@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.12 1998/02/02 05:20:29 perry Exp $
+.\"	$NetBSD: getsockopt.2,v 1.13 1998/04/28 22:28:31 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -186,24 +186,24 @@ of the destination address.
 .Pp
 .Dv SO_LINGER
 controls the action taken when unsent messages
-are queued on socket and a 
+are queued on socket and a
 .Xr close 2
 is performed.
 If the socket promises reliable delivery of data and
 .Dv SO_LINGER is set,
-the system will block the process on the 
-.Xr close
+the system will block the process on the
+.Xr close 2
 attempt until it is able to transmit the data or until it decides it
 is unable to deliver the information (a timeout period, measured in
 seconds, termed the linger interval, is specified in the
 .Fn setsockopt
 call when
 .Dv SO_LINGER
-is requested). 
+is requested).
 If
 .Dv SO_LINGER
-is disabled and a 
-.Xr close
+is disabled and a
+.Xr close 2
 is issued, the system will process the close in a manner that allows
 the process to continue as quickly as possible.
 .Pp
@@ -217,9 +217,9 @@ With protocols that support out-of-band data, the
 option
 requests that out-of-band data be placed in the normal data input queue
 as received; it will then be accessible with
-.Xr recv
+.Xr recv 2
 or
-.Xr read
+.Xr read 2
 calls without the
 .Dv MSG_OOB
 flag.
@@ -257,7 +257,7 @@ requested.
 The default value for
 .Dv SO_RCVLOWAT
 is 1.
-If 
+If
 .Dv SO_RCVLOWAT
 is set to a larger value, blocking receive calls normally
 wait until they have received the smaller of the low water mark value
@@ -301,7 +301,7 @@ If the
 option is enabled on a
 .Dv SOCK_DGRAM
 socket, the
-.Xr recvmsg
+.Xr recvmsg 2
 call will return a timestamp corresponding to when the datagram was
 received.
 The msg_control field in the msghdr structure points to a buffer
@@ -344,7 +344,7 @@ is a file, not a socket.
 .It Bq Er ENOPROTOOPT
 The option is unknown at the level indicated.
 .It Bq Er EFAULT
-The address pointed to by 
+The address pointed to by
 .Fa optval
 is not in a valid part of the process address space.
 For

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.11 1997/11/06 10:44:09 fair Exp $
+.\"	$NetBSD: fcntl.2,v 1.12 1998/04/28 22:28:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Os BSD 4.2
 .Sh NAME
 .Nm fcntl
-.Nd file control
+.Nd file descriptor control
 .Sh SYNOPSIS
 .Fd #include <fcntl.h>
 .Ft int
@@ -172,7 +172,7 @@ taken as a pointer to a
 .Fa "struct flock"
 (see above).
 The information retrieved overwrites the information passed to
-.Nm fcntl
+.Nm
 in the
 .Fa flock
 structure.
@@ -195,7 +195,7 @@ or exclusive (or write) locks,
 as well as remove either type of lock
 .Dv (F_UNLCK) .
 If a shared or exclusive lock cannot be set,
-.Nm fcntl
+.Nm
 returns immediately with
 .Er EAGAIN .
 .It Dv F_SETLKW
@@ -204,9 +204,9 @@ This command is the same as
 except that if a shared or exclusive lock is blocked by other locks,
 the process waits until the request can be satisfied.
 If a signal that is to be caught is received while
-.Nm fcntl
+.Nm
 is waiting for a region, the
-.Nm fcntl
+.Nm
 will be interrupted if the signal handler has not specified the
 .Dv SA_RESTART
 (see
@@ -289,7 +289,9 @@ request fails or blocks respectively when another process has existing
 locks on bytes in the specified region and the type of any of those
 locks conflicts with the type specified in the request.
 .Pp
-This interface follows the completely stupid semantics of System V and
+This interface follows the completely stupid semantics of
+.At V
+and
 .St -p1003.1-88
 that require that all locks associated with a file for a given process are
 removed when \fIany\fP file descriptor for that file is closed by that process.
@@ -297,10 +299,10 @@ This semantic means that applications must be aware of any files that
 a subroutine library may access.
 For example if an application for updating the password file locks the
 password file database while making the update, and then calls
-.Xr getpwname 3
+.Xr getpwnam 3
 to retrieve a record,
 the lock will be lost because 
-.Xr getpwname 3
+.Xr getpwnam 3
 opens, reads, and closes the password database.
 The database close will release all locks that the process has
 associated with the database, even if the library routine never
@@ -313,7 +315,8 @@ The
 .Xr flock 2
 interface has much more rational last close semantics and
 allows locks to be inherited by child processes.
-.Xr Flock 2
+Calling
+.Xr flock 2
 is recommended for applications that want to ensure the integrity
 of their locks when using library routines or wish to pass locks
 to their children.
@@ -475,7 +478,7 @@ the process ID given as argument is not in use.
 .Xr flock 2 ,
 .Xr open 2 ,
 .Xr getdtablesize 3 ,
-.Xr sigaction 3
+.Xr sigaction 2
 .Sh STANDARDS
 The
 .Fn fcntl

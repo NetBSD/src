@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.7 1998/04/28 06:00:53 fair Exp $
+.\"	$NetBSD: getsockname.2,v 1.8 1998/04/28 22:28:31 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,16 +44,18 @@
 .Ft int
 .Fn getsockname "int s" "struct sockaddr *name" "int *namelen"
 .Sh DESCRIPTION
-.Fn Getsockname
-returns the current 
+The
+.Fn getsockname
+system call returns the current 
 .Fa name
-for the specified socket.  The
+for the specified socket.
+The
 .Fa namelen
-parameter should be initialized to indicate
-the amount of space pointed to by
+parameter should be initialized to indicate the amount of space
+pointed to by
 .Fa name .
-On return it contains the actual size of the name
-returned (in bytes).
+On return it contains the actual size of the name returned (in
+bytes).
 .Sh DIAGNOSTICS
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
@@ -68,13 +70,11 @@ The argument
 .Fa s
 is a file, not a socket.
 .It Bq Er ENOBUFS
-Insufficient resources were available in the system
-to perform the operation.
+Insufficient resources were available in the system to perform the operation.
 .It Bq Er EFAULT
 The 
 .Fa name
-parameter points to memory not in a valid part of the
-process address space.
+parameter points to memory not in a valid part of the process address space.
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
@@ -83,7 +83,7 @@ process address space.
 Names bound to sockets in the
 .Ux
 domain are inaccessible;
-.Xr getsockname
+.Fn getsockname
 returns a zero length name.
 .Sh HISTORY
 The

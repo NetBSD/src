@@ -1,4 +1,4 @@
-.\"	$NetBSD: open.2,v 1.12 1998/01/15 02:30:18 thorpej Exp $
+.\"	$NetBSD: open.2,v 1.13 1998/04/28 22:28:31 fair Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,8 +55,9 @@ The
 .Fa flags
 are specified by
 .Em or Ns 'ing
-the following values.  Applications must specify exactly one
-of the first three values (file access modes):
+the following values.
+Applications must specify exactly one of the first three values
+(file access modes):
 .Bl -tag -offset indent -width O_NONBLOCK
 .It Dv O_RDONLY
 Open for reading only.
@@ -92,7 +93,8 @@ Atomically obtain a shared lock.
 Atomically obtain an exclusive lock.
 .It Dv O_SYNC
 If set, each write will wait for both the file data and file status
-to be committed to stable storage.  This is an extension to
+to be committed to stable storage.
+This is an extension to
 .Fn open
 defined in
 .St -xpg4.2 .
@@ -101,10 +103,12 @@ defined in
 Opening a file with
 .Dv O_APPEND
 set causes each write on the file
-to be appended to the end.  If
+to be appended to the end.
+If
 .Dv O_TRUNC
 is specified and the
 file exists, the file is truncated to zero length.
+.Pp
 If
 .Dv O_EXCL
 is set with
@@ -112,8 +116,8 @@ is set with
 and the file already
 exists,
 .Fn open
-returns an error.  This may be used to
-implement a simple exclusive access locking mechanism.
+returns an error.
+This may be used to implement a simple exclusive access locking mechanism.
 If
 .Dv O_EXCL
 is set and the last component of the pathname is
@@ -121,10 +125,12 @@ a symbolic link,
 .Fn open
 will fail even if the symbolic
 link points to a non-existent name.
+.Pp
 If the
 .Dv O_NONBLOCK
 flag is specified, do not wait for the device or file to be ready or
-available.  If the
+available.
+If the
 .Fn open
 call would result
 in the process being blocked for some reason (e.g., waiting for
@@ -156,7 +162,7 @@ When a new file is created it is given the group of the directory
 which contains it.
 .Pp
 The new descriptor is set to remain open across
-.Xr execve
+.Xr execve 2
 system calls; see
 .Xr close 2
 and
@@ -164,7 +170,8 @@ and
 .Pp
 The system imposes a limit on the number of file descriptors
 open simultaneously by one process.
-.Xr Getdtablesize 3
+Calling
+.Xr getdtablesize 3
 returns the current system limit.
 .Sh ERRORS
 The named file is opened unless:
