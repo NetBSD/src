@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.5 1999/10/25 13:55:07 kleink Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.5.6.1 2002/03/07 18:02:18 he Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -110,12 +110,18 @@ ELFNAME2(freebsd,probe)(p, epp, eh, itp, pos)
         static const char wantBrand[] = FREEBSD_ELF_BRAND_STRING;
         static const char wantInterp[] = FREEBSD_ELF_INTERP_PREFIX_STRING;
 
-        /* Insist that the executable have a brand, and that it be "FreeBSD" */
+        /*
+	 * Insist that the executable have a brand, and that it be "FreeBSD".
+	 * Newer FreeBSD binaries have OSABI set to ELFOSABI_FREEBSD. This
+	 * is arguably broken, but they seem to think they need it, for
+	 * whatever reason.
+	 */
 #ifndef EI_BRAND
 #define EI_BRAND 8
 #endif
-        if (eh->e_ident[EI_BRAND] == '\0'
-	  || strcmp(&eh->e_ident[EI_BRAND], wantBrand))
+        if ((eh->e_ident[EI_BRAND] == '\0'
+		|| strcmp(&eh->e_ident[EI_BRAND], wantBrand) != 0)
+	    && eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD)
 		return ENOEXEC;
 
 	i = eh->e_phnum;
