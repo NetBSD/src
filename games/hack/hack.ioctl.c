@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.ioctl.c,v 1.2 1993/08/02 17:17:16 mycroft Exp $";
+static char rcsid[] = "$Id: hack.ioctl.c,v 1.3 1995/01/07 04:36:41 mycroft Exp $";
 #endif /* not lint */
 
 /* This cannot be part of hack.tty.c (as it was earlier) since on some
@@ -37,8 +37,8 @@ setioctls() {
 }
 
 #ifdef SUSPEND		/* implies BSD */
-dosuspend() {
 #include	<signal.h>
+dosuspend() {
 #ifdef SIGTSTP
 	if(signal(SIGTSTP, SIG_IGN) == SIG_DFL) {
 		settty((char *) 0);
