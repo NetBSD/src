@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.91 1997/10/16 23:58:39 is Exp $
+#	$NetBSD: GENERIC,v 1.92 1997/10/18 23:31:32 is Exp $
 
 #
 # GENERIC AMIGA
@@ -192,6 +192,10 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs2		at mfc1 unit 0
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
+
+hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
+com*		at hyper? port ?	# Hypercom3/4 serial ports
+#lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
 
 drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
