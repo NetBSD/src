@@ -1,0 +1,40 @@
+.\"	@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.8,v 1.1 1994/01/08 03:03:36 jtc Exp $ (LBL)
+.TH SLSTATS 8 "5 Jul 1993"
+.SH NAME
+slstats \- print slip statistics
+.SH SYNOPSIS
+.B slstats
+[
+.B -v
+] [
+.B -i
+.I <secs>
+] [
+.I <unit#>
+]
+.ti 12
+.br
+[
+.I objectfile
+[
+.I corefile
+]]
+.SH DESCRIPTION
+.B slstats
+prints slip related statistics.
+.PP
+The 
+.B -v
+flag causes
+.B slstats
+to display additional statistics such as the number of packets tossed.
+.PP
+The
+.B -i
+flag is used to specify the interval between print outs. The default is
+5 seconds.
+.PP
+It must be installed set-group-id to kmem or the user must have read
+access to /dev/kmem.
+.SH "SEE ALSO"
+.BR slinfo (8)
