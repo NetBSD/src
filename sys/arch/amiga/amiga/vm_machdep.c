@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.14 1994/05/29 06:58:29 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.15 1994/06/04 11:58:56 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
 {
-	register struct pte *fpte, *tpte;
+	u_int *fpte, *tpte;
 
 	if (size % CLBYTES)
 		panic("pagemove");
@@ -168,16 +168,15 @@ physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;
 {
-	register struct pte *pte;
+	u_int *pte;
 	register u_int page;
 
-	extern u_int cache_copyback;
 	if (cpu040 && (prot & PG_CI) == 0)	/* if cache not inhibited */
-		prot |= cache_copyback;		/*   set cacheable, copyback */
+		prot |= PG_CCB;		/*   set cacheable, copyback */
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
-		*(int *)pte++ = PG_V | prot | page;
+		*pte++ = PG_V | prot | page;
 		page += NBPG;
 	}
 	TBIAS();
@@ -187,11 +186,11 @@ physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
 {
-	register struct pte *pte;
+	u_int *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
-		*(int *)pte++ = PG_NV;
+		*pte++ = PG_NV;
 	TBIAS();
 }
 
@@ -221,7 +220,7 @@ cpu_coredump(p, vp, cred)
  */
 /*ARGSUSED*/
 setredzone(pte, vaddr)
-	struct pte *pte;
+	u_int *pte;
 	caddr_t vaddr;
 {
 }
