@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.1 1995/04/29 20:23:42 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.2 1995/05/06 18:44:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -140,7 +140,6 @@ grfmv_probe(sc, slot)
 	 */
 
 	sc->card_id = slottype.drhw;
-printf("card id = 0x%x.\n", sc->card_id);
 
 	/* Need to load display info (and driver?), etc... */
 
