@@ -38,8 +38,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)kdump.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kdump.c,v 1.11 1995/07/19 15:11:28 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
+#endif
+static char *rcsid = "$NetBSD: kdump.c,v 1.12 1995/08/31 23:18:33 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -314,7 +316,8 @@ ktrsyscall(ktr)
 				ap++;
 				argsize -= sizeof(register_t);
 			} else if (ktr->ktr_code == SYS_ptrace) {
-				if (*ap <=sizeof(ptrace_ops)/sizeof(ptrace_ops[0]) && *ap >= 0)
+				if (*ap >= 0 && *ap <=
+				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("(%s", ptrace_ops[*ap]);
 				else
 					(void)printf("(%ld", (long)*ap);
