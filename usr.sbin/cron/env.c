@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.6 1997/04/14 08:18:36 mrg Exp $	*/
+/*	$NetBSD: env.c,v 1.7 1998/01/31 14:40:33 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";*/
-static char rcsid[] = "$NetBSD: env.c,v 1.6 1997/04/14 08:18:36 mrg Exp $";
+#if 0
+static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
+#else
+__RCSID("$NetBSD: env.c,v 1.7 1998/01/31 14:40:33 christos Exp $");
+#endif
 #endif
 
 
@@ -29,7 +33,7 @@ static char rcsid[] = "$NetBSD: env.c,v 1.6 1997/04/14 08:18:36 mrg Exp $";
 char **
 env_init()
 {
-	register char	**p = (char **) malloc(sizeof(char **));
+	char	**p = (char **) malloc(sizeof(char **));
 
 	p[0] = NULL;
 	return (p);
@@ -50,10 +54,10 @@ env_free(envp)
 
 char **
 env_copy(envp)
-	register char	**envp;
+	char	**envp;
 {
-	register int	count, i;
-	register char	**p;
+	int	count, i;
+	char	**p;
 
 	for (count = 0;  envp[count] != NULL;  count++)
 		;
@@ -70,8 +74,8 @@ env_set(envp, envstr)
 	char	**envp;
 	char	*envstr;
 {
-	register int	count, found;
-	register char	**p;
+	int	count, found;
+	char	**p;
 
 	/*
 	 * count the number of elements, including the null pointer;
@@ -161,13 +165,13 @@ load_env(envstr, f)
 
 char *
 env_get(name, envp)
-	register char	*name;
-	register char	**envp;
+	char	*name;
+	char	**envp;
 {
-	register int	len = strlen(name);
-	register char	*p, *q;
+	int	len = strlen(name);
+	char	*p, *q;
 
-	while (p = *envp++) {
+	while ((p = *envp++) != NULL) {
 		if (!(q = strchr(p, '=')))
 			continue;
 		if ((q - p) == len && !strncmp(p, name, len))
