@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.13 2001/04/07 21:03:41 tshiozak Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.14 2001/10/30 17:10:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -350,13 +350,13 @@ playdata(buf, tot, name)
 	}
 
 	/* 
-	 * Play MIDI events by selecting the track track with the lowest
+	 * Play MIDI events by selecting the track with the lowest
 	 * curtime.  Execute the event, update the curtime and repeat.
 	 */
 	if (sameprogram) {
 		for(t = 0; t < 16; t++) {
 			SEQ_MK_CHN_COMMON(&event, unit, MIDI_PGM_CHANGE, t,
-			    sameprogram+1, 0, 0);
+			    sameprogram-1, 0, 0);
 			send_event(&event);
 		}
 	}
