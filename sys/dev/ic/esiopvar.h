@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.1 2002/04/21 22:52:05 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.2 2002/04/22 15:53:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -36,6 +36,15 @@
 #define ESIOP_NTAG 256
 
 /*
+ * description of a command scheduler slot. The script uses a ring of
+ * A_ncmd_slots of this.
+ */
+struct esiop_slot {
+	u_int32_t dsa; /* DSA of the xfer. The first 2 bits holds flags */
+	u_int32_t id;  /* for SELECT */
+} __attribute__((__packed__));
+
+/*
  * xfer description of the script: tables and reselect script
  * In struct siop_common_cmd siop_xfer will point to this.
  */
@@ -65,10 +74,37 @@ struct esiop_cbd {
 	bus_dmamap_t xferdma; /* DMA map for this block of xfers */
 };
 
+TAILQ_HEAD(cmd_list, esiop_cmd);
+TAILQ_HEAD(cbd_list, esiop_cbd);
+
+/* DSA table descriptor for tags. Free tables are in a list */
+struct esiop_dsatbl {
+	TAILQ_ENTRY (esiop_dsatbl) next;
+	u_int32_t *tbl; /* the table itself */
+	u_int32_t tbl_dsa; /* DSA of base of this table */
+	bus_addr_t tbl_offset; /* offset of this table in the map */
+	struct esiop_dsatblblk *tblblk; /* pointer back to our block */
+};
+
+/* DSA table block descriptor. */
+struct esiop_dsatblblk {
+	TAILQ_ENTRY (esiop_dsatblblk) next;
+	bus_dmamap_t blkmap; /* DMA map of this block */
+};
+
+TAILQ_HEAD(tbl_list, esiop_dsatbl);
+TAILQ_HEAD(tblblk_list, esiop_dsatblblk);
+
+/* Number of table per block */
+#define ESIOP_NTPB ((PAGE_SIZE) / (sizeof(u_int32_t) * ESIOP_NTAG))
+
 /* per lun struct */
 struct esiop_lun {
-	struct esiop_cmd *active; /* active command */
-	int lun_flags; /* per-lun flags, none currently */
+	struct esiop_cmd *active; /* active non-tagged command */
+	struct esiop_cmd *tactive[ESIOP_NTAG]; /* active tagged commands */
+	int lun_flags; /* per-lun flags */
+#define LUNF_TAGTABLE 0x01 /* the LUN DSA points to the tag table */
+	struct esiop_dsatbl *lun_tagtbl; /* the tag DSA table */
 };
 
 /*
@@ -97,9 +133,6 @@ esiop_table_sync(esiop_cmd, ops)
 }
 
 
-TAILQ_HEAD(cmd_list, esiop_cmd);
-TAILQ_HEAD(cbd_list, esiop_cbd);
-
 
 /* Driver internal state */
 struct esiop_softc {
@@ -108,6 +141,8 @@ struct esiop_softc {
 	int sc_currschedslot;		/* current scheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
+	struct tbl_list free_tagtbl;	/* list of free tag DSA tables */
+	struct tblblk_list tag_tblblk;	/* tag DSA table blocks */
 	u_int32_t sc_flags;
 	u_int32_t sc_free_offset;	/* pointer to free RAM */
 	u_int32_t sc_target_table_offset;/* pointer to target DSA table */
