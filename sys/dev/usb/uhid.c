@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.14 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.15 1999/01/10 11:13:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
