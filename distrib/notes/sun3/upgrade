@@ -11,16 +11,12 @@ through the procedure.  The upgrade program will:
 
 	* Extract binary sets from the media of your choice.
 
-	* Fixup your system's existing /etc/fstab, changing the
-	  occurrences of `ufs' to `ffs' and let you edit the
-	  resulting file.
-
 	* Make new device nodes in your root filesystem.
 
 	* Copy a new kernel onto your root partition.
 	  NOTE: the existing kernel WILL NOT be backed up; doing
 	  so would be pointless, since older kernels may not be
-	  capable of running NetBSD 1.2 executables.
+	  capable of running NetBSD _VER executables.
 
 	* Install a new boot block.
 
@@ -32,13 +28,14 @@ manually.  To do this, follow the following procedure:
 
 	* Place _at least_ the `base' binary set in a filesystem
 	  accessible to the target machine.  A local filesystem
-	  is preferred, since the NFS subsystem in the NetBSD 1.2
+	  is preferred, since the NFS subsystem in the NetBSD _VER
 	  kernel may be incompatible with your old binaries.
 
-	* Back up your pre-existing kernel and copy the 1.2
+	* Back up your pre-existing kernel and copy the _VER
 	  kernel into your root partition.
 
-	* Reboot with the 1.2 kernel into single-user mode.
+	* Reboot with the _VER kernel into single-user mode.
+	  (Otherwise you can not install the boot block.)
 
 	* Check all filesystems:
 
@@ -63,14 +60,17 @@ manually.  To do this, follow the following procedure:
 	  the `base' binary set:
 
 		cd /
-		tar --unlink -zxvpf /path/to/base11.tar.gz
+		tar --unlink -zxvpf /path/to/base.tar.gz
 
 	  NOTE: the `--unlink' option is _very_ important!
 
 	* Install a new boot block:
+	  (assuming root is on /dev/rsd0a)
 
 		cd /usr/mdec
-		disklabel -B <root disk, e.g. sd0>
+		cp -p ./ufsboot /mnt/ufsboot
+		sync ; sleep 1 ; sync
+		./installboot -v /ufsboot bootxx /dev/rsd0a
 
 	* Sync the filesystems:
 
