@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.10 2003/10/10 12:58:38 fvdl Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.11 2003/10/10 15:20:30 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.10 2003/10/10 12:58:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.11 2003/10/10 15:20:30 fvdl Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -552,6 +552,12 @@ ahd_pci_attach(parent, self, aux)
 	 * Map the interrupt routines
 	 */
 	ahd->bus_intr = ahd_pci_intr;
+
+	error = ahd_reset(ahd, /*reinit*/FALSE);
+	if (error != 0) {
+		ahd_free(ahd);
+		return;
+	}
 
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", ahd_name(ahd));
@@ -1207,4 +1213,3 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 
 	return (0);
 }
-
