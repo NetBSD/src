@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.1 2001/05/26 17:49:46 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.2 2001/05/26 20:53:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,9 +38,21 @@
 
 /*
  * Oak SCSI 1 driver using the generic NCR5380 driver
+ *
+ * This driver is a bit crude, and only uses 8-bit PIO accesses to the
+ * card.  It looks like the card can support pseudo-DMA, and can
+ * handle converting between the 5380's 8-bit data bus and the 16-bit
+ * podule bus in the process.  We support none of this cleverness.
+ *
+ * This card has to be polled: it doesn't have anything connected to
+ * PIRQ*.  This seems to be a common failing of Archimedes disc
+ * controllers.
  */
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.2 2001/05/26 20:53:53 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -120,6 +132,19 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sc_intr_on = NULL;
 	sc->sc_ncr5380.sc_intr_off = NULL;
 
+#ifdef NCR5380_USE_BUS_SPACE
+	sc->sc_ncr5380.sc_regt = pa->pa_mod_t;
+	bus_space_map(sc->sc_ncr5380.sc_regt, pa->pa_mod_base, 8, 0,
+	    &sc->sc_ncr5380.sc_regh);
+	sc->sc_ncr5380.sci_r0 = 0;
+	sc->sc_ncr5380.sci_r1 = 1;
+	sc->sc_ncr5380.sci_r2 = 2;
+	sc->sc_ncr5380.sci_r3 = 3;
+	sc->sc_ncr5380.sci_r4 = 4;
+	sc->sc_ncr5380.sci_r5 = 5;
+	sc->sc_ncr5380.sci_r6 = 6;
+	sc->sc_ncr5380.sci_r7 = 7;
+#else
 	iobase = (u_char *)pa->pa_mod_base;
 	sc->sc_ncr5380.sci_r0 = iobase + 0;
 	sc->sc_ncr5380.sci_r1 = iobase + 4;
@@ -129,6 +154,7 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sci_r5 = iobase + 20;
 	sc->sc_ncr5380.sci_r6 = iobase + 24;
 	sc->sc_ncr5380.sci_r7 = iobase + 28;
+#endif
 
 	sc->sc_ncr5380.sc_rev = NCR_VARIANT_NCR5380;
 
