@@ -1,7 +1,7 @@
-/*	$NetBSD: uha_isa.c,v 1.6 1996/11/15 22:53:41 jonathan Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.7 1997/03/29 02:32:33 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,11 +63,12 @@ struct cfattach uha_isa_ca = {
 #endif /* ! DDB */
 #define KVTOPHYS(x)	vtophys(x)
 
-int u14_find __P((bus_space_tag_t, bus_space_handle_t, struct uha_softc *));
-void u14_start_mbox __P((struct uha_softc *, struct uha_mscp *));
-int u14_poll __P((struct uha_softc *, struct scsi_xfer *, int));
-int u14_intr __P((void *));
-void u14_init __P((struct uha_softc *));
+int	u14_find __P((bus_space_tag_t, bus_space_handle_t,
+	    struct uha_probe_data *));
+void	u14_start_mbox __P((struct uha_softc *, struct uha_mscp *));
+int	u14_poll __P((struct uha_softc *, struct scsi_xfer *, int));
+int	u14_intr __P((void *));
+void	u14_init __P((struct uha_softc *));
 
 /*
  * Check the slots looking for a board we recognise
@@ -80,25 +81,25 @@ uha_isa_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct uha_softc sc;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	struct uha_probe_data upd;
 	int rv;
 
 	if (bus_space_map(iot, ia->ia_iobase, UHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = u14_find(iot, ioh, &sc);
+	rv = u14_find(iot, ioh, &upd);
 
 	bus_space_unmap(iot, ioh, UHA_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
+		if (ia->ia_irq != -1 && ia->ia_irq != upd.sc_irq)
 			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != sc.sc_drq)
+		if (ia->ia_drq != -1 && ia->ia_drq != upd.sc_drq)
 			return (0);
-		ia->ia_irq = sc.sc_irq;
-		ia->ia_drq = sc.sc_drq;
+		ia->ia_irq = upd.sc_irq;
+		ia->ia_drq = upd.sc_drq;
 		ia->ia_msize = 0;
 		ia->ia_iosize = UHA_ISA_IOSIZE;
 	}
@@ -117,22 +118,23 @@ uha_isa_attach(parent, self, aux)
 	struct uha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	struct uha_probe_data upd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_iobase, UHA_ISA_IOSIZE, 0, &ioh))
-		panic("uha_attach: bus_space_map failed!");
+		panic("uha_isa_attach: bus_space_map failed!");
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!u14_find(iot, ioh, sc))
-		panic("uha_attach: u14_find failed!");
+	if (!u14_find(iot, ioh, &upd))
+		panic("uha_isa_attach: u14_find failed!");
 
-	if (sc->sc_drq != -1)
-		isa_dmacascade(sc->sc_drq);
+	if (upd.sc_drq != -1)
+		isa_dmacascade(upd.sc_drq);
 
-	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
+	sc->sc_ih = isa_intr_establish(ic, upd.sc_irq, IST_EDGE, IPL_BIO,
 	    u14_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
@@ -145,7 +147,7 @@ uha_isa_attach(parent, self, aux)
 	sc->poll = u14_poll;
 	sc->init = u14_init;
 
-	uha_attach(sc);
+	uha_attach(sc, &upd);
 }
 
 /*
@@ -155,7 +157,7 @@ int
 u14_find(iot, ioh, sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct uha_softc *sc;
+	struct uha_probe_data *sc;
 {
 	u_int16_t model, config;
 	int irq, drq;
@@ -228,7 +230,7 @@ u14_find(iot, ioh, sc)
 	}
 
 	/* if we want to fill in softc, do so now */
-	if (sc != NULL) {
+	if (sc) {
 		sc->sc_irq = irq;
 		sc->sc_drq = drq;
 		sc->sc_scsi_dev = config & U14_HOSTID_MASK;
