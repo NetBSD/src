@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.h,v 1.2 1996/03/28 21:22:24 mark Exp $ */
+/* $NetBSD: vidc.h,v 1.3 1996/06/03 21:58:26 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * VIDC20 registers
  *
  * Created      : 18/09/94
- * Last updated : 08/03/95
  *
  * Based on kate/display/vidc.h
- *
- *    $Id: vidc.h,v 1.2 1996/03/28 21:22:24 mark Exp $
  */
 
 #ifndef __vidc_h
