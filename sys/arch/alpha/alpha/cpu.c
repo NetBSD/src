@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.27 1998/09/24 23:28:17 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.28 1998/09/25 03:23:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 1998/09/24 23:28:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 1998/09/25 03:23:50 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -350,6 +350,10 @@ cpu_run_spinup_queue()
 			continue;
 		}
 		memset(sc->sc_idle_stack, 0, USPACE);
+#if 1
+		printf("%s: idle stack = %p\n", sc->sc_dev.dv_xname,
+		    sc->sc_idle_stack);
+#endif
 
 		/*
 		 * Initialize the PCB and copy it to the PCS.
@@ -359,9 +363,7 @@ cpu_run_spinup_queue()
 		pcb->pcb_hw.apcb_ksp =
 		    (u_int64_t)sc->sc_idle_stack + USPACE -
 		    sizeof(struct trapframe);
-#if 0
-		pcb->pcb_hw.apcb_unique = pcb->pcb_hw.apcb_ksp; /* XXX WHY? */
-#endif
+		pcb->pcb_hw.apcb_backup_ksp = pcb->pcb_hw.apcb_ksp;
 		pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
 		pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
 		memcpy(pcsp->pcs_hwpcb, &pcb->pcb_hw, sizeof(pcb->pcb_hw));
@@ -489,6 +491,7 @@ cpu_iccb_send(cpu_id, msg)
 void
 cpu_iccb_receive()
 {
+#if 0	/* Don't bother... we don't get any important messages anyhow. */
 	u_int64_t txrdy;
 	char *cp1, *cp2, buf[80];
 	struct pcs *pcsp;
@@ -520,6 +523,7 @@ cpu_iccb_receive()
 			printf("Message from CPU %lu: %s\n", cpu_id, buf);
 		}
 	}
+#endif /* 0 */
 	hwrpb->rpb_txrdy = 0;
 	alpha_mb();
 }
