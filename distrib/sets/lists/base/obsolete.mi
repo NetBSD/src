@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.29 2001/06/02 00:34:01 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.30 2001/06/03 06:19:14 itojun Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -33,10 +33,14 @@
 /usr/sbin/kmpstat
 /usr/sbin/lmtp
 /usr/sbin/mbrlabel
+/usr/sbin/mtrace6
 /usr/sbin/nfsiod
 /usr/sbin/nslookup
 /usr/sbin/nsquery
 /usr/sbin/nstest
+/usr/sbin/pim6dd
+/usr/sbin/pim6sd
+/usr/sbin/pim6stat
 /usr/sbin/portmap
 /usr/sbin/rdconfig
 /usr/sbin/scriptdump
@@ -54,8 +58,6 @@
 /usr/share/doc/smm/01.setup/vax
 /usr/share/doc/usd/13.ex
 /usr/share/games/ching
-/usr/share/locale/en_US.UTF-2
-/usr/share/locale/en_US.UTF-2/LC_CTYPE
 /usr/share/lkm
 /usr/share/lkm/misc
 /usr/share/lkm/misc/module
@@ -65,6 +67,8 @@
 /usr/share/lkm/syscall/test
 /usr/share/lkm/vfs 
 /usr/share/lkm/vfs/module
+/usr/share/locale/en_US.UTF-2
+/usr/share/locale/en_US.UTF-2/LC_CTYPE
 /usr/share/locale/ru_SU.CP866
 /usr/share/locale/ru_SU.CP866/LC_CTYPE
 /usr/share/locale/ru_SU.ISO8859-5
@@ -130,6 +134,3 @@
 /usr/share/zoneinfo/GMT9
 /usr/share/zoneinfo/Moscow
 /var/games/save
-/usr/sbin/pim6dd
-/usr/sbin/pim6sd
-/usr/sbin/pim6stat
