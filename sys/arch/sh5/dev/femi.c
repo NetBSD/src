@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.6 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: femi.c,v 1.7 2002/10/24 13:48:44 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -122,7 +122,7 @@ femiattach(struct device *parent, struct device *self, void *args)
 	printf(": Flash/External Memory Interface, Version 0x%x\n",
 	    (int)SUPERHYWAY_VCR_MOD_VERS(vcr));
 
-	printf("%s: Base Address: 0x%lx, Length: 0x%lx\n",
+	printf("%s: Base Address: 0x%x, Length: 0x%x\n",
 	    sc->sc_dev.dv_xname, sc->sc_base, sc->sc_top - sc->sc_base);
 
 	config_search(femisubmatch, self, NULL);
@@ -133,7 +133,7 @@ femiprint(void *arg, const char *cp)
 {
 	struct femi_attach_args *fa = arg;
 
-	printf(" offset 0x%lx", fa->fa_offset - fa->_fa_base);
+	printf(" offset 0x%x", fa->fa_offset - fa->_fa_base);
 
 	return (UNCONF);
 }
