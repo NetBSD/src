@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.9 2001/02/19 23:22:47 cgd Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.10 2002/01/25 20:30:41 wennmach Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.9 2001/02/19 23:22:47 cgd Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.10 2002/01/25 20:30:41 wennmach Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -173,7 +173,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-noshell] [-nogecos] [-nopw] "
-	    "[-m arg1 [arg2 ...]]\n", getprogname());
+	fprintf(stderr, "usage: %s [-d directory] [-noshell] [-nogecos] "
+	    "[-nopw] [-m arg1 [arg2 ...]]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
