@@ -1,4 +1,4 @@
-.\"	$NetBSD: dm.conf.5,v 1.6 1999/03/22 18:49:11 garbled Exp $
+.\"	$NetBSD: dm.conf.5,v 1.7 2002/09/26 18:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,8 +59,7 @@ Entries consist of two white-space separated fields: the string
 .Em badtty
 and the ttyname as returned by
 .Xr ttyname 3 .
-For example,
-to keep the uucp dialout,
+For example, to keep the uucp dialout,
 .Dq tty19 ,
 from being used for games, the entry would be:
 .Bd -literal -offset indent
@@ -94,17 +93,14 @@ in no game limitation or priority based on that field.
 .Pp
 The game
 .Em default
-controls the settings for
-any game not otherwise listed, and must be the last
+controls the settings for any game not otherwise listed, and must be the last
 .Em game
 entry in the file.
 Priorities may not be negative.
-For example, the following entries
-limits the game
+For example, the following entries limits the game
 .Dq hack
-to running only when the system has 10 or less
-users and a load average of 5 or less; all other games may be run any time
-the system has 15 or less users.
+to running only when the system has 10 or less users and a load average of 5
+or less; all other games may be run any time the system has 15 or less users.
 .Bd -literal -offset indent
 game	hack		5	10	*
 game	default		*	15	*

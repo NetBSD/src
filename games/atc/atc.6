@@ -1,4 +1,4 @@
-.\"	$NetBSD: atc.6,v 1.14 2002/09/26 16:33:53 wiz Exp $
+.\"	$NetBSD: atc.6,v 1.15 2002/09/26 18:31:58 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,8 +52,7 @@
 .Sh DESCRIPTION
 .Nm
 lets you try your hand at the nerve wracking duties of the air traffic
-controller without endangering the lives of millions of
-travelers each year.
+controller without endangering the lives of millions of travelers each year.
 Your responsibilities require you to direct the flight of jets
 and prop planes into and out of the flight arena and airports.
 The speed (update time) and frequency of the planes depend on the
@@ -62,7 +61,7 @@ difficulty of the chosen arena.
 .Bl -tag -width flag
 .It Fl u
 Print the usage line and exit.
-.It Fl ?
+.It Fl \&?
 Same as
 .Fl u .
 .It Fl l
@@ -115,8 +114,7 @@ taking longer than another player (except in the case of ties).
 .Pp
 Suspending a game is not permitted.
 If you get a talk message, tough.
-When was the last time an Air Traffic Controller got called away to
-the phone?
+When was the last time an Air Traffic Controller got called away to the phone?
 .Sh THE DISPLAY
 .Pp
 Depending on the terminal you run
@@ -145,12 +143,13 @@ Airports are shown as a number and some indication of the direction
 planes must be going to land at the airport.
 On ascii terminals, this is one of `^', `\*[Gt]', `\*[Lt]', and `v', to indicate
 north (0 degrees), east (90), west (270) and south (180), respectively.
-The planes will also
-take off in this direction.
+The planes will also take off in this direction.
 .Pp
 Beacons are represented as circles or asterisks and a number.
 Their purpose is to offer a place of easy reference to the plane pilots.
-See ``the delay command'' under the input section of this manual.
+See
+.Sx THE DELAY COMMAND
+section below.
 .Pp
 Entry/exit points are displayed as numbers along the border of the
 radar screen.
@@ -195,7 +194,9 @@ It is just now executing a turn to 225 degrees (South-West).
 .Ss INPUT AREA
 The third area of the display is the input area.
 It is here that your input is reflected.
-See the INPUT heading of this manual for more details.
+See the
+.Sx INPUT
+heading of this manual for more details.
 .Ss AUTHOR AREA
 This area is used simply to give credit where credit is due. :-)
 .Sh INPUT
@@ -211,11 +212,11 @@ during the check, the offending statement will be underscored and a
 (hopefully) descriptive message will be printed under it.
 .Pp
 The command syntax is broken into two parts:
-.Em "Immediate Only"
+.Em Immediate Only
 and
 .Em Delayable
 commands.
-.Em "Immediate Only"
+.Em Immediate Only
 commands happen on the next update.
 .Em Delayable
 commands also happen on the next update unless they
@@ -226,16 +227,15 @@ command.
 In the following tables, the syntax
 .Em [0\-9]
 means any single digit, and
-.Em \*[Lt]dir\*[Gt]
+.Aq Em dir
 refers to a direction, given by the keys around the `s' key: ``wedcxzaq''.
 In absolute references, `q' refers to North-West or 315 degrees, and `w'
 refers to North, or 0 degrees.
-In relative references, `q' refers to -45 degrees or 45 degrees left, and `w'
+In relative references, `q' refers to \-45 degrees or 45 degrees left, and `w'
 refers to 0 degrees, or no change in direction.
 .Pp
 All commands start with a plane letter.
-This indicates the recipient
-of the command.
+This indicates the recipient of the command.
 Case is ignored.
 .Ss IMMEDIATE ONLY COMMANDS
 .Bl -tag -width "aaaa"
@@ -252,18 +252,15 @@ Descend: relative altitude change.
 .El
 .It m
 Mark: Display in highlighted mode.
-Plane and command information
-is displayed normally.
+Plane and command information is displayed normally.
 .It i
 Ignore: Do not display highlighted.
-Command is displayed as a
-line of dashes if there is no command.
+Command is displayed as a line of dashes if there is no command.
 .It u
 Unmark: Same as ignore, but if a delayed command is processed,
 the plane will become marked.
-This is useful if you want
-to forget about a plane during part, but not all, of its
-journey.
+This is useful if you want to forget about a plane during part,
+but not all, of its journey.
 .El
 .Ss DELAYABLE COMMANDS
 .Bl -tag -width "aaaa"
@@ -283,16 +280,19 @@ Turn to direction: Turn to the absolute compass heading given.
 The shortest turn will be taken.
 .It "tl [ dir ]"
 Left: Turn counterclockwise: 45 degrees by default, or the amount
-specified in \*[Lt]dir\*[Gt] (not
+specified in
+.Aq dir
+(not
 .Em to
-\*[Lt]dir\*[Gt].) `w' (0 degrees) is no turn.
-`e' is 45 degrees; `q' gives -45
-degrees counterclockwise, that is, 45 degrees clockwise.
+.Aq dir . )
+`w' (0 degrees) is no turn.
+`e' is 45 degrees; `q' gives \-45 degrees counterclockwise, that is,
+45 degrees clockwise.
 .It "t- [ dir ]"
 Same as left.
 .It "tr [ dir ]"
-Right: Turn clockwise, 45 degrees by default, or the amount specified
-in \*[Lt]dir\*[Gt].
+Right: Turn clockwise, 45 degrees by default, or the amount specified in
+.Aq dir .
 .It "t+ [ dir ]"
 Same as right.
 .It tL
@@ -315,17 +315,14 @@ Same as ttb.
 .Ss THE DELAY COMMAND
 The
 .Em Delay
-(a/@)
-command may be appended to any
+(a/@) command may be appended to any
 .Em Delayable
 command.
-It allows the controller to instruct a plane to do an action
-when the plane reaches a particular beacon (or other objects in future
-versions).
+It allows the controller to instruct a plane to do an action when the
+plane reaches a particular beacon (or other objects in future versions).
 .Bl -tag -width "aaaa"
 .It ab Em number
-Do the delayable command when the plane reaches the specified
-beacon.
+Do the delayable command when the plane reaches the specified beacon.
 The `b' for ``beacon'' is redundant to allow for expansion.
 `@' can be used instead of `a'.
 .El
@@ -396,8 +393,7 @@ New field description file names must be placed in this file to be playable.
 If a player specifies a game not in this file, his score will not be logged.
 .Pp
 The game field description files are broken into two parts.
-The first
-part is the definition section.
+The first part is the definition section.
 Here, the four tunable game parameters must be set.
 These variables are set with the syntax:
 .Pp
@@ -430,8 +426,7 @@ The syntax is as follows:
 .El
 .Ed
 .Pp
-For beacons, a simple x, y coordinate pair is used (enclosed in
-parenthesis).
+For beacons, a simple x, y coordinate pair is used (enclosed in parenthesis).
 Airports and exits require a third value, which is one of the directions
 .Em wedcxzaq .
 For airports, this is the direction that planes must be going to take
@@ -485,7 +480,9 @@ line:		[ (  1  1 ) (  6  6 ) ]
 .Ed
 .Sh FILES
 Files are kept in a special directory.
-See the OPTIONS for a way to print this path out.
+See the
+.Sx OPTIONS
+section for a way to print this path out.
 It is normally
 .Pa /usr/share/games/atc .
 .Pp
@@ -502,8 +499,3 @@ This game is based on someone's description of the overall flavor
 of a game written for some unknown PC many years ago, maybe.
 .Sh BUGS
 The screen sometimes refreshes after you have quit.
-.Pp
-Yet Another Curses Bug was discovered during the development of this game.
-If your curses library clrtobot.o is version 5.1 or earlier,
-you will have erase problems with the backspace operator in the input
-window.
