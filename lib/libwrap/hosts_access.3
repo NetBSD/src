@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts_access.3,v 1.6 2002/06/22 11:52:40 itojun Exp $
+.\"	$NetBSD: hosts_access.3,v 1.7 2002/10/01 19:38:46 wiz Exp $
 .\"
 .TH HOSTS_ACCESS 3
 .SH NAME
@@ -26,16 +26,19 @@ char *client_addr;
 char *client_user;
 .fi
 .SH DESCRIPTION
-The routines described in this document are part of the \fIlibwrap.a\fR
-library. They implement a rule-based access control language with
+The routines described in this document are part
+of the \fIlibwrap.a\fR library.
+They implement a rule-based access control language with
 optional shell commands that are executed when a rule fires.
 .PP
-request_init() initializes a structure with information about a client
-request. request_set() updates an already initialized request
-structure. Both functions take a variable-length list of key-value
-pairs and return their first argument.  The argument lists are
-terminated with a zero key value. All string-valued arguments are
-copied. The expected keys (and corresponding value types) are:
+request_init() initializes a structure with
+information about a client request.
+request_set() updates an already initialized request structure.
+Both functions take a variable-length list of key-value
+pairs and return their first argument.
+The argument lists are terminated with a zero key value.
+All string-valued arguments are copied.
+The expected keys (and corresponding value types) are:
 .IP "RQ_FILE (int)"
 The file descriptor associated with the request.
 .IP "RQ_CLIENT_NAME (char *)"
@@ -43,8 +46,8 @@ The client host name.
 .IP "RQ_CLIENT_ADDR (char *)"
 A printable representation of the client network address.
 .IP "RQ_CLIENT_SIN (struct sockaddr_in *)"
-An internal representation of the client network address and port.  The
-contents of the structure are not copied.
+An internal representation of the client network address and port.
+The contents of the structure are not copied.
 .IP "RQ_SERVER_NAME (char *)"
 The hostname associated with the server endpoint address.
 .IP "RQ_SERVER_ADDR (char *)"
@@ -58,22 +61,23 @@ The name of the daemon process running on the server host.
 The name of the user on whose behalf the client host makes the request.
 .PP
 hosts_access() consults the access control tables described in the
-\fIhosts_access(5)\fR manual page.  When internal endpoint information
-is available, host names and client user names are looked up on demand,
-using the request structure as a cache.  hosts_access() returns zero if
-access should be denied.
+\fIhosts_access(5)\fR manual page.
+When internal endpoint information is available, host names
+and client user names are looked up on demand,
+using the request structure as a cache.
+hosts_access() returns zero if access should be denied.
 .PP
 hosts_ctl() is a wrapper around the request_init() and hosts_access()
 routines with a perhaps more convenient interface (though it does not
-pass on enough information to support automated client username
-lookups).  The client host address, client host name and username
-arguments should contain valid data or STRING_UNKNOWN.  hosts_ctl()
-returns zero if access should be denied.
+pass on enough information to support automated client username lookups).
+The client host address, client host name and username
+arguments should contain valid data or STRING_UNKNOWN.
+hosts_ctl() returns zero if access should be denied.
 .PP
 The \fIallow_severity\fR and \fIdeny_severity\fR variables determine
-how accepted and rejected requests may be logged. They must be provided
-by the caller and may be modified by rules in the access control
-tables.
+how accepted and rejected requests may be logged.
+They must be provided by the caller and may be modified
+by rules in the access control tables.
 .SH DIAGNOSTICS
 Problems are reported via the syslog daemon.
 .SH SEE ALSO
