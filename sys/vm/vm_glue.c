@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.53 1996/02/18 22:53:43 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.54 1996/03/30 21:50:45 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -618,6 +618,6 @@ iprintf(pr, fmt /* , va_alist */)
 	while (--i >= 0)
 		(*pr)(" ");
 	va_start(ap, fmt);
-	(*pr)("%r", fmt, ap);
+	(*pr)("%:", fmt, ap);
 	va_end(ap);
 }
