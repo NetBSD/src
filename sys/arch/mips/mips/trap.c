@@ -37,7 +37,7 @@
  *
  * from: Utah Hdr: trap.c 1.32 91/04/06
  * from: @(#)trap.c	7.14 (Berkeley) 3/8/93
- * $Id: trap.c,v 1.1.1.1 1993/10/12 03:22:31 deraadt Exp $
+ * $Id: trap.c,v 1.2 1994/01/16 00:49:47 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -455,13 +455,13 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		code = locr0[V0];
 		switch (code) {
-		case SYS_indir:
+		case SYS_syscall:
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
 			code = locr0[A0];
 			if (code >= numsys)
-				callp = &systab[SYS_indir]; /* (illegal) */
+				callp = &systab[SYS_syscall]; /* (illegal) */
 			else
 				callp = &systab[code];
 			i = callp->sy_narg;
@@ -486,14 +486,15 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 			break;
 
-		case SYS___indir:
+#if 0
+		case SYS___syscall:
 			/*
 			 * Like indir, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
 			code = locr0[A0 + _QUAD_LOWWORD];
 			if (code >= numsys)
-				callp = &systab[SYS_indir]; /* (illegal) */
+				callp = &systab[SYS_syscall]; /* (illegal) */
 			else
 				callp = &systab[code];
 			i = callp->sy_narg;
@@ -516,10 +517,11 @@ trap(statusReg, causeReg, vadr, pc, args)
 				}
 			}
 			break;
+#endif
 
 		default:
 			if (code >= numsys)
-				callp = &systab[SYS_indir]; /* (illegal) */
+				callp = &systab[SYS_syscall]; /* (illegal) */
 			else
 				callp = &systab[code];
 			i = callp->sy_narg;
@@ -815,10 +817,12 @@ interrupt(statusReg, causeReg, pc)
 		clearsoftnet();
 		cnt.v_soft++;
 #ifdef INET
+#ifdef NETISR_ARP
 		if (netisr & (1 << NETISR_ARP)) {
 			netisr &= ~(1 << NETISR_ARP);
 			arpintr();
 		}
+#endif
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
