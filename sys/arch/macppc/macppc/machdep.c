@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2001/06/12 16:29:07 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2001/06/12 16:32:00 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -950,6 +950,7 @@ cninit_kd()
 	printf("no console keyboard\n");
 	return;
 
+#if NAKBD + NUKBD > 0
 kbd_found:
 	/*
 	 * XXX This is a little gross, but we don't get to call
@@ -957,6 +958,7 @@ kbd_found:
 	 */
 	ofkbd_ihandle = stdin;
 	wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
+#endif
 }
 #endif
 
