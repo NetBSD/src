@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.746 2004/12/20 03:50:04 itojun Exp $
+#	$NetBSD: mi,v 1.747 2004/12/20 18:33:53 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3015,6 +3015,7 @@
 ./usr/share/man/cat3/free_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/free_fieldtype.0		comp-c-catman		.cat
 ./usr/share/man/cat3/free_form.0		comp-c-catman		.cat
+./usr/share/man/cat3/freeaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeifaddrs.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/frexp.0			comp-c-catman		.cat
@@ -3040,11 +3041,13 @@
 ./usr/share/man/cat3/fwide.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwrite.0			comp-c-catman		.cat
+./usr/share/man/cat3/gai_strerror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gamma.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gamma_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gammaf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gammaf_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/get_myaddress.0		comp-c-catman		.cat
+./usr/share/man/cat3/getaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getattrs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getbegx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getbegy.0			comp-c-catman		.cat
@@ -3094,6 +3097,7 @@
 ./usr/share/man/cat3/getmntinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getmntopts.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getmode.0			comp-c-catman		.cat
+./usr/share/man/cat3/getnameinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getnetbyaddr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getnetbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getnetconfig.0		comp-c-catman		.cat
@@ -3254,6 +3258,20 @@
 ./usr/share/man/cat3/inchstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/index.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inet.0			comp-c-catman		.cat
+./usr/share/man/cat3/inet6_option_alloc.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_option_append.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_option_find.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_option_init.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_option_next.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_option_space.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_getaddr.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_getflags.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_lasthop.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_reverse.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_segments.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rthdr_space.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet_addr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet_aton.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet_lnaof.0		comp-c-catman		.cat
@@ -6770,6 +6788,7 @@
 ./usr/share/man/man3/free_field.3		comp-c-man		.man
 ./usr/share/man/man3/free_fieldtype.3		comp-c-man		.man
 ./usr/share/man/man3/free_form.3		comp-c-man		.man
+./usr/share/man/man3/freeaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/freeifaddrs.3		comp-c-man		.man
 ./usr/share/man/man3/freopen.3			comp-c-man		.man
 ./usr/share/man/man3/frexp.3			comp-c-man		.man
@@ -6795,11 +6814,13 @@
 ./usr/share/man/man3/fwide.3			comp-c-man		.man
 ./usr/share/man/man3/fwopen.3			comp-c-man		.man
 ./usr/share/man/man3/fwrite.3			comp-c-man		.man
+./usr/share/man/man3/gai_strerror.3		comp-c-man		.man
 ./usr/share/man/man3/gamma.3			comp-c-man		.man
 ./usr/share/man/man3/gamma_r.3			comp-c-man		.man
 ./usr/share/man/man3/gammaf.3			comp-c-man		.man
 ./usr/share/man/man3/gammaf_r.3			comp-c-man		.man
 ./usr/share/man/man3/get_myaddress.3		comp-c-man		.man
+./usr/share/man/man3/getaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/getattrs.3			comp-c-man		.man
 ./usr/share/man/man3/getbegx.3			comp-c-man		.man
 ./usr/share/man/man3/getbegy.3			comp-c-man		.man
@@ -6849,6 +6870,7 @@
 ./usr/share/man/man3/getmntinfo.3		comp-c-man		.man
 ./usr/share/man/man3/getmntopts.3		comp-c-man		.man
 ./usr/share/man/man3/getmode.3			comp-c-man		.man
+./usr/share/man/man3/getnameinfo.3		comp-c-man		.man
 ./usr/share/man/man3/getnetbyaddr.3		comp-c-man		.man
 ./usr/share/man/man3/getnetbyname.3		comp-c-man		.man
 ./usr/share/man/man3/getnetconfig.3		comp-c-man		.man
@@ -7009,6 +7031,20 @@
 ./usr/share/man/man3/inchstr.3			comp-c-man		.man
 ./usr/share/man/man3/index.3			comp-c-man		.man
 ./usr/share/man/man3/inet.3			comp-c-man		.man
+./usr/share/man/man3/inet6_option_alloc.3	comp-c-man		.man
+./usr/share/man/man3/inet6_option_append.3	comp-c-man		.man
+./usr/share/man/man3/inet6_option_find.3	comp-c-man		.man
+./usr/share/man/man3/inet6_option_init.3	comp-c-man		.man
+./usr/share/man/man3/inet6_option_next.3	comp-c-man		.man
+./usr/share/man/man3/inet6_option_space.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_add.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_getaddr.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_getflags.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_init.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_lasthop.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_reverse.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_segments.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rthdr_space.3	comp-c-man		.man
 ./usr/share/man/man3/inet_addr.3		comp-c-man		.man
 ./usr/share/man/man3/inet_aton.3		comp-c-man		.man
 ./usr/share/man/man3/inet_lnaof.3		comp-c-man		.man
