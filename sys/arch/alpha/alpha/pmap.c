@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.69 1998/08/28 19:22:50 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.70 1998/08/28 22:22:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 1998/08/28 19:22:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 1998/08/28 22:22:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -810,7 +810,7 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * Intialize the pmap pool and list.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, NULL, NULL, M_VMPMAP);
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 	LIST_INIT(&pmap_all_pmaps);
 
 	/*
