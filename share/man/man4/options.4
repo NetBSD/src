@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.81 1999/06/26 06:26:13 sommerfeld Exp $
+.\"	$NetBSD: options.4,v 1.82 1999/07/01 10:47:37 itojun Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -934,6 +934,62 @@ See
 .Xr inet 4
 for details.
 This option is currently required.
+.It Cd options INET6
+Includes support for the
+.Tn IPv6
+protocol stack.
+See
+.Xr inet6 4
+for details.
+Unlike
+.Em INET ,
+.Em INET6
+enables multicast routing code as well.
+This option requires
+.Em INET
+at this moment, but it should not.
+.It Cd options IPSEC
+Includes support for the
+.Tn IPsec
+protocol.
+See
+.Xr ipsec 4
+for details.
+.Em IPSEC
+will enable only US-exportable portion of IPsec protocol,
+namely
+secret key management part,
+.Tn AH
+and
+.Tn IPComp .
+.Em INET6
+and
+.Em IPSEC
+are orthogonal so you can get IPv4-only kernel with IPsec support,
+IPv4/v6 dual support kernel without IPsec, and so forth.
+This option requires
+.Em INET
+at this moment, but it should not.
+.It Cd options IPSEC_DEBUG
+Enables debugging code in
+.Tn IPsec
+stack.
+This option assumes
+.Em IPSEC .
+.It Cd options IPSEC_ESP
+Includes support for
+.Tn IPsec
+.Tn ESP
+protocol.
+See
+.Xr ipsec 4
+for details.
+.Em IPSEC_ESP
+will enable US-export controlled source code, so compiled binary is
+subject to US-export restriction.
+This option assumes
+.Em IPSEC .
+.Pq this option is unusable at this moment
 .It Cd options SUBNETSARELOCAL
 Sets default value for net.inet.ip.subnetsarelocal variable, which
 controls whether non-directly-connected subnets of connected networks
