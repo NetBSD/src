@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1998/01/18 22:07:52 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.44 1998/01/27 17:35:03 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -710,9 +710,10 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 }
 
 /*
- * Activate the address space for the specified process.  Note that we
- * only need to load the process's PCB, since the page base/length registers
- * will be implicitly restored on the way back out to user space.
+ * Activate the address space for the specified process.
+ * Note that if the process to activate is the current process, then
+ * the processor internal registers must also be loaded; otherwise
+ * the current process will have wrong pagetables.
  */
 void
 pmap_activate(p)
@@ -725,6 +726,14 @@ pmap_activate(p)
 	pcb->P0LR = pmap->pm_p0lr;
 	pcb->P1BR = pmap->pm_p1br;
 	pcb->P1LR = pmap->pm_p1lr;
+
+	if (p == curproc) {
+		mtpr(pmap->pm_p0br, PR_P0BR);
+		mtpr(pmap->pm_p0lr, PR_P0LR);
+		mtpr(pmap->pm_p1br, PR_P1BR);
+		mtpr(pmap->pm_p1lr, PR_P1LR);
+	}
+	mtpr(0, PR_TBIA);
 }
 
 /*
