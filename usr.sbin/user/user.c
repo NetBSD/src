@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.6 1999/12/08 18:12:16 hubertf Exp $ */
+/* $NetBSD: user.c,v 1.7 1999/12/08 21:45:54 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -783,21 +783,42 @@ static void
 usage(char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
-		(void) fprintf(stderr, "%s -D [-bbasedir] [-eexpiry] [-finactive] [-ggroup] [-rrange] [-sshell]\n", prog);
-		(void) fprintf(stderr, "%s [-Ggroup] [-bbasedir] [-ccomment] [-dhomedir] [-eexpiry] [-finactive]\n\t[-ggroup] [-kskeletondir] [-m] [-o] [-ppassword] [-rrange] [-sshell]\n\t[-uuid] [-v] user\n", prog);
-	} else if (strcmp(prog, "usermod") == 0) {
-		(void) fprintf(stderr, "%s [-Ggroup] [-ccomment] [-dhomedir] [-eexpire] [-finactive] [-ggroup] [-lnewname] [-m] [-o] [-ppassword] [-sshell] [-uuid] [-v] user\n", prog);
+		(void) fprintf(stderr,
+"usage: %s -D [-b basedir] [-e expiry] [-f inactive] [-g group]\n"
+"	[-r range] [-sshell]\n", prog);
+		(void) fprintf(stderr,
+"usage: %s [-G group] [-b basedir] [-c comment] [-d homedir] [-e expiry]\n"
+"	[-f inactive] [-g group] [-k skeletondir] [-m] [-o] [-p password]\n"
+"	[-r range] [-s shell] [-u uid] [-v] user\n", prog);
+
 	} else if (strcmp(prog, "userdel") == 0) {
-		(void) fprintf(stderr, "%s -D [-ppreserve]\n", prog);
-		(void) fprintf(stderr, "%s [-ppreserve] [-r] [-v] user\n", prog);
+		(void) fprintf(stderr,
+"usage: %s -D [-p preserve]\n", prog);
+		(void) fprintf(stderr,
+"usage: %s [-p preserve] [-r] [-v] user\n", prog);
+
+	} else if (strcmp(prog, "usermod") == 0) {
+		(void) fprintf(stderr,
+"usage: %s [-G group] [-c comment] [-d homedir] [-e expire] [-f inactive]\n"
+"	[-g group] [-l newname] [-m] [-o] [-p password] [-s shell] [-u uid]\n"
+"	[-v] user\n", prog);
+
 	} else if (strcmp(prog, "groupadd") == 0) {
-		(void) fprintf(stderr, "%s [-ggid] [-o] [-v] group\n", prog);
+		(void) fprintf(stderr,
+"usage: %s [-g gid] [-o] [-v] group\n", prog);
+
 	} else if (strcmp(prog, "groupdel") == 0) {
-		(void) fprintf(stderr, "%s [-v] group\n", prog);
+		(void) fprintf(stderr,
+"usage: %s [-v] group\n", prog);
+
 	} else if (strcmp(prog, "groupmod") == 0) {
-		(void) fprintf(stderr, "%s [-ggid] [-o] [-nnewname] [-v] group\n", prog);
+		(void) fprintf(stderr,
+"usage: %s [-g gid] [-o] [-n newname] [-v] group\n", prog);
+
 	} else if ((strcmp(prog, "user") == 0) || (strcmp(prog, "group") == 0)) {
-		(void) fprintf(stderr, "%s ( add | del | mod ) ...\n", prog);
+		(void) fprintf(stderr,
+"usage: %s ( add | del | mod ) ...\n", prog);
+
 	} else {
 		warn("usage() called with unknown prog `%s'", prog);
 	}
@@ -1245,16 +1266,21 @@ int
 main(int argc, char **argv)
 {
 	cmd_t	*cmdp;
+	int	 firstok;
 
+	firstok = 0;
 	for (cmdp = cmds ; cmdp->c_progname ; cmdp++) {
 		if (strcmp(__progname, cmdp->c_progname) == 0) {
 			return (*cmdp->c_func)(argc, argv);
 		} 
-
-		if (strcmp(__progname, cmdp->c_word1) == 0 &&
-		    argc > 1 && strcmp(argv[1], cmdp->c_word2) == 0)
-			return (*cmdp->c_func)(argc - 1, argv + 1);
+		if (strcmp(__progname, cmdp->c_word1) == 0) {
+			firstok = 1;
+			if (argc > 1 && strcmp(argv[1], cmdp->c_word2) == 0)
+				return (*cmdp->c_func)(argc - 1, argv + 1);
+		}
 	}
+	if (firstok)
+		usage(__progname);
 	errx(EXIT_FAILURE, "Program `%s' not recognised", __progname);
 	/* NOTREACHED */
 }
