@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.8 2001/01/05 02:02:58 lukem Exp $	 */
+/* $NetBSD: inode.c,v 1.9 2001/01/06 23:08:24 joff Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -468,7 +468,7 @@ iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 			return (n);
 	} else
 		func = dirscan;
-	if (chkrange(idesc->id_blkno, idesc->id_numfrags))
+	if (chkrange(idesc->id_blkno, fragstodb(&sblock, idesc->id_numfrags)))
 		return (SKIP);
 	bp = getddblk(idesc->id_blkno, sblock.lfs_bsize);
 	ilevel--;

@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.9 2001/01/05 02:02:58 lukem Exp $	 */
+/* $NetBSD: pass1.c,v 1.10 2001/01/06 23:08:26 joff Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -330,7 +330,6 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
-	idesc->id_entryno *= btodb(sblock.lfs_fsize);
 	if (dp->di_blocks != idesc->id_entryno) {
 		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
 		      inumber, dp->di_blocks, idesc->id_entryno);
@@ -358,12 +357,12 @@ int
 pass1check(struct inodesc * idesc)
 {
 	int             res = KEEPON;
-	int             anyout, nfrags;
+	int             anyout, ndblks;
 	daddr_t         blkno = idesc->id_blkno;
 	register struct dups *dlp;
 	struct dups    *new;
 
-	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
+	if ((anyout = chkrange(blkno, fragstodb(&sblock, idesc->id_numfrags))) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
 			pwarn("EXCESSIVE BAD BLKS I=%u",
@@ -377,7 +376,7 @@ pass1check(struct inodesc * idesc)
 	} else if (!testbmap(blkno)) {
 		seg_table[datosn(&sblock, blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
 	}
-	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
+	for (ndblks = fragstodb(&sblock, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
 		if (anyout && chkrange(blkno, 1)) {
 			res = SKIP;
 		} else if (!testbmap(blkno)) {

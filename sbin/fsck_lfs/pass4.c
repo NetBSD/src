@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.3 2000/05/23 01:48:55 perseant Exp $	 */
+/* $NetBSD: pass4.c,v 1.4 2001/01/06 23:08:29 joff Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -108,10 +108,10 @@ int
 pass4check(struct inodesc * idesc)
 {
 	register struct dups *dlp;
-	int             nfrags, res = KEEPON;
+	int             ndblks, res = KEEPON;
 	daddr_t         blkno = idesc->id_blkno;
 
-	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
+	for (ndblks = fragstodb(&sblock, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
 		if (chkrange(blkno, 1)) {
 			res = SKIP;
 		} else if (testbmap(blkno)) {
