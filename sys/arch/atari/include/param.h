@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 1997/07/10 08:22:37 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.24 1997/09/19 13:53:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,10 @@
 #include <m68k/param.h>
 
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages

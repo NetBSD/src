@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1997/06/23 02:56:45 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.6 1997/09/19 13:55:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,6 +101,10 @@
 #define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Constants related to network buffer management.

@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.8 1997/06/03 23:48:36 mark Exp $ */
+/* $NetBSD: param.h,v 1.9 1997/09/19 13:53:28 leo Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -84,6 +84,10 @@
 #define SINCR           1               /* increment of stack/NBPG */
 #define UPAGES          2               /* pages of u-area */
 #define USPACE          (UPAGES * NBPG) /* total size of u-area */
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Constants related to network buffer management.

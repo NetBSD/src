@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 1997/07/31 00:36:55 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1997/09/19 13:53:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -79,7 +79,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/msgbuf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -562,9 +561,9 @@ pmap_bootstrap(kernel_l1pt)
 	memhook = (char *)virtual_start;
 	virtual_start += NBPG;
 
-	msgbufp = (struct msgbuf *)virtual_start;
+	msgbufaddr = (caddr_t)virtual_start;
 	msgbufpte = (pt_entry_t)pmap_pte(kernel_pmap, virtual_start);
-	virtual_start += round_page(sizeof(struct msgbuf));
+	virtual_start += round_page(MSGBUFSIZE);
 
 #if PMAPDEBUG > 0
 	printf("pmap_bootstrap: page_hook = V%08x pte = V%08x\n",

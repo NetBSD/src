@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 1997/09/12 10:29:20 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 1997/09/19 13:53:02 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -174,7 +174,8 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t	msgbufaddr;
+
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -254,10 +255,10 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp, 
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+				avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

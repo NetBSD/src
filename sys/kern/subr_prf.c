@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.43 1997/06/26 05:17:45 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.44 1997/09/19 13:56:41 leo Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -553,8 +553,7 @@ putchar(c, flags, tp)
 	int flags;
 	struct tty *tp;
 {
-	extern int msgbufmapped;
-	register struct msgbuf *mbp;
+	register struct kern_msgbuf *mbp;
 
 	if (panicstr)
 		constty = NULL;
@@ -566,15 +565,24 @@ putchar(c, flags, tp)
 	    (flags & TOCONS) && tp == constty)
 		constty = NULL;
 	if ((flags & TOLOG) &&
-	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped) {
+	    c != '\0' && c != '\r' && c != 0177 && msgbufenabled) {
 		mbp = msgbufp;
 		if (mbp->msg_magic != MSG_MAGIC) {
-			bzero((caddr_t)mbp, sizeof(*mbp));
-			mbp->msg_magic = MSG_MAGIC;
+			/*
+			 * Arguably should panic or somehow notify the
+			 * user...  but how?  Panic may be too drastic,
+			 * and would obliterate the message being kicked
+			 * out (maybe a panic itself), and printf
+			 * would invoke us recursively.  Silently punt
+			 * for now.  If syslog is running, it should
+			 * notice.
+			 */
+			msgbufenabled = 0;
+		} else {
+			mbp->msg_bufc[mbp->msg_bufx++] = c;
+			if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
+				mbp->msg_bufx = 0;
 		}
-		mbp->msg_bufc[mbp->msg_bufx++] = c;
-		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= MSG_BSIZE)
-			mbp->msg_bufx = 0;
 	}
 	if ((flags & TOCONS) && constty == NULL && c != '\0')
 		(*v_putc)(c);

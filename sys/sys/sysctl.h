@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.23 1997/06/06 23:14:38 veego Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.24 1997/09/19 14:05:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -140,7 +140,8 @@ struct ctlname {
 #define KERN_AUTONICEVAL	28	/* int: auto nice value */
 #define	KERN_RTC_OFFSET		29	/* int: offset of rtc from gmt */
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
-#define	KERN_MAXID		31	/* number of valid kern ids */
+#define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
+#define	KERN_MAXID		32	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -174,6 +175,7 @@ struct ctlname {
 	{ "autoniceval", CTLTYPE_INT }, \
 	{ "rtc_offset", CTLTYPE_INT }, \
 	{ "root_device", CTLTYPE_STRING }, \
+	{ "msgbufsize", CTLTYPE_INT }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1997/07/02 03:23:57 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1997/09/19 13:55:44 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -867,8 +867,10 @@ pmap_bootstrap(nextva)
 	 * the address is assigned to this global pointer in cpu_startup().
 	 * XXX - Make it non-cached?
 	 */
-	pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
-	va += NBPG; pa += NBPG;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++) {
+		pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
+		va += NBPG; pa += NBPG;
+	}
 
 	/* Next page is used as the temporary stack. */
 	pmap_enter_kernel(va, pa, VM_PROT_ALL);

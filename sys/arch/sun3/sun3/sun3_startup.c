@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.66 1997/06/10 19:25:28 veego Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.67 1997/09/19 13:55:38 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,8 +106,6 @@ int delay_divisor = 82;		/* assume the fastest (3/260) */
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
 
-int msgbufmapped = 0;
-struct msgbuf *msgbufp = NULL;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
 
@@ -355,7 +353,7 @@ _vm_init(kehp)
 	pte = get_pte(va);
 	pte |= PG_NC;
 	set_pte(va, pte);
-	/* Initialize msgbufp later, in machdep.c */
+	/* Initialize msgbufaddr later, in machdep.c */
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)

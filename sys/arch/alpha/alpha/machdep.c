@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.85 1997/09/11 23:01:44 mycroft Exp $ */
+/* $NetBSD: machdep.c,v 1.86 1997/09/19 13:52:37 leo Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 1997/09/11 23:01:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 1997/09/19 13:52:37 leo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
+caddr_t msgbufaddr;
+
 int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
@@ -493,10 +494,10 @@ unknown_cputype:
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	lastusablepage -= btoc(sizeof (struct msgbuf));
-	msgbufp =
-	    (struct msgbuf *)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
-	msgbufmapped = 1;
+	lastusablepage -= btoc(MSGBUFSIZE);
+	msgbufaddr = ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
+	initmsgbuf(msgbufaddr, alpha_round_page(MSGBUFSIZE));
+	
 
 	/*
 	 * Allocate space for system data structures.

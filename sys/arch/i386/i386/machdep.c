@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.253 1997/09/16 20:34:34 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.254 1997/09/19 13:54:13 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -205,8 +205,7 @@ int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
 
-struct	msgbuf *msgbufp;
-int	msgbufmapped;
+caddr_t	msgbufaddr;
 
 vm_map_t buffer_map;
 
@@ -310,11 +309,10 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
 	identifycpu();

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 1997/09/18 20:25:34 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.75 1997/09/19 13:55:29 leo Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -186,14 +186,14 @@ bootstrap()
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		extern void oldmon_w_cmd __P((u_long, char *));
-		extern struct msgbuf *msgbufp;
+		extern caddr_t	msgbufaddr;
 		/*
 		 * XXX
 		 * Some boot programs mess up physical page 0, which
 		 * is where we want to put the msgbuf. There's some
 		 * room, so shift it over half a page.
 		 */
-		msgbufp = (struct msgbuf *)((caddr_t) msgbufp + 4096);
+		msgbufaddr = (caddr_t) msgbufaddr + 4096;
 
 		/*
 		 * XXX:
@@ -232,7 +232,7 @@ bootstrap()
 	pmap_bootstrap(cpuinfo.mmu_ncontext,
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
-	msgbufmapped = 1;	/* enable message buffer */
+	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 #ifdef KGDB
 	zs_kgdb_init();		/* XXX */
 #endif

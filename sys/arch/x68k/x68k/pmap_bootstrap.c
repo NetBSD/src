@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 1997/06/10 20:18:35 veego Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7 1997/09/19 13:55:56 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,7 +40,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/msgbuf.h>
 #include <machine/pte.h>
 #include <x68k/x68k/iodevice.h>
 #include <machine/vmparam.h>
@@ -82,10 +81,10 @@ u_long high[8];
  *
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
- *	msgbufp:	kernel message buffer
+ *	msgbufaddr:	kernel message buffer
  */
 caddr_t		CADDR1, CADDR2, vmmap;
-struct msgbuf	*msgbufp;
+extern caddr_t	msgbufaddr;
 
 /*
  * Bootstrap the VM system.
@@ -442,7 +441,7 @@ pmap_bootstrap(nextpa, firstpa)
 	RELOC(avail_end, vm_offset_t) =
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
-			- m68k_round_page(sizeof(struct msgbuf));
+			- m68k_round_page(MSGBUFSIZE);
 	RELOC(avail_next, vm_offset_t) = nextpa;
 	RELOC(avail_remaining, vm_size_t) = 0;
 	RELOC(avail_range, int) = -1;
@@ -459,8 +458,8 @@ int i;
 	}
 }
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
-	avail_remaining -= m68k_round_page(sizeof(struct msgbuf));
-	high[numranges - 1] -= m68k_round_page(sizeof(struct msgbuf));
+	avail_remaining -= m68k_round_page(MSGBUFSIZE);
+	high[numranges - 1] -= m68k_round_page(MSGBUFSIZE);
 	/* XXX -- this doesn't look correct to me. */
 	while (high[numranges - 1] < low[numranges - 1]) {
 		numranges--;
@@ -554,8 +553,8 @@ int i;
 		va += NBPG;
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
 		va += NBPG;
-		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += NBPG;
+		RELOC(msgbufaddr, caddr_t) = va;
+		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
 }
