@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 1997/12/18 09:08:04 sakamoto Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 1998/02/18 11:11:24 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,12 +55,6 @@
 #endif
 
 /*
- * Min & Max swap space allocation chunks
- */
-#define	DMMIN		32
-#define	DMMAX		4096
-
-/*
  * Size of shared memory map
  */
 #ifndef	SHMMAXPGS
@@ -95,6 +89,7 @@
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)
 #define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
 
-#define	SAFERSS		4
-
+/*
+ * MACHINE_NONCONTIG is necessary for NetBSD/powerpc.
+ */
 #define	MACHINE_NONCONTIG
