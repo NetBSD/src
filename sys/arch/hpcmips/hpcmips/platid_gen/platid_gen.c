@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.1 2000/02/06 08:47:13 takemura Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.2 2000/02/17 21:31:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -186,7 +186,7 @@ main(argc, argv)
 		break;
 	case FORM_NAME_C:
 		fprintf(fp_out, "};\n");
-		fprintf(fp_out, "platid_name_table_size = %d;\n", count);
+		fprintf(fp_out, "int platid_name_table_size = %d;\n", count);
 		break;
 	}
 	fclose(fp_out);
