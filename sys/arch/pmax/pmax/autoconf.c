@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.4.5 1999/06/11 00:53:34 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.4.6 1999/10/26 03:45:44 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.5 1999/06/11 00:53:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.6 1999/10/26 03:45:44 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,10 +68,8 @@ char	*booted_protocol;
 void	calculate_iplmask __P((void));
 int	nullintr __P((void *));
 
-extern int cold;			/* if 1, still working on cold-start */
-
 void
-configure()
+cpu_configure()
 {
 	int s;
 
@@ -82,28 +80,15 @@ configure()
 	}
 
 	(void)splhigh();
-
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
-
 	/* Reset any bus errors due to probing nonexistent devices. */
-        (*platform.bus_reset)();
-
+	(*platform.bus_reset)();
+	calculate_iplmask();
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 	
 	if (cn_tab->cn_dev == NODEV)
 		panic("No console driver.  Check kernel configuration.");
-
-	cold = 0;
-
-	printf("boot configuration: via %s, slot %d, unit %d, part %d: ",
-		booted_protocol ? booted_protocol : "UNKNOWN",
-		booted_slot, booted_unit, booted_partition);
-	printf("boot device: %s\n", booted_device->dv_xname);
-
-	calculate_iplmask();
-	printf("biomask %x netmask %x ttymask %x\n",
-	    iplmask[IPL_BIO], iplmask[IPL_NET], iplmask[IPL_TTY]);
 }
 
 void
@@ -115,6 +100,14 @@ consinit()
 void
 cpu_rootconf()
 {
+	printf("biomask %x netmask %x ttymask %x\n",
+	    iplmask[IPL_BIO], iplmask[IPL_NET], iplmask[IPL_TTY]);
+#if 0
+	printf("boot configuration: via %s, slot %d, unit %d, part %d\n ",
+		booted_protocol ? booted_protocol : "UNKNOWN",
+		booted_slot, booted_unit, booted_partition);
+#endif
+
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 

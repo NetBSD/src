@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.16 1999/09/09 07:09:33 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.17 1999/10/26 03:45:44 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.16 1999/09/09 07:09:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.17 1999/10/26 03:45:44 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -110,7 +110,6 @@ vm_map_t phys_map = NULL;
 int	systype;		/* mother board type */
 char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 int	cpuspeed = 30;		/* approx # of instructions per usec */
-int	cold = 1;		/* 1 until configure has been done well */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
@@ -133,9 +132,6 @@ void	mach_init __P((int, char *[], int, int, u_int, char *));
 
 unsigned (*clkread) __P((void)); /* high resolution timer if available */
 unsigned nullclkread __P((void));
-
-void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
-int	prom_systype __P((void));
 
 /* XXX should go XXX */
 volatile struct chiptime *mcclock_addr;
@@ -193,7 +189,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
-
+	int prom_systype __P((void));
 	extern char edata[], end[];
 
 	/* Set up bootinfo structure.  Note that we can't print messages yet! */
@@ -222,7 +218,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		ssym = (caddr_t)bi_syms->ssym;
 		esym = (caddr_t)bi_syms->esym;
 		kernend = (caddr_t)mips_round_page(esym);
-		memset(edata, 0, kernend - edata);
+		memset(edata, 0, end - edata);
 	}
 	/* XXX: Backwards compatibility with old bootblocks - this should
 	 * go soon...
@@ -234,7 +230,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;
 		kernend = (caddr_t)mips_round_page(esym);
-		memset(edata, 0, kernend - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif
 	{
@@ -450,10 +446,10 @@ mach_init(argc, argv, code, cv, bim, bip)
 }
 
 
-/*      
+/*
  * Machine-dependent startup code.
  * allocate memory for variable-sized tables, initialize cpu.
- */     
+ */
 void
 cpu_startup()
 {
@@ -516,13 +512,8 @@ cpu_startup()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-#if defined(PMAP_NEW)
-			pmap_kenter_pgs(curbuf, &pg, 1);
-#else
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
-#endif
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+				       VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -541,7 +532,7 @@ cpu_startup()
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
-	 * No need to allocate an mbuf cluster submap.	Mbuf clusters
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
 	 * are allocated via the pool allocator, and we use KSEG to
 	 * map those pages.
 	 */
@@ -595,7 +586,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
 	        if(!bibp)
-			return(ENOENT); /* ??? */
+			return (ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
 	default:
 		return (EOPNOTSUPP);
@@ -612,6 +603,7 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	extern int cold;
+	void prom_halt __P((int, char *)) __attribute__((__noreturn__));
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
