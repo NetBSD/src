@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 1997/07/23 05:36:40 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.44 1997/08/08 06:52:59 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1485,14 +1485,14 @@ END(splx)
 
 
 
-#if 0 /* NOTUSED */
+
 /*----------------------------------------------------------------------------
  *
- * MachGetCauseReg --
+ * mips_read_causereg --
  *
  *	Return the current value of the cause register.
  *
- *	MachGetCauseReg(void)
+ *	mips_read_causereg(void)
  *
  * Results:
  *	current value of Cause register.None.
@@ -1502,12 +1502,12 @@ END(splx)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MachGetCauseReg)
+LEAF(mips_read_causereg)
 	mfc0	v0, MIPS_COP_0_CAUSE_REG
 	j	ra
 	nop
-END(MachGetCauseReg)
-#endif
+END(mips_read_causereg)
+
 
 /*----------------------------------------------------------------------------
  *
