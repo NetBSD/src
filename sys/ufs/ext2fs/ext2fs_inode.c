@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.26 2001/11/06 06:59:05 simonb Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.27 2001/11/08 02:39:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ffs_inode.c	8.8 (Berkeley) 10/19/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.27 2001/11/08 02:39:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

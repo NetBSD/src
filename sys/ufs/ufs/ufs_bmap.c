@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.12 2001/11/06 07:11:30 simonb Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.13 2001/11/08 02:39:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_bmap.c	8.8 (Berkeley) 8/11/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.13 2001/11/08 02:39:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
