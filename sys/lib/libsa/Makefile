@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/06/26 19:14:53 drochner Exp $
+#	$NetBSD: Makefile,v 1.20.8.1 1997/11/12 23:51:57 thorpej Exp $
 
 LIB=	sa
 NOPIC=
@@ -11,7 +11,7 @@ SA_INCLUDE_NET?= yes
 CPPFLAGS=	-I. ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 		-DCOMPAT_UFS ${DEBUGCPPFLAGS}
 
-#CFLAGS+= -ansi -pedantic -Wall
+#COPTS+= -ansi -pedantic -Wall
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
