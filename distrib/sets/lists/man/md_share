@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.91.2.3 2000/09/08 14:13:43 ad Exp $
+# $NetBSD: md_share,v 1.91.2.4 2000/09/13 06:48:30 enami Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -110,7 +110,6 @@
 ./usr/share/man/cat4/i386/omms.0
 ./usr/share/man/cat4/i386/opms.0
 ./usr/share/man/cat4/i386/pcibios.0
-./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pnpbios.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
@@ -443,7 +442,6 @@
 ./usr/share/man/man4/i386/omms.4
 ./usr/share/man/man4/i386/opms.4
 ./usr/share/man/man4/i386/pcibios.4
-./usr/share/man/man4/i386/pcvt.4
 ./usr/share/man/man4/i386/pnpbios.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4
