@@ -1,4 +1,4 @@
-.\"	$NetBSD: iteconfig.8,v 1.9 1999/04/06 20:24:57 pk Exp $
+.\"	$NetBSD: iteconfig.8,v 1.10 2002/01/19 03:20:06 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -31,9 +31,9 @@
 .\"
 .Dd February 3, 1994
 .Dt ITECONFIG 8
-.Os 
+.Os
 .Sh NAME
-.Nm iteconfig 
+.Nm iteconfig
 .Nd modify console attributes at run time
 .Sh SYNOPSIS
 .Nm
@@ -78,7 +78,7 @@ Set the pitch of the console bell to
 which must be between 10 and 1399.
 .It Fl t
 Set the duration of the beep to
-.Ar msec 
+.Ar msec
 milliseconds which must be between 1 and 5000 (5 seconds).
 .It Fl w
 Set the width of the console display to
@@ -90,7 +90,7 @@ must be a positive integer.
 Set the height of the console display to
 .Ar height
 pixel rows.
-.Ar Height 
+.Ar Height
 must be a positive integer.
 .It Fl d
 Set the number of bitplanes the console view should use to
@@ -130,7 +130,7 @@ and
 .Ar BB
 are taken to be eight-bit values specifying the
 intensities of the red, green and blue components, respectively,
-of the color to be used.  For example, 
+of the color to be used.  For example,
 .Li 0xff0000
 is bright red,
 .Li 0xffffff
