@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.54 2001/08/24 06:42:46 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.54.2.1 2001/10/01 12:48:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -203,7 +203,6 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
-	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_specop_opv_desc =
@@ -255,6 +254,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
@@ -774,7 +774,7 @@ lfs_getattr(void *v)
 	vap->va_uid = ip->i_ffs_uid;
 	vap->va_gid = ip->i_ffs_gid;
 	vap->va_rdev = (dev_t)ip->i_ffs_rdev;
-	vap->va_size = ip->i_ffs_size;
+	vap->va_size = vp->v_size;
 	vap->va_atime.tv_sec = ip->i_ffs_atime;
 	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
 	vap->va_mtime.tv_sec = ip->i_ffs_mtime;

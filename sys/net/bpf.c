@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61.4.2 2001/09/26 15:28:25 fvdl Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.4.3 2001/10/01 12:47:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -168,6 +168,12 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 		/* XXX 4(FORMAC)+6(dst)+6(src) */
 		hlen = 16;
 		align = 0;
+		break;
+
+	case DLT_ECONET:
+		sockp->sa_family = AF_UNSPEC;
+		hlen = 6;
+		align = 2;
 		break;
 
 	case DLT_NULL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.20.2.4 2001/09/27 14:52:26 fvdl Exp $	*/
+/*	$NetBSD: specdev.h,v 1.20.2.5 2001/10/01 12:47:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -104,4 +104,3 @@ int	spec_advlock	(void *);
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
-int	spec_size	(void *);

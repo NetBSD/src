@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.34 2001/05/30 11:57:19 mrg Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.34.6.1 2001/10/01 12:48:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -94,6 +94,7 @@ struct vfsops mfs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	mfs_init,
+	mfs_reinit,
 	mfs_done,
 	ffs_sysctl,
 	NULL,
@@ -112,6 +113,12 @@ mfs_init()
 	 * only once.
 	 */
 	ffs_init();
+}
+
+void
+mfs_reinit()
+{
+	ffs_reinit();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.85.2.2 2001/09/26 15:28:27 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.85.2.3 2001/10/01 12:48:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -103,11 +103,18 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+	ffs_reinit,
 	ffs_done,
 	ffs_sysctl,
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_vnodeopv_descs,
+};
+
+struct genfs_ops ffs_genfsops = {
+	ffs_gop_size,
+	ffs_gop_alloc,
+	genfs_gop_write,
 };
 
 struct pool ffs_inode_pool;
@@ -972,7 +979,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -1056,6 +1063,7 @@ ffs_vget(mp, ino, vpp)
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
+
 	do {
 		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
 			ungetnewvnode(vp);
@@ -1067,8 +1075,9 @@ ffs_vget(mp, ino, vpp)
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
 	 * XXX create another pool for MFS inodes?
 	 */
+
 	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct inode));
+	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;
@@ -1083,12 +1092,14 @@ ffs_vget(mp, ino, vpp)
 			ip->i_dquot[i] = NODQUOT;
 	}
 #endif
+
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
+
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
@@ -1096,12 +1107,14 @@ ffs_vget(mp, ino, vpp)
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
 		      (int)fs->fs_bsize, NOCRED, &bp);
 	if (error) {
+
 		/*
 		 * The inode does not contain anything useful, so it would
 		 * be misleading to leave it on its hash chain. With mode
 		 * still zero, it will be unlinked and returned to the free
 		 * list by vput().
 		 */
+
 		vput(vp);
 		brelse(bp);
 		*vpp = NULL;
@@ -1124,27 +1137,27 @@ ffs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
-	if (error) {
-		vput(vp);
-		*vpp = NULL;
-		return (error);
-	}
+
+	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
+
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &ffs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
+
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
+
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
 		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_ffs_size);
-
 	*vpp = vp;
 	return (0);
 }
@@ -1210,6 +1223,13 @@ ffs_init()
 }
 
 void
+ffs_reinit()
+{
+	softdep_reinitialize();
+	ufs_reinit();
+}
+
+void
 ffs_done()
 {
 	if (--ffs_initcount > 0)
@@ -1230,7 +1250,7 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern int doclusterread, doclusterwrite, doreallocblks, doasyncfree;
+	extern int doasyncfree;
 	extern int ffs_log_changeopt;
 
 	/* all sysctl names at this level are terminal */
@@ -1238,15 +1258,6 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-	case FFS_CLUSTERREAD:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doclusterread));
-	case FFS_CLUSTERWRITE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doclusterwrite));
-	case FFS_REALLOCBLKS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doreallocblks));
 	case FFS_ASYNCFREE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
 	case FFS_LOG_CHANGEOPT:

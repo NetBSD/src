@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.32 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: denode.h,v 1.32.4.1 2001/10/01 12:47:28 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,8 @@
  *
  * October 1992
  */
+
+#include <miscfs/genfs/genfs_node.h>
 
 /*
  * This is the pc filesystem specific portion of the vnode structure.
@@ -134,8 +136,8 @@ struct fatcache {
  * contained within a vnode.
  */
 struct denode {
-	struct denode *de_next;	/* Hash chain forward */
-	struct denode **de_prev; /* Hash chain back */
+	struct genfs_node de_gnode;
+	LIST_ENTRY(denode) de_hash;
 	struct vnode *de_vnode;	/* addr of vnode we are part of */
 	struct vnode *de_devvp;	/* vnode of blk dev we live on */
 	u_long de_flag;		/* flag bits */
@@ -304,4 +306,5 @@ void reinsert __P((struct denode *));
 int removede __P((struct denode *, struct denode *));
 int uniqdosname __P((struct denode *, struct componentname *, u_char *));
 int findwin95 __P((struct denode *));
+int msdosfs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.15 2000/08/01 04:58:55 thorpej Exp $	*/
+/*	$NetBSD: callout.h,v 1.15.6.1 2001/10/01 12:48:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,10 @@
 
 #include <sys/queue.h>
 
-TAILQ_HEAD(callout_queue, callout);
+struct callout_queue {
+	uint64_t	cq_hint;		/* earliest callout in bkt */
+	TAILQ_HEAD(, callout) cq_q;		/* callouts in this bucket */
+};
 
 struct callout {
 	TAILQ_ENTRY(callout) c_link;

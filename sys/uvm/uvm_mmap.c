@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.55.2.1 2001/09/07 04:45:46 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.55.2.2 2001/10/01 12:48:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -68,7 +68,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
-#include <uvm/uvm_vnode.h>
 
 
 /*
@@ -131,7 +130,7 @@ sys_mincore(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
-	struct vm_page *m;
+	struct vm_page *pg;
 	char *vec, pgi;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
@@ -196,8 +195,7 @@ sys_mincore(p, v, retval)
 
 		if (UVM_ET_ISOBJ(entry)) {
 			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
-			if (entry->object.uvm_obj->pgops->pgo_releasepg
-			    == NULL) {
+			if (!UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
@@ -232,9 +230,9 @@ sys_mincore(p, v, retval)
 			}
 			if (uobj != NULL && pgi == 0) {
 				/* Check the bottom layer. */
-				m = uvm_pagelookup(uobj,
+				pg = uvm_pagelookup(uobj,
 				    entry->offset + (start - entry->start));
-				if (m != NULL) {
+				if (pg != NULL) {
 
 					/*
 					 * Object has the page for this entry
@@ -1001,9 +999,8 @@ sys_munlockall(p, v, retval)
 /*
  * uvm_mmap: internal version of mmap
  *
- * - used by sys_mmap, exec, and sysv shm
- * - handle is a vnode pointer or NULL for MAP_ANON (XXX: not true,
- *	sysv shm uses "named anonymous memory")
+ * - used by sys_mmap and various framebuffers
+ * - handle is a vnode pointer or NULL for MAP_ANON
  * - caller must page-align the file offset
  */
 
@@ -1041,12 +1038,12 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 */
 
 	if ((flags & MAP_FIXED) == 0) {
-		*addr = round_page(*addr);	/* round */
+		*addr = round_page(*addr);
 	} else {
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
-		(void) uvm_unmap(map, *addr, *addr + size);	/* zap! */
+		(void) uvm_unmap(map, *addr, *addr + size);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.56 2001/04/13 23:30:10 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.56.4.1 2001/10/01 12:46:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -353,8 +353,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 {
 	struct proc	*p;
 	struct mbuf	**mp, *m;
-	long		space, len, resid;
-	int		clen, error, s, dontroute, mlen, atomic;
+	long		space, len, resid, clen, mlen;
+	int		error, s, dontroute, atomic;
 
 	p = curproc;		/* XXX */
 	clen = 0;
@@ -447,19 +447,19 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 						goto nopages;
 					mlen = MCLBYTES;
 #ifdef	MAPPED_MBUFS
-					len = min(MCLBYTES, resid);
+					len = lmin(MCLBYTES, resid);
 #else
 					if (atomic && top == 0) {
-						len = min(MCLBYTES - max_hdr,
+						len = lmin(MCLBYTES - max_hdr,
 						    resid);
 						m->m_data += max_hdr;
 					} else
-						len = min(MCLBYTES, resid);
+						len = lmin(MCLBYTES, resid);
 #endif
 					space -= len;
 				} else {
 nopages:
-					len = min(min(mlen, resid), space);
+					len = lmin(lmin(mlen, resid), space);
 					space -= len;
 					/*
 					 * For datagram protocols, leave room
@@ -736,6 +736,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
+			if (error)
+				goto release;
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {

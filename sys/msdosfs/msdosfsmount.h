@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.21 2000/03/30 02:29:46 simonb Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.21.10.1 2001/10/01 12:47:31 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -208,6 +208,7 @@ struct msdosfsmount {
  * Prototypes for MSDOSFS virtual filesystem operations
  */
 void msdosfs_init __P((void));
+void msdosfs_reinit __P((void));
 void msdosfs_done __P((void));
 
 #endif /* _KERNEL */

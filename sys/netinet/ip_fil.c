@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.68.4.1 2001/09/07 04:45:43 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.68.4.2 2001/10/01 12:47:41 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.68.4.1 2001/09/07 04:45:43 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.68.4.2 2001/10/01 12:47:41 fvdl Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 darrenr Exp";
@@ -1502,7 +1502,7 @@ frdest_t *fdp;
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
 # if defined(__NetBSD__) && defined(M_CSUM_IPv4)
-		if (ifp->if_csum_flags & M_CSUM_IPv4)
+		if (ifp->if_csum_flags_tx & M_CSUM_IPv4)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 		else if (ip->ip_sum == 0)
 			ip->ip_sum = in_cksum(m, hlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.38.4.1 2001/09/18 19:13:56 fvdl Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.38.4.2 2001/10/01 12:47:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,7 +303,7 @@ portal_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-		struct vnode *a_vpp;
+		struct vnode **a_vpp;
 	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;

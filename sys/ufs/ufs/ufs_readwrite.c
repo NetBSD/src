@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.32 2001/07/13 20:30:26 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.32.2.1 2001/10/01 12:48:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,15 +72,14 @@ READ(void *v)
 	struct inode *ip;
 	struct uio *uio;
 	FS *fs;
-#ifndef LFS_READWRITE
 	void *win;
 	vsize_t bytelen;
-#endif
 	struct buf *bp;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
+	boolean_t usepc = FALSE;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -109,14 +108,16 @@ READ(void *v)
 	}
 
 #ifndef LFS_READWRITE
-	if (vp->v_type == VREG) {
+	usepc = vp->v_type == VREG;
+#endif
+	if (usepc) {
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_ffs_size - uio->uio_offset,
 			    uio->uio_resid);
 			if (bytelen == 0)
 				break;
 
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -125,7 +126,6 @@ READ(void *v)
 		}
 		goto out;
 	}
-#endif
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		bytesinfile = ip->i_ffs_size - uio->uio_offset;
@@ -138,22 +138,15 @@ READ(void *v)
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-#ifdef LFS_READWRITE
-		(void)lfs_check(vp, lbn, 0);
-		error = cluster_read(vp, ip->i_ffs_size, lbn, size, NOCRED, &bp);
-#else
 		if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
-		else if (lbn - 1 == vp->v_lastr) {
+		else {
 			int nextsize = BLKSIZE(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
-		} else
-			error = bread(vp, lbn, size, NOCRED, &bp);
-#endif
+		}
 		if (error)
 			break;
-		vp->v_lastr = lbn;
 
 		/*
 		 * We should only get non-zero b_resid when an I/O error
@@ -200,24 +193,28 @@ WRITE(void *v)
 	struct vnode *vp;
 	struct uio *uio;
 	struct inode *ip;
+	struct genfs_node *gp;
 	FS *fs;
 	struct buf *bp;
 	struct proc *p;
+	struct ucred *cred;
 	ufs_daddr_t lbn;
-	off_t osize;
+	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
-#ifndef LFS_READWRITE
+	int bsize, aflag;
+	int ubc_alloc_flags;
 	void *win;
 	vsize_t bytelen;
-	off_t oldoff;
-	boolean_t rv;
-#endif
+	boolean_t usepc = FALSE;
 
+	cred = ap->a_cred;
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	gp = VTOG(vp);
 
+	KASSERT(vp->v_size == ip->i_ffs_size);
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("%s: mode", WRITE_S);
@@ -265,78 +262,115 @@ WRITE(void *v)
 
 	resid = uio->uio_resid;
 	osize = ip->i_ffs_size;
+	bsize = fs->fs_bsize;
 	error = 0;
 
 #ifndef LFS_READWRITE
-	if (vp->v_type != VREG) {
+	usepc = vp->v_type == VREG;
+#endif
+	if (!usepc) {
 		goto bcache;
 	}
 
+	preallocoff = round_page(blkroundup(fs, MAX(osize, uio->uio_offset)));
+	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
+	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
+	endallocoff = nsize - blkoff(fs, nsize);
+
+	/*
+	 * if we're increasing the file size, deal with expanding
+	 * the fragment if there is one.
+	 */
+
+	if (nsize > osize && lblkno(fs, osize) < NDADDR &&
+	    lblkno(fs, osize) != lblkno(fs, nsize) &&
+	    blkroundup(fs, osize) != osize) {
+		error = ufs_balloc_range(vp, osize, blkroundup(fs, osize) -
+		    osize, cred, aflag);
+		if (error) {
+			goto out;
+		}
+	}
+
+	ubc_alloc_flags = UBC_WRITE;
+	origoff = uio->uio_offset;
 	while (uio->uio_resid > 0) {
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
 		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 
 		/*
-		 * XXXUBC if file is mapped and this is the last block,
-		 * process one page at a time.
+		 * if we're filling in a hole, allocate the blocks now and
+		 * initialize the pages first.  if we're extending the file,
+		 * we can safely allocate blocks without initializing pages
+		 * since the new blocks will be inaccessible until the write
+		 * is complete.
 		 */
 
-		error = ufs_balloc_range(vp, uio->uio_offset, bytelen,
-		    ap->a_cred, ioflag & IO_SYNC ? B_SYNC : 0);
-		if (error) {
-			return error;
+		if (uio->uio_offset < preallocoff ||
+		    uio->uio_offset >= endallocoff) {
+			error = ufs_balloc_range(vp, uio->uio_offset, bytelen,
+			    cred, aflag);
+			if (error) {
+				break;
+			}
+			ubc_alloc_flags &= ~UBC_FAULTBUSY;
+		} else {
+			lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
+			    aflag, cred);
+			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+			if (error) {
+				break;
+			}
+			ubc_alloc_flags |= UBC_FAULTBUSY;
 		}
 
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
-				UBC_WRITE);
+		/*
+		 * copy the data.
+		 */
+
+		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
+		    ubc_alloc_flags);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
+		if (error) {
+			break;
+		}
+
+		/*
+		 * update UVM's notion of the size now that we've
+		 * copied the data into the vnode's pages.
+		 */
+
+		if (vp->v_size < uio->uio_offset) {
+			uvm_vnp_setsize(vp, uio->uio_offset);
+		}
 
 		/*
 		 * flush what we just wrote if necessary.
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (ioflag & IO_SYNC) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-#if 1
-			/*
-			 * XXX 
-			 * flush whole blocks in case there are deps.
-			 * otherwise we can dirty and flush part of
-			 * a block multiple times and the softdep code
-			 * will get confused.  fixing this the right way
-			 * is complicated so we'll work around it for now.
-			 */
-
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj,
-			    oldoff & ~(fs->fs_bsize - 1),
-			    (oldoff + bytelen + fs->fs_bsize - 1) &
-			    ~(fs->fs_bsize - 1),
-			    PGO_CLEANIT|PGO_SYNCIO);
-#else
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, oldoff, oldoff + bytelen,
-			    PGO_CLEANIT|PGO_SYNCIO);
-#endif
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
-		} else if (oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
-			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+		if (oldoff >> 16 != uio->uio_offset >> 16) {
+			simple_lock(&vp->v_uobj.vmobjlock);
+			error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+			    (oldoff >> 16) << 16, (uio->uio_offset >> 16) << 16,
+			    PGO_CLEANIT);
+			if (error) {
+				break;
+			}
 		}
-		if (error) {
-			break;
-		}
+	}
+	if (error == 0 && ioflag & IO_SYNC) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+		    origoff & ~(bsize - 1), blkroundup(fs, uio->uio_offset),
+		    PGO_CLEANIT|PGO_SYNCIO);
 	}
 	goto out;
 
  bcache:
-#endif
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	while (uio->uio_resid > 0) {
 		lbn = lblkno(fs, uio->uio_offset);
@@ -382,10 +416,7 @@ WRITE(void *v)
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize)
-			if (doclusterwrite)
-				cluster_write(bp, ip->i_ffs_size);
-			else
-				bawrite(bp);
+			bawrite(bp);
 		else
 			bdwrite(bp);
 #endif
@@ -397,20 +428,17 @@ WRITE(void *v)
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
-#ifndef LFS_READWRITE
- out:
-#endif
+out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
 	if (error) {
-		if (ioflag & IO_UNIT) {
-			(void)VOP_TRUNCATE(vp, osize,
-			    ioflag & IO_SYNC, ap->a_cred, uio->uio_procp);
-			uio->uio_offset -= resid - uio->uio_resid;
-			uio->uio_resid = resid;
-		}
+		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		    uio->uio_procp);
+		uio->uio_offset -= resid - uio->uio_resid;
+		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+	KASSERT(vp->v_size == ip->i_ffs_size);
 	return (error);
 }

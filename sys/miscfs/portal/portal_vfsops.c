@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.26 2001/05/30 11:57:17 mrg Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.26.4.1 2001/10/01 12:47:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -367,6 +367,7 @@ struct vfsops portal_vfsops = {
 	portal_fhtovp,
 	portal_vptofh,
 	portal_init,
+	NULL,
 	portal_done,
 	portal_sysctl,
 	NULL,				/* vfs_mountroot */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.73 2001/06/14 06:37:34 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.73.4.1 2001/10/01 12:47:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -284,7 +284,8 @@ struct ifnet {				/* and the entries */
 	 * These are pre-computed based on an interfaces enabled
 	 * capabilities, for speed elsewhere.
 	 */
-	int	if_csum_flags;		/* M_CSUM_* flags */
+	int	if_csum_flags_tx;	/* M_CSUM_* flags for Tx */
+	int	if_csum_flags_rx;	/* M_CSUM_* flags for Rx */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -342,6 +343,8 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_UDPv4	0x0004	/* can do IPv4/UDP checksums */
 #define	IFCAP_CSUM_TCPv6	0x0008	/* can do IPv6/TCP checksums */
 #define	IFCAP_CSUM_UDPv6	0x0010	/* can do IPv6/UDP checksums */
+#define	IFCAP_CSUM_TCPv4_Rx	0x0020	/* can do IPv4/TCP (Rx only) */
+#define	IFCAP_CSUM_UDPv4_Rx	0x0040	/* can do IPv4/UDP (Rx only) */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.4.2 2001/09/18 19:14:00 fvdl Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.4.3 2001/10/01 12:48:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -198,6 +198,13 @@ extern struct cdevsw cdevsw[];
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), 0 }
 
+/*  open, close, mmap */
+#define cdev__ocm_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
+        dev_noimpl(write,enodev), dev_noimpl(ioctl,enodev), \
+        dev_noimpl(stop,enodev), 0, dev_noimpl(poll,enodev), \
+        dev_init(c,n,mmap), 0 }
+
 /*  open, close, ioctl, poll */
 #define cdev__ocip_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
@@ -262,6 +269,13 @@ extern struct cdevsw cdevsw[];
 	dev_noimpl(read,nullop), dev_noimpl(write,nullop), \
 	dev_init(c,n,ioctl), dev_noimpl(stop,enodev), 0, \
 	dev_init(c,n,poll), dev_init(c,n,mmap), 0 }
+
+/*  open, close, ioctl, mmap */
+#define	cdev__ocim_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
+	dev_init(c,n,ioctl), dev_noimpl(stop,enodev), 0, \
+	dev_noimpl(poll,enodev), dev_init(c,n,mmap), 0 }
 
 /*  open, close, read, write, ioctl, stop, poll */
 #define	cdev__ocrwisp_init(c,n) { \
@@ -369,6 +383,7 @@ extern struct cdevsw cdevsw[];
 #define	cdev_sysmon_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_openfirm_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_openprom_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_clockctl_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, read, ioctl, poll */
 #define	cdev_usb_init(c,n)	cdev__ocrip_init(c,n)
@@ -452,6 +467,9 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, read, ioctl, poll */
 #define cdev_i4b_init(c,n)	cdev__ocrip_init(c,n)
+
+/* open, close, ioctl, mmap */
+#define	cdev_pci_init(c,n)	cdev__ocim_init(c,n)
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];

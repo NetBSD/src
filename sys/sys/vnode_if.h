@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.36.4.2 2001/09/26 15:28:26 fvdl Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.36.4.3 2001/10/01 12:48:17 fvdl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -1295,42 +1295,6 @@ static __inline int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
 }
 #endif
 
-struct vop_ballocn_args {
-	const struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_offset;
-	off_t a_length;
-	struct ucred *a_cred;
-	int a_flags;
-};
-extern const struct vnodeop_desc vop_ballocn_desc;
-#ifndef VNODE_OP_NOINLINE
-static __inline
-#endif
-int VOP_BALLOCN(struct vnode *, off_t, off_t, struct ucred *, int)
-#ifndef VNODE_OP_NOINLINE
-__attribute__((__unused__))
-#endif
-;
-#ifndef VNODE_OP_NOINLINE
-static __inline int VOP_BALLOCN(vp, offset, length, cred, flags)
-	struct vnode *vp;
-	off_t offset;
-	off_t length;
-	struct ucred *cred;
-	int flags;
-{
-	struct vop_ballocn_args a;
-	a.a_desc = VDESC(vop_ballocn);
-	a.a_vp = vp;
-	a.a_offset = offset;
-	a.a_length = length;
-	a.a_cred = cred;
-	a.a_flags = flags;
-	return (VCALL(vp, VOFFSET(vop_ballocn), &a));
-}
-#endif
-
 struct vop_reallocblks_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -1569,66 +1533,33 @@ static __inline int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, a
 struct vop_putpages_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	struct vm_page **a_m;
-	int a_count;
+	voff_t a_offlo;
+	voff_t a_offhi;
 	int a_flags;
-	int *a_rtvals;
 };
 extern const struct vnodeop_desc vop_putpages_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_PUTPAGES(struct vnode *, struct vm_page **, int, int, int *)
+int VOP_PUTPAGES(struct vnode *, voff_t, voff_t, int)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_PUTPAGES(vp, m, count, flags, rtvals)
+static __inline int VOP_PUTPAGES(vp, offlo, offhi, flags)
 	struct vnode *vp;
-	struct vm_page **m;
-	int count;
+	voff_t offlo;
+	voff_t offhi;
 	int flags;
-	int *rtvals;
 {
 	struct vop_putpages_args a;
 	a.a_desc = VDESC(vop_putpages);
 	a.a_vp = vp;
-	a.a_m = m;
-	a.a_count = count;
+	a.a_offlo = offlo;
+	a.a_offhi = offhi;
 	a.a_flags = flags;
-	a.a_rtvals = rtvals;
 	return (VCALL(vp, VOFFSET(vop_putpages), &a));
-}
-#endif
-
-struct vop_size_args {
-	const struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_size;
-	off_t *a_eobp;
-};
-extern const struct vnodeop_desc vop_size_desc;
-#ifndef VNODE_OP_NOINLINE
-static __inline
-#endif
-int VOP_SIZE(struct vnode *, off_t, off_t *)
-#ifndef VNODE_OP_NOINLINE
-__attribute__((__unused__))
-#endif
-;
-#ifndef VNODE_OP_NOINLINE
-static __inline int VOP_SIZE(vp, size, eobp)
-	struct vnode *vp;
-	off_t size;
-	off_t *eobp;
-{
-	struct vop_size_args a;
-	a.a_desc = VDESC(vop_size);
-	a.a_vp = vp;
-	a.a_size = size;
-	a.a_eobp = eobp;
-	return (VCALL(vp, VOFFSET(vop_size), &a));
 }
 #endif
 
@@ -1683,7 +1614,7 @@ static __inline int VOP_BWRITE(bp)
 }
 #endif
 
-#define VNODE_OPS_COUNT	51
+#define VNODE_OPS_COUNT	49
 
 /* End of special cases. */
 

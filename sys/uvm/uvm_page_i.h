@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.19 2001/06/27 23:57:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.19.4.1 2001/10/01 12:48:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,11 +127,8 @@ uvm_pagelookup(obj, off)
 {
 	struct vm_page *pg;
 	struct pglist *buck;
-	int s;
 
 	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
-
-	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
@@ -139,7 +136,9 @@ uvm_pagelookup(obj, off)
 		}
 	}
 	simple_unlock(&uvm.hashlock);
-	splx(s);
+	KASSERT(pg == NULL || obj->uo_npages != 0);
+	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
+		(pg->flags & PG_BUSY) != 0);
 	return(pg);
 }
 
@@ -154,15 +153,7 @@ uvm_pagewire(pg)
 	struct vm_page *pg;
 {
 	if (pg->wire_count == 0) {
-		if (pg->pqflags & PQ_ACTIVE) {
-			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-			pg->pqflags &= ~PQ_ACTIVE;
-			uvmexp.active--;
-		} else if (pg->pqflags & PQ_INACTIVE) {
-			TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
-			pg->pqflags &= ~PQ_INACTIVE;
-			uvmexp.inactive--;
-		}
+		uvm_pagedequeue(pg);
 		uvmexp.wired++;
 	}
 	pg->wire_count++;
@@ -211,16 +202,6 @@ uvm_pagedeactivate(pg)
 		TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		uvmexp.inactive++;
-
-		/*
-		 * update the "clean" bit.  this isn't 100%
-		 * accurate, and doesn't have to be.  we'll
-		 * re-sync it after we zap all mappings when
-		 * scanning the inactive list.
-		 */
-		if ((pg->flags & PG_CLEAN) != 0 &&
-		    pmap_is_modified(pg))
-			pg->flags &= ~PG_CLEAN;
 	}
 }
 
@@ -234,26 +215,30 @@ PAGE_INLINE void
 uvm_pageactivate(pg)
 	struct vm_page *pg;
 {
-	if (pg->pqflags & PQ_INACTIVE) {
+	uvm_pagedequeue(pg);
+	if (pg->wire_count == 0) {
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+		pg->pqflags |= PQ_ACTIVE;
+		uvmexp.active++;
+	}
+}
+
+/*
+ * uvm_pagedequeue: remove a page from any paging queue
+ */
+
+PAGE_INLINE void
+uvm_pagedequeue(pg)
+	struct vm_page *pg;
+{
+	if (pg->pqflags & PQ_ACTIVE) {
+		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		pg->pqflags &= ~PQ_ACTIVE;
+		uvmexp.active--;
+	} else if (pg->pqflags & PQ_INACTIVE) {
 		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		uvmexp.inactive--;
-	}
-	if (pg->wire_count == 0) {
-
-		/*
-		 * if page is already active, remove it from list so we
-		 * can put it at tail.  if it wasn't active, then mark
-		 * it active and bump active count
-		 */
-		if (pg->pqflags & PQ_ACTIVE)
-			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		else {
-			pg->pqflags |= PQ_ACTIVE;
-			uvmexp.active++;
-		}
-
-		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
 	}
 }
 
@@ -268,7 +253,6 @@ PAGE_INLINE void
 uvm_pagezero(pg)
 	struct vm_page *pg;
 {
-
 	pg->flags &= ~PG_CLEAN;
 	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.25.2.1 2001/10/01 12:48:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -91,6 +91,7 @@ ffs_balloc(v)
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
 	struct buf **bpp = ap->a_bpp;
+	off_t off;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -266,7 +267,7 @@ ffs_balloc(v)
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
 		    &newb);
 		if (error)
-			return (error);
+			goto fail;
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
@@ -402,7 +403,34 @@ ffs_balloc(v)
 		*bpp = nbp;
 	}
 	return (0);
+
 fail:
+
+	/*
+	 * Restore the UVM state to what the rest of the FFS code is
+	 * expecting.  Unbusy any pages that we allocated and left busy up in
+	 * ufs_balloc_range().  the following VOP_FSYNC() will try to busy
+	 * those pages again, which would deadlock if they are still busy
+	 * from before.  After this we're back to a state where we can undo
+	 * any partial allocation.
+	 */
+
+	simple_lock(&vp->v_uobj.vmobjlock);
+	for (off = ap->a_startoffset; off < ap->a_startoffset + fs->fs_bsize;
+	     off += PAGE_SIZE) {
+		struct vm_page *pg;
+
+		pg = uvm_pagelookup(&vp->v_uobj, off);
+		if (pg == NULL) {
+			break;
+		}
+		uvm_pageactivate(pg);
+		KASSERT((pg->flags & PG_FAKE) == 0);
+		pg->flags &= ~(PG_BUSY);
+		UVM_PAGE_OWN(pg, NULL);
+	}
+	simple_unlock(&vp->v_uobj.vmobjlock);
+
 	/*
 	 * If we have failed part way through block allocation, we
 	 * have to deallocate any indirect blocks that we have allocated.
@@ -414,6 +442,7 @@ fail:
 	 * occurence. The error return from fsync is ignored as we already
 	 * have an error to return to the user.
 	 */
+
 	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc);
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
@@ -462,39 +491,26 @@ fail:
 
 
 int
-ffs_ballocn(v)
-	void *v;
+ffs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
 {
-	struct vop_ballocn_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		off_t a_length;
-		struct ucred *a_cred;
-		int a_flags;
-	} */ *ap = v;
-
-	off_t off, len;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	int error, delta, bshift, bsize;
+	UVMHIST_FUNC("ffs_gop_alloc"); UVMHIST_CALLED(ubchist);
 
 	error = 0;
 	bshift = fs->fs_bshift;
 	bsize = 1 << bshift;
-
-	off = ap->a_offset;
-	len = ap->a_length;
 
 	delta = off & (bsize - 1);
 	off -= delta;
 	len += delta;
 
 	while (len > 0) {
-		bsize = min(bsize, len);
+		bsize = MIN(bsize, len);
 
-		error = VOP_BALLOC(vp, off, bsize, ap->a_cred, ap->a_flags,
-				   NULL);
+		error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL);
 		if (error) {
 			goto out;
 		}
@@ -505,10 +521,9 @@ ffs_ballocn(v)
 		 */
 
 		if (ip->i_ffs_size < off + bsize) {
+			UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
+			    vp, ip->i_ffs_size, off + bsize, 0);
 			ip->i_ffs_size = off + bsize;
-			if (vp->v_uvm.u_size < ip->i_ffs_size) {
-				uvm_vnp_setsize(vp, ip->i_ffs_size);
-			}
 		}
 
 		off += bsize;

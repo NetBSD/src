@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2001/02/07 13:35:39 mrg Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.8.1 2001/10/01 12:47:12 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ int exec_sunos32_aout_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_sunos32_aout =
 	{ SUNOS32_AOUT_HDR_SIZE, exec_sunos32_aout_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY,
-	  0, netbsd32_copyargs, netbsd32_setregs }; /* SunOS a.out, 64-bit kernel */
+	  0, netbsd32_copyargs }; /* SunOS a.out, 64-bit kernel */
 
 /*
  * declare the exec

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.40 2001/05/30 11:57:17 mrg Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.40.4.1 2001/10/01 12:47:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -386,6 +386,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	NULL,
 	kernfs_done,
 	kernfs_sysctl,
 	NULL,				/* vfs_mountroot */

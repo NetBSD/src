@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.37 2001/08/06 10:25:01 itojun Exp $	*/
-/*	$KAME: ipsec.c,v 1.124 2001/08/05 07:03:50 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.37.2.1 2001/10/01 12:47:51 fvdl Exp $	*/
+/*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -320,7 +320,7 @@ ipsec_invalpcbcacheall()
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
@@ -512,7 +512,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 struct secpolicy *
 ipsec4_getpolicybyaddr(m, dir, flag, error)
@@ -572,7 +572,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  */
 struct secpolicy *
@@ -742,7 +742,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 #ifndef IP_FORWARDING
 #define IP_FORWARDING 1
@@ -2648,6 +2648,8 @@ ipsec4_output(state, sp, flags)
 		/* make SA index for search proper SA */
 		ip = mtod(state->m, struct ip *);
 		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		saidx.mode = isr->saidx.mode;
+		saidx.reqid = isr->saidx.reqid;
 		sin = (struct sockaddr_in *)&saidx.src;
 		if (sin->sin_len == 0) {
 			sin->sin_len = sizeof(*sin);
@@ -2869,6 +2871,8 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 		/* make SA index for search proper SA */
 		ip6 = mtod(state->m, struct ip6_hdr *);
 		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		saidx.mode = isr->saidx.mode;
+		saidx.reqid = isr->saidx.reqid;
 		sin6 = (struct sockaddr_in6 *)&saidx.src;
 		if (sin6->sin6_len == 0) {
 			sin6->sin6_len = sizeof(*sin6);
@@ -3037,8 +3041,47 @@ ipsec6_output_tunnel(state, sp, flags)
 	}
 
 	for (/* already initialized */; isr; isr = isr->next) {
-		/* When tunnel mode, SA peers must be specified. */
-		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL) {
+			/* When tunnel mode, SA peers must be specified. */
+			bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		} else {
+			/* make SA index to look for a proper SA */
+			struct sockaddr_in6 *sin6;
+
+			bzero(&saidx, sizeof(saidx));
+			saidx.proto = isr->saidx.proto;
+			saidx.mode = isr->saidx.mode;
+			saidx.reqid = isr->saidx.reqid;
+
+			ip6 = mtod(state->m, struct ip6_hdr *);
+			sin6 = (struct sockaddr_in6 *)&saidx.src;
+			if (sin6->sin6_len == 0) {
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = AF_INET6;
+				sin6->sin6_port = IPSEC_PORT_ANY;
+				bcopy(&ip6->ip6_src, &sin6->sin6_addr,
+				    sizeof(ip6->ip6_src));
+				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
+					/* fix scope id for comparing SPD */
+					sin6->sin6_addr.s6_addr16[1] = 0;
+					sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
+				}
+			}
+			sin6 = (struct sockaddr_in6 *)&saidx.dst;
+			if (sin6->sin6_len == 0) {
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = AF_INET6;
+				sin6->sin6_port = IPSEC_PORT_ANY;
+				bcopy(&ip6->ip6_dst, &sin6->sin6_addr,
+				    sizeof(ip6->ip6_dst));
+				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
+					/* fix scope id for comparing SPD */
+					sin6->sin6_addr.s6_addr16[1] = 0;
+					sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
+				}
+			}
+		}
+
 		if (key_checkrequest(isr, &saidx) == ENOENT) {
 			/*
 			 * IPsec processing is required, but no SA found.
@@ -3367,8 +3410,8 @@ ipsec_copypkt(m)
 	for (n = m, mpp = &m; n; n = n->m_next) {
 		if (n->m_flags & M_EXT) {
 			/*
-			 * Make a copy only if there are more than one references
-			 * to the cluster.
+			 * Make a copy only if there are more than one
+			 * references to the cluster.
 			 * XXX: is this approach effective?
 			 */
 			if (n->m_ext.ext_free || MCLISREFERENCED(n)) {
