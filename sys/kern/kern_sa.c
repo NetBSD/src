@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.6 2003/02/04 15:54:26 jdolecek Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.7 2003/02/05 15:38:14 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.6 2003/02/04 15:54:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.7 2003/02/05 15:38:14 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -929,9 +929,9 @@ sa_upcall_userret(struct lwp *l)
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 			printf("sa_upcall_userret(%d.%d): couldn't copyout"
-			    " sadata_upcall arg %p size %d to %p \n",
+			    " sadata_upcall arg %p size %ld to %p \n",
 			    p->p_pid, l->l_lid,
-			    sau->sau_arg, sau->sau_argsize, ap);
+			    sau->sau_arg, (long) sau->sau_argsize, ap);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
