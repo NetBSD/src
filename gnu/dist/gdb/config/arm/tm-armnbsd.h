@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define IEEE_FLOAT
 
-#define ADDR_BITS_REMOVE(val) ((val) &  0x03fffffc)
+#define ADDR_BITS_REMOVE(val) (val)
 
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
@@ -114,6 +114,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*
  * NetBSD/arm32 does not use r10 as a stack limit as the
  * stack is extendable by faulting in new stack pages.
+ * Instead it is used for GOT referencing with PIC
  */
 
 #define ADDITIONAL_REGISTER_NAMES \
@@ -346,7 +347,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
     register CORE_ADDR sp = read_register (SP_REGNUM);		\
     register int regnum;					\
     /* opcode for ldmdb fp,{v1-v6,fp,ip,lr,pc}^ */		\
-    sp = push_word(sp, 0xe92dbf0); /* dummy return_data_save ins */ \
+    sp = push_word(sp, 0xe92bdbf0); /* dummy return_data_save ins */ \
     /* push a pointer to the dummy instruction minus 12 */	\
     sp = push_word(sp, read_register (SP_REGNUM) - 16);		\
     sp = push_word(sp, read_register (PS_REGNUM));		\
@@ -363,11 +364,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 {									\
     register CORE_ADDR fp = read_register (FP_REGNUM);			\
     register unsigned long return_data_save =				\
-	read_memory_integer ( (read_memory_integer (fp, 4) &		\
-			       0x03fffffc)  - 12, 4);			\
+	read_memory_integer ( ADDR_BITS_REMOVE(read_memory_integer (fp, 4))	\
+			       - 12, 4);			\
     register int regnum;						\
     write_register (PS_REGNUM, read_memory_integer (fp - 4, 4));	\
-    write_register (PC_REGNUM, read_register (PS_REGNUM) & 0x03fffffc);	\
+    write_register (PC_REGNUM, ADDR_BITS_REMOVE(read_register (PS_REGNUM)));	\
     write_register (SP_REGNUM, read_memory_integer (fp - 8, 4));	\
     write_register (FP_REGNUM, read_memory_integer (fp - 12, 4));	\
     fp -= 12;								\
