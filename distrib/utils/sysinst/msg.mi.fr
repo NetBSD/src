@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.30 1999/07/06 06:10:04 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.31 2000/01/04 08:33:52 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -484,17 +484,23 @@ message net_domain
 message net_host
 {Votre nom de machine}
 
+message net_ip6autoconf
+{IPv6 autoconfig}
+
 message net_ip
-{Votre numéro IP}
+{Votre numéro IPv4}
 
 message net_mask
-{Votre masque de réseau (netmask)}
+{Votre masque de réseau (IPv4 netmask)}
+
+message net_namesrv6
+{L'adresse IPv6 de votre serveur de nom}
 
 message net_namesrv
-{L'adresse IP de votre serveur de nom}
+{L'adresse IPv4 de votre serveur de nom}
 
 message net_defroute
-{L'adresee IP de votre passerelle ("gateway")}
+{L'adresee IPv4 de votre passerelle ("gateway")}
 
 message net_media
 {Type de réseau (media)}
@@ -509,6 +515,8 @@ Masque de réseau (Netmask):	%s
 Adresse du serveur de noms:	%s 
 Adresse de la paserelle:	%s 
 Type de réseau (media):	%s 
+IPv6 autoconf:			%s 
+IPv6 nameserver:		%s 
 }
 
 message netagain

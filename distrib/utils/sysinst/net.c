@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.55 1999/10/29 19:45:20 he Exp $	*/
+/*	$NetBSD: net.c,v 1.56 2000/01/04 08:33:52 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,6 +45,11 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/param.h>
+#ifdef INET6
+#include <sys/sysctl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -66,6 +71,9 @@ static void get_ifinterface_info __P((void));
 
 static void write_etc_hosts(FILE *f);
 
+static int is_v6kernel __P((void));
+static void init_v6kernel __P((int));
+static int get_v6wait __P((void));
 
 /*
  * URL encode unsafe characters.  See RFC 1738.
@@ -237,8 +245,8 @@ get_ifinterface_info()
 	char hostname[MAXHOSTNAMELEN + 1];
 
 	/* First look to see if the selected interface is already configured. */
-	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig %s 2>/dev/null",
-	    net_dev);
+	textsize = collect(T_OUTPUT, &textbuf,
+	    "/sbin/ifconfig %s inet 2>/dev/null", net_dev);
 	if (textsize >= 0) {
 		(void)strtok(textbuf, " \t\n"); /* ignore interface name */
 		while ((t = strtok(NULL, " \t\n")) != NULL) {
@@ -261,6 +269,31 @@ get_ifinterface_info()
 			}
 		}
 	}
+#ifdef INET6
+	textsize = collect(T_OUTPUT, &textbuf,
+	    "/sbin/ifconfig %s inet6 2>/dev/null", net_dev);
+	if (textsize >= 0) {
+		char *p;
+
+		(void)strtok(textbuf, "\n"); /* ignore first line */
+		while ((t = strtok(NULL, "\n")) != NULL) {
+			if (strncmp(t, "\tinet6 ", 7) != 0)
+				continue;
+			t += 7;
+			if (strstr(t, "tentative") || strstr(t, "duplicated"))
+				continue;
+			if (strncmp(t, "fe80:", 5) == 0)
+				continue;
+
+			p = t;
+			while (*p && *p != ' ' && *p != '\n')
+				p++;
+			*p = '\0';
+			strcpy(net_ip6, t);
+			break;
+		}
+	}
+#endif
 
 	/* Check host (and domain?) name */
 	if (gethostname(hostname, sizeof(hostname)) == 0) {
@@ -268,6 +301,60 @@ get_ifinterface_info()
 		strncpy(net_host, hostname, sizeof(net_host));
 	}
 }
+
+#ifdef INET6
+static int
+is_v6kernel()
+{
+	int s;
+
+	s = socket(PF_INET6, SOCK_DGRAM, 0);
+	if (s < 0)
+		return 0;
+	else {
+		close(s);
+		return 1;
+	}
+}
+
+/*
+ * initialize as v6 client.
+ * we are sure that we will never become router with boot floppy :-)
+ * (include and use sysctl(8) if you are willing to)
+ */
+static void
+init_v6kernel(autoconf)
+	int autoconf;
+{
+	int v;
+	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, 0};
+
+	mib[3] = IPV6CTL_FORWARDING;
+	v = 0;
+	if (sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v)) < 0)
+		; /* warn("sysctl(net.inet6.ip6.fowarding"); */
+
+	mib[3] = IPV6CTL_ACCEPT_RTADV;
+	v = autoconf ? 1 : 0;
+	if (sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v)) < 0)
+		; /* warn("sysctl(net.inet6.ip6.accept_rtadv"); */
+}
+
+static int
+get_v6wait()
+{
+	long len = sizeof(int);
+	int v;
+	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DAD_COUNT};
+
+	len = sizeof(v);
+	if (sysctl(mib, 4, (void *)&v, (size_t *)&len, NULL, 0) < 0) {
+		/* warn("sysctl(net.inet6.ip6.dadcount)"); */
+		return 1;	/* guess */
+	}
+	return v;
+}
+#endif
 
 /*
  * Get the information to configure the network, configure it and
@@ -278,7 +365,7 @@ config_network()
 {	char *tp;
 	char defname[255];
 	int  octet0;
-	int  pass, needmedia;
+	int  pass, needmedia, v6config;
 
 	FILE *f;
 	time_t now;
@@ -315,47 +402,95 @@ config_network()
 	/* Remove that space we added. */
 	net_dev[strlen(net_dev) - 1] = 0;
 
+#ifdef INET6
+	v6config = 1;
+#else
+	v6config = 0;
+#endif
+
+again:
 	/* Preload any defaults we can find */
 	get_ifinterface_info();
 	pass = strlen(net_mask) == 0 ? 0 : 1;
 	needmedia = strlen(net_media) == 0 ? 0 : 1;
-	
-	/* Get other net information */
-	msg_display(MSG_netinfo);
-	do {
-		msg_prompt_add(MSG_net_domain, net_domain, net_domain, STRSIZE);
-		msg_prompt_add(MSG_net_host, net_host, net_host, STRSIZE);
-		msg_prompt_add(MSG_net_ip, net_ip, net_ip, STRSIZE);
-		octet0 = atoi(net_ip);
-		if (!pass) {
-			if (0 <= octet0 && octet0 <= 127)
-				strcpy(net_mask, "0xff000000");
-			else if (128 <= octet0 && octet0 <= 191)
-				strcpy(net_mask, "0xffff0000");
-			else if (192 <= octet0 && octet0 <= 223)
-				strcpy(net_mask, "0xffffff00");
-		}
-		msg_prompt_add(MSG_net_mask, net_mask, net_mask, STRSIZE);
-		msg_prompt_add(MSG_net_defroute, net_defroute, net_defroute,
-				STRSIZE);
-		msg_prompt_add(MSG_net_namesrv, net_namesvr, net_namesvr,
-				STRSIZE);
-		if (needmedia)
-			msg_prompt_add(MSG_net_media, net_media, net_media,
-				       STRSIZE);
 
-		msg_display(MSG_netok, net_domain, net_host, net_ip, net_mask,
-			     *net_namesvr == '\0' ? "<none>" : net_namesvr,
-			     *net_defroute == '\0' ? "<none>" : net_defroute,
-			     *net_media == '\0' ? "<default>" : net_media);
-		process_menu(MENU_yesno);
+	/* domain and host */
+	msg_display(MSG_netinfo);
+	msg_prompt_add(MSG_net_domain, net_domain, net_domain, STRSIZE);
+	msg_prompt_add(MSG_net_host, net_host, net_host, STRSIZE);
+
+	/* ethernet medium */
+	if (needmedia)
+		msg_prompt_add(MSG_net_media, net_media, net_media,
+			       STRSIZE);
+
+	/* Manually configure IPv4 */
+	/* XXX todo: dhcp */
+	msg_prompt_add(MSG_net_ip, net_ip, net_ip, STRSIZE);
+	octet0 = atoi(net_ip);
+	if (!pass) {
+		if (0 <= octet0 && octet0 <= 127)
+			strcpy(net_mask, "0xff000000");
+		else if (128 <= octet0 && octet0 <= 191)
+			strcpy(net_mask, "0xffff0000");
+		else if (192 <= octet0 && octet0 <= 223)
+			strcpy(net_mask, "0xffffff00");
+	}
+	msg_prompt_add(MSG_net_mask, net_mask, net_mask, STRSIZE);
+	msg_prompt_add(MSG_net_defroute, net_defroute, net_defroute, STRSIZE);
+	msg_prompt_add(MSG_net_namesrv, net_namesvr, net_namesvr, STRSIZE);
+
+#ifdef INET6
+	/* IPv6 autoconfiguration */
+	if (!is_v6kernel())
+		v6config = 0;
+	else {
+		process_menu(MENU_ip6autoconf);
+		v6config = yesno ? 1 : 0;
+	}
+
+	if (v6config) {
+		process_menu(MENU_namesrv6);
 		if (!yesno)
-			msg_display(MSG_netagain);
-		pass++;
-	} while (!yesno);
+			msg_prompt_add(MSG_net_namesrv6, net_namesvr6,
+			    net_namesvr6, STRSIZE);
+	}
+#endif
+
+	/* confirm the setting */
+	msg_display(MSG_netok, net_domain, net_host,
+		     *net_ip == '\0' ? "<none>" : net_ip,
+		     *net_mask == '\0' ? "<none>" : net_mask,
+		     *net_namesvr == '\0' ? "<none>" : net_namesvr,
+		     *net_defroute == '\0' ? "<none>" : net_defroute,
+		     *net_media == '\0' ? "<default>" : net_media,
+#ifdef INET6
+		     !is_v6kernel() ? "<not supported>" :
+			(v6config ? "yes" : "no"),
+		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6
+#else
+		     "<not supported>",
+		     "<not supported>",
+#endif
+		     );
+	process_menu(MENU_yesno);
+	if (!yesno)
+		msg_display(MSG_netagain);
+	pass++;
+	if (!yesno)
+		goto again;
+
+	/*
+	 * we may want to perform checks against inconsistent configuration,
+	 * like IPv4 DNS server without IPv4 configuration.
+	 */
 
 	/* Create /etc/resolv.conf if a nameserver was given */
-	if (strcmp(net_namesvr, "") != 0) {
+	if (strcmp(net_namesvr, "") != 0
+#ifdef INET6
+	 || strcmp(net_namesvr6, "") != 0
+#endif
+		) {
 #ifdef DEBUG
 		f = fopen("/tmp/resolv.conf", "w");
 #else
@@ -373,15 +508,25 @@ config_network()
 		/* NB: ctime() returns a string ending in  '\n' */
 		(void)fprintf(f, ";\n; BIND data file\n; %s %s;\n", 
 		    "Created by NetBSD sysinst on", ctime(&now)); 
-		(void)fprintf (f,
-		    "nameserver %s\nsearch %s\n",
-		    net_namesvr, net_domain);
+		if (strcmp(net_namesvr, "") != 0)
+			(void)fprintf(f, "nameserver %s\n", net_namesvr);
+#ifdef INET6
+		if (strcmp(net_namesvr6, "") != 0)
+			(void)fprintf(f, "nameserver %s\n", net_namesvr6);
+#endif
+		(void)fprintf(f, "search %s\n", net_domain);
 		if (scripting) {
 			(void)fprintf(script, ";\n; BIND data file\n; %s %s;\n", 
 			    "Created by NetBSD sysinst on", ctime(&now)); 
-			(void)fprintf (script,
-			    "nameserver %s\nsearch %s\n",
-			    net_namesvr, net_domain);
+			if (strcmp(net_namesvr, "") != 0)
+				(void)fprintf(script, "nameserver %s\n",
+				    net_namesvr);
+#ifdef INET6
+			if (strcmp(net_namesvr6, "") != 0)
+				(void)fprintf(script, "nameserver %s\n",
+				    net_namesvr6);
+#endif
+			(void)fprintf(script, "search %s\n", net_domain);
 		}
 		fflush(NULL);
 		fclose(f);
@@ -407,13 +552,29 @@ config_network()
 	}
 
 	if (*net_media != '\0')
-		run_prog(0, 0, NULL,
-		    "/sbin/ifconfig %s inet %s netmask %s media %s",
-			  net_dev, net_ip, net_mask, net_media);
-	else
-		run_prog(0, 0, NULL, 
-		    "/sbin/ifconfig %s inet %s netmask %s", net_dev,
-			  net_ip, net_mask);
+		run_prog(0, 1, NULL, "/sbin/ifconfig %s media %s",
+		    net_dev, net_media);
+
+#ifdef INET6
+	if (v6config) {
+		init_v6kernel(1);
+		run_prog(0, 0, NULL, "/sbin/ifconfig %s up", net_dev);
+		sleep(get_v6wait() + 1);
+		run_prog(0, 1, NULL, "/sbin/rtsol -D %s", net_dev);
+		sleep(get_v6wait() + 1);
+	}
+#endif
+
+	if (strcmp(net_ip, "") != 0) {
+		if (strcmp(net_mask, "") != 0) {
+			run_prog(0, 0, NULL, 
+			    "/sbin/ifconfig %s inet %s netmask %s",
+			    net_dev, net_ip, net_mask);
+		} else {
+			run_prog(0, 0, NULL, 
+			    "/sbin/ifconfig %s inet %s", net_dev, net_ip);
+		}
+	}
 
 	/* Set host name */
 	if (strcmp(net_host, "") != 0)
@@ -422,7 +583,7 @@ config_network()
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
 		run_prog(0, 0, NULL, 
-		    "/sbin/route -n flush");
+		    "/sbin/route -n flush -inet");
 		run_prog(0, 0, NULL, 
 		    "/sbin/route -n add default %s",
 			  net_defroute);
@@ -432,6 +593,17 @@ config_network()
 	 * ping should be verbose, so users can see the cause
 	 * of a network failure.
 	 */
+
+#ifdef INET6
+	if (v6config && network_up) {
+		network_up = !run_prog(0, 1, NULL, 
+		    "/sbin/ping6 -v -c 3 -n -I %s ff02::9", net_dev);
+
+		if (strcmp(net_namesvr6, "") != 0)
+			network_up = !run_prog(0, 1, NULL, 
+			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
+	}
+#endif
 
 	if (strcmp(net_namesvr, "") != 0 && network_up)
 		network_up = !run_prog(0, 1, NULL, 

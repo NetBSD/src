@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.56 1999/08/16 08:29:05 abs Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.57 2000/01/04 08:33:52 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -473,16 +473,19 @@ message net_host
 {Your host name}
 
 message net_ip
-{Your IP number}
+{Your IPv4 number}
 
 message net_mask
-{Netmask}
+{IPv4 Netmask}
+
+message net_namesrv6
+{IPv6 name server}
 
 message net_namesrv
-{IP of your name server}
+{IPv4 name server}
 
 message net_defroute
-{IP of your gateway}
+{IPv4 gateway}
 
 message net_media
 {Network media type}
@@ -490,13 +493,15 @@ message net_media
 message netok
 {The following are the values you entered.  Are they OK?
 
-DNS Domain:	%s 
-Host Name:	%s 
-Host IP:	%s 
-Netmask:	%s 
-Nameserver IP:	%s 
-Gateway IP:	%s 
-Media type:	%s 
+DNS Domain:		%s 
+Host Name:		%s 
+Host IP:		%s 
+Netmask:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Media type:		%s 
+IPv6 autoconf:		%s 
+IPv6 Nameserver:	%s 
 }
 
 message netagain
