@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.3 1997/03/13 06:19:21 mikel Exp $	*/
+/*	$NetBSD: popen.c,v 1.4 1998/01/31 14:40:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -25,14 +25,18 @@
  * globbing stuff since we don't need it.  also execvp instead of execv.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: popen.c,v 1.3 1997/03/13 06:19:21 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
+#else
+__RCSID("$NetBSD: popen.c,v 1.4 1998/01/31 14:40:42 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include "cron.h"
-#include <sys/signal.h>
+#include <signal.h>
 
 
 #define MAX_ARGS 100
@@ -50,7 +54,7 @@ FILE *
 cron_popen(program, type)
 	char *program, *type;
 {
-	register char *cp;
+	char *cp;
 	FILE *iop;
 	int argc, pdes[2];
 	PID_T pid;
@@ -61,8 +65,11 @@ cron_popen(program, type)
 	char *gargv[1000];
 	extern char **glob(), **copyblk();
 #endif
+#ifdef __GNUC__
+	(void) &iop;	/* Avoid vfork clobbering */
+#endif
 
-	if (*type != 'r' && *type != 'w' || type[1])
+	if ((*type != 'r' && *type != 'w') || type[1])
 		return(NULL);
 
 	if (!pids) {
@@ -149,8 +156,8 @@ int
 cron_pclose(iop)
 	FILE *iop;
 {
-	register int fdes;
-	int omask;
+	int fdes;
+	sigset_t oset, nset;
 	WAIT_T stat_loc;
 	PID_T pid;
 
@@ -161,10 +168,15 @@ cron_pclose(iop)
 	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
 		return(-1);
 	(void)fclose(iop);
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
+	
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGQUIT);
+	sigaddset(&nset, SIGHUP);
+	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 	while ((pid = wait(&stat_loc)) != pids[fdes] && pid != -1)
 		;
-	(void)sigsetmask(omask);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	pids[fdes] = 0;
 	return (pid == -1 ? -1 : WEXITSTATUS(stat_loc));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.4 1997/03/13 06:19:16 mikel Exp $	*/
+/*	$NetBSD: do_command.c,v 1.5 1998/01/31 14:40:28 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";*/
-static char rcsid[] = "$NetBSD: do_command.c,v 1.4 1997/03/13 06:19:16 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
+#else
+__RCSID("$NetBSD: do_command.c,v 1.5 1998/01/31 14:40:28 christos Exp $");
+#endif
 #endif
 
 
@@ -77,17 +81,21 @@ child_process(e, u)
 	user	*u;
 {
 	int		stdin_pipe[2], stdout_pipe[2];
-	register char	*input_data;
+	char	*input_data;
 	char		*usernm, *mailto;
 	int		children = 0;
-
+#ifdef __GNUC__
+	(void) &input_data;	/* Avoid vfork clobbering */
+	(void) &mailto;
+	(void) &children;
+#endif
 	Debug(DPROC, ("[%d] child_process('%s')\n", getpid(), e->cmd))
 
 	/* mark ourselves as different to PS command watchers by upshifting
 	 * our program name.  This has no effect on some kernels.
 	 */
 	/*local*/{
-		register char	*pch;
+		char	*pch;
 
 		for (pch = ProgramName;  *pch;  pch++)
 			*pch = MkUpper(*pch);
@@ -127,10 +135,11 @@ child_process(e, u)
 	 * but that happens later.
 	 */
 	/*local*/{
-		register int escaped = FALSE;
-		register int ch;
+		int escaped = FALSE;
+		int ch;
 
-		for (input_data = e->cmd;  ch = *input_data;  input_data++) {
+		for (input_data = e->cmd;  (ch = *input_data) != '\0'; 
+		    input_data++) {
 			if (escaped) {
 				escaped = FALSE;
 				continue;
@@ -267,10 +276,10 @@ child_process(e, u)
 	 */
 
 	if (*input_data && fork() == 0) {
-		register FILE	*out = fdopen(stdin_pipe[WRITE_PIPE], "w");
-		register int	need_newline = FALSE;
-		register int	escaped = FALSE;
-		register int	ch;
+		FILE	*out = fdopen(stdin_pipe[WRITE_PIPE], "w");
+		int	need_newline = FALSE;
+		int	escaped = FALSE;
+		int	ch;
 
 		Debug(DPROC, ("[%d] child2 sending data to grandchild\n", getpid()))
 
@@ -284,7 +293,7 @@ child_process(e, u)
 		 *	%  -> \n
 		 *	\x -> \x	for all x != %
 		 */
-		while (ch = *input_data++) {
+		while ((ch = *input_data++) != '\0') {
 			if (escaped) {
 				if (ch != '%')
 					putc('\\', out);
@@ -329,14 +338,17 @@ child_process(e, u)
 	Debug(DPROC, ("[%d] child reading output from grandchild\n", getpid()))
 
 	/*local*/{
-		register FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
-		register int	ch = getc(in);
+		FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
+		int	ch = getc(in);
 
 		if (ch != EOF) {
-			register FILE	*mail;
-			register int	bytes = 1;
+			FILE	*mail;
+			int	bytes = 1;
 			int		status = 0;
 
+#ifdef __GNUC__
+			(void) &mail;	/* Avoid vfork clobbering */
+#endif
 			Debug(DPROC|DEXT,
 				("[%d] got data (%x:%c) from grandchild\n",
 					getpid(), ch, ch))
@@ -364,9 +376,9 @@ child_process(e, u)
 			 */
 
 			if (mailto) {
-				register char	**env;
-				auto char	mailcmd[MAX_COMMAND];
-				auto char	hostname[MAXHOSTNAMELEN];
+				char	**env;
+				char	mailcmd[MAX_COMMAND];
+				char	hostname[MAXHOSTNAMELEN];
 
 				(void) gethostname(hostname, MAXHOSTNAMELEN);
 				(void) snprintf(mailcmd, sizeof(mailcmd),

@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.3 1997/03/13 06:19:16 mikel Exp $	*/
+/*	$NetBSD: entry.c,v 1.4 1998/01/31 14:40:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";*/
-static char rcsid[] = "$NetBSD: entry.c,v 1.3 1997/03/13 06:19:16 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";
+#else
+__RCSID("$NetBSD: entry.c,v 1.4 1998/01/31 14:40:30 christos Exp $");
+#endif
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -72,7 +76,7 @@ free_entry(e)
 entry *
 load_entry(file, error_func, pw, envp)
 	FILE		*file;
-	void		(*error_func)();
+	void		(*error_func) __P((const char *));
 	struct passwd	*pw;
 	char		**envp;
 {
@@ -314,7 +318,7 @@ get_list(bits, low, high, names, ch, file)
 	int		ch;		/* current character being processed */
 	FILE		*file;		/* file being read */
 {
-	register int	done;
+	int	done;
 
 	/* we know that we point to a non-blank character here;
 	 * must do a Skip_Blanks before we exit, so that the
@@ -364,8 +368,8 @@ get_range(bits, low, high, names, ch, file)
 	/* range = number | number "-" number [ "/" number ]
 	 */
 
-	register int	i;
-	auto int	num1, num2, num3;
+	int	i;
+	int	num1, num2, num3;
 
 	Debug(DPARS|DEXT, ("get_range()...entering, exit won't show\n"))
 
