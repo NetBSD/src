@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.527 2002/12/04 23:44:12 david Exp $
+# $NetBSD: GENERIC,v 1.528 2002/12/05 09:32:22 ichiro Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.527 $"
+#ident 		"GENERIC-$Revision: 1.528 $"
 
 maxusers	32		# estimated number of users
 
@@ -860,6 +860,18 @@ ugen*	at uhub? port ?
 oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
+# PCI IEEE1394 controllers
+#fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
+
+# CardBus IEEE1394 controllers
+#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+
+#fw*	at fwbus?			# IP over 1394
+
+# IEEE1394 nodes
+#fwnode* at fwbus? idhi ? idlo ?
+#fwscsi* at fwnode?
+#scsibus* at fwscsi?
 
 # Audio Devices
 
