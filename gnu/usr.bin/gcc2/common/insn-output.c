@@ -2832,12 +2832,17 @@ output_250 (operands, insn)
 {
 
 {
-  rtx xops[2];
+  rtx xops[3];
 
   xops[0] = operands[0];
-  xops[1] = constm1_rtx;
-  output_asm_insn (AS2 (mov%L0,%1,%0), xops);
-  return AS2 (bsf%L0,%1,%0);
+  xops[1] = operands[1];
+  xops[2] = constm1_rtx;
+  /* Can there be a way to avoid the jump here?  */
+  output_asm_insn (AS2 (bsf%L0,%1,%0), xops);
+  output_asm_insn ("jnz 1f", xops);
+  output_asm_insn (AS2 (mov%L0,%2,%0), xops);
+  output_asm_insn ("1:", xops);
+  return "";
 }
 }
 
@@ -2848,12 +2853,16 @@ output_252 (operands, insn)
 {
 
 {
-  rtx xops[2];
+  rtx xops[3];
 
   xops[0] = operands[0];
-  xops[1] = constm1_rtx;
-  output_asm_insn (AS2 (mov%W0,%1,%0), xops);
-  return AS2 (bsf%W0,%1,%0);
+  xops[1] = operands[1];
+  xops[2] = constm1_rtx;
+  output_asm_insn (AS2 (bsf%W0,%1,%0), xops);
+  output_asm_insn ("jnz 1f", xops);
+  output_asm_insn (AS2 (mov%W0,%2,%0), xops);
+  output_asm_insn ("1:", xops);
+  return "";
 }
 }
 
