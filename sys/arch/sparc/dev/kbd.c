@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.10 1994/05/05 09:53:41 deraadt Exp $
+ * $Id: kbd.c,v 1.11 1994/07/21 22:05:49 deraadt Exp $
  */
 
 /*
@@ -63,10 +63,10 @@
 
 #include <machine/autoconf.h>
 
-#include <sparc/dev/vuid_event.h>
+#include <machine/vuid_event.h>
 #include <sparc/dev/event_var.h>
-#include <sparc/dev/kbd.h>
-#include <sparc/dev/kbio.h>
+#include <machine/kbd.h>
+#include <machine/kbio.h>
 
 /*
  * Sun keyboard definitions (from Sprite).
