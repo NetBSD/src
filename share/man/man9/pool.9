@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.30 2003/12/21 07:42:11 simonb Exp $
+.\"	$NetBSD: pool.9,v 1.31 2004/03/08 22:58:34 dbj Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -272,6 +272,11 @@ The pool resource code uses a per-pool lock to protect its internal state.
 If any pool functions are called in an interrupt context,
 the caller must block all interrupts that might cause the
 code to be reentered.
+Additionally, the functions
+.Fn pool_init
+and
+.Fn pool_destroy
+should never be called in interrupt context.
 .Ss DIAGNOSTICS
 Pool usage logs can be enabled by defining the compile-time option
 .Dv POOL_DIAGNOSTIC .
