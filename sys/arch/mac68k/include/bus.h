@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1997/02/11 07:37:41 scottr Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1997/02/14 06:02:57 scottr Exp $	*/
 
 /*
  * Copyright "g" (c) 1997 Scott Reynolds.  All rights reserved.
@@ -57,6 +57,13 @@ void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t));
 int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
+
+int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_space_handle_t *bshp));
+void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size));
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
