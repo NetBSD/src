@@ -1,4 +1,4 @@
-# $NetBSD: lint.mi,v 1.7 2003/01/24 12:06:21 jmmv Exp $
+# $NetBSD: lint.mi,v 1.8 2003/02/13 23:57:53 jmc Exp $
 ./usr/libdata/lint/llib-lbz2.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lc.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lcompat.ln	comp-c-lintlib
@@ -18,8 +18,6 @@
 ./usr/libdata/lint/llib-lpcap.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lpci.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lposix.ln	comp-c-lintlib
-./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
-./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lresolv.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lrmt.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lrpcsvc.ln	comp-c-lintlib

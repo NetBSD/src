@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.13 2002/10/09 01:22:39 thorpej Exp $
+# $NetBSD: md.sparc64,v 1.14 2003/02/13 23:57:52 jmc Exp $
 ./sbin/edlabel			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin
 ./usr/lkm/compat_netbsd32.o	base-netbsd32-lkm
@@ -15,3 +15,7 @@
 ./usr/mdec/ofwboot		base-sysutil-bin
 ./usr/mdec/ofwboot.net		base-sysutil-bin
 ./usr/sbin/eeprom		base-sysutil-bin
+./usr/lib/libpthread.so.0	base-sys-shlib
+./usr/lib/libpthread_dbg.so.0	base-sys-shlib
+./usr/lib/libpthread.so.0.1		base-sys-shlib
+./usr/lib/libpthread_dbg.so.0.0		base-sys-shlib
