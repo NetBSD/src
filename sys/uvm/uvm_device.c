@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.11 1998/11/19 05:23:26 mrg Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.12 1999/03/24 03:45:27 cgd Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -93,7 +93,6 @@ static int		udv_put __P((struct uvm_object *, vm_page_t *,
 
 struct uvm_pagerops uvm_deviceops = {
 	udv_init,
-	udv_attach,
 	udv_reference,
 	udv_detach,
 	udv_fault,

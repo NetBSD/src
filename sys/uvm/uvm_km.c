@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.18 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.19 1999/03/24 03:45:27 cgd Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -179,7 +179,6 @@ static struct uvm_object	mb_object_store;
 
 static struct uvm_pagerops km_pager = {
 	NULL,	/* init */
-	NULL, /* attach */
 	NULL, /* reference */
 	NULL, /* detach */
 	NULL, /* fault */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.19 1999/03/04 06:48:54 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.20 1999/03/24 03:45:28 cgd Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -120,7 +120,6 @@ static boolean_t	   uvn_releasepg __P((struct vm_page *,
 
 struct uvm_pagerops uvm_vnodeops = {
 	uvn_init,
-	uvn_attach,
 	uvn_reference,
 	uvn_detach,
 	NULL,			/* no specialized fault routine required */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.15 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.16 1999/03/24 03:45:27 cgd Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -201,7 +201,6 @@ static boolean_t		 uao_releasepg __P((struct vm_page *,
 
 struct uvm_pagerops aobj_pager = {
 	uao_init,		/* init */
-	NULL,			/* attach */
 	uao_reference,		/* reference */
 	uao_detach,		/* detach */
 	NULL,			/* fault */
