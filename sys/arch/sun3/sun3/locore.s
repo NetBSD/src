@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37 1996/02/16 23:36:54 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1996/04/07 05:42:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -421,6 +421,9 @@ _badtrap:
 	addql	#4, sp			| stack adjust count
 	jra	rei			| all done
 
+/*
+ * Trap 0 is for system calls
+ */
 	.globl	_syscall
 _trap0:
 	clrl	sp@-			| stack adjust count
@@ -444,7 +447,7 @@ _trap0:
 _trap1:
 #if 0 /* COMPAT_HPUX */
 	/* If process is HPUX, this is a user breakpoint. */
-	jne	trap15
+	jne	trap15			| breakpoint
 #endif
 	/* fall into sigreturn */
 
@@ -486,20 +489,21 @@ Lsigr1:
 	jra	rei			| all done
 
 /*
- * Trap 2 is either
- * badtrap (native NetBSD executable)
- * sigreturn (HPUX executable)
+ * Trap 2 is one of:
+ * NetBSD: not used (ignore)
+ * SunOS:  Some obscure FPU operation
+ * HPUX:   sigreturn
  */
 _trap2:
 #if 0 /* COMPAT_HPUX */
 	/* XXX:	If HPUX, this is a user breakpoint. */
 	jne	sigreturn
 #endif
-	jra	_badtrap
+	/* fall into trace (NetBSD or SunOS) */
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.
- * User mode traps are passed simply passed to trap()
+ * User mode traps are simply passed on to trap().
  */
 _trace:
 	clrl	sp@-			| stack adjust count
