@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.36 1998/08/18 06:27:01 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.37 1999/06/07 22:33:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -49,6 +49,9 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #if defined(NFS) || defined(NFSSERVER)
 #include <nfs/rpcv2.h>
@@ -344,6 +347,10 @@ sys_adjtime(p, v, retval)
 	error = copyin(SCARG(uap, delta), &atv, sizeof(struct timeval));
 	if (error)
 		return (error);
+	if (SCARG(uap, olddelta) != NULL &&
+	    uvm_useracc((caddr_t)SCARG(uap, olddelta), sizeof(struct timeval),
+	     B_WRITE) == FALSE)
+		return (EFAULT);
 
 	/*
 	 * Compute the total correction and the rate at which to apply it.
