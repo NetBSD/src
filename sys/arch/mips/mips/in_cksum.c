@@ -1,5 +1,5 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1998/02/02 21:27:17 jonathan Exp $	*/
- 
+/*	$NetBSD: in_cksum.c,v 1.5 1999/04/24 08:10:39 simonb Exp $	*/
+
 /*
  * Copyright (c) 1993 Regents of the University of California.
  * All rights reserved.
@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * ccsum.c - Highly optimized MIPS checksum function.
  * by Jonathan Kay, Computer Systems Lab, UCSD         4/2/93
  *
@@ -76,7 +76,7 @@ fastsum(buf, n, oldsum, odd_aligned)
 {
 	unsigned long hilo = 0, high = 0;
 	unsigned long w0, w1;
-	register unsigned int sum = 0;
+	unsigned int sum = 0;
 
 	/* Align to 32 bits. */
 	if (buf.u & 0x3) {
@@ -100,14 +100,14 @@ fastsum(buf, n, oldsum, odd_aligned)
 			n -= 1;
 			odd_aligned = !odd_aligned;
 		}
-		
+
 		/* 32-bit-align */
 		if (buf.u & 0x2) {
 			sum += *(buf.s++);
 			n -= 2;
 		}
 	}
-	
+
 	/* 32-bit-aligned sum.
 	   Peter Desnoyers' unbelievable 3-instruction main loop. */
 	if (n < 64 + 8)
@@ -118,72 +118,72 @@ fastsum(buf, n, oldsum, odd_aligned)
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[2];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[3];
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[4];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[5];
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[6];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[7];
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[8];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[9];
 
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[10];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[11];
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[12];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[13];
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[14];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[15];
-		
+
 		hilo += w0;
 		high += w0 >> 16;
 		w0 = buf.l[16];
-		
+
 		hilo += w1;
 		high += w1 >> 16;
 		w1 = buf.l[17];
 
-		
+
 		n -= 64;
 		buf.c += 64;
-		
+
 	} while (n >= 64 + 8);
 	hilo -= (high << 16);
 	sum += hilo;
@@ -205,7 +205,7 @@ fastsum(buf, n, oldsum, odd_aligned)
 		n -= sizeof(*buf.s);
 		sum += *(buf.s++);
 	}
-	
+
 	/* handle trailing byte */
 	if (n > 0)
 #if BYTE_ORDER == BIG_ENDIAN
@@ -240,13 +240,13 @@ fastsum(buf, n, oldsum, odd_aligned)
  */
 int
 in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+	struct mbuf *m;
+	int len;
 {
-	register /*u_short **/ union memptr w;
-	register u_int32_t sum = 0;
-	register int mlen;
-	register int odd_aligned = 0;
+	/*u_short **/ union memptr w;
+	u_int32_t sum = 0;
+	int mlen;
+	int odd_aligned = 0;
 
 	for ( ; m && len; m = m->m_next) {
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: process_machdep.c,v 1.9 1999/01/06 04:11:29 nisimura Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 1999/04/24 08:10:41 simonb Exp $	*/
 
 /*
- * Copyright (c) 1994 Adam Glass   
+ * Copyright (c) 1994 Adam Glass
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 1999/01/06 04:11:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10 1999/04/24 08:10:41 simonb Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -133,7 +133,7 @@ process_write_fpregs(p, regs)
 		if (p == fpcurproc)
 			savefpregs(p);
 	}
-	
+
 	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }

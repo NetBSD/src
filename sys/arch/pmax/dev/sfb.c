@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.29 1999/04/12 20:38:19 pk Exp $	*/
+/*	$NetBSD: sfb.c,v 1.30 1999/04/24 08:01:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -301,7 +301,7 @@ sfbinit(fi, base, unit, silent)
 	fi->fi_fbu->scrInfo.max_col = 80;
 
 #if defined(DEBUG) || defined(SFBDEBUG)
-	printf(" (tty %d rows by %d cols) ", 
+	printf(" (tty %d rows by %d cols) ",
 	       fi->fi_fbu->scrInfo.max_row, fi->fi_fbu->scrInfo.max_col);
 #endif
 	init_pmaxfbu(fi);
@@ -349,7 +349,7 @@ sfb_intr(sc)
 {
 	struct fbinfo *fi = (struct fbinfo *)sc;
 	char *slot_addr = (((char *)fi->fi_base) - SFB_ASIC_OFFSET);
-	
+
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	*(int*) (slot_addr + SFB_CLEAR) = 0;
 

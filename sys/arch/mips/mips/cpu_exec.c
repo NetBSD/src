@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.19 1999/01/06 04:11:28 nisimura Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.20 1999/04/24 08:10:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ int	exec_elf_mips32_makecmds __P((struct proc *, struct exec_package *));
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *
@@ -153,7 +153,7 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 /*
  * cpu_exec_ecoff_hook():
  *	cpu-dependent ECOFF format hook for execve().
- * 
+ *
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  *
  */
@@ -306,11 +306,11 @@ mips_elf_makecmds (p, epp)
 			}
 		}
 	}
- 
+
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
 	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
- 
+
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
 	 * map the part of the stack which we can access, and one to map
@@ -328,6 +328,6 @@ mips_elf_makecmds (p, epp)
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
- 
+
 	return 0;
 }

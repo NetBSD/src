@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.15 1999/03/24 05:51:09 mrg Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.16 1999/04/24 08:01:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)fb.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  *  devGraphics.c --
  *
  *     	This file contains machine-dependent routines for the graphics device.
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -138,9 +138,9 @@ void
 init_pmaxfbu(fi)
 	struct fbinfo *fi;
 {
-	
+
 	int tty_rows, tty_cols; /* rows, cols for glass-tty mode */
-	register struct fbuaccess *fbu = NULL;
+	struct fbuaccess *fbu = NULL;
 
 	if (fi == NULL || fi->fi_fbu == NULL)
 		panic("init_pmaxfb: given null pointer to framebuffer\n");
@@ -219,11 +219,11 @@ pmEventQueueInit(qe)
 void
 fbKbdEvent(ch, fi)
 	int ch;
-	register struct fbinfo *fi;
+	struct fbinfo *fi;
 {
-	register pmEvent *eventPtr;
+	pmEvent *eventPtr;
 	int i;
-	register struct fbuaccess *fbu = NULL;
+	struct fbuaccess *fbu = NULL;
 
 	if (!fi->fi_open)
 		return;
@@ -267,14 +267,14 @@ fbKbdEvent(ch, fi)
  *----------------------------------------------------------------------
  */
 void
-fbMouseEvent(newRepPtr, fi) 
-	register MouseReport *newRepPtr;
-	register struct fbinfo *fi;
+fbMouseEvent(newRepPtr, fi)
+	MouseReport *newRepPtr;
+	struct fbinfo *fi;
 {
 	unsigned milliSec;
 	int i;
 	pmEvent *eventPtr;
-	register struct fbuaccess *fbu = NULL;
+	struct fbuaccess *fbu = NULL;
 
 	if (!fi->fi_open)
 		return;
@@ -346,7 +346,7 @@ fbMouseEvent(newRepPtr, fi)
 		return;
 
 	i = PM_EVROUND(fbu->scrInfo.qe.eTail - 1);
-	if ((fbu->scrInfo.qe.eTail != fbu->scrInfo.qe.eHead) && 
+	if ((fbu->scrInfo.qe.eTail != fbu->scrInfo.qe.eHead) &&
 	    (i != fbu->scrInfo.qe.eHead)) {
 		pmEvent *eventPtr;
 
@@ -390,13 +390,13 @@ fbMouseEvent(newRepPtr, fi)
 void
 fbMouseButtons(newRepPtr, fi)
 	MouseReport *newRepPtr;
-	register struct fbinfo *fi;
+	struct fbinfo *fi;
 {
 	static char temp, oldSwitch, newSwitch;
 	int i, j;
 	pmEvent *eventPtr;
 	static MouseReport lastRep;
-	register struct fbuaccess *fbu = NULL;
+	struct fbuaccess *fbu = NULL;
 
 	if (!fi->fi_open)
 		return;
@@ -472,7 +472,7 @@ fbmmap_fb(fi, dev, data, p)
 	struct vnode vn;
 	struct specinfo si;
 	struct fbuaccess *fbp;
-	register struct fbuaccess *fbu = fi->fi_fbu;
+	struct fbuaccess *fbu = fi->fi_fbu;
 
 	len = mips_round_page(((vaddr_t)fbu & PGOFSET) +
 			      sizeof(struct fbuaccess)) +
@@ -649,7 +649,7 @@ void
 mouseInput(cc)
 	int cc;
 {
-	register MouseReport *mrp;
+	MouseReport *mrp;
 	static MouseReport currentRep;
 
 	mrp = &currentRep;

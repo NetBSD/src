@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.19 1999/02/27 02:54:05 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.20 1999/04/24 08:10:35 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -19,7 +19,7 @@
  * archtecture (ISA) level, the Mips family.
  * The following functions must be provided for each mips ISA level:
  *
- * 
+ *
  *	MachFlushCache
  *	MachFlushDCache
  *	MachFlushICache
@@ -230,7 +230,7 @@ extern int	mips3_cacheflush_bug;
 #endif /* MIPS3 */
 
 /*
- * trapframe argument passed to trap() 
+ * trapframe argument passed to trap()
  */
 struct trapframe {
 	mips_reg_t tf_regs[17];

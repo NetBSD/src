@@ -1,4 +1,4 @@
-/* $NetBSD: pxvar.h,v 1.2 1999/04/13 00:40:08 ad Exp $ */
+/* $NetBSD: pxvar.h,v 1.3 1999/04/24 08:01:06 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -58,28 +58,28 @@ struct px_info {
 	char	pxi_revision;	/* card revision */
   	char	pxi_option;	/* option type, from STIC (0=2D, 1=3D) */
   	char	pxi_flg;	/* flags (see below) */
-  	
+
   	void	*pxi_rbuf;	/* KVA of ring buffer */
   	u_long	pxi_rbuf_phys;	/* physical address of ring buffer */
   	int	pxi_rbuf_size;	/* ring buffer size in bytes */
 	int	pxi_pbuf_select;/* current packet buffer offset */
 	int	pxi_fontscale;	/* font scale factor (per character) */
-	
+
 	int	pxi_curx;	/* cursor X position */
 	int	pxi_cury;	/* cursor Y position */
 	u_char	pxi_cursor[1024];/* cursor bits */
 	char	pxi_curcmap[6];	/* cursor colormap */
-	
+
 	char	pxi_dirty;	/* see PX_DIRTY_????? */
 	char	pxi_enable;	/* enable video */
 	char	pxi_cmap[768];	/* colormap */
 	int	pxi_cmap_idx;	/* dirty colormap index */
 	int	pxi_cmap_cnt;	/* dirty colormap count */
-	
+
 	/* Disgusting Xserver hack */
 	struct	fbuaccess pxi_fbuaccess;
 	struct	fbinfo pxi_fbinfo;
-	
+
 	/* Stuff for interrupt driven operation and Xserver */
 	volatile int pxi_lpw;		/* last packet written */
 	volatile int pxi_lpr;		/* last packet read */

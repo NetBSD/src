@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.12 1999/02/09 17:15:52 tv Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.13 1999/04/24 08:10:36 simonb Exp $	*/
 
 /*
  * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
@@ -24,7 +24,7 @@
  * ALIGNED_POINTER is a boolean macro that checks whether an address
  * is valid to fetch data elements of type t from on this architecture.
  * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
+ * (within reasonable limits).
  *
  */
 #define	ALIGNBYTES	7
@@ -42,7 +42,7 @@
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
- */ 
+ */
 #ifndef NKMEMCLUSTERS
 #define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
