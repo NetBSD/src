@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.7 1998/12/19 20:16:50 christos Exp $	*/
+/*	$NetBSD: pr.c,v 1.8 2000/07/13 02:07:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.7 1998/12/19 20:16:50 christos Exp $");
+__RCSID("$NetBSD: pr.c,v 1.8 2000/07/13 02:07:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1126,6 +1126,13 @@ otln(buf, cnt, svips, svops, mor)
 			 */
 			while (ops < ips) {
 				/*
+				 * use one space if necessary
+				 */
+				if (ips - ops == 1) {
+					putchar(' ');
+					break;
+				}
+				/*
 				 * use as many ochar as will fit
 				 */
 				if ((tbps = ops + gap - (ops % gap)) > ips)
@@ -1170,6 +1177,13 @@ otln(buf, cnt, svips, svops, mor)
 
 		if (mor < 0) {
 			while (ops < ips) {
+				/*
+				 * use one space if necessary
+				 */
+				if (ips - ops == 1) {
+					putchar(' ');
+					break;
+				}
 				/*
 				 * use as many ochar as will fit
 				 */
