@@ -1,7 +1,11 @@
-/*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.8 1996/06/18 12:55:03 mycroft Exp $	*/
 
-#define	WDSDIAG
+#undef WDSDIAG
+#ifdef DDB
 #define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 /*
  * XXX

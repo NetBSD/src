@@ -1,7 +1,11 @@
-/*	$NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.11 1996/06/18 12:55:02 mycroft Exp $	*/
 
-#define BTDIAG
-#define integrate
+#undef BTDIAG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
