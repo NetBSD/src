@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.19 2002/01/02 20:21:12 dbj Exp $	*/
+/*	$NetBSD: akbd.c,v 1.20 2002/02/23 10:51:50 dbj Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -529,14 +529,13 @@ akbd_cngetc(v, type, data)
 	s = splhigh();
 
 	polledkey = -1;
-	adb_polling = 1;
+	KASSERT(adb_polling);
 
 	while (polledkey == -1) {
 		adb_intr();
 		DELAY(10000);				/* XXX */
 	}
 
-	adb_polling = 0;
 	splx(s);
 
 	key = polledkey;
@@ -552,4 +551,5 @@ akbd_cnpollc(v, on)
 	void *v;
 	int on;
 {
+	adb_polling = on;
 }
