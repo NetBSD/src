@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.40 2004/01/01 16:01:25 jsm Exp $	*/
+/*	$NetBSD: fortune.c,v 1.41 2004/01/01 16:02:07 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.40 2004/01/01 16:01:25 jsm Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.41 2004/01/01 16:02:07 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -315,7 +315,7 @@ fortlen()
 	char	line[BUFSIZ];
 
 	if (!(Fortfile->tbl.str_flags & (STR_RANDOM | STR_ORDERED)))
-		nchar = (Seekpts[1] - Seekpts[0] <= SLEN);
+		nchar = Seekpts[1] - Seekpts[0];
 	else {
 		open_fp(Fortfile);
 		(void) fseek(Fortfile->inf, (long)Seekpts[0], SEEK_SET);
