@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.13 1999/05/20 23:03:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.14 1999/05/25 20:37:49 thorpej Exp $	*/
 
 /*
  *
@@ -616,17 +616,10 @@ vsize_t len;
 
     pte = vtopte(va);    
 
-    /* 
-     * XXXCDC: we can get PVLIST if the mapping was created by uvm_fault
-     * as part of a pageable kernel mapping.  in that case we need to
-     * update the pvlists, so we punt the problem to the more powerful
-     * (and complex) pmap_remove() function.   this is kind of ugly...
-     * need to rethink this a bit.
-     */
-    if (*pte & PG_PVLIST) {
-      pmap_remove(pmap_kernel(), va, va + (len*NBPG)); /* punt ... */
-      return;
-    }
+#ifdef DIAGNOSTIC
+    if (*pte & PG_PVLIST)
+      panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n", va);
+#endif
 
     *pte = 0;		/* zap! */
     pmap_update_pg(va);
@@ -2019,8 +2012,14 @@ vaddr_t startva, endva;
     /*
      * if we are not on a pv_head list we are done.
      */
-    if ((opte & PG_PVLIST) == 0)
+    if ((opte & PG_PVLIST) == 0) {
+#ifdef DIAGNOSTIC
+      if (vm_physseg_find(ns532_btop(opte & PG_FRAME), &off) != -1)
+	panic("pmap_remove_ptes: managed page without PG_PVLIST for 0x%lx",
+	  startva);
+#endif
       continue;
+    }
 
     bank = vm_physseg_find(ns532_btop(opte & PG_FRAME), &off);
     if (bank == -1)
@@ -2093,8 +2092,14 @@ vaddr_t va;
   /*
    * if we are not on a pv_head list we are done.
    */
-  if ((opte & PG_PVLIST) == 0)
+  if ((opte & PG_PVLIST) == 0) {
+#ifdef DIAGNOSTIC
+    if (vm_physseg_find(ns532_btop(opte & PG_FRAME), &off) != -1)
+      panic("pmap_remove_ptes: managed page without PG_PVLIST for 0x%lx",
+	va);
+#endif
     return(TRUE);
+  }
 
   bank = vm_physseg_find(ns532_btop(opte & PG_FRAME), &off);
   if (bank == -1)
