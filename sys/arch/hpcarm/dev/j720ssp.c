@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.16 2002/11/07 17:26:34 manu Exp $ */
+/* $NetBSD: j720ssp.c,v 1.17 2003/01/03 04:36:29 takemura Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -689,6 +689,7 @@ j720tp_ioctl(arg, cmd, data, flag, p)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
+	case WSMOUSEIO_GETID:
 		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 
 	default:

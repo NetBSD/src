@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.53 2002/12/10 13:05:09 itohy Exp $ */
+/* $NetBSD: wsconsio.h,v 1.54 2003/01/03 04:36:28 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -206,6 +206,16 @@ struct wsmouse_calibcoords {
 };
 #define	WSMOUSEIO_SCALIBCOORDS	_IOW('W', 36, struct wsmouse_calibcoords)
 #define	WSMOUSEIO_GCALIBCOORDS	_IOR('W', 37, struct wsmouse_calibcoords)
+
+/* get device id for calibration */
+#define	WSMOUSE_ID_TYPE_UIDSTR	0	/* ID string (null terminated) */
+#define	WSMOUSE_ID_MAXLEN	256
+struct wsmouse_id {
+	u_int type;
+	u_int length;
+	u_char data[WSMOUSE_ID_MAXLEN];
+};
+#define	WSMOUSEIO_GETID		_IOWR('W', 38, struct wsmouse_id)
 
 /*
  * Display ioctls (64 - 95)
