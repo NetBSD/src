@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.3 2003/08/07 16:31:06 agc Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.4 2003/09/25 01:05:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
  */
 
 enum fdc_state {
+	PROBING = -1,
 	DEVIDLE = 0,
 	MOTORWAIT,
 	DOSEEK,
@@ -143,5 +144,5 @@ struct fdc_softc {
 
 int	out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
 
-void	fdcattach __P((struct fdc_softc *));
+void	fdcattach __P((struct device *));
 int	fdcintr __P((void *));
