@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.38 2001/06/03 14:29:42 lukem Exp $	*/
+/*	$NetBSD: cons.c,v 1.39 2001/06/03 17:56:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -278,14 +278,14 @@ cngetsn(cp, size)
 			}
 			continue;
 		case '@':
-		case 'u'&037:
+		case '\025':	/* nak */
 			len = 0;
 			lp = cp;
 			printf("\n");
 			continue;
 		default:
 			if (len + 1 >= size || c < ' ') {
-				printf("\007");
+				printf("\b");
 				continue;
 			}
 			printf("%c", c);
