@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.8 1995/06/13 07:58:22 mycroft Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.9 1995/08/16 00:38:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -853,18 +853,12 @@ tp_detach(tpcb)
 	 * to one (that is, we need the TP_PERF_MEASs around the following section 
 	 * of code, not the IFPERFs)
 	 */
-	if (tpcb->tp_p_mbuf) {
-		register struct mbuf *m = tpcb->tp_p_mbuf;
-		struct mbuf *n;
+	if (tpcb->tp_p_meas) {
 		IFDEBUG(D_PERF_MEAS)
 			printf("freeing tp_p_meas 0x%x  ", tpcb->tp_p_meas);
 		ENDDEBUG
-		do {
-		    MFREE(m, n);
-		    m = n;
-		} while (n);
+		free(tpcb->tp_p_meas, M_PCB);
 		tpcb->tp_p_meas = 0;
-		tpcb->tp_p_mbuf = 0;
 	}
 #endif /* TP_PERF_MEAS */
 
