@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.5 2002/08/26 10:23:56 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.6 2002/08/29 16:04:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -91,6 +91,7 @@
 	getcon	sr, r0				/* Fetch status register */   ;\
 	st.q	pcb, PCB_CTX_PC, r18		/* Save return address */     ;\
 	st.q	pcb, PCB_CTX_SP, r15		/* Save stack pointer */      ;\
+	st.q	pcb, PCB_CTX_FP, r14		/* Save frame pointer */      ;\
 	st.q	pcb, PCB_CTX_SR, r0		/* Save status register */    ;\
 	st.q	pcb, PCB_CTX_REGS_R10, r10	/* Save callee-saved regs */  ;\
 	st.q	pcb, PCB_CTX_REGS_R11, r11				      ;\
@@ -161,6 +162,7 @@
 	ptabs/u	r0, tr7							      ;\
 	ld.q	pcb, PCB_CTX_PC, r18		/* Restore return address */  ;\
 	ld.q	pcb, PCB_CTX_SP, r15		/* Restore stack pointer */   ;\
+	ld.q	pcb, PCB_CTX_FP, r14		/* Restore frame pointer */   ;\
 	ld.q	pcb, PCB_CTX_REGS_R10, r10	/* Restore callee-saved regs*/;\
 	ld.q	pcb, PCB_CTX_REGS_R11, r11				      ;\
 	ld.q	pcb, PCB_CTX_REGS_R12, r12				      ;\
