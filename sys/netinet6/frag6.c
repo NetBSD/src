@@ -1,3 +1,5 @@
+/*	$NetBSD: frag6.c,v 1.2.2.3 1999/08/02 22:36:03 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -44,7 +46,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
@@ -535,7 +536,7 @@ void
 frag6_slowtimo()
 {
 	struct ip6q *q6;
-	int s = splnet();
+	int s = splsoftnet();
 #if 0
 	extern struct	route_in6 ip6_forward_rt;
 #endif

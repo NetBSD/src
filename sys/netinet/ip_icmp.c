@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.36.4.1 1999/07/01 23:47:01 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.36.4.2 1999/08/02 22:34:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,8 @@
  *
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

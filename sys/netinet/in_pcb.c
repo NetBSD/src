@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.58.4.1 1999/07/01 23:47:00 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.58.4.2 1999/08/02 22:34:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,8 @@
  *
  *	@(#)in_pcb.c	8.4 (Berkeley) 5/24/95
  */
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

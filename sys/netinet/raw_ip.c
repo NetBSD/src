@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.42.4.1 1999/07/01 23:47:02 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.42.4.2 1999/08/02 22:34:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +64,7 @@
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
 
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
@@ -84,6 +85,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_mroute.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 
@@ -93,6 +95,8 @@
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
 
+extern u_char ip_protox[];
+extern struct  protosw inetsw[];
 struct inpcbtable rawcbtable;
 
 int	 rip_bind __P((struct inpcb *, struct mbuf *));
@@ -202,9 +206,12 @@ rip_input(m, va_alist)
 		} else
 			sorwakeup(last->inp_socket);
 	} else {
-		m_freem(m);
-		ipstat.ips_noproto++;
-		ipstat.ips_delivered--;
+		if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,0,0);
+			ipstat.ips_noproto++;
+			ipstat.ips_delivered--;
+		} else
+			m_freem(m);
 	}
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.43.8.1 1999/07/01 23:47:04 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.43.8.2 1999/08/02 22:35:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -493,11 +493,11 @@ tcp_timers(tp, timer)
 				 * length to get a 4.2 host to respond.
 				 */
 				(void)tcp_respond(tp, tp->t_template,
-				    (struct mbuf *)NULL, tp->rcv_nxt - 1,
+				    (struct mbuf *)NULL, NULL, tp->rcv_nxt - 1,
 				    tp->snd_una - 1, 0);
 			} else {
 				(void)tcp_respond(tp, tp->t_template,
-				    (struct mbuf *)NULL, tp->rcv_nxt,
+				    (struct mbuf *)NULL, NULL, tp->rcv_nxt,
 				    tp->snd_una - 1, 0);
 			}
 			TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);

@@ -1,3 +1,5 @@
+/*	$NetBSD: icmp6.c,v 1.2.2.3 1999/08/02 22:36:03 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -64,6 +66,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -84,7 +89,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
@@ -96,6 +100,7 @@
 #endif
 #include <netinet6/nd6.h>
 #include <netinet6/in6_ifattach.h>
+#include <netinet6/ip6protosw.h>
 
 #ifdef IPSEC
 #include <netkey/key.h>
@@ -104,7 +109,7 @@
 
 #include "faith.h"
 
-extern struct protosw inet6sw[];
+extern struct ip6protosw inet6sw[];
 extern u_char ip6_protox[];
 
 struct icmp6stat icmp6stat;
@@ -115,6 +120,11 @@ extern struct in6pcb rawin6pcb;
 extern struct inpcbhead ripcb;
 #endif
 extern u_int icmp6errratelim;
+#ifdef __NetBSD__
+static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
+extern int pmtu_expire;
+#endif
+
 static int icmp6_rip6_input __P((struct mbuf **, int));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
 static struct mbuf * ni6_input __P((struct mbuf *, int));
@@ -122,6 +132,10 @@ static int ni6_addrs __P((struct icmp6_nodeinfo *, struct mbuf *,
 			  struct ifnet **));
 static int ni6_store_addrs __P((struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
 				struct ifnet *, int));
+#ifdef __NetBSD__
+static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
+static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
+#endif
 
 #ifdef COMPAT_RFC1885
 static struct route_in6 icmp6_reflect_rt;
@@ -132,6 +146,9 @@ void
 icmp6_init()
 {
 	mld6_init();
+#ifdef __NetBSD__
+	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
+#endif
 }
 
 /*
@@ -271,7 +288,7 @@ icmp6_error(m, type, code, param)
 	icmp6 = (struct icmp6_hdr *)(nip6 + 1);
 	icmp6->icmp6_type = type;
 	icmp6->icmp6_code = code;
-	icmp6->icmp6_pptr = htonl((u_long)param);
+	icmp6->icmp6_pptr = htonl((u_int32_t)param);
 
 	icmp6stat.icp6s_outhist[type]++;
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /*header order: IPv6 - ICMPv6*/
@@ -343,7 +360,7 @@ icmp6_input(mp, offp, proto)
 #endif
 
 #ifdef IPSEC
-	/*drop it if it does not match the default policy */
+	/* drop it if it does not match the default policy */
 	if (ipsec6_in_reject(m, NULL)) {
 		ipsecstat.in_polvio++;
 		goto freeit;
@@ -391,17 +408,25 @@ icmp6_input(mp, offp, proto)
 		sin6.sin6_family = PF_INET6;
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_addr = ((struct ip6_hdr *)(icmp6 + 1))->ip6_dst;
-		rt = rtalloc1((struct sockaddr *)&sin6, 0
+#ifdef __NetBSD__
+		rt = rtalloc1((struct sockaddr *)&sin6, 1);	/*clone*/
+		if (!rt || (rt->rt_flags & RTF_HOST) == 0) {
+			if (rt)
+				RTFREE(rt);
+			rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
+		}
+#endif
 #ifdef __FreeBSD__
-			      , RTF_CLONING | RTF_PRCLONING
+		rt = rtalloc1((struct sockaddr *)&sin6, 0,
+			RTF_CLONING | RTF_PRCLONING);
 #endif /*__FreeBSD__*/
-			      );
 #ifdef __bsdi__
 		bcopy(&sin6, &ro6.ro_dst, sizeof(struct sockaddr_in6));
 		ro6.ro_rt = 0;
 		rtcalloc((struct route *)&ro6);
 		rt = ro6.ro_rt;
 #endif /*__bsdi__*/
+
 		if (rt && (rt->rt_flags & RTF_HOST)
 		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) {
 			if (mtu < IPV6_MMTU) {
@@ -494,9 +519,11 @@ icmp6_input(mp, offp, proto)
 		}
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
-		icmp6stat.icp6s_reflect++;
-		icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
-		icmp6_reflect(n, noff);
+		if (n) {
+			icmp6stat.icp6s_reflect++;
+			icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
+			icmp6_reflect(n, noff);
+		}
 		break;
 
 	case ICMP6_ECHO_REPLY:
@@ -1154,13 +1181,15 @@ icmp6_reflect(m, off)
 		/* sanity checks */
 		if (off < sizeof(struct ip6_hdr)) {
 			printf("sanity fail: off=%x, sizeof(ip6)=%x in %s:%d\n",
-			       off, sizeof(struct ip6_hdr), __FILE__, __LINE__);
+			       (unsigned int)off,
+			       (unsigned int)sizeof(struct ip6_hdr),
+			       __FILE__, __LINE__);
 			goto bad;
 		}
 		siz = off - sizeof(struct ip6_hdr);
 		if (plen < siz) {
 			printf("sanity fail: siz=%x, payloadlen=%x in %s:%d\n",
-			       siz, plen, __FILE__, __LINE__);
+			       (unsigned int)siz, plen, __FILE__, __LINE__);
 			goto bad;
 		}
 		IP6_EXTHDR_CHECK(m, 0, off, /*nothing*/);
@@ -1216,11 +1245,11 @@ icmp6_reflect(m, off)
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
 		sin6->sin6_addr = ip6->ip6_dst;
 
-#ifdef __NetBSD__
-		rtalloc((struct route *)&icmp6_reflect_rt.ro_rt);
-#else
+#ifdef __FreeBSD__
 		rtalloc_ign((struct route *)&icmp6_reflect_rt.ro_rt,
 			    RTF_PRCLONING);
+#else
+		rtalloc((struct route *)&icmp6_reflect_rt.ro_rt);
 #endif
 	}
 
@@ -1441,7 +1470,8 @@ icmp6_redirect_input(m, off)
 	}
 
 	/* RFC 2461 8.3 */
-	nd6_cache_lladdr(ifp, &redtgt6, lladdr, lladdrlen, ND_REDIRECT);
+	nd6_cache_lladdr(ifp, &redtgt6, lladdr, lladdrlen, ND_REDIRECT,
+			 is_onlink ? ND_REDIRECT_ONLINK : ND_REDIRECT_ROUTER);
 
 	if (!is_onlink) {	/* better router case. perform rtredirect. */
 		/* perform rtredirect */
@@ -1508,7 +1538,16 @@ icmp6_redirect_output(m0, rt)
 	/* sanity check */
 	if (!m0 || !rt || !(rt->rt_flags & RTF_UP) || !(ifp = rt->rt_ifp))
 		goto fail;
+
+	/*
+	 * Address check:
+	 *  the source address must identify a neighbor, and
+	 *  the destination address must not be a multicast address
+	 *  [RFC 2461, sec 8.2]
+	 */
 	sip6 = mtod(m0, struct ip6_hdr *);
+	if (nd6_is_addr_neighbor(&sip6->ip6_src, ifp) == 0)
+		goto fail;
 	if (IN6_IS_ADDR_MULTICAST(&sip6->ip6_dst))
 		goto fail;	/* what should we do here? */
 
@@ -1846,6 +1885,64 @@ icmp6_ratelimit(dst, type, code)
 	/* it is okay to send this */
 	return 0;
 }
+
+#ifdef __NetBSD__
+static struct rtentry *
+icmp6_mtudisc_clone(dst)
+	struct sockaddr *dst;
+{
+	struct rtentry *rt;
+	int    error;
+
+	rt = rtalloc1(dst, 1);
+	if (rt == 0)
+		return NULL;
+    
+	/* If we didn't get a host route, allocate one */
+	if ((rt->rt_flags & RTF_HOST) == 0) {
+		struct rtentry *nrt;
+
+		error = rtrequest((int) RTM_ADD, dst, 
+		    (struct sockaddr *) rt->rt_gateway,
+		    (struct sockaddr *) 0, 
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		if (error) {
+			rtfree(rt);
+			rtfree(nrt);
+			return NULL;
+		}
+		nrt->rt_rmx = rt->rt_rmx;
+		rtfree(rt);
+		rt = nrt;
+	}
+	error = rt_timer_add(rt, icmp6_mtudisc_timeout,
+			icmp6_mtudisc_timeout_q);
+	if (error) {
+		rtfree(rt);
+		return NULL;
+	}
+
+	return rt;	/* caller need to call rtfree() */
+}
+
+static void
+icmp6_mtudisc_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp6_mtudisc_timeout: bad route to timeout");
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	    (RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+	} else {
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+			rt->rt_rmx.rmx_mtu = 0;
+		}
+	}
+}
+#endif /*__NetBSD__*/
 
 #ifdef __bsdi__
 void

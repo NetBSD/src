@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.30.4.2 1999/07/01 23:44:13 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.30.4.3 1999/08/02 22:30:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -312,7 +312,7 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	}
 
 	/* detect the root vnode (and aliases) */
-	vflag = 0;
+	vflag = VLAYER;
 	if ((uppervp == um->um_uppervp) &&
 	    ((lowervp == NULLVP) || lowervp == um->um_lowervp)) {
 		if (lowervp == NULLVP) {
@@ -486,6 +486,7 @@ loop:
 		M_TEMP, M_WAITOK);
 
 	(*vpp)->v_flag |= vflag;
+	(*vpp)->v_vnlock = NULL;	/* Make upper layers call VOP_LOCK */
 	if (uppervp)
 		(*vpp)->v_type = uppervp->v_type;
 	else
@@ -778,6 +779,9 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
  * (cnp) is the componentname to be created.
  * (vpp) is the returned newly created shadow directory, which
  * is returned locked.
+ *
+ * N.B. We still attempt to create shadow directories even if the union
+ * is mounted read-only, which is a little nonintuitive.
  */
 int
 union_mkshadow(um, dvp, cnp, vpp)

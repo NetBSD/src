@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.82.2.2.2.2 1999/07/01 23:47:01 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.82.2.2.2.3 1999/08/02 22:34:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,7 @@
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
@@ -140,10 +141,6 @@
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#include <netinet6/ah.h>
-#ifdef IPSEC_ESP
-#include <netinet6/esp.h>
-#endif
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif
@@ -1638,14 +1635,14 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (error);
 	    }
 #endif
-#if NGIF > 0
-	case IPCTL_GIF_TTL:
-		return(sysctl_int(oldp, oldlenp, newp, newlen,
-				  &gif_ttl));
-#endif
 	case IPCTL_HOSTZEROBROADCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &hostzeroisbroadcast));
+#if NGIF > 0
+	case IPCTL_GIF_TTL:
+		return(sysctl_int(oldp, oldlenp, newp, newlen,
+				  &ip_gif_ttl));
+#endif
 
 	default:
 		return (EOPNOTSUPP);

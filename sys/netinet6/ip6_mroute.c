@@ -1,3 +1,5 @@
+/*	$NetBSD: ip6_mroute.c,v 1.2.2.3 1999/08/02 22:36:05 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
@@ -203,7 +205,8 @@ static int pim6;
 	      (a).tv_sec <= (b).tv_sec) || (a).tv_sec < (b).tv_sec)
 
 #ifdef UPCALL_TIMING
-u_long upcall_data[51];
+#define UPCALL_MAX	50
+u_long upcall_data[UPCALL_MAX + 1];
 static void collate();
 #endif /* UPCALL_TIMING */
 
@@ -296,7 +299,7 @@ get_sg_cnt(req)
 	register struct mf6c *rt;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	MF6CFIND(req->src.sin6_addr, req->grp.sin6_addr, rt);
 	splx(s);
 	if (rt != NULL) {
@@ -421,7 +424,7 @@ ip6_mrouter_done()
 	struct rtdetq *rte;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	/*
 	 * For each phyint in use, disable promiscuous reception of all IPv6
@@ -554,14 +557,14 @@ add_m6if(mifcp)
 		 */
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
-		s = splnet();
+		s = splsoftnet();
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
 		splx(s);
 		if (error)
 			return error;
 	}
 
-	s = splnet();
+	s = splsoftnet();
 	mifp->m6_flags     = mifcp->mif6c_flags;
 	mifp->m6_ifp       = ifp;
 #ifdef notyet
@@ -608,7 +611,7 @@ del_m6if(mifip)
 	if (mifp->m6_ifp == NULL)
 		return EINVAL;
 
-	s = splnet();
+	s = splsoftnet();
 
 	if (!(mifp->m6_flags & MIFF_REGISTER)) {
 		/*
@@ -669,7 +672,7 @@ add_m6fc(mfccp)
 			    mfccp->mf6cc_parent);
 #endif
 
-		s = splnet();
+		s = splsoftnet();
 		rt->mf6c_parent = mfccp->mf6cc_parent;
 		rt->mf6c_ifset = mfccp->mf6cc_ifset;
 		splx(s);
@@ -679,7 +682,7 @@ add_m6fc(mfccp)
 	/* 
 	 * Find the entry for which the upcall was made and update
 	 */
-	s = splnet();
+	s = splsoftnet();
 	hash = MF6CHASH(mfccp->mf6cc_origin.sin6_addr,
 			mfccp->mf6cc_mcastgrp.sin6_addr);
 	for (rt = mf6ctable[hash], nstl = 0; rt; rt = rt->mf6c_next) {
@@ -691,11 +694,11 @@ add_m6fc(mfccp)
 
 			if (nstl++)
 				log(LOG_ERR,
-				    "add_m6fc: %s o %s g %s p %x dbx %x\n",
+				    "add_m6fc: %s o %s g %s p %x dbx %p\n",
 				    "multiple kernel entries",
 				    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 				    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),
-				    mfccp->mf6cc_parent, (u_int)rt->mf6c_stall);
+				    mfccp->mf6cc_parent, rt->mf6c_stall);
 
 #ifdef MRT6DEBUG
 			if (mrt6debug & DEBUG_MFC)
@@ -814,8 +817,8 @@ collate(t)
 		TV_DELTA(tp, *t, delta);
 	
 		d = delta >> 10;
-		if (d > 50)
-			d = 50;
+		if (d > UPCALL_MAX)
+			d = UPCALL_MAX;
 	
 		++upcall_data[d];
 	}
@@ -847,7 +850,7 @@ del_m6fc(mfccp)
 		    ip6_sprintf(&mcastgrp.sin6_addr));
 #endif
 
-	s = splnet();
+	s = splsoftnet();
 
 	nptr = &mf6ctable[hash];
 	while ((rt = *nptr) != NULL) {
@@ -920,13 +923,6 @@ ip6_mforward(ip6, ifp, m)
 		    ip6_sprintf(&ip6->ip6_src), ip6_sprintf(&ip6->ip6_dst),
 		    ifp->if_index);
 #endif
-	/*
-	 * If the packet is loop-backed, it should be for local listeners
-	 * and need not to be forwarded any more.
-	 * XXX: M_LOOP is an ad-hoc hack...
-	 */
-	if (m->m_flags & M_LOOP)
-		return 0;
 
 	/*
 	 * Don't forward a packet with Hop limit of zero or one,
@@ -940,7 +936,7 @@ ip6_mforward(ip6, ifp, m)
 	/*
 	 * Determine forwarding mifs from the forwarding cache table
 	 */
-	s = splnet();
+	s = splsoftnet();
 	MF6CFIND(ip6->ip6_src, ip6->ip6_dst, rt);
 
 	/* Entry exists, so forward if necessary */
@@ -1125,7 +1121,7 @@ expire_upcalls(unused)
 	int i;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	for (i = 0; i < MF6CTBLSIZ; i++) {
 		if (nexpire[i] == 0)
 			continue;
@@ -1182,7 +1178,7 @@ ip6_mdq(m, ifp, rt)
 	register struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	register mifi_t mifi, iif;
 	register struct mif6 *mifp;
-	register u_long plen = m->m_pkthdr.len;
+	register int plen = m->m_pkthdr.len;
 
 /*
  * Macro to send packet on mif.  Since RSVP packets don't get counted on
@@ -1221,7 +1217,12 @@ ip6_mdq(m, ifp, rt)
 		if(mifi < nummifs) /* have to make sure this is a valid mif */
 			if(mif6table[mifi].m6_ifp)
 
-				if (pim6) {
+				if (pim6 && (m->m_flags & M_LOOP) == 0) {
+					/*
+					 * Check the M_LOOP flag to avoid an
+					 * unnecessary PIM assert.
+					 * XXX: M_LOOP is an ad-hoc hack...
+					 */
 					static struct sockaddr_in6 sin6 =
 					{ sizeof(sin6), AF_INET6 };
 
@@ -1299,7 +1300,7 @@ phyint_send(ip6, mifp, m)
 	register struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
 	int error = 0;
-	int s = splnet();
+	int s = splsoftnet();
 	static struct route_in6 ro6;
 	struct	in6_multi *in6m;
 
@@ -1569,14 +1570,14 @@ pim6_input(mp, offp, proto)
 	if (pim->pim_type == PIM_REGISTER) {
 		/*
 		 * since this is a REGISTER, we'll make a copy of the register
-		 * headers ip6+pim+u_long+encap_ip6, to be passed up to the
+		 * headers ip6+pim+u_int32_t+encap_ip6, to be passed up to the
 		 * routing daemon.
 		 */
 		static struct sockaddr_in6 dst = { sizeof(dst), AF_INET6 };
 
 		struct mbuf *mcp;
 		struct ip6_hdr *eip6;
-		u_long *reghdr;
+		u_int32_t *reghdr;
 		int rc;
 	
 		++pim6stat.pim6s_rcv_registers;
@@ -1592,7 +1593,7 @@ pim6_input(mp, offp, proto)
 			return(IPPROTO_DONE);
 		}
 	
-		reghdr = (u_long *)(pim + 1);
+		reghdr = (u_int32_t *)(pim + 1);
 	
 		if ((ntohl(*reghdr) & PIM_NULL_REGISTER))
 			goto pim6_input_to_daemon;

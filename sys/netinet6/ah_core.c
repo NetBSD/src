@@ -1,3 +1,5 @@
+/*	$NetBSD: ah_core.c,v 1.2.2.3 1999/08/02 22:36:02 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -33,6 +35,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 /* Some of operating systems have standard crypto checksum library */
@@ -66,7 +71,6 @@
 #include <netinet/in_pcb.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
@@ -96,8 +100,10 @@
 
 #define	HMACSIZE	16
 
+#ifdef INET6
 #define ZEROBUFLEN	256
 static char zerobuf[ZEROBUFLEN];
+#endif
 
 static int ah_sumsiz_1216 __P((struct secas *));
 static int ah_sumsiz_zero __P((struct secas *));
@@ -868,7 +874,11 @@ ah4_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	s = splnet();	/*XXX crypt algorithms need splnet() */
+#ifdef __NetBSD__
+	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
+#else
+	s = splnet();	/*XXX crypt algorithms need splsoftnet() */
+#endif
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/
@@ -1082,7 +1092,11 @@ ah6_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	s = splnet();	/*XXX crypt algorithms need splnet() */
+#ifdef __NetBSD__
+	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
+#else
+	s = splnet();	/*XXX crypt algorithms need splsoftnet() */
+#endif
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/

@@ -1,3 +1,5 @@
+$NetBSD: IMPLEMENTATION,v 1.1.2.3 1999/08/02 22:36:02 thorpej Exp $
+
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
 # NetBSD-current (especially tcp part).  Check sys/netinet6/TODO as well.
@@ -6,7 +8,7 @@
 
 			KAME Project
 			http://www.kame.net/
-			$Date: 1999/07/01 23:48:25 $
+			$Date: 1999/08/02 22:36:02 $
 
 1. IPv6
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ah_output.c,v 1.2.2.3 1999/08/02 22:36:02 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -61,7 +63,6 @@
 #include <netinet/in_pcb.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ipsec.c,v 1.2.2.3 1999/08/02 22:36:06 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -32,7 +34,10 @@
  */
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-# include "opt_inet.h"
+#include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -69,7 +74,6 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
@@ -1529,7 +1533,7 @@ ipsec4_hdrsiz(m, inp)
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec4_hdrsiz call free SP:%p\n", sp));
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec4_hdrsiz: size:%d.\n", size));
+		printf("ipsec4_hdrsiz: size:%lu.\n", (unsigned long)size));
 	key_freesp(sp);
 
 	return size;
@@ -1567,7 +1571,7 @@ ipsec6_hdrsiz(m, in6p)
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec6_hdrsiz call free SP:%p\n", sp));
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec6_hdrsiz: size:%d.\n", size));
+		printf("ipsec6_hdrsiz: size:%lu.\n", (unsigned long)size));
 	key_freesp(sp);
 
 	return size;
@@ -2085,6 +2089,8 @@ ipsec4_output(state, sp, flags)
 
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 
+#if 0	/* give up to check restriction of transport mode */
+	/* XXX but should be checked somewhere */
 		/*
 		 * some of the IPsec operation must be performed only in
 		 * originating case.
@@ -2092,6 +2098,7 @@ ipsec4_output(state, sp, flags)
 		if (isr->mode == IPSEC_MODE_TRANSPORT
 		 && (flags & IP_FORWARDING))
 			continue;
+#endif
 
 		if ((error = key_checkrequest(isr)) != 0) {
 			/*
@@ -2126,9 +2133,13 @@ ipsec4_output(state, sp, flags)
 
 		/*
 		 * There may be the case that SA status will be changed when
-		 * we are refering to one. So calling splnet().
+		 * we are refering to one. So calling splsoftnet().
 		 */
+#ifdef __NetBSD__
+		s = splsoftnet();
+#else
 		s = splnet();
+#endif
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2164,6 +2175,7 @@ ipsec4_output(state, sp, flags)
 			}
 
 			ip = mtod(state->m, struct ip *);
+#if 0 /* XXX */
 			if (!key_checktunnelsanity(isr->sa, AF_INET,
 					(caddr_t)&ip->ip_src,
 					(caddr_t)&ip->ip_dst)) {
@@ -2177,6 +2189,7 @@ ipsec4_output(state, sp, flags)
 				error = EINVAL;
 				goto bad;
 			}
+#endif
 
 			state->m = ipsec4_splithdr(state->m);
 			if (!state->m) {
@@ -2470,9 +2483,13 @@ ipsec6_output_tunnel(state, sp, flags)
 
 		/*
 		 * There may be the case that SA status will be changed when
-		 * we are refering to one. So calling splnet().
+		 * we are refering to one. So calling splsoftnet().
 		 */
+#ifdef __NetBSD__
+		s = splsoftnet();
+#else
 		s = splnet();
+#endif
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2508,6 +2525,7 @@ ipsec6_output_tunnel(state, sp, flags)
 			}
 
 			ip6 = mtod(state->m, struct ip6_hdr *);
+#if 0 /* XXX */
 			if (!key_checktunnelsanity(isr->sa, AF_INET6,
 					(caddr_t)&ip6->ip6_src,
 					(caddr_t)&ip6->ip6_dst)) {
@@ -2519,6 +2537,7 @@ ipsec6_output_tunnel(state, sp, flags)
 				error = EINVAL;
 				goto bad;
 			}
+#endif
 
 			state->m = ipsec6_splithdr(state->m);
 			if (!state->m) {
@@ -3072,19 +3091,19 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			}
 		}
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_def_policy.policy);
+				  &ip4_def_policy.policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_esp_trans_deflev);
+				  &ip4_esp_trans_deflev);
 	case IPSECCTL_DEF_ESP_NETLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_esp_net_deflev);
+				  &ip4_esp_net_deflev);
 	case IPSECCTL_DEF_AH_TRANSLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_ah_trans_deflev);
+				  &ip4_ah_trans_deflev);
 	case IPSECCTL_DEF_AH_NETLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_ah_net_deflev);
+				  &ip4_ah_net_deflev);
 	case IPSECCTL_INBOUND_CALL_IKE:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_inbound_call_ike);

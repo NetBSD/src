@@ -1,3 +1,5 @@
+/*	$NetBSD: ipcomp_core.c,v 1.2.2.3 1999/08/02 22:36:05 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.

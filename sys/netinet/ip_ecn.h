@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_ecn.h,v 1.2.2.3 1999/08/02 22:34:58 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
@@ -26,12 +28,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ip_ecn.h,v 1.2.2.2 1999/07/01 23:47:01 thorpej Exp $
+ * KAME Id: ip_ecn.h,v 1.1.4.1 1999/05/07 15:59:16 itojun Exp
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.
  * http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
  */
+
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
 
 #define ECN_ALLOWED	1	/* ECN allowed */
 #define ECN_FORBIDDEN	0	/* ECN forbidden */

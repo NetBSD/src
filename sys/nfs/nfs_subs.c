@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.69 1999/03/24 05:51:28 mrg Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.69.4.1 1999/08/02 22:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1573,13 +1573,15 @@ nfs_loadattrcache(vpp, fp, vaper)
 				 * Since the nfsnode does not have a lock, its
 				 * vnode lock has to be carried over.
 				 */
-				nvp->v_vnlock = vp->v_vnlock;
-				vp->v_vnlock = NULL;
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				vp->v_op = spec_vnodeop_p;
-				vrele(vp);
+				vput(vp);
 				vgone(vp);
+				/*
+				 * XXX When nfs starts locking, we need to
+				 * lock the new node here.
+				 */
 				/*
 				 * Reinitialize aliased node.
 				 */

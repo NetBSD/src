@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.47.4.1 1999/07/01 23:47:04 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.47.4.2 1999/08/02 22:35:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,9 @@
  *
  *	@(#)udp_usrreq.c	8.6 (Berkeley) 5/23/95
  */
+
+#include "opt_ipsec.h"
+
 #include "ipkdb.h"
 
 /* XXX MAPPED_ADDR_ENABLED should be revisited */
@@ -280,16 +283,17 @@ udp_input(m, va_alist)
 				} else
 #endif /*IPSEC*/
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-					m_adj(m, iphlen);
 					if (last->inp_flags & INP_CONTROLOPTS
 					    || last->inp_socket->so_options &
 					       SO_TIMESTAMP) {
 						ip_savecontrol(last, &opts,
 						    ip, n);
 					}
+					m_adj(n, iphlen);
 					sa = (struct sockaddr *)&udpsrc;
 #ifdef MAPPED_ADDR_ENABLED
-					if (last->inp_socket->so_proto->pr_domain->dom_family == AF_INET6) {
+					if (last->inp_socket->so_proto->
+					    pr_domain->dom_family == AF_INET6) {
 						in6_sin_2_v4mapsin6(&udpsrc,
 								    &mapped);
 						sa = (struct sockaddr *)&mapped;
@@ -340,6 +344,9 @@ udp_input(m, va_alist)
 		if (last->inp_flags & INP_CONTROLOPTS ||
 		    last->inp_socket->so_options & SO_TIMESTAMP)
 			ip_savecontrol(last, &opts, ip, m);
+		m->m_len -= iphlen;
+		m->m_pkthdr.len -= iphlen;
+		m->m_data += iphlen;
 		sa = (struct sockaddr *)&udpsrc;
 #ifdef MAPPED_ADDR_ENABLED
 		if (last->inp_socket->so_proto->pr_domain->dom_family ==
