@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.74 2003/03/20 11:09:54 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.75 2003/03/24 15:25:56 atatat Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -652,7 +652,7 @@ Responsible:
 Notes:
 
 Package:	sendmail
-Version:	8.11.6
+Version:	8.12.8
 Current Vers:	8.12.8
 Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
@@ -661,7 +661,6 @@ Responsible:	atatat@netbsd.org
 Notes:
 use gnu/dist/sendmail/sendmail2netbsd to strip off RCS tags.
 local changes:
-- DaemonPortOptions "O" modifier (will be in 8.12.x)
 - do not reverse-resolve link-local addresses
 - syslog args change
 
