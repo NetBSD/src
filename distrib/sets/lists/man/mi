@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.455 2002/03/22 10:11:11 martti Exp $
+# $NetBSD: mi,v 1.456 2002/03/23 23:39:57 shin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -2973,7 +2973,7 @@
 ./usr/share/man/man8/eeprom.8			man-sysutil-man
 ./usr/share/man/man8/envstat.8			man-sysutil-man
 ./usr/share/man/man8/error.8			man-postfix-man
-./usr/share/man/cat8/etcupdate.8		man-sysutil-man
+./usr/share/man/man8/etcupdate.8		man-sysutil-man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/makedev.8		man-sysutil-man
