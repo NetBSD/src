@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/01/12 19:11:37 tls Exp $
+#	$NetBSD: Makefile,v 1.4 1997/01/16 21:17:53 perry Exp $
 CFLAGS+=	-DHAVE_CONFIG_H -I.
 
 PROG=	ksh
@@ -12,12 +12,12 @@ beforedepend:	emacs.out siglist.out
 
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
-	$(.CURDIR)/siglist.sh "$(CPP) $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > tmpsiglist.out
+	sh $(.CURDIR)/siglist.sh "$(CPP) $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > tmpsiglist.out
 	mv tmpsiglist.out siglist.out
 
 # two steps to prevent the creation of a bogus emacs.out
 emacs.out: emacs.c
-	$(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > tmpemacs.out
+	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > tmpemacs.out
 	mv tmpemacs.out emacs.out
 
 emacs.o: emacs.out
