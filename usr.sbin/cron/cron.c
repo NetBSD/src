@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.6 1998/01/31 14:40:19 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.7 1998/02/04 21:51:44 thorpej Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.6 1998/01/31 14:40:19 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.7 1998/02/04 21:51:44 thorpej Exp $");
 #endif
 #endif
 
@@ -222,7 +222,7 @@ cron_sleep() {
 	do {
 		seconds_to_wait = (int) (TargetTime - time((time_t*)0));
 		Debug(DSCH, ("[%d] TargetTime=%ld, sec-to-wait=%d\n",
-			getpid(), TargetTime, seconds_to_wait))
+			getpid(), (long)TargetTime, seconds_to_wait))
 
 		/* if we intend to sleep, this means that it's finally
 		 * time to empty the job queue (execute it).
