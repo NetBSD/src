@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.100 1998/02/10 03:52:05 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.101 1998/02/11 00:05:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 1998/02/10 03:52:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 1998/02/11 00:05:33 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,9 +308,11 @@ alpha_init(pfn, ptb, bim, bip)
 	vm_set_page_size();
 
 	/*
-	 * Find the beginning and end of the kernel.
+	 * Find the beginning and end of the kernel (and leave a
+	 * bit of space before the beginning for the bootstrap
+	 * stack).
 	 */
-	kernstart = trunc_page(kernel_text);
+	kernstart = trunc_page(kernel_text) - 2 * PAGE_SIZE;
 #ifdef DDB
 	if (bootinfo_valid) {
 		/*
