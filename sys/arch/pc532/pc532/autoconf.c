@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2001/11/29 08:41:00 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2002/09/26 20:32:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@ device_register(dev, aux)
 	static int found;
 	static struct device *booted_controller;
 	struct device *parent = dev->dv_parent;
-	struct cfdriver *cd = dev->dv_cfdata->cf_driver;
+	const char *name = dev->dv_cfdata->cf_driver->cd_name;
 
 	if (found)
 		return;
@@ -119,7 +119,7 @@ device_register(dev, aux)
 	/*
 	 * Check for NCR SCSI controller.
 	 */
-	if (strcmp(cd->cd_name, "ncr") == 0) {
+	if (strcmp(name, "ncr") == 0) {
 		booted_controller = dev;
 		return;
 	}
@@ -130,8 +130,8 @@ device_register(dev, aux)
 	 * If we found the boot controller, if check disk/cdrom device
 	 * on that controller matches.
 	 */
-	if (booted_controller && (strcmp(cd->cd_name, "sd") == 0 ||
-	    strcmp(cd->cd_name, "cd") == 0)) {
+	if (booted_controller && (strcmp(name, "sd") == 0 ||
+	    strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != booted_controller)
