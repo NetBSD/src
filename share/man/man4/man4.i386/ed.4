@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ed.4,v 1.1 1994/02/20 09:41:43 cgd Exp $
+.\"	$Id: ed.4,v 1.1.2.1 1994/10/17 18:31:23 cgd Exp $
 .\"
 .Dd
 .Dt ED 4 i386
@@ -36,9 +36,9 @@
 .Nm ed
 .Nd Ethernet driver for DP8390- and WD83C690-based ethernet boards
 .Sh SYNOPSIS
-.Cd "device ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr"
-.Cd "device ed1 at isa? port 0x250 net irq 9 iomem 0xd8000 vector edintr"
-.Cd "device ed2 at isa? port 0x300 net irq 10 iomem 0xcc000 vector edint"
+.Cd "device ed0 at isa? port 0x280 irq 9 iomem 0xd0000"
+.Cd "device ed1 at isa? port 0x250 irq 9 iomem 0xd8000"
+.Cd "device ed2 at isa? port 0x300 irq 10 iomem 0xcc000"
 .Sh DESCRIPTION
 The
 .Nm
