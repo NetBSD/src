@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.4 1995/06/14 15:19:03 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.9 (Berkeley) 6/1/90
- *	$Id: config.h,v 1.3 1994/03/05 00:34:40 cgd Exp $
  */
 
 #define	DEFSHELL	1			/* Bourne shell */

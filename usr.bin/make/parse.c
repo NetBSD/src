@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.c,v 1.15 1995/06/14 15:19:48 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -37,8 +39,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.14 1995/05/15 13:10:10 ws Exp $";
+#if 0
+static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
+#else
+static char rcsid[] = "$NetBSD: parse.c,v 1.15 1995/06/14 15:19:48 christos Exp $";
+#endif
 #endif /* not lint */
 
 /*-

@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.3 1995/06/14 15:19:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:11:58 mycroft Exp $
+ *	$Id: pathnames.h,v 1.3 1995/06/14 15:19:52 christos Exp $
  */
 
 #define	_PATH_OBJDIR		"obj"

@@ -1,3 +1,5 @@
+/*	$NetBSD: buf.h,v 1.5 1995/06/14 15:18:53 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)buf.h	5.4 (Berkeley) 12/28/90
- *	$Id: buf.h,v 1.4 1994/06/06 22:45:20 jtc Exp $
  */
 
 /*-

@@ -1,3 +1,5 @@
+/*	$NetBSD: suff.c,v 1.8 1995/06/14 15:19:59 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -37,8 +39,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: suff.c,v 1.7 1995/02/04 23:44:43 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
+#else
+static char rcsid[] = "$NetBSD: suff.c,v 1.8 1995/06/14 15:19:59 christos Exp $";
+#endif
 #endif /* not lint */
 
 /*-

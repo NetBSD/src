@@ -1,3 +1,5 @@
+/*	$NetBSD: lstInt.h,v 1.4 1995/06/14 15:21:23 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lstInt.h	5.4 (Berkeley) 12/28/90
- *	$Id: lstInt.h,v 1.3 1994/03/05 00:35:48 cgd Exp $
  */
 
 /*-

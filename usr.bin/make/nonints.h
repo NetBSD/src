@@ -1,3 +1,5 @@
+/*	$NetBSD: nonints.h,v 1.6 1995/06/14 15:19:45 christos Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nonints.h	5.6 (Berkeley) 4/18/91
- *	$Id: nonints.h,v 1.5 1994/06/16 18:50:16 jtc Exp $
  */
 
 /* arch.c */

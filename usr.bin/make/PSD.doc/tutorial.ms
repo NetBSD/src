@@ -1,3 +1,4 @@
+.\"	$NetBSD: tutorial.ms,v 1.2 1995/06/14 15:20:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
 .\" Copyright (c) 1988, 1989, 1993
@@ -42,8 +43,6 @@
 .\" into a table-of-contents, properly indented, etc. If the first argument
 .\" is numeric, it is taken as the depth for numbering (as for .NH), else
 .\" the default (1) is assumed.
-.\"
-.\" $Id: tutorial.ms,v 1.1.1.1 1994/06/19 02:33:16 cgd Exp $
 .\"
 .\" @P The initial paragraph distance.
 .\" @Q The piece of section number to increment (or 0 if none given)
