@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.235 2000/06/13 22:44:19 tron Exp $
+$NetBSD: pcidevs,v 1.236 2000/06/16 08:13:25 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1291,8 +1291,16 @@ product S3 TRIO3D	0x8904	86C365 Trio3D
 product S3 VIRGE_DX	0x8a01	ViRGE/DX
 product S3 VIRGE_GX2	0x8a10	ViRGE/GX2
 product S3 TRIO3D2X	0x8a13	Trio3D/2X
+product S3 SAVAGE3D	0x8a20	Savage3D
+product S3 SAVAGE3D_MV	0x8a21	Savage3D+MV
+product S3 SAVAGE4	0x8a22	Savage4
 product S3 VIRGE_MX	0x8c01	ViRGE/MX
 product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
+product S3 SAVAGE_MX_MV	0x8c10	Savage/MX+MV
+product S3 SAVAGE_MX	0x8c11	Savage/MX
+product S3 SAVAGE_IX_MV	0x8c12	Savage/IX+MV
+product S3 SAVAGE_IX	0x8c13	Savage/IX
+product S3 SAVAGE2000	0x9102	Savage2000
 product	S3 SONICVIBES	0xca00	SonicVibes
 
 /* Samsung Semiconductor products */
