@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.9 2000/07/18 10:23:43 jdolecek Exp $	*/
+/*	$NetBSD: regular.c,v 1.10 2000/07/27 02:58:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.9 2000/07/18 10:23:43 jdolecek Exp $");
+__RCSID("$NetBSD: regular.c,v 1.10 2000/07/27 02:58:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,12 +82,12 @@ mmap_failed:
 	}
 
 	if ((p1 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_FILE, fd1, skip1)) == MAP_FAILED)
+	    PROT_READ, MAP_FILE|MAP_SHARED, fd1, skip1)) == MAP_FAILED)
 		goto mmap_failed;
 	(void)madvise(p1, (size_t)length, MADV_SEQUENTIAL);
 
 	if ((p2 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_FILE, fd2, skip2)) == MAP_FAILED) {
+	    PROT_READ, MAP_FILE|MAP_SHARED, fd2, skip2)) == MAP_FAILED) {
 		munmap(p1, (size_t) length);
 		goto mmap_failed;
 	}
