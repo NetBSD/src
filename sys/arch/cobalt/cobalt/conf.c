@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2000/04/28 13:28:42 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2000/06/06 18:00:23 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@ struct bdevsw bdevsw[] =
 	bdev_disk_init(NMD,md),		/* 2: memory disk */
 	bdev_disk_init(NVND,vnd),	/* 3: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 4: concatenated disk driver */
-	bdev_disk_init(NRAID,ccd),	/* 5: RAIDframe */
+	bdev_disk_init(NRAID,raid),	/* 5: RAIDframe */
 	bdev_disk_init(NWD,wd),		/* 6: ATA disk */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NCD,cd),		/* 8: SCSI CD-ROM */
