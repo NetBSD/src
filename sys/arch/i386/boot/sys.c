@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.c,v 1.14 1996/06/18 06:10:35 mycroft Exp $	*/
+/*	$NetBSD: sys.c,v 1.15 1997/03/29 21:40:19 christos Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -189,11 +189,16 @@ openrd()
 		* Look inside brackets for unit number, and partition	*
 		\*******************************************************/
 		cp++;
-		if (*cp >= '0' && *cp <= '9')
-			if ((unit = *cp++ - '0') > 1) {
+		if (*cp >= '0' && *cp <= '9') {
+			unit = *cp++ - '0';
+#if 0
+			/* Modern bios'es can boot from disks higher than d */
+			if (unit > 1) {
 				printf("Bad unit\n");
 				return 1;
 			}
+#endif
+		}
 		if (!*cp || (*cp == ',' && !*++cp))
 			return 1;
 		if (*cp >= 'a' && *cp <= 'p')
