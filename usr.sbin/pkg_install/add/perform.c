@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.63.2.10 2002/11/24 22:36:37 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.63.2.11 2003/02/08 07:47:12 jmc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63.2.10 2002/11/24 22:36:37 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.63.2.11 2003/02/08 07:47:12 jmc Exp $");
 #endif
 #endif
 
@@ -125,7 +125,7 @@ pkg_do(const char *pkg)
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
 		if (vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
-			errx(1, "Database-dir %s cannot be generated, aborting.",
+			errx(EXIT_FAILURE, "Database-dir %s cannot be generated, aborting.",
 			    dbdir);
 		}
 	}
@@ -588,6 +588,8 @@ pkg_do(const char *pkg)
 			move_file(".", BUILD_INFO_FNAME, LogDir);
 		if (fexists(DISPLAY_FNAME))
 			move_file(".", DISPLAY_FNAME, LogDir);
+		if (fexists(PRESERVE_FNAME))
+			move_file(".", PRESERVE_FNAME, LogDir);
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we
@@ -610,7 +612,7 @@ pkg_do(const char *pkg)
 					strcpy(t + 1, s);
 					free(s);
 				} else {
-					errx(1, "Where did our dependency go?!");
+					errx(EXIT_FAILURE, "Where did our dependency go?!");
 					/* this shouldn't happen... X-) */
 				}
 			}
