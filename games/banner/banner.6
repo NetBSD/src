@@ -1,4 +1,4 @@
-.\"	$NetBSD: banner.6,v 1.5 1995/03/25 07:44:48 glass Exp $
+.\"	$NetBSD: banner.6,v 1.6 1995/04/22 11:55:13 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd print large banner on printer
 .Sh SYNOPSIS
 .Nm banner
-.Op Fl w Op Ar n
+.Op Fl w Ar width
 .Ar message ...
 .Sh DESCRIPTION
 .Nm Banner
@@ -50,10 +50,8 @@ If the message is omitted, it prompts for and
 reads one line of its standard input.  If
 .Fl w
 is given, the output is scrunched down from a width of 132 to
-.Ar n ,
-suitable for a narrow terminal.  If
-.Ar n
-is omitted, it defaults to 132.
+.Ar width ,
+suitable for a narrow terminal.
 .Pp
 The output should be printed on a hard-copy device, up to 132 columns wide,
 with no breaks between the pages. The volume is great enough that you 
