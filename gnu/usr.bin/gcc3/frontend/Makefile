@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/29 07:26:23 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -12,10 +12,8 @@ SRCS=		gcc.c version.c intl.c prefix.c
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCH} -I${BACKENDOBJ} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
 		-DPREFIX=\"/usr\" \
-		-DDEFAULT_TARGET_VERSION=\"\" \
-		-DDEFAULT_TARGET_MACHINE=\"\"
-#		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
-#		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
+		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
+		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 .include <bsd.lib.mk>
