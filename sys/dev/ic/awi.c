@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.30 2000/12/18 23:57:13 thorpej Exp $	*/
+/*	$NetBSD: awi.c,v 1.31 2001/06/25 04:29:19 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#include <sys/syslog.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 #include <sys/bus.h>
 #else
@@ -124,8 +123,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
 #ifdef __NetBSD__
 #include <netinet/if_inarp.h>
 #else
@@ -135,7 +132,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/cpu.h>

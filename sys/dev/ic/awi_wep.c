@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.5 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.6 2001/06/25 04:29:19 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,13 +51,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
-#include <sys/sockio.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 #include <sys/bus.h>
 #else
@@ -65,7 +63,6 @@
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
 #include <net/if_arp.h>
@@ -82,7 +79,6 @@
 #endif
 
 #ifdef __NetBSD__
-#include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
@@ -91,7 +87,6 @@
 #endif
 
 #ifdef __FreeBSD__
-#include <dev/awi/am79c930reg.h>
 #include <dev/awi/am79c930var.h>
 #include <dev/awi/awireg.h>
 #include <dev/awi/awivar.h>
