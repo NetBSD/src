@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.7 1994/04/10 02:28:30 chopps Exp $
+ *	$Id: pmap.h,v 1.8 1994/05/25 07:59:59 chopps Exp $
  */
 #ifndef	_MACHINE_PMAP_H_
 #define	_MACHINE_PMAP_H_
@@ -71,7 +71,8 @@ extern pmap_t		kernel_pmap;
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
 		    amiga_btop(pmap_extract(kernel_pmap, \
-		    cpu040 ? (pmapp)->pm_rtab : (pmapp)->pm_stab)); \
+		    cpu040 ? (vm_offset_t)(pmapp)->pm_rtab : \
+		    (vm_offset_t)(pmapp)->pm_stab)); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
@@ -100,7 +101,6 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
-#define	pmap_kernel()			(kernel_pmap)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 extern	struct pte *Sysmap;

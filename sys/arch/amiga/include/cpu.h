@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.12 1994/05/09 06:38:50 chopps Exp $
+ *	$Id: cpu.h,v 1.13 1994/05/25 07:59:57 chopps Exp $
  */
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -53,38 +53,34 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-/*
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#undef	NEED_FFS		/* don't need ffs function */
-#undef	NEED_BCMP		/* don't need bcmp function */
-#undef	NEED_STRLEN		/* don't need strlen function */
-
-#define	cpu_exec(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
+#define	cpu_exec(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_wait(p)			/* nothing */
+#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
+#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
 
 /*
- * Arguments to hardclock, softclock and statclock
- * encapsulate the previous machine state in an opaque
- * clockframe; for hp300, use just what the hardware
- * leaves on the stack.
- *
- * which is now in this format.  note if m68k/frame.h
- * changes this may need too also.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.  One the hp300, we use
+ * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
-	int     ps;
-	int     pc;
+	u_short	sr;		/* sr at time of interrupt */
+	u_long	pc;		/* pc at time of interrupt */
+	u_short	vo;		/* vector offset (4-word frame) */
 };
 
-
-#define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
+#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define CLKF_INTR(framep)	(0)	/* XXXX*/
+#if 0
+/* We would like to do it this way... */
+#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#else
+/* but until we start using PSL_M, we have to do this instead */
+#define	CLKF_INTR(framep)	(0)	/* XXX */
+#endif
+
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -153,15 +149,6 @@ extern unsigned char ssir;
 
 #ifdef KERNEL
 extern	int machineid, mmutype, cpu040;
-
-/* what is this supposed to do? i.e. how is it different than startrtclock? 
-   #define	enablertclock()
-   
-   Answer (MW): startrtclock is supposed to start the clock chip (to get an
-   accurate uptime, enablertclock is called later (after *vital* stuff
-   has been setup) to enable clock interrupts. Enabling clock interrupts
-   at startrtclock-time can get you into big troubles...  */
-
 #endif
 
 /* physical memory sections */
