@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.18 1996/03/30 21:01:21 christos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.19 1996/04/26 06:50:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -344,7 +344,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	}
 	if (!(flags & INUSE)) {
 		ncr_tprint(reqp, "scsi_cmd: command not in use.....\n");
-		xs->flags |= ~INUSE;
+		xs->flags |= INUSE;
 	}
 
 #ifdef REAL_DMA
@@ -1014,6 +1014,19 @@ struct ncr_softc *sc;
 		reqp->phase = phase;
 		DBG_INFPRINT(show_phase, reqp, phase);
 	}
+	else {
+		/*
+		 * Same data-phase. If same error give up
+		 */
+		if ((reqp->msgout == MSG_ABORT)
+		     && ((phase == PH_DATAOUT) || (phase == PH_DATAIN))) {
+			busy     &= ~(1 << reqp->targ_id);
+			connected = NULL;
+			finish_req(reqp);
+			scsi_reset_verbose(sc, "Failure to abort command");
+			return (0);
+		}
+	}
 
 	switch (phase) {
 	    case PH_DATAOUT:
@@ -1033,6 +1046,17 @@ struct ncr_softc *sc;
 		}
 
 	   case PH_DATAIN:
+		if (reqp->xdata_len <= 0) {
+			/*
+			 * Target keeps requesting data. Try to get into
+			 * message-out phase by feeding/taking 100 byte.
+			 */
+			ncr_tprint(reqp, "Target requests too much data\n");
+			reqp->msgout = MSG_ABORT;
+			SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+			reach_msg_out(sc, 100);
+			return (-1);
+		}
 #ifdef REAL_DMA
 		if (reqp->dr_flag & DRIVER_DMAOK) {
 			int poll = REAL_DMA_POLL|(reqp->dr_flag & DRIVER_NOINT);
@@ -1069,7 +1093,8 @@ struct ncr_softc *sc;
 		if (reqp->msgout == MSG_ABORT) {
 			busy     &= ~(1 << reqp->targ_id);
 			connected = NULL;
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+			if (!reqp->xs->error)
+				reqp->xs->error = XS_DRIVER_STUFFUP;
 			finish_req(reqp);
 			PID("info_transf4");
 			return (0);
@@ -1516,9 +1541,10 @@ dma_ready()
 	else reqp->dm_cur->dm_addr += bytes_done;
 
 	if (PH_IN(reqp->phase) && (dmstat & SC_PAR_ERR)) {
-		if (!(ncr5380_no_parchk & (1 << reqp->targ_id)))
-			/* XXX: Should be parity error ???? */
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+		if (!(ncr5380_no_parchk & (1 << reqp->targ_id))) {
+			ncr_tprint(reqp, "parity error in data-phase\n");
+			reqp->xs->error = XS_TIMEOUT;
+		}
 	}
 
 	/*
@@ -1546,7 +1572,7 @@ dma_ready()
 
 		if (dmstat & SC_BSY_ERR) {
 			if (!reqp->xs->error)
-				reqp->xs->error = XS_BUSY;
+				reqp->xs->error = XS_TIMEOUT;
 			finish_req(reqp);
 			PID("dma_ready1");
 			return (1);
@@ -1637,6 +1663,7 @@ u_long		 len;
 {
 	u_char	phase;
 	u_char	data;
+	u_long	n = len;
 
 	ncr_aprint(sc, "Trying to reach Message-out phase\n");
 	if ((phase = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ)
@@ -1664,12 +1691,13 @@ u_long		 len;
 		if (!wait_req_false())
 			break;
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
-	} while (--len);
+	} while (--n);
 
 	if ((phase = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ) {
 		phase = (phase >> 2) & 7;
 		if (phase == PH_MSGOUT) {
-			ncr_aprint(sc, "Message-out phase reached.\n");
+			ncr_aprint(sc, "Message-out phase reached after "
+					"%ld bytes.\n", len - n);
 			return (0);
 		}
 	}
@@ -1710,7 +1738,7 @@ scsi_reset()
 	 * doing REAL-DMA. In that case 'dma_ready()' should correctly finish
 	 * the job because it detects BSY-loss.
 	 */
-	if (tmp = connected) {
+	if ((tmp = connected) != NULL) {
 		if (tmp->dr_flag & DRIVER_IN_DMA) {
 			tmp->xs->error = XS_DRIVER_STUFFUP;
 #ifdef REAL_DMA
@@ -1941,7 +1969,7 @@ show_request(reqp, qtxt)
 SC_REQ	*reqp;
 char	*qtxt;
 {
-	printf("REQ-%s: %d %p[%d] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
+	printf("REQ-%s: %d %p[%ld] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
 			reqp->xs->error, reqp->xs->resid, reqp->dr_flag,
@@ -1984,7 +2012,7 @@ scsi_show()
 	u_char	idstat, dmstat;
 	int	i;
 
-	printf("scsi_show: main_running is%s running\n",
+	printf("scsi_show: scsi_main is%s running\n",
 		main_running ? "" : " not");
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");
