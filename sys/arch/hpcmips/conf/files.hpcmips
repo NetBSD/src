@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.85 2002/05/11 14:10:05 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.86 2002/05/30 01:45:00 greg Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -160,6 +160,10 @@ file arch/hpcmips/vr/vrled.c			vrled needs-flag
 device vrpiu: wsmousedev
 attach vrpiu at vripif: tpcalib
 file arch/hpcmips/vr/vrpiu.c			vrpiu
+
+device vrdsiu_mouse: wsmousedev
+attach vrdsiu_mouse at vripif
+file arch/hpcmips/vr/vrdsiu_mouse.c		vrdsiu_mouse
 
 attach ohci at vripif with ohci_vrip
 file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
