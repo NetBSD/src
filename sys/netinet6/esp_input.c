@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.4 2000/09/29 06:42:42 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.5 2000/10/02 23:41:32 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
@@ -644,7 +644,7 @@ noreplaycheck:
 	 * pre-compute and cache intermediate key
 	 */
 	if (esp_schedule(algo, sav) != 0) {
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		goto bad;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.9.2.1 2000/07/25 04:24:47 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.9.2.2 2000/10/02 23:41:31 itojun Exp $	*/
 /*	$KAME: ah_output.c,v 1.23 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ ah6_output(m, nexthdrp, md, isr)
 				ipseclog((LOG_WARNING,
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
-				ipsecstat.out_inval++;
+				ipsec6stat.out_inval++;
 				m_freem(m);
 				return EINVAL;
 			}
