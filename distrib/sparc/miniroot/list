@@ -1,8 +1,8 @@
-#	$NetBSD: list,v 1.16 2000/05/02 13:59:20 sjg Exp $
+#	$NetBSD: list,v 1.17 2000/07/08 11:32:06 pk Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/dmesg
 LINK	instbin			sbin/sysctl
 
 SYMLINK	../../instbin		usr/bin/basename
