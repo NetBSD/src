@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.15 2002/10/02 16:53:03 thorpej Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.16 2003/01/22 08:06:21 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.15 2002/10/02 16:53:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.16 2003/01/22 08:06:21 mhitch Exp $");
 
 #include "opt_inet.h"
 
@@ -97,7 +97,8 @@ le_tc_attach(parent, self, aux)
 	 * It's on the turbochannel proper, or a kn02
 	 * baseboard implementation of a TC option card.
 	 */
-	lesc->sc_r1 = (struct lereg1 *)(d->ta_addr + LE_OFFSET_LANCE);
+	lesc->sc_r1 = (struct lereg1 *)
+	    TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->ta_addr + LE_OFFSET_LANCE));
 	sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
 
 	sc->sc_copytodesc = lance_copytobuf_contig;
