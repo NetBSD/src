@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.12 1998/10/13 14:19:21 kleink Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.13 1998/11/15 17:19:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tempnam.c,v 1.12 1998/10/13 14:19:21 kleink Exp $");
+__RCSID("$NetBSD: tempnam.c,v 1.13 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ tempnam(dir, pfx)
 			return(f);
 	}
 
-	if ((f = (char *)dir) != NULL) {
+	if ((/* LINTED */f = (char *)dir) != NULL) {
 		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if ((f = _mktemp(name)) != NULL)

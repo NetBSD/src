@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.11 1998/10/18 13:56:22 kleink Exp $	*/
+/*	$NetBSD: findfp.c,v 1.12 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.11 1998/10/18 13:56:22 kleink Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.12 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ moreglue(n)
 	g = (struct glue *)malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE));
 	if (g == NULL)
 		return (NULL);
-	p = (FILE *)ALIGN(g + 1);
+	p = (FILE *)ALIGN((u_long)(g + 1));
 	g->next = NULL;
 	g->niobs = n;
 	g->iobs = p;

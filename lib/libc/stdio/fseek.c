@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.15 1998/09/06 16:37:27 kleink Exp $	*/
+/*	$NetBSD: fseek.c,v 1.16 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.15 1998/09/06 16:37:27 kleink Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.16 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,7 +121,7 @@ fseek(fp, offset, whence)
 		} else if (fp->_flags & __SWR && fp->_p != NULL)
 			curoff += fp->_p - fp->_bf._base;
 
-		offset += curoff;
+		offset += (long)curoff;
 		whence = SEEK_SET;
 		havepos = 1;
 		break;
@@ -211,7 +211,7 @@ fseek(fp, offset, whence)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
 	    target >= curoff && target < curoff + n) {
-		int o = target - curoff;
+		int o = (int)(target - curoff);
 
 		fp->_p = fp->_bf._base + o;
 		fp->_r = n - o;
@@ -238,7 +238,7 @@ fseek(fp, offset, whence)
 	if (HASUB(fp))
 		FREEUB(fp);
 	fp->_flags &= ~__SEOF;
-	n = target - curoff;
+	n = (int)(target - curoff);
 	if (n) {
 		if (__srefill(fp) || fp->_r < n)
 			goto dumb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puts.c,v 1.7 1998/09/07 14:37:13 kleink Exp $	*/
+/*	$NetBSD: puts.c,v 1.8 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)puts.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: puts.c,v 1.7 1998/09/07 14:37:13 kleink Exp $");
+__RCSID("$NetBSD: puts.c,v 1.8 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,6 +62,7 @@ puts(s)
 	struct __siov iov[2];
 	int r;
 
+	/* LINTED we don't touch the string */
 	iov[0].iov_base = (void *)s;
 	iov[0].iov_len = c;
 	iov[1].iov_base = "\n";

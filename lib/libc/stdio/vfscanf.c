@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.21 1998/10/25 18:25:43 kleink Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.22 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.21 1998/10/25 18:25:43 kleink Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.22 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,7 +110,7 @@ __svfscanf(fp, fmt0, ap)
 	const char *fmt0;
 	_BSD_VA_LIST_ ap;
 {
-	const u_char *fmt = fmt0;
+	const u_char *fmt = (const u_char *)fmt0;
 	int c;		/* character from format, or conversion */
 	size_t width;	/* field width, or 0 */
 	char *p;	/* points into all kinds of strings */
@@ -557,11 +557,11 @@ literal:
 				else if (flags & QUAD)
 					*va_arg(ap, quad_t *) = res;
 				else if (flags & LONG)
-					*va_arg(ap, long *) = res;
+					*va_arg(ap, long *) = (long)res;
 				else if (flags & SHORT)
-					*va_arg(ap, short *) = res;
+					*va_arg(ap, short *) = (short)res;
 				else
-					*va_arg(ap, int *) = res;
+					*va_arg(ap, int *) = (int)res;
 				nassigned++;
 			}
 			nread += p - buf;

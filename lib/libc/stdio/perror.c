@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.16 1998/09/09 12:15:55 kleink Exp $	*/
+/*	$NetBSD: perror.c,v 1.17 1998/11/15 17:19:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.16 1998/09/09 12:15:55 kleink Exp $");
+__RCSID("$NetBSD: perror.c,v 1.17 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,7 @@ perror(s)
 
 	v = iov;
 	if (s && *s) {
+		/* LINTED we don't touch the string */
 		v->iov_base = (void *)s;
 		v->iov_len = strlen(s);
 		v++;
@@ -82,10 +83,11 @@ perror(s)
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = (void *)__strerror(errno, buf, sizeof(buf));
 	v->iov_len = strlen(v->iov_base);
+	/* LINTED we don't touch the string */
+	v->iov_base = (void *)__strerror(errno, buf, sizeof(buf));
 	v++;
-	v->iov_base = "\n";
 	v->iov_len = 1;
+	v->iov_base = "\n";
 	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
 }
