@@ -1,10 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2001/01/04 21:50:13 garbled Exp $
+# $NetBSD: Makefile,v 1.3 2001/11/05 15:24:48 lukem Exp $
 DIST=		${.CURDIR}/../../dist
 .PATH: ${DIST}/cdk
 .PATH: ${DIST}/cdk/include
 .PATH: ${DIST}/cdk/man
 
-WARNS?=  1
 MKLINT= no
 
 LIB=	cdk
