@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.36 1999/12/02 22:08:04 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.37 2000/03/05 18:46:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -430,8 +430,7 @@ alpha_pal_rdval()
 }
 
 static __inline unsigned long
-alpha_pal_swpctx(ctx)
-	unsigned long ctx;
+alpha_pal_swpctx(unsigned long ctx)
 {
 	register unsigned long a0 __asm("$16") = ctx;
 	register unsigned long v0 __asm("$0");
@@ -446,8 +445,7 @@ alpha_pal_swpctx(ctx)
 }
 
 static __inline unsigned long
-alpha_pal_swpipl(ipl)
-	unsigned long ipl;
+alpha_pal_swpipl(unsigned long ipl)
 {
 	register unsigned long a0 __asm("$16") = ipl;
 	register unsigned long v0 __asm("$0");
@@ -462,9 +460,7 @@ alpha_pal_swpipl(ipl)
 }
 
 static __inline void
-alpha_pal_tbi(op, va)
-	unsigned long op;
-	vaddr_t va;
+alpha_pal_tbi(unsigned long op, vaddr_t va)
 {
 	register unsigned long a0 __asm("$16") = op;
 	register unsigned long a1 __asm("$17") = va;
@@ -491,8 +487,7 @@ alpha_pal_whami()
 }
 
 static __inline void
-alpha_pal_wrfen(onoff)
-	unsigned long onoff;
+alpha_pal_wrfen(unsigned long onoff)
 {
 	register unsigned long a0 __asm("$16") = onoff;
 
@@ -504,8 +499,7 @@ alpha_pal_wrfen(onoff)
 }
 
 static __inline void
-alpha_pal_wripir(cpu_id)
-	unsigned long cpu_id;
+alpha_pal_wripir(unsigned long cpu_id)
 {
 	register unsigned long a0 __asm("$16") = cpu_id;
 
@@ -517,8 +511,7 @@ alpha_pal_wripir(cpu_id)
 }
 
 static __inline void
-alpha_pal_wrusp(usp)
-	unsigned long usp;
+alpha_pal_wrusp(unsigned long usp)
 {
 	register unsigned long a0 __asm("$16") = usp;
 
@@ -530,8 +523,7 @@ alpha_pal_wrusp(usp)
 }
 
 static __inline void
-alpha_pal_wrmces(mces)
-	unsigned long mces;
+alpha_pal_wrmces(unsigned long mces)
 {
 	register unsigned long a0 __asm("$16") = mces;
 
@@ -543,8 +535,7 @@ alpha_pal_wrmces(mces)
 }
 
 static __inline void
-alpha_pal_wrval(val)
-	unsigned long val;
+alpha_pal_wrval(unsigned long val)
 {
 	register unsigned long a0 __asm("$16") = val;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.h,v 1.1 1999/12/02 19:41:40 thorpej Exp $ */
+/* $NetBSD: bwx.h,v 1.2 2000/03/05 18:46:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,8 +62,7 @@ static __inline u_int16_t alpha_sextw __P((u_int16_t))
 	__attribute__((__unused__));
 
 static __inline u_int8_t
-alpha_ldbu(a0)
-	__volatile u_int8_t *a0;
+alpha_ldbu(__volatile u_int8_t *a0)
 {
 	u_int8_t v0;
 
@@ -75,8 +74,7 @@ alpha_ldbu(a0)
 }
 
 static __inline u_int16_t
-alpha_ldwu(a0)
-	__volatile u_int16_t *a0;
+alpha_ldwu(__volatile u_int16_t *a0)
 {
 	u_int16_t v0;
 
@@ -88,9 +86,7 @@ alpha_ldwu(a0)
 }
 
 static __inline void
-alpha_stb(a0, a1)
-	__volatile u_int8_t *a0;
-	u_int8_t a1;
+alpha_stb(__volatile u_int8_t *a0, u_int8_t a1)
 {
 
 	__asm __volatile("stb %1, %0"
@@ -99,9 +95,7 @@ alpha_stb(a0, a1)
 }
 
 static __inline void
-alpha_stw(a0, a1)
-	__volatile u_int16_t *a0;
-	u_int16_t a1;
+alpha_stw(__volatile u_int16_t *a0, u_int16_t a1)
 {
 
 	__asm __volatile("stw %1, %0"
@@ -110,8 +104,7 @@ alpha_stw(a0, a1)
 }
 
 static __inline u_int8_t
-alpha_sextb(a0)
-	u_int8_t a0;
+alpha_sextb(u_int8_t a0)
 {
 	u_int8_t v0;
 
@@ -123,8 +116,7 @@ alpha_sextb(a0)
 }
 
 static __inline u_int16_t
-alpha_sextw(a0)
-	u_int16_t a0;
+alpha_sextw(u_int16_t a0)
 {
 	u_int16_t v0;
 
