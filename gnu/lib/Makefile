@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.35 2003/08/29 01:57:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.36 2003/11/27 13:53:11 mrg Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKBFD} != "no"
+. if ${HAVE_BINUTILS214} == "no"
 SUBDIR+= libopcodes libbfd libiberty
+. endif
 .endif
 
 .if ${MKGCC} != "no"
