@@ -1,3 +1,5 @@
+/*	$NetBSD: strtok_r.c,v 1.2 1997/07/13 20:24:36 christos Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strtok.c	5.8 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strtok_r.c,v 1.1 1996/11/12 02:03:14 jtc Exp $";
+#if 0
+static char *sccsid = "@(#)strtok.c	5.8 (Berkeley) 2/24/91";
+#else
+__RCSID("$NetBSD: strtok_r.c,v 1.2 1997/07/13 20:24:36 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>

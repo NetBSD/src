@@ -1,3 +1,5 @@
+/*	$NetBSD: strsignal.c,v 1.5 1997/07/13 20:24:33 christos Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -31,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strsignal.c,v 1.4 1997/01/23 14:02:25 mrg Exp $";
+#if 0
+static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
+#else
+__RCSID("$NetBSD: strsignal.c,v 1.5 1997/07/13 20:24:33 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 #include <limits.h>
-
-extern char *__strsignal __P((int, char *, int));
+#include "extern.h"
 
 char *
 strsignal(sig)

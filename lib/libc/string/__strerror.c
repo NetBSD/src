@@ -1,3 +1,5 @@
+/*	$NetBSD: __strerror.c,v 1.10 1997/07/13 20:24:09 christos Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -31,25 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strerror.c,v 1.9 1997/01/23 14:02:21 mrg Exp $";
+#if 0
+static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
+#else
+__RCSID("$NetBSD: __strerror.c,v 1.10 1997/07/13 20:24:09 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #ifdef NLS
-#define catclose	_catclose
-#define catgets		_catgets
-#define catopen		_catopen
 #include <limits.h>
 #include <nl_types.h>
 #endif
 
-#define sys_errlist	_sys_errlist
-#define sys_nerr	_sys_nerr
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "extern.h"
 
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
