@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/10/03 06:33:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1996/10/06 18:08:15 cgd Exp $
 
 # XXX - are these useful for users?
 #SUBDIR=	dhclient
@@ -9,5 +9,4 @@ SRCS=	options.c errwarn.c convert.c tree.c memory.c alloc.c print.c hash.c \
 	dhcp.c bootp.c conflex.c confpars.c db.c
 MAN=	dhcpd.8 dhcpd.conf.5
 
-.include <bsd.subdir.mk>
 .include <bsd.prog.mk>
