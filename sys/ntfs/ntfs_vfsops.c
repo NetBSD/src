@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.20 1999/10/20 14:32:10 enami Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.21 1999/10/25 19:08:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -438,9 +438,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
 #if defined(__FreeBSD__)
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
+	VOP__UNLOCK(devvp, 0, p);
 #else
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
 #endif
@@ -607,9 +607,9 @@ out:
 
 #if defined __NetBSD__
 	/* lock the device vnode before calling VOP_CLOSE() */
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0);
+	VOP__UNLOCK(devvp, 0, p);
 #else
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 #endif
@@ -665,11 +665,11 @@ ntfs_unmount(
 
 #if defined(__FreeBSD__)
 	ntmp->ntm_devvp->v_specmountpoint = NULL;
-
-	VOP_LOCK(ntmp->ntm_devvp);
-	vnode_pager_uncache(ntmp->ntm_devvp);
-	VOP_UNLOCK(ntmp->ntm_devvp);
 #else
+	/* Check if the type of device node isn't VBAD before
+	 * touching v_specinfo.  If the device vnode is revoked, the
+	 * field is NULL and touching it causes null pointer derefercence.
+	 */
 	if (ntmp->ntm_devvp->v_type != VBAD)
 		ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #endif
@@ -681,7 +681,7 @@ ntfs_unmount(
 	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
-	VOP_UNLOCK(ntmp->ntm_devvp, 0);
+	VOP__UNLOCK(ntmp->ntm_devvp, 0, p);
 #else
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
@@ -928,12 +928,11 @@ ntfs_vgetex(
 
 	if (!(flags & VG_DONTVALIDFN) && !(fp->f_flag & FN_VALID)) {
 		if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
-		    (fp->f_attrtype == 0x80 && fp->f_attrname == NULL)) {
+		    (fp->f_attrtype == NTFS_A_DATA && fp->f_attrname == NULL)) {
 			f_type = VDIR;
-		} else if(flags & VG_EXT) {
+		} else if (flags & VG_EXT) {
 			f_type = VNON;
-
-			fp->f_size =fp->f_allocated = 0;
+			fp->f_size = fp->f_allocated = 0;
 		} else {
 			f_type = VREG;	
 
@@ -996,7 +995,7 @@ ntfs_vget(
 	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			   LK_EXCLUSIVE, 0, curproc, vpp);
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp);
 }
 
 #if defined(__FreeBSD__)

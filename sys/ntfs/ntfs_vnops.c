@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.19 1999/10/10 14:19:54 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.20 1999/10/25 19:08:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -789,9 +789,7 @@ ntfs_lookup(ap)
 			return (error);
 
 		VOP__UNLOCK(dvp,0,cnp->cn_proc);
-#ifdef __NetBSD__
 		cnp->cn_flags |= PDIRUNLOCK;
-#endif
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
@@ -799,22 +797,18 @@ ntfs_lookup(ap)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0) {
-#ifdef __NetBSD__
+			if (VN_LOCK(dvp, LK_EXCLUSIVE | LK_RETRY, curproc) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
-#endif
-			}
 			return(error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
+			error = VN_LOCK(dvp, LK_EXCLUSIVE | LK_RETRY, curproc);
+			if (error) {
 				vput( *(ap->a_vpp) );
 				return (error);
 			}
-#ifdef __NetBSD__
 			cnp->cn_flags &= ~PDIRUNLOCK;
-#endif
 		}
 	} else {
 		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
