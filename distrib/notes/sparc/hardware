@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.28 2003/12/13 17:55:02 martin Exp $
+.\"	$NetBSD: hardware,v 1.29 2003/12/14 03:25:46 uwe Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -79,7 +79,7 @@ SPARCstation Voyager
 .It
 JavaStation-1 (Mr. Coffee)
 .It
-JavaStation-10 (JavaStation-NC, Krups)
+JavaStation-NC (Krups)
 .bullet)
 .(Note
 All known SuperSPARC, hyperSPARC, microSPARC, and TurboSPARC CPUs are supported
@@ -414,7 +414,7 @@ On-board sun4c and SPARC Classic
 .Em audiocs ;
 CS4231-based 44 KHz, 16 bit, stereo, PCM.
 .br
-On-board SPARCStation 5, JavaStation-1, JavaStation-10,  and optional on
+On-board SPARCStation 5, JavaStation-1, JavaStation-NC,  and optional on
 SPARCStation 4.
 .bullet)
 .It
