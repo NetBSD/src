@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.63 2003/01/18 06:15:23 thorpej Exp $	*/
+/*	$NetBSD: dtop.c,v 1.64 2003/03/21 17:23:22 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.63 2003/01/18 06:15:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.64 2003/03/21 17:23:22 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -203,7 +203,8 @@ static u_char divend[NUMDIVS] = {0xff, 0xa5, 0xbc, 0xbe, 0xb2, 0xaf, 0xa8,
 static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e800, 0, 0};
 
 struct consdev dtopcons = { 
-	NULL, NULL, (void *)dtopKBDGetc, NULL, NULL, NULL, NODEV, 0
+	NULL, NULL, (void *)dtopKBDGetc, NULL, NULL, NULL, NULL, NULL,
+	NODEV, 0
 };
  
 void dtikbd_cnattach __P((void));		/* XXX */

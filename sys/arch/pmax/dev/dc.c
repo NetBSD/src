@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.71 2002/10/23 09:11:46 jdolecek Exp $	*/
+/*	$NetBSD: dc.c,v 1.72 2003/03/21 17:23:22 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.71 2002/10/23 09:11:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.72 2003/03/21 17:23:22 drochner Exp $");
 
 /*
  * devDC7085.c --
@@ -203,7 +203,8 @@ static struct dc_softc coldcons_softc;
 
 /* XXX move back into dc_consinit when debugged */
 static struct consdev dccons = {
-	NULL, NULL, dcGetc, dcPutc, dcPollc, NULL, NODEV, CN_REMOTE
+	NULL, NULL, dcGetc, dcPutc, dcPollc, NULL, NULL, NULL,
+	NODEV, CN_REMOTE
 };
 
 void

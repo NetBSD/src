@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.78 2003/02/23 03:37:40 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.79 2003/03/21 17:23:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.78 2003/02/23 03:37:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.79 2003/03/21 17:23:23 drochner Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -262,7 +262,8 @@ static int	sccintr __P((void *));
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
-	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NODEV, 0
+	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NULL, NULL,
+	NODEV, 0
 };
 
 void
