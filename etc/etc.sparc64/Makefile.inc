@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/08/19 14:18:39 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2001/08/23 14:40:21 mrg Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -14,11 +14,53 @@ BUILD_KERNELS+= INSTALL
 # Add sparc64 installation directories
 MD_INSTALLATION_DIRS= \
 	installation/miniroot installation/netboot installation/misc
-INSTALLATION_DIRS=$(MD_INSTALLATION_DIRS) 
+INSTALLATION_DIRS+=$(MD_INSTALLATION_DIRS) 
 
 snap_pre_md:
 .ifndef UPDATE
 	cd $(TOP)/distrib && ${MAKE} clean 
+.endif
+
+#
+# Build 32 bit lib/csu, lib, gnu/lib & libexec/ld.elf_so
+#
+.if (${MACHINE_ARCH} == sparc64 && ${MACHINE} == sparc64 && ${MK32BITLIBS} == yes)
+LIBDIR=/usr/lib/sparcv7
+BINDIR=/usr/libexec/sparcv7
+SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
+	MACHINE=sparc MACHINE_ARCH=sparc LIBDIR=${LIBDIR} BINDIR=${BINDIR} \
+	SHLIB_LDSTARTFILE=${DESTDIR}${LIBDIR}/crtbeginS.o \
+	SHLIB_LDENDFILE=${DESTDIR}${LIBDIR}/crtendS.o
+
+snap_md_pre:
+.if ${MKOBJDIRS} != "no"
+	(cd ${.CURDIR}/../lib/csu && \
+	    ${MAKE} ${SPARC32} ${_M} obj)
+.endif
+	(cd ${.CURDIR}/../lib/csu && \
+	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+.if ${MKOBJDIRS} != "no"
+	(cd ${.CURDIR}/../lib && \
+	    ${MAKE} ${SPARC32} ${_M} obj)
+.endif
+	(cd ${.CURDIR}/../lib && \
+	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+.if ${MKOBJDIRS} != "no"
+	(cd ${.CURDIR}/../gnu/lib && \
+	    ${MAKE} ${SPARC32} ${_M} obj)
+.endif
+	(cd ${.CURDIR}/../gnu/lib && \
+	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+.if ${MKOBJDIRS} != "no"
+	(cd ${.CURDIR}/../libexec/ld.elf_so && \
+	    ${MAKE} ${SPARC32} ${_M} obj)
+.endif
+	(cd ${.CURDIR}/../libexec/ld.elf_so && \
+	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 .endif
 
 #
