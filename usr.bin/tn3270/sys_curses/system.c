@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.10 1998/07/26 22:38:15 mycroft Exp $	*/
+/*	$NetBSD: system.c,v 1.11 1998/11/06 20:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.10 1998/07/26 22:38:15 mycroft Exp $");
+__RCSID("$NetBSD: system.c,v 1.11 1998/11/06 20:05:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,10 +618,9 @@ static void
 child_died(code)
     int code;
 {
-    union wait status;
-    int pid;
+    int pid, status;
 
-    while ((pid = wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
+    while ((pid = waitpid((pid_t) -1, &status, WNOHANG)) > 0) {
 	if (pid == shell_pid) {
 	    char inputbuffer[100];
 
