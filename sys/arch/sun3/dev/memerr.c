@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.10 1998/02/05 04:56:43 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.11 2001/05/27 06:30:27 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,16 +81,18 @@ struct cfattach memerr_ca = {
 	sizeof(struct memerr_softc), memerr_match, memerr_attach
 };
 
+int memerr_attached;
+
 static int
 memerr_match(parent, cf, args)
-    struct device *parent;
-    struct cfdata *cf;
-    void *args;
+	struct device *parent;
+	struct cfdata *cf;
+	void *args;
 {
 	struct confargs *ca = args;
 
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	/* This driver only supports one instance. */
+	if (memerr_attached)
 		return (0);
 
 	/* Make sure there is something there... */
@@ -140,8 +142,7 @@ memerr_attach(parent, self, args)
 	sc->sc_reg = mer;
 
 	/* Install interrupt handler. */
-	isr_add_autovect(memerr_interrupt,
-		(void *)sc, ca->ca_intpri);
+	isr_add_autovect(memerr_interrupt, sc, ca->ca_intpri);
 
 	/* Enable error interrupt (and checking). */
 	if (sc->sc_type == ME_PAR)
@@ -154,6 +155,7 @@ memerr_attach(parent, self, args)
 		 */
 		mer->me_csr = ME_CSR_IENA; /* | ME_ECC_CE_ENA */
 	}
+	memerr_attached = 1;
 }
 
 /*****************************************************************
