@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.7 1997/06/06 23:46:43 thorpej Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.8 1997/06/18 07:19:08 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -80,11 +80,12 @@ sb_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	if (strcmp(ipa->ipa_devlogic, "ADS7150") &&
-	    strcmp(ipa->ipa_devlogic, "ADS7180") &&
+	if (strcmp(ipa->ipa_devlogic, "ADS7150") && /* AD1815 */
+	    strcmp(ipa->ipa_devlogic, "ADS7180") && /* AD1816 */
 	    strcmp(ipa->ipa_devlogic, "CTL0001") &&
-	    strcmp(ipa->ipa_devlogic, "CTL0031") &&
-	    strcmp(ipa->ipa_devlogic, "CTL0041") &&
+	    strcmp(ipa->ipa_devlogic, "CTL0031") && /* SB AWE32 */
+	    strcmp(ipa->ipa_devlogic, "CTL0041") && /* SB16 PnP (CT4131) */
+	    strcmp(ipa->ipa_devlogic, "CTL0042") && /* SB AWE64 Value */
 	    strcmp(ipa->ipa_devlogic, "ESS1868"))
 		return (0);
 
