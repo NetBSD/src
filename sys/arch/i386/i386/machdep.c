@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 1995/01/08 21:22:16 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 1995/01/15 00:44:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -554,49 +554,6 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_ss = _udatasel;
 }
 
-int
-check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
-{
-	int result;
-
-	__asm __volatile("
-	xorl	%%edx,%%edx
-
-	movw	%1,%%dx
-	verr	%%dx
-	jnz	1f
-	movl	%%edx,%%eax
-
-	movw	%2,%%dx
-	verr	%%dx
-	jnz	1f
-	andl	%%edx,%%eax
-
-	movw	%3,%%dx
-	testw	$0xfffc,%%dx
-	jz	2f
-	verr	%%dx
-	jnz	1f
-	andl	%%edx,%%eax
-
-2:	movw	%4,%%dx
-	testw	$0xfffc,%%dx
-	jz	2f
-	verr	%%dx
-	jnz	1f
-	andl	%%edx,%%eax
-
-2:	andl	$3,%%eax
-	subl	$3,%%eax
-	jmp	3f
-1:	movl	$1,%%eax
-3:
-	": "=&a" (result)
-	 : "g" (cs), "g" (ss), "g" (ds), "g" (es)
-	 : "%edx");
-	return result;
-}
-
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -616,7 +573,6 @@ sigreturn(p, uap, retval)
 {
 	struct sigcontext *scp, context;
 	register struct trapframe *tf;
-	int eflags;
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 
@@ -629,24 +585,12 @@ sigreturn(p, uap, retval)
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
-	eflags = context.sc_eflags;
-	if ((eflags & PSL_USERCLR) != 0 ||
-	    (eflags & PSL_USERSET) != PSL_USERSET ||
-	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
-		return (EINVAL);
-
 	/*
-	 * Sanity check the user's selectors and error if they are suspect.
-	 * We assume that swtch() has loaded the correct LDT descriptor, so
-	 * we can just use the `verr' instruction.  We further assume that
-	 * none of the segments we wish to protect are conforming.  (If they
-	 * were, this check wouldn't help much anyway.)
+	 * Check for security violations.
 	 */
-	if (check_selectors(context.sc_cs, context.sc_ss, context.sc_ds,
-	    context.sc_es)) {
-		trapsignal(p, SIGBUS, T_PROTFLT);
+	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    ISPL(context.sc_cs) != SEL_UPL)
 		return (EINVAL);
-	}
 
 	if (context.sc_onstack & 01)
 		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
@@ -668,7 +612,7 @@ sigreturn(p, uap, retval)
 	tf->tf_eax    = context.sc_eax;
 	tf->tf_eip    = context.sc_eip;
 	tf->tf_cs     = context.sc_cs;
-	tf->tf_eflags = eflags;
+	tf->tf_eflags = context.sc_eflags;
 	tf->tf_esp    = context.sc_esp;
 	tf->tf_ss     = context.sc_ss;
 
