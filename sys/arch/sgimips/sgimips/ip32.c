@@ -1,9 +1,9 @@
-/*	$NetBSD: ip32.c,v 1.19 2003/10/04 09:41:27 tsutsui Exp $	*/
+/*	$NetBSD: ip32.c,v 1.20 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001, 2002 Rafal K. Boni
- * Copyright (c) 2002 Christopher Sekiya
+ * Copyright (c) 2002, 2003 Christopher Sekiya
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.19 2003/10/04 09:41:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.20 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include "opt_machtypes.h"
 
@@ -53,17 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.19 2003/10/04 09:41:27 tsutsui Exp $");
 #include <dev/arcbios/arcbiosvar.h>
 
 #include <sgimips/dev/crimereg.h>
-#include <sgimips/dev/macereg.h>
+#include <sgimips/dev/crimevar.h>
+#include <sgimips/dev/macevar.h>
 
 void		ip32_init(void);
 void		ip32_bus_reset(void);
 void 		ip32_intr(u_int, u_int, u_int, u_int);
 void		ip32_intr_establish(int, int, int (*)(void *), void *);
 unsigned long	ip32_clkread(void);
-
-void		crime_intr(u_int);
-void		*crime_intr_establish(int, int, int, int (*)(void *), void *);
-void		mace_intr(u_int);
 
 u_int32_t next_clk_intr;
 u_int32_t missed_clk_intrs;
@@ -84,6 +81,9 @@ ip32_init(void)
 	u_int64_t baseline;
 	u_int32_t cps;
 
+	/* XXX nasty hack */
+	bus_space_handle_t ioh = MIPS_PHYS_TO_KSEG1(CRIME_BASE);
+
 	/*
 	 * NB: don't enable watchdog here as we do on IP22, since the
 	 * fixed -- and overly short -- duration of the IP32 watchdog
@@ -95,16 +95,15 @@ ip32_init(void)
 	 */
 
 	/* Reset CRIME CPU & memory error registers */
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CPU_ERROR_STAT) = 0;
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_STAT) = 0;
+	bus_space_write_8(iot, ioh, CRIME_CPU_ERROR_STAT, 0);
+	bus_space_write_8(iot, ioh, CRIME_MEM_ERROR_STAT, 0);
 
 #define WAIT_MS 50
-	baseline = *(volatile u_int64_t *)
-	    MIPS_PHYS_TO_KSEG1(CRIME_TIME) & CRIME_TIME_MASK;
+	baseline = bus_space_read_8(iot, ioh, CRIME_TIME) & CRIME_TIME_MASK;
 	cps = mips3_cp0_count_read();
 
-	while (((*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_TIME)
-	    & CRIME_TIME_MASK) - baseline) < WAIT_MS * 1000000 / 15)
+	while (((bus_space_read_8(iot, ioh, CRIME_TIME) & CRIME_TIME_MASK)
+	    - baseline) < WAIT_MS * 1000000 / 15)
 		continue;
 	cps = mips3_cp0_count_read() - cps;
 	cps = cps / 5;
@@ -138,8 +137,11 @@ ip32_init(void)
 void
 ip32_bus_reset(void)
 {
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CPU_ERROR_STAT) = 0;
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_STAT) = 0;
+
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+	    CRIME_CPU_ERROR_STAT, 0);
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+	    CRIME_MEM_ERROR_STAT, 0);
 }
 
 /*
@@ -158,29 +160,9 @@ ip32_intr(status, cause, pc, ipending)
 	u_int64_t crime_intstat, crime_intmask, crime_ipending;
 
 	/* enable watchdog timer, clear it */
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) |=
-		CRIME_CONTROL_DOG_ENABLE;
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
-
-#if 1
-	/*
-	 * XXXrkb: Even if this code makes sense (which I'm not sure of;
-	 * the magic number of "6" seems to correspond to capability bits
-	 * of the card/slot in question -- not 66 Mhz capable, fast B2B
-	 * capable and a medium DEVSEL timing -- and also seem to corres-
-	 * pond to on-reset values of this register), these errors should
-	 * be dealt with in the MACE PCI interrupt, not here!
-	 *
-	 * The 0x00100000 is MACE_PERR_CONFIG_ADDR, so this code should
-	 * panic on any other PCI errors except simple address errors on
-	 * config. space accesses.  This also seems wrong, but I lack the
-	 * PCI clue to figure out how to deal with other error ATM...
-	 */
-	if ((*(volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS) & ~0x00100000) != 6)
-		panic("pcierr: %x %x",
-				*(volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_ADDR),
-				*(volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS));
-#endif
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+	    CRIME_CONTROL, CRIME_CONTROL_DOG_ENABLE);
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh, CRIME_WATCHDOG, 0);
 
 	if (ipending & MIPS_INT_MASK_5) {
 		last_clk_intr = mips3_cp0_count_read();
@@ -209,8 +191,10 @@ ip32_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_0) {
-		crime_intmask = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_INTMASK);
-		crime_intstat = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_INTSTAT);
+		crime_intmask = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
+		    CRIME_INTMASK);
+		crime_intstat = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
+		    CRIME_INTSTAT);
 
 		crime_ipending = (crime_intstat & crime_intmask);
 
@@ -222,18 +206,28 @@ ip32_intr(status, cause, pc, ipending)
 
 		if (crime_ipending & 0xffff0000) {
 			/*
- 			 * CRIME interrupts for CPU and memory errors
+			 * CRIME interrupts for CPU and memory errors
 			 */
 			if (crime_ipending & CRIME_INT_MEMERR) {
-				u_int64_t address = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_ADDR);
-				u_int64_t status = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_STAT);
-				printf("crime: memory error address %llx status %llx\n", address << 2, status);
+				u_int64_t address =
+				    bus_space_read_8(crime_sc->iot,
+				    crime_sc->ioh, CRIME_MEM_ERROR_ADDR);
+				u_int64_t status =
+				    bus_space_read_8(crime_sc->iot,
+				    crime_sc->ioh, CRIME_MEM_ERROR_STAT);
+				printf("crime: memory error address %llx"
+				    " status %llx\n", address << 2, status);
 				ip32_bus_reset();
 			}
 
 			if (crime_ipending & CRIME_INT_CRMERR) {
-				u_int64_t stat = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CPU_ERROR_STAT);
-				printf("crime: cpu error %llx\n", stat);
+				u_int64_t stat =
+				    bus_space_read_8(crime_sc->iot,
+				    crime_sc->ioh, CRIME_CPU_ERROR_STAT);
+				printf("crime: cpu error %llx at"
+				    " address %llx\n", stat,
+				    bus_space_read_8(crime_sc->iot,
+				    crime_sc->ioh, CRIME_CPU_ERROR_ADDR));
 				ip32_bus_reset();
 			}
 		}

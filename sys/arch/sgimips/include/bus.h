@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2003/06/15 23:09:05 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,15 @@ typedef u_long bus_size_t;
  */
 typedef int	bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
+
+/*
+ * Values for sgimips bus space tag, not to be used directly by MI code.
+ */
+#define	SGIMIPS_BUS_SPACE_NORMAL	0
+#define	SGIMIPS_BUS_SPACE_HPC		1
+#define	SGIMIPS_BUS_SPACE_MEM		2
+#define	SGIMIPS_BUS_SPACE_MACE		3
+#define	SGIMIPS_BUS_SPACE_IO		4
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -138,10 +147,7 @@ u_int16_t bus_space_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 (wbflush(), /* XXX */							\
      (void) t, (*(volatile u_int32_t *)((h) + (o))))
 
-/* XXX Make sure to use 64-bit loads. */
-#define	bus_space_read_8(t, h, o)					\
-(wbflush(), /* XXX */							\
-     (void) t, (*(volatile u_int64_t *)((h) + (o))))
+#define bus_space_read_8(t, h, o) mips3_ld((u_int64_t *)((h) + (o)))
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
@@ -241,13 +247,7 @@ do {									\
 	wbflush(); /* XXX */						\
 } while (0)
 
-/* XXX Make sure to use 64-bit stores. */
-#define	bus_space_write_8(t, h, o, v)					\
-do {									\
-	(void) t;							\
-	*(volatile u_int64_t *)((h) + (o)) = (v);			\
-	wbflush(); /* XXX */						\
-} while (0)
+#define bus_space_write_8(t, h, o, v) (mips3_sd((u_int64_t *)((h) + (o)), (v)))
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,

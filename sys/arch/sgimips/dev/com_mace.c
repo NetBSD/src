@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.9 2003/07/15 03:35:51 lukem Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.10 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.9 2003/07/15 03:35:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.10 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,13 @@ com_mace_attach(parent, self, aux)
 	struct mace_attach_args *maa = aux;
 
 	sc->sc_iot = maa->maa_st;
-	sc->sc_ioh = maa->maa_sh;
-	sc->sc_iobase = maa->maa_sh;
+
+	/*
+	 * XXX should check com_is_console() and 
+	 * XXX use bus_space_map().
+	 */
+	sc->sc_ioh = maa->maa_sh + maa->maa_offset;
+	sc->sc_iobase = sc->sc_ioh;
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -104,8 +109,7 @@ com_mace_attach(parent, self, aux)
 	com_attach_subr(sc);
 	delay(10000);
 
-	mace_intr_establish(4, IPL_TTY, comintr, sc);
-	/*mace_intr_establish(maa->maa_intr, IPL_TTY, comintr, sc);*/
+	mace_intr_establish(maa->maa_intr, maa->maa_intrmask, comintr, sc);
 
 	return;
 }
