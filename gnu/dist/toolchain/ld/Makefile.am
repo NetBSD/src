@@ -110,6 +110,7 @@ ALL_EMULATIONS = \
 	earmcoff.o \
 	earmelf.o \
 	earmelf_linux.o \
+	earmelf_nbsd.o \
 	earmelf_oabi.o \
 	earmnbsd.o \
 	earmpe.o \
@@ -152,6 +153,7 @@ ALL_EMULATIONS = \
 	eelf32ppcsim.o \
 	eelf32shlunx.o \
 	eelf32shunx.o \
+	eelf32vax.o \
 	eelf_i386.o \
 	eelf_i386_be.o \
 	eelf_i386_chaos.o \
@@ -238,6 +240,7 @@ ALL_EMULATIONS = \
 	etic80coff.o \
 	evanilla.o \
 	evax.o \
+	evaxnbsd.o \
 	evsta.o \
 	ew65.o \
 	ez8001.o \
@@ -335,6 +338,9 @@ earmelf_linux.c: $(srcdir)/emulparams/armelf_linux.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armelf_linux "$(tdir_armelf_linux)"
+earmelf_nbsd.c: $(srcdir)/emulparams/armelf_nbsd.sh \
+  $(srcdir)/emultempl/armelf.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
 earmaoutb.c:	$(srcdir)/emulparams/armaoutb.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/armaout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armaoutb "$(tdir_armaoutb)"
@@ -733,6 +739,9 @@ eelf32shunx.c: $(srcdir)/emulparams/elf32shunx.sh \
 eelf32shlunx.c: $(srcdir)/emulparams/elf32shlunx.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32shlunx "$(tdir_elf32shlunx)"
+eelf32vax.c: $(srcdir)/emulparams/elf32vax.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32vax "$(tdir_elf32vax)"
 esparcaout.c: $(srcdir)/emulparams/sparcaout.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} sparcaout "$(tdir_sparcaout)"
@@ -772,6 +781,9 @@ evanilla.c: $(srcdir)/emulparams/vanilla.sh \
 evax.c: $(srcdir)/emulparams/vax.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} vax "$(tdir_vax)"
+evaxnbsd.c: $(srcdir)/emulparams/vaxnbsd.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} vaxnbsd "$(tdir_vax)"
 evsta.c: $(srcdir)/emulparams/vsta.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} vsta "$(tdir_vsta)"
