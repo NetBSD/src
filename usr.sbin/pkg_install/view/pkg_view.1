@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.5 2003/09/08 07:09:33 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.6 2003/09/08 08:58:00 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 13, 2003
+.Dd September 8, 2003
 .Dt PKG_VIEW 1
 .Os
 .Sh NAME
@@ -210,7 +210,7 @@ environment variable.
 .El
 .Sh FILES
 .Bl -tag -width indent
-.It Pa <pkg-dbdir>/<package>/+INSTALL
+.It Pa \*[Lt]pkg-dbdir\*[Gt]/\*[Lt]package\*[Gt]/+INSTALL
 If the package contains an
 .Ar install
 script (see
@@ -228,7 +228,7 @@ the package is added to a view.
 If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
-.It Pa <pkg-dbdir>/<package>/+DEINSTALL
+.It Pa \*[Lt]pkg-dbdir\*[Gt]/\*[Lt]package\*[Gt]/+DEINSTALL
 If the package contains an
 .Ar deinstall
 script (see
