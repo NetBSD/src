@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.usr,v 1.7 1996/10/17 04:38:49 perry Exp $
+#	$NetBSD: 4.4BSD.usr,v 1.8 1996/10/18 07:04:27 perry Exp $
 #
 #	   user: bostic
 #	machine: vangogh.CS.Berkeley.EDU
@@ -860,20 +860,6 @@ smm             type=dir
 # ./share/doc/smm/01.setup
 /set type=file gname=bin uname=bin mode=0444
 01.setup        type=dir uname=root gname=wheel mode=0775
-
-# ./share/doc/smm/01.setup/tahoe
-/set type=file gname=bin uname=bin mode=0444
-tahoe           type=dir uname=root gname=wheel mode=0775
-# ./share/doc/smm/01.setup/tahoe
-..
-
-
-# ./share/doc/smm/01.setup/vax
-/set type=file gname=bin uname=bin mode=0444
-vax             type=dir uname=root gname=wheel mode=0775
-# ./share/doc/smm/01.setup/vax
-..
-
 # ./share/doc/smm/01.setup
 ..
 

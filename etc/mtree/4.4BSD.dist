@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.dist,v 1.34 1996/10/17 04:29:14 perry Exp $
+#	$NetBSD: 4.4BSD.dist,v 1.35 1996/10/18 07:04:24 perry Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -480,17 +480,6 @@ smm
 
 # ./usr/share/doc/smm/01.setup
 01.setup
-
-# ./usr/share/doc/smm/01.setup/tahoe
-tahoe
-# ./usr/share/doc/smm/01.setup/tahoe
-..
-
-# ./usr/share/doc/smm/01.setup/vax
-vax
-# ./usr/share/doc/smm/01.setup/vax
-..
-
 # ./usr/share/doc/smm/01.setup
 ..
 
