@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.20 2002/09/30 20:37:09 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.21 2002/10/02 16:51:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.20 2002/09/30 20:37:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.21 2002/10/02 16:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ int	auvia_trigger_input(void *, void *, void *, int, void (*)(void *),
 int	auvia_intr __P((void *));
 
 CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
-    auvia_match, auvia_attach, NULL, NULL)
+    auvia_match, auvia_attach, NULL, NULL);
 
 #define AUVIA_PCICONF_JUNK	0x40
 #define		AUVIA_PCICONF_ENABLES	 0x00FF0000	/* reg 42 mask */
