@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.9 1999/01/16 06:36:42 nisimura Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.10 1999/04/20 06:48:58 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -18,6 +18,7 @@
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
+
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
 #include <dev/tc/ioasicvar.h>
