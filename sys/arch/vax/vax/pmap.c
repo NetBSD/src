@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 2002/06/09 21:57:08 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.116 2002/07/25 10:44:25 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,7 @@
 #include "qd.h"
 void	qdearly(void);
 
-#define ISTACK_SIZE NBPG
+#define ISTACK_SIZE (NBPG*2)
 vaddr_t istack;
 /* 
  * This code uses bitfield operators for most page table entries.  
