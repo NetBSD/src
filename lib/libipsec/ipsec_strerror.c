@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.c,v 1.3 1999/07/04 01:36:13 itojun Exp $	*/
+/*	$NetBSD: ipsec_strerror.c,v 1.4 2000/01/31 14:15:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -46,7 +46,9 @@ static char *ipsec_errlist[] = {
 "Invalid sadb message",				/*EIPSEC_INVAL_SADBMSG*/
 "Invalid version",				/*EIPSEC_INVAL_VERSION*/
 "Invalid security policy",			/*EIPSEC_INVAL_POLICY*/
+"Invalid address specification",		/*EIPSEC_INVAL_ADDRESS*/
 "Invalid ipsec protocol",			/*EIPSEC_INVAL_PROTO*/
+"Invalid ipsec mode",				/*EIPSEC_INVAL_MODE*/
 "Invalid ipsec level",				/*EIPSEC_INVAL_LEVEL*/
 "Invalid SA type",				/*EIPSEC_INVAL_SATYPE*/
 "Invalid message type",				/*EIPSEC_INVAL_MSGTYPE*/
@@ -55,6 +57,7 @@ static char *ipsec_errlist[] = {
 "Invalid key length",				/*EIPSEC_INVAL_KEYLEN*/
 "Invalid address family",			/*EIPSEC_INVAL_FAMILY*/
 "Invalid prefix length",			/*EIPSEC_INVAL_PREFIXLEN*/
+"Invalid direciton",				/*EIPSEC_INVAL_DIR*/
 "SPI range violation",				/*EIPSEC_INVAL_SPI*/
 "No protocol specified",			/*EIPSEC_NO_PROTO*/
 "No algorithm specified",			/*EIPSEC_NO_ALGS*/
@@ -62,6 +65,7 @@ static char *ipsec_errlist[] = {
 "Must get supported algorithms list first",	/*EIPSEC_DO_GET_SUPP_LIST*/
 "Protocol mismatch",				/*EIPSEC_PROTO_MISMATCH*/
 "Family mismatch",				/*EIPSEC_FAMILY_MISMATCH*/
+"Too few arguments",				/*EIPSEC_FEW_ARGUMENTS*/
 NULL,						/*EIPSEC_SYSTEM_ERROR*/
 "Unknown error",				/*EIPSEC_MAX*/
 };
