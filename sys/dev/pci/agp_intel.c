@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.8 2003/06/14 11:40:20 ichiro Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.9 2003/06/14 11:44:51 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.8 2003/06/14 11:40:20 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.9 2003/06/14 11:44:51 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,8 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 
 	default:
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
-		    pci_read_config(dev, AGP_INTEL_AGPCTRL) | AGPCTRL_GTLB);
+		    pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL)
+			| AGPCTRL_GTLB);
 	}
 	
 	/* Enable things, clear errors etc. */
@@ -219,18 +220,21 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Clear Error status */
-	switch (type) {
+	switch (isc->chiptype) {
 	case CHIP_I840:
-		pci_write_config(dev, AGP_INTEL_I8XX_ERRSTS, 0xc000);
+		pci_conf_write(sc->as_pc, sc->as_tag,
+			AGP_INTEL_I8XX_ERRSTS, 0xc000);
 		break;
 
 	case CHIP_I845:
 	case CHIP_I850:
-		pci_write_config(dev, AGP_INTEL_I8XX_ERRSTS, 0x00ff);
+		pci_conf_write(sc->as_pc, sc->as_tag,
+			AGP_INTEL_I8XX_ERRSTS, 0x00ff);
 		break;
 
 	default:
-		pci_write_config(dev, AGP_INTEL_ERRSTS, 0x70);
+		pci_conf_write(sc->as_pc, sc->as_tag,
+			AGP_INTEL_ERRSTS, 0x70);
 	}
 
 	return 0;
