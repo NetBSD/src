@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.3.2.5 2002/09/30 13:19:54 lukem Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.3.2.6 2002/10/13 23:04:54 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -157,8 +157,10 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 	option "Przesuniecie/rozmiar", action  
 		{	int start, size;
 			msg_display_add(MSG_defaultunit, multname);
-			start = getpartoff(MSG_offset, 0);
-			size = getpartsize(MSG_size, start, 0);
+			start = getpartoff(MSG_offset,
+				bsdlabel[editpart].pi_offset);
+			size = getpartsize(MSG_size, start,
+				bsdlabel[editpart].pi_size);
 			if (size == -1)
 				size = dlsize - start;
 			bsdlabel[editpart].pi_offset = start;
@@ -172,10 +174,14 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 				process_menu (MENU_ok);
 				return FALSE;
 			}
-			msg_prompt_add (MSG_bsize, NULL, buf, 40);
+			snprintf(buf, sizeof(buf), "%d",
+				bsdlabel[editpart].pi_bsize);
+			msg_prompt_add (MSG_bsize, buf, buf, 40);
 			i = atoi(buf);
 			bsdlabel[editpart].pi_bsize = i;
-			msg_prompt_add (MSG_fsize, NULL, buf, 40);
+			snprintf(buf, sizeof(buf), "%d",
+				bsdlabel[editpart].pi_fsize);
+			msg_prompt_add (MSG_fsize, buf, buf, 40);
 			i = atoi(buf);
 			bsdlabel[editpart].pi_fsize = i;
 		};
