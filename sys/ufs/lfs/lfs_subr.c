@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.8 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.9 1999/03/25 21:39:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -213,15 +213,11 @@ lfs_segunlock(fs)
 		splx(s);
 		if (ckp) {
 			fs->lfs_nactive = 0;
-#ifndef LFS_TOGGLE_SB
-			lfs_writesuper(fs,fs->lfs_sboffs[0]);
-#else
 			/* If we *know* everything's on disk, write both sbs */
 			if(sync)
 				lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
-#endif
 		}
 		--fs->lfs_seglock;
 		fs->lfs_lockpid = 0;

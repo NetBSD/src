@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.15 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.16 1999/03/25 21:39:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
  *
  *	@(#)lfs_segment.c	8.10 (Berkeley) 6/10/95
  */
+
+#define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,18 +262,11 @@ lfs_vflush(vp)
 	return (0);
 }
 
-#define vndebug(vp,str) if(VTOI(vp)->i_flag & IN_CLEANING) printf("not writing ino %d because %s\n",VTOI(vp)->i_number,(str))
-
-/* XXX KS - This is ugly */
-#define BYTE_BORROW(FS,SP,SZ) do {                        \
-        SEGUSE *_sup;                                     \
-        struct buf *_bp;                                  \
-                                                          \
-        LFS_SEGENTRY(_sup, (FS), (SP)->seg_number, _bp);  \
-        _sup->su_nbytes += (SZ);                          \
-        (FS)->lfs_loaned_bytes += (SZ);                   \
-        VOP_BWRITE(_bp);                                  \
-} while(0)
+#ifdef DEBUG_LFS_VERBOSE
+# define vndebug(vp,str) if(VTOI(vp)->i_flag & IN_CLEANING) printf("not writing ino %d because %s (op %d)\n",VTOI(vp)->i_number,(str),op)
+#else
+# define vndebug(vp,str)
+#endif
 
 int
 lfs_writevnodes(fs, mp, sp, op)
@@ -309,13 +304,11 @@ lfs_writevnodes(fs, mp, sp, op)
 			goto loop;
 
 		ip = VTOI(vp);
-#ifdef LFS_USEDIROP
 		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
 		    (op != VN_DIROP && op != VN_CLEAN && (vp->v_flag & VDIROP))) {
 			vndebug(vp,"dirop");
 			continue;
 		}
-#endif /* LFS_USEDIROP */
 		
 		if (op == VN_EMPTY && vp->v_dirtyblkhd.lh_first) {
 			vndebug(vp,"empty");
@@ -326,46 +319,26 @@ lfs_writevnodes(fs, mp, sp, op)
 			continue;
 		}
 
-#ifdef LFS_STINGY_CLEAN
 		if(op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM
 		   && !(ip->i_flag & IN_CLEANING)) {
 			vndebug(vp,"cleaning");
 			continue;
 		}
-#endif /* LFS_STINGY_CLEAN */
 
 		if (lfs_vref(vp)) {
 			vndebug(vp,"vref");
 			continue;
 		}
 
-#ifdef LFS_USEDIROP
-		/*
-		 * A removed Inode from a dirop we're writing
-		 */
-		if((vp->v_flag & VDIROP)
-		   && !WRITEINPROG(vp)
-		   && vp->v_usecount<3
-		   && ip->i_ffs_nlink == 0
-		   && !VOP_ISLOCKED(vp))
-		{
-			vndebug(vp,"vinactive");
-			--fs->lfs_dirvcount;
-			vp->v_flag &= ~VDIROP;
-			wakeup(&fs->lfs_dirvcount);
-			/*
-			 * vrele() will call VOP_INACTIVE for us, if
-			 * there are no active references to this vnode
-			 * (i.e. it was really removed).
-			 */
-			if(vp->v_usecount==2)
-				lfs_vunref(vp);
-			VOP_LOCK(vp,LK_EXCLUSIVE);
-			vput(vp);
-			continue; /* Don't lfs_vunref again */
+#if 0 /* XXX KS - if we skip the ifile, things could go badly for us. */
+		if(WRITEINPROG(vp)) {
+			lfs_vunref(vp);
+#ifdef DEBUG_LFS
+			ivndebug(vp,"writevnodes/writeinprog");
+#endif
+			continue;
 		}
-#endif /* LFS_USEDIROP */
-
+#endif
 		/*
 		 * Write the inode/file if dirty and it's not the
 		 * the IFILE.
@@ -382,7 +355,7 @@ lfs_writevnodes(fs, mp, sp, op)
 			if(vp->v_dirtyblkhd.lh_first != NULL) {
 				if(WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
-					printf("W");
+					ivndebug(vp,"writevnodes/write2");
 #endif
 				} else if(!(ip->i_flag & (IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE|IN_CLEANING))) {
 #ifdef DEBUG_LFS
@@ -396,14 +369,12 @@ lfs_writevnodes(fs, mp, sp, op)
 			inodes_written++;
 		}
 
-#ifdef LFS_USEDIROP
 		if(vp->v_flag & VDIROP) {
 			--fs->lfs_dirvcount;
 			vp->v_flag &= ~VDIROP;
 			wakeup(&fs->lfs_dirvcount);
 			lfs_vunref(vp);
 		}
-#endif /* LFS_USEDIROP */
 
 		lfs_vunref(vp);
 	}
@@ -433,9 +404,7 @@ lfs_segwrite(mp, flags)
 	ufs_daddr_t ibno;
 	int do_ckp, error, i;
 	int writer_set = 0;
-#ifdef LFS_CONSERVATIVE_LOCK
 	int need_unlock = 0;
-#endif /* LFS_CONSERVATIVE_LOCK */
 	
 	fs = VFSTOUFS(mp)->um_lfs;
 
@@ -473,17 +442,13 @@ lfs_segwrite(mp, flags)
 	sp = fs->lfs_sp;
 
 	/*
-	 * XXX KS - If lfs_flushvp is non-NULL, we are called from
-	 * lfs_vflush, in which case we have to flush *all* buffers
-	 * off of this vnode.
+	 * If lfs_flushvp is non-NULL, we are called from lfs_vflush,
+	 * in which case we have to flush *all* buffers off of this vnode.
 	 */
-#ifdef LFS_STINGY_CLEAN
 	if((sp->seg_flags & SEGM_CLEAN) && !(fs->lfs_flushvp))
 		lfs_writevnodes(fs, mp, sp, VN_CLEAN);
 	else {
-#endif /* LFS_STINGY_CLEAN */
 		lfs_writevnodes(fs, mp, sp, VN_REG);
-#ifdef LFS_USEDIROP
 		/*
 		 * XXX KS - If we're cleaning, we can't wait for dirops,
 		 * because they might be waiting on us.  The downside of this
@@ -505,15 +470,7 @@ lfs_segwrite(mp, flags)
 			lfs_writevnodes(fs, mp, sp, VN_DIROP);
 			((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 		}
-#if defined(DEBUG_LFS) && !defined(LFS_STINGY_BLOCKS)
-		else if(fs->lfs_dirops) {
-			printf("ignoring active dirops in favor of the cleaner\n");
-		}
-#endif /* DEBUG_LFS && !LFS_STINGY_BLOCKS */
-#endif /* LFS_USEDIROP */
-#ifdef LFS_STINGY_CLEAN
 	}	
-#endif /* LFS_STINGY_CLEAN */
 
 	/*
 	 * If we are doing a checkpoint, mark everything since the
@@ -539,10 +496,6 @@ lfs_segwrite(mp, flags)
 	if (do_ckp || fs->lfs_doifile) {
 	redo:
 		vp = fs->lfs_ivnode;
-#ifndef LFS_CONSERVATIVE_LOCK
-		while (vget(vp, LK_EXCLUSIVE))
-			continue;
-#else  /* LFS_CONSERVATIVE_LOCK */
 		/*
 		 * Depending on the circumstances of our calling, the ifile
 		 * inode might be locked.  If it is, and if it is locked by
@@ -557,21 +510,16 @@ lfs_segwrite(mp, flags)
 				continue;
 			need_unlock = 1;
 		}
-#endif /* LFS_CONSERVATIVE_LOCK */
 		ip = VTOI(vp);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			lfs_writefile(fs, sp, vp);
 		(void)lfs_writeinode(fs, sp, ip);
 
-#ifndef LFS_CONSERVATIVE_LOCK
-		vput(vp);
-#else  /* LFS_CONSERVATIVE_LOCK */
 		/* Only vput if we used vget() above. */
 		if(need_unlock)
 			vput(vp);
 		else
 			vrele(vp);
-#endif /* LFS_CONSERVATIVE_LOCK */
 
 		if (lfs_writeseg(fs, sp) && do_ckp)
 			goto redo;
@@ -584,11 +532,9 @@ lfs_segwrite(mp, flags)
 	 * At the moment, the user's process hangs around so we can
 	 * sleep. 
 	 */
-#ifdef LFS_USEDIROP
 	fs->lfs_doifile = 0;
 	if(writer_set && --fs->lfs_writer==0)
 		wakeup(&fs->lfs_dirops);
-#endif /* LFS_USEDIROP */
 	
 	if(lfs_dostats) {
 		++lfs_stats.nwrites;
@@ -622,10 +568,8 @@ lfs_writefile(fs, sp, vp)
 	sp->sum_bytes_left -= sizeof(struct finfo) - sizeof(ufs_daddr_t);
 	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 
-#ifdef LFS_USEDIROP
 	if(vp->v_flag & VDIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
-#endif
 	
 	fip = sp->fip;
 	fip->fi_nblocks = 0;
@@ -643,15 +587,14 @@ lfs_writefile(fs, sp, vp)
 	 * vnode is being flushed (for reuse by vinvalbuf); or (2) we are
 	 * checkpointing.
 	 */
-#ifdef LFS_STINGY_BLOCKS
 	if((sp->seg_flags & SEGM_CLEAN)
 	   && VTOI(vp)->i_number != LFS_IFILE_INUM
 	   && !IS_FLUSHING(fs,vp))
 	{
 		lfs_gather(fs, sp, vp, lfs_match_fake);
 	} else
-#endif /* LFS_STINGY_BLOCKS */
 		lfs_gather(fs, sp, vp, lfs_match_data);
+
 	if(lfs_writeindir
 	   || IS_FLUSHING(fs,vp)
 	   || (sp->seg_flags & SEGM_CKP))
@@ -721,20 +664,12 @@ lfs_writeinode(fs, sp, ip)
 	/* Update the inode times and copy the inode onto the inode page. */
 	if (ip->i_flag & (IN_CLEANING|IN_MODIFIED))
 		--fs->lfs_uinodes;
-#ifdef DEBUG_LFS
-	if((int32_t)fs->lfs_uinodes < 0) {
-		printf("U2");
-		fs->lfs_uinodes=0;
-	}
-#endif
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip, &ts, &ts, &ts);
-	
-#ifdef LFS_STINGY_CLEAN
+
 	if(ip->i_flag & IN_CLEANING)
 		ip->i_flag &= ~IN_CLEANING;
 	else
-#endif
 		ip->i_flag &= ~(IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE);
 
 	bp = sp->ibp;
@@ -1166,10 +1101,6 @@ lfs_writeseg(fs, sp)
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
 
-	/* Now we can recover the bytes we lost to writevnodes */
-	sup->su_nbytes -= fs->lfs_loanedbytes;
-	fs->lfs_loanedbytes = 0;
-
 	do_again = !(bp->b_flags & B_GATHERED);
 	(void)VOP_BWRITE(bp);
 	/*
@@ -1255,11 +1186,6 @@ lfs_writeseg(fs, sp)
 			 * XXX == what do I do on an error?
 			 */
 			if ((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL)) {
-#ifdef DEBUG
-				if(incore(bp->b_vp, bp->b_lblkno)) {
-				    printf("lfs_writeseg: fake block (ino %d lbn %d) is also in core!\n", VTOI(bp->b_vp)->i_number, bp->b_lblkno);
-				}
-#endif
 				if (copyin(bp->b_saveaddr, p, bp->b_bcount))
 					panic("lfs_writeseg: copyin failed [2]");
 			} else
