@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.64 1998/04/18 19:03:00 pk Exp $
+# 	$NetBSD: GENERIC,v 1.65 1998/05/05 01:15:41 mrg Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -33,11 +33,6 @@ options 	RASTERCONSOLE	# fast rasterop console
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
-
-## Virtual memory configuration.  There are two choices, the old Mach
-## based VM system, or the new UVM system.
-options 	OLDVM		# MACH VM
-#options 	UVM		# UVM VM
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
