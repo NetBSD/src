@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.27 2003/06/29 22:29:36 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.28 2003/10/26 19:13:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.27 2003/06/29 22:29:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.28 2003/10/26 19:13:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -783,17 +783,17 @@ compat_43_netbsd32_osigvec(l, v, retval)
 	} */ *uap = v;
 	struct compat_43_sys_sigvec_args ua;
 	struct netbsd32_sigvec sv32;
-	struct sigvec sv, *sgnsvp, *sgosvp;
+	struct sigvec sv;
 	caddr_t sg = stackgap_init(p, 0);
 	int rv, error;
 
 	NETBSD32TO64_UAP(signum);
 	if (SCARG(uap, osv))
-		SCARG(&ua, osv) = sgosvp = stackgap_alloc(p, &sg, sizeof(sv));
+		SCARG(&ua, osv) = stackgap_alloc(p, &sg, sizeof(sv));
 	else
 		SCARG(&ua, osv) = NULL;
 	if (SCARG(uap, nsv)) {
-		SCARG(&ua, nsv) = sgnsvp = stackgap_alloc(p, &sg, sizeof(sv));
+		SCARG(&ua, nsv) = stackgap_alloc(p, &sg, sizeof(sv));
 		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, nsv)), &sv32,
 		    sizeof(sv32));
 		if (error)
@@ -801,7 +801,7 @@ compat_43_netbsd32_osigvec(l, v, retval)
 		sv.sv_handler = (void *)NETBSD32PTR64(sv32.sv_handler);
 		sv.sv_mask = sv32.sv_mask;
 		sv.sv_flags = sv32.sv_flags;
-		error = copyout(&sv, sgnsvp, sizeof(sv));
+		error = copyout(&sv, SCARG(&ua, nsv), sizeof(sv));
 		if (error)
 			return (error);
 	} else
@@ -811,7 +811,7 @@ compat_43_netbsd32_osigvec(l, v, retval)
 		return (rv);
 
 	if (SCARG(uap, osv)) {
-		error = copyin(sgosvp, &sv, sizeof(sv));
+		error = copyin(SCARG(&ua, osv), &sv, sizeof(sv));
 		if (error)
 			return (error);
 		sv32.sv_handler = (netbsd32_sigvecp_t)(u_long)sv.sv_handler;
@@ -869,23 +869,23 @@ compat_43_netbsd32_osigstack(l, v, retval)
 	} */ *uap = v;
 	struct compat_43_sys_sigstack_args ua;
 	struct netbsd32_sigstack ss32;
-	struct sigstack ss, *sgossp, *sgnssp;
+	struct sigstack ss;
 	caddr_t sg = stackgap_init(p, 0);
 	int error, rv;
 
 	if (SCARG(uap, oss))
-		SCARG(&ua, oss) = sgossp = stackgap_alloc(p, &sg, sizeof(ss));
+		SCARG(&ua, oss) = stackgap_alloc(p, &sg, sizeof(ss));
 	else
 		SCARG(&ua, oss) = NULL;
 	if (SCARG(uap, nss)) {
-		SCARG(&ua, nss) = sgnssp = stackgap_alloc(p, &sg, sizeof(ss));
+		SCARG(&ua, nss) = stackgap_alloc(p, &sg, sizeof(ss));
 		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, nss)), &ss32,
 		    sizeof(ss32));
 		if (error)
 			return (error);
 		ss.ss_sp = (void *)NETBSD32PTR64(ss32.ss_sp);
 		ss.ss_onstack = ss32.ss_onstack;
-		error = copyout(&ss, sgnssp, sizeof(ss));
+		error = copyout(&ss, SCARG(&ua, nss), sizeof(ss));
 		if (error)
 			return (error);
 	} else
@@ -896,7 +896,7 @@ compat_43_netbsd32_osigstack(l, v, retval)
 		return (rv);
 
 	if (SCARG(uap, oss)) {
-		error = copyin(sgossp, &ss, sizeof(ss));
+		error = copyin(SCARG(&ua, oss), &ss, sizeof(ss));
 		if (error)
 			return (error);
 		ss32.ss_sp = (netbsd32_sigstackp_t)(u_long)ss.ss_sp;
