@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1995/04/10 13:09:17 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 1995/05/14 19:09:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,9 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/core.h>
+#include <sys/exec_aout.h>
+#include <m68k/reg.h>
 
 #include <machine/cpu.h>
 
@@ -68,68 +71,76 @@
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	register struct user *up = p2->p_addr;
-	int offset;
-	extern caddr_t getsp();
-	extern char kstack[];
+	register struct pcb *pcb = &p2->p_addr->u_pcb;
+	register struct trapframe *tf;
+	register struct switchframe *sf;
+	extern void proc_trampoline(), child_return();
 
-	/* copy over the machdep part of struct proc, so we don't lose
-	   any emulator-properties of processes. */
-	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* need to copy current frame pointer */
-	p2->p_md.md_regs = p1->p_md.md_regs;
+	/* Copy pcb from proc p1 to p2. */
+	*pcb = p1->p_addr->u_pcb;
 
-	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 * this is tricky, as the final pcb is constructed by savectx,
-	 * but its frame isn't yet on the stack when the stack is copied.
-	 * cpu_switch compensates for this when the child eventually runs.
-	 * This should be done differently, with a single call
-	 * that copies and updates the pcb+stack,
-	 * replacing the bcopy and savectx.
-	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = getsp() - kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
-
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
 
 	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
+	 * Copy the trap frame, and arrange for the child to return directly
+	 * through return_to_user().
 	 */
-	if (savectx(up, 1)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
+	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
+	p2->p_md.md_regs = (int *)tf;
+	*tf = *(struct trapframe *)p1->p_md.md_regs;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
+	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[11] = (int)sf;		/* SSP */
+
 	return (0);
+}
+
+/*
+ * cpu_set_kpc:
+ *
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with argument, the current process's process pointer.
+ *
+ * Note that it's assumed that when the named process returns, rei()
+ * should be invoked, to return to user mode.
+ */
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	u_int32_t pc;
+{
+	struct pcb *pcbp;
+	struct switchframe *sf;
+	extern void proc_trampoline(), child_return();
+
+	pcbp = &p->p_addr->u_pcb;
+	sf = (struct switchframe *)pcbp->pcb_regs[11];
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcbp->pcb_regs[6] = pc;			/* A2 */
+	pcbp->pcb_regs[7] = (int)p;		/* A3 */
 }
 
 /*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ * Block context switches and then call switch_exit() which will
+ * free our stack and user area and switch to another process
+ * thus we never return.
  */
 void
 cpu_exit(p)
 	struct proc *p;
 {
-
 	vmspace_free(p->p_vmspace);
 	
-	(void) splimp();
+	(void)splhigh();
 	cnt.v_swtch++;
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	switch_exit();
+	switch_exit(p);
 	/* NOTREACHED */
 }
 
@@ -202,16 +213,78 @@ physunaccess(vaddr, size)
 }
 
 /*
- * Dump the machine specific header information at the start of a core dump.
- */     
-cpu_coredump(p, vp, cred)
+ * Dump the machine specific segment at the start of a core dump.
+ * This means the CPU and FPU registers.  The format used here is
+ * the same one ptrace uses, so gdb can be machine independent.
+ *
+ * XXX - Generate Sun format core dumps for Sun executables?
+ */
+struct md_core {
+	struct reg intreg;
+	struct fpreg freg;
+};
+int
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
-	return(vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	int error;
+	struct md_core md_core;
+	struct coreseg cseg;
+	register struct user *up = p->p_addr;
+	register i;
+
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(md_core);
+
+	/* Save integer registers. */
+	{
+		register struct frame *f;
+
+		f = (struct frame*) p->p_md.md_regs;
+		for (i = 0; i < 16; i++) {
+			md_core.intreg.r_regs[i] = f->f_regs[i];
+		}
+		md_core.intreg.r_sr = f->f_sr;
+		md_core.intreg.r_pc = f->f_pc;
+	}
+	if (fputype) {
+		register struct fpframe *f;
+
+		f = &up->u_pcb.pcb_fpregs;
+		m68881_save(f);
+		for (i = 0; i < (8*3); i++) {
+			md_core.freg.r_regs[i] = f->fpf_regs[i];
+		}
+		md_core.freg.r_fpcr  = f->fpf_fpcr;
+		md_core.freg.r_fpsr  = f->fpf_fpsr;
+		md_core.freg.r_fpiar = f->fpf_fpiar;
+	} else {
+		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
+	}
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }
 
 /*
