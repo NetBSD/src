@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/gen.c,v 1.6 1993/12/09 19:06:16 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/gen.c,v 1.7 1993/12/14 02:10:07 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -45,8 +45,10 @@ static int indent_level = 0; /* each level is 8 spaces */
 #define indent_down() (--indent_level)
 #define set_indent(indent_val) indent_level = indent_val
 
-/* *Everything* is done in terms of arrays starting at 1, so provide
- * a null entry for the zero element of all C arrays.
+/* Almost everything is done in terms of arrays starting at 1, so provide
+ * a null entry for the zero element of all C arrays.  (The exception
+ * to this is that the fast table representation generally uses the
+ * 0 elements of its arrays, too.)
  */
 static char C_int_decl[] = "static const int %s[%d] =\n    {   0,\n";
 static char C_short_decl[] = "static const short int %s[%d] =\n    {   0,\n";
@@ -169,16 +171,17 @@ void genctbl()
 	/* So that "make test" won't show arb. differences. */
 	nxt[tblend + 2] = 0;
 
-	/* Make sure every state has a end-of-buffer transition and an
+	/* Make sure every state has an end-of-buffer transition and an
 	 * action #.
 	 */
 	for ( i = 0; i <= lastdfa; ++i )
 		{
-		register int anum = dfaacc[i].dfaacc_state;
+		int anum = dfaacc[i].dfaacc_state;
+		int offset = base[i];
 
-		chk[base[i]] = EOB_POSITION;
-		chk[base[i] - 1] = ACTION_POSITION;
-		nxt[base[i] - 1] = anum;	/* action number */
+		chk[offset] = EOB_POSITION;
+		chk[offset - 1] = ACTION_POSITION;
+		nxt[offset - 1] = anum;	/* action number */
 		}
 
 	for ( i = 0; i <= tblend; ++i )
@@ -1254,11 +1257,14 @@ void make_tables()
 		else
 			{
 			printf(
-			"\tif ( yy_current_buffer->is_interactive ) \\\n" );
+			"\tif ( yy_current_buffer->yy_is_interactive ) \\\n" );
+			printf( "\t\t{ \\\n" );
+			printf( "\t\tint c = getc( yyin ); \\\n" );
+			printf( "\t\tresult = c == EOF ? 0 : 1; \\\n" );
+			printf( "\t\tbuf[0] = (char) c; \\\n" );
+			printf( "\t\t} \\\n" );
 			printf(
-"\t\tresult = ((int) (buf[0] = getc( yyin ))) == EOF ? 0 : 1; \\\n" );
-			printf(
-"\telse if ( ((result = fread( (char *) buf, 1, max_size, yyin )) == 0)\\\n" );
+	"\telse if ( ((result = fread( buf, 1, max_size, yyin )) == 0) \\\n" );
 			printf( "\t\t  && ferror( yyin ) ) \\\n" );
 			printf(
 		"\t\tYY_FATAL_ERROR( \"input in flex scanner failed\" );\n" );
