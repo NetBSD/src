@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.7 2001/01/04 15:56:32 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.8 2002/01/31 00:25:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.7 2001/01/04 15:56:32 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.8 2002/01/31 00:25:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -370,17 +370,17 @@ tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
 		if (tok->wptr >= tok->wmax - 4) {
 			size_t size = tok->wmax - tok->wspace + WINCR;
 			char *s = (char *) tok_realloc(tok->wspace, size);
-			/* SUPPRESS 22 */
-			int offs = s - tok->wspace;
 			if (s == NULL)
 				return (-1);
 
-			if (offs != 0) {
+			if (s != tok->wspace) {
 				int i;
-				for (i = 0; i < tok->argc; i++)
-					tok->argv[i] = tok->argv[i] + offs;
-				tok->wptr = tok->wptr + offs;
-				tok->wstart = tok->wstart + offs;
+				for (i = 0; i < tok->argc; i++) {
+				    tok->argv[i] =
+					(tok->argv[i] - tok->wspace) + s;
+				}
+				tok->wptr = (tok->wptr - tok->wspace) + s;
+				tok->wstart = (tok->wstart - tok->wspace) + s;
 				tok->wmax = s + size;
 				tok->wspace = s;
 			}
