@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.48.2.1 1999/08/24 19:19:30 he Exp $	*/
+/*	$NetBSD: if.c,v 1.48.2.2 2000/04/30 12:51:05 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -211,14 +211,24 @@ ifa_ifwithnet(addr)
 	}
 #ifdef NETATALK
 	if (af == AF_APPLETALK) {
+		struct sockaddr_at *sat, *sat2;
+
+		sat = (struct sockaddr_at*)addr;
 		for (ifp = ifnet.tqh_first; ifp != 0;
 		    ifp = ifp->if_list.tqe_next) {
-			ifa = at_ifawithnet((struct sockaddr_at *)addr, ifp);
-			if (ifa)
-				return ifa;
+			ifa = at_ifawithnet(sat, ifp);
+			if (ifa == NULL)
+				continue;
+			sat2 = (struct sockaddr_at *)ifa->ifa_addr;
+			if (sat2->sat_addr.s_net == sat->sat_addr.s_net)
+				return (ifa); /* exact match */
+			if (ifa_maybe == NULL) {
+				/* else keep the if with the rigth range */
+				ifa_maybe = ifa;
+			}
 		}
-		return NULL;
-	}
+		return (ifa_maybe);
+ 	}
 #endif
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
