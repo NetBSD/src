@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.14 1999/01/21 08:46:06 mycroft Exp $	*/
+/*	$NetBSD: tar.c,v 1.15 1999/08/18 17:46:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.14 1999/01/21 08:46:06 mycroft Exp $");
+__RCSID("$NetBSD: tar.c,v 1.15 1999/08/18 17:46:28 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,13 +514,16 @@ tar_rd(arcn, buf)
 		break;
 	case AREGTYPE:
 	case REGTYPE:
+	case DIRTYPE:	/* see below */
 	default:
 		/*
 		 * If we have a trailing / this is a directory and NOT a file.
+		 * Note: V7 tar doesn't actually have DIRTYPE, but it was
+		 * reported that V7 archives using USTAR directories do exist.
 		 */
 		arcn->ln_name[0] = '\0';
 		arcn->ln_nlen = 0;
-		if (*pt == '/') {
+		if (*pt == '/' || hd->linkflag == DIRTYPE) {
 			/*
 			 * it is a directory, set the mode for -v printing
 			 */
