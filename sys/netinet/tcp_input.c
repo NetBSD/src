@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108.4.8 2001/04/06 00:25:58 he Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108.4.9 2001/05/09 19:37:19 he Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -185,6 +185,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif /*IPSEC*/
 #ifdef INET6
 #include "faith.h"
+#if defined(NFAITH) && NFAITH > 0
+#include <net/if_faith.h>
+#endif
 #endif
 
 int	tcprexmtthresh = 3;
@@ -530,9 +533,8 @@ tcp6_input(mp, offp, proto)
 			}
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
-		icmp6_error(m, ICMP6_DST_UNREACH,
-			ICMP6_DST_UNREACH_ADDR,
-			(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR,
+		    (caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
 		return IPPROTO_DONE;
 	}
 
@@ -883,11 +885,7 @@ findpcb:
 		int faith;
 
 #if defined(NFAITH) && NFAITH > 0
-		if (m->m_pkthdr.rcvif
-		 && m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			faith = 1;
-		} else
-			faith = 0;
+		faith = faithprefix(&ip6->ip6_dst);
 #else
 		faith = 0;
 #endif
