@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.67 2001/09/15 20:36:36 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.68 2001/09/22 22:45:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -264,6 +264,8 @@ cd9660_read(v)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
+	if (uio->uio_offset >= ip->i_size)
+		return 0;
 	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
 
