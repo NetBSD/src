@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.6 2000/02/13 01:31:22 kristerw Exp $	*/
+/*	$NetBSD: scr.c,v 1.7 2000/03/16 23:21:09 darrenr Exp $	*/
 
 /*
  * Copyright 1997
@@ -638,7 +638,7 @@ static void   cardOff              __P((struct scr_softc * sc));
 ** we cannot use system ones as we are running at a spl level
 ** that can interrupt the system timeout routines
 */
-static void scrClkInit     __P(());
+static void scrClkInit     __P((void));
 static void scrClkStart    __P((struct scr_softc* sc,int countPerTick));
 static void scrClkAdj      __P((int count));
 static void scrClkStop     __P((void));
