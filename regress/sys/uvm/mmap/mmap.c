@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.1 1999/06/19 00:53:32 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.2 1999/07/07 22:00:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -182,6 +182,46 @@ main(argc, argv)
 	printf("    UNLOCKING ALL\n");
 
 	(void) munlockall();
+
+	printf(">>> MADV_FREE'ING SECOND ANONYMOUS REGION <<<\n");
+
+	if (madvise(addr2, npgs * pgsize, MADV_FREE) == -1)
+		err(1, "madvise");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr2, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	printf(">>> MADV_FREE'ING FIRST ANONYMOUS REGION <<<\n");
+
+	if (madvise(addr, npgs * pgsize, MADV_FREE) == -1)
+		err(1, "madvise");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	printf(">>> ZEROING FIRST ANONYMOUS REGION <<<\n");
+
+	memset(addr, 0, npgs * pgsize);
+
+	printf(">>> MADV_FREE'ING FIRST ANYMOUS REGION AGAIN <<<\n");
+
+	if (madvise(addr, npgs * pgsize, MADV_FREE) == -1)
+		err(1, "madvise");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr2, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
 
 	exit(ecode);
 }
