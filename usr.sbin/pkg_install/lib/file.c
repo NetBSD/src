@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.65 2003/09/23 14:18:01 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.66 2003/09/23 14:23:54 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.65 2003/09/23 14:18:01 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.66 2003/09/23 14:23:54 wiz Exp $");
 #endif
 #endif
 
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: file.c,v 1.65 2003/09/23 14:18:01 agc Exp $");
 
 #include <assert.h>
 #include <err.h>
+#include <glob.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <time.h>
@@ -517,6 +518,40 @@ move_file(char *dir, char *fname, char *to)
 		cleanup(0);
 		errx(2, "could not perform 'mv %s %s'", fpath, to);
 	}
+}
+
+void
+remove_files(char *path, char *pattern)
+{
+	char	fpath[FILENAME_MAX];
+	glob_t	globbed;
+	int	err, i;
+
+	(void) snprintf(fpath, sizeof(fpath), "%s/%s", path, pattern);
+	if ((err=glob(fpath, GLOB_NOSORT, NULL, &globbed)) != 0) {
+		switch(err) {
+		case GLOB_NOMATCH:
+			warn("no files matching ``%s'' found", fpath);
+			break;
+		case GLOB_ABORTED:
+			warn("globbing aborted");
+			break;
+		case GLOB_NOSPACE:
+			warn("out-of-memory during globbing");
+			break;
+		default:
+			warn("unknown error during globbing");
+			break;
+		}
+		return;
+	}
+
+	/* deleting globbed files */
+	for (i=0; i<globbed.gl_pathc; i++)
+		if (unlink(globbed.gl_pathv[i]) < 0)
+			warn("can't delete ``%s''", globbed.gl_pathv[i]);
+
+	return;
 }
 
 /*
