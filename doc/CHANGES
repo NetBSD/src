@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.89 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.90 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -264,3 +264,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	grep(1): upgraded to 2.5.  [wiz 20030127]
 	objcopy(1): Add --redefine-syms-file option.  [simonb 20030129]
 	crunchgen(1): Use "objcopy --redefine-syms-file".  [simonb 20030129]
+	find(1): allow preceding +/- on numeric arg to -user. [jhawk 20030130]
