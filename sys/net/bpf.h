@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.26 2000/11/02 16:14:05 eeh Exp $	*/
+/*	$NetBSD: bpf.h,v 1.27 2000/11/11 00:11:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,6 +43,8 @@
 
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
+
+#include <sys/time.h>
 
 /* BSD style release date */
 #define BPF_RELEASE 199606
