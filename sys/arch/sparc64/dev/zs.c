@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30 2001/09/26 20:53:12 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.31 2001/10/05 21:53:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
@@ -321,8 +320,8 @@ zs_attach(zsc, zsd, pri)
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 			zs_conschan_put = zc;
 		}
-		/* Childs need to set cn_dev, etc */
 
+		/* Children need to set cn_dev, etc */
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
