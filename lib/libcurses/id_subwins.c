@@ -1,4 +1,4 @@
-/*	$NetBSD: id_subwins.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: id_subwins.c,v 1.12 2000/04/16 05:48:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)id_subwins.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: id_subwins.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: id_subwins.c,v 1.12 2000/04/16 05:48:25 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,20 +53,12 @@ void
 __id_subwins(WINDOW *orig)
 {
 	WINDOW *win;
-	int     oy, realy, y;
+	int     oy, y;
 
-	realy = orig->begy + orig->cury;
 	for (win = orig->nextp; win != orig; win = win->nextp) {
-		/*
-		 * If the window ends before our current position, don't need
-		 * to do anything.
-		 */
-		if (win->begy + win->maxy <= realy)
-			continue;
-
-		oy = orig->cury;
-		for (y = realy - win->begy; y < win->maxy; y++, oy++)
+		oy = win->begy - orig->begy;
+		for (y = 0; y < win->maxy; y++)
 			win->lines[y]->line =
-			    &orig->lines[oy]->line[win->ch_off];
+			    &orig->lines[oy + y]->line[win->ch_off];
 	}
 }
