@@ -3004,10 +3004,10 @@ optional address extension.
 address extension.
 
 <li> Look up the "user+extension" address local part when the
-recipient domain equals $myorigin, $mydestination, $inet_interfaces
+sender domain equals $myorigin, $mydestination, $inet_interfaces
 or $proxy_interfaces.
 
-<li> Look up the "user" address local part when the recipient domain
+<li> Look up the "user" address local part when the sender domain
 equals $myorigin, $mydestination, $inet_interfaces or $proxy_interfaces.
 
 <li> Look up the "@domain.tld" part.
@@ -6345,9 +6345,8 @@ from filling up with undeliverable MAILER-DAEMON messages.
 or $proxy_interfaces, but the recipient is not listed in
 $local_recipient_maps, and $local_recipient_maps is not null.
 
-<li> The recipient domain matches $virtual_alias_maps but the
-recipient is not listed in $virtual_alias_maps, and $virtual_alias_maps
-is not null.
+<li> The recipient domain matches $virtual_alias_domains but the
+recipient is not listed in $virtual_alias_maps.
 
 <li> The recipient domain matches $virtual_mailbox_domains but the
 recipient is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
@@ -6376,9 +6375,8 @@ of forged mail from worms or viruses.  </p>
 $proxy_interfaces, but the recipient is not listed in
 $local_recipient_maps, and $local_recipient_maps is not null.
 
-<li> The sender domain matches $virtual_alias_maps but the recipient
-is not listed in $virtual_alias_maps, and $virtual_alias_maps is
-not null.
+<li> The sender domain matches $virtual_alias_domains but the recipient
+is not listed in $virtual_alias_maps.
 
 <li> The sender domain matches $virtual_mailbox_domains but the
 recipient is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
