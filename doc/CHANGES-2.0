@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.92 2004/04/18 02:10:22 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.93 2004/04/18 02:12:22 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -962,3 +962,8 @@ share/man/man4/options.4			1.235
 
 	Flesh out description of COMPAT_AOUT.
 	[mrg, ticket #143]
+
+share/man/man4/options.4			1.236
+
+	Add a useful description for COMPAT_AOUT.
+	[mrg, ticket #144]
