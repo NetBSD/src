@@ -676,7 +676,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			 */
 			if (ep == 0) {
 				*np = '\0';
-				++argv;
+				*argv++ = ap;
 			}
 			break;
 		}
