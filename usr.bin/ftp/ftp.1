@@ -1,7 +1,9 @@
-.\" 	$NetBSD: ftp.1,v 1.23 1997/08/23 07:32:50 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.23.2.1 1998/11/10 18:48:55 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\" Portions Copyright (c) 1997, 1998
+.\"	The NetBSD Foundation, Inc.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -33,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd August 18, 1997
+.Dd August 2, 1998
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -43,6 +45,7 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm
+.Op Fl A
 .Op Fl a
 .Op Fl d
 .Op Fl e
@@ -51,15 +54,22 @@ file transfer program
 .Op Fl n
 .Op Fl p
 .Op Fl P Ar port
+.Op Fl r Ar seconds
 .Op Fl t
 .Op Fl v
 .Op Fl V
 .Op Ar host Op Ar port
 .Nm ftp
+.Op Fl o Ar output
 ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
+.Op Fl o Ar output
 http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
+.Op Fl o Ar output
+file:///\fIfile\fR
+.Nm ftp
+.Op Fl o Ar output
 \fIhost\fR:[/\fIpath\fR/]\fIfile\fR[/]
 .Sh DESCRIPTION
 .Nm
@@ -69,8 +79,8 @@ standard File Transfer Protocol.
 The program allows a user to transfer files to and from a
 remote network site.
 .Pp
-The latter three usage formats will fetch a file using either the
-HTTP or FTP protocols into the current directory.
+The last four usage formats will fetch a file using the
+http or ftp protocols, or by direct copying, into the current directory.
 This is ideal for scripts.
 Refer to
 .Sx AUTO-FETCHING FILES
@@ -78,7 +88,18 @@ below for more information.
 .Pp
 Options may be specified at the command line, or to the
 command interpreter.
-.Bl -tag -width "port    "
+.Bl -tag -width "port   "
+.It Fl A
+Force active mode ftp.
+By default,
+.Nm
+will try to use passive mode ftp and fall back to active mode
+if passive is not supported by the server.
+This option causes
+.Nm
+to always use an active connection.
+It is only useful for connecting to very old servers that do not
+implement passive mode properly.
 .It Fl a
 Causes
 .Nm
@@ -87,6 +108,7 @@ to bypass normal login procedure, and use an anonymous login instead.
 Enables debugging.
 .It Fl e
 Disables command line editing.
+This is useful for Emacs ange-ftp mode.
 .It Fl g
 Disables file name globbing.
 .It Fl i
@@ -109,11 +131,36 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
+.It Fl o Ar output
+When auto-fetching files, save the contents in
+.Ar output .
+.Ar output
+is parsed according to the
+.Sx FILE NAMING CONVENTIONS
+below.
+If
+.Ar output
+is not
+.Sq -
+or doesn't start with
+.Sq \&| ,
+then only the first file specified will be retrieved into
+.Ar output ;
+all other files will be retrieved into the basename of their
+remote name.
 .It Fl p
 Enable passive mode operation for use behind connection filtering firewalls.
+This option has been deprecated as
+.Nm
+now tries to use passive mode by default, falling back to active mode
+if the server does not support passive connections.
 .It Fl P Ar port
 Sets the port number to
 .Ar port .
+.It Fl r Ar wait
+Retry the connection attempt if it failed, pausing for
+.Ar wait
+seconds.
 .It Fl t
 Enables packet tracing.
 .It Fl v
@@ -383,6 +430,10 @@ The size of a data block defaults to 1024 bytes.
 This can be changed by specifying
 .Ar size
 in bytes.
+Enabling
+.Ic hash
+disables
+.Ic progress .
 .It Ic help Op Ar command
 Print an informative message about the meaning of
 .Ar command .
@@ -604,7 +655,7 @@ Spaces may be included in
 .Ar outpattern  ,
 as in the example: `nmap $1 sed "s/  *$//" > $1' .
 Use the `\e' character to prevent special treatment
-of the `$','[','[', and `,' characters.
+of the `$','[',']', and `,' characters.
 .It Ic ntrans Op Ar inchars Op Ar outchars
 Set or unset the filename character translation mechanism.
 If no arguments are specified, the filename character
@@ -694,6 +745,10 @@ or a command that starts with
 Refer to
 .Sx FILE NAMING CONVENTIONS
 for more information.
+Enabling
+.Ic progress
+disables
+.Ic hash .
 .It Ic prompt
 Toggle interactive prompting.
 Interactive prompting
@@ -1045,6 +1100,8 @@ An HTTP URL, retrieved using the http protocol.
 If
 .Ev http_proxy
 is defined, it is used as a URL to an HTTP proxy server.
+.It file:///file
+A local URL, copied from /file.
 .El
 .Pp
 If a classic format or a ftp URL format has a trailing
@@ -1327,8 +1384,25 @@ command
 By default, this is bound to the TAB key.
 .Sh ENVIRONMENT
 .Nm
-utilizes the following environment variables.
+uses the following environment variables.
 .Bl -tag -width "FTPSERVERPORT"
+.It Ev FTPANONPASS
+Password to send in an anonymous ftp transfer.
+Defaults to
+.Dq `whoami`@ .
+.It Ev FTPMODE
+Overrides the default operation mode.
+Support values are:
+.Bl -tag -width "passive"
+.It active
+active mode ftp only
+.It auto
+automatic determination of passive or active (this is the default)
+.It gate
+gate-ftp mode
+.It passive
+passive mode ftp only
+.El
 .It Ev FTPSERVER
 Host to use as gate-ftp server when
 .Ic gate
@@ -1356,6 +1430,11 @@ URL of FTP proxy to use when making FTP URL requests
 (if not defined, use the standard ftp protocol).
 .It Ev http_proxy
 URL of HTTP proxy to use when making HTTP URL requests.
+.It Ev no_proxy
+A space or comma separated list of hosts (or domains) for which
+proxying is not to be used.
+Each entry may have an optional trailing ":port", which restricts
+the matching to connections to that port.
 .El
 .Sh SEE ALSO
 .Xr getservbyname 3 ,
@@ -1370,7 +1449,7 @@ command appeared in
 .Pp
 Various features such as command line editing, context sensitive 
 command and file completion, dynamic progress bar, automatic
-fetching of files, ftp and http URLs, and modification time
+fetching of files and URLs, and modification time
 preservation were implemented in
 .Nx 1.3
 by Luke Mewburn, with assistance from Jason Thorpe.
