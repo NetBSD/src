@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_resolver.c,v 1.1.1.1 2000/04/22 14:53:21 simonb Exp $	*/
+/*	$NetBSD: ntp_resolver.c,v 1.2 2002/05/16 19:30:17 wiz Exp $	*/
 
 /*
 ** Ancestor was ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -487,7 +487,7 @@ findhostaddr(
 		if (debug > 2)
 			msyslog(LOG_INFO, "findhostaddr: Resolving <%s>",
 				&entry->de_hostname[0]);
-#endif DEBUG
+#endif
 		hp = gethostbyname(&entry->de_hostname[0]);
 	} else {
 #ifdef DEBUG
