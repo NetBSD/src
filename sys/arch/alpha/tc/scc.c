@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.15 1996/04/12 06:09:54 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.16 1996/04/29 14:48:25 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -355,7 +355,7 @@ sccattach(parent, self, aux)
                 s = spltty();
                 ctty.t_dev = makedev(SCCDEV,
                     sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
-                cterm.c_cflag = CS8;
+                cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
                 cterm.c_ospeed = cterm.c_ispeed = 9600;
                 (void) sccparam(&ctty, &cterm);
                 DELAY(1000);
@@ -988,6 +988,7 @@ sccstart(tp)
 		}
 		goto out;
 	}
+#if 0
 	if (tp->t_flags & (RAW|LITOUT))
 		cc = ndqb(&tp->t_outq, 0);
 	else {
@@ -999,6 +1000,9 @@ sccstart(tp)
 			goto out;
 		}
 	}
+#else
+	cc = ndqb(&tp->t_outq, 0);
+#endif
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
