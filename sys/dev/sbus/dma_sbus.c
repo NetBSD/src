@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.19 2003/02/06 15:21:21 martin Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.20 2003/02/06 16:20:05 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.19 2003/02/06 15:21:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.20 2003/02/06 16:20:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.19 2003/02/06 15:21:21 martin Exp $")
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -84,13 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.19 2003/02/06 15:21:21 martin Exp $")
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
-
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-
-#include <dev/ic/ncr53c9xreg.h>
-#include <dev/ic/ncr53c9xvar.h>
 
 struct dma_softc {
 	struct lsi64854_softc	sc_lsi64854;	/* base device */
