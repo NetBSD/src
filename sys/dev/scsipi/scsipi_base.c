@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.20.2.2 1999/06/24 16:17:11 perry Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.20.2.3 2000/01/16 17:49:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -300,6 +300,14 @@ scsipi_interpret_sense(xs)
 				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
 				return (EIO);
+			/* 
+			 * If we're probing and the device indicates LUNs
+			 * aren't supported, shut up about it.
+			 */
+			if ((xs->flags & SCSI_PROBE) != 0 && 
+			    sense->add_sense_code == 0x25 &&
+			    sense->add_sense_code_qual == 0x00)
+				    	return (EINVAL);
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:

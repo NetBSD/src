@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.122.2.2 1999/11/27 15:11:28 he Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.122.2.3 2000/01/16 17:47:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -634,7 +634,7 @@ scsi_probedev(scsi, target, lun)
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsipi_inquire(sc_link, &inqbuf, SCSI_AUTOCONF) != 0)
+	if (scsipi_inquire(sc_link, &inqbuf, SCSI_AUTOCONF | SCSI_PROBE) != 0)
 		goto bad;
 
 	{
