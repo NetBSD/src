@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.8 1999/03/31 06:28:41 cgd Exp $ */
+/* $NetBSD: start.S,v 1.9 1999/03/31 16:12:52 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -62,7 +62,7 @@ Lstartgp:
 	or	s0,zero,a0
 #endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
 
-	CALL(main_)			/* transfer to C */
+	CALL(main)			/* transfer to C */
 
 XLEAF(_rtt, 0)
 XLEAF(halt, 0)
