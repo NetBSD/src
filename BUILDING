@@ -436,6 +436,9 @@ BUILDING
                    distribution'' (as ``make build'' does not install all of
                    the required files).
 
+     sourcesets    Create source sets of the source tree into
+                   RELEASEDIR/source/sets.
+
      release       Do a ``make distribution'', build kernels, distribution me-
                    dia, and install sets (this as per ``make sets''), and then
                    package the system into a standard release layout as de-
@@ -497,6 +500,8 @@ BUILDING
                    installworld''.
 
      sets          Perform ``make sets''.
+
+     sourcesets    Perform ``make sourcesets''.
 
      The following command line options alter the behaviour of the above oper-
      ations: The following command line options alter the behaviour of the
