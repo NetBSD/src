@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2000/11/21 05:49:08 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.91 2000/11/21 06:14:40 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -720,6 +720,8 @@ if (startpmapdebug)
 				pg = uvm_pagealloc(NULL, 0, NULL, 0);
 				if (pg != NULL)
 					break;
+				if (flags & PMAP_CANFAIL)
+					return (KERN_RESOURCE_SHORTAGE);
 
 				if (pmap == pmap_kernel())
 					panic("pmap_enter: no free pages");
@@ -745,11 +747,12 @@ if (startpmapdebug)
 		RECURSEEND;
 		return (KERN_SUCCESS);
 	}
-#ifdef DIAGNOSTIC
-	/* No mapping change. Not allowed to happen. */
-	if (newpte == oldpte)
-		panic("pmap_enter onto myself");
-#endif
+
+	/* mapping unchanged? just return. */
+	if (newpte == oldpte) {
+		RECURSEEND;
+		return (KERN_SUCCESS);
+	}
 
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
