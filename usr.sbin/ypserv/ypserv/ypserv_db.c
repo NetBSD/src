@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.1.1.1 1996/08/09 10:15:04 thorpej Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.2 1996/11/27 09:16:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -121,6 +121,9 @@ yp_private(key, ypprivate)
 	int result;
 
 	if (ypprivate)
+		return (FALSE);
+
+	if (key.dsize == 0 || key.dptr == NULL)
 		return (FALSE);
 
 	if (key.dsize == YP_LAST_LEN &&
