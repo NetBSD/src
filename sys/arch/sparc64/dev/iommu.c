@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.46 2002/02/08 00:47:04 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -267,7 +267,9 @@ iommu_init(name, is, tsbsize, iovabase)
 	printf("DVMA map: %x to %x\n", 
 		(unsigned int)is->is_dvmabase,
 		(unsigned int)is->is_dvmaend);
-printf("IOTSB: %lx to %lx\n", is->is_ptsb, is->is_ptsb+size);
+	printf("IOTSB: %llx to %llx\n", 
+		(unsigned long long)is->is_ptsb,
+		(unsigned long long)(is->is_ptsb + size));
 	is->is_dvmamap = extent_create(name,
 				       is->is_dvmabase, is->is_dvmaend - NBPG,
 				       M_DEVBUF, 0, 0, EX_NOWAIT);
@@ -419,7 +421,8 @@ iommu_remove(is, va, len)
 		else
 			len -= NBPG;
 
-		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = 0;
+		/* XXX Zero-ing the entry would not require RMW */
+		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] &= ~IOTTE_V;
 		bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
 				  &is->is_iommu->iommu_flush, 0, va);
 		va += NBPG;
@@ -825,7 +828,8 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 				"physseg %d start %lx size %lx\n", i, 
 				segs[i].ds_addr, segs[i].ds_len));
 
-			if (pa == prev_pa) {
+			if ((pa == prev_pa) && 
+				((offset != 0) || (end != offset))) {
 				/* We can re-use this mapping */
 #ifdef DEBUG
 if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
@@ -843,9 +847,6 @@ if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
 				/* Just append to the previous segment. */
 #ifdef DEBUG
 if (iommudebug & 0x10) {
-printf("iommu_dvmamap_load_raw: converting "
-	"physseg %d start %lx size %lx\n", i,
-	segs[i].ds_addr, segs[i].ds_len);
 printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 	offset, pa, prev_pa, dvmaddr, prev_va);
 }
