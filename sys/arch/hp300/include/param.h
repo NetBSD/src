@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.34 1997/06/10 18:59:12 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:38 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,11 @@
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
+#define	UPAGES		2		/* pages of u-area */
+
 #include <m68k/param.h>
+
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
