@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: pcio.c,v 1.2 1997/03/15 22:15:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -45,9 +45,9 @@ extern int congetc __P((void));
 extern int coniskey __P((void));
 
 #ifdef SUPPORT_SERIAL
-extern void computc __P((int));
-extern int comgetc __P((void));
-extern int comiskey __P((void));
+extern int computc __P((int, int));
+extern int comgetc __P((int));
+extern int comstatus __P((int));
 
 static int iodev;
 #endif
@@ -73,18 +73,18 @@ int dev;
        */
       cominit(0);
       if(!(computc(' ', 0) & 0x80) && (comstatus(0) & 0x00b0))
-	dev = 1;
+	dev = CONSDEV_COM0;
       else {
 	cominit(1);
 	if(!(computc(' ', 1) & 0x80) && (comstatus(1) & 0x00b0))
-	  dev = 2;
+	  dev = CONSDEV_COM1;
 	else
-	  dev = 0;
+	  dev = CONSDEV_PC;
       }
       break;
     case CONSDEV_COM0: cominit(0); break;
     case CONSDEV_COM1: cominit(1); break;
-    default: dev = 0; break;
+    default: dev = CONSDEV_PC; break;
   }
   return(iodevname[iodev = dev]);
 #else
@@ -97,13 +97,13 @@ int c;
 {
 #ifdef SUPPORT_SERIAL
   switch(iodev){
-    case 0:
+    case CONSDEV_PC:
 #endif
       conputc(c);
 #ifdef SUPPORT_SERIAL
       break;
-    case 1: computc(c, 0); break;
-    case 2: computc(c, 1); break;
+    case CONSDEV_COM0: computc(c, 0); break;
+    case CONSDEV_COM1: computc(c, 1); break;
   }
 #endif
 }
@@ -119,12 +119,12 @@ int c;
 int getchar(){
 #ifdef SUPPORT_SERIAL
   switch(iodev){
-    case 0:
+    case CONSDEV_PC:
 #endif
       return(congetc());
 #ifdef SUPPORT_SERIAL
-    case 1: return(comgetc(0));
-    case 2: return(comgetc(1));
+    case CONSDEV_COM0: return(comgetc(0));
+    case CONSDEV_COM1: return(comgetc(1));
   }
 #endif
 }
@@ -132,12 +132,12 @@ int getchar(){
 int iskey(){
 #ifdef SUPPORT_SERIAL
   switch(iodev){
-    case 0:
+    case CONSDEV_PC:
 #endif
       return(coniskey());
 #ifdef SUPPORT_SERIAL
-    case 1: return(!!(comstatus(0) & 0x0100));
-    case 2: return(!!(comstatus(1) & 0x0100));
+    case CONSDEV_COM0: return(!!(comstatus(0) & 0x0100));
+    case CONSDEV_COM1: return(!!(comstatus(1) & 0x0100));
   }
 #endif
 }
