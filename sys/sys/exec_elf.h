@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.37.4.1 2000/07/26 23:57:06 mycroft Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.37.4.2 2001/05/01 12:05:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -410,7 +410,7 @@ typedef struct {
 	Elf32_Word	r_offset;	/* where to do it */
 	Elf32_Word	r_info;		/* index & type of relocation */
 	Elf32_Sword	r_addend;	/* adjustment value */
-} Elf32_RelA;
+} Elf32_Rela;
 
 /* r_info utility macros */
 #define	ELF32_R_SYM(info)	((info) >> 8)
@@ -426,7 +426,7 @@ typedef struct {
 	Elf64_Addr	r_offset;	/* where to do it */
 	Elf64_Xword	r_info;		/* index & type of relocation */
 	Elf64_Sxword	r_addend;	/* adjustment value */
-} Elf64_RelA;
+} Elf64_Rela;
 
 /* r_info utility macros */
 #define	ELF64_R_SYM(info)	((info) >> 32)
@@ -598,7 +598,7 @@ typedef struct {
 #define	Elf_Shdr	Elf32_Shdr
 #define	Elf_Sym		Elf32_Sym
 #define	Elf_Rel		Elf32_Rel
-#define	Elf_RelA	Elf32_RelA
+#define	Elf_Rela	Elf32_Rela
 #define	Elf_Dyn		Elf32_Dyn
 #define	Elf_Word	Elf32_Word
 #define	Elf_Sword	Elf32_Sword
@@ -621,7 +621,7 @@ typedef struct {
 #define	Elf_Shdr	Elf64_Shdr
 #define	Elf_Sym		Elf64_Sym
 #define	Elf_Rel		Elf64_Rel
-#define	Elf_RelA	Elf64_RelA
+#define	Elf_Rela	Elf64_Rela
 #define	Elf_Dyn		Elf64_Dyn
 #define	Elf_Word	Elf64_Word
 #define	Elf_Sword	Elf64_Sword
