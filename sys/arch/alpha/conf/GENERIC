@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.53 1997/05/03 21:27:24 cjs Exp $
+# $NetBSD: GENERIC,v 1.54 1997/06/03 17:37:58 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -27,7 +27,6 @@ options		KTRACE			# System call tracing support
 
 # Diagnostic/debugging support options
 options		DIAGNOSTIC		# Cheap kernel consistency checks
-options		DEBUG			# Expensive debugging checks/support
 
 # File systems
 file-system 	FFS		# Fast file system
