@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.8 2003/01/21 20:56:57 augustss Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.8 2003/01/21 20:56:57 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -140,8 +140,12 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_id = UMASS_SCSIID_HOST;
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n",
 			     USBDEVNAME(sc->sc_dev)));
+
+	sc->sc_refcnt++;
 	scbus->base.sc_child =
 	    config_found(&sc->sc_dev, &scbus->sc_channel, scsipiprint);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
 	return (0);
 }
@@ -163,8 +167,12 @@ umass_atapi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
 			     USBDEVNAME(sc->sc_dev)));
+
+	sc->sc_refcnt++;
 	scbus->base.sc_child =
 	    config_found(&sc->sc_dev, &scbus->sc_channel, scsipiprint);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
 	return (0);
 }
