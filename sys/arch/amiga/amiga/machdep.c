@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184.2.4 2004/09/21 13:12:15 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.184.2.5 2005/02/19 13:18:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.4 2004/09/21 13:12:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.5 2005/02/19 13:18:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1572,7 +1572,7 @@ cpu_exec_aout_makecmds(l, epp)
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(l->l_proc, epp));
+		return(exec_aout_prep_zmagic(l, epp));
 #endif
 	return(error);
 }
