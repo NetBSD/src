@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.7 2000/05/04 18:29:12 drochner Exp $	*/
+/*	$NetBSD: job.h,v 1.8 2000/12/03 01:18:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-#define TMPPAT	"/tmp/makeXXXXX"
+#define TMPPAT	"/tmp/makeXXXXXX"
 
 /*
  * The SEL_ constants determine the maximum amount of time spent in select
