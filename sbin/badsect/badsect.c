@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.17 1999/07/30 15:56:58 drochner Exp $	*/
+/*	$NetBSD: badsect.c,v 1.18 2001/02/04 19:54:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.17 1999/07/30 15:56:58 drochner Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.18 2001/02/04 19:54:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,8 @@ void	rdfs __P((daddr_t, int, char *));
 int	chkuse __P((daddr_t, int));
 int	main __P((int, char *[]));
 
+extern char *__progname;
+
 int
 main(argc, argv)
 	int argc;
@@ -106,7 +108,6 @@ main(argc, argv)
 	struct direct *dp;
 	DIR *dirp;
 	char name[MAXPATHLEN];
-	extern char *__progname;
 
 	if (argc < 3) {
 		(void) fprintf(stderr, "Usage: %s bbdir blkno [ blkno ]\n",
