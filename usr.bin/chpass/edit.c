@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
+/*	$NetBSD: edit.c,v 1.7 1996/08/09 09:22:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $";
+static char rcsid[] = "$NetBSD: edit.c,v 1.7 1996/08/09 09:22:16 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,18 +66,23 @@ edit(tempname, pw)
 
 	for (;;) {
 		if (stat(tempname, &begin))
-			pw_error(tempname, 1, 1);
+			(*Pw_error)(tempname, 1, 1);
 		pw_edit(1, tempname);
 		if (stat(tempname, &end))
-			pw_error(tempname, 1, 1);
+			(*Pw_error)(tempname, 1, 1);
 		if (begin.st_mtime == end.st_mtime) {
 			warnx("no changes made");
 			unlink(tempname);
-			pw_error(NULL, 0, 0);
+			(*Pw_error)(NULL, 0, 0);
 		}
 		if (verify(tempname, pw))
 			break;
-		pw_prompt();
+#ifdef YP
+		if (use_yp)
+			yppw_prompt();
+		else
+#endif
+			pw_prompt();
 	}
 }
 
@@ -96,10 +101,11 @@ display(tempname, fd, pw)
 	char *bp, *p, *ttoa();
 
 	if (!(fp = fdopen(fd, "w")))
-		pw_error(tempname, 1, 1);
+		(*Pw_error)(tempname, 1, 1);
 
 	(void)fprintf(fp,
-	    "#Changing user database information for %s.\n", pw->pw_name);
+	    "#Changing user %sdatabase information for %s.\n",
+	    use_yp ? "YP " : "", pw->pw_name);
 	if (!uid) {
 		(void)fprintf(fp, "Login: %s\n", pw->pw_name);
 		(void)fprintf(fp, "Password: %s\n", pw->pw_passwd);
@@ -151,9 +157,9 @@ verify(tempname, pw)
 	static char buf[LINE_MAX];
 
 	if (!(fp = fopen(tempname, "r")))
-		pw_error(tempname, 1, 1);
+		(*Pw_error)(tempname, 1, 1);
 	if (fstat(fileno(fp), &sb))
-		pw_error(tempname, 1, 1);
+		(*Pw_error)(tempname, 1, 1);
 	if (sb.st_size == 0) {
 		warnx("corrupted temporary file");
 		goto bad;
