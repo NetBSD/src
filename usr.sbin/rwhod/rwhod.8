@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.6 1997/07/14 01:42:20 mikel Exp $
+.\"	$NetBSD: rwhod.8,v 1.7 1997/07/14 01:43:49 mikel Exp $
 .\"
 .Dd December 11, 1993
 .Dt RWHOD 8
@@ -96,7 +96,7 @@ intervals prior to a server's transmission; they are multiplied by 100
 for representation in an integer.  The host name
 included is that returned by the
 .Xr gethostname 3
-system call, with any trailing domain name omitted.
+function call, with any trailing domain name omitted.
 The array at the end of the message contains information about
 the users logged in to the sending machine.  This information 
 includes the contents of the 
