@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.22 1997/07/21 05:39:18 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.22.6.1 1997/11/15 00:14:09 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,6 +54,9 @@
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.22.6.1 1997/11/15 00:14:09 mellon Exp $");
 
 
 #include <sys/param.h>
@@ -261,7 +264,7 @@ pmattach(fi, unit, cold_console_flag)
 	/*
 	 * Initialize the cursor register.
 	 */
-	pcc->cmdr = curReg = PCC_ENPA | PCC_ENPB;
+	pcc->cmdr = curReg = 0;
 
 	/*
 	 * Initialize the color map, the screen, and the mouse.
@@ -330,6 +333,7 @@ pmLoadCursor(fi, cur)
 		wbflush();
 	}
 	curReg &= ~PCC_LODSA;
+	curReg |= PCC_ENPA | PCC_ENPB;
 	pcc->cmdr = curReg;
 }
 
