@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.11 1994/09/05 08:52:49 pk Exp $";
+static char rcsid[] = "$Id: main.c,v 1.12 1994/09/05 09:09:43 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -238,7 +238,7 @@ main(argc, argv)
 			APset++, OPset++, EPset++;
 		setdefaults();
 		off = 0;
-		ioctl(0, TIOCFLUSH, &off);	/* clear out the crap */
+		(void)tcflush(0, TCIOFLUSH);	/* clear out the crap */
 		ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
 		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
 
