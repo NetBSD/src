@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.26 2002/01/18 00:30:03 enami Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.27 2002/02/10 18:06:03 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.26 2002/01/18 00:30:03 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.27 2002/02/10 18:06:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -848,7 +848,8 @@ u_long	pagedep_hash;		/* size of hash table - 1 */
 static struct sema pagedep_in_progress;
 
 /*
- * Look up a pagedep. Return 1 if found, 0 if not found.
+ * Look up a pagedep. Return 1 if found, 0 if not found or found
+ * when asked to allocate but not associated with any buffer.
  * If not found, allocate if DEPALLOC flag is passed.
  * Found or allocated entry is returned in pagedeppp.
  * This routine must be called with splbio interrupts blocked.
@@ -880,6 +881,9 @@ top:
 	}
 	if (pagedep) {
 		*pagedeppp = pagedep;
+		if ((flags & DEPALLOC) != 0 &&
+		    (pagedep->pd_state & ONWORKLIST) == 0)
+			return (0);
 		return (1);
 	}
 	if ((flags & DEPALLOC) == 0) {
@@ -4042,13 +4046,12 @@ handle_written_filepage(pagedep, bp)
 		return (1);
 	}
 	/*
-	 * If no dependencies remain and we are not waiting for a
-	 * new directory block to be claimed by its inode, then the
-	 * pagedep will be freed. Otherwise it will remain to track
-	 * any new entries on the page in case they are fsync'ed.
+	 * If we are not waiting for a new directory block to be
+	 * claimed by its inode, then the pagedep will be freed.
+	 * Otherwise it will remain to track any new entries on
+	 * the page in case they are fsync'ed.
 	 */
-	if (LIST_FIRST(&pagedep->pd_pendinghd) == 0 &&
-	    (pagedep->pd_state & NEWBLOCK) == 0) {
+	if ((pagedep->pd_state & NEWBLOCK) == 0) {
 		LIST_REMOVE(pagedep, pd_hash);
 		WORKITEM_FREE(pagedep, D_PAGEDEP);
 	}
