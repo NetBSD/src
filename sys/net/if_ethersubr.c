@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.90 2001/11/12 23:49:37 lukem Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.91 2002/02/28 19:23:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.90 2001/11/12 23:49:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.91 2002/02/28 19:23:03 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -630,6 +630,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 static void
 ether_input(struct ifnet *ifp, struct mbuf *m)
 {
+	struct ethercom *ec = (struct ethercom *) ifp;
 	struct ifqueue *inq;
 	u_int16_t etype;
 	int s;
@@ -730,19 +731,22 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	etype = ntohs(eh->ether_type);
 #endif
 
-	/* Check if the mbuf has a VLAN tag */
-	n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN);
-	if (n) {
+	/*
+	 * If VLANs are configured on the interface, check to
+	 * see if the device performed the decapsulation and
+	 * provided us with the tag.
+	 */
+	if (ec->ec_nvlans &&
+	    (n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN)) != NULL) {
 #if NVLAN > 0
 		/*
 		 * vlan_input() will either recursively call ether_input()
 		 * or drop the packet.
 		 */
-		if (((struct ethercom *)ifp)->ec_nvlans != 0)
-			vlan_input(ifp, m);
-		else
+		vlan_input(ifp, m);
+#else
+		m_freem(m);
 #endif
-			m_freem(m);
 		return;
 	}
 
