@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2001/04/13 23:29:58 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2002/02/11 10:57:58 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ extern int imask[];
 
 /*
  *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
+ * achieved with the "eieio" instruction which the assembler
  * seems to detect and then doen't move instructions past....
  */
 static __inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2001/11/08 23:28:14 eeh Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2002/02/11 10:57:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ extern u_long intrcnt[];
 
 /*
  *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
+ * achieved with the "eieio" instruction which the assembler
  * seems to detect and then doen't move instructions past....
  */
 static __inline int
