@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.6 2003/01/06 13:04:59 wiz Exp $ */
+/* $NetBSD: toccata.c,v 1.7 2004/01/10 21:38:32 is Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6 2003/01/06 13:04:59 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.7 2004/01/10 21:38:32 is Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -596,8 +596,6 @@ toccata_get_port(void *addr, mixer_ctrl_t *cp) {
 
 int
 toccata_query_devinfo(void *addr, mixer_devinfo_t *dip) {
-
-	printf("toccata_query_devinfo(%2d)\n", dip->index);
 
 	switch(dip->index) {
 	case TOCCATA_MIC_IN_LVL:	/* Microphone */
