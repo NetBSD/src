@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2002/05/07 12:12:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.50 2002/05/18 05:59:23 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,8 @@ TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
 .endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
-.if !defined(NOSUBDIR)
+.if !defined(NOSUBDIR)					# {
+
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT \
 		cap_mkdb crunchgen ctags gencat lint lint2 lorder \
@@ -36,7 +37,7 @@ SUBDIR+=	prep-mkbootimage
 SUBDIR+=	mips-elf2ecoff
 .endif
 
-.endif
+.endif	# ! NOSUBDIR					# }
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"
 realall install: _warn
