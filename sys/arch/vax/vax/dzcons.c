@@ -1,4 +1,4 @@
-/*	$NetBSD: dzcons.c,v 1.3 1997/02/26 18:38:23 ragge Exp $	*/
+/*	$NetBSD: dzcons.c,v 1.4 1997/03/15 16:36:20 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -357,11 +357,4 @@ dzcnputc(dev,ch)
 	dz->tdr = ch;                    /* Put the  character */
 
 	*ka410_intmsk = imsk;
-}
-
-conout(str)
-	char *str;
-{
-	while (*str)
-		gencnputc(0, *str++);
 }

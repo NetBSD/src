@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.36 1997/02/19 10:04:23 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.37 1997/03/15 16:36:18 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -392,6 +392,7 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
+	cninit();
 #ifdef DDB
 /*	db_machine_init(); */
 	ddb_init();
