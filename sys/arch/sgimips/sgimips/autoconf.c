@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2001/11/20 18:06:40 soren Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2001/11/22 03:15:35 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -89,10 +89,10 @@ void
 makebootdev(cp)
 	char *cp;
 {
-	booted_slot = booted_unit = booted_partition = 0;
-
 	if (booted_protocol != NULL)
 		return;
+
+	booted_slot = booted_unit = booted_partition = 0;
 
 	if (strncmp(cp, "scsi(", 5) == NULL) {
 		cp += 5;
