@@ -3,6 +3,3 @@
 machine	arm32
 
 options		MACHINE_NONCONTIG	# temporary kludge
-
-options		__FORK_BRAINDAMAGE	# temporary until I fix it
-
