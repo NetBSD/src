@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/14 12:49:09 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ FILES=		README \
 		vn \
 		yu
 
-SUBDIR=		digital fujitsu hp macintosh nec sgi sony sun xfree68 pc
+SUBDIR=		digital fujitsu hp macintosh nec sgi sharp sony sun xfree68 pc
 
 XKBDIR=		1
 
