@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.1 2001/03/05 22:49:57 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.2 2001/03/13 20:29:50 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -1239,7 +1239,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 	struct mbuf *m = *mp;
 	int optval = 0;
 	int error = 0;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
 
 	if (level == IPPROTO_IPV6) {
 		switch (op) {
@@ -1573,7 +1573,7 @@ ip6_pcbopts(pktopt, m, so)
 {
 	struct ip6_pktopts *opt = *pktopt;
 	int error = 0;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
 	int priv = 0;
 
 	/* turn off any old options. */

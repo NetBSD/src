@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.83.2.1 2001/03/05 22:49:56 nathanw Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.83.2.2 2001/03/13 20:29:49 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -858,7 +858,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	int error = 0;
 #ifdef IPSEC
 #ifdef __NetBSD__
-	struct proc *p = curproc->l_proc;	/*XXX*/
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/*XXX*/
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.13.6.1 2001/03/05 22:49:55 nathanw Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.13.6.2 2001/03/13 20:29:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -70,7 +70,7 @@ pk_accton(path)
 	struct vnode *vp = NULL;
 	struct nameidata nd;
 	struct vnode *oacctp = pkacctp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
 	int error;
 
 	if (path == 0)
