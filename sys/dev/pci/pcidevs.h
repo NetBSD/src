@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.173 1999/11/06 11:18:00 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.174 1999/11/06 13:50:02 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.166 1999/11/06 11:17:30 augustss Exp 
+ *	NetBSD: pcidevs,v 1.167 1999/11/06 13:48:29 rh Exp 
  */
 
 /*
@@ -489,6 +489,7 @@
 #define	PCI_VENDOR_SPECIALIX	0x11cb		/* Specialix Research */
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
+#define	PCI_VENDOR_AURAVISION	0x11d1		/* Auravision */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran Corporation */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
@@ -712,6 +713,9 @@
 #define	PCI_PRODUCT_ATI_MACH64_LG	0x4c47		/* Mach64 LG */
 #define	PCI_PRODUCT_ATI_MACH64_LI	0x4c49		/* Mach64 LI */
 #define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
+
+/* Auravision products */
+#define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
 
 /* Aureal Semiconductor */
 #define	PCI_PRODUCT_AUREAL_AU8820	0x0001		/* AU8820 Vortex Digital Audio Processor */
