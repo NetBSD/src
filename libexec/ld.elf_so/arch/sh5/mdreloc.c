@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.1 2003/03/25 13:11:54 scw Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.2 2003/03/26 14:46:32 scw Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -165,4 +165,28 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		*where = new_value;
 
 	return (caddr_t)new_value;
+}
+
+Elf_Addr
+_rtld_function_descriptor_alloc(const Obj_Entry *obj, const Elf_Sym *def,
+    Elf_Addr addend)
+{
+	Elf_Addr pc;
+
+	pc = (Elf_Addr)(obj->relocbase + addend);
+
+	if (def) {
+		pc += def->st_value;
+		if (def->st_other & STO_SH5_ISA32)
+			pc |= 1;
+	}
+
+	return (pc);
+}
+
+const void *
+_rtld_function_descriptor_function(const void *addr)
+{
+
+	return (addr);
 }
