@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)delete.c	8.7 (Berkeley) 12/9/93"; */
-static char *rcsid = "$Id: delete.c,v 1.2 1994/01/24 06:38:49 cgd Exp $";
+static char sccsid[] = "@(#)delete.c	8.9 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 
@@ -60,10 +70,6 @@ delete(sp, ep, fm, tm, lmode)
 	char *bp, *p;
 	int eof;
 
-#if defined(DEBUG) && 0
-	TRACE(sp, "delete: from %lu/%d to %lu/%d%s\n",
-	    fm->lno, fm->cno, tm->lno, tm->cno, lmode ? " (LINE MODE)" : "");
-#endif
 	bp = NULL;
 
 	/* Case 1 -- delete in line mode. */
@@ -114,9 +120,11 @@ delete(sp, ep, fm, tm, lmode)
 			return (1);
 		}
 		GET_SPACE_RET(sp, bp, blen, len);
-		memmove(bp, p, fm->cno);
-		memmove(bp + fm->cno, p + tm->cno, len - tm->cno);
-		if (file_sline(sp, ep, fm->lno, bp, len - (tm->cno - fm->cno)))
+		if (fm->cno != 0)
+			memmove(bp, p, fm->cno);
+		memmove(bp + fm->cno, p + (tm->cno + 1), len - (tm->cno + 1));
+		if (file_sline(sp, ep, fm->lno,
+		    bp, len - ((tm->cno - fm->cno) + 1)))
 			goto err;
 		goto done;
 	}
@@ -163,8 +171,8 @@ delete(sp, ep, fm, tm, lmode)
 		GETLINE_ERR(sp, tm->lno);
 		goto err;
 	}
-	memmove(bp + tlen, p + tm->cno, len - tm->cno);
-	tlen += len - tm->cno;
+	memmove(bp + tlen, p + (tm->cno + 1), len - (tm->cno + 1));
+	tlen += len - (tm->cno + 1);
 
 	/* Set the current line. */
 	if (file_sline(sp, ep, fm->lno, bp, tlen))

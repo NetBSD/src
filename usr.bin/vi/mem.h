@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mem.h	8.2 (Berkeley) 12/19/93
- *	$Id: mem.h,v 1.2 1994/01/24 06:39:02 cgd Exp $
+ *	@(#)mem.h	8.5 (Berkeley) 3/16/94
  */
 
 /* Increase the size of a malloc'd buffer.  Two versions, one that
@@ -163,5 +162,12 @@
 	if ((p = (cast)realloc(p, size)) == NULL)			\
 		msgq(sp, M_SYSERR, NULL);				\
 }
+
+/*
+ * Versions of memmove(3) and memset(3) that use the size of the
+ * initial pointer to figure out how much memory to manipulate.
+ */
+#define	MEMMOVE(p, t, len)	memmove(p, t, (len) * sizeof(*(p)))
+#define	MEMSET(p, value, len)	memset(p, value, (len) * sizeof(*(p)))
 
 int	binc __P((SCR *, void *, size_t *, size_t));

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,27 +32,35 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)search.c	8.32 (Berkeley) 1/9/94"; */
-static char *rcsid = "$Id: search.c,v 1.2 1994/01/24 06:39:12 cgd Exp $";
+static char sccsid[] = "@(#)search.c	8.40 (Berkeley) 3/23/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
+
 #include "vi.h"
-#include "interrupt.h"
 
 static int	check_delta __P((SCR *, EXF *, long, recno_t));
 static int	ctag_conv __P((SCR *, char **, int *));
 static int	get_delta __P((SCR *, char **, long *, u_int *));
 static int	resetup __P((SCR *, regex_t **, enum direction,
 		    char *, char **, long *, u_int *));
-static void	search_intr __P((int));
 
 /*
  * resetup --
@@ -214,7 +222,7 @@ ctag_conv(sp, ptrnp, replacedp)
 	/* The second character is a '^', and it's magic. */
 	if (p[0] == '^')
 		*t++ = *p++;
-		
+
 	/*
 	 * Escape every other magic character we can find, stripping the
 	 * backslashes ctags inserts to escape the search delimiter
@@ -237,28 +245,6 @@ ctag_conv(sp, ptrnp, replacedp)
 	return (0);
 }
 
-/*
- * search_intr --
- *	Set the interrupt bit in any screen that is interruptible.
- *
- * XXX
- * In the future this may be a problem.  The user should be able to move to
- * another screen and keep typing while this runs.  If so, and the user has
- * more than one search/global (see ex/ex_global.c) running, it will be hard
- * to decide which one to stop.
- */
-static void
-search_intr(signo)
-	int signo;
-{
-	SCR *sp;
-
-	for (sp = __global_list->dq.cqh_first;
-	    sp != (void *)&__global_list->dq; sp = sp->q.cqe_next)
-		if (F_ISSET(sp, S_INTERRUPTIBLE))
-			F_SET(sp, S_INTERRUPTED);
-}
-
 #define	EMPTYMSG	"File empty; nothing to search."
 #define	EOFMSG		"Reached end-of-file without finding the pattern."
 #define	NOTFOUND	"Pattern not found."
@@ -273,14 +259,13 @@ f_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 	char *ptrn, **eptrn;
 	u_int *flagp;
 {
-	DECLARE_INTERRUPTS;
 	regmatch_t match[1];
 	regex_t *re, lre;
 	recno_t lno;
 	size_t coff, len;
 	long delta;
 	u_int flags;
-	int eval, rval, wrapped;
+	int btear, eval, itear, rval, wrapped;
 	char *l;
 
 	if (file_lline(sp, ep, &lno))
@@ -328,16 +313,9 @@ f_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 		}
 	}
 
-	/*
-	 * Set up busy message, interrupts.
-	 *
-	 * F_search is called from the ex_tagfirst() routine, which runs
-	 * before the screen really exists.  Make sure we don't step on
-	 * anything.
-	 */
-	if (sp->s_position != NULL)
-		busy_on(sp, 1, "Searching...");
-	SET_UP_INTERRUPTS(search_intr);
+	/* Set up busy message, interrupts. */
+	btear = F_ISSET(sp, S_EXSILENT) ? 0 : !busy_on(sp, "Searching...");
+	itear = !intr_init(sp);
 
 	for (rval = 1, wrapped = 0;; ++lno, coff = 0) {
 		if (F_ISSET(sp, S_INTERRUPTED)) {
@@ -382,7 +360,7 @@ f_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 			re_error(sp, eval, re);
 			break;
 		}
-		
+
 		/* Warn if wrapped. */
 		if (wrapped && O_ISSET(sp, O_WARN) && LF_ISSET(SEARCH_MSG))
 			msgq(sp, M_INFO, WRAPMSG);
@@ -417,13 +395,11 @@ f_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 		break;
 	}
 
-interrupt_err:
-
 	/* Turn off busy message, interrupts. */
-	if (sp->s_position != NULL)
+	if (btear)
 		busy_off(sp);
-	TEAR_DOWN_INTERRUPTS;
-
+	if (itear)
+		intr_end(sp);
 	return (rval);
 }
 
@@ -435,14 +411,13 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 	char *ptrn, **eptrn;
 	u_int *flagp;
 {
-	DECLARE_INTERRUPTS;
 	regmatch_t match[1];
 	regex_t *re, lre;
 	recno_t lno;
 	size_t coff, len, last;
 	long delta;
 	u_int flags;
-	int eval, rval, wrapped;
+	int btear, eval, itear, rval, wrapped;
 	char *l;
 
 	if (file_lline(sp, ep, &lno))
@@ -472,10 +447,8 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 		lno = fm->lno;
 
 	/* Turn on busy message, interrupts. */
-	busy_on(sp, 1, "Searching...");
-
-	if (F_ISSET(sp->gp, G_ISFROMTTY))
-		SET_UP_INTERRUPTS(search_intr);
+	btear = F_ISSET(sp, S_EXSILENT) ? 0 : !busy_on(sp, "Searching...");
+	itear = !intr_init(sp);
 
 	for (rval = 1, wrapped = 0, coff = fm->cno;; --lno, coff = 0) {
 		if (F_ISSET(sp, S_INTERRUPTED)) {
@@ -510,7 +483,7 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 
 		/* Set the termination. */
 		match[0].rm_so = 0;
-		match[0].rm_eo = coff ? coff : len;
+		match[0].rm_eo = len;
 
 #if defined(DEBUG) && 0
 		TRACE(sp, "B search: %lu from 0 to %qu\n", lno, match[0].rm_eo);
@@ -525,10 +498,14 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 			break;
 		}
 
+		/* Check for a match starting past the cursor. */
+		if (coff != 0 && match[0].rm_so >= coff)
+			continue;
+
 		/* Warn if wrapped. */
 		if (wrapped && O_ISSET(sp, O_WARN) && LF_ISSET(SEARCH_MSG))
 			msgq(sp, M_INFO, WRAPMSG);
-		
+
 		if (delta) {
 			if (check_delta(sp, ep, delta, lno))
 				break;
@@ -540,17 +517,17 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 			    match[0].rm_so, match[0].rm_eo);
 #endif
 			/*
-			 * Find the last acceptable one in this line.  This
-			 * is really painful, we need a cleaner interface to
-			 * regexec to make this possible.
+			 * We now have the first match on the line.  Step
+			 * through the line character by character until we
+			 * find the last acceptable match.  This is painful,
+			 * we need a better interface to regex to make this
+			 * work.
 			 */
 			for (;;) {
-				last = match[0].rm_so;
-				match[0].rm_so = match[0].rm_eo + 1;
-				if (match[0].rm_so >= len ||
-				    coff && match[0].rm_so >= coff)
+				last = match[0].rm_so++;
+				if (match[0].rm_so >= len)
 					break;
-				match[0].rm_eo = coff ? coff : len;
+				match[0].rm_eo = len;
 				eval = regexec(re, l, 1, match,
 				    (match[0].rm_so == 0 ? 0 : REG_NOTBOL) |
 				    REG_STARTEND);
@@ -560,6 +537,8 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 					re_error(sp, eval, re);
 					goto err;
 				}
+				if (coff && match[0].rm_so >= coff)
+					break;
 			}
 			rm->lno = lno;
 
@@ -574,11 +553,10 @@ b_search(sp, ep, fm, rm, ptrn, eptrn, flagp)
 	}
 
 	/* Turn off busy message, interrupts. */
-interrupt_err:
-err:	busy_off(sp);
-
-	if (F_ISSET(sp->gp, G_ISFROMTTY))
-		TEAR_DOWN_INTERRUPTS;
+err:	if (btear)
+		busy_off(sp);
+	if (itear)
+		intr_end(sp);
 
 	return (rval);
 }
@@ -592,7 +570,7 @@ err:	busy_off(sp);
  * the global, search, and substitute patterns) work with POSIX RE's.
  *
  * 1: If O_MAGIC is not set, strip backslashes from the magic character
- *    set (.[]*~) that have them, and add them to the ones that don't. 
+ *    set (.[]*~) that have them, and add them to the ones that don't.
  * 2: If O_MAGIC is not set, the string "\~" is replaced with the text
  *    from the last substitute command's replacement string.  If O_MAGIC
  *    is set, it's the string "~".
