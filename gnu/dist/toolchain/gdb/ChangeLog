@@ -1,3 +1,8 @@
+2001-10-18  Andrew Cagney  <ac131313@redhat.com>
+
+	* config/powerpc/nbsd.mt (SIM_OBS, SIM): Define.
+	* config/powerpc/linux.mt (SIM, SIM_OBS): Ditto
+
 2000-05-17  Andrew Cagney  <cagney@sourceware.cygnus.com>
 
 	* GDB 5.0 released.
