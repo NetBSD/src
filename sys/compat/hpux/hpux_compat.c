@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.42 1998/10/18 17:00:32 christos Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.43 1998/10/19 22:31:50 tron Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,8 @@
 #ifndef COMPAT_43
 #define COMPAT_43
 #endif
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
