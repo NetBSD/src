@@ -16,21 +16,24 @@ Supported models:
 	MacTV,
 	Centris 650,
 	Quadra 610, Quadra 630, Quadra 650, Quadra 700, Quadra 800,
-	Quadra/Centris 660AV, Quadra 840AV,
+	Quadra/Centris 660AV, Quadra 840AV
 
 Supported devices on all of the above systems include:
 	Onboard SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 	Internal sound--enough to beep on some machines, anyway
-	Most basic NuBUS video cards (there have been some
-		problems with some 24-bit color cards)
+	Most basic NuBus video cards (there have been some
+		problems with some 24-bit color cards and with most
+                QuickDraw acclerators)
 	Both internal serial ports
 	ADB keyboards and mice (both Apple and a number of third party
-		multi-button mice are supported)
+		multi-button mice and trackballs are supported)
 	Ethernet cards based on the Natl. Semiconductor 8390 and the
 		SONIC (DP83932) chips
 		(Asante, Apple, and a few others--problems still
 		 with ethernet and many NuBus video cards).
 	Onboard ethernet based on the SONIC chip for Quadra-series Macs
+	Onboard ethernet based on the MACE chip for the AV Quadras.
+	Comm-slot ethernet may be working for some machines/cards.
 	
 If your 68030 system is not listed above, it may be because of a problem
 with accessing onboard video and it may still work with a serial console.
@@ -43,6 +46,7 @@ floating point emulation (FPE) for this type of processor.  Machines in
 this category include:
 	Newer LC-series machines
 	Newer Performa-series machines
+	Some PowerBook 500-series Macs
 
 What isn't supported, but often asked about:
 	Macintosh IIfx:  This machine has unusual custom chips for the
