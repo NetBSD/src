@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.94 2003/07/03 20:15:28 ragge Exp $
+.\"	$NetBSD: sysctl.8,v 1.95 2003/07/04 13:32:13 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd February 2, 2003
+.Dd July 3, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ The second-level name is the pid of the process (in decimal form),
 or the special word
 .Ql curproc .
 For variables below
-.Ql proc.\*[Lt]pid\*[Gt].rlimit ,
+.Ql proc. Ns Ao pid Ac Ns .rlimit ,
 the integer value may be replaced
 with the string
 .Ql unlimited
@@ -424,7 +424,7 @@ privilege can change the value.
 .El
 .Pp
 Entries found under
-.Dq vendor.\*[Lt]vendor\*[Gt]
+.Dq vendor. Ns Aq vendor
 are left to be specified (and used) by vendors
 using the
 .Nx
@@ -491,7 +491,9 @@ sysctl proc.$$
 can be used if the shell interpreter replaces $$ with its pid (this is true
 for most shells).
 .Pp
-To redirect core dumps to the /var/tmp/\*[Lt]username\*[Gt] directory,
+To redirect core dumps to the
+.Pa /var/tmp/ Ns Aq username
+directory,
 .Bd -literal -offset indent -compact
 sysctl -w proc.$$.corename=/var/tmp/%u/%n.core
 .Ed
