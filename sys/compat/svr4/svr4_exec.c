@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.2 1994/06/29 06:30:31 cgd Exp $	*/
+/*	$NetBSD: svr4_exec.c,v 1.3 1994/08/15 22:03:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -125,7 +125,7 @@ svr4_exec_elf_makecmds(p, epp)
 	return ETXTBSY;
     }
 
-    epp->ep_emul = EMUL_IBCS2;
+    epp->ep_emul = EMUL_IBCS2_ELF;
     epp->ep_tsize = ~0;
     epp->ep_dsize = ~0;
     pos = eh.e_phoff;
