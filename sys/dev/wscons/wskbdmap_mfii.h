@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.2 1998/04/18 09:51:20 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.3 1998/04/18 10:57:13 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -182,6 +182,37 @@ static const keysym_t pckbd_keydesc_de_nodead[] = {
     KC(41),  KS_asciicircum,	KS_degree,
 };
 
+static const keysym_t pckbd_keydesc_dk[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(3),   KS_2,		KS_quotedbl,	KS_at,
+    KC(4),   KS_3,		KS_numbersign,	KS_sterling,
+    KC(5),   KS_4,		KS_currency,	KS_dollar,
+    KC(7),   KS_6,		KS_ampersand,
+    KC(8),   KS_7,		KS_slash,	KS_braceleft,
+    KC(9),   KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(10),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(11),  KS_0,		KS_equal,	KS_braceright,
+    KC(12),  KS_plus,		KS_question,
+    KC(13),  KS_dead_acute,	KS_dead_grave,	KS_bar,
+    KC(26),  KS_aring,
+    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(39),  KS_ae,
+    KC(40),  KS_oslash,
+    KC(41),  KS_onehalf,	KS_paragraph,
+    KC(43),  KS_apostrophe,	KS_asterisk,
+    KC(51),  KS_comma,		KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_minus,		KS_underscore,
+    KC(86),  KS_less,		KS_greater,	KS_backslash,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t pckbd_keydesc_dk_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(13),  KS_apostrophe,	KS_grave,	KS_bar,
+    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -189,6 +220,8 @@ static const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	pckbd_keydesc_us),
 	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
+	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
+	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 };
 
 #undef KBD_MAP
