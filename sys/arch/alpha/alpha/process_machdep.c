@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.20 2003/09/18 05:26:41 skd Exp $ */
+/* $NetBSD: process_machdep.c,v 1.21 2003/09/21 15:14:51 skd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -34,27 +34,27 @@
  * This file may seem a bit stylized, but that so that it's easier to port.
  * Functions to be implemented here are:
  *
- * process_read_regs(lwp, regs)
+ * process_read_regs(proc, regs)
  *	Get the current user-visible register set from the process
  *	and copy it into the regs structure (<machine/reg.h>).
  *	The process is stopped at the time read_regs is called.
  *
- * process_write_regs(lwp, regs)
+ * process_write_regs(proc, regs)
  *	Update the current register set from the passed in regs
  *	structure.  Take care to avoid clobbering special CPU
  *	registers or privileged bits in the PSL.
  *	The process is stopped at the time write_regs is called.
  *
- * process_sstep(lwp,int)
+ * process_sstep(proc)
  *	Arrange for the process to trap after executing a single instruction.
  *
- * process_set_pc(lwp)
+ * process_set_pc(proc)
  *	Set the process's program counter.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2003/09/18 05:26:41 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2003/09/21 15:14:51 skd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2003/09/18 05:26:41 skd Exp
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include <machine/alpha.h>
-#include <alpha/alpha/db_instruction.h>
 
 #define	lwp_frame(l)	((l)->l_md.md_tf)
 #define	lwp_pcb(l)	(&(l)->l_addr->u_pcb)
@@ -91,6 +90,16 @@ process_write_regs(struct lwp *l, struct reg *regs)
 	regtoframe(regs, lwp_frame(l));
 	lwp_frame(l)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
 	lwp_pcb(l)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
+	return (0);
+}
+
+int
+process_sstep(struct lwp *l, int sstep)
+{
+
+	if (sstep)
+		return (EINVAL);
+
 	return (0);
 }
 
@@ -124,189 +133,3 @@ process_write_fpregs(struct lwp *l, struct fpreg *regs)
 	memcpy(lwp_fpframe(l), regs, sizeof(struct fpreg));
 	return (0);
 }
-
-static int
-process_read_bpt(struct lwp *l, vaddr_t addr, u_int32_t *v)
-{
-	struct iovec iov;
-	struct uio uio;
-	iov.iov_base = (caddr_t) v;
-	iov.iov_len = sizeof(u_int32_t);
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)addr;
-	uio.uio_resid = sizeof(u_int32_t);
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_rw = UIO_READ;
-	uio.uio_procp = l->l_proc;
-	return process_domem(l->l_proc,l->l_proc, &uio);
-}
-
-static int
-process_write_bpt(struct lwp *l, vaddr_t addr, u_int32_t v)
-{
-	struct iovec iov;
-	struct uio uio;
-	iov.iov_base = (caddr_t) &v;
-	iov.iov_len = sizeof(u_int32_t);
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)addr;
-	uio.uio_resid = sizeof(u_int32_t);
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_rw = UIO_WRITE;
-	uio.uio_procp = l->l_proc;
-	return process_domem(l->l_proc,l->l_proc, &uio);
-}
-
-static int
-process_clear_bpt(struct lwp *l, struct mdbpt *bpt)
-{
-	return process_write_bpt(l, bpt->addr, bpt->contents);
-}
-
-static int
-process_set_bpt(struct lwp *l, struct mdbpt *bpt)
-{
-	int error;
-	u_int32_t bpins = 0x00000080;
-	error = process_read_bpt(l, bpt->addr, &bpt->contents);
-	if (error)
-		return error;
-	return process_write_bpt(l, bpt->addr, bpins);
-}
-
-static u_int64_t
-process_read_register(struct lwp *l, int regno)
-{
-	static int reg_to_frame[32] = {
-		FRAME_V0,
-		FRAME_T0,
-		FRAME_T1,
-		FRAME_T2,
-		FRAME_T3,
-		FRAME_T4,
-		FRAME_T5,
-		FRAME_T6,
-		FRAME_T7,
-		
-		FRAME_S0,
-		FRAME_S1,
-		FRAME_S2,
-		FRAME_S3,
-		FRAME_S4,
-		FRAME_S5,
-		FRAME_S6,
-
-		FRAME_A0,
-		FRAME_A1,
-		FRAME_A2,
-		FRAME_A3,
-		FRAME_A4,
-		FRAME_A5,
-
-		FRAME_T8,
-		FRAME_T9,
-		FRAME_T10,
-		FRAME_T11,
-		FRAME_RA,
-		FRAME_T12,
-		FRAME_AT,
-		FRAME_GP,
-		FRAME_SP,
-		-1,             /* zero */
-	};
-	
-	if (regno == R_ZERO)
-		return 0;
-	
-	return l->l_md.md_tf->tf_regs[reg_to_frame[regno]];
-}
-
-static int
-process_clear_sstep(struct lwp *l)
-{
-	if (l->l_md.md_flags & MDP_STEP2) {
-		process_clear_bpt(l, &l->l_md.md_sstep[1]);
-		process_clear_bpt(l, &l->l_md.md_sstep[0]);
-		l->l_md.md_flags &= ~MDP_STEP2;
-	} else if (l->l_md.md_flags & MDP_STEP1) {
-		process_clear_bpt(l, &l->l_md.md_sstep[0]);
-		l->l_md.md_flags &= ~MDP_STEP1;
-	}
-	return 0;
-}
-
-int
-process_sstep(struct lwp *l,int action)
-{
-	int error;
-	struct trapframe *tf = l->l_md.md_tf;
-	vaddr_t pc = tf->tf_regs[FRAME_PC];
-	alpha_instruction ins;
-	vaddr_t addr[2];    /* places to set breakpoints */
-	int count = 0;          /* count of breakpoints */
-	
-	if ( action == 0 )
-		return(process_clear_sstep(l));
-	
-	if (l->l_md.md_flags & (MDP_STEP1|MDP_STEP2))
-		panic("process_sstep: step breakpoints not removed");
-	
-	error = process_read_bpt(l, pc, &ins.bits);
-	if (error)
-		return error;
-	
-	switch (ins.branch_format.opcode) {
-
-	case op_j:
-		/* Jump: target is register value */
-		addr[0] = process_read_register(l, ins.jump_format.rb) & ~3;
-		count = 1;
-		break;
-
-	case op_br:
-	case op_fbeq:
-	case op_fblt:
-	case op_fble:
-	case op_bsr:
-	case op_fbne:
-	case op_fbge:
-	case op_fbgt:
-	case op_blbc:
-	case op_beq:
-	case op_blt:
-	case op_ble:
-	case op_blbs:
-	case op_bne:
-	case op_bge:
-	case op_bgt:
-		/* Branch: target is pc+4+4*displacement */
-		addr[0] = pc + 4;
-		addr[1] = pc + 4 + 4 * ins.branch_format.displacement;
-		count = 2;
-		break;
-		
-	default:
-		addr[0] = pc + 4;
-		count = 1;
-	}
-
-	l->l_md.md_sstep[0].addr = addr[0];
-	error = process_set_bpt(l, &l->l_md.md_sstep[0]);
-	if (error)
-		return error;
-	if (count == 2) {
-		l->l_md.md_sstep[1].addr = addr[1];
-		error = process_set_bpt(l, &l->l_md.md_sstep[1]);
-		if (error) {
-			process_clear_bpt(l, &l->l_md.md_sstep[0]);
-			return error;
-		}
-		l->l_md.md_flags |= MDP_STEP2;
-	} else
-		l->l_md.md_flags |= MDP_STEP1;
-	
-	return 0;
-}
-
