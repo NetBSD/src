@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.19 2004/05/22 22:52:16 jonathan Exp $	*/
+/*	$NetBSD: domain.h,v 1.20 2005/01/23 18:41:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -48,7 +48,7 @@ struct	ifnet;
 
 struct	domain {
 	int	dom_family;		/* AF_xxx */
-	char	*dom_name;
+	const char *dom_name;
 	void	(*dom_init)		/* initialize domain data structures */
 			(void);
 	int	(*dom_externalize)	/* externalize access rights */
@@ -56,7 +56,6 @@ struct	domain {
 	void	(*dom_dispose)		/* dispose of internalized rights */
 			(struct mbuf *);
 	const struct protosw *dom_protosw, *dom_protoswNPROTOSW;
-	struct	domain *dom_next;
 	int	(*dom_rtattach)		/* initialize routing table */
 			(void **, int);
 	int	dom_rtoffset;		/* an arg to rtattach, in bits */
@@ -65,11 +64,20 @@ struct	domain {
 			(struct ifnet *);
 	void	(*dom_ifdetach)		/* detach af-dependent data on ifnet */
 			(struct ifnet *, void *);
+	STAILQ_ENTRY(domain) dom_link;
 	struct	mowner dom_mowner;
 };
 
+STAILQ_HEAD(domainhead,domain);
+
 #ifdef _KERNEL
-extern struct domain *domains;
+#define	DOMAIN_DEFINE(name)	\
+	extern struct domain name; \
+	__link_set_add_data(domains, name)
+
+#define	DOMAIN_FOREACH(dom)	STAILQ_FOREACH(dom, &domains, dom_link)
+extern struct domainhead domains;
+void domain_attach(struct domain *);
 void domaininit(void);
 #endif
 

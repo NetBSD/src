@@ -378,12 +378,13 @@ m_reclaim(void *arg, int flags)
 	struct ifnet *ifp;
 	int s = splvm();
 
-	for (dp = domains; dp; dp = dp->dom_next)
+	DOMAIN_FOREACH(dp) {
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	}
+	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		if (ifp->if_drain)
 			(*ifp->if_drain)(ifp);
 	splx(s);
