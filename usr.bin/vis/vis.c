@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.3 1994/11/17 07:56:01 jtc Exp $	*/
+/*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,20 +43,26 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vis.c,v 1.3 1994/11/17 07:56:01 jtc Exp $";
+static char rcsid[] = "$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
 #include <vis.h>
 
 int eflags, fold, foldwidth=80, none, markeol, debug;
 
+int foldit __P((char *, int, int));
+void process __P((FILE *, char *));
+
+int
 main(argc, argv) 
+	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	extern int errno;
 	FILE *fp;
 	int ch;
 
@@ -85,9 +91,8 @@ main(argc, argv)
 			break;
 		case 'F':
 			if ((foldwidth = atoi(optarg))<5) {
-				fprintf(stderr, 
-				 "vis: can't fold lines to less than 5 cols\n");
-				exit(1);
+				errx(1, "can't fold lines to less than 5 cols");
+				/* NOTREACHED */
 			}
 			/*FALLTHROUGH*/
 		case 'f':
@@ -115,8 +120,7 @@ main(argc, argv)
 			if ((fp=fopen(*argv, "r")) != NULL)
 				process(fp, *argv);
 			else
-				fprintf(stderr, "vis: %s: %s\n", *argv,
-				    (char *)strerror(errno));
+				warn("%s", *argv);
 			argv++;
 		}
 	else
@@ -124,6 +128,7 @@ main(argc, argv)
 	exit(0);
 }
 	
+void
 process(fp, filename)
 	FILE *fp;
 	char *filename;
@@ -131,7 +136,6 @@ process(fp, filename)
 	static int col = 0;
 	register char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
 	register int c, rachar; 
-	register char nc;
 	char buff[5];
 	
 	c = getc(fp);
