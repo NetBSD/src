@@ -9,7 +9,7 @@
  * Kristoffer Eriksson <ske@pkmab.se>
  */
  
-/* $Id: match.S,v 1.7 1999/11/10 16:54:10 thorpej Exp $ */
+/* $Id: match.S,v 1.8 2000/12/03 17:24:00 scw Exp $ */
 
 /* Preprocess with -DNO_UNDERLINE if your C compiler does not prefix
  * external symbols with an underline character '_'.
@@ -158,7 +158,8 @@ maxmatch:
 
 /* ======================== 680x0 version ================================= */
 
-#if defined(m68k)||defined(mc68k)||defined(__mc68000__)||defined(__MC68000__)
+#if defined(m68k)||defined(mc68k)||defined(__mc68000__)||\
+    defined(__MC68000__)||defined(__m68k__)
 #  ifndef mc68000
 #    define mc68000
 #  endif
