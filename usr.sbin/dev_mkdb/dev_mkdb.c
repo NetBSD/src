@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.20 2003/08/07 11:25:18 agc Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.21 2005/03/16 02:56:18 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.20 2003/08/07 11:25:18 agc Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.21 2005/03/16 02:56:18 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.20 2003/08/07 11:25:18 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+void	usage(void);
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -72,9 +71,7 @@ HASHINFO openinfo = {
 };
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	struct stat *st;
 	struct {
@@ -207,7 +204,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: dev_mkdb [-o database] [directory]\n");
