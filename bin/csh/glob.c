@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)glob.c	5.21 (Berkeley) 6/25/91";*/
-static char rcsid[] = "$Id: glob.c,v 1.5 1993/11/03 18:02:57 mycroft Exp $";
+static char rcsid[] = "$Id: glob.c,v 1.6 1994/02/07 23:55:37 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -157,9 +157,9 @@ globbrace(s, p, bl)
 	    i--;
 	}
 
-    if (i != 0) {
+    if (i != 0 || *pe == '\0') {
 	blkfree(nv);
-	return (-LBRC);
+	return (-RBRC);
     }
 
     for (i = 0, pl = pm = p; pm <= pe; pm++)
