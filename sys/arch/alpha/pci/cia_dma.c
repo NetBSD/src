@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.9 1998/06/03 18:25:54 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.10 1998/06/04 18:11:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.9 1998/06/03 18:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.10 1998/06/04 18:11:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,15 +89,16 @@ void	cia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 #define	CIA_SGMAP_MAPPED_BASE	(8*1024*1024)
 #define	CIA_SGMAP_MAPPED_SIZE	(8*1024*1024)
 
-/*
- * Macro to flush CIA scatter/gather TLB.
- */
-#define	CIA_TLB_INVALIDATE() \
-do { \
-	alpha_mb(); \
-	REGVAL(CIA_PCI_TBIA) = CIA_PCI_TBIA_ALL; \
-	alpha_mb(); \
-} while (0)
+void	cia_tlb_invalidate __P((void));
+void	cia_broken_pyxis_tlb_invalidate __P((void));
+
+void	(*cia_tlb_invalidate_fn) __P((void));
+
+#define	CIA_TLB_INVALIDATE()	(*cia_tlb_invalidate_fn)()
+
+struct alpha_sgmap cia_pyxis_bug_sgmap;
+#define	CIA_PYXIS_BUG_BASE	(1*128*1024)
+#define	CIA_PYXIS_BUG_SIZE	(2*1024*1024)
 
 void
 cia_dma_init(ccp)
@@ -190,6 +191,55 @@ cia_dma_init(ccp)
 			panic("cia_dma_init: bad page table address");
 		REGVAL(CIA_PCI_T0BASE) = tbase;
 		alpha_mb();
+
+		/*
+		 * Pass 1 and 2 (i.e. revision <= 1) of the Pyxis have a
+		 * broken scatter/gather TLB; it cannot be invalidated.  To
+		 * work around this problem, we configure window 2 as an SG
+		 * 2M window at 128M, which we use in DMA loopback mode to
+		 * read a spill page.  This works by causing TLB misses,
+		 * causing the old entries to be purged to make room for
+		 * the new entries coming in for the spill page.
+		 */
+		if ((ccp->cc_flags & CCF_ISPYXIS) != 0 && ccp->cc_rev <= 1) {
+			u_int64_t *page_table;
+			int i;
+
+			cia_tlb_invalidate_fn =
+			    cia_broken_pyxis_tlb_invalidate;
+
+			alpha_sgmap_init(t, &cia_pyxis_bug_sgmap,
+			    "pyxis_bug_sgmap", CIA_PYXIS_BUG_BASE, 0,
+			    CIA_PYXIS_BUG_SIZE, sizeof(u_int64_t), NULL,
+			    (32*1024*1024));
+
+			REGVAL(CIA_PCI_W2BASE) = CIA_PYXIS_BUG_BASE |
+			    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
+			alpha_mb();
+
+			REGVAL(CIA_PCI_W2MASK) = CIA_PCI_WnMASK_2M;
+			alpha_mb();
+
+			tbase = cia_pyxis_bug_sgmap.aps_ptpa >>
+			    CIA_PCI_TnBASE_SHIFT;
+			if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
+				panic("cia_dma_init: bad page table address");
+			REGVAL(CIA_PCI_T2BASE) = tbase;
+			alpha_mb();
+
+			/*
+			 * Initialize the page table to point at the spill
+			 * page.  Leave the last entry invalid.
+			 */
+			pci_sgmap_pte64_init_spill_page_pte();
+			for (i = 0, page_table = cia_pyxis_bug_sgmap.aps_pt;
+			     i < (CIA_PYXIS_BUG_SIZE / PAGE_SIZE) - 1; i++) {
+				page_table[i] =
+				    pci_sgmap_pte64_prefetch_spill_page_pte;
+			}
+			alpha_mb();
+		} else
+			cia_tlb_invalidate_fn = cia_tlb_invalidate;
 
 		CIA_TLB_INVALIDATE();
 	}
@@ -387,4 +437,60 @@ cia_bus_dmamap_unload_sgmap(t, map)
 	 * Do the generic bits of the unload.
 	 */
 	_bus_dmamap_unload(t, map);
+}
+
+/*
+ * Flush the CIA scatter/gather TLB.
+ */
+void
+cia_tlb_invalidate()
+{
+
+	alpha_mb();
+	REGVAL(CIA_PCI_TBIA) = CIA_PCI_TBIA_ALL;
+	alpha_mb();
+}
+
+/*
+ * Flush the scatter/gather TLB on broken Pyxis chips.
+ */
+void
+cia_broken_pyxis_tlb_invalidate()
+{
+	volatile u_int64_t dummy;
+	u_int32_t ctrl;
+	int i, s;
+
+	s = splhigh();
+
+	/*
+	 * Put the Pyxis into PCI loopback mode.
+	 */
+	alpha_mb();
+	ctrl = REGVAL(CIA_CSR_CTRL);
+	REGVAL(CIA_CSR_CTRL) = ctrl | CTRL_PCI_LOOP_EN;
+	alpha_mb();
+
+	/*
+	 * Now, read from PCI dense memory space at offset 128M (our
+	 * target window base), skipping 64k on each read.  This forces
+	 * S/G TLB misses.
+	 *
+	 * XXX Looks like the TLB entries are `not quite LRU'.  We need
+	 * XXX to read more times than there are actual tags!
+	 */
+	for (i = 0; i < CIA_TLB_NTAGS + 4; i++) {
+		dummy = *((volatile u_int64_t *)
+		    ALPHA_PHYS_TO_K0SEG(CIA_PCI_DENSE + CIA_PYXIS_BUG_BASE +
+		    (i * 65536)));
+	}
+
+	/*
+	 * Restore normal PCI operation.
+	 */
+	alpha_mb();
+	REGVAL(CIA_CSR_CTRL) = ctrl;
+	alpha_mb();
+
+	splx(s);
 }
