@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2001/01/15 20:19:57 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,7 +269,6 @@ void	remrq __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));
-void	child_return __P((void *));
 /* amd7930intr.s */
 void	amd7930_trap __P((void));
 /* cons.c */
