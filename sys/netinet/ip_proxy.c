@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.12 1998/05/29 20:24:38 veego Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.13 1998/05/29 20:27:18 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -80,6 +80,8 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.7 1998/05/18 11:15:
 static ap_session_t *ap_find __P((ip_t *, tcphdr_t *));
 static ap_session_t *ap_new_session __P((aproxy_t *, ip_t *, tcphdr_t *,
 					 fr_info_t *, nat_t *));
+static int ap_matchsrcdst __P((ap_session_t *, struct in_addr,
+				struct in_addr, void *, u_short, u_short));
 
 #define	AP_SESS_SIZE	53
 
@@ -122,13 +124,13 @@ u_short sport, dport;
 {
 	if (aps->aps_dst.s_addr == dst.s_addr) {
 		if ((aps->aps_src.s_addr == src.s_addr) &&
-		    (!tcp || (sport == aps->aps_sport) &&
-		     (dport == aps->aps_dport)))
+		    (!tcp || ((sport == aps->aps_sport) &&
+		     (dport == aps->aps_dport))))
 			return 1;
 	} else if (aps->aps_dst.s_addr == src.s_addr) {
 		if ((aps->aps_src.s_addr == dst.s_addr) &&
-		    (!tcp || (sport == aps->aps_dport) &&
-		     (dport == aps->aps_sport)))
+		    (!tcp || ((sport == aps->aps_dport) &&
+		     (dport == aps->aps_sport))))
 			return 1;
 	}
 	return 0;
