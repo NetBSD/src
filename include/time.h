@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.19 1998/07/27 11:08:38 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.20 1998/07/27 11:09:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 
 #include <sys/cdefs.h>
 #include <machine/ansi.h>
+#include <machine/limits.h>	/* Include file containing CLK_TCK. */
 
 #ifndef	NULL
 #define	NULL	0
@@ -90,10 +91,6 @@ struct tm {
 	long	tm_gmtoff;	/* offset from CUT in seconds */
 	__aconst char *tm_zone;	/* timezone abbreviation */
 };
-
-#include <machine/limits.h>	/* Include file containing CLK_TCK. */
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 char *asctime __P((const struct tm *));
