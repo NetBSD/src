@@ -1,4 +1,4 @@
-/*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
+/*	$NetBSD: nm.c,v 1.8 1996/09/21 00:34:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,11 +46,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $";
+static char rcsid[] = "$NetBSD: nm.c,v 1.8 1996/09/21 00:34:36 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <a.out.h>
+#include <link.h>
 #include <stab.h>
 #include <ar.h>
 #include <ranlib.h>
@@ -66,6 +67,7 @@ int print_only_external_symbols;
 int print_only_undefined_symbols;
 int print_all_symbols;
 int print_file_each_line;
+int print_weak_symbols;
 int fcount;
 
 int rev;
@@ -91,13 +93,16 @@ main(argc, argv)
 	extern int optind;
 	int ch, errors;
 
-	while ((ch = getopt(argc, argv, "agnopruw")) != EOF) {
+	while ((ch = getopt(argc, argv, "aglnopruw")) != EOF) {
 		switch (ch) {
 		case 'a':
 			print_all_symbols = 1;
 			break;
 		case 'g':
 			print_only_external_symbols = 1;
+			break;
+		case 'l':
+			print_weak_symbols = 1;
 			break;
 		case 'n':
 			sfunc = value;
@@ -456,8 +461,14 @@ print_symbol(objname, sym)
 	if (IS_DEBUGGER_SYMBOL(sym->n_type))
 		(void)printf(" - %02x %04x %5s ", sym->n_other,
 		    sym->n_desc&0xffff, typestring(sym->n_type));
-	else
-		(void)printf(" %c ", typeletter(sym->n_type));
+	else {
+		(void)printf(" %c", typeletter(sym->n_type));
+
+		if (print_weak_symbols)
+			putchar((N_BIND(sym) == BIND_WEAK) ? '*' : ' ');
+
+		putchar(' ');
+	}
 
 	/* print the symbol's name */
 	(void)puts(sym->n_un.n_name);
