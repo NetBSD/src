@@ -1425,7 +1425,7 @@ handle_copy_file (args, len)
 }
 
 
-static void read_counted_file PROTO ((char *, char *));
+static void read_counted_file PROTO ((const char *, const char *));
 
 /* Read from the server the count for the length of a file, then read
    the contents of that file and write them to FILENAME.  FULLNAME is
@@ -1434,8 +1434,8 @@ static void read_counted_file PROTO ((char *, char *));
    use it.  On error, gives a fatal error.  */
 static void
 read_counted_file (filename, fullname)
-    char *filename;
-    char *fullname;
+    const char *filename;
+    const char *fullname;
 {
     char *size_string;
     size_t size;
