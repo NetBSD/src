@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.15 1999/05/01 16:13:45 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.16 1999/08/04 19:11:01 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -57,12 +57,14 @@
 #include <machine/nexus.h>
 #include <machine/clock.h>
 #include <machine/scb.h>
+#include <machine/bus.h>
 
-#include <arch/vax/bi/bireg.h>
-#include <arch/vax/bi/bivar.h>
+#include <dev/bi/bireg.h>
+#include <dev/bi/bivar.h>
 
 #include <vax/vax/crx.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 struct ka820port *ka820port_ptr;
@@ -103,7 +105,7 @@ ka820_match(parent, cf, aux)
 {
 	struct bi_attach_args *ba = aux;
 
-	if (ba->ba_node->biic.bi_dtype != BIDT_KA820)
+	if (bus_space_read_2(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) != BIDT_KA820)
 		return 0;
 
 	if (ba->ba_nodenr != mastercpu)
@@ -125,9 +127,10 @@ ka820_attach(parent, self, aux)
 	register int csr;
 	extern	short *clk_page;
 	extern	int clk_adrshift, clk_tweak;
-	u_short rev = ba->ba_node->biic.bi_revs;
+	u_short rev;
 	extern	char cpu_model[];
 
+	rev = bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) >> 16;
 	strcpy(cpu_model,"VAX 8200");
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
 	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
@@ -140,8 +143,11 @@ ka820_attach(parent, self, aux)
 	csr |= KA820PORT_CONSCLR | KA820PORT_CRDCLR | KA820PORT_CONSEN |
 		KA820PORT_RXIE;
 	ka820port_ptr->csr = csr;
-	ba->ba_node->biic.bi_intrdes = ba->ba_intcpu;
-	ba->ba_node->biic.bi_csr |= BICSR_SEIE | BICSR_HEIE;
+	bus_space_write_4(ba->ba_iot, ba->ba_ioh,
+	    BIREG_INTRDES, ba->ba_intcpu);
+	bus_space_write_4(ba->ba_iot, ba->ba_ioh, BIREG_VAXBICSR,
+	    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_VAXBICSR) |
+	    BICSR_SEIE | BICSR_HEIE);
 
 	/* XXX - should be done somewhere else */
 	scb_vecalloc(SCB_RX50, crxintr, 0, SCB_ISTACK);
@@ -157,6 +163,7 @@ ka820_attach(parent, self, aux)
 	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
 }
 
+#ifdef notdef
 /*
  * MS820 support.
  */
@@ -166,7 +173,13 @@ struct ms820regs {
 	int	ms_csr1;		/* control/status register 1 */
 	int	ms_csr2;		/* control/status register 2 */
 };
+#endif
 
+#define	MEMRD(reg) bus_space_read_4(sc->sc_iot, sc->sc_ioh, (reg))
+#define MEMWR(reg, val) bus_space_write_4(sc->sc_iot, sc->sc_ioh, (reg), (val))
+
+#define	MSREG_CSR1	0x100
+#define	MSREG_CSR2	0x104
 /*
  * Bits in CSR1.
  */
@@ -205,8 +218,9 @@ static int ms820_match __P((struct device *, struct cfdata *, void *));
 static void ms820_attach __P((struct device *, struct device *, void*));
 
 struct mem_bi_softc {
-	struct device mem_dev;
-	struct ms820regs *mem_regs;
+	struct device sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 };
 
 struct cfattach mem_bi_ca = {
@@ -221,7 +235,7 @@ ms820_match(parent, cf, aux)
 {
 	struct bi_attach_args *ba = aux;
 
-	if (ba->ba_node->biic.bi_dtype != BIDT_MS820)
+	if (bus_space_read_2(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) != BIDT_MS820)
 		return 0;
 
 	if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
@@ -236,71 +250,67 @@ ms820_attach(parent, self, aux)
 	struct	device	*parent, *self;
 	void	*aux;
 {
-	struct mem_bi_softc *ms = (void *)self;
+	struct mem_bi_softc *sc = (void *)self;
 	struct bi_attach_args *ba = aux;
 
-	ms->mem_regs = (void *)ba->ba_node;
+	sc->sc_iot = ba->ba_iot;
+	sc->sc_ioh = ba->ba_ioh;
 
-	if ((ms->mem_regs->biic.bi_csr & BICSR_STS) == 0)
+	if ((MEMRD(BIREG_VAXBICSR) & BICSR_STS) == 0)
 		printf(": failed self test\n");
 	else
-		printf(": size %dMB, %s chips\n", ((ms->mem_regs->ms_csr1 & 
-		    MS1_MSIZEMASK) >> 20), (ms->mem_regs->ms_csr1&MS1_RAMTYMASK
-		    ?ms->mem_regs->ms_csr1 & MS1_RAMTY256K?"256K":"1M":"64K"));
+		printf(": size %dMB, %s chips\n", ((MEMRD(MSREG_CSR1) & 
+		    MS1_MSIZEMASK) >> 20), (MEMRD(MSREG_CSR1) & MS1_RAMTYMASK
+		    ? MEMRD(MSREG_CSR1) & MS1_RAMTY256K ? "256K":"1M":"64K"));
 
-	ms->mem_regs->biic.bi_intrdes = ba->ba_intcpu;
-	ms->mem_regs->biic.bi_csr |= BICSR_SEIE | BICSR_HEIE;
+	MEMWR(BIREG_INTRDES, ba->ba_intcpu);
+	MEMWR(BIREG_VAXBICSR, MEMRD(BIREG_VAXBICSR) | BICSR_SEIE | BICSR_HEIE);
 
-	ms->mem_regs->ms_csr1 = MS1_MWRITEERR | MS1_CNTLERR;
-	ms->mem_regs->ms_csr2 = MS2_RDSERR | MS2_HIERR |
-	    MS2_CRDERR | MS2_ADRSERR;
+	MEMWR(MSREG_CSR1, MS1_MWRITEERR | MS1_CNTLERR);
+	MEMWR(MSREG_CSR2, MS2_RDSERR | MS2_HIERR | MS2_CRDERR | MS2_ADRSERR);
 }
 
 void
 ka820_memerr()
 {
-	extern struct cfdriver mem_cd;
-	register struct ms820regs *mcr;
-	struct mem_bi_softc *mc;
-	register int m, hard;
-	register char *type;
+	struct mem_bi_softc *sc;
+	int m, hard, csr1, csr2;
+	char *type;
 static char b1[] = "\20\40ERRSUM\37ECCDIAG\36ECCDISABLE\20CRDINH\17VALID\
 \16INTLK\15BROKE\13MWRITEERR\12CNTLERR\11INTLV";
 static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 
 	for (m = 0; m < mem_cd.cd_ndevs; m++) {
-		mc = mem_cd.cd_devs[m];
-		if (mc == NULL)
+		sc = mem_cd.cd_devs[m];
+		if (sc == NULL)
 			continue;
-		mcr = mc->mem_regs;
-		printf("%s: csr1=%b csr2=%b\n", mc->mem_dev.dv_xname,
-		    mcr->ms_csr1, b1, mcr->ms_csr2, b2);
-		if ((mcr->ms_csr1 & MS1_ERRSUM) == 0)
+		csr1 = MEMRD(MSREG_CSR1);
+		csr2 = MEMRD(MSREG_CSR2);
+		printf("%s: csr1=%b csr2=%b\n", sc->sc_dev.dv_xname,
+		    csr1, b1, csr2, b2);
+		if ((csr1 & MS1_ERRSUM) == 0)
 			continue;
 		hard = 1;
-		if (mcr->ms_csr1 & MS1_BROKE)
+		if (csr1 & MS1_BROKE)
 			type = "broke";
-		else if (mcr->ms_csr1 & MS1_CNTLERR)
+		else if (csr1 & MS1_CNTLERR)
 			type = "cntl err";
-		else if (mcr->ms_csr2 & MS2_ADRSERR)
+		else if (csr2 & MS2_ADRSERR)
 			type = "address parity err";
-		else if (mcr->ms_csr2 & MS2_RDSERR)
+		else if (csr2 & MS2_RDSERR)
 			type = "rds err";
-		else if (mcr->ms_csr2 & MS2_CRDERR) {
+		else if (csr2 & MS2_CRDERR) {
 			hard = 0;
 			type = "";
 		} else
 			type = "mysterious error";
-		printf("%s: %s%s%s addr %lx bank %x syn %x\n",
-		    mc->mem_dev.dv_xname,
-		    hard ? "hard error: " : "soft ecc",
-		    type, mcr->ms_csr2 & MS2_HIERR ?
-		    " (+ other rds or crd err)" : "",
-		    ((mcr->ms_csr2 & MS2_ADDR) + mcr->biic.bi_sadr) >> 9,
-		    (mcr->ms_csr2 & MS2_INTLVADDR) != 0,
-		    mcr->ms_csr2 & MS2_SYN);
-		mcr->ms_csr1 = mcr->ms_csr1 | MS1_CRDINH;
-		mcr->ms_csr2 = mcr->ms_csr2;
+		printf("%s: %s%s%s addr %x bank %x syn %x\n",
+		    sc->sc_dev.dv_xname, hard ? "hard error: " : "soft ecc",
+		    type, csr2 & MS2_HIERR ?  " (+ other rds or crd err)" : "",
+		    ((csr2 & MS2_ADDR) + MEMRD(BIREG_SADR)) >> 9,
+		    (csr2 & MS2_INTLVADDR) != 0, csr2 & MS2_SYN);
+		MEMWR(MSREG_CSR1, csr1 | MS1_CRDINH);
+		MEMWR(MSREG_CSR2, csr2);
 	}
 }
 
