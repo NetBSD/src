@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.19 2000/06/02 04:11:46 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.20 2000/07/05 02:42:39 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -607,7 +607,8 @@ in both a numeric and graphical format, as well as an estimated time
 to completion of the operation.
 .Pp
 Since it is the parity that provides the
-'redundancy' part of RAID, it is critical that the parity is correct
+.Sq redundancy
+part of RAID, it is critical that the parity is correct
 as much as possible.  If the parity is not correct, then there is no
 guarantee that data will not be lost if a component fails.
 .Pp
