@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.79 2004/12/30 11:35:41 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.80 2004/12/30 11:47:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.79 2004/12/30 11:35:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.80 2004/12/30 11:47:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -483,18 +483,27 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			       curp->size - curp->offset);
 		}
 
+#ifdef DDB
+		/*
+		 * Temporarily load the symbol table before the entry
+		 * routine is called, so that the symbols are available
+		 * for DDB backtrace and breakpoints.
+		 */
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
 			error = ksyms_addsymtab("/lkmtemp/",
 			    (char *)curp->syms, curp->sym_symsize,
 			    (char *)curp->syms + curp->sym_symsize,
 			    curp->sym_size - curp->sym_symsize);
+
 			if (error)
-				break;
+				goto rdyfail;
+
 #ifdef DEBUG
 			if (lkmdebug & LKMDB_INFO)
 				printf( "DDB symbols added!\n" );
 #endif
 		}
+#endif /* DDB */
 
 		curp->entry = (int (*)(struct lkm_table *, int, int))
 				(*((long *) (data)));
@@ -503,7 +512,9 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION);
 
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
+#ifdef DDB
 			ksyms_delsymtab("/lkmtemp/");
+#endif
 
 			if (!error) {
 				error = ksyms_addsymtab(curp->private.lkm_any->lkm_name,
@@ -514,6 +525,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		if (error) {
+    rdyfail:
 			/*
 			 * Module may refuse loading or may have a
 			 * version mismatch...
