@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.3.2.1 2000/01/08 18:16:54 he Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.3.2.2 2000/01/08 18:19:41 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,7 +130,6 @@ a34kugettod(tvp)
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
-	printf("year read: %d.\n", dt.dt_year);
 	if (dt.dt_year < STARTOFTIME)
 		dt.dt_year += 100;
 
@@ -182,7 +181,9 @@ a34kusettod(tvp)
 	rt->month2  = dt.dt_mon % 10;
 	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
-	rt->control1 = A3CONTROL1_FREE_CLOCK;
+	rt->control1 = A3CONTROL1_HOLD_CLOCK | 1;	/* mode 1 registers */
+	rt->leapyear = dt.dt_year; 		/* XXX implicit % 4 */
+	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implies mode 0 */
 
 	return (1);
 }
