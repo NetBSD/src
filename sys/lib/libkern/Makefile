@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 1997/11/04 20:34:46 gwr Exp $
+#	$NetBSD: Makefile,v 1.38 1998/01/21 21:23:18 cgd Exp $
 
 LIB=	kern
 NOPIC=
@@ -25,9 +25,57 @@ SRCS+=	md5c.c
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
 
+#
+# Special rules for certain objects
+#
+
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
 	cp mcount.o mcount.po
+
+# if no machine specific strchr(3), build one out of index(3).
+.if empty(SRCS:Mstrchr.S)
+OBJS+=	strchr.o
+strchr.o: index.c
+	${COMPILE.c} -DSTRCHR ${.ALLSRC} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+strchr.po: index.c
+	${COMPILE.c} -DSTRCHR -p ${.ALLSRC} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+strchr.so: index.c
+	${COMPILE.c} ${PICFLAG} -DPIC -DSTRCHR ${.ALLSRC} -o ${.TARGET}
+
+LOBJS+= strchr.ln
+strchr.ln: index.c
+	${LINT} -DSTRCHR ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	    ${.ALLSRC}
+.endif
+
+# if no machine specific strrchr(3), build one out of rindex(3).
+.if empty(SRCS:Mstrrchr.S)
+OBJS+=	strrchr.o
+strrchr.o: rindex.c
+	${COMPILE.c} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+strrchr.po: rindex.c
+	${COMPILE.c} -DSTRRCHR -p ${.ALLSRC} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+strrchr.so: rindex.c
+	${COMPILE.c} ${PICFLAG} -DPIC -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
+
+LOBJS+= strrchr.ln
+strrchr.ln: rindex.c
+	${LINT} -DSTRRCHR ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	    ${.ALLSRC}
+.endif
 
 # only needed during build
 libinstall::

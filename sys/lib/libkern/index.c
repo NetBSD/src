@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.c,v 1.3 1998/01/21 19:43:23 cgd Exp $	*/
+/*	$NetBSD: index.c,v 1.1 1998/01/21 21:23:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,19 +38,9 @@
 #if 0
 static char *sccsid = "@(#)index.c	5.7 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strchr.c,v 1.3 1998/01/21 19:43:23 cgd Exp $");
+__RCSID("$NetBSD: index.c,v 1.1 1998/01/21 21:23:19 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
-
-/*
- * XXX This file copied from libc's "index.c", but with the
- * "#define STRCHR" and the #ifndef _KERNEL goop added below.
- *
- * It'd be nice to include the file here unchanged from the libc
- * version (and, preferably, with the same name) but I didn't want to
- * include the baroque strchr/index + asm/C rules here in libkern.
- */
-#define STRCHR
 
 #ifndef _KERNEL
 #include <string.h>
