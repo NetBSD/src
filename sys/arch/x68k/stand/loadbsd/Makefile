@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/06/12 16:57:28 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2001/11/14 00:58:51 tv Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -11,9 +11,12 @@ BINDIR=		/usr/mdec
 
 .PATH:	${.CURDIR}/../common
 
-AOUT2HUX!=cd ${.CURDIR}/../aout2hux && echo `${MAKE} print-objdir`/aout2hux
-LIBDOS!=cd ${.CURDIR}/../libdos && ${MAKE} print-objdir
-LIBIOCS!=cd ${.CURDIR}/../libiocs && ${MAKE} print-objdir
+.include <bsd.own.mk>
+
+AOUT2HUXDIR!=	cd ${.CURDIR}/../aout2hux && ${PRINTOBJDIR}
+AOUT2HUX=	${AOUT2HUXDIR}/aout2hux
+LIBDOS!=	cd ${.CURDIR}/../libdos && ${PRINTOBJDIR}
+LIBIOCS!=	cd ${.CURDIR}/../libiocs && ${PRINTOBJDIR}
 
 CPPFLAGS=	-W -Wall -O -fomit-frame-pointer
 CPPFLAGS+=	-m68000 -Wa,-mc68000

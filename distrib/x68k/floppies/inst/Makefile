@@ -1,15 +1,12 @@
-#	$NetBSD: Makefile,v 1.8 2001/05/09 16:28:10 nsmrtks Exp $
+#	$NetBSD: Makefile,v 1.9 2001/11/14 00:58:49 tv Exp $
 
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
 .include <bsd.prog.mk>
 .MAIN:	all
 
 realall: inst.fs.gz
 all: realall
 
-RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk.sysinst ; ${MAKE} print-objdir
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk.sysinst && ${PRINTOBJDIR}
 
 inst.fs.gz: inst.fs
 	gzip -9vc inst.fs > ${.TARGET}
