@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.85 2003/08/31 12:59:05 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.86 2003/09/03 11:13:14 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.85 2003/08/31 12:59:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.86 2003/09/03 11:13:14 ragge Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -357,8 +357,8 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			 * Copy in known text to detect modification
 			 * after freeing.
 			 */
-			end = (int32_t *)&cp[copysize];
-			for (lp = (int32_t *)cp; lp < end; lp++)
+			end = (uint32_t *)&cp[copysize];
+			for (lp = (uint32_t *)cp; lp < end; lp++)
 				*lp = WEIRD_ADDR;
 			freep->type = M_FREE;
 #endif /* DIAGNOSTIC */
@@ -406,14 +406,14 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #else
 	freep->type = (struct malloc_type *) WEIRD_ADDR;
 #endif
-	end = (int32_t *)&freep->next +
+	end = (uint32_t *)&freep->next +
 	    (sizeof(freep->next) / sizeof(int32_t));
-	for (lp = (int32_t *)&freep->next; lp < end; lp++)
+	for (lp = (uint32_t *)&freep->next; lp < end; lp++)
 		*lp = WEIRD_ADDR;
 
 	/* and check that the data hasn't been modified. */
 	end = (uint32_t *)&va[copysize];
-	for (lp = (int32_t *)va; lp < end; lp++) {
+	for (lp = (uint32_t *)va; lp < end; lp++) {
 		if (__predict_true(*lp == WEIRD_ADDR))
 			continue;
 		printf("Data modified on freelist: "
