@@ -1,4 +1,4 @@
-/*	$NetBSD: kcmd.c,v 1.11 2003/04/15 08:02:58 itojun Exp $	*/
+/*	$NetBSD: kcmd.c,v 1.12 2003/07/23 20:31:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-__RCSID("$NetBSD: kcmd.c,v 1.11 2003/04/15 08:02:58 itojun Exp $");
+__RCSID("$NetBSD: kcmd.c,v 1.12 2003/07/23 20:31:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: kcmd.c,v 1.11 2003/04/15 08:02:58 itojun Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include <kerberosIV/kparse.h>
 
