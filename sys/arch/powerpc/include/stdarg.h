@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.5 2000/02/27 17:50:21 tsubai Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.6 2001/05/16 15:41:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -66,6 +66,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define __va_reg_args							\
 	((char *)__builtin_frame_address(0) + __builtin_args_info(4))
 
+/* From gcc/typeclass.h */
 #define __INTEGER_TYPE_CLASS	1
 #define __REAL_TYPE_CLASS	8
 #define __RECORD_TYPE_CLASS	12
@@ -74,8 +75,12 @@ typedef _BSD_VA_LIST_	va_list;
 	(__builtin_classify_type(*(type *)0) == __INTEGER_TYPE_CLASS &&	\
 	 sizeof(type) == 8)
 
+#ifdef _SOFT_FLOAT
+#define __va_double(type)	0
+#else
 #define __va_double(type)						\
 	(__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS)
+#endif
 
 #define __va_struct(type)						\
 	(__builtin_classify_type(*(type *)0) >= __RECORD_TYPE_CLASS)
