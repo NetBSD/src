@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.90 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.91 2004/03/07 23:17:44 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.90 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.91 2004/03/07 23:17:44 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.90 2004/03/07 22:15:19 oster Exp $")
 #endif
 
 /* rad == RF_RaidAccessDesc_t */
-RF_DECLARE_MUTEX(rf_rad_pool_lock)
+RF_DECLARE_MUTEX(rf_rad_lock)
 #define RF_MAX_FREE_RAD 128
 #define RF_MIN_FREE_RAD  32
 
@@ -219,16 +219,16 @@ rf_Shutdown(RF_Raid_t *raidPtr)
          * cuts down on the amount of serialization we've got going
          * on.
          */
-	RF_LOCK_MUTEX(rf_rad_pool_lock);
+	RF_LOCK_MUTEX(rf_rad_lock);
 	if (raidPtr->waitShutdown) {
-		RF_UNLOCK_MUTEX(rf_rad_pool_lock);
+		RF_UNLOCK_MUTEX(rf_rad_lock);
 		return (EBUSY);
 	}
 	raidPtr->waitShutdown = 1;
 	while (raidPtr->nAccOutstanding) {
-		RF_WAIT_COND(raidPtr->outstandingCond, rf_rad_pool_lock);
+		RF_WAIT_COND(raidPtr->outstandingCond, rf_rad_lock);
 	}
-	RF_UNLOCK_MUTEX(rf_rad_pool_lock);
+	RF_UNLOCK_MUTEX(rf_rad_lock);
 
 	/* Wait for any parity re-writes to stop... */
 	while (raidPtr->parity_rewrite_in_progress) {
@@ -434,7 +434,7 @@ rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 	rf_pool_init(&rf_pools.rad, sizeof(RF_RaidAccessDesc_t),
 		     "rf_rad_pl", RF_MIN_FREE_RAD, RF_MAX_FREE_RAD);
 	rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
-	simple_lock_init(&rf_rad_pool_lock);
+	simple_lock_init(&rf_rad_lock);
 	return (0);
 }
 
@@ -449,20 +449,20 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc = pool_get(&rf_pools.rad, PR_WAITOK);
 	simple_lock_init(&desc->mutex);
 
-	RF_LOCK_MUTEX(rf_rad_pool_lock);
+	RF_LOCK_MUTEX(rf_rad_lock);
 	if (raidPtr->waitShutdown) {
 		/*
 	         * Actually, we're shutting the array down. Free the desc
 	         * and return NULL.
 	         */
 
-		RF_UNLOCK_MUTEX(rf_rad_pool_lock);
+		RF_UNLOCK_MUTEX(rf_rad_lock);
 		pool_put(&rf_pools.rad, desc);
 		return (NULL);
 	}
 	raidPtr->nAccOutstanding++;
 
-	RF_UNLOCK_MUTEX(rf_rad_pool_lock);
+	RF_UNLOCK_MUTEX(rf_rad_lock);
 
 	desc->raidPtr = (void *) raidPtr;
 	desc->type = type;
@@ -506,12 +506,12 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 
 	rf_FreeAllocList(desc->cleanupList);
 	pool_put(&rf_pools.rad, desc);
-	RF_LOCK_MUTEX(rf_rad_pool_lock);
+	RF_LOCK_MUTEX(rf_rad_lock);
 	raidPtr->nAccOutstanding--;
 	if (raidPtr->waitShutdown) {
 		RF_SIGNAL_COND(raidPtr->outstandingCond);
 	}
-	RF_UNLOCK_MUTEX(rf_rad_pool_lock);
+	RF_UNLOCK_MUTEX(rf_rad_lock);
 }
 /*********************************************************************
  * Main routine for performing an access.
