@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $	*/
+/*	$NetBSD: pass5.c,v 1.2 1997/07/10 04:52:40 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $";
+static char rcsid[] = "$NetBSD: pass5.c,v 1.2 1997/07/10 04:52:40 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ pass5()
 				break;
 
 			default:
-				errexit("BAD STATE %d FOR INODE I=%d\n",
+				errexit("BAD STATE %d FOR INODE I=%ld\n",
 				    statemap[j], j);
 			}
 		}
