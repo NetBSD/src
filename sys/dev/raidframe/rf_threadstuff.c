@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.14 2003/12/29 05:01:14 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.15 2003/12/29 05:09:08 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.14 2003/12/29 05:01:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.15 2003/12/29 05:09:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -38,19 +38,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.14 2003/12/29 05:01:14 oster Ex
 #include "rf_general.h"
 #include "rf_shutdown.h"
 
-static void mutex_destroyer(void *);
 static void cond_destroyer(void *);
 
 /*
  * Shared stuff
  */
-
-static void 
-mutex_destroyer(arg)
-	void   *arg;
-{
-
-}
 
 static void 
 cond_destroyer(arg)
@@ -71,15 +63,10 @@ RF_DECLARE_MUTEX(*m)
 	char   *file;
 	int     line;
 {
-	int     rc;
 
 	rf_mutex_init(m);
 
-	rc = _rf_ShutdownCreate(listp, mutex_destroyer, (void *) m, file, line);
-	if (rc) {
-		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
-	}
-	return (rc);
+	return (0);
 }
 
 #if 0
