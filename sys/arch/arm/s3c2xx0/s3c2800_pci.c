@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.5 2003/06/15 23:08:57 fvdl Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.6 2003/06/18 10:56:35 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -301,7 +301,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if defined(PCI_NETBSD_CONFIGURE)
-	ioext = extent_create("pciio", 0, S3C2800_PCI_IOSPACE_SIZE,
+	ioext = extent_create("pciio", 0x100, S3C2800_PCI_IOSPACE_SIZE - 0x100,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	memext = extent_create("pcimem", 0, S3C2800_PCI_MEMSPACE_SIZE,
@@ -315,8 +315,6 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 
 	extent_destroy(memext);
 	extent_destroy(ioext);
-
-	printf("pci_configure_bus done\n");
 #endif				/* PCI_NETBSD_CONFIGURE */
 
 	/* initialize bus space tag */
