@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.71 2003/04/10 22:06:52 christos Exp $
+# $NetBSD: INSTALL,v 1.72 2003/04/16 23:41:36 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -196,6 +196,7 @@ le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
+mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
