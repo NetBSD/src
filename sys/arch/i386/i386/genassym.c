@@ -87,11 +87,9 @@ main()
 
 	def("PCB_CR3", &pcb->pcb_tss.tss_cr3);
 	def("PCB_EBP", &pcb->pcb_tss.tss_ebp);
-	def("PCB_EBX", &pcb->pcb_tss.tss_ebx);
-	def("PCB_EDI", &pcb->pcb_tss.tss_edi);
-	def("PCB_EIP", &pcb->pcb_tss.tss_eip);
-	def("PCB_ESI", &pcb->pcb_tss.tss_esi);
 	def("PCB_ESP", &pcb->pcb_tss.tss_esp);
+	def("PCB_FS", &pcb->pcb_tss.tss_fs);
+	def("PCB_GS", &pcb->pcb_tss.tss_gs);
 	def("PCB_IML", &pcb->pcb_iml);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
 	def("PCB_SAVEFPU", &pcb->pcb_savefpu);
