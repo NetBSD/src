@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.89 2003/03/01 05:55:51 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.90 2003/06/25 13:48:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.89 2003/03/01 05:55:51 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.90 2003/06/25 13:48:06 christos Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -102,6 +102,8 @@ int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
 /* round up and down to page boundaries. */
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
+
+#define MAXPHNUM	50
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -389,6 +391,9 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 	if ((error = ELFNAME(check_header)(&eh, ET_DYN)) != 0)
 		goto bad;
 
+	if (eh.e_phnum > MAXPHNUM)
+		goto bad;
+
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
@@ -547,6 +552,9 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 */
 	if (ELFNAME(check_header)(eh, ET_EXEC) != 0 &&
 	    ELFNAME(check_header)(eh, ET_DYN) != 0)
+		return ENOEXEC;
+
+	if (eh->e_phnum > MAXPHNUM)
 		return ENOEXEC;
 
 	error = vn_marktext(epp->ep_vp);
@@ -717,6 +725,9 @@ ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
 	Elf_Phdr *ph;
 	size_t phsize;
 	int error;
+
+	if (eh->e_phnum > MAXPHNUM)
+		return ENOEXEC;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
