@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.20 1998/02/01 23:30:49 marc Exp $	*/
+/*	$NetBSD: comvar.h,v 1.21 1998/02/02 22:55:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -48,6 +48,7 @@ int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_HAYESP	0x04
 #define	COM_HW_FLOW	0x08
+#define	COM_HW_DEV_OK	0x20
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 
