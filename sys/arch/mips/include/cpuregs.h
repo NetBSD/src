@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.62 2003/08/07 16:28:27 agc Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.63 2003/09/28 08:16:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -715,7 +715,8 @@
 
 /* For MIPS_R4000 */
 #define	MIPS_REV_R4000_A	0x00
-#define	MIPS_REV_R4000_B	0x30
+#define	MIPS_REV_R4000_B	0x22
+#define	MIPS_REV_R4000_C	0x30
 #define	MIPS_REV_R4400_A	0x40
 #define	MIPS_REV_R4400_B	0x50
 #define	MIPS_REV_R4400_C	0x60
