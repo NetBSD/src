@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.35 2005/01/03 22:45:34 manu Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.36 2005/01/04 15:06:24 manu Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -861,7 +861,7 @@ lpt*|lpa*)
 
 bpf)
 	mkdev bpf	c %bpf_chr% 0
-	lndev bpf0 bpf
+	lndev bpf bpf0
 	;;
 
 tun*|joy*)
