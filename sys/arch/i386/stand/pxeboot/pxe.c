@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.5 2003/03/11 18:29:00 drochner Exp $	*/
+/*	$NetBSD: pxe.c,v 1.6 2003/03/12 17:33:10 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -93,7 +93,6 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 #include <lib/libsa/bootp.h>
 
 #include <libi386.h>
@@ -101,6 +100,7 @@
 
 #include "pxeboot.h"
 #include "pxe.h"
+#include "pxe_netif.h"
 
 void	(*pxe_call)(u_int16_t);
 
@@ -110,6 +110,8 @@ void	pxecall_pxenv(u_int16_t);	/* pxe_call.S */
 char pxe_command_buf[256];
 
 BOOTPLAYER bootplayer;
+
+static struct btinfo_netif bi_netif;
 
 /*****************************************************************************
  * This section is a replacement for libsa/udp.c
@@ -185,55 +187,28 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	return (ur->buffer_size);
 }
 
-/*****************************************************************************
- * PXE "netif" back-end
- *****************************************************************************/
+/*
+ * netif layer:
+ *  open, close, shutdown: called from dev_net.c
+ *  socktodesc: called by network protocol modules
+ *
+ * We only allow one open socket.
+ */
 
-int	pxe_netif_match(struct netif *, void *);
-int	pxe_netif_probe(struct netif *, void *);
-void	pxe_netif_init(struct iodesc *, void *);
-int	pxe_netif_get(struct iodesc *, void *, size_t, time_t);
-int	pxe_netif_put(struct iodesc *, void *, size_t);
-void	pxe_netif_end(struct netif *);
-
-struct netif_stats pxe_netif_stats;
-
-struct netif_dif pxe0_dif = {
-	0,			/* unit */
-	1,			/* nsel */
-	&pxe_netif_stats,
-	0,
-	0,
-};
-
-struct netif_driver pxe_netif_driver = {
-	"pxe",			/* netif_bname */
-	pxe_netif_match,	/* match */
-	pxe_netif_probe,	/* probe */
-	pxe_netif_init,		/* init */
-	pxe_netif_get,		/* get */
-	pxe_netif_put,		/* put */
-	pxe_netif_end,		/* end */
-	&pxe0_dif,		/* netif_ifs */
-	1,			/* netif_nifs */
-};
+static int pxe_inited;
+static struct iodesc desc;
 
 int
-pxe_netif_match(struct netif *nif, void *machdep_hint)
-{
-
-	return (1);
-}
-
-int
-pxe_netif_probe(struct netif *nif, void *machdep_hint)
+pxe_netif_open()
 {
 	t_PXENV_UDP_OPEN *uo = (void *) pxe_command_buf;
 
-	pxe_init();
-
-	if (pxe_call == NULL)
-		return (1);
+	if (!pxe_inited) {
+		if (pxe_init() != 0)
+			return (-1);
+		pxe_inited = 1;
+	}
+	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 
 	bzero(uo, sizeof(*uo));
 
@@ -244,48 +219,30 @@ pxe_netif_probe(struct netif *nif, void *machdep_hint)
 	if (uo->status != PXENV_STATUS_SUCCESS) {
 		printf("pxe_netif_probe: PXENV_UDP_OPEN failed: 0x%x\n",
 		    uo->status);
-		pxe_fini();
-		return (1);
+		return (-1);
 	}
 
-	return (0);
-}
-
-void
-pxe_netif_init(struct iodesc *desc, void *machdep_hint)
-{
-	struct netif *nif = desc->io_netif;
-
-	bcopy(bootplayer.CAddr, desc->myea, ETHER_ADDR_LEN);
+	bcopy(bootplayer.CAddr, desc.myea, ETHER_ADDR_LEN);
 
 	/*
 	 * Since the PXE BIOS has already done DHCP, make sure we
 	 * don't reuse any of its transaction IDs.
 	 */
-	desc->xid = bootplayer.ident;
+	desc.xid = bootplayer.ident;
 
-	printf("%s%d: Ethernet address %s\n", nif->nif_driver->netif_bname,
-	    nif->nif_unit, ether_sprintf(desc->myea));
-}
-
-int
-pxe_netif_put(struct iodesc *desc, void *pkt, size_t len)
-{
-	
-	return (-1);
-}
-
-int
-pxe_netif_get(struct iodesc *desc, void *pkt, size_t len, time_t tleft)
-{
-
-	return (-1);
+	return (0);
 }
 
 void
-pxe_netif_end(struct netif *nif)
+pxe_netif_close(sock)
+	int sock;
 {
 	t_PXENV_UDP_CLOSE *uc = (void *) pxe_command_buf;
+
+#ifdef NETIF_DEBUG
+	if (sock != 0)
+		printf("pxe_netif_close: sock=%d\n", sock);
+#endif
 
 	uc->status = 0;
 
@@ -294,8 +251,26 @@ pxe_netif_end(struct netif *nif)
 	if (uc->status != PXENV_STATUS_SUCCESS)
 		printf("pxe_netif_end: PXENV_UDP_CLOSE failed: 0x%x\n",
 		    uc->status);
+}
+
+void
+pxe_netif_shutdown()
+{
 
 	pxe_fini();
+}
+
+struct iodesc *
+socktodesc(sock)
+	int sock;
+{
+
+#ifdef NETIF_DEBUG
+	if (sock != 0)
+		return (0);
+	else
+#endif
+		return (&desc);
 }
 
 /*****************************************************************************
@@ -439,8 +414,6 @@ pxe_init(void)
 		bi_netif.bus = BI_BUS_PCI;
 		bi_netif.addr.tag = gnt->info.pci.BusDevFunc;
 
-		BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
-
 		printf("Using %s device at bus %d device %d function %d\n",
 		    gnt->NicType == PCI_NIC ? "PCI" : "CardBus",
 		    (gnt->info.pci.BusDevFunc >> 8) & 0xff,
@@ -452,6 +425,8 @@ pxe_init(void)
 		/* XXX Make bootinfo work with this. */
 		printf("Using PnP device at 0x%x\n", gnt->info.pnp.CardSelNum);
 	}
+
+	printf("Ethernet address %s\n", ether_sprintf(bootplayer.CAddr));
 
 	return (0);
 }
