@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.68 1996/09/05 19:12:33 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -26,8 +26,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@rm -f ${.TARGET}.o
 
 .c.po:
-	@echo "${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.c} -pg ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -47,8 +47,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@rm -f ${.TARGET}.o
 
 .cc.po .C.po:
-	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
