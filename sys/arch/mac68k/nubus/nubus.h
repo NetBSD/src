@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.41 1998/08/12 07:19:10 scottr Exp $	*/
+/*	$NetBSD: nubus.h,v 1.42 1998/08/17 15:04:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -71,7 +71,7 @@
 #define	   NUBUS_DRHW_ROPS24LXI	0x02A0	/* RasterOps 8/24 XLi */
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
-#define    NUBUS_DRHW_GVIMAGE	0x03FB	/* SuperMac Thunder/24 */
+#define    NUBUS_DRHW_GVIMAGE	0x03FB	/* Interware Co., Ltd. Grand Vimage */
 #define	   NUBUS_DRHW_RPC24XP	0x0406	/* Radius PrecisionColor 24Xp */
 #define	   NUBUS_DRHW_RPC24X	0x040A	/* Radius PrecisionColor 24X */
 #define	   NUBUS_DRHW_RPC8XJ	0x040B	/* Radius PrecisionColor 8xj */
