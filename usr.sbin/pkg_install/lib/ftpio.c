@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.21 2000/07/06 16:06:36 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.22 2000/08/28 21:35:14 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.21 2000/07/06 16:06:36 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.22 2000/08/28 21:35:14 hubertf Exp $");
 #endif
 
 /*
@@ -193,7 +193,7 @@ expect(int fd, const char *str, int *ftprc)
  * "expectstr" to be returned. Return numeric FTP return code or -1
  * in case of an error (usually expect() timeout) 
  */
-static int
+int
 ftp_cmd(const char *cmd, const char *expectstr)
 {
     int rc=0, verbose_ftp=0;
@@ -351,7 +351,7 @@ ftp_stop(void)
  * If the requested host/dir is different than the one that the
  * coprocess is currently at, close first. 
  */
-static int
+int
 ftp_start(char *base)
 {
 	char *tmp1, *tmp2;
@@ -397,18 +397,25 @@ ftp_start(char *base)
 		
 		needclose=1;
 		signal(SIGPIPE, sigpipe_handler);
-		
+
 		if ((expect(ftpio.answer, "\n(221|250|221|550).*\n", &rc) != 0)
 		    || rc != 250) {
 			warnx("expect1 failed, rc=%d", rc);
 			return -1;
 		}
 		
+		/* lukemftp now issues a CWD for each part of the path
+		 * and will return a code for each of them. No idea how to
+		 * deal with that other than to issue a 'prompt off' to
+		 * get something that we can wait for and that does NOT
+		 * look like a CWD command's output */
 		rc = ftp_cmd("prompt off\n", "\n(Interactive mode off|221).*\n");
 		if ((rc == 221) || (rc == -1)) {
 			/* something is wrong */
 			ftp_started=1; /* not really, but for ftp_stop() */
 			ftp_stop();
+			warnx("prompt failed - wrong dir?");
+			return -1;
 		}
 		
 		ftp_started=1;
