@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.13 1997/03/14 00:14:20 jtk Exp $	*/
+/*	$NetBSD: sem.c,v 1.14 1997/03/14 20:43:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -649,7 +649,7 @@ resolve(nvp, name, what, dflt, part)
 	}
 	dev = ht_lookup(devbasetab, intern(buf));
 	if (dev == NULL) {
-		error("%s: device `%s' does not exist", buf);
+		error("%s: device `%s' does not exist", name, buf);
 		return (1);
 	}
 
