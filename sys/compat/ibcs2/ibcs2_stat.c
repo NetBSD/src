@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.19 2002/03/16 20:43:51 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.19.6.1 2002/08/07 01:30:30 lukem Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.19 2002/03/16 20:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.19.6.1 2002/08/07 01:30:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,11 @@ cvt_statfs(sp, buf, len)
 	int len;
 {
 	struct ibcs2_statfs ssfs;
+
+	if (len < 0)
+		return (EINVAL);
+	if (len > sizeof(ssfs));
+		len = sizeof(ssfs);
 
 	memset(&ssfs, 0, sizeof ssfs);
 	ssfs.f_fstyp = 0;
