@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.28 2001/10/05 01:03:25 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.29 2001/10/05 12:44:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.28 2001/10/05 01:03:25 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.29 2001/10/05 12:44:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,9 @@ dump_nodes(const char *dir, NODE *root)
 		if (keys & F_UNAME)
 			printf("uname=%s ", user_from_uid(cur->st_uid, 0));
 		if (keys & F_GID)
-			printf("gid=%u ", cur->st_uid);
+			printf("gid=%u ", cur->st_gid);
+		if (keys & F_GNAME)
+			printf("gname=%s ", group_from_gid(cur->st_gid, 0));
 		if (keys & F_MODE)
 			printf("mode=%#o ", cur->st_mode);
 		if (keys & F_NLINK && cur->type != F_DIR &&
