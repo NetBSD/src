@@ -1,6 +1,6 @@
-.\"	$NetBSD: contents,v 1.32 2000/11/21 12:39:40 scw Exp $
+.\"	$NetBSD: contents,v 1.33 2001/04/07 16:48:17 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -90,7 +90,7 @@ A kernel for TX3922 machines.
 A version of 
 .Li GENERIC
 that has USB, PCMCIA and Cardbus enabled to allow
-installing on Laptop machine.
+installing on laptop machines.
 .			It Pa netbsd.GENERIC_TINY.gz
 A version of
 .Li GENERIC
@@ -109,7 +109,7 @@ intended to fit on a 5.25"/1.2 MB diskette.
 A version of 
 .Li INSTALL
 that has USB, PCMCIA and Cardbus enabled to allow
-installing on Laptop machine.
+installing on laptop machines.
 .\}
 .
 .if r_mvme68k \{\
@@ -460,7 +460,7 @@ the typesettable document set, and other files from
 .
 .It Sy text
 This set includes
-.Nx 's
+.Nx Ns 's
 text processing tools, including
 .Xr groff 1 ,
 all related programs, and their manual pages.
@@ -666,7 +666,7 @@ named with the extension
 .\" contrary to most old INSTALL docs, only i386 has Split/ sets
 .
 They are also
-available in split form \- catted together, the members of a split set
+available in split form; catted together, the members of a split set
 form a gzipped tar file.
 .\}
 .
