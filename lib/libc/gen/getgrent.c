@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.31 1999/01/19 08:30:46 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.32 1999/01/20 02:59:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.31 1999/01/19 08:30:46 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.32 1999/01/20 02:59:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -435,9 +435,13 @@ __grscancompat(search, gid, name)
 		NS_COMPAT_CB(_bad_grscan, "compat")
 		{ 0 }
 	};
+	static const ns_src defaultnis[] = {
+		{ NSSRC_NIS, 	NS_SUCCESS },
+		{ 0 }
+	};
 
 	return (nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, "grscancompat",
-	    __nsdefaultsrc, search, gid, name));
+	    defaultnis, search, gid, name));
 }
 
 
@@ -543,8 +547,12 @@ grscan(search, gid, name)
 		NS_COMPAT_CB(_compat_grscan, NULL)
 		{ 0 }
 	};
+	static const ns_src compatsrc[] = {
+		{ NSSRC_COMPAT, NS_SUCCESS },
+		{ 0 }
+	};
 
-	r = nsdispatch(NULL, dtab, NSDB_GROUP, "grscan", __nsdefaultsrc,
+	r = nsdispatch(NULL, dtab, NSDB_GROUP, "grscan", compatsrc,
 	    search, gid, name);
 	return (r == NS_SUCCESS) ? 1 : 0;
 }
