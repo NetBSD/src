@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.4.2.2 1997/11/06 22:17:32 mellon Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.4.2.3 1999/02/05 06:50:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -77,7 +77,7 @@ int atapibusprint __P((void *, const char *));
 
 struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
-	 "GCD-R580B", "", "1.00"},                ADEV_LITTLETOC},
+	 "GCD-R580B", "", "1.00"},                ADEV_LITTLETOC}, /* Goldstar */
 	{{T_CDROM, T_REMOV,
 	 "SANYO CRD-256P", "", "1.02"},           ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
@@ -85,7 +85,11 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "SANYO CRD-S54P", "", "1.08"},           ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
-	 "UJDCD8730", "", "1.14"},                ADEV_NODOORLOCK},
+	 "CD-ROM  CDR-S1", "", "1.70"},           ADEV_NOCAPACITY}, /* Sanyo */
+	{{T_CDROM, T_REMOV,
+	 "CD-ROM  CDR-N16", "", "1.25"},          ADEV_NOCAPACITY}, /* Sanyo */
+	{{T_CDROM, T_REMOV,
+	 "UJDCD8730", "", "1.14"},                ADEV_NODOORLOCK}, /* Acer */
 	{{T_CDROM, T_REMOV,
 	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"}, ADEV_NOTUR},
 	{{T_CDROM, T_REMOV,
