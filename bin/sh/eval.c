@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.37 1997/07/15 17:49:15 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.38 1997/07/20 21:27:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.37 1997/07/15 17:49:15 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.38 1997/07/20 21:27:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -685,7 +685,7 @@ evalcommand(cmd, flags, backcmd)
 			if (strncmp(sp->text, PATH, sizeof(PATH) - 1) == 0)
 				path = sp->text + sizeof(PATH) - 1;
 
-		find_command(argv[0], &cmdentry, 1, path);
+		find_command(argv[0], &cmdentry, DO_ERR, path);
 		if (cmdentry.cmdtype == CMDUNKNOWN) {	/* command not found */
 			exitstatus = 127;
 			flushout(&errout);
