@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.2 2003/09/22 14:42:04 cl Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.3 2004/03/26 21:29:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define __HAVE_SIGINFO
 #include "SYS.h"
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.2 2003/10/07 17:08:07 skd Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.3 2004/03/26 21:29:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,6 @@
  * rights to redistribute these changes.
  */
 
-#define __HAVE_SIGINFO
 #include "SYS.h"
 
 /*
