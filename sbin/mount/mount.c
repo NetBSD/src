@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.16 1995/03/18 14:57:02 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.17 1995/05/28 05:25:34 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.16 1995/03/18 14:57:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.17 1995/05/28 05:25:34 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -371,7 +371,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 			if (WEXITSTATUS(status) != 0)
 				return (WEXITSTATUS(status));
 		} else if (WIFSIGNALED(status)) {
-			warnx("%s: %s", name, sys_siglist[WTERMSIG(status)]);
+			warnx("%s: %s", name, strsignal(WTERMSIG(status)));
 			return (1);
 		}
 

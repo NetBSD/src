@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.19 1995/03/18 14:56:33 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.20 1995/05/28 05:26:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.19 1995/03/18 14:56:33 cgd Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.20 1995/05/28 05:26:32 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -442,8 +442,7 @@ void
 disaster(sig)
 	int sig;
 {
-	emergency("fatal signal: %s",
-		sig < (unsigned) NSIG ? sys_siglist[sig] : "unknown signal");
+	emergency("fatal signal: %s", strsignal(sig));
 
 	sleep(STALL_TIMEOUT);
 	_exit(sig);		/* reboot */
