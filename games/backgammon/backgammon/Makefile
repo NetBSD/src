@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/06 20:45:00 gwr Exp $
+#	$NetBSD: Makefile,v 1.8 1997/05/08 21:11:05 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	backgammon
@@ -8,7 +8,7 @@ SRCS=	allow.c board.c check.c extra.c fancy.c init.c main.c move.c \
 MAN=	backgammon.6
 DPADD=	${LIBTERM} ${LIBCOMPAT}
 LDADD=	-ltermcap -lcompat
-.PATH.c: ${.CURDIR}/../common_source
+.PATH:	${.CURDIR}/../common_source
 HIDEGAME=hidegame
 
 .include "../../Makefile.inc"

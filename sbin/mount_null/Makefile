@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/06 20:45:15 gwr Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/08 21:11:24 gwr Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 PROG=	mount_null
@@ -7,6 +7,6 @@ MAN=	mount_null.8
 
 MOUNT=	${.CURDIR}/../mount
 CFLAGS+= -I${.CURDIR}/../../sys -I${MOUNT}
-.PATH.c: ${MOUNT}
+.PATH:	${MOUNT}
 
 .include <bsd.prog.mk>

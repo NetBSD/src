@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/06 20:46:31 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/08 21:12:39 gwr Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:45 vixie Exp 
 
-.PATH.c: ${.CURDIR}/../man
+.PATH: ${.CURDIR}/../man
 
 PROG=	named
 SRCS=	version.c db_dump.c db_glue.c db_load.c db_lookup.c db_reload.c \

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/06 20:46:23 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/08 21:12:31 gwr Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
-.PATH.c: ${.CURDIR}/../mrouted
+.PATH: ${.CURDIR}/../mrouted
 CFLAGS+= -I${.CURDIR}/../mrouted
 
 PROG=	mrinfo
