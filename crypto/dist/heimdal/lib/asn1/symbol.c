@@ -33,8 +33,10 @@
 
 #include "gen_locl.h"
 
+#ifdef __RCSID
 __RCSID("$Heimdal: symbol.c,v 1.9 2001/09/25 13:39:27 assar Exp $"
-        "$NetBSD: symbol.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: symbol.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 static Hashtab *htab;
 

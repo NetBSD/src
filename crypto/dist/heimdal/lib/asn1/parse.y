@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: parse.y,v 1.19 2001/09/27 16:21:47 assar Exp $
-   $NetBSD: parse.y,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $ */
+   $NetBSD: parse.y,v 1.2 2002/09/13 19:09:01 thorpej Exp $ */
 
 %{
 #ifdef HAVE_CONFIG_H
@@ -45,8 +45,10 @@
 #include "lex.h"
 #include "gen_locl.h"
 
+#ifdef __RCSID
 __RCSID("$Heimdal: parse.y,v 1.19 2001/09/27 16:21:47 assar Exp $"
-        "$NetBSD: parse.y,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: parse.y,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 static Type *new_type (Typetype t);
 void yyerror (char *);

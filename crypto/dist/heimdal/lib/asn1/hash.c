@@ -37,8 +37,10 @@
 
 #include "gen_locl.h"
 
+#ifdef __RCSID
 __RCSID("$Heimdal: hash.c,v 1.8 1999/12/02 17:05:02 joda Exp $"
-        "$NetBSD: hash.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: hash.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 static Hashentry *_search(Hashtab * htab,	/* The hash table */
 			  void *ptr);	/* And key */

@@ -35,8 +35,10 @@
 #include "compile_et.h"
 #include <getarg.h>
 
+#ifdef __RCSID
 __RCSID("$Heimdal: compile_et.c,v 1.16 2002/08/20 12:44:51 joda Exp $"
-        "$NetBSD: compile_et.c,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $");
+        "$NetBSD: compile_et.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 #include <roken.h>
 #include <err.h>

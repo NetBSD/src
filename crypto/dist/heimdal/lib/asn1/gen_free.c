@@ -33,8 +33,10 @@
 
 #include "gen_locl.h"
 
+#ifdef __RCSID
 __RCSID("$Heimdal: gen_free.c,v 1.9 2001/09/25 13:39:26 assar Exp $"
-        "$NetBSD: gen_free.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: gen_free.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 static void
 free_primitive (const char *typename, const char *name)

@@ -33,8 +33,10 @@
 
 #include "gen_locl.h"
 
+#ifdef __RCSID
 __RCSID("$Heimdal: gen_glue.c,v 1.7 1999/12/02 17:05:02 joda Exp $"
-        "$NetBSD: gen_glue.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: gen_glue.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 static void
 generate_2int (const Symbol *s)

@@ -33,8 +33,10 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#ifdef __RCSID
 __RCSID("$Heimdal: emalloc.c,v 1.5 2001/06/17 12:07:48 assar Exp $"
-        "$NetBSD: emalloc.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: emalloc.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 #endif
 
 #include <stdlib.h>
