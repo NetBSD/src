@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 2001/12/23 20:57:30 manu Exp $
+	$NetBSD: syscalls.master,v 1.13 2001/12/25 16:40:48 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -153,7 +153,9 @@
 75	OBSOL		sigret
 76	OBSOL		rdebug
 77	OBSOL		rfstop
-78	UNIMPL		lseek64
+78	STD		{ irix_off64_t irix_sys_lseek64(int fd, int pad1, \
+			    irix_off64_t offset, int whence, \
+			    int pad2, int pad3, int pad4); }
 79	NOARGS		{ int sys_rmdir(char *path); }
 80	NOARGS		{ int sys_mkdir(char *path, int mode); }
 81	STD		{ int irix_sys_getdents(int fildes, \
