@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.87 2004/01/14 21:51:18 jmmv Exp $
+.\"	$NetBSD: rc.conf.5,v 1.88 2004/01/15 09:14:54 jmmv Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 14, 2004
+.Dd January 15, 2004
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -114,6 +114,27 @@ control variables, and thus changing the operation of the script
 without requiring editing of the script.
 .Ss Overall control
 .Bl -tag -width net_interfaces
+.It Sy do_rcshutdown
+.Sq YES
+or
+.Sq NO .
+If set to
+.Sq NO ,
+.Xr shutdown 8
+will not run
+.Pa /etc/rc.shutdown .
+.It Sy rcshutdown_rcorder_flags
+A string.
+Extra arguments to the
+.Xr rcorder 8
+run by
+.Pa /etc/rc.shutdown .
+.It Sy rcshutdown_timeout
+A number.
+If non-blank, use this as the number of seconds to run a watchdog timer for
+which will terminate
+.Pa /etc/rc.shutdown
+if the timer expires before the shutdown script completes.
 .It Sy rc_configured
 .Sq YES
 or
@@ -140,36 +161,9 @@ Extra arguments to the
 .Xr rcorder 8
 run by
 .Pa /etc/rc .
-.It Sy do_rcshutdown
-.Sq YES
-or
-.Sq NO .
-If set to
-.Sq NO ,
-.Xr shutdown 8
-will not run
-.Pa /etc/rc.shutdown .
-.It Sy rcshutdown_rcorder_flags
-A string.
-Extra arguments to the
-.Xr rcorder 8
-run by
-.Pa /etc/rc.shutdown .
-.It Sy rcshutdown_timeout
-A number.
-If non-blank, use this as the number of seconds to run a watchdog timer for
-which will terminate
-.Pa /etc/rc.shutdown
-if the timer expires before the shutdown script completes.
 .El
 .Ss Basic network configuration
 .Bl -tag -width net_interfaces
-.It Sy hostname
-A string.
-Name of host.
-If empty or not set, then the contents of
-.Pa /etc/myname
-(if it exists) are used.
 .It Sy defaultroute
 A string.
 Default network route.
@@ -199,6 +193,12 @@ All active
 and
 .Xr ippp 4
 interfaces will be automatically added to this list.
+.It Sy hostname
+A string.
+Name of host.
+If empty or not set, then the contents of
+.Pa /etc/myname
+(if it exists) are used.
 .El
 .Ss Boottime file-system and swap configuration
 .Bl -tag -width net_interfaces
@@ -256,37 +256,20 @@ Useful if swapping onto RAIDframe devices.
 .El
 .Ss One-time actions to perform or programs to run on boot-up
 .Bl -tag -width net_interfaces
-.It Sy lkm
+.It Sy accounting
 .Sq YES
 or
 .Sq NO .
-Runs
-.Pa /etc/rc.lkm .
-.It Sy savecore
-.Sq YES
-or
-.Sq NO .
-Runs the
-.Xr savecore 8
-utility.
-Passes
-.Sy savecore_flags .
+Enables process accounting with
+.Xr accton 8 .
+Requires
+.Pa /var/account/acct
+to exist.
 .It Sy clear_tmp
 .Sq YES
 or
 .Sq NO .
 Clear /tmp after reboot.
-.It Sy update_motd
-.Sq YES
-or
-.Sq NO .
-Updates the
-.Nx
-version string in the
-.Pa /etc/motd
-file to reflect the version of the running kernel.
-See
-.Xr motd 5 .
 .It Sy dmesg
 .Sq YES
 or
@@ -297,34 +280,12 @@ from the output of
 .Xr dmesg 8 .
 Passes
 .Sy dmesg_flags .
-.It Sy accounting
+.It Sy lkm
 .Sq YES
 or
 .Sq NO .
-Enables process accounting with
-.Xr accton 8 .
-Requires
-.Pa /var/account/acct
-to exist.
-.It Sy newsyslog
-.Sq YES
-or
-.Sq NO .
-Run
-.Nm newsyslog
-to trim logfiles before syslogd starts.
-Intended for laptop users.
-Passes
-.Sy newsyslog_flags .
-.It Sy tpctl
-.Sq YES
-or
-.Sq NO .
-Run
-.Xr tpctl 8
-to calibrate touch panel device.
-Passes
-.Sy tpctl_flags .
+Runs
+.Pa /etc/rc.lkm .
 .It Sy mixerctl
 .Sq YES
 or
@@ -336,6 +297,53 @@ List in
 .Sy mixerctl_mixers
 the devices whose settings are to be saved at shutdown and
 restored at start-up.
+.It Sy newsyslog
+.Sq YES
+or
+.Sq NO .
+Run
+.Nm newsyslog
+to trim logfiles before syslogd starts.
+Intended for laptop users.
+Passes
+.Sy newsyslog_flags .
+.It Sy savecore
+.Sq YES
+or
+.Sq NO .
+Runs the
+.Xr savecore 8
+utility.
+Passes
+.Sy savecore_flags .
+.It Sy tpctl
+.Sq YES
+or
+.Sq NO .
+Run
+.Xr tpctl 8
+to calibrate touch panel device.
+Passes
+.Sy tpctl_flags .
+.It Sy update_motd
+.Sq YES
+or
+.Sq NO .
+Updates the
+.Nx
+version string in the
+.Pa /etc/motd
+file to reflect the version of the running kernel.
+See
+.Xr motd 5 .
+.It Sy veriexec
+.Sq YES
+or
+.Sq NO .
+Load verified exec fingerprints during startup.
+Read
+.Xr veriexecctl 8
+for more information.
 .It Sy virecover
 .Sq YES
 or
@@ -347,14 +355,6 @@ See
 option in
 .Xr vi 1
 for details.
-.It Sy veriexec
-.Sq YES
-or
-.Sq NO .
-Load verified exec fingerprints during startup.
-Read
-.Xr veriexecctl 8
-for more information.
 .El
 .Ss System security setting
 .Bl -tag -width net_interfaces
@@ -378,88 +378,13 @@ completes.
 .El
 .Ss Networking startup
 .Bl -tag -width net_interfaces
-.It Sy ipfilter
+.It Sy altqd
 .Sq YES
 or
 .Sq NO .
-Runs
-.Xr ipf 8
-to load in packet filter specifications from
-.Pa /etc/ipf.conf
-at network boot time, before any interfaces are configured.
-See
-.Xr ipf.conf 5 .
-.It Sy ipnat
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr ipnat 8
-to load in the IP network address translation (NAT) rules from
-.Pa /etc/ipnat.conf
-at network boot time, before any interfaces are configured.
-See
-.Xr ipnat.conf 5 .
-.It Sy ipfs
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr ipfs 8
-to save and restore information for ipnat and ipfilter state tables.
-The information is stored in
-.Pa /var/db/ipf/ipstate.ipf
-and
-.Pa /var/db/ipf/ipnat.ipf .
+ALTQ configuration/monitoring daemon.
 Passes
-.Sy ipfs_flags .
-.It Sy ipsec
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr setkey 8
-to load in IPsec manual keys and policies from
-.Pa /etc/ipsec.conf
-at network boot time, before any interfaces are configured.
-.It Sy ipmon
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr ipmon 8
-to read
-.Xr ipf 8
-packet log information and log it to a file or the system log.
-Passes
-.Sy ipmon_flags .
-.It Sy ipmon_flags
-A string.
-Specifies arguments to supply to
-.Xr ipmon 8 .
-Defaults to
-.Dq Li -ns .
-A typical example would be
-.Dq Fl nD Pa /var/log/ipflog
-to have
-.Xr ipmon 8
-log directly to a file bypassing
-.Xr syslogd 8 .
-If the
-.Dq -D
-argument is used, remember to modify
-.Pa /etc/newsyslog.conf
-accordingly; for example:
-.Bd -literal
-/var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
-.Ed
-.It Sy racoon
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr racoon 8 ,
-the IKE (ISAKMP/Oakley) key management daemon.
+.Sy altqd_flags .
 .It Sy auto_ifconfig
 .Sq YES
 or
@@ -472,51 +397,6 @@ with the
 .Dq Li -l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
-.It Sy net_interfaces
-A string.
-The list of network interfaces to be configured at boot time.
-For each interface "xxN", the system first looks for ifconfig
-parameters in
-.Pa /etc/ifconfig.xxN
-and then in the variable
-.Sy ifconfig_xxN .
-The contents of the file or the variable are handed to ifconfig
-after the interface name.
-If
-.Sy auto_ifconfig
-is set to "NO" and neither the file nor the variable is found,
-a warning is printed.
-Refer to
-.Xr ifconfig.if 5
-for more details on
-.Pa /etc/ifconfig.xxN .
-.It Sy ifaliases_*
-A string.
-List of
-.Sq Em "address netmask"
-pairs to configure additional network addresses for the given
-configured interface
-.Dq *
-(e.g.
-.Sy ifaliases_le0 ) .
-If
-.Em netmask
-is
-.Dq - ,
-then use the default netmask for the interface.
-.Pp
-.Sy ifaliases_*
-covers limited cases only and considered unrecommended.
-We recommend using
-.Pa /etc/ifconfig.xxN
-with multiple lines instead.
-.It Sy flushroutes
-.Sq YES
-or
-.Sq NO .
-Flushes the route table on networking startup.
-Useful when coming up to multiuser mode after going down to
-single-user mode.
 .It Sy dhclient
 .Sq YES
 or
@@ -562,35 +442,40 @@ then you should specify an alternate location for the DHCP client's lease
 file in the
 .Sy dhclient_flags
 variable - for example, "-lf /tmp/dhclient.leases".
-.It Sy ntpdate
+.It Sy flushroutes
 .Sq YES
 or
 .Sq NO .
-Runs
-.Xr ntpdate 8
-to set the system time from one of the hosts in
-.Sy ntpdate_hosts .
-If
-.Sy ntpdate_hosts
-is empty, it will attempt to find a list of hosts in
-.Pa /etc/ntp.conf .
-Passes
-.Sy ntpdate_flags .
-.It Sy ppp_peers
+Flushes the route table on networking startup.
+Useful when coming up to multiuser mode after going down to
+single-user mode.
+.It Sy ifaliases_*
 A string.
+List of
+.Sq Em "address netmask"
+pairs to configure additional network addresses for the given
+configured interface
+.Dq *
+(e.g.
+.Sy ifaliases_le0 ) .
 If
-.Sy ppp_peers
-is not empty, then
-.Pa /etc/rc.d/ppp
-will check each word in
-.Sy ppp_peers
-for a corresponding ppp configuration file in
-.Pa /etc/ppp/peers
-and will call
-.Xr pppd 8
-with the
-.Dq call Sy peer
-option.
+.Em netmask
+is
+.Dq - ,
+then use the default netmask for the interface.
+.Pp
+.Sy ifaliases_*
+covers limited cases only and considered unrecommended.
+We recommend using
+.Pa /etc/ifconfig.xxN
+with multiple lines instead.
+.It Sy ifwatchd
+.Sq YES
+or
+.Sq NO .
+Monitor dynamic interfaces and perform actions upon address changes.
+Passes
+.Sy ifwatchd_flags .
 .It Sy ip6mode
 A string.
 An IPv6 node can be a router
@@ -624,6 +509,135 @@ If you intend to use IPv6 site-local addresses in your site, set it to
 .Sq YES .
 Otherwise, reject routes will get installed on boot to avoid misconfiguration
 relating to site-local addresses.
+.It Sy ipfilter
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ipf 8
+to load in packet filter specifications from
+.Pa /etc/ipf.conf
+at network boot time, before any interfaces are configured.
+See
+.Xr ipf.conf 5 .
+.It Sy ipfs
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ipfs 8
+to save and restore information for ipnat and ipfilter state tables.
+The information is stored in
+.Pa /var/db/ipf/ipstate.ipf
+and
+.Pa /var/db/ipf/ipnat.ipf .
+Passes
+.Sy ipfs_flags .
+.It Sy ipmon
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ipmon 8
+to read
+.Xr ipf 8
+packet log information and log it to a file or the system log.
+Passes
+.Sy ipmon_flags .
+.It Sy ipmon_flags
+A string.
+Specifies arguments to supply to
+.Xr ipmon 8 .
+Defaults to
+.Dq Li -ns .
+A typical example would be
+.Dq Fl nD Pa /var/log/ipflog
+to have
+.Xr ipmon 8
+log directly to a file bypassing
+.Xr syslogd 8 .
+If the
+.Dq -D
+argument is used, remember to modify
+.Pa /etc/newsyslog.conf
+accordingly; for example:
+.Bd -literal
+/var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
+.Ed
+.It Sy ipnat
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ipnat 8
+to load in the IP network address translation (NAT) rules from
+.Pa /etc/ipnat.conf
+at network boot time, before any interfaces are configured.
+See
+.Xr ipnat.conf 5 .
+.It Sy ipsec
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr setkey 8
+to load in IPsec manual keys and policies from
+.Pa /etc/ipsec.conf
+at network boot time, before any interfaces are configured.
+.It Sy net_interfaces
+A string.
+The list of network interfaces to be configured at boot time.
+For each interface "xxN", the system first looks for ifconfig
+parameters in
+.Pa /etc/ifconfig.xxN
+and then in the variable
+.Sy ifconfig_xxN .
+The contents of the file or the variable are handed to ifconfig
+after the interface name.
+If
+.Sy auto_ifconfig
+is set to "NO" and neither the file nor the variable is found,
+a warning is printed.
+Refer to
+.Xr ifconfig.if 5
+for more details on
+.Pa /etc/ifconfig.xxN .
+.It Sy ntpdate
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ntpdate 8
+to set the system time from one of the hosts in
+.Sy ntpdate_hosts .
+If
+.Sy ntpdate_hosts
+is empty, it will attempt to find a list of hosts in
+.Pa /etc/ntp.conf .
+Passes
+.Sy ntpdate_flags .
+.It Sy ppp_peers
+A string.
+If
+.Sy ppp_peers
+is not empty, then
+.Pa /etc/rc.d/ppp
+will check each word in
+.Sy ppp_peers
+for a corresponding ppp configuration file in
+.Pa /etc/ppp/peers
+and will call
+.Xr pppd 8
+with the
+.Dq call Sy peer
+option.
+.It Sy racoon
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr racoon 8 ,
+the IKE (ISAKMP/Oakley) key management daemon.
 .It Sy rtsol
 .Sq YES
 or
@@ -641,20 +655,6 @@ This is only for autoconfigured IPv6 hosts, so set
 to
 .Dq Li autohost
 if you use it.
-.It Sy ifwatchd
-.Sq YES
-or
-.Sq NO .
-Monitor dynamic interfaces and perform actions upon address changes.
-Passes
-.Sy ifwatchd_flags .
-.It Sy altqd
-.Sq YES
-or
-.Sq NO .
-ALTQ configuration/monitoring daemon.
-Passes
-.Sy altqd_flags .
 .El
 .Ss Daemons required by other daemons
 .Bl -tag -width net_interfaces
@@ -693,20 +693,23 @@ Passes
 .El
 .Ss Commonly used daemons
 .Bl -tag -width net_interfaces
-.It Sy syslogd
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr syslogd 8
-and passes
-.Sy syslogd_flags .
 .It Sy cron
 .Sq YES
 or
 .Sq NO .
 Run
 .Xr cron 8 .
+.It Sy lpd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr lpd 8
+and passes
+.Sy lpd_flags .
+The
+.Dq Li -l
+flag will turn on extra logging.
 .It Sy named
 .Sq YES
 or
@@ -732,25 +735,6 @@ to
 will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
-.It Sy timed
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr timed 8
-and passes
-.Sy timed_flags .
-The
-.Dq Li -M
-option allows
-.Xr timed 8
-to be a master time source as well as a slave.
-If you are also running
-.Xr ntpd 8 ,
-only one machine running both should have the
-.Dq Li -M
-flag given to
-.Xr timed 8 .
 .It Sy ntpd
 .Sq YES
 or
@@ -781,6 +765,13 @@ This option requires that the kernel has
 compiled in, and that
 .Pa /dev/clockctl
 is present.
+.It Sy postfix
+.Sq YES
+or
+.Sq NO .
+Starts
+.Xr postfix 1
+mail system.
 .It Sy sendmail
 .Sq YES
 or
@@ -813,24 +804,6 @@ Its main purpose is to flush locally collected mail from the queue, but
 it can also be used as a non-privileged
 .Dq nullclient
 that forwards to a more functional SMTP gateway.
-.It Sy postfix
-.Sq YES
-or
-.Sq NO .
-Starts
-.Xr postfix 1
-mail system.
-.It Sy lpd
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr lpd 8
-and passes
-.Sy lpd_flags .
-The
-.Dq Li -l
-flag will turn on extra logging.
 .It Sy sshd
 .Sq YES
 or
@@ -839,24 +812,36 @@ Runs
 .Xr sshd 8
 and passes
 .Sy sshd_flags .
-.El
-.Ss Routing daemons
-.Bl -tag -width net_interfaces
-.It Sy routed
+.It Sy syslogd
 .Sq YES
 or
 .Sq NO .
 Runs
-.Xr routed 8 ,
-the RIP routing protocol daemon.
-Passes
-.Sy routed_flags .
-.\" This should be
-.\" .Sq NO
-.\" if
-.\" .Sy gated
-.\" is
-.\" .Sq YES .
+.Xr syslogd 8
+and passes
+.Sy syslogd_flags .
+.It Sy timed
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr timed 8
+and passes
+.Sy timed_flags .
+The
+.Dq Li -M
+option allows
+.Xr timed 8
+to be a master time source as well as a slave.
+If you are also running
+.Xr ntpd 8 ,
+only one machine running both should have the
+.Dq Li -M
+flag given to
+.Xr timed 8 .
+.El
+.Ss Routing daemons
+.Bl -tag -width net_interfaces
 .It Sy mrouted
 .Sq YES
 or
@@ -875,6 +860,21 @@ Runs
 the RIPng routing protocol daemon for IPv6.
 Passes
 .Sy route6d_flags .
+.It Sy routed
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr routed 8 ,
+the RIP routing protocol daemon.
+Passes
+.Sy routed_flags .
+.\" This should be
+.\" .Sq NO
+.\" if
+.\" .Sy gated
+.\" is
+.\" .Sq YES .
 .It Sy rtsold
 .Sq YES
 or
@@ -898,17 +898,6 @@ if you use it.
 .El
 .Ss Daemons used to boot other hosts over a network
 .Bl -tag -width net_interfaces
-.It Sy rarpd
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr rarpd 8 ,
-the reverse ARP daemon, often used to boot
-.Nx
-and Sun workstations.
-Passes
-.Sy rarpd_flags .
 .It Sy bootparamd
 .Sq YES
 or
@@ -941,19 +930,6 @@ Runs
 .Xr dhcrelay 8 .
 Passes
 .Sy dhcrelay_flags .
-.It Sy rbootd
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr rbootd 8 ,
-the
-.Tn HP
-boot protocol daemon; used for booting
-.Tn HP
-workstations.
-Passes
-.Sy rbootd_flags .
 .It Sy mopd
 .Sq YES
 or
@@ -979,6 +955,30 @@ Runs
 the Sun Network Disk (ND) Protocol server.
 Passes
 .Sy ndbootd_flags .
+.It Sy rarpd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr rarpd 8 ,
+the reverse ARP daemon, often used to boot
+.Nx
+and Sun workstations.
+Passes
+.Sy rarpd_flags .
+.It Sy rbootd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr rbootd 8 ,
+the
+.Tn HP
+boot protocol daemon; used for booting
+.Tn HP
+workstations.
+Passes
+.Sy rbootd_flags .
 .It Sy rtadvd
 .Sq YES
 or
@@ -997,13 +997,6 @@ if you use it.
 .El
 .Ss X Window System daemons
 .Bl -tag -width net_interfaces
-.It Sy xfs
-.Sq YES
-or
-.Sq NO .
-Runs the
-.Xr xfs 1
-X11 font server, which supplies local X font files to X terminals.
 .It Sy xdm
 .Sq YES
 or
@@ -1013,6 +1006,13 @@ Runs the
 X display manager.
 These X daemons are available only with the optional X distribution of
 .Nx .
+.It Sy xfs
+.Sq YES
+or
+.Sq NO .
+Runs the
+.Xr xfs 1
+X11 font server, which supplies local X font files to X terminals.
 .El
 .Ss NIS (YP) daemons
 .Bl -tag -width net_interfaces
@@ -1029,6 +1029,17 @@ which lets
 server.
 Passes
 .Sy ypbind_flags .
+.It Sy yppasswdd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr yppasswdd 8 ,
+which allows remote
+.Tn NIS
+users to update password on master server.
+Passes
+.Sy yppasswdd_flags .
 .It Sy ypserv
 .Sq YES
 or
@@ -1046,20 +1057,42 @@ The
 flag causes it to use DNS for lookups in
 .Pa /etc/hosts
 that fail.
-.It Sy yppasswdd
+.El
+.Ss NFS daemons and parameters
+.Bl -tag -width net_interfaces
+.It Sy amd
 .Sq YES
 or
 .Sq NO .
 Runs
-.Xr yppasswdd 8 ,
-which allows remote
-.Tn NIS
-users to update password on master server.
+.Xr amd 8 ,
+the automounter daemon, which automatically mounts NFS file systems
+whenever a file or directory within that file system is accessed.
 Passes
-.Sy yppasswdd_flags .
-.El
-.Ss NFS daemons and parameters
-.Bl -tag -width net_interfaces
+.Sy amd_flags .
+.It Sy amd_dir
+A string.
+The
+.Xr amd 8
+mount directory.
+Used only if
+.Sy amd
+is set to
+.Sq YES .
+.It Sy lockd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr rpc.lockd 8
+if
+.Sy nfs_server
+and/or
+.Sy nfs_client
+are set to
+.Sq YES .
+Passes
+.Sy lockd_flags .
 .It Sy mountd
 .Sq YES
 or
@@ -1082,20 +1115,6 @@ Sets up a host to be a NFS server by running
 .Xr nfsd 8
 and passing
 .Sy nfsd_flags .
-.It Sy lockd
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr rpc.lockd 8
-if
-.Sy nfs_server
-and/or
-.Sy nfs_client
-are set to
-.Sq YES .
-Passes
-.Sy lockd_flags .
 .It Sy statd
 .Sq YES
 or
@@ -1112,36 +1131,9 @@ are set to
 .Sq YES .
 Passes
 .Sy statd_flags .
-.It Sy amd
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr amd 8 ,
-the automounter daemon, which automatically mounts NFS file systems
-whenever a file or directory within that file system is accessed.
-Passes
-.Sy amd_flags .
-.It Sy amd_dir
-A string.
-The
-.Xr amd 8
-mount directory.
-Used only if
-.Sy amd
-is set to
-.Sq YES .
 .El
 .Ss Other daemons
 .Bl -tag -width net_interfaces
-.It Sy kdc
-.Sq YES
-or
-.Sq NO .
-Runs the
-.Xr kdc 8
-Kerberos v4 and v5 server.
-This should be run on Kerberos master and slave servers.
 .It Sy isdnd
 .Sq YES
 or
@@ -1164,6 +1156,14 @@ Used only if
 .Sy isdnd
 is set to
 .Sq YES .
+.It Sy kdc
+.Sq YES
+or
+.Sq NO .
+Runs the
+.Xr kdc 8
+Kerberos v4 and v5 server.
+This should be run on Kerberos master and slave servers.
 .It Sy rwhod
 .Sq YES
 or
@@ -1186,6 +1186,15 @@ Runs
 .Xr apmd 8
 and passes
 .Sy apmd_flags .
+.It Sy moused
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr moused 8 ,
+to pass serial mouse data to the wscons mouse mux.
+Passes
+.Sy moused_flags .
 .It Sy poffd
 .Sq YES
 or
@@ -1205,15 +1214,6 @@ Runs
 .Xr screenblank 1
 and passes
 .Sy screenblank_flags .
-.It Sy moused
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr moused 8 ,
-to pass serial mouse data to the wscons mouse mux.
-Passes
-.Sy moused_flags .
 .It Sy wscons
 .Sq YES
 or
@@ -1251,11 +1251,11 @@ before the end-user configuration section.
 overrides.
 .El
 .Sh SEE ALSO
-.Xr ifconfig.if 5 ,
 .Xr boot 8 ,
 .Xr rc 8 ,
+.Xr rc.d 8 ,
 .Xr rc.subr 8 ,
-.Xr sysctl 8
+.Xr rcorder 8
 .Sh HISTORY
 The
 .Nm
