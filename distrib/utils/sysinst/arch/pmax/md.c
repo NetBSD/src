@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.4 1997/11/18 19:22:33 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.3.2.5 1997/11/19 14:10:28 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,15 +175,8 @@ void	md_post_disklabel (void)
 		partstart = ptstart;
 
 		/* Root */
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-#if 0
-		/* i386 md code uses: */
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-#else
 		/* By convention, NetBSD/pmax uses a 32Mbyte root */
 		partsize= NUMSEC(32, MEG/sectorsize, dlcylsize);
-#endif
 		bsdlabel[A][D_OFFSET] = partstart;
 		bsdlabel[A][D_SIZE] = partsize;
 		bsdlabel[A][D_BSIZE] = 8192;
@@ -219,9 +212,8 @@ void	md_post_disklabel (void)
 		/* root */
 		partstart = ptstart;
 		remain = fsdsize - partstart;
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
+		/* By convention, NetBSD/pmax uses a 32Mbyte root */
+		partsize= NUMSEC(32, MEG/sectorsize, dlcylsize);
 		snprintf (isize, 20, "%d", partsize/sizemult);
 		msg_prompt (MSG_askfsroot, isize, isize, 20,
 			    remain/sizemult, multname);
