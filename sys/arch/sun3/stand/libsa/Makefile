@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2001/11/14 23:01:15 tv Exp $
+#	$NetBSD: Makefile,v 1.36 2001/12/12 01:49:53 tv Exp $
 
 LIB=sa
 
@@ -9,9 +9,9 @@ LIB=sa
 
 POBJS=SRT0.o SRT1.o
 
-MKLINT=no
-MKPIC=no
-MKPROFILE=no
+NOLINT=# defined
+NOPIC=# defined
+NOPROFILE=# defined
 
 # Logically src/sys
 S=${.CURDIR}/../../../..

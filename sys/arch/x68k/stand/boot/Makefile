@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/11/14 00:58:51 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:57 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ TEXT=		006000
 PROG=		boot
 BINDIR=		/usr/mdec
 BINMODE=	444
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 
 BFDNAME=	a.out-m68k-netbsd

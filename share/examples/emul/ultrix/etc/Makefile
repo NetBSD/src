@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 01:49:15 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,6 @@
 FILES=	svc.conf
 FILESDIR=/usr/share/examples/emul/ultrix/etc
 .endif
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include <bsd.prog.mk>

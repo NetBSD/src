@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2001/04/12 07:49:32 itojun Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/12 01:48:46 tv Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.10 2001/04/12 07:49:32 itojun Exp $
+#	$Id: Makefile,v 1.11 2001/12/12 01:48:46 tv Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -57,7 +57,7 @@ DPADD+=	${LIBSSL} ${LIBCRYPTO}
 LDADD+=	-lcompat
 DPADD+=	${LIBCOMPAT}
 
-MKMAN=	no
+NOMAN=	# defined
 
 CRYPTODIST=	${.CURDIR}/../../crypto/dist
 .include "../../crypto/Makefile.openssl"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/08/10 11:57:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:48:59 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ INCS=	PlotFile.h SFile.h builtinbuf.h editbuf.h floatio.h fstream.h \
 	procbuf.h stdiostream.h stream.h streambuf.h strfile.h strstream.h
 INCSDIR=/usr/include/g++
 
-MKOBJ=	no
+NOOBJ=	# defined
 
 .PATH: ${.CURDIR}/../../../dist/libio
 

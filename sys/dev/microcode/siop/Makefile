@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2001/12/05 18:34:19 fredette Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/12 01:50:04 tv Exp $
 
 all: siop.out osiop.out oosiop.out
 
 PROG=	ncr53cxxx
-MKSHARE=no
+NOSHARE=# defined
 
 .include <bsd.prog.mk>
 

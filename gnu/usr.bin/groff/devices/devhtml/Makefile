@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:05 tv Exp $
 
 .include "../../Makefile.path"
 
@@ -7,6 +7,6 @@
 DEVICE=		html
 FONTFILES=	DESC TR TI TB TBI CR CI CB CBI HR HI HB HBI NR NI NB NBI S
 
-MKOBJ=		no
+NOOBJ=		# defined
 
 .include "../Makefile.dev"

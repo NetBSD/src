@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/05 07:32:33 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:18 tv Exp $
 
 SUBDIR= basics execapi formapi helpapi i18n indexapi scriptapi searchpaths
 
 FILES=	index help
 FILESDIR=${BINDIR}/sushi/info/programming
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../../../Makefile.inc"
 .include <bsd.prog.mk>

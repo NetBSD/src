@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.21 2001/10/22 10:53:47 taca Exp $
+#	$NetBSD: Makefile,v 1.22 2001/12/12 01:49:17 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 FILES=	acronyms airport ascii birthtoken bsd-family-tree country domains \
 	eqnchar flowers indent.pro inter.phone language man.template \
 	mdoc.template na.phone operator style zipcodes
 FILESDIR=${BINDIR}/misc
-MKOBJ=	no
+NOOBJ=	# defined
 
 
 # According to iana@ISI.EDU, the URL below is the authoritative list
@@ -13,7 +13,7 @@ MKOBJ=	no
 update-domains:
 	ftp -o /tmp/domains.$$$$ http://www.iana.org/country-codes.txt ; \
 	( \
-	echo '# $$NetBSD: Makefile,v 1.21 2001/10/22 10:53:47 taca Exp $$' ;  \
+	echo '# $$NetBSD: Makefile,v 1.22 2001/12/12 01:49:17 tv Exp $$' ;  \
 	echo '# ISO 3166 country codes, from http://www.iana.org/country-codes.txt' ;  \
 	echo '# '`grep ^Latest /tmp/domains.$$$$` ;  \
 	echo '#' ;  \

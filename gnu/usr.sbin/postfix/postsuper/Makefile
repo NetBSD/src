@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:11 tv Exp $
 
 PROG=	postsuper
 
@@ -10,6 +10,6 @@ BINDIR=	${PFIX_SBINDIR}
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

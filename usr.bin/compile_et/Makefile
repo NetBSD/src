@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/11/10 07:50:42 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.10 2001/12/12 01:48:44 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
 
 WARNS?=  1
-MKLINT= no
+NOLINT= # defined
 
 PROG= compile_et
 

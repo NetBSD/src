@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2001/11/14 00:58:50 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:48 tv Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
-MKMAN= no
+NOMAN= # defined
 STRIPFLAG=
 BINMODE= 444
 SIZE?= size

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.37 2001/06/01 23:26:30 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.38 2001/12/12 01:49:43 tv Exp $
 
 S=	${.CURDIR}/../../../../
 
 BASE?= biosboot
 PROG= ${BASE}.sym
-MKMAN=	no
+NOMAN=	# defined
 NEWVERSWHAT=	"BIOS Boot"
 
 .if (${BASE} != "biosboot")

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2001/09/17 12:34:44 assar Exp $
+# $NetBSD: Makefile,v 1.9 2001/12/12 01:48:45 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kuser
 
 WARNS?=  1
-MKLINT= no
+NOLINT= # defined
 
 PROG= kinit
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/08/06 19:12:01 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/12 01:49:02 tv Exp $
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
@@ -26,9 +26,9 @@ SRCS=		arparse.y arlex.l arsup.c bucomm.c version.c filemode.c \
 CPPFLAGS+=	-DTARGET='"${MACHINE_GNU_ARCH}--netbsd"'
 YHEADER=1
 
-MKPROFILE=	no
-MKPIC=		no
-MKLINT=		no
+NOPROFILE=	# defined
+NOPIC=		# defined
+NOLINT=		# defined
 
 # only needed during build
 libinstall::

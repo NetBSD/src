@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2001/10/13 20:22:56 leo Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/12 01:49:38 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
 
 PROG=	bootxx
 SRCS=	bootxx.c filesystem.c
-MKMAN=	no
+NOMAN=	# defined
 
 STRIPFLAG=
 BINDIR=	/usr/mdec

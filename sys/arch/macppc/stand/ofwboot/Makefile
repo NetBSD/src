@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2001/11/14 00:58:50 tv Exp $
+#	$NetBSD: Makefile,v 1.24 2001/12/12 01:49:45 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -15,7 +15,7 @@ DBG=		-Os -mmultiple
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
 
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 

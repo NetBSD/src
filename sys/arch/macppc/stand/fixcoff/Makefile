@@ -1,4 +1,4 @@
-NOMAN=  1
+NOMAN=  # defined
 HOSTPROG=   fixcoff
 SRCS=    fixcoff.c nb_progname.c
 

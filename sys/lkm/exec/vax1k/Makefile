@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/09/08 13:19:50 chuck Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:50:14 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_AOUT
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	exec_vax1k
 

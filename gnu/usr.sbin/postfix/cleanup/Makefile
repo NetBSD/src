@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:17 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:07 tv Exp $
 
 PROG=	cleanup
 
@@ -15,6 +15,6 @@ SRCS=	cleanup.c cleanup_out.c cleanup_envelope.c cleanup_message.c \
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

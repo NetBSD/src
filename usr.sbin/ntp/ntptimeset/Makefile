@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2000/06/12 13:57:43 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 01:48:54 tv Exp $
 
 PROG=	ntptimeset
-MKMAN=	no	# no man page for ntptimeset
+NOMAN=	# defined
 SRCS=	ntptimeset.c ntptime_config.c
 
 NTPSRCDIR=ntpdate

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:39 tv Exp $
 
 PROG=	installboot
-MKMAN=	no
+NOMAN=	# defined
 SRCS=	installboot.c disklabel.c
 BINDIR=	/usr/mdec
 LDADD=	-lkvm

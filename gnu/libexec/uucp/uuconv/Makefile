@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:00 tv Exp $
 #
 # Makefile for uuconv
 
@@ -13,6 +13,6 @@ CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-I$(.CURDIR)/../libuuconf\
 		-DVERSION=\"$(VERSION)\"
 
-MKMAN=		no
+NOMAN=		# defined
 
 .include <bsd.prog.mk>

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.30 2001/01/04 10:43:24 itojun Exp $
+#	$NetBSD: Makefile,v 1.31 2001/12/12 01:49:04 tv Exp $
 
-MKLINKLIB=no
-MKMAN=	no
-MKPIC=	no
+NOLINKLIB=# defined
+NOMAN=	# defined
+NOPIC=	# defined
 
 .include "../Makefile.inc"
 

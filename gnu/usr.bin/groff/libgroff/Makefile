@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/04/19 14:41:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.14 2001/12/12 01:49:06 tv Exp $
 
 .include "../Makefile.comp"
 
@@ -12,9 +12,9 @@ SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc \
 		lineno.cc macropath.cc matherr.c nametoindex.cc new.cc \
 		prime.cc progname.cc ptable.cc searchpath.cc string.cc \
 		strsave.cc tmpfile.cc version.cc
-MKMAN=		no
-MKPROFILE=	no
-MKPIC=		no
+NOMAN=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
 
 CLEANFILES+=	version.cc
 

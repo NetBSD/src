@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/09/22 03:34:21 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/12 01:49:56 tv Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -10,7 +10,7 @@ TEXTSZ=		1024
 PROG=		${BOOT}
 BINDIR=		/usr/mdec
 BINMODE=	444
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 
 STRIP?=		/usr/bin/strip

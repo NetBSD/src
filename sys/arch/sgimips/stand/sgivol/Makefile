@@ -2,7 +2,7 @@
 
 PROG=	sgivol
 LDADD+=	-lutil
-MKMAN=	no
+NOMAN=	# defined
 
 WARNS=	2
 

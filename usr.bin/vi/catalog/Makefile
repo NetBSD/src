@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/03/31 14:11:12 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/12 01:48:48 tv Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
@@ -10,7 +10,7 @@ FILESDIR=	/usr/share/vi/catalog
 
 HOSTPROG=	dump
 SRCS=		dump.c
-MKMAN=		no
+NOMAN=		# defined
 
 CLEANFILES+=	${CAT} english.base *.check __ck1 __ck2
 

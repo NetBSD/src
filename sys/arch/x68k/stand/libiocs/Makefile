@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2001/11/14 23:01:15 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:56 tv Exp $
 
 LIB=	iocs
 
-MKLINT=no
-MKPROFILE=no
-MKPIC=no
+NOLINT=# defined
+NOPROFILE=# defined
+NOPIC=# defined
 
 AWK?=	awk
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/15 12:03:12 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:07 tv Exp $
 
 PROG=	flush
 
@@ -10,6 +10,6 @@ BINDIR=	${PFIX_LIBEXECDIR}
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:45 tv Exp $
 
 PROG= installboot
-MKMAN=	no
+NOMAN=	# defined
 
 LDSTATIC= -static
 

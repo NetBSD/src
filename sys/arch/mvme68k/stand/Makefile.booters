@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.7 2001/07/19 18:18:30 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.8 2001/12/12 01:49:47 tv Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -7,13 +7,13 @@ COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes
 DEFS?= 
 STRIPFLAG?=
 
-NOMAN=  1
-MKMAN=	no
-NOLINT= 1
-MKLINT=	no
-MKPIC=	no
-MKPROFILE=no
-MKLINT=no
+NOMAN=  # defined
+NOMAN=	# defined
+NOLINT= # defined
+NOLINT=	# defined
+NOPIC=	# defined
+NOPROFILE=# defined
+NOLINT=# defined
 
 INCPATH=-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
         -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 2001/05/02 06:56:29 matt Exp $
+#	$NetBSD: Makefile,v 1.21 2001/12/12 01:49:54 tv Exp $
 
 S=	${.CURDIR}/../../../..
-NOMAN=	1
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 

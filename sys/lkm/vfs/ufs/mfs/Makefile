@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:50:19 tv Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/ufs/mfs ${.CURDIR}/../..
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	mfs
 

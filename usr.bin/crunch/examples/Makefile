@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/08/30 23:51:55 jhawk Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:48:44 tv Exp $
 
 CRUNCHED=   fixit
 
@@ -11,7 +11,7 @@ CONF=	$(CRUNCHED).conf
 OUTMK=	$(CRUNCHED).mk
 OUTPUTS=  $(OUTMK) $(CRUNCHED).c $(CRUNCHED).cache
 
-MKMAN=	no
+NOMAN=	# defined
 CLEANFILES+=$(CRUNCHED) $(OUTPUTS) *.o *.lo *_stub.c
 
 all: $(CRUNCHED)

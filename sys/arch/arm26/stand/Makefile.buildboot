@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.buildboot,v 1.6 2001/11/23 12:58:03 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.7 2001/12/12 01:49:37 tv Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
 
 SRCS=	${PROGSOURCE}
-MKMAN=no
+NOMAN=# defined
 BINDIR=/usr/mdec
 BINMODE=444
 FILESDIR=/usr/mdec

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/18 16:18:35 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:02 tv Exp $
 
 LIB=		frontend
-MKLINT=		no
-MKPROFILE=	no
-MKPIC=		no
-MKLINKLIB=	no
+NOLINT=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
+NOLINKLIB=	# defined
 
 SRCS=		gcc.c version.c intl.c prefix.c
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/07 06:51:47 minoura Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:58 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ PROG=		fd$(BOOT)
 BINDIR=		/usr/mdec
 STRIPFLAG=
 BINMODE=	444
-MKMAN=		no
+NOMAN=		# defined
 
 S=		${.CURDIR}/../../../..
 M=		$S/arch/x68k

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:19 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:08 tv Exp $
 
 PROG=	local
 
@@ -15,6 +15,6 @@ SRCS=	alias.c command.c delivered.c dotforward.c file.c forward.c \
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

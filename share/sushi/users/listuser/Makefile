@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/05 07:32:40 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:32 tv Exp $
 
 SCRIPTS= script
 SCRIPTSDIR=${BINDIR}/sushi/users/listuser
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../../../Makefile.inc"
 .include <bsd.prog.mk>

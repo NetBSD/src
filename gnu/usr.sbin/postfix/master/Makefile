@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:20 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:08 tv Exp $
 
 PROG=	master
 
@@ -15,6 +15,6 @@ SRCS=	master.c master_conf.c master_ent.c master_sig.c master_avail.c \
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

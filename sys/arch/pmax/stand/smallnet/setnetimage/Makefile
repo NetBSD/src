@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.3 2001/11/14 00:58:50 tv Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/12 01:49:49 tv Exp $
 
 PROG=	setnetimage
-MKMAN=	no
+NOMAN=	# defined
 WARNS?=	1
 
 MDSIDIR=${.CURDIR}/../../../../../../usr.sbin/mdsetimage

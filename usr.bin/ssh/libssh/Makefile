@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/09/27 03:24:01 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/12 01:48:47 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -16,10 +16,10 @@ SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c \
 SRCS+=	random.c
 SRCS+=	readpassphrase.c
 
-MKLINT=		no
-MKMAN=		no
-MKPIC=		no
-MKPROFILE=	no
+NOLINT=		# defined
+NOMAN=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 # only needed during build - prevent installation of library
 libinstall::

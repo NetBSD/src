@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.clnt,v 1.7 2000/09/10 23:21:50 erh Exp $
+#	$NetBSD: Makefile.clnt,v 1.8 2001/12/12 01:48:55 tv Exp $
 
 #	This Makefile builds a client used for testing.
 
@@ -6,7 +6,7 @@ CPPFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
 
 PROG=	clnt.pcnfsd
 SRCS=	pcnfsd_test.c pcnfsd_clnt.c pcnfsd_xdr.c
-MKMAN=	no
+NOMAN=	# defined
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

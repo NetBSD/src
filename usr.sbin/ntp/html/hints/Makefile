@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/05/02 12:01:11 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:53 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ FILES=	a-ux aix bsdi changes decosf1 decosf2 hpux linux notes-xntp-v3 parse \
 	solaris.xtra.patchfreq sun4 svr4-dell svr4_package todo vxworks.html \
 	winnt.htm
 .endif
-MKOBJ=  no
+NOOBJ=  # defined
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

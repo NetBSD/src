@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 2001/11/14 00:58:50 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/12 01:49:48 tv Exp $
 
 S= ${.CURDIR}/../../../..
 
 PROG= boot
 SRCS= locore.S boot.c bootinfo.c devopen.c net.c netif_news.c
-MKMAN= no
+NOMAN= # defined
 STRIPFLAG=
 BINMODE= 444
 

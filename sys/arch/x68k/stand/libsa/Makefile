@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/12/02 13:25:34 minoura Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/12 01:49:58 tv Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -26,9 +26,9 @@ SRCS+=		inflate.c inftrees.c infutil.c uncompr.c
 SRCS+=		consio.c devopen.c parseutils.c sdcd.c fd.c fdsub.S chdsk.c
 SRCS+=		putimage.S
 
-MKPROFILE=	no
-MKPIC=		no
-MKLINT=		no
+NOPROFILE=	# defined
+NOPIC=		# defined
+NOLINT=		# defined
 
 CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -D_STANDALONE
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common

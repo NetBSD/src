@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 23:53:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:48:59 tv Exp $
 
 INCS=	bastring.cc bastring.h complext.cc complext.h dcomplex.h fcomplex.h \
 	ldcomplex.h straits.h
 INCS+=	bastring_inst.h complext_inst.h
 INCSDIR=/usr/include/g++/std
 
-MKOBJ=	no
+NOOBJ=	# defined
 
 .PATH: ${.CURDIR}/../../../dist/libstdc++/std
 

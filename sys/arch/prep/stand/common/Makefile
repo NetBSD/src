@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2000/02/29 15:21:52 nonaka Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:50 tv Exp $
 
 S= ${.CURDIR}/../../../..
 
-MKMAN= no
+NOMAN= # defined
 
 CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= -I. -I${S} -I${.OBJDIR}

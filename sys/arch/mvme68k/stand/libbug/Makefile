@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2001/11/14 23:01:14 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2001/12/12 01:49:46 tv Exp $
 
 LIB=bug
 
-MKPIC= no
-MKLINT= no
-MKPROFILE= no
+NOPIC= # defined
+NOLINT= # defined
+NOPROFILE= # defined
 
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
