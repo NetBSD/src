@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.8 2002/02/13 08:17:30 ross Exp $
+.\"     $NetBSD: agp.4,v 1.9 2002/02/20 20:28:18 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,11 @@ specification was designed by Intel.
 .Pp
 The AGP chipset is positioned between the PCI-Host bridge and the
 graphics accelerator to provide a high-performance dedicated graphics
-bus.  The specification currently supports a peak bandwidth of 528 MB/s.
+bus for moving large amounts of data directly from host memory to the
+graphics accelerator.  The specification currently supports a peak
+bandwidth of 528 MB/s.  AGP uses a Graphics Address Remapping Table
+(GART) to provide a physically-contiguous view of scattered pages in
+host memory for DMA transfers.
 .Pp
 The
 .Nm
