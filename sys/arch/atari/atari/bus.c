@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.2 1998/04/10 08:19:53 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.3 1998/05/11 07:46:15 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +80,11 @@ bus_space_handle_t	*mhp;
 		panic("bus_mem_map: overflow");
 #endif
 
+#if defined(UVM)
+	va = uvm_km_valloc(kernel_map, endpa - pa);
+#else
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+#endif
 	if (va == 0)
 		return 1;
 	*mhp = (caddr_t)(va + (bpa & PGOFSET));
@@ -108,7 +114,11 @@ bus_size_t		size;
 		panic("unmap_iospace: overflow");
 #endif
 
+#if defined(UVM)
+	uvm_km_free(kernel_map, (vm_offset_t)va, endva - va);
+#else
 	kmem_free(kernel_map, va, endva - va);
+#endif
 }
 
 /*
