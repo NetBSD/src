@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.4 1996/03/09 17:15:46 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.5 1996/03/13 21:39:10 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,8 +51,27 @@ sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-.text
+/*
+ * PULLFRAME - macro to pull a trap frame from the stack in the current mode
+ * Since the current mode is used, the SVC R14 field is ignored.
+ */
 
+#define PULLFRAME \
+        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
+        msr     spsr_all, r0; \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+        ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+ 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
+ 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+
+/*
+ * setrunqueue() and remrq()
+ *
+ * Functions to add and remove a process for the run queue.
+ */
+
+	.text
 
 Lwhichqs:
 	.word	_whichqs
@@ -60,18 +79,22 @@ Lwhichqs:
 Lqs:
 	.word	_qs
 
-	.global	_setrunqueue
+/*
+ * On entry
+ *	r0 = process
+ */
 
+	.global	_setrunqueue
 _setrunqueue:
 /*
- * r0 = proc
- * r1 = queue
- * r2 = &qs[queue]
- * r3 = temp
+ * Local register usage
+ * 	r0 = process
+ * 	r1 = queue
+ * 	r2 = &qs[queue]
+ * 	r3 = temp
+ *	r4 = whichqs
  */
 	stmfd	sp!, {r4}
-
-/* diags */
 
 #ifdef DIAGNOSTIC
 	ldr	r1, [r0, #(P_BACK)]
@@ -137,13 +160,21 @@ Ltext2:
 	.align	0
 #endif
 
+/*
+ * On entry
+ *	r0 = process
+ */
+
 	.global	_remrq
 _remrq:
 
 /*
- * r0 = oldproc
- * r1 = queue
- * r2 = &qs[queue]
+ * Local register usage
+ *	r0 = oldproc
+ * 	r1 = queue
+ * 	r2 = &qs[queue]
+ *	r3 = scratch
+ *	r4 = whichqs
  */
 	stmfd	sp!, {r4}
 
@@ -182,6 +213,15 @@ _remrq:
 
 	mov	pc, lr
 
+
+/*
+ * cpuswitch()
+ *
+ * preforms a process context switch.
+ * This function has several entry points
+ */
+
+
 Lcurproc:
 	.word	_curproc
 
@@ -196,18 +236,21 @@ Lcurpcb:
 Lwant_resched:
 	.word	_want_resched
 
+
+/*
+ * Idle loop, exercised while waiting for a process to wake up.
+ */
+
 	.global	_idle
 _idle:
 idle:
 
-/* Enable IRQ's and set the spl level to 0 to allow all interrupts */
+/* Enable interrupts */
 
 	IRQenable
 
-idleloop:
-
 #ifdef CPU_ARM7500
-/* ARM7500 has a suspend mode so use it ! */
+/* ARM7500 has a suspend mode so use it ! [danny, does this work ? - mark] */
 
 	mov	r7, #(IOMD_BASE)
 	orr	r7, r7, #(IOMD_SUSPEND - IOMD_BASE)
@@ -223,15 +266,20 @@ idleloop:
 	teq	r3, #0x00000000
 	bne	sw1
 
-/* Nothing active yet. Handle IRQ's again and loop back */
+/* All processes are still asleep so idle a while longer */
 
-  	IRQenable
-	b	idleloop
-	
+	b	idle
+
+
+/*
+ * Find a new process to run, save the current context and
+ * load the new context
+ */
+
 	.global	_cpu_switch
-
 _cpu_switch:
 /*
+ * Local register usage. Some of these registers are out of date.
  * r1 = oldproc
  * r2 = spl level
  * r3 = whichqs
@@ -240,7 +288,7 @@ _cpu_switch:
  * r6 = newproc
  * r7 = scratch
  */
-	stmfd	sp!, {r4-r7, r8-r12, lr}
+	stmfd	sp!, {r4-r7, lr}
 
 /*
  * Get the current process and indicate that there is no longer a valid
@@ -268,11 +316,15 @@ _cpu_switch:
 	bl	_spl0
 #endif
 
+/* Push the old spl level onto the stack */
+
 	str	r0, [sp, #-0x0004]!
 
 	mov	r1, r7
 
 /* First phase : find a new process */
+
+/* rem: r1 = old proc */
 
 switch_search:
 	IRQdisable
@@ -288,6 +340,10 @@ switch_search:
 	beq	idle
 
 sw1:
+/* rem: r1 = old proc */
+/* rem: r3 = whichqs */
+/* rem: interrupts are disabled */
+
 /*
  * Paranoid debug time ....
  * Is this overkill ? If we are not in SVC mode then things are
@@ -301,7 +357,7 @@ sw1:
 	beq	switchmodeok
 
 	add	r0, pc, #switchpanic - . - 8
-	mrs	r4, cpsr_all
+	mrs	r1, cpsr_all
 	bl	_panic
 
 switchpanic:
@@ -319,6 +375,8 @@ switchmodeok:
  * that the queue has something in it.
  */
 
+/* This ffs() type routine code be optimised */
+
 	mov	r4, #0x00000000
 
 findqueue:
@@ -331,9 +389,15 @@ findqueue:
 
 /*
  * Ok we have found the active queue. The above code can never fail as
- * to get to it IRQ's must be disabled and whichqs != 0.
+ * we only get to it if r3 != 0
  * r4 contains the number of the first queue found with a process in it.
  */
+
+/* rem: r0 = bit mask of chosen queue (1 << r4) */
+/* rem: r1 = old proc */
+/* rem: r3 = whichqs */
+/* rem: r4 = queue number */
+/* rem: interrupts are disabled */
 
 /* Get the address of the queue (&qs[queue]) */
 
@@ -345,6 +409,8 @@ findqueue:
  * at the head. This basically unlinks the process at the head of the queue.
  */
 	ldr	r6, [r5, #(P_FORW)]
+
+/* rem: r6 = new process */
 
 	ldr	r7, [r6, #(P_FORW)]
 	str	r7, [r5, #(P_FORW)]	
@@ -358,6 +424,8 @@ findqueue:
 	teq	r5, r7
 	biceq	r3, r3, r0
 
+/* rem: r0 = bit mask of chosen queue (1 << r4) - NOT NEEDED AN MORE */
+
 /* Fix the back pointer for the process now at the head of the queue. */
 
 	ldr	r0, [r6, #(P_BACK)]
@@ -367,6 +435,12 @@ findqueue:
 
 	ldr	r7, Lwhichqs
 	str	r3, [r7]
+
+/* rem: r1 = old proc */
+/* rem: r3 = whichqs - NOT NEEDED ANY MORE */
+/* rem: r4 = queue number - NOT NEEDED ANY MORE */
+/* rem: r6 = new process */
+/* rem: interrupts are disabled */
 
 /* Clear the want_resched flag */
 
@@ -400,6 +474,10 @@ findqueue:
 	IRQdisable
 */
 
+/* rem: r1 = old proc */
+/* rem: r6 = new process */
+/* rem: interrupts are disabled */
+
 /*
  * If the new process is the same as the process that called cpu_switch
  * Then we do not need to save and restore any contexts. This means
@@ -421,6 +499,10 @@ findqueue:
 	teq	r1, #0x00000000
 	beq	switch_exited
 
+/* rem: r1 = old proc */
+/* rem: r6 = new process */
+/* rem: interrupts are disabled */
+
 /* Stage two : Save old context */
 
 /* Remember the old process in r0 */
@@ -433,12 +515,12 @@ findqueue:
 
 /* Save all the registers in the old process's pcb */
 
-	add	r7, r1, #(PCB_R0)
-	stmia	r7, {r0-r15}
+	add	r7, r1, #(PCB_R8)
+	stmia	r7, {r8-r13}
 
 /* Don't really need to do this. as the stmia above does it */
 
-	str	sp, [r1, #(PCB_SP)]	
+/*	str	sp, [r1, #(PCB_SP)]*/	
 
 /*
  * This can be optimised... We know we want to go from SVC32 mode to UND32
@@ -453,6 +535,11 @@ findqueue:
 	str	sp, [r1, #(PCB_UND_SP)]
 
         msr	cpsr_all, r3		/* Restore the old mode */
+
+/* rem: r0 = old proc */
+/* rem: r0 = old pcb */
+/* rem: r6 = new process */
+/* rem: interrupts are disabled */
 
 /* What else needs to be saved  Only FPA stuff when that is supported */
 
@@ -511,11 +598,11 @@ switch_exited:
 /* Restore all the save registers */
 
 	add	r7, r1, #PCB_R8
-	ldmia	r7, {r8-r14}
+	ldmia	r7, {r8-r13}
 
 /* This is not really needed ! */
 
-	ldr	sp, [r1, #(PCB_SP)]
+/*	ldr	sp, [r1, #(PCB_SP)]*/
 
 /* Remember the pcb currently in use */
 
@@ -556,13 +643,9 @@ switch_return:
 
 /*
  * Pull the registers that got pushed when either savectx or cpu_switch
- * was called.
+ * was called and return.
  */
-	ldmfd	sp!, {r4-r7, r8-r12}
-
-/* Return to the new process */
-
-	ldmfd	sp!, {pc}
+	ldmfd	sp!, {r4-r7, pc}
 
 Ltext30:
 	.asciz	"nkt: cpu_switch: sp=%08x pcb=%08x\n"
@@ -581,9 +664,6 @@ Lproc0:
 
 Lkernel_map:
 	.word	_kernel_map
-
-Lkstack:
-	.word	_kstack
 
 
 	.global	_switch_exit
@@ -632,12 +712,12 @@ _switch_exit:
 /* Restore all the save registers */
 
 	add	r7, r2, #PCB_R8
-	ldmia	r7, {r8-r14}
+	ldmia	r7, {r8-r13}
 
 /* This is not really needed ! */
 /* Yes it is for the su and fu routines */
 
-	ldr	sp, [r2, #(PCB_SP)]
+/*	ldr	sp, [r2, #(PCB_SP)]*/
 	ldr	r3, Lcurpcb
 	str	r2, [r3]
 
@@ -687,16 +767,14 @@ Lcurrent_spl_level:
 	.word	_current_spl_level
  
 	.global	_savectx
-
 _savectx:
 /*
- * r0 = p2->p_addr
- * r1 = altreturn
+ * r0 = pcb
  */
 
-/* Push registers. These must match those pushed by cpu_switch */
+/* Push registers.*/
 
-	stmfd	sp!, {r4-r7, r8-r12, lr}
+	stmfd	sp!, {r4-r7, lr}
 
 /* Push the current spl level onto the stack */
 
@@ -707,58 +785,8 @@ _savectx:
 
 /* Store all the registers in the process's pcb */
 
-	add	r2, r0, #(PCB_R0)
-	stmia	r2, {r0-r15}
-
-/*
- * Calulcate the offset of the stack pointer from the beginning of the
- * user area.
- */
-
-	mov	r2, sp
-	ldr	r3, Lkstack
-	ldr	r3, [r3]
-
-	sub	r3, r2, r3
-	str	r2, [r0, #(PCB_SP)]
-
-	add	r2, r0, r3
-
-	teq	r1, #0x00000000
-	beq	savectx_returnasparent
-
-/*
- * If we are clever we will only copy the used bit of the stack
- * r3 contains the offset from the start of p_addr
- */
-
-/*
- * r3 = offset from p->p_addr to bottom of stack
- * r0 = p2->p_addr
- * r2 = p2 stack pointer
- * sp = current stack pointer 
- * We dont have to worry about a zero length copy as this routine
- * pushes stuff on the stack !
- */
-
-/* We copy from sp to r2 for ((UPAGES * NBPG) - r3) */
-
-/* This needs to change - should be USPACE_SVC_STACK_TOP not UPAGES * NBPG */
-
-	mov	r1, #(UPAGES * NBPG)
-	sub	r3, r1, r3
-
-	mov	r1, #0x00000000
-
-savectxloop:
-	ldr	r0, [sp, r1]
-	str	r0, [r2, r1]
-	add	r1, r1, #0x00000004
-	subs	r3, r3, #0x00000004
-	bne	savectxloop
-
-savectx_returnasparent:
-	mov	r0, #0x00000000
+	add	r2, r0, #(PCB_R8)
+	stmia	r2, {r8-r13}
 
 /* Skip the pushed spl mask */
 
@@ -766,5 +794,24 @@ savectx_returnasparent:
 
 /* Pull the regs of the stack */
 
-	ldmfd	sp!, {r4-r7, r8-r12}
-	ldmfd	sp!, {pc}
+	ldmfd	sp!, {r4-r7, pc}
+
+
+	.global	_proc_trampoline
+_proc_trampoline:
+	add	lr, pc, #(trampoline_return - . - 8)
+	mov	r0, r5
+	mov	r1, sp
+	mov	pc, r4
+
+trampoline_return:
+/* Kill irq's */
+
+        mrs     r0, cpsr_all
+        orr     r0, r0, #(I32_bit)
+        msr     cpsr_all, r0
+
+	PULLFRAME
+
+	movs	pc, lr			/* Exit */
+	
