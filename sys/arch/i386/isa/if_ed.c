@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.11 1993/12/10 05:37:33 hpeyerl Exp $
+ * $Id: if_ed.c,v 1.12 1993/12/10 10:57:47 cgd Exp $
  */
 
 /*
@@ -129,7 +129,7 @@
 
 /* For backwards compatibility */
 #ifndef IFF_ALTPHYS
-#define IFF_ALTPHYS IFF_LLC0
+#define IFF_ALTPHYS IFF_LINK0
 #endif
  
 /*
