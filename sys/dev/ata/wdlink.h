@@ -1,4 +1,4 @@
-/*	$NetBSD: wdlink.h,v 1.5 1998/04/23 13:30:39 bouyer Exp $	*/
+/*	$NetBSD: wdlink.h,v 1.6 1998/04/26 05:28:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -72,13 +72,14 @@ struct wd_link {
 #define WDF_WANTED	0x02
 #define WDF_WLABEL	0x04		/* label is writable */
 #define WDF_LABELLING	0x08		/* writing label */
-
 /*
- * XXX Nothing resets this yet, but disk change sensing will when ATAPI is
- * implemented.
+ * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
+ * more fully implemented.
  */
 #define WDF_LOADED	0x10		/* parameters loaded */
-#define WDF_WAIT	0x20		/* waiting for resourses */
+#define WDF_WAIT	0x20		/* waiting for resources */
+#define	WDF_LBA		0x40		/* using LBA mode */
+	int sc_capacity;
 
 	daddr_t sc_badsect[127];	/* 126 plus trailing -1 marker */
 	struct disklabel *sc_lp;	/* label info for this disk */
