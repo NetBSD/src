@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.33 1998/03/18 17:01:24 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.34 1998/07/26 20:32:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.33 1998/03/18 17:01:24 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.34 1998/07/26 20:32:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ struct fs *altsblock;
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 static void badsb __P((int, char *));
-static int calcsb __P((char *, int, struct fs *));
-static struct disklabel *getdisklabel __P((char *, int));
+static int calcsb __P((const char *, int, struct fs *));
+static struct disklabel *getdisklabel __P((const char *, int));
 static int readsb __P((int));
 
 /*
@@ -82,7 +82,7 @@ static int readsb __P((int));
  */
 int
 setup(dev)
-	char *dev;
+	const char *dev;
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
@@ -611,7 +611,7 @@ badsb(listerr, s)
  */
 static int
 calcsb(dev, devfd, fs)
-	char *dev;
+	const char *dev;
 	int devfd;
 	struct fs *fs;
 {
@@ -668,7 +668,7 @@ calcsb(dev, devfd, fs)
 
 static struct disklabel *
 getdisklabel(s, fd)
-	char *s;
+	const char *s;
 	int	fd;
 {
 	static struct disklabel lab;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1998/07/26 20:28:55 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1998/07/26 20:32:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -78,7 +78,7 @@ void		propagate __P((void));
 void		pwarn __P((const char *fmt, ...));
 int		reply __P((char *));
 void		resetinodebuf __P((void));
-int		setup __P((char *));
+int		setup __P((const char *));
 void		voidquit __P((int));
 
 void	swap_cg __P((struct cg *, struct cg *));
