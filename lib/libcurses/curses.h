@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)curses.h	8.1 (Berkeley) 6/7/93
- *	$Id: curses.h,v 1.8 1993/11/09 04:05:35 cgd Exp $
+ *	$Id: curses.h,v 1.9 1993/11/09 04:08:59 cgd Exp $
  */
 
 #ifndef _CURSES_H_
@@ -276,8 +276,8 @@ int	 suspendwin __P((void));
 int	 touchline __P((WINDOW *, int, int, int));
 int	 touchoverlap __P((WINDOW *, WINDOW *));
 int	 touchwin __P((WINDOW *));
-int 	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
-int      vwscanw __P((WINDOW *, const char *, _BSD_VA_LIST_));
+int 	 vwprintw __P((WINDOW *, const char *, _VA_LIST_));
+int      vwscanw __P((WINDOW *, const char *, _VA_LIST_));
 int	 waddch __P((WINDOW *, int));
 int	 waddnstr __P((WINDOW *, const char *, int));
 int	 wclear __P((WINDOW *));
@@ -296,7 +296,7 @@ int	 wrefresh __P((WINDOW *));
 int	 wscanw __P((WINDOW *, const char *, ...));
 char	*wstandend __P((WINDOW *));
 char	*wstandout __P((WINDOW *));
-int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
+int	 vwprintw __P((WINDOW *, const char *, _VA_LIST_));
 
 /* Private functions that are needed for user programs prototypes. */
 void	 __cputchar __P((int));
