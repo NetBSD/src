@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.2.2.2 2004/06/22 07:04:44 tron Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.2.2.3 2004/06/22 07:17:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.2.2.2 2004/06/22 07:04:44 tron Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.2.2.3 2004/06/22 07:17:40 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,7 +56,7 @@ __weak_alias(fparseln,_fparseln)
 #define FUNLOCKFILE(fp)
 #endif
 
-#ifdef _REENTRANT
+#if defined(_REENTRANT) && !HAVE_NBTOOL_CONFIG_H
 #define __fgetln(f, l) __fgetstr(f, l, '\n')
 #else
 #define __fgetln(f, l) fgetln(f, l)
