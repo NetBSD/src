@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_i386.c,v 1.3 1994/05/18 09:31:52 pk Exp $";
+static char *rcsid = "$Id: kvm_i386.c,v 1.4 1994/08/15 15:57:36 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -69,8 +69,8 @@ static char *rcsid = "$Id: kvm_i386.c,v 1.3 1994/05/18 09:31:52 pk Exp $";
 #endif
 
 struct vmstate {
-	struct pde **IdlePTD;
-	struct pde *PTD;
+	pd_entry_t **IdlePTD;
+	pd_entry_t *PTD;
 };
 
 #define KREAD(kd, addr, p)\
@@ -112,7 +112,7 @@ _kvm_initvtop(kd)
 		_kvm_err(kd, kd->program, "cannot read IdlePTD");
 		return (-1);
 	}
-	vm->PTD = (struct pde *)_kvm_malloc(kd, NBPG);
+	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
 	if ((kvm_read(kd, (u_long)vm->IdlePTD, &vm->PTD, NBPG)) != NBPG) {
 		_kvm_err(kd, kd->program, "cannot read PTD");
 		return (-1);
@@ -155,8 +155,8 @@ _kvm_uvatop(kd, p, va, pa)
 	u_long *pa;
 {
 	struct vmspace vms;
-	struct pde pde, *pdeloc;
-	struct pte pte, *pteloc;
+	pd_entry_t pde, *pdeloc;
+	pt_entry_t pte, *pteloc;
 	u_long kva, offset;
 
 	if (va >= KERNBASE)
@@ -167,23 +167,23 @@ _kvm_uvatop(kd, p, va, pa)
 	    sizeof(vms))
 		goto invalid;
 
-	pdeloc = (struct pde *)vms.vm_pmap.pm_pdir + (va >> PDSHIFT);
+	pdeloc = vms.vm_pmap.pm_pdir + (va >> PDSHIFT);
 	if (kvm_read(kd, (u_long)pdeloc, (char *)&pde, sizeof(pde)) !=
 	    sizeof(pde))
 		goto invalid;
-	if (pde.pd_v == 0)
+	if ((pde & PG_V) == 0)
 		goto invalid;
 
-	pteloc = (struct pte *)ptob(pde.pd_pfnum) + btop(va & PT_MASK);
+	pteloc = (pt_entry_t *)(pde & PG_FRAME) + btop(va & PT_MASK);
 	if (lseek(kd->pmfd, (off_t)(u_long)pteloc, 0) != (off_t)(u_long)pteloc)
 		goto invalid;
 	if (read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte))
 		goto invalid;
-	if (pte.pg_v == 0)
+	if ((pte & PG_V) == 0)
 		goto invalid;
 
 	offset = va & PGOFSET;
-	*pa = (u_long)ptob(pte.pg_pfnum) + offset;
+	*pa = (pte & PG_FRAME) + offset;
 	return (NBPG - offset);
 
 invalid:
