@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2003/05/21 10:05:24 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2003/05/29 17:51:28 dsl Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -127,6 +127,7 @@ int md_make_bsd_partitions (void)
 	int maxpart = getmaxpartitions();
 	int remain;
 	char isize[20];
+	int partstart, partsize;
 
 editlab:
 	/* Ask for layout type -- standard or special */
