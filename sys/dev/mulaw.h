@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.16 2003/07/08 09:07:15 itojun Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.17 2004/11/05 16:31:14 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,22 +36,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Convert 8-bit mu-law to 16 bit unsigned linear. */
+/* Convert 8-bit mu-law to/from 16 bit unsigned linear. */
 extern void mulaw_to_ulinear16_le(void *, u_char *, int);
 extern void mulaw_to_ulinear16_be(void *, u_char *, int);
+extern void ulinear16_to_mulaw_le(void *, u_char *, int);
+extern void ulinear16_to_mulaw_be(void *, u_char *, int);
 /* Convert 8-bit mu-law from/to 16 bit signed linear. */
 extern void mulaw_to_slinear16_le(void *, u_char *, int);
 extern void mulaw_to_slinear16_be(void *, u_char *, int);
 extern void slinear16_to_mulaw_le(void *, u_char *, int);
+extern void slinear16_to_mulaw_be(void *, u_char *, int);
 /* Convert 8-bit mu-law to/from 8 bit unsigned linear. */
 extern void mulaw_to_ulinear8(void *, u_char *, int);
 extern void ulinear8_to_mulaw(void *, u_char *, int);
 /* Convert 8-bit mu-law to/from 8 bit signed linear. */
 extern void mulaw_to_slinear8(void *, u_char *, int);
 extern void slinear8_to_mulaw(void *, u_char *, int);
-/* Convert 8-bit A-law to 16 bit unsigned linear. */
+/* Convert 8-bit A-law to/from 16 bit unsigned linear. */
 extern void alaw_to_ulinear16_le(void *, u_char *, int);
 extern void alaw_to_ulinear16_be(void *, u_char *, int);
+extern void ulinear16_to_alaw_le(void *, u_char *, int);
+extern void ulinear16_to_alaw_be(void *, u_char *, int);
 /* Convert 8-bit A-law to/from 16 bit signed linear. */
 extern void alaw_to_slinear16_le(void *, u_char *, int);
 extern void alaw_to_slinear16_be(void *, u_char *, int);
