@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1988, 1993
+/*-
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,46 +30,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)extern.h	8.2 (Berkeley) 4/4/94
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-
-#include <fcntl.h>
-#include <utmp.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include "extern.h"
-
-static int fd = -1;
-
-/*
- * Modified version of logwtmp that holds wtmp file open
- * after first call, for use with ftp (which may chroot
- * after login, but before logout).
- */
-void
-logwtmp(line, name, host)
-	char *line, *name, *host;
-{
-	struct utmp ut;
-	struct stat buf;
-
-	if (fd < 0 && (fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
-		return;
-	if (fstat(fd, &buf) == 0) {
-		(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));
-		(void)strncpy(ut.ut_name, name, sizeof(ut.ut_name));
-		(void)strncpy(ut.ut_host, host, sizeof(ut.ut_host));
-		(void)time(&ut.ut_time);
-		if (write(fd, (char *)&ut, sizeof(struct utmp)) !=
-		    sizeof(struct utmp))
-			(void)ftruncate(fd, buf.st_size);
-	}
-}
+void	blkfree __P((char **));
+char  **copyblk __P((char **));
+void	cwd __P((char *));
+void	delete __P((char *));
+void	dologout __P((int));
+void	fatal __P((char *));
+int	ftpd_pclose __P((FILE *));
+FILE   *ftpd_popen __P((char *, char *));
+char   *getline __P((char *, int, FILE *));
+void	logwtmp __P((char *, char *, char *));
+void	lreply __P((int, const char *, ...));
+void	makedir __P((char *));
+void	nack __P((char *));
+void	pass __P((char *));
+void	passive __P((void));
+void	perror_reply __P((int, char *));
+void	pwd __P((void));
+void	removedir __P((char *));
+void	renamecmd __P((char *, char *));
+char   *renamefrom __P((char *));
+void	reply __P((int, const char *, ...));
+void	retrieve __P((char *, char *));
+void	send_file_list __P((char *));
+void	setproctitle __P((const char *, ...));
+void	statcmd __P((void));
+void	statfilecmd __P((char *));
+void	store __P((char *, char *, int));
+void	upper __P((char *));
+void	user __P((char *));
+void	yyerror __P((char *));
