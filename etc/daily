@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.44 2001/12/18 00:48:05 lukem Exp $
+#	$NetBSD: daily,v 1.45 2001/12/18 00:51:16 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -115,9 +115,9 @@ fi
 if checkyesno purge_accounting && [ -f /var/account/acct ]; then
 	echo ""
 	echo "Purging accounting records:"
-	mv /var/account/acct.2 /var/account/acct.3
-	mv /var/account/acct.1 /var/account/acct.2
-	mv /var/account/acct.0 /var/account/acct.1
+	mv /var/account/acct.2 /var/account/acct.3 2>/dev/null
+	mv /var/account/acct.1 /var/account/acct.2 2>/dev/null
+	mv /var/account/acct.0 /var/account/acct.1 2>/dev/null
 	cp /var/account/acct /var/account/acct.0
 	sa -sq
 fi
