@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.15 2003/02/04 08:11:50 enami Exp $	*/
+/*	$NetBSD: rcache.c,v 1.16 2003/02/04 08:24:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.15 2003/02/04 08:11:50 enami Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.16 2003/02/04 08:24:20 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,7 +97,8 @@ static int64_t readsize;
 static int64_t physreadsize;
 #endif
 
-#define CDATA(i)	(cdata + ((i) * nblksread * dev_bsize))
+#define	CSIZE		(nblksread << dev_bshift)	/* cache buf size */
+#define	CDATA(desc)	(cdata + ((desc) - cdesc) * CSIZE)
 
 void
 initcache(int cachesize, int readblksize)
@@ -121,7 +122,7 @@ initcache(int cachesize, int readblksize)
 			    strerror(errno));
 			return;
 		}
-		cachebufs = (usermem / MAXMEMPART) / (nblksread * dev_bsize);
+		cachebufs = (usermem / MAXMEMPART) / CSIZE;
 	} else {		/* User specified */
 		cachebufs = cachesize;
 	}
@@ -132,7 +133,7 @@ initcache(int cachesize, int readblksize)
 
 		sharedSize = sizeof(union cdesc) +
 	   	    sizeof(union cdesc) * cachebufs +
-	   	    nblksread * cachebufs * dev_bsize;
+	   	    cachebufs * CSIZE;
 #ifdef STATS
 		fprintf(stderr, "Using %d buffers (%d bytes)\n", cachebufs,
 	   	    sharedSize);
@@ -201,7 +202,7 @@ loop:
 	}
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
-	if (blkno + (size / dev_bsize) > ufsib->ufs_dsize) {
+	if (blkno + (size >> dev_bshift) > ufsib->ufs_dsize) {
 		/*
 		 * Trying to read the final fragment.
 		 *
@@ -263,7 +264,7 @@ err:
 void
 bread(daddr_t blkno, char *buf, int size)
 {
-	int	osize = size;
+	int	osize = size, idx;
 	daddr_t oblkno = blkno;
 	char   *obuf = buf;
 	daddr_t numBlocks = howmany(size, dev_bsize);
@@ -286,11 +287,12 @@ bread(daddr_t blkno, char *buf, int size)
 	}
 
 retry:
-	while(size > 0) {
+	idx = 0;
+	while (size > 0) {
 		int	i;
 
 		for (i = 0; i < cachebufs; i++) {
-			union cdesc *curr = &cdesc[i];
+			union cdesc *curr = &cdesc[(i + idx) % cachebufs];
 
 #ifdef DIAGNOSTICS
 			if (curr->cd_owner) {
@@ -311,31 +313,34 @@ retry:
 			    blkno < curr->cd_blkend) {
 				/* Number of data blocks to be copied */
 				int toCopy = MIN(size,
-				    (curr->cd_blkend - blkno) * dev_bsize);
+				    (curr->cd_blkend - blkno) << dev_bshift);
 #ifdef DIAGNOSTICS
-				if (toCopy <= 0 ||
-				    toCopy > nblksread * dev_bsize) {
+				if (toCopy <= 0 || toCopy > CSIZE) {
 					fprintf(stderr, "toCopy %d !\n",
 					    toCopy);
 					dumpabort(0);
 				}
-				if (CDATA(i) + (blkno - curr->cd_blkstart) *
-			   	    dev_bsize < CDATA(i) ||
-			   	    CDATA(i) + (blkno - curr->cd_blkstart) *
-			   	    dev_bsize >
-				    CDATA(i) + nblksread * dev_bsize) {
+				if (CDATA(curr) +
+				    ((blkno - curr->cd_blkstart) <<
+				    dev_bsize) < CDATA(curr) ||
+			   	    CDATA(curr) +
+				    ((blkno - curr->cd_blkstart) <<
+			   	    dev_bsize) > CDATA(curr) + CSIZE) {
 					fprintf(stderr, "%p < %p !!!\n",
-				   	   CDATA(i) + (blkno -
-						curr->cd_blkstart) * dev_bsize,
-					   CDATA(i));
-					fprintf(stderr, "cdesc[i].cd_blkstart %d "
-					    "blkno %d dev_bsize %ld\n",
-				   	    curr->cd_blkstart, blkno, dev_bsize);
+				   	   CDATA(curr) + ((blkno -
+					   curr->cd_blkstart) << dev_bshift),
+					   CDATA(curr));
+					fprintf(stderr,
+					    "cdesc[i].cd_blkstart %lld "
+					    "blkno %lld dev_bsize %ld\n",
+				   	    (long long)curr->cd_blkstart,
+					    (long long)blkno,
+					    dev_bsize);
 					dumpabort(0);
 				}
 #endif
-				memcpy(buf, CDATA(i) +
-				    (blkno - curr->cd_blkstart) * dev_bsize,
+				memcpy(buf, CDATA(curr) +
+				    ((blkno - curr->cd_blkstart) << dev_bsize),
 			   	    toCopy);
 
 				buf 	+= toCopy;
@@ -372,15 +377,13 @@ retry:
 			rawread(oblkno, obuf, osize);
 			break;
 		} else {
-			int	idx;
 			ssize_t	rsize;
 			daddr_t	blockBlkNo;
 
 			blockBlkNo = (blkno / nblksread) * nblksread;
 			idx = findlru();
 			rsize = MIN(nblksread,
-			    ufsib->ufs_dsize - blockBlkNo) *
-			    dev_bsize;
+			    ufsib->ufs_dsize - blockBlkNo) << dev_bshift;
 
 #ifdef DIAGNOSTICS
 			if (cdesc[idx].cd_owner)
@@ -391,6 +394,7 @@ retry:
 #endif
 			cdesc[idx].cd_time = cheader->cd_count++;
 			cdesc[idx].cd_blkstart = blockBlkNo;
+			cdesc[idx].cd_blkend = 0;
 			cdesc[idx].cd_blocksRead = 0;
 
 			if (lseek(diskfd, ((off_t) blockBlkNo << dev_bshift),
@@ -399,7 +403,8 @@ retry:
 				    strerror(errno));
 				rsize = -1;
 			} else {
-				rsize = read(diskfd, CDATA(idx), rsize);
+				rsize = read(diskfd,
+				    CDATA(&cdesc[idx]), rsize);
 				if (rsize < 0) {
 					msg("readBlocks: read fails: %s\n",
 					    strerror(errno));
