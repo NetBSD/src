@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.45 1996/05/07 01:08:15 thorpej Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.46 1996/05/15 03:20:22 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -243,9 +243,7 @@ ae_id_card(slot, sc)
 		}
 		break;
 	default:
-#if DIAGNOSTIC
 		printf("Unknown ethernet drsw: %x\n", slottype.drsw);
-#endif
 		sc->vendor = AE_VENDOR_UNKNOWN;
 		return 0;
 	}
@@ -318,8 +316,10 @@ aeprobe(parent, match, aux)
 		sc->nic_addr = addr + GC_NIC_OFFSET;
 		sc->rom_addr = addr + GC_ROM_OFFSET;
 		sc->mem_start = addr + GC_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc)) == 0)
+		if ((memsize = ae_size_card_memory(sc)) == 0) {
+			printf("Failed to determine size of RAM.\n");
 			return 0;
+		}
 
 		/* reset the NIC chip */
 		*((caddr_t) addr + GC_RESET_OFFSET) = (char) zero;
@@ -336,8 +336,10 @@ aeprobe(parent, match, aux)
 		sc->nic_addr = addr + AE_NIC_OFFSET;
 		sc->rom_addr = addr + AE_ROM_OFFSET;
 		sc->mem_start = addr + AE_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc)) == 0)
+		if ((memsize = ae_size_card_memory(sc)) == 0) {
+			printf("Failed to determine size of RAM.\n");
 			return (0);
+		}
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
@@ -363,8 +365,10 @@ aeprobe(parent, match, aux)
 		sc->rom_addr = addr + FE_ROM_OFFSET;
 		sc->nic_addr = addr + AE_NIC_OFFSET;
 		sc->mem_start = addr + AE_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc)) == 0)
+		if ((memsize = ae_size_card_memory(sc)) == 0) {
+			printf("Failed to determine size of RAM.\n");
 			return (0);
+		}
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
