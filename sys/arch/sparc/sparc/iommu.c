@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.52 2001/04/24 04:31:11 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.53 2001/05/21 22:44:08 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -172,6 +172,7 @@ iommu_attach(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 	int node;
+	int js1_implicit_iommu;
 	int i, s;
 	u_int iopte_table_pa;
 	struct pglist mlist;
@@ -179,7 +180,6 @@ iommu_attach(parent, self, aux)
 	vm_page_t m;
 	vaddr_t va;
 
-	iommu_sc = sc;
 	/*
 	 * XXX there is only one iommu, for now -- do not know how to
 	 * address children on others
@@ -188,7 +188,19 @@ iommu_attach(parent, self, aux)
 		printf(" unsupported\n");
 		return;
 	}
+	iommu_sc = sc;
+
+	/* 
+	 * JS1/OF device tree does not have an iommu node and sbus
+	 * node is directly under root.  mainbus_attach detects this
+	 * and calls us with sbus node instead so that we can attach
+	 * implicit iommu and attach that sbus node under it.
+	 */
 	node = ma->ma_node;
+	if (strcmp(getpropstring(node, "name"), "sbus") == 0)
+		js1_implicit_iommu = 1;
+	else
+		js1_implicit_iommu = 0;
 
 	/*
 	 * Map registers into our space. The PROM may have done this
@@ -211,12 +223,14 @@ iommu_attach(parent, self, aux)
 	}
 	sc->sc_reg = (struct iommureg *)bh;
 
-	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
+	sc->sc_hasiocache = js1_implicit_iommu ? 0
+				: node_has_property(node, "cache-coherence?");
 	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
 		sc->sc_hasiocache = 0;
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
-	sc->sc_pagesize = getpropint(node, "page-size", NBPG),
+	sc->sc_pagesize = js1_implicit_iommu ? NBPG
+				: getpropint(node, "page-size", NBPG),
 
 	/*
 	 * Allocate memory for I/O pagetables.
@@ -289,6 +303,30 @@ iommu_attach(parent, self, aux)
 					M_DEVBUF, 0, 0, EX_NOWAIT);
 	if (iommu_dvmamap == NULL)
 		panic("iommu: unable to allocate DVMA map");
+
+	/*
+	 * If we are attaching implicit iommu on JS1/OF we do not have
+	 * an iommu node to traverse, instead mainbus_attach passed us
+	 * sbus node in ma.ma_node.  Attach it as the only iommu child.
+	 */
+	if (js1_implicit_iommu) {
+		struct iommu_attach_args ia;
+		struct iommu_reg sbus_iommu_reg = { 0, 0x10001000, 0x28 };
+
+		bzero(&ia, sizeof ia);
+
+		/* Propagate BUS & DMA tags */
+		ia.iom_bustag = ma->ma_bustag;
+		ia.iom_dmatag = &iommu_dma_tag;
+
+		ia.iom_name = "sbus";
+		ia.iom_node = node;
+		ia.iom_reg = &sbus_iommu_reg;
+		ia.iom_nreg = 1;
+
+		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
+		return;
+	}
 
 	/*
 	 * Loop through ROM children (expect Sbus among them).
