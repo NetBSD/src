@@ -1,4 +1,4 @@
-/*	$NetBSD: nwmmu.S,v 1.1 2001/04/19 06:53:59 matt Exp $	*/
+/*	$NetBSD: nwmmu.S,v 1.2 2001/04/20 16:09:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,8 @@
 #include <arm/pte.h>
 
 	.text
-ENTRY_NP(kernel_text_start)
+
+ENTRY_NP(kernel_text)
 
 ASENTRY_NP(nwstart)
 	mov	r6, #0x7c000000
@@ -119,7 +120,6 @@ L3:
 	mcr	15, 0, r2, c1, c0, 0
 
 	/* jump to kernel space */
-	add	pc, pc, #0xf0000000
 	mov	r0, r0
 	mov	r0, r0
 	mov	r0, r0
@@ -134,4 +134,6 @@ L3:
 	mov	r0, #0x0200
 
 	/* now startup for real */
-	b	start
+	ldr	pc, Lstart
+
+Lstart:	.long	start
