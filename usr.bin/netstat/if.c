@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.17 1996/06/04 20:09:03 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.18 1996/06/04 20:22:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.17 1996/06/04 20:09:03 cgd Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.18 1996/06/04 20:22:23 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ intpr(interval, ifnetaddr)
 	}
 }
 
-#define	MAXIF	10
+#define	MAXIF	100
 struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
 	int	ift_ip;			/* input packets */
