@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.25 1998/02/03 02:02:13 mycroft Exp $	*/
+/*	$NetBSD: ls.c,v 1.26 1998/05/16 15:12:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.25 1998/02/03 02:02:13 mycroft Exp $");
+__RCSID("$NetBSD: ls.c,v 1.26 1998/05/16 15:12:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,6 @@ int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
 int f_longform;			/* long listing format */
-int f_newline;			/* if precede with newline */
 int f_nonprint;			/* show unprintables as ? */
 int f_nosort;			/* don't sort output */
 int f_numericonly;		/* don't convert uid/gid to name */
@@ -104,7 +103,6 @@ int f_sectime;			/* print the real time for all files */
 int f_singlecol;		/* use single column output */
 int f_size;			/* list size in short listing */
 int f_statustime;		/* use time of last mode change */
-int f_dirname;			/* if precede with directory name */
 int f_type;			/* add type character for non-regular files */
 int f_whiteout;			/* show whiteout entries */
 
@@ -399,14 +397,14 @@ display(p, list)
 	DISPLAY d;
 	FTSENT *cur;
 	NAMES *np;
-	u_quad_t maxsize;
-	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
-	u_long maxmajor, maxminor;
-	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
-	int entries, needstats;
-	char *user, *group, buf[20];	/* 32 bits == 10 digits */
+	u_int64_t btotal, maxblock, maxsize;
+	int maxinode, maxnlink, maxmajor, maxminor;
+	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup, maxlen;
+	int maxuser, needstats;
+	char *user, *group;
+	char buf[21];			/* 64 bits == 20 digits, +1 for NUL */
 	char nuser[12], ngroup[12];
-	char *flags = NULL;	/* pacify gcc */
+	char *flags = NULL;
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */
@@ -425,10 +423,10 @@ display(p, list)
 
 	needstats = f_inode || f_longform || f_size;
 	flen = 0;
-	btotal = maxblock = maxinode = maxlen = maxnlink = 0;
+	maxinode = maxnlink = 0;
 	bcfile = 0;
-	maxuser = maxgroup = maxflags = 0;
-	maxsize = 0;
+	maxuser = maxgroup = maxflags = maxlen = 0;
+	btotal = maxblock = maxsize = 0;
 	maxmajor = maxminor = 0;
 	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
@@ -527,21 +525,21 @@ display(p, list)
 	d.maxlen = maxlen;
 	if (needstats) {
 		d.btotal = btotal;
-		(void)snprintf(buf, sizeof(buf), "%lu", maxblock);
+		(void)snprintf(buf, sizeof(buf), "%qu", (long long)maxblock);
 		d.s_block = strlen(buf);
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
-		(void)snprintf(buf, sizeof(buf), "%lu", maxinode);
+		(void)snprintf(buf, sizeof(buf), "%u", maxinode);
 		d.s_inode = strlen(buf);
-		(void)snprintf(buf, sizeof(buf), "%lu", maxnlink);
+		(void)snprintf(buf, sizeof(buf), "%u", maxnlink);
 		d.s_nlink = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%qu", (long long)maxsize);
 		d.s_size = strlen(buf);
 		d.s_user = maxuser;
 		if (bcfile) {
-			(void)snprintf(buf, sizeof(buf), "%lu", maxmajor);
+			(void)snprintf(buf, sizeof(buf), "%u", maxmajor);
 			d.s_major = strlen(buf);
-			(void)snprintf(buf, sizeof(buf), "%lu", maxminor);
+			(void)snprintf(buf, sizeof(buf), "%u", maxminor);
 			d.s_minor = strlen(buf);
 			if (d.s_major + d.s_minor + 2 > d.s_size)
 				d.s_size = d.s_major + d.s_minor + 2;
