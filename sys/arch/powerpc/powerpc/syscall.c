@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2002/11/15 20:06:03 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.15 2002/11/15 23:19:22 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2002/11/15 20:06:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2002/11/15 23:19:22 manu Exp $");
 
 void
 child_return(void *arg)
@@ -173,6 +173,15 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 		frame->fixreg[FIRSTARG] = rval[0];
 		frame->fixreg[FIRSTARG + 1] = rval[1];
 		frame->cr &= ~0x10000000;
+#ifdef COMPAT_MACH
+		/* 
+		 * For regular system calls, on success,
+		 * the next instruction is skipped 
+		 */
+		if ((frame->fixreg[0] < p->p_emul->e_nsysent)
+		    && (frame->fixreg[0] >= 0))
+			frame->srr0 += 4;
+#endif /* COMPAT_MACH */
 		break;
 	case ERESTART:
 		/*
@@ -270,6 +279,15 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		frame->fixreg[FIRSTARG] = rval[0];
 		frame->fixreg[FIRSTARG + 1] = rval[1];
 		frame->cr &= ~0x10000000;
+#ifdef COMPAT_MACH
+		/* 
+		 * For regular system calls, on success,
+		 * the next instruction is skipped 
+		 */
+		if ((frame->fixreg[0] < p->p_emul->e_nsysent)
+		    && (frame->fixreg[0] >= 0))
+			frame->srr0 += 4;
+#endif /* COMPAT_MACH */
 		break;
 	case ERESTART:
 		/*
