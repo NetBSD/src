@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.113 1999/09/04 09:41:15 simonb Exp $ */
+/*	$NetBSD: st.c,v 1.114 1999/09/30 22:57:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -461,9 +461,9 @@ stattach(parent, self, aux)
 	printf("\n");
 	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
 	if (scsipi_test_unit_ready(sc_link,
-	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
+	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,
-	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE))
+	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE))
 		printf("drive empty\n");
 	else {
 		printf("density code 0x%x, ", st->media_density);
@@ -597,8 +597,8 @@ stopen(dev, flags, mode, p)
 	/*
 	 * Catch any unit attention errors.
 	 */
-	error = scsipi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE |
-	    (stmode == CTRL_MODE ? SCSI_SILENT : 0));
+	error = scsipi_test_unit_ready(sc_link, XS_CTL_IGNORE_MEDIA_CHANGE |
+	    (stmode == CTRL_MODE ? XS_CTL_SILENT : 0));
 	if (error && stmode != CTRL_MODE) {
 		goto bad;
 	}
@@ -772,7 +772,7 @@ st_mount_tape(dev, flags)
 	 * these after doing a Load instruction (with
 	 * the MEDIUM MAY HAVE CHANGED asc/ascq).
 	 */
-	scsipi_test_unit_ready(sc_link, SCSI_SILENT);	/* XXX */
+	scsipi_test_unit_ready(sc_link, XS_CTL_SILENT);	/* XXX */
 
 	/*
 	 * Some devices can't tell you much until they have been
@@ -824,7 +824,7 @@ st_mount_tape(dev, flags)
 		return (error);
 	}
 	scsipi_prevent(sc_link, PR_PREVENT,
-	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 	st->flags &= ~ST_NEW_MOUNT;
 	st->flags |= ST_MOUNTED;
 	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
@@ -849,12 +849,12 @@ st_unmount(st, eject)
 	if (!(st->flags & ST_MOUNTED))
 		return;
 	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
-	st_check_eod(st, FALSE, &nmarks, SCSI_IGNORE_NOT_READY);
-	st_rewind(st, 0, SCSI_IGNORE_NOT_READY);
+	st_check_eod(st, FALSE, &nmarks, XS_CTL_IGNORE_NOT_READY);
+	st_rewind(st, 0, XS_CTL_IGNORE_NOT_READY);
 	scsipi_prevent(sc_link, PR_ALLOW,
-	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 	if (eject)
-		st_load(st, LD_UNLOAD, SCSI_IGNORE_NOT_READY);
+		st_load(st, LD_UNLOAD, XS_CTL_IGNORE_NOT_READY);
 	st->flags &= ~(ST_MOUNTED | ST_NEW_MOUNT);
 	sc_link->flags &= ~SDEV_MEDIA_LOADED;
 }
@@ -1076,7 +1076,7 @@ ststart(v)
 	 * See if there is a buf to do and we are not already
 	 * doing one
 	 */
-	while (sc_link->openings > 0) {
+	while (sc_link->active < sc_link->openings) {
 		/* if a special awaits, let it proceed first */
 		if (sc_link->flags & SDEV_WAITING) {
 			sc_link->flags &= ~SDEV_WAITING;
@@ -1161,10 +1161,10 @@ ststart(v)
 		if ((bp->b_flags & B_READ) == B_WRITE) {
 			cmd.opcode = WRITE;
 			st->flags &= ~ST_FM_WRITTEN;
-			flags = SCSI_DATA_OUT;
+			flags = XS_CTL_DATA_OUT;
 		} else {
 			cmd.opcode = READ;
-			flags = SCSI_DATA_IN;
+			flags = XS_CTL_DATA_IN;
 		}
 
 		/*
@@ -1179,11 +1179,12 @@ ststart(v)
 
 		/*
 		 * go ask the adapter to do all this for us
+		 * XXX Really need NOSLEEP?
 		 */
 		error = scsipi_command(sc_link,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
-		    0, ST_IO_TIME, bp, flags | SCSI_NOSLEEP);
+		    0, ST_IO_TIME, bp, flags | XS_CTL_NOSLEEP | XS_CTL_ASYNC);
 		if (error) {
 			printf("%s: not queued, error %d\n",
 			    st->sc_dev.dv_xname, error);
@@ -1271,7 +1272,7 @@ stioctl(dev, cmd, arg, flag, p)
 		/*
 		 * (to get the current state of READONLY)
 		 */
-		error = st_mode_sense(st, SCSI_SILENT);
+		error = st_mode_sense(st, XS_CTL_SILENT);
 		if (error)
 			break;
 		SC_DEBUG(st->sc_link, SDEV_DB1, ("[ioctl: get status]\n"));
@@ -1498,7 +1499,7 @@ st_read(st, buf, size, flags)
 		_lto3b(size, cmd.len);
 	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)buf, size, 0, ST_IO_TIME, NULL, flags | SCSI_DATA_IN));
+	    (u_char *)buf, size, 0, ST_IO_TIME, NULL, flags | XS_CTL_DATA_IN));
 }
 
 /*
@@ -1531,7 +1532,7 @@ st_read_block_limits(st, flags)
 	 */
 	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
 	if (error)
 		return (error);
 
@@ -1585,7 +1586,7 @@ st_mode_sense(st, flags)
 	 */
 	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsipi_sense, scsipi_sense_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
 	if (error)
 		return (error);
 
@@ -1667,7 +1668,7 @@ st_mode_select(st, flags)
 	 */
 	return (scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsi_select, scsi_select_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_OUT));
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_OUT));
 }
 
 int
@@ -1701,7 +1702,7 @@ st_cmprss(st, onoff)
 	scmd.page = SMS_PAGE_CTRL_CURRENT | 0xf;
 	scmd.length = scsi_dlen;
 
-	flags = SCSI_SILENT;
+	flags = XS_CTL_SILENT;
 
 	/*
 	 * Do the MODE SENSE command...
@@ -1711,7 +1712,7 @@ again:
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
 	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
 
 	if (error) {
 		if (scmd.byte2 != SMS_DBD) {
@@ -1797,7 +1798,7 @@ again:
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&mcmd, sizeof(mcmd),
 	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_OUT);
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_OUT);
 
 	if (error && (scmd.page & SMS_PAGE_CODE) == 0xf) {
 		/*
@@ -2099,7 +2100,7 @@ st_rdpos(st, hard, blkptr)
 	/*
 	 * First flush any pending writes...
 	 */
-	error = st_write_filemarks(st, 0, SCSI_SILENT);
+	error = st_write_filemarks(st, 0, XS_CTL_SILENT);
 
 	/*
 	 * The latter case is for 'write protected' tapes
@@ -2118,7 +2119,7 @@ st_rdpos(st, hard, blkptr)
 	error = scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
-	    SCSI_SILENT | SCSI_DATA_IN);
+	    XS_CTL_SILENT | XS_CTL_DATA_IN);
 
 	if (error == 0) {
 #if	0
@@ -2149,7 +2150,7 @@ st_setpos(st, hard, blkptr)
 	 * we're not supposed to have to worry about this,
 	 * but let's be untrusting.
 	 */
-	error = st_write_filemarks(st, 0, SCSI_SILENT);
+	error = st_write_filemarks(st, 0, XS_CTL_SILENT);
 
 	/*
 	 * The latter case is for 'write protected' tapes
@@ -2189,7 +2190,7 @@ st_interpret_sense(xs)
 	struct buf *bp = xs->bp;
 	struct st_softc *st = sc_link->device_softc;
 	int retval = SCSIRET_CONTINUE;
-	int doprint = ((xs->flags & SCSI_SILENT) == 0);
+	int doprint = ((xs->xs_control & XS_CTL_SILENT) == 0);
 	u_int8_t key;
 	int32_t info;
 
@@ -2237,7 +2238,7 @@ st_interpret_sense(xs)
 			if (bp)
 				bp->b_resid = xs->resid;
 			if (sense->error_code & SSD_ERRCODE_VALID &&
-			    (xs->flags & SCSI_SILENT) == 0)
+			    (xs->xs_control & XS_CTL_SILENT) == 0)
 				printf("%s: block wrong size, %d blocks "
 				    "residual\n", st->sc_dev.dv_xname, info);
 
@@ -2296,7 +2297,7 @@ st_interpret_sense(xs)
 				 * The tape record was bigger than the read
 				 * we issued.
 				 */
-				if ((xs->flags & SCSI_SILENT) == 0) {
+				if ((xs->xs_control & XS_CTL_SILENT) == 0) {
 					printf("%s: %d-byte tape record too big"
 					    " for %d-byte user buffer\n",
 					    st->sc_dev.dv_xname,
@@ -2422,7 +2423,7 @@ st_touch_tape(st)
 		}
 		if ((error = st_mode_select(st, 0)) != 0)
 			goto bad;
-		st_read(st, buf, readsize, SCSI_SILENT);	/* XXX */
+		st_read(st, buf, readsize, XS_CTL_SILENT);	/* XXX */
 		if ((error = st_rewind(st, 0, 0)) != 0) {
 bad:			free(buf, M_TEMP);
 			return (error);
