@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.53.2.2 2001/01/23 06:34:57 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.53.2.3 2001/04/30 16:23:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,19 +74,15 @@
 
 extern vm_map_t kernel_map;
 
-#ifdef USER_LDT
-int i386_get_ldt __P((struct proc *, char *, register_t *));
-int i386_set_ldt __P((struct proc *, char *, register_t *));
-#endif
-int i386_iopl __P((struct proc *, char *, register_t *));
-int i386_get_ioperm __P((struct proc *, char *, register_t *));
-int i386_set_ioperm __P((struct proc *, char *, register_t *));
+int i386_iopl __P((struct proc *, void *, register_t *));
+int i386_get_ioperm __P((struct proc *, void *, register_t *));
+int i386_set_ioperm __P((struct proc *, void *, register_t *));
 
 #ifdef USER_LDT
 int
 i386_get_ldt(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
@@ -135,7 +131,7 @@ i386_get_ldt(p, args, retval)
 int
 i386_set_ldt(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error, i, n;
@@ -294,7 +290,7 @@ out:
 int
 i386_iopl(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
@@ -321,7 +317,7 @@ i386_iopl(p, args, retval)
 int
 i386_get_ioperm(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
@@ -337,7 +333,7 @@ i386_get_ioperm(p, args, retval)
 int
 i386_set_ioperm(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.13 2001/01/23 06:34:53 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.300.2.14 2001/04/30 16:23:08 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.13 $"
+#ident 		"GENERIC-$Revision: 1.300.2.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -58,7 +58,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -75,6 +75,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -472,10 +473,12 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 cac*	at eisa?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-ld*	at cac? unit ?			# Compaq array disk devices
-ld*	at twe? unit ?			# 3ware array disk devices
 
+ld*	at cac? unit ?			# logical disk devices
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -689,6 +692,9 @@ scsibus* at umass? channel ?
 # USB audio
 uaudio*	at uhub? port ? configuration ?
 
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -704,6 +710,9 @@ ucom*	at uftdi? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ? 
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
@@ -740,6 +749,7 @@ eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
+yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -769,6 +779,7 @@ opl*	at fms?
 opl*	at sb?
 opl*	at sv?
 opl*	at wss?
+opl*	at yds?
 opl*	at ym?
 
 # Audio support
@@ -792,6 +803,7 @@ audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
 audio*	at wss?
+audio*	at yds?
 audio*	at ym?
 
 # MPU 401 UARTs
@@ -799,6 +811,7 @@ audio*	at ym?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?
+mpu*	at yds?
 mpu*	at ym?
 
 # MIDI support
@@ -810,6 +823,7 @@ midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB1 MIDI port
+midi*   at umidi?               # USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -839,6 +853,8 @@ wsmouse*	at mms? mux 0
 
 
 # Joysticks
+
+#joy*		at pnpbios? index ?	# Game port
 
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.135.2.8 2001/01/23 06:34:53 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.135.2.9 2001/04/30 16:23:08 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -71,7 +71,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -369,10 +369,12 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # RAID controllers and devices
 cac*	at eisa?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-ld*	at cac? unit ?			# Compaq array disk devices
-ld*	at twe? unit ?			# 3ware array disk devices
 
+ld*	at cac? unit ?			# logical disk devices
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.32 2001/03/16 05:00:48 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.33 2001/04/30 16:23:11 sommerfeld Exp $	*/
 
 /*
  *
@@ -691,8 +691,8 @@ pmap_unmap_ptes(pmap)
  * p m a p   k e n t e r   f u n c t i o n s
  *
  * functions to quickly enter/remove pages from the kernel address
- * space.   pmap_kremove/pmap_kenter_pgs are exported to MI kernel.
- * we make use of the recursive PTE mappings.
+ * space.   pmap_kremove is exported to MI kernel.  we make use of
+ * the recursive PTE mappings.
  */
 
 /*
@@ -774,40 +774,6 @@ pmap_kremove(va, len)
 			      va);
 #endif
 		pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
-	}
-	pmap_tlb_shootnow(cpumask);
-}
-
-/*
- * pmap_kenter_pgs: enter in a number of vm_pages
- */
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	pt_entry_t *pte, opte;
-	int32_t cpumask = 0;
-	vaddr_t tva;
-	int lcv;
-
-	for (lcv = 0 ; lcv < npgs ; lcv++) {
-		tva = va + lcv * PAGE_SIZE;
-		if (va < VM_MIN_KERNEL_ADDRESS)
-			pte = vtopte(tva);
-		else
-			pte = kvtopte(tva);
-		opte = *pte;
-#ifdef LARGEPAGES
-		/* XXX For now... */
-		if (opte & PG_PS)
-			panic("pmap_kenter_pgs: PG_PS");
-#endif
-		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;
-		if (pmap_valid_entry(opte))
-			pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
 	}
 	pmap_tlb_shootnow(cpumask);
 }
@@ -1334,6 +1300,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_update();
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -2046,6 +2013,7 @@ pmap_map(va, spa, epa, prot)
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
+	pmap_update();
 	return va;
 }
 
@@ -2079,13 +2047,13 @@ pmap_zero_page(pa)
 }
 
 /*
- * pmap_zero_page_uncached: the same, except uncached.  Returns
- * TRUE if the page was zero'd, FALSE if we aborted for some
- * reason.
+ * pmap_pagezeroidle: the same, for the idle loop page zero'er.
+ * Returns TRUE if the page was zero'd, FALSE if we aborted for
+ * some reason.
  */
 
 boolean_t
-pmap_zero_page_uncached(pa)
+pmap_pageidlezero(pa)
 	paddr_t pa;
 {
 #ifdef MULTIPROCESSOR
@@ -2101,8 +2069,7 @@ pmap_zero_page_uncached(pa)
 		panic("pmap_zero_page_uncached: lock botch");
 #endif
 
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
-	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
 	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
@@ -2553,7 +2520,7 @@ pmap_page_remove(pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
-	struct pv_entry *pve;
+	struct pv_entry *pve, *npve, **prevptr, *killlist = NULL;
 	pt_entry_t *ptes, opte;
 	int32_t cpumask = 0;
 
@@ -2575,7 +2542,9 @@ pmap_page_remove(pg)
 	/* XXX: needed if we hold head->map lock? */
 	simple_lock(&pvh->pvh_lock);
 
-	for (pve = pvh->pvh_list ; pve != NULL ; pve = pve->pv_next) {
+	for (prevptr = &pvh->pvh_list, pve = pvh->pvh_list;
+	     pve != NULL; pve = npve) {
+		npve = pve->pv_next;
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
@@ -2596,6 +2565,18 @@ pmap_page_remove(pg)
 		}
 #endif
 
+		opte = ptes[i386_btop(pve->pv_va)];
+#if 1 /* XXX Work-around for kern/12554. */
+		if (opte & PG_W) {
+#ifdef DEBUG
+			printf("pmap_page_remove: wired mapping for "
+			    "0x%lx (wire count %d) not removed\n",
+			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
+#endif
+			prevptr = &pve->pv_next;
+			continue;
+		}
+#endif /* kern/12554 */
 		/* atomically save the old PTE and zap! it */
 		opte = i386_atomic_testset_ul(&ptes[i386_btop(pve->pv_va)], 0);
 
@@ -2638,8 +2619,11 @@ pmap_page_remove(pg)
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
+		*prevptr = npve;			/* remove it */
+		pve->pv_next = killlist;		/* mark it for death */
+		killlist = pve;
 	}
-	pmap_free_pvs(NULL, pvh->pvh_list);
+	pmap_free_pvs(NULL, killlist);
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();

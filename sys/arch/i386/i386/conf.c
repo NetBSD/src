@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.135.2.2 2001/01/23 06:34:56 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.135.2.3 2001/04/30 16:23:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ bdev_decl(raid);
 bdev_decl(md);
 #include "ld.h"
 bdev_decl(ld);
+#include "ed_mca.h"
+bdev_decl(edmca);
 
 struct bdevsw	bdevsw[] =
 {
@@ -96,42 +98,9 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
 	bdev_disk_init(NLD,ld),		/* 19: logical disk */
+	bdev_disk_init(NED_MCA,edmca),	/* 20: PS/2 ESDI disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
-
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
-
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl */
-#define cdev_joy_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl, poll -- XXX should be a generic device */
-#define cdev_ocis_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
-        (dev_type_mmap((*))) enodev, 0 }
-#define cdev_apm_init cdev_ocis_init
-
-/* open, close, read, ioctl */
-#define cdev_satlink_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
 
 #include <dev/sysmon/sysmonconf.h>
 cdev_decl(sysmon);
@@ -242,41 +211,6 @@ cdev_decl(esh_fp);
 cdev_decl(scsibus);
 #include "bktr.h"
 
-/* open, close, ioctl */
-#define cdev_i4bctl_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4brbch_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4btel_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
-
-/* open, close, read, ioctl */
-#define cdev_i4btrc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl, poll */
-#define cdev_i4b_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }	
-
 #include "i4b.h"
 #include "i4bctl.h"
 #include "i4btrc.h"
@@ -289,15 +223,15 @@ cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
 /* open, close, read, write, ioctl, mmap */
-#define cdev_vmegen_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, dev_init(c,n,mmap) }
+#define cdev_vmegen_init(c,n)	cdev__ocrwim_init(c,n)
 
 #include "vmegeneric.h"
 cdev_decl(vmegeneric);
 #include "iop.h"
 cdev_decl(iop);
+#include "mlx.h"
+cdev_decl(mlx);
+cdev_decl(edmca);
 
 #include <altq/altqconf.h>
 
@@ -388,6 +322,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
 	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
 	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
+	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
+	cdev_disk_init(NED_MCA,edmca),	/* 79: PS/2 ESDI disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -507,6 +443,8 @@ static int chrtoblktbl[] = {
 	/* 75 */	NODEV,
 	/* 76 */	NODEV,
 	/* 77 */	NODEV,
+	/* 78 */	NODEV,
+	/* 79 */	20,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.20 2001/01/10 04:38:33 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.21 2001/04/30 16:23:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -348,9 +348,8 @@ int	math_emulate __P((struct trapframe *));
 #endif
 #ifdef USER_LDT
 /* sys_machdep.h */
-void	i386_user_cleanup __P((struct pcb *));
-int	i386_get_ldt __P((struct proc *, char *, register_t *));
-int	i386_set_ldt __P((struct proc *, char *, register_t *));
+int	i386_get_ldt __P((struct proc *, void *, register_t *));
+int	i386_set_ldt __P((struct proc *, void *, register_t *));
 #endif
 
 /* isa_machdep.c */

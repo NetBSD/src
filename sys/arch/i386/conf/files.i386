@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.147.2.11 2001/03/16 05:00:46 sommerfeld Exp $
+#	$NetBSD: files.i386,v 1.147.2.12 2001/04/30 16:23:09 sommerfeld Exp $
 #
 # new style config file for i386 architecture
 #
@@ -78,6 +78,7 @@ file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
+file	arch/i386/i386/softintr.c
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
@@ -155,6 +156,7 @@ file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
 defopt	PCI_CONF_MODE
@@ -176,6 +178,11 @@ file	arch/i386/pci/pceb.c		pceb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
+
+# PCI-MCA bridges
+device	pcmb: mcabus
+attach	pcmb at pci
+file	arch/i386/pci/pcmb.c		pcmb
 
 # Game adapter (joystick)
 device	joy
@@ -283,6 +290,8 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 device	mca {[slot = -1]} : bioscall
 include	"dev/mca/files.mca"
 file	arch/i386/mca/mca_machdep.c	mca
+
+major	{ ed = 20 }
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp
