@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.189 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.190 2003/12/31 02:40:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.189 2003/11/26 08:36:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.190 2003/12/31 02:40:26 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -176,8 +176,7 @@ void MachFPTrap(u_int32_t, u_int32_t, u_int32_t, struct frame *);	/* XXX */
  * which will be called the very first time when child gets running.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
@@ -205,12 +204,8 @@ child_return(arg)
  * interrupts as a part of real interrupt processing.
  */
 void
-trap(status, cause, vaddr, opc, frame)
-	unsigned status;
-	unsigned cause;
-	unsigned vaddr;
-	unsigned opc;
-	struct trapframe *frame;
+trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
+    struct trapframe *frame)
 {
 	int type;
 	struct lwp *l = curlwp;
@@ -601,7 +596,7 @@ trap(status, cause, vaddr, opc, frame)
  * Software (low priority) network interrupt. i.e. softnet().
  */
 void
-netintr()
+netintr(void)
 {
 #define DONETISR(bit, fn)			\
 	do {					\
@@ -610,7 +605,9 @@ netintr()
 	} while (0)
 
 	int n;
-	n = netisr; netisr = 0;
+
+	n = netisr;
+	netisr = 0;
 
 #ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
 	intrcnt[SOFTNET_INTR]++;
@@ -627,8 +624,7 @@ netintr()
  * to make involuntary context switch (preemption).
  */
 void
-ast(pc)
-	unsigned pc;		/* program counter where to continue */
+ast(unsigned pc)	/* pc is program counter where to continue */
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -665,8 +661,7 @@ ast(pc)
  * resuming execution, and then restoring the old instruction.
  */
 int
-mips_singlestep(l)
-	struct lwp *l;
+mips_singlestep(struct lwp *l)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 	struct proc *p = l->l_proc;
@@ -723,10 +718,10 @@ mips_singlestep(l)
 mips_reg_t kdbrpeek(vaddr_t);
 
 int
-kdbpeek(addr)
-	vaddr_t addr;
+kdbpeek(vaddr_t addr)
 {
 	int rc;
+
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %lx\n", addr);
 		/* We might have been called from DDB, so do not go there. */
@@ -742,10 +737,10 @@ kdbpeek(addr)
 }
 
 mips_reg_t
-kdbrpeek(addr)
-	vaddr_t addr;
+kdbrpeek(vaddr_t addr)
 {
 	mips_reg_t rc;
+
 	if (addr & (sizeof(mips_reg_t) - 1)) {
 		printf("kdbrpeek: unaligned address %lx\n", addr);
 		/* We might have been called from DDB, so do not go there. */
@@ -793,10 +788,9 @@ void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
  * the console, or both.
  */
 void
-stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
-	int a0, a1, a2, a3;
-	u_int  pc, sp, fp, ra;
-	void (*printfn)(const char*, ...);
+stacktrace_subr(int a0, int a1, int a2, int a3,
+    u_int pc, u_int sp, u_int fp, u_int ra,
+    void (*printfn)(const char*, ...))
 {
 	unsigned va, subr;
 	unsigned instr, mask;
@@ -1034,5 +1028,4 @@ fn_name(unsigned addr)
 }
 
 #endif /* DEBUG */
-
 #endif /* DDB_TRACE */
