@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.4 2001/07/17 20:13:55 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.5 2001/07/20 21:23:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,11 +38,6 @@
 
 
 #include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <ucontext.h>
-#include <sys/queue.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
