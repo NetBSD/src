@@ -1,10 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.4 1997/10/17 14:53:18 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.5 1997/10/25 06:58:29 lukem Exp $
 # Original from Freebsd, no rcs id.
 
 LIBINSTALL != cd ${.CURDIR}/../lib;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-CFLAGS+=-I${.CURDIR}/../lib
-CPPFLAGS+=${DEBUG}
+CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG}
 DPADD+=	${LIBINSTALL}/libinstall.a
 LDADD+=	-L${LIBINSTALL} -linstall
 

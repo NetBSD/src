@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.clnt,v 1.3 1995/07/25 22:20:19 gwr Exp $
+#	$NetBSD: Makefile.clnt,v 1.4 1997/10/25 06:58:39 lukem Exp $
 
 #	This Makefile builds a client used for testing.
 
-CFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
+CPPFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
 
 PROG=	clnt.pcnfsd
 SRCS=	pcnfsd_test.c pcnfsd_clnt.c pcnfsd_xdr.c

@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/18 06:42:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/25 06:58:38 lukem Exp $
 
-WARNS?=	0
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
 MLINKS= pcnfsd.8 rpc.pcnfsd.8
-CFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
+CPPFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
 
 SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 	pcnfsd_cache.c pcnfsd_print.c pcnfsd_svc.c pcnfsd_xdr.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 1997/07/13 20:42:17 cjs Exp $
+#	$NetBSD: Makefile,v 1.33 1997/10/25 06:58:47 lukem Exp $
 #
 #  NetBSD Makefile
 #
@@ -24,7 +24,7 @@ PROG=	sendmail
 # spiral snail, but it will work.
 DBMDEF=	-DNEWDB -DNIS
 
-CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO -DTCPWRAPPERS
+CPPFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO -DTCPWRAPPERS
 LDADD+=-lwrap
 DPADD+=${LIBWRAP}
 

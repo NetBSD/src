@@ -3,7 +3,7 @@
 BINDIR=	/usr/libexec
 PROG=	smrsh
 MAN=	smrsh.8
-CFLAGS+=-I${.CURDIR}/../src -DNDBM -DNEWDB
-CFLAGS+=-DCMDDIR=\"/usr/libexec/sm.bin\"
+CPPFLAGS+=-I${.CURDIR}/../src -DNDBM -DNEWDB
+CPPFLAGS+=-DCMDDIR=\"/usr/libexec/sm.bin\"
 
 .include <bsd.prog.mk>
