@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.35 1999/03/29 17:01:49 hubertf Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.36 1999/06/26 00:41:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.35 1999/03/29 17:01:49 hubertf Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.36 1999/06/26 00:41:39 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,7 +494,7 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	char *from_name, *to_name;
 	off_t size;
 {
-	int nr, nw;
+	ssize_t nr, nw;
 	int serrno;
 	char *p;
 	char buf[MAXBSIZE];
@@ -511,18 +511,31 @@ copy(from_fd, from_name, to_fd, to_name, size)
 		 */
 		if (size <= 8 * 1048576) {
 			if ((p = mmap(NULL, (size_t)size, PROT_READ,
-			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == (char *)-1)
-				err(1, "%s", from_name);
-			if (write(to_fd, p, size) != size)
-				err(1, "%s", to_name);
+			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == MAP_FAILED) {
+				serrno = errno;
+				(void)unlink(to_name);
+				errx(1, "%s: %s", from_name, strerror(serrno));
+			}
+			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1) {
+				serrno = errno;
+				(void)unlink(to_name);
+				errx(1, "madvise: %s", strerror(serrno));
+			}
+			if (write(to_fd, p, size) != size) {
+				serrno = errno;
+				(void)unlink(to_name);
+				errx(1, "%s: %s",
+				    to_name, strerror(serrno));
+			}
 		} else {
-			while ((nr = read(from_fd, buf, sizeof(buf))) > 0)
+			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
 				if ((nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
 					errx(1, "%s: %s",
 					    to_name, strerror(nw > 0 ? EIO : serrno));
 				}
+			}
 			if (nr != 0) {
 				serrno = errno;
 				(void)unlink(to_name);
