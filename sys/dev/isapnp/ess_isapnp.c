@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.3 1999/03/19 01:21:24 mycroft Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.4 1999/03/22 09:44:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -79,7 +79,9 @@ ess_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_ess_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_ess_devinfo, &variant));
 }
 
 

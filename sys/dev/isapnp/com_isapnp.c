@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.14 1998/09/18 14:38:48 enami Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.15 1999/03/22 09:44:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,9 @@ com_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_com_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_com_devinfo, &variant));
 }
 
 void

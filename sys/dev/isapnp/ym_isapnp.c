@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.6 1999/02/23 21:16:27 nathanw Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.7 1999/03/22 09:44:15 mycroft Exp $ */
 
 
 /*
@@ -87,7 +87,9 @@ ym_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_ym_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_ym_devinfo, &variant));
 }
 
 /*

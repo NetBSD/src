@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.4 1998/07/23 19:30:45 christos Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.5 1999/03/22 09:44:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -97,7 +97,9 @@ pcic_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_pcic_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_pcic_devinfo, &variant));
 }
 
 void

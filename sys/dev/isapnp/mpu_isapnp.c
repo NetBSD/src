@@ -44,7 +44,9 @@ mpu_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return (isapnp_devmatch(aux, &isapnp_mpu_devinfo));
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_mpu_devinfo, &variant));
 }
 
 void
