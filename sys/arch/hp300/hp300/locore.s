@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 11/14/93
- *	$Id: locore.s,v 1.20 1994/05/23 06:15:00 mycroft Exp $
+ *	$Id: locore.s,v 1.21 1994/05/23 12:16:34 mycroft Exp $
  */
 
 /*
@@ -1288,32 +1288,42 @@ Lmlloop:
  * NOTE: maxlength must be < 64K (due to use of DBcc)
  */
 ENTRY(copyinstr)
+	movl	d2,sp@-			| used for high word of length
 	movl	_curpcb,a0		| current pcb
 	movl	#Lcisflt1,a0@(PCB_ONFAULT) | set up to catch faults
-	movl	sp@(4),a0		| a0 = fromaddr
-	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	sp@(12),a1		| a1 = toaddr
+	moveq	#0,d2
+	movw	sp@(16),d2		| d2 = maxlength MSW
+	movl	sp@(16),d0		| d0 = maxlength
 	jlt	Lcisflt1		| negative count, error
 	jeq	Lcisdone		| zero count, all done
+	movw	sp@(18),d0		| d0 = maxlength LSW
+	jeq	Lcoloop			| LSW is zero
 	subql	#1,d0			| set up for dbeq
 Lcisloop:
 	movsb	a0@+,d1			| grab a byte
 	nop
 	movb	d1,a1@+			| copy it
 	dbeq	d0,Lcisloop		| if !null and more, continue
-	jne	Lcisflt2		| ran out of room, error
+	jne	Lcoloop			| down to zero...
 	moveq	#0,d0			| got a null, all done
 Lcisdone:
-	tstl	sp@(16)			| return length desired?
+	tstl	sp@(20)			| return length desired?
 	jeq	Lcisret			| no, just return
-	subl	sp@(4),a0		| determine how much was copied
-	movl	sp@(16),a1		| return location
+	subl	sp@(8),a0		| determine how much was copied
+	movl	sp@(20),a1		| return location
 	movl	a0,a1@			| stash it
 Lcisret:
 	movl	_curpcb,a0		| current pcb
 	clrl	a0@(PCB_ONFAULT) 	| clear fault addr
+	movl	sp@+,d2
 	rts
+Lcoloop:
+	subql	#1,d2
+	jeq	Lcisflt2
+	movw	#0xffff,d0
+	jra	Lcisloop
 Lcisflt1:
 	moveq	#EFAULT,d0		| copy fault
 	jra	Lcisdone
