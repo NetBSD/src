@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 1997/11/04 03:44:56 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 1997/11/05 03:23:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -805,9 +805,16 @@ ENTRY_NOPROFILE(lev4intr)
 	movl	_C_LABEL(lev4_intrvec),a2
 	jbsr	a2@
 	addql	#4,sp
+	tstl	d0
+	beq	normal_rei
 	moveml	sp@+, #0xFFFF
 	addql	#4,sp
 	rte
+normal_rei:
+	moveml	sp@+, #0xFFFF
+	addql	#4,sp
+	addql	#1,_C_LABEL(cnt)+V_INTR
+	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev5intr)
 	addql	#1,_C_LABEL(intrcnt)+28
