@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.6 1997/02/04 19:24:36 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1997/05/31 23:53:32 thorpej Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -92,6 +92,8 @@ std)
 	mknod stdout		c 53 1	; chmod 666 stdout
 	mknod stderr		c 53 2	; chmod 666 stderr
         mknod ipl		c 42 0	; chmod 600 ipl
+	mknod ipnat		c 42 1	; chmod 600 ipnat
+	mknod ipstate		c 42 2	; chmod 600 ipstate
 	mkdir fd > /dev/null 2>&1
 	(cd fd && eval `echo "" | awk ' BEGIN { \
 		for (i = 0; i < 64; i++) \
