@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 16:18:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2005/01/13 16:35:02 he Exp $
 
-SUBDIR=	layer shadow
+SUBDIR=	shadow layer
 
 .include <bsd.subdir.mk>
