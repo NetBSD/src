@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getcap.c	5.15 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: getcap.c,v 1.7 1994/03/06 07:54:35 cgd Exp $";
+static char *rcsid = "$Id: getcap.c,v 1.8 1994/03/26 02:51:45 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -251,12 +251,15 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 			     != NULL) {
 				free(record);
 				retval = cdbget(capdbp, &record, name);
-				clen = strlen(record);
-				if ((cbuf = malloc(clen + 1)) == NULL) {
-					errno = ENOMEM;
-					return (-2);
+				if (retval < 0) {
+					/* no record available */
+					(void)capdbp->close(capdbp);
+					return (retval); 
 				}
-				memmove(cbuf, record, clen + 1);
+				/* save the data; close frees it */
+				clen = strlen(record);
+				cbuf = malloc(clen + 1);
+				memcpy(cbuf, record, clen + 1);
 				if (capdbp->close(capdbp) < 0) {
 					free(cbuf);
 					return (-2);
