@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.4 1997/10/17 14:54:05 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:35:32 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.4 1997/10/17 14:54:05 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:35:32 mellon Exp $");
 #endif
 #endif
 
@@ -168,7 +168,8 @@ void
 cleanup(int sig)
 {
     /* Nothing to do */
-    exit(1);
+    if(sig)	/* in case this is ever used as a signal handler */
+	exit(1);
 }
 
 static void
