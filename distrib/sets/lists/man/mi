@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.596 2003/07/25 21:48:36 perry Exp $
+# $NetBSD: mi,v 1.597 2003/08/01 02:46:57 tsutsui Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -698,7 +698,6 @@
 ./usr/share/man/cat4/hp300/kmem.0		man-sys-catman
 ./usr/share/man/cat4/hp300/mem.0		man-sys-catman
 ./usr/share/man/cat4/hp300/nhpib.0		man-sys-catman
-./usr/share/man/cat4/hp300/oscsi.0		man-sys-catman
 ./usr/share/man/cat4/hp300/ppi.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rbox.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rd.0			man-sys-catman
@@ -967,6 +966,7 @@
 ./usr/share/man/cat4/sparc/openprom.0		man-sys-catman
 ./usr/share/man/cat4/sparc/tcx.0		man-sys-catman
 ./usr/share/man/cat4/sparc/zx.0			man-sys-catman
+./usr/share/man/cat4/spc.0			man-sys-catman
 ./usr/share/man/cat4/speaker.0			man-sys-catman
 ./usr/share/man/cat4/spic.0			man-sys-catman
 ./usr/share/man/cat4/spkr.0			man-sys-catman
@@ -2513,7 +2513,6 @@
 ./usr/share/man/man4/hp300/kmem.4		man-sys-man
 ./usr/share/man/man4/hp300/mem.4		man-sys-man
 ./usr/share/man/man4/hp300/nhpib.4		man-sys-man
-./usr/share/man/man4/hp300/oscsi.4		man-sys-man
 ./usr/share/man/man4/hp300/ppi.4		man-sys-man
 ./usr/share/man/man4/hp300/rbox.4		man-sys-man
 ./usr/share/man/man4/hp300/rd.4			man-sys-man
@@ -2782,6 +2781,7 @@
 ./usr/share/man/man4/sparc/openprom.4		man-sys-man
 ./usr/share/man/man4/sparc/tcx.4		man-sys-man
 ./usr/share/man/man4/sparc/zx.4			man-sys-man
+./usr/share/man/man4/spc.4			man-sys-man
 ./usr/share/man/man4/speaker.4			man-sys-man
 ./usr/share/man/man4/spic.4			man-sys-man
 ./usr/share/man/man4/spkr.4			man-sys-man
