@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.3.4.2 2000/11/01 23:18:45 tv Exp $
+.\"$NetBSD: hardware,v 1.3.4.3 2001/04/23 22:21:54 he Exp $
 .
 Currently,
 .Nx*M
@@ -18,7 +18,8 @@ Apple made several revisions of this Open Firmware environment, and each has
 various quirks and problems that we must work around. The single hardest step
 of installing
 .Nx*M
-is to set up Open Firmware properly. Open Firmware versions 1.x and 2.0.x act
+is to set up Open Firmware properly. Open Firmware versions 1.0.5 and 
+2.0.x act
 similarly and the same set of instructions applies to them. Open Firmware
 version 2.4 is slightly different with regards to booting. Open Firmware
 version 3 is altogether different.
@@ -44,31 +45,16 @@ faster CPU.
 Find your model from the list below and take note of its Open Firmware
 version:
 .(tag 8n
-.It Em "Open Firmware 1.0.5 or 2.0.x"
+.It Em "Open Firmware 1.0.5"
 .Pp
 .(bullet -compact
-Apple PowerBook (2400, 3400, G3, and G3 Series)
-.It
-Apple PowerMacintosh/Performa (4400, 54xx, 5500, 6300/160, 6360, 6400, and
-6500)
-.It
 Apple PowerMacintosh (7300, 7500 (with CPU upgrade), 7600, 8500, 8600, 9500,
 and 9600)
-.It
-Apple PowerMacintosh (G3
-.Dq Beige
-models with ATI RageII+: Desktop, Mini Tower, and All-in-One)
-.It
-APS Tech (M*Power 604e/200)
-.It
-Motorola StarMax (3000, 4000, 5000, and 5500)
 .It
 Power Computing (PowerBase, PowerCenter, PowerCenter Pro, PowerCurve,
 PowerTower, PowerTower Pro, and PowerWave)
 .It
 UMAX (J700, S900)
-.It
-UMAX (Apus 2000, Apus 3000, C500, and C600)
 .bullet)
 .It Em "Open Firmware 1.1.22"
 .Pp
@@ -82,6 +68,24 @@ that requires an Apple AAUI dongle).
 If your system does not have the Apple PCI Ethernet Card, you may need to
 purchase and install another ethernet card in your Apple Network Server.
 .Note)
+.bullet)
+.It Em "Open Firmware 2.0.x"
+.Pp
+.(bullet -compact
+Apple PowerBook (2400, 3400, G3, and G3 Series)
+.It
+Apple PowerMacintosh/Performa (4400, 54xx, 5500, 6300/160, 6360, 6400, and
+6500)
+.It
+Apple PowerMacintosh (G3
+.Dq Beige
+models with ATI RageII+: Desktop, Mini Tower, and All-in-One)
+.It
+APS Tech (M*Power 604e/200)
+.It
+Motorola StarMax (3000, 4000, 5000, and 5500)
+.It
+UMAX (Apus 2000, Apus 3000, C500, and C600)
 .bullet)
 .It Em "Open Firmware 2.4"
 .Pp
