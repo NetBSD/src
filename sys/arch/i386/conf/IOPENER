@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.13 2001/04/21 21:10:42 fvdl Exp $
+#	$NetBSD: IOPENER,v 1.14 2001/05/10 22:12:38 tron Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.13 $"
+#ident 		"IOPENER-$Revision: 1.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -129,7 +129,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #

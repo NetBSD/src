@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.4 2001/04/21 21:10:43 fvdl Exp $
+#	$NetBSD: LAMB,v 1.5 2001/05/10 22:12:38 tron Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
 #
@@ -141,7 +141,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
