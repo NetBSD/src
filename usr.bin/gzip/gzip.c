@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29 2004/03/28 13:54:44 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.30 2004/03/30 09:15:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29 2004/03/28 13:54:44 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.30 2004/03/30 09:15:07 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -78,7 +78,6 @@ enum filetype {
 };
 
 #ifndef NO_BZIP2_SUPPORT
-#define BZ_NO_STDIO
 #include <bzlib.h>
 
 #define BZ2_SUFFIX	".bz2"
@@ -746,6 +745,7 @@ close_it:
 			maybe_warnx("%s already exists -- skipping", outfile);
 			goto lose;
 		}
+		/* XXX wanna do this for -l in -DSMALL */
 		if (stat(file, &isb) == 0) {
 			if (isb.st_nlink > 1 && lflag == 0) {
 				maybe_warnx("%s has %d other links -- skipping",
@@ -761,6 +761,7 @@ close_it:
 	if (method == FT_BZIP2) {
 		int in, out;
 
+		/* XXX */
 		if (lflag)
 			maybe_errx(1, "no -l with bzip2 files");
 
@@ -785,6 +786,7 @@ close_it:
 		FILE *in, *out;
 		int fd;
 
+		/* XXX */
 		if (lflag)
 			maybe_errx(1, "no -l with Lempel-Ziv files");
 
