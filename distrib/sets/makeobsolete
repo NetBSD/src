@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.5 2000/10/05 00:11:44 tv Exp $
+# $NetBSD: makeobsolete,v 1.6 2000/10/27 13:04:58 fvdl Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -80,9 +80,9 @@ for setname in $lists; do
 	fi
 	if [ -f $setd/lists/$setname/obsolete.${machine} ]; then
 		awk -- '{print $1}' $setd/lists/$setname/obsolete.${machine}
-	fi) | egrep -v '^#' | sort -u > $file
+	fi) | egrep -v '^#' | sort -ru > $file
 	if [ ! -s $file ] ; then
 		rm $file
 	fi
 
-done | egrep -v '^#' | sort -u
+done | egrep -v '^#' | sort -ru
