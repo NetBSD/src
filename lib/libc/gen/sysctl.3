@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.134 2004/03/25 19:36:26 atatat Exp $
+.\"	$NetBSD: sysctl.3,v 1.135 2004/03/25 20:02:04 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd March 24, 2004
+.Dd March 25, 2004
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@ to the numeric version.
 The
 .Fa name
 argument should point to an array of integers large enough to hold the
-MIB. and
+MIB, and
 .Fa namelenp
 should indicate the number of integer slots available.
 Following a successful translation, the size_t indicated by
@@ -149,7 +149,7 @@ will be changed to show the number of slots consumed.
 .Pp
 The
 .Fn sysctlgetmibinfo
-function performs similar name translation similar to
+function performs name translation similar to
 .Fn sysctlnametomib ,
 but also canonicalizes the name (or returns the first erroneous token
 from the string being parsed) into the space indicated by
@@ -179,7 +179,8 @@ is
 .Fn sysctlgetmibinfo
 uses its own internal tree for parsing, and checks it against the
 kernel at each call, to make sure that the name-to-number mapping is
-kept up to date.  The
+kept up to date.
+The
 .Fa v
 argument is ignored in this case.
 If
