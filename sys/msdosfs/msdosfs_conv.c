@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.28 2000/02/28 10:43:08 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.29 2001/01/18 20:28:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -66,7 +66,7 @@
 /*
  * Days in each month in a regular year.
  */
-u_short regyear[] = {
+u_short const regyear[] = {
 	31, 28, 31, 30, 31, 30,
 	31, 31, 30, 31, 30, 31
 };
@@ -74,7 +74,7 @@ u_short regyear[] = {
 /*
  * Days in each month in a leap year.
  */
-u_short leapyear[] = {
+u_short const leapyear[] = {
 	31, 29, 31, 30, 31, 30,
 	31, 31, 30, 31, 30, 31
 };
@@ -104,7 +104,7 @@ unix2dostime(tsp, ddp, dtp, dhp)
 	u_long inc;
 	u_long year;
 	u_long month;
-	u_short *months;
+	const u_short *months;
 
 	/*
 	 * If the time from the last conversion is the same as now, then
@@ -184,7 +184,7 @@ dos2unixtime(dd, dt, dh, tsp)
 	u_long m, month;
 	u_long y, year;
 	u_long days;
-	u_short *months;
+	const u_short *months;
 
 	if (dd == 0) {
 		/*
@@ -229,7 +229,7 @@ dos2unixtime(dd, dt, dh, tsp)
 	tsp->tv_nsec = (dh % 100) * 10000000;
 }
 
-static u_char
+static const u_char
 unix2dos[256] = {
 	0,    0,    0,    0,    0,    0,    0,    0,	/* 00-07 */
 	0,    0,    0,    0,    0,    0,    0,    0,	/* 08-0f */
@@ -265,7 +265,7 @@ unix2dos[256] = {
 	0x9d, 0xeb, 0xe9, 0xea, 0x9a, 0xed, 0xe8, 0x98,	/* f8-ff */
 };
 
-static u_char
+static const u_char
 dos2unix[256] = {
 	0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f,	/* 00-07 */
 	0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f,	/* 08-0f */
@@ -301,7 +301,7 @@ dos2unix[256] = {
 	0xb0, 0xa8, 0xb7, 0xb9, 0xb3, 0xb2, 0x3f, 0x3f,	/* f8-ff */
 };
 
-static u_char
+static const u_char
 u2l[256] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 00-07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 08-0f */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.21 2000/05/27 16:03:56 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.22 2001/01/18 20:28:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -81,7 +81,7 @@ static int cd9660_rrip_cont __P((void *, ISO_RRIP_ANALYZE *));
 static int cd9660_rrip_stop __P((void *, ISO_RRIP_ANALYZE *));
 static int cd9660_rrip_extref __P((void *, ISO_RRIP_ANALYZE *));
 static int cd9660_rrip_loop __P((struct iso_directory_record *,
-				 ISO_RRIP_ANALYZE *, RRIP_TABLE *));
+				 ISO_RRIP_ANALYZE *, const RRIP_TABLE *));
 /*
  * POSIX file attribute
  */
@@ -513,9 +513,9 @@ static int
 cd9660_rrip_loop(isodir, ana, table)
 	struct iso_directory_record *isodir;
 	ISO_RRIP_ANALYZE *ana;
-	RRIP_TABLE *table;
+	const RRIP_TABLE *table;
 {
-	RRIP_TABLE *ptable;
+	const RRIP_TABLE *ptable;
 	ISO_SUSP_HEADER *phead;
 	ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
@@ -602,7 +602,7 @@ cd9660_rrip_loop(isodir, ana, table)
 /*
  * Get Attributes.
  */
-static RRIP_TABLE rrip_table_analyze[] = {
+static const RRIP_TABLE rrip_table_analyze[] = {
 	{ "PX", cd9660_rrip_attr,	cd9660_rrip_defattr,	ISO_SUSP_ATTR },
 	{ "TF", cd9660_rrip_tstamp,	cd9660_rrip_deftstamp,	ISO_SUSP_TSTAMP },
 	{ "PN", cd9660_rrip_device,	0,			ISO_SUSP_DEVICE },
@@ -630,7 +630,7 @@ cd9660_rrip_analyze(isodir, inop, imp)
 /* 
  * Get Alternate Name.
  */
-static RRIP_TABLE rrip_table_getname[] = {
+static const RRIP_TABLE rrip_table_getname[] = {
 	{ "NM", cd9660_rrip_altname,	cd9660_rrip_defname,	ISO_SUSP_ALTNAME },
 	{ "CL", cd9660_rrip_pclink,	0,			ISO_SUSP_CLINK|ISO_SUSP_PLINK },
 	{ "PL", cd9660_rrip_pclink,	0,			ISO_SUSP_CLINK|ISO_SUSP_PLINK },
@@ -650,7 +650,7 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 	struct iso_mnt *imp;
 {
 	ISO_RRIP_ANALYZE analyze;
-	RRIP_TABLE *tab;
+	const RRIP_TABLE *tab;
 	u_char c;
 	
 	analyze.outbuf = outbuf;
@@ -677,7 +677,7 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 /* 
  * Get Symbolic Link.
  */
-static RRIP_TABLE rrip_table_getsymname[] = {
+static const RRIP_TABLE rrip_table_getsymname[] = {
 	{ "SL", cd9660_rrip_slink,	0,			ISO_SUSP_SLINK },
 	{ "RR", cd9660_rrip_idflag,	0,			ISO_SUSP_IDFLAG },
 	{ "CE", cd9660_rrip_cont,	0,			ISO_SUSP_CONT },
@@ -705,7 +705,7 @@ cd9660_rrip_getsymname(isodir, outbuf, outlen, imp)
 	return cd9660_rrip_loop(isodir, &analyze, rrip_table_getsymname) & ISO_SUSP_SLINK;
 }
 
-static RRIP_TABLE rrip_table_extref[] = {
+static const RRIP_TABLE rrip_table_extref[] = {
 	{ "ER", cd9660_rrip_extref,	0,	ISO_SUSP_EXTREF },
 	{ "CE", cd9660_rrip_cont,	0,	ISO_SUSP_CONT },
 	{ "ST", cd9660_rrip_stop,	0,	ISO_SUSP_STOP },

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.17 2001/01/09 23:14:25 rh Exp $ */
+/*      $NetBSD: ac97.c,v 1.18 2001/01/18 20:28:16 jdolecek Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -74,24 +74,24 @@
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
-static struct audio_mixer_enum ac97_on_off = { 2,
+static const struct audio_mixer_enum ac97_on_off = { 2,
 					       { { { AudioNoff } , 0 },
 					         { { AudioNon }  , 1 } }};
 
 
-static struct audio_mixer_enum ac97_mic_select = { 2,
+static const struct audio_mixer_enum ac97_mic_select = { 2,
 					       { { { AudioNmicrophone "0" }, 
 						   0 },
 					         { { AudioNmicrophone "1" }, 
 						   1 } }};
 
-static struct audio_mixer_enum ac97_mono_select = { 2,
+static const struct audio_mixer_enum ac97_mono_select = { 2,
 					       { { { AudioNmixerout },
 						   0 },
 					         { { AudioNmicrophone }, 
 						   1 } }};
 
-static struct audio_mixer_enum ac97_source = { 8,
+static const struct audio_mixer_enum ac97_source = { 8,
 					       { { { AudioNmicrophone } , 0 },
 						 { { AudioNcd }, 1 },
 						 { { "video" }, 2 },
@@ -101,22 +101,22 @@ static struct audio_mixer_enum ac97_source = { 8,
 						 { { AudioNmixerout AudioNmono }, 6 },
 						 { { "phone" }, 7 }}};
 
-static struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume }, 
+static const struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume }, 
 						       2 };
 
 
-static struct audio_mixer_value ac97_volume_mono = { { AudioNvolume }, 
+static const struct audio_mixer_value ac97_volume_mono = { { AudioNvolume }, 
 						     1 };
 
 #define WRAP(a)  &a, sizeof(a)
 
-struct ac97_source_info {
-	char *class;
-	char *device;
-	char *qualifier;
+const struct ac97_source_info {
+	const char *class;
+	const char *device;
+	const char *qualifier;
 	int  type;
 
-	void *info;
+	const void *info;
 	int  info_size;
 
 	u_int8_t  reg;
@@ -314,7 +314,7 @@ static const struct ac97_codecid {
 	{ 0,					NULL,			}
 };
 
-static const char *ac97enhancement[] = {
+static const char * const ac97enhancement[] = {
 	"no 3D stereo",
 	"Analog Devices Phat Stereo",
 	"Creative"
@@ -349,7 +349,7 @@ static const char *ac97enhancement[] = {
 	"Unknown 3D",
 };
 
-static const char *ac97feature[] = {
+static const char * const ac97feature[] = {
 	"mic channel",
 	"reserved",
 	"tone",
@@ -363,7 +363,7 @@ static const char *ac97feature[] = {
 };
 
 
-int ac97_str_equal __P((char *, char *));
+int ac97_str_equal __P((const char *, const char *));
 void ac97_setup_source_info __P((struct ac97_softc *));
 void ac97_read __P((struct ac97_softc *, u_int8_t, u_int16_t *));
 void ac97_setup_defaults __P((struct ac97_softc *));
@@ -421,7 +421,7 @@ ac97_setup_defaults(as)
 	struct ac97_softc *as;
 {
 	int idx;
-	struct ac97_source_info *si;
+	const struct ac97_source_info *si;
 
 	memset(as->shadow_reg, 0, sizeof(as->shadow_reg));
 
@@ -437,7 +437,7 @@ ac97_restore_shadow(self)
 {
 	struct ac97_softc *as = (struct ac97_softc *) self;
 	int idx;
-	struct ac97_source_info *si;
+	const struct ac97_source_info *si;
 
 	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &source_info[idx];
@@ -447,7 +447,7 @@ ac97_restore_shadow(self)
 
 int
 ac97_str_equal(a, b)
-	char *a, *b;
+	const char *a, *b;
 {
 	return ((a == b) || (a && b && (!strcmp(a, b))));
 }
@@ -656,7 +656,7 @@ ac97_query_devinfo(codec_if, dip)
 
 	if (dip->index < as->num_source_info) {
 		struct ac97_source_info *si = &as->source_info[dip->index];
-		char *name;
+		const char *name;
 
 		dip->type = si->type;
 		dip->mixer_class = si->mixer_class;
@@ -720,7 +720,7 @@ ac97_mixer_set_port(codec_if, cp)
 		break;
 	case AUDIO_MIXER_VALUE:
 	{
-		struct audio_mixer_value *value = si->info;
+		const struct audio_mixer_value *value = si->info;
 		u_int16_t  l, r;
 
 		if ((cp->un.value.num_channels <= 0) ||
@@ -816,7 +816,7 @@ ac97_mixer_get_port(codec_if, cp)
 		break;
 	case AUDIO_MIXER_VALUE:
 	{
-		struct audio_mixer_value *value = si->info;
+		const struct audio_mixer_value *value = si->info;
 		u_int16_t  l, r;
 
 		if ((cp->un.value.num_channels <= 0) ||

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.34 2000/09/15 14:13:01 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.35 2001/01/18 20:28:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 
 #include "opt_wsdisplay_compat.h" /* for WSCONS_SUPPORT_PCVTFONTS */
 
-static struct vgafont {
+static const struct vgafont {
 	char name[16];
 	int height;
 	int encoding;
@@ -75,7 +75,7 @@ struct vgascreen {
 	struct vga_config *cfg;
 
 	/* videostate */
-	struct vgafont *fontset1, *fontset2;
+	const struct vgafont *fontset1, *fontset2;
 	/* font data */
 	/* palette */
 
@@ -95,7 +95,7 @@ struct vga_config {
 	bus_space_tag_t vc_biostag;
 	bus_space_handle_t vc_bioshdl;
 
-	struct vgafont *vc_fonts[8];
+	const struct vgafont *vc_fonts[8];
 
 	struct vgascreen *wantedscreen;
 	void (*switchcb) __P((void *, int, int));
@@ -137,7 +137,7 @@ const struct wsdisplay_emulops vga_emulops = {
 /*
  * translate WS(=ANSI) color codes to standard pc ones
  */
-static unsigned char fgansitopc[] = {
+static const unsigned char fgansitopc[] = {
 #ifdef __alpha__
 	/*
 	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
@@ -358,13 +358,13 @@ vga_selectfont(vc, scr, name1, name2)
 	char *name1, *name2; /* NULL: take first found */
 {
 	const struct wsscreen_descr *type = scr->pcs.type;
-	struct vgafont *f1, *f2;
+	const struct vgafont *f1, *f2;
 	int i;
 
 	f1 = f2 = 0;
 
 	for (i = 0; i < 8; i++) {
-		struct vgafont *f = vc->vc_fonts[i];
+		const struct vgafont *f = vc->vc_fonts[i];
 		if (!f || f->height != type->fontheight)
 			continue;
 		if (!f1 &&
@@ -994,7 +994,7 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 #ifdef WSCONS_SUPPORT_PCVTFONTS
 
 #define NOTYET 0xffff
-static u_int16_t pcvt_unichars[0xa0] = {
+static const u_int16_t pcvt_unichars[0xa0] = {
 /* 0 */	_e006U,
 	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 	NOTYET,
@@ -1153,12 +1153,12 @@ vga_iso7_mapchar(int uni, unsigned int *index)
 
 #endif /* WSCONS_SUPPORT_ISO7FONTS */
 
-static int _vga_mapchar __P((void *, struct vgafont *, int, unsigned int *));
+static int _vga_mapchar __P((void *, const struct vgafont *, int, unsigned int *));
 
 static int
 _vga_mapchar(id, font, uni, index)
 	void *id;
-	struct vgafont *font;
+	const struct vgafont *font;
 	int uni;
 	unsigned int *index;
 {

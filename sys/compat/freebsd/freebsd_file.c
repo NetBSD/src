@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.11 2000/12/01 18:03:54 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.12 2001/01/18 20:28:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -56,13 +56,13 @@
 
 #define	ARRAY_LENGTH(array)	(sizeof(array)/sizeof(array[0]))
 
-static char * convert_from_freebsd_mount_type __P((int));
+static const char * convert_from_freebsd_mount_type __P((int));
 
-static char *
+static const char *
 convert_from_freebsd_mount_type(type)
 	int type;
 {
-	static char *netbsd_mount_type[] = {
+	static const char * const netbsd_mount_type[] = {
 		NULL,     /*  0 = MOUNT_NONE */
 		"ffs",	  /*  1 = "Fast" Filesystem */
 		"nfs",	  /*  2 = Network Filesystem */
@@ -103,7 +103,8 @@ freebsd_sys_mount(p, v, retval)
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
 	int error;
-	char *type, *s;
+	const char *type;
+	char *s;
 	caddr_t sg = stackgap_init(p->p_emul);
 	struct sys_mount_args bma;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.66 2000/11/03 09:07:24 toddpw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.67 2001/01/18 20:28:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -87,7 +87,7 @@ struct cfattach ne_pcmcia_ca = {
 	    ne_pcmcia_detach, dp8390_activate
 };
 
-struct ne2000dev {
+static const struct ne2000dev {
     char *name;
     int32_t manufacturer;
     int32_t product;
@@ -492,7 +492,7 @@ ne_pcmcia_attach(parent, self, aux)
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct ne2000dev *ne_dev;
+	const struct ne2000dev *ne_dev;
 	int i;
 	u_int8_t myea[6], *enaddr;
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.60 2001/01/18 13:56:32 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.61 2001/01/18 20:28:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -470,7 +470,7 @@ linux_fakedev(dev)
  * That's not complete, but enough to get an X server running.
  */
 #define NR_KEYS 128
-static u_short plain_map[NR_KEYS] = {
+static const u_short plain_map[NR_KEYS] = {
 	0x0200,	0x001b,	0x0031,	0x0032,	0x0033,	0x0034,	0x0035,	0x0036,
 	0x0037,	0x0038,	0x0039,	0x0030,	0x002d,	0x003d,	0x007f,	0x0009,
 	0x0b71,	0x0b77,	0x0b65,	0x0b72,	0x0b74,	0x0b79,	0x0b75,	0x0b69,
@@ -540,7 +540,7 @@ static u_short plain_map[NR_KEYS] = {
 	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,
 };
 
-u_short *linux_keytabs[] = {
+const u_short * const linux_keytabs[] = {
 	plain_map, shift_map, altgr_map, altgr_map, ctrl_map
 };
 #endif

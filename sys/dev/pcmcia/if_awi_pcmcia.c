@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.17 2000/07/05 02:27:25 onoe Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.18 2001/01/18 20:28:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct cfattach awi_pcmcia_ca = {
 	awi_pcmcia_detach, awi_activate
 };
 
-static struct awi_pcmcia_product {
+static const struct awi_pcmcia_product {
 	u_int32_t	app_vendor;	/* vendor ID */
 	u_int32_t	app_product;	/* product ID */
 	const char	*app_cisinfo[4]; /* CIS information */
@@ -153,14 +153,14 @@ static struct awi_pcmcia_product {
 	  { NULL, NULL, NULL, NULL },	NULL },
 };
 
-static struct awi_pcmcia_product *
+static const struct awi_pcmcia_product *
 	awi_pcmcia_lookup __P((struct pcmcia_attach_args *));
 
-static struct awi_pcmcia_product *
+static const struct awi_pcmcia_product *
 awi_pcmcia_lookup(pa)
 	struct pcmcia_attach_args *pa;
 {
-	struct awi_pcmcia_product *app;
+	const struct awi_pcmcia_product *app;
 
 	for (app = awi_pcmcia_products; app->app_name != NULL; app++) {
 		/* match by vendor/product id */
@@ -295,7 +295,7 @@ awi_pcmcia_attach(parent, self, aux)
 {
 	struct awi_pcmcia_softc *psc = (void *)self;
 	struct awi_softc *sc = &psc->sc_awi;
-	struct awi_pcmcia_product *app;
+	const struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	bus_addr_t memoff;
