@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.59 2002/10/02 16:49:31 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.60 2002/10/04 01:50:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -108,6 +108,8 @@ struct device {
 	enum	devclass dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
 	struct	cfdata *dv_cfdata;	/* config data that found us */
+	struct	cfdriver *dv_cfdriver;	/* our cfdriver */
+	struct	cfattach *dv_cfattach;	/* our cfattach */
 	int	dv_unit;		/* device unit number */
 	char	dv_xname[16];		/* external name (name + unit) */
 	struct	device *dv_parent;	/* pointer to parent device */
@@ -179,7 +181,7 @@ struct cfparent {
  */
 struct cfdata {
 	const char *cf_name;		/* driver name */
-	const struct cfattach *cf_attach;/* config attachment */
+	const char *cf_atname;		/* attachment name */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
 	int	*cf_loc;		/* locators (machine dependent) */
@@ -221,16 +223,19 @@ typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
  * structure array will be shared.
  */
 struct cfattach {
+	const char *ca_name;		/* name of attachment */
+	LIST_ENTRY(cfattach) ca_list;	/* link on cfdriver's list */
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
 	cfmatch_t ca_match;		/* returns a match level */
 	void	(*ca_attach)(struct device *, struct device *, void *);
 	int	(*ca_detach)(struct device *, int);
 	int	(*ca_activate)(struct device *, enum devact);
 };
+LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
-const struct cfattach __CONCAT(name,_ca) = {				\
-	ddsize, matfn, attfn, detfn, actfn				\
+struct cfattach __CONCAT(name,_ca) = {					\
+	___STRING(name), { }, ddsize, matfn, attfn, detfn, actfn	\
 }
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -239,6 +244,7 @@ const struct cfattach __CONCAT(name,_ca) = {				\
 
 struct cfdriver {
 	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
+	struct cfattachlist cd_attach;	/* list of all attachments */
 	void	**cd_devs;		/* devices found */
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
@@ -249,8 +255,17 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-	{ }, NULL, ___STRING(name), class, 0, attrs			\
+	{ }, { }, NULL, ___STRING(name), class, 0, attrs		\
 }
+
+/*
+ * The cfattachinit is a data structure used to associate a list of
+ * cfattach's with cfdrivers as found in the static kernel configuration.
+ */
+struct cfattachinit {
+	const char *cfai_name;		 /* driver name */
+	struct cfattach * const *cfai_list;/* list of attachments */
+};
 
 /*
  * Configuration printing functions, and their return codes.  The second
@@ -286,6 +301,11 @@ void	configure(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
+
+int	config_cfattach_attach(const char *, struct cfattach *);
+int	config_cfattach_detach(const char *, struct cfattach *);
+
+struct cfattach *config_cfattach_lookup(const char *, const char *);
 
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
 struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
