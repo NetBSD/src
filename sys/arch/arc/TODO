@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.10 2000/05/09 07:30:14 soda Exp $
+$NetBSD: TODO,v 1.11 2000/06/09 05:06:25 soda Exp $
 
 To do list (not in any particular order).
 
@@ -8,7 +8,7 @@ To do list (not in any particular order).
     o	Move the RO and WIRED attribute from the pte to the pv table.
 	This saves four instructions in the tlb miss handler.
 
-    o   Boot. Standalone boot program instead of booting the kernel directly?
+    o   Boot. Standalone boot program instead of booting the kernel directly.
 
     o   Find out why bitmap load to S3-928 flashes screen. (X server)
 	Know why (enable linear mode). Need S3 info.
@@ -17,11 +17,46 @@ To do list (not in any particular order).
 
     o	64bit kernel/userland
 
-    o	repair DeskStation and Algor support
+    o	NEC RISCstation 2200 support
 
-	-   64bit device physical address space for Tyne (see OpenBSD pmap.c)
+	-   framebuffer?
 
-	-   requires bus_dma
+	-   interrupt handling?
+
+    o	NEC RISCstation 2250 support
+
+	-   provide static storage for bus_space extent for kernel early stage
+
+	-   make PCI framebuffer as console.
+	    wired map framebuffer memory for kernel early stage.
+
+    o	repair DeskStation support
+
+	-   requires bounce buffer bus_dma for Tyne
+
+	-   set up rPC44 wired TLB entries explicitly
+
+   o	repair Algor support
+
+	-   pci/pbcpcibus.c:vtophysaddr(): pbc_version < V96X_VREV_C0 case
+
+   o	sysinst
+
+   o	install notes
+	do not forget about legal notice for pefo and openbsd.
+
+   o	www: diskless HOW-TO port-arc specific part.
+
+   o	Xserver
+
+	-   VXL		magnum, some RISCserver 2200
+	-   vga/S3	pica, Image RISCstation - OpenBSD's?
+	-   vga/cirrus	some RISCserver 2200
+	-   vga/???	DESKstation Tyne, rPC44
+	-   TGA		RISCserver 2250
+
+   o	X clients
+	probably pmax binary is good enough.
 
     o	source code structure is quite obsolete,
 	general clean up is needed as nisimura-san suggested.
@@ -34,10 +69,7 @@ To do list (not in any particular order).
 	    possible variations; must be sane and useful for R4030/R4230
 	    'local' devices and any combinations with ISA/EISA/PCI
 
-	-   implement and use bus_dma, keeping in mind TLB assisted VDMA
-	    that R4030/R4230 chip provides
-
-	-   clean up bus_space implementation, remove inb/outb
+	-   remove inb/outb
 
 	-   try to interporate HZ; may be possible for R4030/R4230 system
 	    or 'hardclock() by R4000' system.  Clock resolution of 100Hz
@@ -82,6 +114,11 @@ To do list (not in any particular order).
 
 	-   INT_MASK_REAL_DEV should be removed
 
+	-   make CLKF_INTR() work.
+
+	-   major rework, possibly by software emulated spl.
+		splserial()/splsoftserial()
+
     o	it is better to always disable MIPS_INT_MASK_CLOCK.
 	those are the points which should be fixed:
 	mips_idle: li t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
@@ -93,7 +130,13 @@ To do list (not in any particular order).
 
     o	fix kernel start address
 
+    o	allocate PICA_TL_BASE and SONICBUF dynamically
+
     o	merge new wscons
+
+    o	fix mem_clusters[] usage.
+
+    o	test and merge soren's clean up about proc0.p_addr.
 
     o	parse ARC BIOS configuration information and use it
 
@@ -103,11 +146,22 @@ To do list (not in any particular order).
 
     o	fix implementation of DELAY(), clean up clock implementation
 
+    o	increase MAXPHYS to 64KB
+
     o	asc.c scsi clock/NCR53CF94 handling clean up
 
-    o	if_sn.c ether address handling clean up
+    o	if_sn.c
+
+	-   ether address handling clean up
+
+	-   bus_dma'fy
+	-   bus_space'fy
+	-   split frontend and backend
+	-   make this MI, and share with mac68k, newsmips/apbus
 
     o	com_lbus.c clock handling clean up
+
+    o	intrcnt[] name cleanup
 
     o	implement NCR 53c700(?) driver for NEC RISCserver 2200
 	based on amiga siop driver?
@@ -119,8 +173,6 @@ To do list (not in any particular order).
 	-   use MI ncr53c9x driver instead of home grown asc
 
 	-   use MI bha driver instead of home grown btl
-
-	-   make sonic driver MI, and share it with mac68k, newsmips/apbus
 
 	-   make fd driver MI, and share it with i386
 	    (contact christos about MI fd driver)
@@ -137,6 +189,10 @@ To do list (not in any particular order).
 
     o	way to specify serial console
 
-    o resolve "XXX"
+    o	bus_dmamap_sync: Hit_Invalidate and Hit_Write_Back cache operation
+
+    o	clean up ALEAF/NLEAF/NON_LEAF/NNON_LEAF in userland.
+
+    o	resolve "XXX"
 
 Lots of other things.....
