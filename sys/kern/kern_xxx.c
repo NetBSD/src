@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.21 1995/03/05 08:52:20 fvdl Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.22 1995/03/09 08:54:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -234,12 +234,41 @@ int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
 
 extern int nsysent;
 extern char *syscallnames[];
-
+#ifdef COMPAT_SUNOS
+extern int nsunos_sysent;
+extern struct sysent sunos_sysent[];
+extern char *sunos_syscallnames[];
+#endif /* COMPAT_SUNOS */
+#ifdef COMPAT_HPUX
+extern int nhpux_sysent;
+extern struct sysent hpux_sysent[];
+extern char *hpux_syscallnames[];
+#endif /* COMPAT_HPUX */
+#ifdef COMPAT_ULTRIX
+extern int nultrix_sysent;
+extern struct sysent ultrix_sysent[];
+extern char *ultrix_syscallnames[];
+#endif /* COMPAT_ULTRIX */
+#ifdef COMPAT_SVR4
+extern int nsvr4_sysent;
+extern struct sysent svr4_sysent[];
+extern char *svr4_syscallnames[];
+#endif /* COMPAT_SVR4 */
+#ifdef COMPAT_IBCS2
+extern int nibcs2_sysent;
+extern struct sysent ibcs2_sysent[];
+extern char *ibcs2_syscallnames[];
+#endif /* COMPAT_IBCS2 */
 #ifdef COMPAT_OSF1
 extern int nosf1_sysent;
 extern struct sysent osf1_sysent[];
 extern char *osf1_syscallnames[];
 #endif /* COMPAT_OSF1 */
+#ifdef COMPAT_LINUX
+extern int nlinux_sysent;
+extern struct sysent linux_sysent[];
+extern char *linux_syscallnames[];
+#endif /* COMPAT_LINUX */
 
 static struct os_syscall {
 	char *name;
@@ -248,13 +277,41 @@ static struct os_syscall {
 	char **syscallnames;
 } os_syscall[] = {
 	{ "NetBSD", &nsysent, sysent, syscallnames },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
+#ifdef COMPAT_SUNOS
+	{ "SunOS", &nsunos_sysent, sunos_sysent, sunos_syscallnames },
+#else
+	{ NULL, },
+#endif
+#ifdef COMPAT_HPUX
+	{ "HP-UX", &nhpux_sysent, hpux_sysent, hpux_syscallnames },
+#else
+	{ NULL, },
+#endif
+#ifdef COMPAT_ULTRIX
+	{ "Ultrix", &nultrix_sysent, ultrix_sysent, ultrix_syscallnames },
+#else
+	{ NULL, },
+#endif
+#ifdef COMPAT_SVR4
+	{ "SVR4", &nsvr4_sysent, svr4_sysent, svr4_syscallnames },
+#else
+	{ NULL, },
+#endif
+#ifdef COMPAT_IBCS2
+	{ "iBCS2/COFF", &nibcs2_sysent, ibcs2_sysent, ibcs2_syscallnames },
+	{ "iBCS2/x.out", &nibcs2_sysent, ibcs2_sysent, ibcs2_syscallnames },
+#else
+	{ NULL, },
+	{ NULL, },
+#endif
 #ifdef COMPAT_OSF1
 	{ "OSF/1", &nosf1_sysent, osf1_sysent, osf1_syscallnames },
+#else
+	{ NULL, },
+#endif
+	{ NULL, },
+#ifdef COMPAT_LINUX
+	{ "Linux", &nlinux_sysent, linux_sysent, linux_syscallnames },
 #else
 	{ NULL, },
 #endif
@@ -263,8 +320,7 @@ static struct os_syscall {
 void
 scdebug_call(p, code, args)
 	struct proc *p;
-	int code;
-	register_t *args;
+	register_t code, args[];
 {
 	struct os_syscall *os;
 	struct sysent *sy;
@@ -304,8 +360,9 @@ scdebug_call(p, code, args)
 void
 scdebug_ret(p, code, error, retval)
 	struct proc *p;
-	int code, error;
-	register_t *retval;
+	register_t code;
+	int error;
+	register_t retval[];
 {
 	struct os_syscall *os;
 	struct sysent *sy;
