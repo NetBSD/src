@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2000/09/04 22:12:22 christos Exp $
+#	$NetBSD: Makefile,v 1.98 2000/11/02 12:32:04 itojun Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -8,6 +8,10 @@ SUBDIR+=	groff gzip ld.new rcs sdiff send-pr sort texinfo
 
 SUBDIR+=	cpio
 SUBDIR+=	tar
+
+.if ${MKNLS} != "no"
+SUBDIR+=	gettext
+.endif
 
 .if (${MACHINE_ARCH} == "m68k" && ${OBJECT_FMT} != "ELF") ||	\
     (${MACHINE_ARCH} == "ns32k")
