@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.24 2001/04/07 09:00:58 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.25 2001/04/09 10:22:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,7 +76,7 @@ struct file {
 					    caddr_t data, struct proc *p);
 		int	(*fo_poll)	(struct file *fp, int events,
 					    struct proc *p);
-		int	(*fo_stat)	(void *fdata, struct stat *sp,
+		int	(*fo_stat)	(struct file *fp, struct stat *sp,
 					    struct proc *p);
 		int	(*fo_close)	(struct file *fp, struct proc *p);
 	} *f_ops;
