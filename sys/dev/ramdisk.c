@@ -1,4 +1,4 @@
-/*	$NetBSD: ramdisk.c,v 1.7 1996/03/22 23:02:02 gwr Exp $	*/
+/*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -52,6 +52,8 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -97,6 +99,7 @@ struct rd_softc {
 #define RD_ISOPEN	0x01
 #define RD_SERVED	0x02
 
+void rdattach __P((int));
 static void rd_attach __P((struct device *, struct device *, void *));
 
 /*
@@ -195,6 +198,16 @@ static int rd_server_loop __P((struct rd_softc *sc));
 static int rd_ioctl_server __P((struct rd_softc *sc,
 		struct rd_conf *urd, struct proc *proc));
 #endif
+static int rd_ioctl_kalloc __P((struct rd_softc *sc,
+		struct rd_conf *urd, struct proc *proc));
+
+dev_type_open(rdopen);
+dev_type_close(rdclose);
+dev_type_read(rdread);
+dev_type_write(rdwrite);
+dev_type_ioctl(rdioctl);
+dev_type_size(rdsize);
+dev_type_dump(rddump);
 
 int rddump(dev, blkno, va, size)
 	dev_t dev;
@@ -224,7 +237,8 @@ int rdsize(dev_t dev)
 	return (sc->sc_size >> DEV_BSHIFT);
 }
 
-int rdopen(dev, flag, fmt, proc)
+int
+rdopen(dev, flag, fmt, proc)
 	dev_t   dev;
 	int     flag, fmt;
 	struct proc *proc;
@@ -264,7 +278,8 @@ int rdopen(dev, flag, fmt, proc)
 	return 0;
 }
 
-int rdclose(dev, flag, fmt, proc)
+int
+rdclose(dev, flag, fmt, proc)
 	dev_t   dev;
 	int     flag, fmt;
 	struct proc *proc;
@@ -286,17 +301,19 @@ int rdclose(dev, flag, fmt, proc)
 }
 
 int
-rdread(dev, uio)
+rdread(dev, uio, flags)
 	dev_t		dev;
 	struct uio	*uio;
+	int		flags;
 {
 	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rdwrite(dev, uio)
+rdwrite(dev, uio, flags)
 	dev_t		dev;
 	struct uio	*uio;
+	int		flags;
 {
 	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
@@ -413,7 +430,7 @@ rdioctl(dev, cmd, data, flag, proc)
  * Handle ioctl RD_SETCONF for (sc_type == RD_KMEM_ALLOCATED)
  * Just allocate some kernel memory and return.
  */
-int
+static int
 rd_ioctl_kalloc(sc, urd, proc)
 	struct rd_softc *sc;
 	struct rd_conf *urd;
@@ -441,7 +458,7 @@ rd_ioctl_kalloc(sc, urd, proc)
  * Handle ioctl RD_SETCONF for (sc_type == RD_UMEM_SERVER)
  * Set config, then become the I/O server for this unit.
  */
-int
+static int
 rd_ioctl_server(sc, urd, proc)
 	struct rd_softc *sc;
 	struct rd_conf *urd;
