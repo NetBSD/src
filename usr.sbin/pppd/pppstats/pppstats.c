@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.20 1998/09/02 20:55:58 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.21 1998/09/04 19:13:06 christos Exp $	*/
 
 /*
  * print PPP statistics:
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp ";
+static char rcsid[] = "Id: pppstats.c,v 1.23 1998/07/07 04:23:04 paulus Exp ";
 #else
-__RCSID("$NetBSD: pppstats.c,v 1.20 1998/09/02 20:55:58 christos Exp $");
+__RCSID("$NetBSD: pppstats.c,v 1.21 1998/09/04 19:13:06 christos Exp $");
 #endif
 #endif
 
