@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: login_locl.h,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $ */
+/* $Id: login_locl.h,v 1.1.1.4 2001/09/17 12:24:36 assar Exp $ */
 
 #ifndef __LOGIN_LOCL_H__
 #define __LOGIN_LOCL_H__
@@ -88,6 +88,12 @@
 
 #ifdef OTP
 #include <otp.h>
+#endif
+
+#ifdef HAVE_OSFC2
+#define getargs OSFgetargs
+#include <prot.h>
+#undef getargs
 #endif
 
 #ifndef _PATH_BSHELL

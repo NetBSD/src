@@ -1,8 +1,8 @@
-# $Id: Makefile.am,v 1.1.1.4 2001/06/19 22:07:42 assar Exp $
+# $Id: Makefile.am,v 1.1.1.5 2001/09/17 12:24:39 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4)
+INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_des)
 
 libexec_PROGRAMS = telnetd
 
@@ -20,5 +20,7 @@ LDADD = \
 	$(LIB_des) \
 	$(LIB_tgetent) \
 	$(LIB_logwtmp) \
+	$(LIB_logout) \
+	$(LIB_openpty) \
 	$(LIB_kdfs) \
 	$(LIB_roken)

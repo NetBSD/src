@@ -33,24 +33,18 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$Id: otp_md.c,v 1.1.1.3 2001/02/11 13:51:49 assar Exp $");
+RCSID("$Id: otp_md.c,v 1.1.1.4 2001/09/17 12:25:11 assar Exp $");
 #endif
 #include "otp_locl.h"
 
 #include "otp_md.h"
-#ifdef HAVE_OPENSSL_MD4_H
+#ifdef HAVE_OPENSSL
 #include <openssl/md4.h>
-#else
-#include <md4.h>
-#endif
-#ifdef HAVE_OPENSSL_MD5_H
 #include <openssl/md5.h>
-#else
-#include <md5.h>
-#endif
-#ifdef HAVE_OPENSSL_SHA_H
 #include <openssl/sha.h>
 #else
+#include <md4.h>
+#include <md5.h>
 #include <sha.h>
 #endif
 

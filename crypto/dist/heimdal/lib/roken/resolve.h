@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: resolve.h,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $ */
+/* $Id: resolve.h,v 1.1.1.4 2001/09/17 12:25:07 assar Exp $ */
 
 #ifndef __RESOLVE_H__
 #define __RESOLVE_H__
@@ -142,5 +142,6 @@ struct dns_reply* dns_lookup(const char *, const char *);
 void dns_free_data(struct dns_reply *);
 int dns_string_to_type(const char *name);
 const char *dns_type_to_string(int type);
+void dns_srv_order(struct dns_reply*);
 
 #endif /* __RESOLVE_H__ */

@@ -1,4 +1,4 @@
-dnl $Id: broken-glob.m4,v 1.1.1.3 2001/06/19 22:08:36 assar Exp $
+dnl $Id: broken-glob.m4,v 1.1.1.4 2001/09/17 12:25:13 assar Exp $
 dnl
 dnl check for glob(3)
 dnl
@@ -8,7 +8,13 @@ ac_cv_func_glob_working=yes
 AC_TRY_LINK([
 #include <stdio.h>
 #include <glob.h>],[
-glob(NULL, GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT,
+glob(NULL, GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|
+#ifdef GLOB_MAXPATH
+GLOB_MAXPATH
+#else
+GLOB_LIMIT
+#endif
+,
 NULL, NULL);
 ],:,ac_cv_func_glob_working=no,:))
 

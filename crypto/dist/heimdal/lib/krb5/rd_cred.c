@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_cred.c,v 1.1.1.4 2001/06/19 22:08:22 assar Exp $");
+RCSID("$Id: rd_cred.c,v 1.1.1.5 2001/09/17 12:25:04 assar Exp $");
 
 krb5_error_code
 krb5_rd_cred(krb5_context context,
@@ -180,6 +180,12 @@ krb5_rd_cred(krb5_context context,
 
     *ret_creds = calloc(enc_krb_cred_part.ticket_info.len + 1, 
 		       sizeof(**ret_creds));
+
+    if (*ret_creds == NULL) {
+	ret = ENOMEM;
+	krb5_set_error_string (context, "malloc: out of memory");
+	goto out;
+    }
 
     for (i = 0; i < enc_krb_cred_part.ticket_info.len; ++i) {
 	KrbCredInfo *kci = &enc_krb_cred_part.ticket_info.val[i];

@@ -33,7 +33,7 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: list.c,v 1.1.1.3 2001/06/19 22:07:38 assar Exp $");
+RCSID("$Id: list.c,v 1.1.1.4 2001/09/17 12:24:35 assar Exp $");
 
 static int help_flag;
 static int list_keys;
@@ -122,11 +122,11 @@ do_list(const char *keytab_string)
 			 ((unsigned char*)entry.keyblock.keyvalue.data)[i]);
 	    CHECK_MAX(key);
 	}
-	kp->next = NULL;
 	*kie = kp;
 	kie = &kp->next;
 	krb5_kt_free_entry(context, &entry);
     }
+    *kie = NULL; /* termiate list */
     ret = krb5_kt_end_seq_get(context, keytab, &cursor);
 
     printf("%-*s  %-*s  %-*s", max_version, "Vno", 

@@ -1,21 +1,23 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:10 assar Exp $
+# $Id: Makefile.am,v 1.1.1.4 2001/09/17 12:24:35 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_readline)
+INCLUDES += $(INCLUDE_readline) $(INCLUDE_des)
 
 man_MANS = ktutil.8
 
 sbin_PROGRAMS = ktutil
 
-ktutil_SOURCES = add.c				\
-		 change.c			\
-		 copy.c				\
-		 get.c				\
-		 ktutil.c			\
-		 list.c				\
-		 purge.c			\
-		 remove.c
+ktutil_SOURCES =				\
+	add.c					\
+	change.c				\
+	copy.c					\
+	get.c					\
+	ktutil.c				\
+	list.c					\
+	purge.c					\
+	remove.c				\
+	rename.c
 
 LDADD = \
 	$(top_builddir)/lib/kadm5/libkadm5clnt.la \

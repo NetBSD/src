@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: decapsulate.c,v 1.1.1.3 2001/02/11 13:51:38 assar Exp $");
+RCSID("$Id: decapsulate.c,v 1.1.1.4 2001/09/17 12:25:00 assar Exp $");
 
 OM_uint32
 gssapi_krb5_verify_header(u_char **str,
@@ -80,6 +80,7 @@ gssapi_krb5_verify_header(u_char **str,
 
 OM_uint32
 gssapi_krb5_decapsulate(
+			OM_uint32 *minor_status,    
 			gss_buffer_t input_token_buffer,
 			krb5_data *out_data,
 			char *type
@@ -92,8 +93,10 @@ gssapi_krb5_decapsulate(
     ret = gssapi_krb5_verify_header(&p,
 				    input_token_buffer->length,
 				    type);
-    if (ret)
+    if (ret) {
+	*minor_status = 0;
 	return ret;
+    }
 
     out_data->length = input_token_buffer->length -
 	(p - (u_char *)input_token_buffer->value);

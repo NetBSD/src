@@ -1,8 +1,8 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:17 assar Exp $
+# $Id: Makefile.am,v 1.1.1.4 2001/09/17 12:24:42 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/../common $(INCLUDE_readline) $(INCLUDE_krb4)
+INCLUDES += -I$(srcdir)/../common $(INCLUDE_readline) $(INCLUDE_krb4) $(INCLUDE_des)
 
 bin_PROGRAMS = ftp
 

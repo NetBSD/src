@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: mini_inetd.c,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $");
+RCSID("$Id: mini_inetd.c,v 1.1.1.4 2001/09/17 12:25:07 assar Exp $");
 #endif
 
 #include <err.h>
@@ -76,6 +76,7 @@ mini_inetd (int port)
     memset (&hints, 0, sizeof(hints));
     hints.ai_flags    = AI_PASSIVE;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family   = PF_UNSPEC;
 
     snprintf (portstr, sizeof(portstr), "%d", ntohs(port));
 
@@ -95,14 +96,20 @@ mini_inetd (int port)
     for (i = 0, a = ai; a != NULL; a = a->ai_next) {
 	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
 	if (fds[i] < 0) {
-	    warn ("socket");
+	    warn ("socket af = %d", a->ai_family);
 	    continue;
 	}
 	socket_set_reuseaddr (fds[i], 1);
-	if (bind (fds[i], a->ai_addr, a->ai_addrlen) < 0)
-	    err (1, "bind");
-	if (listen (fds[i], SOMAXCONN) < 0)
-	    err (1, "listen");
+	if (bind (fds[i], a->ai_addr, a->ai_addrlen) < 0) {
+	    warn ("bind af = %d", a->ai_family);
+	    close(fds[i]);
+	    continue;
+	}
+	if (listen (fds[i], SOMAXCONN) < 0) {
+	    warn ("listen af = %d", a->ai_family);
+	    close(fds[i]);
+	    continue;
+	}
 	if (fds[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
 	FD_SET(fds[i], &orig_read_set);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: roken_rename.h,v 1.1.1.1 2001/06/19 22:08:35 assar Exp $ */
+/* $Id: roken_rename.h,v 1.1.1.2 2001/09/17 12:25:12 assar Exp $ */
 
 #ifndef __roken_rename_h__
 #define __roken_rename_h__
@@ -46,5 +46,6 @@
 #define dns_lookup _kafs_dns_lookup
 #define dns_string_to_type _kafs_dns_string_to_type
 #define dns_type_to_string _kafs_dns_type_to_string
+#define dns_srv_order _krb_dns_srv_order
 
 #endif /* __roken_rename_h__ */

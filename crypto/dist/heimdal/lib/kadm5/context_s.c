@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: context_s.c,v 1.1.1.2 2000/08/02 19:59:16 assar Exp $");
+RCSID("$Id: context_s.c,v 1.1.1.3 2001/09/17 12:25:01 assar Exp $");
 
 static void
 set_funcs(kadm5_server_context *c)
@@ -116,7 +116,6 @@ set_config(kadm5_server_context *ctx,
     if(ctx->config.acl_file == NULL)
 	set_field(ctx->context, binding, ctx->config.dbname, 
 		  "acl_file", "acl", &ctx->config.acl_file);
-    /* XXX calling a file a `stash file' isn't very clever */
     if(ctx->config.stash_file == NULL)
 	set_field(ctx->context, binding, ctx->config.dbname, 
 		  "mkey_file", "mkey", &ctx->config.stash_file);

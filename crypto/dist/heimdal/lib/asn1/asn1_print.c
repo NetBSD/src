@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,7 +37,7 @@
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$Id: asn1_print.c,v 1.1.1.4 2001/06/19 22:08:13 assar Exp $");
+RCSID("$Id: asn1_print.c,v 1.1.1.5 2001/09/17 12:24:59 assar Exp $");
 
 static struct et_list *et_list;
 
@@ -147,7 +147,7 @@ loop (unsigned char *buf, size_t len, int indent)
 		if (ret)
 		    errx (1, "der_get_octet_string: %s",
 			  com_right (et_list, ret));
-		printf ("(length %d), ", length);
+		printf ("(length %lu), ", (unsigned long)length);
 		uc = (unsigned char *)str.data;
 		for (i = 0; i < 16; ++i)
 		    printf ("%02x", uc[i]);
@@ -168,7 +168,7 @@ loop (unsigned char *buf, size_t len, int indent)
 		break;
 	    }
 	    default :
-		printf ("%d bytes\n", length);
+		printf ("%lu bytes\n", (unsigned long)length);
 		break;
 	    }
 	}

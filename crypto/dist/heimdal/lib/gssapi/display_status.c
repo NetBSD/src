@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: display_status.c,v 1.1.1.3 2001/06/19 22:08:14 assar Exp $");
+RCSID("$Id: display_status.c,v 1.1.1.4 2001/09/17 12:25:00 assar Exp $");
 
 static char *krb5_error_string;
 
@@ -129,20 +129,24 @@ OM_uint32 gss_display_status
       asprintf (&buf, "%s %s",
 		calling_error(GSS_CALLING_ERROR(status_value)),
 		routine_error(GSS_ROUTINE_ERROR(status_value)));
-      if (buf == NULL) {
-	  *minor_status = ENOMEM;
-	  return GSS_S_FAILURE;
-      }
   } else if (status_type == GSS_C_MECH_CODE) {
       buf = gssapi_krb5_get_error_string ();
-      if (buf == NULL)
-	  buf = strdup(krb5_get_err_text (gssapi_krb5_context, status_value));
       if (buf == NULL) {
-	  *minor_status = ENOMEM;
-	  return GSS_S_FAILURE;
+	  const char *tmp = krb5_get_err_text (gssapi_krb5_context,
+					       status_value);
+	  if (tmp == NULL)
+	      asprintf(&buf, "unknown mech error-code %u",
+		       (unsigned)status_value);
+	  else
+	      buf = strdup(tmp);
       }
   } else
       return GSS_S_BAD_STATUS;
+
+  if (buf == NULL) {
+      *minor_status = ENOMEM;
+      return GSS_S_FAILURE;
+  }
 
   *message_context = 0;
 

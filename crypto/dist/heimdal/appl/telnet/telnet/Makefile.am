@@ -1,8 +1,8 @@
-# $Id: Makefile.am,v 1.1.1.4 2001/06/19 22:07:41 assar Exp $
+# $Id: Makefile.am,v 1.1.1.5 2001/09/17 12:24:38 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4)
+INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_des)
 
 bin_PROGRAMS = telnet
 

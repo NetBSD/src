@@ -33,7 +33,7 @@
 
 #include "45_locl.h"
 
-RCSID("$Id: get_ad_tkt.c,v 1.1.1.2 2000/08/02 19:59:00 assar Exp $");
+RCSID("$Id: get_ad_tkt.c,v 1.1.1.3 2001/09/17 12:24:59 assar Exp $");
 
 /* get an additional version 4 ticket via the 524 protocol */
 
@@ -100,7 +100,7 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
 	krb5_free_context(context);
 	return KFAILURE;
     }
-    ret = krb524_convert_creds_kdc(context, id, out_creds, &cred);
+    ret = krb524_convert_creds_kdc_ccache(context, id, out_creds, &cred);
     krb5_cc_close(context, id);
     krb5_free_context(context);
     krb5_free_creds(context, out_creds);

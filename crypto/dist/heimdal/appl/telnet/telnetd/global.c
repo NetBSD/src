@@ -36,7 +36,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: global.c,v 1.1.1.2 2000/08/02 19:58:22 assar Exp $");
+RCSID("$Id: global.c,v 1.1.1.3 2001/09/17 12:24:39 assar Exp $");
 
 /*
  * Telnet server variable declarations
@@ -93,7 +93,7 @@ int
 output_data (const char *format, ...)
 {
   va_list args;
-  size_t remaining, ret;
+  int remaining, ret;
 
   va_start(args, format);
   remaining = BUFSIZ - (nfrontp - netobuf);
@@ -101,7 +101,7 @@ output_data (const char *format, ...)
 		   remaining,
 		   format,
 		   args);
-  nfrontp += ret;
+  nfrontp += min(ret, remaining-1);
   va_end(args);
   return ret;
 }

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_default_realm.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
+RCSID("$Id: get_default_realm.c,v 1.1.1.4 2001/09/17 12:25:03 assar Exp $");
 
 /*
  * Return a NULL-terminated list of default realms in `realms'.
@@ -68,8 +68,10 @@ krb5_get_default_realm(krb5_context context,
     if (context->default_realms == NULL
 	|| context->default_realms[0] == NULL) {
 	krb5_error_code ret = krb5_set_default_realm (context, NULL);
-	if (ret)
+	if (ret) {
+	    krb5_set_error_string(context, "no default realm configured");
 	    return KRB5_CONFIG_NODEFREALM;
+	}
     }
 
     res = strdup (context->default_realms[0]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: estrdup.c,v 1.1.1.2 2000/08/02 19:59:47 assar Exp $");
+RCSID("$Id: estrdup.c,v 1.1.1.3 2001/09/17 12:25:06 assar Exp $");
 #endif
 
 #include <stdlib.h>
@@ -51,6 +51,6 @@ estrdup (const char *str)
     char *tmp = strdup (str);
 
     if (tmp == NULL)
-	err (1, "strdup");
+	errx (1, "strdup failed");
     return tmp;
 }

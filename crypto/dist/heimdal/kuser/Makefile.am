@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:34 assar Exp $
+# $Id: Makefile.am,v 1.1.1.4 2001/09/17 12:24:59 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -6,17 +6,11 @@ INCLUDES += $(INCLUDE_krb4)
 
 man_MANS = kinit.1 klist.1 kdestroy.1 kgetcred.1
 
-bin_PROGRAMS = kinit kauth klist kdestroy kgetcred
-
-kinit_SOURCES = kinit.c kinit_options.c
-
-kauth_SOURCES = kinit.c kauth_options.c
+bin_PROGRAMS = kinit klist kdestroy kgetcred
 
 noinst_PROGRAMS = kverify kdecode_ticket generate-requests
 
-CHECK_LOCAL = $(bin_PROGRAMS)
-
-kauth_LDADD = \
+kinit_LDADD = \
 	$(LIB_kafs) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_krb4) \
@@ -24,14 +18,16 @@ kauth_LDADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
-kinit_LDADD	= $(kauth_LDADD)
+kdestroy_LDADD	= $(kinit_LDADD)
 
-kdestroy_LDADD	= $(kauth_LDADD)
-
-klist_LDADD	= $(kauth_LDADD)
+klist_LDADD	= $(kinit_LDADD)
 
 LDADD = \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
+
+# make sure install-exec-hook doesn't have any commands in Makefile.am.common
+install-exec-hook:
+	(cd $(DESTDIR)$(bindir) && rm -f kauth && $(LN_S) kinit kauth)

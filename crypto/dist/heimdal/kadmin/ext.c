@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: ext.c,v 1.1.1.3 2001/06/19 22:08:08 assar Exp $");
+RCSID("$Id: ext.c,v 1.1.1.4 2001/09/17 12:24:57 assar Exp $");
 
 struct ext_keytab_data {
     krb5_keytab keytab;
@@ -87,6 +87,7 @@ ext_keytab(int argc, char **argv)
     int i;
     int optind = 0;
     char *keytab = NULL;
+    char keytab_buf[256];
     struct ext_keytab_data data;
     
     args[0].value = &keytab;
@@ -94,10 +95,17 @@ ext_keytab(int argc, char **argv)
 	usage();
 	return 0;
     }
-    if(keytab)
-	ret = krb5_kt_resolve(context, keytab, &data.keytab);
-    else
-	ret = krb5_kt_default(context, &data.keytab);
+    if (keytab == NULL) {
+	ret = krb5_kt_default_modify_name (context, keytab_buf,
+					   sizeof(keytab_buf));
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_kt_default_modify_name");
+	    return 0;
+	}
+	keytab = keytab_buf;
+    }
+
+    ret = krb5_kt_resolve(context, keytab, &data.keytab);
     if(ret){
 	krb5_warn(context, ret, "krb5_kt_resolve");
 	return 0;
