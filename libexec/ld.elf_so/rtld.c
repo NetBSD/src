@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.69 2002/09/24 01:24:44 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.70 2002/09/24 06:43:14 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -58,8 +58,6 @@
 #if !defined(lint)
 #include "sysident.h"
 #endif
-
-#define END_SYM		"_end"
 
 /*
  * Function declarations.
