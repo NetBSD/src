@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.28 2000/03/22 00:58:18 cgd Exp $
+#	$NetBSD: GENERIC,v 1.29 2000/04/19 06:50:29 itojun Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.28 $"
+#ident		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32		# estimated number of users
 
@@ -267,6 +267,7 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
