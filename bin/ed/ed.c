@@ -138,6 +138,7 @@ main(argc, argv)
 	long status = 0;
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
+top:
 	while ((c = getopt(argc, argv, "p:sx")) != EOF)
 		switch(c) {
 		case 'p':				/* set prompt */
@@ -162,8 +163,12 @@ main(argc, argv)
 	argc -= optind;
 	if (argc && **argv == '-') {
 		scripted = 1;
-		argc--;
+		if (argc > 1) {
+			optind = 1;
+			goto top;
+		}
 		argv++;
+		argc--;
 	}
 	/* assert: reliable signals! */
 #ifdef SIGWINCH
@@ -474,8 +479,16 @@ doglob(gflag)
 	int interact = gflag & ~GSG;		/* GLB & gflag ? */
 	char *cmd = NULL;
 
+#ifdef BACKWARDS
+	if (!interact)
+		if (!strcmp(ibufp, "\n"))
+			cmd = "p\n";		/* null cmd-list == `p' */
+		else if ((cmd = getcmdv(&n, 0)) == NULL)
+			return ERR;
+#else
 	if (!interact && (cmd = getcmdv(&n, 0)) == NULL)
 		return ERR;
+#endif
 	ureset();
 	for (;;) {
 		for (lp = getlp(lc = 1); lc <= lastln; lc++, lp = lp->next)
@@ -525,6 +538,26 @@ doglob(gflag)
 }
 
 
+#ifdef BACKWARDS
+/* GETLINE3: get a legal address from the command buffer */
+#define GETLINE3(num) \
+{ \
+	long ol1, ol2; \
+\
+	ol1 = line1, ol2 = line2; \
+	if (getlist() < 0) \
+		return ERR; \
+	else if (nlines == 0) { \
+		sprintf(errmsg, "destination expected"); \
+		return ERR; \
+	} else if (line2 < 0 || lastln < line2) { \
+		sprintf(errmsg, "invalid address"); \
+		return ERR; \
+	} \
+	num = line2; \
+	line1 = ol1, line2 = ol2; \
+}
+#else	/* BACKWARDS */
 /* GETLINE3: get a legal address from the command buffer */
 #define GETLINE3(num) \
 { \
@@ -540,6 +573,7 @@ doglob(gflag)
 	num = line2; \
 	line1 = ol1, line2 = ol2; \
 }
+#endif
 
 /* sgflags */
 #define SGG 001		/* complement previous global substitute suffix */
@@ -598,7 +632,7 @@ docmd(glob)
 		modified = 1;
 		break;
 	case 'e':
-		if (modified)
+		if (modified && !scripted)
 			return EMOD;
 		/* fall through */
 	case 'E':
@@ -756,7 +790,7 @@ docmd(glob)
 			return ERR;
 		}
 		VRFYCMD();
-		gflag =  (modified && !scripted && c != 'Q') ? EMOD : EOF;
+		gflag =  (modified && !scripted && c == 'q') ? EMOD : EOF;
 		break;
 	case 'r':
 		if (!isspace(*ibufp)) {
@@ -912,7 +946,7 @@ docmd(glob)
 			return ERR;
 		else if (num == lastln)
 			modified = 0;
-		else if (n == 'q' && modified)
+		else if (modified && !scripted && n == 'q')
 			gflag = EMOD;
 		break;
 	case 'x':
@@ -929,7 +963,11 @@ docmd(glob)
 #endif
 		break;
 	case 'z':
+#ifdef BACKWARDS
+		if (ckrange(line1 = 1, curln + 1) < 0)
+#else
 		if (ckrange(line1 = 1, curln + !glob) < 0)
+#endif
 			return ERR;
 		else if ('0' < *ibufp && *ibufp <= '9')
 			rows = strtol(ibufp, &ibufp, 10);
@@ -979,7 +1017,11 @@ docmd(glob)
 		break;
 #endif
 	case '\n':
+#ifdef BACKWARDS
+		if (ckrange(line1 = 1, curln + 1) < 0
+#else
 		if (ckrange(line1 = 1, curln + !glob) < 0
+#endif
 		 || doprint(line2, line2, 0) < 0)
 			return ERR;
 		break;
@@ -1689,7 +1731,7 @@ putstr(s, l, n, gflag)
 }
 
 
-int newline_added;		/* long record split across lines */
+int newline_added;		/* set if newline appended to input file */
 
 /* doread: read a text file into the editor buffer; return line count */
 long
@@ -2008,7 +2050,7 @@ getcmdv(sizep, nonl)
 	while (*t++ != '\n')
 		;
 	if ((l = t - ibufp) < 2 || !oddesc(ibufp, ibufp + l - 1)) {
-		*sizep = l;	
+		*sizep = l;
 		return ibufp;
 	}
 	*sizep = -1;
@@ -2025,7 +2067,8 @@ getcmdv(sizep, nonl)
 		}
 		CKBUF(cvbuf, cvbufsz, l + n, NULL);
 		memcpy(cvbuf + l, ibuf, n);
-		if (n < 2 || !oddesc(cvbuf, cvbuf + (l += n) - 1))
+		l += n;
+		if (n < 2 || !oddesc(cvbuf, cvbuf + l - 1))
 			break;
 		*(cvbuf + --l - 1) = '\n'; 	/* strip trailing esc */
 		if (nonl) l--; 			/* strip newline */
@@ -2112,7 +2155,7 @@ dohup(signo)
 	char *s;
 	int n;
 
-	if (!sigactive) 
+	if (!sigactive)
 		quit(1);
 	sigflags &= ~(1 << signo);
 	if (lastln && dowrite(1, lastln, "ed.hup", "w") < 0
@@ -2133,7 +2176,7 @@ void
 dointr(signo)
 	int signo;
 {
-	if (!sigactive) 
+	if (!sigactive)
 		quit(1);
 	sigflags &= ~(1 << signo);
 #ifdef _POSIX_SOURCE

@@ -11,3 +11,5 @@ Some missing tests:
 6) ed -x 	- verify: 8-bit clean
 7) ed		- verify: long-line support
 8) ed		- verify: interactive/help mode
+9) G/pat/	- verify: global interactive command
+10) V/pat/	- verify: global interactive command

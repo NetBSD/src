@@ -2,6 +2,10 @@ ed is an 8-bit-clean, POSIX-compliant line editor.  It should work with
 any regular expression package that conforms to the POSIX interface
 standard, such as GNU regex(3).
 
+If reliable signals are supported (e.g., POSIX sigaction(2)), it should
+compile with little trouble.  Otherwise, the macros spl1() and spl0()
+should be redefined to disable interrupts.
+
 The following compiler directives are recognized:
 GNU_REGEX	- use with GNU regex(3)
 DES		- use to add encryption support (requires crypt(3))

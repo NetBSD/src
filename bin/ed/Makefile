@@ -1,5 +1,5 @@
 PROG=	ed
-CFLAGS+=-DVI_BANG -DDES -DGNU_REGEX
+CFLAGS+=-DVI_BANG -DDES -DGNU_REGEX -DBACKWARDS
 SRCS=	ed.c re.c buf.c cbc.c
 LDADD=	-lgnuregex -lcrypt
 LINKS=  ${BINDIR}/ed ${BINDIR}/red
