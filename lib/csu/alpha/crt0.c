@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 1996/12/07 20:04:38 cgd Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 1996/12/18 22:25:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -42,6 +42,7 @@
 
 #include <stdlib.h>
 #ifdef DYNAMIC
+#include <dlfcn.h>
 #include "rtld.h"
 #else
 typedef void Obj_Entry;
