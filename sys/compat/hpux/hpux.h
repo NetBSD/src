@@ -1,3 +1,5 @@
+/*	$NetBSD: hpux.h,v 1.7 1994/10/26 02:45:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hpux.h 1.33 93/08/05$
  *
- *	from: @(#)hpux.h	8.4 (Berkeley) 2/13/94
- *	$Id: hpux.h,v 1.6 1994/05/23 08:04:13 mycroft Exp $
+ *	@(#)hpux.h	8.4 (Berkeley) 2/13/94
  */
 
 #include <hp300/hpux/hpux_exec.h>

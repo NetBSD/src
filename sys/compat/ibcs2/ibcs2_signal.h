@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_signal.h,v 1.2 1994/10/26 02:53:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Scott Bartram
  * All rights reserved.
@@ -27,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #ifndef	_IBCS2_SIGNAL_H
 #define	_IBCS2_SIGNAL_H

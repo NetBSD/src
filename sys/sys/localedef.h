@@ -1,3 +1,5 @@
+/*	$NetBSD: localedef.h,v 1.2 1994/10/26 02:53:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
  * All rights reserved.

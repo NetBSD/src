@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_fcntl.h,v 1.2 1994/10/26 02:52:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Scott Bartram
  * All rights reserved.

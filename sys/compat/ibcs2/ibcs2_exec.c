@@ -1,8 +1,12 @@
+/*	$NetBSD: ibcs2_exec.c,v 1.3 1994/10/26 02:52:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Scott Bartram
  * Copyright (c) 1994 Adam Glass
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
+ *
+ * originally from kern/exec_ecoff.c
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,8 +32,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * originally from kern/exec_ecoff.c
  */
 
 #include <sys/param.h>

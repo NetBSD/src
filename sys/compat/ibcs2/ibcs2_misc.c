@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_misc.c,v 1.3 1994/10/26 02:52:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Scott Bartram
  * Copyright (c) 1992, 1993
@@ -43,7 +45,6 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
- *	$Id: ibcs2_misc.c,v 1.2 1994/09/05 01:29:03 mycroft Exp $
  */
 
 /*

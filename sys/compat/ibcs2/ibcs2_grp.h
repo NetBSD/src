@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_grp.h,v 1.2 1994/10/26 02:52:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Scott Bartram
  * All rights reserved.

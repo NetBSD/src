@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_ioctl.c,v 1.4 1994/10/26 02:52:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Scott Bartram
  * All rights reserved.
@@ -22,7 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>

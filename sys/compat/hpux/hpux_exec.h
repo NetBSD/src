@@ -1,3 +1,5 @@
+/*	$NetBSD: hpux_exec.h,v 1.5 1994/10/26 02:45:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hpux_exec.h 1.6 92/01/20$
  *
- *	from: @(#)hpux_exec.h	8.1 (Berkeley) 6/10/93
- *	$Id: hpux_exec.h,v 1.4 1994/05/23 08:04:17 mycroft Exp $
+ *	@(#)hpux_exec.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
