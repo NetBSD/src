@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.12 2000/07/05 15:45:31 msaitoh Exp $
+.\" $NetBSD: at.1,v 1.13 2000/10/15 14:51:14 kleink Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
@@ -8,6 +8,12 @@
 .Nm at, batch, atq, atrm
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
+.Nm at
+.Op Fl V
+.Op Fl q Ar queue
+.Op Fl f Ar file
+.Op Fl mldrbv
+.Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Nm at
 .Op Fl V
 .Op Fl q Ar queue
@@ -25,6 +31,12 @@
 .Op Fl V
 .Ar job
 .Op Ar job ...
+.Nm batch
+.Op Fl V
+.Op Fl q Ar queue
+.Op Fl f Ar file
+.Op Fl mv
+.Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Nm batch
 .Op Fl V
 .Op Fl q Ar queue
@@ -108,6 +120,11 @@ to run a job at 10:00am on July 31, you would do
 and to run a job at 1am tomorrow, you would do
 .Nm at 1am tomorrow.
 .Pp
+Alternatively the time may be specified in a language-neutral fashion
+by using the
+.Fl t
+options.
+.Pp
 For both
 .Nm at
 and
@@ -171,6 +188,38 @@ This is the default configuration.
 .Bl -tag -width indent
 .It Fl V
 Prints the version number to standard error.
+.It Fl t
+For both
+.Nm at
+and
+.Nm batch ,
+the time may be specified in a language-neutral format consisting of:
+.Bl -tag -width Ds -compact -offset indent
+.It Ar CC
+The first two digits of the year (the century).
+.It Ar YY
+The second two digits of the year.  If
+.Ar YY
+is specified, but
+.Ar CC
+is not, a value for
+.Ar YY
+between 69 and 99 results in a
+.Ar CC
+value of 19.  Otherwise, a
+.Ar CC
+value of 20 is used.
+.It Ar MM
+The month of the year, from 01 to 12.
+.It Ar DD
+The day of the month, from 01 to 31.
+.It Ar hh
+The hour of the day, from 00 to 23.
+.It Ar mm
+The minute of the hour, from 00 to 59.
+.It Ar SS
+The second of the minute, from 00 to 61.
+.El
 .It Fl q Ar queue
 Uses the specified queue.
 A queue designation consists of a single letter.  Valid queue designations
