@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.81 2000/03/06 03:15:47 mark Exp $
+#	$NetBSD: files.arm32,v 1.82 2000/03/14 15:56:53 oster Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -119,6 +119,9 @@ file    arch/arm32/mainbus/com_pioc.c		com_pioc
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
 major   {md = 18}
+
+# RAIDframe
+major	{raid = 71}
 
 # IOMD device
 # parent to kbd, qms, pms, iic

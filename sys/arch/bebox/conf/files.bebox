@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.17 1999/07/09 02:32:30 thorpej Exp $
+#	$NetBSD: files.bebox,v 1.18 2000/03/14 15:56:54 oster Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -36,6 +36,11 @@ major	{wd = 0}
 #
 file arch/bebox/bebox/md_root.c   memory_disk_hooks 
 major   {md = 17}
+
+#
+# RAIDframe
+#
+major	{raid = 18}
 
 #
 # System bus types

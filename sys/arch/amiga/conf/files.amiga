@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.96 2000/01/31 22:47:07 mhitch Exp $
+#	$NetBSD: files.amiga,v 1.97 2000/03/14 15:56:52 oster Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -426,6 +426,7 @@ attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 
 major	{md = 15}	# Memory disk (for mini-kernel)
+major	{raid = 16}	# RAIDframe
 
 # Compatibility modules
 

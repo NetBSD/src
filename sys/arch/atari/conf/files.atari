@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.67 2000/02/11 21:35:42 leo Exp $
+#	$NetBSD: files.atari,v 1.68 2000/03/14 15:56:53 oster Exp $
 
 maxpartitions 16
 
@@ -42,6 +42,9 @@ file	arch/atari/dev/lpt.c		lp needs-flag
 # memory disk
 file	arch/atari/dev/md_root.c	memory_disk_hooks
 major   {md = 1}
+
+# RAIDframe
+major	{raid = 15}
 
 # nvram
 device	nvr

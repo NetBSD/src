@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.29 1999/11/23 14:17:09 minoura Exp $
+#	$NetBSD: files.x68k,v 1.30 2000/03/14 15:56:59 oster Exp $
 #
 # new style config file for x68k architecture
 #
@@ -172,6 +172,9 @@ file	arch/x68k/dev/pow.c		pow needs-count
 # memory disk
 file	arch/x68k/dev/md_root.c		memory_disk_hooks
 major	{md = 8}
+
+# RAIDframe
+major	{raid = 16}
 
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

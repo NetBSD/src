@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.55 1999/07/09 02:32:31 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.56 2000/03/14 15:56:58 oster Exp $
 
 #
 # sun3-specific configuration info
@@ -274,3 +274,4 @@ major	{xy=3}	# Xylogics 450 and 451
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
 major	{md=13}	# Memory disk (for mini-kernel)
+major	{raid=25} # RAIDframe

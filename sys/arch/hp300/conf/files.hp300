@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.41 1999/07/31 19:56:48 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.42 2000/03/14 15:56:54 oster Exp $
 #
 # hp300-specific configuration info
 
@@ -170,6 +170,9 @@ file	arch/hp300/dev/st.c		st needs-flag
 device	ac
 attach	ac at oscsi
 file	arch/hp300/dev/ac.c		ac needs-flag
+
+# RAIDframe
+major	{raid = 15}
 
 # Human (Hilarious) Interface Loop
 # XXX should be a real device
