@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.27 2004/08/01 10:43:47 mrg Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.28 2004/08/01 21:52:09 bouyer Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -432,6 +432,7 @@ all)
 	makedev ipl crypto random systrace
 	makedev lkm clockctl
 	makedev local
+	makedev atabus0 atabus1 atabus2 atabus3
 	;;
 
 init)
@@ -1450,6 +1451,12 @@ ttyS*)
 	mkdev ttyS$unit c %sacom_chr% $(($unit + $dialin )) "" "" $u_uucp
 	mkdev dtyS$unit c %sacom_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
+
+atabus*)
+	unit=${i#atabus}
+	mkdev atabus$unit c %atabus_chr% $unit 644
+	;;
+
 
 midevend)
 %MI_DEVICES_END%
