@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcmips,v 1.13 2002/01/02 13:13:19 uch Exp $
+#	$NetBSD: std.hpcmips,v 1.14 2002/01/26 10:24:58 takemura Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -15,5 +15,4 @@ options 	EXEC_SCRIPT		# may be unsafe
 
 makeoptions	DEFTEXTADDR="0x80030000"
 makeoptions	MACHINE_ARCH="mipsel"
-makeoptions	DEFGP="-G 18"
 makeoptions	DEFCOPTS="-Os -mmemcpy"
