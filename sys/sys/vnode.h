@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.74 2000/04/16 21:39:57 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.75 2000/05/13 23:43:12 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -240,6 +240,9 @@ extern int		vttoif_tab[];
 #define FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 #define FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
+
+#define UPDATE_WAIT	0x0001		/* update: wait for completion */
+#define UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.25 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.26 2000/05/13 23:43:13 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -385,7 +385,8 @@ ext2fs_setattr(v)
 				ip->i_flag |= IN_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 1);
+		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime,
+			UPDATE_WAIT);
 		if (error)
 			return (error);
 	}
@@ -557,7 +558,7 @@ ext2fs_link(v)
 	}
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	error = VOP_UPDATE(vp, NULL, NULL, 1);
+	error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	if (!error)
 		error = ext2fs_direnter(ip, dvp, cnp);
 	if (error) {
@@ -736,7 +737,7 @@ abortit:
 	 */
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	if ((error = VOP_UPDATE(fvp, NULL, NULL, 1)) != 0) {
+	if ((error = VOP_UPDATE(fvp, NULL, NULL, UPDATE_WAIT)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;
 	}
@@ -794,7 +795,8 @@ abortit:
 			}
 			dp->i_e2fs_nlink++;
 			dp->i_flag |= IN_CHANGE;
-			if ((error = VOP_UPDATE(tdvp, NULL, NULL, 1)) != 0)
+			if ((error = VOP_UPDATE(tdvp, NULL, NULL, UPDATE_WAIT))
+			    != 0)
 				goto bad;
 		}
 		error = ext2fs_direnter(ip, tdvp, tcnp);
@@ -802,7 +804,7 @@ abortit:
 			if (doingdirectory && newparent) {
 				dp->i_e2fs_nlink--;
 				dp->i_flag |= IN_CHANGE;
-				(void)VOP_UPDATE(tdvp, NULL, NULL, 1);
+				(void)VOP_UPDATE(tdvp, NULL, NULL, UPDATE_WAIT);
 			}
 			goto bad;
 		}
@@ -1026,7 +1028,7 @@ ext2fs_mkdir(v)
 	ip->i_e2fs_mode = dmode;
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 2;
-	error = VOP_UPDATE(tvp, NULL, NULL, 1);
+	error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT);
 
 	/*
 	 * Bump link count in parent directory
@@ -1036,7 +1038,7 @@ ext2fs_mkdir(v)
 	 */
 	dp->i_e2fs_nlink++;
 	dp->i_flag |= IN_CHANGE;
-	if ((error = VOP_UPDATE(dvp, NULL, NULL, 1)) != 0)
+	if ((error = VOP_UPDATE(dvp, NULL, NULL, UPDATE_WAIT)) != 0)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
@@ -1362,7 +1364,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, 1)) != 0)
+	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT)) != 0)
 		goto bad;
 	error = ext2fs_direnter(ip, dvp, cnp);
 	if (error != 0)
