@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.4 2000/12/22 22:58:55 jdolecek Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5 2001/05/28 00:12:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,7 +75,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_code = code;
 
 	/* Save register context. */
-	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
+	frame.sf_sc.sc_frame = *tf;
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -145,7 +145,7 @@ sys___sigreturn14(p, v, retval)
 	tf = trapframe(p);
 	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);
-	bcopy(&sc.sc_frame, tf, sizeof *tf);
+	*tf = sc.sc_frame;
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
