@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 1997/10/20 08:14:11 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.1 1997/10/23 01:17:18 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2009,6 +2009,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACQ650, "Quadra", " 650 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACC650, "Centris", " 650 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ605, "Quadra", " 605 ", MACH_CLASSQ, &romvecs[9]},
+	{MACH_MACQ605_33, "Quadra", " 605/33 ", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[13]},
@@ -2047,6 +2048,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ,  &romvecs[9]},
+	{MACH_MACLC475_33, "LC", " 475/33 ", MACH_CLASSQ,  &romvecs[9]},
 	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[15]},
 	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSQ2, &romvecs[16]},
 	{MACH_MACCCLASSIC, "Color Classic ", "", MACH_CLASSLC, &romvecs[3]},
