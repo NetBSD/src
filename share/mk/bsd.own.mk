@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.113 1999/02/07 17:21:09 hubertf Exp $
+#	$NetBSD: bsd.own.mk,v 1.114 1999/02/10 21:11:47 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -128,10 +128,12 @@ GNU_ARCH.powerpc=powerpc
 GNU_ARCH.sparc=sparc
 GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
-# XXX temporary compatibility
-GNU_ARCH.mips=mipsel
+.if (${MACHINE_ARCH} == "mips")
+.INIT:
+	@echo Must set MACHINE_ARCH to one of mipseb or mipsel
+	@false
+.endif
 
-# 
 .if (${MACHINE_ARCH} == "sparc64")
 MACHINE_GNU_ARCH=${MACHINE_ARCH}
 .else
