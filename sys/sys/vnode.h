@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.43 1997/06/11 10:40:19 bouyer Exp $	*/
+/*	$NetBSD: vnode.h,v 1.44 1997/10/10 02:12:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -390,6 +390,8 @@ int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, int *aresid, struct proc *p));
 int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
+int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,
+	    int *done, struct proc *p, off_t *cookies, int ncookies));
 int	vn_poll __P((struct file *fp, int events, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
