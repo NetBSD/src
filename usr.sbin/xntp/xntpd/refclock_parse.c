@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_parse.c,v 1.2 1998/01/09 06:07:07 perry Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/v4/xntpd/refclock_parse.c,v 3.98 1997/01/19 14:11:59 kardel Exp
  *

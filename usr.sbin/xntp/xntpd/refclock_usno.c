@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_usno.c,v 1.2 1998/01/09 06:07:13 perry Exp $	*/
+
 /*
  * refclock_usno - clock driver for the Naval Observatory dialup
  * Michael Shields <shields@tembel.org> 1995/02/25

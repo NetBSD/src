@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_irig.c,v 1.2 1998/01/09 06:06:59 perry Exp $	*/
+
 /*
  * refclock_irig - clock driver for the IRIG audio decoder
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_chu.c,v 1.2 1998/01/09 06:06:54 perry Exp $	*/
+
 /*
  * refclock_chu - clock driver for the CHU time code
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntptrace.c,v 1.3 1998/01/09 06:06:26 perry Exp $	*/
+
 /*
  * ntptrace - show the chain from an NTP host leading back to
  *	its source of time
