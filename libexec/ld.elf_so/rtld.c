@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.48 2002/02/03 23:34:42 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.48.2.1 2003/09/05 19:15:01 tron Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -88,7 +88,6 @@ Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 char            _rtld_path[] = _PATH_RTLD;
-unsigned long   _rtld_curmark;	/* Current mark value */
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 #ifdef	VARPSZ
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
@@ -567,7 +566,6 @@ static void
 _rtld_init_dag(root)
 	Obj_Entry *root;
 {
-	_rtld_curmark++;
 	_rtld_init_dag1(root, root);
 }
 
@@ -578,9 +576,6 @@ _rtld_init_dag1(root, obj)
 {
 	const Needed_Entry *needed;
 
-	if (obj->mark == _rtld_curmark)
-		return;
-	obj->mark = _rtld_curmark;
 	_rtld_objlist_add(&obj->dldags, root);
 	_rtld_objlist_add(&root->dagmembers, obj);
 	for (needed = obj->needed; needed != NULL; needed = needed->next)
@@ -737,7 +732,6 @@ _rtld_objmain_sym(name)
 	hash = _rtld_elf_hash(name);
 	obj = _rtld_objmain;
 
-	_rtld_curmark++;
 	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, true);
 
 	if (def != NULL)
@@ -788,7 +782,6 @@ _rtld_dlsym(handle, name)
 		
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it. */
-			_rtld_curmark++;
 			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
 		} else {
 			/*
