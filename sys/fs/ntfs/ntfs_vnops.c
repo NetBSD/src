@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.2 2003/04/09 16:02:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.1 2002/12/23 17:38:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.2 2003/04/09 16:02:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ static int	ntfs_putpages __P((struct vop_putpages_args *));
 static int	ntfs_fsync __P((struct vop_fsync_args *ap));
 #endif
 static int	ntfs_pathconf __P((void *));
+static int	ntfs_remove(void *);
 
 int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
 
@@ -432,6 +433,23 @@ ntfs_write(ap)
 #endif
 
 	return (error);
+}
+
+int
+ntfs_remove(void *v)
+{
+	struct vop_remove_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	if (ap->a_dvp == ap->a_vp)
+		vrele(ap->a_vp);
+	else
+		vput(ap->a_vp);
+	vput(ap->a_dvp);
+	return (EOPNOTSUPP);
 }
 
 int
@@ -953,7 +971,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, genfs_fsync },		/* fsync */
 	{ &vop_seek_desc, genfs_seek },			/* seek */
-	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
+	{ &vop_remove_desc, ntfs_remove },		/* remove */
 	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
 	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
 	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
