@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.23 1998/01/12 20:35:04 thorpej Exp $
+#	$NetBSD: files.sun3x,v 1.24 1998/02/01 21:23:32 is Exp $
 
 #
 # sun3x-specific configuration info
@@ -36,7 +36,6 @@ file arch/sun3x/dev/idprom.c
 
 # include "arch/m68k/fpe/files.fpe"
 
-file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 
 # Compatibility modules

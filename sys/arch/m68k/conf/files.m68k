@@ -1,4 +1,4 @@
-#       $NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
+#       $NetBSD: files.m68k,v 1.19 1998/02/01 21:23:26 is Exp $
 #
 file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
@@ -15,5 +15,6 @@ file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/random.s
 file	arch/m68k/m68k/regdump.c
+file	arch/m68k/m68k/sig_machdep.c
 
 include "../../../compat/m68k4k/files.m68k4k"
