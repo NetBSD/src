@@ -1,4 +1,30 @@
-/*	$NetBSD: cpu.c,v 1.1 2000/02/29 15:21:46 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/06/17 15:57:13 nonaka Exp $	*/
+
+/*-
+ * Copyright (C) 2000, 2001 NONAKA Kimihiro.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7,9 +33,10 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/preptype.h>
 
-int cpumatch __P((struct device *, struct cfdata *, void *));
-void cpuattach __P((struct device *, struct device *, void *));
+int cpumatch(struct device *, struct cfdata *, void *);
+void cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
@@ -40,8 +67,11 @@ cpuattach(parent, dev, aux)
 
 	printf("\n");
 
-	{
-		/* XXX: ibm_machdep */
+	switch (prep_model) {
+	case IBM_6050:
+	case IBM_7248:
+	case IBM_6040:
+	    {
 		u_char l2ctrl, cpuinf;
 
 		/* system control register */
@@ -66,5 +96,10 @@ cpuattach(parent, dev, aux)
 			printf("not present");
 
 		printf("\n");
+	    }
+		break;
+
+	default:
+		break;
 	}
 }

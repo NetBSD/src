@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2001/06/15 15:50:06 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 2001/06/17 15:57:13 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,8 +49,8 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/preptype.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -224,13 +224,22 @@ pci_attach_hook(parent, self, pba)
 
 			/* Fixup intr */
 #if 1
-			/* XXX: ibm_machdep : ppc830 depend */
-			switch (device) {
-			case 12:
-			case 18:
-			case 22:
-				line = 15;
+			/* XXX: table? */
+			switch (prep_model) {
+			case IBM_6050:
+			case IBM_7248:
+				switch (device) {
+				case 12:
+				case 18:
+				case 22:
+					line = 15;
+					break;
+				default:
+					line = 0;
+					break;
+				}
 				break;
+
 			default:
 				line = 0;
 				break;
