@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.64 2003/04/01 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.65 2003/05/17 01:49:59 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -470,7 +470,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	splx(s);
 
 #ifdef DEBUG
-	if (err || (dvmaddr == (bus_addr_t)-1))
+	if (err || (dvmaddr == (u_long)-1))
 	{
 		printf("iommu_dvmamap_load(): extent_alloc(%d, %x) failed!\n",
 		    (int)sgsize, flags);
@@ -482,7 +482,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	if (err != 0)
 		return (err);
 
-	if (dvmaddr == (bus_addr_t)-1)
+	if (dvmaddr == (u_long)-1)
 		return (ENOMEM);
 
 	/* Set the active DVMA map */
@@ -694,7 +694,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 		return (err);
 
 #ifdef DEBUG
-	if (dvmaddr == (bus_addr_t)-1)
+	if (dvmaddr == (u_long)-1)
 	{
 		printf("iommu_dvmamap_load_raw(): extent_alloc(%d, %x) failed!\n",
 		    (int)sgsize, flags);
@@ -703,7 +703,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 #endif
 	}
 #endif
-	if (dvmaddr == (bus_addr_t)-1)
+	if (dvmaddr == (u_long)-1)
 		return (ENOMEM);
 
 	/* Set the active DVMA map */
