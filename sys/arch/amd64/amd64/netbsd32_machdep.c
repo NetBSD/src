@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.9 2004/02/20 18:11:16 drochner Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.10 2004/03/25 15:32:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2004/02/20 18:11:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.10 2004/03/25 15:32:27 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -92,6 +92,19 @@ cpu_exec_aout_makecmds(struct proc *p, struct exec_package *e)
 {
 
 	return ENOEXEC;
+}
+#endif
+
+#ifdef COMPAT_16
+/*
+ * There is no NetBSD-1.6 compatibility for native code.
+ * COMPAT_16 is useful for i386 emulation (COMPAT_NETBSD32) only.
+ */
+int
+compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+{
+
+	return ENOSYS;
 }
 #endif
 
