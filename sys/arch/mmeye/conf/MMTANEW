@@ -1,4 +1,4 @@
-#	$NetBSD: MMTANEW,v 1.1 1999/09/13 10:30:49 itojun Exp $
+#	$NetBSD: MMTANEW,v 1.2 1999/09/13 16:26:18 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -177,11 +177,6 @@ wd*	at wdc? drive ?			# the drives themselves
 
 # Miscellaneous mass storage devices
 
-# mainbus pseudo floppy
-fdc0	at mainbus0			# pseudo PC floppy controllers
-#fd*	at fdc? drive ?			# the drives themselves
-# some machines need you to do this instead of fd*
-fd0	at fdc0 drive 0
 
 # Network Interfaces
 

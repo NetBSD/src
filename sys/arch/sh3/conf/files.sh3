@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.1 1999/09/13 10:31:07 itojun Exp $
+#	$NetBSD: files.sh3,v 1.2 1999/09/13 16:26:19 msaitoh Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -61,14 +61,6 @@ define mainbus { }
 device	mainbus:  mainbus
 attach	mainbus at root
 file	arch/sh3/sh3/mainbus.c	mainbus
-
-# Mainbus pseudo floppy disk controller
-device	fdc {drive = -1}
-attach	fdc at mainbus
-device	fd: disk
-attach	fd at fdc
-file	arch/sh3/sh3/fd.c		fdc needs-flag
-major	{fd = 2}
 
 #
 # Compatibility modules

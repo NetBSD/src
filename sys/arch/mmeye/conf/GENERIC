@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 1999/09/13 10:30:48 itojun Exp $
+#	$NetBSD: GENERIC,v 1.2 1999/09/13 16:26:18 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -109,10 +109,6 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 shb*	at mainbus?
-
-# mainbus pseudo floppy
-#fdc0	at mainbus0			# mainbus pseudo floppy controllers
-#fd0	at fdc0 drive 0
 
 com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12
