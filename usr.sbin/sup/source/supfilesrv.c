@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.17 1999/04/12 20:48:08 pk Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.18 1999/08/24 15:52:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -28,8 +28,9 @@
 /*
  * supfilesrv -- SUP File Server
  *
- * Usage:  supfilesrv [-l] [-P] [-N] [-R] [-S]
- *	-l	"live" -- don't fork daemon
+ * Usage:  supfilesrv [-d] [-l] [-P] [-N] [-R] [-S]
+ *	-d	"debug" -- don't fork daemon
+ *	-l	"log" -- print successull connects (when compiled with libwrap)
  *	-P	"debug ports" -- use debugging network ports
  *	-N	"debug network" -- print debugging messages for network i/o
  *	-R	"RCS mode" -- if file is an rcs file, use co to get contents
@@ -37,6 +38,9 @@
  *
  **********************************************************************
  * HISTORY
+ * 2-Aug-99   Manuel Bouyer at LIP6
+ *	Added libwrap support
+ *
  * 13-Sep-92  Mary Thompson (mrt) at Carnegie-Mellon University
  *	Changed name of sup program in xpatch from /usr/cs/bin/sup to
  *	/usr/bin/sup for exported version of sup.
@@ -250,6 +254,9 @@
 # include <sys/mkdev.h>
 # include <sys/statvfs.h>
 #endif 
+#ifdef LIBWRAP
+#include <tcpd.h>
+#endif  
 
 #include "supcdefs.h"
 #include "supextern.h"
@@ -302,7 +309,10 @@ jmp_buf sjbuf;				/* jump location for network errors */
 TREELIST *listTL;			/* list of trees to upgrade */
 
 int silent;				/* -S flag */
-int live;				/* -l flag */
+#ifdef LIBWRAP
+int clog;				/* -l flag */
+#endif
+int live;				/* -d flag */
 int dbgportsq;				/* -P flag */
 extern int scmdebug;			/* -N flag */
 extern int netfile;
@@ -376,6 +386,9 @@ char **argv;
 	sigset_t nset, oset;
 	struct sigaction chld,ign;
 	time_t tloc;
+#ifdef LIBWRAP
+        struct request_info req;
+#endif  
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;	/* export version number */
@@ -396,8 +409,23 @@ char **argv;
 		PROTOVERSION,PGMVERSION,scmversion,fmttime (tloc));
 	if (live) {
 		x = service ();
+
 		if (x != SCMOK)
 			logquit (1,"Can't connect to network");
+#ifdef LIBWRAP
+		request_init(&req, RQ_DAEMON, "supfilesrv", RQ_FILE, netfile,
+		    NULL);      
+		fromhost(&req);
+		if (hosts_access(&req) == 0) {
+			logdeny("refused connection from %.500s",
+			    eval_client(&req));   
+			servicekill();       
+			exit(1);
+		}
+		if (clog) {
+			logallow("connection from %.500s", eval_client(&req));
+		}
+#endif
 		answer ();
 		(void) serviceend ();
 		exit (0);
@@ -424,6 +452,21 @@ char **argv;
 		sigaddset(&nset, SIGCHLD);
 		sigprocmask(SIG_BLOCK, &nset, &oset);
 		if ((pid = fork()) == 0) { /* server process */
+#ifdef LIBWRAP
+			request_init(&req, RQ_DAEMON, "supfilesrv", RQ_FILE,
+			    netfile, NULL);      
+			fromhost(&req);
+			if (hosts_access(&req) == 0) {
+				logdeny("refused connection from %.500s",
+				    eval_client(&req));   
+				servicekill();       
+				exit(1);
+			}
+			if (clog) {
+				logallow("connection from %.500s",
+				    eval_client(&req));
+			}
+#endif
 			(void) serviceprep ();
 			answer ();
 			(void) serviceend ();
@@ -457,7 +500,11 @@ chldsig(snum)
 void
 usage ()
 {
-	quit (1,"Usage: supfilesrv [ -l | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+#ifdef LIBWRAP
+	quit (1,"Usage: supfilesrv [ -l | -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+#else
+	quit (1,"Usage: supfilesrv [ -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+#endif
 }
 
 void
@@ -477,6 +524,9 @@ char **argv;
         candorcs = FALSE;
 #endif
 	live = FALSE;
+#ifdef LIBWRAP
+	clog = FALSE;
+#endif
 	dbgportsq = FALSE;
 	scmdebug = 0;
 	clienthost = NULL;
@@ -490,7 +540,12 @@ char **argv;
 		case 'S':
 			silent = TRUE;
 			break;
+#ifdef LIBWRAP
 		case 'l':
+			clog = TRUE;
+			break;
+#endif
+		case 'd':
 			live = TRUE;
 			break;
 		case 'P':

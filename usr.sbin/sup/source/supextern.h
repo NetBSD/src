@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.9 1999/08/02 05:36:05 erh Exp $	*/
+/*	$NetBSD: supextern.h,v 1.10 1999/08/24 15:52:54 bouyer Exp $	*/
 
 struct stat;
 
@@ -35,6 +35,10 @@ void logopen __P((char *));
 void logquit __P((int, char *, ...));
 void logerr __P((char *, ...));
 void loginfo __P((char *, ...));
+#ifdef LIBWRAP
+void logdeny __P((char *, ...));
+void logallow __P((char *, ...));
+#endif
 
 /* netcryptvoid.c */
 int netcrypt __P((char *));
