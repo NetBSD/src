@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.341 2001/04/13 18:48:59 pooka Exp $
+# $NetBSD: mi,v 1.342 2001/04/16 08:22:50 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1088,7 +1088,9 @@
 ./usr/share/man/cat8/arc/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arm26/BBBB.0		man-sys-catman
+./usr/share/man/cat8/arm26/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arm26/bbbb.0		man-sys-catman
+./usr/share/man/cat8/arm26/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arm32/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arm32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arp.0			man-netutil-catman
@@ -1246,6 +1248,8 @@
 ./usr/share/man/cat8/mac68k/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/mac68k/boot.0		man-sys-catman
 ./usr/share/man/cat8/mac68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/macppc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/macppc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/mail.local.0		man-sendmail-catman
 ./usr/share/man/cat8/mailstats.0		man-sendmail-catman
 ./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman
@@ -2581,7 +2585,9 @@
 ./usr/share/man/man8/arc/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arm26/BBBB.8		man-sys-man
+./usr/share/man/man8/arm26/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arm26/bbbb.8		man-sys-man
+./usr/share/man/man8/arm26/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arm32/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arm32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arp.8			man-netutil-man
@@ -2739,6 +2745,8 @@
 ./usr/share/man/man8/mac68k/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/mac68k/boot.8		man-sys-man
 ./usr/share/man/man8/mac68k/makedev.8		man-sysutil-man
+./usr/share/man/man8/macppc/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/macppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/mail.local.8		man-sendmail-man
 ./usr/share/man/man8/mailstats.8		man-sendmail-man
 ./usr/share/man/man8/mailwrapper.8		man-mailwrapper-man
