@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.35 1996/02/01 22:31:39 mycroft Exp $	*/
+/*	$NetBSD: ser.c,v 1.36 1996/03/06 23:22:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1995,6 +1995,9 @@ sercnprobe(struct consdev * cp)
 		}
 		return 0;
 	}
+
+	if (mac68k_machine.serial_console > 1)
+		mac68k_machine.serial_console = 3;
 
 	cp->cn_pri = CN_NORMAL;			/* Lower than CN_INTERNAL */
 	if (mac68k_machine.serial_console & 0x01) {
