@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.4 1994/01/06 23:58:17 mycroft Exp $
+ *	$Id: ns_ip.c,v 1.5 1994/01/10 22:02:31 mycroft Exp $
  */
 
 /*
@@ -290,7 +290,7 @@ nsipoutput(ifn, m, dst)
 	/*
 	 * Output final datagram.
 	 */
-	error =  (ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST));
+	error =  ip_output(m, NULL, ro, SO_BROADCAST, NULL);	/* XXX */
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;
