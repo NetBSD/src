@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_sin.c,v 1.3 1994/02/18 02:26:01 jtc Exp $";
+static char rcsid[] = "$Id: k_sin.c,v 1.4 1994/03/03 17:04:24 jtc Exp $";
 #endif
 
 /* __kernel_sin( x, y, iy)
@@ -43,6 +43,13 @@ static char rcsid[] = "$Id: k_sin.c,v 1.3 1994/02/18 02:26:01 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double 
@@ -65,8 +72,7 @@ S6  =  1.58969099521155010221e-10; /* 0x3DE5D93A, 0x5ACFD57C */
 #endif
 {
 	double z,r,v;
-	int n0, ix;
-	n0 = ((*(int*)&half)>>29)^1;		/* high word index */
+	int ix;
 	ix = (*(n0+(int*)&x))&0x7fffffff;	/* high word of x */
 	if(ix<0x3e400000)			/* |x| < 2**-27 */
 	   {if((int)x==0) return x;}		/* generate inexact */

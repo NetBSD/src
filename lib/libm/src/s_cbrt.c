@@ -11,10 +11,17 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_cbrt.c,v 1.3 1994/02/18 02:26:15 jtc Exp $";
+static char rcsid[] = "$Id: s_cbrt.c,v 1.4 1994/03/03 17:04:28 jtc Exp $";
 #endif
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 /* cbrt(x)
  * Return cube root of x
@@ -45,13 +52,10 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 	double x;
 #endif
 {
-	double	one	= 1.0;
-	int	n0,hx;
+	int	hx;
 	double r,s,t=0.0,w;
 	unsigned *pt = (unsigned *) &t, sign;
 
-
-	n0 = ((*(int*)&one)>>29)^1;	/* index of high word */
 	hx = *( n0 + (int*)&x);		/* high word of x */
 	sign=hx&0x80000000; 		/* sign= sign(x) */
 	hx  ^=sign;

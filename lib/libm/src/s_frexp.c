@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_frexp.c,v 1.3 1994/02/18 02:26:33 jtc Exp $";
+static char rcsid[] = "$Id: s_frexp.c,v 1.4 1994/03/03 17:04:36 jtc Exp $";
 #endif
 
 /*
@@ -25,6 +25,13 @@ static char rcsid[] = "$Id: s_frexp.c,v 1.3 1994/02/18 02:26:33 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double
@@ -41,8 +48,7 @@ two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 	double x; int *eptr;
 #endif
 {
-	int n0, hx, ix, lx;
-	n0 = 1^((*(int*)&one)>>29);
+	int hx, ix, lx;
 	hx = *(n0+(int*)&x);
 	ix = 0x7fffffff&hx;
 	lx = *(1-n0+(int*)&x);

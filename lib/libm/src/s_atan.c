@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_atan.c,v 1.3 1994/02/18 02:26:13 jtc Exp $";
+static char rcsid[] = "$Id: s_atan.c,v 1.4 1994/03/03 17:04:27 jtc Exp $";
 #endif
 
 /* atan(x)
@@ -35,6 +35,13 @@ static char rcsid[] = "$Id: s_atan.c,v 1.3 1994/02/18 02:26:13 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double atanhi[] = {
@@ -92,9 +99,8 @@ huge   = 1.0e300;
 #endif
 {
 	double w,s1,s2,z;
-	int n0,ix,hx,id;
+	int ix,hx,id;
 
-	n0 = ((*(int*)&one)>>29)^1;
 	hx = *(n0+(int*)&x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x44100000) {	/* if |x| >= 2^66 */
