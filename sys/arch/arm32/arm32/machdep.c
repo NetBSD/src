@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.16 1997/01/01 23:40:13 pk Exp $ */
+/* $NetBSD: machdep.c,v 1.17 1997/01/06 04:47:54 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -514,7 +514,7 @@ delay(n)
  * during the bootstrap process.
  */
 
-/*inline*/ void
+/*__inline*/ void
 map_section(pagetable, va, pa)
 	vm_offset_t pagetable;
 	vm_offset_t va;
@@ -527,7 +527,7 @@ map_section(pagetable, va, pa)
 }
 
 
-/*inline*/ void
+/*__inline*/ void
 map_pagetable(pagetable, va, pa)
 	vm_offset_t pagetable;
 	vm_offset_t va;
@@ -542,7 +542,7 @@ map_pagetable(pagetable, va, pa)
 }
 
 
-inline void
+__inline void
 map_entry(pagetable, va, pa)
 	vm_offset_t pagetable;
 	vm_offset_t va;
@@ -553,7 +553,7 @@ map_entry(pagetable, va, pa)
 }
 
 
-inline void
+__inline void
 map_entry_nc(pagetable, va, pa)
 	vm_offset_t pagetable;
 	vm_offset_t va;
@@ -564,7 +564,7 @@ map_entry_nc(pagetable, va, pa)
 }
 
 
-inline void
+__inline void
 map_entry_ro(pagetable, va, pa)
 	vm_offset_t pagetable;
 	vm_offset_t va;
