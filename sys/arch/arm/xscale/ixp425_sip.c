@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.5 2003/11/02 21:24:39 scw Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.6 2003/11/16 12:41:03 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.5 2003/11/02 21:24:39 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.6 2003/11/16 12:41:03 scw Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -60,7 +60,6 @@ static int	ixpsip_print(void *, const char *);
 CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
 		ixpsip_match, ixpsip_attach, NULL, NULL);
 
-extern struct bus_space ixpsip_bs_tag;
 struct ixpsip_softc *ixpsip_softc;
 
 int
@@ -73,7 +72,7 @@ void
 ixpsip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ixpsip_softc *sc = (void *) self;
-	sc->sc_iot = &ixpsip_bs_tag;
+	sc->sc_iot = &ixp425_bs_tag;
 
 	ixpsip_softc = sc;
 
@@ -85,11 +84,6 @@ ixpsip_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-
-	/*
-	 * Bootstrap the timer (needed for delay(9))
-	 */
-	ixp425_clk_bootstrap(sc->sc_iot);
 
 	/*
 	 *  Attach each devices
