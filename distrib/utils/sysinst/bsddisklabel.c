@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.22 2003/07/27 07:45:08 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.23 2003/09/27 10:16:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -245,7 +245,8 @@ set_ptn_size(menudesc *m, void *arg)
 	if (size == 0)
 		size = p->dflt_size;
 	size /= sizemult;
-	snprintf(dflt, sizeof dflt, "%d", size);
+	snprintf(dflt, sizeof dflt, "%d%s",
+	    size, p == pi->pool_part ? "+" : "");
 
 	for (;;) {
 		mult = sizemult;
@@ -302,8 +303,11 @@ set_ptn_size(menudesc *m, void *arg)
 	size = NUMSEC(size, mult, dlcylsize);
 	if (p == pi->pool_part)
 		pi->pool_part = NULL;
-	if (size != 0 && *cp == '+' && p->limit == 0)
+	if (*cp == '+' && p->limit == 0) {
 		pi->pool_part = p;
+		if (size == 0)
+			size = dlcylsize;
+	}
 	if (p->limit != 0 && size > p->limit)
 		size = p->limit;
     adjust_free:
@@ -376,11 +380,12 @@ get_ptn_sizes(int layout_kind, int part_start, int sectors)
 
 		if (root_limit != 0 && part_start + sectors > root_limit) {
 			/* root can't have all the space... */
+			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
+			pi.ptn_sizes[PI_ROOT].changed = 1;
+			/* Give free space to /usr */
 			pi.ptn_sizes[PI_USR].size =
 						pi.ptn_sizes[PI_USR].dflt_size;
-			/* Give free space to /usr */
 			pi.pool_part = &pi.ptn_sizes[PI_USR];
-			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
 		} else {
 			/* Make size of root include default size of /usr */
 			pi.ptn_sizes[PI_ROOT].size +=
