@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.17 1997/09/01 21:16:01 is Exp $
+#	$NetBSD: install.sub,v 1.18 1997/09/07 22:43:13 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -159,6 +159,10 @@ dir_has_sets() {
 		fi
 		# Try for stupid msdos convention
 		if [ -f $_dir/${_file}.tgz ]; then
+			return 0
+		fi
+		# Try for split files
+		if [ -f $_dir/${_file}${VERSION}.aa ]; then
 			return 0
 		fi
 	done
@@ -669,20 +673,39 @@ install_from_mounted_fs() {
 	local _sets
 	local _next
 	local _f
+	local _dirname
 
+	_dirname=$1
 	_sets=""
-	if dir_has_sets $1 $THESETS; then
-		for _f in $THESETS ; do
-			if [ -f $1/${_f}.tar.gz ]; then
-				_sets="$_sets ${_f}.tar.gz"
-			elif [ -f $1/${_f}.tgz ]; then
-				_sets="$_sets ${_f}.tgz"
-			fi
-		done
-	else
-		echo "There are no NetBSD install sets available in \"$1\""
-		return
-	fi
+	while ! dir_has_sets ${_dirname} $THESETS; do
+		echo ""
+		echo -n "There are no NetBSD install sets available in "
+		echo "\"${_dirname}\"."
+		echo "\"${_dirname}\" contains: "
+		echo ""
+		ls -F ${_dirname}
+		echo ""
+		echo -n "Enter subdirectory: [try other install media] "
+		getresp ""
+		if [ "X${resp}" = "X" ]; then
+			return
+		fi
+		if [ ! -d ${_dirname}/${resp} ]; then
+			echo "\"${resp}\" is no directory; try again."
+		else
+			_dirname=${_dirname}/$resp
+		fi
+	done
+
+	for _f in $THESETS ; do
+		if [ -f ${_dirname}/${_f}.tar.gz ]; then
+			_sets="$_sets ${_f}.tar.gz"
+		elif [ -f ${_dirname}/${_f}.tgz ]; then
+			_sets="$_sets ${_f}.tgz"
+		elif [ -f ${_dirname}/${_f}${VERSION}.aa ]; then
+			_sets="$_sets ${_f}${VERSION}"
+		fi
+	done
 
 	while : ; do
 		echo "The following sets are available for extraction:"
@@ -713,13 +736,17 @@ install_from_mounted_fs() {
 		echo -n "File name [$_next]? "
 		getresp "$_next"
 		_f=$resp
-		_filename="/$1/$_f"
+		_filename="/${_dirname}/$_f"
 
 		# Ensure file exists
 		if [ ! -f $_filename ]; then
-			echo "File $_filename does not exist.  Check to make"
-			echo "sure you entered the information properly."
-			continue
+			if [ -f ${_filename}.aa ]; then
+				_filename=${_filename}.\?\?
+			else
+			 echo "File $_filename does not exist.  Check to make"
+			 echo "sure you entered the information properly."
+			 continue
+			fi
 		fi
 
 		# Extract file
@@ -817,13 +844,22 @@ __install_cdrom_2
 	fi
 
 	# Get the directory where the file lives
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo "Enter the directory relative to the mount point that"
-		echo -n "contains the file. [${_directory}] "
-		getresp "${_directory}"
+	_directory="."
+	resp = "."	# force one iteration
+	while [ "X${resp}" != X"" ]; do
+		echo ""
+		echo "The current directory, ${_directory}, contains:" 
+		echo ""
+		(cd /mnt2/$_directory; ls -F)
+		cat << \__install_cdrom_3
+
+Enter the directory relative to this point that contains the files, or
+nothing to install from here.
+
+__install_cdrom_3
+		getresp ""
+		_directory=${_directory}/$resp
 	done
-	_directory=$resp
 
 	install_from_mounted_fs /mnt2/${_directory}
 	umount -f /mnt2 > /dev/null 2>&1
