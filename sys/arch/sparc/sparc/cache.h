@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.21 2000/06/05 20:38:24 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.22 2000/06/06 07:56:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -193,7 +193,7 @@ extern void sparc_noop __P((void));
 #define noop_cache_flush \
 	(void (*)__P((caddr_t, u_int))) sparc_noop
 #define noop_pcache_flush_page \
-	(void (*)__P((int, int))) sparc_noop
+	(void (*)__P((paddr_t, int))) sparc_noop
 #define noop_pure_vcache_flush \
 	(void (*)__P((void))) sparc_noop
 #define noop_cache_flush_all \
