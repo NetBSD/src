@@ -1,7 +1,9 @@
+/*	$NetBSD: rcsrev.c,v 1.5 1996/10/15 07:00:24 veego Exp $	*/
+
 /* Handle RCS revision numbers.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,11 +31,16 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsrev.c,v $
- * Revision 1.4  1996/05/21 13:35:31  mrg
- * don't use gets().  pr#2287 (patch sent to rcs maintainers)
+ * Revision 1.5  1996/10/15 07:00:24  veego
+ * Merge rcs 5.7.
  *
- * Revision 1.3  1995/02/24 02:25:12  mycroft
- * RCS 5.6.7.4
+ * Revision 5.10  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.9  1995/06/01 16:23:43  eggert
+ * (cmpdate, normalizeyear): New functions work around MKS RCS incompatibility.
+ * (cmpnum, compartial): s[d] -> *(s+d) to work around Cray compiler bug.
+ * (genrevs, genbranch): cmpnum -> cmpdate
  *
  * Revision 5.8  1994/03/17 14:05:48  eggert
  * Remove lint.
@@ -103,10 +111,11 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(revId, "$Id: rcsrev.c,v 1.4 1996/05/21 13:35:31 mrg Exp $")
+libId(revId, "Id: rcsrev.c,v 5.10 1995/06/16 06:19:24 eggert Exp")
 
 static char const *branchtip P((char const*));
 static char const *lookupsym P((char const*));
+static char const *normalizeyear P((char const*,char[5]));
 static struct hshentry *genbranch P((struct hshentry const*,char const*,int,char const*,char const*,char const*,struct hshentries**));
 static void absent P((char const*,int));
 static void cantfindbranch P((char const*,char const[datesize],char const*,char const*));
@@ -182,8 +191,8 @@ int cmpnum(num1, num2)
 		/* Strip leading zeros, then find number of digits.  */
 		while (*s1=='0') ++s1;
 		while (*s2=='0') ++s2;
-		for (d1=0; isdigit(s1[d1]); d1++) continue;
-		for (d2=0; isdigit(s2[d2]); d2++) continue;
+		for (d1=0; isdigit(*(s1+d1)); d1++) continue;
+		for (d2=0; isdigit(*(s2+d2)); d2++) continue;
 
 		/* Do not convert to integer; it might overflow!  */
 		if (d1 != d2)
@@ -222,10 +231,48 @@ int cmpnumfld(num1, num2, fld)
 			continue;
 	}
         /* Now s1 and s2 point to the beginning of the respective fields */
-	while (*s1=='0') ++s1;  for (d1=0; isdigit(s1[d1]); d1++) continue;
-	while (*s2=='0') ++s2;  for (d2=0; isdigit(s2[d2]); d2++) continue;
+	while (*s1=='0') ++s1;  for (d1=0; isdigit(*(s1+d1)); d1++) continue;
+	while (*s2=='0') ++s2;  for (d2=0; isdigit(*(s2+d2)); d2++) continue;
 
 	return d1<d2 ? -1 : d1==d2 ? memcmp(s1,s2,d1) : 1;
+}
+
+
+	int
+cmpdate(d1, d2)
+	char const *d1, *d2;
+/*
+* Compare the two dates.  This is just like cmpnum,
+* except that for compatibility with old versions of RCS,
+* 1900 is added to dates with two-digit years.
+*/
+{
+	char year1[5], year2[5];
+	int r = cmpnumfld(normalizeyear(d1,year1), normalizeyear(d2,year2), 1);
+
+	if (r)
+		return r;
+	else {
+		while (isdigit(*d1)) d1++;  d1 += *d1=='.';
+		while (isdigit(*d2)) d2++;  d2 += *d2=='.';
+		return cmpnum(d1, d2);
+	}
+}
+
+	static char const *
+normalizeyear(date, year)
+	char const *date;
+	char year[5];
+{
+	if (isdigit(date[0]) && isdigit(date[1]) && !isdigit(date[2])) {
+		year[0] = '1';
+		year[1] = '9';
+		year[2] = date[0];
+		year[3] = date[1];
+		year[4] = 0;
+		return year;
+	} else
+		return date;
 }
 
 
@@ -282,20 +329,21 @@ compartial(num1, num2, length)
 	    if (!*s1) return 1;
 	    if (!*s2) return -1;
 
-	    while (*s1=='0') ++s1;  for (d1=0; isdigit(s1[d1]); d1++) continue;
-	    while (*s2=='0') ++s2;  for (d2=0; isdigit(s2[d2]); d2++) continue;
+	    while (*s1=='0') ++s1; for (d1=0; isdigit(*(s1+d1)); d1++) continue;
+	    while (*s2=='0') ++s2; for (d2=0; isdigit(*(s2+d2)); d2++) continue;
 
 	    if (d1 != d2)
 		    return d1<d2 ? -1 : 1;
 	    if ((r = memcmp(s1, s2, d1)))
 		    return r;
+	    if (!--length)
+		    return 0;
+
 	    s1 += d1;
 	    s2 += d1;
 
 	    if (*s1 == '.') s1++;
             if (*s2 == '.') s2++;
-
-	    if ( --length == 0 ) return 0;
 	}
 }
 
@@ -391,7 +439,7 @@ struct hshentry * genrevs(revno,date,author,state,store)
 		while (next &&
 		       cmpnumfld(branchnum,next->num,1) == 0 &&
 		       (
-			(date && cmpnum(date,next->date) < 0) ||
+			(date && cmpdate(date,next->date) < 0) ||
 			(author && strcmp(author,next->author) != 0) ||
 			(state && strcmp(state,next->state) != 0)
 		       )
@@ -439,7 +487,7 @@ struct hshentry * genrevs(revno,date,author,state,store)
         if (length>2)
                 return genbranch(next,revno,length,date,author,state,store);
         else { /* length == 2*/
-		if (date && cmpnum(date,next->date)<0) {
+		if (date && cmpdate(date,next->date)<0) {
 			rcserror("Revision %s has date %s.",
 				next->num,
 				date2str(next->date, datebuf)
@@ -529,7 +577,7 @@ genbranch(bpoint, revno, length, date, author, state, store)
                 if (length==field) {
                         /* pick latest one on that branch */
 			trail = 0;
-			do { if ((!date || cmpnum(date,next->date)>=0) &&
+			do { if ((!date || cmpdate(date,next->date)>=0) &&
 				 (!author || strcmp(author,next->author)==0) &&
 				 (!state || strcmp(state,next->state)==0)
                              ) trail = next;
@@ -574,7 +622,7 @@ genbranch(bpoint, revno, length, date, author, state, store)
 			return 0;
                 }
                 if (length == field+1) {
-			if (date && cmpnum(date,trail->date)<0) {
+			if (date && cmpdate(date,trail->date)<0) {
 				rcserror("Revision %s has date %s.",
 					trail->num,
 					date2str(trail->date, datebuf)

@@ -1,7 +1,9 @@
+/*	$NetBSD: ci.c,v 1.4 1996/10/15 06:59:54 veego Exp $	*/
+
 /* Check in revisions of RCS files from working files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,21 @@ Report problems and direct all questions to:
 
 /*
  * $Log: ci.c,v $
- * Revision 1.3  1995/02/24 02:07:46  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 06:59:54  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.30  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.29  1995/06/01 16:23:43  eggert
+ * (main): Add -kb.
+ * Use `cmpdate', not `cmpnum', to compare dates.
+ * This is for MKS RCS's incompatible 20th-century date format.
+ * Don't worry about errno after ftruncate fails.
+ * Fix input file rewinding bug when large_memory && !maps_memory
+ * and checking in a branch tip.
+ *
+ * (fixwork): Fall back on chmod if fchmod fails, since it might be ENOSYS.
  *
  * Revision 5.28  1994/03/20 04:52:58  eggert
  * Do not generate a corrupted RCS file if the user modifies the working file
@@ -264,7 +280,7 @@ static struct hshentry newdelta;	/* new delta to be inserted	*/
 static struct stat workstat;
 static struct Symrev *assoclst, **nextassoc;
 
-mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
+mainProg(ciId, "ci", "Id: ci.c,v 5.30 1995/06/16 06:19:24 eggert Exp")
 {
 	static char const cmdusage[] =
 		"\nci usage: ci -{fIklMqru}[rev] -d[date] -mmsg -{nN}name -sstate -ttext -T -Vn -wwho -xsuff -zzone file ...";
@@ -545,7 +561,7 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
 		newdelta.date = getcurdate();  /* use current date */
 	/* now check validity of date -- needed because of -d and -k          */
 	if (targetdelta &&
-	    cmpnum(newdelta.date,targetdelta->date) < 0) {
+	    cmpdate(newdelta.date,targetdelta->date) < 0) {
 		rcserror("Date %s precedes %s in revision %s.",
 			date2str(newdelta.date, newdatebuf),
 			date2str(targetdelta->date, targetdatebuf),
@@ -568,7 +584,7 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
         puttree(Head,frewrite);
 	putdesc(false,textfile);
 
-	changework = Expand != OLD_EXPAND;
+	changework = Expand < MIN_UNCHANGED_EXPAND;
 	dolog = true;
 	lockthis = lockflag;
 	workdelta = &newdelta;
@@ -615,19 +631,21 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
 			long hwm = ftell(frewrite);
 			int bad_truncate;
 			Orewind(frewrite);
+
+			/*
+			* Work around a common ftruncate() bug:
+			* NFS won't let you truncate a file that you
+			* currently lack permissions for, even if you
+			* had permissions when you opened it.
+			* Also, Posix 1003.1b-1993 sec 5.6.7.2 p 128 l 1022
+			* says ftruncate might fail because it's not supported.
+			*/
 #			if !has_ftruncate
-			    bad_truncate = 1;
-#			else
-			    /*
-			     * Work around a common ftruncate() bug:
-			     * NFS won't let you truncate a file that you
-			     * currently lack permissions for, even if you
-			     * had permissions when you opened it.
-			     */
-			    bad_truncate = ftruncate(fileno(frewrite),(off_t)0);
-			    if (bad_truncate  &&  errno != EACCES)
-				Oerror();
+#			    undef ftruncate
+#			    define ftruncate(fd,length) (-1)
 #			endif
+			bad_truncate = ftruncate(fileno(frewrite), (off_t)0);
+
 			Irewind(finptr);
 			Lexinit();
 			getadmin();
@@ -656,11 +674,12 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
 		} else {
 		    int wfd = Ifileno(workptr);
 		    struct stat checkworkstat;
-#		    if large_memory && !has_mmap
+		    char const *diffv[6 + !!OPEN_O_BINARY], **diffp;
+#		    if large_memory && !maps_memory
 			FILE *wfile = workptr->stream;
-			long wfile_off = 0; /* `= 0' pacifies `gcc -Wall'.  */
+			long wfile_off;
 #		    endif
-#		    if (!large_memory || !has_mmap) && !has_fflush_input
+#		    if !has_fflush_input && !(large_memory && maps_memory)
 		        off_t wfd_off;
 #		    endif
 
@@ -675,9 +694,9 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
 				Ierror();
 #			endif
 #		    else
-#			if !has_mmap
+#			if !maps_memory
 			    if (
-			    	(newhead && (wfile_off=ftell(wfile)) == -1)
+			    	(wfile_off = ftell(wfile)) == -1
 			     ||	fseek(wfile, 0L, SEEK_SET) != 0
 #			     if has_fflush_input
 			     ||	fflush(wfile) != 0
@@ -686,31 +705,36 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.3 1995/02/24 02:07:46 mycroft Exp $")
 				Ierror();
 #			endif
 #		    endif
-#		    if (!large_memory || !has_mmap) && !has_fflush_input
+#		    if !has_fflush_input && !(large_memory && maps_memory)
 			wfd_off = lseek(wfd, (off_t)0, SEEK_CUR);
 			if (wfd_off == -1
 			    || (wfd_off != 0
 				&& lseek(wfd, (off_t)0, SEEK_SET) != 0))
 			    Ierror();
 #		    endif
-		    switch (run(wfd, diffname,
-			DIFF DIFF_FLAGS,
-			newhead ? "-" : expname,
-			newhead ? expname : "-",
-			(char*)0
-		    )) {
+		    diffp = diffv;
+		    *++diffp = DIFF;
+		    *++diffp = DIFFFLAGS;
+#		    if OPEN_O_BINARY
+			if (Expand == BINARY_EXPAND)
+			    *++diffp = "--binary";
+#		    endif
+		    *++diffp = newhead ? "-" : expname;
+		    *++diffp = newhead ? expname : "-";
+		    *++diffp = 0;
+		    switch (runv(wfd, diffname, diffv)) {
 			case DIFF_FAILURE: case DIFF_SUCCESS: break;
 			default: rcsfaterror("diff failed");
 		    }
+#		    if !has_fflush_input && !(large_memory && maps_memory)
+			if (lseek(wfd, wfd_off, SEEK_CUR) == -1)
+			    Ierror();
+#		    endif
+#		    if large_memory && !maps_memory
+			if (fseek(wfile, wfile_off, SEEK_SET) != 0)
+			    Ierror();
+#		    endif
 		    if (newhead) {
-#			if (!large_memory || !has_mmap) && !has_fflush_input
-			    if (lseek(wfd, wfd_off, SEEK_CUR) == -1)
-				Ierror();
-#			endif
-#			if large_memory && !has_mmap
-			    if (fseek(wfile, wfile_off, SEEK_SET) != 0)
-				Ierror();
-#			endif
 			Irewind(workptr);
 			putdftext(&newdelta, workptr, frewrite, false);
 			if (!putdtext(targetdelta,diffname,frewrite,true)) continue;
@@ -1112,7 +1136,7 @@ struct hshentry * delta;
  * return 0; return 1 if a lock is actually removed.
  */
 {
-	register struct lock *next, **trail;
+	register struct rcslock *next, **trail;
 	char const *num;
 
         num=delta->num;
@@ -1162,16 +1186,14 @@ fixwork(mode_t newworkmode, time_t mtime)
 		    ||	setmtime(workname, mtime) != 0
 		?   -1
 	    :	workstat.st_mode == newworkmode  ?  0
-	    :
-#		if has_fchmod
-			fchmod(Ifileno(workptr), newworkmode)
-#		else
-#		if bad_chmod_close
-			-1
-#		else
-			chmod(workname, newworkmode)
-#		endif
-#		endif
+#if has_fchmod
+	    :	fchmod(Ifileno(workptr), newworkmode) == 0  ?  0
+#endif
+#if bad_chmod_close
+	    :	-1
+#else
+	    :	chmod(workname, newworkmode)
+#endif
 	;
 }
 
@@ -1193,13 +1215,13 @@ xpandfile(unexfile, delta, exname, dolog)
 	int e, r;
 
 	targetname = makedirtemp(1);
-	if (!(exfile = fopen(targetname, FOPEN_W_WORK))) {
+	if (!(exfile = fopenSafer(targetname, FOPEN_W_WORK))) {
 		eerror(targetname);
 		workerror("can't build working file");
 		return -1;
         }
 	r = 0;
-	if (Expand == OLD_EXPAND)
+	if (MIN_UNEXPAND <= Expand)
 		fastcopy(unexfile,exfile);
 	else {
 		for (;;) {

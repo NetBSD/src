@@ -1,7 +1,9 @@
+/*	$NetBSD: rcsutil.c,v 1.6 1996/10/15 07:00:27 veego Exp $	*/
+
 /* RCS utility functions */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -31,8 +34,33 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsutil.c,v $
- * Revision 1.5  1995/02/24 02:25:16  mycroft
- * RCS 5.6.7.4
+ * Revision 1.6  1996/10/15 07:00:27  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.20  1995/06/16 06:19:24  eggert
+ * (catchsig): Remove `return'.
+ * Update FSF address.
+ *
+ * Revision 5.19  1995/06/02 18:19:00  eggert
+ * (catchsigaction): New name for `catchsig', for sa_sigaction signature.
+ * Use nRCS even if !has_psiginfo, to remove unused variable warning.
+ * (setup_catchsig): Use sa_sigaction only if has_sa_sigaction.
+ * Use ENOTSUP only if defined.
+ *
+ * Revision 5.18  1995/06/01 16:23:43  eggert
+ * (catchsig, restoreints, setup_catchsig): Use SA_SIGINFO, not has_psiginfo,
+ * to determine whether to use SA_SIGINFO feature,
+ * but also check at runtime whether the feature works.
+ * (catchsig): If an mmap_signal occurs, report the affected file name.
+ * (unsupported_SA_SIGINFO, accessName): New variables.
+ * (setup_catchsig): If using SA_SIGINFO, use sa_sigaction, not sa_handler.
+ * If SA_SIGINFO fails, fall back on sa_handler method.
+ *
+ * (readAccessFilenameBuffer, dupSafer, fdSafer, fopenSafer): New functions.
+ * (concatenate): Remove.
+ *
+ * (runv): Work around bad_wait_if_SIGCHLD_ignored bug.
+ * Remove reference to OPEN_O_WORK.
  *
  * Revision 5.17  1994/03/20 04:52:58  eggert
  * Specify subprocess input via file descriptor, not file name.
@@ -164,7 +192,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(utilId, "$Id: rcsutil.c,v 1.5 1995/02/24 02:25:16 mycroft Exp $")
+libId(utilId, "Id: rcsutil.c,v 5.20 1995/06/16 06:19:24 eggert Exp")
 
 #if !has_memcmp
 	int
@@ -374,10 +402,30 @@ getusername(suspicious)
  */
 
 static sig_atomic_t volatile heldsignal, holdlevel;
-#if has_psiginfo
+#ifdef SA_SIGINFO
+	static int unsupported_SA_SIGINFO;
 	static siginfo_t bufsiginfo;
 	static siginfo_t *volatile heldsiginfo;
 #endif
+
+
+#if has_NFS && has_mmap && large_memory && mmap_signal
+    static char const *accessName;
+
+	  void
+    readAccessFilenameBuffer(filename, p)
+	char const *filename;
+	unsigned char const *p;
+    {
+	unsigned char volatile t;
+	accessName = filename;
+	t = *p;
+	accessName = 0;
+    }
+#else
+#   define accessName ((char const *) 0)
+#endif
+
 
 #if !has_psignal
 
@@ -430,26 +478,35 @@ my_psignal(sig, s)
 	{
 	    char const *p;
 	    char buf[BUFSIZ], *b = buf;
-#	    define concatenate(x) for (p = (x);  *p;  *b++ = *p++) continue
-	    concatenate(s);
+	    for (p = s;  *p;  *b++ = *p++)
+		continue;
 	    *b++ = ':';
 	    *b++ = ' ';
-	    concatenate(sname);
+	    for (p = sname;  *p;  *b++ = *p++)
+		continue;
 	    *b++ = '\n';
 	    VOID write(STDERR_FILENO, buf, b - buf);
-#	    undef concatenate
 	}
 }
 #endif
 
-#if has_psiginfo
-	static signal_type catchsig P((int,siginfo_t*,ucontext_t*));
+static signal_type catchsig P((int));
+#ifdef SA_SIGINFO
+	static signal_type catchsigaction P((int,siginfo_t*,void*));
+#endif
+
 	static signal_type
-catchsig(s, i, c) int s; siginfo_t *i; ucontext_t *c;
-#else
-	static signal_type catchsig P((int));
+catchsig(s)
+	int s;
+#ifdef SA_SIGINFO
+{
+	catchsigaction(s, (siginfo_t *)0, (void *)0);
+}
 	static signal_type
- catchsig(s) int s;
+catchsigaction(s, i, c)
+	int s;
+	siginfo_t *i;
+	void *c;
 #endif
 {
 #   if sig_zaps_handler
@@ -457,9 +514,14 @@ catchsig(s, i, c) int s; siginfo_t *i; ucontext_t *c;
 	VOID signal(s, SIG_IGN);
 #   endif
 
+#   ifdef SA_SIGINFO
+	if (!unsupported_SA_SIGINFO)
+	    i = 0;
+#   endif
+
     if (holdlevel) {
 	heldsignal = s;
-#	if has_psiginfo
+#	ifdef SA_SIGINFO
 	    if (i) {
 		bufsiginfo = *i;
 		heldsiginfo = &bufsiginfo;
@@ -474,34 +536,55 @@ catchsig(s, i, c) int s; siginfo_t *i; ucontext_t *c;
 	/* Avoid calling sprintf etc., in case they're not reentrant.  */
 	char const *p;
 	char buf[BUFSIZ], *b = buf;
-#	define concatenate(x) for (p = (x);  *p;  *b++ = *p++) continue
 
-#	if !has_psiginfo
-	    psignal(s, "\nRCS");
-#	else
-	    {
-		char const *nRCS = "\nRCS";
+	if ( !	(
 #		if has_mmap && large_memory && mmap_signal
-		    if (s == mmap_signal  &&  i  &&  i->si_errno) {
-			errno = i->si_errno;
-			perror(nRCS++);
-		    }
+			/* Check whether this signal was planned.  */
+			s == mmap_signal && accessName
+#		else
+			0
 #		endif
+	)) {
+	    char const *nRCS = "\nRCS";
+#	    if defined(SA_SIGINFO) && has_si_errno && has_mmap && large_memory && mmap_signal
+		if (s == mmap_signal  &&  i  &&  i->si_errno) {
+		    errno = i->si_errno;
+		    perror(nRCS++);
+		}
+#	    endif
+#	    if defined(SA_SIGINFO) && has_psiginfo
 		if (i)
 		    psiginfo(i, nRCS);
 		else
 		    psignal(s, nRCS);
+#	    else
+		psignal(s, nRCS);
+#	    endif
+	}
+
+	for (p = "RCS: ";  *p;  *b++ = *p++)
+	    continue;
+#	if has_mmap && large_memory && mmap_signal
+	    if (s == mmap_signal) {
+		p = accessName;
+		if (!p)
+		    p = "Was a file changed by some other process?  ";
+		else {
+		    char const *p1;
+		    for (p1 = p;  *p1;  p1++)
+			continue;
+		    VOID write(STDERR_FILENO, buf, b - buf);
+		    VOID write(STDERR_FILENO, p, p1 - p);
+		    b = buf;
+		    p = ": Permission denied.  ";
+		}
+		while (*p)
+		    *b++ = *p++;
 	    }
 #	endif
-
-	concatenate("RCS: ");
-#	if has_NFS && has_mmap && large_memory && mmap_signal
-	    if (s == mmap_signal)
-		concatenate("Was an NFS file changed unexpectedly?  ");
-#	endif
-	concatenate("Cleaning up.\n");
+	for (p = "Cleaning up.\n";  *p;  *b++ = *p++)
+	    continue;
 	VOID write(STDERR_FILENO, buf, b - buf);
-#	undef concatenate
     }
     exiterr();
 }
@@ -516,11 +599,11 @@ ignoreints()
 restoreints()
 {
 	if (!--holdlevel && heldsignal)
-		VOID catchsig(heldsignal
-#			if has_psiginfo
-				, heldsiginfo, (ucontext_t *)0
-#			endif
-		);
+#	    ifdef SA_SIGINFO
+		VOID catchsigaction(heldsignal, heldsiginfo, (void *)0);
+#	    else
+		VOID catchsig(heldsignal);
+#	    endif
 }
 
 
@@ -549,12 +632,29 @@ static void setup_catchsig P((int const*,int));
 	    check_sig(sigaction(sig[i], (struct sigaction*)0, &act));
 	    if (act.sa_handler != SIG_IGN) {
 		act.sa_handler = catchsig;
+#		ifdef SA_SIGINFO
+		    if (!unsupported_SA_SIGINFO) {
+#			if has_sa_sigaction
+			    act.sa_sigaction = catchsigaction;
+#			else
+			    act.sa_handler = catchsigaction;
+#			endif
+			act.sa_flags |= SA_SIGINFO;
+		    }
+#		endif
 		for (j=sigs; 0<=--j; )
 		    check_sig(sigaddset(&act.sa_mask, sig[j]));
-#		if has_psiginfo
-		    act.sa_flags |= SA_SIGINFO;
-#		endif
-		check_sig(sigaction(sig[i], &act, (struct sigaction*)0));
+		if (sigaction(sig[i], &act, (struct sigaction*)0) != 0) {
+#		    if defined(SA_SIGINFO) && defined(ENOTSUP)
+			if (errno == ENOTSUP  &&  !unsupported_SA_SIGINFO) {
+			    /* Turn off use of SA_SIGINFO and try again.  */
+			    unsupported_SA_SIGINFO = 1;
+			    i++;
+			    continue;
+			}
+#		    endif
+		    check_sig(-1);
+		}
 	    }
 	}
   }
@@ -676,7 +776,7 @@ fastcopy(inf,outf)
  */
 {
 #if large_memory
-#	if has_mmap
+#	if maps_memory
 	    awrite((char const*)inf->ptr, (size_t)(inf->lim - inf->ptr), outf);
 	    inf->ptr = inf->lim;
 #	else
@@ -727,6 +827,70 @@ awrite(buf, chars, f)
 		Oerror();
 }
 
+/* dup a file descriptor; the result must not be stdin, stdout, or stderr.  */
+	static int dupSafer P((int));
+	static int
+dupSafer(fd)
+	int fd;
+{
+#	ifdef F_DUPFD
+	    return fcntl(fd, F_DUPFD, STDERR_FILENO + 1);
+#	else
+	    int e, f, i, used = 0;
+	    while (STDIN_FILENO <= (f = dup(fd))  &&  f <= STDERR_FILENO)
+		    used |= 1<<f;
+	    e = errno;
+	    for (i = STDIN_FILENO;  i <= STDERR_FILENO;  i++)
+		    if (used & (1<<i))
+			    VOID close(i);
+	    errno = e;
+	    return f;
+#	endif
+}
+
+/* Renumber a file descriptor so that it's not stdin, stdout, or stderr.  */
+	int
+fdSafer(fd)
+	int fd;
+{
+	if (STDIN_FILENO <= fd  &&  fd <= STDERR_FILENO) {
+		int f = dupSafer(fd);
+		int e = errno;
+		VOID close(fd);
+		errno = e;
+		fd = f;
+	}
+	return fd;
+}
+
+/* Like fopen, except the result is never stdin, stdout, or stderr.  */
+	FILE *
+fopenSafer(filename, type)
+	char const *filename;
+	char const *type;
+{
+	FILE *stream = fopen(filename, type);
+	if (stream) {
+		int fd = fileno(stream);
+		if (STDIN_FILENO <= fd  &&  fd <= STDERR_FILENO) {
+			int f = dupSafer(fd);
+			if (f < 0) {
+				int e = errno;
+				VOID fclose(stream);
+				errno = e;
+				return 0;
+			}
+			if (fclose(stream) != 0) {
+				int e = errno;
+				VOID close(f);
+				errno = e;
+				return 0;
+			}
+			stream = fdopen(f, type);
+		}
+	}
+	return stream;
+}
 
 
 #ifdef F_DUPFD
@@ -851,6 +1015,17 @@ runv(infd, outname, args)
 {
 	int wstatus;
 
+#if bad_wait_if_SIGCHLD_ignored
+	static int fixed_SIGCHLD;
+	if (!fixed_SIGCHLD) {
+	    fixed_SIGCHLD = true;
+#	    ifndef SIGCHLD
+#	    define SIGCHLD SIGCLD
+#	    endif
+	    VOID signal(SIGCHLD, SIG_DFL);
+	}
+#endif
+
 	oflush();
 	eflush();
     {
@@ -889,7 +1064,7 @@ runv(infd, outname, args)
 	    }
 	    if (fdreopen(
 		STDOUT_FILENO, outname,
-		OPEN_O_WORK | O_CREAT | O_TRUNC | O_WRONLY
+		O_CREAT | O_TRUNC | O_WRONLY
 	    ) < 0)
 		efaterror(outname);
 	}
@@ -925,7 +1100,7 @@ runv(infd, outname, args)
 		if (outname)
 		    if (fdreopen(
 			STDOUT_FILENO, outname,
-			OPEN_O_WORK | O_CREAT | O_TRUNC | O_WRONLY
+			O_CREAT | O_TRUNC | O_WRONLY
 		    ) < 0) {
 			/* Avoid perror since it may misuse buffers.  */
 			write_stderr(args[1]);

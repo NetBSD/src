@@ -1,8 +1,10 @@
+.\"	$NetBSD: merge.1,v 1.4 1996/10/15 07:00:30 veego Exp $
+.\"
 .de Id
 .ds Rv \\$3
 .ds Dt \\$4
 ..
-.Id $Id: merge.1,v 1.3 1995/02/24 02:25:20 mycroft Exp $
+.\" Id: merge.1,v 5.7 1995/06/01 16:23:43 eggert Exp
 .TH MERGE 1 \*(Dt GNU
 .SH NAME
 merge \- three-way file merge
@@ -76,10 +78,7 @@ to
 .I file3
 into
 .IR file1 ,
-and is usually the best choice for merging.
-This option is the default if
-.B diff3
-supports it.
+and generates the most verbose output.
 .TP
 \f3\-E\fP, \f3\-e\fP
 These options specify conflict styles that generate less information
@@ -88,15 +87,8 @@ than
 See
 .BR diff3 (1)
 for details.
-If
-.B diff3
-does not support
-.BR \-A ,
-then
-.B \-E
-is the default if it is supported, and
-.B \-e
-is otherwise.
+The default is
+.BR \-E .
 With
 .BR \-e ,
 .B merge
@@ -135,6 +127,11 @@ Manual Page Revision: \*(Rv; Release Date: \*(Dt.
 .br
 Copyright \(co 1982, 1988, 1989 Walter F. Tichy.
 .br
-Copyright \(co 1990, 1991, 1992, 1993 Paul Eggert.
+Copyright \(co 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert.
 .SH SEE ALSO
 diff3(1), diff(1), rcsmerge(1), co(1).
+.SH BUGS
+It normally does not make sense to merge binary files as if they were text, but
+.B merge
+tries to do it anyway.
+.br

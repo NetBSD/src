@@ -1,8 +1,10 @@
+.\"	$NetBSD: rlog.1,v 1.4 1996/10/15 07:00:49 veego Exp $
+.\"
 .de Id
 .ds Rv \\$3
 .ds Dt \\$4
 ..
-.Id $Id: rlog.1,v 1.3 1995/02/24 02:25:42 mycroft Exp $
+.\" Id: rlog.1,v 5.9 1995/06/16 06:19:24 eggert Exp
 .ds i \&\s-1ISO\s0
 .ds r \&\s-1RCS\s0
 .ds u \&\s-1UTC\s0
@@ -243,18 +245,20 @@ and with slashes separating the parts of the date;
 otherwise, times are output in \*i 8601 format with time zone indication.
 For example, if local time is January 11, 1990, 8pm Pacific Standard Time,
 eight hours west of \*u,
-then the time is output as
-.B "1990/01/11 04:00:00"
-with
-.BR \-z ,
-as
-.B "1990-01-11 20:00:00\-0800"
-with
-.BR \-zLT ,
-and as
-.B "1990-01-11 09:30:00+0530"
-with
-.BR \-z+0530 .
+then the time is output as follows:
+.RS
+.LP
+.RS
+.nf
+.ta \w'\f3\-z+05:30\fP  'u +\w'\f31990-01-11 09:30:00+05:30\fP  'u
+.ne 4
+\f2option\fP	\f2time output\fP
+\f3\-z\fP	\f31990/01/12 04:00:00\fP	\f2(default)\fP
+\f3\-zLT\fP	\f31990-01-11 20:00:00\-08\fP
+\f3\-z+05:30\fP	\f31990-01-12 09:30:00+05:30\fP
+.ta 4n +4n +4n +4n
+.fi
+.RE
 .SH EXAMPLES
 .LP
 .nf
@@ -285,7 +289,7 @@ Manual Page Revision: \*(Rv; Release Date: \*(Dt.
 .br
 Copyright \(co 1982, 1988, 1989 Walter F. Tichy.
 .br
-Copyright \(co 1990, 1991, 1992, 1993, 1994 Paul Eggert.
+Copyright \(co 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert.
 .SH "SEE ALSO"
 ci(1), co(1), ident(1), rcs(1), rcsdiff(1), rcsintro(1), rcsmerge(1),
 rcsfile(5)

@@ -1,3 +1,5 @@
+/*	$NetBSD: rcsfcmp.c,v 1.4 1996/10/15 07:00:18 veego Exp $	*/
+
 /* Compare working files, ignoring RCS keyword strings.  */
 
 /*****************************************************************************
@@ -7,7 +9,7 @@
  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -23,8 +25,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -38,8 +41,14 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsfcmp.c,v $
- * Revision 1.3  1995/02/24 02:25:03  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:18  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.14  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.13  1995/06/01 16:23:43  eggert
+ * (rcsfcmp): Add -kb support.
  *
  * Revision 5.12  1994/03/17 14:05:48  eggert
  * Normally calculate the $Log prefix from context, not from RCS file.
@@ -115,7 +124,7 @@ Report problems and direct all questions to:
 
 #include  "rcsbase.h"
 
-libId(fcmpId, "$Id: rcsfcmp.c,v 1.3 1995/02/24 02:25:03 mycroft Exp $")
+libId(fcmpId, "Id: rcsfcmp.c,v 5.14 1995/06/16 06:19:24 eggert Exp")
 
 	static int discardkeyval P((int,RILE*));
 	static int
@@ -169,9 +178,9 @@ rcsfcmp(xfp, xstatp, uname, delta)
        efaterror(uname);
     }
     xeof = ueof = false;
-    if (Expand==OLD_EXPAND) {
+    if (MIN_UNEXPAND <= Expand) {
 	if (!(result = xstatp->st_size!=ustat.st_size)) {
-#	    if has_mmap && large_memory
+#	    if large_memory && maps_memory
 		result = !!memcmp(xfp->base,ufp->base,(size_t)xstatp->st_size);
 #	    else
 		for (;;) {

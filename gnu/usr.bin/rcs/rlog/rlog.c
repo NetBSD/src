@@ -1,7 +1,9 @@
+/*	$NetBSD: rlog.c,v 1.4 1996/10/15 07:00:50 veego Exp $	*/
+
 /* Print log messages and other information about RCS files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,17 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rlog.c,v $
- * Revision 1.3  1995/02/24 02:25:43  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:50  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.18  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.17  1995/06/01 16:23:43  eggert
+ * (struct rcslockers): Renamed from `struct lockers'.
+ * (getnumericrev): Return error indication instead of ignoring errors.
+ * (main): Check it.  Don't use dateform.
+ * (recentdate, extdate): cmpnum -> cmpdate
  *
  * Revision 5.16  1994/04/13 16:30:34  eggert
  * Fix bug; `rlog -lxxx' inverted the sense of -l.
@@ -151,9 +163,9 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-struct  lockers {                     /* lockers in locker option; stored   */
+struct rcslockers {                   /* lockers in locker option; stored   */
      char const		* login;      /* lockerlist			    */
-     struct     lockers * lockerlink;
+     struct rcslockers  * lockerlink;
      }  ;
 
 struct  stateattri {                  /* states in state option; stored in  */
@@ -183,13 +195,13 @@ struct Datepairs{                     /* date range in -d option; stored in */
 static char extractdelta P((struct hshentry const*));
 static int checkrevpair P((char const*,char const*));
 static int extdate P((struct hshentry*));
+static int getnumericrev P((void));
 static struct hshentry const *readdeltalog P((void));
 static void cleanup P((void));
 static void exttree P((struct hshentry*));
 static void getauthor P((char*));
 static void getdatepair P((char*));
 static void getlocker P((char*));
-static void getnumericrev P((void));
 static void getrevpairs P((char*));
 static void getscript P((struct hshentry*));
 static void getstate P((char*));
@@ -208,11 +220,11 @@ static int lockflag;
 static struct Datepairs *datelist, *duelst;
 static struct Revpairs *revlist, *Revlst;
 static struct authors *authorlist;
-static struct lockers *lockerlist;
+static struct rcslockers *lockerlist;
 static struct stateattri *statelist;
 
 
-mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.3 1995/02/24 02:25:43 mycroft Exp $")
+mainProg(rlogId, "rlog", "Id: rlog.c,v 5.18 1995/06/16 06:19:24 eggert Exp")
 {
 	static char const cmdusage[] =
 		"\nrlog usage: rlog -{bhLNRt} -ddates -l[lockers] -r[revs] -sstates -Vn -w[logins] -xsuff -zzone file ...";
@@ -225,7 +237,7 @@ mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.3 1995/02/24 02:25:43 mycroft Exp $")
 	struct access const *curaccess;
 	struct assoc const *curassoc;
 	struct hshentry const *delta;
-	struct lock const *currlock;
+	struct rcslock const *currlock;
 	int descflag, selectflag;
 	int onlylockflag;  /* print only files with locks */
 	int onlyRCSflag;  /* print only RCS pathname */
@@ -369,6 +381,11 @@ mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.3 1995/02/24 02:25:43 mycroft Exp $")
 		continue;
 	    }
 
+	    gettree();
+
+	    if (!getnumericrev())
+		continue;
+
 	    /*
 	    * Output the first character with putc, not printf.
 	    * Otherwise, an SVR4 stdio bug buffers output inefficiently.
@@ -414,22 +431,18 @@ mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.3 1995/02/24 02:25:43 mycroft Exp $")
 			expand_names[Expand]
 		);
 
-            gettree();
-
 	    aprintf(out, "\ntotal revisions: %d", TotalDeltas);
 
 	    revno = 0;
 
 	    if (Head  &&  selectflag & descflag) {
 
-		getnumericrev();    /* get numeric revision or branch names */
-
 		exttree(Head);
 
 		/*  get most recently date of the dates pointed by duelst  */
 		currdate = duelst;
 		while( currdate) {
-		    VOID sprintf(currdate->strtdate,dateform,0,0,0,0,0,0);
+		    VOID strcpy(currdate->strtdate, "0.0.0.0.0.0");
 		    recentdate(Head, currdate);
 		    currdate = currdate->dnext;
 		}
@@ -731,7 +744,7 @@ char    * argv;
 
 {
         register char c;
-        struct   lockers   * newlocker;
+	struct rcslockers *newlocker;
         argv--;
 	while ((c = *++argv)==',' || c==' ' || c=='\t' || c=='\n' || c==';')
 	    continue;
@@ -741,7 +754,7 @@ char    * argv;
         }
 
         while( c != '\0' ) {
-	    newlocker = talloc(struct lockers);
+	    newlocker = talloc(struct rcslockers);
             newlocker->lockerlink = lockerlist;
             newlocker->login = argv;
             lockerlist = newlocker;
@@ -833,8 +846,8 @@ trunclocks()
 /*             id's on lockerlist. Do not truncate if lockerlist empty.  */
 
 {
-	struct lockers const *plocker;
-        struct lock *p, **pp;
+	struct rcslockers const *plocker;
+	struct rcslock *p, **pp;
 
 	if (!lockerlist) return;
 
@@ -865,8 +878,8 @@ recentdate(root, pd)
 
 	if (!root) return;
 	if (root->selector) {
-             if ( cmpnum(root->date, pd->strtdate) >= 0 &&
-                  cmpnum(root->date, pd->enddate) <= 0)
+	     if ( cmpdate(root->date, pd->strtdate) >= 0 &&
+		  cmpdate(root->date, pd->enddate) <= 0)
 		VOID strcpy(pd->strtdate, root->date);
         }
 
@@ -901,8 +914,13 @@ struct  hshentry        * root;
             pdate = datelist;
             while( pdate ) {
 		ne = pdate->ne_date;
-		if (!pdate->strtdate[0]||cmpnum(root->date,pdate->strtdate)>=ne)
-		  if (!pdate->enddate[0]||cmpnum(pdate->enddate,root->date)>=ne)
+		if (
+			(!pdate->strtdate[0]
+			|| ne <= cmpdate(root->date, pdate->strtdate))
+		    &&
+			(!pdate->enddate[0]
+			|| ne <= cmpdate(pdate->enddate, root->date))
+		)
                         break;
                 pdate = pdate->dnext;
             }
@@ -913,7 +931,7 @@ struct  hshentry        * root;
 			root->selector = false;
 			break;
 		   }
-                   if ( cmpnum(root->date, pdate->strtdate) == 0)
+		   if (cmpdate(root->date, pdate->strtdate) == 0)
                       break;
                    pdate = pdate->dnext;
                 }
@@ -938,7 +956,7 @@ extractdelta(pdelta)
 /*             statelist, revlist and yield true if pdelta is selected.    */
 
 {
-	struct lock const *plock;
+	struct rcslock const *plock;
 	struct stateattri const *pstate;
 	struct authors const *pauthor;
 	struct Revpairs const *prevision;
@@ -1060,7 +1078,7 @@ getdatepair(argv)
 
 
 
-	static void
+	static int
 getnumericrev()
 /*  function:  get the numeric name of revisions which stored in revlist  */
 /*             and then stored the numeric names in Revlst                */
@@ -1085,47 +1103,47 @@ getnumericrev()
 	    switch (ptr->numfld) {
 
 	      case 1: /* -rREV */
-		if (expandsym(ptr->strtrev, &s)) {
-		    rend = &s;
-		    n = countnumflds(s.string);
-		    if (!n  &&  (lrev = tiprev())) {
-			bufscpy(&s, lrev);
-			n = countnumflds(lrev);
-		    }
-                }
+		if (!expandsym(ptr->strtrev, &s))
+		    goto freebufs;
+		rend = &s;
+		n = countnumflds(s.string);
+		if (!n  &&  (lrev = tiprev())) {
+		    bufscpy(&s, lrev);
+		    n = countnumflds(lrev);
+		}
 		break;
 
 	      case 2: /* -rREV: */
-		if (expandsym(ptr->strtrev, &s)) {
-		    bufscpy(&e, s.string);
-		    n = countnumflds(s.string);
-		    (n<2 ? e.string : strrchr(e.string,'.'))[0]  =  0;
-                }
+		if (!expandsym(ptr->strtrev, &s))
+		    goto freebufs;
+		bufscpy(&e, s.string);
+		n = countnumflds(s.string);
+		(n<2 ? e.string : strrchr(e.string,'.'))[0]  =  0;
 		break;
 
 	      case 3: /* -r:REV */
-		if (expandsym(ptr->endrev, &e)) {
-		    if ((n = countnumflds(e.string)) < 2)
-			bufscpy(&s, ".0");
-		    else {
-			bufscpy(&s, e.string);
-			VOID strcpy(strrchr(s.string,'.'), ".0");
-		    }
-                }
+		if (!expandsym(ptr->endrev, &e))
+		    goto freebufs;
+		if ((n = countnumflds(e.string)) < 2)
+		    bufscpy(&s, ".0");
+		else {
+		    bufscpy(&s, e.string);
+		    VOID strcpy(strrchr(s.string,'.'), ".0");
+		}
 		break;
 
 	      default: /* -rREV1:REV2 */
-		if (
+		if (!(
 			expandsym(ptr->strtrev, &s)
 		    &&	expandsym(ptr->endrev, &e)
 		    &&	checkrevpair(s.string, e.string)
-		) {
-		    n = countnumflds(s.string);
-		    /* Swap if out of order.  */
-		    if (compartial(s.string,e.string,n) > 0) {
-			rstart = &e;
-			rend = &s;
-		    }
+		))
+		    goto freebufs;
+		n = countnumflds(s.string);
+		/* Swap if out of order.  */
+		if (compartial(s.string,e.string,n) > 0) {
+		    rstart = &e;
+		    rend = &s;
 		}
 		break;
 	    }
@@ -1148,8 +1166,11 @@ getnumericrev()
 	    pt->rnext=Revlst; Revlst=pt;
 	    pt->numfld = countnumflds(pt->strtrev);
         }
+
+      freebufs:
 	bufautoend(&s);
 	bufautoend(&e);
+	return !ptr;
 }
 
 
