@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.7 1999/12/30 22:31:20 simonb Exp $
+.\"	$NetBSD: installboot.8,v 1.8 2000/08/10 13:21:11 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,15 @@
 .Nd install a bootstrap on an FFS filesystem partition
 .Sh SYNOPSIS
 .Nm installboot
+.Op Fl U
 .Op Fl nv
 .Ar boot
 .Ar bootxx
+.Ar device
+.Nm installboot
+.Op Fl u
+.Op Fl nv
+.Ar bootblk
 .Ar device
 .Sh DESCRIPTION
 .Nm installboot
@@ -60,13 +66,15 @@ The first-stage program is loaded into memory by the PROM. After it receiving
 control, it loads the second stage program from a set of filesystem block
 numbers that have been hard-coded into it by the
 .Nm installboot
-program.
+program, or, on the UltraSPARC, finds the second stage boot program by a
+name lookup in the filesystem.
 .Pp
 The second-stage boot program uses the device driver interface to
 the PROM and the stand-alone filesystem code in
 .Dq libsa.a
 to locate and load the kernel.
-The second-stage boot program and the prototype code for the
+For non-UltraSPARC machines,
+the second-stage boot program and the prototype code for the
 first-stage bootprogram can be found in
 .Pa /usr/mdec/boot
 and
@@ -74,6 +82,12 @@ and
 respectively. The second-stage program commonly resides in the root directory
 as
 .Pa /boot .
+For UltraSPARC machines, these files live in
+.Pa /usr/mdec/bootblk.sparc64
+and
+.Pa /usr/mdec/ofwboot.sparc64
+respectively, and the second-stage program resides in the root directly as
+.Pa /ofwboot .
 The utility
 .Pa /usr/mdec/binstall
 can be used to properly copy the a second-stage bootprogram to its
@@ -98,17 +112,26 @@ in fact, just a branch past the rest of the header
 .Pc
 for Sun 4
 .Dq old monitor
-ROMs to execute.
+ROMs to execute.  On the UltraSPARC machines, the first stage loader
+is actually a Forth program compiled into Fcode, executed by the Open
+Firmware.
 .Pp
-There are two options with these meaning:
+There are three options with these meaning:
 .Bl -tag -width flag
 .It Fl n
 Do not actually write anything on the disk.
+.It Fl u
+Install sparc64 (UltraSPARC) Forth boot block.  Note that this option
+is the default if we are running on a sparc64 machine.
+.It Fl U
+Force SPARC boot block semantics.  This allows SPARC boot blocks to be
+installed on an UltraSPARC machine.  This option is the default if we
+are running on a sparc machine.
 .It Fl v
 Verbose mode: prints internal informational messages on standard output.
 .El
 .Pp
-The arguments are:
+The arguments for the standard SPARC are:
 .Bl -tag -width bootxx
 .It Ar boot
 the name of the second-stage boot program in the file system
@@ -121,6 +144,14 @@ is to be installed.  This should correspond to the block device
 on which the file system containing
 .Ar boot
 is mounted.
+.El
+The arguments for the UltraSPARC are:
+.Bl -tag -width bootblk
+.It Ar bootblk
+the name of the first stage boot program.
+.It Ar device
+the name of the raw device in which the first-stage boot program
+is to be installed.
 .El
 .Sh EXAMPLES
 The following command will install the first-stage bootblocks in the
