@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.24 1994/06/30 12:42:05 gwr Exp $
+ *	$Id: trap.c,v 1.25 1994/07/01 21:30:13 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -508,13 +508,12 @@ trap(type, code, v, frame)
 		break;
 	    }
 	}
-#ifdef	DIAGNOSTIC
-	if (sig == 0)
-		panic("trap: sig not set");
-#endif
-	trapsignal(p, sig, ucode);
+	/* If trap was from supervisor mode, just return. */
 	if ((type & T_USER) == 0)
 		return;
+	/* Post a signal if necessary. */
+	if (sig != 0)
+		trapsignal(p, sig, ucode);
 out:
 	userret(p, &frame, sticks);
 }
