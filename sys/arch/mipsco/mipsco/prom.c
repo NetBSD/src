@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.1 2000/08/19 12:13:47 wdk Exp $	*/
+/*	$NetBSD: prom.c,v 1.2 2000/09/04 22:23:35 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ prom_init()
 
 	fp = (void *)&callvec;
 	for (i=0; i < sizeof(struct mips_prom)/sizeof(funcp_t); i++ ) {
-		fp[i] = (funcp_t)PROM_ENTRY(i);
+		fp[i] = (funcp_t)MIPS_PROM_ENTRY(i);
 	}
 	callv = &callvec;
 }
