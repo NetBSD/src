@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.81 2003/06/27 22:33:19 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.82 2003/10/26 07:58:44 martti Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -219,6 +219,23 @@ File systems such as
 .Pa /usr
 that may require network services to be available to mount,
 that must be available early in the system boot for general services to use.
+.It Sy fsck_flags
+A string.
+A file system is checked with
+.Xr fsck 8
+during boot before mounting it.
+This option may be used to override the default command-line options
+passed to the
+.Xr fsck 8
+program.
+.Pp
+When set to
+.Fl y ,
+.Xr fsck 8
+assumes yes as the answer to all operator questions during file system checks.
+This might be important with hosts where the administrator does not have
+access to the console and an unsuccessful shutdown must not make the host
+unbootable even if the file system checks would fail in preen mode.
 .It Sy no_swap
 .Sq YES
 or
