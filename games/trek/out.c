@@ -1,4 +1,4 @@
-/*	$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $	*/
+/*	$NetBSD: out.c,v 1.4 1997/10/12 21:25:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,28 +33,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)out.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $";
+__RCSID("$NetBSD: out.c,v 1.4 1997/10/12 21:25:04 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  Announce Device Out
 */
 
+void
 out(dev)
 int	dev;
 {
-	register struct device	*d;
+	struct device	*d;
 
 	d = &Device[dev];
 	printf("%s reports %s ", d->person, d->name);
-	if (d->name[length(d->name) - 1] == 's')
+	if (d->name[strlen(d->name) - 1] == 's')
 		printf("are");
 	else
 		printf("is");

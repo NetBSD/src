@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.3 1995/04/22 10:59:06 cgd Exp $	*/
+/*	$NetBSD: kill.c,v 1.4 1997/10/12 21:24:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: kill.c,v 1.3 1995/04/22 10:59:06 cgd Exp $";
+__RCSID("$NetBSD: kill.c,v 1.4 1997/10/12 21:24:56 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  KILL KILL KILL !!!
@@ -59,10 +61,11 @@ static char rcsid[] = "$NetBSD: kill.c,v 1.3 1995/04/22 10:59:06 cgd Exp $";
 **	and the game is won if that was the last klingon.
 */
 
+void
 killk(ix, iy)
 int	ix, iy;
 {
-	register int		i, j;
+	int		i;
 
 	printf("   *** Klingon at %d,%d destroyed ***\n", ix, iy);
 
@@ -81,7 +84,7 @@ int	ix, iy;
 			/* purge him from the list */
 			Etc.nkling -= 1;
 			for (; i < Etc.nkling; i++)
-				bmove(&Etc.klingon[i+1], &Etc.klingon[i], sizeof Etc.klingon[i]);
+				Etc.klingon[i] = Etc.klingon[i+1];
 			break;
 		}
 
@@ -99,11 +102,12 @@ int	ix, iy;
 **  handle a starbase's death
 */
 
+void
 killb(qx, qy)
 int	qx, qy;
 {
-	register struct quad	*q;
-	register struct xy	*b;
+	struct quad	*q;
+	struct xy	*b;
 
 	q = &Quad[qx][qy];
 
@@ -121,12 +125,12 @@ int	qx, qy;
 	for (b = Now.base; ; b++)
 		if (qx == b->x && qy == b->y)
 			break;
-	bmove(&Now.base[Now.bases], b, sizeof *b);
+	*b = Now.base[Now.bases];
 	if (qx == Ship.quadx && qy == Ship.quady)
 	{
 		Sect[Etc.starbase.x][Etc.starbase.y] = EMPTY;
 		if (Ship.cond == DOCKED)
-			undock();
+			undock(0);
 		printf("Starbase at %d,%d destroyed\n", Etc.starbase.x, Etc.starbase.y);
 	}
 	else
@@ -146,14 +150,14 @@ int	qx, qy;
  **	kill an inhabited starsystem
  **/
 
+void
 kills(x, y, f)
 int	x, y;	/* quad coords if f == 0, else sector coords */
 int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
 {
-	register struct quad	*q;
-	register struct event	*e;
-	register char		*name;
-	char			*systemname();
+	struct quad	*q;
+	struct event	*e;
+	char		*name;
 
 	if (f)
 	{
@@ -190,13 +194,14 @@ int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
  **	"kill" a distress call
  **/
 
+void
 killd(x, y, f)
 int	x, y;		/* quadrant coordinates */
 int	f;		/* set if user is to be informed */
 {
-	register struct event	*e;
-	register int		i;
-	register struct quad	*q;
+	struct event	*e;
+	int		i;
+	struct quad	*q;
 
 	q = &Quad[x][y];
 	for (i = 0; i < MAXEVENTS; i++)

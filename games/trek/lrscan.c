@@ -1,4 +1,4 @@
-/*	$NetBSD: lrscan.c,v 1.3 1995/04/22 10:59:09 cgd Exp $	*/
+/*	$NetBSD: lrscan.c,v 1.4 1997/10/12 21:24:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lrscan.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: lrscan.c,v 1.3 1995/04/22 10:59:09 cgd Exp $";
+__RCSID("$NetBSD: lrscan.c,v 1.4 1997/10/12 21:24:59 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  LONG RANGE OF SCANNERS
@@ -55,10 +57,13 @@ static char rcsid[] = "$NetBSD: lrscan.c,v 1.3 1995/04/22 10:59:09 cgd Exp $";
 **	for future use by the "chart" option of the computer.
 */
 
-lrscan()
+/*ARGSUSED*/
+void
+lrscan(v)
+	int v;
 {
-	register int			i, j;
-	register struct quad		*q;
+	int		i, j;
+	struct quad	*q;
 
 	if (check_out(LRSCAN))
 	{

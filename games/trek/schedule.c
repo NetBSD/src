@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $	*/
+/*	$NetBSD: schedule.c,v 1.4 1997/10/12 21:25:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $";
+__RCSID("$NetBSD: schedule.c,v 1.4 1997/10/12 21:25:11 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include <err.h>
+#include "trek.h"
 
 /*
 **  SCHEDULE AN EVENT
@@ -59,8 +63,8 @@ double	offset;
 char	x, y;
 char	z;
 {
-	register struct event	*e;
-	register int		i;
+	struct event	*e;
+	int		i;
 	double			date;
 
 	date = Now.date + offset;
@@ -83,7 +87,7 @@ char	z;
 		Now.eventptr[type] = e;
 		return (e);
 	}
-	syserr("Cannot schedule event %d parm %d %d %d", type, x, y, z);
+	errx(1, "Cannot schedule event %d parm %d %d %d", type, x, y, z);
 }
 
 
@@ -94,12 +98,13 @@ char	z;
 **	time plus 'offset'.
 */
 
+void
 reschedule(e1, offset)
 struct event	*e1;
 double		offset;
 {
 	double			date;
-	register struct event	*e;
+	struct event	*e;
 
 	e = e1;
 
@@ -120,10 +125,11 @@ double		offset;
 **	The event at slot 'e' is deleted.
 */
 
+void
 unschedule(e1)
 struct event	*e1;
 {
-	register struct event	*e;
+	struct event	*e;
 
 	e = e1;
 
@@ -151,7 +157,7 @@ int	ev1;
 int	factor;
 int	x, y, z;
 {
-	register int	ev;
+	int	ev;
 
 	ev = ev1;
 	return (schedule(ev, -Param.eventdly[ev] * Param.time * log(franf()) / factor, x, y, z));
@@ -165,13 +171,14 @@ int	x, y, z;
 **	division factor.  Look at the code to see what really happens.
 */
 
+void
 xresched(e1, ev1, factor)
 struct event	*e1;
 int		ev1;
 int		factor;
 {
-	register int		ev;
-	register struct event	*e;
+	int		ev;
+	struct event	*e;
 
 	ev = ev1;
 	e = e1;
