@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.29 2003/01/18 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: keyword.c,v 1.30 2003/03/01 05:41:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.29 2003/01/18 10:52:16 thorpej Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.30 2003/03/01 05:41:56 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,16 @@ VAR var[] = {
 	{"command", "COMMAND", NULL, COMM|LJUST, command},
 	{"cpu", "CPU", NULL, 0, pvar, 0, POFF(p_estcpu), UINT, "u"},
 	{"cputime", "", "time"},
+	GID("egid", "EGID", pvar, POFF(p_gid)),
+	{"egroup", "EGROUP", NULL, LJUST, gname},
+	UID("euid", "EUID", pvar, POFF(p_uid)),
+	{"euser", "EUSER", NULL, LJUST, uname},
 	{"f", "F", NULL, 0, pvar, 0, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
+	GID("gid", "GID", pvar, POFF(p_gid)),
+	{"group", "GROUP", NULL, LJUST, gname},
+	{"groupnames", "GROUPNAMES", NULL, LJUST, groupnames},
+	{"groups", "GROUPS", NULL, LJUST, groups},
 	{"holdcnt", "HOLDCNT", NULL, LWP, pvar, 0, LOFF(l_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), UINT64, "llu"},
@@ -141,6 +149,7 @@ VAR var[] = {
 	{"pri", "PRI", NULL, LWP, pri},
 	{"re", "RE", NULL, INF127|LWP, pvar, 0, LOFF(l_swtime), UINT, "u"},
 	GID("rgid", "RGID", pvar, POFF(p_rgid)),
+	{"rgroup", "RGROUP", NULL, LJUST, rgname},
 	/* XXX */
 	{"rlink", "RLINK", NULL, LWP, pvar, 0, LOFF(l_back), KPTR, "llx"},
 	{"rlwp", "RLWP", NULL, 0, pvar, 0, POFF(p_nrlwps), UINT64, "lld"},
@@ -164,7 +173,9 @@ VAR var[] = {
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, LJUST, state},
 	GID("svgid", "SVGID", pvar, POFF(p_gid)),
+	{"svgroup", "SVGROUP", NULL, LJUST, svgname},
 	UID("svuid", "SVUID", pvar, POFF(p_uid)),
+	{"svuser", "SVUSER", NULL, LJUST, svuname},
 	{"tdev", "TDEV", NULL, 0, tdev},
 	{"time", "TIME", NULL, 0, cputime},
 	PID("tpgid", "TGPID", pvar, POFF(p_tpgid)),
