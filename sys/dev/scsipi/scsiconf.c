@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.142 2000/05/15 16:35:49 dante Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.143 2000/05/28 07:03:59 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -509,6 +509,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	"TOSHIBA ", "CD-ROM XM-3401TA", "0283"}, ADEV_CDROM|SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	"TOSHIBA ", "CD-ROM DRIVE:XM", "1971"}, ADEV_CDROM|SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
@@ -770,6 +772,14 @@ scsi_probedev(scsi, target, lun)
 	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
 	sc_link->scsipi_scsi.scsi_version = inqbuf.version;
+
+	if (sc_link->quirks & ADEV_CDROM) {
+		sc_link->quirks ^= ADEV_CDROM;
+		inqbuf.dev_qual2 |= SID_REMOVABLE;
+		sa.sa_inqbuf.type = inqbuf.device = ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
+		sa.sa_inqbuf.removable = T_REMOV;
+	
+	}
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		docontinue = 1;
