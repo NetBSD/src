@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.72 2003/03/10 20:50:22 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.73 2003/06/27 12:25:38 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.72 2003/03/10 20:50:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.73 2003/06/27 12:25:38 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -196,6 +196,8 @@ void	tlp_pci_algor_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 void	tlp_pci_netwinder_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
+void	tlp_pci_znyx_21142_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
 
 void	tlp_pci_adaptec_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
@@ -239,6 +241,7 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_algor_21142_quirks,	{ 0x00, 0x40, 0xbc } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ tlp_pci_netwinder_21142_quirks,{ 0x00, 0x10, 0x57 } },
+	{ tlp_pci_znyx_21142_quirks,	{ 0x00, 0xc0, 0x95 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -1098,6 +1101,60 @@ tlp_pci_znyx_21040_quirks(psc, enaddr)
 	}
 
 	strcpy(sc->sc_name, "ZNYX ZX31x");
+}
+
+void	tlp_pci_znyx_21142_qs6611_reset __P((struct tulip_softc *));
+
+void
+tlp_pci_znyx_21142_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+	pcireg_t subid;
+
+	subid = pci_conf_read(psc->sc_pc, psc->sc_pcitag, PCI_SUBSYS_ID_REG);
+
+	if (PCI_VENDOR(subid) != PCI_VENDOR_ZNYX)
+		return;		/* ? */
+
+	switch (PCI_PRODUCT(subid) & 0xff) {
+	/*
+	 * ZNYX 21143 boards with QS6611 PHY
+	 */
+	case 0x12:	/* ZX345Q */
+	case 0x13:	/* ZX346Q */
+	case 0x14:	/* ZX348Q */
+	case 0x18:	/* ZX414 */
+	case 0x19:	/* ZX412 */
+	case 0x1a:	/* ZX444 */
+	case 0x1b:	/* ZX442 */
+	case 0x23:	/* ZX212 */
+	case 0x24:	/* ZX214 */
+	case 0x29:	/* ZX374 */
+	case 0x2d:	/* ZX372 */
+	case 0x2b:	/* ZX244 */
+	case 0x2c:	/* ZX424 */
+	case 0x2e:	/* ZX422 */
+		printf("%s: QS6611 PHY\n", sc->sc_dev.dv_xname);
+		sc->sc_reset = tlp_pci_znyx_21142_qs6611_reset;
+		break;
+	}
+}
+
+void
+tlp_pci_znyx_21142_qs6611_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	/*
+	 * Reset QS6611 PHY.
+	 */
+	TULIP_WRITE(sc, CSR_SIAGEN,
+	    SIAGEN_CWE | SIAGEN_LGS1 | SIAGEN_ABM | (0xf << 16));
+	delay(200);
+	TULIP_WRITE(sc, CSR_SIAGEN, (0x4 << 16));
+	delay(10000);
 }
 
 void
