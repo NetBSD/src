@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.72 1999/04/17 21:26:59 kleink Exp $
+#	$NetBSD: files.sparc,v 1.73 1999/04/26 04:25:38 ad Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -137,43 +137,46 @@ file	arch/sparc/sparc/amd7930intr.s		audioamd
 # Brooktree DAC attribute
 define bt_dac
 
+# Raster operations for RASTERCONSOLE (this is here so dependancies work).
+include "dev/rasops/files.rasops"
+
 # Include /dev/fb driver only if a framebuffer card is included
 define fb
 
-device bwtwo: fb
+device bwtwo: fb, rasops1
 attach bwtwo at sbus with bwtwo_sbus
 attach bwtwo at obio with bwtwo_obio
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
-device cgtwo: fb
+device cgtwo: fb, rasops8
 attach cgtwo at vme
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree: bt_dac, fb
+device cgthree: bt_dac, fb, rasops8
 attach cgthree at sbus with cgthree_sbus
 attach cgthree at obio with cgthree_obio
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
-device cgfour: bt_dac, fb
+device cgfour: bt_dac, fb, rasops8
 attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
-device cgsix: bt_dac, fb
+device cgsix: bt_dac, fb, rasops8
 attach cgsix at sbus with cgsix_sbus
 attach cgsix at obio with cgsix_obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 file	arch/sparc/dev/cgsix_sbus.c	cgsix_sbus & (sbus | obio)
 file	arch/sparc/dev/cgsix_obio.c	cgsix_obio & obio
 
-device cgeight: bt_dac, fb
+device cgeight: bt_dac, fb, rasops24
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device tcx: bt_dac, fb
+device tcx: bt_dac, fb, rasops8, rasops24
 attach tcx at sbus
 file	arch/sparc/dev/tcx.c		tcx needs-flag
 
-device cgfourteen: fb
+device cgfourteen: fb, rasops32
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
@@ -244,7 +247,6 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 # Raster Console
 #
 include "dev/rcons/files.rcons"
-include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 #
