@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.14 1995/06/21 03:20:22 briggs Exp $	*/
+/*	$NetBSD: genassym.c,v 1.15 1996/02/02 19:42:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,15 +40,18 @@
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/syscall.h>
+#include <sys/user.h>
+
+#include <vm/vm.h>
+
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
-#include "clockreg.h"
-#include <sys/syscall.h>
-#include <vm/vm.h>
-#include <sys/user.h>
 #include <machine/pte.h>
+
+#include "clockreg.h"
 
 main()
 {
