@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/01 03:14:55 tv Exp $
 
 INCS=	exception new new.h typeinfo
-INCSDIR=/usr/include/g++
+#INCSDIR=/usr/include/g++
 
 # XXX hack
 exception:
@@ -29,10 +29,14 @@ NOPIC=
 
 LIB2OBJS+=__gcc_bcmp.o _varargs.o _eprintf.o _op_new.o _new_handler.o \
 	  _op_delete.o _bb.o _shtab.o _clear_cache.o _trampoline.o __main.o \
-	  _exit.o _ctors.o _op_vdel.o _op_vnew.o _pure.o _eh.o __dummy.o
+	  _exit.o _ctors.o _op_vdel.o _op_vnew.o _pure.o __dummy.o
 
-# Extra code to include in libgcc2.
-SRCS+=	tinfo.cc tinfo2.cc new.cc new1.cc new2.cc exception.cc
+# Extra code to include in libgcc2 for C++ support.
+.if !defined(EGCS_BOOTSTRAP)
+SRCS+=		tinfo.cc tinfo2.cc new.cc new1.cc new2.cc exception.cc
+CXXFLAGS+=	-I$(DIST)/cp/inc
+LIB2OBJS+=	_eh.o
+.endif
 
 .if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386")
 LIB2OBJS+=_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
