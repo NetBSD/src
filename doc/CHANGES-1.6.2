@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.58 2003/06/20 10:39:45 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.59 2003/06/24 08:20:28 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -764,3 +764,13 @@ distrib/sets/lists/xserver4/md.macppc		1.5
 
 	Update X11 sets for XFree86 4.3.0.
 	[tron, ticket #1326]
+
+sys/net/if_ethersubr.c				1.109 (via patch)
+sys/net/if_ieee1394subr.c			1.23
+sys/net/if_spppsubr.c				1.66
+sys/net/if_tokensubr.c				1.22
+
+	don't call if_free_sadl() until very end of if_detach() logic.  many
+	of routing table manipulation code assumes the presense of AF_LINK
+	sockaddr.  should fix PR 21581
+	[itojun, ticket #1325]
