@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.28 1997/01/28 06:33:36 mrg Exp $
-#	@(#)netstart	5.9 (Berkeley) 3/30/91
+#	$NetBSD: netstart,v 1.29 1997/02/15 10:02:19 mikel Exp $
+#	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 # /etc/myname contains my symbolic name
 #

@@ -1,12 +1,12 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.19 1997/01/09 05:44:46 mikel Exp $
+#	$NetBSD: daily,v 1.20 1997/02/15 10:02:11 mikel Exp $
 #
-# from: @(#)daily	5.12 (Berkeley) 5/24/91
+# from: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
-host=`hostname -s`
+host=`hostname`
 echo "Subject: $host daily run output"
 
 umask 077
@@ -182,11 +182,16 @@ fi
 echo ""
 if [ x"$run_rdist" != xNO -a -f /etc/Distfile ]; then
 	echo "Running rdist:"
-	rdist -f /etc/Distfile
+	if [ -d /var/log/rdist ]; then
+		logf=`date | awk '{printf "%s.%s.%s", $6, $2, $3}'`
+		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
+	else
+		rdist -f /etc/Distfile 
+	fi
 fi
 
 if [ x"$run_security" != xNO ]; then
-	sh /etc/security 2>&1 | mail -s "daily insecurity output" root
+	sh /etc/security 2>&1 | mail -s "$host daily insecurity output" root
 fi
 
 rm -rf $TMPDIR

@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.6 1997/01/05 11:21:10 mrg Exp $
-#	@(#)weekly	5.14 (Berkeley) 6/23/91
+#	$NetBSD: weekly,v 1.7 1997/02/15 10:02:29 mikel Exp $
+#	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -9,7 +9,7 @@ export PATH
 
 umask 077
 
-host=`hostname -s`
+host=`hostname`
 echo "Subject: $host weekly run output"
 
 if [ -s /etc/weekly.conf ]; then
@@ -36,10 +36,12 @@ fi
 #		echo "$owner	$file"
 #		echo $file >> $TDIR/$owner
 #	done | sed -e 's,SCCS/p.,,'
-#	for file in $TDIR/*; do
-#		sed -e 's,SCCS/p.,,' $file | \
-#		    Mail -s 'checked out files' `basename $file`
-#	done
+#	if test -n "`ls $TDIR`"; then
+#		for file in $TDIR/*; do
+#			sed -e 's,SCCS/p.,,' $file | \
+#			    Mail -s 'checked out files' `basename $file`
+#		done
+#	fi
 #	rm -rf $TDIR
 #fi
 

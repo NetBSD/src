@@ -1,10 +1,10 @@
 #!/bin/sh -
 #
-#	$NetBSD: monthly,v 1.5 1997/01/05 11:21:11 mrg Exp $
-#	@(#)monthly	5.5 (Berkeley) 6/17/91
+#	$NetBSD: monthly,v 1.6 1997/02/15 10:02:18 mikel Exp $
+#	from: @(#)monthly	8.1 (Berkeley) 6/9/93
 #
 
-host=`hostname -s`
+host=`hostname`
 echo "Subject: $host monthly run output"
 
 umask 077

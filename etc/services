@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.19 1996/12/29 03:25:34 mrg Exp $
+#	$NetBSD: services,v 1.20 1997/02/15 10:02:28 mikel Exp $
 #
 # Network services, Internet style
 #
@@ -8,9 +8,9 @@
 # Updated from RFC 1340, ``Assigned Numbers'' (July 1992).  Not all ports
 # are included, only the more common ones.
 #
-#	from: @(#)services	5.8 (Berkeley) 5/9/91
+#	from: @(#)services	8.1 (Berkeley) 6/9/93
 #
-tcpmux		1/tcp		# TCP port service multiplexer
+tcpmux		1/tcp		# TCP port multiplexer (RFC1078)
 echo		7/tcp
 echo		7/udp
 discard		9/tcp		sink null
@@ -136,6 +136,7 @@ conference	531/tcp		chat
 netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
+rdist		541/tcp		rdistd		# rdist daemon
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 #
 webster		765/tcp				# Network dictionary
