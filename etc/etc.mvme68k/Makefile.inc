@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/01/03 15:34:38 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2004/05/21 15:32:29 he Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
@@ -20,6 +20,6 @@ snap_md_post:
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
 	    ${RELEASEDIR}/${MACHINE}/installation/tapeimage
 .endfor
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/netboot -all
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/tapeimage -all
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/netboot -a
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/tapeimage -a
 
