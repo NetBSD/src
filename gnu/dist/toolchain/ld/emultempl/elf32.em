@@ -243,7 +243,7 @@ gld${EMULATION_NAME}_try_needed (name, force)
      int force;
 {
   bfd *abfd;
-  const char *soname;
+  char *soname;
 
   abfd = bfd_openr (name, bfd_get_target (output_bfd));
   if (abfd == NULL)
@@ -329,7 +329,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
     einfo ("%F%P:%B: bfd_stat failed: %E\n", abfd);
 
   /* First strip off everything before the last '/'.  */
-  soname = basename (abfd->filename);
+  soname = xstrdup (basename (abfd->filename));
 
   if (trace_file_tries)
     info_msg (_("found %s at %s\n"), soname, name);
@@ -340,6 +340,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
     {
       /* Return true to indicate that we found the file, even though
          we aren't going to do anything with it.  */
+      free (soname);
       return true;
     }
 
@@ -350,7 +351,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
   /* Tell the ELF backend that the output file needs a DT_NEEDED
      entry for this file if it is used to resolve the reference in
      a regular object.  */
-  bfd_elf_set_dt_needed_soname (abfd, xstrdup (soname));
+  bfd_elf_set_dt_needed_soname (abfd, soname);
 
   /* Add this file into the symbol table.  */
   if (! bfd_link_add_symbols (abfd, &link_info))
