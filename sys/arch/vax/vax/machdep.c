@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.85 1999/08/07 10:36:50 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.86 1999/08/12 20:23:49 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -115,9 +115,6 @@
 #endif
 
 #include "smg.h"
-
-void	machinecheck __P((caddr_t));
-void	cmrerr __P((void));
 
 extern int virtual_avail, virtual_end;
 /*
@@ -748,7 +745,7 @@ vax_map_physmem(phys, size)
 	printf("vax_map_physmem: alloc'ed %d pages for paddr %lx, at %lx\n",
 	    size, phys, addr);
 #endif
-	return addr | (phys & PGOFSET);
+	return addr | (phys & VAX_PGOFSET);
 }
 
 /*
