@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.74 2003/01/15 16:42:27 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.75 2003/01/15 22:56:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -576,8 +576,7 @@ sun4_cache_flush(base, len, ctx)
  * Flush the current context from the cache.
  *
  * This is done by writing to each cache line in the `flush context'
- * address space (or, for hardware flush, once to each page in the
- * hardware flush space, for all cache pages).
+ * address space.
  */
 void
 srmmu_vcache_flush_context(ctx)
@@ -684,6 +683,17 @@ srmmu_vcache_flush_page(va, ctx)
 	setcontext4m(ctx);
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_IDCACHELFP, 0);
+#if defined(MULTIPROCESSOR)
+	/*
+	 * The page flush operation will have caused a MMU table walk
+	 * on Hypersparc because the is physically tagged. Since the pmap
+	 * functions will not always cross flush it in the MP case (because
+	 * may not be active on this CPU) we flush the TLB entry now.
+	 */
+	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS)
+		sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+
+#endif
 	setcontext4m(octx);
 	trapon();
 }
@@ -728,6 +738,18 @@ srmmu_cache_flush(base, len, ctx)
 		setcontext4m(ctx);
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
+#if defined(MULTIPROCESSOR)
+		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+			/*
+			 * See hypersparc comment in srmmu_vcache_flush_page().
+			 * Just flush both possibly touched pages
+			 * fromt the TLB.
+			 */
+			int va = (int)base & ~0xfff;
+			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+			sta((va+4096) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+		}
+#endif
 		setcontext4m(octx);
 		trapon();
 		return;
@@ -770,6 +792,13 @@ srmmu_cache_flush(base, len, ctx)
 		setcontext4m(ctx);
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
+#if defined(MULTIPROCESSOR)
+		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+			/* Just flush the segment from the TLB */
+			int va = (int)base & ~SGOFSET;
+			sta(va | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
+		}
+#endif
 		setcontext4m(octx);
 		trapon();
 		return;
