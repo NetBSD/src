@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.8 1999/01/03 02:00:18 hubertf Exp $	*/
+/*	$NetBSD: screen.c,v 1.9 1999/01/03 17:13:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -394,9 +394,8 @@ scr_update()
 		curscore = score;
 	}
 
-#ifndef NO_PREVIEW
 	/* draw preview of nextpattern */
-	if (nextshape != lastshape) {
+	if (showpreview && (nextshape != lastshape)) {
 		int i;
 		static int r=5, c=2;
 		int tr, tc, t; 
@@ -429,7 +428,6 @@ scr_update()
 		}
 		putpad(SEstr);
 	}
-#endif
 	
 	bp = &board[D_FIRST * B_COLS];
 	sp = &curscreen[D_FIRST * B_COLS];
