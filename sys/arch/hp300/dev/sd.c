@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.19 1995/12/02 18:22:16 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.20 1995/12/09 07:31:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -538,7 +538,7 @@ sdgetinfo(dev)
 		/* XXX ensure size is at least one device block */
 		lp->d_partitions[2].p_size =
 			roundup(LABELSECTOR+1, btodb(sc->sc_blksize));
-		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp);
+		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
 		if (msg == NULL)
 			return (0);
 	}

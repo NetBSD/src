@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.15 1995/12/02 18:22:10 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.16 1995/12/09 07:31:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -442,7 +442,7 @@ rdgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp);
+	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp, NULL);
 	if (msg == NULL)
 		return(0);
 
