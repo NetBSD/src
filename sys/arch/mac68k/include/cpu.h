@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 1995/12/21 05:02:01 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 1996/01/09 15:26:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,6 +190,10 @@ extern unsigned char ssir;
 #define MACH_MACLC475		89
 #define MACH_MACLC575		92
 #define MACH_MACQ605		94
+#define MACH_MACQ630		98
+#define MACH_MACPB280		102
+#define MACH_MACPB280C		103
+#define MACH_MACPB150		115
 
 /*
  * Machine classes.  These define subsets of the above machines.
