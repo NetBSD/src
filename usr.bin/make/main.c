@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.100 2004/03/27 00:17:08 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.101 2004/04/22 21:19:02 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.100 2004/03/27 00:17:08 enami Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.101 2004/04/22 21:19:02 ross Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.100 2004/03/27 00:17:08 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.101 2004/04/22 21:19:02 ross Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -210,7 +210,7 @@ MainParseArgs(int argc, char **argv)
 	char *argvalue;
 	const char *getopt_def;
 	char *optscan;
-	Boolean inOption;
+	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
 #ifdef REMOTE
@@ -239,7 +239,7 @@ rearg:
 				continue;
 			}
 		} else {
-			if (c != '-')
+			if (c != '-' || dashDash)
 				break;
 			inOption = TRUE;
 			c = *optscan++;
@@ -478,6 +478,9 @@ rearg:
 			touchFlag = TRUE;
 			Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
 			break;
+		case '-':
+			dashDash = TRUE;
+			break;
 		default:
 		case '?':
 			usage();
@@ -499,7 +502,7 @@ rearg:
 		} else {
 			if (!*argv[1])
 				Punt("illegal (null) argument.");
-			if (*argv[1] == '-')
+			if (*argv[1] == '-' && !dashDash)
 				goto rearg;
 			(void)Lst_AtEnd(create, (ClientData)estrdup(argv[1]));
 		}
