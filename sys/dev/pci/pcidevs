@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.65 1998/06/15 19:54:48 bouyer Exp $
+$NetBSD: pcidevs,v 1.66 1998/06/30 14:41:29 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -481,6 +481,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
+vendor 2MICRO		0x1217  2 Micro Inc
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
@@ -724,6 +725,9 @@ product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
+
+/* 2 Micro Inc */
+product 2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
