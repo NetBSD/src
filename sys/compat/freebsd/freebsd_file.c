@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.6 1997/10/10 01:50:55 enami Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.7 1997/10/16 23:48:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -332,7 +332,7 @@ compat_43_freebsd_sys_stat(p, v, retval)
 {
 	struct compat_43_freebsd_sys_stat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -348,7 +348,7 @@ compat_43_freebsd_sys_lstat(p, v, retval)
 {
 	struct compat_43_freebsd_sys_lstat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
