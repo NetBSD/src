@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 2002/03/27 04:47:28 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137 2002/07/03 02:46:13 yamt Exp $	*/
 
 /*
  *
@@ -60,11 +60,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2002/03/27 04:47:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2002/07/03 02:46:13 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
+#include "opt_kstack_dr0.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1675,6 +1676,16 @@ pmap_activate(p)
 		lcr3(pcb->pcb_cr3);
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
+
+#ifdef KSTACK_CHECK_DR0
+	/*
+	 * setup breakpoint on the top of stack
+	 */
+	if (p == &proc0)
+		dr0(0, 0, 0, 0);
+	else
+		dr0(KSTACK_LOWEST_ADDR(p), 1, 3, 1);
+#endif
 }
 
 /*

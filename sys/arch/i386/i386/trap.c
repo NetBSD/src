@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165 2002/02/18 15:58:02 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.166 2002/07/03 02:46:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,13 +79,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2002/02/18 15:58:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2002/07/03 02:46:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_cputype.h"
+#include "opt_kstack_dr0.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +203,21 @@ trap(frame)
 
 	default:
 	we_re_toast:
+#ifdef KSTACK_CHECK_DR0
+		if (type == T_TRCTRAP) {
+			u_int mask, dr6 = rdr6();
+
+			mask = 1 << 0; /* dr0 */
+			if (dr6 & mask) {
+				panic("trap on DR0: maybe kernel stack overflow\n");
+#if 0
+				dr6 &= ~mask;
+				ldr6(dr6);
+				return;
+#endif
+			}
+		}
+#endif
 #ifdef KGDB
 		if (kgdb_trap(type, &frame))
 			return;
