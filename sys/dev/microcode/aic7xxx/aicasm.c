@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.2 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.3 2001/01/22 14:30:44 jdolecek Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -352,7 +352,7 @@ ahc_patch%d_func(struct ahc_softc *ahc)
 
 	fprintf(ofile,
 "typedef int patch_func_t __P((struct ahc_softc *));
-struct patch {
+const struct patch {
 	patch_func_t	*patch_func;
 	u_int32_t	begin	   :10,
 			skip_instr :10,
