@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2001/11/21 19:09:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/21 23:33:17 thorpej Exp $
 
 PROG=	boot
 
-SRCS=	start.S boot.c
-SRCS+=	conf.c devopen.c putchar.c getchar.c disk.c
-SRCS+=	startprog.S
+SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c disk.c
 
 .include "../Makefile.booters"
