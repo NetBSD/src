@@ -1,4 +1,5 @@
-/*	$NetBSD: if.c,v 1.5 2000/02/25 09:19:07 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.6 2000/08/13 06:20:02 itojun Exp $	*/
+/*	$KAME: if.c,v 1.13 2000/08/13 06:14:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
