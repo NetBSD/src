@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.3 2001/02/27 18:59:16 cgd Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.4 2001/02/27 19:44:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,17 +40,23 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htonl.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_4.S,v 1.3 2001/02/27 18:59:16 cgd Exp $")
+	ASMSTR("$NetBSD: byte_swap_4.S,v 1.4 2001/02/27 19:44:54 cgd Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#undef _LOCORE
 #define _LOCORE		/* XXX not really, just assembly-code source */
 #include <machine/endian.h>
 
+#ifdef _KERNEL
+#define	BSWAP32_NAME	bswap32
+#else
 #ifdef ABICALLS
 	.abicalls
 #endif
+#define	BSWAP32_NAME	__bswap32
+#endif
 
-NLEAF(__bswap32)			# a0 = 0x11223344, return 0x44332211
+NLEAF(BSWAP32_NAME)			# a0 = 0x11223344, return 0x44332211
 #if BYTE_ORDER == LITTLE_ENDIAN
 ALEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
@@ -65,7 +71,7 @@ ALEAF(ntohl)
 	and	v1, v1, 0xff00		# v1 = 0x00002200
 	or	v0, v0, v1
 	j	ra
-END(__bswap32)
+END(BSWAP32_NAME)
 
 #if BYTE_ORDER == BIG_ENDIAN
 NLEAF(htonl)				# a0 = 0x11223344, return 0x44332211
