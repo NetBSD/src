@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.25 1999/09/10 00:06:38 mason Exp $
+.\" $NetBSD: main,v 1.26 1999/09/27 03:25:12 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -747,7 +747,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.ORG
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.ORG
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.ORG
-.It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.ORG
 .It Ta Ta
 .br_ne 2i
