@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88.2.3.2.3 1999/08/02 19:32:42 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.88.2.3.2.4 1999/08/11 05:47:03 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.3.2.3 1999/08/02 19:32:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.3.2.4 1999/08/11 05:47:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3364,7 +3364,7 @@ pmap_physpage_addref(kva)
 	paddr_t pa;
 	int rval;
 
-	pa = ALPHA_K0SEG_TO_PHYS(trunc_page(kva));
+	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pvh = pa_to_pvh(pa);
 
 	simple_lock(&pvh->pvh_slock);
@@ -3392,7 +3392,7 @@ pmap_physpage_delref(kva)
 	paddr_t pa;
 	int rval;
 
-	pa = ALPHA_K0SEG_TO_PHYS(trunc_page(kva));
+	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pvh = pa_to_pvh(pa);
 
 	simple_lock(&pvh->pvh_slock);
