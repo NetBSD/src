@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.25 2000/12/09 12:27:00 jdolecek Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.26 2000/12/11 03:09:11 mycroft Exp $ */
 
 /*
  * System call switch table.
@@ -461,5 +461,81 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 216 = unimplemented setfsgid */
 	{ 0, 0,
 	    sys_nosys },			/* 217 = unimplemented pivot_root */
+	{ 0, 0,
+	    sys_nosys },			/* 218 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 219 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 220 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 221 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 222 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 223 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 224 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 225 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 226 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 227 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 228 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 229 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 230 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 231 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 232 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 233 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 234 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 235 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 236 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 237 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 238 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 239 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 240 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 241 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 242 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 243 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 244 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 245 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 246 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 247 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 248 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 249 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 250 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 251 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 252 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 253 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 254 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 255 = filler */
 };
 
