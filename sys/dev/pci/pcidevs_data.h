@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.442 2002/06/17 14:08:25 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.443 2002/06/21 15:56:45 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.439 2002/06/17 14:07:14 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.440 2002/06/21 15:55:52 thorpej Exp 
  */
 
 /*
@@ -3392,6 +3392,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "SAA7116",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_PB,
+	    0,
+	    "Intel",
+	    "82452KX/GX Orion Extended Express Processor to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596,
