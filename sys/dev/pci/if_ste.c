@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.16 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.17 2003/06/05 16:33:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.16 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17 2003/06/05 16:33:43 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -760,7 +760,7 @@ ste_start(struct ifnet *ifp)
 		 * last.
 		 */
 		sc->sc_txdescs[olasttx].tfd_next =
-		    STE_CDTXADDR(sc, STE_NEXTTX(olasttx));
+		    htole32(STE_CDTXADDR(sc, STE_NEXTTX(olasttx)));
 		STE_CDTXSYNC(sc, olasttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
