@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27 1999/02/11 06:41:07 ender Exp $	*/
+/*	$NetBSD: adb.c,v 1.27.4.1 1999/11/21 15:02:46 he Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -63,7 +63,7 @@ extern void	adb_jadbproc __P((void));
 /*
  * Global variables.
  */
-int	adb_initted = 0;	/* adb_init() has completed successfully */
+int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
 int	adb_debug = 0;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
@@ -105,6 +105,8 @@ adbattach(parent, dev, aux)
 	int totaladbs;
 	int adbindex, adbaddr;
 
+	adb_polling = 1;
+
 #ifdef MRG_ADB
 	/* 
 	 * Even if serial console only, some models require the
@@ -140,7 +142,7 @@ adbattach(parent, dev, aux)
 		printf("adb: calling ADBAlternateInit.\n");
 #endif
 
-	printf(" (mrg)  ");
+	printf(" (mrg)");
 	ADBAlternateInit();
 #else
 	ADBReInit();
@@ -175,6 +177,7 @@ adbattach(parent, dev, aux)
 
 		(void)config_found(dev, &aa_args, adbprint);
 	}
+	adb_polling = 0;
 }
 
 
