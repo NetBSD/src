@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.17 2001/04/21 19:21:11 he Exp $
+# $NetBSD: mi,v 1.169.2.18 2001/04/23 22:39:07 he Exp $
 .
 ./altroot
 ./bin
@@ -67,6 +67,7 @@
 ./sbin/ccdconfig
 ./sbin/clri
 ./sbin/dhclient
+./sbin/dhclient-script
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
