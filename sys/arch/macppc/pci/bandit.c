@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.4 1998/07/24 20:53:57 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.5 1998/10/15 14:39:53 tsubai Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -126,6 +127,14 @@ scan_pci_devs()
 			pci_bridges[n].addr = mapiodev(reg[0] + 0x800000, 4);
 			pci_bridges[n].data = mapiodev(reg[0] + 0xc00000, 4);
 			pci_bridges[n].pc = n;
+
+			if (OF_getprop(node, "bus-range",
+				       reg, sizeof(reg)) != 8) {
+				pci_bridges[n].addr = NULL;
+				continue;
+			}
+			pci_bridges[n].bus = reg[0];
+
 			bandit_init(n);
 
 			child = OF_child(node);
@@ -146,11 +155,19 @@ scan_pci_devs()
 			pci_bridges[n].data = mapiodev(0xfee00000, 4); /* XXX */
 			pci_bridges[n].pc = PCI_CHIPSET_MPC106; /* for now */
 
+			if (OF_getprop(node, "bus-range",
+				       reg, sizeof(reg)) != 8) {
+				pci_bridges[n].addr = NULL;
+				continue;
+			}
+			pci_bridges[n].bus = reg[0];
+
 			child = OF_child(node);
 			while (child) {
 				config_slot(child, pci_bridges[n].pc);
 				child = OF_peer(child);
 			}
+			n++;
 		}
 
 		node = OF_peer(node);
