@@ -5,6 +5,8 @@ showstoppers for merge back to -current:
  - rewrite interrupt dispatch so that multi-level shared interrupts
    are no longer broken.
 
+ - implement MI softint API
+
  - figure out why ahc on serverworks fails to find its interrupt.
 
  - careful code review of all diffs from -current
@@ -24,8 +26,6 @@ showstoppers for merge back to -current:
  - stop all cpu's on shutdown.
 
  - try out mpbios+ioapic w/o MULTIPROCESSOR
-
- - implement MI softint API
 
  - figure out why cpu time accounting screws up bigtime:
 
