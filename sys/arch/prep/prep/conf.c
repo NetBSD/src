@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2001/03/21 22:25:55 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2001/12/11 20:49:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,6 +166,8 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
+#include "wsfont.h"
+cdev_decl(wsfont);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
@@ -256,6 +258,7 @@ struct cdevsw cdevsw[] =
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 68: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 69: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 70: i4b phone device */
+	cdev__oci_init(NWSFONT,wsfont),	/* 71: wsfont pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -368,6 +371,7 @@ static int chrtoblktbl[] = {
 	/* 68 */	NODEV,
 	/* 69 */	NODEV,
 	/* 70 */	NODEV,
+	/* 71 */	NODEV,
 };
 
 /*

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.34 2001/11/23 05:00:28 atatat Exp $
+#	$NetBSD: GENERIC,v 1.35 2001/12/11 20:49:18 kleink Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.34 $"
+#ident		"GENERIC-$Revision: 1.35 $"
 
 maxusers	32
 
@@ -429,5 +429,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
