@@ -35,9 +35,10 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.y	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: parse.y,v 1.2 1993/08/01 17:59:39 mycroft Exp $";
+static char rcsid[] = "$Id: parse.y,v 1.3 1994/12/23 16:47:06 cgd Exp $";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "htable.h"
 %}
 
