@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.37.2.4 1999/11/01 08:04:30 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.37.2.5 1999/12/14 00:43:40 scottr Exp $
 #
 ###########################################################################
 #
@@ -78,6 +78,7 @@
 #	ch*	SCSI changer
 #	adb	Apple Desktop Bus
 #	asc*	Apple Sound Chip
+#	cfs*	Venus cache driver, for Coda
 #
 
 dialin=0
@@ -97,7 +98,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11 random
 	sh $0 tun0 tun1 tun2 tun3 asc0 lkm ipl local
-	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3 cfs0
 	sh $0 wscons
 	;;
 
@@ -399,6 +400,16 @@ scsibus*)
 	mknod scsibus$unit c 39 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+cfs*)
+	unit=${i#cfs}
+	cfs=cfs$unit
+	major=47
+	rm -f $cfs
+	mknod $cfs c $major $unit
+	chown root.wheel $cfs
+	chmod 600 $cfs
 	;;
 
 local)
