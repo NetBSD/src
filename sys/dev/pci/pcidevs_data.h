@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.383 2002/01/03 05:27:39 rafal Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.384 2002/01/05 00:16:43 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.380 2002/01/03 05:25:48 rafal Exp 
+ *	NetBSD: pcidevs,v 1.381 2002/01/04 18:26:20 augustss Exp 
  */
 
 /*
@@ -2026,6 +2026,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82C693 PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11,
+	    0,
+	    "Corega",
+	    "CGWLPCIA11",
+	},
+	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
 	    0,
 	    "Corrollary",
@@ -2422,6 +2428,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
+	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000,
+	    0,
+	    "Eumitcom",
+	    "WL11000",
+	},
+	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
 	    0,
 	    "O2 Micro Inc",
@@ -2570,6 +2582,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Galileo Technology",
 	    "GT-64260 System Controller",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
+	    0,
+	    "Global Sun Tech",
+	    "GL24110P",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P_2,
+	    0,
+	    "Global Sun Tech",
+	    "GL24110P",
 	},
 	{
 	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
@@ -4238,6 +4262,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620 1000baseT Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
+	    0,
+	    "Netgear",
+	    "MA301",
 	},
 	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
@@ -9736,6 +9766,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_EUMITCOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Eumitcom",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_NETSEC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NetSec",
@@ -9769,6 +9805,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LAVA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Lava Semiconductor Manufacturing, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_COREGA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Corega",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Global Sun Tech",
 	    NULL,
 	},
 	{
