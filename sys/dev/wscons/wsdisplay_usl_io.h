@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_usl_io.h,v 1.2 2000/11/26 06:03:24 simonb Exp $ */
+/* $NetBSD: wsdisplay_usl_io.h,v 1.3 2001/05/15 15:06:23 lukem Exp $ */
 
 #ifndef _DEV_WSCONS_WSDISPLAY_USL_IO_H_
 #define _DEV_WSCONS_WSDISPLAY_USL_IO_H_
@@ -20,13 +20,13 @@ struct vt_mode {
 
 typedef struct vt_mode vtmode_t;
 
-#define VT_RELDISP	_IO('v', 4 /*, int */)
+#define VT_RELDISP	_IO('v', 4)
 #define VT_FALSE	0		/* release of VT refused */
 #define VT_TRUE		1		/* VT released */
 #define VT_ACKACQ	2		/* acknowledging VT acquiration */
 
-#define VT_ACTIVATE	_IO('v', 5 /*, int */)
-#define VT_WAITACTIVE	_IO('v', 6 /*, int */)
+#define VT_ACTIVATE	_IO('v', 5)
+#define VT_WAITACTIVE	_IO('v', 6)
 #define VT_GETACTIVE	_IOR('v', 7, int)
 
 #define VT_GETSTATE	_IOR('v', 100, struct vt_stat)
@@ -45,13 +45,13 @@ struct kbentry {
 
 #define KDGKBMODE 	_IOR('K', 6, int)	/* get keyboard mode */
 
-#define KDSKBMODE 	_IO('K', 7 /*, int */)	/* set keyboard mode */
+#define KDSKBMODE 	_IO('K', 7)		/* set keyboard mode */
 #define K_RAW		0		/* kbd switched to raw mode */
 #define K_XLATE		1		/* kbd switched to "normal" mode */
 
-#define KDMKTONE	_IO('K', 8 /*, int */)
+#define KDMKTONE	_IO('K', 8)
 
-#define KDSETMODE	_IO('K', 10 /*, int */)
+#define KDSETMODE	_IO('K', 10)
 #define KD_TEXT		0		/* set text mode restore fonts  */
 #define KD_GRAPHICS	1		/* set graphics mode 		*/
 
@@ -64,12 +64,12 @@ struct kbentry {
 #define KB_OTHER	3
 
 #define KDGETLED	_IOR('K', 65, int)
-#define KDSETLED	_IO('K', 66 /*, int */)
+#define KDSETLED	_IO('K', 66)
 #define LED_CAP		1
 #define LED_NUM		2
 #define LED_SCR		4
 
-#define KDSETRAD	_IO('K', 67 /*, int */)
+#define KDSETRAD	_IO('K', 67)
 
 /* pcvt compatibility */
 #define VGAPCVTID	_IOWR('V',113, struct pcvtid)	/* get driver id */
