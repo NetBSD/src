@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.7 2003/05/16 23:37:47 scw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.8 2004/01/19 16:18:33 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.7 2003/05/16 23:37:47 scw Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.8 2004/01/19 16:18:33 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/ras.h>
@@ -75,10 +75,12 @@ pthread__ras_simple_lock_try(__cpu_simple_lock_t *alp)
 	__cpu_simple_lock_t old;
 
 	/* This is the atomic sequence. */
-	__asm __volatile(".globl pthread__lock_ras_start; pthread__lock_ras_start:");
+	__asm __volatile(".globl pthread__lock_ras_start	\n"
+			 "pthread__lock_ras_start:");
 	old = *alp;
 	*alp = __SIMPLELOCK_LOCKED;
-	__asm __volatile(".globl pthread__lock_ras_end; pthread__lock_ras_end:");
+	__asm __volatile(".globl pthread__lock_ras_end		\n"
+			 "pthread__lock_ras_end:");
 
 	return (old == __SIMPLELOCK_UNLOCKED);
 }
