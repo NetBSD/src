@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.6 1997/07/21 14:08:38 jtc Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.7 1998/02/10 04:54:51 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.6 1997/07/21 14:08:38 jtc Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.7 1998/02/10 04:54:51 lukem Exp $");
 #endif
 #endif
 
@@ -51,8 +51,10 @@ __RCSID("$NetBSD: svc_auth_unix.c,v 1.6 1997/07/21 14:08:38 jtc Exp $");
  */
 
 #include "namespace.h"
+
 #include <stdio.h>
 #include <string.h>
+
 #include <rpc/rpc.h>
 
 /*
@@ -60,27 +62,27 @@ __RCSID("$NetBSD: svc_auth_unix.c,v 1.6 1997/07/21 14:08:38 jtc Exp $");
  */
 enum auth_stat
 _svcauth_unix(rqst, msg)
-	register struct svc_req *rqst;
-	register struct rpc_msg *msg;
+	struct svc_req *rqst;
+	struct rpc_msg *msg;
 {
-	register enum auth_stat stat;
+	enum auth_stat stat;
 	XDR xdrs;
-	register struct authunix_parms *aup;
-	register int32_t *buf;
+	struct authunix_parms *aup;
+	int32_t *buf;
 	struct area {
 		struct authunix_parms area_aup;
 		char area_machname[MAX_MACHINE_NAME+1];
 		int area_gids[NGRPS];
 	} *area;
-	u_int auth_len;
+	size_t auth_len;
 	int str_len, gid_len;
-	register int i;
+	int i;
 
 	area = (struct area *) rqst->rq_clntcred;
 	aup = &area->area_aup;
 	aup->aup_machname = area->area_machname;
 	aup->aup_gids = area->area_gids;
-	auth_len = (u_int)msg->rm_call.cb_cred.oa_length;
+	auth_len = (size_t)msg->rm_call.cb_cred.oa_length;
 	xdrmem_create(&xdrs, msg->rm_call.cb_cred.oa_base, auth_len,XDR_DECODE);
 	buf = XDR_INLINE(&xdrs, auth_len);
 	if (buf != NULL) {
@@ -90,7 +92,7 @@ _svcauth_unix(rqst, msg)
 			stat = AUTH_BADCRED;
 			goto done;
 		}
-		bcopy((caddr_t)buf, aup->aup_machname, (u_int)str_len);
+		memmove(aup->aup_machname, (void *)buf, (size_t)str_len);
 		aup->aup_machname[str_len] = 0;
 		str_len = RNDUP(str_len);
 		buf += str_len / sizeof (int32_t);

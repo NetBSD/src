@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.7 1997/07/21 14:08:35 jtc Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.8 1998/02/10 04:54:45 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.7 1997/07/21 14:08:35 jtc Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.8 1998/02/10 04:54:45 lukem Exp $");
 #endif
 #endif
 
@@ -47,9 +47,12 @@ __RCSID("$NetBSD: rpc_callmsg.c,v 1.7 1997/07/21 14:08:35 jtc Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/param.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
+
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
@@ -61,11 +64,11 @@ __weak_alias(xdr_callmsg,_xdr_callmsg);
  */
 bool_t
 xdr_callmsg(xdrs, cmsg)
-	register XDR *xdrs;
-	register struct rpc_msg *cmsg;
+	XDR *xdrs;
+	struct rpc_msg *cmsg;
 {
-	register int32_t *buf;
-	register struct opaque_auth *oa;
+	int32_t *buf;
+	struct opaque_auth *oa;
 
 	if (xdrs->x_op == XDR_ENCODE) {
 		if (cmsg->rm_call.cb_cred.oa_length > MAX_AUTH_BYTES) {
@@ -95,14 +98,16 @@ xdr_callmsg(xdrs, cmsg)
 			IXDR_PUT_ENUM(buf, oa->oa_flavor);
 			IXDR_PUT_LONG(buf, oa->oa_length);
 			if (oa->oa_length) {
-				bcopy(oa->oa_base, (caddr_t)buf, oa->oa_length);
+				memmove((void *)buf, oa->oa_base,
+				    oa->oa_length);
 				buf += RNDUP(oa->oa_length) / sizeof (int32_t);
 			}
 			oa = &cmsg->rm_call.cb_verf;
 			IXDR_PUT_ENUM(buf, oa->oa_flavor);
 			IXDR_PUT_LONG(buf, oa->oa_length);
 			if (oa->oa_length) {
-				bcopy(oa->oa_base, (caddr_t)buf, oa->oa_length);
+				memmove((void *)buf, oa->oa_base,
+				    oa->oa_length);
 				/* no real need....
 				buf += RNDUP(oa->oa_length) / sizeof (int32_t);
 				*/
@@ -133,8 +138,8 @@ xdr_callmsg(xdrs, cmsg)
 					return (FALSE);
 				}
 				if (oa->oa_base == NULL) {
-					oa->oa_base = (caddr_t)
-						mem_alloc(oa->oa_length);
+					oa->oa_base =
+					    (caddr_t) mem_alloc(oa->oa_length);
 				}
 				buf = XDR_INLINE(xdrs, RNDUP(oa->oa_length));
 				if (buf == NULL) {
@@ -143,7 +148,7 @@ xdr_callmsg(xdrs, cmsg)
 						return (FALSE);
 					}
 				} else {
-					bcopy((caddr_t)buf, oa->oa_base,
+					memmove(oa->oa_base, (void *)buf,
 					    oa->oa_length);
 					/* no real need....
 					buf += RNDUP(oa->oa_length) /
@@ -167,8 +172,8 @@ xdr_callmsg(xdrs, cmsg)
 					return (FALSE);
 				}
 				if (oa->oa_base == NULL) {
-					oa->oa_base = (caddr_t)
-						mem_alloc(oa->oa_length);
+					oa->oa_base =
+					    (caddr_t)mem_alloc(oa->oa_length);
 				}
 				buf = XDR_INLINE(xdrs, RNDUP(oa->oa_length));
 				if (buf == NULL) {
@@ -177,7 +182,7 @@ xdr_callmsg(xdrs, cmsg)
 						return (FALSE);
 					}
 				} else {
-					bcopy((caddr_t)buf, oa->oa_base,
+					memmove(oa->oa_base, (void *)buf,
 					    oa->oa_length);
 					/* no real need...
 					buf += RNDUP(oa->oa_length) /

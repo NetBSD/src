@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.8 1997/07/21 14:08:28 jtc Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.9 1998/02/10 04:54:34 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.8 1997/07/21 14:08:28 jtc Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.9 1998/02/10 04:54:34 lukem Exp $");
 #endif
 #endif
 
@@ -44,13 +44,15 @@ __RCSID("$NetBSD: getrpcent.c,v 1.8 1997/07/21 14:08:28 jtc Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <string.h>
+
 #include <rpc/rpc.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 
 #ifdef __weak_alias
 __weak_alias(endrpcent,_endrpcent);
@@ -81,9 +83,9 @@ static struct rpcdata *_rpcdata __P((void));
 static struct rpcdata *
 _rpcdata()
 {
-	register struct rpcdata *d = rpcdata;
+	struct rpcdata *d = rpcdata;
 
-	if (d == 0) {
+	if (d == NULL) {
 		d = (struct rpcdata *)calloc(1, sizeof (struct rpcdata));
 		rpcdata = d;
 	}
@@ -92,7 +94,7 @@ _rpcdata()
 
 struct rpcent *
 getrpcbynumber(number)
-	register int number;
+	u_int32_t number;
 {
 	struct rpcent *rpc;
 
@@ -107,7 +109,7 @@ getrpcbynumber(number)
 
 struct rpcent *
 getrpcbyname(name)
-	char *name;
+	const char *name;
 {
 	struct rpcent *rpc;
 	char **rp;
@@ -129,9 +131,9 @@ void
 setrpcent(f)
 	int f;
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 
-	if (d == 0)
+	if (d == NULL)
 		return;
 	if (d->rpcf == NULL)
 		d->rpcf = fopen(RPCDB, "r");
@@ -143,9 +145,9 @@ setrpcent(f)
 void
 endrpcent()
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 
-	if (d == 0)
+	if (d == NULL)
 		return;
 	if (d->rpcf && !d->stayopen) {
 		fclose(d->rpcf);
@@ -156,9 +158,9 @@ endrpcent()
 struct rpcent *
 getrpcent()
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 
-	if (d == 0)
+	if (d == NULL)
 		return(NULL);
 	if (d->rpcf == NULL && (d->rpcf = fopen(RPCDB, "r")) == NULL)
 		return (NULL);
@@ -172,11 +174,11 @@ interpret(val, len)
 	char *val;
 	int len;
 {
-	register struct rpcdata *d = _rpcdata();
+	struct rpcdata *d = _rpcdata();
 	char *p;
-	register char *cp, **q;
+	char *cp, **q;
 
-	if (d == 0)
+	if (d == NULL)
 		return (0);
 	(void) strncpy(d->line, val, len);
 	p = d->line;
