@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.12 1999/09/19 20:51:09 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.13 1999/09/20 19:26:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -169,6 +169,9 @@ void	tlp_sio_mii_writereg __P((struct device *, int, int, int));
 int	tlp_pnic_mii_readreg __P((struct device *, int, int));
 void	tlp_pnic_mii_writereg __P((struct device *, int, int, int));
 
+void	tlp_2114x_preinit __P((struct tulip_softc *));
+void	tlp_pnic_preinit __P((struct tulip_softc *));
+
 u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
 #define	tlp_mchash(addr)	(tlp_crc32((addr), ETHER_ADDR_LEN) &	\
 				 (TULIP_MCHASHSIZE - 1))
@@ -249,8 +252,17 @@ tlp_attach(sc, enaddr)
 	 * Set up various chip-specific quirks.
 	 */
 	switch (sc->sc_chip) {
+	case TULIP_CHIP_21140:
+	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		sc->sc_preinit = tlp_2114x_preinit;
+		break;
+
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
+		sc->sc_preinit = tlp_pnic_preinit;
+
 		/*
 		 * These chips seem to have busted DMA engines; just put them
 		 * in Store-and-Forward mode from the get-go.
@@ -1299,6 +1311,17 @@ tlp_init(sc)
 	tlp_stop(sc, 0);
 
 	/*
+	 * Initialize `opmode' to 0, and call the pre-init routine, if
+	 * any.  This is required because the 2114x and some of the
+	 * clones require that the media-related bits in `opmode' be
+	 * set before performing a soft-reset in order to get internal
+	 * chip pathways are correct.  Yay!
+	 */
+	sc->sc_opmode = 0;
+	if (sc->sc_preinit != NULL)
+		(*sc->sc_preinit)(sc);
+
+	/*
 	 * Reset the Tulip to a known state.
 	 */
 	tlp_reset(sc);
@@ -1353,7 +1376,7 @@ tlp_init(sc)
 	 * Media-related OPMODE bits are set in the media callbacks
 	 * for each specific chip/board.
 	 */
-	sc->sc_opmode = OPMODE_SR | OPMODE_ST |
+	sc->sc_opmode |= OPMODE_SR | OPMODE_ST |
 	    sc->sc_txth[sc->sc_txthresh].txth_opmode;
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21140:
@@ -1832,7 +1855,7 @@ tlp_crc32(buf, len)
  */
 int
 tlp_srom_crcok(romdata)
-	u_int8_t *romdata;
+	const u_int8_t *romdata;
 {
 	u_int32_t crc;
 
@@ -1841,6 +1864,80 @@ tlp_srom_crcok(romdata)
 	if (crc == TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM))
 		return (1);
 	return (0);
+}
+
+/*
+ * tlp_isv_srom:
+ *
+ *	Check to see if the SROM is in the new standardized format.
+ */
+int
+tlp_isv_srom(romdata)
+	const u_int8_t *romdata;
+{
+	int i;
+	u_int16_t cksum;
+
+	if (tlp_srom_crcok(romdata)) {
+		/*
+		 * SROM CRC checks out; must be in the new format.
+		 */
+		return (1);
+	}
+
+	cksum = TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM);
+	if (cksum == 0xffff || cksum == 0) {
+		/*
+		 * No checksum present.  Check the SROM ID; 18 bytes of 0
+		 * followed by 1 (version) followed by the number of
+		 * adapters which use this SROM (should be non-zero).
+		 */
+		for (i = 0; i < TULIP_ROM_SROM_FORMAT_VERION; i++) {
+			if (romdata[i] != 0)
+				return (0);
+		}
+		if (romdata[TULIP_ROM_SROM_FORMAT_VERION] != 1)
+			return (0);
+		if (romdata[TULIP_ROM_CHIP_COUNT] == 0)
+			return (0);
+		return (1);
+	}
+
+	return (0);
+}
+
+/*
+ * tlp_isv_srom_enaddr:
+ *
+ *	Get the Ethernet address from an ISV SROM.
+ */
+int
+tlp_isv_srom_enaddr(sc, enaddr)
+	struct tulip_softc *sc;
+	u_int8_t *enaddr;
+{
+	int i, devcnt;
+
+	if (tlp_isv_srom(sc->sc_srom) == 0)
+		return (0);
+
+	devcnt = sc->sc_srom[TULIP_ROM_CHIP_COUNT];
+	for (i = 0; i < devcnt; i++) {
+		if (sc->sc_srom[TULIP_ROM_CHIP_COUNT] == 1)
+			break;
+		if (sc->sc_srom[TULIP_ROM_CHIPn_DEVICE_NUMBER(i)] ==
+		    sc->sc_devno)
+			break;
+	}
+
+	if (i == devcnt)
+		return (0);
+
+	memcpy(enaddr, &sc->sc_srom[TULIP_ROM_IEEE_NETWORK_ADDRESS],
+	    ETHER_ADDR_LEN);
+	enaddr[5] += i;
+
+	return (1);
 }
 
 /*
@@ -2637,6 +2734,83 @@ tlp_pnic_mii_writereg(self, phy, reg, val)
 }
 
 /*****************************************************************************
+ * Chip-specific pre-init and reset functions.
+ *****************************************************************************/
+
+/*
+ * tlp_2114x_preinit:
+ *
+ *	Pre-init function shared by DECchip 21140, 21140A, 21142, and 21143.
+ */
+void
+tlp_2114x_preinit(sc)
+	struct tulip_softc *sc;
+{
+
+	/*
+	 * Always set the Must-Be-One bit.
+	 */
+	sc->sc_opmode |= OPMODE_MBO;
+
+	if (sc->sc_flags & TULIPF_HAS_MII) {
+		/*
+		 * MII case: just set the port-select bit; we will never
+		 * be called during a media change.
+		 */
+		sc->sc_opmode |= OPMODE_PS;
+	} else {
+		/*
+		 * ENDEC/PCS mode; set according to selected media type.
+		 * XXX Auto-sense not supported yet.
+		 */
+		/*
+		 * XXX This sould come from the SROM.
+		 */
+	}
+
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+}
+
+/*
+ * tlp_pnic_preinit:
+ *
+ *	Pre-init function for the Lite-On 82c168 and 82c169.
+ */
+void
+tlp_pnic_preinit(sc)
+	struct tulip_softc *sc;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	int media = ife->ifm_media;
+
+	if (sc->sc_flags & TULIPF_HAS_MII) {
+		/*
+		 * MII case: just set the port-select bit; we will never
+		 * be called during a media change.
+		 */
+		sc->sc_opmode |= OPMODE_PS;
+	} else {
+		/*
+		 * ENDEC/PCS/Nway mode; set according to media type.
+		 */
+		if (IFM_SUBTYPE(media) == IFM_AUTO)
+			media = sc->sc_mii.mii_media_active;
+		switch (IFM_SUBTYPE(media)) {
+		case IFM_10_T:
+			/* Nothing. */
+			break;
+
+		case IFM_100_TX:
+		case IFM_100_T4:
+			sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR;
+			break;
+		}
+	}
+
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+}
+
+/*****************************************************************************
  * Chip/board-specific media switches.  The ones here are ones that
  * are potentially common to multiple front-ends.
  *****************************************************************************/
@@ -2647,6 +2821,7 @@ tlp_pnic_mii_writereg(self, phy, reg, val)
 void	tlp_21040_tmsw_init __P((struct tulip_softc *));
 void	tlp_21040_tp_tmsw_init __P((struct tulip_softc *));
 void	tlp_21040_auibnc_tmsw_init __P((struct tulip_softc *));
+void	tlp_21041_tmsw_init __P((struct tulip_softc *));
 void	tlp_21040_21041_tmsw_get __P((struct tulip_softc *,
 	    struct ifmediareq *));
 int	tlp_21040_21041_tmsw_set __P((struct tulip_softc *));
@@ -2663,6 +2838,10 @@ const struct tulip_mediasw tlp_21040_tp_mediasw = {
 const struct tulip_mediasw tlp_21040_auibnc_mediasw = {
 	tlp_21040_auibnc_tmsw_init, tlp_21040_21041_tmsw_get,
 	    tlp_21040_21041_tmsw_set
+};
+
+const struct tulip_mediasw tlp_21041_mediasw = {
+	tlp_21041_tmsw_init, tlp_21040_21041_tmsw_get, tlp_21040_21041_tmsw_set
 };
 
 #define	ADD(m, t)	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, (t))
@@ -2778,6 +2957,227 @@ tlp_21040_auibnc_tmsw_init(sc)
 	PRINT("10base5");
 
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_5);
+
+	printf("\n");
+}
+
+void
+tlp_21041_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	int i, defmedia, devcnt, leaf_offset, mb_offset, m_cnt;
+	struct tulip_21040_21041_sia_media *tsm;
+	const char *sep = "", *defstr;
+	u_int16_t romdef;
+	u_int8_t mb;
+
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	if (tlp_isv_srom(sc->sc_srom) == 0)
+		goto not_isv_srom;
+
+	devcnt = sc->sc_srom[TULIP_ROM_CHIP_COUNT];
+	for (i = 0; i < devcnt; i++) {
+		if (sc->sc_srom[TULIP_ROM_CHIP_COUNT] == 1)
+			break;
+		if (sc->sc_srom[TULIP_ROM_CHIPn_DEVICE_NUMBER(i)] ==
+		    sc->sc_devno)
+			break;
+	}
+
+	if (i == devcnt)
+		goto not_isv_srom;
+
+	leaf_offset = sc->sc_srom[TULIP_ROM_CHIPn_INFO_LEAF_OFFSET(i)];
+	mb_offset = leaf_offset + TULIP_ROM_IL_MEDIAn_BLOCK_BASE;
+	m_cnt = sc->sc_srom[leaf_offset + TULIP_ROM_IL_MEDIA_COUNT];
+
+	for (; m_cnt != 0;
+	     m_cnt--, mb_offset += TULIP_ROM_MB_SIZE(mb)) {
+		mb = sc->sc_srom[mb_offset];
+		tsm = malloc(sizeof(struct tulip_21040_21041_sia_media),
+		    M_DEVBUF, M_WAITOK);
+		switch (mb & TULIP_ROM_MB_MEDIA_CODE) {
+		case TULIP_ROM_MB_MEDIA_TP:
+			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR13) :
+			    SIACONN_21041_10BASET;
+			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR14) :
+			    SIATXRX_21041_10BASET;
+			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR15) :
+			    SIAGEN_21041_10BASET;
+			ADD(IFM_ETHER|IFM_10_T, tsm);
+			PRINT("10baseT");
+			break;
+
+		case TULIP_ROM_MB_MEDIA_BNC:
+			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR13) :
+			    SIACONN_21041_BNC;
+			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR14) :
+			    SIATXRX_21041_BNC;
+			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR15) :
+			    SIAGEN_21041_BNC;
+			ADD(IFM_ETHER|IFM_10_2, tsm);
+			PRINT("10base2");
+			break;
+
+		case TULIP_ROM_MB_MEDIA_AUI:
+			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR13) :
+			    SIACONN_21041_AUI;
+			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR14) :
+			    SIATXRX_21041_AUI;
+			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR15) :
+			    SIAGEN_21041_AUI;
+			ADD(IFM_ETHER|IFM_10_5, tsm);
+			PRINT("10base5");
+			break;
+
+		case TULIP_ROM_MB_MEDIA_TP_FDX:
+			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR13) :
+			    SIACONN_21041_10BASET_FDX;
+			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR14) :
+			    SIATXRX_21041_10BASET_FDX;
+			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
+			    TULIP_ROM_GETW(sc->sc_srom,
+			      mb_offset + TULIP_ROM_MB_CSR15) :
+			    SIAGEN_21041_10BASET_FDX;
+			ADD(IFM_ETHER|IFM_10_T|IFM_FDX, tsm);
+			PRINT("10baseT-FDX");
+			break;
+
+		default:
+			printf("%s<unknown 0x%02x>", sep,
+			    (mb & TULIP_ROM_MB_MEDIA_CODE));
+			sep = ", ";
+			free(tsm, M_DEVBUF);
+		}
+	}
+
+	/*
+	 * XXX Autosense not yet supported.
+	 */
+
+	romdef = TULIP_ROM_GETW(sc->sc_srom, leaf_offset +
+	    TULIP_ROM_IL_SELECT_CONN_TYPE);
+	switch (romdef) {
+	case SELECT_CONN_TYPE_TP:
+	case SELECT_CONN_TYPE_TP_AUTONEG:
+	case SELECT_CONN_TYPE_TP_NOLINKPASS:
+		defmedia = IFM_ETHER|IFM_10_T;
+		defstr = "10baseT";
+		break;
+
+	case SELECT_CONN_TYPE_TP_FDX:
+		defmedia = IFM_ETHER|IFM_10_T|IFM_FDX;
+		defstr = "10baseT-FDX";
+		break;
+
+	case SELECT_CONN_TYPE_BNC:
+		defmedia = IFM_ETHER|IFM_10_2;
+		defstr = "10base2";
+		break;
+
+	case SELECT_CONN_TYPE_AUI:
+		defmedia = IFM_ETHER|IFM_10_5;
+		defstr = "10base5";
+		break;
+#if 0 /* XXX */
+	case SELECT_CONN_TYPE_ASENSE:
+	case SELECT_CONN_TYPE_ASENSE_AUTONEG:
+		defmedia = IFM_ETHER|IFM_AUTO;
+		defstr = "auto";
+		break;
+#endif
+	default:
+		defmedia = 0;
+		defstr = NULL;
+	}
+
+	if (defmedia != 0)
+		printf(", default %s\n", defstr);
+	else {
+		/*
+		 * XXX We should default to auto-sense.
+		 */
+		defmedia = IFM_ETHER|IFM_10_T;
+		defstr = "10baseT";
+
+		printf("\n%s: unknown default media in SROM (0x%04x), "
+		    "using %s\n", sc->sc_dev.dv_xname, romdef, defstr);
+	}
+
+	ifmedia_set(&sc->sc_mii.mii_media, defmedia);
+	return;
+
+ not_isv_srom:
+	/*
+	 * If we have a board without the standard 21041 SROM format,
+	 * we just assume all media are present and try and pick a
+	 * reasonable default.
+	 */
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21041_10BASET;
+	tsm->tsm_siatxrx = SIATXRX_21041_10BASET;
+	tsm->tsm_siagen  = SIAGEN_21041_10BASET;
+	ADD(IFM_ETHER|IFM_10_T, tsm);
+	PRINT("10baseT");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21041_10BASET_FDX;
+	tsm->tsm_siatxrx = SIATXRX_21041_10BASET_FDX;
+	tsm->tsm_siagen  = SIAGEN_21041_10BASET_FDX;
+	ADD(IFM_ETHER|IFM_10_T|IFM_FDX, tsm);
+	PRINT("10baseT-FDX");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21041_BNC;
+	tsm->tsm_siatxrx = SIATXRX_21041_BNC;
+	tsm->tsm_siagen  = SIAGEN_21041_BNC;
+	ADD(IFM_ETHER|IFM_10_2|IFM_FDX, tsm);
+	PRINT("10base2");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21041_AUI;
+	tsm->tsm_siatxrx = SIATXRX_21041_AUI;
+	tsm->tsm_siagen  = SIAGEN_21041_AUI;
+	ADD(IFM_ETHER|IFM_10_5|IFM_FDX, tsm);
+	PRINT("10base5");
+
+	/*
+	 * XXX Autosense not yet supported.
+	 */
+
+	/* XXX This should be auto-sense. */
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
+	printf(", default 10baseT");
 
 	printf("\n");
 }
