@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.14 1998/07/29 11:31:22 lukem Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.15 1998/09/20 04:44:55 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.14 1998/07/29 11:31:22 lukem Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.15 1998/09/20 04:44:55 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ main(argc, argv)
 	int ch, on;
 	int fd = 0;
 	struct sockaddr_in sin;
+	int len;
 	char *tgtuser, *tgtgroup, *ep;
 	uid_t curuid, tgtuid;
 	gid_t curgid, tgtgid;
@@ -342,8 +343,22 @@ main(argc, argv)
 			exit(0);
 		}
 	}
+
 	from.sin_len = sizeof(struct sockaddr_in);
 	from.sin_family = AF_INET;
+
+	/*
+	 * remember what address this was sent to, so we can respond on the
+	 * same interface
+	 */
+	len = sizeof(sin);
+	if (getsockname(fd, (struct sockaddr *)&sin, &len) == 0)
+		sin.sin_port = 0;
+	else {
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_family = AF_INET;
+	}
+
 	alarm(0);
 	close(fd);
 	close(1);
@@ -352,9 +367,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	if (bind(peer, (struct sockaddr *)&sin, sizeof (sin)) < 0) {
+	if (bind(peer, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		syslog(LOG_ERR, "bind: %m");
 		exit(1);
 	}
