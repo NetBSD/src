@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.7 1999/12/13 20:12:22 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.8 2000/01/12 19:24:02 drochner Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -457,8 +457,28 @@ pnpbios_attachnode(sc, idx, buf, len)
 	}
 
 	if (p != buf + len) {
-		printf("length mismatch\n");
-		goto dump;
+		printf("%s: length mismatch in node %d: used %d of %d Bytes\n",
+		       sc->sc_dev.dv_xname, idx, p - buf, len);
+		if (p > buf + len) {
+			/* XXX shouldn't happen - pnp_scan should catch it */
+			goto dump;
+		}
+		/* Crappy BIOS: Buffer is not fully used. Be generous. */
+	}
+
+	if (r.nummem + r.numio + r.numirq + r.numdma == 0) {
+#ifdef PNPBIOSVERBOSE
+		printf("%s", idstr);
+		if (r.longname)
+			printf(", %s", r.longname);
+		compatid = s.compatids;
+		while (compatid) {
+			printf(", %s", compatid->idstr);
+			compatid = compatid->next;
+		}
+		printf(" at %s index %d disabled\n", sc->sc_dev.dv_xname, idx);
+#endif
+		return;
 	}
 
 	aa.pbt = 0; /* XXX placeholder */
@@ -511,6 +531,7 @@ static int pnp_compatid __P((struct pnpresources *, unsigned char *, size_t));
 static int pnp_newirq __P((struct pnpresources *, unsigned char *, size_t));
 static int pnp_newdma __P((struct pnpresources *, unsigned char *, size_t));
 static int pnp_newioport __P((struct pnpresources *, unsigned char *, size_t));
+static int pnp_newfixedioport __P((struct pnpresources *, unsigned char *, size_t));
 
 /*
  * small ressource types (beginning with 1)
@@ -527,7 +548,7 @@ static struct{
 	{0, 0, 1}, /* start dep */
 	{0, 0, 0}, /* end dep */
 	{pnp_newioport, 7, 7}, /* io descriptor */
-	{0, 3, 3}, /* fixed io descriptor */
+	{pnp_newfixedioport, 3, 3}, /* fixed io descriptor */
 	{0, -1, -1}, /* reserved */
 	{0, -1, -1},
 	{0, -1, -1},
@@ -589,13 +610,7 @@ pnp_scan(bufp, maxlen, r, in_depends)
 					mem->align = 0x10000;
 				mem->len = NEXTBYTE(p) << 8;
 				mem->len |= NEXTBYTE(p) << 16;
-				SIMPLEQ_INSERT_TAIL(&r->mem, mem, next);
-				r->nummem++;
-#ifdef PNPBIOSDEBUG
-				if (mem->len == 0)
-					printf("ZERO mem descriptor\n");
-#endif
-				break;
+				goto gotmem;
 			case 0x02:
 				if (in_depends)
 					printf("ID in dep?\n");
@@ -630,13 +645,7 @@ pnp_scan(bufp, maxlen, r, in_depends)
 				mem->len |= NEXTBYTE(p) << 8;
 				mem->len |= NEXTBYTE(p) << 16;
 				mem->len |= NEXTBYTE(p) << 24;
-				SIMPLEQ_INSERT_TAIL(&r->mem, mem, next);
-				r->nummem++;
-#ifdef PNPBIOSDEBUG
-				if (mem->len == 0)
-					printf("ZERO mem descriptor\n");
-#endif
-				break;
+				goto gotmem;
 			case 0x06: /* 32bit fixed memory descriptor */
 				if (len != 9) {
 					printf("pnp_scan: bad mem32 desc\n");
@@ -656,12 +665,16 @@ pnp_scan(bufp, maxlen, r, in_depends)
 				mem->len |= NEXTBYTE(p) << 8;
 				mem->len |= NEXTBYTE(p) << 16;
 				mem->len |= NEXTBYTE(p) << 24;
-				SIMPLEQ_INSERT_TAIL(&r->mem, mem, next);
-				r->nummem++;
+gotmem:
+				if (mem->len == 0) { /* disabled */
 #ifdef PNPBIOSDEBUG
-				if (mem->len == 0)
 					printf("ZERO mem descriptor\n");
 #endif
+					free(mem, M_DEVBUF);
+					break;
+				}
+				SIMPLEQ_INSERT_TAIL(&r->mem, mem, next);
+				r->nummem++;
 				break;
 			default:
 				printf("ignoring long tag %x\n", type);
@@ -751,6 +764,12 @@ pnp_newirq(r, buf, len)
 {
 	struct pnp_irq *irq;
 
+	if (buf[0] == 0 && buf[1] == 0) { /* disabled */
+#ifdef PNPBIOSDEBUG
+		printf("ZERO irq descriptor\n");
+#endif
+		return (0);
+	}
 	irq = malloc(sizeof(struct pnp_irq), M_DEVBUF, M_NOWAIT);
 	irq->mask = buf[0] | (buf[1] << 8);
 	if (len > 2)
@@ -770,6 +789,12 @@ pnp_newdma(r, buf, len)
 {
 	struct pnp_dma *dma;
 
+	if (buf[0] == 0) { /* disabled */
+#ifdef PNPBIOSDEBUG
+		printf("ZERO dma descriptor\n");
+#endif
+		return (0);
+	}
 	dma = malloc(sizeof(struct pnp_dma), M_DEVBUF, M_NOWAIT);
 	dma->mask = buf[0];
 	dma->flags = buf[1];
@@ -786,12 +811,42 @@ pnp_newioport(r, buf, len)
 {
 	struct pnp_io *io;
 
+	if (buf[6] == 0) { /* disabled */
+#ifdef PNPBIOSDEBUG
+		printf("ZERO io descriptor\n");
+#endif
+		return (0);
+	}
 	io = malloc(sizeof(struct pnp_io), M_DEVBUF, M_NOWAIT);
 	io->flags = buf[0];
 	io->minbase = buf[1] | (buf[2] << 8);
 	io->maxbase = buf[3] | (buf[4] << 8);
 	io->align = buf[5];
 	io->len = buf[6];
+	SIMPLEQ_INSERT_TAIL(&r->io, io, next);
+	r->numio++;
+	return (0);
+}
+
+static int
+pnp_newfixedioport(r, buf, len)
+	struct pnpresources *r;
+	unsigned char *buf;
+	size_t len;
+{
+	struct pnp_io *io;
+
+	if (buf[2] == 0) { /* disabled */
+#ifdef PNPBIOSDEBUG
+		printf("ZERO fixed io descriptor\n");
+#endif
+		return (0);
+	}
+	io = malloc(sizeof(struct pnp_io), M_DEVBUF, M_NOWAIT);
+	io->flags = 1; /* 10 bit decoding */
+	io->minbase = io->maxbase = buf[0] | (buf[1] << 8);
+	io->align = 1;
+	io->len = buf[2];
 	SIMPLEQ_INSERT_TAIL(&r->io, io, next);
 	r->numio++;
 	return (0);
