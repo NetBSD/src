@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.24 2002/01/29 18:53:14 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.25 2002/02/19 14:21:48 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ tx3912video_hpcfbinit(sc)
 		fb->hf_u.hf_gray.hf_flags = 0;
 		break;
 	case 8:
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE | HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;

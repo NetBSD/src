@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.7 2002/01/29 18:53:24 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.8 2002/02/19 14:21:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -321,6 +321,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
+	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
 	if (vc->vc_reverse)
 		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
 
@@ -329,6 +330,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 		panic("%s: not supported color depth\n", __FUNCTION__);
 		/* NOTREACHED */
 	case 16:
+		fb->hf_order_flags = HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 16;
@@ -350,6 +352,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 		break;
 
 	case 8:
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE | HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;
