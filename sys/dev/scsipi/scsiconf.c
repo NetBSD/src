@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.126 1999/09/11 21:25:26 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.127 1999/09/19 23:45:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -483,6 +483,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEAC    ", "CD-ROM CD-56S   ", "1.0B"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM          ", "1.06"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.09"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
