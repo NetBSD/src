@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49 1998/02/23 00:47:30 is Exp $	*/
+/*	$NetBSD: ite.c,v 1.50 1998/03/25 22:14:13 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -114,7 +115,6 @@ static char sample[20] = {
 };
 
 static char *index __P((const char *, char));
-static void ite_sifilter __P((void *, void *));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
@@ -454,22 +454,30 @@ iteopen(dev, mode, devtype, p)
 	tp->t_oproc = itestart;
 	tp->t_param = ite_param;
 	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-		tp->t_state = TS_WOPEN | TS_CARR_ON;
+		tp->t_state = TS_CARR_ON;
 		ttsetwater(tp);
 	}
+	error = ttyopen(tp, 0, mode & O_NONBLOCK);
+	if (error) 
+		goto bad;
+
 	error = (*linesw[tp->t_line].l_open) (dev, tp);
-	if (error == 0) {
-		tp->t_winsize.ws_row = ip->rows;
-		tp->t_winsize.ws_col = ip->cols;
-		kbdenable();
-	} else if (first)
+	if (error)
+		goto bad;
+
+	tp->t_winsize.ws_row = ip->rows;
+	tp->t_winsize.ws_col = ip->cols;
+	kbdenable();
+	return (0);
+bad:
+	if (first)
 		ite_off(dev, 0);
 	return (error);
 }
@@ -856,14 +864,6 @@ ite_cnfilter(c, caller)
 static u_char last_char;
 static u_char tout_pending;
 
-
-static void
-ite_sifilter(void *arg1, void *arg2)
-{
-	ite_filter((u_char)(size_t)arg1, (enum caller)(size_t)arg2);
-}
-
-
 /*ARGSUSED*/
 static void
 repeat_handler(arg)
@@ -871,8 +871,7 @@ repeat_handler(arg)
 {
 	tout_pending = 0;
 	if (last_char) 
-		add_sicallback(ite_sifilter, (void *)(size_t)last_char,
-		    (void *)(size_t)ITEFILT_REPEATER);
+		ite_filter(last_char, ITEFILT_REPEATER);
 }
 
 void
@@ -898,8 +897,8 @@ ite_filter(c, caller)
 	 * generated keyboard-repeat interrupts come at level 1.  So,
 	 * to not allow a key-up event to get thru before a repeat for
 	 * the key-down, we remove any outstanding callout requests..
-	 */
 	rem_sicallback(ite_sifilter);
+	 */
 
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;
