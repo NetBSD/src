@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.57 2001/04/13 12:51:43 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.58 2001/04/17 00:50:13 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -239,7 +239,6 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	 */
 
 	sc->drive = DRIVE_GENERIC;
-	sc->proto = PROTO_UNKNOWN;
 	sc->transfer_speed = UMASS_DEFAULT_TRANSFER_SPEED;
 
 	sc->sc_udev = dev;
@@ -254,9 +253,11 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		if (product == USB_PRODUCT_SHUTTLE_EUSB)
 			sc->drive = SHUTTLE_EUSB;
 #if CBI_I
-		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
+		sc->wire_proto = WPROTO_CBI_I;
+		sc->cmd_proto = CPROTO_ATAPI;
 #else
-		sc->proto = PROTO_ATAPI | PROTO_CBI;
+		sc->wire_proto = WPROTO_CBI;
+		sc->cmd_proto = CPROTO_ATAPI;
 #endif
 		sc->subclass = UISUBCLASS_SFF8020I;
 		sc->protocol = UIPROTO_MASS_CBI;
@@ -266,7 +267,8 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 
 	if (vendor == USB_VENDOR_MICROTECH &&
 	    product == USB_PRODUCT_MICROTECH_DPCM) {
-		sc->proto = PROTO_ATAPI | PROTO_CBI;
+		sc->wire_proto = WPROTO_CBI;
+		sc->cmd_proto = CPROTO_ATAPI;
 		sc->subclass = UISUBCLASS_SFF8070I;
 		sc->protocol = UIPROTO_MASS_CBI;
 		sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED * 2;
@@ -277,9 +279,11 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	if (vendor == USB_VENDOR_YANO &&
 	    product == USB_PRODUCT_YANO_U640MO) {
 #if CBI_I
-		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
+		sc->wire_proto = WPROTO_CBI_I;
+		sc->cmd_proto = PROTO_ATAPI;
 #else
-		sc->proto = PROTO_ATAPI | PROTO_CBI;
+		sc->wire_proto = WPROTO_CBI;
+		sc->cmd_proto = CPROTO_ATAPI;
 #endif
 		sc->quirks |= FORCE_SHORT_INQUIRY;
 		return (UMATCH_VENDOR_PRODUCT);
@@ -296,13 +300,16 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		/* Revisions < 1.28 do not handle the interrupt endpoint
 		 * very well.
 		 */
-		if (UGETW(dd->bcdDevice) < 0x128)
-			sc->proto = PROTO_UFI | PROTO_CBI;
-		else
+		if (UGETW(dd->bcdDevice) < 0x128) {
+			sc->wire_proto = WPROTO_CBI;
+			sc->cmd_proto = CPROTO_UFI;
+		} else
 #if CBI_I
-			sc->proto = PROTO_UFI | PROTO_CBI_I;
+			sc->wire_proto = WPROTO_CBI_I;
+			sc->cmd_proto = CPROTO_UFI;
 #else
-			sc->proto = PROTO_UFI | PROTO_CBI;
+			sc->wire_proto = WPROTO_CBI;
+			sc->cmd_proto = CPROTO_UFI;
 #endif
 		/*
 		 * Revisions < 1.28 do not have the TEST UNIT READY command
@@ -322,7 +329,8 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	if (vendor == USB_VENDOR_INSYSTEM &&
 	    product == USB_PRODUCT_INSYSTEM_USBCABLE) {
 		sc->drive = INSYSTEM_USBCABLE;
-		sc->proto = PROTO_ATAPI | PROTO_CBI;
+		sc->wire_proto = WPROTO_CBI;
+		sc->cmd_proto = CPROTO_ATAPI;
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
 		return (UMATCH_VENDOR_PRODUCT);
 	}
@@ -350,19 +358,19 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 
 	switch (sc->subclass) {
 	case UISUBCLASS_SCSI:
-		sc->proto |= PROTO_SCSI;
+		sc->cmd_proto = CPROTO_SCSI;
 		break;
 	case UISUBCLASS_UFI:
 		sc->transfer_speed = UMASS_FLOPPY_TRANSFER_SPEED;
-		sc->proto |= PROTO_UFI;
+		sc->cmd_proto = CPROTO_UFI;
 		break;
 	case UISUBCLASS_SFF8020I:
 	case UISUBCLASS_SFF8070I:
 	case UISUBCLASS_QIC157:
-		sc->proto |= PROTO_ATAPI;
+		sc->cmd_proto = CPROTO_ATAPI;
 		break;
 	case UISUBCLASS_RBC:
-		sc->proto |= PROTO_RBC;
+		sc->cmd_proto = CPROTO_RBC;
 		break;
 	default:
 		DPRINTF(UDMASS_GEN, ("%s: Unsupported command protocol %d\n",
@@ -372,21 +380,21 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 
 	switch (sc->protocol) {
 	case UIPROTO_MASS_CBI:
-		sc->proto |= PROTO_CBI;
+		sc->wire_proto = WPROTO_CBI;
 		break;
 	case UIPROTO_MASS_CBI_I:
 #if CBI_I
-		sc->proto |= PROTO_CBI_I;
+		sc->wire_proto = WPROTO_CBI_I;
 #else
-		sc->proto |= PROTO_CBI;
+		sc->wire_proto = WPROTO_CBI;
 #endif
 		break;
 	case UIPROTO_MASS_BBB:
-		sc->proto |= PROTO_BBB;
+		sc->wire_proto = WPROTO_BBB;
 		break;
 	case UIPROTO_MASS_BBB_P:
 		sc->drive = ZIP_100;
-		sc->proto |= PROTO_BBB;
+		sc->wire_proto = WPROTO_BBB;
 		sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED;
 		sc->quirks |= NO_TEST_UNIT_READY;
 		break;
@@ -533,7 +541,7 @@ USB_ATTACH(umass)
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
 			sc->bulkout = ed->bEndpointAddress;
-		} else if (sc->proto & PROTO_CBI_I
+		} else if (sc->wire_proto == WPROTO_CBI_I
 		    && UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->intrin = ed->bEndpointAddress;
@@ -549,7 +557,7 @@ USB_ATTACH(umass)
 
 	/* check whether we found all the endpoints we need */
 	if (!sc->bulkin || !sc->bulkout
-	    || (sc->proto & PROTO_CBI_I && !sc->intrin) ) {
+	    || (sc->wire_proto == WPROTO_CBI_I && !sc->intrin) ) {
 		DPRINTF(UDMASS_USB, ("%s: endpoint not found %d/%d/%d\n",
 			USBDEVNAME(sc->sc_dev),
 			sc->bulkin, sc->bulkout, sc->intrin));
@@ -560,7 +568,7 @@ USB_ATTACH(umass)
 	/*
 	 * Get the maximum LUN supported by the device.
 	 */
-	if ((sc->proto & PROTO_WIRE) == PROTO_BBB) {
+	if (sc->wire_proto == WPROTO_BBB) {
 		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
 		if (err) {
 			printf("%s: unable to get Max Lun: %s\n",
@@ -600,7 +608,7 @@ USB_ATTACH(umass)
 	 * code for handling the data on that endpoint simpler. No data
 	 * arriving concurrently.
 	 */
-	if (sc->proto & PROTO_CBI_I) {
+	if (sc->wire_proto == WPROTO_CBI_I) {
 		err = usbd_open_pipe(sc->iface, sc->intrin,
 				USBD_EXCLUSIVE_USE, &sc->intrin_pipe);
 		if (err) {
@@ -625,14 +633,14 @@ USB_ATTACH(umass)
 		}
 	}
 	/* Allocate buffer for data transfer (it's huge). */
-	switch (sc->proto & PROTO_WIRE) {
-	case PROTO_BBB:
+	switch (sc->wire_proto) {
+	case WPROTO_BBB:
 		bno = XFER_BBB_DATA;
 		goto dalloc;
-	case PROTO_CBI:
+	case WPROTO_CBI:
 		bno = XFER_CBI_DATA;
 		goto dalloc;
-	case PROTO_CBI_I:
+	case WPROTO_CBI_I:
 		bno = XFER_CBI_DATA;
 	dalloc:
 		sc->data_buffer = usbd_alloc_buffer(sc->transfer_xfer[bno], 
@@ -647,18 +655,19 @@ USB_ATTACH(umass)
 	}
 
 	/* Initialise the wire protocol specific methods */
-	if (sc->proto & PROTO_BBB) {
+	if (sc->wire_proto == WPROTO_BBB) {
 		sc->reset = umass_bbb_reset;
 		sc->transfer = umass_bbb_transfer;
 		sc->state = umass_bbb_state;
-	} else if ((sc->proto & PROTO_CBI) || (sc->proto & PROTO_CBI_I)) {
+	} else if (sc->wire_proto == WPROTO_CBI ||
+		   sc->wire_proto == WPROTO_CBI_I) {
 		sc->reset = umass_cbi_reset;
 		sc->transfer = umass_cbi_transfer;
 		sc->state = umass_cbi_state;
 #ifdef UMASS_DEBUG
 	} else {
-		panic("%s:%d: Unknown proto 0x%02x\n",
-		      __FILE__, __LINE__, sc->proto);
+		panic("%s:%d: Unknown wire proto 0x%02x\n",
+		      __FILE__, __LINE__, sc->wire_proto);
 #endif
 	}
 
@@ -1508,7 +1517,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
-		} else if (sc->proto & PROTO_CBI_I) {
+		} else if (sc->wire_proto == WPROTO_CBI_I) {
 			DPRINTF(UDMASS_CBI, ("%s: no data phase\n",
 				USBDEVNAME(sc->sc_dev)));
 			sc->transfer_state = TSTATE_CBI_STATUS;
@@ -1562,7 +1571,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					umass_dump_buffer(sc, sc->transfer_data,
 						sc->transfer_actlen, 48));
 
-		if (sc->proto & PROTO_CBI_I) {
+		if (sc->wire_proto == WPROTO_CBI_I) {
 			sc->transfer_state = TSTATE_CBI_STATUS;
 			memset(&sc->sbl, 0, sizeof(sc->sbl));
 			if (umass_setup_transfer(sc, sc->intrin_pipe,
@@ -1602,7 +1611,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		/* Dissect the information in the buffer */
 
-		if (sc->proto & PROTO_UFI) {
+		if (sc->cmd_proto == CPROTO_UFI) {
 			int status;
 			
 			/* Section 3.4.3.1.3 specifies that the UFI command
