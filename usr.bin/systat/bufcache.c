@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.2 1999/11/15 10:54:40 mrg Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.3 1999/11/15 23:39:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.2 1999/11/15 10:54:40 mrg Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.3 1999/11/15 23:39:33 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -130,8 +130,6 @@ closebufcache(w)
 	wrefresh(w);
 	delwin(w);
 	ml_init();		/* Clear out mount list */
-	if (buf != NULL)
-		free(buf);
 }
 
 void
