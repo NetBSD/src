@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2000/10/04 16:26:43 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2000/11/09 14:17:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,6 +71,9 @@
 #define CACHE_CLR	CACHE_ON
 #define IC_CLEAR	(DC_WA|DC_ENABLE|IC_CLR|IC_ENABLE)
 #define DC_CLEAR	(DC_WA|DC_CLR|DC_ENABLE|IC_ENABLE)
+
+#define DCIC_CLR	(DC_CLR|IC_CLR)
+#define CACHE_BE	(DC_BE|IC_BE)
 
 #endif
 
@@ -183,7 +186,7 @@ extern int systype;
 #define NEWS1200	1
 
 extern int cpuspeed;
-extern char *intiobase, *intiolimit;
+extern char *intiobase, *intiolimit, *extiobase;
 extern u_int intiobase_phys, intiotop_phys;
 extern u_int extiobase_phys, extiotop_phys;
 extern u_int intrcnt[];
