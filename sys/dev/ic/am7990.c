@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.5 1995/12/10 08:55:07 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.6 1995/12/11 02:21:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -383,8 +383,10 @@ leread(sc, boff, len)
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
+#ifdef LEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
+#endif
 		ifp->if_ierrors++;
 		return;
 	}
@@ -461,6 +463,7 @@ lerint(sc)
 
 		if (rmd.rmd1_bits & LE_R1_ERR) {
 			if (rmd.rmd1_bits & LE_R1_ENP) {
+#ifdef LEDEBUG
 				if ((rmd.rmd1_bits & LE_R1_OFLO) == 0) {
 					if (rmd.rmd1_bits & LE_R1_FRAM)
 						printf("%s: framing error\n",
@@ -469,6 +472,7 @@ lerint(sc)
 						printf("%s: crc mismatch\n",
 						    sc->sc_dev.dv_xname);
 				}
+#endif
 			} else {
 				if (rmd.rmd1_bits & LE_R1_OFLO)
 					printf("%s: overflow\n",
@@ -477,10 +481,12 @@ lerint(sc)
 			if (rmd.rmd1_bits & LE_R1_BUFF)
 				printf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
+			sc->sc_arpcom.ac_if.if_errors++;
 		} else if (rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
+			sc->sc_arpcom.ac_if.if_errors++;
 		} else {
 #ifdef LEDEBUG
 			if (sc->sc_debug)
@@ -608,7 +614,9 @@ leintr(arg)
 		   LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
+#ifdef LEDEBUG
 			printf("%s: babble\n", sc->sc_dev.dv_xname);
+#endif
 			sc->sc_arpcom.ac_if.if_oerrors++;
 		}
 #if 0
@@ -617,8 +625,12 @@ leintr(arg)
 			sc->sc_arpcom.ac_if.if_collisions++;
 		}
 #endif
-		if (isr & LE_C0_MISS)
+		if (isr & LE_C0_MISS) {
+#ifdef LEDEBUG
+			printf("%s: missed packet\n", sc->sc_dev.dv_xname);
+#endif
 			sc->sc_arpcom.ac_if.if_ierrors++;
+		}
 		if (isr & LE_C0_MERR) {
 			printf("%s: memory error\n", sc->sc_dev.dv_xname);
 			lereset(sc);
