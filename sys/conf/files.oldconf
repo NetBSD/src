@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.69 1996/06/23 00:10:14 thorpej Exp $
+#	$NetBSD: files.oldconf,v 1.70 1996/09/01 23:57:19 mycroft Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -98,6 +98,7 @@ miscfs/deadfs/dead_vnops.c	standard
 miscfs/fdesc/fdesc_vfsops.c	optional fdesc
 miscfs/fdesc/fdesc_vnops.c	optional fdesc
 miscfs/fifofs/fifo_vnops.c	optional fifo
+miscfs/genfs/genfs_vnops.c	standard
 miscfs/kernfs/kernfs_vfsops.c	optional kernfs
 miscfs/kernfs/kernfs_vnops.c	optional kernfs
 miscfs/nullfs/null_subr.c	optional nullfs
