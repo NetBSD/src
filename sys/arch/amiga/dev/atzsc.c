@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.17 1996/08/27 21:54:31 cgd Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.18 1996/08/28 18:59:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -51,7 +51,6 @@
 #include <amiga/dev/atzscreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int atzscprint __P((void *auxp, const char *));
 void atzscattach __P((struct device *, struct device *, void *));
 int atzscmatch __P((struct device *, void *, void *));
 
@@ -162,6 +161,7 @@ atzscattach(pdp, dp, auxp)
 	
 	printf(": dmamask 0x%lx\n", ~sc->sc_dmamask);
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &atzsc_scsiswitch;
@@ -178,22 +178,8 @@ atzscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, atzscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-atzscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 void
 atzsc_enintr(dev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.48 1996/08/27 21:59:20 cgd Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.49 1996/08/28 19:01:12 cgd Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -585,7 +585,6 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 
 int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
-int	aicprint	__P((void *, const char *));
 void	aic_minphys	__P((struct buf *));
 int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
@@ -756,16 +755,6 @@ aic_find(sc)
 	return 0;
 }
 
-int
-aicprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach the AIC6360, fill out some high and low level data structures
  */
@@ -784,6 +773,7 @@ aicattach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &aic_switch;
@@ -798,7 +788,7 @@ aicattach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, aicintr, sc);
 
-	config_found(self, &sc->sc_link, aicprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 

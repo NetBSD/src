@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.12 1996/08/27 21:59:26 cgd Exp $	*/
+/*	$NetBSD: bt.c,v 1.13 1996/08/28 19:01:18 cgd Exp $	*/
 
 #undef BTDIAG
 #ifdef DDB
@@ -165,7 +165,6 @@ struct scsi_device bt_dev = {
 
 int	btprobe __P((struct device *, void *, void *));
 void	btattach __P((struct device *, struct device *, void *));
-int	btprint __P((void *, const char *));
 
 struct cfattach bt_ca = {
 	sizeof(struct bt_softc), btprobe, btattach
@@ -337,17 +336,6 @@ btprobe(parent, match, aux)
 	return 1;
 }
 
-int
-btprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -374,6 +362,7 @@ btattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &bt_switch;
@@ -389,7 +378,7 @@ btattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, btprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 integrate void

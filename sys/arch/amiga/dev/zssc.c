@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.17 1996/08/27 21:55:18 cgd Exp $	*/
+/*	$NetBSD: zssc.c,v 1.18 1996/08/28 18:59:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,7 +50,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int  zsscprint __P((void *auxp, const char *));
 void zsscattach __P((struct device *, struct device *, void *));
 int  zsscmatch __P((struct device *, void *, void *));
 int  zssc_dmaintr __P((void *));
@@ -125,6 +124,7 @@ zsscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &zssc_scsiswitch;
@@ -141,22 +141,8 @@ zsscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, zsscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-zsscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 /*
  * Level 6 interrupt processing for the Progressive Peripherals Inc
