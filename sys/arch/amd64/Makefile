@@ -1,29 +1,29 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/26 18:39:25 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/26 19:16:36 fvdl Exp $
 
-# Makefile for x86_64 tags file and boot blocks
+# Makefile for amd64 tags file and boot blocks
 
-TX86_64=	${SYSDIR}/arch/x86_64/tags
-SX86_64=	${SYSDIR}/arch/x86_64/x86_64/*.[ch] \
-		${SYSDIR}/arch/x86_64/include/*.h \
-		${SYSDIR}/arch/x86_64/isa/*.[ch] \
-		${SYSDIR}/arch/x86_64/pci/*.[ch]
-AX86_64=	${SYSDIR}/arch/x86_64/x86_64/*.s ${SYSDIR}/arch/x86_64/isa/*.s
+TAMD64=		${SYSDIR}/arch/amd64/tags
+SAMD64=		${SYSDIR}/arch/amd64/amd64/*.[ch] \
+		${SYSDIR}/arch/amd64/include/*.h \
+		${SYSDIR}/arch/amd64/isa/*.[ch] \
+		${SYSDIR}/arch/amd64/pci/*.[ch]
+AAMD64=		${SYSDIR}/arch/amd64/amd64/*.s ${SYSDIR}/arch/amd64/isa/*.s
 
 # Directories in which to place tags links
-DX86_64=	x86_64 isa include pci
+DAMD64=		amd64 isa include pci
 
 .include "../../kern/Make.tags.inc"
 
 tags:
-	rm -f ${TX86_64}
-	-echo ${SX86_64} ${COMM} | xargs ctags -wadtf ${TX86_64}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AX86_64} | \
+	rm -f ${TAMD64}
+	-echo ${SAMD64} ${COMM} | xargs ctags -wadtf ${TAMD64}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMD64} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> ${TX86_64}
-	sort -o ${TX86_64} ${TX86_64}
+		>> ${TAMD64}
+	sort -o ${TAMD64} ${TAMD64}
 
 links:
-	-for i in ${DX86_64}; do \
+	-for i in ${DAMD64}; do \
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2003/04/26 19:08:18 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2003/04/26 19:23:36 fvdl Exp $
 #
-#	etc.x86_64/Makefile.inc -- x86_64-specific etc Makefile targets
+#	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC GENERIC.MP
