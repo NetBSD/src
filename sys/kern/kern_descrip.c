@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.66 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.67 2000/05/26 23:10:36 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1181,7 +1181,7 @@ filedescopen(dev, mode, type, p)
 {
 
 	/*
-	 * XXX Kludge: set curproc->p_dupfd to contain the value of the
+	 * XXX Kludge: set p->p_dupfd to contain the value of the
 	 * the file descriptor being sought for duplication. The error 
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
