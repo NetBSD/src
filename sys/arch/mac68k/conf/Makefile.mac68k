@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.18 1995/06/24 17:24:24 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.19 1995/06/25 13:06:32 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -97,7 +97,7 @@ newvers:
 	sh $S/conf/newvers.sh "${KERN_IDENT}" ${IDENT}
 	${CC} ${CFLAGS} -c vers.c
 
-clean:
+clean::
 	rm -f eddep netbsd tags *.o locore.i [a-z]*.s \
 		Errs errs linterrs makelinks
 
