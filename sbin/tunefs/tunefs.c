@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.14 1998/03/26 06:00:34 thorpej Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.15 1998/07/26 20:57:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.14 1998/03/26 06:00:34 thorpej Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.15 1998/07/26 20:57:54 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ int needswap = 0;
 
 void bwrite __P((daddr_t, char *, int));
 int bread __P((daddr_t, char *, int));
-void getsb __P((struct fs *, char *));
+void getsb __P((struct fs *, const char *));
 int main __P((int, char *[]));
 void usage __P((void));
 
@@ -92,7 +92,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *cp, *special, *name;
+	char *cp, *name;
+	const char *special;
 	struct stat st;
 	int i;
 	int Aflag = 0, Nflag = 0;
@@ -294,7 +295,7 @@ usage()
 void
 getsb(fs, file)
 	struct fs *fs;
-	char *file;
+	const char *file;
 {
 
 	fi = open(file, 0);
