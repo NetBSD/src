@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.19 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: makefs.c,v 1.19.2.1 2004/06/22 07:25:39 tron Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -35,9 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.19 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.19.2.1 2004/06/22 07:25:39 tron Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -67,7 +71,7 @@ static fstype_t fstypes[] = {
 	{ NULL	},
 };
 
-uint		debug;
+u_int		debug;
 struct timespec	start_time;
 
 static	fstype_t *get_fstype(const char *);
