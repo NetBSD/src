@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 1998/07/27 15:11:06 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 1999/05/18 04:49:41 jwise Exp $	*/
 
 /*
 ** parse.c                         This file contains the protocol parser
@@ -223,6 +223,19 @@ int parse(fp, laddr, faddr)
 
     /* Read query from client */
     rcode = fscanf(fp, " %d , %d", &lport, &fport);
+
+    if (liar_flag)
+    {
+      if (syslog_flag)
+        syslog(LOG_NOTICE, "User %s requested a user for host %s: %d, %d, and I lied",
+               pwp->pw_name,
+               gethost(faddr),
+               lport, fport);
+
+      printf("%d , %d : USER-ID : OTHER :%s\r\n",
+           lport, fport, lie_string);
+      continue;
+    }
 
 #ifdef INCLUDE_EXTENSIONS
     /*

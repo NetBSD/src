@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.9 1998/07/15 07:31:56 msaitoh Exp $	*/
+/*	$NetBSD: identd.c,v 1.10 1999/05/18 04:49:41 jwise Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -107,6 +107,7 @@ int other_flag   = 0;
 int unknown_flag = 0;
 int noident_flag = 0;
 int crypto_flag  = 0;
+int liar_flag    = 0;
 
 int lport = 0;
 int fport = 0;
@@ -114,6 +115,7 @@ int fport = 0;
 char *charset_name = (char *) NULL;
 char *indirect_host = (char *) NULL;
 char *indirect_password = (char *) NULL;
+char *lie_string = (char *) NULL;
 
 #ifdef ALLOW_FORMAT
     int format_flag = 0;
@@ -476,6 +478,18 @@ int main(argc,argv)
 	    format = argv[i]+2;
 	    break;
 #endif
+
+	  case 'L':	/* lie brazenly */
+	    liar_flag = 1;
+	    if (*(argv[i]+2) != '\0')
+		lie_string = argv[i]+2;
+	    else
+#ifdef DEFAULT_LIE_USER
+		lie_string = DEFAULT_LIE_USER;
+#else
+		ERROR("-L specified with no user name");
+#endif
+	    break;
 
 	  default:
 	    ERROR1("Bad option %s", argv[i]);

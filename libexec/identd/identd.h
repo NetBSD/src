@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.h,v 1.5 1998/07/15 07:31:56 msaitoh Exp $	*/
+/*	$NetBSD: identd.h,v 1.6 1999/05/18 04:49:41 jwise Exp $	*/
 
 /*
 ** identd.h                 Common variables for the Pidentd daemon
@@ -15,6 +15,7 @@
 #define __IDENTD_H__
 
 extern char version[];
+extern char *lie_string;
 
 extern char *path_unix;
 extern char *path_kmem;
@@ -27,6 +28,7 @@ extern int other_flag;
 extern int unknown_flag;
 extern int noident_flag;
 extern int crypto_flag;
+extern int liar_flag;
 
 extern char *charset_name;
 extern char *indirect_host;
