@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.6 1999/04/20 21:19:48 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.7 1999/05/09 19:39:13 cgd Exp $ */
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 1999/04/20 21:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 1999/05/09 19:39:13 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -504,7 +504,7 @@ db_branch_taken(ins, pc, regs)
 	 * Jump format: target PC is (contents of instruction's "RB") & ~3.
 	 */
 	case op_j:
-		newpc = db_register_value(regs, insn.jump_format.rs) & ~3;
+		newpc = db_register_value(regs, insn.jump_format.rb) & ~3;
 		break;
 
 	/*
