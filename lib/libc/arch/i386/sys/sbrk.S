@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sbrk.s	5.1 (Berkeley) 4/23/90
- *	$Id: sbrk.S,v 1.4 1994/01/27 04:30:46 mycroft Exp $
+ *	$Id: sbrk.S,v 1.5 1994/01/27 06:35:07 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: sbrk.S,v 1.4 1994/01/27 04:30:46 mycroft Exp $"
+	.asciz "$Id: sbrk.S,v 1.5 1994/01/27 06:35:07 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -58,17 +58,17 @@ ENTRY(sbrk)
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
 	movl	PIC_GOT(curbrk),%edx
-	movl	(%edx),%eax
 	PIC_EPILOGUE
+	movl	(%edx),%eax
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
 	LCALL(7,0)
-	jb	err
+	jc	err
 	PIC_PROLOGUE
 	movl	PIC_GOT(curbrk),%edx
+	PIC_EPILOGUE
 	movl	(%edx),%eax
 	addl	%ecx,(%edx)
-	PIC_EPILOGUE
 	ret
 err:
 	jmp	PIC_PLT(cerror)
@@ -80,7 +80,7 @@ err:
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
 	LCALL(7,0)
-	jb	err
+	jc	err
 	movl	curbrk,%eax
 	addl	%ecx,curbrk
 	ret
