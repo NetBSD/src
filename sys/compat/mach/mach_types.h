@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.19 2003/11/30 20:42:55 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.20 2003/12/30 00:14:20 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ typedef struct {
 } mach_time_value_t;
 
 #ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
+#define DPRINTF(a) printf a
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_MACH */
