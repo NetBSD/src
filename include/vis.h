@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.6 1997/10/20 22:05:40 thorpej Exp $	*/
+/*	$NetBSD: vis.h,v 1.7 1997/10/22 00:54:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,10 +80,12 @@ char	*vis __P((char *, int, int, int));
 int	strvis __P((char *, const char *, int));
 int	strvisx __P((char *, const char *, size_t, int));
 int	strunvis __P((char *, const char *));
+#ifdef __LIBC12_SOURCE__
 int	unvis __P((char *, char, int *, int));
 int	__unvis13 __P((char *, int, int *, int));
+#else
+int	unvis __P((char *, int, int *, int))	__RENAME("__unvis13");
+#endif
 __END_DECLS
-
-#define unvis(p,c,i,j)	__unvis13(p,c,i,j)
 
 #endif /* !_VIS_H_ */

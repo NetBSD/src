@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.9 1997/10/20 22:05:32 thorpej Exp $	*/
+/*	$NetBSD: unvis.c,v 1.10 1997/10/22 00:55:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,9 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.9 1997/10/20 22:05:32 thorpej Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.10 1997/10/22 00:55:33 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#define __LIBC12_SOURCE__
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -50,6 +52,7 @@ __RCSID("$NetBSD: unvis.c,v 1.9 1997/10/20 22:05:32 thorpej Exp $");
 #ifdef __weak_alias
 __weak_alias(strunvis,_strunvis);
 __weak_alias(unvis,_unvis);
+__weak_alias(__unvis13,___unvis13);
 #endif
 
 /*
@@ -64,8 +67,6 @@ __weak_alias(unvis,_unvis);
 #define	S_OCTAL3	6	/* octal digit 3 */
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
-
-#undef unvis
 
 int
 unvis(cp, c, astate, flag)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.1 1997/10/21 00:56:47 fvdl Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.2 1997/10/22 00:54:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.1 1997/10/21 00:56:47 fvdl Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.2 1997/10/22 00:54:57 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,11 +55,11 @@ __RCSID("$NetBSD: __fts13.c,v 1.1 1997/10/21 00:56:47 fvdl Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(__fts_children13,___fts_children13);
-__weak_alias(__fts_close13,___fts_close13);
-__weak_alias(__fts_open13,___fts_open13);
-__weak_alias(__fts_read13,___fts_read13);
-__weak_alias(__fts_set13,___fts_set13);
+__weak_alias(__fts_children13,____fts_children13);
+__weak_alias(__fts_close13,____fts_close13);
+__weak_alias(__fts_open13,____fts_open13);
+__weak_alias(__fts_read13,____fts_read13);
+__weak_alias(__fts_set13,____fts_set13);
 #endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, int));
@@ -87,7 +87,7 @@ static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 #define	BREAD		3		/* fts_read */
 
 FTS *
-__fts_open13(argv, options, compar)
+fts_open(argv, options, compar)
 	char * const *argv;
 	register int options;
 	int (*compar) __P((const FTSENT **, const FTSENT **));
@@ -221,7 +221,7 @@ fts_load(sp, p)
 }
 
 int
-__fts_close13(sp)
+fts_close(sp)
 	FTS *sp;
 {
 	register FTSENT *freep, *p;
@@ -274,7 +274,7 @@ __fts_close13(sp)
 	    p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
 
 FTSENT *
-__fts_read13(sp)
+fts_read(sp)
 	register FTS *sp;
 {
 	register FTSENT *p, *tmp;
@@ -466,7 +466,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
  */
 /* ARGSUSED */
 int
-__fts_set13(sp, p, instr)
+fts_set(sp, p, instr)
 	FTS *sp;
 	FTSENT *p;
 	int instr;
@@ -481,7 +481,7 @@ __fts_set13(sp, p, instr)
 }
 
 FTSENT *
-__fts_children13(sp, instr)
+fts_children(sp, instr)
 	register FTS *sp;
 	int instr;
 {
