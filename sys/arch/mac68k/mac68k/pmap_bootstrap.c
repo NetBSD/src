@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.15 1995/09/27 04:16:54 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16 1995/09/28 04:17:24 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -585,8 +585,7 @@ bootstrap_mac68k(tc)
 		if ((v = mfs_initminiroot(nextpa-load_addr)) == 0) {
 			printf("Error loading miniroot.\n");
 		}
-		if (mac68k_machine.do_graybars)
-			printf("Loaded %d byte miniroot.\n", v);
+		printf("Loaded %d byte miniroot.\n", v);
 		nextpa += v;
 	}
 #endif
