@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1997/01/31 01:49:41 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 1997/01/31 20:20:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -313,7 +313,7 @@ configure()
 			    dd != NULL; dd = dd->dd_list.le_next) {
 				if (dd->dd_dev->dv_class == DV_IFNET) {
 					/* Got it! */
-					dv = dd->dev;
+					dv = dd->dd_dev;
 					break;
 				}
 			}
