@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.18 2002/04/14 13:12:37 bjh21 Exp $
+.\"	$NetBSD: macros,v 1.19 2002/05/12 22:47:17 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -375,10 +375,10 @@
 .
 .ds A \*M
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[netwinder]:\n[shark] .ds A arm
-.if \n[amiga]:\n[atari]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
-.if \n[arc]:\n[cobalt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .ds A mips
-.if \n[amigappc]:\n[bebox]:\n[macppc]:\n[ofppc]:\n[prep] .ds A powerpc
-.if \n[evbsh3]:\n[mmeye] .ds A sh3
+.if \n[amiga]:\n[atari]:\n[cesfic]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
+.if \n[algor]:\n[arc]:\n[cobalt]:\n[evbmips]:\n[hpcmips]:\n[mipsco]:\n[newsmips]:\n[playstation2]:\n[pmax]:\n[sbmips]:\n[sgimips] .ds A mips
+.if \n[amigappc]:\n[bebox]:\n[macppc]:\n[mvmeppc]:\n[ofppc]:\n[prep]:\n[sandpoint]:\n[walnut] .ds A powerpc
+.if \n[dreamcast]\n[evbsh3]:\n[hpcsh]:\n[mmeye] .ds A sh3
 .if !r\*A .nr \*A 1
 .
 .
