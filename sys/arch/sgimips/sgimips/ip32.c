@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.6.2.4 2002/10/18 02:39:42 nathanw Exp $	*/
+/*	$NetBSD: ip32.c,v 1.6.2.5 2002/12/29 19:35:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -45,6 +45,8 @@
 #include <machine/sysconf.h>
 #include <mips/locore.h>
 
+#include <sgimips/dev/crimereg.h>
+
 void	ip32_init(void);
 void	ip32_bus_reset(void);
 void 	ip32_intr(u_int, u_int, u_int, u_int);
@@ -62,18 +64,30 @@ static struct evcnt mips_int5_evcnt =
 static struct evcnt mips_spurint_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
-void ip32_init(void)
+void
+ip32_init(void)
 {
+	u_int64_t baseline;
+	u_int32_t cps;
+
 	/* XXXrkb: enable watchdog timer, clear it */
 	*(volatile u_int32_t *)0xb400000c |= 0x200;
 	*(volatile u_int32_t *)0xb4000034 = 0;
 
-	/* 
-	 * XXX: we have no clock calibration code for the IP32, so cpu speed
-	 * is set from `cpuspeed' environment variable in machdep.c.
-	 */
+#define WAIT_MS 50
+	baseline = *(volatile u_int64_t *)
+	    MIPS_PHYS_TO_KSEG1(CRIME_TIME) & CRIME_TIME_MASK;
+	cps = mips3_cp0_count_read();
+
+	while (((*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_TIME)
+	    & CRIME_TIME_MASK) - baseline) < WAIT_MS * 1000000 / 15)
+		continue;
+	cps = mips3_cp0_count_read() - cps;
+	cps = cps / 5;
+#undef WAIT_MS
 	
 	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
+	curcpu()->ci_cpu_freq = cps * 2 * hz;
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
 	MIPS_SET_CI_RECIPRICAL(curcpu());
@@ -186,6 +200,7 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 void
 ip32_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
+
 	(void) crime_intr_establish(level, IST_LEVEL, ipl, func, arg);
 }
 #endif	/* IP32 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1 1999/12/09 14:53:14 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.1.16.1 2002/12/29 19:33:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -62,12 +62,12 @@ struct zsc_softc {
  * These could be inlines, but with the delay, speed is moot.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
+u_char zs_read_csr(struct zs_chanstate *cs);
+u_char zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
+void  zs_write_csr(struct zs_chanstate *cs, u_char val);
+void  zs_write_data(struct zs_chanstate *cs, u_char val);
 
 #define	splzs()		splserial()

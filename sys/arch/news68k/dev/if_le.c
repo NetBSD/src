@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3.8.2 2002/10/18 02:39:06 nathanw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3.8.3 2002/12/29 19:33:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,8 +86,8 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-static int	le_match __P((struct device *, struct cfdata *, void *));
-static void	le_attach __P((struct device *, struct device *, void *));
+static int  le_match(struct device *, struct cfdata *, void *);
+static void le_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le, sizeof(struct le_softc),
     le_match, le_attach, NULL, NULL);
@@ -106,9 +106,9 @@ extern volatile u_char *lance_mem, *idrom_addr;
 #define hide		static
 #endif
 
-hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));  
-int leintr __P((int));
+hide void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
+int leintr(int);
 
 hide void
 lewrcsr(sc, port, val)

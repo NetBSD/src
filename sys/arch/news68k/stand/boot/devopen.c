@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.16.1 2002/06/20 03:40:10 nathanw Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.16.2 2002/12/29 19:33:48 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -39,9 +39,9 @@
 # define DPRINTF(x)
 #endif
 
-int dkopen __P((struct open_file *, ...));
-int dkclose __P((struct open_file *));
-int dkstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int dkopen(struct open_file *, ...);
+int dkclose(struct open_file *);
+int dkstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 struct devsw devsw[] = {
 	{ "dk", dkstrategy, dkopen, dkclose, noioctl }

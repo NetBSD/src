@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12.6.6 2002/12/11 06:11:44 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.12.6.7 2002/12/29 19:35:06 thorpej Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -26,6 +26,7 @@
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
+#include <ddb/db_lex.h>
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 #endif
@@ -48,6 +49,9 @@ static void db_ppc4xx_pv(db_expr_t, int, db_expr_t, char *);
 static void db_ppc4xx_reset(db_expr_t, int, db_expr_t, char *);
 static void db_ppc4xx_tf(db_expr_t, int, db_expr_t, char *);
 static void db_ppc4xx_dumptlb(db_expr_t, int, db_expr_t, char *);
+static void db_ppc4xx_dcr(db_expr_t, int, db_expr_t, char *);
+static db_expr_t db_ppc4xx_mfdcr(db_expr_t);
+static void db_ppc4xx_mtdcr(db_expr_t, db_expr_t);
 #ifdef USERACC
 static void db_ppc4xx_useracc(db_expr_t, int, db_expr_t, char *);
 #endif
@@ -65,6 +69,7 @@ int
 ddb_trap_glue(frame)
 	struct trapframe *frame;
 {
+#ifndef PPC_IBM4XX
 	if (!(frame->srr1 & PSL_PR)
 	    && (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC
 		|| (frame->exc == EXC_PGM
@@ -77,6 +82,9 @@ ddb_trap_glue(frame)
 		return kdb_trap(type, frame);
 	}
 	return 0;
+#else
+	return kdb_trap(frame->exc, frame);
+#endif
 }
 
 int
@@ -156,12 +164,40 @@ kdb_trap(type, v)
 }
 
 #ifdef PPC_IBM4XX
+db_addr_t
+branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
+{
+
+	if ((inst & M_B ) == I_B || (inst & M_B ) == I_BL) {
+		db_expr_t off;
+		off = ((db_expr_t)((inst & 0x03fffffc) << 6)) >> 6;
+		return (((inst & 0x2) ? 0 : pc) + off);
+	}
+
+	if ((inst & M_BC) == I_BC || (inst & M_BC) == I_BCL) {
+		db_expr_t off;
+		off = ((db_expr_t)((inst & 0x0000fffc) << 16)) >> 16;
+		return (((inst & 0x2) ? 0 : pc) + off);
+	}
+
+	if ((inst & M_RTS) == I_RTS || (inst & M_RTS) == I_BLRL)
+		return (regs->lr);
+
+	if ((inst & M_BCTR) == I_BCTR || (inst & M_BCTR) == I_BCTRL)
+		return (regs->ctr);
+
+	db_printf("branch_taken: can't figure out branch target for 0x%x!\n",
+	    inst);
+	return (0);
+}
+
 const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ppc4xx_ctx,		0,	0 },
 	{ "pv",		db_ppc4xx_pv,		0,	0 },
 	{ "reset",	db_ppc4xx_reset,	0,	0 },
-	{ "tf",		db_ppc4xx_tf,	0,	0 },
+	{ "tf",		db_ppc4xx_tf,		0,	0 },
 	{ "tlb",	db_ppc4xx_dumptlb,	0,	0 },
+	{ "dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,	0 },
 #ifdef USERACC
 	{ "user",	db_ppc4xx_useracc,	0,	0 },
 #endif
@@ -326,6 +362,79 @@ db_ppc4xx_dumptlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		    tlbhi & TLB_U0 ? "U0" : "  ");
 		db_printf("\n");
 	}
+}
+
+static void
+db_ppc4xx_dcr(db_expr_t address, int have_addr, db_expr_t count, char *modif)
+{
+	db_expr_t new_value;
+	db_expr_t addr;
+
+	if (address < 0 || address > 0x3ff)
+		db_error("Invalid DCR address (Valid range is 0x0 - 0x3ff)\n");
+
+	addr = address;
+
+	while (db_expression(&new_value)) {
+		db_printf("dcr 0x%lx\t\t%s = ", addr,
+		    db_num_to_str(db_ppc4xx_mfdcr(addr)));
+		db_ppc4xx_mtdcr(addr, new_value);
+		db_printf("%s\n", db_num_to_str(db_ppc4xx_mfdcr(addr)));
+		addr += 1;
+	}
+
+	if (addr == address) {
+		db_next = (db_addr_t)addr + 1;
+		db_prev = (db_addr_t)addr;
+		db_printf("dcr 0x%lx\t\t%s\n", addr,
+		    db_num_to_str(db_ppc4xx_mfdcr(addr)));
+	} else {
+		db_next = (db_addr_t)addr;
+		db_prev = (db_addr_t)addr - 1;
+	}
+
+	db_skip_to_eol();
+}
+
+/*
+ * XXX Grossness Alert! XXX
+ *
+ * Please look away now if you don't like self-modifying code
+ */
+static u_int32_t db_ppc4xx_dcrfunc[4];
+
+static db_expr_t
+db_ppc4xx_mfdcr(db_expr_t reg)
+{
+	db_expr_t (*func)(void);
+
+	reg = (((reg & 0x1f) << 5) | ((reg >> 5) & 0x1f)) << 11;
+	db_ppc4xx_dcrfunc[0] = 0x7c0004ac;		/* sync */
+	db_ppc4xx_dcrfunc[1] = 0x4c00012c;		/* isync */
+	db_ppc4xx_dcrfunc[2] = 0x7c600286 | reg;	/* mfdcr reg, r3 */
+	db_ppc4xx_dcrfunc[3] = 0x4e800020;		/* blr */
+
+	__syncicache((void *)db_ppc4xx_dcrfunc, sizeof(db_ppc4xx_dcrfunc));
+	func = (db_expr_t (*)(void))(void *)db_ppc4xx_dcrfunc;
+
+	return ((*func)());
+}
+
+static void
+db_ppc4xx_mtdcr(db_expr_t reg, db_expr_t val)
+{
+	db_expr_t (*func)(db_expr_t);
+
+	reg = (((reg & 0x1f) << 5) | ((reg >> 5) & 0x1f)) << 11;
+	db_ppc4xx_dcrfunc[0] = 0x7c0004ac;		/* sync */
+	db_ppc4xx_dcrfunc[1] = 0x4c00012c;		/* isync */
+	db_ppc4xx_dcrfunc[2] = 0x7c600386 | reg;	/* mtdcr r3, reg */
+	db_ppc4xx_dcrfunc[3] = 0x4e800020;		/* blr */
+
+	__syncicache((void *)db_ppc4xx_dcrfunc, sizeof(db_ppc4xx_dcrfunc));
+	func = (db_expr_t (*)(db_expr_t))(void *)db_ppc4xx_dcrfunc;
+
+	(*func)(val);
 }
 
 #ifdef USERACC

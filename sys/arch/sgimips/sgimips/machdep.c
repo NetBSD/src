@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.11 2002/11/11 22:03:57 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.12 2002/12/29 19:35:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -73,6 +73,8 @@
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
+
+#include <sgimips/dev/crimereg.h>
 
 #if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
@@ -636,21 +638,6 @@ cpu_reboot(howto, bootstr)
 	if (curlwp)
 		savectx((struct user *)curpcb);
 
-#if 1
-	/* Clear and disable watchdog timer. */
-	switch (mach_type) {
-	case MACH_SGI_IP22:
-		*(volatile u_int32_t *)0xbfa00014 = 0;
-		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
-		break;
-
-	case MACH_SGI_IP32:
-		*(volatile u_int32_t *)0xb4000034 = 0;
-		*(volatile u_int32_t *)0xb400000c &= ~0x200;
-		break;
-	}
-#endif
-
 	if (cold) {
 		howto |= RB_HALT;
 		goto haltsys;
@@ -671,6 +658,22 @@ cpu_reboot(howto, bootstr)
 		 */
 		resettodr();
 	}
+
+#if 1
+	/* Clear and disable watchdog timer. */
+	switch (mach_type) {
+	case MACH_SGI_IP22:
+		*(volatile u_int32_t *)0xbfa00014 = 0;
+		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
+		break;
+
+	case MACH_SGI_IP32:
+		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
+		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(CRIME_CONTROL)
+		    &= ~CRIME_CONTROL_DOG_ENABLE;
+		break;
+	}
+#endif
 
 	splhigh();
 
@@ -865,29 +868,33 @@ void ddb_trap_hook(int where)
 	switch (where) {
 	case 1:		/* Entry to DDB, turn watchdog off */
 		switch (mach_type) {
-		case MACH_SGI_IP32:
-			*(volatile u_int32_t *)0xb4000034 = 0;
-			*(volatile u_int32_t *)0xb400000c &= ~0x200;
-			break;
-
 		case MACH_SGI_IP22:
 			*(volatile u_int32_t *)0xbfa00014 = 0;
 			*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
+			break;
+
+		case MACH_SGI_IP32:
+			*(volatile u_int32_t *)
+			    MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG)= 0;
+			*(volatile u_int32_t *)
+			    MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) \
+			        &= ~CRIME_CONTROL_DOG_ENABLE;
 			break;
 		}
 		break;
 
 	case 0:		/* Exit from DDB, turn watchdog back on */
 		switch (mach_type) {
-		case MACH_SGI_IP32:
-			*(volatile u_int32_t *)0xb400000c |= 0x200;
-			*(volatile u_int32_t *)0xb4000034 = 0;
-			break;
-
 		case MACH_SGI_IP22:
 			*(volatile u_int32_t *)0xbfa00004 |= 0x100;
 			*(volatile u_int32_t *)0xbfa00014 = 0;
+			break;
 
+		case MACH_SGI_IP32:
+			*(volatile u_int32_t *)
+			    MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) \
+			        |= CRIME_CONTROL_DOG_ENABLE;
+			*(volatile u_int32_t *)0xb4000034 = 0;
 			break;
 		}
 		break;

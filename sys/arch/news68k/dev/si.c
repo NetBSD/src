@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.6.8.3 2002/11/11 22:01:50 nathanw Exp $	*/
+/*	$NetBSD: si.c,v 1.6.8.4 2002/12/29 19:33:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,17 +79,17 @@ struct si_softc {
 	struct	si_dma_handle ncr_dma[SCI_OPENINGS];
 };
 
-void si_attach __P((struct device *, struct device *, void *));
-int  si_match  __P((struct device *, struct cfdata *, void *));
-int si_intr __P((int));
+void si_attach(struct device *, struct device *, void *);
+int  si_match(struct device *, struct cfdata *, void *);
+int  si_intr(int);
 
-void si_dma_alloc __P((struct ncr5380_softc *));
-void si_dma_free __P((struct ncr5380_softc *));
-void si_dma_setup __P((struct ncr5380_softc *));
-void si_dma_start __P((struct ncr5380_softc *));
-void si_dma_poll __P((struct ncr5380_softc *));
-void si_dma_eop __P((struct ncr5380_softc *));
-void si_dma_stop __P((struct ncr5380_softc *));
+void si_dma_alloc(struct ncr5380_softc *);
+void si_dma_free(struct ncr5380_softc *);
+void si_dma_setup(struct ncr5380_softc *);
+void si_dma_start(struct ncr5380_softc *);
+void si_dma_poll(struct ncr5380_softc *);
+void si_dma_eop(struct ncr5380_softc *);
+void si_dma_stop(struct ncr5380_softc *);
 
 CFATTACH_DECL(si, sizeof(struct si_softc),
     si_match, si_attach, NULL, NULL);

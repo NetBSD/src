@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.7.12.2 2002/10/18 02:37:22 nathanw Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.7.12.3 2002/12/29 19:26:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -236,37 +236,74 @@ pfckbd_callout_unknown(void *arg)
 void
 pfckbd_callout_hp(void *arg)
 {
+#define PFCKBD_HP_PDCR_MASK 0xcc0c
+#define PFCKBD_HP_PECR_MASK 0xf0cf
+
+	/*
+	 * Disable output on all lines but the n'th line in D.
+	 * Pull the n'th scan line in D low.
+	 */
+#define PD(n)								\
+	{ (u_int16_t)(PFCKBD_HP_PDCR_MASK & (~(1 << (2*(n)+1)))),	\
+	  (u_int16_t)(PFCKBD_HP_PECR_MASK & 0xffff),			\
+	  (u_int8_t)~(1 << (n)),					\
+	  0xff }
+
+	/* Ditto for E */
+#define PE(n)								\
+	{ (u_int16_t)(PFCKBD_HP_PDCR_MASK & 0xffff),			\
+	  (u_int16_t)(PFCKBD_HP_PECR_MASK & (~(1 << (2*(n)+1)))),	\
+	  0xff,								\
+	  (u_int8_t)~(1 << (n)) }
+
 	static const struct {
-		u_int8_t d, e;
+		u_int16_t dc, ec; u_int8_t d, e;
 	} scan[] = {
-		{ 0xfd, 0xff },
-		{ 0xdf, 0xff },
-		{ 0xff, 0xfd },
-		{ 0xff, 0xbf },
-		{ 0xff, 0x7f },
-		{ 0xff, 0xf7 },
-		{ 0xff, 0xfe },
-		{ 0x7f, 0xff },
+		PD(1), PD(5), PE(1), PE(6), PE(7), PE(3), PE(0), PD(7)
 	};
+
+#undef PD
+#undef PE
+
 	struct pfckbd_core *pc = arg;
+	u_int16_t dc, ec;
 	int column;
 	u_int16_t data;
 
 	if (!pc->pc_enabled)
 		goto reinstall;
 
+	/* bits in D/E control regs we do not touch (XXX: can they change?) */
+	dc = _reg_read_2(SH7709_PDCR) & ~PFCKBD_HP_PDCR_MASK;
+	ec = _reg_read_2(SH7709_PECR) & ~PFCKBD_HP_PECR_MASK;
+
 	for (column = 0; column < 8; column++) {
+		/* disable output to all lines except the one we scan */
+		_reg_write_2(SH7709_PDCR, dc | scan[column].dc);
+		_reg_write_2(SH7709_PECR, ec | scan[column].ec);
+		delay(5);
+
+		/* pull the scan line low */
 		_reg_write_1(SH7709_PDDR, scan[column].d);
 		_reg_write_1(SH7709_PEDR, scan[column].e);
 		delay(50);
+
+		/* read sense */
 		data = _reg_read_1(SH7709_PFDR) |
 		    (_reg_read_1(SH7709_PCDR) << 8);
 
 		pfckbd_input(pc->pc_hpckbd, pc->pc_column, data, column);
 	}
 
+	/* scan no lines */
 	_reg_write_1(SH7709_PDDR, 0xff);
 	_reg_write_1(SH7709_PEDR, 0xff);
+
+	/* enable all scan lines */
+	_reg_write_2(SH7709_PDCR, dc | (0x5555 & PFCKBD_HP_PDCR_MASK));
+	_reg_write_2(SH7709_PECR, ec | (0x5555 & PFCKBD_HP_PECR_MASK));
+
+	/* (ignore) extra keys/events (recorder buttons, lid, cable &c) */
 	data = _reg_read_1(SH7709_PGDR) | (_reg_read_1(SH7709_PHDR) << 8);
 
  reinstall:

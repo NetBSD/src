@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.1.6.7 2002/12/11 06:00:56 thorpej Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.1.6.8 2002/12/29 19:29:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.1.6.7 2002/12/11 06:00:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.1.6.8 2002/12/29 19:29:14 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -246,7 +246,8 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, realcode, args, rval)) != 0)
+	if ((error = trace_enter(p, code, realcode, 
+	    callp - code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

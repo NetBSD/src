@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.13.6.8 2002/12/11 06:00:58 thorpej Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.13.6.9 2002/12/29 19:29:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.8 2002/12/11 06:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.9 2002/12/29 19:29:15 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -226,7 +226,7 @@ svr4_syscall_fancy(frame)
 	}
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

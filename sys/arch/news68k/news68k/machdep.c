@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26.4.10 2002/10/18 02:39:08 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.4.11 2002/12/29 19:33:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,27 +120,27 @@ extern int end, *esym;
 extern u_int lowram;
 
 /* prototypes for local functions */
-void	identifycpu __P((void));
-void	initcpu __P((void));
-void	parityenable __P((void));
-void	parityerror __P((void));
-void	init_intreg __P((void));
-int	readidrom __P((u_char *));
+void identifycpu(void);
+void initcpu(void);
+void parityenable(void);
+void parityerror(void);
+void init_intreg(void);
+int readidrom(u_char *);
 
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
-void	cpu_init_kcore_hdr __P((void));
+int cpu_dumpsize(void);
+int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+void cpu_init_kcore_hdr(void);
 
 #ifdef news1700
-void	news1700_init __P((void));
+void news1700_init(void);
 #endif
 #ifdef news1200
-void	news1200_init __P((void));
+void news1200_init(void);
 #endif
 /* functions called from locore.s */
-void	dumpsys __P((void));
-void	news68k_init __P((void));
-void	straytrap __P((int, u_short));
+void dumpsys(void);
+void news68k_init(void);
+void straytrap(int, u_short);
 
 /*
  * Machine-dependent crash dump header info.
@@ -576,7 +576,7 @@ cpu_dumpsize()
  */
 int
 cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	daddr_t *blknop;
 {
 	int buf[dbtob(1) / sizeof(int)];
@@ -656,7 +656,7 @@ dumpsys()
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -990,7 +990,7 @@ parityenable()
 
 	*parity_vector = PARITY_VECT;
 
-	isrlink_vectored((int (*) __P((void *)))parityerror, NULL,
+	isrlink_vectored((int (*)(void *))parityerror, NULL,
 	    PARITY_PRI, PARITY_VECT);
 
 	*ctrl_parity_clr = 1;
@@ -1058,11 +1058,11 @@ news1200_init()
  * XXX should do better handling XXX
  */
 
-void intrhand_lev2 __P((void));
-void intrhand_lev3 __P((void));
-void intrhand_lev4 __P((void));
+void intrhand_lev2(void);
+void intrhand_lev3(void);
+void intrhand_lev4(void);
 
-void (*sir_routines[NSIR]) __P((void *));
+void (*sir_routines[NSIR])(void *);
 void *sir_args[NSIR];
 u_char ssir;
 int next_sir;
@@ -1097,7 +1097,7 @@ intrhand_lev2()
  */
 u_char
 allocate_sir(proc, arg)
-	void (*proc) __P((void *));
+	void (*proc)(void *);
 	void *arg;
 {
 	int bit;
@@ -1114,7 +1114,7 @@ void
 init_sir()
 {
 
-	sir_routines[SIR_NET]   = (void (*) __P((void *)))netintr;
+	sir_routines[SIR_NET]   = (void (*)(void *))netintr;
 	sir_routines[SIR_CLOCK] = softclock;
 	next_sir = NEXT_SIR;
 }
@@ -1137,10 +1137,10 @@ intrhand_lev4()
 {
 	int stat;
 #if NLE > 0
-	extern int leintr __P((int));
+	extern int leintr(int);
 #endif
 #if NSI > 0
-	extern int si_intr __P((int));
+	extern int si_intr(int);
 #endif
 
 #define INTST_LANCE	0x04

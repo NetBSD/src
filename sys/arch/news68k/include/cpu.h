@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.8.4 2002/11/11 22:01:52 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.8.5 2002/12/29 19:33:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,44 +190,43 @@ extern u_int intiobase_phys, intiotop_phys;
 extern u_int extiobase_phys, extiotop_phys;
 extern u_int intrcnt[];
 
-extern void (*vectab[]) __P((void));
+extern void (*vectab[])(void);
 
 struct frame;
 struct fpframe;
 struct pcb;
 
 /* locore.s functions */
-void m68881_save __P((struct fpframe *));
-void m68881_restore __P((struct fpframe *));
+void m68881_save(struct fpframe *);
+void m68881_restore(struct fpframe *);
 
-int suline __P((caddr_t, caddr_t));
-void savectx __P((struct pcb *));
-void switch_exit __P((struct lwp *));
-void switch_lwp_exit __P((struct lwp *));
-void proc_trampoline __P((void));
-void loadustp __P((int));
-void badtrap __P((void));
-void intrhand_vectored __P((void));
-int getsr __P((void));
+int suline(caddr_t, caddr_t);
+void savectx(struct pcb *);
+void switch_exit(struct lwp *);
+void proc_trampoline(void);
+void loadustp(int);
+void badtrap(void);
+void intrhand_vectored(void);
+int getsr(void);
 
 
-void doboot __P((int))
+void doboot(int)
 	__attribute__((__noreturn__));
-void nmihand __P((struct frame *));
-void ecacheon __P((void));
-void ecacheoff __P((void));
+void nmihand(struct frame *);
+void ecacheon(void);
+void ecacheoff(void);
 
 /* machdep.c functions */
-int badaddr __P((caddr_t, int));
-int badbaddr __P((caddr_t));
+int badaddr(caddr_t, int);
+int badbaddr(caddr_t);
 
 /* sys_machdep.c functions */
-int cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /* vm_machdep.c functions */
-void physaccess __P((caddr_t, caddr_t, int, int));
-void physunaccess __P((caddr_t, int));
-int kvtop __P((caddr_t));
+void physaccess(caddr_t, caddr_t, int, int);
+void physunaccess(caddr_t, int);
+int kvtop(caddr_t);
 
 #endif
 

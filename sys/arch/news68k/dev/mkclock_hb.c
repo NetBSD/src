@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.1.8.3 2002/10/18 02:39:07 nathanw Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.1.8.4 2002/12/29 19:33:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 
 #include <news68k/dev/hbvar.h>
 
-int	mkclock_hb_match __P((struct device *, struct cfdata  *, void *));
-void	mkclock_hb_attach __P((struct device *, struct device *, void *));
+int  mkclock_hb_match(struct device *, struct cfdata  *, void *);
+void mkclock_hb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mkclock_hb, sizeof(struct device),
     mkclock_hb_match, mkclock_hb_attach, NULL, NULL);

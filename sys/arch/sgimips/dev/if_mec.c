@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.5.10.2 2002/10/18 02:39:38 nathanw Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.5.10.3 2002/12/29 19:35:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -146,7 +146,8 @@ mec_attach(parent, self, aux)
 
 	printf(": MAC-110 Ethernet, ");
 	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
-	printf("rev %lld\n", (command & MAC_REVISION) >> MAC_REVISION_SHIFT);
+	printf("rev %lld\n",
+	    (command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT);
 
 	/*
 	 * The firmware has left us the station address.
@@ -213,17 +214,17 @@ mec_mii_readreg(self, phy, reg)
 		return 0;
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_ADDRESS,
-	    phy << PHY_ADDR_DEVSHIFT | reg);
+	    phy << MEC_PHY_ADDR_DEVSHIFT | reg);
 
-	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_READ_INITATE, 1);
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_READ_INITIATE, 1);
 
 	for (i = 0; i < 20; i++) {
 		delay(30);
 
 		val = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
 
-		if ((val & PHY_DATA_BUSY) == 0)
-			return (int)val & PHY_DATA_VALUE;
+		if ((val & MEC_PHY_DATA_BUSY) == 0)
+			return (int)val & MEC_PHY_DATA_VALUE;
 	}
 
 	return 0;
@@ -240,10 +241,10 @@ mec_mii_writereg(self, phy, reg, val)
 		return;
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_ADDRESS,
-	    phy << PHY_ADDR_DEVSHIFT | reg);
+	    phy << MEC_PHY_ADDR_DEVSHIFT | reg);
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA,
-	    val & PHY_DATA_VALUE);
+	    val & MEC_PHY_DATA_VALUE);
 
 	(void)mec_mii_wait(sc);
 
@@ -263,7 +264,7 @@ mec_mii_wait(sc)
 
 		busy = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
 
-		if ((busy & PHY_DATA_BUSY) == 0)
+		if ((busy & MEC_PHY_DATA_BUSY) == 0)
 			return 0;
 		if (busy == 0xffff)
 			return 0;
