@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.44 1999/06/02 02:03:58 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.45 1999/06/24 14:50:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.44 1999/06/02 02:03:58 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.45 1999/06/24 14:50:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,9 @@ __RCSID("$NetBSD: ftp.c,v 1.44 1999/06/02 02:03:58 lukem Exp $");
 #else
 #include <varargs.h>
 #endif
+#ifndef __USE_SELECT
+#include <poll.h>
+#endif
 
 #include "ftp_var.h"
 
@@ -80,6 +83,8 @@ jmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
 struct	sockaddr_in myctladdr;
+
+static int empty __P((FILE *, FILE *, int));
 
 
 FILE	*cin, *cout;
@@ -383,16 +388,66 @@ getreply(expecteof)
 	}
 }
 
-int
-empty(mask, sec)
-	struct fd_set *mask;
+static int
+empty(cin, din, sec)
+	FILE *cin;
+	FILE *din;
 	int sec;
 {
-	struct timeval t;
+	int nr;
+	int nfd = 0;
 
+#ifdef __USE_SELECT
+	struct timeval t;
+	fd_set rmask;
+
+	FD_ZERO(&cin);
+	if (cin) {
+		if (nfd < fileno(cin))
+			nfd = fileno(cin);
+		FD_SET(fileno(cin), &rmask);
+	}
+	if (din) {
+		if (nfd < fileno(din))
+			nfd = fileno(din);
+		FD_SET(fileno(din), &rmask);
+	}
+		
 	t.tv_sec = (long) sec;
 	t.tv_usec = 0;
-	return (select(32, mask, NULL, NULL, &t));
+	if ((nr = select(nfd, &rmask, NULL, NULL, &t)) <= 0)
+		return nr;
+
+	nr = 0;
+	if (cin)
+		nr |= FD_ISSET(fileno(cin), &rmask) ? 1 : 0;
+	if (din)
+		nr |= FD_ISSET(fileno(din), &rmask) ? 2 : 0;
+
+#else
+	struct pollfd pfd[2];
+
+	if (cin) {
+	    pfd[nfd].fd = fileno(cin);
+	    pfd[nfd++].events = POLLIN;
+	}
+
+	if (din) {
+	    pfd[nfd].fd = fileno(din);
+	    pfd[nfd++].events = POLLIN;
+	}
+
+	if ((nr = poll(pfd, nfd, sec * 1000)) <= 0)
+		return nr;
+
+	nr = 0;
+	nfd = 0;
+	if (cin)
+		nr |= (pfd[nfd++].revents & POLLIN) ? 1 : 0;
+	if (din)
+		nr |= (pfd[nfd++].revents & POLLIN) ? 2 : 0;
+#endif
+	return nr;
 }
 
 jmp_buf	sendabort;
@@ -1383,7 +1438,6 @@ proxtrans(cmd, local, remote)
 	int prox_type, nfnd;
 	volatile int secndflag;
 	char *cmd2;
-	struct fd_set mask;
 
 #ifdef __GNUC__			/* to shut up gcc warnings */
 	(void)&oldintr;
@@ -1494,9 +1548,7 @@ abort:
 		abort_remote(NULL);
 	pswitch(!proxy);
 	if (cpend) {
-		FD_ZERO(&mask);
-		FD_SET(fileno(cin), &mask);
-		if ((nfnd = empty(&mask, 10)) <= 0) {
+		if ((nfnd = empty(cin, NULL, 10)) <= 0) {
 			if (nfnd < 0) {
 				warn("abort");
 			}
@@ -1520,13 +1572,10 @@ reset(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct fd_set mask;
 	int nfnd = 1;
 
-	FD_ZERO(&mask);
 	while (nfnd > 0) {
-		FD_SET(fileno(cin), &mask);
-		if ((nfnd = empty(&mask, 0)) < 0) {
+		if ((nfnd = empty(cin, NULL, 0)) < 0) {
 			warn("reset");
 			code = -1;
 			lostpeer();
@@ -1590,7 +1639,6 @@ abort_remote(din)
 {
 	char buf[BUFSIZ];
 	int nfnd;
-	struct fd_set mask;
 
 	if (cout == NULL) {
 		warnx("Lost control connection for abort.");
@@ -1608,12 +1656,7 @@ abort_remote(din)
 		warn("abort");
 	fprintf(cout, "%cABOR\r\n", DM);
 	(void)fflush(cout);
-	FD_ZERO(&mask);
-	FD_SET(fileno(cin), &mask);
-	if (din) {
-		FD_SET(fileno(din), &mask);
-	}
-	if ((nfnd = empty(&mask, 10)) <= 0) {
+	if ((nfnd = empty(cin, din, 10)) <= 0) {
 		if (nfnd < 0) {
 			warn("abort");
 		}
@@ -1621,9 +1664,9 @@ abort_remote(din)
 			code = -1;
 		lostpeer();
 	}
-	if (din && FD_ISSET(fileno(din), &mask)) {
+	if (din && (nfnd & 2)) {
 		while (read(fileno(din), buf, BUFSIZ) > 0)
-			/* LOOP */;
+			continue;
 	}
 	if (getreply(0) == ERROR && code == 552) {
 		/* 552 needed for nic style abort */
