@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.86 1996/10/05 06:32:43 scottr Exp $	*/
+/*	$NetBSD: init_main.c,v 1.87 1996/10/09 00:59:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -53,6 +53,7 @@
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #ifdef REAL_CLISTS
