@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.3 1997/07/13 20:14:54 christos Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.4 1998/01/19 07:38:44 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.3 1997/07/13 20:14:54 christos Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.4 1998/01/19 07:38:44 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fgetln.c,v 1.3 1997/07/13 20:14:54 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+#include "reentrant.h"
 
 int __slbexpand __P((FILE *, size_t));
 
@@ -94,9 +95,12 @@ fgetln(fp, lenp)
 	register size_t len;
 	size_t off;
 
+	FLOCKFILE(fp);
+
 	/* make sure there is input */
 	if (fp->_r <= 0 && __srefill(fp)) {
 		*lenp = 0;
+		FUNLOCKFILE(fp);
 		return (NULL);
 	}
 
@@ -115,6 +119,7 @@ fgetln(fp, lenp)
 		fp->_flags |= __SMOD;
 		fp->_r -= len;
 		fp->_p = p;
+		FUNLOCKFILE(fp);
 		return (ret);
 	}
 
@@ -162,9 +167,11 @@ fgetln(fp, lenp)
 #ifdef notdef
 	fp->_lb._base[len] = 0;
 #endif
+	FUNLOCKFILE(fp);
 	return ((char *)fp->_lb._base);
 
 error:
 	*lenp = 0;		/* ??? */
+	FUNLOCKFILE(fp);
 	return (NULL);		/* ??? */
 }

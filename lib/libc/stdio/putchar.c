@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.6 1997/07/13 20:15:19 christos Exp $	*/
+/*	$NetBSD: putchar.c,v 1.7 1998/01/19 07:38:52 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.6 1997/07/13 20:15:19 christos Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.7 1998/01/19 07:38:52 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "reentrant.h"
 
 #undef putchar
+#undef putchar_unlocked
 
 /*
  * A subroutine version of the macro putchar
@@ -56,7 +58,18 @@ int
 putchar(c)
 	int c;
 {
-	register FILE *so = stdout;
+	FILE *fp = stdout;
+        int r;
 
-	return (__sputc(c, so));
+	FLOCKFILE(fp);
+	r = __sputc(c, fp);
+	FUNLOCKFILE(fp);
+	return r;
+}
+
+int
+putchar_unlocked(c)
+	int c;
+{
+	return (__sputc(c, stdout));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.7 1997/07/13 20:15:07 christos Exp $	*/
+/*	$NetBSD: ftell.c,v 1.8 1998/01/19 07:38:48 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.7 1997/07/13 20:15:07 christos Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.8 1998/01/19 07:38:48 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <errno.h>
 #include "local.h"
+#include "reentrant.h"
 
 /*
  * ftell: return current offset.
@@ -58,7 +59,10 @@ ftell(fp)
 {
 	register fpos_t pos;
 
+	FLOCKFILE(fp);
+
 	if (fp->_seek == NULL) {
+		FUNLOCKFILE(fp);
 		errno = ESPIPE;			/* historic practice */
 		return (-1L);
 	}
@@ -72,8 +76,10 @@ ftell(fp)
 		pos = fp->_offset;
 	else {
 		pos = (*fp->_seek)(fp->_cookie, (fpos_t)0, SEEK_CUR);
-		if (pos == -1L)
+		if (pos == -1L) {
+			FUNLOCKFILE(fp);
 			return (pos);
+		}
 	}
 	if (fp->_flags & __SRD) {
 		/*
@@ -92,5 +98,6 @@ ftell(fp)
 		 */
 		pos += fp->_p - fp->_bf._base;
 	}
+	FUNLOCKFILE(fp);
 	return (pos);
 }
