@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.7 1998/08/15 18:55:25 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.8 1998/08/15 18:58:05 thorpej Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -79,6 +79,7 @@ product IODATA PCLAT		0x2216 I-O DATA PCLA/T
 /* Linksys corporation */
 product LINKSYS ECARD		0x0265 Linksys EthernetCard
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
+product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 
 /* Megahertz Products */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
