@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.178 2001/03/15 06:10:49 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.179 2001/04/24 04:31:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ cpu_startup()
 
 	/* Invalidate the current mapping at KERNBASE. */
 	pmap_kremove((vaddr_t)KERNBASE, size);
+	pmap_update();
 
 	/* Enter the new mapping */
 	pmap_map(MSGBUF_VA, pa, pa + size, VM_PROT_READ|VM_PROT_WRITE);
@@ -228,6 +229,7 @@ cpu_startup()
 
 	/* Invalidate the current mapping at KERNBASE. */
 	pmap_kremove((vaddr_t)KERNBASE, 8192);
+	pmap_update();
 
 	/* Allocate virtual memory space */
 	va0 = va = uvm_km_valloc(kernel_map, size);
@@ -241,6 +243,7 @@ cpu_startup()
 		pa += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
+	pmap_update();
 
 	/* Map the rest of the pages */
 	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
@@ -251,6 +254,7 @@ cpu_startup()
 			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		va += PAGE_SIZE;
 	}
+	pmap_update();
 
 	/*
 	 * Re-initialize the message buffer.
@@ -325,6 +329,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -885,6 +890,7 @@ dumpsys()
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			pmap_update();
 			if (error)
 				break;
 			maddr += n;
@@ -1535,6 +1541,7 @@ no_fit:
 		va += sgsize;
 		buflen -= sgsize;
 	}
+	pmap_update();
 
 	map->dm_nsegs = 1;
 	return (0);
@@ -1604,6 +1611,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		dva += pagesz;
 		sgsize -= pagesz;
 	}
+	pmap_update();
 
 	map->dm_nsegs = 1;
 	map->dm_mapsize = size;
@@ -1650,6 +1658,7 @@ sun4_dmamap_unload(t, map)
 			uvm_unmap(kernel_map, dva, dva + len);
 		}
 	}
+	pmap_update();
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
@@ -1699,6 +1708,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update();
 
 	return (0);
 }
@@ -1788,6 +1798,7 @@ static	vaddr_t iobase;
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
+	pmap_update();
 	return (0);
 }
 
@@ -1801,6 +1812,7 @@ sparc_bus_unmap(t, bh, size)
 	vaddr_t endva = va + round_page(size);
 
 	pmap_remove(pmap_kernel(), va, endva);
+	pmap_update();
 	return (0);
 }
 

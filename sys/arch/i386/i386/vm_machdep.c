@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97 2001/01/25 20:14:28 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.98 2001/04/24 04:30:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -394,6 +394,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
+	pmap_update();
 }
 
 /*
@@ -412,6 +413,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
+	pmap_update();
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

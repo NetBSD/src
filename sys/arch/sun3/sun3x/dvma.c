@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.18 2001/01/14 03:23:59 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.19 2001/04/24 04:31:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -241,6 +241,7 @@ dvma_mapin(kmem_va, len, canwait)
 		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
 			VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
+	pmap_update();
 
 	return (dvma_addr);
 }
@@ -276,6 +277,7 @@ dvma_mapout(dvma_addr, len)
 	 */
 #ifdef	DVMA_ON_PVLIST
 	pmap_remove(pmap_kernel(), kva, kva + len);
+	pmap_update();
 #endif	/* DVMA_ON_PVLIST */
 
 	s = splvm();

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2001/03/15 06:10:45 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2001/04/24 04:31:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -218,6 +218,7 @@ next68k_init()
 		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+	pmap_update();
 }
 
 /*
@@ -350,6 +351,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -849,6 +851,7 @@ dumpsys()
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update();
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

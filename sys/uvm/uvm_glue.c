@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.46 2001/04/21 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.47 2001/04/24 04:31:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -193,14 +193,12 @@ uvm_chgkprot(addr, len, rw)
 	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
 		 * Extract physical address for the page.
-		 * We use a cheezy hack to differentiate physical
-		 * page 0 from an invalid mapping, not that it
-		 * really matters...
 		 */
 		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
+	pmap_update();
 }
 #endif
 
