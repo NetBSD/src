@@ -11,7 +11,7 @@
 
 PROG=	crond
 SRCS=	crond.c database.c user.c entry.c misc.c job.c do_command.c env.c
-CFLAGS+=-I${.CURDIR} -DDEBUGGING=1 -DBSD -DCRONDIR='"/var/cron"' -fstrength-reduce
+CFLAGS+=-I${.CURDIR} -DBSD -DCRONDIR='"/var/cron"' 
 MAN8=	crond.0
 
 .include <bsd.prog.mk>
