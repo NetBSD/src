@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.134 2001/09/24 01:04:32 tls Exp $
+#	$NetBSD: bsd.prog.mk,v 1.135 2001/09/24 09:18:05 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -148,10 +148,14 @@ cleanprog: cleanobjs cleanextra
 	rm -f a.out [Ee]rrs mklog core *.core ${PROG}
 
 cleanobjs:
+.if defined(OBJS) && !empty(OBJS)
 	rm -f ${OBJS} ${LOBJS}
+.endif
 
 cleanextra:
+.if defined(CLEANFILES) && !empty(CLEANFILES)
 	rm -f ${CLEANFILES}
+.endif
 
 .if defined(SRCS) && !target(afterdepend)
 afterdepend: .depend
