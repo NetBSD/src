@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.23 2000/06/06 02:24:02 soren Exp $	*/
+/*	$NetBSD: types.h,v 1.24 2000/06/09 04:37:51 soda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,8 +72,13 @@ typedef struct label_t {
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#ifdef _MIPS_PADDR_T_64BIT
+typedef unsigned long long	paddr_t;
+typedef unsigned long long	psize_t;
+#else
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
+#endif
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
