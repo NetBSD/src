@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.5 1997/04/03 06:14:37 mikel Exp $	*/
+/*	$NetBSD: env.c,v 1.6 1997/04/14 08:18:36 mrg Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -19,12 +19,12 @@
 
 #if !defined(lint) && !defined(LINT)
 /*static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";*/
-static char rcsid[] = "$NetBSD: env.c,v 1.5 1997/04/03 06:14:37 mikel Exp $";
+static char rcsid[] = "$NetBSD: env.c,v 1.6 1997/04/14 08:18:36 mrg Exp $";
 #endif
 
 
 #include "cron.h"
-
+#include <string.h>
 
 char **
 env_init()
@@ -117,9 +117,8 @@ load_env(envstr, f)
 	FILE	*f;
 {
 	long	filepos;
-	int	fileline;
-	char	name[MAX_ENVSTR], val[MAX_ENVSTR];
-	int	fields;
+	int	fileline, len;
+	char	*name, *val, *s;
 
 	filepos = ftell(f);
 	fileline = LineNumber;
@@ -129,38 +128,33 @@ load_env(envstr, f)
 
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
-	name[0] = val[0] = '\0';
-	fields = sscanf(envstr, "%[^ =] = %[^\n#]", name, val);
-	if (fields != 2) {
-		Debug(DPARS, ("load_env, not 2 fields (%d)\n", fields))
+	s = strchr(envstr, '=');
+	if (s != NULL && s != envstr) {
+		*s++ = '\0';
+		val = s;
+		name = strdup(envstr);
+	} else {
+		Debug(DPARS, ("load_env, didn't get valid string"));
 		fseek(f, filepos, 0);
 		Set_LineNum(fileline);
 		return (FALSE);
 	}
 
-	/* 2 fields from scanf; looks like an env setting
-	 */
-
 	/*
 	 * process value string
 	 */
-	/*local*/{
-		int	len = strdtb(val);
-
-		if (len >= 2) {
-			if (val[0] == '\'' || val[0] == '"') {
-				if (val[len-1] == val[0]) {
-					val[len-1] = '\0';
-					(void) strncpy(val, val+1,
-					    sizeof(val) - 1);
-					val[sizeof(val) - 1] = '\0';
-				}
-			}
+	if (*val) {
+		len = strdtb(val);
+		if (len >= 2 && (val[0] == '\'' || val[0] == '"') &&
+		    val[len-1] == val[0]) {
+			val[len-1] = '\0';
+			val++;
 		}
 	}
 
 	(void) snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val);
 	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
+	free(name);
 	return (TRUE);
 }
 
