@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.3 2001/04/30 05:47:31 minoura Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.4 2001/05/02 12:48:24 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,10 +58,12 @@ struct dmac_dma_xfer {
 	int		dx_ocr;		/* direction */
 	int		dx_scr;		/* SCR value */
 	void		*dx_device;	/* (initial) device address */
-	bus_dma_segment_t dx_seg;	/* b_d_s_t for the array chain */
+#ifdef DMAC_ARRAYCHAIN
 	struct dmac_sg_array *dx_array;	/* DMAC array chain */
-	int		dx_arraysize;	/* size of above */
 	int		dx_done;
+#endif
+	int		dx_nextoff;	/* for continued operation */
+	int		dx_nextsize;
 };
 
 /*
@@ -112,10 +114,17 @@ struct dmac_channel_stat *dmac_alloc_channel __P((struct device*, int, char*,
 		/* ch, name, normalv, normal, errorv, error */
 int dmac_free_channel __P((struct device*, int, void*));
 		/* ch, channel */
+struct dmac_dma_xfer *dmac_alloc_xfer __P((struct dmac_channel_stat*,
+					  bus_dma_tag_t, bus_dmamap_t));
+int dmac_load_xfer __P((struct device*, struct dmac_dma_xfer *));
+
+int dmac_start_xfer __P((struct device*, struct dmac_dma_xfer*));
+int dmac_start_xfer_offset __P((struct device*, struct dmac_dma_xfer*,
+				u_int, u_int));
+int dmac_abort_xfer __P((struct device*, struct dmac_dma_xfer*));
+/* Compatibility function: alloc, fill defaults, load */
 struct dmac_dma_xfer *dmac_prepare_xfer __P((struct dmac_channel_stat*,
 					     bus_dma_tag_t,
 					     bus_dmamap_t,
 					     int, int, void*));
 	/* chan, dmat, map, dir, sequence, dar */
-#define dmac_finish_xfer(xfer) free(xfer, M_DEVBUF)
-int dmac_start_xfer __P((struct device*, struct dmac_dma_xfer*));
