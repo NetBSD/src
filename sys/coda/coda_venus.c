@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.6 1998/11/11 19:22:08 rvb Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.7 1998/11/18 03:09:20 ross Exp $	*/
 
 /*
  * 
@@ -270,7 +270,7 @@ venus_ioctl(void *mdp, ViceFid *fid,
     inp->len = iap->vi.in_size;
     inp->data = (char *)(sizeof (struct coda_ioctl_in));
 
-    error = copyin(iap->vi.in, (char*)inp + (int)inp->data, 
+    error = copyin(iap->vi.in, (char*)inp + (int)(long)inp->data, 
 		   iap->vi.in_size);
     if (error) {
 	CODA_FREE(inp, coda_ioctl_size);
@@ -285,7 +285,7 @@ venus_ioctl(void *mdp, ViceFid *fid,
 	if (outp->len > iap->vi.out_size) {
 	    error = EINVAL;
 	} else {
-	    error = copyout((char *)outp + (int)outp->data, 
+	    error = copyout((char *)outp + (int)(long)outp->data, 
 			    iap->vi.out, iap->vi.out_size);
 	}
     }
@@ -369,7 +369,7 @@ venus_readlink(void *mdp, ViceFid *fid,
     if (!error) {
 	    CODA_ALLOC(*str, char *, outp->count);
 	    *len = outp->count;
-	    bcopy((char *)outp + (int)outp->data, *str, *len);
+	    bcopy((char *)outp + (int)(long)outp->data, *str, *len);
     }
 
     CODA_FREE(inp, coda_readlink_size);
@@ -626,7 +626,7 @@ venus_readdir(void *mdp, ViceFid *fid,
     Osize = VC_MAXMSGSIZE;
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error) {
-	bcopy((char *)outp + (int)outp->data, buffer, outp->size);
+	bcopy((char *)outp + (int)(long)outp->data, buffer, outp->size);
 	*len = outp->size;
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.4 1998/09/15 02:02:58 rvb Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.5 1998/11/18 03:09:20 ross Exp $	*/
 
 /*
  * 
@@ -47,6 +47,9 @@
 /* 
  * HISTORY
  * $Log: coda_namecache.h,v $
+ * Revision 1.5  1998/11/18 03:09:20  ross
+ * Various trivial LP64 tweaks to squelch some compiler warnings.
+ *
  * Revision 1.4  1998/09/15 02:02:58  rvb
  * Final piece of rename cfs->coda
  *
@@ -160,10 +163,12 @@
 
 #ifdef	oldhash
 #define CODA_NC_HASH(name, namelen, cp) \
-	((name[0] + name[namelen-1] + namelen + (int)(cp)) & (coda_nc_hashsize-1))
+	((name[0] + name[namelen-1] + namelen + (int)(long)(cp)) \
+	  & (coda_nc_hashsize-1))
 #else
 #define CODA_NC_HASH(name, namelen, cp) \
-	((name[0] + (name[namelen-1]<<4) + namelen + (((int)cp)>>8)) & (coda_nc_hashsize-1))
+	((name[0] + (name[namelen-1]<<4) + namelen + (((int)(long)cp)>>8)) \
+	  & (coda_nc_hashsize-1))
 #endif
 
 #define CODA_NAMEMATCH(cp, name, namelen, dcp) \
