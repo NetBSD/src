@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.25 2000/07/06 12:46:48 hubertf Exp $	*/
+/*	$NetBSD: time.h,v 1.26 2001/03/29 19:06:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -99,7 +99,8 @@ double difftime __P((time_t, time_t));
 struct tm *gmtime __P((const time_t *));
 struct tm *localtime __P((const time_t *));
 time_t mktime __P((struct tm *));
-size_t strftime __P((char *, size_t, const char *, const struct tm *));
+size_t strftime __P((char * __restrict, size_t, const char * __restrict,
+    const struct tm * __restrict));
 time_t time __P((time_t *));
 
 #if !defined(_ANSI_SOURCE)
@@ -112,7 +113,8 @@ void tzset __P((void));
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_XOPEN_SOURCE - 0) >= 4
-char *strptime __P((const char *, const char *, struct tm *));
+char *strptime __P((const char * __restrict, const char * __restrict,
+    struct tm * __restrict));
 #endif
 
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
@@ -135,10 +137,10 @@ int timer_settime __P((timer_t, int, const struct itimerspec *,
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT)
-char *asctime_r __P((const struct tm *, char *));
+char *asctime_r __P((const struct tm * __restrict, char * __restrict));
 char *ctime_r __P((const time_t *, char *));
-struct tm *gmtime_r __P((const time_t *, struct tm *));
-struct tm *localtime_r __P((const time_t *, struct tm *));
+struct tm *gmtime_r __P((const time_t * __restrict, struct tm * __restrict));
+struct tm *localtime_r __P((const time_t * __restrict, struct tm * __restrict));
 #endif
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.8 1998/05/05 14:24:00 tv Exp $
+.\"	$NetBSD: strptime.3,v 1.9 2001/03/29 19:06:39 kleink Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Sh SYNOPSIS
 .Fd #include <time.h>
 .Ft char *
-.Fn strptime "const char *buf" "const char *format" "struct tm *tm"
+.Fn strptime "const char * restrict buf" "const char * restrict format" "struct tm * restrict tm"
 .Sh DESCRIPTION
 The
 .Fn strptime
