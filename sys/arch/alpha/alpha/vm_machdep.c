@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 1995/11/23 02:34:40 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 1995/12/09 04:37:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -130,6 +130,7 @@ cpu_exit(p)
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -228,8 +229,6 @@ cpu_fork(p1, p2)
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
 	}
-
-	return (0);
 }
 
 /*
