@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.17 2003/09/22 01:13:03 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.18 2003/09/22 18:31:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,11 @@
 
 #define	TWE_MAX_QUEUECNT	129
 
+/* Callbacks from controller to array. */
+struct twe_callbacks {
+	void	(*tcb_openings)(struct device *, int);
+};
+
 /* Per-array drive information. */
 struct twe_drive {
 	uint32_t		td_size;
@@ -50,6 +55,7 @@ struct twe_drive {
 	uint8_t			td_stripe;
 
 	struct device		*td_dev;
+	const struct twe_callbacks *td_callbacks;
 };
 
 /* Per-controller state. */
@@ -67,6 +73,7 @@ struct twe_softc {
 	SIMPLEQ_HEAD(, twe_ccb)	sc_ccb_queue;
 	SLIST_HEAD(, twe_ccb)	sc_ccb_freelist;
 	int			sc_flags;
+	int			sc_openings;
 	int			sc_nunits;
 	struct twe_drive	sc_units[TWE_MAX_UNITS];
 
@@ -127,6 +134,9 @@ int	twe_param_get(struct twe_softc *, int, int, size_t,
 int	twe_param_get_1(struct twe_softc *, int, int, uint8_t *);
 int	twe_param_get_2(struct twe_softc *, int, int, uint16_t *);
 int	twe_param_get_4(struct twe_softc *, int, int, uint32_t *);
+
+void	twe_register_callbacks(struct twe_softc *, int,
+	    const struct twe_callbacks *);
 
 static __inline__ size_t twe_get_maxsegs(void) {
 	size_t max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
