@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: options.c,v 1.7 2003/08/27 13:47:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #else
-__RCSID("$NetBSD: options.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: options.c,v 1.7 2003/08/27 13:47:51 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,8 @@ static int	 	 opts_print __P((SCR *, OPTLIST const *));
  *
  * HPUX noted options and abbreviations are from "The Ultimate Guide to the
  * VI and EX Text Editors", 1990.
+ *
+ * This list must be sorted...
  */
 OPTLIST const optlist[] = {
 /* O_ALTWERASE	  4.4BSD */
@@ -75,10 +77,10 @@ OPTLIST const optlist[] = {
 	{"directory",	NULL,		OPT_STR,	0},
 /* O_EDCOMPATIBLE   4BSD */
 	{"edcompatible",NULL,		OPT_0BOOL,	0},
-/* O_ESCAPETIME	  4.4BSD */
-	{"escapetime",	NULL,		OPT_NUM,	0},
 /* O_ERRORBELLS	    4BSD */
 	{"errorbells",	NULL,		OPT_0BOOL,	0},
+/* O_ESCAPETIME	  4.4BSD */
+	{"escapetime",	NULL,		OPT_NUM,	0},
 /* O_EXRC	System V (undocumented) */
 	{"exrc",	NULL,		OPT_0BOOL,	0},
 /* O_EXTENDED	  4.4BSD */
