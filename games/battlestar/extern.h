@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2000/09/17 23:03:43 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.21 2000/09/21 17:44:34 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -253,8 +253,9 @@ extern const int     objwt[NUMOFOBJECTS];
 extern const int     objcumber[NUMOFOBJECTS];
 
  /* current input line */
+#define WORDLEN	15
 #define NWORD	20		/* words per line */
-extern char    words[NWORD][15];
+extern char    words[NWORD][WORDLEN];
 extern int     wordvalue[NWORD];
 extern int     wordtype[NWORD];
 extern int     wordcount, wordnumber;
