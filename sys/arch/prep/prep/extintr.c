@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3 2000/06/29 07:47:53 mrg Exp $	*/
+/*	$NetBSD: extintr.c,v 1.4 2000/11/22 16:07:16 nonaka Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -185,6 +185,9 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 		panic("intr_establish: bogus irq or type");
 
 	switch (intrtype[irq]) {
+	case IST_NONE:
+		intrtype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == intrtype[irq])
