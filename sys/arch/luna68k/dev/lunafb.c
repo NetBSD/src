@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
+/* $NetBSD: lunafb.c,v 1.2 2000/01/06 00:19:10 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.2 2000/01/06 00:19:10 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,7 @@ omfb_getdevconfig(paddr, dc)
 		bpp = 1;
 		break;
 	}
-	dc->dc_wid = 1240;
+	dc->dc_wid = 1280;
 	dc->dc_ht = 1024;
 	dc->dc_depth = bpp;
 	dc->dc_rowbytes = 2048 / 8;
