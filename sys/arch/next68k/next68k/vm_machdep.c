@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2001/06/02 18:09:18 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2001/08/19 17:35:36 chs Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -250,7 +250,7 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	struct pmap *upmap, *kpmap;
+	struct pmap *upmap;
 	vaddr_t uva;	/* User VA (map from) */
 	vaddr_t kva;	/* Kernel VA (new to) */
 	paddr_t pa; 	/* physical address */
@@ -266,12 +266,10 @@ vmapbuf(bp, len)
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-	kpmap = vm_map_pmap(phys_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
-		    PMAP_WIRED);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -297,10 +295,8 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 
-	/*
-	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
-	 * will do it for us.
-	 */
+	pmap_kremove(kva, len);
+	pmap_update();
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
