@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.66 2001/06/02 16:17:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.67 2001/07/08 16:18:59 abs Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -116,6 +116,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_tcp_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -950,6 +951,7 @@ send:
 		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
 			tp->snd_max = tp->snd_nxt + len;
 
+#ifdef TCP_DEBUG
 	/*
 	 * Trace.
 	 */
@@ -974,6 +976,7 @@ send:
 		}
 		tcp_trace(TA_OUTPUT, tp->t_state, tp, m, 0);
 	}
+#endif
 
 	/*
 	 * Fill in IP length and desired time to live and
