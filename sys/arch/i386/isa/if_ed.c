@@ -17,7 +17,12 @@
  * Modification history
  *
  * $Log: if_ed.c,v $
- * Revision 1.2  1993/07/12 13:13:41  deraadt
+ * Revision 1.2.2.1  1993/07/20 01:51:58  cgd
+ * Fixed to allow iosiz config parameter to override what was (for jkh,
+ * incorrectly) probed.  This allows you more flexibility in getting weird
+ * WD 80x3 clones to work.
+ *
+ * Revision 1.2  1993/07/12  13:13:41  deraadt
  * moved bfdttach point  to same place as other drivers, from greenman
  *
  * Revision 1.1  1993/07/03  12:19:45  cgd
@@ -308,10 +313,14 @@ type_WD80x3:
 	}
 
 #if ED_DEBUG
-	printf("type=%s width=%d memsize=%d\n",sc->type_str,memwidth,memsize);
+	printf("type=%s width=%d memsize=%d id_msize=%d\n",sc->type_str,memwidth,memsize,isa_dev->id_msize);
 	for (i=0; i<8; i++)
 		printf("%x -> %x\n", i, inb(sc->asic_addr + i));
 #endif
+	/* Allow id_msize to override */
+	if (isa_dev->id_msize)
+		memsize = isa_dev->id_msize;
+
 	/*
 	 * Check 83C584 interrupt configuration register if this board has one
 	 *	XXX - we could also check the IO address register. But why
