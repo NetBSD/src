@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nameindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $	*/
+/*	$NetBSD: if_nameindex.c,v 1.3 2000/07/06 02:55:45 christos Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.3 2000/04/24 10:08:41 itojun Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nameindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $");
+__RCSID("$NetBSD: if_nameindex.c,v 1.3 2000/07/06 02:55:45 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -114,7 +114,7 @@ if_nameindex(void)
 	 * the strings.
 	 */
 	cp = malloc(ni*(sizeof(struct if_nameindex) + 1) + nbytes);
-	ifni = (struct if_nameindex *)cp;
+	ifni = (struct if_nameindex *)(void *)cp;
 	if (ifni == NULL)
 		goto out;
 	cp += ni*(sizeof(struct if_nameindex) + 1);
@@ -129,7 +129,8 @@ if_nameindex(void)
 		if (ifa->ifa_addr &&
 		    ifa->ifa_addr->sa_family == AF_LINK) {
 			ifni2->if_index =
-			    ((struct sockaddr_dl*)ifa->ifa_addr)->sdl_index;
+			    ((struct sockaddr_dl*)
+			    (void *)ifa->ifa_addr)->sdl_index;
 			ifni2->if_name = cp;
 			strcpy(cp, ifa->ifa_name);
 			ifni2++;
