@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 1999/02/14 12:42:33 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.23.8.1 1999/10/19 17:57:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -76,6 +76,8 @@ dk_establish(dk, dev)
 {
 	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
 	struct scsibus_softc *sbsc;
+	struct scsipi_channel *chan;
+	struct scsipi_periph *periph;
 	int target, lun;
 
 	if (bp == NULL)
@@ -88,12 +90,13 @@ dk_establish(dk, dev)
 	    strncmp("cd", dev->dv_xname, 2) == 0) {
 
 		sbsc = (struct scsibus_softc *)dev->dv_parent;
+		chan = sbsc->sc_channel;
 
 		target = bp->val[0];
 		lun = bp->val[1];
 
 		if (CPU_ISSUN4 && dev->dv_xname[0] == 's' &&
-		    target == 0 && sbsc->sc_link[0][0] == NULL) {
+		    target == 0 && scsipi_lookup_periph(chan, 0, 0) == NULL) {
 			/*
 			 * disk unit 0 is magic: if there is actually no
 			 * target 0 scsi device, the PROM will call
@@ -107,8 +110,9 @@ dk_establish(dk, dev)
 		if (CPU_ISSUN4C && dev->dv_xname[0] == 's')
 			target = sd_crazymap(target);
 
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+		periph = scsipi_lookup_periph(chan, target, lun);
+		if (periph != NULL &&
+		    periph->periph_dev == (void *)dev) {
 			bp->dev = dev;	/* got it! */
 			return;
 		}
