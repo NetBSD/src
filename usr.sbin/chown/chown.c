@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.22 2000/08/04 07:44:07 enami Exp $	*/
+/*	$NetBSD: chown.c,v 1.23 2000/08/04 07:51:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.22 2000/08/04 07:44:07 enami Exp $");
+__RCSID("$NetBSD: chown.c,v 1.23 2000/08/04 07:51:32 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,15 +136,13 @@ main(argc, argv)
 			fts_options |= FTS_COMFOLLOW;
 		if (Lflag) {
 			if (hflag)
-				errx(EXIT_FAILURE, "the -L and -h options may not be specified together.");
+				errx(EXIT_FAILURE,
+				    "the -L and -h options "
+				    "may not be specified together.");
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
 	}
-	if (hflag)
-		change_owner = lchown;
-	else
-		change_owner = chown;
 
 	uid = (uid_t)-1;
 	gid = (gid_t)-1;
@@ -166,9 +164,10 @@ main(argc, argv)
 		a_gid(*argv);
 
 	if ((ftsp = fts_open(++argv, fts_options, NULL)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(EXIT_FAILURE, "fts_open");
 
 	for (rval = EXIT_SUCCESS; (p = fts_read(ftsp)) != NULL;) {
+		change_owner = chown;
 		switch (p->fts_info) {
 		case FTS_D:
 			if (!Rflag)		/* Change it at FTS_DP. */
@@ -183,17 +182,29 @@ main(argc, argv)
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = EXIT_FAILURE;
 			continue;
-		case FTS_SL:			/* Ignore. */
-		case FTS_SLNONE:
+		case FTS_SL:			/* Ignore unless -h. */
 			/*
-			 * The only symlinks that end up here are ones that
-			 * don't point to anything and ones that we found
-			 * doing a physical walk.
+			 * All symlinks we found while doing a physical
+			 * walk end up here.
 			 */
 			if (!hflag)
 				continue;
-			/* else */
-			/* FALLTHROUGH */
+			/*
+			 * Note that if we follow a symlink, fts_info is
+			 * not FTS_SL but FTS_F or whatever.  And we should
+			 * use lchown only for FTS_SL and should use chown
+			 * for others.
+			 */
+			change_owner = lchown;
+			break;
+		case FTS_SLNONE:		/* Ignore. */
+			/*
+			 * The only symlinks that end up here are ones that
+			 * don't point to anything.  Note that if we are
+			 * doing a phisycal walk, we never reach here unless
+			 * we asked to follow explicitly.
+			 */
+			continue;
 		default:
 			break;
 		}
