@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.3 1999/09/14 10:22:34 tsubai Exp $
+#	$NetBSD: files.sh3,v 1.4 1999/09/21 13:16:17 tsubai Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -24,6 +24,7 @@ file	arch/sh3/sh3/mem.c
 file	arch/sh3/sh3/ns_cksum.c		ns
 file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
+file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
