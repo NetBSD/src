@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdformat.1,v 1.10 2000/10/08 18:48:31 hubertf Exp $
+.\"	$NetBSD: fdformat.1,v 1.11 2001/04/04 09:36:12 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,7 +96,7 @@ The
 .Nn
 utility does not create a filesystem of any kind. Use tools like
 .Xr newfs 8 ,
-.Xr newfs_msdos 8 
+.Xr newfs_msdos 8 ,
 or
 .Xr mformat 1
 (part of the pkgsrc/sysutils/mtools package) depending on what filesystem
@@ -112,7 +112,7 @@ instead of the default
 .It Fl t Ar type
 Format the floppy using parameters for the diskette named
 .Ar type
-in 
+in
 .Pa /etc/floppytab
 instead of the device default parameters.
 .It Fl n
@@ -137,14 +137,14 @@ Set the bit transfer rate for the formatted diskette.
 Set the interleave factor for the formatted diskette.
 .El
 .Sh BUGS
-Some floppy drive units have physical 
+Some floppy drive units have physical
 diskette format sensors which automatically select a diskette
 density for reading.  Such drives can format at alternate densities, but
 they cannot successfully verify the formatted diskette except at the
 diskette's normal density.
 .Sh SEE ALSO
 .Xr fdc 4
-(i386 port).
+(amiga, i386 and sparc ports).
 .Sh HISTORY
 The
 .Nm
