@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.30 2004/08/28 17:37:01 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.31 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.30 2004/08/28 17:37:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.31 2005/01/02 12:03:12 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -154,7 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.30 2004/08/28 17:37:01 thorpej Exp $");
 static int	tc_init(struct grf_data *, int, caddr_t);
 static int	tc_mode(struct grf_data *, int, caddr_t);
 
-static void	topcat_common_attach(struct grfdev_softc *, caddr_t, u_int8_t);
+static void	topcat_common_attach(struct grfdev_softc *, caddr_t, uint8_t);
 
 static int	topcat_intio_match(struct device *, struct cfdata *, void *);
 static void	topcat_intio_attach(struct device *, struct device *, void *);
@@ -298,7 +298,7 @@ topcat_dio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-topcat_common_attach(struct grfdev_softc *sc, caddr_t grf, u_int8_t secid)
+topcat_common_attach(struct grfdev_softc *sc, caddr_t grf, uint8_t secid)
 {
 	struct grfsw *sw;
 
@@ -717,7 +717,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	caddr_t va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
-	u_int8_t *dioiidev;
+	uint8_t *dioiidev;
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
@@ -753,7 +753,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	}
 
 	if (scode > 132) {
-		dioiidev = (u_int8_t *)va;
+		dioiidev = (uint8_t *)va;
 		size =  ((dioiidev[0x101] + 1) * 0x100000);
 	} else
 		size = DIOCSIZE;
