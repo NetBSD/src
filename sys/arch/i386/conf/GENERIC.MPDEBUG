@@ -1,10 +1,11 @@
-#	$NetBSD: GENERIC.MPDEBUG,v 1.1.2.1 2001/01/07 19:38:12 sommerfeld Exp $
+#	$NetBSD: GENERIC.MPDEBUG,v 1.1.2.2 2001/05/23 03:13:36 sommerfeld Exp $
 #
 #	GENERIC.MPDEBUG -- Generic multiprocessor, plus enable all the DEBUG
 #		switches we can.
 
 include "arch/i386/conf/GENERIC.MP"
 
+options		DIAGNOSTIC	# STRONGLY RECOMMENDED
 options 	LOCKDEBUG
 options 	MPDEBUG
 options 	MPVERBOSE
