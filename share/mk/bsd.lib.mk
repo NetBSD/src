@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.41 1994/01/04 19:08:55 mycroft Exp $
+#	$Id: bsd.lib.mk,v 1.42 1994/01/04 20:26:52 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -89,28 +89,28 @@ OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.a
-	@${AR} cTq lib${LIB}.a `lorder ${OBJS} | tsort` ${LDADD}
+	@${AR} cTq lib${LIB}.a `lorder ${OBJS} | tsort`
 	${RANLIB} lib${LIB}.a
 
 POBJS+=	${OBJS:.o=.po}
 lib${LIB}_p.a:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}_p.a
-	@${AR} cTq lib${LIB}_p.a `lorder ${POBJS} | tsort` ${LDADD}
+	@${AR} cTq lib${LIB}_p.a `lorder ${POBJS} | tsort`
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
 lib${LIB}_pic.a:: ${SOBJS}
 	@echo building shared object ${LIB} library
 	@rm -f lib${LIB}_pic.a
-	@${AR} cTq lib${LIB}_pic.a `lorder ${SOBJS} | tsort` ${LDADD}
+	@${AR} cTq lib${LIB}_pic.a `lorder ${SOBJS} | tsort`
 	${RANLIB} lib${LIB}_pic.a
 
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	$(LD) -Bshareable -Bforcearchive \
-	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a
+	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
 
 llib-l${LIB}.ln: ${SRCS}
 	${LINT} -C${LIB} ${CFLAGS} ${.ALLSRC:M*.c}
