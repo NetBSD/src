@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.21 2000/11/01 20:43:58 jdolecek Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.22 2000/11/08 04:19:00 erh Exp $ */
 
 /*
  * System call numbers.
@@ -214,7 +214,7 @@
 /* syscall: "readv" ret: "ssize_t" args: "int" "const struct iovec *" "int" */
 #define	LINUX_SYS_readv	120
 
-/* syscall: "writev" ret: "ssize_t" args: "int" "struct iovec *" "int" */
+/* syscall: "writev" ret: "ssize_t" args: "int" "const struct iovec *" "int" */
 #define	LINUX_SYS_writev	121
 
 /* syscall: "fchown" ret: "int" args: "int" "int" "int" */
