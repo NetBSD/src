@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.18 1999/08/26 20:28:53 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.19 1999/08/27 06:17:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.18 1999/08/26 20:28:53 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.19 1999/08/27 06:17:33 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,8 +88,9 @@ static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
 static void	 fts_load __P((FTS *, FTSENT *));
 static size_t	 fts_maxarglen __P((char * const *));
-static void	 fts_padjust __P((FTS *, FTSENT *));
+static size_t	 fts_pow2 __P((size_t));
 static int	 fts_palloc __P((FTS *, size_t));
+static void	 fts_padjust __P((FTS *, FTSENT *));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, size_t));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 
@@ -711,7 +712,7 @@ fts_build(sp, type)
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
 		if (dlen >= maxlen) {	/* include space for NUL */
-			if (fts_palloc(sp, dlen)) {
+			if (fts_palloc(sp, dlen + 1)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -997,6 +998,20 @@ fts_lfree(head)
 	}
 }
 
+static size_t
+fts_pow2(x)
+	size_t x;
+{
+	x--;
+	x |= x>>1;
+	x |= x>>2;
+	x |= x>>4;
+	x |= x>>8;
+	x |= x>>16;
+	x++;
+	return (x);
+}
+
 /*
  * Allow essentially unlimited paths; find, rm, ls should all work on any tree.
  * Most systems will allow creation of paths much longer than MAXPATHLEN, even
@@ -1008,7 +1023,7 @@ fts_palloc(sp, more)
 	FTS *sp;
 	size_t more;
 {
-	sp->fts_pathlen += more + 256;
+	sp->fts_pathlen = fts_pow2(sp->fts_pathlen + more);
 	sp->fts_path = realloc(sp->fts_path, (size_t)sp->fts_pathlen);
 	return (sp->fts_path == NULL);
 }
@@ -1054,5 +1069,5 @@ fts_maxarglen(argv)
 	for (max = 0; *argv; ++argv)
 		if ((len = strlen(*argv)) > max)
 			max = len;
-	return (max);
+	return (max + 1);
 }
