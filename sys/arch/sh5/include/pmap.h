@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2003/01/19 19:49:50 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2003/03/13 13:44:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,9 +106,21 @@ extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
 extern int	pmap_page_is_cacheable(pmap_t, vaddr_t);
 
-extern void (*__cpu_tlbinv_cookie)(pteh_t, tlbcookie_t);
-extern void (*__cpu_tlbinv_all)(void);
-extern void (*__cpu_tlbload)(void);	/* Not C-callable */
+struct sh5_tlb_ops {
+	void (*tlbinv_cookie)(pteh_t, tlbcookie_t);
+	void (*tlbinv_all)(void);
+	void (*tlbload)(void);		/* Not C-callable */
+	u_int dtlb_slots;
+	u_int itlb_slots;
+};
+
+#define	cpu_tlbinv_cookie	sh5_tlb_ops.tlbinv_cookie
+#define	cpu_tlbinv_all		sh5_tlb_ops.tlbinv_all
+#define	cpu_tlbload		sh5_tlb_ops.tlbload
+#define	cpu_dtlb_slots		sh5_tlb_ops.dtlb_slots
+#define	cpu_itlb_slots		sh5_tlb_ops.itlb_slots
+
+extern struct sh5_tlb_ops sh5_tlb_ops;
 #endif
 
 #endif	/* _SH5_PMAP_H */

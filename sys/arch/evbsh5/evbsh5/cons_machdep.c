@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.4 2002/10/19 08:43:32 scw Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.5 2003/03/13 13:44:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,16 +112,14 @@ consinit(void)
 	cninit();
 
 #ifdef DDB
-#if 0
 	{
-		extern int end;
-		extern int *esym;
+		extern void *symbol_table;
+		extern long symbol_table_size;
 
-		ddb_init((int)esym - (int)&end, (void *)&end, esym);
+		ddb_init((int)symbol_table_size, symbol_table,
+		    (void *)((long)symbol_table + symbol_table_size));
 	}
-#else
-	ddb_init(0, NULL, NULL);
-#endif
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -149,7 +147,7 @@ comcnprobe(struct consdev *cn)
 		goto done;
 
 	cn->cn_dev = makedev(cdevsw_lookup_major(&com_cdevsw), 0);
-	pri = CN_REMOTE;
+	pri = CN_NORMAL;
 
 done:
 	cn->cn_pri = pri;

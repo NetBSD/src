@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.16 2003/01/19 19:49:54 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.17 2003/03/13 13:44:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,6 +58,8 @@
  *
  * To be called early on from port-specific locore.S, after the MMU is
  * enabled, but before pmap_bootstrap().
+ *
+ * On entry, r2 must point to the physical address of KSEG0.
  */
 Lsh5_init_env:
 	/*
@@ -67,6 +69,16 @@ Lsh5_init_env:
 	 */
 	LEA(_C_LABEL(sh5_vector_table), r0)
 	putcon  r0, vbr
+
+	/*
+	 * Arrange to catch debug/panic exceptions with the mmu off.
+	 * Need to convert sh5_resvec_vector_table to a physical
+	 * address.
+	 */
+	LEA(_C_LABEL(sh5_resvec_vector_table) - SH5_KSEG0_BASE, r0)
+	add	r0, r2, r0		/* Convert to phys address */
+	ori	r0, 1, r0		/* MMU off when handling exceptions */
+	putcon  r0, resvec
 
 	/*
 	 * If we have an FPU, ensure it's quiescent
