@@ -1,7 +1,7 @@
-/*	$NetBSD: apmd.c,v 1.14 2000/03/04 21:27:18 mycroft Exp $	*/
+/*	$NetBSD: apmd.c,v 1.15 2000/08/13 21:13:56 jhawk Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,6 +63,9 @@
 #define TRUE 1
 #define FALSE 0
 
+#define POWER_STATUS_ACON	0x1
+#define POWER_STATUS_LOWBATTNOW	0x2
+
 const char apmdev[] = _PATH_APM_CTLDEV;
 const char sockfile[] = _PATH_APM_SOCKET;
 
@@ -103,12 +106,16 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
     struct apm_power_info bstate;
     static struct apm_power_info last;
     int acon = 0;
+    int lowbattnow = 0;
 
     if (ioctl(fd, APM_IOC_GETPOWER, &bstate) == 0) {
 	/* various conditions under which we report status:  something changed
 	   enough since last report, or asked to force a print */
 	if (bstate.ac_state == APM_AC_ON)
 	    acon = 1;
+	if (bstate.battery_state != last.battery_state  &&
+	    bstate.battery_state == APM_BATT_LOW)
+		lowbattnow = 1;
 	if (force || 
 	    bstate.ac_state != last.ac_state ||
 	    bstate.battery_state != last.battery_state ||
@@ -135,7 +142,8 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	    *pinfo = bstate;
     } else
 	syslog(LOG_ERR, "cannot fetch power status: %m");
-    return acon;
+    return ((acon?POWER_STATUS_ACON:0) |
+	(lowbattnow?POWER_STATUS_LOWBATTNOW:0));
 }
 
 static char *socketname;
@@ -429,8 +437,18 @@ main(int argc, char *argv[])
 	if (errno == EINTR)
 	    continue;
 	if (ready == 0) {
-	    /* wakeup for timeout: take status */
-	    power_status(ctl_fd, 0, 0);
+		int status;
+		/* wakeup for timeout: take status */
+		status = power_status(ctl_fd, 0, 0);
+		if (lowbattsleep && status&POWER_STATUS_LOWBATTNOW) {
+			if (noacsleep && status&POWER_STATUS_ACON) {
+				if (debug)
+					syslog(LOG_DEBUG,
+					    "not sleeping because "
+					    "AC is connected");
+			} else
+				suspend(ctl_fd);
+		}
 	}
 	if (FD_ISSET(ctl_fd, &selcopy)) {
 	    suspends = standbys = resumes = 0;
@@ -474,9 +492,9 @@ main(int argc, char *argv[])
 		}
 	    }
 	    if ((standbys || suspends) && noacsleep &&
-		power_status(ctl_fd, 0, 0)) {
+		(power_status(ctl_fd, 0, 0) & POWER_STATUS_ACON)) {
 		if (debug)
-		    syslog(LOG_DEBUG, "not sleeping cuz AC is connected");
+		    syslog(LOG_DEBUG, "not sleeping because AC is connected");
 	    } else if (suspends) {
 		suspend(ctl_fd);
 	    } else if (standbys) {
