@@ -16,7 +16,7 @@
    Sigh. */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: raw.c,v 1.1.1.1 2001/08/03 11:35:33 drochner Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: raw.c,v 1.1.1.1.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -74,10 +74,10 @@ void if_register_send (info)
 	int flag;
 
 	/* Set up the address we're going to connect to. */
+	memset (&name, 0, sizeof (name));
 	name.sin_family = AF_INET;
 	name.sin_port = local_port;
 	name.sin_addr.s_addr = htonl (INADDR_BROADCAST);
-	memset (name.sin_zero, 0, sizeof (name.sin_zero));
 
 	/* List addresses on which we're listening. */
         if (!quiet_interface_discovery)

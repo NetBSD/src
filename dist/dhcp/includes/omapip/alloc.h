@@ -66,9 +66,17 @@ struct dmalloc_preamble {
 #define DMDSIZE 0
 #endif
 
+/* rc_history flags... */
+#define RC_LEASE	1
+#define RC_MISC		2
+
 #if defined (DEBUG_RC_HISTORY)
 #if !defined (RC_HISTORY_MAX)
 # define RC_HISTORY_MAX 256
+#endif
+
+#if !defined (RC_HISTORY_FLAGS)
+# define RC_HISTORY_FLAGS (RC_LEASE | RC_MISC)
 #endif
 
 struct rc_history_entry {
@@ -79,19 +87,21 @@ struct rc_history_entry {
 	int refcnt;
 };
 
-#define rc_register(x, l, r, y, z, d) do { \
-	rc_history [rc_history_index].file = (x); \
-	rc_history [rc_history_index].line = (l); \
-	rc_history [rc_history_index].reference = (r); \
-	rc_history [rc_history_index].addr = (y); \
-	rc_history [rc_history_index].refcnt = (z); \
-	rc_history_next (d); \
+#define rc_register(x, l, r, y, z, d, f) do { \
+		if (RC_HISTORY_FLAGS & ~(f)) { \
+			rc_history [rc_history_index].file = (x); \
+			rc_history [rc_history_index].line = (l); \
+			rc_history [rc_history_index].reference = (r); \
+			rc_history [rc_history_index].addr = (y); \
+			rc_history [rc_history_index].refcnt = (z); \
+			rc_history_next (d); \
+		} \
 	} while (0)
-#define rc_register_mdl(r, y, z, d) \
-	rc_register (__FILE__, __LINE__, r, y, z, d)
+#define rc_register_mdl(r, y, z, d, f) \
+	rc_register (__FILE__, __LINE__, r, y, z, d, f)
 #else
-#define rc_register(file, line, reference, addr, refcnt, d)
-#define rc_register_mdl(reference, addr, refcnt, d)
+#define rc_register(file, line, reference, addr, refcnt, d, f)
+#define rc_register_mdl(reference, addr, refcnt, d, f)
 #endif
 
 #if defined (DEBUG_MEMORY_LEAKAGE) || defined (DEBUG_MALLOC_POOL) || \

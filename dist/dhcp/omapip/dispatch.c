@@ -148,7 +148,7 @@ isc_result_t omapi_unregister_io_object (omapi_object_t *h)
 
 isc_result_t omapi_dispatch (struct timeval *t)
 {
-	return omapi_wait_for_completion ((omapi_object_t *)&omapi_io_states,
+	return omapi_wait_for_completion ((void *)&omapi_io_states,
 					  t);
 }
 
@@ -461,7 +461,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 						     tmp, MDL);
 					else
 						omapi_signal_in
-							((omapi_object_t *)
+							((void *)
 							 &omapi_io_states,
 							 "ready");
 				}

@@ -3,7 +3,7 @@
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,8 @@ dhcpctl_status dhcpctl_initialize ()
 					     dhcpctl_callback_stuff_values,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof
-					     (dhcpctl_callback_object_t), 0);
+					     (dhcpctl_callback_object_t), 0,
+					     RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -81,7 +82,7 @@ dhcpctl_status dhcpctl_initialize ()
 					     dhcpctl_remote_stuff_values,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof (dhcpctl_remote_object_t),
-					     0);
+					     0, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -104,7 +105,6 @@ dhcpctl_status dhcpctl_connect (dhcpctl_handle *connection,
 				dhcpctl_handle authinfo)
 {
 	isc_result_t status;
-	dhcpctl_status waitstatus;
 
 	status = omapi_generic_new (connection, MDL);
 	if (status != ISC_R_SUCCESS) {
@@ -174,7 +174,6 @@ dhcpctl_status dhcpctl_get_value (dhcpctl_data_string *result,
 {
 	isc_result_t status;
 	omapi_value_t *tv = (omapi_value_t *)0;
-	omapi_data_string_t *value = (omapi_data_string_t *)0;
 	unsigned len;
 	int ip;
 
@@ -266,7 +265,6 @@ dhcpctl_status dhcpctl_set_value (dhcpctl_handle h, dhcpctl_data_string value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
-	int len;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -300,7 +298,6 @@ dhcpctl_status dhcpctl_set_string_value (dhcpctl_handle h, const char *value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
-	int len;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -389,7 +386,6 @@ dhcpctl_status dhcpctl_set_boolean_value (dhcpctl_handle h, int value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
-	int len;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -419,7 +415,6 @@ dhcpctl_status dhcpctl_set_int_value (dhcpctl_handle h, int value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
-	int len;
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)

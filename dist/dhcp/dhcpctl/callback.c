@@ -3,7 +3,7 @@
    The dhcpctl callback object. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,6 @@ dhcpctl_status dhcpctl_set_callback (dhcpctl_handle h, void *data,
 {
 	dhcpctl_callback_object_t *callback;
 	omapi_object_t *inner;
-	isc_result_t status;
 
 	callback = dmalloc (sizeof *callback, MDL);
 	if (!callback)
@@ -166,7 +165,6 @@ isc_result_t dhcpctl_callback_stuff_values (omapi_object_t *c,
 					    omapi_object_t *id,
 					    omapi_object_t *p)
 {
-	int i;
 
 	if (p -> type != dhcpctl_callback_type)
 		return ISC_R_INVALIDARG;

@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_parse.c,v 1.3 2002/03/18 20:16:49 bjh21 Exp $";
+static const char rcsid[] = "$Id: ns_parse.c,v 1.3.2.1 2003/10/27 04:41:53 jmc Exp $";
 #endif
 
 /* Import. */
@@ -134,7 +134,7 @@ isc_result_t
 ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
 	isc_result_t status;
-	int tmp;
+	int tmp; /* XXX used to force a signed comparison below */
 
 	/* Make section right. */
 	if ((tmp = section) < 0 || section >= ns_s_max)

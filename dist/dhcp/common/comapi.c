@@ -3,7 +3,7 @@
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 1999-2001 Internet Software Consortium.
+ * Copyright (c) 1999-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.2 2001/08/03 13:07:03 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.2.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -84,7 +84,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_control_create,
 					     dhcp_control_remove, 0, 0, 0,
 					     sizeof (dhcp_control_object_t),
-					     0);
+					     0, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register control object type: %s",
 			   isc_result_totext (status));
@@ -104,7 +104,8 @@ void dhcp_common_objects_setup ()
 					     dhcp_group_lookup, 
 					     dhcp_group_create,
 					     dhcp_group_remove, 0, 0, 0,
-					     sizeof (struct group_object), 0);
+					     sizeof (struct group_object), 0,
+					     RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register group object type: %s",
 			   isc_result_totext (status));
@@ -119,7 +120,8 @@ void dhcp_common_objects_setup ()
 					     dhcp_subnet_lookup, 
 					     dhcp_subnet_create,
 					     dhcp_subnet_remove, 0, 0, 0,
-					     sizeof (struct subnet), 0);
+					     sizeof (struct subnet), 0,
+					     RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register subnet object type: %s",
 			   isc_result_totext (status));
@@ -135,7 +137,7 @@ void dhcp_common_objects_setup ()
 		 dhcp_shared_network_lookup, 
 		 dhcp_shared_network_create,
 		 dhcp_shared_network_remove, 0, 0, 0,
-		 sizeof (struct shared_network), 0);
+		 sizeof (struct shared_network), 0, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register shared network object type: %s",
 			   isc_result_totext (status));
@@ -150,7 +152,6 @@ isc_result_t dhcp_group_set_value  (omapi_object_t *h,
 {
 	struct group_object *group;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_group)
 		return ISC_R_INVALIDARG;
@@ -224,7 +225,6 @@ isc_result_t dhcp_group_get_value (omapi_object_t *h, omapi_object_t *id,
 {
 	struct group_object *group;
 	isc_result_t status;
-	struct data_string ip_addrs;
 
 	if (h -> type != dhcp_type_group)
 		return ISC_R_INVALIDARG;
@@ -247,7 +247,6 @@ isc_result_t dhcp_group_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_group_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct group_object *group, *t;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_group)
 		return ISC_R_INVALIDARG;
@@ -278,7 +277,7 @@ isc_result_t dhcp_group_destroy (omapi_object_t *h, const char *file, int line)
 isc_result_t dhcp_group_signal_handler (omapi_object_t *h,
 					const char *name, va_list ap)
 {
-	struct group_object *group, *t;
+	struct group_object *group;
 	isc_result_t status;
 	int updatep = 0;
 
@@ -462,7 +461,6 @@ isc_result_t dhcp_control_set_value  (omapi_object_t *h,
 {
 	dhcp_control_object_t *control;
 	isc_result_t status;
-	int foo;
 	unsigned long newstate;
 
 	if (h -> type != dhcp_type_control)
@@ -497,7 +495,6 @@ isc_result_t dhcp_control_get_value (omapi_object_t *h, omapi_object_t *id,
 {
 	dhcp_control_object_t *control;
 	isc_result_t status;
-	struct data_string ip_addrs;
 
 	if (h -> type != dhcp_type_control)
 		return ISC_R_INVALIDARG;
@@ -520,8 +517,6 @@ isc_result_t dhcp_control_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_control_destroy (omapi_object_t *h,
 				   const char *file, int line)
 {
-	dhcp_control_object_t *control, *t;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_control)
 		return ISC_R_INVALIDARG;
@@ -533,9 +528,8 @@ isc_result_t dhcp_control_destroy (omapi_object_t *h,
 isc_result_t dhcp_control_signal_handler (omapi_object_t *h,
 					const char *name, va_list ap)
 {
-	dhcp_control_object_t *control, *t;
+	dhcp_control_object_t *control;
 	isc_result_t status;
-	int updatep = 0;
 
 	if (h -> type != dhcp_type_control)
 		return ISC_R_INVALIDARG;
@@ -591,7 +585,6 @@ isc_result_t dhcp_control_lookup (omapi_object_t **lp,
 {
 	omapi_value_t *tv = (omapi_value_t *)0;
 	isc_result_t status;
-	dhcp_control_object_t *control;
 
 	/* First see if we were sent a handle. */
 	if (ref) {
@@ -640,7 +633,6 @@ isc_result_t dhcp_subnet_set_value  (omapi_object_t *h,
 {
 	struct subnet *subnet;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_subnet)
 		return ISC_R_INVALIDARG;
@@ -686,7 +678,6 @@ isc_result_t dhcp_subnet_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_subnet_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct subnet *subnet;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_subnet)
 		return ISC_R_INVALIDARG;
@@ -763,9 +754,6 @@ isc_result_t dhcp_subnet_lookup (omapi_object_t **lp,
 				 omapi_object_t *id,
 				 omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct subnet *subnet;
 
 	/* Can't look up subnets yet. */
 
@@ -795,7 +783,6 @@ isc_result_t dhcp_shared_network_set_value  (omapi_object_t *h,
 {
 	struct shared_network *shared_network;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_shared_network)
 		return ISC_R_INVALIDARG;
@@ -843,7 +830,6 @@ isc_result_t dhcp_shared_network_destroy (omapi_object_t *h,
 					  const char *file, int line)
 {
 	struct shared_network *shared_network;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_shared_network)
 		return ISC_R_INVALIDARG;
@@ -933,9 +919,6 @@ isc_result_t dhcp_shared_network_lookup (omapi_object_t **lp,
 					 omapi_object_t *id,
 					 omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct shared_network *shared_network;
 
 	/* Can't look up shared_networks yet. */
 

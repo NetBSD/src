@@ -3,7 +3,7 @@
    Memory allocation... */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.1 2001/08/03 11:35:31 drochner Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.1.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,7 +57,6 @@ int option_chain_head_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int size;
 	struct option_chain_head *h;
 
 	if (!ptr) {
@@ -109,7 +108,7 @@ int option_chain_head_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -118,7 +117,6 @@ int option_chain_head_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int i;
 	struct option_chain_head *option_chain_head;
 	pair car, cdr;
 
@@ -134,8 +132,8 @@ int option_chain_head_dereference (ptr, file, line)
 	option_chain_head = *ptr;
 	*ptr = (struct option_chain_head *)0;
 	--option_chain_head -> refcnt;
-	rc_register (file, line, ptr,
-		     option_chain_head, option_chain_head -> refcnt, 1);
+	rc_register (file, line, ptr, option_chain_head,
+		     option_chain_head -> refcnt, 1, RC_MISC);
 	if (option_chain_head -> refcnt > 0)
 		return 1;
 
@@ -170,7 +168,6 @@ int group_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int size;
 	struct group *g;
 
 	if (!ptr) {
@@ -222,7 +219,7 @@ int group_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -231,7 +228,6 @@ int group_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int i;
 	struct group *group;
 
 	if (!ptr || !*ptr) {
@@ -246,7 +242,7 @@ int group_dereference (ptr, file, line)
 	group = *ptr;
 	*ptr = (struct group *)0;
 	--group -> refcnt;
-	rc_register (file, line, ptr, group, group -> refcnt, 1);
+	rc_register (file, line, ptr, group, group -> refcnt, 1, RC_MISC);
 	if (group -> refcnt > 0)
 		return 1;
 
@@ -496,7 +492,7 @@ int expression_reference (ptr, src, file, line)
 	}
 	*ptr = src;
 	src -> refcnt++;
-	rc_register (file, line, ptr, src, src -> refcnt, 0);
+	rc_register (file, line, ptr, src, src -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -570,7 +566,7 @@ int binding_value_reference (ptr, src, file, line)
 	}
 	*ptr = src;
 	src -> refcnt++;
-	rc_register (file, line, ptr, src, src -> refcnt, 0);
+	rc_register (file, line, ptr, src, src -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -636,7 +632,7 @@ int fundef_reference (ptr, src, file, line)
 	}
 	*ptr = src;
 	src -> refcnt++;
-	rc_register (file, line, ptr, src, src -> refcnt, 0);
+	rc_register (file, line, ptr, src, src -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -701,7 +697,7 @@ int option_cache_reference (ptr, src, file, line)
 	}
 	*ptr = src;
 	src -> refcnt++;
-	rc_register (file, line, ptr, src, src -> refcnt, 0);
+	rc_register (file, line, ptr, src, src -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -745,7 +741,7 @@ int buffer_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -754,7 +750,6 @@ int buffer_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct buffer *bp;
 
 	if (!ptr) {
 		log_error ("%s(%d): null pointer", file, line);
@@ -775,7 +770,7 @@ int buffer_dereference (ptr, file, line)
 	}
 
 	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1);
+	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1, RC_MISC);
 	if (!(*ptr) -> refcnt) {
 		dfree ((*ptr), file, line);
 	} else if ((*ptr) -> refcnt < 0) {
@@ -834,7 +829,7 @@ int dns_host_entry_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -843,7 +838,6 @@ int dns_host_entry_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct dns_host_entry *bp;
 
 	if (!ptr || !*ptr) {
 		log_error ("%s(%d): null pointer", file, line);
@@ -855,7 +849,7 @@ int dns_host_entry_dereference (ptr, file, line)
 	}
 
 	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1);
+	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1, RC_MISC);
 	if (!(*ptr) -> refcnt)
 		dfree ((*ptr), file, line);
 	if ((*ptr) -> refcnt < 0) {
@@ -903,7 +897,8 @@ int option_state_allocate (ptr, file, line)
 		memset (*ptr, 0, size);
 		(*ptr) -> universe_count = universe_count;
 		(*ptr) -> refcnt = 1;
-		rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 0);
+		rc_register (file, line,
+			     ptr, *ptr, (*ptr) -> refcnt, 0, RC_MISC);
 		return 1;
 	}
 	return 0;
@@ -933,7 +928,7 @@ int option_state_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -957,7 +952,7 @@ int option_state_dereference (ptr, file, line)
 	options = *ptr;
 	*ptr = (struct option_state *)0;
 	--options -> refcnt;
-	rc_register (file, line, ptr, options, options -> refcnt, 1);
+	rc_register (file, line, ptr, options, options -> refcnt, 1, RC_MISC);
 	if (options -> refcnt > 0)
 		return 1;
 
@@ -1021,7 +1016,7 @@ int executable_statement_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -1045,7 +1040,6 @@ int packet_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int size;
 	struct packet *p;
 
 	if (!ptr) {
@@ -1103,7 +1097,7 @@ int packet_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -1127,7 +1121,7 @@ int packet_dereference (ptr, file, line)
 	packet = *ptr;
 	*ptr = (struct packet *)0;
 	--packet -> refcnt;
-	rc_register (file, line, ptr, packet, packet -> refcnt, 1);
+	rc_register (file, line, ptr, packet, packet -> refcnt, 1, RC_MISC);
 	if (packet -> refcnt > 0)
 		return 1;
 
@@ -1165,7 +1159,6 @@ int dns_zone_allocate (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int size;
 	struct dns_zone *d;
 
 	if (!ptr) {
@@ -1217,7 +1210,7 @@ int dns_zone_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 
@@ -1278,7 +1271,7 @@ int binding_scope_reference (ptr, bp, file, line)
 	}
 	*ptr = bp;
 	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 0);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
 }
 

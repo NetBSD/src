@@ -3,7 +3,7 @@
    Support for executable statements. */
 
 /*
- * Copyright (c) 1998-2001 Internet Software Consortium.
+ * Copyright (c) 1998-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.1.1.1 2001/08/03 11:35:32 drochner Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.1.1.1.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -63,8 +63,6 @@ int execute_statements (result, packet, lease, client_state,
 	struct executable_statement *r, *e, *next;
 	int rc;
 	int status;
-	unsigned long num;
-	struct binding_scope *outer;
 	struct binding *binding;
 	struct data_string ds;
 	struct binding_scope *ns;
@@ -292,7 +290,6 @@ int execute_statements (result, packet, lease, client_state,
 					binding -> next = (*scope) -> bindings;
 					(*scope) -> bindings = binding;
 				    } else {
-				       badalloc:
 					dfree (binding, MDL);
 					binding = (struct binding *)0;
 				    }
@@ -533,7 +530,6 @@ int executable_statement_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct executable_statement *bp;
 
 	if (!ptr || !*ptr) {
 		log_error ("%s(%d): null pointer", file, line);
@@ -545,7 +541,7 @@ int executable_statement_dereference (ptr, file, line)
 	}
 
 	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1);
+	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1, RC_MISC);
 	if ((*ptr) -> refcnt > 0) {
 		*ptr = (struct executable_statement *)0;
 		return 1;
@@ -657,8 +653,6 @@ void write_statements (file, statements, indent)
 	int indent;
 {
 	struct executable_statement *r, *x;
-	int result;
-	int status;
 	const char *s, *t, *dot;
 	int col;
 
@@ -913,10 +907,8 @@ int find_matching_case (struct executable_statement **ep,
 {
 	int status, sub;
 	struct executable_statement *s;
-	unsigned long foo;
 
 	if (is_data_expression (expr)) {
-		struct executable_statement *e;
 		struct data_string cd, ds;
 		memset (&ds, 0, sizeof ds);
 		memset (&cd, 0, sizeof cd);
@@ -990,7 +982,6 @@ int executable_statement_foreach (struct executable_statement *stmt,
 {
 	struct executable_statement *foo;
 	int ok = 0;
-	int result;
 
 	for (foo = stmt; foo; foo = foo -> next) {
 	    if ((*callback) (foo, vp, condp) != 0)
@@ -999,10 +990,10 @@ int executable_statement_foreach (struct executable_statement *stmt,
 	      case null_statement:
 		break;
 	      case if_statement:
-		if (executable_statement_foreach (stmt -> data.ie.tc,
+		if (executable_statement_foreach (foo -> data.ie.tc,
 						  callback, vp, 1))
 			ok = 1;
-		if (executable_statement_foreach (stmt -> data.ie.fc,
+		if (executable_statement_foreach (foo -> data.ie.fc,
 						  callback, vp, 1))
 			ok = 1;
 		break;
@@ -1024,17 +1015,17 @@ int executable_statement_foreach (struct executable_statement *stmt,
 		break;
 	      case statements_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.statements, callback, vp, condp)))
+		     (foo -> data.statements, callback, vp, condp)))
 			ok = 1;
 		break;
 	      case on_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.on.statements, callback, vp, 1)))
+		     (foo -> data.on.statements, callback, vp, 1)))
 			ok = 1;
 		break;
 	      case switch_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.s_switch.statements, callback, vp, 1)))
+		     (foo -> data.s_switch.statements, callback, vp, 1)))
 			ok = 1;
 		break;
 	      case case_statement:
@@ -1047,7 +1038,7 @@ int executable_statement_foreach (struct executable_statement *stmt,
 		break;
 	      case let_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.let.statements, callback, vp, 0)))
+		     (foo -> data.let.statements, callback, vp, 0)))
 			ok = 1;
 		break;
 	      case define_statement:

@@ -134,9 +134,6 @@ extern int h_errno;
 # endif
 # define HAVE_ARPHRD_METRICOM
 # define HAVE_ARPHRD_IEEE802
-# if (LINUX_MINOR >= 4)
-#  define HAVE_ARPHRD_IEEE802_TR
-# endif
 # define HAVE_ARPHRD_LOOPBACK
 # define HAVE_SO_BINDTODEVICE
 # define HAVE_SIOCGIFHWADDR

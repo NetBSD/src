@@ -3,7 +3,7 @@
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 1996-2001 Internet Software Consortium.
+ * Copyright (c) 1996-2003 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,11 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.1 2001/08/03 11:35:41 drochner Exp $ Copyright 1995-2001 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.1.4.1 2003/10/27 04:41:54 jmc Exp $ Copyright 1995-2003 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
-"Copyright 1995-2001 Internet Software Consortium.";
+"Copyright 1995-2003 Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
 static char message [] = "Internet Software Consortium DHCP Server";
 static char url [] = "For info, please visit http://www.isc.org/products/DHCP";
@@ -226,9 +226,6 @@ int main (argc, argv, envp)
 	struct interface_info *ip;
 	struct parse *parse;
 	int lose;
-	omapi_object_t *auth;
-	struct tsig_key *key;
-	omapi_typed_data_t *td;
 	int no_dhcpd_conf = 0;
 	int no_dhcpd_db = 0;
 	int no_dhcpd_pid = 0;
@@ -484,7 +481,7 @@ int main (argc, argv, envp)
 	    }		
 	    trace_file_replay (traceinfile);
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
                 defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
             free_everything ();
             omapi_print_dmalloc_usage_by_caller (); 
@@ -979,7 +976,6 @@ int dhcpd_interface_setup_hook (struct interface_info *ip, struct iaddr *ia)
 	   necessary. */
 	if (!ia) {
 		const char *fnn = "fallback-net";
-		char *s;
 		status = shared_network_allocate (&ip -> shared_network, MDL);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("No memory for shared subnet: %s",
@@ -1129,7 +1125,7 @@ static isc_result_t dhcp_io_shutdown_countdown (void *vlp)
 		    dhcp_failover_set_state (state, recover);
 		}
 	    }
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	    free_everything ();
 	    omapi_print_dmalloc_usage_by_caller ();
@@ -1138,10 +1134,10 @@ static isc_result_t dhcp_io_shutdown_countdown (void *vlp)
 	}		
 #else
 	if (shutdown_state == shutdown_done) {
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-                defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
-            free_everything ();
-            omapi_print_dmalloc_usage_by_caller (); 
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
+		free_everything ();
+		omapi_print_dmalloc_usage_by_caller (); 
 #endif
 		exit (0);
 	}

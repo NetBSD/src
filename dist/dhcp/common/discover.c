@@ -3,7 +3,7 @@
    Network input dispatcher... */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.2.4.1 2003/06/19 00:56:49 grant Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.2.4.2 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -105,7 +105,7 @@ isc_result_t interface_setup ()
 #endif
 					     0, 0, 0,
 					     sizeof (struct interface_info),
-					     interface_initialize);
+					     interface_initialize, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register interface object type: %s",
 			   isc_result_totext (status));
@@ -144,16 +144,14 @@ isc_result_t interface_initialize (omapi_object_t *ipo,
 void discover_interfaces (state)
 	int state;
 {
-	struct interface_info *tmp, *ip;
+	struct interface_info *tmp;
 	struct interface_info *last, *next;
 	char buf [2048];
 	struct ifconf ic;
 	struct ifreq ifr;
 	int i;
 	int sock;
-	int address_count = 0;
 	struct subnet *subnet;
-	struct shared_network *share;
 	struct sockaddr_in foo;
 	int ir;
 	struct ifreq *tif;
@@ -429,8 +427,11 @@ void discover_interfaces (state)
 					   name, isc_result_totext (status));
 			tmp -> flags = ir;
 			strncpy (tmp -> name, name, IFNAMSIZ);
-			interface_reference (&tmp -> next, interfaces, MDL);
-			interface_dereference (&interfaces, MDL);
+			if (interfaces) {
+				interface_reference (&tmp -> next,
+						     interfaces, MDL);
+				interface_dereference (&interfaces, MDL);
+			}
 			interface_reference (&interfaces, tmp, MDL);
 			interface_dereference (&tmp, MDL);
 			tmp = interfaces;
@@ -559,8 +560,12 @@ void discover_interfaces (state)
 		if (tmp -> next)
 			interface_reference (&next, tmp -> next, MDL);
 		/* skip interfaces that are running already */
-		if (tmp -> flags & INTERFACE_RUNNING)
+		if (tmp -> flags & INTERFACE_RUNNING) {
+			interface_dereference(&tmp, MDL);
+			if(next)
+				interface_reference(&tmp, next, MDL);
 			continue;
+		}
 		if ((tmp -> flags & INTERFACE_AUTOMATIC) &&
 		    state == DISCOVER_REQUESTED)
 			tmp -> flags &= ~(INTERFACE_AUTOMATIC |
@@ -806,7 +811,6 @@ isc_result_t dhcp_interface_set_value  (omapi_object_t *h,
 {
 	struct interface_info *interface;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
@@ -849,7 +853,6 @@ isc_result_t dhcp_interface_destroy (omapi_object_t *h,
 					 const char *file, int line)
 {
 	struct interface_info *interface;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
@@ -879,8 +882,6 @@ isc_result_t dhcp_interface_signal_handler (omapi_object_t *h,
 					    const char *name, va_list ap)
 {
 	struct interface_info *ip, *interface;
-	struct client_config *config;
-	struct client_state *client;
 	isc_result_t status;
 
 	if (h -> type != dhcp_type_interface)

@@ -1,6 +1,6 @@
 .\"	dhclient-script.8
 .\"
-.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Copyright (c) 1996-2002 Internet Software Consortium.
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -34,6 +34,9 @@
 .\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
+.\"
+.\" $Id: dhclient-script.8,v 1.2.4.1 2003/10/27 04:41:52 jmc Exp $
+.\"
 .TH dhclient-script 8
 .SH NAME
 dhclient-script - DHCP client network configuration script
@@ -97,7 +100,8 @@ script can modify the valid of exit_status to change the exit status
 of dhclient-script.
 .SH OPERATION
 When dhclient needs to invoke the client configuration script, it
-writes a shell script into /tmp which defines a variety of variables.
+defines a set of variables in the environment, and then invokes
+.B CLIENTBINDIR/dhclient-script.
 In all cases, $reason is set to the name of the reason why the script
 has been invoked.   The following reasons are currently defined:
 MEDIUM, PREINIT, BOUND, RENEW, REBIND, REBOOT, EXPIRE, FAIL and TIMEOUT.
@@ -215,10 +219,10 @@ dhclient.leases(5).
 .SH AUTHOR
 .B dhclient-script(8)
 has been written for the Internet Software Consortium
-by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
+by Ted Lemon in cooperation with Vixie
 Enterprises.  To learn more about the Internet Software Consortium,
 see
-.B http://www.vix.com/isc.
+.B http://www.isc.org.
 To learn more about Vixie
 Enterprises, see
 .B http://www.vix.com.
