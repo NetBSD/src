@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdevs.c,v 1.21 1999/02/28 19:03:11 explorer Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.22 1999/03/16 22:58:17 dean Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -78,6 +78,8 @@ static const char *isapnp_com_devlogic[] = {
 	"BRI1400",	/* Boca 33.6 PnP */
 	"BRIB400",	/* Boca 56k PnP */
 	"ROK0010",	/* Rockwell ? */
+	"USR0004",	/* USR Sportster 14.4k */
+	"USR0006",	/* USR Sportster 33.6k */
 	"USR2070",	/* USR Sportster 56k */
 	"USR3031",	/* USR 56k Faxmodem */
 	"ZTIF761",	/* Zoom ComStar 33.6 */
