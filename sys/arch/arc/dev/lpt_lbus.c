@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_lbus.c,v 1.9 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: lpt_lbus.c,v 1.10 2000/06/09 05:42:00 soda Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
 
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
+
+extern struct arc_bus_space arc_bus_io;
 
 int lpt_localbus_probe __P((struct device *, struct cfdata *, void *));
 void lpt_localbus_attach __P((struct device *, struct device *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.9 2000/06/04 19:14:31 cgd Exp $	*/
+/*	$NetBSD: isabus.c,v 1.10 2000/06/09 05:42:01 soda Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -136,6 +136,8 @@ struct cfattach isabr_ca = {
 };
 extern struct cfdriver isabr_cd;
 
+extern struct arc_bus_space arc_bus_io, arc_bus_mem;
+
 const struct evcnt *isabr_intr_evcnt __P((isa_chipset_tag_t, int));
 void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *));
@@ -178,7 +180,8 @@ isabrattach(parent, self, aux)
 	switch(cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
-	case NEC_RD94:
+	case NEC_R94:
+	case NEC_R96:
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
@@ -215,8 +218,8 @@ isabrprint(aux, pnp)
 
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
-        printf(" isa_io_base 0x%x isa_mem_base 0x%x",
-		arc_bus_io.bus_base, arc_bus_mem.bus_base);
+        printf(" isa_io_base 0x%lx isa_mem_base 0x%lx",
+		arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
         return (UNCONF);
 }
 
@@ -307,10 +310,10 @@ intr_calculatemasks()
 	}
 }
 
-const struct evcnt *   
-isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-        isa_chipset_tag_t ic;
-        int irq;
+const struct evcnt *
+isabr_intr_evcnt(ic, irq)
+	isa_chipset_tag_t ic;
+	int irq;
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -416,7 +419,8 @@ isabr_iointr(mask, cf)
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 		break;
 
-	case NEC_RD94:
+	case NEC_R94:
+	case NEC_R96:
 		isa_vector = in32(RD94_SYS_INTSTAT2) & (ICU_LEN - 1);
 		break;
 

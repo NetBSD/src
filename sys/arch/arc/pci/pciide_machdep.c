@@ -1,8 +1,7 @@
-/*	$NetBSD: pio.h,v 1.3 2000/06/09 05:42:01 soda Exp $	*/
-/*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.1 2000/06/09 05:42:02 soda Exp $	*/
 
 /*
- * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
+ * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Per Fogelstrom.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -30,30 +30,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARC_PIO_H_
-#define _ARC_PIO_H_
 /*
- * I/O macros.
+ * PCI IDE controller driver (ARC machine-dependent portion).
+ *
+ * Author: Christopher G. Demetriou, March 2, 1998 (derived from NetBSD
+ * sys/dev/pci/ppb.c, revision 1.16).
+ *
+ * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" from the
+ * PCI SIG.
  */
 
-#define	outb(a,v)	(*(volatile unsigned char*)(a) = (v))
-#define	outw(a,v)	(*(volatile unsigned short*)(a) = (v))
-#define	out16(a,v)	outw(a,v)
-#define	outl(a,v)	(*(volatile unsigned int*)(a) = (v))
-#define	out32(a,v)	outl(a,v)
-#define	inb(a)		(*(volatile unsigned char*)(a))
-#define	inw(a)		(*(volatile unsigned short*)(a))
-#define	in16(a)		inw(a)
-#define	inl(a)		(*(volatile unsigned int*)(a))
-#define	in32(a)		inl(a)
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-void insb __P((u_int8_t *, u_int8_t *,int));
-void insw __P((u_int16_t *, u_int16_t *,int));
-void insl __P((u_int32_t *, u_int32_t *,int));
-void outsb __P((u_int8_t *, const u_int8_t *,int));
-void outsw __P((u_int16_t *, const u_int16_t *,int));
-void outsl __P((u_int32_t *, const u_int32_t *,int));
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.1 2000/06/09 05:42:02 soda Exp $");
 
-extern struct arc_bus_space arc_bus_io, arc_bus_mem;
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-#endif /*_ARC_PIO_H_*/
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
+
+void *
+pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
+	struct device *dev;
+	struct pci_attach_args *pa;
+	int chan;
+	int (*func) __P((void *));
+	void *arg;
+{
+
+	/*
+	 * The PCI IDE on the ARC is never wired to compatibility
+	 * mode.  This place holder simply returns a NULL interrupt cookie.
+	 * It is necessary for the PCI IDE driver to link.
+	 */
+	return (NULL);
+}

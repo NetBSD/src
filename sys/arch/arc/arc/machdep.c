@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2000/05/26 21:19:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2000/06/09 05:41:58 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -98,12 +98,27 @@
 
 #include <arc/arc/arctype.h>
 #include <arc/arc/arcbios.h>
+#include <arc/arc/wired_map.h>
 #include <arc/pica/pica.h>
 #include <arc/pica/rd94.h>
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 
 #include "pc.h"
+
+#include "vga_isa.h"
+#if NVGA_ISA > 0
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/isa/vga_isavar.h>
+#endif
+
+#include "pckbd.h"
+#if NPCKBC > 0
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
+#endif
+
 #include "com.h"
 #if NCOM > 0
 #include <sys/termios.h>
@@ -111,8 +126,12 @@
 #include <dev/ic/comvar.h>
 #endif
 
+#ifndef COMCONSOLE
+#define COMCONSOLE	0
+#endif
+
 #ifndef COM_FREQ_MAGNUM
-#if 0
+#if 1
 #define COM_FREQ_MAGNUM	4233600 /* 4.2336MHz - ARC? */
 #else
 #define COM_FREQ_MAGNUM	8192000	/* 8.192 MHz - NEC RISCstation M402 */
@@ -152,12 +171,14 @@ int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	cputype;		/* Mother board type */
 int	ncpu = 1;		/* At least one cpu in the system */
+vaddr_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
 struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
 struct arc_bus_space pica_bus;	/* picabus for com.c/com_lbus.c */
 int	com_freq = COM_FREQ;	/* unusual clock frequency of dev/ic/com.c */
 int	com_console_address;	/* Well, ain't it just plain stupid... */
 bus_space_tag_t comconstag = &arc_bus_io;	/* com console bus */
+int	com_console = COMCONSOLE;
 struct arc_bus_space *arc_bus_com = &arc_bus_io; /* com bus */
 char   **environment;		/* On some arches, pointer to environment */
 char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
@@ -177,7 +198,8 @@ extern void stacktrace __P((void)); /*XXX*/
 
 extern void machine_ConfigCache __P((void));
 static void tlb_init_pica __P((void));
-static void tlb_init_nec_rd94 __P((void));
+static void tlb_init_nec_eisa __P((void));
+static void tlb_init_nec_pci __P((void));
 static void tlb_init_tyne __P((void));
 static int get_simm_size __P((int *, int));
 static char *getenv __P((char *env));
@@ -239,6 +261,8 @@ mach_init(argc, argv, envv)
 		    &mem_cluster_cnt);
 	}
 
+	arc_init_wired_map();
+
 	/*
 	 * Get config register now as mapped from BIOS since we are
 	 * going to demap these addresses later. We want as may TLB
@@ -257,9 +281,15 @@ mach_init(argc, argv, envv)
 			com_freq = COM_FREQ_MAGNUM;
 			break;
 		}
-		pica_bus.bus_base = 0;
-		arc_bus_io.bus_base = PICA_V_ISA_IO;
-		arc_bus_mem.bus_base = PICA_V_ISA_MEM;
+
+		arc_bus_space_init(&pica_bus, "picabus",
+		    R4030_P_LOCAL_IO_BASE, R4030_V_LOCAL_IO_BASE,
+		    R4030_V_LOCAL_IO_BASE, R4030_S_LOCAL_IO_BASE);
+		arc_bus_space_init(&arc_bus_io, "picaisaio",
+		    PICA_P_ISA_IO, PICA_V_ISA_IO, 0, PICA_S_ISA_IO);
+		arc_bus_space_init(&arc_bus_mem, "picaisamem",
+		    PICA_P_ISA_MEM, PICA_V_ISA_MEM, 0, PICA_S_ISA_MEM);
+
 		arc_bus_com = &pica_bus;
 		comconstag = &pica_bus;
 		com_console_address = PICA_SYS_COM1;
@@ -275,11 +305,66 @@ mach_init(argc, argv, envv)
 		splvec.splstatclock = MIPS_INT_MASK_SPL5;
 		break;
 
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
-		strcpy(cpu_model, "NEC RD94");
-		pica_bus.bus_base = 0;
-		arc_bus_io.bus_base = RD94_V_PCI_IO;
-		arc_bus_mem.bus_base = RD94_V_PCI_MEM;
+	case NEC_R96:
+		switch (cputype) {
+		case NEC_R94:
+			strcpy(cpu_model, "NEC-R94");
+			break;
+		case NEC_RAx94:
+			strcpy(cpu_model, "NEC-RA'94");
+			break;
+		case NEC_RD94:
+			strcpy(cpu_model, "NEC-RD94");
+			break;
+		case NEC_R96:
+			strcpy(cpu_model, "NEC-R96");
+			break;
+		}
+
+		arc_bus_space_init(&pica_bus, "picabus",
+		    RD94_P_LOCAL_IO_BASE, RD94_V_LOCAL_IO_BASE,
+		    RD94_V_LOCAL_IO_BASE, RD94_S_LOCAL_IO_BASE);
+
+		switch (cputype) {
+		/* EISA machines */
+		case NEC_R94:
+		case NEC_R96:
+			/* XXX - not really confirmed */
+			arc_bus_space_init(&arc_bus_io, "rd94pciio",
+			    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
+			arc_bus_space_init(&arc_bus_mem, "rd94pcimem",
+			    RD94_P_PCI_MEM, RD94_V_PCI_MEM, 0, RD94_S_PCI_MEM);
+			break;
+
+		/* PCI machines */		
+		case NEC_RAx94: /* XXX - not really confirmed */
+		case NEC_RD94:
+			arc_bus_space_init(&arc_bus_io, "rd94pciio",
+			    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
+			arc_bus_space_init(&arc_bus_mem, "rd94pcimem",
+			    RD94_P_PCI_MEM, RD94_V_PCI_MEM, 0, RD94_S_PCI_MEM);
+		/*
+		 * By default, reserve 32MB in KSEG2 for PCI memory space.
+		 * Since kseg2iobufsize/NBPG*4 bytes are used for Sysmap,
+		 * this consumes 32KB physical memory.
+		 *
+		 * If a kernel with "options DIAGNOSTIC" panics with
+		 * the message "pmap_enter: kva too big", you have to
+		 * increase this value by a option like below:
+		 *     options KSEG2IOBUFSIZE=0x1b000000 # 432MB consumes 432KB
+		 * If you met this symptom, please report it to
+		 * port-arc-maintainer@netbsd.org.
+		 *
+		 * kseg2iobufsize will be refered from pmap_bootstrap().
+		 */
+			kseg2iobufsize = 0x02000000;
+			/* 32MB: consumes 32KB for PTEs */
+			break;
+		}
+
 		arc_bus_com = &pica_bus;
 		comconstag = &pica_bus;
 		com_console_address = RD94_SYS_COM1;
@@ -297,8 +382,12 @@ mach_init(argc, argv, envv)
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-		arc_bus_io.bus_base = RPC44_V_ISA_IO;
-		arc_bus_mem.bus_base = RPC44_V_ISA_MEM;
+
+		arc_bus_space_init(&arc_bus_io, "rpc44isaio",
+		    RPC44_P_ISA_IO, RPC44_V_ISA_IO, 0, RPC44_S_ISA_IO);
+		arc_bus_space_init(&arc_bus_mem, "rpc44isamem",
+		    RPC44_P_ISA_MEM, RPC44_V_ISA_MEM, 0, RPC44_S_ISA_MEM);
+
 		com_console_address = 0; /* Don't screew the mouse... */
 
 		/*
@@ -312,8 +401,12 @@ mach_init(argc, argv, envv)
 
 	case DESKSTATION_TYNE:
 		strcpy(cpu_model, "Deskstation Tyne");
-		arc_bus_io.bus_base = TYNE_V_ISA_IO;
-		arc_bus_mem.bus_base = TYNE_V_ISA_MEM;
+
+		arc_bus_space_init(&arc_bus_io, "tyneisaio",
+		    TYNE_P_ISA_IO, TYNE_V_ISA_IO, 0, TYNE_S_ISA_IO);
+		arc_bus_space_init(&arc_bus_mem, "tyneisamem",
+		    TYNE_P_ISA_MEM, TYNE_V_ISA_MEM, 0, TYNE_S_ISA_MEM);
+
 		com_console_address = 0; /* Don't screew the mouse... */
 
 		/*
@@ -328,8 +421,10 @@ mach_init(argc, argv, envv)
 	case SNI_RM200:
 		strcpy(cpu_model, "Siemens Nixdorf RM200");
 #if 0
-		arc_bus_io.bus_base = RM200_V_ISA_IO;
-		arc_bus_mem.bus_base = RM200_V_ISA_MEM;
+		arc_bus_space_init(&arc_bus_io, "rm200isaio",
+		    RM200_P_ISA_IO, RM200_V_ISA_IO, 0, RM200_S_ISA_IO);
+		arc_bus_space_init(&arc_bus_mem, "rm200isamem",
+		    RM200_P_ISA_MEM, RM200_V_ISA_MEM, 0, RM200_S_ISA_MEM);
 #endif
 		com_console_address = 0; /* Don't screew the mouse... */
 		break;
@@ -342,18 +437,18 @@ mach_init(argc, argv, envv)
 #if 0
 		cputype = ALGOR_P4032;
 		strcpy(cpu_model, "Algorithmics P-4032");
-		arc_bus_io.bus_sparse1 = 2;
-		arc_bus_io.bus_sparse2 = 1;
-		arc_bus_io.bus_sparse4 = 0;
-		arc_bus_io.bus_sparse8 = 0;
+		arc_bus_space_init(&arc_bus_io, "p4032bus",
+		    0LL, MIPS_KSEG1_START,
+		    MIPS_KSEG1_START, MIPS_KSEG2_START - MIPS_KSEG1_START);
+		/* stride: (1 << 2) == 4 byte alignment */
+		arc_bus_space_set_aligned_stride(&arc_bus_io, 2);
 		com_console_address = P4032_COM1;
 #else
 		cputype = ALGOR_P5064;
 		strcpy(cpu_model, "Algorithmics P-5064");
-		arc_bus_io.bus_sparse1 = 0;
-		arc_bus_io.bus_sparse2 = 0;
-		arc_bus_io.bus_sparse4 = 0;
-		arc_bus_io.bus_sparse8 = 0;
+		arc_bus_space_init(&arc_bus_io, "p5064bus",
+		    0LL, MIPS_KSEG1_START,
+		    MIPS_KSEG1_START, MIPS_KSEG2_START - MIPS_KSEG1_START);
 		com_console_address = P5064_COM1;
 #endif
 
@@ -436,6 +531,10 @@ mach_init(argc, argv, envv)
 			case 'N': /* don't ask for names */
 				boothowto &= ~RB_ASKNAME;
 				break;
+
+			case 's': /* use serial console */
+				com_console = 1;
+				break;
 			}
 
 		}
@@ -461,14 +560,29 @@ mach_init(argc, argv, envv)
 	 */
 	mips_vector_init();
 
+	/*
+	 * Map critical I/O spaces (e.g. for console printf(9)) on KSEG2.
+	 * We cannot call VM functions here, since uvm is not initialized,
+	 * yet.
+	 * Since printf(9) is called before uvm_init() in main(),
+	 * we have to handcraft console I/O space anyway.
+	 *
+	 * XXX - reserve these KVA space after UVM initialization.
+	 */
 	switch (cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
 		tlb_init_pica();
 		break;
 
+	case NEC_R94:
+	case NEC_R96:
+		tlb_init_nec_eisa();
+		break;
+
+	case NEC_RAx94:
 	case NEC_RD94:
-		tlb_init_nec_rd94();
+		tlb_init_nec_pci();
 		break;
 
 	case DESKSTATION_TYNE:
@@ -611,112 +725,73 @@ machine_ConfigCache()
 		mips_L2CacheSize = 128 * 1024;
 #endif
 		break;
+	case NEC_R94:
+		mips_L2CacheSize = 512 * 1024;
+		break;
+	case NEC_RAx94:
 	case NEC_RD94:
 		mips_L2CacheSize = 1024 * 1024;
+		break;
+	case NEC_R96:
+#if 0
+		mips_L2CacheSize = 1 * 1024 * 1024;
+#else	/* bigger is safer - XXX use arc bios to get the size */
+		mips_L2CacheSize = 2 * 1024 * 1024;
+#endif
 		break;
 	}
 }
 
-/*
- * NOTE:
- *	TLB 0, 1, 2 are reserved by locore_mips3.S.
- */
-
 void
 tlb_init_pica()
 {
-	struct tlb tlb;
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
-	tlb.tlb_hi = mips3_vad_to_vpn(R4030_V_LOCAL_IO_BASE);
-	tlb.tlb_lo0 = vad_to_pfn(R4030_P_LOCAL_IO_BASE) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(3, &tlb);
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(4, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(5, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_4M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(6, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_16M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_ISA_IO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(7, &tlb);
+	arc_enter_wired(R4030_V_LOCAL_IO_BASE, R4030_P_LOCAL_IO_BASE,
+	    PICA_P_INT_SOURCE, MIPS3_PG_SIZE_256K);
+	arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL, PICA_P_LOCAL_VIDEO_CTRL,
+	    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
+	    MIPS3_PG_SIZE_1M);
+	arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL, PICA_P_EXTND_VIDEO_CTRL,
+	    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
+	    MIPS3_PG_SIZE_1M);
+	arc_enter_wired(PICA_V_LOCAL_VIDEO, PICA_P_LOCAL_VIDEO,
+	    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2, MIPS3_PG_SIZE_4M);
+	arc_enter_wired(PICA_V_ISA_IO, PICA_P_ISA_IO, PICA_P_ISA_MEM,
+	    MIPS3_PG_SIZE_16M);
 }
 
 void
-tlb_init_nec_rd94()
+tlb_init_nec_eisa()
 {
-	struct tlb tlb;
+	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
+	    MIPS3_PG_SIZE_256K);
+	arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL, PICA_P_LOCAL_VIDEO_CTRL,
+	    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
+	    MIPS3_PG_SIZE_1M);
+	arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL, PICA_P_EXTND_VIDEO_CTRL,
+	    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
+	    MIPS3_PG_SIZE_1M);
+	arc_enter_wired(PICA_V_LOCAL_VIDEO, PICA_P_LOCAL_VIDEO,
+	    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2, MIPS3_PG_SIZE_4M);
+	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
+	    MIPS3_PG_SIZE_16M);
+}
 
-	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
-	tlb.tlb_hi = mips3_vad_to_vpn(RD94_V_LOCAL_IO_BASE);
-	tlb.tlb_lo0 = vad_to_pfn(RD94_P_LOCAL_IO_BASE) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = MIPS3_PG_G;
-	mips3_TLBWriteIndexedVPS(3, &tlb);
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
-	tlb.tlb_lo0 = mips3_vad_to_pfn64(0x108000000LL) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = mips3_vad_to_pfn64(0x108100000LL) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(4, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO);
-	tlb.tlb_lo0 = mips3_vad_to_pfn64(0x108200000LL) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = mips3_vad_to_pfn64(0x108300000LL) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(5, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_16M;
-	tlb.tlb_hi = mips3_vad_to_vpn(RD94_V_PCI_IO);
-	tlb.tlb_lo0 = vad_to_pfn(RD94_P_PCI_IO) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = mips3_vad_to_pfn64(RD94_P_PCI_MEM) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(6, &tlb);
+void
+tlb_init_nec_pci()
+{
+	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
+	    MIPS3_PG_SIZE_256K);
+	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
+	    MIPS3_PG_SIZE_16M);
 }
 
 void
 tlb_init_tyne()
 {
-	struct tlb tlb;
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
-	tlb.tlb_hi = mips3_vad_to_vpn(TYNE_V_BOUNCE);
-	tlb.tlb_lo0 = mips3_vad_to_pfn64(TYNE_P_BOUNCE) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = MIPS3_PG_G;
-	mips3_TLBWriteIndexedVPS(3, &tlb);
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(TYNE_V_ISA_IO);
-	tlb.tlb_lo0 = mips3_vad_to_pfn64(TYNE_P_ISA_IO) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = MIPS3_PG_G;
-	mips3_TLBWriteIndexedVPS(4, &tlb);
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(TYNE_V_ISA_MEM);
-	tlb.tlb_lo0 = mips3_vad_to_pfn64(TYNE_P_ISA_MEM) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = MIPS3_PG_G;
-	mips3_TLBWriteIndexedVPS(5, &tlb);
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_4K;
-	tlb.tlb_hi = mips3_vad_to_vpn(0xe3000000);
-	tlb.tlb_lo0 = 0x03ffc000 | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = MIPS3_PG_G;
-	mips3_TLBWriteIndexedVPS(6, &tlb);
-
+	arc_enter_wired(TYNE_V_BOUNCE, TYNE_P_BOUNCE, 0, MIPS3_PG_SIZE_256K);
+	arc_enter_wired(TYNE_V_ISA_IO, TYNE_P_ISA_IO, 0, MIPS3_PG_SIZE_1M);
+	arc_enter_wired(TYNE_V_ISA_MEM, TYNE_P_ISA_MEM, 0, MIPS3_PG_SIZE_1M);
+	arc_enter_wired(0xe3000000, 0xfff00000, 0, MIPS3_PG_SIZE_4K);
 }
 
 /*
@@ -834,50 +909,105 @@ consinit()
 		return;
 	initted = 1;
 
-#ifndef COMCONSOLE
-	switch (cputype) {
-	case ACER_PICA_61:
+	if (!com_console) {
+		switch (cputype) {
+		case ACER_PICA_61:
 #if NPC_PICA > 0
-		pccnattach();
-		return;
+			pccnattach();
+			return;
 #endif
-		break;
+#if NVGA_PICA > 0
+			if (vga_cnattach(&arc_bus_io, &arc_bus_mem, -1, 1)
+			    == 0) {
+#if NPCKBC > 0
+				pckbc_cnattach(&arc_bus_io, PICA_SYS_KBD, 1,
+				    PCKBC_KBD_SLOT);
+#endif
+			}
+			return;
+#endif
+			break;
 
-	case MAGNUM:
+		case MAGNUM:
 #if NFB > 0
-		fb_console();
-		return;
+			if (fb_console()) {
+#if NPCKBC > 0
+				pckbc_cnattach(&arc_bus_io, PICA_SYS_KBD, 1,
+				    PCKBC_KBD_SLOT);
 #endif
-		break;
+			}
+			return;
+#endif
+			break;
 
-	case NEC_RD94:
+		case NEC_R94:
+#if NFB > 0
+			fb_console();
+			return;
+#endif
+			break;
+
+		case NEC_RAx94:
+#if 0				/* XXX - physical address unknown */
+#if NPC_PICA > 0
+			pccnattach();
+			return;
+#endif
+#endif
+			break;
+
+		case NEC_RD94:
 #if NTGA_PCI > 0
-		tga_cnattach(/* XXX */);
-		return;
+			tga_cnattach( /* XXX */);
+#if NPCKBC > 0
+			pckbc_cnattach(&arc_bus_io, PICA_SYS_KBD, 1,
+			    PCKBC_KBD_SLOT);
 #endif
-		break;
+			return;
+#endif
+			break;
 
-	case DESKSTATION_TYNE:
-	case DESKSTATION_RPC44:
+		case NEC_R96:
+			/* XXX - some machines have jazz, and others have vga */
+#if NPC_PICA > 0
+			pccnattach();
+			return;
+#endif
+#if NFB > 0
+			fb_console();
+			return;
+#endif
+			break;
+
+		case DESKSTATION_TYNE:
+		case DESKSTATION_RPC44:
 #if NPC_ISA > 0
-		pccnattach();
-		return;
+			pccnattach();
+			return;
 #endif
-		break;
+#if NVGA_ISA > 0
+			if (vga_cnattach(&arc_bus_io, &arc_bus_mem, -1, 1)
+			    == 0) {
+				pckbc_cnattach(&arc_bus_io, IO_KBD, KBCMDP,
+				    PCKBC_KBD_SLOT);
+			}
+			return;
+#endif
+			break;
 
-	case ALGOR_P4032:
-	case ALGOR_P5064:
-		/* XXX For now... */
-		break;
+		case ALGOR_P4032:
+		case ALGOR_P5064:
+			/* XXX For now... */
+			break;
 
-	default:
+		default:
 #if NVGA > 0
-		vga_localbus_console();
-		return;
+			vga_localbus_console();
+			return;
 #endif
-		break;
+			break;
+		}
 	}
-#endif /* !COMCONSOLE */
 
 #if NCOM > 0
 	if (com_console_address)
@@ -1138,7 +1268,10 @@ initcpu()
 		out32(R4030_SYS_EXT_IMASK, 0x00);
 		break;
 
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		out32(RD94_SYS_LB_IE, 0);
 		out32(RD94_SYS_EXT_IMASK, 0);
 		break;
