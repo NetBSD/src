@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.5 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: vector.S,v 1.6 2003/02/04 14:17:11 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -532,7 +532,6 @@ IDTVEC(softserial)
 	call	_C_LABEL(i386_softintunlock)
 #endif
 	decl	CPUVAR(IDEPTH)
-	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	*%esi
 
 IDTVEC(softnet)
@@ -564,7 +563,6 @@ IDTVEC(softnet)
 	call	_C_LABEL(i386_softintunlock)	
 #endif
 	decl	CPUVAR(IDEPTH)
-	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	*%esi
 
 IDTVEC(softclock)
@@ -584,7 +582,6 @@ IDTVEC(softclock)
 	call	_C_LABEL(i386_softintunlock)		
 #endif
 	decl	CPUVAR(IDEPTH)
-	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	*%esi
 
 /*
