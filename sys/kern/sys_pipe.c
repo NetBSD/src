@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.8 2001/07/17 18:21:59 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.9 2001/07/18 06:48:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -437,7 +437,7 @@ pipe_create(cpipep, allockva)
 	 * if pipespace() fails.
 	 */
 	cpipe->pipe_buffer.buffer = NULL;
-	bzero(&cpipe->pipe_sel, sizeof(cpipe->pipe_sel));
+	memset(&cpipe->pipe_sel, 0, sizeof(cpipe->pipe_sel));
 	cpipe->pipe_state = PIPE_SIGNALR;
 	cpipe->pipe_peer = NULL;
 	cpipe->pipe_busy = 0;
@@ -1559,7 +1559,7 @@ pipe_stat(fp, ub, p)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
-	bzero((caddr_t)ub, sizeof(*ub));
+	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
