@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  *  Edward Wang at The University of California, Berkeley.
@@ -33,18 +33,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)README	3.13 (Berkeley) 6/6/90
+ *	@(#)README	8.1 (Berkeley) 6/6/93
  */
 
 Compilation notes:
 
-     There is only one compiler option:
+     Compiler options:
 
 	BYTE_ORDER (used only in ww.h)
 		It should already be defined in machine/endian.h.
 		The code knows about BIG_ENDIAN, LITTLE_ENDIAN, and PDP_ENDIAN.
 		It only cares about byte order in words, so PDP_ENDIAN
 		is the same as LITTLE_ENDIAN.
+	OLD_TTY
+		If you don't have Posix termios, then define this.
+	VMIN_BUG
+		Even if you have Posix termios, define this if the MIN and TIME
+		feature in noncanonical mode doesn't work correctly.
 
      Ok, there's another one, STR_DEBUG.  It turns on consistency checks
      in the string allocator.  It's been left on since performace doesn't
@@ -57,7 +62,7 @@ Compilation notes:
 at various times to use cpp -M and, currently, mkdep.  The only library
 it needs is termcap.
 
-     Window, as is, only runs on 4.3 machines.
+     Window, as is, only runs on 4.3 (or later) machines.
 
      On 4.2 machines, at least these modifications must be done:
 
