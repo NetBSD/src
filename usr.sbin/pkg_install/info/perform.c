@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.34 2000/12/13 03:17:54 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.35 2001/03/06 10:30:54 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.34 2000/12/13 03:17:54 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.35 2001/03/06 10:30:54 wiz Exp $");
 #endif
 #endif
 
@@ -239,9 +239,19 @@ bail:
 static int
 foundpkg(const char *found, char *data)
 {
+	char buf[FILENAME_MAX+1];
+
+	/* we only want to display this if it really is a directory */
+	snprintf(buf, sizeof(buf), "%s/%s", data, found);
+	if (!isdir(buf)) {
+		/* return value seems to be ignored for now */
+		return -1;
+	}
+
 	if (!Quiet) {
 		printf("%s\n", found);
 	}
+
 	return 0;
 }
 
@@ -252,17 +262,16 @@ foundpkg(const char *found, char *data)
 static int
 CheckForPkg(char *pkgspec, char *dbdir)
 {
-	struct stat st;
 	char    buf[FILENAME_MAX];
 	int     error;
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
 		/* expensive (pattern) match */
-		return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
+		return !findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
 	}
 	/* simple match */
 	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = (stat(buf, &st) < 0);
+	error = !isdir(buf);
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
 	}
@@ -272,7 +281,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 		char    try[FILENAME_MAX];
 		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
 		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-			foundpkg, NULL) != 0) {
+			foundpkg, dbdir) != 0) {
 			error = 0;
 		}
 	}
