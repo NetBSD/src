@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/05/20 02:06:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/20 05:01:36 mrg Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
@@ -35,6 +35,4 @@ MLINKS= vi.1 ex.1 vi.1 view.1
 cat=	dutch english german ru_SU.KOI8-R swedish
 datadir=	/usr/share
 afterinstall:
-	install -d $(datadir)/vi
-	install -d $(datadir)/vi/catalog
 	(cd ${.CURDIR}/../catalog && install -m $(NONBINMODE) -c $(cat) $(datadir)/vi/catalog )
