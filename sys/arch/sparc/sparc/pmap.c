@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.233 2003/01/20 15:45:40 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.234 2003/01/20 22:03:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5971,6 +5971,15 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 				cache_flush_page(va, 0);
 			}
 		}
+
+		/*
+		 * Invalidate the mapping now, so we can avoid the
+		 * de-map and update protocol when setting the new
+		 * PTE below.
+		 */
+		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+			SRMMU_TEINVALID, pm->pm_ctx != NULL,
+			pm->pm_ctxnum, PMAP_CPUSET(pm));
 	} else {
 		/* adding new entry */
 		sp->sg_npte++;
@@ -5978,8 +5987,6 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
-	 * Note that the mapping for a malloc page will always be
-	 * unique (hence will never cause a second call to malloc).
 	 */
 	if (pv != NULL)
 	        pteproto &= ~(pv_link4m(pv, pm, va, (pteproto & SRMMU_PG_C) == 0));
@@ -5989,7 +5996,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 		panic("pmap_enk4m: missing segment table for va 0x%lx",va);
 #endif
 
-	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto, 1, 0, CPUSET_ALL);
+	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
 	splx(s);
 	return (0);
@@ -6157,6 +6164,16 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 				if (pm->pm_ctx && (tpte & SRMMU_PG_C))
 					cache_flush_page(va, pm->pm_ctxnum);
 			}
+			/*
+			 * We end up in this `change map' branch relatively
+			 * infrequently.
+			 * Invalidate the mapping now, so we can avoid the
+			 * de-map and update protocol when setting the new
+			 * PTE below.
+			 */
+			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+				SRMMU_TEINVALID, pm->pm_ctx != NULL,
+				pm->pm_ctxnum, PMAP_CPUSET(pm));
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -6168,14 +6185,14 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 				pm->pm_stats.wired_count++;
 		}
 	}
+
 	if (pv != NULL)
 	        pteproto &= ~(pv_link4m(pv, pm, va, (pteproto & SRMMU_PG_C) == 0));
 
 	/*
 	 * Update PTEs, flush TLB as necessary.
 	 */
-	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto,
-	    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
+	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
 out:
 	splx(s);
