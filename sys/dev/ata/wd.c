@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.169 1998/01/15 01:26:13 cgd Exp $ */
+/*	$NetBSD: wd.c,v 1.170 1998/03/25 09:58:24 leo Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -119,7 +119,9 @@ bdev_decl(wd);
 
 void	wdfinish	__P((struct wd_softc *, struct buf *));
 int	wdsetctlr	__P((struct wd_link *));
+#ifdef HAS_BAD144_HANDLING
 static void bad144intern __P((struct wd_softc *));
+#endif
 int	wdlock		__P((struct wd_link *));
 void	wdunlock	__P((struct wd_link *));
 
@@ -603,8 +605,10 @@ wdgetdisklabel(wd)
 
 	if (d_link->sc_state > GEOMETRY)
 		d_link->sc_state = GEOMETRY;
+#ifdef HAS_BAD144_HANDLING
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
+#endif
 }
 
 
@@ -651,6 +655,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		return EIO;
 
 	switch (xfer) {
+#ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -658,6 +663,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		wd->sc_dk.dk_label->d_flags |= D_BADSECT;
 		bad144intern(wd);
 		return 0;
+#endif
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
@@ -945,6 +951,7 @@ wddump(dev, blkno, va, size)
 }
 #endif /* __BDEVSW_DUMP_NEW_TYPE */
 
+#ifdef HAS_BAD144_HANDLING
 /*
  * Internalize the bad sector table.
  */
@@ -959,7 +966,7 @@ bad144intern(wd)
 
 	WDDEBUG_PRINT(("bad144intern\n"));
 
-	for (; i < 126; i++) {
+	for (; i < NBT_BAD; i++) {
 		if (bt->bt_bad[i].bt_cyl == 0xffff)
 			break;
 		d_link->sc_badsect[i] =
@@ -967,9 +974,10 @@ bad144intern(wd)
 		    (bt->bt_bad[i].bt_trksec >> 8) * lp->d_nsectors +
 		    (bt->bt_bad[i].bt_trksec & 0xff);
 	}
-	for (; i < 127; i++)
+	for (; i < NBT_BAD+1; i++)
 		d_link->sc_badsect[i] = -1;
 }
+#endif
 
 void
 wderror(d_link, bp, msg)
