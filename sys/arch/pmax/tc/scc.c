@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.6 1996/01/29 22:52:42 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.7 1996/01/31 08:47:22 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -133,7 +133,6 @@ extern void ttrstrt	__P((void *));
  */
 #ifdef pmax
 #define HAVE_RCONS
-#include <machine/ioasic_machdep.h>
 #endif
 
 /*
@@ -433,8 +432,8 @@ sccattach(parent, self, aux)
 #ifdef HAVE_RCONS
 	if ((cn_tab->cn_getc == LKgetc)) {
 		/* XXX test below may be too inclusive ? */
-		if (1 /*CONSOLE_ON_UNIT(unit)*/ ) {
-
+		/*(1)*/ /*(CONSOLE_ON_UNIT(unit))*/
+		if (major(cn_tab->cn_dev) == SCCDEV) {
 			if (unit == 1) {
 				s = spltty();
 				ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);

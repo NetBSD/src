@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1996/01/29 22:52:32 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1996/01/31 08:46:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,7 +155,7 @@ int	physmem;		/* max supported memory, changes to actual */
 int	pmax_boardtype;		/* Mother board type */
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
-u_long	asic_base;		/* Base address of I/O asic */
+u_long	ioasic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
 
 extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
@@ -468,7 +468,7 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[0] = KMIN_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = KMIN_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KMIN_PHYS_TC_2_START;
-		asic_base = MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
+		ioasic_base = MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
 		pmax_hardware_intr = kmin_intr;
 		tc_enable_interrupt = kmin_enable_intr;
 		kmin_tc3_imask = (KMIN_INTR_CLOCK | KMIN_INTR_PSWARN |
@@ -493,8 +493,8 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Initialize interrupts.
 		 */
-		*(u_int *)ASIC_REG_IMSK(asic_base) = KMIN_IM0;
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_IMSK(ioasic_base) = KMIN_IM0;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 
 		/* clear any memory errors from probes */
 		Mach_reset_addr =
@@ -512,7 +512,7 @@ mach_init(argc, argv, code, cv)
 		tc_min_slot = XINE_TC_MIN;
 		tc_slot_phys_base[0] = XINE_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = XINE_PHYS_TC_1_START;
-		asic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
+		ioasic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
 		pmax_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
 		Mach_splbio = Mach_spl3;
@@ -527,8 +527,8 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Initialize interrupts.
 		 */
-		*(u_int *)ASIC_REG_IMSK(asic_base) = XINE_IM0;
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_IMSK(ioasic_base) = XINE_IM0;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 		/* clear any memory errors from probes */
 		Mach_reset_addr =
 		    (u_int*)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT);
@@ -544,7 +544,7 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[0] = KN03_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = KN03_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KN03_PHYS_TC_2_START;
-		asic_base = MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
+		ioasic_base = MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
 		pmax_hardware_intr = kn03_intr;
 		tc_enable_interrupt = kn03_enable_intr;
 		Mach_reset_addr =
@@ -570,11 +570,11 @@ mach_init(argc, argv, code, cv)
 		 */
 		kn03_tc3_imask = KN03_IM0 &
 			~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
-		*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 		wbflush();
 		/* XXX hard-reset LANCE */
-		 *(u_int *)ASIC_REG_CSR(asic_base) |= 0x100;
+		 *(u_int *)IOASIC_REG_CSR(ioasic_base) |= 0x100;
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
@@ -1211,7 +1211,7 @@ clkread()
 		return (0);
 	}
 
-	cycles = *(u_long*)ASIC_REG_CTR(asic_base);
+	cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
 
 	/* Compute difference in cycle count from last hardclock() to now */
 #if 1
@@ -1247,7 +1247,7 @@ clkread()
 void
 microset()
 {
-		latched_cycle_cnt = *(u_long*)(ASIC_REG_CTR(asic_base));
+		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
 }
 #endif
 #endif /*DS5000_240*/
@@ -1303,7 +1303,7 @@ initcpu()
 	case DS_3MAXPLUS:
 	case DS_3MIN:
 	case DS_MAXINE:
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 		break;
 	case DS_3MAX:
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
@@ -1499,6 +1499,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 		mask = (KMIN_INTR_SCSI | KMIN_INTR_SCSI_PTR_LOAD |
 			KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
 		break;
+
 	case KMIN_LANCE_SLOT:
 		mask = KMIN_INTR_LANCE;
 		break;
@@ -1627,7 +1628,7 @@ xine_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].intr = 0;
 		tc_slot_info[slotno].sc = 0;
 	}
-	*(u_int *)ASIC_REG_IMSK(asic_base) = xine_tc3_imask;
+	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = xine_tc3_imask;
 }
 
 #ifdef DS5000_240
@@ -1637,7 +1638,7 @@ kn03_tc_reset()
 /*
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
-	*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 	*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
 }
 
@@ -1682,7 +1683,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 		break;
 	case KN03_LANCE_SLOT:
 		mask = KN03_INTR_LANCE;
-		mask |= ASIC_INTR_LANCE_READ_E;
+		mask |= IOASIC_INTR_LANCE_READ_E;
 		break;
 	case KN03_SCC0_SLOT:
 		mask = KN03_INTR_SCC_0;
@@ -1710,7 +1711,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 done:
-	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
+	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
 	wbflush();
 }
 #endif /* DS5000_240 */
@@ -1726,11 +1727,11 @@ asic_init(isa_maxine)
 	volatile u_int *decoder;
 
 	/* These are common between 3min and maxine */
-	decoder = (volatile u_int *)ASIC_REG_LANCE_DECODE(asic_base);
+	decoder = (volatile u_int *)IOASIC_REG_LANCE_DECODE(ioasic_base);
 	*decoder = KMIN_LANCE_CONFIG;
 
 	/* set the SCSI DMA configuration map */
-	decoder = (volatile u_int *) ASIC_REG_SCSI_DECODE(asic_base);
+	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
 	(*decoder) = 0x00000000e;
 }
 #endif /* DS5000 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1996/01/29 22:52:40 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1996/01/31 08:47:17 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -64,8 +64,7 @@
 #ifdef pmax
 #define wbflush() MachEmptyWriteBuffer()
 
-/* These should be in a header file, but where? */
-extern u_long asic_base;
+/* This should be in a header file, but where? */
 extern struct cfdriver mainbuscd;	/* XXX really 3100/5100 b'board */
 
 #include <pmax/pmax/kn01.h>
@@ -189,7 +188,7 @@ leattach(parent, self, aux)
 		sc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
 #endif
 		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(le_iomem);
-/* XXX */	cp = (u_char *)ASIC_SYS_ETHER_ADDRESS(asic_base);
+/* XXX */	cp = (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
 
 		sc->sc_copytodesc = copytobuf_gap2;
 		sc->sc_copyfromdesc = copyfrombuf_gap2;
@@ -200,7 +199,7 @@ leattach(parent, self, aux)
 		/*
 		 * And enable Lance dma through the asic.
 		 */
-		ldp = (volatile u_int *) (ASIC_REG_LANCE_DMAPTR(asic_base));
+		ldp = (volatile u_int *) (IOASIC_REG_LANCE_DMAPTR(ioasic_base));
 		dma_mask = ((tc_addr_t)le_iomem << 3);
 #ifdef alpha
 		/* Set upper 64 bits of DMA mask */
@@ -208,8 +207,8 @@ leattach(parent, self, aux)
 			(((tc_addr_t)le_iomem >> 29) & 0x1f);
 #endif /*alpha*/
 		*ldp = dma_mask;
-		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
-		    ASIC_CSR_DMAEN_LANCE;
+		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) |=
+		    IOASIC_CSR_DMAEN_LANCE;
 		wbflush();
 	}
 	else
@@ -263,7 +262,8 @@ leattach(parent, self, aux)
 
 	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
 		/* XXX YEECH!!! */
-		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;
+		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) |=
+			IOASIC_INTR_LANCE;
 		wbflush();
 	}
 }

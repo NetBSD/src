@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.7 1996/01/29 22:52:37 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.8 1996/01/31 08:47:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -69,6 +69,12 @@ struct asic_softc {
 int	asicmatch __P((struct device *, void *, void *));
 void	asicattach __P((struct device *, struct device *, void *));
 int     asicprint(void *, char *);
+
+/* Device locators. */
+#define	ioasiccf_offset	cf_loc[0]		/* offset */
+
+#define	IOASIC_OFFSET_UNKNOWN	-1
+
 struct cfdriver ioasiccd =
     { NULL, "asic", asicmatch, asicattach, DV_DULL, sizeof(struct asic_softc) };
 
@@ -91,7 +97,7 @@ struct asic_slot {
 };
 
 #ifdef	pmax
-#define ASIC_DEBUG
+#define IOASIC_DEBUG
 
 struct asic_slot *asic_slots;
 #include "ds-asic-conf.c"
@@ -102,25 +108,25 @@ struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
 
 {
 	{ { "lance",		/* XXX */ 0, 0x000c0000, },
-	    ASIC_INTR_LANCE, asic_intrnull, (void *)(long)ASIC_SLOT_LANCE, },
+	    ASIC_INTR_LANCE, asic_intrnull, (void *)(long)IOASIC_SLOT_LANCE, },
 	{ { "scc",		/* XXX */ 1, 0x00100000, },
-	    ASIC_INTR_SCC_0, asic_intrnull, (void *)(long)ASIC_SLOT_SCC0, },
+	    ASIC_INTR_SCC_0, asic_intrnull, (void *)(long)IOASIC_SLOT_SCC0, },
 	{ { "scc",		/* XXX */ 2, 0x00180000, },
-	    ASIC_INTR_SCC_1, asic_intrnull, (void *)(long)ASIC_SLOT_SCC1, },
+	    ASIC_INTR_SCC_1, asic_intrnull, (void *)(long)IOASIC_SLOT_SCC1, },
 	{ { "dallas_rtc",	/* XXX */ 3, 0x00200000, },
-	    0, asic_intrnull, (void *)(long)ASIC_SLOT_RTC, },
+	    0, asic_intrnull, (void *)(long)IOASIC_SLOT_RTC, },
 	{ { "AMD79c30",		/* XXX */ 4, 0x00240000, },
-	    0 /* XXX */, asic_intrnull, (void *)(long)ASIC_SLOT_ISDN, },
+	    0 /* XXX */, asic_intrnull, (void *)(long)IOASIC_SLOT_ISDN, },
 };
 #endif	/*alpha*/
 
-#ifdef ASIC_DEBUG
-#define ASIC_DPRINTF(x)	printf x
+#ifdef IOASIC_DEBUG
+#define IOASIC_DPRINTF(x)	printf x
 #else
-#define ASIC_DPRINTF(x)	(void) x
+#define IOASIC_DPRINTF(x)	(void) x
 #endif
 
-caddr_t asic_base;		/* XXX XXX XXX */
+caddr_t ioasic_base;		/* XXX XXX XXX */
 
 int
 asicmatch(parent, cfdata, aux)
@@ -131,7 +137,7 @@ asicmatch(parent, cfdata, aux)
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
-	ASIC_DPRINTF(("asicmatch: %s slot %d offset 0x%x pri %d\n",
+	IOASIC_DPRINTF(("asicmatch: %s slot %d offset 0x%x pri %d\n",
 		ca->ca_name, ca->ca_slot, ca->ca_offset, ca->ca_slotpri));
 
 	/* An IOCTL asic can only occur on the turbochannel, anyway. */
@@ -195,19 +201,19 @@ asicattach(parent, self, aux)
 	if (asic_slots == NULL)
 		panic("asicattach: no asic_slot map\n");
 
-	ASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
+	IOASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
 
 	sc->sc_base = (caddr_t)ca->ca_addr;
 
-	asic_base = sc->sc_base;			/* XXX XXX XXX */
+	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
 
 #ifdef pmax
 	printf("\n");
 #else	/* Alpha AXP: select ASIC speed  */
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
-		*(volatile u_int *)ASIC_REG_CSR(sc->sc_base) |=
-		    ASIC_CSR_FASTMODE;
+		*(volatile u_int *)IOASIC_REG_CSR(sc->sc_base) |=
+		    IOASIC_CSR_FASTMODE;
 		MB();
 		printf(": slow mode\n");
 	} else
@@ -226,7 +232,7 @@ asicattach(parent, self, aux)
         /* Try to configure each CPU-internal device */
         for (i = 0; i < ASIC_MAX_NSLOTS; i++) {
 
-		ASIC_DPRINTF(("asicattach: entry %d, base addr %x\n",
+		IOASIC_DPRINTF(("asicattach: entry %d, base addr %x\n",
 		       i, sc->sc_base));
 
                 nca = &asic_slots[i].as_ca;
@@ -235,14 +241,14 @@ asicattach(parent, self, aux)
 			break;
 		nca->ca_addr = ((u_int)sc->sc_base) + nca->ca_offset;
 
-		ASIC_DPRINTF((" adding %s subslot %d offset %x addr %x\n",
+		IOASIC_DPRINTF((" adding %s subslot %d offset %x addr %x\n",
 		       nca->ca_name, nca->ca_slot, nca->ca_offset,
 		       nca->ca_addr));
 
                 /* Tell the autoconfig machinery we've found the hardware. */
                 config_found(self, nca, asicprint);
         }
-	ASIC_DPRINTF(("asicattach: done\n"));
+	IOASIC_DPRINTF(("asicattach: done\n"));
 }
 
 int
@@ -257,6 +263,17 @@ asicprint(aux, pnp)
 	printf(" offset 0x%lx", ca->ca_offset);
 	printf(" priority %d", ca->ca_slotpri);
 	return (UNCONF);
+}
+
+int
+ioasic_submatch(match, d)
+	struct cfdata *match;
+	/*struct ioasicdev_attach_args *d;*/
+	struct confargs *d;
+{
+
+	return ((match->ioasiccf_offset == /*d->iada_offset*/ d->ca_offset) ||
+		(match->ioasiccf_offset == IOASIC_OFFSET_UNKNOWN));
 }
 
 /*
@@ -278,7 +295,7 @@ asic_intr_establish(ca, handler, val)
 {
 
 #if defined(DIAGNOSTIC) && defined(alpha)
-	if (ca->ca_slot == ASIC_SLOT_RTC)
+	if (ca->ca_slot == IOASIC_SLOT_RTC)
 		panic("setting clock interrupt incorrectly");
 #endif	/*defined(DIAGNOSTIC) && defined(alpha)*/
 
@@ -292,11 +309,11 @@ asic_intr_establish(ca, handler, val)
 	 * tables with unused entries, so that slot is always equal
 	 * to "priority" (software pseudo-slot number).  FIXME.
 	 */
-#if defined(ASIC_DEBUG) && 0
+#if defined(IOASIC_DEBUG) && 0
 	printf("asic: %s:  intr for entry %d slot %d pri %d\n", 
 		 ca->ca_name, ca->ca_slot, ca->ca_slotpri,
 		 asic_slots[ca->ca_slot].as_val);
-#endif	/*ASIC_DEBUG*/
+#endif	/*IOASIC_DEBUG*/
 
 #ifdef pmax
 	tc_enable_interrupt(ca->ca_slotpri, handler, val, 1);
@@ -317,7 +334,7 @@ asic_intr_disestablish(ca)
 #ifdef pmax
 	panic("asic_intr_disestablish: shouldn't ever be called\n");
 #else
-	if (ca->ca_slot == ASIC_SLOT_RTC)
+	if (ca->ca_slot == IOASIC_SLOT_RTC)
 	        panic("asic_intr_disestablish: can't do clock interrupt");
 
 	/* XXX SHOULD NOT BE THIS LITERAL */
@@ -328,6 +345,19 @@ asic_intr_disestablish(ca)
 	asic_slots[ca->ca_slot].as_handler = dsasic_intrnull;
 	asic_slots[ca->ca_slot].as_val = (void *)(long)ca->ca_slot;
 #endif
+}
+
+
+void
+ioasic_intr_establish(dev, cookie, level, handler, val)
+    struct device *dev;
+    void *cookie;
+    tc_intrlevel_t level;
+    intr_handler_t handler;
+    void *val;
+{
+
+	(*tc_enable_interrupt)((int)cookie, handler, val, 1);
 }
 
 #ifdef	alpha
@@ -345,7 +375,7 @@ asic_intr(val)
 	u_int32_t sir, junk;
 	volatile u_int32_t *sirp, *junkp;
 
-	sirp = (volatile u_int32_t *)ASIC_REG_INTR(sc->sc_base);
+	sirp = (volatile u_int32_t *)IOASIC_REG_INTR(sc->sc_base);
 
 	gifound = 0;
 	do {
@@ -374,4 +404,31 @@ asic_intrnull(val)
 {
 
         panic("uncaught IOCTL ASIC intr for slot %ld\n", (long)val);
+}
+
+
+/* XXX */
+char *
+ioasic_lance_ether_address()
+{
+
+	return (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
+}
+
+void
+ioasic_lance_dma_setup(v)
+	void *v;
+{
+	volatile u_int32_t *ldp;
+	tc_addr_t tca;
+
+	tca = (tc_addr_t)v;
+
+	ldp = (volatile u_int *)IOASIC_REG_LANCE_DMAPTR(ioasic_base);
+	*ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
+	tc_wmb();
+
+	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
+	    IOASIC_CSR_DMAEN_LANCE;
+	tc_mb();
 }
