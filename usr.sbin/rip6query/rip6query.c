@@ -1,4 +1,5 @@
-/*	$NetBSD: rip6query.c,v 1.3 1999/12/13 04:30:53 itojun Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.4 2000/12/19 23:55:02 itojun Exp $	*/
+/*	$KAME: rip6query.c,v 1.9 2000/12/19 23:54:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,10 +37,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
+#include <errno.h>
 #include <err.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
+
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
@@ -57,7 +61,6 @@
 #endif
 
 int	s;
-extern int errno;
 struct sockaddr_in6 sin6;
 struct rip6	*ripbuf;
 
@@ -77,8 +80,6 @@ main(argc, argv)
 	struct sockaddr_in6 fsock;
 	int i, n, len, flen;
 	int c;
-	extern char *optarg;
-	extern int optind;
 	int ifidx = -1;
 	int error;
 	char pbuf[10];
