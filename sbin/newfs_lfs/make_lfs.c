@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.1 2005/02/26 05:45:54 perseant Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.2 2005/03/25 20:17:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.1 2005/02/26 05:45:54 perseant Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.2 2005/03/25 20:17:58 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -350,11 +350,11 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 
 	/* Initialize LFS subsystem with blank superblock and ifile. */
 	fs = lfs_init(devfd, start, (ufs_daddr_t)0, 1, 1/* XXX debug*/);
-	save_devvp = fs->lfs_unlockvp;
+	save_devvp = fs->lfs_devvp;
 	vp = fs->lfs_ivnode;
 	*fs = lfs_default;
 	fs->lfs_ivnode = vp;
-	fs->lfs_unlockvp = save_devvp;
+	fs->lfs_devvp = save_devvp;
 
 
 	/* Set version first of all since it is used to compute other fields */
