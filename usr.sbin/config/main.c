@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 1998/06/30 03:30:56 jonathan Exp $	*/
+/*	$NetBSD: main.c,v 1.37 1998/10/05 19:50:40 itohy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -324,6 +324,7 @@ mksymlinks()
 	if (ret)
 		(void)fprintf(stderr, "config: symlink(machine -> %s): %s\n",
 		    p, strerror(errno));
+	free(p);
 
 	if (machinearch != NULL) {
 		sprintf(buf, "arch/%s/include", machinearch);
