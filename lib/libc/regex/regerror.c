@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.11 1998/11/14 16:43:49 christos Exp $	*/
+/*	$NetBSD: regerror.c,v 1.12 1998/12/08 13:48:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.11 1998/11/14 16:43:49 christos Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.12 1998/12/08 13:48:06 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -144,12 +144,11 @@ size_t errbuf_size;
 			if (r->code == target)
 				break;
 	
-		if (errcode&REG_ITOA) {
+		if (errcode & REG_ITOA) {
 			if (r->code != 0) {
 				(void)strncpy(convbuf, r->name, sizeof convbuf);
 				convbuf[sizeof(convbuf) - 1] = '\0';
-			}
-			else
+			} else
 				(void)snprintf(convbuf, sizeof convbuf,
 				    "REG_0x%x", target);
 			s = convbuf;
@@ -168,7 +167,7 @@ size_t errbuf_size;
 
 /*
  * regatoi - internal routine to implement REG_ATOI
- * static char *regatoi(const regex_t *preg, char *localbuf, int buflen);
+ * static char *regatoi(const regex_t *preg, char *localbuf, size_t buflen);
  */
 static char *
 regatoi(preg, localbuf, buflen)
