@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.2.10.1 1999/09/19 15:33:17 he Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.2.10.2 1999/09/19 15:54:46 he Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -29,9 +29,7 @@ ENTRY(__modsi3)
 	ldmfd	sp!, {pc}
 
 L_overflow:
-	mov	r0, #8			/* SIGFPE */
-	bl	_raise			/* raise it */
-	mov	r0, #0
+	mvn	r0, #0
 	mov	pc, lr
 
 ENTRY(__udivsi3)
