@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.135 2002/04/03 13:57:47 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.136 2002/04/12 18:44:57 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,9 +205,14 @@ XLEAF(linux_esigcode)
 #ifdef COMPAT_IRIX
 #define SYSCALL_SHIFT 1000		# 1000 shift as in irix_syscall.c
 LEAF_NOPROFILE(irix_sigcode)
-	move	a0, sp
-	li	v0, IRIX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
-	syscall
+#	lw	t1,32(sp)
+#	lw	t0,28(sp)
+#	sw	t1,0(t0)
+	lw	a0,40(sp)
+	lw	a1,44(sp)
+	lw	a2,36(sp)
+	li	v0, IRIX_SYS_sigreturn	+ SYSCALL_SHIFT
+	syscall				# sigreturn(scp, ucp, sig)
 	break	0			# just in case sigreturn fails
 END(irix_sigcode)
 XLEAF(irix_esigcode)

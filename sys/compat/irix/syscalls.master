@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2002/04/02 20:29:52 manu Exp $
+	$NetBSD: syscalls.master,v 1.33 2002/04/12 18:44:59 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -176,7 +176,8 @@
 			    struct svr4_strbuf *dat, int flags); }
 87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	STD		{ int irix_sys_sigreturn(struct irix_sigreturna isr); }
+88	STD		{ int irix_sys_sigreturn(struct irix_sigcontext *scp, \
+			    struct irix_ucontext *ucp, int signo); }
 89	NOARGS		{ int compat_43_sys_accept(int s, \
 			    struct sockaddr *name, int *anamelen); }
 90	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \

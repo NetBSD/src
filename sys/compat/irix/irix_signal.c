@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.11 2002/04/01 15:45:16 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.12 2002/04/12 18:44:58 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.11 2002/04/01 15:45:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.12 2002/04/12 18:44:58 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -70,6 +70,12 @@ extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
 static int irix_setinfo __P((struct proc *, int, irix_irix5_siginfo_t *));
+static void irix_set_ucontext __P((struct irix_ucontext*, sigset_t *, 
+    int, struct proc *));
+static void irix_set_sigcontext __P((struct irix_sigcontext*, sigset_t *, 
+    int, struct proc *));
+static void irix_get_ucontext __P((struct irix_ucontext*, struct proc *));
+static void irix_get_sigcontext __P((struct irix_sigcontext*, struct proc *));
 
 #define irix_sigmask(n)	 (1 << (((n) - 1) & 31))
 #define irix_sigword(n)	 (((n) - 1) >> 5) 
@@ -80,7 +86,7 @@ static int irix_setinfo __P((struct proc *, int, irix_irix5_siginfo_t *));
 /* 
  * This is ripped from svr4_setinfo. See irix_sys_waitsys...
  */
-int
+static int
 irix_setinfo(p, st, s)
 	struct proc *p;
 	int st;
@@ -168,24 +174,28 @@ irix_to_native_sigset(sss, bss)
 }
 
 void
-irix_sendsig(catcher, sig, mask, code)  /* XXX Check me */
+irix_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
-	struct irix_sigcontext *fp;
+	void *fp;
+	void *sp;
 	struct frame *f;
-	int i,onstack;
-	struct irix_sigcontext sc;
+	int onstack;
+	int error;
+	struct irix_sigframe sf;
  
+	f = (struct frame *)p->p_md.md_regs;
 #ifdef DEBUG_IRIX
 	printf("irix_sendsig()\n");
 	printf("catcher = %p, sig = %d, code = 0x%lx\n",
 	    (void *)catcher, sig, code);
+	printf("irix_sendsig(): starting [PC=%p SP=%p SR=0x%08lx]\n",
+	    (void *)f->f_regs[PC], (void *)f->f_regs[SP], f->f_regs[SR]);
 #endif /* DEBUG_IRIX */
-	f = (struct frame *)p->p_md.md_regs;
 
 	/*
 	 * Do we need to jump onto the signal stack?
@@ -201,60 +211,56 @@ irix_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct irix_sigcontext *)
-		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+		sp = (void *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
 		    + p->p_sigctx.ps_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
-		fp = (struct irix_sigcontext *)(u_int32_t)f->f_regs[SP];
+		sp = (void *)(u_int32_t)f->f_regs[SP];
 
 	/*
-	 * Build stack frame for signal trampoline.
+	 * Build the signal frame
 	 */
-	memset(&sc, 0, sizeof sc);
+	bzero(&sf, sizeof(sf));
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
+		irix_set_ucontext(&sf.isf_ctx.iuc, mask, code, p);
+	else
+		irix_set_sigcontext(&sf.isf_ctx.isc, mask, code, p);
+	
+	sf.isf_signo = native_to_svr4_signo[sig];
 
-	native_to_irix_sigset(mask, &sc.isc_sigset);
-	for (i = 1; i < 32; i++) { /* save gpr1 - gpr31 */
-		sc.isc_regs[i] = f->f_regs[i];
-	}
-	sc.isc_regs[0] = 0;
-	sc.isc_fp_rounded_result = 0;
-	sc.isc_regmask = ~0x1UL;
-	sc.isc_mdhi = f->f_regs[MULHI];
-	sc.isc_mdlo = f->f_regs[MULLO];
-	sc.isc_pc = f->f_regs[PC];
+	/*
+	 * XXX On, IRIX, the sigframe holds a pointer to 
+	 * errno in userspace. This is used by the signal
+	 * trampoline. No idea how to emulate this for now...
+	 */
+	/* sf.isf_errno = 0;  */
 
+	/*
+	 * Compute the new stack address after copying sigframe (hold by sp),
+	 * and the address of the sigcontext/ucontext (hold by fp)
+	 */
+	sp = (void *)((unsigned long)sp - sizeof(sf));
+	sp = (void *)((unsigned long)sp & ~0xfUL); /* 16 bytes alignement */
+	fp = (void *)((unsigned long)sp + sizeof(sf) - sizeof(sf.isf_ctx));
+
+	
 	/* 
-	 * Save the floating-pointstate, if necessary, then copy it. 
+	 * If SA_SIGINFO is used, then ucp is used, and scp = NULL, 
+	 * if it is not used, then scp is used, and ucp = scp
 	 */
-#ifndef SOFTFLOAT
-	sc.isc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
-	if (sc.isc_ownedfp) {
-		/* if FPU has current state, save it first */
-		if (p == fpcurproc)
-			savefpregs(p);
-		(void)memcpy(&sc.isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
-		    sizeof(sc.isc_fpregs));
-		sc.isc_fpc_csr = p->p_addr->u_pcb.pcb_fpregs.r_regs[32];
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
+		sf.isf_ucp = (struct irix_ucontext *)fp;
+		sf.isf_scp = NULL;
+	} else {
+		sf.isf_ucp = (struct irix_ucontext *)fp;
+		sf.isf_scp = (struct irix_sigcontext *)fp;
 	}
-#else
-	(void)memcpy(&sc.isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
-	    sizeof(sc.isc_fpregs));
-#endif 
-	/*
-	 * Save signal stack
-	 */
-	sc.isc_ssflags = 
-	    (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) ? IRIX_SS_ONSTACK : 0;
 
 	/*
 	 * Install the sigframe onto the stack
 	 */
-	fp = (struct irix_sigcontext *)((unsigned long)fp
-	    - sizeof(struct irix_sigcontext));
-	fp = (struct irix_sigcontext *)((unsigned long)fp 
-	    & ~0xfUL);		/* 16 bytes alignement */
-	if (copyout(&sc, fp, sizeof(sc)) != 0) {
+	error = copyout(&sf, sp, sizeof(sf));
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -266,28 +272,138 @@ irix_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 		/* NOTREACHED */
 	}
 
-	/* Set up the registers to return to sigcode. */
-	f->f_regs[A0] = native_to_svr4_signo[sig];
-	f->f_regs[A1] = 0;
-	f->f_regs[A2] = (unsigned long)fp;
+	/* 
+	 * Set up signal handler arguments. 
+	 */
+	f->f_regs[A0] = native_to_svr4_signo[sig];	/* signo/signo */
+	f->f_regs[A1] = 0;			/* code/siginfo */
+	f->f_regs[A2] = (unsigned long)fp;	/* sigcontext/ucontext */
 
 #ifdef DEBUG_IRIX
-	printf("sigcontext is at %p\n", fp);
+	printf("sigcontext is at %p, stack pointer at %p\n", fp, sp);
 #endif /* DEBUG_IRIX */
 
+	/* 
+	 * Set up the registers to return to sigcode. 
+	 */
 	f->f_regs[RA] = (unsigned long)p->p_sigctx.ps_sigcode;
-	f->f_regs[SP] = (unsigned long)fp;
+	f->f_regs[SP] = (unsigned long)sp;
 	f->f_regs[T9] = (unsigned long)catcher;
 	f->f_regs[A3] = (unsigned long)catcher;
 	f->f_regs[PC] = (unsigned long)catcher;
 
-	/* Remember that we're now on the signal stack. */
+	/* 
+	 * Remember that we're now on the signal stack. 
+	 */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG_IRIX
 	printf("returning from irix_sendsig()\n");
 #endif
+	return;
+}
+
+static void 
+irix_set_sigcontext (scp, mask, code, p)
+	struct irix_sigcontext *scp;
+	sigset_t *mask;
+	int code;
+	struct proc *p;
+{
+	int i;
+	struct frame *f;
+
+#ifdef DEBUG_IRIX
+	printf("irix_set_sigcontext()\n");
+#endif
+	f = (struct frame *)p->p_md.md_regs;
+	/*
+	 * Build stack frame for signal trampoline.
+	 */
+	native_to_irix_sigset(mask, &scp->isc_sigset);
+	for (i = 1; i < 32; i++) { /* save gpr1 - gpr31 */
+		scp->isc_regs[i] = f->f_regs[i];
+	}
+	scp->isc_regs[0] = 0;
+	scp->isc_fp_rounded_result = 0;
+	scp->isc_regmask = ~0x1UL;
+	scp->isc_mdhi = f->f_regs[MULHI];
+	scp->isc_mdlo = f->f_regs[MULLO];
+	scp->isc_pc = f->f_regs[PC];
+
+	/* 
+	 * Save the floating-pointstate, if necessary, then copy it. 
+	 */
+#ifndef SOFTFLOAT
+	scp->isc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
+	if (scp->isc_ownedfp) {
+		/* if FPU has current state, save it first */
+		if (p == fpcurproc)
+			savefpregs(p);
+		(void)memcpy(&scp->isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
+		    sizeof(scp->isc_fpregs));
+		scp->isc_fpc_csr = p->p_addr->u_pcb.pcb_fpregs.r_regs[32];
+	}
+#else
+	(void)memcpy(&scp->isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
+	    sizeof(scp->isc_fpregs));
+#endif 
+	/*
+	 * Save signal stack
+	 */
+	scp->isc_ssflags = 
+	    (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) ? IRIX_SS_ONSTACK : 0;
+
+	return;
+}
+
+void 
+irix_set_ucontext(ucp, mask, code, p)
+	struct irix_ucontext *ucp;
+	sigset_t *mask;
+	int code;
+	struct proc *p;
+{
+	struct frame *f;
+
+#ifdef DEBUG_IRIX
+	printf("irix_set_ucontext()\n");
+#endif
+	f = (struct frame *)p->p_md.md_regs;
+	/*
+	 * Build stack frame for signal trampoline.
+	 */
+	native_to_irix_sigset(mask, &ucp->iuc_sigmask);
+	memcpy(&ucp->iuc_mcontext.svr4___gregs, 
+	    &f->f_regs, 32 * sizeof(mips_reg_t));
+	/* Theses registers have different order on NetBSD and IRIX */
+	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDLO] = f->f_regs[MULLO];
+	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDHI] = f->f_regs[MULHI];
+	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_EPC] = f->f_regs[PC];
+
+	ucp->iuc_flags = IRIX_UC_SIGMASK | IRIX_UC_MCONTEXT;
+
+	/* 
+	 * Save the floating-pointstate, if necessary, then copy it. 
+	 */
+#ifndef SOFTFLOAT
+	if (p->p_md.md_flags & MDP_FPUSED) {
+		/* if FPU has current state, save it first */
+		if (p == fpcurproc)
+			savefpregs(p);
+		(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs, 
+		    &p->p_addr->u_pcb.pcb_fpregs, 
+		    sizeof(ucp->iuc_mcontext.svr4___fpregs));
+		ucp->iuc_mcontext.svr4___fpregs.svr4___fp_csr = 
+		    p->p_addr->u_pcb.pcb_fpregs.r_regs[32];
+	}
+#else
+	(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs, 
+	    &p->p_addr->u_pcb.pcb_fpregs, 
+	    sizeof(ucp->iuc_mcontext.svr4___fpregs));
+#endif 
+	/* XXX Save signal stack */
 	return;
 }
 
@@ -298,18 +414,19 @@ irix_sys_sigreturn(p, v, retval)
 	register_t *retval;
 {       
 	struct irix_sys_sigreturn_args /* {
-		syscallarg(struct irix_sigreturna) isr;
+		syscallarg(struct irix_sigcontext *) scp;
+		syscallarg(struct irix_ucontext *) ucp;
+		syscallarg(int) signo;
 	} */ *uap = v;
-	struct irix_sigcontext *sc, ksc;
-	struct frame *f; 
-	sigset_t mask;
-	int i, error;
+	void *usf;
+	struct irix_sigframe ksf;
+	int error;
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sigreturn()\n");
-	printf("scp = %p, ucp = %p, sig = %d (%p)\n", 
-	    (void *)SCARG(uap, isr).scp, (void *)SCARG(uap, isr).ucp, 
-	    SCARG(uap, isr).signo, (void *)SCARG(uap, isr).signo);
+	printf("scp = %p, ucp = %p, sig = %d\n", 
+	    (void *)SCARG(uap, scp), (void *)SCARG(uap, ucp),
+	    SCARG(uap, signo));
 #endif /* DEBUG_IRIX */
 
 	/*
@@ -317,52 +434,133 @@ irix_sys_sigreturn(p, v, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	sc = SCARG(uap, isr).scp;
-	if (sc == NULL)
-		sc = SCARG(uap, isr).ucp;
+	usf = (void *)SCARG(uap, scp);
+	if (usf == NULL) {
+		usf = (void *)SCARG(uap, ucp);
 
-	if ((error = copyin(sc, &ksc, sizeof(ksc))) != 0)
-		return (error);
+		if ((error = copyin(usf, &ksf.isf_ctx.iuc, 
+		    sizeof(ksf.isf_ctx))) != 0)
+			return error;
+
+		irix_get_ucontext(&ksf.isf_ctx.iuc, p);
+	} else {
+		if ((error = copyin(usf, &ksf.isf_ctx.isc, 
+		    sizeof(ksf.isf_ctx))) != 0)
+			return error;
+
+		irix_get_sigcontext(&ksf.isf_ctx.isc, p);
+	}
+
+#ifdef DEBUG_IRIX
+	printf("irix_sys_sigreturn(): returning [PC=%p SP=%p SR=0x%08lx]\n",
+	    (void *)((struct frame *)(p->p_md.md_regs))->f_regs[PC], 
+	    (void *)((struct frame *)(p->p_md.md_regs))->f_regs[SP], 
+	    ((struct frame *)(p->p_md.md_regs))->f_regs[SR]);
+#endif
+
+	return EJUSTRETURN;
+}
+
+static void
+irix_get_ucontext(ucp, p)
+	struct irix_ucontext *ucp;
+	struct proc *p;
+{
+	struct frame *f;
+	sigset_t mask;
 
 	/* Restore the register context. */
 	f = (struct frame *)p->p_md.md_regs;
-	for (i = 1; i < 32; i++) /* restore gpr1 to gpr31 */
-		f->f_regs[i] = ksc.isc_regs[i];
-	f->f_regs[MULLO] = ksc.isc_mdlo;
-	f->f_regs[MULHI] = ksc.isc_mdhi;
-	f->f_regs[PC] = ksc.isc_pc;
 
+	if (ucp->iuc_flags & IRIX_UC_CPU) {
+		(void)memcpy(&f->f_regs, &ucp->iuc_mcontext.svr4___gregs, 
+		    32 * sizeof(mips_reg_t));
+		/* Theses registers have different order on NetBSD and IRIX */
+		f->f_regs[MULLO] = 
+		    ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDLO];
+		f->f_regs[MULHI] = 
+		    ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDHI];
+		f->f_regs[PC] = 
+		    ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_EPC];
+	}
+
+	if (ucp->iuc_flags & IRIX_UC_MAU) { 
 #ifndef SOFTFLOAT
-	if (ksc.isc_ownedfp) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
 		if (p == fpcurproc) 
 			fpcurproc = (struct proc *)0;
-		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &ksc.isc_fpregs,
-		    sizeof(ksc.isc_fpregs));
-		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = ksc.isc_fpc_csr;
+		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, 
+		    &ucp->iuc_mcontext.svr4___fpregs,
+		    sizeof(p->p_addr->u_pcb.pcb_fpregs));
+		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = 
+		     ucp->iuc_mcontext.svr4___fpregs.svr4___fp_csr;
+#else	
+		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, 
+		    &ucp->iuc_mcontext.svr4___fpregs,
+		    sizeof(p->p_addr->u_pcb.pcb_fpregs));
+#endif
+	}
+
+	if (ucp->iuc_flags & IRIX_UC_STACK)
+		; /* XXX Restore signal stack. */
+
+	if (ucp->iuc_flags & IRIX_UC_SIGMASK) {
+		/* Restore signal mask. */
+		irix_to_native_sigset(&ucp->iuc_sigmask, &mask);
+		(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	}
+
+	return;
+}
+
+static void
+irix_get_sigcontext(scp, p) 
+	struct irix_sigcontext *scp;
+	struct proc *p;
+{
+	int i;
+	struct frame *f;
+	sigset_t mask;
+
+	/* Restore the register context. */
+	f = (struct frame *)p->p_md.md_regs;
+
+	for (i = 1; i < 32; i++) /* restore gpr1 to gpr31 */
+		f->f_regs[i] = scp->isc_regs[i];
+	f->f_regs[MULLO] = scp->isc_mdlo;
+	f->f_regs[MULHI] = scp->isc_mdhi;
+	f->f_regs[PC] = scp->isc_pc;
+
+#ifndef SOFTFLOAT
+	if (scp->isc_ownedfp) {
+		/* Disable the FPU to fault in FP registers. */
+		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+		if (p == fpcurproc) 
+			fpcurproc = (struct proc *)0;
+		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
+		    sizeof(scp->isc_fpregs));
+		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = scp->isc_fpc_csr;
 	}
 #else	
-	(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &ksc.isc_fpregs,
+	(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
 	    sizeof(p->p_addr->u_pcb.pcb_fpregs));
 #endif
 
 	/* Restore signal stack. */
-	if (ksc.isc_ssflags & IRIX_SS_ONSTACK)
+	if (scp->isc_ssflags & IRIX_SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 		
 
 	/* Restore signal mask. */
-	irix_to_native_sigset((irix_sigset_t *)&ksc.isc_sigset, &mask);
+	irix_to_native_sigset(&scp->isc_sigset, &mask);
 	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
-#ifdef DEBUG_IRIX
-	printf("irix_sys_sigreturn(): returning\n");
-#endif
-	return (EJUSTRETURN);
+	return;
 }
+
 
 int
 irix_sys_sginap(p, v, retval)
