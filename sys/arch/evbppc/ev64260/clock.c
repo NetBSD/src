@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2003/03/16 07:07:19 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2003/03/16 08:12:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -239,13 +239,6 @@ decr_intr(struct clockframe *frame)
 	oframe = clockframe;
 	clockframe = frame;
 #endif
-
-	{
-		extern int softclock_ticks;
-		if (++softclock_ticks > 3 * hz)
-			cpu_Debugger();
-	}
-
 
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
