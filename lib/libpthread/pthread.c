@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.40 2005/02/10 23:42:37 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.41 2005/02/26 20:33:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.40 2005/02/10 23:42:37 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.41 2005/02/26 20:33:06 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -251,6 +251,8 @@ pthread__start(void)
 	 * fork() before creating any threads. 
 	 */
 	pthread__alarm_init();
+
+	pthread__signal_start();
 
 	pthread_atfork(NULL, NULL, pthread__child_callback);
 

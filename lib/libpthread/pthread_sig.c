@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.37 2005/02/26 18:15:25 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.38 2005/02/26 20:33:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.37 2005/02/26 18:15:25 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.38 2005/02/26 20:33:06 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -125,6 +125,20 @@ pthread__signal_init(void)
 
 	PTQ_INIT(&pt_sigsuspended);
 	PTQ_INIT(&pt_sigwaiting);
+}
+
+void
+pthread__signal_start(void)
+{
+	int i;
+	struct sigaction act;
+
+	/* Clear all additional signal masks; we'll handle them ourselves */
+	for (i = 1 ; i < NSIG ; i++) {
+		__libc_sigaction14(i, NULL, &act);
+		__sigemptyset14(&act.sa_mask);
+		__libc_sigaction14(i, &act, NULL);
+	}
 }
 
 static void
@@ -215,9 +229,11 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 		 * appropriate, because that would permit a continuous
 		 * stream of signals to exhaust the supply of upcalls.
 		 */
-		realact = *act;
-		__sigemptyset14(&realact.sa_mask);
-		act = &realact;
+		if (pthread__started) {
+			realact = *act;
+			__sigemptyset14(&realact.sa_mask);
+			act = &realact;
+		}
 	} else
 		pthread_spinunlock(self, &pt_sigacts_lock);
 
