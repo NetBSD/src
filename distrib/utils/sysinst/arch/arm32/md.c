@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1999/01/23 06:19:17 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -264,8 +264,7 @@ void	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf("%s", msg_string(MSG_dotar));
-	run_prog(0, 1, "tar --one-file-system -cf - -C / . |"
-	    "(cd /mnt ; tar --unlink -xpf - )");
+	run_prog(0, 1, "pax -X -r -w / /mnt");
 
 	/* Copy next-stage install profile into target /.profile. */
 	cp_to_target("/tmp/.hdprofile", "/.profile");

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 1999/01/21 08:02:19 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.21 1999/01/23 06:19:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -417,9 +417,7 @@ void	md_copy_filesystem (void)
 	/* test returns 0  on success */
 	dir_exists = (run_prog(0, 0, "test -d %s", diskimage_usr) == 0);
 	if (dir_exists) {
-		run_prog ( 0, 1, 
-		  "tar --one-file-system -cf - -C %s . | tar -xpf - -C /usr",
-		  diskimage_usr);
+		run_prog ( 0, 1, "pax -X -r -w %s /usr", diskimage_usr);
 	}
 
 	if (target_already_root()) {
