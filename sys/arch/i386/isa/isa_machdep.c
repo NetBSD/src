@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 1995/04/19 06:14:13 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.3 1995/04/21 04:53:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -51,11 +51,6 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/icu.h>
-
-/* XXX NO BETTER PLACE TO PUT IT. */
-#include <machine/pc/display.h>
-u_short *Crtat = (u_short *)MONO_BUF;
-/* XXX end */
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */

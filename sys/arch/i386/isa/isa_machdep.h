@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 1995/04/17 12:07:12 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 1995/04/21 04:53:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,9 +71,9 @@
  * stuff that used to be in pccons.c
  */
 #define	MONO_BASE	0x3B4
-#define	MONO_BUF	(KERNBASE + 0xB0000)
+#define	MONO_BUF	0xB0000
 #define	CGA_BASE	0x3D4
-#define	CGA_BUF		(KERNBASE + 0xB8000)
+#define	CGA_BUF		0xB8000
 #define	IOPHYSMEM	0xA0000
 
 

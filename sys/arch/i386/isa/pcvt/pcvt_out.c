@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_out.c,v 1.4 1995/04/19 19:12:22 mycroft Exp $	*/
+/*	$NetBSD: pcvt_out.c,v 1.5 1995/04/21 04:55:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -881,11 +881,9 @@ vt_coldinit(void)
 	extern u_short csd_ascii[];		/* pcvt_tbl.h */
 	extern u_short csd_supplemental[];
 	
-	u_short volatile *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;  /* gcc 2.4.5 */
 	u_short was;
 	int nscr, charset;
 	int equipment;
-	u_short *SaveCrtat = Crtat;
 	struct video_state *svsp;
 
 	do_initialization = 0;
@@ -899,20 +897,21 @@ vt_coldinit(void)
 
 			/* set memory start to CGA == B8000 */
 			
-			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
+			Crtat = ISA_HOLE_VADDR(CGA_BUF);
 		
 			/* find out, what monitor is connected */
 			
-			was = *cp;
-			*cp = (u_short) 0xA55A;
-			if (*cp != 0xA55A)
+			was = *Crtat;
+			*Crtat = (u_short) 0xA55A;
+			if (*Crtat != 0xA55A)
 			{
+				Crtat = ISA_HOLE_VADDR(MONO_BUF);
 				addr_6845 = MONO_BASE;
 				color = 0;
 			}
 			else
 			{
-				*cp = was;
+				*Crtat = was;
 				addr_6845 = CGA_BASE;
 				color = 1;
 			}
@@ -968,8 +967,6 @@ vt_coldinit(void)
 					/* map starts at 0xb000 */
 					outb(GDC_INDEX, GDC_MISC);
 					outb(GDC_DATA, 0x0a);
-
-					Crtat = SaveCrtat; /* mono start */
 				}
 				/* find out which chipset we are running on */
 				vga_type = vga_chipset();
@@ -984,10 +981,8 @@ vt_coldinit(void)
 				else
 				{	/* mono ega -> MDA .... */
 					/* NOT TESTED !!!!!!!!! */
-					addr_6845 = MONO_BASE;
 					adaptor_type = MDA_ADAPTOR;
 					totalfonts = 0;
-					Crtat = SaveCrtat;
 					break;
 				}
 					
@@ -1000,13 +995,14 @@ vt_coldinit(void)
 
 		case EQ_40COLOR:
 		case EQ_80COLOR:
-			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
+			Crtat = ISA_HOLE_VADDR(CGA_BUF);
 			addr_6845 = CGA_BASE;
 			adaptor_type = CGA_ADAPTOR;
 			totalfonts = 0;
 			break;
 
 		case EQ_80MONO:
+			Crtat = ISA_HOLE_VADDR(MONO_BUF);
 			addr_6845 = MONO_BASE;
 			adaptor_type = MDA_ADAPTOR;
 			totalfonts = 0;			

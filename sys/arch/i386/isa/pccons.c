@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.84 1995/04/19 22:08:08 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.85 1995/04/21 04:53:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -80,7 +80,7 @@
 
 #define PCBURST 128
 
-extern u_short *Crtat;			/* pointer to backing store */
+static u_short *Crtat;			/* pointer to backing store */
 static u_short *crtat;			/* pointer to current char */
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
@@ -831,26 +831,21 @@ sput(cp, n)
 		return;
 
 	if (crtat == 0) {
-		u_short volatile *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
+		u_short volatile *cp;
 		u_short was;
 		unsigned cursorat;
 
-		/*
-		 * Crtat initialized to point to MONO buffer if not present
-		 * change to CGA_BUF offset ONLY ADD the difference since
-		 * locore.s adds in the remapped offset at the right time
-		 */
-
+		cp = ISA_HOLE_VADDR(CGA_BUF);
 		was = *cp;
 		*cp = (u_short) 0xA55A;
 		if (*cp != 0xA55A) {
+			cp = ISA_HOLE_VADDR(MONO_BUF);
 			addr_6845 = MONO_BASE;
-			vs.color=0;
+			vs.color = 0;
 		} else {
 			*cp = was;
 			addr_6845 = CGA_BASE;
-			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
-			vs.color=1;
+			vs.color = 1;
 		}
 
 		/* Extract cursor location */
@@ -863,7 +858,9 @@ sput(cp, n)
 		cursor_shape = 0x0012;
 #endif
 
-		crtat = Crtat + cursorat;
+		Crtat = cp;
+		crtat = cp + cursorat;
+
 		vs.ncol = COL;
 		vs.nrow = ROW;
 		vs.nchr = COL * ROW;

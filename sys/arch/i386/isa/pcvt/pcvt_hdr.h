@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.14 1995/04/19 18:33:34 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.15 1995/04/21 04:54:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1258,6 +1258,7 @@ u_char bgansitopc[] = {			/* background ANSI color -> pc */
 u_short *Crtat	=	(u_short *)MONO_BUF;	/* screen start address */
 struct tty *pcconsp =	&pccons[0];		/* ptr to current device */
 #else
+u_short *Crtat;			/* screen start address */
 struct tty *pcconsp;		/* ptr to current device, see pcattach() */
 #endif /* PCVT_NETBSD */
 
