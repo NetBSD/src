@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.34 2001/05/07 07:07:11 lukem Exp $
+# $NetBSD: rc.subr,v 1.35 2001/05/09 16:40:59 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -159,8 +159,7 @@ check_process()
 
 #
 # wait_for_pids pid [pid ...]
-#	spins until none of the pids exist or loop finally terminates
-#	(~ 65 seconds)
+#	spins until none of the pids exist
 #
 wait_for_pids()
 {
@@ -168,8 +167,8 @@ wait_for_pids()
 	if [ -z "$_list" ]; then
 		return
 	fi
-	echo -n "Waiting for PIDs: $_list"
-	for _i in 1 1 1 1 2 2 2 3 3 4 5 6 7 8 9 10; do
+	_prefix=
+	while true; do
 		_nlist="";
 		for _j in $_list; do
 			if kill -0 $_j 2>/dev/null; then
@@ -180,10 +179,13 @@ wait_for_pids()
 			break
 		fi
 		_list=$_nlist
-		sleep $_i
-		echo -n ", $_list"
+		echo -n ${_prefix:-"Waiting for PIDS: "}$_list
+		_prefix=", "
+		sleep 2
 	done
-	echo "."
+	if [ -n "$_prefix" ]; then
+		echo "."
+	fi
 }
 
 #
@@ -268,12 +270,15 @@ wait_for_pids()
 #				${command}
 #
 #	stop		if ${pidfile}
-#				kill $sig_stop `check_pidfile $pidfile`
+#				_pid=`check_pidfile $pidfile`
 #			else
-#				kill $sig_stop `check_process $command`
-#			$sig_stop defaults to TERM.
+#				_pid=`check_process $command`
+#			kill $sig_stop $_pid
+#			wait_for_pids $_pid
+#			($sig_stop defaults to TERM.)
 #
-#	reload		As stop, except use $sig_reload instead.
+#	reload		Similar to stop, except use $sig_reload instead,
+#			and doesn't wait_for_pids.
 #			$sig_reload defaults to HUP.
 #
 #	restart		Run `stop' then `start'.
@@ -467,6 +472,7 @@ $command $_flags $command_args"
 				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
 			fi
 			eval $_doit
+			wait_for_pids $_pid
 			;;
 
 		reload)
@@ -503,7 +509,6 @@ $command $_flags $command_args"
 			_rc_restart_done=YES
 
 			( $0 ${_rc_force_run:+force}stop )
-			( $0 ${_rc_force_run:+force}poll )
 			$0 ${_rc_force_run:+force}start
 
 			;;
