@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.4 1993/08/14 01:29:36 mycroft Exp $
+ *	$Id: mem.c,v 1.5 1993/09/16 03:24:37 brezak Exp $
  */
 
 /*
@@ -69,12 +69,12 @@ mmclose(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct syscframe *fp;
+	struct trapframe *fp;
 
 	switch (minor(dev)) {
 	case 14:
-		fp = (struct syscframe *)curproc->p_regs;
-		fp->sf_eflags &= ~PSL_IOPL;
+		fp = (struct trapframe *)curproc->p_regs;
+		fp->tf_eflags &= ~PSL_IOPL;
 		break;
 	default:
 		break;
@@ -87,12 +87,12 @@ mmopen(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct syscframe *fp;
+	struct trapframe *fp;
 
 	switch (minor(dev)) {
 	case 14:
-		fp = (struct syscframe *)curproc->p_regs;
-		fp->sf_eflags |= PSL_IOPL;
+		fp = (struct trapframe *)curproc->p_regs;
+		fp->tf_eflags |= PSL_IOPL;
 		break;
 	default:
 		break;

@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.4 1993/08/02 17:52:20 mycroft Exp $
+ *	$Id: db_trace.c,v 1.5 1993/09/16 03:24:34 brezak Exp $
  */
 
 #include "param.h"
@@ -165,13 +165,13 @@ db_nextframe(fp, ip, argp, is_trap)
 	    break;
 
 	case SYSCALL: {
-	    struct syscframe	*saved_regs = (struct syscframe *)argp;
+	    struct trapframe	*saved_regs = (struct trapframe *)argp;
 
-	    db_printf("--- syscall (number %d) ---\n", saved_regs->sf_eax);
-	    db_printsym(saved_regs->sf_eip, DB_STGY_XTRN);
+	    db_printf("--- syscall (number %d) ---\n", saved_regs->tf_eax);
+	    db_printsym(saved_regs->tf_eip, DB_STGY_XTRN);
 	    db_printf(":\n");
-	    *fp = (struct i386_frame *)saved_regs->sf_ebp;
-	    *ip = (db_addr_t)saved_regs->sf_eip;
+	    *fp = (struct i386_frame *)saved_regs->tf_ebp;
+	    *ip = (db_addr_t)saved_regs->tf_eip;
 	    }
 	    break;
 	}

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	5.11 (Berkeley) 5/10/91
- *	$Id: genassym.c,v 1.7 1993/08/03 06:33:55 mycroft Exp $
+ *	$Id: genassym.c,v 1.8 1993/09/16 03:24:13 brezak Exp $
  */
 
 #include "sys/param.h"
@@ -48,7 +48,6 @@
 #include "machine/cpu.h"
 #include "machine/trap.h"
 #include "machine/psl.h"
-#include "machine/reg.h"
 #include "sys/syscall.h"
 #include "vm/vm_param.h"
 #include "vm/vm_map.h"
@@ -65,6 +64,7 @@ main()
 	vm_map_t map = (vm_map_t)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
+        struct trapframe *tf = (struct trapframe *)0;
 	register unsigned i;
 
 	printf("#define\tI386_CR3PAT %d\n", I386_CR3PAT);
@@ -148,6 +148,24 @@ main()
 	printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);
 	printf("#define\tPCB_IML %d\n", &pcb->pcb_iml);
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
+
+	printf("#define\tTF_ES %d\n", &tf->tf_es);
+	printf("#define\tTF_DS %d\n", &tf->tf_ds);
+	printf("#define\tTF_EDI %d\n", &tf->tf_edi);
+	printf("#define\tTF_ESI %d\n", &tf->tf_esi);
+	printf("#define\tTF_EBP %d\n", &tf->tf_ebp);
+	printf("#define\tTF_ISP %d\n", &tf->tf_isp);
+	printf("#define\tTF_EBX %d\n", &tf->tf_ebx);
+	printf("#define\tTF_EDX %d\n", &tf->tf_edx);
+	printf("#define\tTF_ECX %d\n", &tf->tf_ecx);
+	printf("#define\tTF_EAX %d\n", &tf->tf_eax);
+	printf("#define\tTF_TRAPNO %d\n", &tf->tf_trapno);
+	printf("#define\tTF_ERR %d\n", &tf->tf_err);
+	printf("#define\tTF_EIP %d\n", &tf->tf_eip);
+	printf("#define\tTF_CS %d\n", &tf->tf_cs);
+	printf("#define\tTF_EFLAGS %d\n", &tf->tf_eflags);
+	printf("#define\tTF_ESP %d\n", &tf->tf_esp);
+	printf("#define\tTF_SS %d\n", &tf->tf_ss);
 
 	printf("#define\tB_READ %d\n", B_READ);
 	printf("#define\tENOENT %d\n", ENOENT);
