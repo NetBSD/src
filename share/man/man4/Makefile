@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.300 2003/10/08 12:02:40 bouyer Exp $
+#	$NetBSD: Makefile,v 1.301 2003/10/30 08:21:19 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 \
@@ -132,7 +132,7 @@ SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
 	man4.cobalt \
 	man4.dreamcast man4.evbarm man4.hp300 man4.i386 man4.mac68k \
 	man4.macppc man4.mvme68k man4.pc532 man4.pmax man4.pmppc man4.sgimips \
-	man4.sparc man4.sun2 man4.sun3 man4.vax man4.x68k
+	man4.sparc man4.sparc64 man4.sun2 man4.sun3 man4.vax man4.x68k
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
