@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.7 2005/02/17 03:12:36 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.8 2005/02/17 04:14:31 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1545,18 +1545,19 @@ struct in_addr *inp, *inpmask;
 u_32_t fr_newisn(fin)
 fr_info_t *fin;
 {
-	u_32_t newiss;
 #if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
 	
-
 	if (fin->fin_v == 4)
 		asz = sizeof(struct in_addr);
 	else if (fin->fin_v == 6)
 		asz = sizeof(fin->fin_src);
-	newiss = tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-			      fin->fin_sport, fin->fin_dport, asz, 0);
+	else	/* XXX: no way to return error */
+		return 0;
+	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
+	    fin->fin_sport, fin->fin_dport, asz, 0);
 #else
+	u_32_t newiss;
 	static int iss_seq_off = 0;
 	u_char hash[16];
 	MD5_CTX ctx;
@@ -1588,8 +1589,8 @@ fr_info_t *fin;
 	 */
 	iss_seq_off += 0x00010000;
 	newiss += iss_seq_off;
-#endif
 	return newiss;
+#endif
 }
 
 
