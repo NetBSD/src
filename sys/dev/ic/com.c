@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.185 2001/05/30 15:24:23 lukem Exp $	*/
+/*	$NetBSD: com.c,v 1.186 2001/06/20 03:07:25 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -71,10 +71,6 @@
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
 
-#if defined(__sparc__) || defined(__sparc_v9__)
-#define	DDB_BREAK_CHAR	1	/* L1 or Stop key */
-#endif
-
 /*
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  * Supports automatic hardware flow control on StarTech ST16C650A UART
@@ -89,6 +85,18 @@
 #if NRND > 0 && defined(RND_COM)
 #include <sys/rnd.h>
 #endif
+
+/*
+ * Override cnmagic(9) macro before including <sys/systm.h>.
+ * We need to know if cn_check_magic triggered debugger, so set a flag.
+ * Callers of cn_check_magic must declare int cn_trapped = 0;
+ * XXX: this is *ugly*!
+ */
+#define cn_trap()				\
+	do {					\
+		console_debugger();		\
+		cn_trapped = 1;			\
+	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,9 +135,8 @@
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
 
-#if defined(DDB) || defined(KGDB)
 static void com_enable_debugport __P((struct com_softc *));
-#endif
+
 void	com_config	__P((struct com_softc *));
 void	com_shutdown	__P((struct com_softc *));
 int	comspeed	__P((long, long));
@@ -147,8 +154,8 @@ void	tiocm_to_com	__P((struct com_softc *, u_long, int));
 int	com_to_tiocm	__P((struct com_softc *));
 void	com_iflush	__P((struct com_softc *));
 
-int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
-void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
+int	com_common_getc	__P((dev_t, bus_space_tag_t, bus_space_handle_t));
+void	com_common_putc	__P((dev_t, bus_space_tag_t, bus_space_handle_t, int));
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
@@ -193,6 +200,7 @@ static bus_space_handle_t comconsioh;
 static int	comconsattached;
 static int comconsrate;
 static tcflag_t comconscflag;
+static struct cnm_state com_cnm_state;
 
 static int ppscap =
 	PPS_TSFMT_TSPEC |
@@ -383,7 +391,6 @@ comprobeHAYESP(hayespioh, sc)
 }
 #endif
 
-#if defined(DDB) || defined(KGDB)
 static void
 com_enable_debugport(sc)
 	struct com_softc *sc;
@@ -400,7 +407,6 @@ com_enable_debugport(sc)
 	COM_UNLOCK(sc);
 	splx(s);
 }
-#endif
 
 void
 com_attach_subr(sc)
@@ -628,19 +634,8 @@ com_config(sc)
 	}
 #endif
 
-#ifdef DDB
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
 		com_enable_debugport(sc);
-#endif
-
-#ifdef KGDB
-	/*
-	 * Allow kgdb to "take over" this port.  If this is
-	 * the kgdb device, it has exclusive use.
-	 */
-	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
-		com_enable_debugport(sc);
-#endif
 }
 
 int
@@ -753,11 +748,9 @@ com_shutdown(sc)
 	}
 
 	/* Turn off interrupts. */
-#ifdef DDB
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
 	else
-#endif
 		sc->sc_ier = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 
@@ -2018,42 +2011,35 @@ comintr(arg)
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
-#if defined(DDB) || defined(KGDB)
 		if (ISSET(lsr, LSR_BI)) {
-#ifndef DDB_BREAK_CHAR
-#ifdef DDB 
-			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-				console_debugger();
+			int cn_trapped = 0;
+			cn_check_magic(sc->sc_tty->t_dev,
+				       CNC_BREAK, com_cnm_state);
+			if (cn_trapped)
 				continue;
-			}
-#endif
-#ifdef KGDB 
+#if defined(KGDB)
 			if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
 				kgdb_connect(1);
 				continue;
 			}
 #endif
-#endif
 		}
-#endif /* DDB || KGDB */
 
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			while (cc > 0) {
+				int cn_trapped = 0;
 				put[0] = bus_space_read_1(iot, ioh, com_data);
 				put[1] = lsr;
-#if defined(DDB) && defined(DDB_BREAK_CHAR)
-				if (put[0] == DDB_BREAK_CHAR &&
-				    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-					console_debugger();
-
+				cn_check_magic(sc->sc_tty->t_dev,
+					       put[0], com_cnm_state);
+				if (cn_trapped) {
 					lsr = bus_space_read_1(iot, ioh, com_lsr);
 					if (!ISSET(lsr, LSR_RCV_MASK))
 						break;
 
 					continue;
 				}
-#endif
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;
@@ -2239,36 +2225,37 @@ comintr(arg)
 /*
  * The following functions are polled getc and putc routines, shared
  * by the console and kgdb glue.
+ * 
+ * The read-ahead code is so that you can detect pending in-band
+ * cn_magic in polled mode while doing output rather than having to
+ * wait until the kernel decides it needs input.
  */
 
-#if defined(DDB) && defined(DDB_BREAK_CHAR)
-#define MAX_UNGETC	20
-static int com_ungetc[MAX_UNGETC];
-static int com_ungetccount = 0;
-#endif
+#define MAX_READAHEAD	20
+static int com_readahead[MAX_READAHEAD];
+static int com_readaheadcount = 0;
 
 int
-com_common_getc(iot, ioh)
+com_common_getc(dev, iot, ioh)
+	dev_t dev;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 {
 	int s = splserial();
 	u_char stat, c;
 
-#if defined(DDB) && defined(DDB_BREAK_CHAR)
 	/* got a character from reading things earlier */
-	if (com_ungetccount > 0) {
+	if (com_readaheadcount > 0) {
 		int i;
 
-		c = com_ungetc[0];
-		for (i = 1; i < com_ungetccount; i++) {
-			com_ungetc[i -1] = com_ungetc[i];
+		c = com_readahead[0];
+		for (i = 1; i < com_readaheadcount; i++) {
+			com_readahead[i-1] = com_readahead[i];
 		}
-		com_ungetccount--;
+		com_readaheadcount--;
 		splx(s);
 		return (c);
 	}
-#endif
 
 	/* block until a character becomes available */
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
@@ -2276,21 +2263,21 @@ com_common_getc(iot, ioh)
 
 	c = bus_space_read_1(iot, ioh, com_data);
 	stat = bus_space_read_1(iot, ioh, com_iir);
-#if defined(DDB) && defined(DDB_BREAK_CHAR)
-	if (c == DDB_BREAK_CHAR) {
+	{
+		int cn_trapped = 0; /* unused */
+#ifdef DDB
 		extern int db_active;
-
-		if (db_active == 0) {
-			console_debugger();
-		}
-	}
+		if (!db_active)
 #endif
+			cn_check_magic(dev, c, com_cnm_state);
+	}
 	splx(s);
 	return (c);
 }
 
 void
-com_common_putc(iot, ioh, c)
+com_common_putc(dev, iot, ioh, c)
+	dev_t dev;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int c;
@@ -2298,18 +2285,15 @@ com_common_putc(iot, ioh, c)
 	int s = splserial();
 	int timo;
 
-#if defined(DDB) && defined(DDB_BREAK_CHAR)
 	int cin, stat;
-	if (com_ungetccount < MAX_UNGETC 
+	if (com_readaheadcount < MAX_READAHEAD 
 	     && ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY)) {
+		int cn_trapped = 0;
 		cin = bus_space_read_1(iot, ioh, com_data);
 		stat = bus_space_read_1(iot, ioh, com_iir);
-		if (cin == DDB_BREAK_CHAR) {
-			console_debugger();
-		}
-		com_ungetc[com_ungetccount++] = cin;
+		cn_check_magic(dev, cin, com_cnm_state);
+		com_readahead[com_readaheadcount++] = cin;
 	}
-#endif
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
@@ -2382,6 +2366,8 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 		return (res);
 
 	cn_tab = &comcons;
+	cn_init_magic(&com_cnm_state);
+	cn_set_magic("\047\001"); /* default magic is BREAK */
 
 	comconstag = iot;
 	comconsaddr = iobase;
@@ -2395,8 +2381,7 @@ int
 comcngetc(dev)
 	dev_t dev;
 {
-
-	return (com_common_getc(comconstag, comconsioh));
+	return (com_common_getc(dev, comconstag, comconsioh));
 }
 
 /*
@@ -2407,8 +2392,7 @@ comcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-
-	com_common_putc(comconstag, comconsioh, c);
+	com_common_putc(dev, comconstag, comconsioh, c);
 }
 
 void
@@ -2450,8 +2434,7 @@ int
 com_kgdb_getc(arg)
 	void *arg;
 {
-
-	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
+	return (com_common_getc(NODEV, com_kgdb_iot, com_kgdb_ioh));
 }
 
 /* ARGSUSED */
@@ -2460,8 +2443,7 @@ com_kgdb_putc(arg, c)
 	void *arg;
 	int c;
 {
-
-	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
+	com_common_putc(NODEV, com_kgdb_iot, com_kgdb_ioh, c);
 }
 #endif /* KGDB */
 
