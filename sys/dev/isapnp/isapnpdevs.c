@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdevs.c,v 1.19 1999/02/24 18:26:37 rh Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.20 1999/02/28 19:01:31 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -83,6 +83,7 @@ static const char *isapnp_com_devlogic[] = {
 	"ZTIF761",	/* Zoom ComStar 33.6 */
 	"CIR3000",	/* Cirrus Logic V43 */
 	"MOT0000",	/* Motorolla ModemSurfr */
+	"NCI1000",
 	NULL
 };
 static const char *isapnp_com_devcompat[] = {

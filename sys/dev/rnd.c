@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.13 1999/02/28 17:19:13 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.14 1999/02/28 19:01:30 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -716,7 +716,7 @@ rnd_attach_source(rs, name, type, flags)
 	 * default
 	 */
 	if (type == RND_TYPE_NET)
-		flags |= RND_FLAG_NO_ESTIMATE;
+		flags |= (RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
 
 	rs->data.type = type;
 	rs->data.flags = flags;
