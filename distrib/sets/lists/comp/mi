@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.590 2003/07/08 11:34:17 seb Exp $
+#	$NetBSD: mi,v 1.591 2003/07/10 13:07:25 atatat Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -309,9 +309,9 @@
 ./usr/include/md5.h			comp-c-include
 ./usr/include/memory.h			comp-c-include
 ./usr/include/menu.h			comp-c-include
-./usr/include/milter			comp-sendmail-include
-./usr/include/milter/mfapi.h		comp-sendmail-include
-./usr/include/milter/mfdef.h		comp-sendmail-include
+./usr/include/libmilter			comp-sendmail-include
+./usr/include/libmilter/mfapi.h		comp-sendmail-include
+./usr/include/libmilter/mfdef.h		comp-sendmail-include
 ./usr/include/miscfs			comp-c-include
 ./usr/include/miscfs/fdesc		comp-c-include
 ./usr/include/miscfs/fdesc/fdesc.h	comp-c-include
