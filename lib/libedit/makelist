@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.7 2001/01/09 19:22:31 jdolecek Exp $
+#	$NetBSD: makelist,v 1.8 2003/03/10 21:21:10 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 
 # makelist.sh: Automatically generate header files...
 
-AWK=/usr/bin/awk
+AWK=awk
 USAGE="Usage: $0 -h|-e|-fc|-fh|-bc|-bh|-m <filenames>"
 
 if [ "x$1" = "x" ]
