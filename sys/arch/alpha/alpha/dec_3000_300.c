@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.22 1998/05/24 23:45:29 thorpej Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.23 1998/10/22 01:03:07 briggs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.22 1998/05/24 23:45:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.23 1998/10/22 01:03:07 briggs Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -47,9 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.22 1998/05/24 23:45:29 thorpej Ex
 #include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
-
 #include <alpha/tc/tcdsvar.h>
-#include <alpha/tc/zs_ioasicvar.h>
+#include <alpha/tc/tc_3000_300.h>
+
+#include <machine/z8530var.h>
+#include <dev/dec/zskbdvar.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -95,6 +97,17 @@ dec_3000_300_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
+	case CTB_GRAPHICS:
+		/* display console ... */
+		if (zs_ioasic_lk201_cnattach(0x1a0000000, 0x00180000, 0)
+		    && tc_3000_300_fb_cnattach(ctb->ctb_turboslot)) {
+			break;
+		}
+		printf("consinit: Unable to init console on keyboard and ");
+		printf("TURBOchannel slot 0x%lx.\n", ctb->ctb_turboslot);
+		printf("Using serial console.\n");
+		/* FALLTHROUGH */
+
 	case CTB_PRINTERPORT:
 		/* serial console ... */
 		/*
@@ -118,13 +131,6 @@ dec_3000_300_cons_init()
 				panic("can't init serial console");
 			break;
 		}
-
-	case CTB_GRAPHICS:
-		/* display console ... */
-		/* XXX */
-		printf("WARNING: display console not supported, "
-		    "using promcons\n");
-		break;
 
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
