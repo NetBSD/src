@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.2 1998/09/23 21:45:44 perry Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.3 1998/09/24 12:28:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.2 1998/09/23 21:45:44 perry Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.3 1998/09/24 12:28:40 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -41,27 +41,26 @@ __RCSID("$NetBSD: shuffle.c,v 1.2 1998/09/23 21:45:44 perry Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/time.h>
 
-void enomem(void);
-void *emalloc(size_t len);
-void *ecalloc(size_t nmemb, size_t size);
-char *estrdup(const char *str);
-void *erealloc(void *ptr, size_t size);
+static void enomem __P((void));
+static void *emalloc __P((size_t));
+static void *erealloc __P((void *, size_t));
 
-int *get_shuffle(int t);
-void usage(void);
-void swallow_input(FILE *input);
+static size_t *get_shuffle __P((size_t));
+static void usage __P((void));
+static void get_lines __P((const char *, char ***, size_t *));
+static size_t get_number __P((const char *, int));
 
-char **global_inputbuf;
-int global_inputlen;
+int main __P((int, char *[]));
 
 /*
  * enomem --
  *	die when out of memory.
  */
-void
-enomem(void)
+static void
+enomem()
 {
 	errx(2, "Cannot allocate memory.");
 }
@@ -70,43 +69,15 @@ enomem(void)
  * emalloc --
  *	malloc, but die on error.
  */
-void *
-emalloc(size_t len)
+static void *
+emalloc(len)
+	size_t len;
 {
 	void *p;
 
 	if ((p = malloc(len)) == NULL)
 		enomem();
-	return(p);
-}
-
-/*
- * ecalloc --
- *	calloc, but die on error.
- */
-void *
-ecalloc(size_t nmemb, size_t size)
-{
-	void *p;
-
-	if ((p = calloc(nmemb, size)) == NULL)
-		enomem();
-	return(p);
-}
-
-
-/*
- * estrdup --
- *	strdup, but die on error.
- */
-char *
-estrdup(const char *str)
-{
-	char *p;
-
-	if ((p = strdup(str)) == NULL)
-		enomem();
-	return(p);
+	return p;
 }
 
 /*
@@ -114,19 +85,27 @@ estrdup(const char *str)
  *	realloc, but die on error.
  */
 void *
-erealloc(void *ptr, size_t size)
+erealloc(ptr, size)
+	void *ptr;
+	size_t size;
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem();
-	return(ptr);
+	return ptr;
 }
 
-int *get_shuffle(int t)
+/*
+ * get_shuffle --
+ *	Construct a random shuffle array of t elements
+ */
+static size_t *
+get_shuffle(t)
+	size_t t;
 {
-	int *shuffle;
-	int i, j, k, temp;
+	size_t *shuffle;
+	size_t i, j, k, temp;
 	
-	shuffle = (int *)ecalloc(t, sizeof(int));
+	shuffle = emalloc(t * sizeof(size_t));
 
 	for (i = 0; i < t; i++)
 		shuffle[i] = i;
@@ -136,81 +115,115 @@ int *get_shuffle(int t)
 	 * page 139.
 	 */
 
-	/* for (j = 0; j < t; j++) {
-	   k = random()%t; */
-
-	for (j = t-1; j > 0 ; j--) {
-		k = random() % (j+1);
+	for (j = t - 1; j > 0; j--) {
+		k = random() % (j + 1);
 		temp = shuffle[j];
 		shuffle[j] = shuffle[k];
 		shuffle[k] = temp;
 	}
 
-	return(shuffle);
+	return shuffle;
 }
 
-void
-usage(void)
+/*
+ * usage --
+ *	Print a usage message and exit
+ */
+static void
+usage()
 {
-	errx(1, "usage: shuffle [-c arg ...] [-n number] [-p number] [file]");
+	extern char *__progname;
+	(void) fprintf(stderr,
+    "Usage: %s [-f <filename>] [-n <number>] [-p <number>] [<arg> ...]",
+		__progname);
+	exit(1);
 }
 
-void
-swallow_input(FILE *input)
+
+/*
+ * get_lines --
+ *	Return an array of lines read from input
+ */
+static void
+get_lines(fname, linesp, nlinesp)
+	const char *fname;
+	char ***linesp;
+	size_t *nlinesp;
 {
-	int insize;
-	int numlines;
-	char **inputbuf, buf[BUFSIZ];
-	
+	FILE *fp;
+	char *line;
+	size_t size, nlines = 0, maxlines = 100;
+	char **lines = emalloc(sizeof(char *) * maxlines);
 
-	insize = BUFSIZ;
-	numlines = 0;
+	if (strcmp(fname, "-") == 0)
+		fp = stdin;
+	else
+		if ((fp = fopen(fname, "r")) == NULL)
+			err(1, "Cannot open `%s'", fname);
 
-	inputbuf = emalloc(sizeof(char *) * insize);
-
-	while (fgets(buf, BUFSIZ, input) != NULL) {
-		inputbuf[numlines] = estrdup(buf);
-		numlines++;
-		if (numlines >= insize) {
-			insize *= 2;
-			inputbuf = erealloc(inputbuf,
-			    (sizeof(char *) * insize));
+	while ((line = fgetln(fp, &size)) != NULL) {
+		if (size > 0 && line[size - 1] == '\n')
+			size--;
+		lines[nlines] = emalloc(size + 1);
+		(void)memcpy(lines[nlines], line, size);
+		lines[nlines++][size] = '\0';
+		if (nlines >= maxlines) {
+			maxlines += 100;
+			lines = erealloc(lines, (sizeof(char *) * maxlines));
 		}
 	}
-	inputbuf[numlines] = NULL;
+	lines[nlines] = NULL;
 
-	global_inputbuf = inputbuf;
-	global_inputlen = numlines;
+	*linesp = lines;
+	*nlinesp = nlines;
+	if (strcmp(fname, "-") != 0)
+		(void)fclose(fp);
+}
 
+/*
+ * get_number --
+ *	Return a number or exit on error
+ */
+static size_t
+get_number(str, ch)
+	const char *str;
+	int ch;
+{
+	char *estr;
+	long number = strtol(str, &estr, 0);
+
+	if ((number == LONG_MIN || number == LONG_MAX) && errno == ERANGE)
+		err(1, "bad -%c argument `%s'", ch, str);
+	if (*estr)
+		errx(1, "non numeric -%c argument `%s'", ch, str);
+	if (number < 0)
+		errx(1, "negative -%c argument `%s'", ch, str);
+	return (size_t) number;
 }
 
 int
-main(int argc, char *argv[])
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	int cflag, nflag, pflag, ch;
-	int *shuffle;
-	int i, p, t;
-	FILE *input;
+	int i, nflag = 0, pflag = 0, ch;
+	char *fname = NULL;
+	size_t *shuffle;
 	struct timeval tv;
-
-	cflag = nflag = pflag = 0;
-	p = t = 0;
+	char **lines = NULL;
+	size_t nlines = 0, pick = 0;
 	
-	while ((ch = getopt(argc, argv, "cn:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "f:n:p:")) != -1) {
 		switch(ch) {
-		case 'c':
-			cflag = 1;
+		case 'f':
+			fname = optarg;
 			break;
 		case 'n':
-			if ((t = atoi(optarg)) <= 0)
-				errx(1, "%d: number is invalid\n", t);
+			nlines = get_number(optarg, ch);
 			nflag = 1;
 			break;
 		case 'p':
-			if ((p = atoi(optarg)) <= 0)
-				errx(1, "%d: number is invalid\n", p);
+			pick = get_number(optarg, ch);
 			pflag = 1;
 			break;
 		case '?':
@@ -221,47 +234,32 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((cflag && nflag) || (nflag && (argc > 0)))
+	if ((fname && nflag) || (nflag && (argc > 0)))
 		usage();
 
-	if (cflag)
-		t = argc;
-
-	if (!(cflag || nflag)) {
-
-		if (argc > 1)
-			usage();
-		if (argc == 1) {
-			if ((input = fopen(argv[0], "r")) == NULL)
-				err(1, "could not open %s", argv[0]);
-		}
-		else {
-			input = stdin;
-		}
-		
-		swallow_input(input);
-		t = global_inputlen;
+	if (fname != NULL)
+		get_lines(fname, &lines, &nlines);
+	else if (nflag == 0) {
+		lines = argv;
+		nlines = argc;
 	}
 
 	gettimeofday(&tv, NULL);
 	srandom(getpid() ^ ~getuid() ^ tv.tv_sec ^ tv.tv_usec);
-
-	shuffle = get_shuffle(t);
+	shuffle = get_shuffle(nlines);
 
 	if (pflag) {
-		if (p > t)
+		if (pick > nlines)
 			errx(1, "-p specified more components than exist.");
-		t = p;
+		nlines = pick;
 	}
 
-	for (i = 0; i < t; i++) {
+	for (i = 0; i < nlines; i++) {
 		if (nflag)
 			printf("%d\n", shuffle[i]);
-		else if (cflag)
-			printf("%s\n", argv[shuffle[i]]);
 		else
-			printf("%s", global_inputbuf[shuffle[i]]);
+			printf("%s\n", lines[shuffle[i]]);
 	}
 
-	return(0);
+	return 0;
 }
