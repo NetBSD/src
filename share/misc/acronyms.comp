@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.57 2005/01/14 14:20:46 wiz Exp $
+$NetBSD: acronyms.comp,v 1.58 2005/02/16 00:04:23 kleink Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -48,6 +48,7 @@ CLI	command line interface
 CLV	constant linear velocity (as opposed to CAV)
 CMYK	cyan magenta yellow black
 COFF	common object file format
+COW	copy-on-write
 CPU	central processing unit
 CRLF	carriage return line feed
 CRT	cathode ray tube
@@ -98,6 +99,7 @@ ESDRAM	enhanced synchronous dynamic random access memory
 E-XER	extended XML encoding rules
 FAT	file allocation table
 FBRAM	frame buffer random access memory
+FCS	frame check sequence
 FDDI	fiber distributed data interface
 FFS	fast file system
 FHSS	frequency hop spread spectrum
@@ -108,6 +110,7 @@ FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
 GC	garbage collector
+GCR	group-coded recording
 GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
@@ -313,3 +316,4 @@ XGA	extended graphics array
 XML	extensible markup language
 XSL	extensible stylesheet language
 XT	extended technology
+ZFOD	zero-filled on demand
