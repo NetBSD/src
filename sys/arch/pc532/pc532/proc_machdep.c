@@ -40,7 +40,7 @@
  * And then from:
  *	Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp 
  *
- *	$Id: proc_machdep.c,v 1.1 1994/01/14 08:12:29 phil Exp $
+ *	$Id: proc_machdep.c,v 1.2 1994/01/28 03:48:22 phil Exp $
  */
 
 /* Modified by Phil Nelson for the pc532 port.  1/12/94 */
@@ -158,8 +158,9 @@ process_write_regs(p, regs)
 }
 
 int
-process_sstep(p)
+process_sstep(p, sstep)
 	struct proc *p;
+	int sstep;
 {
 	void *ptr;
 	struct trapframe *tp;
@@ -170,7 +171,10 @@ process_sstep(p)
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
 	tp = ptr;
-	tp->tf_eflags |= PSL_T;
+	if (sstep)
+		tp->tf_eflags |= PSL_T;
+	else
+		tp->tf_eflags &= ~PSL_T;
 */	return (EIO); /* Temporary */
 
 	return (0);

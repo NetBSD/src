@@ -36,7 +36,7 @@
  *
  *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
  *
- *	$Id: pmap.c,v 1.2 1993/09/13 07:26:50 phil Exp $
+ *	$Id: pmap.c,v 1.3 1994/01/28 03:47:57 phil Exp $
  */
 
 /*
@@ -355,7 +355,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	*ptr = KPTphys | PG_V | PG_KW;
 	/* fill in the rest of the top-level kernel VA entries */
 	for (x = ns532_btod(VM_MIN_KERNEL_ADDRESS);
-			x < ns532_btod(VM_MIN_KERNEL_ADDRESS)+3; x++) {
+			x < ns532_btod(VM_MAX_KERNEL_ADDRESS); x++) {
 		ptr = (int *) &kernel_pmap->pm_pdir[x];
 		/* only fill in the entries not yet made in _low_level_init() */
 		if (!*ptr) {
@@ -1014,7 +1014,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (pmap == NULL)
 		return;
 
-	if(va > VM_MAX_KERNEL_ADDRESS)panic("pmap_enter: toobig");
+	if(va >= VM_MAX_KERNEL_ADDRESS)
+		panic("pmap_enter: toobig");
 	/* also, should not muck with PTD va! */
 
 #ifdef DEBUG
@@ -1027,59 +1028,59 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/*
 	 * Page Directory table entry not valid, we need a new PT page
 	 */
-	if (!pmap_pde_v(pmap_pde(pmap, va))) {
-		printf("ptdi %x\n", pmap->pm_pdir[PTDPTDI]);
-	}
-
 	pte = pmap_pte(pmap, va);
-	opa = pmap_pte_pa(pte);
+	if (!pte)
+		panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("enter: pte %x *pte %x pte_pa %x opa %x pa %x va %x\n",
-			pte, *(int *)pte,
-			pmap_pte_pa(pte), opa, pa, va);
+		printf("enter: pte %x, *pte %x ", pte, *(int *)pte);
 #endif
 
-	/*
-	 * Mapping has not changed, must be protection or wiring change.
-	 */
-	if (opa == pa) {
-#ifdef DEBUG
-		enter_stats.pwchange++;
-#endif
+
+	if (pmap_pte_v(pte)) {
+		register vm_offset_t opa;
+
+		opa = pmap_pte_pa(pte);
+
 		/*
-		 * Wiring change, just update stats.
-		 * We don't worry about wiring PT pages as they remain
-		 * resident as long as there are valid mappings in them.
-		 * Hence, if a user page is wired, the PT page will be also.
+		 * Mapping has not changed, must be protection or wiring change.
 		 */
-		if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
+		if (opa == pa) {
 #ifdef DEBUG
-			if (pmapdebug & PDB_ENTER)
-				pg("enter: wiring change -> %x\n", wired);
+			enter_stats.pwchange++;
 #endif
-			if (wired)
-				pmap->pm_stats.wired_count++;
-			else
-				pmap->pm_stats.wired_count--;
+			/*
+			 * Wiring change, just update stats.
+			 * We don't worry about wiring PT pages as they remain
+			 * resident as long as there are valid mappings in them.
+			 * Hence, if a user page is wired, the PT page will be also.
+			 */
+			if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
 #ifdef DEBUG
-			enter_stats.wchange++;
+				if (pmapdebug & PDB_ENTER)
+					pg("enter: wiring change -> %x ", wired);
 #endif
+				if (wired)
+					pmap->pm_stats.wired_count++;
+				else
+					pmap->pm_stats.wired_count--;
+#ifdef DEBUG
+				enter_stats.wchange++;
+#endif
+			}
+			goto validate;
 		}
-		goto validate;
-	}
-
-	/*
-	 * Mapping has changed, invalidate old range and fall through to
-	 * handle validating new mapping.
-	 */
-	if (opa) {
+		
+		/*
+		 * Mapping has changed, invalidate old range and fall through to
+		 * handle validating new mapping.
+		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
-			printf("enter: removing old mapping va %x opa %x\n",
-				va, opa);
+			printf("enter: removing old mapping %x pa %x ", va, opa);
 #endif
-		pmap_remove(pmap, va, va + PAGE_SIZE);
+		pmap_remove(pmap, va, va + NBPG);
 #ifdef DEBUG
 		enter_stats.mchange++;
 #endif
@@ -1090,6 +1091,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Note that we raise IPL while manipulating pv_table
 	 * since pmap_enter can be called at interrupt time.
 	 */
+/*	if (pmap_valid_page(pa)) in the i386 version ... */
 	if (pa >= vm_first_phys && pa < vm_last_phys) {
 		register pv_entry_t pv, npv;
 		int s;
