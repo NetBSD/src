@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.15 1998/11/06 19:43:23 christos Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.16 1999/03/26 04:04:13 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.15 1998/11/06 19:43:23 christos Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.16 1999/03/26 04:04:13 sommerfe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -185,6 +185,8 @@ err2:	(void)close(fd);
 	errno = serrno;
 	return (NULL);
 }
+
+#ifdef OLD_GETCWD
 
 char *
 getcwd(pt, size)
@@ -377,3 +379,46 @@ err:
 	free(up);
 	return (NULL);
 }
+
+#else /* New getcwd */
+
+char *
+getcwd(pt, size)
+	char *pt;
+	size_t size;
+{
+	int ptsize, bufsize, len;
+	
+	/*
+	 * If no buffer specified by the user, allocate one as necessary.
+	 * If a buffer is specified, the size has to be non-zero.  The path
+	 * is built from the end of the buffer backwards.
+	 */
+	if (pt) {
+		ptsize = 0;
+		if (!size) {
+			errno = EINVAL;
+			return (NULL);
+		}
+		bufsize = size;
+	} else {
+		if ((pt = malloc(ptsize = 1024 - 4)) == NULL)
+			return (NULL);
+		bufsize = ptsize;
+	}
+	do {
+		len = __getcwd(pt, bufsize);
+		if ((len < 0) && (size == 0) && (errno == ERANGE)) {
+			if ((pt = realloc(pt, ptsize *= 2)) == NULL)
+				return NULL;
+			bufsize = ptsize;
+			continue;
+		}
+	} while (0);
+	if (len < 0)
+		return NULL;
+	else
+		return pt;
+}
+
+#endif
