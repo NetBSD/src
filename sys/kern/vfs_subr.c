@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.93.2.1 1998/11/09 06:06:32 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.93.2.2 1999/02/25 03:56:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1506,7 +1506,7 @@ printlockedvnodes()
 #endif
 
 #ifdef DDB
-char buf_flagbits[] =
+const char buf_flagbits[] =
 	"\20\1AGE\2NEEDCOMMIT\3ASYNC\4BAD\5BUSY\6CACHE\7CALL\10DELWRI"
 	"\11DIRTY\12DONE\13EINTR\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE"
 	"\21PAGET\22PHYS\23RAW\24READ\25TAPE\26UAREA\27WANTED\30WRITEINPROG"
@@ -1540,11 +1540,11 @@ vfs_buf_print(bp, full, pr)
 }
 
 
-char vnode_flagbits[] =
+const char vnode_flagbits[] =
 	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5XLOCK\6XWANT\7BWAIT\10ALIASED"
 	"\11DIROP\13DIRTY";
 
-char *vnode_types[] = {
+const char *vnode_types[] = {
 	"VNON",
 	"VREG",
 	"VDIR",
@@ -1556,7 +1556,7 @@ char *vnode_types[] = {
 	"VBAD",
 };
 
-char *vnode_tags[] = {
+const char *vnode_tags[] = {
 	"VT_NON",
 	"VT_UFS",
 	"VT_NFS",
@@ -1585,7 +1585,7 @@ vfs_vnode_print(vp, full, pr)
 {
 	char buf[1024];
 
-	char *vtype, *vtag;
+	const char *vtype, *vtag;
 
 	uvm_object_printit(&vp->v_uvm.u_obj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
