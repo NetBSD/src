@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.9 2002/01/18 08:39:24 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.10 2002/01/22 13:03:57 is Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,8 +37,12 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.9 2002/01/18 08:39:24 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.10 2002/01/22 13:03:57 is Exp $");
 #endif	/* !__lint */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <assert.h>
 #include <ctype.h>
