@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.2 1995/04/22 10:27:22 cgd Exp $
+$NetBSD: CHANGES,v 1.3 2000/03/13 22:53:22 soren Exp $
 
 From:    tektronix!zeus.TEK.COM!tims@ucbvax.Berkeley.EDU
 Date:    30 Nov 87 15:08:15 PST (Mon)
@@ -19,7 +19,7 @@ There are no dark rooms.
 ROGUEOPTS of flush,terse,seefloor,askme,inventory are ignored.
 	'askquit' is added to prevent ^\ from terminating the game accidentally.
 	If 'noaskquit' is
-	found in the ROGUEOPTS string, the the ^\ kills the game, otherwise,
+	found in the ROGUEOPTS string, the ^\ kills the game, otherwise,
 	the player is asked if he really wants to quit.  In either case, no
 	score file processing is attempted.
 The score is keyed to winning scores, and no player may appear twice.
