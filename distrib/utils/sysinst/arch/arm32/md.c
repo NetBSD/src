@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1999/01/25 23:34:24 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.12 1999/01/25 23:55:10 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -480,6 +480,10 @@ md_cleanup_install(void)
 
 	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
+	if (logging)
+		(void)fprintf(log, "%s\n", sedcmd);
+	if (scripting)
+		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
 	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
