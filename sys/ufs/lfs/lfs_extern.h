@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.23 2000/11/25 02:39:35 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.24 2000/12/03 05:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -120,7 +120,16 @@ int lfs_fits __P((struct lfs *, int));
 void lfs_flush_fs __P((struct lfs *, int));
 void lfs_flush __P((struct lfs *, int));
 int lfs_check __P((struct vnode *, ufs_daddr_t, int));
+#ifdef MALLOCLOG
+void lfs_freebuf_malloclog __P((struct buf *, char *, int));
+struct buf *lfs_newbuf_malloclog __P((struct vnode *, ufs_daddr_t, size_t,
+				      char *, int));
+#define lfs_freebuf(BP) lfs_freebuf_malloclog((BP), __FILE__, __LINE__)
+#define lfs_newbuf(V, A, S) lfs_newbuf_malloclog((V),(A),(S),__FILE__,__LINE__)
+#else
 void lfs_freebuf __P((struct buf *));
+struct buf *lfs_newbuf __P((struct vnode *, ufs_daddr_t, size_t));
+#endif
 void lfs_countlocked __P((int *, long *));
 int lfs_reserve __P((struct lfs *, struct vnode *, int));
 
@@ -157,7 +166,6 @@ int lfs_match_data __P((struct lfs *, struct buf *));
 int lfs_match_indir __P((struct lfs *, struct buf *));
 int lfs_match_dindir __P((struct lfs *, struct buf *));
 int lfs_match_tindir __P((struct lfs *, struct buf *));
-struct buf *lfs_newbuf __P((struct vnode *, ufs_daddr_t, size_t));
 void lfs_callback __P((struct buf *));
 void lfs_supercallback __P((struct buf *));
 void lfs_shellsort __P((struct buf **, ufs_daddr_t *, int));

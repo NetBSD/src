@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.33 2000/11/27 03:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.34 2000/12/03 05:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -482,11 +482,23 @@ lfs_check(vp, blkno, flags)
 /*
  * Allocate a new buffer header.
  */
+#ifdef MALLOCLOG
+# define DOMALLOC(S, T, F) _malloc((S), (T), (F), file, line)
+struct buf *
+lfs_newbuf_malloclog(vp, daddr, size, file, line)
+	struct vnode *vp;
+	ufs_daddr_t daddr;
+	size_t size;
+	char *file;
+	int line;
+#else
+# define DOMALLOC(S, T, F) _malloc((S), (T), (F))
 struct buf *
 lfs_newbuf(vp, daddr, size)
 	struct vnode *vp;
 	ufs_daddr_t daddr;
 	size_t size;
+#endif
 {
 	struct buf *bp;
 	size_t nbytes;
@@ -494,10 +506,10 @@ lfs_newbuf(vp, daddr, size)
 	
 	nbytes = roundup(size, DEV_BSIZE);
 	
-	bp = malloc(sizeof(struct buf), M_SEGMENT, M_WAITOK);
+	bp = DOMALLOC(sizeof(struct buf), M_SEGMENT, M_WAITOK);
 	bzero(bp, sizeof(struct buf));
 	if (nbytes)
-		bp->b_data = malloc(nbytes, M_SEGMENT, M_WAITOK);
+		bp->b_data = DOMALLOC(nbytes, M_SEGMENT, M_WAITOK);
 	if(nbytes) {
 		bzero(bp->b_data, nbytes);
 	}
@@ -523,9 +535,19 @@ lfs_newbuf(vp, daddr, size)
 	return (bp);
 }
 
+#ifdef MALLOCLOG
+# define DOFREE(A, T) _free((A), (T), file, line)
+void
+lfs_freebuf_malloclog(bp, file, line)
+	struct buf *bp;
+	char *file;
+	int line;
+#else
+# define DOFREE(A, T) free((A), (T))
 void
 lfs_freebuf(bp)
 	struct buf *bp;
+#endif
 {
 	int s;
 	
@@ -534,10 +556,10 @@ lfs_freebuf(bp)
 		brelvp(bp);
 	splx(s);
 	if (!(bp->b_flags & B_INVAL)) { /* B_INVAL indicates a "fake" buffer */
-		free(bp->b_data, M_SEGMENT);
+		DOFREE(bp->b_data, M_SEGMENT);
 		bp->b_data = NULL;
 	}
-	free(bp, M_SEGMENT);
+	DOFREE(bp, M_SEGMENT);
 }
 
 /*
