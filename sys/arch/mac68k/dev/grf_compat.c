@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.7 2001/04/30 17:12:03 wiz Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.7.2.1 2002/06/18 19:40:46 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -318,6 +318,14 @@ grfpoll(dev, events, p)
 	struct proc *p;
 {
 	return EINVAL;
+}
+
+int
+grfkqfilter(dev_t dev, struct knote *kn)
+{
+
+	/* XXXLUKEM (thorpej): not supported -- why is poll? */
+	return (1);
 }
 
 paddr_t
