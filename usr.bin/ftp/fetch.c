@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.111 2000/05/01 10:35:17 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.112 2000/05/25 15:35:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.111 2000/05/01 10:35:17 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.112 2000/05/25 15:35:51 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -637,6 +637,16 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					FREEPTR(ppath);
 					goto cleanup_fetch_url;
 				}
+				if (isipv6addr(host) &&
+				    strchr(host, '%') != NULL) {
+					warnx(
+"Scoped address notation `%s' disallowed via web proxy",
+					    host);
+					FREEPTR(phost);
+					FREEPTR(pport);
+					FREEPTR(ppath);
+					goto cleanup_fetch_url;
+				}
 
 				FREEPTR(host);
 				host = phost;
@@ -777,8 +787,19 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		} else {
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			if (strchr(host, ':')) {
-				fprintf(fin, "Host: [%s]:%d\r\n", host,
-				    portnum);
+				char *h, *p;
+
+				/*
+				 * strip off IPv6 scope identifier, since it is
+				 * local to the node
+				 */
+				h = xstrdup(host);
+				if (isipv6addr(h) &&
+				    (p = strchr(h, '%')) != NULL) {
+					*p = '\0';
+				}
+				fprintf(fin, "Host: [%s]:%d\r\n", h, portnum);
+				free(h);
 			} else
 				fprintf(fin, "Host: %s:%d\r\n", host, portnum);
 			fprintf(fin, "Accept: */*\r\n");
