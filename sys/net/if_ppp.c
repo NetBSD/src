@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.66 2001/01/15 16:33:30 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.67 2001/01/17 00:30:51 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -223,6 +223,7 @@ pppattach()
 	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, 0);
 #endif

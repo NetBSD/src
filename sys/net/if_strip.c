@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.34 2001/01/15 16:33:31 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35 2001/01/17 00:30:52 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -366,6 +366,7 @@ stripattach(n)
 
 		sc->sc_if.if_watchdog = strip_watchdog;
 		if_attach(&sc->sc_if);
+		if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
