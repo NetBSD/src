@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2000/09/27 18:53:57 fvdl Exp $
+#	$NetBSD: list,v 1.3 2000/09/27 22:14:15 fvdl Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -22,18 +22,13 @@ LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
 LINK	ramdiskbin			bin/stty
 LINK	ramdiskbin			bin/sync
-LINK	ramdiskbin			sbin/cd9660
-LINK	ramdiskbin			sbin/dhclient
 LINK	ramdiskbin			sbin/disklabel
-LINK	ramdiskbin			sbin/fdisk
-LINK	ramdiskbin			sbin/ffs
 LINK	ramdiskbin			sbin/fsck
 LINK	ramdiskbin			sbin/fsck_ffs
 LINK	ramdiskbin			sbin/halt
 LINK	ramdiskbin			sbin/ifconfig
 LINK	ramdiskbin			sbin/init
 LINK	ramdiskbin			sbin/kernfs
-LINK	ramdiskbin			sbin/mbrlabel
 LINK	ramdiskbin			sbin/mknod
 LINK	ramdiskbin			sbin/mount
 LINK	ramdiskbin			sbin/mount_cd9660
@@ -41,19 +36,11 @@ LINK	ramdiskbin			sbin/mount_ffs
 LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/mount_msdos
 LINK	ramdiskbin			sbin/mount_nfs
-LINK	ramdiskbin			sbin/mount_ntfs
 LINK	ramdiskbin			sbin/msdos
 LINK	ramdiskbin			sbin/newfs
-LINK	ramdiskbin			sbin/nfs
-LINK	ramdiskbin			sbin/ntfs
 LINK	ramdiskbin			sbin/ping
-LINK	ramdiskbin			sbin/ping6
 LINK	ramdiskbin			sbin/reboot
 LINK	ramdiskbin			sbin/route
-LINK	ramdiskbin			sbin/rtsol
-LINK	ramdiskbin			sbin/scsictl
-LINK	ramdiskbin			sbin/shutdown
-LINK	ramdiskbin			sbin/slattach
 LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/chgrp
