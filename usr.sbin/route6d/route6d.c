@@ -1,5 +1,7 @@
+/*	$NetBSD: route6d.c,v 1.2 1999/07/04 14:45:54 itojun Exp $	*/
+
 /*
- * $Header: /cvsroot/src/usr.sbin/route6d/route6d.c,v 1.1 1999/07/02 11:47:12 itojun Exp $
+ * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/route6d/Attic/route6d.c,v 1.1.2.12.2.5.2.8.2.10.2.30 1999/07/02 11:44:48 itojun Exp
  */
 
 /*
@@ -31,10 +33,9 @@
  * SUCH DAMAGE.
  */
 
-#if 0
+#include <sys/cdefs.h>
 #ifndef	lint
-static char _rcsid[] = "$id";
-#endif
+__RCSID("$NetBSD: route6d.c,v 1.2 1999/07/04 14:45:54 itojun Exp $");
 #endif
 
 #include <stdio.h>
