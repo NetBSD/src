@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.3 2001/05/17 10:35:30 scw Exp $	*/
+/*	$NetBSD: osiop.c,v 1.4 2001/06/09 12:59:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -607,8 +607,7 @@ osiop_scsidone(acb, status)
 
 #ifdef DIAGNOSTIC
 	if (acb == NULL || acb->xs == NULL) {
-		printf("%s: NULL acb or scsipi_xfer in osiop_scsidone\n",
-		    sc->sc_dev.dv_xname);
+		printf("osiop_scsidone: NULL acb or scsipi_xfer\n");
 #if defined(OSIOP_DEBUG) && defined(DDB)
 		Debugger();
 #endif
