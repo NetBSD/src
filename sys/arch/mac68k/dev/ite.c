@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.4 1994/07/30 04:21:47 lkestel Exp $
+ *	$Id: ite.c,v 1.5 1994/07/31 06:45:50 lkestel Exp $
  */
 
 /*
@@ -196,6 +196,7 @@ static void reversepixel1(int xx, int yy, int num)
 	unsigned char	*sc;
 
 	sc = (unsigned char *)videoaddr;
+	mask = 0; /* Get rid of warning from compiler */
 
 	switch (videobitdepth) {
 		case 1:	mask = 1 << (7 - (xx & 7));
@@ -210,6 +211,8 @@ static void reversepixel1(int xx, int yy, int num)
 		case 8: mask = 255;
 			sc += yy * videorowbytes + xx;
 			break;
+		default:
+			panic ("reversepixel(): unsupported bit depth");
 	}
 
 	while (num--) {
@@ -294,14 +297,19 @@ static void erasecursor (void)
 static void scrollup (void)
 {
 	unsigned long	*from, *to;
-	int		i, linelongs;
+	int		i, linelongs, tocopy, copying;
 
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
 	to = (unsigned long *)videoaddr;
 	from = to + linelongs;
 
-	bcopy (from, to, (scrrows - 1) * linelongs * sizeof (long));
+	tocopy = (scrrows - 1) * linelongs * sizeof (long);
+	while (tocopy > 0) {
+		copying = (tocopy > 65535) ? 65535 : tocopy;
+		bcopy (from, to, copying);
+		tocopy -= copying;
+	}
 	bzero (to + (scrrows - 1) * linelongs, linelongs * sizeof (long));
 }
 
@@ -617,6 +625,8 @@ static int ite_pollforchar(void)
 
 	adb_polling = 0;
 
+	splx(s);
+
 	return polledkey;
 }
 
@@ -841,10 +851,13 @@ itecnprobe(struct consdev *cp)
 		panic ("itecnprobe(): did not find iteopen().");
 	}
 
+	cdevsw[maj].d_ttys = &ite_tty;
+
 	unit = 0; /* hardcode first device as console. */
 
 	/* initialize required fields */
 	cp->cn_dev = makedev (maj, unit);
+	cp->cn_tp = ite_tty;
 	cp->cn_pri = CN_INTERNAL;
 }
 
