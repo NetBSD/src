@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.368 1999/11/30 15:22:52 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.369 1999/12/03 22:48:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ extern struct proc *npxproc;
 
 #include "pckbc.h"
 #if (NPCKBC > 0)
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/pckbcvar.h>
 #endif
 
 #include "pc.h"
@@ -2011,7 +2011,7 @@ consinit()
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(I386_BUS_SPACE_IO, PCKBC_KBD_SLOT);
+		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
