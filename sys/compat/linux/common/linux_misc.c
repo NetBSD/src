@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.131 2004/09/19 16:50:11 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.132 2004/09/20 18:41:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.131 2004/09/19 16:50:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.132 2004/09/20 18:41:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,7 @@ const int linux_ptrace_request_map[] = {
 	-1
 };
 
-static const struct mnttypes {
-	char *bsd;
-	int linux;
-} fstypes[] = {
+const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_FFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NFS,		LINUX_NFS_SUPER_MAGIC 		},
 	{ MOUNT_MFS,		LINUX_DEFAULT_SUPER_MAGIC	},
@@ -159,7 +156,7 @@ static const struct mnttypes {
 	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		}
 };
-#define FSTYPESSIZE (sizeof(fstypes) / sizeof(fstypes[0]))
+const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
@@ -307,16 +304,17 @@ bsd_to_linux_statfs(bsp, lsp)
 {
 	int i;
 
-	for (i = 0; i < FSTYPESSIZE; i++)
-		if (strcmp(bsp->f_fstypename, fstypes[i].bsd) == 0)
+	for (i = 0; i < linux_fstypes_cnt; i++) {
+		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
+			lsp->l_ftype = linux_fstypes[i].linux;
 			break;
+		}
+	}
 
-	if (i == FSTYPESSIZE) {
+	if (i == linux_fstypes_cnt) {
 		DPRINTF(("unhandled fstype in linux emulation: %s\n",
 		    bsp->f_fstypename));
 		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
-	} else {
-		lsp->l_ftype = fstypes[i].linux;
 	}
 
 	/*
