@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.30 1998/06/20 18:47:33 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.31 1998/08/21 13:42:52 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,9 +39,6 @@
 
 #ifndef _VAX_PARAM_H_
 #define _VAX_PARAM_H_
-
-#include <machine/macros.h>
-#include <machine/psl.h>
 
 /*
  * Machine dependent constants for VAX.
@@ -84,8 +81,8 @@
 #define	MAXPHYS		(63 * 1024)	/* max raw I/O transfer size */
 #define	MAXBSIZE	0x4000		/* max FS block size - XXX */
 
-#define	CLSIZELOG2    1
-#define	CLSIZE	      2
+#define	CLSIZELOG2    3
+#define	CLSIZE	      8
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE	4		/* initial stack size/NBPG */
@@ -95,7 +92,7 @@
 #define USPACE  (NBPG*UPAGES)
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	(CLBYTES * 4)	/* default message buffer size */
+#define MSGBUFSIZE	CLBYTES		/* default message buffer size */
 #endif
 
 /*
@@ -191,7 +188,7 @@
 #define	spl6()		splx(0x16)
 #define	spl7()		splx(0x17)
 
-#define	ovbcopy(x,y,z)	bcopy(x,y,z)
+/* #define	ovbcopy(x,y,z)	bcopy(x,y,z) */
 
 #if !defined(VAX410) && !defined(VAX43)
 #define vmapbuf(p,q)
@@ -202,6 +199,8 @@
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
 void	delay __P((int));
+/* inline macros used inside kernel */
+#include <machine/macros.h>
 #endif
 
 #define	DELAY(x) delay(x)
