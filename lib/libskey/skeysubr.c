@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.11 1998/02/03 19:12:48 perry Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.12 1998/03/18 19:22:12 christos Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -42,8 +42,6 @@ char *passwd;	/* Password, any length */
 	char *buf;
 	MD4_CTX md;
 	unsigned int buflen;
-	int i;
-	int tmp;
 	u_int32_t hash[4];
 	
 	buflen = strlen(seed) + strlen(passwd);
@@ -64,19 +62,7 @@ char *passwd;	/* Password, any length */
 	hash[0] ^= hash[2];
 	hash[1] ^= hash[3];
 
-	/* Default (but slow) code that will convert to
-	 * little-endian byte ordering on any machine
-	 */
-	for (i=0; i<2; i++) {
-		tmp = hash[i];
-		*result++ = tmp;
-		tmp >>= 8;
-		*result++ = tmp;
-		tmp >>= 8;
-		*result++ = tmp;
-		tmp >>= 8;
-		*result++ = tmp;
-	}
+	(void)memcpy(result, hash, 8);
 
 	return 0;
 }
@@ -87,7 +73,6 @@ f(x)
 	char *x;
 {
 	MD4_CTX md;
-	int tmp;
 	u_int32_t hash[4];
 
 	MD4Init(&md);
@@ -98,26 +83,7 @@ f(x)
 	hash[0] ^= hash[2];
 	hash[1] ^= hash[3];
 
-	/* Default (but slow) code that will convert to
-	 * little-endian byte ordering on any machine
-	 */
-	tmp = hash[0];
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-
-	tmp = hash[1];
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x = tmp;
+	(void)memcpy(x, hash, 8);
 }
 
 /* Strip trailing cr/lf from a line of text */
