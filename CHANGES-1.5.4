@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.144 2004/04/09 04:23:53 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.145 2004/04/11 02:24:50 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2572,3 +2572,10 @@ sys/kern/sysv_shm.c				patch
 	Don't use uao_ functions directly; use them through the pgops methods.
 	Fix missing reference leak in the error path of shmat().
 	[groo, ticket #122]
+
+UPDATING					new
+
+	Note requirements for building a post 1.5.3 snapshot (since this 
+	doesn't use cross tools it's still a bootstrap issue at times).
+
+	[jmc]
