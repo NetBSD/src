@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.12 2001/12/15 20:43:31 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.13 2001/12/16 11:40:52 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.12 2001/12/15 20:43:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.13 2001/12/16 11:40:52 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -91,8 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.12 2001/12/15 20:43:31 martin Exp $")
 		PPPOE_ADD_16(PTR, SESS);	\
 		PPPOE_ADD_16(PTR, LEN)
 
-#define	PPPOE_DISC_TIMEOUT	hz/5
-#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times */
+#define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
+#define	PPPOE_SLOW_RETRY	(hz*240)	/* persistent retry interval */
+#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
 struct pppoe_softc {
@@ -576,7 +577,8 @@ pppoe_data_input(struct mbuf *m)
         /* fix incoming interface pointer (not the raw ethernet interface anymore) */
         m->m_pkthdr.rcvif = &sc->sc_sppp.pp_if;
 
-        /* pass packet up */
+        /* pass packet up and account for it */
+        sc->sc_sppp.pp_if.if_ipackets++;
         sppp_input(&sc->sc_sppp.pp_if, m);
         return;
 
@@ -608,6 +610,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	    ether_sprintf((const unsigned char *)&sc->sc_dest), m->m_pkthdr.len);
 #endif
 
+	sc->sc_sppp.pp_if.if_opackets++;
 	return sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL);
 }
 
@@ -657,6 +660,20 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		return 0;
 	}
 	break;
+	case SIOCSIFFLAGS:
+	{
+		struct ifreq *ifr = (struct ifreq*) data;
+		/*
+		 * Prevent running re-establishment timers overriding
+		 * administrators choice.
+		 */
+		if ((ifr->ifr_flags & IFF_UP) == 0) {
+			callout_stop(&sc->sc_timeout);
+			sc->sc_padi_retried = 0;
+			sc->sc_padr_retried = 0;
+		}
+	}
+	/* FALLTHROUGH */
 	default:
 		return sppp_ioctl(ifp, cmd, data);
 	}
@@ -752,7 +769,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 static void
 pppoe_timeout(void *arg)
 {
-	int x;
+	int x, retry_wait;
 	struct pppoe_softc *sc = (struct pppoe_softc*)arg;
 
 #ifdef PPPOE_DEBUG
@@ -761,15 +778,34 @@ pppoe_timeout(void *arg)
 
 	switch (sc->sc_state) {
 	case PPPOE_STATE_PADI_SENT:
+		/*
+		 * We have two basic ways of retrying:
+		 *  - Quick retry mode: try a few times in short sequence
+		 *  - Slow retry mode: we already had a connection successfully
+		 *    established and will try infinitely (without user
+		 *    intervention)
+		 * We only enter slow retry mode if IFF_LINK1 (aka autodial)
+		 * is not set and we already had a successfull connection.
+		 */
+
+		/* initialize for quick retry mode */
+		retry_wait = PPPOE_DISC_TIMEOUT*(1+sc->sc_padi_retried);
+
 		x = splnet();
 		sc->sc_padi_retried++;
 		if (sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
-			pppoe_abort_connect(sc);
-			splx(x);
-			return;
+			if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0
+			   && sc->sc_sppp.pp_if.if_ibytes) {
+			    /* slow retry mode */
+			    retry_wait = PPPOE_SLOW_RETRY;
+			} else {
+			    pppoe_abort_connect(sc);
+			    splx(x);
+			    return;
+			}
 		}
 		if (pppoe_send_padi(sc) == 0)
-			callout_reset(&sc->sc_timeout, PPPOE_DISC_TIMEOUT*(1+sc->sc_padi_retried), pppoe_timeout, sc);
+			callout_reset(&sc->sc_timeout, retry_wait, pppoe_timeout, sc);
 		else
 			pppoe_abort_connect(sc);
 		splx(x);
