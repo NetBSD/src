@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.10 1997/06/15 20:20:10 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -105,13 +105,13 @@ sn_obio_attach(parent, self, aux)
 	case MACH_MACQ800:
 	case MACH_MACQ900:
 	case MACH_MACQ950:
-		sc->snr_dcr |= DCR_EXBUS | DCR_DW32;
+		sc->snr_dcr |= DCR_EXBUS;
 		sc->bitmode = 1;
 		break;
 
 	case MACH_MACPB500:
-		sc->snr_dcr |= DCR_SYNC | DCR_LBR | DCR_DW16;
-		sc->bitmode = 0;
+		sc->snr_dcr |= DCR_SYNC | DCR_LBR;
+		sc->bitmode = 0;	/* 16 bit interface */
 		break;
 
 	default:
