@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.19 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: rc_config.c,v 1.20 2004/03/21 16:31:22 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -1227,18 +1227,32 @@ check_config(void)
 	
 	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
 
+		/* does this entry have a bchannel driver configured? */
+		if (cep->usrdevice < 0) {
+			logit(LL_ERR, "check_config: usrdevicename not set in entry \"%s\"!", 
+			    cep->name);
+			error++;
+		}
+		if (cep->usrdeviceunit < 0) {
+			logit(LL_ERR, "check_config: usrdeviceunit not set in entry \"%s\"!",
+			    cep->name);
+			error++;
+		}
+
 		/* numbers used for dialout */
 		
 		if ((cep->inout != DIR_INONLY) && (cep->dialin_reaction != REACT_ANSWER))
 		{
 			if (cep->remote_numbers_count == 0)
 			{
-				logit(LL_ERR, "check_config: remote-phone-dialout not set in entry %d!", i);
+				logit(LL_ERR, "check_config: remote-phone-dialout not set in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 			if (strlen(cep->local_phone_dialout) == 0)
 			{
-				logit(LL_ERR, "check_config: local-phone-dialout not set in entry %d!", i);
+				logit(LL_ERR, "check_config: local-phone-dialout not set in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 		}
@@ -1249,19 +1263,22 @@ check_config(void)
 		{
 			if (strlen(cep->local_phone_incoming) == 0)
 			{
-				logit(LL_ERR, "check_config: local-phone-incoming not set in entry %d!", i);
+				logit(LL_ERR, "check_config: local-phone-incoming not set in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 			if (cep->incoming_numbers_count == 0)
 			{
-				logit(LL_ERR, "check_config: remote-phone-incoming not set in entry %d!", i);
+				logit(LL_ERR, "check_config: remote-phone-incoming not set in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 		}
 
 		if ((cep->dialin_reaction == REACT_ANSWER) && (cep->b1protocol != BPROT_NONE))
 		{
-			logit(LL_ERR, "check_config: b1protocol not raw for telephony in entry %d!", i);
+			logit(LL_ERR, "check_config: b1protocol not raw for telephony in entry \"%s\"!",
+			    cep->name);
 			error++;
 		}
 
@@ -1269,12 +1286,14 @@ check_config(void)
 		{
 			if (cep->ppp_send_name == NULL)
 			{
-				logit(LL_ERR, "check_config: no remote authentification name in entry %d!", i);
+				logit(LL_ERR, "check_config: no remote authentification name in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 			if (cep->ppp_send_password == NULL)
 			{
-				logit(LL_ERR, "check_config: no remote authentification password in entry %d!", i);
+				logit(LL_ERR, "check_config: no remote authentification password in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 		}
@@ -1282,12 +1301,14 @@ check_config(void)
 		{
 			if (cep->ppp_expect_name == NULL)
 			{
-				logit(LL_ERR, "check_config: no local authentification name in entry %d!", i);
+				logit(LL_ERR, "check_config: no local authentification name in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 			if (cep->ppp_expect_password == NULL)
 			{
-				logit(LL_ERR, "check_config: no local authentification secret in entry %d!", i);
+				logit(LL_ERR, "check_config: no local authentification secret in entry \"%s\"!",
+				    cep->name);
 				error++;
 			}
 		}
@@ -1304,7 +1325,8 @@ check_config(void)
 			set_autoupdown(cep);
 	}
 	if (error) {
-		logit(LL_ERR, "check_config: %d error(s) in configuration file, exit!", error);
+		logit(LL_ERR, "check_config: %d error(s) in configuration file, exiting!",
+		    error);
 		do_exit(1);
 	}
 }
