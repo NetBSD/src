@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.21 1995/04/13 06:35:38 cgd Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.22 1995/05/15 01:24:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -223,6 +223,7 @@ ip_output(m0, opt, ro, flags, imo)
 			 * if necessary.
 			 */
 			extern struct socket *ip_mrouter;
+
 			if (ip_mrouter && (flags & IP_FORWARDING) == 0) {
 				if (ip_mforward(m, ifp) != 0) {
 					m_freem(m);
@@ -322,6 +323,8 @@ sendit:
 			ipstat.ips_odropped++;
 			goto sendorfree;
 		}
+		*mnext = m;
+		mnext = &m->m_nextpkt;
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
@@ -340,7 +343,6 @@ sendit:
 		mhip->ip_len = htons((u_int16_t)(len + mhlen));
 		m->m_next = m_copy(m0, off, len);
 		if (m->m_next == 0) {
-			(void) m_free(m);
 			error = ENOBUFS;	/* ??? */
 			ipstat.ips_odropped++;
 			goto sendorfree;
@@ -350,8 +352,6 @@ sendit:
 		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
-		*mnext = m;
-		mnext = &m->m_nextpkt;
 		ipstat.ips_ofragments++;
 	}
 	/*
@@ -754,7 +754,7 @@ ip_setmoptions(optname, imop, m)
 		 * No multicast option buffer attached to the pcb;
 		 * allocate one and initialize to default values.
 		 */
-		imo = (struct ip_moptions*)malloc(sizeof(*imo), M_IPMOPTS,
+		imo = (struct ip_moptions *)malloc(sizeof(*imo), M_IPMOPTS,
 		    M_WAITOK);
 
 		if (imo == NULL)
