@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.7 2001/09/10 18:27:42 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.8 2001/09/10 19:25:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.7 2001/09/10 18:27:42 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.8 2001/09/10 19:25:35 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,7 +353,7 @@ main(int argc, char *argv[])
 	usage();
     fname = *argv++;
     if (!strchr(fname, '/')) {
-	snprintf(buf, sizeof(buf), "%s%s", _PATH_DEV, fname);
+	snprintf(buf, sizeof(buf), "%sr%s", _PATH_DEV, fname);
 	if (!(fname = strdup(buf)))
 	    err(1, NULL);
     }
@@ -770,9 +770,9 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 #endif
 	part = *s2++ - 'a';
     }
+#ifdef __FreeBSD__
     if (!s2 || (*s2 && *s2 != '.'))
 	errx(1, "%s: can't figure out partition info", fname);
-#ifdef __FreeBSD__
     if (slice != -1 && (!oflag || (!bpb->bsec && part == -1))) {
 	if (ioctl(fd, DIOCGSLICEINFO, &ds) == -1) {
 	    warn("ioctl (GSLICEINFO)");
