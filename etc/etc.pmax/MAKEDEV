@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.41 2001/12/19 17:58:09 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.42 2001/12/19 18:14:22 wiz Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -40,7 +40,7 @@
 #	lkm	loadable kernel modules interface    (unsupported in 1.3_ALPHA)
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
-#	ss*	MI scsi scanners
+#	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	MI unknown scsi devices
 # Platform-specific devices:
