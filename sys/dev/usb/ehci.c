@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.53 2004/01/09 09:19:33 chs Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,18 +66,10 @@
  *    on hubs in USB 2.0 for details. 
  *
  * 5) command failures are not recovered correctly
- *
- * 6) usb_frag_freelist gets corrupted and system panics at next allocation
-      with 
-
-ehci0 at pci0 dev 16 function 3: VIA Technologies product 0x3104 (rev. 0x82)
-umass0: Cypress Semiconductor USB2.0 Storage Device, rev 2.00/0.01, addr 2
-umass0: using SCSI over Bulk-Only
-
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.53 2004/01/09 09:19:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
