@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.31 2002/03/18 13:38:52 wiz Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.32 2002/06/18 20:24:31 jdolecek Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.31 2002/03/18 13:38:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.32 2002/06/18 20:24:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5055,10 +5055,11 @@ clear_inodedeps(p)
 	 * Ugly code to find mount point given pointer to superblock.
 	 */
 	fs = inodedep->id_fs;
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = CIRCLEQ_NEXT(mp, mnt_list))
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if ((mp->mnt_flag & MNT_SOFTDEP) && fs == VFSTOUFS(mp)->um_fs)
 			break;
+	}
+
 	/*
 	 * Find the last inode in the block with dependencies.
 	 */
