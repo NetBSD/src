@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.5 1999/10/27 14:14:18 joda Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.6 1999/11/09 09:20:30 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -87,8 +87,12 @@ cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbusreg_t address, mask;
   int s;
 
-  if (reg != CARDBUS_ROM_REG 
-      && (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
+  /* EXT ROM is able to map on memory space ONLY. */
+  if (reg == CARDBUS_ROM_REG) {
+    return 1;
+  }
+
+  if(reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
     panic("cardbus_io_find: bad request");
   }
 
@@ -110,12 +114,12 @@ cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   splx(s);
 
   if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
-    printf("pci_io_find: expected type i/o, found mem\n");
+    printf("cardbus_io_find: expected type i/o, found mem\n");
     return 1;
   }
 
   if (PCI_MAPREG_IO_SIZE(mask) == 0) {
-    printf("pci_io_find: void region\n");
+    printf("cardbus_io_find: void region\n");
     return (1);
   }
 
@@ -157,7 +161,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
 
   if (reg != CARDBUS_ROM_REG && 
       (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
-    panic("cardbus_find_mem: bad request");
+    panic("cardbus_mem_find: bad request");
   }
 
   /*
@@ -177,15 +181,19 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbus_conf_write(cc, cf, tag, reg, address);
   splx(s);
 
-  if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
-    printf("cardbus_mem_find: expected type mem, found i/o\n");
-    return 1;
-  }
-  if (PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
-    printf("cardbus_mem_find: expected mem type %08x, found %08x\n",
-	   PCI_MAPREG_MEM_TYPE(type),
-	   PCI_MAPREG_MEM_TYPE(address));
-    return 1;
+  if (reg != CARDBUS_ROM_REG) {
+    /* memory space BAR */
+
+    if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
+      printf("cardbus_mem_find: expected type mem, found i/o\n");
+      return 1;
+    }
+    if (PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
+      printf("cardbus_mem_find: expected mem type %08x, found %08x\n",
+	     PCI_MAPREG_MEM_TYPE(type),
+	     PCI_MAPREG_MEM_TYPE(address));
+      return 1;
+    }
   }
 
   if (PCI_MAPREG_MEM_SIZE(mask) == 0) {
@@ -198,7 +206,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   case PCI_MAPREG_MEM_TYPE_32BIT_1M:
     break;
   case PCI_MAPREG_MEM_TYPE_64BIT:
-    printf("pci_mem_find: 64-bit memory mapping register\n");
+    printf("cardbus_mem_find: 64-bit memory mapping register\n");
     return 1;
   default:
     printf("cardbus_mem_find: reserved mapping register type\n");
