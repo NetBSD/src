@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2001/04/24 15:41:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 2001/05/11 16:36:42 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -115,6 +115,10 @@
 #endif
 
 #include "pc.h"
+#if NPC > 0
+extern int kbc_8042sysreset __P((void));
+extern void pccnattach __P((void));
+#endif
 
 #include "vga_jazzio.h"
 #if NVGA_JAZZIO > 0
@@ -168,13 +172,6 @@
 #endif
 #endif /* NCOM */
 
-extern struct consdev *cn_tab;
-extern char kernel_text[];
-extern void makebootdev __P((char *));
-extern void configure __P((void));
-extern int kbc_8042sysreset __P((void));
-extern void pccnattach __P((void));
-
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -211,15 +208,9 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-extern	void
-mach_init __P((int argc, char *argv[], char *envv[]));
+extern void mach_init __P((int argc, char *argv[], char *envv[]));
 
-#ifdef DEBUG
-/* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
-#endif
-
-extern void machine_ConfigCache __P((void));
+void machine_ConfigCache __P((void));
 static void tlb_init_pica __P((void));
 static void tlb_init_nec_eisa __P((void));
 static void tlb_init_nec_pci __P((void));
@@ -228,7 +219,6 @@ static int get_simm_size __P((int *, int));
 static char *getenv __P((char *env));
 static void get_eth_hw_addr __P((char *));
 static int atoi __P((const char *, int));
-
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -247,6 +237,7 @@ struct splvec	splvec = {			/* XXX will go XXX */
 	MIPS_INT_MASK_SPLHIGH, /* splstatclock */
 };
 
+extern char kernel_text[], edata[], end[];
 extern struct user *proc0paddr;
 
 /*
@@ -266,7 +257,6 @@ mach_init(argc, argv, envv)
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	caddr_t kernend, v;
 	vsize_t size;
-	extern char edata[], end[];
 
 	/* clear the BSS segment in kernel code */
 	kernend = (caddr_t)mips_round_page(end);
@@ -1257,7 +1247,6 @@ cpu_reboot(howto, bootstr)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
 		/* fill curproc with live object */
 		if (curproc == NULL)
 			curproc = &proc0;
