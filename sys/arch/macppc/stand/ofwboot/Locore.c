@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.10 2002/03/29 15:15:07 tsutsui Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11 2002/09/27 00:32:17 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,14 +58,6 @@ asm("
 	.text
 	.globl	_start
 _start:
-	li	8,0
-	li	9,0x100
-	mtctr	9
-1:
-	dcbf	0,8
-	icbi	0,8
-	addi	8,8,0x20
-	bdnz	1b
 	sync
 	isync
 
