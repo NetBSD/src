@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.356 2002/10/06 17:28:47 thorpej Exp $
+# $NetBSD: mi,v 1.357 2002/10/09 14:55:53 elric Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -43,6 +43,7 @@
 ./dev/fd		base-sys-root
 ./dev/log		base-sys-root
 ./etc			base-sys-root
+./etc/cgd		base-sys-root
 ./etc/defaults		base-sys-root
 ./etc/kerberosIV	base-krb4-root
 ./etc/kerberosV		base-krb5-root
