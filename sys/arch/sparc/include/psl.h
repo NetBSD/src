@@ -42,7 +42,7 @@
  *	@(#)psl.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: psl.h,v 1.12 92/11/26 02:04:42 torek Exp 
- * $Id: psl.h,v 1.2 1993/10/11 02:28:29 deraadt Exp $
+ * $Id: psl.h,v 1.3 1994/03/22 08:09:24 deraadt Exp $
  */
 
 #ifndef PSR_IMPL
@@ -137,12 +137,12 @@ SPL(splsoftint, 1)
 #define	splnet	splsoftint
 #define	splsoftclock splsoftint
 
-/* Memory allocation (must be as high as highest network device) */
-SPL(splimp, 5)
-
 /* tty input runs at software level 6 */
 #define	PIL_TTY	6
 SPL(spltty, PIL_TTY)
+
+/* Memory allocation (must be as high as highest network or tty device) */
+SPL(splimp, 7)
 
 /* audio software interrupts are at software level 4 */
 #define	PIL_AUSOFT	4
