@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.19 1999/03/26 22:04:07 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.20 1999/06/19 15:46:05 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ si_attach(parent, self, aux)
 	ncr_sc->sci_r6 = sc->sca_regs + 24; /* IN_DATA/DMA_TRCV  (rw) */
 	ncr_sc->sci_r7 = sc->sca_regs + 28; /* RESET/DMA_IRCV    (rw) */
 
+	ncr_sc->sc_no_disconnect = 0xff;
 	/*
 	 * Initialize si board itself.
 	 */
