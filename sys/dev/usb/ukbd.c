@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.31 1999/05/13 23:34:38 thorpej Exp $        */
+/*      $NetBSD: ukbd.c,v 1.32 1999/05/14 19:38:44 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ USB_ATTACH(ukbd)
 
 #if defined(__NetBSD__)
 	if (sc->sc_console_keyboard) {
-		DPRINTF(("ukbd_attach: console keyboard\n", sc));
+		DPRINTF(("ukbd_attach: console keyboard sc=%p\n", sc));
 		wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
 	}
 
