@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.3 1995/02/01 01:39:43 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.4 1995/03/31 02:49:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -55,6 +55,8 @@
 #include <machine/svr4_machdep.h>
 
 extern int _ucodesel, _udatasel;
+
+static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
@@ -184,6 +186,100 @@ svr4_setcontext(p, uc)
 }
 
 
+static void
+svr4_getsiginfo(si, sig, code, addr)
+	union svr4_siginfo	*si;
+	int			 sig;
+	u_long			 code;
+	caddr_t			 addr;
+{
+	si->si_signo = bsd_to_svr4_signum(sig);
+	si->si_errno = 0;
+	si->si_addr  = addr;
+
+	switch (code) {
+	case T_PRIVINFLT:
+		si->si_code = SVR4_ILL_PRVOPC;
+		si->si_trap = SVR4_T_PRIVINFLT;
+		break;
+
+	case T_BPTFLT:
+		si->si_code = SVR4_TRAP_BRKPT;
+		si->si_trap = SVR4_T_BPTFLT;
+		break;
+
+	case T_ARITHTRAP:
+		si->si_code = SVR4_FPE_INTOVF;
+		si->si_trap = SVR4_T_DIVIDE;
+		break;
+
+	case T_PROTFLT:
+		si->si_code = SVR4_SEGV_ACCERR;
+		si->si_trap = SVR4_T_PROTFLT;
+		break;
+
+	case T_TRCTRAP:
+		si->si_code = SVR4_TRAP_TRACE;
+		si->si_trap = SVR4_T_TRCTRAP;
+		break;
+
+	case T_PAGEFLT:
+		si->si_code = SVR4_SEGV_ACCERR;
+		si->si_trap = SVR4_T_PAGEFLT;
+		break;
+
+	case T_ALIGNFLT:
+		si->si_code = SVR4_BUS_ADRALN;
+		si->si_trap = SVR4_T_ALIGNFLT;
+		break;
+
+	case T_DIVIDE:
+		si->si_code = SVR4_FPE_FLTDIV;
+		si->si_trap = SVR4_T_DIVIDE;
+		break;
+
+	case T_OFLOW:
+		si->si_code = SVR4_FPE_FLTOVF;
+		si->si_trap = SVR4_T_DIVIDE;
+		break;
+
+	case T_BOUND:
+		si->si_code = SVR4_FPE_FLTSUB;
+		si->si_trap = SVR4_T_BOUND;
+		break;
+
+	case T_DNA:
+		si->si_code = SVR4_FPE_FLTINV;
+		si->si_trap = SVR4_T_DNA;
+		break;
+
+	case T_FPOPFLT:
+		si->si_code = SVR4_FPE_FLTINV;
+		si->si_trap = SVR4_T_FPOPFLT;
+		break;
+
+	case T_SEGNPFLT:
+		si->si_code = SVR4_SEGV_MAPERR;
+		si->si_trap = SVR4_T_SEGNPFLT;
+		break;
+
+	case T_STKFLT:
+		si->si_code = SVR4_ILL_BADSTK;
+		si->si_trap = SVR4_T_STKFLT;
+		break;
+
+	default:
+		si->si_code = 0;
+		si->si_trap = 0;
+#ifdef DIAGNOSTIC
+		printf("sig %d code %d\n", sig, code);
+		panic("svr4_getsiginfo");
+#endif
+		break;
+	}
+}
+
+
 /*
  * Send an interrupt to process.
  *
@@ -204,8 +300,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
-	extern char sigcode[], esigcode[];
-
+	extern char esigcode[], svr4_sigcode[];
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
@@ -224,12 +319,23 @@ svr4_sendsig(catcher, sig, mask, code)
 
 	/* 
 	 * Build the argument list for the signal handler.
+	 * Notes:
+	 * 	- we always build the whole argument list, even when we
+	 *	  don't need to [when SA_SIGINFO is not set, we don't need
+	 *	  to pass all sf_si and sf_uc]
+	 *	- we don't pass the correct signal address [we need to
+	 *	  modify many kernel files to enable that]
 	 */
-	frame.sf_signum = bsd_to_svr4_signum(sig);
-	frame.sf_code = code;
+
+	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
+	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_eip);
+
+	frame.sf_signum = frame.sf_si.si_signo;
+	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
-	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
+	printf("sig = %d, sip %x, ucp = %x, handler = %x\n", 
+	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -244,7 +350,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	 * Build context to run handler in.
 	 */
 	tf->tf_esp = (int)fp;
-	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - svr4_sigcode));
 	tf->tf_eflags &= ~PSL_VM;
 	tf->tf_cs = _ucodesel;
 	tf->tf_ds = _udatasel;
