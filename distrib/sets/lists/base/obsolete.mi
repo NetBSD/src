@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.17 2001/01/22 17:48:16 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.18 2001/03/07 07:10:11 garbled Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -61,6 +61,10 @@
 /usr/share/man/man8/tahoe
 /usr/share/misc/getopt
 /usr/share/misc/more.help
+/usr/share/sushi/scripton/func
+/usr/share/sushi/scriptoff/func
+/usr/share/sushi/scripton
+/usr/share/sushi/scriptoff
 /usr/share/vi/catalog/ru_SU.KOI8-R
 /usr/share/zoneinfo/Africa/Lumumbashi
 /usr/share/zoneinfo/Asia/Aktau
