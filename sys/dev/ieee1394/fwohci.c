@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.62 2002/12/04 00:28:41 haya Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.63 2002/12/05 12:22:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.62 2002/12/04 00:28:41 haya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.63 2002/12/05 12:22:37 agc Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -6271,10 +6271,10 @@ fwohci_itd_construct(struct fwohci_it_ctx *itc, struct fwohci_it_dmabuf *itd,
 	for (roundsize = 16; roundsize < maxsize; roundsize <<= 1);
 	itd->itd_maxsize = roundsize;
 
-	printf("\t\tdesc%d [%x, %x]\n", itd->itd_num,
+	printf("\t\tdesc%d [%x, %lx]\n", itd->itd_num,
 	    (u_int32_t)phys,
-	    (u_int32_t)phys
-	    + (itd->itd_maxpacket*3 + 1)*sizeof(struct fwohci_desc));
+	    (unsigned long)((u_int32_t)phys
+	    + (itd->itd_maxpacket*3 + 1)*sizeof(struct fwohci_desc)));
 	printf("%s: fwohci_itd_construct[%d] npkt %d maxsize round up to %d\n",
 	    xname, itd->itd_num, itd->itd_maxpacket, itd->itd_maxsize);
 
@@ -6570,8 +6570,9 @@ fwohci_itd_link(struct fwohci_it_dmabuf *itd, struct fwohci_it_dmabuf *itdc)
 		printf("funny! not OUTPUT_LAST descriptor %p\n", fd1);
 	}
 	if (itd->itd_lastdesc - itd->itd_desc != 3 * itd->itd_npacket) {
-		printf("funny! packet number inconsistency %d <=> %d\n",
-		    itd->itd_lastdesc - itd->itd_desc, 3*itd->itd_npacket);
+		printf("funny! packet number inconsistency %ld <=> %ld\n",
+		    (long)(itd->itd_lastdesc - itd->itd_desc),
+		    (long)(3*itd->itd_npacket));
 	}
 
 	fd1->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
@@ -6738,8 +6739,8 @@ fwohci_itd_writedata(struct fwohci_it_dmabuf *itd, int ndata,
 		++fd;
 		/* intr check... */
 		if (fd->fd_flags & OHCI_DESC_INTR_ALWAYS) {
-			printf("uncleared INTR flag in desc %d\n",
-			    (fd - itd->itd_desc - 1)/3);
+			printf("uncleared INTR flag in desc %ld\n",
+			    (long)(fd - itd->itd_desc - 1)/3);
 		}
 		fd->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
 
@@ -6749,21 +6750,21 @@ fwohci_itd_writedata(struct fwohci_it_dmabuf *itd, int ndata,
 			bcal = (fd - itd->itd_desc + 1)*sizeof(struct fwohci_desc) + (u_int32_t)itd->itd_desc_phys;
 			if (bcal != (fd->fd_branch & 0xfffffff0)) {
 
-				printf("uum, branch differ at %d, %x %x %d/%d\n",
+				printf("uum, branch differ at %d, %x %x %ld/%d\n",
 				    itd->itd_num,
 				    bcal,
 				    fd->fd_branch,
-				    (fd - itd->itd_desc - 1)/3,
+				    (long)((fd - itd->itd_desc - 1)/3),
 				    itd->itd_maxpacket);
 			}
 		} else {
 			/* the last pcaket */
 			if (fd->fd_branch != 0) {
-				printf("uum, branch differ at %d, %x %x %d/%d\n",
+				printf("uum, branch differ at %d, %x %x %ld/%d\n",
 				    itd->itd_num,
 				    0,
 				    fd->fd_branch,
-				    (fd - itd->itd_desc - 1)/3,
+				    (long)((fd - itd->itd_desc - 1)/3),
 				    itd->itd_maxpacket);
 			}
 		}
