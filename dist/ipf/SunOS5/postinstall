@@ -1,5 +1,5 @@
 #!/bin/sh
-DEVLINK=${BASEDIR}/etc/devlink.tab
+DEVLINK=${PKG_INSTALL_ROOT}/etc/devlink.tab
 PATH=${PATH}:/sbin:/usr/sbin:/usr/ucb
 if [ x"`grep minor=ipf ${DEVLINK}`" = x ] ; then
 	echo "type=ddi_pseudo;name=ipf;minor=ipf	\M0" >> ${DEVLINK}
@@ -16,16 +16,16 @@ fi
 if [ x"`grep minor=ipauth ${DEVLINK}`" = x ] ; then
 	echo "type=ddi_pseudo;name=ipf;minor=ipauth	\M0" >> ${DEVLINK}
 fi
-if [ x${BASEDIR} = x -o x${BASEDIR} = x/ ] ; then
+if [ x${PKG_INSTALL_ROOT} = x -o x${PKG_INSTALL_ROOT} = x/ ] ; then
 	add_drv -m '* 0600 root root' ipf
 else
-	add_drv -m '* 0600 root root' -b ${BASEDIR:-/} ipf
+	add_drv -m '* 0600 root root' -b ${PKG_INSTALL_ROOT:-/} ipf
 fi
-/usr/sbin/devlinks -r ${BASEDIR:-/}
+/usr/sbin/devlinks -r ${PKG_INSTALL_ROOT:-/}
 if [ -d /usr/ucb -a -f /usr/ucb/ucblinks ] ; then
-	/usr/ucb/ucblinks -r ${BASEDIR:-/}
+	/usr/ucb/ucblinks -r ${PKG_INSTALL_ROOT:-/}
 fi
-if [ ! -f ${BASEDIR}/etc/opt/ipf/ipf.conf ] ; then
-	touch ${BASEDIR}/etc/opt/ipf/ipf.conf
+if [ ! -f ${PKG_INSTALL_ROOT}/etc/opt/ipf/ipf.conf ] ; then
+	touch ${PKG_INSTALL_ROOT}/etc/opt/ipf/ipf.conf
 fi
 exit 0

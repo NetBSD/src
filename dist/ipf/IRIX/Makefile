@@ -62,9 +62,10 @@ DFLAGS=$(IPFLKM) $(IPFLOG) $(KFLAGS) $(MLFLAGS) -jalr #-D_MP_NETLOCKS -DMP
 IPF=ipf.o parse.o common.o opt.o inet_addr.o facpri.o
 IPT=ipt.o parse.o common.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o \
     opt.o ipft_tx.o misc.o ip_frag_u.o ip_state_u.o ip_nat_u.o ip_proxy_u.o \
-    ip_auth_u.o ipft_hx.o ip_fil_u.o inet_addr.o natparse.o facpri.o
-IPNAT=ipnat.o kmem.o natparse.o common.o inet_addr.o
-FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o
+    ip_auth_u.o ipft_hx.o ip_fil_u.o inet_addr.o natparse.o facpri.o \
+    printnat.o printstate.o
+IPNAT=ipnat.o kmem.o natparse.o common.o inet_addr.o printnat.o
+FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o printstate.o
 
 build all: ipf ipfstat ipftest ipmon ipnat $(LKM)
 
@@ -207,6 +208,14 @@ natparse.o: $(TOP)/natparse.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_proxy.h $(TOP)/ip_nat.h
 	$(CC) $(CCARGS) -c $(TOP)/natparse.c -o $@
 
+printnat.o: $(TOP)/printnat.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_proxy.h $(TOP)/ip_nat.h
+	$(CC) $(CCARGS) -c $(TOP)/printnat.c -o $@
+
+printstate.o: $(TOP)/printstate.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_state.h
+	$(CC) $(CCARGS) -c $(TOP)/printstate.c -o $@
+
 clean:
 	${RM} -f *.core *.o ipt fils ipf ipfstat ipftest ipmon ipnat $(LKM)
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
@@ -237,7 +246,7 @@ install:
 	-$(INSTALL) -F $(MANDIR)/man1 -m 444 -src $(TOP)/ipsend/ipresend.1 -O ipresend.1
 	-$(INSTALL) -F $(MANDIR)/man1 -m 444 -src $(TOP)/ipsend/iptest.1 -O iptest.1
 	-$(INSTALL) -F $(MANDIR)/man5 -m 444 -src $(TOP)/ipsend/ipsend.5 -O ipsend.5
-	-$(INSTALL) -F $(MANDIR)/man1 -m 444 -src $(TOP)/man/ipnat.1 -O ipnat.1
+	-$(INSTALL) -F $(MANDIR)/man8 -m 444 -src $(TOP)/man/ipnat.8 -O ipnat.8
 	-$(INSTALL) -F $(MANDIR)/man1 -m 444 -src $(TOP)/man/ipftest.1 -O ipftest.1
 	-$(INSTALL) -F $(MANDIR)/man4 -m 444 -src $(TOP)/man/ipf.4 -O ipf.4
 	-$(INSTALL) -F $(MANDIR)/man4 -m 444 -src $(TOP)/man/ipl.4 -O ipl.4

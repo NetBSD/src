@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.1.1.3 2001/03/26 03:54:49 mike Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.1.1.4 2002/01/24 08:18:33 martti Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -8,14 +8,8 @@
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsend.c,v 2.2.2.1 2001/01/10 06:21:19 darrenr Exp";
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -37,6 +31,11 @@ static const char rcsid[] = "@(#)Id: ipsend.c,v 2.2.2.1 2001/01/10 06:21:19 darr
 #endif
 #include "ipsend.h"
 #include "ipf.h"
+
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipsend.c,v 2.2.2.3 2001/07/15 22:00:14 darrenr Exp";
+#endif
 
 
 extern	char	*optarg;

@@ -1,14 +1,18 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.3 2001/03/26 03:53:05 mike Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.1.1.4 2002/01/24 08:18:30 martti Exp $	*/
 
 /*
- * Copyright (C) 1999 by Darren Reed.
+ * Copyright (C) 1999-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 #ifdef	__FreeBSD__
-# include <osreldate.h>
+# ifndef __FreeBSD_cc_version
+#  include <osreldate.h>
+# else
+#  if __FreeBSD_cc_version < 430000
+#   include <osreldate.h>
+#  endif
+# endif
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -43,7 +47,7 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.3 2001/01/10 06:20:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.8 2001/09/14 18:52:21 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -235,13 +239,13 @@ char *argv[];
 			opts |= OPT_DONOTHING;
 			break;
 		case 'N' :
-			if ((ns > 0) || dirname || (rw != -1) || set)
+			if ((ns >= 0) || dirname || (rw != -1) || set)
 				usage();
 			ns = 0;
 			set = 1;
 			break;
 		case 'r' :
-			if ((ns > 0) || dirname || (rw != -1))
+			if ((ns >= 0) || dirname || (rw != -1))
 				usage();
 			rw = 0;
 			set = 1;
@@ -251,7 +255,7 @@ char *argv[];
 			set = 1;
 			break;
 		case 'S' :
-			if ((ns > 0) || dirname || (rw != -1) || set)
+			if ((ns >= 0) || dirname || (rw != -1) || set)
 				usage();
 			ns = 1;
 			set = 1;
@@ -266,7 +270,7 @@ char *argv[];
 			opts |= OPT_VERBOSE;
 			break;
 		case 'w' :
-			if ((ns > 0) || dirname || (rw != -1) || (ns == -1))
+			if (dirname || (rw != -1) || (ns == -1))
 				usage();
 			rw = 1;
 			set = 1;
@@ -281,7 +285,7 @@ char *argv[];
 		}
 
 	if (ifs) {
-		if (!filename || ns<0)
+		if (!filename || ns < 0)
 			usage();
 		if (ns == 0)
 			return changenatif(ifs, filename);
@@ -534,6 +538,7 @@ char *file;
 	}
 
 	bzero((char *)&ipn, sizeof(ipn));
+	ipnp = &ipn;
 
 	/*
 	 * 1. Read all state information in.
@@ -575,7 +580,7 @@ char *file;
 			}
 		} else
 			in = (nat_save_t *)malloc(sizeof(*in));
-		bcopy((char *)&ipnp, (char *)in, sizeof(ipn));
+		bcopy((char *)ipnp, (char *)in, sizeof(ipn));
 
 		/*
 		 * Check to see if this is the first state entry that will

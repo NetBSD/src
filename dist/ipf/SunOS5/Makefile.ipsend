@@ -18,10 +18,18 @@ all build dlpi sunos5 : $(OBJ)/ipsend $(OBJ)/ipresend $(OBJ)/iptest
 	$(CC) $(DEBUG) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/y.tab.o: $(TOP)/iplang/iplang_y.y
-	(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ=')
+	@if [ "x$$OBJ" != "x" -a "x$$OBJ" != "x." ] ; then \
+		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ=') ; \
+	else \
+		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)' 'CFLAGS=$(CFLAGS)' 'OBJ=') ; \
+	fi
 
 $(OBJ)/lex.yy.o: $(TOP)/iplang/iplang_l.l
-	(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ=')
+	@if [ "x$$OBJ" != "x" -a "x$$OBJ" != "x." ] ; then \
+		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ='); \
+	else \
+		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)' 'CFLAGS=$(CFLAGS)' 'OBJ=') ; \
+	fi
 
 $(OBJ)/ipsend: $(OBJS) $(UNIXOBJS)
 	$(CC) $(DEBUG) $(OBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll

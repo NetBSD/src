@@ -1,32 +1,50 @@
 #!/bin/sh
-id=`/usr/sbin/modinfo | awk '/ipf/ { print $1 } ' -`
-pid=`ps -e | awk '/ipmon/ { print $1 } ' -`
+#
+PIDFILE=/etc/opt/ipf/ipmon.pid
+
+id=`/usr/sbin/modinfo 2>&1 | awk '/ipf/ { print $1 } ' - 2>/dev/null`
+if [ -f $PIDFILE ] ; then
+	pid=`cat $PIDFILE 2>/dev/null`
+else
+	pid=`/bin/ps -e 2>&1 | awk '/ipmon/ { print $1 } ' - 2>/dev/null`
+fi
 PATH=${PATH}:/sbin:/opt/ipf/bin
 IPFILCONF=/etc/opt/ipf/ipf.conf
 IP6FILCONF=/etc/opt/ipf/ipf6.conf
 IPNATCONF=/etc/opt/ipf/ipnat.conf
 
 block_default_workaround() {
-      ipf -F a
-      echo "constructing minimal name resolution rules..."
-      NAMESERVERS=`cat /etc/resolv.conf | nawk '/nameserver/ {printf "%s ", $2}'`
-      for NS in $NAMESERVERS ; do
-	      IF_TO_NS=`/usr/sbin/route -n get $NS | \
-                           nawk '$1 == "interface:" { print $NF ; exit }'`
-	      IP_TO_NS=`ifconfig $IF_TO_NS | \
-                           nawk 'NR == "2" { print $2 ; exit }'`
-	      echo "pass out quick proto udp from $IP_TO_NS to $NS port = 53 keep state" | \
-		      ipf -f -
-      done
+	ipf -F a
+	echo "constructing minimal name resolution rules..."
+	NAMESERVERS=`cat /etc/resolv.conf  2>/dev/null| \
+		     nawk '/nameserver/ {printf "%s ", $2}' 2>/dev/null`
+	if [ -z "$NAMESERVERS" ] ; then
+		return
+	fi
+	for NS in $NAMESERVERS ; do
+		IF_TO_NS=`/usr/sbin/route -n get $NS  2>/dev/null| \
+			  nawk '$1 == "interface:" { print $NF ; exit }' \
+			  2>dev/null`
+		if [ -z "$IF_TO_NS" ] ; then
+			continue
+		fi
+		IP_TO_NS=`ifconfig $IF_TO_NS  2>/dev/null| \
+			nawk 'NR == "2" { print $2 ; exit }' 2>/dev/null`
+		if [ -z "$IP_TO_NS" ] ; then
+			continue
+		fi
+		echo "pass out on $IF_TO_NS quick proto udp from $IP_TO_NS to $NS port = 53 keep state" | \
+		ipf -f -
+	done
 }
 
 case "$1" in
 	start)
 		if [ x"$pid" != x ] ; then
-			kill -TERM $pid
+			kill -TERM $pid 2>/dev/null
 		fi
 		if [ x$id != x ] ; then
-			modunload -i $id
+			modunload -i $id 2>/dev/null
 		fi
 		modload /usr/kernel/drv/ipf
 		if [ -r ${IPFILCONF} ]; then
@@ -41,6 +59,7 @@ case "$1" in
 				ipf -s
 			fi
 		fi
+		ipf -y
 		if [ -r ${IP6FILCONF} ]; then
 			ipf -IFa -6f ${IP6FILCONF}
 			if [ $? != 0 ]; then
@@ -56,7 +75,7 @@ case "$1" in
 				echo "$0: load of ${IPNATCONF} failed"
 			fi
 		fi
-		ipmon -s &
+		ipmon -Ds
 		;;
 
 	stop)

@@ -2,12 +2,12 @@ i pkginfo
 #i preinstall=../preinstall
 i copyright=../copyright
 !default 0755 root root
-d none /usr ? root sys
-d none /usr/kernel ? root sys
-d none /usr/kernel/drv ? root sys
-d none /usr/kernel/drv/sparcv9 ? root sys
+d none /usr ? ? ?
+d none /usr/kernel ? ? ?
+d none /usr/kernel/drv ? ? ?
+d none /usr/kernel/drv/sparcv9 ? ? ?
 f none /usr/kernel/drv/sparcv9/ipf=root/usr/kernel/drv/sparcv9/ipf
-d none /usr/sbin ? root sys
+d none /usr/sbin ? ? ?
 d none /usr/sbin/sparcv9 ? ? ?
 f none /usr/sbin/sparcv9/ipfstat=root/sbin/sparcv9/ipfstat
 f none /usr/sbin/sparcv9/ipf=root/sbin/sparcv9/ipf

@@ -1,11 +1,9 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.4 2001/03/26 03:53:16 mike Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.5 2002/01/24 08:18:30 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 /*
  * 29/12/94 Added code from Marc Huber <huber@fzi.de> to allow it to allocate
@@ -15,12 +13,24 @@
 
 #include <sys/param.h>
 
-#if defined(__FreeBSD__) && (__FreeBSD__ > 1)
+#if defined(__FreeBSD__)
 # ifdef	IPFILTER_LKM
-#  include <osreldate.h>
+#  ifndef __FreeBSD_cc_version
+#   include <osreldate.h>
+#  else
+#   if __FreeBSD_cc_version < 430000
+#    include <osreldate.h>
+#   endif
+#  endif
 #  define	ACTUALLY_LKM_NOT_KERNEL
 # else
-#  include <sys/osreldate.h>
+#  ifndef __FreeBSD_cc_version
+#   include <sys/osreldate.h>
+#  else
+#   if __FreeBSD_cc_version < 430000
+#    include <sys/osreldate.h>
+#   endif
+#  endif
 # endif
 #endif
 #include <sys/systm.h>
@@ -55,19 +65,16 @@
 #if (__FreeBSD_version >= 300000)
 # include <sys/socket.h>
 #endif
-#if (__FreeBSD_version >= 199511)
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <net/route.h>
+#include <net/if.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
-#endif
-#if (__FreeBSD__ > 1)
-# include <sys/sysent.h>
-#endif
+#include <sys/sysent.h>
 #include <sys/lkm.h>
 #include "netinet/ipl.h"
 #include "netinet/ip_compat.h"
@@ -112,8 +119,12 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcpclosed, CTLFLAG_RW,
 	   &fr_tcpclosed, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_udptimeout, CTLFLAG_RW,
 	   &fr_udptimeout, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_udpacktimeout, CTLFLAG_RW,
+	   &fr_udpacktimeout, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_icmptimeout, CTLFLAG_RW,
 	   &fr_icmptimeout, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_icmpacktimeout, CTLFLAG_RW,
+	   &fr_icmpacktimeout, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_defnatage, CTLFLAG_RW,
 	   &fr_defnatage, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_ipfrttl, CTLFLAG_RW,
@@ -394,7 +405,7 @@ int cmd, ver;
 #  endif
 }
 # endif /* IPFILTER_LKM */
-static ipl_devsw_installed = 0;
+static int	ipl_devsw_installed = 0;
 
 static void ipl_drvinit __P((void *unused))
 {

@@ -1,11 +1,9 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.13 2000/05/03 10:58:37 veego Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.14 2002/01/24 08:20:13 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 /*
  * 29/12/94 Added code from Marc Huber <huber@fzi.de> to allow it to allocate

@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.1.1.2 2000/05/03 10:55:55 veego Exp $	*/
+/*	$NetBSD: relay.c,v 1.1.1.3 2002/01/24 08:18:30 martti Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -109,13 +109,16 @@ char *argv[];
 	int	fd, sl = sizeof(sl), se;
 
 	openlog(argv[0], LOG_PID|LOG_NDELAY, LOG_DAEMON);
-	if ((fd = open("/dev/ipl", O_RDONLY)) == -1) {
+	if ((fd = open("/dev/ipnat", O_RDONLY)) == -1) {
 		se = errno;
 		perror("open");
 		errno = se;
 		syslog(LOG_ERR, "open: %m\n");
 		exit(-1);
 	}
+
+	bzero(&nl, sizeof(nl));
+	nl.nl_flags = IPN_TCP;
 
 	bzero(&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
@@ -153,8 +156,8 @@ char *argv[];
 		exit(-1);
 	}
 
-	sin.sin_port = nl.nl_inport;
-	sin.sin_addr = nl.nl_inip;
+	sin.sin_port = nl.nl_realport;
+	sin.sin_addr = nl.nl_realip;
 	sl = sizeof(sin);
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.1 1999/12/11 22:23:58 veego Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.2 2002/01/24 08:18:29 martti Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -54,10 +54,20 @@
  * -
  * --Copyright--
  */
+#ifdef	__STDC__
+# ifndef __P
+#  define	__P(x)	x
+# endif
+#else
+# undef		__P
+# define	__P(x)	()
+# undef		const
+# define	const
+#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static const char rcsid[] = "@(#)Id: inet_addr.c,v 2.1 1999/08/04 17:29:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: inet_addr.c,v 2.1.4.1 2001/07/15 22:06:14 darrenr Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -65,13 +75,6 @@ static const char rcsid[] = "@(#)Id: inet_addr.c,v 2.1 1999/08/04 17:29:54 darre
 #include <arpa/inet.h>
 #include <ctype.h>
 
-#ifndef	__P
-# ifdef	__STDC__
-#  define	__P(x)	x
-# else
-#  define	__P(x)	()
-# endif
-#endif
 int inet_aton __P((const char *, struct in_addr *));
 
 /* 

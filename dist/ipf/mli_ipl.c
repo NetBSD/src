@@ -1,12 +1,10 @@
-/*	$NetBSD: mli_ipl.c,v 1.1.1.3 2001/03/26 03:53:18 mike Exp $	*/
+/*	$NetBSD: mli_ipl.c,v 1.1.1.4 2002/01/24 08:18:30 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  * (C)opyright 1997 by Marc Boucher.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original authors and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 
 /* TODO: (MARCXXX)

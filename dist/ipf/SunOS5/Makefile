@@ -62,11 +62,11 @@ IPT=$(OBJ)/ipt.o $(OBJ)/parse.o $(OBJ)/common.o $(OBJ)/fil.o $(OBJ)/ipft_sn.o \
     $(OBJ)/ipft_tx.o $(OBJ)/misc.o $(OBJ)/ip_state_u.o $(OBJ)/ip_frag_u.o \
     $(OBJ)/ip_nat_u.o $(OBJ)/inet_addr.o $(OBJ)/ip_fil_u.o \
     $(OBJ)/ipft_hx.o $(OBJ)/ip_proxy_u.o $(OBJ)/ip_auth_u.o \
-    $(OBJ)/natparse.o $(OBJ)/facpri.o
+    $(OBJ)/natparse.o $(OBJ)/facpri.o $(OBJ)/printnat.o $(OBJ)/printstate.o
 IPNAT=$(OBJ)/ipnat.o $(OBJ)/kmem.o $(OBJ)/natparse.o $(OBJ)/inet_addr.o \
-    $(OBJ)/common.o
+    $(OBJ)/common.o $(OBJ)/printnat.o
 FILS=$(OBJ)/fils.o $(OBJ)/parse.o $(OBJ)/kmem.o $(OBJ)/opt.o \
-    $(OBJ)/inet_addr.o $(OBJ)/facpri.o $(OBJ)/common.o
+    $(OBJ)/inet_addr.o $(OBJ)/facpri.o $(OBJ)/common.o $(OBJ)/printstate.o
 
 $(OBJ):
 	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ); fi
@@ -75,10 +75,16 @@ $(OBJ):
 sunos5 solaris2 build: $(OBJ) $(OBJ)/ipf.exe $(OBJ)/ipfstat $(OBJ)/ipftest \
     $(OBJ)/ipmon $(OBJ)/ipnat $(OBJ)/ipf $(OBJ)/ipfs
 
-pkg: ipf.pkg
+pkg:
+	if [ "$(CPUDIR)" = "" ] ; then \
+		$$x="`uname -p`-`uname -r`"; \
+		$(MAKE) "CPUDIR=$$x" $$x/ipf.pkg; \
+	else \
+		$(MAKE) "CPUDIR=$(CPUDIR)" $(CPUDIR)/ipf.pkg; \
+	fi
 
 $(OBJ)/ipfstat: $(FILS)
-	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS) $(STATETOP_LIB)
+	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS) $(STATETOP_LIB) -lkvm
 
 $(OBJ)/ipf.exe: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
@@ -99,13 +105,13 @@ $(OBJ)/ipftest: $(IPT) $(OBJ)/ipf.exe
 	ln -s `pwd`/$(OBJ)/ipftest $(TOP)/$(OBJ)/ipftest
 
 $(OBJ)/ipnat: $(IPNAT)
-	$(CC) $(CFLAGS) $(IPNAT) -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $(IPNAT) -o $@ $(LIBS) -lkvm
 
 $(OBJ)/ipfs: $(OBJ)/ipfs.o
 	$(CC) $(DEBUG) $(CFLAGS) $(OBJ)/ipfs.o -o $@ $(LIBS)
 
 tests:
-	(cd test; make )
+	(cd test; $(MAKE) )
 
 $(OBJ)/fils.o: $(TOP)/fils.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
@@ -139,9 +145,17 @@ $(OBJ)/opt.o: $(TOP)/opt.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 $(OBJ)/ipnat.o: $(TOP)/ipnat.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipnat.c -o $@
 
-$(OBJ)/natparse.o: $(TOP)/natparse.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h \
-		$(TOP)/ip_compat.h
+$(OBJ)/natparse.o: $(TOP)/natparse.c $(TOP)/ip_fil.h $(TOP)/ipf.h \
+		$(TOP)/ip_nat.h $(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/natparse.c -o $@
+
+$(OBJ)/printnat.o: $(TOP)/printnat.c $(TOP)/ip_fil.h $(TOP)/ipf.h \
+		$(TOP)/ip_nat.h $(TOP)/ip_compat.h $(TOP)/ip_proxy.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/printnat.c -o $@
+
+$(OBJ)/printstate.o: $(TOP)/printstate.c $(TOP)/ip_fil.h $(TOP)/ipf.h \
+		$(TOP)/ip_state.h $(TOP)/ip_compat.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/printstate.c -o $@
 
 $(OBJ)/ipft_sn.o: $(TOP)/ipft_sn.c $(TOP)/ipt.h $(TOP)/ipf.h $(TOP)/ip_fil.h \
 		$(TOP)/snoop.h
@@ -172,7 +186,8 @@ $(OBJ)/ip_state.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h
 	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
 
 $(OBJ)/ip_proxy.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
-	    $(TOP)/ip_ftp_pxy.c $(TOP)/ip_raudio_pxy.c $(TOP)/ip_nat.h
+	    $(TOP)/ip_ftp_pxy.c $(TOP)/ip_raudio_pxy.c $(TOP)/ip_rcmd_pxy.c \
+	    $(TOP)/ip_ipsec_pxy.c $(TOP)/ip_nat.h
 	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
 
 $(OBJ)/ip_frag.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h
@@ -194,7 +209,8 @@ $(OBJ)/ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_auth.c -o $@
 
 $(OBJ)/ip_proxy_u.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
-	      $(TOP)/ip_ftp_pxy.c $(TOP)/ip_nat.h
+	      $(TOP)/ip_ftp_pxy.c $(TOP)/ip_raudio_pxy.c $(TOP)/ip_rcmd_pxy.c \
+	      $(TOP)/ip_ipsec_pxy.c $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_proxy.c -o $@
 
 $(OBJ)/ip_fil_u.o: $(TOP)/ip_fil.c $(TOP)/ip_fil.h
@@ -227,11 +243,12 @@ $(OBJ)/ipmon: $(TOP)/ipmon.c
 clean:
 	if [ `basename \`pwd\`` != SunOS5 ] ; then \
 		${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon ipnat ipf.exe ipfs; \
-		${RM} -f ipnat.5 ipnat.4 ipnat.1 ipfilter.5; \
+		${RM} -f ipnat.5 ipnat.4 ipnat.8 ipfilter.5; \
+		${RM} -f ipf.pkg ipf.pkg.common; \
 		${RM} -f prototype pkginfo postinstall postremove copyright; \
-		${RM} -f  y.tab.? lex.yy.c; \
+		${RM} -f y.tab.? lex.yy.c; \
 	fi
-	/bin/rm -rf */root ipf.pkg* sparcv7 sparcv9
+	/bin/rm -rf */root $(CPUDIR)/ipf.pkg* sparcv7 sparcv9
 	make -f Makefile.ipsend clean
 	-(for i in *; do \
 		if [ -d $${i} -a -h $${i}/Makefile ] ; then \
@@ -241,23 +258,21 @@ clean:
 		fi \
 	 done)
 
-ipf.pkg: ipf.pkg.common
+$(CPUDIR)/ipf.pkg: $(CPUDIR)/ipf.pkg.common
 	if [ -d $(CPUDIR)/sparcv7 ]; then \
-	    $(MAKE) PROTO=prototype32 PKG=ipf OBJ=sparcv7 BITS=32 \
-		ipf.pkg.bin; \
-	    $(MAKE) PROTO=prototype64 PKG=ipfx OBJ=sparcv9 BITS=64 \
-		ipf.pkg.bin; \
+	    $(MAKE) CPUDIR=$(CPUDIR) PROTO=prototype32 PKG=ipf OBJ=sparcv7 \
+		BITS=32 $(CPUDIR)/ipf.pkg.bin; \
+	    $(MAKE) CPUDIR=$(CPUDIR) PROTO=prototype64 PKG=ipfx OBJ=sparcv9 \
+		BITS=64 $(CPUDIR)/ipf.pkg.bin; \
 	else \
-	    $(MAKE) OBJ=. BITS=${BITS} ipf.pkg.bin;\
+	    $(MAKE) CPUDIR=$(CPUDIR) OBJ=. BITS=${BITS} $(CPUDIR)/ipf.pkg.bin;\
 	fi
 	touch $(CPUDIR)/ipf.pkg
 	pkgtrans -s $(TMP) $(CPUDIR)/ipf.pkg `ls $(TMP)`
-	/bin/rm -f ipf.pkg
-	ln -s $(CPUDIR)/ipf.pkg ipf.pkg
 	rm -rf $(TMP)/ipf*
 	    
 
-ipf.pkg.common:
+$(CPUDIR)/ipf.pkg.common:
 	mkdir -p $(ROOTINC)/netinet $(PKGDIR)/examples $(ROOT)/usr/kernel/drv
 	mkdir -p $(ROOT)/etc/init.d $(TMP)
 	mkdir -p $(PKGMAN)/man1 $(PKGMAN)/man4 $(PKGMAN)/man5 $(PKGMAN)/man8
@@ -266,7 +281,7 @@ ipf.pkg.common:
 	-$(INSTALL) -c ipf.conf $(ROOT)/usr/kernel/drv
 	-$(INSTALL) ipf.8 $(PKGMAN)/man8
 	-$(INSTALL) ipfs.8 $(PKGMAN)/man8
-	-$(INSTALL) ipnat.1 $(PKGMAN)/man1
+	-$(INSTALL) ipnat.8 $(PKGMAN)/man8
 	-$(INSTALL) ipftest.1 $(PKGMAN)/man1
 	-$(INSTALL) mkfilters.1 $(PKGMAN)/man1
 	-$(INSTALL) ipf.4 $(PKGMAN)/man4
@@ -294,7 +309,7 @@ ipf.pkg.common:
 # For 64 bit Solaris, we build 32 and 64 bit packages, but the 64 bit package
 # is smaller and only contains the 64 bit specific and not the common stuff.
 #
-ipf.pkg.bin:
+$(CPUDIR)/ipf.pkg.bin:
 	mkdir -p $(PKGBIN) $(ROOT)/$(SBINDEST) $(ROOT)/usr/kernel/drv/$(OBJ)
 	-$(INSTALL) -c -s $(OBJDIR)/ipftest $(PKGBIN)/ipftest
 	-$(INSTALL) -c -s $(OBJDIR)/ipmon $(PKGBIN)/ipmon
@@ -317,11 +332,20 @@ ipf.pkg.bin:
 	(cd $(CPUDIR); pkgmk -a `uname -p` -o -d $(TMP))
 
 
-package install: ipf.pkg
+package install:
+	if [ "$(CPUDIR)" = "" ] ; then \
+		$$x="`uname -p`-`uname -r`"; \
+		$(MAKE) "CPUDIR=$$x" $@; \
+	else \
+		$(MAKE) "CPUDIR=$(CPUDIR)" make$@; \
+	fi
+
+makepackage makeinstall: $(CPUDIR)/ipf.pkg
 	@if [ `id|sed -e 's/^.[^(]*(\([^)]*\)).*/\1/'` != root ] ; then \
 		echo "Can only install if root"; \
 		exit 1; \
 	fi
 	# Must add ipfx before ipf or driver attach fails.
-	-[ -d $(CPUDIR)/sparcv9 ] && pkgadd -d ipf.pkg ipfx
-	-pkgadd -d ipf.pkg ipf
+	-[ -d $(CPUDIR)/sparcv9 ] && pkgadd -d $(CPUDIR)/ipf.pkg ipfx
+	-pkgadd -d $(CPUDIR)/ipf.pkg ipf
+

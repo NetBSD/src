@@ -1,15 +1,11 @@
-/*	$NetBSD: linux.h,v 1.1.1.2 2000/05/03 10:55:51 veego Exp $	*/
+/*	$NetBSD: linux.h,v 1.1.1.3 2002/01/24 08:18:30 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.  The author accepts no
- * responsibility and is not changed in any way.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
- * I hate legaleese, don't you ?
- * Id: linux.h,v 2.2 2000/03/13 22:10:25 darrenr Exp
+ * Id: linux.h,v 2.2.2.1 2001/06/26 10:43:19 darrenr Exp
  */
 
 #include <linux/config.h>

@@ -1,14 +1,12 @@
-/*	$NetBSD: ip_frag.h,v 1.1.1.3 2001/03/26 03:52:37 mike Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.1.1.4 2002/01/24 08:18:29 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.4.2.2 2000/11/10 13:10:54 darrenr Exp
+ * Id: ip_frag.h,v 2.4.2.6 2002/01/01 15:09:38 darrenr Exp
  */
 
 #ifndef	__IP_FRAG_H__
@@ -22,11 +20,15 @@ typedef	struct	ipfr	{
 	struct	in_addr	ipfr_src;
 	struct	in_addr	ipfr_dst;
 	void	*ipfr_ifp;
+	u_32_t	ipfr_optmsk;
+	u_short	ipfr_secmsk;
+	u_short	ipfr_auth;
 	u_short	ipfr_id;
 	u_char	ipfr_p;
 	u_char	ipfr_tos;
 	u_short	ipfr_off;
-	u_short	ipfr_ttl;
+	u_char	ipfr_ttl;
+	u_char	ipfr_seen0;
 	frentry_t *ipfr_rule;
 } ipfr_t;
 
@@ -42,7 +44,8 @@ typedef	struct	ipfrstat {
 	struct	ipfr	**ifs_nattab;
 } ipfrstat_t;
 
-#define	IPFR_CMPSZ	(4 + 4 + 2 + 1 + 1)
+#define	IPFR_CMPSZ	(offsetof(ipfr_t, ipfr_off) - \
+			 offsetof(ipfr_t, ipfr_src))
 
 extern	int	fr_ipfrttl;
 extern	int	fr_frag_lock;
@@ -55,14 +58,18 @@ extern	void	ipfr_forget __P((void *));
 extern	void	ipfr_unload __P((void));
 extern	void	ipfr_fragexpire __P((void));
 
-#if     (BSD >= 199306) || SOLARIS || defined(__sgi)
-# if defined(SOLARIS2) && (SOLARIS2 < 7)
+#ifdef _KERNEL
+# if     (BSD >= 199306) || SOLARIS || defined(__sgi)
+#  if defined(SOLARIS2) && (SOLARIS2 < 7)
 extern	void	ipfr_slowtimer __P((void));
-# else
+#  else
 extern	void	ipfr_slowtimer __P((void *));
-# endif
-#else
+#  endif
+# else
 extern	int	ipfr_slowtimer __P((void));
-#endif /* (BSD >= 199306) || SOLARIS */
+# endif /* (BSD >= 199306) || SOLARIS */
+#else
+extern	void	ipfr_slowtimer __P((void));
+#endif /* _KERNEL */
 
 #endif	/* __IP_FIL_H__ */

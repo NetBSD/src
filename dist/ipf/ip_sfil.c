@@ -1,17 +1,15 @@
-/*	$NetBSD: ip_sfil.c,v 1.1.1.7 2001/03/26 03:52:52 mike Exp $	*/
+/*	$NetBSD: ip_sfil.c,v 1.1.1.8 2002/01/24 08:18:30 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * I hate legaleese, don't you ?
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.9 2000/11/12 11:55:17 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.15 2001/12/26 22:28:51 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -199,7 +197,7 @@ int *rp;
 		return error;
 	}
 	if (unit == IPL_LOGAUTH) {
-		error = fr_auth_ioctl((caddr_t)data, cmd, NULL, NULL);
+		error = fr_auth_ioctl((caddr_t)data, mode, cmd, NULL, NULL);
 		RWLOCK_EXIT(&ipf_solaris);
 		return error;
 	}
@@ -379,14 +377,14 @@ caddr_t data;
 {
 	register frentry_t *fp, *f, **fprev;
 	register frentry_t **ftail;
-	frentry_t fr;
-	frdest_t *fdp;
 	frgroup_t *fg = NULL;
-	u_int   *p, *pp;
-	int error = 0, in;
+	int error = 0, in, i;
+	u_int *p, *pp;
+	frdest_t *fdp;
+	frentry_t fr;
 	u_32_t group;
-	ill_t *ill;
 	ipif_t *ipif;
+	ill_t *ill;
 	ire_t *ire;
 
 	fp = &fr;
@@ -452,14 +450,20 @@ caddr_t data;
 
 	bzero((char *)frcache, sizeof(frcache[0]) * 2);
 
-	if (*fp->fr_ifname) {
-		fp->fr_ifa = (void *)get_unit((char *)fp->fr_ifname,
-					      (int)fp->fr_v);
-		if (!fp->fr_ifa)
-			fp->fr_ifa = (struct ifnet *)-1;
+	for (i = 0; i < 4; i++) {
+		if ((fp->fr_ifnames[i][1] == '\0') &&
+		    ((fp->fr_ifnames[i][0] == '-') ||
+		     (fp->fr_ifnames[i][0] == '*'))) {
+			fp->fr_ifas[i] = NULL;
+		} else if (*fp->fr_ifnames[i]) {
+			fp->fr_ifas[i] = GETUNIT(fp->fr_ifnames[i], fp->fr_v);
+			if (!fp->fr_ifas[i])
+				fp->fr_ifas[i] = (void *)-1;
+		}
 	}
 
 	fdp = &fp->fr_dif;
+	fdp->fd_mp = NULL;
 	fp->fr_flags &= ~FR_DUP;
 	if (*fdp->fd_ifname) {
 		ill = get_unit(fdp->fd_ifname, (int)fp->fr_v);
@@ -493,6 +497,7 @@ caddr_t data;
 	}
 
 	fdp = &fp->fr_tif;
+	fdp->fd_mp = NULL;
 	if (*fdp->fd_ifname) {
 		ill = get_unit(fdp->fd_ifname, (int)fp->fr_v);
 		if (!ill)
@@ -579,16 +584,13 @@ caddr_t data;
 			}
 			if (fg && fg->fg_head)
 				fg->fg_head->fr_ref--;
-			if (unit == IPL_LOGAUTH) {
-				error = fr_auth_ioctl(data, req, fp, ftail);
-				goto out;
-			}
 			if (f->fr_grhead)
 				fr_delgroup(f->fr_grhead, fp->fr_flags,
 					    unit, set);
 			fixskip(fprev, f, -1);
 			*ftail = f->fr_next;
 			f->fr_next = NULL;
+			f->fr_ref--;
 			if (f->fr_ref == 0)
 				KFREE(f);
 		}
@@ -596,10 +598,6 @@ caddr_t data;
 		if (f) {
 			error = EEXIST;
 		} else {
-			if (unit == IPL_LOGAUTH) {
-				error = fr_auth_ioctl(data, req, fp, ftail);
-				goto out;
-			}
 			KMALLOC(f, frentry_t *);
 			if (f != NULL) {
 				if (fg && fg->fg_head)

@@ -3,7 +3,7 @@ if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.5.2.8 2000/12/17 12:43:14 darrenr Exp
+# Id: buildsunos,v 2.5.2.10 2001/05/18 14:19:38 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then
@@ -36,6 +36,8 @@ if [ $rev = 5 ] ; then
 	v=`echo '__GNUC__' | 2>&1 ${CC} -E - | 2>&1 sed -ne '/^[0-9]* *$/p'`
 	if [ x$v != x ] ; then
 		CC=gcc
+	else
+		CC=cc
 	fi
 
 	if [ $solrev -ge 7 ] && /bin/optisa sparcv8plus > /dev/null
@@ -56,8 +58,8 @@ if [ $rev = 5 ] ; then
 		XARCH64="-m64 -mcmodel=medlow"
 		;;
 	*)	# Sun C
-		XARCH32="-Xa -xF -xildoff"
-		XARCH64="$XARCH32 -xarch=v9 -xchip=ultra -dalign -xcode=abs32"
+		XARCH32="-Xa -xildoff"
+		XARCH64="$XARCH32 -xchip=ultra -dalign -xcode=abs32 -xarch=v9"
 		;;
 	esac
 

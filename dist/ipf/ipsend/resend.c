@@ -1,4 +1,4 @@
-/*	$NetBSD: resend.c,v 1.1.1.2 2001/03/26 03:54:55 mike Exp $	*/
+/*	$NetBSD: resend.c,v 1.1.1.3 2002/01/24 08:18:33 martti Exp $	*/
 
 /*
  * resend.c (C) 1995-1998 Darren Reed
@@ -8,14 +8,8 @@
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: resend.c,v 2.1.4.1 2001/01/10 06:21:20 darrenr Exp";
-#endif
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
@@ -40,6 +34,12 @@ static const char rcsid[] = "@(#)Id: resend.c,v 2.1.4.1 2001/01/10 06:21:20 darr
 # endif
 #endif
 #include "ipsend.h"
+
+#if !defined(lint)
+static const char sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: resend.c,v 2.1.4.3 2001/07/15 22:00:14 darrenr Exp";
+#endif
+
 
 extern	int	opts;
 

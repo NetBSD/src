@@ -18,8 +18,8 @@ set ipf:fr_udptimeout = 120
 set ipf:fr_icmptimeout = 120
 
 * NAT timeouts
-set ipf:fr_defnaticmpage = 600
-set ipf:fr_defnatage = 6
+set ipf:fr_defnaticmpage = 6
+set ipf:fr_defnatage = 600
 
 * Fragment timeouts
 set ipf:fr_ipfrttl = 1200
