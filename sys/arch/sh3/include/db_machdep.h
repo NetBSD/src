@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 2002/04/28 17:10:34 uch Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.8 2002/05/09 12:24:20 uch Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
-#include <machine/trap.h>
+#include <sh3/exception.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
@@ -52,7 +52,7 @@ db_regs_t		ddb_regs;	/* register state */
 
 #define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_spc -= BKPT_SIZE)
 
-#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_USERBREAK)
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == EXPEVT_BREAK)
 #define	IS_WATCHPOINT_TRAP(type, code)	(0) /* XXX (msaitoh) */
 
 #define	inst_load(ins)		0
