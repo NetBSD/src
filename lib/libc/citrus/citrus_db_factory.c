@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.c,v 1.6 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: citrus_db_factory.c,v 1.7 2003/10/28 04:00:51 jmc Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_factory.c,v 1.6 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: citrus_db_factory.c,v 1.7 2003/10/28 04:00:51 jmc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: citrus_db_factory.c,v 1.6 2003/10/27 00:12:42 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 
