@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.242 2003/12/21 08:14:19 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.243 2003/12/24 04:28:02 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3082,3 +3082,9 @@ usr.bin/cksum/sum2.c				1.10
 	opposed to u_int32_t).
 	[kleink, ticket #1580]
 
+etc/skel/dot.cshrc				1.2
+etc/skel/dot.profile				1.2
+
+	Nuke 'umask 2' as it is inappropriate for the default useradd(8)
+	behaviour.
+	[grant, ticket #1570]
