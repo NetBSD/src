@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.6 2001/11/28 10:21:20 lukem Exp $
+#	$NetBSD: files.x86_64,v 1.7 2002/01/25 22:01:12 fvdl Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -160,6 +160,7 @@ attach	pcconskbd at pckbc
 file	arch/x86_64/isa/pccons.c		pc | pcconskbd needs-flag
 
 include	"dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 include	"dev/pckbc/files.pckbc"
 
