@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.9.2.2 2004/12/17 10:34:15 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.9.2.3 2005/01/18 15:09:04 bouyer Exp $	*/
 
 /*
  * 
@@ -55,6 +55,7 @@ struct xen_npx_attach_args {
 #include <machine/xen-public/xen.h>
 #include <machine/xen-public/dom0_ops.h>
 #include <machine/xen-public/event_channel.h>
+#include <machine/xen-public/physdev.h>
 #include <machine/xen-public/io/domain_controller.h>
 #include <machine/xen-public/io/netif.h>
 #include <machine/xen-public/io/blkif.h>
