@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.3 1996/04/30 17:07:17 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.4 1996/04/30 18:11:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -153,8 +153,9 @@ struct sbc_softc {
 #define	SBC_OPTIONS_BITS	"\10\2RESELECT\1INTR"
 int sbc_options = 0;
 
-static	int	sbc_match __P(());
-static	void	sbc_attach __P(());
+static	int	sbc_print __P((void *, char *));
+static	int	sbc_match __P((struct device *, void *, void *));
+static	void	sbc_attach __P((struct device *, struct device *, void *));
 static	void	sbc_minphys __P((struct buf *bp));
 
 static	int	sbc_wait_busy __P((struct ncr5380_softc *));
@@ -235,12 +236,9 @@ sbc_attach(parent, self, args)
 	struct device	*parent, *self;
 	void		*args;
 {
-	static int probed = 0;
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
-	struct confargs *ca = args;
 	extern vm_offset_t SCSIBase;
-	int i;
 
 	/* Pull in the options flags. */ 
 	sc->sc_options =
@@ -330,7 +328,7 @@ sbc_attach(parent, self, args)
 
 #ifdef	SBC_DEBUG
 	if (sbc_debug)
-		printf("%s: softc=%x regs=%x\n", ncr_sc->sc_dev.dv_xname,
+		printf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
 		    sc, sc->sc_regs);
 	ncr_sc->sc_link.flags |= sbc_link_flags;
 #endif
@@ -999,7 +997,6 @@ void
 sbc_dma_poll(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 
 	/*
@@ -1028,9 +1025,6 @@ sbc_dma_start(ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
-	int s;
-
-	s = splbio();
 
 	/*
 	 * Match bus phase, set DMA mode, and assert data bus (for
@@ -1051,8 +1045,6 @@ sbc_dma_start(ncr_sc)
 	}
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
-	splx(s);
-
 #ifdef	SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
 		printf("%s: PDMA started, va=%p, len=0x%x\n",
@@ -1071,7 +1063,6 @@ void
 sbc_dma_stop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 	register int ntrans;
