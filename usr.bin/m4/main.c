@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1998/09/01 03:16:49 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1998/12/19 19:54:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 1998/09/01 03:16:49 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 1998/12/19 19:54:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -451,7 +451,7 @@ inspect(tp)
 	ndptr p;
 	unsigned long h = 0;
 
-	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
+	while ((isalnum((unsigned char)(c = gpbc())) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
 	putback(c);
 	if (tp == etp)
