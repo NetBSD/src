@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.3 2005/03/10 17:05:38 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.4 2005/03/15 23:39:18 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -646,9 +646,28 @@ xbdback_do_io(struct xbdback_request *xbd_req)
 {
 	xbd_req->rq_buf.b_data =
 	    (void *)((vaddr_t)xbd_req->rq_buf.b_data + xbd_req->rq_vaddr);
+#ifdef DIAGNOSTIC
+	{
+	vaddr_t bdata = (vaddr_t)xbd_req->rq_buf.b_data;
+	int nsegs =
+	    ((((bdata + xbd_req->rq_buf.b_bcount - 1) & ~PAGE_MASK) -
+	    (bdata & ~PAGE_MASK)) >> PAGE_SHIFT) + 1;
+	if ((bdata & ~PAGE_MASK) != (xbd_req->rq_vaddr & ~PAGE_MASK)) {
+		printf("xbdback_do_io vaddr 0x%lx bdata 0x%lx\n",
+		    xbd_req->rq_vaddr, bdata);
+		panic("xbdback_do_io: bdata page change");
+	}
+	if (nsegs > xbd_req->rq_nrsegments) {
+		printf("xbdback_do_io vaddr 0x%lx bcount 0x%x doesn't fit in "
+		    " %d segments\n", bdata, xbd_req->rq_buf.b_bcount,
+		    xbd_req->rq_nrsegments);
+		panic("xbdback_do_io: not enouth segments");
+	}
+	}
+#endif
 	if ((xbd_req->rq_buf.b_flags & B_READ) == 0)
 		xbd_req->rq_buf.b_vp->v_numoutput++;
-	XENPRINTF(("xbdback_io domain %d: start reqyest\n",
+	XENPRINTF(("xbdback_io domain %d: start request\n",
 	    xbd_req->rq_xbdi->domid));
 	VOP_STRATEGY(xbd_req->rq_buf.b_vp, &xbd_req->rq_buf);
 }
@@ -695,7 +714,7 @@ xbdback_probe(struct xbdback_instance *xbdi, blkif_request_t *req)
 		panic("xbd_req"); /* XXX */
 	}
 	xbd_req->rq_xbdi = xbdi;
-	if (xbdback_map_shm(req, xbd_req) < 0) {
+	if (xbdback_map_shm(req, xbd_req) != 0) {
 		pool_put(&xbdback_request_pool, xbd_req);
 		return EINVAL;
 	}
