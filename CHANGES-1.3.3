@@ -1160,3 +1160,19 @@ usr.sbin/ipf/iptest/sock.c			1.9
 usr.sbin/ipf/rules/BASIC_2.FW			1.4
 
   Update to IP Filter 3.2.10.  (mrg)
+
+usr.bin/cal/cal.c				1.9
+
+  Fix leap year calculation.  (1900 wasn't a leap year.)  (nathanw)
+
+sys/dev/isapnp/isapnp.c				1.30
+
+  Fix a bug where the allocation of an I/O region for a PnP card might
+  loop forever in case of a conflict, instead of returning an error.
+  This has caused laptops where PCMCIA and ISAPnP were conflicting to
+  hang at startup.  (fvdl)
+
+gnu/usr.bin/gas/expr.c				1.7-1.8
+
+  Fix the PIC symbol bug exposed on sparc when using egcs to compile
+  -fPIC code.  (tv)
