@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.3 2000/05/16 04:56:00 perseant Exp $	*/
+/* $NetBSD: utilities.c,v 1.4 2000/05/23 01:48:55 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -51,23 +51,22 @@
 #include "fsck.h"
 #include "extern.h"
 
-long	diskreads, totalreads;	/* Disk cache statistics */
+long            diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror __P((char *, daddr_t));
+static void     rwerror(char *, daddr_t);
 
 int
-ftypeok(dp)
-	struct dinode *dp;
+ftypeok(struct dinode * dp)
 {
 	switch (dp->di_mode & IFMT) {
 
-	case IFDIR:
-	case IFREG:
-	case IFBLK:
-	case IFCHR:
-	case IFLNK:
-	case IFSOCK:
-	case IFIFO:
+		case IFDIR:
+		case IFREG:
+		case IFBLK:
+		case IFCHR:
+		case IFLNK:
+		case IFSOCK:
+		case IFIFO:
 		return (1);
 
 	default:
@@ -78,11 +77,10 @@ ftypeok(dp)
 }
 
 int
-reply(question)
-	char *question;
+reply(char *question)
 {
-	int persevere;
-	char c;
+	int             persevere;
+	char            c;
 
 	if (preen)
 		pfatal("INTERNAL ERROR: GOT TO reply()");
@@ -96,9 +94,9 @@ reply(question)
 		printf("%s? yes\n\n", question);
 		return (1);
 	}
-	do	{
+	do {
 		printf("%s? [yn] ", question);
-		(void) fflush(stdout);
+		(void)fflush(stdout);
 		c = getc(stdin);
 		while (c != '\n' && getc(stdin) != '\n')
 			if (feof(stdin))
@@ -117,8 +115,8 @@ void
 bufinit()
 {
 	register struct bufarea *bp;
-	long bufcnt, i;
-	char *bufp;
+	long            bufcnt, i;
+	char           *bufp;
 
 	pbp = pdirbp = (struct bufarea *)0;
 	bufp = malloc((unsigned int)sblock.lfs_bsize);
@@ -152,18 +150,16 @@ bufinit()
  * Manage a cache of directory blocks.
  */
 struct bufarea *
-getddblk(blkno,size)
-    daddr_t blkno;
-    long size;
+getddblk(daddr_t blkno, long size)
 {
 	register struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
 		if (bp->b_bno == blkno) {
-                    if(bp->b_size <= size)
-                        getdblk(bp,blkno,size);
-                    goto foundit;
-                }
+			if (bp->b_size <= size)
+				getdblk(bp, blkno, size);
+			goto foundit;
+		}
 	for (bp = bufhead.b_prev; bp != &bufhead; bp = bp->b_prev)
 		if ((bp->b_flags & B_INUSE) == 0)
 			break;
@@ -184,18 +180,13 @@ foundit:
 }
 
 struct bufarea *
-getdatablk(blkno, size)
-	daddr_t blkno;
-	long size;
+getdatablk(daddr_t blkno, long size)
 {
-    return getddblk(fsbtodb(&sblock,blkno),size);
+	return getddblk(fsbtodb(&sblock, blkno), size);
 }
 
-void 
-getdblk(bp, blk, size)
-	register struct bufarea *bp;
-	daddr_t blk;
-	long size;
+void
+getdblk(struct bufarea * bp, daddr_t blk, long size)
 {
 	if (bp->b_bno != blk) {
 		flush(fswritefd, bp);
@@ -207,44 +198,37 @@ getdblk(bp, blk, size)
 }
 
 void
-getblk(bp, blk, size)
-	register struct bufarea *bp;
-	daddr_t blk;
-	long size;
+getblk(struct bufarea * bp, daddr_t blk, long size)
 {
-        getdblk(bp, fsbtodb(&sblock,blk), size);
+	getdblk(bp, fsbtodb(&sblock, blk), size);
 }
 
 void
-flush(fd, bp)
-	int fd;
-	register struct bufarea *bp;
+flush(int fd, struct bufarea * bp)
 {
 	if (!bp->b_dirty)
 		return;
 	if (bp->b_errs != 0)
 		pfatal("WRITING %sZERO'ED BLOCK %d TO DISK\n",
-		    (bp->b_errs == bp->b_size / dev_bsize) ? "" : "PARTIALLY ",
-		    bp->b_bno);
+		 (bp->b_errs == bp->b_size / dev_bsize) ? "" : "PARTIALLY ",
+		       bp->b_bno);
 	bp->b_dirty = 0;
 	bp->b_errs = 0;
 	bwrite(fd, bp->b_un.b_buf, bp->b_bno, (long)bp->b_size);
 	if (bp != &sblk)
 		return;
-#if 0 /* XXX - FFS */        
+#if 0				/* XXX - FFS */
 	for (i = 0, j = 0; i < sblock.lfs_cssize; i += sblock.lfs_bsize, j++) {
 		bwrite(fswritefd, (char *)sblock.lfs_csp[j],
-		    fsbtodb(&sblock, sblock.lfs_csaddr + j * sblock.lfs_frag),
-		    sblock.lfs_cssize - i < sblock.lfs_bsize ?
-		    sblock.lfs_cssize - i : sblock.lfs_bsize);
+		  fsbtodb(&sblock, sblock.lfs_csaddr + j * sblock.lfs_frag),
+		       sblock.lfs_cssize - i < sblock.lfs_bsize ?
+		       sblock.lfs_cssize - i : sblock.lfs_bsize);
 	}
 #endif
 }
 
 static void
-rwerror(mesg, blk)
-	char *mesg;
-	daddr_t blk;
+rwerror(char *mesg, daddr_t blk)
 {
 
 	if (preen == 0)
@@ -255,11 +239,10 @@ rwerror(mesg, blk)
 }
 
 void
-ckfini(markclean)
-	int markclean;
+ckfini(int markclean)
 {
 	register struct bufarea *bp, *nbp;
-	int cnt = 0;
+	int             cnt = 0;
 
 	if (fswritefd < 0) {
 		(void)close(fsreadfd);
@@ -274,19 +257,18 @@ ckfini(markclean)
 		flush(fswritefd, &sblk);
 	}
 	if (havesb) {
-		if(sblk.b_bno == LFS_LABELPAD / dev_bsize) {
+		if (sblk.b_bno == LFS_LABELPAD / dev_bsize) {
 			/* Do the first alternate */
 			sblk.b_bno = sblock.lfs_sboffs[1];
 			sbdirty();
 			flush(fswritefd, &sblk);
-		} else if(sblk.b_bno == sblock.lfs_sboffs[1]) {
+		} else if (sblk.b_bno == sblock.lfs_sboffs[1]) {
 			/* Do the primary */
 			sblk.b_bno = LFS_LABELPAD / dev_bsize;
 			sbdirty();
 			flush(fswritefd, &sblk);
 		}
 	}
-		
 	/* flush(fswritefd, &cgblk); */
 	/* free(cgblk.b_un.b_buf); */
 	for (bp = bufhead.b_prev; bp && bp != &bufhead; bp = nbp) {
@@ -311,11 +293,11 @@ ckfini(markclean)
 			sblock.lfs_clean = 1;
 			sbdirty();
 			flush(fswritefd, &sblk);
-			if(sblk.b_bno == LFS_LABELPAD / dev_bsize) {
+			if (sblk.b_bno == LFS_LABELPAD / dev_bsize) {
 				/* Do the first alternate */
 				sblk.b_bno = sblock.lfs_sboffs[0];
 				flush(fswritefd, &sblk);
-			} else if(sblk.b_bno == sblock.lfs_sboffs[0]) {
+			} else if (sblk.b_bno == sblock.lfs_sboffs[0]) {
 				/* Do the primary */
 				sblk.b_bno = LFS_LABELPAD / dev_bsize;
 				flush(fswritefd, &sblk);
@@ -324,29 +306,24 @@ ckfini(markclean)
 	}
 	if (debug)
 		printf("cache missed %ld of %ld (%d%%)\n", diskreads,
-		    totalreads, (int)(diskreads * 100 / totalreads));
+		       totalreads, (int)(diskreads * 100 / totalreads));
 	(void)close(fsreadfd);
 	(void)close(fswritefd);
 }
 
 int
-bread(fd, buf, blk, size)
-	int fd;
-	char *buf;
-	daddr_t blk;
-	long size;
+bread(int fd, char *buf, daddr_t blk, long size)
 {
-	char *cp;
-	int i, errs;
-	off_t offset;
+	char           *cp;
+	int             i, errs;
+	off_t           offset;
 
 	offset = blk;
 	offset *= dev_bsize;
 	if (lseek(fd, offset, 0) < 0) {
 		rwerror("SEEK", blk);
 		raise(1);
-	}
-	else if (read(fd, buf, (int)size) == size)
+	} else if (read(fd, buf, (int)size) == size)
 		return (0);
 	rwerror("READ", blk);
 	if (lseek(fd, offset, 0) < 0)
@@ -359,8 +336,8 @@ bread(fd, buf, blk, size)
 			(void)lseek(fd, offset + i + secsize, 0);
 			if (secsize != dev_bsize && dev_bsize != 1)
 				printf(" %ld (%ld),",
-				    (blk * dev_bsize + i) / secsize,
-				    blk + i / dev_bsize);
+				       (blk * dev_bsize + i) / secsize,
+				       blk + i / dev_bsize);
 			else
 				printf(" %ld,", blk + i / dev_bsize);
 			errs++;
@@ -371,15 +348,11 @@ bread(fd, buf, blk, size)
 }
 
 void
-bwrite(fd, buf, blk, size)
-	int fd;
-	char *buf;
-	daddr_t blk;
-	long size;
+bwrite(int fd, char *buf, daddr_t blk, long size)
 {
-	int i;
-	char *cp;
-	off_t offset;
+	int             i;
+	char           *cp;
+	off_t           offset;
 
 	if (fd < 0)
 		return;
@@ -408,8 +381,7 @@ bwrite(fd, buf, blk, size)
  * allocate a data block with the specified number of fragments
  */
 int
-allocblk(frags)
-	long frags;
+allocblk(long frags)
 {
 #if 1
 	/*
@@ -417,8 +389,8 @@ allocblk(frags)
 	 * a full partial segment write.
 	 */
 	return 0;
-#else /* 0 */
-	register int i, j, k;
+#else				/* 0 */
+	register int    i, j, k;
 
 	if (frags <= 0 || frags > sblock.lfs_frag)
 		return (0);
@@ -435,28 +407,26 @@ allocblk(frags)
 			}
 			for (k = 0; k < frags; k++) {
 #ifndef VERBOSE_BLOCKMAP
-                            setbmap(i + j + k);
+				setbmap(i + j + k);
 #else
-                            setbmap(i + j + k, -1);
+				setbmap(i + j + k, -1);
 #endif
-                        }
+			}
 			n_blks += frags;
 			return (i + j);
 		}
 	}
 	return (0);
-#endif /* 0 */
+#endif				/* 0 */
 }
 
 /*
  * Free a previously allocated block
  */
 void
-freeblk(blkno, frags)
-	daddr_t blkno;
-	long frags;
+freeblk(daddr_t blkno, long frags)
 {
-	struct inodesc idesc;
+	struct inodesc  idesc;
 
 	idesc.id_blkno = blkno;
 	idesc.id_numfrags = frags;
@@ -467,14 +437,12 @@ freeblk(blkno, frags)
  * Find a pathname
  */
 void
-getpathname(namebuf, curdir, ino)
-	char *namebuf;
-	ino_t curdir, ino;
+getpathname(char *namebuf, ino_t curdir, ino_t ino)
 {
-	int len;
-	register char *cp;
-	struct inodesc idesc;
-	static int busy = 0;
+	int             len;
+	register char  *cp;
+	struct inodesc  idesc;
+	static int      busy = 0;
 
 	if (curdir == ino && ino == ROOTINO) {
 		(void)strcpy(namebuf, "/");
@@ -501,12 +469,12 @@ getpathname(namebuf, curdir, ino)
 		idesc.id_name = "..";
 		if ((ckinode(ginode(ino), &idesc) & FOUND) == 0)
 			break;
-	namelookup:
+namelookup:
 		idesc.id_number = idesc.id_parent;
 		idesc.id_parent = ino;
 		idesc.id_func = findname;
 		idesc.id_name = namebuf;
-		if ((ckinode(ginode(idesc.id_number), &idesc)&FOUND) == 0)
+		if ((ckinode(ginode(idesc.id_number), &idesc) & FOUND) == 0)
 			break;
 		len = strlen(namebuf);
 		cp -= len;
@@ -523,8 +491,7 @@ getpathname(namebuf, curdir, ino)
 }
 
 void
-catch(n)
-	int n;
+catch(int n)
 {
 	if (!doinglevel2)
 		ckfini(0);
@@ -537,10 +504,9 @@ catch(n)
  * so that reboot sequence may be interrupted.
  */
 void
-catchquit(n)
-	int n;
+catchquit(int n)
 {
-	extern int returntosingle;
+	extern int      returntosingle;
 
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
@@ -552,8 +518,7 @@ catchquit(n)
  * Used by child processes in preen.
  */
 void
-voidquit(n)
-	int n;
+voidquit(int n)
 {
 
 	sleep(1);
@@ -565,14 +530,12 @@ voidquit(n)
  * determine whether an inode should be fixed.
  */
 int
-dofix(idesc, msg)
-	register struct inodesc *idesc;
-	char *msg;
+dofix(struct inodesc * idesc, char *msg)
 {
 
 	switch (idesc->id_fix) {
 
-	case DONTKNOW:
+		case DONTKNOW:
 		if (idesc->id_type == DATA)
 			direrror(idesc->id_number, msg);
 		else

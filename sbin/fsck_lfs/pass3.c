@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+/* $NetBSD: pass3.c,v 1.3 2000/05/23 01:48:54 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,17 +45,17 @@ void
 pass3()
 {
 	register struct inoinfo **inpp, *inp;
-	ino_t orphan;
-	int loopcnt;
+	ino_t           orphan;
+	int             loopcnt;
 
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
 		inp = *inpp;
 		if (inp->i_number == ROOTINO ||
-		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
+		 !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
 			continue;
 		if (statemap[inp->i_number] == DCLEAR)
 			continue;
-		for (loopcnt = 0; ; loopcnt++) {
+		for (loopcnt = 0;; loopcnt++) {
 			orphan = inp->i_number;
 			if (inp->i_parent == 0 ||
 			    statemap[inp->i_parent] != DSTATE ||
