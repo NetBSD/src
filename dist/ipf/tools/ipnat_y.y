@@ -281,9 +281,9 @@ rhaddr:	addr				{ $$.a = $1.a; $$.m = $1.m; }
 	;
 
 dip:
-	ipv4				{ nat->in_inip = $1.s_addr;
+	hostname			{ nat->in_inip = $1.s_addr;
 					  nat->in_inmsk = 0xffffffff; }
-	| ipv4 ',' ipv4			{ nat->in_flags |= IPN_SPLIT;
+	| hostname ',' hostname		{ nat->in_flags |= IPN_SPLIT;
 					  nat->in_inip = $1.s_addr;
 					  nat->in_inmsk = $3.s_addr; }
 	;
