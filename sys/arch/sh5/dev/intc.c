@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.3 2002/08/30 10:41:24 scw Exp $	*/
+/*	$NetBSD: intc.c,v 1.4 2002/09/07 20:43:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -174,7 +174,7 @@ intc_enable(void *arg, u_int intevt, int trigger, int level)
 	int s;
 
 	KDASSERT(trigger == IST_LEVEL);
-	KDASSERT(level <= 15 && level > 0);
+	KDASSERT(level > 0 && level < NIPL);
 
 	intevt >>= 5;
 
