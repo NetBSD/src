@@ -363,7 +363,8 @@ proto:	| protox protocol		{ yyresetdict(); }
 
 protox:	IPFY_PROTO			{ setipftype();
 					  fr = frc;
-					  yysetdict(NULL); }
+					  yysetdict(NULL);
+					  yyvarnext = 1; }
 	;
 
 ip:	srcdst flags icmp
@@ -588,7 +589,7 @@ protocol:
 	;
 
 nextstring:
-	'/'			{ yysetdict(NULL); }
+	'/'			{ yysetdict(NULL); yyvarnext = 1; }
 	;
 
 fromto:	from srcobject to dstobject	{ yyexpectaddr = 0; yycont = NULL; }
@@ -743,7 +744,6 @@ dstaddrlist:
 				fr->fr_datype = FRI_LOOKUP;)
 		}
 	;
-
 
 dstport:
 	| portcomp
@@ -902,20 +902,23 @@ poollist:
 
 port:	IPFY_PORT			{ yyexpectaddr = 0;
 					  yycont = NULL;
-					  yysetdict(NULL); }
+					  yysetdict(NULL);
+					  yyvarnext = 1; }
 	;
 
 portcomp:
 	port compare portnum		{ $$.pc = $2;
 					  $$.p1 = $3;
-					  yyresetdict(); }
+					  yyresetdict();
+					  yyvarnext = 0; }
 	;
 
 portrange:
 	port portnum range portnum	{ $$.p1 = $2;
 					  $$.pc = $3;
 					  $$.p2 = $4;
-					  yyresetdict(); }
+					  yyresetdict();
+					  yyvarnext = 0; }
 	;
 
 icmp:	| itype icode
