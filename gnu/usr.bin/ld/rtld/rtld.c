@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.49 1997/06/26 20:52:06 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.50 1997/06/30 20:49:40 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -583,7 +583,7 @@ free_link_map(smp)
 
 	free(smp->som_spd);
 	if (smp->som_path != NULL)
-		free(smp);
+		free(smp->som_path);
 	free(smp);
 }
 
