@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.18 1998/09/20 21:08:50 dbj Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.19 1998/10/07 01:08:58 jtk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.16 1998/09/20 19:19:54 dbj Exp 
+ *	NetBSD: pcmciadevs,v 1.17 1998/10/07 01:08:37 jtk Exp 
  */
 
 /*-
@@ -136,8 +136,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "I-O DATA PCLA/T"	},
 	},
 	{
-	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD,
-	    PCMCIA_CIS_LINKSYS_ECARD,
+	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+	    PCMCIA_CIS_LINKSYS_ECARD_1,
 	    0,
 	    "Linksys Corporation",
 	    "Linksys EthernetCard"	},
@@ -302,6 +302,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TEAC",
 	    "TEAC IDE Card/II"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_LINKSYS_ECARD_2,
+	    PCMCIA_CIS_LINKSYS_ECARD_2,
+	    0,
+	    "Linksys Corporation",
+	    "Linksys E-Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_SANDISK, 0,
