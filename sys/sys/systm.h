@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.107 2000/03/29 00:01:39 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.108 2000/05/24 08:14:01 soren Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -70,6 +70,10 @@
 
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
 
 #include <machine/endian.h>
 
