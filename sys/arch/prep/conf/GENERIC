@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51 2002/05/02 15:17:56 nonaka Exp $
+# $NetBSD: GENERIC,v 1.52 2002/05/30 16:10:03 nonaka Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,14 +22,17 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.51 $"
+#ident		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32
 
 # Platform support
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
+options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
 options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
+
+options 	OPENPIC				# OpenPIC support (7043-140)
 
 # Standard system options
 
@@ -384,9 +387,17 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #upl*	at uhub? port ?
 
 # Serial adapters
-# FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
+#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 #ucom*	at uftdi? portno ?
+
+#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
+
+#uplcom* at uhub? port ?	# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom? portno ?
+
+#uvscom* at uhub? port ?	# SUNTAC Slipper U VS-10U serial adapter
+#ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
 #urio*	at uhub? port ?
