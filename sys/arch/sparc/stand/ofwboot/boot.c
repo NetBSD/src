@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.18.1 2004/05/06 04:34:10 jmc Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -143,7 +143,7 @@ parseargs(str, howtop)
 	}
 	*howtop = 0;
 	for (cp = str; *cp; cp++)
-		if (*cp == ' ' || *cp == '-')
+		if (*cp == ' ')
 			break;
 	if (!*cp)
 		return;
