@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.17 1998/01/05 10:31:58 thorpej Exp $	*/
+/*	$NetBSD: ip.h,v 1.18 1998/02/10 01:26:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ip.h	8.2 (Berkeley) 6/1/94
  */
+
+#ifndef _NETINET_IP_H_
+#define _NETINET_IP_H_
 
 /*
  * Definitions for internet protocol version 4.
@@ -166,3 +169,5 @@ struct	ip_timestamp {
 #define	IPTTLDEC	1		/* subtracted when forwarding */
 
 #define	IP_MSS		576		/* default maximum segment size */
+
+#endif /* _NETINET_IP_H_ */

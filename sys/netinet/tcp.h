@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
+/*	$NetBSD: tcp.h,v 1.9 1998/02/10 01:27:07 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)tcp.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_TCP_H_
+#define _NETINET_TCP_H_
 
 typedef u_int32_t tcp_seq;
 /*
@@ -98,3 +101,5 @@ struct tcphdr {
  */
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
+
+#endif /* _NETINET_TCP_H_ */

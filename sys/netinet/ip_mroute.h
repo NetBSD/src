@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.12 1996/09/09 17:14:05 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.13 1998/02/10 01:26:57 perry Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -10,6 +10,9 @@
  *
  * MROUTING Revision: 1.2
  */
+
+#ifndef _NETINET_IP_MROUTE_H_
+#define _NETINET_IP_MROUTE_H_
 
 #include <sys/queue.h>
 
@@ -215,3 +218,5 @@ int ip_mforward __P((struct mbuf *, struct ifnet *));
 void ipip_input __P((struct mbuf *, ...));
 
 #endif /* _KERNEL */
+
+#endif /* _NETINET_IP_MROUTE_H_ */

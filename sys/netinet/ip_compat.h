@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.11 1997/11/14 12:46:48 mrg Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.12 1998/02/10 01:26:48 perry Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -11,8 +11,8 @@
  * Id: ip_compat.h,v 2.0.2.31.2.4 1997/11/12 10:48:43 darrenr Exp 
  */
 
-#ifndef	__IP_COMPAT_H__
-#define	__IP_COMPAT_H__
+#ifndef _NETINET_IP_COMPAT_H_
+#define _NETINET_IP_COMPAT_H_
 
 #ifndef	__P
 # ifdef	__STDC__
@@ -713,4 +713,5 @@ struct	ether_addr	{
 #ifndef	ICMP_ROUTERSOLICIT
 # define	ICMP_ROUTERSOLICIT	10
 #endif
-#endif	/* __IP_COMPAT_H__ */
+
+#endif /* _NETINET_IP_COMPAT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.23 1998/01/07 22:51:24 lukem Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.24 1998/02/10 01:26:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)in_pcb.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IN_PCB_H_
+#define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
 
@@ -122,3 +125,5 @@ void	in_setsockaddr __P((struct inpcb *, struct mbuf *));
 struct rtentry *
 	in_pcbrtentry __P((struct inpcb *));
 #endif
+
+#endif /* _NETINET_IN_PCB_H_ */
