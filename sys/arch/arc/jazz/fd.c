@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.20 2005/01/22 11:08:18 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.19 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.20 2005/01/22 11:08:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ void
 fdstart(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
-	int active = fdc->sc_drives.tqh_first != 0;
+	int active = TAILQ_FIRST(&fdc->sc_drives) != 0;
 
 	/* Link into controller queue. */
 	fd->sc_active = 1;
@@ -549,7 +549,7 @@ fd_set_motor(struct fdc_softc *fdc, int reset)
 	u_char status;
 	int n;
 
-	if ((fd = fdc->sc_drives.tqh_first) != NULL)
+	if ((fd = TAILQ_FIRST(&fdc->sc_drives)) != NULL)
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -582,7 +582,8 @@ fd_motor_on(void *arg)
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
+	if ((TAILQ_FIRST(&fdc->sc_drives) == fd) &&
+	    (fdc->sc_state == MOTORWAIT))
 		(void) fdcintr(fdc);
 	splx(s);
 }
@@ -725,7 +726,7 @@ void
 fdctimeout(void *arg)
 {
 	struct fdc_softc *fdc = arg;
-	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	struct fd_softc *fd = TAILQ_FIRST(&fdc->sc_drives);
 	int s;
 
 	s = splbio();
@@ -769,7 +770,7 @@ fdcintr(void *arg)
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
 		return 1;
@@ -1024,7 +1025,7 @@ fdcretry(struct fdc_softc *fdc)
 	struct buf *bp;
 	char bits[64];
 
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	bp = BUFQ_PEEK(&fd->sc_q);
 
 	switch (fdc->sc_errors) {
