@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.45 2000/12/08 02:33:44 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.46 2000/12/18 19:57:47 matt Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -1182,13 +1182,14 @@ scsipiprint(void *aux, const char *pnp)
 		return (scsiprint(aux, pnp));
 	else {
 #if NATAPIBUS > 0
-		extern int atapi_print(void *aux, const char *pnp);
-		return (atapi_print(aux, pnp));
-#else
+		struct ata_atapi_attach *aa_link = aux;
+#endif
 		if (pnp)
 			printf("atapibus at %s", pnp);
-		return (UNCONF);
+#if NATAPIBUS > 0
+		printf(" channel %d", aa_link->aa_channel);
 #endif
+		return (UNCONF);
 	}
 }
 
