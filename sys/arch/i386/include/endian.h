@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.9 1994/02/12 07:23:49 cgd Exp $
+ *	$Id: endian.h,v 1.10 1994/03/16 17:20:24 jtc Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_
@@ -69,7 +69,7 @@ __END_DECLS
 
 #if __GNUC__ >= 2
 
-#if defined(KERNEL) && ((defined(I486_CPU) || defined(I586_CPU)) && !defined(I386_CPU))
+#if defined(KERNEL) && !defined(I386_CPU)
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
    asm ("bswap %1" \
@@ -79,21 +79,21 @@ __END_DECLS
 #else
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
-   asm ("xchgb %h1, %b1\n\trorl $16, %1\n\txchgb %h1, %b1" \
+   asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
 	: "=q" (__x) \
 	: "0" (__x)); \
    __x; })
 #endif	/* KERNEL && ... */
 #define __byte_swap_word(x) \
 ({ register unsigned short __x = (x); \
-   asm ("xchgb %h1, %b1" \
+   asm ("rorw $8, %w1" \
 	: "=q" (__x) \
 	: "0" (__x)); \
    __x; })
 
 #else	/* __GNUC__ >= 2 */
 
-#if defined(KERNEL) && ((defined(I486_CPU) || defined(I586_CPU)) && !defined(I386_CPU))
+#if defined(KERNEL) && !defined(I386_CPU)
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
    asm ("bswap %1" \
