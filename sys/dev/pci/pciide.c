@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.117 2001/05/14 20:41:27 matt Exp $	*/
+/*	$NetBSD: pciide.c,v 1.118 2001/05/30 20:30:02 bouyer Exp $	*/
 
 
 /*
@@ -3755,7 +3755,7 @@ acard_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
-	int i, compatchan;
+	int i;
 	pcireg_t interface;
 	bus_size_t cmdsize, ctlsize;
 
@@ -3801,7 +3801,7 @@ acard_chip_map(sc, pa)
 			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
 			    &ctlsize, pciide_pci_intr);
 		} else {
-			cp->hw_ok = pciide_mapregs_compat(pa, cp, compatchan,
+			cp->hw_ok = pciide_mapregs_compat(pa, cp, i,
 			    &cmdsize, &ctlsize);
 		}
 		if (cp->hw_ok == 0)
