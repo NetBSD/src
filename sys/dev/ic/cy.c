@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.21.2.7 2002/11/11 22:09:22 nathanw Exp $	*/
+/*	$NetBSD: cy.c,v 1.21.2.8 2003/01/07 21:34:16 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.21.2.7 2002/11/11 22:09:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.21.2.8 2003/01/07 21:34:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -269,7 +269,7 @@ cy_getport(dev_t dev)
 }
 
 /*
- * open routine. returns zero if successfull, else error code
+ * open routine. returns zero if successful, else error code
  */
 int
 cyopen(dev_t dev, int flag, int mode, struct proc *p)
@@ -398,7 +398,7 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 /*
- * close routine. returns zero if successfull, else error code
+ * close routine. returns zero if successful, else error code
  */
 int
 cyclose(dev_t dev, int flag, int mode, struct proc *p)
@@ -643,7 +643,7 @@ cystop(struct tty *tp, int flag)
 
 /*
  * parameter setting routine.
- * returns 0 if successfull, else returns error code
+ * returns 0 if successful, else returns error code
  */
 int
 cyparam(struct tty *tp, struct termios *t)

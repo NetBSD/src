@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.8.20.3 2002/01/08 00:30:07 nathanw Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.8.20.4 2003/01/07 21:34:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.8.20.3 2002/01/08 00:30:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.8.20.4 2003/01/07 21:34:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ tms320av110_intr(p)
 	if (!intlist)
 		return 0;
 
-	/* ack now, so that we don't miss later interupts */
+	/* ack now, so that we don't miss later interrupts */
 	if (sc->sc_intack)
 		(sc->sc_intack)(sc);
 
@@ -205,7 +205,7 @@ tav_close(hdl)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	/* re"start" chip, also clears interupts and interupt enable */
+	/* re"start" chip, also clears interrupts and interrupt enable */
 	tav_write_short(iot, ioh, TAV_INTR_EN, 0);
 	if (sc->sc_intack)
 		(*sc->sc_intack)(sc);
@@ -225,7 +225,7 @@ tav_drain(hdl)
 	ioh = sc->sc_ioh;
 
 	/*
-	 * tsleep waiting for underflow interupt.
+	 * tsleep waiting for underflow interrupt.
 	 */
 	if (tav_read_short(iot, ioh, TAV_BUFF)) {
 		mask = tav_read_short(iot, ioh, TAV_INTR_EN);

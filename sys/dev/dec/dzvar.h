@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.1.2.3 2002/10/18 02:41:35 nathanw Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.1.2.4 2003/01/07 21:34:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -35,6 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _DEV_DEC_DZVAR_H_
+#define _DEV_DEC_DZVAR_H_
 
 /* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. */
 
@@ -77,3 +80,5 @@ void	dzattach(struct dz_softc *, struct evcnt *, int);
 void	dzrint(void *);
 void	dzxint(void *);
 void	dzreset(struct device *);
+
+#endif /* _DEV_DEC_DZVAR_H_ */

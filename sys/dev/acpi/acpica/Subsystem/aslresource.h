@@ -143,7 +143,7 @@
 #define ASL_RESNAME_REGISTERBITOFFSET           "_RBO"
 #define ASL_RESNAME_REGISTERBITWIDTH            "_RBW"
 #define ASL_RESNAME_RANGETYPE                   "_RNG"
-#define ASL_RESNAME_READWRITETYPE               "_RW_"  /* ReadOnly(0), Writeable (1) */
+#define ASL_RESNAME_READWRITETYPE               "_RW_"  /* ReadOnly(0), Writable (1) */
 #define ASL_RESNAME_TRANSLATION                 "_TRA"
 #define ASL_RESNAME_TRANSTYPE                   "_TRS"  /* Sparse(1), Dense(0) */
 #define ASL_RESNAME_TYPE                        "_TTP"  /* Translation(1), Static (0) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.4.4.10 2003/01/03 17:01:10 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4.4.11 2003/01/07 21:33:56 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.10 2003/01/03 17:01:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.11 2003/01/07 21:33:56 thorpej Exp $");
+
+#include "opt_acpi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.10 2003/01/03 17:01:10 thorpej Exp $"
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
+#ifdef ACPIVERBOSE
+#include <dev/acpi/acpidevs_data.h>
+#endif
 
 #ifndef ACPI_PCI_FIXUP
 #define ACPI_PCI_FIXUP 1
@@ -298,6 +303,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
+	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
 
 	/*
@@ -409,29 +415,32 @@ acpi_build_tree(struct acpi_softc *sc)
 			aa.aa_pciflags = sc->sc_pciflags;
 			aa.aa_ic = sc->sc_ic;
 
-			/*
-			 * XXX We only attach devices which are:
-			 *
-			 *	- present
-			 *	- enabled
-			 *	- functioning properly
-			 *
-			 * However, if enabled, it's decoding resources,
-			 * so we should claim them, if possible.  Requires
-			 * changes to bus_space(9).
-			 */
-			if ((ad->ad_devinfo.CurrentStatus &
-			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			      ACPI_STA_DEV_OK)) !=
-			    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			     ACPI_STA_DEV_OK))
-				continue;
+			if (ad->ad_devinfo.Type == ACPI_TYPE_DEVICE) {
+				/*
+				 * XXX We only attach devices which are:
+				 *
+				 *	- present
+				 *	- enabled
+				 *	- functioning properly
+				 *
+				 * However, if enabled, it's decoding resources,
+				 * so we should claim them, if possible.
+				 * Requires changes to bus_space(9).
+				 */
+				if ((ad->ad_devinfo.CurrentStatus &
+				     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
+				      ACPI_STA_DEV_OK)) !=
+				    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
+				     ACPI_STA_DEV_OK))
+					continue;
 
-			/*
-			 * XXX Same problem as above...
-			 */
-			if ((ad->ad_devinfo.Valid & ACPI_VALID_HID) == 0)
-				continue;
+				/*
+				 * XXX Same problem as above...
+				 */
+				if ((ad->ad_devinfo.Valid & ACPI_VALID_HID)
+				    == 0)
+					continue;
+			}
 
 			ad->ad_device = config_found(&sc->sc_dev,
 			    &aa, acpi_print);
@@ -555,24 +564,44 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
-	char *uid;
-#if 0
-	char *str;
-#endif
 
 	if (pnp) {
-		aprint_normal("%s ", aa->aa_node->ad_devinfo.HardwareId);
-#if 0 /* Not until we fix acpi_eval_string */
-		if (acpi_eval_string(aa->aa_node->ad_handle,
-		    "_STR", &str) == AE_OK) {
-			aprint_normal("[%s] ", str);
-			AcpiOsFree(str);
-		}
+		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID) {
+			char *pnpstr = aa->aa_node->ad_devinfo.HardwareId;
+			char *str;
+
+			aprint_normal("%s ", pnpstr);
+			if (acpi_eval_string(aa->aa_node->ad_handle,
+			    "_STR", &str) == AE_OK) {
+				aprint_normal("[%s] ", str);
+				AcpiOsFree(str);
+			}
+#ifdef ACPIVERBOSE
+			else {
+				int i;
+
+				for (i = 0; i < sizeof(acpi_knowndevs) /
+				    sizeof(acpi_knowndevs[0]); i++) {
+					if (strcmp(acpi_knowndevs[i].pnp,
+					    pnpstr) == 0) {
+						printf("[%s] ",
+						    acpi_knowndevs[i].str);
+					}
+				}
+			}
+			    
 #endif
+		} else {
+			/* XXX print something more meaningful.. */
+			aprint_normal("ACPI Object Type 0x%02x ",
+			   aa->aa_node->ad_devinfo.Type);
+		}
 		aprint_normal("at %s", pnp);
 	} else {
 		aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId);
 		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
+			char *uid;
+
 			if (aa->aa_node->ad_devinfo.UniqueId[0] == '\0')
 				uid = "<null>";
 			else
@@ -699,12 +728,10 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 	return (rv);
 }
 
-#if 0
 /*
  * acpi_eval_string:
  *
  *	Evaluate a (Unicode) string object.
- * XXX current API may leak memory, so don't use this.
  */
 ACPI_STATUS
 acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
@@ -731,17 +758,24 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 	param = (ACPI_OBJECT *)buf.Pointer;
 	if (rv == AE_OK) {
 		if (param->Type == ACPI_TYPE_STRING) {
-			/* XXX may leak buf.Pointer!! */
-			*stringp = param->String.Pointer;
-			return (AE_OK);
+			char *ptr = param->String.Pointer;
+			size_t len;
+			while (*ptr++)
+				continue;
+			len = ptr - param->String.Pointer;
+			if ((*stringp = AcpiOsAllocate(len)) == NULL) {
+				rv = AE_NO_MEMORY;
+				goto done;
+			}
+			(void)memcpy(*stringp, param->String.Pointer, len);
+			goto done;
 		}
 		rv = AE_TYPE;
 	}
-
+done:
 	AcpiOsFree(buf.Pointer);
 	return (rv);
 }
-#endif
 
 
 /*
@@ -1008,21 +1042,44 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	ACPI_PCI_ROUTING_TABLE *PrtElement;
 	ACPI_HANDLE link;
 	uint line;
+	ACPI_NAMESPACE_NODE *node;
+	ACPI_INTEGER val;
 
 	rv = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
 	if (ACPI_FAILURE(rv))
 		return (AE_OK);
 
+	/*
+	 * If at level 1, this is a PCI root bus. Try the _BBN method
+	 * to get the right PCI bus numbering for the following
+	 * busses (this is a depth-first walk). It may fail,
+	 * for example if there's only one root bus, but that
+	 * case should be ok, so we'll ignore that.
+	 */
+	if (level == 1) {
+		node = AcpiNsMapHandleToNode(handle);
+		rv = AcpiUtEvaluateNumericObject(METHOD_NAME__BBN, node, &val);
+		if (!ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
-	printf("%s: fixing up PCI bus %d\n", sc->sc_dev.dv_xname,
-	    sc->sc_pci_bus);
+			printf("%s: fixup: _BBN success, bus # was %d now %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_pci_bus,
+			    ACPI_LOWORD(val));
+#endif
+			sc->sc_pci_bus = ACPI_LOWORD(val);
+		}
+	}
+			
+
+#ifdef ACPI_DEBUG
+	printf("%s: fixing up PCI bus %d at level %u\n", sc->sc_dev.dv_xname,
+	    sc->sc_pci_bus, level);
 #endif
 
         for (Buffer = buf.Pointer; ; Buffer += PrtElement->Length) {
 		PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;
 		if (PrtElement->Length == 0)
 			break;
-		if (PrtElement->Source == NULL)
+		if (PrtElement->Source[0] == 0)
 			continue;
 
 		link = acpi_get_node(PrtElement->Source);

@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_namemap.c,v 1.3.2.4 2002/12/19 00:44:33 thorpej Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.3.2.5 2003/01/07 21:27:43 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.3.2.4 2002/12/19 00:44:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.3.2.5 2003/01/07 21:27:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.3.2.4 2002/12/19 00:44:33 thorpej
 
 struct mach_subsystem_namemap mach_namemap[] = {
 	{ 200, mach_host_info, "host_info" },
-	{ 202, mach_host_page_size,"host_page_size" },
+	{ 202, mach_host_page_size, "host_page_size" },
+	{ 205, mach_host_get_io_master, "host_get_io_master" },
 	{ 206, mach_host_get_clock_service, "host_get_clock_service" },
 /*	{ 403, mach_boostrap_register, "boostrap_register" }, */
  	{ 404, mach_bootstrap_look_up, "bootstrap_look_up" }, 
@@ -79,6 +80,7 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 3803, mach_vm_protect, "vm_protect" },
 	{ 3804, mach_vm_inherit, "vm_inherit" },
 	{ 3812, mach_vm_map, "vm_map" },
+	{ 3825, mach_vm_make_memory_entry, "vm_make_memory_entry" },
 	{ 0, NULL, NULL },
 };
 

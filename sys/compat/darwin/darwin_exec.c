@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.1.2.4 2003/01/03 16:59:04 thorpej Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.1.2.5 2003/01/07 21:27:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1.2.4 2003/01/03 16:59:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1.2.5 2003/01/07 21:27:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +219,8 @@ darwin_e_proc_fork(p, parent)
 {
 	struct darwin_emuldata *ded1;
 	struct darwin_emuldata *ded2;
+	char *ed1, *ed2;
+	size_t len;
 
 	p->p_emuldata = NULL;
 
@@ -228,9 +230,12 @@ darwin_e_proc_fork(p, parent)
 	ded1 = p->p_emuldata;
 	ded2 = parent->p_emuldata;
 
-	(void)memcpy(ded1, ded2, sizeof(struct darwin_emuldata));
+	ed1 = (char *)((u_long)ded1 + sizeof(struct mach_emuldata));
+	ed2 = (char *)((u_long)ded2 + sizeof(struct mach_emuldata));
+	len = sizeof(struct darwin_emuldata) - sizeof(struct mach_emuldata);
+	(void)memcpy(ed1, ed2, len);
 
-	if (ded2->ded_fakepid == 1) {
+	if ((ded2->ded_fakepid == 1) && (darwin_init_pid != 0)) {
 		darwin_init_pid = 0;
 		ded1->ded_fakepid = 2;
 	} else {
@@ -254,9 +259,9 @@ darwin_e_proc_init(p, vmspace)
 		p->p_emuldata = malloc(sizeof(struct darwin_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
 
-		ded = (struct darwin_emuldata *)p->p_emuldata;
-		ded->ded_fakepid = 0;
 	}
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+	ded->ded_fakepid = 0;
 
 	mach_e_proc_init(p, vmspace);
 

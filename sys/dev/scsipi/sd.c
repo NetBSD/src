@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.13 2002/12/19 00:48:18 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.14 2003/01/07 21:34:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.13 2002/12/19 00:48:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.14 2003/01/07 21:34:52 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -1101,7 +1101,7 @@ bad:
 
 	case DIOCCACHESYNC:
 		/*
-		 * XXX Do we really need to care about having a writeable
+		 * XXX Do we really need to care about having a writable
 		 * file descriptor here?
 		 */
 		if ((flag & FWRITE) == 0)

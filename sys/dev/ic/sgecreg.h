@@ -1,4 +1,4 @@
-/*	$NetBSD: sgecreg.h,v 1.1 1999/08/08 11:41:29 ragge Exp $	*/
+/*	$NetBSD: sgecreg.h,v 1.1.14.1 2003/01/07 21:34:22 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,8 @@
  *
  */
 
+#ifndef _DEV_IC_SGECREG_H_
+#define _DEV_IC_SGECREG_H_
 
 /* Driver for SGEC (second generation Ethernet controller) chip, type DC-541,
    found on the KA670 (and prob ably other) CPU.
@@ -239,3 +241,4 @@ struct ze_tdes {
 #define ZE_TDES1_IC 0x0100		/* interrupt on completion */
 #define ZE_TDES1_VT 0x0080		/* virtual(1)/phys PTE address */
 
+#endif /* _DEV_IC_SGECREG_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: tpcalib.c,v 1.1.2.4 2002/12/19 00:48:04 thorpej Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.1.2.5 2003/01/07 21:34:09 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1999 Shin Takemura All rights reserved.
+ * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1.2.4 2002/12/19 00:48:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1.2.5 2003/01/07 21:34:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1.2.4 2002/12/19 00:48:04 thorpej Exp 
 #include <sys/kernel.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/hpc/tpcalibvar.h>
+
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #define TPCALIBDEBUG
 #ifdef TPCALIBDEBUG
@@ -89,12 +92,14 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
 	struct wsmouse_calibcoords *d;
-	int s = sizeof(struct wsmouse_calibcoord);
-
-	d = (struct wsmouse_calibcoords *)data;
+	struct wsmouse_id *id;
+	char *idstr;
+	int s;
 
 	switch (cmd) {
 	case WSMOUSEIO_SCALIBCOORDS:
+		s = sizeof(struct wsmouse_calibcoord);
+		d = (struct wsmouse_calibcoords *)data;
 		if (d->samplelen == WSMOUSE_CALIBCOORDS_RESET) {
 			tpcalib_reset(sc);
 		} else
@@ -129,7 +134,25 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
 		break;
 
 	case WSMOUSEIO_GCALIBCOORDS:
+		d = (struct wsmouse_calibcoords *)data;
 		*d = sc->sc_saved;
+		break;
+
+	case WSMOUSEIO_GETID:
+		/*
+		 * return unique ID string,
+		 * "<vendor> <model> <serial number>"
+		 */
+		id = (struct wsmouse_id *)data;
+		if (id->type != WSMOUSE_ID_TYPE_UIDSTR)
+			return (EINVAL);
+		idstr = platid_name(&platid);
+		s = strlen(idstr);
+		if (WSMOUSE_ID_MAXLEN - 10 < s)
+			s = WSMOUSE_ID_MAXLEN - 10;
+		memcpy(id->data, idstr, s);
+		strcpy(&id->data[s], " SN000000");
+		id->length = s + 9;
 		break;
 
 	default:

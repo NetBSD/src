@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.37.2.2 2001/11/14 19:14:37 nathanw Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.37.2.3 2003/01/07 21:34:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.37.2.2 2001/11/14 19:14:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.37.2.3 2003/01/07 21:34:23 thorpej Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -644,7 +644,7 @@ cleanup:
 		sc->sc_rx_act = buffer;
 		sc->sc_intmask |= BAH_RI;
 
-		/* this also clears the RI flag interupt: */
+		/* this also clears the RI flag interrupt: */
 		PUTREG(BAHCMD, BAH_RXBC(buffer));
 		PUTREG(BAHSTAT, sc->sc_intmask);
 
@@ -834,7 +834,7 @@ bahintr(arg)
 				 * configured sender)
 				 */
 				log(LOG_WARNING, 
-				    "%s: spurious RX interupt or sender 0 "
+				    "%s: spurious RX interrupt or sender 0 "
 				    " (ignored)\n", sc->sc_dev.dv_xname);
 				/*
 				 * restart receiver on same buffer.
@@ -852,7 +852,7 @@ bahintr(arg)
 					/*
 					 * Start receiver on other receive
 					 * buffer. This also clears the RI
-					 * interupt flag.
+					 * interrupt flag.
 					 */
 					PUTREG(BAHCMD, BAH_RXBC(buffer));
 					/* in RX intr, so mask is ok for RX */

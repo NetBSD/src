@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.40.2.7 2002/12/11 06:37:52 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.40.2.8 2003/01/07 21:34:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.7 2002/12/11 06:37:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.8 2003/01/07 21:34:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1083,7 +1083,7 @@ bha_probe_inquiry(bus_space_tag_t iot, bus_space_handle_t ioh,
 /*
  * bha_disable_isacompat:
  *
- *	Disable the ISA-compatiblity ioports on PCI bha devices,
+ *	Disable the ISA-compatibility ioports on PCI bha devices,
  *	to ensure they're not autoconfigured a second time as an ISA bha.
  */
 int

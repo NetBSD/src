@@ -1,4 +1,4 @@
-/*	$NetBSD: dzreg.h,v 1.1.2.2 2002/02/28 04:13:15 nathanw Exp $ */
+/*	$NetBSD: dzreg.h,v 1.1.2.3 2003/01/07 21:34:08 thorpej Exp $ */
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
@@ -21,6 +21,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_DEC_DZREG_H
+#define _DEV_DEC_DZREG_H
 
 union w_b
 {
@@ -142,3 +145,5 @@ struct	dz_regs	{
 #define DZ_LPR_8_BIT_CHAR	0000030
 
 #define DZ_LPR_CHANNEL_MASK	0000007
+
+#endif /* _DEV_DEC_DZREG_H */

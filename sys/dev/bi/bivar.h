@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.8 2000/07/26 12:41:40 ragge Exp $ */
+/*	$NetBSD: bivar.h,v 1.8.2.1 2003/01/07 21:34:05 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,7 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#ifndef _DEV_BI_BIVAR_H_
+#define _DEV_BI_BIVAR_H_
 
 
 /*
@@ -78,3 +79,5 @@ struct bi_list {
 /* Prototype */
 void bi_attach (struct bi_softc *);
 void bi_intr_establish (void *, int, void (*)(void *), void *, struct evcnt *);
+
+#endif /* _DEV_BI_BIVAR_H_ */

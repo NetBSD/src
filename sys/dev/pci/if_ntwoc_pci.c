@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.4.2.3 2002/10/18 02:43:05 nathanw Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.4.2.4 2003/01/07 21:34:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.4.2.3 2002/10/18 02:43:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.4.2.4 2003/01/07 21:34:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ ntwoc_pci_shutdown(void *aux)
 	sca_shutdown(&sc->sc_sca);
 
 	/*
-	 * disable interupts for the whole card.  Black magic, see comment
+	 * disable interrupts for the whole card.  Black magic, see comment
 	 * above.
 	 */
 	bus_space_write_4(sc->sc_asic_iot, sc->sc_asic_ioh,
