@@ -1,11 +1,10 @@
-#	$NetBSD: changelist,v 1.12 2000/05/13 08:07:01 lukem Exp $
+#	$NetBSD: changelist,v 1.13 2000/05/22 04:14:30 itojun Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
 # for modifications.
 
 /etc/Distfile
-/etc/aliases
 /etc/amd/master
 /etc/bootparams
 /etc/bootptab
@@ -54,6 +53,7 @@
 /etc/mail.rc
 /etc/mail/aliases
 /etc/mail/helpfile
+/etc/mail/local-host-names
 /etc/mail/sendmail.cf
 /etc/mail/sendmail-IPv6.cf
 /etc/mailer.conf
@@ -100,8 +100,6 @@
 /etc/rtadvd.conf
 /etc/security
 /etc/security.conf
-/etc/sendmail.cf
-/etc/sendmail.cw
 /etc/services
 /etc/shells
 /etc/slip.hosts
