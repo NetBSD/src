@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.241 2001/04/26 03:10:44 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.242 2001/04/28 06:10:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2001/04/26 03:10:44 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2001/04/28 06:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1940,46 +1940,6 @@ remrunqueue(p)
 
 	if ((struct proc *)&sched_qs[bit] == sched_qs[bit].ph_link)
 		sched_whichqs &= ~(1 << bit);
-}
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
- *
- * XXX PLEASE REWRITE ME TO USE THE CYCLE COUNTER AND DEAL WITH
- * XXX MULTIPLE CPUs IN A SANE WAY!
- */
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	static struct timeval lasttime;
-	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
-	int s;
-
-	s = splclock();
-	simple_lock(&microtime_slock);
-
-	*tvp = time;
-#ifdef notdef
-	tvp->tv_usec += clkread();
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-#endif
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-
-	simple_unlock(&microtime_slock);
-	splx(s);
 }
 
 /*

@@ -1,7 +1,7 @@
-/* $NetBSD: interrupt.c,v 1.58 2001/04/15 23:26:05 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.59 2001/04/28 06:10:49 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.58 2001/04/15 23:26:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.59 2001/04/28 06:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.58 2001/04/15 23:26:05 thorpej Exp $
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 
 #include <machine/cpuvar.h>
 
@@ -107,6 +108,7 @@ void
 interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
     struct trapframe *framep)
 {
+	static int microset_iter;	/* call microset() once per sec. */
 	struct cpu_info *ci = curcpu();
 	struct cpu_softc *sc = ci->ci_softc;
 	struct proc *p;
@@ -141,6 +143,22 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 */
 		sc->sc_evcnt_clock.ev_count++;
 		uvmexp.intrs++;
+		/*
+		 * Update the PCC frequency for use by microtime().
+		 */
+		if (
+#if defined(MULTIPROCESSOR)
+		    CPU_IS_PRIMARY(ci) &&
+#endif
+
+		    microset_iter-- == 0) {
+			microset_iter = hz;
+#if defined(MULTIPROCESSOR)
+			alpha_multicast_ipi(cpus_running,
+			    ALPHA_IPI_MICROSET);
+#endif
+			microset(ci, framep);
+		}
 		if (platform.clockintr) {
 			/*
 			 * Call hardclock().  This will also call
