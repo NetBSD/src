@@ -60,8 +60,10 @@
 ./usr/games/primes
 ./usr/games/quiz
 ./usr/games/rain
+./usr/games/random
 ./usr/games/robots
 ./usr/games/rogue
+./usr/games/rot13
 ./usr/games/sail
 ./usr/games/snake
 ./usr/games/snscore
@@ -99,6 +101,12 @@
 ./usr/share/games/fortune/fortunes-o
 ./usr/share/games/fortune/fortunes-o.dat
 ./usr/share/games/fortune/fortunes.dat
+./usr/share/games/fortune/fortunes2
+./usr/share/games/fortune/fortunes2-o
+./usr/share/games/fortune/fortunes2-o.dat
+./usr/share/games/fortune/fortunes2.dat
+./usr/share/games/fortune/limerick
+./usr/share/games/fortune/limerick.dat
 ./usr/share/games/fortune/startrek
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/zippy
@@ -107,7 +115,6 @@
 ./usr/share/games/larn/larn.help
 ./usr/share/games/larn/larnmaze
 ./usr/share/games/larn/larnopts
-./usr/share/games/larn/lfortune
 ./usr/share/games/quiz.db/africa
 ./usr/share/games/quiz.db/america
 ./usr/share/games/quiz.db/areas
@@ -120,6 +127,7 @@
 ./usr/share/games/quiz.db/ed
 ./usr/share/games/quiz.db/elements
 ./usr/share/games/quiz.db/europe
+./usr/share/games/quiz.db/flowers
 ./usr/share/games/quiz.db/greek
 ./usr/share/games/quiz.db/inca
 ./usr/share/games/quiz.db/index
@@ -171,6 +179,7 @@
 ./usr/share/man/cat6/primes.0
 ./usr/share/man/cat6/quiz.0
 ./usr/share/man/cat6/rain.0
+./usr/share/man/cat6/random.0
 ./usr/share/man/cat6/robots.0
 ./usr/share/man/cat6/rogue.0
 ./usr/share/man/cat6/rot13.0
