@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnodevar.h,v 1.2 2001/05/03 04:38:33 jmc Exp $	*/
+/*	$NetBSD: fwnodevar.h,v 1.3 2001/05/11 06:07:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@ struct fwnode_softc {
 	
 	int sc_flags;
 	
-	int (*sc1394_input)(struct ieee1394_abuf *);
-	int (*sc1394_output)(struct ieee1394_abuf *);
+	int (*sc1394_read)(struct ieee1394_abuf *);
+	int (*sc1394_write)(struct ieee1394_abuf *);
 	int (*sc1394_inreg)(struct ieee1394_abuf *, int);
 	
 	TAILQ_HEAD(, fwnode_device_cap) sc_dev_cap_head;
