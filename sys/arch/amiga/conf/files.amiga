@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
+#	$NetBSD: files.amiga,v 1.49 1996/10/17 15:42:38 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -254,10 +254,15 @@ device	flsc: scsi, sfas
 attach	flsc at zbus
 file	arch/amiga/dev/flsc.c		flsc needs-flag
 
-# Blizzard1230
+# Blizzard1230-I,II
 device	bzsc: scsi, sfas
 attach	bzsc at zbus
 file	arch/amiga/dev/bzsc.c		bzsc needs-flag
+
+# Blizzard1230-IV,1260,2060
+device	bznsc: scsi, sfas
+attach	bznsc at zbus
+file	arch/amiga/dev/bznsc.c		bznsc needs-flag
 
 # Amiga 4000/1200 IDE masquerading as SCSI
 device	idesc: scsi
