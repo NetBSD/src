@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.50 2001/04/29 05:56:20 tron Exp $
+.\"	$NetBSD: packages.7,v 1.51 2001/05/20 03:08:31 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd October 22, 2000
+.Dd May 3rd, 2001
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -91,6 +91,17 @@ shared libs.
 .It USE_GLX 
 Says that if Mesa is requested, a package should preferably use a
 GLX (hardware-accelerated) version of the Mesa library.
+.It BINPKG_SITES
+List of sites carrying binary pkgs. Variables
+.Dq rel
+and
+.Dq arch
+are
+replaced with OS release (
+.Dq 1.5 ,
+etc.) and architecture (
+.Dq mipsel ,
+etc.). 
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
@@ -696,9 +707,16 @@ Actually compile the sources.
 .It install	
 Install the results of a build.
 .It bin-install	
-Install a binary package if available, do a 
+Install a binary package from local disk and via FTP from a list
+of sites (see
+.Dq BINPKG_LIST
+variable), and do a 
 .Dq make package
-else.
+if no binary package is available anywhere. The arguments given to
+.Xr pkg_add
+can be set via
+.Dq BIN_INSTALL_FLAGS ,
+e.g. to do verbose operation, etc. 
 .It reinstall	
 Install the results of a build, ignoring
 .Dq already installed
@@ -753,12 +771,13 @@ NEVER override the
 targets unless you want to open a major can of worms.
 .Sh SEE ALSO
 .Xr make 1 ,
-.Xr mk.conf 5
+.Xr mk.conf 5 ,
+.Pa ${PKGSRCDIR}/mk/mk.conf.examples
 and
 .Rs
 .%T "Documentation on the NetBSD Package System"
-.Re
-.Pa ${PKGSRCDIR}/Packages.txt
+.Re 
+.Pa ${PKGSRCDIR}/Packages.txt 
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
