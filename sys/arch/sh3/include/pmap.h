@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2001/02/02 02:28:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2001/02/19 17:51:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -404,8 +404,22 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  */
+/*
+ * XXX Indeed, first, we should refine physical address v.s. virtual
+ *	address mapping.
+ * See
+ *	uvm_km.c:uvm_km_free_poolpage1,
+ *	vm_page.h:PHYS_TO_VM_PAGE, vm_physseg_find
+ *	machdep.c:pmap_bootstrap (uvm_page_physload, etc)
+ */
+#if 0
+/* broken */
 #define PMAP_MAP_POOLPAGE(pa)	SH3_PHYS_TO_P1SEG((pa))
 #define PMAP_UNMAP_POOLPAGE(va)	SH3_P1SEG_TO_PHYS((va))
+#else
+#define PMAP_MAP_POOLPAGE(pa)	(pa)
+#define PMAP_UNMAP_POOLPAGE(va)	(va)
+#endif
 
 /*
  * inline functions
