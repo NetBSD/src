@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.124 2003/10/25 18:35:43 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.125 2003/10/25 19:12:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.124 2003/10/25 18:35:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.125 2003/10/25 19:12:08 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -5981,7 +5981,7 @@ tlp_dm9102_tmsw_init(sc)
 		break;
 
 	default:
-		/* Nothing. */
+		opmode = 0;
 		break;
 	}
 
