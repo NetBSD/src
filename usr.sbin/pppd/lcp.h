@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.h,v 1.6 1995/07/04 23:47:48 paulus Exp $
+ * $Id: lcp.h,v 1.7 1996/03/15 03:03:53 paulus Exp $
  */
 
 /*
@@ -74,7 +74,7 @@ extern u_int32_t xmit_accm[][8];
 
 void lcp_init __P((int));
 void lcp_open __P((int));
-void lcp_close __P((int));
+void lcp_close __P((int, char *));
 void lcp_lowerup __P((int));
 void lcp_lowerdown __P((int));
 void lcp_input __P((int, u_char *, int));
@@ -82,6 +82,8 @@ void lcp_protrej __P((int));
 void lcp_sprotrej __P((int, u_char *, int));
 int  lcp_printpkt __P((u_char *, int,
 		       void (*) __P((void *, char *, ...)), void *));
+
+extern struct protent lcp_protent;
 
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */

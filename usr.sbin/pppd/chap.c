@@ -19,7 +19,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: chap.c,v 1.6 1995/07/04 23:47:35 paulus Exp $";
+static char rcsid[] = "$Id: chap.c,v 1.7 1996/03/15 03:03:41 paulus Exp $";
 #endif
 
 /*
@@ -35,6 +35,12 @@ static char rcsid[] = "$Id: chap.c,v 1.6 1995/07/04 23:47:35 paulus Exp $";
 #include "pppd.h"
 #include "chap.h"
 #include "md5.h"
+
+struct protent chap_protent = {
+    PPP_CHAP, ChapInit, ChapInput, ChapProtocolReject,
+    ChapLowerUp, ChapLowerDown, NULL, NULL,
+    ChapPrintPkt, NULL, 1, "CHAP", NULL, NULL
+};
 
 chap_state chap[NUM_PPP];		/* CHAP state; one for each unit */
 
@@ -424,9 +430,7 @@ ChapReceiveResponse(cstate, inp, id, len)
     int secret_len, old_state;
     int code;
     char rhostname[256];
-    u_char buf[256];
     MD5_CTX mdContext;
-    u_char msg[256];
     char secret[MAXSECRETLEN];
 
     CHAPDEBUG((LOG_INFO, "ChapReceiveResponse: Rcvd id %d.", id));
@@ -578,9 +582,6 @@ ChapReceiveFailure(cstate, inp, id, len)
     u_char id;
     int len;
 {
-    u_char msglen;
-    u_char *msg;
-  
     CHAPDEBUG((LOG_INFO, "ChapReceiveFailure: Rcvd id %d.", id));
 
     if (cstate->clientstate != CHAPCS_RESPONSE) {

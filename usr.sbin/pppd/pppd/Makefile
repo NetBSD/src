@@ -1,8 +1,10 @@
-#	$Id: Makefile,v 1.8 1995/07/04 23:47:29 paulus Exp $
+#	$Id: Makefile,v 1.9 1996/03/15 03:03:34 paulus Exp $
 
 PROG=	pppd
 SRCS=	main.c magic.c fsm.c lcp.c ipcp.c upap.c chap.c md5.c ccp.c \
-	auth.c options.c sys-bsd.c
+	auth.c options.c sys-bsd.c demand.c gencode.c grammar.c scanner.c \
+	nametoaddr.c optimize.c bpf_filter.c
+.PATH:	${.CURDIR}/../../lib/libpcap ${.CURDIR}/../../sys/net
 MAN=	pppd.8
 SUBDIR=	pppstats chat
 BINMODE=4555

@@ -1,7 +1,7 @@
 /*
  * define path names
  *
- * $Id: pathnames.h,v 1.7 1995/07/04 23:48:01 paulus Exp $
+ * $Id: pathnames.h,v 1.8 1996/03/15 03:04:03 paulus Exp $
  */
 
 #ifdef HAVE_PATHS_H
@@ -20,3 +20,8 @@
 #define _PATH_TTYOPT	"/etc/ppp/options."
 #define _PATH_CONNERRS	"/etc/ppp/connect-errors"
 #define _PATH_USEROPT	".ppprc"
+
+#ifdef IPX_CHANGE
+#define _PATH_IPXUP	"/etc/ppp/ipx-up"
+#define _PATH_IPXDOWN	"/etc/ppp/ipx-down"
+#endif /* IPX_CHANGE */
