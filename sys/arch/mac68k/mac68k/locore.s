@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 1994/12/03 23:34:50 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 1995/01/21 05:21:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,10 +128,12 @@
  */
 	.globl	_panic
 	.globl	_jmp0panic
+
+_jmp0panic:
 	pea	Ljmp0panic
 	jbsr	_panic
 	/* NOTREACHED */
-_jmp0panic:
+
 Ljmp0panic:
 	.asciz	"kernel jump to zero"
 	.even
