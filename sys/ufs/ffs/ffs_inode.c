@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.49 2001/11/30 07:05:55 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.50 2001/12/18 06:50:28 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.49 2001/11/30 07:05:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.50 2001/12/18 06:50:28 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -211,6 +211,7 @@ ffs_truncate(v)
 
 	osize = oip->i_ffs_size;
 	ioflag = ap->a_flags;
+	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -219,7 +220,6 @@ ffs_truncate(v)
 	 */
 
 	if (osize < length) {
-		aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 		if (lblkno(fs, osize) < NDADDR &&
 		    lblkno(fs, osize) != lblkno(fs, length) &&
 		    blkroundup(fs, osize) != osize) {
@@ -266,6 +266,11 @@ ffs_truncate(v)
 	if (ovp->v_type == VREG && length < osize && offset != 0) {
 		voff_t eoz;
 
+		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		    aflag);
+		if (error) {
+			return error;
+		}
 		size = blksize(fs, oip, lblkno(fs, length));
 		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
