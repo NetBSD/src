@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/04/12 11:06:23 pk Exp $
+#	$NetBSD: Makefile,v 1.21 2001/08/03 14:42:35 enami Exp $
 
 .include <bsd.own.mk>
 
@@ -33,11 +33,6 @@ FILESNAME_${F}=	grep.mo
 
 TEXINFO=	grep.texi
 INFOFLAGS=	-I${.CURDIR}/../../dist/grep/doc
-
-# this is a hack -- our texinfo doesn't support @command yet, so
-# we have to use the pre-generated grep.info until it does
-grep.info:
-	cp ${DIST}/grep/doc/grep.info .
 
 MLINKS=	grep.1 egrep.1 \
 	grep.1 fgrep.1
