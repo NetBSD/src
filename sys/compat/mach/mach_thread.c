@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.11 2002/12/30 18:44:34 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.12 2003/01/08 00:39:44 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.11 2002/12/30 18:44:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.12 2003/01/08 00:39:44 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -175,7 +175,7 @@ mach_thread_create_running(args)
 
 /* 
  * Duplicate the right of p1 into p2 on thread creation.
- * This will disapear the day we will have struct lwp. 
+ * This will disappear the day we will have struct lwp. 
  * XXX mr_p is not accurate anymore, this might introduce
  * some problems.
  */
