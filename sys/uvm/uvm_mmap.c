@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.36 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.37 1999/12/11 05:38:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1153,19 +1153,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 */
 
 	if (flags & MAP_ANON) {
-#if 1
-		/*
-		 * Specify an offset of 0 so that uvm_map_findspace() via.
-		 * uvm_map() will PMAP_PREFER the address for us.  This
-		 * prevents alias problems if the following occurs:
-		 *
-		 *	- Anon region mapped.
-		 *	- File mapped over anon region (using MAP_FIXED).
-		 */
-		foff = 0;
-#else
 		foff = UVM_UNKNOWN_OFFSET;
-#endif
 		uobj = NULL;
 		if ((flags & MAP_SHARED) == 0)
 			/* XXX: defer amap create */
