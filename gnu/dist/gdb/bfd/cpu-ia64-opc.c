@@ -188,7 +188,7 @@ ins_imms (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 static const char*
 ins_immsu4 (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 {
-  if (value == (BFD_HOST_U_64_BIT) 0x100000000)
+  if (value == (BFD_HOST_U_64_BIT) 0x100000000ULL)
     value = 0;
   else
     value = (((BFD_HOST_64_BIT)value << 32) >> 32);
@@ -213,7 +213,7 @@ static const char*
 ins_immsm1u4 (const struct ia64_operand *self, ia64_insn value,
 	      ia64_insn *code)
 {
-  if (value == (BFD_HOST_U_64_BIT) 0x100000000)
+  if (value == (BFD_HOST_U_64_BIT) 0x100000000ULL)
     value = 0;
   else
     value = (((BFD_HOST_64_BIT)value << 32) >> 32);
