@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.34 2001/01/05 07:02:00 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.35 2001/01/05 07:03:54 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -400,7 +400,7 @@ isp_wait_complete(isp)
 		int rv = 0;
                 isp->isp_osinfo.mboxwaiting = 1;
                 while (isp->isp_osinfo.mboxwaiting && rv == 0) {
-			static const struct timeval dtime = { 90, 0 };
+			static const struct timeval dtime = { 5, 0 };
 			int timo;
 			struct timeval tv;
 			microtime(&tv);
