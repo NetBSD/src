@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 1998/02/21 02:42:42 mark Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 1998/04/19 04:05:24 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -194,8 +194,17 @@ db_read_bytes(addr, size, data)
 	register char	*src;
 
 	src = (char *)addr;
-	while (--size >= 0)
+	while (--size >= 0) {
+		pt_entry_t *ptep;
+
+		/* Make sure the address we are reading is valid */
+		ptep = vtopte((vm_offset_t)src);
+		if ((*ptep & L2_MASK) == L2_INVAL) {
+			db_printf("address %p is invalid\n", src);
+			return;
+		}
 		*data++ = *src++;
+	}
 }
 
 #define	splpmap() splimp()
