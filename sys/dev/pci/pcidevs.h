@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.695 2005/02/20 18:07:29 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.696 2005/02/27 15:19:25 perry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.694 2005/02/20 18:06:17 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.695 2005/02/27 00:27:33 perry Exp
  */
 
 /*
@@ -814,8 +814,8 @@
 #define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 11Mbps 802.11b WLAN */
 
 /* Advanced System Products */
-#define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
-#define	PCI_PRODUCT_ADVSYS_1200B	0x1200	
+#define	PCI_PRODUCT_ADVSYS_1200A	0x1100
+#define	PCI_PRODUCT_ADVSYS_1200B	0x1200
 #define	PCI_PRODUCT_ADVSYS_ULTRA	0x1300		/* ABP-930/40UA */
 #define	PCI_PRODUCT_ADVSYS_WIDE	0x2300		/* ABP-940UW */
 #define	PCI_PRODUCT_ADVSYS_U2W	0x2500		/* ASB-3940U2W */
