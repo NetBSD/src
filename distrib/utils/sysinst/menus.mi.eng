@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.12 1997/11/04 01:39:06 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.13 1997/11/05 22:45:59 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -235,6 +235,8 @@ menu distmedium, title "  Select medium";
 				 got_dist = get_via_cdrom(); }, exit; 
 	option "floppy", action { process_menu (MENU_distset);
 				  got_dist = get_via_floppy(); }, exit;
+	option "local", action { process_menu (MENU_distset);
+				got_dist = get_via_localfs(); }, exit;
 	option "none",  action { nodist = 1; }, exit;
 
 menu distset, title " Select your distribution";
@@ -312,3 +314,23 @@ menu cdrombadmount, title "  What do you want to do?";
 		{ yesno = 1; };
 	option "Give up", exit, action
 		{ yesno = 0; };
+
+menu localfssource, title "  Change";
+	display action
+		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
+	option "Device", action
+		{ msg_prompt (MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
+	option "Filesystem", action
+		{ msg_prompt (MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
+	option "Continue", exit;
+
+menu localfsbadmount, title "  What do you want to do?";
+	display action
+		{ msg_display (MSG_localfsbadmount, localfs_dir, localfs_dev); };
+	option "Try again", exit, sub menu localfssource, action
+		{ yesno = 1; };
+	option "Give up", exit, action
+		{ yesno = 0; };
+

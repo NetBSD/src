@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 1997/11/05 07:48:52 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.16 1997/11/05 22:46:10 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -212,6 +212,28 @@ get_via_cdrom(void)
 	return 1;
 }
 
+int
+get_via_localfs(void)
+{
+	/* Get device, filesystem, and filepath */
+	process_menu (MENU_localfssource);
+
+	/* Mount it */
+	while (run_prog ("/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
+	    localfs_dev)) {
+		process_menu (MENU_localfsbadmount);
+		if (!yesno)
+			return 0;
+		/* Verify distribution files exist.  XXX */
+	}
+
+	/* return location, don't clean... */
+	strcpy (dist_dir, "/mnt2");
+	strncat (dist_dir, localfs_dir, STRSIZE-strlen(dist_dir)-1);
+	clean_dist_dir = 0;
+	mnt2_mounted = 1;
+	return 1;
+}
 
 void cd_dist_dir (char *forwhat)
 {
