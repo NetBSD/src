@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.6 1997/01/09 20:19:11 tls Exp $	*/
+/*	$NetBSD: find.h,v 1.7 1998/02/02 14:02:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)find.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: find.h,v 1.6 1997/01/09 20:19:11 tls Exp $
  */
 
 /* node type */

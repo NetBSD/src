@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.12 1997/10/19 11:52:22 lukem Exp $
+.\"	$NetBSD: find.1,v 1.13 1998/02/02 14:02:14 mrg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,18 +34,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: find.1,v 1.12 1997/10/19 11:52:22 lukem Exp $
+.\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd June 6, 1993
+.Dd May 9, 1995
 .Dt FIND 1
 .Os
 .Sh NAME
 .Nm find
 .Nd walk a file hierarchy
 .Sh SYNOPSIS
-.Nm
-.Op Fl HdhXx
+.Nm find
+.Op Fl H | Fl L | Fl P
+.Op Fl Xdx
 .Op Fl f Ar file
 .Op Ar file ...
 .Ar expression
@@ -65,12 +65,40 @@ The options are as follows:
 The
 .Fl H
 option causes the file information and file type (see
-.Xr stat  2  ) ,
+.Xr stat 2 ) ,
 returned for each symbolic link encountered on the command line to be 
 those of the file referenced by the link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.  File information of all symbolic links not on 
 the command line is that of the link itself.
+.It Fl L
+The
+.Fl L
+option causes the file information and file type (see
+.Xr stat 2)
+returned for each symbolic link to be those of the file referenced by the
+link, not the link itself.
+If the referenced file does not exist, the file information and type will
+be for the link itself.
+.It Fl P
+The
+.Fl P
+option causes the file information and file type (see
+.Xr stat 2)
+returned for each symbolic link to be those of the link itself.
+.It Fl X
+The
+.Fl X
+option is a modification to permit
+.Nm
+to be safely used in conjunction with
+.Xr xargs 1 .
+If a file name contains any of the delimiting characters used by
+.Xr xargs ,
+a diagnostic message is displayed on standard error, and the file
+is skipped.
+The delimiting characters include single (`` ' '') and double (`` " '')
+quotes, backslash (``\e''), space, tab and newline characters.
 .It Fl d
 The
 .Fl d
@@ -155,9 +183,15 @@ Follow symbolic links.
 .It Ic -fstype Ar type 
 True if the file is contained in a file system of type
 .Ar type .
-Two special file system types are recognized: ``local'' and ``rdonly''.
-These do not describe actual file system types;
-the former matches any file system physically mounted on the system where
+The
+.Xr sysctl 8
+command can be used to find out the types of filesystems
+that are available on the system:
+.Bd -literal -offset indent
+sysctl vfs
+.Ed
+In addition, there are two pseudo-types, ``local'' and ``rdonly''.
+The former matches any file system physically mounted on the system where
 the
 .Nm
 is being executed, and the latter matches any file system which is
@@ -193,7 +227,7 @@ True if the difference between the file last modification time and the time
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
-.It Ic \&-ok Ar utility Ns Op argument ... ; 
+.It Ic \&-ok Ar utility Op argument ... ; 
 The
 .Ic \&-ok
 primary is identical to the
@@ -263,7 +297,7 @@ Note, the first character of a symbolic mode may not be a dash (``\-'').
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
 by a newline character.
-If neither
+If none of
 .Ic -exec ,
 .Ic -ls ,
 .Ic -ok ,
@@ -419,7 +453,7 @@ primaries are extensions to
 .Pp
 Historically, the
 .Fl d ,
-.Fl s
+.Fl h
 and
 .Fl x
 options were implemented using the primaries ``\-depth'', ``\-follow'',

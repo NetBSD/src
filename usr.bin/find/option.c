@@ -1,7 +1,7 @@
-/*	$NetBSD: option.c,v 1.7 1997/10/19 11:52:59 lukem Exp $	*/
+/*	$NetBSD: option.c,v 1.8 1998/02/02 14:02:28 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.7 1997/10/19 11:52:59 lukem Exp $");
+__RCSID("$NetBSD: option.c,v 1.8 1998/02/02 14:02:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,10 @@ __RCSID("$NetBSD: option.c,v 1.7 1997/10/19 11:52:59 lukem Exp $");
 #include "find.h"
 
 int typecompare __P((const void *, const void *));
+static OPTION *option __P((char *));
 
 /* NB: the following table must be sorted lexically. */
-static OPTION options[] = {
+static OPTION const options[] = {
 	{ "!",		N_NOT,		c_not,		O_ZERO },
 	{ "(",		N_OPENPAREN,	c_openparen,	O_ZERO },
 	{ ")",		N_CLOSEPAREN,	c_closeparen,	O_ZERO },
@@ -138,7 +139,7 @@ find_create(argvp)
 	return (new);
 }
 
-OPTION *
+static OPTION *
 option(name)
 	char *name;
 {

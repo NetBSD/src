@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/19 12:04:58 lukem Exp $
-#	from: @(#)Makefile	5.2 (Berkeley) 5/24/91
+#	$NetBSD: Makefile,v 1.6 1998/02/02 14:02:06 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 WARNS=	0
 PROG=	find
