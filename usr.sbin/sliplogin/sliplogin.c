@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.3 1993/08/01 17:55:46 mycroft Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.4 1993/08/06 22:18:26 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -93,6 +93,7 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.3 1993/08/01 17:55:46 mycroft Exp $"
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 int	unit;
@@ -186,45 +187,13 @@ char *
 sigstr(s)
 	int s;
 {
-	static char buf[32];
-
-	switch (s) {
-	case SIGHUP:	return("HUP");
-	case SIGINT:	return("INT");
-	case SIGQUIT:	return("QUIT");
-	case SIGILL:	return("ILL");
-	case SIGTRAP:	return("TRAP");
-	case SIGIOT:	return("IOT");
-	case SIGEMT:	return("EMT");
-	case SIGFPE:	return("FPE");
-	case SIGKILL:	return("KILL");
-	case SIGBUS:	return("BUS");
-	case SIGSEGV:	return("SEGV");
-	case SIGSYS:	return("SYS");
-	case SIGPIPE:	return("PIPE");
-	case SIGALRM:	return("ALRM");
-	case SIGTERM:	return("TERM");
-	case SIGURG:	return("URG");
-	case SIGSTOP:	return("STOP");
-	case SIGTSTP:	return("TSTP");
-	case SIGCONT:	return("CONT");
-	case SIGCHLD:	return("CHLD");
-	case SIGTTIN:	return("TTIN");
-	case SIGTTOU:	return("TTOU");
-	case SIGIO:	return("IO");
-	case SIGXCPU:	return("XCPU");
-	case SIGXFSZ:	return("XFSZ");
-	case SIGVTALRM:	return("VTALRM");
-	case SIGPROF:	return("PROF");
-	case SIGWINCH:	return("WINCH");
-#ifdef SIGLOST
-	case SIGLOST:	return("LOST");
-#endif
-	case SIGUSR1:	return("USR1");
-	case SIGUSR2:	return("USR2");
+	if (s > 0 && s < NSIG)
+		return(sys_signame[s]);
+	else {
+		static char buf[32];
+		(void)sprintf(buf, "sig %d", s);
+		return(buf);
 	}
-	(void)sprintf(buf, "sig %d", s);
-	return(buf);
 }
 
 void
