@@ -1,11 +1,11 @@
 /* Context-format output routines for GNU DIFF.
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 91, 92 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -18,7 +18,6 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "diff.h"
-#include "regex.h"
 
 static void pr_context_hunk ();
 static void pr_unidiff_hunk ();
@@ -75,7 +74,7 @@ print_context_script (script, unidiff_flag)
      struct change *script;
      int unidiff_flag;
 {
-  if (ignore_blank_lines_flag || ignore_regexp)
+  if (ignore_blank_lines_flag || ignore_regexp_list)
     mark_ignorable (script);
   else
     {
@@ -84,8 +83,8 @@ print_context_script (script, unidiff_flag)
 	e->ignore = 0;
     }
 
-  find_function_last_search = 0;
-  find_function_last_match = -1;
+  find_function_last_search = - files[0].prefix_lines;
+  find_function_last_match = find_function_last_search - 1;
 
   if (unidiff_flag)
     print_script (script, find_hunk, pr_unidiff_hunk);
@@ -130,8 +129,9 @@ pr_context_hunk (hunk)
   int first0, last0, first1, last1, show_from, show_to, i;
   struct change *next;
   char *prefix;
-  char *function;
+  const char *function;
   int function_length;
+  FILE *out;
 
   /* Determine range of line numbers involved in each file.  */
 
@@ -142,29 +142,33 @@ pr_context_hunk (hunk)
 
   /* Include a context's width before and after.  */
 
-  first0 = max (first0 - context, 0);
-  first1 = max (first1 - context, 0);
-  last0 = min (last0 + context, files[0].buffered_lines - 1);
-  last1 = min (last1 + context, files[1].buffered_lines - 1);
+  i = - files[0].prefix_lines;
+  first0 = max (first0 - context, i);
+  first1 = max (first1 - context, i);
+  last0 = min (last0 + context, files[0].valid_lines - 1);
+  last1 = min (last1 + context, files[1].valid_lines - 1);
 
   /* If desired, find the preceding function definition line in file 0.  */
   function = 0;
-  if (function_regexp)
+  if (function_regexp_list)
     find_function (&files[0], first0, &function, &function_length);
+
+  begin_output ();
+  out = outfile;
 
   /* If we looked for and found a function this is part of,
      include its name in the header of the diff section.  */
-  fprintf (outfile, "***************");
+  fprintf (out, "***************");
 
   if (function)
     {
-      fprintf (outfile, " ");
-      fwrite (function, 1, min (function_length - 1, 40), outfile);
+      fprintf (out, " ");
+      fwrite (function, 1, min (function_length - 1, 40), out);
     }
 
-  fprintf (outfile, "\n*** ");
+  fprintf (out, "\n*** ");
   print_context_number_range (&files[0], first0, last0);
-  fprintf (outfile, " ****\n");
+  fprintf (out, " ****\n");
 
   if (show_from)
     {
@@ -191,9 +195,9 @@ pr_context_hunk (hunk)
 	}
     }
 
-  fprintf (outfile, "--- ");
+  fprintf (out, "--- ");
   print_context_number_range (&files[1], first1, last1);
-  fprintf (outfile, " ----\n");
+  fprintf (out, " ----\n");
 
   if (show_to)
     {
@@ -258,9 +262,9 @@ pr_unidiff_hunk (hunk)
 {
   int first0, last0, first1, last1, show_from, show_to, i, j, k;
   struct change *next;
-  int lastline;
   char *function;
   int function_length;
+  FILE *out;
 
   /* Determine range of line numbers involved in each file.  */
 
@@ -271,31 +275,35 @@ pr_unidiff_hunk (hunk)
 
   /* Include a context's width before and after.  */
 
-  first0 = max (first0 - context, 0);
-  first1 = max (first1 - context, 0);
-  last0 = min (last0 + context, files[0].buffered_lines - 1);
-  last1 = min (last1 + context, files[1].buffered_lines - 1);
+  i = - files[0].prefix_lines;
+  first0 = max (first0 - context, i);
+  first1 = max (first1 - context, i);
+  last0 = min (last0 + context, files[0].valid_lines - 1);
+  last1 = min (last1 + context, files[1].valid_lines - 1);
 
   /* If desired, find the preceding function definition line in file 0.  */
   function = 0;
-  if (function_regexp)
+  if (function_regexp_list)
     find_function (&files[0], first0, &function, &function_length);
+
+  begin_output ();
+  out = outfile;
+
+  fprintf (out, "@@ -");
+  print_unidiff_number_range (&files[0], first0, last0);
+  fprintf (out, " +");
+  print_unidiff_number_range (&files[1], first1, last1);
+  fprintf (out, " @@");
 
   /* If we looked for and found a function this is part of,
      include its name in the header of the diff section.  */
 
-  fprintf (outfile, "@@ -");
-  print_unidiff_number_range (&files[0], first0, last0);
-  fprintf (outfile, " +");
-  print_unidiff_number_range (&files[1], first1, last1);
-  fprintf (outfile, " @@");
-
   if (function)
     {
-      putc (' ', outfile);
-      fwrite (function, 1, min (function_length - 1, 40), outfile);
+      putc (' ', out);
+      fwrite (function, 1, min (function_length - 1, 40), out);
     }
-  putc ('\n', outfile);
+  putc ('\n', out);
 
   next = hunk;
   i = first0;
@@ -308,7 +316,7 @@ pr_unidiff_hunk (hunk)
 
       if (!next || i < next->line0)
 	{
-	  putc (' ', outfile);
+	  putc (tab_align_flag ? '\t' : ' ', out);
 	  print_1_line ((char *)0, &files[0].linbuf[i++]);
 	  j++;
 	}
@@ -319,7 +327,9 @@ pr_unidiff_hunk (hunk)
 	  k = next->deleted;
 	  while (k--)
 	    {
-	      putc ('-', outfile);
+	      putc ('-', out);
+	      if (tab_align_flag)
+		putc ('\t', out);
 	      print_1_line ((char *)0, &files[0].linbuf[i++]);
 	    }
 
@@ -328,7 +338,9 @@ pr_unidiff_hunk (hunk)
 	  k = next->inserted;
 	  while (k--)
 	    {
-	      putc ('+', outfile);
+	      putc ('+', out);
+	      if (tab_align_flag)
+		putc ('\t', out);
 	      print_1_line ((char *)0, &files[1].linbuf[j++]);
 	    }
 
@@ -339,7 +351,7 @@ pr_unidiff_hunk (hunk)
     }
 }
 
-/* Scan a (forward-ordered) edit script for the first place that at least
+/* Scan a (forward-ordered) edit script for the first place that more than
    2*CONTEXT unchanged lines appear, and return a pointer
    to the `struct change' for the last change before those lines.  */
 
@@ -353,7 +365,7 @@ find_hunk (start)
 
   do
     {
-      /* Computer number of first line in each file beyond this changed.  */
+      /* Compute number of first line in each file beyond this changed.  */
       top0 = start->line0 + start->deleted;
       top1 = start->line1 + start->inserted;
       prev = start;
@@ -362,7 +374,7 @@ find_hunk (start)
 	 but only CONTEXT if one is ignorable.  */
       thresh = ((prev->ignore || (start && start->ignore))
 		? context
-		: 2 * context);
+		: 2 * context + 1);
       /* It is not supposed to matter which file we check in the end-test.
 	 If it would matter, crash.  */
       if (start && start->line0 - top0 != start->line1 - top1)
@@ -414,7 +426,7 @@ static void
 find_function (file, linenum, linep, lenp)
      struct file_data *file;
      int linenum;
-     char **linep;
+     const char **linep;
      int *lenp;
 {
   int i = linenum;
@@ -424,26 +436,26 @@ find_function (file, linenum, linep, lenp)
   while (--i >= last)
     {
       /* See if this line is what we want.  */
+      struct regexp_list *r;
+      const char *line = file->linbuf[i];
+      int len = file->linbuf[i + 1] - line;
 
-      if (0 <= re_search (&function_regexp_compiled,
-			  file->linbuf[i].text,
-			  file->linbuf[i].length,
-			  0, file->linbuf[i].length,
-			  0))
-	{
-	  *linep = file->linbuf[i].text;
-	  *lenp = file->linbuf[i].length;
-	  find_function_last_match = i;
-	  return;
-	}
+      for (r = function_regexp_list; r; r = r->next)
+	if (0 <= re_search (&r->buf, line, len, 0, len, 0))
+	  {
+	    *linep = line;
+	    *lenp = len;
+	    find_function_last_match = i;
+	    return;
+	  }
     }
   /* If we search back to where we started searching the previous time,
      find the line we found last time.  */
-  if (find_function_last_match >= 0)
+  if (find_function_last_match >= - file->prefix_lines)
     {
       i = find_function_last_match;
-      *linep = file->linbuf[i].text;
-      *lenp = file->linbuf[i].length;
+      *linep = file->linbuf[i];
+      *lenp = file->linbuf[i + 1] - *linep;
       return;
     }
   return;
