@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.17 2001/09/16 21:18:33 wiz Exp $ */
+/* $NetBSD: sleep.c,v 1.18 2001/11/12 14:55:53 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.17 2001/09/16 21:18:33 wiz Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.18 2001/11/12 14:55:53 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
+#include <err.h>
 #include <locale.h>
 #include <math.h>
 #include <signal.h>
@@ -119,7 +120,8 @@ main(int argc, char *argv[])
 		ntime.tv_nsec = 0;
 	}
 
-	(void)nanosleep(&ntime, NULL);
+	if (nanosleep(&ntime, NULL) == -1)
+		err(1, "nanosleep failed");
 
 	exit(0);
 	/* NOTREACHED */
