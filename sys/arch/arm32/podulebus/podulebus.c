@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.3 1996/03/17 01:24:52 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.4 1996/03/20 18:46:58 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -225,7 +225,7 @@ podulebusscan(parent, match)
 		pa.pa_podule_number = cf->cf_loc[0];
 	}
 
-	if ((*cf->cf_driver->cd_match)(parent, dev, &pa) > 0)
+	if ((*cf->cf_attach->ca_match)(parent, dev, &pa) > 0)
 		config_attach(parent, dev, &pa, podulebusprint);
 	else
 		free(dev, M_DEVBUF);
@@ -584,7 +584,7 @@ poduleirqhandler()
 	return(1);      
 }
 
-struct cfattach posulebus_ca = {
+struct cfattach podulebus_ca = {
 	sizeof(struct device), podulebusmatch, podulebusattach
 };
 
