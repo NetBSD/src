@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.18 1998/01/05 10:31:55 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.19 1998/01/12 03:02:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)in_proto.c	8.2 (Berkeley) 2/9/95
  */
+
+#include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>

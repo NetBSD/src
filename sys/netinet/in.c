@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.36 1998/01/05 10:31:49 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.37 1998/01/12 03:02:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)in.c	8.4 (Berkeley) 1/9/95
  */
+
+#include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.41 1998/01/07 22:51:25 lukem Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.42 1998/01/12 03:02:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
+
+#include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>

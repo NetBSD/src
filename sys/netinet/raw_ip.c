@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.39 1998/01/05 10:32:01 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.40 1998/01/12 03:02:53 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
+
+#include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>

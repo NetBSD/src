@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.16 1996/09/09 14:51:08 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.17 1998/01/12 03:02:48 scottr Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -9,6 +9,8 @@
  *
  * MULTICAST Revision: 1.3
  */
+
+#include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
