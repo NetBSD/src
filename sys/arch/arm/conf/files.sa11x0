@@ -1,4 +1,4 @@
-#	$NetBSD: files.sa11x0,v 1.2 2001/07/30 10:50:59 rjs Exp $
+#	$NetBSD: files.sa11x0,v 1.3 2002/04/16 20:50:18 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -51,5 +51,4 @@ file	arch/arm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
 
 # USB
 
-include "dev/mii/files.mii"
 include "dev/usb/files.usb"

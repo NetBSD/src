@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.37 2002/03/13 02:55:11 simonb Exp $
+#	$NetBSD: files.arc,v 1.38 2002/04/16 20:50:17 thorpej Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -147,11 +147,6 @@ device	sn: ifnet, ether, arp
 file	dev/ic/dp83932.c		sn
 attach	sn at jazzio with sn_jazzio
 file	arch/arc/jazz/if_sn_jazzio.c	sn_jazzio
-
-#
-# Machine-independent MII/PHY drivers.
-#
-include "dev/mii/files.mii"
 
 #
 # Machine-independent I2O drivers.
