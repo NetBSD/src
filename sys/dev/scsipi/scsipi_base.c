@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.108 2004/08/21 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.109 2004/08/23 20:01:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.108 2004/08/21 21:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.109 2004/08/23 20:01:10 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2635,7 +2635,7 @@ show_scsipi_xs(struct scsipi_xfer *xs)
 }
 
 void
-show_scsipi_cmd(strict scsipi_xfer *xs)
+show_scsipi_cmd(struct scsipi_xfer *xs)
 {
 	u_char *b = (u_char *) xs->cmd;
 	int i = 0;
