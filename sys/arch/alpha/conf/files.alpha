@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.57 1997/09/02 19:18:20 thorpej Exp $
+# $NetBSD: files.alpha,v 1.58 1997/09/06 02:03:11 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -354,6 +354,11 @@ file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae	needs-flag
+
+# Kernel debugger support
+file	arch/alpha/alpha/db_disasm.c		ddb
+file	arch/alpha/alpha/db_interface.c		ddb
+file	arch/alpha/alpha/db_trace.c		ddb
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
