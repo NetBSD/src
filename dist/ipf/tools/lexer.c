@@ -461,13 +461,7 @@ done:
 			rval = YY_STR;
 	}
 
-	if (rval == YY_STR && yysavedepth > 0)
-		yyresetdict();
-
 	yytokentype = rval;
-
-	if (yydebug)
-		printf("lexed(%s) => %d\n", yystr, rval);
 
 	switch (rval)
 	{
@@ -493,7 +487,6 @@ done:
 		yylast -= yypos;
 		yypos = 0;
 	}
-
 	return rval;
 }
 
