@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.9 2000/04/10 15:24:36 itojun Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.10 2000/04/24 13:02:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.9 2000/04/10 15:24:36 itojun Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.10 2000/04/24 13:02:30 itojun Exp $");
 #endif
 #endif
 
@@ -319,7 +319,7 @@ ppp_netbsd_serial_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 #undef GET2
 
-			switch(type) {
+			switch (type) {
 			case CISCO_KEEP_TYPE_ADDR_REPLY:
 				printf("CISCO ADDR REPLY ");
 				break;
