@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/20 16:26:57 scw Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 1999/04/26 15:41:43 perry Exp $
 
 LIB=sa
 
@@ -6,6 +6,7 @@ CLEANFILES+=SRT0.o
 
 MKPIC=no
 MKPROFILE=no
+MKLINT=no
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
@@ -32,7 +33,7 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_mvme} ${SRC_here}
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
-#DEFS= -DCOMPAT_UFS
+DEFS= -D_STANDALONE
 CPPFLAGS+= -I. -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
 COPTS= #-fno-defer-pop
 CFLAGS= -O2 ${COPTS} ${DEFS} ${DBG}
