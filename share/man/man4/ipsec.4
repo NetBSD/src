@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ipsec.4,v 1.3 1999/07/17 06:57:59 itojun Exp $
-.\"	KAME Id: ipsec.4,v 1.1.2.3 1999/04/28 06:39:52 sakane Exp
+.\"	$NetBSD: ipsec.4,v 1.4 2000/01/19 06:59:32 itojun Exp $
+.\"	KAME Id: ipsec.4,v 1.4 2000/01/19 06:56:51 itojun Exp
 .\"
 .Dd January 29, 1999
 .Dt IPSEC 4
@@ -42,10 +42,12 @@
 .Nm
 is a security protocol in Internet Protocol layer.
 .Nm
-is defined for both IPv4
-.Pq Xr inet 4
-and IPv6
-.Pq Xr inet6 4 .
+is defined for both IPv4 and IPv6
+.Po
+.Xr inet 4
+and
+.Xr inet6 4
+.Pc .
 .Nm
 consists of two sub-protocols, namely
 ESP
@@ -75,16 +77,17 @@ The
 .Dv PF_KEY
 socket API is defined in RFC2367.
 .Pp
-Policy engine can be controlled by
+Policy engine can be controlled by extended part of
 .Dv PF_KEY
 API,
 .Xr setsockopt 2
 operations, and
 .Xr sysctl 3
 interface.
+The kernel implements
+extended version of 
 .Dv PF_KEY
-interface is an extension to RFC2367,
-and defines IPsec policy like per-packet filters.
+interface, and allows you to define IPsec policy like per-packet filters.
 .Xr setsockopt 2
 interface is used to define per-socket behavior, and
 .Xr sysctl 3
@@ -175,22 +178,30 @@ routines from looking into IP payload.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
-.Xr sysctl 3 ,
 .Xr icmp6 4 ,
 .Xr intro 4 ,
 .Xr ip6 4 ,
 .Xr setkey 8 ,
+.Xr sysctl 8 ,
 .Xr racoon 8
 .Pp
-.%T RFC2367
+.Rs
+.%A Daniel L. McDonald
+.%A Craig Metz
+.%A Bao G. Phan
+.%T "PF_KEY Key Management API, Version 2"
+.%R RFC
+.%N 2367
+.Re
 .Rs
 .%A "D. L. McDonald"
 .%T "A Simple IP Security API Extension to BSD Sockets"
+.%R internet draft
 .%N "draft-mcdonald-simple-ipsec-api-03.txt"
-.%O "internet draft"
+.%O work in progress material
 .Re
 .Sh CAVEAT
-The IPsec support is subject to change as the Internet protocols develop.
+The IPsec support is subject to change as the IPsec protocols develop.
 .Pp
 There is no single standard for policy engine API,
 so the policy engine API described herein is just for KAME implementation.
