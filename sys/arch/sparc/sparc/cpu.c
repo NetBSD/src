@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.68 1998/09/15 13:12:25 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.69 1998/09/16 13:36:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,7 +91,10 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
+
 int	ncpu;
+struct	cpu_info *cpus[_MAXNCPU];
+#define CPU_MID2CPUNO(mid) ((mid) - 8)
 
 struct proc	*fpproc;
 
@@ -257,12 +260,15 @@ static	struct cpu_softc *bootcpu;
 		bootcpu = sc;
 		cip = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
 		cip->master = 1;
+		cpus[0] = cip;
 	} else {
 		cip = sc->sc_cpuinfo = alloc_cpuinfo();
 	}
 
-	if (mid != 0)
+	if (mid != 0) {
 		printf(": mid %d", mid);
+		cpus[CPU_MID2CPUNO(mid)] = cip;
+	}
 
 	cip->mid = mid;
 	cip->node = node;
