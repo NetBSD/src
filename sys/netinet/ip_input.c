@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.133 2001/04/16 17:03:33 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.134 2001/05/21 03:31:36 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1514,7 +1514,7 @@ ip_forward(m, srcrt)
 	}
 
 #ifdef IPSEC
-	/* Don't lookup socket in forwading case */
+	/* Don't lookup socket in forwarding case */
 	(void)ipsec_setsocket(m, NULL);
 #endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
