@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.12 1997/09/06 13:55:56 drochner Exp $	*/
+/*	$NetBSD: bootp.c,v 1.13 1997/09/17 16:25:29 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -53,6 +53,8 @@
 #include "net.h"
 #include "netif.h"
 #include "bootp.h"
+
+struct in_addr servip;
 
 static n_long	nmask, smask;
 
@@ -174,7 +176,8 @@ bootp(sock)
 #endif
 
 	myip = d->myip = rbuf.rbootp.bp_yiaddr;
-	if(rootip.s_addr == INADDR_ANY) rootip = rbuf.rbootp.bp_siaddr;
+	servip = rbuf.rbootp.bp_siaddr;
+	if(rootip.s_addr == INADDR_ANY) rootip = servip;
 	bcopy(rbuf.rbootp.bp_file, bootfile, sizeof(bootfile));
 	bootfile[sizeof(bootfile) - 1] = '\0';
 
