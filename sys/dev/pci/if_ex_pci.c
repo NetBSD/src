@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.27 2002/10/02 16:51:23 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.28 2002/12/23 02:58:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.27 2002/10/02 16:51:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.28 2002/12/23 02:58:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,9 +280,9 @@ ex_pci_attach(parent, self, aux)
 		sc->enable = ex_pci_enable;
 		sc->disable = ex_pci_disable;
 
-		psc->psc_pwrmgmt_csr_reg = pmreg + 4;
+		psc->psc_pwrmgmt_csr_reg = pmreg + PCI_PMCSR;
 		reg = pci_conf_read(pc, pa->pa_tag,
-		    psc->psc_pwrmgmt_csr_reg) & 0x3;
+		    psc->psc_pwrmgmt_csr_reg) & PCI_PMCSR_STATE_MASK;
 
 		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
 		    PCI_PMCSR_STATE_D0;
