@@ -1,4 +1,4 @@
-/*	$NetBSD: ispmbox.h,v 1.3 1997/08/16 00:16:40 mjacob Exp $	*/
+/*	$NetBSD: ispmbox.h,v 1.4 1997/09/10 02:17:22 mjacob Exp $	*/
 
 /*
  * Mailbox and Command Definitions for for Qlogic ISP SCSI adapters.
@@ -109,9 +109,8 @@
 #define	MBOX_EXEC_BIOS_IOCB		0x0042
 
 /* These are for the ISP2100 FC cards */
-#define	MBOX_GET_LOOP_ID		0x0020
-#define	MBOX_EXEC_COMMAND_IOCB_A64	0x0054
-#define	MBOX_GET_FW_STATE		0x0069
+#define	MBOX_GET_LOOP_ID		0x20
+#define	MBOX_EXEC_COMMAND_IOCB_A64	0x54
 #define	MBOX_INIT_FIRMWARE		0x60
 #define	MBOX_GET_INIT_CONTROL_BLOCK	0x61
 #define	MBOX_INIT_LIP			0x62
@@ -121,6 +120,7 @@
 #define	MBOX_TARGET_RESET		0x66
 #define	MBOX_CLEAR_TASK_SET		0x67
 #define	MBOX_ABORT_TASK_SET		0x68
+#define	MBOX_GET_FW_STATE		0x69
 
 #define	ISP2100_SET_PCI_PARAM		0x00ff
 
@@ -203,7 +203,8 @@ typedef struct {
 	u_int8_t	req_target;
 #endif
 	u_int16_t	_res1;
-	u_int32_t	req_flags;
+	u_int16_t	req_flags;
+	u_int16_t	_res2;
 	u_int16_t	req_time;
 	u_int16_t	req_seg_count;
 	u_int32_t	req_cdb[4];
