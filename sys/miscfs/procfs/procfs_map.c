@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.8 2000/06/28 02:44:07 mrg Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.9 2000/11/24 18:58:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -92,26 +92,18 @@ procfs_domap(curp, p, pfs, uio)
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
 
-		/*
-		 * format:
-		 *  start, end, resident, private resident, cow, access, type.
-		 */
 		snprintf(mebuffer, sizeof(mebuffer),
 		    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
-			entry->start, entry->end,
-
-			(entry->protection & VM_PROT_READ) ? 'r' : '-',
-			(entry->protection & VM_PROT_WRITE) ? 'w' : '-',
-			(entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
-			(entry->max_protection & VM_PROT_READ) ? 'r' : '-',
-			(entry->max_protection & VM_PROT_WRITE) ? 'w' : '-',
-			(entry->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
-
-			(entry->etype & UVM_ET_COPYONWRITE) ? "COW" : "NCOW",
-			(entry->etype & UVM_ET_NEEDSCOPY) ? "NC" : "NNC",
-		    entry->inheritance, entry->wired_count , entry->advice
-			);
-
+		    entry->start, entry->end,
+		    (entry->protection & VM_PROT_READ) ? 'r' : '-',
+		    (entry->protection & VM_PROT_WRITE) ? 'w' : '-',
+		    (entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
+		    (entry->max_protection & VM_PROT_READ) ? 'r' : '-',
+		    (entry->max_protection & VM_PROT_WRITE) ? 'w' : '-',
+		    (entry->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
+		    (entry->etype & UVM_ET_COPYONWRITE) ? "COW" : "NCOW",
+		    (entry->etype & UVM_ET_NEEDSCOPY) ? "NC" : "NNC",
+		    entry->inheritance, entry->wired_count, entry->advice);
 
 		len = strlen(mebuffer);
 		if (len > uio->uio_resid) {
