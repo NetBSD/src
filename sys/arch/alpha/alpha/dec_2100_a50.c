@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.18.2.2 1997/01/24 07:05:40 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.18.2.3 1997/02/01 02:29:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,6 +38,7 @@
 #include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
+#include <alpha/isa/pcppivar.h>
 #include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
@@ -137,6 +138,8 @@ dec_2100_a50_cons_init()
 			static struct consdev wscons = { NULL, NULL,
 			    wskbd_cngetc, wsdisplay_cnputc, wskbd_cnpollc,
 			    NODEV, 1 };
+
+			pcppi_attach_console(acp->ac_iot);
 
 			if (ctb->ctb_turboslot == 0)
 				isa_display_console(acp->ac_iot, acp->ac_memt);
