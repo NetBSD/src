@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.14 2001/10/29 17:32:57 matt Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.15 2001/11/02 21:19:10 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -224,7 +224,7 @@ initarm(ofw_handle)
 	printf("ddb: ");
 	db_machine_init();
 	{
-		struct exec *kernexec = (struct exec *)KERNEL_BASE;
+		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
