@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.15 1998/08/03 01:49:25 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.16 1998/08/08 07:51:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.15 1998/08/03 01:49:25 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.16 1998/08/08 07:51:30 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -257,7 +257,8 @@ complete_remote(word, list)
 	int		 i;
 	unsigned char	 rv;
 
-	char *dummyargv[] = { "complete", dir, NULL };
+	char *dummyargv[] = { "complete", NULL, NULL };
+	dummyargv[1] = dir;
 
 	if ((file = strrchr(word, '/')) == NULL) {
 		dir[0] = '.';
