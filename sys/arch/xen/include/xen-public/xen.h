@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.1.2.1 2004/12/17 10:26:33 bouyer Exp $ */
+/* $NetBSD: xen.h,v 1.1.2.2 2005/01/18 14:39:57 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser
@@ -286,7 +286,7 @@ typedef struct shared_info_st
      * Per-VCPU information goes here. This will be cleaned up more when Xen 
      * actually supports multi-VCPU guests.
      */
-    struct {
+    volatile struct {
         /*
          * 'evtchn_upcall_pending' is written non-zero by Xen to indicate
          * a pending notification for a particular VCPU. It is then cleared 
@@ -381,7 +381,7 @@ typedef struct shared_info_st
     u64                wall_timeout;    /* 312 */
     u64                domain_timeout;  /* 320 */
 
-    arch_shared_info_t arch;
+    volatile arch_shared_info_t arch;
 
 } PACKED shared_info_t;
 
@@ -441,7 +441,7 @@ typedef struct {
 #define SIF_NET_BE_DOMAIN (1<<5)  /* Is this a net backend domain? */
 
 /* For use in guest OSes. */
-extern shared_info_t *HYPERVISOR_shared_info;
+volatile extern shared_info_t *HYPERVISOR_shared_info;
 
 #endif /* !__ASSEMBLY__ */
 
