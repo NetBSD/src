@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.6 2002/12/31 05:27:29 explorer Exp $ */
+/* $NetBSD: envsys.h,v 1.7 2003/02/20 20:57:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,8 +95,15 @@ enum envsys_units {
 	ENVSYS_SAMPHOUR,
 	ENVSYS_INDICATOR,	/* boolean indicator */
 	ENVSYS_INTEGER,		/* generic integer return */
-	ENVSYS_NSENSORS,
+	ENVSYS_NSENSORS
 };
+
+#ifdef ENVSYSUNITNAMES
+static const char *envsysunitnames[] = {
+    "degC", "RPM", "VAC", "V", "Ohms", "W",
+    "A", "Wh", "Ah", "bool", "integer", "Unk"
+};
+#endif
 
 /* flags for validflags */
 #define ENVSYS_FVALID		0x00000001  /* sensor is valid */
