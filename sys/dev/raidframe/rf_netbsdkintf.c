@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.121 2002/06/27 05:13:33 leo Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.122 2002/07/13 17:04:09 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.121 2002/06/27 05:13:33 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.122 2002/07/13 17:04:09 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -456,17 +456,14 @@ rf_buildroothack(arg)
 		rf_cleanup_config_set(cset);
 		cset = next_cset;
 	}
-	if (boothowto & RB_ASKNAME) {
-		/* We don't auto-config... */
-	} else {
-		/* They didn't ask, and we found something bootable... */
 
-		if (num_root == 1) {
-			booted_device = &raidrootdev[rootID]; 
-		} else if (num_root > 1) {
-			/* we can't guess.. require the user to answer... */
-			boothowto |= RB_ASKNAME;
-		}
+	/* we found something bootable... */
+
+	if (num_root == 1) {
+		booted_device = &raidrootdev[rootID]; 
+	} else if (num_root > 1) {
+		/* we can't guess.. require the user to answer... */
+		boothowto |= RB_ASKNAME;
 	}
 }
 
