@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.19 1996/10/20 13:13:24 fvdl Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.20 1997/08/29 16:12:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -100,14 +100,20 @@ struct rpc_reply {
 	int32_t  rp_direction;		/* call direction (1) */
 	int32_t  rp_astatus;		/* accept status (0: accepted) */
 	union {
-		u_int32_t rpu_errno;
+		/* rejected */
+		struct {
+			u_int32_t rej_stat;
+			u_int32_t rej_val1;
+			u_int32_t rej_val2;
+		} rpu_rej;
+		/* accepted */
 		struct {
 			struct auth_info rok_auth;
 			u_int32_t	rok_status;
 		} rpu_rok;
 	} rp_u;
 };
-#define rp_errno  rp_u.rpu_errno
+#define rp_rstat  rp_u.rpu_rej.rej_stat
 #define rp_auth   rp_u.rpu_rok.rok_auth
 #define rp_status rp_u.rpu_rok.rok_status
 
@@ -116,10 +122,11 @@ struct rpc_reply {
 /*
  * What is the longest we will wait before re-sending a request?
  * Note this is also the frequency of "RPC timeout" messages.
- * The re-send loop count sup linearly to this maximum, so the
+ * The re-send loop counts up linearly to this maximum, so the
  * first complaint will happen after (1+2+3+4+5)=15 seconds.
  */
 #define	MAX_RESEND_DELAY 5	/* seconds */
+#define TOTAL_TIMEOUT   30	/* seconds */
 
 /*
  * Call portmap to lookup a port number for a particular rpc program
@@ -196,7 +203,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	struct rpc_call *call;
 	struct rpc_reply *reply;
 	struct uio auio;
-	int error, rcvflg, timo, secs, len;
+	int error, len, rcvflg, timo, secs, waited;
 	static u_int32_t xid = ~0xFF;
 	u_int16_t tport;
 	struct timeval *tv;
@@ -311,93 +318,119 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	 * If the delay hits the maximum, start complaining.
 	 */
 	timo = 0;
-	for (;;) {
-		/* Send RPC request (or re-send). */
-		m = m_copym(mhead, 0, M_COPYALL, M_WAIT);
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto out;
-		}
-		error = sosend(so, nam, NULL, m, NULL, 0);
-		if (error) {
-			printf("krpc_call: sosend: %d\n", error);
-			goto out;
-		}
-		m = NULL;
+	waited = 0;
+send_again:
+	waited += timo;
+	if (waited >= TOTAL_TIMEOUT) {
+		error = ETIMEDOUT;
+		goto out;
+	}
+	/* Determine new timeout. */
+	if (timo < MAX_RESEND_DELAY)
+		timo++;
+	else
+		printf("RPC timeout for server 0x%x\n",
+			   ntohl(sin->sin_addr.s_addr));
 
-		/* Determine new timeout. */
-		if (timo < MAX_RESEND_DELAY)
-			timo++;
-		else
-			printf("RPC timeout for server 0x%x\n",
-			       ntohl(sin->sin_addr.s_addr));
-
-		/*
-		 * Wait for up to timo seconds for a reply.
-		 * The socket receive timeout was set to 1 second.
-		 */
-		secs = timo;
-		while (secs > 0) {
-			if (from) {
-				m_freem(from);
-				from = NULL;
-			}
-			if (m) {
-				m_freem(m);
-				m = NULL;
-			}
-			auio.uio_resid = len = 1<<16;
-			rcvflg = 0;
-			error = soreceive(so, &from, &auio, &m, NULL, &rcvflg);
-			if (error == EWOULDBLOCK) {
-				secs--;
-				continue;
-			}
-			if (error)
-				goto out;
-			len -= auio.uio_resid;
-
-			/* Does the reply contain at least a header? */
-			if (len < MIN_REPLY_HDR)
-				continue;
-			if (m->m_len < MIN_REPLY_HDR)
-				continue;
-			reply = mtod(m, struct rpc_reply *);
-
-			/* Is it the right reply? */
-			if (reply->rp_direction != txdr_unsigned(RPC_REPLY))
-				continue;
-
-			if (reply->rp_xid != txdr_unsigned(xid))
-				continue;
-
-			/* Was RPC accepted? (authorization OK) */
-			if (reply->rp_astatus != 0) {
-				error = fxdr_unsigned(u_int32_t, reply->rp_errno);
-				printf("rpc denied, error=%d\n", error);
-				continue;
-			}
-
-			/* Did the call succeed? */
-			if (reply->rp_status != 0) {
-				error = fxdr_unsigned(u_int32_t, reply->rp_status);
-				if (error == RPC_PROGMISMATCH)
-				       goto out;
-				printf("rpc failed, status=%d\n", error);
-				continue;
-			}
-
-			goto gotreply;	/* break two levels */
-
-		} /* while secs */
-	} /* forever send/receive */
-
-	error = ETIMEDOUT;
-	goto out;
-
- gotreply:
+	/* Send RPC request (or re-send). */
+	m = m_copym(mhead, 0, M_COPYALL, M_WAIT);
+	if (m == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
+	error = sosend(so, nam, NULL, m, NULL, 0);
+	if (error) {
+		printf("krpc_call: sosend: %d\n", error);
+		goto out;
+	}
+	m = NULL;
 
 	/*
+	 * Wait for up to timo seconds for a reply.
+	 * The socket receive timeout was set to 1 second.
+	 */
+	secs = timo;
+	for (;;) {
+		if (from) {
+			m_freem(from);
+			from = NULL;
+		}
+		if (m) {
+			m_freem(m);
+			m = NULL;
+		}
+		auio.uio_resid = len = 1<<16;
+		rcvflg = 0;
+		error = soreceive(so, &from, &auio, &m, NULL, &rcvflg);
+		if (error == EWOULDBLOCK) {
+			if (--secs <= 0)
+				goto send_again;
+			continue;
+		}
+		if (error)
+			goto out;
+		len -= auio.uio_resid;
+
+		/* Does the reply contain at least a header? */
+		if (len < MIN_REPLY_HDR)
+			continue;
+		if (m->m_len < MIN_REPLY_HDR)
+			continue;
+		reply = mtod(m, struct rpc_reply *);
+
+		/* Is it the right reply? */
+		if (reply->rp_direction != txdr_unsigned(RPC_REPLY))
+			continue;
+
+		if (reply->rp_xid != txdr_unsigned(xid))
+			continue;
+
+		/* Was RPC accepted? (authorization OK) */
+		if (reply->rp_astatus != 0) {
+			/* Note: This is NOT an error code! */
+			error = fxdr_unsigned(u_int32_t, reply->rp_rstat);
+			switch (error) {
+			case RPC_MISMATCH:
+				/* .re_status = RPC_VERSMISMATCH; */
+				error = ERPCMISMATCH;
+				break;
+			case RPC_AUTHERR:
+				/* .re_status = RPC_AUTHERROR; */
+				error = EAUTH;
+				break;
+			default:
+				/* unexpected */
+				error = EBADRPC;
+				break;
+			}
+			goto out;
+		}
+
+		/* Did the call succeed? */
+		if (reply->rp_status != 0) {
+			/* Note: This is NOT an error code! */
+			error = fxdr_unsigned(u_int32_t, reply->rp_status);
+			switch (error) {
+			case RPC_PROGUNAVAIL:
+				error = EPROGUNAVAIL;
+				break;
+			case RPC_PROGMISMATCH:
+				error = EPROGMISMATCH;
+				break;
+			case RPC_PROCUNAVAIL:
+				error = EPROCUNAVAIL;
+				break;
+			case RPC_GARBAGE:
+			default:
+				error = EBADRPC;
+			}
+			goto out;
+		}
+		break;
+	} /* while secs */
+
+	/*
+	 * OK, we have received a good reply!
 	 * Get RPC reply header into first mbuf,
 	 * get its length, then strip it off.
 	 */
