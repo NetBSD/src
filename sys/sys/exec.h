@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.54 1995/04/07 22:34:11 fvdl Exp $	*/
+/*	$NetBSD: exec.h,v 1.55 1995/04/22 19:40:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -96,8 +96,6 @@ struct proc;
 struct exec_package;
 
 typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
-typedef void (*exec_setup_fcn) __P((int, struct proc *, struct exec_package *,
-    void *));
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
@@ -130,25 +128,17 @@ struct exec_package {
 	u_long	ep_minsaddr;		/* proc's min stack addr ("bottom") */
 	u_long	ep_ssize;		/* size of process's stack */
 	u_long	ep_entry;		/* process's entry point */
-	u_char	ep_emul;		/* os emulation */
 	u_int	ep_flags;		/* flags; see below. */
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
-	exec_setup_fcn ep_setup;	/* special setup fn for exec type */
-	void	*ep_setup_arg;		/* setup argument */
-	u_long	ep_setup_arglen;	/* size of extra arguments */
-	char	*ep_sigcode;		/* start of sigtramp code (if any) */
-	char	*ep_esigcode;		/* end of sigtramp code (if any) */
+	struct  emul *ep_emul;		/* os emulation */
+	void	*ep_emul_arg;		/* emulation argument */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
 #define	EXEC_HASARGL	0x0004		/* has fake args vector */
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
-
-#define EXEC_SETUP_ADDARGS	0	/* add arguments on the stack */
-#define EXEC_SETUP_FINISH	1	/* final setup before exec */
-#define EXEC_SETUP_CLEANUP	2	/* called to cleanup things */
 
 struct exec_vmcmd {
 	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
@@ -173,6 +163,10 @@ void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
 int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
+void	*copyargs		__P((struct exec_package *, struct ps_strings *,
+				     void *, void *));
+void	setregs			__P((struct proc *, struct exec_package *,
+				     u_long, register_t *));
 
 #ifdef DEBUG
 void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
