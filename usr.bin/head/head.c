@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.12 1999/11/09 15:06:36 drochner Exp $	*/
+/*	$NetBSD: head.c,v 1.13 2001/02/05 02:09:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.12 1999/11/09 15:06:36 drochner Exp $");
+__RCSID("$NetBSD: head.c,v 1.13 2001/02/05 02:09:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,8 @@ void usage __P((void));
 int main __P((int, char *[]));
 
 int eval = 0;
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -163,7 +165,6 @@ obsolete(argv)
 void
 usage()
 {
-	extern char *__progname;
 	(void)fprintf(stderr, "Usage: %s [-n lines] [file ...]\n", __progname);
 	exit(1);
 }
