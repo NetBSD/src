@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 2000/05/11 15:42:00 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.6 2000/06/28 16:27:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,8 +122,6 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
