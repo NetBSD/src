@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1997/03/26 22:39:12 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1997/05/24 09:32:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,7 +200,6 @@ findroot(devpp, partp)
 	int *partp;
 {
 	int i, majdev, unit, part, controller;
-	struct device *dv;
 	struct pmax_scsi_device *dp;
 
 	/*
