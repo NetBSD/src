@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.15 1995/11/28 08:07:25 thorpej Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -30,14 +30,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	EXEC_SCRIPT			/* XXX */
+#undef EXEC_SCRIPT			/* XXX */
+#define EXEC_SCRIPT			/* XXX */
+#undef EXEC_AOUT			/* XXX */
 #define EXEC_AOUT			/* XXX */
 
 #if defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)
+#undef EXEC_ECOFF
 #define EXEC_ECOFF
 #endif
 
 #if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)
+#undef EXEC_ELF
 #define EXEC_ELF
 #endif
 
