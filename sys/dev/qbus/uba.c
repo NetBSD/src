@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.55 2000/06/28 17:09:44 mrg Exp $	   */
+/*	$NetBSD: uba.c,v 1.56 2001/04/12 20:08:09 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -79,7 +79,7 @@ uba_enqueue(struct uba_unit *uu)
 
 	uh = (void *)((struct device *)(uu->uu_softc))->dv_parent;
 
-	s = splimp();
+	s = spluba();
 	SIMPLEQ_INSERT_TAIL(&uh->uh_resq, uu, uu_resq);
 	splx(s);
 }
@@ -88,7 +88,7 @@ uba_enqueue(struct uba_unit *uu)
  * When a routine that uses resources is finished, the next device
  * in queue for map registers etc is called. If it succeeds to get
  * resources, call next, and next, and next...
- * This routine must be called at splimp.
+ * This routine must be called at spluba.
  */
 void
 uba_done(struct uba_softc *uh)
@@ -132,7 +132,7 @@ ubareset(struct uba_softc *uh)
 	struct uba_reset *ur;
 	int s;
 
-	s = splimp();
+	s = spluba();
 	SIMPLEQ_INIT(&uh->uh_resq);
 	printf("%s: reset", uh->uh_dev.dv_xname);
 	(*uh->uh_ubainit)(uh);
