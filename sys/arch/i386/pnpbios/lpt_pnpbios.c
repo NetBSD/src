@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_pnpbios.c,v 1.1 1999/11/14 02:15:50 thorpej Exp $ */
+/* $NetBSD: lpt_pnpbios.c,v 1.2 1999/11/14 18:03:38 soren Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -62,7 +62,8 @@ lpt_pnpbios_match(parent, match, aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (strcmp(aa->idstr, "PNP0400"))
+	if (strcmp(aa->idstr, "PNP0400") &&
+	    strcmp(aa->idstr, "PNP0401"))
 		return (0);
 
 	return (1);
