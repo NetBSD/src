@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkbuiltins,v 1.20 2003/08/22 11:22:23 agc Exp $
+#	$NetBSD: mkbuiltins,v 1.21 2004/06/06 07:03:11 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -83,8 +83,16 @@ while read line
 do
 	set -- $line
 	[ -z "$1" ] && continue
+	case "$1" in
+	\#if*|\#def*|\#end*)
+		echo $line >&3
+		echo $line >&4
+		continue
+		;;
+	esac
 	l1="${line###}"
 	[ "$l1" != "$line" ] && continue
+
 
 	func=$1
 	shift
