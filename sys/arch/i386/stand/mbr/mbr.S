@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.8 2004/07/04 00:38:51 mycroft Exp $	*/
+/*	$NetBSD: mbr.S,v 1.9 2004/08/14 21:03:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -249,8 +249,7 @@ wait_key:
 	xorb	%ah, %ah
 	int	$0x1a			/* current time to cx:dx */
 	sub	%di, %dx
-	movw	timeout, %ax
-	cmp	%ax, %dx		/* always wait for 1 tick... */
+	cmpw	timeout, %dx		/* always wait for 1 tick... */
 	jbe	3b			/* 0xffff means never timeout */
 def_key:
 	movb	defkey, %al		/* timedout - pick default key */
