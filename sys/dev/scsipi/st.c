@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.112 1999/06/17 04:20:55 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.113 1999/09/04 09:41:15 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1094,7 +1094,7 @@ ststart(v)
 		*bp->b_actb = dp;
 
 		/*
-		 * if the device has been unmounted byt the user
+		 * if the device has been unmounted bye the user
 		 * then throw away all requests until done
 		 */
 		if (!(st->flags & ST_MOUNTED) ||
