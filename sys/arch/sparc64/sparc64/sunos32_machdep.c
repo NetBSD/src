@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.1 2001/02/05 12:47:47 mrg Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.2 2001/02/05 13:13:47 mrg Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -117,7 +117,7 @@ sunos32_sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	sigpid = p->p_pid;
-	if (((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) || 1) {
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos32_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
 #ifdef DDB
@@ -162,7 +162,7 @@ sunos32_sendsig(catcher, sig, mask, code)
 	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) || 1)
+	if ((sigdebug & SDB_KSTACK))
 	    printf("sunos32_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
@@ -185,7 +185,7 @@ sunos32_sendsig(catcher, sig, mask, code)
 	}
 
 #ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) || 1) {
+	if ((sigdebug & SDB_FOLLOW)) {
 		printf("sunos32_sendsig: %s[%d] sig %d scp %p\n",
 		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
 	}
@@ -199,7 +199,7 @@ sunos32_sendsig(catcher, sig, mask, code)
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
 #ifdef DEBUG
-	if (((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) || 1) {
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos32_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, (void *)(u_long)addr);
 #ifdef DDB
