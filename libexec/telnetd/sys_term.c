@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sys_term.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: sys_term.c,v 1.3 1994/02/25 03:20:56 cgd Exp $";
+static char *rcsid = "$Id: sys_term.c,v 1.4 1994/12/23 14:29:46 cgd Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -1337,7 +1337,6 @@ startslave(host, autologin, autoname)
 	char *autoname;
 {
 	register int i;
-	long time();
 	char name[256];
 #ifdef	NEWINIT
 	extern char *ptyip;
@@ -1720,14 +1719,14 @@ addarg(argv, val)
 	}
 	for (cpp = argv; *cpp; cpp++)
 		;
-	if (cpp == &argv[(int)argv[-1]]) {
+	if (cpp == &argv[(long)argv[-1]]) {
 		--argv;
-		*argv = (char *)((int)(*argv) + 10);
-		argv = (char **)realloc(argv, (int)(*argv) + 2);
+		*argv = (char *)((long)(*argv) + 10);
+		argv = (char **)realloc(argv, (long)(*argv) + 2);
 		if (argv == NULL)
 			return(NULL);
 		argv++;
-		cpp = &argv[(int)argv[-1] - 10];
+		cpp = &argv[(long)argv[-1] - 10];
 	}
 	*cpp++ = val;
 	*cpp = 0;
