@@ -1,5 +1,5 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_init_context.3,v 1.5 2001/09/17 12:32:38 assar Exp $
+.\" $Id: krb5_init_context.3,v 1.6 2001/11/08 19:47:37 gmcgarry Exp $
 .Dd January 21, 2001
 .Dt KRB5_CONTEXT 3
 .Os
@@ -7,8 +7,10 @@
 .Nm krb5_init_context ,
 .Nm krb5_free_context
 .Nd create and delete krb5_context structures
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
+.Fd #include <krb5/krb5.h>
 .Ft krb5_error_code
 .Fn krb5_init_context "krb5_context *context"
 .Ft void

@@ -1,8 +1,8 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_keytab.3,v 1.1.1.2 2001/09/17 12:25:04 assar Exp $
+.\" $Id: krb5_keytab.3,v 1.2 2001/11/08 19:47:37 gmcgarry Exp $
 .Dd Feb 5, 2001
 .Dt KRB5_KEYTAB 3
-.Os HEIMDAL
+.Os
 .Sh NAME
 .Nm krb5_kt_ops,
 .Nm krb5_keytab_entry ,
@@ -24,8 +24,10 @@
 .Nm krb5_kt_resolve ,
 .Nm krb5_kt_start_seq_get
 .Nd manage keytab (key storage) files
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
+.Fd #include <krb5/krb5.h>
 .Pp
 .Ft krb5_error_code
 .Fo krb5_kt_add_entry
