@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.17 2001/12/31 23:04:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18 2002/02/11 21:45:19 tv Exp $
 
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
 
-.if ${MKBFD} != "no"
+.if ${MKBFD} != "no" && exists(${.CURDIR}/common/arch/${MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/common/arch/${MACHINE_ARCH}/defs.mk"
 
 SUBDIR=		common gas gprof ld ${G_PROGRAMS:C/-new$//:cxxfilt=c++filt}
