@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.58 1998/09/10 15:58:48 kenh Exp $
+.\"	$NetBSD: options.4,v 1.59 1998/09/18 12:38:54 drochner Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1248,8 +1248,9 @@ emulators.
 .It Cd options USER_LDT
 Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
-.It Cd options REALBASEMEM
+.It Cd options REALBASEMEM=integer
 Overrides the base memory size passed in from the boot block.
+(Value given in kilobytes.)
 Use this option only if the boot block reports the size incorrectly.
 (Note that some
 .Tn BIOS Ns es
@@ -1260,8 +1261,9 @@ base memory size to prevent programs overwriting it.
 This is correct behavior, and you should not use the
 .Em REALBASEMEM
 option to access this memory).
-.It Cd options REALEXTMEM
+.It Cd options REALEXTMEM=integer
 Overrides the extended memory size passed in from the boot block.
+(Value given in kilobytes. Extended memory does not include the first megabyte.)
 Use this option only if the boot block reports the size incorrectly.
 .It Cd options FRENCH_KBD,FINNISH_KBD,GERMAN_KBD,NORWEGIAN_KBD
 Select a non-US keyboard layout for the 
