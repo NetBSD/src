@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2000/03/30 11:37:24 tsutsui Exp $ */
+/*	$NetBSD: disksubr.c,v 1.10 2000/05/16 05:45:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -58,14 +58,6 @@ static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
 extern struct device *bootdv;
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
-}
 
 /*
  * Attempt to read a disk label from a device

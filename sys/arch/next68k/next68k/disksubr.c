@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1998/11/10 22:45:45 dbj Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 2000/05/16 05:45:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -240,13 +240,4 @@ bounds_check_with_label(bp, lp, wlabel)
  bad:
 	bp->b_flags |= B_ERROR;
 	return (-1);
-}
-
-/* XXX unknown function but needed for /sys/scsi to link */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.27 2000/04/01 14:41:13 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.28 2000/05/16 05:45:51 thorpej Exp $	*/
 
 /*
  *
@@ -513,7 +513,6 @@ xyattach(parent, self, aux)
 
 	/* Do init work common to attach and open. */
 	xy_init(xy);
-	dk_establish(&xy->sc_dk, &xy->sc_dev);
 }
 
 /*

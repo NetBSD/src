@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.22 2000/05/10 14:26:06 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.23 2000/05/16 05:45:53 thorpej Exp $	*/
 
 /*
  *
@@ -882,8 +882,6 @@ xdattach(parent, self, aux)
 	} else {
 		bcopy(buf, &xd->dkb, XDFM_BPS);
 	}
-
-	dk_establish(&xd->sc_dk, &xd->sc_dev);		/* XXX */
 
 done:
 	if (buf != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2000/03/24 17:05:32 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2000/05/16 05:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -879,11 +879,6 @@ lcsplx(ipl)
 {
 	splx(ipl);
 }
-
-/* not impliment */
-
-void
-dk_establish() {}
 
 /*
  * Allocate vm space and mapin the I/O address

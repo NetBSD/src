@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.4 2000/03/29 12:02:01 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.5 2000/05/16 05:45:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.4 2000/03/29 12:02:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.5 2000/05/16 05:45:51 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -209,10 +209,6 @@ caattach(parent, self, aux)
 	disk_attach(&sc->sc_dk);
 	sc->sc_flags |= CAF_ENABLED;
 	
-#if !defined(__i386__) && !defined(__vax__)
-	dk_establish(&sc->sc_dk, &sc->sc_dv);		/* XXX */
-#endif
-
 #if NRND > 0
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
