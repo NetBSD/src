@@ -58,7 +58,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)slattach.c	4.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: slattach.c,v 1.7 1993/08/01 18:23:56 mycroft Exp $";
+static char rcsid[] = "$Id: slattach.c,v 1.8 1993/12/02 05:44:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,11 +76,12 @@ static char rcsid[] = "$Id: slattach.c,v 1.7 1993/08/01 18:23:56 mycroft Exp $";
 #define DEFAULT_BAUD	9600
 
 static char usage_str[] = "\
-usage: %s [-a ][-c ][-n ][-s <speed> ]<device>\n\
+usage: %s [-a] [-c] [-h] [-m] [-n] [-s <speed>] <device>\n\
 	-a -- autoenable VJ compression\n\
 	-c -- enable VJ compression\n\
+	-h -- turn on CTS/RTS style flow control\n\
+	-m -- maintain DTR after last close (no HUPCL)\n\
 	-n -- throw out ICMP packets\n\
-	-h -- turn on cts/rts style flow control\n\
 	-s -- baud rate (default 9600)\n";
 
 int main(int argc, char **argv)
@@ -93,12 +94,12 @@ int main(int argc, char **argv)
 	int slipdisc = SLIPDISC;
 	int speed = DEFAULT_BAUD;
 	int slflags = 0;
-	int flow_control = 0;	/* extra flags to enable hardware flow cont. */
+	int cflags = HUPCL;
 
 	extern char *optarg;
 	extern int optind;
 
-	while ((option = getopt(argc, argv, "achns:")) != EOF) {
+	while ((option = getopt(argc, argv, "achmns:")) != EOF) {
 		switch (option) {
 		case 'a':
 			slflags |= SC_AUTOCOMP;
@@ -109,7 +110,10 @@ int main(int argc, char **argv)
 			slflags &= ~SC_AUTOCOMP;
 			break;
 		case 'h':
-			flow_control |= CRTSCTS;
+			cflags |= CRTSCTS;
+			break;
+		case 'm':
+			cflags &= ~HUPCL;
 			break;
 		case 'n':
 			slflags |= SC_NOICMP;
@@ -133,11 +137,6 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 
-	if ((speed = findspeed(speed)) == 0) {
-		fprintf(stderr, "unknown speed");
-		exit(1);
-	}
-
 	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
 		strcpy(devname, _PATH_DEV);
 		strcat(devname, "/");
@@ -150,14 +149,21 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (tcgetattr(fd, &tty) < 0) {
+		perror("tcgetattr");
+		close(fd);
+		exit(1);
+	}
 	tty.c_iflag = 0;
 	tty.c_oflag = 0;
-	tty.c_cflag = CREAD | CS8 | flow_control;
+	tty.c_cflag = CREAD | CS8 | cflags;
 	tty.c_lflag = 0;
 	tty.c_cc[VMIN] = 1; /* wait for one char */
 	tty.c_cc[VTIME] = 0; /* wait forever for a char */
-	if (ioctl(fd, TIOCSETA, &tty) < 0) {
-		perror("ioctl(TIOCSETA)");
+	cfsetispeed(&tty, speed);
+	cfsetospeed(&tty, speed);
+	if (tcsetattr(fd, TCSADRAIN, &tty) < 0) {
+		perror("tcsetattr");
 		close(fd);
 		exit(1);
 	}
@@ -167,14 +173,6 @@ int main(int argc, char **argv)
                 close(fd);
                 exit(1);
         }
-
-	cfsetispeed(&tty, speed);
-	cfsetospeed(&tty, speed);
-	if (tcsetattr(fd, TCSADRAIN, &tty) < 0) {
-		perror("tcsetattr");
-		close(fd);
-		exit(1);
-	}
 
 	if (ioctl(fd, TIOCSETD, &slipdisc) < 0) {
 		perror("ioctl(TIOCSETD)");
@@ -193,77 +191,4 @@ int main(int argc, char **argv)
 
 	for (;;)
 		sigpause(0L);
-}
-
-struct sg_spds {
-	int sp_val, sp_name;
-}       spds[] = {
-#ifdef B50
-	{ 50, B50 },
-#endif
-#ifdef B75
-	{ 75, B75 },
-#endif
-#ifdef B110
-	{ 110, B110 },
-#endif
-#ifdef B150
-	{ 150, B150 },
-#endif
-#ifdef B200
-	{ 200, B200 },
-#endif
-#ifdef B300
-	{ 300, B300 },
-#endif
-#ifdef B600
-	{ 600, B600 },
-#endif
-#ifdef B1200
-	{ 1200, B1200 },
-#endif
-#ifdef B1800
-	{ 1800, B1800 },
-#endif
-#ifdef B2000
-	{ 2000, B2000 },
-#endif
-#ifdef B2400
-	{ 2400, B2400 },
-#endif
-#ifdef B3600
-	{ 3600, B3600 },
-#endif
-#ifdef B4800
-	{ 4800, B4800 },
-#endif
-#ifdef B7200
-	{ 7200, B7200 },
-#endif
-#ifdef B9600
-	{ 9600, B9600 },
-#endif
-#ifdef B19200
-	{ 19200, B19200 },
-#endif
-#ifdef B38400
-	{ 38400, B38400 },
-#endif
-#ifdef B57600
-	{ 57600, B57600 },
-#endif
-#ifdef B115200
-	{ 115200, B115200 },
-#endif
-	{ 0, 0 }
-};
-
-int findspeed(int speed)
-{
-	struct sg_spds *sp = spds;
-
-	while ((sp->sp_val != 0) && (sp->sp_val != speed))
-		sp++;
-
-	return (sp->sp_name);
 }
