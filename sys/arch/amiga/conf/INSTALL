@@ -1,14 +1,16 @@
-# $NetBSD: INSTALL,v 1.9 2000/10/04 20:13:42 is Exp $
+# $NetBSD: INSTALL,v 1.10 2000/10/04 20:40:06 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.150 2000/10/04 03:35:54 itojun Exp $
+#$ NetBSD: GENERIC,v 1.151 2000/10/04 20:38:11 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.9 $"
+#ident  		"GENERIC-$Revision: 1.10 $"
+
+makeoptions	COPTS="-Os"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -321,7 +323,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty 2			# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
