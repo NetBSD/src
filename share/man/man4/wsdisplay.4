@@ -1,12 +1,10 @@
-.\" $NetBSD: wsdisplay.4,v 1.4 2000/03/20 11:51:59 pk Exp $
-
+.\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSDISPLAY 4
 .Sh NAME
 .Nm wsdisplay
 .Nd generic display device support in wscons
-
 .Sh SYNOPSIS
 .Cd wsdisplay* at vga? console ?
 (VGA display on ISA or PCI)
@@ -23,7 +21,6 @@
 .Cd wsdisplay0 at smg0
 (VAXstation small monochrome display)
 .Cd options WSDISPLAY_DEFAULTSCREENS=N
-
 .Sh DESCRIPTION
 The
 .Nm
@@ -83,7 +80,6 @@ utility). Alternatively, the compile-time option
 .Cd WSDISPLAY_DEFAULTSCREENS=N
 will set up N screens of the display driver's default type and using
 the system's default terminal emulator at autoconfiguration time.
-
 .Sh FILES
 .Bl -item
 .It
@@ -95,7 +91,6 @@ Control device.
 .It
 .Pa /usr/include/dev/wscons/wsconsio.h
 .El
-
 .Sh BUGS
 The
 .Nm
@@ -109,7 +104,6 @@ are not cleanly distinguished in the code and in manual pages.
 .Pp
 .Dq non-emulating
 display devices are not tested.
-
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,

@@ -1,17 +1,14 @@
-.\" $NetBSD: vga.4,v 1.1 1999/03/22 19:15:01 drochner Exp $
-
+.\" $NetBSD: vga.4,v 1.2 2000/05/13 15:22:19 mycroft Exp $
 .Dd March 20, 1999
 .Os
 .Dt VGA 4
 .Sh NAME
 .Nm vga
 .Nd VGA graphics driver for wscons
-
 .Sh SYNOPSIS
 .Cd "vga0 at isa?"
 .Cd "vga* at pci?"
 .Cd "wsdisplay* at vga? console ?"
-
 .Sh DESCRIPTION
 This driver handles
 .Tn VGA
@@ -77,7 +74,6 @@ was set at compile time. This is only useful with the
 screen types; a font containing the
 .Tn ASCII
 range of characters must be available too on this screen.
-
 .Sh BUGS
 Only a subset of the possible text modes is supported.
 .Pp
@@ -93,7 +89,6 @@ and
 .Dq 80x50bf
 screen types will not be available. This mode of operation
 is not tested.
-
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr pci 4 ,
