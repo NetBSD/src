@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.10 2001/04/25 12:24:51 kleink Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.11 2002/09/05 15:38:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -319,4 +319,25 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		*addrp = (caddr_t)value;
 
 	return (0);
+}
+
+void
+_rtld_setup_pltgot(const Obj_Entry *obj)
+{
+	/*
+	 * PLTGOT is the PLT on the sparc.
+	 * The first entry holds the call the dynamic linker.
+	 * We construct a `call' sequence that transfers
+	 * to `_rtld_bind_start()'.
+	 * The second entry holds the object identification.
+	 * Note: each PLT entry is three words long.
+	 */
+#define SAVE	0x9de3bfc0	/* i.e. `save %sp,-64,%sp' */
+#define CALL	0x40000000
+#define NOP	0x01000000
+	obj->pltgot[0] = SAVE;
+	obj->pltgot[1] = CALL |
+	    ((Elf_Addr) &_rtld_bind_start - (Elf_Addr) &obj->pltgot[1]) >> 2;
+	obj->pltgot[2] = NOP;
+	obj->pltgot[3] = (Elf_Addr) obj;
 }

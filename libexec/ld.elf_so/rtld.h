@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.34 2002/07/10 15:12:36 fredette Exp $	 */
+/*	$NetBSD: rtld.h,v 1.35 2002/09/05 15:38:22 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -300,10 +300,9 @@ Elf_Addr _rtld_function_descriptor_alloc __P((const Obj_Entry *,
 const void *_rtld_function_descriptor_function __P((const void *));
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
-#if defined(__alpha__)
-/* alpha_reloc.c */
-void	_rtld_setup_alpha_pltgot __P((const Obj_Entry *, bool));
+void	_rtld_setup_pltgot __P((const Obj_Entry *));
 
+#if defined(__alpha__)
 /* rtld_start.S */
 void	_rtld_bind_start_old __P((void));
 #endif
@@ -311,23 +310,15 @@ void	_rtld_bind_start_old __P((void));
 #if defined(__hppa__)
 /* hppa_reloc.c */
 void _rtld_bootstrap_hppa_got __P((Elf_Dyn *, Elf_Addr, Elf_Addr, Elf_Addr));
-void _rtld_setup_hppa_pltgot __P((const Obj_Entry *));
 
 /* rtld_start.S */
 void __rtld_setup_hppa_pltgot __P((const Obj_Entry *, Elf_Addr *));
-#endif
-
-#if defined(__mips__)
-/* mips_reloc.c */
-void _rtld_relocate_mips_got __P((Obj_Entry *));
-caddr_t _rtld_bind_mips __P((Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr));
 #endif
 
 #if defined(__powerpc__)
 /* ppc_reloc.c */
 caddr_t _rtld_bind_powerpc __P((Obj_Entry *, Elf_Word));
 int _rtld_reloc_powerpc_plt __P((Obj_Entry *, const Elf_Rela *, bool));
-void _rtld_setup_powerpc_plt __P((const Obj_Entry *));
 #endif
 
 #endif /* _RTLD_SOURCE */
