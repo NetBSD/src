@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.3 2003/09/03 12:45:25 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.4 2003/09/08 07:09:34 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -45,6 +45,7 @@ linkfarmprog=/usr/sbin/linkfarm
 lnprog=/bin/ln
 mkdirprog=/bin/mkdir
 paxprog=/bin/pax
+pkgadminprog=/usr/sbin/pkg_admin
 pkginfoprog=/usr/sbin/pkg_info
 rmprog=/bin/rm
 rmdirprog=/bin/rmdir
@@ -211,6 +212,7 @@ while [ $# -gt 0 ]; do
 			echo "${depot_pkg_dbdir}/$1" > ${pkg_dbdir}/$1/+DEPOT
 			;;
 		esac
+		$doit $pkgadminprog -K ${pkg_dbdir} add $1
 		if [ -f ${pkg_dbdir}/$1/+INSTALL ]; then
 			$doit $chmodprog +x ${pkg_dbdir}/$1/+INSTALL
 			$doit $envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+INSTALL $1 VIEW-INSTALL
@@ -260,6 +262,7 @@ while [ $# -gt 0 ]; do
 		esac
 		$doit $rmprog ${temp}
 		$doit $rmprog -rf ${pkg_dbdir}/$1
+		$doit $pkgadminprog -K ${pkg_dbdir} delete $1
 		;;
 	esac
 	shift
