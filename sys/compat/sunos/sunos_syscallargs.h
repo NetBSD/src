@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscallargs.h,v 1.35 1998/06/25 22:19:33 thorpej Exp $	*/
+/*	$NetBSD: sunos_syscallargs.h,v 1.36 1998/09/13 22:29:06 pk Exp $	*/
 
 /*
  * System call argument lists.
@@ -127,6 +127,10 @@ struct sunos_sys_sigvec_args {
 	syscallarg(int) signum;
 	syscallarg(struct sigvec *) nsv;
 	syscallarg(struct sigvec *) osv;
+};
+
+struct sunos_sys_sigsuspend_args {
+	syscallarg(int) mask;
 };
 
 struct sunos_sys_sigreturn_args {
@@ -297,7 +301,7 @@ int	sys_listen	__P((struct proc *, void *, register_t *));
 int	sunos_sys_sigvec	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigblock	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigsetmask	__P((struct proc *, void *, register_t *));
-int	sys_sigsuspend	__P((struct proc *, void *, register_t *));
+int	sunos_sys_sigsuspend	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigstack	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_recvmsg	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sendmsg	__P((struct proc *, void *, register_t *));
