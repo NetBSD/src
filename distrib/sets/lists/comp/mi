@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.503 2002/11/29 13:16:29 lukem Exp $
+#	$NetBSD: mi,v 1.504 2002/12/05 03:59:19 explorer Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -143,6 +143,8 @@
 ./usr/include/dev/ic/rrunnervar.h	comp-c-include
 ./usr/include/dev/ic/wdcreg.h		comp-c-include
 ./usr/include/dev/ic/wi_ieee.h		comp-c-include
+./usr/include/dev/ieee1394		comp-c-include
+./usr/include/dev/ieee1394/fwiso_ioctl.h	comp-c-include
 ./usr/include/dev/ir			comp-c-include
 ./usr/include/dev/ir/irdaio.h		comp-c-include
 ./usr/include/dev/isa			comp-c-include
