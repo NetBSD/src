@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 1999/07/11 23:41:10 kim Exp $
+#	$NetBSD: Makefile,v 1.15 1999/07/12 22:11:38 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
+
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 PROG=	su
 DPADD+=	${LIBCRYPT}
@@ -11,6 +14,10 @@ INSTALLFLAGS=-fschg
 # Uncomment the following line to change the group that may su root to "sugroup"
 #
 #CPPFLAGS+=-DSUGROUP=\"sugroup\"
+
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/usr.bin/su/Makefile.frag"
+.endif
 
 .include <bsd.prog.mk>
 

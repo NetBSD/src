@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.22 1999/07/12 21:36:10 aidan Exp $
+#	$NetBSD: Makefile,v 1.23 1999/07/12 22:11:37 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
-.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
-
-.if !exists(${.CURDIR}/../../domestic/usr.bin/login) && \
-    !exists(${.CURDIR}/../../crypto-us/usr.bin/login) || \
-    defined(EXPORTABLE_SYSTEM) || \
-    make(obj) || make(clean) || make(cleandir) || make(distclean)
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 PROG=	login
 SRCS=	login.c
@@ -24,12 +20,8 @@ DPADD+= ${LIBSKEY}
 LDADD+=	-lskey
 .endif
 
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/usr.bin/login/Makefile.frag"
+.endif
+
 .include <bsd.prog.mk>
-
-.else	# EXPORTABLE_SYSTEM
-
-MAN=	login.1
-
-.include <bsd.man.mk>
-
-.endif	# EXPORTABLE_SYSTEM

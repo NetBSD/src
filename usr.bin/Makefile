@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.104 1999/07/12 03:21:50 darrenr Exp $
+#	$NetBSD: Makefile,v 1.105 1999/07/12 22:11:37 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
-.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
-#					# and OBJECT_FMT definition
+SRCTOP=	..
+.include <bsd.crypto.mk>
 
-SUBDIR=	apply apropos asa at audio banner basename bdes biff \
+SUBDIR=	apply apropos asa at audio banner basename biff \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay checknr chflags \
 	chpass cksum cmp col colcrt colrm column comm compress \
 	crontab crunch ctags cut dirname du eject elf2aout elf2ecoff env \
@@ -26,5 +26,9 @@ SUBDIR=	apply apropos asa at audio banner basename bdes biff \
 	wall wc what whatis whereis which who whois window \
 	write xargs xinstall xlint xstr yacc yes ypcat \
 	ypmatch ypwhich
+
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/usr.bin/Makefile.frag"
+.endif
 
 .include <bsd.subdir.mk>
