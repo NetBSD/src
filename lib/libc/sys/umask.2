@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)umask.2	6.2 (Berkeley) 3/10/91
-.\"	$Id: umask.2,v 1.4 1993/11/25 00:39:58 jtc Exp $
+.\"	$Id: umask.2,v 1.5 1994/05/18 14:36:13 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt UMASK 2
@@ -55,8 +55,9 @@ bits of
 are used by system calls, including
 .Xr open 2 ,
 .Xr mkdir 2 ,
+.Xr mkfifo 2
 and
-.Xr mkfifo 2 ,
+.Xr mknod 2
 to turn off corresponding bits
 requested in file mode.
 (see
@@ -74,6 +75,8 @@ The
 function is always successful.
 .Sh SEE ALSO
 .Xr chmod 2 ,
+.Xr mkdir 2 ,
+.Xr mkfifo 2 ,
 .Xr mknod 2 ,
 .Xr open 2
 .Sh STANDARDS
