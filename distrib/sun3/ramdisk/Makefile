@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/05/18 07:31:56 gwr Exp $
+#	$NetBSD: Makefile,v 1.11 1999/05/21 04:06:20 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,16 +26,17 @@ NBLKS=		640
 # bigendian, old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -B be -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
-CLEANFILES= netbsd-rd.sun3 netbsd-rd.sun3x rdsetroot ${IMAGE}.fs
+KERNELS= netbsd-RAMDISK netbsd-RAMDISK3X
+CLEANFILES= $(KERNELS) rdsetroot ${IMAGE}.fs
 
-all: netbsd-rd.sun3 netbsd-rd.sun3x
+all: $(KERNELS)
 
-netbsd-rd.sun3 : rdsetroot ${IMAGE}.fs
+netbsd-RAMDISK : rdsetroot ${IMAGE}.fs
 	cp ${KERNEL3} netbsd-tmp
 	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
-netbsd-rd.sun3x : rdsetroot ${IMAGE}.fs
+netbsd-RAMDISK3X : rdsetroot ${IMAGE}.fs
 	cp ${KERNEL3X} netbsd-tmp
 	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
@@ -77,3 +78,15 @@ clean cleandir distclean:
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
+
+.if !defined(RELEASEDIR)
+release:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+.else	# RELEASEDIR
+release: $(KERNELS)
+.for x in ${KERNELS}
+	gzip -c -9 < ${x} > \
+	 ${RELEASEDIR}/binary/kernel/${x}.gz
+.endfor # KERNELS
+.endif	# RELEASEDIR
