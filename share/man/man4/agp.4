@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.2 2001/09/10 22:32:49 wiz Exp $
+.\"     $NetBSD: agp.4,v 1.3 2001/09/10 23:01:00 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,21 @@ specification was designed by Intel.
 .Pp
 The AGP chipset is positioned between the PCI-Host bridge and the
 graphics accelerator to provide a high-performance dedicated graphics
-bus.  It currently supports a peak bandwidth of 528 MB/s.
+bus.  The specification currently supports a peak bandwidth of 528 MB/s.
+.Pp
+The
+.Nm
+driver supports the following chipsets:
+.Bl -dash -compact indent
+.It
+VIA
+.It
+Intel
+.It
+SiS
+.It
+AMD
+.El
 .Pp
 The
 .Nm
@@ -128,6 +142,89 @@ typedef struct _agp_unbind {
 } agp_unbind;
 .Ed
 .El
+.Sh EXAMPLE
+This short code fragment is an example of opening the AGP device
+and performing some basic operations:
+.Bd -literal
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/agpio.h>
+#include <fcntl.h>
+#include <err.h>
+
+int
+main(int argc, char **argv)
+{
+	int fd;
+	agp_info info;
+	agp_allocate alloc;
+	agp_setup setup;
+	agp_bind bind;
+	agp_unbind unbind;
+
+	fd = open("/dev/agp0", O_RDWR);
+	if (fd < 0)
+		err(1, "open");
+
+	if (ioctl(fd, AGPIOC_INFO, &info) < 0)
+		err(2, "ioctl AGPIOC_INFO");
+
+	printf("version:	%u.%u\\n", info.version.major,
+	    info.version.minor);
+	
+	printf("id:		%x\\n", info.bridge_id);
+	printf("mode:		%x\\n", info.agp_mode);
+	printf("base:		%x\\n", info.aper_base);
+	printf("size:		%uM\\n", info.aper_size);
+	printf("total mem:	%u\\n", info.pg_total);
+	printf("system mem:	%u\\n", info.pg_system);
+	printf("used mem:	%u\\n\\n", info.pg_used);
+
+	setup.agp_mode = info.agp_mode;
+
+	if (ioctl(fd, AGPIOC_SETUP, &setup) < 0)
+		err(3, "ioctl AGPIOC_SETUP");
+
+	if (ioctl(fd, AGPIOC_ACQUIRE, 0) < 0)
+		err(3, "ioctl AGPIOC_ACQUIRE");
+
+	alloc.type = 0;
+	alloc.pg_count = 64;
+
+	if (ioctl(fd, AGPIOC_ALLOCATE, &alloc) < 0)
+		err(4, "ioctl AGPIOC_ALLOCATE");
+
+	printf("alloc key %d, paddr %x\\n", alloc.key, alloc.physical);
+	if (ioctl(fd, AGPIOC_INFO, &info) < 0)
+		err(5, "ioctl AGPIOC_INFO");
+
+	bind.key = alloc.key;
+	bind.pg_start = 0x1000;
+
+	if (ioctl(fd, AGPIOC_BIND, &bind) < 0)
+		err(6, "ioctl AGPIOC_BIND");
+
+	printf("used mem now:	%u\\n\\n", info.pg_used);
+
+	unbind.key = alloc.key;
+	unbind.priority = 0;
+
+	if (ioctl(fd, AGPIOC_UNBIND, &unbind) < 0)
+		err(6, "ioctl AGPIOC_BIND");
+
+	if (ioctl(fd, AGPIOC_DEALLOCATE, &alloc.key) < 0)
+		err(6, "ioctl AGPIOC_DEALLOCATE");
+
+	if (ioctl(fd, AGPIOC_RELEASE, 0) < 0)
+		err(7, "ioctl AGPIOC_RELEASE");
+
+	close(fd);
+
+	printf("agp test successful\\n");
+
+	return 0;
+}
+.Ed
 .Sh FILES
 .Bl -tag -width /dev/agp? -compact
 .It Pa /dev/agp?
@@ -139,7 +236,7 @@ device special file
 .Sh HISTORY
 The
 .Nm
-device driver first appeared in
+driver first appeared in
 .Fx .
-It was introduced in
+It was adopted in
 .Nx 1.6 .
