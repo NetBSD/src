@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.9 1997/07/25 06:59:47 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.10 1997/07/25 07:01:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -97,7 +97,7 @@ struct bootinfo_v1 {
 	u_long	esym;			/* 8: end of kernel sym table	*/
 	char	boot_flags[64];		/* 16: boot flags		*/
 	char	booted_kernel[64];	/* 80: name of booted kernel	*/
-	void	*hwrpb;			/* 144: hwrpb pointer */
+	void	*hwrpb;			/* 144: hwrpb pointer		*/
 	int	(*cngetc) __P((void));	/* 152: console getc pointer	*/
 	void	(*cnputc) __P((int));	/* 160: console putc pointer	*/
 	void	(*cnpollc) __P((int));	/* 168: console pollc pointer	*/
