@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipkdb.4,v 1.4 2001/09/11 00:08:28 wiz Exp $
+.\"	$NetBSD: ipkdb.4,v 1.5 2001/09/22 00:57:41 wiz Exp $
 .\"
 .\"
 .\" Copyright (C) 2000 Wolfgang Solfrank.
@@ -114,14 +114,6 @@ based on the data it sends and the key, or
 ignores the packet.
 This is also used in order to check against data errors
 on the connection.
-.Sh BUGS
-Since the kernel includes the definition of IPKDBKEY,
-anyone who can read the kernel can extract it and
-use it to enter
-.Nm "" .
-.Pp
-There is no support for
-.Xr ip6 4 .
 .Sh SEE ALSO
 .Xr gdb 1 ,
 .Xr ddb 4 ,
@@ -135,3 +127,11 @@ appeared in
 for the first time.
 It's configuration and setup changed quite a bit in
 .Nx 1.5 .
+.Sh BUGS
+Since the kernel includes the definition of IPKDBKEY,
+anyone who can read the kernel can extract it and
+use it to enter
+.Nm "" .
+.Pp
+There is no support for
+.Xr ip6 4 .
