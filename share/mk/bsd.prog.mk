@@ -168,6 +168,9 @@ realinstall: _PROGSUBDIR
 	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG}; \
 	    chown games.bin ${PROG})
 .endif
+.endif
+
+install: maninstall
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \
@@ -180,9 +183,7 @@ realinstall: _PROGSUBDIR
 		ln $$l $$t; \
 	done; true
 .endif
-.endif
 
-install: maninstall
 maninstall: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
