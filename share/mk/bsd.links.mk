@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.21 2002/10/22 18:48:28 perry Exp $
+#	$NetBSD: bsd.links.mk,v 1.22 2003/07/20 14:49:44 lukem Exp $
 
 ##### Basic targets
 .PHONY:		linksinstall
@@ -15,26 +15,25 @@ linksinstall::	realinstall
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
-		if [ -h $$t ]; then \
-			cur=`ls -ld $$t | awk '{print $$NF}'` ; \
-			if [ "$$cur" = "$$l" ]; then \
-				continue ; \
-			fi; \
-		fi; \
+		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		    [ "$$l" = "$$ttarg" ]; then \
+			continue ; \
+		fi ; \
 		echo "$$t -> $$l"; \
 		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
 .endif
 .if !empty(LINKS)
 	@(set ${LINKS}; \
-	 echo ".include <bsd.own.mk>"; \
 	 while test $$# -ge 2; do \
 		l=${DESTDIR}$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
-		echo "realall: $$t"; \
-		echo "$$t!"; \
-		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@${INSTALL_LINK} ${SYSPKGTAG} $$l $$t"; \
-	 done; \
-	) | ${MAKE} -f- all
+		if  ldevino=`${TOOL_STAT} -qf '%d %i' $$l` && \
+		    tdevino=`${TOOL_STAT} -qf '%d %i' $$t` && \
+		    [ "$$ldevino" = "$$tdevino" ]; then \
+			continue ; \
+		fi ; \
+		echo "$$t -> $$l"; \
+		${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
+	done ; )
 .endif
