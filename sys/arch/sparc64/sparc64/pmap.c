@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 1998/08/26 07:55:10 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 1998/08/26 12:41:47 mrg Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -63,6 +63,9 @@
 #include "cache.h"
 #include "asm.h"
 
+#ifndef DDB
+#define Debugger()
+#endif
 
 /*
  * Support for big page sizes.  This maps the page size to the
