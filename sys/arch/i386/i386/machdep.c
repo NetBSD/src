@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.290 1998/02/11 03:03:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.291 1998/02/18 01:09:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center and by Chris G. Demetriou.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -105,6 +105,9 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
+#include <machine/kcore.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -262,7 +265,16 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	ioport_malloc_safe;
 
+/*
+ * Size of memory segments, before any memory is stolen.
+ */
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+int	mem_cluster_cnt;
+
 caddr_t	allocsys __P((caddr_t));
+int	cpu_dump __P((void));
+int	cpu_dumpsize __P((void));
+u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
@@ -1321,6 +1333,81 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /*
+ * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
+	    ALIGN(mem_cluster_cnt * sizeof(phys_ram_seg_t));
+	if (roundup(size, dbtob(1)) != dbtob(1))
+		return (-1);
+
+	return (1);
+}
+
+/*
+ * cpu_dump_mempagecnt: calculate the size of RAM (in pages) to be dumped.
+ */
+u_long
+cpu_dump_mempagecnt()
+{
+	u_long i, n;
+
+	n = 0;
+	for (i = 0; i < mem_cluster_cnt; i++)
+		n += atop(mem_clusters[i].size);
+	return (n);
+}
+
+/*
+ * cpu_dump: dump the machine-dependent kernel core dump headers.
+ */
+int
+cpu_dump()
+{
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	char buf[dbtob(1)];
+	kcore_seg_t *segp;
+	cpu_kcore_hdr_t *cpuhdrp;
+	phys_ram_seg_t *memsegp;
+	int i;
+	extern u_long PTDpaddr;			/* from locore */
+
+	dump = bdevsw[major(dumpdev)].d_dump;
+
+	bzero(buf, sizeof buf);
+	segp = (kcore_seg_t *)buf;
+	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
+	    ALIGN(sizeof(*cpuhdrp))];
+
+	/*
+	 * Generate a segment header.
+	 */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	/*
+	 * Add the machine-dependent header info.
+	 */
+	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->nmemsegs = mem_cluster_cnt;
+
+	/*
+	 * Fill in the memory segment descriptors.
+	 */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		memsegp[i].start = mem_clusters[i].start;
+		memsegp[i].size = mem_clusters[i].size;
+	}
+
+	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+}
+
+/*
  * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
@@ -1330,31 +1417,38 @@ long	dumplo = 0; 		/* blocks */
 void
 cpu_dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int nblks, dumpblks;	/* size of dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
-		return;
+		goto bad;
 	maj = major(dumpdev);
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdevsw[maj].d_psize == NULL)
-		return;
+		goto bad;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
-		return;
+		goto bad;
 
-	dumpsize = btoc(IOM_END + ctob(dumpmem_high));
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0)
+		goto bad;
+	dumpblks += ctod(cpu_dump_mempagecnt());
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1)))
+		goto bad;
 
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	/* Put dump at end of partition */
+	dumplo = nblks - dumpblks;
+
+	/* dumpsize is in page units, and doesn't include headers. */
+	dumpsize = cpu_dump_mempagecnt();
+	return;
+
+ bad:
+	dumpsize = 0;
 }
 
 /*
@@ -1377,8 +1471,9 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
-	unsigned bytes, i, n;
-	int maddr, psize;
+	u_long totalbytesleft, bytes, i, n, memseg;
+	u_long maddr;
+	int psize;
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
@@ -1416,48 +1511,48 @@ dumpsys()
 	while (sget() != NULL); /*syscons and pccons differ */
 #endif
 
-	bytes = ctob(dumpmem_high) + IOM_END;
-	maddr = 0;
-	blkno = dumplo;
+	if ((error = cpu_dump()) != 0)
+		goto err;
+
+	totalbytesleft = ptoa(cpu_dump_mempagecnt());
+	blkno = dumplo + cpu_dumpsize();
 	dump = bdevsw[major(dumpdev)].d_dump;
 	error = 0;
-	for (i = 0; i < bytes; i += n) {
-		/*
-		 * Avoid dumping the ISA memory hole, and areas that
-		 * BIOS claims aren't in low memory.
-		 */
-		if (i >= ctob(dumpmem_low) && i < IOM_END) {
-			n = IOM_END - i;
+
+	for (memseg = 0; memseg < mem_cluster_cnt; memseg++) {
+		maddr = mem_clusters[memseg].start;
+		bytes = mem_clusters[memseg].size;
+
+		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
+			/* Print out how many MBs we have left to go. */
+			if ((totalbytesleft % (1024*1024)) == 0)
+				printf("%ld ", totalbytesleft / (1024 * 1024));
+
+			/* Limit size for next transfer. */
+			n = bytes - i;
+			if (n > BYTES_PER_DUMP)
+				n = BYTES_PER_DUMP;
+
+			(void) pmap_map(dumpspace, maddr, maddr + n,
+			    VM_PROT_READ);
+
+			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			if (error)
+				goto err;
 			maddr += n;
-			blkno += btodb(n);
-			continue;
-		}
-
-		/* Print out how many MBs we to go. */
-		n = bytes - i;
-		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
-
-		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n =  BYTES_PER_DUMP;
-
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
-		if (error)
-			break;
-		maddr += n;
-		blkno += btodb(n);			/* XXX? */
+			blkno += btodb(n);		/* XXX? */
 
 #if 0	/* XXX this doesn't work.  grr. */
-		/* operator aborting dump? */
-		if (sget() != NULL) {
-			error = EINTR;
-			break;
-		}
+			/* operator aborting dump? */
+			if (sget() != NULL) {
+				error = EINTR;
+				break;
+			}
 #endif
+		}
 	}
 
+ err:
 	switch (error) {
 
 	case ENXIO:
@@ -1767,8 +1862,14 @@ init386(first_avail)
 
 	/* number of pages of physmem addr space */
 	physmem = btoc(biosbasemem * 1024) + btoc(biosextmem * 1024);
-	dumpmem_low = btoc(biosbasemem * 1024);
-	dumpmem_high = btoc(biosextmem * 1024);
+
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size  = trunc_page(biosbasemem * 1024);
+
+	mem_clusters[1].start = IOM_END;
+	mem_clusters[1].size  = trunc_page(biosextmem * 1024);
+
+	mem_cluster_cnt = 2;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
