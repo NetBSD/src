@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.15 2002/05/13 05:41:27 matt Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.16 2002/05/19 18:03:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.15 2002/05/13 05:41:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.16 2002/05/19 18:03:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,9 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
-	lsp->lst_ino64   = bsp->st_ino;
+#if LINUX_STAT64_HAS_BROKEN_ST_INO
+	lsp->__lst_ino   = (linux_ino_t) bsp->st_ino;
+#endif
 }
 
 /*
