@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1995/06/21 03:45:21 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 1995/06/25 02:45:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -549,7 +549,7 @@ copyfault:
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode);
+	if (i) trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
 out:
