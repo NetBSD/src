@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.87 2003/01/12 12:37:01 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.88 2003/01/26 16:42:25 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2641,9 +2641,8 @@ sys/dev/ic/dpt.c				patch
 
 sys/dev/scsipi/cd_scsi.c			1.26-1.27
 
-	Apply patch from Takeshi Nakayama on current-users which fixes problems
-	when trying to play audio CD's on some drives.
-	Fixes PR 7299 and probably PR 15155 and PR 16883 too.
+	Fix problem when trying to play audio CD's on some drives.
+	Fixes PR#7299 and probably PR#15155 and PR#16883 too.
 	[jdc, ticket #969]
 
 sys/sys/param.h					1.153-1.154
@@ -2666,15 +2665,15 @@ sys/dev/pci/eap.c				1.59
 
 etc/etc.i386/MAKEDEV				1.188-1.189
 
-	Reorder dpti and dpt cases so that 'dptiN' is not interpreted as dpt 
-	unit number 'iN'.
+	Reorder dpti and dpt cases so that 'dptiN' is not interpreted
+	as dpt unit number 'iN'.
 	[seb, ticket #1036]
 
 sys/arch/sun3/include/bswap.h			1.3
 
-	Make this identical to the other m68k machine/bswap.h by including
-	m68k/bswap.h instead of sys/bswap.h.
-	Fixes part of PR#18314.
+	Make this identical to the other m68k machine/bswap.h by
+	including m68k/bswap.h instead of sys/bswap.h.  Fixes part
+	of PR#18314.
 	[kristerw, ticket #1038]
 
 gnu/dist/toolchain/gcc/except.c			1.2
@@ -2691,74 +2690,74 @@ sys/sys/malloc.h                                1.80-1.81 (via hand patch)
 
 usr.sbin/user/user.c				1.52-1.53
 
-	Remove user from supplementary groups when deleting a user and not
-	preserving information.
-	Remove BUGS section from userdel(8) accordingly.
-	Make this utility compile with WARNS=3 - add const-poisoning and
-	shadow variable name resolution.
+	Remove user from supplementary groups when deleting a user
+	and not preserving information.  Remove BUGS section from
+	userdel(8) accordingly.  Make this utility compile with
+	WARNS=3 - add const-poisoning and shadow variable name
+	resolution.
 	[he, ticket #1041]
 
 usr.sbin/user/user.c				1.61-1.62
 
-	Handle PR 18474 in a more safe and scalable fashion - keep a table of
-	password types, and their associated lengths, and check in useradd or
-	usermod whether the given encrypted password has the correct length.
-	This removes the (duplicated) hardcoded lengths which had crept in
-	with the last commit, and also checks the length of the given password
-	against the expected length.
+	Handle PR#18474 in a more safe and scalable fashion - keep
+	a table of password types, and their associated lengths,
+	and check in useradd or usermod whether the given encrypted
+	password has the correct length.  This removes the (duplicated)
+	hardcoded lengths which had crept in with the last commit,
+	and also checks the length of the given password against
+	the expected length.
 	[he, ticket #1041]
 
 usr.sbin/sunlabel/sunlabel.c			1.6
 
-	sweep of errx/warnx, remove unnecessary trailing \n
+	Sweep of errx/warnx, remove unnecessary trailing \n.
 	[lukem, ticket #1042]
 
 usr.sbin/sunlabel/sunlabel.c			1.7
 
-	improve help display
-	minor KNF
+	Improve help display.
+	Minor tweaks to better conform to KNF.
 	[lukem, ticket #1042]
 
 usr.sbin/sunlabel/sunlabel.8			1.4
 usr.sbin/sunlabel/sunlabel.c			1.8
 
-	- make "device" non optional and remove "-d device", and actually make
-	  it work with "device"...
-	- tweak the docco a bit
+	- Make "device" non optional and remove "-d device", and
+	  actually make it work with "device".
+	- Tweak the documentaiton a bit.
 	[lukem, ticket #1042]
 
 usr.sbin/Makefile				1.182
 
-	enable sunlabel
+	Enable sunlabel.
 	[lukem, ticket #1043]
 
 distrib/sets/lists/base/mi			1.375
 distrib/sets/lists/man/mi			1.537
 
-	add sunlabel
+	Add sunlabel.
 	[lukem, ticket #1043]
 
 tools/Makefile					1.61
 
-	enable sunlabel...
+	Enable sunlabel.
 	[lukem, ticket #1043]
 
 share/mk/bsd.sys.mk				1.83
 
-	add SUNLABEL
+	Add SUNLABEL
 	[lukem, ticket #1043]
 
 distrib/sparc/bootfs/Makefile			1.38
 
-	Add some magic with ${SUNLABEL} into ${IMAGEPOSTBUILD} (after
-	${INSTALLBOOT} runs) to ensure that boot.fs has a valid Sun disklabel.
-	Sparc boot floppies now boot.
+	Add some magic with ${SUNLABEL} into ${IMAGEPOSTBUILD}
+	(after ${INSTALLBOOT} runs) to ensure that boot.fs has a
+	valid Sun disklabel.  Sparc boot floppies now boot.
 	[lukem, ticket #1044]
 
 etc/daily					1.47
 
-	fix /etc/security stderr redirection.
-	from rad@twig.com in PR bin/19553.
+	Fix /etc/security stderr redirection.  Fixes PR#19553.
 	[grant, ticket #1046]
 
 sys/sys/cdefs.h					1.46
@@ -2771,16 +2770,17 @@ crypto/dist/krb4/lib/krb/krb.h.in		1.4
 
 sys/dev/usb/umass.c				1.93
 
-	Assign NULL to sc_pipe after closing, so that usbd_close_pipe isn't
-	called twice. At least in NetBSD, the detach function is called when
-	the device is removed, even if the attach function has failed.
-	This is probably the cause of panics reported in kern/19326.
+	Assign NULL to sc_pipe after closing, so that usbd_close_pipe
+	isn't called twice. At least in NetBSD, the detach function
+	is called when the device is removed, even if the attach
+	function has failed.  This is probably the cause of panics
+	reported in PR#19326.
 	[toshii, ticket #1054]
 
 sys/dev/pci/emuxki.c				1.13-1.14
 
-	Use bus_space_write_2() to write the 16 bit register "EMU_TIMER" which
-	should fix PR kern/15663. Patch supplied by Yorick Hardy via GNATS.
+	Use bus_space_write_2() to write the 16 bit register
+	"EMU_TIMER" which should fix PR#15663.
 	[tron, ticket #1056]
 
 sys/dev/usb/umass.c				1.91-1.92
@@ -2800,28 +2800,27 @@ usr.bin/cksum/cksum.1				1.20-1.21
 
 lib/libedit/refresh.c				1.18-1.19
 
-	PR/17954: SAITOH Masanobu: since we have opost and onlcr set, we don't 
-	need to output \r to go to the end of line; \n is enough. 
-	From David Laight.
+	Since we have opost and onlcr set, we don't need to output
+	\r to go to the end of line; \n is enough.  Fixes PR#17954.
 	[masanobu, ticket #1048]
 
 sys/arch/i386/i386/db_trace.c			1.31-1.32
 
-	stack frames can be overwrapped for eg. softintr.
+	Stack frames can be overwrapped for eg. softintr.
 	[masanobu, ticket #1047]
 
 usr.bin/file/ascmagic.c				1.20-1.21
 
 	Actually return a different code for big-endian UTF-16 in 
-	looks_unicode().  Fixes PR 19487.
+	looks_unicode().  Fixes PR#19487.
 	[is, ticket #1045]
 
 bin/pax/gen_subs.c				1.26-1.27 (via patch)
 bin/pax/pax.1					1.36-1.37
 
-	Change verbose output for symbolic links from "%s => %s" to
-	"%s -> %s", which matches ls(1) (per POSIX), as well as GNU
-	tar output.
+	Change verbose output for symbolic links from "%s => %s"
+	to "%s -> %s", which matches ls(1) (per POSIX), as well as
+	GNU tar output.
 	[kleink, ticket #1040]
 
 sys/ufs/ffs/ffs_alloc.c				1.56-1.57
@@ -2832,29 +2831,31 @@ sys/ufs/ffs/ffs_alloc.c				1.56-1.57
 
 sys/ufs/ffs/ffs_softdep.c			1.38 (via patch)
 
-	several bugs:
-	- move calls to softdep_setup_pagecache() (which can sleep to allocate
-	  memory) outside the softdep lock.
-	- replace the softdep_flush_indir() hack (which tries to find another
-	  vnode to fsync when we are holding lots of buffer-cache buffers
-	  locked for long periods of time) with softdep_trackbufs() (which
-	  just kicks the syncer and sleeps under the same circumstances). the
-	  former method had a lock-ordering problem which would occasionally
+	Several bugs:
+	- Move calls to softdep_setup_pagecache() (which can sleep
+	  to allocate memory) outside the softdep lock.
+	- Replace the softdep_flush_indir() hack (which tries to
+	  find another vnode to fsync when we are holding lots of
+	  buffer-cache buffers locked for long periods of time) with
+	  softdep_trackbufs() (which just kicks the syncer and
+	  sleeps under the same circumstances). the former method
+	  had a lock-ordering problem which would occasionally
 	  deadlock.
-	- relax the assertion in softdep_sync_metadata() which says that we
-	  should never see D_ALLOCDIRECT deps for VREG vnodes. it's ok to see
-	  those attached to indirect blocks.
-	also, there's no need to splbio() while allocating the buffer headers
-	to which pagecache dependencies are attached, so remove that.
-	fixes all the problems in PR 19288.
+	- Relax the assertion in softdep_sync_metadata() which says
+	  that we should never see D_ALLOCDIRECT deps for VREG vnodes.
+	  It's OK to see those attached to indirect blocks.
+	Also, there's no need to splbio() while allocating the
+	buffer headers to which pagecache dependencies are attached,
+	so remove that.  Fixes PR#19288.
 	[chs, ticket #1053]
 
 include/rpc/rpc_com.h				0-1.1
 
-	Moved here from libc/rpc. Install this in /usr/include/rpc, just
-	like on Solaris. This wasn't done before, since it only contained
-	internal libc interfaces. These have been moved to rpc_internal.h,
-	and this file now contains some actual exported definitions.
+	Moved here from libc/rpc. Install this in /usr/include/rpc,
+	just like on Solaris. This wasn't done before, since it
+	only contained internal libc interfaces. These have been
+	moved to rpc_internal.h, and this file now contains some
+	actual exported definitions.
 	[fvdl, ticket #1037]
 
 include/rpc/Makefile				1.9-1.10
@@ -2934,32 +2935,34 @@ distrib/sets/lists/comp/mi			1.440.2.4-1.440.2.5 (hand patch)
 usr.sbin/pppd/pppd/main.c			1.41-1.42
 
 	Use "%u" instead "%d" in format string for bytes count reported at
-	termination. This should fix PR bin/19731.
+	termination.  This should fix PR#19731.
 	[tron, ticket #1058]
 
 lib/libc/stdio/snprintf.c			1.16-1.17
 lib/libc/stdio/vsnprintf.c			1.16-1.17
 
 	Fix two bugs:
-	1. snprintf(foo, 0. "XXX") is guaranteed not to write in foo by the
-	   standard (ISO/IEC 9899 7.19.6.5) but our implementation handles this
-	   as if the buffer has a size of (size_t)-1.
-	2. snprintf(NULL, 0, "XXX") leaks memory since cantwrite() allocates
-	   memory if _bf._base == NULL, and this buffer is never freed
-	   (PR 16483).
+	1. snprintf(foo, 0. "XXX") is guaranteed not to write in foo
+	   by the standard (ISO/IEC 9899 7.19.6.5) but our
+	   implementation handles this as if the buffer has a size of
+	   (size_t)-1.
+	2. snprintf(NULL, 0, "XXX") leaks memory since cantwrite()
+	   allocates memory if _bf._base == NULL, and this buffer is
+	   never freed (PR#16483).
 	[kristerw, ticket #1059]
 
 sys/netinet6/esp_rijndael.c			1.8-1.9
 sys/netkey/keydb.h				1.11-1.12 (hand patched)
 sys/netkey/keysock.c				1.20-1.21
 
-	allocate route_in6 in struct secashead, to avoid mistakenly overrun
-	the end of secashead.  Fixes PR18751.
+	Allocate route_in6 in struct secashead, to avoid mistakenly
+	overrun the end of secashead.  Fixes PR#18751.
 	[itojun, ticket #1060]
 
 sys/net/if_spppsubr.c				1.47-1.48
 
-	correct tcp header chasing in pp_fastq processing. should fix kern/17491
+	Correct tcp header chasing in pp_fastq processing. should
+	fix PR#17491.
 	[tron, ticket #1061]
 
 sys/arch/atari/conf/GENERIC.in			1.29-1.30
@@ -2981,24 +2984,27 @@ sys/adosfs/advnops.c				via hand patch of diffs
 						from 1.1-1.2 of 
 						sys/fs/adosfs/advnops.c
 
-	Don't scale file block numbers. Fixes mmap() and UBCified read() 
-	problems.
+	Don't scale file block numbers. Fixes mmap() and UBCified
+	read() problems.
 	[lonewolf, ticket #1063]
 
 libexec/ftpd/cmds.c				1.19-1.20
 
-	ftpd was unable to service the pwd request once you entered a directory
-	without search permission. This confused some ftp clients.
+	ftpd was unable to service the pwd request once you entered
+	a directory without search permission. This confused some
+	ftp clients.
 
-	We fix this problem by maitaining a cached path when getcwd() does not
-	work. The symbolic links and ../ are resolved in the cached path, and it
-	is finnally checked for accuracy by comparing ./ and the cached path
-	with stat (device and inode comparison). If the comparison fails, pwd
-	fails as it did before, and if the comparison succeeds, the cached path
-	is displayed.
+	We fix this problem by maitaining a cached path when getcwd()
+	does not work. The symbolic links and ../ are resolved in
+	the cached path, and it is finnally checked for accuracy
+	by comparing ./ and the cached path with stat (device and
+	inode comparison). If the comparison fails, pwd fails as
+	it did before, and if the comparison succeeds, the cached
+	path is displayed.
 
-	If paths are too long, we should just compare ./ with a truncated path
-	and fail, thus making pwd displaying an error as it did before.
+	If paths are too long, we should just compare ./ with a
+	truncated path and fail, thus making pwd displaying an
+	error as it did before.
 	[manu, ticket #1064]
 
 sbin/fdisk/fdisk.c				1.58-1.59
@@ -3009,39 +3015,57 @@ sbin/fdisk/fdisk.c				1.58-1.59
 sys/arch/amiga/amiga/locore.s			1.132-1.133
 sys/arch/amiga/amiga/amiga_init.c		1.82-1.83 (hand patched)
 
-	Change the bootstrap procedure to avoid temporarily mapping physical 
-	memory.
+	Change the bootstrap procedure to avoid temporarily mapping
+	physical memory.
 	
-	Now, on the Amiga, we copy a small piece of code to chip memory and 
-	enable the MMU from here.
-	On the DraCo, we setup %itt0 so that we shadow physical memory without
-	touching the page tables and very temporarily. The DraCo's memory layout
-	guarantees that there is no overlap in this case between physical and
-	virtual addresses.
+	Now, on the Amiga, we copy a small piece of code to chip
+	memory and enable the MMU from here.
+	On the DraCo, we setup %itt0 so that we shadow physical
+	memory without touching the page tables and very temporarily.
+	The DraCo's memory layout guarantees that there is no
+	overlap in this case between physical and virtual addresses.
 	
-	This fixes a bug where Amiga's with physical memory at 0x200000 
-	wouldn't boot kernels >2M in size, and possibly other corner cases.
+	This fixes a bug where Amiga's with physical memory at
+	0x200000 wouldn't boot kernels >2M in size, and possibly
+	other corner cases.
 	[aymeric, ticket #1066]
 
 sys/arch/i386/stand/biosboot/version		1.13-1.14
 sys/arch/i386/stand/lib/biosdisk_ll.c		1.12-1.13
 
-	If booting from floppy in 2.88MB drive, actually test if it's possible
-	to read sector 18, and fallback to 1.44MB drive geometry if that fails.
-	This allows to boot from 1.44MB floppy disk in 2.88MB drive.
-	Tested with 2.88MB drive in IBM PS/2 model 95 donated
-	by 'Yokotashi' <lhc at kanal ucw cz> and Pavel Cahyna
-	<pavel.cahyna at st ms mff cuni cz>
-	Bump biosboot version.
+	If booting from floppy in 2.88MB drive, actually test if
+	it's possible to read sector 18, and fallback to 1.44MB
+	drive geometry if that fails.  This allows to boot from
+	1.44MB floppy disk in 2.88MB drive.  Tested with 2.88MB
+	drive in IBM PS/2 model 95.  Bump biosboot version.
 
-	Fixes PR kern/3418 by Keith Moore.
+	Fixes PR#3418.
 	[jdolecek, ticket #1067]
 
 share/termcap/termcap.src			1.73
 
-	Wscons terminals (wsvt25) have 25 lines, so we shouldn't use the vt220
-	initialisation sequence (which sets the scrolling region to the top 24
-	lines).
-	Noticed by Martin Husemann.
+	Wscons terminals (wsvt25) have 25 lines, so we shouldn't
+	use the vt220 initialisation sequence (which sets the
+	scrolling region to the top 24 lines).
 	[jdc, ticket #1068]
 
+sys/dev/ic/smc83c170.c				1.52
+sys/dev/ic/smc83c170var.h			1.7
+
+	For short (< ETHER_MIN_LEN) packets, supply a zeroed buffer
+	for the extra bytes to make sure the chip doesn't send
+	random data.
+	[bouyer, ticket #1083]
+
+sys/dev/ic/dp83932.c				1.6-1.8
+sys/dev/ic/dp83932var.h				1.4
+
+	Use a properly zeroed buffer to pad small packets to make
+	sure the chip doesn't send random data.
+	[bouyer, ticket #1084]
+
+sys/dev/ic/rtl81x9.c				1.44 via patch
+
+	Use a properly zeroed buffer to pad small packets to make
+	sure the chip doesn't send random data.
+	[bouyer, ticket #1086]
