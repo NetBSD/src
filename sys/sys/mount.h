@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.74.4.2 1999/07/01 23:50:36 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.74.4.3 1999/07/04 01:49:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -126,6 +126,8 @@ struct mount {
 	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
+	int		mnt_fs_bshift;		/* offset shift for lblkno */
+	int		mnt_dev_bshift;		/* sector shift of device */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	qaddr_t		mnt_data;		/* private data */
 };
