@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 2002/03/13 01:27:00 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.29 2002/03/16 16:05:22 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,7 +105,7 @@ all)
 	;;
 
 floppy)
-	makedev std sd0 sd1 cd0 st0 st1 opty tty0 tty1 md0 wscons
+	makedev std sd0 sd1 sd2 sd3 cd0 st0 st1 opty tty0 tty1 md0 wscons
 	;;
 
 std)
