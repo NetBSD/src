@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2001/08/23 14:17:27 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2002/03/29 15:15:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ prom2boot(dev)
 	char *dev;
 {
 	char *cp;
-	
+
 	cp = dev + strlen(dev) - 1;
 	for (; *cp; cp--) {
 		if (*cp == ':') {
@@ -218,9 +218,7 @@ main()
 				ofw_version = *cp - '0';
 				break;
 			}
-#if 0
-		printf(">> Open Firmware version %d.x\n", ofw_version);
-#endif
+		DPRINTF(">> Open Firmware version %d.x\n", ofw_version);
 	}
 
 	/*
@@ -307,7 +305,7 @@ loaded:
 	entry = marks[MARK_ENTRY];
 	ssym = (void *)marks[MARK_SYM];
 	esym = (void *)marks[MARK_END];
-	
+
 	printf(" start=0x%x\n", entry);
 	__syncicache((void *)entry, (u_int)ssym - (u_int)entry);
 	chain((void *)entry, bootline, ssym, esym);
