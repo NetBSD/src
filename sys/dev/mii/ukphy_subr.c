@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.2 1998/11/05 04:08:02 thorpej Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.3 1999/11/03 22:30:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ ukphy_status(phy)
 	struct mii_softc *phy;
 {
 	struct mii_data *mii = phy->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -108,5 +109,5 @@ ukphy_status(phy)
 		else
 			mii->mii_media_active |= IFM_NONE;
 	} else
-		mii->mii_media_active = mii_media_from_bmcr(bmcr);
+		mii->mii_media_active = ife->ifm_media;
 }
