@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.1.1.4 2000/05/14 22:44:19 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.1.1.5 2000/09/22 16:01:07 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -35,7 +35,7 @@
 #include "file.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: apprentice.c,v 1.32 2000/04/23 04:32:19 christos Exp ")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.33 2000/08/05 17:36:47 christos Exp ")
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -63,8 +63,8 @@ static int apprentice_1	__P((const char *, int));
 
 int
 apprentice(fn, check)
-const char *fn;			/* list of magic files */
-int check;			/* non-zero? checking-only run. */
+	const char *fn;			/* list of magic files */
+	int check;			/* non-zero? checking-only run. */
 {
 	char *p, *mfn;
 	int file_err, errs = -1;
@@ -102,8 +102,8 @@ int check;			/* non-zero? checking-only run. */
 
 static int
 apprentice_1(fn, check)
-const char *fn;			/* name of magic file */
-int check;			/* non-zero? checking-only run. */
+	const char *fn;			/* name of magic file */
+	int check;			/* non-zero? checking-only run. */
 {
 	static const char hdr[] =
 		"cont\toffset\ttype\topcode\tmask\tvalue\tdesc";
@@ -115,8 +115,8 @@ int check;			/* non-zero? checking-only run. */
 	if (f==NULL) {
 		if (errno != ENOENT)
 			(void) fprintf(stderr,
-			"%s: can't read magic file %s (%s)\n", 
-			progname, fn, strerror(errno));
+			    "%s: can't read magic file %s (%s)\n", 
+			    progname, fn, strerror(errno));
 		return -1;
 	}
 
@@ -143,8 +143,8 @@ int check;			/* non-zero? checking-only run. */
  */
 uint32
 signextend(m, v)
-struct magic *m;
-uint32 v;
+	struct magic *m;
+	uint32 v;
 {
 	if (!(m->flag & UNSIGNED))
 		switch(m->type) {
@@ -184,8 +184,8 @@ uint32 v;
  */
 static int
 parse(l, ndx, check)
-char *l;
-int *ndx, check;
+	char *l;
+	int *ndx, check;
 {
 	int i = 0, nd = *ndx;
 	struct magic *m;
@@ -193,19 +193,20 @@ int *ndx, check;
 
 #define ALLOC_INCR	200
 	if (nd+1 >= maxmagic){
-	    maxmagic += ALLOC_INCR;
-	    if ((m = (struct magic *) realloc(magic, sizeof(struct magic) * 
-					      maxmagic)) == NULL) {
-		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
-		if (magic)
-			free(magic);
-		if (check)
-			return -1;
-		else
-			exit(1);
-	    }
-	    magic = m;
-	    memset(&magic[*ndx], 0, sizeof(struct magic) * ALLOC_INCR);
+		maxmagic += ALLOC_INCR;
+		if ((m = (struct magic *) realloc(magic, sizeof(struct magic) * 
+						  maxmagic)) == NULL) {
+			(void) fprintf(stderr, "%s: Out of memory.\n",
+			    progname);
+			if (magic)
+				free(magic);
+			if (check)
+				return -1;
+			else
+				exit(1);
+		}
+		magic = m;
+		memset(&magic[*ndx], 0, sizeof(struct magic) * ALLOC_INCR);
 	}
 	m = &magic[*ndx];
 	m->flag = 0;
@@ -445,8 +446,8 @@ GetDesc:
  */
 static int
 getvalue(m, p)
-struct magic *m;
-char **p;
+	struct magic *m;
+	char **p;
 {
 	int slen;
 
@@ -469,14 +470,14 @@ char **p;
  */
 static char *
 getstr(s, p, plen, slen)
-register char	*s;
-register char	*p;
-int	plen, *slen;
+	char	*s;
+	char	*p;
+	int	plen, *slen;
 {
 	char	*origs = s, *origp = p;
 	char	*pmax = p + plen - 1;
-	register int	c;
-	register int	val;
+	int	c;
+	int	val;
 
 	while ((c = *s++) != '\0') {
 		if (isspace((unsigned char) c))
@@ -572,13 +573,17 @@ out:
 /* Single hex char to int; -1 if not a hex char. */
 static int
 hextoint(c)
-int c;
+	int c;
 {
-	if (!isascii((unsigned char) c))	return -1;
-	if (isdigit((unsigned char) c))		return c - '0';
-	if ((c>='a')&&(c<='f'))	return c + 10 - 'a';
-	if ((c>='A')&&(c<='F'))	return c + 10 - 'A';
-				return -1;
+	if (!isascii((unsigned char) c))
+		return -1;
+	if (isdigit((unsigned char) c))
+		return c - '0';
+	if ((c >= 'a')&&(c <= 'f'))
+		return c + 10 - 'a';
+	if (( c>= 'A')&&(c <= 'F'))
+		return c + 10 - 'A';
+	return -1;
 }
 
 
@@ -587,11 +592,11 @@ int c;
  */
 void
 showstr(fp, s, len)
-FILE *fp;
-const char *s;
-int len;
+	FILE *fp;
+	const char *s;
+	int len;
 {
-	register char	c;
+	char	c;
 
 	for (;;) {
 		c = *s++;
@@ -646,7 +651,7 @@ int len;
  */
 static void
 eatsize(p)
-char **p;
+	char **p;
 {
 	char *l = *p;
 
