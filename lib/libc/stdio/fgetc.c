@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetc.c,v 1.9 1999/09/20 04:39:26 lukem Exp $	*/
+/*	$NetBSD: fgetc.c,v 1.10 2003/07/18 21:52:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetc.c,v 1.9 1999/09/20 04:39:26 lukem Exp $");
+__RCSID("$NetBSD: fgetc.c,v 1.10 2003/07/18 21:52:17 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fgetc.c,v 1.9 1999/09/20 04:39:26 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include "reentrant.h"
+#include "local.h"
 
 int
 fgetc(fp)

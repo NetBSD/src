@@ -1,4 +1,4 @@
-/*	$NetBSD: rewind.c,v 1.11 2000/01/21 19:54:13 mycroft Exp $	*/
+/*	$NetBSD: rewind.c,v 1.12 2003/07/18 21:52:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rewind.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rewind.c,v 1.11 2000/01/21 19:54:13 mycroft Exp $");
+__RCSID("$NetBSD: rewind.c,v 1.12 2003/07/18 21:52:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: rewind.c,v 1.11 2000/01/21 19:54:13 mycroft Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include "reentrant.h"
+#include "local.h"
 
 void
 rewind(fp)

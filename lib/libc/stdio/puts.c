@@ -1,4 +1,4 @@
-/*	$NetBSD: puts.c,v 1.10 1999/09/20 04:39:31 lukem Exp $	*/
+/*	$NetBSD: puts.c,v 1.11 2003/07/18 21:52:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)puts.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: puts.c,v 1.10 1999/09/20 04:39:31 lukem Exp $");
+__RCSID("$NetBSD: puts.c,v 1.11 2003/07/18 21:52:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: puts.c,v 1.10 1999/09/20 04:39:31 lukem Exp $");
 #include <string.h>
 #include "fvwrite.h"
 #include "reentrant.h"
+#include "local.h"
 
 /*
  * Write the given string to stdout, appending a newline.
