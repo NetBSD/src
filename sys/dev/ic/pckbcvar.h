@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.3 2000/06/05 22:20:55 sommerfeld Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -103,7 +103,8 @@ int pckbc_xt_translation __P((pckbc_tag_t, pckbc_slot_t, int));
 void pckbc_slot_enable __P((pckbc_tag_t, pckbc_slot_t, int));
 
 void pckbc_attach __P((struct pckbc_softc *));
-int pckbc_cnattach __P((bus_space_tag_t, bus_addr_t, pckbc_slot_t));
+int pckbc_cnattach __P((bus_space_tag_t, bus_addr_t, bus_size_t,
+			pckbc_slot_t));
 int pckbc_is_console __P((bus_space_tag_t, bus_addr_t));
 int pckbcintr __P((void *));
 
