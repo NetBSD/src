@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.88 2004/04/18 21:49:09 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.89 2004/04/19 08:50:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.88 2004/04/18 21:49:09 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.89 2004/04/19 08:50:21 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -1077,4 +1077,3 @@ smp_vcache_flush_context(ctx)
 		ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */
-int xxxcnt = 0xa00000;
