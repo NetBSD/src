@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.148 2001/06/07 03:51:53 lukem Exp $
+# $NetBSD: ALPHA,v 1.149 2001/06/18 22:40:19 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.148 $"
+ident		"ALPHA-$Revision: 1.149 $"
 
 maxusers 32
 
@@ -248,10 +248,12 @@ eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
+gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
@@ -295,6 +297,7 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
