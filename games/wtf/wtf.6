@@ -1,4 +1,4 @@
-.\"	$NetBSD: wtf.6,v 1.2 1999/07/25 20:02:48 thorpej Exp $
+.\"	$NetBSD: wtf.6,v 1.3 1999/07/25 20:29:04 briggs Exp $
 .\"
 .\" Public Domain
 .\"
@@ -16,7 +16,11 @@
 The
 .Nm
 utility displays the expansion of the acronyms 
-specified on the command line.
+specified on the command line.  If the acronym is unknown,
+.Nm
+will check to see if the acronym is known by the
+.Xr whatis 1
+command.
 .Pp
 If
 .Dq is
@@ -37,6 +41,8 @@ to the name of a file in the proper format (acronym[tab]meaning).
 .It Pa /usr/share/misc/acronyms
 default acronym database.
 .El
+.Sh SEE ALSO
+.Xr whatis 1
 .Sh HISTORY
 .Nm
 first appeared in
