@@ -1,7 +1,7 @@
-/*	$NetBSD: asm.h,v 1.3 1996/04/12 01:35:58 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 1996/04/12 01:36:51 cgd Exp $	*/
 
 /* 
- * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
+ * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
