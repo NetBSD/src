@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.10 2001/03/12 08:46:27 sato Exp $	*/
+/*	$Id: vrc4172pwm.c,v 1.11 2001/03/24 15:53:37 sato Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -83,21 +83,27 @@ struct cfattach vrc4172pwm_ca = {
 /*
  * platform related parameters
  */
+struct vrc4172pwm_param vrc4172pwm_mcr520_param = {
+	1, /* probe broken */
+	8, /* levels */
+	{ 0x16, 0x1f, 0x24, 0x2a, 0x2f, 0x34, 0x3a, 0x3f }
+};
+
 struct vrc4172pwm_param vrc4172pwm_mcr530_param = {
 	0,
-	8,
+	8, /* levels */
 	{ 0x16, 0x1b, 0x20, 0x25, 0x2a, 0x30, 0x37, 0x3f }
 };
 
 struct vrc4172pwm_param vrc4172pwm_mcr700_param = {
 	1, /* probe broken */
-	8,
+	8, /* levels */
 	{ 0x12, 0x15, 0x18, 0x1d, 0x24, 0x2d, 0x38, 0x3f }
 };
 
 struct vrc4172pwm_param vrc4172pwm_sigmarion_param = {
 	0,
-	8,
+	8, /* levels */
 	{ 0xe, 0x13, 0x18, 0x1c, 0x23, 0x29, 0x32, 0x3f }
 };
 
@@ -105,6 +111,12 @@ struct vrc4172pwm_param vrc4172pwm_sigmarion_param = {
 struct platid_data vrc4172pwm_platid_param_table[] = {
 	{ &platid_mask_MACH_NEC_MCR_430, 
 		&vrc4172pwm_mcr530_param},
+	{ &platid_mask_MACH_NEC_MCR_510, 
+		&vrc4172pwm_mcr520_param},
+	{ &platid_mask_MACH_NEC_MCR_520, 
+		&vrc4172pwm_mcr520_param},
+	{ &platid_mask_MACH_NEC_MCR_520A, 
+		&vrc4172pwm_mcr520_param},
 	{ &platid_mask_MACH_NEC_MCR_530, 
 		&vrc4172pwm_mcr530_param},
 	{ &platid_mask_MACH_NEC_MCR_530A, 
@@ -241,6 +253,8 @@ vrc4172pwmattach(parent, self, aux)
 					vrc4172pwm_event, sc);
 
 	vrc4172pwm_init_brightness(sc);
+	if (sc->sc_param == NULL)
+		printf("vrc4172pwm: NO parameter found. DISABLE pwm control\n");;
 	this_pwm = sc;
 }
 
