@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.4 2003/01/17 23:36:18 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/01/17 23:36:18 thorpej Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.5 2003/09/26 12:02:56 simonb Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ int sigpid = 0;
  * Send a signal to process.
  */
 void
-sendsig(int sig, sigset_t *returnmask, u_long code)
+sendsig(int sig, const sigset_t *returnmask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

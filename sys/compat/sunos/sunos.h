@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.15 2003/09/22 14:34:58 cl Exp $	*/
+/*	$NetBSD: sunos.h,v 1.16 2003/09/26 12:02:57 simonb Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_
@@ -157,7 +157,7 @@ __BEGIN_DECLS
 #ifdef __HAVE_SIGINFO
 void	sunos_sendsig __P((struct ksiginfo *, sigset_t *));
 #else
-void	sunos_sendsig __P((int, sigset_t *, u_long));
+void	sunos_sendsig __P((int, const sigset_t *, u_long));
 #endif
 __END_DECLS
 

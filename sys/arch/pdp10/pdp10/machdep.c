@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2003/08/19 10:55:00 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2003/09/26 12:02:56 simonb Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -199,7 +199,7 @@ sys___sigreturn14(struct lwp *p, void *v, register_t *retval)
 }
 
 void
-sendsig(int sig, sigset_t *mask, u_long code)
+sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	panic("sendsig");
 }
