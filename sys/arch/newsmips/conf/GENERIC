@@ -1,8 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.16 2000/01/23 15:27:43 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.17 2000/01/23 23:46:15 hubertf Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
+
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	16
 

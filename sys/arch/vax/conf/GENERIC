@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.56 2000/01/20 19:12:36 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.57 2000/01/23 23:46:20 hubertf Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
+
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"

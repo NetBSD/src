@@ -1,6 +1,8 @@
-#	$NetBSD: GENERIC,v 1.4 1999/11/21 14:00:41 itojun Exp $
+#	$NetBSD: GENERIC,v 1.5 2000/01/23 23:46:14 hubertf Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
+
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 # Boards this kernel supports
 options 	MVME147
