@@ -228,17 +228,23 @@ symbolS *symbol_rootP;
 		temp = S_GET_NAME(symbolP);
 		S_SET_OFFSET(symbolP, symbolP->sy_name_offset);
 		
-		/* Any symbol still undefined and is not a dbg symbol is made N_EXT. */
-		if (!S_IS_DEBUG(symbolP) && !S_IS_DEFINED(symbolP))
-			S_SET_EXTERNAL(symbolP);
+		if (!S_IS_SET(symbolP)) {
+			/*
+			 * Any symbol still undefined and is not a dbg symbol
+			 * is made N_EXT.
+			 */
+			if (!S_IS_DEBUG(symbolP) && !S_IS_DEFINED(symbolP))
+				S_SET_EXTERNAL(symbolP);
 		
-		/*
-		 * Put aux info in lower four bits of `n_other' field
-		 * Do this only now, because things like S_IS_DEFINED()
-		 * depend on S_GET_OTHER() for some unspecified reason.
-		 */
-		S_SET_OTHER(symbolP,
-			(symbolP->sy_bind << 4) | (symbolP->sy_aux & 0xf) );
+			/*
+			 * Put aux info in lower four bits of `n_other' field
+			 * Do this only now, because things like S_IS_DEFINED()
+			 * depend on S_GET_OTHER() for some unspecified reason.
+			 */
+			S_SET_OTHER(symbolP,
+				(symbolP->sy_bind << 4) |
+				(symbolP->sy_aux & 0xf) );
+		}
 
 		if (S_GET_TYPE(symbolP) == N_SIZE) {
 			expressionS	*exp = (expressionS*)symbolP->sy_sizexp;
@@ -469,10 +475,7 @@ object_headers *headers;
 	/* JF deal with forward references first... */
 	for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next(symbolP)) {
 		if (symbolP->sy_forward && symbolP->sy_forward != symbolP) {
-			if (symbolP->sy_symbol.n_type != N_SETA &&
-			    symbolP->sy_symbol.n_type != N_SETT &&
-			    symbolP->sy_symbol.n_type != N_SETD &&
-			    symbolP->sy_symbol.n_type != N_SETB) {
+			if (!S_IS_SET(symbolP)) {
 				S_SET_SEGMENT(symbolP,
 					      S_GET_SEGMENT(symbolP->sy_forward));
 				if (S_IS_EXTERNAL(symbolP->sy_forward)

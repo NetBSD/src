@@ -17,7 +17,7 @@
    License along with GAS; see the file COPYING.  If not, write
    to the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   $Id: obj-aout.h,v 1.6 1996/04/14 11:31:54 pk Exp $
+   $Id: obj-aout.h,v 1.7 1998/11/24 18:24:31 mycroft Exp $
  */
 
 
@@ -85,6 +85,11 @@ typedef struct nlist obj_symbol_type; /* Symbol table entry */
 #define S_IS_EXTERN(s)		((s)->sy_symbol.n_type & N_EXT)
 /* True if the symbol has been generated because of a .stabd directive */
 #define S_IS_STABD(s)		(S_GET_NAME(s) == (char *)0)
+/* True if the symbol is a linker set */
+#define	S_IS_SET(s)		((s)->sy_symbol.n_type == N_SETA || \
+				 (s)->sy_symbol.n_type == N_SETT || \
+				 (s)->sy_symbol.n_type == N_SETD || \
+				 (s)->sy_symbol.n_type == N_SETB)
 
 /* Accessors */
 /* The value of the symbol */
