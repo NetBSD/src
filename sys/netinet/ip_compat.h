@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.1.1.10 1998/05/29 20:14:29 veego Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.1.1.11 1998/07/12 14:48:20 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.31.2.11 1998/05/23 14:29:36 darrenr Exp 
+ * Id: ip_compat.h,v 2.0.2.31.2.12 1998/06/06 14:36:38 darrenr Exp 
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -203,7 +203,15 @@ typedef unsigned long   u_32_t;
  */
 #ifdef KERNEL
 # if SOLARIS
-#  define	MUTEX_ENTER(x)	mutex_enter(x)
+#  define	ATOMIC_INC(x)		{ mutex_enter(&ipf_rw); (x)++; \
+					  mutex_exit(&ipf_rw); }
+#  define	ATOMIC_DEC(x)		{ mutex_enter(&ipf_rw); (x)--; \
+					  mutex_exit(&ipf_rw); }
+#  define	MUTEX_ENTER(x)		mutex_enter(x)
+#  define	READ_ENTER(x)		rw_enter(x, RW_READER)
+#  define	WRITE_ENTER(x)		rw_enter(x, RW_WRITER)
+#  define	MUTEX_DOWNGRADE(x)	rw_downgrade(x)
+#  define	RWLOCK_EXIT(x)	rw_exit(x)
 #  define	MUTEX_EXIT(x)	mutex_exit(x)
 #  define	MTOD(m,t)	(t)((m)->b_rptr)
 #  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
@@ -255,10 +263,24 @@ typedef struct {
 	lock_t *l;
 	int pl;
 } kmutex_t;
-#   define	MUTEX_ENTER(x)	(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
+#  define	ATOMIC_INC(x)		{ MUTEX_ENTER(&ipf_rw); \
+					  (x)++; MUTEX_EXIT(&ipf_rw); }
+#  define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); \
+					  (x)--; MUTEX_EXIT(&ipf_rw); }
+#   define	MUTEX_ENTER(x)		(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
+#   define	READ_ENTER(x)		MUTEX_ENTER(x)
+#   define	WRITE_ENTER(x)		MUTEX_ENTER(x)
+#   define	MUTEX_DOWNGRADE(x)	;
+#   define	RWLOCK_EXIT(x)	MUTEX_EXIT(x)
 #   define	MUTEX_EXIT(x)	UNLOCK((x)->l, (x)->pl);
 #  else /* __sgi */
-#   define	MUTEX_ENTER(x)	;
+#   define	ATOMIC_INC(x)		(x)++
+#   define	ATOMIC_DEC(x)		(x)--
+#   define	MUTEX_ENTER(x)		;
+#   define	READ_ENTER(x)	;
+#   define	WRITE_ENTER(x)	;
+#   define	MUTEX_DOWNGRADE(x)	;
+#   define	RWLOCK_EXIT(x)	;
 #   define	MUTEX_EXIT(x)	;
 #  endif /* __sgi */
 #  ifndef linux
@@ -341,7 +363,13 @@ extern	vm_map_t	kmem_map;
 # define	SLEEP(x,y)	;
 # define	WAKEUP(x)	;
 # define	PANIC(x,y)	;
+# define	ATOMIC_INC(x)	(x)++
+# define	ATOMIC_DEC(x)	(x)--
 # define	MUTEX_ENTER(x)	;
+# define	READ_ENTER(x)	;
+# define	WRITE_ENTER(x)	;
+# define	MUTEX_DOWNGRADE(x)	;
+# define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPL_NET(x)	;
 # define	SPL_IMP(x)	;

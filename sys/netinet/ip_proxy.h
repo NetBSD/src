@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.1.7 1998/05/17 16:30:03 veego Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.1.8 1998/07/12 14:48:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.1.1.10 1998/05/29 20:14:28 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.1.1.11 1998/07/12 14:48:20 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.0.2.39.2.11 1998/05/23 14:29:37 darrenr Exp 
+ * Id: ip_fil.h,v 2.0.2.39.2.12 1998/06/06 14:36:49 darrenr Exp 
  */
 
 #ifndef	__IP_FIL_H__
@@ -116,6 +116,9 @@ typedef	struct	fr_info	{
 	struct	frentry *fin_fr;
 	char	*fin_dp;		/* start of data past IP header */
 	void	*fin_mp;
+#if SOLARIS && defined(_KERNEL)
+	void	*fin_qfm;
+#endif
 } fr_info_t;
 
 /*

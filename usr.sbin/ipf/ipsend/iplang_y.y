@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.1.1.5 1998/05/29 20:14:24 veego Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.1.1.6 1998/07/12 14:48:14 veego Exp $	*/
 
 %{
 /*
