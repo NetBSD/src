@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.72 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: scc.c,v 1.73 2002/09/26 20:36:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.72 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.73 2002/09/26 20:36:14 thorpej Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -334,16 +334,8 @@ sccmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	extern struct cfdriver ioasic_cd;		/* XXX */
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
-
-	if (parent->dv_cfdata->cf_driver != &ioasic_cd) {
-#ifdef DIAGNOSTIC
-		printf("Cannot attach scc on %s\n", parent->dv_xname);
-#endif
-		return (0);
-	}
 
 	/* Make sure that we're looking for this type of device. */
 	if ((strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN) != 0) &&
