@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.158 2002/06/23 01:36:07 gmcgarry Exp $	*/
+/*	$NetBSD: audio.c,v 1.159 2002/07/10 02:25:49 gson Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.158 2002/06/23 01:36:07 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.159 2002/07/10 02:25:49 gson Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1263,13 +1263,12 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			 * The format of data in sc_rconvbuffer is
 			 * [sample_rate, hw_encoding, hw_precision, channels]
 			 */
-			used -= cc;
 			outp += cc;
 			if (outp >= cb->end)
 				outp -= cb->end - cb->start;
 			s = splaudio();
 			cb->outp = outp;
-			cb->used = used;
+			cb->used -= cc;
 			cb->copying = 0;
 			splx(s);
 
