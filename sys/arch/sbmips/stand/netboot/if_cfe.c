@@ -1,4 +1,4 @@
-/* $NetBSD: if_cfe.c,v 1.1 2002/11/09 06:20:42 cgd Exp $ */
+/* $NetBSD: if_cfe.c,v 1.2 2003/03/13 13:59:11 drochner Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -61,8 +61,9 @@ struct netif_dif cfenet_ifs[] = {
 /*	dif_unit	dif_nsel	dif_stats	dif_private	*/
 {	0,		1,		&cfenet_stats[0],	0,		},
 };
+#define NCFENET_IFS (sizeof(cfenet_ifs) / sizeof(cfenet_ifs[0]))
 
-struct netif_stats cfenet_stats[NENTS(cfenet_ifs)];
+struct netif_stats cfenet_stats[NCFENET_IFS];
 
 struct netif_driver prom_netif_driver = {
 	"cfe",			/* netif_bname */
@@ -73,7 +74,7 @@ struct netif_driver prom_netif_driver = {
 	cfenet_put,		/* netif_put */
 	cfenet_end,		/* netif_end */
 	cfenet_ifs,		/* netif_ifs */
-	NENTS(cfenet_ifs)		/* netif_nifs */
+	NCFENET_IFS		/* netif_nifs */
 };
 
 int
