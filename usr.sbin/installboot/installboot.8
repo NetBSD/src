@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.5 2002/04/04 07:27:44 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.6 2002/04/04 11:06:47 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,7 +187,7 @@ Append
 .Ar bootstrap
 to the end of
 .Ar filesystem ,
-which much be a regular file in this case.
+which must be a regular file in this case.
 .
 .It Sy sunsum
 .Em [ pmax ,
@@ -195,7 +195,8 @@ which much be a regular file in this case.
 Recalculate and restore the Sun and
 .Nx Ns Tn /sparc
 compatible checksum.
-.Em Note : No The existing
+.Em Note :
+The existing
 .Nx Ns Tn /sparc
 disklabel should use no more than 4 partitions.
 .El
@@ -266,9 +267,7 @@ Install the Berkeley Fast File System primary bootstrap on to disk sd0:
 .Pp
 Remove the primary bootstrap from disk wd1:
 .Dl Ic installboot -c /dev/rwd1c
-.Pp
 .Ss NetBSD/pmax examples
-.Pp
 Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image :
 .Dl Ic installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
@@ -300,7 +299,7 @@ appeared in
 .Nx 1.6 .
 .
 .Sh AUTHORS
-The machine independant portion of this implementation of
+The machine independent portion of this implementation of
 .Nm
 was written by Luke Mewburn.
 The following people contributed to the various machine dependent
@@ -308,19 +307,17 @@ back-ends:
 Simon Burge (pmax),
 Chris Demetriou (alpha),
 Ross Harvey (alpha),
-Matth Thomas (vax).
+Matt Thomas (vax).
 .
 .Sh BUGS
 There are not currently primary bootstraps to support all file systems
 types which are capable of being the root file system.
-.Pp
 .Ss NetBSD/pmax bugs
-.Pp
 The
 .Nx Ns Tn /pmax
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
-though some file systems (e.g. ISO 9660) are able to accomodate larger
+though some file systems (e.g. ISO 9660) are able to accommodate larger
 ones.
