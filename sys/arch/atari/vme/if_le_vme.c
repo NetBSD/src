@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.3 1997/03/17 03:17:36 thorpej Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.4 1997/03/17 13:29:05 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -51,10 +51,11 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/cpu.h>
@@ -347,18 +348,18 @@ le_vme_attach(parent, self, aux)
 	 */
 	switch (lesc->sc_type) {
 	    case LE_OLD_RIEBL:
-		bcopy(riebl_def_mac, sc->sc_arpcom.ac_enaddr,
-					sizeof(sc->sc_arpcom.ac_enaddr));
+		bcopy(riebl_def_mac, sc->sc_enaddr,
+					sizeof(sc->sc_enaddr));
 		break;
 	    case LE_NEW_RIEBL:
-		for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		    sc->sc_arpcom.ac_enaddr[i] =
+		for (i = 0; i < sizeof(sc->sc_enaddr); i++)
+		    sc->sc_enaddr[i] =
 			bus_space_read_1(va->va_memt, memh, i + RIEBL_MAC_ADDR);
 			break;
 	    case LE_PAM:
 		i = bus_space_read_1(va->va_iot, ioh, LER_EEPROM);
-		for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++) {
-		    sc->sc_arpcom.ac_enaddr[i] =
+		for (i = 0; i < sizeof(sc->sc_enaddr); i++) {
+		    sc->sc_enaddr[i] =
 			(bus_space_read_2(va->va_memt, memh, 2 * i) << 4) |
 			(bus_space_read_2(va->va_memt, memh, 2 * i + 1) & 0xf);
 		}
