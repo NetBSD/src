@@ -29,9 +29,19 @@ DDEESSCCRRIIPPTTIIOONN
        --AAcc    Show  the mail submission queue specified in _/_e_t_c_/_m_a_i_l_/_s_u_b_m_i_t_._c_f
               instead of the MTA queue specified in _/_e_t_c_/_m_a_i_l_/_s_e_n_d_m_a_i_l_._c_f.
 
+       --qqLL    Show the "lost" items in the mail queue instead  of  the  normal
+              queue items.
+
+       --qqQQ    Show the quarantined items in the mail queue instead of the nor-
+              mal queue items.
+
        --qq[_!]I substr
               Limit processed jobs to those containing _s_u_b_s_t_r as  a  substring
               of the queue id or not when _!  is specified.
+
+       --qq[_!]Q substr
+              Limit  processed jobs to quarantined jobs containing _s_u_b_s_t_r as a
+              substring of the quarantine reason or not when _!  is  specified.
 
        --qq[_!]R substr
               Limit  processed  jobs to those containing _s_u_b_s_t_r as a substring
@@ -61,4 +71,4 @@ HHIISSTTOORRYY
 
 
 
-                         Date: 2002/09/26 23:03:39                 MAILQ(1)
+                         Date: 2002/06/27 22:47:34                 MAILQ(1)

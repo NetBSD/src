@@ -1,4 +1,4 @@
-.\" Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -9,10 +9,10 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	Id: vacation.1,v 8.29.2.1 2002/06/21 21:28:06 ca Exp
-.\"	$NetBSD: vacation.1,v 1.7 2003/06/01 14:07:10 atatat Exp $
+.\"	Id: vacation.1,v 8.34 2002/06/27 23:51:52 ca Exp
+.\"	$NetBSD: vacation.1,v 1.8 2005/03/15 02:14:20 atatat Exp $
 .\"
-.TH VACATION 1 "Date: 2002/06/21 21:28:06"
+.TH VACATION 1 "Date: 2002/06/27 23:51:52"
 .SH NAME
 vacation
 \- E-mail auto-responder
@@ -27,9 +27,12 @@ vacation
 .IR database ]
 .RB [ \-i ]
 .RB [ \-I ]
+.RB [ \-j ]
 .RB [ \-l ]
 .RB [ \-m
 .IR message ]
+.RB [ \-R 
+.IR returnaddr ]
 .RB [ \-r 
 .IR interval ]
 .RB [ \-s
@@ -119,6 +122,15 @@ This should only be used on the command line, not in your
 .I .forward
 file.
 .TP
+.B \-j
+Respond to the message regardless of whether the login is listed as
+a recipient for the message.
+Do not use this flag unless you are sure of the consequences.
+For example, this will cause
+.i vacation
+to reply to mailing list messages which may result in removing
+you from the list.
+.TP
 .B \-l
 List the content of the vacation database file including the address
 and the associated time of the last auto-response to that address.
@@ -134,6 +146,9 @@ as name of the file containing the message to send instead of
 Unless the
 .I filename
 starts with / it is relative to ~.
+.TP
+.BI \-R " returnaddr"
+Set the reply envelope sender address
 .TP
 .BI \-r " interval"
 Set the reply interval to

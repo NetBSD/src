@@ -1,7 +1,7 @@
-/* $NetBSD: mci.c,v 1.8 2004/03/25 19:14:31 atatat Exp $ */
+/* $NetBSD: mci.c,v 1.9 2005/03/15 02:14:17 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mci.c,v 1.8 2004/03/25 19:14:31 atatat Exp $");
+__RCSID("$NetBSD: mci.c,v 1.9 2005/03/15 02:14:17 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: mci.c,v 1.8 2004/03/25 19:14:31 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: mci.c,v 8.205.2.4 2003/03/31 17:35:27 ca Exp")
+SM_RCSID("@(#)Id: mci.c,v 8.212 2004/08/04 21:11:31 ca Exp")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -493,6 +493,7 @@ mci_setstat(mci, xstat, dstat, rstat)
 **  MCI_DUMP -- dump the contents of an MCI structure.
 **
 **	Parameters:
+**		fp -- output file pointer
 **		mci -- the MCI structure to dump.
 **
 **	Returns:
@@ -535,7 +536,8 @@ static struct mcifbits	MciFlags[] =
 };
 
 void
-mci_dump(mci, logit)
+mci_dump(fp, mci, logit)
+	SM_FILE_T *fp;
 	register MCI *mci;
 	bool logit;
 {
@@ -603,12 +605,13 @@ printit:
 	if (logit)
 		sm_syslog(LOG_DEBUG, CurEnv->e_id, "%.1000s", buf);
 	else
-		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "%s\n", buf);
+		(void) sm_io_fprintf(fp, SM_TIME_DEFAULT, "%s\n", buf);
 }
 /*
 **  MCI_DUMP_ALL -- print the entire MCI cache
 **
 **	Parameters:
+**		fp -- output file pointer
 **		logit -- if set, log the result instead of printing
 **			to stdout.
 **
@@ -617,7 +620,8 @@ printit:
 */
 
 void
-mci_dump_all(logit)
+mci_dump_all(fp, logit)
+	SM_FILE_T *fp;
 	bool logit;
 {
 	register int i;
@@ -626,7 +630,7 @@ mci_dump_all(logit)
 		return;
 
 	for (i = 0; i < MaxMciCache; i++)
-		mci_dump(MciCache[i], logit);
+		mci_dump(fp, MciCache[i], logit);
 }
 /*
 **  MCI_LOCK_HOST -- Lock host while sending.
@@ -931,7 +935,7 @@ mci_read_persistent(fp, mci)
 
 		  case '.':		/* end of file */
 			if (tTd(56, 93))
-				mci_dump(mci, false);
+				mci_dump(sm_debug_file(), mci, false);
 			return 0;
 
 		  default:
@@ -1047,7 +1051,7 @@ mci_store_persistent(mci)
 
 int
 mci_traverse_persistent(action, pathname)
-	int (*action)();
+	int (*action)__P((char *, char *));
 	char *pathname;
 {
 	struct stat statbuf;
