@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.210.2.3 2004/08/30 09:24:46 tron Exp $
+#	$NetBSD: files.pci,v 1.210.2.3.2.1 2005/04/02 21:26:46 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -244,6 +244,11 @@ file	dev/pci/optiide.c		optiide
 device	piixide {[channel = -1]}: ata, pciide_common
 attach	piixide at pci
 file	dev/pci/piixide.c		piixide
+
+# Promise Serial ATA controllers
+device	pdcsata {[channel = -1]}: ata, pciide_common
+attach	pdcsata at pci
+file	dev/pci/pdcsata.c		pdcsata
 
 # Promise IDE controllers
 device	pdcide {[channel = -1]}: ata, pciide_common
