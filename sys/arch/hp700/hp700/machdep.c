@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/07/15 02:29:26 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2003/08/31 01:26:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,8 +70,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/07/15 02:29:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2003/08/31 01:26:32 chs Exp $");
 
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_hpux.h"
@@ -102,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/07/15 02:29:26 lukem Exp $");
 #include <sys/ksyms.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_page.h>
@@ -420,7 +422,7 @@ hppa_init(start)
 	paddr_t start;
 {
 	vaddr_t vstart, vend;
-	register int error;
+	int error;
 	int hptsize;	/* size of HPT table if supported */
 	int sz;
 	u_int *p, *q;
@@ -952,7 +954,7 @@ cpu_startup()
 void
 delay_init(void)
 {
-	register u_int num, denom, delta, mdelta;
+	u_int num, denom, delta, mdelta;
 
 	mdelta = UINT_MAX;
 	for (denom = 1; denom < 1000; denom++) {
@@ -973,7 +975,7 @@ void
 delay(us)
 	u_int us;
 {
-	register u_int start, end, n;
+	u_int start, end, n;
 
 	mfctl(CR_ITMR, start);
 	while (us) {
@@ -999,7 +1001,7 @@ static __inline void
 fall(c_base, c_count, c_loop, c_stride, data)
 	int c_base, c_count, c_loop, c_stride, data;
 {
-	register int loop;
+	int loop;
 
 	for (; c_count--; c_base += c_stride)
 		for (loop = c_loop; loop--; )
@@ -1026,13 +1028,13 @@ fcacheall()
 void
 ptlball()
 {
-	register pa_space_t sp;
-	register int i, j, k;
+	pa_space_t sp;
+	int i, j, k;
 
 	/* instruction TLB */
 	sp = pdc_cache.it_sp_base;
 	for (i = 0; i < pdc_cache.it_sp_count; i++) {
-		register vaddr_t off = pdc_cache.it_off_base;
+		vaddr_t off = pdc_cache.it_off_base;
 		for (j = 0; j < pdc_cache.it_off_count; j++) {
 			for (k = 0; k < pdc_cache.it_loop; k++)
 				pitlbe(sp, off);
@@ -1044,7 +1046,7 @@ ptlball()
 	/* data TLB */
 	sp = pdc_cache.dt_sp_base;
 	for (i = 0; i < pdc_cache.dt_sp_count; i++) {
-		register vaddr_t off = pdc_cache.dt_off_base;
+		vaddr_t off = pdc_cache.dt_off_base;
 		for (j = 0; j < pdc_cache.dt_off_count; j++) {
 			for (k = 0; k < pdc_cache.dt_loop; k++)
 				pdtlbe(sp, off);
@@ -1630,10 +1632,10 @@ dumpsys()
 {
 	const struct bdevsw *bdev;
 	int psize, bytes, i, n;
-	register caddr_t maddr;
-	register daddr_t blkno;
-	register int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	register int error;
+	caddr_t maddr;
+	daddr_t blkno;
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int error;
 
 	if (dumpdev == NODEV)
 		return;
@@ -1704,11 +1706,11 @@ kcopy(from, to, size)
 	void *to;
 	size_t size;
 {
-	register u_int oldh = curproc->p_addr->u_pcb.pcb_onfault;
+	u_int oldh = curlwp->l_addr->u_pcb.pcb_onfault;
 
-	curproc->p_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
+	curlwp->l_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
 	bcopy(from, to, size);
-	curproc->p_addr->u_pcb.pcb_onfault = oldh;
+	curlwp->l_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;
 }
@@ -1717,19 +1719,20 @@ kcopy(from, to, size)
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack)
-	register struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	register struct trapframe *tf = p->p_md.md_regs;
-	/* register struct pcb *pcb = &p->p_addr->u_pcb; */
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
+	/* struct pcb *pcb = &l->l_addr->u_pcb; */
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
 	pmapdebug = 0x180d;
 	pmapdebug = -1;
 	printf("setregs(%p, %p, %x), ep=%x, cr30=%x\n",
-	    p, pack, (u_int)stack, (u_int)pack->ep_entry, tf->tf_cr30);
+	    l, pack, (u_int)stack, (u_int)pack->ep_entry, tf->tf_cr30);
 #endif
 
 	tf->tf_iioq_tail = 4 +
