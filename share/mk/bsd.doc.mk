@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.30 1997/05/07 17:06:18 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.31 1997/05/07 19:09:47 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.own.mk>
@@ -65,3 +65,5 @@ docinstall::
 
 spell: ${SRCS}
 	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
+
+depend includes lint obj tags:
