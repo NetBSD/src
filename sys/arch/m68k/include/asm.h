@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asm.h,v 1.2 1994/01/29 10:02:44 mycroft Exp $
+ *	$Id: asm.h,v 1.3 1994/01/29 10:14:01 mycroft Exp $
  */
 
 #ifndef _ASM_H_
@@ -52,7 +52,7 @@
 #define	_ASM_LABEL(name)	name
 
 #define	_ENTRY(name) \
-	.globl name; .type x,@function; x:
+	.globl name; .type name,@function; name:
 
 #ifdef GPROF
 #define ENTRY(name) \
