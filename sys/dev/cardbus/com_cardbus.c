@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.10 2004/03/11 16:34:54 kanaoka Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.10.2.1 2004/07/23 22:12:15 he Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.10 2004/03/11 16:34:54 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.10.2.1 2004/07/23 22:12:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,13 @@ static struct csdev {
 	{ CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 	{ CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656_M,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656B_M,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656C_M,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 };
 
 static const int ncsdevs = sizeof(csdevs) / sizeof(csdevs[0]);
