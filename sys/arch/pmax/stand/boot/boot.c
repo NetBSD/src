@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1999/04/12 05:19:25 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 1999/04/28 09:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ main(argc, argv)
 
 	marks[MARK_START] = 0;
 	if (name != NULL)
-		win = (loadfile(name, marks, LOAD_ALL) != -1);
+		win = (loadfile(name, marks, LOAD_KERNEL) != -1);
 	else {
 		win = 0;
 		for (namep = kernelnames, win = 0; *namep != NULL && !win;
