@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.8 2000/04/02 11:10:53 augustss Exp $	*/
+/*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -28,7 +28,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "usb.h"
+#include "usbhid.h"
 
 int
 hid_get_data(const void *p, const hid_item_t *h)

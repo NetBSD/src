@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.6 2001/12/28 15:05:19 augustss Exp $
+# $NetBSD: usb_hid_usages,v 1.1 2001/12/28 17:45:27 augustss Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -197,7 +197,7 @@
 	0x39	Gamepad Trigger
 
 7	Keyboard
-	0x00	Reserved (no event indicated)
+	0x00	No Event
 	0x01	Keyboard ErrorRollOver
 	0x02	Keyboard POSTFail
 	0x03	Keyboard ErrorUndefined

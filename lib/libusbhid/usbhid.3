@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.15 2001/10/23 17:40:00 augustss Exp $
+.\"	$NetBSD: usbhid.3,v 1.1 2001/12/28 17:45:27 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -54,15 +54,15 @@
 .Ft void
 .Fn hid_dispose_report_desc "report_desc_t d"
 .Ft hid_data_t
-.Fn hid_start_parse "report_desc_t d" "int kindset"
+.Fn hid_start_parse "report_desc_t d" "int kindset" "int id"
 .Ft void
 .Fn hid_end_parse "hid_data_t s"
 .Ft int
 .Fn hid_get_item "hid_data_t s" "hid_item_t *h"
 .Ft int
-.Fn hid_report_size "report_desc_t d" "hid_kind_t k" "int *idp"
+.Fn hid_report_size "report_desc_t d" "hid_kind_t k" "int id"
 .Ft int
-.Fn hid_locate "report_desc_t d" "u_int usage" "hid_kind_t k" "hid_item_t *h"
+.Fn hid_locate "report_desc_t d" "u_int usage" "hid_kind_t k" "hid_item_t *h" "int id"
 .Ft char *
 .Fn hid_usage_page "int i"
 .Ft char *
@@ -121,6 +121,8 @@ where
 .Fa k
 is an item of type
 .Fa hid_kind_t .
+The report id (if present) is given by
+.Fa id .
 The function returns
 .Fa NULL
 if the initialization fails, otherwise an opaque value to be used
@@ -149,9 +151,8 @@ the report.  The size of a report (of a certain kind) can be
 computed by the
 .Fn hid_report_size
 function.  If the report is prefixed by an ID byte it is
-stored at
-.Fa idp ,
-otherwise it will contain 0.
+given by
+.Fa id .
 .Pp
 To locate a single item the
 .Fn hid_locate
@@ -203,9 +204,9 @@ This man page is woefully incomplete.
 The
 .Tn USB
 specifications can be found at
-.Dv http://www.usb.org/developers/docs.html .
+.Dv http://www.usb.org/developers/docs.htm .
 .Pp
-.Xr uhid 4 ,
+.Xr hid 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
