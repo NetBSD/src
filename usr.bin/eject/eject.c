@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.15 2001/10/06 14:29:55 bjh21 Exp $	*/
+/*	$NetBSD: eject.c,v 1.16 2001/10/06 15:43:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.15 2001/10/06 14:29:55 bjh21 Exp $");
+__RCSID("$NetBSD: eject.c,v 1.16 2001/10/06 15:43:33 bjh21 Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -109,9 +109,12 @@ struct devtypes_s {
 	{ "tape", TAPE | NOTLOADABLE },
 };
 
+enum eject_op {
+	OP_EJECT, OP_LOAD, OP_LOCK, OP_UNLOCK
+};
+
 int verbose_f = 0;
 int umount_f = 1;
-int load_f = 0;
 
 int main(int, char *[]);
 void usage(void);
@@ -119,8 +122,8 @@ char *nick2dev(char *);
 char *nick2rdev(char *);
 int guess_devtype(char *);
 char *guess_nickname(char *);
-void eject_tape(char *);
-void eject_disk(char *);
+void eject_tape(char *, enum eject_op);
+void eject_disk(char *, enum eject_op);
 void unmount_dev(char *);
 
 int
@@ -130,8 +133,9 @@ main(int argc, char *argv[])
 	int devtype = -1;
 	int n, i;
 	char *devname = NULL;
+	enum eject_op op = OP_EJECT;
 
-	while ((ch = getopt(argc, argv, "d:flnt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "d:flLnt:Uv")) != -1) {
 		switch (ch) {
 		case 'd':
 			devname = optarg;
@@ -140,7 +144,14 @@ main(int argc, char *argv[])
 			umount_f = 0;
 			break;
 		case 'l':
-			load_f = 1;
+			if (op != OP_EJECT)
+				usage();
+			op = OP_LOAD;
+			break;
+		case 'L':
+			if (op != OP_EJECT)
+				usage();
+			op = OP_LOCK;
 			break;
 		case 'n':
 			for (n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]);
@@ -159,13 +170,17 @@ main(int argc, char *argv[])
 				}
 			}
 			if (devtype == -1)
-				errx(1, "%s: unknown device type\n", optarg);
+				errx(1, "%s: unknown device type", optarg);
+			break;
+		case 'U':
+			if (op != OP_EJECT)
+				usage();
+			op = OP_UNLOCK;
 			break;
 		case 'v':
 			verbose_f = 1;
 			break;
 		default:
-			warnx("-%c: unknown switch", ch);
 			usage();
 			/* NOTREACHED */
 		}
@@ -197,9 +212,9 @@ main(int argc, char *argv[])
 
 	/* XXX Tapes and disks have different ioctl's: */
 	if ((devtype & TYPEMASK) == TAPE)
-		eject_tape(devname);
+		eject_tape(devname, op);
 	else
-		eject_disk(devname);
+		eject_disk(devname, op);
 
 	if (verbose_f)
 		printf("done.\n");
@@ -211,7 +226,10 @@ void
 usage(void)
 {
 
-	errx(1, "Usage: eject [-n][-f][-v][-l][-t type][-d] device | nickname");
+	fprintf(stderr, "Usage: eject [-fv] [-l | -L | -U] "
+	    "[-t device-type] [-d] device\n");
+	fprintf(stderr, "       eject -n\n");
+	exit(1);
 }
 
 int
@@ -342,7 +360,7 @@ unmount_dev(char *name)
 }
 
 void
-eject_tape(char *name)
+eject_tape(char *name, enum eject_op op)
 {
 	struct mtop m;
 	int fd;
@@ -354,19 +372,32 @@ eject_tape(char *name)
 	fd = open(dn, O_RDONLY);
 	if (fd == -1)
 		err(1, "open: %s", dn);
-	if (verbose_f)
-		printf("Ejecting %s...\n", dn);
+	switch (op) {
+	case OP_EJECT:
+		if (verbose_f)
+			printf("Ejecting %s...\n", dn);
 
-	m.mt_op = MTOFFL;
-	m.mt_count = 0;
-	if (ioctl(fd, MTIOCTOP, &m) == -1)
-		err(1, "ioctl: MTIOCTOP: %s", dn);
+		m.mt_op = MTOFFL;
+		m.mt_count = 0;
+		if (ioctl(fd, MTIOCTOP, &m) == -1)
+			err(1, "ioctl: MTIOCTOP: %s", dn);
+		break;
+	case OP_LOAD:
+		errx(1, "cannot load tapes");
+		/* NOTREACHED */
+	case OP_LOCK:
+		errx(1, "cannot lock tapes");
+		/* NOTREACHED */
+	case OP_UNLOCK:
+		errx(1, "cannot unlock tapes");
+		/* NOTREACHED */
+	}
 	close(fd);
 	return;
 }
 
 void
-eject_disk(char *name)
+eject_disk(char *name, enum eject_op op)
 {
 	int fd;
 	char *dn;
@@ -378,13 +409,15 @@ eject_disk(char *name)
 	fd = open(dn, O_RDONLY);
 	if (fd == -1)
 		err(1, "open: %s", dn);
-	if (load_f) {
+	switch (op) {
+	case OP_LOAD:
 		if (verbose_f)
 			printf("Closing %s...\n", dn);
 
 		if (ioctl(fd, CDIOCCLOSE, NULL) == -1)
 			err(1, "ioctl: CDIOCCLOSE: %s", dn);
-	} else {
+		break;
+	case OP_EJECT:
 		if (verbose_f)
 			printf("Ejecting %s...\n", dn);
 
@@ -392,11 +425,28 @@ eject_disk(char *name)
 		if (umount_f == 0) {
 			/* force eject, unlock the device first */
 			if (ioctl(fd, DIOCLOCK, &arg) == -1)
-				err(1, "ioctl: DIOCEJECT: %s", dn);
+				err(1, "ioctl: DIOCLOCK: %s", dn);
 			arg = 1;
 		}
 		if (ioctl(fd, DIOCEJECT, &arg) == -1)
 			err(1, "ioctl: DIOCEJECT: %s", dn);
+		break;
+	case OP_LOCK:
+		if (verbose_f)
+			printf("Locking %s...\n", dn);
+
+		arg = 1;
+		if (ioctl(fd, DIOCLOCK, &arg) == -1)
+			err(1, "ioctl: DIOCLOCK: %s", dn);
+		break;
+	case OP_UNLOCK:
+		if (verbose_f)
+			printf("Unlocking %s...\n", dn);
+
+		arg = 0;
+		if (ioctl(fd, DIOCLOCK, &arg) == -1)
+			err(1, "ioctl: DIOCLOCK: %s", dn);
+		break;
 	}
 
 	close(fd);
