@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.18 1998/05/07 20:09:37 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.19 1998/05/13 21:21:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 1998/05/07 20:09:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 1998/05/13 21:21:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 1998/05/07 20:09:37 thorpej Exp $")
 
 int	_bus_dmamap_load_buffer_direct_common __P((bus_dmamap_t,
 	    void *, bus_size_t, struct proc *, int, bus_addr_t,
-	    vm_offset_t *, int *, int));
+	    bus_size_t, vm_offset_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -137,13 +137,14 @@ _bus_dmamap_destroy(t, map)
  */
 int
 _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
-    lastaddrp, segp, first)
+    wsize, lastaddrp, segp, first)
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 	bus_addr_t wbase;
+	bus_size_t wsize;
 	vm_offset_t *lastaddrp;
 	int *segp;
 	int first;
@@ -164,6 +165,13 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 			    vaddr);
 		else
 			curaddr = vtophys(vaddr);
+
+		/*
+		 * If we're beyond the current DMA window, indicate
+		 * that and try to fall back into SGMAPs.
+		 */
+		if (wsize != 0 && curaddr >= wsize)
+			return (EINVAL);
 
 		curaddr |= wbase;
 
@@ -207,10 +215,12 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 	 */
 	if (buflen != 0) {
 		/*
-		 * XXX Should fall back on SGMAPs.
+		 * If there is a chained window, we will automatically
+		 * fall back to it.
 		 */
 		return (EFBIG);		/* XXX better return value here? */
 	}
+
 	return (0);
 }
 
@@ -243,10 +253,16 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer_direct_common(map, buf, buflen,
-	    p, flags, t->_wbase, &lastaddr, &seg, 1);
+	    p, flags, t->_wbase, t->_wsize, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+	} else if (t->_next_window != NULL) {
+		/*
+		 * Give the next window a chance.
+		 */
+		error = bus_dmamap_load(t->_next_window, map, buf, buflen,
+		    p, flags);
 	}
 	return (error);
 }
@@ -284,13 +300,18 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		error = _bus_dmamap_load_buffer_direct_common(map,
-		    m->m_data, m->m_len, NULL, flags, t->_wbase, &lastaddr,
-		    &seg, first);
+		    m->m_data, m->m_len, NULL, flags, t->_wbase, t->_wsize,
+		    &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+	} else if (t->_next_window != NULL) {
+		/*
+		 * Give the next window a chance.
+		 */
+		error = bus_dmamap_load_mbuf(t->_next_window, map, m0, flags);
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.8 1998/05/07 20:09:37 thorpej Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.9 1998/05/13 21:21:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.8 1998/05/07 20:09:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.9 1998/05/13 21:21:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,14 +78,16 @@ int	apecs_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 void	apecs_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 /*
- * The 1G direct-mapped DMA window begins at this PCI address.
+ * Direct-mapped window: 1G at 1G
  */
-#define	APECS_DIRECT_MAPPED_BASE 0x40000000
+#define	APECS_DIRECT_MAPPED_BASE (1*1024*1024*1024)
+#define	APECS_DIRECT_MAPPED_SIZE (1*1024*1024*1024)
 
 /*
- * The 8M SGMAP-mapped DMA window begins at this PCI address.
+ * SGMAP window: 8M at 8M
  */
 #define	APECS_SGMAP_MAPPED_BASE	(8*1024*1024)
+#define	APECS_SGMAP_MAPPED_SIZE	(8*1024*1024)
 
 /*
  * Macro to flush APECS scatter/gather TLB.
@@ -110,6 +112,9 @@ apecs_dma_init(acp)
 	t = &acp->ac_dmat_direct;
 	t->_cookie = acp;
 	t->_wbase = APECS_DIRECT_MAPPED_BASE;
+	t->_wsize = APECS_DIRECT_MAPPED_SIZE;
+	t->_next_window = NULL;
+	t->_sgmap = NULL;
 	t->_get_tag = apecs_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
@@ -132,6 +137,9 @@ apecs_dma_init(acp)
 	t = &acp->ac_dmat_sgmap;
 	t->_cookie = acp;
 	t->_wbase = APECS_SGMAP_MAPPED_BASE;
+	t->_wsize = APECS_SGMAP_MAPPED_SIZE;
+	t->_next_window = NULL;
+	t->_sgmap = &acp->ac_sgmap;
 	t->_get_tag = apecs_dma_get_tag;
 	t->_dmamap_create = apecs_bus_dmamap_create_sgmap;
 	t->_dmamap_destroy = apecs_bus_dmamap_destroy_sgmap;
@@ -161,7 +169,7 @@ apecs_dma_init(acp)
 	 */
 	if (acp->ac_mallocsafe) {
 		alpha_sgmap_init(t, &acp->ac_sgmap, "apecs_sgmap",
-		    APECS_SGMAP_MAPPED_BASE, 0, (8*1024*1024),
+		    APECS_SGMAP_MAPPED_BASE, 0, APECS_SGMAP_MAPPED_SIZE,
 		    sizeof(u_int64_t), NULL, 0);
 
 		/*
@@ -240,7 +248,6 @@ apecs_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct apecs_config *acp = t->_cookie;
 	bus_dmamap_t map;
 	int error;
 
@@ -253,7 +260,7 @@ apecs_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		error = alpha_sgmap_alloc(map, round_page(size),
-		    &acp->ac_sgmap, flags);
+		    t->_sgmap, flags);
 		if (error)
 			apecs_bus_dmamap_destroy_sgmap(t, map);
 	}
@@ -269,10 +276,9 @@ apecs_bus_dmamap_destroy_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct apecs_config *acp = t->_cookie;
 
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, &acp->ac_sgmap);
+		alpha_sgmap_free(map, t->_sgmap);
 
 	_bus_dmamap_destroy(t, map);
 }
@@ -289,11 +295,10 @@ apecs_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct apecs_config *acp = t->_cookie;
 	int error;
 
 	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
-	    &acp->ac_sgmap);
+	    t->_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
 
@@ -310,10 +315,9 @@ apecs_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
-	struct apecs_config *acp = t->_cookie;
 	int error;
 
-	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, &acp->ac_sgmap);
+	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, t->_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
 
@@ -330,10 +334,9 @@ apecs_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct apecs_config *acp = t->_cookie;
 	int error;
 
-	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, &acp->ac_sgmap);
+	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, t->_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
 
@@ -352,11 +355,10 @@ apecs_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	struct apecs_config *acp = t->_cookie;
 	int error;
 
 	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
-	    &acp->ac_sgmap);
+	    t->_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
 
@@ -371,13 +373,12 @@ apecs_bus_dmamap_unload_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct apecs_config *acp = t->_cookie;
 
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_sgmap_pte64_unload(t, map, &acp->ac_sgmap);
+	pci_sgmap_pte64_unload(t, map, t->_sgmap);
 	APECS_TLB_INVALIDATE();
 
 	/*

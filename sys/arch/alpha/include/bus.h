@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.21 1998/05/07 20:09:37 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.22 1998/05/13 21:21:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -410,6 +410,7 @@ struct alpha_bus_space {
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
+struct alpha_sgmap;
 
 /*
  * Operations performed by bus_dmamap_sync().
@@ -458,6 +459,31 @@ typedef struct alpha_bus_dma_segment	bus_dma_segment_t;
 struct alpha_bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
 	bus_addr_t _wbase;		/* DMA window base */
+
+	/*
+	 * The following two members are used to chain DMA windows
+	 * together.  If, during the course of a map load, the
+	 * resulting physical memory address is too large to
+	 * be addressed by the window, the next window will be
+	 * attempted.  These would be chained together like so:
+	 *
+	 *	direct -> sgmap -> NULL
+	 *  or
+	 *	sgmap -> NULL
+	 *  or
+	 *	direct -> NULL
+	 *
+	 * If the window size is 0, it will not be checked (e.g.
+	 * TurboChannel DMA).
+	 */
+	bus_size_t _wsize;
+	struct alpha_bus_dma_tag *_next_window;
+
+	/*
+	 * A chipset may have more than one SGMAP window, so SGMAP
+	 * windows also get a pointer to their SGMAP state.
+	 */
+	struct alpha_sgmap *_sgmap;
 
 	/*
 	 * Internal-use only utility methods.  NOT TO BE USED BY
