@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.9 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.10 2004/11/13 15:18:41 he Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -173,7 +173,7 @@ udpcksum(ip_t *ip, struct udphdr *udp, int len)
 		u_short w[6];
 	} ph;
 	u_32_t temp32;
-	u_short cksum, *opts;
+	u_short *opts;
 
 	ph.h.len = htons(len);
 	ph.h.ttl = 0;
