@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/01/22 21:55:17 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/01/24 11:51:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -151,38 +151,6 @@ void strayintr(int);
 
 void pmppc_setup(void);
 
-#ifdef PMPPC_BAT_PRINT
-static void
-print_bats(void)
-{
-	int i;
-	struct bat bats[16];
-
-	__asm __volatile ("mfibatl %0,0; mfibatu %1,0"
-		      : "=r"(bats[0].batl), "=r"(bats[0].batu));
-	__asm __volatile ("mfibatl %0,1; mfibatu %1,1"
-		      : "=r"(bats[1].batl), "=r"(bats[1].batu));
-	__asm __volatile ("mfibatl %0,2; mfibatu %1,2"
-		      : "=r"(bats[2].batl), "=r"(bats[2].batu));
-	__asm __volatile ("mfibatl %0,3; mfibatu %1,3"
-		      : "=r"(bats[3].batl), "=r"(bats[3].batu));
-	for (i = 0; i < 4; i++)
-		printf("BATI%d %08x %08x\n", i, bats[i].batu,
-		       bats[i].batl);
-	__asm __volatile ("mfdbatl %0,0; mfdbatu %1,0"
-		      : "=r"(bats[0].batl), "=r"(bats[0].batu));
-	__asm __volatile ("mfdbatl %0,1; mfdbatu %1,1"
-		      : "=r"(bats[1].batl), "=r"(bats[1].batu));
-	__asm __volatile ("mfdbatl %0,2; mfdbatu %1,2"
-		      : "=r"(bats[2].batl), "=r"(bats[2].batu));
-	__asm __volatile ("mfdbatl %0,3; mfdbatu %1,3"
-		      : "=r"(bats[3].batl), "=r"(bats[3].batu));
-	for (i = 0; i < 4; i++)
-		printf("BATD%d %08x %08x\n", i, bats[i].batu,
-		       bats[i].batl);
-}
-#endif
-
 void print_intr_regs(void);
 void
 print_intr_regs(void)
@@ -239,10 +207,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	cpu_timebase = ticks_per_sec;
 	cpu_initclocks();
 
-#ifdef PMPPC_BAT_PRINT
-	print_bats();
-#endif
-
 	/*
 	 * Initialize the BAT registers
 	 */
@@ -251,17 +215,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	    CPC_PCI_MEM_BASE, BAT_BL_256M, /* PCI memory 256M area */
 	    CPC_PCI_IO_BASE,  BAT_BL_128M, /* PCI I/O 128M area */
 	    0);
-
-	/*
-	 * Now setup fixed bat registers
-	 */
-	__asm __volatile ("mtibatl 1,%0; mtibatu 1,%1"
-	    ::	"r"(battable[PMPPC_FLASH_BASE >> 28].batl),
-		"r"(battable[PMPPC_FLASH_BASE >> 28].batu));
-
-#ifdef PMPPC_BAT_PRINT
-	print_bats();
-#endif
 
 	/*
 	 * Set up trap vectors
