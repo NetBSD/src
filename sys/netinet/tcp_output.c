@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.97 2003/08/07 16:33:17 agc Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.98 2003/08/15 03:42:04 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.97 2003/08/07 16:33:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.98 2003/08/15 03:42:04 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -175,6 +175,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.97 2003/08/07 16:33:17 agc Exp $");
 #include <netinet6/nd6.h>
 #endif
 
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#endif	/* FAST_IPSEC*/
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif
@@ -322,7 +325,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	 */
 #ifdef INET
 	if (inp) {
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		optlen += ip_optlen(inp);
@@ -331,7 +334,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 #ifdef INET6
 #ifdef INET
 	if (in6p && tp->t_family == AF_INET) {
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
@@ -1169,7 +1172,8 @@ send:
 		error = ip_output(m, opts, ro,
 			(tp->t_mtudisc ? IP_MTUDISC : 0) |
 			(so->so_options & SO_DONTROUTE),
-			0);
+			(struct ip_moptions *)0,
+			(tp == NULL ? (struct inpcb *)0 : tp->t_inpcb));
 		break;
 	    }
 #endif
