@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.2 1998/10/12 16:09:21 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.3 1998/10/19 12:26:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -76,7 +76,7 @@
 /* misc timings control */
 #define APO_MISCTIM 0x4c
 
-/* Ultra-DMA/33 control (586A/B only) XXX check */
+/* Ultra-DMA/33 control (586A/B only) */
 #define APO_UDMA 0x50
 #define APO_UDMA_TIME(channel, drive, x) (((x) & 0x3) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
