@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 1997/11/22 03:13:58 tv Exp $ */
+/*	$NetBSD: intr.c,v 1.24 1997/12/03 22:32:06 mjacob Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,7 @@
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #endif
+#include "kbd.h"
 
 union sir	sir;
 
@@ -122,10 +123,13 @@ int
 soft01intr(fp)
 	void *fp;
 {
+#if	NKBD > 0
+	extern int cnrom __P((void));
 	extern int rom_console_input;
 
 	if (rom_console_input && cnrom())
 		cnrint();
+#endif
 	if (sir.sir_any) {
 		/*
 		 * XXX	this is bogus: should just have a list of
