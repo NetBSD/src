@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2000/12/10 14:28:45 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2000/12/28 03:54:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -85,7 +85,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
