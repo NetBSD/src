@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.427 2004/11/28 11:14:41 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.428 2005/01/06 00:42:58 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -561,7 +561,7 @@ MK${var}:=	yes
 	MAN \
 	NLS \
 	OBJ \
-	PIC PICINSTALL PICLIB POSTFIX PROFILE \
+	PAM PIC PICINSTALL PICLIB POSTFIX PROFILE \
 	SENDMAIL SHARE SKEY STATICLIB \
 	UUCP \
 	YP
@@ -660,7 +660,7 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in HESIOD INET6 KERBEROS KERBEROS4 SKEY YP
+.for var in HESIOD INET6 KERBEROS KERBEROS4 PAM SKEY YP
 .if (${MK${var}} == "no")
 USE_${var}:= no
 .else
