@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.25 2004/07/23 06:44:55 mycroft Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.26 2004/07/23 08:05:00 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.25 2004/07/23 06:44:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.26 2004/07/23 08:05:00 mycroft Exp $");
 #endif
 
 /*
@@ -766,7 +766,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 		IASSERT(ic->ic_ibss_chan != NULL &&
 		    isset(ic->ic_chan_active,
 			ieee80211_chan2ieee(ic, ic->ic_ibss_chan)),
-		    ("Bad IBSS channel %u\n",
+		    ("Bad IBSS channel %u",
 		     ieee80211_chan2ieee(ic, ic->ic_ibss_chan)));
 	}
 
@@ -899,36 +899,29 @@ int
 ieee80211_media2rate(int mword)
 {
 #define	N(a)	(sizeof(a) / sizeof(a[0]))
-	int i;
-	static const struct {
-		int subtype;
-		int rate;
-	} ieeerates[] = {
-		{ IFM_AUTO,		-1	},
-		{ IFM_MANUAL,		0	},
-		{ IFM_NONE,		0	},
-		{ IFM_IEEE80211_FH1,	2	},
-		{ IFM_IEEE80211_FH2,	4	},
-		{ IFM_IEEE80211_DS1,	2	},
-		{ IFM_IEEE80211_DS2,	4	},
-		{ IFM_IEEE80211_DS5,	11	},
-		{ IFM_IEEE80211_DS11,	22	},
-		{ IFM_IEEE80211_DS22,	44	},
-		{ IFM_IEEE80211_OFDM6,	12	},
-		{ IFM_IEEE80211_OFDM9,	18	},
-		{ IFM_IEEE80211_OFDM12,	24	},
-		{ IFM_IEEE80211_OFDM18,	36	},
-		{ IFM_IEEE80211_OFDM24,	48	},
-		{ IFM_IEEE80211_OFDM36,	72	},
-		{ IFM_IEEE80211_OFDM48,	96	},
-		{ IFM_IEEE80211_OFDM54,	108	},
-		{ IFM_IEEE80211_OFDM72,	144	},
+	static const int ieeerates[] = {
+		-1,		/* IFM_AUTO */
+		0,		/* IFM_MANUAL */
+		0,		/* IFM_NONE */
+		2,		/* IFM_IEEE80211_FH1 */
+		4,		/* IFM_IEEE80211_FH2 */
+		4,		/* IFM_IEEE80211_DS2 */
+		11,		/* IFM_IEEE80211_DS5 */
+		22,		/* IFM_IEEE80211_DS11 */
+		2,		/* IFM_IEEE80211_DS1 */
+		44,		/* IFM_IEEE80211_DS22 */
+		12,		/* IFM_IEEE80211_OFDM6 */
+		18,		/* IFM_IEEE80211_OFDM9 */
+		24,		/* IFM_IEEE80211_OFDM12 */
+		36,		/* IFM_IEEE80211_OFDM18 */
+		48,		/* IFM_IEEE80211_OFDM24 */
+		72,		/* IFM_IEEE80211_OFDM36 */
+		96,		/* IFM_IEEE80211_OFDM48 */
+		108,		/* IFM_IEEE80211_OFDM54 */
+		144,		/* IFM_IEEE80211_OFDM72 */
 	};
-	for (i = 0; i < N(ieeerates); i++) {
-		if (ieeerates[i].subtype == IFM_SUBTYPE(mword))
-			return ieeerates[i].rate;
-	}
-	return 0;
+	return IFM_SUBTYPE(mword) < N(ieeerates) ?
+		ieeerates[IFM_SUBTYPE(mword)] : 0;
 #undef N
 }
 
