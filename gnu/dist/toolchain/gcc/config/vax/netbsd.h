@@ -11,10 +11,10 @@
 #define CC1_SPEC "\
 	%{!fno-pic: \
 		%{!mno-pic: %{!fpic: %{!fPIC:-fPIC}}} \
-		%{!mindirect: %{!no-mindirect: -mno-indirect}}} \
+		%{!mindirect: %{!mno-indirect:-mno-indirect}}} \
 	%{mno-pic: -fno-pic -mindirect} \
 	%{fno-pic: \
-		%{!mindirect: %{!no-mindirect: -mindirect}}}"
+		%{!mindirect: %{!mno-indirect:-mindirect}}}"
 
 #define	CC1PLUS_SPEC CC1_SPEC
 
