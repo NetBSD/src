@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.5 1997/10/15 04:35:48 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.6 1997/10/17 22:17:19 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -275,3 +275,7 @@ menu nfsbadmount, title "  What do you want to do?";
 	option "Give up", exit, action
 		{ yesno = 0; };
 
+
+menu fdremount, title " What do you want to do? ";
+	option "Try again", exit, action { yesno = 1; };
+	option "Abort install", exit, action { yesno = 0; };
