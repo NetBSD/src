@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1995/09/14 20:55:00 pk Exp $
+#	$NetBSD: Makefile,v 1.8 1995/09/17 00:49:37 pk Exp $
 
 LIB=	sa
 
@@ -7,7 +7,7 @@ DIR=${SAREL}${SADIR}
 .PATH: ${DIR}
 
 #DEBUGFLAGS= -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
-#DEBUGFLAGS= -ansi -pedantic -Wall
+DEBUGFLAGS= -ansi -pedantic -Wall
 CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
 
 # stand routines
