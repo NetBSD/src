@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.12 2004/12/10 21:49:31 erh Exp $
+# $NetBSD: README,v 1.13 2005/03/01 13:19:51 wiz Exp $
 # Original from FreeBSD, no rcs id.
 
 This is the pkg_install suite of tools for doing maintainance of
@@ -17,5 +17,5 @@ Christian E. Hopps, Thomas Klausner, Johnny Lam, and Matthias Scheler.
 When making snapshots, please modify PKGTOOLS_VERSION in lib/version.h
 to that day's date.
 
-This is the canonical location for these sources.  Any changes should
-be made here first, then merged over to pkgsrc.
+src/usr.sbin/pkg_install is the canonical location for these sources.
+Any changes should be made here first, then merged over to pkgsrc.
