@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.12 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.13 2000/01/26 17:06:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -242,10 +242,13 @@ in6_pcbbind(in6p, nam)
 			}
 		}
 		if (lport) {
+#ifndef IPNOPRIVPORTS
 			/* GROSS */
 			if (ntohs(lport) < IPV6PORT_RESERVED &&
-			   (error = suser(p->p_ucred, &p->p_acflag)))
+			    (p == 0 ||
+			     (error = suser(p->p_ucred, &p->p_acflag))))
 				return(EACCES);
+#endif
 
 			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
 				/* should check this but we can't ... */
@@ -284,7 +287,6 @@ in6_pcbbind(in6p, nam)
 
 /*
  * Find an empty port and set it to the specified PCB.
- * XXX IN6P_LOWPORT
  */
 int
 in6_pcbsetport(laddr, in6p)
@@ -296,6 +298,10 @@ in6_pcbsetport(laddr, in6p)
 	u_short last_port, lport = 0;
 	int wild = 0;
 	void *t;
+	u_short min, max;
+#ifndef IPNOPRIVPORTS
+	struct proc *p = curproc;	/*XXX*/
+#endif
 
 	/* XXX: this is redundant when called from in6_pcbbind */
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
@@ -303,11 +309,23 @@ in6_pcbsetport(laddr, in6p)
 	    (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = IN6PLOOKUP_WILDCARD;
 
+	if (in6p->in6p_flags & IN6P_LOWPORT) {
+#ifndef IPNOPRIVPORTS
+                if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
+			return (EACCES);
+#endif
+		min = IPV6PORT_RESERVEDMIN;
+		max = IPV6PORT_RESERVEDMAX;
+	} else {
+		min = IPV6PORT_ANONMIN;
+		max = IPV6PORT_ANONMAX;
+	}
+
 	/* value out of range */
-	if (head->in6p_lport < IPV6PORT_ANONMIN)
-		head->in6p_lport = IPV6PORT_ANONMIN;
-	else if (head->in6p_lport > IPV6PORT_ANONMAX)
-		head->in6p_lport = IPV6PORT_ANONMIN;
+	if (head->in6p_lport < min)
+		head->in6p_lport = min;
+	else if (head->in6p_lport > max)
+		head->in6p_lport = min;
 	last_port = head->in6p_lport;
 	goto startover;	/*to randomize*/
 	for (;;) {
@@ -327,8 +345,8 @@ in6_pcbsetport(laddr, in6p)
 		if (t == 0)
 			break;
 	  startover:
-		if (head->in6p_lport >= IPV6PORT_ANONMAX)
-			head->in6p_lport = IPV6PORT_ANONMIN;
+		if (head->in6p_lport >= max)
+			head->in6p_lport = min;
 		else
 			head->in6p_lport++;
 		if (head->in6p_lport == last_port)
