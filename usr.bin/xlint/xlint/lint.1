@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.27 2003/04/08 21:09:40 wiz Exp $
+.\" $NetBSD: lint.1,v 1.28 2004/01/26 21:51:11 dsl Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -46,6 +46,9 @@
 .Op Fl i | Fl nu
 .Ek
 .Bk -words
+.Op Fl MD
+.Ek
+.Bk -words
 .Op Fl D Ar name Ns Op =def
 .Ek
 .Bk -words
@@ -77,6 +80,9 @@
 .Op Fl abceghprvwzHFV
 .Bk -words
 .Op Fl s | Fl t | Fl S
+.Ek
+.Bk -words
+.Op Fl MD
 .Ek
 .Bk -words
 .Fl C Ar library
@@ -389,6 +395,13 @@ If a complaint stems from an included file
 .Nm
 prints the name of the included file instead of the source file name
 followed by a question mark.
+.It Fl MD
+Pass
+.Fl MD
+to 
+.Xr cpp 1
+causing cpp to create files containing dependency information for
+each source file.
 .It Fl o Ns Ar outputfile
 Name the output file
 .Ar outputfile .
