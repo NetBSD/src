@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.4 2005/01/11 22:39:21 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -51,14 +51,16 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.4 2005/01/11 22:39:21 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
 #include <pwd.h>
+#include <errno.h>
 
+#include "crypt.h"
 #include "blowfish.c"
 
 /* This implementation is adaptable to current computing power.
@@ -68,6 +70,7 @@ __RCSID("$NetBSD: bcrypt.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $");
 
 #define BCRYPT_VERSION '2'
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
+#define BCRYPT_MAXSALTLEN 	(BCRYPT_MAXSALT * 4 / 3 + 1)
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
 
@@ -78,7 +81,6 @@ static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
 char *__bcrypt(const char *, const char *);	/* XXX */
 
 static char    encrypted[_PASSWORD_LEN];
-static char    gsalt[BCRYPT_MAXSALT * 4 / 3 + 1];
 static char    error[] = ":";
 
 const static u_int8_t Base64Code[] =
@@ -150,16 +152,25 @@ encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
 	encode_base64((u_int8_t *) salt + 7, csalt, clen);
 }
 
-/* Generates a salt for this version of crypt.
-   Since versions may change. Keeping this here
-   seems sensible.
- */
-char *
-bcrypt_gensalt(u_int8_t log_rounds)
+int
+__gensalt_blowfish(char *salt, size_t saltlen, size_t nrounds)
 {
-	u_int8_t csalt[BCRYPT_MAXSALT];
-	u_int16_t i;
+	size_t i;
 	u_int32_t seed = 0;
+	u_int8_t csalt[BCRYPT_MAXSALT];
+
+	if (saltlen < BCRYPT_MAXSALTLEN) {
+		errno = ENOSPC;
+		return -1;
+	}
+
+	if (nrounds > 255) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (nrounds < 4)
+		nrounds = 4;
 
 	for (i = 0; i < BCRYPT_MAXSALT; i++) {
 		if (i % 4 == 0)
@@ -167,11 +178,21 @@ bcrypt_gensalt(u_int8_t log_rounds)
 		csalt[i] = seed & 0xff;
 		seed = seed >> 8;
 	}
+	encode_salt(salt, csalt, BCRYPT_MAXSALT, nrounds);
+	return 0;
+}
 
-	if (log_rounds < 4)
-		log_rounds = 4;
-
-	encode_salt(gsalt, csalt, BCRYPT_MAXSALT, log_rounds);
+/* Generates a salt for this version of crypt.
+   Since versions may change. Keeping this here
+   seems sensible.
+   XXX: compat.
+ */
+char *
+bcrypt_gensalt(u_int8_t log_rounds)
+{
+	static char gsalt[BCRYPT_MAXSALTLEN];
+	if (__gensalt_blowfish(gsalt, sizeof(gsalt), log_rounds) == -1)
+		return NULL;
 	return gsalt;
 }
 
