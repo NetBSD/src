@@ -63,7 +63,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void sfasinitialize __P((struct sfas_softc *));
-void sfas_minphys   __P((struct buf *bp));
+u_int sfas_minphys   __P((struct buf *bp));
 int  sfas_scsicmd   __P((struct scsi_xfer *xs));
 int  sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
 void sfas_scsidone  __P((struct sfas_softc *dev, struct scsi_xfer *xs,
@@ -92,10 +92,15 @@ int	sfas_debug = 0;
 /*
  * default minphys routine for sfas based controllers
  */
-void sfas_minphys(bp)
+u_int
+sfas_minphys(bp)
 	struct buf *bp;
 {
-/* no max transfer at this level */
+
+	/*
+	 * No max transfer at this level.
+	 */
+	return (minphys(bp));
 }
 
 /*
