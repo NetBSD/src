@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.57 2002/12/10 22:00:56 fvdl Exp $
+# $NetBSD: makeflist,v 1.58 2003/01/29 11:32:46 simonb Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -142,11 +142,6 @@ for setname in $lists; do
 				cat $setd/lists/$setname/tc.shl
 			fi
 		fi
-	fi
-
-	# XXX MIPS does not support rescue right now.
-	if [ ${machine_cpu} = "mips" ]; then
-		continue
 	fi
 
 	if [ -f $setd/lists/$setname/rescue.mi ]; then
