@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$NetBSD: Makefile,v 1.23 2003/07/18 08:26:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2004/03/20 11:35:15 dsl Exp $
 
 MELIB=	${BINDIR}/me
 #TMLIB=	${BINDIR}/tmac
@@ -8,6 +8,7 @@ MESRCS=	acm.me chars.me deltext.me eqn.me float.me footnote.me \
 	tbl.me thesis.me
 #TMSRCS=	tmac.e
 MAN=	me.7
+CLEANFILES+= ${MESRCS:=.tmp}
 
 .include <bsd.prog.mk>
 
@@ -26,6 +27,7 @@ ${DESTDIR}${MELIB}/${M}: ${M}
 	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
 	${INSTALL_FILE:N-c} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${M}.tmp ${.TARGET}
+	@rm -f ${.TARGET} ${M}.tmp
 .endfor
 
 #.for M in ${TMSRCS}
