@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.129 2002/07/20 08:36:26 grant Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.130 2002/09/20 21:21:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.129 2002/07/20 08:36:26 grant Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.130 2002/09/20 21:21:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.129 2002/07/20 08:36:26 grant Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+#include <util.h>
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
@@ -137,7 +138,8 @@ struct	sockaddr_in	netmask;
 struct	netrange	at_nr;		/* AppleTalk net range */
 
 char	name[30];
-int	flags, setaddr, setipdst, doalias;
+u_short	flags;
+int	setaddr, setipdst, doalias;
 u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = -1;
@@ -317,7 +319,6 @@ int	carrier __P((void));
 void	getsock __P((int));
 void	printall __P((const char *));
 void	list_cloners __P((void));
-void 	printb __P((const char *, unsigned short, const char *));
 int	prefix __P((void *, int));
 void 	status __P((const struct sockaddr_dl *));
 void 	usage __P((void));
@@ -1920,9 +1921,10 @@ status(sdl)
 	struct ifdatareq ifdr;
 	int *media_list, i;
 	char hbuf[NI_MAXHOST];
+	char fbuf[BUFSIZ];
 
-	printf("%s: ", name);
-	printb("flags", flags, IFFBITS);
+	(void)snprintb(fbuf, sizeof(fbuf), IFFBITS, flags);
+	printf("%s: flags=%s", name, &fbuf[2]);
 	if (metric)
 		printf(" metric %lu", metric);
 	if (mtu)
@@ -1930,13 +1932,12 @@ status(sdl)
 	putchar('\n');
 
 	if (g_ifcr.ifcr_capabilities) {
-		putchar('\t');
-		printb("capabilities", g_ifcr.ifcr_capabilities, IFCAPBITS);
-		putchar('\n');
-
-		putchar('\t');
-		printb("enabled", g_ifcr.ifcr_capenable, IFCAPBITS);
-		putchar('\n');
+		(void)snprintb(fbuf, sizeof(fbuf), IFCAPBITS,
+		    g_ifcr.ifcr_capabilities);
+		printf("\tcapabilities=%s\n", &fbuf[2]);
+		(void)snprintb(fbuf, sizeof(fbuf), IFCAPBITS,
+		    g_ifcr.ifcr_capenable);
+		printf("\tenabled=%s\n", &fbuf[2]);
 	}
 
 	ieee80211_status();
@@ -2618,40 +2619,6 @@ in_getprefix(plen, which)
 		*cp++ = 0xff;
 	if (len)
 		*cp = 0xff << (8 - len);
-}
-
-/*
- * Print a value a la the %b format of the kernel's printf
- */
-void
-printb(str, v, bits)
-	const char *str;
-	unsigned short v;
-	const char *bits;
-{
-	int i, any = 0;
-	char c;
-
-	if (bits && *bits == 8)
-		printf("%s=%o", str, v);
-	else
-		printf("%s=%x", str, v);
-	bits++;
-	if (bits) {
-		putchar('<');
-		while ((i = *bits++) != 0) {
-			if (v & (1 << (i-1))) {
-				if (any)
-					putchar(',');
-				any = 1;
-				for (; (c = *bits) > 32; bits++)
-					putchar(c);
-			} else
-				for (; *bits > 32; bits++)
-					;
-		}
-		putchar('>');
-	}
 }
 
 #ifdef INET6
