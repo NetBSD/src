@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.170 2001/08/14 06:47:24 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.171 2001/08/14 07:02:13 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -206,6 +206,7 @@ depend:		.NOTMAIN realdepend subdir-depend
 subdir-depend:	.NOTMAIN
 realdepend:	.NOTMAIN
 distclean:	.NOTMAIN cleandir
+cleandir:	.NOTMAIN clean
 .endif
 
 PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-
