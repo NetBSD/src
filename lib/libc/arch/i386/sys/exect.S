@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.8 1999/01/14 22:48:19 kleink Exp $	*/
+/*	$NetBSD: exect.S,v 1.9 1999/02/08 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: exect.S,v 1.8 1999/01/14 22:48:19 kleink Exp $")
+	RCSID("$NetBSD: exect.S,v 1.9 1999/02/08 18:56:48 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -55,6 +55,7 @@ ENTRY(exect)
 	popf
 	int	$0x80
 #ifdef PIC
+	PIC_PROLOGUE
 	jmp	PIC_PLT(CERROR)		/* exect(file, argv, env); */
 #else
 	jmp	CERROR
