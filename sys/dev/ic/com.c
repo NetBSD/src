@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.159.2.3 2000/01/20 23:24:39 he Exp $	*/
+/*	$NetBSD: com.c,v 1.159.2.4 2000/02/08 22:14:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2009,55 +2009,55 @@ comintr(arg)
 		msr = bus_space_read_1(iot, ioh, com_msr);
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
+		/*
+		 * Pulse-per-second (PSS) signals on edge of DCD?
+		 * Process these even if line discipline is ignoring DCD.
+		 */
+		if (delta & sc->sc_ppsmask) {
+			struct timeval tv;
+		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
+				/* XXX nanotime() */
+				microtime(&tv);
+				TIMEVAL_TO_TIMESPEC(&tv, 
+				    &sc->ppsinfo.assert_timestamp);
+				if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
+					timespecadd(&sc->ppsinfo.assert_timestamp,
+					    &sc->ppsparam.assert_offset,
+						    &sc->ppsinfo.assert_timestamp);
+				}
+
+#ifdef PPS_SYNC
+				if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
+					hardpps(&tv, tv.tv_usec);
+#endif
+				sc->ppsinfo.assert_sequence++;
+				sc->ppsinfo.current_mode = sc->ppsparam.mode;
+
+			} else if ((msr & sc->sc_ppsmask) == sc->sc_ppsclear) {
+				/* XXX nanotime() */
+				microtime(&tv);
+				TIMEVAL_TO_TIMESPEC(&tv, 
+				    &sc->ppsinfo.clear_timestamp);
+				if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
+					timespecadd(&sc->ppsinfo.clear_timestamp,
+					    &sc->ppsparam.clear_offset,
+					    &sc->ppsinfo.clear_timestamp);
+				}
+
+#ifdef PPS_SYNC
+				if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
+					hardpps(&tv, tv.tv_usec);
+#endif
+				sc->ppsinfo.clear_sequence++;
+				sc->ppsinfo.current_mode = sc->ppsparam.mode;
+			}
+		}
+
+		/*
+		 * Process normal status changes
+		 */
 		if (ISSET(delta, sc->sc_msr_mask)) {
 			SET(sc->sc_msr_delta, delta);
-
-			/*
-			 * Pulse-per-second clock signal on edge of DCD?
-			 */
-			if (ISSET(delta, sc->sc_ppsmask)) {
-				struct timeval tv;
-			    	if (ISSET(msr, sc->sc_ppsmask) ==
-				    sc->sc_ppsassert) {
-					/* XXX nanotime() */
-					microtime(&tv);
-					TIMEVAL_TO_TIMESPEC(&tv, 
-					    &sc->ppsinfo.assert_timestamp);
-					if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
-						timespecadd(&sc->ppsinfo.assert_timestamp,
-						    &sc->ppsparam.assert_offset,
-						    &sc->ppsinfo.assert_timestamp);
-	}
-
-#ifdef PPS_SYNC
-					if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
-						hardpps(&tv, tv.tv_usec);
-#endif
-					sc->ppsinfo.assert_sequence++;
-					sc->ppsinfo.current_mode = 
-					    sc->ppsparam.mode;
-
-				} else if (ISSET(msr, sc->sc_ppsmask) == 
-				    sc->sc_ppsclear) {
-					/* XXX nanotime() */
-					microtime(&tv);
-					TIMEVAL_TO_TIMESPEC(&tv, 
-					    &sc->ppsinfo.clear_timestamp);
-					if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
-						timespecadd(&sc->ppsinfo.clear_timestamp,
-						    &sc->ppsparam.clear_offset,
-						    &sc->ppsinfo.clear_timestamp);
-	}
-
-#ifdef PPS_SYNC
-					if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
-						hardpps(&tv, tv.tv_usec);
-#endif
-					sc->ppsinfo.clear_sequence++;
-					sc->ppsinfo.current_mode = 
-					    sc->ppsparam.mode;
-				}
-			}
 
 			/*
 			 * Stop output immediately if we lose the output
