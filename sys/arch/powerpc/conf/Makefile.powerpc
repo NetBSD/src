@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.5 1997/03/14 23:27:33 mycroft Exp $
+#	$NetBSD: Makefile.powerpc,v 1.6 1997/04/16 23:26:06 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -37,17 +37,13 @@ S!=	cd ../../../..; pwd
 PPC=	$S/arch/powerpc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpowerpc
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-D_LOCORE
-LINKFLAGS=	-N -Ttext 100000 -e start
-STRIPFLAGS=	-d
-
-HOSTD_CC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
+LINKFLAGS=	-N -Ttext 100000 -e __start
+STRIPFLAGS=	--strip-debug
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -71,8 +67,6 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 #.c.o:
 #	${NORMAL_C}
@@ -111,14 +105,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym > assym.h
-
-genassym: genassym.o
-	${HOSTED_CC} -o $@ genassym.o
-
-genassym.o: ${PPC}/powerpc/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${PPC}/hp300/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${PPC}/hp300/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -137,7 +127,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-		[Ee]rrs linterrs makelinks genassym genassym.o assym.h
+		[Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -158,15 +148,13 @@ links:
 
 SRCS=	${PPC}/powerpc/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PPC}/powerpc/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${PPC}/powerpc/genassym.c
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -175,7 +163,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration
 locore.o machdep.o: Makefile
