@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.4 1997/08/16 08:33:12 drochner Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.5 1997/08/23 14:03:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -86,11 +86,7 @@ com_multi_probe(parent, match, aux)
 	iobase = ca->ca_iobase;
 
 	/* if it's in use as console, it's there. */
-	if ((iobase == comconsaddr && !comconsattached)
-#ifdef KGDB
-	    || iobase == com_kgdb_addr
-#endif
-	    )
+	if (com_is_console(ca->ca_iot, iobase, 0))
 		return 1;
 
 	return comprobe1(ca->ca_iot, ca->ca_ioh, iobase);
