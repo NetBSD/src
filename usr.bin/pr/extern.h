@@ -34,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$Id: extern.h,v 1.1 1994/01/06 15:57:19 cgd Exp $
+ *      @(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
 extern int eoptind;
