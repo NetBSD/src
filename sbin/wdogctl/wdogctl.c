@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.12 2005/01/11 11:30:19 wiz Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.13 2005/01/12 16:18:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.12 2005/01/11 11:30:19 wiz Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.13 2005/01/12 16:18:39 drochner Exp $");
 #endif
 
 
@@ -319,7 +319,7 @@ disable(void)
 {
 	struct wdog_mode wm;
 	pid_t tickler;
-	int fd;
+	int fd, mode;
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
@@ -329,13 +329,14 @@ disable(void)
 		printf("No watchdog timer running.\n");
 		return;
 	}
+	mode = wm.wm_mode & WDOG_MODE_MASK;
 
 	/*
 	 * If the timer is running in UTICKLE mode, we need
 	 * to kill the wdogctl(8) process that is tickling
 	 * the timer.
 	 */
-	if (wm.wm_mode == WDOG_MODE_UTICKLE) {
+	if (mode == WDOG_MODE_UTICKLE) {
 		if (ioctl(fd, WDOGIOC_GTICKLER, &tickler) == -1)
 			err(1, "WDOGIOC_GTICKLER");
 		(void) close(fd);
@@ -354,7 +355,7 @@ list_timers(void)
 	struct wdog_conf wc;
 	struct wdog_mode wm;
 	char *buf, *cp;
-	int fd, count, i;
+	int fd, count, i, mode;
 	pid_t tickler;
 
 	fd = open(_PATH_WATCHDOG, O_RDONLY, 0644);
@@ -395,15 +396,16 @@ list_timers(void)
 		strlcpy(wm.wm_name, cp, sizeof(wm.wm_name));
 
 		if (ioctl(fd, WDOGIOC_GMODE, &wm) == -1)
-			wm.wm_mode = -1;
-		else if (wm.wm_mode == WDOG_MODE_UTICKLE) {
+			continue;
+		mode = wm.wm_mode & WDOG_MODE_MASK;
+		if (mode == WDOG_MODE_UTICKLE) {
 			if (ioctl(fd, WDOGIOC_GTICKLER, &tickler) == -1)
 				tickler = (pid_t) -1;
 		}
 
 		printf("\t%s, %u second period", cp, wm.wm_period);
-		if (wm.wm_mode != WDOG_MODE_DISARMED) {
-			switch(wm.wm_mode) {
+		if (mode != WDOG_MODE_DISARMED) {
+			switch(mode) {
 				case WDOG_MODE_KTICKLE:
 					printf(" [armed, kernel tickle");
 					break;
