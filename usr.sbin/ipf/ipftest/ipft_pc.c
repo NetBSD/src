@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_pc.c,v 1.1.1.6.2.1 1997/10/30 07:16:28 mrg Exp $	*/
+/*	$NetBSD: ipft_pc.c,v 1.1.1.6.2.2 1998/07/23 00:32:39 mellon Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -27,20 +27,15 @@
 #endif
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#ifndef	linux
-#include <netinet/tcpip.h>
-#endif
 #include <net/if.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 #include "pcap.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipft_pc.c,v 2.0.2.6 1997/09/28 07:11:52 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_pc.c,v 2.0.2.6.2.1 1997/11/12 10:56:08 darrenr Exp ";
 #endif
 
 struct	llc	{
