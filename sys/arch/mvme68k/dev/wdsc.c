@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.18 2000/07/25 20:52:29 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.19 2000/08/12 20:09:12 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -109,7 +109,6 @@ wdsc_pcc_attach(pdp, dp, auxp)
     struct sbic_softc *sc;
     struct pcc_attach_args *pa;
     bus_space_handle_t bush;
-    int tmp;
 
     sc = (struct sbic_softc *)dp;
     pa = auxp;
