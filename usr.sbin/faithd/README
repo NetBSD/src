@@ -94,7 +94,8 @@ There are two ways to translate IPv4 address to IPv6 address:
 (5.a) Install "newbie" and set up FAITH mode. See kit/ports/newbie.
 
 (5.b) Add an entry into /etc/hosts so that you can resolve hostname into
-faked IPv6 addrss.  For example, add the following line for www.NetBSD.org:
+faked IPv6 address.  For example, add the following line for
+www.NetBSD.org:
 
 	3ffe:0501:ffff:0000::140.160.140.252	www.NetBSD.org
 
