@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 1995/03/28 18:20:07 jtc Exp $ */
+/*	$NetBSD: psl.h,v 1.7 1995/08/13 00:29:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,8 +133,12 @@ static __inline int name() { \
 }
 
 SPL(splsoftint, 1)
-#define	splnet	splsoftint
-#define	splsoftclock splsoftint
+#define	splsoftclock	splsoftint
+#define	splsoftnet	splsoftint
+
+/* network hardware interrupts are at level 6 */
+#define	PIL_NET	6
+SPL(splnet, PIL_NET)
 
 /* tty input runs at software level 6 */
 #define	PIL_TTY	6
