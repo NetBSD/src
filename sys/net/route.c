@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.62 2004/09/29 21:19:33 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.63 2004/09/30 00:14:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.62 2004/09/29 21:19:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.63 2004/09/30 00:14:05 christos Exp $");
 
 #include "opt_ns.h"
 
@@ -551,6 +551,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
 	struct sockaddr *ndst;
+	struct sockaddr_storage deldst;
 #define senderr(x) { error = x ; goto bad; }
 
 	if ((rnh = rt_tables[dst->sa_family]) == 0)
@@ -559,8 +560,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		netmask = 0;
 	switch (req) {
 	case RTM_DELETE:
-		if (netmask)
-			rt_maskedcopy(dst, dst, netmask);
+		if (netmask) {
+			rt_maskedcopy(dst, (struct sockaddr *)&deldst, netmask);
+			dst = (struct sockaddr *)&deldst;
+		}
 		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == 0)
 			senderr(ESRCH);
 		rt = (struct rtentry *)rn;
