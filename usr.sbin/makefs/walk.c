@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.10 2002/10/19 20:33:20 provos Exp $	*/
+/*	$NetBSD: walk.c,v 1.11 2003/01/27 01:34:09 uwe Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.10 2002/10/19 20:33:20 provos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.11 2003/01/27 01:34:09 uwe Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -418,8 +418,8 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	if (specnode->flags & F_FLAGS) {
 		ASEPRINT("flags", "%#lX",
-		    (ulong)dirnode->inode->st.st_flags,
-		    (ulong)specnode->st_flags);
+		    (unsigned long)dirnode->inode->st.st_flags,
+		    (unsigned long)specnode->st_flags);
 		dirnode->inode->st.st_flags = specnode->st_flags;
 	}
 #endif
