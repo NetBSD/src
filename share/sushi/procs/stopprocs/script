@@ -1,0 +1,12 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/26 02:26:22 garbled Exp $
+
+if [ "$1" = "none" ]; then
+	echo "None selected, no action taken"
+	exit 0
+fi
+
+/etc/rc.d/$1 stop
+if [ "$?" != "0" ]; then
+	echo "Failed to stop $1"
+fi

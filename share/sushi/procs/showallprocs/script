@@ -1,0 +1,8 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/26 02:26:19 garbled Exp $
+
+for i in `ls -1 /etc/rc.d | grep -v ipfilter`
+do
+	/etc/rc.d/$i forcestatus
+done 2>&1 | grep -v unknown | grep -v Usage | grep -v 'not found' \
+| grep -vi permission
