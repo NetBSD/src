@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.149 2004/05/25 14:54:59 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.150 2004/05/27 17:04:52 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.149 2004/05/25 14:54:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.150 2004/05/27 17:04:52 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -917,6 +917,7 @@ ffs_mountfs(devvp, mp, p)
 		fs->fs_avgfilesize = AVFILESIZ;
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
+	fs->fs_active = NULL;
 	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FFS);
