@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2002/03/24 18:21:20 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2002/05/09 12:36:17 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,11 +107,6 @@
 char machine[] = MACHINE;		/* mmeye */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb */
 
-paddr_t msgbuf_paddr;
-extern paddr_t avail_start, avail_end;
-
-#define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
-
 void initSH3 __P((void *));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
@@ -123,8 +118,6 @@ struct mmeye_intrhand {
 	void *intc_ih;
 	int irq;
 } mmeye_intrhand[_INTR_N];
-
-extern char start[], etext[], edata[], end[];
 
 /*
  * Machine-dependent startup code
@@ -231,14 +224,9 @@ haltsys:
 void
 initSH3(void *pc)	/* XXX return address */
 {
+	extern char edata[], end[];
 	vaddr_t kernend;
-	vsize_t sz;
 
-	kernend = sh3_round_page(end);
-#ifdef DDB
-	/* XXX Currently symbol table size is not passed to the kernel. */
-	kernend += 0x40000;					/* XXX */
-#endif
 	/* Clear bss */
 	memset(edata, 0, end - edata);
 
@@ -250,36 +238,38 @@ initSH3(void *pc)	/* XXX return address */
 #else
 #warning "unknown product"
 #endif
-	/* Initialize proc0 and enable MMU. */
-	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
-
-	/* Number of pages of physmem addr space */
-	physmem = atop(IOM_RAM_END - IOM_RAM_BEGIN + 1);
-
-	/* avail_start is first available physical memory address */
-	avail_start = kernend + sz;
-	avail_end = IOM_RAM_END + 1;
-
 	consinit();
+
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
+#ifdef DDB
+	/* XXX Currently symbol table size is not passed to the kernel. */
+	kernend += 0x40000;					/* XXX */
+#endif
+
+	/* Load memory to UVM */
+	physmem = atop(IOM_RAM_SIZE);
+	uvm_page_physload(
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		VM_FREELIST_DEFAULT);
+
+	/* Initialize proc0 u-area */
+	sh_proc0_init();
+
+	/* Initialize pmap and start to address translation */
+	pmap_bootstrap();
+
 #ifdef DDB
 	ddb_init(1, end, end + 0x40000);			/* XXX */
 #endif
-
-	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
-
 	/*
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
 	__asm __volatile (
 		"jmp	@%0;"
-		"mov	%1, r15" :: "r"(pc), "r"(proc0.p_addr->u_pcb.pcb_sp));
+		"mov	%1, r15"
+		:: "r"(pc),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 }
 
 /*
