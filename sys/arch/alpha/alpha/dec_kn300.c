@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.3 1998/04/17 02:45:20 mjacob Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.4 1998/05/05 20:10:05 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.3 1998/04/17 02:45:20 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.4 1998/05/05 20:10:05 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ dec_kn300_cons_init()
 	case 3:
 	{
 		extern struct mcpcia_softc *mcpcias;
-		struct mcpcia_config *ccp;
 		struct mcpcia_softc *mcp = mcpcias;
 		/* display console ... */
 		/*
@@ -139,8 +138,9 @@ dec_kn300_cons_init()
 		 */
 		if (mcp && mcp->mcpcia_next) {
 #if	NPCKBD > 0
-			ccp = &mcp->mcpcia_next->mcpcia_cc;
-		
+			struct mcpcia_config *ccp =
+				&mcp->mcpcia_next->mcpcia_cc;
+
 			(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
 
 			if ((ctb->ctb_turboslot & 0xffff) == 0)
