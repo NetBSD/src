@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.17 2000/07/22 05:11:27 matt Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.18 2001/11/12 23:49:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -39,6 +39,9 @@
  *
  *	@(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.18 2001/11/12 23:49:33 lukem Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))

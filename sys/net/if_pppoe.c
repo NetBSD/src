@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.6 2001/10/28 09:48:20 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.7 2001/11/12 23:49:42 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.7 2001/11/12 23:49:42 lukem Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"

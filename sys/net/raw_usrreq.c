@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.16 2001/11/05 18:02:16 matt Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.17 2001/11/12 23:49:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)raw_usrreq.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.17 2001/11/12 23:49:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
