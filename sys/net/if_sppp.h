@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.9 2001/04/09 19:33:01 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.10 2001/12/08 19:46:39 martin Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -51,12 +51,16 @@ struct sipcp {
 	u_long	opts;		/* IPCP options to send (bitfield) */
 	u_int	flags;
 #define IPCP_HISADDR_SEEN 1	/* have seen his address already */
-#define IPCP_MYADDR_DYN   2	/* my address is dynamically assigned */
-#define IPCP_MYADDR_SEEN  4	/* have seen his address already */
+#define IPCP_MYADDR_SEEN  2	/* have a local address assigned already */
+#define IPCP_MYADDR_DYN   4	/* my address is dynamically assigned */
+#define	IPCP_HISADDR_DYN  8	/* his address is dynamically assigned */
 #ifdef notdef
 #define IPV6CP_MYIFID_DYN   2	/* my ifid is dynamically assigned */
 #endif
 #define IPV6CP_MYIFID_SEEN  4	/* have seen his ifid already */
+	u_int32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
+	u_int32_t req_hisaddr;	/* remote address requested */
+	u_int32_t req_myaddr;	/* local address requested */
 };
 
 #define AUTHNAMELEN	48
