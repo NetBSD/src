@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.21 2003/08/13 00:03:00 lukem Exp $
+#	$NetBSD: checkflist,v 1.22 2003/09/30 06:23:43 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -11,26 +11,8 @@ fi
 
 prog=${0##*/}
 
-
-# Make sure we don't loop forever if mkdir will always fail.
-if [ ! -d /tmp ]; then
-	echo /tmp is not a directory
-	exit 1
-fi
-
-if [ ! -w /tmp ]; then
-	echo /tmp is not writable
-	exit 1
-fi
-
-SDIR_BASE=/tmp/checkflist.$$
-SDIR_SERIAL=0
-
-while true; do
-	SDIR=${SDIR_BASE}.${SDIR_SERIAL}
-	mkdir -m 0700 ${SDIR} && break
-	SDIR_SERIAL=$((${SDIR_SERIAL} + 1))
-done    
+: ${MKTEMP=mktemp}
+SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
 
 es=0
 cleanup()
@@ -48,6 +30,8 @@ origin=.
 xargs=""
 dargs=""
 metalog=
+allowextra=false
+allowmissing=false
 
 # handle args
 while : ; do
@@ -59,15 +43,23 @@ while : ; do
 	-both)
 		xargs="-b"
 		;;
-	-M*)
+	-M)
 		metalog=$2; shift
+		;;
+	-e)
+		allowextra=true
+		;;
+	-m)
+		allowmissing=true
 		;;
 	-*)
 		cat 1>&2 <<USAGE
-Usage: ${prog} [-x11|-both] [-M metalog]
+Usage: ${prog} [-x11|-both] [-M metalog] [-e] [-m]
 	-x11		check only x11 lists
 	-both		check netbsd + x11 lists
 	-M metalog	metalog file
+	-e		extra files are not considered an error
+	-m		missing files are not considered an error
 USAGE
 		exit 1
 		;;
@@ -116,11 +108,15 @@ if [ -s $SDIR/extra ]; then
 	echo "============  extra files  ==============="
 	echo "Files in DESTDIR but missing from flist."
 	echo "File is obsolete or flist is out of date ?"
+	if ${allowextra}; then
+		echo "This is non-fatal."
+	else
+		es=1
+	fi
 	echo "------------------------------------------"
 	cat $SDIR/extra
 	echo "=========  end of extra files  ==========="
 	echo ""
-	es=1
 fi
 
 if [ -s $SDIR/missing ]; then
@@ -128,11 +124,15 @@ if [ -s $SDIR/missing ]; then
 	echo "===========  missing files  =============="
 	echo "Files in flist but missing from DESTDIR."
 	echo "File wasn't installed ?"
+	if ${allowmissing}; then
+		echo "This is non-fatal."
+	else
+		es=1
+	fi
 	echo "------------------------------------------"
 	cat $SDIR/missing
 	echo "========  end of missing files  =========="
 	echo ""
-	es=1
 fi
 
 exit 0		# cleanup will exit with $es
