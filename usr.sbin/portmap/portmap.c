@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.11 1997/10/17 12:01:25 lukem Exp $	*/
+/*	$NetBSD: portmap.c,v 1.12 1997/10/18 11:06:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.11 1997/10/17 12:01:25 lukem Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.12 1997/10/18 11:06:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	bzero((char *)&addr, sizeof addr);
+	memset((char *)&addr, 0, sizeof addr);
 	addr.sin_addr.s_addr = 0;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(PMAPPORT);
