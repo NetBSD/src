@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.102 2003/10/19 14:23:02 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.103 2003/10/20 00:24:22 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -164,7 +164,7 @@ TOOL_UUDECODE?=		uudecode
 TOOL_VGRIND?=		vgrind -f
 TOOL_ZIC?=		zic
 
-.SUFFIXES:	.c .m .o .ln .lo .s .S .l .y ${YHEADER:D.h}
+.SUFFIXES:	.c .cc .cpp .cxx .C .m .o .ln .lo .s .S .l .y ${YHEADER:D.h}
 
 # C
 .c:
@@ -179,6 +179,16 @@ TOOL_ZIC?=		zic
 	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[IDU]*} -i ${.IMPSRC}
+
+# C++
+.cc .cpp .cxx .C:
+	${_MKMSGCOMPILE}
+	${_MKCMD}\
+	${LINK.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.cc.o .cpp.o .cxx.o .C.o:
+	${_MKMSGCOMPILE}
+	${_MKCMD}\
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
@@ -230,7 +240,7 @@ LFLAGS+=	-P${LPREFIX}
 	${_MKCMD}\
 	${LEX.l} -o${.TARGET:R}.${LPREFIX}.c ${.IMPSRC}
 	${_MKCMD}\
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}}-o ${.TARGET} ${.TARGET:R}.${LPREFIX}.c ${LDLIBS} -ll
+	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.TARGET:R}.${LPREFIX}.c ${LDLIBS} -ll
 	${_MKCMD}\
 	rm -f ${.TARGET:R}.${LPREFIX}.c
 .l.c:
@@ -247,7 +257,7 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 	${_MKCMD}\
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${_MKCMD}\
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}}-o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
+	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	${_MKCMD}\
 	rm -f ${.TARGET:R}.tab.[ch]
 .y.c:
