@@ -32,14 +32,14 @@
  */
 
 /* $Heimdal: hdb.h,v 1.31 2000/07/08 16:03:37 joda Exp $
-   $NetBSD: hdb.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
+   $NetBSD: hdb.h,v 1.2 2003/01/26 22:06:39 elric Exp $ */
 
 #ifndef __HDB_H__
 #define __HDB_H__
 
-#include <hdb_err.h>
+#include <krb5/hdb_err.h>
 
-#include <hdb_asn1.h>
+#include <krb5/hdb_asn1.h>
 
 enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 
@@ -87,6 +87,6 @@ typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
 					      hdb_entry*, void*);
 extern krb5_kt_ops hdb_kt_ops;
 
-#include <hdb-protos.h>
+#include <krb5/hdb-protos.h>
 
 #endif /* __HDB_H__ */

@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: krb5.h,v 1.205 2002/09/03 17:31:47 joda Exp $
-   $NetBSD: krb5.h,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $ */
+   $NetBSD: krb5.h,v 1.2 2003/01/26 22:06:40 elric Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
@@ -44,12 +44,12 @@
 typedef socklen_t krb5_socklen_t;
 typedef ssize_t krb5_ssize_t;
 
-#include <asn1_err.h>
-#include <krb5_err.h>
-#include <heim_err.h>
-#include <k524_err.h>
+#include <krb5/asn1_err.h>
+#include <krb5/krb5_err.h>
+#include <krb5/heim_err.h>
+#include <krb5/k524_err.h>
 
-#include <krb5_asn1.h>
+#include <krb5/krb5_asn1.h>
 
 /* name confusion with MIT */
 #ifndef KRB5KDC_ERR_KEY_EXP
@@ -670,7 +670,7 @@ struct credentials; /* this is to keep the compiler happy */
 struct getargs;
 struct sockaddr;
 
-#include <krb5-protos.h>
+#include <krb5/krb5-protos.h>
 
 #endif /* __KRB5_H__ */
 
