@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.8 1998/05/21 13:06:24 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.9 1998/11/05 19:47:20 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -292,6 +292,7 @@ loop:
 
 	case M_OP_POS | M_OP_END:
 	case M_OP_WRITM | M_OP_END:
+	case M_OP_AVAILABLE | M_OP_END:
 		/*
 		 * A non-data transfer operation completed.
 		 */

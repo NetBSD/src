@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.10 1998/05/21 13:06:24 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.11 1998/11/05 19:47:20 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -168,7 +168,7 @@ mt_putonline(mt)
 	struct	mscp_softc *mi = (struct mscp_softc *)mt->mt_dev.dv_parent;
 	volatile int i;
 
-	(volatile)mt->mt_state = MT_OFFLINE;
+	(volatile int)mt->mt_state = MT_OFFLINE;
 	mp = mscp_getcp(mi, MSCP_WAIT);
 	mp->mscp_opcode = M_OP_ONLINE;
 	mp->mscp_unit = mt->mt_hwunit;
@@ -180,7 +180,7 @@ mt_putonline(mt)
 	if (tsleep(&mt->mt_state, PRIBIO, "mtonline", 240 * hz))
 		return MSCP_FAILED;
 
-	if ((volatile)mt->mt_state != MT_ONLINE)
+	if ((volatile int)mt->mt_state != MT_ONLINE)
 		return MSCP_FAILED;
 
 	return MSCP_DONE;
@@ -404,6 +404,7 @@ mtioerror(usc, mp, bp)
 		else
 			printf("%s: error %d\n", mt->mt_dev.dv_xname, st);
 		bp->b_flags |= B_ERROR;
+		bp->b_error = EROFS;
 	}
 
 	return (MSCP_DONE);
