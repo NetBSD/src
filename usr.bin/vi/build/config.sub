@@ -831,9 +831,6 @@ case $basic_machine in
 			-sunos*)
 				vendor=sun
 				;;
-			-lynxos*)
-				vendor=lynx
-				;;
 			-aix*)
 				vendor=ibm
 				;;

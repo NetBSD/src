@@ -1,8 +1,7 @@
-#	@(#)Makefile	8.23 (Berkeley) 5/2/96
+#	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
-CAT=	dutch english german ru_SU.KOI8-R swedish
-FILES=	../cl/*.c ../common/*.c ../ex/*.c ../perl_api/*.c ../tcl_api/*.c \
-	../tk/*.c ../vi/*.c
+CAT=	dutch english french german ru_SU.KOI8-R spanish swedish
+FILES=	../cl/*.c ../common/*.c ../ex/*.c ../tk/*.c ../vi/*.c
 
 all: dump ${CAT}
 
@@ -34,8 +33,8 @@ ${CAT}: english.base
 		grep 'NOT LEGAL' $@;					\
 	fi
 
-CHK=	dutch.check english.check german.check ru_SU.KOI8-R.check \
-	swedish.check
+CHK=	dutch.check english.check french.check german.check \
+	ru_SU.KOI8-R.check spanish.check swedish.check
 check: ${CHK}
 ${CHK}: ${CAT}
 	@echo "... $@";							\
@@ -46,16 +45,15 @@ ${CHK}: ${CAT}
 			printf "%03d\n", nline;				\
 	}' < $$f.base;							\
 	echo =========================;					\
-	echo "MISSING ERROR MESSAGES (FIX!!!):";			\
-	awk '{print $$1}' < $$f.base > __ck1;				\
-	awk '{print $$1}' < english.base > __ck2;			\
-	join -v 2 __ck1 __ck2;						\
+	echo "MISSING ERROR MESSAGES (Please add!):";			\
+	awk '{print $$1}' < $$f.base | sort -u > __ck1;			\
+	awk '{print $$1}' < english.base | sort -u > __ck2;		\
+	comm -13 __ck1 __ck2;						\
 	echo =========================;					\
 	echo "Extra error messages (just delete them):";		\
-	join -v 1 __ck1 __ck2;						\
-	rm -f __ck1 __ck2;						\
+	comm -23 __ck1 __ck2;						\
 	echo =========================;					\
-	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!!!):";		\
+	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!):";		\
 	for j in							\
 	    `sed '/^$$/d' < $$f.base | sort -u |			\
 	    awk '{print $$1}' | uniq -d`; do				\
@@ -75,7 +73,8 @@ english.base: dump ${FILES} #Makefile
 	./dump ${FILES} |\
 	sed -e '/|/!d' \
 	    -e 's/|/ "/' \
-	    -e 's/^"//' |\
+	    -e 's/^"//' \
+	    -e 's/\\"/"/g' |\
 	sort -n > $@
 
 dump: dump.c

@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)options.h	10.16 (Berkeley) 5/16/96
+ *	@(#)options.h	10.19 (Berkeley) 10/10/96
  */
 
 /*
@@ -39,11 +39,14 @@
 #define	OG_D_STR(gp, o)		((gp)->opts[(o)].o_def.str)
 #define	OG_D_VAL(gp, o)		((gp)->opts[(o)].o_def.val)
 
-/* Flags to o_set(). */
+/*
+ * Flags to o_set(); need explicit OS_STR as can be setting the value to
+ * NULL.
+ */
 #define	OS_DEF		0x01		/* Set the default value. */
-#define	OS_FREE		0x02		/* Free old string if set. */
-#define	OS_STR		0x04		/* Set to the str value. */
-#define	OS_STRDUP	0x08		/* Copy and set to the str value. */
+#define	OS_NOFREE	0x02		/* Don't free the old string. */
+#define	OS_STR		0x04		/* Set to string argument. */
+#define	OS_STRDUP	0x08		/* Copy then set to string argument. */
 
 struct _option {
 	union {
@@ -83,7 +86,7 @@ struct _optlist {
 #define	OPT_ALWAYS	0x002		/* Always call the support function. */
 #define	OPT_NDISP	0x004		/* Never display the option. */
 #define	OPT_NOSAVE	0x008		/* Mkexrc command doesn't save. */
-#define	OPT_NOSET	0x010		/* Option may not be unset. */
+#define	OPT_NOSET	0x010		/* Option may not be set. */
 #define	OPT_NOUNSET	0x020		/* Option may not be unset. */
 #define	OPT_NOZERO	0x040		/* Option may not be set to 0. */
 	u_int8_t flags;

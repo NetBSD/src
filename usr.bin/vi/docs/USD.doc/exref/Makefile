@@ -1,14 +1,17 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/8/93
+# @(#)Makefile	8.8 (Berkeley) 10/10/96
 
-DIR=	usd/13.ex
-SRCS=	ex.rm
-MACROS=	-msU
-CLEANFILES=summary.*
+ROFF=	groff
+TBL=	tbl
 
-paper.ps: ${SRCS} summary.ps
-	${ROFF} ${SRCS} > ${.TARGET}
+all: exref.ps summary.ps
+
+exref.ps: ex.rm
+	${TBL} ex.rm | ${ROFF} -ms > $@
+	chmod 444 $@
 
 summary.ps: ex.summary
-	${TBL} ex.summary | ${ROFF} > ${.TARGET}
+	${TBL} ex.summary | ${ROFF} -ms > $@
+	chmod 444 $@
 
-.include <bsd.doc.mk>
+clean:
+	rm -f exref.ps summary.ps

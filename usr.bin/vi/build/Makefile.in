@@ -1,10 +1,13 @@
-#	@(#)Makefile.in	8.56 (Berkeley) 5/18/96
+#	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 srcdir=	@srcdir@/..
 CC=	@CC@
 OPTFLAG=@OPTFLAG@
 CFLAGS=	-c $(OPTFLAG) @CFLAGS@ -I. -I$(srcdir)/include @CPPFLAGS@
 LDFLAGS=@LDFLAGS@
+PERL=	@vi_cv_path_perl@
+PERLLIB=@vi_cv_perllib@
+SHRPENV=@shrpenv@
 
 # Objects
 COBJS=	addbytes.o addch.o box.o clear.o clrtobot.o clrtoeol.o \
@@ -43,23 +46,14 @@ VIOBJS= cut.o delete.o ex.o ex_abbrev.o ex_append.o ex_args.o ex_argv.o \
 all: nvi @tknvi@
 
 NVIALL=	$(CLOBJS) $(VIOBJS) @cobjs@ @LIBOBJS@
-nvi: $(NVIALL)
-	$(CC) $(LDFLAGS) -o $@ $(NVIALL) @LIBS@
-	rm -f nex
+nvi nex: $(NVIALL)
+	$(SHRPENV) $(CC) $(LDFLAGS) -o $@ $(NVIALL) @LIBS@
+	-rm -f nex
 	ln $@ nex
 
 TKALL=	$(TKOBJS) $(VIOBJS) @LIBOBJS@
 tknvi: $(TKALL)
-	$(CC) $(LDFLAGS) -o $@ $(TKALL) @TKLIBS@
-
-clean:
-	-rm -f nex nvi tknvi core *.core *.o
-	rm -f $(COBJS) $(CLOBJS) $(DBOBJS) $(REOBJS)
-	rm -f $(TKOBJS) $(VIOBJS)
-
-distclean: clean
-	rm -f Makefile pathnames.h port.h
-	rm -f config.cache config.h config.log config.status
+	$(SHRPENV) $(CC) $(LDFLAGS) -o $@ $(TKALL) @TKLIBS@
 
 chmod=	@vi_cv_path_chmod@
 cp=	@vi_cv_path_cp@
@@ -83,7 +77,7 @@ transform=@program_transform_name@
 install: all install_common
 	@echo "Installing vi, ex, view: $(bindir) ..."
 	[ -d $(bindir) ] || \
-	    $(mkdir) $(bindir) && $(chmod) $(dmode) $(bindir)
+	    ($(mkdir) $(bindir) && $(chmod) $(dmode) $(bindir))
 	cd $(bindir) && $(rm) -f `echo vi | sed '$(transform)'`
 	$(cp) nvi $(bindir)/`echo vi | sed '$(transform)'`
 	cd $(bindir) && [ -f $(strip) ] && \
@@ -96,9 +90,9 @@ install: all install_common
 	cd $(bindir) && $(ln) \
 		`echo vi | sed '$(transform)'` `echo view | sed '$(transform)'`
 	[ -d $(mandir) ] || \
-	    $(mkdir) $(mandir) && $(chmod) $(dmode) $(mandir)
+	    ($(mkdir) $(mandir) && $(chmod) $(dmode) $(mandir))
 	[ -d $(mandir)/cat1 ] || \
-	    $(mkdir) $(mandir)/cat1 && $(chmod) $(dmode) $(mandir)/cat1
+	    ($(mkdir) $(mandir)/cat1 && $(chmod) $(dmode) $(mandir)/cat1)
 	@echo "Installing man pages: $(mandir) ..."
 	cd $(mandir)/cat1 && $(rm) -f `echo vi.0 | sed '$(transform)'`
 	$(cp) $(srcdir)/docs/USD.doc/vi.man/vi.0 \
@@ -111,7 +105,7 @@ install: all install_common
 	cd $(mandir)/cat1 && $(ln) \
 	    `echo vi.0 | sed '$(transform)'` `echo view.0 | sed '$(transform)'`
 	[ -d $(mandir)/man1 ] || \
-	    $(mkdir) $(mandir)/man1 && $(chmod) $(dmode) $(mandir)/man1
+	    ($(mkdir) $(mandir)/man1 && $(chmod) $(dmode) $(mandir)/man1)
 	cd $(mandir)/man1 && $(rm) -f `echo vi.1 | sed '$(transform)'`
 	$(cp) $(srcdir)/docs/USD.doc/vi.man/vi.1 \
 	    $(mandir)/man1/`echo vi.1 | sed '$(transform)'`
@@ -123,7 +117,7 @@ install: all install_common
 	cd $(mandir)/man1 && $(ln) \
 	    `echo vi.1 | sed '$(transform)'` `echo view.1 | sed '$(transform)'`
 
-cat=	dutch english german ru_SU.KOI8-R swedish
+cat=	dutch english french german ru_SU.KOI8-R spanish swedish
 install_common:
 	[ -f $(chmod) ]
 	[ -f $(cp) ]
@@ -131,11 +125,11 @@ install_common:
 	[ -f $(mkdir) ]
 	[ -f $(rm) ]
 	[ -d $(prefix) ] || \
-	    $(mkdir) $(prefix) && $(chmod) $(dmode) $(prefix)
+	    ($(mkdir) $(prefix) && $(chmod) $(dmode) $(prefix))
 	[ -d $(exec_prefix) ] || \
-	    $(mkdir) $(exec_prefix) && $(chmod) $(dmode) $(exec_prefix)
+	    ($(mkdir) $(exec_prefix) && $(chmod) $(dmode) $(exec_prefix))
 	[ -d $(datadir) ] || \
-	    $(mkdir) $(datadir) && $(chmod) $(dmode) $(datadir)
+	    ($(mkdir) $(datadir) && $(chmod) $(dmode) $(datadir))
 	$(rm) -rf $(datadir)/vi
 	$(mkdir) $(datadir)/vi && $(chmod) $(dmode) $(datadir)/vi
 	@echo "Installing message catalogs: $(datadir)/vi/catalog ..."
@@ -143,14 +137,55 @@ install_common:
 	    $(chmod) $(dmode) $(datadir)/vi/catalog
 	(cd $(srcdir)/catalog && $(cp) $(cat) $(datadir)/vi/catalog && \
 	    cd $(datadir)/vi/catalog && $(chmod) $(fmode) *)
-	@echo "Installing Perl5 scripts: $(datadir)/vi/perl ..."
+	@echo "Installing Perl scripts: $(datadir)/vi/perl ..."
 	$(mkdir) $(datadir)/vi/perl && $(chmod) $(dmode) $(datadir)/vi/perl
+	[ -f VI.pm ] && $(cp) VI.pm $(datadir)/vi/perl && \
+	    cd $(datadir)/vi/perl && $(chmod) $(fmode) VI.pm)
 	(cd $(srcdir)/perl_scripts && $(cp) *.pl $(datadir)/vi/perl && \
 	    cd $(datadir)/vi/perl && $(chmod) $(fmode) *.pl)
 	@echo "Installing Tcl scripts: $(datadir)/vi/tcl ..."
 	$(mkdir) $(datadir)/vi/tcl && $(chmod) $(dmode) $(datadir)/vi/tcl
 	(cd $(srcdir)/tcl_scripts && $(cp) *.tcl $(datadir)/vi/tcl && \
 	    cd $(datadir)/vi/tcl && $(chmod) $(fmode) *.tcl)
+	@echo "Installing recover script: $(datadir)/vi/recover ..."
+	($(cp) recover $(datadir)/vi/recover && \
+	    $(chmod) $(emode) $(datadir)/vi/recover)
+
+uninstall:
+	$(rm) -rf $(datadir)/vi
+	cd $(bindir) && $(rm) -f `echo ex | sed '$(transform)'`
+	cd $(bindir) && $(rm) -f `echo vi | sed '$(transform)'`
+	cd $(bindir) && $(rm) -f `echo view | sed '$(transform)'`
+	cd $(mandir)/cat1 && $(rm) -f `echo ex.0 | sed '$(transform)'`
+	cd $(mandir)/cat1 && $(rm) -f `echo vi.0 | sed '$(transform)'`
+	cd $(mandir)/cat1 && $(rm) -f `echo view.0 | sed '$(transform)'`
+	cd $(mandir)/man1 && $(rm) -f `echo ex.1 | sed '$(transform)'`
+	cd $(mandir)/man1 && $(rm) -f `echo vi.1 | sed '$(transform)'`
+	cd $(mandir)/man1 && $(rm) -f `echo view.1 | sed '$(transform)'`
+
+docs:
+	cd $(srcdir)/docs/USD.doc/vi.ref && $(MAKE)
+	cd $(srcdir)/docs/USD.doc/vi.man && $(MAKE)
+	cd $(srcdir)/docs/USD.doc/edit && $(MAKE)
+	cd $(srcdir)/docs/USD.doc/exref && $(MAKE)
+	cd $(srcdir)/docs/USD.doc/vitut && $(MAKE)
+
+clean:
+	-rm -f *.core *.o memcpy.c perl.c
+	-rm -f nex nvi tknvi core
+	-rm -f $(COBJS) $(CLOBJS) $(DBOBJS) $(REOBJS)
+	-rm -f $(TKOBJS) $(VIOBJS)
+
+cleandocs:
+	cd $(srcdir)/docs/USD.doc/vi.ref && $(MAKE) clean
+	cd $(srcdir)/docs/USD.doc/vi.man && $(MAKE) clean
+	cd $(srcdir)/docs/USD.doc/edit && $(MAKE) clean
+	cd $(srcdir)/docs/USD.doc/exref && $(MAKE) clean
+	cd $(srcdir)/docs/USD.doc/vitut && $(MAKE) clean
+
+distclean maintainer-clean realclean: clean cleandocs
+	-rm -f Makefile config.cache config.h config.log config.status
+	-rm -f pathnames.h port.h
 
 # Vi curses sources.
 cl_bsd.o: $(srcdir)/cl/cl_bsd.c
@@ -183,7 +218,15 @@ tk_util.o: $(srcdir)/tk/tk_util.c
 # Vi Tcl/Perl interpreter sources.
 api.o: $(srcdir)/common/api.c
 	$(CC) $(CFLAGS) $?
-perl.o: $(srcdir)/perl_api/perl.c
+perl.c: $(srcdir)/perl_api/perl.xs $(srcdir)/perl_api/typemap
+	echo "#define _PATH_PERLSCRIPTS \"$(datadir)/vi/perl\"" > $@
+	$(PERL) $(PERLLIB)/ExtUtils/xsubpp -typemap \
+	    $(PERLLIB)/ExtUtils/typemap $(srcdir)/perl_api/perl.xs >> $@
+	($(PERL) -ne 'print "sub $$1 {\$$curscr->$$1(\@_)}\n" \
+	    if /newXS\("VI::([^":]*)"/;' $@ ; echo "1;") > VI.pm
+perl.o: perl.c
+	$(CC) $(CFLAGS) $?
+perlsfio.o: $(srcdir)/perl_api/perlsfio.c
 	$(CC) $(CFLAGS) $?
 tcl.o: $(srcdir)/tcl_api/tcl.c
 	$(CC) $(CFLAGS) $?
@@ -532,15 +575,14 @@ rec_utils.o: $(srcdir)/db/recno/rec_utils.c
 	$(CC) -D__DBINTERFACE_PRIVATE $(CFLAGS) -I$(srcdir)/db/recno $?
 
 # Regular Expressions sources.
-RINC=	-I$(srcdir)/regex
 regcomp.o: $(srcdir)/regex/regcomp.c
-	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $(RINC) $?
+	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $?
 regerror.o: $(srcdir)/regex/regerror.c
-	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $(RINC) $?
+	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $?
 regexec.o: $(srcdir)/regex/regexec.c
-	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $(RINC) $?
+	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $?
 regfree.o: $(srcdir)/regex/regfree.c
-	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $(RINC) $?
+	$(CC) -D__REGEX_PRIVATE $(CFLAGS) $?
 
 # Random replacement and workaround sources.
 addnstr.o: $(srcdir)/clib/addnstr.c
@@ -557,6 +599,9 @@ getopt.o: $(srcdir)/clib/getopt.c
 	$(CC) $(CFLAGS) $(INC) $?
 memchr.o: $(srcdir)/clib/memchr.c
 	$(CC) $(CFLAGS) $?
+memcpy.o: $(srcdir)/clib/memmove.c
+	$(cp) $? memcpy.c
+	$(CC) $(CFLAGS) -DMEMCOPY memcpy.c
 memmove.o: $(srcdir)/clib/memmove.c
 	$(CC) $(CFLAGS) -DMEMMOVE $?
 memset.o: $(srcdir)/clib/memset.c
@@ -580,4 +625,6 @@ strsep.o: $(srcdir)/clib/strsep.c
 strtol.o: $(srcdir)/clib/strtol.c
 	$(CC) $(CFLAGS) $?
 strtoul.o: $(srcdir)/clib/strtoul.c
+	$(CC) $(CFLAGS) $?
+vsnprintf.o: $(srcdir)/clib/vsnprintf.c
 	$(CC) $(CFLAGS) $?

@@ -1,18 +1,11 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/8/93
+# @(#)Makefile	8.4 (Berkeley) 8/18/96
 
-DIR=	usd/11.edit
-SRCS=	edittut.ms
-MACROS=	-msU
+ROFF=	groff
+TBL=	tbl
 
-paper.ps: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+edittut.ps: edittut.ms
+	${TBL} edittut.ms | ${ROFF} -ms > $@
+	chmod 444 $@
 
-# index for versatec is different from the one in edit.tut
-# because the fonts are different and entries reference page
-# rather than section numbers.  if you have a typesetter
-# you should just use the index in edit.tut, and ignore editvindex.
-
-editvindex:
-	${TROFF} ${MACROS} -n22 edit.vindex
-
-.include <bsd.doc.mk>
+clean:
+	rm -f edittut.ps

@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)common.h	10.11 (Berkeley) 4/10/96
+ *	@(#)common.h	10.13 (Berkeley) 9/25/96
  */
 
 /*
@@ -51,7 +51,7 @@ typedef struct _text		TEXT;
 typedef enum { C_NOTSET, C_CARATSET, C_NOCHANGE, C_ZEROSET } carat_t;
 
 /* Busy message types. */
-typedef enum { BUSY_ON, BUSY_OFF, BUSY_UPDATE } busy_t;
+typedef enum { BUSY_ON = 1, BUSY_OFF, BUSY_UPDATE } busy_t;
 
 /*
  * Routines that return a confirmation return:
@@ -93,4 +93,4 @@ typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 #include "log.h"
 #include "mem.h"
 
-#include "common_extern.h"
+#include "com_extern.h"

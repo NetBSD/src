@@ -1,4 +1,4 @@
-/* @(#)acconfig.h	8.15 (Berkeley) 4/15/96 */
+/* @(#)acconfig.h	8.18 (Berkeley) 7/2/96 */
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef ssize_t
@@ -57,8 +57,8 @@
 /* Define if you want to compile in the Perl interpreter. */
 #undef HAVE_PERL_INTERP
 
-/* Define if your Perl is at least 5.002_01. */
-#undef HAVE_PERL_5_002_01
+/* Define if your Perl is at least 5.003_01. */
+#undef HAVE_PERL_5_003_01
 
 /* Define if you have the Berkeley style revoke(2) system call. */
 #undef HAVE_REVOKE

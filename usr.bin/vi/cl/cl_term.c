@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_term.c	10.20 (Berkeley) 5/3/96";
+static const char sccsid[] = "@(#)cl_term.c	10.22 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -183,8 +183,11 @@ cl_fmap(sp, stype, from, flen, to, tlen)
 	CHAR_T *from, *to;
 	size_t flen, tlen;
 {
-	EX_INIT_IGNORE(sp);
-	VI_INIT_IGNORE(sp);
+	/* Ignore until the screen is running, do the real work then. */
+	if (F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_SCR_VI))
+		return (0);
+	if (F_ISSET(sp, SC_EX) && !F_ISSET(sp, SC_SCR_EX))
+		return (0);
 
 	return (cl_pfmap(sp, stype, from, flen, to, tlen));
 }
@@ -231,6 +234,10 @@ cl_optchange(sp, opt, str, valp)
 	char *str;
 	u_long *valp;
 {
+	CL_PRIVATE *clp;
+
+	clp = CLP(sp);
+
 	switch (opt) {
 	case O_COLUMNS:
 	case O_LINES:
@@ -243,7 +250,23 @@ cl_optchange(sp, opt, str, valp)
 		F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
 		break;
 	case O_MESG:
-		cl_omesg(sp, CLP(sp), !*valp);
+		(void)cl_omesg(sp, clp, !*valp);
+		break;
+	case O_WINDOWNAME:
+		if (*valp) {
+			F_CLR(clp, CL_RENAME_OK);
+
+			(void)cl_rename(sp, NULL, 0);
+		} else {
+			F_SET(clp, CL_RENAME_OK);
+
+			/*
+			 * If the screen is live, i.e. we're not reading the
+			 * .exrc file, update the window.
+			 */
+			if (sp->frp != NULL && sp->frp->name != NULL)
+				(void)cl_rename(sp, sp->frp->name, 1);
+		}
 		break;
 	}
 	return (0);
@@ -428,9 +451,9 @@ noterm:	if (row == 0)
  *
  * PUBLIC: int cl_putchar __P((int));
  */
-void
+int
 cl_putchar(ch)
 	int ch;
 {
-	putchar(ch);
+	return (putchar(ch));
 }

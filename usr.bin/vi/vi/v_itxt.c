@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_itxt.c	10.13 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)v_itxt.c	10.16 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static const char sccsid[] = "@(#)v_itxt.c	10.13 (Berkeley) 4/27/96";
 		(void)log_cursor(sp);					\
 }
 
-static u_int32_t set_txt_std __P((SCR *, VICMD *, u_int));
+static u_int32_t set_txt_std __P((SCR *, VICMD *, u_int32_t));
 
 /*
  * v_iA -- [count]A
@@ -268,6 +268,15 @@ v_change(sp, vp)
 	char *bp, *p;
 
 	/*
+	 * 'c' can be combined with motion commands that set the resulting
+	 * cursor position, i.e. "cG".  Clear the VM_RCM flags and make the
+	 * resulting cursor position stick, inserting text has its own rules
+	 * for cursor positioning.
+	 */
+	F_CLR(vp, VM_RCM_MASK);
+	F_SET(vp, VM_RCM_SET);
+
+	/*
 	 * Find out if the file is empty, it's easier to handle it as a
 	 * special case.
 	 */
@@ -301,15 +310,6 @@ v_change(sp, vp)
 	sp->cno = vp->m_start.cno;
 
 	LOG_CORRECT;
-
-	/*
-	 * 'c' can be combined with motion commands that set the resulting
-	 * cursor position, i.e. "cG".  Clear the VM_RCM flags and make the
-	 * resulting cursor position stick, inserting text has its own rules
-	 * for cursor positioning.
-	 */
-	F_CLR(vp, VM_RCM_MASK);
-	F_SET(vp, VM_RCM_SET);
 
 	/*
 	 * If not in line mode and changing within a single line, copy the
@@ -362,7 +362,7 @@ v_change(sp, vp)
 		bp = NULL;
 
 	/* Delete the text. */
-	if (delete(sp, &vp->m_start, &vp->m_stop, lmode))
+	if (del(sp, &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 
 	/* If replacing entire lines, insert a replacement line. */

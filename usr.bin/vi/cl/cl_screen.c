@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_screen.c	10.44 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,8 +102,7 @@ cl_screen(sp, flags)
 	if (LF_ISSET(SC_EX)) {
 		if (cl_ex_init(sp))
 			return (1);
-		clp->in_ex = 1;
-		F_SET(clp, CL_SCR_EX_INIT);
+		F_SET(clp, CL_IN_EX | CL_SCR_EX_INIT);
 
 		/*
 		 * If doing an ex screen for ex mode, move to the last line
@@ -115,7 +114,7 @@ cl_screen(sp, flags)
 	} else {
 		if (cl_vi_init(sp))
 			return (1);
-		clp->in_ex = 0;
+		F_CLR(clp, CL_IN_EX);
 		F_SET(clp, CL_SCR_VI_INIT);
 	}
 	return (0);
@@ -149,12 +148,12 @@ cl_quit(gp)
 		rval = 1;
 
 	/* Really leave vi mode. */
-	if (F_ISSET(gp, G_STDIN_TTY) &&
+	if (F_ISSET(clp, CL_STDIN_TTY) &&
 	    F_ISSET(clp, CL_SCR_VI_INIT) && cl_vi_end(gp))
 		rval = 1;
 
 	/* Really leave ex mode. */
-	if (F_ISSET(gp, G_STDIN_TTY) &&
+	if (F_ISSET(clp, CL_STDIN_TTY) &&
 	    F_ISSET(clp, CL_SCR_EX_INIT) && cl_ex_end(gp))
 		rval = 1;
 
@@ -194,7 +193,7 @@ cl_vi_init(sp)
 		goto fast;
 
 	/* Curses vi always reads from (and writes to) a terminal. */
-	if (!F_ISSET(gp, G_STDIN_TTY) || !isatty(STDOUT_FILENO)) {
+	if (!F_ISSET(clp, CL_STDIN_TTY) || !isatty(STDOUT_FILENO)) {
 		msgq(sp, M_ERR,
 		    "016|Vi's standard input and output must be a terminal");
 		return (1);
@@ -234,9 +233,10 @@ cl_vi_init(sp)
 	 * never have more than one SCREEN at a time.
 	 *
 	 * XXX
-	 * The SunOS initscr() isn't reentrant.  Don't even think about using
-	 * it.  It fails in subtle ways (e.g. select(2) on fileno(stdin) stops
-	 * working).
+	 * The SunOS initscr() can't be called twice.  Don't even think about
+	 * using it.  It fails in subtle ways (e.g. select(2) on fileno(stdin)
+	 * stops working).  (The SVID notes that applications should only call
+	 * initscr() once.)
 	 *
 	 * XXX
 	 * The HP/UX newterm doesn't support the NULL first argument, so we
@@ -284,7 +284,11 @@ cl_vi_init(sp)
 	/* Put the cursor keys into application mode. */
 	(void)keypad(stdscr, TRUE);
 
-	/* The screen TI sequence just got sent. */
+	/*
+	 * XXX
+	 * The screen TI sequence just got sent.  See the comment in
+	 * cl_funcs.c:cl_attr().
+	 */
 	clp->ti_te = TI_SENT;
 
 	/*
@@ -368,16 +372,6 @@ fast:	/* Set the terminal modes. */
 err:		(void)cl_vi_end(sp->gp);
 		return (1);
 	}
-
-	/* If not already done, send the terminal initialization sequence. */
-	if (clp->ti_te == TE_SENT) {
-		clp->ti_te = TI_SENT;
-		if (clp->smcup == NULL)
-			(void)cl_getcap(sp, "smcup", &clp->smcup);
-		if (clp->smcup != NULL)
-			(void)tputs(clp->smcup, 1, cl_putchar);
-		(void)fflush(stdout);
-	}
 	return (0);
 }
 
@@ -403,7 +397,7 @@ cl_vi_end(gp)
 	 * Move to the bottom of the window (some endwin implementations don't
 	 * do this for you).
 	 */
-	if (!clp->in_ex) {
+	if (!F_ISSET(clp, CL_IN_EX)) {
 		(void)move(0, 0);
 		(void)deleteln();
 		(void)move(LINES - 1, 0);
@@ -415,7 +409,11 @@ cl_vi_end(gp)
 	/* End curses window. */
 	(void)endwin();
 
-	/* The screen TE sequence just got sent. */
+	/*
+	 * XXX
+	 * The screen TE sequence just got sent.  See the comment in
+	 * cl_funcs.c:cl_attr().
+	 */
 	clp->ti_te = TE_SENT;
 
 	return (0);
@@ -438,7 +436,7 @@ cl_ex_init(sp)
 		goto fast;
 
 	/* If not reading from a file, we're done. */
-	if (!F_ISSET(sp->gp, G_STDIN_TTY))
+	if (!F_ISSET(clp, CL_STDIN_TTY))
 		return (0);
 
 	/* Get the ex termcap/terminfo strings. */
@@ -490,16 +488,6 @@ cl_ex_init(sp)
 fast:	if (tcsetattr(STDIN_FILENO, TCSADRAIN | TCSASOFT, &clp->ex_enter)) {
 		msgq(sp, M_SYSERR, "tcsetattr");
 		return (1);
-	}
-
-	/* If not already done, send the terminal end sequence. */
-	if (clp->ti_te == TI_SENT) {
-		clp->ti_te = TE_SENT;
-		if (clp->rmcup == NULL)
-			(void)cl_getcap(sp, "rmcup", &clp->rmcup);
-		if (clp->rmcup != NULL)
-			(void)tputs(clp->rmcup, 1, cl_putchar);
-		(void)fflush(stdout);
 	}
 	return (0);
 }
@@ -575,11 +563,7 @@ cl_freecap(clp)
 
 /*
  * cl_putenv --
- *	Put a value into the environment.  We use putenv(3) because it's
- *	more portable.  The following hack is because some moron decided
- *	to keep a reference to the memory passed to putenv(3), instead of
- *	having it allocate its own.  Someone clearly needs to get promoted
- *	into management.
+ *	Put a value into the environment.
  */
 static int
 cl_putenv(name, str, value)

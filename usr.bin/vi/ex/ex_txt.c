@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_txt.c	10.13 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_txt.c	10.17 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,15 +101,16 @@ newtp:		if ((tp = text_init(sp, NULL, 0, 32)) == NULL)
 	 * practice, but not 'cause it's easier.
 	 */
 	gp = sp->gp;
-	if (F_ISSET(gp, G_STDIN_TTY)) {
+	if (F_ISSET(gp, G_SCRIPTED))
+		LF_CLR(TXT_AUTOINDENT);
+	else {
 		if (LF_ISSET(TXT_AUTOINDENT)) {
 			LF_SET(TXT_EOFCHAR);
 			if (v_txt_auto(sp, sp->lno, NULL, 0, tp))
 				goto err;
 		}
 		txt_prompt(sp, tp, prompt, flags);
-	} else
-		LF_CLR(TXT_AUTOINDENT);
+	}
 
 	for (carat_st = C_NOTSET;;) {
 		if (v_event_get(sp, &ev, 0, 0))
@@ -122,6 +123,7 @@ newtp:		if ((tp = text_init(sp, NULL, 0, 32)) == NULL)
 		case E_ERR:
 			goto err;
 		case E_REPAINT:
+		case E_WRESIZE:
 			continue;
 		case E_EOF:
 			rval = 1;
@@ -162,14 +164,13 @@ newtp:		if ((tp = text_init(sp, NULL, 0, 32)) == NULL)
 			/* FALLTHROUGH */
 		case K_NL:
 			/*
-			 * '\' can escape <carriage-return>/<newline>.  Toss
-			 * the backslash.
+			 * '\' can escape <carriage-return>/<newline>.  We
+			 * don't discard the backslash because we need it
+			 * to get the <newline> through the ex parser.
 			 */
 			if (LF_ISSET(TXT_BACKSLASH) &&
-			    tp->len != 0 && tp->lb[tp->len - 1] == '\\') {
-				--tp->len;
+			    tp->len != 0 && tp->lb[tp->len - 1] == '\\')
 				goto ins_ch;
-			}
 
 			/*
 			 * CR returns from the ex command line.
@@ -291,7 +292,7 @@ notlast:			CIRCLEQ_REMOVE(tiqh, tp, q);
 				ait.lb = NULL;
 				ait.lb_len = 0;
 				BINC_GOTO(sp, ait.lb, ait.lb_len, tp->ai);
-				memmove(ait.lb, tp->lb, tp->ai);
+				memcpy(ait.lb, tp->lb, tp->ai);
 				ait.ai = ait.len = tp->ai;
 
 				carat_st = C_NOCHANGE;

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_funcs.c	10.40 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)cl_funcs.c	10.50 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,10 +83,60 @@ cl_attr(sp, attribute, on)
 {
 	CL_PRIVATE *clp;
 
+	clp = CLP(sp);
+
 	switch (attribute) {
+	case SA_ALTERNATE:
+	/*
+	 * !!!
+	 * There's a major layering violation here.  The problem is that the
+	 * X11 xterm screen has what's known as an "alternate" screen.  Some
+	 * xterm termcap/terminfo entries include sequences to switch to/from
+	 * that alternate screen as part of the ti/te (smcup/rmcup) strings.
+	 * Vi runs in the alternate screen, so that you are returned to the
+	 * same screen contents on exit from vi that you had when you entered
+	 * vi.  Further, when you run :shell, or :!date or similar ex commands,
+	 * you also see the original screen contents.  This wasn't deliberate
+	 * on vi's part, it's just that it historically sent terminal init/end
+	 * sequences at those times, and the addition of the alternate screen
+	 * sequences to the strings changed the behavior of vi.  The problem
+	 * caused by this is that we don't want to switch back to the alternate
+	 * screen while getting a new command from the user, when the user is
+	 * continuing to enter ex commands, e.g.:
+	 *
+	 *	:!date				<<< switch to original screen
+	 *	[Hit return to continue]	<<< prompt user to continue
+	 *	:command			<<< get command from user
+	 *
+	 * Note that the :command input is a true vi input mode, e.g., input
+	 * maps and abbreviations are being done.  So, we need to be able to
+	 * switch back into the vi screen mode, without flashing the screen. 
+	 *
+	 * To make matters worse, the curses initscr() and endwin() calls will
+	 * do this automatically -- so, this attribute isn't as controlled by
+	 * the higher level screen as closely as one might like.
+	 */
+	if (on) {
+		if (clp->ti_te != TI_SENT) {
+			clp->ti_te = TI_SENT;
+			if (clp->smcup == NULL)
+				(void)cl_getcap(sp, "smcup", &clp->smcup);
+			if (clp->smcup != NULL)
+				(void)tputs(clp->smcup, 1, cl_putchar);
+		}
+	} else
+		if (clp->ti_te != TE_SENT) {
+			clp->ti_te = TE_SENT;
+			if (clp->rmcup == NULL)
+				(void)cl_getcap(sp, "rmcup", &clp->rmcup);
+			if (clp->rmcup != NULL)
+				(void)tputs(clp->rmcup, 1, cl_putchar);
+			(void)fflush(stdout);
+		}
+		(void)fflush(stdout);
+		break;
 	case SA_INVERSE:
 		if (F_ISSET(sp, SC_EX | SC_SCR_EXWROTE)) {
-			clp = CLP(sp);
 			if (clp->smso == NULL)
 				return (1);
 			if (on)
@@ -423,6 +473,17 @@ cl_refresh(sp, repaint)
 	SCR *sp;
 	int repaint;
 {
+	CL_PRIVATE *clp;
+
+	clp = CLP(sp);
+
+	/*
+	 * If we received a killer signal, we're done, there's no point
+	 * in refreshing the screen.
+	 */
+	if (clp->killersig)
+		return (0);
+
 	/*
 	 * If repaint is set, the editor is telling us that we don't know
 	 * what's on the screen, so we have to repaint from scratch.
@@ -440,13 +501,41 @@ cl_refresh(sp, repaint)
  * cl_rename --
  *	Rename the file.
  *
- * PUBLIC: int cl_rename __P((SCR *));
+ * PUBLIC: int cl_rename __P((SCR *, char *, int));
  */
 int
-cl_rename(sp)
+cl_rename(sp, name, on)
 	SCR *sp;
+	char *name;
+	int on;
 {
-	return (0);			/* Curses doesn't care. */
+	GS *gp;
+	CL_PRIVATE *clp;
+	char *ttype;
+
+	gp = sp->gp;
+	clp = CLP(sp);
+
+	ttype = OG_STR(gp, GO_TERM);
+
+	/*
+	 * XXX
+	 * We can only rename windows for xterm.
+	 */
+	if (on) {
+		if (F_ISSET(clp, CL_RENAME_OK) &&
+		    !strncmp(ttype, "xterm", sizeof("xterm") - 1)) {
+			F_SET(clp, CL_RENAME);
+			(void)printf(XTERM_RENAME, name);
+			(void)fflush(stdout);
+		}
+	} else
+		if (F_ISSET(clp, CL_RENAME)) {
+			F_CLR(clp, CL_RENAME);
+			(void)printf(XTERM_RENAME, ttype);
+			(void)fflush(stdout);
+		}
+	return (0);
 }
 
 /*
@@ -483,7 +572,7 @@ cl_suspend(sp, allowedp)
 	 */
 	if (F_ISSET(sp, SC_EX)) { 
 		/* Save the terminal settings, and restore the original ones. */
-		if (F_ISSET(gp, G_STDIN_TTY)) {
+		if (F_ISSET(clp, CL_STDIN_TTY)) {
 			(void)tcgetattr(STDIN_FILENO, &t);
 			(void)tcsetattr(STDIN_FILENO,
 			    TCSASOFT | TCSADRAIN, &clp->orig);
@@ -495,7 +584,7 @@ cl_suspend(sp, allowedp)
 		/* Time passes ... */
 
 		/* Restore terminal settings. */
-		if (F_ISSET(gp, G_STDIN_TTY))
+		if (F_ISSET(clp, CL_STDIN_TTY))
 			(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
 		return (0);
 	}
@@ -526,13 +615,11 @@ cl_suspend(sp, allowedp)
 	/* Restore the cursor keys to normal mode. */
 	(void)keypad(stdscr, FALSE);
 
+	/* Restore the window name. */
+	(void)cl_rename(sp, NULL, 0);
+
 #ifdef HAVE_BSD_CURSES
-	/* Send the terminal end sequence. */
-	if (clp->rmcup == NULL)
-		(void)cl_getcap(sp, "rmcup", &clp->rmcup);
-	if (clp->rmcup != NULL)
-		(void)tputs(clp->rmcup, 1, cl_putchar);
-	(void)fflush(stdout);
+	(void)cl_attr(sp, SA_ALTERNATE, 0);
 #else
 	(void)endwin();
 #endif
@@ -550,18 +637,27 @@ cl_suspend(sp, allowedp)
 
 	/* Time passes ... */
 
+	/*
+	 * If we received a killer signal, we're done.  Leave everything
+	 * unchanged.  In addition, the terminal has already been reset
+	 * correctly, so leave it alone.
+	 */
+	if (clp->killersig) {
+		F_CLR(clp, CL_SCR_EX_INIT | CL_SCR_VI_INIT);
+		return (0);
+	}
+
 #ifdef HAVE_BSD_CURSES
 	/* Restore terminal settings. */
-	if (F_ISSET(gp, G_STDIN_TTY))
+	if (F_ISSET(clp, CL_STDIN_TTY))
 		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
 
-	/* Send the terminal initialization sequence. */
-	if (clp->smcup == NULL)
-		(void)cl_getcap(sp, "smcup", &clp->smcup);
-	if (clp->smcup != NULL)
-		(void)tputs(clp->smcup, 1, cl_putchar);
-	(void)fflush(stdout);
+	(void)cl_attr(sp, SA_ALTERNATE, 1);
 #endif
+
+	/* Set the window name. */
+	(void)cl_rename(sp, sp->frp->name, 1);
+
 	/* Put the cursor keys into application mode. */
 	(void)keypad(stdscr, TRUE);
 
@@ -588,8 +684,8 @@ void
 cl_usage()
 {
 #define	USAGE "\
-usage: ex [-eFRrsv] [-c command] [-t tag] [-w size] [file ...]\n\
-usage: vi [-eFlRrv] [-c command] [-t tag] [-w size] [file ...]\n"
+usage: ex [-eFRrSsv] [-c command] [-t tag] [-w size] [file ...]\n\
+usage: vi [-eFlRrSv] [-c command] [-t tag] [-w size] [file ...]\n"
 	(void)fprintf(stderr, "%s", USAGE);
 #undef	USAGE
 }

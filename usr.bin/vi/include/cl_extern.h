@@ -19,7 +19,9 @@ void *newterm __P((const char *, FILE *, FILE *));
 #ifndef HAVE_CURSES_SETUPTERM
 void setupterm __P((char *, int, int *));
 #endif
-#ifndef HAVE_CURSES_TIGETSTR
+#ifdef HAVE_CURSES_TIGETSTR
+char *tigetstr();
+#else
 char *tigetstr __P((char *));
 #endif
 #ifndef HAVE_CURSES_TIGETSTR
@@ -37,7 +39,7 @@ int cl_insertln __P((SCR *));
 int cl_keyval __P((SCR *, scr_keyval_t, CHAR_T *, int *));
 int cl_move __P((SCR *, size_t, size_t));
 int cl_refresh __P((SCR *, int));
-int cl_rename __P((SCR *));
+int cl_rename __P((SCR *, char *, int));
 int cl_suspend __P((SCR *, int *));
 void cl_usage __P((void));
 int sig_init __P((GS *, SCR *));
@@ -51,4 +53,4 @@ int cl_fmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
 int cl_optchange __P((SCR *, int, char *, u_long *));
 int cl_omesg __P((SCR *, CL_PRIVATE *, int));
 int cl_ssize __P((SCR *, int, size_t *, size_t *, int *));
-void cl_putchar __P((int));
+int cl_putchar __P((int));

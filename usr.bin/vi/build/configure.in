@@ -1,23 +1,20 @@
-dnl	@(#)configure.in	8.106 (Berkeley) 5/15/96
+dnl	@(#)configure.in	8.134 (Berkeley) 10/15/96
 
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(../common/main.c)
 AC_CONFIG_HEADER(config.h)
 
 dnl Configure setup.
-AC_C_CROSS()
-AC_PROG_CPP()
 AC_PROG_INSTALL()
 AC_CANONICAL_HOST
 AC_ARG_PROGRAM()
 
 dnl If the user wants a debugging environment, set OPTFLAG now.  (Some
 dnl compilers won't mix optimizing and debug flags.)
-AC_MSG_CHECKING(for debugging)
-AC_CACHE_VAL(vi_cv_debug, [dnl
+AC_MSG_CHECKING(if --enable-debug option specified)
 AC_ARG_ENABLE(debug,
 	[  --enable-debug          Build a debugging version.],
-	[vi_cv_debug="yes"], [vi_cv_debug="no"])])
+	[vi_cv_debug="yes"], [vi_cv_debug="no"])
 if test "$vi_cv_debug" = yes; then
 	AC_DEFINE(DEBUG)
 	OPTFLAG=${OPTFLAG-"-g"}
@@ -25,47 +22,46 @@ if test "$vi_cv_debug" = yes; then
 fi
 AC_MSG_RESULT($vi_cv_debug)
 
-dnl Compilers, compiler flags and libraries per architecture.  This is where
-dnl we handle stuff that autoconf can't handle.
+dnl This is where we handle stuff that autoconf can't handle.
 dnl XXX
 dnl Don't override anything if it's already set from the environment.
-dnl XXX
-dnl A/UX	has broken getopt(3), strpbrk(3).
-dnl		-ZP disables _BSD_SOURCE et al, but enables POSIX at link time.
+
+dnl Compiler, preprocessor and load flags.
+dnl AUX:	-ZP disables _BSD_SOURCE et al, but enables POSIX at link time.
+dnl LynxOS:	We check for gcc 2.x or better, the gcc 1 that was shipped with
+dnl		LynxOS historically wasn't good enough.
 AC_SUBST(CPPFLAGS)
 case "$host_os" in
 aix3.2.5)  OPTFLAG=${OPTFLAG-"-O"};;
-aix4.1*)   OPTFLAG=${OPTFLAG-"-O3"}
-	   CFLAGS=${CFLAGS-"-qstrict"};;
-aux*)	   OPTFLAG=${OPTFLAG-"-O"}
-	   CPPFLAGS=${CPPFLAGS-"-ZP -D_BSD_SOURCE -D_SYSV_SOURCE -D_AUX_SOURCE"}
+aix4.1*)   CFLAGS=${CFLAGS-"-qstrict"}
+	   OPTFLAG=${OPTFLAG-"-O3"};;
+aux*)	   CPPFLAGS=${CPPFLAGS-"-ZP -D_BSD_SOURCE -D_SYSV_SOURCE -D_AUX_SOURCE"}
 	   LDFLAGS=${LDFLAGS-"-ZP"}
-	   LIBOBJS="getopt.o strpbrk.o $LIBOBJS";;
+	   OPTFLAG=${OPTFLAG-"-O"};;
 bsd4.4)    OPTFLAG=${OPTFLAG-"-O2"};;
-bsdi2.1)   CC=${CC-"shlicc"}
-	   LIBS=${LIBS-"-lipc"}
+bsdi*)	   CC=${CC-"shlicc"}
 	   OPTFLAG=${OPTFLAG-"-O2"};;
-bsdi*)	   OPTFLAG=${OPTFLAG-"-O2"};;
-dgux*)	   LIBS=${LIBS-"-ldgc"};;
-irix6*)	   OPTFLAG=${OPTFLAG-"-O2"}
-	   LIBS=${LIBS-"-lbsd"};;
-irix*)	   OPTFLAG=${OPTFLAG-"-O2"}
-	   LIBS=${LIBS-"-lc_s -lbsd"};;
-isc*)	   LIBS=${LIBS-"-lcposix -linet"};;
-netbsd1*)  LIBS=${LIBS-"-lcrypt"};;
-nextstep3) OPTFLAG=${OPTFLAG-"-O9"}
-	   CPPFLAGS=${CPPFLAGS-"-w -pipe -posix"}
-	   LDFLAGS=${LDFLAGS-"-posix"};;
+irix6*)	   OPTFLAG=${OPTFLAG-"-O2"};;
+irix*)	   OPTFLAG=${OPTFLAG-"-O2"};;
+lynxos*)   AC_PROG_CC()
+	   AC_MSG_CHECKING([for GNU C (gcc) version 2.x])
+	   ac_cv_gcc_vers=`${CC-cc} -v 2>&1 | \
+		grep "gcc version " | sed 's/.*version //'`
+	   ac_cv_gcc_major=`echo "$ac_cv_gcc_vers" | sed 's/\..*//'`
+	   if test "$ac_cv_gcc_major" = "2" ; then
+		AC_MSG_RESULT(yes)
+	   else
+		AC_MSG_RESULT(no)
+		echo "Fatal error: Nvi requires gcc 2.x to build on LynxOS."
+		echo "See build/README.LynxOS for more information."
+		exit 1
+	   fi;;
+nextstep3) CPPFLAGS=${CPPFLAGS-"-w -pipe -posix"}
+	   LDFLAGS=${LDFLAGS-"-posix"}
+	   OPTFLAG=${OPTFLAG-"-O9"};;
 osf*)	   CFLAGS=${CFLAGS-"-Olimit 1000"};;
-ptx*)	   LIBS=${LIBS-"-lseq -linet -lsocket"};;
-sco3.2*)   LIBS=${LIBS-"-lsocket"};;
-sinix*)	   LIBS=${LIBS-"-lelf -lc"};;
-solaris*)  no_op_OPTFLAG=${no_op_OPTFLAG-""}
-	   LIBS=${LIBS-"-lsocket -lnsl -ldl"}
-	   RLIBS=yes;;
+solaris*)  no_op_OPTFLAG=${no_op_OPTFLAG-""};;
 sunos*)	   no_op_OPTFLAG=${no_op_OPTFLAG-""};;
-ultrix*)   AC_DEFINE(HAVE_BROKEN_VDISABLE);;
-wgs*)	   LIBS=${LIBS-"-lnsl"};;
 esac
 
 dnl The default compiler is cc.
@@ -76,6 +72,37 @@ dnl The default OPTFLAG is -O
 AC_SUBST(OPTFLAG)
 OPTFLAG=${OPTFLAG-"-O"}
 
+dnl The SunOS/Solaris compiler can't optimize vi/v_txt.c; the symptom is
+dnl that the command 35i==<esc> turns into an infinite loop.
+AC_SUBST(no_op_OPTFLAG)
+no_op_OPTFLAG=${no_op_OPTFLAG-"$OPTFLAG"}
+
+dnl Libraries.
+case "$host_os" in
+bsdi2.1)   LIBS=${LIBS-"-lipc"};;
+dgux*)	   LIBS=${LIBS-"-ldgc"};;
+irix6*)	   LIBS=${LIBS-"-lbsd"};;
+irix*)	   LIBS=${LIBS-"-lc_s -lbsd"};;
+isc*)	   LIBS=${LIBS-"-lcposix -linet"};;
+netbsd1*)  LIBS=${LIBS-"-lcrypt"};;
+ptx*)	   LIBS=${LIBS-"-lseq -linet -lsocket"};;
+sco3.2*)   LIBS=${LIBS-"-lsocket"};;
+sinix*)	   LIBS=${LIBS-"-lelf -lc"};;
+solaris*)  LIBS=${LIBS-"-lsocket -lnsl -ldl"}
+	   RLIBS=yes;;
+wgs*)	   LIBS=${LIBS-"-lnsl"};;
+esac
+
+dnl A/UX has a broken getopt(3), strpbrk(3).
+case "$host_os" in
+aux*)	   LIBOBJS="getopt.o strpbrk.o $LIBOBJS";;
+esac
+
+dnl Ultrix has a broken POSIX.1 VDISABLE value.
+case "$host_os" in
+ultrix*)   AC_DEFINE(HAVE_BROKEN_VDISABLE);;
+esac
+
 dnl The user may have additional CPP information.
 CPPFLAGS="$ADDCPPFLAGS $CPPFLAGS"
 
@@ -85,10 +112,8 @@ LDFLAGS="$ADDLDFLAGS $LDFLAGS"
 dnl The user may have additional library information.
 LIBS="$ADDLIBS $LIBS"
 
-dnl The SunOS/Solaris compiler can't optimize vi/v_txt.c; the symptom is
-dnl that the command 35i==<esc> turns into an infinite loop.
-AC_SUBST(no_op_OPTFLAG)
-no_op_OPTFLAG=${no_op_OPTFLAG-"$OPTFLAG"}
+dnl Check to see if it's going to work.
+AM_SANITY_CHECK_CC
 
 dnl Checks for programs.
 PATH="$PATH:/usr/bin:/usr/sbin:/sbin:/etc:/usr/etc:/usr/lib:/usr/ucblib:"
@@ -105,27 +130,40 @@ AC_PATH_PROG(vi_cv_path_sendmail, sendmail, no)
 if test "$vi_cv_path_sendmail" = no; then
 	echo "WARNING: The sendmail utility was not found!"
 	echo "WARNING: Users will not be told of saved files."
-	exit 1
 fi
 
 dnl Check for the perl5/perl path.
+AC_SUBST(vi_cv_path_perl)
 AC_PATH_PROGS(vi_cv_path_perl, perl5 perl, no)
 
 dnl Check for the "preserve" path.
+dnl Historically, nvi has used /var/tmp/vi.recover.  The Linux filesystem
+dnl standard (FSSTND) uses /var/preserve; we add the vi.recover directory
+dnl beneath it so that we don't have name collisions with other editors.
+dnl Other systems have /var/preserve as well, so we test first for an already
+dnl existing name, and then use the first one that's writeable.
 AC_SUBST(vi_cv_path_preserve)
 AC_MSG_CHECKING(for preserve directory)
 AC_CACHE_VAL(vi_cv_path_preserve, [dnl
-	if test -d /var/tmp; then
-		vi_cv_path_preserve=/var/tmp
-	else
-	if test -d /usr/tmp; then
-		vi_cv_path_preserve=/usr/tmp
-	else
-		vi_cv_path_preserve=no
-	fi
+	dirlist="/var/preserve /var/tmp /usr/tmp"
+	vi_cv_path_preserve=no
+	for i in $dirlist; do
+		if test -d $i/vi.recover; then
+			vi_cv_path_preserve=$i/vi.recover
+			break;
+		fi
+	done
+	if test "$vi_cv_path_preserve" = no; then
+		for i in $dirlist; do
+			if test -d $i -a -w $i; then
+				vi_cv_path_preserve=$i/vi.recover
+				break;
+			fi
+		done
+
 	fi])
 if test "$vi_cv_path_preserve" = no; then
-	echo "Fatal error: no preserve directory found."
+	echo "Fatal error: no writeable preserve directory found."
 	exit 1
 fi
 AC_MSG_RESULT($vi_cv_path_preserve)
@@ -157,11 +195,12 @@ if test "$no_x" != yes; then
 fi
 
 dnl If the user wants a Perl interpreter in nvi, load it.
-AC_MSG_CHECKING(for Perl interpreter)
-AC_CACHE_VAL(vi_cv_perlinterp, [dnl
+AC_SUBST(shrpenv)
+AC_SUBST(vi_cv_perllib)
+AC_MSG_CHECKING(if --enable-perlinterp option specified)
 AC_ARG_ENABLE(perlinterp,
 	[  --enable-perlinterp     Include a Perl interpreter in vi.],
-	[vi_cv_perlinterp="yes"], [vi_cv_perlinterp="no"])])
+	[vi_cv_perlinterp="yes"], [vi_cv_perlinterp="no"])
 AC_MSG_RESULT($vi_cv_perlinterp)
 if test "$vi_cv_perlinterp" = "yes"; then
 	if test "$vi_cv_path_perl" = no; then
@@ -172,82 +211,66 @@ if test "$vi_cv_perlinterp" = "yes"; then
 		echo "Fatal error: perl5 must be version 5.002 or later."
 		exit 1
 	}
-	$vi_cv_path_perl -e 'close(STDERR);require 5.002_01' &&
-	    AC_DEFINE(HAVE_PERL_5_002_01)
+	$vi_cv_path_perl -e 'close(STDERR);require 5.003_01' &&
+	    AC_DEFINE(HAVE_PERL_5_003_01)
 
-	perlcppflags=`$vi_cv_path_perl -e 'use Config;print $Config{ccflags}'`
+	eval `$vi_cv_path_perl -V:shrpenv`
+	if test "X$shrpenv" = "XUNKNOWN"; then # pre 5.003_04
+	    shrpenv=""
+	fi
+	vi_cv_perllib=`$vi_cv_path_perl -MConfig -e 'print $Config{privlib}'`
+	perlcppflags=`$vi_cv_path_perl -Mlib=$srcdir -MExtUtils::Embed \
+        	-e 'ccflags;perl_inc'`
 	if test "X$perlcppflags" != "X"; then
 		CPPFLAGS="$perlcppflags $CPPFLAGS"
 	fi
-	perlarchlib=`$vi_cv_path_perl -e \
-	    'use Config;print $Config{installarchlib}."/CORE"'`
-	if test "X$perlarchlib" != "X"; then
-		CPPFLAGS="-I$perlarchlib $CPPFLAGS"
+	perllibs=`cd $srcdir;$vi_cv_path_perl -MExtUtils::Embed \
+        	-e 'ldopts'`
+	if test "X$perllibs" != "X"; then
+		LIBS="$perllibs $LIBS"
 	fi
-	perllib=`$vi_cv_path_perl -e \
-	    'use Config;print (($Config{d_shrplib} eq "define") ? \
-	    $Config{shrpdir} : ($Config{installarchlib}."/CORE"))'`
-	if test "X$perllib" != "X"; then
-		if test "X$RLIBS" = "Xyes"; then
-			LIBS="$LIBS -R$perllib -L$perllib"
-		else
-			LIBS="$LIBS -L$perllib"
-		fi
-	else
-		echo "Fatal error: no perl5 library; see the section"
-		echo "ADDING LIBRARIES AND INCLUDE FILES in the README file."
-		exit 1
+	perlldflags=`cd $srcdir;$vi_cv_path_perl -MExtUtils::Embed \
+        	-e 'ccdlflags'`
+	if test "X$perlldflags" != "X"; then
+		LDFLAGS="$perlldflags $LDFLAGS"
 	fi
-	LIBOBJS="perl.o $LIBOBJS"
-	LIBS="$LIBS -lperl"
-	perllibs=`$vi_cv_path_perl -e \
-	    'use Config;print "$Config{libs} " . "$Config{installarchlib}/auto/DynaLoader/DynaLoader$Config{lib_ext}"'`
-        LIBS="$LIBS $perllibs"
+	LIBOBJS="perl.o perlsfio.o $LIBOBJS"
 	AC_DEFINE(HAVE_PERL_INTERP)
 fi
 
 dnl If the user wants a Tk/Tcl front-end for nvi, build it.
 AC_SUBST(tknvi)
 AC_SUBST(TKLIBS)
-AC_MSG_CHECKING(for Tk/Tcl front-end)
-AC_CACHE_VAL(vi_cv_tknvi, [dnl
+AC_MSG_CHECKING(if --enable-tknvi option specified)
 AC_ARG_ENABLE(tknvi,
 	[  --enable-tknvi          Build a Tk/Tcl front-end for vi.],
-	[vi_cv_tknvi="yes"], [vi_cv_tknvi="no"])])
+	[vi_cv_tknvi="yes"], [vi_cv_tknvi="no"])
 AC_MSG_RESULT($vi_cv_tknvi)
 if test "$vi_cv_tknvi" = "yes"; then
 	tknvi=tknvi
-	TKLIBS="$LIBS -ltk -ltcl -lm $XLIBS"
+	TKLIBS="-ltk -ltcl -lm $XLIBS $LIBS"
 fi
 
 dnl If the user wants a Tk/Tcl interpreter in nvi, load it.
-AC_MSG_CHECKING(for Tk/Tcl interpreter)
-AC_CACHE_VAL(vi_cv_tclinterp, [dnl
+AC_MSG_CHECKING(if --enable-tclinterp option specified)
 AC_ARG_ENABLE(tclinterp,
 	[  --enable-tclinterp      Include a Tk/Tcl interpreter in vi.],
-	[vi_cv_tclinterp="yes"], [vi_cv_tclinterp="no"])])
+	[vi_cv_tclinterp="yes"], [vi_cv_tclinterp="no"])
 AC_MSG_RESULT($vi_cv_tclinterp)
 if test "$vi_cv_tclinterp" = "yes"; then
 	LIBOBJS="tcl.o $LIBOBJS"
-	LIBS="$LIBS -ltk -ltcl -lm $XLIBS"
+	LIBS="-ltk -ltcl -lm $XLIBS $LIBS"
 	AC_DEFINE(HAVE_TCL_INTERP)
 fi
 
-dnl Make sure that we found a Tk/Tcl library.
+dnl Make sure that we can find a Tk/Tcl library.
 if test "$vi_cv_tknvi" = "yes" || test "$vi_cv_tclinterp" = "yes"; then
-	if test "$vi_cv_tclinterp" != yes; then
-		SAVE_LIBS="$LIBS"
-		LIBS=$TKLIBS
-	fi
-	AC_TRY_LINK([#include <tcl.h>], [Tcl_Eval(0, 0);],
-		[vi_cv_tkfatal="no"], [vi_cv_tkfatal="yes"])
+	AC_CHECK_LIB(tcl, main,
+		[vi_cv_tkfatal="no"], [vi_cv_tkfatal="yes"], -ltk -lm)
 	if test "$vi_cv_tkfatal" = "yes"; then
 		echo "Fatal error: no Tk/Tcl library; see the section"
 		echo "ADDING LIBRARIES AND INCLUDE FILES in the README file."
 		exit 1
-	fi
-	if test "$vi_cv_tclinterp" != yes; then
-		LIBS="$SAVE_LIBS"
 	fi
 fi
 
@@ -269,11 +292,10 @@ if test "$vi_cv_termlib" != no; then
 	LIBS="$vi_cv_termlib $LIBS"
 fi
 AC_SUBST(cobjs)
-AC_MSG_CHECKING(for curses library)
-AC_CACHE_VAL(vi_cv_curses, [dnl
+AC_MSG_CHECKING(if --disable-curses option specified)
 AC_ARG_ENABLE(curses,
 	[  --disable-curses        DON'T use the nvi-provided curses routines.],
-	[vi_cv_curses="other curses"], [vi_cv_curses="bundled curses"])])
+	[vi_cv_curses="other curses"], [vi_cv_curses="bundled curses"])
 AC_MSG_RESULT($vi_cv_curses)
 case "$vi_cv_curses" in
 "bundled curses")
@@ -314,28 +336,20 @@ AC_TYPE_SIZE_T
 AC_STRUCT_TM
 
 dnl Checks for library functions.
-AC_REPLACE_FUNCS(bsearch)
-AC_REPLACE_FUNCS(gethostname)
-AC_REPLACE_FUNCS(getopt)
-AC_REPLACE_FUNCS(memchr)
-AC_REPLACE_FUNCS(memmove)
-AC_REPLACE_FUNCS(memset)
-AC_REPLACE_FUNCS(mkstemp)
-AC_FUNC_MMAP
-AC_REPLACE_FUNCS(mmap)
-AC_REPLACE_FUNCS(realloc)
+  AC_CHECK_FUNCS(bsearch gethostname getopt memchr memcpy memmove memset)
+AC_REPLACE_FUNCS(bsearch gethostname getopt memchr memcpy memmove memset)
+  AC_CHECK_FUNCS(mkstemp mmap snprintf strdup strerror strpbrk strtol)
+AC_REPLACE_FUNCS(mkstemp mmap snprintf strdup strerror strpbrk strtol)
+  AC_CHECK_FUNCS(strtoul vsnprintf)
+AC_REPLACE_FUNCS(strtoul vsnprintf)
+
 AC_CHECK_FUNCS(select)
 AC_CHECK_FUNCS(setenv, [need_env=no], [need_env=yes])
-AC_REPLACE_FUNCS(snprintf)
-AC_REPLACE_FUNCS(strdup)
-AC_REPLACE_FUNCS(strerror)
-AC_REPLACE_FUNCS(strpbrk)
 AC_CHECK_FUNCS(strsep, [need_strsep=no], [need_strsep=yes])
-AC_REPLACE_FUNCS(strtol)
-AC_REPLACE_FUNCS(strtoul)
 AC_CHECK_FUNCS(unsetenv,, [need_env=yes])
+
+AC_FUNC_MMAP
 AC_FUNC_VFORK
-AC_FUNC_VPRINTF
 
 dnl If we needed setenv or unsetenv, add in the clib/env.c replacement file.
 if test "$need_env" = yes; then
@@ -382,7 +396,7 @@ AC_CACHE_VAL(vi_cv_ftruncate, [dnl
 AC_TRY_LINK([#include <unistd.h>], [ftruncate(0, 0);],
 	[vi_cv_ftruncate=ftruncate],
 AC_TRY_LINK([#include <unistd.h>], [chsize(0, 0);],
-	[vi_cv_ftruncate=chsize]), [vi_cv_ftruncate=none])])
+	[vi_cv_ftruncate=chsize], [vi_cv_ftruncate=no]))])
 if test "$vi_cv_ftruncate" = ftruncate; then
 	AC_DEFINE(HAVE_FTRUNCATE_FTRUNCATE)
 fi
@@ -535,7 +549,7 @@ AC_MSG_RESULT($vi_cv_revoke)
 dnl Some versions of sprintf return a pointer to the first argument instead
 dnl of a character count.  We assume that the return value of snprintf and
 dnl vsprintf etc. will be the same as sprintf, and check the easy one.
-AC_MSG_CHECKING(for sprintf return value)
+AC_MSG_CHECKING(for int type sprintf return value)
 AC_CACHE_VAL(vi_cv_sprintf_count, [dnl
 AC_TRY_RUN([main(){char buf[20]; exit(sprintf(buf, "XXX") != 3);}],
 	[vi_cv_sprintf_count=yes], [vi_cv_sprintf_count=no])])
@@ -545,11 +559,10 @@ fi
 AC_MSG_RESULT($vi_cv_sprintf_count)
 
 dnl We compile in nvi's DB routines unless the user specifies otherwise.
-AC_MSG_CHECKING(for Berkeley DB package)
-AC_CACHE_VAL(vi_cv_db_lib, [dnl
+AC_MSG_CHECKING(if --disable-db option specified)
 AC_ARG_ENABLE(db,
 	[  --disable-db            DON'T use the nvi-provided DB routines.],
-	[vi_cv_db_lib="other DB"], [vi_cv_db_lib="bundled DB"])])
+	[vi_cv_db_lib="other DB"], [vi_cv_db_lib="bundled DB"])
 AC_MSG_RESULT($vi_cv_db_lib)
 case "$vi_cv_db_lib" in
 "bundled DB")
@@ -560,11 +573,10 @@ case "$vi_cv_db_lib" in
 esac
 
 dnl We compile in nvi's RE routines unless the user specifies otherwise.
-AC_MSG_CHECKING(for POSIX 1003.2 RE routines)
-AC_CACHE_VAL(vi_cv_re_lib, [dnl
+AC_MSG_CHECKING(if --disable-re option specified)
 AC_ARG_ENABLE(re,
 	[  --disable-re            DON'T use the nvi-provided RE routines.],
-	[vi_cv_re_lib="other RE"], [vi_cv_re_lib="bundled RE"])])
+	[vi_cv_re_lib="other RE"], [vi_cv_re_lib="bundled RE"])
 AC_MSG_RESULT($vi_cv_re_lib)
 case "$vi_cv_re_lib" in
 "bundled RE")
@@ -574,7 +586,48 @@ case "$vi_cv_re_lib" in
 	;;
 esac
 
-dnl DB/Vi uses specific integer sizes.
+dnl Check for the standard shorthand types.
+AC_SUBST(u_char_decl)
+AC_MSG_CHECKING(for u_char)
+AC_CACHE_VAL(vi_cv_uchar, [dnl
+AC_TRY_COMPILE([#include <sys/types.h>], u_char foo;,
+	[vi_cv_uchar=yes], [vi_cv_uchar=no])])
+AC_MSG_RESULT($vi_cv_uchar)
+if test "$vi_cv_uchar" = no; then
+	u_char_decl="typedef unsigned char u_char;"
+fi
+
+AC_SUBST(u_short_decl)
+AC_MSG_CHECKING(for u_short)
+AC_CACHE_VAL(vi_cv_ushort, [dnl
+AC_TRY_COMPILE([#include <sys/types.h>], u_short foo;,
+	[vi_cv_ushort=yes], [vi_cv_ushort=no])])
+AC_MSG_RESULT($vi_cv_ushort)
+if test "$vi_cv_ushort" = no; then
+	u_short_decl="typedef unsigned short u_short;"
+fi
+
+AC_SUBST(u_int_decl)
+AC_MSG_CHECKING(for u_int)
+AC_CACHE_VAL(vi_cv_uint, [dnl
+AC_TRY_COMPILE([#include <sys/types.h>], u_int foo;,
+	[vi_cv_uint=yes], [vi_cv_uint=no])])
+AC_MSG_RESULT($vi_cv_uint)
+if test "$vi_cv_uint" = no; then
+	u_int_decl="typedef unsigned int u_int;"
+fi
+
+AC_SUBST(u_long_decl)
+AC_MSG_CHECKING(for u_long)
+AC_CACHE_VAL(vi_cv_ulong, [dnl
+AC_TRY_COMPILE([#include <sys/types.h>], u_long foo;,
+	[vi_cv_ulong=yes], [vi_cv_ulong=no])])
+AC_MSG_RESULT($vi_cv_ulong)
+if test "$vi_cv_ulong" = no; then
+	u_long_decl="typedef unsigned long u_long;"
+fi
+
+dnl DB/Vi use specific integer sizes.
 AC_SUBST(u_int8_decl)
 AC_MSG_CHECKING(for u_int8_t)
 AC_CACHE_VAL(vi_cv_uint8, [dnl
@@ -668,4 +721,5 @@ if test "$vi_cv_int32" != yes; then
 	int32_decl="typedef $vi_cv_int32 int32_t;"
 fi
 
-AC_OUTPUT(Makefile port.h:port.h.in pathnames.h:pathnames.h.in)
+AC_OUTPUT(Makefile port.h:port.h.in
+    pathnames.h:pathnames.h.in recover:recover.in)

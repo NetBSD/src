@@ -156,7 +156,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
    ????????:AIX?:[12].1:2)   # AIX 2.2.1 or AIX 2.1.1 is RT/PC AIX.
 	echo romp-ibm-aix      # uname -m gives an 8 hex-code CPU id
 	exit 0 ;;              # Note that: echo "'`uname -s`'" gives 'AIX '
-    i[34]86:AIX:*:*)
+    i?86:AIX:*:*)
 	echo i386-ibm-aix
 	exit 0 ;;
     *:AIX:2:3)
@@ -303,7 +303,7 @@ EOF
     hp3[0-9][05]:NetBSD:*:*)
 	echo m68k-hp-netbsd${UNAME_RELEASE}
 	exit 0 ;;
-    i[34]86:BSD/386:*:* | *:BSD/OS:*:*)
+    i?86:BSD/386:*:* | *:BSD/OS:*:*)
 	echo ${UNAME_MACHINE}-unknown-bsdi${UNAME_RELEASE}
 	exit 0 ;;
     *:FreeBSD:*:*)
@@ -319,11 +319,11 @@ EOF
 	# The BFD linker knows what the default object file format is, so
 	# first see if it will tell us.
 	ld_help_string=`ld --help 2>&1`
-	if echo $ld_help_string | grep >/dev/null 2>&1 "supported emulations: elf_i[345]86"; then
+	if echo $ld_help_string | grep >/dev/null 2>&1 "supported emulations: elf_i?86"; then
 	  echo "${UNAME_MACHINE}-unknown-linux" ; exit 0
-	elif echo $ld_help_string | grep >/dev/null 2>&1 "supported emulations: i[345]86linux"; then
+	elif echo $ld_help_string | grep >/dev/null 2>&1 "supported emulations: i?86linux"; then
 	  echo "${UNAME_MACHINE}-unknown-linuxaout" ; exit 0
-	elif echo $ld_help_string | grep >/dev/null 2>&1 "supported emulations: i[345]86coff"; then
+	elif echo $ld_help_string | grep >/dev/null 2>&1 "supported emulations: i?86coff"; then
 	  echo "${UNAME_MACHINE}-unknown-linuxcoff" ; exit 0
 	elif test "${UNAME_MACHINE}" = "alpha" ; then
 	  echo alpha-unknown-linux ; exit 0
@@ -351,17 +351,17 @@ EOF
 	fi ;;
 # ptx 4.0 does uname -s correctly, with DYNIX/ptx in there.  earlier versions
 # are messed up and put the nodename in both sysname and nodename.
-    i[34]86:DYNIX/ptx:4*:*)
+    i?86:DYNIX/ptx:4*:*)
 	echo i386-sequent-sysv4
 	exit 0 ;;
-    i[34]86:*:4.*:* | i[34]86:SYSTEM_V:4.*:*)
+    i?86:*:4.*:* | i?86:SYSTEM_V:4.*:*)
 	if grep Novell /usr/include/link.h >/dev/null 2>/dev/null; then
 		echo ${UNAME_MACHINE}-univel-sysv${UNAME_RELEASE}
 	else
 		echo ${UNAME_MACHINE}-unknown-sysv${UNAME_RELEASE}
 	fi
 	exit 0 ;;
-    i[34]86:*:3.2:*)
+    i?86:*:3.2:*)
 	if test -f /usr/options/cb.name; then
 		UNAME_REL=`sed -n 's/.*Version //p' </usr/options/cb.name`
 		echo ${UNAME_MACHINE}-unknown-isc$UNAME_REL
@@ -390,7 +390,7 @@ EOF
 	# "miniframe"
 	echo m68010-convergent-sysv
 	exit 0 ;;
-    M680[234]0:*:R3V[567]*:*)
+    M680?0:*:R3V[567]*:*)
 	test -r /sysV68 && echo 'm68k-motorola-sysv' && exit 0 ;;
     3[34]??:*:4.0:3.0 | 3[34]??,*:*:4.0:3.0)
         uname -p 2>/dev/null | grep 86 >/dev/null \
@@ -398,20 +398,20 @@ EOF
     3[34]??:*:4.0:* | 3[34]??,*:*:4.0:*)
         uname -p 2>/dev/null | grep 86 >/dev/null \
           && echo i486-ncr-sysv4 && exit 0 ;;
-    m680[234]0:LynxOS:2.[23]*:*)
-	echo m68k-lynx-lynxos${UNAME_RELEASE}
+    m68*:LynxOS:2.*:*)
+	echo m68k-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
-    mc68030:UNIX_System_V:4.*:*)
+    mc68*:UNIX_System_V:4.*:*)
 	echo m68k-atari-sysv4
 	exit 0 ;;
-    i[34]86:LynxOS:2.[23]*:*)
-	echo i386-lynx-lynxos${UNAME_RELEASE}
+    i?86:LynxOS:2.*:*)
+	echo i386-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
-    TSUNAMI:LynxOS:2.[23]*:*)
-	echo sparc-lynx-lynxos${UNAME_RELEASE}
+    TSUNAMI:LynxOS:2.*:* | uSPARC2:LynxOS:2.*:*)
+	echo sparc-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
-    rs6000:LynxOS:2.[23]*:*)
-	echo rs6000-lynx-lynxos${UNAME_RELEASE}
+    PowerPC:LynxOS:2.*:*)
+	echo powerpc-unknown-lynxos${UNAME_RELEASE}
 	exit 0 ;;
     RM*:SINIX-*:*:*)
 	echo mips-sni-sysv4
