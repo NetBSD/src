@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.1 2002/07/05 13:31:34 scw Exp $	*/
+/*	$NetBSD: exect.S,v 1.2 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -79,11 +79,12 @@
 #if 0
 	RCSID("from: @(#)exect.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: exect.S,v 1.1 2002/07/05 13:31:34 scw Exp $")
+	RCSID("$NetBSD: exect.S,v 1.2 2003/03/24 14:29:34 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(exect)
 	SYSTRAP(execve)
-	pt/l	_C_LABEL(__cerror), tr0
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63

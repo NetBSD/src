@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.1 2002/07/05 13:31:32 scw Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.2 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.1 2002/07/05 13:31:32 scw Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.2 2003/03/24 14:29:34 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,7 +97,13 @@ WARN_REFERENCES(vfork, \
  */
 
 ENTRY(vfork)
-	SYSCALL(vfork)
+	SYSTRAP(vfork)
+	pta/u	1f, tr0
+	bne/u	r0, r63, tr0
 	ptabs/l	r18, tr0
 	cmvne	r3, r63, r2
+	blink	tr0, r63
+
+1:	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63
