@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.14 2001/09/03 17:04:11 drochner Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.15 2001/10/13 16:05:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,17 +72,17 @@ struct wsdisplay_font;
 #define WSFONT_RDONLY	(0x04)
 
 /* wsfont.c */
-void	wsfont_init __P((void));
-int	wsfont_matches __P((struct wsdisplay_font *, char *, int, int, int));
-int	wsfont_find __P((char *, int, int, int));
-int	wsfont_add __P((struct wsdisplay_font *, int));
-int	wsfont_remove __P((int));
-void	wsfont_enum __P((void (*) __P((char *, int, int, int))));
-int	wsfont_lock __P((int, struct wsdisplay_font **, int, int));
-int	wsfont_unlock __P((int));
-int	wsfont_getflg __P((int, int *, int *));
-int	wsfont_map_unichar __P((struct wsdisplay_font *, int));
-int	wsfont_add __P((struct wsdisplay_font *, int));
-int	wsfont_remove __P((int));
+void	wsfont_init(void);
+int	wsfont_matches(struct wsdisplay_font *, char *, int, int, int);
+int	wsfont_find(char *, int, int, int);
+int	wsfont_add(struct wsdisplay_font *, int);
+int	wsfont_remove(int);
+void	wsfont_enum(void (*)(char *, int, int, int));
+int	wsfont_lock(int, struct wsdisplay_font **, int, int);
+int	wsfont_unlock(int);
+int	wsfont_getflg(int, int *, int *);
+int	wsfont_map_unichar(struct wsdisplay_font *, int);
+int	wsfont_add(struct wsdisplay_font *, int);
+int	wsfont_remove(int);
 
 #endif	/* !_WSFONT_H_ */
