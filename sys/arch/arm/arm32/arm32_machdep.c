@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.11 2002/01/20 03:41:47 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.12 2002/02/10 13:20:26 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -99,6 +99,7 @@ int kernel_debug = 0;
 
 struct user *proc0paddr;
 
+/* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
 
 
