@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.21 2003/09/06 16:42:10 wiz Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.22 2004/11/11 22:14:20 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.21 2003/09/06 16:42:10 wiz Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.22 2004/11/11 22:14:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -475,7 +475,7 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
-	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0, DB_HASH, NULL);
+	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0644, DB_HASH, NULL);
 
 	if (db == NULL)
 		return -1;
