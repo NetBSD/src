@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 1994/12/20 06:07:13 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 1994/12/20 06:15:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -362,8 +362,8 @@ decl_ioctl(cnioctl);
 decl_select(cnselect);
 
 /* keyboard/display tty (internal, for console) */
-#define	NKD 1	/* #include "kd.h" */
-#if NKD > 0
+#include "zs.h"
+#if NZS > 1
 decl_open(kdopen);
 decl_close(kdclose);
 decl_read(kdread);
@@ -421,7 +421,7 @@ decl_ioctl(promioctl);
 #endif
 
 /* Zilog Zerial ports (/dev/tty{a,b}) */
-#include "zs.h"
+/* #include "zs.h" (above) */
 #if NZS > 0
 decl_open(zsopen);
 decl_close(zsclose);
@@ -850,7 +850,7 @@ struct	consdev constab[] = {
 #if	NKD
 	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, nullcnpollc },
 #endif
-#if NZS
+#if	NZS
 	{ zscnprobe_a, zscninit, zscngetc, zscnputc, nullcnpollc },
 #endif
 #if	NZS
