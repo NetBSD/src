@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.23 1998/11/04 19:43:50 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.24 1998/11/05 14:00:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.23 1998/11/04 19:43:50 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.24 1998/11/05 14:00:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -511,7 +511,7 @@ rsource(name, statp)
 		}
 	}
 	(void)snprintf(path, sizeof(path),
-	    "D%04o %d %s\n", statp->st_mode & MODEMASK, 0, last);
+	    "D%04o %d %s\n", statp->st_mode & RCPMODEMASK, 0, last);
 	(void)write(rem, path, strlen(path));
 	if (response() < 0) {
 		closedir(dirp);
