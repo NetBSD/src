@@ -1,4 +1,4 @@
-.\"	$NetBSD: makewhatis.8,v 1.3 1997/11/01 15:06:09 mrg Exp $
+.\"	$NetBSD: makewhatis.8,v 1.4 1997/11/02 14:01:54 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,8 @@ for use in
 .Xr apropos 1
 or with
 .Xr man 1 's
--k option.
+.Fl k
+option.
 If
 .Ar manpath
 is unspecified,
@@ -69,8 +70,8 @@ will be processed by
 .Nm
 should find its search paths using /etc/man.conf
 .Sh SEE ALSO
-.Xr getNAME 8 ,
 .Xr man 1 ,
-.Xr man.conf 5
+.Xr man.conf 5 ,
+.Xr getNAME 8
 .Sh AUTHOR
 J.T. Conklin (jtc@netbsd.org)
