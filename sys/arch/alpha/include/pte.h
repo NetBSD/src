@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.25.6.1 1999/04/09 00:40:58 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.25.6.1.2.1 1999/06/21 00:46:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

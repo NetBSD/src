@@ -1,9 +1,9 @@
-/*	$NetBSD: setjmp.h,v 1.5 1999/01/31 00:55:41 castor Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.5.4.1 1999/06/21 00:52:03 thorpej Exp $	*/
 
 /*
  * mips/setjmp.h: machine dependent setjmp-related information.
  *
- * For the size of this, refer to <machine/signal.h> as this uses the 
+ * For the size of this, refer to <machine/signal.h> as this uses the
  * struct sigcontext to restore it.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.4.2.1 1999/04/19 04:44:51 cjs Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.4.2.1.2.1 1999/06/21 00:50:30 thorpej Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org

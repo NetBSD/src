@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1 1998/05/15 10:15:59 tsubai Exp $	*/
+/*	$NetBSD: net.c,v 1.1.10.1 1999/06/21 00:51:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -60,6 +60,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+
+#include <lib/libkern/libkern.h>
 
 char	rootpath[FNAME_SIZE];
 

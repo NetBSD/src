@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.38.2.1 1999/04/26 15:14:31 perry Exp $ */
+/* $NetBSD: conf.c,v 1.38.2.1.2.1 1999/06/21 00:46:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.38.2.1 1999/04/26 15:14:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.38.2.1.2.1 1999/06/21 00:46:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

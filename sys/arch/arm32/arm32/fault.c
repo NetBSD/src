@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.41.2.1 1999/05/06 00:19:11 perry Exp $	*/
+/*	$NetBSD: fault.c,v 1.41.2.1.2.1 1999/06/21 00:47:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -371,6 +371,9 @@ copyfault:
 		if (pmap_debug_level >= 0)
 			printf("vmmap=%p ", map);
 #endif
+
+		if (map == NULL)
+			panic("No map for fault address\n");
 
 		/*
 		 * We need to know whether the page should be mapped

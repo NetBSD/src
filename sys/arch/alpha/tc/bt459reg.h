@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459reg.h,v 1.1.6.2 1999/04/12 21:27:04 pk Exp $	*/
+/*	$NetBSD: bt459reg.h,v 1.1.6.2.2.1 1999/06/21 00:46:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

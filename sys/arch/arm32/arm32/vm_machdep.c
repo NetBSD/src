@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1999/03/30 21:01:42 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41.4.1 1999/06/21 00:47:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -84,7 +84,6 @@ int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
 extern void proc_trampoline	__P((void));
 
-int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
@@ -106,9 +105,11 @@ pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
  */
 
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1;
 	struct proc *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -165,8 +166,14 @@ cpu_fork(p1, p2)
 #endif	/* ARMFPE */
 
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
-
 	*tf = *p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_usr_sp = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_spl = _SPL_0;
 	sf->sf_r4 = (u_int)child_return;
@@ -232,18 +239,12 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
-	int i;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
-
-	/* Make sure the pages are *really* wired. */
-	for (i = 0; i < UPAGES; i++)
-		pmap_modified_emulation(kernel_map->pmap,
-		    (vaddr_t)p->p_addr + (i << PGSHIFT));
 
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
@@ -311,24 +312,10 @@ pagemove(from, to, size)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
- *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the useriomap
- * (a name with only slightly more meaning than "kernelmap")
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
  */
-
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -383,10 +370,8 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
-
 void
 vunmapbuf(bp, len)
 	struct buf *bp;

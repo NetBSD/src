@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.48 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.48.4.1 1999/06/21 00:52:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,12 +52,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.48 1999/03/24 05:51:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.48.4.1 1999/06/21 00:52:09 thorpej Exp $");
 
-#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
-#include "opt_sysv.h"
 #include "opt_cputype.h"
 
 #include <sys/param.h>
@@ -67,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.48 1999/03/24 05:51:05 mrg Exp $"
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/clist.h>  
+#include <sys/clist.h>
 #include <sys/callout.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
@@ -76,17 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.48 1999/03/24 05:51:05 mrg Exp $"
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
 #include <sys/core.h>
-#include <sys/kcore.h>  
+#include <sys/kcore.h>
 #include <machine/kcore.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <vm/vm.h>
 
@@ -117,24 +106,6 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
   NULL, NULL
 };
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef NBUF
-#define NBUF		0
-#endif
-#ifndef BUFPAGES
-#define BUFPAGES	0
-#endif
-#ifndef BUFCACHE
-#define BUFCACHE	10
-#endif
-
-int	nswbuf = 0;
-int	nbuf = NBUF;
-int	bufpages = BUFPAGES;	/* optional hardwired count */
-int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 
 int cpu_mhz;
 int mips_num_tlb_entries;
@@ -251,7 +222,7 @@ mips3_ConfigCache()
 {
 	u_int32_t config = mips3_read_config();
 	static int snoop_check = 0;
-	register int i;
+	int i;
 
 	mips_L1ICacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
 	    MIPS3_CONFIG_IC_MASK, MIPS3_CONFIG_IC_SHIFT);
@@ -350,7 +321,7 @@ mips3_vector_init()
  * cod into the CPU exception-vector entries and the jump tables
  * used to  hide the differences in cache and TLB handling in
  * different MIPS CPUs.
- * 
+ *
  * This should be the very first thing called by each port's
  * init_main() function.
  */
@@ -417,7 +388,7 @@ mips_vector_init()
 	case MIPS_R5000:
 #endif
 	case MIPS_RM5230:
-		cpu_arch = 4; 
+		cpu_arch = 4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
 		mips3_cacheflush_bug = 0;
@@ -558,13 +529,13 @@ cpu_identify()
 #ifdef MIPS1
 	if (cpu_arch == 1) {
 		printf("%dkb Instruction, %dkb Data, direct mapped cache",
-		    mips_L1ICacheSize / 1024, mips_L1DCacheSize / 1024);	
+		    mips_L1ICacheSize / 1024, mips_L1DCacheSize / 1024);
 	}
 #endif
 #ifdef MIPS3
 	if (cpu_arch >= 3) {
 		printf("L1 cache: %dkb/%db Instruction, %dkb/%db Data",
-		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize, 
+		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
 		    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
 		if (mips3_L1TwoWayCache)
 			printf(", two way set associative");
@@ -711,7 +682,7 @@ sendsig(catcher, sig, mask, code)
 	f = (struct frame *)p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = 
+	onstack =
 	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
@@ -995,10 +966,10 @@ cpu_dumpconf()
 	if (bdevsw[maj].d_psize == NULL)
 		goto bad;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1)) 
+	if (nblks <= ctod(1))
 		goto bad;
 
-	dumpblks = cpu_dumpsize(); 
+	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
 		goto bad;
 	dumpblks += ctod(cpu_dump_mempagecnt());
@@ -1131,67 +1102,6 @@ dumpsys()
 	delay(5000000);		/* 5 seconds */
 }
 
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way, we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and the call
- * allocsys() again with the correct base virtual address.
- */
-caddr_t  
-allocsys(v) 
-	caddr_t v;
-{                       
-
-#define valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcache % of memory for buffer space.  Ensure a
-	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
-	 * headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / CLSIZE * bufcache / 100;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-
-	return (v);
-#undef valloc
-}
-
 void
 mips_init_msgbuf()
 {
@@ -1218,25 +1128,4 @@ mips_init_msgbuf()
 		printf("WARNING: %ld bytes not available for msgbuf "
 		    "in last cluster (%d used)\n",
 		    round_page(MSGBUFSIZE), sz);
-}
-
-/*
- * Initialize the U-area for proc0.  Since these need to be set up
- * before we can probe for memory, we have to use stolen pages before
- * they're loaded into the VM system.
- *
- * "space" is USPACE in size, must be page aligned, and in KSEG0.
- */
-void
-mips_init_proc0(space)
-	caddr_t space;
-{
-	/* XXX Flush cache?? */
-	memset(space, 0, USPACE);
-
-	proc0.p_addr = proc0paddr = (struct user *)space;
-
-	curpcb = &proc0.p_addr->u_pcb;
-	MachSetPID(1);		/* Also establishes context using curpcb */
-	proc0.p_md.md_regs = (void *)((struct frame *)((int)curpcb+USPACE) - 1);
 }

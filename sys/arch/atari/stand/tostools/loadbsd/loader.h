@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.h,v 1.6 1996/01/07 22:06:18 leo Exp $	*/
+/*	$NetBSD: loader.h,v 1.6.26.1 1999/06/21 00:48:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -47,6 +47,9 @@
 #endif
 
 #define	TTRAM_BASE	0x1000000	/* Fastram always starts here	*/
+#define	CTRAM_BASE	0x4000000	/*  ... except on CT2 boards:	*/
+					/*	   Logical : TTRAM_BASE */
+					/*	   Physical: CTRAM_BASE */
 
 /*
  * System var's used in low-memory

@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.21 1999/02/02 04:02:26 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.21.4.1 1999/06/21 00:47:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -402,7 +402,7 @@ qmsintr(arg)
 			wakeup((caddr_t)sc);
 		}
 
-		if (dosignal)
+/*		if (dosignal)*/
 			psignal(sc->sc_proc, SIGIO);
 		
 		sc->lastx = x;

@@ -1,7 +1,7 @@
-/* $NetBSD: multiproc.s,v 1.3.4.1 1999/06/21 00:46:05 thorpej Exp $ */
+/* $NetBSD: debug.s,v 1.5.2.2 1999/06/21 00:46:03 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,44 +37,80 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.3.4.1 1999/06/21 00:46:05 thorpej Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.5.2.2 1999/06/21 00:46:03 thorpej Exp $")
 
 /*
- * Multiprocessor glue code.
+ * Debugger glue.
  */
 
 	.text
-inc5:	.stabs	__FILE__,132,0,0,inc5; .loc	1 __LINE__
+inc6:	.stabs	__FILE__,132,0,0,inc6; .loc	1 __LINE__
 
 /*
- * cpu_spinup_trampoline:
- *
- * We come here via the secondary processor's console.  We simply
- * make the function call look right, and call cpu_hatch() to finish
- * starting up the processor.
- *
- * We are provided an argument in $27 (pv) (which will be our cpu_info).
+ * Debugger stack.
  */
-NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
-	mov	pv, s0			/* squirrel away argument */
+BSS(debug_stack_bottom, NBPG)
+ABS(debug_stack_top, debug_stack_bottom + NBPG)
 
-	br	pv, 1f			/* compute new GP */
+/*
+ * alpha_debug:
+ *
+ *	Single debugger entry point, handling the housekeeping
+ *	chores we need to deal with.
+ *
+ *	Arguments are:
+ *
+ *		a0	a0 from trap
+ *		a1	a1 from trap
+ *		a2	a2 from trap
+ *		a3	kernel trap entry point
+ *		a4	frame pointer
+ */
+NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
+	br	pv, 1f
 1:	LDGP(pv)
+	lda	t0, FRAME_SIZE*8(a4)	/* what would sp have been? */
+	stq	t0, FRAME_SP*8(a4)	/* belatedly save sp for ddb view */
+	lda	sp, -32(sp)		/* set up stack frame */
+	stq	ra, (32-8)(sp)		/* save ra */
+	stq	s0, (32-16)(sp)		/* save s0 */
 
-	/* Invalidate TLB and I-stream. */
-	ldiq	a0, -2			/* TBIA */
-	call_pal PAL_OSF1_tbi
-	call_pal PAL_imb
+	/* Remember our current stack pointer. */
+	mov	sp, s0
 
-	/* Load KGP with current GP. */
-	mov	gp, a0
-	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXX PAUSE ALL OTHER CPUs.
+	 */
+#endif
 
-	/* Restore argument and call cpu_hatch() */
-	mov	s0, a0
-	CALL(cpu_hatch)
+	/*
+	 * Switch to the debug stack if we're not on it already.
+	 */
+	lda	t0, debug_stack_bottom
+	cmpule	sp, t0, t1		/* sp <= debug_stack_bottom */
+	bne	t1, 2f			/* yes, switch now */
 
-	/* cpu_hatch() returned!  Just halt (forever). */
-2:	call_pal PAL_halt
-	br	zero, 2b
-	END(cpu_spinup_trampoline)
+	lda	t0, debug_stack_top
+	cmpule	t0, sp, t1		/* debug_stack_top <= sp? */
+	bne	t1, 3f			/* yes, we're on the debug stack */
+
+2:	lda	sp, debug_stack_top	/* sp <- debug_stack_top */
+
+3:	/* Dispatch to the debugger - arguments are already in place. */
+	CALL(ddb_trap)
+
+	/* Debugger return value in v0; switch back to our previous stack. */
+	mov	s0, sp
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXX RESUME ALL OTHER CPUs.
+	 */
+#endif
+
+	ldq	ra, (32-8)(sp)		/* restore ra */
+	ldq	s0, (32-16)(sp)		/* restore s0 */
+	lda	sp, 32(sp)		/* pop stack frame */
+	RET
+	END(alpha_debug)

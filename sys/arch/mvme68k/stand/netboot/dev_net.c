@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.6 1997/07/22 17:41:04 drochner Exp $ */
+/*	$NetBSD: dev_net.c,v 1.6.18.1 1999/06/21 00:52:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,6 +55,8 @@
 #include <netinet/in_systm.h>
 
 #include <machine/prom.h>
+
+#include <lib/libkern/libkern.h>
 
 #include "stand.h"
 #include "libsa.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.22.6.2 1999/04/12 21:27:04 pk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.22.6.2.2.1 1999/06/21 00:49:57 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -260,6 +260,26 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			}
 		}
 		if (INKERNEL((int)frame) && name) {
+#ifdef __ELF__
+			if (!strcmp(name, "trap")) {
+				is_trap = TRAP;
+			} else if (!strcmp(name, "syscall")) {
+				is_trap = SYSCALL;
+			} else if (name[0] == 'X') {
+				if (!strncmp(name, "Xintr", 5) ||
+				    !strncmp(name, "Xresume", 7) ||
+				    !strncmp(name, "Xstray", 6) ||
+				    !strncmp(name, "Xhold", 5) ||
+				    !strncmp(name, "Xrecurse", 8) ||
+				    !strcmp(name, "Xdoreti") ||
+				    !strncmp(name, "Xsoft", 5)) {
+					is_trap = INTERRUPT;
+				} else
+					goto normal;
+			} else
+				goto normal;
+			narg = 0;
+#else
 			if (!strcmp(name, "_trap")) {
 				is_trap = TRAP;
 			} else if (!strcmp(name, "_syscall")) {
@@ -278,6 +298,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			} else
 				goto normal;
 			narg = 0;
+#endif /* __ELF__ */
 		} else {
 		normal:
 			is_trap = NONE;

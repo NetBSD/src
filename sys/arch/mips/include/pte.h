@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 1999/01/06 04:11:25 nisimura Exp $	*/
+/*	$NetBSD: pte.h,v 1.6.4.1 1999/06/21 00:52:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	mips_pg_v(entry)	((entry) & MIPS1_PG_V)
 #define	mips_pg_wired(entry)	((entry) & MIPS1_PG_WIRED)
 
-#define	mips_pg_m_bit()		(MIPS1_PG_M)
+#define	mips_pg_m_bit()		(MIPS1_PG_D)
 #define	mips_pg_rw_bit()	(MIPS1_PG_RW)	/* no RW bits for mips1 */
 #define	mips_pg_ro_bit()	(MIPS1_PG_RO)
 #define	mips_pg_ropage_bit()	(MIPS1_PG_RO)	/* XXX not MIPS1_PG_ROPAGE? */
@@ -110,8 +110,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	mips_pg_v(entry)	((entry) & MIPS3_PG_V)
 #define	mips_pg_wired(entry)	((entry) & MIPS3_PG_WIRED)
 
-#define	mips_pg_m_bit()		(MIPS3_PG_M)
-#define	mips_pg_rw_bit()	(MIPS3_PG_M)
+#define	mips_pg_m_bit()		(MIPS3_PG_D)
+#define	mips_pg_rw_bit()	(MIPS3_PG_D)
 #define	mips_pg_ro_bit()	(MIPS3_PG_RO)
 #define	mips_pg_ropage_bit()	(MIPS3_PG_ROPAGE)
 #define	mips_pg_rwpage_bit()	(MIPS3_PG_RWPAGE)
@@ -169,8 +169,8 @@ static __inline unsigned int
 mips_pg_m_bit()
 {
 	if (CPUISMIPS3)
-		return (MIPS3_PG_M);
-	return (MIPS1_PG_M);
+		return (MIPS3_PG_D);
+	return (MIPS1_PG_D);
 }
 
 static __inline unsigned int
@@ -185,7 +185,7 @@ static __inline unsigned int
 mips_pg_rw_bit()
 {
 	if (CPUISMIPS3)
-		return (MIPS3_PG_M);
+		return (MIPS3_PG_D);
 	return (MIPS1_PG_RW);
 }
 

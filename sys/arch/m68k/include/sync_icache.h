@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_icache.h,v 1.2.2.1 1999/04/15 11:12:37 kleink Exp $	*/
+/*	$NetBSD: sync_icache.h,v 1.2.2.1.2.1 1999/06/21 00:50:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

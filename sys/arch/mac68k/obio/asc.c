@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.30.4.1 1999/04/23 14:52:32 perry Exp $	*/
+/*	$NetBSD: asc.c,v 1.30.4.1.2.1 1999/06/21 00:51:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds

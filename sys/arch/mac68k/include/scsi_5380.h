@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_5380.h,v 1.3.28.2 1999/04/12 21:27:05 pk Exp $	*/
+/*	$NetBSD: scsi_5380.h,v 1.3.28.2.2.1 1999/06/21 00:51:01 thorpej Exp $	*/
 
 /*
  * Mach Operating System

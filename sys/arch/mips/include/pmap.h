@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.25 1999/02/26 19:03:39 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.4.1 1999/06/21 00:52:02 thorpej Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1987 Carnegie-Mellon University
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@
  * The user address space is mapped using a two level structure where
  * virtual address bits 30..22 are used to index into a segment table which
  * points to a page worth of PTEs (4096 page can hold 1024 PTEs).
- * Bits 21..12 are then used to index a PTE which describes a page within 
+ * Bits 21..12 are then used to index a PTE which describes a page within
  * a segment.
  *
  * The wired entries in the TLB will contain the following:
@@ -85,8 +85,8 @@ typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	int			pm_tlbpid;	/* address space tag */
-	u_int			pm_tlbgen;	/* TLB PID generation number */
+	unsigned		pm_asid;	/* TLB address space tag */
+	unsigned		pm_asidgen;	/* its generation number */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
@@ -98,7 +98,7 @@ typedef struct pmap {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;		/* virtual address for mapping */
+	vaddr_t	pv_va;			/* virtual address for mapping */
 	int		pv_flags;	/* some flags for the mapping */
 } *pv_entry_t;
 
@@ -109,11 +109,11 @@ typedef struct pv_entry {
 
 #ifdef	_KERNEL
 
-char *pmap_attributes;		/* reference and modify bits */
-struct pmap kernel_pmap_store;
+extern char *pmap_attributes;		/* reference and modify bits */
+extern struct pmap kernel_pmap_store;
 
-#define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_kernel()		(&kernel_pmap_store)
+#define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
 
 /*
@@ -144,7 +144,7 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
 #define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
 
 /*
- * Kernel cache operations for the user-space API 
+ * Kernel cache operations for the user-space API
  */
 int mips_user_cacheflush __P((struct proc *p, vaddr_t va, int nbytes,
 	int whichcache));

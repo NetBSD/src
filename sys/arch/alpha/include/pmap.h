@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.h,v 1.26.2.1 1999/04/16 23:29:02 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.26.2.1.2.1 1999/06/21 00:46:09 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
 struct pmap {
-	LIST_ENTRY(pmap)	pm_list;	/* list of all pmaps */
+	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	int			pm_count;	/* pmap reference count */
 	struct simplelock	pm_slock;	/* lock on pmap */
@@ -131,6 +131,7 @@ typedef struct pv_entry {
 	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
+	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
 
 /*
@@ -165,17 +166,6 @@ struct pv_head {
 	"l2pt",								\
 	"l3pt",								\
 }
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pgi_list;
-	LIST_HEAD(, pv_entry) pgi_freelist;
-	int pgi_nfree;
-};
-
-struct pv_page {
-	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[1];		/* variable length */
-};
 
 #ifdef _KERNEL
 
@@ -298,6 +288,32 @@ pmap_l3pte(pmap, v, l2pte)
 	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
 	return (&lev3map[l3pte_index(v)]);
 }
+
+/*
+ * Macros for locking pmap structures.
+ *
+ * Note that the kernel pmap can be accessed from interrupt context,
+ * so when we have the kernel pmap lock asserted, we must block any
+ * interrupts that can cause memory allocation, otherwise we can deadlock
+ * if an interrupt occurs and causes us to recurse into the pmap and
+ * attempt to try to assert the lock while it is already held.
+ *
+ * No other pmap can be accessed from interrupt context, so we do not
+ * need to block interrupts in any other case.
+ */
+#define	PMAP_LOCK(pmap, s)						\
+do {									\
+	if ((pmap) == pmap_kernel())					\
+		(s) = splimp();						\
+	simple_lock(&(pmap)->pm_slock);					\
+} while (0)
+
+#define	PMAP_UNLOCK(pmap, s)						\
+do {									\
+	simple_unlock(&(pmap)->pm_slock);				\
+	if ((pmap) == pmap_kernel())					\
+		splx((s));						\
+} while (0)
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_alphabook1.c,v 1.2.2.1 1999/04/16 23:13:16 thorpej Exp $ */
+/* $NetBSD: dec_alphabook1.c,v 1.2.2.1.2.1 1999/06/21 00:46:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.2.2.1 1999/04/16 23:13:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.2.2.1.2.1 1999/06/21 00:46:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

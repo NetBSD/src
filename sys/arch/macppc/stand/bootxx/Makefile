@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1999/06/21 00:51:42 thorpej Exp $
 
 PROG= bootxx
 MKMAN=	no
@@ -9,6 +9,6 @@ CFLAGS=-O2 -Wall
 
 ${PROG}: ${PROG}.o
 	${LD} -o bootxx -x -N -Ttext 4000 -e _start ${PROG}.o
-	@size ${PROG}
+	@${SIZE} ${PROG}
 
 .include <bsd.prog.mk>

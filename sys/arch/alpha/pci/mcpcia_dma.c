@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.9.2.2 1999/04/16 23:39:45 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.9.2.2.2.1 1999/06/21 00:46:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.9.2.2 1999/04/16 23:39:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.9.2.2.2.1 1999/06/21 00:46:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.2 1999/05/11 00:04:52 cgd Exp $ */
+/* $NetBSD: test.c,v 1.2.2.1 1999/06/21 00:46:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28.8.1 1999/04/28 22:44:34 perry Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.8.1.2.1 1999/06/21 00:46:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,6 +41,18 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <amiga/amiga/adosglue.h>
+
+/*
+ * In /usr/src/sys/dev/scsipi/sd.c, routine sdstart() adjusts the
+ * block numbers, it changes from DEV_BSIZE units to physical units:
+ * blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+ * As long as media with sector sizes of 512 bytes are used, this
+ * doesn't matter (divide by 1), but for successfull usage of media with
+ * greater sector sizes (e.g. 640MB MO-media with 2048 bytes/sector)
+ * we must multiply block numbers with (lp->d_secsize / DEV_BSIZE)
+ * to keep "unchanged" physical block numbers.
+ */
+#define SD_C_ADJUSTS_NR
 
 /*
  * bitmap id's
@@ -153,6 +165,9 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
+#ifdef SD_C_ADJUSTS_NR
+		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
+#endif
 		strat(bp);
 
 		if (biowait(bp)) {
@@ -244,6 +259,9 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
+#ifdef SD_C_ADJUSTS_NR
+		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
+#endif
 		strat(bp);
 		
 		if (biowait(bp)) {
@@ -313,7 +331,8 @@ readdisklabel(dev, strat, lp, clp)
 			lp->d_npartitions = (pp - lp->d_partitions) + 1;
 
 #ifdef DIAGNOSTIC
-		if (lp->d_secpercyl != (pbp->e.secpertrk * pbp->e.numheads)) {
+		if (lp->d_secpercyl * lp->d_secsize !=
+		    (pbp->e.secpertrk * pbp->e.numheads * pbp->e.sizeblock<<2)) {
 			if (pbp->partname[0] < sizeof(pbp->partname))
 				pbp->partname[pbp->partname[0] + 1] = 0;
 			else
@@ -360,19 +379,40 @@ readdisklabel(dev, strat, lp, clp)
 		}
 
 		pp->p_size = (pbp->e.highcyl - pbp->e.lowcyl + 1)
-		    * pbp->e.secpertrk * pbp->e.numheads;
+		    * pbp->e.secpertrk * pbp->e.numheads
+		    * ((pbp->e.sizeblock << 2) / lp->d_secsize);
 		pp->p_offset = pbp->e.lowcyl * pbp->e.secpertrk
-		    * pbp->e.numheads;
+		    * pbp->e.numheads
+		    * ((pbp->e.sizeblock << 2) / lp->d_secsize);
 		pp->p_fstype = adt.fstype;
 		if (adt.archtype == ADT_AMIGADOS) {
 			/*
 			 * Save reserved blocks at begin in cpg and
 			 *  adjust size by reserved blocks at end
 			 */
-			pp->p_fsize = 512;
-			pp->p_frag = pbp->e.secperblk;
-			pp->p_cpg = pbp->e.resvblocks;
-			pp->p_size -= pbp->e.prefac;
+			int bsize, secperblk, minbsize, prefac;
+
+			minbsize = max(512, lp->d_secsize);
+
+			bsize	  = pbp->e.sizeblock << 2;
+			secperblk = pbp->e.secperblk;
+			prefac	  = pbp->e.prefac;
+
+			while (bsize > minbsize) {
+				bsize >>= 1;
+				secperblk <<= 1;
+				prefac <<= 1;
+			}
+
+			if (bsize == minbsize) {
+				pp->p_fsize = bsize;
+				pp->p_frag = secperblk;
+				pp->p_cpg = pbp->e.resvblocks;
+				pp->p_size -= prefac;
+			} else {
+				adt.archtype = ADT_UNKNOWN;
+				adt.fstype = FS_UNUSED;
+			}
 		} else if (pbp->e.tabsize > 22 && ISFSARCH_NETBSD(adt)) {
 			pp->p_fsize = pbp->e.fsize;
 			pp->p_frag = pbp->e.frag;
@@ -484,14 +524,17 @@ bounds_check_with_label(bp, lp, wlabel)
 	long maxsz, sz;
 
 	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
-	if (bp->b_flags & B_RAW) {
-		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
-		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-	} else {
-		maxsz = pp->p_size;
-		sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
-	}
-
+	/*
+	 * This routine is called before sd.c adjusts block numbers
+	 * and must take this into account
+	 */
+#ifdef SD_C_ADJUSTS_NR
+	maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
+	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+#else
+	maxsz = pp->p_size;
+	sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
+#endif
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		if (bp->b_blkno == maxsz) {
 			/* 

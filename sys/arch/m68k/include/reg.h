@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.12 1996/12/17 19:24:31 gwr Exp $	*/
+/*	$NetBSD: reg.h,v 1.12.24.1 1999/06/21 00:50:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,7 @@ struct fpreg {
 #define	A6	(14)
 #define	A7	(15)
 
+#define	FP	A6
 #define	SP	A7
 #define	PS	(16)
 #define	PC	(17)

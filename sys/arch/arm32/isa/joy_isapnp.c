@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.1.6.1 1999/04/04 09:44:57 mark Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.1.6.1.2.1 1999/06/21 00:47:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

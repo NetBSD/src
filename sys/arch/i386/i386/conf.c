@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.112.2.1 1999/04/09 17:09:25 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.112.2.1.2.1 1999/06/21 00:49:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

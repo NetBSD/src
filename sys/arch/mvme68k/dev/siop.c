@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.1.2.1 1999/04/13 20:24:09 scw Exp $ */
+/*	$NetBSD: siop.c,v 1.1.2.1.2.1 1999/06/21 00:52:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

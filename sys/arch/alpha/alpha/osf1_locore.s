@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_locore.s,v 1.1 1999/04/30 05:58:10 cgd Exp $ */
+/* $NetBSD: osf1_locore.s,v 1.1.2.1 1999/06/21 00:46:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -65,7 +65,7 @@
 #include <compat/osf1/osf1_syscall.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_locore.s,v 1.1 1999/04/30 05:58:10 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_locore.s,v 1.1.2.1 1999/06/21 00:46:05 thorpej Exp $");
 
 /*
  * OSF/1 signal trampoline code.

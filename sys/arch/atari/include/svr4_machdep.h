@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.2 1999/04/29 14:38:39 kleink Exp $	*/
+/*	$NetBSD: svr4_machdep.h,v 1.2.2.1 1999/06/21 00:48:36 thorpej Exp $	*/
 
 #ifndef _MACHINE_SVR4_MACHDEP_H_
 #define _MACHINE_SVR4_MACHDEP_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.18.8.1 1999/04/20 14:54:57 perry Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.18.8.1.2.1 1999/06/21 00:47:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/04/11 03:38:51 cgd Exp $
+# $NetBSD: Makefile,v 1.1.2.1 1999/06/21 00:46:12 thorpej Exp $
 
 PROG=	test
 BINDIR=	/stand

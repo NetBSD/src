@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.68.2.1 1999/04/26 22:15:55 perry Exp $	*/
+/*	$NetBSD: locore.S,v 1.68.2.1.2.1 1999/06/21 00:52:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,16 +84,16 @@ _C_LABEL(kernel_text):
 /*
  * Initialize stack and call machine startup.
  */
-	la	$3,start
-	slt	$2,$3,sp
-	bne	$2,$0,1f
-	addu	$2,$3,-CALLFRAME_SIZ
-	subu	$2,$3,sp
-	slt	$2,$2,4096			# within 4kB of _start
-	beq	$2,$0,2f
-	addu	$2,$3,-CALLFRAME_SIZ
+	la	v1, start
+	slt	v0, v1, sp
+	bne	v0, $0, 1f
+	addu	v0, v1, -CALLFRAME_SIZ
+	subu	v0, v1, sp
+	slt	v0, v0, 4096			# within 4KB of _start
+	beq	v0, $0, 2f
+	addu	v0, v1, -CALLFRAME_SIZ
 1:
-	move	sp,$2
+	move	sp, v0
 2:
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
@@ -147,6 +147,7 @@ LEAF_NOPROFILE(ultrix_sigcode)
 END(ultrix_sigcode)
 XLEAF(ultrix_esigcode)
 #endif
+
 
 /*
  * The following primitives manipulate the run queues.  whichqs tells which
@@ -321,16 +322,16 @@ sw1:
  * Switch to new context.
  */
 	sw	zero, _C_LABEL(want_resched)
-	jal	_C_LABEL(pmap_alloc_tlbpid)	# v0 = TLB PID
+	jal	_C_LABEL(pmap_alloc_asid)	# v0 = new proc's ASID
 	move	s0, a0				# BDSLOT: save p
 	lw	a0, P_ADDR(s0)			# a0 = p_addr
-	lw	a1, P_MD_UPTE+0(s0)		# a1 = first u. pte
-	lw	a2, P_MD_UPTE+4(s0)		# a2 = 2nd u. pte
+	lw	a1, P_MD_UPTE_0(s0)		# a1 = first u. pte
+	lw	a2, P_MD_UPTE_1(s0)		# a2 = 2nd u. pte
 	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
 	sw	s0, _C_LABEL(curproc)		# set curproc
 	sw	a0, _C_LABEL(curpcb)		# set curpcb
 	jal	ra, s1				# CPU-specific: resume process
-	move	a3, v0				# BDSLOT: a3 = TLB PID
+	move	a3, v0				# BDSLOT: a3 = ASID
 
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
@@ -362,7 +363,9 @@ LEAF(switch_exit)
 	lw	v0, _C_LABEL(proc0paddr)	# get proc0 p_addr
 	nop
 	sw	v0, _C_LABEL(curpcb)		# set current pcb
-	lw	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
+	REG_PROLOGUE
+	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
+	REG_EPILOGUE
 	la	ra, sw1				# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
@@ -437,40 +440,95 @@ LEAF(longjmp)
 END(longjmp)
 #endif
 
-#if defined(NS) || defined(ISO) || defined(CCITT)
-/*
- * Insert 'p' after 'q'.
- *	_insque(p, q)
- *		caddr_t p, q;
- */
-LEAF(_insque)
-	lw	v0, 0(a1)		# v0 = q->next
-	sw	a1, 4(a0)		# p->prev = q
-	sw	v0, 0(a0)		# p->next = q->next
-	sw	a0, 4(v0)		# q->next->prev = p
-	j	ra
-	sw	a0, 0(a1)		# q->next = p
-END(_insque)
 
 /*
- * Remove item 'p' from queue.
- *	_remque(p)
- *		caddr_t p;
+ * MIPS processor interrupt control
+ *
+ * Used as building blocks for spl(9) kernel interface.
  */
-LEAF(_remque)
-	lw	v0, 0(a0)		# v0 = p->next
-	lw	v1, 4(a0)		# v1 = p->prev
+LEAF(_splraise)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	and	a0, a0, MIPS_INT_MASK		# extract INT bits
+	nor	a0, zero, a0			# bitwise inverse of A0
+	and	a0, a0, v0			# disable retaining other bits
+	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
-	sw	v0, 0(v1)		# p->prev->next = p->next
 	j	ra
-	sw	v1, 4(v0)		# p->next->prev = p->prev
-END(_remque)
-#endif
+	and	v0, v0, MIPS_INT_MASK
+END(_splraise)
+
+LEAF(_spllower)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	li	v1, ~MIPS_INT_MASK
+	and	v1, v0, v1			# turn off INT bit
+	nor	a0, zero, a0			# bitwise inverse of A0
+	and	a0, a0, MIPS_INT_MASK		# extract INT bits
+	or	a0, a0, v1			# disable making other bits on
+	mtc0	a0, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, MIPS_INT_MASK
+END(_spllower)
+
+LEAF(_splset)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
+	and	v1, v1, v0			# turn off every INT bit
+	or	v1, v1, a0			# set old INT bits
+	mtc0	v1, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+END(_splset)
+
+LEAF(_splget)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	nop
+	j	ra
+	and	v0, v0, MIPS_INT_MASK
+END(_splget)
+
+LEAF(_setsoftintr)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+	nop; nop
+	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
+	nop
+	or	v0, v0, a0			# set soft intr. bits
+	mtc0	v0, MIPS_COP_0_CAUSE		# store back
+	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra
+	nop
+END(_setsoftintr)
+
+LEAF(_clrsoftintr)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+	nop; nop
+	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
+	nor	a0, zero, a0			# bitwise inverse of A0
+	and	v0, v0, a0			# clear soft intr. bits
+	mtc0	v0, MIPS_COP_0_CAUSE		# store back
+	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra
+	nop
+END(_clrsoftintr)
+
+LEAF(_splnone)
+	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
+	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
+	nop
+	j	ra
+	nop
+END(_splnone)
+
 
 /*
  * int copystr(void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
  * Copy a NIL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NIL) in *lencopied.  If the 
+ * number of characters copied (including the NIL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
  */
 LEAF(copystr)
@@ -482,12 +540,12 @@ LEAF(copystr)
 	sb	v0, 0(a1)			# each byte until NIL
 	addu	a0, a0, 1
 	bne	a2, zero, 1b			# less than maxlen
-	addu	a1, a1, 1  
+	addu	a1, a1, 1
 	li	v0, ENAMETOOLONG		# run out of space
 2:
 	beq	a3, zero, 3f			# return num. of copied bytes
 	subu	a2, t0, a2			# if the 4th arg was non-NULL
-	sw	a2, 0(a3) 
+	sw	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
 	nop
@@ -500,7 +558,7 @@ END(copystr)
  * the NIL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
  * else return 0 or EFAULT.
  */
-LEAF(copyinstr) 
+LEAF(copyinstr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(copystrerr)
 	blt	a0, zero, _C_LABEL(copystrerr)
@@ -850,41 +908,36 @@ bcopy:
 	move	a1, v0
 #endif
 
-#if 0
+#if defined(NS) || defined(ISO) || defined(CCITT)
 /*
- * netorder = htonl(hostorder)
- * hostorder = ntohl(netorder)
+ * Insert 'p' after 'q'.
+ *	_insque(p, q)
+ *		caddr_t p, q;
  */
-#if BYTE_ORDER == LITTLE_ENDIAN
-LEAF(htonl)				# a0 = 0x11223344, return 0x44332211
-XLEAF(ntohl)
-	srl	v1, a0, 24		# v1 = 0x00000011
-	sll	v0, a0, 24		# v0 = 0x44000000
-	or	v0, v0, v1
-	and	v1, a0, 0xff00
-	sll	v1, v1, 8		# v1 = 0x00330000
-	or	v0, v0, v1
-	srl	v1, a0, 8
-	and	v1, v1, 0xff00		# v1 = 0x00002200
+LEAF(_insque)
+	lw	v0, 0(a1)		# v0 = q->next
+	sw	a1, 4(a0)		# p->prev = q
+	sw	v0, 0(a0)		# p->next = q->next
+	sw	a0, 4(v0)		# q->next->prev = p
 	j	ra
-	or	v0, v0, v1
-END(htonl)
+	sw	a0, 0(a1)		# q->next = p
+END(_insque)
 
 /*
- * netorder = htons(hostorder)
- * hostorder = ntohs(netorder)
+ * Remove item 'p' from queue.
+ *	_remque(p)
+ *		caddr_t p;
  */
-LEAF(htons)
-XLEAF(ntohs)
-	srl	v0, a0, 8
-	and	v0, v0, 0xff
-	sll	v1, a0, 8
-	and	v1, v1, 0xff00
+LEAF(_remque)
+	lw	v0, 0(a0)		# v0 = p->next
+	lw	v1, 4(a0)		# v1 = p->prev
+	nop
+	sw	v0, 0(v1)		# p->prev->next = p->next
 	j	ra
-	or	v0, v0, v1
-END(htons)
+	sw	v1, 4(v0)		# p->next->prev = p->prev
+END(_remque)
 #endif
-#endif
+
 
 /*----------------------------------------------------------------------------
  *
@@ -912,7 +965,7 @@ END(mips_read_causereg)
 
 /*
  * void switchfpregs(struct proc *old, struct proc *new)
- * 
+ *
  * Save the current floating point coprocessor state, then restore
  * the state of next coprocessor owner process.
  */
@@ -1217,7 +1270,7 @@ END(MachFPInterrupt)
 
 
 /*
- * stacktrace() -- print a stack backtrace to the console. 
+ * stacktrace() -- print a stack backtrace to the console.
  *	implicitly accesses caller's a0-a3.
  */
 NESTED(stacktrace, CALLFRAME_SIZ+20, ra)

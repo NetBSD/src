@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.1.1.1.18.1 1999/06/21 00:50:04 thorpej Exp $	*/
 
 /* extracted from netbsd:sys/arch/i386/netboot/misc.c */
 
@@ -10,32 +10,34 @@
 
 extern int biosgetrtc __P((u_long*));
 
+static inline u_long bcd2dec __P((u_long));
+
 static inline u_long
 bcd2dec(arg)
-u_long arg;
+	u_long arg;
 {
-  return((arg >> 4) * 10 + (arg & 0x0f));
+	return ((arg >> 4) * 10 + (arg & 0x0f));
 }
 
 time_t
 getsecs() {
-  /*
-   * Return the current time in seconds
-   */
+	/*
+	 * Return the current time in seconds
+	 */
 
-  u_long t;
-  time_t sec;
+	u_long t;
+	time_t sec;
 
-  if(biosgetrtc(&t))
-      panic("RTC invalid");
+	if (biosgetrtc(&t))
+		panic("RTC invalid");
 
-  sec = bcd2dec(t & 0xff);
-  sec *= 60;
-  t >>= 8;
-  sec += bcd2dec(t & 0xff);
-  sec *= 60;
-  t >>= 8;
-  sec += bcd2dec(t & 0xff);
+	sec = bcd2dec(t & 0xff);
+	sec *= 60;
+	t >>= 8;
+	sec += bcd2dec(t & 0xff);
+	sec *= 60;
+	t >>= 8;
+	sec += bcd2dec(t & 0xff);
 
-  return(sec);
+	return (sec);
 }

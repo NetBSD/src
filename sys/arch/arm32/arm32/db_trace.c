@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9.2.3 1999/04/12 21:31:33 pk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9.2.3.2.1 1999/06/21 00:47:30 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens

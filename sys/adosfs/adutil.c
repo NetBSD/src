@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.17 1998/03/01 02:25:18 fvdl Exp $	*/
+/*	$NetBSD: adutil.c,v 1.17.10.1 1999/06/21 00:44:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -108,7 +108,7 @@ adosfs_getblktype(amp, bp)
 	if (adoscksum(bp, amp->nwords)) {
 #ifdef DIAGNOSTIC
 		printf("adosfs: aget: cksum of blk %ld failed\n",
-		    bp->b_blkno / amp->secsperblk);
+		    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
 		return (-1);
 	}
@@ -119,7 +119,7 @@ adosfs_getblktype(amp, bp)
 	if (adoswordn(bp, 0) != BPT_SHORT) {
 #ifdef DIAGNOSTIC
 		printf("adosfs: aget: bad primary type blk %ld (type = %d)\n",
-		    bp->b_blkno / amp->secsperblk, adoswordn(bp,0));
+		    bp->b_blkno / (amp->bsize / DEV_BSIZE), adoswordn(bp,0));
 #endif
 		return (-1);
 	}
@@ -144,7 +144,7 @@ adosfs_getblktype(amp, bp)
 
 #ifdef DIAGNOSTIC
 	printf("adosfs: aget: bad secondary type blk %ld (type = %d)\n",
-	    bp->b_blkno / amp->secsperblk, adoswordn(bp, amp->nwords - 1));
+	    bp->b_blkno / (amp->bsize / DEV_BSIZE), adoswordn(bp, amp->nwords - 1));
 #endif
 
 	return (-1);
@@ -239,7 +239,7 @@ tvtods(tvp, dsp)
 }
 #endif
 
-#ifndef m68k
+#if BYTE_ORDER != BIG_ENDIAN
 u_int32_t
 adoswordn(bp, wn)
 	struct buf *bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34.4.1 1999/06/21 00:52:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 1999/03/24 05:51:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.4.1 1999/06/21 00:52:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 1999/03/24 05:51:05 mrg Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/regnum.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
@@ -71,11 +72,17 @@ extern struct proc *fpcurproc;
 extern paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
 /*
- * cpu_fork() now returns just once.
+ * Finish a fork operation, with process p2 nearly set up.  Copy and
+ * update the kernel stack and pcb, making the child ready to run,
+ * and marking it so that it can return differently than the parent.
+ * When scheduled, child p2 will start from proc_trampoline(). cpu_fork()
+ * returns once for forking parent p1.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct pcb *pcb;
 	struct frame *f;
@@ -87,9 +94,7 @@ cpu_fork(p1, p2)
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
-	
-	if (p1 == fpcurproc)
-		savefpregs(p1);
+
 
 #ifdef DIAGNOSTIC
 	/*
@@ -98,20 +103,24 @@ cpu_fork(p1, p2)
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-
-	/* Copy pcb from proc p1 to p2. */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	if (p1 == fpcurproc)
+		savefpregs(p1);
 
 	/*
-	 * Create the child's kernel stack, from scratch.
-	 * Pick a stack pointer, leaving room for a trapframe;
-	 * copy trapframe from parent so return to user mode
+	 * Copy pcb from proc p1 to p2.
+	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
 	 * will be to right address, with correct registers.
 	 */
-	pcb = &p2->p_addr->u_pcb;
-	f = (struct frame *)((int)pcb + USPACE) - 1;
+	memcpy(&p2->p_addr->u_pcb, &p1->p_addr->u_pcb, sizeof(struct pcb));
+	f = (struct frame *)((caddr_t)p2->p_addr + USPACE) - 1;
 	memcpy(f, p1->p_md.md_regs, sizeof(struct frame));
-	memset(((caddr_t) f) - 24, 0, 24);
+	memset((caddr_t)f - 24, 0, 24);		/* ? required ? */
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		f->f_regs[SP] = (u_int)stack + stacksize;
 
 	p2->p_md.md_regs = (void *)f;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -121,9 +130,10 @@ cpu_fork(p1, p2)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
 	/*
-	 * Arrange for continuation at child_return(), which
-	 * will return to user process soon.
+	 * Arrange for continuation at child_return(), which will return to
+	 * user process soon.
 	 */
+	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */
@@ -197,7 +207,7 @@ cpu_exit(p)
 
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
@@ -289,57 +299,48 @@ pagemove(from, to, size)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.
- *
- * Called by physio() in kern/kern_physio.c for raw device I/O
- * between user address and device driver bypassing filesystem cache.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t faddr, taddr;
-	vsize_t off;
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-	u_int pt_mask;
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
+	p = bp->b_proc;
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
-	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
-	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	pt_mask = (CPUISMIPS3) ? (MIPS3_PG_V|MIPS3_PG_G|MIPS3_PG_M) :
-				 (MIPS1_PG_V|MIPS1_PG_G|MIPS1_PG_M);
-	do {
-		/* XXX should mark them PG_WIRED? */
-		tpte->pt_entry = fpte->pt_entry | pt_mask;
-		MachTLBUpdate(taddr, tpte->pt_entry);
-		tpte++, fpte++, taddr += PAGE_SIZE;
-		len -= PAGE_SIZE;
-	} while (len);
+	len = atop(len);
+	while (len--) {
+		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
+		if (pa == 0)
+			panic("vmapbuf: null page frame");
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t addr;
-	vsize_t off;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 1999/04/22 14:51:12 perry Exp $
+#	$NetBSD: Makefile,v 1.6.2.1.2.1 1999/06/21 00:48:37 thorpej Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c

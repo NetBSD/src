@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24.2.1 1999/04/16 16:20:49 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.1.2.1 1999/06/21 00:53:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.1 1999/04/16 16:20:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.1.2.1 1999/06/21 00:53:41 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -174,6 +174,8 @@ struct idrom idrom;
 /* locore callback-vector setup */
 extern void mips_vector_init  __P((void));
 
+extern struct user *proc0paddr;
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the prom monitor.
@@ -252,9 +254,13 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 #endif
 
 	/*
-	 * Init mapping for u page(s) for proc0, pm_tlbpid 1.
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
-	mips_init_proc0(kernend);
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
 	kernend += UPAGES * PAGE_SIZE;
 
@@ -277,9 +283,9 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vsize_t)allocsys(0);
+	size = (vsize_t)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
-	if ((allocsys(v) - v) != size)
+	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 
 	/*
@@ -330,6 +336,7 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -341,7 +348,8 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem  = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -392,12 +400,12 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, TRUE, FALSE, NULL);
+				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -416,9 +424,10 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

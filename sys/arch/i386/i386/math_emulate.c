@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.20.8.1 1999/04/26 16:31:47 perry Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.20.8.1.2.1 1999/06/21 00:49:59 thorpej Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj

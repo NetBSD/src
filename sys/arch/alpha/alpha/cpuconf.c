@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.20 1999/03/17 19:00:01 drochner Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.20.4.1 1999/06/21 00:46:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -177,7 +177,6 @@ int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));
 void
 platform_not_configured()
 {
-	extern int cputype;
 
 	printf("\n");
 	printf("Support for system type %d is not present in this kernel.\n",
@@ -191,7 +190,6 @@ platform_not_configured()
 void
 platform_not_supported()
 {
-	extern int cputype;
 	const char *typestr;
 
 	if (cputype >= ncpuinit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 1999/03/26 23:41:27 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42.4.1 1999/06/21 00:46:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,17 +63,17 @@
 #include <machine/pte.h>
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Finish a fork operation, with process p2 nearly set up.  Copy and
+ * update the kernel stack and pcb, making the child ready to run,  
+ * and marking it so that it can return differently than the parent.
+ * When scheduled, child p2 will start from proc_trampoline(). cpu_fork()
+ * returns once for forking parent p1. 
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -100,6 +100,13 @@ cpu_fork(p1, p2)
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_regs[15] = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
 	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
@@ -337,12 +344,9 @@ kvtop(addr)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.
- *
- * XXX we allocate KVA space by using kmem_alloc_wait which we know
- * allocates space without backing physical memory.  This implementation
- * is a total crock, the multiple mappings of these physical pages should
- * be reflected in the higher-level VM structures to avoid problems.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
@@ -378,7 +382,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

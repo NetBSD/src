@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.84 1999/03/26 21:18:49 is Exp $
+#	$NetBSD: files.amiga,v 1.84.4.1 1999/06/21 00:46:39 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -237,7 +237,6 @@ file	arch/amiga/dev/lpt_supio.c	lpt_supio
 
 include "../../../dev/scsipi/files.scsipi"
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 7}
 
 # wd 33c93 contrllers
@@ -395,14 +394,16 @@ file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/amiga/dev/md_root.c		memory_disk_hooks
 
-major	{vnd = 6}
 major	{md = 15}	# Memory disk (for mini-kernel)
 
 # Compatibility modules
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
