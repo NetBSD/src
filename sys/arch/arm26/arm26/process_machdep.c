@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.3 2001/02/10 19:09:48 bjh21 Exp $ */
+/* $NetBSD: process_machdep.c,v 1.4 2001/02/11 14:51:56 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: process_machdep.c,v 1.3 2001/02/10 19:09:48 bjh21 Exp $");
+__RCSID("$NetBSD: process_machdep.c,v 1.4 2001/02/11 14:51:56 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/proc.h>
@@ -78,9 +78,10 @@ process_read_regs(struct proc *p, struct reg *regs)
 	regs->r[10] = tf->tf_r10;
 	regs->r[11] = tf->tf_r11;
 	regs->r[12] = tf->tf_r12;
-	regs->r_sp  = tf->tf_r13; /* XXX */
+	regs->r_sp  = tf->tf_r13;
 	regs->r_lr  = tf->tf_r14;
-	regs->r_pc  = tf->tf_r15; /* XXX name? */
+	regs->r_pc  = tf->tf_r15;
+	regs->r_cpsr = tf->tf_spsr; /* Always 0 */
 	return 0;
 }
 
