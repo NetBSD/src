@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.6 2000/09/04 22:06:32 lukem Exp $	*/
+/*	$NetBSD: sig.c,v 1.7 2001/01/04 15:55:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.6 2000/09/04 22:06:32 lukem Exp $");
+__RCSID("$NetBSD: sig.c,v 1.7 2001/01/04 15:55:03 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -117,7 +117,7 @@ sig_init(EditLine *el)
 	sigset_t nset, oset;
 
 	(void) sigemptyset(&nset);
-#define	_DO(a) (void) sigaddset(&nset, SIGWINCH);
+#define	_DO(a) (void) sigaddset(&nset, a);
 	ALLSIGS
 #undef	_DO
 	    (void) sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -125,6 +125,8 @@ sig_init(EditLine *el)
 #define	SIGSIZE (sizeof(sighdl) / sizeof(sighdl[0]) * sizeof(sig_t))
 
 	el->el_signal = (sig_t *) el_malloc(SIGSIZE);
+	if (el->el_signal == NULL)
+		return (-1);
 	for (i = 0; sighdl[i] != -1; i++)
 		el->el_signal[i] = SIG_ERR;
 
@@ -156,7 +158,7 @@ sig_set(EditLine *el)
 	sigset_t nset, oset;
 
 	(void) sigemptyset(&nset);
-#define	_DO(a) (void) sigaddset(&nset, SIGWINCH);
+#define	_DO(a) (void) sigaddset(&nset, a);
 	ALLSIGS
 #undef	_DO
 	    (void) sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -182,7 +184,7 @@ sig_clr(EditLine *el)
 	sigset_t nset, oset;
 
 	(void) sigemptyset(&nset);
-#define	_DO(a) (void) sigaddset(&nset, SIGWINCH);
+#define	_DO(a) (void) sigaddset(&nset, a);
 	ALLSIGS
 #undef	_DO
 	    (void) sigprocmask(SIG_BLOCK, &nset, &oset);
