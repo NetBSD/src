@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.12 2001/02/21 23:12:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.12 2001/02/21 23:12:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,10 +272,11 @@ wsemul_sun_output_normal(edp, c, kernel)
 		break;
 
 	case ASCII_ESC:		/* "Escape (ESC)" */
-#ifdef DIAGNOSTIC
-		if (kernel)
-			panic("ESC in kernel output");
-#endif
+		if (kernel) {
+			printf("wsemul_sun_output_normal: ESC in kernel output ignored\n");
+			break;	/* ignore the ESC */
+		}
+
 		if (edp->state == SUN_EMUL_STATE_NORMAL) {
 			newstate = SUN_EMUL_STATE_HAVEESC;
 			break;
