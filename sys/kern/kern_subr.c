@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.27 1997/06/16 00:25:05 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.28 1997/08/03 20:36:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -359,7 +359,7 @@ domountroothook()
 #endif
 
 #ifdef MEMORY_DISK_HOOKS
-static struct device fakemdrootdev = { DV_DISK, {}, NULL, 0, "md0", NULL };
+static struct device fakemdrootdev[NMD];
 #endif
 
 void
@@ -390,8 +390,18 @@ setroot(bootdv, bootpartition, nam2blk)
 	}
 	last_nam2blk = nam2blk;
 
+#ifdef MEMORY_DISK_HOOKS
+	for (i = 0; i < NMD; i++) {
+		fakemdrootdev[i].dv_class  = DV_DISK;
+		fakemdrootdev[i].dv_cfdata = NULL;
+		fakemdrootdev[i].dv_unit   = i;
+		fakemdrootdev[i].dv_parent = NULL;
+		sprintf(fakemdrootdev[i].dv_xname, "md%d", i);
+	}
+#endif /* MEMORY_DISK_HOOKS */
+
 #ifdef MEMORY_DISK_IS_ROOT
-	bootdv = &fakemdrootdev;
+	bootdv = &fakemdrootdev[0];
 	bootpartition = 0;
 #endif
 
@@ -752,14 +762,16 @@ getdisk(str, len, defpart, nam2blk, devp, isdump)
 	dev_t *devp;
 	int isdump;
 {
-	struct device *dv;
+	struct device	*dv;
+	int		i;
 
 	if ((dv = parsedisk(str, len, defpart, nam2blk, devp)) == NULL) {
 		printf("use one of:");
 #ifdef MEMORY_DISK_HOOKS
 		if (isdump == 0)
-			printf(" %s[a-%c]", fakemdrootdev.dv_xname,
-			    'a' + MAXPARTITIONS - 1);
+			for (i = 0; i < NMD; i++)
+				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
+				    'a' + MAXPARTITIONS - 1);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
@@ -785,7 +797,7 @@ parsedisk(str, len, defpart, nam2blk, devp)
 {
 	struct device *dv;
 	char *cp, c;
-	int majdev, part;
+	int majdev, part, i;
 
 	if (len == 0)
 		return (NULL);
@@ -802,10 +814,11 @@ parsedisk(str, len, defpart, nam2blk, devp)
 		part = defpart;
 
 #ifdef MEMORY_DISK_HOOKS
-	if (strcmp(str, fakemdrootdev.dv_xname) == 0) {
-		dv = &fakemdrootdev;
-		goto gotdisk;
-	}
+	for (i = 0; i < NMD; i++)
+		if (strcmp(str, fakemdrootdev[i].dv_xname) == 0) {
+			dv = &fakemdrootdev[i];
+			goto gotdisk;
+		}
 #endif
 
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
