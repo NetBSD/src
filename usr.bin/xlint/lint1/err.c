@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.25 2002/11/02 20:09:27 perry Exp $	*/
+/*	$NetBSD: err.c,v 1.26 2002/11/02 20:14:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.25 2002/11/02 20:09:27 perry Exp $");
+__RCSID("$NetBSD: err.c,v 1.26 2002/11/02 20:14:10 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -500,6 +500,12 @@ message(int n, ...)
 	va_end(ap);
 }
 
+/*
+ * XXX I think the logic is possibly somewhat screwed up here. The
+ * question is, how do we want to interpret the -s and -S flags going
+ * forward? We need to answer that and then we can fix this to be
+ * "right"... [perry, 2 Nov 2002]
+*/
 int
 c99ism(int n, ...)
 {
