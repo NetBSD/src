@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.89 2000/10/10 20:24:50 is Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.90 2000/11/27 23:13:12 perseant Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.89 2000/10/10 20:24:50 is Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.90 2000/11/27 23:13:12 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1197,7 +1197,7 @@ showpartitions(f, lp)
 
 	(void) fprintf(f, "%d partitions:\n", lp->d_npartitions);
 	(void) fprintf(f,
-	    "#        size   offset     fstype   [fsize bsize   cpg]\n");
+	    "#        size   offset     fstype   [fsize bsize cpg/sgs]\n");
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
