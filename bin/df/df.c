@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.33 1999/09/24 13:35:21 hubertf Exp $	*/
+/*	$NetBSD: df.c,v 1.34 2000/06/26 21:16:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.33 1999/09/24 13:35:21 hubertf Exp $");
+__RCSID("$NetBSD: df.c,v 1.34 2000/06/26 21:16:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ void	 maketypelist __P((char *));
 long	 regetmntinfo __P((struct statfs **, long));
 void	 usage __P((void));
 
-int	iflag, kflag, lflag, nflag;
+int	aflag, iflag, kflag, lflag, nflag;
 char	**typelist = NULL;
 struct	ufs_args mdev;
 
@@ -94,8 +94,11 @@ main(argc, argv)
 	int ch, i, maxwidth, width;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "iklnt:")) != -1)
+	while ((ch = getopt(argc, argv, "aiklnt:")) != -1)
 		switch (ch) {
+		case 'a':
+			aflag = 1;
+			break;
 		case 'i':
 			iflag = 1;
 			break;
@@ -291,6 +294,8 @@ regetmntinfo(mntbufp, mntsize)
 	mntbuf = *mntbufp;
 	j = 0;
 	for (i = 0; i < mntsize; i++) {
+		if (!aflag && (mntbuf[i].f_flags & MNT_IGNORE) != 0)
+			continue;
 		if (lflag && (mntbuf[i].f_flags & MNT_LOCAL) == 0)
 			continue;
 		if (!selected(mntbuf[i].f_fstypename))
@@ -451,7 +456,11 @@ bread(off, buf, cnt)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: df [-ikln] [-t type] [file | file_system ...]\n");
+	extern char *__progname;
+
+	(void)fprintf(stderr,
+	    "Usage: %s [-aikln] [-t type] [file | file_system ...]\n",
+	    __progname);
 	exit(1);
 	/* NOTREACHED */
 }

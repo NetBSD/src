@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.17 1999/03/22 18:30:44 garbled Exp $
+.\"	$NetBSD: df.1,v 1.18 2000/06/26 21:16:15 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl ikln
+.Op Fl aikln
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
@@ -70,6 +70,10 @@ on the filesystem is less than
 .Pp
 The following options are available:
 .Bl -tag -width Ds
+.It Fl a
+Show all filesystems. By default only filesystems mounted with the
+.Dv MNT_IGNORE
+flag clear are shown.
 .It Fl i
 Include statistics on the number of free inodes.
 .It Fl k
@@ -78,7 +82,8 @@ The
 .Fl k
 option causes the numbers to be reported in kilobyte counts.
 .It Fl l
-Display statistics only about mounted file systems with the MNT_LOCAL
+Display statistics only about mounted file systems with the
+.Dv MNT_LOCAL
 flag set.  If a non-local file system is given as an argument, a
 warning is issued and no information is given on that file system.
 .It Fl n
