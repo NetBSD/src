@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.36 2002/10/04 15:22:30 tsutsui Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.37 2002/10/04 21:19:35 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.36 2002/10/04 15:22:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.37 2002/10/04 21:19:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ ate_detect(iot, ioh, enaddr)
 		type = FE_TYPE_AT1700AT;
 		break;
 	default:
-		type = FE_TYPE_RE2000;
+		type = FE_TYPE_AT_UNKNOWN;
 		break;
 	}
 
@@ -390,19 +390,19 @@ ate_attach(parent, self, aux)
 	type = ate_detect(iot, ioh, myea);
 	switch (type) {
 	case FE_TYPE_AT1700T:
-		typestr = "AT-1700T";
+		typestr = "AT-1700T/RE2001";
 		break;
 	case FE_TYPE_AT1700BT:
-		typestr = "AT-1700BT";
+		typestr = "AT-1700BT/RE2003";
 		break;
 	case FE_TYPE_AT1700FT:
-		typestr = "AT-1700FT";
+		typestr = "AT-1700FT/RE2009";
 		break;
 	case FE_TYPE_AT1700AT:
-		typestr = "AT-1700AT";
+		typestr = "AT-1700AT/RE2005";
 		break;
-	case FE_TYPE_RE2000:
-		typestr = "unknown (RE-2000?)";
+	case FE_TYPE_AT_UNKNOWN:
+		typestr = "unknown AT-1700/RE2000";
 		break;
 
 	default:
