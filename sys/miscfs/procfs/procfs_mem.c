@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.7 1995/01/05 07:10:54 chopps Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -55,6 +55,8 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+static int procfs_rwmem __P((struct proc *, struct uio *));
 
 static int
 procfs_rwmem(p, uio)
@@ -182,7 +184,8 @@ procfs_rwmem(p, uio)
 			 * Now do the i/o move.
 			 */
 			if (!error)
-				error = uiomove(kva + page_offset, len, uio);
+				error = uiomove((caddr_t) (kva + page_offset),
+						len, uio);
 
 			vm_map_remove(kernel_map, kva, kva + PAGE_SIZE);
 		}
