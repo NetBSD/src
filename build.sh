@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.52 2002/03/14 18:33:04 thorpej Exp $
+#  $NetBSD: build.sh,v 1.53 2002/03/21 10:54:50 pk Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -225,7 +225,7 @@ export MAKEFLAGS MACHINE MACHINE_ARCH
 # can only work if the user has pre-set TOOLDIR in the environment or
 # used the -T option to build.sh.
 #
-make=${TOOLDIR-nonexistent}/bin/nbmake
+make="${TOOLDIR-nonexistent}/bin/nbmake"
 if [ -x $make ]; then
 	for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
 		if [ $f -nt $make ]; then
@@ -239,23 +239,27 @@ fi
 # Build bootstrap nbmake if needed.
 if $do_rebuildmake; then
 	$runcmd echo "===> Bootstrapping nbmake"
-	tmpdir=${TMPDIR-/tmp}/nbbuild$$
+	tmpdir="${TMPDIR-/tmp}/nbbuild$$"
 
-	$runcmd mkdir $tmpdir || bomb "cannot mkdir: $tmpdir"
-	trap "cd /; rm -r -f $tmpdir" 0
+	$runcmd mkdir "$tmpdir" || bomb "cannot mkdir: $tmpdir"
+	trap "cd /; rm -r -f \"$tmpdir\"" 0
 	trap "exit 1" 1 2 3 15
-	$runcmd cd $tmpdir
+	$runcmd cd "$tmpdir"
 
 	$runcmd env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-		$cwd/tools/make/configure || bomb "configure of nbmake failed"
+		"$cwd/tools/make/configure" || bomb "configure of nbmake failed"
 	$runcmd sh buildmake.sh || bomb "build of nbmake failed"
 
-	make=$tmpdir/nbmake
-	$runcmd cd $cwd
+	make="$tmpdir/nbmake"
+	$runcmd cd "$cwd"
 	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
 fi
 
-USE_NEW_TOOLCHAIN=`getmakevar USE_NEW_TOOLCHAIN`
+if [ "$runcmd" = "echo" ]; then
+	USE_NEW_TOOLCHAIN=yes
+else
+	USE_NEW_TOOLCHAIN=`getmakevar USE_NEW_TOOLCHAIN`
+fi
 if [ "${USE_NEW_TOOLCHAIN}" = "" ]; then
 	echo "ERROR: build.sh (new toolchain) is not yet enabled for"
 	echo
@@ -287,7 +291,7 @@ fi
 # before continuing as bsd.own.mk will need this to pick up _SRC_TOP_OBJ_
 #
 if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
-	$runcmd mkdir -p $makeobjdir
+	$runcmd mkdir -p "$makeobjdir"
 fi
 
 # Find DESTDIR and TOOLDIR.
@@ -296,8 +300,14 @@ if [ "$runcmd" = "echo" ]; then
 	DESTDIR='$DESTDIR'
 	TOOLDIR='$TOOLDIR'
 else
-	DESTDIR=`getmakevar DESTDIR`; echo "===> DESTDIR path: $DESTDIR"
-	TOOLDIR=`getmakevar TOOLDIR`; echo "===> TOOLDIR path: $TOOLDIR"
+	DESTDIR=`getmakevar DESTDIR`;
+	[ $? = 0 ] || bomb "getmakevar DESTDIR failed";
+	echo "===> DESTDIR path: $DESTDIR"
+
+	TOOLDIR=`getmakevar TOOLDIR`;
+	[ $? = 0 ] || bomb "getmakevar DESTDIR failed";
+	echo "===> TOOLDIR path: $TOOLDIR"
+
 	export DESTDIR TOOLDIR
 fi
 
@@ -330,36 +340,36 @@ if $do_removedirs; then
 fi
 
 # Recreate $TOOLDIR.
-mkdir -p $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
+$runcmd mkdir -p "$TOOLDIR/bin" || bomb "mkdir of '$TOOLDIR/bin' failed"
 
 # Install nbmake if it was built.
 if $do_rebuildmake; then
-	$runcmd rm -f $TOOLDIR/bin/nbmake
-	$runcmd cp $make $TOOLDIR/bin/nbmake
-	$runcmd rm -r -f $tmpdir
+	$runcmd rm -f "$TOOLDIR/bin/nbmake"
+	$runcmd cp $make "$TOOLDIR/bin/nbmake"
+	$runcmd rm -r -f "$tmpdir"
 	trap 0 1 2 3 15
 fi
 
 # Build a nbmake wrapper script, usable by hand as well as by build.sh.
 if [ -z "$makewrapper" ]; then
-	makewrapper=$TOOLDIR/bin/nbmake-$MACHINE
+	makewrapper="$TOOLDIR/bin/nbmake-$MACHINE"
 	if [ ! -z "$BUILDID" ]; then
-		makewrapper=$makewrapper-$BUILDID
+		makewrapper="$makewrapper-$BUILDID"
 	fi
 fi
 
-$runcmd rm -f $makewrapper
+$runcmd rm -f "$makewrapper"
 if [ "$runcmd" = "echo" ]; then
 	echo 'cat <<EOF >'$makewrapper
 	makewrapout=
 else
-	makewrapout=">>$makewrapper"
+	makewrapout=">>\$makewrapper"
 fi
 
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.52 2002/03/14 18:33:04 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.53 2002/03/21 10:54:50 pk Exp $
 #
 
 EOF
@@ -368,23 +378,23 @@ for f in $makeenv; do
 done
 eval echo "USETOOLS=yes\; export USETOOLS" $makewrapout
 
-eval cat <<EOF $makewrapout
+eval cat <<'EOF' $makewrapout
 
-exec \$TOOLDIR/bin/nbmake \${1+"\$@"}
+exec "$TOOLDIR/bin/nbmake" ${1+"$@"}
 EOF
 [ "$runcmd" = "echo" ] && echo EOF
-$runcmd chmod +x $makewrapper
+$runcmd chmod +x "$makewrapper"
 
 if $do_buildsystem; then
-	${runcmd-exec} $makewrapper $buildtarget
+	${runcmd-exec} "$makewrapper" $buildtarget
 elif $do_buildonlytools; then
 	if [ "$MKOBJDIRS" != "no" ]; then
-		$runcmd $makewrapper obj-tools || exit 1
+		$runcmd "$makewrapper" obj-tools || exit 1
 	fi
 	$runcmd cd tools
 	if [ "$UPDATE" = "" ]; then
-		${runcmd-exec} $makewrapper cleandir dependall install
+		${runcmd-exec} "$makewrapper" cleandir dependall install
 	else
-		${runcmd-exec} $makewrapper dependall install
+		${runcmd-exec} "$makewrapper" dependall install
 	fi
 fi
