@@ -43,8 +43,8 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
               The  <b>trivial-rewrite</b> daemon by default only distin-
               guishes between local and non-local mail. For finer
-              control  over mail routing, use the optional <a href="transport.5.html"><b>trans-</b>
-              <b>port</b>(5)</a> lookup table.
+              control  over mail routing, use the optional <a href="transport.5.html"><b>trans-</b></a>
+              <a href="transport.5.html"><b>port</b>(5)</a> lookup table.
 
        This program expects to be run from the <a href="master.8.html"><b>master</b>(8)</a>  process
        manager.
@@ -109,21 +109,21 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
               Rewrite <i>site</i>!<i>user</i> to <i>user</i>@<i>site</i>.
 
 <b>Routing</b>
+       <b>local</b><i>_</i><b>transport</b>
+              Where  to  deliver mail for destinations that match
+              $<b>mydestination</b> or  $<b>inet</b><i>_</i><b>interfaces</b>.   The  default
+              transport is <b>local</b>.
+
+              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              details. The :<i>nexthop</i> part is optional.
+
        <b>default</b><i>_</i><b>transport</b>
-              The  default  transport to use when no transport is
-              explicitly given in the <a href="transport.5.html"><b>transport</b>(5)</a> table.
+              Where to deliver non-local mail when no information
+              is explicitly given in the <a href="transport.5.html"><b>transport</b>(5)</a> table.  The
+              default transport is <b>smtp</b>.
 
-       <b>relayhost</b>
-              The default host to send mail to when no  entry  is
-              matched in the <a href="transport.5.html"><b>transport</b>(5)</a> table.
-
-              When  no  <b>relayhost</b>  is  specified,  mail is routed
-              directly to the destination's mail exchanger.
-
-       <b>transport</b><i>_</i><b>maps</b>
-              List of tables with <i>domain</i> to (<i>transport,</i>  <i>nexthop</i>)
-              mappings.
-
+              Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
+              details. The :<i>nexthop</i> part is optional.
 
 
 
@@ -137,13 +137,24 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
 
+       <b>relayhost</b>
+              The  default host to send non-local mail to when no
+              entry is matched in the <a href="transport.5.html"><b>transport</b>(5)</a> table.
+
+              When no <b>relayhost</b>  is  specified,  mail  is  routed
+              directly to the destination's mail exchanger.
+
+       <b>transport</b><i>_</i><b>maps</b>
+              List  of tables with <i>domain</i> to (<i>transport,</i> <i>nexthop</i>)
+              mappings.
+
 <b>SEE</b> <b>ALSO</b>
        <a href="master.8.html">master(8)</a> process manager
        syslogd(8) system logging
        <a href="transport.5.html">transport(5)</a> transport table format
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
@@ -151,17 +162,6 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -7,7 +7,7 @@
 #	the forward slash is used). The regular expression can contain
 #	whitespace.
 #
-#	By default, matching is case-INsensative, although following
+#	By default, matching is case-INsensitive, although following
 #	the second slash with an 'i' will reverse this. Other flags are
 #	supported, but the only other useful one is 'U', which makes
 #	matching ungreedy (see PCRE documentation and source for more

@@ -2,15 +2,20 @@ Purpose of this document
 ========================
 
 This document provides a road map of the Postfix mail system source
-code distribution.  I suggest that you take a few minutes to read
-it, and then proceed with the installation instructions.
+code distribution.  I suggest that you
+
+- take a few minutes to read this file,
+
+- review the RELEASE_NOTES file for incompatible changes,
+
+- and then proceed with the INSTALL instructions.
 
 Introduction
 ============
 
-This is the first public release of the Postfix mail system. Thank
-you for your interest in this project. Send me a postcard if you
-like it. My postal address is below.
+This is the public release of the Postfix mail system. Thank you
+for your interest in this project. Send me a postcard if you like
+it. My postal address is below.
 
 You must read the LICENSE file, if you didn't do so already. A copy
 of the LICENSE must be distributed with every original, modified,
@@ -21,9 +26,7 @@ Purpose of the Postfix mail system
 ==================================
 
 Postfix aims to be an alternative to the widely-used sendmail
-program.  Sendmail is responsible for 70% of all e-mail delivered
-on the Internet.  With an estimated 100 million users, that's an
-estimated 10 billion (10^10) messages daily. A stunning number.
+program.
 
 Although IBM supported the Postfix development, it abstains from
 control over its evolution. The goal is to have Postfix installed
@@ -40,17 +43,16 @@ On-line resources devoted to the Postfix mail system
 Web sites:
 
     http://www.postfix.org/		current release information
-    http://www.ibm.com/alphaworks/	the original distribution site
 
-Mail addresses (please do NOT send mail to my address at work):
+Mail addresses (PLEASE send questions to the mailing list)
 
     postfix-XXX@postfix.org		Postfix mailing lists
     wietse@porcupine.org		the original author
 
 In order to subscribe to a mailing list, see http://www.postfix.org/.
 
-Acknowledgements
-================
+Acknowledgments
+===============
 
 This release could not have happened without the input from a team
 of competent alpha testers. Their names appear in numerous places
@@ -72,15 +74,6 @@ you are welcome to send a postcard to:
 Roadmap of the Postfix source distribution
 ==========================================
 
-Point your browser at html/index.html for Postfix documentation,
-for manual pages, and for the unavoidable Postfix FAQ. Expect to
-see updated versions on-line at http://www.postfix.org/
-
-Point your MANPATH environment variable at the `man' directory (use
-an absolute path) for UNIX-style on-line manual pages.  These pages
-are also available through the HTML interface, which allows you to
-navigate faster.
-
 The RELEASE_NOTES file describes new features, and lists incompatible
 changes with respect to previous Postfix versions.
 
@@ -92,10 +85,17 @@ not yet implement, and how well it works with other software.
 
 The HISTORY file gives a detailed log of changes to the software.
 
+Point your browser at html/index.html for Postfix documentation,
+for manual pages, and for the unavoidable Postfix FAQ. Expect to
+see updated versions on-line at http://www.postfix.org/
+
+Point your MANPATH environment variable at the `man' directory (use
+an absolute path) for UNIX-style on-line manual pages.  These pages
+are also available through the HTML interface, which allows you to
+navigate faster.
+
 The PORTING file discusses how to go about porting Postfix to other
-UNIX platforms. Some people are looking into a port to Windows NT.
-We'll see. This software uses every trick in the book that I learned
-about UNIX.
+UNIX platforms.
 
 The TODO file lists things that still need to be done. If you want
 to set your teeth into one of those problems, drop me a note at
@@ -113,41 +113,45 @@ Example files:
 
 Library routines:
 
-    dns/		DNS client library
-    global/		Postfix-specific support routines
-    util/		General-purpose support routines
+    src/dns/		DNS client library
+    src/global/		Postfix-specific support routines
+    src/util/		General-purpose support routines
 
 Command-line utilities:
 
-    postalias/		Alias database management
-    postcat/		List Postfix queue file
-    postconf/		Configuration utility
-    postfix/		Postfix administrative interface
-    postkick/		Postfix IPC for shell scripts
-    postlock/		Postfix locking for shell scripts
-    postlog/		Postfix logging for shell scripts
-    postmap/		Postfix lookup table management
-    sendmail/		Sendmail compatibility interface
+    src/postalias/	Alias database management
+    src/postcat/	List Postfix queue file
+    src/postconf/	Configuration utility
+    src/postfix/	Postfix administrative interface
+    src/postkick/	Postfix IPC for shell scripts
+    src/postlock/	Postfix locking for shell scripts
+    src/postlog/	Postfix logging for shell scripts
+    src/postmap/	Postfix lookup table management
+    src/postsuper/	Postfix house keeping program
+    src/sendmail/	Sendmail compatibility interface
 
 Postfix daemons:
 
-    bounce/		Bounce or defer mail
-    cleanup/		Canonicalize and enqueue mail
-    error/		Trivial error mailer
-    local/		Local delivery
-    master/		Postfix resident superserver
-    pickup/		Local pickup
-    pipe/		Pipe delivery
-    qmgr/		Queue manager
-    showq/		List Postfix queue status
-    smtp/		SMTP client
-    smtpd/		SMTP server
-    trivial-rewrite/	Address rewriting and resolving
+    src/bounce/		Bounce or defer mail
+    src/cleanup/	Canonicalize and enqueue mail
+    src/error/		Trivial error mailer
+    src/local/		Local delivery
+    src/master/		Postfix resident superserver
+    src/pickup/		Local pickup
+    src/pipe/		Pipe delivery
+    src/qmgr/		Queue manager
+    src/showq/		List Postfix queue status
+    src/spawn/		Run any command from a network socket
+    src/lmtp/		LMTP client
+    src/smtp/		SMTP client
+    src/smtpd/		SMTP server
+    src/trivial-rewrite/ Address rewriting and resolving
+    src/virtual/	virtual mailbox-only delivery agent
 
 Test programs:
 
-    fsstone/		Measure file system overhead
-    smtpstone/		SMTP server torture test
+    src/fsstone/	Measure file system overhead
+    src/smtpstone/	SMTP server torture test
 
 Miscellaneous:
 
@@ -157,3 +161,5 @@ Miscellaneous:
     include/		Installed include files
     lib/		Installed object libraries
     libexec/		Postfix daemon executables
+    mantools/		Manual page utilities
+    proto/		Manual pages for sample configuration files

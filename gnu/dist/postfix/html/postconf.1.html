@@ -9,7 +9,7 @@ POSTCONF(1)                                           POSTCONF(1)
        postconf - Postfix configuration utility
 
 <b>SYNOPSIS</b>
-       <b>postconf</b> [<b>-dhmnv</b>] [<b>-c</b> <i>config_dir</i>] [<i>parameter</i> <i>...</i>]
+       <b>postconf</b> [<b>-dhmlnv</b>] [<b>-c</b> <i>config_dir</i>] [<i>parameter</i> <i>...</i>]
 
        <b>postconf</b> [<b>-ev</b>] [<b>-c</b> <i>config_dir</i>] [<i>parameter=value</i> <i>...</i>]
 
@@ -23,19 +23,23 @@ POSTCONF(1)                                           POSTCONF(1)
 
        <b>-c</b> <i>config_dir</i>
               The <b>main.cf</b> configuration  file  is  in  the  named
+              directory  instead  of  the  default  configuration
               directory.
 
-       <b>-d</b>     Print  default parameter settings instead of actual
+       <b>-d</b>     Print default parameter settings instead of  actual
               settings.
 
-       <b>-e</b>     Edit the <b>main.cf</b> configuration file.  The  file  is
+       <b>-e</b>     Edit  the  <b>main.cf</b>  configuration file. The file is
               copied to a temporary file then renamed into place.
-              Parameters and values are specified on the  command
-              line.   Use   quotes  in  order  to  protect  shell
+              Parameters  and values are specified on the command
+              line.  Use  quotes  in  order  to   protect   shell
               metacharacters and whitespace.
 
-       <b>-h</b>     Show parameter values only, not  the  ``name  =  ''
+       <b>-h</b>     Show  parameter  values  only,  not the ``name = ''
               label that normally precedes the value.
+
+       <b>-l</b>     List the names of  all  supported  mailbox  locking
+              methods.
 
        <b>-m</b>     List the names of all supported lookup table types.
 
@@ -55,6 +59,18 @@ POSTCONF(1)                                           POSTCONF(1)
 <b>AUTHOR(S)</b>
        Wietse Venema
        IBM T.J. Watson Research
+
+
+
+                                                                1
+
+
+
+
+
+POSTCONF(1)                                           POSTCONF(1)
+
+
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
@@ -62,7 +78,57 @@ POSTCONF(1)                                           POSTCONF(1)
 
 
 
-                                                                1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                2
 
 
 </pre> </body> </html>

@@ -1,0 +1,109 @@
+.TH SPAWN 8 
+.ad
+.fi
+.SH NAME
+spawn
+\-
+Postfix external command spawner
+.SH SYNOPSIS
+.na
+.nf
+\fBspawn\fR [generic Postfix daemon options] command_attributes...
+.SH DESCRIPTION
+.ad
+.fi
+The \fBspawn\fR daemon provides the Postfix equivalent of \fBinetd\fR.
+It listens on a port as specified in the Postfix \fBmaster.cf\fR file
+and spawns an external command whenever a connection is established.
+The connection can be made over local IPC (such as UNIX-domain
+sockets) or over non-local IPC (such as TCP sockets).
+The command\'s standard input, output and error streams are connected
+directly to the communication endpoint.
+
+This daemon expects to be run from the \fBmaster\fR(8) process
+manager.
+.SH COMMAND ATTRIBUTE SYNTAX
+.na
+.nf
+.ad
+.fi
+The external command attributes are given in the \fBmaster.cf\fR
+file at the end of a service definition.  The syntax is as follows:
+.IP "\fBuser\fR=\fIusername\fR (required)"
+.IP "\fBuser\fR=\fIusername\fR:\fIgroupname\fR"
+The external command is executed with the rights of the
+specified \fIusername\fR.  The software refuses to execute
+commands with root privileges, or with the privileges of the
+mail system owner. If \fIgroupname\fR is specified, the
+corresponding group ID is used instead of the group ID of
+of \fIusername\fR.
+.IP "\fBargv\fR=\fIcommand\fR... (required)"
+The command to be executed. This must be specified as the
+last command attribute.
+The command is executed directly, i.e. without interpretation of
+shell meta characters by a shell command interpreter.
+.SH BUGS
+.ad
+.fi
+In order to enforce standard Postfix process resource controls,
+the \fBspawn\fR daemon runs only one external command at a time.
+As such, it presents a noticeable overhead by wasting precious
+process resources. The \fBspawn\fR daemon is expected to be
+replaced by a more structural solution.
+.SH DIAGNOSTICS
+.ad
+.fi
+The \fBspawn\fR daemon reports abnormal child exits.
+Problems are logged to \fBsyslogd\fR(8).
+.SH SECURITY
+.na
+.nf
+.fi
+.ad
+This program needs root privilege in order to execute external
+commands as the specified user. It is therefore security sensitive.
+However the \fBspawn\fR daemon does not talk to the external command
+and thus is not vulnerable to data-driven attacks.
+.SH CONFIGURATION PARAMETERS
+.na
+.nf
+.ad
+.fi
+The following \fBmain.cf\fR parameters are especially relevant to
+this program. See the Postfix \fBmain.cf\fR file for syntax details
+and for default values. Use the \fBpostfix reload\fR command after
+a configuration change.
+.SH Miscellaneous
+.ad
+.fi
+.IP \fBexport_environment\fR
+List of names of environment parameters that can be exported
+to non-Postfix processes.
+.IP \fBmail_owner\fR
+The process privileges used while not running an external command.
+.SH Resource control
+.ad
+.fi
+.IP \fIservice\fB_command_time_limit\fR
+The amount of time the command is allowed to run before it is
+killed with force. The \fIservice\fR name is the name of the entry
+in the \fBmaster.cf\fR file. The default time limit is given by the
+global \fBcommand_time_limit\fR configuration parameter.
+.SH SEE ALSO
+.na
+.nf
+master(8) process manager
+syslogd(8) system logging
+.SH LICENSE
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH AUTHOR(S)
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA

@@ -34,16 +34,17 @@ MASTER(8)                                               MASTER(8)
 
        <b>-c</b> <i>config_dir</i>
               Read  the <b>main.cf</b> and <b>master.cf</b> configuration files
-              in the named directory.
+              in the named directory instead of the default  con-
+              figuration directory.
 
-       <b>-D</b>     After initialization, run a debugger on the  master
-              process.  The  debugging  command is specified with
+       <b>-D</b>     After  initialization, run a debugger on the master
+              process. The debugging command  is  specified  with
               the <b>debugger</b><i>_</i><b>command</b> in the <b>main.cf</b> global configu-
               ration file.
 
-       <b>-t</b>     Test  mode. Return a zero exit status when the <b>mas-</b>
-              <b>ter.pid</b> lock file does not exist or when that  file
-              is  not  locked.   This is evidence that the <b>master</b>
+       <b>-t</b>     Test mode. Return a zero exit status when the  <b>mas-</b>
+              <b>ter.pid</b>  lock file does not exist or when that file
+              is not locked.  This is evidence  that  the  <b>master</b>
               daemon is not running.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. This
@@ -52,13 +53,12 @@ MASTER(8)                                               MASTER(8)
 
        Signals:
 
-       <b>SIGHUP</b> Upon receipt of a <b>HUP</b> signal (e.g.,  after  <b>postfix</b>
+       <b>SIGHUP</b> Upon  receipt  of a <b>HUP</b> signal (e.g., after <b>postfix</b>
               <b>reload</b>), the master process re-reads its configura-
-              tion files. If a service has been removed from  the
-              <b>master.cf</b>  file,  its  running processes are termi-
-              nated immediately.   Otherwise,  running  processes
-              are  allowed to terminate as soon as is convenient,
-              so that changes in  configuration  settings  affect
+              tion  files. If a service has been removed from the
+              <b>master.cf</b> file, its running  processes  are  termi-
+              nated  immediately.   Otherwise,  running processes
+              are allowed to terminate as soon as is  convenient,
 
 
 
@@ -71,14 +71,15 @@ MASTER(8)                                               MASTER(8)
 MASTER(8)                                               MASTER(8)
 
 
+              so  that  changes  in configuration settings affect
               only new service requests.
 
        <b>SIGTERM</b>
-              Upon  receipt of a <b>TERM</b> signal (e.g., after <b>postfix</b>
-              <b>abort</b>), the master process passes the signal on  to
+              Upon receipt of a <b>TERM</b> signal (e.g., after  <b>postfix</b>
+              <b>abort</b>),  the master process passes the signal on to
               its child processes and terminates.  This is useful
-              for an emergency shutdown. Normally one would  ter-
-              minate  only  the  master  (<b>postfix</b> <b>stop</b>) and allow
+              for  an emergency shutdown. Normally one would ter-
+              minate only the master  (<b>postfix</b>  <b>stop</b>)  and  allow
               running processes to finish what they are doing.
 
 <b>DIAGNOSTICS</b>
@@ -88,21 +89,28 @@ MASTER(8)                                               MASTER(8)
 <b>ENVIRONMENT</b>
        <b>MAIL</b><i>_</i><b>DEBUG</b>
               After initialization, start a debugger as specified
-              with  the  <b>debugger</b><i>_</i><b>command</b> configuration parameter
+              with the <b>debugger</b><i>_</i><b>command</b>  configuration  parameter
               in the <b>main.cf</b> configuration file.
 
        <b>MAIL</b><i>_</i><b>CONFIG</b>
               Directory with Postfix configuration files.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program. See the Postfix <b>main.cf</b> file  for  syntax
+       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
        command after a configuration change.
 
 <b>Miscellaneous</b>
+       <b>import</b><i>_</i><b>environment</b>
+
+       <b>export</b><i>_</i><b>environment</b>
+              Lists of names of environment parameters  that  can
+              be  imported  from  (exported  to) non-Postfix pro-
+              cesses.
+
        <b>mail</b><i>_</i><b>owner</b>
-              The  owner  of  the  mail queue and of most Postfix
+              The owner of the mail queue  and  of  most  Postfix
               processes.
 
        <b>command</b><i>_</i><b>directory</b>
@@ -112,18 +120,10 @@ MASTER(8)                                               MASTER(8)
               Directory with Postfix daemon programs.
 
        <b>queue</b><i>_</i><b>directory</b>
-              Top-level directory of the Postfix queue.  This  is
+              Top-level  directory  of the Postfix queue. This is
               also the root directory of Postfix daemons that run
               chrooted.
 
-<b>Resource</b> <b>controls</b>
-       <b>default</b><i>_</i><b>process</b><i>_</i><b>limit</b>
-              Default limit for the number of simultaneous  child
-              processes that provide a given service.
-
-       <b>max</b><i>_</i><b>idle</b>
-              Limit  the  time  in  seconds  that a child process
-              waits between service requests.
 
 
 
@@ -137,12 +137,21 @@ MASTER(8)                                               MASTER(8)
 MASTER(8)                                               MASTER(8)
 
 
+<b>Resource</b> <b>controls</b>
+       <b>default</b><i>_</i><b>process</b><i>_</i><b>limit</b>
+              Default  limit for the number of simultaneous child
+              processes that provide a given service.
+
+       <b>max</b><i>_</i><b>idle</b>
+              Limit the time in  seconds  that  a  child  process
+              waits between service requests.
+
        <b>max</b><i>_</i><b>use</b>
-              Limit the number of service requests handled  by  a
+              Limit  the  number of service requests handled by a
               child process.
 
        <b>service</b><i>_</i><b>throttle</b><i>_</i><b>time</b>
-              Time  to  avoid forking a server that appears to be
+              Time to avoid forking a server that appears  to  be
               broken.
 
 <b>FILES</b>
@@ -156,7 +165,7 @@ MASTER(8)                                               MASTER(8)
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -164,15 +173,6 @@ MASTER(8)                                               MASTER(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Crude script to convert formatted manual pages to HTML
+
+echo '<html> <head> </head> <body> <pre>'
+
+sed '
+	s/\([<>&]\)\1/\1/g
+	s/&/\&amp;/g
+	s/</\&lt;/g
+	s/>/\&gt;/g
+	s;_\(.\);<i>\1</i>;g
+	s;.\(.\);<b>\1</b>;g
+	s;</i><i>;;g
+	s;</b><b>;;g
+' "$@"
+
+echo '</pre> </body> </html>'

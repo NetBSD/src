@@ -28,27 +28,39 @@ default_destination_recipient_limit = 50
 #
 initial_destination_concurrency = 2
 
-# The maximal_backoff_time parameter specifies the maximal time in
-# seconds between attempts to deliver a deferred message.
+# The maximal_backoff_time parameter specifies the maximal time
+# between attempts to deliver a deferred message.
 #
-maximal_backoff_time = 4000
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+maximal_backoff_time = 4000s
 
-# The maximal_queue_lifetime parameter specifies the maximal time in
-# days a message is queued before it is sent back as undeliverable.
+# The maximal_queue_lifetime parameter specifies the maximal time
+# a message is queued before it is sent back as undeliverable.
 #
-maximal_queue_lifetime = 5
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is d (days).
+#
+maximal_queue_lifetime = 5d
 
-# The minimal_backoff_time parameter specifies the minimal time in
-# seconds between attempts to deliver a deferred message.  This
-# parameter also limits the time an unreachable destination is kept
-# in the short-term, in-memory destination status cache.
+# The minimal_backoff_time parameter specifies the minimal time
+# between attempts to deliver a deferred message.  This parameter
+# also limits the time an unreachable destination is kept in the
+# short-term, in-memory, destination status cache.
 #
-minimal_backoff_time = 1000
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+minimal_backoff_time = 1000s
 
-# The queue_run_delay parameter specifies the time in seconds
-# between deferred queue scans by the queue manager.
+# The queue_run_delay parameter specifies the time between deferred
+# queue scans by the queue manager.
 #
-queue_run_delay = 1000
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+queue_run_delay = 1000s
 
 # The defer_transports parameter specifies the names of transports
 # that should not be delivered to unless someone issues "sendmail

@@ -90,7 +90,7 @@ that span multiple lines.
 Address to send a copy of each message that enters the system.
 .IP \fBhopcount_limit\fR
 Limit the number of \fBReceived:\fR message headers.
-.IP \fBrecipients_witheld_header\fR
+.IP \fBundisclosed_recipients_header\fR
 The header line that is inserted when no recipients were
 specified in (Resent-)To: or (Resent-)Cc: message headers.
 .SH "Address transformations"
@@ -121,6 +121,8 @@ Address mapping lookup table for envelope recipient addresses.
 Limit the number of envelope recipients that are remembered.
 .IP \fBheader_size_limit\fR
 Limit the amount of memory in bytes used to process a message header.
+.IP \fBextract_recipient_limit\fR
+Limit the amount of recipients extracted from message headers.
 .SH SEE ALSO
 .na
 .nf
