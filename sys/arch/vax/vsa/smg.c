@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.18 1999/10/27 16:40:47 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.19 1999/12/06 19:25:57 drochner Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -117,7 +117,8 @@ static int	smg_mmap __P((void *, off_t, int));
 static int	smg_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	smg_free_screen __P((void *, void *));
-static void	smg_show_screen __P((void *, void *));
+static int	smg_show_screen __P((void *, void *, int,
+				     void (*) (void *, int, int), void *));
 static void	smg_crsr_blink __P((void *));
 
 const struct wsdisplay_accessops smg_accessops = {
@@ -432,16 +433,19 @@ smg_free_screen(v, cookie)
 {
 }
 
-void
-smg_show_screen(v, cookie)
+int
+smg_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
 	struct smg_screen *ss = cookie;
 	int row, col, line;
 
 	if (ss == curscr)
-		return;
+		return (0);
 
 	for (row = 0; row < SM_ROWS; row++)
 		for (line = 0; line < SM_CHEIGHT; line++) {
@@ -461,6 +465,7 @@ smg_show_screen(v, cookie)
 	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
 	    ((SM_CHEIGHT - 1) * SM_COLS)];
 	curscr = ss;
+	return (0);
 }
 
 cons_decl(smg);
