@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getgroups.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: getgroups.2,v 1.5 1994/03/29 02:46:29 jtc Exp $
+.\"	$Id: getgroups.2,v 1.6 1994/04/15 22:44:06 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt GETGROUPS 2
@@ -46,7 +46,7 @@
 .Fn getgroups "int gidsetlen" "gid_t *gidset"
 .Sh DESCRIPTION
 .Fn Getgroups
-gets the current group access list of the user process
+gets the current group access list of the current user process
 and stores it in the array 
 .Fa gidset .
 The parameter
@@ -57,11 +57,16 @@ indicates the number of entries that may be placed in
 returns the actual number of groups returned in
 .Fa gidset .
 No more than
-.Dv NGROUPS ,
-as defined in
-.Aq Pa sys/param.h ,
+.Dv NGROUPS_MAX
 will ever
 be returned.
+If
+.Fa gidsetlen
+is 0, 
+.Fn getgroups
+returns the number of groups without modifying the
+.Fa gidset
+array.
 .Sh RETURN VALUES
 A successful call returns the number of groups in the group set.
 A value of -1 indicates that an error occurred, and the error
