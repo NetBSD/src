@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1999/01/16 21:03:48 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1999/01/17 06:58:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -626,6 +626,13 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	pd_entry_t *kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 {
+	int loop;
+	vm_offset_t start, end;
+#if defined(UVM) && NISADMA > 0
+	vm_offset_t istart;
+	vm_size_t isize;
+#endif
+
 	kernel_pmap = &kernel_pmap_store;
 
 	kernel_pmap->pm_pdir = kernel_l1pt;
@@ -643,89 +650,76 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	vm_set_page_size();
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
-	{
-		int loop;
-		vm_offset_t start, end;
-#if defined(UVM) && NISADMA > 0
-		vm_offset_t istart;
-		vm_size_t isize;
-#endif
-
-		loop = 0;
-		while (loop < bootconfig.dramblocks) {
-			start = (vm_offset_t)bootconfig.dram[loop].address;
-			end = start + (bootconfig.dram[loop].pages * NBPG);
-			if (start < physical_freestart)
-				start = physical_freestart;
-			if (end > physical_freeend)
-				end = physical_freeend;
+	loop = 0;
+	while (loop < bootconfig.dramblocks) {
+		start = (vm_offset_t)bootconfig.dram[loop].address;
+		end = start + (bootconfig.dram[loop].pages * NBPG);
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
 #if 0
-			printf("%d: %lx -> %lx\n", loop, start, end-1);
+		printf("%d: %lx -> %lx\n", loop, start, end - 1);
 #endif
 #if defined(UVM)
 #if NISADMA > 0
-			if (pmap_isa_dma_range_intersect(start, end - start,
-			    &istart, &isize)) {
-				/*
-				 * Place the pages that intersect with the
-				 * ISA DMA range onto the ISA DMA free list.
-				 */
+		if (pmap_isa_dma_range_intersect(start, end - start,
+		    &istart, &isize)) {
+			/*
+			 * Place the pages that intersect with the
+			 * ISA DMA range onto the ISA DMA free list.
+			 */
 #if 0
-				printf("    ISADMA 0x%lx -> 0x%lx\n",
-				    istart, istart + isize - 1);
+			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
+			    istart + isize - 1);
 #endif
-				uvm_page_physload(atop(istart),
-				    atop(istart + isize), atop(istart),
-				    atop(istart + isize),
-				    VM_FREELIST_ISADMA);
-				
-				/*
-				 * Load the pieces that come before
-				 * the intersection into the default
-				 * free list.
-				 */
-				if (start < istart) {
+			uvm_page_physload(atop(istart),
+			    atop(istart + isize), atop(istart),
+			    atop(istart + isize), VM_FREELIST_ISADMA);
+			
+			/*
+			 * Load the pieces that come before
+			 * the intersection into the default
+			 * free list.
+			 */
+			if (start < istart) {
 #if 0
-					printf("    BEFORE 0x%lx -> 0x%lx\n",
-					    start, istart - 1);
+				printf("    BEFORE 0x%lx -> 0x%lx\n",
+				    start, istart - 1);
 #endif
-					uvm_page_physload(atop(start),
-					    atop(istart), atop(start),
-					    atop(istart), VM_FREELIST_DEFAULT);
-				}
-
-				/*
-				 * Load the pieces that come after
-				 * the intersection into the default
-				 * free list.
-				 */
-				if ((istart + isize) < end) {
-#if 0
-					printf("     AFTER 0x%lx -> 0x%lx\n",
-					    (istart + isize), end - 1);
-#endif
-					uvm_page_physload(atop(istart + isize),
-					    atop(end), atop(istart + isize),
-					    atop(end), VM_FREELIST_DEFAULT);
-				}
-			} else {
-				uvm_page_physload(atop(start), atop(end),
-				    atop(start), atop(end),
-				    VM_FREELIST_DEFAULT);
+				uvm_page_physload(atop(start),
+				    atop(istart), atop(start),
+				    atop(istart), VM_FREELIST_DEFAULT);
 			}
-#else
+
+			/*
+			 * Load the pieces that come after
+			 * the intersection into the default
+			 * free list.
+			 */
+			if ((istart + isize) < end) {
+#if 0
+				printf("     AFTER 0x%lx -> 0x%lx\n",
+				    (istart + isize), end - 1);
+#endif
+				uvm_page_physload(atop(istart + isize),
+				    atop(end), atop(istart + isize),
+				    atop(end), VM_FREELIST_DEFAULT);
+			}
+		} else {
 			uvm_page_physload(atop(start), atop(end),
 			    atop(start), atop(end), VM_FREELIST_DEFAULT);
-#endif /* NISADMA > 0 */
-#else
-			vm_page_physload(atop(start), atop(end),
-			    atop(start), atop(end));
-#endif /* UVM */
-			++loop;
 		}
+#else	/* NISADMA > 0 */
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+#endif /* NISADMA > 0 */
+#else	/* UVM */
+		vm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end));
+#endif /* UVM */
+		++loop;
 	}
-#endif	/* MACHINE_NEW_NONCONTIG */
 
 	virtual_start = KERNEL_VM_BASE;
 	virtual_end = virtual_start + KERNEL_VM_SIZE - 1;
