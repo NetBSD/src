@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.70 1999/07/08 01:06:03 wrstuden Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.71 1999/09/06 09:27:18 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1532,8 +1532,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 	if (v3) {
 		vtyp = nfsv3tov_type(fp->fa_type);
 		vmode = fxdr_unsigned(u_short, fp->fa_mode);
-		rdev = makedev(fxdr_unsigned(u_char, fp->fa3_rdev.specdata1),
-			fxdr_unsigned(u_char, fp->fa3_rdev.specdata2));
+		rdev = makedev(fxdr_unsigned(u_int32_t, fp->fa3_rdev.specdata1),
+			fxdr_unsigned(u_int32_t, fp->fa3_rdev.specdata2));
 		fxdr_nfsv3time(&fp->fa3_mtime, &mtime);
 	} else {
 		vtyp = nfsv2tov_type(fp->fa_type);
