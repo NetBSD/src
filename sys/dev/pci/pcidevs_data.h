@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.24 2003/08/15 14:45:21 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.25 2003/09/10 19:17:13 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.27 2003/08/15 14:40:42 tron Exp 
+ *	NetBSD: pcidevs,v 1.428.2.29 2003/09/10 19:15:02 grant Exp 
  */
 
 /*
@@ -4252,16 +4252,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82845G/GL Integrated Graphics Device",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_DRAM,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_HB,
 	    0,
 	    "Intel",
-	    "82875P DRAM Controller / Host-Hub Bridge",
+	    "82865 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_AGP,
+	    0,
+	    "Intel",
+	    "82865 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_HPB,
+	    0,
+	    "Intel",
+	    "82801EB Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_HB,
+	    0,
+	    "Intel",
+	    "82875P Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_AGP,
 	    0,
 	    "Intel",
-	    "82875P Host-to-AGP Bridge",
+	    "82875P AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
