@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.6 1995/06/11 21:50:05 pk Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -330,10 +330,7 @@ write_real_program(def)
 
 			f_print(fout, "{\n");
 			f_print(fout, "\treturn(");
-			if( Cflag )
-			  pvname_svc(proc->proc_name, vp->vers_num);
-			else
-			  pvname(proc->proc_name, vp->vers_num);
+			pvname_svc(proc->proc_name, vp->vers_num);
 			f_print(fout, "(");
 			if (proc->arg_num < 2) { /* single argument */
 			  if (!streq( proc->args.decls->decl.type, "void"))
@@ -450,7 +447,7 @@ write_program(def, storage)
 			if (newstyle) { /* new style: calls internal routine */
 				f_print(fout,"_");
 			}
-			if( Cflag && !newstyle )
+			if (!newstyle )
 			  pvname_svc(proc->proc_name, vp->vers_num);
 			else
 			  pvname(proc->proc_name, vp->vers_num);
@@ -463,10 +460,7 @@ write_program(def, storage)
 		f_print(fout, "\t}\n");
 
 		f_print(fout, "\t(void) memset((char *)&%s, 0, sizeof (%s));\n", ARG, ARG);
-		if (Cflag)
-		    printif("getargs", TRANSP, "(caddr_t) &", ARG);
-		else
-		    printif("getargs", TRANSP, "&", ARG);
+		printif("getargs", TRANSP, "(caddr_t) &", ARG);
 		printerr("decode", TRANSP);
 		print_return("\t\t");
 		f_print(fout, "\t}\n");
@@ -483,10 +477,7 @@ write_program(def, storage)
 		printerr("systemerr", TRANSP);
 		f_print(fout, "\t}\n");
 
-		if (Cflag)
-		    printif("freeargs", TRANSP, "(caddr_t) &", ARG);
-		else
-		    printif("freeargs", TRANSP, "&", ARG);
+		printif("freeargs", TRANSP, "(caddr_t) &", ARG);
 		(void) sprintf(_errbuf, "unable to free arguments");
 		print_err_message("\t\t");
 		f_print(fout, "\t\texit(1);\n");
