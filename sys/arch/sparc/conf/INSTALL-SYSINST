@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 2000/09/04 16:16:18 abs Exp $
+#	$NetBSD: INSTALL-SYSINST,v 1.1 2000/09/04 16:16:18 abs Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -13,7 +13,7 @@ maxusers	32
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3960	# size of memory disk, in blocks
+options 	MINIROOTSIZE=3584	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 
@@ -141,11 +141,12 @@ options 	INSECURE
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	COMPAT_AOUT	# NetBSD a.out compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
-#file-system	KERNFS		# kernel data-structure filesystem
+file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
 #file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
