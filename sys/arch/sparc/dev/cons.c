@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.13 1995/04/25 17:52:43 pk Exp $ */
+/*	$NetBSD: cons.c,v 1.14 1995/06/01 14:36:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -275,14 +275,19 @@ cnstart(tp)
 	register struct tty *tp;
 {
 	register int c, s;
-	register void (*putc)(int);
+	register void (*putc)__P((...));
+	register int fd, v;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) {
 		splx(s);
 		return;
 	}
-	putc = promvec->pv_putchar;
+	if ((v = promvec->pv_romvec_vers) > 2) {
+		putc = (void (*))promvec->pv_v2devops.v2_write;
+		fd = *promvec->pv_v2bootargs.v2_fd1;
+	} else
+		putc = promvec->pv_putchar;
 	while (tp->t_outq.c_cc) {
 		c = getc(&tp->t_outq);
 		/*
@@ -291,7 +296,11 @@ cnstart(tp)
 		 * clock interrupts blocked.
 		 */
 		(void) splhigh();
-		(*putc)(c & 0177);
+		if (v > 2) {
+			unsigned char c0 = c & 0177;
+			(*putc)(fd, &c0, 1);
+		} else
+			(*putc)(c & 0177);
 		(void) spltty();
 	}
 	if (tp->t_state & TS_ASLEEP) {		/* can't happen? */
@@ -386,7 +395,11 @@ cnfbdma(tpaddr)
 		for (q = p, c = n; --c >= 0; q++)
 			if (*q & 0200)	/* high bits seem to be bad */
 				*q &= ~0200;
-		(*promvec->pv_putstr)(p, n);
+		if (promvec->pv_romvec_vers > 2) {
+			(*promvec->pv_v2devops.v2_write)
+				(*promvec->pv_v2bootargs.v2_fd1, p, n);
+		} else
+			(*promvec->pv_putstr)(p, n);
 		ndflush(&tp->t_outq, n);
 	}
 	if (tp->t_line)
@@ -400,7 +413,7 @@ cnfbdma(tpaddr)
  * an `interrupt' routine on console input ready, so we must poll.
  * This is all rather sad.
  */
-volatile int	cn_rxc;			/* XXX receive `silo' */
+volatile int	cn_rxc = -1;		/* XXX receive `silo' */
 
 /* called from hardclock, which is above spltty, so no tty calls! */
 cnrom()
@@ -409,7 +422,13 @@ cnrom()
 
 	if (cn_rxc >= 0)
 		return (1);
-	if ((c = (*promvec->pv_nbgetchar)()) < 0)
+	if (promvec->pv_romvec_vers > 2) {
+		unsigned char c0;
+		if ((*promvec->pv_v2devops.v2_read)
+			(*promvec->pv_v2bootargs.v2_fd0, &c0, 1) <= 0)
+			return (0);
+		c = c0;
+	} else if ((c = (*promvec->pv_nbgetchar)()) < 0)
 		return (0);
 	cn_rxc = c;
 	return (1);
@@ -444,9 +463,21 @@ cngetc()
 {
 	register int s, c;
 
-	s = splhigh();
-	c = (*promvec->pv_getchar)();
-	splx(s);
+	if (promvec->pv_romvec_vers > 2) {
+		register int n = 0;
+		unsigned char c0;
+		while (n <= 0) {
+			s = splhigh();
+			n = (*promvec->pv_v2devops.v2_read)
+				(*promvec->pv_v2bootargs.v2_fd0, &c0, 1);
+			splx(s);
+		}
+		c = c0;
+	} else {
+		s = splhigh();
+		c = (*promvec->pv_getchar)();
+		splx(s);
+	}
 	if (c == '\r')
 		c = '\n';
 	return (c);
@@ -455,16 +486,21 @@ cngetc()
 cnputc(c)
 	register int c;
 {
-	register int s = splhigh();
+	register int s;
 
 	if (c == '\n')
-		(*promvec->pv_putchar)('\r');
-	(*promvec->pv_putchar)(c);
+		cnputc('\r');
+	s = splhigh();
+	if (promvec->pv_romvec_vers > 2) {
+		unsigned char c0 = c;
+		(*promvec->pv_v2devops.v2_write)
+			(*promvec->pv_v2bootargs.v2_fd1, &c0, 1);
+	} else
+		(*promvec->pv_putchar)(c);
 	splx(s);
 }
 
-cnpollc(dev, on)
-	dev_t dev;
+cnpollc(on)
 	int on;
 {
 }
