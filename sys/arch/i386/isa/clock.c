@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.81 2003/08/07 16:28:01 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.82 2004/04/24 13:38:36 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.81 2003/08/07 16:28:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.82 2004/04/24 13:38:36 minoura Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -158,13 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.81 2003/08/07 16:28:01 agc Exp $");
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-#ifdef CLOCKDEBUG
-int clock_debug = 0;
-#define DPRINTF(arg) if (clock_debug) printf arg
-#else
-#define DPRINTF(arg)
-#endif
-
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
@@ -174,6 +167,13 @@ CFATTACH_DECL(sysbeep, sizeof(struct device),
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
+
+#ifdef CLOCKDEBUG
+int clock_debug = 0;
+#define DPRINTF(arg) if (clock_debug) printf arg
+#else
+#define DPRINTF(arg)
+#endif
 
 void	spinwait __P((int));
 int	clockintr __P((void *, struct intrframe));
