@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lptvar.h,v 1.5 1993/06/05 22:58:31 cgd Exp $
+ *	$Id: lptvar.h,v 1.6 1993/06/15 01:50:32 mycroft Exp $
  */
 
 /*
@@ -221,6 +221,7 @@ lptattach(isdp)
 
 	sc = lpt_sc + isdp->id_unit;
 	sc->sc_port = isdp->id_iobase;
+	sc->sc_state = 0;
 	outb(sc->sc_port+lpt_control, LPC_NINIT);
 	return (1);
 }
@@ -390,8 +391,15 @@ lptintr(unit)
 	struct lpt_softc *sc = lpt_sc + unit;
 	int port = sc->sc_port,sts;
 
+	sts = inb(port+lpt_status);
+
+	if (!sc->sc_state) {
+		printf ("lpt%d: stray interrupt sts=0x%02x\n", unit, sts);
+		return;
+	}
+
 	/* is printer online and ready for output */
-	if (((sts=inb(port+lpt_status)) & (LPS_SEL|LPS_OUT|LPS_NBSY|LPS_NERR/*|LPS_NACK*/)) ==
+	if ((sts & (LPS_SEL|LPS_OUT|LPS_NBSY|LPS_NERR/*|LPS_NACK*/)) ==
 			(LPS_SEL|LPS_NBSY|LPS_NERR)) {
 			/* is this a false interrupt ? */
 			if ((sc->sc_state & OBUSY) 
