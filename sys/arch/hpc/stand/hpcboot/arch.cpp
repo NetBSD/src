@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3 2001/05/08 18:51:22 uch Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.4 2002/02/04 17:31:34 uch Exp $	 */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,9 @@
 #include <hpcboot.h>
 #include <hpcmenu.h>
 
+#include <menu/window.h>
+#include <menu/rootwindow.h>	// MessageBox
+
 #include <console.h>
 #include <memory.h>
 #include <load.h>
@@ -48,6 +51,7 @@
 Architecture::Architecture(Console *&cons, MemoryManager *&mem)
 	:_cons(cons), _mem(mem)
 {
+
 	_loader_addr = 0;
 	_debug = FALSE;
 	_dll = 0;
@@ -55,6 +59,7 @@ Architecture::Architecture(Console *&cons, MemoryManager *&mem)
 
 Architecture::~Architecture(void)
 {
+
 	if (_dll)
 		FreeLibrary(_dll);
 }
@@ -101,65 +106,60 @@ Architecture::setupBootInfo(Loader &loader)
 void *
 Architecture::_load_func(const TCHAR * name)
 {
-	if (_dll == 0)
+
+	if (_dll == NULL)
 		_dll = LoadLibrary(TEXT("coredll.dll"));
 
-	return 
-	    _dll ? reinterpret_cast <void *>(GetProcAddress(_dll, name)) : 0;
+	if (_dll == NULL) {
+		MessageBox(HpcMenuInterface::Instance()._root->_window,
+		    TEXT("Can't load Coredll.dll"), TEXT("WARNING"), 0);
+
+		return NULL;
+	}
+	
+	return reinterpret_cast <void *>(GetProcAddress(_dll, name));
 }
 
 void
 Architecture::systemInfo(void)
 {
-	int(*func)(HDC, int, int, LPCSTR, int, LPSTR);
 	u_int32_t val = 0;
-	int ret;
+	SYSTEM_INFO si;
 	HDC hdc;
+
+	GetSystemInfo(&si);
+	DPRINTF((TEXT("GetSystemInfo:\n")));
+	DPRINTF((TEXT("wProcessorArchitecture      0x%x\n"),
+	    si.wProcessorArchitecture)); 
+	DPRINTF((TEXT("dwPageSize                  0x%x\n"),
+	    si.dwPageSize)); 
+	DPRINTF((TEXT("dwAllocationGranularity     0x%08x\n"),
+	    si.dwAllocationGranularity)); 
+	DPRINTF((TEXT("dwProcessorType             0x%x\n"),
+	    si.dwProcessorType)); 
+	DPRINTF((TEXT("wProcessorLevel             0x%x\n"),
+	    si.wProcessorLevel)); 
+	DPRINTF((TEXT("wProcessorRevision          0x%x\n"),
+	    si.wProcessorRevision)); 
 
 	// inquire default setting.
 	FrameBufferInfo fb(0, 0);
-	DPRINTF((TEXT("[DISPLAY] %dx%d %dbpp\n"), fb.width(), fb.height(),
+	DPRINTF((TEXT("Display: %dx%d %dbpp\n"), fb.width(), fb.height(),
 	    fb.bpp()));
 
-	func = reinterpret_cast <int(*)(HDC, int, int, LPCSTR, int, LPSTR)>
-	    (_load_func(TEXT("ExtEscape")));
-	if (func == 0) {
-		DPRINTF((TEXT("ExtEscape not found.\n")));
-		return;
-	}
-	hdc = GetDC(0);
-	ret = func(hdc, GETVFRAMEPHYSICAL, 0, 0, sizeof(u_int32_t),
-	    reinterpret_cast <char *>(&val));
-	if (ret == 0)
-		DPRINTF((TEXT("ExtEscape(GETVFRAMEPHYSICAL) not implemented.\n")));
-	else if (ret < 0)
-		DPRINTF((TEXT("ExtEscape(GETVFRAMEPHYSICAL) failure.\n")));
-	else
-		DPRINTF((TEXT("frame buffer physical address: 0x%08x\n"),
-		    val));
-
-	ret = func(hdc, GETVFRAMELEN, 0, 0, sizeof(u_int32_t),
-	    reinterpret_cast <char *>(&val));
-
-	if (ret == 0)
-		DPRINTF((TEXT("ExtEscape(GETVFRAMELEN) not implemented.\n")));
-	else if (ret < 0)
-		DPRINTF((TEXT("ExtEscape(GETVFRAMELEN) failure.\n")));
-	else
-		DPRINTF((TEXT("frame buffer length: 0x%08x\n"), val));
-
 	ReleaseDC(0, hdc);
-
 }
 
 BOOL(*Architecture::_load_LockPages(void))(LPVOID, DWORD, PDWORD, int)
 {
+
 	return reinterpret_cast <BOOL(*)(LPVOID, DWORD, PDWORD, int)>
 	    (_load_func(TEXT("LockPages")));
 }
 
 BOOL(*Architecture::_load_UnlockPages(void))(LPVOID, DWORD)
 {
+
 	return reinterpret_cast <BOOL(*)(LPVOID, DWORD)>
 	    (_load_func(TEXT("UnlockPages")));
 }
@@ -201,5 +201,6 @@ void
 Architecture::_dbg_bit_print(u_int32_t reg, u_int32_t mask, const char *name)
 {
 	static const char onoff[3] = "_x";
+
 	DPRINTF((TEXT("%S[%c] "), name, onoff[reg & mask ? 1 : 0]));
 }
