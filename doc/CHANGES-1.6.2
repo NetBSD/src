@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.167 2003/10/02 09:57:17 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.168 2003/10/02 10:04:52 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2169,4 +2169,23 @@ sys/sys/vnode.h					1.96
 	also, always do the VTEXT vs. v_writecount mutual exclusion
 	(which we previously skipped if the text or data segment was empty).
 	[junyoung, ticket #1488]
+
+lib/libmenu/item.c				1.10
+
+	new_item fixes:
+		* return NULL to indicate an error if a NULL name is passed
+		* fix a crash if description is NULL
+	Thanks to Julian Coleman for finding and fixing these.
+	[blymn, ticket #1489]
+
+sys/dev/pci/if_sip.c				1.81
+
+	Fix typo (DP83020 -> DP83820) from HITOSHI Osada in PR kern/23023.
+	[martin, ticket #1490]
+
+sys/netinet6/ipsec.c				1.84
+
+	permit tunnel mode over link-local address. (outer header is
+	link-local) iij seil team
+	[itojun, ticket #1498]
 
