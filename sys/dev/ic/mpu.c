@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.4 2000/06/28 17:13:02 mrg Exp $	*/
+/*	$NetBSD: mpu.c,v 1.5 2001/11/13 13:14:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.5 2001/11/13 13:14:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.18 2001/07/07 15:57:53 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.19 2001/11/13 13:14:45 lukem Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -32,6 +32,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.19 2001/11/13 13:14:45 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

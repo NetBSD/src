@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.2 2001/07/07 16:13:49 thorpej Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.3 2001/11/13 13:14:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * National Semiconductor MM58167 time-of-day chip subroutines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.3 2001/11/13 13:14:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

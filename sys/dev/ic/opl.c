@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.16 2001/11/04 06:44:31 itohy Exp $	*/
+/*	$NetBSD: opl.c,v 1.17 2001/11/13 13:14:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * The OPL3 (YMF262) manual can be found at
  * ftp://ftp.yamahayst.com/Fax_Back_Doc/sound/YMF262.PDF
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.17 2001/11/13 13:14:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
