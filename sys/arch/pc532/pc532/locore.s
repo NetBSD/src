@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1997/02/08 09:34:01 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 1997/03/01 09:49:48 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -1035,6 +1035,12 @@ _ENTRY(interrupt)
 	bne	1f
 	cmpqd	0,_sirpending(pc)
 	beq	1f
+	/*
+	 * r3 contains imask[IPL_ZERO] and IR_SOFT is
+	 * not set in imask[IPL_ZERO]. So the following
+	 * instruction just does a
+	 * 	r0 = r3 | (1 << IR_SOFT).
+	 */
 	addr	1 << IR_SOFT(r3),r0
 	movd	r0,_Cur_pl(pc)
 	movw	r0,@ICU_ADR+IMSK
