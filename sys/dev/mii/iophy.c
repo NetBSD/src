@@ -1,7 +1,7 @@
-/*	$NetBSD: iophy.c,v 1.9 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: iophy.c,v 1.10 2000/07/04 03:28:59 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,6 +97,10 @@ struct cfattach iophy_ca = {
 int	iophy_service __P((struct mii_softc *, struct mii_data *, int));
 void	iophy_status __P((struct mii_softc *));
 
+const struct mii_phy_funcs iophy_funcs = {
+	iophy_service, iophy_status, mii_phy_reset,
+};
+
 int
 iophymatch(parent, match, aux)
 	struct device *parent;
@@ -130,12 +134,11 @@ iophyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = iophy_service;
-	sc->mii_status = iophy_status;
+	sc->mii_funcs = &iophy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

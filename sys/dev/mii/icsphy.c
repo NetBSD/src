@@ -1,7 +1,7 @@
-/*	$NetBSD: icsphy.c,v 1.18 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.19 2000/07/04 03:28:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,8 +96,12 @@ struct cfattach icsphy_ca = {
 };
 
 int	icsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	icsphy_reset __P((struct mii_softc *));
 void	icsphy_status __P((struct mii_softc *));
+void	icsphy_reset __P((struct mii_softc *));
+
+const struct mii_phy_funcs icsphy_funcs = {
+	icsphy_service, icsphy_status, icsphy_reset,
+};
 
 int
 icsphymatch(parent, match, aux)
@@ -128,12 +132,11 @@ icsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = icsphy_service;
-	sc->mii_status = icsphy_status;
+	sc->mii_funcs = &icsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	icsphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;

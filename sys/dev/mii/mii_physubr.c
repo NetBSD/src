@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.17 2000/03/23 07:01:36 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.18 2000/07/04 03:28:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ mii_phy_auto_timeout(arg)
 	bmsr = PHY_READ(sc, MII_BMSR);
 
 	/* Update the media status. */
-	(void) (*sc->mii_service)(sc, sc->mii_pdata, MII_POLLSTAT);
+	(void) PHY_SERVICE(sc, sc->mii_pdata, MII_POLLSTAT);
 	splx(s);
 }
 
@@ -200,7 +200,7 @@ mii_phy_tick(sc)
 		return (EJUSTRETURN);
 
 	sc->mii_ticks = 0;
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	if (mii_phy_auto(sc, 0) == EJUSTRETURN)
 		return (EJUSTRETURN);
@@ -252,7 +252,7 @@ mii_phy_status(sc)
 	struct mii_softc *sc;
 {
 
-	(*sc->mii_status)(sc);
+	PHY_STATUS(sc);
 }
 
 void

@@ -1,7 +1,7 @@
-/*	$NetBSD: nsphyter.c,v 1.6 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.7 2000/07/04 03:28:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,6 +99,10 @@ struct cfattach nsphyter_ca = {
 int	nsphyter_service __P((struct mii_softc *, struct mii_data *, int));
 void	nsphyter_status __P((struct mii_softc *));
 
+const struct mii_phy_funcs nsphyter_funcs = {
+	nsphyter_service, nsphyter_status, mii_phy_reset,
+};
+
 int
 nsphytermatch(parent, match, aux)
 	struct device *parent;
@@ -128,12 +132,11 @@ nsphyterattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = nsphyter_service;
-	sc->mii_status = nsphyter_status;
+	sc->mii_funcs = &nsphyter_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
