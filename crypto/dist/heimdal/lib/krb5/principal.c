@@ -40,7 +40,7 @@
 #endif
 #include "resolve.h"
 
-RCSID("$Id: principal.c,v 1.1.1.2 2000/08/02 19:59:37 assar Exp $");
+RCSID("$Id: principal.c,v 1.2 2000/08/09 23:27:21 thorpej Exp $");
 
 #define princ_num_comp(P) ((P)->name.name_string.len)
 #define princ_type(P) ((P)->name.name_type)
@@ -330,6 +330,72 @@ krb5_princ_set_realm(krb5_context context,
     princ_realm(principal) = *realm;
 }
 
+#if 0
+/*
+ * XXX Implemented in MIT Kerberos, but not here.  MIT Kerberos
+ * XXX internally represents realms as krb5_data, whereas we
+ * XXX use C strings, so it's not particularly straightforward
+ * XXX for us.
+ */
+void
+krb5_princ_set_realm_length(krb5_context context,
+			    krb5_principal principal,
+			    int length)
+{
+
+	/* XXX XXX XXX */
+}
+
+void
+krb5_princ_set_realm_data(krb5_context context,
+			  krb5_principal principal,
+			  char *data)
+{
+
+	/* XXX XXX XXX */
+}
+#endif
+
+unsigned int
+krb5_princ_size(krb5_context context,
+		krb5_principal principal)
+{
+
+	return (principal->name.name_string.len);
+}
+
+NAME_TYPE
+krb5_princ_type(krb5_context context,
+		krb5_principal principal)
+{
+
+	return (principal->name.name_type);
+}
+
+#if 0
+/*
+ * XXX Implemented in MIT Kerberos, but not here.  MIT Kerberos
+ * XXX internally represents principal name components as krb5_data,
+ * XXX whereas we use C strings, so it's not particularly
+ * XXX straightforward for us.
+ */
+krb5_data *
+krb5_princ_name(krb5_context context,
+		krb5_principal principal)
+{
+
+	return (principal->name.name_string.val);
+}
+
+krb5_data *
+krb5_princ_component(krb5_context context,
+		     krb5_principal principal,
+		     int idx)
+{
+
+	return (&principal->name.name_string.val[idx]);
+}
+#endif
 
 krb5_error_code
 krb5_build_principal(krb5_context context,
