@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2000/03/08 13:34:58 cjs Exp $
+#	$NetBSD: Makefile,v 1.6 2000/03/08 14:28:54 cjs Exp $
 
-include <bsd.own.mk>		# Use /etc/mk.conf.
+.include <bsd.own.mk>		# Use /etc/mk.conf.
 
 SUBDIR=	instkernel #floppy-GENERIC
 
