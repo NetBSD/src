@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.5 1994/02/27 10:09:09 deraadt Exp $";
+static char *rcsid = "$Id: gethostnamadr.c,v 1.6 1994/04/07 07:00:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -67,10 +67,7 @@ static char *host_aliases[MAXALIASES];
 static char hostbuf[BUFSIZ+1];
 static struct in_addr host_addr;
 static FILE *hostf = NULL;
-static u_long hostaddr[MAXADDRS];
-static char *host_addrs[2];
 static int stayopen = 0;
-char *strpbrk();
 
 #if PACKETSZ > 1024
 #define	MAXPACKET	PACKETSZ
@@ -88,7 +85,10 @@ typedef union {
     char ac;
 } align;
 
-int h_errno;
+static int qcomp __P((struct in_addr **, struct in_addr **));
+static struct hostent *getanswer __P((querybuf *, int, int));
+
+extern int h_errno;
 
 static struct hostent *
 getanswer(answer, anslen, iquery)
@@ -144,9 +144,7 @@ getanswer(answer, anslen, iquery)
 	host.h_aliases = host_aliases;
 	hap = h_addr_ptrs;
 	*hap = NULL;
-#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
 	host.h_addr_list = h_addr_ptrs;
-#endif
 	haveanswer = 0;
 	while (--ancount >= 0 && cp < eom) {
 		if ((n = dn_expand((u_char *)answer->buf, (u_char *)eom,
@@ -172,10 +170,8 @@ getanswer(answer, anslen, iquery)
 		if (iquery && type == T_PTR) {
 			if ((n = dn_expand((u_char *)answer->buf,
 			    (u_char *)eom, (u_char *)cp, (u_char *)bp,
-			    buflen)) < 0) {
-				cp += n;
-				continue;
-			}
+			    buflen)) < 0)
+				break;
 			cp += n;
 			host.h_name = bp;
 			return(&host);
@@ -224,11 +220,12 @@ getanswer(answer, anslen, iquery)
 	}
 	if (haveanswer) {
 		*ap = NULL;
-#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
 		*hap = NULL;
-#else
-		host.h_addr = h_addr_ptrs[0];
-#endif
+		if (_res.nsort) {
+			qsort(host.h_addr_list, haveanswer,
+			    sizeof(struct in_addr),
+			    (int (*)__P((const void *, const void *)))qcomp);
+		}
 		return (&host);
 	} else {
 		h_errno = TRY_AGAIN;
@@ -238,10 +235,10 @@ getanswer(answer, anslen, iquery)
 
 struct hostent *
 gethostbyname(name)
-	char *name;
+	const char *name;
 {
 	querybuf buf;
-	register char *cp;
+	register const char *cp;
 	int n, i;
 	extern struct hostent *_gethtbyname(), *_yp_gethtbyname();
 	register struct hostent *hp;
@@ -259,26 +256,20 @@ gethostbyname(name)
 				/*
 				 * All-numeric, no dot at the end.
 				 * Fake up a hostent as if we'd actually
-				 * done a lookup.  What if someone types
-				 * 255.255.255.255?  The test below will
-				 * succeed spuriously... ???
+				 * done a lookup.
 				 */
-				if ((host_addr.s_addr = inet_addr(name)) == -1) {
+				if (!inet_aton(name, &host_addr)) {
 					h_errno = HOST_NOT_FOUND;
 					return((struct hostent *) NULL);
 				}
-				host.h_name = name;
+				host.h_name = (char *)name;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
 				host.h_addrtype = AF_INET;
 				host.h_length = sizeof(u_long);
 				h_addr_ptrs[0] = (char *)&host_addr;
-				h_addr_ptrs[1] = (char *)0;
-#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
+				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
-#else
-				host.h_addr = h_addr_ptrs[0];
-#endif
 				return (&host);
 			}
 			if (!isdigit(*cp) && *cp != '.') 
@@ -289,10 +280,8 @@ gethostbyname(name)
 		return (_gethtbyname(name));
 
 	bcopy(_res.lookups, lookups, sizeof lookups);
-	if (lookups[0] == '\0') {
-		lookups[0] = 'b';
-		lookups[1] = 'f';
-	}
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof lookups);
 
 	hp = (struct hostent *)NULL;
 	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
@@ -345,10 +334,8 @@ gethostbyaddr(addr, len, type)
 		return (_gethtbyaddr(addr, len, type));
 
 	bcopy(_res.lookups, lookups, sizeof lookups);
-	if (lookups[0] == '\0') {
-		lookups[0] = 'b';
-		lookups[1] = 'f';
-	}
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof lookups);
 
 	hp = (struct hostent *)NULL;
 	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
@@ -375,9 +362,6 @@ gethostbyaddr(addr, len, type)
 			h_addr_ptrs[0] = (char *)&host_addr;
 			h_addr_ptrs[1] = (char *)0;
 			host_addr = *(struct in_addr *)addr;
-#if BSD < 43 && !defined(h_addr)	/* new-style hostent structure */
-			hp->h_addr = h_addr_ptrs[0];
-#endif
 			break;
 		case 'f':
 			hp = _gethtbyaddr(addr, len, type);
@@ -387,6 +371,7 @@ gethostbyaddr(addr, len, type)
 	return (hp);
 }
 
+void
 _sethtent(f)
 	int f;
 {
@@ -394,9 +379,10 @@ _sethtent(f)
 		hostf = fopen(_PATH_HOSTS, "r" );
 	else
 		rewind(hostf);
-	stayopen |= f;
+	stayopen = f;
 }
 
+void
 _endhtent()
 {
 	if (hostf && !stayopen) {
@@ -427,11 +413,10 @@ again:
 		goto again;
 	*cp++ = '\0';
 	/* THIS STUFF IS INTERNET SPECIFIC */
-#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
-	host.h_addr_list = host_addrs;
-#endif
-	host.h_addr = (char *)hostaddr;
-	*((u_long *)host.h_addr) = inet_addr(p);
+	h_addr_ptrs[0] = (char *)&host_addr;
+	h_addr_ptrs[1] = NULL;
+	host_addr.s_addr = inet_addr(p);
+	host.h_addr_list = h_addr_ptrs;
 	host.h_length = sizeof (u_long);
 	host.h_addrtype = AF_INET;
 	while (*cp == ' ' || *cp == '\t')
@@ -491,12 +476,29 @@ _gethtbyaddr(addr, len, type)
 	return (p);
 }
 
+static int
+qcomp(a1, a2)
+	struct in_addr **a1, **a2;
+{
+	int pos1, pos2;
+
+	for (pos1 = 0; pos1 < _res.nsort; pos1++)
+		if (_res.sort_list[pos1].addr.s_addr ==
+		    ((*a1)->s_addr & _res.sort_list[pos1].mask))
+			break;
+	for (pos2 = 0; pos2 < _res.nsort; pos2++)
+		if (_res.sort_list[pos2].addr.s_addr ==
+		    ((*a2)->s_addr & _res.sort_list[pos2].mask))
+			break;
+	return pos1 - pos2;
+}
+
 #ifdef YP
 struct hostent *
 _yphostent(line)
 	char *line;
 {
-	static struct hostent host;
+	static u_long host_addrs[MAXADDRS];
 	char *p = line;
 	char *cp, **q;
 	char **hap;
@@ -504,14 +506,11 @@ _yphostent(line)
 	int more;
 
 	host.h_name = NULL;
-#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
 	host.h_addr_list = h_addr_ptrs;
-#endif
-	host.h_addr = (char *)hostaddr;
 	host.h_length = sizeof (u_long);
 	host.h_addrtype = AF_INET;
 	hap = h_addr_ptrs;
-	buf = hostaddr;
+	buf = host_addrs;
 	q = host.h_aliases = host_aliases;
 
 nextline:
@@ -564,11 +563,7 @@ nextline:
 	}
 done:
 	*q = NULL;
-#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
 	*hap = NULL;
-#else
-	host.h_addr = h_addr_ptrs[0];
-#endif
 	return (&host);
 }
 

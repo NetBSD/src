@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)inet_addr.c	5.10 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: inet_addr.c,v 1.3 1993/08/26 00:46:02 jtc Exp $";
+static char *rcsid = "$Id: inet_addr.c,v 1.4 1994/04/07 07:00:15 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ inet_addr(cp)
  */
 
 inet_aton(cp, addr)
-	register char *cp;
+	const register char *cp;
 	struct in_addr *addr;
 {
 	register u_long val, base, n;

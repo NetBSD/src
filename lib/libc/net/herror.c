@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)herror.c	6.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: herror.c,v 1.3 1993/08/26 00:46:01 jtc Exp $";
+static char *rcsid = "$Id: herror.c,v 1.4 1994/04/07 07:00:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -79,4 +79,11 @@ herror(s)
 	v->iov_base = "\n";
 	v->iov_len = 1;
 	writev(STDERR_FILENO, iov, (v - iov) + 1);
+}
+
+char *
+hstrerror(err)
+	int err;
+{
+	return (u_int)err < h_nerr ? h_errlist[err] : "Unknown resolver error";
 }

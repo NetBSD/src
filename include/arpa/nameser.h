@@ -31,13 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nameser.h	5.25 (Berkeley) 4/3/91
- *	$Id: nameser.h,v 1.4 1993/10/27 00:10:40 mycroft Exp $
+ *	$Id: nameser.h,v 1.5 1994/04/07 06:59:03 deraadt Exp $
  */
 
 #ifndef _NAMESER_H_
 #define	_NAMESER_H_
 
 #include <machine/endian.h>
+#include <sys/cdefs.h>
 
 /*
  * Define constants based on rfc883
@@ -66,7 +67,7 @@
 	/* non standard */
 #define UPDATEA		0x9		/* add resource record */
 #define UPDATED		0xa		/* delete a specific resource record */
-#define UPDATEDA	0xb		/* delete all nemed resource record */
+#define UPDATEDA	0xb		/* delete all named resource record */
 #define UPDATEM		0xc		/* modify a specific resource record */
 #define UPDATEMA	0xd		/* modify all named resource record */
 
@@ -104,11 +105,16 @@
 #define T_MINFO		14		/* mailbox information */
 #define T_MX		15		/* mail routing information */
 #define T_TXT		16		/* text strings */
+#define T_RP		17		/* responsible person */
+#define T_AFSDB		18		/* AFS cell database */
+#define T_NSAP		22		/* NSAP address */
+#define T_NSAP_PTR	23		/* reverse lookup for NSAP */
 	/* non standard */
 #define T_UINFO		100		/* user (finger) information */
 #define T_UID		101		/* user ID */
 #define T_GID		102		/* group ID */
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
+#define T_SA		200		/* shuffle address */
 	/* Query type values which do not appear in resource records */
 #define T_AXFR		252		/* transfer zone of authority */
 #define T_MAILB		253		/* transfer mailbox records */
@@ -201,32 +207,41 @@ extern	u_long	_getlong();
  * cp MUST be u_char *.
  */
 #define GETSHORT(s, cp) { \
-	(s) = *(cp)++ << 8; \
-	(s) |= *(cp)++; \
+	register u_char *t_cp = (u_char *)(cp); \
+	(s) = ((u_short)t_cp[0] << 8) \
+	    | ((u_short)t_cp[1]) ;\
+	(cp) += 2; \
 }
 
 #define GETLONG(l, cp) { \
-	(l) = *(cp)++ << 8; \
-	(l) |= *(cp)++; (l) <<= 8; \
-	(l) |= *(cp)++; (l) <<= 8; \
-	(l) |= *(cp)++; \
+	register u_char *t_cp = (u_char *)(cp); \
+	(l) = ((u_long)t_cp[0] << 24) \
+	    | ((u_long)t_cp[1] << 16) \
+	    | ((u_long)t_cp[2] << 8) \
+	    | ((u_long)t_cp[3]) ;\
+	(cp) += 4; \
 }
 
-
 #define PUTSHORT(s, cp) { \
-	*(cp)++ = (s) >> 8; \
-	*(cp)++ = (s); \
+	register u_short t_s = (u_short)(s); \
+	register u_char *t_cp = (u_char *)(cp); \
+	*t_cp++ = t_s >> 8; \
+	*t_cp   = t_s; \
+	(cp) += 2; \
 }
 
 /*
- * Warning: PUTLONG destroys its first argument.
+ * Warning: PUTLONG --no-longer-- destroys its first argument.  if you
+ * were depending on this "feature", you will lose.
  */
 #define PUTLONG(l, cp) { \
-	(cp)[3] = l; \
-	(cp)[2] = (l >>= 8); \
-	(cp)[1] = (l >>= 8); \
-	(cp)[0] = l >> 8; \
-	(cp) += sizeof(u_long); \
+	register u_long t_l = (u_long)(l); \
+	register u_char *t_cp = (u_char *)(cp); \
+	*t_cp++ = t_l >> 24; \
+	*t_cp++ = t_l >> 16; \
+	*t_cp++ = t_l >> 8; \
+	*t_cp   = t_l; \
+	(cp) += 4; \
 }
 
 #endif /* !_NAMESER_H_ */
