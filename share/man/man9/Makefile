@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.86 2001/07/07 05:08:19 perry Exp $
+#       $NetBSD: Makefile,v 1.86.2.1 2001/07/10 12:29:28 lukem Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -9,8 +9,8 @@ MAN=	access.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	ctxsw.9 disk.9 disklabel.9 \
 	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
 	extent.9 fetch.9 fork1.9 humanize_number.9 in4_cksum.9 inittodr.9 \
-	intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 kprintf.9 kthread.9 \
-	linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
+	intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 kfilter_register.9 knote.9 \
+	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
 	memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
@@ -151,6 +151,8 @@ MLINKS+=isa.9 isa_intr_alloc.9 \
 MLINKS+=isapnp.9 isapnp_devmatch.9 \
 	isapnp.9 isapnp_config.9 \
 	isapnp.9 isapnp_unconfig.9
+MLINKS+=kfilter_register.9 kfilter_unregister.9
+MLINKS+=knote.9 KNOTE.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 snprintf.9 \
 	kprintf.9 vprintf.9 kprintf.9 vsprintf.9 kprintf.9 vsnprintf.9 \
 	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
