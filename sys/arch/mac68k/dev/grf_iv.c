@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.7 1995/07/30 21:36:23 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.8 1995/08/04 02:47:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -66,8 +66,8 @@ grfiv_probe(sc, slotinfo)
 		return 0;
 	}
 
-	if (   (NUBUS_SLOT_TO_BASE(slotinfo->slot) <= int_video_start)
-	    && (int_video_start < NUBUS_SLOT_TO_BASE(slotinfo->slot + 1)))
+	if (   (NUBUS_SLOT_TO_BASE(slotinfo->slot) <= mac68k_vidlog)
+	    && (mac68k_vidlog < NUBUS_SLOT_TO_BASE(slotinfo->slot + 1)))
 		return 1;
 
 	if (slotinfo->slot == NUBUS_INT_VIDEO_PSUEDO_SLOT)
