@@ -36,10 +36,11 @@
 
 
 /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
-   the GCC option `-posix'.  */
+   the GCC option `-posix'.  We also deal with -pthread, which is required
+   for the 2.95.3 STL to work.  */
 
 #undef CPP_SPEC
-#define CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE}"
+#define CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS}"
 
 /* Provide an ASM_SPEC appropriate for NetBSD.  Currently we only deal
    with the options for generating PIC code.  */
@@ -54,7 +55,8 @@
 
 #undef LIB_SPEC
 #define LIB_SPEC							\
-  "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
+  "%{pthread:%{!p:%{!pg:-lpthread}}%{p:-lpthread_p}%{pg:-lpthread_p}}	\
+   %{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
    %{!shared:%{!symbolic:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}}"
 
 /* Provide a LIBGCC_SPEC appropriate for NetBSD.  We also want to exclude

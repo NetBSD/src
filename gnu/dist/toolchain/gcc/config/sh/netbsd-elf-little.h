@@ -20,7 +20,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #undef  CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} \
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS} \
 %{!mb:-D__LITTLE_ENDIAN__} \
 %{m1:-D__sh1__} \
 %{m2:-D__sh2__} \

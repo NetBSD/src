@@ -2968,6 +2968,11 @@ for machine in $build $host $target; do
 		tmake_file="t-libc-ok t-netbsd"
 		xm_file="${xm_file} xm-netbsd.h"
 		xmake_file=none
+		case x${enable_threads} in
+		xyes | xposix)
+			thread_file='posix'
+			;;
+		esac
 		;;
 	*-*-openbsd*)
 		tm_file=${cpu_type}/openbsd.h
