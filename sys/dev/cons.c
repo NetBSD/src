@@ -204,10 +204,14 @@ cnputc(c)
 	}
 }
 
+int pg_wait = 0;
 pg(p,q,r,s,t,u,v,w,x,y,z) char *p; {
 	printf(p,q,r,s,t,u,v,w,x,y,z);
-	printf("\n>");
-	return(cngetc());
+	if (pg_wait) {
+		printf("\n>");
+		return(cngetc());
+	} else
+		return 0;
 }
 
 
