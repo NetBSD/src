@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.17 2001/04/25 17:53:35 bouyer Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.18 2001/05/03 20:34:55 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ bha_isa_probe(parent, match, aux)
 	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = bha_find(iot, ioh, &bpd);
+	rv = bha_probe_inquiry(iot, ioh, &bpd);
 
 	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
@@ -129,8 +129,8 @@ bha_isa_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
-	if (!bha_find(iot, ioh, &bpd)) {
-		printf("%s: bha_find failed\n", sc->sc_dev.dv_xname);
+	if (!bha_probe_inquiry(iot, ioh, &bpd)) {
+		printf("%s: bha_isa_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -164,5 +164,5 @@ bha_isa_attach(parent, self, aux)
 		return;
 	}
 
-	bha_attach(sc, &bpd);
+	bha_attach(sc);
 }
