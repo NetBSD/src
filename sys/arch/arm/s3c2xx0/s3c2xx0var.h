@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0var.h,v 1.1 2002/11/20 17:52:52 bsh Exp $ */
+/* $NetBSD: s3c2xx0var.h,v 1.2 2003/05/13 05:06:39 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -47,6 +47,11 @@ struct s3c2xx0_softc {
 	bus_space_handle_t	sc_clkman_ioh; 	/* Clock manager */
 	bus_space_handle_t	sc_gpio_ioh;  	/* GPIO */
 	bus_space_handle_t	sc_rtc_ioh; 	/* real time clock */
+
+	/* clock frequency */
+	int sc_fclk;			/* CPU clock */
+	int sc_hclk;			/* AHB bus clock */
+	int sc_pclk;			/* peripheral clock */
 };
 
 typedef void *s3c2xx0_chipset_tag_t;
