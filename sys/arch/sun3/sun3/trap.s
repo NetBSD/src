@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.s,v 1.9 1994/11/21 21:39:17 gwr Exp $	*/
+/*	$NetBSD: trap.s,v 1.10 1994/12/20 05:32:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -131,8 +131,8 @@ sun3_mmu_specific:
 	movc d2, sfc			| stop using control space (potential)
 	movl sp@+, d2			| restore d2
 	movl sp@+, d1			| restore d1
-	btst #5, d0 			| test to timeout bit
-	jne Lisberr			| if bus error, do it
+	andb #0xC0, d0 			| test INVALID|PROTERR
+	jeq Lisberr			| non-MMU bus error
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	Ltrapnstkadj		| and deal with it
