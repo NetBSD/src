@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.75 2001/02/01 20:27:06 agc Exp $
+#	$NetBSD: bsd.README,v 1.76 2001/03/10 11:00:37 fair Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -196,6 +196,10 @@ MANOWN		Manual owner. [root]
 MANMODE		Manual mode. [${NONBINMODE}]
 
 MANINSTALL	Manual installation type: maninstall, catinstall, or both
+
+LDSTATIC	Control program linking; if set blank, link everything
+		dynamically. If set to "-static", link everything statically.
+		If not set, programs link according to their makefile.
 
 LIBDIR		Base path for library installation. [/usr/lib]
 
