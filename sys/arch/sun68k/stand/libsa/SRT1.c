@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.2 2002/06/03 00:18:27 fredette Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,18 +52,18 @@ void *chain_to_func = 0;
 /*
  * These are the function pointers for sun2 vs sun3 vs sun3x stuff.
  */
-char *	(*dev_mapin_p) __P((int, u_long, int));
-char *	(*dvma_alloc_p) __P((int len));
-void	(*dvma_free_p) __P((char *dvma, int len));
-char *	(*dvma_mapin_p) __P((char *pkt, int len));
-void	(*dvma_mapout_p) __P((char *dmabuf, int len));
+char *	(*dev_mapin_p)(int, u_long, int);
+char *	(*dvma_alloc_p)(int);
+void	(*dvma_free_p)(char *, int);
+char *	(*dvma_mapin_p)(char *, int);
+void	(*dvma_mapout_p)(char *, int);
 
 /*
  * This is called by SRT0.S
  * to do final prep for main
  */
-void
-_start()
+void 
+_start(void)
 {
 	void **vbr;
 	int x;
@@ -106,15 +106,14 @@ _start()
 	exit(0);
 }
 
-void
-breakpoint()
+void 
+breakpoint(void)
 {
 	__asm __volatile ("trap #14");
 }
 
-void
-chain_to(func)
-	void *func;
+void 
+chain_to(void *func)
 {
 
 	/*
@@ -129,5 +128,5 @@ chain_to(func)
 /*
  * Boot programs in C++ ?  Not likely!
  */
-void
-__main() {}
+void 
+__main(void) {}

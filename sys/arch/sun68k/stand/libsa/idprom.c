@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.2 2002/09/27 15:36:57 provos Exp $	*/
+/*	$NetBSD: idprom.c,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,14 +55,13 @@
 u_char cpu_machine_id = 0;
 struct idprom identity_prom = { 0 };
 
-int idprom_cksum __P((u_char *));
-void idprom_init2 __P((void));
-void idprom_init3 __P((void));
-void idprom_init3x __P((void));
+int idprom_cksum(u_char *);
+void idprom_init2(void);
+void idprom_init3(void);
+void idprom_init3x(void);
 
 int
-idprom_cksum(p)
-	u_char *p;
+idprom_cksum(u_char *p)
 {
 	int len, x;
 
@@ -75,17 +74,16 @@ idprom_cksum(p)
 
 /* Copy the ethernet address into the passed space. */
 void
-idprom_etheraddr(eaddrp)
-	u_char *eaddrp;
+idprom_etheraddr(u_char *eaddrp)
 {
 
 	idprom_init();
-	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
+	memcpy(eaddrp, identity_prom.idp_etheraddr, 6);
 }
 
 /* Fetch a copy of the idprom. */
-void
-idprom_init()
+void 
+idprom_init(void)
 {
 
 	if (identity_prom.idp_format == 1)
@@ -108,8 +106,8 @@ idprom_init()
  * Sun2 version:
  * Just copy it from control space.
  */
-void
-idprom_init2()
+void 
+idprom_init2(void)
 {
 
 	/* Copy the IDPROM contents and do the checksum. */
@@ -122,8 +120,8 @@ idprom_init2()
  * Sun3 version:
  * Just copy it from control space.
  */
-void
-idprom_init3()
+void 
+idprom_init3(void)
 {
 
 	/* Copy the IDPROM contents and do the checksum. */
@@ -143,8 +141,8 @@ idprom_init3()
  * to search was determined from some "insider" info. about
  * the layout of the PROM data area.
  */
-void
-idprom_init3x()
+void 
+idprom_init3x(void)
 {
 	u_char *p;
 
@@ -172,5 +170,5 @@ idprom_init3x()
 
 found:
 	printf("idprom: copy found at 0x%x\n", (int)p);
-	bcopy(p, &identity_prom, sizeof(struct idprom));
+	memcpy(&identity_prom, p, sizeof(struct idprom));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.7 2003/07/15 03:36:12 lukem Exp $	*/
+/*	$NetBSD: pcons.c,v 1.8 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.7 2003/07/15 03:36:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.8 2005/01/22 15:36:09 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.7 2003/07/15 03:36:12 lukem Exp $");
 
 #include <sun2/dev/cons.h>
 
-static int pconsmatch __P((struct device *, struct cfdata *, void *));
-static void pconsattach __P((struct device *, struct device *, void *));
+static int pconsmatch(struct device *, struct cfdata *, void *);
+static void pconsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcons, sizeof(struct pconssoftc),
     pconsmatch, pconsattach, NULL, NULL);
@@ -68,7 +68,7 @@ CFATTACH_DECL(pcons, sizeof(struct pconssoftc),
 extern struct cfdriver pcons_cd;
 static struct cnm_state pcons_cnm_state;
 
-static int pconsprobe __P((void));
+static int pconsprobe(void);
 extern struct consdev *cn_tab;
 
 dev_type_open(pconsopen);
@@ -84,14 +84,11 @@ const struct cdevsw pcons_cdevsw = {
 	nostop, pconstty, pconspoll, nommap, ttykqfilter, D_TTY
 };
 
-static int
-pconsmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int 
+pconsmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	extern int  prom_cngetc __P((dev_t));
+	extern int  prom_cngetc(dev_t);
 
 	/* Only attach if no other console has attached. */
 	return ((ma->ma_name != NULL) &&
@@ -100,10 +97,8 @@ pconsmatch(parent, match, aux)
 
 }
 
-static void
-pconsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+pconsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pconssoftc *sc = (struct pconssoftc *) self;
 
@@ -116,15 +111,12 @@ pconsattach(parent, self, aux)
 	callout_init(&sc->sc_poll_ch);
 }
 
-static void pconsstart __P((struct tty *));
-static int pconsparam __P((struct tty *, struct termios *));
-static void pcons_poll __P((void *));
+static void pconsstart(struct tty *);
+static int pconsparam(struct tty *, struct termios *);
+static void pcons_poll(void *);
 
-int
-pconsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+int 
+pconsopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pconssoftc *sc;
 	int unit = minor(dev);
@@ -162,11 +154,8 @@ pconsopen(dev, flag, mode, p)
 	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
-int
-pconsclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+int 
+pconsclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -178,11 +167,8 @@ pconsclose(dev, flag, mode, p)
 	return 0;
 }
 
-int
-pconsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+int 
+pconsread(dev_t dev, struct uio *uio, int flag)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -190,11 +176,8 @@ pconsread(dev, uio, flag)
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
-int
-pconswrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+int 
+pconswrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -202,11 +185,8 @@ pconswrite(dev, uio, flag)
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
-int
-pconspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+int 
+pconspoll(dev_t dev, int events, struct proc *p)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -214,13 +194,8 @@ pconspoll(dev, events, p)
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
-int
-pconsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+int 
+pconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -234,17 +209,15 @@ pconsioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-pconstty(dev)
-	dev_t dev;
+pconstty(dev_t dev)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 
 	return sc->of_tty;
 }
 
-static void
-pconsstart(tp)
-	struct tty *tp;
+static void 
+pconsstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
@@ -276,10 +249,8 @@ pconsstart(tp)
 	splx(s);
 }
 
-static int
-pconsparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+static int 
+pconsparam(struct tty *tp, struct termios *t)
 {
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -287,9 +258,8 @@ pconsparam(tp, t)
 	return 0;
 }
 
-static void
-pcons_poll(aux)
-	void *aux;
+static void 
+pcons_poll(void *aux)
 {
 	struct pconssoftc *sc = aux;
 	struct tty *tp = sc->of_tty;
@@ -305,8 +275,8 @@ pcons_poll(aux)
 	callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 }
 
-int
-pconsprobe()
+int 
+pconsprobe(void)
 {
 	switch (prom_version()) {
 #ifdef	PROM_OLDMON
@@ -325,10 +295,8 @@ pconsprobe()
 	return (0);
 }
 
-void
-pcons_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+void 
+pcons_cnpollc(dev_t dev, int on)
 {
 	struct pconssoftc *sc = NULL;
 
@@ -349,8 +317,9 @@ pcons_cnpollc(dev, on)
 	}
 }
 
-void pcons_dopoll __P((void));
-void
-pcons_dopoll() {
-		pcons_poll((void*)pcons_cd.cd_devs[0]);
+void pcons_dopoll(void);
+void 
+pcons_dopoll(void)
+{
+	pcons_poll((void*)pcons_cd.cd_devs[0]);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.20 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: control.h,v 1.21 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,17 +66,17 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 
 /* ctrlsp.S */
-int   get_control_byte __P((vaddr_t));
-void  set_control_byte __P((vaddr_t, int));
-u_int get_control_word __P((vaddr_t));
-void  set_control_word __P((vaddr_t, u_int));
+int   get_control_byte(vaddr_t);
+void  set_control_byte(vaddr_t, int);
+u_int get_control_word(vaddr_t);
+void  set_control_word(vaddr_t, u_int);
 
 /* control.c */
-int  get_context __P((void));
-void set_context __P((int));
+int  get_context(void);
+void set_context(int);
 
-int  get_segmap __P((vaddr_t));
-void set_segmap __P((vaddr_t, int));
-void set_segmap_allctx __P((vaddr_t, int));
+int  get_segmap(vaddr_t);
+void set_segmap(vaddr_t, int);
+void set_segmap_allctx(vaddr_t, int);
 
 #endif	/* _KERNEL | _STANDALONE */

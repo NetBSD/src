@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.1 2002/03/22 00:22:43 fredette Exp $	*/
+/*	$NetBSD: cons.h,v 1.2 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -46,22 +46,22 @@ struct pconssoftc {
 #define	OFBURSTLEN	128	/* max number of bytes to write in one chunk */
 
 /* These are shared with the consinit OBP console */
-void pcons_cnpollc __P((dev_t dev, int on));
+void pcons_cnpollc(dev_t dev, int on);
 
 struct consdev;
 struct zs_chanstate;
 
 extern void *zs_conschan;
 
-extern void nullcnprobe __P((struct consdev *));
+extern void nullcnprobe(struct consdev *);
 
-extern int  zs_getc __P((void *arg));
-extern void zs_putc __P((void *arg, int c));
+extern int  zs_getc(void *arg);
+extern void zs_putc(void *arg, int c);
 
 #ifdef	KGDB
-void zs_kgdb_init __P((void));
-void zskgdb __P((struct zs_chanstate *));
-void *zs_find_prom __P((int));
+void zs_kgdb_init(void);
+void zskgdb(struct zs_chanstate *);
+void *zs_find_prom(int);
 #endif
 
 /*

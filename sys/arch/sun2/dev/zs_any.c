@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.10 2003/07/15 03:36:12 lukem Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.11 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.10 2003/07/15 03:36:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.11 2005/01/22 15:36:09 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.10 2003/07/15 03:36:12 lukem Exp $");
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_any_match __P((struct device *, struct cfdata *, void *));
-static void	zs_any_attach __P((struct device *, struct device *, void *));
+static int	zs_any_match(struct device *, struct cfdata *, void *);
+static void	zs_any_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
     zs_any_match, zs_any_attach, NULL, NULL);
@@ -97,11 +97,8 @@ CFATTACH_DECL(zs_mbmem, sizeof(struct zsc_softc),
 /*
  * Is the zs chip present?
  */
-static int
-zs_any_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+zs_any_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -126,11 +123,8 @@ zs_any_match(parent, cf, aux)
 /*
  * Attach a found zs.
  */
-static void
-zs_any_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+zs_any_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
@@ -150,11 +144,8 @@ zs_any_attach(parent, self, aux)
 	zs_attach(zsc, (void *)bh, ma->ma_pri);
 }
 
-int
-zs_console_flags(promunit, node, channel)
-	int promunit;
-	int node;
-	int channel;
+int 
+zs_console_flags(int promunit, int node, int channel)
 {
 	int cookie, flags = 0;
 
@@ -188,18 +179,18 @@ zs_console_flags(promunit, node, channel)
 }
 
 #ifdef	KGDB
+extern	int sun68k_find_prom_map(bus_addr_t, bus_type_t, int,
+	    bus_space_handle_t *);
+
 /*
  * Find a zs mapped by the PROM.  Currently this only works to find
  * zs0 on obio.
  */
 void *
-zs_find_prom(unit)
-    int unit;
+zs_find_prom(int unit)
 {
 	bus_addr_t zs0_phys;
 	bus_space_handle_t bh;
-extern	int sun68k_find_prom_map __P((bus_addr_t, bus_type_t, 
-				      int, bus_space_handle_t *));
 
 	if (unit != 0)
 		return (NULL);
@@ -207,12 +198,11 @@ extern	int sun68k_find_prom_map __P((bus_addr_t, bus_type_t,
 	/*
 	 * The physical address of zs0 is model-dependent.
 	 */
-	zs0_phys = (cpu_machine_id == SUN2_MACH_120 ?
-	    	    0x002000 : 0x7f2000);
-	    
-	if (sun68k_find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice), &bh))
+	zs0_phys = (cpu_machine_id == SUN2_MACH_120 ? 0x002000 : 0x7f2000);
+	if (sun68k_find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice),
+	    &bh))
 		return (NULL);
 
-	return ((void*) bh);
+	return (bh);
 }
 #endif	/* KGDB */

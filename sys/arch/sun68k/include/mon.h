@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.1 2001/06/14 12:57:11 fredette Exp $	*/
+/*	$NetBSD: mon.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,10 +119,10 @@ struct sunromvec {
 	 * Single-character input and output
 	 */
 
-	u_char	(*getChar)__P((void));	/* Get char from input source */
-	int	(*putChar)__P((int));	/* Put char to output sink */
-	int	(*mayGet)__P((void));	/* Maybe get char, or -1 */
-	int	(*mayPut)__P((int));	/* Maybe put char, or -1 */
+	u_char	(*getChar)(void);	/* Get char from input source */
+	int	(*putChar)(int);	/* Put char to output sink */
+	int	(*mayGet)(void);	/* Maybe get char, or -1 */
+	int	(*mayPut)(int);	/* Maybe put char, or -1 */
 	u_char	*echo;		/* Should getchar echo? */
 	u_char	*inSource;	/* Input source selector */
 	u_char	*outSink;	/* Output sink selector */
@@ -135,8 +135,8 @@ struct sunromvec {
 	 * Keyboard input (scanned by monitor nmi routine)
 	 */
 
-	int	(*getKey)__P((void));	/* Get next key if one exists */
-	int	(*initGetKey)__P((void*)); /* Initialize get key */
+	int	(*getKey)(void);	/* Get next key if one exists */
+	int	(*initGetKey)(void *); /* Initialize get key */
 	u_int	*translation;		/* Kbd translation selector
 					   (see keyboard.h in sun
 					    monitor code) */
@@ -155,17 +155,17 @@ struct sunromvec {
 	 * Frame buffer output and terminal emulation
 	 */
 
-	int	(*fbWriteChar)__P((int)); /* Write a character to FB */
+	int	(*fbWriteChar)(int); /* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
 	/* Quickly write string to FB */
-	int	(*fbWriteStr)__P((char *buf, int len));
+	int	(*fbWriteStr)(char *, int);
 
 	/*
 	 * Reboot interface routine -- resets and reboots system.  No return.
 	 */
 
-	int	(*reBoot)__P((char *));	/* e.g. reBoot("xy()vmunix") */
+	int	(*reBoot)(char *);	/* e.g. reBoot("xy()vmunix") */
 
 	/*
 	 * Line input and parsing
@@ -174,32 +174,32 @@ struct sunromvec {
 	u_char	*lineBuf;	/* The line input buffer */
 	u_char	**linePtr;	/* Cur pointer into linebuf */
 	int		*lineSize;	/* length of line in linebuf */
-	int	(*getLine)__P((int));	/* Get line from user */
-	u_char	(*getNextChar)__P((void)); /* Get next char from linebuf */
-	u_char	(*peekNextChar)__P((void));	/* Peek at next char */
+	int	(*getLine)(int);	/* Get line from user */
+	u_char	(*getNextChar)(void); /* Get next char from linebuf */
+	u_char	(*peekNextChar)(void);	/* Peek at next char */
 	int		*fbThere;		/* =1 if frame buffer there */
-	int		(*getNum)__P((void));	/* Grab hex num from line */
+	int		(*getNum)(void);	/* Grab hex num from line */
 
 	/*
 	 * Print formatted output to current output sink
 	 */
 
-	int	(*printf)__P((char *, ...));	/* Like kernel printf */
-	int	(*printHex)__P((int,int));	/* Format N digits in hex */
+	int	(*printf)(char *, ...);	/* Like kernel printf */
+	int	(*printHex)(int, int);	/* Format N digits in hex */
 
 	/*
 	 * Led stuff
 	 */
 
 	u_char	*leds;			/* RAM copy of LED register */
-	int	(*setLeds)__P((int));	/* Sets LED's and RAM copy */
+	int	(*setLeds)(int);	/* Sets LED's and RAM copy */
 
 	/*
 	 * Non-maskable interrupt  (nmi) information
 	 */
 
-	int	(*nmiAddr)__P((void*));	/* Addr for level 7 vector */
-	int	(*abortEntry)__P((void*)); /* Entry for keyboard abort */
+	int	(*nmiAddr)(void *);	/* Addr for level 7 vector */
+	int	(*abortEntry)(void *); /* Entry for keyboard abort */
 	int	*nmiClock;		/* Counts up in msec */
 
 	/*
@@ -222,7 +222,7 @@ struct sunromvec {
 	long	*resetAddr;		/* where to jump on a reset */
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
-	int	(*exitToMon)__P((void)); /* Exit from user program */
+	int	(*exitToMon)(void); /* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 
 	/****************************************************************
@@ -232,13 +232,13 @@ struct sunromvec {
 		void *un_pad[8]; /* this determines the size */
 		struct {
 			/* Set seg in all contexts (ctx, va, sme) */
-			void	(*un3_setcxsegmap)__P((int,int,int));
+			void	(*un3_setcxsegmap)(int, int, int);
 			/* V2: Handler for 'v' cmd */
-			void	(**un3_vector_cmd)__P((int, char*));
+			void	(**un3_vector_cmd)(int, char *);
 		} un3;
 		struct {
 			/* V2: Handler for 'v' cmd */
-			void	(**un3x_vector_cmd)__P((int, char*));
+			void	(**un3x_vector_cmd)(int, char *);
 			/* Address of low memory PTEs (maps at least 4MB) */
 			int	**un3x_lomemptaddr;
 			/*
@@ -312,8 +312,8 @@ struct sunromvec {
  * fbWriteStr -- Write a string to the frame buffer.
  *
  *   	void fwritestr(addr,len)
- *  	    register u_char *addr;	/ * String to be written * /
- *  	    register short len;		/ * Length of string * /
+ *  	    u_char *addr;	/ * String to be written * /
+ *  	    short len;		/ * Length of string * /
  *
  * getLine -- read the next input line into a global buffer
  *
@@ -337,9 +337,9 @@ struct sunromvec {
  *
  * printhex -- prints rightmost <digs> hex digits of <val>
  *
- *      printhex(val,digs)
- *          register int val;
- *     	    register int digs;
+ *      printhex(val, digs)
+ *          int val;
+ *     	    int digs;
  *
  * abortEntry -- Entry for keyboard abort.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2005/01/22 15:36:11 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -119,7 +119,7 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
 
-void	cpu_proc_fork __P((struct proc *, struct proc *));
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -175,24 +175,24 @@ extern void *softnet_cookie;
  * For some reason the sparc has this prototype in its machine/cpu.h,
  * so for now we do the same.
  */
-void	fb_unblank __P((void));
+void	fb_unblank(void);
 
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /*
  * This is needed by sun68k/isr.c.  It's here for lack of a 
  * better place.
  */
-void	netintr __P((void));
+void	netintr(void);
 
 /*
  * more stuff here for lack of a better place.
  */
 struct pcb;
-void	proc_trampoline __P((void));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
+void	proc_trampoline(void);
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *);
+void	switch_lwp_exit(struct lwp *);
 
 #define M68K_VAC
 

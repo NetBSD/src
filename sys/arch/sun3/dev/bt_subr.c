@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.7 2003/08/07 16:29:54 agc Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.8 2005/01/22 15:36:09 chs Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.7 2003/08/07 16:29:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.8 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -61,11 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.7 2003/08/07 16:29:54 agc Exp $");
 /*
  * Implement an FBIOGETCMAP-like ioctl.
  */
-int
-bt_getcmap(p, cm, cmsize)
-	struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
+int 
+bt_getcmap(struct fbcmap *p, union bt_cmap *cm, int cmsize)
 {
 	u_int i, start, count;
 	u_char *cp;
@@ -89,11 +86,8 @@ bt_getcmap(p, cm, cmsize)
 /*
  * Implement the software portion of an FBIOPUTCMAP-like ioctl.
  */
-int
-bt_putcmap(p, cm, cmsize)
-	struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
+int 
+bt_putcmap(struct fbcmap *p, union bt_cmap *cm, int cmsize)
 {
 	u_int i, start, count;
 	u_char *cp;

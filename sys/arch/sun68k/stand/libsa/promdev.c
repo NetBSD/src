@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.2 2002/05/15 04:07:43 lukem Exp $ */
+/*	$NetBSD: promdev.c,v 1.3 2005/01/22 15:36:11 chs Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -50,9 +50,8 @@ int promdev_inuse;
  *	si->si_boff
  */
 
-int
-prom_iopen(si)
-	struct saioreq *si;
+int 
+prom_iopen(struct saioreq *si)
 {
 	struct boottab *ops;
 	struct devinfo *dip;
@@ -140,9 +139,8 @@ prom_iopen(si)
 	return (0);
 }
 
-void
-prom_iclose(si)
-	struct saioreq *si;
+void 
+prom_iclose(struct saioreq *si)
 {
 	struct boottab *ops;
 	struct devinfo *dip;
@@ -161,4 +159,3 @@ prom_iclose(si)
 
 	promdev_inuse = 0;
 }
-

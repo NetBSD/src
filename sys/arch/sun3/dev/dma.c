@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.14 2003/07/15 03:36:14 lukem Exp $ */
+/*	$NetBSD: dma.c,v 1.15 2005/01/22 15:36:09 chs Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.14 2003/07/15 03:36:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.15 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,19 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.14 2003/07/15 03:36:14 lukem Exp $");
 
 #define MAX_DMA_SZ	0x01000000	/* 16MB */
 
-static int	dmamatch  __P((struct device *, struct cfdata *, void *));
-static void	dmaattach __P((struct device *, struct device *, void *));
+static int	dmamatch (struct device *, struct cfdata *, void *);
+static void	dmaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dma, sizeof(struct dma_softc),
     dmamatch, dmaattach, NULL, NULL);
 
 extern struct cfdriver dma_cd;
 
-static int
-dmamatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+dmamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -85,10 +82,8 @@ dmamatch(parent, cf, aux)
 	return (1);
 }
 
-static void
-dmaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+dmaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
@@ -180,9 +175,8 @@ espdmafind(int unit)
 	DMACSR(sc) |= D_FLUSH;						\
 } while(0)
 
-void
-dma_reset(sc)
-	struct dma_softc *sc;
+void 
+dma_reset(struct dma_softc *sc)
 {
 
 	DMA_FLUSH(sc, 1);
@@ -209,15 +203,11 @@ dma_reset(sc)
 /*
  * setup a dma transfer
  */
-int
-dma_setup(sc, addr, len, datain, dmasize)
-	struct dma_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;	/* IN-OUT */
+int 
+dma_setup(struct dma_softc *sc, caddr_t *addr, size_t *len, int datain,
+    size_t *dmasize)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	DMA_FLUSH(sc, 0);
 
@@ -254,7 +244,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 		DMADDR(sc) = sc->sc_dmasaddr;
 	} else {
 		/* XXX: What is this about? -gwr */
-		DMADDR(sc) = (u_int32_t) *sc->sc_dmaaddr;
+		DMADDR(sc) = (uint32_t) *sc->sc_dmaaddr;
 	}
 
 	/* We never have DMAREV_ESC. */
@@ -278,14 +268,13 @@ dma_setup(sc, addr, len, datain, dmasize)
  *
  * return 1 if it was a DMA continue.
  */
-int
-espdmaintr(sc)
-	struct dma_softc *sc;
+int 
+espdmaintr(struct dma_softc *sc)
 {
 	struct ncr53c9x_softc *nsc = sc->sc_esp;
 	char bits[64];
 	int trans, resid;
-	u_int32_t csr;
+	uint32_t csr;
 
 	csr = DMACSR(sc);
 

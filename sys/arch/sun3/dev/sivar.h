@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.6 1997/10/17 03:33:47 gwr Exp $	*/
+/*	$NetBSD: sivar.h,v 1.7 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,9 +92,9 @@ struct si_softc {
 
 extern int si_debug;
 
-void si_attach __P((struct si_softc *));
-int  si_intr __P((void *));
+void si_attach(struct si_softc *);
+int  si_intr(void *);
 
-void si_dma_alloc __P((struct ncr5380_softc *));
-void si_dma_free __P((struct ncr5380_softc *));
-void si_dma_poll __P((struct ncr5380_softc *));
+void si_dma_alloc(struct ncr5380_softc *);
+void si_dma_free(struct ncr5380_softc *);
+void si_dma_poll(struct ncr5380_softc *);

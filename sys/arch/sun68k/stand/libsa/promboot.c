@@ -1,4 +1,4 @@
-/*	$NetBSD: promboot.c,v 1.2 2002/05/15 04:07:43 lukem Exp $	*/
+/*	$NetBSD: promboot.c,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
 
 
 #include <sys/param.h>
@@ -22,8 +22,8 @@ char	prom_bootdev[32];
  * arg[1] = -sa
  */
 
-void
-prom_get_boot_info()
+void 
+prom_get_boot_info(void)
 {
 	struct bootparam *bp;
 	char	c, *src, *dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.16 2003/08/07 16:29:55 agc Exp $ */
+/*	$NetBSD: memerr.c,v 1.17 2005/01/22 15:36:10 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.16 2003/08/07 16:29:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.17 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,21 +71,18 @@ struct memerr_softc {
 	/* XXX: counters? */
 };
 
-static int  memerr_match __P((struct device *, struct cfdata *, void *));
-static void memerr_attach __P((struct device *, struct device *, void *));
-static int  memerr_interrupt __P((void *));
-static void memerr_correctable __P((struct memerr_softc *));
+static int  memerr_match(struct device *, struct cfdata *, void *);
+static void memerr_attach(struct device *, struct device *, void *);
+static int  memerr_interrupt(void *);
+static void memerr_correctable(struct memerr_softc *);
 
 CFATTACH_DECL(memerr, sizeof(struct memerr_softc),
     memerr_match, memerr_attach, NULL, NULL);
 
 int memerr_attached;
 
-static int
-memerr_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+memerr_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -104,11 +101,8 @@ memerr_match(parent, cf, args)
 	return (1);
 }
 
-static void
-memerr_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+memerr_attach(struct device *parent, struct device *self, void *args)
 {
 	struct memerr_softc *sc = (void *)self;
 	struct confargs *ca = args;
@@ -160,9 +154,8 @@ memerr_attach(parent, self, args)
  * Functions for ECC memory
  *****************************************************************/
 
-static int
-memerr_interrupt(arg)
-	void *arg;
+static int 
+memerr_interrupt(void *arg)
 {
 	struct memerr_softc *sc = arg;
 	volatile struct memerr *me = sc->sc_reg;
@@ -237,9 +230,8 @@ recover:
  * Need to look at the ECC syndrome register on
  * the memory board that caused the error...
  */
-void
-memerr_correctable(sc)
-	struct memerr_softc *sc;
+void 
+memerr_correctable(struct memerr_softc *sc)
 {
 	/* XXX: Not yet... */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.23 2003/09/22 14:27:13 cl Exp $	*/
+/*	$NetBSD: vector.c,v 1.24 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.23 2003/09/22 14:27:13 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.24 2005/01/22 15:36:10 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.23 2003/09/22 14:27:13 cl Exp $");
 #define fpunfl fpfault
 
 void *vector_table[NVECTORS] = {
-	(void*)0xfffe000,		/* 0: NOT USED (reset SP) */
-	(void*)0xfef0000,		/* 1: NOT USED (reset PC) */
+	(void *)0xfffe000,		/* 0: NOT USED (reset SP) */
+	(void *)0xfef0000,		/* 1: NOT USED (reset PC) */
 	buserr,				/* 2: bus error */
 	addrerr,			/* 3: address error */
 	illinst,			/* 4: illegal instruction */

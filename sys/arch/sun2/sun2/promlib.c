@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.11 2003/07/15 03:36:13 lukem Exp $	*/
+/*	$NetBSD: promlib.c,v 1.12 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.11 2003/07/15 03:36:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.12 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ static struct kernel_state sunmon_kernel_state;
 static struct bootparam sunmon_bootparam;
 static u_int sunmon_ptes[4];
 
-static void tracedump __P((int));
+static void tracedump(int);
 
 /*
  * The PROM keeps its data is in the first four physical pages, and
@@ -83,10 +83,9 @@ static void tracedump __P((int));
  * This swaps out one set of PTEs for the first 
  * four virtual pages, and swaps another set in.
  */
-static inline void _prom_swap_ptes __P((u_int *, u_int *));
-static inline void
-_prom_swap_ptes(swapout, swapin)
-	u_int *swapout, *swapin;
+static inline void _prom_swap_ptes(u_int *, u_int *);
+static inline void 
+_prom_swap_ptes(u_int *swapout, u_int *swapin)
 {
 	int pte_number;
 	vaddr_t va;
@@ -101,11 +100,9 @@ _prom_swap_ptes(swapout, swapin)
 /*
  * Prepare for running the PROM monitor.
  */
-static inline void _mode_monitor __P((struct kernel_state *, int));
-static inline void
-_mode_monitor(state, full)
-	struct kernel_state *state;
-	int full;
+static inline void _mode_monitor(struct kernel_state *, int);
+static inline void 
+_mode_monitor(struct kernel_state *state, int full)
 {
 	/*
 	 * Save the current context, and the PTEs for pages
@@ -132,11 +129,9 @@ _mode_monitor(state, full)
 /*
  * Prepare for running the kernel.
  */
-static inline void _mode_kernel __P((struct kernel_state *, int));
-static inline void
-_mode_kernel(state, full)
-	struct kernel_state *state;
-	int full;
+static inline void _mode_kernel(struct kernel_state *, int);
+static inline void 
+_mode_kernel(struct kernel_state *state, int full)
 {
 	/*
 	 * If we were in the PROM fully, disable the PROM NMI clock,
@@ -176,9 +171,8 @@ PROMLIB_FUNC(int, prom_getchar, (void), getChar, (), return(rc))
 PROMLIB_FUNC(int, prom_peekchar, (void), mayGet, (), return(rc))
 PROMLIB_FUNC(void, prom_putchar, (int c), putChar, (c), return)
 
-void prom_putstr(buf, len)
-	char *buf;
-	int len;
+void
+prom_putstr(char *buf, int len)
 {
 	struct kernel_state state;
 	_mode_monitor(&state, 0);
@@ -193,13 +187,7 @@ void prom_putstr(buf, len)
  * This is very ugly.  Please fix me!
  */
 void
-#ifdef __STDC__
 prom_printf(const char *fmt, ...)
-#else
-prom_printf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	struct kernel_state state;
 	int rc;
@@ -222,8 +210,10 @@ prom_printf(fmt, va_alist)
 	i = 0;
 	for(p1 = fmt; (c1 = *(p1++)) != '\0'; ) {
 		if (c1 == '%') {
-			if (i == (sizeof(varargs.arg) / sizeof(varargs.arg[0]))) {
-				prom_printf("too many args to prom_printf, format %s", fmt);
+			if (i == (sizeof(varargs.arg) /
+				  sizeof(varargs.arg[0]))) {
+				prom_printf("too many args to prom_printf, "
+					    "format %s", fmt);
 				prom_abort();
 			}
 			varargs.arg[i++] = va_arg(ap, int);
@@ -235,7 +225,7 @@ prom_printf(fmt, va_alist)
 	_mode_monitor(&state, 0);
 	rc = (*
 	    /* the ghastly type we cast the PROM printf vector to: */
-	    ( (int (*) __P((const char *, struct printf_args)))
+	    ( (int (*)(const char *, struct printf_args))
 	    /* the PROM printf vector: */
 		(romVectorPtr->printf))
 		)(fmt, varargs);
@@ -244,7 +234,7 @@ prom_printf(fmt, va_alist)
 
 /* Return the boot path. */
 char *
-prom_getbootpath()
+prom_getbootpath(void)
 {
 	/*
 	 * The first bootparam argument is the device string.
@@ -254,7 +244,7 @@ prom_getbootpath()
 
 /* Return the boot args. */
 char *
-prom_getbootargs()
+prom_getbootargs(void)
 {
 	/*
 	 * The second bootparam argument is any options.
@@ -264,15 +254,14 @@ prom_getbootargs()
 
 /* Return the boot file. */
 char *
-prom_getbootfile()
+prom_getbootfile(void)
 {
 	return (sunmon_bootparam.fileName);
 }
 
 /* This maps a PROM `sd' unit number into a SCSI target. */
-int
-prom_sd_target(unit)
-	int unit;
+int 
+prom_sd_target(int unit)
 {
 	switch(unit) {
 	case 2:	return (4);
@@ -284,10 +273,10 @@ prom_sd_target(unit)
  * This aborts to the PROM, but should allow the user
  * to "c" continue back into the kernel.
  */
-void
-prom_abort()
+void 
+prom_abort(void)
 {
-	u_int16_t old_g0_g4_vectors[4], *vec, *store;
+	uint16_t old_g0_g4_vectors[4], *vec, *store;
 
 	_mode_monitor(&sunmon_kernel_state, 1);
 
@@ -297,7 +286,7 @@ prom_abort()
 	 * the braw instruction displacement is PC-relative.
 	 */
 #define	BRAW	0x6000
-	vec = (u_int16_t *) sunmon_vbr;
+	vec = (uint16_t *) sunmon_vbr;
 	store = old_g0_g4_vectors;
 	*(store++) = *vec;
 	*(vec++) = BRAW;
@@ -323,7 +312,7 @@ prom_abort()
 	/* We have continued from a PROM abort! */
 
 	/* Put back the old g0 and g4 handlers. */
-	vec = (u_int16_t *) sunmon_vbr;
+	vec = (uint16_t *) sunmon_vbr;
 	store = old_g0_g4_vectors;
 	*(vec++) = *(store++);
 	*(vec++) = *(store++);
@@ -333,8 +322,8 @@ prom_abort()
 	_mode_kernel(&sunmon_kernel_state, 1);
 }
 
-void
-prom_halt()
+void 
+prom_halt(void)
 {
 	_mode_monitor(&sunmon_kernel_state, 1);
 	(*romVectorPtr->exitToMon)();
@@ -345,9 +334,8 @@ prom_halt()
 /*
  * Caller must pass a string that is in our data segment.
  */
-void
-prom_boot(bs)
-	char *bs;
+void 
+prom_boot(char *bs)
 {
 	_mode_monitor(&sunmon_kernel_state, 1);
 	(*romVectorPtr->reBoot)(bs);
@@ -367,9 +355,8 @@ struct funcall_frame {
 	int fr_arg[1];
 };
 /*VARARGS0*/
-static void
-tracedump(x1)
-	int x1;
+static void 
+tracedump(int x1)
 {
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
 	u_int stackpage = ((u_int)fp) & ~PGOFSET;
@@ -389,17 +376,16 @@ tracedump(x1)
 }
 
 /* Handlers for the old-school "g0" and "g4" */
-void g0_handler __P((void));
-void
-g0_handler()
+void g0_handler(void);
+void 
+g0_handler(void)
 {
 	_mode_kernel(&sunmon_kernel_state, 1);
 	panic("zero");
 }
-void g4_handler __P((int));
-void
-g4_handler(addr)
-	int addr;
+void g4_handler(int);
+void 
+g4_handler(int addr)
 {
 	_mode_kernel(&sunmon_kernel_state, 1);
 	tracedump(addr);
@@ -414,8 +400,8 @@ g4_handler(addr)
  * argv[1] = options	(i.e. "-ds" or NULL)
  * argv[2] = NULL
  */
-void
-prom_init()
+void 
+prom_init(void)
 {
 	struct bootparam *old_bp;
 	struct bootparam *new_bp;

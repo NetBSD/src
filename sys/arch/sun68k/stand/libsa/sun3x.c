@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.5 2002/09/27 15:36:58 provos Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.6 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,16 +75,16 @@
 #define MON_DVMA_BASE	SUN3X_MON_DVMA_BASE
 #define MON_DVMA_SIZE	SUN3X_MON_DVMA_SIZE
 
-void mmu_atc_flush (u_int va);
-void set_iommupte(u_int va, u_int pa);
+void mmu_atc_flush(u_int);
+void set_iommupte(u_int, u_int);
 
-u_int	get_pte __P((vaddr_t va));
-void	set_pte __P((vaddr_t va, u_int pte));
-char *	dvma3x_alloc __P((int len));
-void	dvma3x_free __P((char *dvma, int len));
-char *	dvma3x_mapin __P((char *pkt, int len));
-void	dvma3x_mapout __P((char *dmabuf, int len));
-char *	dev3x_mapin __P((int type, u_long addr, int len));
+u_int	get_pte(vaddr_t);
+void	set_pte(vaddr_t, u_int);
+char *	dvma3x_alloc(int);
+void	dvma3x_free(char *, int);
+char *	dvma3x_mapin(char *, int);
+void	dvma3x_mapout(char *, int);
+char *	dev3x_mapin(int, u_long, int);
 
 struct mapinfo {
 	int maptype;
@@ -115,10 +115,7 @@ sun3x_mapinfo[MAP__NTYPES] = {
 u_int sun3x_devmap = MON_KDB_BASE;
 
 char *
-dev3x_mapin(maptype, physaddr, length)
-	int maptype;
-	u_long physaddr;
-	int length;
+dev3x_mapin(int maptype, u_long physaddr, int length)
 {
 	u_int i, pa, pte, pgva, va;
 
@@ -167,8 +164,8 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma3x_end = MON_DVMA_BASE + MON_DVMA_MAPLEN;
 
-void
-dvma3x_init()
+void 
+dvma3x_init(void)
 {
 	u_int va, pa;
 
@@ -216,7 +213,7 @@ dvma3x_alloc(int len)
 {
 	len = m68k_round_page(len);
 	dvma3x_end -= len;
-	return((char*)dvma3x_end);
+	return((char *)dvma3x_end);
 }
 
 void
@@ -230,8 +227,7 @@ dvma3x_free(char *dvma, int len)
  */
 
 u_int
-get_pte(va)
-	vaddr_t va;	/* virt. address */
+get_pte(vaddr_t va)
 {
 	u_int	pn;
 	mmu_short_pte_t *tbl;
@@ -255,9 +251,7 @@ get_pte(va)
 }
 
 void
-set_pte(va, pa)
-	vaddr_t va;	/* virt. address */
-	u_int pa;	/* phys. address */
+set_pte(vaddr_t va, paddr_t pa)
 {
 	u_int	pn;
 	mmu_short_pte_t *tbl;
@@ -292,18 +286,15 @@ set_pte(va, pa)
 	mmu_atc_flush(va);
 }
 
-void
-mmu_atc_flush(va)
-	u_int va;
+void 
+mmu_atc_flush(vaddr_t va)
 {
 
 	__asm __volatile ("pflush	#0,#0,%0@" : : "a" (va));
 }
 
-void
-set_iommupte(va, pa)
-	u_int va;	/* virt. address */
-	u_int pa;	/* phys. address */
+void 
+set_iommupte(vaddr_t va, paddr_t pa)
 {
 	iommu_pde_t *iommu_va;
 	int pn;
@@ -323,8 +314,8 @@ set_iommupte(va, pa)
  * Init our function pointers, etc.
  */
 
-void
-sun3x_init()
+void 
+sun3x_init(void)
 {
 
 	/* Set the function pointers. */

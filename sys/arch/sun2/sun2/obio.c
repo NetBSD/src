@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: obio.c,v 1.14 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.14 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2004/12/13 02:14:13 chs Exp $");
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;
 
-static int  obio_match __P((struct device *, struct cfdata *, void *));
-static void obio_attach __P((struct device *, struct device *, void *));
+static int  obio_match(struct device *, struct cfdata *, void *);
+static void obio_attach(struct device *, struct device *, void *);
 
 struct obio_softc {
 	struct device	sc_dev;		/* base device */
@@ -69,17 +69,16 @@ CFATTACH_DECL(obio, sizeof(struct obio_softc),
 
 static int obio_attached;
 
-static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       off_t, int, int));
-static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       bus_size_t, int,
-			       vaddr_t, bus_space_handle_t *));
-static	int _obio_addr_bad __P((bus_space_tag_t, bus_space_handle_t, 
-				bus_size_t, size_t));
-static	int _obio_bus_peek __P((bus_space_tag_t, bus_space_handle_t,
-				bus_size_t, size_t, void *));
-static	int _obio_bus_poke __P((bus_space_tag_t, bus_space_handle_t,
-				bus_size_t, size_t, u_int32_t));
+static	paddr_t obio_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t, off_t,
+	    int, int);
+static	int _obio_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
+	    int, vaddr_t, bus_space_handle_t *);
+static	int _obio_addr_bad(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    size_t);
+static	int _obio_bus_peek(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    size_t, void *);
+static	int _obio_bus_poke(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    size_t, uint32_t);
 
 static struct sun68k_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
@@ -94,11 +93,8 @@ static struct sun68k_bus_space_tag obio_space_tag = {
 	_obio_bus_poke			/* bus_space_poke_N */
 }; 
 
-static int
-obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -108,11 +104,8 @@ obio_match(parent, cf, aux)
 	return (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
-static void
-obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct obio_softc *sc = (struct obio_softc *)self;
@@ -156,30 +149,18 @@ obio_attach(parent, self, aux)
 }
 
 int
-_obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	bus_size_t size;
-	vaddr_t vaddr;
-	int	flags;
-	
-	bus_space_handle_t *hp;
+_obio_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
 {
 	struct obio_softc *sc = t->cookie;
 
-	return (bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr,
-				size, flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp));
+	return (bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr, size,
+			       flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp));
 }
 
 paddr_t
-obio_bus_mmap(t, btype, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+obio_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
 {
 	struct obio_softc *sc = t->cookie;
 
@@ -192,11 +173,7 @@ obio_bus_mmap(t, btype, paddr, off, prot, flags)
  * probed obio physical addresses to make sure they're ok.
  */
 int
-_obio_addr_bad(t, h, o, s)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	size_t s;
+_obio_addr_bad(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s)
 {
 	u_int pte;
 	paddr_t pa;
@@ -217,12 +194,8 @@ _obio_addr_bad(t, h, o, s)
 }
 	
 int
-_obio_bus_peek(t, h, o, s, vp)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	size_t s;
-	void *vp;
+_obio_bus_peek(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s,
+    void *vp)
 {
 	struct obio_softc *sc = t->cookie;
 
@@ -231,12 +204,8 @@ _obio_bus_peek(t, h, o, s, vp)
 }
 
 int
-_obio_bus_poke(t, h, o, s, v)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	size_t s;
-	u_int32_t v;
+_obio_bus_poke(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s,
+    uint32_t v)
 {
 	struct obio_softc *sc = t->cookie;
 

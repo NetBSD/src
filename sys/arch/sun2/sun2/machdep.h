@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.10 2004/02/13 11:36:19 wiz Exp $	*/
+/*	$NetBSD: machdep.h,v 1.11 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -105,34 +105,34 @@ extern label_t *nofault;
 
 extern vaddr_t vmmap;	/* XXX - See mem.c */
 
-void	clock_init  __P((void));
-void	cninit __P((void));
+void	clock_init (void);
+void	cninit(void);
 
-void	dumpconf __P((void));
-void	dumpsys __P((void));
+void	dumpconf(void);
+void	dumpsys(void);
 
-int 	fpu_emulate __P((struct trapframe *, struct fpframe *, ksiginfo_t *));
+int 	fpu_emulate(struct trapframe *, struct fpframe *, ksiginfo_t *);
 
-int 	getdfc __P((void));
-int 	getsfc __P((void));
+int 	getdfc(void);
+int 	getsfc(void);
 
 /* Backward compatibility... */
 #define getsr	_getsr
 
-void**	getvbr __P((void));
+void**	getvbr(void);
 
-void	initfpu __P((void));
+void	initfpu(void);
 
-void	set_clk_mode __P((int, int));
+void	set_clk_mode(int, int);
 
-void	setvbr __P((void **));
+void	setvbr(void **);
 
-void	g0_entry __P((void));
-void	g4_entry __P((void));
+void	g0_entry(void);
+void	g4_entry(void);
 
-void	swapconf __P((void));
+void	swapconf(void);
 
-void	zs_init __P((void));
+void	zs_init(void);
 
 struct sun2_kcore_hdr;
 
@@ -142,8 +142,8 @@ extern vaddr_t virtual_avail, virtual_end;
 extern paddr_t avail_start, avail_end;
 
 /* pmap.c */
-void	pmap_bootstrap __P((vaddr_t nextva));
-void	pmap_kcore_hdr __P((struct sun2_kcore_hdr *));
-void	pmap_get_pagemap __P((int *pt, int off));
+void	pmap_bootstrap(vaddr_t nextva);
+void	pmap_kcore_hdr(struct sun2_kcore_hdr *);
+void	pmap_get_pagemap(int *pt, int off);
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.2 2003/08/07 16:29:55 agc Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.3 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,24 +40,24 @@
 
 #ifndef _LOCORE
 struct fdreg_77 {
-	u_int8_t	fd_statusA;
-	u_int8_t	fd_statusB;
-	u_int8_t	fd_dor;		/* Digital Output Register (R/W) */
-	u_int8_t	fd_tdr;		/* Tape Control Register (R/W) */
-	u_int8_t	fd_msr;		/* Main Status Register (R) */
-#define fd_drs		fd_msr		/* Data Rate Select Register (W) */
-	u_int8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
-	u_int8_t	fd_reserved;
-	u_int8_t	fd_dir;		/* Digital Input Register (R) */
-#define fd_ccr		fd_dir		/* Configuration Control (W) */
+	uint8_t	fd_statusA;
+	uint8_t	fd_statusB;
+	uint8_t	fd_dor;		/* Digital Output Register (R/W) */
+	uint8_t	fd_tdr;		/* Tape Control Register (R/W) */
+	uint8_t	fd_msr;		/* Main Status Register (R) */
+#define fd_drs	fd_msr		/* Data Rate Select Register (W) */
+	uint8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
+	uint8_t	fd_reserved;
+	uint8_t	fd_dir;		/* Digital Input Register (R) */
+#define fd_ccr	fd_dir		/* Configuration Control (W) */
 };
 
 struct fdreg_72 {
-	u_int8_t	fd_msr;		/* Main Status Register (R) */
+	uint8_t	fd_msr;		/* Main Status Register (R) */
 #if already_a_define
-#define fd_drs	fd_msr			/* Data Rate Select Register (W) */
+#define fd_drs	fd_msr		/* Data Rate Select Register (W) */
 #endif
-	u_int8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
+	uint8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
 };
 
 union fdreg {

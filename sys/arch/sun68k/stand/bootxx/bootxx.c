@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2002/05/15 09:44:55 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.9 2005/01/22 15:36:11 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@ struct shared_bbinfo bbinfo = {
 	{ 0 }
 };
 
-int
-main()
+int 
+main(void)
 {
 	struct open_file	f;
 	void	*entry;
@@ -102,10 +102,8 @@ main()
 	return;
 }
 
-int
-copyboot(fp, addr)
-	struct open_file	*fp;
-	char			*addr;
+int 
+copyboot(struct open_file *fp, char *addr)
 {
 	int	n, i, blknum;
 	char *buf;
@@ -133,10 +131,9 @@ copyboot(fp, addr)
 			putstr("bootxx: short read\n");
 			return -1;
 		}
-		bcopy(buf, addr, bbinfo.bbi_block_size);
+		memcpy(addr, buf, bbinfo.bbi_block_size);
 		addr += bbinfo.bbi_block_size;
 	}
 
 	return 0;
 }
-

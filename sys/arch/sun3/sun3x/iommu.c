@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.13 2003/07/15 03:36:20 lukem Exp $	*/
+/*	$NetBSD: iommu.c,v 1.14 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.13 2003/07/15 03:36:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.14 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,19 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.13 2003/07/15 03:36:20 lukem Exp $");
 
 #define IOMMU_SIZE	(IOMMU_NENT * sizeof(iommu_pde_t))
 
-static int  iommu_match __P((struct device *, struct cfdata *, void *));
-static void iommu_attach __P((struct device *, struct device *, void *));
+static int  iommu_match(struct device *, struct cfdata *, void *);
+static void iommu_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(iommu, sizeof(struct device),
     iommu_match, iommu_attach, NULL, NULL);
 
 static iommu_pde_t *iommu_va;
 
-static int
-iommu_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+iommu_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	/* This driver only supports one instance. */
 	if (iommu_va)
@@ -79,11 +76,8 @@ iommu_match(parent, cf, args)
 	return (1);
 }
 
-static void
-iommu_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+iommu_attach(struct device *parent, struct device *self, void *args)
 {
 	struct confargs *ca = args;
 
@@ -93,10 +87,8 @@ iommu_attach(parent, self, args)
 	printf("\n");
 }
 
-void
-iommu_enter(sa, pa)
-	u_int32_t sa;	/* slave address */
-	u_int32_t pa;	/* phys. address */
+void 
+iommu_enter(uint32_t sa, uint32_t pa)
 {
 	int pn;
 
@@ -115,10 +107,8 @@ iommu_enter(sa, pa)
 	iommu_va[pn].addr.raw = pa;
 }
 
-void
-iommu_remove(sa, len)
-	u_int32_t sa;	/* slave address */
-	u_int32_t len;
+void 
+iommu_remove(uint32_t sa, uint32_t len)
 {
 	int pn;
 

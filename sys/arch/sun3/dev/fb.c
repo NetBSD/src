@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.11 2003/08/07 16:29:55 agc Exp $ */
+/*	$NetBSD: fb.c,v 1.12 2005/01/22 15:36:10 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.11 2003/08/07 16:29:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,8 @@ static int fbpriority;
  * This is called by the real driver (i.e. bw2, cg3, ...)
  * to declare itself as a potential default frame buffer.
  */
-void
-fb_attach(fb, newpri)
-	struct fbdevice *fb;
-	int newpri;
+void 
+fb_attach(struct fbdevice *fb, int newpri)
 {
 	if (fbpriority < newpri) {
 		fbpriority = newpri;
@@ -88,11 +86,8 @@ fb_attach(fb, newpri)
 	}
 }
 
-int
-fbopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+fbopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 
 	if (devfb == NULL)
@@ -100,32 +95,21 @@ fbopen(dev, flags, mode, p)
 	return ((*devfb->fb_driver->fbd_open)(dev, flags, mode, p));
 }
 
-int
-fbclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+fbclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 
 	return ((*devfb->fb_driver->fbd_close)(dev, flags, mode, p));
 }
 
-int
-fbioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+int 
+fbioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (fbioctlfb(devfb, cmd, data));
 }
 
-paddr_t
-fbmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+paddr_t 
+fbmmap(dev_t dev, off_t off, int prot)
 {
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
 }
@@ -133,11 +117,8 @@ fbmmap(dev, off, prot)
 /*
  * Common fb ioctl function
  */
-int
-fbioctlfb(fb, cmd, data)
-	struct fbdevice *fb;
-	u_long cmd;
-	caddr_t data;
+int 
+fbioctlfb(struct fbdevice *fb, u_long cmd, caddr_t data)
 {
 	struct fbdriver *fbd = fb->fb_driver;
 	void *vp = (void *)data;
@@ -176,8 +157,8 @@ fbioctlfb(fb, cmd, data)
 	return (error);
 }
 
-void
-fb_unblank()
+void 
+fb_unblank(void)
 {
 	int on = 1;
 
@@ -191,10 +172,8 @@ fb_unblank()
  * Default ioctl function to put in struct fbdriver
  * for functions that are not supported.
  */
-int
-fb_noioctl(fbd, vp)
-	struct fbdevice *fbd;
-	void *vp;
+int 
+fb_noioctl(struct fbdevice *fbd, void *vp)
 {
 	return ENOTTY;
 }
@@ -204,9 +183,8 @@ fb_noioctl(fbd, vp)
  */
 
 /* Set FB size based on EEPROM screen shape code. */
-void
-fb_eeprom_setsize(fb)
-	struct fbdevice *fb;
+void 
+fb_eeprom_setsize(struct fbdevice *fb)
 {
 	int szcode;
 	int w, h;
@@ -249,11 +227,10 @@ fb_eeprom_setsize(fb)
  * Probe for a P4 register at the passed virtual address.
  * Returns P4 ID value, or -1 if no P4 register.
  */
-int
-fb_pfour_id(va)
-	void *va;
+int 
+fb_pfour_id(void *va)
 {
-	volatile u_int32_t val, save, *pfour = va;
+	volatile uint32_t val, save, *pfour = va;
 
 	/* Read the P4 register. */
 	save = *pfour;
@@ -276,9 +253,8 @@ fb_pfour_id(va)
 /*
  * Return the status of the video enable.
  */
-int
-fb_pfour_get_video(fb)
-	struct fbdevice *fb;
+int 
+fb_pfour_get_video(struct fbdevice *fb)
 {
 
 	return ((*fb->fb_pfour & P4_REG_VIDEO) != 0);
@@ -287,10 +263,8 @@ fb_pfour_get_video(fb)
 /*
  * Turn video on or off using the P4 register.
  */
-void
-fb_pfour_set_video(fb, on)
-	struct fbdevice *fb;
-	int on;
+void 
+fb_pfour_set_video(struct fbdevice *fb, int on)
 {
 	int pfour;
 
@@ -312,9 +286,8 @@ static const struct {
 /*
  * Use the P4 register to determine the screen size.
  */
-void
-fb_pfour_setsize(fb)
-	struct fbdevice *fb;
+void 
+fb_pfour_setsize(struct fbdevice *fb)
 {
 	int p4, p4type, p4size;
 	int h, w;

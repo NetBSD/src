@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.18 1999/03/04 05:57:18 gwr Exp $	*/
+/*	$NetBSD: idprom.h,v 1.19 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct idprom {
 extern struct idprom identity_prom;
 extern u_char cpu_machine_id;
 
-void idprom_etheraddr __P((u_char *));
-void idprom_init __P((void));
+void idprom_etheraddr(u_char *);
+void idprom_init(void);
 
 #endif	/* _KERNEL || _STANDALONE */

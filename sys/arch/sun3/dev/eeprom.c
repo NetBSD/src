@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.25 2003/07/15 03:36:14 lukem Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.26 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.25 2003/07/15 03:36:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.26 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,17 +73,14 @@ static int ee_size;     /* size of usable part. */
 
 static int ee_busy, ee_want; /* serialization */
 
-static int  eeprom_match __P((struct device *, struct cfdata *, void *));
-static void eeprom_attach __P((struct device *, struct device *, void *));
+static int  eeprom_match(struct device *, struct cfdata *, void *);
+static void eeprom_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eeprom, sizeof(struct device),
     eeprom_match, eeprom_attach, NULL, NULL);
 
-static int
-eeprom_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+eeprom_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -97,11 +94,8 @@ eeprom_match(parent, cf, args)
 	return (1);
 }
 
-static void
-eeprom_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+eeprom_attach(struct device *parent, struct device *self, void *args)
 {
 	struct confargs *ca = args;
 	char *src, *dst, *lim;
@@ -148,9 +142,10 @@ eeprom_attach(parent, self, args)
 
 /* Take the lock. */
 static int
-ee_take __P((void))
+ee_take(void)
 {
 	int error = 0;
+
 	while (ee_busy) {
 		ee_want = 1;
 		error = tsleep(&ee_busy, PZERO | PCATCH, "eeprom", 0);
@@ -164,7 +159,7 @@ ee_take __P((void))
 
 /* Give the lock. */
 static void
-ee_give __P((void))
+ee_give(void)
 {
 	ee_busy = 0;
 	if (ee_want) {

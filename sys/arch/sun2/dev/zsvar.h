@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.3 2003/08/07 16:29:52 agc Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.4 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,13 +69,12 @@ struct zsc_softc {
 };
 
 /* MI function to attach a zs. */
-void zs_attach __P((struct zsc_softc *, struct zsdevice *, int)); 
+void zs_attach(struct zsc_softc *, struct zsdevice *, int); 
 
 /* MD function to get any console flags for a zs. */
-int zs_console_flags __P((int, int, int));
+int zs_console_flags(int, int, int);
 
 /* MD function that says what is attached to a zs. */
-int zs_peripheral_type __P((int, int, int));
 #define ZS_PERIPHERAL_UNKNOWN	0
 #define ZS_PERIPHERAL_SUNKBD	1
 #define ZS_PERIPHERAL_SUNMS	2
@@ -94,13 +93,13 @@ int zs_peripheral_type __P((int, int, int));
  * about the function call overhead where ZS_DELAY does nothing.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *, u_char);
+u_char zs_read_csr(struct zs_chanstate *);
+u_char zs_read_data(struct zs_chanstate *);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
+void  zs_write_csr(struct zs_chanstate *, u_char);
+void  zs_write_data(struct zs_chanstate *, u_char);
 
 /* Everyone has splzs() in psl.h */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.8 2003/07/15 03:36:12 lukem Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.9 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.8 2003/07/15 03:36:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.9 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.8 2003/07/15 03:36:12 lukem Exp $");
  * New-style autoconfig attachment
  */
 
-static int	sunsc_mbmem_match __P((struct device *, struct cfdata *, void *));
-static void	sunsc_mbmem_attach __P((struct device *, struct device *, void *));
-static int	sunsc_mbmem_intr __P((void *));
+static int	sunsc_mbmem_match(struct device *, struct cfdata *, void *);
+static void	sunsc_mbmem_attach(struct device *, struct device *, void *);
+static int	sunsc_mbmem_intr(void *);
 
 CFATTACH_DECL(sc_mbmem, sizeof(struct sunscpal_softc),
     sunsc_mbmem_match, sunsc_mbmem_attach, NULL, NULL);
@@ -116,11 +116,8 @@ CFATTACH_DECL(sc_mbmem, sizeof(struct sunscpal_softc),
  */
 int sunsc_mbmem_options = 0x00;
 
-static int
-sunsc_mbmem_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+sunsc_mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
 	bus_space_handle_t bh;
@@ -146,10 +143,8 @@ sunsc_mbmem_match(parent, cf, aux)
 	return (1);
 }
 
-static void
-sunsc_mbmem_attach(parent, self, args)
-	struct device	*parent, *self;
-	void		*args;
+static void 
+sunsc_mbmem_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sunscpal_softc *sc = (void *) self;
 	struct cfdata *cf = self->dv_cfdata;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootyy.c,v 1.1 2001/06/14 12:57:13 fredette Exp $ */
+/*	$NetBSD: bootyy.c,v 1.2 2005/01/22 15:36:11 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@
 
 int     	block_size = SUNND_BSIZE;	/* default */
 
-int
-main()
+int 
+main(void)
 {
 	struct open_file	f;
 	void	*entry;
@@ -97,7 +97,7 @@ main()
 		return;
 	}
 
-	addr = (char*)KERN_LOADADDR;
+	addr = (char *)KERN_LOADADDR;
 	error = copyboot(&f, addr);
 	f.f_dev->dv_close(&f);
 	if (!error) {
@@ -111,10 +111,8 @@ main()
 	return;
 }
 
-int
-copyboot(fp, addr)
-	struct open_file	*fp;
-	char			*addr;
+int 
+copyboot(struct open_file *fp, char *addr)
 {
 	int	n, i, blknum;
 	char *buf;
@@ -139,7 +137,7 @@ copyboot(fp, addr)
 			printf("bootyy: short read\n");
 			return -1;
 		}
-		bcopy(buf, addr, block_size);
+		memcpy(addr, buf, block_size);
 		addr += block_size;
 	}
 

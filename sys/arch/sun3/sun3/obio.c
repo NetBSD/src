@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.45 2003/07/15 03:36:18 lukem Exp $	*/
+/*	$NetBSD: obio.c,v 1.46 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.45 2003/07/15 03:36:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.46 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,19 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.45 2003/07/15 03:36:18 lukem Exp $");
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/obio.h>
 
-static int  obio_match __P((struct device *, struct cfdata *, void *));
-static void obio_attach __P((struct device *, struct device *, void *));
-static int  obio_print __P((void *, const char *parentname));
-static int	obio_submatch __P((struct device *, struct cfdata *, void *));
+static int	obio_match(struct device *, struct cfdata *, void *);
+static void	obio_attach(struct device *, struct device *, void *);
+static int	obio_print(void *, const char *);
+static int	obio_submatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
 
-static int
-obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -83,11 +80,8 @@ obio_match(parent, cf, aux)
 #define OBIO_INCR	0x020000
 #define OBIO_END	0x200000
 
-static void
-obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	int	addr;
@@ -109,10 +103,8 @@ obio_attach(parent, self, aux)
  * Print out the confargs.  The (parent) name is non-NULL
  * when there was no match found by config_found().
  */
-static int
-obio_print(args, name)
-	void *args;
-	const char *name;
+static int 
+obio_print(void *args, const char *name)
 {
 
 	/* Be quiet about empty OBIO locations. */
@@ -123,11 +115,8 @@ obio_print(args, name)
 	return(bus_print(args, name));
 }
 
-int
-obio_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+obio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -243,7 +232,7 @@ obio_find_mapping(paddr_t pa, psize_t sz)
 #define PGBITS (PG_VALID|PG_WRITE|PG_SYSTEM)
 
 static void
-save_prom_mappings __P((void))
+save_prom_mappings(void)
 {
 	paddr_t pa;
 	vaddr_t segva, pgva;
@@ -305,7 +294,7 @@ static paddr_t required_mappings[] = {
 };
 
 static void
-make_required_mappings __P((void))
+make_required_mappings(void)
 {
 	paddr_t *rmp;
 
@@ -333,8 +322,8 @@ make_required_mappings __P((void))
  * normal autoconfiguration calls configure().  Warning: this is
  * called before pmap_bootstrap, so no allocation allowed!
  */
-void
-obio_init()
+void 
+obio_init(void)
 {
 	save_prom_mappings();
 	make_required_mappings();

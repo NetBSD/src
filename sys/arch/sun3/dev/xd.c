@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.47 2004/10/28 07:07:38 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.48 2005/01/22 15:36:10 chs Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.47 2004/10/28 07:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.48 2005/01/22 15:36:10 chs Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -220,39 +220,38 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.47 2004/10/28 07:07:38 yamt Exp $");
  */
 
 /* internals */
-int	xdc_cmd __P((struct xdc_softc *, int, int, int, int, int, char *, int));
-char   *xdc_e2str __P((int));
-int	xdc_error __P((struct xdc_softc *, struct xd_iorq *,
-		   struct xd_iopb *, int, int));
-int	xdc_ioctlcmd __P((struct xd_softc *, dev_t dev, struct xd_iocmd *));
-void	xdc_perror __P((struct xd_iorq *, struct xd_iopb *, int));
-int	xdc_piodriver __P((struct xdc_softc *, int, int));
-int	xdc_remove_iorq __P((struct xdc_softc *));
-int	xdc_reset __P((struct xdc_softc *, int, int, int, struct xd_softc *));
-inline void xdc_rqinit __P((struct xd_iorq *, struct xdc_softc *,
-			    struct xd_softc *, int, u_long, int,
-			    caddr_t, struct buf *));
-void	xdc_rqtopb __P((struct xd_iorq *, struct xd_iopb *, int, int));
-void	xdc_start __P((struct xdc_softc *, int));
-int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
-int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
-void	xdc_tick __P((void *));
-void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+int	xdc_cmd(struct xdc_softc *, int, int, int, int, int, char *, int);
+char   *xdc_e2str(int);
+int	xdc_error(struct xdc_softc *, struct xd_iorq *, struct xd_iopb *, int,
+	    int);
+int	xdc_ioctlcmd(struct xd_softc *, dev_t dev, struct xd_iocmd *);
+void	xdc_perror(struct xd_iorq *, struct xd_iopb *, int);
+int	xdc_piodriver(struct xdc_softc *, int, int);
+int	xdc_remove_iorq(struct xdc_softc *);
+int	xdc_reset(struct xdc_softc *, int, int, int, struct xd_softc *);
+inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *, struct xd_softc *,
+	    int, u_long, int, caddr_t, struct buf *);
+void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
+void	xdc_start(struct xdc_softc *, int);
+int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
+int	xdc_submit_iorq(struct xdc_softc *, int, int);
+void	xdc_tick(void *);
+void	xdc_xdreset(struct xdc_softc *, struct xd_softc *);
 
 /* machine interrupt hook */
-int	xdcintr __P((void *));
+int	xdcintr(void *);
 
 /* autoconf */
-static int	xdcmatch __P((struct device *, struct cfdata *, void *));
-static void	xdcattach __P((struct device *, struct device *, void *));
-static int  xdc_print __P((void *, const char *name));
+static int	xdcmatch(struct device *, struct cfdata *, void *);
+static void	xdcattach(struct device *, struct device *, void *);
+static int	xdc_print(void *, const char *);
 
-static int	xdmatch __P((struct device *, struct cfdata *, void *));
-static void	xdattach __P((struct device *, struct device *, void *));
-static void xd_init __P((struct xd_softc *));
+static int	xdmatch(struct device *, struct cfdata *, void *);
+static void	xdattach(struct device *, struct device *, void *);
+static void	xd_init(struct xd_softc *);
 
-static	void xddummystrat __P((struct buf *));
-int	xdgetdisklabel __P((struct xd_softc *, void *));
+static	void xddummystrat(struct buf *);
+int	xdgetdisklabel(struct xd_softc *, void *);
 
 /*
  * cfattach's: device driver interface to autoconfig
@@ -303,9 +302,8 @@ struct dkdriver xddkdriver = {xdstrategy};
 
 static void *xd_labeldata;
 
-static void
-xddummystrat(bp)
-	struct buf *bp;
+static void 
+xddummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
@@ -314,10 +312,8 @@ xddummystrat(bp)
 	bp->b_flags &= ~B_BUSY;
 }
 
-int
-xdgetdisklabel(xd, b)
-	struct xd_softc *xd;
-	void *b;
+int 
+xdgetdisklabel(struct xd_softc *xd, void *b)
 {
 	const char *err;
 	struct sun_disklabel *sdl;
@@ -372,10 +368,8 @@ xdgetdisklabel(xd, b)
  * soft reset to detect the xdc.
  */
 
-int xdcmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+xdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -397,10 +391,8 @@ int xdcmatch(parent, cf, aux)
 /*
  * xdcattach: attach controller
  */
-void
-xdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+void 
+xdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xdc_softc *xdc = (void *) self;
 	struct confargs *ca = aux;
@@ -507,10 +499,8 @@ xdcattach(parent, self, aux)
 	callout_reset(&xdc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdc);
 }
 
-int
-xdc_print(aux, name)
-	void *aux;
-	const char *name;
+int 
+xdc_print(void *aux, const char *name)
 {
 	struct xdc_attach_args *xa = aux;
 
@@ -531,11 +521,8 @@ xdc_print(aux, name)
  * call xdattach!).  Also, wire down the relationship between the
  * xd* and xdc* devices, to simplify boot device identification.
  */
-int
-xdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+xdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xdc_attach_args *xa = aux;
 	int xd_unit;
@@ -551,11 +538,8 @@ xdmatch(parent, cf, aux)
 /*
  * xdattach: attach a disk.
  */
-void
-xdattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+void 
+xdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xd_softc *xd = (void *) self;
 	struct xdc_softc *xdc = (void *) parent;
@@ -590,9 +574,8 @@ xdattach(parent, self, aux)
  * Initialize a disk.  This can be called from both autoconf and
  * also from xdopen/xdstrategy.
  */
-static void
-xd_init(xd)
-	struct xd_softc *xd;
+static void 
+xd_init(struct xd_softc *xd)
 {
 	struct xdc_softc *xdc;
 	struct dkbad *dkb;
@@ -755,11 +738,8 @@ done:
 /*
  * xdclose: close device
  */
-int
-xdclose(dev, flag, fmt, p)
-	dev_t   dev;
-	int     flag, fmt;
-	struct proc *p;
+int 
+xdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -782,12 +762,8 @@ xdclose(dev, flag, fmt, p)
 /*
  * xddump: crash dump system
  */
-int
-xddump(dev, blkno, va, sz)
-	dev_t   dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t sz;
+int 
+xddump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -821,14 +797,8 @@ xddump(dev, blkno, va, sz)
 /*
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
-int
-xdioctl(dev, command, addr, flag, p)
-	dev_t   dev;
-	u_long  command;
-	caddr_t addr;
-	int     flag;
-	struct proc *p;
-
+int 
+xdioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
 {
 	struct xd_softc *xd;
 	struct xd_iocmd *xio;
@@ -915,11 +885,8 @@ xdioctl(dev, command, addr, flag, p)
 /*
  * xdopen: open drive
  */
-int
-xdopen(dev, flag, fmt, p)
-	dev_t   dev;
-	int     flag, fmt;
-	struct proc *p;
+int 
+xdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int err, unit, part, s;
 	struct xd_softc *xd;
@@ -976,21 +943,15 @@ done:
 	return (err);
 }
 
-int
-xdread(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+int 
+xdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
-int
-xdwrite(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+int 
+xdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -1000,10 +961,8 @@ xdwrite(dev, uio, flags)
 /*
  * xdsize: return size of a partition for a dump
  */
-int
-xdsize(dev)
-	dev_t   dev;
-
+int 
+xdsize(dev_t dev)
 {
 	struct xd_softc *xdsc;
 	int     unit, part, size, omask;
@@ -1033,10 +992,8 @@ xdsize(dev)
 /*
  * xdstrategy: buffering system interface to xd.
  */
-void
-xdstrategy(bp)
-	struct buf *bp;
-
+void 
+xdstrategy(struct buf *bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
@@ -1130,10 +1087,8 @@ done:				/* tells upper layers we are done with this
  *
  * xdcintr: hardware interrupt.
  */
-int
-xdcintr(v)
-	void   *v;
-
+int 
+xdcintr(void *v)
 {
 	struct xdc_softc *xdcsc = v;
 
@@ -1165,16 +1120,9 @@ xdcintr(v)
  * xdc_rqinit: fill out the fields of an I/O request
  */
 
-inline void
-xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
-	struct xd_iorq *rq;
-	struct xdc_softc *xdc;
-	struct xd_softc *xd;
-	int     md;
-	u_long  blk;
-	int     cnt;
-	caddr_t db;
-	struct buf *bp;
+inline void 
+xdc_rqinit(struct xd_iorq *rq, struct xdc_softc *xdc, struct xd_softc *xd,
+    int md, u_long blk, int cnt, caddr_t db, struct buf *bp)
 {
 	rq->xdc = xdc;
 	rq->xd = xd;
@@ -1190,12 +1138,8 @@ xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
 /*
  * xdc_rqtopb: load up an IOPB based on an iorq
  */
-void
-xdc_rqtopb(iorq, iopb, cmd, subfun)
-	struct xd_iorq *iorq;
-	struct xd_iopb *iopb;
-	int     cmd, subfun;
-
+void 
+xdc_rqtopb(struct xd_iorq *iorq, struct xd_iopb *iopb, int cmd, int subfun)
 {
 	u_long  block, dp;
 
@@ -1304,13 +1248,9 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
  * If you've already got an IORQ, you can call submit directly (currently
  * there is no need to do this).    NORM requests are handled separately.
  */
-int
-xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
-	struct xdc_softc *xdcsc;
-	int     cmd, subfn, unit, block, scnt;
-	char   *dptr;
-	int     fullmode;
-
+int 
+xdc_cmd(struct xdc_softc *xdcsc, int cmd, int subfn, int unit, int block,
+    int scnt, char *dptr, int fullmode)
 {
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
@@ -1368,12 +1308,8 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
  * xdc_startbuf
  * start a buffer running, assumes nfree > 0
  */
-int
-xdc_startbuf(xdcsc, xdsc, bp)
-	struct xdc_softc *xdcsc;
-	struct xd_softc *xdsc;
-	struct buf *bp;
-
+int 
+xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 {
 	int     rqno, partno;
 	struct xd_iorq *iorq;
@@ -1485,13 +1421,8 @@ xdc_startbuf(xdcsc, xdsc, bp)
  * on the iorq free list until some iopbs are available.
  */
 
-
-int
-xdc_submit_iorq(xdcsc, iorqno, type)
-	struct xdc_softc *xdcsc;
-	int     iorqno;
-	int     type;
-
+int 
+xdc_submit_iorq(struct xdc_softc *xdcsc, int iorqno, int type)
 {
 	u_long  iopbaddr;
 	struct xd_iorq *iorq = &xdcsc->reqs[iorqno];
@@ -1567,12 +1498,8 @@ xdc_submit_iorq(xdcsc, iorqno, type)
  * the caller is interesting in.   if freeone is true, then it returns
  * when there is a free iorq.
  */
-int
-xdc_piodriver(xdcsc, iorqno, freeone)
-	struct xdc_softc *xdcsc;
-	int     iorqno;
-	int     freeone;
-
+int 
+xdc_piodriver(struct xdc_softc *xdcsc, int iorqno, int freeone)
 {
 	int     nreset = 0;
 	int     retval = 0;
@@ -1645,11 +1572,8 @@ xdc_piodriver(xdcsc, iorqno, freeone)
  * xdc_reset: reset one drive.   NOTE: assumes xdc was just reset.
  * we steal iopb[0] for this, but we put it back when we are done.
  */
-void
-xdc_xdreset(xdcsc, xdsc)
-	struct xdc_softc *xdcsc;
-	struct xd_softc *xdsc;
-
+void 
+xdc_xdreset(struct xdc_softc *xdcsc, struct xd_softc *xdsc)
 {
 	struct xd_iopb tmpiopb;
 	u_long  addr;
@@ -1679,12 +1603,9 @@ xdc_xdreset(xdcsc, xdsc)
  * xdc_reset: reset everything: requests are marked as errors except
  * a polled request (which is resubmitted)
  */
-int
-xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
-	struct xdc_softc *xdcsc;
-	int     quiet, blastmode, error;
-	struct xd_softc *xdsc;
-
+int 
+xdc_reset(struct xdc_softc *xdcsc, int quiet, int blastmode, int error,
+    struct xd_softc *xdsc)
 {
 	int     del = 0, lcv, retval = XD_ERR_AOK;
 	int     oldfree = xdcsc->nfree;
@@ -1776,11 +1697,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 /*
  * xdc_start: start all waiting buffers
  */
-void
-xdc_start(xdcsc, maxio)
-	struct xdc_softc *xdcsc;
-	int     maxio;
-
+void 
+xdc_start(struct xdc_softc *xdcsc, int maxio)
 {
 	int     rqno;
 	while (maxio && xdcsc->nwait &&
@@ -1796,10 +1714,8 @@ xdc_start(xdcsc, maxio)
 /*
  * xdc_remove_iorq: remove "done" IOPB's.
  */
-int
-xdc_remove_iorq(xdcsc)
-	struct xdc_softc *xdcsc;
-
+int 
+xdc_remove_iorq(struct xdc_softc *xdcsc)
 {
 	int     errno, rqno, comm, errs;
 	struct xdc *xdc = xdcsc->xdc;
@@ -1964,12 +1880,8 @@ xdc_remove_iorq(xdcsc)
  *   is in lasterror. also, if iorq->errno == 0, then we recovered
  *   from that error (otherwise iorq->errno == iorq->lasterror).
  */
-void
-xdc_perror(iorq, iopb, still_trying)
-	struct xd_iorq *iorq;
-	struct xd_iopb *iopb;
-	int     still_trying;
-
+void 
+xdc_perror(struct xd_iorq *iorq, struct xd_iopb *iopb, int still_trying)
 {
 
 	int     error = iorq->lasterror;
@@ -1998,12 +1910,9 @@ xdc_perror(iorq, iopb, still_trying)
  * xdc_error: non-fatal error encountered... recover.
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
-int
-xdc_error(xdcsc, iorq, iopb, rqno, comm)
-	struct xdc_softc *xdcsc;
-	struct xd_iorq *iorq;
-	struct xd_iopb *iopb;
-	int     rqno, comm;
+int 
+xdc_error(struct xdc_softc *xdcsc, struct xd_iorq *iorq, struct xd_iopb *iopb,
+    int rqno, int comm)
 
 {
 	int     errno = iorq->errno;
@@ -2070,9 +1979,8 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 /*
  * xdc_tick: make sure xd is still alive and ticking (err, kicking).
  */
-void
-xdc_tick(arg)
-	void   *arg;
+void 
+xdc_tick(void *arg)
 
 {
 	struct xdc_softc *xdcsc = arg;
@@ -2163,11 +2071,8 @@ xdc_tick(arg)
  * in user code, and is also useful for some debugging.   we return
  * an error code.   called at user priority.
  */
-int
-xdc_ioctlcmd(xd, dev, xio)
-	struct xd_softc *xd;
-	dev_t   dev;
-	struct xd_iocmd *xio;
+int 
+xdc_ioctlcmd(struct xd_softc *xd, dev_t dev, struct xd_iocmd *xio)
 
 {
 	int     s, err, rqno;
@@ -2293,8 +2198,7 @@ done:
  * xdc_e2str: convert error code number into an error string
  */
 char *
-xdc_e2str(no)
-	int     no;
+xdc_e2str(int no)
 {
 	switch (no) {
 	case XD_ERR_FAIL:

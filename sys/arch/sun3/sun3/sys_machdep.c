@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.17 2003/08/07 16:29:58 agc Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18 2005/01/22 15:36:10 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17 2003/08/07 16:29:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.18 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17 2003/08/07 16:29:58 agc Exp $")
 /* XXX end should be */
 
 /*ARGSUSED1*/
-int
-cachectl1(req, addr, len, p)
-	unsigned long req;
-	vaddr_t	addr;
-	size_t len;
-	struct proc *p;
+int 
+cachectl1(unsigned long req, vaddr_t addr, size_t len, struct proc *p)
 {
 	int error = 0;
 
@@ -91,11 +87,8 @@ cachectl1(req, addr, len, p)
 	return(error);
 }
 
-int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+int 
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2004/12/14 02:32:03 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2005/01/22 15:36:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2004/12/14 02:32:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2005/01/22 15:36:12 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2004/12/14 02:32:03 chs Exp $");
  * then choose root device (etc.)
  * Called by machdep.c: cpu_startup()
  */
-void
-cpu_configure()
+void 
+cpu_configure(void)
 {
 
 	/*
@@ -115,8 +115,8 @@ cpu_configure()
 	(void)spl0();
 }
 
-static int 	mainbus_match __P((struct device *, struct cfdata *, void *));
-static void	mainbus_attach __P((struct device *, struct device *, void *));
+static int 	mainbus_match(struct device *, struct cfdata *, void *);
+static void	mainbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -124,11 +124,8 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 /*
  * Probe for the mainbus; always succeeds.
  */
-static int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	return 1;
@@ -139,11 +136,8 @@ mainbus_match(parent, cf, aux)
  * This controls the order of autoconfig for important things
  * used early.  For example, idprom is used by Ether drivers.
  */
-static void
-mainbus_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+mainbus_attach(struct device *parent, struct device *self, void *args)
 {
 extern struct sun68k_bus_dma_tag mainbus_dma_tag;
 extern struct sun68k_bus_space_tag mainbus_space_tag;
@@ -191,10 +185,8 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
  * used config_found, then we would not have an opportunity to
  * setup the _attach_args for each child match and attach call.
  */
-int sun68k_bus_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+sun68k_bus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *map = aux;
 	struct mainbus_attach_args ma;
@@ -261,10 +253,8 @@ int sun68k_bus_search(parent, cf, aux)
  * The parent name is non-NULL when there was no match
  * found by config_found().
  */
-int
-sun68k_bus_print(args, name)
-	void *args;
-	const char *name;
+int 
+sun68k_bus_print(void *args, const char *name)
 {
 	struct mainbus_attach_args *ma = args;
 
@@ -282,14 +272,14 @@ sun68k_bus_print(args, name)
 /****************************************************************/
 
 /* This takes the args: name, ctlr, unit */
-typedef struct device * (*findfunc_t) __P((char *, int, int));
+typedef struct device * (*findfunc_t)(char *, int, int);
 
-static struct device * find_dev_byname __P((char *));
-static struct device * net_find  __P((char *, int, int));
+static struct device * find_dev_byname(char *);
+static struct device * net_find (char *, int, int);
 #if NSCSIBUS > 0
-static struct device * scsi_find __P((char *, int, int));
+static struct device * scsi_find(char *, int, int);
 #endif /* NSCSIBUS > 0 */
-static struct device * xx_find   __P((char *, int, int));
+static struct device * xx_find  (char *, int, int);
 
 struct prom_n2f {
 	const char name[4];
@@ -311,11 +301,9 @@ static struct prom_n2f prom_dev_table[] = {
  * This converts one hex number to an integer, and returns
  * an updated string pointer.
  */
-static const char *str2hex __P((const char *, int *));
+static const char *str2hex(const char *, int *);
 static const char *
-str2hex(p, _val)
-	const char *p;
-	int *_val;
+str2hex(const char *p, int *_val)
 {
 	int val;
 	int c;
@@ -334,8 +322,8 @@ str2hex(p, _val)
 /*
  * Choose root and swap devices.
  */
-void
-cpu_rootconf()
+void 
+cpu_rootconf(void)
 {
 	struct prom_n2f *nf;
 	struct device *boot_device;
@@ -395,9 +383,7 @@ cpu_rootconf()
  * Network device:  Just use controller number.
  */
 static struct device *
-net_find(name, ctlr, unit)
-	char *name;
-	int ctlr, unit;
+net_find(char *name, int ctlr, int unit)
 {
 	char tname[16];
 
@@ -411,9 +397,7 @@ net_find(name, ctlr, unit)
  * scsibus number, and the unit number is (targ*8 + LUN).
  */
 static struct device *
-scsi_find(name, ctlr, unit)
-	char *name;
-	int ctlr, unit;
+scsi_find(char *name, int ctlr, int unit)
 {
 	struct device *scsibus;
 	struct scsibus_softc *sbsc;
@@ -445,9 +429,7 @@ scsi_find(name, ctlr, unit)
  * Assume wired-in unit numbers for now...
  */
 static struct device *
-xx_find(name, ctlr, unit)
-	char *name;
-	int ctlr, unit;
+xx_find(char *name, int ctlr, int unit)
 {
 	int diskunit;
 	char tname[16];
@@ -462,8 +444,7 @@ xx_find(name, ctlr, unit)
  * XXX - Move this to some common file?
  */
 static struct device *
-find_dev_byname(name)
-	char *name;
+find_dev_byname(char *name)
 {
 	struct device *dv;
 
