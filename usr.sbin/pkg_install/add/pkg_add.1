@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.20 2000/10/05 12:45:22 ad Exp $
+.\" $NetBSD: pkg_add.1,v 1.21 2001/01/07 01:39:20 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -86,23 +86,37 @@ will search them in each directory named by the
 environment variable.
 Any dependencies required by the installed package will be searched
 in the same location that the original package was installed from.
-.It Fl v
-Turn on verbose output.
-.It Fl I
-If an installation script exists for a given package, do not execute it.
-.It Fl n
-Don't actually install a package, just report the steps that
-would be taken if it was.
-.It Fl R
-Do not record the installation of a package.  This means
-that you cannot deinstall it later, so only use this option if
-you know what you are doing!
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
 installed or the requirements script fails.  Although
 .Nm
 will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
+.It Fl I
+If an installation script exists for a given package, do not execute it.
+.It Fl M
+Run in
+.Cm MASTER
+mode.  This is a very specialized mode for running
+.Nm
+and is meant to be run in conjunction with
+.Cm SLAVE
+mode.  When run in this mode,
+.Nm
+does no work beyond extracting the package into a temporary staging
+area (see the
+.Fl t
+option), reading in the packing list, and then dumping it (prefaced by
+the current staging area) to stdout where it may be filtered by a
+program such as
+.Xr sed 1 .
+When used in conjunction with
+.Cm SLAVE
+mode, it allows you to make radical changes to the package structure
+before acting on its contents.
+.It Fl n
+Don't actually install a package, just report the steps that
+would be taken if it was.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -125,6 +139,23 @@ modes (see the
 and
 .Fl S
 options).
+.It Fl R
+Do not record the installation of a package.  This means
+that you cannot deinstall it later, so only use this option if
+you know what you are doing!
+.It Fl S
+Run in
+.Cm SLAVE
+mode.  This is a very specialized mode for running
+.Nm
+and is meant to be run in conjunction with
+.Cm MASTER
+mode.  When run in this mode,
+.Nm
+expects the release contents to be already extracted and waiting
+in the staging area, the location of which is read as a string
+from stdin.  The complete packing list is also read from stdin,
+and the contents then acted on as normal.
 .It Fl t Ar template
 Use
 .Ar template
@@ -146,39 +177,8 @@ You can get a performance boost by setting the staging area
 to reside on the same disk partition as target directories for package
 file installation; often this is
 .Pa /usr .
-.It Fl M
-Run in
-.Cm MASTER
-mode.  This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm SLAVE
-mode.  When run in this mode,
-.Nm
-does no work beyond extracting the package into a temporary staging
-area (see the
-.Fl t
-option), reading in the packing list, and then dumping it (prefaced by
-the current staging area) to stdout where it may be filtered by a
-program such as
-.Xr sed 1 .
-When used in conjunction with
-.Cm SLAVE
-mode, it allows you to make radical changes to the package structure
-before acting on its contents.
-.It Fl S
-Run in
-.Cm SLAVE
-mode.  This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm MASTER
-mode.  When run in this mode,
-.Nm
-expects the release contents to be already extracted and waiting
-in the staging area, the location of which is read as a string
-from stdin.  The complete packing list is also read from stdin,
-and the contents then acted on as normal.
+.It Fl v
+Turn on verbose output.
 .El
 .Pp
 One or more
