@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.52 1999/06/02 22:40:51 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.53 1999/06/07 16:31:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2928,8 +2928,9 @@ uvm_map_printit(map, full, pr)
 	vm_map_entry_t entry;
 
 	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, map->min_offset,map->max_offset);
-	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d\n",
-	    map->nentries, map->size, map->ref_count, map->timestamp);
+	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
+	    map->nentries, map->size, map->ref_count, map->timestamp,
+	    map->flags);
 #ifdef pmap_resident_count
 	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap, 
 	    pmap_resident_count(map->pmap));
