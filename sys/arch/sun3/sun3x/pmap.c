@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2001/04/22 23:42:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2001/04/23 23:57:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -366,6 +366,8 @@ unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
 #define pmap_add_ref(pmap) ++pmap->pm_refcount
 #define pmap_del_ref(pmap) --pmap->pm_refcount
 #define pmap_refcount(pmap) pmap->pm_refcount
+
+void *pmap_bootstrap_alloc(int);
 
 static INLINE void *      mmu_ptov __P((vm_offset_t pa));
 static INLINE vm_offset_t mmu_vtop __P((void * va));
