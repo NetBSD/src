@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.16 2002/09/23 12:48:02 mycroft Exp $	*/
+/*	$NetBSD: identd.c,v 1.17 2003/04/19 20:57:36 christos Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -388,11 +388,6 @@ int main(argc,argv)
 	    
 	  case 'l':    /* Use the Syslog daemon for logging */
 	    syslog_flag++;
-#ifdef LOG_DAEMON
-	    openlog("identd", LOG_PID, syslog_facility);
-#else
-	    openlog("identd", LOG_PID);
-#endif
 	    break;
 	    
 	  case 'o':
@@ -640,6 +635,16 @@ int main(argc,argv)
 	    ERROR2("main: setuid failed: wanted %d, got EUID %d", set_uid, geteuid());
     }
     
+    if (syslog_flag) {
+#ifdef LOG_DAEMON
+	openlog("identd", LOG_PID, syslog_facility);
+#else
+	openlog("identd", LOG_PID);
+#endif
+    }
+    (void)getpwnam("xyzzy");
+    (void)gethostbyname("xyzzy");
+
     /*
     ** Do some special handling if the "-b" or "-w" flags are used
     */
