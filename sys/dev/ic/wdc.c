@@ -1,5 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.121 2003/01/20 07:34:37 simonb Exp $ */
-
+/*	$NetBSD: wdc.c,v 1.122 2003/01/27 18:21:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -68,11 +67,10 @@
 
 /*
  * CODE UNTESTED IN THE CURRENT REVISION:
- *   
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.121 2003/01/20 07:34:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.122 2003/01/27 18:21:25 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -105,8 +103,13 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.121 2003/01/20 07:34:37 simonb Exp $");
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
+#include "ataraid.h"
 #include "atapibus.h"
 #include "wd.h"
+
+#if NATARAID > 0
+#include <dev/ata/ata_raidvar.h>
+#endif
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -461,8 +464,16 @@ wdcattach(chp)
 		adev.adev_channel = chp->channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		if (config_found(&chp->wdc->sc_dev, (void *)&adev, wdprint))
+		chp->ata_drives[i] = config_found(&chp->wdc->sc_dev,
+		    &adev, wdprint);
+		if (chp->ata_drives[i] != NULL) {
 			wdc_probe_caps(&chp->ch_drive[i]);
+#if NATARAID > 0
+			if (chp->wdc->cap & WDC_CAPABILITY_RAID)
+				config_interrupts(chp->ata_drives[i],
+				    ata_raid_check_component);
+#endif /* NATARAID > 0 */
+		}
 	}
 
 	/*
