@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.20 2001/09/05 01:22:24 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.21 2001/11/21 06:52:35 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
 
 /*
@@ -301,9 +301,13 @@ daemon_main(int argc, char **argv)
 			exit_stderr("too many arguments");
 
 		serverpath = malloc(strlen(argv[NUMPRG]) + 1);
+		if (!serverpath)
+			exit_stderr("not enough core");
 		strcpy(serverpath, argv[NUMPRG]);
 		for (i = 0; i < serverargc; i++) {
 			serverarg[i] = malloc(strlen(argv[i + NUMARG]) + 1);
+			if (!serverarg[i])
+				exit_stderr("not enough core");
 			strcpy(serverarg[i], argv[i + NUMARG]);
 		}
 		serverarg[i] = NULL;
@@ -770,9 +774,10 @@ sig_child(int sig)
 	int status;
 	pid_t pid;
 
-	pid = wait3(&status, WNOHANG, (struct rusage *)0);
-	if (pid && WEXITSTATUS(status))
-		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
+	while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) > 0)
+		if (WEXITSTATUS(status))
+			syslog(LOG_WARNING, "child %d exit status 0x%x",
+			    pid, status);
 }
 
 void
