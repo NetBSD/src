@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.10.4 2000/08/18 13:58:29 sommerfeld Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.10.5 2001/04/30 16:23:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,15 +145,14 @@ IDTVEC(doreti)
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL,CPL
-#include "com.h"
-#if NCOM > 0
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(apic_intlock)
 #endif
-	call	_C_LABEL(comsoft)
+	pushl	$I386_SOFTINTR_SOFTSERIAL
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(apic_intunlock)
-#endif
 #endif
 	movl	%ebx,CPL
 	jmp	%esi
@@ -166,6 +165,7 @@ IDTVEC(softnet)
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
 
+	/* XXX Do the legacy netisrs here for now. */
 #define DONETISR(s, c) \
 	.globl  _C_LABEL(c)	;\
 	testl	$(1 << s),%edi	;\
@@ -173,10 +173,14 @@ IDTVEC(softnet)
 	call	_C_LABEL(c)	;\
 1:
 #include <net/netisr_dispatch.h>
-	movl	%ebx,CPL
+	
+	pushl	$I386_SOFTINTR_SOFTNET
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(apic_intunlock)	
 #endif
+	movl	%ebx,CPL
 	jmp	%esi
 
 IDTVEC(softclock)
@@ -184,7 +188,9 @@ IDTVEC(softclock)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(apic_intlock)
 #endif
-	call	_C_LABEL(softclock)
+	pushl	$I386_SOFTINTR_SOFTCLOCK
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(apic_intunlock)		
 #endif

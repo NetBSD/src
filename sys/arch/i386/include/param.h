@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.40.2.3 2001/01/07 22:12:47 sommerfeld Exp $	*/
+/*	$NetBSD: param.h,v 1.40.2.4 2001/04/30 16:23:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,6 +124,13 @@
 #else
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
+#endif
+
+#ifndef NFS_RSIZE
+#define NFS_RSIZE	32768
+#endif
+#ifndef NFS_WSIZE
+#define NFS_WSIZE	32768
 #endif
 
 /*

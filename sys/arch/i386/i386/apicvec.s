@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.1.2.4 2000/11/18 23:17:34 sommerfeld Exp $ */	
+/* $NetBSD: apicvec.s,v 1.1.2.5 2001/04/30 16:23:09 sommerfeld Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@ XINTR(softclock):
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	sti
 	call	_C_LABEL(apic_intlock)
-	call	_C_LABEL(softclock)
+	pushl	$I386_SOFTINTR_SOFTCLOCK
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 	call	_C_LABEL(apic_intunlock)	
 	jmp	_C_LABEL(Xdoreti)
 	
@@ -124,6 +126,9 @@ XINTR(softnet):
 
 #include "net/netisr_dispatch.h"
 	
+	pushl	$I386_SOFTINTR_SOFTNET
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 	call	_C_LABEL(apic_intunlock)		
 	jmp	_C_LABEL(Xdoreti)
 
@@ -138,7 +143,9 @@ XINTR(softser):
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI	
 	sti
 	call	_C_LABEL(apic_intlock)
-	call	_C_LABEL(comsoft)
+	pushl	$I386_SOFTINTR_SOFTSERIAL
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
 	call	_C_LABEL(apic_intunlock)	
 	jmp	_C_LABEL(Xdoreti)
 

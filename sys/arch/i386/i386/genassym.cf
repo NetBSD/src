@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.10 2001/03/16 05:00:47 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.11 2001/04/30 16:23:10 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -253,3 +253,6 @@ define	CPU_INFO_BRAND		offsetof(struct cpu_info, ci_brand_id)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 
+if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
+define	__HAVE_GENERIC_SOFT_INTERRUPTS 1
+endif

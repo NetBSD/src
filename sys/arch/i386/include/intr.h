@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.h,v 1.12.10.10 2001/01/14 23:18:51 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.11 2001/04/30 16:23:13 sommerfeld Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,7 +103,7 @@ extern void Xspllower __P((void));
 
 static __inline int splraise __P((int));
 static __inline void spllower __P((int));
-static __inline void softintr __P((int, int));
+static __inline void softintr __P((int));
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
@@ -145,8 +145,6 @@ spllower(ncpl)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(IPL_SERIAL)
-#define spllock() 	splraise(IPL_SERIAL) /* XXX XXX XXX XXX */
-#define splsched()	splraise(IPL_HIGH)
 #define splipi()	splraise(IPL_IPI)
 
 #define spllpt()	spltty()
@@ -168,10 +166,11 @@ spllower(ncpl)
 /*
  * Miscellaneous
  */
-#define	splimp()	splraise(IPL_IMP)
 #define	splvm()		splraise(IPL_IMP)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
+#define	splsched()	splhigh()
+#define spllock() 	splraise(IPL_SERIAL) /* XXX XXX XXX XXX */
 #define	splx(x)		spllower(x)
 
 /*
@@ -180,21 +179,23 @@ spllower(ncpl)
  * We hand-code this to ensure that it's atomic.
  */
 static __inline void
-softintr(sir, vec)
-	register int sir;
-	register int vec;
+softintr(register int sir)
 {
 	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (1 << sir));
+#if 0
 #ifdef MULTIPROCESSOR
 	i82489_writereg(LAPIC_ICRLO,
 	    vec | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
 #endif
+#endif
 }
 
+#if 0
 #define	setsoftclock()	softintr(SIR_CLOCK,IPL_SOFTCLOCK)
-#define	setsoftnet()	softintr(SIR_NET,IPL_SOFTNET)
 #define	setsoftserial()	softintr(SIR_SERIAL,IPL_SOFTSERIAL)
-
+#define	setsoftnet()	softintr(SIR_NET,IPL_SOFTNET)
+#endif
+#define	setsoftnet()	softintr(SIR_NET)
 
 #define I386_IPI_HALT			0x00000001
 #define I386_IPI_FLUSH_FPU		0x00000002
@@ -212,5 +213,63 @@ void i386_ipi_handler (void);
 #endif
 
 #endif /* !_LOCORE */
+
+/*
+ * Generic software interrupt support.
+ */
+
+#define	I386_SOFTINTR_SOFTCLOCK		0
+#define	I386_SOFTINTR_SOFTNET		1
+#define	I386_SOFTINTR_SOFTSERIAL	2
+#define	I386_NSOFTINTR			3
+
+#ifndef _LOCORE
+#include <sys/queue.h>
+
+struct i386_soft_intrhand {
+	TAILQ_ENTRY(i386_soft_intrhand)
+		sih_q;
+	struct i386_soft_intr *sih_intrhead;
+	void	(*sih_fn)(void *);
+	void	*sih_arg;
+	int	sih_pending;
+};
+
+struct i386_soft_intr {
+	TAILQ_HEAD(, i386_soft_intrhand)
+		softintr_q;
+	int softintr_ssir;
+};
+
+#define	i386_softintr_lock(si, s)					\
+do {									\
+	(s) = splhigh();						\
+} while (/*CONSTCOND*/0)
+
+#define	i386_softintr_unlock(si, s)					\
+do {									\
+	splx((s));							\
+} while (/*CONSTCOND*/0)
+
+void	*softintr_establish(int, void (*)(void *), void *);
+void	softintr_disestablish(void *);
+void	softintr_init(void);
+void	softintr_dispatch(int);
+
+#define	softintr_schedule(arg)						\
+do {									\
+	struct i386_soft_intrhand *__sih = (arg);			\
+	struct i386_soft_intr *__si = __sih->sih_intrhead;		\
+	int __s;							\
+									\
+	i386_softintr_lock(__si, __s);					\
+	if (__sih->sih_pending == 0) {					\
+		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
+		__sih->sih_pending = 1;					\
+		softintr(__si->softintr_ssir);				\
+	}								\
+	i386_softintr_unlock(__si, __s);				\
+} while (/*CONSTCOND*/0)
+#endif /* _LOCORE */
 
 #endif /* !_I386_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.10 2001/01/07 22:12:47 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.11 2001/04/30 16:23:13 sommerfeld Exp $	*/
 
 /*
  *
@@ -381,8 +381,8 @@ void	pmap_do_tlb_shootdown __P((struct cpu_info *));
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t	pmap_zero_page_uncached __P((paddr_t));
-#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
+boolean_t			pmap_pageidlezero __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
  * inline functions

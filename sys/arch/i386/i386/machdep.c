@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.19 2001/03/16 05:00:47 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.20 2001/04/30 16:23:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -225,6 +225,13 @@ u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	init386 __P((paddr_t));
 
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
+#endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
+
+const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
+    *cpu_dcache_info, *cpu_l2cache_info;
+
 const struct i386_cache_info {
 	size_t		cai_offset;
 	u_int8_t	cai_desc;
@@ -343,6 +350,7 @@ cpu_startup()
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
 		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update();
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -434,6 +442,7 @@ cpu_startup()
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
+	pmap_update();
 	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
@@ -533,11 +542,13 @@ i386_bufinit()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_kenter_pgs(curbuf, &pg, 1);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -1892,6 +1903,77 @@ void cpu_init_idt()
         lidt(&region);
 }
 
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+void
+add_mem_cluster(seg_start, seg_end, type)
+	u_int64_t seg_start, seg_end;
+	u_int32_t type;
+{
+	extern struct extent *iomem_ex;
+
+	if (seg_end > 0x100000000ULL) {
+		printf("WARNING: skipping large "
+		    "memory map entry: "
+		    "0x%qx/0x%qx/0x%x\n",
+		    seg_start,
+		    (seg_end - seg_start),
+		    type);
+		return;
+	}
+
+	/*
+	 * XXX Chop the last page off the size so that
+	 * XXX it can fit in avail_end.
+	 */
+	if (seg_end == 0x100000000ULL)
+		seg_end -= PAGE_SIZE;
+
+	if (seg_end <= seg_start)
+		return;
+
+	/*
+	 * Allocate the physical addresses used by RAM
+	 * from the iomem extent map.  This is done before
+	 * the addresses are page rounded just to make
+	 * sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, seg_start,
+	    seg_end - seg_start, EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE "
+		    "MEMORY SEGMENT "
+		    "(0x%qx/0x%qx/0x%x) FROM "
+		    "IOMEM EXTENT MAP!\n",
+		    seg_start, seg_end - seg_start, type);
+	}
+
+	/*
+	 * If it's not free memory, skip it.
+	 */
+	if (type != BIM_Memory)
+		return;
+
+	/* XXX XXX XXX */
+	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
+		panic("init386: too many memory segments");
+
+	seg_start = round_page(seg_start);
+	seg_end = trunc_page(seg_end);
+
+	if (seg_start == seg_end)
+		return;
+
+	mem_clusters[mem_cluster_cnt].start = seg_start;
+	mem_clusters[mem_cluster_cnt].size =
+	    seg_end - seg_start;
+
+	if (avail_end < seg_end)
+		avail_end = seg_end;
+	physmem += atop(mem_clusters[mem_cluster_cnt].size);
+	mem_cluster_cnt++;
+}
+#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
+
 void
 init386(first_avail)
 	vaddr_t first_avail;
@@ -1992,67 +2074,29 @@ init386(first_avail)
 			seg_start = bim->entry[x].addr;
 			seg_end = bim->entry[x].addr + bim->entry[x].size;
 
-			if (seg_end > 0x100000000ULL) {
-				printf("WARNING: skipping large "
-				    "memory map entry: "
-				    "0x%qx/0x%qx/0x%x\n",
-				    bim->entry[x].addr,
-				    bim->entry[x].size,
+			/*
+			 *   Avoid Compatibility Holes.
+			 * XXX  Holes within memory space that allow access
+			 * XXX to be directed to the PC-compatible frame buffer
+			 * XXX (0xa0000-0xbffff),to adapter ROM space 
+			 * XXX (0xc0000-0xdffff), and to system BIOS space
+			 * XXX (0xe0000-0xfffff).
+			 * XXX  Some laptop(for example,Toshiba Satellite2550X)
+			 * XXX report this area and occurred problems,
+			 * XXX so we avoid this area.
+			 */
+			if (seg_start < 0x100000 && seg_end > 0xa0000) {
+				printf("WARNING: memory map entry overlaps "
+				    "with ``Compatibility Holes'': "
+				    "0x%qx/0x%qx/0x%x\n", seg_start,
+				    seg_end - seg_start, bim->entry[x].type);
+				add_mem_cluster(seg_start, 0xa0000,
 				    bim->entry[x].type);
-				continue;
-			}
-
-			/*
-			 * XXX Chop the last page off the size so that
-			 * XXX it can fit in avail_end.
-			 */
-			if (seg_end == 0x100000000ULL) {
-				seg_end -= PAGE_SIZE;
-				if (seg_end <= seg_start)
-					continue;
-			}
-
-			/*
-			 * Allocate the physical addresses used by RAM
-			 * from the iomem extent map.  This is done before
-			 * the addresses are page rounded just to make
-			 * sure we get them all.
-			 */
-			if (extent_alloc_region(iomem_ex, seg_start,
-			    seg_end - seg_start, EX_NOWAIT)) {
-				/* XXX What should we do? */
-				printf("WARNING: CAN'T ALLOCATE "
-				    "MEMORY SEGMENT %d "
-				    "(0x%qx/0x%qx/0x%x) FROM "
-				    "IOMEM EXTENT MAP!\n",
-				    x, seg_start, seg_end - seg_start,
+				add_mem_cluster(0x100000, seg_end,
 				    bim->entry[x].type);
-			}
-
-			/*
-			 * If it's not free memory, skip it.
-			 */
-			if (bim->entry[x].type != BIM_Memory)
-				continue;
-
-			/* XXX XXX XXX */
-			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
-
-			seg_start = round_page(seg_start);
-			seg_end = trunc_page(seg_end);
-
-			if (seg_start == seg_end)
-				continue;
-
-			mem_clusters[mem_cluster_cnt].start = seg_start;
-			mem_clusters[mem_cluster_cnt].size =
-			    seg_end - seg_start;
-
-			if (avail_end < seg_end)
-				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
-			mem_cluster_cnt++;
+			} else
+				add_mem_cluster(seg_start, seg_end,
+				    bim->entry[x].type);
 		}
 	}
 #endif /* ! REALBASEMEM && ! REALEXTMEM */
@@ -2278,16 +2322,19 @@ init386(first_avail)
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update();
 	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update();
 	idt = (union descriptor *)idt_vaddr;
 	
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
+	pmap_update();
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 
@@ -2389,6 +2436,9 @@ init386(first_avail)
 #if NISA > 0
 	isa_defaultirq();
 #endif
+
+	/* Initialize software interrupts. */
+	softintr_init();
 
 	splraise(IPL_SERIAL);	/* XXX MP clean me */
 	enable_intr();
