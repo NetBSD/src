@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.25 2004/07/07 19:46:57 mycroft Exp $	*/
+/*	$NetBSD: emacs.c,v 1.26 2004/10/28 20:15:37 dsl Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.25 2004/07/07 19:46:57 mycroft Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.26 2004/10/28 20:15:37 dsl Exp $");
 #endif
 
 
@@ -741,7 +741,7 @@ x_size(c)
 {
 	if (c=='\t')
 		return 4;	/* Kludge, tabs are always four spaces. */
-	if (iscntrl(c))		/* control char */
+	if (iscntrl((unsigned char)c))		/* control char */
 		return 2;
 	return 1;
 }
@@ -764,7 +764,7 @@ x_zotc(c)
 	if (c == '\t')  {
 		/*  Kludge, tabs are always four spaces.  */
 		x_e_puts("    ");
-	} else if (iscntrl(c))  {
+	} else if (iscntrl((unsigned char)c))  {
 		x_e_putc('^');
 		x_e_putc(UNCTRL(c));
 	} else
@@ -1390,7 +1390,7 @@ x_mapout(c)
 		*p++ = '0';
 	} else
 #endif /* OS2 */
-	if (iscntrl(c))  {
+	if (iscntrl((unsigned char)c))  {
 		*p++ = '^';
 		*p++ = UNCTRL(c);
 	} else
@@ -2155,10 +2155,10 @@ x_fold_case(c)
 		if (cp != xep) {
 			if (c == 'L') {		/* lowercase */
 				if (isupper((unsigned char)*cp))
-					*cp = tolower(*cp);
+					*cp = tolower((unsigned char)*cp);
 			} else {		/* uppercase, capitialize */
 				if (islower((unsigned char)*cp))
-					*cp = toupper(*cp);
+					*cp = toupper((unsigned char)*cp);
 			}
 			cp++;
 		}
@@ -2168,10 +2168,10 @@ x_fold_case(c)
 		while (cp != xep && !is_mfs((unsigned char)*cp)) {
 			if (c == 'U') {		/* uppercase */
 				if (islower((unsigned char)*cp))
-					*cp = toupper(*cp);
+					*cp = toupper((unsigned char)*cp);
 			} else {		/* lowercase, capitialize */
 				if (isupper((unsigned char)*cp))
-					*cp = tolower(*cp);
+					*cp = tolower((unsigned char)*cp);
 			}
 			cp++;
 		}
