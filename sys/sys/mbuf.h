@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.38 1999/01/09 21:54:07 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.39 1999/01/09 22:10:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -471,7 +471,6 @@ struct mbstat {
 };
 
 #ifdef	_KERNEL
-extern struct mbuf *mbutl;		/* virtual address of mclusters */
 extern struct mbstat mbstat;
 extern int	nmbclusters;
 extern int	nmbufs;
