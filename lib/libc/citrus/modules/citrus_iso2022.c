@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.9 2003/07/16 08:05:28 itojun Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.10 2004/01/02 12:25:46 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.9 2003/07/16 08:05:28 itojun Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.10 2004/01/02 12:25:46 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -203,7 +203,7 @@ get_recommend(_ISO2022EncodingInfo * __restrict ei,
 	      const char * __restrict token)
 {
 	int i;
-	_ISO2022Charset cs;
+	_ISO2022Charset cs, *p;
 
 	if (!strchr("0123", token[0]) || token[1] != '=')
 		return (_NOTMATCH);
@@ -235,16 +235,18 @@ get_recommend(_ISO2022EncodingInfo * __restrict ei,
 	}
 
 	i = token[0] - '0';
-	ei->recommendsize[i] += 1;
 	if (!ei->recommend[i]) {
 		ei->recommend[i] = malloc(sizeof(_ISO2022Charset));
 	} else {
-		ei->recommend[i] =
-		    realloc(ei->recommend[i],
-			    sizeof(_ISO2022Charset)* (ei->recommendsize[i]));
+		p = realloc(ei->recommend[i],
+		    sizeof(_ISO2022Charset) * (ei->recommendsize[i] + 1));
+		if (!p)
+			return (_PARSEFAIL);
+		ei->recommend[i] = p;
 	}
 	if (!ei->recommend[i])
 		return (_PARSEFAIL);
+	ei->recommendsize[i]++;
 
 	(ei->recommend[i] + (ei->recommendsize[i] - 1))->final = cs.final;
 	(ei->recommend[i] + (ei->recommendsize[i] - 1))->interm = cs.interm;
