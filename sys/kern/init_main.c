@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.240 2004/10/01 16:30:52 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.241 2004/10/15 07:19:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.240 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.241 2004/10/15 07:19:01 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -279,7 +279,6 @@ main(void)
 	 * The following things must be done before autoconfiguration.
 	 */
 	evcnt_init();		/* initialize event counters */
-	disk_init();		/* initialize disk list */
 	tty_init();		/* initialize tty list */
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
