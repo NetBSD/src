@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.28 1998/02/19 02:36:43 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.29 1998/03/17 23:50:30 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -134,12 +134,17 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 		size = ifp->if_mtu - sizeof(struct tcpiphdr);
 	else
 		size = tcp_mssdflt;
+	size -= tcp_optlen(tp);
 
  out:
 	*txsegsizep = min(tp->t_peermss, size);
 	*rxsegsizep = min(tp->t_ourmss, size);
 
 	if (*txsegsizep != tp->t_segsz) {
+	        /* 
+		 * XXX:  should we check to make sure these are all
+		 *       at least txsegsize in length, now?
+		 */
 		tp->snd_cwnd = (tp->snd_cwnd / tp->t_segsz) * *txsegsizep;
 		tp->snd_ssthresh = (tp->snd_ssthresh / tp->t_segsz) * 
 		    *txsegsizep;
@@ -404,17 +409,9 @@ send:
 
  	hdrlen += optlen;
  
-	/*
-	 * Adjust data length if insertion of options will
-	 * bump the packet length beyond the txsegsize length.
-	 */
-	 if (len > txsegsize - optlen) {
-		len = txsegsize - optlen;
-		flags &= ~TH_FIN;
-		sendalot = 1;
-	 }
-
 #ifdef DIAGNOSTIC
+	if (len > txsegsize)
+		panic("tcp data to be sent is larger than segment");
  	if (max_linkhdr + hdrlen > MHLEN)
 		panic("tcphdr too big");
 #endif

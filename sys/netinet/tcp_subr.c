@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.41 1998/02/19 02:36:43 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.42 1998/03/17 23:50:30 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -637,13 +637,14 @@ tcp_mss_from_peer(tp, offer)
 	int mss;
 
 	/*
-	 * Assume our MSS is the MSS of the peer, unless they sent us
-	 * an offer.  Do not accept offers less than 32 bytes.
+	 * As per RFC1122, use the default MSS value, unless they 
+	 * sent us an offer.  Do not accept offers less than 32 bytes.
 	 */
-	mss = tp->t_ourmss;
+	mss = tcp_mssdflt;
 	if (offer)
 		mss = offer;
 	mss = max(mss, 32);		/* sanity */
+	mss -= tcp_optlen(tp);
 
 	/*
 	 * If there's a pipesize, change the socket buffer to that size.
@@ -828,3 +829,26 @@ tcp_new_iss(tp, len, addin)
 
 	return tcp_iss;
 }
+
+
+/*
+ * Determine the length of the TCP options for this connection.
+ * 
+ * XXX:  What do we do for SACK, when we add that?  Just reserve
+ *       all of the space?  Otherwise we can't exactly be incrementing
+ *       cwnd by an amount that varies depending on the amount we last
+ *       had to SACK!
+ */
+
+u_int
+tcp_optlen(tp)
+	struct tcpcb *tp;
+{
+	if ((tp->t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP|TF_NOOPT)) == 
+	    (TF_REQ_TSTMP | TF_RCVD_TSTMP))
+		return TCPOLEN_TSTAMP_APPA;
+	else
+		return 0;
+}
+
+
