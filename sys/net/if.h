@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.45 2000/03/06 18:55:10 kleink Exp $	*/
+/*	$NetBSD: if.h,v 1.46 2000/03/06 20:49:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,11 +119,12 @@ struct ether_header;
  * Structure defining statistics and other data kept regarding a network
  * interface.
  */
-struct	if_data {
+struct if_data {
 	/* generic interface information */
 	u_char	ifi_type;		/* ethernet, tokenring, etc. */
 	u_char	ifi_addrlen;		/* media address length */
 	u_char	ifi_hdrlen;		/* media header length */
+	int	ifi_link_state;		/* current link state */
 	u_quad_t ifi_mtu;		/* maximum transmission unit */
 	u_quad_t ifi_metric;		/* routing metric (external only) */
 	u_quad_t ifi_baudrate;		/* linespeed */
@@ -142,9 +143,16 @@ struct	if_data {
 	struct	timeval ifi_lastchange;	/* last updated */
 };
 
+/*
+ * Values for if_link_state.
+ */
+#define	LINK_STATE_UNKNOWN	0	/* link invalid/unknown */
+#define	LINK_STATE_DOWN		1	/* link is down */
+#define	LINK_STATE_UP		2	/* link is up */
+
 #if defined(_KERNEL) && defined(COMPAT_14)
 /* Pre-1.5 if_data struct */
-struct	if_data14 {
+struct if_data14 {
 	/* generic interface information */
 	u_char	ifi_type;		/* ethernet, tokenring, etc. */
 	u_char	ifi_addrlen;		/* media address length */
@@ -229,6 +237,7 @@ struct ifnet {				/* and the entries */
 #define	if_addrlen	if_data.ifi_addrlen
 #define	if_hdrlen	if_data.ifi_hdrlen
 #define	if_metric	if_data.ifi_metric
+#define	if_link_state	if_data.ifi_link_state
 #define	if_baudrate	if_data.ifi_baudrate
 #define	if_ipackets	if_data.ifi_ipackets
 #define	if_ierrors	if_data.ifi_ierrors
@@ -264,6 +273,14 @@ struct ifnet {				/* and the entries */
 #define	IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
 	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
+
+/*
+ * Some convenience macros used for setting ifi_baudrate.
+ * XXX 1000 vs. 1024? --thorpej@netbsd.org
+ */
+#define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
+#define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
+#define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -387,6 +404,21 @@ struct ifa_msghdr {
 	u_short	ifam_index;	/* index for associated ifp */
 	int	ifam_metric;	/* value of ifa_metric */
 };
+
+/*
+ * Message format announcing the arrival or departure of a network interface.
+ */
+struct if_announcemsghdr {
+	u_short	ifan_msglen;	/* to skip over non-understood messages */
+	u_char	ifan_version;	/* future binary compatibility */
+	u_char	ifan_type;	/* message type */
+	u_short	ifan_index;	/* index for associated ifp */
+	char	ifan_name[IFNAMSIZ]; /* if name, e.g. "en0" */
+	u_short	ifan_what;	/* what type of announcement */
+};
+
+#define	IFAN_ARRIVAL	0	/* interface arrival */
+#define	IFAN_DEPARTURE	1	/* interface departure */
 
 /*
  * Interface request structure used for socket

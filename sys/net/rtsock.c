@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.35 2000/02/17 04:28:00 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.36 2000/03/06 20:49:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -494,6 +494,10 @@ rt_msg1(type, rtinfo, data, datalen)
 		len = sizeof(struct if_msghdr);
 		break;
 
+	case RTM_IFANNOUNCE:
+		len = sizeof(struct if_announcemsghdr);
+		break;
+
 	default:
 		len = sizeof(struct rt_msghdr);
 	}
@@ -776,6 +780,33 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 		route_proto.sp_protocol = sa ? sa->sa_family : 0;
 		raw_input(m, &route_proto, &route_src, &route_dst);
 	}
+}
+
+/*
+ * This is called to generate routing socket messages indicating
+ * network interface arrival and departure.
+ */
+void
+rt_ifannouncemsg(ifp, what)
+	struct ifnet *ifp;
+	int what;
+{
+	struct if_announcemsghdr ifan;
+	struct mbuf *m;
+	struct rt_addrinfo info;
+
+	if (route_cb.any_count == 0)
+		return;
+	bzero(&info, sizeof(info));
+	bzero(&ifan, sizeof(ifan));
+	ifan.ifan_index = ifp->if_index;
+	strcpy(ifan.ifan_name, ifp->if_xname);
+	ifan.ifan_what = what;
+	m = rt_msg1(RTM_IFANNOUNCE, &info, (caddr_t)&ifan, sizeof(ifan));
+	if (m == 0)
+		return;
+	route_proto.sp_protocol = 0;
+	raw_input(m, &route_proto, &route_src, &route_dst);
 }
 
 /*
