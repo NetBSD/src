@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.18 2002/12/26 13:45:18 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.19 2002/12/27 09:59:25 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.18 2002/12/26 13:45:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.19 2002/12/27 09:59:25 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,15 +271,14 @@ mach_e_proc_exit(p)
 		mach_right_put_exclocked(mr);
 	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
-	med->med_bootstrap->mp_refcount--;
-	med->med_kernel->mp_refcount--;
-	med->med_host->mp_refcount--;
-	med->med_exception->mp_refcount--;
-
-	mach_port_put(med->med_bootstrap);
-	mach_port_put(med->med_kernel);
-	mach_port_put(med->med_host);
-	mach_port_put(med->med_exception);
+	if (--med->med_bootstrap->mp_refcount == 0)
+		mach_port_put(med->med_bootstrap);
+	if (--med->med_kernel->mp_refcount == 0) 
+		mach_port_put(med->med_kernel);
+	if (--med->med_host->mp_refcount == 0)  
+		mach_port_put(med->med_host);  
+	if (--med->med_exception->mp_refcount == 0)
+		mach_port_put(med->med_exception);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
