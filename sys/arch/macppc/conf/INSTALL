@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30 2000/06/11 23:29:29 matt Exp $
+#	$NetBSD: INSTALL,v 1.31 2000/06/17 21:44:46 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -34,7 +34,7 @@ file-system 	KERNFS		# /kern
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
 options 	NMBCLUSTERS=1024
-options 	NFS_BOOT_DHCP, NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
 #options 	FONT_GALLANT12x22
