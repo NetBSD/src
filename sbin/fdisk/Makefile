@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.27 2003/04/26 19:10:09 fvdl Exp $
+#	$NetBSD: Makefile,v 1.28 2003/04/30 19:49:01 dsl Exp $
 
 SUBDIR=	mbr
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
-SUBDIR+= mbr_bootsel
-.endif
 
 .if (${MACHINE} == "i386" || \
      ${MACHINE} == "bebox" || \
