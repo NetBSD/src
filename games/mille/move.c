@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.13 2003/08/07 09:37:25 agc Exp $	*/
+/*	$NetBSD: move.c,v 1.13.2.1 2004/04/08 22:02:36 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.13 2003/08/07 09:37:25 agc Exp $");
+__RCSID("$NetBSD: move.c,v 1.13.2.1 2004/04/08 22:02:36 jmc Exp $");
 #endif
 #endif /* not lint */
 
 #include <termios.h>
+
+#ifdef DEBUG
+#include <sys/param.h>
+#endif
 
 #include	"mille.h"
 #ifndef	unctrl
@@ -60,6 +64,13 @@ domove()
 	bool	goodplay;
 
 	pp = &Player[Play];
+	for (i = 0, j = 0; i < HAND_SZ; i++)
+		if (pp->hand[i] != -1)
+			j++;
+	if (!j) {
+		nextplay();
+		return;
+	}
 	if (Play == PLAYER)
 		getmove();
 	else
@@ -426,10 +437,12 @@ getmove()
 		  case 'Z':		/* Debug code */
 			if (!Debug && outf == NULL) {
 				char	buf[MAXPATHLEN];
+				char	*sp;
 
 				prompt(FILEPROMPT);
 				leaveok(Board, FALSE);
 				refresh();
+over:
 				sp = buf;
 				while ((*sp = readch()) != '\n') {
 					if (*sp == killchar())
