@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.8 1999/03/22 18:25:47 garbled Exp $
+.\"	$NetBSD: rshd.8,v 1.9 2000/01/22 10:22:55 mjl Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)rshd.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd January 22, 2000
 .Dt RSHD 8
 .Os
 .Sh NAME
@@ -199,7 +199,8 @@ and is not preceded by a flag byte.
 .Sh SEE ALSO
 .Xr rsh 1 ,
 .Xr rcmd 3 ,
-.Xr ruserok 3
+.Xr ruserok 3 ,
+.Xr login.conf 5
 .Sh BUGS
 The authentication procedure used here assumes the integrity
 of each client machine and the connecting medium.  This is
