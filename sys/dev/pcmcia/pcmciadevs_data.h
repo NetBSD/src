@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.155 2001/12/23 09:11:06 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.156 2001/12/29 08:32:07 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.154 2001/12/23 09:10:39 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.155 2001/12/29 08:31:01 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -419,6 +419,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "IBM Corporation",
 	    "IBM Wireless LAN Entry",	}
+	,
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_SMART_CAPTURE_II,
+	    PCMCIA_CIS_IBM_SMART_CAPTURE_II,
+	    0,
+	    "IBM Corporation",
+	    "IBM Smart Capture Card II",	}
 	,
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET,
