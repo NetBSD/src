@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.135.2.1 2000/09/19 17:40:46 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.135.2.2 2000/09/19 17:48:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.2.1 2000/09/19 17:40:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.2.2 2000/09/19 17:48:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,6 +484,7 @@ struct prm_thief {
  * Internal routines
  */
 void	alpha_protection_init(void);
+void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, boolean_t);
 boolean_t pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *,
 	    boolean_t, long, struct prm_thief *);
 void	pmap_changebit(paddr_t, pt_entry_t, pt_entry_t, long);
@@ -1285,6 +1286,26 @@ pmap_reference(pmap_t pmap)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
+		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
+#endif
+
+	pmap_do_remove(pmap, sva, eva, TRUE);
+}
+
+/*
+ * pmap_do_remove:
+ *
+ *	This actually removes the range of addresses from the
+ *	specified map.  It is used by pmap_collect() (does not
+ *	want to remove wired mappings) and pmap_remove() (does
+ *	want to remove wired mappings).
+ */
+void
+pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
+{
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	pt_entry_t *saved_l1pte, *saved_l2pte, *saved_l3pte;
 	vaddr_t l1eva, l2eva, vptva;
@@ -1310,6 +1331,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (pmap == pmap_kernel()) {
 		PMAP_MAP_TO_HEAD_LOCK();
 		PMAP_LOCK(pmap);
+
+		KASSERT(dowired == TRUE);
 
 		while (sva < eva) {
 			l3pte = PMAP_KERNEL_PTE(sva);
@@ -1392,7 +1415,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 					for (; sva < l2eva && sva < eva;
 					     sva += PAGE_SIZE, l3pte++) {
-						if (pmap_pte_v(l3pte)) {
+						if (pmap_pte_v(l3pte) &&
+						    (dowired == TRUE ||
+						     pmap_pte_w(l3pte) == 0)) {
 							needisync |=
 							    pmap_remove_mapping(
 								pmap, sva,
@@ -2193,12 +2218,20 @@ pmap_collect(pmap_t pmap)
 #endif
 
 	/*
+	 * If called for the kernel pmap, just return.  We
+	 * handle this case in the event that we ever want
+	 * to have swappable kernel threads.
+	 */
+	if (pmap == pmap_kernel())
+		return;
+
+	/*
 	 * This process is about to be swapped out; free all of
 	 * the PT pages by removing the physical mappings for its
 	 * entire address space.  Note: pmap_remove() performs
 	 * all necessary locking.
 	 */
-	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, FALSE);
 }
 
 /*
