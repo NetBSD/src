@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2000/03/28 02:58:48 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10 2000/03/30 14:36:30 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -64,21 +64,22 @@ struct mips_saved_state *db_cur_exc_frame = 0;
 /*
  *  forward declarations
  */
-int print_exception_frame __P((register struct mips_saved_state *fp,
+int print_exception_frame __P((struct mips_saved_state *fp,
 			       unsigned epc));
 
 /*XXX*/
 void stacktrace_subr __P((int a0, int a1, int a2, int a3,
-				 u_int pc, u_int sp, u_int fp, u_int ra,
-				 void (*)(const char*, ...)));
+			  u_int pc, u_int sp, u_int fp, u_int ra,
+			  void (*)(const char*, ...)));
 
 /*
  * Stack trace helper.
  */
 void db_mips_stack_trace __P((int count, vaddr_t stackp,
-    vaddr_t the_pc, vaddr_t the_ra, int flags, vaddr_t kstackp));
-int	db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep,
-    int db_var_fun));
+			      vaddr_t the_pc, vaddr_t the_ra, int flags,
+			      vaddr_t kstackp));
+int db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep,
+			       int db_var_fun));
 
 #define DB_SETF_REGS db_mips_variable_func
 #define DBREGS_REG()
