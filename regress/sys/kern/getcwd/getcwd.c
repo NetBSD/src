@@ -1,4 +1,4 @@
-/* $NetBSD: getcwd.c,v 1.4 1999/06/19 18:02:06 sommerfeld Exp $ */
+/* $NetBSD: getcwd.c,v 1.5 1999/07/11 09:54:41 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -255,6 +255,19 @@ test___getcwd_perms()
 	seteuid(altid);
 
 	CHECK("/tmp/permdir/subdir", __getcwd(kbuf, sizeof(kbuf)), -1, EACCES);
+
+	seteuid(0);
+	chdir ("/");
+	rmdir ("/tmp/permdir/subdir");
+	rmdir ("/tmp/permdir");
+
+	mkdir ("/tmp/permdir", 0755);
+	mkdir ("/tmp/permdir/subdir", 0711);
+	chdir ("/tmp/permdir/subdir");
+	
+	seteuid(altid);
+
+	CHECK("/tmp/permdir/subdir", __getcwd(kbuf, sizeof(kbuf)), 20, 0);
 
 	seteuid(0);
 	chdir ("/");
