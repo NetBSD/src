@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 1999/06/05 21:58:17 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2000/04/05 08:03:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -40,7 +40,7 @@
 #define SPDB_INTR	0x04
 #define SPDB_INTMAP	0x08
 #define SPDB_INTFIX	0x10
-int sparc_pci_debug = 0x4;
+int sparc_pci_debug = 0x0;
 #define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -301,7 +301,6 @@ pci_conf_read(pc, tag, reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
-	u_int32_t data;
 	pcireg_t val;
 
 	DPRINTF(SPDB_CONF, ("pci_conf_read: tag %lx; reg %x; ", (long)tag, reg));
@@ -313,6 +312,8 @@ pci_conf_read(pc, tag, reg)
 		val = (pcireg_t)~0;
 	} else {
 #if 0
+		u_int32_t data;
+
 		data = probeget(sc->sc_configaddr + tag + reg,
 				bus_type_asi[sc->sc_configtag->type], 4);
 		if (data == -1)
@@ -371,12 +372,11 @@ pci_intr_map(pc, tag, pin, line, ihp)
 	int line;
 	pci_intr_handle_t *ihp;
 {
-	struct psycho_pbm *pp = pc->cookie;
 	int rv;
 
-	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %x; pin %d; line %d", (u_int)tag, pin, line));
+	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; pin %d; line %d", (long)tag, pin, line));
 	
-	if (line == 255 || pin == 0) {
+	if (line == 255) {
 		*ihp = -1;
 		rv = 1;
 		goto out;
