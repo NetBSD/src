@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.25 2003/12/13 23:13:40 thorpej Exp $
+#	$NetBSD: P5064,v 1.26 2003/12/14 01:32:01 thorpej Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.25 $"
+#ident 		"P5064-$Revision: 1.26 $"
 
 maxusers 32
 
@@ -146,6 +146,7 @@ siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?		# Acard IDE controllers
 aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
 cypide* at pci? dev ? function ?		# Cypress IDE controllers
 hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers

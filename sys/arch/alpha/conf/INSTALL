@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.77 2003/12/13 23:13:40 thorpej Exp $
+# $NetBSD: INSTALL,v 1.78 2003/12/14 01:32:01 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -202,6 +202,7 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?		# Acard IDE controllers
 aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
 cypide* at pci? dev ? function ?		# Cypress IDE controllers
 hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers

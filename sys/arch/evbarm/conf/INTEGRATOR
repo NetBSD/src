@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.22 2003/12/13 23:31:21 thorpej Exp $
+#	$NetBSD: INTEGRATOR,v 1.23 2003/12/14 01:32:01 thorpej Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -162,6 +162,7 @@ pci0		at ifpga?			# PCI bus
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 #pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+#artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 #cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 #hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #piixide* 	at pci? dev ? function ?	# Intel IDE controllers
