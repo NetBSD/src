@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.19 2004/01/04 08:35:52 jdolecek Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.20 2004/01/04 11:11:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.19 2004/01/04 08:35:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.20 2004/01/04 11:11:56 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ USB_ATTACH(uhidev)
 	int size, nrepid, repid, repsz;
 	int repsizes[256];
 	void *desc;
-	const void *descptr = NULL;
+	const void *descptr;
 	usbd_status err;
 	char devinfo[1024];
 
@@ -158,9 +158,9 @@ USB_ATTACH(uhidev)
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
 	/* XXX need to extend this */
-	if (uaa->vendor == USB_VENDOR_WACOM /* &&
-	    uaa->revision == 0x???? */) { /* XXX should use revision */
-		char reportbuf[] = {2, 2, 2};
+	descptr = NULL;
+	if (uaa->vendor == USB_VENDOR_WACOM) {
+		static uByte reportbuf[] = {2, 2, 2};
 
 		/* The report descriptor for the Wacom Graphire is broken. */
 		switch (uaa->product) {
@@ -176,13 +176,15 @@ USB_ATTACH(uhidev)
 			 * returning digitizer data.
 			 */
 			usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 2,
-			    &reportbuf, sizeof(reportbuf));
+			    &reportbuf, sizeof reportbuf);
 
 			size = sizeof uhid_graphire3_4x5_report_descr;
 			descptr = uhid_graphire3_4x5_report_descr;
 			break;
+		default:
+			/* Keep descriptor */
+			break;
 		}
-
 	}
 
 	if (descptr) {
