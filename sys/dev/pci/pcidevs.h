@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.576 2003/09/21 14:27:40 nisimura Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.577 2003/09/25 16:49:03 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.578 2003/09/21 14:23:21 nisimura Exp 
+ *	NetBSD: pcidevs,v 1.579 2003/09/25 16:47:54 joda Exp 
  */
 
 /*
@@ -1976,6 +1976,17 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_FX5800	0x0302		/* GeForce FX 5800 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_2000	0x0308		/* Quadro FX 2000 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_1000	0x0309		/* Quadro FX 1000 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5600U	0x0311		/* GeForce FX 5600 Ultra */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5600	0x0312		/* GeForce FX 5600 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5600_SE	0x0314		/* GeForce FX 5600 SE */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5200U	0x0321		/* GeForce FX 5200 Ultra */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5200	0x0322		/* GeForce FX 5200 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5200SE	0x0323		/* GeForce FX 5200SE */
+#define	PCI_PRODUCT_NVIDIA_QUADRO_FX_500	0x032B		/* Quadro FX 500 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5900U	0x0330		/* GeForce FX 5900 Ultra */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5900	0x0331		/* GeForce FX 5900 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5950U	0x0333		/* GeForce FX 5950 Ultra */
+#define	PCI_PRODUCT_NVIDIA_QUADRO_FX_3000	0x0338		/* Quadro FX 3000 */
 
 /* Nvidia Corporation & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
