@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	5.20 (Berkeley) 11/29/90";*/
-static char rcsid[] = "$Id: route.c,v 1.6 1994/03/06 09:45:24 cgd Exp $";
+static char rcsid[] = "$Id: route.c,v 1.7 1994/03/07 09:19:56 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -419,8 +419,11 @@ int flags, width;
 		cp = workbuf;
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += sprintf(cp, "(%d)", sa->sa_family);
-		for (; s < slim && cp < cplim; s += 2)
-			cp += sprintf(cp, " %02x%02x", s[0], s[1]);
+		while (s < slim && cp < cplim) {
+			cp += sprintf(cp, " %02x", *s++);
+			if (s < slim)
+				cp += sprintf(cp, "%02x", *s++);
+		}
 		cp = workbuf;
 	    }
 	}
