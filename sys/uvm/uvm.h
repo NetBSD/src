@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.13.2.2 1999/02/25 04:06:22 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.13.2.3 1999/04/09 04:36:57 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -82,6 +82,7 @@
 
 struct uvm {
 	/* vm_page related parameters */
+
 		/* vm_page queues */
 	struct pglist page_free[VM_NFREELIST];	/* unallocated pages */
 	struct pglist page_active;	/* allocated pages, in use */
@@ -89,15 +90,23 @@ struct uvm {
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
 	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
 	simple_lock_data_t fpageqlock;	/* lock for free page q */
+
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
 	simple_lock_data_t pagedaemon_lock;
+
+		/* aiodone daemon trigger */
+	int aiodoned;			/* daemon sleeps on this */
+	struct proc *aiodoned_proc;	/* daemon's pid */
+	simple_lock_data_t aiodoned_lock;
+
 		/* page hash */
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
 	simple_lock_data_t hashlock;	/* lock on page_hash array */
+
 	/* anon stuff */
 	struct vm_anon *afree;		/* anon free list */
 	simple_lock_data_t afreelock; 	/* lock on anon free list */
