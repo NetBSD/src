@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.81 2003/02/21 03:53:43 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.82 2003/02/26 21:18:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.81 2003/02/21 03:53:43 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.82 2003/02/26 21:18:22 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -318,7 +318,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
     struct exec_vmcmd_set *vcset, u_long *entryoff, struct elf_args *ap,
     Elf_Addr *last)
 {
-	int error, i;
+	int error, i, direction, end;
 	const int topdown =
 	    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN ? VMCMD_TOPDOWN : 0;
 	struct nameidata nd;
@@ -390,9 +390,21 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 		goto bad;
 
 	/*
-	 * Load all the necessary sections
+	 * Load all the necessary sections.  If TOPDOWN, load the
+	 * psections last to first to properly deal with spacing and
+	 * alignment between psections, if any.  Note that end is one
+	 * past the last (before or after) valid array index.
 	 */
-	for (i = 0; i < eh.e_phnum; i++) {
+	if (topdown) {
+		i = eh.e_phnum - 1;
+		end = -1;
+		direction = -1;
+	} else {
+		i = 0;
+		end = eh.e_phnum;
+		direction = 1;
+	}
+	for (; i != end; i += direction) {
 		u_long size = 0;
 		int prot = 0;
 		int flags;
@@ -400,21 +412,40 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 		switch (ph[i].p_type) {
 		case PT_LOAD:
 			if (base_ph == NULL) {
+				/*
+				 * First encountered psection is always the
+				 * base psection.
+				 */
+				base_ph = &ph[i];
 				addr = *last;
 				flags = VMCMD_BASE;
 			} else {
-				addr = ph[i].p_vaddr - base_ph->p_vaddr;
+				/*
+				 * If TOPDOWN, the last psection may not be
+				 * page aligned.  Make sure that the address
+				 * we are using is page aligned.  If TOPDOWN
+				 * addr will be a "negative" offset.
+				 */
+				addr = ph[i].p_vaddr -
+				    trunc_page(base_ph->p_vaddr);
 				flags = VMCMD_RELATIVE;
 			}
 			ELFNAME(load_psection)(vcset, vp, &ph[i], &addr,
 			    &size, &prot, flags|topdown);
-			/* If entry is within this section it must be text */
+			/*
+			 * If entry is within this psection then this
+			 * must contain the .text section.  *entryoff is
+			 * relative to the (page aligned) base psection.
+			 * If TOPDOWN, entryoff may be backwards.
+			 */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				*entryoff = eh.e_entry - ph[i].p_vaddr;
+				*entryoff = eh.e_entry -
+				    trunc_page(base_ph->p_vaddr);
 			}
-			if (base_ph == NULL)
-				base_ph = &ph[i];
+			/*
+			 * This value is ignored if TOPDOWN.
+			 */
 			if (ph[i].p_vaddr != 0)
 				addr += size;
 			break;
@@ -430,6 +461,9 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 	}
 
 	free(ph, M_TEMP);
+	/*
+	 * This value is ignored if TOPDOWN.
+	 */
 	*last = addr;
 	vrele(vp);
 	return 0;
