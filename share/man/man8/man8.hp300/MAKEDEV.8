@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.17 2001/09/13 22:55:12 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.18 2001/11/10 22:58:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,6 +140,22 @@ HP400 4 port serial mux interface, see
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
+. El
+.It wscons :
+. Bl -tag -width 0123456789 -compact
+. It Ar ttyE#
+Wscons consoles
+. It Ar wskbd#
+Wscons keyboard events, see
+.Xr \&wskbd 4
+. It Ar wsmouse#
+Wscons mouse events, see
+.Xr \&wsmouse 4
+. It Ar wsmux#
+Wscons events multiplexor, see
+.Xr \&wsmux 4
+. It Ar wsfont#
+Console font control
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
