@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.10 1999/09/20 04:39:03 lukem Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.11 2000/06/09 16:22:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.10 1999/09/20 04:39:03 lukem Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.11 2000/06/09 16:22:55 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,8 +55,8 @@ __RCSID("$NetBSD: nlist_ecoff.c,v 1.10 1999/09/20 04:39:03 lukem Exp $");
 
 #ifdef NLIST_ECOFF
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
+#define	BAD			do { rv = -1; goto out; } while (/*CONSTCOND*/0)
+#define	BADUNMAP		do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
 
 int
 __fdnlist_ecoff(fd, list)

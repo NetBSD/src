@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_coff.c,v 1.1 2000/01/03 02:13:32 msaitoh Exp $	*/
+/*	$NetBSD: nlist_coff.c,v 1.2 2000/06/09 16:22:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.1 2000/01/03 02:13:32 msaitoh Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.2 2000/06/09 16:22:54 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,8 +55,8 @@ __RCSID("$NetBSD: nlist_coff.c,v 1.1 2000/01/03 02:13:32 msaitoh Exp $");
 
 #ifdef NLIST_COFF
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
+#define	BAD			do { rv = -1; goto out; } while (/*CONSTCOND*/0)
+#define	BADUNMAP		do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
 
 #define ES_LEN 18
 struct coff_extsym {
