@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1996/05/27 12:39:05 leo Exp $
+#	$NetBSD: list,v 1.6 1996/05/27 15:50:53 leo Exp $
 
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 
@@ -61,15 +61,6 @@ ARGVLINK mount_nfs	nfs
 ARGVLINK mount_cd9660	cd9660
 ARGVLINK sh		-sh
 
-# Minimize use of MFS
-SYMLINK	/tmp	var/tmp
-
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV
-
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
@@ -78,12 +69,6 @@ COPY	${DESTDIR}/etc/protocols	etc/protocols
 COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
-
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
-
-# and the termcap file
-COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # and the installation scripts
 COPY	${CURDIR}/install.sub		install.sub
