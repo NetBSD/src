@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.53 1998/07/26 14:57:56 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.54 1998/07/27 01:51:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.53 1998/07/26 14:57:56 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.54 1998/07/27 01:51:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,8 +185,8 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 
 static void	 ack __P((char *));
 static void	 myoob __P((int));
-static int	 checkuser __P((char *, char *));
-static int	 checkaccess __P((char *));
+static int	 checkuser __P((const char *, const char *));
+static int	 checkaccess __P((const char *));
 static FILE	*dataconn __P((char *, off_t, char *));
 static void	 dolog __P((struct sockaddr_in *));
 static char	*curdir __P((void));
@@ -198,8 +198,8 @@ static int	 receive_data __P((FILE *, FILE *));
 static void	 replydirname __P((const char *, const char *));
 static int	 send_data __P((FILE *, FILE *, off_t));
 static struct passwd *
-		 sgetpwnam __P((char *));
-static char	*sgetsave __P((char *));
+		 sgetpwnam __P((const char *));
+static char	*sgetsave __P((const char *));
 
 int	main __P((int, char *[]));
 
@@ -389,7 +389,7 @@ lostconn(signo)
  */
 static char *
 sgetsave(s)
-	char *s;
+	const char *s;
 {
 	char *new = malloc((unsigned) strlen(s) + 1);
 
@@ -409,7 +409,7 @@ sgetsave(s)
  */
 static struct passwd *
 sgetpwnam(name)
-	char *name;
+	const char *name;
 {
 	static struct passwd save;
 	struct passwd *p;
@@ -417,11 +417,11 @@ sgetpwnam(name)
 	if ((p = getpwnam(name)) == NULL)
 		return (p);
 	if (save.pw_name) {
-		free(save.pw_name);
-		free(save.pw_passwd);
-		free(save.pw_gecos);
-		free(save.pw_dir);
-		free(save.pw_shell);
+		free((char *)save.pw_name);
+		free((char *)save.pw_passwd);
+		free((char *)save.pw_gecos);
+		free((char *)save.pw_dir);
+		free((char *)save.pw_shell);
 	}
 	save = *p;
 	save.pw_name = sgetsave(p->pw_name);
@@ -512,8 +512,8 @@ user(name)
  */
 static int
 checkuser(fname, name)
-	char *fname;
-	char *name;
+	const char *fname;
+	const char *name;
 {
 	FILE *fd;
 	int found = 0;
@@ -557,7 +557,7 @@ checkuser(fname, name)
  */
 static int
 checkaccess(name)
-	char *name;
+	const char *name;
 {
 #define ALLOWED		0
 #define	NOT_ALLOWED	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.5 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.6 1998/07/27 01:45:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,8 +37,8 @@
 
 __BEGIN_DECLS
 extern char *UserNameRequested;
-extern char *LocalHostName;
-extern char *RemoteHostName;
+extern const char *LocalHostName;
+extern const char *RemoteHostName;
 extern int ConnectedCount;
 extern int ReservedPort;
 

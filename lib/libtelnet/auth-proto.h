@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.6 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.7 1998/07/27 01:45:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,7 +60,7 @@
 #if	defined(AUTHENTICATION)
 Authenticator *findauthenticator __P((int, int));
 
-void auth_init __P((char *, int));
+void auth_init __P((const char *, int));
 int auth_cmd __P((int, char **));
 void auth_request __P((void));
 void auth_send __P((unsigned char *, int));
