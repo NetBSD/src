@@ -1,4 +1,4 @@
-.\" $NetBSD: xi.4,v 1.1 2000/06/05 23:14:23 gmcgarry Exp $
+.\" $NetBSD: xi.4,v 1.2 2000/06/07 02:12:00 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,9 +79,8 @@ using the standard
 mechanism.  Refer to those manual pages for more information.
 .Sh BUGS
 The driver suffers from poor performance.  Even with the 10/100 cards,
-do not expect more than ~450KB/s.  Autonegotiation on the 10/100 cards
-does not appear to be functional and therefore media selection must be
-performed manually.  Promiscuous mode is known not to work on some adapters.
+do not expect more than ~450KB/s.  Some 10/100 cards may not autonegotiate
+reliably and require manual media selection.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr ifmedia 4 ,
