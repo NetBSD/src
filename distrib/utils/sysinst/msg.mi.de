@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.6.2.3 2004/06/17 09:19:09 tron Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.6.2.4 2004/07/01 21:50:13 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,7 +43,7 @@ message usage
 }
 
 message sysinst_message_language
-{Installation messages in German}
+{Installation auf Deutsch}
 
 message Yes {Ja}
 message No {Nein}
