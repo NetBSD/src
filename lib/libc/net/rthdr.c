@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.6 2000/01/23 00:10:56 mycroft Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.7 2000/02/29 18:24:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@ inet6_rthdr_init(bp, type)
     _DIAGASSERT(bp != NULL);
 
     ch = (struct cmsghdr *)bp;
-    rthdr = (struct ip6_rthdr *)(ch + 1);
+    rthdr = (struct ip6_rthdr *)CMSG_DATA(ch);
 
     ch->cmsg_level = IPPROTO_IPV6;
     ch->cmsg_type = IPV6_RTHDR;
@@ -99,7 +99,7 @@ inet6_rthdr_add(cmsg, addr, flags)
     _DIAGASSERT(cmsg != NULL);
     _DIAGASSERT(addr != NULL);
 
-    rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
     switch(rthdr->ip6r_type) {
      case IPV6_RTHDR_TYPE_0:
@@ -150,7 +150,7 @@ inet6_rthdr_lasthop(cmsg, flags)
 
     _DIAGASSERT(cmsg != NULL);
 
-    rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
     switch(rthdr->ip6r_type) {
      case IPV6_RTHDR_TYPE_0:
@@ -208,7 +208,7 @@ inet6_rthdr_segments(cmsg)
 
     _DIAGASSERT(cmsg != NULL);
 
-    rthdr = (const struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (const struct ip6_rthdr *)CMSG_DATA(cmsg);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
@@ -244,7 +244,7 @@ inet6_rthdr_getaddr(cmsg, index)
 
     _DIAGASSERT(cmsg != NULL);
 
-    rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (struct ip6_rthdr *)CMSG_DATA(cmsg);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
@@ -287,7 +287,7 @@ inet6_rthdr_getflags(cmsg, index)
 
     _DIAGASSERT(cmsg != NULL);
 
-    rthdr = (const struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (const struct ip6_rthdr *)CMSG_DATA(cmsg);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
