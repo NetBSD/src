@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.412 2001/07/21 13:22:05 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.413 2001/07/30 18:03:54 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.412 $"
+#ident 		"GENERIC-$Revision: 1.413 $"
 
 maxusers	32		# estimated number of users
 
@@ -152,6 +152,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	I2OVERBOSE	# verbose I2O driver messages
+options		MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -266,6 +267,9 @@ isa*	at pcib?
 pcmcia*	at pcic? controller ? socket ?
 pcmcia*	at tcic? controller ? socket ?
 
+# MCA bus support
+mca0	at mainbus?
+
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
@@ -368,6 +372,8 @@ com2	at isa? port 0x3e8 irq 5
 #moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
 #com*	at moxa? slave ?
 
+# MCA serial interfaces
+com*	at mca? slot ?			# 16x50s on comm boards
 
 # Parallel Printer Interfaces
 
@@ -443,6 +449,9 @@ wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
 #ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+
+# MCA SCSI cards
+aha*	at mca? slot ?			# Adaptec AHA-1640
 
 # SCSI bus support
 scsibus* at adv?
@@ -548,6 +557,10 @@ fd*	at fdc? drive ?			# the drives themselves
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
+# MCA ESDI devices
+edc*	at mca? slot ?			# IBM ESDI Disk Controllers
+ed*	at edc?
+
 
 # Network Interfaces
 
@@ -639,6 +652,15 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
+
+# MCA network cards
+elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
+ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
+we*	at mca? slot ?			# WD/SMC Ethernet
+ate*	at mca? slot ?			# Allied Telesis AT1720
+ne*	at mca? slot ?			# Novell NE/2 and clones
+tr*	at mca? slot ?			# IBM Token Ring adapter
+le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
