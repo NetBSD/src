@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.12 2004/01/28 15:07:52 onoe Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.13 2004/01/29 16:57:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.12 2004/01/28 15:07:52 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.13 2004/01/29 16:57:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -167,6 +167,6 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: failed to attach controller\n",
 		    self->dv_xname);
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
-		bus_space_unmap(sc->sc_ioh, sc->sc_ioh, AN_IOSIZ);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, AN_IOSIZ);
 	}
 }
