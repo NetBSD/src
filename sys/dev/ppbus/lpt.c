@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.10 2004/02/03 18:48:39 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.11 2004/02/03 19:57:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.10 2004/02/03 18:48:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.11 2004/02/03 19:57:00 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -635,8 +635,8 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct device * dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
         struct lpt_softc * sc = (struct lpt_softc *) dev;
-	int val;
-	int error = 0;
+	int val, fl;
+	int error=0;
 
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to perform ioctl on device which "
@@ -646,100 +646,98 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 	}
 
 	switch (cmd) {
-	case LPTIO_ENABLE_DMA:
-		if (((sc->ppbus_dev).capabilities & PPBUS_HAS_DMA) == 0) {
-			error = ENODEV;
+	case LPTGMODE:
+        	switch (ppbus_get_mode(dev->dv_parent)) {
+		case PPBUS_COMPATIBLE:
+			val = mode_standard;
+			break;
+		case PPBUS_NIBBLE:
+			val = mode_nibble;
+			break;
+		case PPBUS_PS2:
+			val = mode_ps2;
+			break;
+		case PPBUS_FAST:
+			val = mode_fast;
+			break;
+		case PPBUS_EPP:
+			val = mode_epp;
+			break;
+		case PPBUS_ECP:
+			val = mode_ecp;
+			break;
+		default:
+			error = EINVAL;
+			val = mode_unknown;
+			break;
+		}
+		*(int *)data = val;
+		break;
+
+	case LPTSMODE:
+        	switch (*(int *)data) {
+		case mode_standard:
+			val = PPBUS_COMPATIBLE;
+			break;
+		case mode_nibble:
+			val = PPBUS_NIBBLE;
+			break;
+		case mode_ps2:
+			val = PPBUS_PS2;
+			break;
+		case mode_fast:
+			val = PPBUS_FAST;
+			break;
+		case mode_epp:
+			val = PPBUS_EPP;
+			break;
+		case mode_ecp:
+			val = PPBUS_ECP;
+			break;
+		default:
+			error = EINVAL;
+			val = mode_unknown;
 			break;
 		}
 
-		val = 1;
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
+		if (!error)
+			error = ppbus_set_mode(dev->dv_parent, val, 0);
+
 		break;
 
-	case LPTIO_DISABLE_DMA:
-		if (((sc->ppbus_dev).capabilities & PPBUS_HAS_DMA) == 0) {
-			/* nop, 'success' */
-			error = 0;
-			break;
-		}
-
-		val = 0;
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
-		break;
-
-	case LPTIO_MODE_STD:
-		error = ppbus_set_mode(dev->dv_parent, PPBUS_COMPATIBLE, 0);
-		break;
-
-	case LPTIO_MODE_NIBBLE:
-		error = ppbus_set_mode(dev->dv_parent, PPBUS_NIBBLE, 0);
-		break;
-
-	case LPTIO_MODE_PS2:
-		error = ppbus_set_mode(dev->dv_parent, PPBUS_PS2, 0);
-		break;
-
-	case LPTIO_MODE_FAST:
-		error = ppbus_set_mode(dev->dv_parent, PPBUS_FAST, 0);
-		break;
-
-	case LPTIO_MODE_ECP:
-		error = ppbus_set_mode(dev->dv_parent, PPBUS_ECP, 0);
-		break;
-
-	case LPTIO_MODE_EPP:
-		error = ppbus_set_mode(dev->dv_parent, PPBUS_EPP, 0);
-		break;
-	
-	case LPTIO_ENABLE_IEEE:
-		val = 1;
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
-		break;
-
-	case LPTIO_DISABLE_IEEE:
-		val = 0;
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
-		break;
-
-	case LPTIO_GET_STATUS:
-	{	
-		LPT_INFO_T * status = (LPT_INFO_T *)data; 
+	case LPTGFLAGS:
+		fl = 0;
 
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
 		if (error)
 			break;
-		status->dma_status = (val);
-
+		if (val)
+			fl |= LPT_DMA;
+		
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
 		if (error)
 			break;
-		status->ieee_status = (val);
+		if (val)
+			fl |= LPT_IEEE;
 
-        	switch(ppbus_get_mode(dev->dv_parent)) {
-		case PPBUS_COMPATIBLE:
-			status->mode_status = standard;
-			break;
-		case PPBUS_NIBBLE:
-			status->mode_status = nibble;
-			break;
-		case PPBUS_PS2:
-			status->mode_status = ps2;
-			break;
-		case PPBUS_FAST:
-			status->mode_status = fast;
-			break;
-		case PPBUS_EPP:
-			status->mode_status = epp;
-			break;
-		case PPBUS_ECP:
-			status->mode_status = ecp;
-			break;
-		}
+		*(int *)data = fl;
 		break;
-	}
+
+	case LPTSFLAGS:
+		fl = *(int *)data;
+
+		val = (fl & LPT_DMA);
+		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
+		if (error)
+			break;
+
+		val = (fl & LPT_IEEE);
+		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
+		break;
 
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	return error;
