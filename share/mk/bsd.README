@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.55 1999/11/30 16:16:43 sommerfeld Exp $
+#	$NetBSD: bsd.README,v 1.56 1999/12/01 03:33:52 sommerfeld Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -620,5 +620,41 @@ and CPP flags.
 
 The "EXPORTABLE_SYSTEM" variable, if set, causes CRYPTOBASE to be set
 to "none".  This is for compatibilty with older NetBSD build environments.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.obj.mk> defines targets related to the creation
+and use of separated object and source directories.
+
+make(1) looks for the existance of a subdirectory (or a symlink to a
+directory) of the source directory into which built targets should be
+placed.  If an environment variable named MAKEOBJDIR is set, make(1)
+uses its value as the name of the object directory; failing that, make
+first looks for a subdirectory named "obj.${MACHINE}", and if that
+doesn't exist, it looks for "obj".
+
+Object directories are not created automatically by make(1) if they
+don't exist; you need to run a separate "make obj".  (This will happen
+during a top-level build if "MKOBJDIRS" is set to a value other than
+"no").  When the source directory is a subdirectory of ${BSDSRCDIR},
+object directories are created in a separate object directory tree,
+and a symlink to the object directory in that tree is created in the
+source directory.
+
+Several variables used by <bsd.obj.mk> control exactly what
+directories and links get created during a "make obj":
+
+MAKEOBJDIR	If set, this is the component name of the object
+		directory.
+
+OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
+		object directories or links named "obj.${MACHINE}";
+		otherwise, just creates ones named "obj".
+
+USR_OBJMACHINE  If set, and the current directory is a subdirectory of
+		${BSDSRCDIR}, create object directory in the
+		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
+		otherwise, create it in the corresponding subdirectory
+		of ${BSDOBJDIR}
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
