@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.37 2002/09/28 12:34:53 grant Exp $
+.\"	$NetBSD: find.1,v 1.38 2002/09/28 12:59:49 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,10 +102,13 @@ If a file name contains any of the delimiting characters used by
 .Nm xargs ,
 a diagnostic message is displayed on standard error, and the file
 is skipped.
-The delimiting characters include single (') and double (")
-quotes, backslash (
-.Dq \e
-), space, tab and newline characters.
+The delimiting characters include single
+.Pq Dq \&'
+and double
+.Pq Dq \&"
+quotes, backslash
+.Pq Dq \e ,
+space, tab and newline characters.
 Alternatively, the
 .Ic -print0
 or
@@ -118,15 +121,15 @@ The
 .Fl d
 option causes
 .Nm
-to perform a depth\-first traversal, i.e. directories
-are visited in post\-order and all entries in a directory will be acted
+to perform a depth-first traversal, i.e., directories
+are visited in post-order and all entries in a directory will be acted
 on before the directory itself.
 By default,
 .Nm
-visits directories in pre\-order, i.e. before their contents.
+visits directories in pre-order, i.e., before their contents.
 Note, the default is
 .Ar not
-a breadth\-first traversal.
+a breadth-first traversal.
 .It Fl f
 The
 .Fl f
@@ -179,9 +182,9 @@ True if the current file has a more recent last access time than
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
 .Nm
-was started, rounded up to the next full 24\-hour period, is
+was started, rounded up to the next full 24-hour period, is
 .Ar n
-24\-hour periods.
+24-hour periods.
 .It Ic -cmin Ar n
 True if the difference between the time of last change of file status
 information and the time
@@ -196,9 +199,9 @@ True if the current file has a more recent last change time than
 True if the difference between the time of last change of file status
 information and the time
 .Nm
-was started, rounded up to the next full 24\-hour period, is
+was started, rounded up to the next full 24-hour period, is
 .Ar n
-24\-hour periods.
+24-hour periods.
 .It Ic -empty
 True if the current file or directory is empty.
 .It Ic -exec Ar utility Op argument ... ;
@@ -206,9 +209,8 @@ True if the program named
 .Ar utility
 returns a zero value as its exit status.
 Optional arguments may be passed to the utility.
-The expression must be terminated by a semicolon (
-.Dq \&;
-).
+The expression must be terminated by a semicolon
+.Pq Dq \&; .
 If the string
 .Dq {}
 appears anywhere in the utility name or the
@@ -219,7 +221,7 @@ will be executed from the directory from which
 was executed.
 .It Ic -execdir Ar utility Op argument ... ; 
 The
-.Ic \&-execdir
+.Ic -execdir
 primary is identical to the
 .Ic -exec
 primary with the exception that
@@ -236,9 +238,9 @@ is not qualified.
 .Xc
 If
 .Ar flags
-are preceded by a dash (
-.Dq \-
-), this primary evaluates to true
+are preceded by a dash
+.Pq Dq - ,
+this primary evaluates to true
 if at least all of the bits in
 .Ar flags
 are set in the file's flags bits.
@@ -303,15 +305,15 @@ links.
 .It Ic -ls
 This primary always evaluates to true.
 The following information for the current file is written to standard output:
-its inode number, size in 512\-byte blocks, file permissions, number of hard
+its inode number, size in 512-byte blocks, file permissions, number of hard
 links, owner, group, size in bytes, last modification time, and pathname.
 If the file is a block or character special file, the major and minor numbers
 will be displayed instead of the size in bytes.
-If the file is a symbolic link, the pathname of the linked\-to file will be
+If the file is a symbolic link, the pathname of the linked-to file will be
 displayed preceded by
-.Dq \-\*[Gt] .
+.Dq -\*[Gt] .
 The format is identical to that produced by
-.Dq ls \-dgils .
+.Dq ls -dgils .
 .It Ic -maxdepth Ar n
 True if the current search depth is less than or equal to what is specified in
 .Ar n .
@@ -327,12 +329,12 @@ minutes.
 .It Ic -mtime Ar n
 True if the difference between the file last modification time and the time
 .Nm
-was started, rounded up to the next full 24\-hour period, is
+was started, rounded up to the next full 24-hour period, is
 .Ar n
-24\-hour periods.
-.It Ic \&-ok Ar utility Op argument ... ;
+24-hour periods.
+.It Ic -ok Ar utility Op argument ... ;
 The
-.Ic \&-ok
+.Ic -ok
 primary is identical to the
 .Ic -exec
 primary with the exception that
@@ -358,9 +360,8 @@ Special shell pattern matching characters
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
-backslash (
-.Dq \e
-).
+backslash
+.Pq Dq \e .
 .It Ic -newer Ar file
 True if the current file has a more recent last modification time than
 .Ar file  .
@@ -371,22 +372,22 @@ True if the file belongs to an unknown group.
 .It Ic -path Ar pattern
 True if the pathname being examined matches
 .Ar pattern  .
-Special shell pattern matching characters (
+Special shell pattern matching characters
+.Po
 .Dq \&[ ,
 .Dq \&] ,
 .Dq \&* ,
 and
 .Dq \&?
-)
+.Pc
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
-backslash (
-.Dq \e
-).
-Slashes (
-.Dq /
-) are treated as normal characters and do not have to be
+backslash
+.Pq Dq \e .
+Slashes
+.Pq Dq /
+are treated as normal characters and do not have to be
 matched explicitly.
 .It Xo
 .Ic -perm
@@ -415,15 +416,14 @@ If the mode is octal, only bits 07777
 .Dv S_IRWXO )
 of the file's mode bits participate
 in the comparison.
-If the mode is preceded by a dash (
-.Dq \-
-), this primary evaluates to true
+If the mode is preceded by a dash
+.Pq Dq - ,
+this primary evaluates to true
 if at least all of the bits in the mode are set in the file's mode bits.
 If the mode is not preceded by a dash, this primary evaluates to true if
 the bits in the mode exactly match the file's mode bits.
-Note, the first character of a symbolic mode may not be a dash (
-.Dq \-
-).
+Note, the first character of a symbolic mode may not be a dash
+.Pq Dq - .
 .It Ic -print
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
@@ -468,14 +468,13 @@ basic regular expression
 This is a match on the whole path, not a search for the regular expression
 within the path.
 .It Ic -size Ar n Ns Op Cm c
-True if the file's size, rounded up, in 512\-byte blocks is
+True if the file's size, rounded up, in 512-byte blocks is
 .Ar n  .
 If
 .Ar n
 is followed by a
-.Dq c
-, then the primary is true if the
-file's size is
+.Dq c ,
+then the primary is true if the file's size is
 .Ar n
 bytes.
 .It Ic -type Ar t
@@ -512,15 +511,14 @@ is treated as a user id.
 .El
 .Pp
 All primaries which take a numeric argument allow the number to be
-preceded by a plus sign (
-.Dq +
-) or a minus sign (
-.Dq \-
-).
+preceded by a plus sign
+.Pq Dq +
+or a minus sign
+.Pq Dq \- .
 A preceding plus sign means
-.Dq more than n
-, a preceding minus sign means
-.Dq less than n
+.Dq more than n ,
+a preceding minus sign means
+.Dq less than n ,
 and neither means
 .Dq exactly n .
 .Sh OPERATORS
@@ -570,7 +568,7 @@ The following examples are shown as given to the shell:
 .Bl -tag -width findx
 .It Li "find  /  \e!  -name  \*q*.c\*q  -print"
 Print out a list of all the files whose names do not end in
-.Dq .c .
+.Dq \&.c .
 .It Li "find  /  -newer  ttt  -user  wnj  -print"
 Print out a list of all the files owned by user
 .Dq wnj
@@ -632,27 +630,27 @@ Historically, the
 and
 .Fl x
 options were implemented using the primaries
-.Dq \-depth ,
-.Dq \-follow ,
+.Dq -depth ,
+.Dq -follow ,
 and
-.Dq \-xdev .
+.Dq -xdev .
 These primaries always evaluated to true.
 As they were really global variables that took effect before the traversal
 began, some legal expressions could have unexpected results.
 An example is the expression
-.Dq \-print \-o \-depth .
-As \-print always evaluates to true, the standard order of evaluation
-implies that \-depth would never be evaluated.
+.Dq -print -o -depth .
+As -print always evaluates to true, the standard order of evaluation
+implies that -depth would never be evaluated.
 This is not the case.
 .Pp
 The operator
 .Dq -or
 was implemented as
-.Dq \-o ,
+.Dq -o ,
 and the operator
 .Dq -and
 was implemented as
-.Dq \-a .
+.Dq -a .
 .Pp
 Historic implementations of the
 .Ic -exec
