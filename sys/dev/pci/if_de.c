@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.62 1998/02/11 01:28:22 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.63 1998/03/29 22:21:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -2069,11 +2069,13 @@ tulip_crc32(
     const unsigned char *databuf,
     size_t datalen)
 {
-    u_int idx, bit, data, crc = 0xFFFFFFFFUL;
+    u_int idx, bit, crc = 0xFFFFFFFFUL;
 
-    for (idx = 0; idx < datalen; idx++)
-        for (data = *databuf++, bit = 0; bit < 8; bit++, data >>= 1)
-            crc = (crc >> 1) ^ (((crc ^ data) & 1) ? TULIP_CRC32_POLY : 0);
+    for (idx = 0; idx < datalen; idx++) {
+	crc ^= (*databuf++) << 0;
+        for (bit = 0; bit < 8; bit++)
+            crc = (crc >> 1) ^ ((crc & 1) ? TULIP_CRC32_POLY : 0);
+    }
     return crc;
 }
 
