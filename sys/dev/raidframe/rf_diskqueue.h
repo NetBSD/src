@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.15 2004/02/24 15:12:52 wiz Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.16 2004/03/04 01:53:25 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -104,9 +104,9 @@ struct RF_DiskQueueSW_s {
 struct RF_DiskQueue_s {
 	const RF_DiskQueueSW_t *qPtr;	/* access point to queue functions */
 	void   *qHdr;		/* queue header, of whatever type */
-	        RF_DECLARE_MUTEX(mutex)	/* mutex locking data structures */
-	        RF_DECLARE_COND(cond)	/* condition variable for
-					 * synchronization */
+        RF_DECLARE_MUTEX(mutex)	/* mutex locking data structures */
+        RF_DECLARE_COND(cond)	/* condition variable for
+				 * synchronization */
 	long    numOutstanding;	/* number of I/Os currently outstanding on
 				 * disk */
 	long    maxOutstanding;	/* max # of I/Os that can be outstanding on a
@@ -123,7 +123,7 @@ struct RF_DiskQueue_s {
 	dev_t   dev;		/* device number for kernel version */
 	RF_SectorNum_t last_deq_sector;	/* last sector number dequeued or
 					 * dispatched */
-	int     row, col;	/* debug only */
+	int     col;	/* debug only */
 	struct raidcinfo *rf_cinfo;	/* disks component info.. */
 };
 #define RF_DQ_LOCKED  0x02	/* no new accs allowed until queue is
@@ -148,40 +148,24 @@ struct RF_DiskQueue_s {
   (RF_QUEUE_EMPTY(_q_) || \
     (!RF_QUEUE_FULL(_q_) && ((_r_)->priority >= (_q_)->curPriority)))
 
-int     rf_ConfigureDiskQueueSystem(RF_ShutdownList_t ** listp);
-
-int 
-rf_ConfigureDiskQueues(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr);
-
-void    rf_DiskIOEnqueue(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req, int pri);
-
-
-void    rf_DiskIOComplete(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req, int status);
-
-int 
-rf_DiskIOPromote(RF_DiskQueue_t * queue, RF_StripeNum_t parityStripeID,
-    RF_ReconUnitNum_t which_ru);
-
-RF_DiskQueueData_t *
-rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect, 
-		       RF_SectorCount_t nsect, caddr_t buf,
-		       RF_StripeNum_t parityStripeID, 
-		       RF_ReconUnitNum_t which_ru,
-		       int (*wakeF) (void *, int),
-		       void *arg, RF_DiskQueueData_t * next, 
-		       RF_AccTraceEntry_t * tracerec,
-		       void *raidPtr, RF_DiskQueueDataFlags_t flags, 
-		       void *kb_proc);
-
-void    
-rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
-
-int 
-rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
-		      RF_RowCol_t, const RF_DiskQueueSW_t *,
-		      RF_SectorCount_t, dev_t, int, 
-		      RF_ShutdownList_t **,
-		      RF_AllocListElem_t *);
+int rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **);
+int rf_ConfigureDiskQueues(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+void rf_DiskIOEnqueue(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
+void rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
+int rf_DiskIOPromote(RF_DiskQueue_t *, RF_StripeNum_t,  RF_ReconUnitNum_t);
+RF_DiskQueueData_t *rf_CreateDiskQueueData(RF_IoType_t, RF_SectorNum_t,
+					   RF_SectorCount_t , caddr_t,
+					   RF_StripeNum_t, RF_ReconUnitNum_t,
+					   int (*wakeF) (void *, int),
+					   void *, RF_DiskQueueData_t *, 
+					   RF_AccTraceEntry_t *, void *,
+					   RF_DiskQueueDataFlags_t, 
+					   void *);
+void rf_FreeDiskQueueData(RF_DiskQueueData_t *);
+int rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
+			  RF_RowCol_t, const RF_DiskQueueSW_t *,
+			  RF_SectorCount_t, dev_t, int, 
+			  RF_ShutdownList_t **,
+			  RF_AllocListElem_t *);
 
 #endif				/* !_RF__RF_DISKQUEUE_H_ */
