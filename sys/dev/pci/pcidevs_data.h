@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.376 2001/12/13 20:41:06 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.377 2001/12/15 13:18:11 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.373 2001/12/13 20:40:28 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.374 2001/12/15 13:17:49 soren Exp 
  */
 
 /*
@@ -1838,6 +1838,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cogent Data Technologies",
 	    "EX110TX PCI Fast Ethernet Adapter",
+	},
+	{
+	    PCI_VENDOR_COLOGNECHIP, PCI_PRODUCT_COLOGNECHIP_HFC,
+	    0,
+	    "Cologne Chip Designs",
+	    "HFC-S",
 	},
 	{
 	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
@@ -9565,6 +9571,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LEVELONE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Level One",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_COLOGNECHIP, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Cologne Chip Designs",
 	    NULL,
 	},
 	{
