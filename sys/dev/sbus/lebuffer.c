@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.1 1998/07/27 05:43:58 mrg Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.2 1998/07/27 19:13:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -45,15 +45,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
+#include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>
-
-#if defined(SUN4C) || defined(SUN4M)
-#include <sparc/dev/sbusvar.h>
-#include <sparc/dev/dmareg.h>/*XXX*/
-#elif defined(SUN4U)
-#include <sparc64/dev/sbusvar.h>
-#include <sparc64/dev/dmareg.h>/*XXX*/
-#endif
 
 int	lebufprint	__P((void *, const char *));
 int	lebufmatch	__P((struct device *, struct cfdata *, void *));
