@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.17 2000/01/13 16:19:36 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.18 2000/01/13 16:20:27 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.17 2000/01/13 16:19:36 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.18 2000/01/13 16:20:27 jsm Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -132,7 +132,7 @@ STRFILE	Tbl;				/* statistics table */
 
 STR	*Firstch;			/* first chars of each string */
 
-#ifdef __GCC__
+#ifdef __GNUC__
 #define NORETURN	__attribute__((__noreturn__))
 #else
 #define NORETURN
