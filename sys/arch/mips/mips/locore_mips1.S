@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.12 1999/05/22 02:35:35 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.13 1999/05/29 09:38:28 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1068,7 +1068,7 @@ END(mips1_TLBFlushAddr)
  *		unsigned highreg, lowreg;
  *
  * Results:
- *	None.
+ *	None.		(XXX not correct XXX)
  *
  * Side effects:
  *	None.
@@ -1078,6 +1078,17 @@ END(mips1_TLBFlushAddr)
 LEAF(mips1_TLBUpdate)
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+
+	li	v0, -1				#
+	bne	v0, a0, 3f			#
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# this is the way MIPS
+	nop					# TLB exception
+	tlbwi					# handlers should be
+	nop					# implemented.
+	j	ra				#
+	mtc0	v1, MIPS_COP_0_STATUS		#
+
+3:
 	mfc0	t0, MIPS_COP_0_TLB_HI		# Save current PID
 	nop					# 2 cycles before intr disabled
 	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
@@ -1702,6 +1713,7 @@ ALEAF(mips1_TLBFlush)
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(mips1_purge_perprocess_tlb)
 
+#if notyet_for_PMAP_NEW
 /*
  * mips1_purge_single_tlb(vaddr_t)
  *
@@ -1737,13 +1749,19 @@ END(mips1_purge_single_tlb)
 /*
  * void mips1_update_tlb(vaddr, unsigned)
  *
- * Replace an entry which has the same VPN with the same TLBPID or
- * global bit, if any.  If no such entry exists, add the new entry
- * into TLB victimizing a ramdomly choosen one.
+ * Used dual purposes; update current TLB entry just made TLB exception
+ * with the given entrylo value.  Or, replace an entry which has the
+ * given VPN with the given TLBPID or with global bit, if any.  If no
+ * such entry exists, add the new entry into TLB victimizing a ramdomly
+ * choosen one.
  */
 LEAF(mips1_update_tlb)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	li	v0, -1				# check to use current entryhi
+	beq	v0, a0, 2f
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
 
 	mfc0	v0, MIPS_COP_0_TLB_HI		# pick current TLBPID
 	srl	a0, 12
@@ -1754,17 +1772,18 @@ LEAF(mips1_update_tlb)
 	nop
 	tlbp					# probe looking for the entry
 	mfc0	t0, MIPS_COP_0_TLB_INDEX	# see what we got
-	mtc0	a1, MIPS_COP_0_TLB_LOW
-	bltz	t0, 1f				# index < 0 => !found
 	nop
+	bgtz	t0, 1f				# index < 0 => !found
+	mtc0	a1, MIPS_COP_0_TLB_LOW
 	b	2f
-	tlbwi					# update an entry found
-1:
 	tlbwr					# add vicitimizing another
+1:
+	tlbwi					# update the entry
 2:
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(mips1_update_tlb)
+#endif
 
 /*
  * void mips1_clean_tlb(void)
