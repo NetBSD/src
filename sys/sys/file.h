@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.15 1998/06/30 05:33:11 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.16 1998/06/30 07:39:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -86,6 +86,16 @@ LIST_HEAD(filelist, file);
 extern struct filelist filehead;	/* head of list of open files */
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int nfiles;			/* actual number of open files */
+
+int	dofileread __P((struct proc *, int, struct file *, void *, size_t,
+	    off_t *, int, register_t *));
+int	dofilewrite __P((struct proc *, int, struct file *, const void *,
+	    size_t, off_t *, int, register_t *));
+
+int	dofilereadv __P((struct proc *, int, struct file *,
+	    const struct iovec *, int, off_t *, int, register_t *));
+int	dofilewritev __P((struct proc *, int, struct file *,
+	    const struct iovec *, int, off_t *, int, register_t *));
 
 #endif /* _KERNEL */
 

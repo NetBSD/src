@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.38 1998/06/30 05:33:12 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.39 1998/06/30 07:39:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -83,6 +83,27 @@ sys_read(p, v, retval)
 	int fd = SCARG(uap, fd);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FREAD) == 0)
+		return (EBADF);
+
+	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+}
+
+int
+dofileread(p, fd, fp, buf, nbyte, offset, flags, retval)
+	struct proc *p;
+	int fd;
+	struct file *fp;
+	void *buf;
+	size_t nbyte;
+	off_t *offset;
+	int flags;
+	register_t *retval;
+{
 	struct uio auio;
 	struct iovec aiov;
 	long cnt, error = 0;
@@ -90,15 +111,11 @@ sys_read(p, v, retval)
 	struct iovec ktriov;
 #endif
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FREAD) == 0)
-		return (EBADF);
-	aiov.iov_base = (caddr_t)SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, nbyte);
+	aiov.iov_base = (caddr_t)buf;
+	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_resid = SCARG(uap, nbyte);
+	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
@@ -112,8 +129,7 @@ sys_read(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_read)(fp, &fp->f_offset, &auio, fp->f_cred,
-	    FOF_UPDATE_OFFSET);
+	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -142,9 +158,29 @@ sys_readv(p, v, retval)
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	int iovcnt = SCARG(uap, iovcnt);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FREAD) == 0)
+		return (EBADF);
+
+	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+}
+
+int
+dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
+	struct proc *p;
+	int fd;
+	struct file *fp;
+	const struct iovec *iovp;
+	int iovcnt;
+	off_t *offset;
+	int flags;
+	register_t *retval;
+{
 	struct uio auio;
 	register struct iovec *iov;
 	struct iovec *needfree;
@@ -155,10 +191,6 @@ sys_readv(p, v, retval)
 	struct iovec *ktriov = NULL;
 #endif
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FREAD) == 0)
-		return (EBADF);
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof (struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
@@ -175,7 +207,7 @@ sys_readv(p, v, retval)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	error = copyin(SCARG(uap, iovp), iov, iovlen);
+	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
 	auio.uio_resid = 0;
@@ -197,8 +229,7 @@ sys_readv(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_read)(fp, &fp->f_offset, &auio, fp->f_cred,
-	    FOF_UPDATE_OFFSET);
+	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -236,6 +267,27 @@ sys_write(p, v, retval)
 	int fd = SCARG(uap, fd);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FWRITE) == 0)
+		return (EBADF);
+
+	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+}
+
+int
+dofilewrite(p, fd, fp, buf, nbyte, offset, flags, retval)
+	struct proc *p;
+	int fd;
+	struct file *fp;
+	const void *buf;
+	size_t nbyte;
+	off_t *offset;
+	int flags;
+	register_t *retval;
+{
 	struct uio auio;
 	struct iovec aiov;
 	long cnt, error = 0;
@@ -243,15 +295,11 @@ sys_write(p, v, retval)
 	struct iovec ktriov;
 #endif
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
-		return (EBADF);
-	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
-	aiov.iov_len = SCARG(uap, nbyte);
+	aiov.iov_base = (caddr_t)buf;		/* XXX kills const */
+	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_resid = SCARG(uap, nbyte);
+	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
@@ -265,8 +313,7 @@ sys_write(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio, fp->f_cred,
-	    FOF_UPDATE_OFFSET);
+	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -295,12 +342,32 @@ sys_writev(p, v, retval)
 	register struct sys_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct iovec *) iovp;
-		syscallarg(u_int) iovcnt;
+		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	int iovcnt = SCARG(uap, iovcnt);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FWRITE) == 0)
+		return (EBADF);
+
+	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+}
+
+int
+dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
+	struct proc *p;
+	int fd;
+	struct file *fp;
+	const struct iovec *iovp;
+	int iovcnt;
+	off_t *offset;
+	int flags;
+	register_t *retval;
+{
 	struct uio auio;
 	register struct iovec *iov;
 	struct iovec *needfree;
@@ -311,10 +378,6 @@ sys_writev(p, v, retval)
 	struct iovec *ktriov = NULL;
 #endif
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
-		return (EBADF);
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof (struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
@@ -331,7 +394,7 @@ sys_writev(p, v, retval)
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	error = copyin(SCARG(uap, iovp), iov, iovlen);
+	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
 	auio.uio_resid = 0;
@@ -353,8 +416,7 @@ sys_writev(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio, fp->f_cred,
-	    FOF_UPDATE_OFFSET);
+	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
