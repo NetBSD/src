@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tar.c,v 1.10 1997/06/06 07:59:55 jeremy Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.11 1997/10/10 00:16:02 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -208,6 +208,9 @@ main (argc, argv)
   errors = 0;
 
   options (argc, argv);
+
+  /* Always force `--unlink'. */
+  f_unlink = 1;
 
   if (!n_argv)
     name_init (argc, argv);
