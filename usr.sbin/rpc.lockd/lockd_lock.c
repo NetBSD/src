@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.8 2001/10/23 19:54:53 oster Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.8.2.1 2003/06/30 02:27:38 grant Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -148,6 +148,7 @@ getlock(lckarg, rqstp, flags)
 {
 	struct file_lock *fl, *newfl;
 	enum nlm_stats retval;
+	struct sockaddr *addr;
 
 	if (grace_expired == 0 && lckarg->reclaim == 0)
 		return (flags & LOCK_V4) ?
@@ -166,12 +167,22 @@ getlock(lckarg, rqstp, flags)
 		    lckarg->alock.fh.n_len, (int)sizeof(fhandle_t));
 	}
 	memcpy(&newfl->filehandle, lckarg->alock.fh.n_bytes, sizeof(fhandle_t));
-	newfl->addr = (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf;
+	addr = (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf;
+	newfl->addr = malloc(addr->sa_len);
+	if (newfl->addr == NULL) {
+		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		free(newfl);
+		/* failed */
+		return (flags & LOCK_V4) ?
+		    nlm4_denied_nolock : nlm_denied_nolocks;
+	}
+	memcpy(newfl->addr, addr, addr->sa_len);
 	newfl->client.exclusive = lckarg->exclusive;
 	newfl->client.svid = lckarg->alock.svid;
 	newfl->client.oh.n_bytes = malloc(lckarg->alock.oh.n_len);
 	if (newfl->client.oh.n_bytes == NULL) {
 		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		free(newfl->addr);
 		free(newfl);
 		return (flags & LOCK_V4) ?
 		    nlm4_denied_nolock : nlm_denied_nolocks;
@@ -185,6 +196,7 @@ getlock(lckarg, rqstp, flags)
 	newfl->client_cookie.n_bytes = malloc(lckarg->cookie.n_len);
 	if (newfl->client_cookie.n_bytes == NULL) {
 		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		free(newfl->addr);
 		free(newfl->client.oh.n_bytes);
 		free(newfl);
 		return (flags & LOCK_V4) ? 
@@ -332,6 +344,7 @@ void
 lfree(fl)
 	struct file_lock *fl;
 {
+	free(fl->addr);
 	free(fl->client.oh.n_bytes);
 	free(fl->client_cookie.n_bytes);
 	free(fl);
@@ -688,6 +701,11 @@ do_mon(hostname)
 	}
 	/* not found, have to create an entry for it */
 	hp = malloc(sizeof(struct host));
+ 	if (hp == NULL) {
+ 		syslog(LOG_WARNING, "can't monitor host %s: malloc failed\n",
+ 		    hostname);
+ 		return;
+	}
 	strncpy(hp->name, hostname, SM_MAXSTRLEN);
 	hp->refcnt = 1;
 	syslog(LOG_DEBUG, "monitoring host %s",
