@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.8 2002/10/10 08:23:51 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.9 2002/10/10 09:38:46 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -298,7 +298,7 @@ http://www.wam.umd.edu/~howardjp/software/grep/
 
 Package:	groff
 Version:	1.16.1
-Current Vers:	1.18
+Current Vers:	1.18.1
 Maintainer:	James Clark/FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Mailing List:	bug-groff@gnu.org
