@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.64 2003/08/28 13:12:18 pk Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.65 2003/12/18 08:15:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.64 2003/08/28 13:12:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.65 2003/12/18 08:15:42 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -592,73 +592,42 @@ uvm_km_alloc1(map, size, zeroit)
 }
 
 /*
- * uvm_km_valloc: allocate zero-fill memory in the kernel's address space
+ * uvm_km_valloc1: allocate zero-fill memory in the kernel's address space
  *
  * => memory is not allocated until fault time
+ * => the align, prefer and flags parameters are passed on to uvm_map().
+ *
+ * Note: this function is also the backend for these macros:
+ *	uvm_km_valloc
+ *	uvm_km_valloc_wait
+ *	uvm_km_valloc_prefer
+ *	uvm_km_valloc_prefer_wait
+ *	uvm_km_valloc_align
  */
 
 vaddr_t
-uvm_km_valloc(map, size)
-	struct vm_map *map;
-	vsize_t size;
-{
-	return(uvm_km_valloc_align(map, size, 0));
-}
-
-vaddr_t
-uvm_km_valloc_align(map, size, align)
+uvm_km_valloc1(map, size, align, prefer, flags)
 	struct vm_map *map;
 	vsize_t size;
 	vsize_t align;
-{
-	vaddr_t kva;
-	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
-	KASSERT(vm_map_pmap(map) == pmap_kernel());
-
-	size = round_page(size);
-	kva = vm_map_min(map);		/* hint */
-
-	/*
-	 * allocate some virtual space.  will be demand filled by kernel_object.
-	 */
-
-	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-					    UVM_INH_NONE, UVM_ADV_RANDOM,
-					    0)) != 0)) {
-		UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
-		return(0);
-	}
-
-	UVMHIST_LOG(maphist, "<- done (kva=0x%x)", kva,0,0,0);
-	return(kva);
-}
-
-/*
- * uvm_km_valloc_wait: allocate zero-fill memory in the kernel's address space
- *
- * => memory is not allocated until fault time
- * => if no room in map, wait for space to free, unless requested size
- *    is larger than map (in which case we return 0)
- */
-
-vaddr_t
-uvm_km_valloc_prefer_wait(map, size, prefer)
-	struct vm_map *map;
-	vsize_t size;
 	voff_t prefer;
+	uvm_flag_t flags;
 {
 	vaddr_t kva;
-	UVMHIST_FUNC("uvm_km_valloc_prefer_wait"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_km_valloc1"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
+	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x, align=0x%x, prefer=0x%x)",
+		    map, size, align, prefer);
+
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
+	/*
+	 * Check if requested size is larger than the map, in which
+	 * case we can't succeed.
+	 */
 	if (size > vm_map_max(map) - vm_map_min(map))
-		return(0);
+		return (0);
 
 	for (;;) {
 		kva = vm_map_min(map);		/* hint */
@@ -669,29 +638,23 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 		 */
 
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
-		    prefer, 0, UVM_MAPFLAG(UVM_PROT_ALL,
-		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0))
+		    prefer, align, UVM_MAPFLAG(UVM_PROT_ALL,
+		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flags))
 		    == 0)) {
 			UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
-			return(kva);
+			return (kva);
 		}
 
 		/*
 		 * failed.  sleep for a while (on map)
 		 */
+		if ((flags & UVM_KMF_NOWAIT) != 0)
+			return (0);
 
 		UVMHIST_LOG(maphist,"<<<sleeping>>>",0,0,0,0);
 		tsleep((caddr_t)map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/
-}
-
-vaddr_t
-uvm_km_valloc_wait(map, size)
-	struct vm_map *map;
-	vsize_t size;
-{
-	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
 
 /* Sanity; must specify both or none. */
