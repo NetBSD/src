@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.33 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: signal.h,v 1.34 2003/09/11 13:12:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -189,9 +189,13 @@ void	psignal __P((unsigned int, const char *));
 int	sigblock __P((int));
 #ifdef __LIBC12_SOURCE__
 int	sigreturn __P((struct sigcontext13 *));
+#ifdef COMPAT_16
 int	__sigreturn14 __P((struct sigcontext *));
+#endif
 #else
+#ifdef COMPAT_16
 int	sigreturn __P((struct sigcontext *)) __RENAME(__sigreturn14);
+#endif
 #endif
 int	sigsetmask __P((int));
 int	sigvec __P((int, struct sigvec *, struct sigvec *));
