@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 2002/03/03 14:31:24 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 2002/04/03 10:38:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -362,8 +362,8 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PGA_REFERENCED)
 #define	pmap_is_modified(pg)		pmap_test_attrs(pg, PGA_MODIFIED)
 
-#define pmap_copy(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, FALSE)
-#define pmap_move(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, TRUE)
+#define pmap_copy(DP,SP,D,L,S)
+#define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		sh3_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
