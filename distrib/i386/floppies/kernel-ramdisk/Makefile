@@ -1,65 +1,51 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/27 15:31:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/02/03 16:22:24 lukem Exp $
 
 .include "../Makefile.inc"
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
-RAMDISK!=	cd $(.CURDIR)/../ramdisk-big/; \
-	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-big.fs\n" | \
-		${MAKE} -s -f-
-RAMDISK_T!=	cd ${.CURDIR}/../ramdisk-tiny/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-tiny.fs\n" | \
-		${MAKE} -s -f-
-RAMDISK_S!=	cd ${.CURDIR}/../ramdisk-small/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-small.fs\n" | \
-		${MAKE} -s -f-
+#	create ${RAMDISK_*} variables
+#
+RAMDISKS=	RAMDISK_B	ramdisk-big	\
+		RAMDISK_S	ramdisk-small	\
+		RAMDISK_T	ramdisk-tiny
 
-netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
-	cp ${KERNOBJDIR}/INSTALL/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	${NM} netbsd.tmp > netbsd.INSTALL.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+.for V F in ${RAMDISKS}
+${V}!=		cd ${.CURDIR}/../${F}/; \
+	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/${F}.fs\n" | \
+		${MAKE} -s -f-
+.endfor
 
-netbsd.INSTALL_LAPTOP.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_LAPTOP/netbsd ${RAMDISK}
-	cp ${KERNOBJDIR}/INSTALL_LAPTOP/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	${NM} netbsd.tmp > netbsd.INSTALL_LAPTOP.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+#	create netbsd.*.gz targets
+#
+#	TARGETS is a list of:
+#		KERNEL_name	fs-image	"nocluster" disables clustering
+#
+TARGETS=	INSTALL		${RAMDISK_B}	-		\
+		INSTALL_LAPTOP	${RAMDISK_B}	-		\
+		INSTALL_SMALL	${RAMDISK_S}	-		\
+		INSTALL_TINY	${RAMDISK_T}	nocluster	\
+		INSTALL_PS2	${RAMDISK_S}	nocluster
 
-netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
-	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
+.for K R E in ${TARGETS}
+_E:=${E}			# work around obscure issue in make(1)
+KERNELS+=	netbsd.${K}.gz
+KERNELSYMS+=	netbsd.${K}.symbols
+netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
+	@echo "Populating ${K} with ${R}"
+	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
+.if ${_E} == "nocluster"
 	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_T}
-	${NM} netbsd.tmp > netbsd.INSTALL_TINY.symbols
+.endif
+	${MDSETIMAGE} -v netbsd.tmp ${R}
+	${NM} netbsd.tmp > netbsd.${K}.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
+.endfor
 
-netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S}
-	cp ${KERNOBJDIR}/INSTALL_SMALL/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_S}
-	${NM} netbsd.tmp > netbsd.INSTALL_SMALL.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
-netbsd.INSTALL_PS2.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_PS2/netbsd ${RAMDISK_S}
-	cp ${KERNOBJDIR}/INSTALL_PS2/netbsd netbsd.tmp
-	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_S}
-	${NM} netbsd.tmp > netbsd.INSTALL_PS2.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
-KERNELS=netbsd.INSTALL.gz netbsd.INSTALL_TINY.gz netbsd.INSTALL_SMALL.gz \
-	netbsd.INSTALL_LAPTOP.gz netbsd.INSTALL_PS2.gz
-KERNELSYMS=${KERNELS:S/.gz$/.symbols/}
-
+#	do the work
+#
 all: ${KERNELS}
 
 release:
@@ -70,3 +56,4 @@ clean cleandir distclean:
 	rm -f *.core netbsd.tmp ${KERNELS} ${KERNELSYMS}
 
 .include <bsd.obj.mk>
+.include <bsd.prog.mk>

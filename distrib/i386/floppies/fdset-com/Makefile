@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/14 22:26:06 jmc Exp $
+#	$NetBSD: Makefile,v 1.2 2002/02/03 16:22:23 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,4 +11,4 @@ KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL.gz\n" | \
 	${MAKE} -s -f-
 
-.include "${TOP}/fdset-common/Makefile.inc"
+.include "${TOP}/common/Makefile.fdset"

@@ -1,0 +1,37 @@
+#	$NetBSD: Makefile.ramdisk,v 1.1 2002/02/03 16:22:22 lukem Exp $
+
+.include "../Makefile.inc"
+.include <bsd.own.mk>
+
+.PATH:		${.CURDIR}/../common
+
+WARNS=		1
+
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${.CURDIR}/../common/list.ramdisk
+MTREECONF=	${.CURDIR}/../common/mtree.conf
+IMAGEENDIAN=	le
+IMAGEDEPENDS+= 	${CRUNCHBIN} dot.profile termcap.mini
+POPULATEENV+=	BOOTMODEL=${BOOTMODEL:Q}
+
+
+realall: ${IMAGE}
+
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=${_SRC_TOP_}/distrib/utils/libhack
+.include "${HACKSRC}/Makefile.inc"
+
+# turn off small gethostby* temporarily
+HACKOBJS:=	${HACKOBJS:Ngethost.o}
+
+# This is listed in ramdiskbin.conf but is built here.
+${CRUNCHBIN}: libhack.o
+
+
+release:
+
+.include "${_SRC_TOP_}/distrib/common/Makefile.crunch"
+.include "${_SRC_TOP_}/distrib/common/Makefile.image"
+
+.include <bsd.prog.mk>
