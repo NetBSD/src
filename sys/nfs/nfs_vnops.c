@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.91 1998/05/08 18:26:55 kleink Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.92 1998/06/05 19:53:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1722,7 +1722,7 @@ nfs_link(v)
 	 * doesn't get "out of sync" with the server.
 	 * XXX There should be a better way!
 	 */
-	VOP_FSYNC(vp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
+	VOP_FSYNC(vp, cnp->cn_cred, FSYNC_WAIT, cnp->cn_proc);
 
 	v3 = NFS_ISV3(vp);
 	nfsstats.rpccnt[NFSPROC_LINK]++;
@@ -2760,11 +2760,12 @@ nfs_fsync(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_vp;
 		struct ucred * a_cred;
-		int  a_waitfor;
+		int  a_flags;
 		struct proc * a_p;
 	} */ *ap = v;
 
-	return (nfs_flush(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_p, 1));
+	return (nfs_flush(ap->a_vp, ap->a_cred,
+	    (ap->a_flags & FSYNC_WAIT) != 0 ? MNT_WAIT : 0, ap->a_p, 1));
 }
 
 /*
