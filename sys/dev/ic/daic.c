@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.5 2001/11/13 13:14:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.6 2001/11/15 09:48:06 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

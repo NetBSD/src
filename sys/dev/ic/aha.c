@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.37 2001/11/13 13:14:33 lukem Exp $	*/
+/*	$NetBSD: aha.c,v 1.38 2001/11/15 09:48:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.37 2001/11/13 13:14:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.38 2001/11/15 09:48:05 lukem Exp $");
 
 #include "opt_ddb.h"
 
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.37 2001/11/13 13:14:33 lukem Exp $");
 #define	integrate	static inline
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

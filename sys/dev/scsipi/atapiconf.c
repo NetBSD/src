@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.42 2001/11/13 06:56:38 lukem Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.43 2001/11/15 09:48:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.42 2001/11/13 06:56:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.43 2001/11/15 09:48:16 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
