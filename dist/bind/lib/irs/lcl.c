@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: lcl.c,v 1.1.1.2 2001/01/27 06:19:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: lcl.c,v 1.15 1999/10/13 16:39:32 vixie Exp";
+static const char rcsid[] = "Id: lcl.c,v 1.16 2000/02/28 07:52:16 vixie Exp";
 #endif
 
 /* Imports */
@@ -106,7 +106,7 @@ lcl_res_get(struct irs_acc *this) {
 		lcl_res_set(this, res, free);
 	}
 
-	if ((lcl->res->options | RES_INIT) == 0 &&
+	if ((lcl->res->options & RES_INIT) == 0 &&
 	    res_ninit(lcl->res) < 0)
 		return (NULL);
 
