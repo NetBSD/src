@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1 1999/06/04 13:29:13 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.2 1999/06/04 14:29:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -255,6 +255,7 @@ ebus_find_node(sc, pa)
 		DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus, pa->pa_device, pa->pa_function));
 
 		/* get the PCI bus/device/function for this node */
+		ap = NULL;
 		if (getprop(node, "reg", sizeof(int), &n,
 		    (void **)&ap))
 			continue;
