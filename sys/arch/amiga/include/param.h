@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.36 1997/09/19 13:53:10 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.37 1997/09/20 12:06:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,10 +72,6 @@
  */
 #ifndef NKMEMCLUSTERS
 # define	NKMEMCLUSTERS	(3072 * 1024 / CLBYTES)
-#endif
-
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
 /*
