@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 1997/06/22 07:43:04 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 1997/06/23 21:48:28 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -333,11 +333,12 @@ void trapDump __P((char * msg));
 #endif	/* DEBUG */
 
 
-#ifdef MINIDEBUG
 void mips1_dump_tlb __P((int, int));
 void mips3_dump_tlb __P((int, int));
-void mdbpanic __P((void));
 void mips_dump_tlb __P((int, int));
+
+#ifdef MINIDEBUG
+void mdbpanic __P((void));
 #endif
 
 /*
@@ -1716,6 +1717,92 @@ fn_name(unsigned addr)
 
 #endif /* DEBUG */
 
+#ifdef MIPS3
+/*
+ *	Dump TLB contents.
+ */
+void
+mips3_dump_tlb(first, last)
+	int first;
+	int last;
+{
+	int tlbno;
+	struct tlb tlb;
+	extern void mips3_TLBRead(int, struct tlb *);
+
+	tlbno = first;
+
+	while(tlbno <= last) {
+		mips3_TLBRead(tlbno, &tlb);
+		if (mips_pg_v(tlb.tlb_lo0) || mips_pg_v(tlb.tlb_lo1)) {
+			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
+		}
+		else {
+			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
+		}
+		printf("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
+		printf("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
+		printf("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
+		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
+		printf("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
+		printf("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
+		printf("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
+		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
+		printf(" sz=%x\n", tlb.tlb_mask);
+
+		tlbno++;
+	}
+}
+#endif /* MIPS3 */
+
+/*
+ *	Dump TLB contents.
+ */
+void
+mips1_dump_tlb(first, last)
+	int first;
+	int last;
+{
+	int tlbno;
+	extern u_int tlbhi, tlblo;
+	extern void mips1_TLBRead(int);
+
+	tlbno = first;
+
+	while(tlbno <= last) {
+		mips1_TLBRead(tlbno);
+		if (mips_pg_v(tlblo)) {
+			printf("TLB %2d vad 0x%08x ", tlbno, tlbhi);
+		}
+		else {
+			printf("TLB*%2d vad 0x%08x ", tlbno, tlbhi);
+		}
+		printf("0x%08x ", tlblo & MIPS1_PG_FRAME);
+		printf("%c", tlblo & mips_pg_m_bit() ? 'M' : ' ');
+		printf("%c", tlblo & mips_pg_global_bit() ? 'G' : ' ');
+		printf("%c\n", tlblo & MIPS1_PG_N ? 'N' : ' ');
+
+		tlbno++;
+	}
+}
+
+
+void
+mips_dump_tlb(first, last)
+	int first;
+	int last;
+{
+	if (CPUISMIPS3) {
+#ifdef MIPS3
+		mips3_dump_tlb(first,last);
+#endif
+	} else {
+#ifdef MIPS1
+		mips1_dump_tlb(first,last);
+#endif
+	}
+}
+
 #ifdef MINIDEBUG
 
 #ifndef TRUE
@@ -2326,94 +2413,6 @@ mdbprintins(ins, mdbdot)
 			(short)i.IType.imm);
 	}
 	return(delay);
-}
-
-#ifdef MIPS3
-/*
- *	Dump TLB contents.
- */
-void
-mips3_dump_tlb(first, last)
-	int first;
-	int last;
-{
-	int tlbno;
-	struct tlb tlb;
-	extern void mips3_TLBRead(int, struct tlb *);
-
-	tlbno = first;
-
-	while(tlbno <= last) {
-		mips3_TLBRead(tlbno, &tlb);
-		if (mips_pg_v(tlb.tlb_lo0) || mips_pg_v(tlb.tlb_lo1)) {
-			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
-		}
-		else {
-			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
-		}
-		printf("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
-		printf("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
-		printf("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
-		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		printf("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
-		printf("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
-		printf("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
-		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
-		printf(" sz=%x\n", tlb.tlb_mask);
-
-		tlbno++;
-	}
-}
-#endif /* MIPS3 */
-
-#ifdef MIPS1
-/*
- *	Dump TLB contents.
- */
-void
-mips1_dump_tlb(first, last)
-	int first;
-	int last;
-{
-	int tlbno;
-	extern u_int tlbhi, tlblo;
-	extern void mips1_TLBRead(int);
-
-	tlbno = first;
-
-	while(tlbno <= last) {
-		mips1_TLBRead(tlbno);
-		if (mips_pg_v(tlblo)) {
-			printf("TLB %2d vad 0x%08x ", tlbno, tlbhi);
-		}
-		else {
-			printf("TLB*%2d vad 0x%08x ", tlbno, tlbhi);
-		}
-		printf("0x%08x ", tlblo & MIPS1_PG_FRAME);
-		printf("%c", tlblo & mips_pg_m_bit() ? 'M' : ' ');
-		printf("%c", tlblo & mips_pg_global_bit() ? 'G' : ' ');
-		printf("%c\n", tlblo & MIPS1_PG_N ? 'N' : ' ');
-
-		tlbno++;
-	}
-}
-#endif /* MIPS3 */
-
-
-void
-mips_dump_tlb(first, last)
-	int first;
-	int last;
-{
-	if (CPUISMIPS3) {
-#ifdef MIPS3
-		mips3_dump_tlb(first,last);
-#endif
-	} else {
-#ifdef MIPS1
-		mips1_dump_tlb(first,last);
-#endif
-	}
 }
 
 
