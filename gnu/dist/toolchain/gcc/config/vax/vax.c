@@ -85,6 +85,16 @@ print_operand_address (file, addr)
   if (GET_CODE (addr) == PLUS && GET_CODE (XEXP (addr, 1)) == CONST)
     debug_rtx (addr);
 #endif
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+  if (flag_pic && GET_CODE (addr) == CONST &&
+      GET_CODE (XEXP (addr, 0)) == PLUS &&
+      GET_CODE (XEXP (XEXP (addr, 0), 0)) == SYMBOL_REF &&
+      !SYMBOL_REF_FLAG (XEXP (XEXP (addr, 0), 0)) &&
+      GET_CODE (XEXP (XEXP (addr, 0), 1)) == CONST_INT)
+    {
+      fatal_insn ("Non-PIC operand escaped:\n", addr);
+    }
+#endif
 
  retry:
   switch (GET_CODE (addr))
@@ -745,7 +755,7 @@ check_float_value (mode, d, overflow)
    || (!INDEXED && GET_CODE (X) == CONST				\
        && GET_CODE (XEXP ((X), 0)) == PLUS				\
        && GET_CODE (XEXP (XEXP ((X), 0), 0)) == SYMBOL_REF		\
-       && ((!INDIRECT && !(flag_pic || TARGET_HALFPIC))			\
+       && ((!INDIRECT && !flag_pic)					\
            || SYMBOL_REF_FLAG (XEXP (XEXP ((X), 0), 0))))		\
    || GET_CODE (X) == CONST_INT)
 
@@ -801,8 +811,7 @@ check_float_value (mode, d, overflow)
   if (INDIRECTABLE_ADDRESS_P (X, STRICT, INDEXED, 0)) goto ADDR;	\
   xfoob = XEXP (X, 0);							\
   if (GET_CODE (X) == MEM						\
-      && INDIRECTABLE_ADDRESS_P (xfoob, STRICT, INDEXED,		\
-				 (flag_pic || TARGET_HALFPIC)))		\
+      && INDIRECTABLE_ADDRESS_P (xfoob, STRICT, INDEXED, TARGET_INDIRECT)) \
     goto ADDR;								\
   if ((GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_INC)		\
       && GET_CODE (xfoob) == REG					\
@@ -914,6 +923,12 @@ legitimate_address_p(mode, xbar, strict)
       debug_rtx (xbar);
     }
 #endif
+  if (flag_pic && GET_CODE (xbar) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+	     && !SYMBOL_REF_FLAG (xbar)
+#endif
+	     && mode == DImode)
+    return 0;
   return 1;
 }
 
@@ -930,30 +945,19 @@ vax_symbolic_operand (op, mode)
 	     && GET_CODE (XEXP (op, 0)) == PLUS
 	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF
 #ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-	     && (SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 0))
-		 || !(flag_pic || TARGET_HALFPIC))
+	     && (SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 0)) || !flag_pic)
 #endif
 	     && GET_CODE (XEXP (XEXP (op, 0), 1)) == CONST_INT)
-	 || (GET_CODE (op) == CONST
-	     && GET_CODE (XEXP (op, 0)) == PLUS
-	     && GET_CODE (XEXP (XEXP (op, 0), 1)) == SYMBOL_REF
-#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-	     && (SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 1))
-		 || !(flag_pic || TARGET_HALFPIC))
-#endif
-	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == CONST_INT)
 	 || (GET_CODE (op) == PLUS
 	     && GET_CODE (XEXP (op, 1)) == SYMBOL_REF
 #ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-	     && (SYMBOL_REF_FLAG (XEXP (op, 1))
-		 || !(flag_pic || TARGET_HALFPIC))
+	     && (SYMBOL_REF_FLAG (XEXP (op, 1)) || !flag_pic)
 #endif
 	     && GET_CODE (XEXP (op, 0)) == CONST_INT)
 	 || (GET_CODE (op) == PLUS
 	     && GET_CODE (XEXP (op, 0)) == SYMBOL_REF
 #ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-	     && (SYMBOL_REF_FLAG (XEXP (op, 0))
-		 || !(flag_pic || TARGET_HALFPIC))
+	     && (SYMBOL_REF_FLAG (XEXP (op, 0)) || !flag_pic)
 #endif
 	     && GET_CODE (XEXP (op, 1)) == CONST_INT))
     {
@@ -1018,7 +1022,7 @@ vax_general_operand(op, mode)
 {
   if (!general_operand(op, mode))
     return 0;
-  if (!(flag_pic || TARGET_HALFPIC))
+  if (!flag_pic)
     return 1;
   if ((GET_CODE (op) == CONST
        && GET_CODE (XEXP (op, 0)) == PLUS
@@ -1045,124 +1049,6 @@ vax_general_operand(op, mode)
   debug_rtx (op);
 #endif
   return 1;
-}
-
-/* Legitimize PIC addresses.  If the address is already
-   position-independent, we return ORIG.  Newly generated
-   position-independent addresses go to REG.  If we need more
-   than one register, we lose.  
-
-   An address is legitimized by making an indirect reference
-   through the Global Offset Table with the name of the symbol
-   used as an offset.  
-
-   The assembler/loader are responsible for translating a symbol name
-   into a PC-relative displacement.
-
-   A quick example may make things a little clearer:
-
-   When not generating PIC code to store the value 12345 into _foo+4
-   we would generate the following code:
-
-	movl	$12345, _foo+4
-
-   When generating PIC a transformation is made.  First, the compiler
-   loads the address of foo into a register.  So the transformation makes:
-
-	movab	_foo, r0
-	movl	$12345, 4(r0)
-
-   That (in a nutshell) is how *all* symbol references are handled.  */
-
-rtx
-legitimize_pic_address (orig, reg, code)
-     rtx orig;
-     rtx reg;
-     int code;
-{
-  rtx pic_ref = orig;
-
-  if (!(flag_pic || TARGET_HALFPIC) || no_new_pseudos)
-    return pic_ref;
-
-  /* fprintf(stderr, "before: "); debug_rtx(orig); */
-  if (GET_CODE (orig) == SYMBOL_REF
-      && code != CODE_FOR_movsi
-      && code != CODE_FOR_addsi3)
-    {
-      if (reg == NULL || !reload_in_progress)
-	reg = gen_reg_rtx (Pmode);
-
-      emit_move_insn (reg, orig);
-      pic_ref = reg;
-    }
-  else if (GET_CODE (orig) == CONST
-	   && GET_CODE (XEXP (orig, 0)) == PLUS)
-    {
-      if (GET_CODE (XEXP (XEXP (orig, 0), 0)) == SYMBOL_REF
-	  && GET_CODE (XEXP (XEXP (orig, 0), 1)) == CONST_INT)
-	{
-#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-	  if (!SYMBOL_REF_FLAG (XEXP (XEXP (orig, 0), 0)))
-	    {
-	      if (reg == NULL || !reload_in_progress)
-	        reg = gen_reg_rtx (Pmode);
-
-	      emit_move_insn (reg, XEXP (XEXP (orig, 0), 0));
-	      pic_ref = plus_constant_for_output (reg, INTVAL (XEXP (XEXP (orig, 0), 1)));
-	    }
-	  else
-#endif
-	    if (code != CODE_FOR_movsi)
-	      {
-		if (reg == NULL || !reload_in_progress)
-		  reg = gen_reg_rtx (Pmode);
-
-	        emit_move_insn (reg, orig);
-	        pic_ref = reg;
-	      }
-	}
-      else
-	{
-	  if (GET_CODE (XEXP (XEXP (orig, 0), 0)) == SYMBOL_REF
-	      || GET_CODE (XEXP (XEXP (orig, 0), 1)) == SYMBOL_REF)
-	    {
-	      debug_rtx (orig);
-	      abort ();
-	    }
-	}
-#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-    }
-  else if (GET_CODE (orig) == PLUS
-	   && GET_CODE (XEXP (orig, 0)) == CONST_INT
-	   && GET_CODE (XEXP (orig, 1)) == SYMBOL_REF
-	   && !SYMBOL_REF_FLAG (XEXP (orig, 1)))
-    {
-      if (reg == NULL || !reload_in_progress)
-        reg = gen_reg_rtx (Pmode);
-
-      emit_move_insn (reg, XEXP (orig, 1));
-      pic_ref = plus_constant_for_output (reg, INTVAL (XEXP (orig, 0)));
-    }
-  else if (GET_CODE (orig) == PLUS
-	   && GET_CODE (XEXP (orig, 0)) == SYMBOL_REF
-	   && !SYMBOL_REF_FLAG (XEXP (orig, 0))
-	   && GET_CODE (XEXP (orig, 1)) == CONST_INT)
-    {
-      if (reg == NULL || !reload_in_progress)
-        reg = gen_reg_rtx (Pmode);
-
-      emit_move_insn (reg, XEXP (orig, 0));
-      pic_ref = plus_constant_for_output (reg, INTVAL (XEXP (orig, 1)));
-#endif
-    }
-#if 0
-  if (orig != pic_ref)
-    debug_rtx (orig);
-#endif
- 
-  /* fprintf(stderr, "after: "); debug_rtx(pic_ref); */
-  return pic_ref;
 }
 
 int
