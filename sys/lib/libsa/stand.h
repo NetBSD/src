@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.45 2003/04/01 21:09:32 mycroft Exp $	*/
+/*	$NetBSD: stand.h,v 1.46 2003/04/10 14:39:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -93,24 +93,40 @@
 
 struct open_file;
 
+#define FS_DEF(fs) \
+	extern int	__CONCAT(fs,_open)(char *, struct open_file *); \
+	extern int	__CONCAT(fs,_close)(struct open_file *); \
+	extern int	__CONCAT(fs,_read)(struct open_file *, void *, \
+						size_t, size_t *); \
+	extern int	__CONCAT(fs,_write)(struct open_file *, void *, \
+						size_t, size_t *); \
+	extern off_t	__CONCAT(fs,_seek)(struct open_file *, off_t, int); \
+	extern int	__CONCAT(fs,_stat)(struct open_file *, struct stat *)
+
 /*
  * This structure is used to define file system operations in a file system
  * independent way.
  */
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
-	int	(*open) __P((char *path, struct open_file *f));
-	int	(*close) __P((struct open_file *f));
-	int	(*read) __P((struct open_file *f, void *buf,
-			     size_t size, size_t *resid));
-	int	(*write) __P((struct open_file *f, void *buf,
-			     size_t size, size_t *resid));
-	off_t	(*seek) __P((struct open_file *f, off_t offset, int where));
-	int	(*stat) __P((struct open_file *f, struct stat *sb));
+	int	(*open)(char *, struct open_file *);
+	int	(*close)(struct open_file *);
+	int	(*read)(struct open_file *, void *, size_t, size_t *);
+	int	(*write)(struct open_file *, void *, size_t size, size_t *);
+	off_t	(*seek)(struct open_file *, off_t, int);
+	int	(*stat)(struct open_file *, struct stat *);
 };
 
 extern struct fs_ops file_system[];
 extern int nfsys;
+
+#define FS_OPS(fs) { \
+	__CONCAT(fs,_open), \
+	__CONCAT(fs,_close), \
+	__CONCAT(fs,_read), \
+	__CONCAT(fs,_write), \
+	__CONCAT(fs,_seek), \
+	__CONCAT(fs,_stat) }
 
 #define	FS_OPEN(fs)		((fs)->open)
 #define	FS_CLOSE(fs)		((fs)->close)
@@ -128,14 +144,7 @@ extern int nfsys;
 #define	FS_SEEK(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_seek)
 #define	FS_STAT(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_stat)
 
-int	FS_OPEN(unused) __P((char *path, struct open_file *f));
-int	FS_CLOSE(unused) __P((struct open_file *f));
-int	FS_READ(unused) __P((struct open_file *f, void *buf,
-			     size_t size, size_t *resid));
-int	FS_WRITE(unused) __P((struct open_file *f, void *buf,
-			      size_t size, size_t *resid));
-off_t	FS_SEEK(unused) __P((struct open_file *f, off_t offset, int where));
-int	FS_STAT(unused) __P((struct open_file *f, struct stat *sb));
+FS_DEF(LIBSA_SINGLE_FILESYSTEM);
 
 #endif
 
@@ -149,12 +158,10 @@ int	FS_STAT(unused) __P((struct open_file *f, struct stat *sb));
 
 struct devsw {
 	char	*dv_name;
-	int	(*dv_strategy) __P((void *devdata, int rw,
-				    daddr_t blk, size_t size,
-				    void *buf, size_t *rsize));
-	int	(*dv_open) __P((struct open_file *f, ...));
-	int	(*dv_close) __P((struct open_file *f));
-	int	(*dv_ioctl) __P((struct open_file *f, u_long cmd, void *data));
+	int	(*dv_strategy)(void *, int, daddr_t, size_t, void *, size_t *);
+	int	(*dv_open)(struct open_file *, ...);
+	int	(*dv_close)(struct open_file *);
+	int	(*dv_ioctl)(struct open_file *, u_long, void *);
 };
 
 extern struct devsw devsw[];	/* device array */
@@ -174,11 +181,11 @@ extern int ndevs;		/* number of elements in devsw[] */
 #define	DEV_CLOSE(d)		___CONCAT(LIBSA_SINGLE_DEVICE,close)
 #define	DEV_IOCTL(d)		___CONCAT(LIBSA_SINGLE_DEVICE,ioctl)
 
-int	DEV_STRATEGY(unused) __P((void *devdata, int rw, daddr_t blk,
-				  size_t size, void *buf, size_t *rsize));
-int	DEV_OPEN(unused) __P((struct open_file *f, ...));
-int	DEV_CLOSE(unused) __P((struct open_file *f));
-int	DEV_IOCTL(unused) __P((struct open_file *f, u_long cmd, void *data));
+/* These may be #defines which must not be expanded here, hence the extra () */
+int	(DEV_STRATEGY(unused))(void *, int, daddr_t, size_t, void *, size_t *);
+int	(DEV_OPEN(unused))(struct open_file *, ...);
+int	(DEV_CLOSE(unused))(struct open_file *);
+int	(DEV_IOCTL(unused))(struct open_file *, u_long, void *);
 
 #endif
 
@@ -208,72 +215,65 @@ extern struct open_file files[];
 #endif
 #define F_NODEV		0x0008	/* network open - no device */
 
-int	devopen __P((struct open_file *, const char *, char **));
+int	(devopen)(struct open_file *, const char *, char **);
 #ifdef HEAP_VARIABLE
-void	setheap __P((void *, void *));
+void	setheap(void *, void *);
 #endif
-void	*alloc __P((unsigned int));
-void	free __P((void *, unsigned int));
+void	*alloc(unsigned int);
+void	free(void *, unsigned int);
 struct	disklabel;
-char	*getdisklabel __P((const char *, struct disklabel *));
-int	dkcksum __P((struct disklabel *));
+char	*getdisklabel(const char *, struct disklabel *);
+int	dkcksum(struct disklabel *);
 
-void	printf __P((const char *, ...));
-int	sprintf __P((char *, const char *, ...));
-int	snprintf __P((char *, size_t, const char *, ...));
-void	vprintf __P((const char *, _BSD_VA_LIST_));
-int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
-int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
-void	twiddle __P((void));
-void	gets __P((char *));
-int	getfile __P((char *prompt, int mode));
-char	*strerror __P((int));
-__dead void	exit __P((int)) __attribute__((noreturn));
-__dead void	panic __P((const char *, ...)) __attribute__((noreturn));
-__dead void	_rtt __P((void)) __attribute__((noreturn));
-void	bcopy __P((const void *, void *, size_t));
-void	*memcpy __P((void *, const void *, size_t));
-void	*memmove __P((void *, const void *, size_t));
-int	memcmp __P((const void *, const void *, size_t));
-void	exec __P((char *, char *, int));
-int	open __P((const char *, int));
-int	close __P((int));
-void	closeall __P((void));
-ssize_t	read __P((int, void *, size_t));
-ssize_t	write __P((int, void *, size_t));
-off_t	lseek __P((int, off_t, int));
-int	ioctl __P((int, u_long, char *));
-int	stat __P((const char *, struct stat *));
-int	fstat __P((int, struct stat *));
+void	printf(const char *, ...);
+int	sprintf(char *, const char *, ...);
+int	snprintf(char *, size_t, const char *, ...);
+void	vprintf(const char *, _BSD_VA_LIST_);
+int	vsprintf(char *, const char *, _BSD_VA_LIST_);
+int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
+void	twiddle(void);
+void	gets(char *);
+int	getfile(char *prompt, int mode);
+char	*strerror(int);
+__dead void	exit(int) __attribute__((noreturn));
+__dead void	panic(const char *, ...) __attribute__((noreturn));
+__dead void	_rtt(void) __attribute__((noreturn));
+void	bcopy(const void *, void *, size_t);
+void	*memcpy(void *, const void *, size_t);
+void	*memmove(void *, const void *, size_t);
+int	memcmp(const void *, const void *, size_t);
+void	exec(char *, char *, int);
+int	open(const char *, int);
+int	close(int);
+void	closeall(void);
+ssize_t	read(int, void *, size_t);
+ssize_t	write(int, void *, size_t);
+off_t	lseek(int, off_t, int);
+int	ioctl(int, u_long, char *);
+int	stat(const char *, struct stat *);
+int	fstat(int, struct stat *);
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
-int	getopt __P((int, char * const *, const char *));
+int	getopt(int, char * const *, const char *);
 
-char	*getpass __P((const char *));
-int	checkpasswd __P((void));
+char	*getpass(const char *);
+int	checkpasswd(void);
 
-int	nodev __P((void));
-int	noioctl __P((struct open_file *, u_long, void *));
-void	nullsys __P((void));
+int	nodev(void);
+int	noioctl(struct open_file *, u_long, void *);
+void	nullsys(void);
 
-int	null_open __P((char *path, struct open_file *f));
-int	null_close __P((struct open_file *f));
-ssize_t	null_read __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-ssize_t	null_write __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-off_t	null_seek __P((struct open_file *f, off_t offset, int where));
-int	null_stat __P((struct open_file *f, struct stat *sb));
+FS_DEF(null);
 
 /* Machine dependent functions */
-void	machdep_start __P((char *, int, char *, char *, char *));
-int	getchar __P((void));
-void	putchar __P((int));    
+void	machdep_start(char *, int, char *, char *, char *);
+int	getchar(void);
+void	putchar(int);    
 
 #ifdef __INTERNAL_LIBSA_CREAD
-int	oopen __P((const char *, int));
-int	oclose __P((int));
-ssize_t	oread __P((int, void *, size_t));
-off_t	olseek __P((int, off_t, int));
+int	oopen(const char *, int);
+int	oclose(int);
+ssize_t	oread(int, void *, size_t);
+off_t	olseek(int, off_t, int);
 #endif
