@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.28 1998/10/02 19:25:33 drochner Exp $	   */
+/*	$NetBSD: subr.s,v 1.29 1998/10/06 02:07:30 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -131,7 +131,7 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 		movl	8(ap),r1	# Sec arg, b,w,l
 		pushl	r0		# Save old IPL
 		clrl	r3
-		movl	$4f,_memtest	# Set the return adress
+		movab	4f,_memtest	# Set the return address
 
 		caseb	r1,$1,$4	# What is the size
 1:		.word	1f-1b		
@@ -304,7 +304,7 @@ ENTRY(cpu_exit,0)
 	.globl	_copyin, _copyout
 _copyout:
 _copyin:.word 0
-	moval	1f,*pcbtrap
+	movab	1f,*pcbtrap
 	movl	4(ap),r1
 	movl	8(ap),r2
 	movc3	12(ap),(r1), (r2)
@@ -312,7 +312,7 @@ _copyin:.word 0
 	ret
 
 ENTRY(kcopy,0)
-	moval	1f,*pcbtrap
+	movab	1f,*pcbtrap
 	movl	4(ap),r1
 	movl	8(ap),r2
 	movc3	12(ap),(r1), (r2)
@@ -330,7 +330,7 @@ _copyoutstr:	.globl	_copyoutstr
 	movl	12(ap),r2	# len
 	movl	16(ap),r3	# copied
 
-	moval	2f,*pcbtrap
+	movab	2f,*pcbtrap
 
 /*
  * This routine consists of two parts: One is for MV2 that doesn't have
@@ -379,7 +379,7 @@ _copyoutstr:	.globl	_copyoutstr
 	ret
 
 ENTRY(subyte,0)
-	moval	1f,*pcbtrap
+	movab	1f,*pcbtrap
 	movl	4(ap),r0
 	movb	8(ap),(r0)
 	clrl	r1
@@ -388,7 +388,7 @@ ENTRY(subyte,0)
 	ret
 
 ENTRY(suword,0)
-	moval	1f,*pcbtrap
+	movab	1f,*pcbtrap
 	movl	4(ap),r0
 	movl	8(ap),(r0)
 	clrl	r1
@@ -397,7 +397,7 @@ ENTRY(suword,0)
 	ret
 
 ENTRY(suswintr,0)
-	moval	1f,*pcbtrap
+	movab	1f,*pcbtrap
 	movl	4(ap),r0
 	movw	8(ap),(r0)
 	clrl	r1
@@ -406,7 +406,7 @@ ENTRY(suswintr,0)
 	ret
 
 ENTRY(fuswintr,0)
-	moval	1f,*pcbtrap
+	movab	1f,*pcbtrap
 	movl	4(ap),r0
 	movzwl	(r0),r1
 1:	clrl	*pcbtrap

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.33 1998/09/30 14:10:00 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.34 1998/10/06 02:07:31 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -362,7 +362,7 @@ ENTRY(rxcs);	/* console interrupt from some other processor */
 	rei
 
 	ENTRY(sbiflt);
-	moval	sbifltmsg, -(sp)
+	movab	sbifltmsg, -(sp)
 	calls	$1, _panic
 
 	STRAY(0,60)
@@ -525,7 +525,7 @@ _sret:	movl	(sp)+, fp
 	rei
 
 sbifltmsg:
-	.asciz	"SBI fault",0
+	.asciz	"SBI fault"
 
 #if VAX630 || VAX650 || VAX410
 /*
