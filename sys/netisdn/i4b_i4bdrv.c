@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.15 2002/03/29 15:01:27 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.16 2002/03/29 20:29:53 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.15 2002/03/29 15:01:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.16 2002/03/29 20:29:53 martin Exp $");
 
 #include "isdn.h"
 
@@ -1013,6 +1013,21 @@ i4bputqueue_hipri(struct mbuf *m)
 		selflag = 0;
 		selwakeup(&select_rd_info);
 	}
+}
+
+void
+isdn_bri_ready(int bri)
+{
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(bri);
+
+	if (d == NULL)
+		return;
+
+	printf("BRI %d at %s\n", bri, d->devname);
+	if (!openflag) return;
+
+	d->l3driver->N_MGMT_COMMAND(bri, CMR_DOPEN, 0);
+	i4b_l4_contr_ev_ind(bri, 1);
 }
 
 #endif /* NISDN > 0 */

@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.8 2002/03/27 07:39:37 martin Exp $ 
+ *	$Id: isic.c,v 1.9 2002/03/29 20:29:54 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.8 2002/03/27 07:39:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.9 2002/03/29 20:29:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -225,6 +225,7 @@ isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_l
 	sc->sc_l2.l1_token = sc;
 	sc->sc_l2.bri = drv->bri;
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	isdn_bri_ready(drv->bri);
 	return 1;
 }
 

@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.9 2002/03/29 11:21:23 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.10 2002/03/29 20:29:54 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.9 2002/03/29 11:21:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.10 2002/03/29 20:29:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -403,10 +403,6 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 	callout_init(&sc->sc_T4_callout);
 #endif
 
-	/* init higher protocol layers */
-	
-	isic_attach_bri(sc, cardname, &isic_std_driver);
-
 	/* announce chip versions */
 	
 	if(sc->sc_isac_version >= ISAC_UNKN)
@@ -437,6 +433,10 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 				ISIC_PARM,
 				HSCXversion[sc->sc_hscx_version]);
 	}
+
+	/* init higher protocol layers */
+	
+	isic_attach_bri(sc, cardname, &isic_std_driver);
 
 	return(0);
 }
