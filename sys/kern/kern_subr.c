@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.113 2004/10/23 17:14:11 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.114 2004/10/24 17:06:24 cube Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.113 2004/10/23 17:14:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.114 2004/10/24 17:06:24 cube Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -772,7 +772,8 @@ int booted_partition;
  */
 #define	DEV_USES_PARTITIONS(dv)						\
 	((dv)->dv_class == DV_DISK &&					\
-	 strcmp((dv)->dv_cfdata->cf_name, "dk") != 0)
+	((dv)->dv_cfdata == NULL ||					\
+	 strcmp((dv)->dv_cfdata->cf_name, "dk") != 0))
 
 void
 setroot(bootdv, bootpartition)
