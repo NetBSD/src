@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.22.2.2 2001/11/14 19:14:04 nathanw Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.22.2.3 2002/02/28 04:13:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.22.2.2 2001/11/14 19:14:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.22.2.3 2002/02/28 04:13:16 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -250,14 +250,13 @@ pdq_eisa_attach(
     resvaddr_t *mspace;
     int irq = ffs(ed->ioconf.irq) - 1;
 
-    sc = (pdq_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
+    sc = (pdq_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
     if (sc == NULL) {
 	printf("fea%d: malloc failed!\n", sc->sc_if.if_unit);
 	return -1;
     }
     pdqs_eisa[ed->unit] = sc;
 
-    bzero(sc, sizeof(pdq_softc_t));	/* Zero out the softc*/
     sc->sc_if.if_name = "fea";
     sc->sc_if.if_unit = ed->unit;
 

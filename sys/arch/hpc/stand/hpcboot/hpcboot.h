@@ -1,7 +1,7 @@
-/*	$NetBSD: hpcboot.h,v 1.1 2001/02/09 18:34:42 uch Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.1.10.1 2002/02/28 04:09:45 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -125,6 +125,12 @@ struct BootArgs {
 #define VOLATILE_REF(x)			(*(volatile u_int32_t *)(x))
 #define VOLATILE_REF16(x)		(*(volatile u_int16_t *)(x))
 #define VOLATILE_REF8(x)		(*(volatile u_int8_t *)(x))
+#define	_reg_read_1(a)		(*(volatile u_int8_t *)(a))
+#define	_reg_read_2(a)		(*(volatile u_int16_t *)(a))
+#define	_reg_read_4(a)		(*(volatile u_int32_t *)(a))
+#define	_reg_write_1(a, v)	(*(volatile u_int8_t *)(a) = (v))
+#define	_reg_write_2(a, v)	(*(volatile u_int16_t *)(a) = (v))
+#define	_reg_write_4(a, v)	(*(volatile u_int32_t *)(a) = (v))
 
 #ifdef ARM
 #define ptokv(x)	(x)			/* UNCACHED FLAT */
@@ -142,10 +148,17 @@ BOOL VirtualCopy(LPVOID, LPVOID, DWORD, DWORD);
 BOOL SetKMode(BOOL);
 BOOL LockPages(LPVOID, DWORD, PDWORD, int);
 BOOL UnlockPages(LPVOID, DWORD);
-
+void CacheSync(int);
+#define CACHE_D_WBINV	1
+#define CACHE_I_INV	2
 /* ExtEscape */
 #define GETVFRAMEPHYSICAL	6144
 #define GETVFRAMELEN		6145
+
+/* debug utility */
+void _bitdisp(u_int32_t, int, int, int, int);
+void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
+#define bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
 __END_DECLS
 
 #endif /* _HPCBOOT_H_ */

@@ -1,28 +1,17 @@
-/*	$NetBSD: ip_frag.c,v 1.21.4.3 2002/01/08 00:34:06 nathanw Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.21.4.4 2002/02/28 04:15:07 nathanw Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.3 2002/01/08 00:34:06 nathanw Exp $");
-#else
-static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 darrenr Exp";
-#endif
-#endif
-
-#if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
+#if defined(KERNEL) && !defined(_KERNEL)
 # define      _KERNEL
 #endif
 
-#include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -76,7 +65,6 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 da
 #include "netinet/ip_compat.h"
 #include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
-#include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
 #include "netinet/ip_state.h"
@@ -87,13 +75,27 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 da
 #  ifndef IPFILTER_LKM
 #   include <sys/libkern.h>
 #   include <sys/systm.h>
-# endif
+#  endif
 extern struct callout_handle ipfr_slowtimer_ch;
 # endif
 #endif
 #if defined(__NetBSD__) && (__NetBSD_Version__ >= 104230000)
 # include <sys/callout.h>
 extern struct callout ipfr_slowtimer_ch;
+#endif
+#if defined(__OpenBSD__)
+# include <sys/timeout.h>
+extern struct timeout ipfr_slowtimer_ch;
+#endif
+
+#if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.4 2002/02/28 04:15:07 nathanw Exp $");
+#else
+static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.18 2002/01/01 15:09:11 darrenr Exp";
+#endif
 #endif
 
 
@@ -153,7 +155,7 @@ ipfr_t *table[];
 	if (ipfr_inuse >= IPFT_SIZE)
 		return NULL;
 
-	if (!(fin->fin_fi.fi_fl & FI_FRAG))
+	if (!(fin->fin_fl & FI_FRAG))
 		return NULL;
 
 	frag.ipfr_p = ip->ip_p;
@@ -168,6 +170,10 @@ ipfr_t *table[];
 	frag.ipfr_ifp = fin->fin_ifp;
 	idx *= 127;
 	idx %= IPFT_SIZE;
+
+	frag.ipfr_optmsk = fin->fin_fi.fi_optmsk & IPF_OPTCOPY;
+	frag.ipfr_secmsk = fin->fin_fi.fi_secmsk;
+	frag.ipfr_auth = fin->fin_fi.fi_auth;
 
 	/*
 	 * first, make sure it isn't already there...
@@ -231,7 +237,12 @@ u_int pass;
 	WRITE_ENTER(&ipf_frag);
 	ipf = ipfr_new(ip, fin, pass, ipfr_heads);
 	RWLOCK_EXIT(&ipf_frag);
-	return ipf ? 0 : -1;
+	if (ipf == NULL) {
+		ATOMIC_INCL(frstats[fin->fin_out].fr_bnfr);
+		return -1;
+	}
+	ATOMIC_INCL(frstats[fin->fin_out].fr_nfr);
+	return 0;
 }
 
 
@@ -242,9 +253,16 @@ u_int pass;
 nat_t *nat;
 {
 	ipfr_t	*ipf;
+	int off;
 
 	if ((ip->ip_v != 4) || (fr_frag_lock))
 		return -1;
+
+	off = fin->fin_off;
+	off <<= 3;
+	if ((off + fin->fin_dlen) > 0xffff || (fin->fin_dlen == 0))
+		return NULL;
+
 	WRITE_ENTER(&ipf_natfrag);
 	ipf = ipfr_new(ip, fin, pass, ipfr_nattab);
 	if (ipf != NULL) {
@@ -266,11 +284,8 @@ fr_info_t *fin;
 ipfr_t *table[];
 {
 	ipfr_t	*f, frag;
-	u_int	idx;
-
-	if (!(fin->fin_fi.fi_fl & FI_FRAG))
-		return NULL;
-
+	u_int idx;
+ 
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
 	 * (these should all be the same for all fragments of a packet).
@@ -290,6 +305,10 @@ ipfr_t *table[];
 	idx *= 127;
 	idx %= IPFT_SIZE;
 
+	frag.ipfr_optmsk = fin->fin_fi.fi_optmsk & IPF_OPTCOPY;
+	frag.ipfr_secmsk = fin->fin_fi.fi_secmsk;
+	frag.ipfr_auth = fin->fin_fi.fi_auth;
+
 	/*
 	 * check the table, careful to only compare the right amount of data
 	 */
@@ -298,15 +317,16 @@ ipfr_t *table[];
 			  IPFR_CMPSZ)) {
 			u_short	atoff, off;
 
+			off = fin->fin_off;
+
 			/*
 			 * XXX - We really need to be guarding against the
 			 * retransmission of (src,dst,id,offset-range) here
 			 * because a fragmented packet is never resent with
 			 * the same IP ID#.
 			 */
-			off = ip->ip_off & IP_OFFMASK;
 			if (f->ipfr_seen0) {
-				if (!off || (fin->fin_fi.fi_fl & FI_SHORT))
+				if (!off || (fin->fin_fl & FI_SHORT))
 					continue;
 			} else if (!off)
 				f->ipfr_seen0 = 1;
@@ -348,11 +368,18 @@ nat_t *ipfr_nat_knownfrag(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	nat_t	*nat;
-	ipfr_t	*ipf;
+	ipfr_t *ipf;
+	nat_t *nat;
+	int off;
 
-	if ((ip->ip_v != 4) || (fr_frag_lock))
+	if ((fin->fin_v != 4) || (fr_frag_lock))
 		return NULL;
+
+	off = fin->fin_off;
+	off <<= 3;
+	if ((off + fin->fin_dlen) > 0xffff || (fin->fin_dlen == 0))
+		return NULL;
+
 	READ_ENTER(&ipf_natfrag);
 	ipf = ipfr_lookup(ip, fin, ipfr_nattab);
 	if (ipf != NULL) {
@@ -378,15 +405,24 @@ frentry_t *ipfr_knownfrag(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	frentry_t *fr = NULL;
-	ipfr_t	*fra;
+	frentry_t *fr;
+	ipfr_t *fra;
+	int off;
 
-	if ((ip->ip_v != 4) || (fr_frag_lock))
+	if ((fin->fin_v != 4) || (fr_frag_lock))
 		return NULL;
+
+	off = fin->fin_off;
+	off <<= 3;
+	if ((off + fin->fin_dlen) > 0xffff || (fin->fin_dlen == 0))
+		return NULL;
+
 	READ_ENTER(&ipf_frag);
 	fra = ipfr_lookup(ip, fin, ipfr_heads);
 	if (fra != NULL)
 		fr = fra->ipfr_rule;
+	else
+		fr = NULL;
 	RWLOCK_EXIT(&ipf_frag);
 	return fr;
 }
@@ -464,7 +500,6 @@ void ipfr_unload()
 }
 
 
-#ifdef	_KERNEL
 void ipfr_fragexpire()
 {
 	ipfr_t	**fp, *fra;
@@ -535,6 +570,7 @@ void ipfr_fragexpire()
  * Slowly expire held state for fragments.  Timeouts are set * in expectation
  * of this being called twice per second.
  */
+#ifdef _KERNEL
 # if (BSD >= 199306) || SOLARIS || defined(__sgi)
 #  if defined(SOLARIS2) && (SOLARIS2 < 7)
 void ipfr_slowtimer()
@@ -544,6 +580,9 @@ void ipfr_slowtimer __P((void *ptr))
 # else
 int ipfr_slowtimer()
 # endif
+#else
+void ipfr_slowtimer()
+#endif
 {
 #if defined(_KERNEL) && SOLARIS
 	extern	int	fr_running;
@@ -553,7 +592,7 @@ int ipfr_slowtimer()
 #endif
 
 	READ_ENTER(&ipf_solaris);
-#ifdef __sgi
+#if defined(__sgi) && defined(_KERNEL)
 	ipfilter_sgi_intfsync();
 #endif
 
@@ -561,6 +600,7 @@ int ipfr_slowtimer()
 	fr_timeoutstate();
 	ip_natexpire();
 	fr_authexpire();
+#if defined(_KERNEL)
 # if    SOLARIS
 	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, drv_usectohz(500000));
 	RWLOCK_EXIT(&ipf_solaris);
@@ -571,8 +611,8 @@ int ipfr_slowtimer()
 #   if (__FreeBSD_version >= 300000)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
 #   else
-#    if defined(__NetBSD__)
-	callout_reset(&ipfr_slowtimer_ch, hz / 2, ipfr_slowtimer, NULL);
+#    if defined(__OpenBSD__)
+	timeout_add(&ipfr_slowtimer_ch, hz/2);
 #    else
 	timeout(ipfr_slowtimer, NULL, hz/2);
 #    endif
@@ -582,5 +622,5 @@ int ipfr_slowtimer()
 #   endif /* FreeBSD */
 #  endif /* NetBSD */
 # endif /* SOLARIS */
-}
 #endif /* defined(_KERNEL) */
+}

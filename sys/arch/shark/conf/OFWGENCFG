@@ -1,0 +1,141 @@
+#	$NetBSD: OFWGENCFG,v 1.1.2.2 2002/02/28 04:11:40 nathanw Exp $
+#
+#	OFWGENCFG: 'generic' configuration for Open Firmware boards.
+#
+#	Uses all 'generic' drivers (except for 'ofrom', which is
+#	close enough to generic).
+#
+
+include	"arch/shark/conf/std.arm32"
+include "arch/shark/conf/std.ofwgencfg"
+
+# estimated number of users
+
+maxusers	32
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+# CPU options
+
+options 	CPU_SA110	# Support the SA110 core
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
+
+# Architecture options
+
+options 	OFWGENCFG	# Enable Open Firmware bits specific to GENERIC configuration
+
+# FPA options
+
+#options 	ARMFPE		# ARM Ltd FPE
+
+# File systems
+
+file-system	FFS		# UFS
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS
+#file-system 	ADOSFS		# AmigaDOS-compatible file system
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+#file-system	FILECORE	# Acorn filecore file system
+file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PORTAL		# portal filesystem (still experimental)
+#file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
+
+# File system options
+#options 	QUOTA		# UFS quotas
+#options 	NFSSERVER
+options 	NFS_BOOT_DHCP	# NFS booting via DHCP
+options 	NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
+
+# Networking options
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
+				# if you enable the pseudo-device ipl).
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# Compatibility options
+
+options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_12	# NetBSD 1.2 compatibility.
+#options 	COMPAT_11	# NetBSD 1.1 compatibility.
+#options 	COMPAT_10	# NetBSD 1.0 compatibility.
+#options 	COMPAT_09	# NetBSD 0.9 compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
+# Shared memory options
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_SIZE=0	# Size in KBytes
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	IRQSTATS	# manage IRQ statistics
+#options 	LKM		# loadable kernel modules
+options 	KMEMSTATS	# kernel memory statistics
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Development and Debugging options
+
+#options 	ARM700BUGTRACK	# track the ARM700 swi bug
+#options 	PORTMASTER	# Enable PortMaster only options
+options 	DIAGNOSTIC	# internally consistency checks
+#options 	IPKDB		# remote kernel debugging
+options 	DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+
+config		netbsd	root on ofnet0 type nfs
+#config		netbsd	root nfs swap nfs
+
+# The main bus device
+mainbus0 at root
+
+# The boot cpu
+cpu0 at mainbus?
+
+# Open Firmware devices
+ofbus*		at root
+ofbus*		at ofbus?
+ofdisk*		at ofbus?
+ofnet*		at ofbus?
+ofcons*		at ofbus?
+ofrtc*		at ofbus?
+ofrom*		at ofbus?
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+#pseudo-device	sl	2		# CSLIP
+#pseudo-device	ppp	2		# PPP
+#pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipfilter 1		# ip filter
+
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	tb	1		# tablet line discipline
+pseudo-device	vnd	4		# disk-like interface to files
+#pseudo-device	ccd	2		# concatenated disk devices
+pseudo-device	rnd			# /dev/random and /dev/urandom
+
+#pseudo-device	md	1		# Ramdisk driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.2.8.2 2002/01/11 23:39:03 nathanw Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.2.8.3 2002/02/28 04:13:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.2.8.2 2002/01/11 23:39:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.2.8.3 2002/02/28 04:13:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

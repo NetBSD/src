@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.2.2.3 2001/11/14 19:15:07 nathanw Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.2.2.4 2002/02/28 04:13:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.2.2.3 2001/11/14 19:15:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.2.2.4 2002/02/28 04:13:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,11 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_via_softc *asc;
 	struct agp_gatt *gatt;
 
-	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT);
+	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT|M_ZERO);
 	if (asc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
 		return ENOMEM;
 	}
-	memset(asc, 0, sizeof *asc);
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_via_methods;
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->as_capoff,

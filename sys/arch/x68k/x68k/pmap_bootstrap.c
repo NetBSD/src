@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.21 2001/01/11 13:18:37 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.21.8.1 2002/02/28 04:12:41 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 #include "opt_m680x0.h"
 
 #include <sys/param.h>
-#include <uvm/uvm_extern.h>	/* XXX needed? */
+#include <uvm/uvm_extern.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
@@ -111,9 +111,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 *	iiopa		internal IO space
 	 *			PT pages		IIOMAPSIZE pages
 	 *
-	 *	eiiopa		page following
-	 *			internal IO space
-	 *
 	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE
 	 *   is the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
@@ -141,6 +138,12 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
+
+	/*
+	 * Clear all PTEs to zero
+	 */
+	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)p0upa; pte++)
+		*pte = 0;
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -201,13 +204,6 @@ pmap_bootstrap(nextpa, firstpa)
 			*pte++ = protoste;
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
-		/*
-		 * Initialize the final level 1 descriptor to map the last
-		 * block of level 2 descriptors.
-		 */
-		ste = &((u_int *)kstpa)[SG4_LEV1SIZE-1];
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
-		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Initialize Sysptmap
 		 */
@@ -274,10 +270,10 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for proc0
+	 * by us so far (kstpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -422,7 +418,6 @@ pmap_bootstrap(nextpa, firstpa)
 				      SG4_LEV2SIZE) / SG4_LEV2SIZE;
 			while (num)
 				kpm->pm_stfree &= ~l2tobm(num--);
-			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE-1);
 			for (num = MAXKL2SIZE;
 			     num < sizeof(kpm->pm_stfree)*NBBY;
 			     num++)

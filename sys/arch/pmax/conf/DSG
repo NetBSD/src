@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.25.8.2 2002/01/08 00:27:03 nathanw Exp $
+# 	$NetBSD: DSG,v 1.25.8.3 2002/02/28 04:11:20 nathanw Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -26,9 +26,7 @@ options 	DEBUG			# extra kernel debugging support
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 options 	LKM			# loadable kernel modules
-
-
-
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
@@ -37,7 +35,6 @@ options 	LKM			# loadable kernel modules
 
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
-
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas

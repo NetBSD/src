@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.37.2.6 2002/01/08 00:32:25 nathanw Exp $ */
+/* $NetBSD: wsconsio.h,v 1.37.2.7 2002/02/28 04:14:38 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -90,6 +90,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_RISCPC	10	/* RiscPC keyboard, resembling AT codes */
 #define		WSKBD_TYPE_ADB		11	/* ADB */
 #define		WSKBD_TYPE_HIL		12	/* HIL keyboard */
+#define		WSKBD_TYPE_AMIGA	13	/* Amiga keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -171,6 +172,8 @@ struct wskbd_map_data {
 #define 	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 #define		WSMOUSE_TYPE_HIL	9	/* HIL mouse */
+#define		WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */      
+#define		WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
@@ -241,6 +244,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_DAVINCI	29	/* HP DaVinci */
 #define		WSDISPLAY_TYPE_TIGER	30	/* HP Tiger */
 #define		WSDISPLAY_TYPE_HYPERION	31	/* HP Hyperion */
+#define		WSDISPLAY_TYPE_AMIGACC	32	/* Amiga custom chips */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

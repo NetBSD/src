@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7.4.3 2001/12/08 04:22:20 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7.4.4 2002/02/28 04:08:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -225,7 +225,7 @@ cpu_coredump(l, vp, cred, chdr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * and size must be a multiple of PAGE_SIZE.
  */
 void
 pagemove(from, to, size)

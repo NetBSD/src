@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.1.4.5 2002/01/11 23:39:08 nathanw Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.1.4.6 2002/02/28 04:13:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.1.4.5 2002/01/11 23:39:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.1.4.6 2002/02/28 04:13:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

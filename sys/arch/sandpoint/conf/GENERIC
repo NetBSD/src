@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14.4.4 2002/01/08 00:27:21 nathanw Exp $
+# $NetBSD: GENERIC,v 1.14.4.5 2002/02/28 04:11:32 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.14.4.4 $"
+#ident 		"GENERIC-$Revision: 1.14.4.5 $"
 
 maxusers	32
 
@@ -42,6 +42,7 @@ options 	NEWPMAP
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
 options 	SYMTAB_SPACE=200000
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores

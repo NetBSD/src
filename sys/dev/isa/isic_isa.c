@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_isa.c,v 1.2.2.5 2002/01/11 23:39:09 nathanw Exp $	*/
+/*	$NetBSD: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp $	*/
 
 /*
  *   Copyright (c) 1997-1999 Martin Husemann. All rights reserved.
@@ -35,7 +35,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.2.2.5 2002/01/11 23:39:09 nathanw Exp $ 
+ *	$Id: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -45,7 +45,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.5 2002/01/11 23:39:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.34.14.2 2002/01/11 23:39:16 nathanw Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.34.14.3 2002/02/28 04:13:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.2 2002/01/11 23:39:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.3 2002/02/28 04:13:49 nathanw Exp $");
 
 #include "isadma.h"
 

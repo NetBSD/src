@@ -1,0 +1,17 @@
+#
+# kernel config file for system install
+#
+# 	$NetBSD: INSTALL_TX3922,v 1.1.12.2 2002/02/28 04:09:53 nathanw Exp $
+#
+
+include		"arch/hpcmips/conf/TX3922"
+
+pseudo-device	sl		2	# Serial Line IP
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MINIROOTSIZE=8192	# size of memory disk, in blocks
+
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.2 2002/01/08 00:27:58 nathanw Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.3 2002/02/28 04:12:10 nathanw Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -56,6 +56,8 @@ options 	SYSVSHM		# System V shared memory
 
 ## Loadable kernel module support; still under development.
 options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM
@@ -371,7 +373,7 @@ options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

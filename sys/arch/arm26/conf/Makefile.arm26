@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.12.2.3 2002/01/11 23:38:07 nathanw Exp $
+#	$NetBSD: Makefile.arm26,v 1.12.2.4 2002/02/28 04:07:47 nathanw Exp $
 
 # Makefile for NetBSD
 #

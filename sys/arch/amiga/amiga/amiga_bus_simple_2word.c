@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_2word.c,v 1.2 2000/01/23 21:02:18 aymeric Exp $ */
+/* $NetBSD: amiga_bus_simple_2word.c,v 1.2.14.1 2002/02/28 04:06:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_2word.c,v 1.2.14.1 2002/02/28 04:06:17 nathanw Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 2		/* 1 byte per word */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS

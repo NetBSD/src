@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.71.2.3 2001/11/14 19:13:40 nathanw Exp $	*/
+/*	$NetBSD: ccd.c,v 1.71.2.4 2002/02/28 04:13:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.3 2001/11/14 19:13:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.4 2002/02/28 04:13:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,13 +192,12 @@ ccdattach(num)
 	}
 
 	ccd_softc = (struct ccd_softc *)malloc(num * sizeof(struct ccd_softc),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (ccd_softc == NULL) {
 		printf("WARNING: no memory for concatenated disks\n");
 		return;
 	}
 	numccd = num;
-	memset(ccd_softc, 0, num * sizeof(struct ccd_softc));
 
 	/* Initialize the component buffer pool. */
 	pool_init(&ccd_cbufpool, sizeof(struct ccdbuf), 0,
@@ -407,8 +406,8 @@ ccdinterleave(cs)
 	 * Chances are this is too big, but we don't care.
 	 */
 	size = (cs->sc_nccdisks + 1) * sizeof(struct ccdiinfo);
-	cs->sc_itable = (struct ccdiinfo *)malloc(size, M_DEVBUF, M_WAITOK);
-	memset((caddr_t)cs->sc_itable, 0, size);
+	cs->sc_itable = (struct ccdiinfo *)malloc(size, M_DEVBUF,
+	    M_WAITOK|M_ZERO);
 
 	/*
 	 * Trivial case: no interleave (actually interleave of disk size).

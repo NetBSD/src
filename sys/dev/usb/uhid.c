@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.2.5 2002/01/11 23:39:36 nathanw Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.2.6 2002/02/28 04:14:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.5 2002/01/11 23:39:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.6 2002/02/28 04:14:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,9 +438,9 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 	case USB_GET_REPORT_DESC:
 		uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
 		rd = (struct usb_ctl_report_desc *)addr;
-		size = min(size, sizeof rd->data);
-		rd->size = size;
-		memcpy(rd->data, desc, size);
+		size = min(size, sizeof rd->ucrd_data);
+		rd->ucrd_size = size;
+		memcpy(rd->ucrd_data, desc, size);
 		break;
 
 	case USB_SET_IMMED:
@@ -458,7 +458,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 
 	case USB_GET_REPORT:
 		re = (struct usb_ctl_report *)addr;
-		switch (re->report) {
+		switch (re->ucr_report) {
 		case UHID_INPUT_REPORT:
 			size = sc->sc_isize;
 			break;
@@ -472,17 +472,17 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 			return (EINVAL);
 		}
 		extra = sc->sc_hdev.sc_report_id != 0;
-		err = uhidev_get_report(&sc->sc_hdev, re->report, re->data,
-					size+extra);
+		err = uhidev_get_report(&sc->sc_hdev, re->ucr_report,
+		    re->ucr_data, size + extra);
 		if (extra)
-			memcpy(re->data, re->data+1, size);
+			memcpy(re->ucr_data, re->ucr_data+1, size);
 		if (err)
 			return (EIO);
 		break;
 
 	case USB_SET_REPORT:
 		re = (struct usb_ctl_report *)addr;
-		switch (re->report) {
+		switch (re->ucr_report) {
 		case UHID_INPUT_REPORT:
 			size = sc->sc_isize;
 			break;
@@ -495,8 +495,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		default:
 			return (EINVAL);
 		}
-		err = uhidev_set_report(&sc->sc_hdev, re->report, re->data,
-					size);
+		err = uhidev_set_report(&sc->sc_hdev, re->ucr_report,
+		    re->ucr_data, size);
 		if (err)
 			return (EIO);
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.13.4.2 2001/08/30 23:43:42 nathanw Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.13.4.3 2002/02/28 04:06:10 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.4.2 2001/08/30 23:43:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.4.3 2002/02/28 04:06:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,14 +116,37 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 			return error;
 		m = args.mask;
 		md_flags = l->l_md.md_flags;
-		if (SCARG(uap, op) == ALPHA_FPSETMASK) {
+		switch (SCARG(uap, op)) {
+		case ALPHA_FPSETMASK:
 			*retval = FP_C_TO_NETBSD_MASK(md_flags);
 			md_flags = SET_FP_C_MASK(md_flags, m);
-		} else {
+			break;
+		case ALPHA_FPSETSTICKY:
 			*retval = FP_C_TO_NETBSD_FLAG(md_flags);
 			md_flags = SET_FP_C_FLAG(md_flags, m);
+			break;
 		}
 		alpha_write_fp_c(l, md_flags);
+		break;
+	    }
+	case ALPHA_GET_FP_C:
+	    {
+		struct alpha_fp_c_args args;
+
+		args.fp_c = alpha_read_fp_c(p);
+		error = copyout(&args, SCARG(uap, parms), sizeof args);
+		break;
+	    }
+	case ALPHA_SET_FP_C:
+	    {
+		struct alpha_fp_c_args args;
+
+		error = copyin(SCARG(uap, parms), &args, sizeof args);
+		if (error)
+			return (error);
+		if ((args.fp_c >> 63) != 0)
+			args.fp_c |= IEEE_INHERIT;
+		alpha_write_fp_c(p, args.fp_c);
 		break;
 	    }
 	case ALPHA_BUS_GET_WINDOW_COUNT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.h,v 1.3.8.2 2002/01/11 23:38:13 nathanw Exp $	*/
+/*	$NetBSD: pci_vga.h,v 1.3.8.3 2002/02/28 04:08:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.

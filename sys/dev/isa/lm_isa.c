@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.3.4.2 2002/01/11 23:39:09 nathanw Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.3.4.3 2002/02/28 04:13:45 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.3.4.2 2002/01/11 23:39:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.3.4.3 2002/02/28 04:13:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

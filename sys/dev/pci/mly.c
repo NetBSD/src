@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7.2.3 2001/11/14 19:15:21 nathanw Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.2.4 2002/02/28 04:14:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.3 2001/11/14 19:15:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.4 2002/02/28 04:14:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,8 +655,7 @@ mly_scan_btl(struct mly_softc *mly, int bus, int target)
 
 	/* Set up the data buffer. */
 	mc->mc_data = malloc(sizeof(union mly_devinfo), 
-	    M_DEVBUF, M_NOWAIT);
-	memset(mc->mc_data, 0, sizeof(union mly_devinfo));
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	mc->mc_flags |= MLY_CCB_DATAIN;
 	mc->mc_complete = mly_complete_rescan;
@@ -1042,8 +1041,8 @@ mly_fetch_event(struct mly_softc *mly)
 		return;
 
 	/* Set up the data buffer. */
-	mc->mc_data = malloc(sizeof(struct mly_event), M_DEVBUF, M_NOWAIT);
-	memset(mc->mc_data, 0, sizeof(struct mly_event));
+	mc->mc_data = malloc(sizeof(struct mly_event), M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 
 	mc->mc_length = sizeof(struct mly_event);
 	mc->mc_flags |= MLY_CCB_DATAIN;
@@ -1648,8 +1647,7 @@ mly_alloc_ccbs(struct mly_softc *mly)
 		return (rv);
 
 	mly->mly_ccbs = malloc(sizeof(struct mly_ccb) * mly->mly_ncmds,
-	    M_DEVBUF, M_NOWAIT);
-	memset(mly->mly_ccbs, 0, sizeof(struct mly_ccb) * mly->mly_ncmds);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	for (i = 0; i < mly->mly_ncmds; i++) {
 		mc = mly->mly_ccbs + i;

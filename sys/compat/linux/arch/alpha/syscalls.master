@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31.2.4 2001/09/21 22:35:15 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.31.2.5 2002/02/28 04:12:45 nathanw Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -281,9 +281,9 @@
 				caddr_t asa, int *alen); }
 142	UNIMPL
 143	UNIMPL
-144	NOARGS		{ int compat_43_sys_getrlimit(int which, \
+144	STD		{ int linux_sys_getrlimit(int which, \
 			    struct orlimit *rlp); }
-145	NOARGS		{ int compat_43_sys_setrlimit(int which, \
+145	STD		{ int linux_sys_setrlimit(int which, \
 			    const struct orlimit *rlp); }
 146	UNIMPL
 147	NOARGS		{ int sys_setsid(void); }
@@ -341,8 +341,11 @@
 188	UNIMPL
 189	UNIMPL
 190	UNIMPL
-191	UNIMPL
-192	UNIMPL
+; XXX: Dunno
+191	STD		{ int linux_sys_ugetrlimit(int which, \
+			    struct rlimit *rlp); }
+192	STD		{ int linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 193	UNIMPL
 194	UNIMPL
 195	UNIMPL

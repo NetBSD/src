@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.1.2.2 2002/01/08 00:29:59 nathanw Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.1.2.3 2002/02/28 04:13:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.1.2.2 2002/01/08 00:29:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.1.2.3 2002/02/28 04:13:29 nathanw Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -91,6 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.1.2.2 2002/01/08 00:29:59 nathanw Exp 
 #define	bus_space_write_multi_stream_2	bus_space_write_multi_2
 #define	bus_space_read_multi_stream_2	bus_space_read_multi_2
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
+
+static __inline void mx98905_write_setup(struct dp8390_softc *, int, int);
+static __inline void mx98905_write_wait(struct dp8390_softc *);
 
 void
 mx98905_attach(struct dp8390_softc *sc)

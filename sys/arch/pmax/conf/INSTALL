@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.41.6.2 2002/01/08 00:27:04 nathanw Exp $
+# 	$NetBSD: INSTALL,v 1.41.6.3 2002/02/28 04:11:21 nathanw Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -37,8 +37,7 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
-
-
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)

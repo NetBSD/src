@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.6 2002/01/11 23:39:43 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.7 2002/02/28 04:14:58 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.6 2002/01/11 23:39:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.7 2002/02/28 04:14:58 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

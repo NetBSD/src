@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27.2.2 2002/01/08 00:23:20 nathanw Exp $
+# $NetBSD: GENERIC,v 1.27.2.3 2002/02/28 04:07:47 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -112,6 +112,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	NTP		# Kernel PLL for ntpd(8).
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Disable kernel security.
 #options 	INSECURE
@@ -193,8 +194,16 @@ wsdisplay0	at arcvideo0
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1

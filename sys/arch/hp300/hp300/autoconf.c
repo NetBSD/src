@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49.20.1 2002/01/08 00:24:38 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.20.2 2002/02/28 04:09:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -647,8 +647,6 @@ setbootdev()
 	 */
 	bootdev = 0;
 
-	dd = dev_data_lookup(root_device);
-
 	/*
 	 * If the root device is network, we're done
 	 * early.
@@ -665,10 +663,14 @@ setbootdev()
 		type = 2;
 	else if (memcmp(root_device->dv_xname, "sd", 2) == 0)
 		type = 4;
+	else if (memcmp(root_device->dv_xname, "md", 2) == 0)
+		goto out;
 	else {
 		printf("WARNING: strange root device!\n");
 		goto out;
 	}
+
+	dd = dev_data_lookup(root_device);
 
 	/*
 	 * Get parent's info.

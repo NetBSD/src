@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.11.4.2 2001/11/14 19:15:35 nathanw Exp $ */
+/* $NetBSD: psm.c,v 1.11.4.3 2002/02/28 04:14:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.11.4.2 2001/11/14 19:15:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.11.4.3 2002/02/28 04:14:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,9 @@ struct pms_softc {		/* driver status information */
 	int sc_kbcslot;
 
 	int sc_enabled;		/* input enabled? */
+#ifndef PMS_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
+#endif /* !PMS_DISABLE_POWERHOOK */
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
 	signed char dx;
@@ -68,7 +70,9 @@ static void	do_disable __P((struct pms_softc *));
 int	pms_enable __P((void *));
 int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void	pms_disable __P((void *));
+#ifndef PMS_DISABLE_POWERHOOK
 void	pms_power __P((int, void *));
+#endif /* !PMS_DISABLE_POWERHOOK */
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -170,7 +174,9 @@ pmsattach(parent, self, aux)
 		printf("pmsattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
+#ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_powerhook = powerhook_establish(pms_power, sc);
+#endif /* !PMS_DISABLE_POWERHOOK */
 }
 
 static void
@@ -258,6 +264,7 @@ pms_disable(v)
 	sc->sc_enabled = 0;
 }
 
+#ifndef PMS_DISABLE_POWERHOOK
 void
 pms_power(why, v)
 	int why;
@@ -280,7 +287,7 @@ pms_power(why, v)
 		break;
 	}
 }
-
+#endif /* !PMS_DISABLE_POWERHOOK */
 
 int
 pms_ioctl(v, cmd, data, flag, p)

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.2.4.2 2001/11/14 19:16:52 nathanw Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.2.4.3 2002/02/28 04:14:51 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,6 +109,9 @@ loadfile_aout(fd, x, marks, flags)
 	paddr_t offset = marks[MARK_START];
 	u_long magic = N_GETMAGIC(*x);
 	int sub;
+
+	/* some ports dont use the offset */
+	offset = offset;
 
 	/* In OMAGIC and NMAGIC, exec header isn't part of text segment */
 	if (magic == OMAGIC || magic == NMAGIC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3.2.3 2002/01/11 23:39:39 nathanw Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3.2.4 2002/02/28 04:14:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ffs.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: ffs.S,v 1.3.2.3 2002/01/11 23:39:39 nathanw Exp $")
+	ASMSTR("$NetBSD: ffs.S,v 1.3.2.4 2002/02/28 04:14:50 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL)

@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.9.2.2 2002/01/08 00:22:52 nathanw Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.9.2.3 2002/02/28 04:06:12 nathanw Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.2 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.3 $"
 
 maxusers 64
 
@@ -99,6 +99,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -229,7 +230,7 @@ vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

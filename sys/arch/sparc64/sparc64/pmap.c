@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.4 2002/01/08 00:28:04 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.5 2002/02/28 04:12:18 nathanw Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1221,12 +1221,18 @@ remap_data:
 /* Clear all memory we give to the VM system.  I want to make sure
  * the PROM isn't using it for something, so this should break the PROM.
  */
+
+/* Calling pmap_zero_page() at this point also hangs some machines
+ * so don't do it at all. -- pk 26/02/2002
+ */
+#if 0
 		{
 			paddr_t p;
 			for (p = mp->start; p < mp->start+mp->size; p += NBPG)
 				pmap_zero_page(p);
 		}
 #endif
+#endif /* DEBUG */
 		/* 
 		 * In future we should be able to specify both allocated
 		 * and free.
@@ -1471,7 +1477,7 @@ pmap_init()
 
 	BDPRINTF(PDB_BOOT1, ("pmap_init()\r\n"));
 	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: CLSIZE!=1");
+		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	size = sizeof(struct pv_entry) * physmem;
 	TAILQ_INIT(&mlist);

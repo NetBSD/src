@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8.2.3 2002/01/11 23:39:04 nathanw Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.2.4 2002/02/28 04:13:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.3 2002/01/11 23:39:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.4 2002/02/28 04:13:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,0 +1,7 @@
+#	$NetBSD: files.i80200,v 1.3.4.2 2002/02/28 04:07:43 nathanw Exp $
+#
+# Configuration info for Intel i80200 CPU support
+#
+
+file	arch/arm/xscale/i80200_icu.c
+file	arch/arm/xscale/i80200_irq.S

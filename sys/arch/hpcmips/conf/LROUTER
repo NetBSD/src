@@ -1,0 +1,184 @@
+#
+# 	$NetBSD: LROUTER,v 1.4.4.2 2002/02/28 04:09:53 nathanw Exp $
+# 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
+#
+# Kernel configuration file for LASER5 L-Router
+#
+
+include		"arch/hpcmips/conf/std.hpcmips"
+
+maxusers	32
+
+options 	MIPS3			# R4000/R4400/R4600 CPUs
+
+# Support for specific models of H/PC MIPS
+options 	MIPS3_4100		# VR4100 core
+options 	VR41XX			# NEC VR41xx series
+options 	VR4122			# NEC VR4122
+options 	MIPS3_L2CACHE_ABSENT
+
+# Standard system options
+options 	DDB			# in-kernel debugger
+#options 	DDB_ONPANIC=0		# don't enter debugger on panic
+#options 	KGDB			# remote debugger
+options 	DIAGNOSTIC		# extra kernel debugging checks
+#options 	DEBUG			# extra kernel debugging support
+#options 	VRGIUDEBUG_CONF=2	# debug GIU intr
+options 	KTRACE			# system call tracing support
+options 	MSGBUFSIZE=16384	# dmesg buffer size
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+## UVM options.
+#options 	UVM_PAGE_TRKOWN
+#options 	UVMHIST
+#options 	UVMHIST_PRINT	# Loud!
+
+#options 	SCSIVERBOSE		# human readable SCSI error messages
+
+options 	YBASE=2000
+options 	EPOCHYEAR=1970
+
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=-540		# JST-9
+#options 	RTC_OFFSET=480		# PST8
+					# In NO RTC_OFFSET , inherit RTC_OFFSET
+					# from Windows CE.
+options 	NTP			# network time protocol
+#options 	UCONSOLE		# users can redirect console (unsafe)
+
+#options 	WINCE_DEFAULT_SETTING	# Debugging use
+#options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
+
+#options 	SYSCALL_DEBUG		# for debug
+
+#options 	VRRTCDEBUG
+#options 	VRRTCDEBUG_CONF=1
+
+# Filesystem options
+file-system 	FFS		# fast filesystem with user and group quotas
+#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	MFS		# memory-based filesystem
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
+#file-system	LFS		# Log-based filesystem (still experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern (kernel informational filesystem)
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION
+
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	SOFTDEP		# FFS soft updates support.
+#options 	QUOTA		# UFS quotas
+options 	VNODE_OP_NOINLINE # don't inline vnode op calls
+
+# Networking options
+#options 	GATEWAY		# IP packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP		# TPIP
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+
+# NetBSD backwards compatibility
+options 	COMPAT_43
+
+options 	NFS_BOOT_DHCP
+
+# compile options
+makeoptions	DEFGP="-G 14"
+
+config		netbsd		root on ? type ?
+config		nfsnetbsd	root on ? type nfs
+
+
+# temporally power management
+hpcapm0	at mainbus0			# power management
+apmdev0	at hpcapm0			# APM
+
+vrip*	at mainbus0
+vrbcu*	at vrip? addr 0x0f000000 size 0x20
+vrcmu*	at vrip? addr 0x0f000060 size 0x20
+vrrtc*	at vrip? addr 0x0f000100 size 0x20 unit VRRTC
+
+options 	CONSPEED=115200
+com*	at vrip? addr 0x0f000800 size 0x20 unit VRSIU pwctl PWCTL_COM0
+vrgiu*	at vrip? addr 0x0f000140 size 0x20 unit VRGIU
+vrpmu*	at vrip? addr 0x0f0000c0 size 0x20 unit VRPMU # power switch
+#vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 unit VRPIU
+#vrled*	at vrip? addr 0x0f000180 size 0x10 unit VRLED
+vrpciu*	at vrip? addr 0x0f000c00 size 0x200 unit VRPCIU
+
+hpcioman0 at vrgiu? platform LASER5_L_BOARD
+# bus 0, device 0, function 0	i82559 #0 LAN(eth0)
+hpcin*	at hpcioman0 evtype PCIINTR id PCIINTR_00_00_00 port 12 level 0 hold 0 connect 1
+# bus 0, device 1, function 0	i82559 #1 LAN(eth1)
+hpcin*	at hpcioman0 evtype PCIINTR id PCIINTR_00_01_00 port 13 level 0 hold 0 connect 1
+# bus 0, device 16, function 0	M1543C/M5229 (IDE controller)
+hpcin*	at hpcioman0 evtype PCIINTR id PCIINTR_00_16_00 port 11 level 1 hold 0 connect 1
+
+# PCI bus support
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE
+pci*	at vrpciu?
+
+# PCI network interfaces
+fxp*	at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
+
+# MII/PHY support
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+
+# IDE and related devices
+pciide* at pci? dev ? function ? flags 0x0000
+
+# IDE drives
+#wd*	at pciide? channel ? drive ? flags 0x0ffa	# PIO mode 2
+wd*	at pciide? channel ? drive ? flags 0x0ffb	# PIO mode 3
+#wd*	at pciide? channel ? drive ? flags 0x0ff0	# PIO mode 4
+#wd*	at pciide? channel ? drive ? flags 0x0000	# UDMA mode 2
+
+# ATAPI bus support
+atapibus* at pciide? channel ?
+
+# ATAPI devices
+cd*	at atapibus? drive ? flags 0x0ff0 # ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0ff0 # ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0ff0 # ATAPI tape drives
+
+pseudo-device	loop		1	# network loopback
+pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	ipfilter		# IP filter, NAT
+
+pseudo-device	vnd		4	# virtual disk ick
+#pseudo-device	ccd		4	# concatenated disks
+pseudo-device	rnd			# /dev/random and in-kernel generator
+
+#pseudo-device	biconsdev	1	# build-in console device
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MEMORY_DISK_DYNAMIC	# fs image don't exist in data section.
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+
+## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
+pseudo-device	vlan

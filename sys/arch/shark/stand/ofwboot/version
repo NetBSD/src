@@ -1,0 +1,3 @@
+$NetBSD: version,v 1.1.2.2 2002/02/28 04:12:00 nathanw Exp $
+
+1.1:		Boot program for OpenFirmware; initial revision

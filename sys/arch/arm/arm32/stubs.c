@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.5.2.3 2002/01/11 23:38:01 nathanw Exp $	*/
+/*	$NetBSD: stubs.c,v 1.5.2.4 2002/02/28 04:07:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

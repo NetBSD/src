@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.55.2.3 2001/11/14 19:16:45 nathanw Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.55.2.4 2002/02/28 04:14:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.3 2001/11/14 19:16:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.4 2002/02/28 04:14:47 nathanw Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.3 2001/11/14 19:16:45 nathanw Exp
 #include <sys/malloc.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
-#define DEFAULT_MAXPTYS		256	/* default maximum number of ptys */
+#define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -636,7 +636,7 @@ again:
 		}
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
-			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_iflag, ICANON))) {
+			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
 				wakeup((caddr_t)&tp->t_rawq);
 				goto block;
 			}
@@ -694,7 +694,7 @@ ptcpoll(dev, events, p)
 		    ((pti->pt_flags & PF_REMOTE) ?
 		     (tp->t_canq.c_cc == 0) :
 		     ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2) ||
-		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_iflag, ICANON)))))
+		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON)))))
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (events & POLLHUP)

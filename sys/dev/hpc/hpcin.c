@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.3.2.3 2001/11/14 19:14:06 nathanw Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.3.2.4 2002/02/28 04:13:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.3.2.3 2001/11/14 19:14:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.3.2.4 2002/02/28 04:13:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ struct hpcin_softc {
 	struct device sc_dev;
 	struct hpcioman_attach_args sc_hma;
 	hpcio_intr_handle_t sc_ih;
+	config_call_tag sc_ct;
 };
 
 #define sc_hc		sc_hma.hma_hc
@@ -69,6 +70,7 @@ struct hpcin_softc {
 #define sc_initvalue	sc_hma.hma_initvalue
 #define sc_on		sc_hma.hma_on
 #define sc_off		sc_hma.hma_off
+#define sc_connect	sc_hma.hma_connect
 
 struct cfattach hpcin_ca = {
 	sizeof(struct hpcin_softc), hpcin_match, hpcin_attach
@@ -102,6 +104,9 @@ hpcin_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_intr_mode, hpcin_intr, sc);
 	if (sc->sc_ih == NULL)
 		printf("hpcin: can't install interrupt handler\n");
+
+	if (sc->sc_connect)
+		sc->sc_ct = config_connect(sc->sc_type, sc->sc_id);
 }
 
 int
@@ -110,10 +115,15 @@ hpcin_intr(void *arg)
 	struct hpcin_softc *sc = arg;
 	int on;
 
-	printf("%s: type=%d, id=%d\n", __FUNCTION__, sc->sc_type, sc->sc_id);
 	on = (hpcio_portread(sc->sc_hc, sc->sc_port) == sc->sc_on);
-	config_hook_call(sc->sc_type, sc->sc_id, (void *)on);
-	printf("done.\n");
+	if (sc->sc_connect) {
+		config_connected_call(sc->sc_ct, (void *)on);
+	} else {
+		printf("%s: type=%d, id=%d\n", __FUNCTION__,
+		    sc->sc_type, sc->sc_id);
+		config_hook_call(sc->sc_type, sc->sc_id, (void *)on);
+		printf("done.\n");
+	}
 
 	return (0);
 }

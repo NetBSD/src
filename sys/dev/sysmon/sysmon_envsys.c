@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.1.4.2 2002/01/11 23:39:35 nathanw Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.1.4.3 2002/02/28 04:14:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.1.4.2 2002/01/11 23:39:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.1.4.3 2002/02/28 04:14:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

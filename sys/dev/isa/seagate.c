@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.5 2002/01/11 23:39:13 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.6 2002/02/28 04:13:47 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.5 2002/01/11 23:39:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.6 2002/02/28 04:13:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,8 +370,7 @@ seaprobe(parent, match, aux)
 		break;
 	default:
 #ifdef DEBUG
-		printf("seaprobe: board type unknown at address 0x%x\n",
-		    ia->ia_maddr);
+		printf("seaprobe: board type unknown at address %p\n", maddr);
 #endif
 		return 0;
 	}
@@ -429,8 +428,8 @@ seaattach(parent, self, aux)
 		break;
 	default:
 #ifdef DEBUG
-		printf("%s: board type unknown at address 0x%x\n",
-		    sea->sc_dev.dv_xname, ia->ia_maddr);
+		printf("%s: board type unknown at address %p\n",
+		    sea->sc_dev.dv_xname, sea->maddr);
 #endif
 		return;
 	}
@@ -821,11 +820,9 @@ sea_grow_scb(sea)
 		return;
 	}
 
-	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT);
+	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb == NULL)
 		return;
-
-	memset(scb, 0, sizeof(struct sea_scb));
 
 	TAILQ_INSERT_TAIL(&sea->free_list, scb, chain);
 	sea->numscbs++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.3 2001/11/14 19:13:18 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.4 2002/02/28 04:12:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.3 2001/11/14 19:13:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.4 2002/02/28 04:12:58 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -245,8 +245,8 @@ netbsd32___sysctl(p, v, retval)
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
-		error = uvm_vslock(p, (void *)(u_long)SCARG(uap, old), savelen,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		error = uvm_vslock(p, (void *)(vaddr_t)SCARG(uap, old), savelen,
+		    VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.10 1996/04/21 21:12:08 veego Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.10.48.1 2002/02/28 04:06:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -136,6 +136,6 @@ struct kbdmap {
 extern struct kbdmap kbdmap, ascii_kbdmap;
 extern unsigned char acctable[KBD_NUM_ACC][64];
 #include <sys/cdefs.h>
-void kbdenable __P((void));
-int kbdgetcn __P((void));
+void kbdenable(void);
+int kbdgetcn(void);
 #endif

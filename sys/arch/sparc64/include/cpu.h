@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.6.3 2002/01/04 19:12:24 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.29.6.4 2002/02/28 04:12:12 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,10 +151,18 @@ struct clockframe {
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
-#define	CLKF_INTR(framep)	((!CLKF_USERMODE(framep))&&\
-				(((framep)->t.tf_kstack < (vaddr_t)EINTSTACK)&&\
-				((framep)->t.tf_kstack > (vaddr_t)INTSTACK)))
-
+/* Since some files in sys/kern do not know BIAS, I'm using 0x7ff here */
+#define	CLKF_INTR(framep)						\
+	((!CLKF_USERMODE(framep))&&					\
+		(((framep)->t.tf_out[6] & 1 ) ?				\
+			(((vaddr_t)(framep)->t.tf_out[6] <		\
+				(vaddr_t)EINTSTACK-0x7ff) &&		\
+			((vaddr_t)(framep)->t.tf_out[6] >		\
+				(vaddr_t)INTSTACK-0x7ff)) :		\
+			(((vaddr_t)(framep)->t.tf_out[6] <		\
+				(vaddr_t)EINTSTACK) &&			\
+			((vaddr_t)(framep)->t.tf_out[6] >		\
+				(vaddr_t)INTSTACK))))
 
 /*
  * Software interrupt request `register'.

@@ -1,4 +1,4 @@
-/* $NetBSD: aout2bb.h,v 1.3 1999/02/16 23:34:10 is Exp $ */
+/* $NetBSD: aout2bb.h,v 1.3.26.1 2002/02/28 04:07:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,12 +40,12 @@
  * Relocator version definitions for aout to Amiga bootblock converter.
  */
 
-/* 
+/*
  * All the tables are at the end of the bootblock, with logical start at the
  * end.
  */
 
-/* 
+/*
  * The following formats are for a length of 8 kBytes only.
  */
 

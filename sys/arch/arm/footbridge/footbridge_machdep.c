@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.3.6.3 2002/01/11 23:38:03 nathanw Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.3.6.4 2002/02/28 04:07:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

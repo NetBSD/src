@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.26.4.2 2002/01/08 00:24:50 nathanw Exp $
+#	$NetBSD: files.hpcarm,v 1.26.4.3 2002/02/28 04:09:49 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -26,7 +26,6 @@ file	arch/arm/arm32/conf.c
 
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
-file	arch/hpcarm/hpcarm/cpuswitch.S
 file	arch/hpcarm/hpcarm/fault.c
 file	arch/hpcarm/hpcarm/fusu.S
 file	arch/hpcarm/hpcarm/intr.c

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.6.8.1 2002/01/08 00:26:56 nathanw Exp $
+# 	$NetBSD: INSTALL,v 1.6.8.2 2002/02/28 04:11:16 nathanw Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -19,6 +19,8 @@ options 	news5000
 options 	MIPS1			# R2000/R3000 support
 options 	MIPS3			# R4000 support
 options 	CPU_SINGLE		# no I/O processor
+
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Compatibility options
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.2.6.3 2002/01/11 23:38:02 nathanw Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.2.6.4 2002/02/28 04:07:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.

@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.2.2.3 2001/11/14 19:16:57 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2.2.4 2002/02/28 04:14:54 nathanw Exp $
 
 .if ${MACHINE} == "i386"
 SUBDIR+=	freebsd_aout freebsd_elf linux_elf svr4_elf
+.endif
+
+.if ${MACHINE_ARCH} == "sparc64"
+SUBDIR+=	elf netbsd32_aout netbsd32_elf sunos32_aout svr4_32_elf
 .endif
 
 # These are untested, but do compile.  Once they are tested,
@@ -27,10 +31,6 @@ SUBDIR+=	linux_aout linux_elf sunos_aout m68k4k
 
 .if ${MACHINE_ARCH} == "sparc"
 SUBDIR+=	aout sunos_aout svr4_elf
-.endif
-
-.if ${MACHINE_ARCH} == "sparc64"
-SUBDIR+=	elf netbsd32_aout netbsd32_elf sunos32_aout svr4_32_elf
 .endif
 
 .if ${MACHINE_ARCH} == "vax"

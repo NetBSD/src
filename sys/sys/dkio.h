@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.5.2.1 2002/01/11 23:39:51 nathanw Exp $	*/
+/*	$NetBSD: dkio.h,v 1.5.2.2 2002/02/28 04:15:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.12.2.5 2002/01/08 00:31:52 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.12.2.6 2002/02/28 04:14:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.12.2.5 2002/01/08 00:31:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.12.2.6 2002/02/28 04:14:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,10 +111,9 @@ scsipi_alloc_periph(malloc_flag)
 	struct scsipi_periph *periph;
 	int i;
 
-	periph = malloc(sizeof(*periph), M_DEVBUF, malloc_flag);
+	periph = malloc(sizeof(*periph), M_DEVBUF, malloc_flag|M_ZERO);
 	if (periph == NULL)
 		return NULL;
-	memset(periph, 0, sizeof(*periph));
 
 	periph->periph_dev = NULL;
 

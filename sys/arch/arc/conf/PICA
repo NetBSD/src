@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.28.2.2 2002/01/08 00:23:04 nathanw Exp $
+#	$NetBSD: PICA,v 1.28.2.3 2002/02/28 04:07:13 nathanw Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -23,6 +23,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks

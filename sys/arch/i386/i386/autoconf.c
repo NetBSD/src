@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.2.4 2002/01/11 23:38:28 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.5 2002/02/28 04:10:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.4 2002/01/11 23:38:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.5 2002/02/28 04:10:16 nathanw Exp $");
 
 #include "opt_compat_oldboot.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.18 2000/05/18 19:58:30 is Exp $	*/
+/*	$NetBSD: ms.c,v 1.18.12.1 2002/02/28 04:06:53 nathanw Exp $ */
 
 /*
  * based on:
@@ -48,6 +48,9 @@
  * Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.18.12.1 2002/02/28 04:06:53 nathanw Exp $");
+
 /*
  * Mouse driver.
  */
@@ -73,8 +76,8 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-void msattach __P((struct device *, struct device *, void *));
-int msmatch __P((struct device *, struct cfdata *, void *));
+void msattach(struct device *, struct device *, void *);
+int msmatch(struct device *, struct cfdata *, void *);
 
 /* per-port state */
 struct ms_port {
@@ -103,9 +106,9 @@ struct cfattach ms_ca = {
 	sizeof(struct ms_softc), msmatch, msattach
 };
 
-void msintr __P((void *));
-void ms_enable __P((struct ms_port *));
-void ms_disable __P((struct ms_port *));
+void msintr(void *);
+void ms_enable(struct ms_port *);
+void ms_disable(struct ms_port *);
 
 extern struct cfdriver ms_cd;
 
@@ -120,10 +123,7 @@ extern struct cfdriver ms_cd;
     (&(((struct ms_softc *)getsoftc(ms_cd, MS_UNIT(d)))->sc_ports[MS_PORT(d)]))
 
 int
-msmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+msmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int ms_matched = 0;
 
@@ -136,9 +136,7 @@ msmatch(pdp, cfp, auxp)
 }
 
 void
-msattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+msattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ms_softc *sc = (void *) dp;
 	int i;
@@ -162,11 +160,10 @@ msattach(pdp, dp, auxp)
  * enable scanner, called when someone opens the port.
  */
 void
-ms_enable(ms)
-	struct ms_port *ms;
+ms_enable(struct ms_port *ms)
 {
 
-	/* 
+	/*
 	 * use this as flag to the "interrupt" to tell it when to
 	 * shut off (when it's reset to 0).
 	 */
@@ -180,8 +177,7 @@ ms_enable(ms)
  * timeout taken, no further timeouts will be initiated.
  */
 void
-ms_disable(ms)
-	struct ms_port *ms;
+ms_disable(struct ms_port *ms)
 {
 	int s;
 
@@ -195,12 +191,11 @@ ms_disable(ms)
 }
 
 
-/* 
+/*
  * we're emulating a mousesystems serial mouse here..
  */
 void
-msintr(arg)
-	void *arg;
+msintr(void *arg)
 {
 	static const char to_one[] = { 1, 2, 2, 4, 4, 4, 4 };
 	static const int to_id[] = { MS_RIGHT, MS_MIDDLE, 0, MS_LEFT };
@@ -210,7 +205,7 @@ msintr(arg)
 	u_char pra, *horc, *verc;
 	u_short pot, count;
 	short dx, dy;
-	
+
 	port = ms->ms_portno;
 
 	horc = ((u_char *) &count) + 1;
@@ -233,7 +228,7 @@ msintr(arg)
 		count = custom.joy0dat;
 	else
 		count = custom.joy1dat;
-  
+
 	/*
 	 * take care of wraparound
 	 */
@@ -257,13 +252,13 @@ msintr(arg)
 	ms->ms_dx = dx;
 	ms->ms_dy = dy;
 	ms->ms_mb = mb;
-  
+
 	if (dx || dy || ms->ms_ub != ms->ms_mb) {
 		/*
 		 * We have at least one event (mouse button, delta-X, or
 		 * delta-Y; possibly all three, and possibly three separate
 		 * button events).  Deliver these events until we are out of
-		 * changes or out of room.  As events get delivered, mark them 
+		 * changes or out of room.  As events get delivered, mark them
 		 * `unchanged'.
 		 */
 		any = 0;
@@ -355,10 +350,7 @@ out:
 }
 
 int
-msopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+msopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct ms_softc *sc;
 	struct ms_port *ms;
@@ -386,10 +378,7 @@ msopen(dev, flags, mode, p)
 }
 
 int
-msclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+msclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct ms_port *ms;
 
@@ -402,10 +391,7 @@ msclose(dev, flags, mode, p)
 }
 
 int
-msread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_port *ms;
 
@@ -415,12 +401,8 @@ msread(dev, uio, flags)
 }
 
 int
-msioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	register caddr_t data;
-	int flag;
-	struct proc *p;
+msioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
+        struct proc *p)
 {
 	struct ms_port *ms;
 
@@ -448,10 +430,7 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-mspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+mspoll(dev_t dev, int events, struct proc *p)
 {
 	struct ms_port *ms;
 

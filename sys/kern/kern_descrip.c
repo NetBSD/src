@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.6 2002/01/08 00:32:30 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.7 2002/02/28 04:14:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.6 2002/01/08 00:32:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.7 2002/02/28 04:14:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,8 +321,8 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			goto out;
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCGPGRP, (caddr_t)retval, p);
-		*retval = -*retval;
+			(fp, TIOCGPGRP, (caddr_t)&tmp, p);
+		*retval = -tmp;
 		break;
 
 	case F_SETOWN:

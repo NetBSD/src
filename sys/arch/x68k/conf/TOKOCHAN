@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.19.8.2 2002/01/08 00:28:36 nathanw Exp $
+#	$NetBSD: TOKOCHAN,v 1.19.8.3 2002/02/28 04:12:37 nathanw Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.19.8.2 $"
+#ident 		"TOKOCHAN-$Revision: 1.19.8.3 $"
 
 maxusers	10
 
@@ -68,6 +68,8 @@ options 	SHMMAXPGS=2048	# 1024 pages is the default
 
 ## Loadable kernel module support
 #options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM

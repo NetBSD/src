@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.73.6.2 2002/01/08 00:27:33 nathanw Exp $
+# 	$NetBSD: Makefile.sparc,v 1.73.6.3 2002/02/28 04:12:01 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -66,11 +66,6 @@ LINKFORMAT=	-N -p
 ##
 ## (6) port specific target dependencies
 ##
-
-# depend on CPU configuration
-bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
-ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o: Makefile
-mem.o openprom.o pmap.o vm_machdep.o: Makefile
 
 ##
 ## (7) misc settings

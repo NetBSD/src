@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.39.2.7 2002/01/08 00:29:52 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.39.2.8 2002/02/28 04:13:25 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.39.2.7 2002/01/08 00:29:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.39.2.8 2002/02/28 04:13:25 nathanw Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -138,6 +138,19 @@ isp_attach(struct ispsoftc *isp)
 		 * until much much later (after proc0 is created).
 		 */
 		kthread_create(isp_create_fc_worker, isp);
+#ifdef	ISP_FW_CRASH_DUMP
+		if (IS_2200(isp)) {
+			FCPARAM(isp)->isp_dump_data =
+			    malloc(QLA2200_RISC_IMAGE_DUMP_SIZE, M_DEVBUF,
+				M_NOWAIT);
+		} else if (IS_23XX(isp)) {
+			FCPARAM(isp)->isp_dump_data =
+			    malloc(QLA2300_RISC_IMAGE_DUMP_SIZE, M_DEVBUF,
+				M_NOWAIT);
+		}
+		if (FCPARAM(isp)->isp_dump_data)
+			FCPARAM(isp)->isp_dump_data[0] = 0;
+#endif
 	} else {
 		int bus = 0;
 		sdparam *sdp = isp->isp_param;
@@ -222,13 +235,77 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 	int retval = ENOTTY;
 	
 	switch (cmd) {
-	case SCBUSIORESET:
-		ISP_LOCK(isp);
-		if (isp_control(isp, ISPCTL_RESET_BUS, &chan->chan_channel))
-			retval = EIO;
+#ifdef	ISP_FW_CRASH_DUMP
+	case ISP_GET_FW_CRASH_DUMP:
+	{
+		u_int16_t *ptr = FCPARAM(isp)->isp_dump_data;
+		size_t sz;
+
+		retval = 0;
+		if (IS_2200(isp))
+			sz = QLA2200_RISC_IMAGE_DUMP_SIZE;
 		else
-			retval = 0;
+			sz = QLA2300_RISC_IMAGE_DUMP_SIZE;
+		ISP_LOCK(isp);
+		if (ptr && *ptr) {
+			void *uaddr = *((void **) addr);
+			if (copyout(ptr, uaddr, sz)) {
+				retval = EFAULT;
+			} else {
+				*ptr = 0;
+			}
+		} else {
+			retval = ENXIO;
+		}
 		ISP_UNLOCK(isp);
+		break;
+	}
+
+	case ISP_FORCE_CRASH_DUMP:
+		ISP_LOCK(isp);
+		if (isp->isp_osinfo.blocked == 0) {
+                        isp->isp_osinfo.blocked = 1;
+                        scsipi_channel_freeze(&isp->isp_chanA, 1);
+                }
+		isp_fw_dump(isp);
+		isp_reinit(isp);
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+#endif
+	case ISP_GET_STATS:
+	{
+		isp_stats_t *sp = (isp_stats_t *) addr;
+
+		MEMZERO(sp, sizeof (*sp));
+		sp->isp_stat_version = ISP_STATS_VERSION;
+		sp->isp_type = isp->isp_type;
+		sp->isp_revision = isp->isp_revision;
+		ISP_LOCK(isp);
+		sp->isp_stats[ISP_INTCNT] = isp->isp_intcnt;
+		sp->isp_stats[ISP_INTBOGUS] = isp->isp_intbogus;
+		sp->isp_stats[ISP_INTMBOXC] = isp->isp_intmboxc;
+		sp->isp_stats[ISP_INGOASYNC] = isp->isp_intoasync;
+		sp->isp_stats[ISP_RSLTCCMPLT] = isp->isp_rsltccmplt;
+		sp->isp_stats[ISP_FPHCCMCPLT] = isp->isp_fphccmplt;
+		sp->isp_stats[ISP_RSCCHIWAT] = isp->isp_rscchiwater;
+		sp->isp_stats[ISP_FPCCHIWAT] = isp->isp_fpcchiwater;
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+	}
+	case ISP_CLR_STATS:
+		ISP_LOCK(isp);
+		isp->isp_intcnt = 0;
+		isp->isp_intbogus = 0;
+		isp->isp_intmboxc = 0;
+		isp->isp_intoasync = 0;
+		isp->isp_rsltccmplt = 0;
+		isp->isp_fphccmplt = 0;
+		isp->isp_rscchiwater = 0;
+		isp->isp_fpcchiwater = 0;
+		ISP_UNLOCK(isp);
+		retval = 0;
 		break;
 	case ISP_SDBLEV:
 	{
@@ -244,7 +321,7 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		ISP_UNLOCK(isp);
 		retval = 0;
 		break;
-	case ISP_FC_RESCAN:
+	case ISP_RESCAN:
 		if (IS_FC(isp)) {
 			ISP_LOCK(isp);
 			if (isp_fc_runstate(isp, 5 * 1000000)) {
@@ -289,6 +366,14 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		ISP_UNLOCK(isp);
 		break;
 	}
+	case SCBUSIORESET:
+		ISP_LOCK(isp);
+		if (isp_control(isp, ISPCTL_RESET_BUS, &chan->chan_channel))
+			retval = EIO;
+		else
+			retval = 0;
+		ISP_UNLOCK(isp);
+		break;
 	default:
 		break;
 	}

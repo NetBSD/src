@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.16 1999/08/16 19:55:27 is Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.16.20.1 2002/02/28 04:06:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,10 +44,10 @@
 
 struct ite_softc;
 
-/* 
+/*
  * this struct is owned by the driver (grfcc, grfrt)
- * and is passed to grf when grf is configed. The ite also 
- * uses it... 
+ * and is passed to grf when grf is configed. The ite also
+ * uses it...
  */
 struct	grf_softc {
 	struct device  g_device;	/* config sets this up. */
@@ -59,15 +59,14 @@ struct	grf_softc {
 	dev_t	g_itedev;		/* ite device number */
 	dev_t	g_grfdev;		/* grf device number */
 	caddr_t g_data;			/* device dependent data */
-	int  (*g_mode)		__P((struct grf_softc *, u_long, void *,
-								u_long, int));
+	int  (*g_mode)(struct grf_softc *, u_long, void *, u_long, int);
 	int    g_conpri;		/* priority of ite as console */
-	void (*g_iteinit)	__P((struct ite_softc *));
-	void (*g_itedeinit)	__P((struct ite_softc *));
-	void (*g_iteclear)	__P((struct ite_softc *,int,int,int,int));
-	void (*g_iteputc)	__P((struct ite_softc *,int,int,int,int));
-	void (*g_itecursor)	__P((struct ite_softc *,int));
-	void (*g_itescroll)	__P((struct ite_softc *,int,int,int,int));
+	void (*g_iteinit)(struct ite_softc *);
+	void (*g_itedeinit)(struct ite_softc *);
+	void (*g_iteclear)(struct ite_softc *, int, int, int, int);
+	void (*g_iteputc)(struct ite_softc *, int, int, int, int);
+	void (*g_itecursor)(struct ite_softc *, int);
+	void (*g_itescroll)(struct ite_softc *, int, int, int, int);
 	int	g_blank;		/* shadow copy of blank value */
 };
 

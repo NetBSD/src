@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26.8.2 2002/01/08 00:27:33 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.26.8.3 2002/02/28 04:12:01 nathanw Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -70,6 +70,8 @@ config		netbsd	root on ? type ?
 
 ## Loadable kernel module support; still under development.
 #options 	LKM
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM
@@ -451,7 +453,7 @@ en0	at sbus? slot ? offset ?
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs

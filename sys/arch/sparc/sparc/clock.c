@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.81.4.2 2002/01/08 00:27:42 nathanw Exp $ */
+/*	$NetBSD: clock.c,v 1.81.4.3 2002/02/28 04:12:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -372,7 +372,7 @@ oclockattach(parent, self, aux)
 #endif /* SUN4 */
 }
 
-/* We support only on eeprom device */
+/* We support only one eeprom device */
 static int eeprom_attached;
 
 /*
@@ -391,7 +391,7 @@ eeprom_match(parent, cf, aux)
 		return (0);
 
 	if (eeprom_attached)
-		/* We support only on eeprom device */
+		/* We support only one eeprom device */
 		return (0);
 
 	/* Only these sun4s have oclock */
@@ -584,7 +584,8 @@ clockattach(node, bt, bh)
 		panic("clockattach: node == 0");
 
 	/* Our TOD clock year 0 represents 1968 */
-	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
+	todr_handle = mk48txx_attach(bt, bh, model, 1968, NULL, NULL);
+	if (todr_handle == NULL)
 		panic("Cannot attach %s tod clock", model);
 
 	/*

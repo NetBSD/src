@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.29.4.2 2002/01/11 23:38:11 nathanw Exp $	*/
+/*	$NetBSD: bus.c,v 1.29.4.3 2002/02/28 04:08:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

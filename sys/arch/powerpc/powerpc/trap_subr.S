@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.11.6.2 2002/01/11 23:38:43 nathanw Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11.6.3 2002/02/28 04:11:27 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -193,7 +193,7 @@ _C_LABEL(extint):
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
 	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l
+	addi	1,1,intstk+INTSTK@l	/* this is really intr_depth! */
 	lwz	31,0(1)			/* were we already running on intstk? */
 	addic.	31,31,1
 	stw	31,0(1)

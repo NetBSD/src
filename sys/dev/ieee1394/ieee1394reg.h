@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.5.2.2 2001/08/24 00:09:42 nathanw Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.5.2.3 2002/02/28 04:13:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -223,5 +223,18 @@ struct ieee1394_async_nodata {
 #define	CSR_SB_FCP_RESPONSE_FRAME	0x0d00
 #define	CSR_SB_TOPOLOGY_MAP		0x1000
 #define	CSR_SB_END			0x1400
+
+#define IEEE1394_MAX_REC(i)     ((0x1 << (i + 1)))
+#define IEEE1394_BUSINFO_LEN	3
+
+#define IEEE1394_GET_MAX_REC(i) ((i & 0x0000f000) >> 12)
+#define IEEE1394_GET_LINK_SPD(i) (i & 0x00000007)
+
+/* XXX. Should be at if_fw level but needed here for constructing the config
+   rom. An interface for if_fw to send up a config rom should be done (probably
+   in the p1212 routines. */
+
+#define FW_FIFO_HI      0x2000
+#define FW_FIFO_LO      0x00000000
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */

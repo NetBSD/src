@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.6 2002/02/23 22:49:08 gmcgarry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.7 2002/02/28 04:10:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -266,15 +266,21 @@ void i386_bus_space_mallocok __P((void));
 #define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
 #define	CPU_NKPDE		4	/* int: number of kernel PDEs */
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
-#define CPU_DISKINFO		6	/* disk geometry information */
-#define CPU_FPU_PRESENT		7	/* FPU is present */
-#define	CPU_OSFXSR		8	/* OS uses FXSAVE/FXRSTOR */
-#define	CPU_SSE			9	/* OS/CPU supports SSE */
-#define	CPU_SSE2		10	/* OS/CPU supports SSE2 */
-#define CPU_TMLR_MODE		11
-#define CPU_TMLR_FREQUENCY	12
-#define CPU_TMLR_VOLTAGE	13
-#define CPU_TMLR_PERCENTAGE	14
+#define CPU_DISKINFO		6	/* struct disklist *:
+					 * disk geometry information */
+#define CPU_FPU_PRESENT		7	/* int: FPU is present */
+#define	CPU_OSFXSR		8	/* int: OS uses FXSAVE/FXRSTOR */
+#define	CPU_SSE			9	/* int: OS/CPU supports SSE */
+#define	CPU_SSE2		10	/* int: OS/CPU supports SSE2 */
+#define CPU_TMLR_MODE		11 	/* int: longrun mode
+					 * 0: minimum frequency
+					 * 1: economy
+					 * 2: performance
+					 * 3: maximum frequency
+					 */
+#define CPU_TMLR_FREQUENCY	12 	/* int: current frequency */
+#define CPU_TMLR_VOLTAGE	13 	/* int: curret voltage */
+#define CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
 #define	CPU_MAXID		15	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \

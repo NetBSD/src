@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.3.4.2 2002/01/11 23:38:46 nathanw Exp $ */
+/*	$NetBSD: openprom.c,v 1.3.4.3 2002/02/28 04:12:18 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

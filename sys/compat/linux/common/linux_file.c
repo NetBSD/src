@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.6 2001/11/14 19:13:10 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.7 2002/02/28 04:12:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.6 2001/11/14 19:13:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.7 2002/02/28 04:12:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,7 @@ bsd_to_linux_stat(bsp, lsp)
 	struct linux_stat *lsp;
 {
 
-	lsp->lst_dev     = bsp->st_dev;
+	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
 	lsp->lst_ino     = bsp->st_ino;
 	lsp->lst_mode    = (linux_mode_t)bsp->st_mode;
 	if (bsp->st_nlink >= (1 << 15))
@@ -484,7 +484,7 @@ bsd_to_linux_stat(bsp, lsp)
 		lsp->lst_nlink = (linux_nlink_t)bsp->st_nlink;
 	lsp->lst_uid     = bsp->st_uid;
 	lsp->lst_gid     = bsp->st_gid;
-	lsp->lst_rdev    = linux_fakedev(bsp->st_rdev);
+	lsp->lst_rdev    = linux_fakedev(bsp->st_rdev, 1);
 	lsp->lst_size    = bsp->st_size;
 	lsp->lst_blksize = bsp->st_blksize;
 	lsp->lst_blocks  = bsp->st_blocks;
@@ -707,7 +707,7 @@ linux_sys_chmod(l, v, retval)
 	return sys_chmod(l, uap, retval);
 }
 
-#if defined(__i386__) || defined(__m68k__)
+#if defined(__i386__) || defined(__m68k__) || defined(__arm__)
 int
 linux_sys_chown16(l, v, retval)
 	struct lwp *l;
@@ -781,9 +781,9 @@ linux_sys_lchown16(l, v, retval)
 
 	return sys___posix_lchown(l, &bla, retval);
 }
-#endif /* __i386__ || __m68k__ */
+#endif /* __i386__ || __m68k__ || __arm__ */
 #if defined (__i386__) || defined (__m68k__) || \
-    defined (__powerpc__) || defined (__mips__)
+    defined (__powerpc__) || defined (__mips__) || defined(__arm__)
 int
 linux_sys_chown(l, v, retval)
 	struct lwp *l;
@@ -821,7 +821,7 @@ linux_sys_lchown(l, v, retval)
 
 	return sys___posix_lchown(l, uap, retval);
 }
-#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ */
+#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ || __arm__ */
 
 int
 linux_sys_rename(l, v, retval)

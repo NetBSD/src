@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.4.8.1 2002/01/08 00:22:58 nathanw Exp $
+#	$NetBSD: MDINSTALL,v 1.4.8.2 2002/02/28 04:06:29 nathanw Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -51,11 +51,10 @@ file-system 	KERNFS		# kernel data-structure filesystem
 #
 options 	KTRACE		# system call tracing support
 options 	UCONSOLE	# anyone can redirect a virtual console
-#options 	INSECURE	# allow, among other insecure stuff, LKM
-				# loading in multi-user mode.
-options 	SCSIVERBOSE	# Verbose SCSI errors
-
+#options 	INSECURE	# disable kernel security levels
+options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #
 # Misc. debugging options

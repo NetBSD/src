@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.12.2.4 2002/01/11 23:38:59 nathanw Exp $ */
+/* $NetBSD: isp_inline.h,v 1.12.2.5 2002/02/28 04:13:25 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -407,7 +407,7 @@ isp_copy_in_hdr(struct ispsoftc *isp, isphdr_t *hpsrc, isphdr_t *hpdst)
 static INLINE int
 isp_get_response_type(struct ispsoftc *isp, isphdr_t *hp)
 {
-	uint8_t type;
+	u_int8_t type;
 	if (ISP_IS_SBUS(isp)) {
 		ISP_IOXGET_8(isp, &hp->rqs_entry_count, type);
 	} else {
@@ -884,8 +884,11 @@ isp_put_atio2(struct ispsoftc *isp, at2_entry_t *atsrc, at2_entry_t *atdst)
 	}
 	ISP_IOXPUT_32(isp, atsrc->at_datalen, &atdst->at_datalen);
 	ISP_IOXPUT_16(isp, atsrc->at_scclun, &atdst->at_scclun);
-	for (i = 0; i < 10; i++) {
-		ISP_IOXPUT_8(isp, atsrc->at_reserved2[i],
+	for (i = 0; i < 4; i++) {
+		ISP_IOXPUT_16(isp, atsrc->at_wwpn[i], &atdst->at_wwpn[i]);
+	}
+	for (i = 0; i < 6; i++) {
+		ISP_IOXPUT_16(isp, atsrc->at_reserved2[i],
 		    &atdst->at_reserved2[i]);
 	}
 	ISP_IOXPUT_16(isp, atsrc->at_oxid, &atdst->at_oxid);
@@ -911,8 +914,11 @@ isp_get_atio2(struct ispsoftc *isp, at2_entry_t *atsrc, at2_entry_t *atdst)
 	}
 	ISP_IOXGET_32(isp, &atsrc->at_datalen, atdst->at_datalen);
 	ISP_IOXGET_16(isp, &atsrc->at_scclun, atdst->at_scclun);
-	for (i = 0; i < 10; i++) {
-		ISP_IOXGET_8(isp, &atsrc->at_reserved2[i],
+	for (i = 0; i < 4; i++) {
+		ISP_IOXGET_16(isp, &atsrc->at_wwpn[i], atdst->at_wwpn[i]);
+	}
+	for (i = 0; i < 6; i++) {
+		ISP_IOXGET_16(isp, &atsrc->at_reserved2[i],
 		    atdst->at_reserved2[i]);
 	}
 	ISP_IOXGET_16(isp, &atsrc->at_oxid, atdst->at_oxid);
@@ -1014,6 +1020,7 @@ isp_put_ctio2(struct ispsoftc *isp, ct2_entry_t *ctsrc, ct2_entry_t *ctdst)
 	ISP_IOXPUT_16(isp, ctsrc->ct_timeout, &ctdst->ct_timeout);
 	ISP_IOXPUT_16(isp, ctsrc->ct_seg_count, &ctdst->ct_seg_count);
 	ISP_IOXPUT_32(isp, ctsrc->ct_resid, &ctdst->ct_resid);
+	ISP_IOXPUT_32(isp, ctsrc->ct_reloff, &ctdst->ct_reloff);
 	if ((ctsrc->ct_flags & CT2_FLAG_MMASK) == CT2_FLAG_MODE0) {
 		ISP_IOXPUT_32(isp, ctsrc->rsp.m0._reserved,
 		    &ctdst->rsp.m0._reserved);

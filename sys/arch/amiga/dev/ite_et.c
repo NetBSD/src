@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.4 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.4.26.1 2002/02/28 04:06:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -30,10 +30,14 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.4.26.1 2002/02/28 04:06:50 nathanw Exp $");
+
 #include "grfet.h"
 #if NGRFET > 0
 
@@ -58,13 +62,12 @@ int et_console = 1;
 int et_console = 0;
 #endif
 
-void et_init __P((struct ite_softc *ip));
-void et_cursor __P((struct ite_softc *ip, int flag));
-void et_deinit __P((struct ite_softc *ip));
-void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
-void et_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
-void et_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
-    int dir));
+void et_init(struct ite_softc *ip);
+void et_cursor(struct ite_softc *ip, int flag);
+void et_deinit(struct ite_softc *ip);
+void et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
+void et_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
+void et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir);
 static void etbcopy(const void *src, void *dst, size_t len);
 
 
@@ -90,8 +93,7 @@ grfet_cnprobe(void)
 
 
 void
-grfet_iteinit(gp)
-	struct grf_softc *gp;
+grfet_iteinit(struct grf_softc *gp)
 {
 	gp->g_iteinit = et_init;
 	gp->g_itedeinit = et_deinit;
@@ -103,8 +105,7 @@ grfet_iteinit(gp)
 
 
 void
-et_init(ip)
-	struct ite_softc *ip;
+et_init(struct ite_softc *ip)
 {
 	struct grfettext_mode *md;
 
@@ -117,9 +118,7 @@ et_init(ip)
 
 
 void
-et_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+et_cursor(struct ite_softc *ip, int flag)
 {
 	volatile u_char *ba = ip->grf->g_regkva;
 
@@ -146,20 +145,14 @@ et_cursor(ip, flag)
 
 
 void
-et_deinit(ip)
-	struct ite_softc *ip;
+et_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 
 void
-et_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	volatile unsigned char *ba = ip->grf->g_regkva;
 	unsigned char *fb = ip->grf->g_fbkva;
@@ -180,12 +173,7 @@ et_putc(ip, c, dy, dx, mode)
 
 
 void
-et_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+et_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	/* cl_clear and cl_scroll both rely on ite passing arguments
 	 * which describe continuous regions.  For a VT200 terminal,
@@ -196,7 +184,7 @@ et_clear(ip, sy, sx, h, w)
 	int len;
 
 	dst = ip->grf->g_fbkva + (sy * ip->cols) + sx;
-	src = dst + (ip->rows*ip->cols); 
+	src = dst + (ip->rows*ip->cols);
 	len = w*h;
 
 	SetTextPlane(ba, 0x00);
@@ -207,12 +195,7 @@ et_clear(ip, sy, sx, h, w)
 
 
 void
-et_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int count;
-	int dir;
+et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	unsigned char *fb;
 	volatile unsigned char *ba = ip->grf->g_regkva;
@@ -222,7 +205,7 @@ et_scroll(ip, sy, sx, count, dir)
 
 	switch (dir) {
 	    case SCROLL_UP:
-		etbcopy(fb, fb - (count * ip->cols), 
+		etbcopy(fb, fb - (count * ip->cols),
 		    (ip->bottom_margin + 1 - sy) * ip->cols);
 		break;
 	    case SCROLL_DOWN:
@@ -241,7 +224,7 @@ et_scroll(ip, sy, sx, count, dir)
 
 	switch (dir) {
 	    case SCROLL_UP:
-		etbcopy(fb, fb - (count * ip->cols), 
+		etbcopy(fb, fb - (count * ip->cols),
 		    (ip->bottom_margin + 1 - sy) * ip->cols);
 		break;
 	    case SCROLL_DOWN:
@@ -258,10 +241,7 @@ et_scroll(ip, sy, sx, count, dir)
 }
 
 
-static void etbcopy(src, dst, len)
-	const void *src;
-	void *dst;
-	size_t len;
+static void etbcopy(const void *src, void *dst, size_t len)
 {
 	int i;
 
@@ -275,7 +255,7 @@ static void etbcopy(src, dst, len)
 	else {
 		((char *)src) += len;
 		((char *)dst) += len;
-		
+
 		for (i=len; i>0; i--){
 			*--((char *)dst) = *--((char *)src);
 		}

@@ -1,3 +1,5 @@
+/*	$NetBSD: wskbdmap_amiga.c,v 1.1.10.1 2002/02/28 04:07:03 nathanw Exp $ */
+
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,16 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Amiga keyboard map for wscons.
  *
  * Modified from wskbdmap_mfii.c
  * The parts which have not been converted to use Amiga keycodes have
  * been commented out.
  *
- * US/DE keymaps are the ones that are supposed to work at least 
+ * US/DE keymaps are the ones that are supposed to work at least
  * partially.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.1.10.1 2002/02/28 04:07:03 nathanw Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -97,7 +102,7 @@ static const keysym_t amikbd_keydesc_us[] = {
     KC(0), 			KS_grave,	KS_asciitilde,
     KC(96), 			KS_Shift_L,
     KC(13), 			KS_backslash,	KS_bar,
-    KC(48),                     KS_less,        KS_greater, 
+    KC(48),                     KS_less,        KS_greater,
     KC(49), 			KS_z,
     KC(50), 			KS_x,
     KC(51), 			KS_c,
@@ -132,15 +137,15 @@ static const keysym_t amikbd_keydesc_us[] = {
     KC(63), 			KS_KP_9,        KS_KP_Prior,
     KC(74), 			KS_KP_Subtract,
     KC(45), 			KS_KP_4,        KS_KP_Left,
-    KC(46), 			KS_KP_5,        KS_KP_Begin,	
-    KC(47), 			KS_KP_6,        KS_KP_Right,	
+    KC(46), 			KS_KP_5,        KS_KP_Begin,
+    KC(47), 			KS_KP_6,        KS_KP_Right,
     KC(94), 			KS_KP_Add,
-    KC(29), 			KS_KP_1,        KS_KP_End,	
-    KC(30), 			KS_KP_2,        KS_KP_Down,	
-    KC(31), 			KS_KP_3,        KS_KP_Next,	
-    KC(15), 			KS_KP_0,        KS_KP_Insert,	
-    KC(60), 			KS_KP_Decimal,  KS_KP_Delete,	
-    KC(67), 			KS_KP_Enter,	
+    KC(29), 			KS_KP_1,        KS_KP_End,
+    KC(30), 			KS_KP_2,        KS_KP_Down,
+    KC(31), 			KS_KP_3,        KS_KP_Next,
+    KC(15), 			KS_KP_0,        KS_KP_Insert,
+    KC(60), 			KS_KP_Decimal,  KS_KP_Delete,
+    KC(67), 			KS_KP_Enter,
     KC(90), 			KS_bracketleft,	KS_braceleft,
     KC(91), 			KS_bracketright,KS_braceright,
     KC(92), 			KS_KP_Divide,
@@ -182,126 +187,116 @@ static const keysym_t amikbd_keydesc_de[] = {
     KC(12),  KS_dead_acute,	KS_dead_grave,
     KC(16),  KS_q,		KS_Q,		KS_at,
     KC(21),  KS_z,
-/*
     KC(26),  KS_udiaeresis,
     KC(27),  KS_plus,		KS_asterisk,	KS_dead_tilde,
-    KC(39),  KS_odiaeresis,
-    KC(40),  KS_adiaeresis,
-    KC(41),  KS_dead_circumflex,KS_dead_abovering,
+    KC(41),  KS_odiaeresis,
+    KC(42),  KS_adiaeresis,
+    KC(13),  KS_dead_circumflex,KS_dead_abovering,
     KC(43),  KS_numbersign,	KS_apostrophe,
-*/
     KC(49),  KS_y,
     KC(55),  KS_m,		KS_M,		KS_mu,
     KC(56),  KS_comma,		KS_semicolon,
     KC(57),  KS_period,		KS_colon,
     KC(58),  KS_minus,		KS_underscore,
-/*
-    KC(86),  KS_less,		KS_greater,	KS_bar,		KS_brokenbar,
-    KC(184), KS_Mode_switch,	KS_Multi_key,
-*/
+    KC(48),  KS_less,		KS_greater,	KS_bar,		KS_brokenbar,
+    KC(101), KS_Mode_switch,	KS_Multi_key,
 };
 
-static const keysym_t pckbd_keydesc_de_nodead[] = {
+static const keysym_t amikbd_keydesc_de_nodead[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
-    KC(13),  KS_apostrophe,	KS_grave,
+    KC(12),  KS_apostrophe,	KS_grave,
     KC(27),  KS_plus,		KS_asterisk,	KS_asciitilde,
-    KC(41),  KS_asciicircum,	KS_degree,
-};
-
-static const keysym_t pckbd_keydesc_dk[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(3),   KS_2,		KS_quotedbl,	KS_at,
-    KC(4),   KS_3,		KS_numbersign,	KS_sterling,
-    KC(5),   KS_4,		KS_currency,	KS_dollar,
-    KC(7),   KS_6,		KS_ampersand,
-    KC(8),   KS_7,		KS_slash,	KS_braceleft,
-    KC(9),   KS_8,		KS_parenleft,	KS_bracketleft,
-    KC(10),  KS_9,		KS_parenright,	KS_bracketright,
-    KC(11),  KS_0,		KS_equal,	KS_braceright,
-    KC(12),  KS_plus,		KS_question,
-    KC(13),  KS_dead_acute,	KS_dead_grave,	KS_bar,
-    KC(26),  KS_aring,
-    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
-    KC(39),  KS_ae,
-    KC(40),  KS_oslash,
-    KC(41),  KS_onehalf,	KS_paragraph,
-    KC(43),  KS_apostrophe,	KS_asterisk,
-    KC(51),  KS_comma,		KS_semicolon,
-    KC(52),  KS_period,		KS_colon,
-    KC(53),  KS_minus,		KS_underscore,
-    KC(86),  KS_less,		KS_greater,	KS_backslash,
-    KC(184), KS_Mode_switch,	KS_Multi_key,
-};
-
-static const keysym_t pckbd_keydesc_dk_nodead[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(13),  KS_apostrophe,	KS_grave,	KS_bar,
-    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
-};
-
-static const keysym_t pckbd_keydesc_sv[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(12),  KS_plus,		KS_question,	KS_backslash,
-    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
-    KC(39),  KS_odiaeresis,
-    KC(40),  KS_adiaeresis,
-    KC(41),  KS_paragraph,	KS_onehalf,
-    KC(86),  KS_less,		KS_greater,	KS_bar,
-    KC(184), KS_Mode_switch,	KS_Multi_key,
-};
-
-static const keysym_t pckbd_keydesc_sv_nodead[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(13),  KS_apostrophe,	KS_grave,	KS_bar,
-    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
-};
-
-static const keysym_t pckbd_keydesc_no[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(13),  KS_backslash,	KS_dead_grave,	KS_dead_acute,
-    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
-    KC(39),  KS_oslash,
-    KC(40),  KS_ae,
-    KC(41),  KS_bar,		KS_paragraph,
-    KC(86),  KS_less,		KS_greater,
-};
-
-static const keysym_t pckbd_keydesc_no_nodead[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(13),  KS_backslash,	KS_grave,	KS_acute,
-    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+    KC(0),   KS_asciicircum,	KS_degree,
 };
 
 static const keysym_t pckbd_keydesc_fr[] = {
-/*  pos	     normal		shifted		altgr		shift-altgr */
-    KC(2),   KS_ampersand,	KS_1,
-    KC(3),   KS_eacute,		KS_2,		KS_asciitilde,
-    KC(4),   KS_quotedbl,	KS_3,		KS_numbersign,
-    KC(5),   KS_apostrophe,	KS_4,		KS_braceleft,
-    KC(6),   KS_parenleft,	KS_5,		KS_bracketleft,
-    KC(7),   KS_minus,		KS_6,		KS_bar,
-    KC(8),   KS_egrave,		KS_7,		KS_grave,
-    KC(9),   KS_underscore,	KS_8,		KS_backslash,
-    KC(10),  KS_ccedilla,	KS_9,		KS_asciicircum,
-    KC(11),  KS_agrave,		KS_0,		KS_at,
-    KC(12),  KS_parenright,	KS_degree,	KS_bracketright,
-    KC(13),  KS_equal,		KS_plus,	KS_braceright,
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(1),   KS_ampersand,	KS_1,
+    KC(2),   KS_eacute,		KS_2,		KS_2,		KS_at,
+    KC(3),   KS_quotedbl,	KS_3,		KS_3,		KS_numbersign,
+    KC(4),   KS_apostrophe,	KS_4,
+    KC(5),   KS_parenleft,	KS_5,
+    KC(6),   KS_section,	KS_6,
+    KC(7),   KS_egrave,		KS_7,
+    KC(8),   KS_exclam,		KS_8,
+    KC(9),   KS_ccedilla,	KS_9,
+    KC(10),  KS_agrave,		KS_0,
+    KC(11),  KS_parenright,	KS_degree,
+    KC(12),  KS_minus,		KS_underscore,
     KC(16),  KS_a,
     KC(17),  KS_z,
-    KC(26),  KS_dead_circumflex, KS_dead_diaeresis, 
-    KC(27),  KS_dollar,		KS_sterling,	KS_currency,
-    KC(30),  KS_q,
-    KC(39),  KS_m,
-    KC(40),  KS_ugrave,		KS_percent,
-    KC(41),  KS_twosuperior,
-    KC(43),  KS_asterisk,	KS_mu,
-    KC(44),  KS_w,
-    KC(50),  KS_comma,		KS_question,
-    KC(51),  KS_semicolon,	KS_period,
-    KC(52),  KS_colon,		KS_slash,
-    KC(53),  KS_exclam,		KS_section,
-    KC(86),  KS_less,		KS_greater,
-    KC(184), KS_Mode_switch,	KS_Multi_key,
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis,
+    KC(27),  KS_dollar,		KS_asterisk,
+    KC(32),  KS_q,
+    KC(41),  KS_m,
+    KC(42),  KS_ugrave,		KS_percent,
+    KC(43),  KS_mu,		KS_sterling,
+    KC(49),  KS_w,
+    KC(55),  KS_comma,		KS_question,
+    KC(56),  KS_semicolon,	KS_period,
+    KC(57),  KS_colon,		KS_slash,
+    KC(58),  KS_equal,		KS_plus,
+};
+
+static const keysym_t amikbd_keydesc_dk[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_2,		KS_quotedbl,	KS_at,
+    KC(3),   KS_3,		KS_numbersign,	KS_sterling,
+    KC(4),   KS_4,		KS_currency,	KS_dollar,
+    KC(6),   KS_6,		KS_ampersand,
+    KC(7),   KS_7,		KS_slash,	KS_braceleft,
+    KC(8),   KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(9),   KS_9,		KS_parenright,	KS_bracketright,
+    KC(10),  KS_0,		KS_equal,	KS_braceright,
+    KC(11),  KS_plus,		KS_question,
+    KC(12),  KS_dead_acute,	KS_dead_grave,	KS_bar,
+    KC(26),  KS_aring,
+    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(41),  KS_ae,
+    KC(42),  KS_oslash,
+    KC(43),  KS_apostrophe,	KS_asterisk,
+    KC(56),  KS_comma,		KS_semicolon,
+    KC(57),  KS_period,		KS_colon,
+    KC(58),  KS_minus,		KS_underscore,
+    KC(48),  KS_less,		KS_greater,	KS_backslash,
+    KC(101), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t amikbd_keydesc_dk_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(12),  KS_apostrophe,	KS_grave,	KS_bar,
+    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
+static const keysym_t amikbd_keydesc_sv[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(11),  KS_plus,		KS_question,	KS_backslash,
+    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(41),  KS_odiaeresis,
+    KC(42),  KS_adiaeresis,
+    KC(48),  KS_less,		KS_greater,	KS_bar,
+    KC(101), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t amikbd_keydesc_sv_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(12),  KS_apostrophe,	KS_grave,	KS_bar,
+    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
+static const keysym_t amikbd_keydesc_no[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(12),  KS_backslash,	KS_dead_grave,	KS_dead_acute,
+    KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(41),  KS_oslash,
+    KC(42),  KS_ae,
+    KC(48),  KS_less,		KS_greater,
+};
+
+static const keysym_t amikbd_keydesc_no_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(12),  KS_backslash,	KS_grave,	KS_acute,
+    KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
 static const keysym_t pckbd_keydesc_it[] = {
@@ -481,48 +476,28 @@ static const keysym_t pckbd_keydesc_swapctrlcaps[] = {
     KC(58),  KS_Cmd1,		KS_Control_L,
 };
 
-static const keysym_t pckbd_keydesc_iopener[] = {
-/*  pos      command		normal		shifted */
-    KC(59),  KS_Cmd_Debugger,	KS_Escape,
-    KC(60),  KS_Cmd_Screen0,	KS_f1,
-    KC(61),  KS_Cmd_Screen1,	KS_f2,
-    KC(62),  KS_Cmd_Screen2,	KS_f3,
-    KC(63),  KS_Cmd_Screen3,	KS_f4,
-    KC(64),  KS_Cmd_Screen4,	KS_f5,
-    KC(65),  KS_Cmd_Screen5,	KS_f6,
-    KC(66),  KS_Cmd_Screen6,	KS_f7,
-    KC(67),  KS_Cmd_Screen7,	KS_f8,
-    KC(68),  KS_Cmd_Screen8,	KS_f9,
-    KC(87),  KS_Cmd_Screen9,	KS_f10,
-    KC(88), 			KS_f11,
-};
-
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
 const struct wscons_keydesc amigakbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	amikbd_keydesc_us),
 	KBD_MAP(KB_DE,			KB_US,	amikbd_keydesc_de),
-/*	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	amikbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,                  KB_US,  pckbd_keydesc_fr),
-	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
-	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
-	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
+	KBD_MAP(KB_DK,			KB_US,	amikbd_keydesc_dk),
+	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	amikbd_keydesc_dk_nodead),
+/*	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
 	KBD_MAP(KB_UK,			KB_US,	pckbd_keydesc_uk),
-	KBD_MAP(KB_JP,			KB_US,	pckbd_keydesc_jp),
-	KBD_MAP(KB_SV,			KB_DK,	pckbd_keydesc_sv),
-	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	pckbd_keydesc_sv_nodead),
-	KBD_MAP(KB_NO,			KB_DK,	pckbd_keydesc_no),
-	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	pckbd_keydesc_no_nodead),
-	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
+	KBD_MAP(KB_JP,			KB_US,	pckbd_keydesc_jp),*/
+	KBD_MAP(KB_SV,			KB_DK,	amikbd_keydesc_sv),
+	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	amikbd_keydesc_sv_nodead),
+	KBD_MAP(KB_NO,			KB_DK,	amikbd_keydesc_no),
+	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	amikbd_keydesc_no_nodead),
+/*	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	pckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER, KB_US,	pckbd_keydesc_iopener),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP, pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
-		pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
 */
@@ -531,22 +506,3 @@ const struct wscons_keydesc amigakbd_keydesctab[] = {
 
 #undef KBD_MAP
 #undef KC
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

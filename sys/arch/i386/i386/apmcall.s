@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.7.8.1 2001/06/21 19:25:22 nathanw Exp $ */
+/*	$NetBSD: apmcall.s,v 1.7.8.2 2002/02/28 04:10:16 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 
 #include "opt_apm.h"
 
+__KERNEL_RCSID(0, "$NetBSD: apmcall.s,v 1.7.8.2 2002/02/28 04:10:16 nathanw Exp $");
+
 /* LINTSTUB: include <machine/bioscall.h> */
 /* LINTSTUB: include <machine/apmvar.h> */
 
@@ -74,11 +76,11 @@ NENTRY(apmcall)
 	pushl	%es
 	pushl	%fs
 	pushl	%gs
-	xorl	%ax,%ax
+	xorl	%eax,%eax
 /*	movl	%ax,%ds		# can't toss %ds, we need it for apmstatus*/
-	movl	%ax,%es
-	movl	%ax,%fs
-	movl	%ax,%gs
+	movw	%ax,%es
+	movw	%ax,%fs
+	movw	%ax,%gs
 #endif
 	xorl	%eax,%eax
 	movb	%cs:8(%ebp),%al
@@ -96,7 +98,7 @@ nocli:
 	clc /* clear carry in case BIOS doesn't do it for us on no-error */
 	pushl	%ds
 	/* Now call the 32-bit code segment entry point */
-	lcall	%cs:(_C_LABEL(apminfo)+APM_ENTRY)
+	lcall	*%cs:(_C_LABEL(apminfo)+APM_ENTRY)
 	popl	%ds
 	setc	apmstatus
 	popfl

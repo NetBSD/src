@@ -1,4 +1,4 @@
-/*      $NetBSD: profile.h,v 1.7 2000/07/01 06:42:54 matt Exp $ */
+/*      $NetBSD: profile.h,v 1.7.8.1 2002/02/28 04:12:30 nathanw Exp $ */
 /*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
@@ -47,10 +47,10 @@
  */
 #ifdef __ELF__
 #define MCOUNT \
-__asm__(".text; .globl __mcount; __mcount: pushl 16(fp); calls $1,_mcount; rsb");
+__asm__(".text; .globl __mcount; __mcount: pushl 16(%fp); calls $1,_mcount; rsb");
 #else
 #define MCOUNT \
-__asm__(".text; .globl mcount; mcount: pushl 16(fp); calls $1,__mcount; rsb");
+__asm__(".text; .globl mcount; mcount: pushl 16(%fp); calls $1,__mcount; rsb");
 #endif
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.1.2.2 2002/01/08 00:29:47 nathanw Exp $ */
+/* $NetBSD: ibm561.c,v 1.1.2.3 2002/02/28 04:13:22 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,8 +155,7 @@ ibm561_register(v, sched_update, wr, rd)
 {
 	struct ibm561data *data;
 
-	data = malloc(sizeof *data, M_DEVBUF, M_WAITOK);
-	memset(data, 0x0, sizeof *data);
+	data = malloc(sizeof *data, M_DEVBUF, M_WAITOK|M_ZERO);
 	data->cookie = v;
 	data->ramdac_sched_update = sched_update;
 	data->ramdac_wr = wr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36.8.2 2001/11/17 23:08:32 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.36.8.3 2002/02/28 04:06:34 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36.8.3 2002/02/28 04:06:34 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -62,7 +65,7 @@
 #include <sys/PROF.h>
 #endif
 
-/* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz. 
+/* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz.
    We're using a 100 Hz clock. */
 
 #define CLK_INTERVAL amiga_clk_interval
@@ -87,20 +90,17 @@ struct CIA *clockcia;
  * periods where N is the value loaded into the counter.
  */
 
-int clockmatch __P((struct device *, struct cfdata *, void *));
-void clockattach __P((struct device *, struct device *, void *));
-void cpu_initclocks __P((void));
-void calibrate_delay __P((struct device *));
+int clockmatch(struct device *, struct cfdata *, void *);
+void clockattach(struct device *, struct device *, void *);
+void cpu_initclocks(void);
+void calibrate_delay(struct device *);
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
 };
 
 int
-clockmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (matchname("clock", auxp))
 		return(1);
@@ -111,9 +111,7 @@ clockmatch(pdp, cfp, auxp)
  * Start the real-time clock.
  */
 void
-clockattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+clockattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	char *clockchip;
 	unsigned short interval;
@@ -123,7 +121,7 @@ clockattach(pdp, dp, auxp)
 
 	if (eclockfreq == 0)
 		eclockfreq = 715909;	/* guess NTSC */
-		
+
 	CLK_INTERVAL = (eclockfreq / 100);
 
 #ifdef DRACO
@@ -134,7 +132,7 @@ clockattach(pdp, dp, auxp)
 	} else if (dracorev) {
 		clockcia = (struct CIA *)CIAAbase;
 		clockchip = "CIA A";
-	} else 
+	} else
 #endif
 	{
 		clockcia = (struct CIA *)CIABbase;
@@ -151,7 +149,7 @@ clockattach(pdp, dp, auxp)
 
 #ifdef DRACO
 	if (dracorev >= 4) {
-		/* 
+		/*
 		 * can't preload anything beforehand, timer is free_running;
 		 * but need this for delay calibration.
 		 */
@@ -165,7 +163,7 @@ clockattach(pdp, dp, auxp)
 	}
 #endif
 	/*
-	 * stop timer A 
+	 * stop timer A
 	 */
 	clockcia->cra = clockcia->cra & 0xc0;
 	clockcia->icr = 1 << 0;		/* disable timer A interrupt */
@@ -196,22 +194,22 @@ clockattach(pdp, dp, auxp)
  * We use two iterations because we don't have enough bits to do a factor of
  * 8 with better than 1%.
  *
- * XXX Note that we MUST stay below 1 tick if using clkread(), even for 
- * underestimated values of delaydivisor. 
+ * XXX Note that we MUST stay below 1 tick if using clkread(), even for
+ * underestimated values of delaydivisor.
  *
  * XXX the "ns" below is only correct for a shift of 10 bits, and even then
  * off by 2.4%
  */
 
-void calibrate_delay(dp)
-	struct device *dp;
+void
+calibrate_delay(struct device *dp)
 {
 	unsigned long t1, t2;
 	extern u_int32_t delaydivisor;
 		/* XXX this should be defined elsewhere */
 
 	if (dp)
-		printf("Calibrating delay loop... "); 
+		printf("Calibrating delay loop... ");
 
 	do {
 		t1 = clkread();
@@ -223,7 +221,7 @@ void calibrate_delay(dp)
 #ifdef DEBUG
 	if (dp)
 		printf("\ndiff %ld us, new divisor %u/1024 us\n", t2,
-		    delaydivisor); 
+		    delaydivisor);
 	do {
 		t1 = clkread();
 		delay(1024);
@@ -233,7 +231,7 @@ void calibrate_delay(dp)
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 	if (dp)
 		printf("diff %ld us, new divisor %u/1024 us\n", t2,
-		    delaydivisor); 
+		    delaydivisor);
 #endif
 	do {
 		t1 = clkread();
@@ -247,11 +245,11 @@ void calibrate_delay(dp)
 		printf("diff %ld us, new divisor ", t2);
 #endif
 	if (dp)
-		printf("%u/1024 us\n", delaydivisor); 
+		printf("%u/1024 us\n", delaydivisor);
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 #ifdef DRACO
 	unsigned char dracorev;
@@ -274,7 +272,7 @@ cpu_initclocks()
 	 * start timer A in continuous shot mode
 	 */
 	clockcia->cra = (clockcia->cra & 0xc0) | 1;
-  
+
 	/*
 	 * and globally enable interrupts for ciab
 	 */
@@ -288,8 +286,7 @@ cpu_initclocks()
 }
 
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int hz)
 {
 }
 
@@ -298,7 +295,7 @@ setstatclockrate(hz)
  * (i.e. clock interrupt).
  */
 u_long
-clkread()
+clkread(void)
 {
 	u_int interval;
 	u_char hi, hi2, lo;
@@ -326,7 +323,7 @@ clkread()
 		}
 
 		interval = (CLK_INTERVAL - 1) - ((hi<<8) | lo);
-   
+
 		/*
 		 * should read ICR and if there's an int pending, adjust
 		 * interval. However, since reading ICR clears the interrupt,
@@ -375,8 +372,8 @@ int clockdebug = 0;
 #endif
 
 /*ARGSUSED*/
-clockopen(dev, flags)
-	dev_t dev;
+int
+clockopen(dev_t dev, int flags)
 {
 #ifdef PROFTIMER
 #ifdef PROF
@@ -400,8 +397,8 @@ clockopen(dev, flags)
 }
 
 /*ARGSUSED*/
-clockclose(dev, flags)
-	dev_t dev;
+int
+clockclose(dev_t dev, int flags)
 {
 	(void) clockunmmap(dev, (caddr_t)0, curproc->l_proc);	/* XXX */
 	stopclock();
@@ -410,14 +407,11 @@ clockclose(dev, flags)
 }
 
 /*ARGSUSED*/
-clockioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	struct proc *p;
+int
+clockioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
-	
+
 	switch (cmd) {
 
 	case CLOCKMAP:
@@ -440,16 +434,14 @@ clockioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
-clockmap(dev, off, prot)
-	dev_t dev;
+void
+clockmap(dev_t dev, int off, int prot)
 {
 	return((off + (INTIOBASE+CLKBASE+CLKSR-1)) >> PGSHIFT);
 }
 
-clockmmap(dev, addrp, p)
-	dev_t dev;
-	caddr_t *addrp;
-	struct proc *p;
+int
+clockmmap(dev_t dev, caddr_t *addrp, struct proc *p)
 {
 	int error;
 	struct vnode vn;
@@ -469,10 +461,8 @@ clockmmap(dev, addrp, p)
 	return(error);
 }
 
-clockunmmap(dev, addr, p)
-	dev_t dev;
-	caddr_t addr;
-	struct proc *p;
+int
+clockunmmap(dev_t dev, caddr_t addr, struct proc *p)
 {
 	int rv;
 
@@ -482,7 +472,8 @@ clockunmmap(dev, addr, p)
 	return 0;
 }
 
-startclock()
+void
+startclock(void)
 {
 	register struct clkreg *clk = (struct clkreg *)clkstd[0];
 
@@ -495,7 +486,8 @@ startclock()
 	clk->clk_cr1 = CLK_IENAB;
 }
 
-stopclock()
+void
+stopclock(void)
 {
 	register struct clkreg *clk = (struct clkreg *)clkstd[0];
 
@@ -521,7 +513,7 @@ stopclock()
  * locore has been changed to turn the profile clock on/off when switching
  * into/out of a process that is profiling (startprofclock/stopprofclock).
  * This reduces the impact of the profiling clock on other users, and might
- * possibly increase the accuracy of the profiling. 
+ * possibly increase the accuracy of the profiling.
  */
 int  profint   = PRF_INTERVAL;	/* Clock ticks between interrupts */
 int  profscale = 0;		/* Scale factor from sys clock to prof clock */
@@ -532,7 +524,8 @@ char profon    = 0;		/* Is profiling clock on? */
 #define	PRF_USER	0x01
 #define	PRF_KERNEL	0x80
 
-initprofclock()
+void
+initprofclock(void)
 {
 #if NCLOCK > 0
 	struct proc *p = curproc->l_proc;		/* XXX */
@@ -571,7 +564,8 @@ initprofclock()
 	profscale = CLK_INTERVAL / profint;
 }
 
-startprofclock()
+void
+startprofclock(void)
 {
   unsigned short interval;
 
@@ -594,7 +588,8 @@ startprofclock()
   clockcia->crb = (clockcia->crb & 0xc0) | 1;
 }
 
-stopprofclock()
+void
+stopprofclock(void)
 {
   /* stop timer B */
   clockcia->crb = clockcia->crb & 0xc0;
@@ -605,9 +600,8 @@ stopprofclock()
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-profclock(pc, ps)
-	caddr_t pc;
-	int ps;
+void
+profclock(caddr_t pc, int ps)
 {
 	/*
 	 * Came from user mode.
@@ -646,14 +640,13 @@ profclock(pc, ps)
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	struct timeval tvbuf;
 
 	tvbuf.tv_usec = 0;
 	tvbuf.tv_sec = base;	/* assume no battery clock exists */
-  
+
 	if (ugettod == NULL)
 		printf("WARNING: no battery clock\n");
 	else {
@@ -665,12 +658,12 @@ inittodr(base)
 		printf("WARNING: bad date in battery clock\n");
 		tvbuf.tv_sec = base;
 	}
-  
+
 	time = tvbuf;
 }
 
 void
-resettodr()
+resettodr(void)
 {
 	struct timeval tvbuf;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3.2.2 2002/01/08 00:24:26 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3.2.3 2002/02/28 04:09:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -73,7 +73,7 @@
 
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xa0000000
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00100000)
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 #define	ALT_PAGE_TBLS_BASE	(KERNEL_BASE + 0x00c00000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 /*

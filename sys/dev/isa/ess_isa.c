@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.5 1999/06/18 20:25:23 augustss Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.5.14.1 2002/02/28 04:13:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.5.14.1 2002/02/28 04:13:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,23 +73,34 @@ ess_isa_probe(parent, match, aux)
   	int ret;   
 	struct isa_attach_args *ia = aux;
 	struct ess_softc probesc, *sc= &probesc;
-	
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	memset(sc, 0, sizeof *sc);
 
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_iot = ia->ia_iot;
-	sc->sc_iobase = ia->ia_iobase;
-	if (bus_space_map(sc->sc_iot, sc->sc_iobase, ESS_NPORT, 0, &sc->sc_ioh)) {
-	  DPRINTF(("ess_isa_probe: Couldn't map I/O region at %x, size %x\n",
-			   sc->sc_iobase, ESS_NPORT));
-	  return 0;
+	sc->sc_iobase = ia->ia_io[0].ir_addr;
+	if (bus_space_map(sc->sc_iot, sc->sc_iobase, ESS_NPORT, 0,
+	    &sc->sc_ioh)) {
+		DPRINTF(("ess_isa_probe: Couldn't map I/O region at %x, "
+		    "size %x\n", sc->sc_iobase, ESS_NPORT));
+		return 0;
 	}
 
-	sc->sc_audio1.irq = ia->ia_irq;
+	sc->sc_audio1.irq = ia->ia_irq[0].ir_irq;
 	sc->sc_audio1.ist = IST_EDGE;
-	sc->sc_audio1.drq = ia->ia_drq;
+	sc->sc_audio1.drq = ia->ia_drq[0].ir_drq;
 	sc->sc_audio2.irq = -1;
-	sc->sc_audio2.drq = ia->ia_drq2;
+	sc->sc_audio2.drq = (ia->ia_ndrq > 1) ? ia->ia_drq[1].ir_drq : -1;
 
 	ret = essmatch(sc);
 		
@@ -95,7 +108,18 @@ ess_isa_probe(parent, match, aux)
 
 	if (ret) {
 		DPRINTF(("ess_isa_probe succeeded (score %d)\n", ret));
-		ia->ia_iosize = ESS_NPORT;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = ESS_NPORT;
+
+		ia->ia_nirq = 1;
+
+		if (ia->ia_ndrq > 1 &&
+		    ia->ia_drq[1].ir_drq != ISACF_DRQ_DEFAULT)
+			ia->ia_ndrq = 2;
+		else
+			ia->ia_ndrq = 1;
+
+		ia->ia_niomem = 0;
 	} else
 		DPRINTF(("ess_isa_probe failed\n"));
 		
@@ -113,18 +137,19 @@ void ess_isa_attach(parent, self, aux)
 
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_iot = ia->ia_iot;
-	sc->sc_iobase = ia->ia_iobase;
-	if (bus_space_map(sc->sc_iot, sc->sc_iobase, ESS_NPORT, 0, &sc->sc_ioh)) {
-	  DPRINTF(("ess_isa_attach: Couldn't map I/O region at %x, size %x\n",
-			   sc->sc_iobase, ESS_NPORT));
-	  return;
+	sc->sc_iobase = ia->ia_io[0].ir_addr;
+	if (bus_space_map(sc->sc_iot, sc->sc_iobase, ESS_NPORT, 0,
+	    &sc->sc_ioh)) {
+		DPRINTF(("ess_isa_attach: Couldn't map I/O region at %x, "
+		    "size %x\n", sc->sc_iobase, ESS_NPORT));
+		return;
 	}
 
-	sc->sc_audio1.irq = ia->ia_irq;
+	sc->sc_audio1.irq = ia->ia_irq[0].ir_irq;
 	sc->sc_audio1.ist = IST_EDGE;
-	sc->sc_audio1.drq = ia->ia_drq;
+	sc->sc_audio1.drq = ia->ia_drq[0].ir_drq;
 	sc->sc_audio2.irq = -1;
-	sc->sc_audio2.drq = ia->ia_drq2;
+	sc->sc_audio2.drq = ia->ia_ndrq > 1 ? ia->ia_drq[1].ir_drq : -1;
 
 	printf("%s", sc->sc_dev.dv_xname);
 

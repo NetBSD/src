@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135.2.6 2002/01/08 00:29:17 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.135.2.7 2002/02/28 04:13:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.6 2002/01/08 00:29:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.7 2002/02/28 04:13:09 nathanw Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -213,7 +213,6 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	int error;
 	mixer_devinfo_t mi;
 	int iclass, oclass, props;
-	const char *sep = "";
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -236,23 +235,19 @@ audioattach(struct device *parent, struct device *self, void *aux)
         }
 #endif
 
-#define	PRINT(str)	do { printf("%s%s", sep, str); sep = ", "; } while (0)
-
 	props = hwp->get_props(hdlp);
 
 	if (props & AUDIO_PROP_FULLDUPLEX)
-		PRINT(": full duplex");
+		printf(": full duplex");
 	else
-		PRINT(": half duplex");
+		printf(": half duplex");
 
 	if (props & AUDIO_PROP_MMAP)
-		PRINT("mmap");
+		printf(", mmap");
 	if (props & AUDIO_PROP_INDEPENDENT)
-		PRINT("independent");
+		printf(", independent");
 
 	printf("\n");
-
-#undef PRINT
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;

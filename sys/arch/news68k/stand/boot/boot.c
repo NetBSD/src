@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4.8.1 2002/01/11 23:38:40 nathanw Exp $	*/
+/*	$NetBSD: boot.c,v 1.4.8.2 2002/02/28 04:11:15 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.

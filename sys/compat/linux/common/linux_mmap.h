@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.8.2.3 2001/09/26 19:54:48 nathanw Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.8.2.4 2002/02/28 04:12:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #include <compat/linux/arch/powerpc/linux_mmap.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_mmap.h>
+#elif defined(__arm__)
+#include <compat/linux/arch/arm/linux_mmap.h>
 /*
  * XXX ERH: All below here are guesses.  The header
  * XXX ERH: files are correct but the defined(*)
@@ -87,7 +89,8 @@ struct linux_sys_mmap_args {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_mmap __P((struct lwp *p, void *v, register_t *retval));
+int linux_sys_mmap __P((struct lwp *l, void *v, register_t *retval));
+int linux_sys_mmap2 __P((struct lwp *l, void *v, register_t *retval));
 __END_DECLS
 #endif /* !_KERNEL */
 

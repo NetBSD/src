@@ -1,0 +1,43 @@
+#	$NetBSD: files.iq80310,v 1.4.4.2 2002/02/28 04:09:08 nathanw Exp $
+#
+# Intel IQ80310 evaluation board configuration info
+#
+
+# Define the (IQ80310-based) board types that we support:
+#
+#	IOP310_TEAMASA_NPWR
+#		Team ASA, Inc. Npwr http://www.teamasa.com/
+#
+# If no board type options are specified, the default is the
+# Intel/Cyclone IQ80310 (which is the IOP310 reference design
+# eval board).
+defflag opt_iop310.h	IOP310_TEAMASA_NPWR
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+
+file	arch/evbarm/iq80310/iq80310_7seg.c
+file	arch/evbarm/iq80310/iq80310_machdep.c
+file	arch/evbarm/iq80310/iq80310_intr.c
+file	arch/evbarm/iq80310/iq80310_timer.c
+file	arch/evbarm/iq80310/iq80310_pci.c
+
+# IQ80310 on-board devices (including CPLD)
+device	obio {[addr = -1]}
+attach	obio at mainbus
+file	arch/evbarm/iq80310/obio.c			obio
+file	arch/evbarm/iq80310/obio_space.c		obio
+file	arch/evbarm/iq80310/obio_space_asm.S		obio
+
+# on-board XR 16550 UARTs
+attach	com at obio with com_obio
+file	arch/evbarm/iq80310/com_obio.c			com_obio
+
+# i80200 CPU support
+include "arch/arm/xscale/files.i80200"
+
+# i80312 Companion I/O support
+include	"arch/arm/xscale/files.i80312"
+
+attach	iopxs at mainbus with iopxs_mainbus
+file	arch/evbarm/iq80310/i80312_mainbus.c		iopxs_mainbus

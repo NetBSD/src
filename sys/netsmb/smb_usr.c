@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.1.4.3 2002/01/11 23:39:49 nathanw Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.1.4.4 2002/02/28 04:15:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.51.2.3 2002/01/11 23:39:15 nathanw Exp $	*/
+/*	$NetBSD: wt.c,v 1.51.2.4 2002/02/28 04:13:48 nathanw Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.3 2002/01/11 23:39:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.4 2002/02/28 04:13:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

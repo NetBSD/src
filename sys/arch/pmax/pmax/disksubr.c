@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.34 2000/11/20 08:24:20 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.34.8.1 2002/02/28 04:11:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@ char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.

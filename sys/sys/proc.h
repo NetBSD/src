@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.11 2002/01/11 23:39:51 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.12 2002/02/28 04:15:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -257,22 +257,22 @@ struct proc {
 #define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
 /* These flags are kept in p_flag. */
-#define	P_ADVLOCK	0x00001	/* Process may hold a POSIX advisory lock */
-#define	P_CONTROLT	0x00002	/* Has a controlling terminal */
-#define	P_NOCLDSTOP	0x00008	/* No SIGCHLD when children stop */
-#define	P_PPWAIT	0x00010	/* Parent is waiting for child to exec/exit */
-#define	P_PROFIL	0x00020	/* Has started profiling */
-#define	P_SUGID		0x00100	/* Had set id privileges since last exec */
-#define	P_SYSTEM	0x00200	/* System proc: no sigs, stats or swapping */
-#define	P_SA		0x00400	/* Using scheduler activations */
-#define	P_TRACED	0x00800	/* Debugged process being traced */
-#define	P_WAITED	0x01000	/* Debugging process has waited for child */
-#define	P_WEXIT		0x02000	/* Working on exiting */
-#define	P_EXEC		0x04000	/* Process called exec */
-#define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast */
-#define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
-#define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
-#define	P_32		0x40000	/* 32-bit process (used on 64-bit kernels) */
+#define	P_ADVLOCK	0x000001 /* Process may hold a POSIX advisory lock */
+#define	P_CONTROLT	0x000002 /* Has a controlling terminal */
+#define	P_NOCLDSTOP	0x000008 /* No SIGCHLD when children stop */
+#define	P_PPWAIT	0x000010 /* Parent is waiting for child to exec/exit */
+#define	P_PROFIL	0x000020 /* Has started profiling */
+#define	P_SUGID		0x000100 /* Had set id privileges since last exec */
+#define	P_SYSTEM	0x000200 /* System proc: no sigs, stats or swapping */
+#define	P_SA		0x000400 /* Using scheduler activations */
+#define	P_TRACED	0x000800 /* Debugged process being traced */
+#define	P_WAITED	0x001000 /* Debugging process has waited for child */
+#define	P_WEXIT		0x002000 /* Working on exiting */
+#define	P_EXEC		0x004000 /* Process called exec */
+#define	P_OWEUPC	0x008000 /* Owe process an addupc() call at next ast */
+#define	P_FSTRACE	0x010000 /* Debugger process being traced by procfs */
+#define	P_NOCLDWAIT	0x020000 /* No zombies if child dies */
+#define	P_32		0x040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
 
 

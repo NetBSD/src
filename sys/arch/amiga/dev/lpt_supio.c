@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_supio.c,v 1.6 1999/06/22 21:12:00 is Exp $	*/
+/*	$NetBSD: lpt_supio.c,v 1.6.20.1 2002/02/28 04:06:52 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_supio.c,v 1.6.20.1 2002/02/28 04:06:52 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -62,22 +65,19 @@
 struct lptsupio_softc {
 	struct lpt_softc sc_lpt;
 	struct isr sc_isr;
-	void (*sc_intack)__P((void *));
+	void (*sc_intack)(void *);
 };
 
-int lpt_supio_match __P((struct device *, struct cfdata *, void *));
-void lpt_supio_attach __P((struct device *, struct device *, void *));
-int lpt_supio_intr __P((void *p));
+int lpt_supio_match(struct device *, struct cfdata *, void *);
+void lpt_supio_attach(struct device *, struct device *, void *);
+int lpt_supio_intr(void *p);
 
 struct cfattach lpt_supio_ca = {
 	sizeof(struct lptsupio_softc), lpt_supio_match, lpt_supio_attach
 };
 
 int
-lpt_supio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lpt_supio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct supio_attach_args *supa = aux;
 
@@ -88,8 +88,7 @@ lpt_supio_match(parent, match, aux)
 }
 
 int
-lpt_supio_intr(p)
-	void *p;
+lpt_supio_intr(void *p)
 {
 	struct lptsupio_softc *sc = (void *)p;
 	int rc;
@@ -101,9 +100,7 @@ lpt_supio_intr(p)
 }
 
 void
-lpt_supio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_supio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lptsupio_softc *sc = (void *)self;
 	struct lpt_softc *lsc = &sc->sc_lpt;

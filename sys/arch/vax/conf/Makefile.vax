@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.63.2.2 2002/01/08 00:28:30 nathanw Exp $
+#	$NetBSD: Makefile.vax,v 1.63.2.3 2002/02/28 04:12:29 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,9 @@ GENASSYM=	${VAX}/vax/genassym.cf
 ##
 CPPFLAGS+=	-D_VAX_INLINE_
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.if ${OBJECT_FMT} != "ELF"
 CFLAGS+=	-mno-pic
+.endif
 
 ##
 ## (3) libkern and compat
@@ -45,12 +47,12 @@ KERN_AS=	obj
 ##
 MD_OBJS=	intvec.o subr.o
 MD_CFILES=
-MD_SFILES=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s
+MD_SFILES=	${VAX}/vax/intvec.S ${VAX}/vax/subr.S
 
-intvec.o: ${VAX}/vax/intvec.s assym.h
+intvec.o: ${VAX}/vax/intvec.S assym.h
 	${NORMAL_S}
 
-subr.o: ${VAX}/vax/subr.s assym.h
+subr.o: ${VAX}/vax/subr.S assym.h
 	${NORMAL_S}
 
 ##

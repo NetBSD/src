@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.common,v 1.1.2.3 2002/01/08 00:33:01 nathanw Exp $
+#	$NetBSD: Makefile.common,v 1.1.2.4 2002/02/28 04:14:53 nathanw Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/compat/svr4 $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
+.PATH:	$S/compat/svr4 $S/arch/${MACHINE}/${MACHINE} $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
 CPPFLAGS+= -DCOMPAT_SVR4${USE_32} -DSYSVSEM -DSYSVMSG -DSYSVSHM \
 		-DSVR4_COMPAT_SOLARIS2

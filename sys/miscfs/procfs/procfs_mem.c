@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.27.2.2 2001/11/14 19:17:12 nathanw Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.27.2.3 2002/02/28 04:14:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.2.2 2001/11/14 19:17:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.2.3 2002/02/28 04:14:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,13 @@ procfs_checkioperm(p, t)
 	/*
 	 * You cannot attach to a processes mem/regs if:
 	 *
-	 *	(1) it's not owned by you, or is set-id on exec
+	 *	(1) It is currently exec'ing
+	 */
+	if (ISSET(t->p_flag, P_INEXEC))
+		return (EAGAIN);
+
+	/*
+	 *	(2) it's not owned by you, or is set-id on exec
 	 *	    (unless you're root), or...
 	 */
 	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
@@ -133,7 +139,7 @@ procfs_checkioperm(p, t)
 		return (error);
 
 	/*
-	 *	(2) ...it's init, which controls the security level
+	 *	(3) ...it's init, which controls the security level
 	 *	    of the entire system, and the system was not
 	 *	    compiled with permanetly insecure mode turned on.
 	 */
@@ -141,12 +147,11 @@ procfs_checkioperm(p, t)
 		return (EPERM);
 
 	/*
-	 * (3) the tracer is chrooted, and its root directory is
-	 * not at or above the root directory of the tracee
+	 *	(4) the tracer is chrooted, and its root directory is
+	 * 	    not at or above the root directory of the tracee
 	 */
-
 	if (!proc_isunder(t, p))
-		return EPERM;
+		return (EPERM);
 	
 	return (0);
 }

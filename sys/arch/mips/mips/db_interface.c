@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38.2.4 2002/02/01 04:57:45 gmcgarry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.38.2.5 2002/02/28 04:10:44 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -56,8 +56,9 @@
 #include <ddb/db_interface.h>
 #endif
 
-int	db_active = 0;
-mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
+int		db_active = 0;
+db_regs_t	ddb_regs;
+mips_reg_t	kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
 void db_kvtophys_cmd(db_expr_t, int, db_expr_t, char *);
@@ -550,7 +551,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	vaddr_t ra;
 	unsigned fpucsr;
 
-	fpucsr = (curproc) ? curproc->l_addr->u_pcb.pcb_fpregs.r_regs[32] : 0;
+	fpucsr = curproc ? PCB_FSR(&curproc->l_addr->u_pcb) : 0;
 	ra = MachEmulateBranch((struct frame *)regs, pc, fpucsr, 0);
 	return ra;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11 2000/06/29 08:44:03 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11.8.1 2002/02/28 04:06:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11.8.1 2002/02/28 04:06:20 nathanw Exp $");
 
 /*
  * Interface to the debugger for virtual memory read/write.
@@ -57,11 +60,11 @@
 
 #include <m68k/cacheops.h>
 
-static char db_read_data __P((char *src));
-void db_read_bytes __P((db_addr_t addr, register int size, register char *data));
-static void db_write_text __P((char *dst, int ch));
-static void db_write_data __P((char *dst, int ch));
-void db_write_bytes __P((db_addr_t addr, int size, char *data));
+static char db_read_data(char *src);
+void db_read_bytes(db_addr_t addr, register int size, register char *data);
+static void db_write_text(char *dst, int ch);
+static void db_write_data(char *dst, int ch);
+void db_write_bytes(db_addr_t addr, int size, char *data);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.3.14.2 2002/01/11 23:39:08 nathanw Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.3.14.3 2002/02/28 04:13:44 nathanw Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.3.14.2 2002/01/11 23:39:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.3.14.3 2002/02/28 04:13:44 nathanw Exp $");
 
 #undef TRTCMISADEBUG
 

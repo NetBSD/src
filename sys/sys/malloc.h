@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.7 2002/01/11 23:39:51 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.8 2002/02/28 04:15:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -189,7 +189,7 @@
 #define	M_SMBNODENAME	130	/* SMBFS node name */
 #define	M_SMBFSDATA	131	/* SMBFS private data */
 #define	M_SMBFSHASH	132	/* SMBFS hash table */
-#define M_SA		133	/* Scheduler activations */
+#define	M_SA		133	/* Scheduler activations */
 #define	M_LAST		134	/* Must be last type + 1 */
 
 /* added something?  don't forget to update malloc.9 */

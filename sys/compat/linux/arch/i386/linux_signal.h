@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.9 2000/08/23 16:59:52 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.9.2.1 2002/02/28 04:12:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -83,32 +83,34 @@
 
 /* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
+#define LINUX_SA_NOCLDWAIT	0x00000002
 #define LINUX_SA_SIGINFO	0x00000004
+#define LINUX_SA_RESTORER	0x04000000
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
-#define LINUX_SA_ALLBITS	0xf8000001
+#define LINUX_SA_ALLBITS	0xfc000007
 
 typedef void	(*linux_handler_t) __P((int));
 
-typedef u_long	linux_old_sigset_t;
+typedef unsigned long	linux_old_sigset_t;
 typedef struct {
-	u_long sig[LINUX__NSIG_WORDS];
+	unsigned long sig[LINUX__NSIG_WORDS];
 } linux_sigset_t;
 
 struct linux_old_sigaction {
 	linux_handler_t		sa_handler;
 	linux_old_sigset_t	sa_mask;
-	u_long			sa_flags;
+	unsigned long		sa_flags;
 	void			(*sa_restorer) __P((void));
 };
 
 /* Used in rt_* calls */
 struct linux_sigaction {
 	linux_handler_t		sa_handler;
-	u_long			sa_flags;
+	unsigned long		sa_flags;
 	void			(*sa_restorer) __P((void));
 	linux_sigset_t		sa_mask;
 };

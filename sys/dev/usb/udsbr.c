@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.4.2.3 2002/01/11 23:39:35 nathanw Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.4.2.4 2002/02/28 04:14:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.4.2.3 2002/01/11 23:39:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.4.2.4 2002/02/28 04:14:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,8 @@ int	udsbrdebug = 0;
 
 #define UDSBR_CONFIG_NO		1
 
-int     udsbr_get_info(void *, struct radio_info *);
-int     udsbr_set_info(void *, struct radio_info *);
-int     udsbr_search(void *, int);
+Static	int     udsbr_get_info(void *, struct radio_info *);
+Static	int     udsbr_set_info(void *, struct radio_info *);
 
 struct radio_hw_if udsbr_hw_if = {
 	NULL, /* open */
@@ -97,11 +96,12 @@ struct udsbr_softc {
 	char			sc_dying;
 };
 
-int	udsbr_req(struct udsbr_softc *sc, int ureq, int value, int index);
-void	udsbr_start(struct udsbr_softc *sc);
-void	udsbr_stop(struct udsbr_softc *sc);
-void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
-int	udsbr_status(struct udsbr_softc *sc);
+Static	int	udsbr_req(struct udsbr_softc *sc, int ureq, int value,
+			  int index);
+Static	void	udsbr_start(struct udsbr_softc *sc);
+Static	void	udsbr_stop(struct udsbr_softc *sc);
+Static	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
+Static	int	udsbr_status(struct udsbr_softc *sc);
 
 USB_DECLARE_DRIVER(udsbr);
 

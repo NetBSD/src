@@ -1,7 +1,11 @@
-#	$NetBSD: files.integrator,v 1.2.4.2 2001/11/14 23:50:02 thorpej Exp $
+#	$NetBSD: files.integrator,v 1.2.4.3 2002/02/28 04:09:08 nathanw Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
+
+# XXX Use the old arm32 interrupt code for now.
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 file	arch/evbarm/integrator/integrator_machdep.c
 file	arch/evbarm/integrator/int_bus_dma.c

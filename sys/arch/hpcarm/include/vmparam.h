@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7.2.2 2002/01/08 00:24:55 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7.2.3 2002/02/28 04:09:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -95,7 +95,7 @@
  * buffers is being limited due to lack of VA space.
  */
 #ifdef HPCARM
-#define	KERNEL_VM_SIZE		0x03000000
+#define	KERNEL_VM_SIZE		0x05000000
 #endif
 
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96.2.3 2002/01/11 23:38:22 nathanw Exp $
+# $NetBSD: GENERIC,v 1.96.2.4 2002/02/28 04:09:52 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,15 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.96.2.3 $"
+#ident 		"GENERIC-$Revision: 1.96.2.4 $"
 
 maxusers	16
 
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
+options 	VR4122			# NEC VR4122
+options 	VR4131			# NEC VR4131
 options 	TX392X			# Toshiba TX3922
 
 # Standard system options
@@ -61,6 +63,7 @@ options 	NTP			# network time protocol
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
 #options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
@@ -99,7 +102,12 @@ options 	INET6		# IPV6
 # NetBSD backwards compatibility
 options 	COMPAT_43
 
-options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTP
+#options 	NFS_BOOT_BOOTPARAM
+
+# compile options
+makeoptions	DEFGP="-G 14"
 
 config		netbsd		root on ? type ?
 
@@ -125,20 +133,20 @@ apmdev0	at hpcapm0			# APM
 
 options 	MQ200_DEBUG
 #options 	MQ200_USECRT
-mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
+mqvideo0 at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video
 hpcfb*		at	mqvideo?
 
-ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
+ite8181video0 at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video
 hpcfb*		at	ite8181video?
 
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_510
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_520
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700
 
 #
 # hpcmips isa? bus irq locator means:
@@ -314,6 +322,24 @@ isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
 
 #
+# SigmarionII
+#
+com*	at vrgiu? platform NEC_MCR_SIGMARION2 addr 0x0b600000 port 8
+vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
+isa6	at vrisab6
+ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
+#wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
+hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
+hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_02 port 0 level 1 connect 1
+
+#
+# MP-C303/304
+#
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
+hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_02 port 1 level 0 hold 1 connect 1
+
+#
 # Sharp Telios HC-AJ1, HC-VJ1C
 #
 txcsbus1	at tx39biu? platform SHARP_TELIOS
@@ -379,6 +405,23 @@ wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
+
+# PCI bus support
+options 	PCIVERBOSE
+pci*	at vrpciu?
+
+# VRC4173
+vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
+#vrc4173cmu* at vrc4173bcu?		# VRC4173 CMU
+#vrc4173piu* at vrc4173bcu?		# VRC4173 PIU
+#vrc4173kiu* at vrc4173bcu?		# VRC4173 KIU
+
+#vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
+#pcmcia*	at vrc4173cardu?
+
+# PCI USB controllers
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+#options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
 
 # PCMCIA bus support
 pcmcia* at plumpcmcia? controller ? socket ?
@@ -515,8 +558,16 @@ pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	md		1	# memory disk device (ramdisk)
 
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

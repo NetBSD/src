@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11.2.2 2002/01/08 00:23:11 nathanw Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11.2.3 2002/02/28 04:07:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -73,24 +73,66 @@ struct cpu_functions {
 	void	(*cf_tlb_flushD)	__P((void));
 	void	(*cf_tlb_flushD_SE)	__P((u_int va));	
 
-	/* Cache functions */
+	/*
+	 * Cache operations:
+	 *
+	 * We define the following primitives:
+	 *
+	 *	icache_sync_all		Synchronize I-cache
+	 *	icache_sync_range	Synchronize I-cache range
+	 *
+	 *	dcache_wbinv_all	Write-back and Invalidate D-cache
+	 *	dcache_wbinv_range	Write-back and Invalidate D-cache range
+	 *	dcache_inv_range	Invalidate D-cache range
+	 *	dcache_wb_range		Write-back D-cache range
+	 *
+	 *	idcache_wbinv_all	Write-back and Invalidate D-cache,
+	 *				Invalidate I-cache
+	 *	idcache_wbinv_range	Write-back and Invalidate D-cache,
+	 *				Invalidate I-cache range
+	 *
+	 * Note that the ARM term for "write-back" is "clean".  We use
+	 * the term "write-back" since it's a more common way to describe
+	 * the operation.
+	 *
+	 * There are some rules that must be followed:
+	 *
+	 *	I-cache Synch (all or range):
+	 *		The goal is to synchronize the instruction stream,
+	 *		so you may beed to write-back dirty D-cache blocks
+	 *		first.  If a range is requested, and you can't
+	 *		synchronize just a range, you have to hit the whole
+	 *		thing.
+	 *
+	 *	D-cache Write-Back and Invalidate range:
+	 *		If you can't WB-Inv a range, you must WB-Inv the
+	 *		entire D-cache.
+	 *
+	 *	D-cache Invalidate:
+	 *		If you can't Inv the D-cache, you must Write-Back
+	 *		and Invalidate.  Code that uses this operation
+	 *		MUST NOT assume that the D-cache will not be written
+	 *		back to memory.
+	 *
+	 *	D-cache Write-Back:
+	 *		If you can't Write-back without doing an Inv,
+	 *		that's fine.  Then treat this as a WB-Inv.
+	 *		Skipping the invalidate is merely an optimization.
+	 *
+	 *	All operations:
+	 *		Valid virtual addresses must be passed to each
+	 *		cache operation.
+	 */
+	void	(*cf_icache_sync_all)	__P((void));
+	void	(*cf_icache_sync_range)	__P((vaddr_t, vsize_t));
 
-	void	(*cf_cache_flushID)	__P((void));	
-	void	(*cf_cache_flushID_SE)	__P((u_int va));	
-	void	(*cf_cache_flushI)	__P((void));	
-	void	(*cf_cache_flushI_SE)	__P((u_int va));	
-	void	(*cf_cache_flushD)	__P((void));	
-	void	(*cf_cache_flushD_SE)	__P((u_int va));	
+	void	(*cf_dcache_wbinv_all)	__P((void));
+	void	(*cf_dcache_wbinv_range) __P((vaddr_t, vsize_t));
+	void	(*cf_dcache_inv_range)	__P((vaddr_t, vsize_t));
+	void	(*cf_dcache_wb_range)	__P((vaddr_t, vsize_t));
 
-	void	(*cf_cache_cleanID)	__P((void));	
-	void	(*cf_cache_cleanID_E)	__P((u_int imp));	
-	void	(*cf_cache_cleanD)	__P((void));	
-	void	(*cf_cache_cleanD_E)	__P((u_int imp));	
-
-	void	(*cf_cache_purgeID)	__P((void));	
-	void	(*cf_cache_purgeID_E)	__P((u_int imp));	
-	void	(*cf_cache_purgeD)	__P((void));	
-	void	(*cf_cache_purgeD_E)	__P((u_int imp));	
+	void	(*cf_idcache_wbinv_all)	__P((void));
+	void	(*cf_idcache_wbinv_range) __P((vaddr_t, vsize_t));
 
 	/* Other functions */
 
@@ -102,13 +144,6 @@ struct cpu_functions {
 	void	(*cf_sleep)		__P((int mode));
 
 	/* Soft functions */
-
-	void	(*cf_cache_syncI)	__P((void));
-	void	(*cf_cache_cleanID_rng)	__P((u_int start, u_int len));
-	void	(*cf_cache_cleanD_rng)	__P((u_int start, u_int len));
-	void	(*cf_cache_purgeID_rng)	__P((u_int start, u_int len));
-	void	(*cf_cache_purgeD_rng)	__P((u_int start, u_int len));
-	void	(*cf_cache_syncI_rng)	__P((u_int start, u_int len));
 
 	int	(*cf_dataabt_fixup)	__P((void *arg));
 	int	(*cf_prefetchabt_fixup)	__P((void *arg));
@@ -137,20 +172,16 @@ extern u_int cputype;
 #define	cpu_tlb_flushD()	cpufuncs.cf_tlb_flushD()
 #define	cpu_tlb_flushD_SE(e)	cpufuncs.cf_tlb_flushD_SE(e)
 
-#define	cpu_cache_flushID()	cpufuncs.cf_cache_flushID()
-#define	cpu_cache_flushID_SE(e)	cpufuncs.cf_cache_flushID_SE(e)
-#define	cpu_cache_flushI()	cpufuncs.cf_cache_flushI()
-#define	cpu_cache_flushI_SE(e)	cpufuncs.cf_cache_flushI_SE(e)
-#define	cpu_cache_flushD()	cpufuncs.cf_cache_flushD()
-#define	cpu_cache_flushD_SE(e)	cpufuncs.cf_cache_flushD_SE(e)
-#define	cpu_cache_cleanID()	cpufuncs.cf_cache_cleanID()
-#define	cpu_cache_cleanID_E(e)	cpufuncs.cf_cache_cleanID_E(e)
-#define	cpu_cache_cleanD()	cpufuncs.cf_cache_cleanD()
-#define	cpu_cache_cleanD_E(e)	cpufuncs.cf_cache_cleanD_E(e)
-#define	cpu_cache_purgeID()	cpufuncs.cf_cache_purgeID()
-#define	cpu_cache_purgeID_E(e)	cpufuncs.cf_cache_purgeID_E(e)
-#define	cpu_cache_purgeD()	cpufuncs.cf_cache_purgeD()
-#define	cpu_cache_purgeD_E(e)	cpufuncs.cf_cache_purgeD_E(e)
+#define	cpu_icache_sync_all()	cpufuncs.cf_icache_sync_all()
+#define	cpu_icache_sync_range(a, s) cpufuncs.cf_icache_sync_range((a), (s))
+
+#define	cpu_dcache_wbinv_all()	cpufuncs.cf_dcache_wbinv_all()
+#define	cpu_dcache_wbinv_range(a, s) cpufuncs.cf_dcache_wbinv_range((a), (s))
+#define	cpu_dcache_inv_range(a, s) cpufuncs.cf_dcache_inv_range((a), (s))
+#define	cpu_dcache_wb_range(a, s) cpufuncs.cf_dcache_wb_range((a), (s))
+
+#define	cpu_idcache_wbinv_all()	cpufuncs.cf_idcache_wbinv_all()
+#define	cpu_idcache_wbinv_range(a, s) cpufuncs.cf_idcache_wbinv_range((a), (s))
 
 #define	cpu_flush_prefetchbuf()	cpufuncs.cf_flush_prefetchbuf()
 #define	cpu_drain_writebuf()	cpufuncs.cf_drain_writebuf()
@@ -158,13 +189,6 @@ extern u_int cputype;
 #define	cpu_flush_brnchtgt_E(e)	cpufuncs.cf_flush_brnchtgt_E(e)
 
 #define cpu_sleep(m)		cpufuncs.cf_sleep(m)
-
-#define	cpu_cache_syncI()		cpufuncs.cf_cache_syncI()
-#define	cpu_cache_cleanID_rng(s,l)	cpufuncs.cf_cache_cleanID_rng(s,l)
-#define	cpu_cache_cleanD_rng(s,l)	cpufuncs.cf_cache_cleanD_rng(s,l)
-#define	cpu_cache_purgeID_rng(s,l)	cpufuncs.cf_cache_purgeID_rng(s,l)
-#define	cpu_cache_purgeD_rng(s,l)	cpufuncs.cf_cache_purgeD_rng(s,l)
-#define	cpu_cache_syncI_rng(s,l)	cpufuncs.cf_cache_syncI_rng(s,l)
 
 #define cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
 #define cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
@@ -231,11 +255,11 @@ void	arm8_cache_purgeID	__P((void));
 void	arm8_cache_purgeID_E	__P((u_int entry));
 
 void	arm8_cache_syncI	__P((void));
-void	arm8_cache_cleanID_rng	__P((u_int start, u_int end));
-void	arm8_cache_cleanD_rng	__P((u_int start, u_int end));
-void	arm8_cache_purgeID_rng	__P((u_int start, u_int end));
-void	arm8_cache_purgeD_rng	__P((u_int start, u_int end));
-void	arm8_cache_syncI_rng	__P((u_int start, u_int end));
+void	arm8_cache_cleanID_rng	__P((vaddr_t start, vsize_t end));
+void	arm8_cache_cleanD_rng	__P((vaddr_t start, vsize_t end));
+void	arm8_cache_purgeID_rng	__P((vaddr_t start, vsize_t end));
+void	arm8_cache_purgeD_rng	__P((vaddr_t start, vsize_t end));
+void	arm8_cache_syncI_rng	__P((vaddr_t start, vsize_t end));
 
 void	arm8_context_switch	__P((void));
 
@@ -259,9 +283,9 @@ void	arm9_cache_flushD_SE	__P((u_int));
 void	arm9_cache_cleanID	__P((void));
 
 void	arm9_cache_syncI	__P((void));
-void	arm9_cache_flushID_rng	__P((u_int, u_int));
-void	arm9_cache_flushD_rng	__P((u_int, u_int));
-void	arm9_cache_syncI_rng	__P((u_int, u_int));
+void	arm9_cache_flushID_rng	__P((vaddr_t, vsize_t));
+void	arm9_cache_flushD_rng	__P((vaddr_t, vsize_t));
+void	arm9_cache_syncI_rng	__P((vaddr_t, vsize_t));
 
 void	arm9_context_switch	__P((void));
 
@@ -280,6 +304,8 @@ void	armv4_drain_writebuf	__P((void));
 #ifdef CPU_SA110
 void	sa110_setttb		__P((u_int ttb));
 
+void	sa11x0_cpu_sleep	__P((int mode));
+
 void	sa110_tlb_flushID_SE	__P((u_int va));
 
 void	sa110_cache_flushID	__P((void));
@@ -297,11 +323,11 @@ void	sa110_cache_purgeD	__P((void));
 void	sa110_cache_purgeD_E	__P((u_int entry));
 
 void	sa110_cache_syncI	__P((void));
-void	sa110_cache_cleanID_rng	__P((u_int start, u_int end));
-void	sa110_cache_cleanD_rng	__P((u_int start, u_int end));
-void	sa110_cache_purgeID_rng	__P((u_int start, u_int end));
-void	sa110_cache_purgeD_rng	__P((u_int start, u_int end));
-void	sa110_cache_syncI_rng	__P((u_int start, u_int end));
+void	sa110_cache_cleanID_rng	__P((vaddr_t start, vsize_t end));
+void	sa110_cache_cleanD_rng	__P((vaddr_t start, vsize_t end));
+void	sa110_cache_purgeID_rng	__P((vaddr_t start, vsize_t end));
+void	sa110_cache_purgeD_rng	__P((vaddr_t start, vsize_t end));
+void	sa110_cache_syncI_rng	__P((vaddr_t start, vsize_t end));
 
 void	sa110_context_switch	__P((void));
 
@@ -310,6 +336,8 @@ void	sa110_setup		__P((char *string));
 
 #ifdef CPU_XSCALE
 void	xscale_cpwait		__P((void));
+
+void	xscale_cpu_sleep	__P((int mode));
 
 u_int	xscale_control		__P((u_int clear, u_int bic));
 
@@ -332,16 +360,16 @@ void	xscale_cache_purgeD	__P((void));
 void	xscale_cache_purgeD_E	__P((u_int entry));
 
 void	xscale_cache_syncI	__P((void));
-void	xscale_cache_cleanID_rng	__P((u_int start, u_int end));
-void	xscale_cache_cleanD_rng	__P((u_int start, u_int end));
-void	xscale_cache_purgeID_rng	__P((u_int start, u_int end));
-void	xscale_cache_purgeD_rng	__P((u_int start, u_int end));
-void	xscale_cache_syncI_rng	__P((u_int start, u_int end));
+void	xscale_cache_cleanID_rng __P((vaddr_t start, vsize_t end));
+void	xscale_cache_cleanD_rng	__P((vaddr_t start, vsize_t end));
+void	xscale_cache_purgeID_rng __P((vaddr_t start, vsize_t end));
+void	xscale_cache_purgeD_rng	__P((vaddr_t start, vsize_t end));
+void	xscale_cache_syncI_rng	__P((vaddr_t start, vsize_t end));
 
 /* Used in write-through mode. */
-void	xscale_cache_flushID_rng __P((u_int start, u_int end));
-void	xscale_cache_flushD_rng	__P((u_int start, u_int end));
-void	xscale_cache_flushI_rng	__P((u_int start, u_int end));
+void	xscale_cache_flushID_rng __P((vaddr_t start, vsize_t end));
+void	xscale_cache_flushD_rng	__P((vaddr_t start, vsize_t end));
+void	xscale_cache_flushI_rng	__P((vaddr_t start, vsize_t end));
 
 void	xscale_context_switch	__P((void));
 
@@ -350,9 +378,6 @@ void	xscale_setup		__P((char *string));
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
-#define cache_clean	cpu_cache_purgeID
-#define sync_caches	cpu_cache_syncI
-#define sync_icache	cpu_cache_syncI
 #define drain_writebuf	cpu_drain_writebuf
 
 /*

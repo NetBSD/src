@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.8.2 2002/01/08 00:28:29 nathanw Exp $
+#	$NetBSD: Makefile,v 1.10.8.3 2002/02/28 04:12:28 nathanw Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ LINKS+=	${BINDIR}/xxboot ${BINDIR}/sdboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/hpboot
 WARNS?=	1
 
-SRCS=	start.s bootxx.c romread.s urem.s udiv.s str.s
+SRCS=	start.S bootxx.c romread.S str.S
 
 STRIPFLAG=
 CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \

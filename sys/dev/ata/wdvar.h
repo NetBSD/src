@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.6.6.2 2002/01/08 00:29:23 nathanw Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.6.6.3 2002/02/28 04:13:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -34,31 +34,32 @@
 
 /* Params needed by the controller to perform an ATA bio */
 struct ata_bio {
-    volatile u_int16_t flags; /* cmd flags */
-#define ATA_NOSLEEP 0x0001 /* Can't sleep */   
-#define ATA_POLL    0x0002 /* poll for completion */
-#define ATA_ITSDONE 0x0004 /* the transfer is as done as it gets */
-#define ATA_SINGLE  0x0008 /* transfer has to be done in single-sector mode */
-#define ATA_LBA     0x0010 /* transfer uses LBA adressing */
-#define ATA_READ    0x0020 /* transfer is a read (otherwise a write) */
-#define ATA_CORR    0x0040 /* transfer had a corrected error */
-    int multi; /* number of blocks to transfer in multi-mode */
-    struct disklabel *lp; /* pointer to drive's label info */
-    daddr_t blkno; /* block addr */
-    daddr_t blkdone; /* number of blks transferred */
-    daddr_t nblks; /* number of block currently transferring */
-    int     nbytes; /* number of bytes currently transferring */
-    long    bcount; /* total number of bytes */
-    char*   databuf; /* data buffer adress */
-    volatile int error;
-#define NOERROR 0 /* There was no error (r_error invalid) */
-#define ERROR   1 /* check r_error */
-#define ERR_DF	2 /* Drive fault */
-#define ERR_DMA 3 /* DMA error */
-#define TIMEOUT 4 /* device timed out */
-#define ERR_NODEV 5 /* device has been gone */
-    u_int8_t r_error; /* copy of error register */
-    daddr_t badsect[127];    /* 126 plus trailing -1 marker */
+	volatile u_int16_t flags;/* cmd flags */
+#define	ATA_NOSLEEP	0x0001	/* Can't sleep */   
+#define	ATA_POLL	0x0002	/* poll for completion */
+#define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
+#define	ATA_SINGLE	0x0008	/* transfer must be done in singlesector mode */
+#define	ATA_LBA		0x0010	/* transfer uses LBA adressing */
+#define	ATA_READ	0x0020	/* transfer is a read (otherwise a write) */
+#define	ATA_CORR	0x0040	/* transfer had a corrected error */
+#define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA adressing */
+	int		multi;	/* # of blocks to transfer in multi-mode */
+	struct disklabel *lp;	/* pointer to drive's label info */
+	daddr_t		blkno;	/* block addr */
+	daddr_t		blkdone;/* number of blks transferred */
+	daddr_t		nblks;	/* number of block currently transferring */
+	int		nbytes;	/* number of bytes currently transferring */
+	long		bcount;	/* total number of bytes */
+	char		*databuf;/* data buffer adress */
+	volatile int	error;
+#define	NOERROR 	0	/* There was no error (r_error invalid) */
+#define	ERROR		1	/* check r_error */
+#define	ERR_DF		2	/* Drive fault */
+#define	ERR_DMA		3	/* DMA error */
+#define	TIMEOUT		4	/* device timed out */
+#define	ERR_NODEV	5	/* device has been gone */
+	u_int8_t	r_error;/* copy of error register */
+	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
 };
 
 /*

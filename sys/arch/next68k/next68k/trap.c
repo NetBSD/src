@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.4.4 2001/12/17 21:34:44 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.4.5 2002/02/28 04:11:18 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -602,7 +602,7 @@ trap(type, code, v, frame)
 			map = vm ? &vm->vm_map : kernel_map;
 
 		if (WRFAULT(code))
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 

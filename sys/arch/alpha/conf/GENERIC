@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191.2.5 2002/01/08 00:22:52 nathanw Exp $
+# $NetBSD: GENERIC,v 1.191.2.6 2002/02/28 04:06:12 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.191.2.5 $"
+#ident 		"GENERIC-$Revision: 1.191.2.6 $"
 
 maxusers 32
 
@@ -132,6 +132,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -289,6 +290,7 @@ audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 audio*	at	yds?
+audio*	at	ess?
 
 opl*	at	cmpci? flags 1
 opl*	at	eso?
@@ -305,7 +307,7 @@ midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
@@ -357,6 +359,8 @@ we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isapnp?
 #audio*	at	wss?
 #midi*	at	wss?
+
+ess0	at	isa? port 0x220 irq 5 drq 1 drq2 5   # ESS 18XX
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?
 audio*	at	sb?
@@ -497,8 +501,16 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1

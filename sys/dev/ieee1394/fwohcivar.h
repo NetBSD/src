@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.7.2.4 2002/01/08 00:30:18 nathanw Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.7.2.5 2002/02/28 04:13:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ struct fwohci_ctx {
 	TAILQ_HEAD(fwohci_buf_s, fwohci_buf) fc_buf;
 	struct fwohci_buf_s fc_buf2; /* for iso */
 	LIST_HEAD(, fwohci_handler) fc_handler;
+	struct fwohci_buf *fc_buffers;
 };
 
 struct fwohci_uidtbl {

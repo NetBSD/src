@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.2.6 2002/01/08 00:34:55 nathanw Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.7 2002/02/28 04:15:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.6 2002/01/08 00:34:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.7 2002/02/28 04:15:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_close_desc, lfs_close },			/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
-	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
+	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, lfs_read },			/* read */
 	{ &vop_write_desc, lfs_write },			/* write */
 	{ &vop_lease_desc, ufs_lease_check },		/* lease */
@@ -167,7 +167,7 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_close_desc, ufsspec_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
-	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
+	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
 	{ &vop_write_desc, ufsspec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
@@ -220,7 +220,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_close_desc, ufsfifo_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
-	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
+	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
@@ -805,6 +805,25 @@ lfs_getattr(void *v)
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
+}
+
+/*
+ * Check to make sure the inode blocks won't choke the buffer
+ * cache, then call ufs_setattr as usual.
+ */
+int
+lfs_setattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	lfs_check(vp, LFS_UNUSED_LBN, 0);
+	return ufs_setattr(v);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.4.2.3 2002/01/11 23:39:04 nathanw Exp $ */
+/* $NetBSD: aztech.c,v 1.4.2.4 2002/02/28 04:13:38 nathanw Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.2.4.3 2002/01/11 23:38:56 nathanw Exp $	*/
+/*	$NetBSD: bicons.c,v 1.2.4.4 2002/02/28 04:13:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.2.4.3 2002/01/11 23:38:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.2.4.4 2002/02/28 04:13:16 nathanw Exp $");
 
 #define HALF_FONT
 

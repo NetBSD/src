@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.56.2.2 2002/01/08 00:22:53 nathanw Exp $
+# $NetBSD: INSTALL,v 1.56.2.3 2002/02/28 04:06:12 nathanw Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -71,6 +71,7 @@ options 	COMPAT_14
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -200,7 +201,7 @@ vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY

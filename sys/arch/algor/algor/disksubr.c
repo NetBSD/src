@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3.6.2 2002/01/11 23:37:53 nathanw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.6.3 2002/02/28 04:06:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3.6.2 2002/01/11 23:37:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3.6.3 2002/02/28 04:06:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3.6.2 2002/01/11 23:37:53 nathanw Exp
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.

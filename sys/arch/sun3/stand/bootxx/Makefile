@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.9.8.2 2002/01/08 00:28:19 nathanw Exp $
+#	$NetBSD: Makefile,v 1.9.8.3 2002/02/28 04:12:23 nathanw Exp $
 
 SA_PROG= bootxx
 SRCS=   bootxx.c conf.c
 
 # Do not strip or remove a.out header for this one.
 proginstall: ${SA_PROG}
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	${SA_PROG} ${DESTDIR}${MDEC_DIR}/${SA_PROG}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+		${SA_PROG} ${DESTDIR}${MDEC_DIR}/${SA_PROG}
 
 PROG=	${SA_PROG}
 NOMAN= # defined

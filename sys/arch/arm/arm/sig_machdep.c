@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7.6.5 2002/01/08 00:23:07 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7.6.6 2002/02/28 04:07:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.5 2002/01/08 00:23:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.6 2002/02/28 04:07:18 nathanw Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -167,7 +167,8 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
 #ifndef arm26
-	cpu_cache_syncI();	/* XXX really necessary? */
+	/* XXX This should not be needed. */
+	cpu_icache_sync_all();
 #endif
 
 	/* Remember that we're now on the signal stack. */

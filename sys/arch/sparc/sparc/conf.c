@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.71.4.2 2002/01/08 00:27:42 nathanw Exp $ */
+/*	$NetBSD: conf.c,v 1.71.4.3 2002/02/28 04:12:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,9 @@ cdev_decl(i4btel);
 
 #include "pci.h"
 cdev_decl(pci);
+
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw	bdevsw[] =
 {
@@ -279,6 +282,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NPNOZZ,p9100),	/* 122: /dev/cgfourteen */
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Aurora multiport serial */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -440,6 +444,10 @@ static int chrtoblktbl[] = {
 	/*119 */	NODEV,
 	/*120 */	NODEV,
 	/*121 */	25,
+	/*122 */	NODEV,
+	/*123 */	NODEV,
+	/*124 */	NODEV,
+	/*125 */	NODEV,
 };
 
 /*

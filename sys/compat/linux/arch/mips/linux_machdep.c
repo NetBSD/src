@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1.2.7 2002/01/08 00:29:02 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.1.2.8 2002/02/28 04:12:52 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.7 2002/01/08 00:29:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.8 2002/02/28 04:12:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	sf.lsf_code[0] = 0x24020000;	/* li	v0, __NR_sigreturn	*/
 	sf.lsf_code[1] = 0x0000000c;	/* syscall			*/
 
-	native_to_linux_sigset(mask, &sf.lsf_mask);
+	native_to_linux_sigset(&sf.lsf_mask, mask);
 	for (i=0; i<32; i++) {
 		sf.lsf_sc.lsc_regs[i] = f->f_regs[i];
 	}
@@ -278,7 +278,7 @@ linux_sys_sigreturn(l, v, retval)
 	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_to_native_sigset((linux_sigset_t *)&ksf.lsf_mask, &mask);
+	linux_to_native_sigset(&mask, (linux_sigset_t *)&ksf.lsf_mask);
 	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -317,8 +317,9 @@ linux_sys_modify_ldt(l, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
   /* XXX write me */
   return dev;

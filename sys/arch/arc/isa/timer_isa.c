@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.1.10.2 2002/01/11 23:37:58 nathanw Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.1.10.3 2002/02/28 04:07:15 nathanw Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 

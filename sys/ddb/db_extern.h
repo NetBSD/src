@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.7 2000/07/17 19:57:50 jeffs Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.7.2.1 2002/02/28 04:13:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -40,44 +40,35 @@
 #define _DDB_DB_EXTERN_H_
 
 /* db_sym.c */
-void ddb_init __P((int, void *, void *));
+void ddb_init(int, void *, void *);
+
+/* db_command.c */
+extern int db_cmd_loop_done;
 
 /* db_examine.c */
-void db_examine_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_examine __P((db_addr_t, char *, int));
-void db_print_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_print_loc_and_inst __P((db_addr_t));
-void db_strcpy __P((char *, char *));
-void db_search_cmd __P((db_expr_t, boolean_t, db_expr_t, char *));
-void db_search __P((db_addr_t, int, db_expr_t, db_expr_t, unsigned int));
+void	db_examine_cmd(db_expr_t, int, db_expr_t, char *);
+void	db_print_cmd(db_expr_t, int, db_expr_t, char *);
+void	db_print_loc_and_inst(db_addr_t);
+void	db_strcpy(char *, char *);
+void	db_search_cmd(db_expr_t, boolean_t, db_expr_t, char *);
 
 /* db_expr.c */
-boolean_t db_term __P((db_expr_t *));
-boolean_t db_unary __P((db_expr_t *));
-boolean_t db_mult_expr __P((db_expr_t *));
-boolean_t db_add_expr __P((db_expr_t *));
-boolean_t db_shift_expr __P((db_expr_t *));
-int db_expression __P((db_expr_t *));
+int db_expression(db_expr_t *);
 
 /* db_input.c */
-void db_putstring __P((char *, int));
-void db_putnchars __P((int, int));
-void db_delete __P((int, int));
-void db_delete_line __P((void));
-int db_inputchar __P((int));
-int db_readline __P((char *, int));
-void db_check_interrupt __P((void));
+int	db_readline(char *, int);
+void	db_check_interrupt(void);
 
 /* db_print.c */
-void db_show_regs __P((db_expr_t, boolean_t, db_expr_t, char *));
+void	db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
 
 /* db_trap.c */
-void db_trap(int, int);
+void	db_trap(int, int);
 
 /* db_write_cmd.c */
-void db_write_cmd __P((db_expr_t, boolean_t, db_expr_t, char *));
+void	db_write_cmd(db_expr_t, boolean_t, db_expr_t, char *);
 
 /* Callback for MD platform code to manage watchdogs, etc. */
-void (*db_trap_callback)(int);
+extern void (*db_trap_callback)(int);
 
 #endif /* _DDB_DB_EXTERN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscreg.h,v 1.5 1996/12/09 17:24:58 is Exp $ */
+/*	$NetBSD: mscreg.h,v 1.5.46.1 2002/02/28 04:06:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -89,7 +89,7 @@ struct mscstatus {
 #define	MSC_MEMPAD1	\
     (0x0200 - NUMLINES * sizeof(struct mscstatus) - sizeof(struct msccommon))
 #define	MSC_MEMPAD2	(0x2000 - NUMLINES * IOBUFLEN - IOBUFLEN)
-	
+
 struct mscmemory {
 	struct mscstatus Status[NUMLINES];	/* 0x0000-0x006f status areas */
 	struct msccommon Common;		/* 0x0070-0x0077 common flags */

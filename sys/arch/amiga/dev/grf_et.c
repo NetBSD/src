@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.12 1999/03/25 23:19:59 is Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.12.26.1 2002/02/28 04:06:40 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -35,6 +35,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.12.26.1 2002/02/28 04:06:40 nathanw Exp $");
+
 #include "grfet.h"
 #if NGRFET > 0
 
@@ -51,9 +55,9 @@
  * Kari Mettinen's Cirrus driver by Tobias Abt
  *
  * Fixed Merlin in Z-III, fixed LACE and DBLSCAN, added Domino16M proto
- * and AT&T ATT20c491 DAC, added memory-size detection by Klaus Burkert. 
+ * and AT&T ATT20c491 DAC, added memory-size detection by Klaus Burkert.
  *
- * 
+ *
  * TODO:
  *
  */
@@ -76,37 +80,34 @@
 #include <amiga/dev/grf_etreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	et_mondefok __P((struct grfvideo_mode *gv));
-void	et_boardinit __P((struct grf_softc *gp));
-static void et_CompFQ __P((u_int fq, u_char *num, u_char *denom));
-int	et_getvmode __P((struct grf_softc *gp, struct grfvideo_mode *vm));
-int	et_setvmode __P((struct grf_softc *gp, unsigned int mode));
-int	et_toggle __P((struct grf_softc *gp, unsigned short));
-int	et_getcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
-int	et_putcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
+int	et_mondefok(struct grfvideo_mode *gv);
+void	et_boardinit(struct grf_softc *gp);
+static void et_CompFQ(u_int fq, u_char *num, u_char *denom);
+int	et_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm);
+int	et_setvmode(struct grf_softc *gp, unsigned int mode);
+int	et_toggle(struct grf_softc *gp, unsigned short);
+int	et_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap);
+int	et_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap);
 #ifndef TSENGCONSOLE
-void	et_off __P((struct grf_softc *gp));
+void	et_off(struct grf_softc *gp);
 #endif
-void	et_inittextmode __P((struct grf_softc *gp));
-int	et_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
-int	et_getmousepos __P((struct grf_softc *gp, struct grf_position *data));
-void	et_writesprpos __P((volatile char *ba, short x, short y));
-int	et_setmousepos __P((struct grf_softc *gp, struct grf_position *data));
-static int et_setspriteinfo __P((struct grf_softc *gp,
-				struct grf_spriteinfo *data));
-int	et_getspriteinfo __P((struct grf_softc *gp,
-				struct grf_spriteinfo *data));
-static int et_getspritemax __P((struct grf_softc *gp,
-				struct grf_position *data));
-int	et_setmonitor __P((struct grf_softc *gp, struct grfvideo_mode *gv));
-int	et_blank __P((struct grf_softc *gp, int *on));
-static int et_getControllerType __P((struct grf_softc *gp));
-static int et_getDACType __P((struct grf_softc *gp));
+void	et_inittextmode(struct grf_softc *gp);
+int	et_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
+int	et_getmousepos(struct grf_softc *gp, struct grf_position *data);
+void	et_writesprpos(volatile char *ba, short x, short y);
+int	et_setmousepos(struct grf_softc *gp, struct grf_position *data);
+static int et_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data);
+int	et_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data);
+static int et_getspritemax(struct grf_softc *gp, struct grf_position *data);
+int	et_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv);
+int	et_blank(struct grf_softc *gp, int *on);
+static int et_getControllerType(struct grf_softc *gp);
+static int et_getDACType(struct grf_softc *gp);
 
-int	grfetmatch __P((struct device *, struct cfdata *, void *));
-void	grfetattach __P((struct device *, struct device *, void *));
-int	grfetprint __P((void *, const char *));
-void	et_memset __P((unsigned char *d, unsigned char c, int l));
+int	grfetmatch(struct device *, struct cfdata *, void *);
+void	grfetattach(struct device *, struct device *, void *);
+int	grfetprint(void *, const char *);
+void	et_memset(unsigned char *d, unsigned char c, int l);
 
 /*
  * Graphics display definitions.
@@ -185,10 +186,7 @@ struct cfattach grfet_ca = {
 static struct cfdata *cfdata;
 
 int
-grfetmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 	static int regprod, regprod2 = 0, fbprod;
@@ -270,9 +268,7 @@ grfetmatch(pdp, cfp, auxp)
 
 
 void
-grfetattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void   *auxp;
+grfetattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
@@ -370,9 +366,7 @@ grfetattach(pdp, dp, auxp)
 
 
 int
-grfetprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+grfetprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);
@@ -381,8 +375,7 @@ grfetprint(auxp, pnp)
 
 
 void
-et_boardinit(gp)
-	struct grf_softc *gp;
+et_boardinit(struct grf_softc *gp)
 {
 	unsigned char *ba = gp->g_regkva;
 	int     x;
@@ -414,7 +407,7 @@ et_boardinit(gp)
 		vgaw(ba, MERLIN_VDAC_DATA, 0);
 	}
 
-	
+
 	/* setup initial unchanging parameters */
 
 	vgaw(ba, GREG_HERCULESCOMPAT + ((ettype == DOMINO) ? 0x0fff : 0), 0x03);
@@ -540,7 +533,7 @@ et_boardinit(gp)
 			vgaw(ba, GREG_SEGMENTSELECT2, 0x11); /* 1MB offset */
 			*et_fbtestaddr = 0x12345678;
 			vgaw(ba, GREG_SEGMENTSELECT2, 0x00);
-			if (*et_fbtestaddr == 0x0) 
+			if (*et_fbtestaddr == 0x0)
 				et_fbsize = 0x200000;		/* 2 MB */
 			else
 				et_fbsize = 0x100000;		/* 1 MB */
@@ -560,9 +553,7 @@ et_boardinit(gp)
 
 
 int
-et_getvmode(gp, vm)
-	struct grf_softc *gp;
-	struct grfvideo_mode *vm;
+et_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 {
 	struct grfvideo_mode *gv;
 
@@ -598,9 +589,7 @@ et_getvmode(gp, vm)
 
 
 int
-et_setvmode(gp, mode)
-	struct grf_softc *gp;
-	unsigned mode;
+et_setvmode(struct grf_softc *gp, unsigned mode)
 {
 	if (!mode || (mode > monitor_def_max) ||
 	    monitor_def[mode - 1].mode_num == 0)
@@ -614,8 +603,7 @@ et_setvmode(gp, mode)
 
 #ifndef TSENGCONSOLE
 void
-et_off(gp)
-	struct grf_softc *gp;
+et_off(struct grf_softc *gp)
 {
 	char   *ba = gp->g_regkva;
 
@@ -626,9 +614,7 @@ et_off(gp)
 
 
 int
-et_blank(gp, on)
-	struct grf_softc *gp;
-	int *on;
+et_blank(struct grf_softc *gp, int *on)
 {
 	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
 	return(0);
@@ -640,12 +626,8 @@ et_blank(gp, on)
  * Return a UNIX error number or 0 for success.
  */
 int
-et_mode(gp, cmd, arg, a2, a3)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void *arg;
-	u_long a2;
-	int a3;
+et_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
+        int a3)
 {
 	int error;
 
@@ -692,10 +674,7 @@ et_mode(gp, cmd, arg, a2, a3)
 
 
 int
-et_ioctl(gp, cmd, data)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void   *data;
+et_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 {
 	switch (cmd) {
 	    case GRFIOCGSPRITEPOS:
@@ -736,9 +715,7 @@ et_ioctl(gp, cmd, data)
 
 
 int
-et_getmousepos(gp, data)
-	struct grf_softc *gp;
-	struct grf_position *data;
+et_getmousepos(struct grf_softc *gp, struct grf_position *data)
 {
 	data->x = et_cursprite.pos.x;
 	data->y = et_cursprite.pos.y;
@@ -748,18 +725,13 @@ et_getmousepos(gp, data)
 
 
 void
-et_writesprpos(ba, x, y)
-	volatile char *ba;
-	short   x;
-	short   y;
+et_writesprpos(volatile char *ba, short x, short y)
 {
 }
 
 
 int
-et_setmousepos(gp, data)
-	struct grf_softc *gp;
-	struct grf_position *data;
+et_setmousepos(struct grf_softc *gp, struct grf_position *data)
 {
 	volatile char *ba = gp->g_regkva;
 	short rx, ry, prx, pry;
@@ -789,9 +761,7 @@ et_setmousepos(gp, data)
 
 
 int
-et_getspriteinfo(gp, data)
-	struct grf_softc *gp;
-	struct grf_spriteinfo *data;
+et_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data)
 {
 
 	return(EINVAL);
@@ -799,9 +769,7 @@ et_getspriteinfo(gp, data)
 
 
 static int
-et_setspriteinfo(gp, data)
-	struct grf_softc *gp;
-	struct grf_spriteinfo *data;
+et_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data)
 {
 
 	return(EINVAL);
@@ -809,9 +777,7 @@ et_setspriteinfo(gp, data)
 
 
 static int
-et_getspritemax(gp, data)
-	struct grf_softc *gp;
-	struct grf_position *data;
+et_getspritemax(struct grf_softc *gp, struct grf_position *data)
 {
 
 	return(EINVAL);
@@ -819,9 +785,7 @@ et_getspritemax(gp, data)
 
 
 int
-et_setmonitor(gp, gv)
-	struct grf_softc *gp;
-	struct grfvideo_mode *gv;
+et_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 {
 	struct grfvideo_mode *md;
 
@@ -860,9 +824,7 @@ et_setmonitor(gp, gv)
 
 
 int
-et_getcmap(gfp, cmap)
-	struct grf_softc *gfp;
-	struct grf_colormap *cmap;
+et_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
 	volatile unsigned char *ba;
 	u_char	red[256], green[256], blue[256], *rp, *gp, *bp;
@@ -913,9 +875,7 @@ et_getcmap(gfp, cmap)
 
 
 int
-et_putcmap(gfp, cmap)
-	struct grf_softc *gfp;
-	struct grf_colormap *cmap;
+et_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
 	volatile unsigned char *ba;
 	u_char	red[256], green[256], blue[256], *rp, *gp, *bp;
@@ -972,9 +932,8 @@ et_putcmap(gfp, cmap)
 
 
 int
-et_toggle(gp, wopp)
-	struct grf_softc *gp;
-	unsigned short wopp;	/* don't need that one yet, ill */
+et_toggle(struct grf_softc *gp, unsigned short wopp)
+/* (variable wopp) don't need that one yet, ill */
 {
 	volatile unsigned char *ba;
 
@@ -1018,10 +977,7 @@ static u_int et_clockfreqs[ET_NUMCLOCKS] = {
 
 
 static void
-et_CompFQ(fq, num, denom)
-	u_int   fq;
-	u_char *num;
-	u_char *denom;
+et_CompFQ(u_int fq, u_char *num, u_char *denom)
 {
 	int i;
 
@@ -1039,8 +995,7 @@ et_CompFQ(fq, num, denom)
 
 
 int
-et_mondefok(gv)
-	struct grfvideo_mode *gv;
+et_mondefok(struct grfvideo_mode *gv)
 {
         unsigned long maxpix;
 
@@ -1088,9 +1043,7 @@ et_mondefok(gv)
 
 
 int
-et_load_mon(gp, md)
-	struct grf_softc *gp;
-	struct grfettext_mode *md;
+et_load_mon(struct grf_softc *gp, struct grfettext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
@@ -1442,8 +1395,7 @@ et_load_mon(gp, md)
 
 
 void
-et_inittextmode(gp)
-	struct grf_softc *gp;
+et_inittextmode(struct grf_softc *gp)
 {
 	struct grfettext_mode *tm = (struct grfettext_mode *) gp->g_data;
 	volatile unsigned char *ba = gp->g_regkva;
@@ -1509,10 +1461,7 @@ et_inittextmode(gp)
 
 
 void
-et_memset(d, c, l)
-	unsigned char *d;
-	unsigned char c;
-	int     l;
+et_memset(unsigned char *d, unsigned char c, int l)
 {
 	for (; l > 0; l--)
 		*d++ = c;
@@ -1520,8 +1469,7 @@ et_memset(d, c, l)
 
 
 static int
-et_getControllerType(gp)
-	struct grf_softc * gp;
+et_getControllerType(struct grf_softc *gp)
 {
 	unsigned char *ba = gp->g_regkva; /* register base */
 	unsigned char *mem = gp->g_fbkva; /* memory base */
@@ -1556,8 +1504,7 @@ et_getControllerType(gp)
 
 
 static int
-et_getDACType(gp)
-	struct grf_softc * gp;
+et_getDACType(struct grf_softc *gp)
 {
 	unsigned char *ba = gp->g_regkva;
 	union {

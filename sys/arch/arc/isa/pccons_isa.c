@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.1.10.2 2002/01/11 23:37:58 nathanw Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.1.10.3 2002/02/28 04:07:15 nathanw Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*

@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.22.2.2 2002/01/08 00:22:53 nathanw Exp $
+# $NetBSD: TCWSCONS,v 1.22.2.3 2002/02/28 04:06:13 nathanw Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"TCWSCONS-$Revision: 1.22.2.2 $"
+#ident 		"TCWSCONS-$Revision: 1.22.2.3 $"
 
 maxusers 32
 
@@ -80,13 +80,14 @@ options 	SYSVSHM
 # Loadable Kernel Modules
 options 	LKM
 
-# Disable kernel security.
+# Disable kernel security.  Needed for X on a px or pxg.
 #options 	INSECURE
 
 # Misc. options
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,

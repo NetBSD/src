@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.1.12.2 2002/01/11 23:38:12 nathanw Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.1.12.3 2002/02/28 04:08:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

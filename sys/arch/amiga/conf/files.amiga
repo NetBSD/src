@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.110.2.2 2002/01/08 00:22:58 nathanw Exp $
+#	$NetBSD: files.amiga,v 1.110.2.3 2002/02/28 04:06:29 nathanw Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -103,6 +103,10 @@ device repulse: audio, ac97, mulaw
 attach	repulse at zbus
 file	arch/amiga/dev/repulse.c	repulse
 
+device toccata: audio, ad1848, auconv
+attach	toccata at zbus
+file	arch/amiga/dev/toccata.c	toccata
+
 # mouse
 device	ms: event
 attach	ms at mainbus
@@ -144,6 +148,7 @@ attach	amidisplaycc at mainbus
 file	arch/amiga/dev/amidisplaycc.c	amidisplaycc needs-flag
 
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 defpseudo	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count
@@ -439,7 +444,7 @@ file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
-file	arch/amiga/dev/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 file	arch/m68k/m68k/cacheops.c
 
 define	gayle

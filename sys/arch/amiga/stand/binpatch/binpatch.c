@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.7 1997/11/01 06:49:17 lukem Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.7.32.1 2002/02/28 04:07:04 nathanw Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -27,7 +27,7 @@ NAME
 \t%s - Allows the patching of BSD binaries
 SYNOPSIS
 \t%s [-HELP]
-\t%s [-b|-w|-l] -s symbol[[[index]][=value]] binary 
+\t%s [-b|-w|-l] -s symbol[[[index]][=value]] binary
 \t%s [-b|-w|-l] [-o offset] -s symbol [-r value] binary
 \t%s [-b|-w|-l] [-o offset] -a address [-r value] binary
 ";
@@ -52,7 +52,7 @@ EXAMPLES
 \t\tbinpatch -l -s _hz netbsd
 \tNow it gets more advanced, replace the value:
 \t\tbinpatch -l -s _sbic_debug -r 1 netbsd
-\tNow patch a variable at a given 'index' not offset, 
+\tNow patch a variable at a given 'index' not offset,
 \tunder NetBSD you must use '', under AmigaDos CLI '' is optional.:
 \t\tbinpatch -w -s '_vieww[4]' -r 0 a.out
 \tsame as
@@ -107,8 +107,8 @@ main(int argc, char *argv[])
   u_long  lval;
   u_short sval;
   u_char  cval;
-  
- 
+
+
   while ((c = getopt (argc, argv, "H:a:bwlr:s:o:")) != -1)
     switch (c)
       {
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
           offset = atoi (optarg);
         break;
       }/* while switch() */
-  
+
   if (argc > 1)
   {
     if (addr || symbol)
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
       addr += offset;
 
       /* if replace-mode, have to reopen the file for writing.
-         Can't do that from the beginning, or nlist() will not 
+         Can't do that from the beginning, or nlist() will not
          work (at least not under AmigaDOS) */
       if (do_replace)
       {
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
           break;
         }/* switch size */
 
-      
+
       if (symbol)
         printf ("%s(0x%x): %d (0x%x)\n", symbol, addr, lval, lval);
       else
@@ -349,7 +349,7 @@ static void Usage(char *pgname)
                  treated as a index if-and-only-if a '-b -w -l' option
                  was given. Otherwise it is treated like an offset.
                  See above documentation in for of help!
-*/ 
+*/
 static void FindOffset(char *symbol,u_long *index)
 {
   char *sb=strchr(symbol,'['); /* Start of '[', now line must
@@ -383,7 +383,7 @@ static void FindOffset(char *symbol,u_long *index)
       else
       {
         fprintf(stderr,"Error: Garbage trailing ']'\n");
-      } 
+      }
     }
     else
     {
@@ -413,7 +413,7 @@ static u_long FindAssign(char *symbol,u_long *rvalue)
     if (nscan != 1)
       error("Invalid value following '='");
     dr = 1;
-    *ce = '\0';/* Now were left with just symbol */ 
+    *ce = '\0';/* Now were left with just symbol */
   }/* if (ce) */
   return(dr);
 }/* FindAssign */

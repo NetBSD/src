@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.6 2000/03/16 16:37:20 kleink Exp $	*/
+/*	$NetBSD: drbbc.c,v 1.6.12.1 2002/02/28 04:06:35 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.6.12.1 2002/02/28 04:06:35 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -52,16 +55,16 @@
 
 #include <dev/ic/ds.h>
 
-int draco_ds_read_bit __P((void *));
-void draco_ds_write_bit __P((void *, int));
-void draco_ds_reset __P((void *));
+int draco_ds_read_bit(void *);
+void draco_ds_write_bit(void *, int);
+void draco_ds_reset(void *);
 
-void drbbc_attach __P((struct device *, struct device *, void *));
-int drbbc_match __P((struct device *, struct cfdata *, void *));
+void drbbc_attach(struct device *, struct device *, void *);
+int drbbc_match(struct device *, struct cfdata *, void *);
 
-int dracougettod __P((struct timeval *));
+int dracougettod(struct timeval *);
 #ifdef __NOTYET__
-int dracousettod __P((struct timeval *));
+int dracousettod(struct timeval *);
 #endif
 
 struct drbbc_softc {
@@ -78,10 +81,7 @@ struct cfattach drbbc_ca = {
 struct drbbc_softc *drbbc_sc;
 
 int
-drbbc_match(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+drbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int drbbc_matched = 0;
 
@@ -94,9 +94,7 @@ drbbc_match(pdp, cfp, auxp)
 }
 
 void
-drbbc_attach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+drbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int i;
 	struct drbbc_softc *sc;
@@ -112,25 +110,24 @@ drbbc_attach(pdp, dp, auxp)
 	sc->sc_dsh.ds_reset(sc->sc_dsh.ds_hw_handle);
 
 	ds_write_byte(&sc->sc_dsh, DS_ROM_READ);
-	for (i=0; i<8; ++i) 
+	for (i=0; i<8; ++i)
 		rombuf[i] = ds_read_byte(&sc->sc_dsh);
 
 	hostid = (rombuf[3] << 24) + (rombuf[2] << 16) +
 		(rombuf[1] << 8) + rombuf[7];
 
 	printf(": ROM %02x %02x%02x%02x%02x%02x%02x %02x (DraCo sernum %ld)\n",
-		rombuf[7], rombuf[6], rombuf[5], rombuf[4], 
+		rombuf[7], rombuf[6], rombuf[5], rombuf[4],
 		rombuf[3], rombuf[2], rombuf[1], rombuf[0],
-		hostid); 
-		
+		hostid);
+
 	ugettod = dracougettod;
 	usettod = (void *)0;
 	drbbc_sc = sc;
 }
 
 int
-draco_ds_read_bit(p)
-	void *p;
+draco_ds_read_bit(void *p)
 {
 	struct drioct *draco_ioct;
 
@@ -146,9 +143,7 @@ draco_ds_read_bit(p)
 }
 
 void
-draco_ds_write_bit(p, b)
-	void *p;
-	int b;
+draco_ds_write_bit(void *p, int b)
 {
 	struct drioct *draco_ioct;
 
@@ -163,8 +158,7 @@ draco_ds_write_bit(p, b)
 }
 
 void
-draco_ds_reset(p)
-	void *p;
+draco_ds_reset(void *p)
 {
 	struct drioct *draco_ioct;
 
@@ -174,8 +168,7 @@ draco_ds_reset(p)
 }
 
 int
-dracougettod(tvp)
-	struct timeval *tvp;
+dracougettod(struct timeval *tvp)
 {
 	u_int32_t clkbuf;
 	u_int32_t usecs;
@@ -188,7 +181,7 @@ dracougettod(tvp)
 	/* address of seconds/256: */
 	ds_write_byte(&drbbc_sc->sc_dsh, 0x02);
 	ds_write_byte(&drbbc_sc->sc_dsh, 0x02);
-	
+
 	usecs = (ds_read_byte(&drbbc_sc->sc_dsh) * 1000000) / 256;
 	clkbuf = ds_read_byte(&drbbc_sc->sc_dsh)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<8)
@@ -197,7 +190,7 @@ dracougettod(tvp)
 
 	/* BSD time is wr. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
 
-	clkbuf += (8*365 + 2) * 86400;	
+	clkbuf += (8*365 + 2) * 86400;
 
 	tvp->tv_sec = clkbuf;
 	tvp->tv_usec = usecs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.6.6.1 2001/08/24 00:09:04 nathanw Exp $	*/
+/*	$NetBSD: atareg.h,v 1.6.6.2 2002/02/28 04:13:12 nathanw Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -129,6 +129,7 @@ struct ataparams {
     u_int16_t	atap_cmd1_en;		/* 85: cmd/features enabled */
 /* bits are the same as atap_cmd_set1 */
     u_int16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
+#define	WDC_CAP_LBA48	(1L << 10)
 /* bits are the same as atap_cmd_set2 */
     u_int16_t	atap_cmd_def;		/* 87: cmd/features default */
 #if BYTE_ORDER == LITTLE_ENDIAN

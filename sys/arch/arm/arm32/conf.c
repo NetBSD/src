@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.3 2002/01/11 23:37:59 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.4 2002/02/28 04:07:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

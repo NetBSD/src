@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.18.2.3 2002/01/11 23:39:42 nathanw Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.18.2.4 2002/02/28 04:14:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.2.3 2002/01/11 23:39:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.2.4 2002/02/28 04:14:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

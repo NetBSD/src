@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.4.4.2 2002/01/11 23:38:53 nathanw Exp $
+;	$NetBSD: syscalls.master,v 1.4.4.3 2002/02/28 04:13:00 nathanw Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp 
 

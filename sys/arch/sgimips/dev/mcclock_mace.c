@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.2.2.2 2002/01/08 00:27:26 nathanw Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.2.2.3 2002/02/28 04:11:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -183,13 +183,7 @@ mcclock_mace_get(struct device *dev, struct clock_ymdhms *dt)
 	dt->dt_wday = FROMBCD(regs[MC_DOW]);
 	dt->dt_day = FROMBCD(regs[MC_DOM]);
 	dt->dt_mon = FROMBCD(regs[MC_MONTH]);
-	dt->dt_year = FROMBCD(regs[MC_YEAR]);
-
-	/* RTC base on IRIX is 1940, offsets < 45 are from 1970 */
-	if (dt->dt_year < 45)
-		dt->dt_year += 30;
-
-	dt->dt_year += IRIX_CLOCK_BASE;	/* 1940 */
+	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[MC_YEAR]));
 }
 
 static void
@@ -207,15 +201,7 @@ mcclock_mace_set(struct device *dev, struct clock_ymdhms *dt)
 	regs[MC_DOW] = TOBCD(dt->dt_wday);
 	regs[MC_DOM] = TOBCD(dt->dt_day);
 	regs[MC_MONTH] = TOBCD(dt->dt_mon);
-
-	/*
-	 * If year < 1985, store (year - 1970), else (year - 1940).  This
-	 * matches IRIX semantics.
-	 */
-	if (dt->dt_year < 1985)
-		dt->dt_year -= 30;
-
-	regs[MC_YEAR] = TOBCD(dt->dt_year - IRIX_CLOCK_BASE);	/* - 1940 */
+	regs[MC_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
 
 	s = splhigh();
 	MC146818_PUTTOD(sc, &regs);

@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.2.2.3 2002/01/08 00:30:38 nathanw Exp $ 
+ *	$Id: isic_isapnp.c,v 1.2.2.4 2002/02/28 04:13:50 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.2.2.3 2002/01/08 00:30:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.2.2.4 2002/02/28 04:13:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -102,7 +102,8 @@ typedef void (*attach_func)(struct l1_softc *sc);
 
 /* map allocators */
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
-	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)
+	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
+	|| defined(ISICPNP_ITKIX)
 static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
 #endif
 #ifdef ISICPNP_DRN_NGO
@@ -120,6 +121,7 @@ extern void isic_attach_drnngo __P((struct l1_softc *sc));
 extern void isic_attach_sws __P((struct l1_softc *sc));
 extern void isic_attach_Eqs1pi __P((struct l1_softc *sc));
 extern void isic_attach_siemens_isurf __P((struct l1_softc *sc));
+extern void isic_attach_isapnp_itkix1 __P((struct l1_softc *sc));
 
 struct isic_isapnp_card_desc {
 	char *devlogic;			/* ISAPNP logical device ID */
@@ -159,6 +161,10 @@ isic_isapnp_descriptions[] =
 	{ "SIE0020", "Siemens I-Surf 2.0 PnP", CARD_TYPEP_SIE_ISURF2,
 	  generic_pnp_mapalloc, isic_attach_siemens_isurf },
 #endif
+#ifdef ISICPNP_ITKIX
+	{ "ITK0025", "ix1-micro 3.0", 0,
+	  generic_pnp_mapalloc, isic_attach_isapnp_itkix1 },
+#endif
 };
 #define	NUM_DESCRIPTIONS	(sizeof(isic_isapnp_descriptions)/sizeof(isic_isapnp_descriptions[0]))
 
@@ -189,7 +195,6 @@ isic_isapnp_probe(parent, cf, aux)
 
 	return 0;
 }
-
 
 /*---------------------------------------------------------------------------*
  *	card independend attach for ISA P&P cards
@@ -235,6 +240,12 @@ isic_isapnp_attach(parent, self, aux)
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;
 
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	for (i = 0; i < NUM_DESCRIPTIONS; i++, desc++)
 		if (strcmp(ipa->ipa_devlogic, desc->devlogic) == 0)
 			break;
@@ -251,7 +262,7 @@ isic_isapnp_attach(parent, self, aux)
 	printf(": %s\n", desc->name);
 
 	/* establish interrupt handler */
-	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, IST_EDGE,
+	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, ipa->ipa_irq[0].type,
 		IPL_NET, isicintr, sc) == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 			sc->sc_dev.dv_xname);
@@ -369,7 +380,8 @@ isic_isapnp_attach(parent, self, aux)
 }
 
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
-	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)
+	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
+	|| defined(ISICPNP_ITKIX)
 static void
 generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
 {

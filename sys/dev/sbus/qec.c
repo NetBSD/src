@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.12.2.3 2002/01/08 00:31:44 nathanw Exp $ */
+/*	$NetBSD: qec.c,v 1.12.2.4 2002/02/28 04:14:21 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.3 2002/01/08 00:31:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.4 2002/02/28 04:14:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,14 +194,13 @@ qecattach(parent, self, aux)
 	}
 
 	/* Allocate a bus tag */
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag), 
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sbt == NULL) {
 		printf("%s: attach: out of memory\n", self->dv_xname);
 		return;
 	}
 
-	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
 	sbt->sparc_bus_map = qec_bus_map;

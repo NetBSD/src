@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcuvar.h,v 1.2.4.2 2002/01/11 23:38:26 nathanw Exp $	*/
+/*	$NetBSD: vrc4173bcuvar.h,v 1.2.4.3 2002/02/28 04:10:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -28,19 +28,7 @@
 
 #include <dev/pci/pcivar.h>
 
-struct vrc4173bcu_softc;
-
 struct vrc4173bcu_attach_args {
 	bus_space_tag_t vaa_iot;
 	bus_space_handle_t vaa_ioh;
 };
-
-int	vrc4173bcu_intr(void *);
-void	*vrc4173bcu_intr_establish(struct vrc4173bcu_softc *, int,
-	    int (*)(void *), void *);
-void	vrc4173bcu_intr_disestablish(struct vrc4173bcu_softc *, void *);
-int	vrc4173bcu_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *
-	vrc4173bcu_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
-const struct evcnt *
-	vrc4173bcu_pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);

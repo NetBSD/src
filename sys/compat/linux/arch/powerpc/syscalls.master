@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2.4.3 2001/09/21 22:35:18 nathanw Exp $  
+	$NetBSD: syscalls.master,v 1.2.4.4 2002/02/28 04:12:54 nathanw Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -174,9 +174,9 @@
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *set); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
+75	STD		{ int linux_sys_setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
+76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
@@ -348,9 +348,11 @@
 187	UNIMPL		getpmsg
 188	UNIMPL		putpmsg
 189	NOARGS		{ int sys___vfork14(void); }
-190	UNIMPL		sys_getrlimit
+190	STD		{ int linux_sys_ugetrlimit(int which, \
+			    struct rlimit *rlp); }
 191	UNIMPL		/* unused */
-192	UNIMPL		mmap2
+192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 193	UNIMPL		truncate64
 194	UNIMPL		ftruncate64
 195	UNIMPL		stat64

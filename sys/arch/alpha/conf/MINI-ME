@@ -1,0 +1,277 @@
+# $NetBSD: MINI-ME,v 1.5.4.2 2002/02/28 04:06:13 nathanw Exp $
+#
+# mini-me.shagadelic.org - thorpej's Multia
+#
+
+include	"arch/alpha/conf/std.alpha"
+
+maxusers 32
+
+makeoptions	DEBUG="-g"
+
+# CPU Support
+#options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+#options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+#options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+#options 	DEC_3000_300	# Pelican etc:	3000/300*
+options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
+#options 	DEC_EB164	# EB164:	AlphaPC 164
+#options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
+#options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
+#options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+#options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
+#options 	DEC_550		# Miata:	Digital Personal Workstation
+
+# Standard system options
+options 	KTRACE			# System call tracing support
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC		# Cheap kernel consistency checks
+options 	DDB			# Kernel Dynamic Debugger
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+
+# File systems
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system	MSDOSFS		# MS-DOS-compatible file system
+file-system	NFS		# Sun NFS-compatible file system client
+
+# File system options
+options 	NFSSERVER	# Sun NFS-compatible file system server
+#options 	FFS_EI		# FFS Endian Independant support
+
+# Networking options
+options 	INET		# Internet protocol suite
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options 	COMPAT_43
+
+# Binary compatibility with previous versions of NetBSD.
+#options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+
+# System V-like message queues
+options 	SYSVMSG
+
+# System V-like semaphores
+options 	SYSVSEM
+
+# System V-like shared memory
+options 	SYSVSHM
+#options 	SHMMAXPGS=1024		# 1024 pages is the default
+
+# Loadable Kernel Modules
+options 	LKM
+
+# Disable kernel security.
+#options 	INSECURE
+
+# Misc. options
+#options 	EISAVERBOSE		# recognize "unknown" EISA devices
+options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
+options 	SCSIVERBOSE		# Verbose SCSI errors
+#options 	TCVERBOSE		# recognize "unknown" TC devices
+options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# The Alpha console firmware network boots using the BOOTP
+# protocol, so we ask the NFS code to use BOOTP/DHCP as well,
+# in case we have NFS root.
+options 	NFS_BOOT_DHCP		# superset of BOOTP
+
+# WS console uses SUN terminal emulation
+#options 	WSEMUL_SUN
+options 	WSEMUL_VT100
+
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0 type ffs
+#config		netbsd	root on ? type nfs
+
+mainbus0 at	root
+cpu*	at	mainbus0
+
+# TurboLaser bus support and devices
+#tlsb*	at	mainbus0
+#gbus*	at	tlsb? node ? offset ?
+#tlsbmem* at	tlsb? node ? offset ?
+#kft*	at	tlsb? node ? offset ?
+
+# Gbus Devices
+#mcclock* at	gbus? offset ?
+
+# MCBUS bus support
+#mcbus*	at	mainbus0
+#mcmem*	at	mcbus? mid ?
+
+#i2c	at	mcbus?
+
+# TurboChannel host bus adapter support
+#tcasic*	at	mainbus0
+
+# TurboChannel bus support
+#tc*	at	tcasic?
+
+# TurboChannel devices
+#ioasic*	at	tc? slot ? offset ?
+#mcclock* at	ioasic? offset ?
+#le*	at	ioasic? offset ?
+#scc0	at	ioasic? offset ?
+#scc1	at	ioasic? offset ?
+#tcds*	at	tc? slot ? offset ?
+#asc*	at	tcds? chip ?
+#cfb*	at	tc? slot ? offset ?
+#sfb*	at	tc? slot ? offset ?
+#le*	at	tc? slot ? offset ?
+#fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+
+# PCI host bus adapter support
+#apecs*	at	mainbus?
+#cia*	at	mainbus?
+lca*	at	mainbus?
+#dwlpx*	at	kft?
+#mcpcia*	at	mcbus? mid ?
+
+# PCI bus support
+#pci*	at	apecs?
+#pci*	at	cia?
+pci*	at	lca?
+#pci*	at	ppb?
+#pci*	at	dwlpx?
+#pci*	at	mcpcia?
+
+# PCI devices
+#ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+#bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+#cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
+de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+#en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
+#ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
+#epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
+#fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
+#isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
+#le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+#pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+#ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+#pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+#wdc*	at	pciide? channel ?
+sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
+#vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+#eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
+#audio*	at	eap?
+
+# ISA/EISA bus support
+#isa*	at	pceb?
+#eisa*	at	pceb?
+isa*	at	sio?
+
+# ISA devices
+mcclock* at	isa? port 0x70
+pckbc*	at	isa?				# PC keyboard controller
+pckbd*	at	pckbc?				# PC keyboard (kbd port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
+pcppi*	at	isa?				# PC prog. periph. interface
+spkr0	at	pcppi?				# IBM BASIC emulation
+com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x2f8 irq 3
+#ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
+#lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
+#lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
+#depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
+#depca1	at	isa? port 0x200 iomem 0xd8000 iosiz 0x8000 irq 10 	# DEPCA
+#le*	at	depca?
+lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+#vga*	at	isa?				# ISA (EISA: XXX) VGA
+wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
+#wdc1	at	isa? port 0x170 irq 15
+wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+audio*	at	wss?
+#midi*	at	wss?
+#aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
+#aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
+#bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
+#bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
+#uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+#uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+pcic*	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic*	at	isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+
+# EISA devices
+#ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
+#ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+#bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
+#ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
+#fea*	at	eisa? slot ?			# DEC DEFEA FDDI
+#uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
+
+# PCMCIA bus support
+pcmcia*	at	pcic? controller ? socket ?
+
+# PCMCIA devices
+#aic*	at	pcmcia? function ?		# Adaptec APA-1460 SCSI
+com*	at	pcmcia? function ?		# Modems and serial cards
+wdc*	at	pcmcia? function ?		# PCMCIA IDE controllers
+ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
+#mbe*	at	pcmcia? function ?		# MB8696x based Ethernet
+ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
+sm*	at	pcmcia? function ?		# Megahertz Ethernet
+
+# SCSI bus support
+#scsibus* at	aha?
+#scsibus* at	ahb?
+#scsibus* at	ahc?
+#scsibus* at	asc?
+#scsibus* at	bha?
+#scsibus* at	isp?
+#scsibus* at	ncr?
+scsibus* at	siop?
+#scsibus* at	uha?
+
+# SCSI devices
+cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
+sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+st*	at	scsibus? target ? lun ?		# SCSI tape drives
+
+# ST506/ESDI/IDE devices
+wd*	at	wdc? drive ?
+
+# ATAPI bus support
+atapibus* at	wdc?
+
+# ATAPI devices
+sd*	at	atapibus? drive ?		# ATAPI disk devices
+cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# Floppy drives
+fd*	at	fdc? drive ?
+
+# Workstation Console attachments
+#wsdisplay*	at	cfb?
+#wsdisplay*	at	vga?
+#wsdisplay*	at	sfb?
+wsdisplay*	at	tga?
+wskbd*		at	pckbd?
+wsmouse*	at	pms?
+
+pseudo-device	bpfilter	16
+pseudo-device	ccd		4
+pseudo-device	ipfilter	1
+pseudo-device	loop		1
+pseudo-device	md		1
+pseudo-device	ppp		4
+pseudo-device	pty
+pseudo-device	sl		4
+pseudo-device	vnd		4
+
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness too

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.66.2.7 2002/01/08 00:31:07 nathanw Exp $ */
+/* $NetBSD: isp_pci.c,v 1.66.2.8 2002/02/28 04:14:03 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.66.2.7 2002/01/08 00:31:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.66.2.8 2002/02/28 04:14:03 nathanw Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -509,7 +509,12 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP2300 ||
 	    pa->pa_id == PCI_QLOGIC_ISP2312) {
 		isp->isp_mdvec = &mdvec_2300;
-		isp->isp_type = ISP_HA_FC_2300;
+		if (pa->pa_id == PCI_QLOGIC_ISP2300) {
+			isp->isp_type = ISP_HA_FC_2300;
+		} else {
+			isp->isp_type = ISP_HA_FC_2312;
+			isp->isp_port = pa->pa_function;
+		}
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
 			printf(nomem, isp->isp_name);
@@ -561,6 +566,9 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * enabled......
 	 */
 	data |= PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
+	if (IS_2300(isp)) {	/* per QLogic errata */
+		data &= ~PCI_COMMAND_INVALIDATE_ENABLE;
+	}
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
 	/*
@@ -723,6 +731,7 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, u_int16_t *isrp,
 	case ISPR2HST_MBX_OK:
 	case ISPR2HST_MBX_FAIL:
 	case ISPR2HST_ASYNC_EVENT:
+	case ISPR2HST_RIO_16:
 	case ISPR2HST_FPOST:
 	case ISPR2HST_FPOST_CTIO:
 		*isrp = r2hisr & 0xffff;
@@ -1125,6 +1134,10 @@ isp_pci_reset1(struct ispsoftc *isp)
 {
 	/* Make sure the BIOS is disabled */
 	isp_pci_wr_reg(isp, HCCR, PCI_HCCR_CMD_BIOS);
+	if (isp->isp_osinfo.no_mbox_ints == 0) {
+		ENABLE_INTS(isp);
+	}
+
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.45.2.3 2002/01/08 00:34:40 nathanw Exp $ */
+/* $NetBSD: device.h,v 1.45.2.4 2002/02/28 04:15:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -275,6 +275,9 @@ void	evcnt_detach(struct evcnt *);
 #define	device_lookup(cfd, unit)					\
 	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
 
+#ifdef DDB
+void event_print(int, void (*)(const char *, ...));
+#endif
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */

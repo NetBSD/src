@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44.4.2 2002/01/08 00:23:44 nathanw Exp $
+# $NetBSD: GENERIC,v 1.44.4.3 2002/02/28 04:08:36 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.44.4.2 $"
+#ident 		"GENERIC-$Revision: 1.44.4.3 $"
 
 maxusers	32
 
@@ -38,6 +38,7 @@ options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
 options 	NEWPMAP
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43
@@ -89,8 +90,16 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	wsmux		2
 

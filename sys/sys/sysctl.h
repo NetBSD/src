@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.4 2001/10/22 20:42:12 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.5 2002/02/28 04:15:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -178,7 +178,9 @@ struct ctlname {
 #define	KERN_PIPE		56	/* node: pipe limits */
 #define	KERN_MAXPHYS		57	/* int: kernel value of MAXPHYS */
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
-#define	KERN_MAXID		59	/* number of valid kern ids */
+#define	KERN_TKSTAT		59	/* tty in/out counters */
+#define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
+#define	KERN_MAXID		61	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -240,6 +242,8 @@ struct ctlname {
 	{ "pipe", CTLTYPE_NODE }, \
 	{ "maxphys", CTLTYPE_INT }, \
 	{ "sbmax", CTLTYPE_INT }, \
+	{ "tkstat", CTLTYPE_NODE }, \
+	{ "monotonic_clock", CTLTYPE_INT }, \
 }
 
 /*
@@ -437,6 +441,24 @@ struct kinfo_proc2 {
 #define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
 
 /*
+ * tty counter sysctl variables
+ */
+#define	KERN_TKSTAT_NIN			1	/* total input character */
+#define	KERN_TKSTAT_NOUT		2	/* total output character */
+#define	KERN_TKSTAT_CANCC		3	/* canonical input character */
+#define	KERN_TKSTAT_RAWCC		4	/* raw input character */
+#define	KERN_TKSTAT_MAXID		5	/* number of valid TKSTAT ids */
+
+#define	KERN_TKSTAT_NAMES { \
+	{ 0, 0 }, \
+	{ "nin", CTLTYPE_QUAD }, \
+	{ "nout", CTLTYPE_QUAD }, \
+	{ "cancc", CTLTYPE_QUAD }, \
+	{ "rawcc", CTLTYPE_QUAD }, \
+}
+
+
+/*
  * CTL_HW identifiers
  */
 #define	HW_MACHINE	 1		/* string: machine class */
@@ -446,7 +468,7 @@ struct kinfo_proc2 {
 #define	HW_PHYSMEM	 5		/* int: total memory */
 #define	HW_USERMEM	 6		/* int: non-kernel memory */
 #define	HW_PAGESIZE	 7		/* int: software page size */
-#define	HW_DISKNAMES	 8		/* strings: disk drive names */
+#define	HW_DISKNAMES	 8		/* string: disk drive names */
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
@@ -462,7 +484,7 @@ struct kinfo_proc2 {
 	{ "physmem", CTLTYPE_INT }, \
 	{ "usermem", CTLTYPE_INT }, \
 	{ "pagesize", CTLTYPE_INT }, \
-	{ "disknames", CTLTYPE_STRUCT }, \
+	{ "disknames", CTLTYPE_STRING }, \
 	{ "diskstats", CTLTYPE_STRUCT }, \
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
@@ -652,6 +674,8 @@ int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
 int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_rdminstruct(void *, size_t *, void *, const void *, int);
 int sysctl_clockrate(void *, size_t *);
+int sysctl_disknames(void *, size_t *);
+int sysctl_diskstats(int *, u_int, void *, size_t *);
 int sysctl_vnode(char *, size_t *, struct proc *);
 int sysctl_ntptime(void *, size_t *);
 #ifdef GPROF

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.31.2.4 2002/01/08 00:32:41 nathanw Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.31.2.5 2002/02/28 04:14:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.4 2002/01/08 00:32:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.5 2002/02/28 04:14:47 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -194,7 +194,7 @@ ttyldisc_add(disc, no)
 {
 
 	/* You are not allowed to exceed TTLINEDNAMELEN */
-	if (strlen(disc->l_name) > TTLINEDNAMELEN)
+	if (strlen(disc->l_name) >= TTLINEDNAMELEN)
 		return (-1);
 
 	/* 

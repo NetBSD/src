@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.1.2.2 2002/01/08 00:24:13 nathanw Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.1.2.3 2002/02/28 04:09:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -47,6 +47,8 @@
 
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
+
 #include <evbarm/ifpga/ifpgavar.h>
 #include <evbarm/ifpga/ifpgamem.h>
 #include <evbarm/ifpga/ifpgareg.h>

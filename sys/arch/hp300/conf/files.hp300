@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.46.4.2 2002/01/08 00:24:31 nathanw Exp $
+#	$NetBSD: files.hp300,v 1.46.4.3 2002/02/28 04:09:23 nathanw Exp $
 #
 # hp300-specific configuration info
 
@@ -185,6 +185,10 @@ file	arch/hp300/dev/ac.c		ac needs-flag
 # RAIDframe
 major	{raid = 15}
 
+# Memory Disk for ramdisk
+file	dev/md_root.c			memory_disk_hooks
+major	{md = 14}
+
 #
 # Non-device files
 #
@@ -209,7 +213,6 @@ file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
-file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
 file	dev/clock_subr.c
 file	dev/cons.c

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.16.8.2 2002/01/08 00:28:30 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.16.8.3 2002/02/28 04:12:29 nathanw Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -94,6 +94,8 @@ options 	COMPAT_15
 #options 	COMPAT_ULTRIX
 
 #options 	LKM
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile
 config		netbsd root on ? type ?

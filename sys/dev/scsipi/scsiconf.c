@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.7 2002/01/08 00:31:49 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.8 2002/02/28 04:14:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.7 2002/01/08 00:31:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.8 2002/02/28 04:14:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,6 +558,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296           ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST11200N SUN1.05", ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST15150N        ", ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,

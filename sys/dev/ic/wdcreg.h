@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.23.2.1 2002/02/23 22:55:59 gmcgarry Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.23.2.2 2002/02/28 04:13:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.14 2000/05/19 18:54:31 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.14.12.1 2002/02/28 04:09:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -537,7 +537,7 @@ spl_mtintr(arg)
 
 	hpibppclear(sc->sc_hpibno);
 	mtintr(sc);
-	(void) splx(s);
+	splx(s);
 }
 
 void
@@ -547,7 +547,7 @@ spl_mtstart(arg)
 	int s = splbio();
 
 	mtstart(arg);
-	(void) splx(s);
+	splx(s);
 }
 
 void

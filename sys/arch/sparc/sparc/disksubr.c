@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30.8.1 2002/01/08 00:27:44 nathanw Exp $ */
+/*	$NetBSD: disksubr.c,v 1.30.8.2 2002/02/28 04:12:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@ extern struct device *bootdv;
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines

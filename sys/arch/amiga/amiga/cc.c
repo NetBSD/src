@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.12 1998/08/20 19:55:06 veego Exp $	*/
+/*	$NetBSD: cc.c,v 1.12.30.1 2002/02/28 04:06:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.12.30.1 2002/02/28 04:06:19 nathanw Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -60,7 +63,7 @@ custom_chips_init()
  */
 LIST_HEAD(vbllist, vbl_node) vbl_list;
 
-void 
+void
 turn_vbl_function_off(n)
 	struct vbl_node *n;
 {
@@ -68,7 +71,7 @@ turn_vbl_function_off(n)
 		return;
 
 	n->flags |= VBLNF_TURNOFF;
-	while ((n->flags & VBLNF_OFF) == 0) 
+	while ((n->flags & VBLNF_OFF) == 0)
 		;
 }
 
@@ -80,7 +83,7 @@ turn_vbl_function_on(n)
 	n->flags &= (short) ~(VBLNF_OFF);
 }
 
-void                    
+void
 add_vbl_function(add, priority, data)
 	struct vbl_node *add;
 	short priority;
@@ -88,7 +91,7 @@ add_vbl_function(add, priority, data)
 {
 	int s;
 	struct vbl_node *n, *prev;
-	
+
 	s = spl3();
 	prev = NULL;
 	for (n = vbl_list.lh_first; n != NULL; n = n->link.le_next) {
@@ -151,7 +154,7 @@ cc_init_vbl()
 	/*
 	 * enable vertical blank interrupts
 	 */
-	custom.intena = INTF_SETCLR | INTF_VERTB; 
+	custom.intena = INTF_SETCLR | INTF_VERTB;
 }
 
 
@@ -171,7 +174,7 @@ is_blitter_busy()
 	u_short bb;
 
 	bb = (custom.dmaconr & DMAF_BLTDONE);
-	if ((custom.dmaconr & DMAF_BLTDONE) || bb) 
+	if ((custom.dmaconr & DMAF_BLTDONE) || bb)
 		return (1);
 	return (0);
 }
@@ -182,7 +185,7 @@ wait_blit()
 	/*
 	 * V40 state this covers all blitter bugs.
 	 */
-	while (is_blitter_busy()) 
+	while (is_blitter_busy())
 		;
 }
 
@@ -262,13 +265,13 @@ wait_tof()
 	 */
 	while ((custom.vposr & 0x0007) == 0)
 		;
-	
+
 	/*
 	 * wait until until top of frame.
 	 */
-	while (custom.vposr & 0x0007) 
+	while (custom.vposr & 0x0007)
 		;
-	
+
 	if (custom.vposr & 0x8000)
 		return;
 	/*
@@ -316,7 +319,7 @@ cc_init_copper()
 void
 copper_handler()
 {
-	custom.intreq = INTF_COPER;  
+	custom.intreq = INTF_COPER;
 }
 
 /*
@@ -329,7 +332,7 @@ copper_handler()
 struct audio_channel channel[4];
 
 /* audio vbl node for vbl function  */
-struct vbl_node audio_vbl_node;    
+struct vbl_node audio_vbl_node;
 
 void
 cc_init_audio()
@@ -483,13 +486,13 @@ cc_init_chipmem()
 
 	chip_size = chipmem_end - (chipmem_start + NBPG);
 	chip_total = chip_size - sizeof(*mem);
-    
+
 	mem = (struct mem_node *)chipmem_steal(chip_size);
 	mem->size = chip_total;
 
 	CIRCLEQ_INIT(&chip_list);
 	CIRCLEQ_INIT(&free_list);
-    
+
 	CIRCLEQ_INSERT_HEAD(&chip_list, mem, link);
 	CIRCLEQ_INSERT_HEAD(&free_list, mem, free_link);
 	splx(s);
@@ -507,7 +510,7 @@ alloc_chipmem(size)
 
 	s = splhigh();
 
-	if (size & ~(CM_BLOCKMASK)) 
+	if (size & ~(CM_BLOCKMASK))
 		size = (size & CM_BLOCKMASK) + CM_BLOCKSIZE;
 
 	/*
@@ -522,7 +525,7 @@ alloc_chipmem(size)
 
 	if ((mn->size - size) <= sizeof (*mn)) {
 		/*
-		 * our allocation would not leave room 
+		 * our allocation would not leave room
 		 * for a new node in between.
 		 */
 		CIRCLEQ_REMOVE(&free_list, mn, free_link);
@@ -571,7 +574,7 @@ free_chipmem(mem)
 	/*
 	 * check ahead of us.
 	 */
-	if (next->link.cqe_next != (void *)&chip_list && 
+	if (next->link.cqe_next != (void *)&chip_list &&
 	    next->free_link.cqe_next) {
 		/*
 		 * if next is: a valid node and a free node. ==> merge
@@ -601,7 +604,7 @@ free_chipmem(mem)
 		 * we still are not on free list and we need to be.
 		 * <-- | -->
 		 */
-		while (next->link.cqe_next != (void *)&chip_list && 
+		while (next->link.cqe_next != (void *)&chip_list &&
 		    prev->link.cqe_prev != (void *)&chip_list) {
 			if (next->free_link.cqe_next) {
 				CIRCLEQ_INSERT_BEFORE(&free_list, next, mn,
@@ -660,10 +663,10 @@ avail_chipmem(largest)
 		s = splhigh();
 		for (mn = free_list.cqh_first; mn != (void *)&free_list;
 		     mn = mn->free_link.cqe_next) {
-			if (mn->size > val) 
+			if (mn->size > val)
 				val = mn->size;
 		}
 		splx(s);
 	}
 	return (val);
-}	      
+}

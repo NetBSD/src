@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2.4.3 2002/01/11 23:38:00 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.2.4.4 2002/02/28 04:07:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2.4.3 2002/01/11 23:38:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2.4.4 2002/02/28 04:07:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2.4.3 2002/01/11 23:38:00 nathanw Exp $");
 extern char *memhook;            /* poor name! */
 caddr_t zeropage;
 int physlock;
+
 
 /*ARGSUSED*/
 int
@@ -101,7 +102,7 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	vm_prot_t prot;
 
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -123,8 +124,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
@@ -139,8 +139,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			break;
 
-/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
@@ -149,14 +148,12 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-/* minor device 2 is EOF/rathole */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		/* minor device 3 (/dev/zero) is source of nulls on read, rathole on write */
-		case 3:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
@@ -174,7 +171,7 @@ mmrw(dev, uio, flags)
 			return (ENXIO);
 		}
 	}
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 /*unlock:*/
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
@@ -199,7 +196,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(dev) != DEV_MEM)
 		return (-1);
 
 	/* minor device 0 is physical memory */

@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.14.2.5 2002/01/08 00:30:56 nathanw Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14.2.6 2002/02/28 04:13:53 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.32 2001/12/15 00:31:03 augustss Exp 
+ *	NetBSD: miidevs,v 1.34 2002/02/10 17:08:24 wiz Exp 
  */
 
 /*-
@@ -149,6 +149,8 @@
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
 #define	MII_STR_ICS_1890	"ICS1890 10/100 media interface"
+#define	MII_MODEL_ICS_1893	0x0004
+#define	MII_STR_ICS_1893	"ICS1893 10/100 media interface"
 
 /* Intel PHYs */
 #define	MII_MODEL_xxINTEL_I82553	0x0000
@@ -173,8 +175,10 @@
 #define	MII_STR_LEVEL1_LXT1000	"LXT1000 1000BASE-T media interface"
 
 /* Marvell Semiconductor PHYs */
-#define	MII_MODEL_xxMARVELL_E1000	0x0005
-#define	MII_STR_xxMARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_3	0x0003
+#define	MII_STR_xxMARVELL_E1000_3	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_5	0x0005
+#define	MII_STR_xxMARVELL_E1000_5	"Marvell 88E1000 Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccglb.c,v 1.9 1999/03/25 21:55:17 is Exp $	*/
+/*	$NetBSD: grfabs_ccglb.c,v 1.9.26.1 2002/02/28 04:06:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,9 @@
  */
 
 #include "opt_amigaccgrf.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs_ccglb.c,v 1.9.26.1 2002/02/28 04:06:43 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -68,7 +71,7 @@ cop_t std_copper_list[] = {
     {{{ R_DIWSTOP, 0x0000 }}},
 #if defined (GRF_ECS) || defined (GRF_AGA)
     {{{ R_DIWHIGH, 0x0000 }}},
-#endif 
+#endif
     {{{ R_DDFSTRT, 0x0000 }}},
     {{{ R_DDFSTOP, 0x0000 }}},
     {{{ R_BPLCON1, 0x0000 }}},
@@ -462,7 +465,7 @@ cop_t std_dlace_copper_list[] = {
     {{{ R_DIWSTOP, 0x0000 }}},
 #if defined (GRF_ECS) || defined (GRF_AGA)
     {{{ R_DIWHIGH, 0x0000 }}},
-#endif 
+#endif
     {{{ R_DDFSTRT, 0x0000 }}},
     {{{ R_DDFSTOP, 0x0000 }}},
     {{{ R_BPLCON1, 0x0000 }}},
@@ -502,9 +505,9 @@ cop_t std_a2024_copper_list[] = {
     {{{ CI_WAIT(126,21), 0xfffe }}}, {{{ R_COLOR01, 0x0001 }}}, /* Display Quadrent */
     {{{ CI_WAIT(158,21), 0xfffe }}}, {{{ R_COLOR01, 0x08f0 }}}, /* Stuff */
     {{{ CI_WAIT(190,21), 0xfffe }}}, {{{ R_COLOR01, 0x0ff1 }}}, /* Stuff2 */
-    {{{ CI_WAIT(0,22), 0xfffe }}},			  
-    {{{ R_COLOR00, 0x0000 }}}, {{{ R_BPLCON0, 0x0000 }}}, 
-    {{{ CI_WAIT(0,43), 0xfffe }}},			  
+    {{{ CI_WAIT(0,22), 0xfffe }}},
+    {{{ R_COLOR00, 0x0000 }}}, {{{ R_BPLCON0, 0x0000 }}},
+    {{{ CI_WAIT(0,43), 0xfffe }}},
     /* set the registers up. */
     {{{ R_COLOR00, 0x0009 }}}, {{{ R_COLOR01, 0x0001 }}},
     {{{ R_COLOR02, 0x0008 }}}, {{{ R_COLOR03, 0x0000 }}},
@@ -533,7 +536,7 @@ cop_t std_a2024_copper_list[] = {
     {{{ R_BPL0PTH, 0x0000 }}}, {{{ R_BPL0PTL, 0x0000 }}},
     {{{ R_BPL1PTH, 0x0000 }}}, {{{ R_BPL1PTL, 0x0000 }}},
     {{{ R_BPL2PTH, 0x0000 }}}, {{{ R_BPL2PTL, 0x0000 }}},
-    {{{ R_BPL3PTH, 0x0000 }}}, {{{ R_BPL3PTL, 0x0000 }}}, 
+    {{{ R_BPL3PTH, 0x0000 }}}, {{{ R_BPL3PTL, 0x0000 }}},
 #if defined (GRF_ECS) || defined (GRF_AGA)
     {{{ R_DIWHIGH, 0x2000 }}},
 #if defined (GRF_AGA)
@@ -565,7 +568,7 @@ cop_t std_pal_a2024_copper_list[] = {
     {{{ CI_WAIT(126,29), 0xfffe }}}, {{{ R_COLOR01, 0x0001 }}}, /* Display Quadrent */
     {{{ CI_WAIT(158,29), 0xfffe }}}, {{{ R_COLOR01, 0x08f0 }}}, /* Stuff */
     {{{ CI_WAIT(190,29), 0xfffe }}}, {{{ R_COLOR01, 0x0ff1 }}}, /* Stuff2 */
-    {{{ CI_WAIT(0,30), 0xfffe }}},			  
+    {{{ CI_WAIT(0,30), 0xfffe }}},
     {{{ R_COLOR00, 0x0000 }}}, {{{ R_BPLCON0, 0x0000 }}},
     {{{ CI_WAIT(0,43), 0xfffe }}},
 
@@ -597,7 +600,7 @@ cop_t std_pal_a2024_copper_list[] = {
     {{{ R_BPL0PTH, 0x0000 }}}, {{{ R_BPL0PTL, 0x0000 }}},
     {{{ R_BPL1PTH, 0x0000 }}}, {{{ R_BPL1PTL, 0x0000 }}},
     {{{ R_BPL2PTH, 0x0000 }}}, {{{ R_BPL2PTL, 0x0000 }}},
-    {{{ R_BPL3PTH, 0x0000 }}}, {{{ R_BPL3PTL, 0x0000 }}}, 
+    {{{ R_BPL3PTH, 0x0000 }}}, {{{ R_BPL3PTL, 0x0000 }}},
 #if defined (GRF_ECS) || defined (GRF_AGA)
     {{{ R_DIWHIGH, 0x2100 }}},
 #if defined (GRF_AGA)

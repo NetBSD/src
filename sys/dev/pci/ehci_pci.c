@@ -1,7 +1,7 @@
-/*	$NetBSD: ehci_pci.c,v 1.3.4.2 2002/01/11 23:39:17 nathanw Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.3.4.3 2002/02/28 04:13:58 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.3.4.2 2002/01/11 23:39:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.3.4.3 2002/02/28 04:13:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

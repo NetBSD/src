@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.1.8.2 2002/01/11 23:38:42 nathanw Exp $	*/
+/*	$NetBSD: bat.h,v 1.1.8.3 2002/02/28 04:11:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

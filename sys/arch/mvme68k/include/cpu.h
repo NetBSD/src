@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.8.4 2001/12/08 08:22:42 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.8.5 2002/02/28 04:10:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,6 +149,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 /*
  * Associate MVME models with CPU types.
  */
+#define	MVME68K		1	
 
 /*
  * MVME-147; 68030 CPU

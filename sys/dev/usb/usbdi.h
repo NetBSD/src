@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.49.2.3 2002/01/08 00:32:22 nathanw Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.49.2.4 2002/02/28 04:14:37 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -139,10 +139,11 @@ usbd_status usbd_do_request_async(usbd_device_handle pipe,
 				  usb_device_request_t *req, void *data);
 usbd_status usbd_do_request_flags(usbd_device_handle pipe,
 				  usb_device_request_t *req, 
-				  void *data, u_int16_t flags, int *);
+				  void *data, u_int16_t flags, int*, u_int32_t);
 usbd_status usbd_do_request_flags_pipe(
 	usbd_device_handle dev, usbd_pipe_handle pipe,
-	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen);
+	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen,
+	u_int32_t);
 usb_interface_descriptor_t *usbd_get_interface_descriptor
 				(usbd_interface_handle iface);
 usb_config_descriptor_t *usbd_get_config_descriptor(usbd_device_handle dev);
@@ -150,7 +151,7 @@ usb_device_descriptor_t *usbd_get_device_descriptor(usbd_device_handle dev);
 usbd_status usbd_set_interface(usbd_interface_handle, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 usbd_status  usbd_get_interface(usbd_interface_handle iface, u_int8_t *aiface);
-void usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di, int);
+void usbd_fill_deviceinfo(usbd_device_handle, struct usb_device_info *, int);
 int usbd_get_interface_altindex(usbd_interface_handle iface);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *cd,

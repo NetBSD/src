@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hpcmips.h,v 1.2.2.3 2002/01/11 23:38:25 nathanw Exp $	*/
+/*	$NetBSD: bus_dma_hpcmips.h,v 1.2.2.4 2002/02/28 04:09:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.

@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.14.2.5 2002/01/08 00:30:55 nathanw Exp $
+$NetBSD: miidevs,v 1.14.2.6 2002/02/28 04:13:53 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1890			0x0002 ICS1890 10/100 media interface
+model ICS 1893			0x0004 ICS1893 10/100 media interface
 
 /* Intel PHYs */
 model xxINTEL I82553		0x0000 i82553 10/100 media interface
@@ -141,7 +142,8 @@ model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 
 /* Marvell Semiconductor PHYs */
-model xxMARVELL E1000		0x0005 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface

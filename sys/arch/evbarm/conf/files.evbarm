@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4.2.3 2002/01/08 00:24:11 nathanw Exp $
+#	$NetBSD: files.evbarm,v 1.4.2.4 2002/02/28 04:09:07 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -21,7 +21,7 @@ include "dev/ata/files.ata"
 major	{wd = 16}
 
 # Memory disk driver
-file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
+file	dev/md_root.c				md & memory_disk_hooks
 major	{md = 18}
 
 # RAIDframe
@@ -43,9 +43,6 @@ file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
 
-file	arch/arm/arm32/intr.c
-file	arch/arm/arm32/spl.S
-
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
@@ -66,8 +63,6 @@ include "dev/i2o/files.i2o"			# I2O drivers.
 include "dev/pci/files.pci"			# PCI devices
 include "dev/usb/files.usb"			# USB device
 include "dev/cardbus/files.cardbus"		# CARDBus device
-
-file	arch/evbarm/pci/pciide_machdep.c	pciide
 
 #
 # ARM evaluation board specific devices

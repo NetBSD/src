@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.28 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.28.26.1 2002/02/28 04:06:42 nathanw Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -38,10 +38,14 @@
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.28.26.1 2002/02/28 04:06:42 nathanw Exp $");
+
 #include "grful.h"
 #if NGRFUL > 0
 
-/* Graphics routines for the University of Lowell A2410 board, 
+/* Graphics routines for the University of Lowell A2410 board,
    using the TMS34010 processor. */
 
 #include <sys/param.h>
@@ -63,22 +67,22 @@
 
 extern u_int16_t tmscode[];
 
-int ul_ioctl __P((struct grf_softc *, u_long, void *, dev_t));
-int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
-int ul_putcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
-int ul_bitblt __P((struct grf_softc *, struct grf_bitblt *, dev_t));
-int ul_blank __P((struct grf_softc *, int *, dev_t));
+int ul_ioctl(struct grf_softc *, u_long, void *, dev_t);
+int ul_getcmap(struct grf_softc *, struct grf_colormap *, dev_t);
+int ul_putcmap(struct grf_softc *, struct grf_colormap *, dev_t);
+int ul_bitblt(struct grf_softc *, struct grf_bitblt *, dev_t);
+int ul_blank(struct grf_softc *, int *, dev_t);
 
-static int ulisr __P((void *));
-int ulowell_alive __P((struct grfvideo_mode *));
-static void ul_load_code __P((struct grf_softc *));
-static int ul_load_mon __P((struct grf_softc *, struct grfvideo_mode *));
-static int ul_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-static int ul_setvmode __P((struct grf_softc *, unsigned));
-static __inline void ul_setfb __P((struct grf_softc *, u_long));
+static int ulisr(void *);
+int ulowell_alive(struct grfvideo_mode *);
+static void ul_load_code(struct grf_softc *);
+static int ul_load_mon(struct grf_softc *, struct grfvideo_mode *);
+static int ul_getvmode(struct grf_softc *, struct grfvideo_mode *);
+static int ul_setvmode(struct grf_softc *, unsigned);
+static __inline void ul_setfb(struct grf_softc *, u_long);
 
 /*
- * marked true early so that ulowell_cnprobe() can tell if we are alive. 
+ * marked true early so that ulowell_cnprobe() can tell if we are alive.
  */
 int ulowell_inited;
 
@@ -90,7 +94,7 @@ u_int8_t ul_std_palette[] = {
 
 u_int8_t ul_ovl_palette[] = {
 	128, 0, 0, 0,
-	128, 0, 0, 0, 
+	128, 0, 0, 0,
 	128, 0, 0, 0};
 
 struct grfvideo_mode ul_monitor_defs[] = {
@@ -150,13 +154,13 @@ int ulowell_mon_max = sizeof (ul_monitor_defs)/sizeof (ul_monitor_defs[0]);
 int ulowell_default_mon = ULOWELL_DEFAULT_MON;
 int ulowell_default_gfx = ULOWELL_DEFAULT_MON;
 
-/* 
+/*
  * yes, this should be per board. We don't pay service to multiple boards,
  * anyway.
  */
 
 u_long ulowell_clock[2] = { ULOWELL_OSC2, ULOWELL_OSC1 };
-    
+
 static struct grfvideo_mode *current_mon;
 
 /*
@@ -164,7 +168,7 @@ static struct grfvideo_mode *current_mon;
  * busy_waiting in gsp_write, and we use it for spurious int warnings.
  */
 
-static int 
+static int
 ulisr(arg)
 	void *arg;
 {
@@ -186,7 +190,7 @@ ulisr(arg)
 		/* clear int */
 		ba->ctrl = thebits & ~INTOUT;
 		return 1;
-	} 
+	}
 	return 0;
 }
 
@@ -258,7 +262,7 @@ ul_load_code(gp)
 	ba->data = 7;
 	ba->hstadrl = 0x20;
 	ba->data = 0;		/* voodoo */
-	
+
 	/* clear overlay planes */
 	ba->ctrl |= INCW;
 	ba->hstadrh = 0xff80;
@@ -299,15 +303,15 @@ ul_load_code(gp)
 		ba->data = gup->gus_imcmap[i+512] = ul_std_palette[i+32];
 	}
 
-	/* 
-	 * XXX load shadow overlay palette with what the TMS code will load 
-	 * into the real one some time after the TMS code is started below. 
+	/*
+	 * XXX load shadow overlay palette with what the TMS code will load
+	 * into the real one some time after the TMS code is started below.
 	 * This might be considered a rude hack.
-	 */ 
+	 */
 	bcopy(ul_ovl_palette, gup->gus_ovcmap, 3*4);
 
-	/* 
-	 * Unflush cache, unhalt cpu -> nmi starts to run. This MUST NOT BE 
+	/*
+	 * Unflush cache, unhalt cpu -> nmi starts to run. This MUST NOT BE
 	 * DONE before the image color map initialization above, to guarantee
 	 * the index register in the BT458 is not used by more than one CPU
 	 * at once.
@@ -315,35 +319,35 @@ ul_load_code(gp)
 	 * XXX For the same reason, we'll have to rething ul_putcmap(). For
 	 * details, look at comment there.
 	 */
-	ba->ctrl &= ~(HLT|CF);	
+	ba->ctrl &= ~(HLT|CF);
 
 #else
 	/*
-	 * XXX I wonder why this partially ever worked. 
+	 * XXX I wonder why this partially ever worked.
 	 *
 	 * This can't possibly work this way, as we are copyin()ing data in
 	 * ul_putcmap.
 	 *
-	 * I guess this partially worked because SFC happened to point to 
-	 * to supervisor data space on 68030 machines coming from the old 
+	 * I guess this partially worked because SFC happened to point to
+	 * to supervisor data space on 68030 machines coming from the old
 	 * boot loader.
 	 *
 	 * While this looks more correct than the hack in the other part of the
-	 * loop, we would have to do our own version of the loop through 
+	 * loop, we would have to do our own version of the loop through
 	 * colormap entries, set up command buffer, and call gsp_write(), or
 	 * factor out some code.
 	 */
 
 	/*
-	 * XXX This version will work for the overlay, if our queue codes 
+	 * XXX This version will work for the overlay, if our queue codes
 	 * initial conditions are set at load time (not start time).
-	 * It further assumes that ul_putcmap only uses the 
+	 * It further assumes that ul_putcmap only uses the
 	 * GRFIMDEV/GRFOVDEV bits of the dev parameter.
 	 */
 
 
 	/* unflush cache, unhalt cpu first -> nmi starts to run */
-	ba->ctrl &= ~(HLT|CF);	
+	ba->ctrl &= ~(HLT|CF);
 
 	gcm.index = 0;
 	gcm.count = 16;
@@ -435,12 +439,12 @@ ul_load_mon(gp, md)
 	return(1);
 }
 
-int ul_mode __P((struct grf_softc *, u_long, void *, u_long, int));
+int ul_mode(struct grf_softc *, u_long, void *, u_long, int);
 
-void grfulattach __P((struct device *, struct device *, void *));
-int grfulprint __P((void *, const char *));
-int grfulmatch __P((struct device *, struct cfdata *, void *));
- 
+void grfulattach(struct device *, struct device *, void *);
+int grfulprint(void *, const char *);
+int grfulmatch(struct device *, struct cfdata *, void *);
+
 struct cfattach grful_ca = {
 	sizeof(struct grf_ul_softc), grfulmatch, grfulattach
 };
@@ -454,7 +458,7 @@ static struct cfdata *cfdata;
  * we make sure to only init things once.  this is somewhat
  * tricky regarding the console.
  */
-int 
+int
 grfulmatch(pdp, cfp, auxp)
 	struct device *pdp;
 	struct cfdata *cfp;
@@ -488,17 +492,17 @@ grfulmatch(pdp, cfp, auxp)
 		current_mon = ul_monitor_defs + ulowell_default_mon - 1;
 		if (ulowell_alive(current_mon) == 0)
 			return(0);
-#ifdef ULOWELLCONSOLE 
+#ifdef ULOWELLCONSOLE
 		if (amiga_realconfig == 0) {
 			ulconunit = cfp->cf_unit;
 			cfdata = cfp;
-		} 
+		}
 	}
 #endif
 	return(1);
 }
 
-/* 
+/*
  * attach to the grfbus (zbus)
  */
 void
@@ -512,8 +516,8 @@ grfulattach(pdp, dp, auxp)
 	struct grf_ul_softc *gup;
 
 	zap = auxp;
-	
-	if (dp == NULL) 
+
+	if (dp == NULL)
 		gup = &congrf;
 	else
 		gup = (struct grf_ul_softc *)dp;
@@ -524,14 +528,14 @@ grfulattach(pdp, dp, auxp)
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
-		bcopy(&congrf.gus_sc.g_display, &gp->g_display, 
+		bcopy(&congrf.gus_sc.g_display, &gp->g_display,
 		    (char *)&gup->gus_isr - (char *)&gp->g_display);
 
 		/* ...and transfer the isr */
 		gup->gus_isr.isr_ipl = 2;
 		gup->gus_isr.isr_intr = ulisr;
 		gup->gus_isr.isr_arg = (void *)gp;
-		/* 
+		/*
 		 * To make sure ints are always catched, first add new isr
 		 * then remove old:
 		 */
@@ -574,7 +578,7 @@ grfulprint(auxp, pnp)
 	return(UNCONF);
 }
 
-static int 
+static int
 ul_getvmode (gp, vm)
 	struct grf_softc *gp;
 	struct grfvideo_mode *vm;
@@ -588,7 +592,7 @@ ul_getvmode (gp, vm)
 		vm->mode_num = current_mon - ul_monitor_defs + 1;
 
 	md = ul_monitor_defs + vm->mode_num - 1;
-	strncpy (vm->mode_descr, md->mode_descr, 
+	strncpy (vm->mode_descr, md->mode_descr,
 		sizeof (vm->mode_descr));
 
 	/* XXX should tell TMS to measure it */
@@ -612,7 +616,7 @@ ul_getvmode (gp, vm)
 }
 
 
-static int 
+static int
 ul_setvmode (gp, mode)
 	struct grf_softc *gp;
 	unsigned mode;
@@ -694,7 +698,7 @@ ul_mode(gp, cmd, arg, a2, a3)
 	case GM_GRFOVOFF:
 		ul_setfb (gp, cmd);
 		return 0;
-		  
+
 	case GM_GRFCONFIG:
 		gd = (struct grfdyninfo *)arg;
 		for (i=0; i<ulowell_mon_max; ++i) {
@@ -720,7 +724,7 @@ ul_mode(gp, cmd, arg, a2, a3)
 	default:
 		break;
 	}
-		
+
 	return EINVAL;
 }
 
@@ -769,7 +773,7 @@ ul_ioctl (gp, cmd, data, dev)
 	}
 
 	return EINVAL;
-}     
+}
 
 int
 ul_getcmap (gp, cmap, dev)
@@ -790,7 +794,7 @@ ul_getcmap (gp, cmap, dev)
 		mxidx = 4;
 		mymap = gup->gus_ovcmap;
 	}
-	
+
 	if (cmap->count == 0 || cmap->index >= mxidx)
 		return 0;
 
@@ -801,10 +805,10 @@ ul_getcmap (gp, cmap, dev)
 
 	if ((error = copyout(mymap + cmap->index, cmap->red, cmap->count))
 
-	    || (error = copyout(mymap + mxidx + cmap->index, cmap->green, 
+	    || (error = copyout(mymap + mxidx + cmap->index, cmap->green,
 		cmap->count))
 
-	    || (error = copyout(mymap + mxidx * 2 + cmap->index, cmap->blue, 
+	    || (error = copyout(mymap + mxidx * 2 + cmap->index, cmap->blue,
 		cmap->count)))
 
 		return(error);
@@ -851,14 +855,14 @@ ul_putcmap (gp, cmap, dev)
 		cmap->count)))
 
 		return error;
-		
+
 
 	/* then write from there to the hardware */
 	ba = (struct gspregs *)gp->g_regkva;
 	/*
 	 * XXX This is a bad thing to do.
-	 * We should always use the gsp call, or have a means to arbitrate 
-	 * the usage of the BT458 index register. Else there might be a 
+	 * We should always use the gsp call, or have a means to arbitrate
+	 * the usage of the BT458 index register. Else there might be a
 	 * race condition (when writing both colormaps at nearly the same
 	 * time), where one CPU changes the index register when the other
 	 * one has not finished using it.
@@ -909,14 +913,14 @@ ul_blank(gp, onoff, dev)
 		gsp->data |= 0x9000;
 	else
 		gsp->data &= ~0x9000;
-		
+
 	return 0;
 }
 /*
  * !!! THIS AREA UNDER CONSTRUCTION !!!
  */
 int ul_BltOpMap[16] = {
-	3, 1, 2, 0, 11,  9, 10, 8, 
+	3, 1, 2, 0, 11,  9, 10, 8,
 	7, 5, 6, 4, 15, 13, 14, 12
 };
 
@@ -961,7 +965,7 @@ gsp_write(gsp, ptr, size)
 
 	GSPSETHADRS(gsp, GET_PTR_ADRS);
 	next = gsp->data;
-	
+
 	while (next == new_put) {
 		/*
 		 * we should use an intr. here. unfortunately, we already

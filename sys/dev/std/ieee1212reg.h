@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.1.8.2 2001/08/24 00:10:58 nathanw Exp $ */
+/*        $NetBSD: ieee1212reg.h,v 1.1.8.3 2002/02/28 04:14:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 #define	P1212_KEYVALUE_Module_Hw_Version	0x04	/* immediate */
 #define	P1212_KEYVALUE_Module_Spec_Id		0x05	/* immediate */
 #define	P1212_KEYVALUE_Module_Sw_Version	0x06	/* immediate */
-#define	P1212_KEYVALUE_Module_Dependent_info	0x07	/* leaf | directory */
+#define	P1212_KEYVALUE_Module_Dependent_Info	0x07	/* leaf | directory */
 #define	P1212_KEYVALUE_Node_Vendor_Id		0x08	/* immediate */
 #define	P1212_KEYVALUE_Node_Hw_Version		0x09	/* immediate */
 #define	P1212_KEYVALUE_Node_Spec_Id		0x0a	/* immediate */
@@ -222,6 +222,10 @@
  *	[2]	0xllllllll		language id
  */
 
+#define	P1212_TEXT_Min_Leaf_Length 0x3
+#define P1212_TEXT_GET_Spec_Type(quadlet)	(((quadlet) & 0xff000000) >> 24)
+#define P1212_TEXT_GET_Spec_Id(quadlet)		((quadlet) & 0xffffff)
+
 /*
  * Directory nodes look like:
  *	[0]	0xnnnn-0xcccc		length, crc16
@@ -230,7 +234,22 @@
  */
 
 /* Some definitions for the p1212_find routines. */
+
 #define P1212_FIND_SEARCHALL          0x1
 #define P1212_FIND_RETURNALL          0x2
+
+/* Mask definitions for overriding the p1212 standard checks. */
+
+/*
+ * XXX: Note that some of these go away if full p1212r support is done as
+ * a lot of the restrictions were lifted there in what can go where. 
+ */
+
+
+/* Normally dependent info can only be leaf or directory. Allow offsets also */
+#define P1212_ALLOW_DEPENDENT_INFO_OFFSET_TYPE	0x1
+
+/* Same thing applies for immediate types. */
+#define P1212_ALLOW_DEPENDENT_INFO_IMMED_TYPE	0x2
 
 #endif	/* _DEV_STD_IEEE1212REG_H_ */

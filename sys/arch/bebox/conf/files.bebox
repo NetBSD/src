@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.29.4.2 2002/01/08 00:23:46 nathanw Exp $
+#	$NetBSD: files.bebox,v 1.29.4.3 2002/02/28 04:08:37 nathanw Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -49,7 +49,7 @@ major	{wd = 0}
 #
 # Memory Disk for install floppy
 #
-file arch/bebox/bebox/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{md = 17}
 
 #
@@ -152,11 +152,7 @@ attach	fd at fdc
 major	{fd = 2}
 
 # Game adapter (joystick)
-device	joy
-file	arch/bebox/isa/joy.c		joy needs-flag
-
-attach	joy at isa with joy_isa
-file	arch/bebox/isa/joy_isa.c		joy_isa
+file	arch/bebox/isa/joy_timer.c	joy
 
 # ISA Plug 'n Play support
 file	arch/bebox/isa/isapnp_machdep.c		isapnp

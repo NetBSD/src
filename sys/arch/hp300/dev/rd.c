@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.45.4.2 2002/01/08 00:24:36 nathanw Exp $	*/
+/*	$NetBSD: rd.c,v 1.45.4.3 2002/02/28 04:09:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -264,6 +264,7 @@ int	rdgetinfo __P((dev_t));
 void	rdrestart __P((void *));
 struct buf *rdfinish __P((struct rd_softc *, struct buf *));
 
+void	rdgetdefaultlabel __P((struct rd_softc *, struct disklabel *));
 void	rdrestart __P((void *));
 void	rdustart __P((struct rd_softc *));
 struct buf *rdfinish __P((struct rd_softc *, struct buf *));
@@ -1191,8 +1192,46 @@ rdioctl(dev, cmd, data, flag, p)
 				       (struct cpu_disklabel *)0);
 		sc->sc_flags = flags;
 		return (error);
+
+	case DIOCGDEFLABEL:
+		rdgetdefaultlabel(sc, (struct disklabel *)data);
+		return (0);
 	}
 	return(EINVAL);
+}
+
+void
+rdgetdefaultlabel(sc, lp)
+	struct rd_softc *sc;
+	struct disklabel *lp;
+{
+	int type = sc->sc_type;
+
+	memset((caddr_t)lp, 0, sizeof(struct disklabel));
+
+	lp->d_type = DTYPE_HPIB;
+	lp->d_secsize = rdidentinfo[type].ri_nbpt;
+	lp->d_ntracks = rdidentinfo[type].ri_ntpc;
+	lp->d_nsectors = rdidentinfo[type].ri_nblocks;
+	lp->d_ncylinders = rdidentinfo[type].ri_ncyl;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	
+	strncpy(lp->d_typename, rdidentinfo[type].ri_desc, 16);
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
+	lp->d_rpm = 3000;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1.8.3 2002/01/11 23:38:43 nathanw Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.8.4 2002/02/28 04:11:27 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

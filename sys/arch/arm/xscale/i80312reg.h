@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.8.2.2 2002/01/08 00:23:19 nathanw Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.8.2.3 2002/02/28 04:07:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -201,24 +201,21 @@
 /*
  * Performance Monitoring Unit
  */
-#define	I80312_PMU_GTMR		0x00
-#define	I80312_PMU_ESR		0x04
-#define	I80312_PMU_EMISR	0x08
-#define	I80312_PMU_GTSR		0x10
-#define	I80312_PMU_PECR1	0x14
-#define	I80312_PMU_PECR2	0x18
-#define	I80312_PMU_PECR3	0x1c
-#define	I80312_PMU_PECR4	0x20
-#define	I80312_PMU_PECR5	0x24
-#define	I80312_PMU_PECR6	0x28
-#define	I80312_PMU_PECR7	0x2c
-#define	I80312_PMU_PECR8	0x30
-#define	I80312_PMU_PECR9	0x34
-#define	I80312_PMU_PECR10	0x38
-#define	I80312_PMU_PECR11	0x3c
-#define	I80312_PMU_PECR12	0x40
-#define	I80312_PMU_PECR13	0x44
-#define	I80312_PMU_PECR14	0x48
+#define	I80312_PMU_GTMR		0x00	/* Global Timer Mode Register */
+#define	I80312_PMU_ESR		0x04	/* Event Select Register */
+#define	I80312_PMU_EMISR	0x08	/* Event Monitoring Int Stat Reg */
+#define	I80312_PMU_GTSR		0x10	/* Global Time Stamp Register */
+					/* Programmable Event Counter Regs */
+#define	I80312_PMU_PECR(x)	(0x14 + (4 * ((x) - 1)))
+
+#define	PMU_GTMR_INTEN		(1U << 0)
+#define	PMU_GTMR_CNTRDIS	(1U << 2)
+
+#define	PMU_ESR_MODE(x)		((x))
+#define	PMU_ESR_PMIE		(1U << 16)
+
+#define	PMU_EMISR_GTS		(1U << 0)
+#define	PMU_EMISR_PECRS(x)	(1U << (x))
 
 /*
  * Address Translation Unit

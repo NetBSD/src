@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200reg.h,v 1.1.2.2 2002/01/08 00:23:18 nathanw Exp $	*/
+/*	$NetBSD: i80200reg.h,v 1.1.2.3 2002/02/28 04:07:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -50,18 +50,18 @@
  *	CP13.2		Interrupt Steer
  */
 
-#define	INTCTL_FM	(1U << 0)	/* external FIQ# enable */
-#define	INTCTL_IM	(1U << 1)	/* external IRQ# enable */
-#define	INTCTL_PM	(1U << 2)	/* PMU interrupt enable */
-#define	INTCTL_BM	(1U << 3)	/* BCU interrupt enable */
+#define	INTCTL_FM	0x00000001	/* external FIQ# enable */
+#define	INTCTL_IM	0x00000002	/* external IRQ# enable */
+#define	INTCTL_PM	0x00000004	/* PMU interrupt enable */
+#define	INTCTL_BM	0x00000008	/* BCU interrupt enable */
 
-#define	INTSRC_PI	(1U << 28)	/* PMU interrupt */
-#define	INTSRC_BM	(1U << 29)	/* BCU interrupt */
-#define	INTSRC_II	(1U << 30)	/* external IRQ# */
-#define	INTSRC_FI	(1U << 31)	/* external FIQ# */
+#define	INTSRC_PI	0x10000000	/* PMU interrupt */
+#define	INTSRC_BM	0x20000000	/* BCU interrupt */
+#define	INTSRC_II	0x40000000	/* external IRQ# */
+#define	INTSRC_FI	0x80000000	/* external FIQ# */
 
-#define	INTSTR_PS	(1U << 0)	/* PMU 0 = IRQ, 1 = FIQ */
-#define	INTSTR_BS	(1U << 1)	/* BCU 0 = IRQ, 1 = FIQ */
+#define	INTSTR_PS	0x00000001	/* PMU 0 = IRQ, 1 = FIQ */
+#define	INTSTR_BS	0x00000002	/* BCU 0 = IRQ, 1 = FIQ */
 
 /*
  * Bus Controller Unit			(CP13)
@@ -75,22 +75,22 @@
  *	CP13.8.1	ECTST (ECC test)
  */
 
-#define	BCUCTL_SR	(1U << 0)	/* single bit error report enable */
-#define	BCUCTL_SC	(1U << 2)	/* single bit correct enable */
-#define	BCUCTL_EE	(1U << 3)	/* ECC enable */
-#define	BCUCTL_E0	(1U << 28)	/* ELOG0 valid */
-#define	BCUCTL_E1	(1U << 29)	/* ELOG1 valid */
-#define	BCUCTL_EV	(1U << 30)	/* error overflow */
-#define	BCUCTL_TP	(1U << 31)	/* transactions pending */
+#define	BCUCTL_SR	0x00000001	/* single bit error report enable */
+#define	BCUCTL_SC	0x00000004	/* single bit correct enable */
+#define	BCUCTL_EE	0x00000008	/* ECC enable */
+#define	BCUCTL_E0	0x10000000	/* ELOG0 valid */
+#define	BCUCTL_E1	0x20000000	/* ELOG1 valid */
+#define	BCUCTL_EV	0x40000000	/* error overflow */
+#define	BCUCTL_TP	0x80000000	/* transactions pending */
 
-#define	BCUMOD_AF	(1U << 0)	/* aligned fetch */
+#define	BCUMOD_AF	0x00000001	/* aligned fetch */
 
-#define	ELOGx_SYN(x)	((x) & 0xff)	/* ECC syndrome */
-#define	ELOGx_ET(x)	(((x) >> 29) & 3)/* error type */
-#define	ELOGx_ET_SB	0		/* single-bit */
-#define	ELOGx_ET_MB	1		/* multi-bit */
-#define	ELOGx_ET_BA	2		/* bus abort */
-#define	ELOGx_RW	(1U << 31)	/* direction 0 = read 1 = write */
+#define	ELOGx_SYN_MASK	0x000000ff	/* ECC syndrome */
+#define	ELOGx_ET_MASK	0x60000000	/* error type */
+#define	ELOGx_ET_SB	0x00000000	/* single-bit */
+#define	ELOGx_ET_MB	0x20000000	/* multi-bit */
+#define	ELOGx_ET_BA	0x40000000	/* bus abort */
+#define	ELOGx_RW	0x80000000	/* direction 0 = read 1 = write */
 
 /*
  * Performance Monitoring Unit		(CP14)
@@ -101,17 +101,19 @@
  *	CP14.3		Performance Counter Register 1
  */
 
-#define	PMNC_E		(1U << 0)	/* enable counters */
-#define	PMNC_P		(1U << 1)	/* reset both PMNs to 0 */
-#define	PMNC_C		(1U << 2)	/* clock counter reset */
-#define	PMNC_D		(1U << 3)	/* clock counter / 64 */
-#define	PMNC_PMN0_IE	(1U << 4)	/* enable PMN0 interrupt */
-#define	PMNC_PMN1_IE	(1U << 5)	/* enable PMN1 interrupt */
-#define	PMNC_CC_IE	(1U << 6)	/* enable clock counter interrupt */
-#define	PMNC_PMN0_IF	(1U << 8)	/* PMN0 overflow/interrupt */
-#define	PMNC_PMN1_IF	(1U << 9)	/* PMN1 overflow/interrupt */
-#define	PMNC_CC_IF	(1U << 10)	/* clock counter overflow/interrupt */
-#define	PMNC_EVCNT0(x)	((x) << 12)	/* event to count for PMN0 */
-#define	PMNC_EVCNT1(x)	((x) << 20)	/* event to count for PMN1 */
+#define	PMNC_E		0x00000001	/* enable counters */
+#define	PMNC_P		0x00000002	/* reset both PMNs to 0 */
+#define	PMNC_C		0x00000004	/* clock counter reset */
+#define	PMNC_D		0x00000008	/* clock counter / 64 */
+#define	PMNC_PMN0_IE	0x00000010	/* enable PMN0 interrupt */
+#define	PMNC_PMN1_IE	0x00000020	/* enable PMN1 interrupt */
+#define	PMNC_CC_IE	0x00000040	/* enable clock counter interrupt */
+#define	PMNC_PMN0_IF	0x00000100	/* PMN0 overflow/interrupt */
+#define	PMNC_PMN1_IF	0x00000200	/* PMN1 overflow/interrupt */
+#define	PMNC_CC_IF	0x00000400	/* clock counter overflow/interrupt */
+#define	PMNC_EVCNT0_MASK 0x000ff000	/* event to count for PMN0 */
+#define	PMNC_EVCNT0_SHIFT 12
+#define	PMNC_EVCNT1_MASK 0x0ff00000	/* event to count for PMN1 */
+#define	PMNC_EVCNT1_SHIFT 20
 
 #endif /* _ARM_XSCALE_I80200REG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135.6.3 2002/01/08 00:26:03 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.135.6.4 2002/02/28 04:10:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -458,7 +458,7 @@ Lberr40:
 
 ENTRY_NOPROFILE(busaddrerr2030)
 #if !(defined(M68020) || defined(M68030))
-	jra	_badtrap
+	jra	_C_LABEL(badtrap)
 #else
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
@@ -510,7 +510,7 @@ Lbe10:
 	btst	#8,%d0			| data fault?
 	jne	Lbe10a
 	movql	#1,%d0			| user program access FC
-					| (we dont seperate data/program)
+					| (we do not separate data/program)
 	btst	#5,%sp@(FR_HW+8)	| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,%d0			| else supervisor program access

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.8 2002/01/08 00:23:19 nathanw Exp $ */
+/* $NetBSD: except.c,v 1.38.4.9 2002/02/28 04:07:46 nathanw Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,16 +32,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.8 2002/01/08 00:23:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.9 2002/02/28 04:07:46 nathanw Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_syscall_debug.h"
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
@@ -95,165 +93,6 @@ checkvectors()
 }
 #endif
 
-
-void
-swi_handler(struct trapframe *tf)
-{
-
-	/* XXX The type of e_syscall is all wrong. */
-	(*(void (*)(struct trapframe *))(curproc->l_proc->p_emul->e_syscall))(tf);
-}
-
-void
-syscall(struct trapframe *tf)
-{
-	struct lwp *l;
-	struct proc *p;
-	vaddr_t pc;
-	int code, nargs, nregargs, nextreg, nstkargs;
-	const struct sysent *sy;
-	register_t args[8]; /* XXX just enough for mmap... */
-	register_t rval[2], or15;
-	int error;
-
-	/* Enable interrupts if they were enabled before the trap. */
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-	uvmexp.traps++;
-	uvmexp.syscalls++;
-
-	l = curproc;
-	p = l->l_proc;
-
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		l->l_addr->u_pcb.pcb_tf = tf;
-
-	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
-#ifdef DEBUG
-		printf("SWI:\n");
-		printregs(tf);
-		printf("pc -> ");
-		disassemble(tf->tf_r15 & R15_PC);
-#endif
-		panic("SWI in kernel mode");
-	}
-
-	pc = tf->tf_r15 & R15_PC;
-
-#ifdef DIAGNOSTIC
-	if ((*(u_int32_t *)pc & 0x0f000000) != 0x0f000000) {
-		disassemble(pc);
-		panic("SWI on non-SWI instruction");
-	}
-#endif
-
-	/* Look up the system call and see if it's magic. */
-	code = *(register_t *)pc & 0x00ffffff;
-	switch (code) {
-	case SYS_syscall: /* Indirect system call.  First arg is new code */
-		code = tf->tf_r0;
-		nregargs = 3; nextreg = 1;
-		break;
-	case SYS___syscall: /* As above, but quad_t arg */
-		if (p->p_emul->e_sysent == sysent) { /* NetBSD emulation */
-			code = tf->tf_r0; /* XXX assume little-endian */
-			nregargs = 2; nextreg = 2;
-			break;
-		}
-		/* FALLTHROUGH */
-	default:
-		nregargs = 4; nextreg = 0;
-	}
-	code &= (SYS_NSYSENT - 1);
-	sy = &p->p_emul->e_sysent[code];
-
-	nargs = sy->sy_argsize / sizeof(register_t);
-	nregargs = min(nregargs, nargs);
-	nstkargs = nargs - nregargs;
-
-	if (nregargs > 0)
-		bcopy(&tf->tf_r0 + nextreg, args,
-		    nregargs * sizeof(register_t));
-
-	if (nstkargs > 0) {
-		error = copyin((caddr_t)tf->tf_r13, args + nregargs,
-			       nstkargs * sizeof(register_t));
-		if (error) {
-#ifdef SYSCALL_DEBUG
-			scdebug_call(l, code, (register_t *)args);
-#endif
-			goto bad;
-		}
-	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, nargs * sizeof(register_t), args);
-#endif
-
-	rval[0] = 0;
-	rval[1] = tf->tf_r1;
-
-	/* Set return address */
-	or15 = tf->tf_r15;
-	tf->tf_r15 += 4;
-
-	error = sy->sy_call(l, args, rval);
-
-	switch (error) {
-	case 0:
-		tf->tf_r0 = rval[0];
-		tf->tf_r1 = rval[1];
-		tf->tf_r15 &= ~R15_FLAG_C;
-		break;
-	case ERESTART:
-		tf->tf_r15 = or15;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		tf->tf_r0 = rval[0] = error;
-		tf->tf_r15 |= R15_FLAG_C;
-		break;
-	}
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
-}
-
-/*
- * Return from fork(2) in the child.  This is effectively the tail end of
- * a normal successful syscall return.
- */
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-	struct trapframe *tf;
-
-	tf = l->l_addr->u_pcb.pcb_tf;
-	tf->tf_r0 = 0;
-	tf->tf_r15 &= ~R15_FLAG_C;
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, SYS_fork /* XXX */, 0, &tf->tf_r0);
-#endif
-	userret(l);
-#ifdef KTRACE
-        if (KTRPOINT(l->l_proc, KTR_SYSRET))
-                ktrsysret(l->l_proc, SYS_fork /* XXX */, 0, tf->tf_r0);
-#endif
-}
 
 void
 prefetch_abort_handler(struct trapframe *tf)
@@ -388,11 +227,6 @@ do_fault(struct trapframe *tf, struct lwp *l,
  * with the current trapframe layout on arm26, but be careful.
  */
 #define getreg(r) (((register_t *)&tf->tf_r0)[r])
-
-/* Macros to extract fields from instructions */
-#define Rn(insn) ((insn >> 16) & 0x0f)
-#define Rd(insn) ((insn >> 12) & 0x0f)
-#define Rm(insn) (insn & 0x0f)
 
 /*
  * Undo any effects of the aborted instruction that need to be undone
@@ -553,10 +387,10 @@ data_abort_atype(struct trapframe *tf)
 	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	/* STR instruction ? */
 	if ((insn & 0x0c100000) == 0x04000000)
-		return VM_PROT_READ | VM_PROT_WRITE;
+		return VM_PROT_WRITE;
 	/* STM or CDT instruction ? */
 	else if ((insn & 0x0a100000) == 0x08000000)
-		return VM_PROT_READ | VM_PROT_WRITE;
+		return VM_PROT_WRITE;
 #if defined(CPU_ARM250) || defined(CPU_ARM3)
 	/* SWP instruction ? */
 	else if ((insn & 0x0fb00ff0) == 0x01000090)
@@ -612,15 +446,6 @@ address_exception_handler(struct trapframe *tf)
 		panic("address exception in kernel mode");
 	}
 
-#ifdef DEBUG
-	printf("Address exception:\n");
-	printregs(tf);
-	printf("pc -> ");
-	disassemble(pc);
-#ifdef DDB
-	Debugger();
-#endif
-#endif
 	trapsignal(l, SIGBUS, pc);
 	userret(l);
 }

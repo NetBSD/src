@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.1.22.3 2002/01/11 23:38:31 nathanw Exp $	*/
+/*	$NetBSD: olms.c,v 1.1.22.4 2002/02/28 04:10:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.1.22.3 2002/01/11 23:38:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.1.22.4 2002/02/28 04:10:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

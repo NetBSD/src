@@ -18,7 +18,10 @@
  * 6 for 6xx/7xx series and 8 for 8xx and 8xxx series.
  */
 
+#define	SPR_MQ			0x000	/* .6. 601 MQ register */
 #define	SPR_XER			0x001	/* 468 Fixed Point Exception Register */
+#define	SPR_RTCU_R		0x004	/* .6. 601 RTC Upper - Read */
+#define	SPR_RTCL_R		0x005	/* .6. 601 RTC Lower - Read */
 #define	SPR_LR			0x008	/* 468 Link Register */
 #define	SPR_CTR			0x009	/* 468 Count Register */
 #define	SPR_DSISR		0x012	/* .68 DSI exception source */
@@ -31,6 +34,8 @@
 #define	  DSISR_SEGMENT		  0x00200000 /* XXX; not in 6xx PEM */
 #define	  DSISR_EAR		  0x00100000 /* eciwx/ecowx && EAR[E] == 0 */
 #define	SPR_DAR			0x013	/* .68 Data Address Register */
+#define	SPR_RTCU_W		0x014	/* .6. 601 RTC Upper - Write */
+#define	SPR_RTCL_W		0x015	/* .6. 601 RTC Lower - Write */
 #define	SPR_DEC			0x016	/* .68 DECrementer register */
 #define	SPR_SDR1		0x019	/* .68 Page table base address register */
 #define	SPR_SRR0		0x01a	/* 468 Save/Restore Register 0 */

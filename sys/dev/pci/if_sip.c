@@ -1,7 +1,7 @@
-/*	$NetBSD: if_sip.c,v 1.24.2.5 2002/01/08 00:31:04 nathanw Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.24.2.6 2002/02/28 04:14:01 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.5 2002/01/08 00:31:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.6 2002/02/28 04:14:01 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -217,6 +217,7 @@ struct sip_softc {
 	void *sc_sdhook;		/* shutdown hook */
 
 	const struct sip_product *sc_model; /* which model are we? */
+	int sc_rev;			/* chip revision */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -365,6 +366,20 @@ do {									\
 	SIP_INIT_RXDESC_EXTSTS						\
 	SIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
+
+#define	SIP_CHIP_VERS(sc, v, p, r)					\
+	((sc)->sc_model->sip_vendor == (v) &&				\
+	 (sc)->sc_model->sip_product == (p) &&				\
+	 (sc)->sc_rev == (r))
+
+#define	SIP_CHIP_MODEL(sc, v, p)					\
+	((sc)->sc_model->sip_vendor == (v) &&				\
+	 (sc)->sc_model->sip_product == (p))
+
+#if !defined(DP83820)
+#define	SIP_SIS900_REV(sc, rev)						\
+	SIP_CHIP_VERS((sc), PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900, (rev))
+#endif
 
 #define SIP_TIMEOUT 1000
 
@@ -567,6 +582,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		panic(SIP_STR(attach) ": impossible");
 	}
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
 	printf(": %s\n", sip->sip_name);
 
@@ -728,6 +744,12 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * in the softc.
 	 */
 	sc->sc_cfg = 0;
+#if !defined(DP83820)
+	if (SIP_SIS900_REV(sc,SIS_REV_635) ||
+	    SIP_SIS900_REV(sc,SIS_REV_900B))
+		sc->sc_cfg |= (CFG_PESEL | CFG_RNDCNT);
+#endif
+
 	(*sip->sip_variant->sipv_read_macaddr)(sc, pa, enaddr);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
@@ -1913,6 +1935,9 @@ SIP_DECL(reset)(struct sip_softc *sc)
 	bus_space_handle_t sh = sc->sc_sh;
 	int i;
 
+	bus_space_write_4(st, sh, SIP_IER, 0);
+	bus_space_write_4(st, sh, SIP_IMR, 0);
+	bus_space_write_4(st, sh, SIP_RFCR, 0);
 	bus_space_write_4(st, sh, SIP_CR, CR_RST);
 
 	for (i = 0; i < SIP_TIMEOUT; i++) {
@@ -1964,8 +1989,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	SIP_DECL(reset)(sc);
 
 #if !defined(DP83820)
-	if (sc->sc_model->sip_vendor == PCI_VENDOR_NS &&
-	    sc->sc_model->sip_product == PCI_PRODUCT_NS_DP83815) {
+	if (SIP_CHIP_MODEL(sc, PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815)) {
 		/*
 		 * DP83815 manual, page 78:
 		 *    4.4 Recommended Registers Configuration
@@ -2058,11 +2082,10 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	if (sc->sc_tx_fill_thresh == 0) {
 		/*
-		 * XXX This value should be tuned.  This is the
-		 * minimum (32 bytes), and we may be able to
+		 * XXX This value should be tuned.  We may be able to
 		 * improve performance by increasing it.
 		 */
-		sc->sc_tx_fill_thresh = 1;
+		sc->sc_tx_fill_thresh = 64/32;
 	}
 	if (sc->sc_tx_drain_thresh == 0) {
 		/*
@@ -2081,7 +2104,22 @@ SIP_DECL(init)(struct ifnet *ifp)
 	/*
 	 * Initialize the prototype TXCFG register.
 	 */
-	sc->sc_txcfg = TXCFG_ATP | TXCFG_MXDMA_512 |
+#if defined(DP83820)
+	sc->sc_txcfg = TXCFG_MXDMA_512;
+	sc->sc_rxcfg = RXCFG_MXDMA_512;
+#else
+	if ((SIP_SIS900_REV(sc, SIS_REV_635) ||
+	     SIP_SIS900_REV(sc, SIS_REV_900B)) &&
+	    (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG) & CFG_EDBMASTEN)) {
+		sc->sc_txcfg = TXCFG_MXDMA_64;
+		sc->sc_rxcfg = RXCFG_MXDMA_64;
+	} else {
+		sc->sc_txcfg = TXCFG_MXDMA_512;
+		sc->sc_rxcfg = RXCFG_MXDMA_512;
+	}
+#endif /* DP83820 */
+
+	sc->sc_txcfg |= TXCFG_ATP |
 	    (sc->sc_tx_fill_thresh << TXCFG_FLTH_SHIFT) |
 	    sc->sc_tx_drain_thresh;
 	bus_space_write_4(st, sh, SIP_TXCFG, sc->sc_txcfg);
@@ -2104,12 +2142,8 @@ SIP_DECL(init)(struct ifnet *ifp)
 	/*
 	 * Initialize the prototype RXCFG register.
 	 */
-	sc->sc_rxcfg = RXCFG_MXDMA_512 |
-	    (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
+	sc->sc_rxcfg |= (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
 	bus_space_write_4(st, sh, SIP_RXCFG, sc->sc_rxcfg);
-
-	/* Set up the receive filter. */
-	(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 
 #ifdef DP83820
 	/*
@@ -2159,6 +2193,9 @@ SIP_DECL(init)(struct ifnet *ifp)
 	sc->sc_imr = ISR_DPERR|ISR_SSERR|ISR_RMABT|ISR_RTABT|ISR_RXSOVR|
 	    ISR_TXURN|ISR_TXDESC|ISR_RXORN|ISR_RXIDLE|ISR_RXDESC;
 	bus_space_write_4(st, sh, SIP_IMR, sc->sc_imr);
+
+	/* Set up the receive filter. */
+	(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 
 	/*
 	 * Set the current media.  Do this after initializing the prototype
@@ -2418,7 +2455,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 	struct ether_multi *enm;
 	u_int8_t *cp;
 	struct ether_multistep step;
-	u_int32_t crc, mchash[8];
+	u_int32_t crc, mchash[16];
 
 	/*
 	 * Initialize the prototype RFCR.
@@ -2456,10 +2493,16 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 			goto allmulti;
 		}
 
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
-		/* Just want the 7 most significant bits. */
-		crc >>= 25;
+		if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+		    SIP_SIS900_REV(sc, SIS_REV_900B)) {
+			/* Just want the 8 most significant bits. */
+			crc >>= 24;
+		} else {
+			/* Just want the 7 most significant bits. */
+			crc >>= 25;
+		}
 
 		/* Set the corresponding bit in the hash table. */
 		mchash[crc >> 4] |= 1 << (crc & 0xf);
@@ -2501,6 +2544,17 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 		FILTER_EMIT(RFCR_RFADDR_MC5, mchash[5]);
 		FILTER_EMIT(RFCR_RFADDR_MC6, mchash[6]);
 		FILTER_EMIT(RFCR_RFADDR_MC7, mchash[7]);
+		if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+		    SIP_SIS900_REV(sc, SIS_REV_900B)) {
+			FILTER_EMIT(RFCR_RFADDR_MC8, mchash[8]);
+			FILTER_EMIT(RFCR_RFADDR_MC9, mchash[9]);
+			FILTER_EMIT(RFCR_RFADDR_MC10, mchash[10]);
+			FILTER_EMIT(RFCR_RFADDR_MC11, mchash[11]);
+			FILTER_EMIT(RFCR_RFADDR_MC12, mchash[12]);
+			FILTER_EMIT(RFCR_RFADDR_MC13, mchash[13]);
+			FILTER_EMIT(RFCR_RFADDR_MC14, mchash[14]);
+			FILTER_EMIT(RFCR_RFADDR_MC15, mchash[15]);
+		}
 	}
 #undef FILTER_EMIT
 
@@ -2762,7 +2816,8 @@ SIP_DECL(sis900_mii_readreg)(struct device *self, int phy, int reg)
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
+	    sc->sc_rev < SIS_REV_635 && phy != 0)
 		return (0);
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
@@ -2789,7 +2844,8 @@ SIP_DECL(sis900_mii_writereg)(struct device *self, int phy, int reg, int val)
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
+	    sc->sc_rev < SIS_REV_635 && phy != 0)
 		return;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
@@ -2992,6 +3048,7 @@ SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
 	case SIS_REV_630S:
 	case SIS_REV_630E:
 	case SIS_REV_630EA1:
+	case SIS_REV_635:
 		/*
 		 * The MAC address for the on-board Ethernet of
 		 * the SiS 630 chipset is in the NVRAM.  Kick

@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.1.8.2 2001/09/21 22:35:45 nathanw Exp $
+$NetBSD: IMPLEMENTATION,v 1.1.8.3 2002/02/28 04:13:33 nathanw Exp $
 
 At time point in time, there are 3 controller drivers planned:
 
@@ -28,8 +28,8 @@ fwnode* at fwbus? idhi ? idlo ?
 #
 # An ip capable interface can be added to the local bus as a service to offer
 # on the bus. (the code will only attach to the local bridge so 2 boxes plugged
-# into each other would only each have fw0, but would see there's another one
-# out there when they probe the config rom's)
+# into each other would only each have fw0, but would see the other side as
+# fwnodeX when it probes for remote devices)
 #
 fw* at fwbus?
 #

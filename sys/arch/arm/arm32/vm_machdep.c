@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.4 2002/01/08 00:23:09 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.5 2002/02/28 04:07:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -178,11 +178,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-#ifdef __NEWINTR
-	sf->sf_spl = cpu_sf_spl0();
-#else
-	sf->sf_spl = _SPL_0;
-#endif
+	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -196,11 +192,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
-#ifdef __NEWINTR
-	sf->sf_spl = cpu_sf_spl0();
-#else
-	sf->sf_spl = _SPL_0;
-#endif
+	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -298,7 +290,7 @@ cpu_swapout(l)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * and size must be a multiple of NBPG.
  */
 
 void
@@ -327,7 +319,7 @@ pagemove(from, to, size)
 	 * the 'from' area.
 	 */
 
-	cpu_cache_purgeD_rng((u_int)from, size);
+	cpu_dcache_wbinv_range((vaddr_t) from, size);
 
 	while (size > 0) {
 		*tpte++ = *fpte;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.6.6.1 2001/11/14 19:15:42 nathanw Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.6.6.2 2002/02/28 04:14:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.6.1 2001/11/14 19:15:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.6.2 2002/02/28 04:14:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,13 +172,12 @@ pcmcom_attach(parent, self, aux)
 	/* Allocate the slave info. */
 	sc->sc_nslaves = pp->pp_nslaves;
 	size = sizeof(struct pcmcom_slave_info) * sc->sc_nslaves;
-	sc->sc_slaves = malloc(size, M_DEVBUF, M_NOWAIT);
+	sc->sc_slaves = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_slaves == NULL) {
 		printf("%s: unable to allocate slave info\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	memset(sc->sc_slaves, 0, size);
 
 	/*
 	 * The address decoders on these cards are stupid.  They decode

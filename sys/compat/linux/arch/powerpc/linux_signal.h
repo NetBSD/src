@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.1.4.1 2001/09/21 22:35:17 nathanw Exp $ */
+/* $NetBSD: linux_signal.h,v 1.1.4.2 2002/02/28 04:12:53 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 
 /* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
+#define LINUX_SA_NOCLDWAIT	0x00000002
 #define LINUX_SA_SIGINFO	0x00000004
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000

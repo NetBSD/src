@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.26.4.2 2002/01/08 00:25:07 nathanw Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.26.4.3 2002/02/28 04:10:06 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -43,15 +43,15 @@
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
 #include <machine/config_hook.h>
+#include <machine/debug.h>
 
 #include <dev/hpc/hpciovar.h>
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripreg.h>
-#include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
-#include <hpcmips/vr/vrgiuvar.h>
 
 #include "locators.h"
 
@@ -98,11 +98,6 @@ int vrgiu_intr_led = 1;
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
 #define	LEGAL_OUT_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_OUT)
 
-/* flags for variant chips */
-#if !defined(VR4122) && !defined(VR4131)
-#define VRGIU_HAVE_PULLUPDNREGS
-#endif
-
 /*
  * type declarations
  */
@@ -124,7 +119,15 @@ struct vrgiu_softc {
 	u_int32_t sc_intr_mode[MAX_GPIO_INOUT];
 	TAILQ_HEAD(, vrgiu_intr_entry) sc_intr_head[MAX_GPIO_INOUT]; 
 	struct hpcio_chip sc_iochip;
+#ifndef SINGLE_VRIP_BASE
+	int sc_useupdn_reg, sc_termupdn_reg;
+#endif /* SINGLE_VRIP_BASE */
 };
+
+#ifndef SINGLE_VRIP_BASE
+#define GIUUSEUPDN_REG_W	(sc->sc_useupdn_reg)
+#define GIUTERMUPDN_REG_W	(sc->sc_termupdn_reg)
+#endif /* SINGLE_VRIP_BASE */
 
 /*
  * prototypes
@@ -193,6 +196,20 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 	struct hpcio_attach_args haa;
 	int i;
 
+#ifndef SINGLE_VRIP_BASE
+	if (va->va_addr == VR4102_GIU_ADDR) {
+		sc->sc_useupdn_reg = VR4102_GIUUSEUPDN_REG_W;
+		sc->sc_termupdn_reg = VR4102_GIUTERMUPDN_REG_W;
+	} else
+	if (va->va_addr == VR4122_GIU_ADDR) {
+		sc->sc_useupdn_reg = VR4122_GIUUSEUPDN_REG_W;
+		sc->sc_termupdn_reg = VR4122_GIUTERMUPDN_REG_W;
+	} else {
+		panic("%s: unknown base address 0x%lx\n",
+		    sc->sc_dev.dv_xname, va->va_addr);
+	}
+#endif /* SINGLE_VRIP_BASE */
+
 	this_giu = sc;
 	sc->sc_vc = va->va_vc;
 	sc->sc_iot = va->va_iot;
@@ -218,8 +235,8 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
     
 	for (i = 0; i < MAX_GPIO_INOUT; i++)
 		TAILQ_INIT(&sc->sc_intr_head[i]);
-	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_intr, IPL_BIO,
-	    vrgiu_intr, sc))) {
+	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
+	    IPL_BIO, vrgiu_intr, sc))) {
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -231,7 +248,7 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iochip.hc_name = sc->sc_dev.dv_xname;
 	sc->sc_iochip.hc_sc = sc;
 	/* Register functions to upper interface */
-	vrip_gpio_register(va->va_vc, &sc->sc_iochip);
+	vrip_register_gpio(va->va_vc, &sc->sc_iochip);
 
 	/* Display port status (Input/Output) for debugging */
 	VPRINTF(DEBUG_IO, ("I/O setting:                                "));
@@ -292,12 +309,15 @@ vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 	edge = vrgiu_regread_4(sc, GIUINTTYP_REG);
 	hold = vrgiu_regread_4(sc, GIUINTHTSEL_REG);
 	level = vrgiu_regread_4(sc, GIUINTALSEL_REG);
-#ifndef VRGIU_HAVE_PULLUPDNREGS
-	useupdn = termupdn = 0;
-#else
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-#endif
+
+	if (GIUUSEUPDN_REG_W == GIU_NO_REG_W)
+		useupdn = 0;
+	else
+		useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	if (GIUTERMUPDN_REG_W == GIU_NO_REG_W)
+		termupdn = 0;
+	else
+		termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 	for (m = 0x80000000; m; m >>=1)
 		printf ("%c", syms[
 			((useupdn&m) ? 32 : 0) +
@@ -318,12 +338,14 @@ vrgiu_diff_iosetting()
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
-#ifndef VRGIU_HAVE_PULLUPDNREGS
-	useupdn = termupdn = 0;
-#else
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-#endif
+	if (GIUUSEUPDN_REG_W == GIU_NO_REG_W)
+		useupdn = 0;
+	else
+		useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	if (GIUTERMUPDN_REG_W == GIU_NO_REG_W)
+		termupdn = 0;
+	else
+		termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 	if (oiosel != iosel || ointen != inten ||
 	    ouseupdn != useupdn || otermupdn != termupdn) {
 		for (m = 0x80000000; m; m >>=1)
@@ -340,12 +362,9 @@ vrgiu_diff_iosetting()
 void
 vrgiu_dump_io(struct vrgiu_softc *sc)
 {
-	u_int32_t preg[2];
 
-	preg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
-	preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
-
-	bitdisp64(preg);
+	dbg_bit_print(vrgiu_regread_4(sc, GIUPIOD_REG));
+	dbg_bit_print(vrgiu_regread_4(sc, GIUPODAT_REG));
 }
 
 void
@@ -360,7 +379,8 @@ vrgiu_diff_io()
 
 	if (opreg[0] != preg[0] || opreg[1] != preg[1]) {
 		printf("giu data: ");
-		bitdisp64(preg);
+		dbg_bit_print(preg[0]);
+		dbg_bit_print(preg[1]);
 	}
 	opreg[0] = preg[0];
 	opreg[1] = preg[1];
@@ -482,44 +502,6 @@ vrgiu_getchip(void* scx, int chipid)
 	return (&sc->sc_iochip);
 }
 
-/* 
- *  For before autoconfiguration.  
- */
-void
-__vrgiu_out(int port, int data)
-{
-	u_int16_t reg;
-	u_int32_t addr;
-	int offs;
-
-	if (!LEGAL_OUT_PORT(port))
-		panic("__vrgiu_out: illegal gpio port");
-	if (port < 16) {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPIOD_L_REG_W));
-		offs = port;
-	} else if (port < 32) {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPIOD_H_REG_W));
-		offs = port - 16;
-	} else if (port < 48) {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPODAT_L_REG_W));	
-		offs = port - 32;
-	} else {
-		addr = MIPS_PHYS_TO_KSEG1((VRIP_GIU_ADDR + GIUPODAT_H_REG_W));	
-		offs = port - 48;
-		panic ("__vrgiu_out: not coded yet.");
-	}
-	DPRINTF(DEBUG_IO, ("__vrgiu_out: addr %08x bit %d\n", addr, offs));
-    
-	wbflush();
-	reg = *((volatile u_int16_t*)addr);
-	if (data) {
-		reg |= (1 << offs);
-	} else {
-		reg &= ~(1 << offs);
-	}
-	*((volatile u_int16_t*)addr) = reg;
-	wbflush();
-}
 /*
  * Interrupt staff 
  */
@@ -674,7 +656,7 @@ vrgiu_register_iochip(hpcio_chip_t hc, hpcio_chip_t iochip)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 
-	vrip_gpio_register(sc->sc_vc, iochip);
+	vrip_register_gpio(sc->sc_vc, iochip);
 }
 
 /* interrupt handler */
@@ -691,7 +673,7 @@ vrgiu_intr(void *arg)
 	int ledvalue = CONFIG_HOOK_LED_FLASH;
 
 	/* Get Level 2 interrupt status */
-	vrip_intr_get_status2 (sc->sc_vc, sc->sc_ih, &reg);
+	vrip_intr_getstatus2 (sc->sc_vc, sc->sc_ih, &reg);
 #ifdef DUMP_GIU_LEVEL2_INTR
 #warning DUMP_GIU_LEVEL2_INTR
 	{

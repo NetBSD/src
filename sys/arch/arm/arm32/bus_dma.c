@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3.4.2 2002/01/08 00:23:07 nathanw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3.4.3 2002/02/28 04:07:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,23 +60,17 @@
 
 #include <arm/cpufunc.h>
 
-int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int));
-int	_bus_dma_inrange __P((bus_dma_segment_t *, int, bus_addr_t));
+int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int);
+int	_bus_dma_inrange(bus_dma_segment_t *, int, bus_addr_t);
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
  */
 int
-_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct arm32_bus_dmamap *map;
 	void *mapstore;
@@ -112,6 +106,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_proc = NULL;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -127,9 +122,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * DMA map destruction functions.
  */
 void
-_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 #ifdef DEBUG_DMA
@@ -147,13 +140,8 @@ _bus_dmamap_destroy(t, map)
  * be called by bus-specific DMA map load functions.
  */
 int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	vm_offset_t lastaddr;
 	int seg, error;
@@ -178,6 +166,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load: error=%d\n", error);
@@ -189,11 +178,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf(t, map, m0, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	vm_offset_t lastaddr;
 	int seg, error, first;
@@ -229,6 +215,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load_mbuf: error=%d\n", error);
@@ -240,11 +227,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
  * Like _bus_dmamap_load(), but for uios.
  */
 int
-_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	vm_offset_t lastaddr;
 	int seg, i, error, first;
@@ -290,6 +274,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 	return (error);
 }
@@ -299,13 +284,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");
@@ -316,9 +296,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * bus-specific DMA map unload functions.
  */
 void
-_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 #ifdef DEBUG_DMA
@@ -331,77 +309,133 @@ _bus_dmamap_unload(t, map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_proc = NULL;
 }
 
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
+ *
+ * This version works for the Virtually Indexed Virtually Tagged
+ * cache found on 32-bit ARM processors.
+ *
+ * XXX Should have separate versions for write-through vs.
+ * XXX write-back caches.  We currently assume write-back
+ * XXX here, which is not as efficient as it could be for
+ * XXX the write-through case.
  */
 void
-_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
-	int loop;
-	bus_addr_t vaddr;
-	bus_size_t length;
-	bus_dma_segment_t *seg;
+	bus_size_t minlen;
+	bus_addr_t addr;
+	int i;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_sync: t=%p map=%p offset=%lx len=%lx ops=%x\n",
 	    t, map, offset, len, ops);
 #endif	/* DEBUG_DMA */
 
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
-		/* Quick exit if length is zero */
-		if (len == 0)
-			return;
+	/*
+	 * Mixing of PRE and POST operations is not allowed.
+	 */
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		panic("_bus_dmamap_sync: mix PRE and POST");
 
-		/* Find the segment pointed to by offset */
-		loop = map->dm_nsegs;
-		seg = &map->dm_segs[0];
-		while (offset >= seg->ds_len) {
-			offset -= seg->ds_len;
-			++seg;
-			/* Got any more segments ? */
-			--loop;
-			if (loop == 0)
-				return;
+#ifdef DIAGNOSTIC
+	if (offset >= map->dm_mapsize)
+		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
+		    offset, map->dm_mapsize);
+	if (len == 0 || (offset + len) > map->dm_mapsize)
+		panic("_bus_dmamap_sync: bad length");
+#endif
+
+	/*
+	 * For a virtually-indexed write-back cache, we need
+	 * to do the following things:
+	 *
+	 *	PREREAD -- Invalidate the D-cache.  We do this
+	 *	here in case a write-back is required by the back-end.
+	 *
+	 *	PREWRITE -- Write-back the D-cache.  Note that if
+	 *	we are doing a PREREAD|PREWRITE, we can collapse
+	 *	the whole thing into a single Wb-Inv.
+	 *
+	 *	POSTREAD -- Nothing.
+	 *
+	 *	POSTWRITE -- Nothing.
+	 */
+
+	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (ops == 0)
+		return;
+
+	/*
+	 * XXX Skip cache frobbing if mapping was COHERENT.
+	 */
+
+	/*
+	 * If the mapping is not the kernel's and also not the
+	 * current process's (XXX actually, vmspace), then we
+	 * don't have anything to do, since the cache is Wb-Inv'd
+	 * on context switch.
+	 *
+	 * XXX REVISIT WHEN WE DO FCSE!
+	 */
+	if (__predict_false(map->_dm_proc != NULL && map->_dm_proc != curproc))
+		return;
+
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
 		}
 
-		/* Set the starting address and maximum length */
-		vaddr = seg->_ds_vaddr + offset;
-		length = seg->ds_len - offset;
-		do {
-			/* Limit the length if not the whole segment */
-			if (len < length)
-				length = len;
+		/*
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		minlen = len < map->dm_segs[i].ds_len - offset ?
+		    len : map->dm_segs[i].ds_len - offset;
+
+		addr = map->dm_segs[i]._ds_vaddr;
+
 #ifdef DEBUG_DMA
-			printf("syncing: %lx,%lx\n", vaddr, length);
-#endif	/* DEBUG_DMA */
-			/* Actually sync the cache */
-			cpu_cache_purgeD_rng(vaddr, length);
+		printf("bus_dmamap_sync: flushing segment %d "
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
+#endif
 
-			/* Adjust the length */
-			len -= length;
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wbinv_range(addr + offset, minlen);
+			break;
 
-			/* sync complete ? */
-			if (len > 0) {
-				/* Got any more segments ? */
-				--loop;
-				if (loop == 0)
-					return;
-				++seg;
-				vaddr = seg->_ds_vaddr;
-				length = seg->ds_len;
-			}
-		} while (len > 0);
+		case BUS_DMASYNC_PREREAD:
+#if 1
+			cpu_dcache_wbinv_range(addr + offset, minlen);
+#else
+			cpu_dcache_inv_range(addr + offset, minlen);
+#endif
+			break;
 
-		cpu_drain_writebuf();
+		case BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wb_range(addr + offset, minlen);
+			break;
+		}
+#ifdef DEBUG_DMA
+		printf("\n");
+#endif
+		offset = 0;
+		len -= minlen;
 	}
+
+	/* Drain the write buffer. */
+	cpu_drain_writebuf();
 }
 
 /*
@@ -415,13 +449,9 @@ extern vm_offset_t physical_freeend;
 extern vm_offset_t physical_end;
 
 int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	int error;
 #ifdef DEBUG_DMA
@@ -441,10 +471,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  * bus-specific DMA memory free functions.
  */
 void
-_bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct vm_page *m;
 	bus_addr_t addr;
@@ -475,13 +502,8 @@ _bus_dmamem_free(t, segs, nsegs)
  * bus-specific DMA memory map functions.
  */
 int
-_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
@@ -522,7 +544,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * uncacheable.
 			 */
 			if (flags & BUS_DMA_COHERENT) {
-				cpu_cache_purgeD_rng(va, NBPG);	
+				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep = ((*ptep) & (~PT_C | PT_B));
@@ -546,10 +568,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 
 #ifdef DEBUG_DMA
@@ -570,12 +589,8 @@ _bus_dmamem_unmap(t, kva, size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    off_t off, int prot, int flags)
 {
 	int i;
 
@@ -612,16 +627,9 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-	vm_offset_t *lastaddrp;
-	int *segp;
-	int first;
+_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, vm_offset_t *lastaddrp,
+    int *segp, int first)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
@@ -717,10 +725,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
  * Check to see if the specified page is in an allowed DMA range.
  */
 int
-_bus_dma_inrange(ranges, nranges, curaddr)
-	bus_dma_segment_t *ranges;
-	int nranges;
-	bus_addr_t curaddr;
+_bus_dma_inrange(bus_dma_segment_t *ranges, int nranges, bus_addr_t curaddr)
 {
 	bus_dma_segment_t *ds;
 	int i;
@@ -739,16 +744,9 @@ _bus_dma_inrange(ranges, nranges, curaddr)
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags, vm_offset_t low, vm_offset_t high)
 {
 	vm_offset_t curaddr, lastaddr;
 	struct vm_page *m;

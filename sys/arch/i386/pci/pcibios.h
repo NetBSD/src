@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.3.6.1 2001/08/24 00:08:38 nathanw Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.3.6.2 2002/02/28 04:10:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -96,6 +96,9 @@ void pci_device_foreach __P((pci_chipset_tag_t, int,
 void pci_device_foreach_min __P((pci_chipset_tag_t, int, int,
 				 void (*) (pci_chipset_tag_t, pcitag_t, void*),
 				 void *context));
+
+void pci_bridge_foreach(pci_chipset_tag_t, int, int,
+    void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);
 
 #ifdef PCIBIOSVERBOSE
 extern int pcibiosverbose;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.1.4.2 2002/01/08 00:22:45 nathanw Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.1.4.3 2002/02/28 04:05:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: com_pioc.c,v 1.1.4.3 2002/02/28 04:05:56 nathanw Exp $");
+
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
@@ -97,6 +100,8 @@ struct com_pioc_softc {
 };
 
 /* Prototypes for functions */
+
+cons_decl(com);   
 
 static int  com_pioc_probe   __P((struct device *, struct cfdata *, void *));
 static void com_pioc_attach  __P((struct device *, struct device *, void *));

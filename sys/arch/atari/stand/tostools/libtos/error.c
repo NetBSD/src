@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.1 1996/01/07 21:50:49 leo Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.1.48.1 2002/02/28 04:08:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -49,7 +49,7 @@ init_toslib(arg0)
 	char	*p;
 
 	if (isatty(STDERR_FILENO) && (!*arg0 || !getenv("STDERR")))
-		Fforce(STDERR_FILENO, -1);
+		(void)Fforce(STDERR_FILENO, -1);
 
 	if (!(p = strrchr(arg0, '/')))
 		p = strrchr(arg0, '\\');

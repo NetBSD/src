@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitovar.h,v 1.1.8.2 2002/01/11 23:38:38 nathanw Exp $	*/
+/*	$NetBSD: bonitovar.h,v 1.1.8.3 2002/02/28 04:10:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.1.4.2 2002/01/08 00:23:16 nathanw Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.1.4.3 2002/02/28 04:07:40 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.1.4.2 2002/01/08 00:23:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.1.4.3 2002/02/28 04:07:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,6 +193,7 @@ static void set_curpos __P((struct vidcvideo_softc *, struct wsdisplay_curpos *)
 static void vidcvideo_getdevconfig __P((vaddr_t, struct fb_devconfig *));
 
 static int  vidcvideointr __P((void *));
+static void vidcvideo_config_wscons __P((struct fb_devconfig *));
 
 /* Acceleration function prototypes */
 static void vv_copyrows __P((void *, int, int, int));

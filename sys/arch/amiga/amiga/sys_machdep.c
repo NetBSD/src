@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.29.8.1 2001/11/17 21:59:07 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.29.8.2 2002/02/28 04:06:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.8.2 2002/02/28 04:06:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,16 +80,18 @@ cachectl1(req, addr, len, p)
 		vaddr_t end = 0;
 		paddr_t pa = 0;
 
-		if (addr == 0 ||
+		if (addr == 0
 #if defined(M68040)
 #if defined(M68060)
-		    (cputype == CPU_68040 && req & CC_IPURGE) ||
+		    || (cputype == CPU_68040 && req & CC_IPURGE)
 #else
-		    (req & CC_IPURGE) ||
+		    || (req & CC_IPURGE)
 #endif
 #endif
-		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
+		    || ((req & ~CC_EXTPURGE) != CC_PURGE
+		        && len > 2*NBPG))
 			doall = 1;
+
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
@@ -123,7 +128,7 @@ cachectl1(req, addr, len, p)
 					ICPP(pa);
 				}
 				break;
-			
+
 			case CC_EXTPURGE|CC_PURGE:
 			case CC_PURGE:
 				if (doall)
@@ -143,7 +148,7 @@ cachectl1(req, addr, len, p)
 				else if (inc == NBPG)
 					DCFP(pa);
 				break;
-				
+
 			default:
 				error = EINVAL;
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.11 2001/11/29 01:22:57 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.12 2002/02/28 04:14:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,12 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.11 2001/11/29 01:22:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.12 2002/02/28 04:14:44 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
-#include "opt_new_pipe.h"
+#include "opt_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.11 2001/11/29 01:22:57 nathan
 #include <ddb/ddbvar.h>
 #endif
 
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
 #endif
 
@@ -111,6 +111,7 @@ static int sysctl_sysvipc(int *, u_int, void *, size_t *);
 #endif
 static int sysctl_msgbuf(void *, size_t *);
 static int sysctl_doeproc(int *, u_int, void *, size_t *);
+static int sysctl_dotkstat(int *, u_int, void *, size_t *, void *);
 #ifdef MULTIPROCESSOR
 static int sysctl_docptime(void *, size_t *, void *);
 static int sysctl_ncpus(void);
@@ -223,8 +224,7 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
-		error = uvm_vslock(p, SCARG(uap, old), oldlen,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		error = uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return error;
@@ -335,6 +335,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_PROC_ARGS:
 	case KERN_SYSVIPC_INFO:
 	case KERN_PIPE:
+	case KERN_TKSTAT:
 		/* Not terminal. */
 		break;
 	default:
@@ -354,11 +355,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_MAXVNODES:
 		old_vnodes = desiredvnodes;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &desiredvnodes);
-		if (old_vnodes > desiredvnodes) {
-		        desiredvnodes = old_vnodes;
-			return (EINVAL);
-		}
-		if (error == 0) {
+		if (newp && !error) {
+			if (old_vnodes > desiredvnodes) {
+				desiredvnodes = old_vnodes;
+				return (EINVAL);
+			}
 			vfs_reinit();
 			nchreinit();
 		}
@@ -393,7 +394,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_HOSTID:
 		inthostid = hostid;  /* XXX assumes sizeof long <= sizeof int */
 		error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
-		hostid = inthostid;
+		if (newp && !error)
+			hostid = inthostid;
 		return (error);
 	case KERN_CLOCKRATE:
 		return (sysctl_clockrate(oldp, oldlenp));
@@ -540,7 +542,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_MAXPTYS:
 		return sysctl_pty(oldp, oldlenp, newp, newlen);
 #endif
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 	case KERN_PIPE:
 		return (sysctl_dopipe(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
@@ -552,13 +554,18 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		int new_sbmax = sb_max;
 
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &new_sbmax);
-		if (error == 0) {
+		if (newp && !error) {
 			if (new_sbmax < (16 * 1024)) /* sanity */
 				return (EINVAL);
 			sb_max = new_sbmax;
 		}
 		return (error);
 	    }
+	case KERN_TKSTAT:
+		return (sysctl_dotkstat(name + 1, namelen - 1, oldp, oldlenp,
+		    newp));
+	case KERN_MONOTONIC_CLOCK:	/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -573,9 +580,15 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	/* All sysctl names at this level, except for a few, are terminal. */
+	switch (name[0]) {
+	case HW_DISKSTATS:
+		/* Not terminal. */
+		break;
+	default:
+		if (namelen != 1)
+			return (ENOTDIR);	/* overloaded */
+	}
 
 	switch (name[0]) {
 	case HW_MACHINE:
@@ -597,6 +610,10 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_ALIGNBYTES:
 		return (sysctl_rdint(oldp, oldlenp, newp, ALIGNBYTES));
+	case HW_DISKNAMES:
+		return (sysctl_disknames(oldp, oldlenp));
+	case HW_DISKSTATS:
+		return (sysctl_diskstats(name + 1, namelen - 1, oldp, oldlenp));
 	case HW_CNMAGIC: {
 		char magic[CNS_LEN];
 		int error;
@@ -1892,3 +1909,29 @@ sysctl_pty(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	return (error);
 }
 #endif /* NPTY > 0 */
+
+static int
+sysctl_dotkstat(name, namelen, where, sizep, newp)
+	int *name;
+	u_int namelen;
+	void *where;
+	size_t *sizep;
+	void *newp;
+{
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case KERN_TKSTAT_NIN:
+		return (sysctl_rdquad(where, sizep, newp, tk_nin));
+	case KERN_TKSTAT_NOUT:
+		return (sysctl_rdquad(where, sizep, newp, tk_nout));
+	case KERN_TKSTAT_CANCC:
+		return (sysctl_rdquad(where, sizep, newp, tk_cancc));
+	case KERN_TKSTAT_RAWCC:
+		return (sysctl_rdquad(where, sizep, newp, tk_rawcc));
+	default:
+		return (EOPNOTSUPP);
+	}
+}

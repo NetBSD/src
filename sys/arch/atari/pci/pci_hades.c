@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.1.10.2 2002/01/11 23:38:12 nathanw Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.1.10.3 2002/02/28 04:08:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.

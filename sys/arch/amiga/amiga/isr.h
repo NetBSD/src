@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.8 1996/04/21 21:07:02 veego Exp $	*/
+/*	$NetBSD: isr.h,v 1.8.48.1 2002/02/28 04:06:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.
@@ -38,7 +38,7 @@
 struct isr {
 	struct	isr *isr_forw;
 	struct	isr *isr_back;
-	int	(*isr_intr) __P((void *));
+	int	(*isr_intr)(void *);
 	void	*isr_arg;
 	int	isr_ipl;
 };
@@ -47,10 +47,10 @@ struct isr {
 #define	ISRIPL(x)	((x) - 3)
 
 #ifdef _KERNEL
-void add_isr __P((struct isr *));
-void remove_isr __P((struct isr *));
-typedef void (*sifunc_t) __P((void *, void *));
-void alloc_sicallback __P((void));
-void add_sicallback __P((sifunc_t, void *, void *));
-void rem_sicallback __P((sifunc_t));
+void add_isr(struct isr *);
+void remove_isr(struct isr *);
+typedef void (*sifunc_t)(void *, void *);
+void alloc_sicallback(void);
+void add_sicallback(sifunc_t, void *, void *);
+void rem_sicallback(sifunc_t);
 #endif

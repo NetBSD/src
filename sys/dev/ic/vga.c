@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.35.2.4 2002/01/08 00:30:10 nathanw Exp $ */
+/* $NetBSD: vga.c,v 1.35.2.5 2002/02/28 04:13:31 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.4 2002/01/08 00:30:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.5 2002/02/28 04:13:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,6 +662,38 @@ vga_is_console(bus_space_tag_t iot, int type)
 	return (0);
 }
 
+#define	VGA_TS_BLANK	0x20
+
+static int
+vga_get_video(struct vga_config *vc)
+{
+	return (vga_ts_read(&vc->hdl, mode) & VGA_TS_BLANK) == 0;
+}
+
+static void
+vga_set_video(struct vga_config *vc, int state)
+{
+	int val;
+
+	vga_ts_write(&vc->hdl, syncreset, 0x01);
+	if (state) {					/* unblank screen */
+		val = vga_ts_read(&vc->hdl, mode);
+		vga_ts_write(&vc->hdl, mode, val & ~VGA_TS_BLANK);
+#ifndef VGA_NO_VBLANK
+		val = vga_6845_read(&vc->hdl, mode);
+		vga_6845_write(&vc->hdl, mode, val | 0x80);
+#endif
+	} else {					/* blank screen */
+		val = vga_ts_read(&vc->hdl, mode);
+		vga_ts_write(&vc->hdl, mode, val | VGA_TS_BLANK);
+#ifndef VGA_NO_VBLANK
+		val = vga_6845_read(&vc->hdl, mode);
+		vga_6845_write(&vc->hdl, mode, val & ~0x80);
+#endif
+	}
+	vga_ts_write(&vc->hdl, syncreset, 0x03);
+}
+
 int
 vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
@@ -677,10 +709,17 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* XXX should get detailed hardware information here */
 		return ENOTTY;
 
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = (vga_get_video(vc) ? WSDISPLAYIO_VIDEO_ON :
+				WSDISPLAYIO_VIDEO_OFF);
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		vga_set_video(vc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
+		return 0;
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:

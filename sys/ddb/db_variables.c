@@ -1,33 +1,33 @@
-/*	$NetBSD: db_variables.c,v 1.20.2.3 2002/01/08 00:29:16 nathanw Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.20.2.4 2002/02/28 04:13:08 nathanw Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.20.2.3 2002/01/08 00:29:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.20.2.4 2002/02/28 04:13:08 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -65,9 +65,9 @@ int		db_onpanic = DDB_ONPANIC;
 #endif
 int		db_fromconsole = DDB_FROMCONSOLE;
 
-
-static int	db_rw_internal_variable __P((const struct db_variable *,
-			db_expr_t *, int));
+static int	db_rw_internal_variable(const struct db_variable *, db_expr_t *,
+		    int);
+static int	db_find_variable(const struct db_variable **);
 
 /* XXX must all be ints for sysctl. */
 const struct db_variable db_vars[] = {
@@ -85,17 +85,13 @@ const struct db_variable * const db_evars = db_vars + sizeof(db_vars)/sizeof(db_
  * ddb command line access to the DDB variables defined above.
  */
 static int
-db_rw_internal_variable(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+db_rw_internal_variable(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
 
-	if (rw == DB_VAR_GET) {
+	if (rw == DB_VAR_GET)
 		*valp = *(int *)vp->valuep;
-	} else {
+	else
 		*(int *)vp->valuep = *valp;
-	}
 	return (0);
 }
 
@@ -103,14 +99,8 @@ db_rw_internal_variable(vp, valp, rw)
  * sysctl(3) access to the DDB variables defined above.
  */
 int
-ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int	*name;
-	u_int	namelen;
-	void	*oldp;
-	size_t	*oldlenp;
-	void	*newp;
-	size_t	newlen;
-	struct proc *p;
+ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 
 	/* All sysctl names at this level are terminal. */
@@ -146,26 +136,25 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int
-db_find_variable(varp)
-	const struct db_variable	**varp;
+db_find_variable(const struct db_variable **varp)
 {
 	int	t;
 	const struct db_variable *vp;
 
 	t = db_read_token();
 	if (t == tIDENT) {
-	    for (vp = db_vars; vp < db_evars; vp++) {
-		if (!strcmp(db_tok_string, vp->name)) {
-		    *varp = vp;
-		    return (1);
+		for (vp = db_vars; vp < db_evars; vp++) {
+			if (!strcmp(db_tok_string, vp->name)) {
+				*varp = vp;
+				return (1);
+			}
 		}
-	    }
-	    for (vp = db_regs; vp < db_eregs; vp++) {
-		if (!strcmp(db_tok_string, vp->name)) {
-		    *varp = vp;
-		    return (1);
+		for (vp = db_regs; vp < db_eregs; vp++) {
+			if (!strcmp(db_tok_string, vp->name)) {
+				*varp = vp;
+				return (1);
+			}
 		}
-	    }
 	}
 	db_error("Unknown variable\n");
 	/*NOTREACHED*/
@@ -173,13 +162,12 @@ db_find_variable(varp)
 }
 
 int
-db_get_variable(valuep)
-	db_expr_t	*valuep;
+db_get_variable(db_expr_t *valuep)
 {
 	const struct db_variable *vp;
 
 	if (!db_find_variable(&vp))
-	    return (0);
+		return (0);
 
 	db_read_variable(vp, valuep);
 
@@ -187,13 +175,12 @@ db_get_variable(valuep)
 }
 
 int
-db_set_variable(value)
-	db_expr_t	value;
+db_set_variable(db_expr_t value)
 {
 	const struct db_variable *vp;
 
 	if (!db_find_variable(&vp))
-	    return (0);
+		return (0);
 
 	db_write_variable(vp, &value);
 
@@ -202,38 +189,30 @@ db_set_variable(value)
 
 
 void
-db_read_variable(vp, valuep)
-	const struct db_variable *vp;
-	db_expr_t	*valuep;
+db_read_variable(const struct db_variable *vp, db_expr_t *valuep)
 {
-	int	(*func) __P((const struct db_variable *, db_expr_t *, int)) = vp->fcn;
+	int (*func)(const struct db_variable *, db_expr_t *, int) = vp->fcn;
 
 	if (func == FCN_NULL)
-	    *valuep = *(vp->valuep);
+		*valuep = *(vp->valuep);
 	else
-	    (*func)(vp, valuep, DB_VAR_GET);
+		(*func)(vp, valuep, DB_VAR_GET);
 }
 
 void
-db_write_variable(vp, valuep)
-	const struct db_variable *vp;
-	db_expr_t	*valuep;
+db_write_variable(const struct db_variable *vp, db_expr_t *valuep)
 {
-	int	(*func) __P((const struct db_variable *, db_expr_t *, int)) = vp->fcn;
+	int (*func)(const struct db_variable *, db_expr_t *, int) = vp->fcn;
 
 	if (func == FCN_NULL)
-	    *(vp->valuep) = *valuep;
+		*(vp->valuep) = *valuep;
 	else
-	    (*func)(vp, valuep, DB_VAR_SET);
+		(*func)(vp, valuep, DB_VAR_SET);
 }
 
 /*ARGSUSED*/
 void
-db_set_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_expr_t	value;
 	db_expr_t	old_value;
@@ -242,25 +221,25 @@ db_set_cmd(addr, have_addr, count, modif)
 
 	t = db_read_token();
 	if (t != tDOLLAR) {
-	    db_error("Unknown variable\n");
-	    /*NOTREACHED*/
+		db_error("Unknown variable\n");
+		/*NOTREACHED*/
 	}
 	if (!db_find_variable(&vp)) {
-	    db_error("Unknown variable\n");
-	    /*NOTREACHED*/
+		db_error("Unknown variable\n");
+		/*NOTREACHED*/
 	}
 
 	t = db_read_token();
 	if (t != tEQ)
-	    db_unread_token(t);
+		db_unread_token(t);
 
 	if (!db_expression(&value)) {
-	    db_error("No value\n");
-	    /*NOTREACHED*/
+		db_error("No value\n");
+		/*NOTREACHED*/
 	}
 	if (db_read_token() != tEOL) {
-	    db_error("?\n");
-	    /*NOTREACHED*/
+		db_error("?\n");
+		/*NOTREACHED*/
 	}
 
 	db_read_variable(vp, &old_value);

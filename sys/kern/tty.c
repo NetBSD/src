@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.5 2001/11/14 19:16:44 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.6 2002/02/28 04:14:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.5 2001/11/14 19:16:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.6 2002/02/28 04:14:46 nathanw Exp $");
 
 #include "opt_uconsole.h"
 
@@ -171,6 +171,11 @@ struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
 
 struct pool tty_pool;
+
+u_int64_t tk_cancc;
+u_int64_t tk_nin;
+u_int64_t tk_nout;
+u_int64_t tk_rawcc;
 
 int
 ttyopen(struct tty *tp, int dialout, int nonblock)
@@ -825,8 +830,8 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = tp->t_linesw->l_no;
 		break;
 	case TIOCGLINED:
-		strncpy((char *)data, tp->t_linesw->l_name, 
-			TTLINEDNAMELEN);
+		(void)strncpy((char *)data, tp->t_linesw->l_name, 
+		    TTLINEDNAMELEN - 1);
 		break;
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
@@ -932,7 +937,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dev_t device;
 
 		/* Null terminate to prevent buffer overflow */
-		name[TTLINEDNAMELEN] = 0; 
+		name[TTLINEDNAMELEN - 1] = '\0'; 
 		lp = ttyldisc_lookup(name);
 
  setldisc:

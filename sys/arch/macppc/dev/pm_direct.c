@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.16.4.2 2002/01/11 23:38:35 nathanw Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.16.4.3 2002/02/28 04:10:39 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada

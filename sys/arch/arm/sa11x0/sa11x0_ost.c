@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.2.6.3 2002/01/11 23:38:06 nathanw Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.2.6.4 2002/02/28 04:07:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.4.2 2002/01/08 00:23:12 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.4.3 2002/02/28 04:07:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

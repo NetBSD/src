@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.1.12.2 2002/01/08 00:25:41 nathanw Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.1.12.3 2002/02/28 04:10:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.1.12.2 2002/01/08 00:25:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.1.12.3 2002/02/28 04:10:23 nathanw Exp $");
 
 #include "opt_pcibios.h"
 
@@ -54,10 +54,10 @@ int pci_bus_parent[256];
 /* this array lists the pcitag to program each bridge */
 pcitag_t pci_bus_tag[256];
 
+static void pci_bridge_reset(pci_chipset_tag_t, pcitag_t, void *);
+
 int
-pci_bus_fixup(pc, bus)
-	pci_chipset_tag_t pc;
-	int bus;
+pci_bus_fixup(pci_chipset_tag_t pc, int bus)
 {
 	static int bus_total;
 	static int bridge_cnt;
@@ -71,6 +71,9 @@ pci_bus_fixup(pc, bus)
 
 	if (++bus_total > 256)
 		panic("pci_bus_fixup: more than 256 PCI busses?");
+
+	/* Reset bridge configuration on this bus */
+	pci_bridge_foreach(pc, bus, bus, pci_bridge_reset, 0);
 
 	maxdevs = pci_bus_maxdevs(pc, bus);
 
@@ -153,4 +156,16 @@ pci_bus_fixup(pc, bus)
 	}
 
 	return (bus_max);	/* last # of subordinate bus */
+}
+
+/* Reset bus-bridge configuration */
+void
+pci_bridge_reset(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
+{
+	pcireg_t reg;
+
+	reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+	reg &= 0xff000000;
+	reg |= 0x00ffffff;	/* max bus # */
+	pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
 }

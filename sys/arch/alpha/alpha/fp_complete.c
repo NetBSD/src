@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.4.2.2 2001/08/30 23:43:40 nathanw Exp $ */
+/* $NetBSD: fp_complete.c,v 1.4.2.3 2002/02/28 04:06:09 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.4.2.2 2001/08/30 23:43:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.4.2.3 2002/02/28 04:06:09 nathanw Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -704,6 +704,7 @@ done:
 			usertrap_pc = trigger_pc;
 #endif
 		l->l_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
+		return sig;
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.8.2.2 2002/01/08 00:23:04 nathanw Exp $
+#	$NetBSD: MIMORI,v 1.8.2.3 2002/02/28 04:07:12 nathanw Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -24,6 +24,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks
@@ -190,7 +192,7 @@ atapibus*	at pciide? channel ?
 #### MII/PHY support
 
 exphy*		at mii? phy ?		# 3Com internal PHYs
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs

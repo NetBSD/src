@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54.2.3 2001/10/08 20:10:49 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.54.2.4 2002/02/28 04:12:51 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -144,9 +144,9 @@
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *set); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
+75	STD		{ int linux_sys_setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
+76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
@@ -317,19 +317,21 @@
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
 190	NOARGS		{ int sys___vfork14(void); }
-191	UNIMPL		getrlimit
-192	UNIMPL		mmap2
+191	STD		{ int linux_sys_ugetrlimit(int which, \
+			    struct orlimit *rlp); }
+192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
-				off_t length); }
+			    off_t length); }
 194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, off_t length); }
 195	STD		{ int linux_sys_stat64(const char *path, \
-				struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 196	STD		{ int linux_sys_lstat64(const char *path, \
-				struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 197	STD		{ int linux_sys_fstat64(int fd, \
-				struct linux_stat64 *sp); }
-198	STD		 { int linux_sys_lchown(const char *path, uid_t uid, \
-				gid_t gid); }
+			    struct linux_stat64 *sp); }
+198	STD		{ int linux_sys_lchown(const char *path, uid_t uid, \
+			    gid_t gid); }
 199	NOARGS		{ uid_t sys_getuid(void); }
 200	NOARGS		{ gid_t sys_getgid(void); }
 201	NOARGS		{ uid_t sys_geteuid(void); }
@@ -339,7 +341,7 @@
 205	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 206	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 207	NOARGS		{ int sys___posix_fchown(int fd, uid_t uid, \
-				gid_t gid); }
+			    gid_t gid); }
 208	STD		{ int linux_sys_setresuid(uid_t ruid, uid_t euid, \
 			    uid_t suid); }
 209	STD		{ int linux_sys_getresuid(uid_t *ruid, uid_t *euid, \

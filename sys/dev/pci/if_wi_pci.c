@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.1.2.3 2001/11/14 19:15:20 nathanw Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.1.2.4 2002/02/28 04:14:02 nathanw Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.3 2001/11/14 19:15:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.4 2002/02/28 04:14:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.3 2001/11/14 19:15:20 nathanw Ex
 #include <dev/ic/wi_ieee.h>
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
+
+#define WI_PCI_PLX_LOMEM	0x10	/* PLX chip membase */
+#define WI_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
+#define WI_PCI_LOMEM		0x18	/* ISA membase */
+#define WI_PCI_LOIO		0x1C	/* ISA iobase */
+
+#define WI_PLX_COR_OFFSET       0x3E0
+#define WI_PLX_COR_VALUE        0x41
 
 struct wi_pci_softc {
 	struct wi_softc psc_wi;		/* real "wi" softc */
@@ -96,11 +104,22 @@ const struct wi_pci_product {
 	pci_vendor_id_t		wpp_vendor;	/* vendor ID */
 	pci_product_id_t	wpp_product;	/* product ID */
 	const char		*wpp_name;	/* product name */
+	int			wpp_plx;	/* uses PLX chip */
 } wi_pci_products[] = {
+	{ PCI_VENDOR_GLOBALSUN,		PCI_PRODUCT_GLOBALSUN_GL24110P,
+	  NULL, 1 },
+	{ PCI_VENDOR_GLOBALSUN,		PCI_PRODUCT_GLOBALSUN_GL24110P02,
+	  NULL, 1 },
+	{ PCI_VENDOR_EUMITCOM,		PCI_PRODUCT_EUMITCOM_WL11000P,
+	  NULL, 1 },
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3CRWE777A,
+	  NULL, 1 },
+	{ PCI_VENDOR_NETGEAR,		PCI_PRODUCT_NETGEAR_MA301,
+	  NULL, 1 },
 	{ PCI_VENDOR_INTERSIL,		PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
-	  "Intersil Prism2.5" },
+	  "Intersil Prism2.5", 0 },
 	{ 0,				0,
-	  NULL},
+	  NULL, 0},
 };
 
 static int
@@ -117,7 +136,6 @@ wi_pci_enable(sc)
 		    sc->sc_dev.dv_xname);
 		return (EIO);
 	}
-	sc->sc_pci = 1;
 
 	/* reset HFA3842 MAC core */
 	wi_pci_reset(sc);
@@ -140,7 +158,7 @@ wi_pci_lookup(pa)
 {
 	const struct wi_pci_product *wpp;
 
-	for (wpp = wi_pci_products; wpp->wpp_name != NULL; wpp++) {
+	for (wpp = wi_pci_products; wpp->wpp_vendor != 0; wpp++) {
 		if (PCI_VENDOR(pa->pa_id) == wpp->wpp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == wpp->wpp_product)
 			return (wpp);
@@ -173,36 +191,54 @@ wi_pci_attach(parent, self, aux)
 	const char *intrstr;
 	const struct wi_pci_product *wpp;
 	pci_intr_handle_t ih;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
-	int memh_valid;
-	bus_addr_t busbase; 
-	bus_size_t bussize;
+	bus_space_tag_t memt, iot;
+	bus_space_handle_t memh, ioh;
 
 	psc->psc_pa = pa;
 
-	memh_valid = !pci_mapreg_map(pa, WI_PCI_CBMA, 
-		PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    	    		   &memt, &memh, &busbase, &bussize);
-
-	if(memh_valid){
-		sc->sc_iot = memt;
-		sc->sc_ioh = memh;
-	}
-	else {
-		printf(": unable to map device registers\n");
-		return;
-	}
-
 	wpp = wi_pci_lookup(pa);
+#ifdef DIAGNOSTIC
 	if (wpp == NULL) {
 		printf("\n");
 		panic("wi_pci_attach: impossible");
 	}
+#endif
 
-	printf(": %s Wireless Lan\n", wpp->wpp_name);
+	if (wpp->wpp_plx) {
+		/* Map memory and I/O registers. */
+		if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+		    &memt, &memh, NULL, NULL) != 0) {
+			printf(": can't map mem space\n");
+			return;
+		}
+		if (pci_mapreg_map(pa, WI_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+		    &iot, &ioh, NULL, NULL) != 0) {
+			printf(": can't map I/O space\n");
+			return;
+		}
+	} else {
+		if (pci_mapreg_map(pa, WI_PCI_CBMA,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+		    0, &iot, &ioh, NULL, NULL) != 0) {
+			printf(": can't map mem space\n");
+			return;
+		}
 
-	sc->sc_pci = 1;
+		memt = iot;
+		memh = ioh;
+		sc->sc_pci = 1;
+	}
+
+	if (wpp->wpp_name != NULL) {
+		printf(": %s Wireless Lan\n", wpp->wpp_name);
+	} else {
+		char devinfo[256];
+
+		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+		printf(": %s (rev. 0x%02x)\n", devinfo,
+		       PCI_REVISION(pa->pa_class));
+	}
+
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pci_enable;
 	sc->sc_disable = wi_pci_disable;
@@ -212,6 +248,11 @@ wi_pci_attach(parent, self, aux)
 		pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 		PCI_COMMAND_MASTER_ENABLE);
 
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+	/* Make sure interrupts are disabled. */
+	CSR_WRITE_2(sc, WI_INT_EN, 0);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -233,13 +274,22 @@ wi_pci_attach(parent, self, aux)
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/* reset HFA3842 MAC core */
-	wi_pci_reset(sc);
+	if (wpp->wpp_plx) {
+		/*
+		 * Setup the PLX chip for level interrupts and config index 1
+		 * XXX - should really reset the PLX chip too.
+		 */
+		bus_space_write_1(memt, memh,
+		    WI_PLX_COR_OFFSET, WI_PLX_COR_VALUE);
+	} else {
+		/* reset HFA3842 MAC core */
+		wi_pci_reset(sc);
+	}
 
+	printf("%s:", sc->sc_dev.dv_xname);
 	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-		    sc->sc_dev.dv_xname);
+		printf(" failed to attach controller\n");
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.7.2.4 2002/01/11 23:39:44 nathanw Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.7.2.5 2002/02/28 04:15:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Martin Husemann. All rights reserved.
@@ -38,14 +38,14 @@
 
 struct spppauthcfg {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
-	int	hisauth;		/* one of SPPP_AUTHPROTO_* above */
-	int	myauth;			/* one of SPPP_AUTHPROTO_* above */
-	int	myname_length;		/* includes terminating 0 */
-	int	mysecret_length;	/* includes terminating 0 */
-	int	hisname_length;		/* includes terminating 0 */
-	int	hissecret_length;	/* includes terminating 0 */
-	int	myauthflags;
-	int	hisauthflags;
+	u_int	hisauth;		/* one of SPPP_AUTHPROTO_* above */
+	u_int	myauth;			/* one of SPPP_AUTHPROTO_* above */
+	u_int	myname_length;		/* includes terminating 0 */
+	u_int	mysecret_length;	/* includes terminating 0 */
+	u_int	hisname_length;		/* includes terminating 0 */
+	u_int	hissecret_length;	/* includes terminating 0 */
+	u_int	myauthflags;
+	u_int	hisauthflags;
 	char	*myname;
 	char	*mysecret;
 	char	*hisname;

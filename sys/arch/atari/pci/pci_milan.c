@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.2.10.2 2002/01/11 23:38:13 nathanw Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.2.10.3 2002/02/28 04:08:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

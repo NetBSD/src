@@ -1,13 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.15.6.1 2001/04/09 01:58:28 nathanw Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.15.6.2 2002/02/28 04:15:10 nathanw Exp $	*/
 
 /*
- * Copyright (C) 1997-2000 by Darren Reed.
+ * Copyright (C) 1997-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.8.2.4 2000/12/02 00:15:03 darrenr Exp
+ * Id: ip_proxy.h,v 2.8.2.12 2002/01/01 13:41:43 darrenr Exp
  */
 
 #ifndef _NETINET_IP_PROXY_H_
@@ -78,10 +76,12 @@ typedef	struct	aproxy	{
 	void	(* apr_fini) __P((void));
 	int	(* apr_new) __P((fr_info_t *, ip_t *,
 				 ap_session_t *, struct nat *));
+	void	(* apr_del) __P((ap_session_t *));
 	int	(* apr_inpkt) __P((fr_info_t *, ip_t *,
 				   ap_session_t *, struct nat *));
 	int	(* apr_outpkt) __P((fr_info_t *, ip_t *,
 				    ap_session_t *, struct nat *));
+	int	(* apr_match) __P((fr_info_t *, ap_session_t *, struct nat *));
 } aproxy_t;
 
 #define	APR_DELETE	1
@@ -100,18 +100,20 @@ typedef struct  ftpside {
 	u_32_t	ftps_seq;
 	u_32_t	ftps_len;
 	int	ftps_junk;
+	int	ftps_cmds;
 	char	ftps_buf[FTP_BUFSZ];
 } ftpside_t;
 
 typedef struct  ftpinfo {
-	u_int   	ftp_passok;
+	int 	  	ftp_passok;
+	int		ftp_incok;
 	ftpside_t	ftp_side[2];
 } ftpinfo_t;
 
 /*
  * Real audio proxy structure and #defines
  */
-typedef	struct	{
+typedef	struct	raudio_s {
 	int	rap_seenpna;
 	int	rap_seenver;
 	int	rap_version;
@@ -139,6 +141,19 @@ typedef	struct	{
 #define	RAP_M_TCP	4
 #define	RAP_M_UDP_ROBUST	(RAP_M_UDP|RAP_M_ROBUST)
 
+/*
+ * IPSec proxy
+ */
+typedef	u_32_t	ipsec_cookie_t[2];
+
+typedef struct ipsec_pxy {
+	ipsec_cookie_t	ipsc_icookie;
+	ipsec_cookie_t	ipsc_rcookie;
+	int		ipsc_rckset;
+	ipnat_t		ipsc_rule;
+	nat_t		*ipsc_nat;
+	ipstate_t	*ipsc_state;
+} ipsec_pxy_t;
 
 extern	ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
 extern	ap_session_t	*ap_sess_list;
@@ -150,9 +165,11 @@ extern	int	appr_del __P((aproxy_t *));
 extern	int	appr_init __P((void));
 extern	void	appr_unload __P((void));
 extern	int	appr_ok __P((ip_t *, tcphdr_t *, struct ipnat *));
+extern	int	appr_match __P((fr_info_t *, struct nat *));
 extern	void	appr_free __P((aproxy_t *));
 extern	void	aps_free __P((ap_session_t *));
 extern	int	appr_check __P((ip_t *, fr_info_t *, struct nat *));
-extern	aproxy_t	*appr_match __P((u_int, char *));
+extern	aproxy_t	*appr_lookup __P((u_int, char *));
+extern	int	appr_new __P((fr_info_t *, ip_t *, struct nat *));
 
 #endif /* _NETINET_IP_PROXY_H_ */

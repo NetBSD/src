@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 2001/02/05 13:14:21 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11.8.1 2002/02/28 04:08:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,6 +35,7 @@
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/intr_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -217,7 +218,7 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
-	panic("pci_intr_disestablish: not implemented");
-
-	return;
+	/* Try both, only the valid one will disestablish. */
+	cpu_intr_disestablish(cookie);
+	icu_intr_disestablish(cookie);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.2.2.2 2002/01/08 00:24:12 nathanw Exp $ */
+/*	$NetBSD: ifpga.c,v 1.2.2.3 2002/02/28 04:09:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -48,6 +48,7 @@
 #include <dev/pci/pciconf.h>
 
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <arm/cpufunc.h>
 

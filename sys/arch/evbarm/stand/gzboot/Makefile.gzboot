@@ -1,0 +1,102 @@
+#	$NetBSD: Makefile.gzboot,v 1.4.2.2 2002/02/28 04:09:17 nathanw Exp $
+
+NOMAN=  # defined
+
+.include <bsd.own.mk>
+
+EVBARM_STAND=	${S}/arch/evbarm/stand
+
+BASE=	gzboot_${PLATFORM}_${RELOC}
+PROG=	${BASE}.sym
+WARNS=	1
+
+NEWVERSWHAT=	"Gzip Boot"
+VERSIONFILE=	${EVBARM_STAND}/gzboot/version
+
+BINMODE=644
+
+DBG=	-Os
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN= 
+LIBCRTEND=      
+
+.PATH: ${EVBARM_STAND}/gzboot
+.PATH: ${EVBARM_STAND}/board
+
+SRCS+=	gzboot.c image.S
+
+STARTFILE= srtbegin.o
+
+CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
+CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
+
+CPPFLAGS+= -D_STANDALONE
+
+# libsa options
+CPPFLAGS+= -DHEAP_VARIABLE
+
+# libz options
+CPPFLAGS+= -DDYNAMIC_CRC_TABLE
+
+CPPFLAGS+= -DRELOC=${RELOC}
+CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
+CPPFLAGS+= -DLOADADDR=${LOADADDR}
+
+COPTS+=	-ffreestanding
+CWARNFLAGS+= -Wno-main
+
+CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+SRCS+= vers.c
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN: machine
+.NOPATH: machine
+.endif
+
+realdepend realall: machine
+CLEANFILES+= arm machine
+
+machine::
+	-rm -f arm machine
+	ln -s ${S}/arch/evbarm/include machine
+	ln -s ${S}/arch/arm/include arm
+
+${OBJS}: machine
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	rm -rf lib
+
+LDFLAGS= -M -T ${LDSCRIPT}
+
+LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
+
+.PHONY: vers.c
+vers.c: ${VERSIONFILE}
+	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
+	    ${NEWVERSWHAT}
+
+${PROG}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -o ${BASE}.sym ${LDFLAGS} ${STARTFILE} \
+	    ${OBJS} ${LIBLIST} > ${BASE}.list
+
+.include <bsd.prog.mk>

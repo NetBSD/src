@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.5.2.6 2002/01/11 23:39:36 nathanw Exp $	*/
+/*	$NetBSD: umidi.c,v 1.5.2.7 2002/02/28 04:14:33 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.5.2.6 2002/01/11 23:39:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.5.2.7 2002/02/28 04:14:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,8 +980,7 @@ alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 {
 	sc->sc_num_mididevs = nmidi;
 	sc->sc_mididevs = malloc(sizeof(*sc->sc_mididevs)*nmidi,
-				 M_USBDEV, M_WAITOK);
-	memset(sc->sc_mididevs, 0, sizeof(*sc->sc_mididevs)*nmidi);
+				 M_USBDEV, M_WAITOK|M_ZERO);
 	if (!sc->sc_mididevs)
 		return USBD_NOMEM;
 

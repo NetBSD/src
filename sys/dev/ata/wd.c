@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.212.2.3 2002/01/08 00:29:22 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.4 2002/02/28 04:13:12 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.3 2002/01/08 00:29:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.4 2002/02/28 04:13:12 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -145,18 +145,19 @@ struct wd_softc {
 	int openings;
 	struct ataparams sc_params;/* drive characteistics found */
 	int sc_flags;	  
-#define WDF_LOCKED	  0x01
-#define WDF_WANTED	  0x02
-#define WDF_WLABEL	  0x04 /* label is writable */
-#define WDF_LABELLING   0x08 /* writing label */
+#define	WDF_LOCKED	0x001
+#define	WDF_WANTED	0x002
+#define	WDF_WLABEL	0x004 /* label is writable */
+#define	WDF_LABELLING	0x008 /* writing label */
 /*
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.
  */
-#define WDF_LOADED	  0x10 /* parameters loaded */
-#define WDF_WAIT	0x20 /* waiting for resources */
-#define WDF_LBA	 0x40 /* using LBA mode */
-#define WDF_KLABEL	 0x80 /* retain label after 'full' close */
+#define WDF_LOADED	0x010 /* parameters loaded */
+#define WDF_WAIT	0x020 /* waiting for resources */
+#define WDF_LBA		0x040 /* using LBA mode */
+#define WDF_KLABEL	0x080 /* retain label after 'full' close */
+#define WDF_LBA48	0x100 /* using 48-bit LBA mode */
 	int sc_capacity;
 	int cyl; /* actual drive parameters */
 	int heads;
@@ -308,6 +309,10 @@ wdattach(parent, self, aux)
 	printf("%s: drive supports %d-sector PIO transfers,",
 	    wd->sc_dev.dv_xname, wd->sc_multi);
 
+	/* 48-bit LBA addressing */
+	if ((wd->sc_params.atap_cmd2_en & WDC_CAP_LBA48) != 0)
+		wd->sc_flags |= WDF_LBA48;
+
 	/* Prior to ATA-4, LBA was optional. */
 	if ((wd->sc_params.atap_capabilities1 & WDC_CAP_LBA) != 0)
 		wd->sc_flags |= WDF_LBA;
@@ -318,7 +323,14 @@ wdattach(parent, self, aux)
 		wd->sc_flags |= WDF_LBA;
 #endif
 
-	if ((wd->sc_flags & WDF_LBA) != 0) {
+	if ((wd->sc_flags & WDF_LBA48) != 0) {
+		printf(" LBA48 addressing\n");
+		wd->sc_capacity =
+		    ((u_int64_t) wd->sc_params.__reserved6[11] << 48) |
+		    ((u_int64_t) wd->sc_params.__reserved6[10] << 32) |
+		    ((u_int64_t) wd->sc_params.__reserved6[9]  << 16) |
+		    ((u_int64_t) wd->sc_params.__reserved6[8]  << 0);
+	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		printf(" LBA addressing\n");
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
@@ -549,6 +561,8 @@ __wdstart(wd, bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
+	if (wd->sc_flags & WDF_LBA48)
+		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
 	if (bp->b_flags & B_READ)
@@ -1266,6 +1280,8 @@ again:
 		wd->sc_wdc_bio.flags = ATA_POLL;
 		if (wddumpmulti == 1)
 			wd->sc_wdc_bio.flags |= ATA_SINGLE;
+		if (wd->sc_flags & WDF_LBA48)
+			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;
 		wd->sc_wdc_bio.bcount =
@@ -1445,8 +1461,7 @@ wi_get()
 	struct wd_ioctl *wi;
 	int s;
 
-	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK);
-	memset(wi, 0, sizeof (struct wd_ioctl));
+	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);

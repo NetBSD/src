@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.2.2.2 2002/01/08 00:23:06 nathanw Exp $	*/
+/*	$NetBSD: fiq.c,v 1.2.2.3 2002/02/28 04:07:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.2.2.2 2002/01/08 00:23:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.2.2.3 2002/02/28 04:07:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,16 @@ extern char fiq_nullhandler[], fiq_nullhandler_end[];
  * fiq_installhandler:
  *
  *	Actually install the FIQ handler down at the FIQ vector.
+ *
+ *	Note: If the FIQ is invoked via an extra layer of
+ *	indirection, the actual FIQ code store lives in the
+ *	data segment, so there is no need to manipulate
+ *	the vector page's protection.
  */
 static void
 fiq_installhandler(void *func, size_t size)
 {
-#ifdef __PROG32
+#if defined(__PROG32) && !defined(__ARM_FIQ_INDIRECT)
 	extern void zero_page_readwrite(void);	/* XXX */
 	extern void zero_page_readonly(void);	/* XXX */
 
@@ -76,8 +81,10 @@ fiq_installhandler(void *func, size_t size)
 	memcpy(fiqvector, func, size);
 
 #ifdef __PROG32
+#if !defined(__ARM_FIQ_INDIRECT)
 	zero_page_readonly();
-	cpu_cache_syncI_rng((vaddr_t) fiqvector, size);
+#endif
+	cpu_icache_sync_range((vaddr_t) fiqvector, size);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.4.4.2 2002/01/11 23:38:47 nathanw Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.4.4.3 2002/02/28 04:12:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.

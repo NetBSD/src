@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.6.2.3 2001/11/14 19:15:53 nathanw Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.6.2.4 2002/02/28 04:14:19 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.6.2.3 2001/11/14 19:15:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.6.2.4 2002/02/28 04:14:19 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.6.2.3 2001/11/14 19:15:53 natha
 #include "rf_driver.h"
 #include "rf_shutdown.h"
 
+#ifdef DEBUG 
+
 #define Dprintf1(s,a)         rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
@@ -78,6 +80,19 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.6.2.3 2001/11/14 19:15:53 natha
 #define Dprintf6(s,a,b,c,d,e,f) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),NULL,NULL)
 #define Dprintf7(s,a,b,c,d,e,f,g) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define Dprintf8(s,a,b,c,d,e,f,g,h) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
+
+#else /* DEBUG */
+
+#define Dprintf1(s,a) {}
+#define Dprintf2(s,a,b) {}
+#define Dprintf3(s,a,b,c) {}
+#define Dprintf4(s,a,b,c,d) {}
+#define Dprintf5(s,a,b,c,d,e) {}
+#define Dprintf6(s,a,b,c,d,e,f) {}
+#define Dprintf7(s,a,b,c,d,e,f,g) {}
+#define Dprintf8(s,a,b,c,d,e,f,g,h) {}
+
+#endif /* DEBUG */
 
 #define FLUSH
 
@@ -233,15 +248,18 @@ rf_AcquireStripeLock(
 {
 	RF_StripeLockDesc_t *lockDesc;
 	RF_LockReqDesc_t *p;
-	int     tid = 0, hashval = HASH_STRIPEID(stripeID);
+#ifdef DEBUG
+	int     tid = 0;
+#endif
+	int     hashval = HASH_STRIPEID(stripeID);
 	int     retcode = 0;
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(lockReqDesc->type));
 
 	if (rf_stripeLockDebug) {
-		if (stripeID == -1)
+		if (stripeID == -1) {
 			Dprintf1("[%d] Lock acquisition supressed (stripeID == -1)\n", tid);
-		else {
+		} else {
 			Dprintf8("[%d] Trying to acquire stripe lock table 0x%lx SID %ld type %c range %ld-%ld, range2 %ld-%ld hashval %d\n",
 			    tid, (unsigned long) lockTable, stripeID, lockReqDesc->type, lockReqDesc->start,
 			    lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2);
@@ -340,16 +358,19 @@ rf_ReleaseStripeLock(
 {
 	RF_StripeLockDesc_t *lockDesc, *ld_t;
 	RF_LockReqDesc_t *lr, *lr_t, *callbacklist, *t;
-	int     tid = 0, hashval = HASH_STRIPEID(stripeID);
+#ifdef DEBUG
+	int     tid = 0;
+#endif
+	int     hashval = HASH_STRIPEID(stripeID);
 	int     release_it, consider_it;
 	RF_LockReqDesc_t *candidate, *candidate_t, *predecessor;
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(lockReqDesc->type));
 
 	if (rf_stripeLockDebug) {
-		if (stripeID == -1)
+		if (stripeID == -1) {
 			Dprintf1("[%d] Lock release supressed (stripeID == -1)\n", tid);
-		else {
+		} else {
 			Dprintf8("[%d] Releasing stripe lock on stripe ID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
 			    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2, lockTable);
 			FLUSH;

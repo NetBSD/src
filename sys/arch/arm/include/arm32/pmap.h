@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.2.2 2002/01/08 00:23:12 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.3 2002/02/28 04:07:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -123,8 +123,8 @@ struct pv_head {
  * entry address for each page hook.
  */
 typedef struct {
-        vaddr_t va;
-        pt_entry_t *pte;
+	vaddr_t va;
+	pt_entry_t *pte;
 } pagehook_t;
 
 /*
@@ -132,10 +132,20 @@ typedef struct {
  * during bootstrapping) we need to keep track of the physical and virtual
  * addresses of various pages
  */
-typedef struct {
+typedef struct pv_addr {
+	SLIST_ENTRY(pv_addr) pv_list;
 	paddr_t pv_pa;
 	vaddr_t pv_va;
 } pv_addr_t;
+
+/*
+ * Determine various modes for PTEs (user vs. kernel, cacheable
+ * vs. non-cacheable).
+ */
+#define	PTE_KERNEL	0
+#define	PTE_USER	1
+#define	PTE_NOCACHE	0
+#define	PTE_CACHE	1
 
 /*
  * _KERNEL specific macros, functions and prototypes
@@ -176,6 +186,12 @@ int pmap_modified_emulation __P((struct pmap *, vaddr_t));
 void pmap_postinit __P((void));
 pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
 
+/* Bootstrapping routines. */
+void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
+void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
+vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
+void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
+
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
  */
@@ -210,6 +226,12 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
 	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
+
+/*
+ * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
+ */
+
+#define PMAP_CACHE_VIVT
 
 #endif /* _KERNEL */
 
