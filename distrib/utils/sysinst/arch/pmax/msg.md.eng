@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.2 1997/10/29 01:09:59 phil Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.3 1997/10/29 03:06:39 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,3 +37,40 @@
  */
 
 /* pmax machine dependend messages, english */
+
+
+message fullpart
+{We are now going to install NetBSD on the disk %s.  You may
+choose to install NetBSD on the entire disk or part of the disk.
+Which would you like to do?
+}
+
+message dobootblks
+{Installing boot blocks on %s....
+}
+
+message askfsroot
+{I will be asking for partition sizes and on some, mount points.
+
+First the root partition.  You have %d %s left on your disk.
+Root partition size? }
+
+message askfsswap
+{
+Next the swap partition.  You have %d %s left on your disk.
+Swap partition size? }
+
+message askfsusr
+{
+Next the /usr partition.  You have %d %s left on your disk.
+/usr partition size? }
+
+message otherparts
+{You still have some space remaining unallocated on your disk.  Please
+give sizes and mount points for the following partitions.
+
+}
+
+message askfspart
+{The next partition is /dev/%s%c.  You have %d %s left on your disk.
+Partition size? }
