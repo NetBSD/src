@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.53 1994/10/12 13:38:16 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.54 1994/10/24 09:09:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1273,7 +1273,6 @@ loop:	lflag = tp->t_lflag;
 				/* nothing, check expiration */
 				slp = t - diff(time, stime);
 			}
-			last_cc = qp->c_cc;
 		} else {	/* m == 0 */
 			if (qp->c_cc > 0)
 				goto read;
@@ -1284,6 +1283,7 @@ loop:	lflag = tp->t_lflag;
 			} else
 				slp = t - diff(time, stime);
 		}
+		last_cc = qp->c_cc;
 #undef diff
 		if (slp > 0) {
 			/*
@@ -1319,7 +1319,7 @@ sleep:
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 		    carrier ? ttyin : ttopen, slp);
 		splx(s);
-		if (error)
+		if (error && error != EWOULDBLOCK)
 			return (error);
 		goto loop;
 	}
