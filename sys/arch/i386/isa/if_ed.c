@@ -14,82 +14,7 @@
  */
 
 /*
- * Modification history
- *
- * $Log: if_ed.c,v $
- * Revision 1.2.2.3  1993/07/26 18:55:46  cgd
- * Fixed logic problem which caused a bogus value to be written to the 3c503
- * asic register even if the board isn't a 3c503. This caused old 8003E's not
- * to work because they ignore IO address bits >10bits and the 3c503 asic is
- * located at +0x400....the offset was ignored by the 8003E and so the
- * value was written to one of the NIC registers. The bug was discovered by
- * Wolfgang Solfrank.
- *
- * Revision 1.2.2.2  1993/07/21  13:50:00  cgd
- * from davidg:
- *    Added config file override for memory size and added flags to force
- * 8bit or 16bit operation, and a flag to disable transmitter double buffering.
- *    See the updated "ed.relnotes" file for information about how to set
- * the flags.
- *    This should be considered the first "production"  release. It still
- * needs a manual page, though.
- *
- * Revision 1.2.2.1  1993/07/20  01:51:58  cgd
- * Fixed to allow iosiz config parameter to override what was (for jkh,
- * incorrectly) probed.  This allows you more flexibility in getting weird
- * WD 80x3 clones to work.
- *
- * Revision 1.2  1993/07/12  13:13:41  deraadt
- * moved bfdttach point  to same place as other drivers, from greenman
- *
- * Revision 1.1  1993/07/03  12:19:45  cgd
- * add support for David Greenman's "ed" driver.
- *
- * Revision 1.12  93/07/07  06:27:44  davidg
- * moved call to bpfattach to after this drivers attach printf -
- * improves readability of startup messages.
- * 
- * Revision 1.11  93/06/27  03:07:01  davidg
- * fixed bugs in the 3Com part of the probe routine that were uncovered by
- * the previous fix.
- * 
- * Revision 1.10  93/06/25  19:23:19  davidg
- * fixed bug that caused erroneous 'Invalid irq configuration' message when
- * no board is present (during autoconfiguration).
- * 
- * Revision 1.9  93/06/23  03:48:14  davidg
- * fixed minor typo introduced when cleaning up probe routine
- * 
- * Revision 1.8  93/06/23  03:37:19  davidg
- * cleaned up/added some comments. Also improved readability of a part of
- * the probe routine.
- * 
- * Revision 1.7  93/06/22  04:45:01  davidg
- * (no additional changes) Second beta release
- * 
- * Revision 1.6  93/06/22  04:40:35  davidg
- * minor definition fix to ed_reset()
- * 
- * Revision 1.5  93/06/22  04:37:39  davidg
- * fixed some comments
- * 
- * Revision 1.4  93/06/22  04:34:34  davidg
- * added support to use the LLC0 'link-level control' flag
- * to disable the tranceiver for AUI operation on 3Com boards.
- * The default for this flag can be set in the kernel config
- * file - 'flags 0x01' sets the flag (disables the tranceiver).
- * 
- * Revision 1.3  93/06/17  03:57:28  davidg
- * fixed some printf's
- * 
- * Revision 1.2  93/06/17  03:26:49  davidg
- * fixed 3c503 code to determine 8/16bit board
- * changed attach printf to work with Interim-0.1.5 and NetBSD
- * 
- * Revision 1.1  93/06/14  22:21:24  davidg
- * Beta release of device driver for SMC/WD80x3 and 3C503 ethernet boards.
- * 
- * 
+ *	$Id: if_ed.c,v 1.2.2.4 1993/07/27 05:57:54 cgd Exp $
  */
  
 #include "ed.h"
@@ -97,12 +22,12 @@
 #include "bpfilter.h"
 
 #include "param.h"
+#include "systm.h"
 #include "errno.h"
 #include "ioctl.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "syslog.h"
-#include "select.h"
 
 #include "net/if.h"
 #include "net/if_dl.h"
@@ -826,10 +751,8 @@ ed_stop(unit)
 	 *	to 'n' (about 5ms). It shouldn't even take 5us on modern
 	 *	DS8390's, but just in case it's an old one.
 	 */
-	while ((inb(sc->nic_addr + ED_P0_ISR) & ED_ISR_RST) == 0) {
-		if (--n == 0)
-			break;
-	}
+	while (((inb(sc->nic_addr + ED_P0_ISR) & ED_ISR_RST) == 0) && --n);
+
 }
 
 /*
@@ -1486,13 +1409,24 @@ edintr(unit)
 		}
 
 		/*
-		 * return NIC CR to standard state before looping back
-		 *	to top: page 0, remote DMA complete, start
-		 * (toggling the TXP bit off, even if was just set in the
-		 *	transmit routine, is *okay* - it is 'edge' triggered
-		 *	from low to high)
+		 * return NIC CR to standard state: page 0, remote DMA complete,
+		 * 	start (toggling the TXP bit off, even if was just set
+		 *	in the transmit routine, is *okay* - it is 'edge'
+		 *	triggered from low to high)
 		 */
 		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+
+		/*
+		 * If the Network Talley Counters overflow, read them to
+		 *	reset them. It appears that old 8390's won't
+		 *	clear the ISR flag otherwise - resulting in an
+		 *	infinite loop.
+		 */
+		if (isr & ED_ISR_CNT) {
+			(void) inb(sc->nic_addr + ED_P0_CNTR0);
+			(void) inb(sc->nic_addr + ED_P0_CNTR1);
+			(void) inb(sc->nic_addr + ED_P0_CNTR2);
+		}
 	}
 }
  
