@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 2001/02/14 20:24:17 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 2001/03/02 16:29:41 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,8 +144,8 @@ Lnobpe:
 					| instruction case: 4+12+12
 	andl	#PG_FRAME,%d1           | and truncate
 Lberr3:
-	movl	%d1,sp@-
-	movl	%d0,sp@-		| code is FSLW now.
+	movl	%d1,%sp@-
+	movl	%d0,%sp@-		| code is FSLW now.
 	andw	#0x1f80,%d0 
 	jeq	Lisberr
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
@@ -1211,7 +1211,7 @@ Lsw2:
 	moveml	%d2-%d7/%a2-%a7,%a1@(PCB_REGS)	| save non-scratch registers
 	movl	%usp,%a2			| grab USP (a2 has been saved)
 	movl	%a2,%a1@(PCB_USP)		| and save it
-	movl	_C_LABEL(CMAP2),a1@(PCB_CMAP2)	| save temporary map PTE
+	movl	_C_LABEL(CMAP2),%a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)		| do we have any FPU?
@@ -1282,7 +1282,7 @@ Lswnofpsave:
 	tstl	_C_LABEL(fputype)		| do we _have_ any fpu?
 	jne	Lresnonofpatall
 	movw	%a1@(PCB_PS),%sr		| no, restore PS
-	moveq	#1,d0				| return 1 (for alternate rets)
+	moveq	#1,%d0				| return 1 (for alternate rets)
 	rts
 Lresnonofpatall:
 #endif

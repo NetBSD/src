@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.73 2001/02/14 20:24:17 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.74 2001/03/02 16:29:41 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -837,7 +837,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		if (id & AMIGA_68060) {
 			/* do i need to clear the branch cache? */
 			asm volatile (	".word 0x4e7a,0x0002;" 
-					"orl #0x400000,d0;" 
+					"orl #0x400000,%%d0;" 
 					".word 0x4e7b,0x0002" : : : "d0");
 		}
 
