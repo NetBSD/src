@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.231 2003/06/01 17:37:23 mbw Exp $
+.\"	$NetBSD: main,v 1.232 2003/06/05 12:40:23 scw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1667,6 +1667,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Izumi Tsutsui Ta Mt tsutsui@netbsd.org Ta Sy news68k
 .It Ta Leo Weppelman Ta Mt leo@netbsd.org Ta Sy atari
 .It Ta Nathan Williams Ta Mt nathanw@netbsd.org Ta Sy sun3
+.It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy evbsh5
 .It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvme68k
 .It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvmeppc
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org Ta Sy acorn32
