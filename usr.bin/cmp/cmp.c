@@ -1,4 +1,4 @@
-/*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
+/*      $NetBSD: cmp.c,v 1.8 1996/02/01 03:32:41 mrg Exp $      */
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $";
+static char rcsid[] = "$NetBSD: cmp.c,v 1.8 1996/02/01 03:32:41 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,8 +105,11 @@ endargs:
 		fd1 = 0;
 		file1 = "stdin";
 	}
-	else if ((fd1 = open(file1, O_RDONLY, 0)) < 0)
-		err(ERR_EXIT, "%s", file1);
+	else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
+		if (!sflag)
+			warn("%s", file1);
+		exit(ERR_EXIT);
+	}
 	if (strcmp(file2 = argv[1], "-") == 0) {
 		if (special)
 			errx(ERR_EXIT,
@@ -115,8 +118,11 @@ endargs:
 		fd2 = 0;
 		file2 = "stdin";
 	}
-	else if ((fd2 = open(file2, O_RDONLY, 0)) < 0)
-		err(ERR_EXIT, "%s", file2);
+	else if ((fd2 = open(file2, O_RDONLY, 0)) < 0) {
+		if (!sflag)
+			warn("%s", file2);
+		exit(ERR_EXIT);
+	}
 
 	skip1 = argc > 2 ? strtoq(argv[2], NULL, 10) : 0;
 	skip2 = argc == 4 ? strtoq(argv[3], NULL, 10) : 0;
