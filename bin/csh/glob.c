@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.13 1998/03/31 20:45:25 kleink Exp $	*/
+/*	$NetBSD: glob.c,v 1.14 1998/06/19 22:58:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.13 1998/03/31 20:45:25 kleink Exp $");
+__RCSID("$NetBSD: glob.c,v 1.14 1998/06/19 22:58:04 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,7 @@ static Char **
 libglob(vl)
     Char  **vl;
 {
-    int     gflgs = GLOB_QUOTE | GLOB_NOMAGIC;
+    int     gflgs = GLOB_NOMAGIC;
     glob_t  globv;
     char   *ptr;
     int     nonomatch = adrof(STRnonomatch) != 0, magic = 0, match = 0;

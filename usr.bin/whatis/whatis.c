@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.10 1998/02/03 04:24:17 perry Exp $	*/
+/*	$NetBSD: whatis.c,v 1.11 1998/06/19 23:03:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.10 1998/02/03 04:24:17 perry Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.11 1998/06/19 23:03:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,8 @@ main(argc, argv)
 		ep = (tp = getlist("_whatdb")) == NULL ?
 		   NULL : tp->list.tqh_first;
 		for (; ep != NULL; ep = ep->q.tqe_next) {
-			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
-			    NULL, &pg) != 0)
+			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
+			    &pg) != 0)
 				err(1, "glob");
 			if (pg.gl_pathc)
 				for (p = pg.gl_pathv; *p; p++)
