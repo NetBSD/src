@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.4 2003/10/21 12:43:19 itohy Exp $
+#	$NetBSD: Makefile.buildboot,v 1.5 2003/10/26 07:25:36 lukem Exp $
 
 MACHINE_ARCH=hppa
 MACHINE=hp700
@@ -38,7 +38,7 @@ CLEANFILES+=	vers.c
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp700 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp700 ${NEWVERSWHAT}
 
 CPPFLAGS+=		-D_STANDALONE -Dhp700 ${DEBUGFLAGS}
 CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT} 

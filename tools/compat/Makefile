@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/08/01 17:04:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2003/10/26 07:25:38 lukem Exp $
 
 HOSTLIB=	nbcompat
 
@@ -52,7 +52,7 @@ SRCS:=		${SRCS:Nndbm.c}
 config.cache: include/.stamp configure config.h.in defs.mk.in
 	rm -f ${.TARGET}
 	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
-		sh ${.CURDIR}/configure --cache-file=config.cache
+		${HOST_SH} ${.CURDIR}/configure --cache-file=config.cache
 
 defs.mk: config.cache
 	@touch ${.TARGET}

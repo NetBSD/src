@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/26 07:25:35 lukem Exp $
 
 NOMAN=		# defined
 LDSTATIC=	-static
@@ -6,6 +6,6 @@ LDSTATIC=	-static
 PROG=		sigtramp
 
 regress:
-	sh ${.CURDIR}/dotest
+	${HOST_SH} ${.CURDIR}/dotest
 
 .include <bsd.prog.mk>

@@ -1,4 +1,6 @@
-# $NetBSD: Makefile.booters,v 1.9 2003/10/08 01:40:23 simonb Exp $
+# $NetBSD: Makefile.booters,v 1.10 2003/10/26 07:25:37 lukem Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -31,7 +33,7 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -msoft-float -G 128
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
@@ -51,7 +53,7 @@ LOAD_ADDRESS_IP32?=	0x80002000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

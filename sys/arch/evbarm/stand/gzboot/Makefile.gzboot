@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.8 2003/04/29 05:32:41 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.9 2003/10/26 07:25:36 lukem Exp $
 
 NOMAN=  # defined
 
@@ -94,7 +94,7 @@ LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
 .PHONY: vers.c
 vers.c: ${VERSIONFILE}
-	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
 	    ${NEWVERSWHAT}
 
 ${PROG}: ${PROGSYM}

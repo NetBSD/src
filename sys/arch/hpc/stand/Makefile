@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.11 2003/07/10 10:34:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2003/10/26 07:25:36 lukem Exp $
 #
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 PROJECT_DIRS=	hpcboot libz libsa
 
@@ -12,9 +14,9 @@ all:
 evc3:
 	cd dspgen && ${MAKE} evc3 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
-		sh dspgen/config.sh evc3 $$d;				\
+		${HOST_SH} dspgen/config.sh evc3 $$d;			\
 	done
-	sh dspgen/gen_workspace.sh evc3 hpc_stand.vcw $(PROJECT_DIRS)
+	${HOST_SH} dspgen/gen_workspace.sh evc3 hpc_stand.vcw $(PROJECT_DIRS)
 	cd dspgen && ${MAKE} clean;
 #
 # generates project/work files for Visual C++ 6.0 + Windows CE tool kit.
@@ -22,10 +24,10 @@ evc3:
 vc6:
 	cd dspgen && ${MAKE} vc6 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
-		sh dspgen/config.sh vc6 $$d;				\
+		${HOST_SH} dspgen/config.sh vc6 $$d;			\
 	done
 	cd dspgen && ${MAKE} clean;
-	sh dspgen/gen_workspace.sh vc6 hpc_stand.dsw $(PROJECT_DIRS)
+	${HOST_SH} dspgen/gen_workspace.sh vc6 hpc_stand.dsw $(PROJECT_DIRS)
 
 #
 # generates project/work files for Visual C++ 5.0 Windows CE Embeded tool kit.
@@ -34,10 +36,10 @@ vc6:
 vc5:
 	cd dspgen && ${MAKE} vc5 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
-		sh dspgen/config.sh vc5 $$d;				\
+		${HOST_SH} dspgen/config.sh vc5 $$d;			\
 	done
 	cd dspgen && ${MAKE} clean;
-	sh dspgen/gen_workspace.sh vc5 hpc_stand.dsw $(PROJECT_DIRS)
+	${HOST_SH} dspgen/gen_workspace.sh vc5 hpc_stand.dsw $(PROJECT_DIRS)
 
 clean:
 	rm -f hpcboot/opt_spec_platform.h
@@ -72,7 +74,8 @@ install1:
 
 uuencode:
 	find binary -name "hpcboot*.exe" -print | \
-	awk '{ print "uuencode", $$1, $$1, ">", $$1".uu ; rm -f", $$1 }' | sh
+	awk '{ print "uuencode", $$1, $$1, ">", $$1".uu ; rm -f", $$1 }' \
+	    | ${HOST_SH}
 	cp binary/build_number.h build_number.h
 	awk '{if (/HPCBOOT_BUILD_NUMBER/)				\
 		{ i = $$3 + 1;						\

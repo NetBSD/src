@@ -14,6 +14,8 @@
 ##
 ##    This is derived from work done by Brian Grayson, submitted in PR 6706.
 
+.include <bsd.sys.mk>		# for HOST_SH
+
 TMPL=/tmp/ffstemplate
 TMPMP=/tmp/ffsregresstest_mount
 TMPIM=/var/tmp/ffsregresstest.im
@@ -66,10 +68,10 @@ cmp:
 dump:
 	@echo "***  Testing dump nodump flag support."
 	@#  First of all, estimate the size of a dump of just the tmpfs.
-	sh ${SRCDIR}/estimatecompare 2572 -S -h9 -0 ${CVND}${MPART}
+	${HOST_SH} ${SRCDIR}/estimatecompare 2572 -S -h9 -0 ${CVND}${MPART}
 
 	@#  Now estimate the size, after honoring the nodump flag.
-	sh ${SRCDIR}/estimatecompare 347  -S -h0 -0 ${CVND}${MPART}
+	${HOST_SH} ${SRCDIR}/estimatecompare 347  -S -h0 -0 ${CVND}${MPART}
 	@echo "***  Testing dump/restore support"
 	mkdir ${TMPREST}
 	dump -0 -h9 -B10000 -f - ${CVND}${MPART} | \
