@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.10 1993/10/15 23:26:39 cgd Exp $
+ *	$Id: config.h,v 1.11 1994/01/08 10:33:43 cgd Exp $
  */
 
 /*
@@ -135,6 +135,7 @@ struct config {
  */
 int	machine;
 char	*machinename;
+char	*machinearch;
 #define	MACHINE_VAX	1
 #define	MACHINE_TAHOE	2
 #define MACHINE_HP300	3
