@@ -54,7 +54,7 @@
 .Ft void
 .Fn pw_prompt
 .Ft void
-.Fn pw_copy "int ffd" "int tfd" "struct passwd *pw"
+.Fn pw_copy "int ffd" "int tfd" "struct passwd *pw" "struct passwd *old_pw"
 .Ft int
 .Fn pw_scan "char *bp" "struct passwd *pw" "int *flags"
 .Ft void
@@ -105,6 +105,15 @@ and writes it to
 updating the entry corresponding to pw->pw_name with the information
 in
 .Fa pw .
+If
+.Fa old_pw
+is not NULL, it checks to make sure the old entry is the same as
+the one described in
+.Fa old_pw
+or the process is aborted.  If an entry is not found to match
+.Fa pw ,
+a new entry is appended to the passwd file only if the real user
+ID is 0.
 .Pp
 The
 .Fn pw_scan

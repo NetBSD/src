@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.9 1997/07/06 18:17:21 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.10 1997/07/24 08:50:31 phil Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.9 1997/07/06 18:17:21 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.10 1997/07/24 08:50:31 phil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: passwd.c,v 1.9 1997/07/06 18:17:21 christos Exp $");
 #include <util.h>
 
 static void	pw_cont __P((int sig));
+static int	pw_equal __P((char *buf, struct passwd *old_pw));
 
 int
 pw_lock(retries)
@@ -237,10 +238,33 @@ pw_prompt()
 		pw_error(NULL, 0, 0);
 }
 
-void
-pw_copy(ffd, tfd, pw)
-	int ffd, tfd;
+/* for use in pw_copy(). Compare a pw entry to a pw struct. */
+static int
+pw_equal (buf, pw)
+	char *buf;
 	struct passwd *pw;
+{
+	struct passwd buf_pw;
+	int len = strlen (buf);
+	if (buf[len-1] == '\n')
+		buf[len-1] = '\0';
+	if (!pw_scan(buf, &buf_pw, NULL))
+		return 0;
+	return !strcmp(pw->pw_name, buf_pw.pw_name)
+		&& pw->pw_uid == buf_pw.pw_uid
+		&& pw->pw_gid == buf_pw.pw_gid
+		&& !strcmp(pw->pw_class, buf_pw.pw_class)
+		&& (long)pw->pw_change == (long)buf_pw.pw_change
+		&& (long)pw->pw_expire == (long)buf_pw.pw_expire
+		&& !strcmp(pw->pw_gecos, buf_pw.pw_gecos)
+		&& !strcmp(pw->pw_dir, buf_pw.pw_dir)
+		&& !strcmp(pw->pw_shell, buf_pw.pw_shell);
+}
+
+void
+pw_copy(ffd, tfd, pw, old_pw)
+	int ffd, tfd;
+	struct passwd *pw, *old_pw;
 {
 	FILE *from, *to;
 	int done;
@@ -274,6 +298,12 @@ pw_copy(ffd, tfd, pw)
 				goto err;
 			continue;
 		}
+		*p = ':';
+		if (old_pw && !pw_equal(buf, old_pw)) {
+			warnx("%s: entry inconsistent",
+			      _PATH_MASTERPASSWD);
+			pw_error(NULL, 0, 1);
+		}
 		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
 		    pw->pw_class, (long)pw->pw_change, (long)pw->pw_expire,
@@ -282,11 +312,17 @@ pw_copy(ffd, tfd, pw)
 		if (ferror(to))
 			goto err;
 	}
-	if (!done)
-		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
-		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-		    pw->pw_class, (long)pw->pw_change, (long)pw->pw_expire,
-		    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
+	/* Only append a new entry if real uid is root! */
+	if (!done) 
+		if (getuid() == 0)
+			(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
+			    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
+			    pw->pw_class, (long)pw->pw_change,
+			    (long)pw->pw_expire, pw->pw_gecos, pw->pw_dir,
+			    pw->pw_shell);
+		else
+			warnx("%s: changes not made, no such entry",
+		      	    _PATH_MASTERPASSWD);
 
 	if (ferror(to))
 err:		pw_error(NULL, 1, 1);
