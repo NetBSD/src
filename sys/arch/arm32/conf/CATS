@@ -119,6 +119,18 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options		PMAP_STATIC_L1S=128
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/wscons/wskbdmap_mfii.h for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
 # Development and Debugging options
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
@@ -233,11 +245,11 @@ uhub* at uhub? port ?
 
 # USB Mice
 ums*  at uhub? port ?
-#wsmouse*	at ums?
+wsmouse*	at ums?
 
 # USB Keyboards
 ukbd* at uhub? port ?
-#wskbd*	at ukbd? console ?
+wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
 uhid* at uhub? port ?
@@ -259,6 +271,9 @@ ulpt* at uhub? port ?
 # Audio support
 #audio*	at eap?
 #audio*	at uaudio?
+
+vga*		at pci?
+wsdisplay*	at vga? console ?
 
 # ISA bus bridging
 
