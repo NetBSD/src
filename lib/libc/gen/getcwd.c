@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.24.4.2 2003/08/05 09:31:58 msaitoh Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.24.4.3 2004/05/12 04:20:34 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.24.4.2 2003/08/05 09:31:58 msaitoh Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.24.4.3 2004/05/12 04:20:34 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,7 +134,7 @@ loop:
 				errno = ELOOP;
 				goto err1;
 			}
-			n = readlink(p, resolved, MAXPATHLEN);
+			n = readlink(p, resolved, MAXPATHLEN-1);
 			if (n < 0)
 				goto err1;
 			resolved[n] = '\0';
