@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.52 1999/10/13 09:00:49 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.53 1999/10/13 19:11:07 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.52 1999/10/13 09:00:21 augustss Exp 
+ *	NetBSD: usbdevs,v 1.53 1999/10/13 18:55:32 augustss Exp 
  */
 
 /*
@@ -84,6 +84,7 @@
 #define	USB_VENDOR_VISION	0x0553		/* VLSI Vision Ltd. */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
 #define	USB_VENDOR_MUSTEK	0x055f		/* Mustek Systems Inc. */
+#define	USB_VENDOR_TELEX	0x0562		/* Telex Communications Inc. */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks Inc. */
 #define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
 #define	USB_VENDOR_ETEK	0x056c		/* e-TEK Labs */
@@ -101,6 +102,7 @@
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
+#define	USB_VENDOR_MIDIMAN	0x0763		/* Midiman */
 #define	USB_VENDOR_SANDISK	0x0781		/* SanDisk Corp */
 #define	USB_VENDOR_SIIG	0x07cc		/* SIIG */
 #define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
@@ -224,6 +226,9 @@
 /* Mustek products */
 #define	USB_PRODUCT_MUSTEK_MDC800	0xa800		/* MDC-800 digital camera */
 
+/* Telex Communications products */
+#define	USB_PRODUCT_TELEX_MIC1	0x0001		/* Enhanced USB Microphone */
+
 /* Peracom products */
 #define	USB_PRODUCT_PERACOM_SERIAL1	0x0001		/* Serial Converter */
 
@@ -287,6 +292,9 @@
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
 #define	USB_PRODUCT_ENTREGA_EZUSB	0x8000		/* EZ-USB */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
+
+/* Midiman products */
+#define	USB_PRODUCT_MIDIMAN_MIDISPORT2X2	0x1001		/* Midisport 2x2 */
 
 /* SanDisk products */
 #define	USB_PRODUCT_SANDISK_IMAGEMATE	0x0001		/* USB ImageMate */
