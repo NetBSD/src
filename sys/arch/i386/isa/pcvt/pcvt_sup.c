@@ -353,9 +353,6 @@ vgapcvtinfo(struct pcvtinfo *data)
 #if PCVT_MDAFASTSCROLL
 	| CONF_MDAFASTSCROLL
 #endif
-#if PCVT_SLOW_INTERRUPT
-	| CONF_SLOW_INTERRUPT
-#endif
 #if PCVT_NO_LED_UPDATE
 	| CONF_NO_LED_UPDATE
 #endif

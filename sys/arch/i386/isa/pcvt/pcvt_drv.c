@@ -812,10 +812,7 @@ static u_char pcvt_timeout_scheduled = 0;
 static	void	pcvt_timeout (void *arg)
 {
 	u_char *cp;
-
-#if PCVT_SLOW_INTERRUPT
 	int	s;
-#endif
 
 	pcvt_timeout_scheduled = 0;
 
@@ -842,12 +839,12 @@ static	void	pcvt_timeout (void *arg)
 				(*linesw[pcconsp->t_line].l_rint)(*cp++ & 0xff, pcconsp);
 		}
 
-		PCVT_DISABLE_INTR ();
+		s = spltty();
 
 		if (!pcvt_kbd_count)
 			pcvt_timeout_scheduled = 0;
 
-		PCVT_ENABLE_INTR ();
+		splx(s);
 	}
 
 	return;
@@ -866,10 +863,7 @@ pcrint(void)
 #if PCVT_KBD_FIFO
 	u_char	dt;
 	u_char	ret = -1;
-
-# if PCVT_SLOW_INTERRUPT
 	int	s;
-# endif
 
 #else /* !PCVT_KBD_FIFO */
 	u_char	*cp;
@@ -904,9 +898,9 @@ pcrint(void)
 		{
 			pcvt_kbd_fifo[pcvt_kbd_wptr++] = dt; /* data -> fifo */
 
-			PCVT_DISABLE_INTR ();	/* XXX necessary ? */
+			s = spltty();	/* XXX necessary ? */
 			pcvt_kbd_count++;		/* update fifo count */
-			PCVT_ENABLE_INTR ();
+			splx(s);
 
 			if (pcvt_kbd_wptr >= PCVT_KBD_FIFO_SZ)
 				pcvt_kbd_wptr = 0;	/* wraparound pointer */
@@ -917,10 +911,10 @@ pcrint(void)
 	{
 		if (!pcvt_timeout_scheduled)	/* if not already active .. */
 		{
-			PCVT_DISABLE_INTR ();
+			s = spltty();
 			pcvt_timeout_scheduled = 1;	/* flag active */
 			timeout((TIMEOUT_FUNC_T)pcvt_timeout, (caddr_t) 0, 1); /* fire off */
-			PCVT_ENABLE_INTR ();
+			splx(s);
 		}
 	}
 	return (ret);

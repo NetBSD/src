@@ -433,13 +433,6 @@
 # define PCVT_MDAFASTSCROLL 1	/* MDA/Hercules which do support more 	*/
 #endif				/* than one page of video memory.	*/
 
-#if !defined PCVT_SLOW_INTERRUPT/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_SLOW_INTERRUPT 0	/* If off, protecting critical regions	*/
-#elif PCVT_SLOW_INTERRUPT != 0	/* in the keyboard fifo code is done by	*/
-# undef PCVT_SLOW_INTERRUPT	/* disabling the processor irq's, if on */
-# define PCVT_SLOW_INTERRUPT 1	/* this is done by spl()/splx() calls.  */
-#endif
-
 /*---------------------------------------------------------------------------*
  *	Kernel messages attribute definitions
  *	These define the foreground and background attributes used to
