@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.4 2002/07/12 19:52:21 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.5 2002/08/26 10:23:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -272,6 +272,18 @@ ASENTRY_NOPROFILE(idle)
  *      resuming curproc.
  */
 ENTRY_NOPROFILE(cpu_switch)
+#ifdef DEBUG
+	pta/l	1f, tr0
+	getcon	sr, r0
+	LDC32(SH5_CONREG_SR_BL, r1)
+	and	r0, r1, r0
+	beq	r0, r63, tr0
+	LEAF(_C_LABEL(panic), r0)
+	ptabs/l	r0, tr0
+	LEA(Lbadsw2_panic, r2)
+	blink	tr0, r63
+1:
+#endif
 	getcon	kcr0, r0
 	LDPTR	r0, CI_CURPCB, r2	/* Fetch curpcb */
 	LDPTR	r0, CI_CURPROC, r0	/* Fetch curproc */
@@ -379,6 +391,7 @@ Lsw2:
 	ld.q	r15, 0, r18
 	addi	r15, 8, r15
 #endif
+
 	getcon	kcr0, r0
 	LDPTR	r0, CI_CURPROC, r1	/* Fetch curproc */
 	movi	SONPROC, r2		/* Flag process as running */
@@ -388,7 +401,6 @@ Lsw2:
 	LDPTR	r0, CI_CURPCB, r0	/* Fetch curpcb */
 	ld.q	r0, PCB_CTX_SR, r0	/* Fetch saved status register */
 	putcon	r0, sr			/* Restore interrupt mask */
-
 	ptabs/l	r18, tr0
 	movi	1, r2			/* Non-zero return value */
 	blink	tr0, r63		/* Done */
@@ -402,6 +414,8 @@ Lbadsw:
 	.data
 Lbadsw_panic:
 	.asciz	"cpu_switch: bad switch!"
+Lbadsw2_panic:
+	.asciz	"cpu_switch: switch with SR.BL set!"
 
 
 /******************************************************************************
@@ -441,6 +455,21 @@ ENTRY(switch_exit)
 
 /******************************************************************************
  *
+ * int sh5_savectx(u_int usr, int mdf, struct pcb *pcb)
+ *
+ * Save state in the PCB
+ */
+ENTRY(sh5_savectx)
+	ptabs/l	r18, tr1
+	or	r2, r63, r1		/* Get USR to r1 */
+	SAVE_CTX(r4, r3)
+	or	r3, r63, r2
+	blink	tr1, r63
+
+
+
+/******************************************************************************
+ *
  * int sh5_fpsave(u_int usr, struct pcb *pcb)
  *
  * Save FP state in the PCB
@@ -449,13 +478,13 @@ ENTRY(switch_exit)
  * indicate if the FPU state was used/saved.
  */
 ENTRY(sh5_fpsave)
-	ptabs/l	r18, tr0
+	ptabs/l	r18, tr1
 	getcon	sr, r0
 	or	r2, r63, r1
 	movi	0, r2
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0
 	andi	r0, 1, r0
-	bne/u	r0, r63, tr0		/* Skip FP save if FPU disabled */
+	bne/u	r0, r63, tr1		/* Skip FP save if FPU disabled */
 	shlri	r1, 8, r0
 	andi	r0, 0xff, r0
 	cmpgt	r0, r63, r2		/* r2 = MDP_FPUSED if fpregs dirty */
@@ -470,7 +499,7 @@ ENTRY(sh5_fpsave)
 	FPSV(r3,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)
 	fgetscr	fr0
 	fst.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
-	blink	tr0, r63
+	blink	tr1, r63
 
 
 /******************************************************************************
@@ -480,12 +509,12 @@ ENTRY(sh5_fpsave)
  * Restore FP state from the PCB
  */
 ENTRY(sh5_fprestore)
-	ptabs/l	r18, tr0
+	ptabs/l	r18, tr1
 	getcon	sr, r0
 	or	r2, r63, r1
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0
 	andi	r0, 1, r0
-	bne/u	r0, r63, tr0		/* Skip FP save if FPU disabled */
+	bne/u	r0, r63, tr1		/* Skip FP save if FPU disabled */
 	FPRS(r3,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)
 	FPRS(r3,PCB_CTX_FPREGS_DR8,dr8,dr10,dr12,dr14)
 	FPRS(r3,PCB_CTX_FPREGS_DR16,dr16,dr18,dr20,dr22)
@@ -496,4 +525,4 @@ ENTRY(sh5_fprestore)
 	FPRS(r3,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)
 	fgetscr	fr0
 	fst.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
-	blink	tr0, r63
+	blink	tr1, r63
