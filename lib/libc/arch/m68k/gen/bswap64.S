@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap64.S,v 1.1 1999/01/15 13:31:18 bouyer Exp $	*/
+/*	$NetBSD: bswap64.S,v 1.2 1999/02/08 22:00:13 is Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -32,9 +32,9 @@ ENTRY(bswap64)
 	movl	sp@(4),d1
 	movl	sp@(8),d0
 	rolw	#8,d1
-	swap	d1
-	rolw	#8,d1
 	rolw	#8,d0
+	swap	d1
 	swap	d0
 	rolw	#8,d0
+	rolw	#8,d1
 	rts
