@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.23 1997/09/15 09:15:28 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.24 1997/09/16 07:04:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
+static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.23 1997/09/15 09:15:28 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.24 1997/09/16 07:04:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -755,7 +755,7 @@ newroute(argc, argv)
 			break;
 		if (af == AF_INET && *gateway && hp && hp->h_addr_list[1]) {
 			hp->h_addr_list++;
-			memcpy(&so_gate.sin.sin_addr, hp->h_addr_list[0],
+			memmove(&so_gate.sin.sin_addr, hp->h_addr_list[0],
 			    hp->h_length);
 		} else
 			break;
@@ -984,7 +984,7 @@ netdone:
 	if (hp) {
 		*hpp = hp;
 		su->sin.sin_family = hp->h_addrtype;
-		memcpy(&su->sin.sin_addr, hp->h_addr, hp->h_length);
+		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
 	(void) fprintf(stderr, "%s: bad value\n", s);
@@ -1119,7 +1119,7 @@ rtmsg(cmd, flags)
 
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
-	    l = ROUNDUP(u.sa.sa_len); memcpy(cp, &(u), l); cp += l;\
+	    l = ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
 	    if (verbose) sodump(&(u),"u");\
 	}
 
