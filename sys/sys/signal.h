@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.26 1997/12/20 12:00:06 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.27 1998/01/15 14:58:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -182,7 +182,7 @@ struct	sigvec {
  * Structure used in sigstack call.
  */
 struct	sigstack {
-	char	*ss_sp;			/* signal stack pointer */
+	void	*ss_sp;			/* signal stack pointer */
 	int	ss_onstack;		/* current status */
 };
 
