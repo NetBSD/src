@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.56 2003/08/04 00:26:09 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.57 2004/06/24 16:56:00 drochner Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.56 2003/08/04 00:26:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.57 2004/06/24 16:56:00 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -654,7 +654,8 @@ wds_create_scbs(sc, mem, size)
 			return (error);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_scb, scb, chain);
-		(caddr_t)scb += ALIGN(sizeof(struct wds_scb));
+		scb = (struct wds_scb *)((caddr_t)scb +
+			ALIGN(sizeof(struct wds_scb)));
 		size -= ALIGN(sizeof(struct wds_scb));
 		sc->sc_numscbs++;
 	}
