@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.42 2000/05/27 15:02:04 sommerfeld Exp $	*/
+/*	$NetBSD: fstat.c,v 1.43 2000/08/14 06:03:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.42 2000/05/27 15:02:04 sommerfeld Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.43 2000/08/14 06:03:21 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,9 @@ __RCSID("$NetBSD: fstat.c,v 1.42 2000/05/27 15:02:04 sommerfeld Exp $");
 #include <msdosfs/bpb.h>
 #define	_KERNEL
 #include <msdosfs/msdosfsmount.h>
+#undef _KERNEL
+#define	_KERNEL
+#include <miscfs/genfs/layer.h>
 #undef _KERNEL
 
 #include <net/route.h>
@@ -152,6 +155,8 @@ int	ext2fs_filestat __P((struct vnode *, struct filestat *));
 int	getfname __P((char *));
 void	getinetproto __P((int));
 char   *getmnton __P((struct mount *));
+int	layer_filestat __P((struct vnode *, struct filestat *,
+    struct vnode **));
 int	main __P((int, char **));
 int	msdosfs_filestat __P((struct vnode *, struct filestat *));
 int	nfs_filestat __P((struct vnode *, struct filestat *));
@@ -403,8 +408,9 @@ vtrans(vp, i, flag)
 	struct vnode vn;
 	struct filestat fst;
 	char mode[15], rw[3];
-	char *badtype = NULL, *filename;
+	char *badtype, *filename;
 
+again:
 	filename = badtype = NULL;
 	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {
 		dprintf("can't read vnode at %p for pid %d", vp, Pid);
@@ -443,6 +449,14 @@ vtrans(vp, i, flag)
 		case VT_NTFS:
 			if (!ntfs_filestat(&vn, &fst))
 				badtype = "error";
+			break;
+		case VT_NULL:
+		case VT_OVERLAY:
+		case VT_UMAP:
+			if (!layer_filestat(&vn, &fst, &vp))
+				badtype = "error";
+			else
+				goto again;
 			break;
 		default: {
 			static char unknown[10];
@@ -599,6 +613,23 @@ msdosfs_filestat(vp, fsp)
 	fsp->rdev = 0;	/* msdosfs doesn't support device files */
 	fsp->mode = (0777 & mp.pm_mask) | getftype(vp->v_type);
 	return 1;
+}
+
+int
+layer_filestat(vp, fsp, nvp)
+	struct vnode *vp;
+	struct filestat *fsp;
+	struct vnode **nvp;
+{
+	struct layer_node layer_node;
+
+	if (!KVM_READ(VTOLAYER(vp), &layer_node, sizeof(layer_node))) {
+		dprintf("can't read layer_node at %p for pid %d",
+		    VTOLAYER(vp), Pid);
+		return (0);
+	}
+	*nvp = layer_node.layer_lowervp;
+	return (1);
 }
 
 char *
