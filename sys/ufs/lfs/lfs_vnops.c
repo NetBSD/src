@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.131 2004/04/21 01:05:45 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.132 2004/04/22 10:45:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.131 2004/04/21 01:05:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.132 2004/04/22 10:45:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1363,7 +1363,6 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int by_list;
 	struct vm_page *curpg = NULL; /* XXX: gcc */
 	struct vm_page *pgs[MAXBSIZE / PAGE_SIZE], *pg;
-	struct lwp *l = curlwp ? curlwp : &lwp0;
 	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
 	int i;
@@ -1381,7 +1380,6 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 
 	if (by_list) {
 		curpg = TAILQ_FIRST(&vp->v_uobj.memq);
-		PHOLD(l);
 	} else {
 		soff = startoffset;
 	}
@@ -1489,9 +1487,6 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		} else {
 			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
 		}
-	}
-	if (by_list) {
-		PRELE(l);
 	}
 
 	/*
