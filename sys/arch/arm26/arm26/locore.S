@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.23 2001/12/20 17:45:31 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.24 2001/12/21 22:56:18 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -161,7 +161,7 @@ pull_trapframe:
  * AST handling stuff.  We have to disable IRQs between loading the
  * flag and returning to user mode, since otherwise an IRQ might
  * happen in the interim and set the flag again.  For simplicity, we
- * just leave IRQs off throughout (ast_handler will re-enable them).
+ * just leave IRQs off throughout (ast will re-enable them).
  */
 	ldr	lr, [sp, #TF_R15]	/* Pull return address and PSR */
 	tst	lr, #R15_MODE		/* Was trap in USR mode? */
@@ -174,8 +174,10 @@ pull_trapframe:
 	ldr	r1, [r4]
 	cmp	r1, #0			/* AST pending? */
 	beq	2f			/* If not, return */
+	mov	r1, #0			/* Clear astpending */
+	str	r1, [r4]
 	mov	r0, sp			/* Reuse old trapframe */
-	bl	_C_LABEL(ast_handler)	/* Handle AST */
+	bl	_C_LABEL(ast)	/* Handle AST */
 	b	1b			/* Try again */
 
 2:
@@ -279,8 +281,8 @@ Lirq_from_usr:
 	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
-	ldr	r0, Lastpending
-	ldr	r0, [r0]
+	ldr	r1, Lastpending
+	ldr	r0, [r1]
 	cmp	r0, #0
 	bne	Lirq_to_ast
 	mov	r0, sp
@@ -296,6 +298,8 @@ Lirq_from_usr:
 	movs	r15, lr			/* and return. */
 
 Lirq_to_ast:
+	mov	r0, #0			/* Clear astpending */
+	str	r0, [r1]
 	ldmia	sp, {IRQ_REGS_USR}	/* Slurp up irqframe */
 	sub	sp, sp, #(TF_SIZE - IF_SIZE - TF_R0)
 	stmia	sp, {TRAP_REGS}^	/* Spit out trapframe */
@@ -307,7 +311,7 @@ Lirq_to_ast:
 
 	mov	fp, #0
 	mov	r0, sp
-	bl	_C_LABEL(ast_handler)
+	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
 /* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
@@ -453,4 +457,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.23 2001/12/20 17:45:31 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.24 2001/12/21 22:56:18 bjh21 Exp $")

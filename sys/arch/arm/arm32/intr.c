@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2001/11/26 23:19:04 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 2001/12/21 22:56:17 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -115,8 +115,6 @@ setsoftserial()
 {
 	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_SERIAL));
 }
-
-int astpending;
 
 /* Handle software interrupts */
 

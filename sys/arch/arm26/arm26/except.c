@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38 2001/10/18 22:53:39 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.39 2001/12/21 22:56:17 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38 2001/10/18 22:53:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.39 2001/12/21 22:56:17 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -81,45 +81,6 @@ void checkvectors(void);
 
 int want_resched;
 
-/*
- * userret() is called just before any return to userland after a trap.
- * It's all boilerplate stuff.
- */
-
-static void
-userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
-#ifdef DIAGNOSTIC
-	/* Mark trapframe as invalid. */
-	p->p_addr->u_pcb.pcb_tf = (void *)-1;
-	checkvectors();
-#endif
-}
-
 #ifdef DIAGNOSTIC
 void
 checkvectors()
@@ -145,7 +106,6 @@ swi_handler(struct trapframe *tf)
 void
 syscall(struct trapframe *tf)
 {
-	u_quad_t sticks;
 	struct proc *p;
 	vaddr_t pc;
 	int code, nargs, nregargs, nextreg, nstkargs;
@@ -162,7 +122,6 @@ syscall(struct trapframe *tf)
 	p = curproc;
 	if (p == NULL)
 		p = &proc0;
-	sticks = p->p_sticks;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
 		p->p_addr->u_pcb.pcb_tf = tf;
 
@@ -262,7 +221,7 @@ syscall(struct trapframe *tf)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p, pc, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -286,7 +245,7 @@ child_return(void *arg)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, SYS_fork /* XXX */, 0, &tf->tf_r0);
 #endif
-	userret(p, tf->tf_r15 & R15_PC, 0);
+	userret(p);
 #ifdef KTRACE
         if (KTRPOINT(p, KTR_SYSRET))
                 ktrsysret(p, SYS_fork /* XXX */, 0, tf->tf_r0);
@@ -296,7 +255,6 @@ child_return(void *arg)
 void
 prefetch_abort_handler(struct trapframe *tf)
 {
-	u_quad_t sticks;
 	vaddr_t pc;
 	struct proc *p;
 
@@ -315,7 +273,6 @@ prefetch_abort_handler(struct trapframe *tf)
 	p = curproc;
 	if (p == NULL)
 		p = &proc0;
-	sticks = p->p_sticks;
 
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
 		p->p_addr->u_pcb.pcb_tf = tf;
@@ -333,13 +290,12 @@ prefetch_abort_handler(struct trapframe *tf)
 
 	do_fault(tf, p, &p->p_vmspace->vm_map, pc, VM_PROT_EXECUTE);
 
-	userret(p, pc, sticks);
+	userret(p);
 }
 
 void
 data_abort_handler(struct trapframe *tf)
 {
-	u_quad_t sticks;
 	vaddr_t pc, va;
 	vsize_t asize;
 	struct proc *p;
@@ -367,7 +323,6 @@ data_abort_handler(struct trapframe *tf)
 		p = &proc0;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
 		p->p_addr->u_pcb.pcb_tf = tf;
-	sticks = p->p_sticks;
 	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
@@ -383,7 +338,7 @@ data_abort_handler(struct trapframe *tf)
 		do_fault(tf, p, map, va + asize - 4, atype);
 
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		userret(p, pc, sticks);
+		userret(p);
 }
 
 /*
@@ -631,7 +586,6 @@ data_abort_usrmode(struct trapframe *tf)
 void
 address_exception_handler(struct trapframe *tf)
 {
-	u_quad_t sticks;
 	struct proc *p;
 	vaddr_t pc;
 
@@ -666,42 +620,8 @@ address_exception_handler(struct trapframe *tf)
 	Debugger();
 #endif
 #endif
-	sticks = p->p_sticks;
 	trapsignal(p, SIGBUS, pc);
-	userret(p, pc, sticks);
-}
-
-/*
- * An AST isn't a real hardware trap, but locore.S makes it look like one
- * for consistency.
- */
-int astpending;
-
-void
-ast_handler(struct trapframe *tf)
-{
-	u_quad_t sticks;
-	vaddr_t pc;
-	struct proc *p;
-
-	/* Enable interrupts if they were enabled before the trap. */
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-	astpending = 0;
-	p = curproc;
-	if (p == NULL)
-		p = &proc0;
-	sticks = p->p_sticks;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		p->p_addr->u_pcb.pcb_tf = tf;
-	pc = tf->tf_r15 & R15_PC;
-
-	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
-		ADDUPROF(p);
-	}
-
-	userret(p, pc, sticks);
+	userret(p);
 }
 
 #ifdef DEBUG

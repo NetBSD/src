@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2001/11/22 18:00:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2001/12/21 22:56:17 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -235,10 +235,8 @@ void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
-#ifndef arm26
 /* ast.c */
 void userret		__P((register struct proc *p));
-#endif
 
 /* machdep.h */
 void bootsync		__P((void));
