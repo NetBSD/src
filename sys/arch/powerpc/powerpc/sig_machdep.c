@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.14 2003/09/25 21:59:55 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15 2003/09/25 22:04:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14 2003/09/25 21:59:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2003/09/25 22:04:17 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14 2003/09/25 21:59:55 matt Exp $"
  * Send a signal to process.
  */
 void
-sendsig(ksiginfo_t *ksi, sigset_t *mask)
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
