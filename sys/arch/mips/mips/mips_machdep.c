@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.89 2000/06/15 23:39:14 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.90 2000/06/17 06:38:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.89 2000/06/15 23:39:14 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.90 2000/06/17 06:38:25 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -321,7 +321,7 @@ mips3_vector_init()
  * The principal purpose of this function is to examine the
  * variable cpu_id, into which the kernel locore start code
  * writes the cpu ID register, and to then copy appropriate
- * cod into the CPU exception-vector entries and the jump tables
+ * code into the CPU exception-vector entries and the jump tables
  * used to hide the differences in cache and TLB handling in
  * different MIPS CPUs.
  *
