@@ -1,4 +1,4 @@
-.\"	$NetBSD: ti.4,v 1.5 2001/06/02 17:08:47 thorpej Exp $
+.\"	$NetBSD: ti.4,v 1.6 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -48,10 +48,10 @@ The
 .Nm
 driver provides support for PCI gigabit
 .Tn Ethernet
-adapters based on the Alteon Networks Tigon gigabit 
+adapters based on the Alteon Networks Tigon gigabit
 .Tn Ethernet
-controller chip.  The Tigon contains an embedded R4000 CPU, gigabit MAC, dual 
-DMA channels and a PCI interface unit.  The Tigon II contains two R4000 CPUs 
+controller chip.  The Tigon contains an embedded R4000 CPU, gigabit MAC, dual
+DMA channels and a PCI interface unit.  The Tigon II contains two R4000 CPUs
 and other refinements.  Either chip can be used in either a 32-bit or 64-bit
 PCI slot.  Communication with the chip is achieved via PCI shared memory
 and bus master DMA.  The Tigon I and II support hardware multicast
@@ -187,7 +187,7 @@ The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El
 .Sh SEE ALSO
-.Xr netintro 4 , 
+.Xr netintro 4 ,
 .Xr ifconfig 8 ,
 .Xr pci 4
 .Rs
