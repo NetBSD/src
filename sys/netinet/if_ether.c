@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.6 1997/02/18 13:27:45 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.7 1997/02/18 15:24:20 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -517,6 +517,24 @@ in_arpinput(m)
 			log(LOG_INFO, "arp info overwritten for %08x by %s\n",
 			    ntohl(isaddr.s_addr),
 			    lla_snprintf(ar_sha(ah), ah->ar_hln));
+		/* 
+		 * sanity check for the address length.
+		 * XXX this does not work for protocols with variable address
+		 * length. -is
+		 */
+		if (sdl->sdl_alen &&
+		    sdl->sdl_alen != ah->ar_hln) {
+			log(LOG_WARNING, 
+			    "arp from %08x: new addr len %d, was %d",
+			    ntohl(isaddr.s_addr), ah->ar_hln, sdl->sdl_alen);
+		}
+		if (ifp->if_data.ifi_addrlen != ah->ar_hln) {
+			log(LOG_WARNING, 
+			    "arp from %08x: addr len: new %d, i/f %d (ignored)",
+			    ntohl(isaddr.s_addr), ah->ar_hln,
+			    ifp->if_data.ifi_addrlen);
+			goto reply;
+		}
 		bcopy((caddr_t)ar_sha(ah), LLADDR(sdl),
 		    sdl->sdl_alen = ah->ar_hln);
 		if (rt->rt_expire)
