@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.97 2003/08/07 16:34:15 agc Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.98 2003/09/27 07:52:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -193,7 +193,9 @@ struct ctlname {
 #define	KERN_POSIX_READER_WRITER_LOCKS 71 /* int: POSIX R/W Locks option */
 #define	KERN_DUMP_ON_PANIC	72	/* int: dump on panic */
 #define	KERN_SOMAXKVA		73	/* int: max socket kernel virtual mem */
-#define	KERN_MAXID		74	/* number of valid kern ids */
+#define	KERN_ROOT_PARTITION	74	/* int: root partition */
+#define	KERN_DRIVERS		75	/* struct: driver names and majors #s */
+#define	KERN_MAXID		76	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -271,6 +273,8 @@ struct ctlname {
 	{ "posix_reader_writer_locks", CTLTYPE_INT }, \
 	{ "dump_on_panic", CTLTYPE_INT}, \
 	{ "somaxkva", CTLTYPE_INT}, \
+	{ "root_partition", CTLTYPE_INT}, \
+	{ "drivers", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -513,6 +517,16 @@ struct kinfo_lwp {
 	{ "cancc", CTLTYPE_QUAD }, \
 	{ "rawcc", CTLTYPE_QUAD }, \
 }
+
+/*
+ * kern.drivers returns the size of one of these, followed by an array of them.
+ */
+
+struct kinfo_drivers {
+	int32_t		d_bmajor;
+	int32_t		d_cmajor;
+	char		d_name[16];
+};
 
 
 /*
