@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16 1999/09/10 10:12:09 is Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.17 1999/11/12 07:29:34 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -376,9 +376,6 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				return;
 		}
 
-		/* XXX Is this only for BUS_DMASYNC_PREWRITE ? */
-		cpu_drain_writebuf();
-
 		/* Set the starting address and maximum length */
 		vaddr = seg->_ds_vaddr + offset;
 		length = seg->ds_len - offset;
@@ -406,6 +403,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				length = seg->ds_len;
 			}
 		} while (len > 0);
+
+		cpu_drain_writebuf();
 	}
 }
 
