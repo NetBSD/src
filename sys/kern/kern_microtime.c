@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.3 2003/06/23 11:02:05 martin Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.4 2003/06/28 15:02:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.3 2003/06/23 11:02:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.4 2003/06/28 15:02:24 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,7 +81,7 @@ cc_microtime(struct timeval *tvp)
 {
 	static struct timeval lasttime;
 	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
-	struct timeval t, st;
+	struct timeval t;
 	struct cpu_info *ci = curcpu();
 	int64_t sec, usec;
 	int s;
@@ -91,9 +91,6 @@ cc_microtime(struct timeval *tvp)
 #else
 	s = splclock();		/* block clock interrupts */
 #endif
-
-	/* XXXSMP: not atomic */
-	st = time;		/* read system time */
 
 	if (ci->ci_cc_denom != 0) {
 		/*
@@ -120,7 +117,8 @@ cc_microtime(struct timeval *tvp)
 		/*
 		 * Can't use the CC -- just use the system time.
 		 */
-		t = st;
+		/* XXXSMP: not atomic */
+		t = time;
 	}
 
 	/*
