@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.25 2003/09/13 13:30:03 chris Exp $
+#	$NetBSD: IPAQ,v 1.26 2003/10/08 11:08:54 bouyer Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -151,7 +151,8 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 # PCMCIA IDE controllers and disks
 wdc*	at pcmcia? function ?
-wd*	at wdc?
+atabus* at wdc? channel ?
+wd*	at atabus? drive ?
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)

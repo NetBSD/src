@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.6 2003/10/06 16:04:15 scw Exp $
+#	$NetBSD: WALNUT,v 1.7 2003/10/08 11:08:07 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -211,9 +211,10 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-wd*	at pciide? channel ? drive ?
+atabus* 	at pciide? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
-atapibus* at pciide? channel ?
+atapibus* at atabus?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives

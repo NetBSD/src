@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.3 2003/10/06 18:20:54 shige Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.4 2003/10/08 11:08:07 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -151,6 +151,7 @@ pchb0	at plb?				# PCI-Host bridges
 pci*	at pchb?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pciide*	at pci? dev ? function ?
+atabus* at pciide? channel ?
 
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
@@ -170,9 +171,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
-wd*	at pciide? channel ? drive ?
+wd*	at atabus? drive ?
 
-atapibus* at pciide? channel ?
+atapibus* at atabus?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
