@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.125 2000/05/17 18:08:03 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.126 2000/05/22 16:58:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,8 @@ cdev_decl(scd);
 cdev_decl(pc);
 cdev_decl(sd);
 cdev_decl(st);
+#include "ses.h"
+cdev_decl(ses);
 #include "ss.h"
 cdev_decl(ss);
 #include "uk.h"
@@ -399,6 +401,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bktr_init(NBKTR, bktr),    /* 71: Bt848 video capture device */
 	cdev_viaenv_init(NVIAENV, viaenv_),/* 72: VIA VT82C686A hwmon */
 	cdev_tty_init(NCZ,cztty),	/* 73: Cyclades-Z serial port */
+	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -514,6 +517,7 @@ static int chrtoblktbl[] = {
 	/* 71 */	NODEV,
 	/* 72 */	NODEV,
 	/* 73 */	NODEV,
+	/* 74 */	NODEV,
 };
 
 /*
