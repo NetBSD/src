@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.1.2.1 1997/07/01 16:52:05 bouyer Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.1.2.2 1997/07/01 23:32:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

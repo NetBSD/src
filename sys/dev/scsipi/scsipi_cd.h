@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.1.2.1 1997/07/01 16:52:36 bouyer Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.1.2.2 1997/07/01 23:32:48 thorpej Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -145,5 +145,4 @@ struct cd_audio_page {
 };
 
 
-#endif /*_SCSI_PI_CD_H*/
-
+#endif /* _SCSI_PI_CD_H */
