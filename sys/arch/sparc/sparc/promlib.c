@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.2 1999/02/18 17:23:55 christos Exp $ */
+/*	$NetBSD: promlib.c,v 1.3 1999/03/02 13:41:03 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -900,9 +900,10 @@ prom_init_obp()
 		promops.po_finddevice = obp_v2_finddevice;
 
 #ifndef _STANDALONE
-		prom_printf("OBP version %x (plugin %x, revision %x)\n",
-			obpvec->pv_romvec_vers, obpvec->pv_plugin_vers,
-			obpvec->pv_printrev);
+		prom_printf("OBP version %d, revision %d.%d (plugin rev %x)\n",
+			obpvec->pv_romvec_vers,
+			obpvec->pv_printrev >> 16, obpvec->pv_printrev & 0xffff,
+			obpvec->pv_plugin_vers);
 #endif
 		break;
 	}
