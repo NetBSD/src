@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.12 1996/10/03 01:25:37 thorpej Exp $
+#	$NetBSD: LAGER,v 1.13 1996/10/21 16:43:05 hpeyerl Exp $
 #
 # LAGER (hpeyerl's hp380)
 #
@@ -64,10 +64,10 @@ tape		ct1	at hpib0 slave ?
 
 master		scsi0	at scode?
 master		scsi1	at scode?
-disk		sd0	at scsi? slave ?
-disk		sd1	at scsi? slave ?
+disk		sd0	at scsi? slave 3
+disk		sd1	at scsi? slave 5
+disk		sd3	at scsi? slave 2
 disk		sd2	at scsi? slave ?
-disk		sd3	at scsi? slave ?
 tape		st0	at scsi? slave ?
 tape		st1	at scsi? slave ?
 
