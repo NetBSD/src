@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1996/01/28 11:46:54 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1996/03/02 13:45:37 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -257,7 +257,7 @@ cdev_decl(crl);
 #define	crxwrite crxrw
 cdev_decl(crx);
 
-#if VAX780
+#if VAX780 && 0
 #define	NFL 1
 #else
 #define NFL 0

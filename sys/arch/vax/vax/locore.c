@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.12 1996/02/02 18:08:58 mycroft Exp $	*/
+/*	$NetBSD: locore.c,v 1.13 1996/03/02 13:45:42 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -63,7 +63,7 @@ start()
 {
 	extern	u_int *end;
 	extern	void *scratch;
-	register curtop;
+	register curtop, tmpptr;
 
 	mtpr(0x1f, PR_IPL); /* No interrupts before istack is ok, please */
 
@@ -92,7 +92,6 @@ tokmem: movw	$0xfff, _panic
 	 * FIRST we must set up kernel stack, directly after end.
 	 * This is the only thing we have to setup here, rest in pmap.
 	 */
-
 	PAGE_SIZE = NBPG * 2; /* Set logical page size */
 #ifdef DDB
 	if ((boothowto & RB_KDB) != 0)
@@ -101,7 +100,8 @@ tokmem: movw	$0xfff, _panic
 #endif
 		proc0paddr = ROUND_PAGE(&end);
 
-	mtpr(proc0paddr, PR_PCBB); /* must be set before ksp for some cpus */
+	tmpptr = proc0paddr & 0x7fffffff;
+	mtpr(tmpptr, PR_PCBB); /* must be set before ksp for some cpus */
 	mtpr(proc0paddr + UPAGES * NBPG, PR_KSP); /* new kernel stack */
 
 	/*
@@ -111,12 +111,12 @@ tokmem: movw	$0xfff, _panic
 
 	/* Be sure some important internal registers have safe values */
         ((struct pcb *)proc0paddr)->P0LR = 0;
-        ((struct pcb *)proc0paddr)->P0BR = 0;
+        ((struct pcb *)proc0paddr)->P0BR = (void *)0x80000000;
         ((struct pcb *)proc0paddr)->P1LR = 0;
         ((struct pcb *)proc0paddr)->P1BR = (void *)0x80000000;
         ((struct pcb *)proc0paddr)->iftrap = NULL;
 	mtpr(0, PR_P0LR);
-	mtpr(0, PR_P0BR);
+	mtpr(0x80000000, PR_P0BR);
 	mtpr(0, PR_P1LR);
 	mtpr(0x80000000, PR_P1BR);
 
