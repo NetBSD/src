@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.233 2000/06/07 09:55:23 mrg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.234 2000/06/07 19:53:18 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.229 2000/06/07 09:52:16 mrg Exp 
+ *	NetBSD: pcidevs,v 1.230 2000/06/07 19:52:07 ad Exp 
  */
 
 /*
@@ -218,6 +218,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3D Labs",
 	    "GLINT Permedia 2",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
+	    0,
+	    "3ware",
+	    "Escalade IDE RAID",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -7015,6 +7021,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_3WARE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "3ware",
 	    NULL,
 	},
 	{

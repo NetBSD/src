@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.235 2000/06/07 09:55:22 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.236 2000/06/07 19:53:17 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.229 2000/06/07 09:52:16 mrg Exp 
+ *	NetBSD: pcidevs,v 1.230 2000/06/07 19:52:07 ad Exp 
  */
 
 /*
@@ -525,6 +525,7 @@
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
@@ -594,6 +595,9 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA	0x0004		/* GLINT Permedia */
 #define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
 #define	PCI_PRODUCT_3DLABS_PERMEDI2	0x0007		/* GLINT Permedia 2 */
+
+/* 3ware products */
+#define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
