@@ -16,7 +16,7 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: Fix16.h,v 1.3 1993/08/02 17:23:11 mycroft Exp $
+	$Id: Fix16.h,v 1.4 1995/12/30 03:32:27 chopps Exp $
 */
 
 #ifndef _Fix16_h
@@ -197,6 +197,8 @@ public:
   friend Fix32          operator *  (int g, const Fix32&  f);
   Fix32&                operator *= (int g);
 };
+
+inline Fix32::~Fix32() {}
 
 // active error handler declarations
 
@@ -498,7 +500,6 @@ inline Fix16& Fix16::operator*=(int g)
   return *this = *this * g;
 }
 
-inline Fix32::~Fix32() {}
 
 inline long Fix32::round(double d)
 { 

@@ -1,7 +1,7 @@
 //
 // Fix.h : variable length fixed point data type 
 //
-//	$Id: Fix.h,v 1.2 1993/08/02 17:23:09 mycroft Exp $
+//	$Id: Fix.h,v 1.3 1995/12/30 03:32:26 chopps Exp $
 //
 
 #ifndef _Fix_h
@@ -63,7 +63,7 @@ public:
 
                   ~Fix();
 
-  Fix             operator =  (Fix&);
+  Fix             operator =  (const Fix&);
   Fix             operator =  (double);
 
   friend int      operator == (const Fix&, const Fix& );
@@ -199,7 +199,8 @@ inline _Fix copy(const _Fix from, _Fix to)
 {
   uint16 *ts = to->s, *fs = from->s;
   int ilim = to->siz < from->siz ? to->siz : from->siz;
-  for ( int i=0; i < ilim; i++ )
+  int i;
+  for ( i=0; i < ilim; i++ )
     *ts++ = *fs++;
   for ( ; i < to->siz; i++ )
     *ts++ = 0;
@@ -260,7 +261,7 @@ inline Fix::~Fix()
   if ( --rep->ref <= 0 ) delete rep;
 }
 
-inline Fix  Fix::operator = (Fix&  y)
+inline Fix  Fix::operator = (const Fix&  y)
 {
   if ( rep->len == y.rep->len ) {
     ++y.rep->ref;
