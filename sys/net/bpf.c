@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61 2001/04/13 23:30:11 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.2.1 2001/09/08 03:15:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -508,9 +508,7 @@ bpf_wakeup(d)
 			psignal (p, SIGIO);
 	}
 
-	selwakeup(&d->bd_sel);
-	/* XXX */
-	d->bd_sel.si_pid = 0;
+	selnotify(&d->bd_sel, 0);
 }
 
 int
@@ -982,7 +980,7 @@ bpf_ifname(ifp, ifr)
  * Support for poll() system call
  *
  * Return true iff the specific operation will not block indefinitely.
- * Otherwise, return false but make a note that a selwakeup() must be done.
+ * Otherwise, return false but make a note that a selnotify() must be done.
  */
 int
 bpfpoll(dev, events, p)
@@ -1006,6 +1004,59 @@ bpfpoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_bpfrdetach(struct knote *kn)
+{
+	struct bpf_d *d = (void *) kn->kn_hook;
+	int s;
+
+	s = splnet();
+	SLIST_REMOVE(&d->bd_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_bpfread(struct knote *kn, long hint)
+{
+	struct bpf_d *d = (void *) kn->kn_hook;
+
+	kn->kn_data = d->bd_hlen;
+	if (d->bd_immediate)
+		kn->kn_data += d->bd_slen;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops bpfread_filtops =
+	{ 1, NULL, filt_bpfrdetach, filt_bpfread };
+
+int
+bpfkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &d->bd_sel.si_klist;
+		kn->kn_fop = &bpfread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) d;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 /*
