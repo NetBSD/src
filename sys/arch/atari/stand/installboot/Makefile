@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/02/29 11:35:46 leo Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/22 05:48:18 mrg Exp $
 
 PROG=	installboot
-MAN=	installboot.8
+NOMAN=	yes
 SRCS=	installboot.c disklabel.c
 BINDIR=	/usr/mdec
 
