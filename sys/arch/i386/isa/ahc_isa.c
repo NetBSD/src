@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.8 1997/10/04 22:32:26 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.9 1997/10/20 20:07:57 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -401,12 +401,18 @@ ahc_isa_attach(parent, self, aux)
 	char idstring[EISA_IDSTRINGLEN];
 	const char *model;
 
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
-		panic("ahc_isa_attach: could not map slot I/O addresses");
-	if (!ahc_isa_idstring(iot, ioh, idstring))
-		panic("ahc_isa_attach: could not read ID string");
-	if ((irq = ahc_isa_irq(iot, ioh)) < 0)
-		panic("ahc_isa_attach: ahc_isa_irq failed!");
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+	if (!ahc_isa_idstring(iot, ioh, idstring)) {
+		printf(": can't read ID string\n");
+		return;
+	}
+	if ((irq = ahc_isa_irq(iot, ioh)) < 0) {
+		printf(": ahc_isa_irq failed\n");
+		return;
+	}
 
 	if (strcmp(idstring, "ADP7756") == 0) {
 		model = EISA_PRODUCT_ADP7756;
@@ -415,7 +421,8 @@ ahc_isa_attach(parent, self, aux)
 		model = EISA_PRODUCT_ADP7757;
 		type = AHC_284;
 	} else {
-		panic("ahc_isa_attach: Unknown device type %s\n", idstring);
+		printf(": unknown device type %s\n", idstring);
+		return;
 	}
 	printf(": %s\n", model);
 
