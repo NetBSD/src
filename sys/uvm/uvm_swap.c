@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.72 2002/10/27 16:53:20 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.73 2002/11/02 07:40:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.72 2002/10/27 16:53:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.73 2002/11/02 07:40:49 perry Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -186,7 +186,7 @@ static struct pool vndbuf_pool;
 	int s = splbio();						\
 	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
 	splx(s);							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define putvndxfer(vnx) {						\
 	pool_put(&vndxfer_pool, (void *)(vnx));				\
@@ -196,7 +196,7 @@ static struct pool vndbuf_pool;
 	int s = splbio();						\
 	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
 	splx(s);							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define putvndbuf(vbp) {						\
 	pool_put(&vndbuf_pool, (void *)(vbp));				\

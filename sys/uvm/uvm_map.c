@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.123 2002/10/24 22:22:28 atatat Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.124 2002/11/02 07:40:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.123 2002/10/24 22:22:28 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.124 2002/11/02 07:40:47 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -146,7 +146,7 @@ vaddr_t uvm_maxkaddr;
 	(entry)->next = (after_where)->next; \
 	(entry)->prev->next = (entry); \
 	(entry)->next->prev = (entry); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * uvm_map_entry_unlink: remove entry from a map
@@ -157,7 +157,7 @@ vaddr_t uvm_maxkaddr;
 	(map)->nentries--; \
 	(entry)->next->prev = (entry)->prev; \
 	(entry)->prev->next = (entry)->next; \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * SAVE_HINT: saves the specified entry as the hint for future lookups.
@@ -169,7 +169,7 @@ vaddr_t uvm_maxkaddr;
 	if ((map)->hint == (check)) \
 		(map)->hint = (value); \
 	simple_unlock(&(map)->hint_lock); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * VM_MAP_RANGE_CHECK: check and correct range
@@ -184,7 +184,7 @@ vaddr_t uvm_maxkaddr;
 		end = vm_map_max(map);          \
 	if (start > end)                        \
 		start = end;                    \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * local prototypes

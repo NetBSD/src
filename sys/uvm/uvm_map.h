@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.32 2002/09/22 07:21:31 chs Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.33 2002/11/02 07:40:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -238,7 +238,7 @@ do {									\
 	simple_lock(&(map)->flags_lock);				\
 	(map)->flags = ((map)->flags | (set)) & ~(clear);		\
 	simple_unlock(&(map)->flags_lock);				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #endif /* _KERNEL */
 
 /*
@@ -399,7 +399,7 @@ do {									\
 	if ((map)->flags & VM_MAP_INTRSAFE)				\
 		panic("vm_map_lock_read: intrsafe Map");		\
 	(void) lockmgr(&(map)->lock, LK_SHARED, NULL);			\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	vm_map_lock_read(map)						\
 	(void) lockmgr(&(map)->lock, LK_SHARED, NULL)
@@ -411,7 +411,7 @@ do {									\
 		simple_unlock(&(map)->lock.lk_interlock);		\
 	else								\
 		(void) lockmgr(&(map)->lock, LK_RELEASE, NULL);		\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	vm_map_unlock_read(map)						\
 	(void) lockmgr(&(map)->lock, LK_RELEASE, NULL)
@@ -424,7 +424,7 @@ do {									\
 do {									\
 	if (lockmgr(&(map)->lock, LK_UPGRADE, NULL) != 0)		\
 		panic("vm_map_upgrade: failed to upgrade lock");	\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	vm_map_upgrade(map)						\
 	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL)
@@ -435,7 +435,7 @@ do {									\
 	simple_lock(&(map)->flags_lock);				\
 	(map)->flags |= VM_MAP_BUSY;					\
 	simple_unlock(&(map)->flags_lock);				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	vm_map_unbusy(map)						\
 do {									\
@@ -447,7 +447,7 @@ do {									\
 	simple_unlock(&(map)->flags_lock);				\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #endif /* _KERNEL */
 
 /*
