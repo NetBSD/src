@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.5 2002/01/04 06:50:59 thorpej Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.6 2004/11/13 06:09:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5 2002/01/04 06:50:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2004/11/13 06:09:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ static struct execsw exec_elf =
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
-	  coredump_elf32 };
+	  coredump_elf32,
+	  exec_setup_stack };		/* XXX XXX XXX */
 
 /*
  * declare the exec
