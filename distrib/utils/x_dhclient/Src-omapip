@@ -1,5 +1,0 @@
-#	$NetBSD: Src-omapip,v 1.6 2001/04/06 18:53:33 mellon Exp $
-
-OMSRCS=	array.c alloc.OM.c result.c \
-	errwarn.c dispatch.OM.c support.OM.c handle.c \
-	hash.OM.c
