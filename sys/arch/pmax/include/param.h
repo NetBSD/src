@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 1998/08/25 01:55:40 nisimura Exp $	*/
+/*	$NetBSD: param.h,v 1.27 1999/02/09 17:15:52 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,8 @@
  * Machine dependent constants for mips-based DECstations.
  */
 
+#define	_MACHINE_ARCH	mipsel
+#define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	pmax
 #define	MACHINE		"pmax"
 #define	MID_MACHINE	MID_PMAX
