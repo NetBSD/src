@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.67 2002/06/04 21:39:09 thorpej Exp $
+#	$NetBSD: Makefile.atari,v 1.68 2002/11/26 18:51:13 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -33,11 +33,7 @@ CMACHFLAGS=	-m68020
 CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
-.if defined(HAVE_GCC3)
-AFLAGS+=	-x assembler-with-cpp
-.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-.endif
 
 ##
 ## (3) libkern and compat
