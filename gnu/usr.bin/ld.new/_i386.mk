@@ -1,4 +1,8 @@
-#	$NetBSD: _i386.mk,v 1.1 1998/12/12 21:57:19 kristerw Exp $
+#	$NetBSD: _i386.mk,v 1.2 1999/01/11 09:53:26 christos Exp $
 
-EMULS=		i386nbsd
+EMULS=		i386nbsd elf_i386
+.if ${OBJECT_FMT} == "ELF"
+DEFAULT_EMUL=	elf_i386
+.else
 DEFAULT_EMUL=	i386nbsd
+.endif
