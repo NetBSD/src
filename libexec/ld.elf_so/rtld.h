@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.60 2002/09/26 20:42:10 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.61 2002/10/03 01:09:21 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -182,7 +182,8 @@ typedef struct Struct_Obj_Entry {
 			symbolic:1,	/* True if generated with
 					 * "-Bsymbolic" */
 			printed:1,	/* True if ldd has printed it */
-			isdynamic:1;	/* True if this is a pure PIC object */
+			isdynamic:1,	/* True if this is a pure PIC object */
+			main:1;		/* True if on _rtld_list_main */
 
 	struct link_map linkmap;	/* for GDB */
 
