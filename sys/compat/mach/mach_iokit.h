@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.16 2003/05/22 22:07:37 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.17 2003/06/03 06:48:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -496,6 +496,23 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_registry_entry_from_path_reply_t;
 
+/* io_registry_entry_get_parent_iterator */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_offset;
+	mach_msg_type_number_t req_count;
+	char req_plane[128];
+} mach_io_registry_entry_get_parent_iterator_request_t; 
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_iterator;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_get_parent_iterator_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -522,6 +539,7 @@ int mach_io_service_close(struct mach_trap_args *);
 int mach_io_connect_add_client(struct mach_trap_args *);
 int mach_io_connect_method_scalari_structi(struct mach_trap_args *);
 int mach_io_registry_entry_from_path(struct mach_trap_args *);
+int mach_io_registry_entry_get_parent_iterator(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
