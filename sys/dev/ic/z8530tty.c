@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.63 2000/03/14 21:20:52 jdc Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.64 2000/03/19 12:42:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -273,6 +273,7 @@ zstty_attach(parent, self, aux)
 	struct tty *tp;
 	int channel, s, tty_unit;
 	dev_t dev;
+	char *i, *o;
 
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
@@ -288,26 +289,45 @@ zstty_attach(parent, self, aux)
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
 
-	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
-		printf(" (console)\n");
-		DELAY(20000);
+	/*
+	 * Check whether we serve as a console device.
+	 * XXX - split console input/output channels aren't
+	 *	 supported yet on /dev/console
+	 */
+	i = o = NULL;
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
+		i = "input";
+		if ((args->hwflags & ZS_HWFLAG_USE_CONSDEV) != 0) {
+			cn_tab->cn_pollc = args->consdev->cn_pollc;
+			cn_tab->cn_getc = args->consdev->cn_getc;
+		}
 		cn_tab->cn_dev = dev;
-	} else
+	}
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
+		o = "output";
+		if ((args->hwflags & ZS_HWFLAG_USE_CONSDEV) != 0) {
+			cn_tab->cn_putc = args->consdev->cn_putc;
+		}
+		cn_tab->cn_dev = dev;
+	}
+	if (i != NULL || o != NULL)
+		printf(" (console %s)", i ? (o ? "i/o" : i) : o);
+
 #ifdef KGDB
 	if (zs_check_kgdb(cs, dev)) {
 		/*
 		 * Allow kgdb to "take over" this port.  Returns true
 		 * if this serial port is in-use by kgdb.
 		 */
-		printf(" (kgdb)\n");
+		printf(" (kgdb)");
 		/*
 		 * This is the kgdb port (exclusive use)
 		 * so skip the normal attach code.
 		 */
 		return;
-	} else
+	}
 #endif
-		printf("\n");
+	printf("\n");
 
 	tp = ttymalloc();
 	tp->t_dev = dev;
@@ -1477,7 +1497,7 @@ zstty_stint(cs, force)
 	 * even when interrupts are locking up the machine.
 	 */
 	if (ISSET(rr0, ZSRR0_BREAK) &&
-	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
+	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE_INPUT)) {
 		zs_abort(cs);
 		return;
 	}
