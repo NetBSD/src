@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.18 1999/09/12 01:17:41 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.19 1999/11/04 21:51:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,8 +110,9 @@ static void		uvmpd_tune __P((void));
  * => should _not_ be called by the page daemon (to avoid deadlock)
  */
 
-void uvm_wait(wmsg)
-	char *wmsg;
+void
+uvm_wait(wmsg)
+	const char *wmsg;
 {
 	int timo = 0;
 	int s = splbio();
