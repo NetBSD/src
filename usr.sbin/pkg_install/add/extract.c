@@ -1,5 +1,11 @@
+/* $NetBSD: extract.c,v 1.2 1997/06/05 12:59:24 agc Exp $ */
+
 #ifndef lint
+#if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.13 1997/05/24 21:45:55 ache Exp";
+#else
+static const char *rcsid = "$NetBSD: extract.c,v 1.2 1997/06/05 12:59:24 agc Exp $";
+#endif
 #endif
 
 /*
@@ -26,8 +32,8 @@ static const char *rcsid = "FreeBSD - Id: extract.c,v 1.13 1997/05/24 21:45:55 a
 #include "add.h"
 
 
-#define STARTSTRING "tar cf - "
-#define TOOBIG(str) ((strlen(str) + 22 + strlen(home) + where_count > maxargs) \
+#define STARTSTRING "tar cf -"
+#define TOOBIG(str) ((strlen(str) + 6 + strlen(home) + where_count > maxargs) \
 		|| (strlen(str) + 6 + strlen(home) + perm_count > maxargs))
 
 #define PUSHOUT(todir) /* push out string */ \

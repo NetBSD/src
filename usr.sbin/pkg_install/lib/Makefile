@@ -1,15 +1,15 @@
-LIB=		ftpio
-CFLAGS+=	-I${.CURDIR} -Wall
-SRCS=		ftpio.c ftperr.c
+# $NetBSD: Makefile,v 1.2 1997/06/05 12:59:43 agc Exp $
+# Original from FreeBSD, no rcs id.
+
+LIB=		install
+CFLAGS+=	-I${.CURDIR} ${DEBUG}
+SRCS=		exec.c file.c global.c msg.c pen.c plist.c str.c
+SRCS+=		ftpio.c ftperr.c 
 MAN3=		ftpio.3
 CLEANFILES+=	ftperr.c
 
-SHLIB_MAJOR=    4
-SHLIB_MINOR=	0
-
-beforeinstall:
-	${INSTALL} -C -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/ftpio.h \
-		${DESTDIR}/usr/include
+NOPROFILE=	yes
+NOPIC=		yes
 
 ftperr.c:	ftp.errors
 	@echo '#include <stdio.h>' > ${.TARGET}
