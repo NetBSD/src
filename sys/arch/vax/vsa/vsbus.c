@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.6 1997/03/22 23:05:31 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.7 1998/01/03 00:25:19 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -599,7 +599,7 @@ vsdma_mapin(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0) {
 		pte = kvtopte(addr);
 	} else {
-		pcb = bp->b_proc->p_vmspace->vm_pmap.pm_pcb;
+		pcb = &bp->b_proc->p_addr->u_pcb;
 		pte = uvtopte(addr, pcb);
 	}
 
