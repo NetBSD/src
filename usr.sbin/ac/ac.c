@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.7 1997/10/17 00:12:51 lukem Exp $	*/
+/*	$NetBSD: ac.c,v 1.8 1998/04/02 11:54:03 kleink Exp $	*/
 
 /*
  *      Copyright (c) 1994 Christopher G. Demetriou.
@@ -17,12 +17,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.7 1997/10/17 00:12:51 lukem Exp $");
+__RCSID("$NetBSD: ac.c,v 1.8 1998/04/02 11:54:03 kleink Exp $");
 #endif
 
 #include <sys/types.h>
-#include <sys/file.h>
-#include <sys/time.h>
+
 #include <err.h>
 #include <errno.h>
 #include <pwd.h>
@@ -31,6 +30,7 @@ __RCSID("$NetBSD: ac.c,v 1.7 1997/10/17 00:12:51 lukem Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 #include <utmp.h>
 #include <ttyent.h>
 
