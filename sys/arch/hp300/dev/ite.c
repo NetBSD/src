@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.5 1993/06/06 23:04:45 cgd Exp $
+ *	$Id: ite.c,v 1.6 1993/07/01 18:04:16 mycroft Exp $
  */
 
 /*
@@ -269,7 +269,7 @@ iteclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	iteoff(dev, 0);
-	FREE(dev, M_TTYS);
+	FREE(tp, M_TTYS);
 	ite_tty[UNIT(dev)] = (struct tty *)NULL;
 	return(0);
 }
