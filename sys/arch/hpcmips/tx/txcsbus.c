@@ -1,29 +1,39 @@
-/*	$NetBSD: txcsbus.c,v 1.4 2000/08/18 07:33:14 sato Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.5 2001/06/14 11:09:56 uch Exp $ */
 
-/*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_tx39_debug.h"
 
@@ -78,10 +88,10 @@ const struct csmap {
 			   TX39_SYSADDR_CARD_SIZE},
 };
 
-int	txcsbus_match __P((struct device*, struct cfdata*, void*));
-void	txcsbus_attach __P((struct device*, struct device*, void*));
-int	txcsbus_print __P((void*, const char*));
-int	txcsbus_search __P((struct device*, struct cfdata*, void*));
+int	txcsbus_match(struct device *, struct cfdata *, void *);
+void	txcsbus_attach(struct device *, struct device *, void *);
+int	txcsbus_print(void *, const char *);
+int	txcsbus_search(struct device *, struct cfdata *, void *);
 
 struct txcsbus_softc {
 	struct	device sc_dev;
@@ -94,40 +104,30 @@ struct cfattach txcsbus_ca = {
 	sizeof(struct txcsbus_softc), txcsbus_match, txcsbus_attach
 };
 
-bus_space_tag_t __txcsbus_alloc_cstag __P((struct txcsbus_softc*, 
-					   struct cs_handle*));
+static bus_space_tag_t __txcsbus_alloc_cstag(struct txcsbus_softc *, 
+    struct cs_handle *);
 
 int
-txcsbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+txcsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct csbus_attach_args *cba = aux;
 	platid_mask_t mask;
 
-	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name)) {
-		return 0;
-	}
+	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name))
+		return (0);
 
-	if (cf->cf_loc[TXCSBUSIFCF_PLATFORM] == 
-	    TXCSBUSIFCF_PLATFORM_DEFAULT) {
-		return 1;
-	}
+	if (cf->cf_loc[TXCSBUSIFCF_PLATFORM] == TXCSBUSIFCF_PLATFORM_DEFAULT)
+		return (1);
 
 	mask = PLATID_DEREF(cf->cf_loc[TXCSBUSIFCF_PLATFORM]);
-	if (platid_match(&platid, &mask)) {
-		return 2;
-	}
+	if (platid_match(&platid, &mask))
+		return (2);
 
-	return 0;
+	return (0);
 }
 
 void
-txcsbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+txcsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct csbus_attach_args *cba = aux;
 	struct txcsbus_softc *sc = (void*)self;
@@ -142,35 +142,33 @@ txcsbus_attach(parent, self, aux)
 }
 
 int
-txcsbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+txcsbus_print(void *aux, const char *pnp)
 {
 #define PRINTIRQ(i) i, (i) / 32, (i) % 32
 	struct cs_attach_args *ca = aux;
 	
 	if (ca->ca_csreg.cs != TXCSBUSCF_REGCS_DEFAULT) {
 		printf(" regcs %s %dbit %#x+%#x", 
-		       __csmap[ca->ca_csreg.cs].cs_name,
-		       ca->ca_csreg.cswidth,
-		       ca->ca_csreg.csbase,
-		       ca->ca_csreg.cssize);
+		    __csmap[ca->ca_csreg.cs].cs_name,
+		    ca->ca_csreg.cswidth,
+		    ca->ca_csreg.csbase,
+		    ca->ca_csreg.cssize);
 	}
 
 	if (ca->ca_csio.cs != TXCSBUSCF_IOCS_DEFAULT) {
 		printf(" iocs %s %dbit %#x+%#x", 
-		       __csmap[ca->ca_csio.cs].cs_name,
-		       ca->ca_csio.cswidth,
-		       ca->ca_csio.csbase,
-		       ca->ca_csio.cssize);
+		    __csmap[ca->ca_csio.cs].cs_name,
+		    ca->ca_csio.cswidth,
+		    ca->ca_csio.csbase,
+		    ca->ca_csio.cssize);
 	}
 
 	if (ca->ca_csmem.cs != TXCSBUSCF_MEMCS_DEFAULT) {
 		printf(" memcs %s %dbit %#x+%#x", 
-		       __csmap[ca->ca_csmem.cs].cs_name,
-		       ca->ca_csmem.cswidth,
-		       ca->ca_csmem.csbase,
-		       ca->ca_csmem.cssize);
+		    __csmap[ca->ca_csmem.cs].cs_name,
+		    ca->ca_csmem.cswidth,
+		    ca->ca_csmem.csbase,
+		    ca->ca_csmem.cssize);
 	}
 	
 	if (ca->ca_irq1 != TXCSBUSCF_IRQ1_DEFAULT) {
@@ -185,14 +183,11 @@ txcsbus_print(aux, pnp)
 		printf(" irq3 %d(%d:%d)", PRINTIRQ(ca->ca_irq3));
 	}
 
-	return UNCONF;
+	return (UNCONF);
 }
 
 int
-txcsbus_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+txcsbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct txcsbus_softc *sc = (void*)parent;
 	struct cs_attach_args ca;
@@ -234,13 +229,11 @@ txcsbus_search(parent, cf, aux)
 		config_attach(parent, cf, &ca, txcsbus_print);
 	}
 
-	return 0;
+	return (0);
 }
 
 bus_space_tag_t
-__txcsbus_alloc_cstag(sc, csh)
-	struct txcsbus_softc *sc;
-	struct cs_handle *csh;
+__txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 {
 
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -255,7 +248,7 @@ __txcsbus_alloc_cstag(sc, csh)
 
 	/* Already setuped chip select */
 	if (sc->sc_cst[cs]) {
-		return sc->sc_cst[cs];
+		return (sc->sc_cst[cs]);
 	}
 
 	iot = hpcmips_alloc_bus_space_tag();
@@ -282,8 +275,8 @@ __txcsbus_alloc_cstag(sc, csh)
 #ifdef TX392X
 			reg = tx_conf_read(tc, TX39_MEMCONFIG1_REG);
 			reg |= ((cs == TX39_MCS0) ? 
-				TX39_MEMCONFIG1_MCS0_32 :
-				TX39_MEMCONFIG1_MCS1_32);
+			    TX39_MEMCONFIG1_MCS0_32 :
+			    TX39_MEMCONFIG1_MCS1_32);
 			tx_conf_write(tc, TX39_MEMCONFIG1_REG, reg);
 #endif /* TX392X */
 		}
@@ -299,8 +292,8 @@ __txcsbus_alloc_cstag(sc, csh)
 #ifdef TX392X
 			reg = tx_conf_read(tc, TX39_MEMCONFIG1_REG);
 			reg &= ~((cs == TX39_MCS0) ? 
-				 TX39_MEMCONFIG1_MCS0_32 :
-				 TX39_MEMCONFIG1_MCS1_32);
+			    TX39_MEMCONFIG1_MCS0_32 :
+			    TX39_MEMCONFIG1_MCS1_32);
 			tx_conf_write(tc, TX39_MEMCONFIG1_REG, reg);
 #endif /* TX392X */
 		} else {
@@ -309,13 +302,13 @@ __txcsbus_alloc_cstag(sc, csh)
 
 			/* enable I/O access */
 			reg |= (cs == TX39_CARD1) ?
-				TX39_MEMCONFIG3_CARD1IOEN :
-				TX39_MEMCONFIG3_CARD2IOEN;
+			    TX39_MEMCONFIG3_CARD1IOEN :
+			    TX39_MEMCONFIG3_CARD2IOEN;
 			/* disable 8bit access */
 #ifdef TX392X
 			reg &= ~((cs == TX39_CARD1) ?
-				TX39_MEMCONFIG3_CARD1_8SEL :
-				TX39_MEMCONFIG3_CARD2_8SEL);
+			    TX39_MEMCONFIG3_CARD1_8SEL :
+			    TX39_MEMCONFIG3_CARD2_8SEL);
 #endif /* TX392X */
 #ifdef TX391X
 			reg &= ~TX39_MEMCONFIG3_PORT8SEL;
@@ -330,13 +323,13 @@ __txcsbus_alloc_cstag(sc, csh)
 
 			/* enable I/O access */
 			reg |= (cs == TX39_CARD1) ?
-				TX39_MEMCONFIG3_CARD1IOEN :
-				TX39_MEMCONFIG3_CARD2IOEN;
+			    TX39_MEMCONFIG3_CARD1IOEN :
+			    TX39_MEMCONFIG3_CARD2IOEN;
 			/* disable 8bit access */
 #ifdef TX392X
 			reg |= (cs == TX39_CARD1) ?
-				TX39_MEMCONFIG3_CARD1_8SEL :
-				TX39_MEMCONFIG3_CARD2_8SEL;
+			    TX39_MEMCONFIG3_CARD1_8SEL :
+			    TX39_MEMCONFIG3_CARD2_8SEL;
 #endif /* TX392X */
 #ifdef TX391X
 			reg |= TX39_MEMCONFIG3_PORT8SEL;
@@ -345,11 +338,11 @@ __txcsbus_alloc_cstag(sc, csh)
 
 		} else {
 			panic("__txcsbus_alloc_cstag: CS%d 8bit mode is"
-			      "not allowed", cs);
+			    "not allowed", cs);
 		}
 	}
 	
 	hpcmips_init_bus_space_extent(iot);
 
-	return iot;
+	return (iot);
 }

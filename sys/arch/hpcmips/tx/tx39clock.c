@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.8 2000/10/22 10:42:32 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.9 2001/06/14 11:09:55 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct cfattach tx39clock_ca = {
 int
 tx39clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ATTACH_FIRST;
+	return (ATTACH_FIRST);
 }
 
 void
@@ -198,7 +198,7 @@ __inline__ time_t
 __tx39timer_rtc2sec(struct txtime *t)
 {
 	/* This rely on RTC is 32.768kHz */
-	return (t->t_lo >> 15) | (t->t_hi << 17);
+	return ((t->t_lo >> 15) | (t->t_hi << 17));
 }
 
 __inline__ void
@@ -287,7 +287,7 @@ tx39clock_get(struct device *dev, time_t base, struct clocktime *ct)
 
 	if (!sc->sc_enabled) {
 		DPRINTF(("bootstrap: %d sec from previous reboot\n", 
-			 (int)sec));
+		    (int)sec));
 
 		sc->sc_enabled = 1;
 		base += sec;
@@ -333,7 +333,7 @@ tx39clock_alarm_set(tx_chipset_tag_t tc, int msec)
 	sc->sc_alarm = TX39_MSEC2RTC(msec);
 	tx39clock_alarm_refill(tc);
 
-	return 0;
+	return (0);
 }
 
 void
