@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.14 2001/04/19 23:26:18 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.15 2001/05/06 10:04:58 wiz Exp $
 /usr/share/doc/smm/03.fsck
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
@@ -21,6 +21,7 @@
 /usr/share/examples/supfiles/skarven.itea.unit.no
 /usr/share/examples/supfiles/sup.de.netbsd.org
 /usr/share/examples/supfiles/sup.no.netbsd.org
+/usr/share/examples/supfiles/sup.uk.netbsd.org
 /usr/share/misc/sendmail.hf
 /usr/share/postfix
 /usr/share/sendmail/cf/clientproto.mc
