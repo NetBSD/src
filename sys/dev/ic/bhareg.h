@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.13 1999/09/30 23:12:29 thorpej Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.13.2.1 1999/10/19 17:47:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -402,7 +402,7 @@ struct bha_setup_reply {
 };
 
 /* additional reply data supplied by wide controlers */
-struct bus_setup_reply_wide {
+struct bha_setup_reply_wide {
 	u_int8_t	signature;
 	u_int8_t	letter_d;
 	u_int8_t	ha_type;
@@ -421,7 +421,7 @@ struct bha_setup {
 		u_char	len;
 	} cmd;
 	struct bha_setup_reply reply;
-	struct bus_setup_reply_wide reply_w;	/* for wide controllers */
+	struct bha_setup_reply_wide reply_w;	/* for wide controllers */
 };
 
 struct bha_period_reply {

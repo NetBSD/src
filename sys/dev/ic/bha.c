@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33 1999/10/09 22:46:20 mycroft Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.1 1999/10/19 17:47:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -91,8 +91,11 @@ int     bha_debug = 0;
 int	bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
 	    int, u_char *, int, u_char *));
 
-int	bha_scsi_cmd __P((struct scsipi_xfer *));
+void	bha_scsipi_request __P((struct scsipi_channel *,
+	    scsipi_adapter_req_t, void *));
 void	bha_minphys __P((struct buf *));
+
+void	bha_get_xfer_mode __P((struct bha_softc *, struct scsipi_periph *));
 
 void	bha_done __P((struct bha_softc *, struct bha_ccb *));
 int	bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
@@ -112,14 +115,6 @@ void	bha_create_ccbs __P((struct bha_softc *, int));
 int	bha_init_ccb __P((struct bha_softc *, struct bha_ccb *));
 struct bha_ccb *bha_get_ccb __P((struct bha_softc *, int));
 void	bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
-
-/* the below structure is so we have a default dev struct for out link struct */
-struct scsipi_device bha_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	BHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
@@ -166,6 +161,8 @@ bha_attach(sc, bpd)
 	struct bha_softc *sc;
 	struct bha_probe_data *bpd;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 	int initial_ccbs;
 
 	/*
@@ -182,30 +179,31 @@ bha_attach(sc, bpd)
 	}
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in the scsipi_adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = bha_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = bha_minphys;
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	/* adapt_openings initialized below */
+	adapt->adapt_max_periph = sc->sc_mbox_count;
+	adapt->adapt_request = bha_scsipi_request;
+	adapt->adapt_minphys = bha_minphys;
 
 	/*
-	 * fill in the prototype scsipi_link.
+	 * Fill in the scsipi_channel.
 	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_scsi_id;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &bha_dev;
-	sc->sc_link.openings = 4;
-	sc->sc_link.scsipi_scsi.max_target =
-	    (sc->sc_flags & BHAF_WIDE) ? 15 : 7;
-	sc->sc_link.scsipi_scsi.max_lun =
-	    (sc->sc_flags & BHAF_WIDE_LUN) ? 31 : 7;
-	sc->sc_link.type = BUS_SCSI;
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_flags = SCSIPI_CHAN_CANGROW;
+	chan->chan_ntargets = (sc->sc_flags & BHAF_WIDE) ? 16 : 8;
+	chan->chan_nluns = (sc->sc_flags & BHAF_WIDE_LUN) ? 32 : 8;
+	chan->chan_id = sc->sc_scsi_id;
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
 	TAILQ_INIT(&sc->sc_allocating_ccbs);
-	TAILQ_INIT(&sc->sc_queue);
 
 	if (bha_create_mailbox(sc) != 0)
 		return;
@@ -217,10 +215,12 @@ bha_attach(sc, bpd)
 		return;
 	}
 
+	adapt->adapt_openings = sc->sc_cur_ccbs;
+
 	if (bha_init(sc) != 0)
 		return;
 
-	(void) config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	(void) config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -279,205 +279,187 @@ bha_intr(arg)
  *****************************************************************************/
 
 /*
- * bha_scsi_cmd:
+ * bha_scsipi_request:
  *
- *	Start a SCSI operation.
+ *	Perform a request for the SCSIPI layer.
  */
-int
-bha_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+bha_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct bha_softc *sc = sc_link->adapter_softc;
+	struct scsipi_adapter *adapt = chan->chan_adapter;
+	struct bha_softc *sc = (void *)adapt->adapt_dev;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct bha_ccb *ccb;
 	int error, seg, flags, s;
-	int fromqueue = 0, dontqueue = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bha_scsi_cmd\n"));
 
-	s = splbio();		/* protect the queue */
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	/*
-	 * If we're running the queue from bha_done(), we've been
-	 * called with the first queue entry as our argument.
-	 */
-	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-		goto get_ccb;
-	}
-
-	/* Polled requests can't be queued for later. */
-	dontqueue = xs->xs_control & XS_CTL_POLL;
-
-	/*
-	 * If there are jobs in the queue, run them first.
-	 */
-	if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
+		/* Get a CCB to use. */
+		ccb = bha_get_ccb(sc, flags);
+#ifdef DIAGNOSTIC
 		/*
-		 * If we can't queue, we have to abort, since
-		 * we have to preserve order.
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
 		 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
+		if (ccb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate ccb\n");
+			panic("bha_scsipi_request");
+		}
+#endif
+
+		ccb->xs = xs;
+		ccb->timeout = xs->timeout;
+
+		/*
+		 * Put all the arguments for the xfer in the ccb
+		 */
+		if (flags & XS_CTL_RESET) {
+			ccb->opcode = BHA_RESET_CCB;
+			ccb->scsi_cmd_length = 0;
+		} else {
+			/* can't use S/G if zero length */
+			ccb->opcode = (xs->datalen ? BHA_INIT_SCAT_GATH_CCB
+						   : BHA_INITIATOR_CCB);
+			bcopy(xs->cmd, &ccb->scsi_cmd,
+			    ccb->scsi_cmd_length = xs->cmdlen);
 		}
 
-		/*
-		 * Swap with the first queue entry.
-		 */
-		TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		xs = TAILQ_FIRST(&sc->sc_queue);
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-	}
-
- get_ccb:
-	/*
-	 * get a ccb to use. If the transfer
-	 * is from a buf (possibly from interrupt time)
-	 * then we can't allow it to sleep
-	 */
-	flags = xs->xs_control;
-	if ((ccb = bha_get_ccb(sc, flags)) == NULL) {
-		/*
-		 * If we can't queue, we lose.
-		 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
-		}
-
-		/*
-		 * Stuff ourselves into the queue, in front
-		 * if we came off in the first place.
-		 */
-		if (fromqueue)
-			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-
-	splx(s);		/* done playing with the queue */
-
-	ccb->xs = xs;
-	ccb->timeout = xs->timeout;
-
-	/*
-	 * Put all the arguments for the xfer in the ccb
-	 */
-	if (flags & XS_CTL_RESET) {
-		ccb->opcode = BHA_RESET_CCB;
-		ccb->scsi_cmd_length = 0;
-	} else {
-		/* can't use S/G if zero length */
-		ccb->opcode = (xs->datalen ? BHA_INIT_SCAT_GATH_CCB
-					   : BHA_INITIATOR_CCB);
-		bcopy(xs->cmd, &ccb->scsi_cmd,
-		    ccb->scsi_cmd_length = xs->cmdlen);
-	}
-
-	if (xs->datalen) {
-		/*
-		 * Map the DMA transfer.
-		 */
+		if (xs->datalen) {
+			/*
+			 * Map the DMA transfer.
+			 */
 #ifdef TFS
-		if (flags & XS_CTL_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-			    ccb->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		} else
+			if (flags & XS_CTL_DATA_UIO) {
+				error = bus_dmamap_load_uio(dmat,
+				    ccb->dmamap_xfer, (struct uio *)xs->data,
+				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				    BUS_DMA_WAITOK);
+			} else
 #endif /* TFS */
-		{
-			error = bus_dmamap_load(dmat,
-			    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		}
-
-		if (error) {
-			if (error == EFBIG) {
-				printf("%s: bha_scsi_cmd, more than %d"
-				    " dma segments\n",
-				    sc->sc_dev.dv_xname, BHA_NSEG);
-			} else {
-				printf("%s: bha_scsi_cmd, error %d loading"
-				    " dma map\n",
-				    sc->sc_dev.dv_xname, error);
+			{
+				error = bus_dmamap_load(dmat,
+				    ccb->dmamap_xfer, xs->data, xs->datalen,
+				    NULL, (flags & XS_CTL_NOSLEEP) ?
+				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 			}
-			goto bad;
+
+			if (error) {
+				if (error == EFBIG) {
+					printf("%s: bha_scsipi_request, more "
+					    "than %d dma segments\n",
+					    sc->sc_dev.dv_xname, BHA_NSEG);
+				} else {
+					printf("%s: bha_scsipi_request, "
+					    "error %d loading dma map\n",
+					    sc->sc_dev.dv_xname, error);
+				}
+				bha_free_ccb(sc, ccb);
+				xs->error = XS_DRIVER_STUFFUP;
+				scsipi_done(xs);
+				return;
+			}
+
+			bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+			    ccb->dmamap_xfer->dm_mapsize,
+			    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
+
+			/*
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
+			 */
+			for (seg = 0; seg < ccb->dmamap_xfer->dm_nsegs; seg++) {
+				ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_addr,
+				    ccb->scat_gath[seg].seg_addr);
+				ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_len,
+				    ccb->scat_gath[seg].seg_len);
+			}
+
+			ltophys(ccb->hashkey + offsetof(struct bha_ccb,
+			    scat_gath), ccb->data_addr);
+			ltophys(ccb->dmamap_xfer->dm_nsegs *
+			    sizeof(struct bha_scat_gath), ccb->data_length);
+		} else {
+			/*
+			 * No data xfer, use non S/G values.
+			 */
+			ltophys(0, ccb->data_addr);
+			ltophys(0, ccb->data_length);
 		}
 
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
-		    ccb->dmamap_xfer->dm_mapsize,
-		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
-		    BUS_DMASYNC_PREWRITE);
-
-		/*
-		 * Load the hardware scatter/gather map with the
-		 * contents of the DMA map.
-		 */
-		for (seg = 0; seg < ccb->dmamap_xfer->dm_nsegs; seg++) {
-			ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_addr,
-			    ccb->scat_gath[seg].seg_addr);
-			ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_len,
-			    ccb->scat_gath[seg].seg_len);
+		if (XS_CTL_TAGTYPE(xs) != 0) {
+			ccb->tag_enable = 1;
+			ccb->tag_type = xs->xs_tag_type & 0x03;
+		} else {
+			ccb->tag_enable = 0;
+			ccb->tag_type = 0;
 		}
 
-		ltophys(ccb->hashkey + offsetof(struct bha_ccb, scat_gath),
-		    ccb->data_addr);
-		ltophys(ccb->dmamap_xfer->dm_nsegs *
-		    sizeof(struct bha_scat_gath), ccb->data_length);
-	} else {
+		ccb->data_out = 0;
+		ccb->data_in = 0;
+		ccb->target = periph->periph_target;
+		ccb->lun = periph->periph_lun;
+		ltophys(ccb->hashkey + offsetof(struct bha_ccb, scsi_sense),
+		    ccb->sense_ptr);
+		ccb->req_sense_length = sizeof(ccb->scsi_sense);
+		ccb->host_stat = 0x00;
+		ccb->target_stat = 0x00;
+		ccb->link_id = 0;
+		ltophys(0, ccb->link_addr);
+
+		BHA_CCB_SYNC(sc, ccb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		s = splbio();
+		bha_queue_ccb(sc, ccb);
+		splx(s);
+
+		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
+		if ((flags & XS_CTL_POLL) == 0)
+			return;
+
 		/*
-		 * No data xfer, use non S/G values.
+		 * If we can't use interrupts, poll on completion
 		 */
-		ltophys(0, ccb->data_addr);
-		ltophys(0, ccb->data_length);
-	}
-
-	ccb->data_out = 0;
-	ccb->data_in = 0;
-	ccb->target = sc_link->scsipi_scsi.target;
-	ccb->lun = sc_link->scsipi_scsi.lun;
-	ltophys(ccb->hashkey + offsetof(struct bha_ccb, scsi_sense),
-	    ccb->sense_ptr);
-	ccb->req_sense_length = sizeof(ccb->scsi_sense);
-	ccb->host_stat = 0x00;
-	ccb->target_stat = 0x00;
-	ccb->link_id = 0;
-	ltophys(0, ccb->link_addr);
-
-	BHA_CCB_SYNC(sc, ccb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	s = splbio();
-	bha_queue_ccb(sc, ccb);
-	splx(s);
-
-	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
-	if ((flags & XS_CTL_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
-
-	/*
-	 * If we can't use interrupts, poll on completion
-	 */
-	if (bha_poll(sc, xs, ccb->timeout)) {
-		bha_timeout(ccb);
-		if (bha_poll(sc, xs, ccb->timeout))
+		if (bha_poll(sc, xs, ccb->timeout)) {
 			bha_timeout(ccb);
-	}
-	return (COMPLETE);
+			if (bha_poll(sc, xs, ccb->timeout))
+				bha_timeout(ccb);
+		}
+		return;
 
- bad:
-	xs->error = XS_DRIVER_STUFFUP;
-	bha_free_ccb(sc, ccb);
-	return (COMPLETE);
+	case ADAPTER_REQ_GROW_RESOURCES:
+		if (sc->sc_cur_ccbs == sc->sc_max_ccbs) {
+			chan->chan_flags &= ~SCSIPI_CHAN_CANGROW;
+			return;
+		}
+		seg = sc->sc_cur_ccbs;
+		bha_create_ccbs(sc, bha_ccbs_per_group);
+		adapt->adapt_openings += sc->sc_cur_ccbs - seg;
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/*
+		 * Can't really do this on the Buslogic.  It has its
+		 * own setup info.
+		 */
+		return;
+
+	case ADAPTER_REQ_GET_XFER_MODE:
+		bha_get_xfer_mode(sc, (struct scsipi_periph *)arg);
+		return;
+	}
 }
 
 /*
@@ -498,6 +480,115 @@ bha_minphys(bp)
 /*****************************************************************************
  * SCSI job execution helper routines
  *****************************************************************************/
+
+/*
+ * bha_get_xfer_mode;
+ *
+ *	Negotiate the xfer mode for the specified periph, and report
+ *	back the mode to the midlayer.
+ *
+ *	NOTE: we must be called at splbio().
+ */
+void
+bha_get_xfer_mode(sc, periph)
+	struct bha_softc *sc;
+	struct scsipi_periph *periph;
+{
+	struct bha_setup hwsetup;
+	struct bha_period hwperiod;
+	struct bha_sync *bs;
+	int toff = periph->periph_target & 7, tmask = (1 << toff);
+	int wide, period, offset, rlen;
+
+	/*
+	 * Issue an Inquire Setup Information.  We can extract
+	 * sync and wide information from here.
+	 */
+	rlen = sizeof(hwsetup.reply) +
+	    ((sc->sc_flags & BHAF_WIDE) ? sizeof(hwsetup.reply_w) : 0);
+	hwsetup.cmd.opcode = BHA_INQUIRE_SETUP;
+	hwsetup.cmd.len = rlen;
+	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+	    sizeof(hwsetup.cmd), (u_char *)&hwsetup.cmd,
+	    rlen, (u_char *)&hwsetup.reply);
+
+	periph->periph_mode = 0;
+	periph->periph_period = 0;
+	periph->periph_offset = 0;
+
+	/*
+	 * First check for wide.  On later boards, we can check
+	 * directly in the setup info if wide is currently active.
+	 *
+	 * On earlier boards, we have to make an educated guess.
+	 */
+	if (sc->sc_flags & BHAF_WIDE) {
+		if (strcmp(sc->sc_firmware, "5.06L") >= 0) {
+			if (periph->periph_target > 7) {
+				wide =
+				    hwsetup.reply_w.high_wide_active & tmask;
+			} else {
+				wide =
+				    hwsetup.reply_w.low_wide_active & tmask;
+			}
+			if (wide)
+				periph->periph_mode |= PERIPH_CAP_WIDE16;
+		} else {
+			/* XXX Check `wide permitted' in the config info. */
+			periph->periph_mode |=
+			    (periph->periph_cap & PERIPH_CAP_WIDE16);
+		}
+	}
+
+	/*
+	 * Now get basic sync info.
+	 */
+	bs = (periph->periph_target > 7) ?
+	     &hwsetup.reply_w.sync_high[toff] :
+	     &hwsetup.reply.sync_low[toff];
+
+	if (bs->valid) {
+		periph->periph_mode |= PERIPH_CAP_SYNC;
+		period = (bs->period * 50) + 20;
+		offset = bs->offset;
+
+		/*
+		 * On boards that can do Fast and Ultra, use the Inquire Period
+		 * command to get the period.
+		 */
+		if (sc->sc_firmware[0] >= '3') {
+			rlen = sizeof(hwperiod.reply) +
+			    ((sc->sc_flags & BHAF_WIDE) ?
+			      sizeof(hwperiod.reply_w) : 0);
+			hwperiod.cmd.opcode = BHA_INQUIRE_PERIOD;
+			hwperiod.cmd.len = rlen;
+			bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+			    sizeof(hwperiod.cmd), (u_char *)&hwperiod.cmd,
+			    rlen, (u_char *)&hwperiod.reply);
+
+			if (periph->periph_target > 7)
+				period = hwperiod.reply_w.period[toff];
+			else
+				period = hwperiod.reply.period[toff];
+
+			period *= 10;
+		}
+
+		periph->periph_period =
+		    scsipi_sync_period_to_factor(period * 10);
+		periph->periph_offset = offset;
+	}
+
+	/*
+	 * Now check for tagged queueing support.
+	 *
+	 * XXX Check `tags permitted' in the config info.
+	 */
+	if (sc->sc_flags & BHAF_TAGGED_QUEUEING)
+		periph->periph_mode |= (periph->periph_cap & PERIPH_CAP_TQING);
+
+	periph->periph_flags |= PERIPH_MODE_VALID;
+}
 
 /*
  * bha_done:
@@ -576,20 +667,7 @@ bha_done(sc, ccb)
 	}
 
 	bha_free_ccb(sc, ccb);
-
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
-
-	/*
-	 * If there are queue entries in the software queue, try to
-	 * run the first one.  We should be more or less guaranteed
-	 * to succeed, since we just freed a CCB.
-	 *
-	 * NOTE: bha_scsi_cmd() relies on our calling it with
-	 * the first entry in the queue.
-	 */
-	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
-		(void) bha_scsi_cmd(xs);
 }
 
 /*
@@ -634,11 +712,12 @@ bha_timeout(arg)
 {
 	struct bha_ccb *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct bha_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct bha_softc *sc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();
@@ -1079,7 +1158,7 @@ bha_info(sc)
 	 *
 	 * The firmware version indicates:
 	 *
-	 *	5.xx	BusLogic "W" Series Hose Adapters
+	 *	5.xx	BusLogic "W" Series Host Adapters
 	 *		BT-948/958/958D
 	 *
 	 *	4.xx	BusLogic "C" Series Host Adapters
@@ -1145,7 +1224,7 @@ bha_info(sc)
 	sc->sc_max_dmaseg = inquire.reply.sg_limit;
 
 	/*
-	 * Determine the maximum CCB cound and whether or not
+	 * Determine the maximum CCB count and whether or not
 	 * tagged queueing is available on this host adapter.
 	 *
 	 * Tagged queueing works on:
@@ -1163,15 +1242,15 @@ bha_info(sc)
 	 */
 	switch (sc->sc_firmware[0]) {
 	case '5':
-		sc->sc_hw_ccbs = 192;
+		sc->sc_max_ccbs = 192;
 		sc->sc_flags |= BHAF_TAGGED_QUEUEING;      
 		break;
 
 	case '4':
 		if (sc->sc_model[0] == '5')
-			sc->sc_hw_ccbs = 50;
+			sc->sc_max_ccbs = 50;
 		else
-			sc->sc_hw_ccbs = 100;
+			sc->sc_max_ccbs = 100;
 		if (strcmp(sc->sc_firmware, "4.22") >= 0)
 			sc->sc_flags |= BHAF_TAGGED_QUEUEING;
 		break;
@@ -1182,40 +1261,20 @@ bha_info(sc)
 		/* FALLTHROUGH */
 
 	default:
-		sc->sc_hw_ccbs = 30;
+		sc->sc_max_ccbs = 30;
 	}
 
 	/*
-	 * Set the mailbox size to be just larger than the internal
-	 * CCB count.
+	 * Set the mailbox count to precisely the number of HW CCBs
+	 * available.  A mailbox isn't required while a CCB is executing,
+	 * but this allows us to actually enqueue up to our resource
+	 * limit.
 	 *
-	 * XXX We should consider making this a large number on
-	 * boards with strict round-robin mode, as it would allow
-	 * us to expand the openings available to the upper layer.
-	 * The CCB count is what the host adapter can process
-	 * concurrently, but we can queue up to 255 in the mailbox
-	 * regardless.
+	 * This will keep the mailbox count small on boards which don't
+	 * have strict round-robin (they have to scan the entire set of
+	 * mailboxes each time they run a command).
 	 */
-	if (sc->sc_flags & BHAF_STRICT_ROUND_ROBIN) {
-#if 0
-		sc->sc_mbox_count = 255;
-#else
-		sc->sc_mbox_count = sc->sc_hw_ccbs + 8;
-#endif
-	} else {
-		/*
-		 * Only 32 in this case; non-strict round-robin must
-		 * scan the entire mailbox for new commands, which
-		 * is not very efficient.
-		 */
-		sc->sc_mbox_count = 32;
-	}
-
-	/*
-	 * The maximum number of CCBs we allow is the number we can
-	 * enqueue.
-	 */
-	sc->sc_max_ccbs = sc->sc_mbox_count;
+	sc->sc_mbox_count = sc->sc_max_ccbs;
 
 	/*
 	 * Obtain setup information.
@@ -1231,7 +1290,7 @@ bha_info(sc)
 	printf("%s: model BT-%s, firmware %s\n", sc->sc_dev.dv_xname,
 	    sc->sc_model, sc->sc_firmware);
 
-	printf("%s: %d H/W CCBs", sc->sc_dev.dv_xname, sc->sc_hw_ccbs);
+	printf("%s: %d H/W CCBs", sc->sc_dev.dv_xname, sc->sc_max_ccbs);
 	if (setup.reply.sync_neg)
 		printf(", sync");
 	if (setup.reply.parity)
@@ -1468,8 +1527,14 @@ bha_finish_ccbs(sc)
 	if (mbi->comp_stat == BHA_MBI_FREE) {
 		for (i = 0; i < sc->sc_mbox_count; i++) {
 			if (mbi->comp_stat != BHA_MBI_FREE) {
+#ifdef BHADIAG
+				/*
+				 * This can happen in normal operation if
+				 * we use all mailbox slots.
+				 */
 				printf("%s: mbi not in round-robin order\n",
 				    sc->sc_dev.dv_xname);
+#endif
 				goto again;
 			}
 			mbi = bha_nextmbi(sc, mbi);
