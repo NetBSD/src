@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.38 2002/01/02 13:13:19 uch Exp $
+#	$NetBSD: TX3922,v 1.39 2002/01/26 10:24:58 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -73,6 +73,9 @@ options 	SOFTDEP		# FFS soft updates support.
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 
 options 	NFS_BOOT_DHCP
+
+# compile options
+makeoptions	DEFGP="-G 18"
 
 config		netbsd		root on ? type ?
 
