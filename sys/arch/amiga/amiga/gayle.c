@@ -1,4 +1,4 @@
-/*	$NetBSD: gayle.c,v 1.2 2000/09/27 08:24:02 aymeric Exp $	*/
+/*	$NetBSD: gayle.c,v 1.3 2001/01/19 21:18:29 is Exp $	*/
 
 /* public domain */
 
@@ -12,17 +12,15 @@
 #include <amiga/amiga/gayle.h>
 #include <amiga/dev/zbusvar.h>
 
-struct gayle_struct *gayle_base_virtual_address;
+struct gayle_struct *gayle_base_virtual_address = 0;
 
 #define GAYLE_PHYS_ADDRESS      0xda8000
 
 void
 gayle_init(void) {
-	static int did_init = 0;
 
-	if (did_init)
+	if (gayle_base_virtual_address != 0)
 		return;
-	did_init = 1;
 
 	gayle_base_virtual_address =
 		(struct gayle_struct *) ztwomap(GAYLE_PHYS_ADDRESS);
