@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.107 2004/04/21 03:15:44 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.108 2004/04/21 03:17:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1072,3 +1072,9 @@ lib/libc/compat-43/sethostid.c			1.7
 	incur bizarre failure modes if the types also dont have the same size
 	(sparc64, alpha, etc).
 	[atatat, ticket #162]
+
+sys/fs/msdosfs/msdosfsmount.h			1.6
+
+	Properly version the msdosfs mount structure after addition
+	of gmt time offset support. PR#25226
+	[jdolecek, ticket #160]
