@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.15 2003/04/19 14:56:06 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.16 2003/05/09 13:36:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -35,7 +35,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/adrsmap.h>
-#include <machine/autoconf.h>
+
+#include <newsmips/dev/hbvar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -111,12 +112,12 @@ fb_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "fb") != 0)
+	if (strcmp(ha->ha_name, "fb") != 0)
 		return 0;
 
-	if (badaddr(NWB253_CTLREG, 2) || badaddr(NWB253_CRTREG, 2))
+	if (hb_badaddr(NWB253_CTLREG, 2) || hb_badaddr(NWB253_CRTREG, 2))
 		return 0;
 	if ((*(volatile u_short *)NWB253_CTLREG & 7) != 4)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.9 2003/05/09 11:58:21 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.10 2003/05/09 13:36:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -37,7 +37,8 @@
 #include <machine/psl.h>
 #include <newsmips/newsmips/machid.h>
 
-extern void hb_intr_dispatch(int);
+#include <newsmips/dev/hbvar.h>
+
 #if !defined(SOFTFLOAT)
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
 #endif
