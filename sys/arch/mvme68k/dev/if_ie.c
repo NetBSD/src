@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.7 2000/09/06 19:51:43 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.8 2000/09/15 08:50:24 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -269,15 +269,12 @@ ie_pcctwo_attach(parent, self, args)
 	struct pcctwo_attach_args *pa;
 	struct ie_pcctwo_softc *ps;
 	struct ie_softc *sc;
-	u_int8_t ethaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	int rseg;
 
 	pa = (struct pcctwo_attach_args *) args;
 	ps = (struct ie_pcctwo_softc *) self;
 	sc = (struct ie_softc *) self;
-
-	myetheraddr(ethaddr);
 
 	/* Map the MPU controller registers in PCCTWO space */
 	ps->ps_bust = pa->pa_bust;
@@ -336,7 +333,7 @@ ie_pcctwo_attach(parent, self, args)
 	i82586_proberam(sc);
 
 	/* Attach the MI back-end */
-	i82586_attach(sc, "onboard", ethaddr, NULL, 0, 0);
+	i82586_attach(sc, "onboard", mvme_ea, NULL, 0, 0);
 
 	/* Finally, hook the hardware interrupt */
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc);
