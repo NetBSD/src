@@ -1,11 +1,11 @@
-/*	$NetBSD: pci_map.c,v 1.6 2000/01/25 22:30:04 drochner Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by William R. Studenmund; by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,11 +115,17 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 	bus_size_t *sizep;
 	int *flagsp;
 {
-	pcireg_t address, mask;
-	int s;
+	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
+	u_int64_t waddress, wmask;
+	int s, is64bit;
+
+	is64bit = (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT);
 
 	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("pci_find_mem: bad request");
+		panic("pci_mem_find: bad request");
+
+	if (is64bit && (reg + 4) >= PCI_MAPREG_END)
+		panic("pci_mem_find: bad 64-bit request");
 
 	/*
 	 * Section 6.2.5.1, `Address Maps', tells us that:
@@ -136,6 +142,12 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
+	if (is64bit) {
+		address1 = pci_conf_read(pc, tag, reg + 4);
+		pci_conf_write(pc, tag, reg + 4, 0xffffffff);
+		mask1 = pci_conf_read(pc, tag, reg + 4);
+		pci_conf_write(pc, tag, reg + 4, address1);
+	}
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
@@ -149,7 +161,10 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 		return (1);
 	}
 
-	if (PCI_MAPREG_MEM_SIZE(mask) == 0) {
+	waddress = (u_int64_t)address1 << 32UL | address;
+	wmask = (u_int64_t)mask1 << 32UL | mask;
+
+	if (PCI_MAPREG_MEM64_SIZE(wmask) == 0) {
 		printf("pci_mem_find: void region\n");
 		return (1);
 	}
@@ -159,22 +174,57 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 		break;
 	case PCI_MAPREG_MEM_TYPE_64BIT:
-		printf("pci_mem_find: 64-bit memory mapping register\n");
-		return (1);
+		/*
+		 * Handle the case of a 64-bit memory register on a
+		 * platform with 32-bit addressing.  Make sure that
+		 * the address assigned and the device's memory size
+		 * fit in 32 bits.  We implicitly assume that if
+		 * bus_addr_t is 64-bit, then so is bus_size_t.
+		 */
+		if (sizeof(u_int64_t) > sizeof(bus_addr_t) &&
+		    (address1 != 0 || mask1 != 0xffffffff)) {
+			printf("pci_mem_find: 64-bit memory map which is "
+			    "inaccessible on a 32-bit platform\n");
+			return (1);
+		}
+		break;
 	default:
 		printf("pci_mem_find: reserved mapping register type\n");
 		return (1);
 	}
 
-	if (basep != 0)
-		*basep = PCI_MAPREG_MEM_ADDR(address);
-	if (sizep != 0)
-		*sizep = PCI_MAPREG_MEM_SIZE(mask);
+	if (sizeof(u_int64_t) > sizeof(bus_addr_t)) {
+		if (basep != 0)
+			*basep = PCI_MAPREG_MEM_ADDR(address);
+		if (sizep != 0)
+			*sizep = PCI_MAPREG_MEM_SIZE(mask);
+	} else {
+		if (basep != 0)
+			*basep = PCI_MAPREG_MEM64_ADDR(waddress);
+		if (sizep != 0)
+			*sizep = PCI_MAPREG_MEM64_SIZE(wmask);
+	}
 	if (flagsp != 0)
 		*flagsp = PCI_MAPREG_MEM_PREFETCHABLE(address) ?
 		    BUS_SPACE_MAP_PREFETCHABLE : 0;
 
 	return (0);
+}
+
+pcireg_t
+pci_mapreg_type(pc, tag, reg)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int reg;
+{
+	pcireg_t rv;
+
+	rv = pci_conf_read(pc, tag, reg);
+	if (PCI_MAPREG_TYPE(rv) == PCI_MAPREG_TYPE_IO)
+		rv &= PCI_MAPREG_TYPE_MASK;
+	else
+		rv &= PCI_MAPREG_TYPE_MASK|PCI_MAPREG_MEM_TYPE_MASK;
+	return (rv);
 }
 
 int
