@@ -47,6 +47,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
 
@@ -144,11 +145,18 @@ cpu_exit(p)
 	switch_exit(p);
 }
 
-void
-cpu_wait(p)
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ */     
+cpu_coredump(p, vp, cred)
 	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
 {
 
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
+	    p));
 }
 
 /*
