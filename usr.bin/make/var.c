@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.36 1999/09/15 02:56:35 mycroft Exp $	*/
+/*	$NetBSD: var.c,v 1.37 1999/09/15 22:51:05 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.36 1999/09/15 02:56:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.37 1999/09/15 22:51:05 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.36 1999/09/15 02:56:35 mycroft Exp $");
+__RCSID("$NetBSD: var.c,v 1.37 1999/09/15 22:51:05 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -180,7 +180,6 @@ typedef struct {
 
 static Var *VarFind __P((char *, GNode *, int));
 static void VarAdd __P((char *, char *, GNode *));
-static void VarDelete __P((ClientData));
 static Boolean VarHead __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarTail __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarSuffix __P((char *, Boolean, Buffer, ClientData));
@@ -344,8 +343,6 @@ VarAdd (name, val, ctxt)
 
     v = (Var *) emalloc (sizeof (Var));
 
-    v->name = estrdup (name);
-
     len = val ? strlen(val) : 0;
     v->val = Buf_Init(len+1);
     Buf_AddBytes(v->val, len, (Byte *)val);
@@ -354,35 +351,11 @@ VarAdd (name, val, ctxt)
 
     h = Hash_CreateEntry (&ctxt->context, name, NULL);
     Hash_SetValue(h, v);
+    v->name = h->name;
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
 }
-
-
-/*-
- *-----------------------------------------------------------------------
- * VarDelete  --
- *	Delete a variable and all the space associated with it.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-static void
-VarDelete(vp)
-    ClientData vp;
-{
-    Var *v = (Var *) vp;
-    free(v->name);
-    Buf_Destroy(v->val, TRUE);
-    free((Address) v);
-}
-
-
 
 /*-
  *-----------------------------------------------------------------------
@@ -412,8 +385,11 @@ Var_Delete(name, ctxt)
 	register Var 	  *v;
 
 	v = (Var *)Hash_GetValue(ln);
+	if (v->name != ln->name)
+		free(v->name);
 	Hash_DeleteEntry(&ctxt->context, ln);
-	VarDelete((ClientData) v);
+	Buf_Destroy(v->val, TRUE);
+	free((Address) v);
     }
 }
 
