@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.12 2003/10/19 08:58:52 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.13 2004/02/29 18:47:12 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,5 +144,6 @@
 .ds doc-operating-system-NetBSD-1.6.1  1.6.1
 .ds doc-operating-system-NetBSD-1.6.2  1.6.2
 .ds doc-operating-system-NetBSD-2.0    2.0
+.ds doc-operating-system-FreeBSD-5.2   5.2
 .ds doc-str-At-V.3 \*[Tn-font-size]AT&T\*[str-At] System\~V.3
 .as doc-str-At-V.3 " \*[Tn-font-size]UNIX\*[str-At]
