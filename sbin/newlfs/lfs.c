@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.8 1995/06/19 21:30:36 cgd Exp $	*/
+/*	$NetBSD: lfs.c,v 1.9 1997/08/01 06:15:20 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: lfs.c,v 1.8 1995/06/19 21:30:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: lfs.c,v 1.9 1997/08/01 06:15:20 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,8 +194,8 @@ make_lfs(fd, lp, partp, minfree, block_size, seg_size)
 	daddr_t last_addr;	/* Previous segment address */
 	daddr_t	sb_addr;	/* Address of superblocks */
 	daddr_t	seg_addr;	/* Address of current segment */
-	void *ipagep;		/* Pointer to the page we use to write stuff */
-	void *sump;		/* Used to copy stuff into segment buffer */
+	char *ipagep;		/* Pointer to the page we use to write stuff */
+	char *sump;		/* Used to copy stuff into segment buffer */
 	u_long *block_array;	/* Array of logical block nos to put in sum */
 	u_long blocks_used;	/* Number of blocks in first segment */
 	u_long *dp;		/* Used to computed checksum on data */
@@ -372,7 +372,7 @@ make_lfs(fd, lp, partp, minfree, block_size, seg_size)
 	memset(dip, 0, lfsp->lfs_bsize);
 
 	/* Create a block of IFILE structures. */
-	if (!(ipagep = malloc(lfsp->lfs_bsize)))
+	if (!(ipagep = (char *)malloc(lfsp->lfs_bsize)))
 		fatal("%s", strerror(errno));
 	ifile = (IFILE *)ipagep;
 
@@ -610,10 +610,6 @@ put(fd, off, p, len)
  * Create the root directory for this file system and the lost+found
  * directory.
  */
-
-void
-lfsinit()
-{}
 
 static daddr_t
 make_dinode(ino, dip, nblocks, saddr, lfsp)
