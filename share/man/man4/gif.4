@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.9.4.1 2000/06/30 18:33:38 thorpej Exp $
+.\"	$NetBSD: gif.4,v 1.9.4.2 2001/05/01 10:12:48 he Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,7 +45,7 @@ It can tunnel IPv[46] traffic over IPv[46].
 Therefore, there can be four possible configurations.
 The behavior of
 .Nm
-is mainly based on RFC1933 IPv6-over-IPv4 configured tunnel.
+is mainly based on RFC2893 IPv6-over-IPv4 configured tunnel.
 .Pp
 To use
 .Nm gif ,
@@ -157,7 +157,7 @@ interface flag.
 Without
 .Dv IFF_LINK1 ,
 .Nm
-will show a normal behavior, like described in RFC1933.
+will show a normal behavior, like described in RFC2893.
 This can be summarized as follows:
 .Bl -tag -width "Ingress" -offset indent
 .It Ingress
@@ -196,7 +196,7 @@ If outer ECN CE bit is
 enable ECN CE bit on the inner.
 .El
 .Pp
-Note that the ECN friendly behavior violates RFC1933.
+Note that the ECN friendly behavior violates RFC2893.
 This should be used in mutual agreement with the peer.
 .Pp
 .Ss Security
@@ -208,6 +208,9 @@ performs martian filter and ingress filter against outer source address,
 on egress.
 Note that martian/ingress filters are no way complete.
 You may want to secure your node by using packet filters.
+Ingress filter can be turned off by
+.Dv IFF_LINK2
+bit.
 .Pp
 As mentioned above, multi-destination mode
 .Pq Dv IFF_LINK0
@@ -220,10 +223,10 @@ is far less secure than bidirectional mode.
 .Rs
 .%A	R. Gilligan
 .%A	E. Nordmark
-.%B	RFC1933
+.%B	RFC2893
 .%T	Transition Mechanisms for IPv6 Hosts and Routers
-.%D	April 1996
-.%O	ftp://ftp.isi.edu/in-notes/rfc1933.txt
+.%D	August 2000
+.%O	ftp://ftp.isi.edu/in-notes/rfc2893.txt
 .Re
 .Rs
 .%A	Sally Floyd
