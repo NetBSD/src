@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.5 2000/06/14 17:25:17 cgd Exp $ */
+/* $NetBSD: sysident.h,v 1.6 2000/12/15 06:46:22 mycroft Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -66,13 +66,9 @@ __asm("
 
 	.long	7
 	.long	4
-	.long	" __S(ELF_NOTE_NETBSD_TYPE_OSVERSION) "
+	.long	" __S(ELF_NOTE_TYPE_NETBSD_TAG) "
 	.ascii \"NetBSD\\0\\0\"	
 	.long	" __S(NetBSD) "
 
-	.long	7
-	.long	7
-	.long	" __S(ELF_NOTE_NETBSD_TYPE_EMULNAME) "
-	.ascii	\"NetBSD\\0\\0\"
-	.ascii	\"netbsd\\0\\0\"
+	.p2align 2
 ");
