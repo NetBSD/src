@@ -1,23 +1,27 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/03 02:05:49 takemura Exp $
+#	$NetBSD: Makefile,v 1.7 2004/01/06 12:30:13 mrg Exp $
 
-SUBDIR=	vfb xnest
+.include "../Makefile.common"
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+SUBDIR= xnest
+
+.if ${XSERVER_XVFB} != "no"
+SUBDIR+=vfb
+.endif
+
+.if ${XSERVER_XSUN} != "no"
 SUBDIR+=sun
 .endif
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "cats"
+.if ${XSERVER_XFREE86} != "no"
 SUBDIR+=xfree86
 .endif
 
-.if ${MACHINE} == "macppc"
+.if ${XSERVER_XMACPPC} != "no"
 SUBDIR+=netbsd/macppc
 .endif
 
-.if ${MACHINE} == "hpcmips"
+.if ${XSERVER_XHPC} != "no"
 SUBDIR+=netbsd/hpc
 .endif
-
 
 .include <bsd.subdir.mk>
