@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.43 2003/07/27 01:19:30 thorpej Exp $
+#	$NetBSD: files.prep,v 1.44 2003/11/01 22:54:46 tsutsui Exp $
 #
 # prep-specific configuration info
 #
@@ -119,9 +119,8 @@ file	arch/prep/isa/isapnp_machdep.c	isapnp
 # clock
 #
 # mc146818 and compat.
-device	mcclock
+device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
-file	arch/prep/prep/mcclock.c	mcclock
 file	arch/prep/isa/mcclock_isa.c	mcclock_isa
 
 # mk48t18 and compat.
