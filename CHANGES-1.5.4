@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.160 2004/08/26 05:01:13 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.161 2004/12/10 23:08:26 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2669,3 +2669,8 @@ libexec/ftpd/strsuftoll.c			new + patch
 
 	Update to NetBSD ftpd 20040809.  Fixes SA#2004-009.
 	[he, ticket #158]
+
+sys/netinet6/ipsec.c				1.98-1.99
+
+	Add a missing break
+	[itojun, ticket #178]
