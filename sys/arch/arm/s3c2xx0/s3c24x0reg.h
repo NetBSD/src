@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.6 2004/02/12 03:47:29 bsh Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.7 2004/02/12 03:52:46 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -167,8 +167,142 @@
 #define	S3C24X0_CLKMAN_SIZE	0x18
 
 /* LCD controller */
-/* XXX */
-#define	S3C24X0_LCDC_SIZE 	0x64
+#define	LCDC_LCDCON1	0x00	/* control 1 */
+#define	 LCDCON1_ENVID   	(1<<0)	/* enable video */
+#define	 LCDCON1_BPPMODE_SHIFT 	1
+#define	 LCDCON1_BPPMODE_MASK	(0x0f<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_STN1	(0x0<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_STN2	(0x1<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_STN4	(0x2<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_STN8	(0x3<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_STN12	(0x4<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFT1	(0x8<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFT2	(0x9<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFT4	(0xa<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFT8	(0xb<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFT16	(0xc<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFT24	(0xd<<LCDCON1_BPPMODE_SHIFT)
+#define	 LCDCON1_BPPMODE_TFTX	(0x8<<LCDCON1_BPPMODE_SHIFT)
+
+#define	 LCDCON1_PNRMODE_SHIFT	5
+#define	 LCDCON1_PNRMODE_MASK	(0x3<<LCDCON1_PNRMODE_SHIFT)
+#define	 LCDCON1_PNRMODE_DUALSTN4    (0x0<<LCDCON1_PNRMODE_SHIFT)
+#define	 LCDCON1_PNRMODE_SINGLESTN4  (0x1<<LCDCON1_PNRMODE_SHIFT)
+#define	 LCDCON1_PNRMODE_SINGLESTN8  (0x2<<LCDCON1_PNRMODE_SHIFT)
+#define	 LCDCON1_PNRMODE_TFT         (0x3<<LCDCON1_PNRMODE_SHIFT)
+
+#define	 LCDCON1_MMODE  	(1<<7) /* VM toggle rate */
+#define	 LCDCON1_CLKVAL_SHIFT 	8
+#define	 LCDCON1_CLKVAL_MASK	(0x3ff<<LCDCON1_CLKVAL_SHIFT)
+#define	 LCDCON1_LINCNT_SHIFT 	18
+#define	 LCDCON1_LINCNT_MASK	(0x3ff<<LCDCON1_LINCNT_SHIFT)
+
+#define	LCDC_LCDCON2	0x04	/* control 2 */
+#define	 LCDCON2_VPSW_SHIFT	0 	/* TFT Vsync pulse width */
+#define	 LCDCON2_VPSW_MASK	(0x3f<<LCDCON2_VPSW_SHIFT)
+#define	 LCDCON2_VFPD_SHIFT	6 	/* TFT V front porch */
+#define	 LCDCON2_VFPD_MASK	(0xff<<LCDCON2_VFPD_SHIFT)
+#define	 LCDCON2_LINEVAL_SHIFT	14 	/* Vertical size */
+#define	 LCDCON2_LINEVAL_MASK	(0x3ff<<LCDCON2_LINEVAL_SHIFT)
+#define	 LCDCON2_VBPD_SHIFT	24 	/* TFT V back porch */
+#define	 LCDCON2_VBPD_MASK	(0xff<<LCDCON2_VBPD_SHIFT)
+
+#define	LCDC_LCDCON3	0x08	/* control 2 */
+#define	 LCDCON3_HFPD_SHIFT	0 	/* TFT H front porch */
+#define	 LCDCON3_HFPD_MASK	(0xff<<LCDCON3_VPFD_SHIFT)
+#define	 LCDCON3_LINEBLANK_SHIFT  0 	/* STN H blank time */
+#define	 LCDCON3_LINEBLANK_MASK	  (0xff<<LCDCON3_LINEBLANK_SHIFT)
+#define	 LCDCON3_HOZVAL_SHIFT	8 	/* Horizontal size */
+#define	 LCDCON3_HOZVAL_MASK	(0x7ff<<LCDCON3_HOZVAL_SHIFT)
+#define	 LCDCON3_HBPD_SHIFT	19 	/* TFT H back porch */
+#define	 LCDCON3_HBPD_MASK	(0x7f<<LCDCON3_HPBD_SHIFT)
+#define	 LCDCON3_WDLY_SHIFT	19	/* STN vline delay */
+#define	 LCDCON3_WDLY_MASK	(0x03<<LCDCON3_WDLY_SHIFT)
+#define	 LCDCON3_WDLY_16	(0x00<<LCDCON3_WDLY_SHIFT)
+#define	 LCDCON3_WDLY_32	(0x01<<LCDCON3_WDLY_SHIFT)
+#define	 LCDCON3_WDLY_64	(0x02<<LCDCON3_WDLY_SHIFT)
+#define	 LCDCON3_WDLY_128	(0x03<<LCDCON3_WDLY_SHIFT)
+
+#define	LCDC_LCDCON4	0x0c	/* control 4 */
+#define	 LCDCON4_HPSW_SHIFT	0 	/* TFT Hsync pulse width */
+#define	 LCDCON4_HPSW_MASK	(0xff<<LCDCON4_HPSW_SHIFT)
+#define	 LCDCON4_WLH_SHIFT	0	/* STN VLINE high width */
+#define	 LCDCON4_WLH_MASK	(0x03<<LCDCON4_WLH_SHIFT)
+#define	 LCDCON4_WLH_16 	(0x00<<LCDCON4_WLH_SHIFT)
+#define	 LCDCON4_WLH_32  	(0x01<<LCDCON4_WLH_SHIFT)
+#define	 LCDCON4_WLH_64  	(0x02<<LCDCON4_WLH_SHIFT)
+#define	 LCDCON4_WLH_128	(0x03<<LCDCON4_WLH_SHIFT)
+
+#define	 LCDCON4_MVAL_SHIFT	8	/* STN VM toggle rate */
+#define	 LCDCON4_MVAL_MASK	(0xff<<LCDCON4_MVAL_SHIFT)
+
+#define	LCDC_LCDCON5	0x10	/* control 5 */
+#define	 LCDCON5_HWSWP		(1<<0)	/* half-word swap */
+#define	 LCDCON5_BSWP 		(1<<1)	/* byte swap */
+#define	 LCDCON5_ENLEND		(1<<2)	/* TFT: enable LEND signal */
+#define	 LCDCON5_PWREN		(1<<3)	/* enable PWREN signale */
+#define	 LCDCON5_INVLEND	(1<<4)	/* TFT: LEND signal polarity */
+#define	 LCDCON5_INVPWREN	(1<<5)	/* PWREN signal polarity */
+#define	 LCDCON5_INVVDEN	(1<<6)	/* VDEN signal polarity */
+#define	 LCDCON5_INVVD		(1<<7)	/* video data signal polarity */
+#define	 LCDCON5_INVVFRAME	(1<<8)	/* VFRAME/VSYNC signal polarity */
+#define	 LCDCON5_INVVLINE	(1<<9)	/* VLINE/HSYNC signal polarity */
+#define	 LCDCON5_INVVCLK	(1<<10)	/* VCLK signal polarity */
+#define	 LCDCON5_INVVCLK_RISING	LCDCON5_INVVCLK
+#define	 LCDCON5_INVVCLK_FALLING  0
+#define	 LCDCON5_FRM565  	(1<<11)	/* RGB:565 format*/
+#define	 LCDCON5_FRM555I	0	/* RGBI:5551 format */
+#define	 LCDCON5_BPP24BL	(1<<12)	/* bit order for bpp24 */
+
+#define	 LCDCON5_HSTATUS_SHIFT	17 /* TFT: horizontal status */
+#define	 LCDCON5_HSTATUS_MASK	(0x03<<LCDCON5_HSTATUS_SHIFT)
+#define	 LCDCON5_HSTATUS_HSYNC	(0x00<<LCDCON5_HSTATUS_SHIFT)
+#define	 LCDCON5_HSTATUS_BACKP	(0x01<<LCDCON5_HSTATUS_SHIFT)
+#define	 LCDCON5_HSTATUS_ACTIVE	(0x02<<LCDCON5_HSTATUS_SHIFT)
+#define	 LCDCON5_HSTATUS_FRONTP	(0x03<<LCDCON5_HSTATUS_SHIFT)
+
+#define	 LCDCON5_VSTATUS_SHIFT	19 /* TFT: vertical status */
+#define	 LCDCON5_VSTATUS_MASK	(0x03<<LCDCON5_VSTATUS_SHIFT)
+#define	 LCDCON5_VSTATUS_HSYNC	(0x00<<LCDCON5_VSTATUS_SHIFT)
+#define	 LCDCON5_VSTATUS_BACKP	(0x01<<LCDCON5_VSTATUS_SHIFT)
+#define	 LCDCON5_VSTATUS_ACTIVE	(0x02<<LCDCON5_VSTATUS_SHIFT)
+#define	 LCDCON5_VSTATUS_FRONTP	(0x03<<LCDCON5_VSTATUS_SHIFT)
+
+#define	LCDC_LCDSADDR1	0x14	/* frame buffer start address */
+#define	LCDC_LCDSADDR2	0x18
+#define	LCDC_LCDSADDR3	0x1c
+#define	 LCDSADDR3_OFFSIZE_SHIFT     11
+#define	 LCDSADDR3_PAGEWIDTH_SHIFT   0
+
+#define	LCDC_REDLUT	0x20	/* STN: red lookup table */
+#define	LCDC_GREENLUT	0x24	/* STN: green lookup table */
+#define	LCDC_BLUELUT	0x28	/* STN: blue lookup table */
+#define	LCDC_DITHMODE	0x4c	/* STN: dithering mode */
+
+#define	LCDC_TPAL	0x50	/* TFT: temporary palette */
+#define	 TPAL_TPALEN		(1<<24)
+#define	 TPAL_RED_SHIFT  	16
+#define	 TPAL_GREEN_SHIFT	8
+#define	 TPAL_BLUE_SHIFT 	0
+
+#define	LCDC_LCDINTPND	0x54
+#define	LCDC_LCDSRCPND	0x58
+#define	LCDC_LCDINTMSK	0x5c
+#define	 LCDINT_FICNT	(1<<0)	/* FIFO trigger interrupt pending */
+#define	 LCDINT_FRSYN	(1<<1)	/* frame sync interrupt pending */
+#define	 LCDINT_FIWSEL	(1<<2)	/* FIFO trigger level: 1=8 words, 0=4 words*/
+
+#define	LCDC_LPCSEL	0x60	/* LPC3600 mode  */
+#define	 LPCSEL_LPC_EN		(1<<0)	/* enable LPC3600 mode */
+#define	 LPCSEL_RES_SEL		(1<<1)	/* 1=240x320 0=320x240 */
+#define	 LPCSEL_MODE_SEL	(1<<2)
+#define	 LPCSEL_CPV_SEL		(1<<3)
+
+
+#define	LCDC_PALETTE		0x0400
+#define	LCDC_PALETTE_SIZE	0x0400
+
+#define	S3C24X0_LCDC_SIZE 	(LCDC_PALETTE+LCDC_PALETTE_SIZE)
 
 /* Timer */
 #define	TIMER_TCFG0 	0x00	/* Timer configuration */
@@ -238,11 +372,37 @@
 
 /* RTC */ /* XXX */
 
-/* ADC */ /* XXX */
+/* SPI */
+#define	S3C24X0_SPI_SIZE 	0x20
 
-/* SPI */ /* XXX */
-#define	S3C24X0_SPI_SIZE 	0x18
+#define	SPI_SPCON		0x00
+#define	 SPCON_TAGD		(1<<0) /* Tx auto garbage */
+#define	 SPCON_CPHA		(1<<1)
+#define	 SPCON_CPOL		(1<<2)
+#define	 SPCON_IDLELOW_RISING	  (0|0)
+#define	 SPCON_IDLELOW_FALLING	  (0|SPCON_CPHA)
+#define	 SPCON_IDLEHIGH_FALLING  (SPCON_CPOL|0) 
+#define	 SPCON_IDLEHIGH_RISING	  (SPCON_CPOL|SPCON_CPHA)
+#define	 SPCON_MSTR		(1<<3)
+#define	 SPCON_ENSCK		(1<<4)
+#define	 SPCON_SMOD_SHIFT	5
+#define	 SPCON_SMOD_MASK	(0x03<<SPCON_SMOD_SHIFT)
+#define	 SPCON_SMOD_POLL	(0x00<<SPCON_SMOD_SHIFT)
+#define	 SPCON_SMOD_INT 	(0x01<<SPCON_SMOD_SHIFT)
+#define	 SPCON_SMOD_DMA 	(0x02<<SPCON_SMOD_SHIFT)
 
+#define	SPI_SPSTA		0x04 /* status register */
+#define	 SPSTA_REDY		(1<<0) /* ready */
+#define	 SPSTA_MULF		(1<<1) /* multi master error */
+#define	 SPSTA_DCOL		(1<<2) /* Data collision error */
+
+#define	SPI_SPPIN		0x08
+#define	 SPPIN_KEEP		(1<<0)
+#define	 SPPIN_ENMUL		(1<<2) /* multi master error detect */
+
+#define	SPI_SPPRE		0x0c /* prescaler */
+#define	SPI_SPTDAT		0x10 /* tx data */
+#define	SPI_SPRDAT		0x14 /* rx data */
 
 
 #endif /* _ARM_S3C2XX0_S3C24X0REG_H_ */
