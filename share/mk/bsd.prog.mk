@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.104 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.prog.mk,v 1.105 1999/11/23 13:22:38 blymn Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -46,6 +46,7 @@ LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
+LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a

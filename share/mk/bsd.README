@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.52 1999/08/21 06:19:33 simonb Exp $
+#	$NetBSD: bsd.README,v 1.53 1999/11/23 13:22:37 blymn Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -366,6 +366,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 		LIBL?=		${DESTDIR}/usr/lib/libl.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
+		LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 		LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 		LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 		LIBPC?=		${DESTDIR}/usr/lib/libpc.a
