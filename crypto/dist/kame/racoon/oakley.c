@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.76 2000/12/27 04:36:46 sakane Exp $	*/
+/*	$KAME: oakley.c,v 1.77 2001/01/02 05:06:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -245,7 +245,7 @@ oakley_setdhgroup(group, dhgrp)
 	if (*dhgrp == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get DH buffer.\n");
-		return NULL;
+		return 0;
 	}
 	switch (group) {
 	case OAKLEY_ATTR_GRP_DESC_MODP768:
@@ -1352,7 +1352,7 @@ get_cert_fromlocal(iph1, my)
 	}
 	if (!certfile) {
 		plog(LLV_ERROR, LOCATION, NULL, "no CERT defined.\n");
-		return NULL;
+		return 0;
 	}
 
 	switch (iph1->rmconf->certtype) {
@@ -1732,7 +1732,7 @@ oakley_savecert(iph1, gen)
 		/* XXX */
 		oakley_delcert((*c));
 		*c = NULL;
-		return NULL;
+		return 0;
 	}
 
 	return 0;
