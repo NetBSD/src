@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.46 1995/08/14 01:47:03 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.47 1995/08/14 06:07:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -520,6 +520,7 @@ trapsignal(p, signum, code)
 			p->p_sigcatch &= ~mask;
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
 				p->p_sigignore |= mask;
+			ps->ps_sigact[signum] = SIG_DFL;
 		}
 	} else {
 		ps->ps_code = code;	/* XXX for core dump/debugger */
@@ -968,6 +969,7 @@ postsig(signum)
 			p->p_sigcatch &= ~mask;
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
 				p->p_sigignore |= mask;
+			ps->ps_sigact[signum] = SIG_DFL;
 		}
 		(void) spl0();
 		p->p_stats->p_ru.ru_nsignals++;
