@@ -1,4 +1,4 @@
-/* $NetBSD: login_cap.c,v 1.2 2000/01/13 06:48:14 mjl Exp $ */
+/* $NetBSD: login_cap.c,v 1.3 2000/01/14 02:14:42 mjl Exp $ */
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -462,8 +462,8 @@ setusercontext(lc, pwd, uid, flags)
 
 	flc = NULL;
 
-	if (!lc && !(flc = lc = login_getclass(pwd ? pwd->pw_class : NULL)))
-		return (-1);
+	if (!lc)
+		flc = lc = login_getclass(pwd ? pwd->pw_class : NULL);
 
 	/*
 	 * Without the pwd entry being passed we cannot set either
