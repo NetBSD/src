@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.206 2004/05/18 14:44:14 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.207 2004/05/23 00:37:27 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.206 2004/05/18 14:44:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.207 2004/05/23 00:37:27 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2826,9 +2826,6 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 
 #ifdef TCP_SIGNATURE
 	if (tp->t_flags & TF_SIGNATURE) {
-#ifdef FAST_IPSEC
-		union sockaddr_union dst;
-#endif
 
 		sav = tcp_signature_getsav(m, th);
 
