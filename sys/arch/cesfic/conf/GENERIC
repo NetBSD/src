@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24 2004/06/26 07:32:05 abs Exp $
+# $NetBSD: GENERIC,v 1.25 2004/06/28 21:07:47 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -55,6 +55,7 @@ options 	COMPAT_16	# compatibility with NetBSD 1.6
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVMSG		# System V-style message queues
+#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support
 options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
