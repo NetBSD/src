@@ -1,5 +1,4 @@
-/*	$NetBSD: locore.c,v 1.16 1996/07/20 18:14:46 ragge Exp $	*/
-
+/*	$NetBSD: locore.c,v 1.17 1996/08/20 14:13:54 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,6 +47,7 @@
 #include <machine/vmparam.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
+#include <machine/nexus.h>
 
 void	start __P((void));
 void	main __P((void));
@@ -151,16 +151,19 @@ tokmem: movw	$0xfff, _panic
 	switch (vax_cputype) {
 #if VAX780
 	case VAX_TYP_780:
+		vax_bustype = VAX_SBIBUS | VAX_CPUBUS;
 		vax_boardtype = VAX_BTYP_780;
 		break;
 #endif
 #if VAX750
 	case VAX_TYP_750:
-		vax_boardtype = VAX_BTYP_780;
+		vax_bustype = VAX_CMIBUS | VAX_CPUBUS;
+		vax_boardtype = VAX_BTYP_750;
 		break;
 #endif
 #if VAX8600
 	case VAX_TYP_790:
+		vax_bustype = VAX_CPUBUS | VAX_MEMBUS;
 		vax_boardtype = VAX_BTYP_790;
 		break;
 #endif
@@ -175,6 +178,12 @@ tokmem: movw	$0xfff, _panic
 		case VAX_BTYP_410:
 		case VAX_BTYP_43:
 			vax_confdata = *(int *)(0x20020000);
+			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
+			break;
+
+		case VAX_BTYP_630:
+		case VAX_BTYP_650:
+			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
 			break;
 
 		default:
