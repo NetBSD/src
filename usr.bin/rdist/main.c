@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.6 (Berkeley) 8/27/90";
+static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #endif /* not lint */
 
 #include "defs.h"
@@ -72,6 +72,10 @@ int	groupid;	/* user's group ID */
 struct	passwd *pw;	/* pointer to static area used by getpwent */
 struct	group *gr;	/* pointer to static area used by getgrent */
 
+static void usage __P((void));
+static void docmdargs __P((int, char *[]));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -185,7 +189,7 @@ main(argc, argv)
 	}
 	*hp = NULL;
 
-	setreuid(0, userid);
+	seteuid(userid);
 	mktemp(tempfile);
 
 	if (iamremote) {
@@ -215,6 +219,7 @@ main(argc, argv)
 	exit(nerrs != 0);
 }
 
+static void
 usage()
 {
 	printf("Usage: rdist [-nqbhirvwyD] [-f distfile] [-d var=value] [-m host] [file ...]\n");
@@ -225,6 +230,7 @@ usage()
 /*
  * rcp like interface for distributing files.
  */
+static void
 docmdargs(nargs, args)
 	int nargs;
 	char *args[];
@@ -280,6 +286,7 @@ docmdargs(nargs, args)
 /*
  * Print a list of NAME blocks (mostly for debugging).
  */
+void
 prnames(nl)
 	register struct namelist *nl;
 {
@@ -291,13 +298,30 @@ prnames(nl)
 	printf(")\n");
 }
 
-/*VARARGS*/
-warn(fmt, a1, a2,a3)
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#if __STDC__
+warn(const char *fmt, ...)
+#else
+warn(fmt, va_alist)
 	char *fmt;
+        va_dcl
+#endif
 {
 	extern int yylineno;
-
-	fprintf(stderr, "rdist: line %d: Warning: ", yylineno);
-	fprintf(stderr, fmt, a1, a2, a3);
-	fputc('\n', stderr);
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "rdist: line %d: Warning: ", yylineno);
+	(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
+	va_end(ap);
 }
