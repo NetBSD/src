@@ -1,5 +1,9 @@
-#	$NetBSD: files.arm,v 1.8 2001/02/13 22:54:25 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.9 2001/02/23 21:23:46 reinoud Exp $
 
+# temporary define to allow easy moving to ../arch/arm/arm32
+defopt	ARM32
+
+# generic networking files
 file	arch/arm/arm/in_cksum_arm.c		inet
 file	netinet/in4_cksum.c			inet
 file	netns/ns_cksum.c			ns
