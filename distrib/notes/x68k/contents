@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.8 1999/01/25 23:34:24 garbled Exp $	
+	$NetBSD: contents,v 1.9 1999/01/26 15:21:17 minoura Exp $	
 
 The x68k-specific portion of the NetBSD _VER release is found in the
 "x68k" subdirectory of the distribution.  That subdirectory is laid
@@ -9,6 +9,9 @@ out as follows:
 
 			binary/sets/	x68k binary distribution sets;
 					see below.
+
+			security/	x68k security distribution;
+					see below;
 
 			floppies/	x68k boot and installation
 					floppy; see below.
@@ -82,6 +85,23 @@ and are as follows:
 		manual pages.
 		[ 1.0M gzipped, 3.7M uncompressed ]
 
+	xbase	The basic files needed for a complete X
+		client environment. This does not include
+		the X servers.
+		[ 2.4M gzipped, 7.4M uncompressed ]
+
+	xcomp	The extra libraries and include files needed
+		to compile X source code.
+		[ 1.6M gzipped, 6.7M uncompressed ]
+
+	xcontrib	Programs that were contributed to X.
+		[ 178k gzipped, 670k uncompressed ]
+
+	xfont	Fonts needed by X.
+		[ 5.7M gzipped, 7M uncompressed ]
+
+	xserver	x68k X servers.
+		[ 1.4M gzipped, 3.3M unzipped ]
 
 IMPORTANT: In previous versions of NetBSD, the kernel from the install
 floppy was copied onto the hard drive in a special step. In the new
@@ -90,9 +110,20 @@ onto the hard drive. Instead, a new set, "kern", has been added which
 contains a generic kernel to be unloaded onto the drive. It must be
 extracted in order to have a minimally functioning system.
 
-For other platform, there is a security distribution named "secr"
-provided.  The x68k security distribution is not provided in the
-binary form.
+The x68k security distribution set is named "secr" and can be found in
+the "x68k/binary/security" subdirectory of the NetBSD _VER
+distribution tree.  It contains security related binaries which depend
+on cryptographic source code. You do not need this distribution set to
+use encrypted passwords in your password file; the "base" distribution
+includes a crypt library which can perform only the decryption
+function.  The security distribution includes a version of the
+Kerberos IV network security system, and a Kerberized version of the
+"telnet" program.  The "secr" distribution set can be found only on
+those sites which carry the complete NetBSD distribution and which can
+legally obtain it.  (Remember, because of United States law, it may
+not be legal to distribute this set to locations outside of the United
+States and Canada.)
+	[ 798K gzipped, 2.4M uncompressed ]
 
 The x68k binary distribution sets are distributed as gzipped tar files
 named with the extension ".tgz", e.g. "base.tgz".
