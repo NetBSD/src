@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1995/06/27 15:57:13 gwr Exp $
+#	$NetBSD: Makefile,v 1.7 1995/08/08 21:02:28 gwr Exp $
 
 LIB=sa
 
@@ -30,11 +30,11 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_sun3} ${SRC_here}
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 DEFS= -DCOMPAT_UFS
-INCL= -I. -I${S}/lib/libsa -I${S}
+INCL= -I${.CURDIR} -I${S}/lib/libsa -I${S}
 COPTS= -msoft-float -fno-defer-pop -fno-omit-frame-pointer
 CFLAGS= -O ${COPTS} ${DEFS} ${DBG} ${INCL}
 
-.PATH:  ${DIR_SA} ${DIR_KERN} ../../sun3
+.PATH:  ${DIR_SA} ${DIR_KERN} ${.CURDIR}/../../sun3
 
 all: libsa.a SRT0.o SRT1.o
 
