@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.5 1995/02/27 12:32:32 cgd Exp $
+.\"	$NetBSD: flock.2,v 1.6 1997/07/17 18:20:48 phil Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -129,10 +129,18 @@ option was specified.
 The argument
 .Fa fd
 is an invalid descriptor.
-.It Bq Er EINVAL
+.It Bq Er EOPNOTSUPP
 The argument
 .Fa fd
 refers to an object other than a file.
+.It Bq Er EINVAL
+The argument
+.Fa operation
+does not include one of
+.Dv LOCK_EX ,
+.Dv LOCK_SH 
+or
+.Dv LOCK_UN .
 .El
 .Sh SEE ALSO
 .Xr open 2 ,
