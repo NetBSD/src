@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.7 1993/10/12 23:30:58 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.8 1993/10/13 01:26:43 mycroft Exp $
  */
 
 /*
@@ -628,9 +628,10 @@ commint(sc)
 }
 
 static int
-comintr(sc)
-	struct com_softc *sc;
+comintr(arg)
+	void *arg;
 {
+	struct	com_softc *sc = arg;
 	u_short	iobase = sc->sc_iobase;
 	struct	tty *tp;
 	u_char	code;
