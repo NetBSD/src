@@ -852,11 +852,7 @@ static int reject_unknown_hostname(SMTPD_STATE *state, char *name,
 	msg_info("%s: %s", myname, name);
 
     dns_status = dns_lookup_types(name, 0, (DNS_RR **) 0, (VSTRING *) 0,
-				  (VSTRING *) 0, T_A, T_MX,
-#ifdef INET6
-				  T_AAAA,
-#endif
-				  0);
+				  (VSTRING *) 0, T_A, T_MX, 0);
     if (dns_status != DNS_OK)
 	return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
 				   "%d <%s>: %s rejected: Host not found",
@@ -878,11 +874,7 @@ static int reject_unknown_mailhost(SMTPD_STATE *state, const char *name,
 	msg_info("%s: %s", myname, name);
 
     dns_status = dns_lookup_types(name, 0, (DNS_RR **) 0, (VSTRING *) 0,
-				  (VSTRING *) 0, T_A, T_MX,
-#ifdef INET6
-				  T_AAAA,
-#endif
-				  0);
+				  (VSTRING *) 0, T_A, T_MX, 0);
     if (dns_status != DNS_OK)
 	return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
 				   "%d <%s>: %s rejected: Domain not found",
@@ -1021,49 +1013,6 @@ static int reject_unauth_pipelining(SMTPD_STATE *state)
 
 static int has_my_addr(const char *host)
 {
-#ifdef INET6
-    char   *myname = "has_my_addr";
-    struct addrinfo hints, *res, *res0;
-    int error;
-    char hbuf[NI_MAXHOST];
-
-    if (msg_verbose)
-	msg_info("%s: host %s", myname, host);
-
-    /*
-     * If we can't lookup the host, play safe and assume it is OK.
-     */
-#define YUP	1
-#define NOPE	0
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    error = getaddrinfo(host, NULL, &hints, &res0);
-    if (error) {
-	if (msg_verbose)
-	    msg_info("%s: host %s: %s", myname, host, gai_strerror(error));
-	return (YUP);
-    }
-    for (res = res0; res; res = res->ai_next) {
-	if (msg_verbose) {
-	    if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
-		    NULL, 0, NI_NUMERICHOST)) {
-		strncpy(hbuf, "???", sizeof(hbuf));
-	    }
-	    msg_info("%s: addr %s", myname, hbuf);
-	}
-	if (own_inet_addr(res->ai_addr)) {
-	    freeaddrinfo(res0);
-	    return (YUP);
-	}
-    }
-    freeaddrinfo(res0);
-    if (msg_verbose)
-	msg_info("%s: host %s: no match", myname, host);
-
-    return (NOPE);
-#else
     char   *myname = "has_my_addr";
     struct in_addr addr;
     char  **cpp;
@@ -1099,7 +1048,6 @@ static int has_my_addr(const char *host)
 	msg_info("%s: host %s: no match", myname, host);
 
     return (NOPE);
-#endif
 }
 
 /* permit_mx_backup - permit use of me as MX backup for recipient domain */
@@ -1618,7 +1566,6 @@ static int reject_maps_rbl(SMTPD_STATE *state)
     int     dns_status = DNS_FAIL;
     int     i;
     int     result;
-    struct in_addr a;
 
     if (msg_verbose)
 	msg_info("%s: %s", myname, state->addr);

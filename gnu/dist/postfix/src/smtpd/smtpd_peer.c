@@ -63,15 +63,6 @@
 #include <netdb.h>
 #include <string.h>
 
-/* Utility library. */
-
-#include <msg.h>
-#include <mymalloc.h>
-#include <valid_hostname.h>
-#include <stringops.h>
-
-/* Global library. */
-
  /*
   * Older systems don't have h_errno. Even modern systems don't have
   * hstrerror().
@@ -93,10 +84,14 @@ static int h_errno = TRY_AGAIN;
     )
 #endif
 
-#ifdef INET6
-#define GAI_STRERROR(error) \
-	((error = EAI_SYSTEM) ? gai_strerror(error) : strerror(errno))
-#endif
+/* Utility library. */
+
+#include <msg.h>
+#include <mymalloc.h>
+#include <valid_hostname.h>
+#include <stringops.h>
+
+/* Global library. */
 
 
 /* Application-specific. */
@@ -107,23 +102,16 @@ static int h_errno = TRY_AGAIN;
 
 void    smtpd_peer_init(SMTPD_STATE *state)
 {
-#ifdef INET6
-    struct sockaddr_storage ss;
-#else
-    struct sockaddr ss;
-    struct in_addr *in;
+    struct sockaddr_in sin;
+    SOCKADDR_SIZE len = sizeof(sin);
     struct hostent *hp;
-#endif
-    struct sockaddr *sa;
-    SOCKADDR_SIZE len;
-
-    sa = (struct sockaddr *)&ss;
-    len = sizeof(ss);
+    int     i;
 
     /*
      * Look up the peer address information.
      */
-    if (getpeername(vstream_fileno(state->client), sa, &len) >= 0) {
+    if (getpeername(vstream_fileno(state->client),
+		    (struct sockaddr *) & sin, &len) >= 0) {
 	errno = 0;
     }
 
@@ -140,51 +128,18 @@ void    smtpd_peer_init(SMTPD_STATE *state)
     /*
      * Look up and "verify" the client hostname.
      */
-    else if (errno == 0 && (sa->sa_family == AF_INET
-#ifdef INET6
-			    || sa->sa_family == AF_INET6
-#endif
-		    )) {
-#ifdef INET6
-	char hbuf[NI_MAXHOST];
-	char abuf[NI_MAXHOST];
-	struct addrinfo hints, *rnull = NULL;
-#else
-	char abuf[sizeof("255.255.255.255") + 1];
-	char *hbuf;
-#endif
-	int error = -1;
-
-#ifdef INET6
-	(void)getnameinfo(sa, len, abuf, sizeof(abuf), NULL, 0, NI_NUMERICHOST);
-#else
-	in = &((struct sockaddr_in *)sa)->sin_addr;
-	inet_ntop(AF_INET, in, abuf, sizeof(abuf));
-#endif
-	state->addr = mystrdup(abuf);
-#ifdef INET6
-	error = getnameinfo(sa, len, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD);
-#else
-	hbuf = NULL;
-	hp = gethostbyaddr((char *)in, sizeof(*in), AF_INET);
-	if (hp) {
-	    error = 0;
-	    hbuf = mystrdup(hp->h_name);
-	} else
-	    error = 1;
-#endif
-	if (error) {
+    else if (errno == 0 && sin.sin_family == AF_INET) {
+	state->addr = mystrdup(inet_ntoa(sin.sin_addr));
+	hp = gethostbyaddr((char *) &(sin.sin_addr),
+			   sizeof(sin.sin_addr), AF_INET);
+	if (hp == 0) {
 	    state->name = mystrdup("unknown");
-#ifdef INET6
-	    state->peer_code = (error == EAI_AGAIN ? 4 : 5);
-#else
 	    state->peer_code = (h_errno == TRY_AGAIN ? 4 : 5);
-#endif
-	} else if (!valid_hostname(hbuf, DONT_GRIPE)) {
+	} else if (!valid_hostname(hp->h_name, DONT_GRIPE)) {
 	    state->name = mystrdup("unknown");
 	    state->peer_code = 5;
 	} else {
-	    state->name = mystrdup(hbuf);	/* hp->name is clobbered!! */
+	    state->name = mystrdup(hp->h_name);	/* hp->name is clobbered!! */
 	    state->peer_code = 2;
 
 	    /*
@@ -196,31 +151,16 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	state->peer_code = code; \
     }
 
-#ifdef INET6
-	    memset(&hints, 0, sizeof(hints));
-	    hints.ai_family = AF_UNSPEC;
-	    hints.ai_socktype = SOCK_STREAM;
-	    error = getaddrinfo(state->name, NULL, &hints, &rnull);
-	    if (error) {
-		msg_warn("%s: hostname %s verification failed: %s",
-			 state->addr, state->name, GAI_STRERROR(error));
-		REJECT_PEER_NAME(state, (error == EAI_AGAIN ? 4 : 5));
-	    }
-	    /* memcmp() isn't needed if we use getaddrinfo */
-	    if (rnull)
-		freeaddrinfo(rnull);
-#else
 	    hp = gethostbyname(state->name);	/* clobbers hp->name!! */
 	    if (hp == 0) {
 		msg_warn("%s: hostname %s verification failed: %s",
 			 state->addr, state->name, HSTRERROR(h_errno));
 		REJECT_PEER_NAME(state, (h_errno == TRY_AGAIN ? 4 : 5));
-	    } else if (hp->h_length != sizeof(*in)) {
+	    } else if (hp->h_length != sizeof(sin.sin_addr)) {
 		msg_warn("%s: hostname %s verification failed: bad address size %d",
 			 state->addr, state->name, hp->h_length);
 		REJECT_PEER_NAME(state, 5);
 	    } else {
-		int i;
 		for (i = 0; /* void */ ; i++) {
 		    if (hp->h_addr_list[i] == 0) {
 			msg_warn("%s: address not listed for hostname %s",
@@ -228,17 +168,13 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 			REJECT_PEER_NAME(state, 5);
 			break;
 		    }
-		    if (memcmp(hp->h_addr_list[i], (char *)in, sizeof(*in)) == 0)
+		    if (memcmp(hp->h_addr_list[i],
+			       (char *) &sin.sin_addr,
+			       sizeof(sin.sin_addr)) == 0)
 			break;			/* keep peer name */
 		}
 	    }
-#endif
 	}
-
-#ifndef INET6
-	if (hbuf)
-	    myfree(hbuf);
-#endif
     }
 
     /*
