@@ -1,6 +1,6 @@
-#	$NetBSD: dot.shrc,v 1.5 2001/03/01 22:45:49 tv Exp $
+#	$NetBSD: dot.shrc,v 1.6 2001/04/01 01:32:10 toddpw Exp $
 
-hup(){ (read pid; kill -HUP $pid) </var/run/$1.pid }
+hup(){ (read pid; kill -HUP $pid) </var/run/$1.pid; }
 ll(){ ls -l ${1+"$@"}; }
 
 case "$-" in *i*)
