@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2003/04/01 15:28:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2003/04/26 11:05:21 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,7 @@
 #include <sys/vnode.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -91,6 +92,8 @@
 #endif
 
 #include <sun3/sun3/machdep.h>
+
+#include "ksyms.h"
 
 /* Defined in locore.s */
 extern char kernel_text[];
@@ -145,12 +148,12 @@ consinit()
 	 */
 	cninit();
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int nsym;
 		extern char *ssym, *esym;
 
-		ddb_init(nsym, ssym, esym);
+		ksyms_init(nsym, ssym, esym);
 	}
 #endif	/* DDB */
 

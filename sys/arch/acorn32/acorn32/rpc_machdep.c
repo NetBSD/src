@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.48 2003/04/01 23:48:13 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.49 2003/04/26 11:05:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.48 2003/04/01 23:48:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.49 2003/04/26 11:05:06 ragge Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.48 2003/04/01 23:48:13 thorpej Exp
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
+#include <sys/ksyms.h>
 
 #include <dev/cons.h>
 
@@ -97,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.48 2003/04/01 23:48:13 thorpej Exp
 #include <dev/ic/pckbcvar.h>
 
 #include "opt_ipkdb.h"
+#include "ksyms.h"
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -1023,20 +1025,14 @@ initarm(void *cookie)
 		ipkdb_connect(0);
 #endif	/* NIPKDB */
 
-#ifdef DDB
-	db_machine_init();
-
-#ifdef __ELF__
-	ddb_init(bootconfig.ksym_end - bootconfig.ksym_start,
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(bootconfig.ksym_end - bootconfig.ksym_start,
 		(void *) bootconfig.ksym_start, (void *) bootconfig.ksym_end);
-#else
-	{
-		extern int end, *esym;
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-	};
 #endif
 
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif	/* DDB */

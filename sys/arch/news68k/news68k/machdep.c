@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2003/04/02 04:05:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2003/04/26 11:05:17 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,14 +62,15 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif
 #ifdef __ELF__
 #include <sys/exec_elf.h>
-#endif
 #endif
 
 #include <machine/autoconf.h>
@@ -93,6 +94,7 @@
 #include "kb.h"
 #include "ms.h"
 #include "si.h"
+#include "ksyms.h"
 /* XXX etc. etc. */
 
 /* the following is used externally (sysctl_hw) */
@@ -1208,15 +1210,11 @@ consinit()
 		(*cn_tab->cn_init)(cn_tab);
 		break;
 	}
-#ifdef DDB
-	{
-#ifndef __ELF__
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-#else
-		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 #endif
-	}
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

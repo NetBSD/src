@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.521 2003/04/16 21:37:37 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.522 2003/04/26 11:05:14 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.521 2003/04/16 21:37:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.522 2003/04/26 11:05:14 ragge Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.521 2003/04/16 21:37:37 dsl Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/ksyms.h>
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -179,6 +180,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.521 2003/04/16 21:37:37 dsl Exp $");
 #include "isa.h"
 #include "isadma.h"
 #include "npx.h"
+#include "ksyms.h"
 
 #include "mca.h"
 #if NMCA > 0
@@ -1998,25 +2000,29 @@ init386(first_avail)
 
 	cpu_init_idt();
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
 		extern int *esym;
 		struct btinfo_symtab *symtab;
 
+#ifdef DDB
 		db_machine_init();
+#endif
 
 		symtab = lookup_bootinfo(BTINFO_SYMTAB);
 
 		if (symtab) {
 			symtab->ssym += KERNBASE;
 			symtab->esym += KERNBASE;
-			ddb_init(symtab->nsym, (int *)symtab->ssym,
+			ksyms_init(symtab->nsym, (int *)symtab->ssym,
 			    (int *)symtab->esym);
 		}
 		else
-			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+			ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

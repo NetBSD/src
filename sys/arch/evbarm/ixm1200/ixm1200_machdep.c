@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.14 2003/04/02 03:49:26 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.15 2003/04/26 11:05:10 ragge Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.14 2003/04/02 03:49:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.15 2003/04/26 11:05:10 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -81,12 +81,15 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.14 2003/04/02 03:49:26 thorpej
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -322,7 +325,7 @@ initarm(void *arg)
 	vaddr_t freemempos;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
         Elf_Shdr *sh;
 #endif
 
@@ -362,7 +365,7 @@ initarm(void *arg)
 	pmap_debug(-1);
 #endif
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
         if (! memcmp(&end, "\177ELF", 4)) {
                 sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
                 loop = ((Elf_Ehdr *)&end)->e_shnum;
@@ -718,6 +721,10 @@ initarm(void *arg)
 		ipkdb_connect(0);
 #endif  /* NIPKDB */
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_initsymbolsize, ((int *)&end), ((char *)&end) + symbolsize);
+#endif
+
 #ifdef DDB
 	{
 		static struct undefined_handler uh;
@@ -725,7 +732,6 @@ initarm(void *arg)
 		uh.uh_handler = db_trapper;
 		install_coproc_handler_static(0, &uh);
 	}
-	ddb_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 
 	if (boothowto & RB_KDB)
 		Debugger();

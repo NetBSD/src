@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2003/01/17 22:43:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2003/04/26 11:05:09 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/ksyms.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -102,6 +103,8 @@
 #include <machine/intr.h>
 
 #include <dev/cons.h>
+
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* dreamcast */
@@ -140,8 +143,8 @@ dreamcast_startup()
 	pmap_bootstrap();
 
 	/* Debugger. */
-#ifdef DDB
-	ddb_init(0, NULL, NULL);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, NULL, NULL);
 #endif
 #if defined(KGDB) && (NSCIF > 0)
 	if (scif_kgdb_init() == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/04/01 23:57:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/04/26 11:05:09 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,6 +70,7 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+#include <sys/ksyms.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -102,6 +103,7 @@
 #include <machine/z8530var.h>
 #include <cesfic/dev/zsvar.h>
 
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */
@@ -236,8 +238,10 @@ consinit()
 		zscons.cn_getc = zs_kgdb_cngetc;
 	}
 #endif
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, 0, 0);
+#endif
 #ifdef DDB
-	ddb_init(0, 0, 0);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

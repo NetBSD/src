@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2003/04/19 13:56:04 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2003/04/26 11:05:18 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,6 +71,7 @@
 
 #include <dev/cons.h>
 
+#include "ksyms.h"
 /*
  * Global variables used here and there
  */
@@ -103,7 +105,7 @@ initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	extern void *startsym, *endsym;
 #endif
 
@@ -153,8 +155,10 @@ initppc(startkernel, endkernel, args)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
 #ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

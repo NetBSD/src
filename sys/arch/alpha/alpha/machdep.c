@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.265 2003/04/17 00:15:19 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.266 2003/04/26 11:05:07 ragge Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2003/04/17 00:15:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.266 2003/04/26 11:05:07 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2003/04/17 00:15:19 nathanw Exp $"
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <sys/conf.h>
+#include <sys/ksyms.h>
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
@@ -140,6 +141,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2003/04/17 00:15:19 nathanw Exp $"
 #endif
 
 #include <machine/alpha.h>
+
+#include "ksyms.h"
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -187,7 +190,7 @@ u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
 
 struct platform platform;
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
@@ -428,7 +431,7 @@ nobootinfo:
 	 * stack).
 	 */
 	kernstart = trunc_page((vaddr_t)kernel_text) - 2 * PAGE_SIZE;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	ksym_start = (void *)bootinfo.ssym;
 	ksym_end   = (void *)bootinfo.esym;
 	kernend = (vaddr_t)round_page((vaddr_t)ksym_end);
@@ -788,8 +791,8 @@ nobootinfo:
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
-#ifdef DDB
-	ddb_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 

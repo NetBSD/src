@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.45 2003/04/22 01:42:02 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.46 2003/04/26 11:05:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -53,6 +53,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -83,6 +84,8 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #endif
+
+#include "ksyms.h"
 
 static bus_space_handle_t isa_base = (bus_space_handle_t) DC21285_PCI_IO_VBASE;
 
@@ -871,12 +874,14 @@ initarm(void *arg)
 		ipkdb_connect(0);
 #endif
 
+
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* Firmware doesn't load symbols. */
+	ksyms_init(0, NULL, NULL);
+#endif
+
 #ifdef DDB
 	db_machine_init();
-
-	/* Firmware doesn't load symbols. */
-	ddb_init(0, NULL, NULL);
-
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

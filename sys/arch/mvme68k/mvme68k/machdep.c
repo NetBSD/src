@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2003/04/02 02:19:30 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2003/04/26 11:05:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,8 +68,11 @@
 #include <sys/vnode.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 
-#if defined(DDB) && defined(__ELF__)
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <sys/exec_elf.h>
 #endif
 
@@ -405,18 +408,16 @@ consinit()
 	 */
 	cninit();
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
 		extern int *esym;
 
-#ifndef __ELF__
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-#else
-		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
-#endif
 	}
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2003/03/11 10:57:56 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2003/04/26 11:05:12 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/properties.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -58,7 +59,9 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -266,8 +269,8 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
-	ddb_init(0, NULL, NULL);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, NULL, NULL);
 #endif
 
 	fake_mapiodev = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2003/04/02 03:58:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2003/04/26 11:05:13 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2003/04/02 03:58:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2003/04/26 11:05:13 ragge Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2003/04/02 03:58:12 thorpej Exp $")
 #include <sys/reboot.h>
 #include <sys/mount.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -115,7 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2003/04/02 03:58:12 thorpej Exp $")
 #include <sys/kgdb.h>
 #endif
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -222,7 +225,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	extern caddr_t esym;
 #endif
 	caddr_t kernend, v;
@@ -231,7 +234,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 
 	/* clear the BSS segment */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	size_t symbolsz = 0;
 	Elf_Ehdr *eh = (void *)end;
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
@@ -252,7 +255,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		kernend = (caddr_t)mips_round_page(esym);
 		bzero(edata, end - edata);
 	} else
-#endif /* DDB */
+#endif /* NKSYMS || defined(DDB) || defined(LKM) */
 	{
 		kernend = (caddr_t)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
@@ -406,10 +409,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif /* MFS */
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ddb_init(symbolsz, &end, esym);
+		ksyms_init(symbolsz, &end, esym);
 #endif /* DDB */
 	/*
 	 * Alloc u pages for lwp0 stealing KSEG0 memory.

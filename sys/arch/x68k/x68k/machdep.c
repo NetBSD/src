@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2003/04/01 15:14:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2003/04/26 11:05:22 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,8 +74,9 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
-#if defined(DDB) && defined(__ELF__)
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <sys/exec_elf.h>
 #endif
 
@@ -104,6 +105,8 @@
 
 #include <machine/bus.h>
 #include <arch/x68k/dev/intiovar.h>
+
+#include "ksyms.h"
 
 void initcpu __P((void));
 void identifycpu __P((void));
@@ -194,13 +197,11 @@ consinit()
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
-#ifdef DDB
-#ifndef __ELF__
-	ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-#else
-	ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		 (void *)&end, esym);
 #endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.18 2003/04/02 04:27:19 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.19 2003/04/26 11:05:23 ragge Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -78,6 +78,7 @@
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -97,7 +98,9 @@
 #endif /* XXXCGD */
 #include <machine/leds.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -111,7 +114,7 @@
 
 #include <dev/cons.h>
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
@@ -192,7 +195,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	}
 
 	kernend = (caddr_t)mips_round_page(end);
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (magic == BOOTINFO_MAGIC) {
 		ksym_start = (void *)bootinfo.ssym;
 		ksym_end   = (void *)bootinfo.esym;
@@ -339,8 +342,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if defined(DDB)
-	ddb_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 

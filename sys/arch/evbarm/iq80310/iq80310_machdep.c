@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.49 2003/04/22 14:09:47 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.50 2003/04/26 11:05:10 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -84,6 +84,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -111,6 +112,7 @@
 #include <evbarm/iq80310/obiovar.h>
 
 #include "opt_ipkdb.h"
+#include "ksyms.h"
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -850,12 +852,13 @@ initarm(void *arg)
 		ipkdb_connect(0);
 #endif
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* Firmware doesn't load symbols. */
+	ksyms_init(0, NULL, NULL);
+#endif
+
 #ifdef DDB
 	db_machine_init();
-
-	/* Firmware doesn't load symbols. */
-	ddb_init(0, NULL, NULL);
-
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

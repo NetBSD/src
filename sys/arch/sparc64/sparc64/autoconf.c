@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2003/01/04 17:00:27 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.72 2003/04/26 11:05:20 ragge Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,6 +64,7 @@
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <net/if.h>
 
@@ -90,6 +91,7 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include "ksyms.h"
 
 int printspl = 0;
 
@@ -210,7 +212,7 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
-#if defined(DDB) && defined(DB_ELF_SYMBOLS)
+#if (NKSYMS || defined(DDB) || defined(LKM)) && defined(DB_ELF_SYMBOLS)
 	extern void *ssym, *esym;
 #endif
 #ifndef	__arch64__
@@ -221,7 +223,7 @@ bootstrap(nctx)
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
-	 * We can do this because ddb_init() does not allocate anything,
+	 * We can do this because ksyms_init() does not allocate anything,
 	 * just initialze some pointers to important things
 	 * like the symtab.
 	 *
@@ -234,11 +236,11 @@ bootstrap(nctx)
 #endif
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 #ifdef DB_ELF_SYMBOLS
-	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
+	ksyms_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
 #else
-	ddb_init();
+	ksyms_init();
 #endif
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */

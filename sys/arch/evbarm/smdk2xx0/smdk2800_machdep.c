@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.2 2003/04/02 03:49:26 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.3 2003/04/26 11:05:11 ragge Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -121,6 +121,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -145,6 +146,8 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>
+
+#include "ksyms.h"
 
 #ifndef	SDRAM_START
 #define	SDRAM_START	S3C2800_DBANK0_START
@@ -856,12 +859,13 @@ initarm(void *arg)
 	}
 #endif
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* Firmware doesn't load symbols. */
+	ksyms_init(0, NULL, NULL);
+#endif
+
 #ifdef DDB
 	db_machine_init();
-
-	/* Firmware doesn't load symbols. */
-	ddb_init(0, NULL, NULL);
-
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2003/04/19 13:58:38 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2003/04/26 11:05:19 ragge Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -124,6 +125,8 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+
+#include "ksyms.h"
 
 #ifdef KGDB
 char kgdb_devname[] = KGDB_DEVNAME;
@@ -155,7 +158,7 @@ void pmppc_setup(void);
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
-#if defined(DDB) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
 	extern void *startsym, *endsym;
 #endif
 	extern void consinit(void);
@@ -218,11 +221,11 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 #ifdef SYMTAB_SPACE
-	ddb_init(0, NULL, NULL);
+	ksyms_init(0, NULL, NULL);
 #else
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #endif
 #ifdef IPKDB

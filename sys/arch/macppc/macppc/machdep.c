@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 2003/04/02 03:04:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127 2003/04/26 11:05:15 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,7 @@
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,6 +99,8 @@
 #include <machine/z8530var.h>
 #endif
 
+#include "ksyms.h"
+
 extern int ofmsr;
 
 char bootpath[256];
@@ -105,7 +108,7 @@ static int chosen;
 struct pmap ofw_pmap;
 int ofkbd_ihandle;
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 void *startsym, *endsym;
 #endif
 
@@ -151,7 +154,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Parse arg string.
 	 */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
 	memcpy(&endsym, args + strlen(args) + 5, sizeof(endsym));
 	if (startsym == NULL || endsym == NULL)
@@ -263,8 +266,10 @@ consinit()
 	initted = 1;
 	cninit();
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
 #ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

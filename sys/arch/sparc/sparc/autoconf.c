@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.193 2003/04/02 04:35:22 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.194 2003/04/26 11:05:20 ragge Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -71,6 +71,7 @@
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <net/if.h>
 
@@ -102,6 +103,7 @@
 #include <ddb/ddbvar.h>
 #endif
 
+#include "ksyms.h"
 
 /*
  * The following several variables are related to
@@ -115,7 +117,7 @@ extern	int kgdb_debug_panic;
 #endif
 extern void *bootinfo;
 
-#ifndef DDB
+#if !NKSYMS && !defined(DDB) && !defined(LKM)
 void bootinfo_relocate(void *);
 #endif
 
@@ -246,7 +248,7 @@ bootstrap()
 {
 	extern struct user *proc0paddr;
 	extern int end[];
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
 #endif
 
@@ -269,7 +271,7 @@ bootstrap()
 	}
 #endif /* SUN4M || SUN4D */
 
-#ifndef DDB
+#if !NKSYMS && !defined(DDB) && !defined(LKM)
 	/*
 	 * We want to reuse the memory where the symbols were stored
 	 * by the loader. Relocate the bootinfo array which is loaded
@@ -295,21 +297,15 @@ bootstrap()
 	initmsgbuf((caddr_t)KERNBASE, 8192);
 #endif
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
 		if (bi_sym->ssym < KERNBASE) {
 			/* Assume low-loading boot loader */
 			bi_sym->ssym += KERNBASE;
 			bi_sym->esym += KERNBASE;
 		}
-		ddb_init(bi_sym->nsym, (int *)bi_sym->ssym,
+		ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
 		    (int *)bi_sym->esym);
-	} else {
-		/*
-		 * Compatibility, will go away.
-		 */
-		extern char *kernel_top;
-		ddb_init(*(int *)end, ((int *)end) + 1, (int *)kernel_top);
 	}
 #endif
 
@@ -1941,7 +1937,7 @@ lookup_bootinfo(type)
 	return (NULL);
 }
 
-#ifndef DDB
+#if !NKSYMS && !defined(DDB) && !defined(LKM)
 /*
  * Move bootinfo from the current kernel top to the proposed
  * location. As a side-effect, `kernel_top' is adjusted to point

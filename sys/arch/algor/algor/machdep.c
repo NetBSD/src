@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2003/04/01 02:15:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2003/04/26 11:05:06 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -116,6 +117,8 @@
 #include <machine/pmon.h>
 
 #include <algor/pci/vtpbcvar.h>
+
+#include "ksyms.h"
 
 #include "com.h"
 #if NCOM > 0
@@ -560,12 +563,12 @@ mach_init(int argc, char *argv[], char *envp[])
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if defined(DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/*
 	 * XXX Loader doesn't give us symbols the way we like.  Need
 	 * XXX dbsym(1) support for ELF.
 	 */
-	ddb_init(0, 0, 0);
+	ksyms_init(0, 0, 0);
 #endif
 
 	if (boothowto & RB_KDB) {

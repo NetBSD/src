@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2003/04/01 20:41:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 2003/04/26 11:05:23 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2003/04/01 20:41:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2003/04/26 11:05:23 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -75,15 +75,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2003/04/01 20:41:38 thorpej Exp $"
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/ksyms.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif /* DDB */
 #ifdef __ELF__
 #include <sys/exec_elf.h>
 #endif
-#endif /* DDB */
 
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
@@ -111,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2003/04/01 20:41:38 thorpej Exp $"
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
+
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -260,18 +263,16 @@ consinit()
 	if (bootinfo_va == 0)
 		printf("WARNING: boot loader did not provide bootinfo\n");
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
 		extern int *esym;
 
-#ifndef __ELF__
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-#else 
-		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
-#endif
 	}
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

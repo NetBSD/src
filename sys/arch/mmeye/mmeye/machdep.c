@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2003/01/17 23:39:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2003/04/26 11:05:15 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
 #include <uvm/uvm_extern.h>
+#include <sys/ksyms.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
@@ -102,6 +103,8 @@
 #include <machine/intr.h>
 
 #include <dev/cons.h>
+
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* mmeye */
@@ -241,7 +244,7 @@ initSH3(void *pc)	/* XXX return address */
 	consinit();
 
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* XXX Currently symbol table size is not passed to the kernel. */
 	kernend += 0x40000;					/* XXX */
 #endif
@@ -259,8 +262,8 @@ initSH3(void *pc)	/* XXX return address */
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#ifdef DDB
-	ddb_init(1, end, end + 0x40000);			/* XXX */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(1, end, end + 0x40000);			/* XXX */
 #endif
 	/*
 	 * XXX We can't return here, because we change stack pointer.

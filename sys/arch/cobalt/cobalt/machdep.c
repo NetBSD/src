@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2003/04/02 03:40:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2003/04/26 11:05:09 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -69,7 +70,9 @@
 #include <sys/kgdb.h>
 #endif
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #define ELFSIZE		DB_ELFSIZE
@@ -132,7 +135,7 @@ mach_init(memsize)
 	/*
 	 * Clear the BSS segment.
 	 */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
@@ -173,8 +176,10 @@ mach_init(memsize)
 
 	decode_bootstring();
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, NULL, NULL);
+#endif
 #ifdef DDB
-	ddb_init(0, NULL, NULL);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/04/02 03:51:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/04/26 11:05:11 ragge Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,12 +90,15 @@
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -300,12 +303,12 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#ifdef DDB
-	ddb_init(0, 0, 0);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, 0, 0);
 #endif
 
-	if (boothowto & RB_KDB)
 #if defined(DDB)
+	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 }

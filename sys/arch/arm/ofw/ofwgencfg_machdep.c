@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.5 2003/04/01 23:19:11 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.6 2003/04/26 11:05:08 ragge Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -65,6 +66,8 @@
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
+
+#include "ksyms.h"
 
 /*
  *  Imported variables
@@ -196,20 +199,22 @@ initarm(ofw_handle)
 	/* Set-up the IRQ system. */
 	irq_init();
 
-#ifdef DDB
-	db_machine_init();
+#if NKSYMS || defined(DDB) || defined(LKM)
 #ifdef __ELF__
-	ddb_init(0, NULL, NULL);	/* XXX */
+	ksyms_init(0, NULL, NULL);	/* XXX */
 #else
 	{
 		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
-		ddb_init(kernexec->a_syms, &end, esym);
+		ksyms_init(kernexec->a_syms, &end, esym);
 	}
 #endif /* __ELF__ */
+#endif
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

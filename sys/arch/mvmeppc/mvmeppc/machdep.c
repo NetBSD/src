@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/04/02 04:01:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2003/04/26 11:05:16 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,6 +103,8 @@ void comsoft(void);
 #include <ddb/db_extern.h>
 #endif
 
+#include "ksyms.h"
+
 void initppc(u_long, u_long, void *);
 void strayintr(int);
 int lcsplx(int);
@@ -124,7 +127,7 @@ initppc(startkernel, endkernel, btinfo)
 	u_long startkernel, endkernel;
 	void *btinfo;
 {
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	extern void *startsym, *endsym;
 #endif
 
@@ -202,9 +205,11 @@ initppc(startkernel, endkernel, btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
-	ddb_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+#endif
 
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

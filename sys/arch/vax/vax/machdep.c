@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.134 2003/04/01 15:23:07 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.135 2003/04/26 11:05:22 ragge Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -72,6 +72,7 @@
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
 #include <sys/savar.h>
+#include <sys/ksyms.h>
 
 #include <dev/cons.h>
 
@@ -96,6 +97,7 @@
 #endif
 
 #include "smg.h"
+#include "ksyms.h"
 
 extern vaddr_t virtual_avail, virtual_end;
 /*
@@ -359,20 +361,14 @@ consinit()
 	iospace_inited = 1;
 #endif
 	cninit();
-#if defined(DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (symtab_start != NULL && symtab_nsyms != 0 && symtab_end != NULL) {
-		ddb_init(symtab_nsyms, symtab_start, symtab_end);
-#ifndef __ELF__
-	} else {
-		extern int end; /* Contains pointer to symsize also */
-		extern paddr_t esym;
-		ddb_init(*(int *)&end, ((int *)&end) + 1, (void *)esym);
-#endif
+		ksyms_init(symtab_nsyms, symtab_start, symtab_end);
 	}
+#endif
 #ifdef DEBUG
 	if (sizeof(struct user) > REDZONEADDR)
 		panic("struct user inside red zone");
-#endif
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2003/04/01 23:48:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2003/04/26 11:05:08 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -76,6 +77,7 @@
 #include <dev/cons.h>
 
 #include "pfb.h"
+#include "ksyms.h"
 
 #include "pc.h"
 #if (NPC > 0)
@@ -214,8 +216,8 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef IPKDB
 	/*

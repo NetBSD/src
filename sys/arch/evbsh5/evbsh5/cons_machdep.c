@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.5 2003/03/13 13:44:20 scw Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.6 2003/04/26 11:05:12 ragge Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,6 +47,7 @@
 #include <sys/conf.h>
 #include <sys/termios.h>
 #include <sys/ttydefaults.h>
+#include <sys/ksyms.h>
 
 #include <machine/bus.h>
 
@@ -90,6 +91,8 @@ bus_space_handle_t _sh5_scif_bh;
 cons_decl(dtfcons);
 #endif
 
+#include "ksyms.h"
+
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
@@ -110,16 +113,16 @@ consinit(void)
 	 * Initialize the console before we print anything out.
 	 */
 	cninit();
-
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern void *symbol_table;
 		extern long symbol_table_size;
 
-		ddb_init((int)symbol_table_size, symbol_table,
+		ksyms_init((int)symbol_table_size, symbol_table,
 		    (void *)((long)symbol_table + symbol_table_size));
 	}
-
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
