@@ -1,4 +1,4 @@
-.\"     $NetBSD: m_tag.9,v 1.1 2004/09/06 18:23:31 yamt Exp $
+.\"     $NetBSD: m_tag.9,v 1.2 2004/09/06 21:53:25 yamt Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -107,7 +107,7 @@ Prepend the mbuf tag
 to the mbuf
 .Fa m .
 .Fa t
-will become the first tag of the
+will become the first tag of the mbuf
 .Fa m .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_unlink "m" "t"
@@ -157,7 +157,7 @@ Otherwise return
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_copy "t"
 Copy a mbuf tag
-Fa t .
+.Fa t .
 Return a new mbuf tag on success.
 Otherwise return
 .Dv NULL .
