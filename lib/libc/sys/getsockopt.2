@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.19 2001/05/19 17:23:39 jdolecek Exp $
+.\"	$NetBSD: getsockopt.2,v 1.20 2001/09/16 02:13:28 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -192,8 +192,8 @@ are queued on socket and a
 .Xr close 2
 is performed.
 If the socket promises reliable delivery of data and
-.Dv SO_LINGER is set,
-the system will block the process on the
+.Dv SO_LINGER
+is set, the system will block the process on the
 .Xr close 2
 attempt until it is able to transmit the data or until it decides it
 is unable to deliver the information (a timeout period, measured in
@@ -359,15 +359,15 @@ is not in a valid part of the process address space.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr socket 2 ,
-.Xr select 2 ,
 .Xr poll 2 ,
+.Xr select 2 ,
+.Xr socket 2 ,
 .Xr getprotoent 3 ,
 .Xr protocols 5
-.Sh BUGS
-Several of the socket options should be handled at lower levels of the system.
 .Sh HISTORY
 The
 .Fn getsockopt
 system call appeared in
 .Bx 4.2 .
+.Sh BUGS
+Several of the socket options should be handled at lower levels of the system.

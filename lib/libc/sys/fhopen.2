@@ -1,4 +1,4 @@
-.\"	$NetBSD: fhopen.2,v 1.3 2000/03/13 22:59:21 soren Exp $
+.\"	$NetBSD: fhopen.2,v 1.4 2001/09/16 02:13:27 wiz Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .Fn fhstatfs "const fhandle_t *fhp" "struct statfs *buf"
 .Sh DESCRIPTION
 These functions provide a means to access a file given the file handle
-.Fa fhp.
+.Fa fhp .
 As this method bypasses directory access restrictions, these calls are
 restricted to the superuser.
 .Pp
@@ -116,10 +116,10 @@ The file handle
 is no longer valid.
 .El
 .Sh SEE ALSO
-.Xr getfh 2 ,
-.Xr open 2 ,
 .Xr fstat 2 ,
-.Xr fstatfs 2
+.Xr fstatfs 2 ,
+.Xr getfh 2 ,
+.Xr open 2
 .Sh HISTORY
 The
 .Fn fhopen ,

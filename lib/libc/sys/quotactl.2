@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.16 2001/09/16 01:39:02 wiz Exp $
+.\"	$NetBSD: quotactl.2,v 1.17 2001/09/16 02:13:30 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -204,14 +204,14 @@ The call was privileged and the caller was not the super-user.
 .Xr quotacheck 8 ,
 .Xr quotaon 8 ,
 .Xr repquota 8
+.Sh HISTORY
+The
+.Fn quotactl
+function call appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
 There should be some way to integrate this call with the resource
 limit interface provided by
 .Xr setrlimit 2
 and
 .Xr getrlimit 2 .
-.Sh HISTORY
-The
-.Fn quotactl
-function call appeared in
-.Bx 4.3 Reno .

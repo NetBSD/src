@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_markv.2,v 1.3 2001/09/16 01:39:01 wiz Exp $
+.\"	$NetBSD: lfs_markv.2,v 1.4 2001/09/16 02:13:29 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,15 +54,15 @@ rewrites the blocks specified in
 to new disk locations, for the purposes of grouping them next to one
 another, or to move them out of a segment to clean it.  All fields of
 the BLOCK_INFO structure must be filled in, except for
-.Fa bi_segcreate.
+.Fa bi_segcreate .
 If
 .Fa bi_daddr
 is not the correct current address for logical block
 .Fa bi_lbn
 of the file with inode number
-.Fa bi_inode,
+.Fa bi_inode ,
 or if the file's version number does not match
-.Fa bi_version,
+.Fa bi_version ,
 the block will not be written to disk, but no error will be returned.
 .Pp
 The
@@ -115,10 +115,15 @@ One or more of the inodes whose blocks were to be written was locked,
 and its blocks were not rewritten.
 .El
 .Sh SEE ALSO
-.Xr lfs_cleanerd 8 ,
 .Xr lfs_markv 2 ,
 .Xr lfs_segclean 2 ,
-.Xr lfs_segwait 2
+.Xr lfs_segwait 2 ,
+.Xr lfs_cleanerd 8
+.Sh HISTORY
+The
+.Fn lfs_markv
+function call appeared in
+.Bx 4.4 .
 .Sh BUGS
 The functionality of
 .Fn lfs_markv
@@ -128,10 +133,4 @@ SF_IMMUTABLE
 and
 SF_APPEND
 file flags (see
-.Xr chflags 2
-).
-.Sh HISTORY
-The
-.Fn lfs_markv
-function call appeared in
-.Bx 4.4 .
+.Xr chflags 2 ) .
