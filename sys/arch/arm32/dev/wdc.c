@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.2 1998/01/13 02:10:11 thorpej Exp $	*/
+/*	$NetBSD: wdc.c,v 1.3 1998/01/17 20:00:59 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -68,6 +68,7 @@
 
 #if NATAPIBUS > 0
 #include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/atapiconf.h>
 #endif
 
