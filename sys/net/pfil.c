@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.9 1999/10/10 09:07:32 mrg Exp $	*/
+/*	$NetBSD: pfil.c,v 1.10 2000/02/17 10:59:32 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -35,29 +35,26 @@
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/protosw.h>
 #include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/pfil.h>
 
-typedef TAILQ_HEAD(, packet_filter_hook) pfil_list_t;
-pfil_list_t pfil_in_list;
-pfil_list_t pfil_out_list;
-static int done_pfil_init;
-
-static void pfil_init __P((void));
+static void pfil_init __P((struct pfil_head *));
 static void pfil_list_add(pfil_list_t *,
     int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)), int);
 static void pfil_list_remove(pfil_list_t *,
     int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)));
 
 static void
-pfil_init()
+pfil_init(ph)
+	 struct pfil_head *ph;
 {
 
-	TAILQ_INIT(&pfil_in_list);
-	TAILQ_INIT(&pfil_out_list);
-	done_pfil_init = 1;
+	TAILQ_INIT(&ph->ph_in);
+	TAILQ_INIT(&ph->ph_out);
+	ph->ph_init = 1;
 }
 
 /*
@@ -69,21 +66,21 @@ pfil_init()
  *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
  */
 void
-pfil_add_hook(func, flags)
+pfil_add_hook(func, flags, psw)
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 	int	flags;
+	struct	protosw	*psw;
 {
+	struct	pfil_head	*ph = &psw->pr_pfh;
 
-	if (done_pfil_init == 0)
-		pfil_init();
+	if (ph->ph_init == 0)
+		pfil_init(ph);
 
 	if (flags & PFIL_IN)
-		pfil_list_add(&pfil_in_list, func, PFIL_IN |
-		    (flags & PFIL_WAITOK));
+		pfil_list_add(&ph->ph_in, func, flags);
 	if (flags & PFIL_OUT)
-		pfil_list_add(&pfil_out_list, func, PFIL_OUT |
-		    (flags & PFIL_WAITOK));
+		pfil_list_add(&ph->ph_out, func, flags);
 }
 
 static void
@@ -91,7 +88,7 @@ pfil_list_add(list, func, flags)
 	pfil_list_t *list;
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
-	int	flags;
+	int flags;
 {
 	struct packet_filter_hook *pfh;
 
@@ -99,16 +96,12 @@ pfil_list_add(list, func, flags)
 	    flags & PFIL_WAITOK ? M_WAITOK : M_NOWAIT);
 	if (pfh == NULL)
 		panic("no memory for packet filter hook");
-
 	pfh->pfil_func = func;
 	/*
 	 * insert the input list in reverse order of the output list
 	 * so that the same path is followed in or out of the kernel.
 	 */
-	if (flags & PFIL_IN)
-		TAILQ_INSERT_HEAD(list, pfh, pfil_link);
-	else
-		TAILQ_INSERT_TAIL(list, pfh, pfil_link);
+	TAILQ_INSERT_TAIL(list, pfh, pfil_link);
 }
 
 /*
@@ -116,19 +109,21 @@ pfil_list_add(list, func, flags)
  * hook list.
  */
 void
-pfil_remove_hook(func, flags)
+pfil_remove_hook(func, flags, psw)
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 	int	flags;
+	struct	protosw	*psw;
 {
+	struct	pfil_head	*ph = &psw->pr_pfh;
 
-	if (done_pfil_init == 0)
-		pfil_init();
+	if (ph->ph_init == 0)
+		pfil_init(ph);
 
 	if (flags & PFIL_IN)
-		pfil_list_remove(&pfil_in_list, func);
+		pfil_list_remove(&ph->ph_in, func);
 	if (flags & PFIL_OUT)
-		pfil_list_remove(&pfil_out_list, func);
+		pfil_list_remove(&ph->ph_out, func);
 }
 
 /*
@@ -156,16 +151,18 @@ pfil_list_remove(list, func)
 }
 
 struct packet_filter_hook *
-pfil_hook_get(flag)
+pfil_hook_get(flag, psw)
 	int flag;
+	struct protosw *psw;
 {
+	struct	pfil_head	*ph = &psw->pr_pfh;	
 
-	if (done_pfil_init)
+	if (ph->ph_init != 0)
 		switch (flag) {
 		case PFIL_IN:
-			return (pfil_in_list.tqh_first);
+			return (ph->ph_in.tqh_first);
 		case PFIL_OUT:
-			return (pfil_out_list.tqh_first);
+			return (ph->ph_out.tqh_first);
 		}
 	return NULL;
 }

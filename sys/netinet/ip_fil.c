@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.40 2000/02/01 21:41:36 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.41 2000/02/17 10:59:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.40 2000/02/01 21:41:36 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.41 2000/02/17 10:59:35 darrenr Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -263,7 +263,8 @@ int iplattach()
 		return -1;
 
 # ifdef NETBSD_PF
-	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
+	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+		      &inetsw[ip_protox[IPPROTO_IP]]);
 # endif
 
 # ifdef __sgi
@@ -341,7 +342,8 @@ int ipldetach()
 	fr_running = 0;
 
 # ifdef NETBSD_PF
-	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
+	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+			 &inetsw[ip_protox[IPPROTO_IP]]);
 # endif
 
 # ifdef __sgi

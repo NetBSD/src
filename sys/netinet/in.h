@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.45 2000/02/09 00:54:55 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.46 2000/02/17 10:59:35 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -374,6 +374,7 @@ struct ip_mreq {
 
 #ifdef _KERNEL
 extern	struct in_addr zeroin_addr;
+extern	u_char	ip_protox[];
 
 int	in_broadcast __P((struct in_addr, struct ifnet *));
 int	in_canforward __P((struct in_addr));

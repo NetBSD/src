@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.100 2000/02/16 12:40:40 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.101 2000/02/17 10:59:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -194,8 +194,6 @@ int	ipprintfs = 0;
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 extern	struct domain inetdomain;
-extern	struct protosw inetsw[];
-u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
@@ -466,9 +464,11 @@ ip_input(struct mbuf *m)
 	 * in the list may have previously cleared it.
 	 */
 	m0 = m;
-	for (pfh = pfil_hook_get(PFIL_IN); pfh; pfh = pfh->pfil_link.tqe_next)
+	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IP]]);
+	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
-			rv = pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 0, &m0);
+			rv = pfh->pfil_func(ip, hlen,
+					    m->m_pkthdr.rcvif, 0, &m0);
 			if (rv)
 				return;
 			m = m0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.8 2000/02/06 12:49:42 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.9 2000/02/17 10:59:38 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,9 +76,6 @@
 #include <net/net_osdep.h>
 
 #ifdef INET
-extern struct protosw inetsw[];
-extern u_char ip_protox[];
-
 void
 #if __STDC__
 ah4_input(struct mbuf *m, ...)

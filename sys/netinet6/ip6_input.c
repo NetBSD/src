@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.14 2000/02/06 12:49:45 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.15 2000/02/17 10:59:39 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,7 @@
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +87,9 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -118,7 +122,6 @@
 #include <net/net_osdep.h>
 
 extern struct domain inet6domain;
-extern struct ip6protosw inet6sw[];
 
 u_char ip6_protox[IPPROTO_MAX];
 static int ip6qmaxlen = IFQ_MAXLEN;
@@ -238,6 +241,11 @@ ip6_input(m)
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
+#ifdef	PFIL_HOOKS
+	struct packet_filter_hook *pfh;
+	struct mbuf *m0;
+	int rv;
+#endif	/* PFIL_HOOKS */
 
 #ifdef IPSEC
 	/*
@@ -296,6 +304,30 @@ ip6_input(m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 		goto bad;
 	}
+
+#ifdef PFIL_HOOKS
+	/*
+	 * Run through list of hooks for input packets.  If there are any
+	 * filters which require that additional packets in the flow are
+	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
+	 * Note that filters must _never_ set this flag, as another filter
+	 * in the list may have previously cleared it.
+	 */
+	m0 = m;
+	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IPV6]]);
+	for (; pfh; pfh = pfh->pfil_link.tqe_next)
+		if (pfh->pfil_func) {
+			rv = pfh->pfil_func(ip6, sizeof(*ip6),
+					    m->m_pkthdr.rcvif, 0, &m0);
+			if (rv)
+				return;
+			m = m0;
+			if (m == NULL)
+				return;
+			ip6 = mtod(m, struct ip6_hdr *);
+		}
+#endif /* PFIL_HOOKS */
+
 
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
 

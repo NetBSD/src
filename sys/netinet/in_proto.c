@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.37 2000/02/15 19:54:11 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.38 2000/02/17 10:59:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -266,6 +266,8 @@ struct domain inetdomain =
     { PF_INET, "internet", 0, 0, 0, 
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
       rn_inithead, 32, sizeof(struct sockaddr_in) };
+
+u_char	ip_protox[IPPROTO_MAX];
 
 #define	TCP_SYN_HASH_SIZE	293
 #define	TCP_SYN_BUCKET_SIZE	35

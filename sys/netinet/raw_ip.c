@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.50 2000/02/02 23:28:09 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.51 2000/02/17 10:59:36 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,8 +95,6 @@
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
 
-extern u_char ip_protox[];
-extern struct  protosw inetsw[];
 struct inpcbtable rawcbtable;
 
 int	 rip_bind __P((struct inpcb *, struct mbuf *));
