@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx.c,v 1.8 1996/05/20 00:58:07 thorpej Exp $	*/
+
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
  * Product specific probe and attach routines can be found in:
@@ -30,8 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *      $Id: aic7xxx.c,v 1.7 1996/05/16 05:20:23 mycroft Exp $
  */
 /*
  * TODO:
