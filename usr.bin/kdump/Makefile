@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.19 2002/09/18 14:00:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/09/18 20:50:22 lha Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	kdump
-CPPFLAGS+=-I$${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys
 SRCS=	kdump.c ioctl.c subr.c setemul.c
-.PATH:	$${NETBSDSRCDIR}/usr.bin/ktrace
+.PATH:	${NETBSDSRCDIR}/usr.bin/ktrace
 CLEANFILES+=ioctl.c
 WFORMAT=1
 
