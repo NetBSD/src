@@ -1,4 +1,4 @@
-.\"	$NetBSD: rdist.1,v 1.17 2003/08/07 11:15:37 agc Exp $
+.\"	$NetBSD: rdist.1,v 1.18 2004/07/13 12:02:23 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,13 @@
 .Nd remote file distribution program
 .Sh SYNOPSIS
 .Nm
-.Op Fl nqbRhivwyD
-.Op Fl f Ar distfile
+.Op Fl bDhinqRvwy
 .Op Fl d Ar var=value
+.Op Fl f Ar distfile
 .Op Fl m Ar host
 .Op Ar name ...
 .Nm
-.Op Fl nqbRhivwyD
+.Op Fl bDhinqRvwy
 .Fl c
 .Ar name ...
 .Oo login@ Oc Ns Ar host Ns Op :dest
