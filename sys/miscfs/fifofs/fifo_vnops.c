@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.27 1998/10/31 01:18:41 matt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.28 2000/03/30 12:22:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -423,8 +423,8 @@ fifo_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct fifoinfo *fip = vp->v_fifoinfo;
+	struct vnode *vp = ap->a_vp;
+	struct fifoinfo *fip = vp->v_fifoinfo;
 	int error1, error2;
 
 	if (ap->a_fflag & FREAD) {
@@ -470,7 +470,7 @@ void
 fifo_printinfo(vp)
 	struct vnode *vp;
 {
-	register struct fifoinfo *fip = vp->v_fifoinfo;
+	struct fifoinfo *fip = vp->v_fifoinfo;
 
 	printf(", fifo with %ld readers and %ld writers",
 	    fip->fi_readers, fip->fi_writers);
