@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.29 2004/04/15 10:07:32 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.30 2004/04/17 10:13:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -176,6 +176,19 @@ void	srmmu_vcache_flush_region(int, int);	/* flush region in cur ctx */
 void	srmmu_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
 void	srmmu_vcache_flush_page(int va, int);	/* flush page in cur ctx */
 void	srmmu_cache_flush(caddr_t, u_int, int);	/* flush region */
+
+/* `Fast trap' versions for use in cross-call cache flushes on MP systems */
+#if defined(MULTIPROCESSOR)
+void	ft_srmmu_vcache_flush_context(int);	/* flush current context */
+void	ft_srmmu_vcache_flush_region(int, int);	/* flush region in cur ctx */
+void	ft_srmmu_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
+void	ft_srmmu_vcache_flush_page(int va, int);/* flush page in cur ctx */
+#else
+#define ft_srmmu_vcache_flush_context	0
+#define ft_srmmu_vcache_flush_region	0
+#define ft_srmmu_vcache_flush_segment	0
+#define ft_srmmu_vcache_flush_page	0
+#endif /* MULTIPROCESSOR */
 
 void	ms1_cache_flush(caddr_t, u_int, int);
 void	viking_cache_flush(caddr_t, u_int, int);

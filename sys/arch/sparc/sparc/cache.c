@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.84 2004/04/13 14:55:48 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.85 2004/04/17 10:13:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.84 2004/04/13 14:55:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.85 2004/04/17 10:13:13 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -747,7 +747,7 @@ srmmu_cache_flush(base, len, ctx)
 			/*
 			 * See hypersparc comment in srmmu_vcache_flush_page().
 			 * Just flush both possibly touched pages
-			 * fromt the TLB.
+			 * from the TLB.
 			 */
 			int va = (int)base & ~0xfff;
 			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
@@ -1049,7 +1049,8 @@ smp_vcache_flush_page(va, ctx)
 	int va;
 	int ctx;
 {
-	XCALL2(cpuinfo.sp_vcache_flush_page, va, ctx, CPUSET_ALL);
+	FXCALL2(cpuinfo.sp_vcache_flush_page, cpuinfo.ft_vcache_flush_page,
+		va, ctx, CPUSET_ALL);
 }
 
 void
@@ -1057,7 +1058,8 @@ smp_vcache_flush_segment(vr, vs, ctx)
 	int vr, vs;
 	int ctx;
 {
-	XCALL3(cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, CPUSET_ALL);
+	FXCALL3(cpuinfo.sp_vcache_flush_segment, cpuinfo.ft_vcache_flush_segment,
+		vr, vs, ctx, CPUSET_ALL);
 }
 
 void
@@ -1065,14 +1067,16 @@ smp_vcache_flush_region(vr, ctx)
 	int vr;
 	int ctx;
 {
-	XCALL2(cpuinfo.sp_vcache_flush_region, vr, ctx, CPUSET_ALL);
+	FXCALL2(cpuinfo.sp_vcache_flush_region, cpuinfo.ft_vcache_flush_region,
+		vr, ctx, CPUSET_ALL);
 }
 
 void
 smp_vcache_flush_context(ctx)
 	int ctx;
 {
-	XCALL1(cpuinfo.sp_vcache_flush_context, ctx, CPUSET_ALL);
+	FXCALL1(cpuinfo.sp_vcache_flush_context, cpuinfo.ft_vcache_flush_context,
+		ctx, CPUSET_ALL);
 }
 
 void
@@ -1081,6 +1085,7 @@ smp_cache_flush(va, size, ctx)
 	u_int size;
 	int ctx;
 {
+
 	XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */
