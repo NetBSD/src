@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.215 2001/11/13 17:37:03 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.216 2001/11/14 19:46:38 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -15,11 +15,11 @@ NEED_OWN_INSTALL_TARGET?=	yes
 .if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
 .undef USE_NEW_TOOLCHAIN	# unset
 .else
-.if ${MACHINE_ARCH} == "i386" || \
+.if ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE} == "arm26"
+    ${MACHINE_ARCH} == "sparc64"
 USE_NEW_TOOLCHAIN=yes	# set
 .endif
 .endif
@@ -222,6 +222,7 @@ NOPIC?=1
 # SHLIB_TYPE:		"ELF" or "a.out" or "" to force static libraries.
 #
 .if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
@@ -235,7 +236,6 @@ NOPIC?=1
     ${MACHINE} == "hp300" || \
     ${MACHINE} == "news68k" || \
     ${MACHINE} == "cesfic" || \
-    ${MACHINE} == "arm26" || \
     ${MACHINE} == "atari"
 OBJECT_FMT?=ELF
 .else
