@@ -1,4 +1,4 @@
-/*	$NetBSD: argo_debug.h,v 1.5 1994/06/29 06:39:02 cgd Exp $	*/
+/*	$NetBSD: argo_debug.h,v 1.6 1995/08/16 00:38:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -266,28 +266,20 @@ void dump_mbuf();
 #ifdef notdef
 
 #define 	TPMT_DATA	0x21
-#define 	TPMT_RCVRTC	0x42
-#define 	TPMT_SNDRTC	0x41
 #define 	TPMT_TPHDR	0x22
 #define 	TPMT_IPHDR	0x32
 #define 	TPMT_SONAME	0x28
 #define 	TPMT_EOT	0x40
 #define 	TPMT_XPD	0x44
-#define 	TPMT_PCB	0x23
-#define 	TPMT_PERF	0x45
 
 #else /* ARGO_DEBUG */
 
 #define 	TPMT_DATA	MT_DATA
-#define 	TPMT_RCVRTC	MT_DATA
-#define 	TPMT_SNDRTC	MT_DATA
 #define 	TPMT_IPHDR	MT_HEADER
 #define 	TPMT_TPHDR	MT_HEADER
 #define 	TPMT_SONAME	MT_SONAME
 /* MT_EOT and MT_XPD are defined in tp_param.h */
 #define 	TPMT_XPD	MT_OOBDATA
-#define 	TPMT_PCB	MT_PCB
-#define 	TPMT_PERF	MT_PCB
 
 #endif /* ARGO_DEBUG */
 

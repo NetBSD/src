@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.7 1995/06/13 07:13:47 mycroft Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.8 1995/08/16 00:38:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -792,21 +792,10 @@ int
 tp_setup_perf(tpcb)
 	register struct tp_pcb *tpcb;
 {
-	register struct mbuf *q;
 
 	if( tpcb->tp_p_meas == 0 ) {
-		MGET(q, M_WAITOK, MT_PCB);
-		if (q == 0)
-			return ENOBUFS;
-		MCLGET(q, M_WAITOK);
-		if ((q->m_flags & M_EXT) == 0) {
-			(void) m_free(q);
-			return ENOBUFS;
-		}
-		q->m_len = sizeof (struct tp_pmeas);
-		tpcb->tp_p_mbuf = q;
-		tpcb->tp_p_meas = mtod(q, struct tp_pmeas *);
-		bzero( (caddr_t)tpcb->tp_p_meas, sizeof (struct tp_pmeas) );
+		tpcb->tp_p_meas = malloc(sizeof(struct tp_pmeas), M_PCB, M_WAITOK);
+		bzero((caddr_t)tpcb->tp_p_meas, sizeof(struct tp_pmeas));
 		IFDEBUG(D_PERF_MEAS)
 			printf(
 			"tpcb 0x%x so 0x%x ref 0x%x tp_p_meas 0x%x tp_perf_on 0x%x\n", 
