@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.467 2002/01/27 13:23:18 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.468 2002/01/28 01:23:32 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.467 $"
+#ident 		"GENERIC-$Revision: 1.468 $"
 
 maxusers	32		# estimated number of users
 
@@ -472,8 +472,8 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 #adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
