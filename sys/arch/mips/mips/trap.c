@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 1997/08/10 01:14:49 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 1997/08/17 17:02:07 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,7 @@
 
 #ifdef DDB
 #include <mips/db_machdep.h>
+#include <ddb/db_sym.h>
 #endif
 
 /* all this to get prototypes for ipintr() and arpintr() */
@@ -1421,7 +1422,7 @@ specialframe:
 		a3 = kdbpeek(sp + 52);
 
 		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
-		ra = kdbpeek(sp + 148);	/* ra at time of exception */
+		ra = kdbpeek(sp + 140);	/* ra at time of exception */
 		sp = sp + 176;
 		goto specialframe;
 	}
@@ -1436,7 +1437,7 @@ specialframe:
 		a3 = kdbpeek(sp + 52);
 
 		pc = kdbpeek(sp + 172);	/* exc_pc - pc at time of exception */
-		ra = kdbpeek(sp + 148);	/* ra at time of exception */
+		ra = kdbpeek(sp + 140);	/* ra at time of exception */
 		sp = sp + 176;
 		goto specialframe;
 	}
@@ -1453,7 +1454,7 @@ specialframe:
 		a3 = kdbpeek(sp + 52);
 
 		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
-		ra = kdbpeek(sp + 148);	/* ra at time of exception */
+		ra = kdbpeek(sp + 140);	/* ra at time of exception */
 		sp = sp + 176;
 		goto specialframe;
 	}
@@ -1468,7 +1469,7 @@ specialframe:
 		a3 = kdbpeek(sp + 52);
 
 		pc = kdbpeek(sp + 172);	/* exc_pc - pc at time of exception */
-		ra = kdbpeek(sp + 148);	/* ra at time of exception */
+		ra = kdbpeek(sp + 140);	/* ra at time of exception */
 		sp = sp + 176;
 		goto specialframe;
 	}
@@ -1737,7 +1738,20 @@ fn_name(unsigned addr)
 {
 	static char buf[17];
 	int i = 0;
+#ifdef DDB
+	db_expr_t diff;
+	db_sym_t sym;
+	char *symname;
+#endif
 
+#ifdef DDB
+	diff = 0;
+	symname = NULL;
+	sym = db_search_symbol(addr, DB_STGY_ANY, &diff);
+	db_symbol_values(sym, &symname, 0);
+	if (symname && diff == 0)
+		return (symname);
+#endif
 	for (i = 0; names[i].name; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
