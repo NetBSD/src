@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.36 2000/11/20 19:35:28 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.37 2000/11/24 08:54:08 scw Exp $
 
 # config file for mvme68k
 
@@ -79,7 +79,7 @@ attach clmpcc at pcctwo with clmpcc_pcctwo
 file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 
 # Memory disk for boot tape
-file arch/mvme68k/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 
 include "dev/scsipi/files.scsipi"
 
