@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 1998/05/11 07:46:20 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 1998/06/11 16:31:45 thomas Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -249,7 +249,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct md_core md_core;
 	struct coreseg cseg;
 	register struct user *up = p->p_addr;
-	register i;
+	register int i;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
