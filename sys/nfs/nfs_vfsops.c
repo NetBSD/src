@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.60 1997/06/12 17:14:54 mrg Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.61 1997/07/17 23:54:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -209,6 +209,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, retattr;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	u_int64_t maxfsize;
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
 	nfsm_reqhead(vp, NFSPROC_FSINFO, NFSX_FH(1));
@@ -218,34 +219,39 @@ nfs_fsinfo(nmp, vp, cred, p)
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_wtpref);
-		if (pref < nmp->nm_wsize)
+		if (pref < nmp->nm_wsize && pref >= NFS_FABLKSIZE)
 			nmp->nm_wsize = (pref + NFS_FABLKSIZE - 1) &
 				~(NFS_FABLKSIZE - 1);
 		max = fxdr_unsigned(u_int32_t, fsp->fs_wtmax);
-		if (max < nmp->nm_wsize) {
+		if (max < nmp->nm_wsize && max > 0) {
 			nmp->nm_wsize = max & ~(NFS_FABLKSIZE - 1);
 			if (nmp->nm_wsize == 0)
 				nmp->nm_wsize = max;
 		}
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_rtpref);
-		if (pref < nmp->nm_rsize)
+		if (pref < nmp->nm_rsize && pref >= NFS_FABLKSIZE)
 			nmp->nm_rsize = (pref + NFS_FABLKSIZE - 1) &
 				~(NFS_FABLKSIZE - 1);
 		max = fxdr_unsigned(u_int32_t, fsp->fs_rtmax);
-		if (max < nmp->nm_rsize) {
+		if (max < nmp->nm_rsize && max > 0) {
 			nmp->nm_rsize = max & ~(NFS_FABLKSIZE - 1);
 			if (nmp->nm_rsize == 0)
 				nmp->nm_rsize = max;
 		}
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_dtpref);
-		if (pref < nmp->nm_readdirsize)
+		if (pref < nmp->nm_readdirsize && pref >= NFS_DIRBLKSIZ)
 			nmp->nm_readdirsize = (pref + NFS_DIRBLKSIZ - 1) &
 				~(NFS_DIRBLKSIZ - 1);
-		if (max < nmp->nm_readdirsize) {
+		if (max < nmp->nm_readdirsize && max > 0) {
 			nmp->nm_readdirsize = max & ~(NFS_DIRBLKSIZ - 1);
 			if (nmp->nm_readdirsize == 0)
 				nmp->nm_readdirsize = max;
 		}
+		/* XXX */
+		nmp->nm_maxfilesize = (u_int64_t)0x80000000 * DEV_BSIZE - 1;
+		fxdr_hyper(&fsp->fs_maxfilesize, &maxfsize);
+		if (maxfsize > 0 && maxfsize < nmp->nm_maxfilesize)
+			nmp->nm_maxfilesize = maxfsize;
 		nmp->nm_flag |= NFSMNT_GOTFSINFO;
 	}
 	nfsm_reqdone;
@@ -672,6 +678,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	getnewfsid(mp, makefstype(MOUNT_NFS));
 #endif
 	nmp->nm_mountp = mp;
+
 	if (argp->flags & NFSMNT_NQNFS)
 		/*
 		 * We have to set mnt_maxsymlink to a non-zero value so
@@ -680,6 +687,14 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 		 * unsuspecting binaries).
 		 */
 		mp->mnt_maxsymlinklen = 1;
+
+	if (argp->flags & NFSMNT_NFSV3)
+		/*
+		 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
+		 * will fill this in.
+		 */
+		nmp->nm_maxfilesize = 0xffffffffLL;
+
 	nmp->nm_timeo = NFS_TIMEO;
 	nmp->nm_retry = NFS_RETRANS;
 	nmp->nm_wsize = NFS_WSIZE;
