@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.37 1999/09/30 23:51:27 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.38 1999/10/01 06:18:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -91,6 +91,35 @@
 
 #include "extern.h"
 
+
+/*
+ * Format of command table.
+ */
+struct cmd {
+	char	*c_name;	/* name of command */
+	char	*c_help;	/* help string */
+	char	 c_bell;	/* give bell when command completes */
+	char	 c_conn;	/* must be connected to use command */
+	char	 c_proxy;	/* proxy server may execute */
+#ifndef NO_EDITCOMPLETE
+	char	*c_complete;	/* context sensitive completion list */
+#endif /* !NO_EDITCOMPLETE */
+	void	(*c_handler) __P((int, char **)); /* function to call */
+};
+
+/*
+ * Format of macro table
+ */
+struct macel {
+	char mac_name[9];	/* macro name */
+	char *mac_start;	/* start of macro in macbuf */
+	char *mac_end;		/* end of macro in macbuf */
+};
+
+
+/*
+ * Global defines
+ */
 #define FTPBUFLEN	MAXPATHLEN + 200
 #define MAX_IN_PORT_T	0xffffU
 
@@ -108,6 +137,9 @@
 #endif
 
 #define PAGER		"more"	/* default pager if $PAGER isn't set */
+
+#define	TMPFILE		"ftpXXXXXXXXXX"
+
 
 /*
  * Options and other state info.
@@ -215,27 +247,6 @@ int	options;		/* used during socket creation */
 
 int	sndbuf_size;		/* socket send buffer size */
 int	rcvbuf_size;		/* socket receive buffer size */
-
-/*
- * Format of command table.
- */
-struct cmd {
-	char	*c_name;	/* name of command */
-	char	*c_help;	/* help string */
-	char	 c_bell;	/* give bell when command completes */
-	char	 c_conn;	/* must be connected to use command */
-	char	 c_proxy;	/* proxy server may execute */
-#ifndef NO_EDITCOMPLETE
-	char	*c_complete;	/* context sensitive completion list */
-#endif /* !NO_EDITCOMPLETE */
-	void	(*c_handler) __P((int, char **)); /* function to call */
-};
-
-struct macel {
-	char mac_name[9];	/* macro name */
-	char *mac_start;	/* start of macro in macbuf */
-	char *mac_end;		/* end of macro in macbuf */
-};
 
 int	macnum;			/* number of defined macros */
 struct macel macros[16];
