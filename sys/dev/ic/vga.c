@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.26 2000/03/23 07:01:33 thorpej Exp $ */
+/* $NetBSD: vga.c,v 1.27 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,9 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <machine/bus.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isareg.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
