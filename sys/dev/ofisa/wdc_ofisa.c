@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.21 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.22 2004/08/19 23:38:06 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.21 2004/08/14 15:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.22 2004/08/19 23:38:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,17 +66,14 @@ struct wdc_ofisa_softc {
 	void	*sc_ih;
 };
 
-int wdc_ofisa_probe __P((struct device *, struct cfdata *, void *));
-void wdc_ofisa_attach __P((struct device *, struct device *, void *));
+static int wdc_ofisa_probe(struct device *, struct cfdata *, void *);
+static void wdc_ofisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wdc_ofisa, sizeof(struct wdc_ofisa_softc),
     wdc_ofisa_probe, wdc_ofisa_attach, NULL, NULL);
 
-int
-wdc_ofisa_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+wdc_ofisa_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,600", NULL };
@@ -91,10 +88,8 @@ wdc_ofisa_probe(parent, cf, aux)
 	return (rv);
 }
 
-void
-wdc_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_ofisa_softc *sc = (void *)self;
 	struct wdc_regs *wdr;

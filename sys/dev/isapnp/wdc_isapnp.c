@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.28 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.29 2004/08/19 23:32:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.28 2004/08/14 15:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.29 2004/08/19 23:32:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,23 +69,20 @@ struct wdc_isapnp_softc {
 	int	sc_drq;
 };
 
-int	wdc_isapnp_probe 	__P((struct device *, struct cfdata *, void *));
-void	wdc_isapnp_attach 	__P((struct device *, struct device *, void *));
+static int	wdc_isapnp_probe(struct device *, struct cfdata *, void *);
+static void	wdc_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wdc_isapnp, sizeof(struct wdc_isapnp_softc),
     wdc_isapnp_probe, wdc_isapnp_attach, NULL, NULL);
 
 #ifdef notyet
-static void	wdc_isapnp_dma_setup __P((struct wdc_isapnp_softc *));
-static void	wdc_isapnp_dma_start __P((void *, void *, size_t, int));
-static void	wdc_isapnp_dma_finish __P((void *));
+static void	wdc_isapnp_dma_setup(struct wdc_isapnp_softc *);
+static void	wdc_isapnp_dma_start(void *, void *, size_t, int);
+static void	wdc_isapnp_dma_finish(void *);
 #endif
 
-int
-wdc_isapnp_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+wdc_isapnp_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
@@ -95,10 +92,8 @@ wdc_isapnp_probe(parent, match, aux)
 	return (pri);
 }
 
-void
-wdc_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+wdc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_isapnp_softc *sc = (void *)self;
 	struct wdc_regs *wdr;
@@ -177,8 +172,7 @@ wdc_isapnp_attach(parent, self, aux)
 
 #ifdef notyet
 static void
-wdc_isapnp_dma_setup(sc)
-	struct wdc_isapnp_softc *sc;
+wdc_isapnp_dma_setup(struct wdc_isapnp_softc *sc)
 {
 
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
@@ -190,10 +184,7 @@ wdc_isapnp_dma_setup(sc)
 }
 
 static void
-wdc_isapnp_dma_start(scv, buf, size, read)
-	void *scv, *buf;
-	size_t size;
-	int read;
+wdc_isapnp_dma_start(void *scv, void *buf, size_t size, int read)
 {
 	struct wdc_isapnp_softc *sc = scv;
 
@@ -203,8 +194,7 @@ wdc_isapnp_dma_start(scv, buf, size, read)
 }
 
 static void
-wdc_isapnp_dma_finish(scv)
-	void *scv;
+wdc_isapnp_dma_finish(void *scv)
 {
 	struct wdc_isapnp_softc *sc = scv;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.43 2004/08/16 14:47:31 mycroft Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.44 2004/08/19 23:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.43 2004/08/16 14:47:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.44 2004/08/19 23:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,24 +74,21 @@ struct wdc_isa_softc {
 	int	sc_drq;
 };
 
-int	wdc_isa_probe	__P((struct device *, struct cfdata *, void *));
-void	wdc_isa_attach	__P((struct device *, struct device *, void *));
+static int	wdc_isa_probe(struct device *, struct cfdata *, void *);
+static void	wdc_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wdc_isa, sizeof(struct wdc_isa_softc),
     wdc_isa_probe, wdc_isa_attach, NULL, NULL);
 
 #if 0
-static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
-static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
-static void 	wdc_isa_dma_start __P((void*, int, int));
-static int	wdc_isa_dma_finish __P((void*, int, int, int));
+static void	wdc_isa_dma_setup(struct wdc_isa_softc *);
+static int	wdc_isa_dma_init(void*, int, int, void *, size_t, int);
+static void 	wdc_isa_dma_start(void*, int, int);
+static int	wdc_isa_dma_finish(void*, int, int, int);
 #endif
 
-int
-wdc_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+wdc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;
@@ -154,10 +151,8 @@ out:
 	return (result);
 }
 
-void
-wdc_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_isa_softc *sc = (void *)self;
 	struct wdc_regs *wdr;
@@ -229,8 +224,7 @@ wdc_isa_attach(parent, self, aux)
 
 #if 0
 static void
-wdc_isa_dma_setup(sc)
-	struct wdc_isa_softc *sc;
+wdc_isa_dma_setup(struct wdc_isa_softc *sc)
 {
 	bus_size_t maxsize;
 
@@ -257,11 +251,8 @@ wdc_isa_dma_setup(sc)
 }
 
 static int
-wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
-	void *v;
-	void *databuf;
-	size_t datalen;
-	int read;
+wdc_isa_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int read)
 {
 	struct wdc_isa_softc *sc = v;
 
@@ -272,18 +263,13 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 }
 
 static void
-wdc_isa_dma_start(v, channel, drive)
-	void *v;
-	int channel, drive;
+wdc_isa_dma_start(void *v, int channel, int drive)
 {
 	/* nothing to do */
 }
 
 static int
-wdc_isa_dma_finish(v, channel, drive, read)
-	void *v;
-	int channel, drive;
-	int read;
+wdc_isa_dma_finish(void *v, int channel, int drive, int read)
 {
 	struct wdc_isa_softc *sc = v;
 

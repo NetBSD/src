@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.93 2004/08/19 23:25:36 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.94 2004/08/19 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.93 2004/08/19 23:25:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.94 2004/08/19 23:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,16 +73,16 @@ struct wdc_pcmcia_softc {
 #define WDC_PCMCIA_ATTACHED	3
 };
 
-static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
-static int wdc_pcmcia_validate_config_io __P((struct pcmcia_config_entry *));
-static int wdc_pcmcia_validate_config_memory __P((struct pcmcia_config_entry *));
-static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
-static int wdc_pcmcia_detach	__P((struct device *, int));
+static int wdc_pcmcia_match(struct device *, struct cfdata *, void *);
+static int wdc_pcmcia_validate_config_io(struct pcmcia_config_entry *);
+static int wdc_pcmcia_validate_config_memory(struct pcmcia_config_entry *);
+static void wdc_pcmcia_attach(struct device *, struct device *, void *);
+static int wdc_pcmcia_detach(struct device *, int);
 
 CFATTACH_DECL(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
     wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, wdcactivate);
 
-const struct pcmcia_product wdc_pcmcia_products[] = {
+static const struct pcmcia_product wdc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_DIGITAL,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
 	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
@@ -139,20 +139,17 @@ const struct pcmcia_product wdc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "PnPIDE", NULL, NULL} },
 };
-const size_t wdc_pcmcia_nproducts =
+static const size_t wdc_pcmcia_nproducts =
     sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
 
-int	wdc_pcmcia_enable __P((struct device *, int));
-void	wdc_pcmcia_datain_memory __P((struct ata_channel *, int, void *,
-	    size_t));
-void	wdc_pcmcia_dataout_memory __P((struct ata_channel *, int, void *,
-	    size_t));
+static int	wdc_pcmcia_enable(struct device *, int);
+static void	wdc_pcmcia_datain_memory(struct ata_channel *, int, void *,
+					 size_t);
+static void	wdc_pcmcia_dataout_memory(struct ata_channel *, int, void *,
+					  size_t);
 
 static int
-wdc_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wdc_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -166,8 +163,7 @@ wdc_pcmcia_match(parent, match, aux)
 }
 
 static int
-wdc_pcmcia_validate_config_io(cfe)
-	struct pcmcia_config_entry *cfe;
+wdc_pcmcia_validate_config_io(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace < 1 || cfe->num_iospace > 2)
@@ -177,8 +173,7 @@ wdc_pcmcia_validate_config_io(cfe)
 }
 
 static int
-wdc_pcmcia_validate_config_memory(cfe)
-	struct pcmcia_config_entry *cfe;
+wdc_pcmcia_validate_config_memory(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_MEMORY ||
 	    cfe->num_memspace > 1 ||
@@ -189,10 +184,7 @@ wdc_pcmcia_validate_config_memory(cfe)
 }
 
 static void
-wdc_pcmcia_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -305,10 +297,8 @@ fail:
 	pcmcia_function_unconfigure(pa->pf);
 }
 
-int
-wdc_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+static int
+wdc_pcmcia_detach(struct device *self, int flags)
 {
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int error;
@@ -324,10 +314,8 @@ wdc_pcmcia_detach(self, flags)
 	return (0);
 }
 
-int
-wdc_pcmcia_enable(self, onoff)
-	struct device *self;
-	int onoff;
+static int
+wdc_pcmcia_enable(struct device *self, int onoff)
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	int error;
@@ -354,12 +342,9 @@ wdc_pcmcia_enable(self, onoff)
 	return (0);
 }
 
-void
-wdc_pcmcia_datain_memory(chp, flags, buf, len)
-	struct ata_channel *chp;
-	int flags;
-	void *buf;
-	size_t len;
+static void
+wdc_pcmcia_datain_memory(struct ata_channel *chp, int flags, void *buf,
+    size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
@@ -378,12 +363,9 @@ wdc_pcmcia_datain_memory(chp, flags, buf, len)
 	}
 }
 
-void
-wdc_pcmcia_dataout_memory(chp, flags, buf, len)
-	struct ata_channel *chp;
-	int flags;
-	void *buf;
-	size_t len;
+static void
+wdc_pcmcia_dataout_memory(struct ata_channel *chp, int flags, void *buf,
+    size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
