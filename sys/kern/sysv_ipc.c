@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.10 1995/06/03 05:53:28 mycroft Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.11 1997/05/08 17:08:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -56,8 +56,8 @@ ipcperm(cred, perm, mode)
 		return (EPERM);
 	}
 
-	if (vaccess(perm->mode, perm->uid, perm->gid, mode, cred) == 0 ||
-	    vaccess(perm->mode, perm->cuid, perm->cgid, mode, cred) == 0)
+	if (vaccess(VNON, perm->mode, perm->uid, perm->gid, mode, cred) == 0 ||
+	    vaccess(VNON, perm->mode, perm->cuid, perm->cgid, mode, cred) == 0)
 		return (0);
 	return (EACCES);
 }
