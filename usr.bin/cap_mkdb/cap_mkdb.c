@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.20 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.21 2004/04/23 21:39:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.21 2004/04/23 21:39:33 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,16 +55,16 @@ __RCSID("$NetBSD: cap_mkdb.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
 #include <unistd.h>
 #include <ctype.h>
 
-static void	db_build (char **);
-static void	dounlink (void);
-static void	usage (void);
+static void	db_build(const char **);
+static void	dounlink(void);
+static void	usage(void) __attribute__((__unused__));
 static int	count_records(char **);
 
-DB *capdbp;
-int verbose;
-char *capdb, *capname, buf[8 * 1024];
+static DB *capdbp;
+static int verbose;
+static char *capname, buf[8 * 1024];
 
-HASHINFO openinfo = {
+static HASHINFO openinfo = {
 	4096,		/* bsize */
 	16,		/* ffactor */
 	2048,		/* nelem */
@@ -134,12 +134,12 @@ main(int argc, char *argv[])
 	if (atexit(dounlink))
 		err(1, "atexit");
 
-	db_build(argv);
+	db_build((const char **)argv);
 
 	if (capdbp->close(capdbp) < 0)
 		err(1, "%s", capname);
 	capname = NULL;
-	exit(0);
+	return 0;
 }
 
 static void
@@ -162,7 +162,7 @@ dounlink(void)
  * details above.
  */
 static void
-db_build(char **ifiles)
+db_build(const char **ifiles)
 {
 	DBT key, data;
 	recno_t reccnt;
@@ -205,7 +205,7 @@ db_build(char **ifiles)
 		}
 
 		/* Create the stored record. */
-		memmove(&((u_char *)(data.data))[1], bp, len + 1);
+		(void)memmove(&((u_char *)(data.data))[1], bp, len + 1);
 		data.size = len + 2;
 
 		/* Store the record under the name field. */
@@ -229,7 +229,7 @@ db_build(char **ifiles)
 
 		/* The rest of the names reference the entire name. */
 		((char *)(data.data))[0] = SHADOW;
-		memmove(&((u_char *)(data.data))[1], key.data, key.size);
+		(void)memmove(&((u_char *)(data.data))[1], key.data, key.size);
 		data.size = key.size + 1;
 
 		/* Store references for other names. */
@@ -270,7 +270,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: cap_mkdb [-b|-l] [-v] [-f outfile] file1 [file2 ...]\n");
+	    "Usage: %s [-b|-l] [-v] [-f outfile] file1 [file2 ...]\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -289,7 +290,7 @@ count_records(char **list)
 
 	/* scan input files and count individual records */
 	for(nelem = 0, slash = 0; *list && (fp = fopen(*list++, "r")); ) {
-		while((line = fgetln(fp, &len))) {
+		while((line = fgetln(fp, &len)) != NULL) {
 			if (len < 2)
 				continue;
 			if (!isspace((unsigned char) *line) && *line != ':'
@@ -298,7 +299,7 @@ count_records(char **list)
 
 			slash = (line[len - 2] == '\\');
 		}
-		fclose(fp);
+		(void)fclose(fp);
 	} 
 
 	if (nelem == 0) {
