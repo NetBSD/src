@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.207 2004/05/23 00:37:27 jonathan Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.208 2004/06/26 03:29:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.207 2004/05/23 00:37:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.208 2004/06/26 03:29:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2630,10 +2630,12 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 	struct ippseudo ippseudo;
 	struct ip6_hdr_pseudo ip6pseudo;
 	struct tcphdr th0;
-	int l;
+	int l, tcphdrlen;
 
 	if (sav == NULL)
 		return (-1);
+
+	tcphdrlen = th->th_off * 4;
 
 	switch (mtod(m, struct ip *)->ip_v) {
 	case 4:
@@ -2674,10 +2676,10 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 	th0.th_sum = 0;
 	MD5Update(&ctx, (char *)&th0, sizeof(th0));
 
-	l = m->m_pkthdr.len - thoff - sizeof(struct tcphdr);
+	l = m->m_pkthdr.len - thoff - tcphdrlen;
 	if (l > 0)
-		m_apply(m, thoff + sizeof(struct tcphdr),
-		    m->m_pkthdr.len - thoff - sizeof(struct tcphdr),
+		m_apply(m, thoff + tcphdrlen,
+		    m->m_pkthdr.len - thoff - tcphdrlen,
 		    tcp_signature_apply, &ctx);
 
 	MD5Update(&ctx, _KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
@@ -2834,6 +2836,8 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 	}
 
 	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
+		if (sav == NULL)
+			return (-1);
 #ifdef FAST_IPSEC
 		KEY_FREESAV(&sav);
 #else
@@ -2848,6 +2852,8 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 		TCP_FIELDS_TO_NET(th);
 		if (tcp_signature(m, th, toff, sav, sig) < 0) {
 			TCP_FIELDS_TO_HOST(th);
+			if (sav == NULL)
+				return (-1);
 #ifdef FAST_IPSEC
 			KEY_FREESAV(&sav);
 #else
@@ -2859,6 +2865,8 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 
 		if (bcmp(sig, sigp, TCP_SIGLEN)) {
 			tcpstat.tcps_badsig++;
+			if (sav == NULL)
+				return (-1);
 #ifdef FAST_IPSEC
 			KEY_FREESAV(&sav);
 #else
@@ -3798,6 +3806,10 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	if (optp)
 #endif
 	{
+		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+#ifdef TCP_SIGNATURE
+		tb.t_flags |= (tp->t_flags & TF_SIGNATURE);
+#endif
 		if (tcp_dooptions(&tb, optp, optlen, th, m, m->m_pkthdr.len -
 		    sizeof(struct tcphdr) - optlen - hlen, oi) < 0)
 			return (0);
