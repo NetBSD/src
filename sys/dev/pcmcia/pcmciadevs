@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.95 2000/07/18 14:48:10 onoe Exp $
+$NetBSD: pcmciadevs,v 1.96 2000/07/24 21:45:00 gmcgarry Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -200,6 +200,9 @@ product XIRCOM CE2		0x010b Xircom CreditCard Ethernet II
 product XIRCOM CE3		0x010a Xircom CreditCard 10/100 Ethernet
 product XIRCOM CEM		0x110a Xircom CreditCard Ethernet + Modem
 product XIRCOM CEM28		0x110b Xircom CreditCard Ethernet + Modem 28
+product XIRCOM CEM33		0x110b Xircom CreditCard Ethernet + Modem 33
+product XIRCOM CEM56		0x110b Xircom CreditCard Ethernet + Modem 56
+product XIRCOM REM56		0x110a Xircom RealPort Ethernet 10/100 + Modem 56
 product XIRCOM CNW_801		0x0801 Xircom CreditCard Netwave (Canada)
 product XIRCOM CNW_802		0x0802 Xircom CreditCard Netwave (US)
 
