@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.18 1996/09/27 03:15:00 thorpej Exp $	*/
+/*	$NetBSD: dirs.c,v 1.19 1996/09/27 03:23:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.18 1996/09/27 03:15:00 thorpej Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.19 1996/09/27 03:23:33 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,8 @@ extractdirs(genmode)
 	struct direct nulldir;
 
 	vprintf(stdout, "Extract directories from tape\n");
-	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
+	(void) snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d",
+	    _PATH_TMP, dumpdate);
 	df = fopen(dirfile, "w");
 	if (df == NULL) {
 		fprintf(stderr,
@@ -161,7 +162,8 @@ extractdirs(genmode)
 		exit(1);
 	}
 	if (genmode != 0) {
-		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+		(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
+		    _PATH_TMP, dumpdate);
 		mf = fopen(modefile, "w");
 		if (mf == NULL) {
 			fprintf(stderr,
@@ -591,7 +593,8 @@ setdirmodes(flags)
 	char *cp;
 	
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
-	(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+	(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
+	    _PATH_TMP, dumpdate);
 	mf = fopen(modefile, "r");
 	if (mf == NULL) {
 		fprintf(stderr, "fopen: %s\n", strerror(errno));

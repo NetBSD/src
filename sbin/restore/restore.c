@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.6 1995/03/18 14:59:51 cgd Exp $	*/
+/*	$NetBSD: restore.c,v 1.7 1996/09/27 03:23:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: restore.c,v 1.6 1995/03/18 14:59:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: restore.c,v 1.7 1996/09/27 03:23:34 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ addfile(name, ino, type)
 	if (ino == WINO && command == 'i' && !vflag)
 		return (descend);
 	if (!mflag) {
-		(void) sprintf(buf, "./%u", ino);
+		(void) snprintf(buf, sizeof(buf), "./%u", ino);
 		name = buf;
 		if (type == NODE) {
 			(void) genliteraldir(name, ino);
