@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.12 1998/05/11 23:56:16 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.13 1998/05/12 19:07:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -54,7 +54,10 @@ struct cia_config {
 	u_int32_t cc_rev;
 	u_int32_t cc_cnfg;
 
-	int	cc_ispyxis;
+	int	cc_flags;
+
+#define	CCF_ISPYXIS	0x01		/* chip is a 21174 Pyxis */
+#define	CCF_USEBWX	0x02		/* use BWX when possible */
 
 	struct extent *cc_io_ex, *cc_d_mem_ex, *cc_s_mem_ex;
 	int	cc_mallocsafe;
