@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2001/02/23 22:02:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,8 +35,8 @@
  *	from: @(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_ARM32_TYPES_H_
-#define	_ARM32_TYPES_H_
+#ifndef	_ARM_TYPES_H_
+#define	_ARM_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
@@ -74,8 +74,6 @@ typedef	__uint64_t	u_int64_t;
 
 typedef int32_t                 register_t;
 
-#define __HAVE_NWSCONS
-#define	__HAVE_DEVICE_REGISTER
 #define __HAVE_MINIMAL_EMUL
 
-#endif	/* _ARM32_TYPES_H_ */
+#endif	/* _ARM_TYPES_H_ */
