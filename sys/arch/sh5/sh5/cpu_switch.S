@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.6 2002/08/29 16:04:10 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.7 2002/09/01 11:40:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
  * When no processes are ready to run, cpu_switch branches to idle to
  * wait for someone to come ready.
  *
- * On entry, r11 points to "sched_whichqs".
+ * On entry, r29 points to "sched_whichqs".
  * On exit, r0 must hold the contents of "sched_whichqs"
  *
  * We don't need to preserve caller-save registers.
@@ -258,7 +258,7 @@ ASENTRY_NOPROFILE(idle)
 	pta/u	1b, tr0
 #endif
 
-	ld.l	r11, 0, r0		/* Fetch sched_whichqs */
+	ld.l	r29, 0, r0		/* Fetch sched_whichqs */
 	beq/u	r0, r63, tr0		/* Back around if nobody's awake */
 	pta/l	Lsw2, tr0
 	blink	tr0, r63		/* Otherwise, back to cpu_switch */
@@ -299,8 +299,8 @@ ENTRY_NOPROFILE(cpu_switch)
 
 Lsw1:
 	pta/u	_ASM_LABEL(idle), tr0
-	LEA(_C_LABEL(sched_whichqs), r11)
-	ld.l	r11, 0, r0		/* Fetch sched_whichqs */
+	LEA(_C_LABEL(sched_whichqs), r29)
+	ld.l	r29, 0, r0		/* Fetch sched_whichqs */
 	beq/u	r0, r63, tr0		/* Go to sleep if nobody's around */
 
 Lsw2:
@@ -340,26 +340,26 @@ Lsw2:
 
 	sub	r3, r4, r4		/* r4 == 0 if queue is now empty */
 	cmveq	r4, r5, r0		/* Update sched_whichqs bitmap */
-	st.l	r11, 0, r0
+	st.l	r29, 0, r0
 
 	/*
 	 * At this point: r2 == process we're about to switch to
 	 */
-	getcon	kcr0, r10
-	LDPTR	r10, CI_CURPROC, r10	/* Fetch curproc (NULL if we idled) */
+	getcon	kcr0, r28
+	LDPTR	r28, CI_CURPROC, r28	/* Fetch curproc (NULL if we idled) */
 	pta/u	1f, tr0
-	beq/u	r10, r63, tr0		/* Jump if no previous curproc */
+	beq/u	r28, r63, tr0		/* Jump if no previous curproc */
 
 	pta/u	2f, tr0
-	beq/u	r2, r10, tr0		/* Jump if switching to same process */
+	beq/u	r2, r28, tr0		/* Jump if switching to same process */
 
 	/* Deactivate the old process' pmap */
 	LEAF(_C_LABEL(pmap_deactivate), r0)
 	ptabs/l	r0, tr0
-	or	r2, r63, r11		/* Save new proc in r11 */
-	or	r10, r63, r2		/* Get old proc to r2 */
+	or	r2, r63, r29		/* Save new proc in r29 */
+	or	r28, r63, r2		/* Get old proc to r2 */
 	blink	tr0, r18
-	or	r11, r63, r2		/* Restore r2 */
+	or	r29, r63, r2		/* Restore r2 */
 
 1:	getcon	kcr0, r0
 	LDPTR	r2, P_ADDR, r1		/* Point to process' pcb */
@@ -369,10 +369,10 @@ Lsw2:
 	/* Activate the new process' pmap */
 	LEAF(_C_LABEL(pmap_activate), r0)
 	ptabs/l	r0, tr0
-	or	r2, r63, r10		/* Save new proc in r10 */
+	or	r2, r63, r28		/* Save new proc in r28 */
 	blink	tr0, r18
-	LDPTR	r10, P_ADDR, r3		/* Fetch new process' pcb */
-	or	r10, r63, r2		/* new proc to r2 */
+	LDPTR	r28, P_ADDR, r3		/* Fetch new process' pcb */
+	or	r28, r63, r2		/* new proc to r2 */
 
 2:
 	LDPTR	r2, P_MD_REGS, r1	/* Fetch pointer to trapframe */
