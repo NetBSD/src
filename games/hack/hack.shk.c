@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.4 1997/10/19 16:59:01 christos Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.5 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.4 1997/10/19 16:59:01 christos Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.5 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -127,12 +127,12 @@ static long int followmsg;	/* last time of follow message */
  */
 
 
-char            shtypes[] = {	/* 8 shoptypes: 7 specialized, 1 mixed */
+const char shtypes[] = {	/* 8 shoptypes: 7 specialized, 1 mixed */
 	RING_SYM, WAND_SYM, WEAPON_SYM, FOOD_SYM, SCROLL_SYM,
 	POTION_SYM, ARMOR_SYM, 0
 };
 
-static char    *shopnam[] = {
+static const char    *const shopnam[] = {
 	"engagement ring", "walking cane", "antique weapon",
 	"delicatessen", "second hand book", "liquor",
 	"used armor", "assorted antiques"
@@ -902,7 +902,7 @@ shk_move(shkp)
 	struct monst   *shkp;
 {
 	struct monst   *mtmp;
-	struct permonst *mdat = shkp->data;
+	const struct permonst *mdat = shkp->data;
 	xchar           gx, gy, omx, omy, nx, ny, nix, niy;
 	schar           appr, i;
 	int             udist;
@@ -1092,7 +1092,7 @@ shopdig(fall)
 #endif	/* QUEST */
 
 int
-online(x, y)
+online(int x, int y)
 {
 	return (x == u.ux || y == u.uy ||
 		(x - u.ux) * (x - u.ux) == (y - u.uy) * (y - u.uy));

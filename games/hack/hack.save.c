@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.save.c,v 1.6 1997/10/19 16:58:57 christos Exp $	*/
+/*	$NetBSD: hack.save.c,v 1.7 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.save.c,v 1.6 1997/10/19 16:58:57 christos Exp $");
+__RCSID("$NetBSD: hack.save.c,v 1.7 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -30,7 +30,7 @@ dosave()
 #ifndef NOSAVEONHANGUP
 void
 hangup(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	(void) dosave0(1);
 	exit(1);
@@ -77,7 +77,7 @@ dosave0(hu)
 		if (tmp == dlevel || !level_exists[tmp])
 			continue;
 		glo(tmp);
-		if ((ofd = open(lock, 0)) < 0) {
+		if ((ofd = open(lock, O_RDONLY)) < 0) {
 			if (!hu)
 				pline("Error while saving: cannot read %s.", lock);
 			(void) close(fd);
@@ -146,7 +146,7 @@ dorecover(fd)
 		savelev(nfd, tmp);
 		(void) close(nfd);
 	}
-	(void) lseek(fd, (off_t) 0, 0);
+	(void) lseek(fd, (off_t) 0, SEEK_SET);
 	getlev(fd, 0, 0);
 	(void) close(fd);
 	(void) unlink(SAVEF);
@@ -225,7 +225,7 @@ restmonchn(fd)
 	long            differ;
 
 	mread(fd, (char *) &monbegin, sizeof(monbegin));
-	differ = (char *) (&mons[0]) - (char *) (monbegin);
+	differ = (const char *) (&mons[0]) - (const char *) (monbegin);
 
 #ifdef lint
 	/* suppress "used before set" warning from lint */
@@ -243,8 +243,8 @@ restmonchn(fd)
 		mread(fd, (char *) mtmp, (unsigned) xl + sizeof(struct monst));
 		if (!mtmp->m_id)
 			mtmp->m_id = flags.ident++;
-		mtmp->data = (struct permonst *)
-			((char *) mtmp->data + differ);
+		mtmp->data = (const struct permonst *)
+			((const char *) mtmp->data + differ);
 		if (mtmp->minvent)
 			mtmp->minvent = restobjchn(fd);
 		mtmp2 = mtmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.timeout.c,v 1.4 1997/10/19 16:59:08 christos Exp $	*/
+/*	$NetBSD: hack.timeout.c,v 1.5 2001/03/25 20:44:03 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.timeout.c,v 1.4 1997/10/19 16:59:08 christos Exp $");
+__RCSID("$NetBSD: hack.timeout.c,v 1.5 2001/03/25 20:44:03 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -55,7 +55,7 @@ timeout()
 }
 
 /* He is being petrified - dialogue by inmet!tower */
-char           *stoned_texts[] = {
+const char           *const stoned_texts[] = {
 	"You are slowing down.",/* 5 */
 	"Your limbs are stiffening.",	/* 4 */
 	"Your limbs have turned to stone.",	/* 3 */

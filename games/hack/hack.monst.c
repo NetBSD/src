@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.monst.c,v 1.4 1997/10/19 16:58:36 christos Exp $	*/
+/*	$NetBSD: hack.monst.c,v 1.5 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,14 +6,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.monst.c,v 1.4 1997/10/19 16:58:36 christos Exp $");
+__RCSID("$NetBSD: hack.monst.c,v 1.5 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 #include "def.eshk.h"
 
-struct permonst mons[CMNUM + 2] = {
+const struct permonst mons[CMNUM + 2] = {
 	{"bat", 'B', 1, 22, 8, 1, 4, 0},
 	{"gnome", 'G', 1, 6, 5, 1, 6, 0},
 	{"hobgoblin", 'H', 1, 9, 5, 1, 8, 0},
@@ -77,11 +77,11 @@ struct permonst mons[CMNUM + 2] = {
 	{"shopkeeper", '@', 12, 18, 0, 4, 8, sizeof(struct eshk)}
 };
 
-struct permonst pm_ghost = {"ghost", ' ', 10, 3, -5, 1, 1, sizeof(plname)};
-struct permonst pm_wizard = {
+const struct permonst pm_ghost = {"ghost", ' ', 10, 3, -5, 1, 1, sizeof(plname)};
+const struct permonst pm_wizard = {
 	"wizard of Yendor", '1', 15, 12, -2, 1, 12, 0
 };
 #ifdef MAIL
-struct permonst pm_mail_daemon = {"mail daemon", '2', 100, 1, 10, 0, 0, 0};
+const struct permonst pm_mail_daemon = {"mail daemon", '2', 100, 1, 10, 0, 0, 0};
 #endif	/* MAIL */
-struct permonst pm_eel = {"giant eel", ';', 15, 6, -3, 3, 6, 0};
+const struct permonst pm_eel = {"giant eel", ';', 15, 6, -3, 3, 6, 0};

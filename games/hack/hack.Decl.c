@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.Decl.c,v 1.4 1997/10/19 16:57:30 christos Exp $	*/
+/*	$NetBSD: hack.Decl.c,v 1.5 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.Decl.c,v 1.4 1997/10/19 16:57:30 christos Exp $");
+__RCSID("$NetBSD: hack.Decl.c,v 1.5 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -35,7 +35,8 @@ struct monst    youmonst;	/* dummy; used as return value for boomhit */
 
 xchar           dlevel = 1;
 xchar           xupstair, yupstair, xdnstair, ydnstair;
-char           *save_cm = 0, *killer, *nomovemsg;
+char           *save_cm = 0;
+const char *killer, *nomovemsg;
 
 long            moves = 1;
 long            wailmsg = 0;
@@ -49,4 +50,4 @@ xchar           seelx, seehx, seely, seehy;	/* corners of lit room */
 
 coord           bhitpos;
 
-char            quitchars[] = " \r\n\033";
+const char      quitchars[] = " \r\n\033";

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.4 1997/10/19 16:59:10 christos Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.5 2001/03/25 20:44:03 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.4 1997/10/19 16:59:10 christos Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.5 2001/03/25 20:44:03 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -81,7 +81,7 @@ remember_topl()
 
 void
 addtopl(s)
-	char           *s;
+	const char           *s;
 {
 	curs(tlx, tly);
 	if (tlx + strlen(s) > CO)
@@ -94,7 +94,7 @@ addtopl(s)
 
 void
 xmore(s)
-	char           *s;	/* allowed chars besides space/return */
+	const char *s;	/* allowed chars besides space/return */
 {
 	if (flags.toplin) {
 		curs(tlx, tly);
@@ -124,7 +124,7 @@ more()
 
 void
 cmore(s)
-	char           *s;
+	const char           *s;
 {
 	xmore(s);
 }
@@ -252,7 +252,7 @@ putsym(c)
 
 void
 putstr(s)
-	char           *s;
+	const char           *s;
 {
 	while (*s)
 		putsym(*s++);
