@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.101 2000/06/27 17:41:25 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.102 2000/07/08 18:10:25 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1248,9 +1248,9 @@ int	kern_logsigexit = 1;	/* not static to make public for sysctl */
 int	kern_logsigexit = 0;	/* not static to make public for sysctl */
 #endif
 
-static	char	*logcoredump =
+static	const char logcoredump[] =
 	"pid %d (%s), uid %d: exited on signal %d (core dumped)\n";
-static	char	*lognocoredump =
+static	const char lognocoredump[] =
 	"pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
 
 void
@@ -1259,25 +1259,29 @@ sigexit(p, signum)
 	int signum;
 {
 	int	error;
-	char	*errmsg;
+	int	exitsig = signum;
 
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigacts->ps_sig = signum;
-		if ((error = coredump(p)) == 0) {
-			signum |= WCOREFLAG;
-			errmsg = logcoredump;
-		} else {
-			errmsg = lognocoredump;
+		if ((error = coredump(p)) == 0)
+			exitsig |= WCOREFLAG;
+
+		if (kern_logsigexit) {
+			int uid = p->p_cred && p->p_ucred ? 
+				p->p_ucred->cr_uid : -1;
+
+			if (error) 
+				log(LOG_INFO, lognocoredump, p->p_pid,
+				    p->p_comm, uid, signum, error);
+			else
+				log(LOG_INFO, logcoredump, p->p_pid,
+				    p->p_comm, uid, signum);
 		}
 
-		if (kern_logsigexit)
-			log(LOG_INFO, errmsg, p->p_pid, p->p_comm,
-			    p->p_cred && p->p_ucred ? p->p_ucred->cr_uid : -1,
-			    signum &~ WCOREFLAG, error);
 	}
 
-	exit1(p, W_EXITCODE(0, signum));
+	exit1(p, W_EXITCODE(0, exitsig));
 	/* NOTREACHED */
 }
 
