@@ -1,6 +1,6 @@
-#	$NetBSD: BASALT,v 1.9 1996/12/09 01:53:30 thorpej Exp $
+#	$NetBSD: BASALT,v 1.10 1996/12/09 03:56:01 thorpej Exp $
 #
-# BASALT - thorpej's hp380
+# Kernel for basalt.og.org - thorpej's HP380 file server.
 #
 machine		"hp300"
 
@@ -21,21 +21,17 @@ options         "COMPAT_09"             # compatibility with NetBSD 0.9
 options		"COMPAT_10"		# compatibility with NetBSD 1.0
 options		"COMPAT_11"		# compatibility with NetBSD 1.1
 options		"COMPAT_12"		# compatibility with NetBSD 1.2
-options         SYSVSHM                 # System V shared memory
-options         SYSVSEM                 # System V semaphores
-options         SYSVMSG                 # System V message queues
 options         KTRACE                  # system call tracing support
 options		"NKMEMCLUSTERS=2048"	# # 4K pages in kernel malloc pool
+options		LKM			# loadable kernel modules
 options 	EXEC_AOUT		# support for exec'ing a.out
-options 	EXEC_SCRIPT		# support for !# scripts
+options 	EXEC_SCRIPT		# support for #! scripts
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
 options		FFS		# fast filesystem
-options         "CD9660"        # CD-ROM ISO-9660 filesystem
 options		NFSCLIENT	# Network filesystem client
 options		NFSSERVER	# Network filesystem server
-options		UNION		# Union filesystem (req. for FDESC)
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
 options		PROCFS		# /proc filesystem
@@ -46,15 +42,16 @@ options		INET		# Internet protocols
 options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# Packet forwarding + larger mb_map
 options		NMBCLUSTERS="1024"	# Crank this up
+options		PFIL_HOOKS	# packet filter hooks
 
 # Options for HP hardware
 options		FPSP		# floating point interface for 68040
 options		USELEDS		# make the lights twinkle
 options		COMPAT_HPUX	# HP-UX binary compatibility
-#options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
+options		"COMPAT_M68K4K"	# m68k4k executables
 
 # Debugging options
-options		DDB		# Kernel Dynamic Debugger
+#options 	DDB		# Kernel Dynamic Debugger
 
 config		netbsd swap generic
 
@@ -82,7 +79,6 @@ tape		st1	at scsi? slave ?
 device		dca0	at scode9
 
 device		dcm0	at scode? flags 0xe
-device		dcm1	at scode? flags 0xe
 
 device		le0	at scode?
 
