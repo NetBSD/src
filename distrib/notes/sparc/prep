@@ -61,10 +61,14 @@ memory in your machine (though, unlike SunOS 4.x, there are no restrictions
 on the size of the swap partition that would render part of your memory
 unusable). A full binary installation takes about 60MB in `/usr'.
 
-Some network devices (`le') allow a choice between operating on a UTP
-or a AUI port. Automatic detection of which port is actually connected to
-the wire is not yet fully implemented in this release. This means that
-you may have to specify a `link-layer directive' during the installation
-process. The magic is `link0' to force the use of the UTP port, and `link1'
-to force the use of the AUI port.
+Some network devices (i.e. the built-in `le' interface on sun4m machines)
+allow a choice between operating on a UTP or a AUI port. The `le' driver
+supports automatic detection of the port which is actually connected to
+the wire.
+
+If automatic detection is not available or not working properly in your
+environment, you may have to specify the type connection using the
+`media' parameter of ifconfig(8). During installation, you'll get the
+opportunity to specify the appropriate medium. Use ``10base5/AUI''
+to select the AUI connector, or ``10baseT/UTP'' to select the UTP connector.
 
