@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_defs.h,v 1.4.2.1 2002/06/28 11:32:00 lukem Exp $	*/
+/*	$NetBSD: ns_defs.h,v 1.4.2.2 2002/11/15 00:48:29 lukem Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
@@ -471,7 +471,7 @@ struct qinfo {
 			q_cmsglen,	/* len of cname message */
 			q_cmsgsize;	/* allocated size of cname message */
 	int16_t		q_dfd;		/* UDP file descriptor */
-	int16_t		q_udpsize;	/* UDP message size */
+	u_int16_t	q_udpsize;	/* UDP message size */
 	int		q_distance;	/* distance this query is from the
 					 * original query that the server
 					 * received. */
