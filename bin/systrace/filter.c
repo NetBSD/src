@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.9 2002/10/08 14:49:23 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.10 2002/10/10 14:06:30 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.9 2002/10/08 14:49:23 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.10 2002/10/10 14:06:30 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,7 +146,7 @@ filter_predicate(struct intercept_pid *icpid, struct predicate *pdc)
 	if (pdc->p_flags & PREDIC_UID)
 		res = icpid->uid == pdc->p_uid;
 	else if (pdc->p_flags & PREDIC_GID)
-		res = icpid->uid == pdc->p_uid;
+		res = icpid->gid == pdc->p_gid;
 
 	return (negative ? !res : res);
 }
