@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.10 2001/06/19 07:37:17 jdolecek Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.11 2001/07/08 16:14:22 abs Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -83,7 +83,7 @@ spp_trace(act, ostate, sp, si, req)
 	int req;
 {
 #ifdef INET
-#ifdef TCPDEBUG
+#ifdef SPPDEBUG
 	u_short seq, ack, len, alo;
 	unsigned long iptime();
 	int flags;
