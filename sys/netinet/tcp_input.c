@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.44 1998/02/19 02:36:42 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.45 1998/03/19 22:29:33 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1530,6 +1530,7 @@ tcp_xmit_timer(tp, rtt)
 	short rtt;
 {
 	register short delta;
+	short rttmin;
 
 	tcpstat.tcps_rttupdated++;
 	--rtt;
@@ -1582,8 +1583,11 @@ tcp_xmit_timer(tp, rtt)
 	 * statistical, we have to test that we don't drop below
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
-	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
-	    rtt + 2, TCPTV_REXMTMAX);
+	if (tp->t_rttmin > rtt + 2)
+		rttmin = tp->t_rttmin;
+	else
+		rttmin = rtt + 2;
+	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp), rttmin, TCPTV_REXMTMAX);
 	
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;
