@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.1 2000/07/05 11:44:03 ad Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.2 2000/07/05 13:51:32 ad Exp $	*/
 
 /********************************************************************\
  *
@@ -20,11 +20,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160.c,v 1.1 2000/07/05 11:44:03 ad Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.2 2000/07/05 13:51:32 ad Exp $");
 #endif	/* not lint */
 
 /* header files */
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include "namespace.h"
 
@@ -110,8 +111,7 @@ __RCSID("$NetBSD: rmd160.c,v 1.1 2000/07/05 11:44:03 ad Exp $");
 /********************************************************************/
 
 void
-RMD160Init(context)
-	RMD160_CTX *context;
+RMD160Init(RMD160_CTX *context)
 {
 
 	/* ripemd-160 initialization constants */
@@ -127,9 +127,7 @@ RMD160Init(context)
 /********************************************************************/
 
 void
-RMD160Transform(state, block)
-	u_int32_t state[5];
-	const u_int32_t block[16];
+RMD160Transform(u_int32_t state[5], const u_int32_t block[16])
 {
 	u_int32_t aa = state[0],  bb = state[1],  cc = state[2],
 	    dd = state[3],  ee = state[4];
@@ -328,10 +326,7 @@ RMD160Transform(state, block)
 /********************************************************************/
 
 void
-RMD160Update(context, data, nbytes)
-	RMD160_CTX *context;
-	const u_char *data;
-	u_int32_t nbytes;
+RMD160Update(RMD160_CTX *context, const u_char *data, u_int32_t nbytes)
 {
 	u_int32_t X[16];
 	u_int32_t ofs = 0;
@@ -388,9 +383,7 @@ RMD160Update(context, data, nbytes)
 /********************************************************************/
 
 void
-RMD160Final(digest, context)
-	u_char digest[20];
-	RMD160_CTX *context;
+RMD160Final(u_char digest[20], RMD160_CTX *context)
 {
 	u_int32_t i;
 	u_int32_t X[16];
