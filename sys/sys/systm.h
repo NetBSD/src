@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.82 1998/10/03 19:25:37 eeh Exp $	*/
+/*	$NetBSD: systm.h,v 1.83 1998/10/29 21:22:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -306,7 +306,10 @@ void	kmstartup __P((void));
 #include <lib/libkern/libkern.h>
 #endif
 
+#ifdef _KERNEL
 void	Debugger __P((void));	/* XXX in DDB only */
+void	console_debugger __P((void));
+#endif
 
 #ifdef SYSCALL_DEBUG
 void scdebug_call __P((struct proc *, register_t, register_t[]));
