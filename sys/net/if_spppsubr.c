@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.20 2001/01/17 00:30:52 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.21 2001/03/25 19:39:21 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -1064,11 +1064,7 @@ sppp_pick(struct ifnet *ifp)
  * Process an ioctl request.  Called on low priority level.
  */
 int
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 300003
 sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
-#else
-sppp_ioctl(struct ifnet *ifp, int cmd, void *data)
-#endif
 {
 	struct ifreq *ifr = (struct ifreq*) data;
 	struct sppp *sp = (struct sppp*) ifp;
