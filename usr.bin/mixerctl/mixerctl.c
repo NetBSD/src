@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.10 1998/04/27 16:52:03 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ main(argc, argv)
 	mixer_ctrl_t val;
 	int ndev;
 
-	file = getenv("MIXERUNIT");
+	file = getenv("MIXERDEVICE");
 	if (file == 0)
 		file = "/dev/mixer";
 
