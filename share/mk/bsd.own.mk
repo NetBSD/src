@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.202 2001/10/28 02:03:00 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.203 2001/10/31 16:25:21 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -40,13 +40,13 @@ USETOOLS?=	no
 .BEGIN:
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
 	@false
-.elif ${USETOOLS} == "no" && defined(REQUIRETOOLS)
+.elif defined(REQUIRETOOLS) && defined(USE_NEW_TOOLCHAIN) && ${USETOOLS} == "no"
 .BEGIN:
-	@echo "USETOOLS=no, but this component requires a host toolchain to build"
+	@echo "USETOOLS=no, but this component requires a version-specific host toolchain"
 	@false
 .endif
 
-.if ${USETOOLS} == "yes" && defined(USE_NEW_TOOLCHAIN)
+.if ${USETOOLS} == "yes"
 # Define default locations for common tools.
 .if !defined(TOOLDIR)
 .BEGIN:
