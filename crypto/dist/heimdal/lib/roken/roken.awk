@@ -1,4 +1,4 @@
-# $Id: roken.awk,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $
+# $Id: roken.awk,v 1.1.1.4 2001/06/19 22:08:25 assar Exp $
 
 BEGIN {
 	print "#include <stdio.h>"
@@ -13,13 +13,6 @@ BEGIN {
 	print "puts(\"#ifndef __ROKEN_H__\");"
 	print "puts(\"#define __ROKEN_H__\");"
 	print "puts(\"\");"
-}
-END {
-	print "puts(\"#define ROKEN_VERSION \" VERSION );"
-	print "puts(\"\");"
-	print "puts(\"#endif /* __ROKEN_H__ */\");"
-	print "return 0;"
-	print "}"
 }
 
 $1 == "\#ifdef" || $1 == "\#ifndef" || $1 == "\#if" || $1 == "\#else" || $1 == "\#elif" || $1 == "\#endif" || $1 == "#ifdef" || $1 == "#ifndef" || $1 == "#if" || $1 == "#else" || $1 == "#elif" || $1 == "#endif" {
@@ -36,4 +29,12 @@ $1 == "\#ifdef" || $1 == "\#ifndef" || $1 == "\#if" || $1 == "\#else" || $1 == "
 		s = s x;
 	}
 	print "puts(\"" s "\");"
+}
+
+END {
+	print "puts(\"#define ROKEN_VERSION \" VERSION );"
+	print "puts(\"\");"
+	print "puts(\"#endif /* __ROKEN_H__ */\");"
+	print "return 0;"
+	print "}"
 }

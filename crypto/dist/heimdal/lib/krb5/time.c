@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: time.c,v 1.1.1.2 2000/08/02 19:59:41 assar Exp $");
+RCSID("$Id: time.c,v 1.1.1.3 2001/06/19 22:08:23 assar Exp $");
 
 /*
  * return ``corrected'' time in `timeret'.
@@ -75,5 +75,13 @@ krb5_format_time(krb5_context context, time_t t,
     else
 	tm = localtime(&t);
     strftime(s, len, include_time ? context->time_fmt : context->date_fmt, tm);
+    return 0;
+}
+
+krb5_error_code
+krb5_string_to_deltat(const char *string, krb5_deltat *deltat)
+{
+    if((*deltat = parse_time(string, "s")) == -1)
+	return EINVAL;
     return 0;
 }

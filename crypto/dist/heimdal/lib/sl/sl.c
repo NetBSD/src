@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: sl.c,v 1.1.1.3 2001/02/11 13:51:50 assar Exp $");
+RCSID("$Id: sl.c,v 1.1.1.4 2001/06/19 22:08:34 assar Exp $");
 #endif
 
 #include "sl_locl.h"
@@ -76,8 +76,8 @@ mandoc_template(SL_cmd *cmds,
     t = time(NULL);
     strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
     printf(".Dd %s\n", timestr);
-    p = strrchr(__progname, '/');
-    if(p) p++; else p = __progname;
+    p = strrchr(getprogname(), '/');
+    if(p) p++; else p = getprogname();
     strncpy(cmd, p, sizeof(cmd));
     cmd[sizeof(cmd)-1] = '\0';
     strupr(cmd);

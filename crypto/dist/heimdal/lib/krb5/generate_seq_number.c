@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: generate_seq_number.c,v 1.1.1.2 2000/08/02 19:59:27 assar Exp $");
+RCSID("$Id: generate_seq_number.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
 
 krb5_error_code
 krb5_generate_seq_number(krb5_context context,
@@ -57,6 +57,6 @@ krb5_generate_seq_number(krb5_context context,
 	q = (q << 8) | *p;
     q &= 0xffffffff;
     *seqno = q;
-    krb5_free_keyblock_contents (context, subkey);
+    krb5_free_keyblock (context, subkey);
     return 0;
 }

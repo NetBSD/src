@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$Id: get.c,v 1.1.1.3 2001/02/11 13:51:32 assar Exp $");
+RCSID("$Id: get.c,v 1.1.1.4 2001/06/19 22:08:08 assar Exp $");
 
 struct get_entry_data {
     void (*header)(void);
@@ -270,7 +270,7 @@ getit(const char *name, int terse_flag, int argc, char **argv)
     argv += optind;
 
     for(i = 0; i < argc; i++)
-	ret = foreach_principal(argv[i], do_get_entry, &data);
+	ret = foreach_principal(argv[i], do_get_entry, "get", &data);
     return 0;
 usage:
     arg_printusage (args, num_args, name, "principal...");
