@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.3 1998/06/30 00:09:36 thorpej Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.4 1999/03/19 03:30:35 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -87,12 +87,7 @@ struct ofisa_dma_desc {
  * macros from this (or other) headers.  See those attachments'
  * files for more details.
  */
-#if (arm32 != 1)
-ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
-#endif
-#if arm32
-#include <arm32/ofw/ofisa_machdep.h>
-#endif
+#include <machine/ofisa_machdep.h>
 
 int	ofisa_reg_count __P((int));
 int	ofisa_reg_get __P((int, struct ofisa_reg_desc *, int));
