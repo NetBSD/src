@@ -260,6 +260,7 @@ BFD32_BACKENDS = \
 	sparcnetbsd.o \
 	sunos.o \
 	tekhex.o \
+	vaxnetbsd.o \
 	versados.o \
 	xcofflink.o
 
@@ -357,6 +358,7 @@ BFD32_BACKENDS_CFILES = \
 	sparcnetbsd.c \
 	sunos.c \
 	tekhex.c \
+	vaxnetbsd.c \
 	versados.c \
 	xcofflink.c
 
