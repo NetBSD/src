@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.19 1999/09/19 22:57:24 ad Exp $ */
+/* $NetBSD: vga.c,v 1.20 1999/09/29 17:29:24 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -876,6 +876,8 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	if (scr->pcs.active) {
 		if (dstrow == 0 && (srcrow + nrows == scr->pcs.type->nrows)) {
 #ifdef PCDISPLAY_SOFTCURSOR
+			int cursoron = scr->pcs.cursoron;
+
 			pcdisplay_cursor(&scr->pcs, 0, scr->pcs.vc_crow, 
 			    scr->pcs.vc_ccol);
 #endif
@@ -895,7 +897,7 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 			vga_6845_write(&scr->cfg->hdl, startadrl,
 				       scr->pcs.dispoffset >> 1);
 #ifdef PCDISPLAY_SOFTCURSOR
-			pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
+			pcdisplay_cursor(&scr->pcs, cursoron,
 			    scr->pcs.vc_crow, scr->pcs.vc_ccol);
 #endif
 		} else {
