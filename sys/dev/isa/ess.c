@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.15 1998/08/09 04:58:08 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.16 1998/08/09 04:59:55 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1071,9 +1071,9 @@ ess_set_params(addr, setmode, usemode, play, rec)
 	/*
 	 * The ES1887 manual (page 39, `Full-Duplex DMA Mode') claims that in
 	 * full-duplex operation the sample rates must be the same for both
-	 * channels.  This appears appears to be false; the only bit in common
-	 * is the clock source selection.  However, we'll be conservative
-	 * here.  - mycroft
+	 * channels.  This appears to be false; the only bit in common is the
+	 * clock source selection.  However, we'll be conservative here.
+	 * - mycroft
 	 */
 	if (play->sample_rate != rec->sample_rate) {
 		if ((usemode | setmode) == AUMODE_PLAY) {
