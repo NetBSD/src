@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.163 2003/01/16 16:10:44 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.164 2003/01/16 16:57:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -754,41 +754,49 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	splx(s);
 }
 
+/*
+ * Tell all CPUs other than the current one to enter the PROM idle loop.
+ */
 void
 mp_pause_cpus()
 {
 	int n;
-
-	if (cpus == NULL)
-		return;
-
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (CPU_NOTREADY(cpi))
-			continue;
-
-		cpi->msg_lev15.tag = XPMSG15_PAUSECPU;
-		raise_ipi(cpi,15);	/* high priority intr */
-	}
-}
-
-void
-mp_resume_cpus()
-{
-	int n;
-
-	if (cpus == NULL)
-		return;
-
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
 
-		/* tell it to continue */
-		cpi->flags &= ~CPUFLG_PAUSED;
+		/*
+		 * This PROM utility will put the OPENPROM_MBX_ABORT
+		 * message (0xfc) in the target CPU's mailbox and then
+		 * send it a level 15 soft interrupt.
+		 */
+		if (prom_cpuidle(cpi->node) != 0)
+			printf("cpu%d could not be paused\n", cpi->ci_cpuid);
+	}
+}
+
+int cpunum(void); int cpunum(void) {return cpuinfo.ci_cpuid;}
+/*
+ * Resume all idling CPUs.
+ */
+void
+mp_resume_cpus()
+{
+	int n;
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		/*
+		 * This PROM utility makes the target CPU return
+		 * from its prom_cpuidle(0) call (see intr.c:nmi_soft()).
+		 */
+		if (prom_cpuresume(cpi->node) != 0)
+			printf("cpu%d could not be resumed\n", cpi->ci_cpuid);
 	}
 }
 
@@ -808,14 +816,54 @@ mp_halt_cpus()
 
 		/*
 		 * This PROM utility will put the OPENPROM_MBX_STOP
-		 * message (0xfb) in the CPU's mailbox and then send
-		 * it a level 15 soft interrupt.
+		 * message (0xfb) in the target CPU's mailbox and then
+		 * send it a level 15 soft interrupt.
 		 */
 		r = prom_cpustop(cpi->node);
 		printf("cpu%d %shalted\n", cpi->ci_cpuid,
 			r == 0 ? "" : "(boot CPU?) can not be ");
 	}
 }
+
+#if defined(DDB)
+void
+mp_pause_cpus_ddb()
+{
+	int n;
+
+	if (cpus == NULL)
+		return;
+
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (CPU_NOTREADY(cpi))
+			continue;
+
+		cpi->msg_lev15.tag = XPMSG15_PAUSECPU;
+		raise_ipi(cpi,15);	/* high priority intr */
+	}
+}
+
+void
+mp_resume_cpus_ddb()
+{
+	int n;
+
+	if (cpus == NULL)
+		return;
+
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		/* tell it to continue */
+		cpi->flags &= ~CPUFLG_PAUSED;
+	}
+}
+#endif /* DDB */
 #endif /* MULTIPROCESSOR */
 
 /*
