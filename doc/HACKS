@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.23 2003/11/06 00:37:14 he Exp $
+# $NetBSD: HACKS,v 1.24 2003/11/08 17:21:15 ragge Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -102,6 +102,15 @@ port	vax
 	file	lib/libbz2/Makefile
 	descr
 		libbz2 is mis-compiled with optimization with GCC 2.95.3
+		on VAX.  -O0 works around this problem.
+	kcah
+
+	hack	gawk
+	mdate	8 Nov 2003
+	who	ragge
+	file	gnu/usr.bin/gawk/Makefile
+	descr
+		gawk is mis-compiled with optimization with GCC 2.95.3
 		on VAX.  -O0 works around this problem.
 	kcah
 
