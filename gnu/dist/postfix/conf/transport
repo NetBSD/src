@@ -1,4 +1,3 @@
-# 
 # TRANSPORT(5)                                         TRANSPORT(5)
 # 
 # NAME
@@ -149,9 +148,9 @@
 #        command after a configuration change.
 # 
 #        parent_domain_matches_subdomains
-#               List  of Postfix features that use domain.name pat-
-#               terns  to  match  sub.domain.name  (as  opposed  to
-#               requiring .domain.name patterns).
+#               List  of  Postfix features that use domain.tld pat-
+#               terns  to  match  sub.domain.tld  (as  opposed   to
+#               requiring .domain.tld patterns).
 # 
 #        transport_maps
 #               List of transport lookup tables.
@@ -182,5 +181,4 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                                 1
-# 
+#                                                      TRANSPORT(5)

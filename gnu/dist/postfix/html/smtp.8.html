@@ -1,5 +1,4 @@
 <html> <head> </head> <body> <pre>
-
 SMTP(8)                                                   SMTP(8)
 
 <b>NAME</b>
@@ -121,10 +120,10 @@ SMTP(8)                                                   SMTP(8)
               Numerical source network address to  bind  to  when
               making a connection.
 
-       <b>smtp</b><i>_</i><b>break</b><i>_</i><b>lines</b>
-              Break  lines  &gt;  <b>$line</b><i>_</i><b>length</b><i>_</i><b>limit</b>  into  multiple
-              shorter lines.  Some SMTP servers misbehave on long
-              lines.
+       <b>smtp</b><i>_</i><b>line</b><i>_</i><b>length</b><i>_</i><b>limit</b>
+              Length  limit  for SMTP message content lines. Zero
+              means no limit.  Some  SMTP  servers  misbehave  on
+              long lines.
 
        <b>smtp</b><i>_</i><b>skip</b><i>_</i><b>4xx</b><i>_</i><b>greeting</b>
               Skip  servers that greet us with a 4xx status code.
@@ -147,7 +146,7 @@ SMTP(8)                                                   SMTP(8)
               turned on.
 
 <b>Authentication</b> <b>controls</b>
-       <b>smtp</b><i>_</i><b>enable</b><i>_</i><b>sasl</b><i>_</i><b>auth</b>
+       <b>smtp</b><i>_</i><b>sasl</b><i>_</i><b>auth</b><i>_</i><b>enable</b>
               Enable per-session authentication as per  <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC  2554</a>
               (SASL).   By default, Postfix is built without SASL
               support.
@@ -250,6 +249,5 @@ SMTP(8)                                                   SMTP(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                                1
-
+                                                          SMTP(8)
 </pre> </body> </html>

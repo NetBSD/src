@@ -265,8 +265,8 @@ to route mail for multiple domains to their respective mail retrieval
 
     /etc/postfix/transport:
 
-	domain1.name		lmtp1:unix:/path/name
-	domain2.name		lmtp2:lmtp2host
+	domain1.tld		lmtp1:unix:/path/name
+	domain2.tld		lmtp2:lmtp2host
 
     /etc/postfix/master.cf:
 
@@ -466,8 +466,8 @@ Cyrus 1.6.24 LMTP server:
 
     /etc/postfix/transport:
 
-	domain1.name		lmtp1:lmtp1host
-	domain2.name		lmtp2:lmtp2host
+	domain1.tld		lmtp1:lmtp1host
+	domain2.tld		lmtp2:lmtp2host
 
     /etc/postfix/master.cf:
 

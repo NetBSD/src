@@ -124,7 +124,7 @@ void    mkmap_close(MKMAP *mkmap)
 /* mkmap_open - create or truncate database */
 
 MKMAP  *mkmap_open(const char *type, const char *path,
-		   int open_flags, int dict_flags)
+		           int open_flags, int dict_flags)
 {
     MKMAP  *mkmap;
     MKMAP_OPEN_INFO *mp;
@@ -164,7 +164,8 @@ MKMAP  *mkmap_open(const char *type, const char *path,
      * needed because the underlying routines read as well as write.
      */
     mkmap->dict = mkmap->open(path, open_flags, dict_flags);
-    mkmap->dict->fd = -1;			/* XXX just in case */
+    mkmap->dict->lock_fd = -1;			/* XXX just in case */
+    mkmap->dict->stat_fd = -1;			/* XXX just in case */
     mkmap->dict->flags |= DICT_FLAG_DUP_WARN;
     return (mkmap);
 }

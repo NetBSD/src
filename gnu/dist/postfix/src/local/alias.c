@@ -113,9 +113,9 @@ static uid_t dict_owner(char *table)
      */
     if ((dict = dict_handle(table)) == 0)
 	msg_panic("%s: can't find dictionary: %s", myname, table);
-    if (dict->fd < 0)
+    if (dict->stat_fd < 0)
 	return (0);
-    if (fstat(dict->fd, &st) < 0)
+    if (fstat(dict->stat_fd, &st) < 0)
 	msg_fatal("%s: fstat dictionary %s: %m", myname, table);
     return (st.st_uid);
 }

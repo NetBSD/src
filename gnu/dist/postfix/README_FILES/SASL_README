@@ -144,9 +144,9 @@ Testing SASL authentication in the Postfix SMTP server
 To test the whole mess, connect to the SMTP server, and you should
 be able to have a conversation like this:
 
-    220 server.host.name ESMTP Postfix
-    EHLO client.host.name
-    250-server.host.name
+    220 server.host.tld ESMTP Postfix
+    EHLO client.host.tld
+    250-server.host.tld
     250-PIPELINING
     250-SIZE 10240000
     250-ETRN

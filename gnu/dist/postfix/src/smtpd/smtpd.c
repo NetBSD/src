@@ -181,9 +181,9 @@
 /* .ad
 /* .fi
 /* .IP \fBparent_domain_matches_subdomains\fR
-/*	List of Postfix features that use \fIdomain.name\fR patterns
-/*	to match \fIsub.domain.name\fR (as opposed to
-/*	requiring \fI.domain.name\fR patterns).
+/*	List of Postfix features that use \fIdomain.tld\fR patterns
+/*	to match \fIsub.domain.tld\fR (as opposed to
+/*	requiring \fI.domain.tld\fR patterns).
 /* .IP \fBsmtpd_client_restrictions\fR
 /*	Restrict what clients may connect to this mail system.
 /* .IP \fBsmtpd_helo_required\fR
@@ -617,8 +617,7 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
      * Report trouble. Log a warning only if we are going to sleep+reject so
      * that attackers can't flood our logfiles.
      */
-    if ((naddr < 1 && !allow_empty_addr)
-	|| naddr > 1
+    if (naddr > 1
 	|| (strict_rfc821 && (non_addr || *STR(arg->vstrval) != '<'))) {
 	msg_warn("Illegal address syntax from %s in %s command: %s",
 		 state->namaddr, state->where, STR(arg->vstrval));
@@ -636,6 +635,16 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
     else
 	vstring_strcpy(arg->vstrval, "");
     arg->strval = STR(arg->vstrval);
+
+    /*
+     * Report trouble. Log a warning only if we are going to sleep+reject so
+     * that attackers can't flood our logfiles.
+     */
+    if (arg->strval[0] == 0 && !allow_empty_addr) {
+	msg_warn("Illegal address syntax from %s in %s command: %s",
+		 state->namaddr, state->where, STR(arg->vstrval));
+	err = "501 Bad address syntax";
+    }
 
     /*
      * Cleanup.
@@ -981,7 +990,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	if (first) {
 	    if (strncmp(start + strspn(start, ">"), "From ", 5) == 0) {
 		rec_fprintf(state->cleanup, curr_rec_type,
-			    "Mailbox-Line: %s", start);
+			    "X-Mailbox-Line: %s", start);
 		continue;
 	    }
 	    first = 0;
@@ -1038,7 +1047,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	smtpd_chat_reply(state, "554 Error: too many hops");
     } else if ((state->err & CLEANUP_STAT_CONT) != 0) {
 	state->error_mask |= MAIL_ERROR_POLICY;
-	smtpd_chat_reply(state, "552 Error: %s", LEN(why) ?
+	smtpd_chat_reply(state, "550 Error: %s", LEN(why) ?
 			 STR(why) : "content rejected");
     } else if ((state->err & CLEANUP_STAT_WRITE) != 0) {
 	state->error_mask |= MAIL_ERROR_RESOURCE;
@@ -1295,6 +1304,7 @@ typedef struct SMTPD_CMD {
 } SMTPD_CMD;
 
 #define SMTPD_CMD_FLAG_LIMIT    (1<<0)	/* limit usage */
+#define SMTPD_CMD_FLAG_HEADER	(1<<1)	/* RFC 2822 mail header */
 
 static SMTPD_CMD smtpd_cmd_table[] = {
     "HELO", helo_cmd, SMTPD_CMD_FLAG_LIMIT,
@@ -1312,6 +1322,9 @@ static SMTPD_CMD smtpd_cmd_table[] = {
     "VRFY", vrfy_cmd, SMTPD_CMD_FLAG_LIMIT,
     "ETRN", etrn_cmd, SMTPD_CMD_FLAG_LIMIT,
     "QUIT", quit_cmd, 0,
+    "Received:", 0, SMTPD_CMD_FLAG_HEADER,
+    "Subject:", 0, SMTPD_CMD_FLAG_HEADER,
+    "From:", 0, SMTPD_CMD_FLAG_HEADER,
     0,
 };
 
@@ -1393,6 +1406,12 @@ static void smtpd_proto(SMTPD_STATE *state)
 		state->error_count++;
 		continue;
 	    }
+	    if (cmdp->flags & SMTPD_CMD_FLAG_HEADER) {
+		msg_warn("%s sent message header instead of SMTP command: %.100s",
+			 state->namaddr, vstring_str(state->buffer));
+		smtpd_chat_reply(state, "221 Error: I can break rules, too. Goodbye.");
+		break;
+	    }
 	    if (state->access_denied && cmdp->action != quit_cmd) {
 		smtpd_chat_reply(state, "503 Error: access denied for %s",
 				 state->namaddr);	/* RFC 2821 Sec 3.1 */
@@ -1405,7 +1424,6 @@ static void smtpd_proto(SMTPD_STATE *state)
 	    if ((cmdp->flags & SMTPD_CMD_FLAG_LIMIT)
 		&& state->junk_cmds++ > var_smtpd_junk_cmd_limit)
 		state->error_count++;
-
 	    if (cmdp->action == quit_cmd)
 		break;
 	}

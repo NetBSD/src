@@ -64,6 +64,12 @@
 /*	List of domains that this machine considers local.
 /* .IP \fBmyorigin\fR
 /*	The domain that locally-posted mail appears to come from.
+/* .IP \fBresolve_unquoted_address\fR
+/*	When resolving an address, do not quote the address localpart as
+/*	per RFC 822, so that additional \fB@\fR, \fB%\fR or \fB!\fR
+/*	characters remain visible. This is technically incorrect, but 
+/*	allows us to stop relay attacks when forwarding mail to a Sendmail
+/*	primary MX host.
 /* .SH Rewriting
 /* .ad
 /* .fi
@@ -93,9 +99,9 @@
 /*	Syntax is \fItransport\fR:\fInexthop\fR; see \fBtransport\fR(5)
 /*	for details. The :\fInexthop\fR part is optional.
 /* .IP \fBparent_domain_matches_subdomains\fR
-/*	List of Postfix features that use \fIdomain.name\fR patterns
-/*	to match \fIsub.domain.name\fR (as opposed to
-/*	requiring \fI.domain.name\fR patterns).
+/*	List of Postfix features that use \fIdomain.tld\fR patterns
+/*	to match \fIsub.domain.tld\fR (as opposed to
+/*	requiring \fI.domain.tld\fR patterns).
 /* .IP \fBrelayhost\fR
 /*	The default host to send non-local mail to when no entry is matched
 /*	in the \fBtransport\fR(5) table.
@@ -167,6 +173,7 @@ bool    var_append_dot_mydomain;
 bool    var_append_at_myorigin;
 bool    var_percent_hack;
 char   *var_local_transport;
+int     var_resolve_dequoted;
 
 /* rewrite_service - read request and send reply */
 
@@ -234,6 +241,7 @@ int     main(int argc, char **argv)
 	VAR_APP_DOT_MYDOMAIN, DEF_APP_DOT_MYDOMAIN, &var_append_dot_mydomain,
 	VAR_APP_AT_MYORIGIN, DEF_APP_AT_MYORIGIN, &var_append_at_myorigin,
 	VAR_PERCENT_HACK, DEF_PERCENT_HACK, &var_percent_hack,
+	VAR_RESOLVE_DEQUOTED, DEF_RESOLVE_DEQUOTED, &var_resolve_dequoted,
 	0,
     };
 
