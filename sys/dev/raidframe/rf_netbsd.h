@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.13 2001/10/04 15:58:54 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.14 2004/03/07 22:15:19 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/pool.h>
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -57,6 +58,31 @@ struct raidcinfo {
 #endif
 };
 
+
+/* a little structure to serve as a container for all the various
+   global pools used in RAIDframe */
+
+struct RF_Pools_s {
+	struct pool alloclist;   /* AllocList */
+	struct pool asm_hdr;     /* Access Stripe Map Header */
+	struct pool asmap;       /* Access Stripe Map */
+	struct pool callback;    /* Callback descriptors */
+	struct pool cbuf;        /* Component buffers */
+	struct pool dagh;        /* DAG headers */
+	struct pool daglist;     /* DAG lists */
+	struct pool dqd;         /* Disk Queue Data */
+	struct pool funclist;    /* Function Lists */
+	struct pool mcpair;      /* Mutex/Cond Pairs */
+	struct pool pda;         /* Physical Disk Access structures */
+	struct pool rad;         /* Raid Access Descriptors */
+	struct pool recond;      /* reconstruction descriptors */
+	struct pool reconbuffer; /* reconstruction buffer (header) pool */
+	struct pool revent;      /* reconstruct events */
+	struct pool stripelock;  /* StripeLock */
+};
+
+extern struct RF_Pools_s rf_pools;
+void rf_pool_init(struct pool *, size_t, char *, size_t, size_t);
 
 
 /* XXX probably belongs in a different .h file. */
