@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.78 1999/03/14 10:31:43 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.79 1999/03/14 10:34:18 mycroft Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -236,7 +236,7 @@ pckbd*	at pckbc?		# PC keyboard
 #pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
-vga*		at pci?
+#vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
