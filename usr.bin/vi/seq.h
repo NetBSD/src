@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)seq.h	8.7 (Berkeley) 12/2/93
+ *	from: @(#)seq.h	8.7 (Berkeley) 12/2/93
+ *	$Id: seq.h,v 1.2 1994/01/24 06:39:16 cgd Exp $
  */
 
 /*

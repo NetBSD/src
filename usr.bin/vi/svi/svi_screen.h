@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)svi_screen.h	8.30 (Berkeley) 12/22/93
+ *	from: @(#)svi_screen.h	8.30 (Berkeley) 12/22/93
+ *	$Id: svi_screen.h,v 1.2 1994/01/24 06:41:19 cgd Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tag.h	8.11 (Berkeley) 11/22/93
+ *	from: @(#)tag.h	8.11 (Berkeley) 11/22/93
+ *	$Id: tag.h,v 1.2 1994/01/24 06:40:58 cgd Exp $
  */
 
 struct _tagf {				/* Tag file. */

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cut.h	8.11 (Berkeley) 1/11/94
+ *	from: @(#)cut.h	8.11 (Berkeley) 1/11/94
+ *	$Id: cut.h,v 1.2 1994/01/24 06:38:48 cgd Exp $
  */
 
 typedef struct _texth TEXTH;		/* TEXT list head structure. */

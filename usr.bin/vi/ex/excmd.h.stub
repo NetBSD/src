@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)excmd.h.stub	8.44 (Berkeley) 12/29/93
+ *	from: @(#)excmd.h.stub	8.44 (Berkeley) 12/29/93
+ *	$Id: excmd.h.stub,v 1.2 1994/01/24 06:40:54 cgd Exp $
  */
 
 /* Ex command structure. */
