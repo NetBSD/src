@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.15 1994/12/03 23:30:45 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.16 1994/12/04 19:40:14 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.15 1994/12/03 23:30:45 briggs Exp $
+ * $Id: if_ae.c,v 1.16 1994/12/04 19:40:14 briggs Exp $
  */
  
 #include "ae.h"
@@ -259,7 +259,6 @@ ae_size_card_memory(sc)
 	if (size == 0)
 	  return 0;
 
-	sc->smem_size = size;
 	return size;
 }
 
