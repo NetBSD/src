@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.67 2002/07/27 22:58:07 christos Exp $       */
+/*     $NetBSD: login.c,v 1.68 2002/07/30 14:37:38 itojun Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.67 2002/07/27 22:58:07 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.68 2002/07/30 14:37:38 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -911,7 +911,6 @@ update_db(int quietlog)
 		socklen_t len = sizeof(ss);
 		(void)getpeername(STDIN_FILENO, (struct sockaddr *)&ss, &len);
 	}
-	printf("from host %s\n", hostname);
 	(void)gettimeofday(&now, NULL);
 #ifdef SUPPORT_UTMPX
 	doutmpx();
