@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.3 2001/11/13 06:26:10 lukem Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.4 2002/03/13 15:21:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.3 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.4 2002/03/13 15:21:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ const struct wskbd_consops zskbd_consops = {
 static int zskbd_sendchar __P((void *, u_char));
 
 const struct wskbd_mapdata zskbd_keymapdata = {
-	zskbd_keydesctab,
+	lkkbd_keydesctab,
 #ifdef ZSKBD_LAYOUT
 	ZSKBD_LAYOUT,
 #else
