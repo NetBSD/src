@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.9 1998/01/05 22:00:59 cgd Exp $	*/
+/*	$NetBSD: symbol.c,v 1.10 1998/08/26 14:39:47 matt Exp $	*/
 
 /*
  *	- symbol table routines
@@ -24,6 +24,7 @@ symbol	*edata_symbol;		/* the symbol _edata */
 symbol	*etext_symbol;		/* the symbol _etext */
 symbol	*end_symbol;		/* the symbol _end */
 symbol	*got_symbol;		/* the symbol __GLOBAL_OFFSET_TABLE_ */
+symbol	*plt_symbol;		/* the symbol __PROCEDURE_LINKAGE_TABLE_ */
 symbol	*dynamic_symbol;	/* the symbol __DYNAMIC */
 
 void
@@ -39,16 +40,21 @@ symtab_init(relocatable_output)
 #define END_SYM		"_end"
 #define DYN_SYM		"__DYNAMIC"
 #define GOT_SYM		"__GLOBAL_OFFSET_TABLE_"
+#define PLT_SYM		"__PROCEDURE_LINKAGE_TABLE_"
 #else
 #define ETEXT_SYM	"etext"
 #define EDATA_SYM	"edata"
 #define END_SYM		"end"
 #define DYN_SYM		"_DYNAMIC"
 #define GOT_SYM		"_GLOBAL_OFFSET_TABLE_"
+#define PLT_SYM		"_PROCEDURE_LINKAGE_TABLE_"
 #endif
 
 	dynamic_symbol = getsym(DYN_SYM);
 	dynamic_symbol->defined = relocatable_output?N_UNDF:(N_DATA | N_EXT);
+
+	plt_symbol = getsym(PLT_SYM);
+	plt_symbol->defined = relocatable_output?N_UNDF:(N_DATA | N_EXT);
 
 	got_symbol = getsym(GOT_SYM);
 	got_symbol->defined = N_DATA | N_EXT;
