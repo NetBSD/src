@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2000/07/29 11:11:53 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -153,7 +153,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
+		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 	printf(" -- CHECK AND RESET THE DATE!\n");
