@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.23 2003/09/07 04:24:06 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.24 2004/05/08 08:38:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.23 2003/09/07 04:24:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.24 2004/05/08 08:38:36 minoura Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.23 2003/09/07 04:24:06 isaki Exp $");
 
 #include <arch/x68k/dev/dmacvar.h>
 #include <arch/x68k/dev/intiovar.h>
-#include <arch/x68k/dev/opmreg.h>
+#include <arch/x68k/dev/opmvar.h>
 
 #include <arch/x68k/dev/vsvar.h>
 
