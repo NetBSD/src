@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.70 2003/05/14 17:18:36 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.71 2003/05/14 17:28:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.70 2003/05/14 17:18:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.71 2003/05/14 17:28:31 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1042,8 +1042,8 @@ ip_mforward(m, ifp)
 	m->m_pkthdr.csum_flags = 0;
 
 	if (mrtdebug & DEBUG_FORWARD)
-	    log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
-		ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
+		log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
+		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    ((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
@@ -1786,7 +1786,7 @@ tbf_send_packet(vifp, m)
 		(void)ipsec_setsocket(m, NULL);
 #endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
-			  IP_FORWARDING, (struct ip_moptions *)0);
+		    IP_FORWARDING, (struct ip_moptions *)0);
 	} else {
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
@@ -1803,7 +1803,7 @@ tbf_send_packet(vifp, m)
 		(void)ipsec_setsocket(m, NULL);
 #endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
-				  IP_FORWARDING|IP_MULTICASTOPTS, &imo);
+		    IP_FORWARDING|IP_MULTICASTOPTS, &imo);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
