@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:46 christos Exp $
+# $NetBSD: Makefile,v 1.3 2004/12/29 04:16:17 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -31,6 +31,6 @@ MAN=	pam_radius.8
 WARNS=	0
 
 DPADD=	${LIBRADIUS}
-LDADD=	-lradius
+LDADD=	-Wl,-L${LIBRADIUSDIR} -lradius
 
 .include "${.CURDIR}/../mod.mk"
