@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.33 2001/04/07 16:48:17 jhawk Exp $
+.\"	$NetBSD: contents,v 1.34 2001/05/20 23:23:30 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@ A kernel for TX3922 machines.
 .			It Pa netbsd.GENERIC_LAPTOP.gz
 A version of 
 .Li GENERIC
-that has USB, PCMCIA and Cardbus enabled to allow
+that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
 .			It Pa netbsd.GENERIC_TINY.gz
 A version of
@@ -108,7 +108,7 @@ intended to fit on a 5.25"/1.2 MB diskette.
 .			It Pa netbsd.INSTALL_LAPTOP.gz
 A version of 
 .Li INSTALL
-that has USB, PCMCIA and Cardbus enabled to allow
+that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
 .\}
 .
@@ -388,10 +388,7 @@ and in several other places. This set
 .Em must
 be installed if you are installing the system from scratch, but should
 .Em not
-be used if you are upgrading. (If you are upgrading,
-it's recommended that you get a copy of this set and
-.Em carefully
-upgrade your configuration files by hand.)
+be used if you are upgrading.
 .br
 .\" Not MI, but close enough to the same size on all ports...
 .Em 0.1 MB gzipped, 0.6 MB uncompressed
@@ -489,7 +486,7 @@ maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
 These sources are based on XFree86, and tightly track XFree86 releases.
 They are currently equivalent to XFree86 3.3.6.
-Binary sets for the X Window system are distributed with
+Binary sets for the X Window System are distributed with
 .Nx .
 The sets are:
 .(tag xcontrib
