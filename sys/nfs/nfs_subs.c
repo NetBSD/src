@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.142 2005/01/21 14:31:29 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.143 2005/01/25 12:20:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.142 2005/01/21 14:31:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.143 2005/01/25 12:20:32 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1946,12 +1946,23 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			error = EINVAL;
 		}
 
-		/*
-		 *
-		 */
-
 		nmp = VFSTONFS(vp->v_mount);
 		if (error) {
+
+			/*
+			 * despite of the fact that we've updated the file,
+			 * timestamps of the file were not updated as we
+			 * expected.
+			 * it means that the server has incompatible
+			 * semantics of timestamps or (more likely)
+			 * the server time is not precise enough to
+			 * track each modifications.
+			 * in that case, we disable wcc processing.
+			 *
+			 * yes, strictly speaking, we should disable all
+			 * caching.  it's a compromise.
+			 */
+
 			simple_lock(&nmp->nm_slock);
 #if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
