@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.676 2005/01/06 14:56:22 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.677 2005/01/08 04:58:22 ginsbach Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.677 2005/01/06 14:55:37 he Exp 
+ *	NetBSD: pcidevs,v 1.678 2005/01/08 04:53:39 ginsbach Exp 
  */
 
 /*
@@ -3364,8 +3364,8 @@ const struct pci_product pci_products[] = {
 	    "Radeon 9600 XT Secondary",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP_320M,
-	    "Radeon IGP 320M",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_U1,
+	    "Radeon Mobility U1",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_U2,
