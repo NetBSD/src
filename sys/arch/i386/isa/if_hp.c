@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.9 1993/07/13 21:53:06 mycroft Exp $
+ *	$Id: if_hp.c,v 1.10 1993/09/06 18:30:39 mycroft Exp $
  */
 
 /*
@@ -82,6 +82,7 @@
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
+#include "sys/select.h"
 #include "net/bpf.h"
 #include "net/bpfdesc.h"
 #endif
@@ -113,22 +114,22 @@ struct mbuf *hpget ();
  */
 struct hp_softc
   {
-    struct arpcom ns_ac;	/* Ethernet common part */
-#define	ns_if	ns_ac.ac_if	/* network-visible interface */
-#define	ns_addr	ns_ac.ac_enaddr	/* hardware Ethernet address */
+    struct arpcom ns_ac;		/* Ethernet common part */
+#define	ns_if		ns_ac.ac_if	/* network-visible interface */
+#define	ns_addrp	ns_ac.ac_enaddr	/* hardware Ethernet address */
     int ns_flags;
-#define	DSF_LOCK	1	/* block re-entering enstart */
+#define	DSF_LOCK	1		/* block re-entering enstart */
     int ns_oactive;
     int ns_mask;
-    struct prhdr ns_ph;		/* hardware header of incoming packet*/
+    struct prhdr ns_ph;			/* hardware header of incoming packet*/
     u_char ns_pb[2048];
-    u_char ns_txstart;		/* transmitter buffer start */
-    u_char ns_rxstart;		/* receiver buffer start */
-    u_char ns_rxend;		/* receiver buffer end */
-    u_char hp_type;		/* HP board type */
-    u_char hp_irq;		/* interrupt vector */
-    short ns_port;		/* i/o port base */
-    short ns_mode;		/* word/byte mode */
+    u_char ns_txstart;			/* transmitter buffer start */
+    u_char ns_rxstart;			/* receiver buffer start */
+    u_char ns_rxend;			/* receiver buffer end */
+    u_char hp_type;			/* HP board type */
+    u_char hp_irq;			/* interrupt vector */
+    short ns_port;			/* i/o port base */
+    short ns_mode;			/* word/byte mode */
     short ns_rcr;
 #if NBPFILTER > 0
     caddr_t ns_bpf;
@@ -165,12 +166,12 @@ hpprobe (dvp)
 
   /* Extract board address */
   for (i = 0; i < 6; i++)
-    ns->ns_addr[i] = inb (hpc - 0x10 + i);
+    ns->ns_addrp[i] = inb (hpc - 0x10 + i);
   ns->hp_type = inb (hpc - 0x10 + 7);
 
-  if (ns->ns_addr[0] != 0x08 ||
-      ns->ns_addr[1] != 0x00 ||
-      ns->ns_addr[2] != 0x09) {
+  if (ns->ns_addrp[0] != 0x08 ||
+      ns->ns_addrp[1] != 0x00 ||
+      ns->ns_addrp[2] != 0x09) {
     splx (s);
     return 0;
   }
@@ -406,7 +407,7 @@ hpattach (dvp)
   ifp->if_mtu = ETHERMTU;
   printf ("hp%d: %s %d-bit ethernet address %s\n", unit,
 	  hp_id (ns->hp_type), ns->ns_mode & DSDC_WTS ? 32 : 16,
-	  ether_sprintf (ns->ns_addr));
+	  ether_sprintf (ns->ns_addrp));
   ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
   ifp->if_init = hpinit;
   ifp->if_output = ether_output;
@@ -476,7 +477,7 @@ hpinit (unit)
 
   /* set physical address on ethernet */
   for (i = 0; i < 6; i++)
-    outb (hpc + ds1_par0 + i, ns->ns_addr[i]);
+    outb (hpc + ds1_par0 + i, ns->ns_addrp[i]);
 
   /* clr logical address hash filter for now */
   for (i = 0; i < 8; i++)
@@ -846,7 +847,7 @@ hpread (ns, buf, len)
 #endif
 
   if ((ns->ns_if.if_flags & IFF_PROMISC)
-      && bcmp (eh->ether_dhost, ns->ns_addr,
+      && bcmp (eh->ether_dhost, ns->ns_addrp,
 	       sizeof (eh->ether_dhost)) != 0
       && bcmp (eh->ether_dhost, etherbroadcastaddr,
 	       sizeof (eh->ether_dhost)) != 0)
@@ -991,7 +992,7 @@ hpioctl (ifp, cmd, data)
 	    register struct ns_addr *ina = &(IA_SNS (ifa)->sns_addr);
 
 	    if (ns_nullhost (*ina))
-	      ina->x_host = *(union ns_host *) (ns->ns_addr);
+	      ina->x_host = *(union ns_host *) (ns->ns_addrp);
 	    else
 	      {
 		/*
@@ -1001,7 +1002,7 @@ hpioctl (ifp, cmd, data)
 				 */
 		ifp->if_flags &= ~IFF_RUNNING;
 		bcopy ((caddr_t) ina->x_host.c_host,
-		       (caddr_t) ns->ns_addr, sizeof (ns->ns_addr));
+		       (caddr_t) ns->ns_addrp, sizeof (ns->ns_addrp));
 	      }
 	    hpinit (ifp->if_unit);	/* does hp_setaddr() */
 	    break;
@@ -1032,8 +1033,8 @@ hpioctl (ifp, cmd, data)
 
 #ifdef notdef
     case SIOCGHWADDR:
-      bcopy ((caddr_t) ns->ns_addr, (caddr_t) & ifr->ifr_data,
-	     sizeof (ns->ns_addr));
+      bcopy ((caddr_t) ns->ns_addrp, (caddr_t) & ifr->ifr_data,
+	     sizeof (ns->ns_addrp));
       break;
 #endif
 
