@@ -1,0 +1,43 @@
+#	$NetBSD: Makefile.buildboot,v 1.1 1997/02/04 03:51:38 thorpej Exp $
+
+S=		${.CURDIR}/../../../..
+
+.PATH: ${.CURDIR}/../common
+
+PROG=		${PROGAOUT}.lif
+
+SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
+NOMAN=
+STRIP=
+BINMODE=	444
+
+CLEANFILES+=	${PROGAOUT} vers.c vers.o
+
+CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CFLAGS=		-O3 -msoft-float
+
+# no lint here (yet?)
+lint:
+
+${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
+	${MKBOOT_PROG} ${PROGAOUT} ${PROG}
+
+.include <bsd.prog.mk>
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBKERN}
+	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	${COMPILE.c} vers.c
+	${LD} -N -T ${RELOC} -e begin -o ${PROGAOUT} \
+	    ${OBJS} vers.o ${LIBSA} ${LIBKERN}
+	@size ${PROGAOUT}
+	@echo ${PROGAOUT} total size should not exceed 1044480 bytes
