@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.7 1995/03/21 20:54:05 jtc Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.8 1995/04/14 20:34:41 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_float.c,v 1.7 1995/03/21 20:54:05 jtc Exp $";
+static char *rcsid = "$NetBSD: xdr_float.c,v 1.8 1995/04/14 20:34:41 jtc Exp $";
 #endif
 
 /*
@@ -163,10 +163,6 @@ xdr_float(xdrs, fp)
 	}
 	return (FALSE);
 }
-
-/*
- * This routine works on Suns (Sky / 68000's), i386's, MIPS and Vaxen.
- */
 
 #ifdef vax
 /* What IEEE double precision floating point looks like on a Vax */
