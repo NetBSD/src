@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1.2.3 1997/12/11 02:03:00 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.1.2.4 1997/12/15 13:21:18 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -172,6 +172,30 @@ menu chooseid, title  "  Type de Partition? ";
 		part[editpart][SET] = 1;
 	};
 
+menu cyl1024;
+    display action {
+		msg_display(MSG_cyl1024);
+	};
+	option "Rééditer le secteur de boot et le label", exit, action
+	{
+		/* XXX UGH */
+		extern int c1024_resp;
+
+		c1024_resp = 1;
+	};
+    option "Rééditer le label", exit, action
+	{
+		extern int c1024_resp;
+
+		c1024_resp = 2;
+	};
+	option "L'utiliser tout de même", exit, action
+	{
+		extern int c1024_resp;
+
+		c1024_resp = 3;
+	};
+
 menu editfsparts, y=13, exit;
 	display action  {
 			ask_sizemult();
@@ -194,5 +218,4 @@ menu md_distcustom, exit, title " Sélection des composants";
 	option  "Pages de manuel", 	 action { toggle_getit (5); };
 	option  "Divers", 	 action { toggle_getit (6); };
 	option  "Outils de manipulation de textes", action { toggle_getit (7); };
-
 
