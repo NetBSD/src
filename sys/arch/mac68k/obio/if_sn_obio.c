@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.17 1998/07/05 00:51:10 jonathan Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.17.8.1 1999/11/01 06:19:16 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -180,13 +180,19 @@ sn_obio_attach(parent, self, aux)
 		return;
 	}
 
+	printf(": integrated Ethernet adapter\n");
+
 	/* snsetup returns 1 if something fails */
 	if (snsetup(sc, myaddr)) {
 		bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
 		return;
 	}
 
-	add_nubus_intr(sc->slotno, snintr, (void *)sc);
+	if (mac68k_machine.aux_interrupts) {
+		intr_establish((int (*)(void *))snintr, (void *)sc, 3);
+	} else {
+		add_nubus_intr(sc->slotno, snintr, (void *)sc);
+	}
 }
 
 static int

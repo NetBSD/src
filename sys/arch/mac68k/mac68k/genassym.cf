@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11.6.1 1999/05/16 22:38:11 scottr Exp $
+#	$NetBSD: genassym.cf,v 1.11.6.2 1999/11/01 06:19:13 scottr Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -117,12 +117,14 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
+define	PSL_TS			(PSL_T | PSL_S)
 define	SPL1			(PSL_S | PSL_IPL1)
 define	SPL2			(PSL_S | PSL_IPL2)
 define	SPL3			(PSL_S | PSL_IPL3)
 define	SPL4			(PSL_S | PSL_IPL4)
 define	SPL5			(PSL_S | PSL_IPL5)
 define	SPL6			(PSL_S | PSL_IPL6)
+define	MAC68K_IPL_CLOCK	MAC68K_IPL_CLOCK
 
 # magic
 define	FC_USERD		FC_USERD

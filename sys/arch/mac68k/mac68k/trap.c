@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68.2.1 1999/05/16 22:38:12 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.68.2.2 1999/11/01 06:19:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -266,9 +266,6 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-#ifdef DDB
-	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
-#endif
 	struct proc *p;
 	int i, s;
 	u_int ucode;
@@ -455,42 +452,33 @@ copyfault:
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
-	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
-	 * XXX: because locore.s now gives them special treatment.
+	 * XXX: We should never get kernel-mode T_TRAP15 because
+	 * XXX: locore.s now gives it special treatment.
 	 */
-	case T_TRACE:		/* Kernel trace trap */
 	case T_TRAP15:		/* SUN trace trap */
-#ifdef DDB
-		if (type == T_TRAP15 ||
-		    ((caddr_t) frame.f_pc != trap0 &&
-		     (caddr_t) frame.f_pc != trap1 &&
-		     (caddr_t) frame.f_pc != trap2 &&
-		     (caddr_t) frame.f_pc != trap12 &&
-		     (caddr_t) frame.f_pc != trap15 &&
-		     (caddr_t) frame.f_pc != illinst)) {
-			if (kdb_trap(type, (db_regs_t *) &frame))
-				return;
-		}
+#ifdef DEBUG
+		printf("unexpected kernel trace trap, type = %d\n", type);
+		printf("program counter = 0x%x\n", frame.f_pc);
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-	case T_TRAP15|T_USER:	/* Sun user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
-		 * SunOS uses Trap #2 for a "CPU cache flush"
+		 * SunOS uses Trap #2 for a "CPU cache flush".
 		 * Just flush the on-chip caches and return.
-		 * XXX - Too bad NetBSD uses trap 2...
 		 */
 		if (p->p_emul == &emul_sunos) {
 			ICIA();
 			DCIU();
-			/* get out fast */
-			goto done;
+			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -669,10 +657,6 @@ copyfault:
 		return;
 out:
 	userret(p, &frame, sticks, v, 1); 
-
-#ifdef COMPAT_SUNOS
-done:
-#endif
 }
 
 #if defined(M68040)
@@ -703,6 +687,7 @@ writeback(fp, docachepush)
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
@@ -744,7 +729,8 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(pmap_kernel(), (vaddr_t)fa));
+			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
+			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
 		} else
@@ -967,8 +953,7 @@ dumpwb(num, s, a, d)
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a);
-	if (pa == 0)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
 		printf("<invalid address>");
 	else
 		printf("%lx, current value %lx", pa, fuword((caddr_t)a));

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111.2.4 1999/06/15 04:32:11 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.111.2.5 1999/11/01 06:19:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -675,9 +675,17 @@ ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
+
+	| Check PSW and see what happen.
+	|   T=0 S=0	(should not happen)
+	|   T=1 S=0	trace trap from user mode
+	|   T=0 S=1	trace trap on a trap instruction
+	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
+
 	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
+	notw	d1			| XXX no support for T0 on 680[234]0
+	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
+	jeq	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 /*
@@ -811,31 +819,6 @@ ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(lev1intr)
-	addql	#1,_C_LABEL(intrcnt)+4
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	jbsr	_C_LABEL(via1_intr)
-	addql	#4,sp
-	moveml	sp@+,#0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev2intr)
-	addql	#1,_C_LABEL(intrcnt)+8
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	movl	_C_LABEL(real_via2_intr),a2
-	jbsr	a2@
-	addql	#4,sp
-	moveml	sp@+,#0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
 ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
@@ -867,19 +850,21 @@ ENTRY_NOPROFILE(lev7intr)
 ENTRY_NOPROFILE(rtclock_intr)
 	movl	d2,sp@-			| save d2
 	movw	sr,d2			| save SPL
-	movw	#SPL2,sr		| raise SPL to splclock()
-	movl	a6@(8),a1		| get pointer to frame in via1_intr
-	movl	a1@(64),sp@-		| push ps
-	movl	a1@(68),sp@-		| push pc
-	movl	sp,sp@-			| push pointer to ps, pc
+	movw	_C_LABEL(mac68k_ipls)+MAC68K_IPL_CLOCK*2,sr
+					| raise SPL to splclock()
+	movl	a6@,a1			| unwind to frame in intr_dispatch
+	lea	a1@(28),a1		| push pointer to interrupt frame
+	movl	a1,sp@-			| 28 = 16 for regs in intrhand,
+					|    + 4 for args to intr_dispatch
+					|    + 4 for return address to intrhand
+					|    + 4 for value of A6
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
-	lea	sp@(12),sp		| pop params
+	addql	#4,sp			| pop param
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
-	addql	#1,_C_LABEL(intrcnt)+20
+	addql	#1,_C_LABEL(intrcnt)+32
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
-	movl	#1,d0			| clock taken care of
 	rts				| go back from whence we came
 
 /*
@@ -1884,9 +1869,6 @@ GLOBAL(fputype)
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
 
-GLOBAL(cold)
-	.long	1		| cold start flag
-
 GLOBAL(want_resched)
 	.long	0
 
@@ -1917,18 +1899,18 @@ ASGLOBAL(fullcflush)
 	.long	0
 #endif
 
-/* interrupt counters */
+/* interrupt counters -- leave some space for overriding the names */
 
 GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"via1"
-	.asciz	"via2"
-	.asciz	"scc"
-	.asciz	"nmi"
-	.asciz	"clock"
-	.asciz	"unused1"
-	.asciz	"unused2"
-	.asciz	"unused3"
+	.asciz	"spur    "
+	.asciz	"via1    "
+	.asciz	"via2    "
+	.asciz	"unused1 "
+	.asciz	"scc     "
+	.asciz	"unused2 "
+	.asciz	"unused3 "
+	.asciz	"nmi     "
+	.asciz	"clock   "
 GLOBAL(eintrnames)
 	.even
 
