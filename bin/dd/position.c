@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.8 1999/10/09 00:43:32 jtk Exp $	*/
+/*	$NetBSD: position.c,v 1.9 2000/08/02 16:46:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.8 1999/10/09 00:43:32 jtk Exp $");
+__RCSID("$NetBSD: position.c,v 1.9 2000/08/02 16:46:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ pos_out()
 			err(1, "%s", out.name);
 
 		while (cnt++ < out.offset)
-			if ((n = write(out.fd, out.db, out.dbsz)) != out.dbsz)
+			if ((n = bwrite(out.fd, out.db, out.dbsz)) != out.dbsz)
 				err(1, "%s", out.name);
 		break;
 	}
