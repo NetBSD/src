@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.17 1995/10/10 04:45:39 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.18 1995/10/10 04:54:29 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -374,10 +374,10 @@ svr4_sendsig(catcher, sig, mask, code)
 #ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
 #endif
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
-	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
 

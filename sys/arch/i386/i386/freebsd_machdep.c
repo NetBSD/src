@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.3 1995/10/10 04:45:12 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.4 1995/10/10 04:54:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -157,10 +157,10 @@ freebsd_sendsig(catcher, sig, mask, code)
 #ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
 #endif
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
-	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
 /*
