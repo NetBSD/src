@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.11 2003/04/29 14:56:05 scw Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.12 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,11 +29,15 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-/*
-#ifndef lint
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
+#else
+__RCSID("$NetBSD: getnetconfig.c,v 1.12 2003/09/09 03:56:40 itojun Exp $");
 #endif
-*/
+#endif
 
 /*
  * Copyright (c) 1989 by Sun Microsystems, Inc.

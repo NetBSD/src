@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.11 2003/09/09 00:22:17 itojun Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.12 2003/09/09 03:56:39 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -34,9 +34,12 @@
 
 /* #ident	"@(#)clnt_dg.c	1.23	94/04/22 SMI" */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-#if !defined(lint) && defined(SCCSIDS)
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
+#else
+__RCSID("$NetBSD: clnt_dg.c,v 1.12 2003/09/09 03:56:39 itojun Exp $");
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.10 2003/01/18 11:29:05 thorpej Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.11 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -38,9 +38,12 @@
  * California.
  */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-#if !defined(lint) && defined(SCCSIDS)
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
+#else
+__RCSID("$NetBSD: rpc_soc.c,v 1.11 2003/09/09 03:56:40 itojun Exp $");
 #endif
 #endif
 

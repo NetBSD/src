@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.7 2003/01/18 11:29:04 thorpej Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.8 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,11 +29,15 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-/*
-#ifndef lint
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
+#else
+__RCSID("$NetBSD: getnetpath.c,v 1.8 2003/09/09 03:56:40 itojun Exp $");
 #endif
-*/
+#endif
 
 /*
  * Copyright (c) 1989 by Sun Microsystems, Inc.

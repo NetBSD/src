@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.4 2001/01/04 14:42:21 lukem Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.5 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -34,9 +34,12 @@
 
 /* #ident	"@(#)rpcb_prot.c	1.13	94/04/24 SMI" */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-#if !defined(lint) && defined(SCCSIDS)
 static char sccsid[] = "@(#)rpcb_prot.c 1.9 89/04/21 Copyr 1984 Sun Micro";
+#else
+__RCSID("$NetBSD: rpcb_prot.c,v 1.5 2003/09/09 03:56:40 itojun Exp $");
 #endif
 #endif
 

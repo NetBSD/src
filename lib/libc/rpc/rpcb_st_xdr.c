@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.5 2001/01/04 14:57:17 lukem Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.6 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -37,6 +37,11 @@
  * This file was generated from rpcb_prot.x, but includes only those
  * routines used with the rpcbind stats facility.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.6 2003/09/09 03:56:40 itojun Exp $");
+#endif
 
 #include "namespace.h"
 #include <rpc/rpc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.9 2003/01/18 11:29:06 thorpej Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.10 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,6 +41,11 @@
  *
  * Does some caching in the hopes of achieving execute-at-most-once semantics.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: svc_dg.c,v 1.10 2003/09/09 03:56:40 itojun Exp $");
+#endif
 
 #include "namespace.h"
 #include "reentrant.h"
