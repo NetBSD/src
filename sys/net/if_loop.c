@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.17 1996/10/13 02:11:02 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.18 1997/03/21 16:58:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -122,7 +122,7 @@ looutput(ifp, m, dst, rt)
 		panic("looutput: no header mbuf");
 	ifp->if_lastchange = time;
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK)) {
 		/*
 		 * We need to prepend the address family as
 		 * a four byte field.  Cons up a dummy header
