@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.12 2002/02/27 05:07:25 jmc Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.13 2002/11/22 16:28:56 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -230,11 +230,50 @@ struct ieee1394_async_nodata {
 #define IEEE1394_GET_MAX_REC(i) ((i & 0x0000f000) >> 12)
 #define IEEE1394_GET_LINK_SPD(i) (i & 0x00000007)
 
-/* XXX. Should be at if_fw level but needed here for constructing the config
-   rom. An interface for if_fw to send up a config rom should be done (probably
-   in the p1212 routines. */
+#define IEEE1394_CREATE_ADDR_HIGH(x) (htonl((x & 0xffffffff00000000) >> 32))
+#define IEEE1394_CREATE_ADDR_LOW(x)  (htonl((x & 0x00000000ffffffff)))
 
-#define FW_FIFO_HI      0x2000
-#define FW_FIFO_LO      0x00000000
+
+/*
+ * Allocated CSR space initiator drivers have reserved. Add allocations here to
+ * avoid overlaps. Use the initial 64k space for register space and alloc large
+ * blocks above that for virtualizing data space (ala SBP).
+ */
+
+/*
+ * 0xfffff0010000 - if_fw fifo
+ * 0xfffff0010004 - 0xfffff0020000 - SBP2 addr range (64k in 4 byte chunks)
+ * 0xfffff0020000 - 0xfffff101ffff - SBP2 data address range (16M in 512 byte
+ *                                                            chunks)
+ *
+ */
+
+/* if_fw fifo for receiving packets. */
+
+#define FW_FIFO_HI      0xffff
+#define FW_FIFO_LO      0xf0010000
+#define FW_FIFO		0x0000fffff0010000
+
+#define SBP_ADDR_BEG_HI	0xffff
+#define SBP_ADDR_BEG_LO	0xf0010004
+#define SBP_ADDR_BEG	0x0000fffff0010004
+
+#define SBP_ADDR_MAX_HI	0xffff
+#define SBP_ADDR_MAX_LO	0xf0020004
+#define SBP_ADDR_MAX	0x0000fffff0020004
+
+#define SBP_ADDR_SIZE	(SBP_ADDR_MAX - SBP_ADDR_BEG)
+#define SBP_ADDR_BLOCK_SIZE	4
+
+#define SBP_DATA_BEG_HI	0xffff
+#define SBP_DATA_BEG_LO	0xf0020000
+#define SBP_DATA_BEG	0x0000fffff0020000
+
+#define SBP_DATA_MAX_HI	0xffff
+#define SBP_DATA_MAX_LO 0xf101ffff
+#define SBP_DATA_MAX	0x0000fffff1020000
+
+#define SBP_DATA_SIZE	(SBP_DATA_MAX - SBP_DATA_BEG)
+#define SBP_DATA_BLOCK_SIZE	512
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */
