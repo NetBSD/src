@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.149 2000/02/26 20:47:02 mycroft Exp $
+# $NetBSD: mi,v 1.150 2000/02/27 01:27:49 wiz Exp $
 .
 ./altroot
 ./bin
@@ -859,6 +859,9 @@
 ./usr/share/locale/pl
 ./usr/share/locale/pl/LC_MESSAGES
 ./usr/share/locale/pl/LC_MESSAGES/grep.mo
+./usr/share/locale/pt_BR
+./usr/share/locale/pt_BR/LC_MESSAGES
+./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo
 ./usr/share/locale/ru
 ./usr/share/locale/ru/LC_MESSAGES
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo
