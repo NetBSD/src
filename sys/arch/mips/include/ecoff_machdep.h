@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.4 1995/06/16 02:07:33 mellon Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.5 1996/05/09 23:46:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -36,11 +36,11 @@
 #define ECOFF_PAD
 
 #define ECOFF_MACHDEP \
-        u_long ea_gprmask; \
-        u_long ea_cprmask[4]; \
-        u_long ea_gp_value
+        u_long gprmask; \
+        u_long cprmask[4]; \
+        u_long gp_value
 
 #define ECOFF_MAGIC_MIPSEL 0x0162
-#define ECOFF_BADMAG(ex) ((ex)->ef_magic != ECOFF_MAGIC_MIPSEL)
+#define ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEL)
 
-#define ECOFF_SEGMENT_ALIGNMENT(eap) ((eap)->ea_vstamp < 23 ? 8 : 16)
+#define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
