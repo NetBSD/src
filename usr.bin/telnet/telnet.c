@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
+/*	$NetBSD: telnet.c,v 1.8 1997/06/03 01:51:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $";
+static char rcsid[] = "$NetBSD: telnet.c,v 1.8 1997/06/03 01:51:43 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -2023,7 +2023,7 @@ telsnd()
 	    }
 	}
 #endif
-	if (MODE_LOCAL_CHARS(globalmode)) {
+	if (sc != _POSIX_VDISABLE && MODE_LOCAL_CHARS(globalmode)) {
 	    if (TerminalSpecialChars(sc) == 0) {
 		bol = 1;
 		break;
