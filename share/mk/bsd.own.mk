@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.179 2001/09/16 18:50:29 chris Exp $
+#	$NetBSD: bsd.own.mk,v 1.180 2001/09/22 05:45:50 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -7,6 +7,74 @@ MAKECONF?=	/etc/mk.conf
 
 .if exists(${MAKECONF})
 .include "${MAKECONF}"
+.endif
+
+USETOOLS?=	yes
+
+.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3"
+.BEGIN:
+	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
+	@false
+.elif ${USETOOLS} == "no" && defined(REQUIRETOOLS)
+.BEGIN:
+	@echo "USETOOLS=no, but this component requires a host toolchain to build"
+	@false
+.endif
+
+# Temporary; all USE_NEW_TOOLCHAIN conditionals will be dropped when
+# all platforms have migrated.
+.if ${MACHINE_ARCH} == "i386"
+USE_NEW_TOOLCHAIN=	# set
+.endif
+
+.if defined(USE_NEW_TOOLCHAIN) && ${USETOOLS} != "no"
+# Define default locations for common tools.
+
+AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
+AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
+#BIB=		${TOOLDIR}/bin/bib
+CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+COMPILE_ET=	${TOOLDIR}/bin/compile_et
+CONFIG=		${TOOLDIR}/bin/config
+CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
+#EQN=		${TOOLDIR}/bin/eqn
+FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
+GENCAT=		${TOOLDIR}/bin/gencat
+#GRIND=		${TOOLDIR}/bin/vgrind -f
+#GROFF=		${TOOLDIR}/bin/groff -Tascii
+#INDXBIB=	${TOOLDIR}/bin/indxbib
+INSTALL=	${TOOLDIR}/bin/binstall
+INSTALL_INFO=	${TOOLDIR}/bin/install-info
+LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
+LEX=		${TOOLDIR}/bin/lex
+LINT=		CC=${CC} ${TOOLDIR}/bin/lint
+LORDER=		NM=${NM} ${TOOLDIR}/bin/lorder
+#MAKE=		${TOOLDIR}/bin/bmake
+MAKEINFO=	${TOOLDIR}/bin/makeinfo
+MKDEP=		CC=${CC} ${TOOLDIR}/bin/mkdep
+#MKLOCALE=	${TOOLDIR}/bin/mklocale
+NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
+#NROFF=		${TOOLDIR}/bin/nroff -Tascii
+OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
+#PIC=		${TOOLDIR}/bin/pic
+RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
+#REFER=		${TOOLDIR}/bin/refer
+#ROFF=		${TOOLDIR}/bin/groff -Tps
+RPCGEN=		${TOOLDIR}/bin/rpcgen
+SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
+#SOELIM=	${TOOLDIR}/bin/soelim
+STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
+#TBL=		${TOOLDIR}/bin/tbl
+TSORT=		${TOOLDIR}/bin/tsort -q
+YACC=		${TOOLDIR}/bin/yacc
+
+# Make sure DESTDIR is set, so that builds with these tools always
+# get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
+# <empty string>, meaning start from /, the root directory.
+
+DESTDIR?=
 .endif
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
@@ -154,12 +222,6 @@ MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 
 # CPU model, derived from MACHINE_ARCH
 MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/:S/m68000/m68k/}
-
-.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3"
-.BEGIN:
-	@echo Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el
-	@false
-.endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html installhtml cleanhtml

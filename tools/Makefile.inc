@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/09/22 04:12:33 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2001/09/22 05:45:51 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,8 @@
 	@false
 .endif
 
-# Get default tool locations.
+# Stash the current directory (some builds here actually change .CURDIR).
 _CURDIR?=${.CURDIR}
-.include "${_CURDIR}/../Makefile.tools"
 
 # "make build":  Only build if the installed program is out-of-date.
 # ("make all" and "make install" always build and install.)
