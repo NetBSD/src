@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.12 1994/01/11 16:37:19 mycroft Exp $
+ *	$Id: disklabel.h,v 1.13 1994/01/18 01:32:06 brezak Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -225,7 +225,12 @@ static char *dktypenames[] = {
 #define	FS_V8		6		/* Eighth Edition, 4K blocks */
 #define	FS_BSDFFS	7		/* 4.2BSD fast file system */
 #define	FS_MSDOS	8		/* MS-DOS file system */
-#define	FS_ISOFS	9		/* ISO-9660 filesystem (cdrom) */
+#define	FS_BSDLFS	9		/* 4.4BSD log-structured file system */
+#define	FS_OTHER	10		/* in use, but unknown/unsupported */
+#define	FS_HPFS		11		/* OS/2 high-performance file system */
+#define	FS_ISO9660	12		/* ISO-9660 filesystem (cdrom) */
+#define FS_ISOFS	FS_ISO9660
+#define	FS_BOOT		13		/* partition contains bootstrap */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -238,7 +243,11 @@ static char *fstypenames[] = {
 	"Eighth Edition",
 	"4.2BSD",
 	"MS-DOS",
+	"4.4LFS",
+	"unknown",
+	"HPFS",
 	"ISO-9660",
+	"boot",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
