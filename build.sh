@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.25 2001/11/15 00:14:35 thorpej Exp $
+#  $NetBSD: build.sh,v 1.26 2001/11/25 18:35:06 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -86,11 +86,12 @@ resolvepath () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-boru] [-a arch] [-j njob] -m mach [-w wrapper]"
+	echo "$0 [-bdoru] [-a arch] [-j njob] -m mach [-w wrapper]"
 	echo "   [-D dest] [-O obj] [-R release] [-T tools]"
 	echo ""
 	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
 	echo "    -b: build nbmake and nbmake wrapper script, if needed"
+	echo "    -d: build a full distribution into DESTDIR (including etc files)"
 	echo "    -j: set NBUILDJOBS to njob"
 	echo "    -m: set MACHINE to mach (not required if NetBSD native)"
 	echo "    -n: show commands that would be executed, but do not execute them"
@@ -120,7 +121,7 @@ do_removedirs=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:bhj:m:nortuw:D:O:R:T:'
+opts='a:bdhj:m:nortuw:D:O:R:T:'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -145,6 +146,8 @@ while eval $getoptcmd; do case $opt in
 		MACHINE_ARCH=$OPTARG; opt_a=yes;;
 
 	-b)	do_buildsystem=false;;
+
+	-d)	buildtarget=distribution;;
 
 	-j)	eval $optargcmd
 		MAKEFLAGS="$MAKEFLAGS NBUILDJOBS=$OPTARG"; export MAKEFLAGS;;
@@ -262,10 +265,10 @@ removedirs="$TOOLDIR"
 
 if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
 	if $do_buildsystem && \
-	   ([ "$buildtarget" = "release" ] || \
+	   ([ "$buildtarget" != "build" ] || \
 	    [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
 	    [ "`uname -m`" != "$MACHINE" ]); then
-		bomb "DESTDIR must be set to a non-root path for cross builds or -R."
+		bomb "DESTDIR must be set to a non-root path for cross builds or -d or -R."
 	elif $do_buildsystem; then
 		echo "===> WARNING: Building to /."
 		echo "===> If your kernel is not up to date, this may cause the system to break!"
@@ -309,7 +312,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.25 2001/11/15 00:14:35 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.26 2001/11/25 18:35:06 thorpej Exp $
 #
 
 EOF
