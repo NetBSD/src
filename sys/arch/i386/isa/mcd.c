@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.13 1994/05/05 05:36:42 cgd Exp $
+ *	$Id: mcd.c,v 1.14 1994/05/05 08:26:13 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -96,7 +96,6 @@
 
 struct mcd_mbx {
 	short		unit;
-	u_short		iobase;
 	short		retry;
 	short		nblk;
 	int		sz;
@@ -104,6 +103,7 @@ struct mcd_mbx {
 	struct buf	*bp;
 	int		p_offset;
 	short		count;
+	short		state;
 };
 
 struct mcd_softc {
@@ -149,8 +149,7 @@ int msf2hsg __P((bcd_t *));
 int mcd_volinfo __P((struct mcd_softc *));
 int mcdintr __P((struct mcd_softc *));
 int mcd_setmode __P((struct mcd_softc *, int));
-void mcd_doread __P((int, struct mcd_mbx *));
-void mcd_doreadtimeout __P((void *arg));
+void mcd_doread __P((void *));
 int mcd_toc_header __P((struct mcd_softc *, struct ioc_toc_header *));
 int mcd_read_toc __P((struct mcd_softc *));
 int mcd_toc_entry __P((struct mcd_softc *, struct ioc_read_toc_entry *));
@@ -188,10 +187,9 @@ struct cfdriver mcdcd = {
 
 /* reader state machine */
 #define MCD_S_BEGIN	0
-#define MCD_S_BEGIN1	1
-#define MCD_S_WAITSTAT	2
-#define MCD_S_WAITMODE	3
-#define MCD_S_WAITREAD	4
+#define MCD_S_WAITSTAT	1
+#define MCD_S_WAITMODE	2
+#define MCD_S_WAITREAD	3
 
 void
 mcdattach(parent, self, aux)
@@ -383,13 +381,13 @@ mcd_start(sc)
 
 	sc->flags |= MCDMBXBSY;
 	sc->mbx.unit = sc->sc_dev.dv_unit;
-	sc->mbx.iobase = sc->iobase;
 	sc->mbx.retry = MCD_RETRIES;
 	sc->mbx.bp = bp;
 	sc->mbx.p_offset = p->p_offset;
 
 	/* Calling the read routine. */
-	mcd_doread(MCD_S_BEGIN, &sc->mbx);
+	sc->mbx.state = MCD_S_BEGIN;
+	mcd_doread(&sc->mbx);
 	/* triggers mcd_start, when successful finished. */
 }
 
@@ -838,25 +836,13 @@ mcdintr(sc)
  * MCD_S_WAITMODE: waits for status reply from set mode, set read command
  * MCD_S_WAITREAD: wait for read ready, read data.
  */
-struct mcd_mbx *mbxsave;
-
 void
-mcd_doreadtimeout(arg)
+mcd_doread(arg)
 	void *arg;
 {
-	int state = (long)arg;
-
-	mcd_doread(state, NULL);
-}
-
-void
-mcd_doread(state, mbxin)
-	int state;
-	struct mcd_mbx *mbxin;
-{
-	struct mcd_mbx *mbx = (state != MCD_S_BEGIN) ? mbxsave : mbxin;
+	struct mcd_mbx *mbx = arg;
 	struct mcd_softc *sc = mcdcd.cd_devs[mbx->unit];
-	u_short iobase = mbx->iobase;
+	u_short iobase = sc->iobase;
 	struct buf *bp = mbx->bp;
 
 	int rm, i, k;
@@ -865,78 +851,75 @@ mcd_doread(state, mbxin)
 	caddr_t	addr;
 
 loop:
-	switch (state) {
+	switch (mbx->state) {
 	case MCD_S_BEGIN:
-		mbx = mbxsave = mbxin;
-
-	case MCD_S_BEGIN1:
 		/* Get status. */
 		outb(iobase + mcd_command, MCD_CMDGETSTAT);
+
 		mbx->count = RDELAY_WAITSTAT;
-		timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITSTAT,
-		    hz/100);
+		mbx->state = MCD_S_WAITSTAT;
+		timeout(mcd_doread, mbx, hz / 100);
 		return;
 
 	case MCD_S_WAITSTAT:
-		untimeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITSTAT);
-		if (mbx->count-- >= 0) {
-			if (inb(iobase + mcd_xfer) & MCD_ST_BUSY) {
-				timeout(mcd_doreadtimeout,
-				    (caddr_t)MCD_S_WAITSTAT, hz/100);
-				return;
-			}
-			mcd_setflags(sc);
-			MCD_TRACE("doread: got WAITSTAT delay=%d\n",
-			    RDELAY_WAITSTAT - mbx->count, 0, 0, 0);
-			/* Reject, if audio active. */
-			if (sc->status & MCDAUDIOBSY) {
-				printf("%s: audio is active\n",
-				    sc->sc_dev.dv_xname);
-				goto readerr;
-			}
-
-			/* Check for raw/cooked mode. */
-			if (sc->flags & MCDREADRAW) {
-				rm = MCD_MD_RAW;
-				mbx->sz = MCDRBLK;
-			} else {
-				rm = MCD_MD_COOKED;
-				mbx->sz = sc->blksize;
-			}
-
-			mbx->count = RDELAY_WAITMODE;
-		
-			mcd_put(iobase + mcd_command, MCD_CMDSETMODE);
-			mcd_put(iobase + mcd_command, rm);
-			timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITMODE,
-			    hz/100);
-			return;
-		} else {
+		untimeout(mcd_doread, mbx);
+		if (mbx->count-- < 0) {
 			printf("%s: timeout getting status\n",
 			    sc->sc_dev.dv_xname);
 			goto readerr;
 		}
+		if (inb(iobase + mcd_xfer) & MCD_ST_BUSY) {
+			timeout(mcd_doread, mbx, hz / 100);
+			return;
+		}
+		mcd_setflags(sc);
+		MCD_TRACE("doread: got WAITSTAT delay=%d\n",
+		    RDELAY_WAITSTAT - mbx->count, 0, 0, 0);
+
+		/* Reject, if audio active. */
+		if (sc->status & MCDAUDIOBSY) {
+			printf("%s: audio is active\n",
+			    sc->sc_dev.dv_xname);
+			goto readerr;
+		}
+
+		/* Check for raw/cooked mode. */
+		if (sc->flags & MCDREADRAW) {
+			rm = MCD_MD_RAW;
+			mbx->sz = MCDRBLK;
+		} else {
+			rm = MCD_MD_COOKED;
+			mbx->sz = sc->blksize;
+		}
+
+		mcd_put(iobase + mcd_command, MCD_CMDSETMODE);
+		mcd_put(iobase + mcd_command, rm);
+
+		mbx->count = RDELAY_WAITMODE;
+		mbx->state = MCD_S_WAITMODE;
+		timeout(mcd_doread, mbx, hz / 100);
+		return;
 
 	case MCD_S_WAITMODE:
-		untimeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITMODE);
+		untimeout(mcd_doread, mbx);
 		if (mbx->count-- < 0) {
 			printf("%s: timeout setting mode\n",
 			    sc->sc_dev.dv_xname);
 			goto readerr;
 		}
 		if (inb(iobase + mcd_xfer) & MCD_ST_BUSY) {
-			timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITMODE,
-			    hz/100);
+			timeout(mcd_doread, mbx, hz / 100);
 			return;
 		}
 		mcd_setflags(sc);
 		MCD_TRACE("doread: got WAITMODE delay=%d\n",
 		    RDELAY_WAITMODE - mbx->count, 0, 0, 0);
+
 		/* For first block. */
 		mbx->nblk = (bp->b_bcount + (mbx->sz - 1)) / mbx->sz;
 		mbx->skip = 0;
 
-nextblock:
+	nextblock:
 		blkno = (bp->b_blkno / (mbx->sz / DEV_BSIZE)) + mbx->p_offset +
 		    (mbx->skip / mbx->sz);
 
@@ -954,53 +937,54 @@ nextblock:
 		mcd_put(iobase + mcd_command, 0);
 		mcd_put(iobase + mcd_command, 0);
 		mcd_put(iobase + mcd_command, 1);
+
 		mbx->count = RDELAY_WAITREAD;
-		timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITREAD, hz/100);
+		mbx->state = MCD_S_WAITREAD;
+		timeout(mcd_doread, mbx, hz / 100);
 		return;
 
 	case MCD_S_WAITREAD:
-		untimeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITREAD);
-		if (mbx->count-- > 0) {
-			k = inb(iobase + mcd_xfer);
-			if ((k & 2) == 0) {	/* XXX MCD_ST_AUDIOBSY? */
-				MCD_TRACE("doread: got data delay=%d\n",
-				    RDELAY_WAITREAD - mbx->count, 0, 0, 0);
-				/* Data is ready. */
-				addr = bp->b_un.b_addr + mbx->skip;
-				outb(iobase + mcd_ctl2, 0x04);	/* XXX */
-				for (i = 0; i < mbx->sz; i++)
-					*addr++	= inb(iobase + mcd_rdata);
-				outb(iobase + mcd_ctl2, 0x0c);	/* XXX */
-
-				if (--mbx->nblk > 0) {
-					mbx->skip += mbx->sz;
-					goto nextblock;
-				}
-
-				/* Return buffer. */
-				bp->b_resid = 0;
-				biodone(bp);
-
-				sc->flags &= ~MCDMBXBSY;
-				mcd_start(sc);
-				return;
-			}
-			if ((k & MCD_ST_BUSY) == 0)
-				mcd_getstat(sc, 0);
-			timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITREAD,
-			    hz/100);
-			return;
-		} else {
+		untimeout(mcd_doread, mbx);
+		if (mbx->count-- < 0) {
 			printf("%s: timeout reading data\n",
 			    sc->sc_dev.dv_xname);
 			goto readerr;
 		}
+
+		k = inb(iobase + mcd_xfer);
+		if ((k & 2) == 0) {	/* XXX MCD_ST_AUDIOBSY? */
+			MCD_TRACE("doread: got data delay=%d\n",
+			    RDELAY_WAITREAD - mbx->count, 0, 0, 0);
+			/* Data is ready. */
+			addr = bp->b_un.b_addr + mbx->skip;
+			outb(iobase + mcd_ctl2, 0x04);	/* XXX */
+			for (i = 0; i < mbx->sz; i++)
+				*addr++	= inb(iobase + mcd_rdata);
+			outb(iobase + mcd_ctl2, 0x0c);	/* XXX */
+
+			if (--mbx->nblk > 0) {
+				mbx->skip += mbx->sz;
+				goto nextblock;
+			}
+
+			/* Return buffer. */
+			bp->b_resid = 0;
+			biodone(bp);
+
+			sc->flags &= ~MCDMBXBSY;
+			mcd_start(sc);
+			return;
+		}
+		if ((k & MCD_ST_BUSY) == 0)
+			mcd_getstat(sc, 0);
+		timeout(mcd_doread, mbx, hz / 100);
+		return;
 	}
 
 readerr:
 	if (mbx->retry-- > 0) {
 		printf("%s: retrying\n", sc->sc_dev.dv_xname);
-		state = MCD_S_BEGIN1;
+		mbx->state = MCD_S_BEGIN;
 		goto loop;
 	}
 
