@@ -1,4 +1,4 @@
-.\" $NetBSD: softintr.9,v 1.1 2000/05/31 00:40:52 cgd Exp $
+.\" $NetBSD: softintr.9,v 1.2 2000/06/02 22:12:11 matt Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -114,7 +114,10 @@ by a call to
 to be executed as soon as that software interrupt is unblocked.
 This function may assume that the interrupt is currently blocked,
 so it need not check to see if the interrupt needs to be executed
-immediately.
+immediately.  
+.Fn softintr_schedule
+can safely be called multiple times before the
+callback routine is invoked.
 .El
 .Sh AUTHOR
 The
