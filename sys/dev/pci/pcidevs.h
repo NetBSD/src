@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.118 1999/03/17 19:21:49 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.119 1999/03/19 06:40:11 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.111 1999/03/17 19:20:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.112 1999/03/19 06:39:32 mycroft Exp 
  */
 
 /*
@@ -788,6 +788,7 @@
 
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
+#define	PCI_PRODUCT_ENSONIQ_AUDIOPCI97	0x1371		/* AudioPCI 97 */
 
 /* Essential Communications products */
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
