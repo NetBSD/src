@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.13 1998/07/29 18:36:09 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.14 1999/08/26 22:53:42 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -220,10 +220,9 @@ tcxattach(parent, self, args)
 	/* reset cursor & frame buffer controls */
 	tcx_reset(sc);
 
-	/* grab initial (current) color map (DOES THIS WORK?) */
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3; i++)
-		((char *)&sc->sc_cmap)[i] = bt->bt_cmap >> 24;
+	/* Initialize the default color map. */
+	bt_initcmap(&sc->sc_cmap, 256);
+	tcx_loadcmap(sc, 0, 256);
 
 	/* enable video */
 	sc->sc_thc->thc_hcmisc |= THC_MISC_VIDEN;
