@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.28 1993/10/04 20:54:33 cgd Exp $
+#	$Id: bsd.lib.mk,v 1.29 1993/10/06 17:54:01 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -111,7 +111,7 @@ cleandir: clean
 .if defined(SRCS)
 afterdepend:
 	@(TMP=/tmp/_depend$$$$; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po:/' < .depend > $$TMP; \
+	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so:/' < .depend > $$TMP; \
 	    mv $$TMP .depend)
 .endif
 
