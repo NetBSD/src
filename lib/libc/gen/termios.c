@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)termios.c	5.9 (Berkeley) 5/20/91"; */
-static char rcsid[] = "$Id: termios.c,v 1.3 1993/05/20 12:05:02 cgd Exp $";
+/*static char sccsid[] = "from: @(#)termios.c	5.9 (Berkeley) 5/20/91";*/
+static char rcsid[] = "$Id: termios.c,v 1.4 1993/07/30 08:23:37 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

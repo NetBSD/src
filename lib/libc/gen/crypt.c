@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from static char sccsid[] = "@(#)crypt.c	5.11 (Berkeley) 6/25/91"; */
-static char rcsid[] = "$Header: /cvsroot/src/lib/libc/gen/Attic/crypt.c,v 1.2 1993/04/26 13:02:16 cgd Exp $";
+/*static char sccsid[] = "from: @(#)crypt.c	5.11 (Berkeley) 6/25/91";*/
+static char rcsid[] = "$Id: crypt.c,v 1.3 1993/07/30 08:21:49 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
