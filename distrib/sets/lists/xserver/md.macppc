@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.13 2004/03/14 04:08:24 matt Exp $
+# $NetBSD: md.macppc,v 1.14 2004/03/16 17:40:02 matt Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xmacppc
@@ -34,7 +34,6 @@
 ./usr/X11R6/lib/X11/Options
 ./usr/X11R6/lib/X11/XF86Config.98
 ./usr/X11R6/lib/X11/XF86Config.eg
-./usr/X11R6/lib/X11/XF86Config.indy
 ./usr/X11R6/lib/X11/app-defaults/XF86Cfg
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/BugReport
@@ -111,7 +110,6 @@
 ./usr/X11R6/lib/modules/drivers/glint_drv.o
 ./usr/X11R6/lib/modules/drivers/imstt_drv.o
 ./usr/X11R6/lib/modules/drivers/mga_drv.o
-./usr/X11R6/lib/modules/drivers/newport_drv.o
 ./usr/X11R6/lib/modules/drivers/nv_drv.o
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
 ./usr/X11R6/lib/modules/drivers/radeon_drv.o
@@ -203,7 +201,6 @@
 ./usr/X11R6/man/cat4/microtouch.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/mouse.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/mutouch.0			-unknown-		.cat
-./usr/X11R6/man/cat4/newport.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/nv.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/palmax.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/penmount.0			-unknown-		.cat
@@ -246,7 +243,6 @@
 ./usr/X11R6/man/man4/microtouch.4		-unknown-		.man
 ./usr/X11R6/man/man4/mouse.4			-unknown-		.man
 ./usr/X11R6/man/man4/mutouch.4			-unknown-		.man
-./usr/X11R6/man/man4/newport.4			-unknown-		.man
 ./usr/X11R6/man/man4/nv.4			-unknown-		.man
 ./usr/X11R6/man/man4/palmax.4			-unknown-		.man
 ./usr/X11R6/man/man4/penmount.4			-unknown-		.man

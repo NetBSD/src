@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.1 2004/03/10 22:38:37 chris Exp $
+# $NetBSD: md.cats,v 1.2 2004/03/16 17:40:02 matt Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -32,7 +32,6 @@
 ./usr/X11R6/lib/X11/Options
 ./usr/X11R6/lib/X11/XF86Config.98
 ./usr/X11R6/lib/X11/XF86Config.eg
-./usr/X11R6/lib/X11/XF86Config.indy
 ./usr/X11R6/lib/X11/app-defaults/XF86Cfg
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/BugReport
@@ -112,12 +111,8 @@
 ./usr/X11R6/lib/modules/drivers/fbdev_drv.o
 ./usr/X11R6/lib/modules/drivers/glint_drv.o
 ./usr/X11R6/lib/modules/drivers/i128_drv.o
-./usr/X11R6/lib/modules/drivers/i740_drv.o
-./usr/X11R6/lib/modules/drivers/i810_drv.o
 ./usr/X11R6/lib/modules/drivers/imstt_drv.o
 ./usr/X11R6/lib/modules/drivers/mga_drv.o
-./usr/X11R6/lib/modules/drivers/neomagic_drv.o
-./usr/X11R6/lib/modules/drivers/newport_drv.o
 ./usr/X11R6/lib/modules/drivers/nsc_drv.o
 ./usr/X11R6/lib/modules/drivers/nv_drv.o
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
@@ -134,8 +129,6 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
-./usr/X11R6/lib/modules/drivers/via_drv.o
-./usr/X11R6/lib/modules/drivers/vmware_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
@@ -214,8 +207,6 @@
 ./usr/X11R6/man/cat4/fbdevhw.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/glint.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/i128.0			-unknown-		.cat
-./usr/X11R6/man/cat4/i740.0			-unknown-		.cat
-./usr/X11R6/man/cat4/i810.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/imstt.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/js_x.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/kbd.0			-unknown-		.cat
@@ -224,8 +215,6 @@
 ./usr/X11R6/man/cat4/microtouch.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/mouse.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/mutouch.0			-unknown-		.cat
-./usr/X11R6/man/cat4/neomagic.0			-unknown-		.cat
-./usr/X11R6/man/cat4/newport.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/nsc.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/nv.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/palmax.0			-unknown-		.cat
@@ -243,8 +232,6 @@
 ./usr/X11R6/man/cat4/tseng.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vesa.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vga.0			-unknown-		.cat
-./usr/X11R6/man/cat4/via.0			-unknown-		.cat
-./usr/X11R6/man/cat4/vmware.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
@@ -270,8 +257,6 @@
 ./usr/X11R6/man/man4/fbdevhw.4			-unknown-		.man
 ./usr/X11R6/man/man4/glint.4			-unknown-		.man
 ./usr/X11R6/man/man4/i128.4			-unknown-		.man
-./usr/X11R6/man/man4/i740.4			-unknown-		.man
-./usr/X11R6/man/man4/i810.4			-unknown-		.man
 ./usr/X11R6/man/man4/imstt.4			-unknown-		.man
 ./usr/X11R6/man/man4/js_x.4			-unknown-		.man
 ./usr/X11R6/man/man4/kbd.4			-unknown-		.man
@@ -280,8 +265,6 @@
 ./usr/X11R6/man/man4/microtouch.4		-unknown-		.man
 ./usr/X11R6/man/man4/mouse.4			-unknown-		.man
 ./usr/X11R6/man/man4/mutouch.4			-unknown-		.man
-./usr/X11R6/man/man4/neomagic.4			-unknown-		.man
-./usr/X11R6/man/man4/newport.4			-unknown-		.man
 ./usr/X11R6/man/man4/nsc.4			-unknown-		.man
 ./usr/X11R6/man/man4/nv.4			-unknown-		.man
 ./usr/X11R6/man/man4/palmax.4			-unknown-		.man
@@ -299,8 +282,6 @@
 ./usr/X11R6/man/man4/tseng.4			-unknown-		.man
 ./usr/X11R6/man/man4/vesa.4			-unknown-		.man
 ./usr/X11R6/man/man4/vga.4			-unknown-		.man
-./usr/X11R6/man/man4/via.4			-unknown-		.man
-./usr/X11R6/man/man4/vmware.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man
