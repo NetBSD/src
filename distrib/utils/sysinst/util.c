@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.8 1997/12/05 14:12:52 jonathan Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.9 1997/12/25 20:15:04 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -194,7 +194,7 @@ int get_via_floppy (void)
 		strcpy (post, ".aa");
 		snprintf (distname, STRSIZE, "%s%s", list->name, dist_postfix);
 		while (list->getit && strcmp(&post[1],list->fdlast) <= 0) {
-			snprintf (fname, STRSIZE, list->name, rel, post);
+			snprintf (fname, STRSIZE, "%s%s", list->name, post);
 			snprintf (fullname, STRSIZE, "/mnt2/%s", fname);
 			first = 1;
 			while (!mounted || stat(fullname, &sb)) {
