@@ -1,7 +1,8 @@
-/*	$NetBSD: m68k.c,v 1.4 1995/04/19 07:16:07 cgd Exp $	*/
+/*	$NetBSD: m68k.c,v 1.5 1998/02/22 12:55:45 christos Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: m68k.c,v 1.4 1995/04/19 07:16:07 cgd Exp $";
+__RCSID("$NetBSD: m68k.c,v 1.5 1998/02/22 12:55:45 christos Exp $");
 #endif /* not lint */
 
 #include "gprof.h"
@@ -9,6 +10,7 @@ static char rcsid[] = "$NetBSD: m68k.c,v 1.4 1995/04/19 07:16:07 cgd Exp $";
 /*
  * gprof -c isn't currently supported...
  */
+void
 findcall( parentp , p_lowpc , p_highpc )
     nltype		*parentp;
     unsigned long	p_lowpc;

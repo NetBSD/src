@@ -1,5 +1,7 @@
+/*	$NetBSD: util.c,v 1.5 1998/02/22 13:33:50 christos Exp $	*/
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.4 1996/09/19 06:27:16 thorpej Exp $";
+__RCSID("$NetBSD: util.c,v 1.5 1998/02/22 13:33:50 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -7,8 +9,15 @@ static char rcsid[] = "$NetBSD: util.c,v 1.4 1996/09/19 06:27:16 thorpej Exp $";
 #include "INTERN.h"
 #include "util.h"
 #include "backupfile.h"
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
-void my_exit();
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 /* Rename a file, copying it if necessary. */
 
@@ -175,7 +184,7 @@ Reg1 char *s;
     }
     else {
 	t = rv;
-	while (*t++ = *s++);
+	while ((*t++ = *s++) != '\0');
     }
     return rv;
 }
@@ -196,53 +205,106 @@ ask(pat) char *pat; { ; }
 /* Vanilla terminal output (buffered). */
 
 void
-say(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+#ifdef __STDC__
+say(const char *pat, ...)
+#else
+say(va_alist)
+	va_dcl
+#endif
 {
-    fprintf(stderr, pat, arg1, arg2, arg3);
+    va_list ap;
+#ifdef __STDC__
+    va_start(ap, pat);
+#else
+    const char *pat;
+
+    va_start(ap);
+    pat = va_arg(ap, const char *);
+#endif
+	
+    vfprintf(stderr, pat, ap);
+    va_end(ap);
     Fflush(stderr);
 }
 
 /* Terminal output, pun intended. */
 
 void				/* very void */
-fatal(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+#ifdef __STDC__
+fatal(const char *pat, ...)
+#else
+fatal(va_alist)
+	va_dcl
+#endif
 {
+    va_list ap;
+#ifdef __STDC__
+    va_start(ap, pat);
+#else
+    const char *pat;
+
+    va_start(ap);
+    pat = va_arg(ap, const char *);
+#endif
+	
     fprintf(stderr, "patch: **** ");
-    fprintf(stderr, pat, arg1, arg2, arg3);
+    vfprintf(stderr, pat, ap);
+    va_end(ap);
     my_exit(1);
 }
 
 /* Say something from patch, something from the system, then silence . . . */
 
 void				/* very void */
-pfatal(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+#ifdef __STDC__
+pfatal(const char *pat, ...)
+#else
+pfatal(va_alist)
+	va_dcl
+#endif
 {
+    va_list ap;
     int errnum = errno;
+#ifdef __STDC__
+    va_start(ap, pat);
+#else
+    const char *pat;
 
+    va_start(ap);
+    pat = va_arg(ap, const char *);
+#endif
+	
     fprintf(stderr, "patch: **** ");
-    fprintf(stderr, pat, arg1, arg2, arg3);
+    vfprintf(stderr, pat, ap);
     fprintf(stderr, ": %s\n", strerror(errnum));
+    va_end(ap);
     my_exit(1);
 }
-
 /* Get a response from the user, somehow or other. */
 
 void
-ask(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+#ifdef __STDC__
+ask(const char *pat, ...)
+#else
+ask(va_alist)
+	va_dcl
+#endif
 {
     int ttyfd;
     int r;
     bool tty2 = isatty(2);
+    va_list ap;
+#ifdef __STDC__
+    va_start(ap, pat);
+#else
+    const char *pat;
 
-    Sprintf(buf, pat, arg1, arg2, arg3);
+    va_start(ap);
+    pat = va_arg(ap, const char *);
+#endif
+
+    (void) vsprintf(buf, pat, ap);
+    va_end(ap);
     Fflush(stderr);
     write(2, buf, strlen(buf));
     if (tty2) {				/* might be redirected to a file */
@@ -285,9 +347,9 @@ int reset;
 {
 #ifndef lint
 #ifdef VOIDSIG
-    static void (*hupval)(),(*intval)();
+    static void (*hupval) __P((int)),(*intval) __P((int));
 #else
-    static int (*hupval)(),(*intval)();
+    static int (*hupval) __P((int)),(*intval)__P((int));
 #endif
 
     if (!reset) {
@@ -296,14 +358,14 @@ int reset;
 #ifdef VOIDSIG
 	    hupval = my_exit;
 #else
-	    hupval = (int(*)())my_exit;
+	    hupval = (int(*) __P((int)))my_exit;
 #endif
 	intval = signal(SIGINT, SIG_IGN);
 	if (intval != SIG_IGN)
 #ifdef VOIDSIG
 	    intval = my_exit;
 #else
-	    intval = (int(*)())my_exit;
+	    intval = (int(*) __P((int)))my_exit;
 #endif
     }
     Signal(SIGHUP, hupval);
@@ -427,8 +489,9 @@ int assume_exists;
 	strncpy(tmpbuf, name, pathlen);
 
 #define try(f, a1, a2) (Sprintf(tmpbuf + pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
+#define try1(f, a1) (Sprintf(tmpbuf + pathlen, f, a1), stat(tmpbuf, &filestat) == 0)
 	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try("RCS/%s"  , filebase,         0)
+	    || try1("RCS/%s"  , filebase)
 	    || try(    "%s%s", filebase, RCSSUFFIX)
 	    || try("SCCS/%s%s", SCCSPREFIX, filebase)
 	    || try(     "%s%s", SCCSPREFIX, filebase))
