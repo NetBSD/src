@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.6 2000/05/26 20:16:46 ragge Exp $	*/
+/*	$NetBSD: netio.c,v 1.7 2003/03/28 18:16:59 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -184,11 +184,13 @@ net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr) {
 ssize_t
 netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
-	return (*desc->io_netif->nif_driver->netif_put)(desc, pkt, len);
+	return (*((struct netif*)desc->io_netif)->nif_driver->netif_put)
+		(desc, pkt, len);
 }
 
 ssize_t
 netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timo)
 {
-	return (*desc->io_netif->nif_driver->netif_get)(desc, pkt, len, timo);
+	return (*((struct netif*)desc->io_netif)->nif_driver->netif_get)
+		(desc, pkt, len, timo);
 }
