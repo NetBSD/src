@@ -1,4 +1,4 @@
-#	$Id: bsd.obj.mk,v 1.3 1993/10/23 02:32:55 cgd Exp $
+#	$Id: bsd.obj.mk,v 1.4 1993/11/07 09:45:04 cgd Exp $
 
 .if !target(obj)
 .if defined(NOOBJ)
@@ -12,10 +12,10 @@ __objdir=	obj
 .endif
 
 .if defined(USR_OBJMACHINE)
-__usrobjdir=	obj.${MACHINE}
+__usrobjdir=	${BSDOBJDIR}.${MACHINE}
 __usrobjdirpf=	
 .else
-__usrobjdir=	obj
+__usrobjdir=	${BSDOBJDIR}
 .if defined(OBJMACHINE)
 __usrobjdirpf=	.${MACHINE}
 .else
@@ -25,11 +25,11 @@ __usrobjdirpf=
 
 obj:
 	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
-	here=`pwd`; subdir=`echo $$here | sed 's,^/usr/src/,,'`; \
+	here=`pwd`; subdir=`echo $$here | sed 's,^${BSDSRCDIR}/,,'`; \
 	if test $$here != $$subdir ; then \
-		dest=/usr/${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
+		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
 		echo "$$here/${__objdir} -> $$dest"; ln -s $$dest ${__objdir}; \
-		if test -d /usr/${__usrobjdir} -a ! -d $$dest; then \
+		if test -d ${__usrobjdir} -a ! -d $$dest; then \
 			mkdir -p $$dest; \
 		else \
 			true; \
