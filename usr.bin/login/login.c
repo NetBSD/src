@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.47 2000/01/07 00:00:37 billc Exp $       */
+/*     $NetBSD: login.c,v 1.48 2000/01/13 06:17:56 mjl Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.47 2000/01/07 00:00:37 billc Exp $");
+__RCSID("$NetBSD: login.c,v 1.48 2000/01/13 06:17:56 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -83,15 +83,18 @@ __RCSID("$NetBSD: login.c,v 1.47 2000/01/07 00:00:37 billc Exp $");
 #include <krb5/krb5.h>
 #include <kerberosIV/com_err.h>
 #endif
+#ifdef LOGIN_CAP
+#include <login_cap.h>
+#endif
 
 #include "pathnames.h"
 
 void	 badlogin __P((char *));
-void	 checknologin __P((void));
+void	 checknologin __P((char *));
 void	 dolastlog __P((int));
 void	 getloginname __P((void));
 int	 main __P((int, char *[]));
-void	 motd __P((void));
+void	 motd __P((char *));
 int	 rootterm __P((char *));
 void	 sigint __P((int));
 void	 sleepexit __P((int));
@@ -108,6 +111,9 @@ int	k5_write_creds __P((void));
 #endif
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
+
+#define DEFAULT_BACKOFF 10
+#define DEFAULT_RETRIES 3
 
 /*
  * This bounds the time given to login.  Not a define so it can
@@ -156,8 +162,15 @@ main(argc, argv)
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
 	int need_chpass, require_chpass;
+	int login_retries = DEFAULT_RETRIES, 
+	    login_backoff = DEFAULT_BACKOFF;
+	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
+	char *shell = NULL;
 #ifdef KERBEROS5
 	krb5_error_code kerror;
+#endif
+#ifdef LOGIN_CAP
+	login_cap_t *lc = NULL;
 #endif
 
 	tbuf[0] = '\0';
@@ -244,6 +257,19 @@ main(argc, argv)
 	else
 		tty = ttyn;
 
+#ifdef LOGIN_CAP
+	/* Get "login-retries" and "login-backoff" from default class */
+	if((lc = login_getclass(NULL)))
+		{
+		login_retries = (int) login_getcapnum(lc, "login-retries",
+					DEFAULT_RETRIES, DEFAULT_RETRIES);
+		login_backoff = (int) login_getcapnum(lc, "login-backoff", 
+					DEFAULT_BACKOFF, DEFAULT_BACKOFF);
+		login_close(lc);
+		lc = NULL;
+		}
+#endif
+
 #ifdef KERBEROS5
 	kerror = krb5_init_context(&kcontext);
 	if (kerror) {
@@ -294,6 +320,16 @@ main(argc, argv)
 			salt = pwd->pw_passwd;
 		else
 			salt = "xx";
+
+#ifdef LOGIN_CAP
+		/*
+		 * Establish the class now, before we might goto
+		 * within the next block. pwd can be NULL since it
+                 * falls back to the "default" class if it is.
+                 */
+		if (pwd != NULL)
+                	lc = login_getclass(pwd->pw_class);
+#endif
 
 		/*
 		 * if we have a valid account name, and it doesn't have a
@@ -399,9 +435,10 @@ main(argc, argv)
 
 		(void)printf("Login incorrect\n");
 		failures++;
+		cnt++;
 		/* we allow 10 tries, but after 3 we start backing off */
-		if (++cnt > 3) {
-			if (cnt >= 10) {
+		if (cnt > login_backoff || cnt >= login_retries) {
+			if (cnt >= login_retries) {
 				badlogin(username);
 				sleepexit(1);
 			}
@@ -415,9 +452,23 @@ main(argc, argv)
 	endpwent();
 
 	/* if user not super-user, check for disabled logins */
-	if (!rootlogin)
-		checknologin();
+#ifdef LOGIN_CAP
+        if (!rootlogin || login_getcapbool(lc, "ignorenologin", 0)) {
+		char *fname;
+		
+		fname = login_getcapstr(lc, "nologin", NULL, NULL);
+                checknologin(fname);
+	}
+#else
+        if (!rootlogin)
+                checknologin(NULL);
+#endif
 
+#ifdef LOGIN_CAP
+        quietlog = login_getcapbool(lc, "hushlogin", 0);
+#else
+        quietlog = 0;
+#endif
 	/* Temporarily give up special privileges so we can change */
 	/* into NFS-mounted homes that are exported for non-root */
 	/* access and have mode 7x0 */
@@ -430,6 +481,12 @@ main(argc, argv)
 	(void)seteuid(pwd->pw_uid);
 	
 	if (chdir(pwd->pw_dir) < 0) {
+#ifdef LOGIN_CAP
+                if (login_getcapbool(lc, "requirehome", 0)) {
+			(void) printf("Home directory %s required\n", pwd->pw_dir);
+                        sleepexit(1);
+		}
+#endif	
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
 		if (chdir("/"))
 			exit(0);
@@ -437,12 +494,19 @@ main(argc, argv)
 		(void)printf("Logging in with home = \"/\".\n");
 	}
 
-	quietlog = access(_PATH_HUSHLOGIN, F_OK) == 0;
+	if(!quietlog)
+		quietlog = access(_PATH_HUSHLOGIN, F_OK) == 0;
 
 	/* regain special privileges */
 	(void)seteuid(saved_uid);
 	setgroups(nsaved_gids, saved_gids);
 	(void)setegid(saved_gid);
+
+#ifdef LOGIN_CAP
+        pw_warntime = login_getcaptime(lc, "password-warn",
+                                    _PASSWORD_WARNDAYS * SECSPERDAY,
+                                    _PASSWORD_WARNDAYS * SECSPERDAY);
+#endif
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
@@ -450,8 +514,8 @@ main(argc, argv)
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
-		} else if (pwd->pw_expire - tp.tv_sec <
-		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
+		} else if (pwd->pw_expire - tp.tv_sec < pw_warntime && 
+			   !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
 	}
@@ -461,8 +525,8 @@ main(argc, argv)
 		else if (tp.tv_sec >= pwd->pw_change) {
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
-		} else if (pwd->pw_change - tp.tv_sec <
-		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
+		} else if (pwd->pw_change - tp.tv_sec < pw_warntime && 
+			   !quietlog)
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
 
@@ -489,24 +553,62 @@ main(argc, argv)
 	if (krbtkfile_env)
 		dofork();
 #endif
+#ifdef LOGIN_CAP
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL & ~LOGIN_SETPATH)
+	    != 0) {
+		syslog(LOG_ERR, "setusercontext failed");
+		exit(1);
+	}
+#else
 	(void)setgid(pwd->pw_gid);
 
 	initgroups(username, pwd->pw_gid);
+	
+	if (setlogin(pwd->pw_name) < 0)
+		syslog(LOG_ERR, "setlogin() failure: %m");
+
+	/* Discard permissions last so can't get killed and drop core. */
+	if (rootlogin)
+		(void)setuid(0);
+	else
+		(void)setuid(pwd->pw_uid);
+
+#endif
 
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
-
+#ifdef LOGIN_CAP
+	if((shell = login_getcapstr(lc, "shell", NULL, NULL))) {
+		if(!(shell = strdup(shell))) {
+                	syslog(LOG_NOTICE, "Cannot alloc mem");
+                	sleepexit(1);
+		}
+		pwd->pw_shell = shell;
+	}
+#endif
+	
 	/* Destroy environment unless user has requested its preservation. */
 	if (!pflag)
 		environ = envinit;
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
-	if (term[0] == '\0')
-		(void)strncpy(term, stypeof(tty), sizeof(term));
+	if (term[0] == '\0') {
+		char *tt = (char *) stypeof(tty);
+#ifdef LOGIN_CAP
+		if(!tt)
+			tt = login_getcapstr(lc, "term", NULL, NULL);
+#endif
+		/* unknown term -> "su" */
+		(void)strncpy(term, tt ? tt : "su", sizeof(term));
+		}
 	(void)setenv("TERM", term, 0);
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
 	(void)setenv("USER", pwd->pw_name, 1);
+#ifdef LOGIN_CAP
+	setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH);
+#else
 	(void)setenv("PATH", _PATH_DEFPATH, 0);
+#endif
 #ifdef KERBEROS
 	if (krbtkfile_env)
 		(void)setenv("KRBTKFILE", krbtkfile_env, 1);
@@ -535,14 +637,33 @@ main(argc, argv)
 #endif
 
 	if (!quietlog) {
-		(void)printf(copyrightstr);
-		motd();
+		char    *fname;
+#ifdef LOGIN_CAP
+
+		fname = login_getcapstr(lc, "copyright", NULL, NULL);
+		if (fname && access(fname, F_OK) == 0)
+			motd(fname);
+		else
+#endif
+			(void)printf(copyrightstr);
+
+#ifdef LOGIN_CAP
+                fname = login_getcapstr(lc, "welcome", NULL, NULL);
+                if (fname == NULL || access(fname, F_OK) != 0)
+#endif
+                        fname = _PATH_MOTDFILE;
+                motd(fname);
+
 		(void)snprintf(tbuf,
 		    sizeof(tbuf), "%s/%s", _PATH_MAILDIR, pwd->pw_name);
 		if (stat(tbuf, &st) == 0 && st.st_size != 0)
 			(void)printf("You have %smail.\n",
 			    (st.st_mtime > st.st_atime) ? "new " : "");
 	}
+
+#ifdef LOGIN_CAP
+	login_close(lc);
+#endif
 
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)signal(SIGQUIT, SIG_DFL);
@@ -552,15 +673,6 @@ main(argc, argv)
 	tbuf[0] = '-';
 	(void)strncpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
 	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 2);
-
-	if (setlogin(pwd->pw_name) < 0)
-		syslog(LOG_ERR, "setlogin() failure: %m");
-
-	/* Discard permissions last so can't get killed and drop core. */
-	if (rootlogin)
-		(void)setuid(0);
-	else
-		(void)setuid(pwd->pw_uid);
 
 	/* Wait to change password until we're unprivileged */
 	if (need_chpass) {
@@ -672,13 +784,14 @@ rootterm(ttyn)
 jmp_buf motdinterrupt;
 
 void
-motd()
+motd(fname)
+	char *fname;
 {
 	int fd, nchars;
 	sig_t oldint;
 	char tbuf[8192];
 
-	if ((fd = open(_PATH_MOTDFILE, O_RDONLY, 0)) < 0)
+	if ((fd = open(fname ? fname : _PATH_MOTDFILE, O_RDONLY, 0)) < 0)
 		return;
 	oldint = signal(SIGINT, sigint);
 	if (setjmp(motdinterrupt) == 0)
@@ -708,12 +821,13 @@ timedout(signo)
 }
 
 void
-checknologin()
+checknologin(fname)
+	char *fname;
 {
 	int fd, nchars;
 	char tbuf[8192];
 
-	if ((fd = open(_PATH_NOLOGIN, O_RDONLY, 0)) >= 0) {
+	if ((fd = open(fname ? fname : _PATH_NOLOGIN, O_RDONLY, 0)) >= 0) {
 		while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
 			(void)write(fileno(stdout), tbuf, nchars);
 		sleepexit(0);
@@ -777,16 +891,13 @@ badlogin(name)
 	}
 }
 
-#undef	UNKNOWN
-#define	UNKNOWN	"su"
-
 const char *
 stypeof(ttyid)
 	const char *ttyid;
 {
 	struct ttyent *t;
 
-	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : UNKNOWN);
+	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : NULL);
 }
 
 void
