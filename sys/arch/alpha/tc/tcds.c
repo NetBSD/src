@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.27 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: tcds.c,v 1.28 1999/09/22 03:32:42 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.27 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.28 1999/09/22 03:32:42 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -294,15 +294,17 @@ tcdsattach(parent, self, aux)
 		tcdsdev.tcdsda_chip = i;
 		tcdsdev.tcdsda_sc = &sc->sc_slots[i];
 		/*
-		 * Determine the chip frequency.  If GPI2 is set, we have a
+		 * Determine the chip frequency.  TCDSF_FASTSCSI will be set
+		 * for TC option cards.  For baseboard chips, GPI2 is set, for a
 		 * 25MHz clock, else a 40MHz clock.
 		 */
-		if (gpi2) {
-			tcdsdev.tcdsda_freq = 25000000;
-			tcdsdev.tcdsda_period = 5;
-		} else {
+		if ((sc->sc_flags & TCDSF_BASEBOARD && gpi2 == 0) ||
+		    sc->sc_flags & TCDSF_FASTSCSI) {
 			tcdsdev.tcdsda_freq = 40000000;
 			tcdsdev.tcdsda_period = tcdsdev.tcdsda_fast ? 4 : 8;
+		} else {
+			tcdsdev.tcdsda_freq = 25000000;
+			tcdsdev.tcdsda_period = 5;
 		}
 		if (sc->sc_flags & TCDSF_BASEBOARD)
 			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C94;
@@ -598,9 +600,6 @@ tcds_params(sc, chip, idp, fastp)
 		    sc->sc_dv.dv_xname, id, chip);
 		id = 7;
 	}
-
-	if ((sc->sc_flags & TCDSF_FASTSCSI) == 0)
-		fast = 0;
 
 	if (fast)
 		printf("%s: fast mode set for chip %d\n",
