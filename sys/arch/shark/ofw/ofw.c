@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.13.4.1 2002/11/21 20:18:27 he Exp $	*/
+/*	$NetBSD: ofw.c,v 1.13.4.2 2003/02/14 22:29:35 he Exp $	*/
 
 /*
  * Copyright 1997
@@ -1374,7 +1374,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		pmap_map_entry(L1pagetable,
 		    proc0_pagedir.pv_va + NBPG * i,
 		    proc0_pagedir.pv_pa + NBPG * i,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
