@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.36 2002/10/12 11:53:39 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.37 2002/11/03 21:43:31 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -824,7 +824,7 @@ initarm(bootargs)
 
 	/* Setup the IRQ system */
 	printf("irq ");
-	irq_init();
+	footbridge_intr_init();
 	printf("done.\n");
 
 #ifdef IPKDB
