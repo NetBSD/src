@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc_arm.c,v 1.1 2002/08/09 00:03:15 thorpej Exp $	*/
+/*	$NetBSD: pmc_arm.c,v 1.2 2002/08/09 05:29:37 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@ static const struct pmc_event i80200_pmc_evids[] = {
 };
 
 static const struct pmc_class2evid arm_pmc_classes[] = {
-	{ PMC_TYPE_I80200,		"i80200",
+	{ PMC_CLASS_I80200,		"i80200",
 	  i80200_pmc_evids },
 	{ PMC_TYPE_I80200_CCNT,		"i80200 cycle counter",
 	  NULL },
