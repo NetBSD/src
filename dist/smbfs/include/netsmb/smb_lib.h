@@ -214,7 +214,7 @@ int  m_lineup(struct mbuf *, struct mbuf **);
 int  mb_init(struct mbdata *, size_t);
 int  mb_initm(struct mbdata *, struct mbuf *);
 int  mb_done(struct mbdata *);
-int  mb_fit(struct mbdata *mbp, size_t size, char **pp);
+int  mb_fit(struct mbdata *mbp, size_t size, void **pp);
 int  mb_put_uint8(struct mbdata *, u_int8_t);
 int  mb_put_uint16be(struct mbdata *, u_int16_t);
 int  mb_put_uint16le(struct mbdata *, u_int16_t);
