@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.49 1998/02/16 22:12:47 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.50 1998/03/21 11:12:56 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -11,31 +11,35 @@ maxusers 2 8 1024
 device mainbus {}
 attach mainbus at root
 
-device obio { [addr = -1], [level = -1] }
-attach obio at mainbus
-
 device iommu {}
 attach iommu at mainbus
 file	arch/sparc/sparc/iommu.c		iommu
 
+device obio { [addr = -1], [level = -1] }
+attach obio at mainbus
+
 include "../../../dev/vme/files.vme"
-attach vme at iommu, mainbus
+attach vme at mainbus with vme_mainbus
+attach vme at iommu with vme_iommu
 
 file	arch/sparc/dev/obio.c		obio
 file	arch/sparc/dev/vme_machdep.c	vme
 
 device auxreg
-attach auxreg at mainbus, obio
+attach auxreg at mainbus with auxreg_mainbus
+attach auxreg at obio with auxreg_obio
 file	arch/sparc/sparc/auxreg.c
 
 device clock
-attach clock at mainbus, obio
+attach clock at mainbus with clock_mainbus
+attach clock at obio with clock_obio
 
 device oclock
 attach oclock at obio
 
 device timer
-attach timer at mainbus, obio
+attach timer at mainbus with timer_mainbus
+attach timer at obio with timer_obio
 
 device eeprom
 attach eeprom at obio
@@ -50,24 +54,33 @@ attach cpu at mainbus
 file	arch/sparc/sparc/cpu.c
 
 device memreg
-attach memreg at mainbus, obio
+attach memreg at mainbus with memreg_mainbus
+attach memreg at obio with memreg_obio
 file	arch/sparc/sparc/memreg.c
 
 device zs {channel = -1}
-attach zs at mainbus, obio
+attach zs at mainbus with zs_mainbus
+attach zs at obio with zs_obio
 file	arch/sparc/dev/zs.c			zs needs-count
 file	dev/ic/z8530sc.c			zs
 
 device fdc {}
-attach fdc at mainbus, obio
+attach fdc at mainbus with fdc_mainbus
+attach fdc at obio with fdc_obio
 device fd: disk
 attach fd at fdc
 file	arch/sparc/dev/fd.c			fdc | fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
 device sbus { slot = -1, offset = -1 }
-attach sbus at mainbus, iommu
+attach sbus at mainbus with sbus_mainbus
+attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus
+
+#device xbox class dull {}
+#attach xbox at sbus
+#attach sbus at xbox with sbus_xbox
+#file	arch/sparc/dev/xbox.c			xbox
 
 #
 # Console (zs) related stuff
@@ -104,7 +117,8 @@ major { xd = 10 }
 major { xy = 3 }
 
 device dma {}
-attach dma at sbus, obio
+attach dma at sbus with dma_sbus
+attach dma at obio with dma_obio
 device ledma {}
 attach ledma at sbus
 file	arch/sparc/dev/dma.c		dma | ledma
@@ -113,11 +127,15 @@ attach lebuffer at sbus
 file	arch/sparc/dev/lebuffer.c	lebuffer
 
 device esp: scsi, ncr53c9x
-attach esp at sbus, dma, obio
+##attach esp at sbus, dma, obio
+attach esp at sbus with esp_sbus
+attach esp at dma with esp_dma
+attach esp at obio with esp_obio
 file	arch/sparc/dev/esp.c		esp
 
 device audioamd: audio
-attach audioamd at mainbus, obio, sbus
+attach audioamd at mainbus with audioamd_mainbus
+attach audioamd at sbus with audioamd_sbus
 file	arch/sparc/dev/amd7930.c		audio
 file	arch/sparc/sparc/amd7930intr.s		audio
 
@@ -128,15 +146,17 @@ define bt_dac
 define fb
 
 device bwtwo: fb
-attach bwtwo at sbus, obio, vme
+attach bwtwo at sbus with bwtwo_sbus
+attach bwtwo at obio with bwtwo_obio
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
 device cgtwo: fb
-attach cgtwo at sbus, obio, vme
+attach cgtwo at vme
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
 device cgthree: bt_dac, fb
-attach cgthree at sbus
+attach cgthree at sbus with cgthree_sbus
+attach cgthree at obio with cgthree_obio
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
 device cgfour: bt_dac, fb
@@ -144,7 +164,8 @@ attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
 device cgsix: bt_dac, fb
-attach cgsix at sbus, obio
+attach cgsix at sbus with cgsix_sbus
+attach cgsix at obio with cgsix_obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
 device cgeight: bt_dac, fb
@@ -163,7 +184,10 @@ file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
 
 # device definition in sys/conf/files
-attach le at sbus, ledma, lebuffer, obio
+attach le at sbus with le_sbus
+attach le at ledma with le_ledma
+attach le at lebuffer with le_lebuffer
+attach le at obio with le_obio
 file	arch/sparc/dev/if_le.c		le
 
 attach ie at obio with ie_obio
