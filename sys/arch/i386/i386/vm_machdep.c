@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.106 2002/10/22 20:51:43 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.107 2003/01/17 23:10:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106 2002/10/22 20:51:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.107 2003/01/17 23:10:32 thorpej Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -75,20 +75,28 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106 2002/10/22 20:51:43 christos Ex
 #include "npx.h"
 
 #ifndef NOREDZONE
-static void setredzone __P((struct proc *p));
+static void setredzone __P((struct lwp *l));
 #endif
 
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
+}
+
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a new thread operation, with LWP l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the thread being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -97,37 +105,37 @@ static void setredzone __P((struct proc *p));
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 
 #if NNPX > 0
 	/*
 	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
 	 */
-	if (p1->p_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(p1, 1);
+	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l1, 1);
 #endif
 
-	p2->p_md.md_flags = p1->p_md.md_flags;
+	l2->l_md.md_flags = l1->l_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
-	if (p1 == curproc) {
+	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
-		panic("cpu_fork: curproc");
+	else if (l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = l1->l_addr->u_pcb;
 
 	/*
 	 * Preset these so that gdt_compact() doesn't get confused if called
@@ -136,22 +144,22 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
 	 * we run the new process.
 	 */
-	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
+	l2->l_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
+	pcb->pcb_tss.tss_esp0 = (int)l2->l_addr + USPACE - 16;
 
-	p2->p_md.md_tss_sel = tss_alloc(pcb);
+	l2->l_md.md_tss_sel = tss_alloc(pcb);
 
 	/*
 	 * Copy the trapframe.
 	 */
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	*tf = *p1->p_md.md_regs;
+	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	*tf = *l1->l_md.md_regs;
 
 #ifndef NOREDZONE
-	setredzone(p2);
+	setredzone(l2);
 #endif
 	/*
 	 * If specified, give the child a different stack.
@@ -168,24 +176,41 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = l->l_md.md_regs;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+
+	sf->sf_esi = (int)func;
+	sf->sf_ebx = (int)arg;
+	sf->sf_eip = (int)proc_trampoline;
+	pcb->pcb_esp = (int)sf;
+	pcb->pcb_ebp = 0;
+}	
+
+void
+cpu_swapin(l)
+	struct lwp *l;
 {
 #ifndef NOREDZONE
-	setredzone(p);
+	setredzone(l);
 #endif
 }
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(l)
+	struct lwp *l;
 {
 
 #if NNPX > 0
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	npxsave_proc(p, 1);
+	npxsave_lwp(l, 1);
 #endif
 }
 
@@ -195,21 +220,24 @@ cpu_swapout(p)
  * We clean up a little and then call switch_exit() with the old proc as an
  * argument.  switch_exit() first switches to proc0's context, and finally
  * jumps into switch() to wait for another process to wake up.
+ * 
+ * If proc==0, we're an exiting lwp, and call switch_lwp_exit() instead of 
+ * switch_exit(), and only do LWP-appropriate cleanup (e.g. don't deactivate
+ * the pmap).
  */
 void
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(struct lwp *l, int proc)
 {
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(p, 0);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l, 0);
 #endif
 
 #ifdef MTRR
-	if (p->p_md.md_flags & MDP_USEDMTRR)
-		mtrr_clean(p);
+	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(l->l_proc);
 #endif
 
 	/*
@@ -223,10 +251,10 @@ cpu_exit(p)
 	 * vmspace's context until the switch to the idle process
 	 * in switch_exit().
 	 */
-	pmap_deactivate(p);
+	pmap_deactivate(l);
 
 	uvmexp.swtch++;
-	switch_exit(p);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
 
 /*
@@ -235,12 +263,12 @@ cpu_exit(p)
  * in cpu_exit().
  */
 void
-cpu_wait(p)
-	struct proc *p;
+cpu_wait(l)
+	struct lwp *l;
 {
 
 	/* Nuke the TSS. */
-	tss_free(p->p_md.md_tss_sel);
+	tss_free(l->l_md.md_tss_sel);
 }
 
 /*
@@ -251,12 +279,13 @@ struct md_core {
 	struct fpreg freg;
 };
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -267,12 +296,12 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
+	error = process_read_regs(l, &md_core.intreg);
 	if (error)
 		return error;
 
 	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
+	error = process_read_fpregs(l, &md_core.freg);
 	if (error)
 		return error;
 
@@ -301,10 +330,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Set a red zone in the kernel stack after the u. area.
  */
 static void
-setredzone(struct proc *p)
+setredzone(struct lwp *l)
 {
-	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
-	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
+	pmap_remove(pmap_kernel(), (vaddr_t)l->l_addr + PAGE_SIZE,
+	    (vaddr_t)l->l_addr + 2 * PAGE_SIZE);
 	pmap_update(pmap_kernel());
 }
 #endif

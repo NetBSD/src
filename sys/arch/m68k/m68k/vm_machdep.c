@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2002/10/20 02:37:43 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2002/10/20 02:37:43 chs Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,17 +62,25 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2002/10/20 02:37:43 chs Exp $");
 
 #include <uvm/uvm_extern.h>
 
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_md.mdp_flags = p1->p_md.mdp_flags;
+}
+
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with process l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the process being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -81,37 +89,37 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2002/10/20 02:37:43 chs Exp $");
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
 
-	p2->p_md.md_flags = p1->p_md.md_flags;
+	l2->l_md.md_flags = l1->l_md.md_flags;
 
-	/* Copy pcb from proc p1 to p2. */
-	if (p1 == curproc) {
+	/* Copy pcb from lwp l1 to l2. */
+	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
-		panic("cpu_fork: curproc");
+	else if (l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = l1->l_addr->u_pcb;
 
 	/*
 	 * Copy the trap frame.
 	 */
-	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
-	p2->p_md.md_regs = (int *)tf;
-	*tf = *(struct trapframe *)p1->p_md.md_regs;
+	tf = (struct trapframe *)((u_int)l2->l_addr + USPACE) - 1;
+	l2->l_md.md_regs = (int *)tf;
+	*tf = *(struct trapframe *)l1->l_md.md_regs;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -126,6 +134,23 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 }
 
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+	extern void proc_trampoline __P((void));
+
+	sf->sf_pc = (int)proc_trampoline;
+	pcb->pcb_regs[6] = (int)func;		/* A2 */
+	pcb->pcb_regs[7] = (int)arg;		/* A3 */
+	pcb->pcb_regs[11] = (int)sf;		/* SSP */
+}	
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -133,13 +158,17 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
  * switch to another process thus we never return.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(l, proc)
+	struct lwp *l;
+	int proc;
 {
 
 	(void) splhigh();
 	uvmexp.swtch++;
-	switch_exit(p);
+	if (proc)
+		switch_exit(l);
+	else
+		switch_lwp_exit(l);
 	/* NOTREACHED */
 }
 
@@ -151,12 +180,13 @@ struct md_core {
 	struct fpreg freg;
 };
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -167,13 +197,13 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
+	error = process_read_regs(l, &md_core.intreg);
 	if (error)
 		return error;
 
 	if (fputype) {
 		/* Save floating point registers. */
-		error = process_read_fpregs(p, &md_core.freg);
+		error = process_read_fpregs(l, &md_core.freg);
 		if (error)
 			return error;
 	} else {

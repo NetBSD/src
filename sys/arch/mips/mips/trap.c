@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.176 2003/01/17 23:36:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176 2003/01/17 23:36:19 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $");
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -143,16 +145,16 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct lwp *l = arg;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
 	frame->f_regs[V0] = 0;
 	frame->f_regs[V1] = 1;
 	frame->f_regs[A3] = 0;
-	userret(p);
+	userret(l);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
 }
 
@@ -178,10 +180,12 @@ trap(status, cause, vaddr, opc, frame)
 {
 	int type, sig;
 	int ucode = 0;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p;
 	vm_prot_t ftype;
 	extern void fswintrberr(void);
 
+	p = l ? l->l_proc : NULL; 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status))
@@ -206,12 +210,12 @@ trap(status, cause, vaddr, opc, frame)
 			USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, epc=0x%x, vaddr=0x%x\n",
 			status, cause, opc, vaddr);
-		if (curproc != NULL)
+		if (curlwp != NULL)
 			printf("pid=%d cmd=%s usp=0x%x ",
 			    p->p_pid, p->p_comm,
-			    (int)((struct frame *)p->p_md.md_regs)->f_regs[SP]);
+			    (int)((struct frame *)l->l_md.md_regs)->f_regs[SP]);
 		else
-			printf("curproc == NULL ");
+			printf("curlwp == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
 #if defined(DDB)
 		kdb_trap(type, (mips_reg_t *) frame);
@@ -303,7 +307,7 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		pmap_set_modified(pa);
 		if (type & T_USER)
-			userret(p);
+			userret(l);
 		return; /* GEN */
 	    }
 	case T_TLB_LD_MISS:
@@ -315,10 +319,10 @@ trap(status, cause, vaddr, opc, frame)
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
-		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
+		if (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
 			frame->tf_regs[TF_EPC] = (int)fswintrberr;
 			return; /* KERN */
 		}
@@ -368,7 +372,7 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		if (rv == 0) {
 			if (type & T_USER) {
-				userret(p);
+				userret(l);
 			}
 			return; /* GEN */
 		}
@@ -401,9 +405,9 @@ trap(status, cause, vaddr, opc, frame)
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
 	copyfault:
-		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
-		frame->tf_regs[TF_EPC] = (int)p->p_addr->u_pcb.pcb_onfault;
+		frame->tf_regs[TF_EPC] = (int)l->l_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -455,14 +459,14 @@ trap(status, cause, vaddr, opc, frame)
 		/* read break instruction */
 		instr = fuiword((void *)va);
 
-		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
+		if (l->l_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			sig = SIGTRAP;
 			break;
 		}
 		/*
 		 * Restore original instruction and clear BP
 		 */
-		rv = suiword((void *)va, p->p_md.md_ss_instr);
+		rv = suiword((void *)va, l->l_md.md_ss_instr);
 		if (rv < 0) {
 			vaddr_t sa, ea;
 			sa = trunc_page(va);
@@ -480,8 +484,8 @@ trap(status, cause, vaddr, opc, frame)
 
 		if (rv < 0)
 			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
-				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
-		p->p_md.md_ss_addr = 0;
+				l->l_md.md_ss_addr, l->l_md.md_ss_instr);
+		l->l_md.md_ss_addr = 0;
 		sig = SIGTRAP;
 		break; /* SIGNAL */
 	    }
@@ -491,38 +495,38 @@ trap(status, cause, vaddr, opc, frame)
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
 			struct frame *f;
 
-			f = (struct frame *)p->p_md.md_regs;
-			savefpregs(fpcurproc);  	/* yield FPA */
-			loadfpregs(p);          	/* load FPA */
-			fpcurproc = p;
-			p->p_md.md_flags |= MDP_FPUSED;
+			f = (struct frame *)l->l_md.md_regs;
+			savefpregs(fpcurlwp);	  	/* yield FPA */
+			loadfpregs(l);          	/* load FPA */
+			fpcurlwp = l;
+			l->l_md.md_flags |= MDP_FPUSED;
 			f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
 		} else
 #endif
 		{
-			MachEmulateInst(status, cause, opc, p->p_md.md_regs);
+			MachEmulateInst(status, cause, opc, l->l_md.md_regs);
 		}
-		userret(p);
+		userret(l);
 		return; /* GEN */
 	case T_FPE+T_USER:
 #if defined(SOFTFLOAT)
-		MachEmulateInst(status, cause, opc, p->p_md.md_regs);
+		MachEmulateInst(status, cause, opc, l->l_md.md_regs);
 #elif !defined(NOFPU)
-		MachFPTrap(status, cause, opc, p->p_md.md_regs);
+		MachFPTrap(status, cause, opc, l->l_md.md_regs);
 #endif
-		userret(p);
+		userret(l);
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
 	case T_TRAP+T_USER:
 		sig = SIGFPE;
 		break; /* SIGNAL */
 	}
-	((struct frame *)p->p_md.md_regs)->f_regs[CAUSE] = cause;
-	((struct frame *)p->p_md.md_regs)->f_regs[BADVADDR] = vaddr;
-	trapsignal(p, sig, ucode);
+	((struct frame *)l->l_md.md_regs)->f_regs[CAUSE] = cause;
+	((struct frame *)l->l_md.md_regs)->f_regs[BADVADDR] = vaddr;
+	trapsignal(l, sig, ucode);
 	if ((type & T_USER) == 0)
 		panic("trapsignal");
-	userret(p);
+	userret(l);
 	return;
 }
 
@@ -559,7 +563,8 @@ void
 ast(pc)
 	unsigned pc;		/* program counter where to continue */
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int sig;
 
 	while (p->p_md.md_astpending) {
@@ -572,17 +577,17 @@ ast(pc)
 		}
 
 		/* Take pending signals. */
-		while ((sig = CURSIG(p)) != 0)
+		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 
 		if (want_resched) {
 			/*
 			 * We are being preempted.
 			 */
-			preempt(NULL);
+			preempt(0);
 		}
 
-		userret(p);
+		userret(l);
 	}
 }
 
@@ -593,22 +598,23 @@ ast(pc)
  * resuming execution, and then restoring the old instruction.
  */
 int
-mips_singlestep(p)
-	struct proc *p;
+mips_singlestep(l)
+	struct lwp *l;
 {
-	struct frame *f = (struct frame *)p->p_md.md_regs;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct proc *p = l->l_proc;
 	vaddr_t pc, va;
 	int rv;
 
-	if (p->p_md.md_ss_addr) {
+	if (l->l_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %lx\n",
-			p->p_comm, p->p_pid, p->p_md.md_ss_addr);
+			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}
 	pc = (vaddr_t)f->f_regs[PC];
 	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
 		va = MachEmulateBranch(f, pc,
-		    PCB_FSR(&p->p_addr->u_pcb), 1);
+		    PCB_FSR(&l->l_addr->u_pcb), 1);
 	else
 		va = pc + sizeof(int);
 
@@ -621,8 +627,8 @@ mips_singlestep(p)
 			va += sizeof(int);
 	}
 
-	p->p_md.md_ss_addr = va;
-	p->p_md.md_ss_instr = fuiword((void *)va);
+	l->l_md.md_ss_addr = va;
+	l->l_md.md_ss_instr = fuiword((void *)va);
 	rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 	if (rv < 0) {
 		vaddr_t sa, ea;
@@ -701,7 +707,6 @@ extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 extern int main(void *);
 extern void mips_idle(void);
-extern void cpu_switch(struct proc *, struct proc *);
 
 /*
  *  stack trace code, also useful to DDB one day
@@ -889,10 +894,11 @@ done:
 		}
 	} else {
 finish:
-		if (curproc)
-			(*printfn)("User-level: pid %d\n", curproc->p_pid);
+		if (curlwp)
+			(*printfn)("User-level: pid %d.%d\n", 
+			    curlwp->l_proc->p_pid, curlwp->l_lid);
 		else
-			(*printfn)("User-level: curproc NULL\n");
+			(*printfn)("User-level: curlwp NULL\n");
 	}
 }
 

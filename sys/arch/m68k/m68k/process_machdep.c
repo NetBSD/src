@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.19 2001/07/28 13:08:34 tsutsui Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -62,33 +62,33 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
-static inline struct frame   *process_frame __P((struct proc *p));
-static inline struct fpframe *process_fpframe __P((struct proc *p));
+static inline struct frame   *process_frame __P((struct lwp *l));
+static inline struct fpframe *process_fpframe __P((struct lwp *l));
 
 static inline struct frame *
-process_frame(p)
-	struct proc *p;
+process_frame(l)
+	struct lwp *l;
 {
 	void *ptr;
 
-	ptr = p->p_md.md_regs;
+	ptr = l->l_md.md_regs;
 	return (ptr);
 }
 
 static inline struct fpframe *
-process_fpframe(p)
-	struct proc *p;
+process_fpframe(l)
+	struct lwp *l;
 {
 
-	return (&p->p_addr->u_pcb.pcb_fpregs);
+	return (&l->l_addr->u_pcb.pcb_fpregs);
 }
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
+process_read_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct frame *frame = process_frame(p);
+	struct frame *frame = process_frame(l);
 
 	memcpy(regs->r_regs, frame->f_regs, sizeof(frame->f_regs));
 	regs->r_sr = frame->f_sr;
@@ -98,11 +98,11 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
+process_read_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	struct fpframe *frame = process_fpframe(p);
+	struct fpframe *frame = process_fpframe(l);
 
 	memcpy(regs->r_regs, frame->fpf_regs, sizeof(frame->fpf_regs));
 	regs->r_fpcr = frame->fpf_fpcr;
@@ -113,11 +113,11 @@ process_read_fpregs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
+process_write_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct frame *frame = process_frame(p);
+	struct frame *frame = process_frame(l);
 
 	/*
 	 * in the hp300 machdep.c _write_regs, PC alignment wasn't
@@ -146,11 +146,11 @@ process_write_regs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
+process_write_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	struct fpframe *frame = process_fpframe(p);
+	struct fpframe *frame = process_fpframe(l);
 
 	memcpy(frame->fpf_regs, regs->r_regs, sizeof(frame->fpf_regs));
 	frame->fpf_fpcr = regs->r_fpcr;
@@ -161,11 +161,11 @@ process_write_fpregs(p, regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(l, sstep)
+	struct lwp *l;
 	int sstep;
 {
-	struct frame *frame = process_frame(p);
+	struct frame *frame = process_frame(l);
 
 	if (sstep)
 		frame->f_sr |= PSL_T;
@@ -176,11 +176,11 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
+process_set_pc(l, addr)
+	struct lwp *l;
 	caddr_t addr;
 {
-	struct frame *frame = process_frame(p);
+	struct frame *frame = process_frame(l);
 
 	/*
 	 * in the hp300 machdep.c _set_pc, PC alignment is guaranteed

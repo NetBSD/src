@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.3 2002/11/10 11:01:15 simonb Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.4 2003/01/17 23:36:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2002/11/10 11:01:15 simonb Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/01/17 23:36:18 thorpej Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2002/11/10 11:01:15 simonb Exp $
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -86,14 +87,15 @@ int sigpid = 0;
 void
 sendsig(int sig, sigset_t *returnmask, u_long code)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigcontext *scp, ksc;
 	struct frame *f;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -128,15 +130,15 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 
 	/* Save the FP state, if necessary, then copy it. */
 #ifndef SOFTFLOAT
-	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
+	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
-		if (p == fpcurproc)
-			savefpregs(p);
-		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
+		if (l == fpcurlwp)
+			savefpregs(l);
+		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 	}
 #else
-	*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
+	*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 #endif
 
 	/* Save signal stack. */
@@ -166,7 +168,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 			printf("sendsig(%d): copyout failed on sig %d\n",
 			    p->p_pid, sig);
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -197,7 +199,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	/* Remember that we're now on the signal stack. */
@@ -224,13 +226,14 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
  */
 /* ARGSUSED */
 int
-sys___sigreturn14(struct proc *p, void *v, register_t *retval)
+sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
 	struct frame *f;
+	struct proc *p = l->l_proc;
 	int error;
 
 	/*
@@ -241,7 +244,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", l->l_proc->p_pid, scp);
 #endif
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
@@ -250,7 +253,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 
 	/* Restore the register context. */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 	f->f_regs[PC] = ksc.sc_pc;
 	f->f_regs[MULLO] = ksc.mullo;
 	f->f_regs[MULHI] = ksc.mulhi;
@@ -260,13 +263,13 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (p == fpcurproc) {
-			fpcurproc = (struct proc *)0;
+		if (l == fpcurlwp) {
+			fpcurlwp = (struct lwp *)0;
 		}
-		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	}
 #else
-	p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+	l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 #endif
 
 	/* Restore signal stack. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.18 2001/08/16 23:45:12 fredette Exp $	*/
+/*	$NetBSD: frame.h,v 1.19 2003/01/17 23:18:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -341,6 +341,12 @@ struct fpframe060 {
  * exception frame and reenter the syscall.
  */
 void reenter_syscall __P((struct frame *, int)) __attribute__((__noreturn__));
-#endif         
+
+/*
+ * Create an FPU "idle" frame for use by cpu_setmcontext()
+ */
+extern void m68k_make_fpu_idle_frame(void);
+extern struct fpframe m68k_cached_fpu_idle_frame;
+#endif	/* _KERNEL */
 
 #endif	/* _M68K_FRAME_H_ */

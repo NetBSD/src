@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.22 2001/11/14 18:15:26 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23 2003/01/17 23:36:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <mips/cache.h>
@@ -58,8 +59,8 @@
 #include <uvm/uvm_extern.h>
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -67,7 +68,7 @@ sys_sysarch(p, v, retval)
 		syscallarg(int) op;
 		syscallarg(void *) parms;
 	} */ *uap = v;
-
+	struct proc *p = l->l_proc;
 	int error = 0;
 
 	switch(SCARG(uap, op)) {

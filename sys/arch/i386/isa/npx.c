@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.89 2002/12/04 01:36:10 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.90 2003/01/17 23:10:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.89 2002/12/04 01:36:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.90 2003/01/17 23:10:33 thorpej Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -327,7 +327,7 @@ int
 npxintr(void *arg, struct intrframe iframe)
 {
 	struct cpu_info *ci = curcpu();
-	struct proc *p = ci->ci_fpcurproc;
+	struct lwp *l = ci->ci_fpcurlwp;
 	union savefpu *addr;
 	struct intrframe *frame = &iframe;
 	struct npx_softc *sc;
@@ -350,19 +350,19 @@ npxintr(void *arg, struct intrframe iframe)
 	if (ci->ci_fpsaving)
 		return (1);
 
-	if (p == 0 || npx_type == NPX_NONE) {
-		printf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
-		    p, curproc, npx_type);
+	if (l == NULL || npx_type == NPX_NONE) {
+		printf("npxintr: l = %p, curproc = %p, npx_type = %d\n",
+		    l, curproc, npx_type);
 		printf("npxintr: came from nowhere");
 		return 1;
 	}
 
 #ifdef DIAGNOSTIC
 	/*
-	 * At this point, fpcurproc should be curproc.  If it wasn't, the TS
+	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS
 	 * bit should be set, and we should have gotten a DNA exception.
 	 */
-	if (p != curproc)
+	if (l != curlwp)
 		panic("npxintr: wrong process");
 #endif
 
@@ -370,7 +370,7 @@ npxintr(void *arg, struct intrframe iframe)
 	 * Find the address of fpcurproc's saved FPU state.  (Given the
 	 * invariant above, this is always the one in curpcb.)
 	 */
-	addr = &p->p_addr->u_pcb.pcb_savefpu;
+	addr = &l->l_addr->u_pcb.pcb_savefpu;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
@@ -416,7 +416,7 @@ npxintr(void *arg, struct intrframe iframe)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		p->p_md.md_regs = (struct trapframe *)&frame->if_gs;
+		l->l_md.md_regs = (struct trapframe *)&frame->if_gs;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
@@ -426,7 +426,7 @@ npxintr(void *arg, struct intrframe iframe)
 #else
 		code = 0;	/* XXX */
 #endif
-		trapsignal(p, SIGFPE, code);
+		trapsignal(l, SIGFPE, code);
 	} else {
 		/*
 		 * This is a nested interrupt.  This should only happen when
@@ -437,7 +437,7 @@ npxintr(void *arg, struct intrframe iframe)
 		 * Currently, we treat this like an asynchronous interrupt, but
 		 * this has disadvantages.
 		 */
-		psignal(p, SIGFPE);
+		psignal(l->l_proc, SIGFPE);
 	}
 
 	return (1);
@@ -456,7 +456,7 @@ npxintr(void *arg, struct intrframe iframe)
 static int
 npxdna_xmm(struct cpu_info *ci)
 {
-	struct proc *p;
+	struct lwp *l;
 	int s;
 
 	KDASSERT(i386_use_fxsave == 1);
@@ -468,9 +468,9 @@ npxdna_xmm(struct cpu_info *ci)
 
 	s = splipi();		/* lock out IPI's while we clean house.. */
 #ifdef MULTIPROCESSOR
-	p = ci->ci_curproc;
+	l = ci->ci_curlwp;
 #else
-	p = curproc;
+	l = curlwp;
 #endif
 	/*
 	 * XXX should have a fast-path here when no save/restore is necessary
@@ -480,7 +480,7 @@ npxdna_xmm(struct cpu_info *ci)
 	 * was using the FPU, save their state (which does an implicit
 	 * initialization).
 	 */
-	if (ci->ci_fpcurproc != NULL) {
+	if (ci->ci_fpcurlwp != NULL) {
 		IPRINTF(("Save"));
 		npxsave_cpu(ci, 1);
 	} else {
@@ -492,25 +492,25 @@ npxdna_xmm(struct cpu_info *ci)
 	}
 	splx(s);
 
-	KDASSERT(ci->ci_fpcurproc == NULL);
+	KDASSERT(ci->ci_fpcurlwp == NULL);
 #ifndef MULTIPROCESSOR
-	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
+	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #else
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(p, 1);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l, 1);
 #endif
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	s = splipi();
-	ci->ci_fpcurproc = p;
-	p->p_addr->u_pcb.pcb_fpcpu = ci;
+	ci->ci_fpcurlwp = l;
+	l->l_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
-		p->p_md.md_flags |= MDP_USEDFPU;
+	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		l->l_md.md_flags |= MDP_USEDFPU;
 	} else {
-		fxrstor(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm);
+		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
 
 	return (1);
@@ -520,7 +520,7 @@ npxdna_xmm(struct cpu_info *ci)
 static int
 npxdna_s87(struct cpu_info *ci)
 {
-	struct proc *p;
+	struct lwp *l;
 	int s;
 
 	KDASSERT(i386_use_fxsave == 0);
@@ -532,9 +532,9 @@ npxdna_s87(struct cpu_info *ci)
 
 	s = splipi();		/* lock out IPI's while we clean house.. */
 #ifdef MULTIPROCESSOR
-	p = ci->ci_curproc;
+	l = ci->ci_curlwp;
 #else
-	p = curproc;
+	l = curlwp;
 #endif
 
 	IPRINTF(("%s: dna for %p\n", ci->ci_dev->dv_xname, p));
@@ -543,7 +543,7 @@ npxdna_s87(struct cpu_info *ci)
 	 * implicit initialization); otherwise, initialize the FPU state to
 	 * clear any exceptions.
 	 */
-	if (ci->ci_fpcurproc != NULL)
+	if (ci->ci_fpcurlwp != NULL)
 		npxsave_cpu(ci, 1);
 	else {
 		clts();
@@ -555,23 +555,24 @@ npxdna_s87(struct cpu_info *ci)
 	splx(s);
 
 	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
-	KDASSERT(ci->ci_fpcurproc == NULL);
+	KDASSERT(ci->ci_fpcurlwp == NULL);
 #ifndef MULTIPROCESSOR
-	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
+	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #else
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(p, 1);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l, 1);
 #endif
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	s = splipi();
-	ci->ci_fpcurproc = p;
-	p->p_addr->u_pcb.pcb_fpcpu = ci;
+	ci->ci_fpcurlwp = l;
+	l->l_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
-		p->p_md.md_flags |= MDP_USEDFPU;
+
+	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
+		l->l_md.md_flags |= MDP_USEDFPU;
 	} else {
 		/*
 		 * The following frstor may cause an IRQ13 when the state being
@@ -586,7 +587,7 @@ npxdna_s87(struct cpu_info *ci)
 		 * fnclex if it is the first FPU instruction after a context
 		 * switch.
 		 */
-		frstor(&p->p_addr->u_pcb.pcb_savefpu.sv_87);
+		frstor(&l->l_addr->u_pcb.pcb_savefpu.sv_87);
 	}
 
 	return (1);
@@ -595,13 +596,13 @@ npxdna_s87(struct cpu_info *ci)
 void
 npxsave_cpu (struct cpu_info *ci, int save)
 {
-	struct proc *p;
+	struct lwp *l;
 	int s;
 
 	KDASSERT(ci == curcpu());
 
-	p = ci->ci_fpcurproc;
-	if (p == NULL)
+	l = ci->ci_fpcurlwp;
+	if (l == NULL)
 		return;
 
 	IPRINTF(("%s: fp cpu %s %p\n", ci->ci_dev->dv_xname,
@@ -627,7 +628,7 @@ npxsave_cpu (struct cpu_info *ci, int save)
 		  */
 		clts();
 		ci->ci_fpsaving = 1;
-		fpu_save(&p->p_addr->u_pcb.pcb_savefpu);
+		fpu_save(&l->l_addr->u_pcb.pcb_savefpu);
 		ci->ci_fpsaving = 0;
 	}
 
@@ -636,16 +637,16 @@ npxsave_cpu (struct cpu_info *ci, int save)
 	 * will get a DNA exception on any FPU instruction and force a reload.
 	 */
 	stts();
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 
 	s = splipi();
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
-	ci->ci_fpcurproc = NULL;
+	l->l_addr->u_pcb.pcb_fpcpu = NULL;
+	ci->ci_fpcurlwp = NULL;
 	splx(s);
 }
 
 /*
- * Save p's FPU state, which may be on this processor or another processor.
+ * Save l's FPU state, which may be on this processor or another processor.
  *
  * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
  * immediately, we clear fpcurproc and turn on CR0_TS to force a DNA and a
@@ -655,15 +656,15 @@ npxsave_cpu (struct cpu_info *ci, int save)
  * saves us a reload once per fork().
  */
 void
-npxsave_proc(struct proc *p, int save)
+npxsave_lwp(struct lwp *l, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
 
-	KDASSERT(p->p_addr != NULL);
-	KDASSERT(p->p_flag & P_INMEM);
+	KDASSERT(l->l_addr != NULL);
+	KDASSERT(l->l_flag & L_INMEM);
 
-	oci = p->p_addr->u_pcb.pcb_fpcpu;
+	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)
 		return;
 
@@ -691,7 +692,7 @@ npxsave_proc(struct proc *p, int save)
 #ifdef DIAGNOSTIC
 		spincount = 0;
 #endif
-		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		while (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 #ifdef DIAGNOSTIC
 		{
 			spincount++;
@@ -705,7 +706,7 @@ npxsave_proc(struct proc *p, int save)
 #endif
 	}
 #else
-	KASSERT(ci->ci_fpcurproc == p);
+	KASSERT(ci->ci_fpcurlwp == l);
 	npxsave_cpu(ci, save);
 #endif
 }

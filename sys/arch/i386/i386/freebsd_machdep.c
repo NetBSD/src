@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.35 2002/10/01 12:56:50 fvdl Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.36 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.35 2002/10/01 12:56:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.36 2003/01/17 23:10:30 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.35 2002/10/01 12:56:50 fvdl Ex
 #include <compat/freebsd/freebsd_ptrace.h>
 
 void
-freebsd_setregs(p, epp, stack)
-	struct proc *p;
+freebsd_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	register struct pcb *pcb = &l->l_addr->u_pcb;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	if (i386_use_fxsave)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __FreeBSD_NPXCW__;
 	else
@@ -97,13 +97,14 @@ freebsd_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	register struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -132,7 +133,7 @@ freebsd_sendsig(sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_efl = get_vflags(p);
+		frame.sf_sc.sc_efl = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -168,7 +169,7 @@ freebsd_sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -201,14 +202,15 @@ freebsd_sendsig(sig, mask, code)
  * a machine fault.
  */
 int
-freebsd_sys_sigreturn(p, v, retval)
-	struct proc *p;
+freebsd_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct freebsd_sys_sigreturn_args /* {
 		syscallarg(struct freebsd_sigcontext *) scp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct freebsd_sigcontext *scp, context;
 	register struct trapframe *tf;
 	sigset_t mask;
@@ -223,7 +225,7 @@ freebsd_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_efl & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
@@ -232,7 +234,7 @@ freebsd_sys_sigreturn(p, v, retval)
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_efl);
+		set_vflags(l, context.sc_efl);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif

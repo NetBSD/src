@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_subr.s,v 1.4 2000/05/26 21:19:50 thorpej Exp $	*/
+/*	$NetBSD: proc_subr.s,v 1.5 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,34 +63,34 @@
  */
 
 /*
- * Setrunqueue(p)
+ * Setrunqueue(struct lwp *l)
  *
- * Call should be made at spl6(), and p->p_stat should be SRUN
+ * Call should be made at spl6(), and l->l_stat should be SRUN
  */
 ENTRY(setrunqueue)
 	movl	%sp@(4),%a0
 #ifdef DIAGNOSTIC
-	tstl	%a0@(P_BACK)
+	tstl	%a0@(L_BACK)
 	jne	Lset1
-	tstl	%a0@(P_WCHAN)
+	tstl	%a0@(L_WCHAN)
 	jne	Lset1
-	cmpb	#SRUN,%a0@(P_STAT)
+	cmpl	#LSRUN,%a0@(L_STAT)
 	jne	Lset1
 #endif
 	clrl	%d0
-	movb	%a0@(P_PRIORITY),%d0
+	movb	%a0@(L_PRIORITY),%d0
 	lsrb	#2,%d0
 	movl	_C_LABEL(sched_whichqs),%d1
 	bset	%d0,%d1
 	movl	%d1,_C_LABEL(sched_whichqs)
 	lslb	#3,%d0
 	addl	#_C_LABEL(sched_qs),%d0
-	movl	%d0,%a0@(P_FORW)
+	movl	%d0,%a0@(L_FORW)
 	movl	%d0,%a1
-	movl	%a1@(P_BACK),%a0@(P_BACK)
-	movl	%a0,%a1@(P_BACK)
-	movl	%a0@(P_BACK),%a1
-	movl	%a0,%a1@(P_FORW)
+	movl	%a1@(L_BACK),%a0@(L_BACK)
+	movl	%a0,%a1@(L_BACK)
+	movl	%a0@(L_BACK),%a1
+	movl	%a0,%a1@(L_FORW)
 	rts
 #ifdef DIAGNOSTIC
 Lset1:
@@ -98,24 +98,24 @@ Lset1:
 #endif
 
 /*
- * remrunqueue(p)
+ * remrunqueue(struct lwp *l)
  *
  * Call should be made at spl6().
  */
 ENTRY(remrunqueue)
 	movl	%sp@(4),%a0
-	movb	%a0@(P_PRIORITY),%d0
+	movb	%a0@(L_PRIORITY),%d0
 #ifdef DIAGNOSTIC
 	lsrb	#2,%d0
 	movl	_C_LABEL(sched_whichqs),%d1
 	btst	%d0,%d1
 	jeq	Lrem2
 #endif
-	movl	%a0@(P_BACK),%a1
-	clrl	%a0@(P_BACK)
-	movl	%a0@(P_FORW),%a0
-	movl	%a0,%a1@(P_FORW)
-	movl	%a1,%a0@(P_BACK)
+	movl	%a0@(L_BACK),%a1
+	clrl	%a0@(L_BACK)
+	movl	%a0@(L_FORW),%a0
+	movl	%a0,%a1@(L_FORW)
+	movl	%a1,%a0@(L_BACK)
 	cmpal	%a0,%a1
 	jne	Lrem1
 #ifndef DIAGNOSTIC

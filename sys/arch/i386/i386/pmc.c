@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.5 2002/10/05 05:55:46 gmcgarry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.6 2003/01/17 23:10:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.5 2002/10/05 05:55:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.6 2003/01/17 23:10:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ pmc_init(void)
 }
 
 int
-pmc_info(struct proc *p, struct i386_pmc_info_args *uargs, register_t *retval)
+pmc_info(struct lwp *l, struct i386_pmc_info_args *uargs, register_t *retval)
 {
 	struct i386_pmc_info_args rv;
 
@@ -124,7 +124,7 @@ pmc_info(struct proc *p, struct i386_pmc_info_args *uargs, register_t *retval)
 }
 
 int
-pmc_startstop(struct proc *p, struct i386_pmc_startstop_args *uargs,
+pmc_startstop(struct lwp *l, struct i386_pmc_startstop_args *uargs,
     register_t *retval)
 {
 	struct i386_pmc_startstop_args args;
@@ -232,7 +232,7 @@ pmc_startstop(struct proc *p, struct i386_pmc_startstop_args *uargs,
 }
 
 int
-pmc_read(struct proc *p, struct i386_pmc_read_args *uargs, register_t *retval)
+pmc_read(struct lwp *l, struct i386_pmc_read_args *uargs, register_t *retval)
 {
 	struct i386_pmc_read_args args;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.17 2002/09/22 08:30:58 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.18 2003/01/17 23:18:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,7 @@ typedef vm_size_t	vsize_t;
 typedef int		register_t;
 
 #define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_RAS
 #define	__HAVE_MD_RUNQUEUE
 
 #endif	/* !_M68K_TYPES_H_ */
