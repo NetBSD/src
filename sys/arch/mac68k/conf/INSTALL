@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27 2003/10/18 08:30:14 lukem Exp $
+#	$NetBSD: INSTALL,v 1.27.2.1 2004/07/15 20:17:37 he Exp $
 #
 # INSTALL
 
@@ -32,6 +32,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options - XXX remove these at some point
