@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1997/03/26 15:50:39 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1997/04/25 19:07:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,9 +52,11 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
-#include <machine/cpu.h>
-
 #include <vm/vm.h>
+
+#include <machine/cpu.h>
+#include <machine/pte.h>
+#include <machine/pmap.h>
 
 #include "nvr.h"
 
@@ -95,11 +97,12 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
-	int error = 0;
-	static int physlock;
+	vm_offset_t	o, v;
+	int		c;
+	struct iovec	*iov;
+	struct memseg	*ms;
+	int		error = 0;
+	static int	physlock;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -123,16 +126,20 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case 0: /* minor device 0 is physical memory */
 			v = uio->uio_offset;
-#ifndef DEBUG
-			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram) {
+
+			/*
+			 * Limit access to RAM actually present
+			 */
+			for (ms = boot_segs; ms->start != ms->end; ms++)
+				if ((v >= ms->start) && (v < ms->end))
+					break;
+			if (ms->start == ms->end) {
 				error = EFAULT;
 				goto unlock;
 			}
-#endif
+
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
@@ -143,8 +150,7 @@ mmrw(dev, uio, flags)
 			    (vm_offset_t)vmmap + NBPG);
 			break;
 
-/* minor device 1 is kernel memory */
-		case 1:
+		case 1: /* minor device 1 is kernel memory */
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)v, c,
@@ -153,14 +159,12 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case 2: /* minor device 2 is EOF/RATHOLE */
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 11 (/dev/nvram) */
-		case 11:
+		case 11: /* minor device 11 (/dev/nvram) */
 #if NNVR > 0
 			error = nvram_uio(uio);
 			return (error);
@@ -168,8 +172,7 @@ mmrw(dev, uio, flags)
 			return (ENXIO);
 #endif
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
+		case 12: /* minor device 12 (/dev/zero) */
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
