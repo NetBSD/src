@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.1.2.2 2002/08/06 06:10:59 thorpej Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.1.2.3 2002/10/16 19:32:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -157,6 +157,13 @@ int td_map_id2thr(td_proc_t *, int, td_thread_t **);
 
 /* Return the thread handle of the thread running on the given LWP */
 int td_map_lwp2thr(td_proc_t *, int, td_thread_t **);
+
+/*
+ * Establish a mapping between threads and LWPs. Must be called
+ * every time a live process runs before calling td_thr_getregs() or
+ * td_thr_setregs().
+ */
+int td_map_lwps(td_proc_t *);
 
 /* Iterate over the set of TSD keys in the process */
 int td_tsd_iter(td_proc_t *, int (*)(pthread_key_t, void (*)(void *), void *), 
