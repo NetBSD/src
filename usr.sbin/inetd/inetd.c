@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.34 1997/04/20 22:04:59 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.35 1997/10/05 16:16:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.34 1997/04/20 22:04:59 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.35 1997/10/05 16:16:13 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,7 @@ struct biltin {
 	{ "discard",	SOCK_STREAM,	1, 0,	discard_stream },
 	{ "discard",	SOCK_DGRAM,	0, 0,	discard_dg },
 
-	/* Return 32 bit time since 1900 */
+	/* Return 32 bit time since 1970 */
 	{ "time",	SOCK_STREAM,	0, 0,	machtime_stream },
 	{ "time",	SOCK_DGRAM,	0, 0,	machtime_dg },
 

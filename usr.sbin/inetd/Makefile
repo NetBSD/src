@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.5 (Berkeley) 6/29/90
-#	$NetBSD: Makefile,v 1.10 1997/03/13 18:36:35 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$NetBSD: Makefile,v 1.11 1997/10/05 16:16:10 mrg Exp $
 
 PROG=	inetd
 MAN=	inetd.8
