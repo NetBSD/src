@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +32,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)head.c	5.7 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)head.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -48,6 +49,7 @@ static char sccsid[] = "@(#)head.c	5.7 (Berkeley) 6/1/90";
  * Return true if yes.  Note the extreme pains to
  * accomodate all funny formats.
  */
+int
 ishead(linebuf)
 	char linebuf[];
 {
@@ -75,6 +77,7 @@ ishead(linebuf)
 }
 
 /*ARGSUSED*/
+void
 fail(linebuf, reason)
 	char linebuf[], reason[];
 {
@@ -92,6 +95,7 @@ fail(linebuf, reason)
  * pointers into the copied line in the passed headline
  * structure.  Actually, it scans.
  */
+void
 parse(line, hl, pbuf)
 	char line[], pbuf[];
 	register struct headline *hl;
@@ -161,6 +165,7 @@ copyin(src, space)
 char ctype[] = "Aaa Aaa O0 00:00:00 0000";
 char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
 
+int
 isdate(date)
 	char date[];
 {
@@ -172,6 +177,7 @@ isdate(date)
  * Match the given string (cp) against the given template (tp).
  * Return 1 if they match, 0 if they don't
  */
+int
 cmatch(cp, tp)
 	register char *cp, *tp;
 {

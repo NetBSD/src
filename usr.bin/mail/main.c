@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +32,18 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.28 (Berkeley) 4/1/91";
+static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/stat.h>
+#include <fcntl.h>
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -52,8 +53,10 @@ static char sccsid[] = "@(#)main.c	5.28 (Berkeley) 4/1/91";
 
 jmp_buf	hdrjmp;
 
+int
 main(argc, argv)
-	char **argv;
+	int argc;
+	char *argv[];
 {
 	register int i;
 	struct name *to, *cc, *bcc, *smopts;
@@ -62,8 +65,6 @@ main(argc, argv)
 	char nosrc = 0;
 	void hdrstop();
 	sig_t prevint;
-	extern int getopt(), optind, opterr;
-	extern char *optarg;
 	void sigchild();
 
 	/*
@@ -253,7 +254,8 @@ Usage: mail [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
  * Interrupt printing of the headers.
  */
 void
-hdrstop()
+hdrstop(signo)
+	int signo;
 {
 
 	fflush(stdout);
@@ -269,6 +271,7 @@ hdrstop()
  *	If baud rate > 1200, use 24 or ws_row
  * Width is either 80 or ws_col;
  */
+void
 setscreensize()
 {
 	struct sgttyb tbuf;

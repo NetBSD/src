@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getname.c	5.8 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)getname.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <pwd.h>
-
-/*
- * Getname / getuserid for those with
- * hashed passwd data base).
- *
- */
-
 #include "rcv.h"
+#include <pwd.h>
+#include "extern.h"
+
+/* Getname / getuserid for those with hashed passwd data base). */
 
 /*
  * Search the passwd file for a uid.  Return name through ref parameter
@@ -52,6 +47,7 @@ static char sccsid[] = "@(#)getname.c	5.8 (Berkeley) 6/1/90";
  */
 char *
 getname(uid)
+	int uid;
 {
 	struct passwd *pw;
 
@@ -64,6 +60,7 @@ getname(uid)
  * Convert the passed name to a user id and return it.  Return -1
  * on error.
  */
+int
 getuserid(name)
 	char name[];
 {

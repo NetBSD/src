@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,22 +30,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)def.h	5.22 (Berkeley) 6/25/90
+ *	@(#)def.h	8.2 (Berkeley) 3/21/94
  */
-
-#include <sys/param.h>		/* includes <sys/types.h> */
-#include <sys/signal.h>
-#include <stdio.h>
-#include <sgtty.h>
-#include <ctype.h>
-#include <string.h>
-#include "pathnames.h"
 
 /*
  * Mail -- a mail program
  *
  * Author: Kurt Shoens (UCB) March 25, 1978
  */
+
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+
+#include <signal.h>
+#include <sgtty.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include "pathnames.h"
 
 #define	APPEND				/* New mail goes to end of mailbox */
 
@@ -97,7 +102,6 @@ struct message {
  * The actual table is declared and initialized
  * in lex.c
  */
-
 struct cmd {
 	char	*c_name;		/* Name of command */
 	int	(*c_func)();		/* Implementor of the command */
@@ -266,58 +270,7 @@ struct ignoretab {
  * useful just before closing an old file that was opened
  * for read/write.
  */
-#define trunc(stream)	ftruncate(fileno(stream), (long) ftell(stream))
-
-/*
- * Forward declarations of routine types to keep lint and cc happy.
- */
-
-FILE	*Fopen();
-FILE	*Fdopen();
-FILE	*Popen();
-FILE	*collect();
-FILE	*infix();
-FILE	*run_editor();
-FILE	*setinput();
-char	**unpack();
-char	*calloc();
-char	*copy();
-char	*copyin();
-char	*detract();
-char	*expand();
-char	*getdeadletter();
-char	*gets();
-char	*hfield();
-char	*name1();
-char	*nameof();
-char	*nextword();
-char	*getenv();
-char	*getname();
-char	*fgets();
-char	*ishfield();
-char	*malloc();
-char	*mktemp();
-char	*readtty();
-char	*reedit();
-char	*salloc();
-char	*savestr();
-char	*skin();
-char	*snarf();
-char	*username();
-char	*value();
-char	*vcopy();
-char	*yankword();
-off_t	fsize();
-uid_t	getuid();
-struct	cmd	*lex();
-struct	grouphead	*findgroup();
-struct	name	*nalloc();
-struct	name	*cat();
-struct	name	*delname();
-struct	name	*elide();
-struct	name	*extract();
-struct	name	*gexpand();
-struct	name	*outof();
-struct	name	*put();
-struct	name	*usermap();
-struct	var	*lookup();
+#define trunc(stream) {							\
+	(void)fflush(stream); 						\
+	(void)ftruncate(fileno(stream), (long)ftell(stream));		\
+}

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tty.c	5.12 (Berkeley) 4/1/91";
+static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)tty.c	5.12 (Berkeley) 4/1/91";
  */
 
 #include "rcv.h"
+#include "extern.h"
 
 static	int	c_erase;		/* Current erase char */
 static	int	c_kill;			/* Current kill char */
@@ -55,8 +56,10 @@ static	int	ttyset;			/* We must now do erase/kill */
  * Read all relevant header fields.
  */
 
+int
 grabh(hp, gflags)
 	struct header *hp;
+	int gflags;
 {
 	struct sgttyb ttybuf;
 	sig_t saveint;
@@ -250,6 +253,7 @@ redo:
  */
 void
 ttystop(s)
+	int s;
 {
 	sig_t old_action = signal(s, SIG_DFL);
 
@@ -263,6 +267,7 @@ ttystop(s)
 /*ARGSUSED*/
 void
 ttyint(s)
+	int s;
 {
 	longjmp(intjmp, 1);
 }

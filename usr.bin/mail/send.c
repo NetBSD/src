@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +32,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)send.c	5.23 (Berkeley) 2/9/91";
+static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -50,6 +51,7 @@ static char sccsid[] = "@(#)send.c	5.23 (Berkeley) 2/9/91";
  * If doign is given, suppress ignored header fields.
  * prefix is a string to prepend to each output line.
  */
+int
 send(mp, obuf, doign, prefix)
 	register struct message *mp;
 	FILE *obuf;
@@ -225,6 +227,7 @@ send(mp, obuf, doign, prefix)
 /*
  * Output a reasonable looking status field.
  */
+void
 statusput(mp, obuf, prefix)
 	register struct message *mp;
 	FILE *obuf;
@@ -247,6 +250,7 @@ statusput(mp, obuf, prefix)
  * Interface between the argument list and the mail1 routine
  * which does all the dirty work.
  */
+int
 mail(to, cc, bcc, smopts, subject)
 	struct name *to, *cc, *bcc, *smopts;
 	char *subject;
@@ -267,6 +271,7 @@ mail(to, cc, bcc, smopts, subject)
  * Send mail to a bunch of user names.  The interface is through
  * the mail routine below.
  */
+int
 sendmail(str)
 	char *str;
 {
@@ -285,8 +290,10 @@ sendmail(str)
  * Mail a message on standard input to the people indicated
  * in the passed header.  (Internal interface).
  */
+void
 mail1(hp, printheaders)
 	struct header *hp;
+	int printheaders;
 {
 	char *cp;
 	int pid;
@@ -362,15 +369,6 @@ mail1(hp, printheaders)
 		goto out;
 	}
 	if (pid == 0) {
-		if (access(_PATH_MAIL_LOG, 0) == 0) {
-			FILE *postage;
-
-			if ((postage = Fopen(_PATH_MAIL_LOG, "a")) != NULL) {
-				fprintf(postage, "%s %d %ld\n", myname,
-				    count(to), fsize(mtf));
-				(void) Fclose(postage);
-			}
-		}
 		prepare_child(sigmask(SIGHUP)|sigmask(SIGINT)|sigmask(SIGQUIT)|
 			sigmask(SIGTSTP)|sigmask(SIGTTIN)|sigmask(SIGTTOU),
 			fileno(mtf), -1);
@@ -394,6 +392,7 @@ out:
  * Fix the header by glopping all of the expanded names from
  * the distribution list into the appropriate fields.
  */
+void
 fixhead(hp, tolist)
 	struct header *hp;
 	struct name *tolist;
@@ -467,9 +466,11 @@ infix(hp, fi)
  * Dump the to, subject, cc header on the
  * passed file buffer.
  */
+int
 puthead(hp, fo, w)
 	struct header *hp;
 	FILE *fo;
+	int w;
 {
 	register int gotcha;
 
@@ -490,6 +491,7 @@ puthead(hp, fo, w)
 /*
  * Format the given header line to not exceed 72 characters.
  */
+void
 fmt(str, np, fo, comma)
 	char *str;
 	register struct name *np;
@@ -525,6 +527,7 @@ fmt(str, np, fo, comma)
  */
 
 /*ARGSUSED*/
+int
 savemail(name, fi)
 	char name[];
 	register FILE *fi;
