@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.119 2001/06/30 00:08:15 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.120 2001/06/30 19:09:38 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -304,6 +304,69 @@
 #define	STACKFRAME(size)	TO_STACK32(size)
 #endif
 
+/*
+ * The following routines allow fpu use in the kernel.
+ *
+ * They allocate a stack frame and use all local regs.  Extra
+ * local storage can be requested by setting the siz parameter,
+ * and can be accessed at %sp+CC64FSZ.
+ */
+#define ENABLE_FPU(siz)										     \
+	save	%sp, -(CC64FSZ), %sp;			/* Allocate a stack frame */		     \
+	sethi	%hi(FPPROC), %l1;								     \
+	add	%fp, STKB-FS_SIZE, %l0;			/* Allocate a fpstate */		     \
+	LDPTR	[%l1 + %lo(FPPROC)], %l2;		/* Load fpproc */			     \
+	andn	%l0, BLOCK_SIZE, %l0;			/* Align it */				     \
+	brz,pt	%l2, 1f;				/* fpproc == NULL? */			     \
+	 add	%l0, -STKB-CC64FSZ-(siz), %sp;		/* Set proper %sp */			     \
+	LDPTR	[%l2 + P_FPSTATE], %l3;								     \
+	brz,pn	%l3, 1f;				/* Make sure we have an fpstate */	     \
+	 mov	%l3, %o0;									     \
+	call	_C_LABEL(savefpstate);			/* Save the old fpstate */		     \
+	 set	EINTSTACK-STKB, %l4;			/* Are we on intr stack? */		     \
+	cmp	%sp, %l4;									     \
+	bgu,pt	%xcc, 1f;									     \
+	 set	INTSTACK-STKB, %l4;								     \
+	cmp	%sp, %l4;									     \
+	blu	%xcc, 1f;									     \
+0:												     \
+	 sethi	%hi(_C_LABEL(proc0)), %l4;		/* Yes, use proc0 */			     \
+	ba,pt	%xcc, 2f;				/* XXXX needs to change to CPUs idle proc */ \
+	 or	%l4, %lo(_C_LABEL(proc0)), %l5;							     \
+1:												     \
+	sethi	%hi(CURPROC), %l4;			/* Use curproc */			     \
+	LDPTR	[%l4 + %lo(CURPROC)], %l5;							     \
+	brz,pn	%l5, 0b;				/* If curproc is NULL need to use proc0 */   \
+2:												     \
+	LDPTR	[%l5 + P_FPSTATE], %l6;			/* Save old fpstate */			     \
+	STPTR	%l0, [%l5 + P_FPSTATE];			/* Insert new fpstate */		     \
+	STPTR	%l5, [%l1 + %lo(FPPROC)];		/* Set new fpproc */			     \
+	wr	%g0, FPRS_FEF, %fprs			/* Enable FPU */
+
+/*
+ * Weve saved our possible fpstate, now disable the fpu
+ * and continue with life.
+ */
+#ifdef DEBUG
+#define __CHECK_FPU				\
+	LDPTR	[%l5 + P_FPSTATE], %l7;		\
+	cmp	%l7, %l0;			\
+	tnz	1;
+#else
+#define	__CHECK_FPU
+#endif
+	
+#define RESTORE_FPU								     \
+	__CHECK_FPU								     \
+	andcc	%l2, %l3, %g0;				/* If (fpproc && fpstate) */ \
+	STPTR	%l2, [%l1 + %lo(FPPROC)];		/* Restore old fproc */	     \
+	bz,pt	%xcc, 1f;				/* Skip if no fpstate */     \
+	 STPTR	%l6, [%l5 + P_FPSTATE];			/* Restore old fpstate */    \
+										     \
+	call	_C_LABEL(loadfpstate);			/* Re-load orig fpstate */   \
+	 mov	%l3, %o0;
+1:
+	
 
 	.data
 	.globl	_C_LABEL(data_start)
@@ -9348,10 +9411,6 @@ ENTRY(bcopy) /* src, dest, size */
 	.text
 3:
 #endif
-#if 1
-	cmp	%o2, 256
-	bge	Lbcopy_block
-#endif
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge	Lbcopy_fancy	! if >= this many, go be fancy.
@@ -9386,10 +9445,14 @@ Lbcopy_fancy:
 	btst	7, %o1
 	be,a	Lbcopy_doubles
 	 dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
-
-	! If the low bits match, we can make these line up.
 1:
-	xor	%o0, %o1, %o3	! t = src ^ dst;
+#if 0
+	! If it is big enough, use VIS instructions
+	cmp	%o2, 256
+	bge	Lbcopy_block
+#endif
+	! If the low bits match, we can make these line up.
+	 xor	%o0, %o1, %o3	! t = src ^ dst;
 	btst	1, %o3		! if (t & 1) {
 	be	1f
 	 btst	1, %o0		! [delay slot: if (src & 1)]
@@ -9524,13 +9587,11 @@ Lbcopy_done:
 	
 Lbcopy_block:
 	!! Make sure our trap table is installed
-#	ba,a,pt	%icc, Lbcopy_start
 	rdpr	%tba, %o3
 	set	_C_LABEL(trapbase), %o5
 	sub	%o3, %o5, %o3
 	brnz,pn	%o3, Lbcopy_start	! No, then don't use block load/store
 	 nop
-#define _KERNEL
 #ifdef _KERNEL
 /*
  * Kernel:
@@ -9567,7 +9628,8 @@ Lbcopy_block:
  *
  * %l0		XXXX DEBUG old fpstate
  * %l1		fpproc (hi bits only)
- * %l2		old fpproc
+ * %l2		orig fpproc
+ * %l3		orig fpstate
  * %l5		curproc
  * %l6		old fpstate
  *
@@ -9588,6 +9650,9 @@ Lbcopy_block:
 	!! This code will allow us to save the fpstate around this
 	!! routine and nest FP use in the kernel
 	!!
+#if 1
+	ENABLE_FPU(0)
+#else
 	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
 	sethi	%hi(FPPROC), %l1
 	LDPTR	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
@@ -9617,7 +9682,7 @@ Lbcopy_block:
 	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
 	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
 	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-	
+#endif
 	mov	%i0, %o0				! Src addr.
 	mov	%i1, %o1				! Store our dest ptr here.
 	mov	%i2, %o2				! Len counter
@@ -9628,7 +9693,7 @@ Lbcopy_block:
 	mov	%i2, %o2				! Len counter
 
 #endif
-	
+
 	!!
 	!! First align the output to a 64-bit entity
 	!! 
@@ -9679,7 +9744,7 @@ Lbcopy_block:
 	stda	%f4, [%o1] ASI_FL16_P			! Store 1st short
 	dec	2, %o2
 	inc	2, %o1
-	inc	2, %o0					! XXXX
+	inc	2, %o0
 4:
 	brz,pn	%o2, Lbcopy_blockfinish			! XXXX
 
@@ -9706,7 +9771,7 @@ Lbcopy_block:
 	st	%f5, [%o1]				! Store word
 	dec	4, %o2
 	inc	4, %o1
-	inc	4, %o0					! XXXX
+	inc	4, %o0
 4:
 	brz,pn	%o2, Lbcopy_blockfinish			! XXXX
 	!!
@@ -9716,7 +9781,7 @@ Lbcopy_block_common:
 
 	 mov	-0, %o4
 	alignaddr %o0, %o4, %o4				! base - shift
-	
+
 	brz,pt	%g1, 1f					! Data loaded?
 	 cmp	%o3, %o4				! Addresses same?
 	beq,pt	%xcc, 3f
@@ -9793,12 +9858,14 @@ Lbcopy_block_aligned64:
  * store.
  *
  */
-#if 0
+#if 1
 	/* XXXX DEBUG -- return which routine we used instead of *src */
 	and	%o0, BLOCK_ALIGN, %o3
-	set	Lbcopy_blocknames, %g7
+	set	Lbcopy_blocknames, %g1
+	ldx	[%g1 + %o3], %g1
+	set	block_routine, %o3
 	ba	1f
-	 ldx	[%g7 + %o3], %g7
+	 stx	%g1, [%o3]
 	
 #define BL_NAME(x)	x:	.asciz #x
 	.align	8
@@ -9811,14 +9878,14 @@ Lbcopy_blocknames:
 	.xword	105f
 	.xword	106f
 	.xword	107f
-	BL_NAME(100)
-	BL_NAME(101)
-	BL_NAME(102)
-	BL_NAME(103)
-	BL_NAME(104)
-	BL_NAME(105)
-	BL_NAME(106)
-	BL_NAME(107)
+100:	.asciz	"L100"
+101:	.asciz	"L101"
+102:	.asciz	"L102"
+103:	.asciz	"L103"
+104:	.asciz	"L104"
+105:	.asciz	"L105"
+106:	.asciz	"L106"
+107:	.asciz	"L107"
 	.align	8
 1:
 #endif
@@ -9898,14 +9965,14 @@ Lbcopy_block_jmp:
 L100:
 	fmovd	%f0 , %f62
 	ldda	[%o0] ASI_BLK_P, %f0
-	inc BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %o0
 	cmp	%o0, %g2
 	bgu,a,pn	%icc, 3f
 	 membar #Sync
 	ldda	[%o0] ASI_BLK_P, %f16
 3:	
 	faligndata	%f62, %f0, %f32
-	inc BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %o0
 	faligndata	%f0, %f2, %f34
 	dec	BLOCK_SIZE, %o2
 	faligndata	%f2, %f4, %f36
@@ -9962,7 +10029,7 @@ L100:
 
 	bgu,a,pn	%icc, 2f
 	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	ldda	[%o0] ASI_BLK_P, %f16			! Increment is at top
 2:	
 	stda	%f32, [%o1] ASI_STORE
 	ba	3b
@@ -10206,7 +10273,6 @@ L103:
 	 faligndata	%f50, %f52, %f46
 
 	stda	%f32, [%o1] ASI_STORE
-	inc	BLOCK_SIZE, %o1
 
 	faligndata	%f52, %f54, %f32
 	dec	BLOCK_SIZE, %o2
@@ -10214,6 +10280,7 @@ L103:
 	cmp	%o0, %g2
 	faligndata	%f56, %f58, %f36
 	faligndata	%f58, %f60, %f38
+	inc	BLOCK_SIZE, %o1
 	faligndata	%f60, %f62, %f40
 	bgu,a,pn	%icc, 2f
 	 membar	#Sync
@@ -10570,6 +10637,7 @@ Lbcopy_blockdone:
 	FINISH_REG(%f42)
 	FINISH_REG(%f44)
 	FINISH_REG(%f46)
+#undef FINISH_REG
 	!! 
 	!! The low 3 bits have the sub-word bits needed to be
 	!! stored [because (x-8)&0x7 == x].
@@ -10616,6 +10684,9 @@ Lbcopy_blockfinish:
  * Weve saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
+#if 1
+	RESTORE_FPU
+#else
 #ifdef DEBUG
 	LDPTR	[%l1 + %lo(FPPROC)], %l7
 	cmp	%l7, %l5
@@ -10624,9 +10695,15 @@ Lbcopy_blockfinish:
 	cmp	%l7, %l0
 	tnz	1		! fpstate has changed!
 #endif
-	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
-	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
-	wr	%g0, 0, %fprs				! Disable FPU
+	andcc	%l2, %l3, %g0				! If (fpproc && fpstate)
+	STPTR	%l2, [%l1 + %lo(FPPROC)]		! Restore old fproc
+	bz,pt	%xcc, 1f				! Skip if no fpstate
+	 STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
+	
+	call	_C_LABEL(loadfpstate)			! Re-load orig fpstate
+	 mov	%l3, %o0
+1:
+#endif
 	ret
 	 restore	%g7, 0, %o0			! Return DEST for memcpy
 #endif
