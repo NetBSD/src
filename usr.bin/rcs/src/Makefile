@@ -42,7 +42,8 @@ installsnoop:	snoop
 lint: ci.lint co.lint ident.lint rlog.lint rcs.lint rcsdiff.lint rcsmerge.lint snoop.lint
 
 clean:
-	rm -f *.o ci co ident merge rlog rcs rcsclean rcsdiff rcsmerge snoop
+	rm -f *.o ci co ident merge rlog rcs rcsclean rcsdiff rcsmerge snoop \
+	      sccstorcs rcsfreeze
 
 cleandir: clean
 	rm -f tags .depend
