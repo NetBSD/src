@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.3 2000/09/03 19:15:45 augustss Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.4 2000/12/08 01:53:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #ifdef UFTDI_DEBUG
 #define DPRINTF(x)	if (uftdidebug) printf x
 #define DPRINTFN(n,x)	if (uftdidebug>(n)) printf x
-int uftdidebug = 15;
+int uftdidebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
