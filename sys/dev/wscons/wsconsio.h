@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.65 2004/06/07 01:13:40 christos Exp $ */
+/* $NetBSD: wsconsio.h,v 1.66 2004/07/07 00:10:30 sekiya Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -96,6 +96,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_ATARI	15	/* Atari keyboard */
 #define	WSKBD_TYPE_SUN		16	/* Sun Type3/4 */
 #define	WSKBD_TYPE_SUN5		17	/* Sun Type5 */
+#define WSKBD_TYPE_SGI		18	/* SGI keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -193,6 +194,7 @@ struct wskbd_scroll_data {
 #define	WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */      
 #define	WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
 #define	WSMOUSE_TYPE_MAPLE	12	/* Dreamcast Maple mouse */
+#define WSMOUSE_TYPE_SGI	13	/* SGI mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
