@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.24 1999/03/04 20:45:01 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.24.2.1 2000/09/09 16:00:44 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -1283,7 +1283,7 @@ aucc_decode_slinear16sw_1ch(dmap, p, i)
 	int i;
 {
 	u_char *ch0 = dmap[0];
-	u_char *ch3 = dmap[3];
+	u_char *ch3 = dmap[1];	/* XXX should be 3 */
 
 	while (i--) {
 		*ch3++ = *p++ >> 2;
