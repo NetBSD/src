@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.5.2.1 2001/05/01 10:13:08 he Exp $
+.\"     $NetBSD: stf.4,v 1.5.2.2 2001/05/02 22:55:05 he Exp $
 .\"     $KAME: stf.4,v 1.24 2000/06/07 23:35:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,7 +44,7 @@ interface supports
 .Dq 6to4
 IPv6 in IPv4 encapsulation.
 It can tunnel IPv6 traffic over IPv4, as specified in
-.Li draft-ietf-ngtrans-6to4-06.txt .
+.Li RFC3056 .
 .Pp
 For ordinary nodes in 6to4 site, you do not need
 .Nm
@@ -182,23 +182,39 @@ It emits 6to4 packet only for IPv6 destination 2002:0901::/32
 .Xr gif 4 ,
 .Xr inet 4 ,
 .Xr inet6 4
+.Pp
+.Pa http://www.6bone.net/6bone_6to4.html
 .Rs
 .%A Brian Carpenter
 .%A Keith Moore
 .%T "Connection of IPv6 Domains via IPv4 Clouds"
-.%D September 2000
-.%N draft-ietf-ngtrans-6to4-07.txt
-.%O work in progress
+.%D February 2001
+.%R RFC
+.%N 3056
 .Re
 .Rs
 .%A Jun-ichiro itojun Hagino
 .%T "Possible abuse against IPv6 transition technologies"
-.%D March 2000
-.%N draft-itojun-ipv6-transition-abuse-00.txt
-.%O work in progress, http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
+.%D July 2000
+.%N draft-itojun-ipv6-transition-abuse-01.txt
+.%O work in progress
 .Re
 .\"
 .Sh HISTORY
 The
 .Nm
 device first appeared in WIDE/KAME IPv6 stack.
+.\"
+.Sh BUGS
+No more than one
+.Nm
+interface is allowed for a node,
+and no more than one IPv6 interface address is allowed for an
+.Nm
+interface.
+It is to avoid source address selection conflicts
+between IPv6 layer and IPv4 layer,
+and to cope with ingress filtering rule on the other side.
+This is a feature to make
+.Nm
+work right for all occasions.
