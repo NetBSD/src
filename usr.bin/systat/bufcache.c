@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.13 2003/02/24 10:10:00 dsl Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.14 2003/12/07 07:28:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.13 2003/02/24 10:10:00 dsl Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.14 2003/12/07 07:28:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ showbufcache(void)
 	    "%-20s    %6d %3d    %8ld %3ld    %8ld %3ld     %3ld",
 	    "Total:", tbuf, (100 * tbuf) / nbuf,
 	    tvalid, (100 * tvalid) / bufkb,
-	    tsize, (100 * tsize) / bufkb, (100 * tvalid) / tsize); 
+	    tsize, (100 * tsize) / bufkb, tsize ? (100 * tvalid) / tsize : 0); 
 }
 
 int
@@ -278,8 +278,7 @@ fetchbufcache(void)
 				if (bp->b_vp != NULL) {
 					vn = vc_lookup(bp->b_vp);
 					if (vn == NULL)
-						errx(1,
-						    "vc_lookup returns NULL!\n");
+						break;
 					if (vn->v_mount != NULL)
 						mt = ml_lookup(vn->v_mount,
 						    bp->b_bufsize,
@@ -337,10 +336,10 @@ static struct vnode *
 vc_lookup(struct vnode *vaddr)
 {
 	struct vnode *ret;
-	int i, oldest, match;
+	size_t i, oldest;
 
 	ret = NULL;
-	oldest = match = 0;
+	oldest = 0;
 	for (i = 0; i < VCACHE_SIZE || vcache[i].vc_addr == NULL; i++) {
 		vcache[i].vc_age++;
 		if (vcache[i].vc_addr == NULL)
@@ -349,7 +348,6 @@ vc_lookup(struct vnode *vaddr)
 			oldest = i;
 		if (vcache[i].vc_addr == vaddr) {
 			vcache[i].vc_age = 0;
-			match = i;
 			ret = &vcache[i].vc_node;
 		}
 	}
@@ -363,7 +361,8 @@ vc_lookup(struct vnode *vaddr)
 		i = oldest;
 
 	/* Read in new vnode and reset age counter. */
-	KREAD(vaddr, &vcache[i].vc_node, sizeof(struct vnode));
+	if (KREAD(vaddr, &vcache[i].vc_node, sizeof(struct vnode)) == 0)
+		return NULL;
 	vcache[i].vc_addr = vaddr;
 	vcache[i].vc_age = 0;
 
