@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/24 22:02:59 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1997/07/18 07:47:26 thorpej Exp $
 
 PROG=	rpc.yppasswdd
 SRCS=	rpc.yppasswdd.c yppasswdd_xdr.c yppasswdd_mkpw.c
@@ -9,5 +9,6 @@ BINDIR=/usr/sbin
 MLINKS= rpc.yppasswdd.8 yppasswdd.8
 DPADD+= ${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lcrypt -lutil
+WARNS=1
 
 .include <bsd.prog.mk>
