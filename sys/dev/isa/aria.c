@@ -61,7 +61,6 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
 #include <machine/bus.h>
 
 #include <sys/audioio.h>
