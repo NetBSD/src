@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.25 2000/12/22 10:12:13 mrg Exp $ */
+/*	$NetBSD: mbr.c,v 1.25.2.1 2002/08/02 10:44:39 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -426,6 +426,10 @@ read_mbr(disk, buf, len)
 				    le_to_native32(mbrp[i].mbrp_start);
 				mbrp[i].mbrp_size =
 				    le_to_native32(mbrp[i].mbrp_size);
+			} else {
+				/* type is unused, discard scum */
+				mbrp[i].mbrp_start = 0;
+				mbrp[i].mbrp_size  = 0;
 			}
 		}
 	}
