@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -35,16 +35,24 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)net.c	5.5 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
+#include <db.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <utmp.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+#include "finger.h"
 
+void
 netfinger(name)
 	char *name;
 {
@@ -56,19 +64,12 @@ netfinger(name)
 	struct servent *sp;
 	struct sockaddr_in sin;
 	int s;
-	char *alist[1], *host, *rindex();
-	u_long inet_addr();
+	char *alist[1], *host;
 
 	if (!(host = rindex(name, '@')))
 		return;
 	*host++ = NULL;
-	if (!(hp = gethostbyname(host))) {
-		defaddr.s_addr = inet_addr(host);
-		if (defaddr.s_addr == -1) {
-			(void)fprintf(stderr,
-			    "finger: unknown host: %s\n", host);
-			return;
-		}
+	if (isdigit(*host) && (defaddr.s_addr = inet_addr(host)) != -1) {
 		def.h_name = host;
 		def.h_addr_list = alist;
 		def.h_addr = (char *)&defaddr;
@@ -76,6 +77,10 @@ netfinger(name)
 		def.h_addrtype = AF_INET;
 		def.h_aliases = 0;
 		hp = &def;
+	} else if (!(hp = gethostbyname(host))) {
+		(void)fprintf(stderr,
+		    "finger: unknown host: %s\n", host);
+		return;
 	}
 	if (!(sp = getservbyname("finger", "tcp"))) {
 		(void)fprintf(stderr, "finger: tcp/finger: unknown service\n");
@@ -116,10 +121,13 @@ netfinger(name)
 	 * it isn't a space, we can simply set the 7th bit.  Every ASCII
 	 * character with bit 7 set is printable.
 	 */ 
-	if (fp = fdopen(s, "r"))
+	lastc = 0;
+	if ((fp = fdopen(s, "r")) != NULL)
 		while ((c = getc(fp)) != EOF) {
 			c &= 0x7f;
 			if (c == 0x0d) {
+				if (lastc == '\r')	/* ^M^M - skip dupes */
+					continue;
 				c = '\n';
 				lastc = '\r';
 			} else {
@@ -136,5 +144,6 @@ netfinger(name)
 		}
 	if (lastc != '\n')
 		putchar('\n');
+	putchar('\n');
 	(void)fclose(fp);
 }

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Cimarron D. Taylor of the University of California, Berkeley.
@@ -35,16 +35,19 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)find.c	5.3 (Berkeley) 5/25/91";
+static char sccsid[] = "@(#)find.c	8.5 (Berkeley) 8/5/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/errno.h>
+
+#include <err.h>
+#include <errno.h>
 #include <fts.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "find.h"
 
 /*
@@ -57,8 +60,6 @@ find_formplan(argv)
 	char **argv;
 {
 	PLAN *plan, *tail, *new;
-	PLAN *c_print(), *find_create(), *not_squish(), *or_squish();
-	PLAN *paren_squish();
 
 	/*
 	 * for each argument in the command line, determine what kind of node
@@ -76,7 +77,7 @@ find_formplan(argv)
 	 * by c_name() with an argument of foo and `-->' represents the
 	 * plan->next pointer.
 	 */
-	for (plan = NULL; *argv;) {
+	for (plan = tail = NULL; *argv;) {
 		if (!(new = find_create(&argv)))
 			continue;
 		if (plan == NULL)
@@ -89,15 +90,21 @@ find_formplan(argv)
     
 	/*
 	 * if the user didn't specify one of -print, -ok or -exec, then -print
-	 * is assumed so we add a -print node on the end.  It is possible that
-	 * the user might want the -print someplace else on the command line,
-	 * but there's no way to know that.
+	 * is assumed so we bracket the current expression with parens, if
+	 * necessary, and add a -print node on the end.
 	 */
 	if (!isoutput) {
-		new = c_print();
-		if (plan == NULL)
+		if (plan == NULL) {
+			new = c_print();
 			tail = plan = new;
-		else {
+		} else {
+			new = c_openparen();
+			new->next = plan;
+			plan = new;
+			new = c_closeparen();
+			tail->next = new;
+			tail = new;
+			new = c_print();
 			tail->next = new;
 			tail = new;
 		}
@@ -129,7 +136,7 @@ find_formplan(argv)
 	plan = paren_squish(plan);		/* ()'s */
 	plan = not_squish(plan);		/* !'s */
 	plan = or_squish(plan);			/* -o's */
-	return(plan);
+	return (plan);
 }
  
 FTS *tree;			/* pointer to top of FTS hierarchy */
@@ -139,19 +146,20 @@ FTS *tree;			/* pointer to top of FTS hierarchy */
  *	take a search plan and an array of search paths and executes the plan
  *	over all FTSENT's returned for the given search paths.
  */
-void
+int
 find_execute(plan, paths)
 	PLAN *plan;		/* search plan */
 	char **paths;		/* array of pathnames to traverse */
 {
 	register FTSENT *entry;
 	PLAN *p;
+	int rval;
     
-	if (!(tree = fts_open(paths, ftsoptions, (int (*)())NULL)))
-		err("ftsopen: %s", strerror(errno));
+	if ((tree = fts_open(paths, ftsoptions, (int (*)())NULL)) == NULL)
+		err(1, "ftsopen");
 
-	while (entry = fts_read(tree)) {
-		switch(entry->fts_info) {
+	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
+		switch (entry->fts_info) {
 		case FTS_D:
 			if (isdepth)
 				continue;
@@ -163,30 +171,32 @@ find_execute(plan, paths)
 		case FTS_DNR:
 		case FTS_ERR:
 		case FTS_NS:
-			(void)fprintf(stderr, "find: %s: %s\n", 
-			    entry->fts_path, strerror(errno));
+			(void)fflush(stdout);
+			warnx("%s: %s",
+			    entry->fts_path, strerror(entry->fts_errno));
+			rval = 1;
 			continue;
-		case FTS_SL:
-			if (entry->fts_level == FTS_ROOTLEVEL) {
-				(void)fts_set(tree, entry, FTS_FOLLOW);
-				continue;
-			}
-			break;
+#ifdef FTS_W
+		case FTS_W:
+			continue;
+#endif /* FTS_W */
 		}
-
 #define	BADCH	" \t\n\\'\""
 		if (isxargs && strpbrk(entry->fts_path, BADCH)) {
-			(void)fprintf(stderr,
-			    "find: illegal path: %s\n", entry->fts_path);
+			(void)fflush(stdout);
+			warnx("%s: illegal path", entry->fts_path);
+			rval = 1;
 			continue;
 		}
 		 
 		/*
-		 * call all the functions in the execution plan until one is
+		 * Call all the functions in the execution plan until one is
 		 * false or all have been executed.  This is where we do all
 		 * the work specified by the user on the command line.
 		 */
 		for (p = plan; p && (p->eval)(p, entry); p = p->next);
 	}
-	(void)fts_close(tree);
+	if (errno)
+		err(1, "fts_read");
+	return (rval);
 }
