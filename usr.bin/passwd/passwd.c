@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: passwd.c,v 1.5 1994/01/05 11:21:42 deraadt Exp $";
+static char rcsid[] = "$Id: passwd.c,v 1.6 1994/07/27 03:28:23 brezak Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -68,7 +68,7 @@ main(argc, argv)
 	char *username;
 	int status = 0;
 	
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 	use_kerberos = 1;
 #endif
 #ifdef	YP
@@ -82,7 +82,7 @@ main(argc, argv)
 			use_yp = 0;
 			break;
 		case 'k':		/* change Kerberos password */
-#ifdef	KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 			use_kerberos = 1;
 			use_yp = 0;
 			break;
@@ -122,12 +122,12 @@ main(argc, argv)
 	case 0:
 		break;
 	case 1:
-#ifdef	KERBEROS
-		if (use_kerberos && strcmp(argv[1], username)) {
+#if defined(KERBEROS) || defined(KERBEROS5)
+		if (use_kerberos && strcmp(argv[0], username)) {
 			(void)fprintf(stderr, "passwd: %s\n\t%s\n%s\n",
 "to change another user's Kerberos password, do",
-"\"kinit user; passwd; kdestroy\";",
-"to change a user's local passwd, use \"passwd -l user\"");
+"\"kinit <user>; passwd; kdestroy\";",
+"to change a user's local passwd, use \"passwd -l <user>\"");
 			exit(1);
 		}
 #endif
@@ -138,7 +138,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-#ifdef	KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 	if (use_kerberos)
 		exit(krb_passwd());
 #endif
