@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.1 2001/11/17 12:25:30 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.2 2002/01/24 02:37:18 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.1 2001/11/17 12:25:30 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2002/01/24 02:37:18 petrov Exp $");
 #endif
 
 #include <inttypes.h>
@@ -63,11 +63,6 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* Align on quad-word boundary. */
 	sp = (unsigned long *)((unsigned long)sp & ~0xf);
 
-	gr[_REG_O6] = (__greg_t)sp;
-	gr[_REG_PC] = (__greg_t)func;
-	gr[_REG_nPC] = (__greg_t)func + 4;
-	gr[_REG_O7] = (__greg_t)_resumecontext - 8;
-
 	va_start(ap, argc);
 	/* Pass up to 6 arguments in %o0-5. */
 	for (i = 0; i < argc && i < 6; i++)
@@ -76,4 +71,12 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	for (sp += 6 + 8 + 8; argc > 0; argc--)
 		*sp++ = va_arg(ap, unsigned long);
 	va_end(ap);
+
+	sp -= 2047;
+
+	gr[_REG_O6] = (__greg_t)sp;
+	gr[_REG_PC] = (__greg_t)func;
+	gr[_REG_nPC] = (__greg_t)func + 4;
+	gr[_REG_O7] = (__greg_t)_resumecontext - 8;
+
 }
