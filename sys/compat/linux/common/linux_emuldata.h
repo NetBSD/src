@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.5 2003/06/23 17:29:25 erh Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.6 2004/08/08 09:40:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -45,12 +45,18 @@
  * stored in the emuldata field of the proc
  * structure.
  */
+struct linux_emuldata_shared {
+	caddr_t	p_break;	/* Processes' idea of break */	
+	int refs;
+};
+
 struct linux_emuldata {
 #if notyet
 	sigset_t ps_siginfo;	/* Which signals have a RT handler */
 #endif
 	int	debugreg[8];	/* GDB information for ptrace - for use, */
 				/* see ../arch/i386/linux_ptrace.c */
-	caddr_t	p_break;	/* Processes' idea of break */	
+	struct linux_emuldata_shared *s;
 };
+
 #endif /* !_COMMON_LINUX_EMULDATA_H */
