@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.56 2002/06/30 18:52:21 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.57 2002/06/30 19:11:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.56 2002/06/30 18:52:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.57 2002/06/30 19:11:40 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1025,7 +1025,11 @@ SIP_DECL(start)(struct ifnet *ifp)
 	struct mbuf *m0, *m;
 	struct sip_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, firsttx, nexttx, lasttx, ofree, seg;
+	int error, nexttx, lasttx, seg;
+	int ofree = sc->sc_txfree;
+#if 0
+	int firsttx = sc->sc_txnext;
+#endif
 #ifdef DP83820
 	u_int32_t extsts;
 #endif
@@ -1038,13 +1042,6 @@ SIP_DECL(start)(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
-	/*
-	 * Remember the previous number of free descriptors and
-	 * the first descriptor we'll use.
-	 */
-	ofree = sc->sc_txfree;
-	firsttx = sc->sc_txnext;
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -1189,7 +1186,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 			sc->sc_txdescs[nexttx].sipd_bufptr =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].sipd_cmdsts =
-			    htole32((nexttx == firsttx ? 0 : CMDSTS_OWN) |
+			    htole32((nexttx == sc->sc_txnext ? 0 : CMDSTS_OWN) |
 			    CMDSTS_MORE | dmamap->dm_segs[seg].ds_len);
 #ifdef DP83820
 			sc->sc_txdescs[nexttx].sipd_extsts = 0;
@@ -1259,6 +1256,15 @@ SIP_DECL(start)(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/*
+		 * The entire packet is set up.  Give the first descrptor
+		 * to the chip now.
+		 */
+		sc->sc_txdescs[sc->sc_txnext].sipd_cmdsts |=
+		    htole32(CMDSTS_OWN);
+		SIP_CDTXSYNC(sc, sc->sc_txnext, 1,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/*
 		 * Store a pointer to the packet so we can free it later,
 		 * and remember what txdirty will be once the packet is
 		 * done.
@@ -1289,14 +1295,6 @@ SIP_DECL(start)(struct ifnet *ifp)
 	}
 
 	if (sc->sc_txfree != ofree) {
-		/*
-		 * The entire packet chain is set up.  Give the
-		 * first descrptor to the chip now.
-		 */
-		sc->sc_txdescs[firsttx].sipd_cmdsts |= htole32(CMDSTS_OWN);
-		SIP_CDTXSYNC(sc, firsttx, 1,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
 		/*
 		 * Start the transmit process.  Note, the manual says
 		 * that if there are no pending transmissions in the
