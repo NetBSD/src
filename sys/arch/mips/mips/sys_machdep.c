@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 1999/04/24 08:10:42 simonb Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.17 2000/03/14 14:11:06 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -224,8 +224,8 @@ mips_user_cachectl(p, va, nbytes, cachectl)
 	return(EOPNOTSUPP);
 #else
 	/*
-	 * Use the merged mips3  pmap cache-control functions
-	 * to change the cache attributes of each page in the virtual-address range,
+	 * Use the merged mips3 pmap cache-control functions to change
+	 * the cache attributes of each page in the virtual-address range,
 	 * by manually mapping to a  physical address and changing the
 	 * pmap attributes of the  PA of each page in the range.
 	 * Force misses on non-present pages to be sure the cacheable bits
