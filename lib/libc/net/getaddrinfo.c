@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.27 2000/02/09 12:25:06 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.28 2000/02/10 03:06:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -831,9 +831,7 @@ get_ai(pai, afd, addr)
 	memcpy(ai, pai, sizeof(struct addrinfo));
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
 	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
-#ifdef HAVE_SOCKADDR_SA_LEN
 	ai->ai_addr->sa_len = afd->a_socklen;
-#endif
 	ai->ai_addrlen = afd->a_socklen;
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(ai->ai_addr);
