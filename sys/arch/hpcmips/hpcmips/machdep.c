@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2001/03/30 15:59:17 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2001/04/11 08:23:27 sato Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,10 +43,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2001/03/30 15:59:17 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2001/04/11 08:23:27 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
-#include "opt_vr41x1.h"
+#include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 #include "biconsdev.h"
 #include "fs_mfs.h"
@@ -202,7 +202,7 @@ struct platform platform = {
 	unimpl_reboot,
 };
 
-#ifdef VR41X1
+#ifdef VR41XX
 extern void	vr_init __P((void));
 #endif
 #ifdef TX39XX
@@ -272,11 +272,11 @@ mach_init(argc, argv, bi)
 		}
 	}
 	/* Platform Specific Function Hooks */
-#if defined TX39XX && defined VR41X1
+#if defined TX39XX && defined VR41XX
 #error misconfiguration
 #elif defined TX39XX
 	tx_init();
-#elif defined VR41X1
+#elif defined VR41XX
 	vr_init();
 #if NBICONSDEV > 0
 	/* bicons don't need actual device initialize. only bootinfo needed. */
@@ -742,7 +742,7 @@ cpu_intr(status, cause, pc, ipending)
 {
 	uvmexp.intrs++;
 
-#ifdef VR41X1
+#ifdef VR41XX
 	if (ipending & MIPS_INT_MASK_5) {
 		/*
 		 *  Writing a value to the Compare register,
