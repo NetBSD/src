@@ -215,7 +215,7 @@
 /* #undef COMPLEX_HISTORY */
 
 /* Strict POSIX behaviour? (see comments in configure.in for more details) */
-/* #undef POSIXLY_CORRECT */
+#define POSIXLY_CORRECT 1
 
 /* Specify default $ENV? (see comments in configure.in for more details) */
 /* #undef DEFAULT_ENV */
