@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.46 1998/12/04 11:00:40 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.47 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -338,8 +338,10 @@ ffs_reload(mountp, cred, p)
 	else
 		size = dpart.disklab->d_secsize;
 	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
-	if (error)
+	if (error) {
+		brelse(bp);
 		return (error);
+	}
 	fs = VFSTOUFS(mountp)->um_fs;
 	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
@@ -377,8 +379,10 @@ ffs_reload(mountp, cred, p)
 			size = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
 			      NOCRED, &bp);
-		if (error)
+		if (error) {
+			brelse(bp);
 			return (error);
+		}
 #ifdef FFS_EI
 		if (UFS_MPNEEDSWAP(mountp))
 			ffs_csum_swap((struct csum*)bp->b_data,
@@ -427,6 +431,7 @@ loop:
 		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 			      (int)fs->fs_bsize, NOCRED, &bp);
 		if (error) {
+			brelse(bp);
 			vput(vp);
 			return (error);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.5 1998/10/23 00:33:23 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.6 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -351,7 +351,8 @@ ext2fs_alloccg(ip, cg, bpref, size)
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
 		return (NULL);
-	error = bread(ip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
+	error = bread(ip->i_devvp, fsbtodb(fs,
+		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -439,7 +440,8 @@ ext2fs_nodealloccg(ip, cg, ipref, mode)
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
 		return (NULL);
-	error = bread(ip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+	error = bread(ip->i_devvp, fsbtodb(fs,
+		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -511,7 +513,8 @@ ext2fs_blkfree(ip, bno)
 		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
 		return;
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
+	error = bread(ip->i_devvp,
+		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -559,7 +562,8 @@ ext2fs_vfree(v)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s\n",
 			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
-	error = bread(pip->i_devvp, fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+	error = bread(pip->i_devvp,
+		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);

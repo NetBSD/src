@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.2 1998/08/14 18:04:07 mark Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.3 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -228,8 +228,10 @@ filecore_getparent(ip)
 #endif
 	error = filecore_bread(ip->i_mnt, addr, FILECORE_DIR_SIZE,
 	    NOCRED, &pbp);
-	if (error)
+	if (error) {
+		brelse(pbp);
 		return error;
+	}
 	paddr = fcdirtail(pbp->b_data)->parent1
 	    | fcdirtail(pbp->b_data)->parent2 << 16;
 #ifdef FILECORE_DEBUG_BR
@@ -248,8 +250,10 @@ filecore_getparent(ip)
 #endif
 	error = filecore_bread(ip->i_mnt, paddr, FILECORE_DIR_SIZE,
 	    NOCRED, &pbp);
-	if (error)
+	if (error) {
+		brelse(pbp);
 		return error;
+	}
 	while (fcdirentry(pbp->b_data,i)->addr != addr) {
 		if (fcdirentry(pbp->b_data, i++)->name[0] == 0) {
 #ifdef FILECORE_DEBUG_BR

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.31 1998/09/01 03:33:27 thorpej Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.32 1999/02/10 13:14:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -214,9 +214,10 @@ adosfs_mountfs(devvp, mp, p)
 
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
-			   amp->bsize, NOCRED, &bp)) != 0)
+			   amp->bsize, NOCRED, &bp)) != 0) {
+		brelse(bp);
 		goto fail;
-
+	}
 	amp->dostype = adoswordn(bp, 0);
 	brelse(bp);
 
@@ -395,6 +396,7 @@ adosfs_vget(mp, an, vpp)
 
 	if ((error = bread(amp->devvp, an * amp->secsperblk,
 			   amp->bsize, NOCRED, &bp)) != 0) {
+		brelse(bp);
 		vput(vp);
 		return (error);
 	}
@@ -513,6 +515,12 @@ adosfs_vget(mp, an, vpp)
 		bp = NULL;
 		error = bread(amp->devvp, ap->linkto * amp->secsperblk,
 		    amp->bsize, NOCRED, &bp);
+		if (error) {
+			brelse(bp);
+			vput(vp);
+			return (error);
+		}
+	}
 		ap->fsize = adoswordn(bp, ap->nwords - 47);
 		/*
 		 * Should ap->block be set to the real file header block?
@@ -588,8 +596,10 @@ adosfs_loadbitmap(amp)
 	bp = mapbp = NULL;
 	bn = amp->rootb;
 	if ((error = bread(amp->devvp, bn * amp->secsperblk, amp->bsize,
-	    NOCRED, &bp)) != 0)
+	    NOCRED, &bp)) != 0) {
+		brelse(bp);
 		return (error);
+	}
 	blkix = amp->nwords - 49;
 	endix = amp->nwords - 24;
 	mapix = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.22 1998/12/02 10:44:53 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.23 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -407,8 +407,10 @@ ext2fs_reload(mountp, cred, p)
 	else
 		size = dpart.disklab->d_secsize;
 	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
-	if (error)
+	if (error) {
+		brelse(bp);
 		return (error);
+	}
 	newfs = (struct ext2fs *)bp->b_data;
 	if (fs2h16(newfs->e2fs_magic) != E2FS_MAGIC) {
 		brelse(bp);
@@ -437,8 +439,9 @@ ext2fs_reload(mountp, cred, p)
 	 * copy in new superblock, and compute in-memory values
 	 */
 	e2fs_sbload(newfs, &fs->e2fs);
-	fs->e2fs_ncg = howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
-		fs->e2fs.e2fs_bpg);
+	fs->e2fs_ncg =
+	    howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
+	    fs->e2fs.e2fs_bpg);
 	/* XXX assume hw bsize = 512 */
 	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
 	fs->e2fs_bsize = 1024 << fs->e2fs.e2fs_log_bsize;
@@ -455,13 +458,16 @@ ext2fs_reload(mountp, cred, p)
 	 */
 
 	for (i=0; i < fs->e2fs_ngdb; i++) {
-		error = bread(devvp , fsbtodb(fs, ((fs->e2fs_bsize>1024)?0:1)+i+1),
-				fs->e2fs_bsize, NOCRED, &bp);
-		if (error)
+		error = bread(devvp ,
+		    fsbtodb(fs, ((fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
+		    fs->e2fs_bsize, NOCRED, &bp);
+		if (error) {
+			brelse(bp);
 			return (error);
+		}
 		e2fs_cgload((struct ext2_gd*)bp->b_data,
-			&fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
-			fs->e2fs_bsize);
+		    &fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
+		    fs->e2fs_bsize);
 		brelse(bp);
 	}
 	
@@ -617,15 +623,17 @@ ext2fs_mountfs(devvp, mp, p)
 	m_fs->e2fs_gd = malloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize,
 		M_UFSMNT, M_WAITOK);
 	for (i=0; i < m_fs->e2fs_ngdb; i++) {
-		error = bread(devvp , fsbtodb(m_fs, ((m_fs->e2fs_bsize>1024)?0:1)+i+1),
-			m_fs->e2fs_bsize, NOCRED, &bp);
+		error = bread(devvp ,
+		    fsbtodb(m_fs, ((m_fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
+		    m_fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			free(m_fs->e2fs_gd, M_UFSMNT);
 			goto out;
 		}
 		e2fs_cgload((struct ext2_gd*)bp->b_data,
-			&m_fs->e2fs_gd[i* m_fs->e2fs_bsize / sizeof(struct ext2_gd)],
-			m_fs->e2fs_bsize);
+		    &m_fs->e2fs_gd[
+			i * m_fs->e2fs_bsize / sizeof(struct ext2_gd)],
+		    m_fs->e2fs_bsize);
 		brelse(bp);
 		bp = NULL;
 	}

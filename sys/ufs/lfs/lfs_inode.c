@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.14 1998/06/09 07:46:33 scottr Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.15 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -217,8 +217,10 @@ lfs_truncate(v)
 		if ((e1 = getinoquota(ip)) != 0)
 			return (e1);
 #endif	
-		if ((e1 = bread(vp, lbn, oldsize_newlast, NOCRED, &bp)) != 0)
+		if ((e1 = bread(vp, lbn, oldsize_newlast, NOCRED, &bp)) != 0) {
+			brelse(bp);
 			return (e1);
+		}
 		ip->i_ffs_size = length;
 #if defined(UVM)
 		(void)uvm_vnp_uncache(vp);

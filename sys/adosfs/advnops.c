@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.46 1998/09/01 03:33:27 thorpej Exp $	*/
+/*	$NetBSD: advnops.c,v 1.47 1999/02/10 13:14:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -290,6 +290,10 @@ adosfs_read(v)
 		 */
 		error = bread(sp->a_vp, lbn * amp->secsperblk,
 			      amp->bsize, NOCRED, &bp);
+		if (error) {
+			brelse(bp);
+			goto reterr;
+		}
 		sp->a_vp->v_lastr = lbn;
 
 		if (!IS_FFS(amp)) {
@@ -547,8 +551,10 @@ adosfs_bmap(v)
 		}
 		error = bread(ap->amp->devvp, nb * ap->amp->secsperblk,
 			      ap->amp->bsize, NOCRED, &flbp);
-		if (error)
+		if (error) {
+			brelse(flbp);
 			goto reterr;
+		}
 		if (adoscksum(flbp, ap->nwords)) {
 #ifdef DIAGNOSTIC
 			printf("adosfs: blk %ld failed cksum.\n", nb);
