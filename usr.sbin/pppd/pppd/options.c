@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.37 2002/07/01 22:19:39 itojun Exp $	*/
+/*	$NetBSD: options.c,v 1.38 2002/07/06 18:21:43 itojun Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.80 2001/03/12 22:56:12 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.37 2002/07/01 22:19:39 itojun Exp $");
+__RCSID("$NetBSD: options.c,v 1.38 2002/07/06 18:21:43 itojun Exp $");
 #endif
 #endif
 
@@ -901,7 +901,7 @@ print_option(opt, mainopt, printer, arg)
 
 	case o_string:
 		if (opt->flags & OPT_HIDE) {
-			p = "??????";
+			p = "\?\?\?\?\?\?";
 		} else {
 			p = (char *) opt->addr;
 			if ((opt->flags & OPT_STATIC) == 0)
