@@ -125,7 +125,7 @@ cpu_exit(p)
 	extern struct proc *npxproc;
 	
 	if (npxproc == p)
-		npxexit(p);
+		npxexit();
 #endif
 
 #ifdef USER_LDT

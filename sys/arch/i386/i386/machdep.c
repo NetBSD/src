@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.92 1994/03/29 04:38:08 mycroft Exp $
+ *	$Id: machdep.c,v 1.93 1994/04/05 17:56:26 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -449,13 +449,8 @@ sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 
 	/*
@@ -748,8 +743,8 @@ setregs(p, entry, stack, retval)
 	tf->tf_cs = _ucodesel;
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
-	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #if	NNPX > 0
+	npxexit();
 	npxinit(__INITIAL_NPXCW__);
 #endif
 
