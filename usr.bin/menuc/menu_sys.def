@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.20 1999/06/20 05:41:45 cgd Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.21 1999/06/20 20:21:03 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -748,6 +748,7 @@ int new_menu (char * title, menu_ent * opts, int numopts,
 	menus[ix].post_act = post_act;
 	menus[ix].exit_act = exit_act;
 	menus[ix].helpstr  = help;
+	menus[ix].exitstr  = "Exit";
 
 	init_menu (&menus[ix]);
 
