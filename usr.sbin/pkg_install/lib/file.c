@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.58 2003/02/02 12:59:54 abs Exp $	*/
+/*	$NetBSD: file.c,v 1.59 2003/04/10 05:08:55 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.58 2003/02/02 12:59:54 abs Exp $");
+__RCSID("$NetBSD: file.c,v 1.59 2003/04/10 05:08:55 grant Exp $");
 #endif
 #endif
 
@@ -526,19 +526,14 @@ int
 unpack(const char *pkg, const char *flist)
 {
 	char    args[10] = "-";
-	char   *cp;
+	const char *suffix;
 
-	/*
-         * Figure out by a crude heuristic whether this or not this is probably
-         * compressed.
-         */
 	if (!IS_STDIN(pkg)) {
-		cp = strrchr(pkg, '.');
-		if (cp) {
-			cp++;
-			if (strchr(cp, 'z') || strchr(cp, 'Z'))
-				strcat(args, "z");
-		}
+		suffix = suffix_of(pkg);
+		if (!strcmp(suffix, "tbz"))
+			strcat(args, "j");
+		else if (!strcmp(suffix, "tgz"))
+			strcat(args, "z");
 	} else
 		strcat(args, "z");
 	strcat(args, "xpf");
