@@ -1,4 +1,4 @@
-$NetBSD: magic.mime,v 1.1.1.1 2000/05/14 22:44:21 christos Exp $
+# $NetBSD: magic.mime,v 1.2 2000/05/14 23:28:43 soren Exp $
 # Magic data for KMimeMagic (originally for file(1) command)
 #
 # The format is 4-5 columns:
