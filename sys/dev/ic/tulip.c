@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.22 1999/09/29 22:07:47 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.23 1999/09/29 23:11:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -187,6 +187,10 @@ u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
 				printf x
 #else
 #define	DPRINTF(sc, x)	/* nothing */
+#endif
+
+#ifdef TLP_STATS
+void	tlp_print_stats __P((struct tulip_softc *));
 #endif
 
 /*
@@ -776,6 +780,10 @@ tlp_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+#ifdef TLP_STATS
+		if (ifp->if_flags & IFF_DEBUG)
+			tlp_print_stats(sc);
+#endif
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -1190,7 +1198,7 @@ tlp_txintr(sc)
 	 * frames that have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		TULIP_CDTXSYNC(sc, txs->txs_firstdesc,
+		TULIP_CDTXSYNC(sc, txs->txs_lastdesc,
 		    txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
@@ -1214,7 +1222,7 @@ tlp_txintr(sc)
 		}
 #endif
 
-		txstat = sc->sc_txdescs[txs->txs_firstdesc].td_status;
+		txstat = sc->sc_txdescs[txs->txs_lastdesc].td_status;
 		if (txstat & TDSTAT_OWN)
 			break;
 
@@ -1234,25 +1242,28 @@ tlp_txintr(sc)
 		/*
 		 * Check for errors and collisions.
 		 */
-		if (txstat &
-		    (TDSTAT_Tx_UF|TDSTAT_Tx_NC|TDSTAT_Tx_LO|TDSTAT_Tx_TO)) {
-			ifp->if_oerrors++;
-#if 0
-			/*
-			 * XXX Can't check for late or excessive collisions;
-			 * XXX Some 21040s seem to register those even on
-			 * XXX successful transmissions!
-			 */
-			if (txstat & TDSTAT_Tx_EC)
-				ifp->if_collisions += 16;
-			if (txstat & TDSTAT_Tx_LC)
-				ifp->if_collisions++;
+#ifdef TLP_STATS
+		if (txstat & TDSTAT_Tx_UF)
+			sc->sc_stats.ts_tx_uf++;
+		if (txstat & TDSTAT_Tx_TO)
+			sc->sc_stats.ts_tx_to++;
+		if (txstat & TDSTAT_Tx_EC)
+			sc->sc_stats.ts_tx_ec++;
+		if (txstat & TDSTAT_Tx_LC)
+			sc->sc_stats.ts_tx_lc++;
 #endif
-		} else {
-			/* Packet was transmitted successfully. */
-			ifp->if_opackets++;
+
+		if (txstat & (TDSTAT_Tx_UF|TDSTAT_Tx_TO))
+			ifp->if_oerrors++;
+		
+		if (txstat & TDSTAT_Tx_EC)
+			ifp->if_collisions += 16;
+		else
 			ifp->if_collisions += TDSTAT_Tx_COLLISIONS(txstat);
-		}
+		if (txstat & TDSTAT_Tx_LC)
+			ifp->if_collisions++;
+
+		ifp->if_opackets++;
 	}
 
 	/*
@@ -1268,6 +1279,19 @@ tlp_txintr(sc)
 	if (sc->sc_flags & TULIPF_WANT_SETUP)
 		(*sc->sc_filter_setup)(sc);
 }
+
+#ifdef TLP_STATS
+void
+tlp_print_stats(sc)
+	struct tulip_softc *sc;
+{
+
+	printf("%s: tx_uf %lu, tx_to %lu, tx_ec %lu, tx_lc %lu\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_stats.ts_tx_uf, sc->sc_stats.ts_tx_to,
+	    sc->sc_stats.ts_tx_ec, sc->sc_stats.ts_tx_lc);
+}
+#endif
 
 /*
  * tlp_reset:
