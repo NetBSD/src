@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.10 1998/08/20 20:46:59 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.11 1998/08/23 10:05:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -177,6 +177,10 @@ struct rom_range vmebus_translations[] = {
 #undef _DS
 };
 
+/*
+ * DMA on sun4 VME devices use the last MB of virtual space, which
+ * is mapped by hardware onto the first MB of VME space.
+ */
 struct extent *vme_dvmamap;
 
 struct sparc_bus_space_tag sparc_vme_bus_tag = {
@@ -330,8 +334,10 @@ vmeattach_mainbus(parent, self, aux)
 	sc->sc_nrange =
 		sizeof(vmebus_translations)/sizeof(vmebus_translations[0]);
 
-	vme_dvmamap = extent_create("vmedvma", DVMA_BASE, DVMA_END,
-					M_DEVBUF, 0, 0, EX_NOWAIT);
+	vme_dvmamap = extent_create("vmedvma", VME4_DVMA_BASE, VME4_DVMA_END,
+				    M_DEVBUF, 0, 0, EX_NOWAIT);
+	if (vme_dvmamap == NULL)
+		panic("vme: unable to allocate DVMA map");
 
 	printf("\n");
 	(void)config_search(vmesearch, self, &vba);
@@ -845,7 +851,7 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	}
 
 	/* Adjust DVMA address to VME view */
-	map->dm_segs[0].ds_addr -= DVMA_BASE;
+	map->dm_segs[0].ds_addr -= VME4_DVMA_BASE;
 	return (0);
 }
 
@@ -858,7 +864,7 @@ sparc_vme4_dmamap_unload(t, map)
 	bus_size_t len;
 
 	/* Go from VME to CPU view */
-	map->dm_segs[0].ds_addr += DVMA_BASE;
+	map->dm_segs[0].ds_addr += VME4_DVMA_BASE;
 
 	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
 	len = round_page(map->dm_segs[0].ds_len);
@@ -905,7 +911,7 @@ sparc_vme4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr = dvmaddr - DVMA_BASE;
+	segs[0].ds_addr = dvmaddr - VME4_DVMA_BASE;
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
@@ -935,7 +941,7 @@ sparc_vme4_dmamem_free(t, segs, nsegs)
 	bus_addr_t addr;
 	bus_size_t len;
 
-	addr = segs[0].ds_addr + DVMA_BASE;
+	addr = segs[0].ds_addr + VME4_DVMA_BASE;
 	len = round_page(segs[0].ds_len);
 
 	/* Remove DVMA kernel map */
