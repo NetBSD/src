@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.29.2.6 2003/10/20 05:02:44 cyber Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.29.2.7 2004/03/15 05:45:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -888,12 +888,16 @@ bge_init_rx_ring_jumbo(sc)
 	int i;
 	volatile struct bge_rcb *rcb;
 
+	if (sc->bge_flags & BGE_JUMBO_RXRING_VALID)
+		return 0;
+
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
 		if (bge_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return(ENOBUFS);
 	};
 
 	sc->bge_jumbo = i - 1;
+	sc->bge_flags |= BGE_JUMBO_RXRING_VALID;
 
 	rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 	rcb->bge_maxlen_flags = 0;
