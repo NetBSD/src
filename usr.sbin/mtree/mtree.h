@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.18 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.19 2002/01/24 03:20:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -113,6 +113,7 @@ typedef struct {
  */
 const char	*inotype(u_int);
 u_int		 nodetoino(u_int);
+int		 setup_getid(const char *);
 NODE		*spec(FILE *);
 
 
