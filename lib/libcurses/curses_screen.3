@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.7 2003/04/08 21:19:15 wiz Exp $
+.\"	$NetBSD: curses_screen.3,v 1.8 2003/04/11 09:37:16 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -64,8 +64,9 @@
 .Fn resizeterm "int lines" "int cols"
 .Ft int
 .Fn setterm "char *name"
+.Pp
 .Va extern int LINES ;
-.br
+.Pp
 .Va extern int COLS ;
 .Sh DESCRIPTION
 These functions initialize terminals and screens.

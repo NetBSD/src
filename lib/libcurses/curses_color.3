@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_color.3,v 1.3 2003/01/27 21:03:05 jdc Exp $
+.\"	$NetBSD: curses_color.3,v 1.4 2003/04/11 09:37:15 jdc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -68,10 +68,10 @@
 .Fn color_content "short color" "short *red" "short *green" "short *blue"
 .Ft attr_t
 .Fn no_color_video void
-.Ft extern int
-.Dv COLOR_PAIRS
-.Ft extern int
-.Dv COLORS
+.Pp
+.Va extern int COLOR_PAIRS ;
+.Pp
+.Va extern int COLORS ;
 .Sh DESCRIPTION
 These functions manipulate color on terminals that support color attributes.
 .Pp
@@ -106,12 +106,12 @@ defined in
 .Em \*[Lt]curses.h\*[Gt] .
 .Fn start_color
 also initializes the global external variables
-.Dv COLORS
+.Va COLORS
 and
-.Dv COLOR_PAIRS .
-.Dv COLORS
+.Va COLOR_PAIRS .
+.Va COLORS
 defines the number of colors that the terminal supports and
-.Dv COLOR_PAIRS
+.Va COLOR_PAIRS
 defines the number of color-pairs that the terminal supports.
 These color-pairs are initialized to white foreground on black background.
 .Fn start_color
