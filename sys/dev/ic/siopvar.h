@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.6 2000/05/23 17:08:07 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.7 2000/05/25 10:10:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -49,10 +49,15 @@ struct siop_softc {
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
 	bus_addr_t sc_raddr;		/* register adresses */
+	bus_space_tag_t sc_ramt;	/* bus_space ram tag */
+	bus_space_handle_t sc_ramh;	/* bus_space ram handle */
+	bus_addr_t sc_scriptaddr;	/* on-board ram or physical adress */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	void (*sc_reset) __P((struct siop_softc*)); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
+	bus_dmamap_t  sc_sheddma;	/* DMA map for sheduler script */
 	u_int32_t *sc_script;		/* script location in memory */
+	u_int32_t *sc_shed;		/* script sheduler location in memory */
 	int sc_nshedslots;		/* number of sheduler slots */
 	int sc_currshedslot;		/* current sheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
