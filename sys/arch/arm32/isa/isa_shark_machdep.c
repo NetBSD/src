@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.2 1998/06/08 18:18:58 tv Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.3 1998/07/08 04:56:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -44,10 +44,12 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <arm32/isa/isadmavar.h>
+#include <dev/isa/isadmavar.h>
 #include <arm32/isa/icu.h>
 
 #include <machine/ofw.h>
+
+struct arm32_isa_chipset isa_chipset_tag;
 
 unsigned i8259_mask;
 
@@ -194,35 +196,8 @@ isa_init(vm_offset_t isa_io_addr, vm_offset_t isa_mem_addr)
   /* Clear the IRQ/FIQ masks */
   isa_init8259s();
 
-  /* Must cascade DRQ 4 on all IBM AT-like systems */
-  isa_dmacascade(4);
-
   /* Initialize the ISA interrupt handling code */
   irq_init();
-}
-
-/*
- * isa_machdep_dmarangecheck
- *
- * returns true  => not in range
- *         false => in range
- *
- * don't blame me, that's the convention in isadma.c
- *
- */
-int
-isa_machdep_dmarangecheck(vm_offset_t pa, vm_size_t size)
-{
-  vm_offset_t ipa;
-  vm_size_t   isz;
-  int         inrange;
-
-  if (!ofw_isadmarangeintersect(pa, size, &ipa, &isz))
-    inrange = 0;
-  else
-    inrange = ((pa == ipa) && (size == isz));
-
-  return !inrange;
 }
 
 void
@@ -231,6 +206,10 @@ isa_attach_hook(parent, self, iba)
         struct isabus_attach_args *iba;
 {
 
-        /* Nothing to do. */
+	/*
+	 * Since we can only have one ISA bus, we just use a single
+	 * statically allocated ISA chipset structure.  Pass it up
+	 * now.
+	 */
+	iba->iba_ic = &isa_chipset_tag;
 }
-
