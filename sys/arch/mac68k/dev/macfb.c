@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.2 1999/03/11 19:27:44 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.3 1999/05/16 23:34:37 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,9 +30,6 @@
  */
 
 #include "opt_wsdisplay_compat.h"
-#ifdef WSDISPLAY_COMPAT_GRF
-#include "opt_uvm.h"
-#endif /* WSDISPLAY_COMPAT_GRF */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -59,9 +56,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 #endif /* WSDISPLAY_COMPAT_GRF */
 
 #include <machine/grfioctl.h>
@@ -504,13 +499,8 @@ macfb_grfmap(v, addrp, p)
 	vn.v_specinfo = &si;				/* XXX */
 	vn.v_rdev = makedev(44,sc->sc_dev.dv_unit);	/* XXX */
 
-#if defined(UVM)
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
-#else
-	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
-#endif
 
 	/* Offset into page: */
 	*addrp += sc->sc_dc->dc_offset;
@@ -535,12 +525,8 @@ macfb_grfunmap(v, addr, p)
 
 	size = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
 
-#if defined(UVM)
 	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
 	    (vaddr_t)addr + size);
-#else
-	rv = vm_deallocate(&p->p_vmspace->vm_map, (vaddr_t)addr, size);
-#endif
 
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);
 }
