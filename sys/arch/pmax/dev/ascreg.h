@@ -64,10 +64,7 @@
 
 /*
  * HISTORY
- * $Log: ascreg.h,v $
- * Revision 1.1.1.1  1993/10/12 03:22:25  deraadt
- * pmax code from <ralphc@pyramid.com> & <rick@snowhite.cis.uoguelph.ca>
- *
+ * Log:	scsi_53C94.h,v
  * Revision 2.4  91/02/05  17:44:59  mrt
  * 	Added author notices
  * 	[91/02/04  11:18:32  mrt]
