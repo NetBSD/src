@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.5 1997/01/23 22:18:35 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.6 1997/01/27 22:26:50 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -26,8 +26,8 @@ file arch/sun3x/sun3x/pmap.c
 file arch/sun3x/sun3x/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3x/sun3x/sys_machdep.c
-file arch/sun3x/sun3x/trap.c
-file arch/sun3x/sun3x/vector.c
+file arch/sun3/sun3/trap.c
+file arch/sun3/sun3/vector.c
 file arch/sun3/sun3/vm_machdep.c
 
 file arch/sun3x/dev/idprom.c
