@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 1996/05/01 20:23:07 cgd Exp $
+#	$NetBSD: GENERIC,v 1.14 1996/05/01 23:22:19 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -74,6 +74,7 @@ scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
+cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
 
@@ -121,6 +122,7 @@ st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
+wscons*	at	cfb?
 wscons*	at	pcivga?
 wscons*	at	sfb?
 wscons*	at	tga?
