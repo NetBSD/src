@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.259 1999/09/27 23:59:50 ad Exp $
+#	$NetBSD: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -444,6 +444,7 @@ le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rl*	at pci? dev ? function ?	# Realtek 8129/8139
@@ -463,6 +464,10 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+
+mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+com*	at mhzc?
+sm*	at mhzc?
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
