@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.6 1995/01/13 19:18:08 mycroft Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.7 1995/01/13 20:46:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -129,7 +129,7 @@ wallproc_wall_1(s)
 		pclose(pfp);
 	}
 
-	return (NULL);
+	return (*s);
 }
 
 void
