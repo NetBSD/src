@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.106 2004/01/08 03:44:48 atatat Exp $
+.\"	$NetBSD: sysctl.8,v 1.107 2004/01/22 03:50:18 jonathan Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -330,6 +330,7 @@ privilege can change the value.
 .It kern.vdisable	integer	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
+.It net.bpf.maxbufsize	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.errppslimit	integer	yes
 .It net.inet.icmp.rediraccept	integer	yes
