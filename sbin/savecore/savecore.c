@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.55 2001/11/01 07:39:38 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.56 2002/03/06 13:13:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.55 2001/11/01 07:39:38 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.56 2002/03/06 13:13:08 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 
 /* Types match kernel declarations. */
 long	dumplo;				/* where dump starts on dumpdev */
-int	dumpmag;			/* magic number in dump */
+u_int32_t dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
 const char	*kernel;		/* name of used kernel */
@@ -434,7 +434,7 @@ nomsguf:
 int
 dump_exists(void)
 {
-	int newdumpmag;
+	u_int32_t newdumpmag;
 
 	if (KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag) != 0) {
 		if (verbose)
