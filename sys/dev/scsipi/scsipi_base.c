@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.64 2001/11/26 20:39:29 fredette Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.65 2001/11/28 01:04:49 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.64 2001/11/26 20:39:29 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.65 2001/11/28 01:04:49 fredette Exp $");
 
 #include "opt_scsi.h"
 
@@ -1067,7 +1067,7 @@ scsipi_inquire(periph, inqbuf, flags)
 	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
 	    SCSIPIRETRIES, 10000, NULL, XS_CTL_DATA_IN | flags);
 	
-#ifdef sun2
+#ifdef SCSI_OLD_NOINQUIRY
 	/*
 	 * Kludge for the Adaptec ACB-4000 SCSI->MFM translator.
 	 * This board doesn't support the INQUIRY command at all.
@@ -1112,7 +1112,7 @@ scsipi_inquire(periph, inqbuf, flags)
 			sizeof(inqbuf->product));
 		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
 	}
-#endif /* sun2 */
+#endif /* SCSI_OLD_NOINQUIRY */
 
 	return error; 
 }
