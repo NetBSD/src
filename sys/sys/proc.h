@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.15 2002/06/20 03:50:14 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.16 2002/06/20 23:01:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -197,8 +197,6 @@ struct proc {
 	int		p_traceflag;	/* Kernel trace points */
 	struct file	*p_tracep;	/* Trace to file */
 	void		*p_systrace;	/* Back pointer to systrace */
-
-	struct vnode	*p_textvp;	/* Vnode of executable */
 
 	struct vnode 	*p_textvp;	/* Vnode of executable */
 
