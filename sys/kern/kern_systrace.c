@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.26 2003/03/30 00:40:06 provos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.27 2003/04/20 20:30:34 provos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.26 2003/03/30 00:40:06 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.27 2003/04/20 20:30:34 provos Exp $");
 
 #include "opt_systrace.h"
 
@@ -734,48 +734,46 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	}
 
 	callp = p->p_emul->e_sysent + code;
-	switch (policy) {
-	case SYSTR_POLICY_PERMIT:
-		break;
-	case SYSTR_POLICY_ASK:
-		/* Puts the current process to sleep, return unlocked */
-		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 
-		/* lock has been released in systrace_msg_ask() */
-		fst = NULL;
-		/* We might have detached by now for some reason */
-		if (!error && (strp = p->p_systrace) != NULL) {
-			/* XXX - do I need to lock here? */
-			if (strp->answer == SYSTR_POLICY_NEVER) {
-				error = strp->error;
-				if (strp->replace != NULL) {
-					free(strp->replace, M_XDATA);
-					strp->replace = NULL;
-				}
-			} else {
-				if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
-#ifndef __NetBSD__
-					CLR(strp->flags, STR_PROC_SYSCALLRES);
-#endif
-					report = 1;
-				}
-				/* Replace the arguments if necessary */
-				if (strp->replace != NULL) {
-					error = systrace_replace(strp, callp->sy_argsize, v);
-				}
-			}
+	/* Fast-path */
+	if (policy != SYSTR_POLICY_ASK) {
+		if (policy != SYSTR_POLICY_PERMIT) {
+			if (policy > 0)
+				error = policy;
+			else
+				error = EPERM;
 		}
-		break;
-	default:
-		if (policy > 0)
-			error = policy;
-		else
-			error = EPERM;
-		break;
+		strp->oldemul = NULL;
+		SYSTRACE_UNLOCK(fst, p);
+		return (error);
 	}
 
-	if (fst) {
-		SYSTRACE_UNLOCK(fst, p);
+	/* Puts the current process to sleep, return unlocked */
+	error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
+
+	/* lock has been released in systrace_msg_ask() */
+	fst = NULL;
+	/* We might have detached by now for some reason */
+	if (!error && (strp = p->p_systrace) != NULL) {
+		/* XXX - do I need to lock here? */
+		if (strp->answer == SYSTR_POLICY_NEVER) {
+			error = strp->error;
+			if (strp->replace != NULL) {
+				free(strp->replace, M_XDATA);
+				strp->replace = NULL;
+			}
+		} else {
+			if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
+#ifndef __NetBSD__
+				CLR(strp->flags, STR_PROC_SYSCALLRES);
+#endif
+				report = 1;
+			}
+			/* Replace the arguments if necessary */
+			if (strp->replace != NULL) {
+				error = systrace_replace(strp, callp->sy_argsize, v);
+			}
+		}
 	}
 
 	systrace_lock();
