@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4102ip.c,v 1.1 2002/02/11 07:55:51 takemura Exp $	*/
+/*	$NetBSD: vr4102ip.c,v 1.2 2002/02/11 08:15:41 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -57,7 +57,7 @@ int	vr4102ipmatch(struct device *, struct cfdata *, void *);
 void	vr4102ipattach(struct device *, struct device *, void *);
 
 struct cfattach vr4102ip_ca = {
-	sizeof(struct vrip_softc), vr4102ipmatch, vr4102ipattach
+	sizeof(struct vrip_softc), vripmatch, vr4102ipattach
 };
 
 static const struct vrip_unit vr4102ip_units[] = {
@@ -99,17 +99,6 @@ static const struct vrip_unit vr4102ip_units[] = {
 			    0,
 			    VR4102_BCUINT_REG_W,VR4102_MBCUINT_REG_W	}
 };
-
-int
-vr4102ipmatch(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct mainbus_attach_args *ma = aux;
-
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
-		return (0);
-
-	return (1);
-}
 
 void
 vr4102ipattach(struct device *parent, struct device *self, void *aux)
