@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.27 1994/04/08 17:58:47 mycroft Exp $
+ *	$Id: if_ep.c,v 1.28 1994/04/11 11:09:00 deraadt Exp $
  */
 /*
  * TODO:
@@ -112,11 +112,35 @@ static void epstop __P((struct ep_softc *));
 static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct ep_softc *));
 
+#define MAXEPCARDS 20	/* if you have 21 cards in your machine... you lose */
+
+static struct epcard {
+	u_short	port;
+	u_short	irq;
+	char	available;
+} epcards[MAXEPCARDS];
+static int nepcards;
+
+static void
+epaddcard(p, i)
+	short p;
+	u_short i;
+{
+	if (nepcards >= sizeof(epcards)/sizeof(epcards[0]))
+		return;
+	epcards[nepcards].port = p;
+	epcards[nepcards].irq = 1 << ((i == 2) ? 9 : i);
+	epcards[nepcards].available = 1;
+	nepcards++;
+}
+	
 /*
- * Eisa probe routine. If any part of this probe should fail to
- * return the desired result, the isa_epprobe() is called.  Astute
- * readers will discover a problem that I don't feel inclined to address
- * at the moment.
+ * 3c579 cards on the EISA bus are probed by their slot number. 3c509
+ * cards on the ISA bus are probed in ethernet address order. The probe
+ * sequence requires careful orchestration, and we'd like like to allow
+ * the irq and base address to be wildcarded. So, we probe all the cards
+ * the first time epprobe() is called. On subsequent calls we look for
+ * matching cards.
  */
 int
 epprobe(parent, self, aux)
@@ -125,84 +149,115 @@ epprobe(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int port;
-	int i;
-	int eisa_slot;
-	u_short k;
+	static int firsttime;
+	int slot, port, i;
+	u_short k, k2;
 
-	eisa_slot=1;
-	while (eisa_slot < 8) {
-		port = 0x1000 * eisa_slot;
-		outw(port + EP_COMMAND, GLOBAL_RESET);
+	if (firsttime==0) {
+		firsttime = 1;
+
+		/* find all EISA cards */
+		for (slot = 1; slot < 8; slot++) {
+			port = 0x1000 * slot;
+			outw(port + EP_COMMAND, GLOBAL_RESET);
+			delay(1000);
+			if (inw(port + EP_W0_MFG_ID) != MFG_ID)
+				continue;
+			k = inw(port + EP_W0_PRODUCT_ID);
+			if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
+				continue;
+			k = inw(port + EP_W0_ADDRESS_CFG);
+			k = (k & 0x1f) * 0x10 + 0x200;
+			k2 = inw(port + EP_W0_RESOURCE_CFG);
+			k2 >>= 12;
+			epaddcard(port, k2);
+		}
+
+		/* find all isa cards */
+		outw(BASE + EP_COMMAND, GLOBAL_RESET);
 		delay(1000);
-		if (inw(port + EP_W0_MFG_ID) == MFG_ID)
-			break;
-		eisa_slot++;
+		elink_reset();	/* global reset to ELINK_ID_PORT */
+		delay(1000);
+
+		for (slot = 0; slot < 10; slot++) {
+			outb(ELINK_ID_PORT, 0x00);
+			elink_idseq(ELINK_509_POLY);
+			delay(1000);
+
+			k = epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID);
+			if (k == 0xff)
+				continue;	/* no more isa cards */
+			if (k != MFG_ID)
+				continue;
+			k = epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID);
+			if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
+				continue;
+
+			k = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);
+			k = (k & 0x1f) * 0x10 + 0x200;
+
+			k2 = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
+			k2 >>= 12;
+			epaddcard(k, k2);
+
+			/* so card will not respond to contention again */
+			outb(ELINK_ID_PORT, TAG_ADAPTER_0 + 1);
+
+			/*
+			 * XXX: this should probably not be done here
+			 * because it enables the drq/irq lines from
+			 * the board. Perhaps it should be done after
+			 * we have checked for irq/drq collisions?
+			 */
+			outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
+		}
+		/* XXX should we sort by ethernet address? */
 	}
-	k = inw(port + EP_W0_PRODUCT_ID);
-	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
-		return isa_epprobe(sc, ia);
-
-	k = inw(port + EP_W0_ADDRESS_CFG);
-	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
-		
-	k = inw(port + EP_W0_RESOURCE_CFG);
-	k >>= 12;
-	if (ia->ia_irq != (1 << ((k == 2) ? 9 : k)))
-		return isa_epprobe(sc, ia);
-
-	ia->ia_iobase = port;	/* Set the base addr for later */
-	ia->ia_iosize = 0x10;
-	ia->ia_msize = 0;
-	return 1;
-}
-
-/*
- * Rudimentary support for multiple cards is here but is not
- * currently handled.  In the future we will have to add code
- * for tagging the cards for later activation.  We wanna do something
- * about the ELINK_ID_PORT.  We're limited due to current config procedure.
- * Magnum config holds promise of a fix but we'll have to wait a bit.
- */
-int
-isa_epprobe(sc, ia)
-	struct ep_softc *sc;
-	struct isa_attach_args *ia;
-{
-	u_short k;
-
-	outw(BASE + EP_COMMAND, GLOBAL_RESET);
-	delay(1000);
-	elink_reset();	/* global reset to ELINK_ID_PORT */
-	delay(1000);
-	outb(ELINK_ID_PORT, 0x00);
-	elink_idseq(ELINK_509_POLY);
-	delay(1000);
 
 	/*
-	 * MFG_ID should have 0x6d50.
-	 * PROD_ID should be 0x9[0-f]50
+	 * a very specific search order:
+	 * 	exact port & irq
+	 * 	exact port, wildcard irq
+	 * 	wildcard port, exact irq
+	 *	wildcard port & irq
+	 * else fail..
 	 */
-	k = epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID);
-	if (k != MFG_ID)
-		return (0);
-	k = epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID);
-	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
-		return (0);
+	if (ia->ia_iobase != (u_short)-1 || ia->ia_irq != (u_short)-1) {
+		for (i = 0; i<nepcards; i++) {
+			if (epcards[i].available == 0)
+				continue;
+			if (ia->ia_iobase == epcards[i].port &&
+			    ia->ia_irq == epcards[i].irq)
+				goto good;
+		}
+	}
+	if (ia->ia_iobase != (u_short)-1 && ia->ia_irq == (u_short)-1) {
+		for (i = 0; i<nepcards; i++) {
+			if (epcards[i].available == 0)
+				continue;
+			if (ia->ia_iobase == epcards[i].port)
+				goto good;
+		}
+	}
+	if (ia->ia_iobase == (u_short)-1 && ia->ia_irq != (u_short)-1) {
+		for (i = 0; i<nepcards; i++) {
+			if (epcards[i].available == 0)
+				continue;
+			if (ia->ia_irq == epcards[i].irq)
+				goto good;
+		}
+	}
+	for (i = 0; i<nepcards; i++)
+		if (epcards[i].available != 0) {
+			goto good;
+	}
+	return 0;
 
-	k = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);	/* get addr cfg */
-	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
-	if (k != ia->ia_iobase)
-		return (0);
-
-	k = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
-	k >>= 12;
-	if (ia->ia_irq != (1 << ((k == 2) ? 9 : k)))
-		return (0);
-
-	outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
-
-	ia->ia_iosize = 0x10;		/* 16 ports of I/O space used. */
+good:
+	epcards[i].available = 0;
+	ia->ia_iobase = epcards[i].port;
+	ia->ia_irq = epcards[i].irq;
+	ia->ia_iosize = 0x10;
 	ia->ia_msize = 0;
 	return 1;
 }
