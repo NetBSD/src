@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 2003/10/21 23:25:48 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.10 2003/10/22 01:53:49 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2003/10/21 23:25:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2003/10/22 01:53:49 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,7 +83,9 @@ struct pic softintr_pic = {
 	NULL,
 };
 
+#if NIOAPIC > 0
 static int intr_scan_bus(struct mp_intr_map *, int, int *);
+#endif
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
