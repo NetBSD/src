@@ -1,5 +1,7 @@
-#	$NetBSD: bsd.subdir.mk,v 1.12 1997/03/21 00:53:02 cgd Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.13 1997/03/24 21:54:22 christos Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
+
+.include <bsd.own.mk>
 
 .if !target(.MAIN)
 .MAIN: all
@@ -49,8 +51,8 @@ beforeinstall:
 .if !target(afterinstall)
 afterinstall:
 .endif
-install: maninstall
-maninstall: afterinstall
+install: ${MANINSTALL}
+${MANINSTALL}: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall _SUBDIRUSE
 .endif

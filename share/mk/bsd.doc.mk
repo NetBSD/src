@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.22 1997/01/17 01:15:55 perry Exp $
+#	$NetBSD: bsd.doc.mk,v 1.23 1997/03/24 21:54:14 christos Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
@@ -12,6 +12,14 @@ ROFF?=		groff -M/usr/share/tmac ${MACROS} ${PAGES}
 SOELIM?=	soelim
 TBL?=		tbl
 
+BINDIR?=	/usr/share/doc
+BINGRP?=	bin
+BINOWN?=	bin
+BINMODE?=	444
+
+.include <bsd.own.mk>
+
+  
 .PATH: ${.CURDIR}
 
 .if !target(all)
@@ -40,21 +48,27 @@ obj:
 clean cleandir:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
-.if defined(NODOC)
-install:
-.else
+.if !defined(NODOC)
 FILES?=	${SRCS}
-install:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
+.for F in ${FILES} ${EXTRA} Makefile
+docinstall:: ${DESTDIR}${BINDIR}/${DIR}/${F}
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${BINDIR}/${DIR}/${F}
 .endif
+.if !defined(BUILD)
+${DESTDIR}${BINDIR}/${DIR}/${F}: .MADE
+.endif
+
+${DESTDIR}${BINDIR}/${DIR}/${F}: ${F}
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} \
+		${.TARGET}
+.endfor
+.else
+docinstall::
+.endif
+
+install: docinstall
 
 spell: ${SRCS}
 	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
 
-BINDIR?=	/usr/share/doc
-BINGRP?=	bin
-BINOWN?=	bin
-BINMODE?=	444
-
-.include <bsd.own.mk>

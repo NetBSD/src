@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.62 1997/03/22 22:34:02 perry Exp $
+#	$NetBSD: bsd.prog.mk,v 1.63 1997/03/24 21:54:20 christos Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -13,6 +13,7 @@ CFLAGS+=	${COPTS}
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
+LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
@@ -20,6 +21,7 @@ LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
@@ -33,6 +35,7 @@ LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
+LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
@@ -116,43 +119,86 @@ afterinstall:
 .endif
 
 .if !target(realinstall)
-realinstall:
+
 .if defined(PROG)
-	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${PROG} ${DESTDIR}${BINDIR}
+PROGNAME?= ${PROG}
+proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
 .endif
+.if !defined(BUILD)
+${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
+.endif
+
+${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
+	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${.ALLSRC} ${.TARGET}
 .if defined(HIDEGAME)
 	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG})
 .endif
 .endif
 
-install: maninstall _SUBDIRUSE
-.if defined(LINKS) && !empty(LINKS)
-	@set ${LINKS}; \
-	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
-		shift; \
-		t=${DESTDIR}$$1; \
-		shift; \
-		echo $$t -\> $$l; \
-		rm -f $$t; \
-		ln $$l $$t; \
-	done; true
+.if defined(FILES)
+FILESDIR?=${BINDIR}
+FILESOWN?=${BINOWN}
+FILESGRP?=${BINGRP}
+FILESMODE?=${NONBINMODE}
+.for F in ${FILES}
+FILESDIR_${F}?=${FILESDIR}
+FILESOWN_${F}?=${FILESOWN}
+FILESGRP_${F}?=${FILESGRP}
+FILESMODE_${F}?=${FILESMODE}
+.if defined(FILESNAME)
+FILESNAME_${F} ?= ${FILESNAME}
+.else
+FILESNAME_${F} ?= ${F:T}
 .endif
-.if defined(SYMLINKS) && !empty(SYMLINKS)
-	@set ${SYMLINKS}; \
-	while test $$# -ge 2; do \
-		l=$$1; \
-		shift; \
-		t=${DESTDIR}$$1; \
-		shift; \
-		echo $$t -\> $$l; \
-		rm -f $$t; \
-		ln -s $$l $$t; \
-	done; true
+FILESDIR_${F} ?= ${FILESDIR}
+proginstall:: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
+.endif
+.if !defined(BUILD)
+${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: .MADE
 .endif
 
-maninstall: afterinstall
+${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
+	${INSTALL} ${COPY} -o ${FILESOWN_${F}} -g ${FILESGRP_${F}} \
+		-m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
+.endfor
+.endif
+
+.if defined(SCRIPTS)
+.for S in ${SCRIPTS}
+.if defined(SCRIPTSNAME)
+SCRIPTSNAME_${S} ?= ${SCRIPTSNAME}
+.else
+SCRIPTSNAME_${S} ?= ${S:T:R}
+.endif
+proginstall:: ${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}
+.endif
+.if !defined(BUILD)
+${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}: .MADE
+.endif
+
+${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}: ${S}
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${.ALLSRC} ${.TARGET}
+.endfor
+.endif
+
+.if target(proginstall)
+realinstall: proginstall
+.else
+realinstall:
+.endif
+.endif
+
+install: ${MANINSTALL} _SUBDIRUSE linksinstall
+
+${MANINSTALL}: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
 .endif
@@ -173,6 +219,8 @@ lint: ${LOBJS}
 .endif
 
 .include <bsd.obj.mk>
+.include <bsd.links.mk>
+.include <bsd.inc.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
