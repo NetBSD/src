@@ -183,11 +183,11 @@ flag prevents any messages other than errors from being printed to the
 standard error descriptor.
 .PP
 The DHCP client normally gets its configuration information from
-.B ETCDIR/dhclient.conf,
+.B /etc/dhclient.conf,
 its lease database from
-.B DBDIR/dhclient.leases
+.B /var/db/dhclient.leases
 and stores its process ID in a file called
-.B RUNDIR/dhclient.pid.
+.B /var/run/dhclient.pid.
 To specify different names and/or locations for these files, use the
 .B -cf,
 .B -lf
@@ -195,9 +195,9 @@ and
 .B -pf
 flags, respectively, followed by the name of the file.   This can be
 particularly useful if, for example,
-.B DBDIR
+.B /var/db
 or
-.B RUNDIR
+.B /var/run
 has not yet been mounted when the DHCP client is started.
 .PP
 The DHCP client normally exits if it isn't able to identify any
