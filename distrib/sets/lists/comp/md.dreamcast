@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.9 2004/02/27 23:02:45 uwe Exp $
+# $NetBSD: md.dreamcast,v 1.10 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-obsolete		obsolete
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -47,4 +47,5 @@
 ./usr/include/dreamcast/types.h			comp-c-include
 ./usr/include/dreamcast/varargs.h		comp-c-include
 ./usr/include/dreamcast/vmparam.h		comp-c-include
+./usr/include/dreamcast/wchar_limits.h		comp-c-include
 ./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete

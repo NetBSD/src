@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.37 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: ad.powerpc,v 1.38 2004/05/08 21:53:23 kleink Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/altivec.h				comp-c-include
 ./usr/include/powerpc				comp-c-include
@@ -72,3 +72,4 @@
 ./usr/include/powerpc/va-ppc.h			comp-obsolete		obsolete
 ./usr/include/powerpc/varargs.h			comp-c-include
 ./usr/include/powerpc/vmparam.h			comp-obsolete		obsolete
+./usr/include/powerpc/wchar_limits.h		comp-c-include
