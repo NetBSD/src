@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/06/20 06:00:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2000/06/20 21:49:02 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -64,9 +64,6 @@ INCS+=	rsaref.h
 .endif
 
 INCSDIR=/usr/include/openssl
-
-LINKS+=	${INCSDIR}/des.h ${DESTDIR}/usr/include/des.h
-LINKS+=	${INCSDIR}/des.h ${DESTDIR}/usr/include/kerberosIV/des.h
 
 # this rebuilds the `srcs.inc' and the .inc files it reads.
 # note that we have no idea, rc5 or rsa here so we include
