@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.12 1999/04/05 22:03:48 cgd Exp $
+# $NetBSD: Makefile.bootprogs,v 1.13 1999/04/11 03:36:21 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -81,6 +81,12 @@ PRIMARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 #SECONDARY_HEAP_START=	right after secondary bss
 SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 
+#	standalone programs are like kernels.  They load at
+#	0xfffffc0000300000 and can use the rest of memory.
+
+STANDPROG_LOAD_ADDRESS=	0xfffffc0000300000
+
+
 FILE_FORMAT_CPPFLAGS=	-DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
 
 UNIFIED_CPPFLAGS=	-DUNIFIED_BOOTBLOCK \
@@ -96,6 +102,8 @@ PRIMARY_CPPFLAGS=	-DPRIMARY_BOOTBLOCK \
 SECONDARY_CPPFLAGS=	-DSECONDARY_BOOTBLOCK \
 			-DHEAP_LIMIT="${SECONDARY_HEAP_LIMIT}" \
 			${FILE_FORMAT_CPPFLAGS}
+
+STANDPROG_CPPFLAGS=	-DSTANDALONE_PROGRAM
 
 .include <bsd.prog.mk>
 
