@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.6 2000/08/29 09:08:43 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.31 2000/08/27 12:11:37 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.7 2000/08/29 11:32:21 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.32 2000/08/29 11:22:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,23 +290,10 @@ noreplaycheck:
 
 	/*
 	 * pre-compute and cache intermediate key
-	 * XXX should improve code sharing
 	 */
-	if (!sav->sched && sav->schedlen == 0) {
-		if (algo->schedule && algo->schedlen) {
-			sav->sched = malloc(algo->schedlen, M_SECA, M_DONTWAIT);
-			sav->schedlen = algo->schedlen;
-			if (sav->sched == NULL ||
-			    esp_schedule(algo, sav) != 0) {
-				if (sav->sched) {
-					free(sav->sched, M_SECA);
-					sav->sched = NULL;
-				}
-				sav->schedlen = 0;
-				ipsecstat.in_inval++;
-				goto bad;
-			}
-		}
+	if (esp_schedule(algo, sav) != 0) {
+		ipsecstat.in_inval++;
+		goto bad;
 	}
 
 	/*
@@ -655,23 +642,10 @@ noreplaycheck:
 
 	/*
 	 * pre-compute and cache intermediate key
-	 * XXX should improve code sharing
 	 */
-	if (!sav->sched && sav->schedlen == 0) {
-		if (algo->schedule && algo->schedlen) {
-			sav->sched = malloc(algo->schedlen, M_SECA, M_DONTWAIT);
-			sav->schedlen = algo->schedlen;
-			if (sav->sched == NULL ||
-			    esp_schedule(algo, sav) != 0) {
-				if (sav->sched) {
-					free(sav->sched, M_SECA);
-					sav->sched = NULL;
-				}
-				sav->schedlen = 0;
-				ipsec6stat.in_inval++;
-				goto bad;
-			}
-		}
+	if (esp_schedule(algo, sav) != 0) {
+		ipsecstat.in_inval++;
+		goto bad;
 	}
 
 	/*
