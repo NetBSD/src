@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.29 2003/08/07 10:04:41 agc Exp $	*/
+/*	$NetBSD: umount.c,v 1.30 2004/03/12 21:14:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.29 2003/08/07 10:04:41 agc Exp $");
+__RCSID("$NetBSD: umount.c,v 1.30 2004/03/12 21:14:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,20 +178,18 @@ umountfs(name, typelist)
 		mntpt = name;
 	} else {
 
-		if (realpath(name, rname) == NULL) {
-			warn("%s", rname);
-			return (1);
-		}
-
 		what = MNTANY;
-		mntpt = name = rname;
+		if (realpath(name, rname) != NULL) {
+			name = rname;
 
-		if (stat(name, &sb) == 0) {
-			if (S_ISBLK(sb.st_mode))
-				what = MNTON;
-			else if (S_ISDIR(sb.st_mode))
-				what = MNTFROM;
+			if (stat(name, &sb) == 0) {
+				if (S_ISBLK(sb.st_mode))
+					what = MNTON;
+				else if (S_ISDIR(sb.st_mode))
+					what = MNTFROM;
+			}
 		}
+		mntpt = name;
 
 		switch (what) {
 		case MNTON:
@@ -208,7 +206,7 @@ umountfs(name, typelist)
 			break;
 		default:
 			if ((name = getmntname(mntpt, MNTFROM, &type)) == NULL) {
-				name = rname;
+				name = mntpt;
 				if ((mntpt = getmntname(name, MNTON, &type)) == NULL) {
 					warnx("%s: not currently mounted", name);
 					return (1);
@@ -222,12 +220,8 @@ umountfs(name, typelist)
 		memset(&hints, 0, sizeof hints);
 		ai = NULL;
 		if (!strncmp(type, MOUNT_NFS, MFSNAMELEN)) {
-			if ((delimp = strchr(name, '@')) != NULL) {
-				hostp = delimp + 1;
-				*delimp = '\0';
-				getaddrinfo(hostp, NULL, &hints, &ai);
-				*delimp = '@';
-			} else if ((delimp = strrchr(name, ':')) != NULL) {
+			/* look for host:mountpoint */
+			if ((delimp = strrchr(name, ':')) != NULL) {
 				*delimp = '\0';
 				hostp = name;
 				getaddrinfo(hostp, NULL, &hints, &ai);
