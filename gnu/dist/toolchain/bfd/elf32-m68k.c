@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -37,7 +37,7 @@ static boolean elf_m68k_check_relocs
   PARAMS ((bfd *, struct bfd_link_info *, asection *,
 	   const Elf_Internal_Rela *));
 static asection *elf_m68k_gc_mark_hook
-  PARAMS ((bfd *, struct bfd_link_info *, Elf_Internal_Rela *,
+  PARAMS ((asection *, struct bfd_link_info *, Elf_Internal_Rela *,
 	   struct elf_link_hash_entry *, Elf_Internal_Sym *));
 static boolean elf_m68k_gc_sweep_hook
   PARAMS ((bfd *, struct bfd_link_info *, asection *,
@@ -57,12 +57,12 @@ static boolean elf_m68k_finish_dynamic_sections
 
 static boolean elf32_m68k_set_private_flags
   PARAMS ((bfd *, flagword));
-static boolean elf32_m68k_copy_private_bfd_data
-  PARAMS ((bfd *, bfd *));
 static boolean elf32_m68k_merge_private_bfd_data
   PARAMS ((bfd *, bfd *));
 static boolean elf32_m68k_print_private_bfd_data
   PARAMS ((bfd *, PTR));
+static enum elf_reloc_type_class elf32_m68k_reloc_type_class
+  PARAMS ((const Elf_Internal_Rela *));
 
 static reloc_howto_type howto_table[] = {
   HOWTO(R_68K_NONE,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_68K_NONE",      false, 0, 0x00000000,false),
@@ -279,6 +279,9 @@ struct elf_m68k_link_hash_entry
 struct elf_m68k_link_hash_table
 {
   struct elf_link_hash_table root;
+
+  /* Small local sym to section mapping cache.  */
+  struct sym_sec_cache sym_sec;
 };
 
 /* Declare this now that the above structures are defined.  */
@@ -338,18 +341,20 @@ elf_m68k_link_hash_table_create (abfd)
      bfd *abfd;
 {
   struct elf_m68k_link_hash_table *ret;
+  bfd_size_type amt = sizeof (struct elf_m68k_link_hash_table);
 
-  ret = ((struct elf_m68k_link_hash_table *)
-	 bfd_alloc (abfd, sizeof (struct elf_m68k_link_hash_table)));
+  ret = (struct elf_m68k_link_hash_table *) bfd_malloc (amt);
   if (ret == (struct elf_m68k_link_hash_table *) NULL)
     return NULL;
 
   if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
 				       elf_m68k_link_hash_newfunc))
     {
-      bfd_release (abfd, ret);
+      free (ret);
       return NULL;
     }
+
+  ret->sym_sec.abfd = NULL;
 
   return &ret->root.root;
 }
@@ -362,26 +367,6 @@ elf32_m68k_set_private_flags (abfd, flags)
 {
   elf_elfheader (abfd)->e_flags = flags;
   elf_flags_init (abfd) = true;
-  return true;
-}
-
-/* Copy m68k-specific data from one module to another */
-static boolean
-elf32_m68k_copy_private_bfd_data (ibfd, obfd)
-     bfd *ibfd;
-     bfd *obfd;
-{
-  flagword in_flags;
-
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return true;
-
-  in_flags = elf_elfheader (ibfd)->e_flags;
-
-  elf_elfheader (obfd)->e_flags = in_flags;
-  elf_flags_init (obfd) = true;
-
   return true;
 }
 
@@ -427,10 +412,13 @@ elf32_m68k_print_private_bfd_data (abfd, ptr)
   /* Ignore init flag - it may not be set, despite the flags field containing valid data.  */
 
   /* xgettext:c-format */
-  fprintf (file, _ ("private flags = %lx:"), elf_elfheader (abfd)->e_flags);
+  fprintf (file, _("private flags = %lx:"), elf_elfheader (abfd)->e_flags);
 
   if (elf_elfheader (abfd)->e_flags & EF_CPU32)
-    fprintf (file, _ (" [cpu32]"));
+    fprintf (file, _(" [cpu32]"));
+
+  if (elf_elfheader (abfd)->e_flags & EF_M68000)
+    fprintf (file, _(" [m68000]"));
 
   if (elf_elfheader (abfd)->e_flags & EF_M68000)
     fprintf (file, _ (" [m68000]"));
@@ -535,12 +523,11 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 
 	  if (h != NULL)
 	    {
-	      if (h->got.refcount == -1)
+	      if (h->got.refcount == 0)
 		{
-		  h->got.refcount = 1;
-
 		  /* Make sure this symbol is output as a dynamic symbol.  */
-		  if (h->dynindx == -1)
+		  if (h->dynindx == -1
+		      && (h->elf_link_hash_flags & ELF_LINK_FORCED_LOCAL) == 0)
 		    {
 		      if (!bfd_elf32_link_record_dynamic_symbol (info, h))
 			return false;
@@ -551,28 +538,25 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		  /* Allocate relocation space.  */
 		  srelgot->_raw_size += sizeof (Elf32_External_Rela);
 		}
-	      else
-		h->got.refcount++;
+	      h->got.refcount++;
 	    }
 	  else
 	    {
 	      /* This is a global offset table entry for a local symbol.  */
 	      if (local_got_refcounts == NULL)
 		{
-		  size_t size;
+		  bfd_size_type size;
 
-		  size = symtab_hdr->sh_info * sizeof (bfd_signed_vma);
+		  size = symtab_hdr->sh_info;
+		  size *= sizeof (bfd_signed_vma);
 		  local_got_refcounts = ((bfd_signed_vma *)
-					 bfd_alloc (abfd, size));
+					 bfd_zalloc (abfd, size));
 		  if (local_got_refcounts == NULL)
 		    return false;
 		  elf_local_got_refcounts (abfd) = local_got_refcounts;
-		  memset (local_got_refcounts, -1, size);
 		}
-	      if (local_got_refcounts[r_symndx] == -1)
+	      if (local_got_refcounts[r_symndx] == 0)
 		{
-		  local_got_refcounts[r_symndx] = 1;
-
 		  sgot->_raw_size += 4;
 		  if (info->shared)
 		    {
@@ -582,8 +566,7 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		      srelgot->_raw_size += sizeof (Elf32_External_Rela);
 		    }
 		}
-	      else
-		local_got_refcounts[r_symndx]++;
+	      local_got_refcounts[r_symndx]++;
 	    }
 	  break;
 
@@ -603,10 +586,7 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 	    continue;
 
 	  h->elf_link_hash_flags |= ELF_LINK_HASH_NEEDS_PLT;
-	  if (h->plt.refcount == -1)
-	    h->plt.refcount = 1;
-	  else
-	    h->plt.refcount++;
+	  h->plt.refcount++;
 	  break;
 
 	case R_68K_PLT8O:
@@ -624,17 +604,15 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 	    }
 
 	  /* Make sure this symbol is output as a dynamic symbol.  */
-	  if (h->dynindx == -1)
+	  if (h->dynindx == -1
+	      && (h->elf_link_hash_flags & ELF_LINK_FORCED_LOCAL) == 0)
 	    {
 	      if (!bfd_elf32_link_record_dynamic_symbol (info, h))
 		return false;
 	    }
 
 	  h->elf_link_hash_flags |= ELF_LINK_HASH_NEEDS_PLT;
-	  if (h->plt.refcount == -1)
-	    h->plt.refcount = 1;
-	  else
-	    h->plt.refcount++;
+	  h->plt.refcount++;
 	  break;
 
 	case R_68K_PC8:
@@ -654,6 +632,7 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		&& (sec->flags & SEC_ALLOC) != 0
 		&& h != NULL
 		&& (!info->symbolic
+		    || h->root.type == bfd_link_hash_defweak
 		    || (h->elf_link_hash_flags
 			& ELF_LINK_HASH_DEF_REGULAR) == 0)))
 	    {
@@ -662,10 +641,7 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		  /* Make sure a plt entry is created for this symbol if
 		     it turns out to be a function defined by a dynamic
 		     object.  */
-		  if (h->plt.refcount == -1)
-		    h->plt.refcount = 1;
-		  else
-		    h->plt.refcount++;
+		  h->plt.refcount++;
 		}
 	      break;
 	    }
@@ -677,10 +653,7 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 	    {
 	      /* Make sure a plt entry is created for this symbol if it
 		 turns out to be a function defined by a dynamic object.  */
-	      if (h->plt.refcount == -1)
-		h->plt.refcount = 1;
-	      else
-		h->plt.refcount++;
+	      h->plt.refcount++;
 	    }
 
 	  /* If we are creating a shared library, we need to copy the
@@ -721,39 +694,58 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 			  || !bfd_set_section_alignment (dynobj, sreloc, 2))
 			return false;
 		    }
+		  if (sec->flags & SEC_READONLY)
+		    info->flags |= DF_TEXTREL;
 		}
 
 	      sreloc->_raw_size += sizeof (Elf32_External_Rela);
 
-	      /* If we are linking with -Bsymbolic, we count the number of
-		 PC relative relocations we have entered for this symbol,
-		 so that we can discard them again if the symbol is later
-		 defined by a regular object.  Note that this function is
-		 only called if we are using an m68kelf linker hash table,
-		 which means that h is really a pointer to an
+	      /* We count the number of PC relative relocations we have
+		 entered for this symbol, so that we can discard them
+		 again if, in the -Bsymbolic case, the symbol is later
+		 defined by a regular object, or, in the normal shared
+		 case, the symbol is forced to be local.  Note that this
+		 function is only called if we are using an m68kelf linker
+		 hash table, which means that h is really a pointer to an
 		 elf_m68k_link_hash_entry.  */
-	      if ((ELF32_R_TYPE (rel->r_info) == R_68K_PC8
- 		   || ELF32_R_TYPE (rel->r_info) == R_68K_PC16
- 		   || ELF32_R_TYPE (rel->r_info) == R_68K_PC32)
-		  && info->symbolic)
+	      if (ELF32_R_TYPE (rel->r_info) == R_68K_PC8
+		  || ELF32_R_TYPE (rel->r_info) == R_68K_PC16
+		  || ELF32_R_TYPE (rel->r_info) == R_68K_PC32)
 		{
-		  struct elf_m68k_link_hash_entry *eh;
 		  struct elf_m68k_pcrel_relocs_copied *p;
+		  struct elf_m68k_pcrel_relocs_copied **head;
 
-		  eh = (struct elf_m68k_link_hash_entry *) h;
+		  if (h != NULL)
+		    {
+		      struct elf_m68k_link_hash_entry *eh
+			= (struct elf_m68k_link_hash_entry *) h;
+		      head = &eh->pcrel_relocs_copied;
+		    }
+		  else
+		    {
+		      asection *s;
+		      s = (bfd_section_from_r_symndx
+			   (abfd, &elf_m68k_hash_table (info)->sym_sec,
+			    sec, r_symndx));
+		      if (s == NULL)
+			return false;
 
-		  for (p = eh->pcrel_relocs_copied; p != NULL; p = p->next)
+		      head = ((struct elf_m68k_pcrel_relocs_copied **)
+			      &elf_section_data (s)->local_dynrel);
+		    }
+
+		  for (p = *head; p != NULL; p = p->next)
 		    if (p->section == sreloc)
 		      break;
 
 		  if (p == NULL)
 		    {
 		      p = ((struct elf_m68k_pcrel_relocs_copied *)
-			   bfd_alloc (dynobj, sizeof *p));
+			   bfd_alloc (dynobj, (bfd_size_type) sizeof *p));
 		      if (p == NULL)
 			return false;
-		      p->next = eh->pcrel_relocs_copied;
-		      eh->pcrel_relocs_copied = p;
+		      p->next = *head;
+		      *head = p;
 		      p->section = sreloc;
 		      p->count = 0;
 		    }
@@ -790,8 +782,8 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
    relocation.  */
 
 static asection *
-elf_m68k_gc_mark_hook (abfd, info, rel, h, sym)
-     bfd *abfd;
+elf_m68k_gc_mark_hook (sec, info, rel, h, sym)
+     asection *sec;
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      Elf_Internal_Rela *rel;
      struct elf_link_hash_entry *h;
@@ -821,15 +813,7 @@ elf_m68k_gc_mark_hook (abfd, info, rel, h, sym)
 	}
     }
   else
-    {
-      if (!(elf_bad_symtab (abfd)
-	    && ELF_ST_BIND (sym->st_info) != STB_LOCAL)
-	  && ! ((sym->st_shndx <= 0 || sym->st_shndx >= SHN_LORESERVE)
-		&& sym->st_shndx != SHN_COMMON))
-	{
-	  return bfd_section_from_elf_index (abfd, sym->st_shndx);
-	}
-    }
+    return bfd_section_from_elf_index (sec->owner, sym->st_shndx);
 
   return NULL;
 }
@@ -996,7 +980,8 @@ elf_m68k_adjust_dynamic_symbol (info, h)
 	}
 
       /* Make sure this symbol is output as a dynamic symbol.  */
-      if (h->dynindx == -1)
+      if (h->dynindx == -1
+	  && (h->elf_link_hash_flags & ELF_LINK_FORCED_LOCAL) == 0)
 	{
 	  if (! bfd_elf32_link_record_dynamic_symbol (info, h))
 	    return false;
@@ -1133,14 +1118,13 @@ elf_m68k_adjust_dynamic_symbol (info, h)
 
 static boolean
 elf_m68k_size_dynamic_sections (output_bfd, info)
-     bfd *output_bfd;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
      struct bfd_link_info *info;
 {
   bfd *dynobj;
   asection *s;
   boolean plt;
   boolean relocs;
-  boolean reltext;
 
   dynobj = elf_hash_table (info)->dynobj;
   BFD_ASSERT (dynobj != NULL);
@@ -1168,21 +1152,22 @@ elf_m68k_size_dynamic_sections (output_bfd, info)
 	s->_raw_size = 0;
     }
 
-  /* If this is a -Bsymbolic shared link, then we need to discard all PC
-     relative relocs against symbols defined in a regular object.  We
-     allocated space for them in the check_relocs routine, but we will not
-     fill them in in the relocate_section routine.  */
-  if (info->shared && info->symbolic)
+  /* If this is a -Bsymbolic shared link, then we need to discard all
+     PC relative relocs against symbols defined in a regular object.
+     For the normal shared case we discard the PC relative relocs
+     against symbols that have become local due to visibility changes.
+     We allocated space for them in the check_relocs routine, but we
+     will not fill them in in the relocate_section routine.  */
+  if (info->shared)
     elf_m68k_link_hash_traverse (elf_m68k_hash_table (info),
 				 elf_m68k_discard_copies,
-				 (PTR) NULL);
+				 (PTR) info);
 
   /* The check_relocs and adjust_dynamic_symbol entry points have
      determined the sizes of the various dynamic sections.  Allocate
      memory for them.  */
   plt = false;
   relocs = false;
-  reltext = false;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
       const char *name;
@@ -1228,28 +1213,7 @@ elf_m68k_size_dynamic_sections (output_bfd, info)
 	    }
 	  else
 	    {
-	      asection *target;
-
-	      /* Remember whether there are any reloc sections other
-                 than .rela.plt.  */
-	      if (strcmp (name, ".rela.plt") != 0)
-		{
-		  const char *outname;
-
-		  relocs = true;
-
-		  /* If this relocation section applies to a read only
-		     section, then we probably need a DT_TEXTREL
-		     entry.  .rela.plt is actually associated with
-		     .got.plt, which is never readonly.  */
-		  outname = bfd_get_section_name (output_bfd,
-						  s->output_section);
-		  target = bfd_get_section_by_name (output_bfd, outname + 5);
-		  if (target != NULL
-		      && (target->flags & SEC_READONLY) != 0
-		      && (target->flags & SEC_ALLOC) != 0)
-		    reltext = true;
-		}
+	      relocs = true;
 
 	      /* We use the reloc_count field as a counter if we need
 		 to copy relocs into the output file.  */
@@ -1286,56 +1250,66 @@ elf_m68k_size_dynamic_sections (output_bfd, info)
 	 must add the entries now so that we get the correct size for
 	 the .dynamic section.  The DT_DEBUG entry is filled in by the
 	 dynamic linker and used by the debugger.  */
+#define add_dynamic_entry(TAG, VAL) \
+  bfd_elf32_add_dynamic_entry (info, (bfd_vma) (TAG), (bfd_vma) (VAL))
+
       if (!info->shared)
 	{
-	  if (!bfd_elf32_add_dynamic_entry (info, DT_DEBUG, 0))
+	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return false;
 	}
 
       if (plt)
 	{
-	  if (!bfd_elf32_add_dynamic_entry (info, DT_PLTGOT, 0)
-	      || !bfd_elf32_add_dynamic_entry (info, DT_PLTRELSZ, 0)
-	      || !bfd_elf32_add_dynamic_entry (info, DT_PLTREL, DT_RELA)
-	      || !bfd_elf32_add_dynamic_entry (info, DT_JMPREL, 0))
+	  if (!add_dynamic_entry (DT_PLTGOT, 0)
+	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
+	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
+	      || !add_dynamic_entry (DT_JMPREL, 0))
 	    return false;
 	}
 
       if (relocs)
 	{
-	  if (!bfd_elf32_add_dynamic_entry (info, DT_RELA, 0)
-	      || !bfd_elf32_add_dynamic_entry (info, DT_RELASZ, 0)
-	      || !bfd_elf32_add_dynamic_entry (info, DT_RELAENT,
-					       sizeof (Elf32_External_Rela)))
+	  if (!add_dynamic_entry (DT_RELA, 0)
+	      || !add_dynamic_entry (DT_RELASZ, 0)
+	      || !add_dynamic_entry (DT_RELAENT, sizeof (Elf32_External_Rela)))
 	    return false;
 	}
 
-      if (reltext)
+      if ((info->flags & DF_TEXTREL) != 0)
 	{
-	  if (!bfd_elf32_add_dynamic_entry (info, DT_TEXTREL, 0))
+	  if (!add_dynamic_entry (DT_TEXTREL, 0))
 	    return false;
-	  info->flags |= DF_TEXTREL;
 	}
     }
+#undef add_dynamic_entry
 
   return true;
 }
 
 /* This function is called via elf_m68k_link_hash_traverse if we are
-   creating a shared object with -Bsymbolic.  It discards the space
-   allocated to copy PC relative relocs against symbols which are defined
-   in regular objects.  We allocated space for them in the check_relocs
-   routine, but we won't fill them in in the relocate_section routine.  */
+   creating a shared object.  In the -Bsymbolic case it discards the
+   space allocated to copy PC relative relocs against symbols which
+   are defined in regular objects.  For the normal shared case, if
+   discards space for pc-relative relocs that have become local due to
+   symbol visibility changes.  We allocated space for them in the
+   check_relocs routine, but we won't fill them in in the
+   relocate_section routine.  */
 
 static boolean
-elf_m68k_discard_copies (h, ignore)
+elf_m68k_discard_copies (h, inf)
      struct elf_m68k_link_hash_entry *h;
-     PTR ignore ATTRIBUTE_UNUSED;
+     PTR inf;
 {
+  struct bfd_link_info *info = (struct bfd_link_info *) inf;
   struct elf_m68k_pcrel_relocs_copied *s;
 
-  /* We only discard relocs for symbols defined in a regular object.  */
-  if ((h->root.elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR) == 0)
+  if (h->root.root.type == bfd_link_hash_warning)
+    h = (struct elf_m68k_link_hash_entry *) h->root.root.u.i.link;
+
+  if ((h->root.elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR) == 0
+      || (!info->symbolic
+	  && (h->root.elf_link_hash_flags & ELF_LINK_FORCED_LOCAL) == 0))
     return true;
 
   for (s = h->pcrel_relocs_copied; s != NULL; s = s->next)
@@ -1367,6 +1341,9 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
   asection *sreloc;
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
+
+  if (info->relocateable)
+    return true;
 
   dynobj = elf_hash_table (info)->dynobj;
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
@@ -1400,26 +1377,6 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
 
-      if (info->relocateable)
-	{
-	  /* This is a relocateable link.  We don't have to change
-	     anything, unless the reloc is against a section symbol,
-	     in which case we have to adjust according to where the
-	     section symbol winds up in the output section.  */
-	  if (r_symndx < symtab_hdr->sh_info)
-	    {
-	      sym = local_syms + r_symndx;
-	      if (ELF_ST_TYPE (sym->st_info) == STT_SECTION)
-		{
-		  sec = local_sections[r_symndx];
-		  rel->r_addend += sec->output_offset + sym->st_value;
-		}
-	    }
-
-	  continue;
-	}
-
-      /* This is a final link.  */
       h = NULL;
       sym = NULL;
       sec = NULL;
@@ -1427,9 +1384,7 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = (sec->output_section->vma
-			+ sec->output_offset
-			+ sym->st_value);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
 	}
       else
 	{
@@ -1493,7 +1448,8 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	    }
 	  else if (h->root.type == bfd_link_hash_undefweak)
 	    relocation = 0;
-	  else if (info->shared && !info->symbolic
+	  else if (info->shared
+		   && (!info->symbolic || info->allow_shlib_undefined)
 		   && !info->no_undefined
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    relocation = 0;
@@ -1674,13 +1630,16 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	case R_68K_PC8:
 	case R_68K_PC16:
 	case R_68K_PC32:
-	  if (h == NULL)
+	  if (h == NULL
+	      || (info->shared
+		  && (h->elf_link_hash_flags & ELF_LINK_FORCED_LOCAL) != 0))
 	    break;
 	  /* Fall through.  */
 	case R_68K_8:
 	case R_68K_16:
 	case R_68K_32:
 	  if (info->shared
+	      && r_symndx != 0
 	      && (input_section->flags & SEC_ALLOC) != 0
 	      && ((r_type != R_68K_PC8
 		   && r_type != R_68K_PC16
@@ -1717,31 +1676,20 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 		}
 
 	      skip = false;
+	      relocate = false;
 
-	      if (elf_section_data (input_section)->stab_info == NULL)
-		outrel.r_offset = rel->r_offset;
-	      else
-		{
-		  bfd_vma off;
-
-		  off = (_bfd_stab_section_offset
-			 (output_bfd, &elf_hash_table (info)->stab_info,
-			  input_section,
-			  &elf_section_data (input_section)->stab_info,
-			  rel->r_offset));
-		  if (off == (bfd_vma) -1)
-		    skip = true;
-		  outrel.r_offset = off;
-		}
-
+	      outrel.r_offset =
+		_bfd_elf_section_offset (output_bfd, info, input_section,
+					 rel->r_offset);
+	      if (outrel.r_offset == (bfd_vma) -1)
+		skip = true;
+	      else if (outrel.r_offset == (bfd_vma) -2)
+		skip = true, relocate = true;
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 
 	      if (skip)
-		{
-		  memset (&outrel, 0, sizeof outrel);
-		  relocate = false;
-		}
+		memset (&outrel, 0, sizeof outrel);
 	      /* h->dynindx may be -1 if the symbol was marked to
                  become local.  */
 	      else if (h != NULL
@@ -1750,7 +1698,6 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 			       & ELF_LINK_HASH_DEF_REGULAR) == 0))
 		{
 		  BFD_ASSERT (h->dynindx != -1);
-		  relocate = false;
 		  outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
 		  outrel.r_addend = relocation + rel->r_addend;
 		}
@@ -1791,7 +1738,6 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 			  BFD_ASSERT (indx > 0);
 			}
 
-		      relocate = false;
 		      outrel.r_info = ELF32_R_INFO (indx, r_type);
 		      outrel.r_addend = relocation + rel->r_addend;
 		    }
@@ -1984,7 +1930,7 @@ elf_m68k_finish_dynamic_symbol (output_bfd, info, h, sym)
 
       rela.r_offset = (sgot->output_section->vma
 		       + sgot->output_offset
-		       + (h->got.offset &~ 1));
+		       + (h->got.offset &~ (bfd_vma) 1));
 
       /* If this is a -Bsymbolic link, and the symbol is defined
 	 locally, we just want to emit a RELATIVE reloc.  Likewise if
@@ -1998,12 +1944,12 @@ elf_m68k_finish_dynamic_symbol (output_bfd, info, h, sym)
 	  rela.r_info = ELF32_R_INFO (0, R_68K_RELATIVE);
 	  rela.r_addend = bfd_get_signed_32 (output_bfd,
 					     (sgot->contents
-					      + (h->got.offset & ~1)));
+					      + (h->got.offset &~ (bfd_vma) 1)));
 	}
       else
 	{
 	  bfd_put_32 (output_bfd, (bfd_vma) 0,
-		      sgot->contents + (h->got.offset & ~1));
+		      sgot->contents + (h->got.offset &~ (bfd_vma) 1));
 	  rela.r_info = ELF32_R_INFO (h->dynindx, R_68K_GLOB_DAT);
 	  rela.r_addend = 0;
 	}
@@ -2203,12 +2149,11 @@ bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
      char **errmsg;
 {
   Elf_Internal_Shdr *symtab_hdr;
-  Elf32_External_Sym *extsyms;
-  Elf32_External_Sym *free_extsyms = NULL;
-  Elf_Internal_Rela *internal_relocs;
-  Elf_Internal_Rela *free_relocs = NULL;
+  Elf_Internal_Sym *isymbuf = NULL;
+  Elf_Internal_Rela *internal_relocs = NULL;
   Elf_Internal_Rela *irel, *irelend;
   bfd_byte *p;
+  bfd_size_type amt;
 
   BFD_ASSERT (! info->relocateable);
 
@@ -2218,30 +2163,6 @@ bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
     return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  /* Read this BFD's symbols if we haven't done so already, or get the cached
-     copy if it exists.  */
-  if (symtab_hdr->contents != NULL)
-    extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
-  else
-    {
-      /* Go get them off disk.  */
-      if (info->keep_memory)
-	extsyms = ((Elf32_External_Sym *)
-		   bfd_alloc (abfd, symtab_hdr->sh_size));
-      else
-	extsyms = ((Elf32_External_Sym *)
-		   bfd_malloc (symtab_hdr->sh_size));
-      if (extsyms == NULL)
-	goto error_return;
-      if (! info->keep_memory)
-	free_extsyms = extsyms;
-      if (bfd_seek (abfd, symtab_hdr->sh_offset, SEEK_SET) != 0
-	  || (bfd_read (extsyms, 1, symtab_hdr->sh_size, abfd)
-	      != symtab_hdr->sh_size))
-	goto error_return;
-      if (info->keep_memory)
-	symtab_hdr->contents = extsyms;
-    }
 
   /* Get a copy of the native relocations.  */
   internal_relocs = (_bfd_elf32_link_read_relocs
@@ -2249,10 +2170,9 @@ bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 		      info->keep_memory));
   if (internal_relocs == NULL)
     goto error_return;
-  if (! info->keep_memory)
-    free_relocs = internal_relocs;
 
-  relsec->contents = (bfd_byte *) bfd_alloc (abfd, datasec->reloc_count * 12);
+  amt = (bfd_size_type) datasec->reloc_count * 12;
+  relsec->contents = (bfd_byte *) bfd_alloc (abfd, amt);
   if (relsec->contents == NULL)
     goto error_return;
 
@@ -2280,14 +2200,23 @@ bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
       /* Get the target section referred to by the reloc.  */
       if (ELF32_R_SYM (irel->r_info) < symtab_hdr->sh_info)
 	{
-	  Elf_Internal_Sym isym;
-
 	  /* A local symbol.  */
-	  bfd_elf32_swap_symbol_in (abfd,
-				    extsyms + ELF32_R_SYM (irel->r_info),
-				    &isym);
+	  Elf_Internal_Sym *isym;
 
-	  targetsec = bfd_section_from_elf_index (abfd, isym.st_shndx);
+	  /* Read this BFD's local symbols if we haven't done so already.  */
+	  if (isymbuf == NULL)
+	    {
+	      isymbuf = (Elf_Internal_Sym *) symtab_hdr->contents;
+	      if (isymbuf == NULL)
+		isymbuf = bfd_elf_get_elf_syms (abfd, symtab_hdr,
+						symtab_hdr->sh_info, 0,
+						NULL, NULL, NULL);
+	      if (isymbuf == NULL)
+		goto error_return;
+	    }
+
+	  isym = isymbuf + ELF32_R_SYM (irel->r_info);
+	  targetsec = bfd_section_from_elf_index (abfd, isym->st_shndx);
 	}
       else
 	{
@@ -2311,18 +2240,37 @@ bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 	strncpy (p + 4, targetsec->output_section->name, 8);
     }
 
-  if (free_extsyms != NULL)
-    free (free_extsyms);
-  if (free_relocs != NULL)
-    free (free_relocs);
+  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+    free (isymbuf);
+  if (internal_relocs != NULL
+      && elf_section_data (datasec)->relocs != internal_relocs)
+    free (internal_relocs);
   return true;
 
 error_return:
-  if (free_extsyms != NULL)
-    free (free_extsyms);
-  if (free_relocs != NULL)
-    free (free_relocs);
+  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+    free (isymbuf);
+  if (internal_relocs != NULL
+      && elf_section_data (datasec)->relocs != internal_relocs)
+    free (internal_relocs);
   return false;
+}
+
+static enum elf_reloc_type_class
+elf32_m68k_reloc_type_class (rela)
+     const Elf_Internal_Rela *rela;
+{
+  switch ((int) ELF32_R_TYPE (rela->r_info))
+    {
+    case R_68K_RELATIVE:
+      return reloc_class_relative;
+    case R_68K_JMP_SLOT:
+      return reloc_class_plt;
+    case R_68K_COPY:
+      return reloc_class_copy;
+    default:
+      return reloc_class_normal;
+    }
 }
 
 #define TARGET_BIG_SYM			bfd_elf32_m68k_vec
@@ -2347,19 +2295,20 @@ error_return:
 					elf_m68k_finish_dynamic_sections
 #define elf_backend_gc_mark_hook	elf_m68k_gc_mark_hook
 #define elf_backend_gc_sweep_hook	elf_m68k_gc_sweep_hook
-#define bfd_elf32_bfd_copy_private_bfd_data \
-                                        elf32_m68k_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data \
                                         elf32_m68k_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags \
                                         elf32_m68k_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data \
                                         elf32_m68k_print_private_bfd_data
+#define elf_backend_reloc_type_class	elf32_m68k_reloc_type_class
 
 #define elf_backend_can_gc_sections 1
+#define elf_backend_can_refcount 1
 #define elf_backend_want_got_plt 1
 #define elf_backend_plt_readonly 1
 #define elf_backend_want_plt_sym 0
 #define elf_backend_got_header_size	12
+#define elf_backend_rela_normal		1
 
 #include "elf32-target.h"
