@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.23 2003/01/01 01:28:29 thorpej Exp $	*/
+/*	$NetBSD: maple.c,v 1.24 2003/02/11 01:21:46 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -697,6 +697,19 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 			u->u_ping_func = f;	/* XXX using largest func */
 		}
 	}
+#ifdef MAPLE_MEMCARD_PING_HACK
+	/*
+	 * Some 3rd party memory card pretend to be Visual Memory,
+	 * but need special handling for ping.
+	 */
+	if (func == (MAPLE_FUNC(MAPLE_FN_MEMCARD) | MAPLE_FUNC(MAPLE_FN_LCD) |
+	    MAPLE_FUNC(MAPLE_FN_CLOCK))) {
+		u->u_ping_func = MAPLE_FN_MEMCARD;
+		u->u_ping_stat = MAPLE_PING_MEMCARD;
+	} else {
+		u->u_ping_stat = MAPLE_PING_NORMAL;
+	}
+#endif
 	strcpy(sc->sc_dev.dv_xname, oldxname);
 
 	sc->sc_port_units[u->port] |= 1 << u->subunit;
@@ -957,15 +970,32 @@ maple_unit_ping(struct maple_softc *sc)
 {
 	struct maple_unit *u;
 	struct maple_func *fn;
+#ifdef MAPLE_MEMCARD_PING_HACK
+	static u_int32_t memcard_ping_arg[2] = {
+		0x02000000,	/* htonl(MAPLE_FUNC(MAPLE_FN_MEMCARD)) */
+		0		/* pt (1 byte) and unused 3 bytes */
+	};
+#endif
 
 	if ((u = TAILQ_FIRST(&sc->sc_pingq)) != NULL) {
 		KASSERT(u->u_queuestat == MAPLE_QUEUE_PING);
 		maple_remove_from_queues(sc, u);
 		if (u->u_dma_stat == MAPLE_DMA_IDLE && u->u_noping == 0) {
-			fn = &u->u_func[u->u_ping_func];
-			fn->f_work = htonl(MAPLE_FUNC(u->u_ping_func));
-			maple_write_command(sc, u, MAPLE_COMMAND_GETCOND,
-			    1, &fn->f_work);
+#ifdef MAPLE_MEMCARD_PING_HACK
+			if (u->u_ping_stat == MAPLE_PING_MINFO) {
+				/* use MINFO for some memory cards */
+				maple_write_command(sc, u,
+				    MAPLE_COMMAND_GETMINFO,
+				    2, memcard_ping_arg);
+			} else
+#endif
+			{
+				fn = &u->u_func[u->u_ping_func];
+				fn->f_work = htonl(MAPLE_FUNC(u->u_ping_func));
+				maple_write_command(sc, u,
+				    MAPLE_COMMAND_GETCOND,
+				    1, &fn->f_work);
+			}
 			u->u_dma_stat = MAPLE_DMA_PING;
 			/* u->u_dma_func = XXX; */
 		} else {
@@ -1292,6 +1322,30 @@ maple_check_responses(struct maple_softc *sc)
 						u->subunit),
 					    response);
 #endif
+#ifdef MAPLE_MEMCARD_PING_HACK
+					if (u->u_ping_stat
+					    == MAPLE_PING_MEMCARD) {
+						/*
+						 * The unit claims itself to be
+						 * a Visual Memory, and has
+						 * never responded to GETCOND.
+						 * Try again using MINFO, in
+						 * case it is a poorly
+						 * implemented 3rd party card.
+						 */
+#ifdef MAPLE_DEBUG
+						printf("%s: switching ping method\n",
+						    maple_unit_name(buf,
+							u->port, u->subunit));
+#endif
+						u->u_ping_stat
+						    = MAPLE_PING_MINFO;
+						TAILQ_INSERT_TAIL(&sc->sc_pingq,
+						    u, u_q);
+						u->u_queuestat
+						    = MAPLE_QUEUE_PING;
+					} else
+#endif	/* MAPLE_MEMCARD_PING_HACK */
 					maple_detach_unit(sc, u);
 				}
 				break;
@@ -1300,6 +1354,14 @@ maple_check_responses(struct maple_softc *sc)
 			case MAPLE_RESPONSE_DATATRF:
 				TAILQ_INSERT_TAIL(&sc->sc_pingq, u, u_q);
 				u->u_queuestat = MAPLE_QUEUE_PING;
+#ifdef MAPLE_MEMCARD_PING_HACK
+				/*
+				 * If the unit responds to GETCOND, it is a
+				 * normal implementation.
+				 */
+				if (u->u_ping_stat == MAPLE_PING_MEMCARD)
+					u->u_ping_stat = MAPLE_PING_NORMAL;
+#endif
 				break;
 			}
 
