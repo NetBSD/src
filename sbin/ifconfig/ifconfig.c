@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.153 2005/03/18 11:11:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.153 2005/03/18 11:11:51 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,8 @@ __RCSID("$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $");
 #include <unistd.h>
 #include <ifaddrs.h>
 #include <util.h>
+
+#include "agr.h"
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
@@ -317,6 +319,8 @@ const struct cmd {
 	{ "-udp4csum-rx",-IFCAP_CSUM_UDPv4_Rx,0,	setifcaps },
 	{ "tso4",	IFCAP_TSOv4,	0,		setifcaps },
 	{ "-tso4",	-IFCAP_TSOv4,	0,		setifcaps },
+	{ "agrport",	NEXTARG,	0,		agraddport } ,
+	{ "-agrport",	NEXTARG,	0,		agrremport } ,
 	{ 0,		0,		0,		setifaddr },
 	{ 0,		0,		0,		setifdstaddr },
 };
@@ -1943,6 +1947,7 @@ status(const struct sockaddr_dl *sdl)
 	ieee80211_status();
 	vlan_status();
 	tunnel_status();
+	agr_status();
 
 	if (sdl != NULL &&
 	    getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,

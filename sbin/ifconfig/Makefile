@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/01/20 16:16:10 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.18 2005/03/18 11:11:51 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -6,6 +6,8 @@
 WARNS=	3
 PROG=	ifconfig
 MAN=	ifconfig.8
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
@@ -18,5 +20,6 @@ DPADD+=${LIBUTIL}
 LDADD+=-lutil
 
 SRCS= ifconfig.c 
+SRCS+= agr.c
 
 .include <bsd.prog.mk>
