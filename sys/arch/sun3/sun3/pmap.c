@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 1995/10/08 23:48:22 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 1995/10/10 21:39:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1855,13 +1855,8 @@ pmap_remove_range_mmu(pmap, sva, eva)
 
 		/* First, remove it from the MMU. */
 		if (kernel_pmap == pmap) {
-			old_ctx = get_context();
-			for (i=0; i < NCONTEXT; i++) { /* map out of all segments */
-				set_context(i);
-				/* Did cache flush above. */
-				set_segmap(sva, SEGINV);
-			}
-			set_context(old_ctx);
+			/* Did cache flush above. */
+			set_segmap_allctx(sva, SEGINV);
 		} else {
 #ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_SEGMAP) {
@@ -2106,12 +2101,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	if (sme == SEGINV) {
 		pmegp = pmeg_allocate(kernel_pmap, sun3_trunc_seg(va));
 		sme = pmegp->pmeg_index;
-		c = get_context();
-		for (i=0; i < NCONTEXT; i++) { /* map into all contexts */
-			set_context(i);
-			set_segmap(va, sme);
-		}
-		set_context(c);
+		set_segmap_allctx(va, sme);
 #ifdef PMAP_DEBUG
 		if (pmap_debug & PMD_SEGMAP) {
 			printf("pmap: set_segmap pmap=%x va=%x sme=%x (ek1)\n",
