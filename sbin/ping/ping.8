@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ping.8	8.2 (Berkeley) 12/11/93
-.\"	$Id: ping.8,v 1.5 1994/09/23 01:38:59 mycroft Exp $
+.\"	$Id: ping.8,v 1.6 1994/11/29 20:41:06 glass Exp $
 .\"
 .Dd December 11, 1993
 .Dt PING 8
@@ -50,6 +50,7 @@ packets to network hosts
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
 .Op Fl t Ar ttl
+.Ar host
 .Sh DESCRIPTION
 .Nm Ping
 uses the
@@ -333,6 +334,7 @@ broadcast address should only be done under very controlled conditions.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
+.Xr spray 8 ,
 .Xr routed 8
 .Sh HISTORY
 The
