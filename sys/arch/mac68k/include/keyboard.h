@@ -30,10 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: keyboard.h,v 1.1 1994/07/30 04:22:00 lkestel Exp $
+ * $Id: keyboard.h,v 1.2 1994/07/31 06:33:41 lkestel Exp $
  */
-
-/* LAK: This table is unfinished. */
 
 #define ADBK_LEFT	0x3B
 #define ADBK_RIGHT	0x3C
@@ -48,8 +46,11 @@
 #define ADBK_SHIFT	0x38
 #define ADBK_CAPSLOCK	0x39
 #define ADBK_OPTION	0x3A
-#define ADBK_Q		0x0C
+#define ADBK_F		0x03
+#define ADBK_O		0x1F
 #define ADBK_P		0x23
+#define ADBK_Q		0x0C
+#define ADBK_V		0x09
 #define ADBK_1		0x12
 #define ADBK_2		0x13
 #define ADBK_3		0x14
@@ -61,9 +62,12 @@
 #define ADBK_9		0x19
 #define ADBK_0		0x1D
 
-#define ADBK_KEYVAL(key) ((key) & 0x7f)
-#define ADBK_PRESS(key) (!((key) & 0x80))
+#define ADBK_KEYVAL(key)	((key) & 0x7f)
+#define ADBK_PRESS(key)		(((key) & 0x80) == 0)
 
+#ifndef KEYBOARD_ARRAY
+extern unsigned char keyboard[128][3];
+#else
 unsigned char keyboard[128][3] = {
 		/* Scan code      Normal     Shifted     Controlled */
 	{	/*   0x00, */       'a',       'A',         0x01 },
@@ -195,3 +199,4 @@ unsigned char keyboard[128][3] = {
 	{	/*   0x7E, */      0x00,      0x00,         0x00 },
 	{	/*   0x7F, */      0x00,      0x00,         0x00 }
 };
+#endif /* KEYBOARD_ARRAY */
