@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.67 2003/08/07 16:32:00 agc Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.68 2003/09/03 21:30:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.67 2003/08/07 16:32:00 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.68 2003/09/03 21:30:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ uipc_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_CONNECT2:
-		error = unp_connect2(so, (struct socket *)nam);
+		error = unp_connect2(so, (struct socket *)nam, PRU_CONNECT2);
 		break;
 
 	case PRU_DISCONNECT:
@@ -256,6 +256,14 @@ uipc_usrreq(so, req, m, nam, control, p)
 
 	case PRU_ACCEPT:
 		unp_setpeeraddr(unp, nam);
+		/*
+		 * Mark the initiating STREAM socket as connected *ONLY*
+		 * after it's been accepted.  This prevents a client from
+		 * overrunning a server and receiving ECONNREFUSED.
+		 */
+		if (unp->unp_conn != NULL &&
+		    (unp->unp_conn->unp_socket->so_state & SS_ISCONNECTING))
+			soisconnected(unp->unp_conn->unp_socket);
 		break;
 
 	case PRU_SHUTDOWN:
@@ -707,7 +715,7 @@ unp_connect(so, nam, p)
 		unp3->unp_flags = unp2->unp_flags;
 		so2 = so3;
 	}
-	error = unp_connect2(so, so2);
+	error = unp_connect2(so, so, PRU_CONNECT);
  bad:
 	vput(vp);
  bad2:
@@ -716,9 +724,10 @@ unp_connect(so, nam, p)
 }
 
 int
-unp_connect2(so, so2)
+unp_connect2(so, so2, req)
 	struct socket *so;
 	struct socket *so2;
+	int req;
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct unpcb *unp2;
@@ -737,7 +746,10 @@ unp_connect2(so, so2)
 
 	case SOCK_STREAM:
 		unp2->unp_conn = unp;
-		soisconnected(so);
+		if (req == PRU_CONNECT)
+			soisconnecting(so);
+		else
+			soisconnected(so);
 		soisconnected(so2);
 		break;
 
