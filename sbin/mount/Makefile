@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/08/23 03:19:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2002/09/01 08:10:53 taca Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ MOUNT_PROGS=	mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_ffs \
 		mount_filecore mount_kernfs mount_lfs mount_msdos mount_nfs \
 		mount_ntfs mount_null mount_overlay mount_procfs mount_umap \
 		mount_union
-	
+
 # include individual source files and manpages to build process
 .for p in ${MOUNT_PROGS}
 .PATH: ${NETBSDSRCDIR}/sbin/${p}
