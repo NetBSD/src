@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.57 2004/11/12 04:15:29 atatat Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.58 2004/11/30 04:25:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.57 2004/11/12 04:15:29 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.58 2004/11/30 04:25:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ portal_open(v)
 	 * by testing whether the dupfd has been set.
 	 */
 	if (curlwp->l_dupfd >= 0)	/* XXX */
-		return (ENODEV);
+		return EDUPFD;
 
 	pt = VTOPORTAL(vp);
 	fmp = VFSTOPORTAL(vp->v_mount);
@@ -510,11 +510,11 @@ portal_open(v)
 
 	/*
 	 * Save the dup fd in the proc structure then return the
-	 * special error code (ENXIO) which causes magic things to
+	 * special error code (EMOVEFD) which causes magic things to
 	 * happen in vn_open.  The whole concept is, well, hmmm.
 	 */
-	curlwp->l_dupfd = fd;	/* XXX */
-	error = ENXIO;
+	curlwp->l_dupfd = fd;
+	error = EMOVEFD;
 
 bad:;
 	/*
