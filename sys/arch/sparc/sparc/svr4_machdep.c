@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.17 1996/03/31 23:45:39 pk Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.17.4.1 1996/06/11 01:46:42 jtc Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -349,6 +349,10 @@ svr4_getsiginfo(si, sig, code, addr)
 	si->si_trap = code;
 
 	switch (code) {
+	case T_RESET:
+		si->si_code = 0;
+		break;
+
 	case T_TEXTFAULT:
 		si->si_code = SVR4_BUS_ADRALN;
 		break;
