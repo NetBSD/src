@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.28 2000/07/01 18:03:41 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.29 2000/07/02 21:49:07 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -709,3 +709,12 @@ sys/conf/osrelease.sh				patch
 sys/sys/param.h					patch
 
   Bump version to NetBSD-1.4.3_ALPHA.
+
+sys/arch/mac68k/obio/grf_obio.c			1.43
+
+  Add support for Quadra 605 on-board video.
+
+sys/netinet/if_arp.c				1.63 partial, via patch
+
+  Protect arp table handling with splnet() to avoid interrupt races
+  when ip_flow is in use.  Fixes PR#10351.
