@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.39 2002/01/03 18:54:32 augustss Exp $
+#	$NetBSD: files.usb,v 1.40 2002/01/07 17:44:45 drochner Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -127,7 +127,7 @@ attach	uyap at uhub
 file	dev/usb/uyap.c			uyap
 
 # D-Link DSB-R100 FM radio
-device	udsbr: radio
+device	udsbr: radiodev
 attach	udsbr at uhub
 file	dev/usb/udsbr.c			udsbr
 
