@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.7 2003/09/11 14:38:18 christos Exp $ */
+/*      $NetBSD: clockctl.h,v 1.8 2003/09/30 20:38:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,16 +32,18 @@
  *
  */
 
+#ifndef _SYS_CLOCKCTL_H_
+#define _SYS_CLOCKCTL_H_
+
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+#include <sys/ioctl.h>
 #include <sys/mount.h>	/* For fhandle_t */
 #include <sys/sa.h>	/* for sa_upcall_t */
 #include <sys/syscallargs.h>
-
-#ifndef SYS_CLOCKCTL_H
-#define SYS_CLOCKCTL_H
 
 #if defined(NTP) || !defined(_KERNEL)
 struct clockctl_ntp_adjtime_args {
@@ -61,5 +63,5 @@ int     clockctlopen __P((dev_t, int, int, struct proc *));
 int     clockctlclose __P((dev_t, int, int, struct proc *));
 int     clockctlioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 #endif
-#endif
 
+#endif /* _SYS_CLOCKCTL_H_ */
