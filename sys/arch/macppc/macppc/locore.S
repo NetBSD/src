@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 1999/04/30 04:35:35 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 1999/10/13 03:51:32 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -182,6 +182,12 @@ ENTRY(openfirmware)
 	lis	4,openfirmware_entry@ha	/* get firmware entry point */
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
+
+	li	0,0			/* clear battable translations */
+	mtdbatu	2,0
+	mtdbatu	3,0
+	mtibatu	2,0
+	mtibatu	3,0
 
 	lis	4,ofmsr@ha		/* Open Firmware msr */
 	lwz	4,ofmsr@l(4)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1999/10/13 03:27:48 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1999/10/13 03:51:33 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -180,6 +180,12 @@ initppc(startkernel, endkernel, args)
 	battable[9].batu = BATU(0x90000000);
 
 	/*
+	 * Map obio devices.
+	 */
+	battable[0xf].batl = BATL(0xf0000000, BAT_I);
+	battable[0xf].batu = BATU(0xf0000000);
+
+	/*
 	 * Now setup fixed bat registers
 	 *
 	 * Note that we still run in real mode, and the BAT
@@ -189,11 +195,6 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
 		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-
-	/* BAT1 statically maps obio devices */
-	/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
 
 	chosen = OF_finddevice("/chosen");
 	save_ofw_mapping();
@@ -371,7 +372,7 @@ restore_ofw_mapping()
 		vaddr_t va = ofw_mapping[i].va;
 		int size = ofw_mapping[i].len;
 
-		if (va < 0xf8000000)			/* XXX */
+		if (va < 0xf0000000)			/* XXX */
 			continue;
 
 		while (size > 0) {
