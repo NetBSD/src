@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.4 1999/07/03 12:30:17 simonb Exp $	*/
+/*	$NetBSD: compress.c,v 1.5 1999/08/20 02:21:49 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Compression machinery (not incl block sorting)        ---*/
@@ -68,7 +68,7 @@
 /*---------------------------------------------------*/
 
 /*---------------------------------------------------*/
-void bsInitWrite ( EState* s )
+void __BZbsInitWrite ( EState* s )
 {
    s->bsLive = 0;
    s->bsBuff = 0;
@@ -385,8 +385,8 @@ void sendMTFValues ( EState* s )
         Recompute the tables based on the accumulated frequencies.
       --*/
       for (t = 0; t < nGroups; t++)
-         hbMakeCodeLengths ( &(s->len[t][0]), &(s->rfreq[t][0]), 
-                             alphaSize, 20 );
+         __BZhbMakeCodeLengths ( &(s->len[t][0]), &(s->rfreq[t][0]), 
+                                 alphaSize, 20 );
    }
 
 
@@ -425,8 +425,8 @@ void sendMTFValues ( EState* s )
       }
       AssertH ( !(maxLen > 20), 3004 );
       AssertH ( !(minLen < 1),  3005 );
-      hbAssignCodes ( &(s->code[t][0]), &(s->len[t][0]), 
-                      minLen, maxLen, alphaSize );
+      __BZhbAssignCodes ( &(s->code[t][0]), &(s->len[t][0]), 
+                          minLen, maxLen, alphaSize );
    }
 
    /*--- Transmit the mapping table. ---*/
@@ -505,7 +505,7 @@ void sendMTFValues ( EState* s )
 
 
 /*---------------------------------------------------*/
-void compressBlock ( EState* s, Bool is_last_block )
+void __BZcompressBlock ( EState* s, Bool is_last_block )
 {
    if (s->nblock > 0) {
 
@@ -519,12 +519,12 @@ void compressBlock ( EState* s, Bool is_last_block )
                    "combined CRC = 0x%8x, size = %d\n",
                    s->blockNo, s->blockCRC, s->combinedCRC, s->nblock );
 
-      blockSort ( s );
+      __BZblockSort ( s );
    }
 
    /*-- If this is the first block, create the stream header. --*/
    if (s->blockNo == 1) {
-      bsInitWrite ( s );
+      __BZbsInitWrite ( s );
       bsPutUChar ( s, 'B' );
       bsPutUChar ( s, 'Z' );
       bsPutUChar ( s, 'h' );
