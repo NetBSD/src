@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.4 1998/09/13 01:41:16 thorpej Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.5 2000/03/30 11:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ compat_13_sys_sigaction(p, v, retval)
 
 int
 compat_13_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -222,7 +222,7 @@ compat_13_sys_sigpending(p, v, retval)
 
 int
 compat_13_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

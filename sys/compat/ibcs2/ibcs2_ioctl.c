@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.17 1999/01/14 15:00:38 jtk Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.18 2000/03/30 11:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -121,7 +121,7 @@ stios2btios(st, bt)
 	struct ibcs2_termios *st;
 	struct termios *bt;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = st->c_iflag;	r = 0;
 	if (l & IBCS2_IGNBRK)	r |= IGNBRK;
@@ -214,7 +214,7 @@ btios2stios(bt, st)
 	struct termios *bt;
 	struct ibcs2_termios *st;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = bt->c_iflag;	r = 0;
 	if (l & IGNBRK)		r |= IBCS2_IGNBRK;
