@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: crontab.c,v 1.4 1993/08/02 17:53:24 mycroft Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.5 1993/11/10 12:35:06 cgd Exp $";
 #endif /* not lint */
 
 #define	MAIN_PROGRAM
@@ -314,7 +314,6 @@ fatal:
 		goto fatal;
 	}
 	if (pid == 0) {
-		extern char **environ;
 		char *argv[3];
 
 		/* CHILD */
@@ -323,7 +322,7 @@ fatal:
 		argv[1] = tn;
 		argv[2] = NULL;
 		fprintf(stderr, "[%s %s]\n", editor, tn);
-		execve(editor, argv, environ);
+		execvp(editor, argv);
 		perror(editor);
 		exit(ERROR_EXIT);
 	}
