@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.19 1999/03/12 18:06:12 christos Exp $	*/
+/*	$NetBSD: portmap.c,v 1.20 1999/04/12 17:29:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.19 1999/03/12 18:06:12 christos Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.20 1999/04/12 17:29:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ main(argc, argv)
 		exit(1);
 	}
 	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
-		syslog(LOG_ERR, "cannot bind udp: %m");
+		syslog(LOG_ERR, "cannot bind tcp: %m");
 		exit(1);
 	}
 	if ((xprt = svctcp_create(sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE))
