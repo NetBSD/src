@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.1 1997/03/08 23:46:12 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.2 1997/03/09 00:14:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,12 +30,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: interact.c,v 1.1 1997/03/08 23:46:12 christos Exp $";
+static char rcsid[] = "$NetBSD: interact.c,v 1.2 1997/03/09 00:14:18 christos Exp $";
 #endif /* lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <util.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #define DKTYPENAMES
@@ -63,20 +64,12 @@ static struct cmds {
 	void (*func) __P((struct disklabel *, char *, int));
 	const char *help;
 } cmds[] = {
-	{ "a",	cmd_part,	"define partition a" },
-	{ "b",	cmd_part,	"define partition b" },
-	{ "c",	cmd_part,	"define partition c" },
-	{ "d",	cmd_part,	"define partition d" },
-	{ "e",	cmd_part,	"define partition e" },
-	{ "f",	cmd_part,	"define partition f" },
-	{ "g",	cmd_part,	"define partition g" },
-	{ "h",	cmd_part,	"define partition h" },
-	{ "l",	cmd_label,	"write the current partition table" },
-	{ "n",	cmd_name,	"name the label" },
-	{ "p",	cmd_print,	"print current partition table" },
-	{ "q",	NULL,		"quit" },
-	{ "r",	cmd_round,	"rounding (c)ylinders (s)ectors" },
 	{ "?",	cmd_help,	"print this menu" },
+	{ "N",	cmd_name,	"name the label" },
+	{ "P",	cmd_print,	"print current partition table" },
+	{ "Q",	NULL,		"quit" },
+	{ "R",	cmd_round,	"rounding (c)ylinders (s)ectors" },
+	{ "W",	cmd_label,	"write the current partition table" },
 	{ NULL, NULL,		NULL }
 };
 	
@@ -89,8 +82,11 @@ cmd_help(lp, s, fd)
 	int fd;
 {
 	struct cmds *cmd;
+
 	for (cmd = cmds; cmd->name != NULL; cmd++)
 		printf("%s\t%s\n", cmd->name, cmd->help);
+	printf("[a-%c]\tdefine named partition\n",
+	    'a' + getmaxpartitions() - 1);
 }
 
 
@@ -243,6 +239,13 @@ runcmd(line, lp, fd)
 			(*cmd->func)(lp, line, fd);
 			return;
 		}
+
+	if (line[1] == '\0' &&
+	    line[0] >= 'a' && line[0] < 'a' + getmaxpartitions()) {
+		cmd_part(lp, line, fd);
+		return;
+	}
+		
 	printf("Unknown command %s\n", line);
 }
 
