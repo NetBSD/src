@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.94 2003/03/15 18:16:21 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.95 2003/03/15 22:18:33 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1472,8 +1472,8 @@ libexec/talkd/talkd.c				1.13-1.14 via patch
 
 lib/libkvm/kvm.c				1.72-1.75,1.77
 
-  Set the close-on-exec bit on all file descriptors we open. Inspired by a
-  FreeBSD security advisory.
+  Set the close-on-exec bit on all file descriptors we open. Inspired
+  by a FreeBSD security advisory.
 
 distrib/sets/lists/base/shl.elf			1.58 via patch
 distrib/sets/lists/base/shl.mi			1.173 via patch
@@ -1893,3 +1893,104 @@ usr.bin/file/softmagic.c			1.30-1.31 via patch
   memory allocation issue (compute the correct size to allocate).
   Fixes SA#2003-003.
   [pooka, ticket #31]
+
+usr.sbin/pkg_install/Makefile			1.5 via patch
+usr.sbin/pkg_install/Makefile.inc		1.17-1.23 via patch
+usr.sbin/pkg_install/add/extract.c		1.24-1.29
+usr.sbin/pkg_install/add/futil.c		1.9
+usr.sbin/pkg_install/add/main.c			1.25-1.27
+usr.sbin/pkg_install/add/perform.c		1.67-1.77
+usr.sbin/pkg_install/add/pkg_add.1		1.34-1.38
+usr.sbin/pkg_install/admin/main.c		1.27-1.32
+usr.sbin/pkg_install/admin/pkg_admin.1		1.17-1.20
+usr.sbin/pkg_install/create/create.h		1.17
+usr.sbin/pkg_install/create/main.c		1.22-1.23
+usr.sbin/pkg_install/create/perform.c		1.33-1.35
+usr.sbin/pkg_install/create/pkg_create.1	1.32-1.35
+usr.sbin/pkg_install/create/pl.c		1.22-1.25
+usr.sbin/pkg_install/delete/main.c		1.20-1.24
+usr.sbin/pkg_install/delete/perform.c		1.37-1.40
+usr.sbin/pkg_install/delete/pkg_delete.1	1.25-1.27
+usr.sbin/pkg_install/info/main.c		1.30-1.33
+usr.sbin/pkg_install/info/perform.c		1.40-1.43
+usr.sbin/pkg_install/info/pkg_info.1		1.29-1.32
+usr.sbin/pkg_install/info/show.c		1.24-1.25
+usr.sbin/pkg_install/lib/Makefile		1.17-1.19
+usr.sbin/pkg_install/lib/exec.c			1.9
+usr.sbin/pkg_install/lib/file.c			1.53-1.58
+usr.sbin/pkg_install/lib/ftpio.c		1.38-1.49
+usr.sbin/pkg_install/lib/lib.h			1.42-1.48
+usr.sbin/pkg_install/lib/lpkg.c			1.4
+usr.sbin/pkg_install/lib/pen.c			1.20-1.23
+usr.sbin/pkg_install/lib/pkgdb.c		1.10-1.13
+usr.sbin/pkg_install/lib/plist.c		1.34-1.37
+usr.sbin/pkg_install/lib/str.c			1.38-1.42
+usr.sbin/pkg_install/lib/version.h		1.14-1.21
+usr.sbin/pkg_install/lib/path.c			1.1-1.5 (new)
+usr.sbin/pkg_install/lib/path.h			1.1-1.3 (new)
+
+  Upgrade pkg_install tools to 20030202 version.
+  [jmc, ticket #6]
+
+sys/lib/libsa/loadfile.c			patch
+
+  Initialize some local variables so that this compiles cleanly with
+  later toolchains.
+  [gmcgarry, ticket #7]
+
+sys/dev/ic/midway.c				1.44 via patch
+
+  Convert from %b to bitmask_snprintf().  Allows this to compile
+  cleanly with later toolchains.
+  [gmcgarry, ticket #8]
+
+usr.bin/menuc/mdb.c				1.20 via patch
+usr.bin/menuc/menu_sys.def			1.25 via patch
+
+  Improve some argument lists, to allow this to compile cleanly
+  with later toolchains.
+  [gmcgarry, ticket #9]
+
+lib/libc/gen/realpath.3				1.9
+
+  Typo corrections: resolved_name -> resolvedname; resolved_path
+  -> resolvedname.
+  [yamt, ticket #10]
+
+lib/libc/sys/intro.2				1.28
+
+  Reflect current value of MAXSYMLINKS.
+  [yamt, ticket #11]
+
+lib/libedit/refresh.c				1.19 via patch
+
+  Since we have opost and onlcr set, we don't need to output \r;
+  \n is sufficient.  Fixes PR#17954.
+  [msaitoh, ticket #14]
+
+usr.bin/file/magdir/hitachi-sh			1.3
+
+  Invert the meaning of the F_LSYMS field.
+  [msaitoh, ticket #16]
+
+gnu/dist/gcc/combine.c				1.6
+
+  Fix typo: GTU/LTU/GEU/GEU -> GTU/LTU/GEU/LEU.  Fixes optimization
+  in some cases.
+  [msaitoh, ticket #17]
+
+sbin/sysctl/sysctl.8				1.79 via patch
+
+  Document vfs.nfs.iothreads.
+  [msaitoh, ticket #18]
+
+usr.bin/mkdep/mkdep.c				1.12
+
+  Catch SIGINT, SIGHUP, SIGQUIT and SIGTREM and clear a temporary
+  file.
+  [msaitoh, ticket #19]
+
+share/tmac/doc					1.28
+
+  Make .Nm without arguments, but with punctuation, work.
+  [wiz, ticket #26]
