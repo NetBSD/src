@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.2 2002/04/03 03:51:00 simonb Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.3 2002/11/08 07:35:20 cgd Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -113,8 +113,8 @@ mipsNN_icache_sync_range_16(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line16(va);
 	eva = round_line16(va + size);
+	va = trunc_line16(va);
 
 	mips_dcache_wb_range(va, (eva - va));
 
@@ -136,8 +136,8 @@ mipsNN_icache_sync_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line32(va);
 	eva = round_line32(va + size);
+	va = trunc_line32(va);
 
 	mips_dcache_wb_range(va, (eva - va));
 
@@ -167,9 +167,9 @@ mipsNN_icache_sync_range_index_16_2way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
 
+	eva = round_line16(va + size);
 	va = trunc_line16(va);
 	w2va = va + mips_picache_way_size;
-	eva = round_line16(va + size);
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
@@ -203,11 +203,11 @@ mipsNN_icache_sync_range_index_16_4way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
 
+	eva = round_line16(va + size);
 	va = trunc_line16(va);
 	w2va = va   + mips_picache_way_size;
 	w3va = w2va + mips_picache_way_size;
 	w4va = w3va + mips_picache_way_size;
-	eva = round_line16(va + size);
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
@@ -247,9 +247,9 @@ mipsNN_icache_sync_range_index_32_2way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
 
+	eva = round_line32(va + size);
 	va = trunc_line32(va);
 	w2va = va + mips_picache_way_size;
-	eva = round_line32(va + size);
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
@@ -283,11 +283,11 @@ mipsNN_icache_sync_range_index_32_4way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
 
+	eva = round_line32(va + size);
 	va = trunc_line32(va);
 	w2va = va   + mips_picache_way_size;
 	w3va = w2va + mips_picache_way_size;
 	w4va = w3va + mips_picache_way_size;
-	eva = round_line32(va + size);
 
 	mips_dcache_wbinv_range_index(va, (eva - va));
 
@@ -363,8 +363,8 @@ mipsNN_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line16(va);
 	eva = round_line16(va + size);
+	va = trunc_line16(va);
 
 	while ((eva - va) >= (32 * 16)) {
 		cache_r4k_op_32lines_16(va,
@@ -389,8 +389,8 @@ mipsNN_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	mipsNN_pdcache_wbinv_range_32_sb1(va, size);
 	return;
 #endif
-	va = trunc_line32(va);
 	eva = round_line32(va + size);
+	va = trunc_line32(va);
 
 	while ((eva - va) >= (32 * 32)) {
 		cache_r4k_op_32lines_32(va,
@@ -419,9 +419,9 @@ mipsNN_pdcache_wbinv_range_index_16_2way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
+	eva = round_line16(va + size);
 	va = trunc_line16(va);
 	w2va = va + mips_pdcache_way_size;
-	eva = round_line16(va + size);
 
 	while ((eva - va) >= (16 * 16)) {
 		cache_r4k_op_16lines_16_2way(va, w2va,
@@ -453,11 +453,11 @@ mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
+	eva = round_line16(va + size);
 	va = trunc_line16(va);
 	w2va = va   + mips_pdcache_way_size;
 	w3va = w2va + mips_pdcache_way_size;
 	w4va = w3va + mips_pdcache_way_size;
-	eva = round_line16(va + size);
 
 	while ((eva - va) >= (8 * 16)) {
 		cache_r4k_op_8lines_16_4way(va, w2va, w3va, w4va,
@@ -495,9 +495,9 @@ mipsNN_pdcache_wbinv_range_index_32_2way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
+	eva = round_line32(va + size);
 	va = trunc_line32(va);
 	w2va = va + mips_pdcache_way_size;
-	eva = round_line32(va + size);
 
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
@@ -533,11 +533,11 @@ mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
+	eva = round_line32(va + size);
 	va = trunc_line32(va);
 	w2va = va   + mips_pdcache_way_size;
 	w3va = w2va + mips_pdcache_way_size;
 	w4va = w3va + mips_pdcache_way_size;
-	eva = round_line32(va + size);
 
 	while ((eva - va) >= (8 * 32)) {
 		cache_r4k_op_8lines_32_4way(va, w2va, w3va, w4va,
@@ -567,8 +567,8 @@ mipsNN_pdcache_inv_range_16(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line16(va);
 	eva = round_line16(va + size);
+	va = trunc_line16(va);
 
 	while ((eva - va) >= (32 * 16)) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
@@ -588,8 +588,8 @@ mipsNN_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line32(va);
 	eva = round_line32(va + size);
+	va = trunc_line32(va);
 
 	while ((eva - va) >= (32 * 32)) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
@@ -609,8 +609,8 @@ mipsNN_pdcache_wb_range_16(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line16(va);
 	eva = round_line16(va + size);
+	va = trunc_line16(va);
 
 	while ((eva - va) >= (32 * 16)) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
@@ -630,8 +630,8 @@ mipsNN_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
 
-	va = trunc_line32(va);
 	eva = round_line32(va + size);
+	va = trunc_line32(va);
 
 	while ((eva - va) >= (32 * 32)) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
@@ -722,8 +722,8 @@ mipsNN_pdcache_wbinv_range_32_sb1(vaddr_t va, vsize_t size)
 	vaddr_t eva;
 	int s;
 
-	va = trunc_line32(va);
 	eva = round_line32(va + size);
+	va = trunc_line32(va);
 
 	s = splhigh();
 	while ((eva - va) >= (32 * 32)) {
@@ -758,11 +758,11 @@ mipsNN_pdcache_wbinv_range_index_32_4way_sb1(vaddr_t va, vsize_t size)
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
+	eva = round_line32(va + size);
 	va = trunc_line32(va);
 	w2va = va + mips_pdcache_way_size;
 	w3va = w2va + mips_pdcache_way_size;
 	w4va = w3va + mips_pdcache_way_size;
-	eva = round_line32(va + size);
 
 	s = splhigh();
 	while ((eva - va) >= (8 * 32)) {
