@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp $
+$NetBSD: pcidevs,v 1.176 1999/12/17 01:02:03 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -36,10 +36,9 @@ $NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp $
  *
  *	http://members.hyperlink.net.au/~chart/pci.htm
  *
- * which replaces the database previously found at
+ * which replaces the database found at
  *
- *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
- *   or http://www.yourvote.com/pci/
+ *	http://www.yourvote.com/pci/
  *
  * (but it doesn't always seem to match vendor documentation)
  */
@@ -927,6 +926,13 @@ product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
 product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product EFFICIENTNETS ENI25P	0x0003	SpeedStream ENI-25p
 product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
+
+/* Galileo Technology */
+product GALILEO		0x0146	GT-64010A System Controller
+product GALILEO		0x4111	GT-64115 System Controller
+product GALILEO		0x4146	GT-64011/GT-64111 System Controller
+product GALILEO		0x4620	GT-64120 System Controller
+product GALILEO		0x6320	GT-64130 System Controller
 
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
