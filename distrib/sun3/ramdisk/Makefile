@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/10/04 08:17:42 chs Exp $
+#	$NetBSD: Makefile,v 1.19 2001/10/13 06:15:21 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,6 +26,7 @@ DISKTYPE=	rdroot
 SIZE=		400k
 # bigendian, minfree, opt, b/i , cpg
 NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
+MTREE?=		mtree
 
 KERNELS= netbsd.RAMDISK netbsd.RAMDISK3X
 CLEANFILES= $(KERNELS) ${IMAGE}.fs netbsd-tmp
@@ -48,7 +49,7 @@ ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
 	disklabel -rw ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
 	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
 	  sh ${TOP}/common/RunList.sh ${LISTS}
