@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.7 1995/02/02 02:09:39 jtc Exp $	*/
+/*	$NetBSD: fseek.c,v 1.8 1995/03/05 06:56:09 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #endif
-static char rcsid[] = "$NetBSD: fseek.c,v 1.7 1995/02/02 02:09:39 jtc Exp $";
+static char rcsid[] = "$NetBSD: fseek.c,v 1.8 1995/03/05 06:56:09 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -93,6 +93,7 @@ fseek(fp, offset, whence)
 		 * we have to first find the current stream offset a la
 		 * ftell (see ftell for details).
 		 */
+		__sflush(fp);	/* may adjust seek offset on append stream */
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
