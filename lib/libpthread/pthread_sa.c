@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.21 2003/11/17 22:59:00 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.22 2003/12/31 16:45:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.21 2003/11/17 22:59:00 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.22 2003/12/31 16:45:48 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: pthread_sa.c,v 1.21 2003/11/17 22:59:00 cl Exp $");
 #define PUC(t)  ((t)->pt_trapuc ? 'T':'U') , UC(t)
 
 extern struct pthread_queue_t pthread__allqueue;
+extern pthread_spin_t pthread__deadqueue_lock;
+extern struct pthread_queue_t pthread__reidlequeue;
 
 #define	PTHREAD_RRTIMER_INTERVAL_DEFAULT	100
 static pthread_mutex_t rrtimer_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -108,48 +110,13 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		/* Don't handle this SA in the usual processing. */
 		t = pthread__sa_id(sas[1]);
 		pthread__assert(self->pt_spinlocks == 0);
-		if (t->pt_spinlocks > 0 || t->pt_next ||
-		    t->pt_type == PT_THREAD_UPCALL ||
-		    t->pt_blockedlwp == -1) {
-			if (t->pt_blockedlwp != -1) {
-				SDPRINTF(("(up %p) unblocking %p "
-					     "(uc: T %p pc: %lx sp: %lx) "
-					     "spinlocks: %d, pt_next: %p\n",
-					     self, t, sas[1]->sa_context,
-					     pthread__uc_pc(sas[1]->sa_context),
-					     pthread__uc_sp(sas[1]->sa_context),
-					     t->pt_spinlocks, t->pt_next));
-				if (sa_unblockyield(sas[1]->sa_id, &self->pt_next,
-					&self->pt_stack) != 0)
-					pthread__abort();
-				/* maybe NOTREACHED */
-			}
-			pthread__assert(t->pt_blockedlwp == -1);
-			t->pt_blockedlwp = 0;
-			SDPRINTF(("(up %p) unblocking switchto to %p(%d) "
-				     "(uc: T %p pc: %lx) chain %p "
-				     "spinlocks: %d, pt_next: %p\n",
-				     self, t, t->pt_type, sas[1]->sa_context,
-				     pthread__uc_pc(sas[1]->sa_context),
-				     self->pt_next, t->pt_spinlocks,
-				     t->pt_next));
-			self->pt_switchtouc = t->pt_trapuc;
-			self->pt_switchto = t;
-			pthread__switch(self, self->pt_next);
-			/*NOTREACHED*/
-			pthread__abort();
-		}
-		/* We can take spinlocks now */
 		if (t->pt_type == PT_THREAD_IDLE) {
-			SDPRINTF(("(up %p) unblocking idle %p (uc: %c %p)\n",
-				     self, t, PUC(t)));
-			if (sa_unblockyield(sas[1]->sa_id, NULL,
-				&self->pt_stack) != 0)
-				pthread__abort();
-			t->pt_blockedlwp = 0;
-			/* XXX need flaglock? */
-			if ((t->pt_flags & PT_FLAG_IDLED) == 0)
-				pthread__sched_bulk(self, t);
+			pthread_spinlock(self, &pthread__deadqueue_lock);
+			if (t->pt_flags & PT_FLAG_IDLED) {
+				PTQ_REMOVE(&pthread__reidlequeue, t, pt_runq);
+				t->pt_flags &= PT_FLAG_IDLED;
+			}
+			pthread_spinunlock(self, &pthread__deadqueue_lock);
 		}
 	} else {
 		/*
@@ -167,35 +134,24 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			pthread__sched_bulk(self, intqueue);
 		if (schedqueue != self)
 			pthread__sched_bulk(self, schedqueue);
-	}
 
-	pthread__sched_idle2(self);
+		pthread__sched_idle2(self);
+	}
 
 	switch (type) {
 	case SA_UPCALL_BLOCKED:
 		PTHREADD_ADD(PTHREADD_UP_BLOCK);
 		t = pthread__sa_id(sas[1]);
-		pthread__assert(t->pt_type != PT_THREAD_UPCALL);
-		if (t->pt_type == PT_THREAD_IDLE)
-			break;
-		pthread_spinlock(self, &t->pt_statelock);
-		t->pt_state = PT_STATE_BLOCKED_SYS;
+		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self, 1, t,
+			     t->pt_type));
+		t->pt_blockuc = sas[1]->sa_context;
 		t->pt_blockedlwp = sas[1]->sa_id;
+		t->pt_blockgen++;
 		if (t->pt_cancel)
 			_lwp_wakeup(t->pt_blockedlwp);
-		pthread_spinunlock(self, &t->pt_statelock);
 #ifdef PTHREAD__DEBUG
 		t->blocks++;
 #endif
-		/*
-		 * Because we might be preempted between the check and
-		 * the set, we set the unblocked thread trapuc again
-		 * below in the SA_UPCALL_UNBLOCKED case.
-		 */
-		if (t->pt_trapuc == NULL)
-			t->pt_trapuc = sas[1]->sa_context;
-		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self, 1, t,
-			     t->pt_type));
 		break;
 	case SA_UPCALL_NEWPROC:
 		PTHREADD_ADD(PTHREADD_UP_NEW);
@@ -208,13 +164,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		schedqueue = NULL;
 		for (i = 0; i < ev; i++) {
 			t = pthread__sa_id(sas[1 + i]);
-			if (t->pt_blockedlwp != 0) {
-				/* Set unblocked thread trapuc again. */
-				t->pt_trapuc = sas[1 + i]->sa_context;
-				t->pt_next = schedqueue;
-				schedqueue = t;
-				t->pt_blockedlwp = 0;
-			}
 			/*
 			 * A signal may have been presented to this
 			 * thread while it was in the kernel.
@@ -275,6 +224,16 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	 * (or was an upcall).
 	 */
 	pthread__assert(self->pt_spinlocks == 0);
+	if (self->pt_next) {
+		SDPRINTF(("(up %p) chain switching to %p (uc: %c %p pc: %lx)\n", 
+			     self, self->pt_next, PUC(self->pt_next),
+			     pthread__uc_pc(UC(self->pt_next))));
+		self->pt_switchtouc = UC(self);
+		self->pt_switchto = self;
+		pthread__switch(self, self->pt_next);
+		/*NOTREACHED*/
+		pthread__abort();
+	}
 	next = pthread__next(self);
 	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(up %p) switching to %p (uc: %c %p pc: %lx)\n", 
@@ -309,12 +268,18 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
 			     victim->pt_type));
 		if (type == SA_UPCALL_UNBLOCKED && i < ev) {
-			if (victim->pt_blockedlwp == 0) {
-				SDPRINTF((" unblock before block\n"));
-				victim->pt_blockedlwp = -1;
-			} else
-				SDPRINTF((" event\n"));
-			continue;
+			victim->pt_unblockgen++;
+#ifdef PTHREAD__DEBUG
+			if (victim->pt_blockgen != victim->pt_unblockgen) {
+				SDPRINTF((" unblock before block"));
+			} else if (victim->pt_type == PT_THREAD_UPCALL ||
+				victim->pt_spinlocks > 0 ||
+				victim->pt_next) {
+				SDPRINTF((" critical"));
+			} else {
+				SDPRINTF((" event"));
+			}
+#endif
 		}
 		if (victim->pt_type == PT_THREAD_UPCALL) {
 			/* Case 1: Upcall. Must be resumed. */
@@ -417,7 +382,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 	PTHREADD_ADD(PTHREADD_RESOLVELOCKS);
 
 	recycleq = NULL;
-	runq = NULL;
+	runq = self;
 	intqueue = *intqueuep;
 	switchto = NULL;
 	victim = intqueue;
@@ -507,6 +472,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						intqueue = next;
 					victim->pt_next = recycleq;
 					recycleq = victim;
+					if (victim->pt_switchto == victim) {
+						victim->pt_switchto = NULL;
+						victim->pt_switchtouc = NULL;
+						SDPRINTF((" switchto self"));
+					}
 				} else {
 					/*
 					 * Not finished yet.
@@ -618,7 +588,6 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				     self, intqueue, PUC(intqueue), 
 				     pthread__uc_pc(UC(intqueue)), 
 				     pthread__uc_sp(UC(intqueue))));
-			pthread__assert(intqueue->pt_state != PT_STATE_BLOCKED_SYS);
 			pthread__switch(self, intqueue);
 			SDPRINTF(("(rl %p) returned from chain\n",
 			    self));
@@ -636,7 +605,6 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				     PUC(self->pt_next),
 				     pthread__uc_pc(UC(self->pt_next)), 
 				     pthread__uc_sp(UC(self->pt_next))));
-			pthread__assert(self->pt_next->pt_state != PT_STATE_BLOCKED_SYS);
 			pthread__switch(self, self->pt_next);
 		}
 
