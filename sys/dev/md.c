@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.28 2002/01/13 19:28:07 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.28.8.1 2002/05/16 04:47:32 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.28 2002/01/13 19:28:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.28.8.1 2002/05/16 04:47:32 gehenna Exp $");
 
 #include "opt_md.h"
 
@@ -95,7 +95,23 @@ struct md_softc {
 void mdattach __P((int));
 static void md_attach __P((struct device *, struct device *, void *));
 
-void mdstrategy __P((struct buf *bp));
+dev_type_open(mdopen);
+dev_type_close(mdclose);
+dev_type_read(mdread);
+dev_type_write(mdwrite);
+dev_type_ioctl(mdioctl);
+dev_type_strategy(mdstrategy);
+dev_type_size(mdsize);
+
+const struct bdevsw md_bdevsw = {
+	mdopen, mdclose, mdstrategy, mdioctl, nodump, mdsize, D_DISK
+};
+
+const struct cdevsw md_cdevsw = {
+	mdopen, mdclose, mdread, mdwrite, mdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 struct dkdriver mddkdriver = { mdstrategy };
 
 static int   ramdisk_ndevs;
@@ -180,24 +196,6 @@ static int md_ioctl_server __P((struct md_softc *sc,
 #endif
 static int md_ioctl_kalloc __P((struct md_softc *sc,
 		struct md_conf *umd, struct proc *proc));
-
-dev_type_open(mdopen);
-dev_type_close(mdclose);
-dev_type_read(mdread);
-dev_type_write(mdwrite);
-dev_type_ioctl(mdioctl);
-dev_type_size(mdsize);
-dev_type_dump(mddump);
-
-int
-mddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-	return ENODEV;
-}
 
 int
 mdsize(dev_t dev)

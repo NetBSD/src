@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.76 2002/03/08 20:48:37 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.76.6.1 2002/05/16 04:47:32 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.76 2002/03/08 20:48:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.76.6.1 2002/05/16 04:47:32 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,6 @@ void	ccdattach __P((int));
 
 /* called by biodone() at interrupt time */
 void	ccdiodone __P((struct buf *));
-int	ccdsize __P((dev_t));
 
 static	void ccdstart __P((struct ccd_softc *, struct buf *));
 static	void ccdinterleave __P((struct ccd_softc *));
@@ -164,6 +163,24 @@ static	struct ccdbuf *ccdbuffer __P((struct ccd_softc *, struct buf *,
 static	void ccdgetdefaultlabel __P((struct ccd_softc *, struct disklabel *));
 static	void ccdgetdisklabel __P((dev_t));
 static	void ccdmakedisklabel __P((struct ccd_softc *));
+
+dev_type_open(ccdopen);
+dev_type_close(ccdclose);
+dev_type_read(ccdread);
+dev_type_write(ccdwrite);
+dev_type_ioctl(ccdioctl);
+dev_type_strategy(ccdstrategy);
+dev_type_dump(ccddump);
+dev_type_size(ccdsize);
+
+const struct bdevsw ccd_bdevsw = {
+	ccdopen, ccdclose, ccdstrategy, ccdioctl, ccddump, ccdsize, D_DISK
+};
+
+const struct cdevsw ccd_cdevsw = {
+	ccdopen, ccdclose, ccdread, ccdwrite, ccdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 #ifdef DEBUG
 static	void printiinfo __P((struct ccdiinfo *));
