@@ -28,8 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.c,v 1.8 1994/05/04 05:29:25 gwr Exp $
- * Added stub for obio_probe_byte() -gwr
+ * $Id: obio.c,v 1.9 1994/05/05 04:46:52 gwr Exp $
  */
 #include <sys/systm.h>
 #include <sys/device.h>
