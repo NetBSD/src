@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.20 1997/10/10 16:18:33 lukem Exp $
+.\"	$NetBSD: ifconfig.8,v 1.21 1997/10/11 02:44:36 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,17 +47,17 @@
 .Op Ar dest_address
 .Oc
 .Op Ar parameters
-.Nm ifconfig
+.Nm ""
 .Op Fl m
 .Ar interface
 .Op Ar protocol_family
-.Nm ifconfig
+.Nm ""
 .Fl a
 .Op Fl m
 .Op Fl d
 .Op Fl u
 .Op Ar protocol_family
-.Nm ifconfig
+.Nm ""
 .Fl l
 .Op Fl d
 .Op Fl u
@@ -80,14 +80,14 @@ For the
 .Tn DARPA-Internet
 family,
 the address is either a host name present in the host name data
-base, 
+base,
 .Xr hosts 5 ,
 or a
 .Tn DARPA
 Internet address expressed in the Internet standard
 .Dq dot notation .
 For the Xerox Network Systems(tm) family,
-addresses are 
+addresses are
 .Ar net:a.b.c.d.e.f ,
 where
 .Ar net
@@ -125,10 +125,10 @@ The
 parameter is a string of the form
 .Dq name unit ,
 for example,
-.Dq en0 
+.Dq en0
 .El
 .Pp
-The following parameters may be set with 
+The following parameters may be set with
 .Nm "" :
 .Bl -tag -width dest_addressxx
 .It Cm alias
@@ -168,7 +168,7 @@ of a point to point link.
 .It Cm down
 Mark an interface ``down''.  When an interface is
 marked ``down'', the system will not attempt to
-transmit messages through that interface. 
+transmit messages through that interface.
 If possible, the interface will be reset to disable reception as well.
 This action does not automatically disable routes using the interface.
 .It Cm ipdst
@@ -231,7 +231,7 @@ and 0's for the host part.
 The mask should contain at least the standard network portion,
 and the subnet field should be contiguous with the network
 portion.
-.\" see 
+.\" see
 .\" Xr eon 5 .
 .It Cm nsellength Ar n
 .Pf ( Tn ISO
@@ -287,7 +287,7 @@ for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
 .It Cm up
-Mark an interface ``up''. 
+Mark an interface ``up''.
 This may be used to enable an interface after an ``ifconfig down.''
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
@@ -324,7 +324,7 @@ with all other flags and commands, except for
 .Fl d
 (only list interfaces that are down)
 and
-.Fl u 
+.Fl u
 (only list interfaces that are up).
 .Pp
 Only the super-user may modify the configuration of a network interface.
