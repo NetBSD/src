@@ -1,11 +1,11 @@
-/*	$NetBSD: darwin_machdep.h,v 1.2 2002/12/08 21:53:10 manu Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.1 2002/12/08 21:53:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus
+ * by Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,66 +36,57 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DARWIN_MACHDEP_H_
-#define	_DARWIN_MACHDEP_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.1 2002/12/08 21:53:18 manu Exp $");
 
-void darwin_fork_child_return(void *);
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signal.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
 
-struct darwin_ppc_exception_state {
-	unsigned long dar;
-	unsigned long dsisr;
-	unsigned long exception;
-	unsigned long pad[5];
-};
+#include <sys/syscallargs.h>
 
-struct darwin_ppc_thread_state {
-	unsigned int srr0;
-	unsigned int srr1;
-	unsigned int gpreg[32];
-	unsigned int cr;
-	unsigned int xer;
-	unsigned int lr;
-	unsigned int ctr;
-	unsigned int mq;
-	unsigned int vrsave;
-};
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_vm.h>
 
-struct darwin_ppc_float_state {
-	double  fpregs[32];
-	unsigned int fpscr_pad;
-	unsigned int fpscr;
-};
+#include <compat/darwin/darwin_signal.h>
+#include <compat/darwin/darwin_syscallargs.h>
 
-struct darwin_ppc_vector_state {
-	unsigned long vr[32][4];
-	unsigned long vscr[4];
-	unsigned int pad1[4];
-	unsigned int vrvalid;
-	unsigned int pad2[7];
-};
+#include <machine/darwin_machdep.h>
 
-struct darwin_mcontext {
-	struct darwin_ppc_exception_state es;   
-	struct darwin_ppc_thread_state ss;
-	struct darwin_ppc_float_state fs;
-	struct darwin_ppc_vector_state vs;			
-};
+/* 
+ * darwin_fork_child_return() sets the return values as expected by Darwin
+ * userland: libSystem stub expects the child pid to be in retval[0] for 
+ * the parent as well as the child. 
+ */
+int
+darwin_sys_fork(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	int error;
 
-struct darwin_sigframe {
-	int nocopy1[30];
-	/* struct darwin_mcontext without the vs field */
-	struct darwin__mcontext {
-		struct darwin_ppc_exception_state es;
-		struct darwin_ppc_thread_state ss;
-		struct darwin_ppc_float_state fs;
-	} dmc;
-	int nocopy2[144];
-	/* struct darwin_ucontext with some padding */
-	struct darwin__ucontext {
-		darwin_siginfo_t si;
-		struct darwin_ucontext uctx;
-	} duc;
-	int nocopy3[56];
-};
+	if ((error = fork1(p, 0, SIGCHLD, NULL, 0, 
+	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
+		return error;
+	
+	return 0;
+}
 
-#endif /* !_DARWIN_MACHDEP_H_ */
+int
+darwin_sys_vfork(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	int error;
+
+	if ((error = fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, 
+	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
+		return error;
+
+	return 0;
+}
