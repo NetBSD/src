@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.64 2004/04/09 16:14:11 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.65 2004/04/09 18:26:24 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -687,3 +687,9 @@ xfree/xc/lib/X11/ConnDis.c			1.2
 	Don't core when there exist (bogus) IPv6 XDM-AUTHORIZATION-1 records 
 	in the ${XAUTHORITY} file. PR#25098
 	[tron, ticket #104]
+
+sys/dev/raidframe/rf_psstatus.h			1.10
+
+	We really should have a wakeup in RF_UNLOCK_PSS_MUTEX in case we have
+	a nap in RF_LOCK_PSS_MUTEX!
+	[oster, ticket #106]
