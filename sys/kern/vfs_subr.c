@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.103 1999/07/04 16:20:13 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.104 1999/07/08 01:06:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -477,6 +477,8 @@ getnewvnode(tag, mp, vops, vpp)
 		vp->v_socket = 0;
 	}
 	vp->v_type = VNON;
+	vp->v_vnlock = &vp->v_lock;
+	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
 	cache_purge(vp);
 	vp->v_tag = tag;
 	vp->v_op = vops;
@@ -854,6 +856,8 @@ loop:
 	vclean(vp, 0, p);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
+	vp->v_vnlock = &vp->v_lock;
+	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
 	nvp->v_type = VNON;
 	insmntque(vp, mp);
 	return (vp);
@@ -1197,6 +1201,12 @@ vclean(vp, flags, p)
 			 * Insert at tail of LRU list.
 			 */
 			simple_lock(&vnode_free_list_slock);
+#ifdef DIAGNOSTIC
+			if (vp->v_vnlock) {
+				if ((vp->v_vnlock->lk_flags & LK_DRAINED) == 0)
+					vprint("vclean: lock not drained", vp);
+			}
+#endif
 			TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 			simple_unlock(&vnode_free_list_slock);
 		}
@@ -1204,12 +1214,6 @@ vclean(vp, flags, p)
 	}
 
 	cache_purge(vp);
-	if (vp->v_vnlock) {
-		if ((vp->v_vnlock->lk_flags & LK_DRAINED) == 0)
-			vprint("vclean: lock not drained", vp);
-		FREE(vp->v_vnlock, M_VNODE);
-		vp->v_vnlock = NULL;
-	}
 
 	/*
 	 * Done with purge, notify sleepers of the grim news.

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.6 1999/02/26 23:44:44 wrstuden Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.7 1999/07/08 01:06:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -574,7 +574,6 @@ filecore_vget(mp, ino, vpp)
 	}
 	ip = pool_get(&filecore_node_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct filecore_node));
-	lockinit(&ip->i_lock, PINOD, "filecorenode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
