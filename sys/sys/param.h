@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.79 1999/12/22 21:26:15 kleink Exp $	*/
+/*	$NetBSD: param.h,v 1.80 1999/12/23 09:10:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -90,6 +90,7 @@
 #endif /* _KERNEL */
 
 #ifndef _LOCORE
+#include <sys/inttypes.h>
 #include <sys/types.h>
 #endif
 
