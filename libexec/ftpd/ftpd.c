@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.136 2002/01/21 11:25:20 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.137 2002/02/01 04:35:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.136 2002/01/21 11:25:20 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.137 2002/02/01 04:35:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1284,8 +1284,7 @@ retrieve(char *argv[], const char *name)
 	(void)gettimeofday(&start, NULL);
 	sendrv = send_data(fin, dout, st.st_blksize, isdata);
 	(void)gettimeofday(&finish, NULL);
-	(void) fclose(dout);		/* close now to affect timing stats */
-	dout = NULL;
+	closedataconn(dout);		/* close now to affect timing stats */
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
@@ -1324,7 +1323,6 @@ retrieve(char *argv[], const char *name)
 		reply(226, "Transfer complete.");
 	}
  cleanupretrieve:
-	closedataconn(dout);
 	if (stderrfd != -1)
 		(void)close(stderrfd);
 	if (isconversion)
@@ -1399,15 +1397,14 @@ store(const char *name, const char *fmode, int unique)
 			reply(226, "Transfer complete.");
 	}
 	(void)gettimeofday(&finish, NULL);
-	(void) fclose(din);		/* close now to affect timing stats */
-	din = NULL;
+	closedataconn(din);		/* close now to affect timing stats */
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
 	logxfer(desc, byte_count, name, NULL, tdp, NULL);
 	(*closefunc)(fout);
  cleanupstore:
-	closedataconn(din);
+	;
 }
 
 static FILE *
