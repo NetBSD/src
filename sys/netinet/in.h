@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.46 2000/02/17 10:59:35 darrenr Exp $	*/
+/*	$NetBSD: in.h,v 1.47 2000/03/10 15:30:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,6 +78,9 @@
 
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
+
+/* last return value of *_input(), meaning "all job for this pkt is done".  */
+#define	IPPROTO_DONE		257
 
 
 /*
@@ -185,9 +188,6 @@ struct in_addr {
 #define	INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
-
-/* last return value of *_input(), meaning "all job for this pkt is done".  */
-#define	IPPROTO_DONE		257
 
 /*
  * Socket address, internet style.
