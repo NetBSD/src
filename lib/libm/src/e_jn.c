@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_jn.c,v 1.7 1994/09/22 16:39:45 jtc Exp $";
+static char rcsid[] = "$Id: e_jn.c,v 1.8 1995/01/16 20:05:43 jtc Exp $";
 #endif
 
 /*
@@ -238,7 +238,7 @@ static double zero  =  0.00000000000000000000e+00;
 	sign = 1;
 	if(n<0){
 		n = -n;
-		sign = 1 - ((n&1)<<2);
+		sign = 1 - ((n&1)<<1);
 	}
 	if(n==0) return(__ieee754_y0(x));
 	if(n==1) return(sign*__ieee754_y1(x));
