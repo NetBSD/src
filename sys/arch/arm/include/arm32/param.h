@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2001/05/30 12:28:40 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.4.2.1 2001/08/25 06:15:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -44,33 +44,12 @@
  */
 /* These are defined in the Port File before it includes
  * this file. */
-#define	MID_MACHINE	MID_ARM6
-
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define SSIZE           1               /* initial stack size/NBPG */
 #define SINCR           1               /* increment of stack/NBPG */
@@ -80,18 +59,6 @@
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
 
@@ -112,29 +79,6 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((7 * 1024 * 1024) >> PAGE_SHIFT)
-
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-/*#define	dtob(x)	((x) << DEV_BSHIFT)*/
-
-#define	ctob(x)	((x) << PGSHIFT)
-
-/* bytes to pages */
-#define	btoc(x)	(((x) + PGOFSET) >> PGSHIFT)
-
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /* Constants used to divide the USPACE area */
 
@@ -170,12 +114,15 @@
 
 #define arm_byte_to_page(x) ((x) >> PGSHIFT)
 #define arm_page_to_byte(x) ((x) << PGSHIFT)
-
+#define arm_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+    
 #ifdef _KERNEL
 #ifndef _LOCORE
 void	delay __P((unsigned));
 #define DELAY(x)	delay(x)
 #endif
 #endif
+
+#include <arm/param.h>
 
 #endif	/* _ARM_ARM32_PARAM_H_ */

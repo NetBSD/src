@@ -1,11 +1,12 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.17 2001/07/08 16:36:11 abs Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.17.2.1 2001/08/25 06:15:23 thorpej Exp $
+#	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
-#	GENERIC -- everything that's currently supported
+#	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.17.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -52,6 +53,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -84,6 +89,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options	COMPAT_MACH	# binary compatibility with Mach binaries
+#options	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -221,8 +228,6 @@ apm0	at mainbus0			# Advanced power management
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide*	at pnpbios? index ?
 
-#joy*		at pnpbios? index ?	# Game port
-
 # PCI bus support
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
@@ -352,6 +357,8 @@ com2	at isa? port 0x3e8 irq 5
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
 #addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
 #com*	at addcom? slave ?
+#moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
+#com*	at moxa? slave ?
 
 
 # Parallel Printer Interfaces
@@ -451,7 +458,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
@@ -550,8 +557,14 @@ upl*	at uhub? port ?
 
 # Serial adapters
 # FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
-#ucom*	at uftdi? portno ?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ? 
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
@@ -570,15 +583,17 @@ ugen*	at uhub? port ?
 # Audio Devices
 
 # PCI audio devices
-auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
-sv*	at pci? dev ? function ?	# S3 SonicVibes
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
+sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
 # ISA Plug-and-Play audio devices
@@ -614,11 +629,13 @@ opl*	at ym?
 
 # Audio support
 #audio*	at aria?
-audio*	at auvia?
 audio*	at auich?
+audio*	at auvia?
 audio*	at clcs?
+audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at esm?
 audio*	at eso?
 audio*	at ess?
 audio*	at fms?
@@ -644,6 +661,7 @@ mpu*	at ym?
 
 # MIDI support
 midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
+#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 #midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
@@ -674,6 +692,8 @@ wsmouse*	at mms? mux 0
 
 
 # Joysticks
+
+#joy*		at pnpbios? index ?	# Game port
 
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)
@@ -717,7 +737,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

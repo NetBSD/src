@@ -1,4 +1,4 @@
-/*	$NetBSD: pccreg.h,v 1.8 2001/04/14 13:53:06 scw Exp $	*/
+/*	$NetBSD: pccreg.h,v 1.8.2.1 2001/08/25 06:15:36 thorpej Exp $	*/
 
 /*
  *
@@ -41,15 +41,12 @@
  * Offsets to the MVME147's onboard device registers.
  * (Relative to the bus_space_tag_t passed in from 'mainbus')
  */
-#define PCC_NVRAM_OFF	0x0000		/* offset of Mostek NVRAM/RTC chip */
-#define PCC_RTC_OFF	0x07f8		/* offset of clock registers NVRAM */
-#define PCC_REG_OFF	0x1000		/* offset of PCC chip registers */
-#define PCC_LE_OFF	0x1800		/* offset of LANCE ethernet chip */
-#define PCC_VME_OFF	0x2000		/* offset of VME chip */
-#define PCC_LPT_OFF	0x2800		/* offset of parallel port register */
-#define PCC_ZS0_OFF	0x3000		/* offset of first 8530 UART */
-#define PCC_ZS1_OFF	0x3800		/* offset of second 8530 UART */
-#define PCC_WDSC_OFF	0x4000		/* offset of 33c93 SCSI chip */
+#define PCC_LE_OFF	0x0800		/* offset of LANCE ethernet chip */
+#define PCC_VME_OFF	0x1000		/* offset of VME chip */
+#define PCC_LPT_OFF	0x1800		/* offset of parallel port register */
+#define PCC_ZS0_OFF	0x2000		/* offset of first 8530 UART */
+#define PCC_ZS1_OFF	0x2800		/* offset of second 8530 UART */
+#define PCC_WDSC_OFF	0x3000		/* offset of 33c93 SCSI chip */
 
 /*
  * This is needed to figure out the boot device.

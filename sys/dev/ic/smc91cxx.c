@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.34 2001/07/07 15:59:38 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.34.2.1 2001/08/25 06:16:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ smc91cxx_attach(sc, myea)
 	SMC_SELECT_BANK(sc, 1);
 	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
 
-	miicapabilities = BMSR_MEDIAMASK;
+	miicapabilities = BMSR_MEDIAMASK|BMSR_ANEG;
 	switch (sc->sc_chipid) {
 	case CHIP_91100:
 		/*

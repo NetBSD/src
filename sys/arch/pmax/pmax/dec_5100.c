@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.29 2001/06/19 13:42:16 wiz Exp $ */
+/* $NetBSD: dec_5100.c,v 1.29.2.1 2001/08/25 06:15:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.29 2001/06/19 13:42:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.29.2.1 2001/08/25 06:15:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ dec_5100_intr(status, cause, pc, ipending)
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		intrcnt[HARDCLOCK]++;
+		pmax_clock_evcnt.ev_count++;
 
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_2;
@@ -211,7 +211,7 @@ dec_5100_memintr()
 	/* read icsr and clear error  */
 	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= KN230_CSR_INTR_WMERR;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 
 #ifdef DIAGNOSTIC

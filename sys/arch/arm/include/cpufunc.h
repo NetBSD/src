@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.6 2001/06/05 09:19:33 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6.2.1 2001/08/25 06:15:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -166,7 +166,7 @@ extern u_int cputype;
 
 #define cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
 #define cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
-#define ABORT_FIXUP_OK		0	/* fixup suceeded */
+#define ABORT_FIXUP_OK		0	/* fixup succeeded */
 #define ABORT_FIXUP_FAILED	1	/* fixup failed */
 #define ABORT_FIXUP_RETURN	2	/* abort handler should return */
 

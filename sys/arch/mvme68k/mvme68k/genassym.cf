@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2001/03/13 18:47:19 scw Exp $
+#	$NetBSD: genassym.cf,v 1.20.2.1 2001/08/25 06:15:37 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -60,7 +60,6 @@ include <machine/psl.h>
 include <machine/reg.h>
 include <machine/prom.h>
 include <machine/pte.h>
-include <mvme68k/mvme68k/clockreg.h>
 
 define	__XXX_BUG_FODDER	0
 

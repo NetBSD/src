@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.9 2001/07/06 19:00:13 scw Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.9.2.1 2001/08/25 06:15:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <machine/psl.h>
 #include <machine/bus.h>
 
-#include <mvme68k/mvme68k/clockreg.h>
 #include <mvme68k/mvme68k/clockvar.h>
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
@@ -118,27 +117,15 @@ clock_pcc_attach(parent, self, aux)
 		panic("clock_pcc_attach: wrong interrupt level");
 
 	clock_pcc_sc = sc;
-
-	/* Map the RTC's registers */
-	sc->sc_clock_args.ca_bust = pa->pa_bust;
-	bus_space_map(pa->pa_bust, pa->pa_offset,
-	    MK48T_REGSIZE, 0, &sc->sc_clock_args.ca_bush);
-
 	sc->sc_clock_args.ca_arg = sc;
 	sc->sc_clock_args.ca_initfunc = clock_pcc_initclocks;
 	sc->sc_clock_args.ca_microtime = clock_pcc_microtime;
 
 	/* Do common portions of clock config. */
-	clock_config(self, &sc->sc_clock_args);
+	clock_config(self, &sc->sc_clock_args, pccintr_evcnt(pa->pa_ipl));
 
 	/* Ensure our interrupts get disabled at shutdown time. */
 	(void) shutdownhook_establish(clock_pcc_shutdown, NULL);
-
-	/* Register the event counters */
-	evcnt_attach_dynamic(&clock_profcnt, EVCNT_TYPE_INTR,
-	    pccintr_evcnt(pa->pa_ipl), "clock", "profint");
-	evcnt_attach_dynamic(&clock_statcnt, EVCNT_TYPE_INTR,
-	    pccintr_evcnt(pa->pa_ipl), "clock", "statint");
 
 	/* Attach the interrupt handlers. */
 	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl,

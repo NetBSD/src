@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.8 2001/04/05 22:33:12 reinoud Exp $	*/
+/*	$NetBSD: todclock.c,v 1.8.2.1 2001/08/25 06:15:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -334,8 +334,10 @@ inittodr(base)
 		if (n > base + 60) {
 			days = (n - base) / SECPERDAY;
 			printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
-			    days, ((days == 1) ? 0 : 's'), ((n - base)  / 3600) % 24,
-			    ((n - base) / 60) % 60, (n - base) % 60);
+			    days, ((days == 1) ? 0 : 's'),
+			    (long)((n - base) / 3600) % 24,
+			    (long)((n - base) / 60)   % 60,
+			    (long) (n - base)         % 60);
 		}
 	}
 }  

@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.6 2001/07/08 16:32:14 abs Exp $
+#	$NetBSD: MIMORI,v 1.6.2.1 2001/08/25 06:15:07 thorpej Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -168,7 +168,7 @@ scsibus*	at ahc?
 #scsibus* 	at siop?
 
 #de*		at pci? dev ? function ?
-ex*		at pci? dev ? function ?	# 3Com 90x[B]
+ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible

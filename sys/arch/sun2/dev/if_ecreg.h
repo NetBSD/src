@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecreg.h,v 1.1 2001/06/27 17:24:35 fredette Exp $	*/
+/*	$NetBSD: if_ecreg.h,v 1.1.2.1 2001/08/25 06:16:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ struct ec_regs {
 #define	EC_PKT_FRERR		0x0800		/* framing error */
 #define	EC_PKT_DOFF		0x07ff		/* first free byte */
 
-#define	EC_PKT_MAXTDOFF	(EC_BUF_SZ-ETHERMIN)	/* max xmit doff (min size) */
+#define	EC_PKT_MAXTDOFF	(EC_BUF_SZ - (ETHER_MIN_LEN - ETHER_CRC_LEN))	/* max xmit doff (min size) */
 #define	EC_PKT_RDOFF	2			/* packet offset in buffer */
-#define	EC_PKT_MINRDOFF	(EC_PKT_RDOFF+ETHERMIN)	/* min packet doff (min size) */
-#define	EC_PKT_MAXRDOFF	(EC_PKT_RDOFF+ETHERMTU)	/* max packet doff (max size) */
+#define	EC_PKT_MINRDOFF	(EC_PKT_RDOFF + (ETHER_MIN_LEN - ETHER_CRC_LEN))	/* min packet doff (min size) */
+#define	EC_PKT_MAXRDOFF	(EC_BUF_SZ - EC_PKT_RDOFF)	/* max packet doff (max size) */

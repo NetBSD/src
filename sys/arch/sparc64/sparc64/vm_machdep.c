@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.38.2.1 2001/08/25 06:15:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -89,11 +89,8 @@ pagemove(from, to, size)
 	while (size > 0) {
 		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
 			panic("pagemove 2");
-		pmap_remove(pmap_kernel(),
-		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(),
-		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kremove((vaddr_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -173,8 +170,7 @@ vunmapbuf(bp, len)
 	kva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
-
-	/* This will call pmap_remove() for us. */
+	pmap_remove(pmap_kernel(), kva, kva + len);
 	uvm_km_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

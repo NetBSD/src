@@ -1,12 +1,10 @@
-# 	$NetBSD: EVERGLADES32,v 1.9 2001/07/08 16:32:24 abs Exp $
+# 	$NetBSD: SPLODE,v 1.1.2.2 2001/08/25 06:15:54 thorpej Exp $
 #
-# from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
-#
-# Configuration for Ultra1 
+# Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.1.2.2 $"
 
 maxusers	64
 
@@ -36,6 +34,7 @@ options 	SUN4U		# sun4u - UltraSPARC
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
+options 	NVNODE=15000
 
 options 	NMBCLUSTERS=1024
 
@@ -279,6 +278,10 @@ scsibus* at isp?
 #siop*	at pci?					# 53C875 "glm" compatible
 #scsibus* at siop?
 
+sd0	at scsibus? target ? lun ?		# SCSI disks
+sd1	at scsibus? target 2 lun ?		# SCSI disks
+sd2	at scsibus? target 5 lun ?		# SCSI disks
+
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
 sd*	at scsibus? target ? lun ?		# SCSI disks
@@ -372,7 +375,7 @@ pseudo-device	loop
 #pseudo-device	sl		2
 
 ## PPP, the successor to SLIP.  See pppd(8).
-#pseudo-device	ppp		2
+pseudo-device	ppp		2
 
 ## Starmode Radio IP, a special hardware network device.
 #pseudo-device	strip		1

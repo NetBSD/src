@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
+/*	$NetBSD: if_types.h,v 1.17.4.1 2001/08/25 06:16:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@
  * This list is derived from the SNMP list of ifTypes, originally
  * documented in RFC1573, now maintained as:
  *
- *	ftp.isi.edu/in-notes/iana/assignments/smi-numbers
+ * <URL:http://www.iana.org/assignments/smi-numbers>
  */
 
 #define	IFT_OTHER	0x1		/* none of the following */
@@ -235,6 +235,14 @@
 #define IFT_AAL2		   0xbb	/* ATM adaptation layer 2 */
 #define IFT_RADIOMAC		   0xbc	/* MAC layer over radio links */
 #define IFT_ATMRADIO		   0xbd	/* ATM over radio links */
+#define IFT_IMT			   0xbe /* Inter-Machine Trunks */
+#define IFT_MVL			   0xbf /* Multiple Virtual Lines DSL */
+#define IFT_REACHDSL		   0xc0 /* Long Reach DSL */
+#define IFT_FRDLCIENDPT		   0xc1 /* Frame Relay DLCI End Point */
+#define IFT_ATMVCIENDPT		   0xc2 /* ATM VCI End Point */
+#define IFT_OPTICALCHANNEL	   0xc3 /* Optical Channel */
+#define IFT_OPTICALTRANSPORT	   0xc4 /* Optical Transport */
+#define IFT_PROPATM		   0xc5 /* Proprietary ATM */
 
 /* not based on IANA assignments - how should we treat these? */
 #define IFT_GIF		0xf0

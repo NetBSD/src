@@ -1,11 +1,12 @@
-#	$NetBSD: std.arm32,v 1.13 2001/02/23 21:23:50 reinoud Exp $
+#	$NetBSD: std.arm32,v 1.13.4.1 2001/08/25 06:15:14 thorpej Exp $
 #
 # standard NetBSD/arm32 options
 
 machine	arm32 arm
 
 options 	EXEC_AOUT
+options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
-options ARM32
+options 	ARM32

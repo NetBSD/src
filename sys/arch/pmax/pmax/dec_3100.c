@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.32 2001/04/12 19:24:05 thorpej Exp $ */
+/* $NetBSD: dec_3100.c,v 1.32.2.1 2001/08/25 06:15:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -195,7 +195,7 @@ dec_3100_intr(status, cause, pc, ipending)
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		intrcnt[HARDCLOCK]++;
+		pmax_clock_evcnt.ev_count++;
 
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_3;

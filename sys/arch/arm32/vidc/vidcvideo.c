@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.7 2001/04/14 02:25:43 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.7.2.1 2001/08/25 06:15:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.7 2001/04/14 02:25:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.7.2.1 2001/08/25 06:15:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ struct fb_devconfig {
 	int	dc_rowbytes;		/* bytes in a FB scan line */
 	vaddr_t	dc_videobase;		/* base of flat frame buffer */
 	int	dc_blanked;		/* currently has video disabled */
+	void   *dc_hwscroll_cookie;	/* cookie for hardware scroll */
 
 	struct vidc_mode   mode_info;
 	struct rasops_info rinfo;
@@ -96,14 +97,16 @@ struct hwcmap256 {
 	u_int8_t b[CMAP_SIZE];
 };
 
-struct hwcursor64 {
+
+/* XXX for CURSOR_MAX_WIDTH = 32 */
+struct hwcursor32 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
 	struct wsdisplay_curpos cc_magic;
-#define	CURSOR_MAX_SIZE	64
-	u_int8_t cc_color[6];
-	u_int64_t cc_image[64 + 64];
+	u_int8_t cc_color[6];		/* how many? */
+	u_int32_t cc_image[(CURSOR_MAX_WIDTH/4) * CURSOR_MAX_HEIGHT];
+	u_int32_t cc_mask[(CURSOR_MAX_WIDTH/4) * CURSOR_MAX_HEIGHT];
 };
 
 
@@ -111,7 +114,7 @@ struct vidcvideo_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	struct hwcmap256 sc_cmap;	/* software copy of colormap */
-	struct hwcursor64 sc_cursor;	/* software copy of cursor */
+	struct hwcursor32 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
 	int sc_changed;			/* need update of hardware */
 #define	WSDISPLAY_CMAP_DOLUT	0x20
@@ -324,6 +327,7 @@ vidcvideo_attach(parent, self, aux)
 	const u_int8_t *p;
 	int index;
 
+	vidcvideo_init();
 	if (sc->nscreens == 0) {
 		if (vidcvideo_is_console) {
 			sc->sc_dc = &vidcvideo_console_dc;
@@ -411,12 +415,9 @@ vidcvideoioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SVIDEO:
 		state = *(int *)data;
-		if ((dc->dc_blanked != state)) {
-			/* change */
-			dc->dc_blanked = state;
-			sc->sc_changed |= WSDISPLAY_VIDEO_ONOFF;
-			/* done on video blank */
-		};
+		dc->dc_blanked = (state == WSDISPLAYIO_VIDEO_OFF);
+		sc->sc_changed |= WSDISPLAY_VIDEO_ONOFF;
+		/* done on video blank */
 		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
@@ -430,12 +431,12 @@ vidcvideoioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
+		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
-		((struct wsdisplay_curpos *)data)->x =
-		((struct wsdisplay_curpos *)data)->y = CURSOR_MAX_SIZE;
+		((struct wsdisplay_curpos *)data)->x = CURSOR_MAX_WIDTH;
+		((struct wsdisplay_curpos *)data)->y = CURSOR_MAX_HEIGHT;
 		return (0);
 
 	case WSDISPLAYIO_GCURSOR:
@@ -444,17 +445,16 @@ vidcvideoioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 
-#if 0
-	/* XXX There are no way to know framebuffer pa from a user program. */
-	/* XXX imported from macppc fb buffer for X support... dunno if this works yet */
-	case GRFIOCGINFO:
-		gm = (void *)data;
-		bzero(gm, sizeof(struct grfinfo));
-		gm->gd_fbaddr = (caddr_t)dc->dc_paddr;
-		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
-		return 0;
-#endif
-
+	case WSDISPLAYIO_SMODE:
+		state = *(int *)data;
+		if (state == WSDISPLAYIO_MODE_MAPPED) {
+			dc->dc_hwscroll_cookie = vidcvideo_hwscroll_reset();
+		};
+		if (state == WSDISPLAYIO_MODE_EMUL) {
+			vidcvideo_hwscroll_back(dc->dc_hwscroll_cookie);
+		};
+		vidcvideo_progr_scroll();
+		return (0);
 	}
 	return ENOTTY;
 }
@@ -585,6 +585,19 @@ vidcvideointr(arg)
 		vidcvideo_blank(sc->sc_dc->dc_blanked);
 	};
 
+	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		int x, y;
+		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+
+		vidcvideo_updatecursor(x, y);
+	};
+
+	if (v & WSDISPLAY_CURSOR_DOCUR) {
+		vidcvideo_enablecursor(sc->sc_curenb);
+	};
+
+
 #if 0	/* XXX snip XXX */
 	/* XXX kept here as an archive for now XXX */
 
@@ -627,7 +640,7 @@ vidcvideointr(arg)
 		int bcnt;
 
 		ip = (u_int8_t *)sc->sc_cursor.cc_image;
-		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
+		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_HEIGHT);
 
 		bcnt = 0;
 		SELECT(vdac, BT459_IREG_CRAM_BASE+0);
@@ -650,7 +663,7 @@ vidcvideointr(arg)
 			bcnt += 2;
 		}
 		/* pad unoccupied scan lines */
-		while (bcnt < CURSOR_MAX_SIZE * 16) {
+		while (bcnt < CURSOR_MAX_HEIGHT * 16) {
 			REG(vdac, bt_reg) = 0; tc_wmb();
 			REG(vdac, bt_reg) = 0; tc_wmb();
 			bcnt += 2;
@@ -693,31 +706,6 @@ vidcvideo_colourmap_and_cursor_init(dc)
 	ri->ri_gpos = rgbdat[4];
 	ri->ri_bpos = rgbdat[5];
 
-
-#if 0	/* XXX snip XXX */
-	/* clear out cursor image */
-	SELECT(vdac, BT459_IREG_CRAM_BASE);
-	for (i = 0; i < 1024; i++)
-		REG(vdac, bt_reg) = 0xff;	tc_wmb();
-
-	/*
-	 * 2 bit/pixel cursor.  Assign MSB for cursor mask and LSB for
-	 * cursor image.  CCOLOR_2 for mask color, while CCOLOR_3 for
-	 * image color.  CCOLOR_1 will be never used.
-	 */
-	SELECT(vdac, BT459_IREG_CCOLOR_1);
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-
-	REG(vdac, bt_reg) = 0;	tc_wmb();
-	REG(vdac, bt_reg) = 0;	tc_wmb();
-	REG(vdac, bt_reg) = 0;	tc_wmb();
-
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-#endif	/* XXX snip XXX */
 }
 
 
@@ -773,13 +761,13 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count, icount;
+	u_int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= 2 || (index + count) > 2)
+		if (index >= CURSOR_MAX_COLOURS || (index + count) > CURSOR_MAX_COLOURS)
 			return (EINVAL);
 		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
 		    !uvm_useracc(p->cmap.green, count, B_READ) ||
@@ -787,15 +775,15 @@ set_cursor(sc, p)
 			return (EFAULT);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
-		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
+		if (p->size.x > CURSOR_MAX_WIDTH || p->size.y > CURSOR_MAX_HEIGHT)
 			return (EINVAL);
-		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
+		icount = sizeof(u_int32_t) * p->size.y;
 		if (!uvm_useracc(p->image, icount, B_READ) ||
 		    !uvm_useracc(p->mask, icount, B_READ))
 			return (EFAULT);
 	}
 
-	if (v & WSDISPLAY_CURSOR_DOCUR)
+	if (v & WSDISPLAY_CURSOR_DOCUR) 
 		sc->sc_curenb = p->enable;
 	if (v & WSDISPLAY_CURSOR_DOPOS)
 		set_curpos(sc, &p->pos);
@@ -809,10 +797,11 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
+		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
 		copyin(p->image, cc->cc_image, icount);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
+		copyin(p->mask, cc->cc_mask, icount);
 	}
-	sc->sc_changed = v;
+	sc->sc_changed |= v;
 
 	return (0);
 #undef cc

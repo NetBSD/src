@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.9 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.9.2.1 2001/08/25 06:15:24 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -369,7 +369,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139

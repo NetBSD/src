@@ -1,4 +1,4 @@
-#	$NetBSD: std.algor,v 1.2 2001/06/10 05:26:59 thorpej Exp $
+#	$NetBSD: std.algor,v 1.2.2.1 2001/08/25 06:14:59 thorpej Exp $
 
 machine algor mips
 
@@ -9,5 +9,5 @@ options 	EXEC_SCRIPT	# exec of #! scripts
 options 	MIPS3		# All supported Algor boards are MIPS3
 options 	MIPS3_ENABLE_CLOCK_INTR
 
-makeoptions	DEFTEXTADDR="0x80030000"
+makeoptions	DEFTEXTADDR="0x80100000"
 makeoptions	ENDIAN="-EL"

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.35.2.1 2001/08/03 04:12:26 lukem Exp $	*/
+/*	$NetBSD: iommu.c,v 1.35.2.2 2001/08/25 06:15:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -650,9 +650,9 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	pa = segs[0].ds_addr;
 	sgsize = 0;
 	for (i=0; i<nsegs; i++) {
-		sgsize += segs[i].ds_len;
 		if (round_page(pa) != round_page(segs[i].ds_addr))
 			sgsize = round_page(sgsize);
+		sgsize += segs[i].ds_len;
 		pa = segs[i].ds_addr + segs[i].ds_len;
 	}
 	sgsize = round_page(sgsize);

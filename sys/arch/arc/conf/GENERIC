@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47 2001/07/08 16:32:13 abs Exp $
+#	$NetBSD: GENERIC,v 1.47.2.1 2001/08/25 06:15:07 thorpej Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.47 $"
+#ident		"GENERIC-$Revision: 1.47.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -274,7 +274,7 @@ scsibus*	at iha?
 #scsibus* 	at siop?
 
 #de*		at pci? dev ? function ?
-ex*		at pci? dev ? function ?	# 3Com 90x[B]
+ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible

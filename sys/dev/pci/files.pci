@@ -1,10 +1,11 @@
-#	$NetBSD: files.pci,v 1.132.2.1 2001/08/03 04:13:15 lukem Exp $
+#	$NetBSD: files.pci,v 1.132.2.2 2001/08/25 06:16:22 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
 defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
+			PCI_NETBSD_ENABLE_IDE
 
 defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT

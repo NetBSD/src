@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.h,v 1.2 1999/02/04 15:41:15 tsubai Exp $	*/
+/*	$NetBSD: ofdev.h,v 1.2.22.1 2001/08/25 06:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_STAND_DEV_H_
-#define	_STAND_DEV_H_
+#ifndef _STAND_DEV_H_
+#define _STAND_DEV_H_
 
 struct of_dev {
 	int handle;
@@ -42,10 +42,8 @@ struct of_dev {
 };
 
 /* Known types: */
-#define	OFDEV_NET	1
-#define	OFDEV_DISK	2
-
-#define	DEFAULT_KERNEL	"/netbsd"
+#define OFDEV_NET	1
+#define OFDEV_DISK	2
 
 extern char opened_name[];
 extern int floppyboot;

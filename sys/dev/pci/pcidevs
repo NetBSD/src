@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.336.2.1 2001/08/03 04:13:19 lukem Exp $
+$NetBSD: pcidevs,v 1.336.2.2 2001/08/25 06:16:25 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -504,6 +504,7 @@ vendor ESSTECH		0x125d	ESS Technology Inc
 vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
+vendor TRANSMETA	0x1279	Transmeta Corp
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor DAVICOM		0x1282	Davicom Semiconductor
 vendor ESSTECH2		0x1285	ESS Technology Inc
@@ -659,6 +660,8 @@ product ALI M4803	0x5215	M4803
 product ALI M5229	0x5229	M5229 UDMA IDE Controller
 product ALI M5237	0x5237	M5237 USB Host Controller
 product ALI M5243	0x5243	M5243 PCI-AGP Bridge
+product ALI M5451	0x5451	M5451 AC-Link Controller Audio Device
+product ALI M5453	0x5453	M5453 AC-Link Controller Modem Device
 product ALI M7101	0x7101	M7101 Power Management Controller
 
 /* Adaptec products */
@@ -720,17 +723,19 @@ product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
 product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 
 /* AMD products */
-product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
-product AMD PCNET_HOME	0x2001	79c978 PCnet-PCI Home
-product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
-product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
+product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
+product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
+product AMD PCNETS_PCI	0x2040	PCnet-PCI Ethernet & SCSI
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
 product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
 product AMD PBC756_IDE	0x7409	AMD756 IDE controller
 product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
 product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
-product AMD PBC766_ISA	0x7410	AMD766 PCI-to-ISA Bridge
+product AMD SC762_NB	0x700c	AMD762 NorthBridge
+product AMD SC762_PPB	0x700d	AMD762 AGP Bridge
+product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
@@ -763,6 +768,9 @@ product APPLE PANGEA_MACIO	0x0025	MAC-IO I/O Controller (Pangea)
 product APPLE PANGEA_AGP	0x0027	Pangea AGP Interface
 product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI Bridge
 product APPLE PANGEA_PCI2	0x0029	Pangea Host-PCI Bridge
+product APPLE UNIN_AGP		0x002d	Uni-N AGP Interface
+product APPLE UNIN_PCI1		0x002e	Uni-N Host-External PCI Bridge
+product APPLE UNIN_PCI2		0x002f	Uni-N Host-Internal PCI Bridge
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -856,6 +864,7 @@ product AVANCE AVL2301	0x2301	AVL2301
 product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
+product AVANCE2 ALS4000	0x4000	ALS4000 Audio
 
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
@@ -1438,6 +1447,7 @@ product NEC VRC4173_BCU	0x00a5	VRC4173 Bus Control Unit
 product NEC VRC4173_AC97U 0x00a6 VRC4173 AC97 Unit
 product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
 product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
+product NEC PD720100A	0x00e0	USB Host Controller
 product NEC VA26D	0x803c	NEC Versa Pro LX VA26D
 product NEC VERSALX	0x8058	NEC Versa LX
 
@@ -1524,7 +1534,8 @@ product PROMISE DC5030	0x5300	DC5030
 product PROMISE ULTRA33	0x4d33	Ultra33/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA66	0x4d38	Ultra66/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100 0x4d30	Ultra100/ATA Bus Master IDE Accelerator
-product PROMISE ULTRA100X 0x0d30 Ultra100/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA100X 0x0d30 Ultra100X/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA100TX2 0x4d68 Ultra100TX2/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
@@ -1755,6 +1766,12 @@ product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
 product TOSHIBA2 OBOE		0x0701	Fast Infrared Type O
 product TOSHIBA2 DONAUOBOE	0x0d01	Fast Infrared Type DO
+
+/* Transmeta products */
+product TRANSMETA NORTHBRIDGE	0x0295	Virtual Northbridge
+product TRANSMETA LONGRUN	0x0395	LongRun Northbridge
+product TRANSMETA SDRAM		0x0396	SDRAM Controller
+product TRANSMETA BIOS_SCRATCH	0x0397	BIOS Scratchpad
 
 /* Trident products */
 product TRIDENT CYBERBLADE_I7	0x8420	CyberBlade i7

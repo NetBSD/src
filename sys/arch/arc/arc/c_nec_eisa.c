@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.1 2001/06/13 15:22:49 soda Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.1.4.1 2001/08/25 06:15:06 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -109,14 +109,6 @@ c_nec_eisa_init()
 	 */
 	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
 	    MIPS3_PG_SIZE_256K);
-	arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL, PICA_P_LOCAL_VIDEO_CTRL,
-	    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
-	    MIPS3_PG_SIZE_1M);
-	arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL, PICA_P_EXTND_VIDEO_CTRL,
-	    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
-	    MIPS3_PG_SIZE_1M);
-	arc_enter_wired(PICA_V_LOCAL_VIDEO, PICA_P_LOCAL_VIDEO,
-	    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2, MIPS3_PG_SIZE_4M);
 	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
 	    MIPS3_PG_SIZE_16M);
 

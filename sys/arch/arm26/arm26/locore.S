@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15 2001/05/01 11:01:12 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.15.2.1 2001/08/25 06:15:12 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -47,6 +47,8 @@
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
+
+#include "fiq.h"
 	
 fp	.req	r11
 ip	.req	r12
@@ -127,7 +129,9 @@ Lfiqhandler:
 	.global _C_LABEL(fiqhandler)
 	.set	_C_LABEL(fiqhandler), . - _C_LABEL(page0)
 	subs	pc, lr, #4
+#if NFIQ > 0
 	.org	Lfiqhandler + 0x100
+#endif
 
 Lreset_target:
 	.word	reset_entry
@@ -339,6 +343,7 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast_handler)
 	b	pull_trapframe
 
+/* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
 ENTRY(atomic_set_bit)
 	/* disable interrupts */
 	/* Note that this is evil and only works due to prefetching */
@@ -349,6 +354,7 @@ ENTRY(atomic_set_bit)
 	str	r2, [r0]
 	/* restore interrupt state and return */
 	movs	pc, lr
+/* LINTSTUB: Func: void atomic_clear_bit(u_int *address, u_int clearmask) */
 ENTRY(atomic_clear_bit)
 	/* disable interrupts */
 	/* Note that this is evil and only works due to prefetching */
@@ -360,8 +366,9 @@ ENTRY(atomic_clear_bit)
 	/* restore interrupt state and return */
 	movs	pc, lr
 
+/* XXX: Return type should be register_t */
+/* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
 ENTRY(set_r13_irq)
-	/* register_t set_r13_irq(register_t r13_irq) */
 	/* XXX Is enabling FIQs OK? */
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
 	mov	r1, r0
@@ -371,19 +378,47 @@ ENTRY(set_r13_irq)
 	MODE_CHANGE_NOP
 	movs	r15, lr
 
+#if NFIQ > 0
+/* LINTSTUB: Func: void fiq_setregs(const struct fiq_regs *) */
+ENTRY(fiq_setregs)
+	/* We assume that there's no need to disable FIQs while we work. */
+	mov	r1, r15
+	bic	r2, r1, #R15_MODE
+	teqp	r2, #R15_MODE_FIQ
+	MODE_CHANGE_NOP
+	ldmia	r0, {r8-r13}
+	teqp	r1, #0
+	MODE_CHANGE_NOP
+	mov	r15, lr	
+/* LINTSTUB: Func: void fiq_getregs(struct fiq_regs *) */
+ENTRY(fiq_getregs)
+	mov	r1, r15
+	bic	r2, r1, #R15_MODE
+	teqp	r2, #R15_MODE_FIQ
+	MODE_CHANGE_NOP
+	stmia	r0, {r8-r13}
+	teqp	r1, #0
+	MODE_CHANGE_NOP
+	mov	r15, lr
+#endif
+
 	/*
 	 * These are grotty, and very non-APCS.  The CPU interrupt status
 	 * is part of the state that's restored on function exit, so the
 	 * effect of these only persists until then.
 	 */
+/* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
+/* LINTSTUB: Func: void int_off(void) */
 ENTRY(int_off)
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
 	/* These are used by mcount */
+/* LINTSTUB: Func: int int_off_save(void) */
 ENTRY_NP(int_off_save)
 	mov	r0, r15
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
+/* LINTSTUB: Func: void int_restore(int) */
 ENTRY_NP(int_restore)
 	tst	r0, #(R15_IRQ_DISABLE)	/* Were IRQs already disabled? */
 	biceqs	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
@@ -400,12 +435,13 @@ ENTRY_NP(int_restore)
 	 * and return to the context in to.  This should be called in
 	 * splhigh();
 	 */
+/* LINTSTUB: Func: void cpu_loswitch(struct switchframe **fromp, struct switchframe *to) */
 ENTRY(cpu_loswitch)
 	mov	r2, sp			/* Temporary stack pointer */
 	stmfd	r2!, {r4-r11, r13-r14}	/* Save all relevant registers */
 	str	r2, [r0]		/* Save switchframe pointer */
 	ldmfd	r1, {r4-r11, r13-r14}	/* Restore from old switchframe */
-	movs	pc, r14			/* and return */
+	mov	pc, r14			/* and return */
 
 	/*
 	 * This funny little routine implements starting a process.
@@ -428,30 +464,31 @@ ENTRY(proc_trampoline)
 Lproc_trampoline_nofunc:
 	b	pull_trapframe
 
-/* int setjmp(label_t *); */
+/* LINTSTUB: Func: int setjmp(label_t *) */
 ENTRY(setjmp)
 	stmia	r0, {r4-r11, r13-r14}	/* Save relevant registers */
 	mov	r0, #0			/* Return 0 */
-	movs	pc, lr
+	mov	pc, lr
 
-/* void longjmp(label_t *); */
+/* LINTSTUB: Func: void longjmp(label_t *) */
 ENTRY(longjmp)
 	ldmia	r0, {r4-r11, r13-r14}	/* Restore registers */
 	mov	r0, #1			/* Return 1 through longjmp */
-	movs	pc, lr
+	mov	pc, lr
 
 #ifdef DDB
 /* Enter DDB -- shove registers in a trapframe first */
-/* void cpu_Debugger(void); */
+/* LINTSTUB: Func: void cpu_Debugger(void) */
 ENTRY(cpu_Debugger)
 	stmfd	r13!, {r14}
 	.word	KERNEL_BREAKPOINT
-	ldmfd	r13!, {pc}^
+	ldmfd	r13!, {pc}
 #endif
 
 /*
  * Dummy symbols for vmstat -i
  */
+/* LINTSTUB: Var: char intrnames[1], eintrnames[1], intrcnt[1], eintrcnt[1] */
 	.global	_C_LABEL(intrnames)
 _C_LABEL(intrnames):
 	.global	_C_LABEL(eintrnames)
@@ -461,4 +498,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.15 2001/05/01 11:01:12 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.15.2.1 2001/08/25 06:15:12 thorpej Exp $")

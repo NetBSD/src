@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.1 2001/08/03 04:13:24 lukem Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.2 2001/08/25 06:16:30 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -452,6 +452,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Panasonic 8X CD-ROM Interface Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
+	    PCMCIA_CIS_PSION_GOLDCARD,
+	    0,
+	    "Psion",
+	    "Psion Gold Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
 	    PCMCIA_CIS_USROBOTICS_WORLDPORT144,
 	    0,
@@ -772,6 +779,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "BUFFALO (Melco Corporation)",
 	    "BUFFALO AirStation 11Mbps WLAN"	},
+	},
+	{
+	    PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
+	    PCMCIA_CIS_ZONET_ZEN,
+	    0,
+	    "Zonet Technology Inc.",
+	    "Zonet Zen 10/10"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -1250,6 +1264,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_PSION, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Psion",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_COMPAQ2, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1359,6 +1380,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Melco Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ZONET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Zonet Technology Inc.",
 	    NULL,
 	},
 	{

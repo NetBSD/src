@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.38 2001/05/06 03:26:39 ichiro Exp $
+#	$NetBSD: files.pcmcia,v 1.38.2.1 2001/08/25 06:16:29 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -21,7 +21,7 @@ file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (NE[12]000, and clones)
-attach	ne at pcmcia with ne_pcmcia: rtl80x9, dl10019, mii_bitbang
+attach	ne at pcmcia with ne_pcmcia: rtl80x9, dl10019, ax88190, mii_bitbang
 file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 
 # Adaptec APA-1460 SCSI Host Adapter

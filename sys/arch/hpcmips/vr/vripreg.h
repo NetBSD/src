@@ -1,4 +1,4 @@
-/*	$NetBSD: vripreg.h,v 1.3 2001/04/21 14:46:36 sato Exp $	*/
+/*	$NetBSD: vripreg.h,v 1.3.2.1 2001/08/25 06:15:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -110,8 +110,8 @@
 #define VR4122_DCU_ADDR		0x0f000040
 #define VR4122_CMU_ADDR		0x0f000060
 #define VR4122_ICU_ADDR		0x0f000080
-#define VR4122_PMU_ADDR		0x0f000100
-#define VR4122_RTC_ADDR		0x0f000140
+#define VR4122_PMU_ADDR		0x0f0000c0
+#define VR4122_RTC_ADDR		0x0f000100
 #define VR4122_DSU_ADDR		VRIP_NO_ADDR	/* XXX: no register */
 #define VR4122_GIU_ADDR		0x0f000140
 #define VR4122_PIU_ADDR		VRIP_NO_ADDR	/* XXX: no register */
@@ -130,10 +130,10 @@
 #define VR4122_GIU81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define VR4122_SIU1_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define	VR4122_SCU_ARR		0x0f001000
-#define VR4122_SDRAMU_ADDR	0x00000400
-#define VR4122_PCI_ADDR		0x00000c00
-#define VR4122_PCICONF_ADDR	0x00000d00
-#define VR4122_CSI_ADDR		0x000001a0
+#define VR4122_SDRAMU_ADDR	0x0f000400
+#define VR4122_PCI_ADDR		0x0f000c00
+#define VR4122_PCICONF_ADDR	0x0f000d00
+#define VR4122_CSI_ADDR		0x0f0001a0
 
 /*
  * VRIP base address

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17 2001/03/28 23:08:15 fredette Exp $	*/
+/*	$NetBSD: frame.h,v 1.17.2.1 2001/08/25 06:15:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ struct frame {
 			u_short	f_irc;
 			u_short	f_maskpc;
 			u_short	f_iregs[15];
-		} F_fmt8;
+		} __attribute__((packed)) F_fmt8;
 
 		struct fmt9 {
 			u_int	f_iaddr;

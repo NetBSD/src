@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.39.2.1 2001/08/03 04:13:16 lukem Exp $ */
+/* $NetBSD: if_ti.c,v 1.39.2.2 2001/08/25 06:16:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1690,7 +1690,7 @@ static void ti_attach(parent, self, aux)
 		}
 	}
 	if (nolinear == 0)
-		sc->ti_vhandle = (void *)(sc->ti_bhandle); /* XXX XXX XXX */
+		sc->ti_vhandle = (void *)(u_long)(sc->ti_bhandle); /* XXX XXX XXX */
 	else 
 		sc->ti_vhandle = NULL;
 
@@ -1762,7 +1762,7 @@ static void ti_attach(parent, self, aux)
 	 * Get station address from the EEPROM. Note: the manual states
 	 * that the MAC address is at offset 0x8c, however the data is
 	 * stored as two longwords (since that's how it's loaded into
-	 * the NIC). This means the MAC address is actually preceeded
+	 * the NIC). This means the MAC address is actually preceded
 	 * by two zero bytes. We need to skip over those.
 	 */
 	if (ti_read_eeprom(sc, (caddr_t)&eaddr,

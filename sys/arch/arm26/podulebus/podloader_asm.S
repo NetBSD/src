@@ -1,4 +1,4 @@
-/*	$NetBSD: podloader_asm.S,v 1.1 2000/12/20 10:57:38 bjh21 Exp $	*/
+/*	$NetBSD: podloader_asm.S,v 1.1.6.1 2001/08/25 06:15:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,32 +30,44 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: podloader_asm.S,v 1.1 2000/12/20 10:57:38 bjh21 Exp $")
+RCSID("$NetBSD: podloader_asm.S,v 1.1.6.1 2001/08/25 06:15:14 thorpej Exp $")
 
 #include <sys/errno.h>
 
 /*
  * register_t podloader_call(register_t r0, register_t r1, register_t r11,
  *     void *loader, int entry)
+ *
+ * Podule loader register assignments:
+ * R0     Write/Read data
+ * R1     Address
+ * R2-R3  Scratch
+ * R4-R9  Preserved
+ * R10    Scratch
+ * R11    Hardware address, preserved
+ * R12    Preserved
+ * R13    Stack pointer, preserved
  */
 ENTRY(podloader_call)
 	mov	ip, sp
-	stmfd	sp!, {r4, fp, ip, lr, pc}
+	stmfd	sp!, {r4, r5, fp, ip, lr, pc}
 	sub	fp, ip, #4
 	ldr	r4, [fp, #4]		/* fetch entry */
-	bl	_C_LABEL(int_off)
+	bl	_C_LABEL(int_off_save)
+	mov	r5, r0
 	stmfd	sp!, {fp}		/* Save FP, since that's R11 */
 	mov	r11, r2
 	mov	lr, pc
 	add	pc, r3, r4, lsl #2	/* Call loader */
 	ldmfd	sp!, {fp}
-	bl	_C_LABEL(int_on)
+	mov	r0, r5
+	bl	_C_LABEL(int_restore)
 	adrvs	r0, Lpodloader_panicmsg
 	blvs	_C_LABEL(panic)
 #ifdef __APCS_26__
-	ldmdb	fp, {r4, fp, sp, pc}^
+	ldmdb	fp, {r4, r5, fp, sp, pc}^
 #else
-	ldmdb	fp, {r4, fp, sp, pc}
+	ldmdb	fp, {r4, r5, fp, sp, pc}
 #endif
 Lpodloader_panicmsg:
 	.asciz	"podloader_call"

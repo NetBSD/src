@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.33.2.1 2001/08/03 04:11:04 lukem Exp $
+# $NetBSD: files.arm26,v 1.33.2.2 2001/08/25 06:15:12 thorpej Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -39,6 +39,8 @@ major { wd = 4 }
 include "dev/scsipi/files.scsipi"
 major   {sd = 5}
 major   {cd = 6}
+
+define fiq
 
 # CPU
 #device	cpu { }
@@ -201,12 +203,13 @@ file	arch/arm26/arm26/conf.c
 file	arch/arm26/arm26/cons_machdep.c
 file	arch/arm26/arm26/copyinout.S
 file	arch/arm26/arm26/except.c
+file	arch/arm26/arm26/fiq.c			fiq		needs-flag
+file	arch/arm26/arm26/fiq_util.S		fiq
 file	arch/arm26/arm26/irq.c
 file	arch/arm26/arm26/Locore.c
 file	arch/arm26/arm26/machdep.c
 file	arch/arm26/arm26/mem.c
 file	arch/arm26/arm26/pmap.c
-file	arch/arm26/arm26/procfs_machdep.c	procfs
 #file	arch/arm26/arm26/rscons.c
 file 	arch/arm26/arm26/softintr.c
 file	arch/arm26/arm26/stubs.c

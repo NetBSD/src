@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.132.2.1 2001/08/03 04:13:23 lukem Exp $
+$NetBSD: pcmciadevs,v 1.132.2.2 2001/08/25 06:16:29 thorpej Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -65,6 +65,7 @@ vendor DLINK_2			0x0143	D-Link
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor LUCENT			0x0156	Lucent Technologies
 vendor AIRONET			0x015f	Aironet Wireless Communications
+vendor PSION			0x016c	Psion
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna Corporation
@@ -81,6 +82,7 @@ vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor COMPEX			0x8a01	Compex Corporation
 vendor MELCO			0x8a01	Melco Corporation
+vendor ZONET			0x8a01	Zonet Technology Inc.
 vendor CONTEC			0xc001	Contec
 vendor MACNICA			0xc00b	MACNICA
 vendor ROLAND			0xc00c	Roland
@@ -203,6 +205,9 @@ product OLICOM TR		0x2132 GoCard Token Ring 16/4
 product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface Card
 product PANASONIC KXLC003	0x0504 Panasonic 8X CD-ROM Interface Card
 
+/* Psion */
+product PSION GOLDCARD		0x0020 Psion Gold Card
+
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
 
@@ -291,6 +296,10 @@ product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
 
 /* BUFFALO */
 product BUFFALO WLI_PCM_S11	0x0305	BUFFALO AirStation 11Mbps WLAN
+
+/* ZONET */
+product ZONET ZEN		0x0100	Zonet Zen 10/10
+
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.72 2001/07/07 17:04:01 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.72.2.1 2001/08/25 06:16:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1017,6 +1017,11 @@ ccdioctl(dev, cmd, data, flag, p)
 			goto out;
 		}
 
+		if (ccio->ccio_ndisks > CCD_MAXNDISKS) {
+			error = EINVAL;
+			goto out;
+		}
+			
 		/* Fill in some important bits. */
 		cs->sc_ileave = ccio->ccio_ileave;
 		cs->sc_nccdisks = ccio->ccio_ndisks;

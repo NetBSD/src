@@ -1,17 +1,17 @@
-/*	$NetBSD: clockreg.h,v 1.4 2000/03/18 22:33:06 scw Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.1.2.2 2001/08/25 06:15:56 thorpej Exp $ */
 
 /*
+ * Copyright (c) 2001 Eduardo Horvath.
+ * Copyright (c) 1995 Zubin Dittia.
+ * Copyright (c) 1995 Matthew R. Green.
+ * Copyright (c) 1994, 1998 Charles M. Hannum.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
  *
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ *	California, and it's contributors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,37 +41,67 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
+ *	@(#)in_cksum.c	8.1 (Berkeley) 6/11/93
  */
-#ifndef _MVME68K_CLOCKREG_H
-#define _MVME68K_CLOCKREG_H
 
-/*
- * Mostek MK48T02 clock register offsets
- */
-#define MK48TREG_CSR	0	/* control register */
-#define MK48TREG_SEC	1	/* seconds (0..59; BCD) */
-#define MK48TREG_MIN	2	/* minutes (0..59; BCD) */
-#define MK48TREG_HOUR	3	/* hour (0..23; BCD) */
-#define MK48TREG_WDAY	4	/* weekday (1..7) */
-#define MK48TREG_MDAY	5	/* day in month (1..31; BCD) */
-#define MK48TREG_MONTH	6	/* month (1..12; BCD) */
-#define MK48TREG_YEAR	7	/* year (0..99; BCD) */
-#define MK48T_REGSIZE	8
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
-/* bits in MK48TREG_CSR */
-#define	CLK_WRITE	0x80		/* want to write */
-#define	CLK_READ	0x40		/* want to read (freeze clock) */
+extern int in_cksum_internal __P((struct mbuf *, int len, int offset, int sum));
 
-/*
- * Sun chose the year `68' as their base count, so that
- * cl_year==0 means 1968.
- */
-#define	YEAR0	68
+int
+in4_cksum(m, nxt, off, len)
+	struct mbuf *m;
+	u_int8_t nxt;
+	int off, len;
+{
+	u_char *w;
+	u_int sum = 0;
+	struct ipovly ipov;
 
-/*
- * interrupt level for clock
- */
-#define CLOCK_LEVEL 5
+	/*
+	 * Declare three temporary registers for use by the asm code.  We
+	 * allow the compiler to pick which specific machine registers to
+	 * use, instead of hard-coding this in the asm code.
+	 */
+	u_int tmp1, tmp2, tmp3;
 
-#endif /* _MVME68K_CLOCKREG_H */
+	if (nxt != 0) {
+		/* pseudo header */
+		memset(&ipov, 0, sizeof(ipov));
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt; 
+		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = (u_char *)&ipov;
+		/* assumes sizeof(ipov) == 20 */
+		__asm __volatile(" lduw [%5 + 0], %1; "
+			" lduw [%5 + 4], %2; "
+			" lduw [%5 + 8], %3; add %0, %1, %0; "
+			" lduw [%5 + 12], %1; add %0, %2, %0; "
+			" lduw [%5 + 16], %2; add %0, %3, %0; "
+			" mov -1, %3; "
+			" add %0, %1, %0; "
+			" srl %3, 0, %3; "
+			" add %0, %2, %0; "
+			" srlx %0, 32, %2; and %0, %3, %1; "
+			" add %0, %2, %0; "
+			: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3)
+			: "0" (sum), "r" (w));
+	}
+
+	/* skip unnecessary part */
+	while (m && off > 0) {
+		if (m->m_len > off)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+	
+	return (in_cksum_internal(m, len, off, sum));
+}

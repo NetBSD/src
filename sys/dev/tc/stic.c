@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8 2001/03/04 13:32:25 ad Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.4.1 2001/08/25 06:16:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1290,7 +1290,7 @@ static int
 stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 #define	cc (&si->si_cursor)
-	int v, index, count, icount;
+	u_int v, index, count, icount;
 	struct stic_screen *ss;
 
 	v = p->which;

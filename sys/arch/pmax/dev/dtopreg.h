@@ -1,4 +1,4 @@
-/*	$NetBSD: dtopreg.h,v 1.8 2000/04/26 04:16:17 mhitch Exp $	*/
+/*	$NetBSD: dtopreg.h,v 1.8.8.1 2001/08/25 06:15:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -130,26 +130,26 @@ typedef struct {
 
 /* from host to devices */
 
-#define	DTOP_MSG_RESET		0xf0	/* preceeded by 0x81: P,len 1 */
+#define	DTOP_MSG_RESET		0xf0	/* preceded by 0x81: P,len 1 */
 
-#define	DTOP_MSG_ID_REQUEST	0xf1	/* preceeded by 0x81: P,len 1 */
+#define	DTOP_MSG_ID_REQUEST	0xf1	/* preceded by 0x81: P,len 1 */
 
-#define	DTOP_MSG_ASSIGN_ADDRESS	0xf2	/* preceeded by 0x9e: P,len 30 */
+#define	DTOP_MSG_ASSIGN_ADDRESS	0xf2	/* preceded by 0x9e: P,len 30 */
 					/* followed by a dtop_id_reply_t */
 					/* and by the new_IC_address */
 
-#define	DTOP_MSG_CAP_REQUEST	0xf3	/* preceeded by 0x83: P,len 3 */
+#define	DTOP_MSG_CAP_REQUEST	0xf3	/* preceded by 0x83: P,len 3 */
 					/* followed by a 16 bit u_offset */
 
-#define	DTOP_MSG_APPL_TEST	0xb1	/* preceed by P, sub, len 1 */
+#define	DTOP_MSG_APPL_TEST	0xb1	/* precede by P, sub, len 1 */
 
 /* from devices to host */
 
-#define	DTOP_MSG_ATTENTION	0xe0	/* preceeded by P, len */
+#define	DTOP_MSG_ATTENTION	0xe0	/* preceded by P, len */
 #	define DTOP_ATN_OK_STATUS	0x00	/* anything else bad */
 					/* followed by 0-30 bytes */
 
-#define	DTOP_MSG_ID_REPLY	0xe1	/* preceeded by P,len (29..32) */
+#define	DTOP_MSG_ID_REPLY	0xe1	/* preceded by P,len (29..32) */
 
 typedef struct {
 	unsigned char	module_revision[8];	/* ascii, blank padded */
@@ -159,7 +159,7 @@ typedef struct {
 	/* 0-3 optional bytes follow, ignore */
 } dtop_id_reply_t;
 
-#define	DTOP_MSG_CAP_REPLY	0xe3	/* preceeded by P,len (3..32) */
+#define	DTOP_MSG_CAP_REPLY	0xe3	/* preceded by P,len (3..32) */
 					/* followed by 16 bit u_offset */
 					/* followed by data */
 
@@ -185,16 +185,16 @@ typedef struct {
 
 /* from host to keyboard */
 
-#define	DTOP_KMSG_CLICK		0x01	/* preceeded by P, sub len 2 */
+#define	DTOP_KMSG_CLICK		0x01	/* preceded by P, sub len 2 */
 #	define	DTOP_CLICK_VOLUME_MAX	0x7	/* followed by one byte */
 
-#define	DTOP_KMSG_BELL		0x02	/* preceeded by P, sub len 2 */
+#define	DTOP_KMSG_BELL		0x02	/* preceded by P, sub len 2 */
 					/* same as above */
 
-#define	DTOP_KMSG_LED		0x03	/* preceeded by P, sub len 2 */
+#define	DTOP_KMSG_LED		0x03	/* preceded by P, sub len 2 */
 					/* four lower bits turn leds on */
 
-#define	DTOP_KMSG_POLL		0x04	/* preceeded by P, sub len 1 */
+#define	DTOP_KMSG_POLL		0x04	/* preceded by P, sub len 1 */
 
 /* keyboard sends up to 11 codes in a data message, distinguished values: */
 #define	DTOP_KBD_EMPTY		0x00
@@ -224,11 +224,11 @@ typedef struct {
 	/* possibly 3 more dimensions for gloves */
 } dtop_locator_msg_t;
 
-#define	DTOP_LMSG_SET_RATE	0x01	/* preceeded by P,sub, len 2 */
+#define	DTOP_LMSG_SET_RATE	0x01	/* preceded by P,sub, len 2 */
 					/* followed by sampling interval,
 					   from 8 to 25 msecs (0->polled */
 
-#define	DTOP_LMSG_POLL		0x02	/* preceeded by P,sub, len 1 */
+#define	DTOP_LMSG_POLL		0x02	/* preceded by P,sub, len 1 */
 
 /* Powerup codes same as keyboard */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10.2.1 2001/08/03 04:11:57 lukem Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.2.2 2001/08/25 06:15:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,12 +95,19 @@
 #include "ofdev.h"
 #include "openfirm.h"
 
+#ifdef DEBUG
+# define DPRINTF printf
+#else
+# define DPRINTF while (0) printf
+#endif
+
 char bootdev[128];
 char bootfile[128];
 int boothowto;
 int debug;
 
 static ofw_version = 0;
+static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
 
 static void
 prom2boot(dev)
@@ -169,6 +176,7 @@ chain(entry, args, ssym, esym)
 	l += sizeof(ssym);
 	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
+	l += sizeof(int);	/* XXX */
 
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
@@ -242,20 +250,33 @@ main()
 
 	prom2boot(bootdev);
 	parseargs(bootline, &boothowto);
+	DPRINTF("bootline=%s\n", bootline);
 
 	for (;;) {
+		int i;
+
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
 			gets(bootline);
 			parseargs(bootline, &boothowto);
 		}
-		marks[MARK_START] = 0;
-		if (loadfile(bootline, marks, LOAD_ALL) >= 0)
-			break;
-		if (errno)
-			printf("open %s: %s\n", opened_name, strerror(errno));
+
+		if (bootline[0]) {
+			kernels[0] = bootline;
+			kernels[1] = NULL;
+		}
+
+		for (i = 0; kernels[i]; i++) {
+			DPRINTF("Trying %s\n", kernels[i]);
+
+			marks[MARK_START] = 0;
+			if (loadfile(kernels[i], marks, LOAD_KERNEL) >= 0)
+				goto loaded;
+		}
 		boothowto |= RB_ASKNAME;
 	}
+loaded:
+
 #ifdef	__notyet__
 	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
 	cp = bootline;

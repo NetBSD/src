@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.134.2.1 2001/08/03 04:14:03 lukem Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.134.2.2 2001/08/25 06:17:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,6 +195,9 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -1403,10 +1406,9 @@ nfs_mknod(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vnode *newvp;
 	int error;
 
-	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
+	error = nfs_mknodrpc(ap->a_dvp, ap->a_vpp, ap->a_cnp, ap->a_vap);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192.2.1 2001/08/03 04:13:39 lukem Exp $	*/
+/*	$NetBSD: init_main.c,v 1.192.2.2 2001/08/25 06:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -300,7 +300,7 @@ main(void)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS), TRUE);
+	    trunc_page(VM_MAX_ADDRESS));
 	p->p_vmspace = &vmspace0;
 
 	p->p_addr = proc0paddr;				/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2001/04/25 17:53:21 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58.2.1 2001/08/25 06:15:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2001/04/25 17:53:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.2.1 2001/08/25 06:15:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,11 @@ cpu_configure()
 {
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	softintr_init();
+	evcnt_attach_static(&pmax_clock_evcnt);
+	evcnt_attach_static(&pmax_fpu_evcnt);
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.1 2001/04/27 18:03:41 jdolecek Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.1.4.1 2001/08/25 06:16:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(lesc->sc_memt, membase, LE_MCA_MEMSIZE,
 		0, &lesc->sc_memh)) {
-		printf(": can't map memory\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map memory\n", sc->sc_dev.dv_xname);
 		return;
 	}
 

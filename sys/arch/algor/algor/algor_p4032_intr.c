@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.4 2001/06/15 04:01:39 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.4.2.1 2001/08/25 06:14:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -337,7 +337,7 @@ algor_p4032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	    cps, ctrdiff[2], ctrdiff[3]);
 	printf("CPU clock speed = %lu.%02luMHz "
 	    "(hz cycles = %lu, delay divisor = %u)\n",
-	    cps / 1000000, (cps % 1000000) / 100,
+	    cps / 1000000, (cps % 1000000) / 10000,
 	    cycles_per_hz, delay_divisor);
 }
 

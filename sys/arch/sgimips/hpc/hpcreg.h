@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.2 2001/06/07 12:10:34 rafal Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.2.2.1 2001/08/25 06:15:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -98,15 +98,15 @@ struct hpc_dma_desc {
 #define HPC_SCSI0_REGS		0x00010000	/* SCSI channel 0 registers */
 #define HPC_SCSI0_REGS_SIZE	0x00001fff
 
-#define HPC_SCSI0_CBP		0x00000000	/* Current buffer ptr */
-#define HPC_SCSI0_NDBP		0x00000004	/* Next descriptor ptr */
+#define HPC_SCSI0_CBP		0x00010000	/* Current buffer ptr */
+#define HPC_SCSI0_NDBP		0x00010004	/* Next descriptor ptr */
 
-#define HPC_SCSI0_BC		0x00001000	/* DMA byte count & flags */
-#define HPC_SCSI0_CTL		0x00001004	/* DMA control flags */
-#define HPC_SCSI0_GIO		0x00001008	/* GIO DMA FIFO pointer */
-#define HPC_SCSI0_DEV		0x0000100c	/* Device DMA FIFO pointer */
-#define HPC_SCSI0_DMACFG	0x00001010	/* DMA configururation */
-#define HPC_SCSI0_PIOCFG	0x00001014	/* PIO configururation */
+#define HPC_SCSI0_BC		0x00011000	/* DMA byte count & flags */
+#define HPC_SCSI0_CTL		0x00011004	/* DMA control flags */
+#define HPC_SCSI0_GIO		0x00011008	/* GIO DMA FIFO pointer */
+#define HPC_SCSI0_DEV		0x0001100c	/* Device DMA FIFO pointer */
+#define HPC_SCSI0_DMACFG	0x00011010	/* DMA configururation */
+#define HPC_SCSI0_PIOCFG	0x00011014	/* PIO configururation */
 
 #define HPC_SCSI1_REGS		0x00012000	/* SCSI channel 1 registers */
 #define HPC_SCSI1_REGS_SIZE	0x00001fff
@@ -120,6 +120,16 @@ struct hpc_dma_desc {
 #define HPC_SCSI1_DEV		0x0000100c	/* Device DMA FIFO pointer */
 #define HPC_SCSI1_DMACFG	0x00001010	/* DMA configururation */
 #define HPC_SCSI1_PIOCFG	0x00001014	/* PIO configururation */
+
+#define HPC_DMACTL_IRQ    0x01 /* IRQ asserted, either dma done or parity */
+#define HPC_DMACTL_ENDIAN 0x02 /* DMA endian mode, 0=BE, 1=LE */
+#define HPC_DMACTL_DIR    0x04 /* DMA direction, 0=dev->mem, 1=mem->dev */
+#define HPC_DMACTL_FLUSH  0x08 /* Flush DMA FIFO's */
+#define HPC_DMACTL_ACTIVE 0x10 /* DMA channel is active */
+#define HPC_DMACTL_AMASK  0x20 /* DMA active inhibits PIO */
+#define HPC_DMACTL_RESET  0x40 /* Resets dma channel and external controller */
+#define HPC_DMACTL_PERR   0x80 /* Parity error on interface to controller */
+
 
 #define HPC_ENET_REGS		0x00014000	/* Ethernet registers */
 #define HPC_ENET_REGS_SIZE	0x00003fff

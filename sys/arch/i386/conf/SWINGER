@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.17 2001/07/09 15:05:24 soren Exp $
+#	$NetBSD: SWINGER,v 1.17.2.1 2001/08/25 06:15:24 thorpej Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.17 $"
+#ident 		"SWINGER-$Revision: 1.17.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -482,7 +482,7 @@ fd*	at fdc? drive ?			# the drives themselves
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI

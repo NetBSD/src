@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2001/05/30 15:24:39 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.80.2.1 2001/08/25 06:16:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -994,6 +994,37 @@ GLOBAL(_delay)
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
+	rts
+
+/*
+ * void set_segmap_allctx(vaddr_t va, int sme)
+ */
+ENTRY(set_segmap_allctx)
+	linkw	%fp,#0
+	moveml	#0x3000,%sp@-
+	movl	8(%fp),%d3		| d3 = va
+	andl	#0xffffffc,%d3
+	bset	#29,%d3
+	movl	%d3,%a1			| a1 = ctrladdr, d3 avail
+	movl	12(%fp),%d1		| d1 = sme
+	moveq	#FC_CONTROL,%d0
+	movl	#CONTEXT_REG,%a0	| a0 = ctxreg
+	movc	%sfc,%d3		| d3 = oldsfc
+	movc	%d0,%sfc
+	movsb	%a0@,%d2
+	andi	#7,%d2			| d2 = oldctx
+	movc	%d3,%sfc		| restore sfc, d3 avail
+	movc	%dfc,%d3		| d3 = olddfc
+	movc	%d0,%dfc
+	movl	#(CONTEXT_NUM - 1),%d0	| d0 = ctx number
+1:
+	movsb	%d0,%a0@		| change to ctx
+	movsb	%d1,%a1@		| set segmap
+	dbf	%d0,1b			| loop setting each ctx
+	movsb	%d2,%a0@		| restore ctx
+	movc	%d3,%dfc		| restore dfc
+	moveml	%sp@+,#0x000c
+	unlk	%fp
 	rts
 
 | Define some addresses, mostly so DDB can print useful info.

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.13 1997/07/29 17:54:11 veego Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.13.34.1 2001/08/25 06:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,8 +147,8 @@ struct grfvideo_mode {
  * Maxium value of "index" can be deduced from grfinfo->gd_colors.
  */
 struct grf_colormap {
-	int	index;		/* start at red[index],green[index],blue[index] */
-	int	count;		/* till < red[index+count],... */
+	unsigned int	index;		/* start at red[index],green[index],blue[index] */
+	unsigned int	count;		/* till < red[index+count],... */
 	u_char	*red;
 	u_char	*green;
 	u_char	*blue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.6.1 2001/08/03 04:14:10 lukem Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.6.2 2001/08/25 06:17:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,7 +119,9 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
+#if 0 /* XXX until LFS is fixed */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
+#endif
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
@@ -148,7 +150,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_vnodeop_opv_desc =
 	{ &lfs_vnodeop_p, lfs_vnodeop_entries };
@@ -199,7 +201,10 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_specop_opv_desc =
 	{ &lfs_specop_p, lfs_specop_entries };
@@ -250,7 +255,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };

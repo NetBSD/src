@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.18.2.1 2001/08/03 04:11:36 lukem Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.18.2.2 2001/08/25 06:15:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -417,7 +417,8 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct wsdisplay_cmap *cmap;
 	u_int8_t *r, *g, *b;
 	u_int32_t *rgb;
-	int idx, cnt, error;
+	int idx, error;
+	size_t cnt;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:

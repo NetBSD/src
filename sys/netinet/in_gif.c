@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.21.2.1 2001/08/03 04:13:54 lukem Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.21.2.2 2001/08/25 06:17:01 thorpej Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -81,11 +81,10 @@ int ip_gif_ttl = 0;
 extern struct protosw in_gif_protosw;
 
 int
-in_gif_output(ifp, family, m, rt)
+in_gif_output(ifp, family, m)
 	struct ifnet	*ifp;
 	int		family;
 	struct mbuf	*m;
-	struct rtentry *rt;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30 2001/06/09 12:22:11 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.30.2.1 2001/08/25 06:15:12 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2001/06/09 12:22:11 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.1 2001/08/25 06:15:12 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -143,12 +143,14 @@ struct pv_entry {
 #define PV_MODIFIED	0x02
 };
 
+#define PM_NENTRIES 1024
+
 struct pmap {
 	int	pm_count;	/* Reference count */
 	int	pm_flags;
 #define PM_ACTIVE 0x00000001
 	struct	pmap_statistics pm_stats;
-	struct	pv_entry *pm_entries[1024];
+	struct	pv_entry **pm_entries;
 };
 
 /*
@@ -171,6 +173,7 @@ struct pv_entry *pv_table;
 /* Kernel pmap -- statically allocated to make life slightly less odd. */
 
 struct pmap kernel_pmap_store;
+struct pv_entry *kernel_pmap_entries[PM_NENTRIES];
 
 static boolean_t pmap_initialised = FALSE;
 
@@ -248,6 +251,8 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	bzero(pmap, sizeof(*pmap));
 	pmap->pm_count = 1;
 	pmap->pm_flags = PM_ACTIVE; /* Kernel pmap always is */
+	pmap->pm_entries = kernel_pmap_entries;
+	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
 	/* pmap_pinit(pmap); */
 	/* Clear the MEMC's page table */
 	/* XXX Maybe we should leave zero page alone? */
@@ -356,6 +361,9 @@ pmap_create()
 		pmap_init2();
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
+	MALLOC(pmap->pm_entries, struct pv_entry **,
+	    sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP, M_WAITOK);
+	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
 	pmap->pm_count = 1;
 	return pmap;
 }
@@ -379,6 +387,7 @@ pmap_destroy(pmap_t pmap)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
+	FREE(pmap->pm_entries, M_VMPMAP);
 	pool_put(&pmap_pool, pmap);
 }
 

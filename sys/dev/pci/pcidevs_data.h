@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.340.2.1 2001/08/03 04:13:20 lukem Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.340.2.2 2001/08/25 06:16:26 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp 
+ *	NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp 
  */
 
 /*
@@ -466,6 +466,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "M5243 PCI-AGP Bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
+	    0,
+	    "Acer Labs",
+	    "M5451 AC-Link Controller Audio Device",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5453,
+	    0,
+	    "Acer Labs",
+	    "M5453 AC-Link Controller Modem Device",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
 	    0,
 	    "Acer Labs",
@@ -733,25 +745,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "79c970 PCnet-PCI LANCE Ethernet",
+	    "PCnet-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_HOME,
 	    0,
 	    "Advanced Micro Devices",
-	    "79c978 PCnet-PCI Home",
+	    "PCnet-Home HomePNA Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "53c974 PCscsi-PCI SCSI",
+	    "PCscsi-PCI SCSI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNETS_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "79C974 PCnet-PCI Ethernet & SCSI",
+	    "PCnet-PCI Ethernet & SCSI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
@@ -790,10 +802,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD756 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD762 NorthBridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD762 AGP Bridge",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
 	    0,
 	    "Advanced Micro Devices",
-	    "AMD766 PCI-to-ISA Bridge",
+	    "AMD766 SouthBridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_IDE,
@@ -950,6 +974,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "Pangea Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_AGP,
+	    0,
+	    "Apple Computer",
+	    "Uni-N AGP Interface",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI1,
+	    0,
+	    "Apple Computer",
+	    "Uni-N Host-External PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI2,
+	    0,
+	    "Apple Computer",
+	    "Uni-N Host-Internal PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -1412,6 +1454,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Avance Logic (2nd PCI Vendor ID)",
 	    "ALG2302",
+	},
+	{
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALS4000,
+	    0,
+	    "Avance Logic (2nd PCI Vendor ID)",
+	    "ALS4000 Audio",
 	},
 	{
 	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,
@@ -3952,6 +4000,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
 	},
 	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD720100A,
+	    0,
+	    "NEC",
+	    "USB Host Controller",
+	},
+	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,
 	    0,
 	    "NEC",
@@ -4279,7 +4333,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100X,
 	    0,
 	    "Promise Technology",
-	    "Ultra100/ATA Bus Master IDE Accelerator",
+	    "Ultra100X/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2,
+	    0,
+	    "Promise Technology",
+	    "Ultra100TX2/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
@@ -5300,6 +5360,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba",
 	    "Fast Infrared Type DO",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE,
+	    0,
+	    "Transmeta Corp",
+	    "Virtual Northbridge",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_LONGRUN,
+	    0,
+	    "Transmeta Corp",
+	    "LongRun Northbridge",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_SDRAM,
+	    0,
+	    "Transmeta Corp",
+	    "SDRAM Controller",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_BIOS_SCRATCH,
+	    0,
+	    "Transmeta Corp",
+	    "BIOS Scratchpad",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
@@ -8971,6 +9055,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETAPP, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Network Appliance",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Transmeta Corp",
 	    NULL,
 	},
 	{

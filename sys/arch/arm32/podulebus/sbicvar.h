@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.8 2001/04/25 17:53:12 bouyer Exp $ */
+/* $NetBSD: sbicvar.h,v 1.8.2.1 2001/08/25 06:15:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,19 +44,6 @@
 #include <sys/callout.h>
 
 /*
- * The largest single request will be MAXPHYS bytes which will require
- * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
- * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
- * buffer is not page aligned (+1).
- */
-#define	DMAMAXIO	(MAXPHYS/NBPG+1)
-
-struct	dma_chain {
-	int	dc_count;
-	char	*dc_addr;
-};
-
-/*
  * ACB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
  * with a request sense command.  Basicly, we refrain from fiddling with
@@ -70,20 +57,16 @@ struct sbic_acb {
 	int		flags;		/* Status */
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
-#define ACB_DONE	0x04
-#define ACB_BBUF	0x10	/* DMA input needs to be copied from bounce */
-#define	ACB_DATAIN	0x20	/* DMA direction flag */
+#define ACB_DONE	0x02
+#define ACB_DATAIN	0x04		/* DMA direction flag */
+#define	ACB_DMA		0x08		/* ACB using DMA this time */
 	struct scsi_generic cmd;	/* SCSI command block */
-	int	 clen;
-	u_char	*data;			/* Data buffer... */
-	int	 datalen;		/* ... and its length. */
-	struct	dma_chain sc_pa;	/* Physical address of DMA segment */
-	u_long	sc_tcnt;		/* number of bytes for this DMA */
-	u_char *sc_dmausrbuf;		/* user buffer kva - for bounce copy */
-	u_long  sc_dmausrlen;		/* length of bounce copy */
-	u_short sc_dmacmd;		/* Internal data for this DMA */
-	char *pa_addr;			/* XXXX initial phys addr */
-	u_char *sc_usrbufpa;		/* user buffer phys addr */
+	int	 	clen;
+	bus_dmamap_t	dmamap_xfer;	/* Handle for dma */
+	u_char	       *data;		/* Data buffer... */
+	int		datalen;	/* ... and its length. */
+	int		offset;
+	u_long		sc_tcnt;	/* number of bytes for this DMA */
 };
 
 /*
@@ -134,33 +117,38 @@ struct	sbic_softc {
 	u_char	sc_stat[2];
 	u_char	sc_msg[7];
 	u_long	sc_clkfreq;
-	u_long	sc_tcnt;		/* number of bytes transfered */
-	u_short sc_dmacmd;		/* used by dma drivers */
+
+	int	sc_dmaflags;		/* Target-specific busdma flags */
+	void	*sc_dmah;		/* Interface specific dma handle */
+	bus_dma_tag_t sc_dmat;		/* Tag for dma accesses */
+	int	sc_max_dmalen;		/* Maximum DMA segment length */
+	int	sc_dmamode;		/* Machine-specific DMA mode for
+					   the SBIC chip */
+
 	u_short	sc_dmatimo;		/* dma timeout */
-	u_long	sc_dmamask;		/* dma valid mem mask */
-	struct	dma_chain *sc_cur;
-	struct	dma_chain *sc_last;
-	int  (*sc_dmago)	__P((struct sbic_softc *, char *, int, int));
-	int  (*sc_dmanext)	__P((struct sbic_softc *));
-	void (*sc_enintr)	__P((struct sbic_softc *));
-	void (*sc_dmastop)	__P((struct sbic_softc *));
-	u_short	gtsc_bankmask;		/* GVP specific bank selected */
+	int  (*sc_dmaok)     (void *, bus_dma_tag_t, struct sbic_acb *);
+	int  (*sc_dmasetup)  (void *, bus_dma_tag_t, struct sbic_acb *, int);
+	int  (*sc_dmanext)   (void *, bus_dma_tag_t, struct sbic_acb *, int);
+	void (*sc_dmastop)   (void *, bus_dma_tag_t, struct sbic_acb *);
+	void (*sc_dmafinish) (void *, bus_dma_tag_t, struct sbic_acb *);
+	void (*sc_enintr)    (struct sbic_softc *);
 };
 
 /* sc_flags */
 #define	SBICF_ALIVE	0x01	/* controller initialized */
-#define SBICF_DCFLUSH	0x02	/* need flush for overlap after dma finishes */
-#define SBICF_SELECTED	0x04	/* bus is in selected state. */
-#define SBICF_ICMD	0x08	/* Immediate command in execution */
-#define SBICF_BADDMA	0x10	/* controller can only DMA to ztwobus space */
-#define	SBICF_INTR	0x40	/* SBICF interrupt expected */
-#define	SBICF_INDMA	0x80	/* not used yet, DMA I/O in progress */
+#define SBICF_SELECTED	0x02	/* bus is in selected state. */
+#define SBICF_ICMD	0x04	/* Immediate command in execution */
+#define SBICF_BADDMA	0x08	/* controller can only DMA to ztwobus space */
+#define SBICF_NODMA	0x10	/* Don't use DMA */
+#define	SBICF_INTR	0x20	/* SBICF interrupt expected */
+#define	SBICF_INDMA	0x40	/* not used yet, DMA I/O in progress */
 
 /* sync states */
 #define SYNC_START	0	/* no sync handshake started */
 #define SYNC_SENT	1	/* we sent sync request, no answer yet */
 #define SYNC_DONE	2	/* target accepted our (or inferior) settings,
-				   or it rejected the request and we stay async */
+				   or it rejected the request and we stay 
+				   async */
 #ifdef DEBUG
 #define	DDB_FOLLOW	0x04
 #define DDB_IO		0x08
@@ -169,7 +157,7 @@ extern u_char sbic_inhibit_sync[8];
 extern int sbic_no_dma;
 extern int sbic_clock_override;
 
-#define	PHASE		0x07		/* mask for psns/pctl phase */
+#define	PHASE_MASK	0x07		/* mask for psns/pctl phase */
 #define	DATA_OUT_PHASE	0x00
 #define	DATA_IN_PHASE	0x01
 #define	CMD_PHASE	0x02
@@ -226,11 +214,11 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsipi_xfer;
 
-void sbic_minphys	__P((struct buf *bp));
-void sbic_scsi_request	__P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void sbicinit		__P((struct sbic_softc *dev));
-int  sbicintr 		__P((struct sbic_softc *));
-void	sbic_dump	__P((struct sbic_softc *dev));
+void sbic_minphys	(struct buf *bp);
+void sbic_scsi_request	(struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+int  sbicinit		(struct sbic_softc *dev);
+int  sbicintr 		(struct sbic_softc *);
+void sbic_dump		(struct sbic_softc *dev);
 
 #endif /* _SBICVAR_H_ */

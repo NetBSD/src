@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.35 2001/07/07 15:53:20 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.35.2.1 2001/08/25 06:16:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/ic/ax88190reg.h>
 
 #if BYTE_ORDER == BIG_ENDIAN
 #include <machine/bswap.h>
@@ -265,7 +267,7 @@ ne2000_attach(nsc, myea)
 			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
 			NIC_BARRIER(nict, nich);
 			ne2000_readmem(nict, nich, asict, asich,
-			    NE2000_AX88190_NODEID_OFFSET, dsc->sc_enaddr,
+			    AX88190_NODEID_OFFSET, dsc->sc_enaddr,
 			    ETHER_ADDR_LEN, useword);
 		} else {
 			ne2000_readmem(nict, nich, asict, asich, 0, romdata,
@@ -893,7 +895,7 @@ ne2000_ipkdb_attach(kip)
 			/* Select word transfer */
 			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
 			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,
-				NE2000_AX88190_NODEID_OFFSET, kip->myenetaddr,
+				AX88190_NODEID_OFFSET, kip->myenetaddr,
 				ETHER_ADDR_LEN, useword);
 		} else {
 			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,

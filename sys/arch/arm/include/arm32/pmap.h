@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.2.1 2001/08/03 04:11:02 lukem Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.2 2001/08/25 06:15:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -97,40 +97,21 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 /*
- * For each struct vm_page, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
- */
-typedef struct pv_entry {
-	struct pv_entry *pv_next;       /* next pv_entry */
-	struct pmap     *pv_pmap;        /* pmap where mapping lies */
-	vaddr_t         pv_va;          /* virtual address for mapping */
-	int             pv_flags;       /* flags */
-} *pv_entry_t;
-
-/*
- * A pv_page_info struture looks like this. It is used to contain status
- * information for pv_entry freelists.
- */
-struct pv_page;
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pgi_list;
-	struct pv_entry *pgi_freelist;
-	int pgi_nfree;
-};
-
-/*
- * A pv_page itself looks like this. pv_entries are requested from the VM a
- * pv_page at a time.
+ * for each managed physical page we maintain a list of <PMAP,VA>'s
+ * which it is mapped at.  the list is headed by a pv_head structure.
+ * there is one pv_head per managed phys page (allocated at boot time).
+ * the pv_head structure points to a list of pv_entry structures (each
+ * describes one mapping).
  *
- * We also define a macro that states the number of pv_entries per page
- * allocated.
+ * pv_entry's are only visible within pmap.c, so only provide a placeholder
+ * here
  */
-#define NPVPPG	((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
 
-struct pv_page {
-	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[NPVPPG];
+struct pv_entry;
+
+struct pv_head {
+	struct simplelock pvh_lock;	/* locks every pv on this list */
+	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
 };
 
 /*
@@ -163,7 +144,7 @@ typedef struct {
 /*
  * Commonly referenced structures
  */
-extern pv_entry_t	pv_table;	/* Phys to virt mappings, per page. */
+extern struct pv_entry	*pv_table;	/* Phys to virt mappings, per page. */
 extern struct pmap	kernel_pmap_store;
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
@@ -189,12 +170,18 @@ extern void pmap_procwr __P((struct proc *, vaddr_t, int));
 /*
  * Functions we use internally
  */
-extern void pmap_bootstrap __P((pd_entry_t *, pv_addr_t));
-extern void pmap_debug	__P((int));
-extern int pmap_handled_emulation __P((struct pmap *, vaddr_t));
-extern int pmap_modified_emulation __P((struct pmap *, vaddr_t));
-extern void pmap_postinit __P((void));
-extern pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
+void pmap_bootstrap __P((pd_entry_t *, pv_addr_t));
+void pmap_debug	__P((int));
+int pmap_handled_emulation __P((struct pmap *, vaddr_t));
+int pmap_modified_emulation __P((struct pmap *, vaddr_t));
+void pmap_postinit __P((void));
+pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
+
+/*
+ * Special page zero routine for use by the idle loop (no cache cleans). 
+ */
+boolean_t	pmap_pageidlezero __P((paddr_t));
+#define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 #endif	/* _KERNEL */
 

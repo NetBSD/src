@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.48.2.1 2001/08/03 04:13:31 lukem Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48.2.2 2001/08/25 06:16:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -797,8 +797,7 @@ scsipi_interpret_sense(xs)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
 				return (0);
-			if (sense->add_sense_code == 0x3A &&
-			    sense->add_sense_code_qual == 0x00) {
+			if (sense->add_sense_code == 0x3A) {
 				error = ENODEV; /* Medium not present */
 				if (xs->xs_control & XS_CTL_SILENT_NODEV)
 					return (error);
@@ -1347,6 +1346,7 @@ scsipi_complete(xs)
 		scsipi_request_sense(xs);
 	}
 	splx(s);
+
 	/*
 	 * If it's a user level request, bypass all usual completion
 	 * processing, let the user work it out..  
@@ -1359,7 +1359,6 @@ scsipi_complete(xs)
 		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
 		return 0;
 	}
-
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -2349,12 +2348,12 @@ scsipi_target_detach(chan, target, lun, flags)
 		maxlun = lun + 1;
 	}
 
-	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
+	for (ctarget = mintarget; ctarget < maxtarget; ctarget++) {
 		if (ctarget == chan->chan_id)
 			continue;
 
 		for (clun = minlun; clun < maxlun; clun++) {
-			periph = scsipi_lookup_periph(chan, target, clun);
+			periph = scsipi_lookup_periph(chan, ctarget, clun);
 			if (periph == NULL)
 				continue;
 			error = config_detach(periph->periph_dev, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.64.2.1 2001/07/10 13:25:42 lukem Exp $	*/
+/*	$NetBSD: malloc.h,v 1.64.2.2 2001/08/25 06:17:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -41,6 +41,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
+#include "opt_malloc_debug.h"
 #include "opt_lockdebug.h"
 #endif
 
@@ -440,6 +441,15 @@ extern void	_free(void *addr, int type, const char *file, long line);
 extern void	*malloc(unsigned long size, int type, int flags);
 extern void	free(void *addr, int type);
 #endif /* MALLOCLOG */
+
+#ifdef MALLOC_DEBUG
+int	debug_malloc(unsigned long, int, int, void **);
+int	debug_free(void *, int);
+void	debug_malloc_init(void);
+
+void	debug_malloc_print(void);
+void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
+#endif /* MALLOC_DEBUG */
 
 extern void	*realloc(void *curaddr, unsigned long newsize, int type,
 		    int flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.19 2001/07/04 22:39:11 thorpej Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.19.2.1 2001/08/25 06:16:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -492,52 +492,56 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* VScom PCI-400: 4S */
+	{   "VScom PCI-400",
+	    {	0x10b5,	0x1077,	0x10b5,	0x1077	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+	    },
+	},
 
-	/*
-	 * VScom PCI-800, as sold on http://www.swann.com.au/isp/titan.html.
-	 * Some PLX chip.  Note: This board has a software selectable(?)
-	 * clock multiplier which this driver doesn't support, so you'll
-	 * have to use an appropriately scaled baud rate when talking to
-	 * the card.
-	 */
+	/* VScom PCI-800: 8S */
 	{   "VScom PCI-800",
 	    {	0x10b5,	0x1076,	0x10b5,	0x1076	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
 	    },
 	},
 	/*
 	 * VScom PCI-800H. Uses 8 16950 UART, behind a PCI chips that offers
 	 * 4 com port on PCI device 0 and 4 on PCI device 1. PCI device 0 has
-	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 Mhz crystal
-	 * instead of the standart 1.8432Mhz.
+	 * device ID 3 and PCI device 1 device ID 4.
 	 */
 	{   "Titan PCI-800H",
 	    {	0x14d2,	0xa003,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, 14745600 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, 14745600 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x10, 14745600 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x18, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
 	    },
 	},
 	{   "Titan PCI-800H",
 	    {	0x14d2,	0xa004,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, 14745600 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, 14745600 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x10, 14745600 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x18, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
 	    },
 	},
 
@@ -551,7 +555,7 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/*NEC PK-UG-X008 */
+	/* NEC PK-UG-X008 */
 	{   "NEC PK-UG-X008",
 	    {	0x1033,	0x007d,	0x1033,	0x8012	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},

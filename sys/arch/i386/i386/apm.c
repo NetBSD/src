@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.60.2.1 2001/08/03 04:11:41 lukem Exp $ */
+/*	$NetBSD: apm.c,v 1.60.2.2 2001/08/25 06:15:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -919,24 +919,24 @@ apm_get_capabilities(regs)
 
 #ifdef APMDEBUG
 	/* print out stats */
-	printf("apm: %d batteries", APM_NBATTERIES(regs));
+	DPRINTF(APMDEBUG_INFO, ("apm: %d batteries", APM_NBATTERIES(regs)));
 	if (regs->CX & APM_GLOBAL_STANDBY)
-	    printf(", global standby");
+	    DPRINTF(APMDEBUG_INFO, (", global standby"));
 	if (regs->CX & APM_GLOBAL_SUSPEND)
-	    printf(", global suspend");
+	    DPRINTF(APMDEBUG_INFO, (", global suspend"));
 	if (regs->CX & APM_RTIMER_STANDBY)
-	    printf(", rtimer standby");
+	    DPRINTF(APMDEBUG_INFO, (", rtimer standby"));
 	if (regs->CX & APM_RTIMER_SUSPEND)
-	    printf(", rtimer suspend");
+	    DPRINTF(APMDEBUG_INFO, (", rtimer suspend"));
 	if (regs->CX & APM_IRRING_STANDBY)
-	    printf(", internal standby");
+	    DPRINTF(APMDEBUG_INFO, (", internal standby"));
 	if (regs->CX & APM_IRRING_SUSPEND)
-	    printf(", internal suspend");
+	    DPRINTF(APMDEBUG_INFO, (", internal suspend"));
 	if (regs->CX & APM_PCRING_STANDBY)
-	    printf(", pccard standby");
+	    DPRINTF(APMDEBUG_INFO, (", pccard standby"));
 	if (regs->CX & APM_PCRING_SUSPEND)
-	    printf(", pccard suspend");
-	printf("\n");
+	    DPRINTF(APMDEBUG_INFO, (", pccard suspend"));
+	DPRINTF(APMDEBUG_INFO, ("\n"));
 #endif
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.15 2001/07/08 16:32:14 abs Exp $
+#	$NetBSD: RAMDISK,v 1.15.2.1 2001/08/25 06:15:07 thorpej Exp $
 #	$OpenBSD: RAMDISK,v 1.9 1999/08/29 12:14:03 niklas Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
@@ -270,7 +270,7 @@ scsibus*	at ahc?
 #scsibus* 	at siop?
 
 #de*		at pci? dev ? function ?
-ex*		at pci? dev ? function ?	# 3Com 90x[B]
+ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible

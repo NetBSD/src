@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.7.2.1 2001/08/03 04:11:40 lukem Exp $
+#	$NetBSD: LAMB,v 1.7.2.2 2001/08/25 06:15:24 thorpej Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
 #	Be sure to check pkgsrc/sysutils/lambd as well.
@@ -7,7 +7,7 @@
 include "arch/i386/conf/std.i386"
 
 # based on:
-#ident 		"GENERIC-Revision: 1.410"
+#ident 		"GENERIC-Revision: 1.414"
 
 maxusers	32		# estimated number of users
 
@@ -92,6 +92,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options	COMPAT_MACH	# binary compatibility with Mach binaries
+#options	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -283,9 +285,9 @@ com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 # Parallel Printer Interfaces
 
 # ISA parallel printer interfaces
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
+#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
 
 # IDE and related devices
 # ISA Plug-and-Play IDE controllers

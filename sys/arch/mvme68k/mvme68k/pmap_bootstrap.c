@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.15 2000/11/20 19:35:30 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15.4.1 2001/08/25 06:15:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -43,7 +43,6 @@
 #include <sys/kcore.h>
 #include <machine/kcore.h>
 #include <machine/pte.h>
-#include <mvme68k/mvme68k/clockreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.21.2.1 2001/08/03 04:13:06 lukem Exp $	*/
+/*	$NetBSD: wi.c,v 1.21.2.2 2001/08/25 06:16:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1666,42 +1666,42 @@ wi_get_id(sc)
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	printf("%s: using ", sc->sc_dev.dv_xname);
 	switch (le16toh(ver.wi_ver[0])) {
-		case WI_NIC_EVB2:
-			printf("RF:PRISM2 MAC:HFA3841");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB3763:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3763 rev.B");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB3163:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.A");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB3163B:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.B");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_EVB3:
-			printf("RF:PRISM2 MAC:HFA3842");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB1153:
-			printf("RF:PRISM1 MAC:HFA3841 CARD:HWB1153");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_P2_SST:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_PRISM2_5:
-			printf("RF:PRISM2.5 MAC:ISL3873");
-			sc->sc_prism2 = 1;
-			break;
-		default:
-			printf("Lucent chip or unknown chip\n");
-			sc->sc_prism2 = 0;
-			break;
+	case WI_NIC_EVB2:
+		printf("RF:PRISM2 MAC:HFA3841");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB3763:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3763 rev.B");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB3163:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.A");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB3163B:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.B");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_EVB3:
+		printf("RF:PRISM2 MAC:HFA3842");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB1153:
+		printf("RF:PRISM1 MAC:HFA3841 CARD:HWB1153");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_P2_SST:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_PRISM2_5:
+		printf("RF:PRISM2.5 MAC:ISL3873");
+		sc->sc_prism2 = 1;
+		break;
+	default:
+		printf("Lucent chip or unknown chip\n");
+		sc->sc_prism2 = 0;
+		break;
 	}
 
 	if (sc->sc_prism2) {
@@ -1713,7 +1713,7 @@ wi_get_id(sc)
 		LE16TOH(ver.wi_ver[1]);
 		LE16TOH(ver.wi_ver[2]);
 		LE16TOH(ver.wi_ver[3]);
-		printf(" ,Firmware: %i.%i variant %i\n", ver.wi_ver[2],
+		printf(", Firmware: %i.%i variant %i\n", ver.wi_ver[2],
 		       ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];

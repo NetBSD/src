@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.69.2.1 2001/08/03 04:13:54 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.69.2.2 2001/08/25 06:17:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -496,6 +496,10 @@ in_pcbconnect(v, nam)
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbstate(inp, INP_CONNECTED);
+#ifdef IPSEC
+	if (inp->inp_socket->so_type == SOCK_STREAM)
+		ipsec_pcbconn(inp->inp_sp);
+#endif
 	return (0);
 }
 
@@ -510,6 +514,9 @@ in_pcbdisconnect(v)
 	in_pcbstate(inp, INP_BOUND);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);
+#ifdef IPSEC
+	ipsec_pcbdisconn(inp->inp_sp);
+#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.12.2.1 2001/08/03 04:11:54 lukem Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.12.2.2 2001/08/25 06:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -184,9 +184,6 @@ int	pm_receive_pm2 __P((u_char *));
 int	pm_send_pm2 __P((u_char));
 int	pm_pmgrop_pm2 __P((PMData *));
 void	pm_intr_pm2 __P((void));
-
-/* this function is MRG-Based (for testing) */
-int	pm_pmgrop_mrg __P((PMData *));
 
 /* these functions are called from adb_direct.c */
 void	pm_setup_adb __P((void));
@@ -900,29 +897,6 @@ pm_intr_pm2()
 
 	splx(s);
 }
-
-
-#if 0
-/*
- * MRG-based PMgrOp routine
- */
-int
-pm_pmgrop_mrg(pmdata)
-	PMData *pmdata;
-{
-	u_int32_t rval=0;
-
-	asm("
-		movl	%1, a0
-		.word	0xa085
-		movl	d0, %0"
-		: "=g" (rval)
-		: "g" (pmdata)
-		: "a0", "d0" );
-
-	return rval;
-}
-#endif
 
 
 /*

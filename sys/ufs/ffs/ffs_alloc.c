@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.44 2001/06/03 16:49:07 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.44.4.1 2001/08/25 06:17:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -94,7 +94,7 @@ extern const u_char * const fragtbl[];
  *   3) allocate a block in the same cylinder group.
  *   4) quadradically rehash into other cylinder groups, until an
  *      available block is located.
- * If no block preference is given the following heirarchy is used
+ * If no block preference is given the following hierarchy is used
  * to allocate a block:
  *   1) allocate a block in the cylinder group that contains the
  *      inode for the file.
@@ -382,7 +382,7 @@ nospace:
  * logical blocks to be made contiguous is given. The allocator attempts
  * to find a range of sequential blocks starting as close as possible to
  * an fs_rotdelay offset from the end of the allocation for the logical
- * block immediately preceeding the current range. If successful, the
+ * block immediately preceding the current range. If successful, the
  * physical block numbers in the buffer pointers and in the inode are
  * changed to reflect the new allocation. If unsuccessful, the allocation
  * is left unchanged. The success in doing the reallocation is returned.
@@ -612,7 +612,7 @@ fail:
  *   2) allocate an inode in the same cylinder group.
  *   3) quadradically rehash into other cylinder groups, until an
  *      available inode is located.
- * If no inode preference is given the following heirarchy is used
+ * If no inode preference is given the following hierarchy is used
  * to allocate an inode:
  *   1) allocate an inode in cylinder group 0.
  *   2) quadradically rehash into other cylinder groups, until an
@@ -1667,15 +1667,17 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	len = howmany(fs->fs_fpg, NBBY) - start;
 	ostart = start;
 	olen = len;
-	loc = scanc((u_int)len, (u_char *)&cg_blksfree(cgp, needswap)[start],
-		(u_char *)fragtbl[fs->fs_frag],
-		(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+	loc = scanc((u_int)len,
+		(const u_char *)&cg_blksfree(cgp, needswap)[start],
+		(const u_char *)fragtbl[fs->fs_frag],
+		(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 	if (loc == 0) {
 		len = start + 1;
 		start = 0;
-		loc = scanc((u_int)len, (u_char *)&cg_blksfree(cgp, needswap)[0],
-			(u_char *)fragtbl[fs->fs_frag],
-			(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+		loc = scanc((u_int)len,
+			(const u_char *)&cg_blksfree(cgp, needswap)[0],
+			(const u_char *)fragtbl[fs->fs_frag],
+			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
 			    ostart, olen, fs->fs_fsmnt);

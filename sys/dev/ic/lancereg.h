@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.3 2000/02/17 20:18:29 thorpej Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.3.8.1 2001/08/25 06:16:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -132,6 +132,12 @@
 #define	LE_TMDADDR(sc, bix)	(sc->sc_tmdaddr + sizeof(struct letmd) * (bix))
 #define	LE_RBUFADDR(sc, bix)	(sc->sc_rbufaddr[bix])
 #define	LE_TBUFADDR(sc, bix)	(sc->sc_tbufaddr[bix])
+
+/*
+ * The byte count fields in descriptors are in two's complement.
+ * This macro does the conversion for us on unsigned numbers.
+ */
+#define	LE_BCNT(x)	(~(x) + 1)
 
 /*
  * Control and Status Register addresses
@@ -284,6 +290,7 @@
 \12TINT\11IDON\10INTR\07INEA\06RXON\05TXON\04TDMD\03STOP\02STRT\01INIT"
 
 /* Control and status register 3 (csr3) */
+#define	LE_C3_BABLM	0x4000		/* babble mask */
 #define	LE_C3_MISSM	0x1000		/* missed frame mask */
 #define	LE_C3_MERRM	0x0800		/* memory error mask */
 #define	LE_C3_RINTM	0x0400		/* receive interrupt mask */
@@ -298,7 +305,9 @@
 #define	LE_C3_BCON	0x0001		/* byte control */
 
 /* Control and status register 4 (csr4) */
+#define	LE_C4_EN124	0x8000		/* enable CSR124 */
 #define	LE_C4_DMAPLUS	0x4000		/* always set (PCnet-PCI) */
+#define	LE_C4_TIMER	0x2000		/* enable bus activity timer */
 #define	LE_C4_TXDPOLL	0x1000		/* disable transmit polling */
 #define	LE_C4_APAD_XMT	0x0800		/* auto pad transmit */
 #define	LE_C4_ASTRP_RCV	0x0400		/* auto strip receive */
@@ -356,29 +365,37 @@
 #define	LE_C7_MIIPDTINTE 0x0001		/* PHY management detect transition
 					   interrupt enable */
 
+/* Control and status register 15 (csr15) */
+#define	LE_C15_PROM	0x8000		/* promiscuous mode */
+#define	LE_C15_DRCVBC	0x4000		/* disable Rx of broadcast */
+#define	LE_C15_DRCVPA	0x2000		/* disable Rx of physical address */
+#define	LE_C15_DLNKTST	0x1000		/* disable link status */
+#define	LE_C15_DAPC	0x0800		/* disable auto-polarity correction */
+#define	LE_C15_MENDECL	0x0400		/* MENDEC Loopback mode */
+#define	LE_C15_LRT	0x0200		/* low receive threshold (TMAU) */
+#define	LE_C15_TSEL	0x0200		/* transmit mode select (AUI) */
+#define	LE_C15_PORTSEL(x) ((x) << 7)	/* port select */
+#define	LE_C15_INTL	0x0040		/* internal loopback */
+#define	LE_C15_DRTY	0x0020		/* disable retry */
+#define	LE_C15_FCOLL	0x0010		/* force collision */
+#define	LE_C15_DXMTFCS	0x0008		/* disable Tx FCS (ADD_FCS overrides) */
+#define	LE_C15_LOOP	0x0004		/* loopback enable */
+#define	LE_C15_DTX	0x0002		/* disable transmit */
+#define	LE_C15_DRX	0x0001		/* disable receiver */
+
+#define	PORTSEL_AUI	0
+#define	PORTSEL_10T	1
+#define	PORTSEL_GPSI	2
+#define	PORTSEL_MII	3
+#define	PORTSEL_MASK	3
+
 /* control and status register 80 (csr80) */
-#define	LE_C80_RCVFW1	0x2000		/* Receive FIFO Watermark 1 */
-#define	LE_C80_RCVFW0	0x1000		/* Receive FIFO Watermark 0 */
-					/*	00	16 bytes	*/
-					/*	01	64 bytes	*/
-					/*	10	112 bytes	*/
-					/*	11	reserved	*/
-#define	LE_C80_XMTSP1	0x0800		/* Transmit Start Point 1 */
-#define	LE_C80_XMTSP0	0x0400		/* Transmit Start Point 0 */
-					/*	00 0	20 bytes	*/
-					/*	01 0	64 bytes	*/
-					/*	10 0	128 bytes	*/
-					/*	11 0	220 max		*/
-					/*	00 >0	36 bytes	*/
-					/*	01 >0	64 bytes	*/
-					/*	10 >0	128 bytes	*/
-					/*	11 >0	store-and-fwd	*/
-#define	LE_C80_XMTFW1	0x0200		/* Transmit FIFO Watermark 1 */
-#define	LE_C80_XMTFW0	0x0100		/* Transmit FIFO Watermark 0 */
-					/*	00	16 bytes	*/
-					/*	01	64 bytes	*/
-					/*	10	108 bytes	*/
-					/*	11	reserved	*/
+#define	LE_C80_RCVFW(x)	((x) << 12)	/* Receive FIFO Watermark */
+#define	LE_C80_RCVFW_MAX 3
+#define	LE_C80_XMTSP(x)	((x) << 10)	/* Transmit Start Point */
+#define	LE_C80_XMTSP_MAX 3
+#define	LE_C80_XMTFW(x)	((x) << 8)	/* Transmit FIFO Watermark */
+#define	LE_C80_XMTFW_MAX 3
 #define	LE_C80_DMATC	0x00ff		/* DMA transfer counter */
 
 /* control and status register 116 (csr116) */
@@ -413,6 +430,12 @@
 #define	LE_B2_LEDPE	0x1000		/* LED program enable */
 #define	LE_B2_APROMWE	0x0100		/* Address PROM Write Enable */
 #define	LE_B2_INTLEVEL	0x0080		/* 1 == edge triggered */
+#define	LE_B2_DXCVRCTL	0x0020		/* DXCVR control */
+#define	LE_B2_DXCVRPOL	0x0010		/* DXCVR polarity */
+#define	LE_B2_EADISEL	0x0008		/* EADI select */
+#define	LE_B2_AWAKE	0x0004		/* power saving mode select */
+#define	LE_B2_ASEL	0x0002		/* auto-select PORTSEL */
+#define	LE_B2_XMAUSEL	0x0001		/* reserved location */
 
 /* bus configuration register 4 (bcr4) */
 /* bus configuration register 5 (bcr5) */
@@ -437,6 +460,7 @@
 /* bus configuration register 9 (bcr9) */
 #define	LE_B9_FDRPAD	0x0004		/* full-duplex runt packet accept
 					   disable */
+#define	LE_B9_AUIFD	0x0002		/* AUI full-duplex */
 #define	LE_B9_FDEN	0x0001		/* full-duplex enable */
 
 /* bus configuration register 18 (bcr18) */
@@ -467,11 +491,13 @@
 
 /* bus configuration register 20 (bcr20) */
 #define	LE_B20_APERREN	0x0400		/* Advanced parity error handling */
+#define	LE_B20_CSRPCNET	0x0200		/* PCnet-style CSRs (0 = ILACC) */
 #define	LE_B20_SSIZE32	0x0100		/* Software Size 32-bit */
 #define	LE_B20_SSTYLE	0x0007		/* Software Style */
 #define	LE_B20_SSTYLE_LANCE	0	/* LANCE/PCnet-ISA (16-bit) */
+#define	LE_B20_SSTYPE_ILACC	1	/* ILACC (32-bit) */
 #define	LE_B20_SSTYLE_PCNETPCI2	2	/* PCnet-PCI (32-bit) */
-#define	LE_B20_SSTYLE_PCNETPCI3	3	/* PCnet-PCI (32-bit) */
+#define	LE_B20_SSTYLE_PCNETPCI3	3	/* PCnet-PCI II (32-bit) */
 
 /* bus configuration register 25 (bcr25) */
 #define	LE_B25_SRAM_SIZE  0x00ff	/* SRAM size */
@@ -567,3 +593,23 @@
 #define	LE_MODE_DTX	0x0002		/* disable transmitter */
 #define	LE_MODE_DRX	0x0001		/* disable receiver */
 #define	LE_MODE_NORMAL	0		/* none of the above */
+
+/*
+ * Chip ID (CSR88 IDL, CSR89 IDU) values for various AMD PCnet parts.
+ */
+#define	CHIPID_MANFID(x)	(((x) >> 1) & 0x3ff)
+#define	CHIPID_PARTID(x)	(((x) >> 12) & 0xffff)
+#define	CHIPID_VER(x)		(((x) >> 28) & 0x7)
+
+#define	PARTID_Am79c960		0x0003
+#define	PARTID_Am79c961		0x2260
+#define	PARTID_Am79c961A	0x2261
+#define	PARTID_Am79c965		0x2430
+#define	PARTID_Am79c970		0x0242
+#define	PARTID_Am79c970A	0x2621
+#define	PARTID_Am79c971		0x2623
+#define	PARTID_Am79c972		0x2624
+#define	PARTID_Am79c973		0x2625
+#define	PARTID_Am79c978		0x2626
+#define	PARTID_Am79c975		0x2627
+#define	PARTID_Am79c976		0x2628

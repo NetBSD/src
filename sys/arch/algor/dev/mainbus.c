@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/06/22 06:02:55 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3.2.1 2001/08/25 06:14:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,12 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+
+#if defined(PCI_NETBSD_CONFIGURE) && defined(PCI_NETBSD_ENABLE_IDE)
+#if defined(ALGOR_P5064) || defined(ALGOR_P6032)
+#include <dev/pci/pciide_piix_reg.h>
+#endif /* ALGOR_P5064 || ALGOR_P6032 */
+#endif /* PCI_NETBSD_CONFIGURE && PCI_NETBSD_ENABLE_IDE */
 
 #include "locators.h"
 #include "pci.h"
@@ -139,6 +145,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext, *memext;
 	pci_chipset_tag_t pc;
+#if defined(PCI_NETBSD_ENABLE_IDE)
+	pcitag_t idetag;
+	pcireg_t idetim;
+#endif
 #endif
 
 	mainbus_found = 1;
@@ -168,6 +178,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	pc = &p5064_configuration.ac_pc;
+#if defined(PCI_NETBSD_ENABLE_IDE)
+	idetag = pci_make_tag(pc, 0, 2, 1);
+#endif
 #elif defined(ALGOR_P6032)
 	/*
 	 * Reserve the bottom 64K of the I/O spcae for ISA devices.
@@ -178,11 +191,30 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	pc = &p6032_configuration.ac_pc;
+#if defined(PCI_NETBSD_ENABLE_IDE)
+	idetag = pci_make_tag(pc, 0, 17, 1);
+#endif
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
 	pci_configure_bus(pc, ioext, memext, NULL);
 	extent_destroy(ioext);
 	extent_destroy(memext);
+
+#if defined(PCI_NETBSD_ENABLE_IDE)
+	/*
+	 * Perhaps PMON has not enabled the IDE controller.  Easy to
+	 * fix -- just set the ENABLE bits for each channel in the
+	 * IDETIM register.  Just clear all the bits for the channel
+	 * except for the ENABLE bits -- the `pciide' driver will
+	 * properly configure it later.
+	 */
+	idetim = 0;
+	if (PCI_NETBSD_ENABLE_IDE & 0x01)
+		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, 0);
+	if (PCI_NETBSD_ENABLE_IDE & 0x02)
+		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, 1);
+	pci_conf_write(pc, idetag, PIIX_IDETIM, idetim);
+#endif
 #endif /* NPCI > 0 && defined(PCI_NETBSD_CONFIGURE) */
 
 #if defined(ALGOR_P4032)

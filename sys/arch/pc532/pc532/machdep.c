@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 2001/06/02 18:09:18 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123.2.1 2001/08/25 06:15:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -1017,45 +1017,6 @@ init532()
 
 	main(curpcb->pcb_onstack);
 	panic("main returned to init532\n");
-}
-
-struct queue {
-	struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
-{
-	register struct queue *elem = v1, *head = v2;
-	register struct queue *next;
-
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-void
-_remque(v)
-	void *v;
-{
-	register struct queue *elem = v;
-	register struct queue *next, *prev;
-
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.44.2.1 2001/08/03 04:14:01 lukem Exp $	*/
+/*	$NetBSD: key.c,v 1.44.2.2 2001/08/25 06:17:09 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -118,9 +118,7 @@
  *   field hits 0 (= no external reference other than from SA header.
  */
 
-#ifdef IPSEC_DEBUG
 u_int32_t key_debug_level = 0;
-#endif
 static u_int key_spi_trycnt = 1000;
 static u_int32_t key_spi_minval = 0x100;
 static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
@@ -367,10 +365,6 @@ static int key_cmpsaidx_withmode
 	__P((struct secasindex *, struct secasindex *));
 static int key_cmpsaidx_withoutmode
 	__P((struct secasindex *, struct secasindex *));
-static int key_cmpspidx_exactly
-	__P((struct secpolicyindex *, struct secpolicyindex *));
-static int key_cmpspidx_withmask
-	__P((struct secpolicyindex *, struct secpolicyindex *));
 static int key_sockaddrcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int key_bbcmp __P((caddr_t, caddr_t, u_int));
 static void key_srandom __P((void));
@@ -1669,6 +1663,9 @@ key_spdadd(so, m, mhp)
 		}
     	}
 
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
+
     {
 	struct mbuf *n, *mpolicy;
 	struct sadb_msg *newmsg;
@@ -1825,6 +1822,9 @@ key_spddelete(so, m, mhp)
 	sp->state = IPSEC_SPSTATE_DEAD;
 	key_freesp(sp);
 
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
+
     {
 	struct mbuf *n;
 	struct sadb_msg *newmsg;
@@ -1890,6 +1890,9 @@ key_spddelete2(so, m, mhp)
 
 	sp->state = IPSEC_SPSTATE_DEAD;
 	key_freesp(sp);
+
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
 
     {
 	struct mbuf *n, *nn;
@@ -2103,6 +2106,9 @@ key_spdflush(so, m, mhp)
 			sp->state = IPSEC_SPSTATE_DEAD;
 		}
 	}
+
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
 
 	if (sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
 #ifdef IPSEC_DEBUG
@@ -3716,7 +3722,7 @@ key_cmpsaidx_withoutmode(saidx0, saidx1)
  *	1 : equal
  *	0 : not equal
  */
-static int
+int
 key_cmpspidx_exactly(spidx0, spidx1)
 	struct secpolicyindex *spidx0, *spidx1;
 {
@@ -3753,7 +3759,7 @@ key_cmpspidx_exactly(spidx0, spidx1)
  *	1 : equal
  *	0 : not equal
  */
-static int
+int
 key_cmpspidx_withmask(spidx0, spidx1)
 	struct secpolicyindex *spidx0, *spidx1;
 {
@@ -3790,7 +3796,13 @@ key_cmpspidx_withmask(spidx0, spidx1)
 		 && satosin6(&spidx0->src)->sin6_port !=
 		    satosin6(&spidx1->src)->sin6_port)
 			return 0;
-		if (satosin6(&spidx0->src)->sin6_scope_id !=
+		/*
+		 * scope_id check. if sin6_scope_id is 0, we regard it
+		 * as a wildcard scope, which matches any scope zone ID. 
+		 */
+		if (satosin6(&spidx0->src)->sin6_scope_id &&
+		    satosin6(&spidx1->src)->sin6_scope_id &&
+		    satosin6(&spidx0->src)->sin6_scope_id !=
 		    satosin6(&spidx1->src)->sin6_scope_id)
 			return 0;
 		if (!key_bbcmp((caddr_t)&satosin6(&spidx0->src)->sin6_addr,
@@ -3819,7 +3831,13 @@ key_cmpspidx_withmask(spidx0, spidx1)
 		 && satosin6(&spidx0->dst)->sin6_port !=
 		    satosin6(&spidx1->dst)->sin6_port)
 			return 0;
-		if (satosin6(&spidx0->dst)->sin6_scope_id !=
+		/*
+		 * scope_id check. if sin6_scope_id is 0, we regard it
+		 * as a wildcard scope, which matches any scope zone ID. 
+		 */
+		if (satosin6(&spidx0->src)->sin6_scope_id &&
+		    satosin6(&spidx1->src)->sin6_scope_id &&
+		    satosin6(&spidx0->dst)->sin6_scope_id !=
 		    satosin6(&spidx1->dst)->sin6_scope_id)
 			return 0;
 		if (!key_bbcmp((caddr_t)&satosin6(&spidx0->dst)->sin6_addr,
@@ -7380,7 +7398,7 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	if (name[0] >= KEYCTL_MAXID)
 		return EOPNOTSUPP;
 	switch (name[0]) {
-#ifdef KEY_DEBUG
+#ifdef IPSEC_DEBUG
 	case KEYCTL_DEBUG_LEVEL:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 		    &key_debug_level);

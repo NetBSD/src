@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.19 2001/07/06 19:00:13 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.19.2.1 2001/08/25 06:15:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,8 +112,7 @@ struct pcc_device {
  * Devices that live on the PCC, attached in this order.
  */
 static struct pcc_device pcc_devices[] = {
-	{"clock", PCC_RTC_OFF},
-	{"nvram", PCC_NVRAM_OFF},
+	{"clock", 0},
 	{"zsc", PCC_ZS0_OFF},
 	{"zsc", PCC_ZS1_OFF},
 	{"le", PCC_LE_OFF},
@@ -181,8 +180,7 @@ pccattach(parent, self, args)
 
 	/* Get a handle to the PCC's registers. */
 	sc->sc_bust = ma->ma_bust;
-	bus_space_map(sc->sc_bust, PCC_REG_OFF + ma->ma_offset,
-	    PCCREG_SIZE, 0, &sc->sc_bush);
+	bus_space_map(sc->sc_bust, ma->ma_offset, PCCREG_SIZE, 0, &sc->sc_bush);
 
 	/* Tell the chip the base interrupt vector */
 	pcc_reg_write(sc, PCCREG_VECTOR_BASE, PCC_VECBASE);

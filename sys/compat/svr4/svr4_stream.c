@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.45 2001/06/25 20:46:12 jdolecek Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.45.2.1 2001/08/25 06:16:05 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1936,7 +1936,7 @@ svr4_sys_getmsg(p, v, retval)
 		if (st->s_cmd == SVR4_TI_CONNECT_REQUEST) {
 		        struct sys_read_args ra;
 
-			/* More wierdness:  Again, I can't find documentation
+			/* More weirdness:  Again, I can't find documentation
 			 * to back this up, but when a process does a generic
 			 * "getmsg()" call it seems that the command field is
 			 * zero and the length of the data area is zero.  I

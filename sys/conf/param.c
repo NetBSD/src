@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.37 2000/11/11 02:24:55 mycroft Exp $	*/
+/*	$NetBSD: param.c,v 1.37.4.1 2001/08/25 06:16:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -129,10 +129,18 @@ int	mcllowat = MCLLOWAT;
  * Values in support of System V compatible shared memory.	XXX
  */
 #ifdef SYSVSHM
+#ifndef	SHMMAX
 #define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= NBPG' */
+#endif
+#ifndef	SHMMIN
 #define	SHMMIN	1
+#endif
+#ifndef	SHMMNI
 #define	SHMMNI	128			/* <= SHMMMNI in shm.h */
+#endif
+#ifndef	SHMSEG
 #define	SHMSEG	128
+#endif
 #define	SHMALL	SHMMAXPGS
 
 struct	shminfo shminfo = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.2 2001/08/03 04:10:59 lukem Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.3 2001/08/25 06:15:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -269,11 +269,12 @@ pagemove(from, to, size)
 	register pt_entry_t *fpte, *tpte;
 
 	if (size % NBPG)
-		panic("pagemove: size=%08x", size);
+		panic("pagemove: size=%08lx", (u_long) size);
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("pagemove: V%p to %p size %08x\n", from, to, size);
+		printf("pagemove: V%p to %p size %08lx\n",
+		    from, to, (u_long) size);
 #endif	/* PMAP_DEBUG */
 
 	fpte = vtopte((vaddr_t)from);
@@ -309,8 +310,8 @@ vmapbuf(bp, len)
 	vsize_t len;
 {
 	vaddr_t faddr, taddr, off;
-	pt_entry_t *fpte, *tpte;
-	int pages;
+	paddr_t fpa;
+
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -323,36 +324,25 @@ vmapbuf(bp, len)
 
 	taddr = uvm_km_valloc_wait(phys_map, len);
 
-	faddr = trunc_page((vaddr_t)bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	bp->b_saveaddr = bp->b_data;
 	bp->b_data = (caddr_t)(taddr + off);
 
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-
-	/*
-	 * Make sure the cache does not have dirty data for the
-	 * pages we are replacing
-	 */
-	if (len <= 0x1000) {
-		cpu_cache_purgeID_rng(faddr, len);
-		cpu_cache_purgeID_rng(taddr, len);
-	} else 
-		cpu_cache_purgeID();
-
-	for (pages = len >> PAGE_SHIFT; pages; pages--)
-		*tpte++ = *fpte++;
-
-	if (len <= 0x1000)
-		cpu_tlb_flushID_SE(taddr);
-	else
-		cpu_tlb_flushID();
+	while (len) {
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &fpa);
+		pmap_enter(pmap_kernel(), taddr, fpa,
+			VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	}
+	pmap_update();
 }
 
 /*
@@ -364,8 +354,6 @@ vunmapbuf(bp, len)
 	vsize_t len;
 {
 	vaddr_t addr, off;
-	pt_entry_t *pte;
-	int pages;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -383,25 +371,12 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	
+	pmap_remove(pmap_kernel(), addr, addr + len);
+	pmap_update();
+	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
-
-	pte = pmap_pte(vm_map_pmap(phys_map), addr);
-
-	if (len <= 0x2000)
-		cpu_cache_purgeID_rng(addr, len);
-	else
-		cpu_cache_purgeID();
-
-	for (pages = len >> PAGE_SHIFT; pages; pages--)
-		*pte++ = 0;
-
-	if (len <= 0x1000)
-		cpu_tlb_flushID_SE(addr);
-	else
-		cpu_tlb_flushID();
-
-	uvm_km_free_wakeup(phys_map, addr, len);
 }
 
 /* End of vm_machdep.c */

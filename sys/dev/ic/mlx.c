@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.10.2.1 2001/08/03 04:13:01 lukem Exp $	*/
+/*	$NetBSD: mlx.c,v 1.10.2.2 2001/08/25 06:16:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1740,6 +1740,9 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 	 * its initial contents.
 	 */
 	if (mu->mu_datasize > 0) {
+		if (mu->mu_datasize > MAXPHYS)
+			return (EINVAL);
+
 		kbuf = malloc(mu->mu_datasize, M_DEVBUF, M_WAITOK);
 		if (kbuf == NULL) {
 			DPRINTF(("mlx_user_command: malloc = NULL\n"));

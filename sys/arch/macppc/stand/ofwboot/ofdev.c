@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5.4.1 2001/08/03 04:11:58 lukem Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.5.4.2 2001/08/25 06:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,11 +41,11 @@
 #include <netinet/in.h>
 
 #include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
-#include <hfs.h>
+#include <lib/libsa/ufs.h>
 
+#include "hfs.h"
 #include "ofdev.h"
 
 extern char bootdev[];
@@ -273,7 +273,7 @@ devopen(of, name, file)
 		*cp = 0;
 	}
 	if (!cp || !*buf)
-		strcpy(buf, DEFAULT_KERNEL);
+		return ENOENT;
 	if (!*fname)
 		strcpy(fname, bootdev);
 	strcpy(opened_name, fname);
