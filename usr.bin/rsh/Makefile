@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.16 2004/09/05 08:38:23 manu Exp $
+#	$NetBSD: Makefile,v 1.17 2004/10/16 02:03:54 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
 
+WARNS=	3
 PROG=	rsh
-WARNS=	2
+SRCS=	rsh.c getport.c
+
 # XXX Kerberos support broken right now.
 # XXX Unsupported Kerberos options were removed from man page
 # XXX Don't forget to update the man page if you fix Kerberos
