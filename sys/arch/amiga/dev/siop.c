@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.5 1994/02/21 06:30:44 chopps Exp $
+ *	$Id: siop.c,v 1.6 1994/02/28 06:06:30 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -47,11 +47,17 @@
 
 #include "zeusscsi.h"
 #include "magnumscsi.h"
-#define NSIOP (NZEUSSCSI + NMAGNUMSCSI)
+
+#define NSIOP NZEUSSCSI
+#if NSIOP < NMAGNUMSCSI
+#undef NSIOP
+#define NSIOP NMAGNUMSCSI
+#endif
+
 #if NSIOP > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.5 1994/02/21 06:30:44 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.6 1994/02/28 06:06:30 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
@@ -108,7 +114,8 @@ struct driver zeusscsidriver = {
 	(int (*)())siopintr2, (int (*)())siopdone,
 	siopustart, siopreq, siopfree, siopreset,
 	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
-	siop_request_sense, siop_immed_command, siop_tt_read, siop_tt_write,
+	siop_request_sense, siop_immed_command, siop_immed_command_nd,
+	siop_tt_read, siop_tt_write,
 #if NST > 0
 	siop_tt_oddio
 #else
@@ -125,7 +132,8 @@ struct driver magnumscsidriver = {
 	(int (*)())siopintr2, (int (*)())siopdone,
 	siopustart, siopreq, siopfree, siopreset,
 	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
-	siop_request_sense, siop_immed_command, siop_tt_read, siop_tt_write,
+	siop_request_sense, siop_immed_command, siop_immed_command_nd,
+	siop_tt_read, siop_tt_write,
 #if NST > 0
 	siop_tt_oddio
 #else
@@ -438,26 +446,17 @@ zeusscsiinit(ac)
 	dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
 	siopreset (ac->amiga_unit);
 
-	/* For the ZEUS SCSI, both IPL6 and IPL2 interrupts have to be
+	/* For the ZEUS SCSI, IPL6 interrupts have to be
 	   enabled.  The ZEUS SCSI generates IPL6 interrupts, which are
 	   not blocked by splbio().  The ZEUS interrupt handler saves the
-	   siop interrupt status information in siop_softc and sets the
-	   PORTS interrupt to process the interrupt at IPL2.
+	   siop interrupt status information in siop_softc and adds an
+	   sicallback to the interrupt2 handler.
+	 */
 
-	   make sure IPL2 interrupts are delivered to the cpu when siopintr6
-	   generates some. Note that this does not yet enable siop-interrupts,
-	   this is handled in siopgo, which selectively enables interrupts only
-	   while DMA requests are pending.
-
-	   Note that enabling PORTS interrupts also enables keyboard interrupts
-	   as soon as the corresponding int-enable bit in CIA-A is set. */
-     
 #if 0	/* EXTER interrupts are enabled in the clock initialization */
 	custom.intreq = INTF_EXTER;
 	custom.intena = INTF_SETCLR | INTF_EXTER;
 #endif
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
 	return(1);
 }
 #endif
@@ -1187,9 +1186,9 @@ siopdone (int unit)
 /*
  * Level 6 interrupt processing for the Progressive Peripherals Inc
  * Zeus SCSI.  Because the level 6 interrupt is above splbio, the
- * interrupt status is saved and the INTF_PORTS interrupt is set.
- * This way, the actual processing of the interrupt can be deferred
- * until splbio is unblocked
+ * interrupt status is saved and an sicallback to the level 2 interrupt
+ * handler scheduled.  This way, the actual processing of the interrupt
+ * can be deferred until splbio is unblocked.
  */
 
 #if NZEUSSCSI > 0
@@ -1217,8 +1216,8 @@ siopintr6 ()
 		dev->sc_istat = istat;
 		dev->sc_dstat = regs->siop_dstat;
 		dev->sc_sstat0 = regs->siop_sstat0;
+		add_sicallback (siopintr2, NULL, NULL);
 		custom.intreq = INTF_EXTER;
-		custom.intreq = INTF_SETCLR | INTF_PORTS;
 	}
 	return (found);
 }

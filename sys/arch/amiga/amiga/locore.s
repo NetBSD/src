@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.11 1994/02/22 02:05:27 chopps Exp $
+ *	$Id: locore.s,v 1.12 1994/02/28 06:05:46 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -643,6 +643,8 @@ LttimerA:
 	jeq     Ltimend		        | no, check state of kernel profiling
 LtimerA:
 #endif
+	btst	#0,d0			| timerA interrupt?
+	jeq     Lskipciab		| no
 	lea	sp@(16),a1		| get pointer to PS
 	movl	a1,sp@-			| push pointer to PS, PC
 	jbsr	_hardclock		| call generic clock int routine
