@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.45 2003/02/26 06:31:18 matt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.46 2003/04/02 15:14:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.45 2003/02/26 06:31:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.46 2003/04/02 15:14:19 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -218,7 +218,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 			return (error);
 		}
 		lpp = NQFHHASH(fh.fh_fid.fid_data);
-		for (lp = lpp->lh_first; lp != 0; lp = lp->lc_hash.le_next)
+		LIST_FOREACH (lp, lpp, lc_hash) {
 			if (fh.fh_fsid.val[0] == lp->lc_fsid.val[0] &&
 			    fh.fh_fsid.val[1] == lp->lc_fsid.val[1] &&
 			    !memcmp(fh.fh_fid.fid_data, lp->lc_fiddata,
@@ -229,6 +229,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 				tlp = lp;
 				break;
 			}
+		}
 	} else
 		lp = tlp;
 	if (lp != 0) {
@@ -383,18 +384,18 @@ nqsrv_instimeq(lp, duration)
 	newexpiry = time.tv_sec + duration + nqsrv_clockskew;
 	if (lp->lc_expiry == newexpiry)
 		return;
-	if (lp->lc_timer.cqe_next != 0)
+	if (CIRCLEQ_NEXT(lp, lc_timer) != 0)
 		CIRCLEQ_REMOVE(&nqtimerhead, lp, lc_timer);
 	lp->lc_expiry = newexpiry;
 
 	/*
 	 * Find where in the queue it should be.
 	 */
-	tlp = nqtimerhead.cqh_last;
+	tlp = CIRCLEQ_LAST(&nqtimerhead);
 	while (tlp != (void *)&nqtimerhead && tlp->lc_expiry > newexpiry)
-		tlp = tlp->lc_timer.cqe_prev;
+		tlp = CIRCLEQ_PREV(tlp, lc_timer);
 #ifdef HASNVRAM
-	if (tlp == nqtimerhead.cqh_last)
+	if (tlp == CIRCLEQ_LAST(&nqtimerhead))
 		NQSTORENOVRAM(newexpiry);
 #endif /* HASNVRAM */
 	if (tlp == (void *)&nqtimerhead) {
@@ -635,11 +636,11 @@ nqnfs_serverd()
 	struct nqm *lphnext, *olphnext;
 	int i, len, ok;
 
-	for (lp = nqtimerhead.cqh_first; lp != (void *)&nqtimerhead;
+	for (lp = CIRCLEQ_FIRST(&nqtimerhead); lp != (void *)&nqtimerhead;
 	    lp = nextlp) {
 		if (lp->lc_expiry >= time.tv_sec)
 			break;
-		nextlp = lp->lc_timer.cqe_next;
+		nextlp = CIRCLEQ_NEXT(lp, lc_timer);
 		if (lp->lc_flag & LC_EXPIREDWANTED) {
 			lp->lc_flag &= ~LC_EXPIREDWANTED;
 			wakeup((caddr_t)&lp->lc_flag);
@@ -799,8 +800,7 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 	/*
 	 * Find the lease by searching the hash list.
 	 */
-	for (lp = NQFHHASH(fhp->fh_fid.fid_data)->lh_first; lp != 0;
-	    lp = lp->lc_hash.le_next)
+	LIST_FOREACH(lp, NQFHHASH(fhp->fh_fid.fid_data), lc_hash) {
 		if (fhp->fh_fsid.val[0] == lp->lc_fsid.val[0] &&
 		    fhp->fh_fsid.val[1] == lp->lc_fsid.val[1] &&
 		    !memcmp(fhp->fh_fid.fid_data, lp->lc_fiddata,
@@ -809,6 +809,7 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 			tlp = lp;
 			break;
 		}
+	}
 	if (tlp != 0) {
 		lp = tlp;
 		len = 1;
@@ -985,10 +986,10 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	if (error)
 		return (error);
 	vp = NFSTOV(np);
-	if (np->n_timer.cqe_next != 0) {
+	if (CIRCLEQ_NEXT(np, n_timer) != 0) {
 		np->n_expiry = 0;
 		np->n_flag |= NQNFSEVICTED;
-		if (nmp->nm_timerhead.cqh_first != np) {
+		if (CIRCLEQ_FIRST(&nmp->nm_timerhead) != np) {
 			CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 			CIRCLEQ_INSERT_HEAD(&nmp->nm_timerhead, np, n_timer);
 		}
@@ -1081,7 +1082,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		 * processes in nfs_reply) and there is data in the receive
 		 * queue, poke for callbacks.
 		 */
-		if (nfs_reqq.tqh_first == 0 && nmp->nm_so &&
+		if (TAILQ_EMPTY(&nfs_reqq) && nmp->nm_so &&
 		    nmp->nm_so->so_rcv.sb_cc > 0) {
 		    myrep.r_flags = R_GETONEREP;
 		    myrep.r_nmp = nmp;
@@ -1093,7 +1094,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		/*
 		 * Loop through the leases, updating as required.
 		 */
-		np = nmp->nm_timerhead.cqh_first;
+		np = CIRCLEQ_FIRST(&nmp->nm_timerhead);
 		while (np != (void *)&nmp->nm_timerhead &&
 		       (nmp->nm_iflag & NFSMNT_DISMINPROG) == 0) {
 			vp = NFSTOV(np);
@@ -1103,7 +1104,8 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 			     nmp->nm_inprog = vp;
 			     if (vpid == vp->v_id) {
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
-				np->n_timer.cqe_next = 0;
+				/* mark this off the list */
+				CIRCLEQ_NEXT(np, n_timer) = 0; /* XXX */
 				if (np->n_flag & (NMODIFIED | NQNFSEVICTED)) {
 					if (np->n_flag & NQNFSEVICTED) {
 						if (vp->v_type == VDIR)
@@ -1125,7 +1127,8 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 			    }
 			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
-				 == NQNFSWRITE && vp->v_dirtyblkhd.lh_first &&
+				 == NQNFSWRITE &&
+				 !LIST_EMPTY(&vp->v_dirtyblkhd) &&
 				 vget(vp, LK_EXCLUSIVE) == 0) {
 				 nmp->nm_inprog = vp;
 				 if (vpid == vp->v_id &&
@@ -1136,9 +1139,9 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 			    }
 			} else
 				break;
-			if (np == nmp->nm_timerhead.cqh_first)
+			if (np == CIRCLEQ_FIRST(&nmp->nm_timerhead))
 				break;
-			np = nmp->nm_timerhead.cqh_first;
+			np = CIRCLEQ_FIRST(&nmp->nm_timerhead);
 		}
 	    }
 #endif /* !NFS_V2_ONLY */
@@ -1167,8 +1170,9 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	/*
 	 * Finally, we can free up the mount structure.
 	 */
-	for (nuidp = nmp->nm_uidlruhead.tqh_first; nuidp != 0; nuidp = nnuidp) {
-		nnuidp = nuidp->nu_lru.tqe_next;
+	for (nuidp = TAILQ_FIRST(&nmp->nm_uidlruhead); nuidp != 0;
+	    nuidp = nnuidp) {
+		nnuidp = TAILQ_NEXT(nuidp, nu_lru);
 		LIST_REMOVE(nuidp, nu_hash);
 		TAILQ_REMOVE(&nmp->nm_uidlruhead, nuidp, nu_lru);
 		free((caddr_t)nuidp, M_NFSUID);
@@ -1194,7 +1198,7 @@ nqnfs_clientlease(nmp, np, rwflag, cachable, expiry, frev)
 {
 	struct nfsnode *tp;
 
-	if (np->n_timer.cqe_next != 0) {
+	if (CIRCLEQ_NEXT(np, n_timer) != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 		if (rwflag == ND_WRITE)
 			np->n_flag |= NQNFSWRITE;
@@ -1238,9 +1242,9 @@ nqnfs_lease_updatetime(deltat)
 	if (nqnfsstarttime != 0)
 		nqnfsstarttime += deltat;
 	s = splsoftnet();
-	for (lp = nqtimerhead.cqh_first; lp != (void *)&nqtimerhead;
-	    lp = lp->lc_timer.cqe_next)
+	CIRCLEQ_FOREACH(lp, &nqtimerhead, lc_timer) {
 		lp->lc_expiry += deltat;
+	}
 	splx(s);
 
 	/*
@@ -1248,24 +1252,24 @@ nqnfs_lease_updatetime(deltat)
 	 * queues.
 	 */
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nxtmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	    mp = nxtmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-			nxtmp = mp->mnt_list.cqe_next;
+			nxtmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_NFS,
 		    MFSNAMELEN)) {
 			nmp = VFSTONFS(mp);
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
-				for (np = nmp->nm_timerhead.cqh_first;
-				    np != (void *)&nmp->nm_timerhead;
-				    np = np->n_timer.cqe_next) {
+				CIRCLEQ_FOREACH(np, &nmp->nm_timerhead,
+				    n_timer) {
 					np->n_expiry += deltat;
 				}
 			}
 		}
 		simple_lock(&mountlist_slock);
-		nxtmp = mp->mnt_list.cqe_next;
+		nxtmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
