@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1996/02/02 18:07:03 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 1996/03/11 20:56:48 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,7 +103,7 @@ int	want_resched;	/* resched() was called */
 /*
  * We need a machine-independent name for this.
  */
-#define	DELAY(n)	{ volatile int N = (n); while (--N > 0); }
+#define	DELAY(n)	delay(n)
 
 /* 
  * CTL_MACHDEP definitions.
