@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.9 1997/04/07 05:19:23 cgd Exp $ */
+/* $NetBSD: pte.h,v 1.10 1997/09/02 19:07:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -101,11 +101,6 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 	(Sysmap + (((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
 #define	ptetokv(pte) \
 	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
-
-#define loadustp(stpte) {					\
-	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = stpte;		\
-	ALPHA_TBIAP();						\
-}
 
 extern	pt_entry_t *Lev1map;		/* Alpha Level One page table */
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
