@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/03/13 18:34:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/11 05:26:53 itojun Exp $
 
 LIB=	global
 
@@ -26,7 +26,7 @@ SRCS=	been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c xtext.c bounce_log.c \
 	flush_clnt.c mail_conf_time.c mbox_conf.c mbox_open.c abounce.c
 # IPv6
-SRCS+=	wildcard_inet_addr.c
+#SRCS+=	wildcard_inet_addr.c
 
 MKLINT=		no
 MKPIC=		no

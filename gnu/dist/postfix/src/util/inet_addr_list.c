@@ -51,13 +51,6 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 
-#include <netdb.h>
-
-#ifdef INET6
-#include <string.h>
-#include <sys/socket.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -70,45 +63,12 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
 {
     list->used = 0;
     list->size = 2;
-#ifdef INET6
-    list->addrs = (struct sockaddr_storage *)
-#else
     list->addrs = (struct in_addr *)
-#endif
-    mymalloc(sizeof(*list->addrs) * list->size);
+	mymalloc(sizeof(*list->addrs) * list->size);
 }
 
 /* inet_addr_list_append - append address to internet address list */
 
-#ifdef INET6
-void    inet_addr_list_append(INET_ADDR_LIST *list, 
-                              struct sockaddr * addr)
-{
-    char   *myname = "inet_addr_list_append";
-    char hbuf[NI_MAXHOST];
-    SOCKADDR_SIZE salen;
-
-#ifndef HAS_SA_LEN				
-    salen = SA_LEN((struct sockaddr *)&addr);
-#else				
-    salen = addr->sa_len;
-#endif				
-    if (msg_verbose > 1) {
-	if (getnameinfo(addr, salen, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST)) {
-	    strncpy(hbuf, "??????", sizeof(hbuf));
-	}
-	msg_info("%s: %s", myname, hbuf);
-    }
-
-    if (list->used >= list->size)
-	list->size *= 2;
-    list->addrs = (struct sockaddr_storage *)
-	myrealloc((char *) list->addrs,
-		  sizeof(*list->addrs) * list->size);
-    memcpy(&list->addrs[list->used++], addr, salen);
-}
-#else
 void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
 {
     char   *myname = "inet_addr_list_append";
@@ -123,42 +83,15 @@ void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
 		  sizeof(*list->addrs) * list->size);
     list->addrs[list->used++] = *addr;
 }
-#endif
 
 /* inet_addr_list_comp - compare addresses */
 
 static int inet_addr_list_comp(const void *a, const void *b)
 {
-#ifdef INET6
-    char h1[NI_MAXHOST], h2[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
-    const int niflags = NI_NUMERICHOST;
-#endif
-    int alen, blen;
-
-#ifndef HAS_SA_LEN
-    alen = SA_LEN((struct sockaddr *)a);
-    blen = SA_LEN((struct sockaddr *)b);
-#else
-    alen = ((struct sockaddr *)a)->sa_len;
-    blen = ((struct sockaddr *)b)->sa_len;
-#endif
-
-    if (getnameinfo((struct sockaddr *)a, alen, h1, sizeof(h1), NULL, 0,
-	niflags) == 0 &&
-        getnameinfo((struct sockaddr *)b, blen, h2, sizeof(h2), NULL, 0,
-	niflags) == 0) {
-	return strcmp(h1, h2);
-    } else
-	return 0;	/*error*/
-#else
     const struct in_addr *a_addr = (const struct in_addr *) a;
     const struct in_addr *b_addr = (const struct in_addr *) b;
 
     return (a_addr->s_addr - b_addr->s_addr);
-#endif
 }
 
 /* inet_addr_list_uniq - weed out duplicates */
