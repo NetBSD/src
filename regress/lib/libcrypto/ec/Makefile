@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2003/07/24 14:22:56 itojun Exp $
+#	$NetBSD: Makefile,v 1.1 2003/07/24 14:22:53 itojun Exp $
 
 NOMAN=		# defined
 
-PROG=		randtest
+PROG=		ectest
 DPADD+=		${LIBCRYPTO}
 LDADD+=		-lcrypto
 
@@ -12,4 +12,4 @@ regress:	${PROG}
 
 .include <bsd.prog.mk>
 
-.PATH:	${OPENSSLSRC}/crypto/rand
+.PATH:	${OPENSSLSRC}/crypto/ec

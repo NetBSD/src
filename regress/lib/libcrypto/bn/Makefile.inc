@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/09/18 04:16:01 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2003/07/24 14:22:52 itojun Exp $
 
 .include <bsd.own.mk>
+CRYPTODIST=${NETBSDSRCDIR}/crypto/dist
+.include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 
-CRYPTODIST=${NETBSDSRCDIR}/crypto/dist/openssl/crypto
-.PATH:	${CRYPTODIST}/bn
+.PATH:	${OPENSSLSRC}/crypto/bn
 
-CPPFLAGS+=	-I${CRYPTODIST}/..
+CPPFLAGS+=	-I${OPENSSLSRC}
+LDADD+=	${NETBSDSRCDIR}/lib/libcrypto/obj.i386/libcrypto.a
 
 # do not install regression test programs
 proginstall::

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/07/14 13:27:40 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2003/07/24 14:22:56 itojun Exp $
 
 NOMAN=		# defined
 
@@ -12,4 +12,4 @@ regress:	${PROG}
 
 .include <bsd.prog.mk>
 
-.PATH:	${CRYPTODIST}/mdc2
+.PATH:	${OPENSSLSRC}/crypto/mdc2
