@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2005/02/24 13:45:08 manu Exp $
+# $NetBSD: Makefile,v 1.10 2005/02/26 11:31:48 he Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -30,8 +30,8 @@ CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
 CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
 
-LDADD+= -ll -ly -lipsec -lcrypto 
-DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO} ${LIBIPSEC}
+LDADD+= -ll -ly -lipsec
+DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO}
 
 YHEADER=cfparse.h
 
@@ -61,6 +61,9 @@ LDADD+= ${LIBCRYPTO_RC5}
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
+
+LDADD+= -lcrypto 
+DPADD+= ${LIBIPSEC}
 
 .PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon		\
 	${DIST}/src/racoon/missing/crypto/sha2
