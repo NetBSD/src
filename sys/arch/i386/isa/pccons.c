@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.122 1998/03/22 13:01:18 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.123 1998/03/22 17:40:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -41,6 +41,10 @@
 
 /*
  * code to work keyboard & display for PC-style console
+ *
+ * "NPCCONSKBD > 0" means that we access the keyboard through the MI keyboard
+ * controller driver, ==0 that we access it directly.
+ * XXX Only one of these attachments can be used in one kernel configuration.
  */
 
 #include "opt_xserver.h"
@@ -60,6 +64,12 @@
 #include <sys/device.h>
 
 #include <dev/cons.h>
+
+#include "pc.h"
+#if (NPCCONSKBD > 0)
+#include <machine/bus.h>
+#include <dev/isa/pckbcvar.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -95,18 +105,27 @@
 
 static u_short *Crtat;			/* pointer to backing store */
 static u_short *crtat;			/* pointer to current char */
+#if (NPCCONSKBD == 0)
 static volatile u_char ack, nak;	/* Don't ask. */
+#endif
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
-static u_char lock_state = 0x00,	/* all off */
-	      old_lock_state = 0xff,
+static u_char lock_state = 0x00;	/* all off */
+#if (NPCCONSKBD == 0)
+static u_char old_lock_state = 0xff,
 	      typematic_rate = 0xff,	/* don't update until set by user */
 	      old_typematic_rate = 0xff;
+#endif
 static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 	       old_cursor_shape = 0xffff;
 #ifdef XSERVER
 int pc_xmode = 0;
 #endif
 int pccons_is_console = 0;
+#if (NPCCONSKBD > 0)
+static pckbc_tag_t kbctag;
+static pckbc_slot_t kbcslot;
+static int kbc_attached;
+#endif
 
 #define	PCUNIT(x)	(minor(x))
 
@@ -141,6 +160,22 @@ struct cfattach pc_ca = {
 
 extern struct cfdriver pc_cd;
 
+#if (NPCCONSKBD > 0)
+struct pcconskbd_softc {
+	struct	device sc_dev;
+};
+
+int pcconskbdprobe __P((struct device *, struct cfdata *, void *));
+void pcconskbdattach __P((struct device *, struct device *, void *));
+void pcinput __P((void *, int));
+
+struct cfattach pcconskbd_ca = {
+	sizeof(struct pcconskbd_softc), pcconskbdprobe, pcconskbdattach
+};
+
+extern struct cfdriver pcconskbd_cd;
+#endif
+
 #define	COL		80
 #define	ROW		25
 #define	CHR		2
@@ -165,7 +200,10 @@ extern struct cfdriver pc_cd;
 
 static unsigned int addr_6845 = MONO_BASE;
 
+#if (NPCCONSKBD == 0)
 char *sget __P((void));
+#endif
+char *strans __P((u_char));
 void sput __P((u_char *, int));
 #ifdef XSERVER
 void pc_xmode_on __P((void));
@@ -177,7 +215,9 @@ int	pcparam __P((struct tty *, struct termios *));
 
 char	partab[];
 
+#if (NPCCONSKBD == 0)
 int kbd_cmd __P((u_char, u_char));
+#endif
 void set_cursor_shape __P((void));
 #ifdef XSERVER
 #ifdef XFREE86_BUG_COMPAT
@@ -186,18 +226,27 @@ void get_cursor_shape __P((void));
 #endif
 void do_async_update __P((void *));
 void async_update __P((void));
+#if (NPCCONSKBD > 0)
+void update_leds __P((void));
+#else
+#define update_leds async_update
+#endif
 
+#if (NPCCONSKBD == 0)
 static __inline int kbd_wait_output __P((void));
 static __inline int kbd_wait_input __P((void));
 static __inline void kbd_flush_input __P((void));
 static u_char kbc_get8042cmd __P((void));
 static int kbc_put8042cmd __P((u_char));
+#endif
 
 void pccnprobe __P((struct consdev *));
 void pccninit __P((struct consdev *));
 void pccnputc __P((dev_t, int));
 int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
+
+#if (NPCCONSKBD == 0)
 
 #define	KBD_DELAY \
 	{ u_char x = inb(0x84); (void) x; } \
@@ -330,6 +379,8 @@ kbd_cmd(val, polling)
 	return (0);
 }
 
+#endif /* NPCCONSKBD == 0 */
+
 void
 set_cursor_shape()
 {
@@ -373,12 +424,15 @@ void
 do_async_update(v)
 	void *v;
 {
+#if (NPCCONSKBD == 0)
 	u_char poll = v ? 1 : 0;
+#endif
 	int pos;
 	static int old_pos = -1;
 
 	async = 0;
 
+#if (NPCCONSKBD == 0)
 	if (lock_state != old_lock_state) {
 		old_lock_state = lock_state;
 		if (!kbd_cmd(KBC_MODEIND, poll) ||
@@ -395,6 +449,13 @@ do_async_update(v)
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}
+#else
+	/*
+	 * If the mi pckbc driver is used, keyboard commands are handled
+	 * there. The commands are issued synchronously (in update_leds()
+	 * and pcioctl()).
+	 */
+#endif
 
 #ifdef XSERVER
 	if (pc_xmode > 0)
@@ -430,6 +491,18 @@ async_update()
 	}
 }
 
+#if (NPCCONSKBD > 0)
+void update_leds()
+{
+	u_char cmd[2];
+
+	cmd[0] = KBC_MODEIND;
+	cmd[1] = lock_state & 7;
+
+	pckbc_enqueue_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+}
+#endif
+
 /*
  * these are both bad jokes
  */
@@ -440,18 +513,35 @@ pcprobe(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+#if (NPCCONSKBD == 0)
 	u_int i;
+#else
+	u_char cmd[2], resp[1];
+	int res;
+#endif
 
+#if (NPCCONSKBD == 0)
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
 		return (0);
 	}
+#else
+	if (!kbc_attached) {
+		printf("pcprobe: no keyboard\n");
+		return (0);
+	}
+#endif
 
 #if 1
 	/* Flush any garbage. */
+#if (NPCCONSKBD == 0)
 	kbd_flush_input();
+#else
+	pckbc_flush(kbctag, kbcslot);
+#endif
 	/* Reset the keyboard. */
+#if (NPCCONSKBD == 0)
 	if (!kbd_cmd(KBC_RESET, 1)) {
 		printf("pcprobe: reset error %d\n", 1);
 		goto lose;
@@ -465,17 +555,48 @@ pcprobe(parent, match, aux)
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
+#else
+	cmd[0] = KBC_RESET;
+	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 1, resp, 1);
+	if (res) {
+		printf("pcprobe: reset error %d\n", 1);
+		/*
+		 * XXX The keyboard is not present. Try to set the
+		 * controller to "translating" anyway in case it is
+		 * connected later. This should be done in attach().
+		 */
+		(void) pckbc_xt_translation(kbctag, kbcslot, 1);
+		goto lose;
+	}
+	if (resp[0] != KBR_RSTDONE) {
+		printf("pcprobe: reset error %d\n", 2);
+		goto lose;
+	}
+#endif
 	/*
 	 * Some keyboards seem to leave a second ack byte after the reset.
 	 * This is kind of stupid, but we account for them anyway by just
 	 * flushing the buffer.
 	 */
+#if (NPCCONSKBD == 0)
 	kbd_flush_input();
+#else
+	pckbc_flush(kbctag, kbcslot);
+#endif
 	/* Just to be sure. */
+#if (NPCCONSKBD == 0)
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
 		printf("pcprobe: reset error %d\n", 3);
 		goto lose;
 	}
+#else
+	cmd[0] = KBC_ENABLE;
+	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
+	if (res) {
+		printf("pcprobe: reset error %d\n", 3);
+		goto lose;
+	}
+#endif
 
 	/*
 	 * Some keyboard/8042 combinations do not seem to work if the keyboard
@@ -490,6 +611,7 @@ pcprobe(parent, match, aux)
 	 * XXX It would perhaps be a better choice to just use AT scan codes
 	 * and not bother with this.
 	 */
+#if (NPCCONSKBD == 0)
 	if (kbc_get8042cmd() & KC8_TRANS) {
 		/* The 8042 is translating for us; use AT codes. */
 		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(2, 1)) {
@@ -503,15 +625,40 @@ pcprobe(parent, match, aux)
 			goto lose;
 		}
 	}
+#else
+	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
+		/* The 8042 is translating for us; use AT codes. */
+		cmd[0] = KBC_SETTABLE;
+		cmd[1] = 2;
+		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		if (res) {
+			printf("pcprobe: reset error %d\n", 4);
+			goto lose;
+		}
+	} else {
+		/* Stupid 8042; set keyboard to XT codes. */
+		cmd[0] = KBC_SETTABLE;
+		cmd[1] = 1;
+		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		if (res) {
+			printf("pcprobe: reset error %d\n", 5);
+			goto lose;
+		}
+	}
+#endif
 
 lose:
 	/*
 	 * Technically, we should probably fail the probe.  But we'll be nice
 	 * and allow keyboard-less machines to boot with the console.
 	 */
-#endif
+#endif /* 1 */
 
+#if (NPCCONSKBD > 0)
+	ia->ia_iosize = 0;
+#else
 	ia->ia_iosize = 16;
+#endif
 	ia->ia_msize = 0;
 	return (1);
 }
@@ -522,7 +669,9 @@ pcattach(parent, self, aux)
 	void *aux;
 {
 	struct pc_softc *sc = (void *)self;
+#if (NPCCONSKBD == 0)
 	struct isa_attach_args *ia = aux;
+#endif
 
 	if (crtat == 0)
 		pcinit();
@@ -530,6 +679,9 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update((void *)1);
 
+#if (NPCCONSKBD > 0)
+	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc);
+#else
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pcintr, sc);
 
@@ -542,6 +694,7 @@ pcattach(parent, self, aux)
 		/* Will break when no more children. */
 		;
 	}
+#endif
 
 	if (pccons_is_console) {
 		int maj;
@@ -557,6 +710,46 @@ pcattach(parent, self, aux)
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
 }
+
+#if (NPCCONSKBD > 0)
+int
+pcconskbdprobe(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct pckbc_attach_args *pka = aux;
+
+	if (pka->pa_slot != PCKBC_KBD_SLOT)
+		return (0);
+	return (1);
+}
+
+void
+pcconskbdattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pckbc_attach_args *pka = aux;
+
+	printf("\n");
+
+	kbctag = pka->pa_tag;
+	kbcslot = pka->pa_slot;
+	kbc_attached = 1;
+}
+
+int
+pcconskbd_cnattach(tag, slot)
+	pckbc_tag_t tag;
+	pckbc_slot_t slot;
+{
+	kbctag = tag;
+	kbcslot = slot;
+	kbc_attached = 1;
+	return (0);
+}
+#endif
 
 int
 pcopen(dev, flag, mode, p)
@@ -655,6 +848,26 @@ pctty(dev)
  * the console processor wants to give us a character.
  * Catch the character, and see who it goes to.
  */
+#if (NPCCONSKBD > 0)
+void
+pcinput(arg, data)
+	void *arg;
+	int data;
+{
+	struct pc_softc *sc = arg;
+	register struct tty *tp = sc->sc_tty;
+	u_char *cp;
+
+	if (!tp || (tp->t_state & TS_ISOPEN) == 0)
+		return;
+
+	cp = strans(data);
+	if (cp)
+		do
+			(*linesw[tp->t_line].l_rint)(*cp++, tp);
+		while (*cp);
+}
+#else
 int
 pcintr(arg)
 	void *arg;
@@ -678,6 +891,7 @@ pcintr(arg)
 	} while (inb(IO_KBD + KBSTATP) & KBS_DIB);
 	return (1);
 }
+#endif
 
 int
 pcioctl(dev, cmd, data, flag, p)
@@ -733,9 +947,21 @@ pcioctl(dev, cmd, data, flag, p)
 		 */
 		if (rate & 0x80)
 			return (EINVAL);
+#if (NPCCONSKBD > 0)
+		{
+			u_char cmd[2];
+
+			cmd[0] = KBC_TYPEMATIC;
+			cmd[1] = rate;
+
+			return (pckbc_enqueue_cmd(kbctag, kbcslot, cmd, 2, 0,
+						  1, 0));
+		}
+#else
 		typematic_rate = rate;
 		async_update();
 		return (0);
+#endif
  	}
 	default:
 		return (ENOTTY);
@@ -842,9 +1068,17 @@ pccngetc(dev)
 
 	do {
 		/* wait for byte */
+#if (NPCCONSKBD == 0)
 		while ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
+#else
+		int data;
+		do {
+			data = pckbc_poll_data(kbctag, kbcslot);
+		} while (data == -1);
+		cp = strans(data);
+#endif
 	} while (!cp);
 	if (*cp == '\r')
 		return ('\n');
@@ -858,6 +1092,9 @@ pccnpollc(dev, on)
 {
 
 	polling = on;
+#if (NPCCONSKBD > 0)
+	pckbc_set_poll(kbctag, kbcslot, on);
+#else
 	if (!on) {
 		int unit;
 		struct pc_softc *sc;
@@ -879,6 +1116,7 @@ pccnpollc(dev, on)
 			}
 		}
 	}
+#endif
 }	
 
 /*
@@ -2077,15 +2315,11 @@ static Scan_def	scan_codes[] = {
 
 #endif
 
-/*
- * Get characters from the keyboard.  If none are present, return NULL.
- */
+#if (NPCCONSKBD == 0)
 char *
 sget()
 {
-	u_char dt;
-	static u_char extended = 0, shift_state = 0;
-	static u_char capchar[2];
+	u_char dt, *capchar;
 
 top:
 	KBD_DELAY;
@@ -2099,6 +2333,27 @@ top:
 		nak = 1;
 		goto loop;
 	}
+
+	capchar = strans(dt);
+	if (capchar)
+		return (capchar);
+
+loop:
+	if ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
+		return (0);
+	goto top;
+}
+#endif
+
+/*
+ * Get characters from the keyboard.  If none are present, return NULL.
+ */
+char *
+strans(dt)
+	u_char dt;
+{
+	static u_char extended = 0, shift_state = 0;
+	static u_char capchar[2];
 
 #ifdef XSERVER
 	if (pc_xmode > 0) {
@@ -2125,7 +2380,7 @@ top:
 				break;
 			shift_state |= NUM;
 			lock_state ^= NUM;
-			async_update();
+			update_leds();
 			break;
 		case CAPS:
 			if (dt & 0x80) {
@@ -2136,7 +2391,7 @@ top:
 				break;
 			shift_state |= CAPS;
 			lock_state ^= CAPS;
-			async_update();
+			update_leds();
 			break;
 		case SCROLL:
 			if (dt & 0x80) {
@@ -2147,7 +2402,7 @@ top:
 				break;
 			shift_state |= SCROLL;
 			lock_state ^= SCROLL;
-			async_update();
+			update_leds();
 			break;
 		}
 		return (capchar);
@@ -2157,7 +2412,7 @@ top:
 	switch (dt) {
 	case KBR_EXTENDED:
 		extended = 1;
-		goto loop;
+		return (0);
 	}
 
 #ifdef DDB
@@ -2225,14 +2480,14 @@ top:
 				break;
 			shift_state |= NUM;
 			lock_state ^= NUM;
-			async_update();
+			update_leds();
 			break;
 		case CAPS:
 			if (shift_state & CAPS)
 				break;
 			shift_state |= CAPS;
 			lock_state ^= CAPS;
-			async_update();
+			update_leds();
 			break;
 		case SCROLL:
 			if (shift_state & SCROLL)
@@ -2310,10 +2565,7 @@ top:
 	}
 
 	extended = 0;
-loop:
-	if ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
-		return (0);
-	goto top;
+	return (0);
 }
 
 int
