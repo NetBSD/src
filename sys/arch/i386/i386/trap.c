@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2000/12/09 02:46:17 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.148 2000/12/09 06:33:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -588,13 +588,14 @@ syscall(frame)
 #endif
 
 	p = curproc;
+	p->p_md.md_regs = &frame;
+
 	if (p->p_emul->e_syscall) {
 		p->p_emul->e_syscall(&frame);
 		return;
 	}
 
 	sticks = p->p_sticks;
-	p->p_md.md_regs = &frame;
 	code = frame.tf_eax;
 
 	callp = p->p_emul->e_sysent;
@@ -625,18 +626,13 @@ syscall(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (p->p_emul->e_flags & EMUL_HAS_SYS___syscall) {
-			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-			params += sizeof(quad_t);
-		}
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		params += sizeof(quad_t);
 		break;
 	default:
 		break;
 	}
-	if ((u_int)code >= (u_int)p->p_emul->e_nsysent)
-		callp += p->p_emul->e_nosys;		/* illegal */
-	else
-		callp += code;
+	callp += (code & (SYS_NSYSENT - 1));
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		error = copyin(params, (caddr_t)args, argsize);
