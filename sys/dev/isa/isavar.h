@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.15 1995/04/17 12:09:15 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.16 1995/06/07 06:45:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -118,11 +118,11 @@ typedef enum {
 	ISA_IPL_CLOCK,		/* clock */
 } isa_intrlevel;
 
-void *isa_intr_establish __P((int intr, isa_intrtype type,
-		    isa_intrlevel level, int (*ih_fun)(void *),
-		    void *ih_arg));
-void isa_intr_disestablish __P((void *handler));
-char *isa_intr_typename __P((isa_intrtype type));
+void	isascan __P((struct device *parent, void *match));
+void	*isa_intr_establish __P((int intr, isa_intrtype type,
+	    isa_intrlevel level, int (*ih_fun)(void *), void *ih_arg));
+void	isa_intr_disestablish __P((void *handler));
+char	*isa_intr_typename __P((isa_intrtype type));
 
 #ifdef NEWCONFIG
 /*
