@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.44 2000/06/27 09:00:14 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.45 2000/06/27 16:16:43 mrg Exp $	*/
 
 /*
  *
@@ -35,7 +35,7 @@
  */
 
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,28 @@
  *
  * NOTE: vm system calls are prototyped in syscallargs.h
  */
+
+/*
+ * typedefs, necessary for standard UVM headers.
+ */
+
+typedef unsigned int  uvm_flag_t;
+typedef int vm_fault_t;
+
+typedef int vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+
+union vm_map_object;
+typedef union vm_map_object vm_map_object_t;
+
+struct vm_map_entry;
+typedef struct vm_map_entry *vm_map_entry_t;
+
+struct vm_map;
+typedef struct vm_map *vm_map_t;
+
+struct vm_page;
+typedef struct vm_page  *vm_page_t;
 
 /*
  * defines
@@ -293,8 +315,46 @@ struct uvmexp {
 };
 
 #ifdef _KERNEL
-
 extern struct uvmexp uvmexp;
+#endif
+
+/*
+ * Finally, bring in standard UVM headers.
+ */
+#include <sys/vmmeter.h>
+#include <sys/queue.h>
+#include <uvm/uvm_param.h>
+#include <sys/lock.h>
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_inherit.h>
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_pmap.h>
+#include <uvm/uvm_map.h>
+#include <uvm/uvm_fault.h>
+#include <uvm/uvm_pager.h>
+
+/*
+ * Shareable process virtual address space.
+ * May eventually be merged with vm_map.
+ * Several fields are temporary (text, data stuff).
+ */
+struct vmspace {
+	struct	vm_map vm_map;	/* VM address map */
+	int	vm_refcnt;	/* number of references */
+	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
+/* we copy from vm_startcopy to the end of the structure on fork */
+#define vm_startcopy vm_rssize
+	segsz_t vm_rssize; 	/* current resident set size in pages */
+	segsz_t vm_swrss;	/* resident set size before last swap */
+	segsz_t vm_tsize;	/* text size (pages) XXX */
+	segsz_t vm_dsize;	/* data size (pages) XXX */
+	segsz_t vm_ssize;	/* stack size (pages) */
+	caddr_t	vm_taddr;	/* user virtual address of text XXX */
+	caddr_t	vm_daddr;	/* user virtual address of data XXX */
+	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
+};
+
+#ifdef _KERNEL
 
 /*
  * the various kernel maps, owned by MD code
@@ -315,12 +375,11 @@ extern vm_map_t	phys_map;
 
 #endif /* _KERNEL */
 
-/*
- * typedefs 
- */
-
-typedef unsigned int  uvm_flag_t;
-typedef int vm_fault_t;
+#ifdef	pmap_resident_count
+#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
+#else
+#define vm_resident_count(vm) ((vm)->vm_rssize)
+#endif
 
 /* XXX clean up later */
 struct buf;
