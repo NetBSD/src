@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.62 1994/07/17 23:52:09 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.63 1994/08/30 03:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -129,13 +129,19 @@ main(framep)
 	cpu_startup();
 
 	/*
+	 * Initialize process and pgrp structures.
+	 */
+	procinit();
+
+	/*
 	 * Create process 0 (the swapper).
 	 */
-	allproc = (volatile struct proc *)p;
-	p->p_prev = (struct proc **)&allproc;
+	LIST_INSERT_HEAD(&allproc, p, p_list);
 	p->p_pgrp = &pgrp0;
-	pgrphash[0] = &pgrp0;
-	pgrp0.pg_mem = p;
+	LIST_INSERT_HEAD(PGRPHASH(0), &pgrp0, pg_hash);
+	LIST_INIT(&pgrp0.pg_members);
+	LIST_INSERT_HEAD(&pgrp0.pg_members, p, p_pglist);
+
 	pgrp0.pg_session = &session0;
 	session0.s_count = 1;
 	session0.s_leader = p;
@@ -190,10 +196,8 @@ main(framep)
 	p->p_sigacts = &p->p_addr->u_sigacts;
 
 	/*
-	 * Initialize per uid information structure and charge
-	 * root for one process.
+	 * Charge root for one process.
 	 */
-	usrinfoinit();
 	(void)chgproccnt(0, 1);
 
 	rqinit();

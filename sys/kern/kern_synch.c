@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.26 1994/06/29 06:32:45 cgd Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.27 1994/08/30 03:05:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -169,7 +169,7 @@ schedcpu(arg)
 	register unsigned int newcpu;
 
 	wakeup((caddr_t)&lbolt);
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
@@ -683,7 +683,7 @@ void db_show_all_procs(long addr, int haddr, int count, char *modif)
     struct proc *ap, *p, *pp;
     
     np = nprocs;
-    p = ap = (struct proc *)allproc;
+    p = ap = allproc.lh_first;
     if (modif[0] == 'm')
         db_printf("  pid  proc    addr     map      comm         wchan\n");
     else
@@ -710,9 +710,9 @@ void db_show_all_procs(long addr, int haddr, int count, char *modif)
 	    }
             db_printf("\n");
 	}
-        ap = p->p_next;
+        ap = p->p_list.le_next;
         if (ap == 0 && np > 0)
-	    ap = zombproc;
+	    ap = zombproc.lh_first;
         p = ap;
     }
 }

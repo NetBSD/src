@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.6 1994/06/29 06:44:47 cgd Exp $	*/
+/*	$NetBSD: namei.h,v 1.7 1994/08/30 03:07:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _SYS_NAMEI_H_
 #define	_SYS_NAMEI_H_
+
+#include <sys/queue.h>
 
 /*
  * Encapsulation of namei parameters.
@@ -156,10 +158,8 @@ struct nameidata {
 #define	NCHNAMLEN	31	/* maximum name segment length we bother with */
 
 struct	namecache {
-	struct	namecache *nc_forw;	/* hash chain */
-	struct	namecache **nc_back;	/* hash chain */
-	struct	namecache *nc_nxt;	/* LRU chain */
-	struct	namecache **nc_prev;	/* LRU chain */
+	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
+	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
 	struct	vnode *nc_vp;		/* vnode the name refers to */
