@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.40 2003/08/19 21:04:22 erh Exp $	*/
+/*	$NetBSD: auich.c,v 1.41 2003/09/28 13:37:19 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,10 +103,10 @@
  *	http://developer.intel.com/design/chipsets/manuals/298028.htm
  * ICH3:http://www.intel.com/design/chipsets/datashts/290716.htm
  * ICH4:http://www.intel.com/design/chipsets/datashts/290744.htm
+ * ICH5:http://www.intel.com/design/chipsets/datashts/252516.htm
  *
  * TODO:
  *	- Add support for the dedicated microphone input.
- *	- 4ch/6ch support.
  *
  * NOTE:
  *      - The 440MX B-stepping at running 100MHz has a hardware erratum.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.40 2003/08/19 21:04:22 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.41 2003/09/28 13:37:19 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,13 @@ struct auich_softc {
 };
 
 #define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
-				  & AC97_EXT_AUDIO_VRA)
+				& AC97_EXT_AUDIO_VRA)
+#define SUPPORTS_4CH(codec)	((codec)->vtbl->get_extcaps(codec) \
+				& AC97_EXT_AUDIO_SDAC)
+#define AC97_6CH_DACS		(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC \
+				| AC97_EXT_AUDIO_LDAC)
+#define SUPPORTS_6CH(codec)	(((codec)->vtbl->get_extcaps(codec) \
+				& AC97_6CH_DACS) == AC97_6CH_DACS)
 
 /* Debug */
 #ifdef AUDIO_DEBUG
@@ -328,19 +334,19 @@ static const struct auich_devtype {
 	    "i82801AA (ICH) AC-97 Audio",	"ICH" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
 	    "i82801AB (ICH0) AC-97 Audio",	"ICH0",
-	    QUIRK_IGNORE_CODEC_READY_MAYBE }, /* i810-L */
+	    QUIRK_IGNORE_CODEC_READY_MAYBE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
 	    "i82801BA (ICH2) AC-97 Audio",	"ICH2",
 	    QUIRK_IGNORE_CODEC_READY_MAYBE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
 	    "i82440MX AC-97 Audio",		"440MX" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
-	    "i82801CA (ICH3) AC-97 Audio",	"ICH3" }, /* i830Mx i845MP/MZ*/
+	    "i82801CA (ICH3) AC-97 Audio",	"ICH3" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "i82801DB (ICH4) AC-97 Audio",	"ICH4",
+	    "i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4",
 	    QUIRK_IGNORE_CODEC_READY_MAYBE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
-		"i82801EB (ICH5) AC-97 Audio",   "ICH5",
+	    "i82801EB (ICH5) AC-97 Audio",   "ICH5",
 	    QUIRK_IGNORE_CODEC_READY },
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
 	    "SiS 7012 AC-97 Audio",		"SiS7012" },
@@ -488,16 +494,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
-	/* Print capabilities though there are no supports for now */
-	if ((status & ICH_SAMPLE_CAP) == ICH_POM20)
-		aprint_normal("%s: 20 bit precision support\n",
-		    sc->sc_dev.dv_xname);
-	if ((status & ICH_CHAN_CAP) == ICH_PCM4)
-		aprint_normal("%s: 4ch PCM output support\n",
-		    sc->sc_dev.dv_xname);
-	if ((status & ICH_CHAN_CAP) == ICH_PCM6)
-		aprint_normal("%s: 6ch PCM output support\n",
-		    sc->sc_dev.dv_xname);
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
@@ -690,13 +686,26 @@ auich_query_encoding(void *v, struct audio_encoding *aep)
 int
 auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 {
-	int reg;
+	int ret;
 	u_long ratetmp;
 
 	ratetmp = srate;
-	reg = mode == AUMODE_PLAY
-		? AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
-	return sc->codec_if->vtbl->set_rate(sc->codec_if, reg, &ratetmp);
+	if (mode == AUMODE_RECORD)
+		return sc->codec_if->vtbl->set_rate(sc->codec_if,
+		    AC97_REG_PCM_LR_ADC_RATE, &ratetmp);
+	ret = sc->codec_if->vtbl->set_rate(sc->codec_if,
+	    AC97_REG_PCM_FRONT_DAC_RATE, &ratetmp);
+	if (ret)
+		return ret;
+	ratetmp = srate;
+	ret = sc->codec_if->vtbl->set_rate(sc->codec_if,
+	    AC97_REG_PCM_SURR_DAC_RATE, &ratetmp);
+	if (ret)
+		return ret;
+	ratetmp = srate;
+	ret = sc->codec_if->vtbl->set_rate(sc->codec_if,
+	    AC97_REG_PCM_LFE_DAC_RATE, &ratetmp);
+	return ret;
 }
 
 int
@@ -706,6 +715,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	struct auich_softc *sc = v;
 	struct audio_params *p;
 	int mode;
+	u_int32_t control;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -734,9 +744,30 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 		p->hw_precision = 16;
 
+		if (mode == AUMODE_RECORD) {
+			if (p->channels < 1 || p->channels > 2)
+				return EINVAL;
+		} else {
+			switch (p->channels) {
+			case 1:
+				break;
+			case 2:
+				break;
+			case 4:
+				if (!SUPPORTS_4CH(sc->codec_if))
+					return EINVAL;
+				break;
+			case 6:
+				if (!SUPPORTS_6CH(sc->codec_if))
+					return EINVAL;
+				break;
+			default:
+				return EINVAL;
+			}
+		}
 		/* If monaural is requested, aurateconv expands a monaural
 		 * stream to stereo. */
-		if (p->channels < 2)
+		if (p->channels == 1)
 			p->hw_channels = 2;
 
 		switch (p->encoding) {
@@ -817,6 +848,16 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		} else {
 			if (auich_set_rate(sc, mode, p->sample_rate))
 				return EINVAL;
+		}
+		if (mode == AUMODE_PLAY) {
+			control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
+			control &= ~ICH_PCM246_MASK;
+			if (p->channels == 4) {
+				control |= ICH_PCM4;
+			} else if (p->channels == 6) {
+				control |= ICH_PCM6;
+			}
+			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);
 		}
 	}
 
