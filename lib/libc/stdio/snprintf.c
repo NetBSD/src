@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.12.4.1 2000/10/19 14:04:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.12.4.1 2000/10/19 14:04:52 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,11 +75,13 @@ snprintf(str, n, fmt, va_alist)
 	va_list ap;
 	FILE f;
 
-	_DIAGASSERT(str != NULL);
+	_DIAGASSERT(n == 0 || str != NULL);
 	_DIAGASSERT(fmt != NULL);
 
-	if ((int)n < 1)
+	if ((int)n < 0) {
+		errno = EINVAL;
 		return (-1);
+	}
 #if __STDC__
 	va_start(ap, fmt);
 #else
