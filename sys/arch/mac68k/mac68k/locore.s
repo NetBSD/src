@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.2 1993/11/29 00:40:52 briggs Exp $
+ *	$Id: locore.s,v 1.3 1993/12/02 06:25:10 briggs Exp $
  */
 
 #include "assym.s"
@@ -1329,14 +1329,14 @@ _esigcode:
 
 #ifdef GPROF
 #define	ENTRY(name) \
-	.globl _ ## name; _ ## name: link a6,\#0; jbsr mcount; unlk a6
+	.globl _/**/name; _/**/name: link a6,\#0; jbsr mcount; unlk a6
 #define ALTENTRY(name, rname) \
 	ENTRY(name); jra rname+12
 #else
 #define	ENTRY(name) \
-	.globl _ ## name; _ ## name:
+	.globl _/**/name; _/**/name:
 #define ALTENTRY(name, rname) \
-	.globl _ ## name; _ ## name:
+	.globl _/**/name; _/**/name:
 #endif
 
 /*
