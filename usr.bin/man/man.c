@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.15 1998/11/06 22:33:47 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.16 1999/06/13 19:38:04 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.15 1998/11/06 22:33:47 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.16 1999/06/13 19:38:04 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,12 +148,14 @@ main(argc, argv)
 		usage();
 
 	if (!f_cat && !f_how && !f_where) {
-		if (!isatty(1))
+		if (!isatty(STDOUT_FILENO)) {
 			f_cat = 1;
-		else {
-			if ((pager = getenv("PAGER")) != NULL)
+		} else {
+			if ((pager = getenv("PAGER")) != NULL &&
+			    pager[0] != '\0')
 				pager = check_pager(pager);
-			else	pager = _PATH_PAGER;
+			else
+				pager = _PATH_PAGER;
 		}
 	}
 	/* Read the configuration file. */

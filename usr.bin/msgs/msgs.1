@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgs.1,v 1.8 1999/03/22 18:16:40 garbled Exp $
+.\"	$NetBSD: msgs.1,v 1.9 1999/06/13 19:38:05 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,7 +97,11 @@ mailbox and
 .Xr mail  1
 is invoked on that mailbox.
 .It Fl p
-The specified message is piped through $PAGER, or, if $PAGER is not defined,
+The specified message is piped through
+.Ev PAGER ,
+or, if
+.Ev PAGER
+is null or not defined,
 .Xr more 1  .
 The commands `m', `p', and `s' all accept a numeric argument in place of the `\-'.
 .El
@@ -163,7 +167,9 @@ The command ``msgs \-q'' is often used in login scripts.
 Print the first part of messages only.
 .It Fl r
 Disables the ability to save messages or enter the mailer.  It is
-assumed that $PAGER is set to something secure.
+assumed that
+.Ev PAGER
+is set to something secure.
 .It Fl l
 Option causes only locally originated messages to be reported.
 .It Ar num
@@ -186,7 +192,11 @@ messages back from the one indicated in the
 .Pa \&.msgsrc
 file, useful for reviews of recent messages.
 .It Fl p
-Pipe long messages through $PAGER, or, if $PAGER is not defined,
+Pipe long messages through
+.Ev PAGER ,
+or, if
+.Ev PAGER
+is null or not defined,
 .Xr more  1  .
 .El
 .Pp
