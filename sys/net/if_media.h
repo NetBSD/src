@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.13 1999/03/23 21:46:47 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.13.2.1 2000/05/11 09:15:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,14 +137,15 @@ void	ifmedia_set __P((struct ifmedia *ifm, int mword));
 int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 	    struct ifmedia *ifm, u_long cmd));
 
+/* Compute baudrate for a given media. */
+int	ifmedia_baudrate __P((int));
 #endif /*_KERNEL */
 
 /*
  * if_media Options word:
  *	Bits	Use
  *	----	-------
- *	0-3	Media variant
- *	4	RFU
+ *	0-4	Media subtype		MAX SUBTYPE == 31!
  *	5-7	Media type
  *	8-15	Type specific options
  *	16-19	RFU
@@ -164,9 +165,13 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_100_T4	8		/* 100BaseT4 - 4 pair cat 3 */
 #define	IFM_100_VG	9		/* 100VG-AnyLAN */
 #define	IFM_100_T2	10		/* 100BaseT2 */
-#define	IFM_1000_FX	11		/* 1000BaseFX - gigabit over fiber */
+#define	IFM_1000_SX	11		/* 1000BaseSX - multi-mode fiber */
 #define	IFM_10_STP	12		/* 10BaseT over shielded TP */
 #define	IFM_10_FL	13		/* 10BaseFL - Fiber */
+#define	IFM_1000_LX	14		/* 1000baseLX - single-mode fiber */
+#define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
+#define	IFM_1000_TX	16		/* 1000baseTX - 4 pair cat 5 */
+#define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
 
 /*
  * Token ring
@@ -190,6 +195,19 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define IFM_FDDI_DA	0x00000100	/* Dual attach / single attach */
 
 /*
+ * IEEE 802.11 Wireless
+ */
+#define	IFM_IEEE80211	0x00000080
+#define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 1Mbps */
+#define	IFM_IEEE80211_FH2	4	/* Frequency Hopping 2Mbps */
+#define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
+#define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
+#define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
+#define	IFM_IEEE80211_DS1	8	/* Direct Sequence 1Mbps */
+
+#define	IFM_IEEE80211_ADHOC	0x00000100	/* Operate in Adhoc mode */
+
+/*
  * Shared media sub-types
  */
 #define	IFM_AUTO	0		/* Autoselect best media */
@@ -211,7 +229,7 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
  * Masks
  */
 #define	IFM_NMASK	0x000000e0	/* Network type */
-#define	IFM_TMASK	0x0000000f	/* Media sub-type */
+#define	IFM_TMASK	0x0000001f	/* Media sub-type */
 #define	IFM_IMASK	0xf0000000	/* Instance */
 #define	IFM_ISHIFT	28		/* Instance shift */
 #define	IFM_OMASK	0x0000ff00	/* Type specific options */
@@ -266,6 +284,7 @@ struct ifmedia_description {
 	{ IFM_TOKEN,			"TokenRing" },			\
 	{ IFM_TOKEN,			"token" },			\
 	{ IFM_FDDI,			"FDDI" },			\
+	{ IFM_IEEE80211,		"IEEE802.11" },			\
 	{ 0, NULL },							\
 }
 
@@ -300,14 +319,22 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_100_VG,		"100VG" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100baseT2" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100T2" },			\
-	{ IFM_ETHER|IFM_1000_FX,	"1000baseFX" },			\
-	{ IFM_ETHER|IFM_1000_FX,	"1000FX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000baseSX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000SX" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10baseSTP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"STP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10STP" },			\
 	{ IFM_ETHER|IFM_10_FL,		"10baseFL" },			\
 	{ IFM_ETHER|IFM_10_FL,		"FL" },				\
 	{ IFM_ETHER|IFM_10_FL,		"10FL" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000baseLX" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000LX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000CX" },			\
+	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
+	{ IFM_ETHER|IFM_1000_TX,	"1000TX" },			\
+	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
+	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
@@ -330,6 +357,16 @@ struct ifmedia_description {
 	 */								\
 	{ IFM_ETHER|IFM_10_T|IFM_FDX,	"10baseT-FDX" },		\
 	{ IFM_ETHER|IFM_100_TX|IFM_FDX,	"100baseTX-FDX" },		\
+									\
+	/*								\
+	 * IEEE 802.11							\
+	 */								\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11"	},		\
 									\
 	{ 0, NULL },							\
 }
@@ -356,7 +393,53 @@ struct ifmedia_description {
 	{ IFM_FDDI|IFM_FDDI_DA,		"dual-attach" },		\
 	{ IFM_FDDI|IFM_FDDI_DA,		"das" },			\
 									\
+	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
+									\
 	{ 0, NULL },							\
+}
+
+/*
+ * Baudrate descriptions for the various media types.
+ */
+struct ifmedia_baudrate {
+	int	ifmb_word;		/* media word */
+	int	ifmb_baudrate;		/* corresponding baudrate */
+};
+
+#define	IFM_BAUDRATE_DESCRIPTIONS {					\
+	{ IFM_ETHER|IFM_10_T,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_2,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_5,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_100_TX,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_FX,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_T4,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_VG,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_T2,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_1000_SX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_10_STP,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_FL,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_1000_LX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_TX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
+									\
+	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
+	{ IFM_TOKEN|IFM_TOK_STP16,	IF_Mbps(16) },			\
+	{ IFM_TOKEN|IFM_TOK_UTP4,	IF_Mbps(4) },			\
+	{ IFM_TOKEN|IFM_TOK_UTP16,	IF_Mbps(16) },			\
+									\
+	{ IFM_FDDI|IFM_FDDI_SMF,	IF_Mbps(100) },			\
+	{ IFM_FDDI|IFM_FDDI_MMF,	IF_Mbps(100) },			\
+	{ IFM_FDDI|IFM_FDDI_UTP,	IF_Mbps(100) },			\
+									\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1, IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5, IF_Mbps(5) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11, IF_Mbps(11) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
+									\
+	{ 0, 0 },							\
 }
 
 #endif	/* _NET_IF_MEDIA_H_ */
