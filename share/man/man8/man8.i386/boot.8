@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.22 2001/10/25 21:34:30 jdolecek Exp $
+.\"	$NetBSD: boot.8,v 1.23 2001/12/26 01:39:09 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,6 @@ system bootstrapping procedures
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
-.Pp
 .Ss Cold starts
 The 386
 .Tn "PC AT"
@@ -63,7 +62,6 @@ a boot selector program (such as OS-BS, BOOTEASY, the OS/2 Boot Menu or
 .No boot-selecting
 master boot record - see
 .Xr mbr 8 ) .
-.Pp
 .Ss Normal Operation
 Once running, a banner similar to the following will appear:
 .Bd -unfilled -offset indent
@@ -86,10 +84,9 @@ of the
 .Nx
 MBR partition of the first hard disk known to the BIOS [which is
 apparently an IDE or similar device - see the
-.Em BUGS
+.Sx BUGS
 section].) Pressing a key within the time limit will enter
 interactive mode.
-.Pp
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
