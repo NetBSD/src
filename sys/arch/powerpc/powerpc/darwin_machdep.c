@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.14 2004/04/18 23:32:46 matt Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.15 2004/07/04 21:03:55 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.14 2004/04/18 23:32:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.15 2004/07/04 21:03:55 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,11 +182,13 @@ darwin_sendsig(ksi, mask)
  * The signal trampoline calls this system call 
  * to get the process state restored like it was
  * before the signal delivery.
+ * 
+ * This is the version for X.2 binaries and older
  */
 int
-darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+darwin_sys_sigreturn_x2(struct lwp *l, void *v, register_t *retval)
 {
-	struct darwin_sys_sigreturn_args /* {
+	struct darwin_sys_sigreturn_x2_args /* {
 		syscallarg(struct darwin_ucontext *) uctx;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -196,6 +198,84 @@ darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	sigset_t mask;
 	size_t mcsize;
 	int error;
+
+	/*
+	 * The trampoline hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal hander.
+	 */
+	if ((error = copyin(SCARG(uap, uctx), &uctx, sizeof(uctx))) != 0)
+		return (error);
+
+	/* Check mcontext size, as it is handed by user code */
+	mcsize = uctx.uc_mcsize;
+	if (mcsize > sizeof(mctx))
+		mcsize = sizeof(mctx);
+
+	if ((error = copyin(uctx.uc_mcontext, &mctx, mcsize)) != 0)
+		return (error);
+
+	/* Check for security abuse */
+	tf = trapframe(l);
+	if (!PSL_USEROK_P(mctx.ss.srr1)) {
+		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08lx\n",
+		    mctx.ss.srr1, tf->srr1));
+		return (EINVAL);
+	}
+
+	/* Restore the context */
+	tf->dar = mctx.es.dar;
+	tf->dsisr = mctx.es.dsisr;
+	tf->exc = mctx.es.exception;
+
+	tf->srr0 = mctx.ss.srr0;
+	tf->srr1 = mctx.ss.srr1;
+	memcpy(&tf->fixreg[0], &mctx.ss.gpreg[0], sizeof(mctx.ss.gpreg));
+	tf->cr = mctx.ss.cr;
+	tf->xer = mctx.ss.xer;
+	tf->lr = mctx.ss.lr;
+	tf->ctr = mctx.ss.ctr;
+
+	/* Restore signal stack */
+	if (uctx.uc_onstack & SS_ONSTACK)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask */
+	native_sigset13_to_sigset(&uctx.uc_sigmask, &mask);
+	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
+	return (EJUSTRETURN);
+}
+
+/*
+ * This is the version used starting with X.3 binaries
+ */
+int
+darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+{
+	struct darwin_sys_sigreturn_args /* {
+		syscallarg(struct darwin_ucontext *) uctx;
+		syscallarg(int) ucvers;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct darwin_ucontext uctx;
+	struct darwin_mcontext mctx;
+	struct trapframe *tf;
+	sigset_t mask;
+	size_t mcsize;
+	int error;
+
+	switch (SCARG(uap, ucvers)) {
+	case DARWIN_UCVERS_X2:
+		break;
+
+	default:
+		printf("darwin_sys_sigreturn: ucvers = %d\n", 
+		    SCARG(uap, ucvers));
+		break;
+	}
 
 	/*
 	 * The trampoline hands us the context.

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.5 2004/07/03 00:14:30 manu Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.6 2004/07/04 21:03:55 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -44,6 +44,11 @@
 
 #define DARWIN_USRSTACK		0xbfff0000
 #define DARWIN_USRSTACK32	0x00000000bfff000L
+
+/*
+ * User context versions for newer sigreturn
+ */
+#define DARWIN_UCVERS_X2 1
 
 void darwin_fork_child_return(void *);
 
