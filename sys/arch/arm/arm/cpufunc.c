@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.6 2001/06/02 22:08:11 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.7 2001/06/02 22:30:07 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -574,10 +574,8 @@ early_abort_fixup(arg)
 				printf("This instruction must be corrected\n");
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
+			if (base == 15)
+				return ABORT_FIXUP_FAILED;
 			/* Count registers transferred */
 			count = 0;
 			for (loop = 0; loop < 16; ++loop) {
@@ -620,14 +618,10 @@ early_abort_fixup(arg)
 
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
+			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+				return ABORT_FIXUP_FAILED;
+			if (base == 15)
+				return ABORT_FIXUP_FAILED;
 
 			offset = (fault_instruction & 0xff) << 2;
 #ifdef DEBUG_FAULT_CORRECTION
@@ -642,10 +636,8 @@ early_abort_fixup(arg)
 				printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		disassemble(fault_pc);
-		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
-	}
+	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
+		return ABORT_FIXUP_FAILED;
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 
@@ -751,14 +743,10 @@ late_abort_fixup(arg)
 		if ((fault_instruction & (1 << 24)) == 0
 		    || (fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
+			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+				return ABORT_FIXUP_FAILED;
+			if (base == 15)
+				return ABORT_FIXUP_FAILED;
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
 				printf("late abt fix: r%d=%08x ", base, registers[base]);
@@ -777,10 +765,8 @@ late_abort_fixup(arg)
 				int shift;
 
 				offset = fault_instruction & 0x0f;
-				if (offset == base) {
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
-				}
+				if (offset == base)
+					return ABORT_FIXUP_FAILED;
                 
 /* Register offset - hard we have to cope with shifts ! */
 				offset = registers[offset];
@@ -788,15 +774,11 @@ late_abort_fixup(arg)
 				if ((fault_instruction & (1 << 4)) == 0)
 					shift = (fault_instruction >> 7) & 0x1f;
 				else {
-					if ((fault_instruction & (1 << 7)) != 0) {
-						disassemble(fault_pc);
-						panic("Abort handler cannot fix this :-(\n");
-					}
+					if ((fault_instruction & (1 << 7)) != 0)
+						return ABORT_FIXUP_FAILED;
 					shift = ((fault_instruction >> 8) & 0xf);
-					if (base == shift) {
-						disassemble(fault_pc);
-						panic("Abort handler cannot fix this :-(\n");
-					}
+					if (base == shift)
+						return ABORT_FIXUP_FAILED;
 #ifdef DEBUG_FAULT_CORRECTION
 					if (pmap_debug_level >=0)
 						printf("shift reg=%d ", shift);
@@ -820,9 +802,7 @@ late_abort_fixup(arg)
 					offset = (int)(((int)offset) >> shift);
 					break;
 				case 3 : /* Rotate right */
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
-					break;
+					return ABORT_FIXUP_FAILED;
 				}
 
 #ifdef DEBUG_FAULT_CORRECTION
@@ -860,10 +840,8 @@ late_abort_fixup(arg)
 				printf("This instruction must be corrected\n");
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
+			if (base == 15)
+				return ABORT_FIXUP_FAILED;
 			/* Count registers transferred */
 			count = 0;
 			for (loop = 0; loop < 16; ++loop) {
@@ -906,14 +884,10 @@ late_abort_fixup(arg)
 
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-			if (base == 15) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
+			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+				return ABORT_FIXUP_FAILED;
+			if (base == 15)
+				return ABORT_FIXUP_FAILED;
 
 			offset = (fault_instruction & 0xff) << 2;
 #ifdef DEBUG_FAULT_CORRECTION
@@ -928,10 +902,8 @@ late_abort_fixup(arg)
 				printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		disassemble(fault_pc);
-		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
-	}
+	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
+		return ABORT_FIXUP_FAILED;
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 
