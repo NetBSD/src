@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.44 2004/08/09 01:49:26 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.45 2004/08/09 02:01:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.44 2004/08/09 01:49:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.45 2004/08/09 02:01:16 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -796,10 +796,6 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
 			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
-
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
-			reg |= PCMCIA_CCR_STATUS_INTRACK;
-			pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
 		}
 	} else {
 		ret = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
