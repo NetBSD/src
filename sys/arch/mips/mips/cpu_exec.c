@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.30.2.2 2001/11/17 23:43:41 wdk Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.30.2.3 2001/12/15 07:08:00 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,8 +142,7 @@ cpu_exec_ecoff_setregs(l, epp, stack)
 	u_long stack;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
-	struct proc *p = l->l_proc;	/* XXX */
-	struct frame *f = (struct frame *)p->p_md.md_regs;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	f->f_regs[GP] = (register_t)execp->a.gp_value;
 }
