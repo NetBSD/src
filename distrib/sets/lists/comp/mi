@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.214 2000/04/21 16:39:25 minoura Exp $
+#	$NetBSD: mi,v 1.215 2000/05/02 04:52:16 sjg Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -4294,6 +4294,7 @@
 ./usr/share/mk/bsd.inc.mk		comp-util-share
 ./usr/share/mk/bsd.info.mk		comp-util-share
 ./usr/share/mk/bsd.kinc.mk		comp-util-share
+./usr/share/mk/bsd.kernobj.mk		comp-util-share
 ./usr/share/mk/bsd.kmod.mk		comp-util-share
 ./usr/share/mk/bsd.lib.mk		comp-util-share
 ./usr/share/mk/bsd.links.mk		comp-util-share
