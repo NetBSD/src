@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.36 1999/03/22 22:06:58 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.37 1999/03/23 02:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -84,6 +84,12 @@ mbinit()
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", 0, mclpool_alloc,
 	    mclpool_release, 0);
+
+	/*
+	 * Set the high water mark on the mclpool to the number of
+	 * mbuf clusters the kernel is to support.
+	 */
+	pool_sethiwat(&mclpool, NMBCLUSTERS);
 }
 
 void *
