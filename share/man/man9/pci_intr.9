@@ -1,11 +1,11 @@
-.\" $NetBSD: pci_intr.9,v 1.1 2000/12/28 23:06:08 sommerfeld Exp $
+.\" $NetBSD: pci_intr.9,v 1.2 2001/06/05 12:57:29 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Bill Sommerfeld
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -21,7 +21,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -43,7 +43,7 @@
 .Nm pci_intr_string ,
 .Nm pci_intr_establish ,
 .Nm pci_intr_disestablish
-.Nd PCI bus interrupt manipulation functions.
+.Nd PCI bus interrupt manipulation functions
 .Sh SYNOPSIS
 .Fd #include <dev/pci/pcivar.h>
 .Ft int
@@ -57,32 +57,32 @@
 .Fn pci_intr_disestablish "pci_chipset_t *pc" "void *ih"
 .Sh DESCRIPTION
 .Pp
-The 
+The
 .Nm
 functions exist to allow device drivers machine-independant access to
 PCI bus interrupts.  The functions described in this page are
 typically declared in a port's
 .Pa Aq machine/pci_machdep.h
-header file; however, drivers should generally include 
+header file; however, drivers should generally include
 .Pa Aq dev/pci/pcivar.h
 to get other PCI-specific declarations as well.
 .Pp
 Each driver has an
 .Fn attach
-function which has a bus-specific 
+function which has a bus-specific
 .Ft attach_args
-structure. 
+structure.
 Each driver for a PCI device is is passed a pointer to an object of type
 .Ft struct pci_attach_args
 which contains, among other things, information about the location
 of the device in the PCI bus topology sufficient to allow interrupts
-from the device to be handled.  
+from the device to be handled.
 .Pp
 If a driver wishes to establish an interrupt handler for the device,
-it should pass the 
+it should pass the
 .Ft struct pci_attach_args *
 to the
-.Fn pci_intr_map 
+.Fn pci_intr_map
 function, which returns zero on success, and nonzero on failure.  The function
 sets the
 .Ft "pci_intr_handle_t"
@@ -94,10 +94,10 @@ error message, it should use the value returned by
 .Fn pci_intr_string .
 .Pp
 Subsequently, when the driver is prepared to recieve interrupts, it
-should call 
+should call
 .Fn pci_intr_establish
 to actually establish the handler; when the device interrupts,
-.Fa intrhand 
+.Fa intrhand
 will be called with a single argument
 .Fa intrarg ,
 and will run at the interrupt priority level
@@ -105,7 +105,7 @@ and will run at the interrupt priority level
 .Pp
 The return value of
 .Fn pci_intr_establish
-may be saved and passed to 
-.Fn pci_intr_disestablish 
+may be saved and passed to
+.Fn pci_intr_disestablish
 to disable the interrupt handler
 when the driver is no longer interested in interrupts from the device.
