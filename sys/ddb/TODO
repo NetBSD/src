@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7 2000/12/28 07:30:06 jmc Exp $
+$NetBSD: TODO,v 1.8 2001/12/31 00:35:21 jhawk Exp $
 
 In rough order.
 
@@ -104,3 +104,5 @@ done	Numbers starting with [a-f] should work, but symbols
 
 28.	Some way to track symbol table failures, since the message buffer
 	isn't available when we detect them.
+
+29.	Make "workXX" variables work.
