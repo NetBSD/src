@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.19 1998/03/18 17:10:16 bouyer Exp $
+.\"	$NetBSD: newfs.8,v 1.20 1998/04/29 09:49:13 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,11 +85,11 @@
 replaces the more obtuse
 mkfs
 program.
-Before running 
+Before running
 .Nm
 or
 .Nm mount_mfs ,
-the disk must be labeled using 
+the disk must be labeled using
 .Xr disklabel 8 .
 .Nm
 builds a file system on the specified special device
@@ -119,26 +119,27 @@ If the
 flag is specified (see below), the special file is unused.
 Otherwise, it is only used to read the disk label which provides
 a set of configuration parameters for the memory based file system.
-The special file is typically that of the primary swap area,
-since that is where the file system will be backed up when
-free memory gets low and the memory supporting
-the file system has to be paged.  If the keyword ``swap''
-is used instead of a special file name, default configuration parameters
-will be used.  (This option is useful when trying to use
+The special file is typically that of the primary swap area, since
+that is where the file system will be backed up when free memory
+gets low and the memory supporting the file system has to be paged.
+If the keyword ``swap'' is used instead of a special file name,
+default configuration parameters will be used.
+(This option is useful when trying to use
 .Nm mount_mfs
-on a machine without any disks.)
+on a machine without any disks).
 .Pp
 The following options define the general layout policies.
 .Bl -tag -width Fl
 .It Fl B
-specify the metadata byte order of the filesystem to be created. Valid byte
-orders are `be' and `le'. If no byte order is specified, the filesystem
-is created in host byte order.
+specify the metadata byte order of the filesystem to be created.
+Valid byte orders are `be' and `le'.
+If no byte order is specified, the filesystem is created in host
+byte order.
 .It Fl N
 Causes the file system parameters to be printed out
 without really creating the file system.
 .It Fl O
-Creates a 
+Creates a
 .Bx 4.3
 format filesystem.
 This options is primarily used to build root filesystems
@@ -157,7 +158,7 @@ See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl b Ar block-size
-The block size of the file system, in bytes.  
+The block size of the file system, in bytes.
 .It Fl c Ar #cylinders/group
 The number of cylinders per cylinder group in a file system.
 The default value is 16.
@@ -209,7 +210,7 @@ for more details on how to set this option.
 The size of the file system in sectors.
 .El
 .Pp
-The following options override the standard sizes for the disk geometry. 
+The following options override the standard sizes for the disk geometry.
 Their default values are taken from the disk label.
 Changing these defaults is useful only when using
 .Nm
@@ -217,8 +218,8 @@ to build a file system whose raw image will eventually be used on a
 different type of disk than the one on which it is initially created
 (for example on a write-once disk).
 Note that changing any of these values from their defaults will make
-it impossible for 
-.Xr fsck_ffs
+it impossible for
+.Xr fsck_ffs 8
 to find the alternative superblocks if the standard superblock is lost.
 .Bl -tag -width Fl
 .It Fl S Ar sector-size
@@ -254,7 +255,7 @@ system.
 This does not include sectors reserved at the end of each track for bad
 block replacement (see the
 .Fl p
-option.)
+option).
 .It Fl x Ar spare sectors per cylinder
 Spare sectors (bad sector replacements) are physical sectors that occupy
 space at the end of the last track in the cylinder.
