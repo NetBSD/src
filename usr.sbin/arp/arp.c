@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.24 2000/07/12 22:36:12 mason Exp $ */
+/*	$NetBSD: arp.c,v 1.25 2000/09/28 01:11:31 erh Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,13 +46,17 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.24 2000/07/12 22:36:12 mason Exp $");
+__RCSID("$NetBSD: arp.c,v 1.25 2000/09/28 01:11:31 erh Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * arp - display, set, and delete arp table entries
  */
+
+/* Roundup the same way rt_xaddrs does */
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -256,7 +260,7 @@ tryagain:
 		return (1);
 	}
 	sin = (struct sockaddr_inarp *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(sin->sin_len + (char *)sin);
+	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -340,7 +344,7 @@ tryagain:
 		return (1);
 	}
 	sin = (struct sockaddr_inarp *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(sin->sin_len + (char *)sin);
+	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -404,7 +408,8 @@ dump(addr)
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
 		sin = (struct sockaddr_inarp *)(rtm + 1);
-		sdl = (struct sockaddr_dl *)(sin + 1);
+		sdl = (struct sockaddr_dl *)
+		    (ROUNDUP(sin->sin_len) + (char *)sin);
 		if (addr) {
 			if (addr != sin->sin_addr.s_addr)
 				continue;
@@ -433,11 +438,11 @@ dump(addr)
 			(void)printf(" published (proxy only)");
 		if (rtm->rtm_addrs & RTA_NETMASK) {
 			sin = (struct sockaddr_inarp *)
-				(sdl->sdl_len + (char *)sdl);
+				(ROUNDUP(sdl->sdl_len) + (char *)sdl);
 			if (sin->sin_addr.s_addr == 0xffffffff)
 				(void)printf(" published");
 			if (sin->sin_len != 8)
-				(void)printf("(wierd)");
+				(void)printf("(weird)");
 		}
 		(void)printf("\n");
 	}
@@ -554,9 +559,12 @@ rtmsg(cmd)
 	case RTM_GET:
 		rtm->rtm_addrs |= RTA_DST;
 	}
+
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
-		(void)memcpy(cp, &s, sizeof(s)); cp += sizeof(s);}
+		(void)memcpy(cp, &s, ((struct sockaddr *)&s)->sa_len); \
+		cp += ROUNDUP(((struct sockaddr *)&s)->sa_len); \
+	}
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
