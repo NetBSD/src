@@ -42,11 +42,13 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)slattach.c	8.2 (Berkeley) 1/7/94";*/
-static char *rcsid = "$Id: slattach.c,v 1.13 1994/10/31 04:38:09 cgd Exp $";
+static char *rcsid = "$Id: slattach.c,v 1.14 1994/12/18 00:26:34 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -55,10 +57,12 @@ static char *rcsid = "$Id: slattach.c,v 1.13 1994/10/31 04:38:09 cgd Exp $";
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
 int	speed = 9600;
 int	slipdisc = SLIPDISC;
