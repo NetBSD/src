@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2000/06/29 08:19:21 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2000/08/11 15:11:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -849,6 +849,7 @@ sh_memio_unmap(t, bsh, size)
 	return;
 }
 
+#if !defined(DONT_INIT_BSC)
 /*
  * InitializeBsc
  * : BSC(Bus State Controler)
@@ -974,6 +975,7 @@ InitializeBsc()
 	SHREG_CCR = CCR_CE;
 #endif
 }
+#endif
 
 void
 sh3_cache_on(void)
