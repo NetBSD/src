@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2001/02/28 00:17:18 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2001/02/28 18:15:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -104,7 +104,9 @@
 
 
 #ifndef _LOCORE
+#include <sys/user.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 #endif	/* !_LOCORE */
 
 #ifdef arm26
@@ -162,7 +164,7 @@ extern int astpending;
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame) ((current_intr_depth > 1) || (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
 
-#define	PROC_PC(p)	((p)->p_md.md_regs->tf_pc)
+#define	PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
 
 #elif defined(PROG26)
 
