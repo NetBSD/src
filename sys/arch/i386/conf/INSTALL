@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.104 1998/12/19 20:06:30 he Exp $
+#	$NetBSD: INSTALL,v 1.105 1999/01/06 23:30:53 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -265,6 +265,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
@@ -301,6 +302,7 @@ scsibus* at aic?
 scsibus* at bha?
 scsibus* at isp?
 scsibus* at ncr?
+scsibus* at pcscp?
 scsibus* at sea?
 scsibus* at uha?
 scsibus* at wds?
