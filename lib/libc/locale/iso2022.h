@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.h,v 1.4 2000/12/28 05:27:35 itojun Exp $	*/
+/*	$NetBSD: iso2022.h,v 1.4.2.1 2001/10/08 20:19:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: iso2022.h,v 1.3 2000/12/26 11:08:04 itojun Exp
+ *	$Citrus: xpg4dl/FreeBSD/lib/libc/locale/iso2022.h,v 1.4 2001/06/21 01:51:44 yamt Exp $
  */
 
 typedef struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.32.2.2 2001/08/24 00:09:38 nathanw Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.32.2.3 2001/10/08 20:11:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -800,10 +800,11 @@ smc91cxx_intr(arg)
 	if (status & IM_RCV_INT) {
 #if 1 /* DIAGNOSTIC */
 		packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
-		if (packetno & FIFO_REMPTY)
+		if (packetno & FIFO_REMPTY) {
 			printf("%s: receive interrupt on empty fifo\n",
 			    sc->sc_dev.dv_xname);
-		else
+			goto out;
+		} else
 #endif
 		smc91cxx_read(sc);
 	}
@@ -924,6 +925,7 @@ smc91cxx_intr(arg)
 	 */
 	smc91cxx_start(ifp);
 
+out:
 	/*
 	 * Reenable the interrupts we wish to receive now that processing
 	 * is complete.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.2 2000/08/04 08:47:05 tsubai Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.2.2.1 2001/10/08 20:18:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.2 2000/08/04 08:47:05 tsubai Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.2.2.1 2001/10/08 20:18:13 nathanw Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,21 +49,21 @@ WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
-	mov	r5, r2			! fetch new sigset pointer
-	tst	r2, r2			! check new sigset pointer
-	bf	1f			! if not null, indirect
-	mov	#1, r4			! SIG_BLOCK
+	mov	r5, r2			/* fetch new sigset pointer */
+	tst	r2, r2			/* check new sigset pointer */
+	bf	1f			/* if not null, indirect */
+	mov	#1, r4			/* SIG_BLOCK */
 	bra	2f
 	nop
-1:	mov.l	@r2, r2			! fetch indirect  ...
-	mov	r2, r5			! to new mask arg
+1:	mov.l	@r2, r2			/* fetch indirect ... */
+	mov	r2, r5			/* to new mask arg */
 2:	mov.l	LSYS_sigprocmask13, r0
 	trapa	#0x80
 	bf	err
-	mov	r6, r2			! fetch old mask requested
-	tst	r2, r2			! test if old mask requested
+	mov	r6, r2			/* fetch old mask requested */
+	tst	r2, r2			/* test if old mask requested */
 	bt	out
-	mov.l	r0, @r2			! store old mask
+	mov.l	r0, @r2			/* store old mask */
 out:
 	xor	r0, r0
 	rts
@@ -73,9 +73,8 @@ err:
 	jmp	@r1
 	nop
 
-	.align 2
+	.align	2
 LSYS_sigprocmask13:
-	.long	SYS_compat_13_sigprocmask
+	.long	SYS_compat_13_sigprocmask13
 Lcerror:
 	.long	cerror
-

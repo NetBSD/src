@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetround.c,v 1.3 2000/06/14 17:24:58 cgd Exp $ */
+/* $NetBSD: fpgetround.c,v 1.3.4.1 2001/10/08 20:16:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -43,9 +43,7 @@ fpgetround()
 	double fpcrval;
 	u_int64_t old;
 
-	__asm__("trapb");
 	__asm__("mf_fpcr %0" : "=f" (fpcrval));
-	__asm__("trapb");
 	old = *(u_int64_t *)&fpcrval;
 
 	return ((old >> 58) & 0x3);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.22 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: fstab.c,v 1.22.6.1 2001/10/08 20:18:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.22 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.22.6.1 2001/10/08 20:18:52 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,6 +101,7 @@ fstabscan()
 	    FSTAB_RW, FSTAB_RQ, FSTAB_RO, FSTAB_SW, FSTAB_DP, FSTAB_XX, NULL 
 	};
 
+	(void)memset(&_fs_fstab, 0, sizeof(_fs_fstab));
 	for (;;) {
 		if (!(lp = fgets(line, sizeof(line), _fs_fp)))
 			return 0;
@@ -160,6 +161,8 @@ fstabscan()
 			if (*tp)
 				break;
 		}
+		if (_fs_fstab.fs_type == NULL)
+			goto bad;
 		if (strcmp(_fs_fstab.fs_type, FSTAB_XX) == 0)
 			continue;
 		if (cp != NULL)

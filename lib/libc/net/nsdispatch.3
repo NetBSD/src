@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.8 1999/03/22 19:44:53 garbled Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.8.12.1 2001/10/08 20:20:21 nathanw Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .Sh DESCRIPTION
 The
 .Fn nsdispatch
-function invokes the callback functions specified in 
+function invokes the callback functions specified in
 .Va dtab
 in the order given in
 .Pa /etc/nsswitch.conf
@@ -94,7 +94,7 @@ The last entry in
 should contain
 .Dv NULL
 values for
-.Va src , 
+.Va src ,
 .Va cb ,
 and
 .Va cb_data .
@@ -131,7 +131,7 @@ For each default source type, an entry with
 set to the name of the source, and
 .Va flags
 set to the relevant flags
-(usually 
+(usually
 .Dv NS_SUCCESS ;
 refer to
 .Sx Callback return values
@@ -172,7 +172,6 @@ Whilst there is support for arbitrary sources, the following
 Refer to
 .Xr nsswitch.conf 5
 for a complete description of what each source type is.
-.Pp
 .Ss Callback return values
 The callback functions should return one of the following values
 depending upon status of the lookup:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.4.2.5 2001/09/26 19:55:05 nathanw Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.4.2.6 2001/10/08 20:11:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1086,23 +1086,22 @@ retry:
 		pipe_loan_free(wpipe);
 	pipeunlock(wpipe);
 
-	if (error == EPIPE) {
+	if (error) {
 		pipeselwakeup(wpipe, wpipe);
 
 		/*
-		 * If anything was read from what we offered, return success
-		 * and short write. We return EOF on next write(2).
+		 * If nothing was read from what we offered, return error
+		 * streight on. Otherwise update uio resid first. Caller
+		 * will deal with the error condition, returning short
+		 * write, error, or restarting the write(2) as appropriate.
 		 */
-		if (wpipe->pipe_map.cnt < bcnt) {
-			bcnt -= wpipe->pipe_map.cnt;
-			error = 0;
-		}
-	}
-
-	if (error) {
+		if (wpipe->pipe_map.cnt == bcnt) {
    error:
-		wakeup(wpipe);
-		return (error);
+			wakeup(wpipe);
+			return (error);
+		}
+
+		bcnt -= wpipe->pipe_map.cnt;
 	}
 
 	uio->uio_resid  -= bcnt;
@@ -1114,7 +1113,7 @@ retry:
 		uio->uio_iovcnt--;
 	}
 
-	return (0);
+	return (error);
 }
 #endif /* !PIPE_NODIRECT */
 #endif /* NetBSD */

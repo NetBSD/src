@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.5 2001/09/21 22:35:24 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.6 2001/10/08 20:10:52 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -519,6 +519,10 @@ file	dev/ic/msm6258.c		msm6258
 define	lsi64854
 file	dev/ic/lsi64854.c		lsi64854
 
+# Cirrus Logic CL-CD180/1864/1865 multi port serial controller back-end
+define	cd18xx
+file	dev/ic/cd18xx.c			cd18xx
+
 # RealTek 8019/8029 NE2000-compatible network interface subroutines
 define	rtl80x9
 file	dev/ic/rtl80x9.c		rtl80x9
@@ -616,6 +620,7 @@ define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
 define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
 define	vmebus { }			# VME bus attachment
+define	acpibus { }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself:

@@ -1,4 +1,4 @@
-/*	$NetBSD: euc.c,v 1.7 2001/01/25 01:25:06 itojun Exp $	*/
+/*	$NetBSD: euc.c,v 1.7.2.1 2001/10/08 20:19:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: euc.c,v 1.7 2001/01/25 01:25:06 itojun Exp $");
+__RCSID("$NetBSD: euc.c,v 1.7.2.1 2001/10/08 20:19:47 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,7 +147,7 @@ _EUC_init(rl)
 		memcpy(rl->__rune_variable, ei, sizeof(_EucInfo));
 		free(ei);
 	} else {
-		rl->__rune_variable = &ei;
+		rl->__rune_variable = ei;
 	}
 	rl->__variable_len = sizeof(_EucInfo);
 
@@ -183,6 +183,7 @@ _EUC_mbrtowc(rl, pwcs, s, n, state)
 	_EUCState *ps;
 	rune_t rune;
 	int c, set, len;
+	int chlenbak;
 
 	_DIAGASSERT(rl != NULL);
 	/* pwcs may be NULL */
@@ -190,6 +191,7 @@ _EUC_mbrtowc(rl, pwcs, s, n, state)
 	_DIAGASSERT(state != NULL);
 
 	ps = state;
+	chlenbak = ps->chlen;
 
 	/* make sure we have the first byte in the buffer */
 	switch (ps->chlen) {
@@ -243,7 +245,7 @@ _EUC_mbrtowc(rl, pwcs, s, n, state)
 	if (!rune)
 		return 0;
 	else
-		return c;
+		return c - chlenbak;
 
 encoding_error:
 	ps->chlen = 0;

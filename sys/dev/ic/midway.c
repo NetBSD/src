@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.48.2.3 2001/08/24 00:09:30 nathanw Exp $	*/
+/*	$NetBSD: midway.c,v 1.48.2.4 2001/10/08 20:11:02 nathanw Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -155,6 +155,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/queue.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_atm.h>

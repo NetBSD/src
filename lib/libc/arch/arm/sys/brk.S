@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.2 2001/01/09 19:47:27 bjh21 Exp $	*/
+/*	$NetBSD: brk.S,v 1.2.2.1 2001/10/08 20:17:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,8 +37,8 @@
 
 #include "SYS.h"
 
-	.globl	_end
-	.globl	curbrk
+	.globl	_C_LABEL(end)
+	.globl	CURBRK
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
@@ -49,7 +49,7 @@ WEAK_ALIAS(brk, _brk)
 	.globl	_C_LABEL(__minbrk)
 	.type	_C_LABEL(__minbrk),#object
 _C_LABEL(__minbrk):
-	.word	_end
+	.word	_C_LABEL(end)
 
 /*
  * Change the data segment size
@@ -59,7 +59,7 @@ ENTRY(_brk)
 	/* Setup the GOT */
 	ldr	r3, Lgot
 	add	r3, pc, r3
-L1:
+.L1:
 	ldr	r1, Lminbrk
 	ldr	r1, [r3, r1]
 #else
@@ -76,7 +76,7 @@ L1:
 	movlt	r0, r1
 	mov	r2, r0
 	SYSTRAP(break)
-	bcs	cerror
+	bcs	PIC_SYM(CERROR, PLT)
 
 #ifdef PIC
 	ldr	r1, Lcurbrk
@@ -95,12 +95,12 @@ L1:
 	mov	r15, r14
 #endif
 
-	.align	0
+	.align	2
 #ifdef PIC
 Lgot:
-	.word	__GLOBAL_OFFSET_TABLE_+. - (L1+4)
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif
 Lminbrk:
-	.word	_C_LABEL(__minbrk)
+	.word	PIC_SYM(_C_LABEL(__minbrk), GOT)
 Lcurbrk:
-	.word	curbrk
+	.word	PIC_SYM(CURBRK, GOT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.33 2000/06/02 13:13:07 itojun Exp $	*/
+/*	$NetBSD: getcap.c,v 1.33.4.1 2001/10/08 20:18:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.33 2000/06/02 13:13:07 itojun Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.33.4.1 2001/10/08 20:18:55 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -708,7 +708,10 @@ cgetmatch(buf, name)
 		/*
 		 * Match failed, skip to next name in record.
 		 */
-		bp--;	/* a '|' or ':' may have stopped the match */
+		if (bp > buf)
+			bp--;	/* a '|' or ':' may have stopped the match */
+		else
+			return (-1);
 		for (;;)
 			if (*bp == '\0' || *bp == ':')
 				return (-1);	/* match failed totally */

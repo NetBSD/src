@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.106 2001/02/19 22:14:20 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.106.2.1 2001/10/08 20:18:39 nathanw Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -18,7 +18,7 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	pause.c popen.c psignal.c pwcache.c pw_scan.c raise.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
-	siginterrupt.c __siglist14.c siglist.c signal.c \
+	shquote.c shquotev.c siginterrupt.c __siglist14.c siglist.c signal.c \
 	__signame14.c signame.c __sigsetops14.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c times.c \
 	timezone.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c \
@@ -27,7 +27,7 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
-	_verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
+	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
@@ -48,7 +48,7 @@ MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
 	modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 realpath.3 scandir.3 setjmp.3 setmode.3 \
-	setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 \
+	setproctitle.3 shquote.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 \
 	stringlist.3 sysconf.3 sysctl.3 syslog.3 time.3 times.3 \
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
@@ -98,6 +98,7 @@ MLINKS+=scandir.3 alphasort.3
 MLINKS+=setjmp.3 _longjmp.3 setjmp.3 _setjmp.3 setjmp.3 longjmp.3 \
 	setjmp.3 longjmperror.3 setjmp.3 sigsetjmp.3 setjmp.3 siglongjmp.3
 MLINKS+=setmode.3 getmode.3
+MLINKS+=shquote.3 shquotev.3
 MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigaddset.3 sigsetops.3 sigdelset.3 \
 	sigsetops.3 sigismember.3

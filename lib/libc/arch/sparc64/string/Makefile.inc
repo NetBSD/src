@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 1998/09/11 04:56:32 eeh Exp $
+#	$NetBSD: Makefile.inc,v 1.1.12.1 2001/10/08 20:18:23 nathanw Exp $
 
-SRCS+=	bcmp.c bcopy.c bzero.S ffs.S index.c memchr.c memcmp.c memset.c \
+SRCS+=	bcmp.c ffs.S index.c memchr.c memcmp.c memcpy.S memset.S \
 	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.S \
 	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
 	strspn.c strstr.c swab.c

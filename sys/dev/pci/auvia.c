@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11.2.1 2001/08/24 00:10:00 nathanw Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.2.2 2001/10/08 20:11:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_get_props,
 	auvia_trigger_output,
 	auvia_trigger_input,
+	NULL, /* dev_ioctl */
 };
 
 int	auvia_attach_codec(void *, struct ac97_codec_if *);

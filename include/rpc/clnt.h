@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.15 2001/02/13 01:00:21 cgd Exp $	*/
+/*	$NetBSD: clnt.h,v 1.15.2.1 2001/10/08 20:13:50 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -282,7 +282,7 @@ struct rpc_timers {
 
 
 /*
- * RPCTEST is a test program which is accessable on every rpc
+ * RPCTEST is a test program which is accessible on every rpc
  * transport/port.  It is used for testing, performance evaluation,
  * and network administration.
  */

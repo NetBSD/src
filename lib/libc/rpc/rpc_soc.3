@@ -1,35 +1,35 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.2 2000/06/07 13:39:43 simonb Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.2.6.1 2001/10/08 20:20:37 nathanw Exp $
 .\"
 .TH RPC_SOC 3 "16 February 1988"
 .SH NAME
-rpc_soc, 
-auth_destroy, 
-authnone_create, 
-authunix_create, 
-authunix_create_default, 
-callrpc, 
-clnt_broadcast, 
-clnt_call, 
-clnt_control, 
+rpc_soc,
+auth_destroy,
+authnone_create,
+authunix_create,
+authunix_create_default,
+callrpc,
+clnt_broadcast,
+clnt_call,
+clnt_control,
 clnt_create,
-clnt_destroy, 
-clnt_freeres, 
-clnt_geterr, 
-clnt_pcreateerror, 
-clnt_perrno, 
-clnt_perror, 
-clnt_spcreateerror, 
-clnt_sperrno, 
-clnt_sperror, 
-clntraw_create, 
-clnttcp_create, 
-clntudp_bufcreate, 
-clntudp_create, 
-get_myaddress, 
-pmap_getmaps, 
-pmap_getport, 
-pmap_rmtcall, 
+clnt_destroy,
+clnt_freeres,
+clnt_geterr,
+clnt_pcreateerror,
+clnt_perrno,
+clnt_perror,
+clnt_spcreateerror,
+clnt_sperrno,
+clnt_sperror,
+clntraw_create,
+clnttcp_create,
+clntudp_bufcreate,
+clntudp_create,
+get_myaddress,
+pmap_getmaps,
+pmap_getport,
+pmap_rmtcall,
 pmap_set,
 pmap_unset,
 registerrpc,
@@ -804,7 +804,7 @@ The total time for the call to time out is specified by
 .BR clnt_call(\|) .
 .IP
 This allows the user to specify the maximum packet size for sending and
-receiving 
+receiving
 .SM UDP\s0-based
 .SM RPC
 messages.
@@ -882,7 +882,7 @@ The value of
 is most likely
 .B
 .SM IPPROTO_UDP
-or 
+or
 .BR \s-1IPPROTO_TCP\s0 .
 A return value of zero means that the mapping does not exist
 or that
@@ -961,7 +961,7 @@ service. The value of
 is most likely
 .B
 .SM IPPROTO_UDP
-or 
+or
 .BR \s-1IPPROTO_TCP\s0 .
 This routine returns one if it succeeds, zero otherwise.
 Automatically done by
@@ -1251,7 +1251,7 @@ service (generally
 is zero,
 .B
 .SM IPPROTO_UDP
-or 
+or
 .B
 .SM IPPROTO_TCP
 ).
@@ -1567,7 +1567,7 @@ This routine returns
 .SM NULL
 if it fails.
 .IP
-This allows the user to specify the maximum packet size for sending and 
+This allows the user to specify the maximum packet size for sending and
 receiving
 .SM UDP\s0-based
 .SM RPC messages.

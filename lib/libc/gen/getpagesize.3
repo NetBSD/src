@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpagesize.3,v 1.7 1999/03/22 19:44:42 garbled Exp $
+.\"	$NetBSD: getpagesize.3,v 1.7.12.1 2001/10/08 20:19:01 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,20 +49,20 @@
 .Bf -symbolic
 This interface is obsoleted by
 .Xr sysconf 3 .
-.Ef 
-.Pp 
+.Ef
+.Pp
 .Fn getpagesize
 returns the number of bytes in a page.
 Page granularity is the granularity of many of the memory management calls.
 .Pp
-The page size is a 
+The page size is a
 .Em system
 page size and may not be the same as the underlying
 hardware page size.
 .Sh SEE ALSO
-.Xr sysconf 3 ,
+.Xr pagesize 1 ,
 .Xr sbrk 2 ,
-.Xr pagesize 1
+.Xr sysconf 3
 .Sh HISTORY
 The
 .Nm

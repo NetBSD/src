@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.8 1999/02/16 23:34:13 is Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.8.20.1 2001/10/08 20:11:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,8 @@ struct audio_hw_if tav_audio_if = {
 	0 /* free */,			/* optional */
 	0 /* round_buffersize */,	/* optional */
 	0 /* mappage */,		/* optional */
-	tav_get_props
+	tav_get_props,
+	0 /* dev_ioctl */		/* optional */
 };
 
 void

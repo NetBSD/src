@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.7.2.4 2001/09/21 22:37:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.7.2.5 2001/10/08 20:11:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 

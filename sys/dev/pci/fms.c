@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.9 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: fms.c,v 1.9.2.1 2001/10/08 20:11:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ struct audio_hw_if fms_hw_if = {
 	fms_get_props,
 	fms_trigger_output,
 	fms_trigger_input,
+	NULL,
 };
 
 int	fms_attach_codec __P((void *, struct ac97_codec_if *));

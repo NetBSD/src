@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.19.2.1 2001/04/08 20:31:41 nathanw Exp $	*/
+/*	$NetBSD: util.h,v 1.19.2.2 2001/10/08 20:13:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -82,7 +82,7 @@ void		pw_getconf(char *, size_t, const char *, const char *);
 const char     *pw_getprefix(void);
 void		pw_init(void);
 int		pw_lock(int);
-int		pw_mkdb(void);
+int		pw_mkdb(const char *, int);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		secure_path(const char *);

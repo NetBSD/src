@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.9 2000/12/29 15:26:33 kleink Exp $	*/
+/*	$NetBSD: wchar.h,v 1.9.2.1 2001/10/08 20:13:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -129,6 +129,11 @@ size_t	wcslcat __P((wchar_t *, const wchar_t *, size_t));
 size_t	wcslcpy __P((wchar_t *, const wchar_t *, size_t));
 int	wcswidth __P((const wchar_t *, size_t));
 int	wcwidth __P((wchar_t));
+
+unsigned long int wcstoul __P((const wchar_t * __restrict, wchar_t ** __restrict,
+		int base));
+long int wcstol __P((const wchar_t * __restrict, wchar_t ** __restrict, int base));
+double wcstod __P((const wchar_t * __restrict, wchar_t ** __restrict));
 __END_DECLS
 
 #endif /* !_WCHAR_H_ */

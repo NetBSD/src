@@ -1,4 +1,4 @@
-/*	$NetBSD: isatty.c,v 1.10 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: isatty.c,v 1.10.6.1 2001/10/08 20:19:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)isatty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isatty.c,v 1.10 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: isatty.c,v 1.10.6.1 2001/10/08 20:19:08 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,5 @@ isatty(fd)
 {
 	struct termios t;
 
-	_DIAGASSERT(fd != -1);
 	return(tcgetattr(fd, &t) != -1);
 }

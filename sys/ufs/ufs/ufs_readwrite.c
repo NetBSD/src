@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.30.2.3 2001/09/21 22:37:09 nathanw Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.30.2.4 2001/10/08 20:11:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -205,7 +205,7 @@ WRITE(void *v)
 	int ubc_alloc_flags;
 	void *win;
 	vsize_t bytelen;
-	boolean_t alloced;
+	boolean_t async;
 	boolean_t usepc = FALSE;
 
 	cred = ap->a_cred;
@@ -261,6 +261,7 @@ WRITE(void *v)
 		return (EFBIG);
 	}
 
+	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
 	osize = ip->i_ffs_size;
 	bsize = fs->fs_bsize;
@@ -293,7 +294,6 @@ WRITE(void *v)
 		}
 	}
 
-	alloced = FALSE;
 	ubc_alloc_flags = UBC_WRITE;
 	origoff = uio->uio_offset;
 	while (uio->uio_resid > 0) {
@@ -317,18 +317,14 @@ WRITE(void *v)
 				break;
 			}
 			ubc_alloc_flags &= ~UBC_FAULTBUSY;
-		} else if (!alloced) {
+		} else {
 			lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
-			error = GOP_ALLOC(vp, uio->uio_offset, uio->uio_resid,
+			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
 			    aflag, cred);
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 			if (error) {
-				(void) VOP_TRUNCATE(vp, preallocoff,
-				    ioflag & IO_SYNC, ap->a_cred,
-				    uio->uio_procp);
 				break;
 			}
-			alloced = TRUE;
 			ubc_alloc_flags |= UBC_FAULTBUSY;
 		}
 
@@ -358,7 +354,7 @@ WRITE(void *v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (oldoff >> 16 != uio->uio_offset >> 16) {
+		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_uobj.vmobjlock);
 			error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
 			    (oldoff >> 16) << 16, (uio->uio_offset >> 16) << 16,

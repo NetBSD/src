@@ -2,19 +2,19 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_err 1.4 89/06/28 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_err.3,v 1.1 2000/06/02 23:11:14 fvdl Exp $
+.\"	$NetBSD: rpc_svc_err.3,v 1.1.6.1 2001/10/08 20:20:38 nathanw Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_ERR 3
 .Os
 .Sh NAME
-.Nm rpc_svc_err,
-.Nm svcerr_auth,
-.Nm svcerr_decode,
-.Nm svcerr_noproc,
-.Nm svcerr_noprog,
-.Nm svcerr_progvers,
-.Nm svcerr_systemerr,
-.Nm svcerr_weakauth 
+.Nm rpc_svc_err ,
+.Nm svcerr_auth ,
+.Nm svcerr_decode ,
+.Nm svcerr_noproc ,
+.Nm svcerr_noprog ,
+.Nm svcerr_progvers ,
+.Nm svcerr_systemerr ,
+.Nm svcerr_weakauth
 .Nd library routines for server side remote procedure call errors
 .Sh LIBRARY
 .Lb libc
@@ -42,7 +42,7 @@ calls on other machines across the network.
 These routines can be called by the server side
 dispatch function if there is any error in the
 transaction with the client.
-.Sh Routines
+.Sh ROUTINES
 See
 .Xr rpc 3
 for the definition of the
@@ -57,10 +57,10 @@ a remote procedure call due to an authentication error.
 .Fn svcerr_decode
 Called by a service dispatch routine that cannot successfully
 decode the remote parameters
-(see 
+(see
 .Fn svc_getargs
 in
-.Xr rpc_svc_reg 3 ).
+.Xr rpc_svc_reg 3 ) .
 .Pp
 .It Fn svcerr_noproc
 Called by a service dispatch routine that does not implement
@@ -76,7 +76,7 @@ Called when the desired version of a program is not registered with the
 RPC package.
 .Fa low_vers
 is the lowest version number,
-and 
+and
 .Fa high_vers
 is the highest version number.
 Service implementors usually do not need this routine.
@@ -96,6 +96,6 @@ The routine calls
 .El
 .Sh SEE ALSO
 .Xr rpc 3 ,
-.Xr rpc_svc_calls 3 ),
+.Xr rpc_svc_calls 3 ,
 .Xr rpc_svc_create 3 ,
 .Xr rpc_svc_reg 3

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttyname.3,v 1.8 1999/02/16 19:36:52 kleink Exp $
+.\"	$NetBSD: ttyname.3,v 1.8.12.1 2001/10/08 20:19:36 nathanw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 .Fn isatty "int fd"
 .Fd #include <stdlib.h>
 .Ft int
-.Fn ttyslot 
+.Fn ttyslot
 .Sh DESCRIPTION
 These functions operate on the system file descriptors for terminal
 type devices. These descriptors are not related to the standard
@@ -63,7 +63,7 @@ and named
 .Pa /dev/tty Ns Em xx
 and for which an entry exists
 in the initialization file
-.Pa /etc/ttys.
+.Pa /etc/ttys .
 (See
 .Xr ttys 5 . )
 .Pp
@@ -95,7 +95,7 @@ The
 function
 returns the null terminated name if the device is found and
 .Fn isatty
-is true; otherwise 
+is true; otherwise
 a
 .Dv NULL
 pointer is returned and
@@ -115,6 +115,11 @@ The
 function
 returns the unit number of the device file if found; otherwise
 the value zero is returned.
+.Sh FILES
+.Bl -tag -width /etc/ttys -compact
+.It Pa /dev/\(**
+.It Pa /etc/ttys
+.El
 .Sh ERRORS
 The
 .Fn ttyname
@@ -130,11 +135,6 @@ argument is not a valid file descriptor.
 The
 .Fa fd
 argument does not refer to a terminal device.
-.El
-.Sh FILES
-.Bl -tag -width /etc/ttys -compact
-.It Pa /dev/\(**
-.It Pa /etc/ttys
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,

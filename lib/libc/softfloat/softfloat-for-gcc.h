@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.3 2000/07/15 15:07:35 bjh21 Exp $ */
+/* $NetBSD: softfloat-for-gcc.h,v 1.3.2.1 2001/10/08 20:20:42 nathanw Exp $ */
 
 /*
  * Move private identifiers with external linkage into implementation
@@ -35,7 +35,7 @@
 #define float64_to_int32_round_to_zero	__fixdfsi
 #define float32_to_int64_round_to_zero	__fixsfdi
 #define float64_to_int64_round_to_zero	__fixdfdi
-/* #define float32_to_uint32_round_to_zero	__fixunssfsi */
-/* #define float64_to_uint32_round_to_zero	__fixunsdfsi */
+#define float32_to_uint32_round_to_zero	__fixunssfsi
+#define float64_to_uint32_round_to_zero	__fixunsdfsi
 #define float32_to_float64		__extendsfdf2
 #define float64_to_float32		__truncdfsf2

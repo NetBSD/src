@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.23.2.4 2001/09/21 22:37:04 nathanw Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.23.2.5 2001/10/08 20:11:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,6 +92,7 @@ ffs_balloc(v)
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
 	struct buf **bpp = ap->a_bpp;
+	off_t off;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -267,7 +268,7 @@ ffs_balloc(v)
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
 		    &newb);
 		if (error)
-			return (error);
+			goto fail;
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
@@ -403,7 +404,34 @@ ffs_balloc(v)
 		*bpp = nbp;
 	}
 	return (0);
+
 fail:
+
+	/*
+	 * Restore the UVM state to what the rest of the FFS code is
+	 * expecting.  Unbusy any pages that we allocated and left busy up in
+	 * ufs_balloc_range().  the following VOP_FSYNC() will try to busy
+	 * those pages again, which would deadlock if they are still busy
+	 * from before.  After this we're back to a state where we can undo
+	 * any partial allocation.
+	 */
+
+	simple_lock(&vp->v_uobj.vmobjlock);
+	for (off = ap->a_startoffset; off < ap->a_startoffset + fs->fs_bsize;
+	     off += PAGE_SIZE) {
+		struct vm_page *pg;
+
+		pg = uvm_pagelookup(&vp->v_uobj, off);
+		if (pg == NULL) {
+			break;
+		}
+		uvm_pageactivate(pg);
+		KASSERT((pg->flags & PG_FAKE) == 0);
+		pg->flags &= ~(PG_BUSY);
+		UVM_PAGE_OWN(pg, NULL);
+	}
+	simple_unlock(&vp->v_uobj.vmobjlock);
+
 	/*
 	 * If we have failed part way through block allocation, we
 	 * have to deallocate any indirect blocks that we have allocated.
@@ -415,6 +443,7 @@ fail:
 	 * occurence. The error return from fsync is ignored as we already
 	 * have an error to return to the user.
 	 */
+
 	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc->l_proc);
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);

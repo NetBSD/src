@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.12.2.1 2001/08/24 00:10:22 nathanw Exp $ */
+/*      $NetBSD: sv.c,v 1.12.2.2 2001/10/08 20:11:18 nathanw Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -185,6 +185,7 @@ struct audio_hw_if sv_hw_if = {
 	sv_get_props,
 	sv_trigger_output,
 	sv_trigger_input,
+	NULL,
 };
 
 

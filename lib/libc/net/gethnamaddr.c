@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.39 2000/12/20 20:51:08 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.39.2.1 2001/10/08 20:20:08 nathanw Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.39 2000/12/20 20:51:08 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.39.2.1 2001/10/08 20:20:08 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -666,7 +666,8 @@ gethostbyname2(name, af)
 struct hostent *
 gethostbyaddr(addr, len, af)
 	const char *addr;	/* XXX should have been def'd as u_char! */
-	int len, af;
+	socklen_t len;
+	int af;
 {
 	const u_char *uaddr = (const u_char *)addr;
 	int size;

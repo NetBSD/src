@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.6.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.6.2.2 2001/10/08 20:20:36 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -705,6 +705,8 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 	}
 
 	ret = (struct netbuf *)malloc(sizeof *ret);
+	if (ret == NULL)
+		goto out;
 	
 	switch (af) {
 	case AF_INET:
@@ -732,7 +734,7 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = htons(port);
 		if (inet_pton(AF_INET6, addrstr, &sin6->sin6_addr) <= 0) {
-			free(sin);
+			free(sin6);
 			free(ret);
 			ret = NULL;
 			goto out;
@@ -748,6 +750,8 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 		memset(sun, 0, sizeof *sun);
 		sun->sun_family = AF_LOCAL;
 		strncpy(sun->sun_path, addrstr, sizeof(sun->sun_path) - 1);
+		ret->len = ret->maxlen = sun->sun_len = SUN_LEN(sun);
+		ret->buf = sun;
 		break;
 	default:
 		break;

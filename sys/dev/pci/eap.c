@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.44.2.2 2001/09/21 22:35:54 nathanw Exp $	*/
+/*	$NetBSD: eap.c,v 1.44.2.3 2001/10/08 20:11:12 nathanw Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -230,6 +230,7 @@ struct audio_hw_if eap1370_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
+	NULL,
 };
 
 struct audio_hw_if eap1371_hw_if = {
@@ -259,6 +260,7 @@ struct audio_hw_if eap1371_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
+	NULL,
 };
 
 #if NMIDI > 0

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.37.2.2 2001/08/24 00:10:25 nathanw Exp $
+#	$NetBSD: files.pcmcia,v 1.37.2.3 2001/10/08 20:11:21 nathanw Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -117,3 +117,13 @@ file	dev/pcmcia/isic_pcmcia_avm_fritz.c	isic_pcmcia
 file	dev/pcmcia/isic_pcmcia_elsa_isdnmc.c	isic_pcmcia
 file	dev/pcmcia/isic_pcmcia_elsa_mcall.c	isic_pcmcia
 file	dev/pcmcia/isic_pcmcia_sbspeedstar2.c	isic_pcmcia
+
+# Audio devices
+# Eiger Labs with ESS 1688
+device	esl { }: audio, midibus, auconv, mulaw
+attach	esl at pcmcia with esl_pcmcia
+file	dev/pcmcia/esl_pcmcia.c			esl_pcmcia
+file	dev/pcmcia/esl.c			esl
+
+attach	opl at esl with opl_esl
+file	dev/pcmcia/opl_esl.c			opl_esl

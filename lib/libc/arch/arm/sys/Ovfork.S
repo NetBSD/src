@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.3 2001/01/09 19:47:27 bjh21 Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.3.2.1 2001/10/08 20:17:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@ WARN_REFERENCES(vfork, \
 ENTRY(vfork)
 	mov	r2, r14
 	SYSTRAP(vfork)
-	bcs	cerror
+	bcs	PIC_SYM(CERROR, PLT)
 	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
 	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
 #ifdef __APCS_26__

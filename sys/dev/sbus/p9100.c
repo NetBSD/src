@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2.2.1 2001/09/26 19:55:00 nathanw Exp $ */
+/*	$NetBSD: p9100.c,v 1.2.2.2 2001/10/08 20:11:27 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	       (i & 7), fb->fb_type.fb_width, fb->fb_type.fb_height,
 	       fb->fb_type.fb_depth);
 
-	fb->fb_type.fb_cmsize = getpropint(node, "cmsize", 256);
+	fb->fb_type.fb_cmsize = PROM_getpropint(node, "cmsize", 256);
 	if ((1 << fb->fb_type.fb_depth) != fb->fb_type.fb_cmsize)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 

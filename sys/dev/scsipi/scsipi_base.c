@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.3 2001/09/21 22:36:14 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.4 2001/10/08 20:11:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -621,6 +621,14 @@ scsipi_periph_thaw(periph, count)
 
 	s = splbio();
 	periph->periph_qfreeze -= count;
+#ifdef DIAGNOSTIC
+	if (periph->periph_qfreeze < 0) {
+		static const char pc[] = "periph freeze count < 0";
+		scsipi_printaddr(periph);
+		printf("%s\n", pc);
+		panic(pc);
+	}
+#endif
 	if (periph->periph_qfreeze == 0 &&
 	    (periph->periph_flags & PERIPH_WAITING) != 0)
 		wakeup(periph);
@@ -636,17 +644,28 @@ void
 scsipi_periph_timed_thaw(arg)
 	void *arg;
 {
+	int s;
 	struct scsipi_periph *periph = arg;
 
 	callout_stop(&periph->periph_callout);
-	scsipi_periph_thaw(periph, 1);
 
-	/*
-	 * Kick the channel's queue here.  Note, we're running in
-	 * interrupt context (softclock), so the adapter driver
-	 * had better not sleep.
-	 */
-	scsipi_run_queue(periph->periph_channel);
+	s = splbio();
+	scsipi_periph_thaw(periph, 1);
+	if ((periph->periph_channel->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
+		/*
+		 * Kick the channel's queue here.  Note, we're running in
+		 * interrupt context (softclock), so the adapter driver
+		 * had better not sleep.
+		 */
+		scsipi_run_queue(periph->periph_channel);
+	} else {
+		/*
+		 * Tell the completion thread to kick the channel's queue here.
+		 */
+		periph->periph_channel->chan_flags |= SCSIPI_CHAN_KICK;
+		wakeup(&periph->periph_channel->chan_complete);
+	}
+	splx(s);
 }
 
 /*
@@ -919,7 +938,6 @@ scsipi_interpret_sense(xs)
 		printf("\n");
 	}
 #else
-
 		scsipi_printaddr(periph);
 		printf("Sense Error Code 0x%x",
 			sense->error_code & SSD_ERRCODE);
@@ -1228,7 +1246,7 @@ scsipi_done(xs)
 	}
 
 	/*
-	 * If this was an xfer that was not to complete asynchrnously,
+	 * If this was an xfer that was not to complete asynchronously,
 	 * let the requesting thread perform error checking/handling
 	 * in its context.
 	 */
@@ -1413,9 +1431,10 @@ scsipi_complete(xs)
 			/*
 			 * Wait one second, and try again.
 			 */
-			if (xs->xs_control & XS_CTL_POLL)
+			if ((xs->xs_control & XS_CTL_POLL) ||
+			    (chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
 				delay(1000000);
-			else {
+			} else {
 				scsipi_periph_freeze(periph, 1);
 				callout_reset(&periph->periph_callout,
 				    hz, scsipi_periph_timed_thaw, periph);
@@ -1505,7 +1524,7 @@ scsipi_complete(xs)
 		} else {
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
-		}
+																		}
 		biodone(bp);
 	}
 
@@ -1942,12 +1961,16 @@ scsipi_completion_thread(arg)
 	struct scsipi_xfer *xs;
 	int s;
 
+	s = splbio();
+	chan->chan_flags |= SCSIPI_CHAN_TACTIVE;
+	splx(s);
 	for (;;) {
 		s = splbio();
 		xs = TAILQ_FIRST(&chan->chan_complete);
 		if (xs == NULL &&
 		    (chan->chan_flags &
-		     (SCSIPI_CHAN_SHUTDOWN | SCSIPI_CHAN_CALLBACK)) == 0) {
+		     (SCSIPI_CHAN_SHUTDOWN | SCSIPI_CHAN_CALLBACK |
+		     SCSIPI_CHAN_KICK)) == 0) {
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
 			splx(s);
@@ -1957,6 +1980,13 @@ scsipi_completion_thread(arg)
 			/* call chan_callback from thread context */
 			chan->chan_flags &= ~SCSIPI_CHAN_CALLBACK;
 			chan->chan_callback(chan, chan->chan_callback_arg);
+			splx(s);
+			continue;
+		}
+		if (chan->chan_flags & SCSIPI_CHAN_KICK) {
+			/* explicitly run the queues for this channel */
+			chan->chan_flags &= ~SCSIPI_CHAN_KICK;
+			scsipi_run_queue(chan);
 			splx(s);
 			continue;
 		}

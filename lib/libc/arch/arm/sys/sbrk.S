@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2001/01/09 19:47:28 bjh21 Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.2.2.1 2001/10/08 20:17:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,9 +45,9 @@ WEAK_ALIAS(sbrk, _sbrk)
 
 	.data
 	.align	0
-	.globl	curbrk
-	.type	curbrk,#object
-curbrk:
+	.globl	CURBRK
+	.type	CURBRK,#object
+CURBRK:
 	.word	_C_LABEL(end)
 
 /*
@@ -58,7 +58,7 @@ ENTRY(_sbrk)
 	/* Setup the GOT */
 	ldr	r3, Lgot
 	add	r3, pc, r3
-L1:
+.L1:
 	ldr	r2, Lcurbrk
 	ldr	r2, [r3, r2]
 #else
@@ -71,7 +71,7 @@ L1:
 	mov	r3, r0
 	add	r0, r0, r1
 	SYSTRAP(break)
-	bcs	cerror
+	bcs	PIC_SYM(CERROR, PLT)
 
 	/* Store new curbrk value */
 	ldr	r0, [r2]
@@ -88,7 +88,7 @@ L1:
 	.align	0
 #ifdef PIC
 Lgot:
-	.word	__GLOBAL_OFFSET_TABLE_+. - (L1+4)
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif
 Lcurbrk:
-	.word	curbrk
+	.word	PIC_SYM(CURBRK, GOT)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.12 2001/01/05 13:40:28 itojun Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.12.2.1 2001/10/08 20:20:11 nathanw Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -226,13 +226,6 @@ if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
 printf("host=%s\\n", hbuf);
 .Ed
 .\"
-.Sh FILES
-.Bl -tag -width /etc/resolv.conf -compact
-.It Pa /etc/hosts
-.It Pa /etc/host.conf
-.It Pa /etc/resolv.conf
-.El
-.\"
 .Sh DIAGNOSTICS
 The function indicates successful completion by a zero return value;
 a non-zero return value indicates failure.
@@ -265,6 +258,7 @@ The error code can be found in errno.
 .Xr gethostbyaddr 3 ,
 .Xr getservbyport 3 ,
 .Xr hosts 5 ,
+.Xr resolv.conf 5 ,
 .Xr services 5 ,
 .Xr hostname 7 ,
 .Xr named 8
@@ -293,16 +287,16 @@ The error code can be found in errno.
 .%D June 2000
 .Re
 .\"
-.Sh HISTORY
-The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.\"
 .Sh STANDARDS
 The
-.Fn getaddrinfo
+.Fn getnameinfo
 function is defined IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
+.\"
+.Sh HISTORY
+The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh BUGS
 The current implementation is not thread-safe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.2 2000/08/04 08:47:05 tsubai Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.2.2.1 2001/10/08 20:18:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,19 +40,19 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigsuspend.S,v 1.2 2000/08/04 08:47:05 tsubai Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.2.2.1 2001/10/08 20:18:14 nathanw Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(sigsuspend)
-	mov	r4, r0		! fetch mask arg
-	mov.l	@r0, r0		! indirect to mask arg
+	mov	r4, r0		/* fetch mask arg */
+	mov.l	@r0, r0		/* indirect to mask arg */
 	mov	r0, r4
 	mov.l	LSYS_sigsuspend13, r0
 	trapa	#0x80
 	bf	err
-	xor	r0, r0		! shouldn t happen
+	xor	r0, r0		/* shouldn t happen */
 	rts
 	nop
 err:

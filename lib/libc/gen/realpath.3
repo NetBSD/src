@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.5 1999/04/06 04:54:19 cgd Exp $
+.\"	$NetBSD: realpath.3,v 1.5.10.1 2001/10/08 20:19:20 nathanw Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ refer to a buffer capable of storing at least
 .Dv MAXPATHLEN
 characters.
 .Pp
-The 
+The
 .Fn realpath
 function will resolve both absolute and relative paths
 and return the absolute pathname corresponding to
@@ -81,7 +81,7 @@ All but the last component of
 must exist when
 .Fn realpath
 is called.
-.Sh "RETURN VALUES"
+.Sh RETURN VALUES
 The
 .Fn realpath
 function returns
@@ -108,7 +108,14 @@ for any of the errors specified for the library functions
 .Xr readlink 2
 and
 .Xr getcwd 3 .
-.Sh CAVEATS
+.Sh SEE ALSO
+.Xr getcwd 3
+.Sh HISTORY
+The
+.Fn realpath
+function call first appeared in
+.Bx 4.4 .
+.Sh BUGS
 This implementation of
 .Fn realpath
 differs slightly from the Solaris implementation.
@@ -120,10 +127,3 @@ under certain circumstances, return a relative
 .Fa resolved_path
 when given a relative
 .Fa pathname .
-.Sh SEE ALSO
-.Xr getcwd 3
-.Sh HISTORY
-The
-.Fn realpath
-function call first appeared in
-.Bx 4.4 .

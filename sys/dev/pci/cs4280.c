@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.15.2.1 2001/06/21 20:04:32 nathanw Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.15.2.2 2001/10/08 20:11:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -148,6 +148,7 @@ struct audio_hw_if cs4280_hw_if = {
 	cs428x_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
+	NULL,
 };
 
 #if NMIDI > 0

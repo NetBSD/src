@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.2 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: movstr.S,v 1.2.2.1 2001/10/08 20:17:59 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -33,7 +33,7 @@ ENTRY(__movstr)
 	cmp/gt	r0, r6
 	bf	loop2
 
-	.align 2
+	.align	2
 loop1:
 	mov.l	@r5+, r0
 	mov.l	r0, @r4
@@ -76,7 +76,7 @@ loop1:
 
 loop2:
 	add	#-32, r6
-	.align 2
+	.align	2
 1:
 	mov.l	@r5+, r0
 	mov.l	r0, @r4
@@ -85,5 +85,5 @@ loop2:
 	tst	r6, r6
 	bf	1b
 
-	rts	
+	rts
 	nop

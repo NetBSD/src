@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_get.c,v 1.10 1997/07/21 14:06:44 jtc Exp $	*/
+/*	$NetBSD: rec_get.c,v 1.10.14.1 2001/10/08 20:18:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_get.c	8.9 (Berkeley) 8/18/94";
 #else
-__RCSID("$NetBSD: rec_get.c,v 1.10 1997/07/21 14:06:44 jtc Exp $");
+__RCSID("$NetBSD: rec_get.c,v 1.10.14.1 2001/10/08 20:18:38 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,7 +189,7 @@ __rec_vpipe(t, top)
 {
 	DBT data;
 	recno_t nrec;
-	indx_t len;
+	ptrdiff_t len;
 	size_t sz;
 	int bval, ch;
 	u_char *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.6 2001/01/21 03:49:02 itojun Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: runeglue.c,v 1.7 2000/12/22 22:52:29 itojun Exp
+ *	$Id: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $
  */
 
 /*
@@ -35,11 +35,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.6 2001/01/21 03:49:02 itojun Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _CTYPE_PRIVATE
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <ctype.h>

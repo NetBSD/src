@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.1.4.3 2001/09/21 22:35:28 nathanw Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.1.4.4 2001/10/08 20:10:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
 #define ADV_CARDBUS_IOBA CARDBUS_BASE0_REG
 #define ADV_CARDBUS_MMBA CARDBUS_BASE1_REG
 
+#define ADV_CARDBUS_DEBUG
+#define ADV_CARDBUS_ALLOW_MEMIO
+
 #define DEVNAME(sc) sc->sc_dev.dv_xname
 
 struct adv_cardbus_softc {
@@ -88,7 +91,7 @@ void	adv_cardbus_attach __P((struct device *, struct device *, void *));
 int	adv_cardbus_detach __P((struct device *, int));
 
 struct cfattach adv_cardbus_ca = {
-	sizeof(struct asc_softc), adv_cardbus_match, adv_cardbus_attach,
+	sizeof(struct adv_cardbus_softc), adv_cardbus_match, adv_cardbus_attach,
 	adv_cardbus_detach
 };
 
@@ -165,18 +168,22 @@ adv_cardbus_attach(parent, self, aux)
 	 */
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
 	
-#if 0
+#ifdef ADV_CARDBUS_ALLOW_MEMIO
 	if (Cardbus_mapreg_map(csc->sc_ct, ADV_CARDBUS_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &iot, &ioh, NULL, &csc->sc_size) == 0) {
-		printf("%s: mem enabled\n", DEVNAME(sc));
+#ifdef ADV_CARDBUS_DEBUG
+		printf("%s: memio enabled\n", DEVNAME(sc));
+#endif
 		csc->sc_cbenable = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 	} else
 #endif
 	if (Cardbus_mapreg_map(csc->sc_ct, ADV_CARDBUS_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, &csc->sc_size) == 0) {
+#ifdef ADV_CARDBUS_DEBUG
 		printf("%s: io enabled\n", DEVNAME(sc));
+#endif
 		csc->sc_cbenable = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
@@ -215,11 +222,7 @@ adv_cardbus_attach(parent, self, aux)
 	sc->pci_device_id = ca->ca_id;
 	sc->bus_type = ASC_IS_PCI;
 	sc->chip_version = ASC_GET_CHIP_VER_NO(iot, ioh);
-#if 0
-	printf("%s: chip_sign_byte=%x\n", DEVNAME(sc), (uint)ASC_GET_CHIP_SIGNATURE_BYTE(iot, ioh));
-	printf("%s: chip_sign_word=%x\n", DEVNAME(sc), (uint)ASC_GET_CHIP_SIGNATURE_WORD(iot, ioh));
-	printf("%s: chip ver=%x\n", DEVNAME(sc), sc->chip_version);
-#endif
+
 	/*
 	 * Initialize the board
 	 */
@@ -267,7 +270,7 @@ adv_cardbus_detach(self, flags)
 	}
 
 	if (csc->sc_cbenable) {
-#if 0
+#ifdef ADV_CARDBUS_ALLOW_MEMIO
 		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE) {
 			Cardbus_mapreg_unmap(csc->sc_ct, ADV_CARDBUS_MMBA,
 			    sc->sc_iot, sc->sc_ioh, csc->sc_size);
@@ -275,7 +278,7 @@ adv_cardbus_detach(self, flags)
 #endif
 			Cardbus_mapreg_unmap(csc->sc_ct, ADV_CARDBUS_IOBA,
 			    sc->sc_iot, sc->sc_ioh, csc->sc_size);
-#if 0
+#ifdef ADV_CARDBUS_ALLOW_MEMIO
 		}
 #endif
 		csc->sc_cbenable = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.3 2000/08/04 08:47:04 tsubai Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.3.2.1 2001/10/08 20:18:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigpending.S,v 1.3 2000/08/04 08:47:04 tsubai Exp $")
+	RCSID("$NetBSD: sigpending.S,v 1.3.2.1 2001/10/08 20:18:13 nathanw Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,7 +49,7 @@ WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 _SYSCALL(sigpending,compat_13_sigpending13)
-	mov	r4, r2			! fetch pointer to...
-	mov.l	r0, @r2 		! store old mask
+	mov	r4, r2			/* fetch pointer to... */
+	mov.l	r0, @r2 		/* store old mask */
 	rts
 	xor	r0, r0

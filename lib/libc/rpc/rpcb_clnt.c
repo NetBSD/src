@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.8.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.8.2.2 2001/10/08 20:20:40 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -487,7 +487,7 @@ try_nconf:
 #ifdef INET6
 			if ((strcmp(nconf->nc_protofmly, NC_INET6) == 0 ||
 #else
-			if (
+			if ((
 #endif
 			     strcmp(nconf->nc_protofmly, NC_INET) == 0) &&
 			    (nconf->nc_semantics == NC_TPI_COTS ||

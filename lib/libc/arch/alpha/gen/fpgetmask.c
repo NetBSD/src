@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.c,v 1.2 1999/04/30 00:58:31 ross Exp $	*/
+/*	$NetBSD: fpgetmask.c,v 1.2.10.1 2001/10/08 20:16:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Ross Harvey
@@ -37,5 +37,5 @@
 fp_except
 fpgetmask __P((void))
 {
-	return sysarch(ALPHA_FPGETMASK, (void *)0);
+	return sysarch(ALPHA_FPGETMASK, 0L);
 }

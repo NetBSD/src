@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60.2.1 2001/03/05 23:34:38 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.2 2001/10/08 20:19:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define daylight	_daylight
 #define err		_err
 #define errx		_errx
 #define fork		_fork
@@ -52,12 +53,15 @@
 #define inet_pton	_inet_pton
 #define pipe		_pipe
 #define sbrk		_sbrk
+#define strtoimax	_strtoimax
 #define strtoll		_strtoll
 #define strtoull	_strtoull
+#define strtoumax	_strtoumax
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
 #define sys_siglist	_sys_siglist
 #define	sys_nsig	_sys_nsig
+#define sysconf		__sysconf
 #define verr		_verr
 #define verrx		_verrx
 #define vwarn		_vwarn
@@ -66,6 +70,9 @@
 #define warnx		_warnx
 
 #ifdef __weak_alias
+#define MD2Final		_MD2Final
+#define MD2Init			_MD2Init
+#define MD2Update		_MD2Update
 #define MD4Final		_MD4Final
 #define MD4Init			_MD4Init
 #define MD4Update		_MD4Update
@@ -87,9 +94,11 @@
 #define SHA1Transform		_SHA1Transform
 #define SHA1Update		_SHA1Update
 #define a64l			_a64l
+#define adjtime			_adjtime
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define asctime_r		_asctime_r
+#define asprintf		_asprintf
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
@@ -135,6 +144,7 @@
 #define clnttcp_create		_clnttcp_create
 #define clntudp_bufcreate	_clntudp_bufcreate
 #define clntudp_create		_clntudp_create
+#define clock_settime		_clock_settime
 #define closedir		_closedir
 #define closelog		_closelog
 #define confstr			_confstr
@@ -325,6 +335,7 @@
 #define nlist			_nlist
 #endif
 #define nrand48			_nrand48
+#define ntp_adjtime		_ntp_adjtime
 #define nsdispatch		_nsdispatch
 #define offtime			_offtime
 #define opendir			_opendir
@@ -394,6 +405,7 @@
 #define setservent		_setservent
 #define setstate		_setstate
 #define setttyent		_setttyent
+#define settimeofday		_settimeofday
 #define setusershell		_setusershell
 #define shm_open		_shm_open
 #define shm_unlink		_shm_unlink
@@ -452,7 +464,6 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define svis			_svis
-#define sysconf			_sysconf
 #define sysctl			_sysctl
 #define syslog			_syslog
 #define tcdrain			_tcdrain
@@ -471,9 +482,6 @@
 #define timelocal		_timelocal
 #define timeoff			_timeoff
 #define times			_times
-#if 0
-#define timezone		_timezone
-#endif
 #define ttyname			_ttyname
 #define ttyslot			_ttyslot
 #define tzname			_tzname

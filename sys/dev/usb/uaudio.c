@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.41.2.1 2001/06/21 20:06:20 nathanw Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.41.2.2 2001/10/08 20:11:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -303,6 +303,7 @@ Static struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input,
+	NULL,
 };
 
 Static struct audio_device uaudio_device = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.4.1 2001/03/05 22:49:25 nathanw Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.4.2 2001/10/08 20:10:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -223,3 +223,43 @@ linux_sys_truncate64(l, v, retval)
 
 	return sys_truncate(l, uap, retval);
 }
+
+#ifdef __mips__ /* i386 and powerpc could use it too */
+int
+linux_sys_fcntl64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_fcntl64_args /* {
+		syscallarg(unsigned int) fd;
+		syscallarg(unsigned int) cmd;
+		syscallarg(unsigned long) arg;
+	} */ *uap = v;
+	unsigned int fd, cmd;
+	unsigned long arg;
+	int error;
+
+	fd = SCARG(uap, fd);
+	cmd = SCARG(uap, cmd);
+	arg = SCARG(uap, arg);
+
+	switch (cmd) {
+		/* XXX implement this later */
+		case LINUX_F_GETLK64:
+			error = 0;
+			break;
+		case LINUX_F_SETLK64:
+			error = 0;
+			break;
+		case LINUX_F_SETLKW64:
+			error = 0;
+			break;
+		default:
+			error = linux_sys_fcntl(p, v, retval);
+			break;
+	}
+
+	return error;
+}
+#endif /* __mips__ */

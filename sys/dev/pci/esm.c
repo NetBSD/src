@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.7.2.2 2001/06/21 20:04:35 nathanw Exp $      */
+/*      $NetBSD: esm.c,v 1.7.2.3 2001/10/08 20:11:12 nathanw Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -171,7 +171,8 @@ struct audio_hw_if esm_hw_if = {
 	esm_mappage,
 	esm_get_props,
 	esm_trigger_output,
-	esm_trigger_input
+	esm_trigger_input,
+	NULL,
 };
 
 struct audio_device esm_device = {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getifaddrs.3,v 1.3 2000/09/21 10:43:49 ad Exp $
+.\"	$NetBSD: getifaddrs.3,v 1.3.2.1 2001/10/08 20:20:10 nathanw Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -21,7 +21,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd "October 12, 1995"
+.Dd October 12, 1995
 .Dt GETIFADDRS 3
 .Sh NAME
 .Nm getifaddrs
@@ -82,7 +82,7 @@ address of the interface, if one exists, otherwise it is NULL.
 (The
 .Li sa_family
 field of the
-.Li ifa_addr 
+.Li ifa_addr
 field should be consulted to determine the format of the
 .Li ifa_addr
 address.)
@@ -108,7 +108,7 @@ if one exists, otherwise it is NULL.
 .Pp
 The
 .Li ifa_data
-field references address family specific data.  For 
+field references address family specific data.  For
 .Dv AF_LINK
 addresses it contains a pointer to the
 .Fa struct if_data
@@ -140,16 +140,6 @@ for any of the errors specified for the library routines
 .Xr malloc 3
 or
 .Xr sysctl 3 .
-.Sh BUGS
-If both
-.Aq Pa net/if.h
-and
-.Aq Pa ifaddrs.h
-are being included,
-.Aq Pa net/if.h
-.Em must
-be included before
-.Aq Pa ifaddrs.h .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
@@ -161,3 +151,13 @@ The
 .Nm
 implementation first appeared in
 .Bsx .
+.Sh BUGS
+If both
+.Aq Pa net/if.h
+and
+.Aq Pa ifaddrs.h
+are being included,
+.Aq Pa net/if.h
+.Em must
+be included before
+.Aq Pa ifaddrs.h .

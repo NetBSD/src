@@ -1,4 +1,4 @@
-.\"	$NetBSD: moncontrol.3,v 1.6 2000/10/24 19:31:59 erh Exp $
+.\"	$NetBSD: moncontrol.3,v 1.6.2.1 2001/10/08 20:19:41 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ to resume the collection of histogram ticks and call counts use
 .Fn moncontrol 1 .
 This feature allows the cost of particular operations to be measured.
 Note that an output file will be produced on program exit
-regardless of the state of 
+regardless of the state of
 .Fn moncontrol .
 .Pp
 Programs that are not loaded with
@@ -86,7 +86,7 @@ the lowest address sampled is that of
 .Fa lowpc
 and the highest is just below
 .Fa highpc .
-Only functions in that range that have been compiled with the 
+Only functions in that range that have been compiled with the
 .Fl pg
 option to
 .Xr cc 1
@@ -95,10 +95,6 @@ however, all functions in that address range will
 have their execution time measured.
 Profiling begins on return from
 .Fn monstartup .
-.Sh FILES
-.Bl -tag -width Pa -compact
-.It Pa gmon.out	execution data file
-.El
 .Sh ENVIRONMENT
 .Bl -tag -width "PROFDIR"
 .It Ev PROFDIR
@@ -107,6 +103,10 @@ writing the profiling output to gmon.out, a filename is generated from
 the process id and name of the program.  (e.g. 123.a.out)  If you are
 profiling a program that forks, or otherwise creates multiple copies,
 setting this is the only reasonable way to get all profiling data.
+.El
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa gmon.out	execution data file
 .El
 .Sh SEE ALSO
 .Xr cc 1 ,

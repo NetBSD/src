@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.26.2.1 2001/08/08 16:27:43 nathanw Exp $	*/
+/*	$NetBSD: syslog.c,v 1.26.2.2 2001/10/08 20:19:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.26.2.1 2001/08/08 16:27:43 nathanw Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.26.2.2 2001/10/08 20:19:31 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -129,7 +129,7 @@ vsyslog(pri, fmt, ap)
 	char ch, *p, *t;
 	time_t now;
 	struct tm tmnow;
-	int fd, saved_errno;
+	int fd, saved_errno, tries;
 #define	TBUF_LEN	2048
 #define	FMT_LEN		1024
 	char *stdp = NULL;	/* pacify gcc */
@@ -246,12 +246,24 @@ vsyslog(pri, fmt, ap)
 
 	/* Get connected, output the message to the local logger. */
 	mutex_lock(&syslog_mutex);
-	if (!connected)
-		openlog_unlocked(LogTag, LogStat | LOG_NDELAY, 0);
-	if (send(LogFile, tbuf, cnt, 0) >= 0) {
-		mutex_unlock(&syslog_mutex);
-		return;
-	} 
+	/*
+	 * Try to send it twice.  If the first try fails, we might
+	 * be able to simply reconnect and send the message (which
+	 * means syslogd was restarted since we connected the first
+	 * time).  If the second attempt doesn't work, then something
+	 * else is wrong and there's probably not much we can do
+	 * here.
+	 */
+	for (tries = 1; tries <= 2; tries++) {
+		if (!connected)
+			openlog_unlocked(LogTag, LogStat | LOG_NDELAY, 0);
+		if (send(LogFile, tbuf, cnt, 0) >= 0) {
+			mutex_unlock(&syslog_mutex);
+			return;
+		} 
+		else
+			closelog_unlocked();
+	}
 	mutex_unlock(&syslog_mutex);
 
 	/*

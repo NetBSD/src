@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.8 1998/12/09 12:42:49 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.8.12.1 2001/10/08 20:18:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -106,7 +106,7 @@ typedef struct htab	 {		/* Memory resident data structure */
 	int		cbucket;	/* Current bucket */
 	int		cndx;		/* Index of next item on cpage */
 	int		err;		/* Error Number -- for DBM 
-					 * compatability */
+					 * compatibility */
 	int		new_file;	/* Indicates if fd is backing store 
 					 * or no */
 	int		save_file;	/* Indicates whether we need to flush 

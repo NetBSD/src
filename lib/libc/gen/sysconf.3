@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.15 2000/08/29 06:38:23 kleink Exp $
+.\"	$NetBSD: sysconf.3,v 1.15.2.1 2001/10/08 20:19:29 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,6 @@
 .Ft long
 .Fn sysconf "int name"
 .Sh DESCRIPTION
-.Pp
 This interface is defined by
 .St -p1003.1-88 .
 A far more complete interface is available using
@@ -160,7 +159,7 @@ The maximum number of repeated occurrences of a regular expression
 permitted when using interval notation.
 .It Li _SC_2_VERSION
 The version of POSIX 1003.2 with which the system attempts to comply.
-.It Li _SC_2_C_BIND	
+.It Li _SC_2_C_BIND
 Return 1 if the system's C-language development facilities support the
 C-Language Bindings Option, otherwise \-1.
 .It Li _SC_2_C_DEV
@@ -211,10 +210,6 @@ argument is invalid.
 .El
 .Sh SEE ALSO
 .Xr sysctl 3
-.Sh BUGS
-The value for _SC_STREAM_MAX is a minimum maximum, and required to be
-the same as ANSI C's FOPEN_MAX, so the returned value is a ridiculously
-small and misleading number.
 .Sh STANDARDS
 The
 .Fn sysconf
@@ -225,3 +220,7 @@ The
 .Nm sysconf
 function first appeared in
 .Bx 4.4 .
+.Sh BUGS
+The value for _SC_STREAM_MAX is a minimum maximum, and required to be
+the same as ANSI C's FOPEN_MAX, so the returned value is a ridiculously
+small and misleading number.

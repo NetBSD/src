@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.2 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: dirname.c,v 1.2.6.1 2001/10/08 20:18:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.2 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.2.6.1 2001/10/08 20:18:48 nathanw Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -61,8 +61,7 @@ dirname(path)
 	 * If `path' is a null pointer or points to an empty string, or does
 	 * not contain a '/', return a pointer to the string ".".
 	 */
-	if ((path == NULL) || (*path == '\0') ||
-	    (strchr(path, '/') == NULL))
+	if ((path == NULL) || (*path == '\0') || (strchr(path, '/') == NULL))
 		return (singledot);
 
         /* Strip trailing slashes, if any. */

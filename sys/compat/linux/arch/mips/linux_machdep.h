@@ -1,4 +1,4 @@
-/* $NetBSD: linux_machdep.h,v 1.2.6.3 2001/09/26 19:54:46 nathanw Exp $ */
+/* $NetBSD: linux_machdep.h,v 1.2.6.4 2001/10/08 20:10:50 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -119,6 +119,20 @@ struct linux_rt_sigframe
 	struct linux_siginfo lrs_info;
 	struct linux_ucontext lrs_uc;
 };
+
+/*
+ * From Linux's include/asm-mips/sysmips.h
+ */
+#define LINUX_SETNAME		1	/* set hostname                  */
+#define LINUX_FLUSH_CACHE	3	/* writeback and invalidate caches */
+#define LINUX_MIPS_FIXADE	7	/* control address error fixing  */
+#define LINUX_MIPS_RDNVRAM	10	/* read NVRAM */
+#define LINUX_MIPS_ATOMIC_SET	2001	/* atomically set variable       */
+
+/*
+ * From Linux's include/linux/utsname.h
+ */
+#define LINUX___NEW_UTS_LEN	64	
 
 #ifdef _KERNEL
 __BEGIN_DECLS				

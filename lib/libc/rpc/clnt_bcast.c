@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.4 2001/01/04 14:42:18 lukem Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.4.2.1 2001/10/08 20:20:32 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -282,13 +282,14 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	size_t fdlistno = 0;
 	struct r_rpcb_rmtcallargs barg;	/* Remote arguments */
 	struct r_rpcb_rmtcallres bres; /* Remote results */
-	size_t outlen, outlen_pmap;
+	size_t outlen;
 	struct netconfig *nconf;
 	int msec;
 	int pollretval;
 	int fds_found;
 
 #ifdef PORTMAP
+	size_t outlen_pmap;
 	u_long port;		/* Remote port number */
 	int pmap_flag = 0;	/* UDP exists ? */
 	char *outbuf_pmap = NULL;
@@ -470,7 +471,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 						perror("sendto");
 #endif
 						warnx("clnt_bcast: cannot send"
-						      "broadcast packet");
+						      " broadcast packet");
 						stat = RPC_CANTSEND;
 						continue;
 					};
@@ -485,7 +486,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				 * Send the version 2 packet also
 				 * for UDP/IP
 				 */
-				if (fdlist[i].proto == IPPROTO_UDP) {
+				if (pmap_flag && fdlist[i].proto == IPPROTO_UDP) {
 					if (sendto(fdlist[i].fd, outbuf_pmap,
 					    outlen_pmap, 0, addr,
 					    (size_t)fdlist[i].asize) !=

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.7.2.1 2001/09/21 22:35:53 nathanw Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.7.2.2 2001/10/08 20:11:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -176,7 +176,8 @@ static struct audio_hw_if cmpci_hw_if = {
 	cmpci_mappage,		/* mappage */
 	cmpci_get_props,	/* get_props */
 	cmpci_trigger_output,	/* trigger_output */
-	cmpci_trigger_input	/* trigger_input */
+	cmpci_trigger_input,	/* trigger_input */
+	NULL,			/* dev_ioctl */
 };
 
 

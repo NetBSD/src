@@ -1,4 +1,4 @@
-.\"	$NetBSD: popen.3,v 1.8 1998/04/28 20:11:35 fair Exp $
+.\"	$NetBSD: popen.3,v 1.8.12.1 2001/10/08 20:19:18 nathanw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,7 @@ function waits for the associated process to terminate
 and returns the exit status of the command
 as returned by
 .Fn wait4 .
-.Sh RETURN VALUE
+.Sh RETURN VALUES
 The
 .Fn popen
 function returns
@@ -154,16 +154,23 @@ The
 function does not reliably set
 .Va errno .
 .Sh SEE ALSO
-.Xr fork 2 ,
 .Xr sh 1 ,
+.Xr fork 2 ,
 .Xr pipe 2 ,
 .Xr socketpair 2 ,
 .Xr wait4 2 ,
-.Xr fflush 3 ,
 .Xr fclose 3 ,
+.Xr fflush 3 ,
 .Xr fopen 3 ,
 .Xr stdio 3 ,
 .Xr system 3
+.Sh HISTORY
+A
+.Fn popen
+and a
+.Fn pclose
+function appeared in
+.At v7 .
 .Sh BUGS
 Since the standard input of a command opened for reading
 shares its seek offset with the process that called
@@ -189,10 +196,3 @@ always calls
 .Xr sh 1 ,
 never calls
 .Xr csh 1 .
-.Sh HISTORY
-A
-.Fn popen
-and a
-.Fn pclose
-function appeared in
-.At v7 .

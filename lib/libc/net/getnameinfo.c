@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.25 2001/01/25 22:50:56 jdolecek Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.25.2.1 2001/10/08 20:20:12 nathanw Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.25 2001/01/25 22:50:56 jdolecek Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.1 2001/10/08 20:20:12 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -70,10 +70,10 @@ __weak_alias(getnameinfo,_getnameinfo)
 #define NO  0
 
 static const struct afd {
-	int a_af;
-	int a_addrlen;
-	int a_socklen;
-	int a_off;
+	int		a_af;
+	socklen_t	a_addrlen;
+	socklen_t	a_socklen;
+	int		a_off;
 } afdl [] = {
 #ifdef INET6
 	{PF_INET6, sizeof(struct in6_addr), sizeof(struct sockaddr_in6),
@@ -331,10 +331,11 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 			char scopebuf[MAXHOSTNAMELEN];
 			int scopelen;
 
-			/* ip6_sa2str never fails */
 			scopelen = ip6_sa2str(
 			    (const struct sockaddr_in6 *)(const void *)sa,
 			    scopebuf, sizeof(scopebuf), 0);
+			if (scopelen < 0)
+				return ENI_MEMORY;
 			if (scopelen + 1 + numaddrlen + 1 > hostlen)
 				return ENI_MEMORY;
 			/*
@@ -361,6 +362,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 {
 	unsigned int ifindex;
 	const struct in6_addr *a6;
+	int n;
 
 	_DIAGASSERT(sa6 != NULL);
 	_DIAGASSERT(buf != NULL);
@@ -368,9 +370,13 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	ifindex = (unsigned int)sa6->sin6_scope_id;
 	a6 = &sa6->sin6_addr;
 
-#ifdef notyet
-	if (flags & NI_NUMERICSCOPE) {
-		return(snprintf(buf, bufsiz, "%d", sa6->sin6_scope_id));
+#ifdef NI_NUMERICSCOPE
+	if ((flags & NI_NUMERICSCOPE) != 0) {
+		n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
+		if (n < 0 || n >= bufsiz)
+			return -1;
+		else
+			return n;
 	}
 #endif
 
@@ -384,6 +390,10 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	}
 
 	/* last resort */
-	return(snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id));
+	n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
+	if (n < 0 || n >= bufsiz)
+		return -1;
+	else
+		return n;
 }
 #endif /* INET6 */

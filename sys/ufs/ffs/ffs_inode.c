@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.40.2.3 2001/09/21 22:37:04 nathanw Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.40.2.4 2001/10/08 20:11:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -216,8 +216,11 @@ ffs_truncate(v)
 	 */
 
 	if (osize < length) {
-		ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 		    ap->a_flags & IO_SYNC ? B_SYNC : 0);
+		if (error) {
+			return error;
+		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		KASSERT(ovp->v_size == oip->i_ffs_size);
