@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.7 1997/11/25 06:57:57 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.8 1997/12/04 09:11:02 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -139,7 +139,8 @@ enum DLTR {A,B,C,D,E,F,G,H};
 EXTERN char partname[] INIT("abcdefgh");
 EXTERN int bsdlabel[16][5];
 EXTERN char fsmount[16][20] INIT({""});
-EXTERN char bsddiskname[80];
+#define DISKNAME_SIZE 80
+EXTERN char bsddiskname[DISKNAME_SIZE];
 EXTERN char *doessf INIT("");
 
 /* scsi_fake communication */
@@ -202,6 +203,9 @@ void	md_post_newfs __P((void));
 void	md_copy_filesystem __P((void));
 void	md_make_bsd_partitions __P((void));
 int	md_update __P((void));
+
+/* from main.c */
+void toplevel __P((void));
 
 /* from disks.c */
 int	find_disks __P((void));
@@ -278,3 +282,4 @@ int	target_mount __P((const char *fstype, const char *from, const char* on));
 int	target_test __P((const char*, const char*));
 int	target_verify_dir __P((const char *path));
 int	target_verify_file __P((const char *path));
+void	unwind_mounts __P((void));

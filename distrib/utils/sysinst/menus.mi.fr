@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.7.2.7 1997/12/04 09:11:01 jonathan Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.1.2.2 1997/12/04 09:11:00 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,91 +57,91 @@
 
 default x=20, y=12, no exit;
 
-menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
+menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	display action  { toplevel(); };
-	option "Install NetBSD to hard disk",
+	option "Installation de NetBSD sur disque dur",
 		action { do_install(); };
-	option "Upgrade NetBSD on a hard disk",
+	option "Mise à jour de NetBSD sur disque dur",
 		action { do_upgrade(); };
-	option "Reboot the computer", exit,
+	option "Redémarrer l'ordinateur", exit,
 		action (endwin) { run_prog("/sbin/reboot"); };
-	option "Utility menu", sub menu utility;
-	option "Exit Install System", exit, action (endwin) {};
+	option "Menu utilitaire", sub menu utility;
+	option "Quitter le programme d'installation", exit, action (endwin) {};
 
-menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
-	option "Run /bin/sh",
+menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
+	option "Exécuter /bin/sh",
 		action (endwin) { system("/bin/sh"); };
-	option "Configure network",
+	option "Configuration du réseau",
 		action { config_network(); };
-/*	option "Partition a disk"; XXX add later.  */
-	option "Halt the system", exit,
+/*	option "Partitioner un disque"; XXX add later.  */
+	option "Arrêter le système", exit,
 		action (endwin) { run_prog("/sbin/halt"); };
 
-menu yesno, title "  yes or no?  ";
-	option "Yes", exit, action  {yesno = 1;};
-	option "No",  exit, action  {yesno = 0;};
+menu yesno, title "  oui ou non?  ";
+	option "Oui", exit, action  {yesno = 1;};
+	option "Non",  exit, action  {yesno = 0;};
 
-menu noyes, title "  yes or no?  ";
-	option "No",  exit, action  {yesno = 0;};
-	option "Yes", exit, action  {yesno = 1;};
+menu noyes, title "  oui ou non?  ";
+	option "Non",  exit, action  {yesno = 0;};
+	option "Oui", exit, action  {yesno = 1;};
 
-menu ok, title "  Hit enter to continue  ";
+menu ok, title "  Presser entrée pour continuer ";
 	option "ok", exit;
 
-menu scsigeom1, title "  Choose an option";
+menu scsigeom1, title "  Choisissez une option";
 	display action {
 		msg_display (MSG_scsigeom1, diskdev, disk->geom[4],
 			dlcyl, dlhead, dlsec, dlcyl*dlhead*dlsec, 
 			disk->geom[0], disk->geom[1], disk->geom[2],
 			disk->geom[0]*disk->geom[1]*disk->geom[2]);
 	};
-	option "Use real geometry", exit, action {
+	option "Utiliser la géométrie réelle", exit, action {
 			dlcyl  = disk->geom[0];
 			dlhead = disk->geom[1];
 			dlsec  = disk->geom[2];
 		};
-	option "Use disklabel geometry", exit, action {
+	option "Utiliser la géométrie du disklabel", exit, action {
 			disk->geom[0] = dlcyl;
 			disk->geom[1] = dlhead;
 			disk->geom[2] = dlsec;
 		};
-	option "Choose a fake geometry", action { scsi_fake ();}, exit;
+	option "Choisissez une géométrie maison", action { scsi_fake ();}, exit;
 
-menu scsigeom2, title "  Choose an option";
+menu scsigeom2, title "  Choisissez une option";
 	display action {
 		msg_display (MSG_scsigeom2, diskdev, disk->geom[4],
 			disk->geom[0], disk->geom[1], disk->geom[2],
 			disk->geom[0]*disk->geom[1]*disk->geom[2]);
 	};
-	option "Use real geometry", exit, action {
+	option " Utiliser la géométrie réelle ", exit, action {
 			dlcyl  = disk->geom[0];
 			dlhead = disk->geom[1];
 			dlsec  = disk->geom[2];
 		};
-	option "Choose a fake geometry", action { scsi_fake ();}, exit;
+	option "  Choisissez une géométrie maison", action { scsi_fake ();}, exit;
 
-menu scsi_fake, title "  Choose a geometry";
-	option "Geometry 1", action { fake_sel = 0; }, exit;
-	option "Geometry 2", action { fake_sel = 1; }, exit;
-	option "Geometry 3", action { fake_sel = 2; }, exit;
-	option "Geometry 4", action { fake_sel = 3; }, exit;
-	option "Geometry 5", action { fake_sel = 4; }, exit;
+menu scsi_fake, title "  Choisissez une géométrie";
+	option "Géométrie 1", action { fake_sel = 0; }, exit;
+	option "Géométrie 2", action { fake_sel = 1; }, exit;
+	option "Géométrie 3", action { fake_sel = 2; }, exit;
+	option "Géométrie 4", action { fake_sel = 3; }, exit;
+	option "Géométrie 5", action { fake_sel = 4; }, exit;
 
-menu layout, title  "  Choose your installation  ";
+menu layout, title  "  Choisissez votre type d'installation  ";
 	option "Standard", 	  exit, action { layoutkind = 1; };
-	option "Standard with X", exit, action { layoutkind = 2; };
-	option "Custom", 	  exit, action { layoutkind = 3; };
+	option "Standard avec X", exit, action { layoutkind = 2; };
+	option "Personnalisée", 	  exit, action { layoutkind = 3; };
 
-menu sizechoice, title  "  Choose your size specifier";
-	option "Megabytes", exit, action 
+menu sizechoice, title  "  Choisissez votre unité d'espace disque";
+	option "Megaoctets", exit, action 
 		{ sizemult = MEG / sectorsize;
 		  multname = msg_string(MSG_megname);
 		};
-	option "Cylinders", exit, action 
+	option "Cylindres", exit, action 
 		{ sizemult = dlcylsize; 
 		  multname = msg_string(MSG_cylname);
 		};
-	option "Sectors", exit, action 
+	option "Secteurs", exit, action 
 		{ sizemult = 1; 
 		  multname = msg_string(MSG_secname);
 		};
@@ -151,16 +151,16 @@ menu fspartok, title "  Partitions ok?", y=15;
 		msg_display(MSG_fspart, multname);
 		disp_cur_fspart(-1, 0);
 	};
-	option "Partitions are ok", exit;
-	option "Change a partition", sub menu editfsparts;
+	option "Les Partitions sont ok", exit;
+	option "Changer une partition", sub menu editfsparts;
 
-menu edfspart, title "  Change what? ", exit, y=15;
+menu edfspart, title "  Changer quoi? ", exit, y=15;
 	display action  {
 		msg_display (MSG_edfspart, 'a'+editpart);
 		disp_cur_fspart(editpart, 1);
 	};
-	option "FS kind", sub menu  selfskind;
-	option "Offset/size", action  
+	option "type de FS", sub menu  selfskind;
+	option "Offset/taille", action  
 		{	char buf[40]; int start, size;
 			msg_prompt_add (MSG_offset, NULL, buf, 40);
 			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
@@ -176,7 +176,7 @@ menu edfspart, title "  Change what? ", exit, y=15;
 			bsdlabel[editpart][D_OFFSET] = start;
 			bsdlabel[editpart][D_SIZE] = size;
 		};
-	option "Bsize/Fsize", action 
+	option "Taille de block/Taille de fragment", action 
 		{	char buf[40]; int i;
 
 			if (bsdlabel[editpart][D_FSTYPE] != T_42BSD) {
@@ -191,7 +191,7 @@ menu edfspart, title "  Change what? ", exit, y=15;
 			i = atoi(buf);
 			bsdlabel[editpart][D_FSIZE] = i;
 		};
-	option "Mount point", action 
+	option "Point de montage", action 
 		{	if (bsdlabel[editpart][D_FSTYPE] == T_42BSD ||
 			    bsdlabel[editpart][D_FSTYPE] == T_MSDOS)
 				msg_prompt_add (MSG_mountpoint, NULL,
@@ -202,7 +202,7 @@ menu edfspart, title "  Change what? ", exit, y=15;
 			}
 		};
 
-menu selfskind, title "  Select the type ", y=15;
+menu selfskind, title "  Selection du type de système de fichier", y=15;
 	option "4.2BSD", exit, action 
 			{ bsdlabel[editpart][D_FSTYPE] = T_42BSD;
 			  bsdlabel[editpart][D_BSIZE]  = 8192;
@@ -225,7 +225,7 @@ menu selfskind, title "  Select the type ", y=15;
 			};
 
 
-menu distmedium, title "  Select medium";
+menu distmedium, title "  Sélection du media d'installation";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
 	option "ftp",  action { process_menu (MENU_distset);
 				got_dist = get_via_ftp(); }, exit;
@@ -233,18 +233,18 @@ menu distmedium, title "  Select medium";
 				got_dist = get_via_nfs(); }, exit;
 	option "cdrom", action { process_menu (MENU_distset);
 				 got_dist = get_via_cdrom(); }, exit; 
-	option "floppy", action { process_menu (MENU_distset);
+	option "disquette", action { process_menu (MENU_distset);
 				  got_dist = get_via_floppy(); }, exit;
 	option "local", action { process_menu (MENU_distset);
 				got_dist = get_via_localfs(); }, exit;
-	option "none",  action { nodist = 1; }, exit;
+	option "aucun",  action { nodist = 1; }, exit;
 
-menu distset, title " Select your distribution";
+menu distset, title " Sélection de la distribution";
 	display action { msg_display (MSG_distset); };
-	option "Full installation", exit;
-	option "Custom installation", next menu md_distcustom;
+	option "Installation complète", exit;
+	option "Installation personnalisée", next menu md_distcustom;
 
-menu ftpsource, title "  Change";
+menu ftpsource, title "  Changer";
 	display action
 		{ int i;
 		  msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
@@ -254,13 +254,13 @@ menu ftpsource, title "  Change";
 			for (i = strlen(ftp_pass); i>0; i--)
 				msg_printf_add ("*");
 		};
-	option "Host", action
+	option "Serveur ftp", action
 		{ msg_prompt (MSG_host, NULL, ftp_host, 255); };
-	option "Directory", action
+	option "Répertoire", action
 		{ msg_prompt (MSG_dir, NULL, ftp_dir, 255); };
-	option "User", action
+	option "Utilisateur", action
 		{ msg_prompt (MSG_user, NULL, ftp_user, 255); };
-	option "Password", action
+	option "Mot de passe", action
 		{ if (strcmp(ftp_user, "ftp") == 0)
 			msg_prompt (MSG_email, NULL, ftp_pass, 255);
 		  else {
@@ -269,68 +269,69 @@ menu ftpsource, title "  Change";
 			msg_echo ();
 		  }
 		};
-	option "Get Distribution", exit;
+	option "Récupérer la Distribution", exit;
 
-menu nfssource, title "  Change";
+menu nfssource, title "  Changer";
 	display action
 		{ msg_display (MSG_nfssource, nfs_host, nfs_dir); };
-	option "Host", action
+	option "Serveur nfs", action
 		{ msg_prompt (MSG_host, NULL, nfs_host, 255); };
-	option "Directory", action
+	option "Répertoire", action
 		{ msg_prompt (MSG_dir, NULL, nfs_dir, 255); };
-	option "Continue", exit;
+	option "Continuer", exit;
 
-menu nfsbadmount, title "  What do you want to do?";
+menu nfsbadmount, title "  Que voulez vous faire?";
 	display action
 		{ msg_display (MSG_nfsbadmount, nfs_host, nfs_dir); };
-	option "Try again", exit, sub menu nfssource, action
+	option "Réessayer", exit, sub menu nfssource, action
 		{ yesno = 1; };
-	option "Give up", exit, action
+	option "Abandonner", exit, action
 		{ yesno = 0; };
 
 
-menu fdremount, title " What do you want to do? ";
-	option "Try again", exit, action { yesno = 1; };
-	option "Abort install", exit, action { yesno = 0; };
+menu fdremount, title " Que voulez vous faire? ";
+	option "Réessayer", exit, action { yesno = 1; };
+	option "Annuler l'installation", exit, action { yesno = 0; };
 
-menu fdok, title "  Hit enter to continue  ";
+menu fdok, title "  Presser entrée pour continuer  ";
 	option "OK", exit, action { yesno = 1; };
-	option "Abort install", exit, action { yesno = 0; };
+	option "Abandonner l'installation", exit, action { yesno = 0; };
 
 
-menu cdromsource, title "  Change";
+menu cdromsource, title "  Changer";
 	display action
 		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
 	option "Device", action
 		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
-	option "Directory", action
+	option "Répertoire", action
 		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
 	option "Continue", exit;
 
 menu cdrombadmount, title "  What do you want to do?";
 	display action
 		{ msg_display (MSG_cdrombadmount, nfs_host, nfs_dir); };
-	option "Try again", exit, sub menu cdromsource, action
+	option "Réessayer", exit, sub menu cdromsource, action
 		{ yesno = 1; };
-	option "Give up", exit, action
+	option "Abandonner", exit, action
 		{ yesno = 0; };
 
-menu localfssource, title "  Change";
+menu localfssource, title "  Changer";
 	display action
 		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
 	option "Device", action
 		{ msg_prompt (MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
-	option "Filesystem", action
+	option "Système de fichier", action
 		{ msg_prompt (MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
-	option "Directory", action
+	option "Répertoire", action
 		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
-	option "Continue", exit;
+	option "Continuer", exit;
 
-menu localfsbadmount, title "  What do you want to do?";
+menu localfsbadmount, title "  Que voulez vous faire?";
 	display action
 		{ msg_display (MSG_localfsbadmount, localfs_dir, localfs_dev); };
-	option "Try again", exit, sub menu localfssource, action
+	option "Réessayer", exit, sub menu localfssource, action
 		{ yesno = 1; };
-	option "Give up", exit, action
+	option "Abandonner", exit, action
 		{ yesno = 0; };
+
 
