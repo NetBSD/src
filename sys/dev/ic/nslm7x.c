@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.5 2000/07/27 21:49:22 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.6 2000/07/30 17:22:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,8 +100,8 @@ struct lm_chip {
 };
 
 struct lm_chip lm_chips[] = {
-	{ lm_match},
 	{ wb_match},
+	{ lm_match},
 	{ def_match} /* Must be last */
 };
 
