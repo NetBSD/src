@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7 1998/06/18 22:34:39 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.8 1998/06/24 17:18:09 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -135,7 +135,6 @@ typedef	struct {
  */
 extern BootConfig bootconfig;	/* temporary, I hope */
 extern int cold;
-extern int max_processes;
 
 #ifdef	DIAGNOSTIC
 /* NOTE: These variables will be removed, well some of them */
@@ -188,7 +187,6 @@ pv_addr_t undstack;
 pv_addr_t abtstack;
 pv_addr_t kernelstack;
 
-vm_offset_t pagetables_start;
 vm_offset_t msgbufphys;
 
 /* for storage allocation, used to be local to ofw_construct_proc0_addrspace */
@@ -901,13 +899,6 @@ ofw_configmem(void)
 {
     vm_offset_t proc0_ttbbase;
     vm_offset_t proc0_ptpt;
-
-    /* XXX - Snarf physical memory for max_processes L1 pagetables. */
-    /* I hate that these are statically-allocated; it needs to be */
-    /* fixed soon! -JJK */
-    pagetables_start = ofw_claimphys(0, PD_SIZE * max_processes, PD_SIZE);
-    if (pagetables_start == -1)
-	panic("unable to allocate L1 pagetables");
 
     /* Set-up proc0 address space. */
     ofw_construct_proc0_addrspace(&proc0_ttbbase, &proc0_ptpt);
