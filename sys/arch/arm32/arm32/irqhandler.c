@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.c,v 1.4 1996/03/28 21:43:52 mark Exp $ */
+/* $NetBSD: irqhandler.c,v 1.5 1996/05/06 00:30:39 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,6 +60,8 @@
 #include <machine/iomd.h>
 #include <machine/katelib.h>
 #include <machine/pte.h>
+
+#include "podulebus.h"
 
 irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;
@@ -179,10 +181,9 @@ irq_claim(irq, handler)
 	  }*/
 
 /*
- * Reset the flags for this handler. As it is at the top of the list it
- * must be the active handler.
+ * Reset the flags for this handler.
+ * As the handler is now in the chain mark it as active.
  */
-/* amb - no needed these days */ 
 	handler->ih_flags = 0 | IRQ_FLAG_ACTIVE;
 
 /*
@@ -229,6 +230,7 @@ irq_claim(irq, handler)
 		printf("irqmask[%d] = %08x\n", level, irqmasks[level]);
 */
 
+#if NPODULEBUS > 0
 /*
  * Is this an expansion card IRQ and is there a PODULE IRQ handler
  * installed ?
@@ -239,6 +241,7 @@ irq_claim(irq, handler)
 	if (irq >= IRQ_EXPCARD0 && irqhandlers[IRQ_PODULE] == NULL)
 		panic("Podule IRQ %d claimed but no podulebus handler installed\n",
 		    irq);
+#endif
 
 	enable_irq(irq);
 	set_spl_masks();
@@ -303,8 +306,8 @@ irq_release(irq, handler)
 	else
 		return(-1);
 
-/* Flag the handler being removed as non active (in case it was) */ 
-/* Not needed these days - AMB */
+/* Now the handler has been removed from the chain mark is as inactive */
+
 	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
 
 /* Make sure the head of the handler list is active */
@@ -563,6 +566,10 @@ fiq_release(handler)
 /* Clear up the FIQ mask */
 
 	WriteWord(IOMD_FIQMSK, 0x00);
+
+/* Retrieve the FIQ registers */
+
+	fiq_getregs(handler);
 
 /* Remove the handler */
 
