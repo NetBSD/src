@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.25 1999/05/31 04:46:33 kim Exp $	*/
+/*	$NetBSD: process.c,v 1.26 1999/11/09 15:06:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.25 1999/05/31 04:46:33 kim Exp $");
+__RCSID("$NetBSD: process.c,v 1.26 1999/11/09 15:06:36 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,7 @@ regexec_e(preg, string, eflags, nomatch, slen)
 
 #ifndef REG_STARTEND
 	if ((buf = malloc(slen + 1)) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	(void)memcpy(buf, string, slen);
 	buf[slen] = '\0';
 	eval = regexec(defpreg, buf,
