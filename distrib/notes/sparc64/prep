@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.6 2001/07/24 18:18:32 nra Exp $
+.\"	$NetBSD: prep,v 1.7 2001/08/23 16:59:08 mrg Exp $
 .
 If you're installing
 .Nx*M
@@ -14,13 +14,13 @@ Assuming a classic partition scheme with
 file systems, a comfortable size for the
 .Nx
 .Pa /
-partition is about 20 MB;
+partition is about 64 MB;
 a good initial size for the swap partition is twice the amount of physical
 memory in your machine (though, unlike
 .Tn SunOS
 4.x, there are no restrictions
 on the size of the swap partition that would render part of your memory
-unusable). A full binary installation including X11R6 takes about 150 MB in
+unusable). A full binary installation including X11R6 takes nearly 200 MB in
 .Pa /usr .
 .Pp
 You cannot use the security modes of the SPARC OpenBoot PROM.
