@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.8 1994/02/17 03:39:52 mycroft Exp $
+ *	$Id: lms.c,v 1.9 1994/03/06 17:19:10 mycroft Exp $
  */
 
 #include "lms.h"
@@ -83,13 +83,13 @@ lmsprobe(isa_dev)
 
 	/* Configure and check for port present. */
 	outb(iobase + LMS_CONFIG, 0x91);
-	DELAY(10);
+	delay(10);
 	outb(iobase + LMS_SIGN, 0x0c);
-	DELAY(10);
+	delay(10);
 	if (inb(iobase + LMS_SIGN) != 0x0c)
 		return 0;
 	outb(iobase + LMS_SIGN, 0x50);
-	DELAY(10);
+	delay(10);
 	if (inb(iobase + LMS_SIGN) != 0x50)
 		return 0;
 

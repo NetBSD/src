@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.38 1994/03/01 18:22:52 mycroft Exp $
+ *	$Id: isa.c,v 1.39 1994/03/06 17:19:09 mycroft Exp $
  */
 
 /*
@@ -580,7 +580,7 @@ isa_strayintr(d) {
 extern int hz;                        /* XXX - should be elsewhere */
 
 void
-DELAY(n)
+delay(n)
 	int n;
 {
 	int counter_limit;
@@ -598,11 +598,11 @@ DELAY(n)
 	if (state == 0) {
 		state = 1;
 		for (n1 = 1; n1 <= 10000000; n1 *= 10)
-			DELAY(n1);
+			delay(n1);
 		state = 2;
 	}
 	if (state == 1)
-		printf("DELAY(%d)...", n);
+		printf("delay(%d)...", n);
 #endif
 
 	/*
