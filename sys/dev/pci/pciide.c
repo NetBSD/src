@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68 2000/06/12 21:25:01 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.1 2000/06/27 14:07:41 bouyer Exp $	*/
 
 
 /*
@@ -3040,7 +3040,7 @@ pdc202xx_setup_channel(chp)
 		    PDC262_U66);
 		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
 		/* Trimm UDMA mode */
-		if ((st & PDC262_STATE_80P(channel)) == 0 ||
+		if ((st & PDC262_STATE_80P(channel)) != 0 ||
 		    (chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
 		    chp->ch_drive[0].UDMA_mode <= 2) ||
 		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
