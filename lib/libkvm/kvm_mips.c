@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mips.c,v 1.4 1997/06/18 01:41:31 jonathan Exp $	*/
+/*	$NetBSD: kvm_mips.c,v 1.5 1997/06/25 21:08:45 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_mips.c,v 1.4 1997/06/18 01:41:31 jonathan Exp $";
+static char *rcsid = "$NetBSD: kvm_mips.c,v 1.5 1997/06/25 21:08:45 jonathan Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -176,7 +176,7 @@ _kvm_kvatop(kd, va, pa)
 	    va >= VM_MIN_KERNEL_ADDRESS + vm->Sysmapsize * NBPG)
 		goto invalid;
 	if (va < VM_MIN_KERNEL_ADDRESS) {
-		*pa = MACH_CACHED_TO_PHYS(va);
+		*pa = MIPS_KSEG0_TO_PHYS(va);
 		return (NBPG - offset);
 	}
 	addr = (u_long)(vm->Sysmap +
