@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_space.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_space.c,v 1.2 2003/10/23 09:25:44 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.2 2003/10/23 09:25:44 scw Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -145,7 +145,6 @@ ixp425_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
         paddr_t		pa;
         paddr_t		offset;
         vaddr_t		va;
-        pt_entry_t	*pte;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -166,10 +165,9 @@ ixp425_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	/* Now map the pages */
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		pte = vtopte(va);
-		*pte &= ~L2_S_CACHE_MASK;
-		PTE_SYNC(pte);
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
 
@@ -190,7 +188,6 @@ ixp425_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	endva = round_page(bsh + size);
 	va = trunc_page(bsh);
 
-	pmap_kremove(va, endva - va);
 	uvm_km_free(kernel_map, va, endva - va);
 }
 
