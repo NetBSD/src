@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.165 1998/01/21 22:24:32 thorpej Exp $
+#	$NetBSD: files,v 1.166 1998/01/22 01:18:30 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -21,6 +21,8 @@ defopt	MROUTING
 defopt	TCP_COMPAT_42
 
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
+
+defopt	INSECURE
 
 # generic attributes
 define	disk

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.29 1997/10/21 18:51:06 sommerfe Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.30 1998/01/22 01:18:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,6 +41,8 @@
 /*
  * sysctl system call.
  */
+
+#include "opt_insecure.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
