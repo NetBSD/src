@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.8 1998/11/08 04:42:21 jonathan Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.9 1998/11/10 15:06:29 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -322,7 +322,7 @@ menu cdromsource, title "  Changer";
 		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
 	option "Répertoire", action
 		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
-	option "Continue", exit;
+	option "Continuer", exit;
 
 menu cdrombadmount, title "  Que voulez-vous faire?";
 	option "Réessayer", exit, sub menu cdromsource, action
