@@ -1,11 +1,11 @@
-/*	$NetBSD: ansi.h,v 1.1 2000/06/04 08:50:28 itojun Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2 2000/06/26 15:45:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jun-ichiro itojun Hagino.
+ * by Jun-ichiro itojun Hagino and by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,8 +39,9 @@
 #ifndef	_SYS_ANSI_H_
 #define	_SYS_ANSI_H_
 
-#include <sys/cdefs.h>
+#include <machine/int_types.h>
 
-typedef unsigned int __socklen_t;
+typedef __uint8_t	__sa_family_t;
+typedef unsigned int	__socklen_t;
 
 #endif	/* _SYS_ANSI_H_ */
