@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.32 1999/12/07 11:30:28 ad Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.33 1999/12/13 04:25:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.32 1999/12/07 11:30:28 ad Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.33 1999/12/13 04:25:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -933,7 +933,7 @@ cvthname(f)
 	static char host[NI_MAXHOST], ip[NI_MAXHOST];
 
 	error = getnameinfo((struct sockaddr*)f, ((struct sockaddr*)f)->sa_len,
-			ip, NI_MAXHOST, NULL, 0, NI_NUMERICHOST|niflag);
+			ip, sizeof ip, NULL, 0, NI_NUMERICHOST|niflag);
 
 	dprintf("cvthname(%s)\n", ip);
 
@@ -943,7 +943,7 @@ cvthname(f)
 	}
 
 	error = getnameinfo((struct sockaddr*)f, ((struct sockaddr*)f)->sa_len,
-			host, NI_MAXHOST, NULL, 0, niflag);
+			host, sizeof host, NULL, 0, niflag);
 	if (error) {
 		dprintf("Host name for your address (%s) unknown\n", ip);
 		return (ip);
