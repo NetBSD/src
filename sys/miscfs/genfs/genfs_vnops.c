@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.69 2003/01/18 09:18:05 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.70 2003/01/21 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.69 2003/01/18 09:18:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.70 2003/01/21 00:01:14 christos Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -68,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.69 2003/01/18 09:18:05 thorpej Exp
 #endif
 
 static __inline void genfs_rel_pages(struct vm_page **, int);
+static void filt_genfsdetach(struct knote *);
+static int filt_genfsread(struct knote *, long);
+static int filt_genfsvnode(struct knote *, long);
+
 
 #define MAX_READ_AHEAD	16 	/* XXXUBC 16 */
 int genfs_rapages = MAX_READ_AHEAD; /* # of pages in each chunk of readahead */
@@ -1035,6 +1039,8 @@ genfs_putpages(void *v)
 	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
+	struct lwp *l = curlwp ? curlwp : &lwp0;
+
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
@@ -1087,7 +1093,7 @@ genfs_putpages(void *v)
 	if (by_list) {
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
-		PHOLD(curlwp);
+		PHOLD(l);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
 	}
@@ -1126,7 +1132,7 @@ genfs_putpages(void *v)
 		 * wait for it to become unbusy.
 		 */
 
-		yield = (curlwp->l_cpu->ci_schedstate.spc_flags &
+		yield = (l->l_cpu->ci_schedstate.spc_flags &
 		    SPCF_SHOULDYIELD) && !pagedaemon;
 		if (pg->flags & PG_BUSY || yield) {
 			KASSERT(!pagedaemon);
@@ -1315,7 +1321,7 @@ genfs_putpages(void *v)
 	}
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(curlwp);
+		PRELE(l);
 	}
 
 	/*
