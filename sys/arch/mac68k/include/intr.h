@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1997/10/10 05:54:51 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.2.1 1997/11/05 22:13:33 mellon Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -80,6 +80,18 @@
 #define	splsoft()	spl1()
 
 /*
+ * splnet must block hardware network interrupts
+ * splimp must be > spltty
+ */
+extern unsigned short	mac68k_ttyipl;
+extern unsigned short	mac68k_bioipl;
+extern unsigned short	mac68k_netipl;
+extern unsigned short	mac68k_impipl;
+extern unsigned short	mac68k_clockipl;
+extern unsigned short	mac68k_statclockipl;
+extern unsigned short	mac68k_schedipl;
+
+/*
  * These should be used for:
  * 1) ensuring mutual exclusion (why use processor level?)
  * 2) allowing faster devices to take priority
@@ -90,13 +102,13 @@
  */
 #define	splsoftclock()	splsoft()
 #define	splsoftnet()	splsoft()
-#define	spltty()	_splraise(PSL_S|PSL_IPL1)
-#define	splbio()	spl2()
-#define	splnet()	spl2()
-#define	splimp()	spl2()
-#define	splclock()	spl2()
-#define	splstatclock()	spl2()
-#define	splsched()	spl3()
+#define	spltty()	_splraise(mac68k_ttyipl)
+#define	splbio()	_splraise(mac68k_bioipl)
+#define	splnet()	_splraise(mac68k_netipl)
+#define	splimp()	_splraise(mac68k_impipl)
+#define	splclock()	_splraise(mac68k_clockipl)
+#define	splstatclock()	_splraise(mac68k_statclockipl)
+#define	splsched()	_splsched(mac68k_schedipl)
 #define	splserial()	spl4()
 #define	splhigh()	spl7()
 
