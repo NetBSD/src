@@ -1,4 +1,4 @@
-/* $NetBSD: hsearchtest.c,v 1.1 2001/02/14 05:20:11 cgd Exp $ */
+/* $NetBSD: hsearchtest.c,v 1.2 2001/02/14 05:32:19 cgd Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -37,6 +37,13 @@
 /*
  * Test program for hsearch() et al.
  */
+
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: hsearchtest.c,v 1.2 2001/02/14 05:32:19 cgd Exp $");
+__COPYRIGHT(
+"@(#) Copyright (c) 2001 Christopher G. Demetriou.  All rights reserved.\n");
+#endif /* not lint */
 
 #include <search.h>
 #include <stdlib.h>
