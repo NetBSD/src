@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2000/06/29 07:37:58 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.8 2000/07/09 13:35:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -359,9 +359,6 @@ netbsd32___sigreturn14(p, v, retval)
 	} */ *uap = v;
 	struct netbsd32_sigcontext sc, *scp;
 	register struct trapframe64 *tf;
-#ifndef TRAPWIN
-	int i;
-#endif
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
