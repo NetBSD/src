@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.4 2000/01/20 04:55:52 itojun Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.5 2000/04/17 06:13:18 itojun Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.4 2000/01/20 04:55:52 itojun Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.5 2000/04/17 06:13:18 itojun Exp $");
 #endif
 #endif
 
@@ -128,6 +128,8 @@ static option_t ipv6cp_option_list[] = {
       "Disable IPv6 and IPv6CP" },
     { "-ipv6", o_bool, &ipv6cp_protent.enabled_flag,
       "Disable IPv6 and IPv6CP" },
+    { "+ipv6", o_bool, &ipv6cp_protent.enabled_flag,
+      "Enable IPv6 and IPv6CP", 1 },
 
     { "ipv6cp-accept-local", o_bool, &ipv6cp_allowoptions[0].accept_local,
       "Accept peer's interface identifier for us", 1 },
@@ -174,7 +176,7 @@ struct protent ipv6cp_protent = {
     ipv6cp_close,
     ipv6cp_printpkt,
     NULL,
-    1,
+    0,
     "IPV6CP",
     "IPV6",
     ipv6cp_option_list,
