@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.19 1995/03/06 19:06:09 glass Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.20 1995/04/07 22:26:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -580,10 +580,24 @@ arplookup(addr, create, proxy)
 
 int
 arpioctl(cmd, data)
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
+
 	return (EOPNOTSUPP);
+}
+
+void
+arp_ifinit(ac, ifa)
+	struct arpcom *ac;
+	struct ifaddr *ifa;
+{
+
+	ac->ac_ipaddr = IA_SIN(ifa)->sin_addr;
+	/* Warn the user if another station has this IP address. */
+	arpwhohas(ac, &ac->ac_ipaddr);
+	ifa->ifa_rtrequest = arp_rtrequest;
+	ifa->ifa_flags |= RTF_CLONING;
 }
 
 /*
