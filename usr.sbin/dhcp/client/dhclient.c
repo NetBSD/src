@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.3 1998/07/31 21:38:43 sommerfe Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.4 1998/09/04 18:01:14 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -234,6 +234,9 @@ int main (argc, argv, envp)
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
+
+        /* Start listening on the sysconf socket... */
+        sysconf_startup (status_message);
 
 	/* Start dispatching packets and timeouts... */
 	dispatch ();
@@ -1640,7 +1643,7 @@ void make_release (ip, lease)
 	ip -> client -> packet.htype = ip -> hw_address.htype;
 	ip -> client -> packet.hlen = ip -> hw_address.hlen;
 	ip -> client -> packet.hops = 0;
-	ip -> client -> packet.xid = ip -> client -> packet.xid;
+	ip -> client -> packet.xid = random ();
 	ip -> client -> packet.secs = 0;
 	ip -> client -> packet.flags = 0;
 	memcpy (&ip -> client -> packet.ciaddr,
@@ -2052,5 +2055,82 @@ void write_client_pid_file ()
 	else {
 		fprintf (pf, "%ld\n", (long)getpid ());
 		fclose (pf);
+	}
+}
+
+void status_message (header, data)
+	struct sysconf_header *header;
+	void *data;
+{
+	switch (header -> type) {
+	      case NETWORK_LOCATION_CHANGED:
+		client_reinit (1);
+		break;
+
+	      case RELEASE_CURRENT_DHCP_LEASES:
+		client_reinit (0);
+		break;
+
+	      default:
+		break;
+	}
+}
+
+void client_reinit (state)
+	int state;
+{
+	struct interface_info *ip;
+
+	for (ip = interfaces; ip; ip = ip -> next) {
+		switch (ip -> client -> state) {
+		      case S_SELECTING:
+			cancel_timeout (send_discover, ip);
+			break;
+
+		      case S_BOUND:
+			cancel_timeout (state_bound, ip);
+			break;
+
+		      case S_REBOOTING:
+		      case S_REQUESTING:
+		      case S_RENEWING:
+			cancel_timeout (send_request, ip);
+			break;
+
+		      case S_INIT:
+		      case S_REBINDING:
+			break;
+		}
+
+		if (state == 0 && ip -> client -> active) {
+			/* Expire the lease. */
+			ip -> client -> active -> expiry = cur_time;
+			write_client_lease (ip, ip -> client -> active);
+
+			/* Unconfigure the leased IP address. */
+			script_init (ip, "EXPIRE", (struct string_list *)0);
+			script_write_params (ip,
+					     "old_", ip -> client -> active);
+			if (ip -> client -> alias)
+			        script_write_params (ip, "alias_",
+			                             ip -> client -> alias);
+			script_go (ip);
+
+			/* Configure the interface in the startup state. */
+			script_init (ip, "PREINIT",
+				     (struct string_list *)0);
+			if (ip -> client -> alias)
+				script_write_params(ip, "alias_",
+						    ip->client->alias);
+			script_go (ip);
+
+			make_release (ip, ip -> client -> active);
+			send_release (ip);
+
+			ip -> client -> state = S_INIT;
+		} else if (state == 1) {
+			ip -> client -> state = S_INIT;
+			state_reboot (ip);
+		}
 	}
 }
