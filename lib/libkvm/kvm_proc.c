@@ -75,9 +75,21 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
 
-int _kvm_readfromcore __P((kvm_t *, u_long, u_long));
-int _kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
-ssize_t kvm_uread __P((kvm_t *, const struct proc *, u_long, char *, size_t));
+int		_kvm_readfromcore __P((kvm_t *, u_long, u_long));
+int		_kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
+ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
+		    size_t));
+
+static char	**kvm_argv __P((kvm_t *, const struct proc *, u_long, int,
+		    int));
+static int	kvm_deadprocs __P((kvm_t *, int, int, u_long, u_long, int));
+static char	**kvm_doargv __P((kvm_t *, const struct kinfo_proc *, int,
+		    void (*)(struct ps_strings *, u_long *, int *)));
+static int	kvm_proclist __P((kvm_t *, int, int, struct proc *,
+		    struct kinfo_proc *, int));
+static int	proc_verify __P((kvm_t *, u_long, const struct proc *));
+static void	ps_str_a __P((struct ps_strings *, u_long *, int *));
+static void	ps_str_e __P((struct ps_strings *, u_long *, int *));
 
 char *
 _kvm_uread(kd, p, va, cnt)
@@ -572,7 +584,7 @@ _kvm_realloc(kd, p, n)
 static char **
 kvm_argv(kd, p, addr, narg, maxcnt)
 	kvm_t *kd;
-	struct proc *p;
+	const struct proc *p;
 	register u_long addr;
 	register int narg;
 	register int maxcnt;
@@ -802,7 +814,7 @@ kvm_uread(kd, p, uva, buf, len)
 	while (len > 0) {
 		register int cc;
 		register char *dp;
-		int cnt;
+		u_long cnt;
 
 		dp = _kvm_uread(kd, p, uva, &cnt);
 		if (dp == 0) {
