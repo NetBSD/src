@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.2 2005/01/09 21:32:08 joff Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.3 2005/01/24 02:38:15 joff Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.2 2005/01/09 21:32:08 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.3 2005/01/24 02:38:15 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ isa_bs_map(t, bpa, size, cacheable, bshp)
 	struct extent *ex;
 	int err;
 
-	if (t == &isa_io_bs_tag) 
+	if (t == isa_io_bs_tag.bs_cookie) 
 		ex = isaio_ex;
 	else
 		ex = isamem_ex;
@@ -312,8 +312,6 @@ isa_bs_subregion(t, bsh, offset, size, nbshp)
 	bus_size_t offset, size;
 	bus_space_handle_t *nbshp;
 {
-/*	printf("isa_subregion(tag=%p, bsh=%lx, off=%lx, sz=%lx)\n",
-	    t, bsh, offset, size);*/
 	*nbshp = bsh + offset;
 	return(0);
 }
@@ -332,7 +330,7 @@ isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	u_long bpa;
 	int err;
 
-	if (t == &isa_io_bs_tag) 
+	if (t == isa_io_bs_tag.bs_cookie) 
 		ex = isaio_ex;
 	else
 		ex = isamem_ex;
@@ -344,7 +342,7 @@ isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	if (err)
 		return err;
 
-	*bshp = *bpap = bpa;
+	*bshp = *bpap = bpa + (bus_addr_t)t;
 	return 0;
 }
 
@@ -356,7 +354,7 @@ isa_bs_free(t, bsh, size)
 {
 	struct extent *ex;
 
-	if (t == &isa_io_bs_tag) 
+	if (t == isa_io_bs_tag.bs_cookie) 
 		ex = isaio_ex;
 	else
 		ex = isamem_ex;
