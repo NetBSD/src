@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.2 2000/12/12 19:07:59 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.3 2002/03/16 14:49:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -127,8 +127,7 @@ struct linux_stat64 {
 	unsigned long	lst_ctime;
 	unsigned long	__pad7;		/* will be high 32 bits of ctime someday */
 
-	unsigned long	__unused1;
-	unsigned long	__unused2;
+	unsigned long long	lst_ino64;
 };
 
 #endif /* !_M68K_LINUX_TYPES_H */
