@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.5 1999/03/07 02:17:36 mycroft Exp $
+.\" $NetBSD: doc2html,v 1.6 1999/03/07 08:37:03 mycroft Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -685,20 +685,6 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .	mode-bold-off
 .	pc-fin
 ..
-.de Oo
-.DEBUG .tm .Oo \\$*
-.	as doc-pcresult \&[
-.	ie \\n(.$>0 .recurse \\$@
-.	el .nr r-lvl +1
-.	pc-fin
-..
-.de Oc
-.DEBUG .tm .Oc \\$*
-.	as doc-pcresult \&]
-.	ie \\n(.$>0 .recurse \\$@
-.	el .nr r-lvl -1
-.	pc-fin
-..
 .de Op
 .DEBUG .tm .Op \\$*
 .	as doc-pcresult \&[
@@ -817,13 +803,15 @@ AT&T UNIX\\$*
 .	pc-fin \\$3
 \\*[dot-dot]
 ..
-.\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Qq Qo Qc Sq So Sc
+.\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Qq Qo Qc Sq So Sc Oo Oc
 .make-quoter A &lt; &gt;
-.make-quoter B [ ]
-.make-quoter D `` ''
-.make-quoter P ( )
+.make-quoter B \&[ \&]
+.make-quoter D \&`` \&''
+.make-quoter P \&( \&)
 .make-quoter Q \&" \&"
-.make-quoter S ` '
+.make-quoter S \&` \&'
+.als Oo Bo
+.als Oc Bc
 .de Ft
 .	as doc-pcresult <br><br>
 .	mode-code-on
