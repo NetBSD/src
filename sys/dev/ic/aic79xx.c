@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.1 2003/04/21 00:14:52 fvdl Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.2 2003/04/21 21:49:31 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -7715,7 +7715,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		break;
 	}	
 	case SCSI_STATUS_OK:
-		printf("%s: Interrupted for status of 0??? (SCB 0x%x)\n",
+		printf("%s: Interrupted for status of 0? (SCB 0x%x)\n",
 		       ahd_name(ahd), SCB_GET_TAG(scb));
 		/* FALLTHROUGH */
 	default:
