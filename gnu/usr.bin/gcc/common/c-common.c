@@ -709,6 +709,7 @@ static format_char_info print_char_table[] = {
   { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
   { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	"-w"		},
   { "n",	1,	T_I,	T_S,	T_L,	T_LL,	NULL,	""		},
+  { "b",	0,	T_I,	NULL,	NULL,	NULL,	NULL,	""		},
   { NULL }
 };
 
@@ -1019,6 +1020,31 @@ check_format_info (info, params)
 			       arg_num);
 		      warning (message);
 		    }
+		}
+	    }
+	  else
+	    if (*format_chars == 'b') {
+	      if (params == 0)
+		{
+		  warning (tfaff);
+		  return;
+		}
+	      if (info->first_arg_num != 0)
+		{
+		  cur_param = TREE_VALUE (params);
+		  cur_type = TREE_TYPE (cur_param);
+		  params = TREE_CHAIN (params);
+		  ++arg_num;
+		  if (TREE_CODE (cur_type) != POINTER_TYPE ||
+		      (TYPE_MAIN_VARIANT (TREE_TYPE (cur_type)) != char_type_node))
+		    {
+		      sprintf (message, "%s format, %s arg (arg %d)",
+			    IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (char_type_node))),
+			    IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (cur_type))),
+			    arg_num);
+		      warning (message);
+		    }
+		  cur_type = TREE_TYPE (cur_type);
 		}
 	    }
 	  else
