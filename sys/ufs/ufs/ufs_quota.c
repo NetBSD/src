@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.15 2000/03/30 12:41:14 augustss Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.16 2000/05/20 03:25:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -133,7 +133,8 @@ chkdq(ip, change, cred, flags)
 		}
 		return (0);
 	}
-	if ((flags & FORCE) == 0 && cred->cr_uid != 0) {
+	if ((flags & FORCE) == 0 &&
+	    (cred != NOCRED && cred->cr_uid != 0)) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
