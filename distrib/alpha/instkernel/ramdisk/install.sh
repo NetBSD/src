@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.3 2003/07/26 17:06:26 salo Exp $
+# $NetBSD: install.sh,v 1.4 2004/04/23 02:48:12 simonb Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -65,7 +65,7 @@ echo	"manual, the installation notes, and a calculator handy."
 echo	""
 echo	"In particular, you will need to know some reasonably detailed"
 echo	"information about your disk's geometry, because there is currently"
-echo	"no way this this program can figure that information out."
+echo	"no way this program can figure that information out."
 echo	""
 echo	"As with anything which modifies your hard drive's contents, this"
 echo	"program can cause SIGNIFICANT data loss, and you are advised"
