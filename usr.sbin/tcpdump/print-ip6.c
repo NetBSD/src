@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip6.c,v 1.4 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-ip6.c,v 1.5 2000/11/08 07:23:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-ip.c,v 2.1 1995/02/03 18:14:45 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-ip6.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-ip6.c,v 1.5 2000/11/08 07:23:54 itojun Exp $");
 #endif
 #endif
 
@@ -171,7 +171,6 @@ ip6_print(register const u_char *bp, register int length)
 			break;
 		    }
 		case IPPROTO_PIM:
-			(void)printf("PIM");
 			pim_print(cp, len);
 			goto end;
 #ifndef IPPROTO_OSPF
