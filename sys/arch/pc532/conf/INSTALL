@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.9 1996/12/28 23:25:12 pk Exp $
+#	$NetBSD: INSTALL,v 1.10 1997/01/31 01:57:09 thorpej Exp $
 #
 # INSTALL -- install kernel
 #
@@ -10,12 +10,14 @@ include	"arch/pc532/conf/std.pc532"
 maxusers	2
 
 # filesystems
+file-system 	FFS				# Berkeley fast file system
+file-system 	MSDOSFS				# MS-DOS file system
+file-system 	CD9660				# ISO 9660 CD-ROM file system
+file-system 	KERNFS				# /kern
+file-system 	NFS				# Network File System client
+
 options		FIFO				# fifos; recommended
-options 	FFS				# Berkeley fast file system
-options		MSDOSFS				# MS-DOS file system
-options		CD9660				# ISO 9660 CD-ROM file system
-options		KERNFS				# /kern
-options		NFSCLIENT			# Network File System client
+
 options		INET				# IP + ICMP + TCP + UDP
 
 # pc532 special options
@@ -24,8 +26,7 @@ options 	CONSOLE_SPEED=B9600		# default console baud rate
 options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"	# use the monitor's setting
 options		NO_INLINE_SPLX			# go for space, not for speed
 
-config		"netbsd"	swap generic
-options		GENERIC
+config		netbsd	root on ? type ?
 
 sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
