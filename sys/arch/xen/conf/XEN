@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.16 2005/01/31 16:55:30 hannken Exp $
+# $NetBSD: XEN,v 1.17 2005/02/18 21:12:36 dsl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -92,6 +92,7 @@ file-system 	PROCFS		# /proc
 #options 	QUOTA		# UFS quotas
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
