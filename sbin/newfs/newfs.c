@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.47 2001/09/06 02:16:01 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.48 2001/11/16 09:58:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.47 2001/09/06 02:16:01 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.48 2001/11/16 09:58:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: newfs.c,v 1.47 2001/09/06 02:16:01 lukem Exp $");
  * newfs: friendly front end to mkfs
  */
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/file.h>
@@ -201,7 +200,6 @@ main(int argc, char *argv[])
 	struct disklabel *lp;
 	struct disklabel mfsfakelabel;
 	struct partition oldpartition;
-	struct stat st;
 	struct statfs *mp;
 	int ch, fsi, fso, len, maxpartitions, n, Fflag, Zflag;
 	char *cp, *endp, *s1, *s2, *special;
@@ -400,16 +398,14 @@ main(int argc, char *argv[])
 		usage();
 
 	special = argv[0];
-	if ((mfs && !strcmp(special, "swap")) || Fflag) {
+	if (Fflag || (mfs && strcmp(special, "swap") == 0)) {
 		/*
-		 * it's an MFS mounted on "swap" or a file system image;
+		 * it's a file system image, or an MFS mounted on "swap";
 		 * fake up a label.		XXX
 		 */
 		if (!sectorsize)
 			sectorsize = DFL_SECSIZE;
 
-		if (Fflag && (stat(special, &st) != -1 && !S_ISREG(st.st_mode)))
-			errx(1, "%s is not a regular file", special);
 		if (Fflag && !Nflag) {	/* creating image in a regular file */
 			if (fssize == 0)
 				errx(1, "need to specify size when using -F");
@@ -418,6 +414,7 @@ main(int argc, char *argv[])
 				err(1, "can't open file %s", special);
 			if ((fsi = dup(fso)) == -1)
 				err(1, "can't dup(2) image fd");
+		/* XXXLUKEM: only ftruncate() regular files ? */
 			if (ftruncate(fso, (off_t)fssize * sectorsize) == -1)
 				err(1, "can't resize %s to %d",
 				    special, fssize);
@@ -474,24 +471,18 @@ main(int argc, char *argv[])
 
 		goto havelabel;
 	}
-	cp = strrchr(special, '/');
-	if (cp == NULL) {
-		/*
-		 * No path prefix; try /dev/r%s then /dev/%s.
-		 */
-		(void)snprintf(device, sizeof(device), "%sr%s",
-		    _PATH_DEV, special);
-		if (stat(device, &st) == -1)
-			(void)snprintf(device, sizeof(device), "%s%s",
-			    _PATH_DEV, special);
-		special = device;
-	}
+
+	fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
+	special = device;
+	if (fsi < 0)
+		err(1, "%s: open for read", special);
+
 	if (Nflag) {
 		fso = -1;
 	} else {
 		fso = open(special, O_WRONLY);
 		if (fso < 0)
-			err(1, "%s: open", special);
+			err(1, "%s: open for write", special);
 
 		/* Bail if target special is mounted */
 		n = getmntinfo(&mp, MNT_NOWAIT);
@@ -521,13 +512,6 @@ main(int argc, char *argv[])
 			errx(1, "%s: unknown disk type", disktype);
 		pp = &lp->d_partitions[1];
 	} else {
-		fsi = open(special, O_RDONLY);
-		if (fsi < 0)
-			err(1, "%s: open", special);
-		if (fstat(fsi, &st) < 0)
-			err(1, "%s: fstat", special);
-		if (!S_ISCHR(st.st_mode) && !mfs)
-			warnx("%s: not a character-special device", special);
 		cp = strchr(argv[0], '\0') - 1;
 		if (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
 		    && !isdigit(*cp)))
