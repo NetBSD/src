@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.23.2.6 2001/04/24 21:36:30 he Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.23.2.7 2004/04/07 21:51:00 jmc Exp $	*/
 /*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
 
 /*
@@ -3100,6 +3100,7 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 {
 	u_int8_t nxt = nxt0 & 0xff;
 	struct sockaddr_in6 *sin6;
+	struct in6_addr in6;
 
 	if (nxt != IPPROTO_IPV6)
 		return 0;
@@ -3109,7 +3110,10 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET6:
 		sin6 = ((struct sockaddr_in6 *)&sav->sah->saidx.dst);
-		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6->sin6_addr))
+		in6 = sin6->sin6_addr;
+		if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
+			in6.s6_addr16[1] = htons(sin6->sin6_scope_id) & 0xffff;
+		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &in6))
 			return 0;
 		break;
 	case AF_INET:
