@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.524 2003/01/23 22:08:44 kleink Exp $
+#	$NetBSD: mi,v 1.525 2003/01/23 23:45:45 kleink Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3218,7 +3218,6 @@
 ./usr/share/man/cat5/cvs.0	comp-cvs-catman
 ./usr/share/man/cat5/mk.conf.0		comp-util-catman
 ./usr/share/man/cat5/ranlib.0		comp-util-catman
-./usr/share/man/cat5/ucontext.0		comp-c-catman
 ./usr/share/man/cat7/operator.0		comp-c-catman
 ./usr/share/man/cat8/config.0		comp-sysutil-catman
 ./usr/share/man/cat8/cvsbug.0		comp-cvs-catman
@@ -6246,7 +6245,6 @@
 ./usr/share/man/man5/cvs.5		comp-cvs-man
 ./usr/share/man/man5/mk.conf.5		comp-util-man
 ./usr/share/man/man5/ranlib.5		comp-util-man
-./usr/share/man/man5/ucontext.5		comp-c-man
 ./usr/share/man/man7/operator.7		comp-c-man
 ./usr/share/man/man8/config.8		comp-sysutil-man
 ./usr/share/man/man8/cvsbug.8		comp-cvs-man
