@@ -67,6 +67,10 @@ main()
 	def("NKPDE", NKPDE);
 	def("APTDPTDI", APTDPTDI);
 
+	def("SIR_AST", SIR_AST);
+	def("SIR_NET", SIR_NET);
+	def("SIR_CLOCK", SIR_CLOCK);
+
 	def("P_ADDR", &p->p_addr);
 	def("P_LINK", &p->p_link);
 	def("P_PRI", &p->p_pri);

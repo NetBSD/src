@@ -1,4 +1,4 @@
-/*	$Id: vector.s,v 1.10 1993/08/02 17:52:37 mycroft Exp $ */
+/*	$Id: vector.s,v 1.11 1993/12/17 00:11:49 mycroft Exp $ */
 
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
@@ -209,7 +209,7 @@ _X/**/name: ; \
 
 #define	STRAYINTR(irq_num, icu_num, icu_enables, reg) \
 IDTVEC(intr/**/irq_num) ; \
-	INTR(irq_num,irq_num,irq_num, _highmask,  _isa_strayintr, \
+	INTR(irq_num,irq_num,irq_num, $-1,  _isa_strayintr, \
 		  IO_ICU/**/icu_num, ENABLE_ICU/**/icu_enables, reg,stray)
 
 /*
@@ -250,7 +250,7 @@ IDTVEC(intr/**/irq_num) ; \
 IDTVEC(intrdefault)
 	STRAYINTR(7,1,1, al)	/* XXX */
 #if 0
-	INTRSTRAY(255, _highmask, 255) ; call	_isa_strayintr ; INTREXIT2
+	INTRSTRAY(255, $-1, 255) ; call	_isa_strayintr ; INTREXIT2
 #endif
 /*
  * These are the interrupt counters, I moved them here from icu.s so that

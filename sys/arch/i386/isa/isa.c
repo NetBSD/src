@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.29 1993/11/05 23:18:04 cgd Exp $
+ *	$Id: isa.c,v 1.30 1993/12/17 00:11:48 mycroft Exp $
  */
 
 /*
@@ -81,7 +81,7 @@ u_short *Crtat = (u_short *)MONO_BUF;
 /*
 **  Register definitions for DMA controller 2 (channels 4..7):
 */
-#define	DMA2_CHN(c)	(IO_DMA1 + 2*(2*(c)))	/* addr reg for channel c */
+#define	DMA2_CHN(c)	(IO_DMA2 + 2*(2*(c)))	/* addr reg for channel c */
 #define	DMA2_SMSK	(IO_DMA2 + 2*10)	/* single mask register */
 #define	DMA2_MODE	(IO_DMA2 + 2*11)	/* mode register */
 #define	DMA2_FFC	(IO_DMA2 + 2*12)	/* clear first/last FF */
@@ -94,13 +94,15 @@ static void sysbeepstop(int);
  * Configure all ISA devices
  */
 void
-isa_configure() {
+isa_configure()
+{
 	struct isa_device *dvp;
 	struct isa_driver *dp;
 
-	enable_intr();
 	splhigh();
 	INTREN(IRQ_SLAVE);
+	enable_intr();
+
 	for (dvp = isa_devtab_tty; config_isadev(dvp,&ttymask); dvp++)
 		;
 	for (dvp = isa_devtab_bio; config_isadev(dvp,&biomask); dvp++)
@@ -110,21 +112,15 @@ isa_configure() {
 	for (dvp = isa_devtab_null; config_isadev(dvp, (u_int *) NULL); dvp++)
 		;
 
-	impmask = ttymask | netmask;
+	printf("biomask %x ttymask %x netmask %x\n",
+	       biomask, ttymask, netmask);
 
-	/* and the problem is... if netmask == 0, then the loopback
-	 * code can do some really ugly things.
-	 * workaround for this: if netmask == 0, set it to 0x8000, which
-	 * is the value used by splsoftclock.  this is nasty, but it
-	 * should work until this interrupt system goes away. -- cgd
-	 */
-	if (netmask == 0)
-		netmask = 0x8000;	/* same as for softclock.  XXX */
+	biomask |= astmask;
+	ttymask |= astmask;
+	netmask |= astmask;
+	impmask = netmask | ttymask;
 
-	/* biomask |= ttymask ;  can some tty devices use buffers? */
-	printf("biomask %x ttymask %x netmask %x impmask %x\n",
-	       biomask, ttymask, netmask, impmask);
-	splnone();	/* XXX -- probably shouldn't use 'splnone()' */
+	spl0();
 }
 
 /*
