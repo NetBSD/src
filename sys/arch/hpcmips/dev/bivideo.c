@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.2 2000/03/12 11:46:44 takemura Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.3 2000/03/13 18:49:17 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.2 2000/03/12 11:46:44 takemura Exp $";
+    "$Id: bivideo.c,v 1.3 2000/03/13 18:49:17 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,13 +102,6 @@ bivideomatch(parent, match, aux)
 	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
 		return 0;
 
-	/*
-	 * Platforms which have TX CPU don't need this device.
-	 */
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX) == 0) {
-		return 0;
-	}
-
 	return (1);
 }
 
@@ -121,7 +114,7 @@ bivideoattach(parent, self, aux)
 	struct hpcfb_attach_args ha;
 
 	if (attach_flag) {
-		panic("%s(%d): bivideo attached twice");
+		panic("%s(%d): bivideo attached twice", __FILE__, __LINE__);
 	}
 	attach_flag = 1;
 
