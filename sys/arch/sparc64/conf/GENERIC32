@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.8 2000/11/09 00:06:47 eeh Exp $
+# 	$NetBSD: GENERIC32,v 1.9 2000/11/19 15:22:51 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	64
 
@@ -251,7 +251,7 @@ ms0	at zstty?
 #sabtty0	at sab0 channel 0		# ttya
 #sabtty1	at sab0 channel 1		# ttyb
 
-## Part of a PC87332VLJ?
+## Part of a PC87332VLJ
 com*	at ebus?				# `com' driver for `su'
 kbd0	at com?					# keyboard
 ms0	at com?					# mouse
@@ -278,7 +278,7 @@ scsibus* at isp?
 #fas*	at sbus? slot ? offset ?
 #scsibus* at fas?
 
-## GLM support missing
+## GLM support
 siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
@@ -437,6 +437,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
-## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
 pseudo-device	rnd
