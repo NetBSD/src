@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.35 1999/04/17 00:01:18 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.36 1999/05/01 16:13:43 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -50,7 +50,6 @@
  */
 struct	cpu_dep {
 	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
-	void	(*cpu_clock) __P((void)); /* CPU dep RT clock start */
 	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
 	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
 	    /* Autoconfiguration */
