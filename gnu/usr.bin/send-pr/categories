@@ -7,13 +7,17 @@ port-alpha
 port-amiga
 port-arm32
 port-atari
+port-bebox
 port-hp300
 port-i386
 port-m68k
 port-mac68k
+port-macppc
 port-mips
 port-mvme68k
+port-newsmips
 port-pc532
+port-pica
 port-pmax
 port-powerpc
 port-sparc
