@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.31 2004/07/12 21:26:01 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.32 2004/11/11 23:06:04 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.35 2004/07/12 21:25:24 he Exp 
+ *	NetBSD: pcidevs,v 1.428.2.36 2004/11/11 23:05:00 he Exp 
  */
 
 /*
@@ -734,6 +734,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
 	    "ASR-2120S",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "ASR-2200S",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAR2810SA,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AAR-2810SA",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364,
@@ -8228,6 +8240,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W89C940F Ethernet",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32UDE SCSI (IODATA)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32UDE SCSI (LOGITEC)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC2,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32UDE SCSI (LOGITEC2)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32UDE SCSI (BUFFALO)",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
