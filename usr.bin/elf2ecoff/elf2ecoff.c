@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.4 1997/01/09 20:18:37 tls Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.5 1997/06/16 22:10:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_aout.h>
 #include <stdio.h>
