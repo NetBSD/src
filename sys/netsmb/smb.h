@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.3 2002/01/04 02:39:38 deberg Exp $	*/
+/*	$NetBSD: smb.h,v 1.4 2003/02/18 10:09:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -324,13 +324,19 @@ enum smb_dialects {
 #define ERRnofiles	18	/* no more files found in file search */
 #define ERRbadshare	32	/* Share mode can't be granted */
 #define ERRlock		33	/* A lock request conflicts with existing lock */
+#define ERRbaddevice	66	/* Bad Device Type */
+#define ERRbadnetname	67	/* Bad Network Name */	
 #define ERRfilexists	80	/* The file named in the request already exists */
+#define ERRinvname	123	/* Invalid Name */
+#define ERRdirnempty	145	/* Directory Not Empty */
+#define ERReexists	183	/* Already Exists */
 
 /*
  * Error codes for the ERRSRV class
  */
 #define ERRerror	1	/* Non-specific error code */
 #define ERRbadpw	2	/* Bad password */
+#define ERRsrvbaddevice	3	/* Reserved - Bad Device Type */
 #define ERRaccess	4	/* The client doesn't have enough access rights */
 #define ERRinvnid	5	/* The Tid specified in a command is invalid */
 #define ERRinvnetname	6	/* Invalid server name in the tree connect */
