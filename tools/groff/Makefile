@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/02/19 12:13:10 pk Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/01 15:39:00 pk Exp $
 
 MODULE=		groff
 
@@ -38,22 +38,30 @@ _installtmac: .USE
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 .endif
 
+#
+# Since ${TMACDIR} is created by the `realinstall' target, the `afterinstall'
+# sources below that depend on it must wait until `realinstall' is done.
+#
 .for F in andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
 afterinstall:	${TMACDIR}/tmac.${F}
 .PHONY:		${TMACDIR}/tmac.${F}
 ${TMACDIR}/tmac.${F}: ${F} _installtmac
+.ORDER: realinstall ${TMACDIR}/tmac.${F}
 .endfor
 
 afterinstall: ${TMACDIR}/tmac.an.old
 ${TMACDIR}/tmac.an.old: ${DIST}/tmac/tmac.an _installtmac
+.ORDER: realinstall ${TMACDIR}/tmac.an.old
 
 afterinstall: ${TMACDIR}/tmac.an
 ${TMACDIR}/tmac.an: ${TMACDIR}/tmac.andoc _installtmac
+.ORDER: realinstall ${TMACDIR}/tmac.an
 
 # The silly walk below is because sometimes the files begin with "g",
 # and sometimes not, depending on what the host tool has at build time.
 
 afterinstall: install.grofflinks
+.ORDER: realinstall install.grofflinks
 install.grofflinks:
 	@cd ${.CURDIR} && ${MAKE} install.grofflinks.recurse
 
