@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wdreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: wdcreg.h,v 1.4 1994/03/02 21:43:42 mycroft Exp $
+ *	$Id: wdcreg.h,v 1.5 1994/03/10 05:18:36 mycroft Exp $
  */
 
 /*
@@ -126,19 +126,4 @@ struct wdparams {
 	short	wdp_nsecperint;		/* sectors per interrupt */
 	short	wdp_usedmovsd;		/* can use double word read/write? */
 };
-
-/*
- * wd driver entry points
- */
-int wdprobe(struct isa_device *);
-int wdattach(struct isa_device *);
-int wdstrategy(struct buf *);
-void wdintr(int);
-int wdopen(dev_t, int, int, struct proc *);
-int wdclose(dev_t, int, int);
-int wdioctl(dev_t, int, caddr_t, int, struct proc *);
-/* int wdformat(struct buf *bp); */
-int wdsize(dev_t);
-int wddump(dev_t);
-
 #endif KERNEL
