@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.30 2003/11/01 10:25:35 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.31 2003/11/01 10:55:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.30 2003/11/01 10:25:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.31 2003/11/01 10:55:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,8 +320,8 @@ acpibat_clear_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~ENVSYS_FMAXVALID;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_DVOLTAGE].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_WCAPACITY].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_LCAPACITY].validflags &= ~ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_WCAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID);
+	sc->sc_data[ACPIBAT_LCAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID);
 }
 
 void
@@ -448,9 +448,11 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_DVOLTAGE].cur.data_s = p2[4].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DVOLTAGE].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_WCAPACITY].cur.data_s = p2[5].Integer.Value * 1000;
-	sc->sc_data[ACPIBAT_WCAPACITY].validflags |= ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_WCAPACITY].max.data_s = p2[2].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_WCAPACITY].validflags |= ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID;
 	sc->sc_data[ACPIBAT_LCAPACITY].cur.data_s = p2[6].Integer.Value * 1000;
-	sc->sc_data[ACPIBAT_LCAPACITY].validflags |= ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_LCAPACITY].max.data_s = p2[2].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_LCAPACITY].validflags |= ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID;
 	sc->sc_available = ABAT_ALV_INFO;
 	ABAT_UNLOCK(sc, s);
 
