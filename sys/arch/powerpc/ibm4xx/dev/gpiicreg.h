@@ -1,4 +1,5 @@
-/*	$NetBSD: iicreg.h,v 1.3 2003/09/23 14:56:08 shige Exp $	*/
+/*	$NetBSD: gpiicreg.h,v 1.1 2003/10/06 16:15:46 scw Exp $	*/
+/*	Original Tag: iicreg.h,v 1.3 2003/09/23 14:56:08 shige Exp 	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IBM4XX_IICREG_H_
-#define	_IBM4XX_IICREG_H_
+#ifndef _IBM4XX_GPIICREG_H_
+#define	_IBM4XX_GPIICREG_H_
 
 /* IIC FIFO buffer size */
 #define IIC_FIFO_BUFSIZE	(4)
@@ -163,4 +164,4 @@
 #define	IIC_CLKDIV_60MHZ	(0x05)		/* OPB 50 < f <= 60 MHz */
 #define	IIC_CLKDIV_70MHZ	(0x06)		/* OPB 60 < f <= 70 MHz */
 
-#endif	/* _IBM4XX_IICREG_H_ */
+#endif	/* _IBM4XX_GPIICREG_H_ */

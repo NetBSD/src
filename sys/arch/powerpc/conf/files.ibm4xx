@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.4 2003/09/23 14:56:10 shige Exp $
+#	$NetBSD: files.ibm4xx,v 1.5 2003/10/06 16:15:46 scw Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -30,11 +30,6 @@ file	arch/powerpc/ibm4xx/dev/com_opb.c	com_opb
 device	emac: ether, ifnet, arp, mii
 attach	emac at opb
 file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
-
-# On-chip IIC device(s)
-device	iic {[addr = -1], [irq = -1]}
-attach	iic at opb
-file	arch/powerpc/ibm4xx/dev/iic.c		iic
 
 # Watchdog timer
 device	wdog: sysmon_wdog
