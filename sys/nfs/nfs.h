@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.41 2003/08/16 18:08:27 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.42 2003/09/26 11:51:53 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -155,9 +155,9 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  */
 #define	NFS_ATTRTIMEO(np) \
 	((((np)->n_flag & NMODIFIED) || \
-	 (time.tv_sec - (np)->n_mtime) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
-	 ((time.tv_sec - (np)->n_mtime) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime) / 10))
+	 (time.tv_sec - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
+	 ((time.tv_sec - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
+	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10))
 
 /*
  * Expected allocation sizes for major data structures. If the actual size

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.127 2003/08/07 16:33:53 agc Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.128 2003/09/26 11:51:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.127 2003/08/07 16:33:53 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.128 2003/09/26 11:51:53 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1644,7 +1644,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				*vpp = vp = nvp;
 			}
 		}
-		np->n_mtime = mtime.tv_sec;
+		np->n_mtime = mtime;
 	}
 	uid = fxdr_unsigned(uid_t, fp->fa_uid);
 	gid = fxdr_unsigned(gid_t, fp->fa_gid);
