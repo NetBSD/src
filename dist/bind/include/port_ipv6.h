@@ -5,5 +5,7 @@
 #define port_ipv6_h
 
 #define HAS_INET6_STRUCTS
+#define HAVE_SIN6_SCOPE_ID
+#define USE_IFNAMELINKID
 
 #endif
