@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.283 2000/12/14 08:56:52 mycroft Exp $
+#	$NetBSD: mi,v 1.284 2000/12/15 01:26:43 thorpej Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -54,6 +54,25 @@
 ./usr/include/a.out.h		comp-c-include
 ./usr/include/adosfs		comp-c-include
 ./usr/include/adosfs/adosfs.h	comp-c-include
+./usr/include/altq/altq.h	comp-c-include
+./usr/include/altq/altq_afmap.h	comp-c-include
+./usr/include/altq/altq_blue.h	comp-c-include
+./usr/include/altq/altq_cbq.h	comp-c-include
+./usr/include/altq/altq_cdnr.h	comp-c-include
+./usr/include/altq/altq_classq.h	comp-c-include
+./usr/include/altq/altq_conf.h	comp-c-include
+./usr/include/altq/altq_fifoq.h	comp-c-include
+./usr/include/altq/altq_flowvalve.h	comp-c-include
+./usr/include/altq/altq_hfsc.h	comp-c-include
+./usr/include/altq/altq_priq.h	comp-c-include
+./usr/include/altq/altq_red.h	comp-c-include
+./usr/include/altq/altq_rio.h	comp-c-include
+./usr/include/altq/altq_rmclass.h	comp-c-include
+./usr/include/altq/altq_rmclass_debug.h	comp-c-include
+./usr/include/altq/altq_var.h	comp-c-include
+./usr/include/altq/altq_wfq.h	comp-c-include
+./usr/include/altq/altqconf.h	comp-c-include
+./usr/include/altq/if_altq.h	comp-c-include
 ./usr/include/ar.h		comp-c-include
 ./usr/include/arpa/ftp.h	comp-c-include
 ./usr/include/arpa/inet.h	comp-c-include
