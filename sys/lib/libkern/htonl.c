@@ -1,12 +1,13 @@
-/*	$NetBSD: htonl.c,v 1.8 1996/10/17 01:41:35 cgd Exp $	*/
+/*	$NetBSD: htonl.c,v 1.9 1998/03/27 01:30:01 cgd Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: htonl.c,v 1.8 1996/10/17 01:41:35 cgd Exp $";
+__RCSID("$NetBSD: htonl.c,v 1.9 1998/03/27 01:30:01 cgd Exp $");
 #endif
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.5 1995/10/07 09:26:18 mycroft Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.6 1998/03/27 01:29:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: ashrdi3.c,v 1.5 1995/10/07 09:26:18 mycroft Exp $";
+__RCSID("$NetBSD: ashrdi3.c,v 1.6 1998/03/27 01:29:59 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,6 +58,8 @@ __ashrdi3(a, shift)
 {
 	union uu aa;
 
+	if (shift == 0)
+		return(a);
 	aa.q = a;
 	if (shift >= LONG_BITS) {
 		long s;
@@ -69,10 +72,9 @@ __ashrdi3(a, shift)
 		 * then 1 more, to get our answer.
 		 */
 		s = (aa.sl[H] >> (LONG_BITS - 1)) >> 1;
-		aa.ul[L] = shift >= QUAD_BITS ? s :
-		    aa.sl[H] >> (shift - LONG_BITS);
+		aa.ul[L] = aa.sl[H] >> (shift - LONG_BITS);
 		aa.ul[H] = s;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
 		    (aa.ul[H] << (LONG_BITS - shift));
 		aa.sl[H] >>= shift;

@@ -1,6 +1,8 @@
+/*	$NetBSD: strcmp.c,v 1.9 1998/03/27 01:30:09 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -34,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strcmp.c	5.5 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: strcmp.c,v 1.8 1997/10/13 11:55:51 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)strcmp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strcmp.c,v 1.9 1998/03/27 01:30:09 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -50,7 +56,7 @@ static char *rcsid = "$NetBSD: strcmp.c,v 1.8 1997/10/13 11:55:51 lukem Exp $";
  */
 int
 strcmp(s1, s2)
-	register const char *s1, *s2;
+	const char *s1, *s2;
 {
 	while (*s1 == *s2++)
 		if (*s1++ == 0)
