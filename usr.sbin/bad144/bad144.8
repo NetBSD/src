@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bad144.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: bad144.8,v 1.4 1994/06/13 22:29:13 mycroft Exp $
+.\"	$NetBSD: bad144.8,v 1.5 1997/03/06 06:12:18 mikel Exp $
 .\"
 .Dd June 6, 1993
 .Dt BAD144 8
@@ -121,12 +121,12 @@ of all of the possible bad sector replacements.
 The bad sector structure is as follows:
 .Bd -literal
 struct dkbad {
-	long	bt_csn;		 /* cartridge serial number */
-	u_short	bt_mbz;		 /* unused; should be 0 */
-	u_short	bt_flag;	 /* -1 => alignment cartridge */
+	int32_t   bt_csn;		/* cartridge serial number */
+	u_int16_t bt_mbz;		/* unused; should be 0 */
+	u_int16_t bt_flag;		/* -1 => alignment cartridge */
 	struct bt_bad {
-	      u_short bt_cyl;    /* bad sector cylinder number */
-	      u_short bt_trksec; /* track and sector number */
+		u_int16_t bt_cyl;	/* cylinder number of bad sector */
+		u_int16_t bt_trksec;	/* track and sector number */
 	} bt_bad[126];
 };
 .Ed
@@ -150,8 +150,8 @@ of the bad-sector file, replacing any previous information.
 Note, however, that 
 .Nm bad144
 does not arrange for the specified sectors to be marked bad in this case.
-This procedure should only be used to restore known bad sector information which
-was destroyed.
+This procedure should only be used to restore known bad sector
+information which was destroyed.
 .Pp
 It is no longer necessary to reboot to allow the kernel
 to reread the bad-sector table from the drive.
@@ -160,7 +160,7 @@ to reread the bad-sector table from the drive.
 .Xr format 8
 .Sh BUGS
 It should be possible to format disks on-line under
-.Tn UNIX .
+.Bx 4 .
 .Pp
 It should be possible to mark bad sectors on drives of all type.
 .Pp
