@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.159 2002/07/10 02:25:49 gson Exp $	*/
+/*	$NetBSD: audio.c,v 1.160 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.159 2002/07/10 02:25:49 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.160 2002/09/06 13:18:43 gehenna Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -181,6 +181,18 @@ int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
 			     int, int);
 int	au_portof(struct audio_softc *, char *);
 
+dev_type_open(audioopen);
+dev_type_close(audioclose);
+dev_type_read(audioread);
+dev_type_write(audiowrite);
+dev_type_ioctl(audioioctl);
+dev_type_poll(audiopoll);
+dev_type_mmap(audiommap);
+
+const struct cdevsw audio_cdevsw = {
+	audioopen, audioclose, audioread, audiowrite, audioioctl,
+	nostop, notty, audiopoll, audiommap,
+};
 
 /* The default audio mode: 8 kHz mono ulaw */
 struct audio_params audio_default =
@@ -372,9 +384,7 @@ audiodetach(struct device *self, int flags)
 	free(sc->sc_rconvbuffer, M_DEVBUF);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == audioopen)
-			break;
+	maj = cdevsw_lookup_major(&audio_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.28 2001/09/19 19:04:17 thorpej Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.29 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@
 #include <uvm/uvm_extern.h>
 #include <miscfs/specfs/specdev.h>
 
+#include <dev/cons.h>
 #include <dev/dec/lk201.h>		/* LK-201 keycodes */
 
 #include <dev/sun/fbio.h>
@@ -86,7 +87,6 @@
 #include <pmax/dev/fbreg.h>		/* XXX should be renamed fbvar.h */
 #include <pmax/dev/qvssvar.h>			/* our own externs */
 
-#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
 #include <pmax/tc/sccvar.h>			/* ioasic z8530 I/O decls */

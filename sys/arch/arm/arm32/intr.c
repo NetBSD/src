@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2002/01/31 09:43:42 chris Exp $	*/
+/*	$NetBSD: intr.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -49,7 +50,6 @@
 
 #include <net/netisr.h>
 
-#include <machine/conf.h>
 #include <arm/arm32/machdep.h>
  
 #ifndef NPLCOM
