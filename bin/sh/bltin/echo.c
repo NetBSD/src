@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.11 2003/08/07 09:05:40 agc Exp $	*/
+/*	$NetBSD: echo.c,v 1.12 2005/02/06 04:43:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,9 +58,9 @@
 int
 main(int argc, char **argv)
 {
-	register char **ap;
-	register char *p;
-	register char c;
+	char **ap;
+	char *p;
+	char c;
 	int count;
 	int nflag = 0;
 	int eflag = 0;
