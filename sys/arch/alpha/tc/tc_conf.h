@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.4 1997/04/06 22:30:39 cgd Exp $ */
+/* $NetBSD: tc_conf.h,v 1.5 1997/06/06 02:41:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,6 +32,8 @@
  */
 
 #ifdef DEC_3000_500
+#include <alpha/tc/tc_dma_3000_500.h>
+
 extern void	tc_3000_500_intr_setup __P((void));
 extern void	tc_3000_500_iointr __P((void *, unsigned long));
 
@@ -48,6 +50,8 @@ extern struct tc_builtin tc_3000_500_nographics_builtins[];
 #endif /* DEC_3000_500 */
 
 #ifdef DEC_3000_300
+#include <alpha/tc/tc_dma_3000_300.h>
+
 extern void	tc_3000_300_intr_setup __P((void));
 extern void	tc_3000_300_iointr __P((void *, unsigned long));
 
