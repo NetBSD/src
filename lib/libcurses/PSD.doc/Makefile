@@ -26,7 +26,7 @@ VFONT=	/usr/libexec/vfontedpr
 	${VFONT} ${.IMPSRC} | grep -v "^'wh" > ${.TARGET}
 
 paper.ps: ${SRCS}
-	soelim -I${.CURDIR} ${.ALLSRC} | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${ROFF} > ${.TARGET}
 
 Master: twinkle1.gr ex1.gr ex2.gr fns.doc intro.5 intro.2.tbl intro.0 intro.1 \
 	intro.3 intro.4 intro.6 macros c_macros
@@ -35,4 +35,3 @@ intro.2.tbl: intro.2
 	${TBL} ${.ALLSRC} > intro.2.tbl
 
 .include <bsd.doc.mk>
-.include <bsd.obj.mk>
