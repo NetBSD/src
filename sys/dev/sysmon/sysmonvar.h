@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.1 2000/06/24 00:37:20 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.2 2000/11/04 18:37:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -37,6 +37,7 @@
 #define	_DEV_SYSMON_SYSMONVAR_H_
 
 #include <sys/envsys.h>
+#include <sys/wdog.h>
 #include <sys/queue.h>
 
 struct sysmon_envsys {
@@ -59,7 +60,24 @@ struct sysmon_envsys {
 
 #define	SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
 
+struct sysmon_wdog {
+	const char *smw_name;		/* watchdog device name */
+
+	LIST_ENTRY(sysmon_wdog) smw_list;
+
+	void *smw_cookie;		/* for watchdog back-end */
+	int (*smw_setmode)(struct sysmon_wdog *);
+	int (*smw_tickle)(struct sysmon_wdog *);
+	u_int smw_period;		/* timer period (in seconds) */
+	int smw_mode;			/* timer mode */
+	u_int smw_refcnt;		/* references */
+	pid_t smw_tickler;		/* last process to tickle */
+};
+
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
+
+int	sysmon_wdog_register(struct sysmon_wdog *);
+void	sysmon_wdog_unregister(struct sysmon_wdog *);
 
 #endif /* _DEV_SYSMON_SYSMONVAR_H_ */
