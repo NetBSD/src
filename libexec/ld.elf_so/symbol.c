@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.15 2002/09/05 21:21:07 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.16 2002/09/05 21:57:09 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -85,9 +85,6 @@ _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
-		if (elm->obj->mark == _rtld_curmark)
-			continue;
-		elm->obj->mark = _rtld_curmark;
 		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
 		    != NULL) {
 			if ((def == NULL) ||
@@ -175,11 +172,9 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	hash = _rtld_elf_hash(name);
 	def = NULL;
 	defobj = NULL;
-	_rtld_curmark++;
 	
 	if (refobj->symbolic) {	/* Look first in the referencing object */
 		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
-		refobj->mark = _rtld_curmark;
 		if (symp != NULL) {
 			def = symp;
 			defobj = refobj;
