@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.7 2000/10/20 11:43:57 pk Exp $
+# $NetBSD: dot.profile,v 1.8 2000/10/31 21:09:22 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -65,10 +65,10 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		cat <<'EOF'
 
 This distribution contains the experimental `sysinst' installation tool.
-To use it, escape to the shell (option (S) below), then type `/sysinst'.
+If you feel like trying it out, choose option (X) below.
 
 EOF
-		echo -n '(I)nstall, (U)pgrade, (H)alt or (S)hell ? '
+		echo -n '(I)nstall, (U)pgrade, (H)alt or (S)hell or (X)? '
 		read _forceloop
 		case "$_forceloop" in
 			i*|I*)
@@ -80,11 +80,27 @@ EOF
 				;;
 
 			h*|H*)
-				/sbin/halt
+				#
+				# XXX - if we're piggybacking a microroot, then
+				# exit from this (chroot) environment: the
+				# microroot's .profile will halt the machine.
+				#
+				if [ "$BOOTFS_DONEPROFILE" = YES ]; then
+					exit
+				else
+					/sbin/halt
+				fi
 				;;
 
 			s*|S*)
 				/bin/sh
+				continue
+				;;
+
+			x*|X*)
+				# setup a writable /tmp directory
+				mount_mfs swap /tmp || continue
+				/sysinst
 				;;
 
 			*)
