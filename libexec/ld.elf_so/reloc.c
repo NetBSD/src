@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.42 2001/09/10 06:09:41 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.43 2001/12/13 21:41:58 rafal Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -337,9 +337,33 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		if (ELFDEFNNAME(ST_BIND)(def->st_info) == STB_LOCAL &&
 		  (ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_SECTION ||
 		   ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_NOTYPE)) {
+			/*
+			 * XXX: ABI DIFFERENCE!
+			 * 
+			 * Old NetBSD binutils would generate shared libs
+			 * with section-relative relocations being already
+			 * adjusted for the start address of the section.
+			 * 
+			 * New binutils, OTOH, generate shared libs with
+			 * the same relocations being based at zero, so we
+			 * need to add in the start address of the section.  
+			 * 
+			 * We assume that all section-relative relocs with
+			 * contents less than the start of the section need 
+			 * to be adjusted; this should work with both old
+			 * and new shlibs.
+			 * 
+			 * --rkb, Oct 6, 2001
+			 */
+			if (def->st_info == STT_SECTION && 
+				    (*where < def->st_value))
+			    *where += (Elf_Addr) def->st_value;
+
 			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, ("REL32 in %s --> %p", obj->path,
-			    (void *)*where));
+
+			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+			    obj->strtab + def->st_name, obj->path,
+			    (void *)*where, obj->path));
 		} else {
 			/* XXX maybe do something re: bootstrapping? */
 			def = _rtld_find_symdef(_rtld_objlist, rela->r_info,
