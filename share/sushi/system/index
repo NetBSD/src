@@ -1,2 +1,8 @@
-# $NetBSD: index,v 1.1 2001/01/05 02:06:59 garbled Exp $
-rcconf	rcconf	Edit startup configuration
+# $NetBSD: index,v 1.2 2001/03/06 21:48:08 garbled Exp $
+rcconf		rcconf		Edit startup configuration
+inetdconf	inetdconf	Edit inetd.conf
+mailerconf	mailerconf	Change your default mailer (mailer.conf)
+usermgmtconf	usermgmtconf	Edit usermgmt.conf
+dailyconf	dailyconf	Edit daily.conf
+weeklyconf	weeklyconf	Edit weekly.conf
+securityconf	securityconf	Edit security.conf
