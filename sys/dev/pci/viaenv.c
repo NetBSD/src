@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.2 2000/05/12 16:42:41 thorpej Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.3 2000/06/24 00:37:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -42,12 +42,13 @@
 #include <sys/lock.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/envsys.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
 #include <dev/pci/viapmvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #ifdef VIAENV_DEBUG
 unsigned int viaenv_debug = 0;
@@ -62,8 +63,6 @@ struct viaenv_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	struct callout sc_callout;
-	unsigned int sc_flags;
 
 	int     sc_fan_div[2];	/* fan RPM divisor */
 
@@ -73,8 +72,22 @@ struct viaenv_softc {
 	struct proc *sc_thread;
 
 	struct lock sc_lock;
+
+	struct sysmon_envsys sc_sysmon;
 };
-#define SCFLAG_OPEN 1
+
+const struct envsys_range viaenv_ranges[] = {
+	{ 0, 2,		ENVSYS_STEMP },
+	{ 3, 4,		ENVSYS_SFANRPM },
+	{ 0, 1,		ENVSYS_SVOLTS_AC },	/* none */
+	{ 5, 11,	ENVSYS_SVOLTS_DC },
+	{ 1, 0,		ENVSYS_SOHMS },		/* none */
+	{ 1, 0,		ENVSYS_SWATTS },	/* none */
+	{ 1, 0,		ENVSYS_SAMPS },		/* none */
+};
+
+int	viaenv_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
+int	viaenv_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 
 static int
         viaenv_match(struct device * parent, struct cfdata * match, void *aux);
@@ -108,7 +121,7 @@ viaenv_match(struct device * parent, struct cfdata * match, void *aux)
  * haven't been able to figure out how -- it doesn't give the same values
  */
 
-static long val_to_temp[] = {
+static const long val_to_temp[] = {
 	20225, 20435, 20645, 20855, 21045, 21245, 21425, 21615, 21785, 21955,
 	22125, 22285, 22445, 22605, 22755, 22895, 23035, 23175, 23315, 23445,
 	23565, 23695, 23815, 23925, 24045, 24155, 24265, 24365, 24465, 24565,
@@ -167,7 +180,8 @@ val_to_rpm(unsigned int val, int div)
 static long
 val_to_uV(unsigned int val, int index)
 {
-	long    mult[] = {1250000, 1250000, 1670000, 2600000, 6300000};
+	static const long mult[] =
+	    {1250000, 1250000, 1670000, 2600000, 6300000};
 
 	assert(index >= 0 && index <= 4);
 
@@ -282,7 +296,7 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	}
 	printf("\n");
 
-	lockinit(&sc->sc_lock, 0, "foo", 0, 0);
+	lockinit(&sc->sc_lock, 0, "viaenv", 0, 0);
 
 	/* Initialize sensors */
 	for (i = 0; i < VIANUMSENSORS; ++i) {
@@ -316,120 +330,45 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	strcpy(sc->sc_info[8].desc, "VSENS3");	/* VSENS3 (5V) */
 	strcpy(sc->sc_info[9].desc, "VSENS4");	/* VSENS4 (12V) */
 
-
 	kthread_create(viaenv_thread_create, sc);
-}
 
+	/*
+	 * Hook into the System Monitor.
+	 */
+	sc->sc_sysmon.sme_ranges = viaenv_ranges;
+	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
+	sc->sc_sysmon.sme_cookie = sc;
 
-extern struct cfdriver viaenv_cd;
+	sc->sc_sysmon.sme_gtredata = viaenv_gtredata;
+	sc->sc_sysmon.sme_streinfo = viaenv_streinfo;
 
-int     viaenv_open(dev_t, int, int, struct proc *);
-int     viaenv_close(dev_t, int, int, struct proc *);
-int     viaenv_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
+	sc->sc_sysmon.sme_nsensors = VIANUMSENSORS;
+	sc->sc_sysmon.sme_envsys_version = 1000;
 
-int
-viaenv_open(dev_t dev, int flag, int mode, struct proc * p)
-{
-	int     unit = minor(dev);
-	struct viaenv_softc *sc;
-
-	if (unit >= viaenv_cd.cd_ndevs)
-		return ENXIO;
-	sc = viaenv_cd.cd_devs[unit];
-	if (sc == NULL)
-		return ENXIO;
-
-	if (sc->sc_flags & SCFLAG_OPEN)
-		return EBUSY;
-
-	sc->sc_flags |= SCFLAG_OPEN;
-
-	return 0;
-}
-
-
-int
-viaenv_close(dev_t dev, int flag, int mode, struct proc * p)
-{
-	struct viaenv_softc *sc = viaenv_cd.cd_devs[minor(dev)];
-
-	sc->sc_flags &= ~SCFLAG_OPEN;
-
-	return 0;
+	if (sysmon_envsys_register(&sc->sc_sysmon))
+		printf("%s: unable to register with sysmon\n",
+		    sc->sc_dev.dv_xname);
 }
 
 int
-viaenv_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc * p)
+viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
-	struct viaenv_softc *sc = viaenv_cd.cd_devs[minor(dev)];
-	struct envsys_range *rng;
-	struct envsys_tre_data *tred;
-	struct envsys_basic_info *binfo;
-	int32_t *vers;
-	sc = sc;
+	struct viaenv_softc *sc = sme->sme_cookie;
 
-	switch (cmd) {
-	case ENVSYS_VERSION:
-		vers = (int32_t *) data;
-		*vers = 1000;
+	(void) lockmgr(&sc->sc_lock, LK_SHARED, NULL);
+	*tred = sc->sc_data[tred->sensor];
+	(void) lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 
-		return (0);
+	return (0);
+}
 
-	case ENVSYS_GRANGE:
-		rng = (struct envsys_range *) data;
+int
+viaenv_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
+{
 
-		switch (rng->units) {
-		case ENVSYS_STEMP:
-			rng->low = 0;
-			rng->high = 2;
-			break;
-		case ENVSYS_SFANRPM:
-			rng->low = 3;
-			rng->high = 4;
-			break;
-		case ENVSYS_SVOLTS_DC:
-			rng->low = 5;
-			rng->high = 11;
-			break;
-		default:
-			rng->low = 1;
-			rng->high = 0;
-			break;
-		}
-		return 0;
-
-	case ENVSYS_GTREDATA:
-		tred = (struct envsys_tre_data *) data;
-		tred->validflags = 0;
-		if (tred->sensor < VIANUMSENSORS) {
-			lockmgr(&sc->sc_lock, LK_SHARED, NULL);
-			memcpy(tred, &sc->sc_data[tred->sensor], sizeof(*tred));
-			lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-		}
-		return 0;
-
-	case ENVSYS_GTREINFO:
-		binfo = (struct envsys_basic_info *) data;
-
-		if (binfo->sensor >= VIANUMSENSORS)
-			binfo->validflags = 0;
-		else
-			memcpy(binfo, &sc->sc_info[binfo->sensor],
-			    sizeof(*binfo));
-
-		return 0;
-
-#if 0
-		/* not yet implemented */
-	case ENVSYS_STREINFO:
-		binfo = (struct envsys_basic_info *) data;
-
-		binfo->validflags = 0;
-
-		return 0;
-#endif
-
-	default:
-		return ENOTTY;
-	}
+	/* XXX Not implemented */
+	binfo->validflags = 0;
+	
+	return (0);
 }

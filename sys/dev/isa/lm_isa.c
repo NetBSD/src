@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.2 2000/03/09 04:19:03 groo Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.3 2000/06/24 00:37:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@
 #include <sys/errno.h>
 #include <sys/conf.h>
 
-#include <sys/envsys.h>
-
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -54,6 +52,8 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ic/nslm7xvar.h>
 
