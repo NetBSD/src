@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.6 2002/05/13 02:58:17 itojun Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.7 2002/06/24 05:48:27 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.26 2002/05/10 02:30:12 mouring Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.27 2002/05/24 16:45:16 stevesk Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -55,7 +55,6 @@ int
 auth_password(Authctxt *authctxt, const char *password)
 {
 	struct passwd * pw = authctxt->pw;
-	char *encrypted_password;
 
 	/* deny if no user. */
 	if (pw == NULL)
@@ -86,14 +85,20 @@ auth_password(Authctxt *authctxt, const char *password)
 		return 0;
 	else
 		return 1;
-#endif
+#else
 	/* Check for users with no password. */
 	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
 		return 1;
-	/* Encrypt the candidate password using the proper salt. */
-	encrypted_password = crypt(password,
-	    (pw->pw_passwd[0] && pw->pw_passwd[1]) ? pw->pw_passwd : "xx");
-
-	/* Authentication is accepted if the encrypted passwords are identical. */
-	return (strcmp(encrypted_password, pw->pw_passwd) == 0);
+	else {
+		/* Encrypt the candidate password using the proper salt. */
+		char *encrypted_password = crypt(password,
+		    (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
+		    pw->pw_passwd : "xx");
+		/*
+		 * Authentication is accepted if the encrypted passwords
+		 * are identical.
+		 */
+		return (strcmp(encrypted_password, pw->pw_passwd) == 0);
+	}
+#endif
 }

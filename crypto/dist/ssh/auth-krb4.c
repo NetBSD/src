@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb4.c,v 1.6 2002/04/22 07:59:35 itojun Exp $	*/
+/*	$NetBSD: auth-krb4.c,v 1.7 2002/06/24 05:48:26 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-krb4.c,v 1.26 2002/03/18 01:30:10 dugsong Exp $");
+RCSID("$OpenBSD: auth-krb4.c,v 1.27 2002/06/11 05:46:20 mpech Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -58,8 +58,8 @@ krb4_init(void *context)
 		if (lstat("/ticket", &st) != -1)
 			tkt_root = "/ticket/";
 #endif /* AFS */
-		snprintf(authctxt->krb4_ticket_file, MAXPATHLEN, "%s%u_%d",
-		    tkt_root, authctxt->pw->pw_uid, getpid());
+		snprintf(authctxt->krb4_ticket_file, MAXPATHLEN, "%s%u_%ld",
+		    tkt_root, authctxt->pw->pw_uid, (long)getpid());
 		krb_set_tkt_string(authctxt->krb4_ticket_file);
 	}
 	/* Register ticket cleanup in case of fatal error. */

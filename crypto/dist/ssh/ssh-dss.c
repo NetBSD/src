@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.9 2002/03/08 02:00:55 itojun Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.10 2002/06/24 05:48:36 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.14 2002/02/28 15:46:33 markus Exp $");
+RCSID("$OpenBSD: ssh-dss.c,v 1.15 2002/06/23 03:30:17 deraadt Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -41,9 +41,7 @@ RCSID("$OpenBSD: ssh-dss.c,v 1.14 2002/02/28 15:46:33 markus Exp $");
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)
 
 int
-ssh_dss_sign(
-    Key *key,
-    u_char **sigp, u_int *lenp,
+ssh_dss_sign(Key *key, u_char **sigp, u_int *lenp,
     u_char *data, u_int datalen)
 {
 	DSA_SIG *sig;
@@ -72,7 +70,7 @@ ssh_dss_sign(
 	rlen = BN_num_bytes(sig->r);
 	slen = BN_num_bytes(sig->s);
 	if (rlen > INTBLOB_LEN || slen > INTBLOB_LEN) {
-		error("bad sig size %d %d", rlen, slen);
+		error("bad sig size %u %u", rlen, slen);
 		DSA_SIG_free(sig);
 		return -1;
 	}
@@ -105,9 +103,7 @@ ssh_dss_sign(
 	return 0;
 }
 int
-ssh_dss_verify(
-    Key *key,
-    u_char *signature, u_int signaturelen,
+ssh_dss_verify(Key *key, u_char *signature, u_int signaturelen,
     u_char *data, u_int datalen)
 {
 	DSA_SIG *sig;
@@ -152,7 +148,7 @@ ssh_dss_verify(
 	}
 
 	if (len != SIGBLOB_LEN) {
-		fatal("bad sigbloblen %d != SIGBLOB_LEN", len);
+		fatal("bad sigbloblen %u != SIGBLOB_LEN", len);
 	}
 
 	/* parse signature */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.18 2002/06/09 22:22:55 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.19 2002/06/24 05:48:38 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.123 2002/06/09 22:17:21 itojun Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.126 2002/06/23 03:30:17 deraadt Exp $");
 
 #include <openssl/bn.h>
 
@@ -37,8 +37,11 @@ RCSID("$OpenBSD: sshconnect.c,v 1.123 2002/06/09 22:17:21 itojun Exp $");
 char *client_version_string = NULL;
 char *server_version_string = NULL;
 
+/* import */
 extern Options options;
 extern char *__progname;
+extern uid_t original_real_uid;
+extern uid_t original_effective_uid;
 
 static const char *
 sockaddr_ntop(struct sockaddr *sa, socklen_t salen)
@@ -55,8 +58,7 @@ sockaddr_ntop(struct sockaddr *sa, socklen_t salen)
  * Connect to the given ssh server using a proxy command.
  */
 static int
-ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
-		  const char *proxy_command)
+ssh_proxy_connect(const char *host, u_short port, const char *proxy_command)
 {
 	Buffer command;
 	const char *cp;
@@ -106,7 +108,8 @@ ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 		char *argv[10];
 
 		/* Child.  Permanently give up superuser privileges. */
-		permanently_set_uid(pw);
+		seteuid(original_real_uid);
+		setuid(original_real_uid);
 
 		/* Redirect stdin and stdout. */
 		close(pin[1]);
@@ -156,7 +159,7 @@ ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
 static int
-ssh_create_socket(struct passwd *pw, int privileged, int family)
+ssh_create_socket(int privileged, int family)
 {
 	int sock, gaierr;
 	struct addrinfo hints, *res;
@@ -167,22 +170,18 @@ ssh_create_socket(struct passwd *pw, int privileged, int family)
 	 */
 	if (privileged) {
 		int p = IPPORT_RESERVED - 1;
+		PRIV_START;
 		sock = rresvport_af(&p, family);
+		PRIV_END;
 		if (sock < 0)
 			error("rresvport: af=%d %.100s", family, strerror(errno));
 		else
 			debug("Allocated local port %d.", p);
 		return sock;
 	}
-	/*
-	 * Just create an ordinary socket on arbitrary port.  We use
-	 * the user's uid to create the socket.
-	 */
-	temporarily_use_uid(pw);
 	sock = socket(family, SOCK_STREAM, 0);
 	if (sock < 0)
 		error("socket: %.100s", strerror(errno));
-	restore_uid();
 
 	/* Bind the socket to an alternative local IP address */
 	if (options.bind_address == NULL)
@@ -212,9 +211,9 @@ ssh_create_socket(struct passwd *pw, int privileged, int family)
 /*
  * Opens a TCP/IP connection to the remote server on the given host.
  * The address of the remote host will be returned in hostaddr.
- * If port is 0, the default port will be used.  If anonymous is zero,
+ * If port is 0, the default port will be used.  If needpriv is true,
  * a privileged port will be allocated to make the connection.
- * This requires super-user privileges if anonymous is false.
+ * This requires super-user privileges if needpriv is true.
  * Connection_attempts specifies the maximum number of tries (one per
  * second).  If proxy_command is non-NULL, it specifies the command (with %h
  * and %p substituted for host and port, respectively) to use to contact
@@ -229,7 +228,7 @@ ssh_create_socket(struct passwd *pw, int privileged, int family)
 int
 ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
     u_short port, int family, int connection_attempts,
-    int anonymous, struct passwd *pw, const char *proxy_command)
+    int needpriv, const char *proxy_command)
 {
 	int gaierr;
 	int on = 1;
@@ -245,8 +244,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	 */
 	int full_failure = 1;
 
-	debug("ssh_connect: getuid %u geteuid %u anon %d",
-	    (u_int) getuid(), (u_int) geteuid(), anonymous);
+	debug("ssh_connect: needpriv %d", needpriv);
 
 	/* Get default port if port has not been set. */
 	if (port == 0) {
@@ -258,14 +256,14 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	}
 	/* If a proxy command is given, connect using it. */
 	if (proxy_command != NULL)
-		return ssh_proxy_connect(host, port, pw, proxy_command);
+		return ssh_proxy_connect(host, port, proxy_command);
 
 	/* No proxy command. */
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-	snprintf(strport, sizeof strport, "%d", port);
+	snprintf(strport, sizeof strport, "%u", port);
 	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0)
 		fatal("%s: %.100s: %s", __progname, host,
 		    gai_strerror(gaierr));
@@ -294,22 +292,14 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				host, ntop, strport);
 
 			/* Create a socket for connecting. */
-			sock = ssh_create_socket(pw,
-			    !anonymous && geteuid() == 0,
-			    ai->ai_family);
+			sock = ssh_create_socket(needpriv, ai->ai_family);
 			if (sock < 0)
 				/* Any error is already output */
 				continue;
 
-			/* Connect to the host.  We use the user's uid in the
-			 * hope that it will help with tcp_wrappers showing
-			 * the remote uid as root.
-			 */
-			temporarily_use_uid(pw);
 			if (connect(sock, ai->ai_addr, ai->ai_addrlen) >= 0) {
 				/* Successful connection. */
 				memcpy(hostaddr, ai->ai_addr, ai->ai_addrlen);
-				restore_uid();
 				break;
 			} else {
 				if (errno == ECONNREFUSED)
@@ -317,7 +307,6 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				log("ssh: connect to address %s port %s: %s",
 				    sockaddr_ntop(ai->ai_addr, ai->ai_addrlen),
 				    strport, strerror(errno));
-				restore_uid();
 				/*
 				 * Close the failed socket; there appear to
 				 * be some problems when reusing a socket for
@@ -497,7 +486,6 @@ confirm(const char *prompt)
  * check whether the supplied host key is valid, return -1 if the key
  * is not valid. the user_hostfile will not be updated if 'readonly' is true.
  */
-
 static int
 check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
     int readonly, const char *user_hostfile, const char *system_hostfile)
@@ -775,7 +763,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			len = strlen(msg);
 			snprintf(msg + len, sizeof(msg) - len,
 			    "\nMatching host key in %s:%d",
-			     host_file, host_line);
+			    host_file, host_line);
 		}
 		if (options.strict_host_key_checking == 1) {
 			log(msg);
@@ -823,7 +811,7 @@ verify_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
  * This function does not require super-user privileges.
  */
 void
-ssh_login(Key **keys, int nkeys, const char *orighost,
+ssh_login(Sensitive *sensitive, const char *orighost,
     struct sockaddr *hostaddr, struct passwd *pw)
 {
 	char *host, *cp;
@@ -848,10 +836,10 @@ ssh_login(Key **keys, int nkeys, const char *orighost,
 	/* authenticate user */
 	if (compat20) {
 		ssh_kex2(host, hostaddr);
-		ssh_userauth2(local_user, server_user, host, keys, nkeys);
+		ssh_userauth2(local_user, server_user, host, sensitive);
 	} else {
 		ssh_kex(host, hostaddr);
-		ssh_userauth1(local_user, server_user, host, keys, nkeys);
+		ssh_userauth1(local_user, server_user, host, sensitive);
 	}
 }
 

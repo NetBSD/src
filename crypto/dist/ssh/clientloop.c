@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.18 2002/05/13 02:58:18 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.19 2002/06/24 05:48:30 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.100 2002/04/22 21:04:52 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.101 2002/06/09 13:32:01 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -482,7 +482,7 @@ process_cmdline(void)
 	int local = 0;
 
 	leave_raw_mode();
- 	handler = signal(SIGINT, SIG_IGN);
+	handler = signal(SIGINT, SIG_IGN);
 	cmd = s = read_passphrase("\r\nssh> ", RP_ECHO);
 	if (s == NULL)
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.19 2002/04/22 07:59:47 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.20 2002/06/24 05:48:39 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.50 2002/04/21 16:25:06 stevesk Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.51 2002/05/23 19:24:30 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -1093,7 +1093,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
  */
 void
 ssh_userauth1(const char *local_user, const char *server_user, char *host,
-    Key **keys, int nkeys)
+    Sensitive *sensitive)
 {
 #ifdef KRB5
 	krb5_context context = NULL;
@@ -1179,9 +1179,11 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 	 */
 	if ((supported_authentications & (1 << SSH_AUTH_RHOSTS_RSA)) &&
 	    options.rhosts_rsa_authentication) {
-		for (i = 0; i < nkeys; i++) {
-			if (keys[i] != NULL && keys[i]->type == KEY_RSA1 &&
-			    try_rhosts_rsa_authentication(local_user, keys[i]))
+		for (i = 0; i < sensitive->nkeys; i++) {
+			if (sensitive->keys[i] != NULL &&
+			    sensitive->keys[i]->type == KEY_RSA1 &&
+			    try_rhosts_rsa_authentication(local_user,
+			    sensitive->keys[i]))
 				goto success;
 		}
 	}

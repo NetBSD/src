@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.1.1.1 2002/06/24 05:26:11 itojun Exp $	*/
+/*	$NetBSD: msg.c,v 1.2 2002/06/24 05:48:31 itojun Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -41,9 +41,9 @@ msg_send(int fd, u_char type, Buffer *m)
 
 	PUT_32BIT(buf, mlen + 1);
 	buf[4] = type;		/* 1st byte of payload is mesg-type */
-	if (atomicio(write, fd, buf, sizeof(buf)) != sizeof(buf))
+	if (atomic_write(fd, buf, sizeof(buf)) != sizeof(buf))
 		fatal("msg_send: write");
-	if (atomicio(write, fd, buffer_ptr(m), mlen) != mlen)
+	if (atomic_write(fd, buffer_ptr(m), mlen) != mlen)
 		fatal("msg_send: write");
 }
 
@@ -56,7 +56,7 @@ msg_recv(int fd, Buffer *m)
 
 	debug3("msg_recv entering");
 
-	res = atomicio(read, fd, buf, sizeof(buf));
+	res = atomic_read(fd, buf, sizeof(buf));
 	if (res != sizeof(buf)) {
 		if (res == 0)
 			return -1;
@@ -67,7 +67,7 @@ msg_recv(int fd, Buffer *m)
 		fatal("msg_recv: read: bad msg_len %d", msg_len);
 	buffer_clear(m);
 	buffer_append_space(m, msg_len);
-	res = atomicio(read, fd, buffer_ptr(m), msg_len);
+	res = atomic_read(fd, buffer_ptr(m), msg_len);
 	if (res != msg_len)
 		fatal("msg_recv: read: %ld != msg_len", (long)res);
 	return 0;

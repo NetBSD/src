@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.17 2002/04/22 07:59:43 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.18 2002/06/24 05:48:34 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.101 2002/03/30 18:51:15 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.102 2002/06/11 05:46:20 mpech Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -675,8 +675,8 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		if (errno != EINTR)
 			packet_disconnect("wait: %.100s", strerror(errno));
 	if (wait_pid != pid)
-		error("Strange, wait returned pid %d, expected %d",
-		    wait_pid, pid);
+		error("Strange, wait returned pid %ld, expected %ld",
+		    (long)wait_pid, (long)pid);
 
 	/* Check if it exited normally. */
 	if (WIFEXITED(wait_status)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.15 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.16 2002/06/24 05:48:32 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.95 2002/02/04 12:15:25 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.100 2002/06/19 00:27:55 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -42,7 +42,7 @@ RCSID("$OpenBSD: readconf.c,v 1.95 2002/02/04 12:15:25 markus Exp $");
    # that they are given in.
 
    Host *.ngs.fi ngs.fi
-     FallBackToRsh no
+     User foo
 
    Host fake.com
      HostName another.host.name.real.org
@@ -66,7 +66,7 @@ RCSID("$OpenBSD: readconf.c,v 1.95 2002/02/04 12:15:25 markus Exp $");
      ProxyCommand ssh-proxy %h %p
 
    Host *.fr
-     UseRsh yes
+     PublicKeyAuthentication no
 
    Host *.su
      Cipher none
@@ -80,8 +80,6 @@ RCSID("$OpenBSD: readconf.c,v 1.95 2002/02/04 12:15:25 markus Exp $");
      PasswordAuthentication yes
      RSAAuthentication yes
      RhostsRSAAuthentication yes
-     FallBackToRsh no
-     UseRsh no
      StrictHostKeyChecking yes
      KeepAlives no
      IdentityFile ~/.ssh/identity
@@ -95,7 +93,7 @@ RCSID("$OpenBSD: readconf.c,v 1.95 2002/02/04 12:15:25 markus Exp $");
 typedef enum {
 	oBadOption,
 	oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
-	oPasswordAuthentication, oRSAAuthentication, oFallBackToRsh, oUseRsh,
+	oPasswordAuthentication, oRSAAuthentication,
 	oChallengeResponseAuthentication, oXAuthLocation,
 #if defined(KRB4) || defined(KRB5)
 	oKerberosAuthentication,
@@ -116,7 +114,8 @@ typedef enum {
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
 	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
 	oHostKeyAlgorithms, oBindAddress, oSmartcardDevice,
-	oClearAllForwardings, oNoHostAuthenticationForLocalhost
+	oClearAllForwardings, oNoHostAuthenticationForLocalhost,
+	oDeprecated
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -153,8 +152,8 @@ static struct {
 #ifdef AFS
 	{ "afstokenpassing", oAFSTokenPassing },
 #endif
-	{ "fallbacktorsh", oFallBackToRsh },
-	{ "usersh", oUseRsh },
+	{ "fallbacktorsh", oDeprecated },
+	{ "usersh", oDeprecated },
 	{ "identityfile", oIdentityFile },
 	{ "identityfile2", oIdentityFile },			/* alias */
 	{ "hostname", oHostName },
@@ -374,14 +373,6 @@ parse_flag:
 		intptr = &options->afs_token_passing;
 		goto parse_flag;
 #endif
-	case oFallBackToRsh:
-		intptr = &options->fallback_to_rsh;
-		goto parse_flag;
-
-	case oUseRsh:
-		intptr = &options->use_rsh;
-		goto parse_flag;
-
 	case oBatchMode:
 		intptr = &options->batch_mode;
 		goto parse_flag;
@@ -679,6 +670,11 @@ parse_int:
 			*intptr = value;
 		break;
 
+	case oDeprecated:
+		debug("%s line %d: Deprecated option \"%s\"",
+		    filename, linenum, keyword);
+		return 0;
+
 	default:
 		fatal("process_config_line: Unimplemented opcode %d", opcode);
 	}
@@ -766,8 +762,6 @@ initialize_options(Options * options)
 	options->kbd_interactive_devices = NULL;
 	options->rhosts_rsa_authentication = -1;
 	options->hostbased_authentication = -1;
-	options->fallback_to_rsh = -1;
-	options->use_rsh = -1;
 	options->batch_mode = -1;
 	options->check_host_ip = -1;
 	options->strict_host_key_checking = -1;
@@ -823,7 +817,7 @@ fill_default_options(Options * options)
 	if (options->use_privileged_port == -1)
 		options->use_privileged_port = 0;
 	if (options->rhosts_authentication == -1)
-		options->rhosts_authentication = 1;
+		options->rhosts_authentication = 0;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
@@ -847,13 +841,9 @@ fill_default_options(Options * options)
 	if (options->kbd_interactive_authentication == -1)
 		options->kbd_interactive_authentication = 1;
 	if (options->rhosts_rsa_authentication == -1)
-		options->rhosts_rsa_authentication = 1;
+		options->rhosts_rsa_authentication = 0;
 	if (options->hostbased_authentication == -1)
 		options->hostbased_authentication = 0;
-	if (options->fallback_to_rsh == -1)
-		options->fallback_to_rsh = 0;
-	if (options->use_rsh == -1)
-		options->use_rsh = 0;
 	if (options->batch_mode == -1)
 		options->batch_mode = 0;
 	if (options->check_host_ip == -1)
