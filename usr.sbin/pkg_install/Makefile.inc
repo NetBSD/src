@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.22 2002/10/17 03:31:33 christos Exp $
+# $NetBSD: Makefile.inc,v 1.23 2002/10/26 14:43:44 hubertf Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -35,7 +35,7 @@ WARNS=2
 #CPPFLAGS+= -DCHGRP_CMD='"${CHGRP_CMD}"'
 
 DPADD+=	${LIBINSTALL}/libinstall.a
-LDADD+=	-L${LIBINSTALL} -linstall
+LDADD+=	-L${LIBINSTALL} -linstall -ltermcap
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

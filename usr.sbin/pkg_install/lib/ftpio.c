@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.46 2002/10/26 12:37:00 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.47 2002/10/26 14:43:43 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.46 2002/10/26 12:37:00 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.47 2002/10/26 14:43:43 hubertf Exp $");
 #endif
 
 /*
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.46 2002/10/26 12:37:00 hubertf Exp $");
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termcap.h>
 #include <unistd.h>
 #ifdef EXPECT_DEBUG
 #include <vis.h>
@@ -84,6 +85,9 @@ static int	 needclose=0;
 static int	 ftp_started=0;
 static fds	 ftpio;
 static int	 ftp_pid;
+static char	 term[1024];
+static char	 bold_on[1024];
+static char	 bold_off[1024];
 
 /*
  * expect "str" (a regular expression) on file descriptor "fd", storing
@@ -219,11 +223,14 @@ expect(int fd, const char *str, int *ftprc)
 int
 ftp_cmd(const char *cmd, const char *expectstr)
 {
-    int rc=0;
+    int rc=0, verbose_ftp=0;
     int len;
 
     if (Verbose)
-	    fprintf(stderr, "\nftp> %s", cmd);
+	    verbose_ftp=1;
+    
+    if (verbose_ftp)
+	    fprintf(stderr, "\n%sftp> %s%s", bold_on, cmd, bold_off);
     
     fflush(stdout);
     len = write(ftpio.command, cmd, strlen(cmd));
@@ -301,7 +308,7 @@ setupCoproc(const char *base)
 	    setbuf(stdout, NULL);
 	    
 	    if (Verbose)
-		    fprintf(stderr, "ftp -detv %s\n", base);
+		    fprintf(stderr, "%sftp -detv %s%s\n", bold_on, base, bold_off);
 	    rc1 = execlp(FTP_CMD, argv0, "-detv", base, NULL);
 	    warn("setupCoproc: execlp() failed");
 	    exit(1);
@@ -404,12 +411,22 @@ int
 ftp_start(char *base)
 {
 	const char *tmp1, *tmp2;
+	char *p;
 	int rc;
 	char newHost[MAXHOSTNAMELEN];
 	const char *newDir;
 	const char *currentHost=getenv(PKG_FTPIO_CURRENTHOST);
 	const char *currentDir=getenv(PKG_FTPIO_CURRENTDIR);
 	int urllen;
+
+	/* talk to termcap for bold on/off escape sequences */
+	if (tgetent(term, getenv("TERM")) < 0) {
+		bold_on[0]  = '\0';
+		bold_off[0] = '\0';
+	} else {
+		p = bold_on;  tgetstr("md", &p);
+		p = bold_off; tgetstr("me", &p);
+	}
 	
 	fileURLHost(base, newHost, sizeof(newHost));
 	urllen = URLlength(base);
