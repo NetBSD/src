@@ -1,6 +1,7 @@
-/*	$NetBSD: if_ep_isa.c,v 1.10 1997/03/15 18:11:42 is Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.11 1997/03/30 22:47:06 jonathan Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
@@ -46,9 +47,9 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
-
 #include <net/if_ether.h>
+#include <net/if_media.h>
+
 
 #ifdef INET
 #include <netinet/in.h>

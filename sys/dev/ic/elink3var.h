@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.11 1997/03/15 18:11:30 is Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -38,6 +38,7 @@ struct ep_softc {
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
+	struct ifmedia sc_media;	/* media control		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
 	u_int	ep_connectors;		/* Connectors on this card.	*/
