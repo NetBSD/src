@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.10 2001/01/04 01:13:34 jwise Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.11 2001/01/04 02:43:33 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.10 2001/01/04 01:13:34 jwise Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.11 2001/01/04 02:43:33 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: pl_main.c,v 1.10 2001/01/04 01:13:34 jwise Exp $");
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+int	pl_main(void);
+static void	initialize(void);
 
 /*ARGSUSED*/
 int
@@ -59,7 +62,7 @@ pl_main(void)
 	return 0;			/* for lint,  play() never returns */
 }
 
-void
+static void
 initialize(void)
 {
 	struct File *fp;

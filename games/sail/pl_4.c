@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_4.c,v 1.9 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: pl_4.c,v 1.10 2001/01/04 02:43:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)pl_4.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_4.c,v 1.9 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: pl_4.c,v 1.10 2001/01/04 02:43:32 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
+
+void	changesail(void);
+void	acceptsignal(void);
+void	lookout(void);
+const char	*saywhat(struct ship *, int);
+void	eyeball(struct ship *);
 
 void
 changesail(void)

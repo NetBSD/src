@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.9 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.10 2001/01/04 02:43:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.9 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.10 2001/01/04 02:43:32 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,10 @@ __RCSID("$NetBSD: pl_1.c,v 1.9 2001/01/01 21:57:38 jwise Exp $");
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+void	leave(int);
+void	choke(int);
+void	child(int);
 
 /*
  * If we get here before a ship is chosen, then ms == 0 and
