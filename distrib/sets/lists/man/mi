@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.401 2001/09/11 18:18:11 bjh21 Exp $
+# $NetBSD: mi,v 1.402 2001/09/12 05:00:50 jmc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -593,28 +593,28 @@
 ./usr/share/man/cat4/guspnp.0			man-sys-catman
 ./usr/share/man/cat4/hcide.0			man-sys-catman
 ./usr/share/man/cat4/hme.0			man-sys-catman
-./usr/share/man/cat4/hp300/apci.4		man-sys-catman
+./usr/share/man/cat4/hp300/apci.0		man-sys-catman
 ./usr/share/man/cat4/hp300/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/hp300/cons.0		man-sys-catman
 ./usr/share/man/cat4/hp300/ct.0			man-sys-catman
 ./usr/share/man/cat4/hp300/dca.0		man-sys-catman
 ./usr/share/man/cat4/hp300/dcl.0		man-sys-catman
 ./usr/share/man/cat4/hp300/dcm.0		man-sys-catman
-./usr/share/man/cat4/hp300/dio.4		man-sys-catman
-./usr/share/man/cat4/hp300/dnkbd.4		man-sys-catman
+./usr/share/man/cat4/hp300/dio.0		man-sys-catman
+./usr/share/man/cat4/hp300/dnkbd.0		man-sys-catman
 ./usr/share/man/cat4/hp300/dvbox.0		man-sys-catman
-./usr/share/man/cat4/hp300/frodo.4		man-sys-catman
+./usr/share/man/cat4/hp300/frodo.0		man-sys-catman
 ./usr/share/man/cat4/hp300/gbox.0		man-sys-catman
 ./usr/share/man/cat4/hp300/grf.0		man-sys-catman
 ./usr/share/man/cat4/hp300/hil.0		man-sys-catman
-./usr/share/man/cat4/hp300/hpib.4		man-sys-catman
-./usr/share/man/cat4/hp300/hyper.4		man-sys-catman
-./usr/share/man/cat4/hp300/intio.4		man-sys-catman
+./usr/share/man/cat4/hp300/hpib.0		man-sys-catman
+./usr/share/man/cat4/hp300/hyper.0		man-sys-catman
+./usr/share/man/cat4/hp300/intio.0		man-sys-catman
 ./usr/share/man/cat4/hp300/intro.0		man-sys-catman
 ./usr/share/man/cat4/hp300/ite.0		man-sys-catman
 ./usr/share/man/cat4/hp300/kmem.0		man-sys-catman
 ./usr/share/man/cat4/hp300/mem.0		man-sys-catman
-./usr/share/man/cat4/hp300/oscsi.4		man-sys-catman
+./usr/share/man/cat4/hp300/oscsi.0		man-sys-catman
 ./usr/share/man/cat4/hp300/ppi.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rbox.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rd.0			man-sys-catman
