@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.337 2004/07/15 15:49:29 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.338 2004/07/15 16:01:41 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5482,4 +5482,9 @@ sys/arch/sgimips/mace/if_mecreg.h		1.2
 
 	Add a working driver for O2 (IP32) on-board MACE MAC-110 Ethernet.
 	[tsutsui, ticket #652]
+
+bin/pax/tar.c					1.57
+
+	Fix a bug in "tar --exclude" handling.
+	[hubertf, ticket #654]
 
