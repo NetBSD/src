@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1 1997/04/16 20:29:23 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.2 1998/02/22 07:42:31 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+__dead void OF_exit __P((void)) __attribute__((noreturn));
 int OF_finddevice __P((char *name));
 int OF_instance_to_package __P((int ihandle));
 int OF_getprop __P((int handle, char *prop, void *buf, int buflen));

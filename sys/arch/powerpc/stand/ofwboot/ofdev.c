@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.2 1998/02/22 07:42:31 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,8 +33,10 @@
 /*
  * Device I/O routines using Open Firmware
  */
+
 #include <sys/param.h>
 #include <sys/disklabel.h>
+
 #include <netinet/in.h>
 
 #include <lib/libsa/stand.h>
@@ -42,7 +44,7 @@
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
 
-#include <powerpc/stand/ofwboot/ofdev.h>
+#include "ofdev.h"
 
 extern char bootdev[];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1998/01/27 05:46:59 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1998/02/22 07:42:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,20 +79,20 @@
 
 #define	ELFSIZE		32		/* We use 32-bit ELF. */
 
-#include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
-
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
 #include <machine/cpu.h>
 #include <machine/machine_type.h>
 
-#include <powerpc/stand/ofwboot/ofdev.h>
-#include <powerpc/stand/ofwboot/openfirm.h>
+#include "ofdev.h"
+#include "openfirm.h"
 
 char bootdev[128];
 char bootfile[128];
@@ -111,16 +111,13 @@ static void
 prom2boot(dev)
 	char *dev;
 {
-	char *cp, *lp = 0;
-	int handle;
-	char devtype[16];
+	char *cp;
 	
-	for (cp = dev; *cp; cp++)
-		if (*cp == ':')
-			lp = cp;
-	if (!lp)
-		lp = cp;
-	*lp = 0;
+	for (cp = dev; *cp != '\0'; cp++)
+		if (*cp == ':') {
+			*cp = '\0';
+			return;
+		}
 }
 
 static void
@@ -132,7 +129,7 @@ parseargs(str, howtop)
 
 	/* Allow user to drop back to the PROM. */
 	if (strcmp(str, "exit") == 0)
-		_rtt();
+		OF_exit();
 
 	*howtop = 0;
 	for (cp = str; *cp; cp++)
@@ -249,6 +246,13 @@ loadfile(fd, args)
  err:
 	close(fd);
 	return (rval);
+}
+
+__dead void
+_rtt()
+{
+
+	OF_exit();
 }
 
 #ifdef POWERPC_BOOT_AOUT
@@ -473,14 +477,16 @@ main()
 	/*
 	 * Get the boot arguments from Openfirmware
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1
-	    || OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0
-	    || OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
+	if ((chosen = OF_finddevice("/chosen")) == -1 ||
+	    OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0 ||
+	    OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
-		exit();
+		OF_exit();
 	}
+
 	prom2boot(bootdev);
 	parseargs(bootline, &boothowto);
+
 	for (;;) {
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
@@ -522,5 +528,5 @@ main()
 	/* XXX void, for now */
 	(void)loadfile(fd, bootline);
 
-	_rtt();
+	OF_exit();
 }
