@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.7 1999/03/26 04:29:26 eeh Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8 1999/10/05 03:46:30 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,8 +51,10 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
+#include <sys/types.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_lwp.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
@@ -79,6 +81,7 @@ svr4_setregs(p, epp, stack)
 
 #ifdef DEBUG
 #include <sparc64/sparc64/sigdebug.h>
+void Debugger __P((void));
 #endif
 
 #ifdef DEBUG_SVR4
@@ -511,7 +514,7 @@ svr4_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("svr4_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
 	if (rwindow_save(p) || copyout(&frame, fp, sizeof(frame)) != 0 ||
 	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp))) {
