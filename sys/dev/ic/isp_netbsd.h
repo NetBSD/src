@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.10 1999/02/09 00:37:35 mjacob Exp $ */
-/* release_01_29_99 */
+/* $NetBSD: isp_netbsd.h,v 1.11 1999/03/17 06:15:48 mjacob Exp $ */
+/* release_03_16_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,7 +63,7 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	991
+#define	ISP_PLATFORM_VERSION_MINOR	992
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
@@ -84,6 +84,11 @@ struct isposinfo {
 
 #define	MEMZERO			bzero
 #define	MEMCPY(dst, src, count)	bcopy((src), (dst), (count))
+#ifdef	__alpha__
+#define	MemoryBarrier	alpha_mb
+#else
+#define	MemoryBarrier()
+#endif
 
 #if	defined(SCSIDEBUG)
 #define	DFLT_DBLEVEL		3
@@ -105,8 +110,8 @@ struct isposinfo {
 
 #define	XS_NULL(xs)		xs == NULL || xs->sc_link == NULL
 #define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
-#define	XS_LUN(xs)		(xs)->sc_link->scsipi_scsi.lun
-#define	XS_TGT(xs)		(xs)->sc_link->scsipi_scsi.target
+#define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
+#define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
 #define	XS_RESID(xs)		(xs)->resid
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
@@ -166,6 +171,95 @@ struct isposinfo {
 
 #define	WATCH_INTERVAL	30
 
+#define	FC_FW_READY_DELAY	(12 * 1000000)
+
 extern void isp_attach __P((struct ispsoftc *));
 extern void isp_uninit __P((struct ispsoftc *));
+
+static inline void isp_prtstst(ispstatusreq_t *sp)
+{
+	char buf[128];
+	sprintf(buf, "states->");
+	if (sp->req_state_flags & RQSF_GOT_BUS)
+		sprintf(buf, "%s%s", buf, "GOT_BUS ");
+	if (sp->req_state_flags & RQSF_GOT_TARGET)
+		sprintf(buf, "%s%s", buf, "GOT_TGT ");
+	if (sp->req_state_flags & RQSF_SENT_CDB)
+		sprintf(buf, "%s%s", buf, "SENT_CDB ");
+	if (sp->req_state_flags & RQSF_XFRD_DATA)
+		sprintf(buf, "%s%s", buf, "XFRD_DATA ");
+	if (sp->req_state_flags & RQSF_GOT_STATUS)
+		sprintf(buf, "%s%s", buf, "GOT_STS ");
+	if (sp->req_state_flags & RQSF_GOT_SENSE)
+		sprintf(buf, "%s%s", buf, "GOT_SNS ");
+	if (sp->req_state_flags & RQSF_XFER_COMPLETE)
+		sprintf(buf, "%s%s", buf, "XFR_CMPLT ");
+	sprintf(buf, "%s%s", buf, "\n");
+	sprintf(buf, "%s%s", buf, "status->");
+	if (sp->req_status_flags & RQSTF_DISCONNECT)
+		sprintf(buf, "%s%s", buf, "Disconnect ");
+	if (sp->req_status_flags & RQSTF_SYNCHRONOUS)
+		sprintf(buf, "%s%s", buf, "Sync_xfr ");
+	if (sp->req_status_flags & RQSTF_PARITY_ERROR)
+		sprintf(buf, "%s%s", buf, "Parity ");
+	if (sp->req_status_flags & RQSTF_BUS_RESET)
+		sprintf(buf, "%s%s", buf, "Bus_Reset ");
+	if (sp->req_status_flags & RQSTF_DEVICE_RESET)
+		sprintf(buf, "%s%s", buf, "Device_Reset ");
+	if (sp->req_status_flags & RQSTF_ABORTED)
+		sprintf(buf, "%s%s", buf, "Aborted ");
+	if (sp->req_status_flags & RQSTF_TIMEOUT)
+		sprintf(buf, "%s%s", buf, "Timeout ");
+	if (sp->req_status_flags & RQSTF_NEGOTIATION)
+		sprintf(buf, "%s%s", buf, "Negotiation ");
+	sprintf(buf, "%s%s", buf, "\n");
+}
+
+static inline const char *isp2100_fw_statename(int state)
+{
+	static char buf[16];
+	switch(state) {
+	case FW_CONFIG_WAIT:	return "Config Wait";
+	case FW_WAIT_AL_PA:	return "Waiting for AL_PA";
+	case FW_WAIT_LOGIN:	return "Wait Login";
+	case FW_READY:		return "Ready";
+	case FW_LOSS_OF_SYNC:	return "Loss Of Sync";
+	case FW_ERROR:		return "Error";
+	case FW_REINIT:		return "Re-Init";
+	case FW_NON_PART:	return "Nonparticipating";
+	default:
+		sprintf(buf, "?0x%x?", state);
+		return buf;
+    }
+}
+
+static inline const char *isp2100_pdb_statename(int pdb_state)
+{
+	static char buf[16];
+	switch(pdb_state) {
+	case PDB_STATE_DISCOVERY:	return "Port Discovery";
+	case PDB_STATE_WDISC_ACK:	return "Waiting Port Discovery ACK";
+	case PDB_STATE_PLOGI:		return "Port Login";
+	case PDB_STATE_PLOGI_ACK:	return "Wait Port Login ACK";
+	case PDB_STATE_PRLI:		return "Process Login";
+	case PDB_STATE_PRLI_ACK:	return "Wait Process Login ACK";
+	case PDB_STATE_LOGGED_IN:	return "Logged In";
+	case PDB_STATE_PORT_UNAVAIL:	return "Port Unavailable";
+	case PDB_STATE_PRLO:		return "Process Logout";
+	case PDB_STATE_PRLO_ACK:	return "Wait Process Logout ACK";
+	case PDB_STATE_PLOGO:		return "Port Logout";
+	case PDB_STATE_PLOG_ACK:	return "Wait Port Logout ACK";
+	default:
+		sprintf(buf, "?0x%x?", pdb_state);
+		return buf;
+	}
+}
+
+/*
+ * Keep these off for now...
+ */
+#define	ISP_NO_FASTPOST_SCSI		1
+#define	ISP_NO_FASTPOST_FC		1
+#define	ISP_DISABLE_1080_SUPPORT	1
+
 #endif	/* _ISP_NETBSD_H */
