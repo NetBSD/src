@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.32 1994/07/27 03:09:21 mycroft Exp $
+ *	$Id: aha1542.c,v 1.33 1994/07/27 13:10:33 mycroft Exp $
  */
 
 /*
@@ -316,8 +316,8 @@ struct aha_softc {
 	struct aha_mbx aha_mbx;			/* all the mailboxes */
 	struct aha_ccb *aha_ccb_free;		/* the next free CCB */
 	struct aha_ccb aha_ccb[AHA_MBX_SIZE];	/* all the CCBs */
-	int aha_int;				/* our IRQ level */
-	int aha_dma;				/* our DMA req channel */
+	u_short aha_int;			/* our IRQ level */
+	u_short aha_dma;			/* our DMA req channel */
 	int aha_scsi_dev;			/* our SCSI bus address */
 	struct scsi_link sc_link;		/* prototype for subdevs */
 };
@@ -549,14 +549,14 @@ ahaprobe(parent, self, aux)
 	 * If it's there, put in it's interrupt vectors and dma channel
 	 */
 	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != (1 << aha->aha_int)) {
+		if (ia->ia_irq != aha->aha_int) {
 			printf("aha%d: irq mismatch; kernel configured %d != board configured %d\n",
 				aha->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				aha->aha_int);
+				ffs(aha->aha_int) - 1);
 			return 0;
 		}
 	} else
-		ia->ia_irq = (1 << aha->aha_int);
+		ia->ia_irq = aha->aha_int;
 
 	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != aha->aha_dma) {
@@ -587,6 +587,9 @@ ahaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc *aha = (void *)self;
+
+	if (ia->ia_drq != DRQUNK)
+		isa_dmacascade(ia->ia_drq);
 
 	aha_init(aha);
 
@@ -932,23 +935,15 @@ noinquire:
 	aha_cmd(aha, 0, sizeof(conf), 0, &conf, AHA_CONF_GET);
 	switch (conf.chan) {
 	case CHAN0:
-		outb(0x0b, 0x0c);
-		outb(0x0a, 0x00);
 		aha->aha_dma = 0;
 		break;
 	case CHAN5:
-		outb(0xd6, 0xc1);
-		outb(0xd4, 0x01);
 		aha->aha_dma = 5;
 		break;
 	case CHAN6:
-		outb(0xd6, 0xc2);
-		outb(0xd4, 0x02);
 		aha->aha_dma = 6;
 		break;
 	case CHAN7:
-		outb(0xd6, 0xc3);
-		outb(0xd4, 0x03);
 		aha->aha_dma = 7;
 		break;
 	default:
@@ -958,22 +953,22 @@ noinquire:
 
 	switch (conf.intr) {
 	case INT9:
-		aha->aha_int = 9;
+		aha->aha_int = IRQ9;
 		break;
 	case INT10:
-		aha->aha_int = 10;
+		aha->aha_int = IRQ10;
 		break;
 	case INT11:
-		aha->aha_int = 11;
+		aha->aha_int = IRQ11;
 		break;
 	case INT12:
-		aha->aha_int = 12;
+		aha->aha_int = IRQ12;
 		break;
 	case INT14:
-		aha->aha_int = 14;
+		aha->aha_int = IRQ14;
 		break;
 	case INT15:
-		aha->aha_int = 15;
+		aha->aha_int = IRQ15;
 		break;
 	default:
 		printf("illegal int setting %x\n", conf.intr);
@@ -990,6 +985,7 @@ noinquire:
 	aha_cmd(aha, 1, 0, 0, 0, AHA_BUS_OFF_TIME_SET, 4);
 
 #ifdef TUNE_1542
+#error XXX Must deal with configuring the DRQ channel if we do this.
 	/*
 	 * Initialize memory transfer speed
 	 * Not compiled in by default because it breaks some machines 

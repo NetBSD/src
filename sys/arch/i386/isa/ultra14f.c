@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.31 1994/07/27 02:34:54 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.32 1994/07/27 13:10:36 mycroft Exp $
  */
 
 /*
@@ -299,9 +299,9 @@ struct uha_softc {
 
 	struct mscp *mscphash[MSCP_HASH_SIZE];
 	struct mscp *free_mscp;
-	int our_id;		/* our scsi id */
-	int vect;
-	int dma;
+	u_short uha_int;
+	u_short uha_dma;
+	int uha_scsi_dev;		/* our scsi id */
 	int nummscps;
 	struct scsi_link sc_link;
 };
@@ -583,29 +583,29 @@ uhaprobe(parent, self, aux)
 
 	/*
 	 * Try initialise a unit at this location
-	 * sets up dma and bus speed, loads uha->vect
+	 * sets up dma and bus speed, loads uha->uha_int
 	 */
 	if (u24_find(uha, ia) != 0 && u14_find(uha, ia) != 0)
 		return 0;
 
 	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != (1 << uha->vect)) {
+		if (ia->ia_irq != uha->uha_int) {
 			printf("uha%d: irq mismatch; kernel configured %d != board configured %d\n",
 				uha->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				uha->vect);
+				ffs(uha->uha_int) - 1);
 			return 0;
 		}
 	} else
-		ia->ia_irq = (1 << uha->vect);
+		ia->ia_irq = uha->uha_int;
 
 	if (ia->ia_drq != DRQUNK) {
-		if (ia->ia_drq != uha->dma) {
+		if (ia->ia_drq != uha->uha_dma) {
 			printf("uha%d: drq mismatch; kernel configured %d != board configured %d\n",
-				uha->sc_dev.dv_unit, ia->ia_drq, uha->dma);
+				uha->sc_dev.dv_unit, ia->ia_drq, uha->uha_dma);
 			return 0;
 		}
 	} else
-		ia->ia_drq = uha->dma;
+		ia->ia_drq = uha->uha_dma;
 
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
@@ -627,6 +627,9 @@ uhaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *uha = (void *)self;
+
+	if (ia->ia_drq != DRQUNK)
+		isa_dmacascade(ia->ia_drq);
 
 	(uha->init)(uha);
 
@@ -975,13 +978,13 @@ u14_find(uha, ia)
 
 	switch (dma_ch) {
 	case U14_DMA_CH5:
-		uha->dma = 5;
+		uha->uha_dma = 5;
 		break;
 	case U14_DMA_CH6:
-		uha->dma = 6;
+		uha->uha_dma = 6;
 		break;
 	case U14_DMA_CH7:
-		uha->dma = 7;
+		uha->uha_dma = 7;
 		break;
 	default:
 		printf("illegal dma setting %x\n", dma_ch);
@@ -990,16 +993,16 @@ u14_find(uha, ia)
 
 	switch (irq_ch) {
 	case U14_IRQ10:
-		uha->vect = 10;
+		uha->uha_int = IRQ10;
 		break;
 	case U14_IRQ11:
-		uha->vect = 11;
+		uha->uha_int = IRQ11;
 		break;
 	case U14_IRQ14:
-		uha->vect = 14;
+		uha->uha_int = IRQ14;
 		break;
 	case U14_IRQ15:
-		uha->vect = 15;
+		uha->uha_int = IRQ15;
 		break;
 	default:
 		printf("illegal int setting %x\n", irq_ch);
@@ -1076,18 +1079,20 @@ u24_find(uha, ia)
 		irq_ch = config0 & U24_IRQ_MASK;
 		uha_id = config2 & U24_HOSTID_MASK;
 
+		uha->uha_dma = DRQUNK;
+
 		switch (irq_ch) {
 		case U24_IRQ10:
-			uha->vect = 10;
+			uha->uha_int = IRQ10;
 			break;
 		case U24_IRQ11:
-			uha->vect = 11;
+			uha->uha_int = IRQ11;
 			break;
 		case U24_IRQ14:
-			uha->vect = 14;
+			uha->uha_int = IRQ14;
 			break;
 		case U24_IRQ15:
-			uha->vect = 15;
+			uha->uha_int = IRQ15;
 			break;
 		default:
 			printf("illegal int setting %x\n", irq_ch);
