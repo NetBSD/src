@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.8 2000/10/12 06:07:04 augustss Exp $	*/
+/*	$NetBSD: vif.c,v 1.9 2002/06/02 13:47:04 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -713,6 +713,7 @@ accept_neighbor_request(src, dst)
 	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
@@ -800,6 +801,7 @@ accept_neighbor_request2(src, dst)
 	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
