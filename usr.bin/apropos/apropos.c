@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.4 1995/03/26 02:22:13 glass Exp $	*/
+/*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)apropos.c	8.7 (Berkeley) 4/2/94";
+static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: apropos.c,v 1.4 1995/03/26 02:22:13 glass Exp $";
+static char rcsid[] = "$NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: apropos.c,v 1.4 1995/03/26 02:22:13 glass Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../man/config.h"
 #include "../man/pathnames.h"
