@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
+/*      $NetBSD: sgec.c,v 1.6 2000/06/05 02:28:19 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -176,7 +176,8 @@ sgec_attach(sc)
 
 	/* For vmstat -i
 	 */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->sc_dev.dv_xname, "intr");
 
 	/*
 	 * Create ring loops of the buffer chains.
