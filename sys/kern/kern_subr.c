@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.59 2000/03/01 03:50:04 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.60 2000/03/01 03:51:29 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1066,7 +1066,7 @@ getstr(cp, size)
  * snprintf() `bytes' into `buf', reformatting it so that the number,
  * plus a possible `x' + suffix extension) fits into len bytes (including
  * the terminating NUL).
- * Returns the number of bytes stored in buf, or -1 * if there was a problem.
+ * Returns the number of bytes stored in buf, or -1 if there was a problem.
  * E.g, given a len of 9 and a suffix of `B': 
  *	bytes		result
  *	-----		------
