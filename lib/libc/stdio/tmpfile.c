@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfile.c,v 1.7 1998/06/01 20:19:46 kleink Exp $	*/
+/*	$NetBSD: tmpfile.c,v 1.8 1998/10/13 14:07:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)tmpfile.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tmpfile.c,v 1.7 1998/06/01 20:19:46 kleink Exp $");
+__RCSID("$NetBSD: tmpfile.c,v 1.8 1998/10/13 14:07:04 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
