@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.1 1997/04/02 21:31:01 christos Exp $	*/
+/*	$NetBSD: aarp.c,v 1.2 1997/04/03 18:38:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -122,15 +122,17 @@ aarptimer(ignored)
  * search through the network addresses to find one that includes the given
  * network.. remember to take netranges into consideration.
  */
-struct ifaddr  *
-at_ifawithnet(sat, ifa)
+struct ifaddr *
+at_ifawithnet(sat, ifp)
 	struct sockaddr_at *sat;
-	struct ifaddr  *ifa;
+	struct ifnet *ifp;
 {
+	struct ifaddr  *ifa;
 	struct sockaddr_at *sat2;
 	struct netrange *nr;
 
-	for (; ifa; ifa = ifa->ifa_list.tqe_next) {
+	for (ifa = ifp->if_addrlist.tqh_first; ifa;
+	    ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
 			continue;
 
@@ -183,8 +185,7 @@ aarpwhohas(ifp, sat)
          * interface with the same address as we're looking for. If the
          * net is phase 2, generate an 802.2 and SNAP header.
          */
-	if ((aa = (struct at_ifaddr *) at_ifawithnet(sat,
-	    ifp->if_addrlist.tqh_first)) == NULL) {
+	if ((aa = (struct at_ifaddr *) at_ifawithnet(sat, ifp)) == NULL) {
 		m_freem(m);
 		return;
 	}
@@ -241,8 +242,8 @@ aarpresolve(ifp, m, destsat, desten)
 	int             s;
 
 	if (at_broadcast(destsat)) {
-		if ((aa = (struct at_ifaddr *) at_ifawithnet(destsat,
-		    ifp->if_addrlist.tqh_first)) == NULL) {
+		aa = (struct at_ifaddr *) at_ifawithnet(destsat, ifp);
+		if (aa == NULL) {
 			m_freem(m);
 			return (0);
 		}
@@ -348,8 +349,8 @@ at_aarpinput(ifp, m)
 		sat.sat_len = sizeof(struct sockaddr_at);
 		sat.sat_family = AF_APPLETALK;
 		sat.sat_addr.s_net = net;
-		if ((aa = (struct at_ifaddr *) at_ifawithnet(&sat,
-		    ifp->if_addrlist.tqh_first)) == NULL) {
+		aa = (struct at_ifaddr *) at_ifawithnet(&sat, ifp);
+		if (aa == NULL) {
 			m_freem(m);
 			return;
 		}
