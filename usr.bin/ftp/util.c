@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.79 1999/10/24 12:31:42 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.80 1999/11/09 07:26:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.79 1999/10/24 12:31:42 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.80 1999/11/09 07:26:50 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -139,7 +139,7 @@ setpeer(argc, argv)
 	else
 		port = ftpport;
 	if (argc > 2)
-		port = strdup(argv[2]);
+		port = argv[2];
 
 	if (gatemode) {
 		if (gateserver == NULL || *gateserver == '\0')
