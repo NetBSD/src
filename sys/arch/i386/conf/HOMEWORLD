@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.13 1997/04/01 13:12:15 mycroft Exp $
+#	$NetBSD: HOMEWORLD,v 1.14 1997/04/30 06:06:02 mycroft Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -60,10 +60,10 @@ file-system 	MFS		# memory file system
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
+#file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
-file-system 	PROCFS		# /proc
+#file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 
@@ -79,20 +79,25 @@ options		INET		# IP + ICMP + TCP + UDP
 #options	ISO,TPIP	# OSI
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
+#options	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 # Busy server; bump these up
 options 	NKMEMCLUSTERS=2048	# slots in kmem_map
 options 	NMBCLUSTERS=1024	# slots in mb_map
 
-config		netbsd root on sd0a type ffs swap on sd0b and sd1b
+config		netbsd	root on sd0a type ffs swap on sd0b and sd1b
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
+#options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
 
 mainbus0 at root
 
 pci0	at mainbus0 bus ?
+#eisa0	at mainbus0
 
+#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+#pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
@@ -100,9 +105,6 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 isa*	at mainbus0			# all other ISA
 
 #apm0	at mainbus0			# Advanced power management
-
-#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-#pci*	at ppb? bus ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
@@ -159,6 +161,8 @@ scsibus* at ahc?
 #wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 #scsibus* at wds?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -177,6 +181,9 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #wdc1	at isa? port 0x170 irq 15
 #wd*	at wdc? drive ?
 
+# note: the wt driver conflicts unpleasantly with ed devices at the
+# same I/O address. The probe reprograms their eeproms. Don't
+# uncomment it unless you are actually using it.
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x300 irq 9	# NE2000 ethernet
@@ -207,11 +214,20 @@ ed0	at isa? port 0x300 irq 9	# NE2000 ethernet
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
+# PnP bus and devices should be declared last 
+#isapnp0	at isa? 
+#ep*	at isapnp?
+#sb*	at isapnp?
+#joy*	at isapnp?
+
+#include	"arch/i386/conf/GENERIC.local"
+
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipfilter		# ip filter
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
