@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.10 2003/08/02 10:11:47 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,12 +35,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.10 2003/08/02 10:11:47 jdolecek Exp $");
 #endif
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
-#define NTFS
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <ntfs/ntfsmount.h>
@@ -64,11 +63,7 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-#ifndef __dead2
-#define __dead2 __attribute__((__noreturn__))
-#endif
-
-static void	usage __P((void)) __dead2;
+static void	usage __P((void)) __attribute__((__noreturn__));
 int main __P((int, char **));
 int mount_ntfs __P((int argc, char **argv));
 
@@ -91,13 +86,6 @@ mount_ntfs(argc, argv)
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
-#ifdef __FreeBSD__
-#if __FreeBSD_version >= 300000
-	struct vfsconf vfc;
-#else
-	struct vfsconf *vfc;
-#endif
-#endif
 
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -164,39 +152,8 @@ mount_ntfs(argc, argv)
 		if (!set_mask)
 			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
-#ifdef __FreeBSD__
-#if __FreeBSD_version >= 300000
-	c = getvfsbyname("ntfs", &vfc);
-	if (c && vfsisloadable("ntfs")) {
-		if (vfsload("ntfs"))
-#else
-	vfc = getvfsbyname("ntfs");
-	if (!vfc && vfsisloadable("ntfs")) {
-		if (vfsload("ntfs"))
-#endif
-			err(EX_OSERR, "vfsload(ntfs)");
-		endvfsent();	/* clear cache */
-#if __FreeBSD_version >= 300000
-		c = getvfsbyname("ntfs", &vfc);
-#else
-		vfc = getvfsbyname("ntfs");
-#endif
-	}
-#if __FreeBSD_version >= 300000
-	if (c)
-#else
-	if (!vfc)
-#endif
-		errx(EX_OSERR, "ntfs filesystem is not available");
 
-#if __FreeBSD_version >= 300000
-	if (mount(vfc.vfc_name, dir, mntflags, &args) < 0)
-#else
-	if (mount(vfc->vfc_index, dir, mntflags, &args) < 0)
-#endif
-#else
 	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
-#endif
 		err(EX_OSERR, "%s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS) {
