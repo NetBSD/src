@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.33 2000/05/27 15:11:05 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.34 2000/05/27 15:30:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.33 2000/05/27 15:11:05 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.34 2000/05/27 15:30:12 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,6 +362,7 @@ parse(string, flags)
 			return;
 		case KERN_PROC:
 		case KERN_PROC2:
+		case KERN_PROC_ARGS:
 			if (flags == 0)
 				return;
 			warnx("Use ps to view %s information", string);
