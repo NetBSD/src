@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.6 2002/10/02 04:09:15 thorpej Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.7 2003/01/19 22:20:44 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -117,19 +117,19 @@ static void
 dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 {
 	struct dsclock_softc *sc = (struct dsclock_softc *)dev;
-	ds_todregs regs;
+	ds1286_todregs regs;
 	int s;
 
 	s = splhigh();
 	DS1286_GETTOD(sc, &regs)
 	splx(s);
 
-	dt->dt_sec = FROMBCD(regs[DS_SEC]);
-	dt->dt_min = FROMBCD(regs[DS_MIN]);
+	dt->dt_sec = FROMBCD(regs[DS1286_SEC]);
+	dt->dt_min = FROMBCD(regs[DS1286_MIN]);
 
-	if (regs[DS_HOUR] & DS_HOUR_12MODE) {
-		dt->dt_hour = FROMBCD(regs[DS_HOUR] & DS_HOUR_12HR_MASK) +
-			((regs[DS_HOUR] & DS_HOUR_12HR_PM) ? 12 : 0);
+	if (regs[DS1286_HOUR] & DS1286_HOUR_12MODE) {
+		dt->dt_hour = FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK) +
+			((regs[DS1286_HOUR] & DS1286_HOUR_12HR_PM) ? 12 : 0);
 
 		/*
 		 * In AM/PM mode, hour range is 01-12, so adding in 12 hours
@@ -139,13 +139,13 @@ dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 		if (dt->dt_hour == 24)
 			dt->dt_hour = 0;
 	} else {
-		 dt->dt_hour = FROMBCD(regs[DS_HOUR] & DS_HOUR_24HR_MASK);
+		 dt->dt_hour = FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_24HR_MASK);
 	}
 
-	dt->dt_wday = FROMBCD(regs[DS_DOW]);
-	dt->dt_day = FROMBCD(regs[DS_DOM]);
-	dt->dt_mon = FROMBCD(regs[DS_MONTH] & DS_MONTH_MASK);
-	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS_YEAR]));
+	dt->dt_wday = FROMBCD(regs[DS1286_DOW]);
+	dt->dt_day = FROMBCD(regs[DS1286_DOM]);
+	dt->dt_mon = FROMBCD(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
+	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS1286_YEAR]));
 }
 
 /*
@@ -155,25 +155,25 @@ static void
 dsclock_set(struct device *dev, struct clock_ymdhms * dt)
 {
 	struct dsclock_softc *sc = (struct dsclock_softc *)dev;
-	ds_todregs regs;
+	ds1286_todregs regs;
 	int s;
 
 	s = splhigh();
 	DS1286_GETTOD(sc, &regs);
 	splx(s);
 
-	regs[DS_SUBSEC] = 0;
-	regs[DS_SEC] = TOBCD(dt->dt_sec);
-	regs[DS_MIN] = TOBCD(dt->dt_min);
-	regs[DS_HOUR] = TOBCD(dt->dt_hour) & DS_HOUR_24HR_MASK;
-	regs[DS_DOW] = TOBCD(dt->dt_wday);
-	regs[DS_DOM] = TOBCD(dt->dt_day);
+	regs[DS1286_SUBSEC] = 0;
+	regs[DS1286_SEC] = TOBCD(dt->dt_sec);
+	regs[DS1286_MIN] = TOBCD(dt->dt_min);
+	regs[DS1286_HOUR] = TOBCD(dt->dt_hour) & DS1286_HOUR_24HR_MASK;
+	regs[DS1286_DOW] = TOBCD(dt->dt_wday);
+	regs[DS1286_DOM] = TOBCD(dt->dt_day);
 
 	/* Leave wave-generator bits as set originally */
-	regs[DS_MONTH] &=  ~DS_MONTH_MASK;
-	regs[DS_MONTH] |=  TOBCD(dt->dt_mon) & DS_MONTH_MASK;
+	regs[DS1286_MONTH] &=  ~DS1286_MONTH_MASK;
+	regs[DS1286_MONTH] |=  TOBCD(dt->dt_mon) & DS1286_MONTH_MASK;
 
-	regs[DS_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
+	regs[DS1286_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
 
 	s = splhigh();
 	DS1286_PUTTOD(sc, &regs);
