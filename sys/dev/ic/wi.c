@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.134 2003/10/16 10:38:07 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.135 2003/10/16 10:57:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.134 2003/10/16 10:38:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.135 2003/10/16 10:57:35 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -124,7 +124,8 @@ static void wi_info_intr(struct wi_softc *);
 
 static int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
 static int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
-static int  wi_write_txrate(struct wi_softc *);
+static int  wi_cfg_txrate(struct wi_softc *);
+static int  wi_write_txrate(struct wi_softc *, int);
 static int  wi_write_wep(struct wi_softc *);
 static int  wi_write_multi(struct wi_softc *);
 static int  wi_alloc_fid(struct wi_softc *, int, int *);
@@ -613,7 +614,7 @@ wi_init(struct ifnet *ifp)
 		wi_write_val(sc, WI_RID_ROAMING_MODE, sc->sc_roaming_mode);
 	if (sc->sc_flags & WI_FLAGS_HAS_MOR)
 		wi_write_val(sc, WI_RID_MICROWAVE_OVEN, sc->sc_microwave_oven);
-	wi_write_txrate(sc);
+	wi_cfg_txrate(sc);
 	wi_write_ssid(sc, WI_RID_NODENAME, sc->sc_nodename, sc->sc_nodelen);
 
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
@@ -1868,7 +1869,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_fixed_rate = i;
 		}
 		if (sc->sc_enabled)
-			error = wi_write_txrate(sc);
+			error = wi_cfg_txrate(sc);
 		break;
 
 	case WI_RID_SCAN_APS:
@@ -1907,28 +1908,34 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
+/* Rate is 0 for hardware auto-select, otherwise rate is
+ * 2, 4, 11, or 22 (units of 500Kbps).
+ */
 static int
-wi_write_txrate(struct wi_softc *sc)
+wi_write_txrate(struct wi_softc *sc, int rate)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_rateset *rs;
+	u_int16_t hwrate;
 	int i;
-	u_int16_t rate;
 
-	rs = &ic->ic_sup_rates[IEEE80211_MODE_11B];
-
-	if (ic->ic_fixed_rate < 0)
-		rate = 0;	/* auto */
-	else
-		rate = (rs->rs_rates[ic->ic_fixed_rate] &
-		    IEEE80211_RATE_VAL) / 2;
+	rate = (rate & IEEE80211_RATE_VAL) / 2;
 
 	/* rate: 0, 1, 2, 5, 11 */
-
 	switch (sc->sc_firmware_type) {
 	case WI_LUCENT:
-		if (rate == 0)
-			rate = 3;	/* auto */
+		switch (rate) {
+		case 0:
+			hwrate = 3;	/* auto */
+			break;
+		case 5:
+			hwrate = 4;
+			break;
+		case 11:
+			hwrate = 5;
+			break;
+		default:
+			hwrate = rate;
+			break;
+		}
 		break;
 	default:
 		/* Choose a bit according to this table.
@@ -1945,12 +1952,38 @@ wi_write_txrate(struct wi_softc *sc)
 				break;
 		}
 		if (i == 0)
-			rate = 0xf;	/* auto */
+			hwrate = 0xf;	/* auto */
 		else
-			rate = i;
+			hwrate = i;
 		break;
 	}
-	return wi_write_val(sc, WI_RID_TX_RATE, rate);
+
+	if (sc->sc_tx_rate == hwrate)
+		return 0;
+
+	sc->sc_tx_rate = hwrate;
+
+	return wi_write_val(sc, WI_RID_TX_RATE, sc->sc_tx_rate);
+}
+
+static int
+wi_cfg_txrate(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_rateset *rs;
+	int rate;
+
+	rs = &ic->ic_sup_rates[IEEE80211_MODE_11B];
+
+	sc->sc_tx_rate = 0; /* force write to RID */
+
+	if (ic->ic_fixed_rate < 0)
+		rate = 0;	/* auto */
+	else
+		rate = (rs->rs_rates[ic->ic_fixed_rate] &
+		    IEEE80211_RATE_VAL) / 2;
+
+	return wi_write_txrate(sc, rate);
 }
 
 static int
