@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.16 1998/01/12 08:57:24 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.17 1998/05/21 20:44:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -474,6 +474,7 @@ pdq_eisa_attach(
     const char *intrstr;
 
     sc->sc_iotag = ea->ea_iot;
+    sc->sc_dmatag = ea->ea_dmat;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;

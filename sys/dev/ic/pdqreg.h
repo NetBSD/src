@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.8 1998/04/07 13:32:06 matt Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.9 1998/05/21 20:44:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -369,10 +369,11 @@ typedef struct {
      * command is at least that long all will be fine.
      */
 #if defined(__alpha) || defined(__alpha__)
-    pdq_uint32_t pdqdb_command_pool[144];
+    pdq_uint32_t pdqdb_command_pool[143];
 #else
-    pdq_uint32_t pdqdb_command_pool[464];
+    pdq_uint32_t pdqdb_command_pool[463];
 #endif
+    pdq_uint8_t pdqdb_tx_hdr[4];
 } pdq_descriptor_block_t;
 
 #define	PDQ_SIZE_COMMAND_RESPONSE	512
@@ -462,6 +463,7 @@ typedef struct {
     pdq_uint32_t tx_completion;
 } pdq_tx_info_t;
 
+typedef struct _pdq_os_ctx_t pdq_os_ctx_t;
 struct _pdq_t {
     pdq_csrs_t pdq_csrs;
     pdq_pci_csrs_t pdq_pci_csrs;
@@ -482,15 +484,20 @@ struct _pdq_t {
 #define	PDQ_IS_FDX	0x0080
 #define	PDQ_IS_ONRING	0x0100
     const char *pdq_os_name;
-    void *pdq_os_ctx;
+    pdq_os_ctx_t *pdq_os_ctx;
     pdq_uint32_t pdq_unit;
     pdq_command_info_t pdq_command_info;
     pdq_unsolicited_info_t pdq_unsolicited_info;
     pdq_tx_info_t pdq_tx_info;
     pdq_rx_info_t pdq_rx_info;
     pdq_rx_info_t pdq_host_smt_info;
-    pdq_uint8_t pdq_tx_hdr[3];
+    pdq_physaddr_t pdq_pa_consumer_block;
+    pdq_physaddr_t pdq_pa_descriptor_block;
 };
+
+#define	PDQ_DB_BUSPA(pdq, m) \
+	((pdq)->pdq_pa_descriptor_block + \
+		((u_int8_t *) (m) - (u_int8_t *) (pdq)->pdq_dbp))
 
 typedef enum {
     PDQC_START=0,
