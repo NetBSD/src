@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.21 1998/07/27 07:41:53 mycroft Exp $	*/
+/*	$NetBSD: getcap.c,v 1.22 1998/08/10 02:43:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.21 1998/07/27 07:41:53 mycroft Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.22 1998/08/10 02:43:09 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -552,8 +552,8 @@ tc_exp:	{
 			 * Insert tc'ed record into our record.
 			 */
 			s = tcstart + newilen;
-			bcopy(tcend, s, (size_t)(rp - tcend));
-			bcopy(newicap, tcstart, newilen);
+			memcpy(s, tcend,  (size_t)(rp - tcend));
+			memcpy(tcstart, newicap, newilen);
 			rp += diff;
 			free(icap);
 

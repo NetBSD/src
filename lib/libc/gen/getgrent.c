@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.24 1998/07/27 09:47:44 mycroft Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.25 1998/08/10 02:43:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.24 1998/07/27 09:47:44 mycroft Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.25 1998/08/10 02:43:09 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -229,7 +229,7 @@ grscan(search, gid, name)
 						free(data);
 					continue;
 				}
-				bcopy(data, line, (size_t)datalen);
+				memcpy(line, data, (size_t)datalen);
 				free(data);
 				break;
 			case YPMODE_NAME:
@@ -246,7 +246,7 @@ grscan(search, gid, name)
 							free(data);
 						continue;
 					}
-					bcopy(data, line, (size_t)datalen);
+					memcpy(line, data, (size_t)datalen);
 					free(data);
 				} else {
 						/* YP not available? */
@@ -310,7 +310,7 @@ grscan(search, gid, name)
 							free(data);
 						continue;
 					}
-					bcopy(data, line, (size_t)datalen);
+					memcpy(line, data, (size_t)datalen);
 					free(data);
 					line[datalen] = '\0';
 					bp = line;

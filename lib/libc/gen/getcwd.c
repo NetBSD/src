@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.12 1998/03/14 03:27:59 lukem Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.13 1998/08/10 02:43:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.12 1998/03/14 03:27:59 lukem Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.13 1998/08/10 02:43:09 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -257,7 +257,7 @@ getcwd(pt, size)
 			 * path to the beginning of the buffer, but it's always
 			 * been that way and stuff would probably break.
 			 */
-			bcopy(bpt, pt, (size_t)(ept - bpt));
+			memcpy(pt, bpt,  (size_t)(ept - bpt));
 			free(up);
 			return (pt);
 		}
@@ -303,7 +303,7 @@ getcwd(pt, size)
 					goto notfound;
 				if (ISDOT(dp))
 					continue;
-				bcopy(dp->d_name, bup,
+				memcpy(bup, dp->d_name,
 				    (size_t)(dp->d_namlen + 1));
 
 				/* Save the first error for later. */
@@ -334,13 +334,13 @@ getcwd(pt, size)
 				goto err;
 			bpt = pt + off;
 			ept = pt + ptsize;
-			bcopy(bpt, ept - len, len);
+			memcpy(ept - len, bpt, len);
 			bpt = ept - len;
 		}
 		if (!first)
 			*--bpt = '/';
 		bpt -= dp->d_namlen;
-		bcopy(dp->d_name, bpt, (size_t)dp->d_namlen);
+		memcpy(bpt, dp->d_name, (size_t)dp->d_namlen);
 		(void)closedir(dir);
 
 		/* Truncate any file name. */

@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.7 1998/03/19 18:06:15 tv Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.8 1998/08/10 02:44:04 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,7 +85,7 @@ retry:
 	sin.sin_family = hp->h_addrtype;
 	sin.sin_len = sizeof(sin);
 	sin.sin_port = rport;
-	bcopy(hp->h_addr, (caddr_t)&sin.sin_addr, hp->h_length);
+	memcpy((caddr_t)&sin.sin_addr, hp->h_addr, hp->h_length);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		if (errno == ECONNREFUSED && timo <= 16) {
 			(void) close(s);
