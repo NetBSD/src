@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 2001/12/11 21:03:10 kleink Exp $
+#	$NetBSD: MAKEDEV,v 1.12 2001/12/19 17:58:09 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -88,7 +88,7 @@
 #	audio*	audio devices
 #	tun*	network tunnel driver
 #	joy*	joystick device
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
