@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2000/06/23 15:40:37 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 2000/06/26 06:25:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,10 @@
 
 	.globl	_C_LABEL(end)
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
+
 	.data
 	.align	0
 	.globl	curbrk
@@ -49,12 +53,7 @@ curbrk:
 /*
  * Change the data segment size
  */
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(sbrk, _sbrk)
 ENTRY(_sbrk)
-#else
-ENTRY(sbrk)
-#endif
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, Lgot

@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.8 2000/06/23 15:40:38 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.9 2000/06/26 06:25:43 kleink Exp $	*/
 
 #include "SYS.h"
 
@@ -16,11 +16,7 @@ _C_LABEL(__minbrk):
 
 	.text
 
-#ifdef WEAK_ALIAS
 ENTRY(_brk)
-#else
-ENTRY(brk)
-#endif
 #ifdef PIC
 	mflr	10
 	bl	_GLOBAL_OFFSET_TABLE_@local-4

@@ -1,4 +1,4 @@
-/* $NetBSD: sbrk.S,v 1.7 2000/06/23 15:40:36 kleink Exp $ */
+/* $NetBSD: sbrk.S,v 1.8 2000/06/26 06:25:36 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -40,11 +40,7 @@ EXPORT(__curbrk)
 	.quad	_end
 
 	.text
-#ifdef WEAK_ALIAS
 LEAF(_sbrk, 1)
-#else
-LEAF(sbrk, 1)
-#endif
 	br	pv, L1				/* XXX profiling */
 L1:	LDGP(pv)
 	ldq	a1, __curbrk
