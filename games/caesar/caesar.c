@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.12 2003/08/07 09:37:07 agc Exp $	*/
+/*	$NetBSD: caesar.c,v 1.13 2004/01/01 16:00:34 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.12 2003/08/07 09:37:07 agc Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.13 2004/01/01 16:00:34 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,8 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int ch, dot, i, nread, winnerdot;
+	int ch, i, nread;
+	double dot, winnerdot;
 	char *inbuf;
 	int obs[26], try, winner;
 
