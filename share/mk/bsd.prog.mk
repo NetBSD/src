@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.46 1994/07/06 04:13:37 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.47 1994/07/20 04:57:12 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -58,6 +58,7 @@ SRCS?=	${PROG}.c
 OBJS+=  ${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 .endif
 
+.if defined(OBJS) && !empty(OBJS)
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
@@ -68,7 +69,8 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
-.endif
+.endif	# defined(DESTDIR)
+.endif	# defined(OBJS) && !empty(OBJS)
 
 .if	!defined(MAN1) && !defined(MAN2) && !defined(MAN3) && \
 	!defined(MAN4) && !defined(MAN5) && !defined(MAN6) && \
