@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.23 2004/03/06 09:41:36 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.24 2004/03/27 22:33:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.23 2004/03/06 09:41:36 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.24 2004/03/27 22:33:43 tsutsui Exp $");
 #endif /* not lint */
 
 /*
@@ -67,20 +67,28 @@ __RCSID("$NetBSD: gzip.c,v 1.23 2004/03/06 09:41:36 mrg Exp $");
 /* what type of file are we dealing with */
 enum filetype {
 	FT_GZIP,
+#ifndef NO_BZIP2_SUPPORT
 	FT_BZIP2,
+#endif
+#ifndef NO_COMPRESS_SUPPORT
 	FT_Z,
+#endif
 	FT_LAST,
 	FT_UNKNOWN
 };
 
+#ifndef NO_BZIP2_SUPPORT
 #define BZ_NO_STDIO
 #include <bzlib.h>
 
-#define Z_SUFFIX	".Z"
-#define Z_MAGIC		"\037\235"
-
 #define BZ2_SUFFIX	".bz2"
 #define BZIP2_MAGIC	"\102\132\150"
+#endif
+
+#ifndef NO_COMPRESS_SUPPORT
+#define Z_SUFFIX	".Z"
+#define Z_MAGIC		"\037\235"
+#endif
 
 #define GZ_SUFFIX	".gz"
 
@@ -138,9 +146,13 @@ static	void	print_test(char *, int);
 static	void	print_list(int fd, off_t, const char *, time_t);
 static	void	usage(void);
 static	void	display_version(void);
+#ifndef NO_BZIP2_SUPPORT
 static	off_t	unbzip2(int, int);
+#endif
+#ifndef NO_COMPRESS_SUPPORT
 static	FILE 	*zopen(const char *);
 static	off_t	zuncompress(FILE *, FILE *);
+#endif
 
 int main(int, char *p[]);
 
@@ -614,16 +626,22 @@ file_uncompress(char *file)
 	if (header1[0] == GZIP_MAGIC0 &&
 	    (header1[1] == GZIP_MAGIC1 || header1[1] == GZIP_OMAGIC1))
 		method = FT_GZIP;
-	else if (memcmp(header1, BZIP2_MAGIC, 3) == 0 &&
+	else
+#ifndef NO_BZIP2_SUPPORT
+	if (memcmp(header1, BZIP2_MAGIC, 3) == 0 &&
 	    header1[3] >= '0' && header1[3] <= '9') {
 		if (Sflag == NULL)
 			suffix = BZ2_SUFFIX;
 		method = FT_BZIP2;
-	} else if (memcmp(header1, Z_MAGIC, 2) == 0) {
+	} else
+#endif
+#ifndef NO_COMPRESS_SUPPORT
+	if (memcmp(header1, Z_MAGIC, 2) == 0) {
 		if (Sflag == NULL)
 			suffix = Z_SUFFIX;
 		method = FT_Z;
 	} else
+#endif
 		method = FT_UNKNOWN;
 
 	if (fflag == 0 && method == FT_UNKNOWN)
@@ -680,6 +698,7 @@ close_it:
 			goto lose;
 	}
 
+#ifndef NO_BZIP2_SUPPORT
 	if (method == FT_BZIP2) {
 		int in, out;
 
@@ -696,7 +715,10 @@ close_it:
 			unlink(outfile);
 			goto lose;
 		}
-	} else if (method == FT_Z) {
+	} else
+#endif
+#ifndef NO_COMPRESS_SUPPORT
+	if (method == FT_Z) {
 		FILE *in, *out;
 		int fd;
 
@@ -726,7 +748,9 @@ close_it:
 			unlink(outfile);
 			maybe_err(1, "failed outfile close");
 		}
-	} else {
+	} else
+#endif
+	{
 		if (lflag) {
 			int fd;
 
@@ -1084,5 +1108,9 @@ display_version(void)
 	exit(0);
 }
 
+#ifndef NO_BZIP2_SUPPORT
 #include "unbzip2.c"
+#endif
+#ifndef NO_COMPRESS_SUPPORT
 #include "zuncompress.c"
+#endif
