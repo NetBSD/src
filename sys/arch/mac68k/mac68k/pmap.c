@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2001/09/10 21:19:17 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2001/09/29 22:00:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1400,7 +1400,7 @@ pmap_kremove(va, len)
 				 */
 
 				*pte = PG_NV;
-				TBIS(va);
+				TBIS(sva);
 			}
 			pte++;
 			sva += NBPG;

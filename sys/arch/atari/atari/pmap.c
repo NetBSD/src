@@ -1447,7 +1447,7 @@ pmap_kremove(va, len)
 				 */
 
 				*pte = PG_NV;
-				TBIS(va);
+				TBIS(sva);
 			}
 			pte++;
 			sva += NBPG;
