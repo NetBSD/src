@@ -1,18 +1,19 @@
-#	$NetBSD: Makefile,v 1.12 2002/03/31 17:27:43 matt Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/26 15:04:30 lukem Exp $
 
-.include <bsd.own.mk>		# Use /etc/mk.conf.
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 SUBDIR= ramdisk .WAIT ramdisk-kernel .WAIT floppy
-
-.include <bsd.subdir.mk>
 
 INSTKERNOBJ != cd ${.CURDIR}/ramdisk-kernel && ${PRINTOBJDIR}
 FLOPPYOBJ != cd ${.CURDIR}/floppy && ${PRINTOBJDIR}
 
 release: check_RELEASEDIR
-	${IINST} ${DESTDIR}/usr/mdec/boot ${ITARGET}/netboot/
-	${IINST} ${INSTKERNOBJ}/netbsd.INSTALL.gz ${ITARGET}/netboot/netbsd.ram.gz
-	${IINST} ${FLOPPYOBJ}/boot.fs ${ITARGET}/bootfs/
+	${RELINSTALL} ${DESTDIR}/usr/mdec/boot ${ITARGET}/netboot/
+	${RELINSTALL} ${INSTKERNOBJ}/netbsd.INSTALL.gz \
+	    ${ITARGET}/netboot/netbsd.ram.gz
+	${RELINSTALL} ${FLOPPYOBJ}/boot.fs ${ITARGET}/bootfs/
+
+.include <bsd.subdir.mk>
