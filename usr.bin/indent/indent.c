@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.15 2003/08/07 11:14:08 agc Exp $	*/
+/*	$NetBSD: indent.c,v 1.16 2004/10/30 17:45:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.15 2003/08/07 11:14:08 agc Exp $");
+__RCSID("$NetBSD: indent.c,v 1.16 2004/10/30 17:45:34 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1039,8 +1039,9 @@ check_type:
 				e_code = chfont(&bodyf, &keywordf, e_code);
 				for (t_ptr = token; *t_ptr; ++t_ptr) {
 					CHECK_SIZE_CODE;
-					*e_code++ = keywordf.allcaps && islower((unsigned char)*t_ptr)
-					    ? toupper(*t_ptr) : *t_ptr;
+					*e_code++ = keywordf.allcaps
+					    ? toupper((unsigned char)*t_ptr)
+					    : *t_ptr;
 				}
 				e_code = chfont(&keywordf, &bodyf, e_code);
 			} else
