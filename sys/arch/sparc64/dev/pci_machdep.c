@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.44 2004/03/21 16:09:13 pk Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.45 2004/03/28 09:31:21 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.44 2004/03/21 16:09:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.45 2004/03/28 09:31:21 nakayama Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -205,8 +205,8 @@ pci_make_tag(pc, b, d, f)
 			int busrange[2], *brp;
 			len = 2;
 			brp = busrange;
-			if (prom_getprop(node, "bus-range", sizeof(busrange),
-				 &len, &brp) != 0)
+			if (prom_getprop(node, "bus-range", sizeof(*brp),
+					 &len, &brp) != 0)
 				break;
 			if (len != 2 || b < busrange[0] || b > busrange[1])
 				break;
