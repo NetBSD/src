@@ -5,4 +5,13 @@ XXX changes before cgd started???	XXX		XXX
 
 sbin/swapctl/swaplist.c			patch		mrg
 
-	Test correct return value.
+  Test correct return value.
+
+include/ctype.h				1.16		tv
+
+  Cast the argument of ctype macros to (int) to fix behaviour on
+  unsigned char machines.
+
+distrib/notes/amiga/prep		1.16		is
+
+  Add a warning to reinstall miniroot.fs before retrying installation.
