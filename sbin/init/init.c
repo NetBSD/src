@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
+/*	$NetBSD: init.c,v 1.23 1997/02/22 02:19:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.23 1997/02/22 02:19:51 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -584,7 +584,8 @@ single_user()
 		 */
 		typ = getttynam("console");
 		pp = getpwnam("root");
-		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp) {
+		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp &&
+		    *pp->pw_passwd != '\0') {
 			write(2, banner, sizeof banner - 1);
 			for (;;) {
 				clear = getpass("Password:");
