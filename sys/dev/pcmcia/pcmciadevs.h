@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.211 2005/03/19 22:00:27 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.212 2005/03/23 11:59:38 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.209 2005/03/19 21:59:56 christos Exp
+ *	NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -463,6 +463,8 @@
 #define	PCMCIA_PRODUCT_PROXIM_ROAMABOUT_2400FH	0x1058
 #define	PCMCIA_CIS_PROXIM_RANGELAN2_7401	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PROXIM_RANGELAN2_7401	0x1158
+#define	PCMCIA_CIS_PROXIM_RANGELANDS_8430	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430	0x8000
 
 /* Psion */
 #define	PCMCIA_CIS_PSION_GOLDCARD	{ NULL, NULL, NULL, NULL }
