@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.12 1994/03/18 18:57:15 mycroft Exp $
+ *	$Id: kern_xxx.c,v 1.13 1994/05/07 00:49:08 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -41,9 +41,10 @@
 #include <sys/reboot.h>
 #include <sys/utsname.h>
 
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 /* ARGSUSED */
 int
-gethostid(p, uap, retval)
+ogethostid(p, uap, retval)
 	struct proc *p;
 	void *uap;
 	long *retval;
@@ -53,15 +54,14 @@ gethostid(p, uap, retval)
 	return (0);
 }
 
-struct sethostid_args {
+struct osethostid_args {
 	long	hostid;
 };
-
 /* ARGSUSED */
 int
-sethostid(p, uap, retval)
+osethostid(p, uap, retval)
 	struct proc *p;
-	struct sethostid_args *uap;
+	struct osethostid_args *uap;
 	int *retval;
 {
 	int error;
@@ -72,16 +72,15 @@ sethostid(p, uap, retval)
 	return (0);
 }
 
-struct gethostname_args {
+struct ogethostname_args {
 	char	*hostname;
 	u_int	len;
 };
-
 /* ARGSUSED */
 int
-gethostname(p, uap, retval)
+ogethostname(p, uap, retval)
 	struct proc *p;
-	struct gethostname_args *uap;
+	struct ogethostname_args *uap;
 	int *retval;
 {
 
@@ -90,16 +89,15 @@ gethostname(p, uap, retval)
 	return (copyout((caddr_t)hostname, (caddr_t)uap->hostname, uap->len));
 }
 
-struct sethostname_args {
+struct osethostname_args {
 	char	*hostname;
 	u_int	len;
 };
-
 /* ARGSUSED */
 int
-sethostname(p, uap, retval)
+osethostname(p, uap, retval)
 	struct proc *p;
-	register struct sethostname_args *uap;
+	register struct osethostname_args *uap;
 	int *retval;
 {
 	int error;
@@ -114,16 +112,15 @@ sethostname(p, uap, retval)
 	return (error);
 }
 
-struct getdomainname_args {
+struct ogetdomainname_args {
 	char	*domainname;
 	u_int	len;
 };
-
 /* ARGSUSED */
 int
-getdomainname(p, uap, retval)
+ogetdomainname(p, uap, retval)
 	struct proc *p;
-	struct getdomainname_args *uap;
+	struct ogetdomainname_args *uap;
 	int *retval;
 {
 	if (uap->len > domainnamelen + 1)
@@ -131,16 +128,15 @@ getdomainname(p, uap, retval)
 	return (copyout((caddr_t)domainname, (caddr_t)uap->domainname, uap->len));
 }
 
-struct setdomainname_args {
+struct osetdomainname_args {
 	char	*domainname;
 	u_int	len;
 };
-
 /* ARGSUSED */
 int
-setdomainname(p, uap, retval)
+osetdomainname(p, uap, retval)
 	struct proc *p;
-	struct setdomainname_args *uap;
+	struct osetdomainname_args *uap;
 	int *retval;
 {
 	int error;
@@ -155,26 +151,25 @@ setdomainname(p, uap, retval)
 	return (error);
 }
 
-struct uname_args {
+struct ouname_args {
 	struct utsname	*name;
 };
-
 /* ARGSUSED */
 int
-uname(p, uap, retval)
+ouname(p, uap, retval)
 	struct proc *p;
-	struct uname_args *uap;
+	struct ouname_args *uap;
 	int *retval;
 {
 	strncpy(utsname.nodename, hostname, sizeof(utsname.nodename)-1);
 	return (copyout((caddr_t)&utsname, (caddr_t)uap->name,
 	    sizeof(struct utsname)));
 }
+#endif /* COMPAT_43 || COMPAT_SUNOS */
 
 struct reboot_args {
 	int	opt;
 };
-
 /* ARGSUSED */
 int
 reboot(p, uap, retval)
