@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.6 1999/01/31 09:30:31 mrg Exp $	*/
+/*	$NetBSD: panic.c,v 1.6.10.1 2001/02/03 21:01:47 he Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -44,7 +44,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $";
 #else
-__RCSID("$NetBSD: panic.c,v 1.6 1999/01/31 09:30:31 mrg Exp $");
+__RCSID("$NetBSD: panic.c,v 1.6.10.1 2001/02/03 21:01:47 he Exp $");
 #endif
 #endif
 
@@ -102,10 +102,12 @@ usage()
 {
 
 	/* Print usage and exit.  */
-	(void)fprintf(stderr,   "Usage: at [-V] [-q x] [-f file] [-m] time\n"
+	(void)fprintf(stderr,   "Usage: at [-V] [-q x] [-f file] [-m] -t [[CC]YY]MMDDhhmm[.SS]\n"
+				"       at [-V] [-q x] [-f file] [-m] timespec\n"
 				"       at [-V] -c job [job ...]\n"
 				"       atq [-V] [-q x] [-v]\n"
 				"       atrm [-V] job [job ...]\n"
-				"       batch [-V] [-f file] [-m]\n");
+				"       batch [-V] [-f file] [-m] [-t [[CC]YY]MMDDhhmm[.SS]]\n"
+				"       batch [-V] [-f file] [-m] [timespec]\n");
 	exit(EXIT_FAILURE);
 }
