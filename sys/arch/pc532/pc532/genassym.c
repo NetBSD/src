@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.9 1996/01/31 21:33:52 phil Exp $	*/
+/*	$NetBSD: genassym.c,v 1.10 1996/02/02 19:43:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -42,8 +42,9 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 #include <sys/user.h>
+
+#include <vm/vm.h>
 
 #include <machine/trap.h>
 #include <machine/pmap.h>
