@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.179 2004/05/06 05:14:23 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.180 2004/05/06 05:18:59 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1830,3 +1830,14 @@ sys/arch/sparc/stand/ofwboot/elfXX_exec.c	1.4
 	When calculating the allocated symbol table size, round up the section
 	sizes with ELF_ALIGN(). PR#25429
 	[martin, ticket #248]
+
+share/man/man4/acpitz.4				1.4
+share/man/man4/acpi.4				1.9
+share/man/man4/acpiacad.4			1.3
+share/man/man4/acpibat.4			1.3
+share/man/man4/acpibut.4			1.2
+share/man/man4/acpiec.4				1.2
+share/man/man4/acpilid.4			1.2
+
+	Update ACPI manual pages to reflect more reality.
+	[kochi, ticket #251]
