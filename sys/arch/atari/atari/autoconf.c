@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 2000/09/28 07:26:48 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 2001/06/07 08:35:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -140,6 +140,7 @@ config_console()
 	 * a PCI card for both wscons and grfabs.
 	 */
 	atari_config_found(cf, NULL, "pcibus", NULL);
+	atari_config_found(cf, NULL, "isabus", NULL);
 	atari_config_found(cf, NULL, "grfbus", NULL);
 }
 
