@@ -34,7 +34,10 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 .B -q
 ]
 [
-.B -c
+.B -1
+]
+[
+.B -r
 ]
 [
 .B -lf
@@ -47,6 +50,10 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 [
 .B -cf
 .I config-file
+]
+[
+.B -sf
+.I script-file
 ]
 [
 .B -s
@@ -182,17 +189,32 @@ facility.   The
 flag prevents any messages other than errors from being printed to the
 standard error descriptor.
 .PP
+The client normally doesn't release the current lease as it is not
+required by the DHCP protocol.  Some cable ISPs require their clients
+to notify the server if they wish to release an assigned IP address.
+The
+.B -r
+flag explicitly releases the current lease.
+.PP
+The
+.B -1
+flag cause dhclient to try once to get a lease.  If it fails, dhclient exits
+with exit code two.
+.PP
 The DHCP client normally gets its configuration information from
 .B /etc/dhclient.conf,
 its lease database from
-.B /var/db/dhclient.leases
-and stores its process ID in a file called
-.B /var/run/dhclient.pid.
+.B /var/db/dhclient.leases,
+stores its process ID in a file called
+.B /var/run/dhclient.pid,
+and configures the network interface using
+.B /sbin/dhclient-script
 To specify different names and/or locations for these files, use the
 .B -cf,
-.B -lf
-and
+.B -lf,
 .B -pf
+and
+.B -sf
 flags, respectively, followed by the name of the file.   This can be
 particularly useful if, for example,
 .B /var/db
@@ -214,6 +236,7 @@ address on that interface.
 .SH CONFIGURATION
 The syntax of the dhclient.conf(8) file is discussed seperately.
 .SH FILES
+.B /sbin/dhclient-script
 .B /etc/dhclient.conf, /var/db/dhclient.leases, /var/run/dhclient.pid,
 .B /var/db/dhclient.leases~.
 .SH SEE ALSO

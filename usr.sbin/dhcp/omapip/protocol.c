@@ -53,7 +53,7 @@ isc_result_t omapi_protocol_connect (omapi_object_t *h,
 				     unsigned port,
 				     omapi_object_t *a)
 {
-	isc_result_t status;
+	isc_result_t rstatus, status;
 	omapi_protocol_object_t *obj;
 
 #ifdef DEBUG_PROTOCOL
@@ -65,10 +65,10 @@ isc_result_t omapi_protocol_connect (omapi_object_t *h,
 	if (status != ISC_R_SUCCESS)
 		return status;
 
-	status = omapi_connect ((omapi_object_t *)obj, server_name, port);
-	if (status != ISC_R_SUCCESS && status != ISC_R_INCOMPLETE) {
+	rstatus = omapi_connect ((omapi_object_t *)obj, server_name, port);
+	if (rstatus != ISC_R_SUCCESS && rstatus != ISC_R_INCOMPLETE) {
 		omapi_protocol_dereference (&obj, MDL);
-		return status;
+		return rstatus;
 	}
 	status = omapi_object_reference (&h -> outer,
 					 (omapi_object_t *)obj, MDL);
@@ -102,14 +102,14 @@ isc_result_t omapi_protocol_connect (omapi_object_t *h,
 		}
 
 		obj -> insecure = 0;
-		status = ISC_R_INCOMPLETE;
+		rstatus = ISC_R_INCOMPLETE;
 	} else {
 		obj -> insecure = 1;
-		status = ISC_R_SUCCESS;
+		rstatus = ISC_R_SUCCESS;
 	}
 
 	omapi_protocol_dereference (&obj, MDL);
-	return status;
+	return rstatus;
 }
 
 /* Send the protocol introduction message. */
