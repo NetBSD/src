@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 2003/08/08 07:15:20 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.36 2003/08/17 18:12:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2003/08/08 07:15:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2003/08/17 18:12:34 chs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -243,15 +243,28 @@ cpu_spinup(self, ci)
 	asm volatile ("sync; isync");
 
 	if (openpic_base) {
+		uint64_t tb;
 		u_int kl_base = 0x80000000;	/* XXX */
 		u_int gpio = kl_base + 0x5c;	/* XXX */
-		uint64_t tb;
+		u_int node, off;
+		char cpupath[32];
 
 		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
 		    0x48000002 | (u_int)cpu_spinup_trampoline;
 		__syncicache((void *)EXC_RST, 0x100);
 
 		h->running = -1;
+
+		/* see if there's an OF property for the reset register */
+		sprintf(cpupath, "/cpus/@%x", ci->ci_cpuid);
+		node = OF_finddevice(cpupath);
+		if (node == -1) {
+			printf(": no OF node for CPU %d?\n", ci->ci_cpuid);
+			return -1;
+		}
+		if (OF_getprop(node, "soft-reset", &off, 4) == 4) {
+			gpio = kl_base + off;
+		}
 
 		/* Start secondary cpu. */
 		out8(gpio, 4);
