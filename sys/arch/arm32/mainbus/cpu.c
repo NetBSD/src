@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1 1996/01/31 23:24:33 mark Exp $ */
+/* $NetBSD: cpu.c,v 1.2 1996/02/22 22:56:16 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,7 +41,7 @@
  * Created      : 10/10/95
  * Last updated : 10/10/95
  *
- *    $Id: cpu.c,v 1.1 1996/01/31 23:24:33 mark Exp $
+ *    $Id: cpu.c,v 1.2 1996/02/22 22:56:16 mark Exp $
  */
 
 #include <sys/param.h>
@@ -265,12 +265,20 @@ identify_master_cpu(cpu_number)
 		if (!ptr) {
 			if (initialise_arm_fpe(&cpus[cpu_number]) != 0) {
 				identify_arm_fpu(cpu_number);
+#ifdef FPE
 				initialise_fpe(&cpus[cpu_number]);
+#endif
 			}
+#ifdef FPE
 		} else
 			initialise_fpe(&cpus[cpu_number]);
+
 	} else
 		initialise_fpe(&cpus[cpu_number]);
+#else
+		}
+	}
+#endif
 
 #else
 #ifdef FPE
