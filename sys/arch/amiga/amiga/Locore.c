@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)Locore.c	7.4 (Berkeley) 5/7/91
- *	$Id: Locore.c,v 1.6 1994/04/29 10:50:06 chopps Exp $
+ *	$Id: Locore.c,v 1.7 1994/05/13 06:06:59 chopps Exp $
  */
 
 #include <machine/pte.h>
@@ -222,7 +222,7 @@ longjmp(lp) label_t *lp; { /*NOTREACHED*/ }
 savectx(pcbp, ar) struct pcb *pcbp; { return (0); }
 
 /*ARGSUSED*/
-setrq(p) struct proc *p; { }
+setrunqueue(p) struct proc *p; { }
 
 /*ARGSUSED*/
 remrq(p) struct proc *p; { }
