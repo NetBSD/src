@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.75 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: AMIGA,v 1.76 2005/02/20 17:57:39 jdolecek Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.30 2005/01/31 16:54:33 hannken Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.33 2005/02/20 17:57:02 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 
 maxusers	8
@@ -117,6 +117,7 @@ file-system 	OVERLAY		# overlay filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # Filesystem options
 
@@ -126,10 +127,10 @@ options 	QUOTA		# User and group quotas in FFS
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 #
 # Compatibility options for various existing systems
@@ -490,5 +491,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
+pseudo-device	nsmb			# experimental - SMB requester
 
 config	netbsd root on ? type ?
