@@ -1,22 +1,17 @@
-.\"	$NetBSD: whatis,v 1.5 2002/07/24 02:47:52 lukem Exp $
+.\"	$NetBSD: whatis,v 1.6 2003/05/14 14:06:07 martin Exp $
 .
 .Nx \*V
 is the second major release for the \*M!
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Support for the FAS336 SCSI controller,
-which is on-board on the Ultra 1e and Ultra 2,
-and on appropriate Sbus cards.
+Support for a native seriell driver on non-SBUS machins
+.Pq Em sab
 .It
-Support for PCI based audio
-.Pq Em audiocs .
+Support for the SBUS pcmcia adapter
+.Pq Em nell
+has been completed.
 .It
-Ability to be run in 32-bit mode on the
-.Nx Ns /sparc
-port (instead of
-.Nx*M )
-by using the former's
-.Li GENERIC_SUN4U
-kernel.
+Support for SBUS based audio
+.Pq Em audiocs
 .bullet)
