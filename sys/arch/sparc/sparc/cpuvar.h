@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.62 2004/04/17 23:45:40 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.63 2004/09/22 11:32:03 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/device.h>
 #include <sys/lock.h>
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 
 #include <sparc/include/reg.h>
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
@@ -141,7 +141,7 @@ extern struct simplelock xpmsg_lock;
  */
 
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/* Scheduler flags */
 	int	want_ast;
@@ -336,10 +336,6 @@ struct cpu_info {
 	/* Module Control Registers */
 	/*bus_space_handle_t*/ long ci_mbusport;
 	/*bus_space_handle_t*/ long ci_mxccregs;
-
-	/* DIAGNOSTIC */
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
 
 	u_int	ci_tt;			/* Last trap (if tracing) */
 };
