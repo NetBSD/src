@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.22 2000/07/14 08:40:42 fvdl Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.23 2000/07/17 04:59:51 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.22 2000/07/14 08:40:42 fvdl Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.23 2000/07/17 04:59:51 matt Exp $");
 #endif
 #endif
 
@@ -148,7 +148,7 @@ xdr_float(xdrs, fp)
 		return (XDR_GETINT32(xdrs, (int32_t *)fp));
 #else
 		vsp = (struct vax_single *)fp;
-		if (!XDR_GETINT32(xdrs, (int32 *)&is))
+		if (!XDR_GETINT32(xdrs, (int32_t *)&is))
 			return (FALSE);
 		for (i = 0, lim = sgl_limits;
 			i < sizeof(sgl_limits)/sizeof(struct sgl_limits);
