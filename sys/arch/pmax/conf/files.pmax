@@ -1,5 +1,5 @@
-#	$Id: files.pmax,v 1.56.2.2 1998/10/19 02:15:21 nisimura Exp $
-#	$NetBSD: files.pmax,v 1.56.2.2 1998/10/19 02:15:21 nisimura Exp $
+#	$Id: files.pmax,v 1.56.2.3 1998/10/19 19:45:09 drochner Exp $
+#	$NetBSD: files.pmax,v 1.56.2.3 1998/10/19 19:45:09 drochner Exp $
 #
 # DECstation-specific configuration info
 
@@ -109,7 +109,7 @@ attach	dc at ibus
 file	arch/pmax/ibus/dc.c		dc needs-flag
 
 # 8530 UARTs using the MI 8530 driver
-device	zsc { channel = -1 }
+device	zsc { [channel = -1] }
 attach	zsc at ioasic with zsc_ioasic	
 file	arch/pmax/tc/zs_ioasic.c	zsc_ioasic
 file	dev/ic/z8530sc.c		zsc
@@ -117,6 +117,12 @@ file	dev/ic/z8530sc.c		zsc
 device	zstty: tty 
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
+
+device	zskbd: wskbddev
+attach	zskbd at zsc
+file	arch/pmax/tc/zskbd.c		zskbd		needs-flag
+file	dev/dec/lk201_ws.c		zskbd
+file	dev/dec/wskbdmap_lk201.c		zskbd
 
 # ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
 device	dtop: tty
