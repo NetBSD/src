@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.2 2004/01/19 08:06:54 sekiya Exp $	*/
+/*	$NetBSD: int.c,v 1.3 2004/03/09 14:05:09 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.2 2004/01/19 08:06:54 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.3 2004/03/09 14:05:09 sekiya Exp $");
 
 #include "opt_cputype.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: int.c,v 1.2 2004/01/19 08:06:54 sekiya Exp $");
 #include <mips/cache.h>
 
 #include <sgimips/dev/int2reg.h>
+#include <sgimips/dev/int2var.h>
 
 static bus_space_handle_t ioh;
 static bus_space_tag_t iot;
@@ -367,4 +368,11 @@ int_8254_cal(void)
 	delay(4);
 	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 11, 0);
 	splx(s);
+}
+
+void
+int2_wait_fifo(u_int32_t flag)
+{
+	while (bus_space_read_4(iot, ioh, INT2_LOCAL0_STATUS) & flag)
+		;
 }
