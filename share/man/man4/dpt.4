@@ -1,4 +1,4 @@
-.\"	$NetBSD: dpt.4,v 1.16 2001/09/11 00:08:26 wiz Exp $
+.\"	$NetBSD: dpt.4,v 1.17 2001/09/12 18:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -83,31 +83,31 @@ A spurious interrupt was received from the HBA.
 A corrupt or incomplete status packet was received from the HBA.
 .El
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr iop 4 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr intro 4 ,
+.Xr iop 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
 .Pp
 CAM committee standard CAM/89-004 - the EATA (Enhanced AT Bus Attachment)
 protocol.
-.Sh AUTHORS
-The
-.Nm
-driver was written by Andrew Doran
-.Aq ad@netbsd.org ,
-based upon the
-.Nm uha
-and
-.Nm bha
-drivers, which are the work of others.
 .Sh HISTORY
 The
 .Nm dpt
 driver first appeared in
 .Nx 1.4.2 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Andrew Doran Aq ad@netbsd.org ,
+based upon the
+.Nm uha
+and
+.Nm bha
+drivers, which are the work of others.
 .Sh BUGS
 EATA adapters other than listed may function correctly with the
 .Nm
