@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.16 2003/08/07 16:33:38 agc Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.17 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.16 2003/08/07 16:33:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.17 2004/04/19 05:16:46 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -122,9 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.16 2003/08/07 16:33:38 agc Exp $");
  */
 
 int
-tpcons_pcbconnect(v, nam)
-	void *v;
-	struct mbuf *nam;
+tpcons_pcbconnect(void *v, struct mbuf *nam)
 {
 	struct isopcb  *isop = v;
 	int             error;
@@ -155,10 +153,7 @@ tpcons_pcbconnect(v, nam)
  * THIS MAYBE BELONGS IN SOME OTHER PLACE??? but i think not -
  */
 void *
-tpcons_ctlinput(cmd, siso, v)
-	int             cmd;
-	struct sockaddr *siso;
-	void *v;
+tpcons_ctlinput(int cmd, struct sockaddr *siso, void *v)
 {
 	struct isopcb  *isop = v;
 	struct tp_pcb *tpcb = 0;
@@ -226,13 +221,7 @@ tpcons_ctlinput(cmd, siso, v)
  * No return value.
  */
 void
-#if __STDC__
 tpcons_input(struct mbuf *m, ...)
-#else
-tpcons_input(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	struct sockaddr *faddr, *laddr;
 	caddr_t         channel;
@@ -270,13 +259,7 @@ tpcons_input(m, va_alist)
  */
 
 int
-#if __STDC__
 tpcons_output(struct mbuf *m0, ...)
-#else
-tpcons_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct isopcb  *isop;
 	int             datalen;
@@ -344,13 +327,7 @@ tpcons_output(m0, va_alist)
  */
 
 int
-#if __STDC__
 tpcons_output_dg(struct mbuf *m0, ...)
-#else
-tpcons_output_dg(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	int             datalen;
 	caddr_t         chan;
@@ -371,16 +348,10 @@ tpcons_output_dg(m0, va_alist)
 
 struct mbuf;
 
-int tpcons_output __P((struct mbuf *m0, ...));
+int tpcons_output (struct mbuf *m0, ...);
 
 int
-#if __STDC__
 tpcons_output(struct mbuf *m0, ...)
-#else
-tpcons_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	return 0;
 }

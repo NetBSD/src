@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.14 2003/08/07 16:33:37 agc Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.15 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.14 2003/08/07 16:33:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.15 2004/04/19 05:16:45 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -87,6 +87,15 @@ __KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.14 2003/08/07 16:33:37 agc Exp $");
 #include <netiso/idrp_var.h>
 #include <netiso/iso_pcb.h>
 #include <netiso/cltp_var.h>
+
+const int isoctlerrmap[PRC_NCMDS] = {
+	0,		0,		0,		0,
+	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
+	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
+	EMSGSIZE,	EHOSTUNREACH,	0,		0,
+	0,		0,		0,		0,
+	ENOPROTOOPT
+};
 
 struct protosw  isosw[] = {
 	/*

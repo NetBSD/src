@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.42 2003/09/30 00:01:18 christos Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.43 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.42 2003/09/30 00:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.43 2004/04/19 05:16:45 matt Exp $");
 
 #include "opt_eon.h"
 
@@ -120,7 +120,7 @@ extern struct timeval time;
 struct ifnet    eonif[1];
 
 void
-eonprotoinit()
+eonprotoinit(void)
 {
 	(void) eonattach();
 }
@@ -138,7 +138,7 @@ struct eon_llinfo eon_llinfo;
  */
 
 void
-eonattach()
+eonattach(void)
 {
 	struct ifnet *ifp = eonif;
 
@@ -184,12 +184,9 @@ eonattach()
  * RETURNS:			nothing
  */
 int
-eonioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long          cmd;
-	caddr_t data;
+eonioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	int             s = splnet();
+	int    s = splnet();
 	int    error = 0;
 
 #ifdef ARGO_DEBUG
@@ -218,11 +215,8 @@ eonioctl(ifp, cmd, data)
 
 
 void
-eoniphdr(hdr, loc, ro, class, zero)
-	struct route   *ro;
-	struct eon_iphdr *hdr;
-	caddr_t         loc;
-	int		class, zero;
+eoniphdr(struct eon_iphdr *hdr, caddr_t loc, struct route *ro,
+	int class, int zero)
 {
 	struct mbuf     mhead;
 	struct sockaddr_in *sin = satosin(&ro->ro_dst);
@@ -277,10 +271,7 @@ eoniphdr(hdr, loc, ro, class, zero)
  * RETURNS:			nothing
  */
 void
-eonrtrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	unsigned long   zerodst = 0;
 	caddr_t         ipaddrloc = (caddr_t) & zerodst;
@@ -350,11 +341,8 @@ eonrtrequest(cmd, rt, info)
  *
  */
 int
-eonoutput(ifp, m, sdst, rt)
-	struct ifnet   *ifp;
-	struct mbuf *m;	/* packet */
-	struct sockaddr *sdst;		/* destination addr */
-	struct rtentry *rt;
+eonoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sdst,
+	struct rtentry *rt)
 {
 	struct sockaddr_iso *dst = (struct sockaddr_iso *) sdst;
 	struct eon_llinfo *el;
@@ -462,13 +450,7 @@ flush:
 }
 
 void
-#if __STDC__
 eoninput(struct mbuf *m, ...)
-#else
-eoninput(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int             iphlen;
 	struct eon_hdr *eonhdr;
@@ -594,10 +576,7 @@ eoninput(m, va_alist)
 }
 
 void *
-eonctlinput(cmd, sa, dummy)
-	int             cmd;
-	struct sockaddr *sa;
-	void *dummy;
+eonctlinput(int cmd, struct sockaddr *sa, void *dummy)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 #ifdef ARGO_DEBUG
