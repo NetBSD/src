@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 1998/01/06 07:03:09 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 1998/02/18 02:05:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -193,6 +193,7 @@ void	pmap_remove_mapping  __P((pmap_t, vm_offset_t, pt_entry_t *, int));
 boolean_t	pmap_testbit __P((vm_offset_t, int));
 void	pmap_changebit       __P((vm_offset_t, int, boolean_t));
 void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
+vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 void	pmap_pvdump          __P((vm_offset_t));
 void	pmap_check_wiring    __P((char *, vm_offset_t));
 void	pmap_collect_pv __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 1998/01/06 07:03:12 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 1998/02/18 02:05:36 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -153,5 +153,7 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
+
+vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif /* !_X68K_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.24 1998/02/05 04:56:58 gwr Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.25 1998/02/18 02:05:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@ extern segsz_t pmap_wired_pages(pmap_t);
 
 /* Our memory is contiguous (or nearly so). */
 #define pmap_page_index(pa) (atop(pa))
+
+/* Map a given physical region to a virtual region */
+extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 /*
  * Since PTEs also contain type bits, we have to have some way

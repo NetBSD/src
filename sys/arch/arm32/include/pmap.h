@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1998/01/03 01:13:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1998/02/18 02:05:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -138,6 +138,8 @@ pmap_phys_address(int ppn)
 {
         return(arm_page_to_byte(ppn));
 }
+
+vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif	/* _KERNEL */
 
