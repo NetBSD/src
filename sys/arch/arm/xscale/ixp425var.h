@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.3 2003/07/02 11:02:29 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -106,14 +106,13 @@ struct pmap_ent {
 void	ixp425_bs_init(bus_space_tag_t, void *);
 void	ixp425_io_bs_init(bus_space_tag_t, void *);
 void	ixp425_mem_bs_init(bus_space_tag_t, void *);
+void	ixp425_pci_init(pci_chipset_tag_t, void *);
 
 void	ixp425_attach(struct ixp425_softc *);
 void	ixp425_icu_init(void);
 void	ixp425_intr_init(void);
 void	*ixp425_intr_establish(int, int, int (*)(void *), void *);
 void    ixp425_intr_disestablish(void *);
-void	ixp425_pmap_chunk_table(vaddr_t l1pt, struct pmap_ent* m);
-void	ixp425_pmap_io_reg(vaddr_t l1pt);
 #if XXX
 void	ixp425_expbus_init(void);
 #endif

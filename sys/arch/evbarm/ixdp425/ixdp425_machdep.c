@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.4 2003/06/01 01:49:57 ichiro Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.5 2003/07/02 11:02:29 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -309,28 +309,32 @@ cpu_reboot(int howto, char *bootstr)
 	for (;;);
 }
 
-/*
- * Mapping table for core kernel memory. This memory is mapped at init
- * time with section mappings.
- */
-struct l1_sec_map {
-	vaddr_t	va;
-	vaddr_t	pa;
-	vsize_t	size;
-	vm_prot_t prot;
-	int cache;
-} l1_sec_table[] = {
-    /*
-     * Map the on-board devices VA == PA so that we can access them
-     * with the MMU on or off.
-     */
+/* Static device mappings. */
+static const struct pmap_devmap ixp425_devmap[] = {
     {
-	IXP425_UART0_HWBASE,
-	IXP425_UART0_HWBASE,
-	IXP425_REG_SIZE * 2,
+	IXP425_IO_VBASE,
+	IXP425_IO_HWBASE,
+	IXP425_IO_SIZE,
 	VM_PROT_READ|VM_PROT_WRITE,
 	PTE_NOCACHE,
     },
+
+    {
+	IXP425_EXP_VBASE,
+	IXP425_EXP_HWBASE,
+	IXP425_EXP_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+     
+    {
+	IXP425_PCI_VBASE,
+	IXP425_PCI_HWBASE,
+	IXP425_PCI_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
     {
 	0,
 	0,
@@ -602,30 +606,7 @@ initarm(void *arg)
         /*
          * Map the IXP425 registers
          */
-
-	ixp425_pmap_io_reg(l1pagetable);
-
-	/*
-	 * Map devices we can map w/ section mappings.
-	 */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
-
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
-
+	pmap_devmap_bootstrap(l1pagetable, ixp425_devmap);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately
