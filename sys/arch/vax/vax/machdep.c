@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37 1997/03/15 16:36:18 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.38 1997/03/26 22:43:12 gwr Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -341,7 +341,7 @@ long	dumplo = 0;
 long	dumpmag = 0x8fca0101;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int		nblks;
 	extern int	dumpdev;
@@ -530,7 +530,7 @@ int	waittime = -1;
 static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register howto;
 	char *bootstr;
 {
@@ -661,7 +661,7 @@ dumpsys()
 	 * configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, (int)dumplo);

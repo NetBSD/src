@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 1997/03/17 19:03:21 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 1997/03/26 22:43:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -499,10 +499,9 @@ reboot_sync __P((void))
 
 /*
  * Common part of the BSD and SunOS reboot system calls.
- * XXX - Should be named: cpu_reboot maybe? -gwr
  */
 __dead void
-boot(howto, user_boot_string)
+cpu_reboot(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -588,14 +587,14 @@ vm_offset_t dumppage_pa;
 #define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
 
 /*
- * This is called by cpu_startup to set dumplo, dumpsize.
+ * This is called by main to set dumplo, dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
@@ -661,7 +660,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0)
 		return;
 	savectx(&dumppcb);
