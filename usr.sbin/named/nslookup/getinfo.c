@@ -55,7 +55,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)getinfo.c	5.26 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: getinfo.c,v 1.3 1997/04/21 05:49:02 mrg Exp $";
+static char rcsid[] = "$Id: getinfo.c,v 1.4 1997/04/21 06:19:13 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -300,7 +300,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    hostPtr->name = Calloc(1, len);
 		    bcopy(bp, hostPtr->name, len);
 		}
-		bp += (((u_int32_t)bp) % sizeof(align));
+		bp += (((long)bp) % sizeof(align));
 
 		if (bp + dlen >= &hostbuf[sizeof(hostbuf)]) {
 		    if (_res.options & RES_DEBUG) {
