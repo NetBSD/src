@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.25.6.1 2005/02/24 11:28:48 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.25.6.2 2005/02/26 01:08:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25.6.1 2005/02/24 11:28:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25.6.2 2005/02/26 01:08:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -388,7 +388,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
-	    (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
+	    (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
 	/*
 	 * CLKbase, MMUbase: important registers in internal IO space
 	 * accessed from assembly language.
