@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.1 2001/11/25 01:09:59 mjl Exp $ */
+/*	$NetBSD: bzero.S,v 1.2 2001/11/29 00:20:37 mjl Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -29,6 +29,9 @@
 /*----------------------------------------------------------------------*/
 
 #include <machine/asm.h>
+#ifdef _KERNEL
+#include <assym.h>
+#endif
 
 #define USE_STSWX 0	/* don't. slower than trivial copy loop */
 
@@ -62,6 +65,7 @@ ENTRY(memset)
 cb_memset:
 
 /*----------------------------------------------------------------------*/
+#ifndef _KERNEL
 		/* First find out cache line size */
 #ifdef PIC
 		mflr	r9
@@ -157,6 +161,16 @@ cb_cacheline_known:
 		lis	r10, cache_sh@ha
 		lwz	r10, cache_sh@l(r10)
 #endif
+
+#else /* _KERNEL */
+		li	r9, CACHELINESIZE
+#if CACHELINESIZE == 32
+#define CACHELINESHIFT 5
+#else
+#error Define CACHELINESHIFT for your CACHELINESIZE
+#endif
+		li	r10, CACHELINESHIFT
+#endif /* _KERNEL */
 		/* Back in memory filling business */
 		
 		cmplwi	cr1, r_len, 0		/* Nothing to do? */
