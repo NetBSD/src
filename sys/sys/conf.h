@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.72 2000/02/22 21:11:28 tls Exp $	*/
+/*	$NetBSD: conf.h,v 1.73 2000/03/16 14:52:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -468,6 +468,12 @@ cdev_decl(ss);
 
 bdev_decl(uk);
 cdev_decl(uk);
+
+/*
+ * [bc]dev_decl()s for Compaq RAID devices.
+ */
+bdev_decl(ca);
+cdev_decl(ca);
 
 /*
  * [bc]dev_decl()s for 'fake' network devices.
