@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.15 1997/06/24 00:58:16 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.16 1997/07/17 02:12:52 jtk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.15 1997/06/24 00:58:16 thorpej Exp $
+ * id: $NetBSD: xy.c,v 1.16 1997/07/17 02:12:52 jtk Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -468,7 +468,8 @@ xymatch(parent, cf, aux)
 
 	/* looking for autoconf wildcard or exact match */
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != xa->driveno)
+	if (cf->cf_loc[XYCCF_DRIVE] != XYCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[XYCCF_DRIVE] != xa->driveno)
 		return 0;
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.14 1997/06/24 00:58:14 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.15 1997/07/17 02:12:50 jtk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.14 1997/06/24 00:58:14 thorpej Exp $
+ * id: $NetBSD: xd.c,v 1.15 1997/07/17 02:12:50 jtk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -521,7 +521,8 @@ xdmatch(parent, cf, aux)
 
 	/* looking for autoconf wildcard or exact match */
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != xa->driveno)
+	if (cf->cf_loc[XDCCF_DRIVE] != XDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[XDCCF_DRIVE] != xa->driveno)
 		return 0;
 
 	return 1;
