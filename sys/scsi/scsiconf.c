@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.43 1995/10/13 20:01:03 gwr Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.44 1995/11/01 01:15:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -315,6 +315,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "PD1225S         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
+	 "QUANTUM ", "PD210S   SUN0207", "",     SDEV_NOLUNS},
+	{T_DIRECT, T_FIXED,
 	 "RODIME  ", "RO3000S         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST157N          ", "",     SDEV_NOLUNS},
@@ -329,11 +331,15 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
 	 "        ", "                ", "    ", SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
+	 "CALIPER ", "CP150           ", "",     SDEV_NOLUNS},
+	{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09", SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
-	 "SONY    ", "SDT-5000        ", "3.17", SDEV_NOSYNCWIDE},
+	 "SONY    ", "SDT-5000        ", "3.",   SDEV_NOSYNCWIDE},
+	{T_SEQUENTIAL, T_REMOV,
+	 "SONY    ", "SDT-5200        ", "3.",   SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
@@ -561,7 +567,7 @@ scsi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
 			continue;
 		priority += len;
 
-#if 0
+#if SCSIDEBUG
 		printf("scsi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
 		    priority, match->type, match->removable,
 		    match->vendor, match->product, match->revision);
