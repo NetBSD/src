@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.26 2002/10/13 00:34:16 mrg Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.27 2002/12/19 22:44:31 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.26 2002/10/13 00:34:16 mrg Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.27 2002/12/19 22:44:31 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
 		(void)fprintf(fp, " == %s\n", arcn->ln_name);
 	else if (arcn->type == PAX_SLK)
-		(void)fprintf(fp, " => %s\n", arcn->ln_name);
+		(void)fprintf(fp, " -> %s\n", arcn->ln_name);
 	else
 		(void)fputc('\n', fp);
 	(void)fflush(fp);
