@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.14 1995/02/19 19:17:01 mycroft Exp $
+#	$NetBSD: Makefile,v 1.15 1995/02/21 09:16:34 mycroft Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
 
-CONS= -DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
-DEFS= -DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
+CONS=	-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
+DEFS=	-DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
+DEFS+=	-DNETIF_DEBUG
 CFLAGS=	-O3 ${INCPATH} ${DEFS}
 
 SRCS=   autoconf.c cons.c devopen.c machdep.c prf.c
@@ -32,7 +33,7 @@ LIBSA=	${SA_LIB}
 
 LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
 
-BOOTS=	pboot netboot dboot nboot dcopy tboot tcopy cat #ls
+BOOTS=	pboot netboot dboot dcopy tboot tcopy cat #ls
 ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
@@ -110,17 +111,6 @@ dboot:	srt0.o boot.o tapeconf.o ${LIBS}
 tapeconf.o: ${.CURDIR}/conf.c
 	${CC} ${CFLAGS} -DTAPEBOOT -c ${.CURDIR}/conf.c -o $@
 
-# non-secure boot (allows booting non-root owned or world writable kernels)
-
-nboot:	srt0.o nboot.o tapeconf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o nboot.o tapeconf.o ${LIBS} -o $@
-	@size $@
-	@echo $@ text+data size should not exceed 57344 bytes
-	@echo $@ total size should not exceed 1044480 bytes
-
-nboot.o: ${.CURDIR}/boot.c
-	${CC} ${CFLAGS} -DINSECURE -c ${.CURDIR}/boot.c -o $@
-
 dcopy:	srt0.o copy.o conf.o ${LIBS}
 	${LD} -N -T ${RELOC} -e begin srt0.o copy.o conf.o ${LIBS} -o $@
 
@@ -137,14 +127,13 @@ clean cleandir:
 	rm -f *.o *.exe *.i errs make.out
 	rm -f a.out pboot cat ls tboot tcopy
 	rm -f boot[a-z]? boot[a-wyz][a-z].c conf[a-wyz][a-z].c
-	rm -f core sboot tapeconf.c netconf.c nboot.c
-	rm -f libdrive.a mkboot dboot dcopy nboot installboot *.lif
+	rm -f core sboot
+	rm -f libdrive.a mkboot dboot dcopy installboot *.lif
 
 install: mkboot installboot ${ALL}
 	./mkboot pboot netbsdboot.lif
 	./mkboot netboot netboot.lif
 	./mkboot dboot diskboot.lif
-	./mkboot nboot ndiskboot.lif
 	./mkboot tboot tcopy tapeboot.lif
 	install -c -o bin -g bin -m 555 installboot ${DESTDIR}/usr/mdec
 	install -c -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/usr/mdec/rdboot
@@ -154,13 +143,12 @@ install: mkboot installboot ${ALL}
 	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/sdboot
 	rm -f ${DESTDIR}/usr/mdec/bootsd
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
-	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
 	install -c -o bin -g bin -m 444 netboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
+	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
 #	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 diskboot.lif ${DESTDIR}/sys/hpdist/tp
-#	install -o bin -g bin -m 444 ndiskboot.lif ${DESTDIR}/sys/hpdist/tp
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>
