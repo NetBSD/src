@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: create.c,v 1.4 1993/08/02 17:48:40 mycroft Exp $";
+static char rcsid[] = "$Id: create.c,v 1.5 1993/08/07 07:42:50 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -823,7 +823,8 @@ dump_file (p, curdev, toplevel)
 	  strcpy (namebuf + len, d->d_name);
 	  if (f_exclude && check_exclude (namebuf))
 	    continue;
-	  dump_file (namebuf, our_device, 0);
+	  if (!f_norecurse)
+	    dump_file (namebuf, our_device, 0);
 	}
 
       closedir (dirp);
