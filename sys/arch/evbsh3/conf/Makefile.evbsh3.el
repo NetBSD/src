@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbsh3.el,v 1.6 2000/05/09 00:56:23 hubertf Exp $
+#	$NetBSD: Makefile.evbsh3.el,v 1.7 2000/07/11 18:47:09 msaitoh Exp $
 
 # Makefile for NetBSD
 #
@@ -33,6 +33,7 @@ RANLIB?=ranlib
 SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
+OBJCOPY?= objcopy
 
 COPTS?=	-O2
 
