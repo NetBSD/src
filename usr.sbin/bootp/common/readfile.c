@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.9 2002/07/14 00:26:18 wiz Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.10 2002/07/14 00:30:03 wiz Exp $");
 #endif
 
 
@@ -1292,7 +1292,7 @@ process_generic(char **src, struct shared_bindata **dest, u_int tagvalue)
  */
 
 PRIVATE boolean
-goodname(register char *hostname)
+goodname(char *hostname)
 {
 	do {
 		if (!isalpha(*hostname++)) {	/* First character must be a letter */
@@ -1505,7 +1505,7 @@ fill_defaults(struct host *hp, char **src)
 PRIVATE void
 adjust(char **s)
 {
-	register char *t;
+	char *t;
 
 	t = *s;
 	while (*t && (*t != ':')) {
@@ -1529,7 +1529,7 @@ adjust(char **s)
 PRIVATE void
 eat_whitespace(char **s)
 {
-	register char *t;
+	char *t;
 
 	t = *s;
 	while (*t && isspace(*t)) {
@@ -1644,7 +1644,7 @@ PRIVATE int
 prs_inetaddr(char **src, u_int32 *result)
 {
 	char tmpstr[MAXSTRINGLEN];
-	register u_int32 value;
+	u_int32 value;
 	u_int32 parts[4], *pp;
 	int n;
 	char *s, *t;
@@ -1828,7 +1828,7 @@ interp_byte(char **src, byte *retbyte)
 PRIVATE u_int32
 get_u_long(char **src)
 {
-	register u_int32 value, base;
+	u_int32 value, base;
 	char c;
 
 	/*
