@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.24 2001/12/24 09:30:40 christos Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.25 2001/12/24 12:07:27 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.24 2001/12/24 09:30:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.25 2001/12/24 12:07:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,15 +326,20 @@ com_pcmcia_enable(sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
+	int error;
+
+	if ((error = com_pcmcia_enable1(sc)) != 0)
+		return error;
 
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_SERIAL, comintr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
+		com_pcmcia_disable1(sc);
 		return 1;
 	}
-	return com_pcmcia_enable1(sc);
+	return 0;
 }
 
 int
