@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.2 2001/02/05 19:22:23 briggs Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.3 2001/08/30 03:08:52 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,6 +37,12 @@
 #define OPENPIC_CONFIG			0x1020
 #define  OPENPIC_CONFIG_RESET			0x80000000
 #define  OPENPIC_CONFIG_8259_PASSTHRU_DISABLE	0x20000000
+
+/* interrupt configuration mode (direct or serial) */
+#define OPENPIC_ICR			0x1030
+#define  OPENPIC_ICR_SERIAL_MODE	(1 << 27)
+#define  OPENPIC_ICR_SERIAL_RATIO_MASK	(0x7 << 28)
+#define  OPENPIC_ICR_SERIAL_RATIO_SHIFT	28
 
 /* vendor ID */
 #define OPENPIC_VENDOR_ID		0x1080
