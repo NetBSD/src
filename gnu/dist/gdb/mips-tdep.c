@@ -2749,7 +2749,7 @@ long step_cache [3];		/* Cache for instructions wiped out by
 
 void
 single_step (ignore)
-     int ignore; /* pid, but we don't need it */
+     enum target_signal ignore;		/* not used */
 {
   CORE_ADDR pc;
   CORE_ADDR epc;
