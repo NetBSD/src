@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers.c,v 1.6 1993/11/21 19:01:02 brezak Exp $";
+static char rcsid[] = "$Id: rusers.c,v 1.7 1993/11/21 19:54:19 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -162,7 +162,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 			    idle_time,
 			    remote);
 		else
-			printf("%s ",
+			printf("%-8.8s ",
 			    up->uia_arr[x]->ui_utmp.ut_name);
 	}
 	if (!longopt)
