@@ -1,6 +1,4 @@
 /*
- * kern_lkm.c
- *
  * functions and pseudo-device for loadable kernel modules
  *
  * 05 Jun 93	Terry Lambert		Release cleanup
@@ -36,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.13 1994/02/15 14:02:59 mycroft Exp $
+ *	$Id: kern_lkm.c,v 1.14 1994/02/15 14:17:07 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -63,7 +61,6 @@
 #define	LKM_ALLOC	0x01
 #define	LKM_WANT	0x02
 
-
 #define	LKMS_IDLE	0x00
 #define	LKMS_RESERVED	0x01
 #define	LKMS_LOADING	0x02
@@ -81,13 +78,14 @@ static struct lkm_table	lkmods[MAXLKMS];	/* table of loaded modules */
 static struct lkm_table	*curp;			/* global for in-progress ops */
 
 /*ARGSUSED*/
+int
 lkmopen(dev, flag, devtype, p)
-dev_t		dev;
-int		flag;
-int		devtype;
-struct proc	*p;
+	dev_t dev;
+	int flag;
+	int devtype;
+	struct proc *p;
 {
-	int	error;
+	int error;
 
 	if (minor(dev) != 0)
 		return(ENXIO);		/* bad minor # */
@@ -105,7 +103,7 @@ struct proc	*p;
 		 * Sleep pending unlock; we use tsleep() to allow
 		 * an alarm out of the open.
 		 */
-		if (error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "LKM", 0))
+		if (error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0))
 			return(error);	/* leave LKM_WANT set -- no problem */
 	}
 	lkm_v |= LKM_ALLOC;
@@ -113,10 +111,7 @@ struct proc	*p;
 	return(0);		/* pseudo-device open */
 }
 
-
 /*
- * l k m u n r e s e r v e
- *
  * Unreserve the memory associated with the current loaded module; done on
  * a coerced close of the lkm device (close on premature exit of modload)
  * or explicitly by modload as a result of a link failure.
@@ -124,6 +119,7 @@ struct proc	*p;
 static int
 lkmunreserve()
 {
+
 	if (lkm_state == LKMS_IDLE)
 		return;
 
@@ -138,13 +134,14 @@ lkmunreserve()
 	lkm_state = LKMS_IDLE;
 }
 
-
+int
 lkmclose(dev, flag, mode, p)
-dev_t		dev;
-int		flag;
-int		mode;
-struct proc	*p;
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
+
 	if (!(lkm_v & LKM_ALLOC)) {
 #ifdef DEBUG
 		printf("LKM: close before open!\n");
@@ -168,22 +165,22 @@ struct proc	*p;
 	return(0);		/* pseudo-device closed */
 }
 
-
 /*ARGSUSED*/
+int
 lkmioctl(dev, cmd, data, flag)
-dev_t		dev;
-int		cmd;
-caddr_t		data;
-int		flag;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
 {
-	int			err = 0;
-	int			i;
-	struct lmc_resrv	*resrvp;
-	struct lmc_loadbuf	*loadbufp;
-	struct lmc_unload	*unloadp;
-	struct lmc_stat		*statp;
-	int			(*funcp)();
-	char			istr[MAXLKMNAME];
+	int err = 0;
+	int i;
+	struct lmc_resrv *resrvp;
+	struct lmc_loadbuf *loadbufp;
+	struct lmc_unload *unloadp;
+	struct lmc_stat	 *statp;
+	int (*funcp)();
+	char istr[MAXLKMNAME];
 
 	switch(cmd) {
 	case LMRESERV:		/* reserve pages for a module */
@@ -195,10 +192,9 @@ int		flag;
 		/*
 		 * Find a free slot.
 		 */
-		for (i = 0; i < MAXLKMS; i++) {
+		for (i = 0; i < MAXLKMS; i++)
 			if (!lkmods[i].used)
 				break;
-		}
 		if (i == MAXLKMS) {
 			err = ENOMEM;		/* no slots available */
 			break;
@@ -419,26 +415,20 @@ int		flag;
 	return (err);
 }
 
-
-/******************************************************************** */
-
-
 /*
- * l k m n o s y s
- *
  * Acts like "nosys" but can be identified in sysent for dynamic call
  * number assignment for a limited number of calls.
  *
  * Place holder for system call slots reserved for loadable modules.
  */
+int
 lkmnosys()
 {
+
 	return(nosys());
 }
 
 /*
- * l k m e n o d e v
- *
  * Acts like "enodev", but can be identified in cdevsw and bdevsw for
  * dynamic driver major number assignment for a limited number of
  * drivers.
@@ -448,17 +438,15 @@ lkmnosys()
 int
 lkmenodev()
 {
+
 	return(enodev());
 }
 
-/*********************************************************************/
-
-
 int
 lkmexists(lkmtp)
-struct lkm_table	*lkmtp;
+	struct lkm_table *lkmtp;
 {
-	int	i;
+	int i;
 
 	/*
 	 * see if name exists...
@@ -478,20 +466,19 @@ struct lkm_table	*lkmtp;
 	return(0);		/* module not loaded... */
 }
 
-
 /*
  * For the loadable system call described by the structure pointed to
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
 _lkm_syscall(lkmtp, cmd)
-struct lkm_table	*lkmtp;
-int			cmd;
+	struct lkm_table *lkmtp;
+	int cmd;
 {
-	struct lkm_syscall	*args = lkmtp->private.lkm_syscall;
-	int			i;
-	int			err = 0;
-	extern int		nsysent;	/* init_sysent.c */
+	struct lkm_syscall *args = lkmtp->private.lkm_syscall;
+	int i;
+	int err = 0;
+	extern int nsysent;	/* from init_sysent.c */
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -544,19 +531,18 @@ int			cmd;
 	return(err);
 }
 
-
 /*
  * For the loadable virtual file system described by the structure pointed
  * to by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
 _lkm_vfs(lkmtp, cmd)
-struct lkm_table	*lkmtp;
-int			cmd;
+	struct lkm_table *lkmtp;
+	int cmd;
 {
-	struct lkm_vfs		*args = lkmtp->private.lkm_vfs;
-	int			i;
-	int			err = 0;
+	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
+	int i;
+	int err = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -616,21 +602,19 @@ int			cmd;
 	return(err);
 }
 
-
 /*
  * For the loadable device driver described by the structure pointed to
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
 _lkm_dev(lkmtp, cmd)
-struct lkm_table	*lkmtp;
-int			cmd;
+	struct lkm_table *lkmtp;
+	int cmd;
 {
-	struct lkm_dev		*args = lkmtp->private.lkm_dev;
-	int			i;
-	int			err = 0;
-	extern int		nblkdev;	/* i386/i386/conf.c */
-	extern int		nchrdev;	/* i386/i386/conf.c */
+	struct lkm_dev *args = lkmtp->private.lkm_dev;
+	int i;
+	int err = 0;
+	extern int nblkdev, nchrdev;	/* from conf.c */
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -733,7 +717,6 @@ int			cmd;
 	return(err);
 }
 
-
 #ifdef STREAMS
 /*
  * For the loadable streams module described by the structure pointed to
@@ -741,12 +724,12 @@ int			cmd;
  */
 static int
 _lkm_strmod(lkmtp, cmd)
-struct lkm_table	*lkmtp;
-int			cmd;
+	struct lkm_table *lkmtp;
+	int cmd;
 {
-	struct lkm_strmod	*args = lkmtp->private.lkm_strmod;
-	int			i;
-	int			err = 0;
+	struct lkm_strmod *args = lkmtp->private.lkm_strmod;
+	int i;
+	int err = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -772,12 +755,12 @@ int			cmd;
  */
 static int
 _lkm_exec(lkmtp, cmd)
-struct lkm_table	*lkmtp;
-int			cmd;
+	struct lkm_table *lkmtp;
+	int cmd;
 {
-	struct lkm_exec		*args = lkmtp->private.lkm_exec;
-	int			i;
-	int			err = 0;
+	struct lkm_exec *args = lkmtp->private.lkm_exec;
+	int i;
+	int err = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -842,11 +825,12 @@ int			cmd;
  * is assumed to be done in their entry routines internal to the module
  * itself.
  */
+int
 lkmdispatch(lkmtp, cmd)
-struct lkm_table	*lkmtp;	
-int			cmd;
+	struct lkm_table *lkmtp;	
+	int cmd;
 {
-	int	err = 0;		/* default = success */
+	int err = 0;		/* default = success */
 
 	switch(lkmtp->private.lkm_any->lkm_type) {
 	case LM_SYSCALL:
@@ -864,9 +848,9 @@ int			cmd;
 #ifdef STREAMS
 	case LM_STRMOD:
 	    {
-		struct lkm_strmod	*args = lkmtp->private.lkm_strmod;
+		struct lkm_strmod *args = lkmtp->private.lkm_strmod;
 	    }
-	    break;
+		break;
 
 #endif	/* STREAMS */
 
@@ -875,11 +859,11 @@ int			cmd;
 		break;
 
 	case LM_MISC:	/* ignore content -- no "misc-specific" procedure */
-	    break;
+		break;
 
 	default:
-	    err = ENXIO;	/* unknown type */
-	    break;
+		err = ENXIO;	/* unknown type */
+		break;
 	}
 
 	return(err);
