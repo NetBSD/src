@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.43 2003/08/07 11:25:37 agc Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.44 2003/12/06 03:01:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.43 2003/08/07 11:25:37 agc Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.44 2003/12/06 03:01:16 jonathan Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ main(argc, argv)
 	char *cp, **cpp;
 #endif
 
-#define	MAXNFSDCNT	20
+#define	MAXNFSDCNT	1024
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
 	cltpflag = reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
