@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.8 1999/07/26 05:20:46 cgd Exp $
+#	$NetBSD: Makefile.macppc,v 1.9 1999/08/27 07:59:49 tsubai Exp $
 #
 # Makefile for NetBSD
 #
@@ -44,6 +44,7 @@ S!=	cd ../../../..; pwd
 .endif
 PPC=	$S/arch/macppc
 
+TEXTADDR?=	100000
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmacppc
@@ -53,7 +54,7 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-D_LOCORE
-LINKFLAGS=	-N -Ttext 100000 -e __start
+LINKFLAGS=	-N -Ttext ${TEXTADDR} -e __start
 STRIPFLAGS=	--strip-debug
 
 %INCLUDES
