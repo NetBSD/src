@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.37 1997/03/08 23:46:10 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.38 1997/03/16 05:25:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.37 1997/03/08 23:46:10 christos Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.38 1997/03/16 05:25:38 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -1008,29 +1008,27 @@ edit(lp, f)
 	struct disklabel *lp;
 	int f;
 {
-	int first, ch;
+	int first, ch, fd;
 	struct disklabel label;
-	FILE *fd;
+	FILE *fp;
 
-	(void) mktemp(tmpfil);
-	fd = fopen(tmpfil, "w");
-	if (fd == NULL) {
+	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
 		warn("%s", tmpfil);
 		return (1);
 	}
-	(void)fchmod(fileno(fd), 0600);
-	display(fd, lp);
-	(void) fclose(fd);
+	(void)fchmod(fd, 0600);
+	display(fp, lp);
+	(void) fclose(fp);
 	for (;;) {
 		if (!editit())
 			break;
-		fd = fopen(tmpfil, "r");
-		if (fd == NULL) {
+		fp = fopen(tmpfil, "r");
+		if (fp == NULL) {
 			warn("%s", tmpfil);
 			break;
 		}
 		(void) memset(&label, 0, sizeof(label));
-		if (getasciilabel(fd, &label)) {
+		if (getasciilabel(fp, &label)) {
 			*lp = label;
 			if (writelabel(f, bootarea, lp) == 0) {
 				(void) unlink(tmpfil);
