@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1997/11/20 08:52:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 1998/09/12 19:05:48 wrstuden Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
@@ -26,6 +26,9 @@ FILESDIR=/var/games/hackdir
 
 hack.onames.h: makedefs def.objects.h
 	${.OBJDIR}/makedefs ${.CURDIR}/def.objects.h > hack.onames.h
+
+makedefs: makedefs.c
+	${HOST_LINK.c} -o makedefs ${.CURDIR}/makedefs.c
 
 hack.h:	hack.onames.h
 
