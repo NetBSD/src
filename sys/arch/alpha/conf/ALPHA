@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.30.2.3 1997/01/31 17:14:45 cgd Exp $
+#	$NetBSD: ALPHA,v 1.30.2.4 1997/02/01 02:26:55 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -157,7 +157,7 @@ isa*	at	sio?
 # ISA devices
 mcclock* at	isa? port 0x70
 pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
+pckbd0	at	pcppi?				# PC keyboard (kbd port)
 pms*	at	pcppi?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3

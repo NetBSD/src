@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.32.2.4 1997/01/31 17:14:49 cgd Exp $
+#	$NetBSD: files.alpha,v 1.32.2.5 1997/02/01 02:27:01 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -126,7 +126,7 @@ file	arch/alpha/isa/pcppi.c		pcppi
 
 device	pckbd: wskbddev
 attach	pckbd at pcppi
-file	arch/alpha/isa/pckbd.c		pckbd
+file	arch/alpha/isa/pckbd.c		pckbd		needs-count
 
 device	pms: wsmousedev
 attach	pms at pcppi
