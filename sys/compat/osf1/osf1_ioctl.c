@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.5 1996/10/13 00:46:53 christos Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.6 1998/12/10 17:13:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

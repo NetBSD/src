@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.15 1998/08/09 20:37:53 perry Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.16 1998/12/10 17:13:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 /*
  * stty/gtty/termio emulation stuff
  */
+#include "opt_compat_43.h"
 
 #ifndef COMPAT_43
 #define COMPAT_43
