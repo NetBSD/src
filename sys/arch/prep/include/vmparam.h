@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2000/02/29 15:21:31 nonaka Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2000/05/01 10:43:42 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,7 +42,7 @@
 #endif
 
 #ifndef	DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* default data size */
+#define	DFLDSIZ		(32*1024*1024)		/* default data size */
 #endif
 
 #ifndef	MAXDSIZ
