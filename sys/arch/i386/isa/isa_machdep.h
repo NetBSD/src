@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 1995/04/21 04:53:15 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3 1995/04/21 05:21:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -116,19 +116,19 @@ extern vm_offset_t isaphysmem;
  * function definitions, invoked through the softc.
  */
 
-extern int atdevbase;           /* kernel virtual address of "hole" */
+extern u_long atdevbase;           /* kernel virtual address of "hole" */
 
 /*
  * Given a kernel virtual address for some location
  * in the "hole" I/O space, return a physical address.
  */
-#define ISA_PHYSADDR(v) ((caddr_t) ((u_long)(v) - atdevbase + IOM_BEGIN))
+#define ISA_PHYSADDR(v) ((void *) ((u_long)(v) - atdevbase + IOM_BEGIN))
 
 /*
  * Given a physical address in the "hole",
  * return a kernel virtual address.
  */
-#define ISA_HOLE_VADDR(p)  ((caddr_t) ((u_long)(p) - IOM_BEGIN + atdevbase))
+#define ISA_HOLE_VADDR(p)  ((void *) ((u_long)(p) - IOM_BEGIN + atdevbase))
 
 
 /*
