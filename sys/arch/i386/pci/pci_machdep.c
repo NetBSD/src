@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 1995/07/27 00:30:47 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17 1995/07/27 21:39:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -280,7 +280,7 @@ pci_map_io(tag, reg, iobasep)
 	address = pci_conf_read(tag, reg);
 
 	if ((address & PCI_MAP_IO) == 0)
-		panic("pci_map_io: attempt to memory map a memory region");
+		panic("pci_map_io: attempt to I/O map a memory region");
 
 	iobase = address & PCI_MAP_IO_ADDRESS_MASK;
 	*iobasep = iobase;
