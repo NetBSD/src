@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.122 1997/12/24 05:15:54 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.123 1998/02/18 03:14:31 jonathan Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -36,8 +36,12 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # SHLIB_SOVERSION:  	version number to be compiled into a shared library
 #                    	via -soname. Usualy ${SHLIB_MAJOR} on ELF.
 #   			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
-# SHLIB_LDSTARTFILE:	???
-# SHLIB_LDENDTILE:	??
+# SHLIB_SHFLAGS:	Flags to tell ${LD} to emit  shared library.
+#			with ELF, also set shared-lib version for ld.so.
+# SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
+# SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
+# SHLIB_WHOLE:		turn on whole-archive
+# SHLIB_NOWHOLE:	turn off whole-archive
 # CPPICFLAGS:	flags for ${CPP} to preprocess  .[sS]  files for ${AS}
 # CPICFLAGS:	flags for ${CC} to compile  .[cC] files to .so objects.
 # CAPICFLAGS	flags for {$CC} to compiling .[Ss] files
@@ -45,23 +49,21 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # APICFLAGS:	flags for ${AS} to assemble .[sS]  to .so objects.
 
 .if (${MACHINE_ARCH} == "alpha")
-
+		# Alpha-specific shared library flags
 SHLIB_TYPE=ELF
 SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
 SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
-SHLIB_SOVERSION=${SHLIB_MAJOR}
+
 CPICFLAGS ?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
-
 .elif (${MACHINE_ARCH} == "mips")
-
+		# mips-specific shared library flags
 SHLIB_TYPE=ELF
-# still use gnu-derived ld.so on pmax; don't have or need lib<>.so support.
+# Still use gnu-derived ld.so on pmax; don't have or need lib<>.so support.
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
-SHLIB_SOVERSION=${SHLIB_MAJOR}
 
 # On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
 CPICFLAGS?=
@@ -77,10 +79,14 @@ AS+=	-KPIC
 
 .else
 
+# Platform-independent flags for NetBSD a.out shared libraries
 SHLIB_TYPE=a.out
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
+SHLIB_SHFLAGS= -Bshareable -Bforcearchive
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
+SHLIB_WHOLE=
+SHLIB_NOWHOLE=
 CPICFLAGS?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
@@ -88,6 +94,13 @@ APICFLAGS?= -k
 
 .endif
 
+# Platform-independent linker flags for ELF shared libraries
+.if (${SHLIB_TYPE} == "ELF")
+SHILB_WHOLE=--whole-archive
+SHILB_NOWHOLE=--no-whole-archive
+SHLIB_SOVERSION=${SHLIB_MAJOR}
+SHLIB_SHFLAGS=-shared -soname lib${LIB}.so.${SHLIB_SOVERSION}
+.endif
 
 CFLAGS+=	${COPTS}
 
@@ -216,15 +229,10 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-.if (${SHLIB_TYPE} == "a.out")
-	$(LD) -x -Bshareable -Bforcearchive \
-	    -o ${.TARGET} lib${LIB}_pic.a ${LDADD}
-.elif (${SHLIB_TYPE} == "ELF")
-	$(LD) -x -shared -o ${.TARGET} \
-	    -soname lib${LIB}.so.${SHLIB_SOVERSION}  ${SHLIB_LDSTARTFILE} \
-	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
+	$(LD) -x ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	    ${SHLIB_LDSTARTFILE} \
+	    ${SHLIB_WHOLE} lib${LIB}_pic.a ${SHLIB_NOWHOLE} ${LDADD} \
 	    ${SHLIB_LDENDFILE}
-.endif
 
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 LLIBS?=		-lc
