@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.5 1999/09/18 00:31:02 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.6 1999/11/03 14:10:40 leo Exp $
 .\"
 .\" Copyright (c) 1995 Leo Weppelman
 .\" All rights reserved.
@@ -91,34 +91,26 @@ by a unit number.
 .It Tapes:
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
-SCSI tapes, see
-.Xr st 4 
+SCSI tapes
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar fd#
 Floppy disks (fdxa: 360Kb, fdxb: 720Kb, fdxc: 1.44Mb)
 . It Ar sd#
-SCSI disks, includes flopticals, see
-.Xr sd 4 
+SCSI disks, includes flopticals
 . It Ar cd#
-SCSI cdrom discs, see
-.Xr cd 4 
+SCSI cdrom discs
 . It Ar vnd#
-``file'' pseudo-disks, see
-.Xr vnd 4 
+``file'' pseudo-disks
 . It Ar ccd#
-Concatenated disk driver, see
-.Xr ccd 4 
+Concatenated disk driver
 . It Ar raid#
-RAIDframe disk driver, see
-.Xr raid 4 
+RAIDframe disk driver
 . It Ar md#
-Memory pseudo-disk driver, see
-.Xr md 4 
+Memory pseudo-disk driver
 . It Ar wd#
-IDE disks, see
-.Xr wd 4 
+IDE disks
 . El
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
@@ -147,47 +139,42 @@ UART on first 68901 (formerly mdm01)
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
-Set of 16 master and slave pseudo terminals, see
-.Xr pty 4 
+Set of 16 master and slave pseudo terminals
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
-. It Ar grf#
-Motherboard bitmapped video.
-. It Ar kbd
-Atari keyboard.
-. It Ar view#
-Generic interface to graphic displays.
 . It Ar aconf
 Autoconfig information (not yet)
-. It Ar lkm
-Loadable kernel modules interface, see
-.Xr lkm 4 
+. It Ar audio#
+Audio devices
 . It Ar bpf#
-Berkeley Packet Filter, see
-.Xr bpf 4 
-. It Ar tun#
-Network tunnel driver, see
-.Xr tun 4 
+Berkeley Packet Filter
+. It Ar ch
+SCSI changer
+. It Ar grf#
+Motherboard bitmapped video.
+. It Ar ipl
+IP Filter devices
+. It Ar kbd
+Atari keyboard.
+. It Ar lkm
+Loadable kernel modules interface
+. It Ar random
+Random number generator
+. It Ar rtc
+Atari RealTimeClock
 . It Ar scsibus#
 SCSI busses, see
 .Xr scsictl 8 ,
 .Xr scsi 4 
 . It Ar ss#
-SCSI scanner, see
-.Xr ss 4 
+SCSI scanner
+. It Ar tun#
+Network tunnel driver
 . It Ar uk#
-SCSI unknown, see
-.Xr uk 4 
-. It Ar ch
-SCSI changer, see
-.Xr ch 4 
-. It Ar rtc
-Atari RealTimeClock
-. It Ar ipl
-IP Filter devices
-. It Ar random
-Random number generator
+SCSI unknown
+. It Ar view#
+Generic interface to graphic displays.
 . El
 .It Video devices:
 . Bl -tag -width 0123456789 -compact
