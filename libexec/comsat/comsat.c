@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.30 2004/07/10 07:10:43 enami Exp $	*/
+/*	$NetBSD: comsat.c,v 1.31 2004/07/10 07:11:38 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.30 2004/07/10 07:10:43 enami Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.31 2004/07/10 07:11:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: comsat.c,v 1.30 2004/07/10 07:10:43 enami Exp $");
 
 static int	logging;
 static int	debug = 0;
-static char	hostname[MAXHOSTNAMELEN+1];
+static char	hostname[MAXHOSTNAMELEN + 1];
 static time_t	utmpmtime;		/* last modification time for utmp/x */
 static int	nutmp;
 static struct	utmpentry *utmp = NULL;
@@ -222,7 +222,7 @@ mailfor(const char *name)
 		 */
 		char maildir[MAXPATHLEN];
 		int l = snprintf(maildir, sizeof(maildir), ":%s/%s",
-				 _PATH_MAILDIR, name);
+		    _PATH_MAILDIR, name);
 		if (l > sizeof(maildir) || strcmp(maildir, fn) != 0)
 			return;
 	}
