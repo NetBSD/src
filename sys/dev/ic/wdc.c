@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.28 1998/09/10 19:24:45 kenh Exp $ */
+/*	$NetBSD: wdc.c,v 1.29 1998/09/22 00:27:51 mark Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -638,8 +638,8 @@ wdc_ata_start(wdc, xfer)
 			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 1);
 		else
-			bus_space_write_multi_stream_4(wdc->sc_iot, wdc->sc_ioh,
-			    wd_data, xfer->databuf + xfer->c_skip,
+			bus_space_write_multi_stream_4(wdc->sc_data32iot,
+			    wdc->sc_data32ioh, 0, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 2);
 	}
 
@@ -732,8 +732,8 @@ wdc_ata_intr(wdc,xfer)
 			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 1);
 		else
-			bus_space_read_multi_stream_4(wdc->sc_iot, wdc->sc_ioh,
-			    wd_data, xfer->databuf + xfer->c_skip,
+			bus_space_read_multi_stream_4(wdc->sc_data32iot,
+			    wdc->sc_data32ioh, 0, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 2);
 	}
     
@@ -869,8 +869,13 @@ wdc_get_parms(wdc, d_link)
 		d_link->sc_lp->d_type = DTYPE_ESDI;
 
 		/* Read in parameter block. */
-		bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
-		    (u_int16_t *)tb, sizeof(tb) >> 1);
+		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, (u_int16_t *)tb, sizeof(tb) >> 1);
+		else
+			bus_space_read_multi_4(wdc->sc_data32iot,
+			    wdc->sc_data32ioh, 0, (u_int32_t *)tb,
+			    sizeof(tb) >> 2);
 		bcopy(tb, &d_link->sc_params, sizeof(struct wdparams));
 
 		/* Shuffle string byte order. */
@@ -1470,8 +1475,14 @@ wdc_atapi_start(wdc, xfer)
 			wdc_atapi_done(wdc, xfer);
 			return;
 		}
-		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
-		    (u_int16_t *)sc_xfer->cmd, sc_xfer->cmdlen >> 1);
+		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, (u_int16_t *)sc_xfer->cmd,
+			    sc_xfer->cmdlen >> 1);
+		else
+			bus_space_write_multi_4(wdc->sc_data32iot,
+			    wdc->sc_data32ioh, 0, (u_int32_t *)sc_xfer->cmd,
+			    sc_xfer->cmdlen >> 2);
 	}
 	wdc->sc_flags |= WDCF_IRQ_WAIT;
 
@@ -1578,8 +1589,12 @@ wdc_atapi_get_params(ab_link, drive, id)
 		if (excess < 0)
 			excess = 0;
 	}
-	bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
-	    (u_int16_t *)id, sizeof(struct atapi_identify) >> 1);
+	if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+		bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)id, sizeof(struct atapi_identify) >> 1);
+	else
+		bus_space_read_multi_4(wdc->sc_data32iot, wdc->sc_data32ioh, 0,
+		    (u_int32_t *)id, sizeof(struct atapi_identify) >> 2);
 	wdcbit_bucket(wdc, excess);
 	wdc->sc_drives_mask |= (1 << drive);
 
@@ -1667,8 +1682,14 @@ wdc_atapi_send_command_packet(sc_xfer)
 		printf("Wait for cmd i/o phase: i = %d\n", i);
 #endif
 
-		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
-		    (u_int16_t *)sc_xfer->cmd, sc_xfer->cmdlen >> 1);
+		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, (u_int16_t *)sc_xfer->cmd,
+			    sc_xfer->cmdlen >> 1);
+		else
+			bus_space_write_multi_4(wdc->sc_data32iot,
+			    wdc->sc_data32ioh, 0, (u_int32_t *)sc_xfer->cmd,
+			    sc_xfer->cmdlen >> 2);
 
 		/* Wait for data i/o phase. */
 		for ( i= 20000; i > 0; --i) {
@@ -1782,8 +1803,14 @@ again:
 		}
 #endif
 
-		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
-		    (u_int16_t *)sc_xfer->cmd, sc_xfer->cmdlen >> 1);
+		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, (u_int16_t *)sc_xfer->cmd,
+			    sc_xfer->cmdlen >> 1);
+		else
+			bus_space_write_multi_4(wdc->sc_data32iot,
+			    wdc->sc_data32ioh, 0, (u_int32_t *)sc_xfer->cmd,
+			    sc_xfer->cmdlen >> 2);
 		return 1;
 
 	case PHASE_DATAOUT:
@@ -1799,17 +1826,27 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
-			    wd_data, xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount >> 1);
+			if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+				bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+				    wd_data, xfer->databuf + xfer->c_skip,
+				    xfer->c_bcount >> 1);
+			else
+				bus_space_write_multi_4(wdc->sc_data32iot,
+				    wdc->sc_data32ioh, 0, xfer->databuf + xfer->c_skip,
+				    xfer->c_bcount >> 2);
 			for (i = xfer->c_bcount; i < len; i += 2)
 				bus_space_write_2(wdc->sc_iot, wdc->sc_ioh,
 				    wd_data, 0);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
-			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
-			    wd_data, xfer->databuf + xfer->c_skip, len >> 1);
+			if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+				bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+				    wd_data, xfer->databuf + xfer->c_skip, len >> 1);
+			else
+				bus_space_write_multi_4(wdc->sc_data32iot,
+				    wdc->sc_data32ioh, 0, xfer->databuf + xfer->c_skip,
+				    len >> 2);
 			xfer->c_skip += len;
 			xfer->c_bcount -= len;
 		}
@@ -1828,15 +1865,25 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
-			    wd_data, xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount >> 1);
+			if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+				bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+				    wd_data, xfer->databuf + xfer->c_skip,
+				    xfer->c_bcount >> 1);
+			else
+				bus_space_read_multi_4(wdc->sc_data32iot,
+				    wdc->sc_data32ioh, 0, xfer->databuf + xfer->c_skip,
+				    xfer->c_bcount >> 2);
 			wdcbit_bucket(wdc, len - xfer->c_bcount);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
-			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
-			    wd_data, xfer->databuf + xfer->c_skip, len >> 1);
+			if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+				bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+				    wd_data, xfer->databuf + xfer->c_skip, len >> 1);
+			else
+				bus_space_read_multi_4(wdc->sc_data32iot,
+				    wdc->sc_data32ioh, 0, xfer->databuf + xfer->c_skip,
+				    len >> 2);
 			xfer->c_skip += len;
 			xfer->c_bcount -=len;
 		}
