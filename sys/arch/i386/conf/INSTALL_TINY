@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.61 2002/10/16 02:46:03 lukem Exp $
+#	$NetBSD: INSTALL_TINY,v 1.62 2002/10/22 23:35:16 thorpej Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -20,7 +20,7 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=2904	# size of memory disk, in blocks
 
 maxusers	2		# estimated number of users
 
