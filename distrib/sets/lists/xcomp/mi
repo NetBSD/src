@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.11 2003/03/01 00:11:30 tron Exp $
+# $NetBSD: mi,v 1.12 2003/10/18 11:46:49 he Exp $
 ./usr/X11R6/bin/gccmakedep
 ./usr/X11R6/bin/imake
 ./usr/X11R6/bin/lndir
@@ -44,7 +44,6 @@
 ./usr/X11R6/include/X11/XWDFile.h
 ./usr/X11R6/include/X11/Xalloca.h
 ./usr/X11R6/include/X11/Xatom.h
-./usr/X11R6/include/X11/Xauth.h
 ./usr/X11R6/include/X11/Xaw/AllWidgets.h
 ./usr/X11R6/include/X11/Xaw/AsciiSink.h
 ./usr/X11R6/include/X11/Xaw/AsciiSinkP.h
@@ -115,7 +114,6 @@
 ./usr/X11R6/include/X11/Xaw/XawImP.h
 ./usr/X11R6/include/X11/Xaw/XawInit.h
 ./usr/X11R6/include/X11/Xcms.h
-./usr/X11R6/include/X11/Xdmcp.h
 ./usr/X11R6/include/X11/Xfuncproto.h
 ./usr/X11R6/include/X11/Xfuncs.h
 ./usr/X11R6/include/X11/Xlib.h
@@ -306,9 +304,7 @@
 ./usr/X11R6/lib/libICE.a
 ./usr/X11R6/lib/libSM.a
 ./usr/X11R6/lib/libX11.a
-./usr/X11R6/lib/libXau.a
 ./usr/X11R6/lib/libXaw.a
-./usr/X11R6/lib/libXdmcp.a
 ./usr/X11R6/lib/libXext.a
 ./usr/X11R6/lib/libXi.a
 ./usr/X11R6/lib/libXmu.a
