@@ -25,7 +25,7 @@
  *
  * 	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_trap.c,v 1.3 1993/12/18 04:46:40 mycroft Exp $
+ *	$Id: db_trap.c,v 1.4 1994/04/04 08:59:38 mycroft Exp $
  */
 
 /*
@@ -37,6 +37,8 @@
 #include <ddb/db_command.h>
 #include <ddb/db_break.h>
 
+#include <setjmp.h>
+
 extern void		db_restart_at_pc();
 extern boolean_t	db_stop_at_pc();
 
@@ -44,11 +46,15 @@ extern int		db_inst_count;
 extern int		db_load_count;
 extern int		db_store_count;
 
+extern jmp_buf		*db_recover;
+
 db_trap(type, code)
 	int	type, code;
 {
 	boolean_t	bkpt;
 	boolean_t	watchpt;
+	jmp_buf		db_jmpbuf;
+	jmp_buf		*savejmp = db_recover;
 
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
@@ -65,7 +71,8 @@ db_trap(type, code)
 	    else
 		db_printf("Stopped at\t");
 	    db_dot = PC_REGS(DDB_REGS);
-	    db_print_loc_and_inst(db_dot);
+	    if (!setjmp(*(db_recover = &db_jmpbuf)))
+		db_print_loc_and_inst(db_dot);
 
 	    db_command_loop();
 	}
