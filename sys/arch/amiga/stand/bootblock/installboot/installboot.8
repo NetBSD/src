@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.4 1997/06/09 10:37:11 is Exp $
+.\"	$NetBSD: installboot.8,v 1.5 1997/06/11 16:01:59 is Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -110,7 +110,10 @@ AmigaOS startup does this). Currently,
 is not able to detect this condition, and will fail.
 .Sh BUGS
 There is currently no easy way to edit the RDB from within
-.Tn NetBSD.
+.Tn NetBSD. Therefore, you have to use HDTOOLBOX or a similar tool to
+set the partition to bootable, "use custom bootblocks" and the number
+of bootblocks to 16 (for xxboot) or 2 (for fdboot), at least the first
+time you install the bootblock.
 .Pp
 As normal dd is used to install the bootblock, you can only install onto
 your currently used root (or any other mounted) partition from single-user
