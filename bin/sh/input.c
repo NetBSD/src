@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.14 1995/05/11 21:29:15 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.15 1995/06/07 16:28:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.14 1995/05/11 21:29:15 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.15 1995/06/07 16:28:03 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$NetBSD: input.c,v 1.14 1995/05/11 21:29:15 christos Exp 
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
  * This file implements the input routines used by the parser.
