@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.18 1997/03/11 21:21:49 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.19 1997/05/07 02:14:59 lukem Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -26,11 +26,11 @@ options 	KGDB
 options 	KGDBDEV=0x0C01
 
 # Filesystem options
-file-system 	NFS		# nfs client support
-file-system 	FDESC		# /dev/fd/*
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	PROCFS		# /proc
+file-system	NFS		# nfs client support
+file-system	FDESC		# /dev/fd/*
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	PROCFS		# /proc
 
 options 	FIFO		# FIFOs; RECOMMENDED
 
@@ -61,11 +61,11 @@ config		netbsd root on ? type nfs
 #
 # Serial ports
 #
-zstty0 at zsc1 channel 0	# ttya
-zstty1 at zsc1 channel 1	# ttyb
+zstty0	at zsc1 channel 0	# ttya
+zstty1	at zsc1 channel 1	# ttyb
 
-kbd0   at zsc0 channel 0	# keyboard
-ms0    at zsc0 channel 1	# mouse
+kbd0	at zsc0 channel 0	# keyboard
+ms0	at zsc0 channel 1	# mouse
 
 #
 # Network devices
@@ -106,7 +106,7 @@ bwtwo0 at obmem0 addr ?
 cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
 
 # Support for the CG9 24-bit VME frame buffer.
-# cgnine0 at vmel0 addr 0x08000000
+#cgnine0 at vmel0 addr 0x08000000
 
 # Misc.
 pseudo-device	loop	1		# network loopback
