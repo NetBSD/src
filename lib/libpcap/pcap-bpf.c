@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.7 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.8 2002/09/22 16:13:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap-bpf.c,v 1.29 96/12/31 20:53:40 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.7 1999/07/02 10:05:22 itojun Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.8 2002/09/22 16:13:01 thorpej Exp $");
 #endif
 #endif
 
@@ -171,8 +171,11 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	int fd;
 	struct ifreq ifr;
 	struct bpf_version bv;
+	struct bpf_dltlist bdl;
 	u_int v;
 	pcap_t *p;
+
+	bzero(&bdl, sizeof(bdl));
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
@@ -226,6 +229,30 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 #endif
 	p->linktype = v;
 
+	/*
+	 * We know the default link type -- now determine any additional
+	 * DLTs this interface supports.  If this fails, it's not fatal;
+	 * we just don't get to use the feature later.
+	 */
+	if (ioctl(fd, BIOCGDLTLIST, (caddr_t) &bdl) == 0) {
+		bdl.bfl_list = (u_int *) malloc(sizeof(u_int) * bdl.bfl_len);
+		if (bdl.bfl_list == NULL) {
+			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+			    pcap_strerror(errno));
+			goto bad;
+		}
+
+		if (ioctl(fd, BIOCGDLTLIST, (caddr_t) &bdl) < 0) {
+			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
+			    "BIOCGDLTLIST: %s", pcap_strerror(errno));
+			free(bdl.bfl_list);
+			goto bad;
+		}
+
+		p->dlt_count = bdl.bfl_len;
+		p->dlt_list = bdl.bfl_list;
+	}
+
 	/* set timeout */
 	if (to_ms != 0) {
 		struct timeval to;
@@ -257,6 +284,8 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	return (p);
  bad:
 	(void)close(fd);
+	if (bdl.bfl_list != NULL)
+		free(bdl.bfl_list);
 	free(p);
 	return (NULL);
 }
@@ -279,4 +308,26 @@ pcap_setfilter(pcap_t *p, struct bpf_program *fp)
 		return (-1);
 	}
 	return (0);
+}
+
+int
+pcap_set_datalink(pcap_t *p, int dlt)
+{
+	int i;
+
+	for (i = 0; i < p->dlt_count; i++)
+		if (p->dlt_list[i] == dlt)
+			break;
+	if (i >= p->dlt_count) {
+		(void) snprintf(p->errbuf, sizeof(p->errbuf),
+		    "No such DLT as %d", dlt);
+		return -1;
+	}
+	if (ioctl(p->fd, BIOCSDLT, &dlt) == -1) {
+		(void) snprintf(p->errbuf, sizeof(p->errbuf),
+		    "Cannot set DLT %d: %s", dlt, strerror(errno));
+		return -1;
+	}
+	p->linktype = dlt;
+	return 0;
 }

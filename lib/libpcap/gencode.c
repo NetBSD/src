@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.31 2002/08/26 11:21:18 yamt Exp $	*/
+/*	$NetBSD: gencode.c,v 1.32 2002/09/22 16:13:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.31 2002/08/26 11:21:18 yamt Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.32 2002/09/22 16:13:01 thorpej Exp $");
 #endif
 #endif
 
@@ -560,6 +560,11 @@ init_linktype(type)
 	case DLT_ARCNET:
 		off_linktype = 2;
 		off_nl = 6;	/* XXX in reality, variable! */
+		return;
+
+	case DLT_IEEE802_11:
+		off_linktype = 30; /* XXX variable */
+		off_nl = 32;
 		return;
 
 	case DLT_EN10MB:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.8 2000/04/12 14:40:33 itojun Exp $	*/
+/*	$NetBSD: pcap.c,v 1.9 2002/09/22 16:13:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap.c,v 1.27 96/11/27 18:43:25 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap.c,v 1.8 2000/04/12 14:40:33 itojun Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.9 2002/09/22 16:13:01 thorpej Exp $");
 #endif
 #endif
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: pcap.c,v 1.8 2000/04/12 14:40:33 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
@@ -122,6 +123,24 @@ int
 pcap_datalink(pcap_t *p)
 {
 	return (p->linktype);
+}
+
+int
+pcap_list_datalinks(pcap_t *p, int **dlt_buffer)
+{
+	if (p->dlt_count <= 0) {
+		*dlt_buffer = NULL;
+		return -1;
+	}
+	*dlt_buffer = (int*)malloc(sizeof(**dlt_buffer) * p->dlt_count);
+	if (*dlt_buffer == NULL) {
+		(void)snprintf(p->errbuf, sizeof(p->errbuf), "malloc: %s",
+		    pcap_strerror(errno));
+		return -1;
+	}
+	(void)memcpy(*dlt_buffer, p->dlt_list,
+	    sizeof(**dlt_buffer) * p->dlt_count);
+	return (p->dlt_count);
 }
 
 int
@@ -208,6 +227,8 @@ pcap_close(pcap_t *p)
 	if (p->md.device != NULL)
 		free(p->md.device);
 #endif
+	if (p->dlt_list != NULL)
+		free(p->dlt_list);
 
 	free(p);
 }
