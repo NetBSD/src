@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.18 2000/03/25 15:27:54 tsutsui Exp $	*/
+/*	$NetBSD: oak.c,v 1.19 2001/03/17 18:46:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ oak_attach(parent, self, aux)
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
 
-	printf(" host=%d, using 8 bit PIO\n",
+	printf(": host=%d, using 8 bit PIO\n",
 	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
 	ncr5380_attach(&sc->sc_ncr5380);
