@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.183 1999/12/17 14:00:12 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.184 1999/12/17 17:19:12 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.178 1999/12/17 13:59:44 augustss Exp 
+ *	NetBSD: pcidevs,v 1.179 1999/12/17 17:18:48 drochner Exp 
  */
 
 /*
@@ -2048,6 +2048,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82451KX/GX Memory Controller (MC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX_MIOC,
+	    0,
+	    "Intel",
+	    "82451NX Memory & I/O Controller (MIOC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX_PXB,
+	    0,
+	    "Intel",
+	    "82451NX PCI Expander Bridge (PXB)",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
