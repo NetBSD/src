@@ -3,6 +3,7 @@
 ./usr/include/machine/aout_machdep.h
 ./usr/include/machine/apmvar.h
 ./usr/include/machine/asm.h
+./usr/include/machine/bootinfo.h
 ./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/conf.h
@@ -17,6 +18,7 @@
 ./usr/include/machine/frame.h
 ./usr/include/machine/freebsd_machdep.h
 ./usr/include/machine/gdt.h
+./usr/include/machine/ibcs2_machdep.h
 ./usr/include/machine/ieeefp.h
 ./usr/include/machine/intr.h
 ./usr/include/machine/joystick.h
