@@ -1,8 +1,8 @@
-.\" $NetBSD: at.1,v 1.16 2000/11/07 06:43:35 lukem Exp $
+.\" $NetBSD: at.1,v 1.17 2001/10/17 22:09:55 wiz Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd October 15, 2000
-.Dt "AT" 1
+.Dt AT 1
 .Os
 .Sh NAME
 .Nm at ,
@@ -121,7 +121,7 @@ For example, to run a job at 4pm three days from now, you would do
 to run a job at 10:00am on July 31, you would do
 .Dl at 10am Jul 31
 and to run a job at 1am tomorrow, you would do
-.Dl at 1am tomorrow.
+.Dl at 1am tomorrow .
 .Pp
 Alternatively the time may be specified in a language-neutral fashion
 by using the
@@ -149,7 +149,7 @@ An
 .Nm
 or
 .Nm batch
-command invoked from a 
+command invoked from a
 .Xr su 1
 shell will retain the current userid.
 The user will be mailed standard error and standard output from his
@@ -157,7 +157,7 @@ commands, if any. Mail will be sent using the command
 .Xr sendmail 8 .
 If
 .Nm
-is executed from a 
+is executed from a
 .Xr su 1
 shell, the owner of the login shell will receive the mail.
 .Pp
@@ -183,7 +183,7 @@ to use
 If neither exists, only the superuser is allowed use of
 .Nm "" .
 .Pp
-An empty 
+An empty
 .Pa /var/at/at.deny
 means that every user is allowed use these commands.
 This is the default configuration.
@@ -228,7 +228,7 @@ Uses the specified queue.
 A queue designation consists of a single letter.  Valid queue designations
 range from
 .Sq a
-to 
+to
 .Sq z
 and
 .Sq A
@@ -291,12 +291,12 @@ Deny permission control
 Job-creation lock file.
 .El
 .Sh SEE ALSO
-.Xr cron 8 ,
 .Xr nice 1 ,
-.Xr umask 2 ,
 .Xr sh 1 ,
-.Xr sendmail 8 ,
-.Xr atrun 8
+.Xr umask 2 ,
+.Xr atrun 8 ,
+.Xr cron 8 ,
+.Xr sendmail 8
 .Sh STANDARDS
 The
 .Nm
@@ -304,12 +304,14 @@ and
 .Nm batch
 utilities conform to
 .St -p1003.2-92 .
+.Sh AUTHORS
+At was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
+The time parsing routines are by David Parsons <orc@pell.chi.il.us>.
 .Sh BUGS
-.Pp
 If the file
 .Pa /var/run/utmp
 is not available or corrupted, or if the user is not logged on at the
-time 
+time
 .Nm
 is invoked, the mail is sent to the userid found
 in the environment variable
@@ -324,6 +326,3 @@ resources.
 If this is the case for your site, you might want to consider another
 batch system, such as
 .Ic nqs .
-.Sh AUTHORS
-At was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
-The time parsing routines are by David Parsons <orc@pell.chi.il.us>.
