@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.12 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: mfp.c,v 1.13 2005/01/17 14:06:14 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.12 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.13 2005/01/17 14:06:14 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,6 @@ mfp_attach(parent, self, aux)
 	struct mfp_softc *sc = (struct mfp_softc *)self;
 	struct intio_attach_args *ia = aux;
 
-	mfp_attached = 1;
-
 	mfp_init ();
 
 	if (sc != NULL) {
@@ -112,6 +110,7 @@ mfp_attach(parent, self, aux)
 
 		printf ("\n");
 
+		mfp_attached = 1;
 		sc->sc_bst = ia->ia_bst;
 		sc->sc_intr = ia->ia_intr;
 		ia->ia_size = 0x30;
