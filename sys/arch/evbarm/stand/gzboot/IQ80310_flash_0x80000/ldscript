@@ -1,3 +1,5 @@
+/*	$NetBSD: ldscript,v 1.4 2002/03/02 22:29:40 thorpej Exp $	*/
+
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
 OUTPUT_ARCH(arm)
