@@ -1,6 +1,8 @@
+/*	$NetBSD: dirname.c,v 1.5 1995/03/28 16:50:12 glass Exp $	*/
+
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,21 +34,24 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dirname.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: dirname.c,v 1.4 1993/10/01 22:23:58 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)dirname.c	8.3 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: dirname.c,v 1.5 1995/03/28 16:50:12 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
 
-static void usage	__P((void));
+static void usage __P((void));
 
 int
 main(argc, argv)
@@ -92,10 +97,9 @@ main(argc, argv)
 	 * (3) If there are any trailing slash characters in string, they
 	 *     shall be removed.
 	 */
-	for (; *p; ++p)
-		;
+	for (; *p; ++p);
 	while (*--p == '/')
-		;
+		continue;
 	*++p = '\0';
 
 	/*
@@ -143,6 +147,8 @@ main(argc, argv)
 static void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: dirname path\n");
 	exit(1);
 }
+
