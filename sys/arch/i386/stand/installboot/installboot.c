@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.10 1999/01/16 18:26:47 he Exp $	 */
+/* $NetBSD: installboot.c,v 1.11 1999/01/17 18:16:16 he Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -564,8 +564,9 @@ out:
 		(void) close(devfd);
 	if (bp)
 		free(bp);
-	if (inode != (ino_t)-1
-	    && !conblockmode) {
+	if (inode != (ino_t)-1 && /* failed? */
+	    inode != (ino_t)-2 && /* small boot, no FS blocks? */
+	    !conblockmode) {	/* contiguous blocks? */
 		cleanupfileondev(argv[optind + 1], bootblkname, !allok || nowrite);
 	}
 	return (!allok);
