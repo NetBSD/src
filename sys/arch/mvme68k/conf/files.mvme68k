@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.6 1996/05/16 19:00:06 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.7 1996/05/20 01:15:54 chuck Exp $
 
 # config file for mvme68k
 
@@ -42,15 +42,21 @@ attach vmes at vmechip
 device vmel { [ atype = -1 ], addr = 0, [ ipl = -1 ], [ vec = - 1 ] }
 attach vmel at vmechip
 
+# RAM disk for boot tape
+pseudo-device rd
+file dev/ramdisk.c				rd needs-flag
+file arch/mvme68k/dev/rd_root.c			ramdisk_hooks
+
 # MVME-147 VME controller chip
 attach vmechip at pcc with vmechip_pcc
 file arch/mvme68k/dev/vme_pcc.c			vmechip_pcc
 
 include "../../../scsi/files.scsi"
 
-major { sd = 7 }
-major { cd = 18 }
 major { vnd = 6 }
+major { sd = 7 }
+major { rd = 9 }
+major { cd = 18 }
 
 # WD33C93 SCSI ...
 define sbic
