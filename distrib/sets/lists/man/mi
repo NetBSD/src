@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.645 2004/01/04 00:54:18 lukem Exp $
+# $NetBSD: mi,v 1.646 2004/01/04 13:20:49 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -6,8 +6,8 @@
 ./usr/share/info/binutils.info			man-computil-info
 ./usr/share/info/bzip2.info			man-util-info
 ./usr/share/info/cpp.info			man-util-info
-./usr/share/info/cvs.info			man-cvs-info
-./usr/share/info/cvsclient.info			man-cvs-info
+./usr/share/info/cvs.info			man-cvs-info	cvs
+./usr/share/info/cvsclient.info			man-cvs-info	cvs
 ./usr/share/info/dc.info			man-util-info
 ./usr/share/info/diff.info			man-util-info
 ./usr/share/info/dir				man-info-share
