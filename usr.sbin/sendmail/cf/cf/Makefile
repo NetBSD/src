@@ -23,15 +23,24 @@ RM=	rm -f
 	(cd ${.CURDIR} && $(M4) ${@:R}.mc > ${.OBJDIR}/$@)
 	$(CHMOD) $(ROMODE) $@
 
-ALL=	boat-anchor.cf chimera.cf sun-lamp.cf trinity.cf \
-	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf
+ALL= netbsd-proto.cf
+
+OTHERS= boat-anchor.cf chimera.cf sun-lamp.cf trinity.cf \
+	clientproto.cf tcpproto.cf uucpproto.cf
+
+FILES=	boat-anchor.mc chimera.mc sun-lamp.mc trinity.mc \
+	clientproto.mc netbsd-proto.mc tcpproto.mc uucpproto.mc Makefile
+
+FILESDIR= /usr/share/sendmail/cf
 
 all: $(ALL)
+
+others: $(OTHERS)
 
 clean cleandir:
 	$(RM) $(ALL) core
 
-depend install: 
+depend:
 
 distribution:
 	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
@@ -84,3 +93,4 @@ M4FILES=\
 $(ALL):  $(M4FILES)
 
 .include <bsd.prog.mk>
+.include <bsd.files.mk>
