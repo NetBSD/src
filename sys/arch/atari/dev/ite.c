@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.22 1997/01/10 21:24:25 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.23 1997/06/29 20:30:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -511,6 +511,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	struct tty		*tp;
 	view_t			*view;
 	struct itewinsize	*is;
+	struct itebell		*ib;
 	int error;
 	
 	ip   = getitesp(dev);
@@ -528,46 +529,64 @@ iteioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case ITEIOCSKMAP:
-		if (addr == 0)
+		if (addr == NULL)
 			return(EFAULT);
 		bcopy(addr, ip->kbdmap, sizeof(struct kbdmap));
-		return(0);
+		return 0;
 	case ITEIOCSSKMAP:
-		if (addr == 0)
+		if (addr == NULL)
 			return(EFAULT);
 		bcopy(addr, &ascii_kbdmap, sizeof(struct kbdmap));
-		return(0);
+		return 0;
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
 		bcopy(ip->kbdmap, addr, sizeof(struct kbdmap));
-		return(0);
+		return 0;
 	case ITEIOCGREPT:
+		if (addr == NULL)
+			return(EFAULT);
 		irp = (struct iterepeat *)addr;
 		irp->start = start_repeat_timeo;
 		irp->next = next_repeat_timeo;
-		return(0);
+		return 0;
 	case ITEIOCSREPT:
+		if (addr == NULL)
+			return(EFAULT);
 		irp = (struct iterepeat *)addr;
 		if (irp->start < ITEMINREPEAT || irp->next < ITEMINREPEAT)
 			return(EINVAL);
 		start_repeat_timeo = irp->start;
 		next_repeat_timeo = irp->next;
-		return(0);
+		return 0;
 	case ITEIOCGWINSZ:
+		if (addr == NULL)
+			return(EFAULT);
 		is         = (struct itewinsize *)addr;
 		is->x      = view->display.x;
 		is->y      = view->display.y;
 		is->width  = view->display.width;
 		is->height = view->display.height;
 		is->depth  = view->bitmap->depth;
-		return(0);
+		return 0;
 	case ITEIOCDSPWIN:
 		ip->grf->g_mode(ip->grf, GM_GRFON, NULL, 0, 0);
-		return(0);
+		return 0;
 	case ITEIOCREMWIN:
 		ip->grf->g_mode(ip->grf, GM_GRFOFF, NULL, 0, 0);
-		return(0);
+		return 0;
+	case ITEIOCSBELL:
+		if (addr == NULL)
+			return(EFAULT);
+		ib = (struct itebell *)addr;
+		kbd_bell_sparms(ib->volume, ib->pitch, ib->msec);
+		return 0;
+	case ITEIOCGBELL:
+		if (addr == NULL)
+			return(EFAULT);
+		ib = (struct itebell *)addr;
+		kbd_bell_gparms(&ib->volume, &ib->pitch, &ib->msec);
+		return 0;
 	}
 	error = (ip->itexx_ioctl)(ip, cmd, addr, flag, p);
 	if(error >= 0)
