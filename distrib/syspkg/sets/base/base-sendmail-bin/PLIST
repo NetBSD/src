@@ -1,6 +1,0 @@
-@cwd /
-./usr/libexec/sendmail
-./usr/libexec/sendmail/sendmail
-./usr/libexec/smrsh
-./usr/sbin/makemap
-./usr/sbin/praliases
