@@ -1,4 +1,4 @@
-/*	$NetBSD: moddi3.c,v 1.2 1995/02/27 17:30:35 cgd Exp $	*/
+/*	$NetBSD: moddi3.c,v 1.3 1996/06/01 02:24:31 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)moddi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: moddi3.c,v 1.2 1995/02/27 17:30:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: moddi3.c,v 1.3 1996/06/01 02:24:31 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,16 +58,17 @@ __moddi3(a, b)
 	quad_t a, b;
 {
 	u_quad_t ua, ub, ur;
-	int neg;
+	int neg = 0;
+
+	ua = a;
+	ub = b;
 
 	if (a < 0)
-		ua = -(u_quad_t)a, neg = 1;
-	else
-		ua = a, neg = 0;
+		ua = -ua, neg ^= 1;
 	if (b < 0)
-		ub = -(u_quad_t)b, neg ^= 1;
-	else
-		ub = b;
+		ub = -ub, neg ^= 1;
 	(void)__qdivrem(ua, ub, &ur);
-	return (neg ? -ur : ur);
+	if (neg)
+		ur = -ur;
+	return (ur);
 }
