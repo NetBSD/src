@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.24 2001/02/04 22:14:13 christos Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.25 2002/08/01 18:52:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.24 2001/02/04 22:14:13 christos Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.25 2002/08/01 18:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,6 @@ __RCSID("$NetBSD: rlogind.c,v 1.24 2001/02/04 22:14:13 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
-#include <utmp.h>
 #include "pathnames.h"
 
 #ifndef TIOCPKT_WINDOW
@@ -250,7 +249,6 @@ doit(f, fromp)
 {
 	int master, pid, on = 1;
 	int authenticated = 0;
-	char utmphost[UT_HOSTSIZE + 1];
 	char *hostname;
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 	char c;
@@ -353,12 +351,6 @@ doit(f, fromp)
 
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 
-	if (strlen(hostname) < sizeof(utmphost))
-		(void)strcpy(utmphost, hostname);
-	else
-		(void)strncpy(utmphost, hostname, sizeof(utmphost));
-	utmphost[sizeof(utmphost) - 1] = '\0';
-
 	if (ntohs(*portp) >= IPPORT_RESERVED ||
 	    ntohs(*portp) < IPPORT_RESERVED/2) {
 		syslog(LOG_NOTICE, "Connection from %s on illegal port",
@@ -414,10 +406,10 @@ doit(f, fromp)
 		setup_term(0);
 		if (authenticated)
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", utmphost, "-f", "--", lusername, (char *)0);
+			    "-h", hostname, "-f", "--", lusername, (char *)0);
 		else
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", utmphost, "--", lusername, (char *)0);
+			    "-h", hostname, "--", lusername, (char *)0);
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
