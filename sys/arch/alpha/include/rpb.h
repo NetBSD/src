@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.29 1999/03/17 18:58:51 drochner Exp $ */
+/* $NetBSD: rpb.h,v 1.30 1999/04/14 23:28:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -367,6 +367,23 @@ struct ctb {
 	u_int64_t	ctb_line_off;		/* 264: line parameter offset */
 	u_int8_t	ctb_csd;		/* 272: console specific data */
 };
+
+/*
+ * Format of the Console Terminal Block Type 4 `turboslot' field:
+ *
+ *  63                   40 39       32 31     24 23      16 15   8 7    0
+ *  |      reserved        |  channel  |  hose   | bus type |  bus | slot|
+ */
+#define	CTB_TURBOSLOT_CHANNEL(x)	(((x) >> 32) & 0xff)
+#define	CTB_TURBOSLOT_HOSE(x)		(((x) >> 24) & 0xff)
+#define	CTB_TURBOSLOT_TYPE(x)		(((x) >> 16) & 0xff)
+#define	CTB_TURBOSLOT_BUS(x)		(((x) >> 8) & 0xff)
+#define	CTB_TURBOSLOT_SLOT(x)		((x) & 0xff)
+
+#define	CTB_TURBOSLOT_BUS_TC		0	/* TURBOchannel */
+#define	CTB_TURBOSLOT_BUS_ISA		1	/* ISA */
+#define	CTB_TURBOSLOT_BUS_EISA		2	/* EISA */
+#define	CTB_TURBOSLOT_BUS_PCI		3	/* PCI */
 
 /* 
  * CRD: Console Routine Descriptor
