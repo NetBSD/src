@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.12 2000/12/27 04:22:11 lukem Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.13 2001/01/04 00:57:14 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.12 2000/12/27 04:22:11 lukem Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.13 2001/01/04 00:57:14 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -168,9 +168,10 @@ getparts(int sd, int np, u_int32_t off, u_int32_t extoff, int verbose)
 				/* find existing entry, or first free slot */
 		unused = -1;	/* flag as no free slot */
 		if (verbose)
-			printf("Found %s partition at %d, size %d\n",
-			    fstypenames[npe.p_fstype], npe.p_offset,
-			    npe.p_size);
+			printf(
+			    "Found %s partition; size %u (%u MB), offset %u\n",
+			    fstypenames[npe.p_fstype],
+			    npe.p_size, npe.p_size / 2048, npe.p_offset);
 		for (j = 0; j < label.d_npartitions; j++) {
 			struct partition *lpe;
 
