@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.9 1994/06/29 06:46:02 cgd Exp $	*/
+/*	$NetBSD: ucred.h,v 1.10 1994/12/24 14:02:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,9 +53,11 @@ struct ucred {
 
 #ifdef KERNEL
 #define	crhold(cr)	(cr)->cr_ref++
-struct ucred	*crget __P((void));
+
 struct ucred	*crcopy __P((struct ucred *cr));
 struct ucred	*crdup __P((struct ucred *cr));
+void		crfree __P((struct ucred *cr));
+struct ucred	*crget __P((void));
 int		suser __P((struct ucred *cred, u_short *acflag));
 #endif /* KERNEL */
 
