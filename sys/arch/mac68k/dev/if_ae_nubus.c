@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.15 1997/04/30 18:10:37 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.16 1997/04/30 19:32:32 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -167,7 +167,7 @@ ae_nubus_attach(parent, self, aux)
 		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
 			sc->sc_reg_map[i] = (15 - i) << 2;
 
-		sc->scr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -203,7 +203,7 @@ ae_nubus_attach(parent, self, aux)
 		for (i = 0; i < 16; i++) /* normal order, longword aligned */
 			sc->sc_reg_map[i] = i << 2;
 
-		sc->scr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -235,7 +235,7 @@ ae_nubus_attach(parent, self, aux)
 		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
 			sc->sc_reg_map[i] = (15 - i) << 2;
 
-		sc->scr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -275,7 +275,7 @@ ae_nubus_attach(parent, self, aux)
 		for (i = 0; i < 16; i++) /* normal order, longword aligned */
 			sc->sc_reg_map[i] = i << 2;
 
-		sc->scr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    GC_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
