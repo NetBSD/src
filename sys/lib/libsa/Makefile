@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.2 1994/05/08 16:11:14 brezak Exp $
+#	$Id: Makefile,v 1.3 1994/07/27 07:40:52 cgd Exp $
 
 LIB=	sa
 
 #DEBUGFLAGS= -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
-CFLAGS+=-DSTANDALONE $(DEBUGFLAGS) -I${.CURDIR}
+CFLAGS+=-DSTANDALONE $(DEBUGFLAGS) -I${.CURDIR} -I${.CURDIR}/../.. -DKERNEL
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
