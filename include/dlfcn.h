@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.7 1998/05/12 21:17:09 pk Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.8 1998/07/14 22:18:36 tv Exp $	*/
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -61,8 +61,8 @@ __END_DECLS
 /* Values for dlopen `mode'. */
 #define RTLD_LAZY	1
 #define RTLD_NOW	2
-#define RTLD_LOCAL	0x000
 #define RTLD_GLOBAL	0x100		/* Allow global searches in object */
+#define RTLD_LOCAL	0x200
 #if !defined(_XOPEN_SOURCE)
 #define DL_LAZY		RTLD_LAZY	/* Compat */
 #endif
