@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.18 1993/10/27 22:20:49 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.19 1993/10/28 00:59:22 mycroft Exp $
  */
 
 /*
@@ -311,22 +311,24 @@ _pcprobe(ps)
 		*cp = (u_short) 0xA55A;
 		if (*cp == 0xA55A) {
 			ps->ps_flags &= ~PSF_COLOR;
-			Crtat = (u_short *)cp;
 			goto found;
 		}
+		*cp = was;
 
 		cp = (u_short volatile *)ISA_HOLE_VADDR(CGA_BUF);
 		was = *cp;
 		*cp = (u_short) 0xA55A;
 		if (*cp == 0xA55A) {
 			ps->ps_flags |= PSF_COLOR;
-			Crtat = (u_short *)cp;
 			goto found;
 		}
+		*cp = was;
 
 		return 0;
 
 	    found:
+		*cp = was;
+		Crtat = (u_short *)cp;
 	}
 
 	iobase = ps->ps_iobase;
