@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.4 2004/11/29 04:13:15 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.5 2004/11/29 05:02:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.4 2004/11/29 04:13:15 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.5 2004/11/29 05:02:40 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: getent.c,v 1.4 2004/11/29 04:13:15 lukem Exp $");
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -77,29 +78,32 @@ enum {
 	RV_NOENUM	= 3,
 };
 
+static struct getentdb {
+	const char	*name;
+	int		(*callback)(int, char *[]);
+} databases[] = {
+	{	"group",	group,		},
+	{	"hosts",	hosts,		},
+	{	"networks",	networks,	},
+	{	"passwd",	passwd,		},
+	{	"protocols",	protocols,	},
+	{	"services",	services,	},
+	{	"shells",	shells,		},
+
+	{	NULL,		NULL,		},
+};
+
+
 int
 main(int argc, char *argv[])
 {
-	static struct {
-		const char	*name;
-		int		(*callback)(int, char *[]);
-	} *curdb, dbs[] = {
-		{	"group",	group,		},
-		{	"hosts",	hosts,		},
-		{	"networks",	networks,	},
-		{	"passwd",	passwd,		},
-		{	"protocols",	protocols,	},
-		{	"services",	services,	},
-		{	"shells",	shells,		},
-
-		{	NULL,		NULL,		},
-	};
+	struct getentdb	*curdb;
 
 	setprogname(argv[0]);
 
 	if (argc < 2)
 		usage();
-	for (curdb = dbs; curdb->name != NULL; curdb++) {
+	for (curdb = databases; curdb->name != NULL; curdb++) {
 		if (strcmp(curdb->name, argv[1]) == 0) {
 			exit(curdb->callback(argc, argv));
 			break;
@@ -114,9 +118,15 @@ main(int argc, char *argv[])
 static int
 usage(void)
 {
+	struct getentdb	*curdb;
 
 	fprintf(stderr, "Usage: %s database [key ...]\n",
 	    getprogname());
+	fprintf(stderr, "       database may be one of:\n\t");
+	for (curdb = databases; curdb->name != NULL; curdb++) {
+		fprintf(stderr, " %s", curdb->name);
+	}
+	fprintf(stderr, "\n");
 	exit(RV_USAGE);
 	/* NOTREACHED */
 }
@@ -142,27 +152,35 @@ parsenum(const char *word, unsigned long *result)
 	return 1;
 }
 
+/*
+ * printfmtstrings --
+ *	vprintf(format, ...),
+ *	then the aliases (beginning with prefix, separated by sep),
+ *	then a newline
+ */
+static void
+printfmtstrings(char *strings[], const char *prefix, const char *sep,
+	const char *fmt, ...)
+{
+	va_list		ap;
+	const char	*curpref;
+	int		i;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+
+	curpref = prefix;
+	for (i = 0; strings[i] != NULL; i++) {
+		printf("%s%s", curpref, strings[i]);
+		curpref = sep;
+	}
+	printf("\n");
+}
+
 
 		/*
 		 * group
 		 */
-
-static void
-groupprint(const struct group *gr)
-{
-	char	prefix;
-	int	i;
-	
-	assert(gr != NULL);
-	printf("%s:%s:%u",
-	    gr->gr_name, gr->gr_passwd, gr->gr_gid);
-	prefix = ':';
-	for (i = 0; gr->gr_mem[i] != NULL; i++) {
-		printf("%c%s", prefix, gr->gr_mem[i]);
-		prefix = ',';
-	}
-	printf("\n");
-}
 
 static int
 group(int argc, char *argv[])
@@ -174,11 +192,14 @@ group(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
+#define GROUPPRINT	printfmtstrings(gr->gr_mem, ":", ",", "%s:%s:%u", \
+			    gr->gr_name, gr->gr_passwd, gr->gr_gid)
+
 	setgroupent(1);
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((gr = getgrent()) != NULL)
-			groupprint(gr);
+			GROUPPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
@@ -186,7 +207,7 @@ group(int argc, char *argv[])
 			else
 				gr = getgrnam(argv[i]);
 			if (gr != NULL)
-				groupprint(gr);
+				GROUPPRINT;
 			else {
 				rv = RV_NOTFOUND;
 				break;
@@ -206,17 +227,11 @@ static void
 hostsprint(const struct hostent *he)
 {
 	char	buf[INET6_ADDRSTRLEN];
-	int	i;
 
 	assert(he != NULL);
 	if (inet_ntop(he->h_addrtype, he->h_addr, buf, sizeof(buf)) == NULL)
 		strlcpy(buf, "# unknown", sizeof(buf));
-	printf("%s\t%s",
-	    buf, he->h_name);
-	for (i = 0; he->h_aliases[i] != NULL; i++) {
-		printf(" %s", he->h_aliases[i]);
-	}
-	printf("\n");
+	printfmtstrings(he->h_aliases, "  ", " ", "%-16s  %s", buf, he->h_name);
 }
 
 static int
@@ -264,21 +279,12 @@ networksprint(const struct netent *ne)
 {
 	char		buf[INET6_ADDRSTRLEN];
 	struct	in_addr	ianet;
-	int		i;
-	char		prefix;
 
 	assert(ne != NULL);
 	ianet = inet_makeaddr(ne->n_net, 0);
 	if (inet_ntop(ne->n_addrtype, &ianet, buf, sizeof(buf)) == NULL)
 		strlcpy(buf, "# unknown", sizeof(buf));
-	printf("%s\t%s",
-	    ne->n_name, buf);
-	prefix = '\t';
-	for (i = 0; ne->n_aliases[i] != NULL; i++) {
-		printf("%c%s", prefix, ne->n_aliases[i]);
-		prefix = ' ';
-	}
-	printf("\n");
+	printfmtstrings(ne->n_aliases, "  ", " ", "%-16s  %s", ne->n_name, buf);
 }
 
 static int
@@ -320,16 +326,6 @@ networks(int argc, char *argv[])
 		 * passwd
 		 */
 
-static void
-passwdprint(const struct passwd *pw)
-{
-	
-	assert(pw != NULL);
-	printf("%s:%s:%u:%u:%s:%s:%s\n",
-	    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-	    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
-}
-
 static int
 passwd(int argc, char *argv[])
 {
@@ -340,11 +336,15 @@ passwd(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
+#define PASSWDPRINT	printf("%s:%s:%u:%u:%s:%s:%s\n", \
+			    pw->pw_name, pw->pw_passwd, pw->pw_uid, \
+			    pw->pw_gid, pw->pw_gecos, pw->pw_dir, pw->pw_shell)
+
 	setpassent(1);
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((pw = getpwent()) != NULL)
-			passwdprint(pw);
+			PASSWDPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
@@ -352,7 +352,7 @@ passwd(int argc, char *argv[])
 			else
 				pw = getpwnam(argv[i]);
 			if (pw != NULL)
-				passwdprint(pw);
+				PASSWDPRINT;
 			else {
 				rv = RV_NOTFOUND;
 				break;
@@ -368,19 +368,6 @@ passwd(int argc, char *argv[])
 		 * protocols
 		 */
 
-static void
-protocolsprint(const struct protoent *pe)
-{
-	int		i;
-
-	assert(pe != NULL);
-	printf("%s\t%d", pe->p_name, pe->p_proto);
-	for (i = 0; pe->p_aliases[i] != NULL; i++) {
-		printf(" %s", pe->p_aliases[i]);
-	}
-	printf("\n");
-}
-
 static int
 protocols(int argc, char *argv[])
 {
@@ -391,11 +378,14 @@ protocols(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
+#define PROTOCOLSPRINT	printfmtstrings(pe->p_aliases, "  ", " ", \
+			    "%-16s  %5d", pe->p_name, pe->p_proto)
+
 	setprotoent(1);
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((pe = getprotoent()) != NULL)
-			protocolsprint(pe);
+			PROTOCOLSPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
@@ -403,7 +393,7 @@ protocols(int argc, char *argv[])
 			else
 				pe = getprotobyname(argv[i]);
 			if (pe != NULL)
-				protocolsprint(pe);
+				PROTOCOLSPRINT;
 			else {
 				rv = RV_NOTFOUND;
 				break;
@@ -419,19 +409,6 @@ protocols(int argc, char *argv[])
 		 * services
 		 */
 
-static void
-servicesprint(const struct servent *se)
-{
-	int		i;
-
-	assert(se != NULL);
-	printf("%s\t%d/%s", se->s_name, ntohs(se->s_port), se->s_proto);
-	for (i = 0; se->s_aliases[i] != NULL; i++) {
-		printf(" %s", se->s_aliases[i]);
-	}
-	printf("\n");
-}
-
 static int
 services(int argc, char *argv[])
 {
@@ -443,11 +420,15 @@ services(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
+#define SERVICESPRINT	printfmtstrings(se->s_aliases, "  ", " ", \
+			    "%-16s  %5d/%s", \
+			    se->s_name, ntohs(se->s_port), se->s_proto)
+
 	setservent(1);
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((se = getservent()) != NULL)
-			servicesprint(se);
+			SERVICESPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
 			proto = strchr(argv[i], '/');
@@ -458,7 +439,7 @@ services(int argc, char *argv[])
 			else
 				se = getservbyname(argv[i], proto);
 			if (se != NULL)
-				servicesprint(se);
+				SERVICESPRINT;
 			else {
 				rv = RV_NOTFOUND;
 				break;
@@ -483,17 +464,19 @@ shells(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
+#define SHELLSPRINT	printf("%s\n", sh)
+
 	setusershell();
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((sh = getusershell()) != NULL)
-			printf("%s\n", sh);
+			SHELLSPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
 			setusershell();
 			while ((sh = getusershell()) != NULL) {
 				if (strcmp(sh, argv[i]) == 0) {
-					printf("%s\n", sh);
+					SHELLSPRINT;
 					break;
 				}
 			}
