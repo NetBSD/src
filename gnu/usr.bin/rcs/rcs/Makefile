@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.2 1993/08/02 17:47:41 mycroft Exp $
+#	$Id: Makefile,v 1.3 1993/11/03 16:09:31 cgd Exp $
 
 PROG=	rcs
 CFLAGS+= -I${.CURDIR}/../lib
-LDADD=  ${LIBRCS}
-DPADD=  ${LIBRCS}
+LDADD=	${LIBRCS} -lgnumalloc
+DPADD=	${LIBRCS} /usr/lib/libgnumalloc.a
 
 MAN1=	rcs.0 rcsintro.0
 MAN5=   rcsfile.0
