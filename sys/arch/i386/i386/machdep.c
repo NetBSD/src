@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282 1998/02/04 05:12:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.283 1998/02/06 05:35:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2118,6 +2118,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 {
 	u_long pa, endpa;
 	vm_offset_t va;
+	pt_entry_t *pte;
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page(bpa + size);
@@ -2136,20 +2137,20 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-#if 0
-		/* 
-		 * Not done for two reasons:
-		 *
-		 *	(1) PG_N doesn't exist on the 386.
-		 *
-		 *	(2) pmap_changebit() only deals with
-		 *	    managed pages.
+
+		/*
+		 * PG_N doesn't exist on 386's, so we assume that
+		 * the mainboard has wired up device space non-cacheable
+		 * on those machines.
 		 */
-		if (!cacheable)
-			pmap_changebit(pa, PG_N, ~0);
-		else
-			pmap_changebit(pa, 0, ~PG_N);
-#endif
+		if (cpu_class != CPUCLASS_386) {
+			pte = kvtopte(va);
+			if (cacheable)
+				*pte &= ~PG_N;
+			else
+				*pte |= PG_N;
+			pmap_update();
+		}
 	}
  
 	return 0;
