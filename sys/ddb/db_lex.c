@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.16 2002/02/15 07:33:51 simonb Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.17 2003/03/02 13:39:40 enami Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.16 2002/02/15 07:33:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.17 2003/03/02 13:39:40 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ int	db_radix = 16;
 char *
 db_num_to_str(db_expr_t val)
 {
+
 	/*
 	 * 2 chars for "0x", 1 for a sign ("-")
 	 * up to 21 chars for a 64-bit number:
@@ -147,12 +148,12 @@ db_num_to_str(db_expr_t val)
 	static char buf[25];
 
 	if (db_radix == 16)
-		snprintf(buf, sizeof(buf), "%#10lx", val);
+		snprintf(buf, sizeof(buf), "%#lx", val);
 	else if (db_radix == 8)
-		snprintf(buf, sizeof(buf), "%#10lo", val);
+		snprintf(buf, sizeof(buf), "%#lo", val);
 	else
-		snprintf(buf, sizeof(buf), "%10lu", val);
-	return buf;
+		snprintf(buf, sizeof(buf), "%lu", val);
+	return (buf);
 }
 
 void
