@@ -1,35 +1,65 @@
-#	$NetBSD: Makefile,v 1.22 2001/04/14 12:31:34 martin Exp $	
+#	$NetBSD: Makefile,v 1.23 2001/06/25 19:41:19 itojun Exp $	
+
+.include <bsd.own.mk>
+
+SRCDIR=	${.CURDIR}/../../dist/tcpdump
+.PATH:	${SRCDIR}
 
 PROG=	tcpdump
 MAN=	tcpdump.8 
 
-CPPFLAGS+=-DHAVE_FCNTL_H=1 -DHAVE_MALLOC_H=1 -DHAVE_MEMORY_H=1
-CPPFLAGS+=-DTIME_WITH_SYS_TIME=1 -DHAVE_NET_SLIP_H=1 -DHAVE_VFPRINTF=1
-CPPFLAGS+=-DHAVE_STRCASECMP=1 -DHAVE_ETHER_NTOA=1 -DHAVE_SETLINEBUF=1
-CPPFLAGS+=-DRETSIGTYPE=void -DRETSIGVAL= -DHAVE_SIGACTION=1
-CPPFLAGS+=-DHAVE_SOCKADDR_SA_LEN=1 -DHAVE_FDDI -DHAVE_TOKEN -DLBL_ALIGN
-CPPFLAGS+=-DHAVE_HDLC
-CPPFLAGS+=-DINET6 -DHAVE_LIBZ -DHAVE_ZLIB_H -DHAVE_SOCKADDR_STORAGE
+SRCS=	addrtoname.c gmt2local.c machdep.c parsenfsfh.c \
+	print-802_11.c print-ah.c print-arcnet.c print-arp.c \
+	print-ascii.c print-atalk.c print-atm.c print-bgp.c \
+	print-bootp.c print-bxxp.c print-cdp.c print-chdlc.c \
+	print-cip.c print-cnfp.c print-decnet.c print-domain.c \
+	print-dvmrp.c print-egp.c print-esp.c print-ether.c \
+	print-fddi.c print-gre.c print-icmp.c print-igmp.c \
+	print-igrp.c print-ip.c print-ipcomp.c print-ipx.c \
+	print-isakmp.c print-isoclns.c print-krb.c print-l2tp.c \
+	print-lane.c print-lcp.c print-llc.c print-lwres.c \
+	print-mobile.c print-mpls.c print-nfs.c print-ntp.c print-null.c \
+	print-ospf.c print-pim.c print-ppp.c print-pppoe.c \
+	print-pptp.c print-radius.c print-raw.c print-rip.c \
+	print-rx.c print-sctp.c print-sl.c print-sll.c \
+	print-snmp.c print-stp.c print-sunrpc.c print-tcp.c \
+	print-telnet.c print-tftp.c print-timed.c print-token.c \
+	print-udp.c print-vjc.c print-vrrp.c print-wb.c \
+	setsignal.c tcpdump.c util.c
+
+SRCS+=	print-ip6.c print-ip6opts.c print-ripng.c print-icmp6.c print-frag6.c \
+	print-rt6.c print-ospf6.c print-dhcp6.c bpf_dump.c version.c
+
+# disabled for now
+#SRCS+=	print-smb.c smbutil.c
+
+version.c: VERSION
+	sed -e 's/.*/char version[] = "&";/' ${.ALLSRC} > ${.TARGET}
 
 LDADD+=	-lpcap -ll
 DPADD+=	${LIBPCAP} ${LIBL}
 
-SRCS=	util.c tcpdump.c setsignal.c savestr.c print-wb.c print-udp.c \
-print-tftp.c print-tcp.c print-sunrpc.c print-snmp.c print-sl.c print-rip.c \
-print-raw.c print-ppp.c print-pim.c print-ospf.c print-null.c print-ntp.c \
-print-nfs.c print-netbios.c print-llc.c print-krb.c print-isoclns.c print-ipx.c \
-print-ip.c print-igrp.c print-icmp.c print-gre.c print-fddi.c print-ether.c \
-print-egp.c print-dvmrp.c print-domain.c print-decnet.c print-bootp.c print-atm.c \
-print-chdlc.c print-token.c print-pppoe.c \
-print-atalk.c print-arp.c parsenfsfh.c machdep.c gmt2local.c bpf_dump.c \
-addrtoname.c print-mobile.c print-arcnet.c
-SRCS+=	print-ah.c print-esp.c print-frag6.c print-icmp6.c print-ip6.c \
-	print-ip6opts.c print-ipcomp.c print-isakmp.c print-ospf6.c \
-	print-ripng.c print-rt6.c print-dhcp6.c print-bgp.c
-SRCS+= version.c
-SRCS+= print-ascii.c print-telnet.c
-SRCS+= print-vrrp.c
+CPPFLAGS+=	-I${.CURDIR} -I${SRCDIR}
 
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   
+
+CPPFLAGS+=-DRETSIGTYPE=void -DTIME_WITH_SYS_TIME=1 -DINET6=1 \
+	-DHAVE_ADDRINFO=1 -DHAVE_H_ERRNO=1 -DHAVE_IN6ADDRSZ=1 \
+	-DHAVE_INADDRSZ=1 -DHAVE_RES_USE_INET6=1 -DHAVE_SOCKADDR_SA_LEN=1 \
+	-DHAVE_SOCKADDR_STORAGE=1 -DRETSIGVAL= -DHAVE_ETHER_NTOHOST=1 \
+	-DHAVE_FREEADDRINFO=1 -DHAVE_GETADDRINFO=1 -DHAVE_GETNAMEINFO=1 \
+	-DHAVE_SETLINEBUF=1 -DHAVE_SIGACTION=1 -DHAVE_SNPRINTF=1 \
+	-DHAVE_STRCASECMP=1 -DHAVE_STRDUP=1 -DHAVE_STRLCAT=1 \
+	-DHAVE_STRLCPY=1 -DHAVE_VFPRINTF=1 -DHAVE_VSNPRINTF=1 \
+	-DHAVE_CAST_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IF_ETHER_H=1 \
+	-DHAVE_RPC_RPCENT_H=1 -DHAVE___ATTRIBUTE__=1
+
+.if (${MKCRYPTO} != "no")
+CPPFLAGS+=-DHAVE_LIBCRYPTO=1 
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
+.endif
+
+CLEANFILES+=	tcpdump.8 version.c
 
 .include <bsd.prog.mk>
