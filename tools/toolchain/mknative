@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative,v 1.9 2003/02/07 01:52:54 lukem Exp $
+#	$NetBSD: mknative,v 1.10 2003/03/01 13:09:10 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -68,16 +68,28 @@ get_libbfd () {
 		getvars bfd/Makefile \
 			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
 			INCLUDES TDEFAULTS
-		getvars opcodes/Makefile \
-			archdefs BFD_MACHINES libopcodes_la_SOURCES
 	} | write_mk gnu/lib/libbfd/arch/$MACHINE_ARCH/defs.mk
 
 	write_c gnu/lib/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
 
 	{
 		cat $_TMPDIR/bfd/config.h
-		grep -v PACKAGE $_TMPDIR/opcodes/config.h
 	} | write_c gnu/lib/libbfd/arch/$MACHINE_ARCH/config.h
+}
+
+##### gnu/lib/libopcodes #####
+
+get_libopcodes () {
+	mkdir -p $_TOP/gnu/lib/libopcodes/arch/$MACHINE_ARCH
+
+	{
+		getvars opcodes/Makefile \
+			archdefs BFD_MACHINES libopcodes_la_SOURCES
+	} | write_mk gnu/lib/libopcodes/arch/$MACHINE_ARCH/defs.mk
+
+	{
+		cat $_TMPDIR/opcodes/config.h
+	} | write_c gnu/lib/libopcodes/arch/$MACHINE_ARCH/config.h
 }
 
 ##### gnu/lib/libg2c #####
@@ -103,14 +115,14 @@ get_libg2c () {
 ##### gnu/lib/libgcc #####
 
 get_libgcc () {
+	mkdir -p $_TOP/gnu/usr.bin/gcc/arch/$MACHINE_ARCH $_TOP/gnu/lib/libgcc
+
 	# DPBIT, FPBIT only used on mn10[23]00, we don't need them.
 	getvars gcc/Makefile \
 		CXX_EXTRA_HEADERS CXX_LIB2FUNCS CXX_LIB2SRCS \
 		INCLUDES LIB2ADD LIB2FUNCS LIB2FUNCS_EH \
 		LIBGCC2_CFLAGS MAYBE_USE_COLLECT2 \
 		| write_mk gnu/lib/libgcc/$MACHINE_ARCH.mk
-
-	mkdir -p $_TOP/gnu/usr.bin/gcc/arch/$MACHINE_ARCH
 
 	for f in tconfig tm; do
 		write_c gnu/usr.bin/gcc/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
@@ -120,6 +132,8 @@ get_libgcc () {
 ##### gnu/lib/libiberty #####
 
 get_libiberty () {
+	mkdir -p $_TOP/gnu/lib/libiberty
+
 	getvars libiberty/Makefile \
 		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
 		| write_mk gnu/lib/libiberty/defs.mk
@@ -131,6 +145,8 @@ get_libiberty () {
 ##### gnu/lib/libobjc #####
 
 get_libobjc () {
+	mkdir -p $_TOP/gnu/lib/libobjc
+
 	getvars $_PLATFORM/libobjc/Makefile \
 		ALL_CFLAGS INCLUDES OBJS OBJC_H \
 		| write_mk gnu/lib/libobjc/defs.mk
@@ -275,7 +291,7 @@ get_gdb () {
 	case $MACHINE_ARCH in
 	powerpc*)
 		mkdir -p $_TOP/gnu/usr.bin/sim/arch/$MACHINE_ARCH
-		write_c $_TOP/gnu/usr.bin/sim/arch/$MACHINE_ARCH/config.h \
+		write_c gnu/usr.bin/sim/arch/$MACHINE_ARCH/config.h \
 			<$_TMPDIR/sim/ppc/config.h
 		;;
 	*)
@@ -301,6 +317,7 @@ all)	# everything (uses "canadian cross" temp environment)
 	get_gcc
 	[ -f $_TMPDIR/gdb/config.h ] && get_gdb
 	get_libbfd
+	get_libopcodes
 	get_libg2c
 	get_libgcc
 	get_libiberty
