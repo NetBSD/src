@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/01/26 13:21:11 aymeric Exp $
+#	$NetBSD: Makefile,v 1.4 2002/01/26 15:03:18 aymeric Exp $
 
 ### what we need:
 
@@ -109,3 +109,5 @@ libboot.a: ${OBJS}
 
 ${COBJS}: ${TXLT}
 ${FILES}: ${RELOC2BB}
+
+.include "${.CURDIR}/../Makefile.booters"
