@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap.h,v 1.2 1995/03/06 11:39:07 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
