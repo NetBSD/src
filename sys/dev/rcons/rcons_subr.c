@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.3 1999/04/13 18:43:17 ad Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.4 1999/04/22 00:46:36 ad Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -58,7 +58,11 @@
 
 extern void rcons_bell(struct rconsole *);
 
+#if 0
 #define RCONS_ISPRINT(c) ((((c) >= ' ') && ((c) <= '~')) || ((c) > 160))
+#else
+#define RCONS_ISPRINT(c) (((((c) >= ' ') && ((c) <= '~'))) || ((c) > 127))
+#endif
 #define RCONS_ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 
 /* Initalize our operations set */
@@ -77,10 +81,7 @@ rcons_init_ops(rc)
 		rc->rc_charmap[i] = ch;
 	}
 
-	/* 
-	 * Determine which attributes the device supports. 
-	 * XXX should determine exactly which _combinations_ work. 
-	 */ 
+	/* Determine which attributes the device supports. */
 	rc->rc_fgcolor = RASTERCONSOLE_FGCOL;
 	rc->rc_bgcolor = RASTERCONSOLE_BGCOL;
 	rc->rc_supwsflg = 0;
@@ -179,7 +180,6 @@ rcons_pctrl(rc, c)
 {
 
 	switch (c) {
-
 	case '\r':	/* Carriage return */
 		rc->rc_col = 0;
 		break;
