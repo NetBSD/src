@@ -1,11 +1,11 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.2 2001/12/28 05:46:56 nathanw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.3 2002/12/17 00:05:37 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Klaus Klein and by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -83,11 +83,23 @@ typedef struct {
 } __fpregset_t;
 
 typedef struct {
+	unsigned int	__vfp_fpscr;
+	unsigned int	__vfp_fstmx[33];
+	unsigned int	__vfp_fpsid;
+} __vfpregset_t;
+
+typedef struct {
 	__gregset_t	__gregs;
-	__fpregset_t	__fpregs;
+	union {
+		__fpregset_t __fpregs;
+		__vfpregset_t __vfpregs;
+	} __fpu;
 } mcontext_t;
 
-#define _UC_MACHINE_PAD	13		/* Padding appended to ucontext_t */
+/* Machine-dependent uc_flags */
+#define	_UC_ARM_VFP	0x00010000	/* FPU field is VFP */
+
+#define _UC_MACHINE_PAD	3		/* Padding appended to ucontext_t */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 
