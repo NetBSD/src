@@ -1,6 +1,7 @@
-/*	$NetBSD: blockio.S,v 1.2 2001/05/30 00:14:09 bjh21 Exp $	*/
+/*	$NetBSD: blockio.S,v 1.3 2001/06/02 10:44:56 bjh21 Exp $	*/
 
 /*
+ * Copyright (c) 2001 Ben Harris.
  * Copyright (c) 1994 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
@@ -47,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.2 2001/05/30 00:14:09 bjh21 Exp $")
+RCSID("$NetBSD: blockio.S,v 1.3 2001/06/02 10:44:56 bjh21 Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -95,6 +96,54 @@ Lrm1_l4:
 	strgeb	r3, [r1], #1
 	ldrgtb	r3, [r0]
 	strgtb	r3, [r1], #1
+	mov	pc, r14
+
+/*
+ * Write bytes to an I/O address from a block of memory
+ *
+ * r0 = address to write to (IO)
+ * r1 = address to read from (memory)
+ * r2 = length
+ */
+
+/* This code will look very familiar if you've read _memcpy(). */
+ENTRY(write_multi_1)
+	subs	r2, r2, #4		/* r2 = length - 4 */
+	blt	Lwm1_l4			/* less than 4 bytes */
+	ands	r12, r1, #3
+	beq	Lwm1_main		/* aligned source */
+	rsb	r12, r12, #4
+	cmp	r12, #2
+	ldrb	r3, [r1], #1
+	strb	r3, [r0]
+	ldrgeb	r3, [r1], #1
+	strgeb	r3, [r0]
+	ldrgtb	r3, [r1], #1
+	strgtb	r3, [r0]
+	subs	r2, r2, r12
+	blt	Lwm1_l4
+Lwm1_main:
+Lwm1loop:
+	ldr	r3, [r1], #4
+	strb	r3, [r0]
+	mov	r3, r3, lsr #8
+	strb	r3, [r0]
+	mov	r3, r3, lsr #8
+	strb	r3, [r0]
+	mov	r3, r3, lsr #8
+	strb	r3, [r0]
+	subs	r2, r2, #4
+	bge	Lwm1loop
+Lwm1_l4:
+	adds	r2, r2, #4			/* r2 = length again */
+	moveq	pc, r14
+	cmp	r2, #2
+	ldrb	r3, [r1], #1
+	strb	r3, [r0]
+	ldrgeb	r3, [r1], #1
+	strgeb	r3, [r0]
+	ldrgtb	r3, [r1], #1
+	strgtb	r3, [r0]
 	mov	pc, r14
 
 /*
