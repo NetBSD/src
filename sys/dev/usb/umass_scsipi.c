@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.14 2003/09/10 05:42:18 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.15 2003/09/12 19:02:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.14 2003/09/10 05:42:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.15 2003/09/12 19:02:30 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -202,7 +202,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 	memset(&scbus->sc_channel, 0, sizeof(scbus->sc_channel));
 	scbus->sc_channel.chan_adapter = &scbus->sc_adapter;
 	scbus->sc_channel.chan_channel = 0;
-	scbus->sc_channel.chan_flags = SCSIPI_CHAN_OPENINGS;
+	scbus->sc_channel.chan_flags = SCSIPI_CHAN_OPENINGS | SCSIPI_CHAN_NOSETTLE;
 	scbus->sc_channel.chan_openings = 1;
 	scbus->sc_channel.chan_max_periph = 1;
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
