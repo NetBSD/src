@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.7 1999/06/19 18:01:26 sommerfeld Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.8 1999/06/21 05:11:09 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #include <sys/syscallargs.h>
 
 static int
-getcwd_scandir __P((struct vnode *, struct vnode **,
+getcwd_scandir __P((struct vnode **, struct vnode **,
     char **, char *, struct proc *));
 static int
 getcwd_getcache __P((struct vnode **, struct vnode **,
@@ -79,10 +79,13 @@ int vn_isunder __P((struct vnode *, struct vnode *, struct proc *));
  *
  * Place the name in the buffer which starts at bufp, immediately
  * before *bpp, and move bpp backwards to point at the start of it.
+ *
+ * On entry, *cvpp is a locked vnode reference; on exit, it is vput and NULL'ed
+ * On exit, *pvpp is either NULL or is a locked vnode reference.
  */
 static int
-getcwd_scandir(cvp, pvpp, bpp, bufp, p)
-	struct vnode *cvp;
+getcwd_scandir(cvpp, pvpp, bpp, bufp, p)
+	struct vnode **cvpp;
 	struct vnode **pvpp;
 	char **bpp;
 	char *bufp;
@@ -99,16 +102,31 @@ getcwd_scandir(cvp, pvpp, bpp, bufp, p)
 	ino_t   fileno;
 	struct vattr va;
 	struct vnode *pvp = NULL;
+	struct vnode *cvp = *cvpp;	
 	struct componentname cn;
 	int len, reclen;
 	tries = 0;
 
 	/*
+	 * If we want the filename, get some info we need while the
+	 * current directory is still locked.
+	 */
+	if (bufp != NULL) {
+		error = VOP_GETATTR(cvp, &va, p->p_ucred, p);
+		if (error) {
+			vput(cvp);
+			*cvpp = NULL;
+			*pvpp = NULL;
+			return error;
+		}
+	}
+
+	/*
 	 * Ok, we have to do it the hard way..
-	 * First, get parent vnode using lookup of ..
+	 * Next, get parent vnode using lookup of ..
 	 */
 	cn.cn_nameiop = LOOKUP;
-	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY | LOCKPARENT;
+	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY;
 	cn.cn_proc = p;
 	cn.cn_cred = p->p_ucred;
 	cn.cn_pnbuf = NULL;
@@ -116,28 +134,28 @@ getcwd_scandir(cvp, pvpp, bpp, bufp, p)
 	cn.cn_namelen = 2;
 	cn.cn_hash = 0;
 	cn.cn_consume = 0;
-
+	
 	/*
-	 * At this point, cvp is locked, and will be locked
-	 * on return in all cases.
-	 * On successful return, *pvpp will also be locked
+	 * At this point, cvp is locked and will be unlocked by the lookup.
+	 * On successful return, *pvpp will be locked
 	 */
 	error = VOP_LOOKUP(cvp, pvpp, &cn);
 	if (error) {
+		vput(cvp);
+		*cvpp = NULL;
 		*pvpp = NULL;
 		return error;
 	}
 	pvp = *pvpp;
 
 	/* If we don't care about the pathname, we're done */
-	if (bufp == NULL)
+	if (bufp == NULL) {
+		vrele(cvp);
+		*cvpp = NULL;
 		return 0;
+	}
 	
-	error = VOP_GETATTR(cvp, &va, p->p_ucred, p);
-	if (error)
-		return error;
 	fileno = va.va_fileid;
-	
 
 	dirbuflen = DIRBLKSIZ;
 	if (dirbuflen < va.va_blocksize)
@@ -163,14 +181,8 @@ unionread:
 
 		eofflag = 0;
 
-		/* XXX un-break adosfs */
-		VOP_UNLOCK(cvp, 0);
-
 		error = VOP_READDIR(pvp, &uio, p->p_ucred, &eofflag, 0, 0);
 
-		/* XXX not handling lock failures here.. */
-		(void) vn_lock(cvp, LK_EXCLUSIVE | LK_RETRY);
-		
 		off = uio.uio_offset;
 
 		/*
@@ -250,6 +262,8 @@ unionread:
 	error = ENOENT;
 		
 out:
+	vrele(cvp);
+	*cvpp = NULL;
 	free(dirbuf, M_TEMP);
 	return error;
 }
@@ -258,7 +272,14 @@ out:
  * Look in the vnode-to-name reverse cache to see if
  * we can find things the easy way.
  *
- * XXX vn_lock/vget failure paths are untested.
+ * XXX vget failure path is untested.
+ *
+ * On entry, *vpp is a locked vnode reference.
+ * On exit, one of the following is the case:
+ *	0) Both *vpp and *vpp are NULL and failure is returned.
+ * 	1) *dvpp is NULL, *vpp remains locked and -1 is returned (cache miss)
+ *      2) *dvpp is a locked vnode reference, *vpp is vput and NULL'ed
+ *	   and 0 is returned (cache hit)
  */
 
 static int
@@ -269,39 +290,52 @@ getcwd_getcache(vpp, dvpp, bpp, bufp)
 {
 	struct vnode *cvp, *pvp = NULL;
 	int error;
+	int vpid;
 	
 	cvp = *vpp;
 	
-	error = cache_revlookup(cvp, dvpp, bpp, bufp);
-	if (error)
-		return error;
-	pvp = *dvpp;
-	
 	/*
-	 * Do a little dance with the locks to avoid deadlocking
-	 * someone going the other way.  Since we're going up, we have
-	 * to release the current lock before we take the parent lock,
-	 * and then re-take the current lock.  Since either lock can
-	 * fail, causing us to abort, this is a little convoluted.
+	 * This returns 0 on a cache hit, -1 on a clean cache miss,
+	 * or an errno on other failure.
+	 */
+	error = cache_revlookup(cvp, dvpp, bpp, bufp);
+	if (error) {
+		if (error != -1) {
+			vput(cvp);
+			*vpp = NULL;
+			*dvpp = NULL;
+		}
+		return error;
+	}
+	pvp = *dvpp;
+	vpid = pvp->v_id;
+
+	/*
+	 * Since we're going up, we have to release the current lock
+	 * before we take the parent lock.
 	 */
 
 	VOP_UNLOCK(cvp, 0);
-	/* cur now unlocked... */
+
 	error = vget(pvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0) {
-		vrele(cvp);
-		*vpp = NULL;
+	if (error != 0)
 		*dvpp = NULL;
-		return error;
+	/*
+	 * Check that vnode capability didn't change while we were waiting
+	 * for the lock.
+	 */
+	if (error || (vpid != pvp->v_id)) {
+		/*
+		 * oops, it did.  do this the hard way.
+		 */
+		if (!error) vput(pvp);
+		error = vn_lock(cvp, LK_EXCLUSIVE | LK_RETRY);		
+		*dvpp = NULL;
+		return -1;
 	}
-	/* parent is now locked */
-	error = vn_lock(cvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0) {
-		vrele(cvp);
-		*vpp = NULL;
-		return error;
-	}
-	/* ok, cur is now locked again.. */
+	vrele(cvp);
+	*vpp = NULL;
+
 	return 0;
 }
 
@@ -356,8 +390,8 @@ static int getcwd_common (dvp, rvp, bpp, bufp, limit, flags, p)
 	 *	- we run out of space in the buffer.
 	 */
 	if (dvp == rvp) {
-		if (bufp)
-			*(--(*bpp)) = '/';
+		if (bp)
+			*(--bp) = '/';
 		goto out;
 	}
 	do {
@@ -407,28 +441,28 @@ static int getcwd_common (dvp, rvp, bpp, bufp, limit, flags, p)
 		 * Look in the name cache; if that fails, look in the
 		 * directory..
 		 */
-		error = getcwd_getcache(&dvp, &pvp, bpp, bufp);
+		error = getcwd_getcache(&dvp, &pvp, &bp, bufp);
 		if (error == -1)
-			error = getcwd_scandir(dvp, &pvp, bpp, bufp, p);
+			error = getcwd_scandir(&dvp, &pvp, &bp, bufp, p);
 		if (error)
 			goto out;
 #if DIAGNOSTIC		
-		if (dvp == pvp) {
-			panic("getcwd: oops, dvp == pvp");
-		}
+		if (dvp != NULL)
+			panic("getcwd: oops, forgot to null dvp");
 		if (bufp && (bp <= bufp)) {
 			panic("getcwd: oops, went back too far");
 		}
 #endif		
-		if (bufp) *(--(*bpp)) = '/';
-
-		vput(dvp);
+		if (bp) 
+			*(--bp) = '/';
 		dvp = pvp;
 		pvp = NULL;
 		limit--;
 	} while ((dvp != rvp) && (limit > 0)); 
 
 out:
+	if (bpp)
+		*bpp = bp;
 	if (pvp)
 		vput(pvp);
 	if (dvp)
@@ -510,6 +544,11 @@ int sys___getcwd(p, v, retval)
 	bend = bp;
 	*(--bp) = '\0';
 
+	/*
+	 * 5th argument here is "max number of vnodes to traverse".
+	 * Since each entry takes up at least 2 bytes in the output buffer,
+	 * limit it to N/2 vnodes for an N byte buffer.
+	 */
 	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
 			       GETCWD_CHECK_ACCESS, p);
 
