@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.2 2002/04/05 03:29:05 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.2.6.1 2002/08/07 01:30:42 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2 2002/04/05 03:29:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2.6.1 2002/08/07 01:30:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,7 @@ igsfb_get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= IGS_CMAP_SIZE || (index + count) > IGS_CMAP_SIZE)
+	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
@@ -571,7 +571,7 @@ igsfb_set_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= IGS_CMAP_SIZE || (index + count) > IGS_CMAP_SIZE)
+	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_READ) ||
