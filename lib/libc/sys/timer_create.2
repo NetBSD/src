@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_create.2,v 1.3 2003/09/13 23:00:38 kleink Exp $
+.\"	$NetBSD: timer_create.2,v 1.4 2003/09/14 09:02:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,36 +58,38 @@ If it succeeds, the
 function fills in the
 .Ar timerid
 argument with an id accociated with the timer created that can be used by
-other timer related calls. The 
+other timer related calls.
+The
 .Ar clockid
 must be a valid clock id as defined in
 .In time.h .
 The timer is created in a disarmed state.
 .Pp
-An optional (non-
-.Dv NULL )
+An optional
+.Pq non- Ns Dv NULL
 sigevent argument can be specified by the
 .Ar evp
-argument. If the
+argument.
+If the
 .Ar evp
 argument is
 .Dv NULL ,
 then it defaults to
-.Fa sigev_notify 
+.Fa sigev_notify
 set to
 .Dv SIGEV_SIGVAL
 and
 .Fa sigev_value
 set to
 .Ar timerid .
-See 
+See
 .Xr siginfo 5
 for accessing those values from a signal handler.
 .Sh NOTES
 Timers are not inherited after a
 .Xr fork 2
 and are disarmed and deleted by an
-.Xr exec 2 .
+.Xr exec 3 .
 .Sh RETURN VALUES
 If successful, the
 .Fn timer_create
@@ -98,7 +100,7 @@ Otherwise, it returns \-1, and sets
 .Dv errno
 to indicate the error.
 .Sh ERRORS
-The 
+The
 .Fn timer_create
 function will fail if:
 .Bl -tag -width Er
@@ -109,13 +111,14 @@ created all the timers it is allowed.
 The argument
 .Ar clockid
 is not a valid clock id.
+.El
 .Sh SEE ALSO
+.Xr clock_getres 2 ,
 .Xr clock_gettime 2 ,
 .Xr clock_settime 2 ,
-.Xr clock_getres 2 ,
 .Xr timer_delete 2 ,
-.Xr timer_gettime 2 ,
 .Xr timer_getoverrun 2 ,
+.Xr timer_gettime 2 ,
 .Xr timer_settime 2
 .Sh STANDARDS
 .St -p1003.1b-93 ,
