@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.24 2000/10/27 07:24:04 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.24 2000/10/27 07:24:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.25 2000/11/21 07:42:02 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ cfbattach(parent, self, aux)
 
 	cm = &sc->sc_cmap;
 	p = rasops_cmap;
-	for (index = 0; index < CMAP_SIZE; index++) {
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
 		cm->r[index] = p[0];
 		cm->g[index] = p[1];
 		cm->b[index] = p[2];
@@ -638,7 +638,7 @@ cfbinit(dc)
 	/* build sane colormap */
 	SELECT(vdac, 0);
 	p = rasops_cmap;
-	for (i = 0; i < CMAP_SIZE; i++) {
+	for (i = 0; i < CMAP_SIZE; i++, p += 3) {
 		REG(vdac, bt_cmap) = p[0];	tc_wmb();
 		REG(vdac, bt_cmap) = p[1];	tc_wmb();
 		REG(vdac, bt_cmap) = p[2];	tc_wmb();
