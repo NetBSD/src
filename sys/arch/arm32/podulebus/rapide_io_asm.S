@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide_io_asm.S,v 1.3 1997/10/14 23:05:03 mark Exp $	*/
+/*	$NetBSD: rapide_io_asm.S,v 1.4 1997/10/17 06:46:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,20 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 /*
  * bus_space I/O functions for Yellowstone RapIDE podule
  *
  * These are optimised 32 bit transfer routines
  */
 
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
 	.text
 
-	.global	_rapide_rm_4
-_rapide_rm_4:
+ENTRY(rapide_rm_4)
 	add	r0, r1, r2
 	mov	r1, r3
 
@@ -113,8 +110,7 @@ rapide_rm_4_m128_loop:
 
 	ldmfd	sp!, {r4-r12, pc}
 
-	.global	_rapide_wm_4
-_rapide_wm_4:
+ENTRY(rapide_wm_4)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
