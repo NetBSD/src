@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.29 2000/05/09 11:51:12 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.30 2000/05/22 12:08:44 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.82 2000/05/05 13:27:14 sumikawa Exp $	*/
 
 /*
@@ -2257,6 +2257,8 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
 		if (error)
 			return (error);
+		if (rate_usec < 0)
+			return (EINVAL);
 		s = splsoftnet();
 		icmp6errratelim.tv_sec = rate_usec / 1000000;
 		icmp6errratelim.tv_usec = rate_usec % 1000000;
