@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39 1996/08/27 21:57:45 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.40 1996/10/11 00:47:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -251,7 +251,7 @@ zsc_attach(parent, self, aux)
 	if ((intpri = cf->cf_intpri) == -1)
 		intpri = ZSHARD_PRI;
 
-	printf(" level %d (softpri %d)\n", intpri, ZSSOFT_PRI);
+	kprintf(" level %d (softpri %d)\n", intpri, ZSSOFT_PRI);
 
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zsc_unit] == NULL)
@@ -333,10 +333,10 @@ zsc_print(aux, name)
 	struct zsc_attach_args *args = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		kprintf("%s: ", name);
 
 	if (args->channel != -1)
-		printf(" channel %d", args->channel);
+		kprintf(" channel %d", args->channel);
 
 	return UNCONF;
 }

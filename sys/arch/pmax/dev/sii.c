@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.15 1996/09/21 08:48:00 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.16 1996/10/11 00:44:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -302,7 +302,7 @@ siiattach(parent, self, aux)
 	/*priority = ca->ca_slot;*/
 	/* tie pseudo-slot to device */
 	BUS_INTR_ESTABLISH(ca, siiintr, sc);
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -325,7 +325,7 @@ siistart(scsicmd)
 	 * separate LUNs.
 	 */
 	if (sc->sc_cmd[sdp->sd_drive]) {
-		printf("%s: device %s busy at start\n", sc->sc_dev.dv_xname,
+		kprintf("%s: device %s busy at start\n", sc->sc_dev.dv_xname,
 			sdp->sd_driver->d_name);
 		(*sdp->sd_driver->d_done)(scsicmd->unit, EBUSY,
 			scsicmd->buflen, 0);
@@ -373,7 +373,7 @@ sii_Reset(sc, reset)
 
 #ifdef DEBUG
 	if (sii_debug > 1)
-		printf("sii: RESET\n");
+		kprintf("sii: RESET\n");
 #endif
 	/*
 	 * Reset the SII chip.
@@ -467,7 +467,7 @@ sii_StartCmd(sc, target)
 
 #ifdef DEBUG
 	if (sii_debug > 1) {
-		printf("sii_StartCmd: %s target %d cmd 0x%x addr %p size %d dma %d\n",
+		kprintf("sii_StartCmd: %s target %d cmd 0x%x addr %p size %d dma %d\n",
 			scsicmd->sd->sd_driver->d_name, target,
 			scsicmd->cmd[0], scsicmd->buf, scsicmd->buflen,
 			state->dmaDataPhase);
@@ -502,7 +502,7 @@ sii_StartCmd(sc, target)
 #if 0
 	/* seem to have problems with synchronous transfers */
 	if (scsicmd->flags & SCSICMD_USE_SYNC) {
-		printf("sii_StartCmd: doing extended msg\n"); /* XXX */
+		kprintf("sii_StartCmd: doing extended msg\n"); /* XXX */
 		/*
 		 * Setup to send both the identify message and the synchronous
 		 * data transfer request.
@@ -567,11 +567,11 @@ sii_StartCmd(sc, target)
 			SII_WAIT_COUNT, retval);
 #ifdef DEBUG
 		if (sii_debug > 2)
-			printf("sii_StartCmd: ds %x cnt %d\n", status, retval);
+			kprintf("sii_StartCmd: ds %x cnt %d\n", status, retval);
 #endif
 		if ((status & (SII_CI | SII_MIS | SII_PHASE_MSK)) !=
 		    (SII_MIS | SII_CMD_PHASE)) {
-			printf("sii_StartCmd: timeout cs %x ds %x cnt %d\n",
+			kprintf("sii_StartCmd: timeout cs %x ds %x cnt %d\n",
 				regs->cstat, status, retval); /* XXX */
 			/* process interrupt or continue until it happens */
 			if (status & (SII_CI | SII_DI))
@@ -591,13 +591,13 @@ sii_StartCmd(sc, target)
 			SII_WAIT_COUNT, retval);
 #ifdef DEBUG
 		if (sii_debug > 2)
-			printf("sii_StartCmd: ds %x, cnt %d\n", status, retval);
+			kprintf("sii_StartCmd: ds %x, cnt %d\n", status, retval);
 #endif
 		if (status & (SII_CI | SII_DI))
 			sii_DoIntr(sc, status);
 #ifdef DEBUG
 		if (sii_debug > 2)
-			printf("sii_StartCmd: DONE ds %x\n", regs->dstat);
+			kprintf("sii_StartCmd: DONE ds %x\n", regs->dstat);
 #endif
 		return;
 	}
@@ -625,7 +625,7 @@ sii_StartCmd(sc, target)
 		error = EBUSY;	/* couldn't get the bus */
 #ifdef DEBUG
 	if (sii_debug > 1)
-		printf("sii_StartCmd: Couldn't select target %d error %d\n",
+		kprintf("sii_StartCmd: Couldn't select target %d error %d\n",
 			target, error);
 #endif
 	sc->sc_target = -1;
@@ -655,7 +655,7 @@ again:
 
 #ifdef DEBUG
 	if (sii_debug > 3)
-		printf("sii_DoIntr: cs %x, ds %x cm %x ",
+		kprintf("sii_DoIntr: cs %x, ds %x cm %x ",
 			regs->cstat, dstat, comm);
 	sii_logp->target = sc->sc_target;
 	sii_logp->cstat = regs->cstat;
@@ -692,7 +692,7 @@ again:
 
 		/* check for a BUS RESET */
 		if (cstat & SII_RST) {
-			printf("%s: SCSI bus reset!!\n", sc->sc_dev.dv_xname);
+			kprintf("%s: SCSI bus reset!!\n", sc->sc_dev.dv_xname);
 			/* need to flush disconnected commands */
 			for (i = 0; i < SII_NCMD; i++) {
 				if (!sc->sc_cmd[i])
@@ -737,7 +737,7 @@ again:
 		 */
 		if (sc->sc_target < 0) {
 			cstat = regs->cstat;
-			printf("%s: target %d DNE?? dev %d,%d cs %x\n",
+			kprintf("%s: target %d DNE?? dev %d,%d cs %x\n",
 				sc->sc_dev.dv_xname, sc->sc_target,
 				regs->slcsr, regs->destat,
 				cstat); /* XXX */
@@ -751,7 +751,7 @@ again:
 		/* check for a PARITY ERROR */
 		if (dstat & SII_IPE) {
 			state->flags |= PARITY_ERR;
-			printf("%s: Parity error!!\n", sc->sc_dev.dv_xname);
+			kprintf("%s: Parity error!!\n", sc->sc_dev.dv_xname);
 			goto abort;
 		}
 		/* dmalen = amount left to transfer, i = amount transfered */
@@ -760,11 +760,11 @@ again:
 		state->dmaCurPhase = -1;
 #ifdef DEBUG
 		if (sii_debug > 4) {
-			printf("DNE: amt %d ", i);
+			kprintf("DNE: amt %d ", i);
 			if (!(dstat & SII_TCZ))
-				printf("no TCZ?? (%d) ", regs->dmlotc);
+				kprintf("no TCZ?? (%d) ", regs->dmlotc);
 		} else if (!(dstat & SII_TCZ)) {
-			printf("%s: device %d: no TCZ?? (%d)\n",
+			kprintf("%s: device %d: no TCZ?? (%d)\n",
 				sc->sc_dev.dv_xname, sc->sc_target, regs->dmlotc);
 			sii_DumpLog(); /* XXX */
 		}
@@ -844,7 +844,7 @@ again:
 		 */
 		if (sc->sc_target < 0) {
 			cstat = regs->cstat;
-			printf("%s: target %d MIS?? dev %d,%d cs %x ds %x\n",
+			kprintf("%s: target %d MIS?? dev %d,%d cs %x ds %x\n",
 				sc->sc_dev.dv_xname, sc->sc_target,
 				regs->slcsr, regs->destat,
 				cstat, dstat); /* XXX */
@@ -864,7 +864,7 @@ again:
 			if (state->dmaPrevPhase >= 0) {
 				/* restart DMA after disconnect/reconnect */
 				if (state->dmaPrevPhase != SII_CMD_PHASE) {
-					printf("%s: device %d: dma reselect phase doesn't match\n",
+					kprintf("%s: device %d: dma reselect phase doesn't match\n",
 						sc->sc_dev.dv_xname, sc->sc_target);
 					goto abort;
 				}
@@ -880,7 +880,7 @@ again:
 				wbflush();
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("Cmd dcnt %d dadr %x ",
+					kprintf("Cmd dcnt %d dadr %x ",
 						state->dmaCnt,
 						(state->dmaAddrH << 16) |
 							state->dmaAddrL);
@@ -889,7 +889,7 @@ again:
 				/* send command data */
 				i = state->cmdlen;
 				if (i == 0) {
-					printf("%s: device %d: cmd count exceeded\n",
+					kprintf("%s: device %d: cmd count exceeded\n",
 						sc->sc_dev.dv_xname, sc->sc_target);
 					goto abort;
 				}
@@ -906,9 +906,9 @@ again:
 			if (dstat & (SII_CI | SII_DI)) {
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("cnt %d\n", i);
+					kprintf("cnt %d\n", i);
 				else if (sii_debug > 0)
-					printf("sii_DoIntr: cmd wait ds %x cnt %d\n",
+					kprintf("sii_DoIntr: cmd wait ds %x cnt %d\n",
 						dstat, i);
 #endif
 				goto again;
@@ -918,7 +918,7 @@ again:
 		case SII_DATA_IN_PHASE:
 		case SII_DATA_OUT_PHASE:
 			if (state->cmdlen > 0) {
-				printf("%s: device %d: cmd %x: command data not all sent (%d) 1\n",
+				kprintf("%s: device %d: cmd %x: command data not all sent (%d) 1\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
 					sc->sc_cmd[sc->sc_target]->cmd[0],
 					state->cmdlen);
@@ -931,7 +931,7 @@ again:
 				/* restart DMA after disconnect/reconnect */
 				if (state->dmaPrevPhase !=
 				    (dstat & SII_PHASE_MSK)) {
-					printf("%s: device %d: dma reselect phase doesn't match\n",
+					kprintf("%s: device %d: dma reselect phase doesn't match\n",
 						sc->sc_dev.dv_xname, sc->sc_target);
 					goto abort;
 				}
@@ -948,7 +948,7 @@ again:
 				wbflush();
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("Data %d dcnt %d dadr %x ",
+					kprintf("Data %d dcnt %d dadr %x ",
 						state->dmaDataPhase,
 						state->dmaCnt,
 						(state->dmaAddrH << 16) |
@@ -957,21 +957,21 @@ again:
 				break;
 			}
 			if (state->dmaDataPhase != (dstat & SII_PHASE_MSK)) {
-				printf("%s: device %d: cmd %x: dma phase doesn't match\n",
+				kprintf("%s: device %d: cmd %x: dma phase doesn't match\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
 					sc->sc_cmd[sc->sc_target]->cmd[0]);
 				goto abort;
 			}
 #ifdef DEBUG
 			if (sii_debug > 4) {
-				printf("Data %d ", state->dmaDataPhase);
+				kprintf("Data %d ", state->dmaDataPhase);
 				if (sii_debug > 5)
-					printf("\n");
+					kprintf("\n");
 			}
 #endif
 			i = state->buflen;
 			if (i == 0) {
-				printf("%s: device %d: data count exceeded\n",
+				kprintf("%s: device %d: data count exceeded\n",
 					sc->sc_dev.dv_xname, sc->sc_target);
 				goto abort;
 			}
@@ -1009,7 +1009,7 @@ again:
 
 		case SII_STATUS_PHASE:
 			if (state->cmdlen > 0) {
-				printf("%s: device %d: cmd %x: command data not all sent (%d) 2\n",
+				kprintf("%s: device %d: cmd %x: command data not all sent (%d) 2\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
 					sc->sc_cmd[sc->sc_target]->cmd[0],
 					state->cmdlen);
@@ -1032,7 +1032,7 @@ again:
 				wbflush();
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("DMA amt %d ", i);
+					kprintf("DMA amt %d ", i);
 #endif
 				switch (comm & SII_PHASE_MSK) {
 				case SII_DATA_IN_PHASE:
@@ -1056,7 +1056,7 @@ again:
 			}
 #ifdef DEBUG
 			if (sii_debug > 4)
-				printf("Status %x ", msg);
+				kprintf("Status %x ", msg);
 			if (sii_logp > sii_log)
 				sii_logp[-1].msg = msg;
 			else
@@ -1069,7 +1069,7 @@ again:
 			if (dstat & (SII_CI | SII_DI)) {
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("cnt2 %d\n", i);
+					kprintf("cnt2 %d\n", i);
 #endif
 				goto again;
 			}
@@ -1105,17 +1105,17 @@ again:
 				wbflush();
 #ifdef DEBUG
 				if (sii_debug > 4) {
-					printf("SavP dcnt %d dadr %x ",
+					kprintf("SavP dcnt %d dadr %x ",
 						state->dmaCnt,
 						(state->dmaAddrH << 16) |
 						state->dmaAddrL);
 					if (((dstat & SII_OBB) != 0) ^
 					    (state->dmaCnt & 1))
-						printf("OBB??? ");
+						kprintf("OBB??? ");
 				} else if (sii_debug > 0) {
 					if (((dstat & SII_OBB) != 0) ^
 					    (state->dmaCnt & 1)) {
-						printf("sii_DoIntr: OBB??? ds %x cnt %d\n",
+						kprintf("sii_DoIntr: OBB??? ds %x cnt %d\n",
 							dstat, state->dmaCnt);
 						sii_DumpLog();
 					}
@@ -1131,7 +1131,7 @@ again:
 			}
 #ifdef DEBUG
 			if (sii_debug > 4)
-				printf("MsgIn %x ", msg);
+				kprintf("MsgIn %x ", msg);
 			if (sii_logp > sii_log)
 				sii_logp[-1].msg = msg;
 			else
@@ -1176,7 +1176,7 @@ again:
 				}
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("cs %x\n", cstat);
+					kprintf("cs %x\n", cstat);
 #endif
 				sii_CmdDone(sc, msg, 0);
 				break;
@@ -1299,7 +1299,7 @@ again:
 				if (dstat & (SII_CI | SII_DI)) {
 #ifdef DEBUG
 					if (sii_debug > 4)
-						printf("cnt %d\n", i);
+						kprintf("cnt %d\n", i);
 #endif
 					goto again;
 				}
@@ -1316,7 +1316,7 @@ again:
 				state->prevComm = comm;
 #ifdef DEBUG
 				if (sii_debug > 4)
-					printf("disconn %d ", sc->sc_target);
+					kprintf("disconn %d ", sc->sc_target);
 #endif
 				/*
 				 * Wait a short time for disconnect.
@@ -1330,7 +1330,7 @@ again:
 				    SII_STATE_MSK)) != SII_SCH) {
 #ifdef DEBUG
 					if (sii_debug > 4)
-						printf("cnt %d\n", i);
+						kprintf("cnt %d\n", i);
 #endif
 					dstat = regs->dstat;
 					goto again;
@@ -1358,13 +1358,13 @@ again:
 					dstat & SII_DNE, SII_WAIT_COUNT, i);
 				regs->dstat = SII_DNE;
 				wbflush();
-				printf("%s: device %d: message reject.\n",
+				kprintf("%s: device %d: message reject.\n",
 					sc->sc_dev.dv_xname, sc->sc_target);
 				break;
 
 			default:
 				if (!(msg & SCSI_IDENTIFY)) {
-					printf("%s: device %d: couldn't handle message 0x%x... rejecting.\n",
+					kprintf("%s: device %d: couldn't handle message 0x%x... rejecting.\n",
 						sc->sc_dev.dv_xname, sc->sc_target,
 						msg);
 #ifdef DEBUG
@@ -1387,7 +1387,7 @@ again:
 				if (dstat & (SII_CI | SII_DI)) {
 #ifdef DEBUG
 					if (sii_debug > 4)
-						printf("cnt %d\n", i);
+						kprintf("cnt %d\n", i);
 #endif
 					goto again;
 				}
@@ -1397,9 +1397,9 @@ again:
 		case SII_MSG_OUT_PHASE:
 #ifdef DEBUG
 			if (sii_debug > 4)
-				printf("MsgOut\n");
+				kprintf("MsgOut\n");
 #endif
-			printf("MsgOut %x\n", state->flags); /* XXX */
+			kprintf("MsgOut %x\n", state->flags); /* XXX */
 
 			/*
 			 * Check for parity error.
@@ -1420,7 +1420,7 @@ again:
 				SII_WAIT_COUNT, i);
 #ifdef DEBUG
 			if (sii_debug > 4)
-				printf("ds %x i %d\n", dstat, i);
+				kprintf("ds %x i %d\n", dstat, i);
 #endif
 			/* just clear the DNE bit and check errors later */
 			if (dstat & SII_DNE) {
@@ -1430,14 +1430,14 @@ again:
 			break;
 
 		default:
-			printf("%s: Couldn't handle phase %d... ignoring.\n",
+			kprintf("%s: Couldn't handle phase %d... ignoring.\n",
 				   sc->sc_dev.dv_xname, dstat & SII_PHASE_MSK);
 		}
 	}
 
 #ifdef DEBUG
 	if (sii_debug > 3)
-		printf("\n");
+		kprintf("\n");
 #endif
 	/*
 	 * Check to make sure we won't be interrupted again.
@@ -1463,7 +1463,7 @@ again:
 
 abort:
 	/* jump here to abort the current command */
-	printf("%s: device %d: current command terminated\n",
+	kprintf("%s: device %d: current command terminated\n",
 		sc->sc_dev.dv_xname, sc->sc_target);
 #ifdef DEBUG
 	sii_DumpLog();
@@ -1482,7 +1482,7 @@ abort:
 			2 * SII_WAIT_COUNT, i);
 #ifdef DEBUG
 		if (sii_debug > 0)
-			printf("Abort: cs %x ds %x i %d\n", cstat, dstat, i);
+			kprintf("Abort: cs %x ds %x i %d\n", cstat, dstat, i);
 #endif
 		if ((dstat & (SII_DNE | SII_PHASE_MSK)) ==
 		    (SII_DNE | SII_MSG_OUT_PHASE)) {
@@ -1495,7 +1495,7 @@ abort:
 	} else {
 #ifdef DEBUG
 		if (sii_debug > 0)
-			printf("Abort: cs %x\n", cstat);
+			kprintf("Abort: cs %x\n", cstat);
 #endif
 	}
 	regs->cstat = 0xffff;
@@ -1508,7 +1508,7 @@ abort:
 	sii_CmdDone(sc, i, EIO);
 #ifdef DEBUG
 	if (sii_debug > 4)
-		printf("sii_DoIntr: after CmdDone target %d\n", sc->sc_target);
+		kprintf("sii_DoIntr: after CmdDone target %d\n", sc->sc_target);
 #endif
 }
 
@@ -1523,7 +1523,7 @@ sii_StateChg(sc, cstat)
 
 #ifdef DEBUG
 	if (sii_debug > 4)
-		printf("SCH: ");
+		kprintf("SCH: ");
 #endif
 
 	switch (cstat & SII_STATE_MSK) {
@@ -1533,10 +1533,10 @@ sii_StateChg(sc, cstat)
 		sc->sc_target = -1;
 #ifdef DEBUG
 		if (sii_debug > 4)
-			printf("disconn %d ", i);
+			kprintf("disconn %d ", i);
 #endif
 		if (i >= 0 && !sc->sc_st[i].prevComm) {
-			printf("%s: device %d: spurrious disconnect (%d)\n",
+			kprintf("%s: device %d: spurrious disconnect (%d)\n",
 				sc->sc_dev.dv_xname, i, regs->slcsr);
 			sc->sc_st[i].prevComm = 0;
 		}
@@ -1547,7 +1547,7 @@ sii_StateChg(sc, cstat)
 		i = regs->slcsr;
 		if (sc->sc_target == i)
 			break;
-		printf("%s: device %d: connect to device %d??\n",
+		kprintf("%s: device %d: connect to device %d??\n",
 			sc->sc_dev.dv_xname, sc->sc_target, i);
 		sc->sc_target = i;
 		break;
@@ -1579,14 +1579,14 @@ sii_StateChg(sc, cstat)
 		regs->dmctrl = state->dmaReqAck;
 		wbflush();
 		if (!state->prevComm) {
-			printf("%s: device %d: spurious reselection\n",
+			kprintf("%s: device %d: spurious reselection\n",
 				sc->sc_dev.dv_xname, i);
 			break;
 		}
 		state->prevComm = 0;
 #ifdef DEBUG
 		if (sii_debug > 4)
-			printf("resel %d ", sc->sc_target);
+			kprintf("resel %d ", sc->sc_target);
 #endif
 		break;
 
@@ -1594,7 +1594,7 @@ sii_StateChg(sc, cstat)
 	case SII_DST | SII_TGT:
 	case SII_CON | SII_DST | SII_TGT:
 		/* connected as target */
-		printf("%s: Selected by device %d as target!!\n",
+		kprintf("%s: Selected by device %d as target!!\n",
 			sc->sc_dev.dv_xname, regs->destat);
 		regs->comm = SII_DISCON;
 		wbflush();
@@ -1607,7 +1607,7 @@ sii_StateChg(sc, cstat)
 #endif
 
 	default:
-		printf("%s: Unknown state change (cs %x)!!\n",
+		kprintf("%s: Unknown state change (cs %x)!!\n",
 			sc->sc_dev.dv_xname, cstat);
 #ifdef DEBUG
 		sii_DumpLog();
@@ -1639,11 +1639,11 @@ sii_GetByte(regs, phase, ack)
 			SII_WAIT_COUNT, i);
 #ifdef DEBUG
 		if (!(dstat & SII_IBF))
-			printf("status no IBF\n");
+			kprintf("status no IBF\n");
 #endif
 	}
 	if (dstat & SII_DNE) { /* XXX */
-		printf("sii_GetByte: DNE set 5\n");
+		kprintf("sii_GetByte: DNE set 5\n");
 #ifdef DEBUG
 		sii_DumpLog();
 #endif
@@ -1654,9 +1654,9 @@ sii_GetByte(regs, phase, ack)
 	if (dstat & SII_IPE) {
 #ifdef DEBUG
 		if (sii_debug > 4)
-			printf("cnt0 %d\n", i);
+			kprintf("cnt0 %d\n", i);
 #endif
-		printf("sii_GetByte: data %x ?? ds %x cm %x i %d\n",
+		kprintf("sii_GetByte: data %x ?? ds %x cm %x i %d\n",
 			data, dstat, regs->comm, i); /* XXX */
 		data = -1;
 		ack = 1;
@@ -1694,7 +1694,7 @@ sii_DoSync(regs, state)
 
 #ifdef DEBUG
 	if (sii_debug)
-		printf("sii_DoSync: len %d per %d req/ack %d\n",
+		kprintf("sii_DoSync: len %d per %d req/ack %d\n",
 			sii_buf[1], sii_buf[3], sii_buf[4]);
 #endif
 
@@ -1720,7 +1720,7 @@ sii_DoSync(regs, state)
 			SII_WAIT_COUNT, i);
 		if (!(dstat & SII_TBE) ||
 		    (dstat & SII_PHASE_MSK) != SII_MSG_OUT_PHASE) {
-			printf("sii_DoSync: TBE? ds %x cm %x i %d\n",
+			kprintf("sii_DoSync: TBE? ds %x cm %x i %d\n",
 				dstat, comm, i); /* XXX */
 			return;
 		}
@@ -1738,7 +1738,7 @@ sii_DoSync(regs, state)
 			SII_WAIT_COUNT, i);
 
 		if (!(dstat & SII_DNE)) {
-			printf("sii_DoSync: DNE? ds %x cm %x i %d\n",
+			kprintf("sii_DoSync: DNE? ds %x cm %x i %d\n",
 				dstat, comm, i); /* XXX */
 			return;
 		}
@@ -1749,7 +1749,7 @@ sii_DoSync(regs, state)
 	}
 #else
 	CopyToBuffer((u_short *)sii_buf, (volatile u_short *)SII_BUF_ADDR, 5);
-	printf("sii_DoSync: %x %x %x ds %x\n",
+	kprintf("sii_DoSync: %x %x %x ds %x\n",
 		((volatile u_short *)SII_BUF_ADDR)[0],
 		((volatile u_short *)SII_BUF_ADDR)[2],
 		((volatile u_short *)SII_BUF_ADDR)[4],
@@ -1767,7 +1767,7 @@ sii_DoSync(regs, state)
 		SII_WAIT_COUNT, i);
 
 	if ((dstat & (SII_DNE | SII_TCZ)) != (SII_DNE | SII_TCZ)) {
-		printf("sii_DoSync: ds %x cm %x i %d lotc %d\n",
+		kprintf("sii_DoSync: ds %x cm %x i %d lotc %d\n",
 			dstat, regs->comm, i, regs->dmlotc); /* XXX */
 		sii_DumpLog(); /* XXX */
 		return;
@@ -1780,7 +1780,7 @@ sii_DoSync(regs, state)
 #if 0
 	SII_WAIT_UNTIL(dstat, regs->dstat, dstat & (SII_CI | SII_DI),
 		SII_WAIT_COUNT, i);
-	printf("sii_DoSync: ds %x cm %x i %d lotc %d\n",
+	kprintf("sii_DoSync: ds %x cm %x i %d lotc %d\n",
 		dstat, regs->comm, i, regs->dmlotc); /* XXX */
 #endif
 
@@ -1801,7 +1801,7 @@ sii_StartDMA(regs, phase, dmaAddr, size)
 
 	if (regs->dstat & SII_DNE) { /* XXX */
 		regs->dstat = SII_DNE;
-		printf("sii_StartDMA: DNE set\n");
+		kprintf("sii_StartDMA: DNE set\n");
 #ifdef DEBUG
 		sii_DumpLog();
 #endif
@@ -1815,7 +1815,7 @@ sii_StartDMA(regs, phase, dmaAddr, size)
 
 #ifdef DEBUG
 	if (sii_debug > 5) {
-		printf("sii_StartDMA: cs 0x%x, ds 0x%x, cm 0x%x, size %d\n",
+		kprintf("sii_StartDMA: cs 0x%x, ds 0x%x, cm 0x%x, size %d\n",
 			regs->cstat, regs->dstat, regs->comm, size);
 	}
 #endif
@@ -1844,7 +1844,7 @@ sii_CmdDone(sc, target, error)
 	sc->sc_cmd[target] = (ScsiCmd *)0;
 #ifdef DEBUG
 	if (sii_debug > 1) {
-		printf("sii_CmdDone: %s target %d cmd %x err %d resid %d\n",
+		kprintf("sii_CmdDone: %s target %d cmd %x err %d resid %d\n",
 			scsicmd->sd->sd_driver->d_name, target,
 			scsicmd->cmd[0], error, sc->sc_st[target].buflen);
 	}
@@ -1869,11 +1869,11 @@ sii_DumpLog()
 {
 	register struct sii_log *lp;
 
-	printf("sii: cmd %x bn %d cnt %d\n", sii_debug_cmd, sii_debug_bn,
+	kprintf("sii: cmd %x bn %d cnt %d\n", sii_debug_cmd, sii_debug_bn,
 		sii_debug_sz);
 	lp = sii_logp;
 	do {
-		printf("target %d cs %x ds %x cm %x msg %x rlen %x dlen %x\n",
+		kprintf("target %d cs %x ds %x cm %x msg %x rlen %x dlen %x\n",
 			lp->target, lp->cstat, lp->dstat, lp->comm, lp->msg,
 			lp->rlen, lp->dlen);
 		if (++lp >= &sii_log[NLOG])

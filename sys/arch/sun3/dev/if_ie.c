@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.12 1996/05/09 21:15:47 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.13 1996/10/11 00:46:35 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -269,7 +269,7 @@ ie_attach(sc)
 	int off;
 
 	/* MD code has done its part before calling this. */
-	printf(" hwaddr %s\n", ether_sprintf(sc->sc_addr));
+	kprintf(" hwaddr %s\n", ether_sprintf(sc->sc_addr));
 
 	/* Allocate from end of buffer space for ISCP, SCB */
 	off = sc->buf_area_sz;
@@ -290,7 +290,7 @@ ie_attach(sc)
 	 * Setup RAM for transmit/receive
 	 */
 	if (ie_setupram(sc) == 0) {
-		printf(": RAM CONFIG FAILED!\n");
+		kprintf(": RAM CONFIG FAILED!\n");
 		/* XXX should reclaim resources? */
 		return;
 	}
@@ -348,7 +348,7 @@ ie_intr(v)
 	if (sc->hard_type == IE_VME) {
 		volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
 		if (iev->status & IEVME_PERR) {
-			printf("%s: parity error (ctrl %x @ %02x%04x)\n",
+			kprintf("%s: parity error (ctrl %x @ %02x%04x)\n",
 			    iev->pectrl, iev->pectrl & IEVME_HADDR,
 			    iev->peaddr);
 			iev->pectrl = iev->pectrl | IEVME_PARACK;
@@ -363,7 +363,7 @@ loop:
 #ifdef IEDEBUG
 		in_ierint++;
 		if (sc->sc_debug & IED_RINT)
-			printf("%s: rint\n", sc->sc_dev.dv_xname);
+			kprintf("%s: rint\n", sc->sc_dev.dv_xname);
 #endif
 		ierint(sc);
 #ifdef IEDEBUG
@@ -375,7 +375,7 @@ loop:
 #ifdef IEDEBUG
 		in_ietint++;
 		if (sc->sc_debug & IED_TINT)
-			printf("%s: tint\n", sc->sc_dev.dv_xname);
+			kprintf("%s: tint\n", sc->sc_dev.dv_xname);
 #endif
 		ietint(sc);
 #ifdef IEDEBUG
@@ -384,14 +384,14 @@ loop:
 	}
 
 	if (status & IE_ST_RNR) {
-		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
+		kprintf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		iereset(sc);
 	}
 
 #ifdef IEDEBUG
 	if ((status & IE_ST_ALLDONE) && (sc->sc_debug & IED_CNA))
-		printf("%s: cna\n", sc->sc_dev.dv_xname);
+		kprintf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
@@ -463,26 +463,26 @@ ietint(sc)
 	status = sc->xmit_cmds[sc->xctail]->ie_xmit_status;
 
 	if (!(status & IE_STAT_COMPL) || (status & IE_STAT_BUSY))
-		printf("ietint: command still busy!\n");
+		kprintf("ietint: command still busy!\n");
 
 	if (status & IE_STAT_OK) {
 		sc->sc_arpcom.ac_if.if_opackets++;
 		sc->sc_arpcom.ac_if.if_collisions += 
 		  SWAP(status & IE_XS_MAXCOLL);
 	} else if (status & IE_STAT_ABORT) {
-		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
+		kprintf("%s: send aborted\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_NOCARRIER) {
-		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
+		kprintf("%s: no carrier\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_LOSTCTS) {
-		printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
+		kprintf("%s: lost CTS\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_UNDERRUN) {
-		printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
+		kprintf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_EXCMAX) {
-		printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
+		kprintf("%s: too many collisions\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_collisions += 16;
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	}
@@ -949,7 +949,7 @@ ie_readframe(sc, num)
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
-		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
@@ -1071,7 +1071,7 @@ iestart(ifp)
 			len += m->m_len;
 		}
 		if (m)
-		  printf("%s: tbuf overflow\n", sc->sc_dev.dv_xname);
+		  kprintf("%s: tbuf overflow\n", sc->sc_dev.dv_xname);
 
 		m_freem(m0);
 		len = max(len, ETHER_MIN_LEN);
@@ -1142,7 +1142,7 @@ iereset(sc)
 {
 	int s = splnet();
 
-	printf("%s: reset\n", sc->sc_dev.dv_xname);
+	kprintf("%s: reset\n", sc->sc_dev.dv_xname);
 
 	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
 	sc->sc_arpcom.ac_if.if_flags &= ~(IFF_UP | IFF_OACTIVE);
@@ -1152,10 +1152,10 @@ iereset(sc)
 	 * Stop i82586 dead in its tracks.
 	 */
 	if (command_and_wait(sc, IE_RU_ABORT | IE_CU_ABORT, 0, 0))
-		printf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
+		kprintf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
 
 	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
-		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
+		kprintf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 
 #ifdef notdef
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
@@ -1274,17 +1274,17 @@ run_tdr(sc, cmd)
 		return;
 
 	if (result & 0x10000) {
-		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
+		kprintf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
 	} else if (result & IE_TDR_XCVR) {
-		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
+		kprintf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
 	} else if (result & IE_TDR_OPEN) {
-		printf("%s: TDR detected an open %d clocks away\n",
+		kprintf("%s: TDR detected an open %d clocks away\n",
 		    sc->sc_dev.dv_xname, SWAP(result & IE_TDR_TIME));
 	} else if (result & IE_TDR_SHORT) {
-		printf("%s: TDR detected a short %d clocks away\n",
+		kprintf("%s: TDR detected a short %d clocks away\n",
 		    sc->sc_dev.dv_xname, SWAP(result & IE_TDR_TIME));
 	} else {
-		printf("%s: TDR returned unknown status %x\n",
+		kprintf("%s: TDR returned unknown status %x\n",
 		    sc->sc_dev.dv_xname, result);
 	}
 }
@@ -1338,7 +1338,7 @@ setup_bufs(sc)
 	sc->nrxbuf = sc->nframes * B_PER_F;
 
 #ifdef IEDEBUG
-	printf("IEDEBUG: %d frames %d bufs\n", sc->nframes, sc->nrxbuf);
+	kprintf("IEDEBUG: %d frames %d bufs\n", sc->nframes, sc->nrxbuf);
 #endif
 
 	/*
@@ -1423,7 +1423,7 @@ setup_bufs(sc)
 	sc->rframes[0]->ie_fd_buf_desc = MK_16(sc->sc_maddr, sc->rbuffs[0]);
 
 #ifdef IEDEBUG
-	printf("IE_DEBUG: reserved %d bytes\n", ptr - sc->buf_area);
+	kprintf("IE_DEBUG: reserved %d bytes\n", ptr - sc->buf_area);
 #endif
 }
 
@@ -1451,7 +1451,7 @@ mc_setup(sc, ptr)
 	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 	    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-		printf("%s: multicast address setup command failed\n",
+		kprintf("%s: multicast address setup command failed\n",
 		    sc->sc_dev.dv_xname);
 		return 0;
 	}
@@ -1490,7 +1490,7 @@ ieinit(sc)
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-			printf("%s: configure command failed\n",
+			kprintf("%s: configure command failed\n",
 			    sc->sc_dev.dv_xname);
 			return 0;
 		}
@@ -1512,7 +1512,7 @@ ieinit(sc)
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-			printf("%s: individual address setup command failed\n",
+			kprintf("%s: individual address setup command failed\n",
 			    sc->sc_dev.dv_xname);
 			return 0;
 		}
@@ -1694,7 +1694,7 @@ print_rbd(rbd)
 	volatile struct ie_recv_buf_desc *rbd;
 {
 
-	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
+	kprintf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
 	    "length %04x, mbz %04x\n", (u_long)rbd, rbd->ie_rbd_actual,
 	    rbd->ie_rbd_next, rbd->ie_rbd_buffer, rbd->ie_rbd_length,
 	    rbd->mbz);

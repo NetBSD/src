@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.27 1996/08/28 19:00:44 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.28 1996/10/11 00:46:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -154,7 +154,7 @@ si_attach(sc)
 
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
+		kprintf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -196,7 +196,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+			kprintf("si_minphys len = 0x%x.\n", bp->b_bcount);
 			Debugger();
 		}
 #endif
@@ -226,11 +226,11 @@ si_intr(void *arg)
 
 	if (csr & SI_CSR_DMA_CONFLICT) {
 		dma_error |= SI_CSR_DMA_CONFLICT;
-		printf("si_intr: DMA conflict\n");
+		kprintf("si_intr: DMA conflict\n");
 	}
 	if (csr & SI_CSR_DMA_BUS_ERR) {
 		dma_error |= SI_CSR_DMA_BUS_ERR;
-		printf("si_intr: DMA bus error\n");
+		kprintf("si_intr: DMA bus error\n");
 	}
 	if (dma_error) {
 		if (sc->ncr_sc.sc_state & NCR_DOINGDMA)
@@ -243,7 +243,7 @@ si_intr(void *arg)
 		claimed = ncr5380_intr(&sc->ncr_sc);
 #ifdef	DEBUG
 		if (!claimed) {
-			printf("si_intr: spurious from SBC\n");
+			kprintf("si_intr: spurious from SBC\n");
 			if (si_debug & 4) {
 				Debugger();	/* XXX */
 			}
@@ -263,7 +263,7 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug) {
-		printf("si_reset_adapter\n");
+		kprintf("si_reset_adapter\n");
 	}
 #endif
 
@@ -322,7 +322,7 @@ si_dma_alloc(ncr_sc)
 
 	/* If the DMA start addr is misaligned then do PIO */
 	if ((addr & 1) || (xlen & 1)) {
-		printf("si_dma_alloc: misaligned.\n");
+		kprintf("si_dma_alloc: misaligned.\n");
 		return;
 	}
 
@@ -337,7 +337,7 @@ si_dma_alloc(ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
-		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
+		kprintf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
 		Debugger();
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
@@ -376,7 +376,7 @@ found:
 	dh->dh_dvma = (u_long) dvma_mapin((char *)addr, xlen);
 	if (!dh->dh_dvma) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %x/%x\n",
+		kprintf("si_dma_alloc: can't remap %x/%x\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
@@ -451,7 +451,7 @@ si_dma_poll(ncr_sc)
 		if (si->si_csr & CSR_MASK)
 			break;
 		if (--tmo <= 0) {
-			printf("si: DMA timeout (while polling)\n");
+			kprintf("si: DMA timeout (while polling)\n");
 			/* Indicate timeout as MI code would. */
 			sr->sr_flags |= SR_OVERDUE;
 			break;
@@ -463,7 +463,7 @@ si_dma_poll(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_poll: done, csr=0x%x\n", si->si_csr);
+		kprintf("si_dma_poll: done, csr=0x%x\n", si->si_csr);
 	}
 #endif
 }

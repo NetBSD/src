@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.3 1996/06/07 21:48:33 thorpej Exp $ */
+/*	$NetBSD: power.c,v 1.4 1996/10/11 00:46:52 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,7 +91,7 @@ powerattach(parent, self, aux)
 
 	power_reg = mapdev(ra->ra_reg, 0, 0, sizeof(long), ca->ca_bustype);
 
-	printf("\n");
+	kprintf("\n");
 }
 
 void

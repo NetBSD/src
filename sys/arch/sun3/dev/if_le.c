@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.29 1996/05/07 01:32:31 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.30 1996/10/11 00:46:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -141,7 +141,7 @@ le_attach(parent, self, aux)
 	/* Default interrupt level. */
 	if ((intpri = cf->cf_intpri) == -1)
 		intpri = 3;
-	printf(" level %d", intpri);
+	kprintf(" level %d", intpri);
 
 	lesc->sc_r1 = (struct lereg1 *)
 	    obio_alloc(ca->ca_paddr, OBIO_AMD_ETHER_SIZE);

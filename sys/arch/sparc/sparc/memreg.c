@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.13 1996/03/31 22:52:08 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.14 1996/10/11 00:47:29 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ memregattach(parent, self, aux)
 		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int),
 					     ca->ca_bustype);
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -135,12 +135,12 @@ memerr(issync, ser, sva, aer, ava)
 #if defined(SUN4)
 	case CPU_SUN4:
 		if (par_err_reg) {
-			printf("mem err: ser=%b sva=%x\n", ser, SER_BITS, sva);
-			printf("parity error register = %b\n",
+			kprintf("mem err: ser=%b sva=%x\n", ser, SER_BITS, sva);
+			kprintf("parity error register = %b\n",
 				*par_err_reg, PER_BITS);
 		} else {
-			printf("mem err: ser=? sva=?\n");
-			printf("parity error register not mapped yet!\n"); /* XXX */
+			kprintf("mem err: ser=? sva=?\n");
+			kprintf("parity error register not mapped yet!\n"); /* XXX */
 		}
 #ifdef DEBUG
 		callrom();
@@ -152,11 +152,11 @@ memerr(issync, ser, sva, aer, ava)
 
 #if defined(SUN4C)
 	case CPU_SUN4C:
-		printf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
+		kprintf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
 		       issync ? "" : "a", ser, SER_BITS,
 		       sva, aer & 0xff, AER_BITS, ava);
 		if (par_err_reg)
-			printf("parity error register = %b\n",
+			kprintf("parity error register = %b\n",
 				*par_err_reg, PER_BITS);
 #ifdef DEBUG
 		callrom();
@@ -236,7 +236,7 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 {
 	if ((afsr & AFSR_AFO) != 0) {	/* HS async fault! */
 
-		printf("HyperSPARC async cache memory failure at phys 0x%x%x. "
+		kprintf("HyperSPARC async cache memory failure at phys 0x%x%x. "
 		       "Ignoring.\n", (afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT,
 		       afva);
 
@@ -251,7 +251,7 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 	} else if (type == T_STOREBUFFAULT) {
 		/* We try to reenable the store buffers to force a retry */
 
-		printf("store buffer copy-back failure at 0x%x. Retrying...\n",
+		kprintf("store buffer copy-back failure at 0x%x. Retrying...\n",
 		       sfva);
 
 		if (oldtype == T_STOREBUFFAULT || addrold == sfva)
@@ -267,7 +267,7 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 	} else if (type == T_DATAFAULT && !(sfsr & SFSR_FAV)) { /* bizarre */
 		/* XXX: Should handle better. See SuperSPARC manual pg. 9-35 */
 
-		printf("warning: got data fault with no faulting address."
+		kprintf("warning: got data fault with no faulting address."
 		       " Ignoring.\n");
 
 		if (oldtype == T_DATAFAULT)
@@ -276,7 +276,7 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 
 		oldtype = T_DATAFAULT;
 	} else if (type == 0) {	/* NMI */
-		printf("ERROR: got NMI with sfsr=0x%b, sfva=0x%x, afsr=0x%b, "
+		kprintf("ERROR: got NMI with sfsr=0x%b, sfva=0x%x, afsr=0x%b, "
 		       "afaddr=0x%x. Retrying...\n",
 			sfsr,SFSR_BITS,sfva,afsr, AFSR_BITS,afva);
 		if (oldtype == 0 || addrold == sfva)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.21 1996/05/19 00:25:14 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.22 1996/10/11 00:45:10 christos Exp $	*/
 
 /*
  * locore file for either "new" merged MIPS-I/MIPS-II kernels or
@@ -2240,7 +2240,7 @@ ALEAF(mips_r2000_TLBMissException)
 	sw	a3, 20(sp)
 	sw	sp, 24(sp)
 	move	a2, ra
-	jal	_C_LABEL(printf)
+	jal	_C_LABEL(kprintf)
 	mfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:
@@ -3104,7 +3104,7 @@ sys_stk_chk:
 	sw	a2, 16(sp)
 	sw	a3, 20(sp)
 	move	a2, ra
-	jal	printf
+	jal	kprintf
 	dmfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.17 1996/04/22 02:42:04 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.18 1996/10/11 00:47:02 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.17 1996/04/22 02:42:04 christos Exp $
+ * id: $NetBSD: xy.c,v 1.18 1996/10/11 00:47:02 christos Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -247,7 +247,7 @@ xygetdisklabel(xy, b)
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {
-		printf("%s: %s\n", xy->sc_dev.dv_xname, err);
+		kprintf("%s: %s\n", xy->sc_dev.dv_xname, err);
 		return(XY_ERR_FAIL);
 	}
 
@@ -256,11 +256,11 @@ xygetdisklabel(xy, b)
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xy->pcyl = sdl->sl_pcylinders;
 	else {
-		printf("%s: WARNING: no `pcyl' in disk label.\n",
+		kprintf("%s: WARNING: no `pcyl' in disk label.\n",
 			xy->sc_dev.dv_xname);
 		xy->pcyl = xy->sc_dk.dk_label->d_ncylinders +
 			xy->sc_dk.dk_label->d_acylinders;
-		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
+		kprintf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 		xy->sc_dev.dv_xname, xy->pcyl);
 	}
 
@@ -336,7 +336,7 @@ xycattach(parent, self, aux)
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	xyc->ipl = pil_to_vme[pri];
 	xyc->vector = ca->ca_ra.ra_intr[0].int_vec;
-	printf(" pri %d", pri);
+	kprintf(" pri %d", pri);
 	xyc->no_ols = 0; /* XXX should be from config */
 
 	for (lcv = 0; lcv < XYC_MAXDEV; lcv++)
@@ -358,7 +358,7 @@ xycattach(parent, self, aux)
 		dvma_free(dtmp2, pbsz, &tmp2);
 		ultmp = (u_long) dtmp;
 		if ((ultmp & 0xffff0000) != ((ultmp + pbsz) & 0xffff0000)) {
-			printf("%s: can't alloc IOPB mem in 64K\n",
+			kprintf("%s: can't alloc IOPB mem in 64K\n",
 				xyc->sc_dev.dv_xname);
 			return;
 		}
@@ -399,24 +399,24 @@ xycattach(parent, self, aux)
 	XYC_DONE(xyc, err);
 	if (res != XYCT_450) {
 		if (err)
-			printf(": %s: ", xyc_e2str(err));
-		printf(": doesn't identify as a 450/451\n");
+			kprintf(": %s: ", xyc_e2str(err));
+		kprintf(": doesn't identify as a 450/451\n");
 		return;
 	}
-	printf(": Xylogics 450/451");
+	kprintf(": Xylogics 450/451");
 	if (xyc->no_ols)
-		printf(" [OLS disabled]"); /* 450 doesn't overlap seek right */
-	printf("\n");
+		kprintf(" [OLS disabled]"); /* 450 doesn't overlap seek right */
+	kprintf("\n");
 	if (err) {
-		printf("%s: error: %s\n", xyc->sc_dev.dv_xname,
+		kprintf("%s: error: %s\n", xyc->sc_dev.dv_xname,
 				xyc_e2str(err));
 		return;
 	}
 	if ((xyc->xyc->xyc_csr & XYC_ADRM) == 0) {
-		printf("%s: 24 bit addressing turned off\n",
+		kprintf("%s: 24 bit addressing turned off\n",
 			xyc->sc_dev.dv_xname);
-		printf("please set hardware jumpers JM1-JM2=in, JM3-JM4=out\n");
-		printf("to enable 24 bit mode and this driver\n");
+		kprintf("please set hardware jumpers JM1-JM2=in, JM3-JM4=out\n");
+		kprintf("to enable 24 bit mode and this driver\n");
 		return;
 	}
 
@@ -531,7 +531,7 @@ xyattach(parent, self, aux)
 				return;
 			}
 		}
-		printf("%s at %s",
+		kprintf("%s at %s",
 			xy->sc_dev.dv_xname, xy->parent->sc_dev.dv_xname);
 	}
 	/* we now have control */
@@ -544,14 +544,14 @@ xyattach(parent, self, aux)
 	err = xyc_cmd(xyc, XYCMD_RST, 0, xy->xy_drive, 0, 0, 0, fmode);
 	XYC_DONE(xyc, err);
 	if (err == XY_ERR_DNRY) {
-		printf(" drive %d: off-line\n", xa->driveno);
+		kprintf(" drive %d: off-line\n", xa->driveno);
 		goto done;
 	}
 	if (err) {
-		printf(": ERROR 0x%02x (%s)\n", err, xyc_e2str(err));
+		kprintf(": ERROR 0x%02x (%s)\n", err, xyc_e2str(err));
 		goto done;
 	}
-	printf(" drive %d: ready", xa->driveno);
+	kprintf(" drive %d: ready", xa->driveno);
 
 	/*
 	 * now set drive parameters (to semi-bogus values) so we can read the
@@ -576,11 +576,11 @@ xyattach(parent, self, aux)
 	}
 
 	if (err != XY_ERR_AOK) {
-		printf("\n%s: reading disk label failed: %s\n",
+		kprintf("\n%s: reading disk label failed: %s\n",
 			xy->sc_dev.dv_xname, xyc_e2str(err));
 		goto done;
 	}
-	printf(" (drive type %d)\n", xy->drive_type);
+	kprintf(" (drive type %d)\n", xy->drive_type);
 
 	newstate = XY_DRIVE_NOLABEL;
 
@@ -592,10 +592,10 @@ xyattach(parent, self, aux)
 		goto done;
 
 	/* inform the user of what is up */
-	printf("%s: <%s>, pcyl %d\n", xy->sc_dev.dv_xname,
+	kprintf("%s: <%s>, pcyl %d\n", xy->sc_dev.dv_xname,
 		xa->buf, xy->pcyl);
 	mb = xy->ncyl * (xy->nhead * xy->nsect) / (1048576 / XYFM_BPS);
-	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	kprintf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		xy->sc_dev.dv_xname, mb, xy->ncyl, xy->nhead, xy->nsect,
 		XYFM_BPS);
 
@@ -616,7 +616,7 @@ xyattach(parent, self, aux)
 		if (oxy->drive_type != xy->drive_type) continue;
 		if (xy->nsect != oxy->nsect || xy->pcyl != oxy->pcyl ||
 			xy->nhead != oxy->nhead) {
-			printf("%s: %s and %s must be the same size!\n",
+			kprintf("%s: %s and %s must be the same size!\n",
 				xyc->sc_dev.dv_xname, xy->sc_dev.dv_xname,
 				oxy->sc_dev.dv_xname);
 			panic("xy drive size mismatch");
@@ -632,7 +632,7 @@ xyattach(parent, self, aux)
 	err = xyc_cmd(xyc, XYCMD_SDS, 0, xy->xy_drive, blk, 0, 0, fmode);
 	XYC_DONE(xyc, err);
 	if (err) {
-		printf("%s: write drive size failed: %s\n",
+		kprintf("%s: write drive size failed: %s\n",
 			xy->sc_dev.dv_xname, xyc_e2str(err));
 		goto done;
 	}
@@ -650,7 +650,7 @@ xyattach(parent, self, aux)
 						xa->dvmabuf, fmode);
 	XYC_DONE(xyc, err);
 	if (err) {
-		printf("%s: reading bad144 failed: %s\n",
+		kprintf("%s: reading bad144 failed: %s\n",
 			xy->sc_dev.dv_xname, xyc_e2str(err));
 		goto done;
 	}
@@ -670,7 +670,7 @@ xyattach(parent, self, aux)
 			break;
 	}
 	if (lcv != 126) {
-		printf("%s: warning: invalid bad144 sector!\n",
+		kprintf("%s: warning: invalid bad144 sector!\n",
 			xy->sc_dev.dv_xname);
 	} else {
 		bcopy(xa->buf, &xy->dkb, XYFM_BPS);
@@ -750,7 +750,7 @@ xydump(dev, blkno, va, size)
 
 	xy = xy_cd.cd_devs[unit];
 
-	printf("%s%c: crash dump not supported (yet)\n", xy->sc_dev.dv_xname,
+	kprintf("%s%c: crash dump not supported (yet)\n", xy->sc_dev.dv_xname,
 	    'a' + part);
 
 	return ENXIO;
@@ -1214,7 +1214,7 @@ start:
 	if (XY_STATE(iorq->mode) != XY_SUB_FREE) {
 		DELAY(1000000);		/* XY_SUB_POLL: steal the iorq */
 		iorq->mode = XY_SUB_FREE;
-		printf("%s: stole control iopb\n", xycsc->sc_dev.dv_xname);
+		kprintf("%s: stole control iopb\n", xycsc->sc_dev.dv_xname);
 	}
 
 	/* init iorq/iopb */
@@ -1262,9 +1262,9 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	partno = DISKPART(bp->b_dev);
 #ifdef XYC_DEBUG
-	printf("xyc_startbuf: %s%c: %s block %d\n", xysc->sc_dev.dv_xname,
+	kprintf("xyc_startbuf: %s%c: %s block %d\n", xysc->sc_dev.dv_xname,
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
-	printf("xyc_startbuf: b_bcount %d, b_data 0x%x\n",
+	kprintf("xyc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
 #endif
 
@@ -1281,7 +1281,7 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	dbuf = kdvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */
-		printf("%s: warning: out of DVMA space\n",
+		kprintf("%s: warning: out of DVMA space\n",
 			xycsc->sc_dev.dv_xname);
 		return (XY_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
@@ -1346,14 +1346,14 @@ xyc_submit_iorq(xycsc, iorq, type)
 	u_long  iopbaddr;
 
 #ifdef XYC_DEBUG
-	printf("xyc_submit_iorq(%s, addr=0x%x, type=%d)\n",
+	kprintf("xyc_submit_iorq(%s, addr=0x%x, type=%d)\n",
 		xycsc->sc_dev.dv_xname, iorq, type);
 #endif
 
 	/* first check and see if controller is busy */
 	if ((xycsc->xyc->xyc_csr & XYC_GBSY) != 0) {
 #ifdef XYC_DEBUG
-		printf("xyc_submit_iorq: XYC not ready (BUSY)\n");
+		kprintf("xyc_submit_iorq: XYC not ready (BUSY)\n");
 #endif
 		if (type == XY_SUB_NOQ)
 			return (XY_ERR_FAIL);	/* failed */
@@ -1369,7 +1369,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 			iopbaddr = xycsc->xyc->xyc_rsetup; /* RESET */
 			if (xyc_unbusy(xycsc->xyc,XYC_RESETUSEC) == XY_ERR_FAIL)
 				panic("xyc_submit_iorq: stuck xyc");
-			printf("%s: stole controller\n",
+			kprintf("%s: stole controller\n",
 				xycsc->sc_dev.dv_xname);
 			break;
 		default:
@@ -1489,7 +1489,7 @@ xyc_piodriver(xycsc, iorq)
 	int     retval = 0;
 	u_long  res;
 #ifdef XYC_DEBUG
-	printf("xyc_piodriver(%s, 0x%x)\n", xycsc->sc_dev.dv_xname, iorq);
+	kprintf("xyc_piodriver(%s, 0x%x)\n", xycsc->sc_dev.dv_xname, iorq);
 #endif
 
 	while (iorq->iopb->done == 0) {
@@ -1500,7 +1500,7 @@ xyc_piodriver(xycsc, iorq)
 		if (res == XY_ERR_FAIL && nreset >= 2) {
 			xyc_reset(xycsc, 0, XY_RSET_ALL, XY_ERR_FAIL, 0);
 #ifdef XYC_DEBUG
-			printf("xyc_piodriver: timeout\n");
+			kprintf("xyc_piodriver: timeout\n");
 #endif
 			return (XY_ERR_FAIL);
 		}
@@ -1525,7 +1525,7 @@ xyc_piodriver(xycsc, iorq)
 	retval = iorq->errno;
 
 #ifdef XYC_DEBUG
-	printf("xyc_piodriver: done, retval = 0x%x (%s)\n",
+	kprintf("xyc_piodriver: done, retval = 0x%x (%s)\n",
 	    iorq->errno, xyc_e2str(iorq->errno));
 #endif
 
@@ -1566,7 +1566,7 @@ xyc_xyreset(xycsc, xysc)
 	}
 
 	if (del <= 0 || xycsc->ciopb->errs) {
-		printf("%s: off-line: %s\n", xycsc->sc_dev.dv_xname,
+		kprintf("%s: off-line: %s\n", xycsc->sc_dev.dv_xname,
 		    xyc_e2str(xycsc->ciopb->errno));
 		del = xycsc->xyc->xyc_rsetup;
 		if (xyc_unbusy(xycsc->xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
@@ -1595,7 +1595,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 	/* soft reset hardware */
 
 	if (!quiet)
-		printf("%s: soft reset\n", xycsc->sc_dev.dv_xname);
+		kprintf("%s: soft reset\n", xycsc->sc_dev.dv_xname);
 	del = xycsc->xyc->xyc_rsetup;
 	del = xyc_unbusy(xycsc->xyc, XYC_RESETUSEC);
 	if (del == XY_ERR_FAIL) {
@@ -1706,9 +1706,9 @@ xyc_remove_iorq(xycsc)
 		 * we dump them all.
 		 */
 		errno = XY_ERR_DERR;
-		printf("%s: DOUBLE ERROR!\n", xycsc->sc_dev.dv_xname);
+		kprintf("%s: DOUBLE ERROR!\n", xycsc->sc_dev.dv_xname);
 		if (xyc_reset(xycsc, 0, XY_RSET_ALL, errno, 0) != XY_ERR_AOK) {
-			printf("%s: soft reset failed!\n",
+			kprintf("%s: soft reset failed!\n",
 				xycsc->sc_dev.dv_xname);
 			panic("xyc_remove_iorq: controller DEAD");
 		}
@@ -1845,23 +1845,23 @@ xyc_perror(iorq, iopb, still_trying)
 
 	int     error = iorq->lasterror;
 
-	printf("%s", (iorq->xy) ? iorq->xy->sc_dev.dv_xname
+	kprintf("%s", (iorq->xy) ? iorq->xy->sc_dev.dv_xname
 	    : iorq->xyc->sc_dev.dv_xname);
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		kprintf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
 	if (iopb->com == XYCMD_RD || iopb->com == XYCMD_WR)
-		printf("%s %d/%d/%d: ",
+		kprintf("%s %d/%d/%d: ",
 			(iopb->com == XYCMD_RD) ? "read" : "write",
 			iopb->cyl, iopb->head, iopb->sect);
-	printf("%s", xyc_e2str(error));
+	kprintf("%s", xyc_e2str(error));
 
 	if (still_trying)
-		printf(" [still trying, new error=%s]", xyc_e2str(iorq->errno));
+		kprintf(" [still trying, new error=%s]", xyc_e2str(iorq->errno));
 	else
 		if (iorq->errno == 0)
-			printf(" [recovered in %d tries]", iorq->tries);
+			kprintf(" [recovered in %d tries]", iorq->tries);
 
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -1955,7 +1955,7 @@ xyc_tick(arg)
 			reset = 1;
 	}
 	if (reset) {
-		printf("%s: watchdog timeout\n", xycsc->sc_dev.dv_xname);
+		kprintf("%s: watchdog timeout\n", xycsc->sc_dev.dv_xname);
 		xyc_reset(xycsc, 0, XY_RSET_NONE, XY_ERR_FAIL, NULL);
 	}
 	splx(s);

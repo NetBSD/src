@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 1996/10/06 06:29:53 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 1996/10/11 00:45:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -114,7 +114,7 @@ mbattach(parent, self, aux)
 
 	extern int cputype, ncpus;
 
-	printf("\n");
+	kprintf("\n");
 
 	/*
 	 * if we ever support multi-CPU DEcstations (5800 family),
@@ -190,7 +190,7 @@ kn01_attach(parent, self, aux)
 	register int i;
 
 #ifdef DEBUG
-/*XXX*/ printf("(configuring kn01/5100 baseboard devices)\n");
+/*XXX*/ kprintf("(configuring kn01/5100 baseboard devices)\n");
 #endif
 
 	/* Try to configure each KN01 mainbus device */
@@ -198,7 +198,7 @@ kn01_attach(parent, self, aux)
 
 		nca = &kn01_devs[i];
 		if (nca == NULL) {
-			printf("mbattach: bad config for slot %d\n", i);
+			kprintf("mbattach: bad config for slot %d\n", i);
 			break;
 		}
 
@@ -214,7 +214,7 @@ dev slot > number of slots for %s",
 #endif
 
 #ifdef DEBUG
-		printf("configuring %s at %x interrupt number %d\n",
+		kprintf("configuring %s at %x interrupt number %d\n",
 		       nca->ca_name, nca->ca_addr, (u_int)nca->ca_slotpri);
 #endif
 
@@ -271,7 +271,7 @@ kn01_intr_establish(parent, cookie, level, handler, arg)
 	intr_arg_t arg;
 {
 	/* Interrupts on the KN01 are currently hardcoded. */
-	printf(" (kn01: intr_establish hardcoded) ");
+	kprintf(" (kn01: intr_establish hardcoded) ");
 	kn01_enable_intr((u_int) cookie, handler, arg, 1);
 }
 
@@ -279,7 +279,7 @@ void
 kn01_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	printf("(kn01: ignoring intr_disestablish) ");
+	kprintf("(kn01: ignoring intr_disestablish) ");
 }
 #endif /* DS3100 */
 
@@ -306,7 +306,7 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 	extern struct cfdriver ioasic_cd, tc_cd;
 
 	if (dev->dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
-		/*XXX*/ printf("ioasic interrupt for %d\n", (u_int)cookie);
+		/*XXX*/ kprintf("ioasic interrupt for %d\n", (u_int)cookie);
 		ioasic_intr_establish(parent, cookie, level, handler, arg);
 	} else
 	if (dev->dv_parent->dv_cfdata->cf_driver == &tc_cd) {
@@ -321,7 +321,7 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 #else
 	{
 #endif
-		printf("intr_establish: unknown parent bustype for %s\n",
+		kprintf("intr_establish: unknown parent bustype for %s\n",
 			dev->dv_xname);
 	}
 }

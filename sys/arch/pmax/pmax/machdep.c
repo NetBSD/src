@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1996/10/07 02:17:35 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1996/10/11 00:45:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -382,7 +382,7 @@ mach_init(argc, argv, code, cv)
 	}
 	/* check for MIPS based platform */
 	if (((i >> 24) & 0xFF) != 0x82) {
-		printf("Unknown System type '%s' 0x%x\n", cp, i);
+		kprintf("Unknown System type '%s' 0x%x\n", cp, i);
 		boot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -606,7 +606,7 @@ mach_init(argc, argv, code, cv)
 #endif /* DS5000_240 */
 
 	default:
-		printf("kernel not configured for systype 0x%x\n", i);
+		kprintf("kernel not configured for systype 0x%x\n", i);
 		boot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -755,8 +755,8 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
-	printf("real mem = %d\n", ctob(physmem));
+	kprintf(version);
+	kprintf("real mem = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -820,8 +820,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
-	printf("using %d buffers containing %d bytes of memory\n",
+	kprintf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	kprintf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
 	/*
@@ -953,7 +953,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
+		kprintf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
 #endif
 	/*
@@ -1008,7 +1008,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
+		kprintf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 }
@@ -1041,7 +1041,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	regs = p->p_md.md_regs;
 	/*
@@ -1052,10 +1052,10 @@ sys_sigreturn(p, v, retval)
 	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
 #ifdef DEBUG
 		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
-		printf("  old sp %x ra %x pc %x\n",
+			kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		kprintf("  old sp %x ra %x pc %x\n",
 			regs[SP], regs[RA], regs[PC]);
-		printf("  new sp %x ra %x pc %x err %d z %x\n",
+		kprintf("  new sp %x ra %x pc %x err %d z %x\n",
 			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
 			error, ksc.sc_regs[ZERO]);
 #endif
@@ -1134,8 +1134,8 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
-	printf("dump ");
+	kprintf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	kprintf("dump ");
 	/*
 	 * XXX
 	 * All but first arguments to  dump() bogus.
@@ -1145,27 +1145,27 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		printf("device bad\n");
+		kprintf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		kprintf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		kprintf("area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		kprintf("i/o error\n");
 		break;
 
 	default:
-		printf("error %d\n", error);
+		kprintf("error %d\n", error);
 		break;
 
 	case 0:
-		printf("succeeded\n");
+		kprintf("succeeded\n");
 	}
 }
 
@@ -1249,7 +1249,7 @@ boot(howto, bootstr)
 haltsys:
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	kprintf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 
 	while(1) ;	/* fool gcc */
@@ -1394,7 +1394,7 @@ initcpu()
 		wbflush();
 		break;
 	default:
-		printf("initcpu(): unknown system type 0x%x\n", pmax_boardtype);
+		kprintf("initcpu(): unknown system type 0x%x\n", pmax_boardtype);
 		break;
 	}
 
@@ -1522,7 +1522,7 @@ kn02_enable_intr(slotno, handler, sc, on)
 	int s;
 
 #if 0
-	printf("3MAX enable_intr: imask %x, %sabling slot %d, sc %p\n",
+	kprintf("3MAX enable_intr: imask %x, %sabling slot %d, sc %p\n",
 	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc);
 #endif
 
@@ -1530,7 +1530,7 @@ kn02_enable_intr(slotno, handler, sc, on)
 		panic("kn02_enable_intr: bogus slot %d\n", slotno);
 
 	if (on)  {
-		/*printf("kn02: slot %d handler 0x%x\n", slotno, handler);*/
+		/*kprintf("kn02: slot %d handler 0x%x\n", slotno, handler);*/
 		tc_slot_info[slotno].intr = handler;
 		tc_slot_info[slotno].sc = sc;
 	} else {
@@ -1606,7 +1606,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-	printf("3MIN: imask %x, %sabling slot %d, sc %x addr 0x%x\n",
+	kprintf("3MIN: imask %x, %sabling slot %d, sc %x addr 0x%x\n",
 	       kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
 #endif
 
@@ -1628,7 +1628,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 		if (slotno <= 2) {
 			/* it's an option slot */
 			int s = splhigh();
-			printf("Enabling 3MIN tcslot %d (UNTESTED)\n", slotno);
+			kprintf("Enabling 3MIN tcslot %d (UNTESTED)\n", slotno);
 			s  |= mask;
 			splx(s);
 		} else {
@@ -1640,7 +1640,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 		if (slotno <= 2) {	
 			/* it's an option slot */
 			int s = splhigh();
-			printf("kmin_intr: cannot disable option slot %d\n",
+			kprintf("kmin_intr: cannot disable option slot %d\n",
 				slotno);
 			s &= ~mask;
 			splx(s);
@@ -1756,7 +1756,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 	register unsigned mask;
 
 #if 0
-	printf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
+	kprintf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
 	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit, handler);
 #endif
 
@@ -1789,7 +1789,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", slotno);
+		kprintf("warning: enabling unknown intr %x\n", slotno);
 #endif
 		goto done;
 	}

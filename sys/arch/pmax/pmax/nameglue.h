@@ -1,4 +1,4 @@
-/*	$NetBSD: nameglue.h,v 1.1 1995/08/10 05:29:11 jonathan Exp $	*/
+/*	$NetBSD: nameglue.h,v 1.2 1996/10/11 00:45:14 christos Exp $	*/
 
 /*
  * Use macros to glue names for "machine-independent" functions 
@@ -32,7 +32,7 @@
  */
 
 #ifdef DEBUG
-#define DPRINTF(x) do { printf x ;} while (0)	/* general debug */
+#define DPRINTF(x) do { kprintf x ;} while (0)	/* general debug */
 #else
 #define DPRINTF(x) /* nothing */		/* general debug */
 #endif

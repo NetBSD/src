@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.8 1996/10/09 00:15:18 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.9 1996/10/11 00:46:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ cg4attach(parent, self, args)
 	bt->bt_addr = 0x07;	/* select test register */
 	bt->bt_ctrl = 0x00;	/* set test mode */
 
-	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+	kprintf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 	fb_attach(fb, 4);
 }
 

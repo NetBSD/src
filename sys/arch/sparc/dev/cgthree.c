@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.29 1996/10/04 20:34:37 thorpej Exp $ */
+/*	$NetBSD: cgthree.c,v 1.30 1996/10/11 00:46:28 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -207,7 +207,7 @@ cgthreeattach(parent, self, args)
 		NBPG);
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", nam,
+	kprintf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 	/*
@@ -234,7 +234,7 @@ cgthreeattach(parent, self, args)
 			if ((fbc->fbc_status & FBS_MSENSE) ==
 			     cg3_videoctrl[i].sense) {
 				int j;
-				printf(" setting video ctrl");
+				kprintf(" setting video ctrl");
 				for (j = 0; j < 12; j++)
 					fbc->fbc_vcontrol[j] =
 						cg3_videoctrl[i].vctrl[j];
@@ -257,12 +257,12 @@ cgthreeattach(parent, self, args)
 	BT_INIT(bt, 0);
 
 	if (isconsole) {
-		printf(" (console)\n");
+		kprintf(" (console)\n");
 #ifdef RASTERCONSOLE
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
-		printf("\n");
+		kprintf("\n");
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)

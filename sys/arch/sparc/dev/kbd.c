@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.25 1996/09/12 01:36:17 mrg Exp $ */
+/*	$NetBSD: kbd.c,v 1.26 1996/10/11 00:46:48 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -324,7 +324,7 @@ kbd_reset(ks)
 			(void) kbd_docmd(KBD_CMD_CLICK, 0);
 		break;
 	default:
-		printf("Unknown keyboard type %d\n", ks->kbd_id);
+		kprintf("Unknown keyboard type %d\n", ks->kbd_id);
 	}
 
 	ks->kbd_leds = 0;
@@ -427,11 +427,11 @@ kbd_rint(c)
 
 	/*
 	 * Reset keyboard after serial port overrun, so we can resynch.
-	 * The printf below should be shortened and/or replaced with a
+	 * The kprintf below should be shortened and/or replaced with a
 	 * call to log() after this is tested (and how will we test it?!).
 	 */
 	if (c & (TTY_FE|TTY_PE)) {
-		printf("keyboard input parity or framing error (0x%x)\n", c);
+		kprintf("keyboard input parity or framing error (0x%x)\n", c);
 		(void) ttyoutput(KBD_CMD_RESET, k->k_kbd);
 		(*k->k_kbd->t_oproc)(k->k_kbd);
 		return;
