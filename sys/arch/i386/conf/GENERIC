@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.517 2002/10/08 13:09:05 augustss Exp $
+# $NetBSD: GENERIC,v 1.518 2002/10/15 18:20:58 junyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.517 $"
+#ident 		"GENERIC-$Revision: 1.518 $"
 
 maxusers	32		# estimated number of users
 
@@ -210,6 +210,8 @@ options 	PCDISPLAY_SOFTCURSOR
 # if you want a really secure system, it may be better not to enable them,
 # see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
 #options 	WSDISPLAY_CHARFUNCS		# mouse console support
+# enable VGA raster mode capable of displaying multilingual text on console
+#options 	VGA_RASTERCONSOLE
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
