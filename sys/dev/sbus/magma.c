@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.2 1998/05/20 22:08:10 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.3 1998/06/03 22:38:31 pk Exp $	*/
 /*
  * magma.c
  *
@@ -69,6 +69,7 @@
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cd1190reg.h>
 
+#include <machine/mbppio.h>
 #include "magmareg.h"
 
 /*
@@ -316,17 +317,15 @@ magma_match(parent, cf, aux)
 	if( strcmp(sa->sa_name, "MAGMA_Sp") != 0 )
 		return(0);
 
-#if defined(MAGMA_DEBUG)
-	printf("magma: matched `%s'\n", sa->sa_name);
-	printf("magma: magma_prom `%s'\n",
-		getpropstring(sa->sa_node, "magma_prom"));
-	printf("magma: intlevels `%s'\n",
-		getpropstring(sa->sa_node, "intlevels"));
-	printf("magma: chiprev `%s'\n",
-		getpropstring(sa->sa_node, "chiprev"));
-	printf("magma: clock `%s'\n",
-		getpropstring(sa->sa_node, "clock"));
-#endif
+	dprintf(("magma: matched `%s'\n", sa->sa_name));
+	dprintf(("magma: magma_prom `%s'\n",
+		getpropstring(sa->sa_node, "magma_prom")));
+	dprintf(("magma: intlevels `%s'\n",
+		getpropstring(sa->sa_node, "intlevels")));
+	dprintf(("magma: chiprev `%s'\n",
+		getpropstring(sa->sa_node, "chiprev")));
+	dprintf(("magma: clock `%s'\n",
+		getpropstring(sa->sa_node, "clock")));
 
 	return (1);
 }
@@ -476,9 +475,24 @@ magma_hard(arg)
 		int port = rivr >> 4;
 
 		if( rivr & (1<<3) ) {			/* parallel port */
-			struct mbpp_port *mbpp = &sc->ms_mbpp->ms_port[port];
+			struct mbpp_port *mbpp;
+			int n_chars;
 
+			mbpp = &sc->ms_mbpp->ms_port[port];
 			cd = mbpp->mp_cd1400;
+ 
+			/* don't think we have to handle exceptions */
+			n_chars = cd1400_read_reg(cd, CD1400_RDCR);
+			while (n_chars--) {
+				if( mbpp->mp_cnt == 0 ) {
+					SET(mbpp->mp_flags, MBPPF_WAKEUP);
+					needsoftint = 1;
+					break;
+				}
+				*mbpp->mp_ptr = cd1400_read_reg(cd,CD1400_RDSR);
+				mbpp->mp_ptr++;
+				mbpp->mp_cnt--;
+			}
 		} else {				/* serial port */
 			struct mtty_port *mtty;
 			u_char *ptr, n_chars, line_stat;
@@ -551,28 +565,27 @@ magma_hard(arg)
 			mbpp = &sc->ms_mbpp->ms_port[port];
 			cd = mbpp->mp_cd1400;
 
-			/* if we have anything to send, then send what we can..
-			 * otherwise shut off the interrupts and signal for
-			 * a wakeup (can't be done at this spl because its
-			 * sleeping in spltty() in mbppwrite)
-			 */
-			if( mbpp->mp_txc ) {
+			if( mbpp->mp_cnt ) {
 				int count = 0;
 
-				while( count++ < CD1400_PAR_FIFO_SIZE &&
-				       mbpp->mp_txc ) {
-					cd1400_write_reg(cd, CD1400_TDR, *mbpp->mp_txp);
-					mbpp->mp_txc--;
-					mbpp->mp_txp++;
+				/* fill the fifo */
+				while (mbpp->mp_cnt &&
+					count++ < CD1400_PAR_FIFO_SIZE) {
+					cd1400_write_reg(cd, CD1400_TDR,
+							 *mbpp->mp_ptr);
+					mbpp->mp_ptr++;
+					mbpp->mp_cnt--;
 				}
 			} else {
-				int srer;
-
-				srer = cd1400_read_reg(cd, CD1400_SRER);
-				CLR(srer, CD1400_SRER_TXRDY);
-				cd1400_write_reg(cd, CD1400_SRER, srer);
-
-				SET(mbpp->mp_flags, MBPPF_DONE);
+				/*
+				 * fifo is empty and we got no more data
+				 * to send, so shut off interrupts and
+				 * signal for a wakeup, which can't be
+				 * done here in case we beat mbpp_send to
+				 * the tsleep call (we are running at >spltty)
+				 */
+				cd1400_write_reg(cd, CD1400_SRER, 0);
+				SET(mbpp->mp_flags, MBPPF_WAKEUP);
 				needsoftint = 1;
 			}
 		} else {		/* serial port */
@@ -724,13 +737,15 @@ magma_soft(arg)
 		splx(s);	/* ok */
 
 		if( ISSET(flags, MTTYF_CARRIER_CHANGED) ) {
-			dprintf(("%s%x: cd %s\n", mtty->ms_dev.dv_xname, port, mp->mp_carrier ? "on" : "off"));
+			dprintf(("%s%x: cd %s\n", mtty->ms_dev.dv_xname,
+				port, mp->mp_carrier ? "on" : "off"));
 			(*linesw[tp->t_line].l_modem)(tp, mp->mp_carrier);
 			serviced = 1;
 		}
 
 		if( ISSET(flags, MTTYF_RING_OVERFLOW) ) {
-			log(LOG_WARNING, "%s%x: ring buffer overflow\n", mtty->ms_dev.dv_xname, port);
+			log(LOG_WARNING, "%s%x: ring buffer overflow\n",
+			    mtty->ms_dev.dv_xname, port);
 			serviced = 1;
 		}
 
@@ -758,10 +773,10 @@ chkbpp:
 
 		s = splhigh();
 		flags = mp->mp_flags;
-		CLR(mp->mp_flags, MBPPF_DONE);
+		CLR(mp->mp_flags, MBPPF_WAKEUP);
 		splx(s);
 
-		if( ISSET(flags, MBPPF_DONE) ) {
+		if( ISSET(flags, MBPPF_WAKEUP) ) {
 			wakeup(mp);
 			serviced = 1;
 		}
@@ -1380,6 +1395,12 @@ mtty_param(tp, t)
  *	mbppread	read from mbpp
  *	mbppwrite	write to mbpp
  *	mbppioctl	do ioctl on mbpp
+ *	mbppselect	do select on mbpp
+ *	mbpp_rw		general rw routine
+ *	mbpp_timeout	rw timeout
+ *	mbpp_start	rw start after delay
+ *	mbpp_send	send data
+ *	mbpp_recv	recv data
  */
 
 int
@@ -1402,7 +1423,7 @@ mbpp_attach(parent, dev, args)
 	struct magma_softc *sc = (struct magma_softc *)parent;
 	struct mbpp_softc *ms = (struct mbpp_softc *)dev;
 	struct mbpp_port *mp;
-	int port = 0;
+	int port;
 
 	sc->ms_mbpp = ms;
 	dprintf((" addr %p", ms));
@@ -1414,17 +1435,6 @@ mbpp_attach(parent, dev, args)
 			mp->mp_cd1190 = &sc->ms_cd1190[port];
 		else
 			mp->mp_cd1400 = &sc->ms_cd1400[0];
-
-		mp->mp_txbuf = malloc(MBPP_TXBUF_SIZE, M_DEVBUF, M_NOWAIT);
-		if( mp->mp_txbuf == NULL ) break;
-
-		/*
-		 * default strobe and timeout settings
-		 */
-		mp->mp_read_strobe = 1000;	/* 1 microsecond */
-		mp->mp_read_timeout = 5 * hz;	/* 5 seconds */
-		mp->mp_write_strobe = 1000;	/* 1 microsecond */
-		mp->mp_write_timeout = 5 * hz;	/* 5 seconds */
 	}
 
 	ms->ms_nports = port;
@@ -1445,7 +1455,7 @@ mbppopen(dev, flags, mode, p)
 	int port = MAGMA_PORT(dev);
 	struct mbpp_softc *ms;
 	struct mbpp_port *mp;
-	int error = 0, s;
+	int s;
 
 	if( card >= mbpp_cd.cd_ndevs ||
 	    (ms = mbpp_cd.cd_devs[card]) == NULL || port >= ms->ms_nports )
@@ -1461,22 +1471,27 @@ mbppopen(dev, flags, mode, p)
 	SET(mp->mp_flags, MBPPF_OPEN);
 	splx(s);
 
-	if( mp->mp_cd1400 ) {	/* CD1400 chip */
+	/* set defaults */
+	mp->mp_burst = MBPP_BURST;
+	mp->mp_timeout = mbpp_mstohz(MBPP_TIMEOUT);
+	mp->mp_delay = mbpp_mstohz(MBPP_DELAY);
+
+	/* init chips */
+	if( mp->mp_cd1400 ) {	/* CD1400 */
 		struct cd1400 *cd = mp->mp_cd1400;
 
 		/* set up CD1400 channel */
 		s = spltty();
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 		cd1400_write_ccr(cd, CD1400_CCR_CMDRESET);
-		cd1400_write_reg(cd, CD1400_TBPR, (mp->mp_write_strobe * cd->cd_clock / 2000));
 		cd1400_write_reg(cd, CD1400_LIVR, (1<<3));
-		cd1400_write_ccr(cd, CD1400_CCR_CMDCHANCTL | CD1400_CCR_XMTEN);
 		splx(s);
-	} else {		/* CD1190 chip */
-		error = ENXIO;
+	} else {		/* CD1190 */
+		mp->mp_flags = 0;
+		return (ENXIO);
 	}
 
-	return(error);
+	return (0);
 }
 
 /*
@@ -1492,19 +1507,7 @@ mbppclose(dev, flag, mode, p)
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 
-	if( mp->mp_cd1400 ) {
-		struct cd1400 *cd = mp->mp_cd1400;
-		int s;
-
-		s = spltty();
-		/* turn off the channel */
-		cd1400_write_reg(cd, CD1400_CAR, 0);
-		cd1400_write_ccr(cd, CD1400_CCR_CMDRESET);
-		splx(s);
-	}
-
 	mp->mp_flags = 0;
-
 	return(0);
 }
 
@@ -1517,7 +1520,8 @@ mbppread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	return(ENODEV);
+
+	return( mbpp_rw(dev, uio) );
 }
 
 /*
@@ -1529,34 +1533,8 @@ mbppwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
-	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
-	int error = 0;
-	int s;
 
-	while( uio->uio_resid ) {
-		mp->mp_txc = MIN(uio->uio_resid, MBPP_TXBUF_SIZE);
-		mp->mp_txp = mp->mp_txbuf;
-
-		error = uiomove((caddr_t)mp->mp_txp, mp->mp_txc, uio);
-		if( error ) break;
-
-		s = spltty();
-		if( mp->mp_cd1400 )
-			cd1400_enable_transmitter(mp->mp_cd1400, 0);
-		error = tsleep(mp, PCATCH | PZERO, "mbppwrite", mp->mp_write_timeout);
-		splx(s);
-
-		if( error ) break;
-	} /* while(more to send...) */
-
-	if( error == EWOULDBLOCK ) {
-		log(LOG_INFO, "%s%d: write timeout\n",
-		    ms->ms_dev.dv_xname, MAGMA_PORT(dev));
-		/* XXX check paper out, printer offline etc.. */
-	}
-
-	return(error);
+	return( mbpp_rw(dev, uio) );
 }
 
 /*
@@ -1570,8 +1548,42 @@ mbppioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	/* we want to be able to get & set strobe and timeout values */
-	return(ENODEV);
+	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct mbpp_param *bp;
+	int error = 0;
+	int s;
+
+	switch(cmd) {
+	case MBPPIOCSPARAM:
+		bp = (struct mbpp_param *)data;
+		if( bp->bp_burst < MBPP_BURST_MIN || bp->bp_burst > MBPP_BURST_MAX ||
+		    bp->bp_delay < MBPP_DELAY_MIN || bp->bp_delay > MBPP_DELAY_MIN ) {
+			error = EINVAL;
+		} else {
+			mp->mp_burst = bp->bp_burst;
+			mp->mp_timeout = mbpp_mstohz(bp->bp_timeout);
+			mp->mp_delay = mbpp_mstohz(bp->bp_delay);
+		}
+		break;
+	case MBPPIOCGPARAM:
+		bp = (struct mbpp_param *)data;
+		bp->bp_burst = mp->mp_burst;
+		bp->bp_timeout = mbpp_hztoms(mp->mp_timeout);
+		bp->bp_delay = mbpp_hztoms(mp->mp_delay);
+		break;
+	case MBPPIOCGSTAT:
+		/* XXX make this more generic */
+		s = spltty();
+		cd1400_write_reg(mp->mp_cd1400, CD1400_CAR, 0);
+		*(int *)data = cd1400_read_reg(mp->mp_cd1400, CD1400_PSVR);
+		splx(s);
+		break;
+	default:
+		error = ENOTTY;
+	}
+
+	return(error);
 }
 
 /*
@@ -1583,7 +1595,267 @@ mbpppoll(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
+
 	return(ENODEV);
+}
+
+int
+mbpp_rw(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	int card = MAGMA_CARD(dev);
+	int port = MAGMA_PORT(dev);
+	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
+	struct mbpp_port *mp = &ms->ms_port[port];
+	caddr_t buffer, ptr;
+	int buflen, cnt, len;
+	int s, error = 0;
+	int gotdata = 0;
+
+	if( uio->uio_resid == 0 )
+		return(0);
+
+	buflen = min(uio->uio_resid, mp->mp_burst);
+	buffer = malloc(buflen, M_DEVBUF, M_WAITOK);
+	if( buffer == NULL )
+		return(ENOMEM);
+
+	SET(mp->mp_flags, MBPPF_UIO);
+
+	/*
+	 * start timeout, if needed
+	 */
+	if( mp->mp_timeout > 0 ) {
+		SET(mp->mp_flags, MBPPF_TIMEOUT);
+		timeout(mbpp_timeout, mp, mp->mp_timeout);
+	}
+
+	len = cnt = 0;
+	while( uio->uio_resid > 0 ) {
+		len = min(buflen, uio->uio_resid);
+		ptr = buffer;
+
+		if( uio->uio_rw == UIO_WRITE ) {
+			error = uiomove(ptr, len, uio);
+			if( error ) break;
+		}
+again:		/* goto bad */
+		/* timed out?  */
+		if( !ISSET(mp->mp_flags, MBPPF_UIO) )
+			break;
+
+		/*
+		 * perform the operation
+		 */
+		if( uio->uio_rw == UIO_WRITE ) {
+			cnt = mbpp_send(mp, ptr, len);
+		} else {
+			cnt = mbpp_recv(mp, ptr, len);
+		}
+
+		if( uio->uio_rw == UIO_READ ) {
+			if( cnt ) {
+				error = uiomove(ptr, cnt, uio);
+				if( error ) break;
+				gotdata++;
+			}
+			else if( gotdata )	/* consider us done */
+				break;
+		}
+
+		/* timed out?  */
+		if( !ISSET(mp->mp_flags, MBPPF_UIO) )
+			break;
+
+		/*
+		 * poll delay?
+		 */
+		if( mp->mp_delay > 0 ) {
+			s = splsoftclock();
+			SET(mp->mp_flags, MBPPF_DELAY);
+			timeout(mbpp_start, mp, mp->mp_delay);
+			error = tsleep(mp, PCATCH | PZERO, "mbppdelay", 0);
+			splx(s);
+			if( error ) break;
+		}
+
+		/*
+		 * don't call uiomove again until we used all the data we grabbed
+		 */
+		if( uio->uio_rw == UIO_WRITE && cnt != len ) {
+			ptr += cnt;
+			len -= cnt;
+			cnt = 0;
+			goto again;
+		}
+	}
+
+	/*
+	 * clear timeouts
+	 */
+	s = splsoftclock();
+	if( ISSET(mp->mp_flags, MBPPF_TIMEOUT) ) {
+		untimeout(mbpp_timeout, mp);
+		CLR(mp->mp_flags, MBPPF_TIMEOUT);
+	}
+	if( ISSET(mp->mp_flags, MBPPF_DELAY) ) {
+		untimeout(mbpp_start, mp);
+		CLR(mp->mp_flags, MBPPF_DELAY);
+	}
+	splx(s);
+
+	/*
+	 * adjust for those chars that we uiomoved but never actually wrote
+	 */
+	if( uio->uio_rw == UIO_WRITE && cnt != len ) {
+		uio->uio_resid += (len - cnt);
+	}
+
+	free(buffer, M_DEVBUF);
+	return(error);
+}
+
+void
+mbpp_timeout(arg)
+	void *arg;
+{
+	struct mbpp_port *mp = arg;
+
+	CLR(mp->mp_flags, MBPPF_UIO | MBPPF_TIMEOUT);
+	wakeup(mp);
+}
+
+void
+mbpp_start(arg)
+	void *arg;
+{
+	struct mbpp_port *mp = arg;
+
+	CLR(mp->mp_flags, MBPPF_DELAY);
+	wakeup(mp);
+}
+
+int
+mbpp_send(mp, ptr, len)
+	struct mbpp_port *mp;
+	caddr_t ptr;
+	int len;
+{
+	int s;
+	struct cd1400 *cd = mp->mp_cd1400;
+
+	/* set up io information */
+	mp->mp_ptr = ptr;
+	mp->mp_cnt = len;
+
+	/* start transmitting */
+	s = spltty();
+	if( cd ) {
+		cd1400_write_reg(cd, CD1400_CAR, 0);
+
+		/* output strobe width ~1microsecond */
+		cd1400_write_reg(cd, CD1400_TBPR, 10);
+
+		/* enable channel */
+		cd1400_write_ccr(cd, CD1400_CCR_CMDCHANCTL | CD1400_CCR_XMTEN);
+		cd1400_write_reg(cd, CD1400_SRER, CD1400_SRER_TXRDY);
+	}
+
+	/* ZZzzz... */
+	tsleep(mp, PCATCH | PZERO, "mbpp_send", 0);
+
+	/* stop transmitting */
+	if( cd ) {
+		cd1400_write_reg(cd, CD1400_CAR, 0);
+
+		/* disable transmitter */
+		cd1400_write_reg(cd, CD1400_SRER, 0);
+		cd1400_write_ccr(cd, CD1400_CCR_CMDCHANCTL | CD1400_CCR_XMTDIS);
+
+		/* flush fifo */
+		cd1400_write_ccr(cd, CD1400_CCR_CMDRESET | CD1400_CCR_FTF);
+	}
+	splx(s);
+
+	/* return number of chars sent */
+	return(len - mp->mp_cnt);
+}
+
+int
+mbpp_recv(mp, ptr, len)
+	struct mbpp_port *mp;
+	caddr_t ptr;
+	int len;
+{
+	int s;
+	struct cd1400 *cd = mp->mp_cd1400;
+
+	/* set up io information */
+	mp->mp_ptr = ptr;
+	mp->mp_cnt = len;
+
+	/* start receiving */
+	s = spltty();
+	if( cd ) {
+	int rcor, rbpr;
+
+		cd1400_write_reg(cd, CD1400_CAR, 0);
+
+		/* input strobe at 100kbaud (10microseconds) */
+		cd1400_compute_baud(100000, cd->cd_clock, &rcor, &rbpr);
+		cd1400_write_reg(cd, CD1400_RCOR, rcor);
+		cd1400_write_reg(cd, CD1400_RBPR, rbpr);
+
+		/* rx threshold */
+		cd1400_write_reg(cd, CD1400_COR3, MBPP_RX_FIFO_THRESHOLD);
+		cd1400_write_ccr(cd, CD1400_CCR_CMDCORCHG | CD1400_CCR_COR3);
+
+		/* enable channel */
+		cd1400_write_ccr(cd, CD1400_CCR_CMDCHANCTL | CD1400_CCR_RCVEN);
+		cd1400_write_reg(cd, CD1400_SRER, CD1400_SRER_RXDATA);
+	}
+
+	/* ZZzzz... */
+	tsleep(mp, PCATCH | PZERO, "mbpp_recv", 0);
+
+	/* stop receiving */
+	if( cd ) {
+		cd1400_write_reg(cd, CD1400_CAR, 0);
+
+		/* disable receiving */
+		cd1400_write_reg(cd, CD1400_SRER, 0);
+		cd1400_write_ccr(cd, CD1400_CCR_CMDCHANCTL | CD1400_CCR_RCVDIS);
+	}
+	splx(s);
+
+	/* return number of chars received */
+	return(len - mp->mp_cnt);
+}
+
+int
+mbpp_hztoms(h)
+	int h;
+{
+	int m = h;
+
+	if( m > 0 )
+		m = m * 1000 / hz;
+	return(m);
+}
+
+int
+mbpp_mstohz(m)
+	int m;
+{
+	int h = m;
+
+	if( h > 0 ) {
+		h = h * hz / 1000;
+		if( h == 0 )
+			h = 1000 / hz;
+	}
+	return(h);
 }
 
 #endif /* NMAGMA */
