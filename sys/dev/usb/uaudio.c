@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.2 1999/09/12 08:23:42 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.3 1999/10/13 20:13:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -952,11 +952,6 @@ uaudio_process_as(sc, buf, offsp, size, id)
 	offs += asid->bLength;
 	if (offs > size)
 		return (USBD_INVAL);
-	if (UGETW(asid->wFormatTag) != 1) {
-		printf("%s: ignored setting with type %d format\n",
-		       USBDEVNAME(sc->sc_dev), UGETW(asid->wFormatTag));
-		return (USBD_NORMAL_COMPLETION);
-	}
 	asf1d = (void *)(buf + offs);
 	if (asf1d->bDescriptorType != UDESC_CS_INTERFACE ||
 	    asf1d->bDescriptorSubtype != FORMAT_TYPE)
@@ -964,6 +959,12 @@ uaudio_process_as(sc, buf, offsp, size, id)
 	offs += asf1d->bLength;
 	if (offs > size)
 		return (USBD_INVAL);
+
+	if (asf1d->bFormatType != FORMAT_TYPE_I) {
+		printf("%s: ignored setting with type %d format\n",
+		       USBDEVNAME(sc->sc_dev), UGETW(asid->wFormatTag));
+		return (USBD_NORMAL_COMPLETION);
+	}
 
 	ed = (void *)(buf + offs);
 	if (ed->bDescriptorType != UDESC_ENDPOINT)
@@ -990,7 +991,7 @@ uaudio_process_as(sc, buf, offsp, size, id)
 	if (offs > size)
 		return (USBD_INVAL);
 	
-	format = asf1d->bFormatType;
+	format = UGETW(asid->wFormatTag);
 	chan = asf1d->bNrChannels;
 	prec = asf1d->bBitResolution;
 	if (prec != 8 && prec != 16) {
@@ -1001,19 +1002,19 @@ uaudio_process_as(sc, buf, offsp, size, id)
 		return (USBD_NORMAL_COMPLETION);
 	}
 	switch (format) {
-	case PCM: 
+	case UA_FMT_PCM:
 		sc->sc_altflags |= prec == 8 ? HAS_8 : HAS_16;
 		enc = AUDIO_ENCODING_SLINEAR_LE; 
 		break;
-	case PCM8: 
+	case UA_FMT_PCM8:
 		enc = AUDIO_ENCODING_ULINEAR; 
 		sc->sc_altflags |= HAS_8U;
 		break;
-	case ALAW: 
+	case UA_FMT_ALAW:
 		enc = AUDIO_ENCODING_ALAW; 
 		sc->sc_altflags |= HAS_ALAW;
 		break;
-	case MULAW: 
+	case UA_FMT_MULAW:
 		enc = AUDIO_ENCODING_ULAW; 
 		sc->sc_altflags |= HAS_MULAW;
 		break;

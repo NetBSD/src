@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.1 1999/09/09 12:28:26 augustss Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.2 1999/10/13 20:13:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -257,16 +257,21 @@ struct usb_audio_extension_unit_1 {
 
 #define FU_MASK(u) (1 << ((u)-1))
 
-#define MASTER_CHAN 0
+#define MASTER_CHAN	0
 
-#define AS_GENERAL 1
-#define FORMAT_TYPE 2
+#define AS_GENERAL	1
+#define FORMAT_TYPE	2
 #define FORMAT_SPECIFIC 3
 
-#define PCM 1
-#define PCM8 2
-#define IEEE_FLOAT 3
-#define ALAW 4
-#define MULAW 5
+#define UA_FMT_PCM	1
+#define UA_FMT_PCM8	2
+#define UA_FMT_IEEE_FLOAT 3
+#define UA_FMT_ALAW	4
+#define UA_FMT_MULAW	5
 
 #define SAMPLING_FREQ_CONTROL 0x01
+
+#define FORMAT_TYPE_UNDEFINED 0
+#define FORMAT_TYPE_I 1
+#define FORMAT_TYPE_II 2
+#define FORMAT_TYPE_III 3
