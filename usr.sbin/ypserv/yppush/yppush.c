@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.2 1996/08/09 20:18:50 thorpej Exp $	*/
+/*	$NetBSD: yppush.c,v 1.3 1996/08/09 20:24:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -92,7 +92,7 @@ main(argc, argv)
 	if (atexit(cleanup))
 		err(1, "can't register cleanup function");
 
-        yp_get_default_domain(&domain);
+	domain = NULL;
 	hostname = NULL;
 
 	while ((c = getopt(argc, argv, "d:h:v")) != -1) {
@@ -120,6 +120,11 @@ main(argc, argv)
 		usage();
 
 	map = argv[0];
+
+	if (domain == NULL)
+		if ((c = yp_get_default_domain(&domain)))
+			errx(1, "can't get YP domain name.  Reason: %s",
+			    yperr_string(c));
 
 	memset(Domain, 0, sizeof(Domain));
 	snprintf(Domain, sizeof(Domain), "%s", domain);
