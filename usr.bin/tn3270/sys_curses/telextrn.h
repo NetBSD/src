@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)telextrn.h	4.2 (Berkeley) 4/26/91
- *	$Id: telextrn.h,v 1.2 1993/08/01 18:04:46 mycroft Exp $
+ *	$Id: telextrn.h,v 1.3 1993/08/10 00:08:52 mycroft Exp $
  */
 
 /*
@@ -61,7 +61,6 @@ extern void
 	outputPurge(),
 	EmptyTerminal(),
 	StringToTerminal(),
-	_putchar(),
 	ExitPerror(),
 	setcommandmode();
 
