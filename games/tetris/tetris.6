@@ -1,4 +1,4 @@
-.\"	$NetBSD: tetris.6,v 1.8 2002/02/08 01:25:15 ross Exp $
+.\"	$NetBSD: tetris.6,v 1.9 2002/09/26 18:32:05 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,14 +60,14 @@ The default level of play is 2.
 .Pp
 The default control keys are as follows:
 .Pp
-.Bl -tag -width "\*[Lt]space\*[Gt]" -compact -offset indent
+.Bl -tag -width "xxspacexx" -compact -offset indent
 .It j
 move left
 .It k
 rotate 1/4 turn counterclockwise
 .It l
 move right
-.It \*[Lt]space\*[Gt]
+.It Aq space
 drop
 .It p
 pause
@@ -110,7 +110,7 @@ at level 9, they fall 9 times per second.
 (As the game goes on, things speed up,
 no matter what your initial selection.)
 When this shape
-.Dq "touches down"
+.Dq touches down
 on the bottom of the field, another will appear at the top.
 .Pp
 You can move shapes to the left or right, rotate them counterclockwise,

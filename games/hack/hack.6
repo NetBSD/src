@@ -1,23 +1,23 @@
-.\"	$NetBSD: hack.6,v 1.9 2002/09/26 16:12:40 wiz Exp $	-*- nroff -*-
+.\"	$NetBSD: hack.6,v 1.10 2002/09/26 18:32:01 wiz Exp $	-*- nroff -*-
 .Dd March 31, 1985
 .Dt HACK 6
 .Os
 .Sh NAME
 .Nm hack
-.Nd Exploring The Dungeons of Doom
+.Nd exploring The Dungeons of Doom
 .Sh SYNOPSIS
-.Nm /usr/games/hack
+.Nm
 .Op Fl d Ar directory
 .Op Fl n
 .Op Fl u Ar playername
-.Nm /usr/games/hack
+.Nm ""
 .Op Fl d Ar directory
 .Op Fl s
 .Op Fl X
 .Op Ar playername ...
 .Sh DESCRIPTION
 .Nm
-is a display oriented dungeons \*[Am] dragons - like game.
+is a display oriented dungeons \*[Am] dragons-like game.
 Both display and command structure resemble rogue.
 (For a game with the same structure but entirely different display -
 a real cave instead of dull rectangles - try Quest.)
@@ -130,7 +130,8 @@ Pager used instead of default pager.
 .It Ev MAIL
 Mailbox file.
 .It Ev MAILREADER
-Reader used instead of default (probably /usr/bin/mail).
+Reader used instead of default (probably
+.Pa /usr/bin/mail ) .
 .It Ev HACKDIR
 Playground.
 .It Ev HACKOPTIONS
