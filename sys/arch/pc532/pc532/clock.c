@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1997/03/20 12:00:33 matthias Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 1997/03/22 08:28:56 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,8 +129,8 @@ clock_attach(parent, self, aux)
 	ICUB(CIPTR) = ca->ca_irq << 4;
 
 	/* Establish interrupt vector */
-	intr_establish(IR_CLK, (void (*)(void *))hardclock, NULL, "clock",
-		       IPL_CLOCK, IPL_CLOCK, FALLING_EDGE);
+	intr_establish(IR_CLK, (void (*)(void *))hardclock, NULL,
+		       self->dv_xname, IPL_CLOCK, IPL_CLOCK, FALLING_EDGE);
 
 	/* No clock output. */
 	ICUB(OCASN) = 0;
