@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.4 1999/05/05 00:48:30 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.5 1999/05/05 00:57:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -89,12 +89,6 @@
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
-
-/* XXX these don't belong here */
-#define osf1_sigmask(n)		(1UL << ((n) - 1))
-#define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
-#define osf1_sigismember(s, n)	(*(s) & osf1_sigmask(n))
-#define osf1_sigaddset(s, n)	(*(s) |= osf1_sigmask(n))
 
 const struct emul_flags_xtab osf1_access_flags_xtab[] = {
 #if 0 /* pseudo-flag */

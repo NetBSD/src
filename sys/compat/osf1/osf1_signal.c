@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.14 1999/05/01 02:57:11 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.15 1999/05/05 00:57:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -49,11 +49,6 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
-
-#define osf1_sigmask(n)		(1UL << ((n) - 1))
-#define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
-#define osf1_sigismember(s, n)	(*(s) & osf1_sigmask(n))
-#define osf1_sigaddset(s, n)	(*(s) |= osf1_sigmask(n))
 
 int
 osf1_sys_sigaction(p, v, retval)
