@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.75 2003/03/24 15:25:56 atatat Exp $
+#	$NetBSD: 3RDPARTY,v 1.76 2003/03/26 00:24:12 pooka Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -236,18 +236,13 @@ FP numbers.  Added ULong type (but Gay says he'll adopt that change
 for the next release).
 
 Package:	file
-Version:	3.39
-Current Vers:	3.41
+Version:	4.00
+Current Vers:	4.00
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Mailing List:	file@mx.gw.com
 Responsible:	christos, pooka
 Notes:
-Currently there are two versions of file(1) in the tree (usr.bin/file,
-dist/file). Of these only the one in usr.bin is currently used. The
-version in dist was imported in preparation to move file over to dist,
-but that project was put on hold waiting for file 3.42, which will be
-structured differently.
 
 Package:	flex
 Version:	2.5.4
