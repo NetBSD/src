@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.52 2002/02/25 00:46:37 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.53 2002/02/26 02:00:16 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -381,14 +381,13 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #include "opt_usb.h"
 
-#if defined(KERNEL)
+#if defined(_KERNEL)
 #include <sys/malloc.h>
 
 MALLOC_DECLARE(M_USB);
 MALLOC_DECLARE(M_USBDEV);
 MALLOC_DECLARE(M_USBHC);
 
-#define _KERNEL KERNEL
 #endif
 
 #define Static
