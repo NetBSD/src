@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.33 1996/09/19 04:25:08 cgd Exp $	*/
+/*	$NetBSD: mountd.c,v 1.34 1996/09/28 15:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.33 1996/09/19 04:25:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.34 1996/09/28 15:30:08 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,7 @@ mntsrv(rqstp, transp)
 				add_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
 					dirpath);
 			if (debug)
-				fprintf(stderr, "Mount successfull.\n");
+				fprintf(stderr, "Mount successful.\n");
 		} else {
 			bad = EACCES;
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
