@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.17 1997/05/28 00:17:15 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.18 1997/05/28 04:48:47 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -108,7 +108,6 @@ int	ipl_unreach = ICMP_UNREACH_FILTER;
 #include "ipt.h"
 static	struct	ifnet **ifneta = NULL;
 static	int	nifs = 0;
-struct	ifnet	*get_unit __P((char *));
 #endif
 
 #ifdef	IPFILTER_LOG
