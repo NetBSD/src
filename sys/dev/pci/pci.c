@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.27 1997/04/10 23:12:22 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.28 1997/08/30 06:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -266,107 +266,6 @@ pcisubmatch(parent, cf, aux)
 	    cf->pcicf_function != pa->pa_function)
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
-}
-
-int
-pci_io_find(pc, pcitag, reg, iobasep, iosizep)
-	pci_chipset_tag_t pc;
-	pcitag_t pcitag;
-	int reg;
-	bus_addr_t *iobasep;
-	bus_size_t *iosizep;
-{
-	pcireg_t addrdata, sizedata;
-	int s;
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("pci_io_find: bad request");
-
-	/* XXX?
-	 * Section 6.2.5.1, `Address Maps', tells us that:
-	 *
-	 * 1) The builtin software should have already mapped the device in a
-	 * reasonable way.
-	 *
-	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
-	 */
-	addrdata = pci_conf_read(pc, pcitag, reg);
-
-	s = splhigh();
-	pci_conf_write(pc, pcitag, reg, 0xffffffff);
-	sizedata = pci_conf_read(pc, pcitag, reg);
-	pci_conf_write(pc, pcitag, reg, addrdata);
-	splx(s);
-
-	if (PCI_MAPREG_TYPE(addrdata) != PCI_MAPREG_TYPE_IO)
-		panic("pci_io_find: not an I/O region");
-
-	if (iobasep != NULL)
-		*iobasep = PCI_MAPREG_IO_ADDR(addrdata);
-	if (iosizep != NULL)
-		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
-
-	return (0);
-}
-
-int
-pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
-	pci_chipset_tag_t pc;
-	pcitag_t pcitag;
-	int reg;
-	bus_addr_t *membasep;
-	bus_size_t *memsizep;
-	int *cacheablep;
-{
-	pcireg_t addrdata, sizedata;
-	int s;
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("pci_find_mem: bad request");
-
-	/*
-	 * Section 6.2.5.1, `Address Maps', tells us that:
-	 *
-	 * 1) The builtin software should have already mapped the device in a
-	 * reasonable way.
-	 *
-	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
-	 */
-	addrdata = pci_conf_read(pc, pcitag, reg);
-
-	s = splhigh();
-	pci_conf_write(pc, pcitag, reg, 0xffffffff);
-	sizedata = pci_conf_read(pc, pcitag, reg);
-	pci_conf_write(pc, pcitag, reg, addrdata);
-	splx(s);
-
-	if (PCI_MAPREG_TYPE(addrdata) == PCI_MAPREG_TYPE_IO)
-		panic("pci_find_mem: I/O region");
-
-	switch (PCI_MAPREG_MEM_TYPE(addrdata)) {
-	case PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-		break;
-	case PCI_MAPREG_MEM_TYPE_64BIT:
-/* XXX */	printf("pci_find_mem: 64-bit region\n");
-/* XXX */	return (1);
-	default:
-		printf("pci_find_mem: reserved region type\n");
-		return (1);
-	}
-
-	if (membasep != NULL)
-		*membasep = PCI_MAPREG_MEM_ADDR(addrdata);	/* PCI addr */
-	if (memsizep != NULL)
-		*memsizep = PCI_MAPREG_MEM_SIZE(sizedata);
-	if (cacheablep != NULL)
-		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
-
-	return 0;
 }
 
 void
