@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.8 2002/03/18 22:25:43 yamt Exp $	*/
+/*	$NetBSD: runetype.h,v 1.9 2002/03/18 22:58:44 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,11 +47,6 @@
 #ifdef _BSD_RUNE_T_
 typedef	_BSD_RUNE_T_	rune_t;
 #undef _BSD_RUNE_T_
-#endif
-
-#ifdef _BSD_MBSTATE_T_
-typedef	_BSD_MBSTATE_T_	mbstate_t;
-#undef _BSD_MBSTATE_T_
 #endif
 
 typedef uint64_t	__runepad_t;
@@ -182,22 +177,6 @@ typedef struct _RuneLocale {
 	char				*rl_codeset;
 	struct _citrus_ctype_rec	*rl_citrus_ctype;
 } _RuneLocale;
-
-
-/* mbstate_t private */
-
-typedef struct _RuneStatePriv {
-	_RuneLocale	*__runelocale;
-	char		__private __attribute__((__aligned__));
-} _RuneStatePriv;
-
-typedef union _RuneState {
-	mbstate_t		__pad;
-	struct _RuneStatePriv	__priv;
-#define rs_runelocale		__priv.__runelocale
-#define rs_private		__priv.__private
-} _RuneState;
-#define _PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
 
 
 /* magic number for LC_CTYPE (rune)locale declaration */

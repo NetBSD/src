@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.1 2002/03/17 22:14:29 tshiozak Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.2 2002/03/18 22:58:44 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,6 +28,29 @@
 
 #ifndef _MULTIBYTE_H_
 #define _MULTIBYTE_H_
+
+/* mbstate_t private */
+
+#ifdef _BSD_MBSTATE_T_
+typedef	_BSD_MBSTATE_T_	mbstate_t;
+#undef _BSD_MBSTATE_T_
+#endif
+
+typedef struct _RuneStatePriv {
+	_RuneLocale	*__runelocale;
+	char		__private __attribute__((__aligned__));
+} _RuneStatePriv;
+
+typedef union _RuneState {
+	mbstate_t		__pad;
+	struct _RuneStatePriv	__priv;
+#define rs_runelocale		__priv.__runelocale
+#define rs_private		__priv.__private
+} _RuneState;
+#define _PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
+
+
+/* */
 
 static __inline _citrus_ctype_t
 _to_cur_ctype(void)
