@@ -1,4 +1,27 @@
-/*	$NetBSD: print-rx.c,v 1.3 2001/07/09 09:27:18 itojun Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.4 2001/10/22 04:24:24 itojun Exp $	*/
+
+/*
+ * Copyright: (c) 2000 United States Government as represented by the
+ *	Secretary of the Navy. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  
+ *   1. Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in
+ *      the documentation and/or other materials provided with the
+ *      distribution.
+ *   3. The names of the authors may not be used to endorse or promote
+ *      products derived from this software without specific prior
+ *      written permission.
+ *  
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */
 
 /*
  * This code unmangles RX packets.  RX is the mutant form of RPC that AFS
@@ -10,7 +33,6 @@
  * Bah.  If I never look at rx_packet.h again, it will be too soon.
  *
  * Ken Hornstein <kenh@cmf.nrl.navy.mil>
- *
  */
 
 #include <sys/cdefs.h>
@@ -19,7 +41,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.20 2001/01/10 08:12:01 fenner Exp";
 #else
-__RCSID("$NetBSD: print-rx.c,v 1.3 2001/07/09 09:27:18 itojun Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.4 2001/10/22 04:24:24 itojun Exp $");
 #endif
 #endif
 
