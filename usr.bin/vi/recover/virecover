@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: virecover,v 1.1 2001/04/11 20:24:17 aymeric Exp $
+#	$NetBSD: virecover,v 1.2 2001/04/11 21:00:21 aymeric Exp $
 #
 #	@(#)recover.in	8.8 (Berkeley) 10/10/96
 #
@@ -8,8 +8,6 @@
 
 RECDIR="/var/tmp/vi.recover"
 SENDMAIL="/usr/sbin/sendmail"
-
-echo 'Recovering nvi editor sessions.'
 
 # Check editor backup files.
 vibackup=`echo $RECDIR/vi.*`
