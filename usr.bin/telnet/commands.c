@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.38 2000/02/05 17:44:11 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.39 2000/02/29 19:36:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.38 2000/02/05 17:44:11 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.39 2000/02/29 19:36:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2742,9 +2742,10 @@ cmdrc(m1, m2)
 /*
  * Source route is handed in as
  *	[!]@hop1@hop2...@dst
- * If the leading ! is present, it is a
- * strict source route, otherwise it is
- * assmed to be a loose source route.
+ *
+ * If the leading ! is present, it is a strict source route, otherwise it is
+ * assmed to be a loose source route.  Note that leading ! is effective
+ * only for IPv4 case.
  *
  * We fill in the source route option as
  *	hop1,hop2,hop3...dest
@@ -2752,30 +2753,35 @@ cmdrc(m1, m2)
  * be the address to connect() to.
  *
  * Arguments:
- *	arg:	pointer to route list to decipher
+ *	ai:	The address (by struct addrinfo) for the final destination.
  *
- *	cpp: 	If *cpp is not equal to NULL, this is a
- *		pointer to a pointer to a character array
- *		that should be filled in with the option.
+ *	arg:	Pointer to route list to decipher
  *
+ *	cpp: 	Pointer to a pointer, so that sourceroute() can return
+ *		the address of result buffer (statically alloc'ed).
+ *
+ *	protop/optp:
+ *		Pointer to an integer.  The pointed variable
  *	lenp:	pointer to an integer that contains the
  *		length of *cpp if *cpp != NULL.
  *
  * Return values:
  *
- *	Returns the address of the host to connect to.  If the
+ *	Returns the length of the option pointed to by *cpp.  If the
  *	return value is -1, there was a syntax error in the
- *	option, either unknown characters, or too many hosts.
- *	If the return value is 0, one of the hostnames in the
- *	path is unknown, and *cpp is set to point to the bad
- *	hostname.
+ *	option, either arg contained unknown characters or too many hosts,
+ *	or hostname cannot be resolved.
  *
- *	*cpp:	If *cpp was equal to NULL, it will be filled
- *		in with a pointer to our static area that has
- *		the option filled in.  This will be 32bit aligned.
+ *	The caller needs to pass return value (len), *cpp, *protop and *optp
+ *	to setsockopt(2).
  *
- *	*lenp:	This will be filled in with how long the option
- *		pointed to by *cpp is.
+ *	*cpp:	Points to the result buffer.  The region is statically
+ *		allocated by the function.
+ *
+ *	*protop:
+ *		protocol # to be passed to setsockopt(2).
+ *
+ *	*optp:	option # to be passed to setsockopt(2).
  *
  */
 int
