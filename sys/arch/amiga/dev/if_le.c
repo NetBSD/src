@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.27 1997/10/04 09:43:10 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28 1998/03/09 17:00:33 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -463,20 +463,26 @@ ariadne_copytobuf_word(sc, from, boff, len)
 	int i;
 
 	if (len > 0 && isodd(boff)) {
+		/* adjust source pointer */
 		b1 = (u_short *)(a1 + 1);
+		/* compute aligned destination pointer */
 		b2 = (u_short *)(a2 + 1);
-		b2[-1] = (b2[-1] & 0xff00) | (b1[-1] & 0x00ff);
+		/* copy first unaligned byte to buf */
+		b2[-1] = (b2[-1] & 0xff00) | *a1;
 		--len;
 	} else {
+		/* destination is aligned or length is zero */
 		b1 = (u_short *)a1;
 		b2 = (u_short *)a2;
 	}
 
+	/* copy full words with aligned destination */
 	for (i = len >> 1; i > 0; i--)
 		*b2++ = *b1++;
 
+	/* copy remaining byte */
 	if (isodd(len))
-		*b2 = (*b2 & 0x00ff) | (*b1 & 0xff00);
+		*b2 = (*b2 & 0x00ff) | (*(u_char *)b1) << 8;
 }
 
 integrate void
@@ -492,20 +498,26 @@ ariadne_copyfrombuf_word(sc, to, boff, len)
 	int i;
 
 	if (len > 0 && isodd(boff)) {
-		b1 = (u_short *)(a1 + 1);
-		b2 = (u_short *)(a2 + 1);
-		b2[-1] = (b2[-1] & 0xff00) | (b1[-1] & 0x00ff);
+		/* compute aligned source pointer */
+		b1  = (u_short *)(a1 + 1);
+		/* adjust destination pointer (possibly unaligned) */
+		b2  = (u_short *)(a2 + 1);
+		/* copy first unaligned byte from buf */
+		*a2 = b1[-1];
 		--len;
 	} else {
+		/* source is aligned or length is zero */
 		b1 = (u_short *)a1;
 		b2 = (u_short *)a2;
 	}
 
+	/* copy full words with aligned source */
 	for (i = len >> 1; i > 0; i--)
 		*b2++ = *b1++;
 
+	/* copy remaining byte */
 	if (isodd(len))
-		*b2 = (*b2 & 0x00ff) | (*b1 & 0xff00);
+		*(u_char *)b2 = *b1 >> 8;
 }
 
 integrate void
