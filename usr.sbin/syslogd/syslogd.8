@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.28 2003/02/25 10:36:20 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.29 2003/05/02 08:31:51 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -162,6 +162,10 @@ For example:
 .Pp
 Note: the normal log socket must now also be passed to
 .Nm .
+.Pp
+The logged message includes the date, time, and hostname (or pathname of
+the log socket).  Commonly, the program name and the process id is
+included.
 .Pp
 Accesses from UDP socket can be filtered by libwrap configuration files, like
 .Pa /etc/hosts.deny .
