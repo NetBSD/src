@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/06/12 23:22:32 cgd Exp $
+#	$NetBSD: Makefile,v 1.16 2003/01/06 17:40:22 lukem Exp $
 
 # Makefile for amiga tags file and boot blocks
 
@@ -27,6 +27,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/11 18:19:12 marcus Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:27 lukem Exp $
 
 # Makefile for dreamcast tags file and boot blocks
 
@@ -25,6 +25,6 @@ links:
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
-SUBDIR=	include # stand
+SUBDIR=	compile include	# stand
 
 .include <bsd.subdir.mk>

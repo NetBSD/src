@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.197 2003/01/04 15:50:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.198 2003/01/06 17:40:18 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -323,21 +323,7 @@ dependall-distrib depend-distrib all-distrib:
 	@true
 
 .include <bsd.obj.mk>
-.include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
-
-#
-# Create ${KERNOBJDIR}.
-# Done here to ensure that it's "last", for BSDOBJDIR uses.
-#
-.if commands(obj)
-obj-kernobjdir: .USE
-	@echo "obj ===> sys/arch/${MACHINE}/compile"
-	@mkdir -p ${KERNOBJDIR}
-obj: obj-kernobjdir
-
-.endif
-
 
 build-docs: ${.CURDIR}/BUILDING
 ${.CURDIR}/BUILDING: doc/BUILDING.mdoc

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/24 15:46:41 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:19 lukem Exp $
 
 # Makefile for acorn26 tags file and boot blocks
 
@@ -28,6 +28,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	stand include
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

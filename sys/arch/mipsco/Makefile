@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/09/26 11:45:06 wdk Exp $
+#	$NetBSD: Makefile,v 1.4 2003/01/06 17:40:38 lukem Exp $
 
 # Makefile for mipsco tags file
 
@@ -26,6 +26,6 @@ links:
 	-for i in ${DMIPSCO}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-SUBDIR=	include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>
