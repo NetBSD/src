@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.9 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.10 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -75,6 +75,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	auich(4): Added support for ICH4 and SiS 7012.  [kent 20020807]
 	pmc(3): Added new performance counter interface library.
 		[thorpej 20020808]
+	libc: Add strcasestr(3), case insensitive version of strstr(3).
+		[junyoung 20040703]
 	usb(4): Added slhci(4), ScanLogic SL811HS/T USB Host Controller.
 		[isaki 20020811]
 	ifmedia(4): Added new "ibss", "ibss-master", and "hostap" ifmedia media
