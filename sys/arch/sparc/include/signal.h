@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.17 2004/01/18 20:53:57 martin Exp $ */
+/*	$NetBSD: signal.h,v 1.18 2004/01/19 19:27:46 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ struct sigcontext {
 };
 
 #ifdef COMPAT_16
-#define	SIGTRAMP_VALID((unsigned)vers)	((vers) <= 2)
+#define	SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
 #else
 #define	SIGTRAMP_VALID(vers)	((vers) == 2)
 #endif
