@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.2 1997/10/05 18:20:19 thorpej Exp $	*/
+/*	$NetBSD: alloc.c,v 1.3 1998/02/22 07:42:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 
 #include <lib/libsa/stand.h>
 
-#include <powerpc/stand/ofwboot/openfirm.h>
+#include "openfirm.h"
 
 /*
  * Each block actually has ALIGN(struct ml) + ALIGN(size) bytes allocated
