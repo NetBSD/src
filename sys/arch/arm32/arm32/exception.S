@@ -1,7 +1,7 @@
-/* $NetBSD: exception.S,v 1.3 1996/02/05 22:43:53 mark Exp $ */
+/* $NetBSD: exception.S,v 1.4 1996/03/08 20:37:59 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,11 +41,8 @@
  * Low level handlers for exception vectors
  *
  * Created      : 24/09/94
- * Last updated : 25/01/95
  *
  * Based on kate/display/abort.s
- *
- *    $Id: exception.S,v 1.3 1996/02/05 22:43:53 mark Exp $
  */
 
 #include <machine/cpu.h>
@@ -258,44 +255,6 @@ abortprefetchmsg:
 swi_entry:
 	PUSHFRAME
 
-	and	r0, r0, #(PSR_MODE)	/* Get the mode we came from */
-	teq	r0, #(PSR_USR32_MODE)	/* Was is USR32 mode ? */
-	beq	swi_ok
-
-/*
- * Who, What, When, Where, Whither, Whether, Whence, Wherefore and a big
- * side order of WHY !
- */
-
-/*
- * We are now in an artifical universe and the editor is out to lunch
- *
- * Something has screwed up and issued a syscall in non USR32 mode...
- * Most like a kernel bug (used to get those you know...)
- */
-
- 	sub	r0, lr, #0x00000004	/* Get the address of the SWI */
-	ldr	r4, [r0]		/* Get the instruction */
-
-	bic	r1, r4, #0xff000000	/* Extract the comment field */
-
-	mov	r0, sp			/* Pass the frame to any function */
-	sub	sp, sp, #0x400
-
-	bl	_syscall		/* It's a syscall ! */
-
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
-
-	add	sp, sp, #0x400
-
-	PULLFRAME
-
-	movs	pc, lr			/* Exit */
-
-
-swi_ok:
  	sub	r0, lr, #0x00000004	/* Get the address of the SWI */
 	ldr	r4, [r0]		/* Get the instruction */
 
@@ -304,14 +263,6 @@ swi_ok:
 	mov	r0, sp			/* Pass the frame to any function */
 
 	bl	_syscall		/* It's a syscall ! */
-
-#if 0 /* validate_frame() traps this */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode */
-	teq	r0, #(PSR_USR32_MODE)
-	addne	r0, pc, #Lswitext - . - 8
-	blne	_panic
-#endif
 
 #if 0	/* Ast's only from the irqhandler .... */
 	ldr	r0, Lastpending		/* Do we have an AST pending ? */
@@ -337,11 +288,6 @@ swi_ok:
 Lastpending:
         .word   _astpending
 
-#if 0
-Lswitext:
-	.asciz	"ntk: swi return in non user mode !\n";
-	.align	0
-#endif
 	.text
 	.align	0
 
@@ -354,19 +300,6 @@ Lswitext:
 
 	.global	undefined_entry
 undefined_entry:
-#if 0
-	PUSHFRAMEINSVC			/* Push the trap frame and get into SVC mode */
-
-	add	r2, sp, #0x00000004	/* Point to registers in trap frame */
-
-	bic	r1, r0, #(PSR_MODE)
-	orr	r1, r1, #(PSR_UND32_MODE)
-	msr	cpsr, r1		/* jump to UND32 mode */
-
-/*	msr	spsr, r0*/		/* This is already done as we were entry in UND32 mode */
-
-	ldmia	r2, {r0-r2}		/* Recover trashed registers */
-#endif
 	stmfd	sp!, {r0, r1}
 	ldr	r0, Lundefined_handler_indirection
 	ldr	r1, [sp], #0x0004
@@ -390,20 +323,6 @@ _undefinedinstruction_bounce:
 	PUSHFRAMEINSVC
 	mov	r0, sp
 	bl	_undefinedinstruction
-
-#if 0	/* ast's only delivered in the IRQ handler */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the UND32 mode */
-	teq	r0, #(PSR_USR32_MODE)
-	ldreq	r0, Lastpending		/* Do we have an AST pending ? */
-	ldreq	r1, [r0]
-	teqeq	r1, #0x00000001
-	moveq	r1, #0x00000000		/* Clear it */
-	streq	r1, [r0]
-
-	moveq	r0, sp			/* arg 0 = trap frame */
-	bleq	_ast			/* call the AST handler */
-#endif
 
 /* Kill irq's */
         mrs     r0, cpsr_all
