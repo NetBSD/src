@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.3.2.1 1999/11/09 21:54:58 he Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.3.2.2 1999/12/16 22:42:17 he Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -1274,12 +1274,17 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	} else
 		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
 			usemirror = 1;
-		} else
-			if (data_pda->startSector < (disks[rowData][colData].numBlocks / 2)) {
+		} else 
+			if (raidPtr->parity_good == RF_RAID_DIRTY) {
+				/* Trust only the main disk */
 				usemirror = 0;
-			} else {
-				usemirror = 1;
-			}
+			} else
+				if (data_pda->startSector < 
+				    (disks[rowData][colData].numBlocks / 2)) {
+					usemirror = 0;
+				} else {
+					usemirror = 1;
+				}
 
 	if (usemirror) {
 		/* use mirror (parity) disk, swap params 0 & 4 */
