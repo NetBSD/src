@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ln.c	4.15 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: ln.c,v 1.7 1994/01/27 02:00:45 jtc Exp $";
+static char rcsid[] = "$Id: ln.c,v 1.8 1994/02/08 05:09:26 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,8 +129,8 @@ linkit(source, target, isdir)
 			return(1);
 		}
 		/* only symbolic links to directories, unless -F option used */
-		if (!dirflag && (buf.st_mode & S_IFMT) == S_IFDIR) {
-			warnx("%s: %s", source, EISDIR);
+		if (!dirflag && S_ISDIR(buf.st_mode)) {
+			warnx("%s: %s", source, strerror(EISDIR));
 			return(1);
 		}
 	}
