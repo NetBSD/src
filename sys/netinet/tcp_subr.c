@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.114 2001/07/23 15:20:41 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.115 2001/09/10 04:24:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -239,7 +239,9 @@ tcp_init()
 #ifdef INET6
 	tcb6.in6p_next = tcb6.in6p_prev = &tcb6;
 #endif
-	LIST_INIT(&tcp_delacks);
+
+	if (tcp_delack_ticks == 0)
+		tcp_delack_ticks = TCP_DELACK_TICKS;
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
 #ifdef INET6
@@ -805,6 +807,8 @@ tcp_newtcpcb(family, aux)
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
 	LIST_INIT(&tp->t_sc);
+
+	callout_init(&tp->t_delack_ch);
 
 	tp->t_flags = 0;
 	if (tcp_do_rfc1323 && tcp_do_win_scale)
