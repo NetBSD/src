@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.77 1996/12/17 23:14:23 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.78 1996/12/19 07:51:59 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -136,7 +136,6 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 .endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
-# the following looks XXX to me... -- cgd
 LLIBS?=	-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
