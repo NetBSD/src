@@ -1,3 +1,5 @@
+/*	$NetBSD: locore.s,v 1.70 1997/04/22 07:48:31 mrg Exp $	*/
+
 /*
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
@@ -63,7 +65,6 @@
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
 #endif
-
 
 /*
  * GNU assembler does not understand `.empty' directive; Sun assembler
