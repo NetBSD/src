@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.5 1998/08/08 22:33:36 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.6 1998/11/17 18:14:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -942,12 +942,17 @@ fatal(char *mess)
       strcpy(lessmess, mess);
       lessmess[messlen - 4] = '\0';
 
+#ifdef HAVE_STRERROR
+      fprintf(stderr, "%s: %s: %s\n", progname,
+	      lessmess, strerror(errno));
+#else
       if (errno < sys_nerr)
 	fprintf(stderr, "%s: %s: %s\n", progname,
 		lessmess, sys_errlist[errno]);
       else
 	fprintf(stderr, "%s: %s: Error %d\n",
 		progname, lessmess, errno);
+#endif
     }
   }
   plog(XLOG_FATAL, mess);
