@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.5 1993/10/06 12:10:31 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.6 1993/10/07 14:48:42 mycroft Exp $
  */
 
 #include "param.h"
@@ -38,7 +38,6 @@
 #include "machine/cpu.h"
 
 #include "i386/isa/isavar.h"
-#include "i386/isa/isa.h"
 #include "i386/isa/icu.h"
 #include "i386/include/mouse.h"
 #include "i386/include/pio.h"
