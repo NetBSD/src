@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.280 2004/04/10 18:48:35 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.281 2004/04/10 19:22:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2004/04/10 18:48:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2004/04/10 19:22:59 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1491,7 +1491,6 @@ mmu_setup4m_L1(regtblptd, kpmap)
 				struct segmap *sp = &rp->rg_segmap[j];
 
 				for (k = 0; k < SRMMU_L3SIZE; k++) {
-					sp->sg_npte++;
 					setpgt4m(&sp->sg_pte[k],
 						(te & SRMMU_L1PPNMASK) |
 						(j << SRMMU_L2PPNSHFT) |
@@ -1544,7 +1543,6 @@ mmu_setup4m_L2(segtblptd, rp)
 			 * into a 3-level description.
 			 */
 			for (k = 0; k < SRMMU_L3SIZE; k++) {
-				sp->sg_npte++;
 				setpgt4m(&sp->sg_pte[k],
 					(te & SRMMU_L1PPNMASK) |
 					(te & SRMMU_L2PPNMASK) |
@@ -1582,7 +1580,6 @@ mmu_setup4m_L3(pagtblptd, sp)
 		case SRMMU_TEINVALID:
 			break;
 		case SRMMU_TEPTE:
-			sp->sg_npte++;
 			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
 			pmap_kernel()->pm_stats.resident_count++;
 			break;
@@ -3902,8 +3899,6 @@ pmap_bootstrap4m(top)
 			continue;
 		}
 
-		sp->sg_npte++;
-
 		pte = PMAP_BOOTSTRAP_VA2PA(q) >> SRMMU_PPNPASHIFT;
 		pte |= PPROT_N_RX | SRMMU_TEPTE;
 
@@ -4791,7 +4786,6 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 {
 	int tpte, perpage, npg;
 	struct vm_page *pg;
-	int nleft;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -4799,8 +4793,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 	sp = &rp->rg_segmap[vs];
 	if (rp->rg_nsegmap == 0)
 		return;
-	if ((nleft = sp->sg_npte) == 0)
-		return;
+
 	/* decide how to flush cache */
 	npg = (endva - va) >> PGSHIFT;
 	if (npg > PMAP_SFL_THRESHOLD) {
@@ -4836,16 +4829,8 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 		    SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
 		pm->pm_stats.resident_count--;
-		nleft--;
-#ifdef DIAGNOSTIC
-		if (nleft < 0)
-			panic("pmap_rmk: too many PTEs in segment; "
-			      "va 0x%lx; endva 0x%lx", va, endva);
-#endif
 		va += NBPG;
 	}
-
-	sp->sg_npte = nleft;
 }
 #endif /* SUN4M || SUN4D */
 
@@ -5426,9 +5411,12 @@ pmap_page_protect4m(pg, prot)
 		if (rp->rg_nsegmap == 0)
 			panic("pmap_remove_all: empty vreg");
 		sp = &rp->rg_segmap[vs];
-		if ((nleft = sp->sg_npte) <= 0)
-			panic("pmap_page_protect: empty vseg");
-		sp->sg_npte = --nleft;
+		nleft = sp->sg_npte;
+		if (pm != pmap_kernel()) {
+			if (nleft <= 0)
+				panic("pmap_page_protect: empty vseg");
+			sp->sg_npte = --nleft;
+		}
 
 		/*
 		 * Invalidate PTE in MMU pagetables.
@@ -5449,7 +5437,7 @@ pmap_page_protect4m(pg, prot)
 
 		flags |= MR4M(tpte);
 
-		if (nleft == 0 && pm != pmap_kernel())
+		if (pm != pmap_kernel() && nleft == 0)
 			/*
 			 * Entire user mode segment is gone
 			 */
@@ -5521,7 +5509,7 @@ pmap_protect4m(pm, sva, eva, prot)
 			continue;
 		}
 		sp = &rp->rg_segmap[vs];
-		if (sp->sg_npte == 0) {
+		if (pm != pmap_kernel() && sp->sg_npte == 0) {
 			va = nva;
 			continue;
 		}
@@ -6384,16 +6372,12 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 			SRMMU_TEINVALID, pm->pm_ctx != NULL,
 			pm->pm_ctxnum, PMAP_CPUSET(pm));
 		pm->pm_stats.resident_count--;
-	} else {
-		/* adding new entry */
-		sp->sg_npte++;
 	}
 
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
 	 */
 	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto)) != 0) {
-		sp->sg_npte--;
 		if ((flags & PMAP_CANFAIL) != 0)
 			goto out;
 		panic("pmap_enter: cannot allocate PV entry");
@@ -6622,8 +6606,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;
 	struct segmap *sp;
-	int pteproto, vr, vs, tpte;
-	int s;
+	int pteproto, vr, vs;
 
 	/* Initialise pteproto with cache bit */
 	pteproto = (pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0;
@@ -6637,23 +6620,9 @@ pmap_kenter_pa4m(va, pa, prot)
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
-	s = splvm();
-#ifdef notyet
-	/* XXX - we can be called with the kernel map already locked
-	 *	 pmap_enter4m()->pv_link()->pool_get()
-	 *	 figure out another way to protect `sg_npte' update.
-	 */
-	simple_lock(&pm->pm_lock);
-#endif
-	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
+	KASSERT((sp->sg_pte[VA_SUN4M_VPG(va)] & SRMMU_TETYPE) != SRMMU_TEPTE);
 
-	sp->sg_npte++;
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
-#ifdef notyet
-	simple_unlock(&pm->pm_lock);
-#endif
-	splx(s);
 }
 
 void
@@ -6667,12 +6636,8 @@ pmap_kremove4m(va, len)
 	vaddr_t endva, nva;
 	int vr, vs;
 	int tpte, perpage, npg;
-	int nleft;
-	int s;
 
 	endva = va + len;
-	s = splvm();
-	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
 		vr = VA_VREG(va);
@@ -6683,17 +6648,9 @@ pmap_kremove4m(va, len)
 		}
 
 		rp = &pm->pm_regmap[vr];
-		if (rp->rg_nsegmap == 0) {
-			continue;
-		}
-
 		sp = &rp->rg_segmap[vs];
-		nleft = sp->sg_npte;
-		if (nleft == 0) {
-			continue;
-		}
 
-		/* decide how to flush cache */
+		/* decide how to flush the cache */
 		npg = (nva - va) >> PGSHIFT;
 		if (npg > PMAP_SFL_THRESHOLD) {
 			/* flush the whole segment */
@@ -6702,19 +6659,17 @@ pmap_kremove4m(va, len)
 				cache_flush_segment(vr, vs, 0);
 			}
 		} else {
-
 			/*
 			 * flush each page individually;
 			 * some never need flushing
 			 */
-
 			perpage = (CACHEINFO.c_vactype != VAC_NONE);
 		}
 		for (; va < nva; va += NBPG) {
 			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE) {
+			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				continue;
-			}
+
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 				/* if cacheable, flush page as needed */
 				if (perpage && (tpte & SRMMU_PG_C))
@@ -6722,12 +6677,8 @@ pmap_kremove4m(va, len)
 			}
 			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 				 SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
-			nleft--;
 		}
-		sp->sg_npte = nleft;
 	}
-	simple_unlock(&pm->pm_lock);
-	splx(s);
 }
 
 /*
@@ -6914,7 +6865,7 @@ pmap_extract4m(pm, va, pap)
 		goto out;
 	}
 #ifdef DIAGNOSTIC
-	if (sp->sg_npte <= 0)
+	if (pm != pmap_kernel() && sp->sg_npte <= 0)
 		panic("pmap_extract: pm %p: npte = %d\n", pm, sp->sg_npte);
 #endif
 
