@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2000/06/13 14:48:44 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2000/08/20 21:50:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -1073,21 +1074,30 @@ ENTRY(switch_exit)
 	jbsr	_C_LABEL(exit2)
 	lea	sp@(4),sp			| pop args
 
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+
 	jra	_C_LABEL(cpu_switch)
 
 /*
  * When no processes are on the runq, Swtch branches to idle
  * to wait for something to come ready.
  */
-	.globl	Idle
-Lidle:
+ASENTRY_NOPROFILE(Idle)
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	_C_LABEL(sched_unlock_idle)
+#endif
 	stop	#PSL_LOWIPL
-Idle:
-idle:
 	movw	#PSL_HIGHIPL,sr
-	tstl	_C_LABEL(sched_whichqs)
-	jeq	Lidle
-	movw	#PSL_LOWIPL,sr
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+	movl	_C_LABEL(sched_whichqs),%d0
+	jeq	_ASM_LABEL(Idle)
 	jra	Lsw1
 
 Lbadsw:
@@ -1107,159 +1117,159 @@ Lbadsw:
  * bit).  For now, we just always flush the full ATC.
  */
 ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),a0	|  current pcb
-	movw	sr,a0@(PCB_PS)		|  save sr before changing ipl
+	movl	_C_LABEL(curpcb),%a0	|  current pcb
+	movw	%sr,%a0@(PCB_PS)	|  save sr before changing ipl
 #ifdef notyet
-	movl	_C_LABEL(curproc),sp@-	|  remember last proc running
+	movl	_C_LABEL(curproc),%sp@-	|  remember last proc running
 #endif
 	clrl	_C_LABEL(curproc)
-Lsw1:
+
 	/*
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	clrl	d0
-	lea	_C_LABEL(sched_whichqs),a0
-	movl	a0@,d1
-Lswchk:
-	btst	d0,d1
-	jne	Lswfnd
-	addqb	#1,d0
-	cmpb	#32,d0
-	jne	Lswchk
-	jra	idle
-Lswfnd:
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	movl	a0@,d1			| and check again...
-	bclr	d0,d1
-	jeq	Lsw1			| proc moved, rescan
-	movl	d1,a0@			| update whichqs
-	moveq	#1,d1			| double check for higher priority
-	lsll	d0,d1			| process (which may have snuck in
-	subql	#1,d1			| while we were finding this one)
-	andl	a0@,d1
-	jeq	Lswok			| no one got in, continue
-	movl	a0@,d1
-	bset	d0,d1			| otherwise put this one back
-	movl	d1,a0@
-	jra	Lsw1			| and rescan
-Lswok:
-	movl	d0,d1
-	lslb	#3,d1			| convert queue number to index
-	addl	#_C_LABEL(sched_qs),d1	| locate queue (q)
-	movl	d1,a1
-	cmpl	a1@(P_FORW),a1		| anyone on queue?
+	movl	_C_LABEL(sched_whichqs),%d0
+	jeq	_ASM_LABEL(Idle)
+Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
+	movl	%d0,%d1
+	negl	%d0
+	andl	%d1,%d0
+	bfffo	%d0{#0:#32},%d1
+	eorib	#31,%d1
+
+	movl	%d0,%d1
+	lslb	#3,%d1			| convert queue number to index
+	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
+	movl	%d1,%a1
+	movl	%a1@(P_FORW),%a0	| p = q->p_forw
+	cmpal	%d1,%a0			| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	a1@(P_FORW),a0		| p = q->p_forw
 #ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
+	tstl	%a0@(P_WCHAN)
 	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
+	cmpb	#SRUN,%a0@(P_STAT)
 	jne	Lbadsw
 #endif
-	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	a0@(P_FORW),a1		| q = p->p_forw
-	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
-	cmpl	a0@(P_FORW),d1		| anyone left on queue?
-	jeq	Lsw2			| no, skip
-	movl	_C_LABEL(sched_whichqs),d1
-	bset	d0,d1			| yes, reset bit
-	movl	d1,_C_LABEL(sched_whichqs)
+	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	%a0@(P_FORW),%a1		| n = p->p_forw
+	movl	%a0@(P_BACK),%a1@(P_BACK)	| n->p_back = q
+	cmpal	%d1,%a1			| anyone left on queue?
+	jne	Lsw2			| yes, skip
+	movl	_C_LABEL(sched_whichqs),%d1
+	bclr	%d0,%d1			| no, clear bit
+	movl	%d1,_C_LABEL(sched_whichqs)
 Lsw2:
 	/* p->p_cpu initialized in fork1() for single-processor */
-	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
-	movl	a0,_C_LABEL(curproc)
+	movb	#SONPROC,%a0@(P_STAT)	| p->p_stat = SONPROC
+	movl	%a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 #ifdef notyet
-	movl	sp@+,a1
-	cmpl	a0,a1			| switching to same proc?
+	movl	%sp@+,%a1
+	cmpl	%a0,%a1			| switching to same proc?
 	jeq	Lswdone			| yes, skip save and restore
 #endif
 
 	/*
 	 * Save state of previous process in its pcb.
 	 */
-	movl	_C_LABEL(curpcb),a1
-	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-	movl	usp,a2			| grab USP (a2 has been saved)
-	movl	a2,a1@(PCB_USP)		| and save it
-	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
+	movl	_C_LABEL(curpcb),%a1
+	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
+	movl	%usp,%a2		| grab USP (a2 has been saved)
+	movl	%a2,%a1@(PCB_USP)	| and save it
+	movl	_CMAP2,%a1@(PCB_CMAP2)	| save temporary map PTE
 	tstl	_C_LABEL(fputype)	| do we have an FPU?
 	jeq	Lswnofpsave		| no? don't attempt to save
-	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
-	fsave	a2@			| save FP state
+	lea	%a1@(PCB_FPCTX),%a2	| pointer to FP save area
+	fsave	%a2@			| save FP state
 #ifdef M68060
 	cmpl	#CPU_68060,_C_LABEL(cputype)
 	jeq	Lsavfp60		| It's a 060
 #endif
-	tstb	a2@			| null state frame?
+	tstb	%a2@			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
-	fmovem	fp0-fp7,a2@(216)	| save FP general registers
-	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
+	fmovem	%fp0-%fp7,%a2@(216)	| save FP general registers
+	fmovem	%fpcr/%fpsr/%fpi,%a2@(312)	| save FP control registers
 #ifdef M68060
 	jra	Lswnofpsave
 Lsavfp60:
-	tstb	a2@(2)			| null state frame?
+	tstb	%a2@(2)			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
-	fmovem	fp0-fp7,a2@(216)	| save FP general registers
-	fmovem	fpcr,a2@(312)		| save FP control registers
-	fmovem  fpsr,a2@(316)
-	fmovem  fpi,a2@(320)
+	fmovem	%fp0-%fp7,%a2@(216)	| save FP general registers
+	fmovem	%fpcr,%a2@(312)		| save FP control registers
+	fmovem  %fpsr,%a2@(316)
+	fmovem  %fpi,%a2@(320)
 #endif
 Lswnofpsave:
 
-	clrl	a0@(P_BACK)		| clear back link
-	movl	a0@(P_ADDR),a1		| get p_addr
-	movl	a1,_C_LABEL(curpcb)
-	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
+	clrl	%a0@(P_BACK)		| clear back link
+	movl	%a0@(P_ADDR),%a1	| get p_addr
+	movl	%a1,_C_LABEL(curpcb)
+	movb	%a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,sp@-		| not args...
+	movl	%a1,sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	sp@+,%a1
+	movl	sp@+,%a0
+#endif
 
 	/*
 	 * Activate process's address space.
 	 * XXX Should remember the last USTP value loaded, and call this
 	 * XXX only if it has changed.
 	 */
-	pea	a0@			| push proc
+	pea	%a0@			| push proc
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p) 
-	addql	#4,sp
-	movl	_C_LABEL(curpcb),a1	| restore p_addr 
+	addql	#4,%sp
+	movl	_C_LABEL(curpcb),%a1	| restore p_addr 
 
-	lea	tmpstk,sp		| now goto a tmp stack for NMI 
+	lea	tmpstk,%sp		| now goto a tmp stack for NMI 
 
-	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
-	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
-	movl	a1@(PCB_USP),a0
-	movl	a0,usp			| and USP
+	movl	%a1@(PCB_CMAP2),_CMAP2	| reload tmp map
+	moveml	%a1@(PCB_REGS),#0xFCFC	| and registers
+	movl	%a1@(PCB_USP),%a0
+	movl	%a0,%usp		| and USP
 	tstl	_C_LABEL(fputype)	| do we have an FPU?
 	jeq	Lnofprest		| no, don't attempt to restore
-	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
+	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
 #ifdef M68060
 	cmpl	#CPU_68060,_C_LABEL(cputype)
 	jeq	Lresfp60rest1		| handle a 060
 #endif
-	tstb	a0@			| null state frame?
+	tstb	%a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
-	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
-	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+	fmovem	%a0@(312),%fpcr/%fpsr/%fpi	| restore FP control registers
+	fmovem	%a0@(216),%fp0-%fp7	| restore FP general registers
 Lresfprest:
-	frestore a0@			| restore state
+	frestore %a0@			| restore state
 
 Lnofprest:
-	movw	a1@(PCB_PS),sr		| no, restore PS
-	moveq	#1,d0			| return 1 (for alternate returns)
+	movw	%a1@(PCB_PS),%sr	| no, restore PS
+	moveq	#1,%d0			| return 1 (for alternate returns)
 	rts
 
 #ifdef M68060
 Lresfp60rest1:
-	tstb	a0@(2)			| null state frame?
+	tstb	%a0@(2)			| null state frame?
 	jeq	Lresfp60rest2		| yes, easy
-	fmovem	a0@(312),fpcr		| restore FP control registers
-	fmovem	a0@(316),fpsr
-	fmovem	a0@(320),fpi
-	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+	fmovem	%a0@(312),%fpcr		| restore FP control registers
+	fmovem	%a0@(316),%fpsr
+	fmovem	%a0@(320),%fpi
+	fmovem	%a0@(216),%fp0-%fp7	| restore FP general registers
 Lresfp60rest2:
-	frestore a0@			| restore state
-	movw	a1@(PCB_PS),sr		| no, restore PS
-	moveq	#1,d0			| return 1 (for alternate returns)
+	frestore %a0@			| restore state
+	movw	%a1@(PCB_PS),%sr	| no, restore PS
+	moveq	#1,%d0			| return 1 (for alternate returns)
 	rts
 #endif
 

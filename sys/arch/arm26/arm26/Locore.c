@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.5 2000/06/29 08:32:34 mrg Exp $	*/
+/*	$NetBSD: Locore.c,v 1.6 2000/08/20 21:50:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -37,9 +37,11 @@
  * but have no need to be coded in assembly.
  */
 
+#include "opt_lockdebug.h"
+
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.5 2000/06/29 08:32:34 mrg Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.6 2000/08/20 21:50:07 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -105,10 +107,16 @@ static void
 idle()
 {
 
+#if defined(LOCKDEBUG)
+	sched_unlock_idle();
+#endif
 	spl0();
 	while (sched_whichqs == 0)
 		continue;
 	splhigh();
+#if defined(LOCKDEBUG)
+	sched_lock_idle();
+#endif
 }
 
 extern int want_resched; /* XXX should be in <machine/cpu.h> */
@@ -120,15 +128,17 @@ void
 cpu_switch(struct proc *p1)
 {
 	int which;
-	int s;
 	struct prochd *q;
 	struct proc *p2;
+
+	/*
+	 * We enter here with interrupts blocked and sched_lock held.
+	 */
 
 #if 0
 	printf("cpu_switch: %p ->", p1);
 #endif
 	curproc = NULL;
-	s = splhigh();
 	while (sched_whichqs == 0)
 		idle();
 	which = ffs(sched_whichqs) - 1;
@@ -136,6 +146,9 @@ cpu_switch(struct proc *p1)
 	p2 = q->ph_link;
 	remrunqueue(p2);
 	want_resched = 0;
+#ifdef LOCKDEBUG
+	sched_unlock_idle();
+#endif
 	/* p->p_cpu initialized in fork1() for single-processor */
 	p2->p_stat = SONPROC;
 	curproc = p2;
@@ -148,5 +161,4 @@ cpu_switch(struct proc *p1)
 	pmap_activate(p2);
 	cpu_loswitch(&p1->p_addr->u_pcb.pcb_sf, p2->p_addr->u_pcb.pcb_sf);
 	/* We only get back here after the other process has run. */
-	splx(s);
 }

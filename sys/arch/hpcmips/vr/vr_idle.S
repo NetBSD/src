@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.5 2000/05/26 21:19:44 thorpej Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.6 2000/08/20 21:50:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,8 @@
 #include <mips/cpuregs.h>
 #include <hpcmips/vr/vr_asm.h>
 
+#include "opt_lockdebug.h"
+
 #include "assym.h"
 
 	.set	noreorder
@@ -64,6 +66,10 @@ LEAF(vr_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	nop
+#endif
 
 	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
@@ -84,7 +90,24 @@ LEAF(vr_idle)
 	beq	t0, zero, 1b
 	nop
 1:
+#if defined(LOCKDEBUG)
+	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	nop
+	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+	nop
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	ra
+	nop
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
+	j	ra
+	nop
+#endif
 END(vr_idle)

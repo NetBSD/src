@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.63 2000/07/28 04:21:26 eeh Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.64 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -92,7 +92,7 @@ sys_ptrace(p, v, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
-	int error, write, tmp;
+	int s, error, write, tmp;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -303,7 +303,9 @@ sys_ptrace(p, v, retval)
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
+			SCHED_LOCK(s);
 			setrunnable(t);
+			SCHED_UNLOCK(s);
 		} else {
 			if (SCARG(uap, data) != 0)
 				psignal(t, SCARG(uap, data));

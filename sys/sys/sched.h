@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.5 2000/06/03 20:42:44 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.6 2000/08/20 21:50:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,11 @@
 
 #ifndef	_SYS_SCHED_H_
 #define	_SYS_SCHED_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
 
 /*
  * Posix defines a <sched.h> which may want to include <sys/sched.h>
@@ -172,7 +177,8 @@ extern __volatile u_int32_t sched_whichqs;
 
 struct proc;
 
-void schedclock __P((struct proc *p));
+void schedclock(struct proc *p);
+void sched_wakeup(void *);
 
 /*
  * scheduler_fork_hook:
@@ -195,5 +201,39 @@ do {									\
 	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu +		\
 	    (child)->p_estcpu);						\
 } while (0)
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#include <sys/lock.h>
+
+extern struct simplelock sched_lock;
+
+#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
+#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
+
+#define	SCHED_LOCK(s)							\
+do {									\
+	s = splhigh();							\
+	simple_lock(&sched_lock);					\
+} while (0)
+
+#define	SCHED_UNLOCK(s)							\
+do {									\
+	simple_unlock(&sched_lock);					\
+	splx(s);							\
+} while (0)
+
+void	sched_lock_idle(void);
+void	sched_unlock_idle(void);
+
+#else /* ! MULTIPROCESSOR || LOCKDEBUG */
+
+#define	SCHED_ASSERT_LOCKED()		/* nothing */
+#define	SCHED_ASSERT_UNLOCKED()		/* nothing */
+
+#define	SCHED_LOCK(s)			s = splhigh()
+#define	SCHED_UNLOCK(s)			splx(s)
+
+#endif /* MULTIPROCESSOR || LOCKDEBUG */
+
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

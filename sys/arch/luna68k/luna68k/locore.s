@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.8 2000/07/09 07:14:18 nisimura Exp $ */
+/* $NetBSD: locore.s,v 1.9 2000/08/20 21:50:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -942,6 +943,8 @@ ASBSS(nullpcb, SIZEOF_PCB)
  * At exit of a process, do a switch for the last time.
  * Switch to a safe stack and PCB, and select a new process to run.  The
  * old stack and u-area will be freed by the reaper.
+ *
+ * MUST BE CALLED AT SPLHIGH!
  */
 ENTRY(switch_exit)
 	movl    sp@(4),a0
@@ -954,6 +957,11 @@ ENTRY(switch_exit)
 	jbsr	_C_LABEL(exit2)
 	lea	sp@(4),sp		| pop args
 
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+
 	jra	_C_LABEL(cpu_switch)
 
 /*
@@ -961,8 +969,16 @@ ENTRY(switch_exit)
  * to wait for something to come ready.
  */
 ASENTRY_NOPROFILE(Idle)
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	_C_LABEL(sched_unlock_idle)
+#endif
 	stop	#PSL_LOWIPL
 	movw	#PSL_HIGHIPL,sr
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
 	movl    _C_LABEL(sched_whichqs),d0
 	jeq     _ASM_LABEL(Idle)
 	jra	Lsw1
@@ -994,10 +1010,14 @@ ENTRY(cpu_switch)
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	movl	_C_LABEL(sched_whichqs),d0
 	jeq	_ASM_LABEL(Idle)
 Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
 	movl	d0,d1
 	negl	d0
 	andl	d1,d0
@@ -1060,6 +1080,18 @@ Lswnofpsave:
 	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,sp@-		| not args...
+	movl	%a1,sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	sp@+,%a1
+	movl	sp@+,%a0
+#endif
 
 	/*
 	 * Activate process's address space.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.58 2000/06/27 17:41:25 mrg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.59 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -187,6 +187,7 @@ donice(curp, chgp, n)
 	int n;
 {
 	struct pcred *pcred = curp->p_cred;
+	int s;
 
 	if (pcred->pc_ucred->cr_uid && pcred->p_ruid &&
 	    pcred->pc_ucred->cr_uid != chgp->p_ucred->cr_uid &&
@@ -200,7 +201,9 @@ donice(curp, chgp, n)
 	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
+	SCHED_LOCK(s);
 	(void)resetpriority(chgp);
+	SCHED_UNLOCK(s);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.17 1999/07/22 18:13:38 thorpej Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.18 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -103,7 +103,7 @@ procfs_control(curp, p, op, sig)
 	struct proc *p;
 	int op, sig;
 {
-	int error;
+	int s, error;
 
 	/*
 	 * Attach - attaches the target process for debugging
@@ -258,7 +258,9 @@ procfs_control(curp, p, op, sig)
 		/* Finally, deliver the requested signal (or none). */
 		if (p->p_stat == SSTOP) {
 			p->p_xstat = sig;
+			SCHED_LOCK(s);
 			setrunnable(p);
+			SCHED_UNLOCK(s);
 		} else {
 			if (sig != 0)
 				psignal(p, sig);

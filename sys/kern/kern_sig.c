@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.103 2000/07/27 14:01:57 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.104 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -77,7 +77,7 @@
 
 #include <uvm/uvm_extern.h>
 
-void stop __P((struct proc *p));
+static void proc_stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
 static int build_corename __P((struct proc *, char *));
 #if COMPAT_NETBSD32
@@ -196,7 +196,7 @@ sigaction1(p, signum, nsa, osa)
 		if (prop & SA_CANTMASK)
 			return (EINVAL);
 
-		(void) splhigh();
+		(void) splhigh();	/* XXXSMP */
 		ps->ps_sigact[signum] = *nsa;
 		sigminusset(&sigcantmask, &ps->ps_sigact[signum].sa_mask);
 		if ((prop & SA_NORESET) != 0)
@@ -376,7 +376,7 @@ sigprocmask1(p, how, nss, oss)
 		*oss = p->p_sigmask;
 
 	if (nss) {
-		(void)splhigh();
+		(void)splhigh();	/* XXXSMP */
 		switch (how) {
 		case SIG_BLOCK:
 			sigplusset(nss, &p->p_sigmask);
@@ -390,11 +390,11 @@ sigprocmask1(p, how, nss, oss)
 			p->p_sigcheck = 1;
 			break;
 		default:
-			(void)spl0();
+			(void)spl0();	/* XXXSMP */
 			return (EINVAL);
 		}
 		sigminusset(&sigcantmask, &p->p_sigmask);
-		(void)spl0();
+		(void)spl0();		/* XXXSMP */
 	}
 
 	return (0);
@@ -480,11 +480,11 @@ sigsuspend1(p, ss)
 		 */
 		ps->ps_oldmask = p->p_sigmask;
 		ps->ps_flags |= SAS_OLDMASK;
-		(void) splhigh();
+		(void) splhigh();	/* XXXSMP */
 		p->p_sigmask = *ss;
 		p->p_sigcheck = 1;
 		sigminusset(&sigcantmask, &p->p_sigmask);
-		(void) spl0();
+		(void) spl0();		/* XXXSMP */
 	}
 
 	while (tsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0) == 0)
@@ -722,7 +722,7 @@ trapsignal(p, signum, code)
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum].sa_handler,
 		    signum, &p->p_sigmask, code);
-		(void) splhigh();
+		(void) splhigh();	/* XXXSMP */
 		sigplusset(&ps->ps_sigact[signum].sa_mask, &p->p_sigmask);
 		if (ps->ps_sigact[signum].sa_flags & SA_RESETHAND) {
 			sigdelset(&p->p_sigcatch, signum);
@@ -730,7 +730,7 @@ trapsignal(p, signum, code)
 				sigaddset(&p->p_sigignore, signum);
 			ps->ps_sigact[signum].sa_handler = SIG_DFL;
 		}
-		(void) spl0();
+		(void) spl0();		/* XXXSMP */
 	} else {
 		ps->ps_code = code;	/* XXX for core dump/debugger */
 		ps->ps_sig = signum;	/* XXX to verify code */
@@ -750,11 +750,14 @@ trapsignal(p, signum, code)
  *     regardless of the signal action (eg, blocked or ignored).
  *
  * Other ignored signals are discarded immediately.
+ *
+ * XXXSMP: Invoked as psignal() or sched_psignal().
  */
 void
-psignal(p, signum)
+psignal1(p, signum, dolock)
 	struct proc *p;
 	int signum;
+	int dolock;		/* XXXSMP: works, but icky */
 {
 	int s, prop;
 	sig_t action;
@@ -762,6 +765,12 @@ psignal(p, signum)
 #ifdef DIAGNOSTIC
 	if (signum <= 0 || signum >= NSIG)
 		panic("psignal signal number");
+
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_ASSERT_UNLOCKED();
+	else
+		SCHED_ASSERT_LOCKED();
 #endif
 	prop = sigprop[signum];
 
@@ -816,9 +825,12 @@ psignal(p, signum)
 	 */
 	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 || p->p_stat != SSTOP))
 		return;
-	s = splhigh();
-	switch (p->p_stat) {
 
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_LOCK(s);
+
+	switch (p->p_stat) {
 	case SSLEEP:
 		/*
 		 * If process is sleeping uninterruptibly
@@ -857,9 +869,14 @@ psignal(p, signum)
 				goto out;
 			sigdelset(&p->p_siglist, signum);
 			p->p_xstat = signum;
-			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-				psignal(p->p_pptr, SIGCHLD);
-			stop(p);
+			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
+				/*
+				 * XXXSMP: recursive call; don't lock
+				 * the second time around.
+				 */
+				sched_psignal(p->p_pptr, SIGCHLD);
+			}
+			proc_stop(p);	/* XXXSMP: recurse? */
 			goto out;
 		}
 		/*
@@ -946,9 +963,11 @@ runfast:
 	if (p->p_priority > PUSER)
 		p->p_priority = PUSER;
 run:
-	setrunnable(p);
+	setrunnable(p);		/* XXXSMP: recurse? */
 out:
-	splx(s);
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_UNLOCK(s);
 }
 
 static __inline int firstsig __P((const sigset_t *));
@@ -996,7 +1015,7 @@ int
 issignal(p)
 	struct proc *p;
 {
-	int signum, prop;
+	int s, signum, prop;
 	sigset_t ss;
 
 	for (;;) {
@@ -1027,8 +1046,11 @@ issignal(p)
 			if ((p->p_flag & P_FSTRACE) == 0)
 				psignal(p->p_pptr, SIGCHLD);
 			do {
-				stop(p);
+				SCHED_LOCK(s);
+				proc_stop(p);
 				mi_switch(p);
+				SCHED_ASSERT_UNLOCKED();
+				splx(s);
 			} while (!trace_req(p) && p->p_flag & P_TRACED);
 
 			/*
@@ -1088,8 +1110,11 @@ issignal(p)
 				p->p_xstat = signum;
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
-				stop(p);
+				SCHED_LOCK(s);
+				proc_stop(p);
 				mi_switch(p);
+				SCHED_ASSERT_UNLOCKED();
+				splx(s);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -1133,14 +1158,16 @@ keep:
  * via wakeup.  Signals are handled elsewhere.  The process must not be
  * on the run queue.
  */
-void
-stop(p)
+static void
+proc_stop(p)
 	struct proc *p;
 {
 
+	SCHED_ASSERT_LOCKED();
+
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
-	wakeup((caddr_t)p->p_pptr);
+	sched_wakeup((caddr_t)p->p_pptr);
 }
 
 /*
@@ -1207,7 +1234,7 @@ postsig(signum)
 			ps->ps_sig = 0;
 		}
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
-		(void) splhigh();
+		(void) splhigh();	/* XXXSMP */
 		sigplusset(&ps->ps_sigact[signum].sa_mask, &p->p_sigmask);
 		if (ps->ps_sigact[signum].sa_flags & SA_RESETHAND) {
 			sigdelset(&p->p_sigcatch, signum);
@@ -1215,7 +1242,7 @@ postsig(signum)
 				sigaddset(&p->p_sigignore, signum);
 			ps->ps_sigact[signum].sa_handler = SIG_DFL;
 		}
-		(void) spl0();
+		(void) spl0();		/* XXXSMP */
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.4 2000/07/09 00:59:06 mycroft Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.5 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -249,10 +249,15 @@ speedup_syncer()
 {
 	int s;
 	
-	s = splhigh();
+	/*
+	 * XXX Should not be doing this, should be using ltsleep()
+	 * XXX with a timeout, rather than sleeping on lbolt.
+	 */
+	SCHED_LOCK(s);
 	if (updateproc && updateproc->p_wchan == &lbolt)
 		setrunnable(updateproc);
-	splx(s);
+	SCHED_UNLOCK(s);
+
 	if (rushjob < syncdelay / 2) {
 		rushjob += 1;
 		stat_rush_requests += 1;
