@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2002/04/13 07:34:17 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2002/04/13 07:53:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -205,6 +205,22 @@ putchar(x)
 		apcall_write(1, &c, 1);
 	else
 		rom_write(1, &c, 1);
+}
+
+int
+getchar()
+{
+	unsigned char c = '\0';
+	int i;
+
+	for (;;) {
+		i = apbus ? apcall_read(1, &c, 1) : rom_read(1, &c, 1);
+		if (i == 1)
+			break;
+		if (i != -2 && i != 0)
+			return -1;
+	}
+	return c;
 }
 
 void
