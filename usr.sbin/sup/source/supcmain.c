@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.11 1998/07/30 21:03:48 frueauf Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.11.2.1 1999/04/12 21:27:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
