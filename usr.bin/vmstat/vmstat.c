@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.110 2003/02/01 20:52:58 matt Exp $ */
+/* $NetBSD: vmstat.c,v 1.111 2003/03/19 11:36:35 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.110 2003/02/01 20:52:58 matt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.111 2003/03/19 11:36:35 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1189,14 +1189,6 @@ struct kernel_hash {
 		"nfs client node cache",
 		X_NFSNODE, X_NFSNODETBL,
 		HASH_LIST, offsetof(struct nfsnode, n_hash)
-	}, {
-		"process group (pgrp) hash",
-		X_PGRPHASH, X_PGRPHASHTBL,
-		HASH_LIST, offsetof(struct pgrp, pg_hash),
-	}, {
-		"process id (pid) hash",
-		X_PIDHASH, X_PIDHASHTBL,
-		HASH_LIST, offsetof(struct proc, p_hash)
 	}, {
 		"user info (uid -> used processes) hash",
 		X_UIHASH, X_UIHASHTBL,
