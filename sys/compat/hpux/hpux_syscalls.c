@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_syscalls.c,v 1.23 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: hpux_syscalls.c,v 1.24 1998/10/19 22:31:50 tron Exp $	*/
 
 /*
  * System call names.
@@ -8,6 +8,7 @@
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
+#include "opt_sysv.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
