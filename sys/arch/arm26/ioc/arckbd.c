@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.15 2001/12/03 22:37:57 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.16 2001/12/03 22:46:23 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.15 2001/12/03 22:37:57 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.16 2001/12/03 22:46:23 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -228,7 +228,9 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	struct ioc_attach_args *ioc = aux;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 	struct arckbd_attach_args aka;
+#endif
 
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
@@ -544,9 +546,7 @@ arckbd_rint(void *cookie)
 		sc->sc_byteone = data;
 	} else if (ARCKBD_IS_KDDA(data) && sc->sc_state == AS_KDDA) {
 		arckbd_send(self, ARCKBD_SMAK, AS_IDLE, 0);
-#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 		arckbd_keyupdown(self, sc->sc_byteone, data);
-#endif
 	}
 
 	/* Key up data */
@@ -555,9 +555,7 @@ arckbd_rint(void *cookie)
 		sc->sc_byteone = data;
 	} else if (ARCKBD_IS_KUDA(data) && sc->sc_state == AS_KUDA) {
 		arckbd_send(self, ARCKBD_SMAK, AS_IDLE, 0);
-#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 		arckbd_keyupdown(self, sc->sc_byteone, data);
-#endif
 	}
 
 	/* Other cruft */
@@ -600,11 +598,12 @@ arckbd_mousemoved(struct device *self, int byte1, int byte2)
 }
 #endif
 
-#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 static void
 arckbd_keyupdown(struct device *self, int byte1, int byte2)
 {
+#if NARCWSKBD > 0 || NARCWSMOUSE > 0 || NRND > 0
 	struct arckbd_softc *sc = (void *)self;
+#endif
 #if NARCWSKBD > 0
 	u_int type;
 	int value;
@@ -645,7 +644,6 @@ arckbd_keyupdown(struct device *self, int byte1, int byte2)
 #endif
 	}
 }
-#endif
 
 #if NARCWSKBD > 0
 /*
