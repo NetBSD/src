@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 1998/09/12 18:55:07 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.45 1998/09/12 18:58:41 wrstuden Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -20,7 +20,6 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
 
 CLEANFILES+= mkinit mknodes mksyntax
-CLEANFILES+= mkinit.o mknodes.o mksyntax.o
 CLEANFILES+= ${GENSRCS} y.tab.h
 
 token.h: mktokens
