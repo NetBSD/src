@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.13 2000/10/24 19:43:23 is Exp $
+#	$NetBSD: install.md,v 1.14 2000/11/14 22:37:58 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -239,6 +239,20 @@ md_copy_kernel() {
 	fi
 
 	if [ -e /netbsd ]; then
+		if [ -e /mnt/netbsd ]; then
+			echo "On the installation filesystem there is this kernel: "
+			ls -l /netbsd
+			echo "The already installed kernel is: "
+			ls -l /mnt/netbsd
+			echo	"Do you want to replace the already installed kernel by the kernel"
+			echo -n "on the installation filesystem? (y/n) [n] "
+			resp="n"
+			getresp ""
+			if [ "${resp}" != "y" -a "${resp}" != "Y" ]; then
+				return
+			fi
+		fi
+
 		echo -n "Copying kernel..."
 		cp -p /netbsd /mnt/netbsd
 		echo "done."
