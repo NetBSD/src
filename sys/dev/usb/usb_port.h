@@ -1,4 +1,5 @@
-/*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
+/*	$NetBSD: usb_port.h,v 1.36 2000/11/10 13:52:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -201,9 +202,40 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define Static
 
+#define UCOMBUSCF_PORTNO		-1
+#define UCOMBUSCF_PORTNO_DEFAULT	-1
+
+#define SCSI_MODE_SENSE		MODE_SENSE
+#define XS_STS_DONE		ITSDONE
+#define XS_CTL_POLL		SCSI_POLL
+#define XS_CTL_DATA_IN		SCSI_DATA_IN
+#define XS_CTL_DATA_OUT		SCSI_DATA_OUT
+#define scsipi_adapter		scsi_adapter
+#define scsipi_cmd		scsi_cmd
+#define scsipi_device		scsi_device
+#define scsipi_done		scsi_done
+#define scsipi_link		scsi_link
+#define scsipi_minphys		scsi_minphys
+#define scsipi_sense		scsi_sense
+#define scsipi_xfer		scsi_xfer
+#define xs_control		flags
+#define xs_status		status
+
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
+#define bswap16(x)		swap16(x)
+
+/*
+ * The UHCI/OHCI controllers are little endian, so on big endian machines
+ * the data strored in memory needs to be swapped.
+ */
+
+#if defined(letoh32)
+#define le32toh(x) letoh32(x)
+#define le16toh(x) letoh16(x)
+#endif
+
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred
 
@@ -212,7 +244,6 @@ __CONCAT(dname,_detach)(self, flags) \
 
 typedef int usb_malloc_type;
 
-#define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
 #define IF_INPUT(ifp, m) do {						\
@@ -226,6 +257,7 @@ typedef int usb_malloc_type;
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
+#define	uriopoll		urioselect
 
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
