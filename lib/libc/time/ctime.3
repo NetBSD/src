@@ -1,260 +1,251 @@
-.\"	$NetBSD: ctime.3,v 1.22 2001/03/29 19:06:39 kleink Exp $
-.TH CTIME 3
-.SH NAME
-asctime, asctime_r, ctime, ctime_r, difftime, gmtime, gmtime_r, localtime, localtime_r, mktime \- convert date and time to ASCII
-.SH LIBRARY
-Standard C Library (libc, -lc)
-.SH SYNOPSIS
-.nf
-.B #include <time.h>
-.PP
-.B extern char *tzname[2];
-.PP
-.B char *ctime(const time_t *clock);
-.B char *ctime_r(const time_t *clock, char *buf);
-.PP
-.B double difftime(time_t time1, time_t time0);
-.PP
-.B char *asctime(const struct tm *tm);
-.B char *asctime_r(const struct tm * restrict tm, char * restrict buf);
-.PP
-.B struct tm *localtime(const time_t *clock);
-.B struct tm *localtime_r(const time_t * restrict clock, struct tm * restrict result);
-.PP
-.B struct tm *gmtime(const time_t *clock);
-.B struct tm *gmtime_r(const time_t * restrict clock, struct tm * restrict result);
-.PP
-.B time_t mktime(struct tm *tm);
-.PP
-.fi
-.SH DESCRIPTION
-.I Ctime\^
+.\"	$NetBSD: ctime.3,v 1.23 2001/04/02 21:26:21 wiz Exp $
+.Dd March 31, 2001
+.Dt CTIME 3
+.Os
+.Sh NAME
+.Nm asctime ,
+.Nm asctime_r ,
+.Nm ctime ,
+.Nm ctime_r ,
+.Nm difftime ,
+.Nm gmtime ,
+.Nm gmtime_r ,
+.Nm localtime ,
+.Nm localtime_r ,
+.Nm mktime
+.Nd convert date and time to ASCII
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.Fd #include <time.h>
+.Dv extern char *tzname[2];
+.Ft char *
+.Fn ctime "const time_t *clock"
+.Ft char *
+.Fn ctime_r "const time_t *clock"  "char *buf"
+.Ft double
+.Fn difftime "time_t time1" "time_t time0"
+.Ft char *
+.Fn asctime "const struct tm *tm"
+.Ft char *
+.Fn asctime_r "const struct tm restrict tm" "char * restrict buf"
+.Ft struct tm *
+.Fn localtime "const time_t *clock"
+.Ft struct tm *
+.Fn localtime_r "const time_t * restrict clock" "struct tm * restrict result"
+.Ft struct tm *
+.Fn gmtime "const time_t *clock"
+.Ft struct tm *
+.Fn gmtime_r "const time_t * restrict clock" "struct tm * restrict result"
+.Ft time_t
+.Fn mktime "struct tm *tm"
+.Sh DESCRIPTION
+.Fn ctime
 converts a long integer, pointed to by
-.IR clock ,
-representing the time in seconds since
-00:00:00 UTC, 1970-01-01,
-and returns a pointer to a
-26-character string
-of the form
-.br
-.ce
-.eo
-Thu Nov 24 18:22:48 1986\n\0
-.ec
-.br
+.Fa clock ,
+representing the time in seconds since 00:00:00 UTC, 1970-01-01,
+and returns a pointer to a 26-character string of the form
+.Dl Thu Nov 24 18:22:48 1986\en\e0
 All the fields have constant width.
-.PP
+.Pp
 The
-.I ctime_r\^
+.Fn ctime_r
 function provides the same functionality as
-.I ctime\^
+.Fn ctime
 differing in that the caller must supply a buffer area
-.IR buf
+.Fa buf
 with a size of at least 26 bytes, in which the result is stored.
-.PP
-.IR Localtime\^
+.Pp
+.Fn localtime
 and
-.I gmtime\^
-return pointers to ``tm'' structures, described below.
-.I Localtime\^
+.Fn gmtime
+return pointers to
+.Va tm
+structures, described below.
+.Fn localtime
 corrects for the time zone and any time zone adjustments
 (such as Daylight Saving Time in the U.S.A.).
-After filling in the ``tm'' structure,
-.I localtime
+After filling in the
+.Va tm
+structure,
+.Fn localtime
 sets the
-.BR tm_isdst 'th
+.Fa tm_isdst Ns 'th
 element of
-.B tzname
+.Fa tzname
 to a pointer to an
 ASCII string that's the time zone abbreviation to be used with
-.IR localtime 's
+.Fn localtime Ns 's
 return value.
-.PP
-.I Gmtime\^
+.Pp
+.Fn gmtime
 converts to Coordinated Universal Time.
-.PP
+.Pp
 The
-.I gmtime_r\^
+.Fn gmtime_r
 and
-.I localtime_r\^
+.Fn localtime_r
 functions provide the same functionality as
-.I gmtime\^
+.Fn gmtime
 and
-.I localtime\^
+.Fn localtime
 differing in that the caller must supply a buffer area
-.IR result
+.Fa result
 in which the result is stored; also,
-.I localtime_r\^
+.Fn localtime_r
 does not imply initialization of the local time conversion information;
 the application may need to do so by calling
-.IR tzset .
-.PP
-.I Asctime\^
+.Xr tzset 3 .
+.Pp
+.Fn asctime
 converts a time value contained in a
-``tm'' structure to a 26-character string,
-as shown in the above example,
-and returns a pointer
-to the string.
-.PP
+.Va tm
+structure to a 26-character string, as shown in the above example,
+and returns a pointer to the string.
+.Pp
 The
-.I asctime_r\^
+.Fn asctime_r
 function provides the same functionality as
-.I asctime\^
+.Fn asctime
 differing in that the caller must supply a buffer area
-.IR buf
+.Fa buf
 with a size of at least 26 bytes, in which the result is stored.
-.PP
-.I Mktime\^
-converts the broken-down time,
-expressed as local time,
+.Pp
+.Fn mktime
+converts the broken-down time, expressed as local time,
 in the structure pointed to by
-.I tm
+.Fa tm
 into a calendar time value with the same encoding as that of the values
 returned by the
-.I time
+.Xr time 3
 function.
 The original values of the
-.B tm_wday
+.Fa tm_wday
 and
-.B tm_yday
+.Fa tm_yday
 components of the structure are ignored,
 and the original values of the other components are not restricted
 to their normal ranges.
 (A positive or zero value for
-.B tm_isdst
+.Fa tm_isdst
 causes
-.I mktime
+.Fn mktime
 to presume initially that summer time (for example, Daylight Saving Time
-in the U.S.A.)
-respectively,
-is or is not in effect for the specified time.
-A negative value for
-.B tm_isdst
+in the U.S.A.) respectively,
+is or is not in effect for the specified time.  A negative value for
+.Fa tm_isdst
 causes the
-.I mktime
+.Fn mktime
 function to attempt to divine whether summer time is in effect
 for the specified time.)
 On successful completion, the values of the
-.B tm_wday
+.Fa tm_wday
 and
-.B tm_yday
+.Fa tm_yday
 components of the structure are set appropriately,
 and the other components are set to represent the specified calendar time,
 but with their values forced to their normal ranges; the final value of
-.B tm_mday
+.Fa tm_mday
 is not set until
-.B tm_mon
+.Fa tm_mon
 and
-.B tm_year
+.Fa tm_year
 are determined.
-.I Mktime\^
-returns the specified calendar time;
-If the calendar time cannot be represented,
-it returns
-.BR -1 .
-.PP
-.I Difftime\^
+.Fn mktime
+returns the specified calendar time; if the calendar time cannot be
+represented, it returns -1.
+.Pp
+.Fn difftime
 returns the difference between two calendar times,
-.RI ( time1
--
-.IR time0 ),
+.Fa ( time1 No - Fa time0 ) ,
 expressed in seconds.
-.PP
-Declarations of all the functions and externals, and the ``tm'' structure,
-are in the
-.B <time.h>\^
-header file.
+.Pp
 The structure (of type)
-.B struct tm
+.Va "struct tm"
 includes the following fields:
-.RS
-.PP
-.nf
-.ta .5i +\w'long tm_gmtoff;\0\0'u
-	int tm_sec;	/\(** seconds after the minute [0,61] \(**/
-	int tm_min;	/\(** minutes after the hour [0,59] \(**/
-	int tm_hour;	/\(** hours since midnight [0,23] \(**/
-	int tm_mday;	/\(** day of the month [1,31] \(**/
-	int tm_mon;	/\(** months since January [0,11] \(**/
-	int tm_year;	/\(** years since 1900 \(**/
-	int tm_wday;	/\(** day of week [0,6] (Sunday = 0) \(**/
-	int tm_yday;	/\(** day of year [0,365] (Jan 1 = 0) \(**/
-	int tm_isdst;	/\(** daylight savings flag \(**/
-	long tm_gmtoff;	/\(** offset from UTC in seconds \(**/
-	char \(**tm_zone;	/\(** abbreviation of timezone name \(**/
-.fi
-.RE
-.PP
+.Bd -literal -offset indent
+int tm_sec;	/* seconds after the minute [0,61] */
+int tm_min;	/* minutes after the hour [0,59] */
+int tm_hour;	/* hours since midnight [0,23] */
+int tm_mday;	/* day of the month [1,31] */
+int tm_mon;	/* months since January [0,11] */
+int tm_year;	/* years since 1900 */
+int tm_wday;	/* day of week [0,6] (Sunday = 0) */
+int tm_yday;	/* day of year [0,365] (Jan 1 = 0) */
+int tm_isdst;	/* daylight savings flag */
+long tm_gmtoff;	/* offset from UTC in seconds */
+char *tm_zone;	/* abbreviation of timezone name */
+.Ed
+.Pp
 The
-.I tm_zone
+.Fa tm_zone
 and
-.I tm_gmtoff
+.Fa tm_gmtoff
 fields exist, and are filled in, only if arrangements to do
 so were made when the library containing these functions was
 created.
 There is no guarantee that these fields will continue to exist
 in this form in future releases of this code.
-.PP
-.I Tm_isdst\^
+.Pp
+.Fa tm_isdst
 is non-zero if summer time is in effect.
-.PP
-.I Tm_gmtoff
+.Pp
+.Fa tm_gmtoff
 is the offset (in seconds) of the time represented
 from UTC, with positive values indicating east
 of the Prime Meridian.
-.SH FILES
-.ta \w'/usr/share/zoneinfo/posixrules\0\0'u
-/etc/localtime	local time zone file
-.br
-/usr/share/zoneinfo	time zone information directory
-.br
-/usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
-.br
-/usr/share/zoneinfo/GMT	for UTC leap seconds
-.sp
+.Sh FILES
+.Bl -tag -width /usr/share/zoneinfo/posixrules -compact
+.It Pa /etc/localtime
+local time zone file
+.It Pa /usr/share/zoneinfo
+time zone information directory
+.It Pa /usr/share/zoneinfo/posixrules
+used with POSIX-style TZ's
+.It Pa /usr/share/zoneinfo/GMT
+for UTC leap seconds
+.El
+.Pp
 If
-.B /usr/share/zoneinfo/GMT
-is absent,
-UTC leap seconds are loaded from
-.BR /usr/share/zoneinfo/posixrules .
-.SH SEE ALSO
-getenv(3),
-strftime(3),
-tzset(3),
-time(3),
-tzfile(5)
-.SH STANDARDS
+.Pa /usr/share/zoneinfo/GMT
+is absent, UTC leap seconds are loaded from
+.Pa /usr/share/zoneinfo/posixrules .
+.Sh SEE ALSO
+.Xr getenv 3 ,
+.Xr strftime 3 ,
+.Xr tzset 3 ,
+.Xr time 3 ,
+.Xr tzfile 5
+.Sh STANDARDS
 The
-ctime(),
-difftime(),
-asctime(),
-localtime(),
-gmtime()
+.Fn ctime ,
+.Fn difftime ,
+.Fn asctime ,
+.Fn localtime ,
+.Fn gmtime
 and
-mktime()
+.Fn mktime
 functions conform to
-ANSI X3.159-1989 (``ANSI C'').
+.St -ansiC
 The
-ctime_r(),
-asctime_r(),
-localtime_r()
+.Fn ctime_r ,
+.Fn asctime_r ,
+.Fn localtime_r
 and
-gmtime_r()
+.Fn gmtime_r
 functions conform to
-IEEE Std1003.1c-1995 (``POSIX'').
-.SH NOTES
-The return values point to static data;
-the data is overwritten by each call.
-The
-.B tm_zone
+.St -p1003.1c-95 .
+.Sh NOTES
+The return values point to static data; the data is overwritten by
+each call.  The
+.Fa tm_zone
 field of a returned
-.B "struct tm"
-points to a static array of characters, which
-will also be overwritten at the next call
-(and by calls to
-.IR tzset ).
-.PP
+.Va "struct tm"
+points to a static array of characters, which will also be overwritten
+at the next call (and by calls to
+.Xr tzset 3 ) .
+.Pp
 Avoid using out-of-range values with
-.I mktime
+.Fn mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" @(#)newctime.3	7.14
+.\" @(#)newctime.3     7.14
