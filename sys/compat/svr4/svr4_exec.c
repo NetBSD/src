@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.17 1996/06/13 18:33:54 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.18 1996/09/26 20:52:44 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -26,6 +26,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	ELFSIZE		32				/* XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +85,7 @@ svr4_copyargs(pack, arginfo, stack, argp)
 {
 	AuxInfo *a;
 
-	if (!(a = (AuxInfo *) elf_copyargs(pack, arginfo, stack, argp)))
+	if (!(a = (AuxInfo *) elf32_copyargs(pack, arginfo, stack, argp)))
 		return NULL;
 #ifdef SVR4_COMPAT_SOLARIS2
 	if (pack->ep_emul_arg) {
@@ -108,12 +110,12 @@ svr4_copyargs(pack, arginfo, stack, argp)
 }
 
 int
-svr4_elf_probe(p, epp, eh, itp, pos)
+svr4_elf32_probe(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
 	Elf32_Ehdr *eh;
 	char *itp;
-	u_long *pos;
+	Elf32_Addr *pos;
 {
 	char *bp;
 	int error;
