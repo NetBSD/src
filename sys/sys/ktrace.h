@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.1 2003/07/02 15:27:16 darrenr Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.2 2003/08/19 19:40:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -174,6 +174,21 @@ struct ktr_mmsg {
 };
 
 /*
+ * KTR_SAUPCALL - schedular activiated upcall.
+ */
+#define	KTR_SAUPCALL	12
+struct ktr_saupcall {
+	int ktr_type;
+	int ktr_nevent;
+	int ktr_nint;
+	void *ktr_sas;
+	void *ktr_ap;
+	/*
+	 * followed by nevent sa_t's from sas[]
+	 */
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -186,6 +201,7 @@ struct ktr_mmsg {
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define	KTRFAC_USER	(1<<KTR_USER)
 #define KTRFAC_MMSG	(1<<KTR_MMSG)
+#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -215,6 +231,7 @@ void ktrsyscall(struct lwp *, register_t, register_t,
 void ktrsysret(struct lwp *, register_t, int, register_t *);
 void ktruser(struct lwp *, const char *, void *, size_t, int);
 void ktrmmsg(struct lwp *, const void *, size_t);
+void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.16 2003/05/28 22:17:20 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.16.2.1 2003/08/19 19:40:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16 2003/05/28 22:17:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.1 2003/08/19 19:40:52 skrll Exp $");
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16 2003/05/28 22:17:20 nathanw Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
+#include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -960,6 +963,10 @@ sa_upcall_userret(struct lwp *l)
 	DPRINTFN(7,("sa_upcall_userret(%d.%d): type %d\n",p->p_pid,
 	    l->l_lid, type));
 
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SAUPCALL))
+		ktrsaupcall(l, type, nevents, nint, sapp, ap);
+#endif
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
 	l->l_flag |= L_SA;
 	KERNEL_PROC_UNLOCK(l);
