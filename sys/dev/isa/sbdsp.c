@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.16 1996/02/16 10:10:21 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.17 1996/02/18 16:36:44 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -191,11 +191,12 @@ sbdsp_attach(sc)
 		sbdsp_mix_write(sc, SBP_DAC_VOL,
 				sbdsp_stereo_vol(SBP_MAXVOL, SBP_MAXVOL));
 		sbdsp_mix_write(sc, SBP_MASTER_VOL,
-				sbdsp_stereo_vol(SBP_MAXVOL, SBP_MAXVOL));
+				sbdsp_stereo_vol(SBP_MAXVOL/2, SBP_MAXVOL/2));
 		sbdsp_mix_write(sc, SBP_LINE_VOL,
 				sbdsp_stereo_vol(SBP_MAXVOL, SBP_MAXVOL));
 		for (i = 0; i < SB_NDEVS; i++)
 			sc->gain[i] = sbdsp_stereo_vol(SBP_MAXVOL, SBP_MAXVOL);
+		sc->in_filter = 0;	/* no filters turned on, please */
 	}
 
 	printf(": dsp v%d.%02d\n",
@@ -390,6 +391,59 @@ sbdsp_get_channels(addr)
 }
 
 int
+sbdsp_set_ifilter(addr, which)
+	void *addr;
+	int which;
+{
+	register struct sbdsp_softc *sc = addr;
+	int rval, mixval;
+
+	if (ISSBPROCLASS(sc)) {
+		mixval = sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_IFILTER_MASK;
+		switch (which) {
+		default:
+		    return EINVAL;
+		case 0:
+		    mixval |= SBP_FILTER_OFF;
+		    break;
+		case SBP_TREBLE_EQ:
+		    mixval |= (SBP_FILTER_ON|SBP_IFILTER_HIGH);
+		    break;
+		case SBP_BASS_EQ:
+		    mixval |= (SBP_FILTER_ON|SBP_IFILTER_LOW); 
+		    break;
+		}
+		sc->in_filter = mixval & SBP_IFILTER_MASK;
+		sbdsp_mix_write(sc, SBP_INFILTER, mixval);
+		return(0);
+	} else {
+		return(EINVAL);
+	}
+}
+
+int
+sbdsp_get_ifilter(addr)
+	void *addr;
+{
+	register struct sbdsp_softc *sc = addr;
+	
+	if (ISSBPROCLASS(sc)) {
+	    sc->in_filter = sbdsp_mix_read(sc, SBP_INFILTER) & SBP_IFILTER_MASK;
+
+	    switch (sc->in_filter) {
+	    case SBP_FILTER_OFF:
+	    default:
+		return 0;
+	    case SBP_FILTER_ON|SBP_IFILTER_HIGH:
+		return SBP_TREBLE_EQ;
+	    case SBP_FILTER_ON|SBP_IFILTER_LOW:
+		return SBP_BASS_EQ;
+	    }
+	} else
+	    return 0;
+}
+
+int
 sbdsp_set_out_port(addr, port)
 	void *addr;
 	int port;
@@ -455,7 +509,7 @@ sbdsp_set_in_port(addr, port)
 		/* record from that port */
 		sbdsp_mix_write(sc, SBP_RECORD_SOURCE,
 				SBP_RECORD_FROM(sbport, SBP_FILTER_OFF,
-						SBP_FILTER_HIGH));
+						SBP_IFILTER_HIGH));
 		/* fetch gain from that port */
 		sc->gain[port] = sbdsp_mix_read(sc, mixport);
 	}
@@ -900,13 +954,12 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 				if (sbdsp_wdsp(iobase, SB_DSP_RECORD_STEREO) < 0)
 					goto badmode;
 				sbdsp_mix_write(sc, SBP_INFILTER,
-				    sbdsp_mix_read(sc, SBP_INFILTER) | SBP_FILTER_OFF);
+					(sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_IFILTER_MASK) | SBP_FILTER_OFF);
 			} else {
 				if (sbdsp_wdsp(iobase, SB_DSP_RECORD_MONO) < 0)
 					goto badmode;
-				sbdsp_mix_write(sc, SBP_INFILTER, sc->sc_itc > SB_8K ? 
-				    sbdsp_mix_read(sc, SBP_INFILTER) | SBP_FILTER_OFF :
-				    sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_FILTER_MASK);
+				sbdsp_mix_write(sc, SBP_INFILTER,
+					(sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_IFILTER_MASK) | sc->in_filter);
 			}
 		}
 
@@ -1162,12 +1215,13 @@ sbdsp_mixer_set_port(addr, cp)
     DPRINTF(("sbdsp_mixer_set_port: port=%d num_channels=%d\n", cp->dev, cp->un.value.num_channels));
 
     /*
-     * Everything is a value except for SBPro special OUTPUT_MODE and
+     * Everything is a value except for SBPro BASS/TREBLE and
      * RECORD_SOURCE
      */
     if (cp->type != AUDIO_MIXER_VALUE) {
-	if (!ISSBPROCLASS(sc) || (cp->dev != SB_OUTPUT_MODE &&
-				  cp->dev != SB_RECORD_SOURCE))
+	if (!ISSBPROCLASS(sc) || (cp->dev != SB_RECORD_SOURCE &&
+				  cp->dev != SB_BASS &&
+				  cp->dev != SB_TREBLE))
 	    return EINVAL;
     }
     else {
@@ -1176,11 +1230,11 @@ sbdsp_mixer_set_port(addr, cp)
 	 * If we get a single-channel gain value passed in, then we
 	 * duplicate it to both left and right channels.
 	 */
-    if (cp->un.value.num_channels == 2) {
-	left  = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-	right = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-    }
-    else
+	if (cp->un.value.num_channels == 2) {
+	    left  = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+	    right = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+	}
+	else
 	    left = right = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
     }    
     
@@ -1218,18 +1272,22 @@ sbdsp_mixer_set_port(addr, cp)
         case SB_MASTER_VOL:
 	    src = SBP_MASTER_VOL;
 	    break;
-#if 0
-	case SB_OUTPUT_MODE:
-	    if (cp->type == AUDIO_MIXER_ENUM)
-		return sbdsp_set_channels(addr, cp->un.ord);
-	    /* fall through...carefully! */
-#endif
+        case SB_TREBLE:
+	    if (cp->type == AUDIO_MIXER_ENUM) {
+		return sbdsp_set_ifilter(addr, cp->un.ord ? SBP_TREBLE_EQ : 0);
+	    }
+	    error = EINVAL;
+	    break;
+        case SB_BASS:
+	    if (cp->type == AUDIO_MIXER_ENUM) {
+		return sbdsp_set_ifilter(addr, cp->un.ord ? SBP_BASS_EQ : 0);
+	    }
+	    error = EINVAL;
+	    break;
 	case SB_RECORD_SOURCE:
 	    if (cp->type == AUDIO_MIXER_ENUM)
 		return sbdsp_set_in_port(addr, cp->un.ord);
 	    /* else fall through: bad input */
-        case SB_TREBLE:
-        case SB_BASS:
         default:
 	    error =  EINVAL;
 	    break;
@@ -1259,13 +1317,13 @@ sbdsp_mixer_get_port(addr, cp)
     DPRINTF(("sbdsp_mixer_get_port: port=%d", cp->dev));
 
     if (ISSBPROCLASS(sc))
-    switch(cp->dev) {
-    case SB_MIC_PORT:
+	switch(cp->dev) {
+	case SB_MIC_PORT:
 	    if (cp->un.value.num_channels == 1) {
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
 		    SBP_MICGAIN_TO_AGAIN(sc->gain[cp->dev]);
 		return 0;
-    }
+	    }
 	    else
 		return EINVAL;
 	    break;
@@ -1278,6 +1336,18 @@ sbdsp_mixer_get_port(addr, cp)
 	case SB_SPEAKER:
 	    cp->dev = SB_MASTER_VOL;
 	    break;
+	case SB_TREBLE:
+	    if (sbdsp_get_ifilter(sc) == SBP_TREBLE_EQ)
+		cp->un.ord = 1;
+	    else
+		cp->un.ord = 0;
+	    return 0;
+	case SB_BASS:
+	    if (sbdsp_get_ifilter(sc) == SBP_BASS_EQ)
+		cp->un.ord = 1;
+	    else
+		cp->un.ord = 0;
+	    return 0;
         default:
 	    error =  EINVAL;
 	    break;
@@ -1285,7 +1355,7 @@ sbdsp_mixer_get_port(addr, cp)
     else {
 	if (cp->un.value.num_channels != 1) /* no stereo on SB classic */
 	    error = EINVAL;
-    else
+	else
 	    switch(cp->dev) {
 	    case SB_MIC_PORT:
 		break;
@@ -1373,7 +1443,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    break;
 	case SB_DAC_PORT:
 	    dip->type = AUDIO_MIXER_VALUE;
-	    dip->mixer_class = SB_OUTPUT_CLASS;
+	    dip->mixer_class = SB_INPUT_CLASS;
 	    dip->prev = AUDIO_MIXER_LAST;
 	    dip->next = AUDIO_MIXER_LAST;
 	    strcpy(dip->label.name, AudioNdac);
@@ -1391,7 +1461,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    break;
 	case SB_FM_PORT:
 	    dip->type = AUDIO_MIXER_VALUE;
-	    dip->mixer_class = SB_OUTPUT_CLASS;
+	    dip->mixer_class = SB_INPUT_CLASS;
 	    dip->prev = AUDIO_MIXER_LAST;
 	    dip->next = AUDIO_MIXER_LAST;
 	    strcpy(dip->label.name, AudioNfmsynth);
@@ -1402,25 +1472,11 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    dip->type = AUDIO_MIXER_VALUE;
 	    dip->mixer_class = SB_OUTPUT_CLASS;
 	    dip->prev = AUDIO_MIXER_LAST;
-	    dip->next = /*TREBLE, BASS not handled, nor is SB_OUTPUT_MODE*/SB_RECORD_SOURCE;
+	    dip->next = AUDIO_MIXER_LAST;
 	    strcpy(dip->label.name, AudioNvolume);
 	    dip->un.v.num_channels = 2;
 	    strcpy(dip->un.v.units.name, AudioNvolume);
 	    break;
-#if 0
-	case SB_OUTPUT_MODE:
-	    dip->mixer_class = SB_OUTPUT_CLASS;
-	    dip->type = AUDIO_MIXER_ENUM;
-	    dip->prev = SB_MASTER_VOL;
-	    dip->next = AUDIO_MIXER_LAST;
-	    strcpy(dip->label.name, AudioNmode);
-	    dip->un.e.num_mem = 2;
-	    strcpy(dip->un.e.member[0].label.name, AudioNmono);
-	    dip->un.e.member[0].ord = 1; /* nchans */
-	    strcpy(dip->un.e.member[1].label.name, AudioNstereo);
-	    dip->un.e.member[1].ord = 2; /* nchans */
-	    break;
-#endif
 	case SB_RECORD_SOURCE:
 	    dip->mixer_class = SB_RECORD_CLASS;
 	    dip->type = AUDIO_MIXER_ENUM;
@@ -1436,7 +1492,37 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    dip->un.e.member[2].ord = SB_LINE_IN_PORT;
 	    break;
 	case SB_BASS:
+	    dip->type = AUDIO_MIXER_ENUM;
+	    dip->mixer_class = SB_INPUT_CLASS;
+	    dip->prev = AUDIO_MIXER_LAST;
+	    dip->next = AUDIO_MIXER_LAST;
+	    strcpy(dip->label.name, AudioNbass);
+	    dip->un.e.num_mem = 2;
+	    strcpy(dip->un.e.member[0].label.name, AudioNoff);
+	    dip->un.e.member[0].ord = 0;
+	    strcpy(dip->un.e.member[1].label.name, AudioNon);
+	    dip->un.e.member[1].ord = 1;
+	    break;
 	case SB_TREBLE:
+	    dip->type = AUDIO_MIXER_ENUM;
+	    dip->mixer_class = SB_INPUT_CLASS;
+	    dip->prev = AUDIO_MIXER_LAST;
+	    dip->next = AUDIO_MIXER_LAST;
+	    strcpy(dip->label.name, AudioNtreble);
+	    dip->un.e.num_mem = 2;
+	    strcpy(dip->un.e.member[0].label.name, AudioNoff);
+	    dip->un.e.member[0].ord = 0;
+	    strcpy(dip->un.e.member[1].label.name, AudioNon);
+	    dip->un.e.member[1].ord = 1;
+	    break;
+
+	case SB_RECORD_CLASS:			/* record source class */
+	    dip->type = AUDIO_MIXER_CLASS;
+	    dip->mixer_class = SB_RECORD_CLASS;
+	    dip->next = dip->prev = AUDIO_MIXER_LAST;
+	    strcpy(dip->label.name, AudioCRecord);
+	    break;
+
 	default:
 	    return ENXIO;
 	    /*NOTREACHED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.9 1996/02/16 10:10:23 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.10 1996/02/18 16:36:52 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -36,24 +36,26 @@
 
 #define SB_MIC_PORT	0
 #define SB_SPEAKER	1
-#define SB_LINE_IN_PORT	2
-#define SB_DAC_PORT	3
-#define SB_FM_PORT	4
-#define SB_CD_PORT	5
-#define SB_MASTER_VOL	6
-#define SB_TREBLE	7
-#define SB_BASS		8
-#define SB_NDEVS	9
+#define SB_INPUT_CLASS	2
+#define SB_OUTPUT_CLASS	3
+#define SB_LINE_IN_PORT	4
+#define SB_DAC_PORT	5
+#define SB_FM_PORT	6
+#define SB_CD_PORT	7
+#define SB_MASTER_VOL	8
+#define SB_TREBLE	9
+#define SB_BASS		10
+#define SB_NDEVS	11		/* XXX include classes above for
+					   contiguous number space on
+					   original SB */
 
-#define SB_OUTPUT_MODE	9
+/*#define SB_OUTPUT_MODE	9
 #define 	SB_SPKR_MONO	0
-#define 	SB_SPKR_STEREO	1
+#define 	SB_SPKR_STEREO	1*/
 
-#define	SB_RECORD_SOURCE 10
+#define	SB_RECORD_SOURCE 11
 
-#define SB_INPUT_CLASS	11
-#define SB_OUTPUT_CLASS	12
-#define SB_RECORD_CLASS	13
+#define SB_RECORD_CLASS	12
 
 
 /*
@@ -88,6 +90,7 @@ struct sbdsp_softc {
 
 	u_int	out_port;		/* output port */
 	u_int	in_port;		/* input port */
+	u_int	in_filter;		/* one of SB_TREBLE_EQ, SB_BASS_EQ, 0 */
 
 	u_int	spkr_state;		/* non-null is on */
 	
@@ -157,6 +160,8 @@ int	sbdsp_set_precision __P((void *, u_int));
 int	sbdsp_get_precision __P((void *));
 int	sbdsp_set_channels __P((void *, int));
 int	sbdsp_get_channels __P((void *));
+int	sbdsp_set_ifilter __P((void *, int));
+int	sbdsp_get_ifilter __P((void *));
 int	sbdsp_round_blocksize __P((void *, int));
 int	sbdsp_set_out_port __P((void *, int));
 int	sbdsp_get_out_port __P((void *));
