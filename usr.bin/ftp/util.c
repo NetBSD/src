@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.37 1998/12/29 14:27:59 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.38 1999/01/01 02:05:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.37 1998/12/29 14:27:59 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.38 1999/01/01 02:05:05 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -755,6 +755,13 @@ updateprogressmeter(dummy)
 }
 #endif	/* SMALL */
 
+
+/*
+ * List of order of magnitude prefixes.
+ * The last is `P', as 2^64 = 16384 Petabytes
+ */
+static const char prefixes[] = " KMGTP";
+
 /*
  * Display a transfer progress bar if progress is non-zero.
  * SIGALRM is hijacked for use by this function.
@@ -773,11 +780,6 @@ progressmeter(flag)
 	int flag;
 {
 #ifndef	SMALL
-	/*
-	 * List of order of magnitude prefixes.
-	 * The last is `P', as 2^64 = 16384 Petabytes
-	 */
-	static const char prefixes[] = "BKMGTP";
 
 	static off_t lastsize;
 	struct timeval now, td, wait;
@@ -803,7 +805,7 @@ progressmeter(flag)
 	ratio = MIN(ratio, 100);
 	len += snprintf(buf + len, sizeof(buf) - len, "\r%3d%% ", ratio);
 
-	barlength = ttywidth - 42;
+	barlength = ttywidth - 43;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		len += snprintf(buf + len, sizeof(buf) - len,
@@ -822,7 +824,7 @@ progressmeter(flag)
 #else
 	    " %5ld %c%c ", (long)abbrevsize,
 #endif
-	    i == 0 ? ' ' : prefixes[i],
+	    prefixes[i],
 	    i == 0 ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
@@ -845,16 +847,17 @@ progressmeter(flag)
 		if (elapsed > 0.0)
 			bytespersec /= elapsed;
 	}
-	for (i = 0; bytespersec >= 100000 && i < sizeof(prefixes); i++)
+	bytespersec /= 10;
+	for (i = 1; bytespersec >= 100000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
 	len += snprintf(buf + len, sizeof(buf) - len,
 #ifndef NO_QUAD
-	    " %5qd %c%s ", (long long)bytespersec,
+	    " %3qd.%02d %cB/s ", (long long)bytespersec / 100,
 #else
-	    " %5ld %c%s ", (long)bytespersec,
+	    " %3ld.%02d %cB/s ", (long)bytespersec / 100,
 #endif
-	    prefixes[i],
-	    i == 0 ? "/s " : "B/s");
+	    (int)(bytespersec % 100),
+	    prefixes[i]);
 
 	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 		len += snprintf(buf + len, sizeof(buf) - len,
@@ -911,7 +914,7 @@ ptransfer(siginfo)
 	struct timeval now, td, wait;
 	double elapsed;
 	off_t bytespersec;
-	int meg, remaining, hh, len;
+	int remaining, hh, i, len;
 	char buf[100];
 
 	if (!verbose && !siginfo)
@@ -921,13 +924,10 @@ ptransfer(siginfo)
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 	bytespersec = 0;
-	meg = 0;
 	if (bytes > 0) {
 		bytespersec = bytes;
 		if (elapsed > 0.0)
 			bytespersec /= elapsed;
-		if (bytespersec > (1024 * 1024))
-			meg = 1;
 	}
 	len = 0;
 	len += snprintf(buf + len, sizeof(buf) - len,
@@ -951,9 +951,19 @@ ptransfer(siginfo)
 	if (hh)
 		len += snprintf(buf + len, sizeof(buf) - len, "%2d:", hh);
 	len += snprintf(buf + len, sizeof(buf) - len,
-	    "%02d:%02d (%.2f %sB/s)", remaining / 60, remaining % 60,
-	    bytespersec / (1024.0 * (meg ? 1024.0 : 1.0)),
-	    meg ? "M" : "K");
+	    "%02d:%02d ", remaining / 60, remaining % 60);
+
+	bytespersec /= 10;
+	for (i = 1; bytespersec >= 100000 && i < sizeof(prefixes); i++)
+		bytespersec >>= 10;
+	len += snprintf(buf + len, sizeof(buf) - len,
+#ifndef NO_QUAD
+	    "(%qd.%02d %cB/s)", (long long)bytespersec / 100,
+#else
+	    "(%ld.%02d %cB/s)", (long)bytespersec / 100,
+#endif
+	    (int)(bytespersec % 100),
+	    prefixes[i]);
 
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
 	    && bytes + restart_point <= filesize) {
