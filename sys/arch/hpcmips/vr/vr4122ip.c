@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4102ip.c,v 1.3 2002/02/11 09:21:47 takemura Exp $	*/
+/*	$NetBSD: vr4122ip.c,v 1.1 2002/02/11 09:21:47 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -43,64 +43,64 @@
 #include <hpcmips/vr/icureg.h>
 #include <hpcmips/vr/cmureg.h>
 
-void	vr4102ipattach(struct device *, struct device *, void *);
+void	vr4122ipattach(struct device *, struct device *, void *);
 
-struct cfattach vr4102ip_ca = {
-	sizeof(struct vrip_softc), vripmatch, vr4102ipattach
+struct cfattach vr4122ip_ca = {
+	sizeof(struct vrip_softc), vripmatch, vr4122ipattach
 };
 
-static const struct vrip_unit vr4102ip_units[] = {
+static const struct vrip_unit vr4122ip_units[] = {
 	[VRIP_UNIT_PMU] = { "pmu",
 			    { VRIP_INTR_POWER,	VRIP_INTR_BAT,	},	},
 	[VRIP_UNIT_RTC] = { "rtc",
 			    { VRIP_INTR_RTCL1,	},		},
-	[VRIP_UNIT_PIU] = { "piu",
-			    { VRIP_INTR_PIU, },
-			    VR4102_CMUMSKPIU,
-			    ICUPIUINT_REG_W,	MPIUINT_REG_W	},
-	[VRIP_UNIT_KIU] = { "kiu",
-			    { VRIP_INTR_KIU,	},
-			    VR4102_CMUMSKKIU,
-			    VR4102_KIUINT_REG_W,VR4102_MKIUINT_REG_W	},
 	[VRIP_UNIT_SIU] = { "siu",
 			    { VRIP_INTR_SIU,	},		},
 	[VRIP_UNIT_GIU] = { "giu",
 			    { VRIP_INTR_GIU,	},
 			    0,
-			    VR4102_GIUINT_L_REG_W,VR4102_MGIUINT_L_REG_W,
-			    VR4102_GIUINT_H_REG_W,VR4102_MGIUINT_H_REG_W},
+			    VR4122_GIUINT_L_REG_W,VR4122_MGIUINT_L_REG_W,
+			    VR4122_GIUINT_H_REG_W,VR4122_MGIUINT_H_REG_W},
 	[VRIP_UNIT_LED] = { "led",
 			    { VRIP_INTR_LED,	},		},
-	[VRIP_UNIT_AIU] = { "aiu",
-			    { VRIP_INTR_AIU,	},
-			    VR4102_CMUMSKAIU,
-			    VR4102_AIUINT_REG_W,VR4102_MAIUINT_REG_W	},
 	[VRIP_UNIT_FIR] = { "fir",
 			    { VRIP_INTR_FIR,	},
-			    VR4102_CMUMSKFIR,
-			    VR4102_FIRINT_REG_W,VR4102_MFIRINT_REG_W	},
+			    VR4122_CMUMSKFIR,
+			    VR4122_FIRINT_REG_W,VR4122_MFIRINT_REG_W	},
 	[VRIP_UNIT_DSIU]= { "dsiu",
 			    { VRIP_INTR_DSIU,	},
-			    VR4102_CMUMSKDSIU,
-			    VR4102_DSIUINT_REG_W,VR4102_MDSIUINT_REG_W	},
+			    VR4122_CMUMSKDSIU,
+			    VR4122_DSIUINT_REG_W,VR4122_MDSIUINT_REG_W	},
+	[VRIP_UNIT_PCIU]= { "pciu",
+			    { VRIP_INTR_PCI,	},
+			    CMUMASK_PCIU,
+			    PCIINT_REG_W,	MPCIINT_REG_W	},
+	[VRIP_UNIT_SCU] = { "scu",
+			    { VRIP_INTR_SCU,	},
+			    0,
+			    SCUINT_REG_W,	MSCUINT_REG_W	},
+	[VRIP_UNIT_CSI] = { "csi",
+			    { VRIP_INTR_CSI,	},
+			    CMUMASK_CSI,
+			    CSIINT_REG_W,	MCSIINT_REG_W	},
 	[VRIP_UNIT_BCU] = { "bcu",
 			    { VRIP_INTR_BCU,	},
 			    0,
-			    VR4102_BCUINT_REG_W,VR4102_MBCUINT_REG_W	}
+			    VR4122_BCUINT_REG_W,VR4122_MBCUINT_REG_W	}
 };
 
 void
-vr4102ipattach(struct device *parent, struct device *self, void *aux)
+vr4122ipattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_softc *sc = (struct vrip_softc*)self;
 
 	printf("\n");
 
-	sc->sc_units = vr4102ip_units;
-	sc->sc_nunits = sizeof(vr4102ip_units)/sizeof(struct vrip_unit);
-	sc->sc_icu_addr = VR4102_ICU_ADDR;
-	sc->sc_sysint2 = VR4102_SYSINT2_REG_W;
-	sc->sc_msysint2 = VR4102_MSYSINT2_REG_W;
+	sc->sc_units = vr4122ip_units;
+	sc->sc_nunits = sizeof(vr4122ip_units)/sizeof(struct vrip_unit);
+	sc->sc_icu_addr = VR4122_ICU_ADDR;
+	sc->sc_sysint2 = VR4122_SYSINT2_REG_W;
+	sc->sc_msysint2 = VR4122_MSYSINT2_REG_W;
 
 	vripattach_common(parent, self, aux);
 }

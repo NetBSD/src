@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.37 2002/02/10 14:38:57 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.38 2002/02/11 09:21:47 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -59,8 +59,8 @@
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 
-#include "vrip.h"
-#if NVRIP > 0
+#include "vrip_common.h"
+#if NVRIP_COMMON > 0
 #include <hpcmips/vr/vripvar.h>
 #endif
 
@@ -451,7 +451,7 @@ vr_reboot(int howto, char *bootstr)
 	 * halt
 	 */
 	if (howto & RB_HALT) {
-#if NVRIP > 0
+#if NVRIP_COMMON > 0
 		_spllower(~MIPS_INT_MASK_0);
 		vrip_intr_suspend();
 #else
@@ -465,7 +465,7 @@ vr_reboot(int howto, char *bootstr)
 		__asm("nop");
 		__asm("nop");
 		__asm(".set reorder");
-#if NVRIP > 0
+#if NVRIP_COMMON > 0
 		vrip_intr_resume();
 #endif
 	}
