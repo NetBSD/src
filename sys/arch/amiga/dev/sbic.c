@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.51 2003/05/03 18:10:43 wiz Exp $ */
+/*	$NetBSD: sbic.c,v 1.52 2003/06/18 08:58:35 drochner Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,14 +46,13 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.51 2003/05/03 18:10:43 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.52 2003/06/18 08:58:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h> /* For hz */
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

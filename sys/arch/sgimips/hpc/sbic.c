@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.12 2003/05/03 18:10:57 wiz Exp $	*/
+/*	$NetBSD: sbic.c,v 1.13 2003/06/18 08:58:40 drochner Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -52,7 +52,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h> /* For hz */
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 
 #include <dev/scsipi/scsi_all.h>

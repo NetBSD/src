@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.28 2003/05/10 23:12:42 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.29 2003/06/18 08:58:42 drochner Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,7 +61,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include <sys/dkstat.h> 
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
