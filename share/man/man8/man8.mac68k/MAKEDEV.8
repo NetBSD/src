@@ -1,15 +1,15 @@
 .\" *** ------------------------------------------------------------------
 .\" *** This file was generated automatically
-.\" *** from src/etc/etc.sun3/MAKEDEV and
-.\" *** src/share/man/man8/man8.sun3/MAKEDEV.8.template
+.\" *** from src/etc/etc.mac68k/MAKEDEV and
+.\" *** src/share/man/man8/man8.mac68k/MAKEDEV.8.template
 .\" *** 
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.4 1999/09/18 00:31:04 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.1 1999/09/18 00:31:02 hubertf Exp $
 .\"
-.\" Copyright (c) 1983, 1991, 1993
-.\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1991 The Regents of the University of California.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -39,12 +39,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)makedev.8	8.1 (Berkeley) 6/5/93
+.\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
 .\"
-.Dd June 5, 1993
-.Dt MAKEDEV 8 sun3
+.Dd Septemper 14, 1999
+.Dt MAKEDEV 8 mac68k
 .Os
 .Sh NAME
+.Nm MAKEDEV ,
 .Nm makedev
 .Nd create system and device special files
 .Sh SYNOPSIS
@@ -66,17 +67,23 @@ files.
 .Nm MAKEDEV
 takes any number of device names as arguments,
 where the names are the common abbreviation for
-the device.  There are several special device names:
+the device.  The following device names are special:
 .Pp
 .\" @@@SPECIAL@@@
 .Bl -tag -width 01234567 -compact
+.It Ar all
+A smattering -- at least one of each except ch*
 .It Ar std
 Standard devices
+.It Ar fd
+File descriptor device nodes
 .It Ar local
 Configuration specific devices
+.It Ar raminst
+For RAM disk install
 .El
 .Pp
-The Sun3 supports the following devices.
+The Mac68k port supports the following devices.
 Where a device name is followed by a hash
 sign ("#"), the hash sign must be replaced
 by a unit number.
@@ -86,25 +93,39 @@ by a unit number.
 .It Tapes:
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
-SCSI tape, see
+Scsi tapes, see
 .Xr st 4 
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
-Sun SCSI disks, see
+SCSI disks, see
 .Xr sd 4 
-. It Ar fd#
-Floppies
+. It Ar cd#
+SCSI compact discs, see
+.Xr cd 4 
 . It Ar vnd#
-``file'' pseudo-disks, see
+Vnode pseudo-disks, see
 .Xr vnd 4 
-. It Ar ccd#
-Concatenated disk driver, see
-.Xr ccd 4 
 . It Ar raid#
 RAIDframe disk driver, see
 .Xr raid 4 
+. It Ar ccd#
+Concatenated disk driver, see
+.Xr ccd 4 
+. It Ar md#
+Memory pseudo-disks, see
+.Xr md 4 
+. It Ar fd#
+Floppy disk drives (3 1/2")
+. El
+.It Terminal ports:
+. Bl -tag -width 0123456789 -compact
+. It Ar ttye#
+Ite consoles
+. It Ar tty#
+Standard built-in serial ports (2), see
+.Xr tty 4 
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
@@ -112,35 +133,44 @@ RAIDframe disk driver, see
 Set of 16 master and slave pseudo terminals, see
 .Xr pty 4 
 . El
+.It Graphics devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar grf#
+Bitmapped graphics device
+. El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
-. It Ar bwtwo#
-Monochromatic frame buffer, see
-.Xr bwtwo 4 
-. It Ar cgtwo#
-8-bit VME bus color frame buffer, see
-.Xr cgtwo 4 
-. It Ar cgfour#
-8-bit color frame buffer, see
-.Xr cgfour 4 
+. It Ar tun#
+Network tunnel driver, see
+.Xr tun 4 
 . It Ar bpf#
 Packet filter, see
 .Xr bpf 4 
 . It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 
-. It Ar tun#
-Network tunnel driver, see
-.Xr tun 4 
-. It Ar md#
-Memory pseudo-disk, see
-.Xr md 4 
+. It Ar ipl
+Ip filter
 . It Ar random
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
 .Xr scsictl 8 ,
 .Xr scsi 4 
+. It Ar ss#
+SCSI scanner, see
+.Xr ss 4 
+. It Ar uk#
+SCSI unknown, see
+.Xr uk 4 
+. It Ar ch#
+SCSI changer, see
+.Xr ch 4 
+. It Ar adb
+Apple Desktop Bus, see
+.Xr adb 4 
+. It Ar asc#
+Apple Sound Chip
 . El
 .El
 .Pp
@@ -153,4 +183,3 @@ The special file directory.
 .Xr intro 4 ,
 .Xr config 8 ,
 .Xr mknod 8
-.\" .Xr special 8
