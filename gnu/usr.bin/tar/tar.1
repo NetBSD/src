@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.21 2002/02/04 10:35:39 fair Exp $
+.\"	$NetBSD: tar.1,v 1.22 2002/02/06 19:24:52 wiz Exp $
 .\"
 .Dd August 6, 1994
 .Os
@@ -26,7 +26,7 @@ archive files
 .Sh DESCRIPTION
 .Nm
 is short for
-.Dq tape archiver,
+.Dq tape archiver ,
 so named for historical reasons; the
 .Nm
 program creates, adds files to, or extracts files from an archive file
@@ -257,7 +257,7 @@ one per line.
 Modifies behavior of
 .Fl T
 to expect null-terminated names; disables
-.Fl C.
+.Fl C .
 .It Fl -totals
 Prints total bytes written with
 .Fl -create .
@@ -324,6 +324,39 @@ Don't recurse into subdirectories when creating.
 .It Fl -unlink
 Unlink files before creating them.
 .El
+.Sh ENVIRONMENT
+The
+.Nm
+program examines the following environment variables:
+.Bl -tag -width "POSIXLY-CORRECT"
+.It Ev POSIXLY-CORRECT
+Normally,
+.Nm
+will process flag arguments that appear in the file list.
+If set in the environment, this flag causes
+.Nm
+to consider the first
+non-flag argument to terminate flag processing, as per the POSIX specification.
+.It Ev SHELL
+In interactive mode, a permissible response to the prompt is to
+request to spawn a subshell, which will be
+.Pa /bin/sh
+unless the
+.Ev SHELL
+variable is set.
+.It Ev TAPE
+Changes the default tape drive (which is still overridden by the
+.Fl f
+flag).
+.El
+.Sh FILES
+.Bl -tag -width "/dev/rst0"
+.It Pa /dev/rst0
+The default tape drive.
+.El
+.\" This next request is for sections 1, 6, 7 & 8 only
+.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
+.\" .Sh DIAGNOSTICS
 .Sh EXAMPLES
 To create an archive on tape drive
 .Pa /dev/rst0
@@ -381,45 +414,12 @@ onto the end of
 (note that this can't be done by simply typing
 .Dl cat archive2.tar >> archive1.tar
 because of the end-of-file block at the end of a tar archive).
-.Sh ENVIRONMENT
-The
-.Nm
-program examines the following environment variables:
-.Bl -tag -width "POSIXLY-CORRECT"
-.It Ev POSIXLY-CORRECT
-Normally,
-.Nm
-will process flag arguments that appear in the file list.
-If set in the environment, this flag causes
-.Nm
-to consider the first
-non-flag argument to terminate flag processing, as per the POSIX specification.
-.It Ev SHELL
-In interactive mode, a permissible response to the prompt is to
-request to spawn a subshell, which will be
-.Pa /bin/sh
-unless the
-.Ev SHELL
-variable is set.
-.It Ev TAPE
-Changes the default tape drive (which is still overridden by the
-.Fl f
-flag).
-.El
-.Sh FILES
-.Bl -tag -width "/dev/rst0"
-.It Pa /dev/rst0
-The default tape drive.
-.El
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
-.\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr bzip2 1 ,
 .Xr compress 1 ,
+.Xr cpio 1 ,
 .Xr gzip 1 ,
 .Xr pax 1 ,
-.Xr cpio 1 ,
 .Xr symlink 7 ,
 .Xr rmt 8
 .\" .Sh STANDARDS
