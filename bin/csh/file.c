@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)file.c	5.17 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: file.c,v 1.4 1993/08/01 19:00:45 mycroft Exp $";
+static char rcsid[] = "$Id: file.c,v 1.5 1994/03/07 23:28:09 cgd Exp $";
 #endif /* not lint */
 
 #ifdef FILEC
@@ -122,6 +122,7 @@ setup_tty(on)
         (void) tcsetattr(SHIN, on, &tchars);
     }
     else {
+	(void) tcgetattr(SHIN, &tchars);
 	tchars.c_cc[VEOL] = _POSIX_VDISABLE;
 	(void) tcsetattr(SHIN, TCSANOW, &tchars);
     }
