@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.33 1994/02/01 00:36:34 cgd Exp $
+#	$Id: rc,v 1.34 1994/02/26 03:29:27 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -160,7 +160,9 @@ echo clearing /tmp
     find . ! -name . ! -name lost+found ! -name quotas \
 	-exec rm -rf -- {} \; -type d -prune)
 
-#echo 'turning on accounting';	accton /var/account/acct
+if [ -f /var/account/acct ]; then
+	echo 'turning on accounting';	accton /var/account/acct
+fi
 
 echo -n standard daemons:
 echo -n ' update';		update
