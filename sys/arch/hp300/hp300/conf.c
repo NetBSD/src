@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1995/04/10 00:55:57 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1995/04/10 10:01:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -73,12 +73,12 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_tape_init(NCT,ct),		/* 0: cs80 cartridge tape */
 	bdev_tape_init(NMT,mt),		/* 1: magnetic reel tape */
-	bdev_disk_init(NRD,rd),		/* 2: hpib disk */
+	bdev_disk_init(NRD,rd),		/* 2: HPIB disk */
 	bdev_swap_init(),		/* 3: swap pseudo-device */
-	bdev_disk_init(NSD,sd),		/* 4: scsi disk */
+	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
-	bdev_tape_init(NST,st),		/* 7: exabyte tape */
+	bdev_tape_init(NST,st),		/* 7: SCSI tape */
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
@@ -163,8 +163,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_tape_init(NCT,ct),		/* 7: cs80 cartridge tape */
-	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
-	cdev_disk_init(NRD,rd),		/* 9: hpib disk */
+	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
+	cdev_disk_init(NRD,rd),		/* 9: HPIB disk */
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
@@ -174,10 +174,10 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
 	cdev_notdef(),			/* 18 */
-	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
-	cdev_tape_init(NST,st),		/* 20: exabyte tape */
-	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
+	cdev_tape_init(NST,st),		/* 20: SCSI tape */
+	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-device */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
 	cdev_lkm_dummy(),		/* 25 */
@@ -187,8 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 };
-
-int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
+int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
 int	mem_no = 2; 	/* major device number of memory special file */
 
@@ -249,6 +248,14 @@ static int chrtoblktbl[] = {
 	/* 20 */	7,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
 };
 
 /*
