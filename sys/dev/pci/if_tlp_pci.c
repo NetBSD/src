@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.35 2000/03/23 22:23:03 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.36 2000/03/26 10:53:39 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1081,6 +1081,8 @@ tlp_pci_asante_21140_reset(sc)
 	TULIP_WRITE(sc, CSR_GPP, 0);
 }
 
+void	tlp_pci_cobalt_21142_reset __P((struct tulip_softc *));
+
 void
 tlp_pci_cobalt_21142_quirks(psc, enaddr)
 	struct tulip_pci_softc *psc;
@@ -1091,5 +1093,27 @@ tlp_pci_cobalt_21142_quirks(psc, enaddr)
 	/*
 	 * Cobalt Networks interfaces are just MII-on-SIO.
 	 */
+	sc->sc_reset = tlp_pci_cobalt_21142_reset;
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+
+	/*
+	 * The Cobalt systems tend to fall back to store-and-forward
+	 * pretty quickly, so we select that from the beginning to
+	 * avoid initial timeouts.
+	 */
+#define TXTH_SF		4
+	sc->sc_txthresh = TXTH_SF;
+}
+
+void
+tlp_pci_cobalt_21142_reset(sc)
+	struct tulip_softc *sc;
+{
+	/*
+	 * Reset PHY.
+	 */
+	TULIP_WRITE(sc, CSR_SIAGEN, SIAGEN_CWE | (1 << 16));
+	delay(10);
+	TULIP_WRITE(sc, CSR_SIAGEN, SIAGEN_CWE);
+	delay(10);
 }
