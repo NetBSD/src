@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1996/07/31 20:40:35 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 1997/10/19 23:46:09 cjs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,9 +33,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/4/93
+ *	$Id: pathnames.h,v 1.5 1997/10/19 23:46:09 cjs Exp $
  */
 
 #include <paths.h>
 
 #define	_PATH_GETTYTAB	"/etc/gettytab"
 #define	_PATH_LOGIN	"/usr/bin/login"
+#define	_PATH_LOCK	"/var/spool/lock/LCK.."
