@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.50 1997/10/08 10:43:09 mycroft Exp $
+#	$NetBSD: NetBSD.dist,v 1.51 1997/10/09 20:08:34 cjs Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -180,6 +180,11 @@ libexec
 # ./usr/libexec/lpr
 lpr
 # ./usr/libexec/lpr
+..
+
+# ./usr/libexec/sm.bin
+sm.bin
+# ./usr/libexec/sm.bin
 ..
 
 # ./usr/libexec/uucp
