@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.7 1997/10/12 21:08:35 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.8 1997/10/13 21:58:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -59,18 +59,10 @@
 #include "dvma.h"
 #include "promdev.h"
 
-/*
- * This is the address of a copy of the IDPROM that the
- * PROM monitor has in its "globram" structure.
- */
-#define	IDPROM_BASE	(MONDATA + 0x4a6)
-
 #define	PKT_BUF_SIZE 2048
 
 int debug;
 int errno;
-
-static void _getether __P((u_char *));
 
 struct iodesc sockets[SOPEN_MAX];
 
@@ -82,18 +74,8 @@ static struct devdata {
 	int tbuf_len;
 	char *tbuf;
 	u_short dd_opens;
-	char dd_myea[6];
+	u_char dd_myea[6];
 } prom_dd;
-
-void
-_getether(ea)
-	u_char *ea;
-{
-	struct idprom *idp;
-
-	idp = (struct idprom *) IDPROM_BASE;
-	MACPY(idp->idp_etheraddr, ea);
-}
 
 
 /*
@@ -166,7 +148,7 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	_getether(dd->dd_myea);
+	idprom_etheraddr(dd->dd_myea);
 	dd->dd_opens = 0;
 
 	return(dd);
