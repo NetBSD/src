@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.3 1995/05/07 02:59:34 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.4 1995/08/27 20:57:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -77,5 +77,38 @@ struct linux_sigframe {
 };
 
 void linux_sendsig __P((sig_t, int, int, u_long));
+
+/*
+ * Major device numbers of VT device on both Linux and NetBSD. Used in
+ * ugly patch to fake device numbers.
+ */
+#define LINUX_CONS_MAJOR   4
+#define NETBSD_CONS_MAJOR 12
+
+/*
+ * Linux ioctl calls for the keyboard.
+ */
+#define LINUX_KDGKBMODE   0x4b44
+#define LINUX_KDSKBMODE   0x4b45
+#define LINUX_KDMKTONE    0x4b30
+#define LINUX_KDSETMODE   0x4b3a
+#define LINUX_KDENABIO    0x4b36
+#define LINUX_KDDISABIO   0x4b37
+#define LINUX_KDGETLED    0x4b31
+#define LINUX_KDSETLED    0x4b32
+/*
+ * Mode for KDSKBMODE which we don't have (we just use plain mode for this)
+ */
+#define LINUX_K_MEDIUMRAW 2
+
+/*
+ * VT ioctl calls in Linux (the ones that pcvt can handle)
+ */
+#define LINUX_VT_OPENQRY    0x5600
+#define LINUX_VT_GETMODE    0x5601
+#define LINUX_VT_SETMODE    0x5602
+#define LINUX_VT_RELDISP    0x5605
+#define LINUX_VT_ACTIVATE   0x5606
+#define LINUX_VT_WAITACTIVE 0x5607
 
 #endif /* _LINUX_MACHDEP_H */
