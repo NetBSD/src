@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.13 1996/03/17 02:01:22 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.14 1996/03/31 22:39:00 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.13 1996/03/17 02:01:22 thorpej Exp $
+ * id: $NetBSD: xy.c,v 1.14 1996/03/31 22:39:00 pk Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -44,7 +44,7 @@
  *             [2] other NetBSD disk device drivers
  *	       [3] Xylogics Model 450 User's Manual
  *		   part number: 166-017-001, Revision B, 1983.
- *	       [4] Addendum to Xylogics Model 450 Disk Controller User's 
+ *	       [4] Addendum to Xylogics Model 450 Disk Controller User's
  *			Manual, Jan. 1985.
  *	       [5] The 451 Controller, Rev. B3, September 2, 1986.
  *	       [6] David Jones <dej@achilles.net>'s unfinished 450/451 driver
@@ -152,7 +152,7 @@ int	xyc_ioctlcmd __P((struct xy_softc *, dev_t dev, struct xd_iocmd *));
 void	xyc_perror __P((struct xy_iorq *, struct xy_iopb *, int));
 int	xyc_piodriver __P((struct xyc_softc *, struct xy_iorq *));
 int	xyc_remove_iorq __P((struct xyc_softc *));
-int	xyc_reset __P((struct xyc_softc *, int, struct xy_iorq *, int, 
+int	xyc_reset __P((struct xyc_softc *, int, struct xy_iorq *, int,
 			struct xy_softc *));
 inline void xyc_rqinit __P((struct xy_iorq *, struct xyc_softc *,
 			    struct xy_softc *, int, u_long, int,
@@ -255,11 +255,11 @@ xygetdisklabel(xy, b)
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xy->pcyl = sdl->sl_pcylinders;
 	else {
-		printf("%s: WARNING: no `pcyl' in disk label.\n", 
-							xy->sc_dev.dv_xname);
+		printf("%s: WARNING: no `pcyl' in disk label.\n",
+			xy->sc_dev.dv_xname);
 		xy->pcyl = xy->sc_dk.dk_label->d_ncylinders +
 			xy->sc_dk.dk_label->d_acylinders;
-		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n", 
+		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 		xy->sc_dev.dv_xname, xy->pcyl);
 	}
 
@@ -311,7 +311,7 @@ int xycmatch(parent, match, aux)
 /*
  * xycattach: attach controller
  */
-void 
+void
 xycattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -341,10 +341,10 @@ xycattach(parent, self, aux)
 	for (lcv = 0; lcv < XYC_MAXDEV; lcv++)
 		xyc->sc_drives[lcv] = (struct xy_softc *) 0;
 
-	/* 
+	/*
 	 * allocate and zero buffers
-	 * check boundaries of the KVA's ... all IOPBs must reside in 
- 	 * the same 64K region. 
+	 * check boundaries of the KVA's ... all IOPBs must reside in
+ 	 * the same 64K region.
 	 */
 
 	pbsz = XYC_MAXIOPB * sizeof(struct xy_iopb);
@@ -357,7 +357,7 @@ xycattach(parent, self, aux)
 		dvma_free(dtmp2, pbsz, &tmp2);
 		ultmp = (u_long) dtmp;
 		if ((ultmp & 0xffff0000) != ((ultmp + pbsz) & 0xffff0000)) {
-			printf("%s: can't alloc IOPB mem in 64K\n", 
+			printf("%s: can't alloc IOPB mem in 64K\n",
 				xyc->sc_dev.dv_xname);
 			return;
 		}
@@ -372,9 +372,9 @@ xycattach(parent, self, aux)
 		panic("xyc malloc");
 	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
 
-	/* 
+	/*
 	 * init iorq to iopb pointers, and non-zero fields in the
-	 * iopb which never change. 
+	 * iopb which never change.
 	 */
 
 	for (lcv = 0; lcv < XYC_MAXIOPB; lcv++) {
@@ -412,8 +412,8 @@ xycattach(parent, self, aux)
 		return;
 	}
 	if ((xyc->xyc->xyc_csr & XYC_ADRM) == 0) {
-		printf("%s: 24 bit addressing turned off\n", 
-						xyc->sc_dev.dv_xname);
+		printf("%s: 24 bit addressing turned off\n",
+			xyc->sc_dev.dv_xname);
 		printf("please set hardware jumpers JM1-JM2=in, JM3-JM4=out\n");
 		printf("to enable 24 bit mode and this driver\n");
 		return;
@@ -456,7 +456,7 @@ xycattach(parent, self, aux)
  * spin up and configure a disk after the system is booted (we can
  * call xyattach!).
  */
-int 
+int
 xymatch(parent, match, aux)
 	struct device *parent;
 	void   *match, *aux;
@@ -478,7 +478,7 @@ xymatch(parent, match, aux)
  * xyattach: attach a disk.   this can be called from autoconf and also
  * from xyopen/xystrategy.
  */
-void 
+void
 xyattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -562,13 +562,13 @@ xyattach(parent, self, aux)
 	xy->nsect = 1;
 	xy->sectpercyl = 1;
 	for (lcv = 0; lcv < 126; lcv++)	/* init empty bad144 table */
-		xy->dkb.bt_bad[lcv].bt_cyl = 
+		xy->dkb.bt_bad[lcv].bt_cyl =
 			xy->dkb.bt_bad[lcv].bt_trksec = 0xffff;
 
 	/* read disk label */
-	for (xy->drive_type = 0 ; xy->drive_type <= XYC_MAXDT ; 
+	for (xy->drive_type = 0 ; xy->drive_type <= XYC_MAXDT ;
 						xy->drive_type++) {
-		err = xyc_cmd(xyc, XYCMD_RD, 0, xy->xy_drive, 0, 1, 
+		err = xyc_cmd(xyc, XYCMD_RD, 0, xy->xy_drive, 0, 1,
 						xa->dvmabuf, fmode);
 		XYC_DONE(xyc, err);
 		if (err == XY_ERR_AOK) break;
@@ -602,9 +602,9 @@ xyattach(parent, self, aux)
 	 * 450/451 stupidity: the drive type is encoded into the format
 	 * of the disk.   the drive type in the IOPB must match the drive
 	 * type in the format, or you will not be able to do I/O to the
-	 * disk (you get header not found errors).  if you have two drives 
-	 * of different sizes that have the same drive type in their 
-	 * formatting then you are out of luck.    
+	 * disk (you get header not found errors).  if you have two drives
+	 * of different sizes that have the same drive type in their
+	 * formatting then you are out of luck.
 	 *
 	 * this problem was corrected in the 753/7053.
 	 */
@@ -621,7 +621,7 @@ xyattach(parent, self, aux)
 			panic("xy drive size mismatch");
 		}
 	}
-		
+
 
 	/* now set the real drive parameters! */
 
@@ -642,10 +642,10 @@ xyattach(parent, self, aux)
 	 * last track of the disk (i.e. second cyl of "acyl" area).
 	 */
 
-	blk = (xy->ncyl + xy->acyl - 1) * (xy->nhead * xy->nsect) + 
+	blk = (xy->ncyl + xy->acyl - 1) * (xy->nhead * xy->nsect) +
 								/* last cyl */
 	    (xy->nhead - 1) * xy->nsect;	/* last head */
-	err = xyc_cmd(xyc, XYCMD_RD, 0, xy->xy_drive, blk, 1, 
+	err = xyc_cmd(xyc, XYCMD_RD, 0, xy->xy_drive, blk, 1,
 						xa->dvmabuf, fmode);
 	XYC_DONE(xyc, err);
 	if (err) {
@@ -678,8 +678,8 @@ xyattach(parent, self, aux)
 	if (xa->booting) {
 		/* restore bootpath! (do this via attach_args again?)*/
 		bp = bootpath_store(0, NULL);
-		if (bp && strcmp("xy", bp->name) == 0 && 
-						xy->xy_drive == bp->val[0])
+		if (bp && strcmp("xy", bp->name) == 0 &&
+					xy->xy_drive == bp->val[0])
 			bootdv = &xy->sc_dev;
 	}
 
@@ -704,7 +704,7 @@ done:
 /*
  * xyclose: close device
  */
-int 
+int
 xyclose(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
@@ -732,7 +732,7 @@ xyclose(dev, flag, fmt, p)
 /*
  * xydump: crash dump system
  */
-int 
+int
 xydump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
@@ -759,11 +759,11 @@ xydump(dev, blkno, va, size)
 	 * "dumpsize" == size of dump in clicks "physmem" == size of physical
 	 * memory (clicks, ctob() to get bytes) (normal case: dumpsize ==
 	 * physmem)
-	 * 
+	 *
 	 * dump a copy of physical memory to the dump device starting at sector
 	 * "dumplo" in the swap partition (make sure > 0).   map in pages as
 	 * we go.   use polled I/O.
-	 * 
+	 *
 	 * XXX how to handle NON_CONTIG? */
 
 }
@@ -771,7 +771,7 @@ xydump(dev, blkno, va, size)
 /*
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
-int 
+int
 xyioctl(dev, command, addr, flag, p)
 	dev_t   dev;
 	u_long  command;
@@ -866,7 +866,7 @@ xyioctl(dev, command, addr, flag, p)
  * xyopen: open drive
  */
 
-int 
+int
 xyopen(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
@@ -890,7 +890,7 @@ xyopen(dev, flag, fmt, p)
 		xa.dvmabuf = (char *)dvma_malloc(XYFM_BPS, &xa.buf, M_NOWAIT);
 		xa.fullmode = XY_SUB_WAIT;
 		xa.booting = 0;
-		xyattach((struct device *) xy->parent, 
+		xyattach((struct device *) xy->parent,
 						(struct device *) xy, &xa);
 		dvma_free(xa.dvmabuf, XYFM_BPS, &xa.buf);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
@@ -944,7 +944,7 @@ xywrite(dev, uio, flags)
  * xysize: return size of a partition for a dump
  */
 
-int 
+int
 xysize(dev)
 	dev_t   dev;
 
@@ -974,7 +974,7 @@ xysize(dev)
  * xystrategy: buffering system interface to xy.
  */
 
-void 
+void
 xystrategy(bp)
 	struct buf *bp;
 
@@ -1059,7 +1059,7 @@ done:				/* tells upper layers we are done with this
  *
  * xycintr: hardware interrupt.
  */
-int 
+int
 xycintr(v)
 	void   *v;
 
@@ -1092,7 +1092,7 @@ xycintr(v)
  * xyc_rqinit: fill out the fields of an I/O request
  */
 
-inline void 
+inline void
 xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
 	struct xy_iorq *rq;
 	struct xyc_softc *xyc;
@@ -1118,7 +1118,7 @@ xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
  * xyc_rqtopb: load up an IOPB based on an iorq
  */
 
-void 
+void
 xyc_rqtopb(iorq, iopb, cmd, subfun)
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
@@ -1188,7 +1188,7 @@ int del;
  * xyc_cmd: front end for POLL'd and WAIT'd commands.  Returns 0 or error.
  * note that NORM requests are handled seperately.
  */
-int 
+int
 xyc_cmd(xycsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 	struct xyc_softc *xycsc;
 	int     cmd, subfn, unit, block, scnt;
@@ -1205,7 +1205,7 @@ xyc_cmd(xycsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 	 */
 start:
 	if (submode == XY_SUB_WAIT && XY_STATE(iorq->mode) != XY_SUB_FREE) {
-		if (tsleep(iorq, PRIBIO, "xyc_cmd", 0)) 
+		if (tsleep(iorq, PRIBIO, "xyc_cmd", 0))
                                 return(XY_ERR_FAIL);
 		goto start;
 	}
@@ -1238,7 +1238,7 @@ start:
  * start a buffer for running
  */
 
-int 
+int
 xyc_startbuf(xycsc, xysc, bp)
 	struct xyc_softc *xycsc;
 	struct xy_softc *xysc;
@@ -1256,7 +1256,7 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	/* get buf */
 
-	if (bp == NULL) 
+	if (bp == NULL)
 		panic("xyc_startbuf null buf");
 
 	partno = DISKPART(bp->b_dev);
@@ -1270,7 +1270,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	/*
 	 * load request.  we have to calculate the correct block number based
 	 * on partition info.
-	 * 
+	 *
 	 * note that iorq points to the buffer as mapped into DVMA space,
 	 * where as the bp->b_data points to its non-DVMA mapping.
 	 */
@@ -1280,7 +1280,7 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	dbuf = kdvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */
-		printf("%s: warning: out of DVMA space\n", 
+		printf("%s: warning: out of DVMA space\n",
 			xycsc->sc_dev.dv_xname);
 		return (XY_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
@@ -1324,9 +1324,9 @@ xyc_startbuf(xycsc, xysc, bp)
  * time, where as a 451 can take them in chains.  [the 450 claims it
  * can handle chains, but is appears to be buggy...]   iopb are allocated
  * in DVMA space at boot up time.  each disk gets one iopb, and the
- * controller gets one (for POLL and WAIT commands).  what happens if 
- * the iopb is busy?  for i/o type [1], the buffers are queued at the 
- * "buff" layer and * picked up later by the interrupt routine.  for case 
+ * controller gets one (for POLL and WAIT commands).  what happens if
+ * the iopb is busy?  for i/o type [1], the buffers are queued at the
+ * "buff" layer and * picked up later by the interrupt routine.  for case
  * [2] we can only be blocked if there is a WAIT type I/O request being
  * run.   since this can only happen when we are crashing, we wait a sec
  * and then steal the IOPB.  for case [3] the process can sleep
@@ -1334,7 +1334,7 @@ xyc_startbuf(xycsc, xysc, bp)
  */
 
 
-int 
+int
 xyc_submit_iorq(xycsc, iorq, type)
 	struct xyc_softc *xycsc;
 	struct xy_iorq *iorq;
@@ -1345,7 +1345,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 	u_long  iopbaddr;
 
 #ifdef XYC_DEBUG
-	printf("xyc_submit_iorq(%s, addr=0x%x, type=%d)\n", 
+	printf("xyc_submit_iorq(%s, addr=0x%x, type=%d)\n",
 		xycsc->sc_dev.dv_xname, iorq, type);
 #endif
 
@@ -1378,12 +1378,12 @@ xyc_submit_iorq(xycsc, iorq, type)
 
 	iopb = xyc_chain(xycsc, iorq);	 /* build chain */
 	if (iopb == NULL) { /* nothing doing? */
-		if (type == XY_SUB_NORM || type == XY_SUB_NOQ) 
+		if (type == XY_SUB_NORM || type == XY_SUB_NOQ)
 			return(XY_ERR_AOK);
 		panic("xyc_submit_iorq: xyc_chain failed!\n");
 	}
 	iopbaddr = (u_long) iopb - DVMA_BASE;
-	
+
 	XYC_GO(xycsc->xyc, iopbaddr);
 
 	/* command now running, wrap it up */
@@ -1431,11 +1431,11 @@ struct xy_iorq *iorq;
 		xycsc->iopbase[XYC_CTLIOPB].done == 0)
     iorq = &xycsc->reqs[XYC_CTLIOPB];
   }
-  /* 
+  /*
    * special case: if iorq != NULL then we have a POLL or WAIT request.
    * we let these take priority and do them first.
    */
-  if (iorq) { 
+  if (iorq) {
     xycsc->xy_chain[0] = iorq;
     iorq->iopb->chen = 0;
     return(iorq->iopb);
@@ -1476,9 +1476,9 @@ struct xy_iorq *iorq;
  *
  * programmed i/o driver.   this function takes over the computer
  * and drains off the polled i/o request.   it returns the status of the iorq
- * the caller is interesting in.   
+ * the caller is interesting in.
  */
-int 
+int
 xyc_piodriver(xycsc, iorq)
 	struct xyc_softc *xycsc;
 	struct xy_iorq  *iorq;
@@ -1530,7 +1530,7 @@ xyc_piodriver(xycsc, iorq)
 
 	/* start up any bufs that have queued */
 
-	xyc_start(xycsc, NULL); 
+	xyc_start(xycsc, NULL);
 
 	return (retval);
 }
@@ -1539,7 +1539,7 @@ xyc_piodriver(xycsc, iorq)
  * xyc_xyreset: reset one drive.   NOTE: assumes xyc was just reset.
  * we steal iopb[XYC_CTLIOPB] for this, but we put it back when we are done.
  */
-void 
+void
 xyc_xyreset(xycsc, xysc)
 	struct xyc_softc *xycsc;
 	struct xy_softc *xysc;
@@ -1554,7 +1554,7 @@ xyc_xyreset(xycsc, xysc)
 	xycsc->ciopb->com = XYCMD_RST;
 	xycsc->ciopb->unit = xysc->xy_drive;
 	addr = (u_long) xycsc->ciopb - DVMA_BASE;
-	
+
 	XYC_GO(xycsc->xyc, addr);
 
 	del = XYC_RESETUSEC;
@@ -1581,7 +1581,7 @@ xyc_xyreset(xycsc, xysc)
  * xyc_reset: reset everything: requests are marked as errors except
  * a polled request (which is resubmitted)
  */
-int 
+int
 xyc_reset(xycsc, quiet, blastmode, error, xysc)
 	struct xyc_softc *xycsc;
 	int     quiet, error;
@@ -1615,7 +1615,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			/* is it active? */
 			continue;
 
-		if (blastmode == XY_RSET_ALL || 
+		if (blastmode == XY_RSET_ALL ||
 				blastmode != iorq) {
 			/* failed */
 			iorq->errno = error;
@@ -1662,7 +1662,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
  * xyc_start: start waiting buffers
  */
 
-void 
+void
 xyc_start(xycsc, iorq)
 	struct xyc_softc *xycsc;
 	struct xy_iorq *iorq;
@@ -1683,10 +1683,10 @@ xyc_start(xycsc, iorq)
 }
 
 /*
- * xyc_remove_iorq: remove "done" IOPB's.   
+ * xyc_remove_iorq: remove "done" IOPB's.
  */
 
-int 
+int
 xyc_remove_iorq(xycsc)
 	struct xyc_softc *xycsc;
 
@@ -1766,7 +1766,7 @@ xyc_remove_iorq(xycsc)
 			 * at the bad144 sector.   to exit bad144 mode, we
 			 * must advance the pointers 1 sector and issue a new
 			 * request if there are still sectors left to process
-			 * 
+			 *
 			 */
 			XYC_ADVANCE(iorq, 1);	/* advance 1 sector */
 
@@ -1834,7 +1834,7 @@ xyc_remove_iorq(xycsc)
  *   is in lasterror. also, if iorq->errno == 0, then we recovered
  *   from that error (otherwise iorq->errno == iorq->lasterror).
  */
-void 
+void
 xyc_perror(iorq, iopb, still_trying)
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
@@ -1867,7 +1867,7 @@ xyc_perror(iorq, iopb, still_trying)
  * xyc_error: non-fatal error encountered... recover.
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
-int 
+int
 xyc_error(xycsc, iorq, iopb, comm)
 	struct xyc_softc *xycsc;
 	struct xy_iorq *iorq;
@@ -1935,7 +1935,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 /*
  * xyc_tick: make sure xy is still alive and ticking (err, kicking).
  */
-void 
+void
 xyc_tick(arg)
 	void   *arg;
 
@@ -1972,7 +1972,7 @@ xyc_tick(arg)
  *
  * XXX missing a few commands (see the 7053 driver for ideas)
  */
-int 
+int
 xyc_ioctlcmd(xy, dev, xio)
 	struct xy_softc *xy;
 	dev_t   dev;
@@ -2143,7 +2143,7 @@ int errno;
 
 	return(XY_ERA_SOFT); /* an FYI error */
 
-    case XY_ERR_WPRO: 
+    case XY_ERR_WPRO:
 
 	return(XY_ERA_WPRO); /* write protect */
   }

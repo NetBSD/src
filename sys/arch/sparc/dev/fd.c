@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.28 1996/03/26 01:28:56 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.29 1996/03/31 22:38:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -461,7 +461,7 @@ fdcattach(parent, self, aux)
 				fa.fa_bootdev = 1;
 			break;
 		}
-			
+
 	}
 
 	/* physical limit: four drives per controller. */
@@ -649,7 +649,7 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-		printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
+	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
 		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin);
 #endif
 
@@ -911,7 +911,7 @@ fdclose(dev, flags, fmt, p)
 		fd->sc_dk.dk_bopenmask &= ~pmask;
 		break;
 	}
-	fd->sc_dk.dk_openmask = 
+	fd->sc_dk.dk_openmask =
 	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
 
 	return 0;

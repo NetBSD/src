@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.44 1996/03/23 21:09:04 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.45 1996/03/31 22:38:35 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -16,7 +16,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Peter Galbavy
- * 4. The name of the author may not be used to endorse or promote products 
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -64,7 +64,7 @@
 #include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 
-int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/ 
+int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
@@ -364,7 +364,7 @@ espattach(parent, self, aux)
  * After reset, registers are loaded with the defaults from the attach
  * routine above.
  */
-void 
+void
 esp_reset(sc)
 	struct esp_softc *sc;
 {
@@ -475,7 +475,7 @@ esp_init(sc, doreset)
 		ESPCMD(sc, ESPCMD_RSTSCSI);
 		return;
 	}
-	
+
 	sc->sc_state = ESP_IDLE;
 	esp_sched(sc);
 	return;
@@ -607,7 +607,7 @@ espselect(sc, target, lun, cmd, clen)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int 
+int
 esp_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -615,9 +615,9 @@ esp_scsi_cmd(xs)
 	struct esp_softc *sc = sc_link->adapter_softc;
 	struct ecb 	*ecb;
 	int s, flags;
-	
+
 	ESP_TRACE(("[esp_scsi_cmd] "));
-	ESP_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen, 
+	ESP_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->target));
 
 	flags = xs->flags;
@@ -630,7 +630,7 @@ esp_scsi_cmd(xs)
 		ECB_SETQ(ecb, ECB_QNONE);
 	}
 	splx(s);
-		
+
 	if (ecb == NULL) {
 		ESP_MISC(("TRY_AGAIN_LATER"));
 		return TRY_AGAIN_LATER;
@@ -720,7 +720,7 @@ esp_sched(sc)
 	struct scsi_link *sc_link;
 	struct ecb *ecb;
 	int t;
-	
+
 	ESP_TRACE(("[esp_sched] "));
 	if (sc->sc_state != ESP_IDLE)
 		panic("esp_sched: not IDLE (state=%d)", sc->sc_state);
@@ -777,10 +777,10 @@ esp_done(ecb)
 	untimeout(esp_timeout, ecb);
 
 	/*
-	 * Now, if we've come here with no error code, i.e. we've kept the 
+	 * Now, if we've come here with no error code, i.e. we've kept the
 	 * initial XS_NOERROR, and the status code signals that we should
-	 * check sense, we'll need to set up a request sense cmd block and 
-	 * push the command back into the ready queue *before* any other 
+	 * check sense, we'll need to set up a request sense cmd block and
+	 * push the command back into the ready queue *before* any other
 	 * commands for this target/lunit, else we lose the sense info.
 	 * We don't support chk sense conditions for the request sense cmd.
 	 */
@@ -911,7 +911,7 @@ esp_msgin(sc)
 	register struct esp_softc *sc;
 {
 	register int v;
-	
+
 	ESP_TRACE(("[esp_msgin(curmsglen:%d)] ", sc->sc_imlen));
 
 	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
@@ -966,7 +966,7 @@ esp_msgin(sc)
 		sc->sc_flags |= ESP_DROP_MSGI;
 	} else {
 		sc->sc_imlen++;
-		/* 
+		/*
 		 * This testing is suboptimal, but most
 		 * messages will be of the one byte variety, so
 		 * it should not effect performance
@@ -1145,7 +1145,7 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			 * Search wait queue for disconnected cmd
 			 * The list should be short, so I haven't bothered with
 			 * any more sophisticated structures than a simple
-			 * singly linked list. 
+			 * singly linked list.
 			 */
 			lunit = sc->sc_imess[0] & 0x07;
 			for (ecb = sc->nexus_list.tqh_first; ecb;
@@ -1306,7 +1306,7 @@ printf("<<XXXmsgoutdoneXXX>>");
  *
  * Most of this needs verifying.
  */
-int 
+int
 espintr(sc)
 	register struct esp_softc *sc;
 {
@@ -1317,7 +1317,7 @@ espintr(sc)
 	size_t size;
 
 	ESP_TRACE(("[espintr]"));
-	
+
 	/*
 	 * I have made some (maybe seriously flawed) assumptions here,
 	 * but basic testing (uncomment the printf() below), show that
@@ -1418,7 +1418,7 @@ espintr(sc)
 				/* illegal command, out of sync ? */
 				printf("%s: illegal command: 0x%x (state %d, phase %x, prevphase %x)\n",
 					sc->sc_dev.dv_xname, sc->sc_lastcmd,
-					sc->sc_state, sc->sc_phase,	
+					sc->sc_state, sc->sc_phase,
 					sc->sc_prevphase);
 				if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 					ESPCMD(sc, ESPCMD_FLUSH);
@@ -1469,7 +1469,7 @@ espintr(sc)
 				sc->sc_dev.dv_xname);
 			if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 				esp_sched_msgout(SEND_PARITY_ERROR);
-			else 
+			else
 				esp_sched_msgout(SEND_INIT_DET_ERR);
 		}
 
@@ -1514,7 +1514,7 @@ espintr(sc)
 					sc->sc_state = ESP_IDLE;
 #if ESP_DEBUG
 if ((esp_debug & 0x10000) && ecb->dleft == 0) {
-	printf("%s: silly disconnect (ecb %x [stat %x])\n",
+	printf("%s: silly disconnect (ecb %p [stat %x])\n",
 		sc->sc_dev.dv_xname, ecb, ecb->stat);
 }
 #endif
@@ -1601,7 +1601,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					 * Things are seriously fucked up.
 					 * Pull the brakes, i.e. reset
 					 */
-					printf("%s: target didn't identify\n", 
+					printf("%s: target didn't identify\n",
 						sc->sc_dev.dv_xname);
 					esp_init(sc, 1);
 					return 1;
@@ -1911,7 +1911,7 @@ esp_timeout(arg)
 	int s = splbio();
 	struct ecb *ecb = (struct ecb *)arg;
 	struct esp_softc *sc;
-	struct scsi_xfer *xs = ecb->xs; 
+	struct scsi_xfer *xs = ecb->xs;
 
 	sc = xs->sc_link->adapter_softc;
 	sc_print_addr(xs->sc_link);
