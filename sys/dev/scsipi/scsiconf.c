@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.215 2003/09/10 05:35:50 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.216 2003/09/12 16:39:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.215 2003/09/10 05:35:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.216 2003/09/12 16:39:25 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -743,9 +743,6 @@ scsi_probe_device(sc, target, lun)
 	/*
 	 * Ask the device what it is
 	 */
-	(void) scsipi_test_unit_ready(periph,
-	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-	    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE);
 
 #ifdef SCSI_2_DEF
 	/* some devices need to be told to go to SCSI2 */
