@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.12 1999/09/12 17:40:57 augustss Exp $
+#	$NetBSD: files.usb,v 1.13 2000/01/16 09:40:07 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -64,3 +64,19 @@ file	dev/usb/umodem.c		umodem		needs-flag
 device	ums: wsmousedev
 attach	ums at uhub
 file	dev/usb/ums.c			ums
+
+# Ethernet adapters
+# ADMtek AN986 Pegasus
+device	aue: arp, ether, ifnet, mii
+attach	aue at uhub
+file	dev/usb/if_aue.c		aue
+
+# CATC USB-EL1201A
+device	cue: arp, ether, ifnet
+attach	cue at uhub
+file	dev/usb/if_cue.c		cue
+
+# Kawasaki LSI KL5KUSB101B
+device	kue: arp, ether, ifnet
+attach	kue at uhub
+file	dev/usb/if_kue.c		kue
