@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.26.4.3 2001/05/01 12:06:16 he Exp $	 */
+/*	$NetBSD: reloc.c,v 1.26.4.4 2001/12/09 17:21:15 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -148,6 +148,12 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 
 
 #ifndef __sparc__
+
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
+extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
+extern Elf_Dyn   _DYNAMIC;
+#endif
+
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Obj_Entry *obj;
@@ -157,10 +163,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
-	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
-	extern Elf_Dyn   _DYNAMIC;
-#endif
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
     defined(__powerpc__) || defined(__vax__)
 	Elf_Addr         tmp;
@@ -449,6 +451,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 }
 
 
+#if !defined(__powerpc__)
 
 int
 _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
@@ -462,10 +465,6 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	Elf_Addr new_value;
 
 	/* Fully resolve procedure addresses now */
-
-#if defined(__powerpc__)
-	return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
-#endif
 
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
     defined(__vax__)
@@ -505,7 +504,10 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset);
 	return 0;
 }
-#endif /* __sparc__ */
+
+#endif /* __powerpc__ */
+
+#endif /* __sparc__ || __x86_64__ */
 
 caddr_t
 _rtld_bind(obj, reloff)
@@ -525,6 +527,29 @@ _rtld_bind(obj, reloff)
 		rela = &ourrela;
 	} else {
 		rela = (const Elf_Rela *)((caddr_t) obj->pltrela + reloff);
+#ifdef __sparc64__
+		if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT)) {
+			/*
+			 * XXXX
+			 *
+			 * The first for PLT entries are reserved.  There
+			 * is some disagreement whether they should have
+			 * associated relocation entries.  Both the SPARC
+			 * 32-bit and 64-bit ELF specifications say that
+			 * they should have relocation entries, but the 
+			 * 32-bit SPARC binutils do not generate them,
+			 * and now the 64-bit SPARC binutils have stopped
+			 * generating them too.
+			 * 
+			 * So, to provide binary compatibility, we will
+			 * check the first entry, if it is reserved it
+			 * should not be of the type JMP_SLOT.  If it
+			 * is JMP_SLOT, then the 4 reserved entries were
+			 * not generated and our index is 4 entries too far.
+			 */
+			rela -= 4;
+		}
+#endif
 	}
 
 	if (_rtld_relocate_plt_object(obj, rela, &addr, true, true) < 0)
