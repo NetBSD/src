@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pfkey.c,v 1.2 2003/07/12 09:37:11 itojun Exp $");
+
 #define _PFKEY_C_
 
 #include <sys/types.h>
