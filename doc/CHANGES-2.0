@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.176 2004/05/05 15:39:55 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.177 2004/05/05 16:22:52 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1807,4 +1807,9 @@ sys/dev/microcode/isp/asm_2100.h		1.5
 	load with the current driver on multiple systems on which we can
 	reproduce the failure with newer versions.
 	[tls, ticket #247]
+
+gnu/dist/gcc/gcc/version.c			1.7
+
+bump version for SPARC fixes (from kjk via martin)
+[mrg, ticket #253]
 
