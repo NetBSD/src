@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.87 2000/02/25 16:02:49 pk Exp $
+#	$NetBSD: files.sparc,v 1.88 2000/02/25 18:24:40 jdc Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -30,6 +30,10 @@ device auxreg
 attach auxreg at mainbus with auxreg_mainbus
 attach auxreg at obio with auxreg_obio
 file	arch/sparc/sparc/auxreg.c
+
+device auxiotwo
+attach auxiotwo at obio with auxiotwo_obio
+file	arch/sparc/sparc/auxiotwo.c
 
 device clock
 attach clock at mainbus with clock_mainbus
