@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.10 2000/08/18 13:26:25 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.11 2000/08/25 02:03:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,23 +141,22 @@ struct cpu_info {
 #define CPU_IS_PRIMARY(ci) ((ci)->ci_flags & CPUF_PRIMARY)
 
 #define	curpcb		curcpu()->ci_curpcb
-
+#define aston(ci)	((ci)->ci_astpending = 1)
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
 extern	u_long cpus_running;
 
 extern void cpu_boot_secondary_processors __P((void));
 extern void cpu_init_idle_pcbs __P((void));
 
-#define want_resched (curcpu()->ci_want_resched)
-#define astpending (curcpu()->ci_astpending)
-
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern void need_resched __P((void));
+extern void need_resched __P((struct cpu_info *));
 
 #else /* !MULTIPROCESSOR */
+
+volatile u_int32_t astpending;
 
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
@@ -170,12 +169,12 @@ extern struct cpu_info cpu_info_store;
  * referenced in generic code
  */
 #define	cpu_number()			0
-int want_resched;
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()		(want_resched = 1, setsoftast())
+#define	need_resched()		(curcpu()->ci_want_resched = 1, aston(0))
+#define aston(ci)		(astpending = 1)
 
 #endif
 
@@ -201,13 +200,13 @@ int want_resched;
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p->p_cpu))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		setsoftast()
+#define	signotify(p)		aston(p->p_cpu)
 
 /*
  * We need a machine-independent name for this.

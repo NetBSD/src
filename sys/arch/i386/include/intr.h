@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.5 2000/08/18 03:10:08 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.6 2000/08/25 02:03:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,10 +91,6 @@
 
 extern volatile u_int32_t lapic_tpr;
 volatile u_int32_t ipending;
-
-#ifndef MULTIPROCESSOR
-volatile u_int32_t astpending;
-#endif
 
 int imasks[NIPL];
 int iunmask[NIPL];
@@ -194,7 +190,6 @@ softintr(sir, vec)
 #endif
 }
 
-#define	setsoftast()	(astpending = 1)
 #define	setsoftclock()	softintr(SIR_CLOCK,IPL_SOFTCLOCK)
 #define	setsoftnet()	softintr(SIR_NET,IPL_SOFTNET)
 #define	setsoftserial()	softintr(SIR_SERIAL,IPL_SOFTSERIAL)
