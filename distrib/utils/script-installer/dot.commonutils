@@ -1,4 +1,4 @@
-#	$NetBSD: dot.commonutils,v 1.2 1998/11/28 01:38:30 jonathan Exp $
+#	$NetBSD: dot.commonutils,v 1.3 1999/03/26 09:24:27 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,7 +40,7 @@ if [ ! -f /etc/fstab ]; then
 fi
 
 # counter for possible shared library confusion
-TAR=/usr/bin/tar
+PAX=/bin/pax
 GUNZIP=/usr/bin/gunzip
 
 Set_tmp_dir()
@@ -111,7 +111,7 @@ Load_tape()
 	echo -n "continue..."
 	read foo
 	echo	"Extracting files from the tape..."
-	$TAR --unlink -xvpf /dev/$which
+	$PAX -rvpe -f /dev/$which
 	echo	"Done."
 }
 
@@ -122,11 +122,11 @@ Extract()
 	read verbose
 	case $verbose in
 	y*|Y*)
-		tarverbose=v
+		tarverbose=-v
 		;;
 	*)
 		tarverbose=
 		;;
 	esac
-	cat "$1"* | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xp"$tarverbose"f - )
+	cat "$1"* | $GUNZIP | (cd $dest_dir ; $PAX -rpe $tarverbose )
 }
