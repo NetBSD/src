@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.13 1998/06/16 19:08:10 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.14 1998/06/29 20:25:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -243,12 +243,13 @@ net_getparams(sock)
 		/* Got it!  Parse the netmask. */
 		/* XXX - Use inet_addr() from libkern! */
 		smask = ip_convertaddr(buf);
-		if (smask == 0)
-			printf("nfs_open: gateway netmask missing\n");
+	}
+	if (smask) {
 		netmask = smask;
 		printf("net_open: subnet mask: %s\n", intoa(netmask));
-		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
 	}
+	if (gateip.s_addr)
+		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
 
 	/* Get the root server and pathname. */
 	if (bp_getfile(sock, "root", &rootip, rootpath)) {
