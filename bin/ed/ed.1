@@ -1,13 +1,13 @@
-.\"	$NetBSD: ed.1,v 1.19 2002/01/03 16:58:04 wiz Exp $
+.\"	$NetBSD: ed.1,v 1.20 2002/01/23 19:07:33 atatat Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
 ed \- text editor
 .\" ed, red \- text editor
 .SH SYNOPSIS
-ed [-] [-sx] [-p \fIstring\fR] [\fIfile\fR]
+ed [-] [-sxE] [-p \fIstring\fR] [\fIfile\fR]
 .\" .LP
-.\" red [-] [-sx] [-p \fIstring\fR] [\fIfile\fR]
+.\" red [-] [-sxE] [-p \fIstring\fR] [\fIfile\fR]
 .SH DESCRIPTION
 .B ed
 is a line-oriented text editor.
@@ -118,6 +118,11 @@ command).
 Specifies a command prompt.  This may be toggled on and off with the
 .I `P'
 command.
+
+.TP 8
+-E
+Enables the use of extended regular expressions instead of the basic
+regular expressions that are normally used.
 
 .TP 8
 .I file
