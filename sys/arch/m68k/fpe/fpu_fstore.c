@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.1 1995/11/03 04:47:10 briggs Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.2 1995/11/05 00:35:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -51,7 +51,7 @@ fpu_emul_fstore(fe, insn)
     u_int flags;
     char regname;
 
-    if (debug_level & DL_FSTORE) {
+    if (fpu_debug_level & DL_FSTORE) {
 	printf("  fpu_emul_fstore: frame at %08x fpframe at %08x\n",
 	       frame, fe->fe_fpframe);
     }
@@ -76,12 +76,12 @@ fpu_emul_fstore(fe, insn)
 	insn->is_datasize = 12;
     } else {
 	/* invalid or unsupported operand format */
-	if (debug_level & DL_FSTORE) {
+	if (fpu_debug_level & DL_FSTORE) {
 	    printf("  fpu_emul_fstore: invalid format %d\n", format);
 	}
 	sig = SIGFPE;
     }
-    if (debug_level & DL_FSTORE) {
+    if (fpu_debug_level & DL_FSTORE) {
 	printf("  fpu_emul_fstore: format %d, size %d\n",
 	       format, insn->is_datasize);
     }
@@ -89,7 +89,7 @@ fpu_emul_fstore(fe, insn)
     /* Get effective address. (modreg=opcode&077) */
     sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
     if (sig) {
-	if (debug_level & DL_FSTORE) {
+	if (fpu_debug_level & DL_FSTORE) {
 	    printf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);
 	}
 	return sig;
@@ -103,12 +103,12 @@ fpu_emul_fstore(fe, insn)
 	return SIGILL;
     }
 
-    if (debug_level & DL_OPERANDS)
+    if (fpu_debug_level & DL_OPERANDS)
 	printf("  fpu_emul_fstore: saving FP%d (%08x,%08x,%08x)\n",
 	       regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 	       fpregs[regnum * 3 + 2]);
     fpu_explode(fe, &fe->fe_f3, FTYPE_EXT, &fpregs[regnum * 3]);
-    if (debug_level & DL_VALUES) {
+    if (fpu_debug_level & DL_VALUES) {
 	static char *class_name[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
 	printf("  fpu_emul_fstore: fpn (%s,%c,%d,%08x,%08x,%08x,%08x)\n",
 	       class_name[fe->fe_f3.fp_class + 2],
@@ -119,7 +119,7 @@ fpu_emul_fstore(fe, insn)
     fpu_implode(fe, &fe->fe_f3, format, buf);
 
     fpu_store_ea(frame, insn, &insn->is_ea0, (char *)buf);
-    if (debug_level & DL_RESULT)
+    if (fpu_debug_level & DL_RESULT)
 	printf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
 	       buf[0], buf[1], buf[2], insn->is_datasize);
 

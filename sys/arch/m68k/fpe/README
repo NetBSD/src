@@ -1,4 +1,4 @@
-* $NetBSD: README,v 1.2 1995/11/03 04:48:22 briggs Exp $
+* $NetBSD: README,v 1.3 1995/11/05 00:35:09 briggs Exp $
 * NetBSD/m68k FPE (floating point emulation) README file
 * Created Oct/??/95 by kenn@romulus.rutgers.edu (Ken Nakata)
 * Last updated Nov/02/95 by kenn
@@ -154,9 +154,7 @@ the following rules:
 	5) Condition code need not be calculated.  It's taken care of in
 	fpu_emul_arith().
 
-It's easy to interface, isn't it?
-
-* Actually, after above was written, stubs for the missing functions
+Actually, after above was written, stubs for the missing functions
 are added to the source, so you do not have to change fpu_emul_arith()
 at all.  Function names and prototypes are in fpu_arith_proto.h, and
 all (except fpu_sincos()) follows the rules above.
