@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cdefs.h	7.6 (Berkeley) 5/4/91
- *	$Id: cdefs.h,v 1.3 1993/05/20 16:21:52 cgd Exp $
+ *	$Id: cdefs.h,v 1.4 1993/05/26 14:52:56 cgd Exp $
  */
 
 #ifndef	_SYS_CDEFS_H_
@@ -75,5 +75,21 @@
 #define	volatile
 #endif	/* !__GNUC__ */
 #endif	/* !(__STDC__ || __cplusplus) */
+
+/*
+ * GCC has extensions for declaring functions as `pure' (always returns
+ * the same value given the same inputs, i.e., has no external state and
+ * no side effects) and `dead' (nonreturning).  These mainly affect
+ * optimization and warnings.  Unfortunately, GCC complains if these are
+ * used under strict ANSI mode (`gcc -ansi -pedantic'), hence we need to
+ * define them only if compiling without this.
+ */
+#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+#define __dead __volatile
+#define __pure __const
+#else
+#define __dead
+#define __pure
+#endif
 
 #endif /* !_SYS_CDEFS_H_ */
