@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.8 1996/04/29 20:02:37 christos Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.9 1997/03/13 02:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -128,8 +128,6 @@ int	ad1848_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	ad1848_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
 int	ad1848_commit_settings __P((void *));
-
-u_int	ad1848_get_silence __P((int));
 
 int	ad1848_halt_in_dma __P((void *));
 int	ad1848_halt_out_dma __P((void *));

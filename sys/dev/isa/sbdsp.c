@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.32 1997/03/03 21:40:01 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.33 1997/03/13 02:20:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1422,27 +1422,6 @@ sbdsp_midi_output(sc, v)
 		++sberr.wmidi;
 }
 #endif
-
-u_int
-sbdsp_get_silence(encoding)
-	int encoding;
-{
-#define ULAW_SILENCE	0x7f
-#define LINEAR_SILENCE	0
-	u_int auzero;
-    
-	switch (encoding) {
-	case AUDIO_ENCODING_ULAW:
-		auzero = ULAW_SILENCE; 
-		break;
-	case AUDIO_ENCODING_PCM16:
-	default:
-		auzero = LINEAR_SILENCE;
-		break;
-	}
-
-	return (auzero);
-}
 
 int
 sbdsp_setfd(addr, flag)
