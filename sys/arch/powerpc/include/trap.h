@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6 2001/06/13 06:01:49 simonb Exp $	*/
+/*	$NetBSD: trap.h,v 1.7 2002/02/22 13:51:40 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,6 +46,9 @@
 #define	EXC_SC		0x0c00		/* System Call */
 #define	EXC_TRC		0x0d00		/* Trace */
 #define	EXC_FPA		0x0e00		/* Floating-point Assist */
+
+/* The following is only available on the 601: */
+#define	EXC_RUNMODETRC	0x2000		/* Run Mode/Trace Exception */
 
 /* The following are only available on 7400(G4): */
 #define	EXC_VEC		0x0f20		/* AltiVec Unavailable */
