@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.10 1999/07/09 06:44:58 thorpej Exp $	*/
+/*	$NetBSD: files.c,v 1.11 2000/06/08 21:22:55 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ addfile(path, optx, flags, rule)
 	int flags;
 	const char *rule;
 {
-	struct files *fi;
+	struct files *fi, *ofi;
 	const char *dotp, *tail;
 	size_t baselen;
 	int needc, needf;
@@ -130,12 +130,25 @@ addfile(path, optx, flags, rule)
 	 */
 	fi = emalloc(sizeof *fi);
 	if (ht_insert(pathtab, path, fi)) {
-		free(fi);
-		if ((fi = ht_lookup(pathtab, path)) == NULL)
+		if ((ofi = ht_lookup(pathtab, path)) == NULL)
 			panic("addfile: ht_lookup(%s)", path);
-		error("duplicate file %s", path);
-		xerror(fi->fi_srcfile, fi->fi_srcline,
-		    "here is the original definition");
+		/*
+		 * It is okay to re-define foo/bar/baz.c as long as the
+		 * re-definition comes from a different source file.  This
+		 * This allows MD "files.machine" files to change a
+		 * "compile-with" directive, for instance.
+		 */
+		if (ofi->fi_srcfile != fi->fi_srcfile) {
+			if (ht_replace(pathtab, path, fi) != 1)
+				panic("addfile: ht_replace(%s)", path);
+			ofi->fi_flags |= FI_HIDDEN;
+		} else {
+			free(fi);
+			error("duplicate file %s", path);
+			xerror(ofi->fi_srcfile, ofi->fi_srcline,
+			    "here is the original definition");
+			goto bad;
+		}
 	}
 	memcpy(base, tail, baselen);
 	base[baselen] = 0;
@@ -271,7 +284,7 @@ fixfiles()
 			 * If the new file comes from a different source,
 			 * allow the new one to override the old one.
 			 */
-			if (fi->fi_path != ofi->fi_path) {
+			if (fi->fi_srcfile != ofi->fi_srcfile) {
 				if (ht_replace(basetab, fi->fi_base, fi) != 1)
 					panic("fixfiles ht_replace(%s)",
 					    fi->fi_base);
