@@ -1,8 +1,7 @@
-.\" $NetBSD: xfer,v 1.6 1999/05/19 05:49:06 gwr Exp $	
+.\"	$NetBSD: xfer,v 1.7 2000/10/10 12:55:23 lukem Exp $
 .
 Installation is supported from several media types, including:
-.Bl -bullet -compact -offset indent
-.It
+.(bullet -compact -offset indent
 Tape
 .It
 NFS
@@ -10,7 +9,7 @@ NFS
 CD-ROM
 .It
 FTP
-.El
+.bullet)
 .(Note
 Installing on a "bare" machine requires some bootable
 device; either a tape drive or Sun-compatible NFS server.
@@ -20,11 +19,11 @@ The procedure for transferring the distribution sets onto
 installation media depends on the type of media. Instructions
 for each type of media are given below.
 .Pp
-In order to create installation media, you will need all the 
+In order to create installation media, you will need all the
 files in the directory
-.Dl \&.../NetBSD-\*V/\*[MACHINE]/
+.Dl \&.../NetBSD-\*V/\*M/
 .
-.Ss2 "Creating boot/install tapes
+.Ss2 Creating boot/install tapes
 .
 Installing from tape is the simplest method of all.
 This method uses two tapes; one called the
@@ -33,11 +32,11 @@ tape, and another called the
 .Em install No tape.
 .Pp
 The boot tape is created as follows:
-.D1 Ic "cd .../NetBSD-\*V/\*[MACHINE]/installation/tapeimage
+.D1 Ic "cd .../NetBSD-\*V/\*M/installation/tapeimage
 .D1 Ic "sh MakeBootTape /dev/nrst0
 .Pp
 The install tape is created as follows:
-.D1 Ic "cd .../NetBSD-\*V/\*[MACHINE]/installation/tapeimage
+.D1 Ic "cd .../NetBSD-\*V/\*M/installation/tapeimage
 .D1 Ic "sh MakeInstallTape /dev/nrst0
 .Pp
 If the tapes do not work as expected, you may need to explicitly
@@ -53,22 +52,26 @@ argument. Consult
 the tape-related manual pages on the system where the tapes are
 created for more details.
 .
-.Ss2 Boot/Install from NFS server:
+.Ss2 Boot/Install from NFS server
 .
 If your machine has a disk and network connection, but no tape drive,
-it may be convenient for you to install NetBSD over the network. This
+it may be convenient for you to install
+.Nx
+over the network. This
 involves temporarily booting your machine over NFS, just long enough
 so you can initialize its disk. This method requires that you have
 access to an NFS server on your network so you can configure it to
 support diskless boot for your machine. Configuring the NFS server
 is normally a task for a system administrator, and is not trivial.
 .Pp
-If you are using a NetBSD system as the boot-server, have a look at
+If you are using a
+.Nx
+system as the boot-server, have a look at
 the diskless(8) manual page for guidelines on how to proceed with
 this. If the server runs another operating system, consult the
 documentation that came with it (i.e. add_client(8) on SunOS).
 .Pp
-When instructed to boot over the network, your \*[MACHINE] expects to be
+When instructed to boot over the network, your \*M expects to be
 able to download a second stage bootstrap program via
 .Tn TFTP
 after
@@ -79,7 +82,7 @@ machine's recently aquired IP
 .if r_sun3 address.
 .if r_sun3x address and an extension which corresponds to the
 .if r_sun3x machine architecture.
-(It may be handy to have a hexadecimal 
+(It may be handy to have a hexadecimal
 calculator for this next step.) The filename
 .if r_sun3x prefix
 is created by
@@ -91,14 +94,15 @@ The filename suffix used by all sun3x machines is
 .Pa SUN3X .
 .\}
 .Pp
-For example, a \*[MACHINE] which has been assigned IP address 130.115.144.11
+For example, a \*M which has been assigned IP address 130.115.144.11
 will make an
 .Tn TFTP
 request for
 .if r_sun3 .Pa 8273900B .
 .if r_sun3x .Pa 8273900B.SUN3X .
 Normally, this file
-is a symbolic link to the NetBSD/\*[MACHINE]
+is a symbolic link to the
+.Nx*M
 .Pa netboot
 program, which should
 be located in a place where the
@@ -116,7 +120,9 @@ should have an entry for your client and its root directory.
 The client will need access to the miniroot image, which can be
 provided using NFS or remote shell.
 .Pp
-If you will be installing NetBSD on several clients, it may be useful
+If you will be installing
+.Nx
+on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long
 as they only use the netbsd-rd kernel. There will be no conflict
 between clients because the RAM-disk kernel will not use the NFS root.
@@ -145,9 +151,17 @@ transfer the files.
 .Pp
 The preparations for this installation/upgrade method are easy; all
 you make sure that there's some FTP site from which you can retrieve
-the NetBSD distribution when you're about to install or upgrade. You
+the
+.Nx
+distribution when you're about to install or upgrade. You
 need to know the numeric IP address of that site, and, if it's not on
 a network directly connected to the machine on which you're installing
-or upgrading NetBSD, you need to know the numeric IP address of the
-router closest to the NetBSD machine. Finally, you need to know the
-numeric IP address of the NetBSD machine itself.
+or upgrading
+.Nx ,
+you need to know the numeric IP address of the
+router closest to the
+.Nx
+machine. Finally, you need to know the
+numeric IP address of the
+.Nx
+machine itself.

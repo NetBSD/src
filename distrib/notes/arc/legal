@@ -1,5 +1,5 @@
-.\"	$NetBSD: legal,v 1.3 2000/10/05 08:39:10 lukem Exp $
-.Pp
+.\"	$NetBSD: legal,v 1.4 2000/10/10 12:55:16 lukem Exp $
+.
 This product includes software developed by Per Fogelstrom.
 .Pp
 This product includes software developed under OpenBSD by Per Fogelstrom.
@@ -10,8 +10,7 @@ Opsycon AB.
 In the following statement, "This software" refers to the parallel
 port driver:
 .Pp
-.Bl -item -offset indent
-.It
-This software is a component of "386BSD" developed by 
+.(item -offset indent
+This software is a component of "386BSD" developed by
 William F. Jolitz, TeleMuse.
-.El
+.item)

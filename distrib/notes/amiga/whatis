@@ -1,8 +1,15 @@
-	$NetBSD: whatis,v 1.12 2000/09/11 06:26:01 is Exp $	
-
-This is the sixth public release of NetBSD for the Amiga and DraCo
+.\"	$NetBSD: whatis,v 1.13 2000/10/10 12:55:16 lukem Exp $
+.
+This is the seventh public release of NetBSD for the Amiga and DraCo
 line of computers.
-
-New port-specific features include: an optional experimental new
-driver for the internal IDE port, which links to the machine
-independent wdc code.
+.Pp
+New port-specific features include:
+.(bullet
+Support Amiga partition tables that fake more than one sector per
+filesystem block (for Adosfs), and partition tables on media with more
+than 512 bytes per sector.
+.It
+PCMCIA support.
+.It
+Recognize Linux ext2fs partitions.
+.bullet)

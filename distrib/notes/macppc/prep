@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2 1999/09/15 04:06:00 ross Exp $
+.\"	$NetBSD: prep,v 1.3 2000/10/10 12:55:19 lukem Exp $
 .
 .(Note
 Currently
@@ -17,8 +17,8 @@ currently does not support Apple's Disk Partition Map.
 .Pp
 Before you start, you must choose an installation method.  If your machine has
 an on-board Ethernet and you have the connection to an NFS server that can
-provide even ~30M for a diskless-root filesystem, then installation via the net
-is best.  Next best, if you have another machine that is a running unix-like
+provide even ~30 MB for a diskless-root filesystem, then installation via the
+net is best. Next best, if you have another machine that is a running unix-like
 operating system and has two disk drives (or one, if you live dangerously) is
 to copy a diskimage onto one drive.  Finally, you can install by using a second
 machine as a helper to prepare a bootable
