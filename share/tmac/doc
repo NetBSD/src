@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.19 1999/03/09 08:32:52 ross Exp $
+.\"	$NetBSD: doc,v 1.20 1999/03/09 10:38:19 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -653,7 +653,7 @@
 .\" NS fD register subroutine test (in synopsis only)
 .\" NS fY register subroutine count (in synopsis only) (fortran only)
 .\" NS fZ register also subroutine count (in synopsis only)
-.de Fd-In-common
+.de fI
 .ds mN Fd
 .if \\n(nS>0 \{\
 .\"	if a variable type was the last thing given, want vertical space
@@ -675,14 +675,14 @@
 .nr cZ \\n(.s
 ..
 .de Fd
-.Fd-In-common
+.fI
 \&\\*(fD\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .br
 .ft \\n(cF
 .fs \\n(cZ
 ..
 .de In
-.Fd-In-common
+.fI
 \&\\*(fD#include <\\$1>
 .br
 .ft \\n(cF
@@ -3532,14 +3532,17 @@ File:
 .	\}
 .\}
 ..
-.als Mt Pa
-.als It-span It
+.de Mt
+.	ie \n(.g .Pa \\$@
+.	el .Pa \\$*
+..
+.if \n(.g .als It-span It
 .de Lk
 .	if \\n(Db .tm .Lk \\$*
-.	nr doc-tmp-1 0
+.	nr d@ 0
 .	nr aT 0
 .	nr sW 0
-.	ds doc-tmp-1 Sy \&\\$*
+.	ds d@ Sy \&\\$*
 .	sW "\\$1"
 .	if \\n(.$>=2 \{\
 .		sW "\\$2"
@@ -3547,22 +3550,21 @@ File:
 .		if \\n(Db .tm arg type==\\n(aT len==\\n(sW
 .		ie \\n(aT<3 \{\
 .			Em \&\\$2:
-.			ds doc-tmp-1 Sy "\&\\$1"
+.			ds d@ Sy "\&\\$1"
 .			sW "\\$1"
 .			shift
 .			shift
-.			as doc-tmp-1 \\$*
+.			as d@ \\$*
 .		\}
 .		el .sW "\\$1"
 .	\}
-.	if n .nr doc-tmp-1 26
-.	if t .nr doc-tmp-1 38
-.	ie \\n(sW>=\\n[doc-tmp-1] .D1 \\*[doc-tmp-1]
-.	el .\\*[doc-tmp-1]
+.	if n .nr d@ 26
+.	if t .nr d@ 38
+.	ie \\n(sW>=\\n(d@ .D1 \\*(d@
+.	el .\\*(d@
 ..
 .
-.ds T "	x\" embedded tab is important
-.chop T
+.ds T "	\&\" embedded tab is important
 .
 .rn em e@
 .de em
