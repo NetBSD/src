@@ -1,11 +1,8 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.5 1997/05/10 15:42:55 lukem Exp $
+#	$NetBSD: makesrctars,v 1.5.2.1 1997/12/29 23:36:33 perry Exp $
 #
 # Make source code tarballs.
-
-RELEASE=`sh ../../sys/conf/osrelease.sh -s`
-SPLITSIZE=240640
 
 GZIP=--best
 export GZIP
@@ -29,46 +26,41 @@ cd $SRCDIR
 
 mkdir ${DESTDIR}
 
-mkdir ${DESTDIR}/src${RELEASE}
+mkdir ${DESTDIR}/sets
+
 find . \
     \! \( \( -path ./gnu -o -path ./share -o -path ./domestic \) -prune \) \
     \! \( -path ./sys -prune \) \
     \! \( -path ./usr.sbin/config -prune \) \
     \! \( -path ./usr.sbin/dbsym -prune \) \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -wv -d -s'|^./|./usr/src/|' | gzip | \
-	split -b ${SPLITSIZE} - ${DESTDIR}/src${RELEASE}/src${RELEASE}.
-(cd ${DESTDIR}/src${RELEASE}; cksum src${RELEASE}.* > CKSUM)
-chmod 444 ${DESTDIR}/src${RELEASE}/*
+	sort | pax -w -d -s'|^./|./usr/src/|' | gzip \
+	> ${DESTDIR}/sets/src.tgz
 
-mkdir ${DESTDIR}/gsrc${RELEASE}
 find gnu \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
-	split -b ${SPLITSIZE} - ${DESTDIR}/gsrc${RELEASE}/gsrc${RELEASE}.
-(cd ${DESTDIR}/gsrc${RELEASE}; cksum gsrc${RELEASE}.* > CKSUM)
-chmod 444 ${DESTDIR}/gsrc${RELEASE}/*
+	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+	> ${DESTDIR}/sets/gnusrc.tgz
 
-mkdir ${DESTDIR}/ksrc${RELEASE}
 find sys usr.sbin/config usr.sbin/dbsym \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
-	split -b ${SPLITSIZE} - ${DESTDIR}/ksrc${RELEASE}/ksrc${RELEASE}.
-(cd ${DESTDIR}/ksrc${RELEASE}; cksum ksrc${RELEASE}.* > CKSUM)
-chmod 444 ${DESTDIR}/ksrc${RELEASE}/*
+	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+	> ${DESTDIR}/sets/syssrc.tgz
 
-mkdir ${DESTDIR}/ssrc${RELEASE}
 find share \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
-	split -b ${SPLITSIZE} - ${DESTDIR}/ssrc${RELEASE}/ssrc${RELEASE}.
-(cd ${DESTDIR}/ssrc${RELEASE}; cksum ssrc${RELEASE}.* > CKSUM)
-chmod 444 ${DESTDIR}/ssrc${RELEASE}/*
+	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+	> ${DESTDIR}/sets/sharesrc.tgz
 
-mkdir ${DESTDIR}/dsrc${RELEASE}
+(cd ${DESTDIR}/sets; cksum *.tgz > CKSUM)
+chmod 444 ${DESTDIR}/sets/*
+
+mkdir ${DESTDIR}/security
+
 find domestic \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
-	split -b ${SPLITSIZE} - ${DESTDIR}/dsrc${RELEASE}/dsrc${RELEASE}.
-(cd ${DESTDIR}/dsrc${RELEASE}; cksum dsrc${RELEASE}.* > CKSUM)
-chmod 444 ${DESTDIR}/dsrc${RELEASE}/*
+	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+	> ${DESTDIR}/security/secrsrc.tgz
+
+(cd ${DESTDIR}/security; cksum *.tgz > CKSUM)
+chmod 444 ${DESTDIR}/security/*
