@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.39 2001/05/03 20:52:19 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.40 2002/07/25 15:39:42 he Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -281,6 +281,9 @@ struct pcs {
 #define	PCS_PROC_PCA56		9			/* PCA56: 21164PC */
 #define	PCS_PROC_PCA57		10			/* PCA57: 21164?? */
 #define	PCS_PROC_EV67		11			/* EV67: 21246A */
+#define PCS_PROC_EV68CB		12			/* EV68CB: 21264C */
+#define PCS_PROC_EV68AL		13			/* EV68AL: 21264B */
+#define PCS_PROC_EV68CX		14			/* EV68CX: 21264D */
 
 #define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
 #define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)
