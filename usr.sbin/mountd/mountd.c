@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	8.8 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: mountd.c,v 1.12 1994/06/08 19:29:45 mycroft Exp $";
+static char *rcsid = "$Id: mountd.c,v 1.13 1994/07/18 18:23:24 ws Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -640,10 +640,12 @@ get_exportlist()
 			struct ufs_args ua;
 			struct iso_args ia;
 			struct mfs_args ma;
+			struct msdosfs_args da;
 		} targs;
 
 		if (!strcmp(fsp->f_fstypename, MOUNT_MFS) ||
 		    !strcmp(fsp->f_fstypename, MOUNT_UFS) ||
+		    !strcmp(fsp->f_fstypename, MOUNT_MSDOS) ||
 		    !strcmp(fsp->f_fstypename, MOUNT_CD9660)) {
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
@@ -1456,6 +1458,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		struct ufs_args ua;
 		struct iso_args ia;
 		struct mfs_args ma;
+		struct msdosfs_args da;
 	} args;
 	u_long net;
 
