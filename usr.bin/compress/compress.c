@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)compress.c	8.2 (Berkeley) 1/7/94";*/
-static char *rcsid = "$Id: compress.c,v 1.7 1994/10/06 16:43:17 mycroft Exp $";
+static char *rcsid = "$Id: compress.c,v 1.8 1994/12/24 16:27:18 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,6 +66,8 @@ void	decompress __P((char *, char *, int));
 int	permission __P((char *));
 void	setfile __P((char *, struct stat *));
 void	usage __P((int));
+
+extern FILE *zopen __P((const char *fname, const char *mode, int bits));
 
 int eval, force, verbose;
 
