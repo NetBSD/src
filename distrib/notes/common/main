@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.40 1999/12/27 11:52:36 soren Exp $
+.\" $NetBSD: main,v 1.41 2000/01/02 18:39:03 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,8 +224,7 @@ IPv4/v6 dual-stack user applications and supporting libraries.
 Due to this, shlib major version for
 .Xr pcap 3
 is incremented and you may need a recompilation of your userland tools.
-We will be upgrading IPv6 part to unified-ipv6 codebase
-whenever it becomes ready.
+The KAME IPv6 part includes result from unified-ipv6 effort.
 .El
 .Pp
 As has been noted, there have also been innumerable bug fixes.	
