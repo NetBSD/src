@@ -38,17 +38,15 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: sbrk.S,v 1.2 1994/01/27 14:45:54 mycroft Exp $"
+	.asciz "$Id: sbrk.S,v 1.3 1994/01/27 15:09:18 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_end
-	.globl	minbrk
 	.globl	curbrk
 
 	.data
-minbrk: .long	_end
 curbrk:	.long	_end
 	.text
 

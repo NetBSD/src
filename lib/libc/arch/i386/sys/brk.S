@@ -34,22 +34,23 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)brk.s	5.2 (Berkeley) 12/17/90
- *	$Id: brk.S,v 1.7 1994/01/27 06:35:00 mycroft Exp $
+ *	$Id: brk.S,v 1.8 1994/01/27 15:08:03 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: brk.S,v 1.7 1994/01/27 06:35:00 mycroft Exp $"
+	.asciz "$Id: brk.S,v 1.8 1994/01/27 15:08:03 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-	.globl	curbrk
+	.globl	_end
 	.globl	minbrk
-#if 0
-ENTRY(_brk)
-	jmp	ok
-#endif
+	.globl	curbrk
+
+	.data
+minbrk:	.long	_end
+	.text
 
 ENTRY(brk)
 #ifdef PIC
