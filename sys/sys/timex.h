@@ -1,3 +1,5 @@
+/*	$NetBSD: timex.h,v 1.2 1996/02/27 04:20:34 jonathan Exp $	*/
+
 /******************************************************************************
  *                                                                            *
  * Copyright (c) David L. Mills 1993, 1994                                    *
@@ -93,7 +95,8 @@
  * zero to MAXTC, the PLL will converge in 15 minutes to 16 hours,
  * respectively.
  */
-#define SHIFT_HZ 7		/* log2(hz) */
+
+
 #define SHIFT_KG 6		/* phase factor (shift) */
 #define SHIFT_KF 16		/* PLL frequency factor (shift) */
 #define SHIFT_KH 2		/* FLL frequency factor (shift) */
@@ -282,9 +285,10 @@ struct timex {
 	long stbcnt;		/* stability limit exceeded (ro) */
 
 };
-#ifdef __FreeBSD__
 
-#ifndef KERNEL
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -292,7 +296,7 @@ extern int ntp_gettime        __P((struct ntptimeval *));
 extern int ntp_adjtime        __P((struct timex *));
 __END_DECLS
 
-#endif /* not KERNEL */
+#endif /* not _KERNEL */
 
-#endif /* __FreeBSD__ */
+#endif /* __FreeBSD__ || __NetBSD__ */
 #endif /* _SYS_TIMEX_H_ */

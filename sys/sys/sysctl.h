@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.11 1996/02/09 18:25:39 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.12 1996/02/27 04:20:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -132,7 +132,9 @@ struct ctlname {
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
 #define KERN_RAWPARTITION	24	/* int: raw partition number */
-#define	KERN_MAXID		25	/* number of valid kern ids */
+#define	KERN_NTPTIME		25	/* struct: extended-precision time */
+#define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
+#define	KERN_MAXID		27	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -160,6 +162,7 @@ struct ctlname {
 	{ "domainname", CTLTYPE_STRING }, \
 	{ "maxpartitions", CTLTYPE_INT }, \
 	{ "rawpartition", CTLTYPE_INT }, \
+	{ "ntptime", CTLTYPE_STRUCT }, \
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.14 1996/02/09 18:59:52 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.15 1996/02/27 04:20:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -277,6 +277,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, MAXPARTITIONS));
 	case KERN_RAWPARTITION:
 		return (sysctl_rdint(oldp, oldlenp, newp, RAW_PART));
+	case KERN_NTPTIME:
+		return (sysctl_ntptime(oldp, oldlenp));
 	default:
 		return (EOPNOTSUPP);
 	}
