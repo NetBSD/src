@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.5 1997/10/15 05:55:13 explorer Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.6 1997/10/15 06:08:27 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,6 @@
  */
 
 #include "bpfilter.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,9 +23,6 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -138,11 +134,6 @@ dp8390_config(sc)
 		printf("type unknown (0x%x) ", sc->type);
 
 	rv = 0;
-
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
-#endif
-
 out:
 	return (rv);
 }
@@ -652,11 +643,6 @@ dp8390_intr(arg, slot)
 			if (sc->txb_inuse > 0)
 				dp8390_xmit(sc);
 		}
-
-#if NRND > 0
-		if (isr)
-			rnd_add_uint32(&sc->rnd_source, isr);
-#endif
 
 		/* Handle receiver interrupts. */
 		if (isr & (ED_ISR_PRX | ED_ISR_RXE | ED_ISR_OVW)) {
