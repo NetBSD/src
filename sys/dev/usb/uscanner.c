@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.20 2001/11/23 10:31:54 enami Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.21 2001/12/01 09:42:39 enami Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.20 2001/11/23 10:31:54 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.21 2001/12/01 09:42:39 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +483,7 @@ uscanner_do_read(sc, uio, flag)
 			sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
 			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 			sc->sc_bulkin_buffer, &tn,
-			"uscannerrb");
+			"uscnrb");
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
@@ -545,7 +545,7 @@ uscanner_do_write(sc, uio, flag)
 			sc->sc_bulkout_xfer, sc->sc_bulkout_pipe,
 			0, USBD_NO_TIMEOUT,
 			sc->sc_bulkout_buffer, &n,
-			"uscannerwb");
+			"uscnwb");
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
