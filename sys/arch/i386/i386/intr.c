@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 2002/11/22 15:05:24 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 2002/11/22 21:21:13 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -111,25 +111,6 @@ i386_nmi(void)
 {
 	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
 	return(0);
-}
-
-/*
- * Caught a stray interrupt, notify
- */
-void
-i386_strayintr(int irq)
-{
-	static u_long strays;
-
-        /*
-         * Stray interrupts on irq 7 occur when an interrupt line is raised
-         * and then lowered before the CPU acknowledges it.  This generally
-         * means either the device is screwed or something is cli'ing too
-         * long and it's timing out.
-         */
-	if (++strays <= 5)
-		log(LOG_ERR, "stray interrupt %d%s\n", irq,
-		    strays >= 5 ? "; stopped logging" : "");
 }
 
 /*
