@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.5 1994/11/22 18:58:43 dean Exp $	*/
+/*	$NetBSD: sii.c,v 1.6 1995/08/10 04:21:45 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,7 +52,14 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 
+#ifdef notyet
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+#endif
+
+#include <machine/autoconf.h>
 #include <machine/machConst.h>
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
@@ -60,10 +67,53 @@
 
 #include <pmax/pmax/kn01.h>
 
-int	siiprobe();
+/*
+ * Autoconfiguration data for config.new.
+ * Use the statically-allocated softc until the config.old program,
+ * old autoconfiguration code, and statically-allocated softcs are
+ * are completely gone.
+ * 
+ */
+int	siimatch  __P((struct device * parent, void *cfdata, void *aux));
+void	siiattach __P((struct device *parent, struct device *self, void *aux));
+int	siiprint(void*, char*);
+
+int sii_doprobe __P((void *addr, int unit, int flags, int pri,
+		     struct device *self));
+void siiintr __P((int unit));
+
+extern struct cfdriver siicd;
+struct  cfdriver siicd = {
+	NULL, "sii", siimatch, siiattach, DV_DULL, sizeof(struct device), 0
+};
+
+#ifdef USE_NEW_SCSI
+/* Glue to the machine-independent scsi */
+struct scsi_adapter asc_switch = {
+	NULL, /* XXX - asc_scsi_cmd */
+#if 0
+/*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
+#else
+	SII_MAX_DMA_XFER_LENGTH,
+#endif
+	NULL,
+	NULL,
+};
+
+struct scsi_device asc_dev = {
+/*XXX*/	NULL,			/* Use default error handler */
+/*XXX*/	NULL,			/* have a queue, served by this */
+/*XXX*/	NULL,			/* have no async handler */
+/*XXX*/	NULL,			/* Use default 'done' routine */
+};
+#endif
+
+/*
+ * Definition of the controller for the old auto-configuration program.
+ */
 void	siistart();
 struct	driver siidriver = {
-	"sii", siiprobe, siistart, 0,
+	"sii", NULL, siistart, 0,
 };
 
 typedef struct scsi_state {
@@ -94,11 +144,15 @@ typedef struct scsi_state {
 
 #define SII_NCMD	7
 struct siisoftc {
+	struct device sc_dev;		/* us as a device */
 	SIIRegs	*sc_regs;		/* HW address of SII controller chip */
 	int	sc_flags;
 	int	sc_target;		/* target SCSI ID if connected */
 	ScsiCmd	*sc_cmd[SII_NCMD];	/* active command indexed by ID */
 	State	sc_st[SII_NCMD];	/* state info for each active command */
+#ifdef NEW_SCSI
+	struct scsi_link sc_link;		/* scsi lint struct */
+#endif
 } sii_softc[NSII];
 
 /*
@@ -166,21 +220,73 @@ static void sii_DoSync();
 static void sii_StartDMA();
 static int sii_GetByte();
 
+
+/*
+ * Match driver based on name
+ */
+int
+siimatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+
+	static int nunits = 0;
+
+	if (!BUS_MATCHNAME(ca, "sii") && !BUS_MATCHNAME(ca, "PMAZ-AA "))
+		return (0);
+
+	/*
+	 * Use statically-allocated softc and attach code until
+	 * old config is completely gone.  Don't  over-run softc.
+	 */
+	if (nunits > NSII) {
+		printf("sii: too many units for old config\n");
+		return (0);
+	}
+	nunits++;
+	return (1);
+}
+
+void
+siiattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	if (!sii_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+			 self->dv_unit, self->dv_cfdata->cf_flags,
+			 ca->ca_slot, self)) {
+		printf(": failed to attach");
+		return;
+	}
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, siiintr, self->dv_unit);
+	printf("\n");
+}
+
+
 /*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
-siiprobe(cp)
-	register struct pmax_ctlr *cp;
+sii_doprobe(addr, unit, flags, priority, self)
+	void *addr;
+	int unit, flags, priority;
+	struct device *self;
 {
 	register struct siisoftc *sc;
 	register int i;
 
-	if (cp->pmax_unit >= NSII)
+	if (unit >= NSII)
 		return (0);
-	sc = &sii_softc[cp->pmax_unit];
-	sc->sc_regs = (SIIRegs *)cp->pmax_addr;
-	sc->sc_flags = cp->pmax_flags;
+	sc = &sii_softc[unit];
+	sc->sc_regs = (SIIRegs *)addr;
+	sc->sc_flags = flags;
 	sc->sc_target = -1;	/* no command active */
 	/*
 	 * Give each target its own DMA buffer region.
@@ -195,7 +301,9 @@ siiprobe(cp)
 			SII_MAX_DMA_XFER_LENGTH;
 	}
 
-	printf("sii%d at nexus0 csr 0x%x\n", cp->pmax_unit, cp->pmax_addr);
+	/* Hack for old-sytle SCSI-device probe */
+	(void) pmax_add_scsi(&siidriver, unit);
+
 	sii_Reset(sc->sc_regs, RESET);
 	return (1);
 }

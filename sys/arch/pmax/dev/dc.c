@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.10 1995/08/04 00:26:39 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.11 1995/08/10 04:21:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -103,22 +103,13 @@ int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	dcattach __P((struct device *parent, struct device *self, void *aux));
 
 int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
+void	dcintr __P((int unit));
 
 extern struct cfdriver dccd;
 struct  cfdriver dccd = {
 	NULL, "dc", dcmatch, dcattach, DV_DULL, sizeof(struct device), 0
 };
 
-
-
-/*
- * Autoconfiguration data for config.old
- */
-int	dcprobe __P ((struct pmax_ctlr *cp));
-void	dcintr();
-struct	driver dcdriver = {
-	"dc", dcprobe, 0, 0, dcintr,
-};
 
 #define	NDCLINE 	(NDC*4)
 
@@ -226,20 +217,8 @@ dcattach(parent, self, aux)
 
 	/* tie pseudo-slot to device */
 	BUS_INTR_ESTABLISH(ca, dcintr, self->dv_unit);
+	printf("\n");
 }
-
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-int
-dcprobe(cp)
-	register struct pmax_ctlr *cp;
-{
-	return dc_doprobe(cp->pmax_addr, cp->pmax_unit,
-		 cp->pmax_flags, cp->pmax_pri);
-}
-
 
 
 dc_doprobe(addr, unit, flags, priority)
@@ -251,17 +230,11 @@ dc_doprobe(addr, unit, flags, priority)
 	register struct tty *tp;
 	register int cntr;
 	int s;
-	static int nunits = 0; /*XXX*/
 
 	if (unit >= NDC)
 		return (0);
 	if (badaddr(addr, 2))
 		return (0);
-
-	if (++nunits > NDC) {
-		printf("dc%d: static softc full\n", unit);
-		return (0);
-	}
 
 	/*
 	 * For a remote console, wait a while for previous output to
@@ -321,8 +294,7 @@ dc_doprobe(addr, unit, flags, priority)
 			splx(s);
 		}
 	}
-	printf("dc%d at nexus0 csr 0x%x priority %d\n",
-		unit, addr, priority);
+
 	return (1);
 }
 
