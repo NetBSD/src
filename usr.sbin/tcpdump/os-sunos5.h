@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1992, 1993, 1994
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,18 +18,24 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.11 94/06/14 20:11:41 leres Exp (LBL)
+ * @(#) Header: os-sunos5.h,v 1.5 94/06/12 14:34:23 leres Exp (LBL)
  */
 
-/* Name to address translation routines. */
+/* Map things in the ether_arp struct */
+#define SHA(ap) ((ap)->arp_sha)
+#define SPA(ap) ((ap)->arp_spa)
+#define THA(ap) ((ap)->arp_tha)
+#define TPA(ap) ((ap)->arp_tpa)
 
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
-extern char *intoa(u_int32);
+#define EDST(ep) ((ep)->ether_dhost.ether_addr_octet)
+#define ESRC(ep) ((ep)->ether_shost.ether_addr_octet)
 
-extern void init_addrtoname(int, u_int32, u_int32);
+#define	bcopy(s, d, n)	memcpy(d, s, n)
+#define major(x)	((int)(((unsigned)(x)>>8)&0377))
+#define minor(x)	((int)((x)&0377))
+#define	bzero(s, n)	memset(s, 0, n)
+#define	bcmp(s1, s2, n)	memcmp(s1, s2, n)
+#define setlinebuf(f)	setvbuf(f, NULL, _IOLBF, 0)
 
-#define ipaddr_string(p) getname((const u_char *)(p))
+/* Prototypes missing in SunOS 5 */
+int strcasecmp(const char *, const char *);

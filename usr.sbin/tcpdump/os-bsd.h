@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1992, 1993, 1994
+ * Copyright (c) 1990, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,18 +18,43 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.11 94/06/14 20:11:41 leres Exp (LBL)
+ * @(#) Header: os-bsd.h,v 1.18 94/06/14 20:15:17 leres Exp (LBL)
  */
 
-/* Name to address translation routines. */
+#include <sys/param.h>
 
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
-extern char *intoa(u_int32);
+#ifndef BSD
+#define BSD
+#endif
 
-extern void init_addrtoname(int, u_int32, u_int32);
+#define SHA(ap) ((ap)->arp_sha)
+#define SPA(ap) ((ap)->arp_spa)
+#define THA(ap) ((ap)->arp_tha)
+#define TPA(ap) ((ap)->arp_tpa)
 
-#define ipaddr_string(p) getname((const u_char *)(p))
+#define EDST(ep) ((ep)->ether_dhost)
+#define ESRC(ep) ((ep)->ether_shost)
+
+#ifndef ETHERTYPE_REVARP
+#define ETHERTYPE_REVARP 0x8035
+#endif
+
+#ifndef	IPPROTO_ND
+/* From <netinet/in.h> on a Sun somewhere. */
+#define	IPPROTO_ND	77
+#endif
+
+#ifndef REVARP_REQUEST
+#define REVARP_REQUEST 3
+#endif
+#ifndef REVARP_REPLY
+#define REVARP_REPLY 4
+#endif
+
+/* newish RIP commands */
+#ifndef	RIPCMD_POLL
+#define	RIPCMD_POLL 5
+#endif
+#ifndef	RIPCMD_POLLENTRY
+#define	RIPCMD_POLLENTRY 6
+#endif
