@@ -27,16 +27,16 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: atzsc.4,v 1.3 1995/08/18 15:10:04 chopps Exp $
+.\"	$Id: afsc.4,v 1.1 1995/08/18 15:10:02 chopps Exp $
 .\"
-.Dd August 31, 1994
-.Os NetBSD 1.0
-.Dt ATZSC 4 amiga
+.Dd July 23, 1995
+.Os NetBSD 1.0a
+.Dt AFSC 4 amiga
 .Sh NAME
-.Nm atzsc
-.Nd A2091 low level SCSI interface
+.Nm afsc
+.Nd A4091 low level SCSI interface
 .Sh SYNOPSIS
-.Cd "atzsc0 at zbus0"
+.Cd "afsc0 at zbus0"
 .Sh DESCRIPTION
 The
 .Tn Amiga
@@ -47,7 +47,7 @@ common interface. (see
 .Xr scsibus 4 )
 This common interface interacts with a machine dependent interface,
 such as
-.Nm atzsc ,
+.Nm afsc ,
 which then handles the hardware specific issues.
 .Pp
 The
@@ -57,42 +57,33 @@ actually sending commands, negotiating synchronous or asynchronous
 transfers and handling disconnect/reconnect of SCSI targets.
 The hardware that 
 .Nm
-uses is based on the WD33c93 SCSI chip.
+uses is based on the NCR53c710 SCSI chip.
 .Sh HARDWARE
 The
 .Nm
-interface supports the following Zorro II expansion cards:
-.Bl -tag -width "A2091" -offset indent
-.It Em A2091
-Commodore SCSI adapter, manufacturer\ 514, product\ 2 or product\ 3
+interface supports the following Zorro III expansion cards:
+.Bl -tag -width "A4091" -offset indent
+.It Em A4091
+Commodore SCSI adapter, manufacturer\ 514, product\ 84
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It sbicwait TIMEO @%d with asr=x%x csr=x%x
-The 33c93 code (sbic) has been waiting too long for a SCSI chip
-operation to complete. %d is the line in the source file
-.Pa amiga/dev/sbic.c
-at which the SCSI chip timed-out.  Asr and csr are status registers
-withing the SCSI chip.
-.It atzsc%d: abort %s: csr = 0x%02x, asr = 0x%02x
-A SCSI operation %s was aborted due to an error.
-.It atzsc%d: csr == 0x%02i
-A error has occured within the SCSI chip code.
-.It atzsc%d: unexpected phase %d in icmd from %d
-The target described by
-.Sq from %d
-has taken the SCSI bus into a phase which is not
-expected durring polled IO.
-.It atzsc%d: unexpected phase %d in icmd from %d
-The target described by
-.Sq from %d
-has taken the SCSI bus into a phase which is not
-expected durring DMA IO setup.
-.El
+.It afsc%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x
+The scsi operation %s was aborted due to error.  Dstat, sstat and
+sbcl are registers within the NCR53c710 SCSI chip.
+.It siop id %d reset\n"
+The NCR53c710 SCSI chip has been reset and configure at id %d.
+.It SIOP interrupt: %x sts %x msg %x sbcl %x
+The NCR53c710 SCSI chip has interrupted unexpectedly.
+.It SIOP: SCSI Gross Error
+The NCR53c710 SCSI chip has indicated that it is confused.
+.It SIOP: Parity Error
+The NCR53c710 SCSI chip has indicated that it has detected a
+parity error on the SCSI bus.
 .Sh SEE ALSO
 .Xr scsibus 4
 .Sh HISTORY
 The
 .Nm 
 interface first appeared in
-.Nx 0.9a
+.Nx 1.0
