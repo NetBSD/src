@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.3 2002/10/02 05:18:51 thorpej Exp $	*/
+/*	$NetBSD: apm.c,v 1.4 2002/10/07 21:32:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.3 2002/10/02 05:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.4 2002/10/07 21:32:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,6 @@ void apmattach(struct device *, struct device *, void *);
 dev_type_open(apmopen);
 dev_type_close(apmclose);
 dev_type_ioctl(apmioctl);
-dev_type_poll(apmpoll);
-
 
 struct apm_softc {
 	struct device sc_dev;
@@ -75,7 +73,7 @@ CFATTACH_DECL(apm, sizeof(struct apm_softc),
 
 const struct cdevsw apm_cdevsw = {
 	apmopen, apmclose, noread, nowrite, apmioctl,
-	nostop, notty, apmpoll, nommap,
+	nostop, notty, nopoll, nommap,
 };
 
 
@@ -144,14 +142,5 @@ apmioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
-	return 0;
-}
-
-int
-apmpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
 	return 0;
 }
