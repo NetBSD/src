@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.367 2000/05/11 16:49:01 jdolecek Exp $
+#	$NetBSD: files,v 1.368 2000/05/15 08:27:24 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -249,8 +249,12 @@ file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
 
+# common stuff for siop and esiop
+define siop_common
+file dev/ic/siop_common.c		siop_common
+
 # Symbios/NCR 53c720/53c8xx SCSI controllers
-device siop: scsi
+device siop: scsi,siop_common
 file dev/ic/siop.c			siop
 
 # UltraStor SCSI controllers
