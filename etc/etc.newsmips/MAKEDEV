@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 2002/08/09 02:39:28 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.35 2002/10/04 18:53:40 elric Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,6 +54,7 @@
 #	ch*	SCSI media changer
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
+#	cgd*	cryptographic disk devices
 #	raid*	RAIDframe disk devices
 #	md*	memory pseudo-disk devices
 # Pseudo terminals:
@@ -96,6 +97,7 @@ all)
 	makedev std wscons fd sd0 sd1 sd2 sd3 cd0 st0 st1
 	makedev pty0 tty0 tty1
 	makedev vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 md0 md1
+	makedev cgd0 cgd1 cgd2 cgd3
 	makedev tun0 tun1 tun2 tun3
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
@@ -176,10 +178,11 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|fd*|sd*|cd*|vnd*|raid*)
+ccd*|cgd*|fd*|sd*|cd*|vnd*|raid*)
 	umask 2
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=7;	chr=49;;
+	cgd*)	name=cgd;	unit=${i#cgd};	blk=33;	chr=77;;
 	raid*)	name=raid;	unit=${i#raid}; blk=32; chr=74;;
 	fd*)	name=fd;	unit=${i#fd};	blk=1;	chr=5;;
 	sd*)	name=sd;	unit=${i#sd};	blk=0;	chr=4;;
