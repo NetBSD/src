@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.3 2001/11/15 07:03:33 lukem Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.4 2003/01/20 01:25:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -94,7 +94,7 @@
 /* HAYAKAWA Koichi wrote ALi 1543 PCI ICU code basing on VIA82C586 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.3 2001/11/15 07:03:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.4 2003/01/20 01:25:04 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,10 @@ const struct pciintr_icu ali1543_icu = {
  * Linux source code (linux/arch/i386/kernel/pci-irq.c) says that the
  * irq order of ALi PCI ICU is shuffled.
  */
-const static int ali1543_intr_shuffle_get[16] = {
+static const int ali1543_intr_shuffle_get[16] = {
 	0, 9, 3, 10, 4, 5, 7, 6, 1, 11, 0, 12, 0, 14, 0, 15
 };
-const static int ali1543_intr_shuffle_set[16] = {
+static const int ali1543_intr_shuffle_set[16] = {
 	0, 8, 0, 2, 4, 5, 7, 6, 0, 1, 3, 9, 11, 0, 13, 15
 };
 
