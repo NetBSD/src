@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.189.2.4 2004/04/05 20:39:31 tron Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.189.2.5 2004/06/13 08:18:05 jdc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.4 2004/04/05 20:39:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.5 2004/06/13 08:18:05 jdc Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.4 2004/04/05 20:39:31 tron Exp 
 
 #include <sys/user.h>		/* for coredump */
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 static void	child_psignal(struct proc *, int);
@@ -90,6 +91,30 @@ static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
 sigset_t	contsigmask, stopsigmask, sigcantmask, sigtrapmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
+
+/*
+ * struct sigacts memory pool allocator.
+ */
+
+static void *
+sigacts_poolpage_alloc(struct pool *pp, int flags)
+{
+
+	return (void *)uvm_km_kmemalloc1(kernel_map,
+	    uvm.kernel_object, (PAGE_SIZE)*2, (PAGE_SIZE)*2, UVM_UNKNOWN_OFFSET,
+	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
+}
+
+static void
+sigacts_poolpage_free(struct pool *pp, void *v)
+{
+        uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2);
+}
+
+static struct pool_allocator sigactspool_allocator = {
+        sigacts_poolpage_alloc, sigacts_poolpage_free,
+};
+
 struct pool	siginfo_pool;	/* memory pool for siginfo structures */
 struct pool	ksiginfo_pool;	/* memory pool for ksiginfo structures */
 
@@ -203,8 +228,12 @@ ksiginfo_exithook(struct proc *p, void *v)
 void
 signal_init(void)
 {
+
+	sigactspool_allocator.pa_pagesz = (PAGE_SIZE)*2;
+
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    &pool_allocator_nointr);
+	    sizeof(struct sigacts) > PAGE_SIZE ?
+	    &sigactspool_allocator : &pool_allocator_nointr);
 	pool_init(&siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
 	    &pool_allocator_nointr);
 	pool_init(&ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo",
