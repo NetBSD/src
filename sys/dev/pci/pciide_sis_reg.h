@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.4 1998/12/03 17:29:01 bouyer Exp $	*/
+/*	$NetBSD: pciide_sis_reg.h,v 1.5 1998/12/04 17:30:55 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -50,8 +50,8 @@
 #define SIS_CTRL0_PCIBURST	0x80
 #define SIS_CTRL0_FAST_PW	0x20
 #define SIS_CTRL0_BO		0x08
-#define SIS_CTRL0_CHAN0_EN	0x04
-#define SIS_CTRL0_CHAN1_EN	0x02
+#define SIS_CTRL0_CHAN0_EN	0x02 /* manual (v2.0) is wrong!!! */
+#define SIS_CTRL0_CHAN1_EN	0x04 /* manual (v2.0) is wrong!!! */
 
 /* IDE general control register 1 (8 bits) */
 #define SIS_CTRL1 0x4b
