@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/03/06 01:29:04 eeh Exp $
+#	$NetBSD: Makefile,v 1.15 2000/07/21 22:06:11 jdolecek Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -10,7 +10,7 @@ S=	${CURDIR}/../../../..
 WARNS=		0
 
 PROG=		ofwboot
-SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c 
+SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 .PATH:		${S}/arch/sparc64/sparc64
 
 .if CROSS
@@ -37,7 +37,7 @@ RELOC=		800000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c vers.o
+CLEANFILES+=	vers.c
 
 CPPFLAGS+=	-I${CURDIR}/../../.. -I${CURDIR}/../../../.. -I${CURDIR}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
@@ -72,9 +72,12 @@ ${OBJS}: machine
 machine:
 	ln -s ../../include machine
 
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 	${LD} -N -p -Ttext ${RELOC} -e ${ENTRY} >lderr -o ${PROG} \
 	    ${OBJS} vers.o -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern # solaris linker
