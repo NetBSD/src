@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.42 2000/05/10 16:58:42 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.43 2000/06/28 16:08:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -68,6 +68,10 @@ struct pcibus_attach_args {
 
 	int		pba_bus;	/* PCI bus number */
 
+#ifdef __PCI_OFW_BINDING
+	int		pba_node;	/* OFW node */
+#endif
+
 	/*
 	 * Interrupt swizzling information.  These fields
 	 * are only used by secondary busses.
@@ -90,6 +94,10 @@ struct pci_attach_args {
 	u_int		pa_function;
 	pcitag_t	pa_tag;
 	pcireg_t	pa_id, pa_class;
+
+#ifdef __PCI_OFW_BINDING
+	int		pa_node;	/* OFW node */
+#endif
 
 	/*
 	 * Interrupt information.
