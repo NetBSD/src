@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.11 2003/11/03 18:07:10 mycroft Exp $ */
+/* $NetBSD: com_acpi.c,v 1.12 2003/11/03 18:25:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.11 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.12 2003/11/03 18:25:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ static const char * const com_acpi_ids[] = {
 	"PNP0510",	/* Generic IRDA-compatible device */
 	"PNP0511",	/* Generic IRDA-compatible device */
 	"IBM0071",	/* IBM ThinkPad IRDA device */
+	"SMCF010",	/* SMC SuperIO IRDA device */
 	NULL
 };
 
