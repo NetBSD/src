@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.7 2003/03/03 21:17:05 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.8 2003/04/02 16:26:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,9 +36,8 @@
 #ifndef _FS_SMBFS_SMBFS_SUBR_H_
 #define _FS_SMBFS_SMBFS_SUBR_H_
 
-#ifdef MALLOC_DECLARE
+MALLOC_DECLARE(M_SMBNODENAME);
 MALLOC_DECLARE(M_SMBFSDATA);
-#endif
 
 #define SMBFSERR(format, args...) printf("%s: "format, __func__ ,## args)
 

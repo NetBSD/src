@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.14 2003/02/27 09:14:26 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.15 2003/04/02 16:26:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.14 2003/02/27 09:14:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.15 2003/04/02 16:26:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.14 2003/02/27 09:14:26 jdolecek Exp
 #define	smbfs_hash_lock(smp)	lockmgr(&smp->sm_hashlock, LK_EXCLUSIVE, NULL)
 #define	smbfs_hash_unlock(smp)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL)
 
-static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
+MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
 extern int (**smbfs_vnodeop_p) __P((void *));
 
