@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.37 1998/09/21 01:50:44 simonb Exp $	*/
+/*	$NetBSD: stat.h,v 1.38 1999/08/03 18:32:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -186,6 +186,8 @@ struct stat {
 #define	_S_ISVTX  0001000		/* save swapped text even after use */
 #define	_S_IFSOCK 0140000		/* socket */
 #define	_S_IFWHT  0160000		/* whiteout */
+#define	_S_ARCH1  0200000		/* Archive state 1, ls -l shows 'a' */
+#define	_S_ARCH2  0400000		/* Archive state 2, ls -l shows 'A' */
 
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #define	S_IFMT	 _S_IFMT
@@ -200,6 +202,9 @@ struct stat {
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	S_IFSOCK _S_IFSOCK
 #define	S_IFWHT  _S_IFWHT
+
+#define	S_ARCH1	_S_ARCH1
+#define	S_ARCH2	_S_ARCH2
 #endif
 
 #define	S_ISDIR(m)	((m & _S_IFMT) == _S_IFDIR)	/* directory */
