@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.16 1998/09/03 01:43:35 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.17 1998/11/16 16:44:57 oster Exp $
 #
 # First try for PPC config file
 #
@@ -71,5 +71,6 @@ ofrtc*		at ofbus?
 pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	pty		64
+#pseudo-device	raid		4	# RAIDframe disk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

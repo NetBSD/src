@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1998/06/26 01:54:06 lukem Exp $
+#	$NetBSD: GENERIC,v 1.16 1998/11/16 16:44:57 oster Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #
@@ -90,5 +90,6 @@ pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	vnd		4	# virtual disk
 pseudo-device	ccd		4	# concatenated disks
+#pseudo-device 	raid		4	# RAIDframe disk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
