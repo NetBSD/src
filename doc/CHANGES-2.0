@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.36 2004/04/05 20:55:35 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.37 2004/04/06 03:54:25 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -320,7 +320,7 @@ sys/dev/mvme/vme_two.c				1.4
 usr.bin/fstat/fstat.c				1.66
 
 	Fix fstat core dumps when some process holds a reference in a Linux
-	ext2fs filesystem.
+	ext2fs filesystem. PR#21301
 	[aymeric, ticket #50]
 
 xsrc/xfree/xc/fonts/util/bdftruncate.pl		1.4
@@ -428,3 +428,7 @@ sys/arch/i386/i386/identcpu.c			1.11
 	- fix a potential out-of-bounds array reference
 	[mrg, ticket #65]
 
+xfree/xc/programs/xdm/config/Imakefile		1.2
+
+	Provide a default tty under NetBSD-amd64, too. PR#25060
+	[tron, ticket #63]
