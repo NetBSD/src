@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.140 2003/10/18 04:03:22 simonb Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.141 2003/10/18 15:52:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.140 2003/10/18 04:03:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.141 2003/10/18 15:52:42 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1088,6 +1088,7 @@ lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	struct buf *bp, *nbp;
 	int s, count = 0;
 	
+	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
 	s = splbio();
 
@@ -1169,6 +1170,7 @@ loop:
 		printf(")\n");
 #endif
 	lfs_updatemeta(sp);
+	KASSERT(sp->vp == vp);
 	sp->vp = NULL;
 	return count;
 }
@@ -1205,6 +1207,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 	int num, error;
 	int bb, osize, obb;
 	
+	KASSERT(sp->vp != NULL);
 	vp = sp->vp;
 	ip = VTOI(vp);
 
@@ -1331,7 +1334,8 @@ lfs_updatemeta(struct segment *sp)
 	vp = sp->vp;
 	nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
 	KASSERT(nblocks >= 0);
-	if (vp == NULL || nblocks == 0)
+	KASSERT(vp != NULL);
+	if (nblocks == 0)
 		return;
 
 	/*
@@ -1404,6 +1408,7 @@ lfs_updatemeta(struct segment *sp)
 		 * update its address on disk.
 		 */
 		KASSERT(lbn >= 0 || sbp->b_bcount == fs->lfs_bsize);
+		KASSERT(vp == sbp->b_vp);
 		for (bytesleft = sbp->b_bcount; bytesleft > 0;
 		     bytesleft -= fs->lfs_bsize) {
 			size = MIN(bytesleft, fs->lfs_bsize);
