@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1997/04/02 21:54:17 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1997/04/06 12:39:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -564,8 +564,8 @@ vm_offset_t	p;
 }
 
 unsigned	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
-int		dumpsize = 0;		/* also for savecore		*/
-long		dumplo   = 0;
+int		dumpsize = 0;		/* also for savecore (pages)	*/
+long		dumplo   = 0;		/* (disk blocks)		*/
 
 void
 cpu_dumpconf()
@@ -577,6 +577,8 @@ cpu_dumpconf()
 			break;
 		dumpsize += boot_segs[i].end - boot_segs[i].start;
 	}
+	dumpsize = btoc(dumpsize);
+
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
