@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.7 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.8 2000/05/14 22:53:37 christos Exp $	*/
 
 /*
  * compress routines:
@@ -8,9 +8,6 @@
  *					    using method, return sizeof new
  */
 #include "file.h"
-#ifdef __CYGWIN__
-#include <errno.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -23,9 +20,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: compress.c,v 1.14 1999/10/31 22:23:03 christos Exp ")
+FILE_RCSID("@(#)Id: compress.c,v 1.15 1999/11/28 20:02:29 christos Exp ")
 #else
-__RCSID("$NetBSD: compress.c,v 1.7 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.8 2000/05/14 22:53:37 christos Exp $");
 #endif
 #endif
 
@@ -42,6 +39,7 @@ static struct {
     { "\037\240", 2, { "gzip", "-cdq", NULL }, 1 },	/* SCO LZH */
     /* the standard pack utilities do not accept standard input */
     { "\037\036", 2, { "gzip", "-cdq", NULL }, 0 },	/* packed */
+    { "BZh",      3, { "bzip2", "-d", NULL }, 1 },	/* bzip2-ed */
 };
 
 static int ncompr = sizeof(compr) / sizeof(compr[0]);
