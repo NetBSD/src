@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.31 1996/09/09 14:51:19 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.32 1996/09/14 14:40:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -54,6 +54,10 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif /* PFIL_HOOKS */
+
 #ifdef vax
 #include <machine/mtpr.h>
 #endif
@@ -92,10 +96,10 @@ ip_output(m0, va_alist)
 	int flags;
 	struct ip_moptions *imo;
 	va_list ap;
-#ifdef PACKET_FILTER
+#ifdef PFIL_HOOKS
 	struct packet_filter_hook *pfh;
 	struct mbuf *m1;
-#endif /* PACKET_FILTER */
+#endif /* PFIL_HOOKS */
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -295,7 +299,7 @@ ip_output(m0, va_alist)
 	} else
 		m->m_flags &= ~M_BCAST;
 
-#ifdef PACKET_FILTER
+#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
@@ -308,7 +312,7 @@ ip_output(m0, va_alist)
 			}
 			ip = mtod(m = m1, struct ip *);
 		}
-#endif /* PACKET_FILTER */
+#endif /* PFIL_HOOKS */
 sendit:
 	/*
 	 * If small enough for interface, can just send directly.
@@ -416,14 +420,14 @@ done:
 	}
 	return (error);
 bad:
-#ifdef PACKET_FILTER
+#ifdef PFIL_HOOKS
 	m1 = m;
 	for (pfh = pfil_hook_get(PFIL_BAD); pfh; pfh = pfh->pfil_link.le_next)
 		if (pfh->pfil_func) {
 			(void)pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 2, &m1);
 			ip = mtod(m = m1, struct ip *);
 		}
-#endif /* PACKET_FILTER */
+#endif /* PFIL_HOOKS */
 	m_freem(m0);
 	goto done;
 }
