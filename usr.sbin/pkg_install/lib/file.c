@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.48.2.3 2002/07/21 04:42:21 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.48.2.4 2002/07/23 11:06:10 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.48.2.3 2002/07/21 04:42:21 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.48.2.4 2002/07/23 11:06:10 lukem Exp $");
 #endif
 #endif
 
@@ -240,7 +240,7 @@ fileGetURL(const char *spec)
 
 	rp = NULL;
 	if (!IS_URL(spec)) {
-		errx(1, "fileGetURL was called with non-url arg '%s'\n", spec);
+		errx(1, "fileGetURL was called with non-url arg '%s'", spec);
 	}
 
  	/* Some sanity checks on the URL */
