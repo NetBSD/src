@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.224 2003/02/16 17:35:14 augustss Exp $
+# $NetBSD: GENERIC,v 1.225 2003/02/18 05:50:51 grant Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.224 $"
+#ident 		"GENERIC-$Revision: 1.225 $"
 
 maxusers 32
 
@@ -87,12 +87,26 @@ options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Sun NFS-compatible file system server
 
 # Networking options
-options 	INET		# Internet protocol suite
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	NETATALK	# AppleTalk protocol suite
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43
