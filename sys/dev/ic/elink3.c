@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.60 1999/10/20 16:34:22 enami Exp $	*/
+/*	$NetBSD: elink3.c,v 1.61 1999/10/20 16:39:11 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -496,7 +496,7 @@ epconfig(sc, chipset, enaddr)
 	GO_WINDOW(1);		/* Window 1 is operating window */
 
 #if NBPFILTER > 0
-	bpfattach(ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 #if NRND > 0
