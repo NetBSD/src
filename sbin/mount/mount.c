@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.32 1997/09/16 12:22:45 lukem Exp $	*/
+/*	$NetBSD: mount.c,v 1.33 1997/10/29 18:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.32 1997/09/16 12:22:45 lukem Exp $");
+__RCSID("$NetBSD: mount.c,v 1.33 1997/10/29 18:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,8 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	struct statfs sf;
 	pid_t pid;
 	int argc, i, status;
-	char *optbuf, execname[MAXPATHLEN + 1], mntpath[MAXPATHLEN];
+	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN],
+	    mntpath[MAXPATHLEN];
 #ifdef __GNUC__
 	(void) &name;
 	(void) &optbuf;
@@ -350,12 +351,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		optbuf = catopt(optbuf, "force");
 	if (flags & MNT_RDONLY)
 		optbuf = catopt(optbuf, "ro");
-	/*
-	 * XXX
-	 * The mount_mfs (newfs) command uses -o to select the
-	 * optimisation mode.  We don't pass the default "-o rw"
-	 * for that reason.
-	 */
+
 	if (flags & MNT_UPDATE) {
 		optbuf = catopt(optbuf, "update");
 		/* Figure out the fstype only if we defaulted to ffs */
@@ -363,15 +359,16 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 			vfstype = sf.f_fstypename;
 	}
 
+	(void) snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
 	argc = 0;
-	argv[argc++] = vfstype;
+	argv[argc++] = execbase;
 	mangle(optbuf, &argc, argv);
 	argv[argc++] = spec;
 	argv[argc++] = name;
 	argv[argc] = NULL;
 
 	if (debug) {
-		(void)printf("exec: mount_%s", vfstype);
+		(void)printf("exec: %s", execbase);
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
@@ -388,14 +385,14 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		edir = edirs;
 		do {
 			(void)snprintf(execname,
-			    sizeof(execname), "%s/mount_%s", *edir, vfstype);
+			    sizeof(execname), "%s/%s", *edir, execbase);
 			execv(execname, (char * const *)argv);
 			if (errno != ENOENT)
 				warn("exec %s for %s", execname, name);
 		} while (*++edir != NULL);
 
 		if (errno == ENOENT)
-			warnx("mount_%s not found for %s", vfstype, name);
+			warnx("%s not found for %s", execbase, name);
 		exit(1);
 		/* NOTREACHED */
 	default:				/* Parent. */
