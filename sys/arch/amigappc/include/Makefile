@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/04 21:29:04 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2002/05/19 08:31:17 gehenna Exp $
 
 KDIR=	/sys/arch/amigappc/include
 INCSDIR= /usr/include/amigappc
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
-	cdefs.h conf.h cpu.h cpufunc.h \
+	cdefs.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
