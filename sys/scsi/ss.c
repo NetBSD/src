@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.11 1996/07/12 16:49:50 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -140,7 +140,7 @@ ssattach(parent, self, aux)
 	 * and install functions for special handling
 	 */
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
-	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK  ", 8))
+	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK", 6))
 		mustek_attach(ss, sa);
 	if (!bcmp(sa->sa_inqbuf->vendor, "HP      ", 8))
 		scanjet_attach(ss, sa);
