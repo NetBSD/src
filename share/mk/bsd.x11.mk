@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.1 2003/09/12 07:40:34 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.2 2003/09/13 00:16:10 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -30,7 +30,7 @@ X11TOOL_UNXCOMM=	sed -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
 			    -e '/^XCOMM[^a-zA-Z0-9_]/s/^XCOMM/\#/'
 
 CPPFLAGS+=		-DCSRG_BASED -DFUNCPROTO=15 -DNARROWPROTO
-CPPFLAGS+=		-I${DESTDIR}/${X11INCDIR}
+CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}
 
 LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
 			-R${X11USRLIBDIR} \
