@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.22 1999/01/26 14:26:23 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.23 1999/01/26 14:47:32 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.22 1999/01/26 14:26:23 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.23 1999/01/26 14:47:32 hubertf Exp $");
 #endif
 #endif
 
@@ -413,6 +413,10 @@ fileFindByPath(char *base, char *fname)
     return NULL;
 }
 
+/*
+ *  expect "fname" to point at a +CONTENTS file, and read it into
+ *  the buffer returned. 
+ */
 char *
 fileGetContents(char *fname)
 {
@@ -441,8 +445,8 @@ fileGetContents(char *fname)
     return contents;
 }
 
-/* Takes a filename and package name, returning (in "try") the canonical "preserve"
- * name for it.
+/* Takes a filename and package name, returning (in "try") the canonical
+ * "preserve" name for it.
  */
 Boolean
 make_preserve_name(char *try, size_t max, char *name, char *file)
