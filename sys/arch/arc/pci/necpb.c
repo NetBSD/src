@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.8 2001/06/13 15:18:27 soda Exp $	*/
+/*	$NetBSD: necpb.c,v 1.9 2001/08/17 11:11:57 ur Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -183,24 +183,32 @@ necpb_init(ncp)
 	ncp->nc_pc.pc_intr_establish = necpb_intr_establish;
 	ncp->nc_pc.pc_intr_disestablish = necpb_intr_disestablish;
 
-	/* XXX: enable all mem/io/busmaster */
+	/*
+	 * XXX:
+	 *  NEC's firmware does not configure PCI devices completely.
+	 *  We need to disable expansion ROM and enable mem/io/busmaster
+	 *  bits here.
+	 */
 	tag = necpb_make_tag(&ncp->nc_pc, 0, 3, 0);
 	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE;
 	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	necpb_conf_write(&ncp->nc_pc, tag, PCI_MAPREG_ROM, 0);
 
 	tag = necpb_make_tag(&ncp->nc_pc, 0, 4, 0);
 	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE;
 	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	necpb_conf_write(&ncp->nc_pc, tag, PCI_MAPREG_ROM, 0);
 
 	tag = necpb_make_tag(&ncp->nc_pc, 0, 5, 0);
 	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE;
 	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	necpb_conf_write(&ncp->nc_pc, tag, PCI_MAPREG_ROM, 0);
 
 	ncp->nc_initialized = 1;
 }
