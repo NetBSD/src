@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.56 2003/06/03 14:00:45 christos Exp $
+# $NetBSD: rc.subr,v 1.57 2003/06/27 04:06:01 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -496,7 +496,7 @@ run_rc_command()
 				exit 1
 			fi
 
-			if [ ! -x $command ]; then
+			if [ ! -x ${_chroot}${command} ]; then
 				return 0
 			fi
 
