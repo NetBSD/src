@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.17 2000/07/18 19:13:20 cgd Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.18 2000/07/27 04:06:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mknodes.c,v 1.17 2000/07/18 19:13:20 cgd Exp $";
+    "$NetBSD: mknodes.c,v 1.18 2000/07/27 04:06:49 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static struct str *nodestr[MAXTYPES];	/* type of structure used by the node */
 static int nstr;			/* number of structures */
 static struct str str[MAXTYPES];	/* the structures */
 static struct str *curstr;		/* current structure */
-static FILE *infp = stdin;
+static FILE *infp;
 static char line[1024];
 static int linno;
 static char *linep;
@@ -124,6 +124,13 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+
+	/*
+	 * some versions of linux complain: initializer element is not
+	 * constant if this is done at compile time.
+	 */
+	infp = stdin;
+
 	if (argc != 3)
 		error("usage: mknodes file");
 	if ((infp = fopen(argv[1], "r")) == NULL)
