@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.90 1997/05/18 19:56:50 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.91 1997/06/24 23:44:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -393,6 +393,9 @@ dounmount(mp, flags, p)
 		vfs_unbusy(mp);
 		return (error);
 	}
+
+	if (mp->mnt_flag & MNT_EXPUBLIC)
+		vfs_setpublicfs(NULL, NULL, NULL);
 
 	mp->mnt_flag &=~ MNT_ASYNC;
 	vnode_pager_umount(mp);	/* release cached vnodes */
