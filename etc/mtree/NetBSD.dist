@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.74 1999/01/02 18:47:09 mcr Exp $
+#	$NetBSD: NetBSD.dist,v 1.75 1999/02/05 18:06:41 perry Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -185,6 +185,16 @@ libexec
 # ./usr/libexec/lpr
 lpr
 # ./usr/libexec/lpr
+..
+
+# ./usr/libexec/postfix
+postfix
+# ./usr/libexec/postfix
+..
+
+# ./usr/libexec/sendmail
+sendmail
+# ./usr/libexec/sendmail
 ..
 
 # ./usr/libexec/sm.bin
