@@ -36,13 +36,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)redir.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: redir.c,v 1.5 1993/08/01 18:58:01 mycroft Exp $";
+static char rcsid[] = "$Id: redir.c,v 1.6 1994/04/25 18:47:17 cgd Exp $";
 #endif /* not lint */
 
 /*
  * Code for dealing with input/output redirection.
  */
 
+#include <sys/types.h>
 #include "shell.h"
 #include "nodes.h"
 #include "jobs.h"
@@ -184,7 +185,7 @@ movefd:
 		if ((f = open(fname, O_WRONLY)) < 0
 		 && (f = creat(fname, 0666)) < 0)
 			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-		lseek(f, 0L, 2);
+		lseek(f, 0, 2);
 #endif
 		goto movefd;
 	case NTOFD:
