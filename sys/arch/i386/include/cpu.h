@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.114 2004/04/30 02:05:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,7 +118,8 @@ struct cpu_info {
 
 	int32_t		ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
-	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
+	u_int32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
+	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
 	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */
@@ -338,8 +339,10 @@ struct cpu_cpuid_nameclass {
 extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
+extern unsigned int cpu_feature2;
 extern int cpu;
 extern int cpu_class;
+extern char cpu_brand_string[];
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
@@ -429,6 +432,9 @@ void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
+
+/* est.c */
+void	est_init(struct cpu_info *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.255 2004/04/18 18:36:56 fvdl Exp $
+#	$NetBSD: files.i386,v 1.256 2004/04/30 02:05:42 lukem Exp $
 #
 # new style config file for i386 architecture
 #
@@ -60,6 +60,9 @@ defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 defflag opt_beep.h		BEEP_ONHALT
 defparam opt_beep.h		BEEP_ONHALT_COUNT
 defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
+
+# Enhanced SpeedStep
+defflag			ENHANCED_SPEEDSTEP
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
@@ -469,5 +472,8 @@ file	arch/i386/bios/vesa_raster8.c	vesarasterviii
 device vesatext
 attach vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
+
+# Enhanced SpeedStep
+file	arch/i386/i386/est.c		enhanced_speedstep
 
 include "arch/i386/conf/majors.i386"
