@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2003/04/05 23:15:10 bjh21 Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.4 2004/08/21 11:31:44 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -123,7 +123,7 @@
 ENTRY(_getcontext_u)
 	GETC(r0)
 	mov	r0, #0x00000000
-	mov	pc, lr
+	RET
 
 ENTRY(_setcontext_u)
 	SETC(r0)
