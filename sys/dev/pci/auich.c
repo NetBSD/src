@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.63 2004/10/17 09:10:28 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.64 2004/10/27 13:26:43 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.63 2004/10/17 09:10:28 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.64 2004/10/27 13:26:43 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.63 2004/10/17 09:10:28 kent Exp $");
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -171,6 +172,7 @@ struct auich_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
+	struct device *sc_audiodev;
 	audio_device_t sc_audev;
 
 	bus_space_tag_t iot;
@@ -225,6 +227,11 @@ struct auich_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
+
+	/* sysctl */
+	struct sysctllog *sc_log;
+	uint32_t sc_ac97_clock;
+	int sc_ac97_clock_mib;
 };
 
 #define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
@@ -284,6 +291,7 @@ int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void	auich_powerhook(int, void *);
 int	auich_set_rate(struct auich_softc *, int, u_long);
+static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 void	auich_finish_attach(struct device *);
 void	auich_calibrate(struct auich_softc *);
 
@@ -394,6 +402,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t v;
 	const char *intrstr;
 	const struct auich_devtype *d;
+	struct sysctlnode *node;
+	int err, node_mib;
 
 	aprint_naive(": Audio controller\n");
 
@@ -524,6 +534,79 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
 
 	config_interrupts(self, auich_finish_attach);
+
+	/* sysctl setup */
+	if (IS_FIXED_RATE(sc->codec_if))
+		return;
+	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
+			     CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
+			     CTL_HW, CTL_EOL);
+	if (err != 0)
+		goto sysctl_err;
+	err = sysctl_createv(&sc->sc_log, 0, NULL, &node, 0,
+			     CTLTYPE_NODE, sc->sc_dev.dv_xname, NULL, NULL, 0,
+			     NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (err != 0)
+		goto sysctl_err;
+	node_mib = node->sysctl_num;
+	/* passing the sc address instead of &sc->sc_ac97_clock */
+	err = sysctl_createv(&sc->sc_log, 0, NULL, &node, CTLFLAG_READWRITE,
+			     CTLTYPE_INT, "ac97rate",
+			     SYSCTL_DESCR("AC'97 codec link rate"),
+			     auich_sysctl_verify, 0, sc, 0,
+			     CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
+	if (err != 0)
+		goto sysctl_err;
+	sc->sc_ac97_clock_mib = node->sysctl_num;
+
+	return;
+
+ sysctl_err:
+	printf("%s: failed to add sysctl nodes. (%d)\n",
+	       sc->sc_dev.dv_xname, err);
+	return;			/* failure of sysctl is not fatal. */
+}
+
+#if 0
+int
+auich_detach(struct device *self, int flags)
+{
+	struct auich_softc *sc;
+
+	sc = (struct auich_softc *)self;
+	/* sysctl */
+	sysctl_teardown(&sc->sc_log);
+	/* audio */
+	if (sc->sc_audiodev != NULL)
+		config_detach(sc->sc_audiodev, flags);
+	/* XXX ac97 */
+	/* XXX memory */
+	return 0;
+}
+#endif
+
+static int
+auich_sysctl_verify(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+	struct auich_softc *sc;
+
+	node = *rnode;
+	sc = rnode->sysctl_data;
+	tmp = sc->sc_ac97_clock;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (node.sysctl_num == sc->sc_ac97_clock_mib) {
+		if (tmp < 48000 || tmp > 96000)
+			return EINVAL;
+		sc->sc_ac97_clock = tmp;
+	}
+
+	return 0;
 }
 
 void
@@ -534,7 +617,7 @@ auich_finish_attach(struct device *self)
 	if (!IS_FIXED_RATE(sc->codec_if))
 		auich_calibrate(sc);
 
-	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
+	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 }
 
 #define ICH_CODECIO_INTERVAL	10
@@ -707,6 +790,7 @@ auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 	int ret;
 	u_long ratetmp;
 
+	sc->codec_if->vtbl->set_clock(sc->codec_if, sc->sc_ac97_clock);
 	ratetmp = srate;
 	if (mode == AUMODE_RECORD)
 		return sc->codec_if->vtbl->set_rate(sc->codec_if,
@@ -1554,5 +1638,5 @@ auich_calibrate(struct auich_softc *sc)
 		printf(", will use %d Hz", ac97rate);
 	printf("\n");
 
-	sc->codec_if->vtbl->set_clock(sc->codec_if, ac97rate);
+	sc->sc_ac97_clock = ac97rate;
 }
