@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.4.2.4 2001/03/23 11:32:17 bouyer Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.4.2.5 2001/03/27 13:05:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -574,7 +574,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 #ifdef USSCANNER_DEBUG
 	if (usscannerdebug > 15)
-		xs->sc_link->flags |= DEBUGLEVEL;
+		xs->xs_periph->periph_flags |= DEBUGLEVEL;
 
 	if (sc->sc_state != UAS_SENSECMD) {
 		printf("%s: !UAS_SENSECMD\n", USBDEVNAME(sc->sc_dev));
@@ -620,7 +620,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 #ifdef USSCANNER_DEBUG
 	if (usscannerdebug > 15)
-		xs->sc_link->flags |= DEBUGLEVEL;
+		xs->xs_periph->periph_flags |= DEBUGLEVEL;
 
 	if (sc->sc_state != UAS_CMD) {
 		printf("%s: !UAS_CMD\n", USBDEVNAME(sc->sc_dev));
@@ -700,7 +700,7 @@ usscanner_scsipi_request(chan, req, arg)
 		}
 
 #ifdef USSCANNER_DEBUG
-		if (sc_link->scsipi_scsi.target != USSCANNER_SCSIID_DEVICE) {
+		if (periph->periph_target != USSCANNER_SCSIID_DEVICE) {
 			DPRINTF(("%s: wrong SCSI ID %d\n",
 			    USBDEVNAME(sc->sc_dev), periph->periph_target));
 			xs->error = XS_DRIVER_STUFFUP;
