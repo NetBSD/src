@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.45 2001/05/27 23:52:41 wiz Exp $
+#	$NetBSD: INSTALL,v 1.46 2001/06/03 13:46:58 tsutsui Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -72,8 +72,9 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
@@ -126,6 +127,7 @@ wskbd0	at akbd? console ?
 scsibus* at adv?
 scsibus* at ahc?
 scsibus* at esp?
+scsibus* at iha?
 scsibus* at mesh?
 scsibus* at pcscp?
 scsibus* at siop?
