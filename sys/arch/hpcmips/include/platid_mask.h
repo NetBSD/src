@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.5 1999/11/21 12:49:08 shin Exp $ */
+/* $Id: platid_mask.h,v 1.6 1999/12/08 05:27:08 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -336,6 +336,18 @@ extern platid_t platid_mask_MACH_COMPAQ_AERO_2130;
 extern platid_t platid_mask_MACH_COMPAQ_AERO_2140;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_AERO_2140 ((int)&platid_mask_MACH_COMPAQ_AERO_2140)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_PRESARIO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_PRESARIO ((int)&platid_mask_MACH_COMPAQ_PRESARIO)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_PRESARIO_21X;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_PRESARIO_21X ((int)&platid_mask_MACH_COMPAQ_PRESARIO_21X)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_PRESARIO_213;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_PRESARIO_213 ((int)&platid_mask_MACH_COMPAQ_PRESARIO_213)
 #endif
 extern platid_t platid_mask_MACH_VICTOR;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
