@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2002/10/01 07:49:46 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2002/10/01 15:01:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -277,6 +277,7 @@ struct pvo_entry {
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
 #define	PVO_MANAGED		0x0020		/* PVO e. for managed page */
 #define	PVO_WRITABLE		0x0040		/* PVO e. for writable page */
+#define	PVO_CACHEABLE		0x0080		/* PVO e. for cacheable page */
 /* Note: These three fields must match the values for SH5_PTEL_[RM] */
 #define	PVO_REFERENCED		0x0400		/* Cached referenced bit */
 #define	PVO_MODIFIED		0x0800		/* Cached modified bit */
@@ -290,6 +291,7 @@ struct pvo_entry {
 #define	PVO_ISWIRED(pvo)	((pvo)->pvo_vaddr & PVO_WIRED)
 #define	PVO_ISMANAGED(pvo)	((pvo)->pvo_vaddr & PVO_MANAGED)
 #define	PVO_ISWRITABLE(pvo)	((pvo)->pvo_vaddr & PVO_WRITABLE)
+#define	PVO_ISCACHEABLE(pvo)	((pvo)->pvo_vaddr & PVO_CACHEABLE)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
 #define	PVO_PTEGIDX_ISSET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_VALID)
 #define	PVO_PTEGIDX_CLR(pvo)	\
@@ -328,6 +330,11 @@ static struct evcnt pmap_pte_spill_events =
 static struct evcnt pmap_pte_spill_evict_events =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "spill evictions");
 
+static struct evcnt pmap_shared_cache_downgrade_events =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "cache downgrades");
+static struct evcnt pmap_shared_cache_upgrade_events =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "cache upgrades");
+
 /*
  * This array contains one entry per kernel IPT entry.
  */
@@ -352,6 +359,7 @@ static ptel_t pmap_pa_unmap_kva(vaddr_t, ptel_t *);
 static int pmap_pvo_enter(pmap_t, struct pvo_head *,
 	vaddr_t, paddr_t, ptel_t, int);
 static void pmap_pvo_remove(struct pvo_entry *, int);
+static void pmap_remove_update(struct pvo_head *, int);
 
 static u_int	pmap_asid_next;
 static u_int	pmap_asid_max;
@@ -1150,6 +1158,8 @@ pmap_init(void)
 
 	evcnt_attach_static(&pmap_pte_spill_events);
 	evcnt_attach_static(&pmap_pte_spill_evict_events);
+	evcnt_attach_static(&pmap_shared_cache_downgrade_events);
+	evcnt_attach_static(&pmap_shared_cache_upgrade_events);
 	for (i = 0; i < SH5_PTEG_SIZE; i++)
 		evcnt_attach_static(&pmap_pteg_idx_events[i]);
 }
@@ -1490,7 +1500,7 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 	vaddr_t va, paddr_t pa, ptel_t ptel, int flags)
 {
 	struct pvo_head *pvo_table_head;
-	struct pvo_entry *pvo;
+	struct pvo_entry *pvo, *pvop;
 	int idx;
 	int i, s;
 	int poolflags = PR_NOWAIT;
@@ -1527,7 +1537,7 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 	s = splhigh();
 
 	/*
-	 * Remove any existing mapping for this page.
+	 * Remove any existing mapping for this virtual page.
 	 */
 	LIST_FOREACH(pvo, pvo_table_head, pvo_olink) {
 		if (pvo->pvo_pmap == pm && PVO_VADDR(pvo) == va)
@@ -1556,24 +1566,9 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 		return (ENOMEM);
 	}
 
-/*
- **************** FIX ME ***************
- *
- * Check for multiple virtual mappings for the same physical page.
- * If the VA of any of the mappings differ:
- *
- *  - Deal with cache synonyms,
- *  - If the page is writable, make all the mappings un-cacheable.
- *
- **************** FIX ME ***************
- */
-
 	ptel |= (ptel_t) (pa & SH5_PTEL_PPN_MASK);
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
-	pvo->pvo_ptel = ptel;
-
-	LIST_INSERT_HEAD(pvo_table_head, pvo, pvo_olink);
 
 	if (flags & VM_PROT_WRITE)
 		pvo->pvo_vaddr |= PVO_WRITABLE;
@@ -1586,6 +1581,83 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 	if (pvo_head != &pmap_pvo_unmanaged)
 		pvo->pvo_vaddr |= PVO_MANAGED; 
 
+	if ((ptel & SH5_PTEL_CB_MASK) > SH5_PTEL_CB_NOCACHE)
+		pvo->pvo_vaddr |= PVO_CACHEABLE;
+
+	/*
+	 * Check that the new mapping's cache-mode and VA/writable-attribute
+	 * agree with any existing mappings for this physical page.
+	 */
+	if ((pvop = LIST_FIRST(pvo_head)) != NULL) {
+		ptel_t cache_mode, pvo_cache_mode;
+
+		/*
+		 * XXX: This should not happen.
+		 */
+		KDASSERT(pvo_head != &pmap_pvo_unmanaged);
+
+#define _SH5_CM(p)	((p) & SH5_PTEL_CB_MASK)
+
+		pvo_cache_mode = _SH5_CM(pvop->pvo_ptel);
+		cache_mode = _SH5_CM(ptel);
+
+		if (cache_mode > pvo_cache_mode) {
+			/*
+			 * The new mapping is "cacheable", the existing
+			 * mappings are "uncacheable". Simply downgrade
+			 * the new mapping to match.
+			 */
+			if (cache_mode > SH5_PTEL_CB_NOCACHE)
+				cache_mode = SH5_PTEL_CB_NOCACHE;
+		} else
+		if (cache_mode < pvo_cache_mode) {
+			/*
+			 * The new mapping is "uncachable", the existing
+			 * mappings are "cacheable". We need to downgrade
+			 * all the existing mappings...
+			 */
+			pvo_cache_mode = SH5_PTEL_CB_NOCACHE;
+		}
+
+		if (va != PVO_VADDR(pvop) && PVO_ISWRITABLE(pvo)) {
+			/*
+			 * Adding a writable mapping at different VA.
+			 * Downgrade all the mappings to uncacheable.
+			 */
+			if (cache_mode > SH5_PTEL_CB_NOCACHE)
+				cache_mode = SH5_PTEL_CB_NOCACHE;
+			pvo_cache_mode = SH5_PTEL_CB_NOCACHE;
+		}
+
+		if (pvo_cache_mode != _SH5_CM(pvop->pvo_ptel)) {
+			/*
+			 * Downgrade the cache-mode of the existing mappings.
+			 */
+			LIST_FOREACH(pvop, pvo_head, pvo_vlink) {
+				if (_SH5_CM(pvop->pvo_ptel) > pvo_cache_mode) {
+					volatile pte_t *pt;
+					pt = pmap_pvo_to_pte(pvo, -1);
+					if (pt)
+						pmap_pteg_unset(pt, pvo);
+
+					pvop->pvo_ptel &= ~SH5_PTEL_CB_MASK;
+					pvop->pvo_ptel |= pvo_cache_mode;
+
+					if (pt)
+						pmap_pteg_set(pt, pvo);
+				  pmap_shared_cache_downgrade_events.ev_count++;
+				}
+			}
+		}
+
+		ptel &= ~SH5_PTEL_CB_MASK;
+		ptel |= cache_mode;
+#undef _SH5_CM
+	}
+
+	pvo->pvo_ptel = ptel;
+
+	LIST_INSERT_HEAD(pvo_table_head, pvo, pvo_olink);
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
 
 	pm->pm_stats.resident_count++;
@@ -1620,6 +1692,7 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 static void
 pmap_pvo_remove(struct pvo_entry *pvo, int idx)
 {
+	struct vm_page *pg = NULL;
 
 #ifdef PMAP_DIAG
 	if (pmap_pvo_remove_depth > 0) {
@@ -1660,11 +1733,8 @@ pmap_pvo_remove(struct pvo_entry *pvo, int idx)
 	 * Save the REF/CHG bits into their cache if the page is managed.
 	 */
 	if (PVO_ISMANAGED(pvo)) {
-		struct vm_page *pg;
-
 		pg = PHYS_TO_VM_PAGE(pvo->pvo_ptel & SH5_PTEL_PPN_MASK);
-
-		if (pg != NULL)
+		if (pg != NULL)	/* XXX: Could assert this ... */
 			pmap_attr_save(pg,
 			    pvo->pvo_ptel & (SH5_PTEL_R | SH5_PTEL_M));
 	}
@@ -1674,16 +1744,6 @@ pmap_pvo_remove(struct pvo_entry *pvo, int idx)
 	 */
 	LIST_REMOVE(pvo, pvo_vlink);
 
-/*
- **************** FIX ME ***************
- *
- * If there were multiple writable mappings to the same physical page,
- * and we're removing the last but one, make the remaining mapping
- * cacheable.
- *
- **************** FIX ME ***************
- */
-
 	/*
 	 * Remove this from the Overflow list and return it to the pool...
 	 * ... if we aren't going to reuse it.
@@ -1692,9 +1752,105 @@ pmap_pvo_remove(struct pvo_entry *pvo, int idx)
 
 	pool_put(&pmap_mpvo_pool, pvo);
 
+	/*
+	 * If there are/were multiple mappings for the same physical
+	 * page, we may just have removed one which had caused the
+	 * others to be made uncacheable.
+	 */
+	if (pg)
+		pmap_remove_update(&pg->mdpage.mdpg_pvoh, 1);
+
 #ifdef PMAP_DIAG
 	pmap_pvo_remove_depth--;
 #endif
+}
+
+void
+pmap_remove_update(struct pvo_head *pvo_head, int update_pte)
+{
+	struct pvo_entry *pvo;
+	volatile pte_t *pt;
+	vaddr_t va;
+	int writable;
+
+	/*
+	 * XXX: Make sure this doesn't happen
+	 */
+	KDASSERT(pvo_head != &pmap_pvo_unmanaged);
+
+	if ((pvo = LIST_FIRST(pvo_head)) == NULL || !PVO_ISCACHEABLE(pvo)) {
+		/*
+		 * There are no more mappings for this physical page,
+		 * or the existing mappings are all non-cacheable anyway.
+		 */
+		return;
+	}
+
+	if ((pvo->pvo_ptel & SH5_PTEL_CB_MASK) > SH5_PTEL_CB_NOCACHE) {
+		/*
+		 * The remaining mappings must already be cacheable, so
+		 * nothing more needs doing.
+		 */
+		return;
+	}
+
+	/*
+	 * We have to scan the remaining mappings to see if they can all
+	 * be made cacheable.
+	 */
+
+	va = PVO_VADDR(pvo);
+	writable = 0;
+
+	/*
+	 * First pass: See if all the mappings are cache-coherent
+	 */
+	LIST_FOREACH(pvo, pvo_head, pvo_vlink) {
+		if (!PVO_ISCACHEABLE(pvo)) {
+			/*
+			 * At least one of the mappings really is
+			 * non-cacheable. This means all the others
+			 * must remain uncacheable. Since this must
+			 * already be the case, there's nothing more
+			 * to do.
+			 */
+			return;
+		}
+
+		if (PVO_ISWRITABLE(pvo)) {
+			/*
+			 * Record the fact that at least one of the
+			 * mappings is writable.
+			 */
+			writable = 1;
+		}
+
+		if (va != PVO_VADDR(pvo) && writable) {
+			/*
+			 * Oops, one or more of the mappings are writable
+			 * and one or more of the VAs are different.
+			 * There's nothing more to do.
+			 */
+			return;
+		}
+	}
+
+	/*
+	 * Looks like we can re-enable cacheing for all the
+	 * remaining mappings.
+	 */
+	LIST_FOREACH(pvo, pvo_head, pvo_vlink) {
+		if (update_pte && (pt = pmap_pvo_to_pte(pvo, -1)) != NULL)
+			pmap_pteg_unset(pt, pvo);
+
+		pvo->pvo_ptel &= ~SH5_PTEL_CB_MASK;
+		pvo->pvo_ptel |= SH5_PTEL_CB_WRITEBACK;
+
+		if (update_pte && pt)
+			pmap_pteg_set(pt, pvo);
+
+		pmap_shared_cache_upgrade_events.ev_count++;
+	}
 }
 
 int
@@ -1926,7 +2082,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
-	ptel_t oldptel, clrbits;
+	ptel_t clrbits;
 	int s, idx;
 
 	PMPRINTF(("pmap_protect: %p: va=0x%lx, endva=0x%lx, prot=0x%x\n",
@@ -1955,7 +2111,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		clrbits = SH5_PTEL_PR_W;
 
 	/*
-	 * We're doing a write-protect or execute-revoke operation.
+	 * We're doing a write-protect, and perhaps an execute-revoke.
 	 */
 
 	for (; va < endva; va += NBPG) {
@@ -1966,21 +2122,22 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 			continue;
 		}
 
-		oldptel = pvo->pvo_ptel;
 		pvo->pvo_ptel &= ~clrbits;
 		pvo->pvo_vaddr &= ~PVO_WRITABLE;
 
 		/*
-		 * If the PTEL already has the bits clear, there's nothing
-		 * more to do.
+		 * Since the mapping is being made readonly,
+		 * if there are other mappings for the same
+		 * physical page, we may now be able to
+		 * make them cacheable.
 		 */
-		if ((oldptel & clrbits) == 0) {
-			splx(s);
-			continue;
-		}
+		pmap_remove_update(
+		    pa_to_pvoh((paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK),
+				NULL),
+		    0);
 
 		/*
-		 * Otherwise, propagate the change to the page-table/TLB
+		 * Propagate the change to the page-table/TLB
 		 */
 		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
 			KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
@@ -2039,7 +2196,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo, *next_pvo;
 	volatile pte_t *pt;
-	ptel_t oldptel, clrbits;
+	ptel_t clrbits;
 	int idx, s;
 
 	PMPRINTF(("pmap_page_protect: %p prot=%x: ", pg, prot));
@@ -2074,19 +2231,19 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			continue;
 		} 
 
-		oldptel = pvo->pvo_ptel;
 		pvo->pvo_ptel &= ~clrbits;
 		pvo->pvo_vaddr &= ~PVO_WRITABLE;
 
 		/*
-		 * If this entry already has the bits cleared, there's
-		 * nothing more to do.
+		 * Since the mapping is being made readonly,
+		 * if there are other mappings for the same
+		 * physical page, we may now be able to
+		 * make them cacheable.
 		 */
-		if ((oldptel & clrbits) == 0)
-			continue;
+		pmap_remove_update(pvo_head, 0);
 
 		/*
-		 * Otherwise, propagate the change to the page-table/TLB
+		 * Propagate the change to the page-table/TLB
 		 */
 		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
 			KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
@@ -2386,8 +2543,11 @@ pmap_write_trap(int usermode, vaddr_t va)
 		 * cache (assuming the entry hasn't been evicted by some
 		 * other TLB miss in the meantime).
 		 */
-		__cpu_cache_dpurge(PVO_VADDR(pvo),
-		    (paddr_t)(pmap_kernel_ipt[idx] & SH5_PTEL_PPN_MASK), NBPG);
+		if ((pvo->pvo_ptel & SH5_PTEL_CB_MASK) > SH5_PTEL_CB_NOCACHE) {
+			__cpu_cache_dpurge(PVO_VADDR(pvo),
+			    (paddr_t)(pmap_kernel_ipt[idx] & SH5_PTEL_PPN_MASK),
+			    NBPG);
+		}
 
 		pmap_kernel_ipt[idx] = pvo->pvo_ptel;
 		__cpu_tlbinv(PVO_VADDR(pvo) | SH5_PTEH_SH,
