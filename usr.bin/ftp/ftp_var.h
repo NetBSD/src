@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.25 1998/07/10 04:39:04 thorpej Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.26 1998/08/08 03:02:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -40,6 +40,10 @@
  */
 
 #include <sys/param.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <setjmp.h>
 #include <stringlist.h>
 
