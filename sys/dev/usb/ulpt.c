@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.25 1999/09/15 21:11:27 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.26 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -330,11 +330,13 @@ ulptopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	u_char flags = ULPTFLAGS(dev);
+	struct ulpt_softc *sc;
 	usbd_status r;
 	int spin, error;
+
 	USB_GET_SC_OPEN(ulpt, ULPTUNIT(dev), sc);
 
-	if (!sc || !sc->sc_iface || sc->sc_dying)
+	if (!sc->sc_iface || sc->sc_dying)
 		return (ENXIO);
 
 	if (sc->sc_state)
@@ -401,6 +403,8 @@ ulptclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
+	struct ulpt_softc *sc;
+
 	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
 
 	if (sc->sc_state != ULPT_OPEN)
@@ -462,8 +466,10 @@ ulptwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+	struct ulpt_softc *sc;
 	int error;
+
+	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
 
 	if (sc->sc_dying)
 		return (EIO);
