@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 2000/05/20 02:20:18 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 2000/06/19 15:15:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.30 2000/05/20 02:20:18 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.31 2000/06/19 15:15:03 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -510,15 +510,15 @@ show_chdir_messages(int code)
 			continue;
 		then = st.st_mtime;
 		if (code != 0) {
-			lreply(code, "");
+			reply(-code, "");
 			code = 0;
 		}
-		lreply(code, "Please read the file %s", *rlist);
+		reply(-code, "Please read the file %s", *rlist);
 		t = localtime(&now);
 		age = 365 * t->tm_year + t->tm_yday;
 		t = localtime(&then);
 		age -= 365 * t->tm_year + t->tm_yday;
-		lreply(code, "  it was last modified on %.24s - %d day%s ago",
+		reply(-code, "  it was last modified on %.24s - %d day%s ago",
 		    ctime(&then), age, PLURAL(age));
 	}
 	globfree(&gl);
@@ -530,27 +530,23 @@ format_file(const char *file, int code)
 	FILE   *f;
 	char   *buf, *p, *cwd;
 	size_t	len;
-	off_t	b;
 	time_t	now;
 
 	if (quietmessages)
 		return (0);
 
-#define PUTC(x)	putchar(x), b++
-
 	if (EMPTYSTR(file))
 		return(0);
 	if ((f = fopen(file, "r")) == NULL)
 		return (0);
-	lreply(code, "");
+	reply(-code, "");
 
-	b = 0;
 	for (;
 	    (buf = fparseln(f, &len, NULL, "\0\0\0", 0)) != NULL; free(buf)) {
 		if (len > 0)
 			if (buf[len - 1] == '\n')
 				buf[--len] = '\0';
-		b += printf("    ");
+		cprintf(stdout, "    ");
 
 		for (p = buf; *p; p++) {
 			if (*p == '%') {
@@ -558,7 +554,7 @@ format_file(const char *file, int code)
 				switch (*p) {
 
 				case 'c':
-					b += printf("%s",
+					cprintf(stdout, "%s",
 					    curclass.classname ?
 					    curclass.classname : "<unknown>");
 					break;
@@ -570,7 +566,7 @@ format_file(const char *file, int code)
 						    strerror(errno));
 						continue;
 					}
-					b += printf("%s", cwd);
+					cprintf(stdout, "%s", cwd);
 					break;
 
 				case 'E':
@@ -578,51 +574,48 @@ format_file(const char *file, int code)
 					break;
 
 				case 'L':
-					b += printf("%s", hostname);
+					cprintf(stdout, "%s", hostname);
 					break;
 
 				case 'M':
 					if (curclass.limit == -1)
-						b += printf("unlimited");
+						cprintf(stdout, "unlimited");
 					else
-						b += printf("%d",
+						cprintf(stdout, "%d",
 						    curclass.limit);
 					break;
 
 				case 'N':
 					if (connections > 0)
-						b += printf("%d", connections);
+						cprintf(stdout, "%d",
+						    connections);
 					break;
 
 				case 'R':
-					b += printf("%s", remotehost);
+					cprintf(stdout, "%s", remotehost);
 					break;
 
 				case 'T':
 					now = time(NULL);
-					b += printf("%.24s", ctime(&now));
+					cprintf(stdout, "%.24s", ctime(&now));
 					break;
 
 				case 'U':
-					b += printf("%s",
+					cprintf(stdout, "%s",
 					    pw ? pw->pw_name : "<unknown>");
 					break;
 
 				case '%':
-					PUTC('%');
+					CPUTC('%', stdout);
 					break;
 
 				}
-			} else {
-				PUTC(*p);
-			}
+			} else
+				CPUTC(*p, stdout);
 		}
-		PUTC('\r');
-		PUTC('\n');
+		cprintf(stdout, "\r\n");
 	}
 
-	total_bytes += b;
-	total_bytes_out += b;
 	(void)fflush(stdout);
 	(void)fclose(f);
 	return (1);
