@@ -33,12 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)index.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: index.c,v 1.3 1993/08/26 00:51:39 jtc Exp $";
+static char *rcsid = "$Id: index.c,v 1.4 1994/06/11 16:49:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
 #include <string.h>
-#include <stddef.h>
 
 char *
 #ifdef STRCHR
