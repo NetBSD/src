@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.10 1999/10/25 13:55:06 kleink Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.11 2000/05/22 14:49:10 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@ boolean_t	db_elf_line_at_pc __P((db_symtab_t *, db_sym_t,
 		    char **, int *, db_expr_t));
 boolean_t	db_elf_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
 		    char **));
+void		db_elf_forall __P((db_symtab_t *,
+		    db_forall_func_t db_forall_func, void *));
 
 db_symformat_t db_symformat_elf = {
 	"ELF",
@@ -84,6 +86,7 @@ db_symformat_t db_symformat_elf = {
 	db_elf_symbol_values,
 	db_elf_line_at_pc,
 	db_elf_sym_numargs,
+	db_elf_forall
 };
 
 /*
@@ -396,5 +399,47 @@ db_elf_sym_numargs(symtab, cursym, nargp, argnamep)
 	 * XXX We don't support this (yet).
 	 */
 	return (FALSE);
+}
+
+void
+db_elf_forall(stab, db_forall_func, arg)
+	db_symtab_t *stab;
+	db_forall_func_t db_forall_func;
+	void *arg;
+{
+	char *strtab;
+	static char suffix[2];
+	Elf_Sym *symp, *symtab_start, *symtab_end;
+
+	symtab_start = STAB_TO_SYMSTART(stab);
+	symtab_end = STAB_TO_SYMEND(stab);
+
+	strtab = db_elf_find_strtab(stab);
+	if (strtab == NULL)
+		return;
+
+	for (symp = symtab_start; symp < symtab_end; symp++)
+		if (symp->st_name != 0) {
+			suffix[1] = '\0';
+			switch (ELFDEFNNAME(ST_TYPE)(symp->st_info)) {
+			case STT_OBJECT:
+				suffix[0] = '+';
+				break;
+			case STT_FUNC:
+				suffix[0] = '*';
+				break;
+			case STT_SECTION:
+				suffix[0] = '&';
+				break;
+			case STT_FILE:
+				suffix[0] = '/';
+				break;
+			default:
+				suffix[0] = '\0';
+			}
+			(*db_forall_func)(stab, (db_sym_t)symp,
+			    strtab + symp->st_name, suffix, 0, arg);
+		}
+	return;
 }
 #endif /* DB_ELF_SYMBOLS */
