@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.247 2004/07/29 22:29:35 jmmv Exp $
+#	$NetBSD: INSTALL,v 1.248 2004/08/08 08:57:11 mycroft Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -551,8 +551,9 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray* 	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
-
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
