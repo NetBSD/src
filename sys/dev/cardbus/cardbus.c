@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.13 1999/11/15 06:01:11 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.14 1999/11/18 15:11:15 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -470,7 +470,7 @@ cardbus_attach_card(sc)
     cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
   
     /* Invalid vendor ID value? */
-    if (CARDBUS_VENDOR(id) == 0xffff) {
+    if (CARDBUS_VENDOR(id) == CARDBUS_VENDOR_INVALID) {
       continue;
     }
       
