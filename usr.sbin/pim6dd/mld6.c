@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.2 1999/08/19 17:31:07 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.3 1999/12/10 06:13:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -65,7 +65,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: mld6.c,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
+ *  KAME Id: mld6.c,v 1.3 1999/10/26 08:39:19 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -83,154 +83,146 @@
 /*
  * Exported variables.
  */
-char    *mld6_recv_buf;		/* input packet buffer               */
-char    *mld6_send_buf;		/* output packet buffer               */
-int     mld6_socket;	      	/* socket for all network I/O        */
+
+char *mld6_recv_buf;		/* input packet buffer */
+char *mld6_send_buf;		/* output packet buffer */
+int mld6_socket;		/* socket for all network I/O */
 struct sockaddr_in6 allrouters_group = {sizeof(struct sockaddr_in6), AF_INET6};
 struct sockaddr_in6 allnodes_group = {sizeof(struct sockaddr_in6), AF_INET6};
 
 /* Extenals */
+
 extern struct in6_addr in6addr_linklocal_allnodes;
 
 /* local variables. */
-static struct sockaddr_in6 *dstp;
-static struct msghdr sndmh, rcvmh;
-static struct iovec sndiov[2];
-static struct iovec rcviov[2];
-static struct sockaddr_in6 from;
-static struct in6_pktinfo *sndpktinfo;
-static u_char rcvcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-			 CMSG_SPACE(sizeof(int))];
+static struct sockaddr_in6 	dst = {sizeof(dst), AF_INET6};
+static struct msghdr 		sndmh,
+                		rcvmh;
+static struct iovec 		sndiov[2];
+static struct iovec 		rcviov[2];
+static struct sockaddr_in6 	from;
+static u_char   		rcvcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+			   	CMSG_SPACE(sizeof(int))];
+u_int8_t raopt[IP6OPT_RTALERT_LEN];
+static char *sndcmsgbuf;
+static int ctlbuflen = 0;
 
 /* local functions */
-static void mld6_read __P((int i, fd_set *fds));
+
+static void mld6_read __P((int i, fd_set * fds));
 static void accept_mld6 __P((int len));
 static void make_mld6_msg __P((int, int, struct sockaddr_in6 *,
-	struct sockaddr_in6 *, struct in6_addr *, int, int, int));
+	struct sockaddr_in6 *, struct in6_addr *, int, int, int, int));
 
 /*
  * Open and initialize the MLD socket.
  */
-void 
+void
 init_mld6()
 {
-	struct icmp6_filter filt;
-	int on, cmsglen;
-	u_char *cmsgbuf;
-	struct cmsghdr *cmsgp;
-	u_int8_t raopt[IP6OPT_RTALERT_LEN];
-	u_short rtalert_code = htons(IP6OPT_RTALERT_MLD);
+    struct icmp6_filter filt;
+    int             on;
+    u_short         rtalert_code = htons(IP6OPT_RTALERT_MLD);
 
-	if (!mld6_recv_buf && (mld6_recv_buf = malloc(RECV_BUF_SIZE)) == NULL)
-		log(LOG_ERR, 0, "malloca failed");
-	if (!mld6_send_buf && (mld6_send_buf = malloc(RECV_BUF_SIZE)) == NULL)
-		log(LOG_ERR, 0, "malloca failed");
+    if (!mld6_recv_buf && (mld6_recv_buf = malloc(RECV_BUF_SIZE)) == NULL)
+	    log(LOG_ERR, 0, "malloca failed");
+    if (!mld6_send_buf && (mld6_send_buf = malloc(RECV_BUF_SIZE)) == NULL)
+	    log(LOG_ERR, 0, "malloca failed");
 
-	if ((mld6_socket = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) 
+    IF_DEBUG(DEBUG_KERN)
+        log(LOG_DEBUG,0,"%d octets allocated for the emit/recept buffer mld6",RECV_BUF_SIZE);
+
+    if ((mld6_socket = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		log(LOG_ERR, errno, "MLD6 socket");
 
-	k_set_rcvbuf(mld6_socket, SO_RECV_BUF_SIZE_MAX,
-		     SO_RECV_BUF_SIZE_MIN); /* lots of input buffering */
-	k_set_hlim(mld6_socket, MINHLIM); /* restrict multicasts to one hop */
-	k_set_loop(mld6_socket, FALSE);	/* disable multicast loopback     */
+    k_set_rcvbuf(mld6_socket, SO_RECV_BUF_SIZE_MAX,
+		 SO_RECV_BUF_SIZE_MIN);	/* lots of input buffering */
+    k_set_hlim(mld6_socket, MINHLIM);	/* restrict multicasts to one hop */
+    k_set_loop(mld6_socket, FALSE);	/* disable multicast loopback     */
 
-	/* address initialization */
-	allnodes_group.sin6_addr = in6addr_linklocal_allnodes;
-	if (inet_pton(AF_INET6, "ff02::2",
-		      (void *)&allrouters_group.sin6_addr) < 1)
-		log(LOG_ERR, 0, "inet_pton failed for ff02::2");
+    /* address initialization */
+    allnodes_group.sin6_addr = in6addr_linklocal_allnodes;
+    if (inet_pton(AF_INET6, "ff02::2",
+		  (void *) &allrouters_group.sin6_addr) != 1)
+	log(LOG_ERR, 0, "inet_pton failed for ff02::2");
 
-	/* filter all non-MLD ICMP messages */
-	ICMP6_FILTER_SETBLOCKALL(&filt);
-	ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_QUERY, &filt);
-	ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REPORT, &filt);
-	ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REDUCTION, &filt);
-	if (setsockopt(mld6_socket, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
-			sizeof(filt)) < 0)
-		log(LOG_ERR, errno, "setsockopt(ICMP6_FILTER)");
+    /* filter all non-MLD ICMP messages */
+    ICMP6_FILTER_SETBLOCKALL(&filt);
+    ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_QUERY, &filt);
+    ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REPORT, &filt);
+    ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REDUCTION, &filt);
+    ICMP6_FILTER_SETPASS(MLD6_MTRACE_RESP, &filt);
+    ICMP6_FILTER_SETPASS(MLD6_MTRACE, &filt);
+    if (setsockopt(mld6_socket, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
+		   sizeof(filt)) < 0)
+	log(LOG_ERR, errno, "setsockopt(ICMP6_FILTER)");
 
-	/* specify to tell receiving interface */
-	on = 1;
-	if (setsockopt(mld6_socket, IPPROTO_IPV6, IPV6_PKTINFO, &on,
-		       sizeof(on)) < 0)
-		log(LOG_ERR, errno, "setsockopt(IPV6_PKTINFO)");
+    /* specify to tell receiving interface */
+    on = 1;
+    if (setsockopt(mld6_socket, IPPROTO_IPV6, IPV6_PKTINFO, &on,
+		   sizeof(on)) < 0)
+	log(LOG_ERR, errno, "setsockopt(IPV6_PKTINFO)");
 
-	on = 1;
-	/* specify to tell value of hoplimit field of received IP6 hdr */
-	if (setsockopt(mld6_socket, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
-		       sizeof(on)) < 0)
-		log(LOG_ERR, errno, "setsockopt(IPV6_HOPLIMIT)");
+    on = 1;
+    /* specify to tell value of hoplimit field of received IP6 hdr */
+    if (setsockopt(mld6_socket, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
+		   sizeof(on)) < 0)
+	log(LOG_ERR, errno, "setsockopt(IPV6_HOPLIMIT)");
 
-	/* initialize msghdr for receiving packets */
-	rcviov[0].iov_base = (caddr_t)mld6_recv_buf;
-	rcviov[0].iov_len = RECV_BUF_SIZE;
-	rcvmh.msg_name = (caddr_t)&from;
-	rcvmh.msg_namelen = sizeof(from);
-	rcvmh.msg_iov = rcviov;
-	rcvmh.msg_iovlen = 1;
-	rcvmh.msg_control = (caddr_t) rcvcmsgbuf;
-	rcvmh.msg_controllen = sizeof(rcvcmsgbuf);
+    /* initialize msghdr for receiving packets */
+    rcviov[0].iov_base = (caddr_t) mld6_recv_buf;
+    rcviov[0].iov_len = RECV_BUF_SIZE;
+    rcvmh.msg_name = (caddr_t) & from;
+    rcvmh.msg_namelen = sizeof(from);
+    rcvmh.msg_iov = rcviov;
+    rcvmh.msg_iovlen = 1;
+    rcvmh.msg_control = (caddr_t) rcvcmsgbuf;
+    rcvmh.msg_controllen = sizeof(rcvcmsgbuf);
 
-	/* initialize msghdr for sending packets */
-	sndiov[0].iov_base = (caddr_t)mld6_send_buf;
-	sndmh.msg_namelen = sizeof(struct sockaddr_in6);
-	sndmh.msg_iov = sndiov;
-	sndmh.msg_iovlen = 1;
-	cmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-		inet6_option_space(sizeof(raopt));
-	if ((cmsgbuf = malloc(cmsglen)) == NULL)
-		log(LOG_ERR, 0, "malloc failed");
-	cmsgp = (struct cmsghdr *)cmsgbuf;
-	sndmh.msg_control = (caddr_t)cmsgbuf;
-	sndmh.msg_controllen = cmsglen;
-	/* initilization cmsg for specifing outgoing interfaces */
-	sndpktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
-	cmsgp->cmsg_len = CMSG_SPACE(sizeof(struct in6_pktinfo));
-	cmsgp->cmsg_level = IPPROTO_IPV6;
-	cmsgp->cmsg_type = IPV6_PKTINFO;
-	/* specifiy to insert router alert option in a hop-by-hop opt hdr. */
-	cmsgp = CMSG_NXTHDR(&sndmh, cmsgp);
-	if (inet6_option_init((void *)cmsgp, &cmsgp, IPV6_HOPOPTS))
-		log(LOG_ERR, 0, "inet6_option_init failed");
-	raopt[0] = IP6OPT_RTALERT;
-	raopt[1] = IP6OPT_RTALERT_LEN - 2;
-	memcpy(&raopt[2], (caddr_t)&rtalert_code, sizeof(u_short));
-	if (inet6_option_append(cmsgp, raopt, 4, 0))
-		log(LOG_ERR, 0, "inet6_option_append failed");
+    /* initialize msghdr for sending packets */
+    sndiov[0].iov_base = (caddr_t)mld6_send_buf;
+    sndmh.msg_namelen = sizeof(struct sockaddr_in6);
+    sndmh.msg_iov = sndiov;
+    sndmh.msg_iovlen = 1;
+    /* specifiy to insert router alert option in a hop-by-hop opt hdr. */
+    raopt[0] = IP6OPT_RTALERT;
+    raopt[1] = IP6OPT_RTALERT_LEN - 2;
+    memcpy(&raopt[2], (caddr_t) & rtalert_code, sizeof(u_short));
 
-	/* register MLD message handler */
-	if (register_input_handler(mld6_socket, mld6_read) < 0)
-		log(LOG_ERR, 0,
-		    "Couldn't register mld6_read as an input handler");
+    /* register MLD message handler */
+    if (register_input_handler(mld6_socket, mld6_read) < 0)
+	log(LOG_ERR, 0,
+	    "Couldn't register mld6_read as an input handler");
 }
 
 /* Read an MLD message */
 static void
 mld6_read(i, rfd)
-	int i;
-	fd_set *rfd;
+    int             i;
+    fd_set         *rfd;
 {
-	register int mld6_recvlen;
+    register int    mld6_recvlen;
 
-	mld6_recvlen = recvmsg(mld6_socket, &rcvmh, 0);
+    mld6_recvlen = recvmsg(mld6_socket, &rcvmh, 0);
 
-	if (mld6_recvlen < 0) {
-		if (errno != EINTR)
-			log(LOG_ERR, errno, "MLD6 recvmsg");
-		return;
-	}
+    if (mld6_recvlen < 0)
+    {
+	if (errno != EINTR)
+	    log(LOG_ERR, errno, "MLD6 recvmsg");
+	return;
+    }
 
-	/* TODO: make it as a thread in the future releases */
-	accept_mld6(mld6_recvlen);
+    /* TODO: make it as a thread in the future releases */
+    accept_mld6(mld6_recvlen);
 }
 
 /*
- * Process a newly received MLD6 packet that is sitting in the input
- * packet buffer.
+ * Process a newly received MLD6 packet that is sitting in the input packet
+ * buffer.
  */
-static void 
+static void
 accept_mld6(recvlen)
-	int recvlen;
+int recvlen;
 {
 	struct in6_addr *group, *dst = NULL;
 	struct mld6_hdr *mldh;
@@ -238,55 +230,58 @@ accept_mld6(recvlen)
 	struct in6_pktinfo *pi = NULL;
 	int *hlimp = NULL;
 	int ifindex = 0;
-	struct sockaddr_in6 *src = (struct sockaddr_in6 *)rcvmh.msg_name;
+	struct sockaddr_in6 *src = (struct sockaddr_in6 *) rcvmh.msg_name;
 
-	if (recvlen == sizeof(struct ip6_hdr)) { /* XXX */
-		/*
-		 * XXX: msg_controllen may have been reset in this case.
-		 */
+	/*
+	 * If control length is zero, it must be an upcall from the kernel
+	 * multicast forwarding engine.
+	 * XXX: can we trust it?
+	 */
+	if (rcvmh.msg_controllen == 0) {
+		/* XXX: msg_controllen must be reset in this case. */
 		rcvmh.msg_controllen = sizeof(rcvcmsgbuf);
- 
+
 		process_kernel_call();
 		return;
 	}
 
-	if (recvlen < sizeof(struct mld6_hdr)) {
+	if (recvlen < sizeof(struct mld6_hdr))
+	{
 		log(LOG_WARNING, 0,
 		    "received packet too short (%u bytes) for MLD header",
 		    recvlen);
 		return;
 	}
-	mldh = (struct mld6_hdr *)rcvmh.msg_iov[0].iov_base;
+	mldh = (struct mld6_hdr *) rcvmh.msg_iov[0].iov_base;
 	group = &mldh->mld6_addr;
 
 	/* extract optional information via Advanced API */
-	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(&rcvmh);
+	for (cm = (struct cmsghdr *) CMSG_FIRSTHDR(&rcvmh);
 	     cm;
-	     cm = (struct cmsghdr *)CMSG_NXTHDR(&rcvmh, cm)) {
+	     cm = (struct cmsghdr *) CMSG_NXTHDR(&rcvmh, cm))
+	{
 		if (cm->cmsg_level == IPPROTO_IPV6 &&
 		    cm->cmsg_type == IPV6_PKTINFO &&
-		    cm->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo))) {
-			pi = (struct in6_pktinfo *)(CMSG_DATA(cm));
+		    cm->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo)))
+		{
+			pi = (struct in6_pktinfo *) (CMSG_DATA(cm));
 			ifindex = pi->ipi6_ifindex;
 			dst = &pi->ipi6_addr;
 		}
 		if (cm->cmsg_level == IPPROTO_IPV6 &&
 		    cm->cmsg_type == IPV6_HOPLIMIT &&
 		    cm->cmsg_len == CMSG_LEN(sizeof(int)))
-			hlimp = (int *)CMSG_DATA(cm);
+			hlimp = (int *) CMSG_DATA(cm);
 	}
-	if (hlimp == NULL) {
+	if (hlimp == NULL)
+	{
 		log(LOG_WARNING, 0,
 		    "failed to get receiving hop limit");
 		return;
 	}
-	if (ifindex == 0) {
-		log(LOG_WARNING, 0, "failed to get receiving interface");
-		return;
-	}
 
-/* TODO: too noisy. Remove it? */
-#define NOSUCHDEF
+	/* TODO: too noisy. Remove it? */
+//#define NOSUCHDEF
 #ifdef NOSUCHDEF
 	IF_DEBUG(DEBUG_PKT | debug_kind(IPPROTO_ICMPV6, mldh->mld6_type,
 					mldh->mld6_code))
@@ -294,34 +289,42 @@ accept_mld6(recvlen)
 		    packet_kind(IPPROTO_ICMPV6,
 				mldh->mld6_type, mldh->mld6_code),
 		    inet6_fmt(&src->sin6_addr), inet6_fmt(dst));
-#endif /* NOSUCHDEF */
+#endif				/* NOSUCHDEF */
 
 	/* for an mtrace message, we don't need strict checks */
 	if (mldh->mld6_type == MLD6_MTRACE) {
-		accept_mtrace(src, dst, group, ifindex, mld6_recv_buf,
-			      mldh->mld6_code, recvlen);
+		accept_mtrace(src, dst, group, ifindex, (char *)(mldh + 1),
+			      mldh->mld6_code, recvlen - sizeof(struct mld6_hdr));
 		return;
 	}
 
-	/* hop limit field check */
-	if (*hlimp != 1) {
+	/* hop limit check */
+	if (*hlimp != 1)
+	{
 		log(LOG_WARNING, 0,
 		    "received an MLD6 message with illegal hop limit(%d) from %s",
-			     inet6_fmt(&src->sin6_addr), *hlimp);
+		    *hlimp, inet6_fmt(&src->sin6_addr));
 		/* but accept the packet */
+	}
+	if (ifindex == 0)
+	{
+		log(LOG_WARNING, 0, "failed to get receiving interface");
+		return;
 	}
 
 	/* scope check */
-	if (IN6_IS_ADDR_MC_NODELOCAL(&mldh->mld6_addr)) {
+	if (IN6_IS_ADDR_MC_NODELOCAL(&mldh->mld6_addr))
+	{
 		log(LOG_INFO, 0,
 		    "RECV %s with an invalid scope: %s from %s",
 		    inet6_fmt(&mldh->mld6_addr),
 		    inet6_fmt(&src->sin6_addr));
-		return;		/* discard */
+		return;			/* discard */
 	}
 
 	/* source address check */
-	if (!IN6_IS_ADDR_LINKLOCAL(&src->sin6_addr)) {
+	if (!IN6_IS_ADDR_LINKLOCAL(&src->sin6_addr))
+	{
 		log(LOG_INFO, 0,
 		    "RECV %s from a non link local address: %s",
 		    packet_kind(IPPROTO_ICMPV6, mldh->mld6_type,
@@ -329,113 +332,151 @@ accept_mld6(recvlen)
 		    inet6_fmt(&src->sin6_addr));
 		return;
 	}
-    
-	switch (mldh->mld6_type) {
-	 case MLD6_LISTENER_QUERY:
-		 accept_listener_query(src, dst, group,
-				       ntohs(mldh->mld6_maxdelay));
-		 return;
 
-	 case MLD6_LISTENER_REPORT:
-		 accept_listener_report(src, dst, group);
-		 return;
+	switch (mldh->mld6_type)
+	{
+	case MLD6_LISTENER_QUERY:
+		accept_listener_query(src, dst, group,
+				      ntohs(mldh->mld6_maxdelay));
+		return;
 
-	 case MLD6_LISTENER_DONE:
-		 accept_listener_done(src, dst, group);
-		 return;
+	case MLD6_LISTENER_REPORT:
+		accept_listener_report(src, dst, group);
+		return;
 
-	 default:
-		 /* This must be impossible since we set a type filter */
-		 log(LOG_INFO, 0,
-		     "ignoring unknown ICMPV6 message type %x from %s to %s",
-		     mldh->mld6_type, inet6_fmt(&src->sin6_addr),
-		     inet6_fmt(dst));
-		 return;
+	case MLD6_LISTENER_DONE:
+		accept_listener_done(src, dst, group);
+		return;
+
+	default:
+		/* This must be impossible since we set a type filter */
+		log(LOG_INFO, 0,
+		    "ignoring unknown ICMPV6 message type %x from %s to %s",
+		    mldh->mld6_type, inet6_fmt(&src->sin6_addr),
+		    inet6_fmt(dst));
+		return;
 	}
 }
 
 static void
-make_mld6_msg(type, code, src, dst, group, ifindex, delay, datalen)
-	int type, code, ifindex, delay, datalen;
-	struct sockaddr_in6 *src, *dst;
-	struct in6_addr *group;
+make_mld6_msg(type, code, src, dst, group, ifindex, delay, datalen, alert)
+    int type, code, ifindex, delay, datalen, alert;
+    struct sockaddr_in6 *src, *dst;
+    struct in6_addr *group;
 {
-	static struct sockaddr_in6 dst_sa = {sizeof(dst_sa), AF_INET6};
-	struct mld6_hdr *mhp = (struct mld6_hdr *)mld6_send_buf;
-	int octllen;
+    static struct sockaddr_in6 dst_sa = {sizeof(dst_sa), AF_INET6};
+    struct mld6_hdr *mhp = (struct mld6_hdr *)mld6_send_buf;
+    int ctllen;
 
-	switch(type) {
-	 case MLD6_MTRACE:
-	 case MLD6_MTRACE_RESP:
-		 sndmh.msg_name = (caddr_t)dst;
-		 /*
-		  * XXX: a router alert option must not be contained in an
-		  * mtrace message. We should be more generic, though.
-		  */
-		 octllen = sndmh.msg_controllen;
-		 sndmh.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
-		 sndmh.msg_controllen = octllen;
-		 break;
-	 default:
-		 if (IN6_IS_ADDR_UNSPECIFIED(group))
-			 dst_sa.sin6_addr = allnodes_group.sin6_addr;
-		 else
-			 dst_sa.sin6_addr = *group;
-		 dstp = &dst_sa;
-		 sndmh.msg_name = (caddr_t)&dst_sa;
-		 datalen = sizeof(struct mld6_hdr);
-		 break;
-	}
+    switch(type) {
+    case MLD6_MTRACE:
+    case MLD6_MTRACE_RESP:
+	sndmh.msg_name = (caddr_t)dst;
+	break;
+    default:
+	if (IN6_IS_ADDR_UNSPECIFIED(group))
+	    dst_sa.sin6_addr = allnodes_group.sin6_addr;
+	else
+	    dst_sa.sin6_addr = *group;
+	sndmh.msg_name = (caddr_t)&dst_sa;
+	datalen = sizeof(struct mld6_hdr);
+	break;
+    }
+   
+    bzero(mhp, sizeof(*mhp));
+    mhp->mld6_type = type;
+    mhp->mld6_code = code;
+    mhp->mld6_maxdelay = htons(delay);
+    mhp->mld6_addr = *group;
 
-	bzero(mhp, sizeof(*mhp));
-	mhp->mld6_type = type;
-	mhp->mld6_code = 0;
-	mhp->mld6_maxdelay = htons(delay);
-	mhp->mld6_addr = *group;
+    sndiov[0].iov_len = datalen;
 
-	sndiov[0].iov_len = datalen;
+    /* estimate total ancillary data length */
+    ctllen = 0;
+    if (ifindex != -1 || src)
+	    ctllen += CMSG_SPACE(sizeof(struct in6_pktinfo));
+    if (alert)
+	    ctllen += inet6_option_space(sizeof(raopt));
+    /* extend ancillary data space (if necessary) */
+    if (ctlbuflen < ctllen) {
+	    if (sndcmsgbuf)
+		    free(sndcmsgbuf);
+	    if ((sndcmsgbuf = malloc(ctllen)) == NULL)
+		    log(LOG_ERR, 0, "make_mld6_msg: malloc failed"); /* assert */
+	    ctlbuflen = ctllen;
+    }
+    /* store ancillary data */
+    if ((sndmh.msg_controllen = ctllen) > 0) {
+	    struct cmsghdr *cmsgp;
 
-	/* specify the outgoing interface and the source address */
-	sndpktinfo->ipi6_ifindex = ifindex;
-	memcpy(&sndpktinfo->ipi6_addr, &src->sin6_addr,
-	       sizeof(sndpktinfo->ipi6_addr));
+	    sndmh.msg_control = sndcmsgbuf;
+	    cmsgp = CMSG_FIRSTHDR(&sndmh);
+
+	    if (ifindex != -1 || src) {
+		    struct in6_pktinfo *pktinfo;
+
+		    cmsgp->cmsg_len = CMSG_SPACE(sizeof(struct in6_pktinfo));
+		    cmsgp->cmsg_level = IPPROTO_IPV6;
+		    cmsgp->cmsg_type = IPV6_PKTINFO;
+		    pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
+		    memset((caddr_t)pktinfo, 0, sizeof(*pktinfo));
+		    if (ifindex != -1)
+			    pktinfo->ipi6_ifindex = ifindex;
+		    if (src)
+			    pktinfo->ipi6_addr = src->sin6_addr;
+		    cmsgp = CMSG_NXTHDR(&sndmh, cmsgp);
+	    }
+	    if (alert) {
+		    if (inet6_option_init((void *)cmsgp, &cmsgp, IPV6_HOPOPTS))
+			    log(LOG_ERR, 0, /* assert */
+				"make_mld6_msg: inet6_option_init failed");
+		    if (inet6_option_append(cmsgp, raopt, 4, 0))
+			    log(LOG_ERR, 0, /* assert */
+				"make_mld6_msg: inet6_option_append failed");
+		    cmsgp = CMSG_NXTHDR(&sndmh, cmsgp);
+	    }
+    }
+    else
+	    sndmh.msg_control = NULL; /* clear for safety */
 }
 
 void
-send_mld6(type, code, src, dst, group, index, delay, datalen)
-	int type;
-	int code;		/* for trace packets only */
-	struct sockaddr_in6 *src;
-	struct sockaddr_in6 *dst; /* may be NULL */
-	struct in6_addr *group;
-	int index, delay;
-	int datalen;		/* for trace packets only */
+send_mld6(type, code, src, dst, group, index, delay, datalen, alert)
+    int type;
+    int code;		/* for trace packets only */
+    struct sockaddr_in6 *src;
+    struct sockaddr_in6 *dst; /* may be NULL */
+    struct in6_addr *group;
+    int index, delay, alert;
+    int datalen;		/* for trace packets only */
 {
-	int setloop = 0;
+    int setloop = 0;
+    struct sockaddr_in6 *dstp;
 	
-	make_mld6_msg(type, code, src, dst, group, index, delay, datalen);
-	if (IN6_ARE_ADDR_EQUAL(&dstp->sin6_addr, &allnodes_group.sin6_addr)) {
-		setloop = 1;
-		k_set_loop(mld6_socket, TRUE);
-	}
-	if (sendmsg(mld6_socket, &sndmh, 0) < 0) {
-		if (errno == ENETDOWN)
-			check_vif_state();
-		else
-			log(log_level(IPPROTO_ICMPV6, type, 0), errno,
-			    "sendto to %s with src %s on %s",
-			    inet6_fmt(&dstp->sin6_addr),
-			    inet6_fmt(&src->sin6_addr),
-			    ifindex2str(index));
+    make_mld6_msg(type, code, src, dst, group, index, delay, datalen, alert);
+    dstp = (struct sockaddr_in6 *)sndmh.msg_name;
+    if (IN6_ARE_ADDR_EQUAL(&dstp->sin6_addr, &allnodes_group.sin6_addr)) {
+	setloop = 1;
+	k_set_loop(mld6_socket, TRUE);
+    }
+    if (sendmsg(mld6_socket, &sndmh, 0) < 0) {
+	if (errno == ENETDOWN)
+	    check_vif_state();
+	else
+	    log(log_level(IPPROTO_ICMPV6, type, 0), errno,
+		"sendmsg to %s with src %s on %s",
+		inet6_fmt(&dstp->sin6_addr),
+		src ? inet6_fmt(&src->sin6_addr) : "(unspec)",
+		ifindex2str(index));
 
-		if (setloop)
-			k_set_loop(mld6_socket, FALSE);
-		return;
-	}
+	if (setloop)
+	    k_set_loop(mld6_socket, FALSE);
+	return;
+    }
     
-	IF_DEBUG(DEBUG_PKT|debug_kind(IPPROTO_IGMP, type, 0))
-		log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-		    packet_kind(IPPROTO_ICMPV6, type, 0),
-		    inet6_fmt(&src->sin6_addr),
-		    inet6_fmt(&dstp->sin6_addr));
+    IF_DEBUG(DEBUG_PKT|debug_kind(IPPROTO_IGMP, type, 0))
+	log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
+	    packet_kind(IPPROTO_ICMPV6, type, 0),
+	    src ? inet6_fmt(&src->sin6_addr) : "unspec",
+	    inet6_fmt(&dstp->sin6_addr));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.4 1999/12/10 06:13:32 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: timer.c,v 1.2 1999/08/24 10:04:57 jinmei Exp
+ *  KAME Id: timer.c,v 1.3 1999/09/15 07:45:12 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -157,8 +157,10 @@ age_vifs()
 	    query_groups(v);
     }
 
-    IF_DEBUG(DEBUG_IF)
+    IF_DEBUG(DEBUG_IF) {
 	dump_vifs(stderr);
+	dump_lcl_grp(stderr);
+    }
 }
 
 
