@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.32 2001/06/25 04:46:28 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.33 2001/06/25 06:44:41 enami Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -283,7 +283,7 @@ pdq_os_restart_transmitter(
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
     if (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0) {
 	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
-	if ((sc->sc_flags & PDQIF_DOWNCALL) != 0)
+	if ((sc->sc_flags & PDQIF_DOWNCALL) == 0)
 	    pdq_ifstart(&sc->sc_if);
     } else {
 	sc->sc_if.if_timer = 0;
