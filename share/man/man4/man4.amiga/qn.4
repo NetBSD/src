@@ -1,4 +1,4 @@
-.\"	$NetBSD: qn.4,v 1.5 1999/12/15 23:44:51 abs Exp $
+.\"	$NetBSD: qn.4,v 1.6 2001/04/11 18:40:54 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1995 Mika Kortelainen. All rights reserved.
@@ -43,7 +43,7 @@
 .\" - if_es.c: used as an example of -current driver
 .\"
 .\" The following requests are required for all man pages.
-.Dd Oct 5, 1995
+.Dd October 5, 1995
 .Os
 .Dt QN 4 amiga
 .Sh NAME
@@ -52,7 +52,7 @@
 .Sh SYNOPSIS
 .Cd "qn* at zbus0"
 .Sh DESCRIPTION
-The 
+The
 .Nm
 interface provides access to the 10 Mb/s Ethernet network via the
 .Tn Fujitsu
@@ -62,7 +62,7 @@ Ethernet chip set.
 Each of the host's network addresses
 is specified at boot time with an
 .Dv SIOCSIFADDR
-.Xr ioctl .
+.Xr ioctl 2 .
 The
 .Nm
 interface employs the address resolution protocol described in
@@ -81,7 +81,7 @@ Resource Management Force's Ethernet card, manufacturer\ 2011, product\ 2
 .Pp
 .Sh NOTES
 Multicasting not done yet. If the driver happens to lock up, you may use
-.Xr ifconfig
+.Xr ifconfig 8
 to force the driver down and up again. This usually helps.
 .Pp
 .Sh HISTORY
@@ -91,6 +91,6 @@ interface first appeared in
 .Nx 1.1
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr ifconfig 8 ,
 .Xr inet 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr ifconfig 8
