@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.3 2003/05/12 07:49:11 bsh Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.4 2003/05/13 08:07:39 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -49,23 +49,24 @@
 #include <arm/s3c2xx0/s3c2800var.h>
 
 
-#ifndef PCLK
-#define PCLK  (50*1000*1000)
-#endif
-
 #ifndef STATHZ
 #define STATHZ	64
 #endif
 
-#define TIMER_FREQUENCY (PCLK/4)	/* divider=1/4 */
+#define TIMER_FREQUENCY(pclk) ((pclk)/32) /* divider=1/32 */
 
 #define TIMER_RELOAD_VAL  1000
 #define COUNTS_PER_USEC   100
 
 static unsigned int timer0_reload_value;
 static unsigned int timer0_prescaler;
+static unsigned int timer0_mseccount;
 
-#define counter_to_usec(c)	(((c)*timer0_prescaler*1000)/(TIMER_FREQUENCY/1000))
+#define usec_to_counter(t)	\
+	((timer0_mseccount*(t))/1000)
+
+#define counter_to_usec(c,pclk)	\
+	(((c)*timer0_prescaler*1000)/(TIMER_FREQUENCY(pclk)/1000))
 
 /*
  * microtime:
@@ -79,6 +80,7 @@ microtime(struct timeval *tvp)
 	struct s3c2800_softc *sc = (struct s3c2800_softc *) s3c2xx0_softc;
 	int save, int_pend0, int_pend1, count, delta;
 	static struct timeval last;
+	int pclk = s3c2xx0_softc->sc_pclk;
 
 	if( timer0_reload_value == 0 ){
 		/* not initialized yet */
@@ -144,7 +146,7 @@ microtime(struct timeval *tvp)
 #endif
 	}
 
-	tvp->tv_usec += counter_to_usec(delta);
+	tvp->tv_usec += counter_to_usec(delta, pclk);
 
 	/* Make sure microseconds doesn't overflow. */
 	tvp->tv_sec += tvp->tv_usec / 1000000;
@@ -200,6 +202,7 @@ delay(u_int n)
 {
 	struct s3c2800_softc *sc = (struct s3c2800_softc *) s3c2xx0_softc;
 	int v0, v1, delta;
+	u_int ucnt;
 
 	if ( timer0_reload_value == 0 ){
 		/* not initialized yet */
@@ -215,26 +218,29 @@ delay(u_int n)
 	/* read down counter */
 	v0 = read_timer(sc);
 
-	for(;;){
+	ucnt = usec_to_counter(n);
+
+	while( ucnt > 0 ) {
 		v1 = read_timer(sc);
 		delta = v0 - v1;
-		if ( delta < 0 ){
+		if ( delta < 0 )
 			delta += timer0_reload_value;
-		}
 #ifdef DEBUG
 		if (delta < 0 || delta > timer0_reload_value)
 			panic("wrong value from timer counter");
 #endif
 
-		delta = counter_to_usec(delta);
-
-		if (delta >= n )
-			return;
-		n -= delta;
-		v0 = v1;
+		if((u_int)delta < ucnt){
+			ucnt -= (u_int)delta;
+			v0 = v1;
+		}
+		else {
+			ucnt = 0;
+		}
 	}
 	/*NOTREACHED*/
 }
+
 /*
  * inittodr:
  *
@@ -247,6 +253,7 @@ inittodr(time_t base)
 	time.tv_sec = base;
 	time.tv_usec = 0;
 }
+
 /*
  * resettodr:
  *
@@ -270,9 +277,10 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
-	struct s3c2800_softc *sc = (struct s3c2800_softc *) s3c2xx0_softc;
+	struct s3c2800_softc *sc = (struct s3c2800_softc *)s3c2xx0_softc;
 	long tc;
 	int prescaler;
+	int pclk = s3c2xx0_softc->sc_pclk;
 
 	stathz = STATHZ;
 	profhz = stathz;
@@ -282,37 +290,41 @@ cpu_initclocks()
 		prescaler = 1;					\
 		do {						\
 			++prescaler;				\
-			tc = TIMER_FREQUENCY /(hz)/ prescaler;	\
+			tc = TIMER_FREQUENCY(pclk) /(hz)/ prescaler;	\
 		} while( tc > 65536 );				\
 	} while(0)
 
 
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
+	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr0_ioh, TIMER_TMCON, 0);
+	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr1_ioh, TIMER_TMCON, 0);
+
 	calc_time_constant(hz);
 	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr0_ioh, TIMER_TMDAT,
 	    ((prescaler - 1) << 16) | (tc - 1));
 	timer0_prescaler = prescaler;
 	timer0_reload_value = tc;
+	timer0_mseccount = TIMER_FREQUENCY(pclk)/timer0_prescaler/1000 ;
 
 	printf("clock: hz=%d stathz = %d PCLK=%d prescaler=%d tc=%ld\n",
-	    hz, stathz, PCLK, prescaler, tc);
+	    hz, stathz, pclk, prescaler, tc);
 
 	calc_time_constant(stathz);
 	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr1_ioh, TIMER_TMDAT,
 	    ((prescaler - 1) << 16) | (tc - 1));
 
 
-	s3c2800_intr_establish(S3C2800_INT_TIMER0, IPL_CLOCK, IST_EDGE, 
-	    hardintr, 0);
-	s3c2800_intr_establish(S3C2800_INT_TIMER1, IPL_STATCLOCK, IST_EDGE,
-	    statintr, 0);
+	s3c2800_intr_establish(S3C2800_INT_TIMER0, IPL_CLOCK, 
+			       IST_NONE, hardintr, 0);
+	s3c2800_intr_establish(S3C2800_INT_TIMER1, IPL_STATCLOCK,
+			       IST_NONE, statintr, 0);
 
 	/* start timers */
-	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr0_ioh, TIMER_TMCON,
-	    TMCON_MUX_DIV4 | TMCON_INTENA | TMCON_ENABLE);
-	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr1_ioh, TIMER_TMCON,
-	    TMCON_MUX_DIV4 | TMCON_INTENA | TMCON_ENABLE);
+	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr0_ioh, TIMER_TMCON, 
+	    TMCON_MUX_DIV32|TMCON_INTENA|TMCON_ENABLE);
+	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr1_ioh, TIMER_TMCON, 
+	    TMCON_MUX_DIV4|TMCON_INTENA|TMCON_ENABLE);
 
 	/* stop timer2 */
 	{
