@@ -1,7 +1,8 @@
 #!/bin/sh -
+#
+#	$NetBSD: build_all,v 1.3 1996/04/12 20:22:14 cgd Exp $
 
 cflist=`cd ../conf ; find . -type f | grep -v '[a-z]' | sed -e 's,^\./,,'`
-cflist=NOSY
 
 docmd()
 {
