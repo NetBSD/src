@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	5.19 (Berkeley) 4/11/91";*/
-static char rcsid[] = "$Id: bad144.c,v 1.2 1993/08/01 18:00:23 mycroft Exp $";
+static char rcsid[] = "$Id: bad144.c,v 1.3 1993/12/03 10:04:50 mycroft Exp $";
 #endif not lint
 
 /*
@@ -162,7 +162,7 @@ usage:
 			break;
 #else
 	/* obtain label and adjust to fit */
-	dp = &label;
+	dp = (struct disklabel *)&label;
 	if (ioctl(f, DIOCGDINFO, dp) < 0)
 		Perror("ioctl DIOCGDINFO");
 #endif
