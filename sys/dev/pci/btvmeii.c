@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.1 2000/02/25 18:22:39 drochner Exp $ */
+/* $NetBSD: btvmeii.c,v 1.2 2000/03/12 11:23:06 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -68,6 +68,7 @@ int b3_2706_map_vmeint __P((void *, int, int, vme_intr_handle_t *));
 void *b3_2706_establish_vmeint __P((void *, vme_intr_handle_t, int,
 				 int (*)(void *), void *));
 void b3_2706_disestablish_vmeint __P((void *, void *));
+void b3_2706_vmeint __P((void *, int, int));
 
 int b3_2706_dmamap_create __P((void *, vme_size_t,
 			    vme_am_t, vme_datasize_t, vme_swap_t,
@@ -87,6 +88,16 @@ struct b3_2706_vmemaprescs {
 	u_int32_t len;
 };
 
+struct b3_2706_vmeintrhand {
+	TAILQ_ENTRY(b3_2706_vmeintrhand) ih_next;
+	int (*ih_fun) __P((void*));
+	void *ih_arg;
+	int ih_level;
+	int ih_vector;
+	int ih_prior;
+	u_long ih_count;
+};
+
 struct b3_2706_softc {
 	struct device sc_dev;
 	struct univ_pci_data univdata;
@@ -100,6 +111,10 @@ struct b3_2706_softc {
 	char vmemap[EXTENT_FIXED_STORAGE_SIZE(8)];
 
 	struct vme_chipset_tag sc_vct;
+
+	/* list of VME interrupt handlers */
+	TAILQ_HEAD(, b3_2706_vmeintrhand) intrhdls;
+	int strayintrs;
 };
 
 struct cfattach btvmeii_ca = {
@@ -202,12 +217,17 @@ b3_2706_attach(parent, self, aux)
 	aa.pa_intrpin =	((1 + aa.pa_intrswiz - 1) % 4) + 1;
 	aa.pa_intrline = PCI_INTERRUPT_LINE(intr);
 
-	if (univ_pci_attach(&sc->univdata, &aa)) {
+	if (univ_pci_attach(&sc->univdata, &aa, self->dv_xname,
+			    b3_2706_vmeint, sc)) {
 		printf("%s: error initializing universe chip\n",
 		       self->dv_xname);
 		return;
 	}
 
+	/*
+	 * don't waste KVM - the byteswap register is aliased in
+	 * a 512k window, we need it only once
+	 */
 	tag = pci_make_tag(pc, secbus, 8, 0);
 	sc->swapt = pa->pa_memt;
 	if (pci_mapreg_info(pc, tag, 0x10,
@@ -217,6 +237,15 @@ b3_2706_attach(parent, self, aux)
 		printf("%s: can't map byteswap register\n", self->dv_xname);
 		return;
 	}
+	/*
+	 * Set up cycle specific byteswap mode.
+	 * XXX Readback yields "all-ones" for me, and it doesn't seem
+	 * to matter what I write into the register - the data don't
+	 * get swapped. Adapter fault or documentation bug?
+	 */
+	bus_space_write_4(sc->swapt, sc->swaph, 0, 0x00000490);
+
+	/* VME space is mapped as needed */
 	sc->vmet = pa->pa_memt;
 	if (pci_mapreg_info(pc, tag, 0x14,
 			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
@@ -224,13 +253,13 @@ b3_2706_attach(parent, self, aux)
 		printf("%s: VME range not assigned\n", self->dv_xname);
 		return;
 	}
+#ifdef BIT3DEBUG
 	printf("%s: VME window @%lx\n", self->dv_xname, (long)sc->vmepbase);
+#endif
 
 	for (i = 0; i < 8; i++) {
-		univ_pci_unmapvme(&sc->univdata, i);
 		sc->windowused[i] = 0;
 	}
-
 	sc->vmeext = extent_create("pcivme", sc->vmepbase,
 				   sc->vmepbase + 32*1024*1024 - 1, M_DEVBUF,
 				   sc->vmemap, sizeof(sc->vmemap),
@@ -250,7 +279,7 @@ b3_2706_attach(parent, self, aux)
 
 	vaa.va_vct = &(sc->sc_vct);
 	vaa.va_bdt = pa->pa_dmat; /* XXX */
-	vaa.va_slaveconfig = 0; /* XXX */
+	vaa.va_slaveconfig = 0; /* XXX CSR window? */
 
 	config_found(self, &vaa, 0);
 }
@@ -300,13 +329,16 @@ b3_2706_map_vme(vsc, vmeaddr, len, am, datasizes, swap, tag, handle, resc)
 	/* bytes in outgoing window required */
 	maplen = vmeend - vmebase + boundary;
 
-	if (extent_alloc(sc->vmeext, maplen, boundary, 0, EX_FAST, &pcibase))
+	if (extent_alloc(sc->vmeext, maplen, boundary, 0, EX_FAST, &pcibase)) {
+		sc->windowused[wnd] = 0;
 		return (ENOMEM);
+	}
 
 	res = univ_pci_mapvme(&sc->univdata, wnd, vmebase, maplen,
 			      am, datasizes, pcibase);
 	if (res) {
 		extent_free(sc->vmeext, pcibase, maplen, 0);
+		sc->windowused[wnd] = 0;
 		return (res);
 	}
 
@@ -315,6 +347,7 @@ b3_2706_map_vme(vsc, vmeaddr, len, am, datasizes, swap, tag, handle, resc)
 	if (res) {
 		univ_pci_unmapvme(&sc->univdata, wnd);
 		extent_free(sc->vmeext, pcibase, maplen, 0);
+		sc->windowused[wnd] = 0;
 		return (res);
 	}
 
@@ -358,7 +391,54 @@ b3_2706_vme_probe(vsc, addr, len, am, datasize, callback, cbarg)
 	int (*callback) __P((void *, bus_space_tag_t, bus_space_handle_t));
 	void *cbarg;
 {
-	return (EINVAL);
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
+	vme_mapresc_t resc;
+	int res, i;
+	volatile u_int32_t dummy;
+
+	res = b3_2706_map_vme(vsc, addr, len, am, datasize, 0,
+			      &tag, &handle, &resc);
+	if (res)
+		return (res);
+
+	if (univ_pci_vmebuserr(&sc->univdata, 1))
+		printf("b3_2706_vme_badaddr: TA bit not clean - reset\n");
+
+	if (callback)
+		res = (*callback)(cbarg, tag, handle);
+	else {
+		for (i = 0; i < len;) {
+			switch (datasize) {
+			    case VME_D8:
+				dummy = bus_space_read_1(tag, handle, i);
+				i++;
+				break;
+			    case VME_D16:
+				dummy = bus_space_read_2(tag, handle, i);
+				i += 2;
+				break;
+			    case VME_D32:
+				dummy = bus_space_read_4(tag, handle, i);
+				i += 4;
+				break;
+			    default:
+				panic("b3_2706_vme_probe: invalid datasize %x",
+				      datasize);
+			}
+		}
+	}
+
+	if (univ_pci_vmebuserr(&sc->univdata, 0)) {
+#ifdef BIT3DEBUG
+		printf("b3_2706_vme_badaddr: caught TA\n");
+#endif
+		univ_pci_vmebuserr(&sc->univdata, 1);
+		res = EIO;
+	}
+
+	b3_2706_unmap_vme(vsc, resc);
+	return (res);
 }
 
 int
@@ -367,7 +447,9 @@ b3_2706_map_vmeint(vsc, level, vector, handlep)
 	int level, vector;
 	vme_intr_handle_t *handlep;
 {
-	return (EINVAL);
+
+	*handlep = (void *)(long)((level << 8) | vector); /* XXX */
+	return (0);
 }
 
 void *
@@ -378,7 +460,30 @@ b3_2706_establish_vmeint(vsc, handle, prior, func, arg)
 	int (*func) __P((void *));
 	void *arg;
 {
-	return (NULL);
+	struct b3_2706_vmeintrhand *ih;
+	long lv;
+	int s;
+	extern int cold;
+
+	/* no point in sleeping unless someone can free memory. */
+	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (ih == NULL)
+		panic("b3_2706_map_vmeint: can't malloc handler info");
+
+	lv = (long)handle; /* XXX */
+
+	ih->ih_fun = func;
+	ih->ih_arg = arg;
+	ih->ih_level = lv >> 8;
+	ih->ih_vector = lv & 0xff;
+	ih->ih_prior = prior;
+	ih->ih_count = 0;
+
+	s = splhigh();
+	TAILQ_INSERT_TAIL(&(sc->intrhdls), ih, ih_next);
+	splx(s);
+
+	return (ih);
 }
 
 void
@@ -386,6 +491,57 @@ b3_2706_disestablish_vmeint(vsc, cookie)
 	void *vsc;
 	void *cookie;
 {
+	struct b3_2706_vmeintrhand *ih = cookie;
+	int s;
+
+	if (!ih) {
+		printf("b3_2706_unmap_vmeint: NULL arg\n");
+		return;
+	}
+
+	s = splhigh();
+	TAILQ_REMOVE(&(sc->intrhdls), ih, ih_next);
+	splx(s);
+
+	free(ih, M_DEVBUF);
+}
+
+void
+b3_2706_vmeint(vsc, level, vector)
+	void *vsc;
+	int level, vector;
+{
+	struct b3_2706_vmeintrhand *ih;
+	int found;
+
+#ifdef BIT3DEBUG
+	printf("b3_2706_vmeint: VME IRQ %d, vec %x\n", level, vector);
+#endif
+	found = 0;
+
+	for (ih = sc->intrhdls.tqh_first; ih;
+	     ih = ih->ih_next.tqe_next) {
+		if ((ih->ih_level == level) &&
+		    ((ih->ih_vector == -1) ||
+		     (ih->ih_vector == vector))) {
+			int s, res;
+			/*
+			 * We should raise the interrupt level
+			 * to ih->ih_prior here. How to do this
+			 * machine-independantly?
+			 * To be safe, raise to the maximum.
+			 */
+			s = splhigh();
+			found |= (res = (*(ih->ih_fun))(ih->ih_arg));
+			splx(s);
+			if (res)
+				ih->ih_count++;
+			if (res == 1)
+				break;
+		}
+	}
+	if (!found)
+		sc->strayintrs++;
 }
 
 int
