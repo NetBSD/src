@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 2000/01/23 17:04:07 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 2000/08/07 22:38:11 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
+SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c vers.c
 .PATH:		${S}/arch/ofppc/ofppc
 SRCS+=		ofwmagic.S
 .PATH:		${S}/arch/powerpc/powerpc
@@ -19,7 +19,7 @@ RELOC=		20000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c vers.o
+CLEANFILES+=	vers.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. -I${.OBJDIR}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
@@ -50,10 +50,12 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
+	
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 .include <bsd.prog.mk>
