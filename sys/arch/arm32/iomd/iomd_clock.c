@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.19 1999/04/20 09:14:32 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.20 2000/01/22 05:21:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -291,7 +291,7 @@ microtime(tvp)
 	tvp->tv_usec += (deltatm / TICKS_PER_MICROSECOND);
 
 	/* Make sure the micro seconds don't overflow. */
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
@@ -300,7 +300,7 @@ microtime(tvp)
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
 		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec > 1000000) {
+		if (tvp->tv_usec >= 1000000) {
 			tvp->tv_usec -= 1000000;
 			++tvp->tv_sec;
 		}
