@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93"; */
-static char *rcsid = "$Id: mmap.c,v 1.2 1994/05/06 01:02:58 cgd Exp $";
+static char *rcsid = "$Id: mmap.c,v 1.3 1994/10/19 03:21:41 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,6 @@ mmap(addr, len, prot, flags, fd, offset)
 	off_t	offset;
 {
 
-	return((caddr_t)__syscall((quad_t)SYS_mmap, addr, len, prot, flags,
-		fd, 0, offset));
+	return((caddr_t)(long)__syscall((quad_t)SYS_mmap, addr, len, prot,
+	    flags, fd, 0, offset));
 }
