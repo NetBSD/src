@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: rsh_locl.h,v 1.1.1.2 2000/08/02 19:58:10 assar Exp $ */
+/* $Heimdal: rsh_locl.h,v 1.28 2002/09/03 20:03:46 joda Exp $
+   $NetBSD: rsh_locl.h,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -97,8 +98,13 @@
 #include <krb.h>
 #include <prot.h>
 #endif
+#ifdef KRB5
 #include <krb5.h>
+#include <krb5-private.h> /* for _krb5_{get,put}_int */
+#endif
+#ifdef KRB4
 #include <kafs.h>
+#endif
 
 #ifndef _PATH_NOLOGIN
 #define _PATH_NOLOGIN   "/etc/nologin"
@@ -113,7 +119,7 @@
 #endif
 
 #ifndef _PATH_ETC_ENVIRONMENT
-#define _PATH_ETC_ENVIRONMENT "/etc/environment"
+#define _PATH_ETC_ENVIRONMENT SYSCONFDIR "/environment"
 #endif
 
 /*
@@ -124,22 +130,34 @@ enum auth_method { AUTH_KRB4, AUTH_KRB5, AUTH_BROKEN };
 
 extern enum auth_method auth_method;
 extern int do_encrypt;
+#ifdef KRB5
 extern krb5_context context;
 extern krb5_keyblock *keyblock;
 extern krb5_crypto crypto;
+extern int key_usage;
+extern void *ivec_in[2];
+extern void *ivec_out[2];
+void init_ivecs(int);
+#endif
 #ifdef KRB4
 extern des_key_schedule schedule;
 extern des_cblock iv;
 #endif
 
-#define KCMD_VERSION "KCMDV0.1"
+#define KCMD_OLD_VERSION "KCMDV0.1"
+#define KCMD_NEW_VERSION "KCMDV0.2"
 
 #define USERNAME_SZ 16
 #define COMMAND_SZ 1024
 
-#define RSH_BUFSIZ (16 * 1024)
+#define RSH_BUFSIZ (5 * 1024) /* MIT kcmd can't handle larger buffers */
 
 #define PATH_RSH BINDIR "/rsh"
 
-ssize_t do_read (int fd, void *buf, size_t sz);
-ssize_t do_write (int fd, void *buf, size_t sz);
+#if defined(KRB4) || defined(KRB5)
+ssize_t do_read (int, void*, size_t, void*);
+ssize_t do_write (int, void*, size_t, void*);
+#else
+#define do_write(F, B, L, I) write((F), (B), (L))
+#define do_read(F, B, L, I) read((F), (B), (L))
+#endif

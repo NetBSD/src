@@ -33,7 +33,8 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_priv.c,v 1.1.1.5 2001/09/17 12:25:04 assar Exp $");
+__RCSID("$Heimdal: rd_priv.c,v 1.29 2001/06/18 02:46:15 assar Exp $"
+        "$NetBSD: rd_priv.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
 
 krb5_error_code
 krb5_rd_priv(krb5_context context,

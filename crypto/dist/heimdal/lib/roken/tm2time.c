@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: tm2time.c,v 1.1.1.2 2000/08/02 19:59:59 assar Exp $");
+__RCSID("$Heimdal: tm2time.c,v 1.7 1999/12/02 16:58:53 joda Exp $"
+        "$NetBSD: tm2time.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #ifdef TIME_WITH_SYS_TIME

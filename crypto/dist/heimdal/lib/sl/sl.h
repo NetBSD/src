@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: sl.h,v 1.1.1.3 2001/02/11 13:51:50 assar Exp $ */
+/* $Heimdal: sl.h,v 1.9 2001/01/26 14:58:41 joda Exp $
+   $NetBSD: sl.h,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $ */
 
 #ifndef _SL_H
 #define _SL_H

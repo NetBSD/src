@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: creds.c,v 1.1.1.3 2001/06/19 22:08:19 assar Exp $");
+__RCSID("$Heimdal: creds.c,v 1.15 2001/05/14 06:14:45 assar Exp $"
+        "$NetBSD: creds.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 krb5_error_code
 krb5_free_cred_contents (krb5_context context, krb5_creds *c)

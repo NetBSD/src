@@ -32,7 +32,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: n-fold-test.c,v 1.1.1.3 2001/06/19 22:08:22 assar Exp $");
+__RCSID("$Heimdal: n-fold-test.c,v 1.4 2001/03/12 07:42:30 assar Exp $"
+        "$NetBSD: n-fold-test.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 enum { MAXSIZE = 24 };
 

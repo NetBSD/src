@@ -1,5 +1,6 @@
 #!/bin/sh
-# $Id: make-rpath,v 1.1.1.1 2001/09/17 12:25:12 assar Exp $
+# $Heimdal: make-rpath,v 1.1 2001/07/17 15:15:31 assar Exp $
+# $NetBSD: make-rpath,v 1.1.1.2 2002/09/12 12:41:44 joda Exp $
 rlist=
 rest=
 while test $# -gt 0; do

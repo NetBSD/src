@@ -38,7 +38,8 @@
 
 #include "edit_compat.h"
 
-RCSID("$Id: edit_compat.c,v 1.1.1.3 2001/09/17 12:25:11 assar Exp $");
+__RCSID("$Heimdal: edit_compat.c,v 1.9 2001/08/29 00:24:33 assar Exp $"
+        "$NetBSD: edit_compat.c,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $");
 
 void
 rl_reset_terminal(char *p)

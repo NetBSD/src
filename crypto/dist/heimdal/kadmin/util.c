@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,8 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$Id: util.c,v 1.1.1.5 2001/09/17 12:24:57 assar Exp $");
+__RCSID("$Heimdal: util.c,v 1.37 2002/06/07 18:28:46 joda Exp $"
+        "$NetBSD: util.c,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $");
 
 /*
  * util.c - functions for parsing, unparsing, and editing different
@@ -539,7 +540,6 @@ foreach_principal(const char *exp,
 
 #include <setjmp.h>
 
-static sig_atomic_t num_intrs;
 static jmp_buf jmpbuf;
 
 static void
@@ -554,7 +554,6 @@ get_response(const char *prompt, const char *def, char *buf, size_t len)
     char *p;
     void (*osig)(int);
 
-    num_intrs = 0;
     osig = signal(SIGINT, interrupt);
     if(setjmp(jmpbuf)) {
 	signal(SIGINT, osig);

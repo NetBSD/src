@@ -43,7 +43,8 @@ static const char rcsid[] =
 
 #include "rcp_locl.h"
 
-RCSID("$Id: util.c,v 1.1.1.1 2001/02/11 13:51:12 assar Exp $");
+__RCSID("$Heimdal: util.c,v 1.6 2001/09/04 14:35:58 assar Exp $"
+        "$NetBSD: util.c,v 1.1.1.2 2002/09/12 12:41:33 joda Exp $");
 
 char *
 colon(cp)
@@ -136,6 +137,7 @@ allocbuf(bp, fd, blksize)
 {
 	struct stat stb;
 	size_t size;
+	char *p;
 
 	if (fstat(fd, &stb) < 0) {
 		run_err("fstat: %s", strerror(errno));
@@ -146,11 +148,16 @@ allocbuf(bp, fd, blksize)
 		size = blksize;
 	if (bp->cnt >= size)
 		return (bp);
-	if ((bp->buf = realloc(bp->buf, size)) == NULL) {
+	if ((p = realloc(bp->buf, size)) == NULL) {
+		if (bp->buf)
+			free(bp->buf);
+		bp->buf = NULL;
 		bp->cnt = 0;
 		run_err("%s", strerror(errno));
 		return (0);
 	}
+	memset(p, 0, size);
+	bp->buf = p;
 	bp->cnt = size;
 	return (bp);
 }

@@ -33,7 +33,8 @@
 
 #include "45_locl.h"
 
-RCSID("$Id: get_ad_tkt.c,v 1.1.1.3 2001/09/17 12:24:59 assar Exp $");
+__RCSID("$Heimdal: get_ad_tkt.c,v 1.4 2001/06/18 13:11:05 assar Exp $"
+        "$NetBSD: get_ad_tkt.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 /* get an additional version 4 ticket via the 524 protocol */
 

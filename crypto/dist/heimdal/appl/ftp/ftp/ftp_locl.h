@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: ftp_locl.h,v 1.1.1.4 2001/09/17 12:24:42 assar Exp $ */
+/* $Heimdal: ftp_locl.h,v 1.37 2002/09/10 20:03:46 joda Exp $
+   $NetBSD: ftp_locl.h,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $ */
 
 #ifndef __FTP_LOCL_H__
 #define __FTP_LOCL_H__
@@ -131,11 +132,7 @@ struct hostent  *gethostbyname(const char *);
 #include "security.h"
 
 /* des_read_pw_string */
-#ifdef HAVE_OPENSSL
-#include <openssl/des.h>
-#else
-#include <des.h>
-#endif
+#include "crypto-headers.h"
 
 #if defined(__sun__) && !defined(__svr4)
 int fclose(FILE*);

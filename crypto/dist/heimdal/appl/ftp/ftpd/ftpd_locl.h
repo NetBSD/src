@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: ftpd_locl.h,v 1.1.1.3 2001/02/11 13:51:19 assar Exp $ */
+/* $Heimdal: ftpd_locl.h,v 1.12 2000/09/19 13:16:44 assar Exp $
+   $NetBSD: ftpd_locl.h,v 1.1.1.4 2002/09/12 12:41:35 joda Exp $ */
 
 #ifndef __ftpd_locl_h__
 #define __ftpd_locl_h__

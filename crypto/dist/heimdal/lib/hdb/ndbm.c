@@ -33,7 +33,8 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: ndbm.c,v 1.1.1.4 2001/09/17 12:25:01 assar Exp $");
+__RCSID("$Heimdal: ndbm.c,v 1.33 2001/09/03 05:03:01 assar Exp $"
+        "$NetBSD: ndbm.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 #if HAVE_NDBM
 

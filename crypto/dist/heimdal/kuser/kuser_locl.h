@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: kuser_locl.h,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $ */
+/* $Heimdal: kuser_locl.h,v 1.12 1999/12/02 17:05:01 joda Exp $
+   $NetBSD: kuser_locl.h,v 1.1.1.3 2002/09/12 12:41:39 joda Exp $ */
 
 #ifndef __KUSER_LOCL_H__
 #define __KUSER_LOCL_H__

@@ -8,7 +8,8 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: xnlock.c,v 1.1.1.5 2001/09/17 12:24:40 assar Exp $");
+__RCSID("$Heimdal: xnlock.c,v 1.90 2002/08/23 19:29:38 assar Exp $"
+        "$NetBSD: xnlock.c,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $");
 #endif
 
 #include <stdio.h>
@@ -241,6 +242,9 @@ init_words (int argc, char **argv)
 		if (appres.file == NULL)
 		    errx (1, "cannot allocate memory for message");
 	    }
+	} else if(strcmp(argv[i], "--version") == 0) {
+	    print_version(NULL);
+	    exit(0);
 	} else {
 	    int j;
 	    int len = 1;
@@ -372,12 +376,22 @@ walk(int dir)
     lastdir = dir;
 }
 
+static long
+my_random (void)
+{
+#ifdef HAVE_RANDOM
+    return random();
+#else
+    return rand();
+#endif
+}
+
 static int
 think(void)
 {
-    if (rand() & 1)
+    if (my_random() & 1)
 	walk(FRONT);
-    if (rand() & 1) {
+    if (my_random() & 1) {
 	words = get_words();
 	return 1;
     }
@@ -392,21 +406,21 @@ move(XtPointer _p, XtIntervalId *_id)
     if (!length) {
 	int tries = 0;
 	dir = 0;
-	if ((rand() & 1) && think()) {
+	if ((my_random() & 1) && think()) {
 	    talk(0); /* sets timeout to itself */
 	    return;
 	}
-	if (!(rand() % 3) && (interval = look())) {
+	if (!(my_random() % 3) && (interval = look())) {
 	    timeout_id = XtAppAddTimeOut(app, interval, move, NULL);
 	    return;
 	}
-	interval = 20 + rand() % 100;
+	interval = 20 + my_random() % 100;
 	do  {
 	    if (!tries)
-		length = Width/100 + rand() % 90, tries = 8;
+		length = Width/100 + my_random() % 90, tries = 8;
 	    else
 		tries--;
-	    switch (rand() % 8) {
+	    switch (my_random() % 8) {
 		case 0:
 		    if (x - X_INCR*length >= 5)
 			dir = LEFT;
@@ -915,21 +929,21 @@ look(void)
 {
     XSetForeground(dpy, gc, White);
     XSetBackground(dpy, gc, Black);
-    if (rand() % 3) {
-	XCopyPlane(dpy, (rand() & 1)? down : front, XtWindow(widget), gc,
+    if (my_random() % 3) {
+	XCopyPlane(dpy, (my_random() & 1)? down : front, XtWindow(widget), gc,
 	    0, 0, 64,64, x, y, 1L);
 	return 1000L;
     }
-    if (!(rand() % 5))
+    if (!(my_random() % 5))
 	return 0;
-    if (rand() % 3) {
-	XCopyPlane(dpy, (rand() & 1)? left_front : right_front,
+    if (my_random() % 3) {
+	XCopyPlane(dpy, (my_random() & 1)? left_front : right_front,
 	    XtWindow(widget), gc, 0, 0, 64,64, x, y, 1L);
 	return 1000L;
     }
-    if (!(rand() % 5))
+    if (!(my_random() % 5))
 	return 0;
-    XCopyPlane(dpy, (rand() & 1)? left0 : right0, XtWindow(widget), gc,
+    XCopyPlane(dpy, (my_random() & 1)? left0 : right0, XtWindow(widget), gc,
 	0, 0, 64,64, x, y, 1L);
     return 1000L;
 }
@@ -966,9 +980,15 @@ main (int argc, char **argv)
       strlcpy(login, pw->pw_name, sizeof(login));
     }
 
-    srand(getpid());
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();
+#elif defined(HAVE_RANDOM)
+    srandom(time(NULL));
+#else
+    srand (time(NULL));
+#endif
     for (i = 0; i < STRING_LENGTH; i++)
-	STRING[i] = ((unsigned long)rand() % ('~' - ' ')) + ' ';
+	STRING[i] = ((unsigned long)my_random() % ('~' - ' ')) + ' ';
 
     locked_at = time(0);
 

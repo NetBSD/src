@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gss_common.h,v 1.1.1.2 2000/08/02 19:58:13 assar Exp $ */
+/* $Heimdal: gss_common.h,v 1.5 1999/12/02 17:04:56 joda Exp $
+   $NetBSD: gss_common.h,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $ */
 
 void write_token (int sock, gss_buffer_t buf);
 void read_token (int sock, gss_buffer_t buf);

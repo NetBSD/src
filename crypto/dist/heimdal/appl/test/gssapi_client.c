@@ -34,7 +34,8 @@
 #include "test_locl.h"
 #include <gssapi.h>
 #include "gss_common.h"
-RCSID("$Id: gssapi_client.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
+__RCSID("$Heimdal: gssapi_client.c,v 1.16 2000/08/09 20:53:06 assar Exp $"
+        "$NetBSD: gssapi_client.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 static int
 do_trans (int sock, gss_ctx_id_t context_hdl)

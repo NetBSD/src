@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: acl.c,v 1.1.1.4 2001/09/17 12:25:01 assar Exp $");
+__RCSID("$Heimdal: acl.c,v 1.13 2001/08/24 04:01:42 assar Exp $"
+        "$NetBSD: acl.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 static struct units acl_units[] = {
     { "all",		KADM5_PRIV_ALL },

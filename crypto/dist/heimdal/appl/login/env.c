@@ -32,7 +32,8 @@
  */
 
 #include "login_locl.h"
-RCSID("$Id: env.c,v 1.1.1.1 2000/08/02 19:58:08 assar Exp $");
+__RCSID("$Heimdal: env.c,v 1.1 2000/06/28 12:27:38 joda Exp $"
+        "$NetBSD: env.c,v 1.1.1.2 2002/09/12 12:41:33 joda Exp $");
 
 /*
  * the environment we will send to execle and the shell.

@@ -33,7 +33,8 @@
 
 #include "kx.h"
 
-RCSID("$Id: kxd.c,v 1.1.1.4 2001/06/19 22:07:44 assar Exp $");
+__RCSID("$Heimdal: kxd.c,v 1.69 2001/02/20 01:44:45 assar Exp $"
+        "$NetBSD: kxd.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;

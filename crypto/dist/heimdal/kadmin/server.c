@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,8 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
-RCSID("$Id: server.c,v 1.1.1.4 2001/09/17 12:24:57 assar Exp $");
+__RCSID("$Heimdal: server.c,v 1.36 2002/09/10 19:23:28 joda Exp $"
+        "$NetBSD: server.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
@@ -255,6 +256,13 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	    krb5_free_principal(context->context, princ);
 	    goto fail;
 	}
+	/* n_key_data will be squeezed into an int16_t below. */
+	if (n_key_data < 0 || n_key_data >= 1 << 16 ||
+	    n_key_data > UINT_MAX/sizeof(*key_data)) {
+	    ret = ERANGE;
+	    krb5_free_principal(context->context, princ);
+	    goto fail;
+	}
 
 	key_data = malloc (n_key_data * sizeof(*key_data));
 	if (key_data == NULL) {
@@ -404,7 +412,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
     return 0;
 fail:
     krb5_warn(context->context, ret, "%s", op);
-    sp->seek(sp, 0, SEEK_SET);
+    krb5_storage_seek(sp, 0, SEEK_SET);
     krb5_store_int32(sp, ret);
     krb5_storage_to_data(sp, out);
     krb5_storage_free(sp);
@@ -440,7 +448,7 @@ v5_loop (krb5_context context,
 }
 
 static krb5_boolean
-match_appl_version(void *data, const char *appl_version)
+match_appl_version(const void *data, const char *appl_version)
 {
     unsigned minor;
     if(sscanf(appl_version, "KADM0.%u", &minor) != 1)

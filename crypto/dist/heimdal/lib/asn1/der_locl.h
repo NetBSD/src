@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: der_locl.h,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $ */
+/* $Heimdal: der_locl.h,v 1.4 2001/09/27 16:21:47 assar Exp $
+   $NetBSD: der_locl.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #ifndef __DER_LOCL_H__
 #define __DER_LOCL_H__
@@ -49,6 +50,8 @@
 #include <errno.h>
 #include <roken.h>
 
-#include <libasn1.h>
+#include <asn1-common.h>
+#include <asn1_err.h>
+#include <der.h>
 
 #endif /* __DER_LOCL_H__ */

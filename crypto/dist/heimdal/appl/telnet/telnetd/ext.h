@@ -33,7 +33,8 @@
  *	@(#)ext.h	8.2 (Berkeley) 12/15/93
  */
 
-/* $Id: ext.h,v 1.1.1.5 2001/09/17 12:24:39 assar Exp $ */
+/* $Heimdal: ext.h,v 1.23 2001/08/29 00:45:22 assar Exp $
+   $NetBSD: ext.h,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $ */
 
 #ifndef __EXT_H__
 #define __EXT_H__

@@ -33,7 +33,8 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kdecode_ticket.c,v 1.1.1.4 2001/06/19 22:08:12 assar Exp $");
+__RCSID("$Heimdal: kdecode_ticket.c,v 1.5 2001/02/20 01:44:51 assar Exp $"
+        "$NetBSD: kdecode_ticket.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 static char *etype_str;
 static int version_flag;

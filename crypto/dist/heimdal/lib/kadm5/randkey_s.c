@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: randkey_s.c,v 1.1.1.3 2001/02/11 13:51:43 assar Exp $");
+__RCSID("$Heimdal: randkey_s.c,v 1.13 2001/01/30 01:24:28 assar Exp $"
+        "$NetBSD: randkey_s.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 /*
  * Set the keys of `princ' to random values, returning the random keys

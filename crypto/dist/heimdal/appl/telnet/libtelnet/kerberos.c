@@ -55,7 +55,8 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: kerberos.c,v 1.1.1.5 2001/09/17 12:24:38 assar Exp $");
+__RCSID("$Heimdal: kerberos.c,v 1.54 2001/08/22 20:30:22 assar Exp $"
+        "$NetBSD: kerberos.c,v 1.1.1.6 2002/09/12 12:41:33 joda Exp $");
 
 #ifdef	KRB4
 #ifdef HAVE_SYS_TYPES_H

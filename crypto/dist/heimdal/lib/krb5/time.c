@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: time.c,v 1.1.1.3 2001/06/19 22:08:23 assar Exp $");
+__RCSID("$Heimdal: time.c,v 1.5 2001/05/02 10:06:11 joda Exp $"
+        "$NetBSD: time.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 /*
  * return ``corrected'' time in `timeret'.

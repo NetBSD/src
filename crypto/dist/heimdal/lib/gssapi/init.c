@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: init.c,v 1.1.1.4 2001/09/17 12:25:00 assar Exp $");
+__RCSID("$Heimdal: init.c,v 1.6 2001/08/13 13:14:07 joda Exp $"
+        "$NetBSD: init.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 krb5_error_code
 gssapi_krb5_init (void)

@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: chpass_s.c,v 1.1.1.3 2001/02/11 13:51:41 assar Exp $");
+__RCSID("$Heimdal: chpass_s.c,v 1.13 2001/01/30 01:24:28 assar Exp $"
+        "$NetBSD: chpass_s.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 static kadm5_ret_t
 change(void *server_handle, 

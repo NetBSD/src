@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: get_s.c,v 1.1.1.2 2000/08/02 19:59:18 assar Exp $");
+__RCSID("$Heimdal: get_s.c,v 1.13 2000/06/19 16:11:31 joda Exp $"
+        "$NetBSD: get_s.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 kadm5_ret_t
 kadm5_s_get_principal(void *server_handle, 

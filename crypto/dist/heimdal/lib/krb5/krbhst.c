@@ -34,7 +34,8 @@
 #include "krb5_locl.h"
 #include <resolve.h>
 
-RCSID("$Id: krbhst.c,v 1.1.1.5 2001/09/17 12:25:04 assar Exp $");
+__RCSID("$Heimdal: krbhst.c,v 1.41 2002/08/16 18:48:19 nectar Exp $"
+        "$NetBSD: krbhst.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
 
 static int
 string_to_proto(const char *string)
@@ -514,6 +515,8 @@ kpasswd_get_next(krb5_context context,
 		 struct krb5_krbhst_data *kd,
 		 krb5_krbhst_info **host)
 {
+    krb5_error_code ret;
+
     if((kd->flags & KD_CONFIG) == 0) {
 	config_get_hosts(context, kd, "kpasswd_server");
 	if(get_next(kd, host))
@@ -538,7 +541,10 @@ kpasswd_get_next(krb5_context context,
 	kd->flags = 0;
 	kd->port  = kd->def_port;
 	kd->get_next = admin_get_next;
-	return (*kd->get_next)(context, kd, host);
+	ret = (*kd->get_next)(context, kd, host);
+	if (ret == 0)
+	    (*host)->proto = KRB5_KRBHST_UDP;
+	return ret;
     }
 
     return KRB5_KDC_UNREACH; /* XXX */

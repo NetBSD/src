@@ -33,7 +33,8 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: get.c,v 1.1.1.5 2001/09/17 12:24:35 assar Exp $");
+__RCSID("$Heimdal: get.c,v 1.21 2001/10/29 12:53:52 nectar Exp $"
+        "$NetBSD: get.c,v 1.1.1.6 2002/09/12 12:41:33 joda Exp $");
 
 static void*
 open_kadmin_connection(char *principal,
@@ -41,8 +42,8 @@ open_kadmin_connection(char *principal,
 		       char *admin_server, 
 		       int server_port)
 {
+    static kadm5_config_params conf;
     krb5_error_code ret;
-    kadm5_config_params conf;
     void *kadm_handle;
     memset(&conf, 0, sizeof(conf));
 

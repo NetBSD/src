@@ -33,7 +33,8 @@
  */
 
 #include "make_cmds.h"
-RCSID("$Id: parse.y,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $");
+__RCSID("$Heimdal: parse.y,v 1.7 2000/06/27 02:37:18 assar Exp $"
+        "$NetBSD: parse.y,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
 
 static void yyerror (char *s);
 

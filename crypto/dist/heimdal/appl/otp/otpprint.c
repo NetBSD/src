@@ -34,7 +34,8 @@
 #include "otp_locl.h"
 #include <getarg.h>
 
-RCSID("$Id: otpprint.c,v 1.1.1.3 2001/06/19 22:07:40 assar Exp $");
+__RCSID("$Heimdal: otpprint.c,v 1.14 2001/02/20 01:44:46 assar Exp $"
+        "$NetBSD: otpprint.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 static int extendedp;
 static int count = 10;

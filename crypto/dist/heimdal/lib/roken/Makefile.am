@@ -1,4 +1,5 @@
-# $Id: Makefile.am,v 1.1.1.5 2001/09/17 12:25:06 assar Exp $
+# $Heimdal: Makefile.am,v 1.122 2002/09/09 19:17:01 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -7,7 +8,7 @@ ACLOCAL_AMFLAGS = -I ../../cf
 CLEANFILES = roken.h make-roken.c $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
-libroken_la_LDFLAGS = -version-info 14:3:5
+libroken_la_LDFLAGS = -version-info 16:0:0
 
 noinst_PROGRAMS = make-roken snprintf-test
 
@@ -17,18 +18,26 @@ check_PROGRAMS = 				\
 		base64-test			\
 		getaddrinfo-test		\
 		parse_bytes-test		\
+		parse_reply-test		\
 		snprintf-test			\
 		strpftime-test
 
 TESTS = $(check_PROGRAMS)
 
-LIB_crypt = @LIB_crypt@
-
 LDADD = libroken.la $(LIB_crypt)
 make_roken_LDADD = 
 
-strpftime_test_SOURCES	= strpftime-test.c strftime.c strptime.c snprintf.c
-snprintf_test_SOURCES	= snprintf-test.c snprintf.c
+noinst_LTLIBRARIES = libtest.la
+libtest_la_SOURCES = strftime.c strptime.c snprintf.c
+libtest_la_CFLAGS = -DTEST_SNPRINTF
+
+parse_reply_test_SOURCES = parse_reply-test.c resolve.c
+parse_reply_test_CFLAGS  = -DTEST_RESOLVE
+
+strpftime_test_SOURCES	= strpftime-test.c
+strpftime_test_LDADD = libtest.la $(LDADD)
+snprintf_test_SOURCES	= snprintf-test.c
+snprintf_test_LDADD = libtest.la $(LDADD)
 snprintf_test_CFLAGS	= -DTEST_SNPRINTF
 
 libroken_la_SOURCES =		\
@@ -91,7 +100,6 @@ EXTRA_libroken_la_SOURCES =	\
 	flock.c			\
 	fnmatch.c		\
 	fnmatch.hin		\
-	freeaddrinfo.c		\
 	freehostent.c		\
 	gai_strerror.c		\
 	getdtablesize.c		\
@@ -210,7 +218,7 @@ nodist_include_HEADERS = roken.h
 
 man_MANS = getarg.3
 
-SUFFIXES = .hin
+SUFFIXES += .hin
 .hin.h:
 	cp $< $@
 

@@ -34,7 +34,8 @@
 #include "test_locl.h"
 #include <gssapi.h>
 #include "gss_common.h"
-RCSID("$Id: gssapi_server.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
+__RCSID("$Heimdal: gssapi_server.c,v 1.15 2000/08/09 20:53:07 assar Exp $"
+        "$NetBSD: gssapi_server.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 static int
 process_it(int sock,

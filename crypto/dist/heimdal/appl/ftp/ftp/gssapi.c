@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -39,7 +39,8 @@
 #include <gssapi.h>
 #include <krb5_err.h>
 
-RCSID("$Id: gssapi.c,v 1.1.1.4 2001/09/17 12:24:42 assar Exp $");
+__RCSID("$Heimdal: gssapi.c,v 1.20 2002/09/04 22:00:50 joda Exp $"
+        "$NetBSD: gssapi.c,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $");
 
 struct gss_data {
     gss_ctx_id_t context_hdl;
@@ -81,6 +82,7 @@ gss_decode(void *app_data, void *buf, int len, int level)
     gss_qop_t qop_state;
     int conf_state;
     struct gss_data *d = app_data;
+    size_t ret_len;
 
     input.length = len;
     input.value = buf;
@@ -93,7 +95,9 @@ gss_decode(void *app_data, void *buf, int len, int level)
     if(GSS_ERROR(maj_stat))
 	return -1;
     memmove(buf, output.value, output.length);
-    return output.length;
+    ret_len = output.length;
+    gss_release_buffer(&min_stat, &output);
+    return ret_len;
 }
 
 static int
@@ -166,41 +170,41 @@ gss_adat(void *app_data, void *buf, size_t len)
     OM_uint32 maj_stat, min_stat;
     gss_name_t client_name;
     struct gss_data *d = app_data;
+    struct gss_channel_bindings_struct bindings;
 
-    gss_channel_bindings_t bindings = malloc(sizeof(*bindings));
     sockaddr_to_gss_address (his_addr,
-			     &bindings->initiator_addrtype,
-			     &bindings->initiator_address);
+			     &bindings.initiator_addrtype,
+			     &bindings.initiator_address);
     sockaddr_to_gss_address (ctrl_addr,
-			     &bindings->acceptor_addrtype,
-			     &bindings->acceptor_address);
+			     &bindings.acceptor_addrtype,
+			     &bindings.acceptor_address);
 
-    bindings->application_data.length = 0;
-    bindings->application_data.value = NULL;
+    bindings.application_data.length = 0;
+    bindings.application_data.value = NULL;
 
     input_token.value = buf;
     input_token.length = len;
 
     d->delegated_cred_handle = malloc(sizeof(*d->delegated_cred_handle));
     if (d->delegated_cred_handle == NULL) {
-       reply(500, "Out of memory");
-       goto out;
+	reply(500, "Out of memory");
+	goto out;
     }
 
     memset ((char*)d->delegated_cred_handle, 0,
-            sizeof(*d->delegated_cred_handle));
+	    sizeof(*d->delegated_cred_handle));
     
     maj_stat = gss_accept_sec_context (&min_stat,
 				       &d->context_hdl,
 				       GSS_C_NO_CREDENTIAL,
 				       &input_token,
-				       bindings,
+				       &bindings,
 				       &client_name,
 				       NULL,
 				       &output_token,
 				       NULL,
 				       NULL,
-                                       &d->delegated_cred_handle);
+				       &d->delegated_cred_handle);
 
     if(output_token.length) {
 	if(base64_encode(output_token.value, output_token.length, &p) < 0) {
@@ -235,9 +239,22 @@ gss_adat(void *app_data, void *buf, size_t len)
 	    reply(335, "ADAT=%s", p);
 	else
 	    reply(335, "OK, need more data");
-    } else
-	reply(535, "foo?");
-out:
+    } else {
+	OM_uint32 new_stat;
+	OM_uint32 msg_ctx = 0;
+	gss_buffer_desc status_string;
+	gss_display_status(&new_stat,
+			   min_stat,
+			   GSS_C_MECH_CODE,
+			   GSS_C_NO_OID,
+			   &msg_ctx,
+			   &status_string);
+	syslog(LOG_ERR, "gss_accept_sec_context: %s", 
+	       (char*)status_string.value);
+	gss_release_buffer(&new_stat, &status_string);
+	reply(431, "Security resource unavailable");
+    }
+  out:
     free(p);
     return 0;
 }
@@ -272,6 +289,11 @@ import_name(const char *kname, const char *host, gss_name_t *target_name)
     gss_buffer_desc name;
 
     name.length = asprintf((char**)&name.value, "%s@%s", kname, host);
+    if (name.value == NULL) {
+	printf("Out of memory\n");
+	return AUTH_ERROR;
+    }
+
     maj_stat = gss_import_name(&min_stat,
 			       &name,
 			       GSS_C_NT_HOSTBASED_SERVICE,
@@ -302,7 +324,6 @@ gss_auth(void *app_data, char *host)
 {
     
     OM_uint32 maj_stat, min_stat;
-    gss_buffer_desc name;
     gss_name_t target_name;
     gss_buffer_desc input, output_token;
     int context_established = 0;

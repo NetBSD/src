@@ -34,7 +34,8 @@
 #define PRINTOPTIONS
 #include "telnetd.h"
 
-RCSID("$Id: utility.c,v 1.1.1.5 2001/09/17 12:24:39 assar Exp $");
+__RCSID("$Heimdal: utility.c,v 1.27 2001/09/03 05:54:17 assar Exp $"
+        "$NetBSD: utility.c,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $");
 
 /*
  * utility functions performing io related tasks
@@ -1152,7 +1153,7 @@ printdata(char *tag, char *ptr, int cnt)
 	output_data("%s: ", tag);
 	for (i = 0; i < 20 && cnt; i++) {
 	    output_data("%02x", *ptr);
-	    if (isprint(*ptr)) {
+	    if (isprint((unsigned char)*ptr)) {
 		xbuf[i] = *ptr;
 	    } else {
 		xbuf[i] = '.';

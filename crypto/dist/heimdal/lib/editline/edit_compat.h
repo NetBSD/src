@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: edit_compat.h,v 1.1.1.1 2001/09/17 12:25:11 assar Exp $ */
+/* $Heimdal: edit_compat.h,v 1.1 2001/08/29 00:24:33 assar Exp $
+   $NetBSD: edit_compat.h,v 1.1.1.2 2002/09/12 12:41:43 joda Exp $ */
 
 #ifndef _EDIT_COMPAT_H
 #define _EDIT_COMPAT_H

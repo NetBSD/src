@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,8 @@
 
 #include "kx.h"
 
-RCSID("$Id: krb5.c,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $");
+__RCSID("$Heimdal: krb5.c,v 1.10 2002/09/09 13:14:58 joda Exp $"
+        "$NetBSD: krb5.c,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $");
 
 #ifdef KRB5
 
@@ -84,8 +85,7 @@ krb5_authenticate (kx_context *kc, int s)
     ret = krb5_sname_to_principal (context,
 				   host, "host", KRB5_NT_SRV_HST, &server);
     if (ret) {
-	warnx ("krb5_sname_to_principal: %s: %s", host,
-	       krb5_get_err_text(context, ret));
+	krb5_warn (context, ret, "krb5_sname_to_principal: %s", host);
 	return 1;
     }
 
@@ -95,7 +95,7 @@ krb5_authenticate (kx_context *kc, int s)
 			 KX_VERSION,
 			 NULL,
 			 server,
-			 AP_OPTS_MUTUAL_REQUIRED,
+			 AP_OPTS_MUTUAL_REQUIRED | AP_OPTS_USE_SUBKEY,
 			 NULL,
 			 NULL,
 			 NULL,
@@ -103,22 +103,21 @@ krb5_authenticate (kx_context *kc, int s)
 			 NULL,
 			 NULL);
     if (ret) {
-	warnx ("krb5_sendauth: %s: %s", host,
-	       krb5_get_err_text(context, ret));
+	if(ret != KRB5_SENDAUTH_BADRESPONSE)
+	    krb5_warn (context, ret, "krb5_sendauth: %s", host);
 	return 1;
     }
 
     ret = krb5_auth_con_getkey (context, auth_context, &c->keyblock);
     if (ret) {
-	warnx ("krb5_auth_con_getkey: %s: %s", host,
-	       krb5_get_err_text(context, ret));
+	krb5_warn (context, ret, "krb5_auth_con_getkey: %s", host);
 	krb5_auth_con_free (context, auth_context);
 	return 1;
     }
     
     ret = krb5_crypto_init (context, c->keyblock, 0, &c->crypto);
     if (ret) {
-	warnx ("krb5_crypto_init: %s", krb5_get_err_text (context, ret));
+	krb5_warn (context, ret, "krb5_crypto_init");
 	krb5_auth_con_free (context, auth_context);
 	return 1;
     }
@@ -158,7 +157,7 @@ krb5_read (kx_context *kc,
     ret = krb5_decrypt (context, c->crypto, KRB5_KU_OTHER_ENCRYPTED,
 			buf, outer_len, &data);
     if (ret) {
-	warnx ("krb5_decrypt: %s", krb5_get_err_text(context, ret));
+	krb5_warn (context, ret, "krb5_decrypt");
 	return -1;
     }
     if (data_len > data.length) {
@@ -189,7 +188,7 @@ krb5_write(kx_context *kc,
     ret = krb5_encrypt (context, c->crypto, KRB5_KU_OTHER_ENCRYPTED,
 			(void *)buf, len, &data);
     if (ret){
-	warnx ("krb5_write: %s", krb5_get_err_text (context, ret));
+	krb5_warn (context, ret, "krb5_write");
 	return -1;
     }
 

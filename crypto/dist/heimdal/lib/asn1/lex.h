@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: lex.h,v 1.1.1.2 2000/08/02 19:59:05 assar Exp $ */
+/* $Heimdal: lex.h,v 1.5 2000/07/01 20:21:34 assar Exp $
+   $NetBSD: lex.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #include <roken.h>
 

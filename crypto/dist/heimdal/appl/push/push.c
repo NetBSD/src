@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,8 @@
  */
 
 #include "push_locl.h"
-RCSID("$Id: push.c,v 1.1.1.4 2001/06/19 22:07:44 assar Exp $");
+__RCSID("$Heimdal: push.c,v 1.45 2001/09/04 09:45:52 assar Exp $"
+        "$NetBSD: push.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
 
 #ifdef KRB4
 static int use_v4 = -1;
@@ -208,7 +209,7 @@ doit(int s,
 {
     int ret;
     char out_buf[PUSH_BUFSIZ];
-    size_t out_len = 0;
+    int out_len = 0;
     char in_buf[PUSH_BUFSIZ + 1];	/* sentinel */
     size_t in_len = 0;
     char *in_ptr = in_buf;
@@ -262,6 +263,8 @@ doit(int s,
     out_len = snprintf (out_buf, sizeof(out_buf),
 			"USER %s\r\nPASS hej\r\nSTAT\r\n",
 			user);
+    if (out_len < 0)
+	errx (1, "snprintf failed");
     if (net_write (s, out_buf, out_len) != out_len)
 	err (1, "write");
     if (verbose > 1)
@@ -464,6 +467,8 @@ doit(int s,
 	    else if(state == DELE)
 		out_len = snprintf (out_buf, sizeof(out_buf),
 				    "DELE %u\r\n", ++asked_deleted);
+	    if (out_len < 0)
+		errx (1, "snprintf failed");
 	    if (net_write (s, out_buf, out_len) != out_len)
 		err (1, "write");
 	    if (verbose > 1)

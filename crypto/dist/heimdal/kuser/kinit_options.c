@@ -32,7 +32,8 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kinit_options.c,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $");
+__RCSID("$Heimdal: kinit_options.c,v 1.2 1999/12/02 17:05:01 joda Exp $"
+        "$NetBSD: kinit_options.c,v 1.1.1.3 2002/09/12 12:41:39 joda Exp $");
 
 #ifdef KRB4
 int do_afslog		= 0;

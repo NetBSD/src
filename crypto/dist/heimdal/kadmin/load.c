@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,8 @@
 #include "kadmin_locl.h"
 #include <kadm5/private.h>
 
-RCSID("$Id: load.c,v 1.1.1.5 2001/09/17 12:24:57 assar Exp $");
+__RCSID("$Heimdal: load.c,v 1.44 2002/09/04 20:44:35 joda Exp $"
+        "$NetBSD: load.c,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $");
 
 struct entry {
     char *principal;
@@ -288,8 +289,10 @@ parse_generation(char *str, GENERATION **gen)
     char *p;
     int v;
 
-    if(strcmp(str, "-") == 0 || *str == '\0')
+    if(strcmp(str, "-") == 0 || *str == '\0') {
 	*gen = NULL;
+	return 0;
+    }
     *gen = calloc(1, sizeof(**gen));
 
     p = strsep(&str, ":");

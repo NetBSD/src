@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: external.c,v 1.1.1.2 2000/08/02 19:59:08 assar Exp $");
+__RCSID("$Heimdal: external.c,v 1.5 2000/07/22 03:45:28 assar Exp $"
+        "$NetBSD: external.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 /*
  * The implementation must reserve static storage for a

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: admin.h,v 1.1.1.3 2001/02/11 13:51:41 assar Exp $ */
+/* $Heimdal: admin.h,v 1.18 2000/08/04 11:26:21 joda Exp $
+   $NetBSD: admin.h,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $ */
 
 #ifndef __KADM5_ADMIN_H__
 #define __KADM5_ADMIN_H__

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 #include "hdb_locl.h"
 #include <ctype.h>
 
-RCSID("$Id: print.c,v 1.1.1.4 2001/09/17 12:25:01 assar Exp $");
+__RCSID("$Heimdal: print.c,v 1.8 2002/05/24 15:18:02 joda Exp $"
+        "$NetBSD: print.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 /* 
    This is the present contents of a dump line. This might change at
@@ -71,7 +72,7 @@ append_string(krb5_context context, krb5_storage *sp, const char *fmt, ...)
 	krb5_set_error_string(context, "malloc: out of memory");
 	return ENOMEM;
     }
-    ret = sp->store(sp, s, strlen(s));
+    ret = krb5_storage_write(sp, s, strlen(s));
     free(s);
     return ret;
 }
@@ -226,7 +227,7 @@ hdb_entry2string (krb5_context context, hdb_entry *ent, char **str)
 	return ret;
     }
 
-    sp->store(sp, "\0", 1);
+    krb5_storage_write(sp, "\0", 1);
     krb5_storage_to_data(sp, &data);
     krb5_storage_free(sp);
     *str = data.data;
@@ -256,7 +257,7 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry, void *data)
 	return ret;
     }
 
-    sp->store(sp, "\n", 1);
+    krb5_storage_write(sp, "\n", 1);
     krb5_storage_free(sp);
     return 0;
 }

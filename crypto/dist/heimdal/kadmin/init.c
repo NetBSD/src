@@ -34,7 +34,8 @@
 #include "kadmin_locl.h"
 #include <kadm5/private.h>
 
-RCSID("$Id: init.c,v 1.1.1.3 2001/02/11 13:51:32 assar Exp $");
+__RCSID("$Heimdal: init.c,v 1.27 2000/09/10 19:20:16 joda Exp $"
+        "$NetBSD: init.c,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $");
 
 static kadm5_ret_t
 create_random_entry(krb5_principal princ,

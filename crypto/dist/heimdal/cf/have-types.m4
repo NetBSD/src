@@ -1,5 +1,6 @@
 dnl
-dnl $Id: have-types.m4,v 1.1.1.2 2000/08/02 20:00:29 assar Exp $
+dnl $Heimdal: have-types.m4,v 1.2 2000/07/15 18:09:16 joda Exp $
+dnl $NetBSD: have-types.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 
 AC_DEFUN(AC_HAVE_TYPES, [

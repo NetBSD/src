@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,24 +32,29 @@
  */
 
 #include "rsh_locl.h"
-RCSID("$Id: rshd.c,v 1.1.1.5 2001/09/17 12:24:37 assar Exp $");
+__RCSID("$Heimdal: rshd.c,v 1.47 2002/09/03 20:03:26 joda Exp $"
+        "$NetBSD: rshd.c,v 1.1.1.6 2002/09/12 12:41:33 joda Exp $");
 
 int
 login_access( struct passwd *user, char *from);
 
 enum auth_method auth_method;
 
+#ifdef KRB5
 krb5_context context;
 krb5_keyblock *keyblock;
 krb5_crypto crypto;
+#endif
 
 #ifdef KRB4
 des_key_schedule schedule;
 des_cblock iv;
 #endif
 
+#ifdef KRB5
 krb5_ccache ccache, ccache2;
 int kerberos_status = 0;
+#endif
 
 int do_encrypt = 0;
 
@@ -60,15 +65,19 @@ static int do_inetd = 1;
 static char *port_str;
 static int do_rhosts = 1;
 static int do_kerberos = 0;
+#define DO_KRB4 2
+#define DO_KRB5 4
 static int do_vacuous = 0;
 static int do_log = 1;
+#ifdef KRB4
 static int do_newpag = 1;
+#endif
 static int do_addr_verify = 0;
 static int do_keepalive = 1;
 static int do_version;
 static int do_help = 0;
 
-#if defined(DCE)
+#if defined(KRB5) && defined(DCE)
 int dfsk5ok = 0;
 int dfspag = 0;
 int dfsfwd = 0;
@@ -91,11 +100,11 @@ syslog_and_die (const char *m, ...)
 }
 
 static void
-fatal (int sock, const char *m, ...)
-    __attribute__ ((format (printf, 2, 3)));
+fatal (int, const char*, const char *, ...)
+    __attribute__ ((format (printf, 3, 4)));
 
 static void
-fatal (int sock, const char *m, ...)
+fatal (int sock, const char *what, const char *m, ...)
 {
     va_list args;
     char buf[BUFSIZ];
@@ -106,7 +115,10 @@ fatal (int sock, const char *m, ...)
     len = vsnprintf (buf + 1, sizeof(buf) - 1, m, args);
     len = min(len, sizeof(buf) - 1);
     va_end(args);
-    syslog (LOG_ERR, "%s", buf + 1);
+    if(what != NULL)
+	syslog (LOG_ERR, "%s: %m: %s", what, buf + 1);
+    else
+	syslog (LOG_ERR, "%s", buf + 1);
     net_write (sock, buf, len + 1);
     exit (1);
 }
@@ -122,7 +134,7 @@ read_str (int s, char *str, size_t sz, char *expl)
 	--sz;
 	++str;
     }
-    fatal (s, "%s too long", expl);
+    fatal (s, NULL, "%s too long", expl);
 }
 
 static int
@@ -140,10 +152,10 @@ recv_bsd_auth (int s, u_char *buf,
     read_str (s, cmd, COMMAND_SZ, "command");
     pwd = getpwnam(server_username);
     if (pwd == NULL)
-	fatal(s, "Login incorrect.");
+	fatal(s, NULL, "Login incorrect.");
     if (iruserok(thataddr->sin_addr.s_addr, pwd->pw_uid == 0,
 		 client_username, server_username))
-	fatal(s, "Login incorrect.");
+	fatal(s, NULL, "Login incorrect.");
     return 0;
 }
 
@@ -188,12 +200,12 @@ recv_krb4_auth (int s, u_char *buf,
 			   version);
     if (status != KSUCCESS)
 	syslog_and_die ("recvauth: %s", krb_get_err_text(status));
-    if (strncmp (version, KCMD_VERSION, KRB_SENDAUTH_VLEN) != 0)
+    if (strncmp (version, KCMD_OLD_VERSION, KRB_SENDAUTH_VLEN) != 0)
 	syslog_and_die ("bad version: %s", version);
 
     read_str (s, server_username, USERNAME_SZ, "remote username");
     if (kuserok (&auth, server_username) != 0)
-	fatal (s, "Permission denied");
+	fatal (s, NULL, "Permission denied.");
     read_str (s, cmd, COMMAND_SZ, "command");
 
     syslog(LOG_INFO|LOG_AUTH,
@@ -211,6 +223,7 @@ recv_krb4_auth (int s, u_char *buf,
 
 #endif /* KRB4 */
 
+#ifdef KRB5
 static int 
 save_krb5_creds (int s,
                  krb5_auth_context auth_context,
@@ -265,6 +278,24 @@ krb5_start_session (void)
     return;
 }
 
+static int protocol_version;
+
+static krb5_boolean
+match_kcmd_version(const void *data, const char *version)
+{
+    if(strcmp(version, KCMD_NEW_VERSION) == 0) {
+	protocol_version = 2;
+	return TRUE;
+    }
+    if(strcmp(version, KCMD_OLD_VERSION) == 0) {
+	protocol_version = 1;
+	key_usage = KRB5_KU_OTHER_ENCRYPTED;
+	return TRUE;
+    }
+    return FALSE;
+}
+
+
 static int
 recv_krb5_auth (int s, u_char *buf,
 		struct sockaddr *thisaddr,
@@ -299,14 +330,15 @@ recv_krb5_auth (int s, u_char *buf,
 	syslog_and_die ("krb5_sock_to_principal: %s",
 			krb5_get_err_text(context, status));
 
-    status = krb5_recvauth(context,
-			   &auth_context,
-			   &s,
-			   KCMD_VERSION,
-			   server,
-			   KRB5_RECVAUTH_IGNORE_VERSION,
-			   NULL,
-			   &ticket);
+    status = krb5_recvauth_match_version(context,
+					 &auth_context,
+					 &s,
+					 match_kcmd_version,
+					 NULL,
+					 server,
+					 KRB5_RECVAUTH_IGNORE_VERSION,
+					 NULL,
+					 &ticket);
     krb5_free_principal (context, server);
     if (status)
 	syslog_and_die ("krb5_recvauth: %s",
@@ -316,8 +348,17 @@ recv_krb5_auth (int s, u_char *buf,
     read_str (s, cmd, COMMAND_SZ, "command");
     read_str (s, client_username, COMMAND_SZ, "local username");
 
-    status = krb5_auth_con_getkey (context, auth_context, &keyblock);
-    if (status)
+    if(protocol_version == 2) {
+	status = krb5_auth_con_getremotesubkey(context, auth_context, 
+					       &keyblock);
+	if(status != 0 || keyblock == NULL)
+	    syslog_and_die("failed to get remote subkey");
+    } else if(protocol_version == 1) {
+	status = krb5_auth_con_getkey (context, auth_context, &keyblock);
+	if(status != 0 || keyblock == NULL)
+	    syslog_and_die("failed to get key");
+    }
+    if (status != 0 || keyblock == NULL)
        syslog_and_die ("krb5_auth_con_getkey: %s",
                        krb5_get_err_text(context, status));
 
@@ -371,14 +412,14 @@ recv_krb5_auth (int s, u_char *buf,
     if(!krb5_kuserok (context,
 		     ticket->client,
 		     server_username))
-	fatal (s, "Permission denied");
+	fatal (s, NULL, "Permission denied.");
 
     if (strncmp (cmd, "-x ", 3) == 0) {
 	do_encrypt = 1;
 	memmove (cmd, cmd + 3, strlen(cmd) - 2);
     } else {
 	if(do_encrypt)
-	    fatal (s, "Encryption required");
+	    fatal (s, NULL, "Encryption is required.");
 	do_encrypt = 0;
     }
 
@@ -410,6 +451,7 @@ recv_krb5_auth (int s, u_char *buf,
 
     return 0;
 }
+#endif /* KRB5 */
 
 static void
 loop (int from0, int to0,
@@ -422,6 +464,11 @@ loop (int from0, int to0,
 
     if(from0 >= FD_SETSIZE || from1 >= FD_SETSIZE || from2 >= FD_SETSIZE)
 	errx (1, "fd too large");
+
+#ifdef KRB5
+    if(auth_method == AUTH_KRB5 && protocol_version == 2)
+	init_ivecs(0);
+#endif
 
     FD_ZERO(&real_readset);
     FD_SET(from0, &real_readset);
@@ -441,7 +488,7 @@ loop (int from0, int to0,
 		syslog_and_die ("select: %m");
 	}
 	if (FD_ISSET(from0, &readset)) {
-	    ret = do_read (from0, buf, sizeof(buf));
+	    ret = do_read (from0, buf, sizeof(buf), ivec_in[0]);
 	    if (ret < 0)
 		syslog_and_die ("read: %m");
 	    else if (ret == 0) {
@@ -462,7 +509,7 @@ loop (int from0, int to0,
 		if (--count == 0)
 		    exit (0);
 	    } else
-		do_write (to1, buf, ret);
+		do_write (to1, buf, ret, ivec_out[0]);
 	}
 	if (FD_ISSET(from2, &readset)) {
 	    ret = read (from2, buf, sizeof(buf));
@@ -475,7 +522,7 @@ loop (int from0, int to0,
 		if (--count == 0)
 		    exit (0);
 	    } else
-		do_write (to2, buf, ret);
+		do_write (to2, buf, ret, ivec_out[1]);
 	}
    }
 }
@@ -494,7 +541,7 @@ static void
 pipe_a_like (int fd[2])
 {
     if (socketpair (AF_UNIX, SOCK_STREAM, 0, fd) < 0)
-	fatal (STDOUT_FILENO, "socketpair: %m");
+	fatal (STDOUT_FILENO, "socketpair", "Pipe creation failed.");
 }
 
 /*
@@ -511,7 +558,7 @@ setup_copier (void)
     pipe_a_like(p2);
     pid = fork ();
     if (pid < 0)
-	fatal (STDOUT_FILENO, "fork: %m");
+	fatal (STDOUT_FILENO, "fork", "Could not create child process.");
     if (pid == 0) { /* child */
 	close (p0[1]);
 	close (p1[0]);
@@ -528,7 +575,7 @@ setup_copier (void)
 	close (p2[1]);
 
 	if (net_write (STDOUT_FILENO, "", 1) != 1)
-	    fatal (STDOUT_FILENO, "write failed");
+	    fatal (STDOUT_FILENO, "net_write", "Write failure.");
 
 	loop (STDIN_FILENO, p0[1],
 	      STDOUT_FILENO, p1[0],
@@ -590,7 +637,7 @@ setup_environment (char ***env, const struct passwd *pwd)
 }
 
 static void
-doit (int do_kerberos, int check_rhosts)
+doit (void)
 {
     u_char buf[BUFSIZ];
     u_char *p;
@@ -618,8 +665,10 @@ doit (int do_kerberos, int check_rhosts)
     if (getpeername (s, thataddr, &thataddr_len) < 0)
 	syslog_and_die ("getpeername: %m");
 
-    if (!do_kerberos && !is_reserved(socket_get_port(thataddr)))
-	fatal(s, "Permission denied");
+    /* check for V4MAPPED addresses? */
+
+    if (do_kerberos == 0 && !is_reserved(socket_get_port(thataddr)))
+	fatal(s, NULL, "Permission denied.");
 
     p = buf;
     port = 0;
@@ -634,8 +683,8 @@ doit (int do_kerberos, int check_rhosts)
 	    syslog_and_die ("non-digit in port number: %c", *p);
     }
 
-    if (!do_kerberos && !is_reserved(htons(port)))
-	fatal(s, "Permission denied");
+    if (do_kerberos  == 0 && !is_reserved(htons(port)))
+	fatal(s, NULL, "Permission denied.");
 
     if (port) {
 	int priv_port = IPPORT_RESERVED - 1;
@@ -674,19 +723,23 @@ doit (int do_kerberos, int check_rhosts)
 	    syslog_and_die ("reading auth info: %m");
     
 #ifdef KRB4
-	if (recv_krb4_auth (s, buf, thisaddr, thataddr,
+	if ((do_kerberos & DO_KRB4) && 
+	    recv_krb4_auth (s, buf, thisaddr, thataddr,
 			    client_user,
 			    server_user,
 			    cmd) == 0)
 	    auth_method = AUTH_KRB4;
 	else
 #endif /* KRB4 */
-	    if(recv_krb5_auth (s, buf, thisaddr, thataddr,
+#ifdef KRB5
+	    if((do_kerberos & DO_KRB5) &&
+	       recv_krb5_auth (s, buf, thisaddr, thataddr,
 			       client_user,
 			       server_user,
 			       cmd) == 0)
 		auth_method = AUTH_KRB5;
 	    else
+#endif /* KRB5 */
 		syslog_and_die ("unrecognized auth protocol: %x %x %x %x",
 				buf[0], buf[1], buf[2], buf[3]);
     } else {
@@ -711,25 +764,25 @@ doit (int do_kerberos, int check_rhosts)
 
     pwd = getpwnam (server_user);
     if (pwd == NULL)
-	fatal (s, "Login incorrect.");
+	fatal (s, NULL, "Login incorrect.");
 
     if (*pwd->pw_shell == '\0')
 	pwd->pw_shell = _PATH_BSHELL;
 
     if (pwd->pw_uid != 0 && access (_PATH_NOLOGIN, F_OK) == 0)
-	fatal (s, "Login disabled.");
+	fatal (s, NULL, "Login disabled.");
 
 
     ret = getnameinfo_verified (thataddr, thataddr_len,
 				that_host, sizeof(that_host),
 				NULL, 0, 0);
     if (ret)
-	fatal (s, "getnameinfo: %s", gai_strerror(ret));
+	fatal (s, NULL, "getnameinfo: %s", gai_strerror(ret));
 
     if (login_access(pwd, that_host) == 0) {
 	syslog(LOG_NOTICE, "Kerberos rsh denied to %s from %s",
 	       server_user, that_host);
-	fatal(s, "Permission denied");
+	fatal(s, NULL, "Permission denied.");
     }
 
 #ifdef HAVE_GETSPNAM
@@ -742,7 +795,7 @@ doit (int do_kerberos, int check_rhosts)
 	    today = time(0)/(24L * 60 * 60);
 	    if (sp->sp_expire > 0) 
 		if (today > sp->sp_expire) 
-		    fatal(s, "Account has expired.");
+		    fatal(s, NULL, "Account has expired.");
 	}
     }
 #endif
@@ -786,20 +839,20 @@ doit (int do_kerberos, int check_rhosts)
 #endif /* HAVE_SETPCRED */
 
     if (initgroups (pwd->pw_name, pwd->pw_gid) < 0)
-	fatal (s, "Login incorrect.");
+	fatal (s, "initgroups", "Login incorrect.");
 
     if (setgid(pwd->pw_gid) < 0)
-	fatal (s, "Login incorrect.");
+	fatal (s, "setgid", "Login incorrect.");
 
     if (setuid (pwd->pw_uid) < 0)
-	fatal (s, "Login incorrect.");
+	fatal (s, "setuid", "Login incorrect.");
 
     if (chdir (pwd->pw_dir) < 0)
-	fatal (s, "Remote directory.");
+	fatal (s, "chdir", "Remote directory.");
 
     if (errsock >= 0) {
 	if (dup2 (errsock, STDERR_FILENO) < 0)
-	    fatal (s, "Dup2 failed.");
+	    fatal (s, "dup2", "Cannot dup stderr.");
 	close (errsock);
     }
 
@@ -809,7 +862,7 @@ doit (int do_kerberos, int check_rhosts)
 	setup_copier ();
     } else {
 	if (net_write (s, "", 1) != 1)
-	    fatal (s, "write failed");
+	    fatal (s, "net_write", "write failed");
     }
 
 #ifdef KRB4
@@ -848,18 +901,22 @@ struct getargs args[] = {
     { "keepalive",	'n',	arg_negative_flag,	&do_keepalive },
     { "inetd",		'i',	arg_negative_flag,	&do_inetd,
       "Not started from inetd" },
+#if defined(KRB4) || defined(KRB5)
     { "kerberos",	'k',	arg_flag,	&do_kerberos,
       "Implement kerberised services" },
     { "encrypt",	'x',	arg_flag,		&do_encrypt,
       "Implement encrypted service" },
+#endif
     { "rhosts",		'l',	arg_negative_flag, &do_rhosts,
       "Don't check users .rhosts" },
     { "port",		'p',	arg_string,	&port_str,	"Use this port",
       "port" },
     { "vacuous",	'v',	arg_flag, &do_vacuous,
       "Don't accept non-kerberised connections" },
+#ifdef KRB4
     { NULL,		'P',	arg_negative_flag, &do_newpag,
       "Don't put process in new PAG" },
+#endif
     /* compatibility flag: */
     { NULL,		'L',	arg_flag, &do_log },
     { "version",	0, 	arg_flag,		&do_version },
@@ -884,7 +941,7 @@ int
 main(int argc, char **argv)
 {
     int optind = 0;
-    int port = 0;
+    int on = 1;
 
     setprogname (argv[0]);
     roken_openlog ("rshd", LOG_ODELAY | LOG_PID, LOG_AUTH);
@@ -901,50 +958,79 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-#ifdef KRB5
-    {
-	krb5_error_code ret;
-
-	ret = krb5_init_context (&context);
-	if (ret)
-	    errx (1, "krb5_init_context failed: %d", ret);
-    }	
-#endif
-
-    if(port_str) {
-	struct servent *s = roken_getservbyname (port_str, "tcp");
-
-	if (s)
-	    port = s->s_port;
-	else {
-	    char *ptr;
-
-	    port = strtol (port_str, &ptr, 10);
-	    if (port == 0 && ptr == port_str)
-		syslog_and_die("Bad port `%s'", port_str);
-	    port = htons(port);
-	}
-    }
-
+#if defined(KRB4) || defined(KRB5)
     if (do_encrypt)
 	do_kerberos = 1;
 
+    if(do_kerberos)
+	do_kerberos = DO_KRB4 | DO_KRB5;
+#endif
+
+    if (do_keepalive &&
+	setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
+		   sizeof(on)) < 0)
+	syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
+
+    /* set SO_LINGER? */
+
+#ifdef KRB5
+    if((do_kerberos & DO_KRB5) && krb5_init_context (&context) != 0)
+	do_kerberos &= ~DO_KRB5;
+#endif
+
     if (!do_inetd) {
-	if (port == 0) {
-	    if (do_kerberos) {
-		if (do_encrypt)
-		    port = krb5_getportbyname (context, "ekshell", "tcp", 545);
-		else
-		    port = krb5_getportbyname (context, "kshell",  "tcp", 544);
-	    } else {
-		port = krb5_getportbyname(context, "shell", "tcp", 514);
-	    }
+	int error;
+	struct addrinfo *ai = NULL, hints;
+	char portstr[NI_MAXSERV];
+	
+	memset (&hints, 0, sizeof(hints));
+	hints.ai_flags    = AI_PASSIVE;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family   = PF_UNSPEC;
+	
+	if(port_str != NULL) {
+	    error = getaddrinfo (NULL, port_str, &hints, &ai);
+	    if (error)
+		errx (1, "getaddrinfo: %s", gai_strerror (error));
 	}
-	mini_inetd (port);
+	if (ai == NULL) {
+#if defined(KRB4) || defined(KRB5)
+	    if (do_kerberos) {
+		if (do_encrypt) {
+		    error = getaddrinfo(NULL, "ekshell", &hints, &ai);
+		    if(error == EAI_NONAME) {
+			snprintf(portstr, sizeof(portstr), "%d", 545);
+			error = getaddrinfo(NULL, portstr, &hints, &ai);
+		    }
+		    if(error) 
+			errx (1, "getaddrinfo: %s", gai_strerror (error));
+		} else {
+		    error = getaddrinfo(NULL, "kshell", &hints, &ai);
+		    if(error == EAI_NONAME) {
+			snprintf(portstr, sizeof(portstr), "%d", 544);
+			error = getaddrinfo(NULL, portstr, &hints, &ai);
+		    }
+		    if(error) 
+			errx (1, "getaddrinfo: %s", gai_strerror (error));
+		}
+	    } else
+#endif
+		{
+		    error = getaddrinfo(NULL, "shell", &hints, &ai);
+		    if(error == EAI_NONAME) {
+			snprintf(portstr, sizeof(portstr), "%d", 514);
+			error = getaddrinfo(NULL, portstr, &hints, &ai);
+		    }
+		    if(error) 
+			errx (1, "getaddrinfo: %s", gai_strerror (error));
+		}
+	}
+	mini_inetd_addrinfo (ai);
+	freeaddrinfo(ai);
     }
 
     signal (SIGPIPE, SIG_IGN);
 
-    doit (do_kerberos, do_rhosts);
+    doit ();
     return 0;
 }

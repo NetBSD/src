@@ -33,7 +33,8 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: termstat.c,v 1.1.1.3 2001/09/17 12:24:39 assar Exp $");
+__RCSID("$Heimdal: termstat.c,v 1.12 2001/08/29 00:45:23 assar Exp $"
+        "$NetBSD: termstat.c,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $");
 
 /*
  * local variables

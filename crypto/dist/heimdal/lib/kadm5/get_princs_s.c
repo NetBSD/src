@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: get_princs_s.c,v 1.1.1.2 2000/08/02 19:59:18 assar Exp $");
+__RCSID("$Heimdal: get_princs_s.c,v 1.5 1999/12/02 17:05:06 joda Exp $"
+        "$NetBSD: get_princs_s.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 struct foreach_data {
     const char *exp;

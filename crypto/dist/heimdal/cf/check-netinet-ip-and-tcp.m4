@@ -1,5 +1,6 @@
 dnl
-dnl $Id: check-netinet-ip-and-tcp.m4,v 1.1.1.2 2000/08/02 20:00:28 assar Exp $
+dnl $Heimdal: check-netinet-ip-and-tcp.m4,v 1.3 2000/07/18 10:33:02 joda Exp $
+dnl $NetBSD: check-netinet-ip-and-tcp.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 
 dnl extra magic check for netinet/{ip.h,tcp.h} because on irix 6.5.3

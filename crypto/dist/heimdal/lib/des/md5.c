@@ -34,7 +34,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: md5.c,v 1.1.1.3 2001/02/11 13:51:48 assar Exp $");
+__RCSID("$Heimdal: md5.c,v 1.15 2001/01/29 04:33:44 assar Exp $"
+        "$NetBSD: md5.c,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include "md5.h"

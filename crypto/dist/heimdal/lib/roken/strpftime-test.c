@@ -35,7 +35,8 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id: strpftime-test.c,v 1.1.1.2 2000/08/02 19:59:58 assar Exp $");
+__RCSID("$Heimdal: strpftime-test.c,v 1.2 1999/11/12 15:29:55 assar Exp $"
+        "$NetBSD: strpftime-test.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 
 enum { MAXSIZE = 26 };
 

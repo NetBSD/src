@@ -38,7 +38,8 @@
 #endif
 #include "getarg.h"
 
-RCSID("$Id: ftpd.c,v 1.1.1.5 2001/09/17 12:24:43 assar Exp $");
+__RCSID("$Heimdal: ftpd.c,v 1.161 2002/02/28 15:50:14 joda Exp $"
+        "$NetBSD: ftpd.c,v 1.1.1.6 2002/09/12 12:41:35 joda Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -312,6 +313,11 @@ main(int argc, char **argv)
 		defumask = val;
 	}
     }
+    sp = getservbyname("ftp", "tcp");
+    if(sp)
+	port = sp->s_port;
+    else
+	port = htons(21);
     if(port_string) {
 	sp = getservbyname(port_string, "tcp");
 	if(sp)
@@ -321,12 +327,6 @@ main(int argc, char **argv)
 		port = htons(atoi(port_string));
 	    else
 		warnx("bad value for -p");
-    } else {
-	sp = getservbyname("ftp", "tcp");
-	if(sp)
-	    port = sp->s_port;
-	else
-	    port = htons(21);
     }
 		    
     if (maxtimeout < ftpd_timeout)
@@ -1246,6 +1246,26 @@ bad:
 	return (NULL);
 }
 
+static int
+accept_with_timeout(int socket, 
+		    struct sockaddr *address,
+		    size_t *address_len,
+		    struct timeval *timeout)
+{
+    int ret;
+    fd_set rfd;
+    FD_ZERO(&rfd);
+    FD_SET(socket, &rfd);
+    ret = select(socket + 1, &rfd, NULL, NULL, timeout);
+    if(ret < 0)
+	return ret;
+    if(ret == 0) {
+	errno = ETIMEDOUT;
+	return -1;
+    }
+    return accept(socket, address, address_len);
+}
+
 static FILE *
 dataconn(const char *name, off_t size, const char *mode)
 {
@@ -1262,10 +1282,13 @@ dataconn(const char *name, off_t size, const char *mode)
 	if (pdata >= 0) {
 		struct sockaddr_storage from_ss;
 		struct sockaddr *from = (struct sockaddr *)&from_ss;
+		struct timeval timeout;
 		int s;
 		socklen_t fromlen = sizeof(from_ss);
 
-		s = accept(pdata, from, &fromlen);
+		timeout.tv_sec = 15;
+		timeout.tv_usec = 0;
+		s = accept_with_timeout(pdata, from, &fromlen, &timeout);
 		if (s < 0) {
 			reply(425, "Can't open data connection.");
 			close(pdata);
@@ -2142,8 +2165,10 @@ list_file(char *file)
 	if (dout == NULL)
 	    return;
 	set_buffer_size(fileno(dout), 0);
-	builtin_ls(dout, file);
-	reply(226, "Transfer complete.");
+	if(builtin_ls(dout, file) == 0)
+	    reply(226, "Transfer complete.");
+	else
+	    reply(451, "Requested action aborted. Local error in processing.");
 	fclose(dout);
 	data = -1;
 	pdata = -1;

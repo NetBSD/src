@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: kadm5_locl.h,v 1.1.1.2 2000/08/02 19:59:19 assar Exp $ */
+/* $Heimdal: kadm5_locl.h,v 1.23 2000/07/08 11:57:40 assar Exp $
+   $NetBSD: kadm5_locl.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #ifndef __KADM5_LOCL_H__
 #define __KADM5_LOCL_H__

@@ -32,7 +32,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: dump_config.c,v 1.1.1.2 2000/08/02 19:59:26 assar Exp $");
+__RCSID("$Heimdal: dump_config.c,v 1.2 1999/10/28 23:22:41 assar Exp $"
+        "$NetBSD: dump_config.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
 /* print contents of krb5.conf */
 

@@ -59,7 +59,8 @@
 #include "des_locl.h"
 #include "rc4.h"
 
-RCSID("$Id: rc4_enc.c,v 1.1.1.2 2000/08/02 20:00:09 assar Exp $");
+__RCSID("$Heimdal: rc4_enc.c,v 1.2 1999/10/21 12:58:43 joda Exp $"
+        "$NetBSD: rc4_enc.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
 
 /* RC4 as implemented from a posting from
  * Newsgroups: sci.crypt

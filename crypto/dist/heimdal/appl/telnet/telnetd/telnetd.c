@@ -33,7 +33,8 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: telnetd.c,v 1.1.1.5 2001/09/17 12:24:39 assar Exp $");
+__RCSID("$Heimdal: telnetd.c,v 1.69 2002/08/23 19:28:01 assar Exp $"
+        "$NetBSD: telnetd.c,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $");
 
 #ifdef _SC_CRAY_SECURE_SYS
 #include <sys/sysv.h>
@@ -54,6 +55,8 @@ int	auth_level = 0;
 extern	int utmp_len;
 int	registerd_host_only = 0;
 
+#undef NOERROR
+
 #ifdef	STREAMSPTY
 # include <stropts.h>
 # include <termios.h>
@@ -63,6 +66,7 @@ int	registerd_host_only = 0;
 #ifdef HAVE_SYS_STREAM_H
 #include <sys/stream.h>
 #endif
+
 #ifdef _AIX
 #include <sys/termio.h>
 #endif
@@ -172,6 +176,11 @@ main(int argc, char **argv)
      */
     highpty = getnpty();
 #endif /* CRAY */
+
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+	print_version(NULL);
+	exit(0);
+    }
 
     while ((ch = getopt(argc, argv, valid_opts)) != -1) {
 	switch(ch) {
@@ -765,9 +774,9 @@ show_issue(void)
 {
     FILE *f;
     char buf[128];
-    f = fopen("/etc/issue.net", "r");
+    f = fopen(SYSCONFDIR "/issue.net", "r");
     if(f == NULL)
-	f = fopen("/etc/issue", "r");
+	f = fopen(SYSCONFDIR "/issue", "r");
     if(f){
 	while(fgets(buf, sizeof(buf)-2, f)){
 	    strcpy(buf + strcspn(buf, "\r\n"), "\r\n");

@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: codec.c,v 1.1.1.3 2001/06/19 22:08:19 assar Exp $");
+__RCSID("$Heimdal: codec.c,v 1.7 2001/05/16 22:08:08 assar Exp $"
+        "$NetBSD: codec.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 krb5_error_code
 krb5_decode_EncTicketPart (krb5_context context,

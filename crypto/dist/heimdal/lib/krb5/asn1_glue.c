@@ -37,7 +37,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: asn1_glue.c,v 1.1.1.2 2000/08/02 19:59:24 assar Exp $");
+__RCSID("$Heimdal: asn1_glue.c,v 1.7 1999/12/02 17:05:07 joda Exp $"
+        "$NetBSD: asn1_glue.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 krb5_error_code
 krb5_principal2principalname (PrincipalName *p,

@@ -33,7 +33,8 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: misc.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
+__RCSID("$Heimdal: misc.c,v 1.22 2001/01/30 03:54:21 assar Exp $"
+        "$NetBSD: misc.c,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $");
 
 struct timeval now;
 

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: ecalloc.c,v 1.1.1.1 2001/09/17 12:25:06 assar Exp $");
+__RCSID("$Heimdal: ecalloc.c,v 1.1 2001/06/17 12:09:37 assar Exp $"
+        "$NetBSD: ecalloc.c,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $");
 #endif
 
 #include <stdlib.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,20 +31,27 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: iprop.h,v 1.1.1.2 2000/08/02 19:59:19 assar Exp $ */
+/* $Heimdal: iprop.h,v 1.7 2002/07/04 14:39:19 joda Exp $
+   $NetBSD: iprop.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #ifndef __IPROP_H__
 #define __IPROP_H__
 
 #include "kadm5_locl.h"
+#include <krb5-private.h> /* _krb5_{get,put}_int */
 #include <getarg.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+#ifdef HAVE_UTIL_H
+#include <util.h>
 #endif
 
 #define IPROP_VERSION "iprop-0.0"
 
 #define KADM5_SLAVE_ACL HDB_DB_DIR "/slaves"
+
+#define KADM5_SLAVE_STATS HDB_DB_DIR "/slaves-stats"
 
 #define IPROP_NAME "iprop"
 

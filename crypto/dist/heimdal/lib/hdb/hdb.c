@@ -33,7 +33,8 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: hdb.c,v 1.1.1.4 2001/09/17 12:25:01 assar Exp $");
+__RCSID("$Heimdal: hdb.c,v 1.44 2001/08/09 08:41:48 assar Exp $"
+        "$NetBSD: hdb.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 struct hdb_method {
     const char *prefix;

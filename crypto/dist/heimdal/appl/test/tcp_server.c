@@ -32,7 +32,8 @@
  */
 
 #include "test_locl.h"
-RCSID("$Id: tcp_server.c,v 1.1.1.2 2000/08/02 19:58:14 assar Exp $");
+__RCSID("$Heimdal: tcp_server.c,v 1.16 1999/12/16 10:31:08 assar Exp $"
+        "$NetBSD: tcp_server.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
 
 krb5_context context;
 

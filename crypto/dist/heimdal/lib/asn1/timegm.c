@@ -33,7 +33,8 @@
 
 #include "der_locl.h"
 
-RCSID("$Id: timegm.c,v 1.1.1.2 2000/08/02 19:59:06 assar Exp $");
+__RCSID("$Heimdal: timegm.c,v 1.7 1999/12/02 17:05:02 joda Exp $"
+        "$NetBSD: timegm.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 #ifndef HAVE_TIMEGM
 

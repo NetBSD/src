@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: v1.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
+__RCSID("$Heimdal: v1.c,v 1.2 1999/12/02 17:05:04 joda Exp $"
+        "$NetBSD: v1.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 /* These functions are for V1 compatibility */
 

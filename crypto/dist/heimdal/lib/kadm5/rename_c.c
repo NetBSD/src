@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: rename_c.c,v 1.1.1.2 2000/08/02 19:59:21 assar Exp $");
+__RCSID("$Heimdal: rename_c.c,v 1.4 2000/07/11 16:00:08 joda Exp $"
+        "$NetBSD: rename_c.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 kadm5_ret_t
 kadm5_c_rename_principal(void *server_handle, 

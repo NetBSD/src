@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,14 +32,14 @@
  */
 
 #include "der_locl.h"
+#include <com_err.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$Id: asn1_print.c,v 1.1.1.5 2001/09/17 12:24:59 assar Exp $");
-
-static struct et_list *et_list;
+__RCSID("$Heimdal: asn1_print.c,v 1.11 2002/08/29 20:45:35 assar Exp $"
+        "$NetBSD: asn1_print.c,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $");
 
 const char *class_names[] = {
     "UNIV",			/* 0 */
@@ -98,7 +98,7 @@ loop (unsigned char *buf, size_t len, int indent)
 
 	ret = der_get_tag (buf, len, &class, &type, &tag, &sz);
 	if (ret)
-	    errx (1, "der_get_tag: %s", com_right (et_list, ret));
+	    errx (1, "der_get_tag: %s", error_message (ret));
 	if (sz > len)
 	    errx (1, "unreasonable length (%u) > %u",
 		  (unsigned)sz, (unsigned)len);
@@ -113,7 +113,7 @@ loop (unsigned char *buf, size_t len, int indent)
 	    printf ("tag %d = ", tag);
 	ret = der_get_length (buf, len, &length, &sz);
 	if (ret)
-	    errx (1, "der_get_tag: %s", com_right (et_list, ret));
+	    errx (1, "der_get_tag: %s", error_message (ret));
 	buf += sz;
 	len -= sz;
 
@@ -134,7 +134,7 @@ loop (unsigned char *buf, size_t len, int indent)
 
 		ret = der_get_int (buf, length, &val, NULL);
 		if (ret)
-		    errx (1, "der_get_int: %s", com_right (et_list, ret));
+		    errx (1, "der_get_int: %s", error_message (ret));
 		printf ("integer %d\n", val);
 		break;
 	    }
@@ -145,8 +145,7 @@ loop (unsigned char *buf, size_t len, int indent)
 
 		ret = der_get_octet_string (buf, length, &str, NULL);
 		if (ret)
-		    errx (1, "der_get_octet_string: %s",
-			  com_right (et_list, ret));
+		    errx (1, "der_get_octet_string: %s", error_message (ret));
 		printf ("(length %lu), ", (unsigned long)length);
 		uc = (unsigned char *)str.data;
 		for (i = 0; i < 16; ++i)
@@ -162,9 +161,24 @@ loop (unsigned char *buf, size_t len, int indent)
 		ret = der_get_general_string (buf, length, &str, NULL);
 		if (ret)
 		    errx (1, "der_get_general_string: %s",
-			  com_right (et_list, ret));
+			  error_message (ret));
 		printf ("\"%s\"\n", str);
 		free (str);
+		break;
+	    }
+	    case UT_OID: {
+		oid o;
+		int i;
+
+		ret = der_get_oid(buf, length, &o, NULL);
+		if (ret)
+		    errx (1, "der_get_oid: %s", error_message (ret));
+		
+		for (i = 0; i < o.length ; i++)
+		    printf("%d%s", o.components[i],
+			   i < o.length - 1 ? "." : "");
+		printf("\n");
+		free_oid(&o);
 		break;
 	    }
 	    default :
@@ -194,7 +208,7 @@ doit (const char *filename)
     len = sb.st_size;
     buf = malloc (len);
     if (buf == NULL)
-	err (1, "malloc %u", len);
+	err (1, "malloc %u", (unsigned)len);
     if (read (fd, buf, len) != len)
 	errx (1, "read failed");
     close (fd);
@@ -225,7 +239,7 @@ main(int argc, char **argv)
     int optind = 0;
 
     setprogname (argv[0]);
-    initialize_asn1_error_table_r (&et_list);
+    initialize_asn1_error_table ();
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

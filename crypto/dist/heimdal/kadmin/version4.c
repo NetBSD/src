@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -41,7 +41,8 @@
 #include <krb_err.h>
 #include <kadm_err.h>
 
-RCSID("$Id: version4.c,v 1.1.1.3 2001/02/11 13:51:33 assar Exp $");
+__RCSID("$Heimdal: version4.c,v 1.26 2002/09/10 15:20:46 joda Exp $"
+        "$NetBSD: version4.c,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $");
 
 #define KADM_NO_OPCODE -1
 #define KADM_NO_ENCRYPT -2
@@ -61,13 +62,13 @@ make_you_loose_packet(int code, krb5_data *reply)
 static int
 ret_fields(krb5_storage *sp, char *fields)
 {
-    return sp->fetch(sp, fields, FLDSZ);
+    return krb5_storage_read(sp, fields, FLDSZ);
 }
 
 static int
 store_fields(krb5_storage *sp, char *fields)
 {
-    return sp->store(sp, fields, FLDSZ);
+    return krb5_storage_write(sp, fields, FLDSZ);
 }
 
 static void
@@ -470,8 +471,8 @@ kadm_ser_cpw(krb5_context context,
     krb5_warnx(context, "v4-compat %s: CHPASS %s",
 	       principal_string, principal_string); 
 
-    ret = message->fetch(message, key + 4, 4);
-    ret = message->fetch(message, key, 4);
+    ret = krb5_storage_read(message, key + 4, 4);
+    ret = krb5_storage_read(message, key, 4);
     ret = krb5_ret_stringz(message, &password);
     
     if(password) {
@@ -740,7 +741,7 @@ dispatch(krb5_context context,
     krb5_ret_int8(sp_in, &command);
     
     sp_out = krb5_storage_emem();
-    sp_out->store(sp_out, KADM_VERSTR, KADM_VERSIZE);
+    krb5_storage_write(sp_out, KADM_VERSTR, KADM_VERSIZE);
     krb5_store_int32(sp_out, 0);
 
     switch(command) {
@@ -777,7 +778,7 @@ dispatch(krb5_context context,
     }
     krb5_storage_free(sp_in);
     if(retval) {
-	sp_out->seek(sp_out, KADM_VERSIZE, SEEK_SET);
+	krb5_storage_seek(sp_out, KADM_VERSIZE, SEEK_SET);
 	krb5_store_int32(sp_out, retval);
     }
     krb5_storage_to_data(sp_out, reply);
@@ -868,7 +869,7 @@ decode_packet(krb5_context context,
 		     client_addr->sin_addr.s_addr, &ad, NULL);
 
     if(ret) {
-	make_you_loose_packet(krb_err_base + ret, reply);
+	make_you_loose_packet(ERROR_TABLE_BASE_krb + ret, reply);
 	krb5_warnx(context, "krb_rd_req: %d", ret);
 	return;
     }
@@ -905,7 +906,7 @@ decode_packet(krb5_context context,
     ret = krb_rd_priv(msg + off, rlen, schedule, &ad.session, 
 		      client_addr, admin_addr, &msg_dat);
     if (ret) {
-	make_you_loose_packet (krb_err_base + ret, reply);
+	make_you_loose_packet (ERROR_TABLE_BASE_krb + ret, reply);
 	krb5_warnx(context, "krb_rd_priv: %d", ret);
 	goto out;
     }

@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: sha.h,v 1.1.1.3 2001/02/11 13:51:48 assar Exp $ */
+/* $Heimdal: sha.h,v 1.7 2001/01/29 02:08:57 assar Exp $
+   $NetBSD: sha.h,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H

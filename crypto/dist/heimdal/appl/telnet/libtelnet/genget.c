@@ -34,7 +34,8 @@
 #include <config.h>
 #include "misc-proto.h"
 
-RCSID("$Id: genget.c,v 1.1.1.2 2000/08/02 19:58:18 assar Exp $");
+__RCSID("$Heimdal: genget.c,v 1.7 2001/09/03 05:54:14 assar Exp $"
+        "$NetBSD: genget.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
 
 #include <ctype.h>
 
@@ -57,7 +58,7 @@ isprefix(char *s1, char *s2)
     os1 = s1;
     c1 = *s1;
     c2 = *s2;
-    while (LOWER(c1) == LOWER(c2)) {
+    while (tolower((unsigned char)c1) == tolower((unsigned char)c2)) {
 	if (c1 == '\0')
 	    break;
 	c1 = *++s1;

@@ -1,4 +1,5 @@
-dnl $Id: have-pragma-weak.m4,v 1.1.1.2 2000/08/02 20:00:29 assar Exp $
+dnl $Heimdal: have-pragma-weak.m4,v 1.3 1999/03/01 11:55:25 joda Exp $
+dnl $NetBSD: have-pragma-weak.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 AC_DEFUN(AC_HAVE_PRAGMA_WEAK, [
 if test "${enable_shared}" = "yes"; then

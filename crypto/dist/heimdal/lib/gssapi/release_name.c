@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: release_name.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
+__RCSID("$Heimdal: release_name.c,v 1.5 2000/04/12 09:48:27 assar Exp $"
+        "$NetBSD: release_name.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32 gss_release_name
            (OM_uint32 * minor_status,

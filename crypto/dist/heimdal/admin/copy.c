@@ -33,7 +33,8 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: copy.c,v 1.1.1.4 2001/06/19 22:07:37 assar Exp $");
+__RCSID("$Heimdal: copy.c,v 1.8 2002/08/12 15:09:12 joda Exp $"
+        "$NetBSD: copy.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
 
 
 static krb5_boolean
@@ -170,7 +171,7 @@ kt_copy (int argc, char **argv)
 }
 
 #ifndef KEYFILE
-#define KEYFILE "/etc/srvtab"
+#define KEYFILE SYSCONFDIR "/srvtab"
 #endif
 
 /* copy to from v4 srvtab, just short for copy */

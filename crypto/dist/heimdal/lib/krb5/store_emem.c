@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 200 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,10 @@
  */
 
 #include "krb5_locl.h"
+#include "store-int.h"
 
-RCSID("$Id: store_emem.c,v 1.1.1.2 2000/08/02 19:59:41 assar Exp $");
+__RCSID("$Heimdal: store_emem.c,v 1.12 2002/04/18 14:00:34 joda Exp $"
+        "$NetBSD: store_emem.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
 typedef struct emem_storage{
     unsigned char *base;
@@ -104,7 +106,9 @@ emem_seek(krb5_storage *sp, off_t offset, int whence)
 static void
 emem_free(krb5_storage *sp)
 {
-    free(((emem_storage*)sp->data)->base);
+    emem_storage *s = sp->data;
+    memset(s->base, 0, s->len);
+    free(s->base);
 }
 
 krb5_storage *
@@ -114,6 +118,7 @@ krb5_storage_emem(void)
     emem_storage *s = malloc(sizeof(*s));
     sp->data = s;
     sp->flags = 0;
+    sp->eof_code = HEIM_ERR_EOF;
     s->size = 1024;
     s->base = malloc(s->size);
     s->len = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: add.c,v 1.1.1.4 2001/09/17 12:24:35 assar Exp $");
+__RCSID("$Heimdal: add.c,v 1.5 2002/09/10 19:26:52 joda Exp $"
+        "$NetBSD: add.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
 
 int
 kt_add(int argc, char **argv)

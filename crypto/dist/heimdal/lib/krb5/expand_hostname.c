@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: expand_hostname.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
+__RCSID("$Heimdal: expand_hostname.c,v 1.11 2001/09/18 09:35:47 joda Exp $"
+        "$NetBSD: expand_hostname.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 static krb5_error_code
 copy_hostname(krb5_context context,
@@ -148,5 +149,6 @@ krb5_expand_hostname_realms (krb5_context context,
 	    free (*new_hostname);
 	}
     }
+    freeaddrinfo(ai);
     return vanilla_hostname (context, orig_hostname, new_hostname, realms);
 }

@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_init.c,v 1.1.1.4 2001/06/19 22:07:43 assar Exp $");
+__RCSID("$Heimdal: pop_init.c,v 1.58 2001/02/20 01:44:47 assar Exp $"
+        "$NetBSD: pop_init.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)

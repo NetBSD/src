@@ -1,4 +1,5 @@
-dnl $Id: krb-prog-ln-s.m4,v 1.1.1.2 2000/08/02 20:00:30 assar Exp $
+dnl $Heimdal: krb-prog-ln-s.m4,v 1.1 1997/12/14 15:59:01 joda Exp $
+dnl $NetBSD: krb-prog-ln-s.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 dnl
 dnl Better test for ln -s, ln or cp

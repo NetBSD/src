@@ -33,7 +33,8 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: mod.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
+__RCSID("$Heimdal: mod.c,v 1.10 2000/07/11 14:34:56 joda Exp $"
+        "$NetBSD: mod.c,v 1.1.1.3 2002/09/12 12:41:39 joda Exp $");
 
 static int parse_args (krb5_context context, kadm5_principal_ent_t ent,
 		       int argc, char **argv, int *optind, char *name,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "hprop.h"
 
-RCSID("$Id: hpropd.c,v 1.1.1.5 2001/09/17 12:24:58 assar Exp $");
+__RCSID("$Heimdal: hpropd.c,v 1.35 2002/04/18 10:18:50 joda Exp $"
+        "$NetBSD: hpropd.c,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $");
 
 #ifdef KRB4
 static des_cblock mkey4;
@@ -163,8 +164,9 @@ static int inetd_flag = -1;
 static int help_flag;
 static int version_flag;
 static int print_dump;
-static char *database = HDB_DEFAULT_DB;
+static const char *database = HDB_DEFAULT_DB;
 static int from_stdin;
+static char *local_realm;
 #ifdef KRB4
 static int v4dump;
 #endif
@@ -177,6 +179,7 @@ struct getargs args[] = {
     { "inetd",	   'i',	arg_negative_flag,	&inetd_flag,
       "Not started from inetd" },
     { "keytab",   'k',	arg_string, &ktname,	"keytab to use for authentication", "keytab" },
+    { "realm",   'r',	arg_string, &local_realm, "realm to use" },
 #ifdef KRB4
     { "v4dump",       '4',  arg_flag, &v4dump, "create v4 type DB" },
 #endif
@@ -231,6 +234,9 @@ main(int argc, char **argv)
     if (v4dump && database == HDB_DEFAULT_DB)
        database = "/var/kerberos/524_dump";
 #endif /* KRB4 */
+
+    if(local_realm != NULL)
+	krb5_set_default_realm(context, local_realm);
     
     if(help_flag)
 	usage(0);

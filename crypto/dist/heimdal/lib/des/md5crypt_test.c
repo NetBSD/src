@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: md5crypt_test.c,v 1.1.1.2 2000/08/02 20:00:07 assar Exp $");
+__RCSID("$Heimdal: md5crypt_test.c,v 1.4 1999/12/17 05:15:32 assar Exp $"
+        "$NetBSD: md5crypt_test.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include <stdio.h>

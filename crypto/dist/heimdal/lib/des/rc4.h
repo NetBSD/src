@@ -56,7 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-/* $Id: rc4.h,v 1.1.1.2 2000/08/02 20:00:09 assar Exp $ */
+/* $Heimdal: rc4.h,v 1.2 1999/10/21 12:58:31 joda Exp $
+   $NetBSD: rc4.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
 
 #ifndef HEADER_RC4_H
 #define HEADER_RC4_H

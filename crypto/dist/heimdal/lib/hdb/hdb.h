@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: hdb.h,v 1.1.1.2 2000/08/02 19:59:12 assar Exp $ */
+/* $Heimdal: hdb.h,v 1.31 2000/07/08 16:03:37 joda Exp $
+   $NetBSD: hdb.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #ifndef __HDB_H__
 #define __HDB_H__

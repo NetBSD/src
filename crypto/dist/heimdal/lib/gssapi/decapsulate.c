@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: decapsulate.c,v 1.1.1.4 2001/09/17 12:25:00 assar Exp $");
+__RCSID("$Heimdal: decapsulate.c,v 1.7 2001/08/23 04:35:54 assar Exp $"
+        "$NetBSD: decapsulate.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32
 gssapi_krb5_verify_header(u_char **str,

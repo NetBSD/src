@@ -35,7 +35,8 @@
 #include <com_err.h>
 #include "ss.h"
 
-RCSID("$Id: ss.c,v 1.1.1.2 2000/08/02 20:00:19 assar Exp $");
+__RCSID("$Heimdal: ss.c,v 1.6 2000/05/25 00:14:58 assar Exp $"
+        "$NetBSD: ss.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
 
 struct ss_subst {
     char *name;

@@ -34,7 +34,8 @@
 #include "test_locl.h"
 #include <gssapi.h>
 #include "gss_common.h"
-RCSID("$Id: gss_common.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
+__RCSID("$Heimdal: gss_common.c,v 1.9 2000/11/15 23:05:27 assar Exp $"
+        "$NetBSD: gss_common.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 void
 write_token (int sock, gss_buffer_t buf)

@@ -33,7 +33,8 @@
 
 #include "login_locl.h"
 
-RCSID("$Id: read_string.c,v 1.1.1.2 2000/08/02 19:58:08 assar Exp $");
+__RCSID("$Heimdal: read_string.c,v 1.4 2000/06/21 02:09:36 assar Exp $"
+        "$NetBSD: read_string.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
 
 static sig_atomic_t intr_flag;
 

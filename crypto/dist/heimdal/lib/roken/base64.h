@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: base64.h,v 1.1.1.2 2000/08/02 19:59:46 assar Exp $ */
+/* $Heimdal: base64.h,v 1.2 1999/12/02 16:58:45 joda Exp $
+   $NetBSD: base64.h,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $ */
 
 #ifndef _BASE64_H_
 #define _BASE64_H_
