@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.7 2002/08/04 03:26:39 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.8 2002/08/04 03:33:04 oster Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -82,7 +82,6 @@ RF_DBG_OPTION(sstfDebug, 0)	/* turn on debugging info for sstf queueing */
 RF_DBG_OPTION(stripeLockDebug, 0)
 RF_DBG_OPTION(suppressLocksAndLargeWrites, 0)
 RF_DBG_OPTION(suppressTraceDelays, 0)
-RF_DBG_OPTION(useMemChunks, 1)
 RF_DBG_OPTION(validateDAGDebug, 0)
 RF_DBG_OPTION(validateVisitedDebug, 1)		/* XXX turn to zero by
 						 * default? */
