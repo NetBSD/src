@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.338 2000/05/17 18:08:50 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.339 2000/05/19 10:23:36 veego Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.338 $"
+#ident 		"GENERIC-$Revision: 1.339 $"
 
 maxusers	32		# estimated number of users
 
@@ -355,8 +355,8 @@ lpt2	at isa? port 0x3bc
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # VIA VT82C686A hardware monitor
-viapm*	at pci? dev ? function ?
-viaenv*	at viapm?
+#viapm*	at pci? dev ? function ?
+#viaenv*	at viapm?
 
 # SCSI Controllers and Devices
 
@@ -368,7 +368,6 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-siop*	at pci? dev ? function ?	# Symbios Logic 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
