@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.5 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$NetBSD: intercept.c,v 1.6 2002/09/17 04:54:36 itojun Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.5 2002/08/28 03:52:45 itojun Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.6 2002/09/17 04:54:36 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -316,7 +316,7 @@ intercept_run(int bg, int fd, char *path, char *const argv[])
 	}
 
 	if (bg) {
-		if (daemon(0, 1) == -1) {
+		if (daemon(1, 1) == -1) {
 			kill(pid, SIGKILL);
 			err(1, "daemon");
 		}
