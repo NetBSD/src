@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.1 2000/12/01 19:17:41 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.2 2001/07/14 02:05:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -85,8 +85,8 @@ ibcs2_elf32_signature(p, epp, eh)
 
 	sh = (Elf32_Shdr *)malloc(shsize, M_TEMP, M_WAITOK);
 
-	if ((error = elf32_read_from(p, epp->ep_vp, eh->e_shoff,
-	    (caddr_t)sh, shsize)) != 0)
+	if ((error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh,
+	    shsize)) != 0)
 		goto out;
 
 	for (i = 0; i < eh->e_shnum; i++) {
@@ -96,8 +96,8 @@ ibcs2_elf32_signature(p, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		if ((error = elf32_read_from(p, epp->ep_vp, s->sh_offset,
-		    (caddr_t)buf, sizeof(signature) - 1)) != 0)
+		if ((error = exec_read_from(p, epp->ep_vp, s->sh_offset, buf,
+		    sizeof(signature) - 1)) != 0)
 			goto out;
 
 		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
