@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.72 2000/03/31 14:31:03 jdolecek Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.73 2000/04/13 11:48:07 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -632,6 +632,8 @@ skip_ipsec:
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
+		/* we must inherit MCAST and BCAST flags */
+		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			mhip->ip_hl = mhlen >> 2;
