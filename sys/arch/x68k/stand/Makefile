@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 1998/09/01 20:18:37 itohy Exp $
+#	$NetBSD: Makefile,v 1.4 1999/07/04 04:39:12 minoura Exp $
 
-SUBDIR=	aout2hux libdos libiocs loadbsd xxboot # common
+SUBDIR=	aout2hux libdos libiocs loadbsd xxboot mboot # common
 
 all-loadbsd: all-aout2hux all-libdos all-libiocs
 
