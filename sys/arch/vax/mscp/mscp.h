@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.h,v 1.4 1998/02/08 14:03:51 ragge Exp $	*/
+/*	$NetBSD: mscp.h,v 1.5 1998/05/21 13:06:24 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -335,7 +335,7 @@ struct mscpv_guse {
  */
 #define MSCP_MEDIA_PORT(id)	(((long)(id) >> 22) & 0x3ff)	/* port */
 #define MSCP_MEDIA_DRIVE(id)	((long)(id) & 0x003fffff)	/* drive */
-#define MSCP_MID_ECH(n, id)	(((long)(id) >> ((n) * 5 + 7)) & 0x1f)
+#define MSCP_MID_ECH(n, id)	(((int)(id) >> ((n) * 5 + 7)) & 0x1f)
 #define MSCP_MID_CHAR(n, id) \
 	(MSCP_MID_ECH(n, id) ? MSCP_MID_ECH(n, id) + '@' : ' ')
 #define MSCP_MID_NUM(id)	((id) & 0x7f)
