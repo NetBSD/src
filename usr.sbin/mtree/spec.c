@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.50 2003/08/07 11:25:36 agc Exp $	*/
+/*	$NetBSD: spec.c,v 1.51 2003/09/19 06:15:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.50 2003/08/07 11:25:36 agc Exp $");
+__RCSID("$NetBSD: spec.c,v 1.51 2003/09/19 06:15:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ spec(FILE *fp)
 	NODE *centry, *last, *pathparent, *cur;
 	char *p, *e, *next;
 	NODE ginfo, *root;
-	char *buf, *tname;
+	char *buf, *tname, *ntname;
 	size_t tnamelen, plen;
 
 	root = NULL;
@@ -162,9 +162,10 @@ noparent:		mtree_err("no parent node");
 
 		plen = strlen(p) + 1;
 		if (plen > tnamelen) {
-			tnamelen = plen;
-			if ((tname = realloc(tname, tnamelen)) == NULL)
+			if ((ntname = realloc(tname, plen)) == NULL)
 				mtree_err("realloc: %s", strerror(errno));
+			tname = ntname;
+			tnamelen = plen;
 		}
 		if (strunvis(tname, p) == -1)
 			mtree_err("strunvis failed on `%s'", p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.14 2003/08/07 11:25:32 agc Exp $	*/
+/*	$NetBSD: walk.c,v 1.15 2003/09/19 06:11:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.14 2003/08/07 11:25:32 agc Exp $");
+__RCSID("$NetBSD: walk.c,v 1.15 2003/09/19 06:11:35 itojun Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -497,7 +497,7 @@ link_check(fsinode *entry)
 		uint32_t	dev;
 		uint32_t	ino;
 		fsinode		*dup;
-	} *dups;
+	} *dups, *newdups;
 	static	int	ndups, maxdups;
 
 	int	i;
@@ -519,10 +519,11 @@ link_check(fsinode *entry)
 		printf("link_check: no match for [%d, %d]\n",
 		    entry->st.st_dev, entry->st.st_ino);
 	if (ndups == maxdups) {
-		maxdups += 128;
-		if ((dups = realloc(dups, sizeof(struct dupnode) * maxdups))
+		if ((newdups = realloc(dups, sizeof(struct dupnode) * (maxdups + 128)))
 		    == NULL)
 			err(1, "Memory allocation error");
+		dups = newdups;
+		maxdups += 128;
 	}
 	dups[ndups].dev = entry->st.st_dev;
 	dups[ndups].ino = entry->st.st_ino;

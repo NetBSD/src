@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.22 2003/09/07 14:24:08 fvdl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.23 2003/09/19 06:11:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.22 2003/09/07 14:24:08 fvdl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.23 2003/09/19 06:11:35 itojun Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -918,6 +918,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 {
 	struct direct	de, *dp;
 	uint16_t	llen, reclen;
+	char		*newbuf;
 
 	assert (dbuf != NULL);
 	assert (name != NULL);
@@ -945,12 +946,13 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 		    de.d_namlen, de.d_name);
 
 	if (reclen + dbuf->cur + llen > roundup(dbuf->size, DIRBLKSIZ)) {
-		dbuf->size += DIRBLKSIZ;	/* need another chunk */
 		if (debug & DEBUG_FS_MAKE_DIRBUF)
 			printf("ffs_make_dirbuf: growing buf to %d\n",
-			    dbuf->size);
-		if ((dbuf->buf = realloc(dbuf->buf, dbuf->size)) == NULL)
+			    dbuf->size + DIRBLKSIZ);
+		if ((newbuf = realloc(dbuf->buf, dbuf->size + DIRBLKSIZ)) == NULL)
 			err(1, "Allocating memory for directory buffer");
+		dbuf->buf = newbuf;
+		dbuf->size += DIRBLKSIZ;
 		memset(dbuf->buf + dbuf->size - DIRBLKSIZ, 0, DIRBLKSIZ);
 		dbuf->cur = dbuf->size - DIRBLKSIZ;
 	} else {				/* shrink end of previous */

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2003/08/07 11:25:17 agc Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2003/09/19 06:19:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,9 +76,11 @@ emalloc(size_t size)
 void *
 erealloc(void *p, size_t size)
 {
+	void *q;
 
-	if ((p = realloc(p, size)) == NULL)
+	if ((q = realloc(p, size)) == NULL)
 		nomem();
+	p = q;
 	return (p);
 }
 
