@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.7,v 1.4 1997/03/06 23:13:07 mikel Exp $
+.\"	$NetBSD: mdoc.7,v 1.5 1997/06/03 05:38:59 mikel Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -280,7 +280,7 @@ Produces
 .El
 .ne 1i
 .Ss Manual Domain Macros
-.Bl -column "Name" "Parsed" Callable" -compact
+.Bl -column "Name" "Parsed" "Callable" -compact
 .It Em Name	Parsed	Callable	Description
 .It Li \&Ad Ta Yes Ta Yes Ta Address. "(This macro may be deprecated.)"
 .It Li \&Ar Ta Yes Ta Yes Ta "Command line argument."
@@ -304,7 +304,7 @@ Produces
 .It Li \&Xr Ta Yes Ta Yes Ta "Manual Page Cross Reference."
 .El
 .Ss General Text Domain Macros
-.Bl -column "Name" "Parsed" Callable" -compact
+.Bl -column "Name" "Parsed" "Callable" -compact
 .It Em "Name	Parsed	Callable	Description"
 .It Li \&%A Ta Yes Ta \&No Ta "Reference author."
 .It Li \&%B Ta Yes Ta Yes Ta "Reference book title."
@@ -320,13 +320,13 @@ Produces
 .It Li \&Ac Ta Yes Ta Yes Ta "Angle close quote."
 .It Li \&Ao Ta Yes Ta Yes Ta "Angle open quote."
 .It Li \&Aq Ta Yes Ta Yes Ta "Angle quote."
-.It Li \&At Ta \&No Ta \&No Ta Tn "AT&T UNIX"
+.It Li \&At Ta \&No Ta \&No Ta Tn "AT&T UNIX."
 .It Li \&Bc Ta Yes Ta Yes Ta "Bracket close quote."
 .It Li \&Bf Ta \&No Ta \&No Ta "Begin font mode."
 .It Li \&Bo Ta Yes Ta Yes Ta "Bracket open quote."
 .It Li \&Bq Ta Yes Ta Yes Ta "Bracket quote."
 .It Li \&Bx Ta Yes Ta Yes Ta Bx .
-.It Li \&Db Ta \&No Ta \&No Ta "Debug (default is \\*qoff\\*q)"
+.It Li \&Db Ta \&No Ta \&No Ta "Debug (default is \\*qoff\\*q)."
 .It Li \&Dc Ta Yes Ta Yes Ta "Double close quote."
 .It Li \&Do Ta Yes Ta Yes Ta "Double open quote."
 .It Li \&Dq Ta Yes Ta Yes Ta "Double quote."
@@ -345,7 +345,7 @@ Produces
 .It Li \&Ql Ta Yes Ta Yes Ta "Quoted literal."
 .It Li \&Qo Ta Yes Ta Yes Ta "Strait Double open quote."
 .It Li \&Qq Ta Yes Ta Yes Ta "Strait Double quote."
-.It Li \&Re Ta \&No Ta \&No Ta "Reference start."
+.It Li \&Re Ta \&No Ta \&No Ta "Reference end."
 .It Li \&Rs Ta \&No Ta \&No Ta "Reference start."
 .It Li \&Sc Ta Yes Ta Yes Ta "Single close quote."
 .It Li \&So Ta Yes Ta Yes Ta "Single open quote."
@@ -354,9 +354,9 @@ Produces
 .It Li \&Sx Ta Yes Ta Yes Ta "Section Cross Reference."
 .It Li \&Sy Ta Yes Ta Yes Ta "Symbolic (traditional English)."
 .It Li \&Tn Ta Yes Ta Yes Ta "Trade or type name (small Caps)."
-.It Li \&Ux Ta Yes Ta Yes Ta Ux
+.It Li \&Ux Ta Yes Ta Yes Ta Ux .
 .It Li \&Xc Ta Yes Ta Yes Ta "Extend argument list close."
-.It Li \&Xo Ta Yes Ta Yes Ta "Extend argument list close."
+.It Li \&Xo Ta Yes Ta Yes Ta "Extend argument list open."
 .El
 .\" .It Sy \&Hf Ta \&No Ta \&No Ta "Include file with header"
 .Pp
