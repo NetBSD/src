@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.4 1994/02/06 22:06:25 briggs Exp $
+ *	$Id: clock.c,v 1.5 1994/05/06 17:39:39 briggs Exp $
  */
 
 #if !defined(STANDALONE)
@@ -132,16 +132,27 @@ void startrtclock(void)
 
 }
 
-
-void enablertclock(void)
+void
+enablertclock(void)
 {
    /* clear then enable clock interrupt. */
    via_reg(VIA1, vIFR) |= V1IF_T1;
    via_reg(VIA1, vIER) = 0x80 | (V1IF_ADBRDY | V1IF_T1);
 }
 
+void
+cpu_initclocks(void)
+{
+	enablertclock();
+}
 
-void disablertclock(void)
+void
+setstatclockrate(int rateinhz)
+{
+}
+
+void
+disablertclock(void)
 {
    /* disable clock interrupt */
    via_reg(VIA1, vIER) = V1IF_T1;

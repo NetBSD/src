@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.9 1994/04/21 23:17:15 briggs Exp $
+ *	$Id: param.h,v 1.10 1994/05/06 17:39:22 briggs Exp $
  */
 
 #ifndef _MACHINE_PARAM_H_
@@ -234,6 +234,8 @@
 #define splvm()         spl6()	/* disallow virtual memory operations */
 #define splhigh()       spl7()	/* disallow everything */
 #define splsched()      spl7()	/* disallow scheduling */
+
+#define splstatclock()  spl7()	/* This should be splclock... */
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())

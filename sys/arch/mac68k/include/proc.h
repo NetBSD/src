@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.3 1994/02/27 16:41:41 briggs Exp $
+ *	$Id: proc.h,v 1.4 1994/05/06 17:39:24 briggs Exp $
  */
 
 /*
@@ -39,9 +39,7 @@
  */
 struct mdproc {
 	int	md_flags;		/* machine-dependent flags */
-#ifdef notyet
-	int	*p_regs;		/* registers on current frame */
-#endif
+	int	*md_regs;		/* registers on current frame */
 };
 
 /* md_flags */

@@ -32,7 +32,7 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.6 1994/04/21 23:22:16 briggs Exp $
+ *	$Id: genassym.c,v 1.7 1994/05/06 17:39:42 briggs Exp $
  */
 
 #include "sys/param.h"
@@ -63,13 +63,13 @@ main()
 	struct pcb *pcb = (struct pcb *)0;
 	register unsigned i;
 
-	printf("#define\tP_LINK %d\n", &p->p_link);
-	printf("#define\tP_RLINK %d\n", &p->p_rlink);
+	printf("#define\tP_LINK %d\n", &p->p_forw);
+	printf("#define\tP_RLINK %d\n", &p->p_back);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
 	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRI %d\n", &p->p_pri);
+	printf("#define\tP_PRI %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tP_FLAG %d\n", &p->p_flag);

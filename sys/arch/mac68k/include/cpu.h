@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.9 1994/04/22 12:10:36 briggs Exp $
+ *	$Id: cpu.h,v 1.10 1994/05/06 17:39:19 briggs Exp $
  */
 
 /*
@@ -97,14 +97,15 @@
  * leaves on the stack.
  */
 
-typedef struct intrframe {
+struct clockframe {
 	int	ps;
 	int	pc;
-} clockframe;
+};
 
 #define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_INTR(framep)	(0) /* XXX should have an interrupt stack? */
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -117,7 +118,8 @@ typedef struct intrframe {
  * interrupt.  Request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	profile_tick(p, framep)	( (p)->p_flag |= P_OWEUPC, aston() )
+#define	need_proftick(p)	( (p)->p_flag |= P_OWEUPC, aston() )
 
 /*
  * Notify the current process (p) that it has a signal pending,
