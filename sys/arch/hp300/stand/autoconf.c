@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1994/10/26 07:27:00 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1995/08/04 07:55:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,10 +42,11 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <hp300/stand/samachdep.h>
-#include <hp300/stand/rominfo.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
+
+#include <hp300/stand/samachdep.h>
+#include <hp300/stand/rominfo.h>
 
 #include <hp300/dev/device.h>
 #include <hp300/dev/grfvar.h>

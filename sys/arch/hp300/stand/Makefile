@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 1995/02/21 09:16:34 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16 1995/08/04 07:55:34 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
+
+NOPROG=	noprog
+NOMAN=	noman
+
+SUBDIR=	libsa
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -20,15 +25,15 @@ DOBJS=	${DSRCS:N*.h:R:S/$/.o/g}
 S=	${.CURDIR}/../../..
 
 .PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-.PATH: ${S}/stand ${S}/lib/libsa
+.PATH: ${S}/stand
 
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
-
 ### find out what to use for libkern
+KERNREL=
 .include "$S/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
-.include "$S/lib/libsa/Makefile.inc"
+.include "${.CURDIR}/libsa/Makefile.inc"
 LIBSA=	${SA_LIB}
 
 LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
@@ -123,7 +128,7 @@ installboot: ${.CURDIR}/installboot.sh
 
 # utilities
 
-clean cleandir:
+clean::
 	rm -f *.o *.exe *.i errs make.out
 	rm -f a.out pboot cat ls tboot tcopy
 	rm -f boot[a-z]? boot[a-wyz][a-z].c conf[a-wyz][a-z].c
@@ -143,6 +148,7 @@ install: mkboot installboot ${ALL}
 	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/sdboot
 	rm -f ${DESTDIR}/usr/mdec/bootsd
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
+	install -d -m 755 -o bin -g bin ${DESTDIR}/usr/mdec/rbootd
 	install -c -o bin -g bin -m 444 netboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
 	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
 #	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
@@ -150,7 +156,5 @@ install: mkboot installboot ${ALL}
 #	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 diskboot.lif ${DESTDIR}/sys/hpdist/tp
 
-.include <bsd.dep.mk>
-.include <bsd.obj.mk>
-# XXX This should not be necessary.
+.include <bsd.prog.mk>
 .include <bsd.subdir.mk>

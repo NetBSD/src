@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.5 1994/10/26 07:27:14 cgd Exp $	*/
+/*	$NetBSD: dcm.c,v 1.6 1995/08/04 07:55:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,14 @@
 #ifdef DCMCONSOLE
 #include <sys/param.h>
 #include <dev/cons.h>
+
 #include <hp300/dev/device.h>
 #include <hp300/dev/dcmreg.h>
+#include <hp300/stand/consdefs.h>
 
 struct dcmdevice *dcmcnaddr = NULL;
 
+void
 dcmprobe(cp)
 	struct consdev *cp;
 {
@@ -78,6 +81,7 @@ dcmprobe(cp)
 	}
 }
 
+void
 dcminit(cp)
 	struct consdev *cp;
 {
@@ -96,8 +100,11 @@ dcminit(cp)
 	DELAY(15000);
 }
 
+/* ARGSUSED */
 #ifndef SMALL
-dcmgetchar()
+int
+dcmgetchar(dev)
+	dev_t dev;
 {
 	register struct dcmdevice *dcm = dcmcnaddr;
 	register struct dcmrfifo *fifo;
@@ -120,13 +127,18 @@ dcmgetchar()
 	return(c);
 }
 #else
-dcmgetchar()
+int
+dcmgetchar(dev)
+	dev_t dev;
 {
 	return(0);
 }
 #endif
 
-dcmputchar(c)
+/* ARGSUSED */
+void
+dcmputchar(dev, c)
+	dev_t dev;
 	register int c;
 {
 	register struct dcmdevice *dcm = dcmcnaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.5 1994/10/26 07:27:13 cgd Exp $	*/
+/*	$NetBSD: dca.c,v 1.6 1995/08/04 07:55:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,11 @@
 
 #ifdef DCACONSOLE
 #include <sys/param.h>
-#include <hp300/dev/dcareg.h>
 #include <machine/cpu.h>
 #include <dev/cons.h>
+
+#include <hp300/dev/dcareg.h>
+#include <hp300/stand/consdefs.h>
 
 /* If not using 4.4 devs */
 #ifndef dca_reset
@@ -54,6 +56,7 @@
 
 struct dcadevice *dcacnaddr = 0;
 
+void
 dcaprobe(cp)
 	struct consdev *cp;
 {
@@ -84,6 +87,7 @@ dcaprobe(cp)
 #endif
 }
 
+void
 dcainit(cp)
 	struct consdev *cp;
 {
@@ -98,8 +102,11 @@ dcainit(cp)
 	dca->dca_cfcr = CFCR_8BITS;
 }
 
+/* ARGSUSED */
 #ifndef SMALL
-dcagetchar()
+int
+dcagetchar(dev)
+	dev_t dev;
 {
 	register struct dcadevice *dca = dcacnaddr;
 	short stat;
@@ -111,13 +118,18 @@ dcagetchar()
 	return(c);
 }
 #else
-dcagetchar()
+int
+dcagetchar(dev)
+	dev_t dev;
 {
 	return(0);
 }
 #endif
 
-dcaputchar(c)
+/* ARGSUSED */
+void
+dcaputchar(dev, c)
+	dev_t dev;
 	register int c;
 {
 	register struct dcadevice *dca = dcacnaddr;

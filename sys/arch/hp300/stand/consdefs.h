@@ -1,13 +1,8 @@
-/*	$NetBSD: cons.c,v 1.7 1995/08/04 07:55:38 thorpej Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.1 1995/08/04 07:55:39 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,73 +31,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Utah Hdr: cons.c 1.7 92/02/28
- *
- *	@(#)cons.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/param.h>
-#include <dev/cons.h>
-
-#include <hp300/stand/consdefs.h>
-#include <hp300/stand/samachdep.h>
-
-struct consdev constab[] = {
+/*
+ * Console routine prototypes.
+ */
 #ifdef ITECONSOLE
-	{ iteprobe,	iteinit,	itegetchar,	iteputchar },
+void	iteprobe __P((struct consdev *));
+void	iteinit __P((struct consdev *));
+int	itegetchar __P((dev_t));
+void	iteputchar __P((dev_t, int));
 #endif
 #ifdef DCACONSOLE
-	{ dcaprobe,	dcainit,	dcagetchar,	dcaputchar },
+void	dcaprobe __P((struct consdev *));
+void	dcainit __P((struct consdev *));
+int	dcagetchar __P((dev_t));
+void	dcaputchar __P((dev_t, int));
 #endif
 #ifdef DCMCONSOLE
-	{ dcmprobe,	dcminit,	dcmgetchar,	dcmputchar },
+void	dcmprobe __P((struct consdev *));
+void	dcminit __P((struct consdev *));
+int	dcmgetchar __P((dev_t));
+void	dcmputchar __P((dev_t, int));
 #endif
-	{ 0 },
-};
-
-struct consdev *cn_tab;
-int noconsole;
-
-cninit()
-{
-	register struct consdev *cp;
-
-	cn_tab = NULL;
-	noconsole = 1;
-	for (cp = constab; cp->cn_probe; cp++) {
-		(*cp->cn_probe)(cp);
-		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
-			cn_tab = cp;
-	}
-	if (cn_tab) {
-		(*cn_tab->cn_init)(cn_tab);
-		noconsole = 0;
-	}
-}
-
-cngetc()
-{
-
-	/* Note: the dev_t arguments are not used! */
-	if (cn_tab)
-		return((*cn_tab->cn_getc)(0));
-	return(0);
-}
-
-cnputc(c)
-	int c;
-{
-
-	/* Note: the dev_t arguments are not used! */
-#ifdef ROMPRF
-	extern int userom;
-
-	if (userom)
-		romputchar(c);
-	else
-#endif
-	if (cn_tab)
-		(*cn_tab->cn_putc)(0, c);
-}

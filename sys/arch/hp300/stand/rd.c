@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.7 1994/10/26 07:27:52 cgd Exp $	*/
+/*	$NetBSD: rd.c,v 1.8 1995/08/04 07:55:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -318,14 +318,15 @@ rdopen(f, ctlr, unit, part)
 	return (0);
 }
 
-rdstrategy(rs, func, dblk, size, buf, rsize)
-	register struct rd_softc *rs;
+rdstrategy(devdata, func, dblk, size, buf, rsize)
+	void *devdata;
 	int func;
 	daddr_t dblk;
 	u_int size;
 	char *buf;
 	u_int *rsize;
 {
+	struct rd_softc *rs = devdata;
 	register int ctlr = rs->sc_ctlr;
 	register int unit = rs->sc_unit;
 	daddr_t blk = (dblk + rs->sc_pinfo.offset[rs->sc_part]);

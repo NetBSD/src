@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1995/02/19 19:17:04 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1995/08/04 07:55:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,30 +71,38 @@
  * Device configuration
  */
 #ifdef TAPEBOOT
-#define	ctstrategy	nullsys
-#define	ctopen		nodev
-#define	ctclose		nullsys
+#define	ctstrategy	\
+	(int (*) __P((void *, int, daddr_t, u_int, char *, u_int *)))nullsys
+#define	ctopen		(int (*) __P((struct open_file *, ...)))nodev
+#define	ctclose		(int (*) __P((struct open_file *)))nullsys
 #else
-extern int	ctstrategy __P((void *, int, daddr_t, u_int, char *, u_int));
-extern int	ctopen __P((struct open_file *, ...));
-extern int	ctclose __P((struct open_file *));
+int	ctstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	ctopen __P((struct open_file *, ...));
+int	ctclose __P((struct open_file *));
 #endif
-#define	ctioctl	noioctl
+#define	ctioctl		noioctl
 
-extern int	rdstrategy __P((void *, int, daddr_t, u_int, char *, u_int));
-extern int	rdopen __P((struct open_file *, ...));
-#define	rdioctl	noioctl
+int	rdstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	rdopen __P((struct open_file *, ...));
+#define rdclose		(int (*) __P((struct open_file *)))nullsys
+#define rdioctl		noioctl
 
-extern int	sdstrategy __P((void *, int, daddr_t, u_int, char *, u_int));
-extern int	sdopen __P((struct open_file *, ...));
-#define	sdioctl	noioctl
+int	sdstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	sdopen __P((struct open_file *, ...));
+#define sdclose		(int (*) __P((struct open_file *)))nullsys
+#define	sdioctl		noioctl
+
+#define xxstrategy	\
+	(int (*) __P((void *, int, daddr_t, u_int, char *, u_int *)))nullsys
+#define xxopen		(int (*) __P((struct open_file *, ...)))nodev
+#define xxclose		(int (*) __P((struct open_file *)))nullsys
 
 struct devsw devsw[] = {
 	{ "ct",	ctstrategy,	ctopen,	ctclose,	ctioctl }, /*0*/
-	{ "??",	nullsys,	nodev,	nullsys,	noioctl }, /*1*/
-	{ "rd",	rdstrategy,	rdopen,	nullsys,	rdioctl }, /*2*/
-	{ "??",	nullsys,	nodev,	nullsys,	noioctl }, /*3*/
-	{ "sd",	sdstrategy,	sdopen,	nullsys,	sdioctl }, /*4*/
+	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*1*/
+	{ "rd",	rdstrategy,	rdopen,	rdclose,	rdioctl }, /*2*/
+	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*3*/
+	{ "sd",	sdstrategy,	sdopen,	sdclose,	sdioctl }, /*4*/
 };
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
