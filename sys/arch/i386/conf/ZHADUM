@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.13 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: ZHADUM,v 1.14 1999/01/23 16:10:48 drochner Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -200,11 +200,11 @@ pckbc0	at isa?				# PC keyboard controller
 pckbd*	at pckbc?			# PC keyboard
 wskbd*	at pckbd? console ?
 
-psm*	at pckbc?			# PS/2 mouse for wsmouse
-wsmouse* at psm?
+pms*	at pckbc?			# PS/2 mouse for wsmouse
+wsmouse* at pms?
 
-#psmi*	at pckbc?			# PS/2 "Intelli" mouse for wscons
-#wsmouse* at psmi?
+#pmsi*	at pckbc?			# PS/2 "Intelli" mouse for wscons
+#wsmouse* at pmsi?
 
 vga0	at isa?
 vga*	at pci? dev ? function ?
