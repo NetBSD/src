@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.20 1997/10/24 14:44:35 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.21 1998/04/02 11:13:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.20 1997/10/24 14:44:35 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.21 1998/04/02 11:13:33 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: su.c,v 1.20 1997/10/24 14:44:35 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 
