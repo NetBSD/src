@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.2 2004/04/11 00:18:29 cl Exp $	*/
+/*	$NetBSD: events.c,v 1.3 2004/04/17 12:46:42 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.2 2004/04/11 00:18:29 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.3 2004/04/17 12:46:42 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ init_events()
 }
 
 unsigned int
-do_event(int num, struct pt_regs *regs)
+do_event(int num, struct trapframe *regs)
 {
 	ev_vector_t  *ev;
 	struct cpu_info *ci;
