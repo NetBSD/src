@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.57 2001/02/09 10:41:50 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.58 2001/02/20 15:16:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -517,6 +517,8 @@ pccbbattach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_function = pa->pa_function;
+	sc->sc_sockbase = sock_base;
+	sc->sc_busnum = busreg;
 
 	memcpy(&sc->sc_pa, pa, sizeof(*pa));
 
@@ -3232,6 +3234,14 @@ pccbb_powerhook(why, arg)
 	}
 
 	if (why == PWR_RESUME) {
+		if (pci_conf_read (sc, sc->sc_tag, PCI_SOCKBASE) == 0)
+			/* BIOS did not recover this register */
+			pci_conf_write (sc, sc->sc_tag,
+					PCI_SOCKBASE, sc->sc_sockbase);
+		if (pci_conf_read (sc, sc->sc_tag, PCI_BUSNUM) == 0)
+			/* BIOS did not recover this register */
+			pci_conf_write (sc, sc->sc_tag,
+					PCI_BUSNUM, sc->sc_busnum);
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 		/* Card detect intr is turned on. */
