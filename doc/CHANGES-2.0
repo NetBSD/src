@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.377 2004/08/11 19:52:40 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.378 2004/08/11 19:54:53 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6372,3 +6372,12 @@ doc/HACKS					1.37
 	"dereferencing type-punned pointer will break strict-aliasing rules"
 	which occurs when compiling crypto_openssl.c with -O[23s].
 	[junyoung, ticket #738]
+
+usr.sbin/pkg_install/info/perform.c		1.53
+
+	pkg_info will not DTRT when applied to a binary package that doesn't
+	have all the files from ALL_FNAMES -- meta pkgs don't have +MTREE-files,
+	and as such it's impossible to retrieve _any_ information on them.
+	The fix is to only extract those +-files that are needed (as determined
+	by the command line options)
+	[hubertf, ticket #739]
