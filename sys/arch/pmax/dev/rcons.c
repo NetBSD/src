@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.18 1998/11/19 15:38:23 mrg Exp $	*/
+/*	$NetBSD: rcons.c,v 1.19 1998/11/23 04:26:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -119,11 +119,6 @@ rcons_connect (info)
 {
 	static struct rconsole rc;
 	static int row, col;
-
-	/* If we're running a serial console, don't set up a raster console
-	   even if there's a device that can support it. */
-	if (cn_tab -> cn_pri == CN_REMOTE)
-		return;
 
 	fbconstty = &rcons_tty [0];
 	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
