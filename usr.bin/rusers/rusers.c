@@ -42,7 +42,7 @@
 #include <rpcsvc/rnusers.h>
 
 #define MAX_INT 0x7fffffff
-#define HOST_WIDTH 12
+#define HOST_WIDTH 20
 #define LINE_WIDTH 15
 char *argv0;
 
@@ -84,10 +84,11 @@ void remember_host(struct in_addr addr)
 rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 {
         int x, idle;
-        char date[128], idle_time[128], remote[128];
+        char date[32], idle_time[64], remote[64];
         struct hostent *hp;
         utmpidlearr *up = (utmpidlearr *)replyp;
         char *host;
+        int days, hours, minutes, seconds;
         
 	if (search_host(raddrp->sin_addr))
 		return(0);
@@ -103,29 +104,46 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
                 host = inet_ntoa(raddrp->sin_addr);
         
         if (!longopt)
-                printf("%-*.*s ", HOST_WIDTH, HOST_WIDTH, host);
+                printf("%-*s ", HOST_WIDTH, host);
         
         for (x = 0; x < up->utmpidlearr_len; x++) {
-
-                strcpy(date, &(ctime((time_t *)&(up->utmpidlearr_val[x].ui_utmp.ut_time))[4]));
+                strncpy(date,
+                        &(ctime((time_t *)&(up->utmpidlearr_val[x].ui_utmp.ut_time))[4]),
+                        sizeof(date)-1);
 
                 idle = up->utmpidlearr_val[x].ui_idle;
                 sprintf(idle_time, "  :%02d", idle);
-                if (idle == 0)
-                        strcpy(idle_time, "");
-                if (idle > 60)
-                        sprintf(idle_time, "%d:%02d", idle/60, idle%60);
                 if (idle == MAX_INT)
                         strcpy(idle_time, "??");
+                else if (idle == 0)
+                        strcpy(idle_time, "");
+                else {
+                        seconds = idle;
+                        days = seconds/(60*60*24);
+                        seconds %= (60*60*24);
+                        hours = seconds/(60*60);
+                        seconds %= (60*60);
+                        minutes = seconds/60;
+                        seconds %= 60;
+                        if (idle > 60)
+                                sprintf(idle_time, "%d:%02d",
+                                        minutes, seconds);
+                        if (idle >= (60*60))
+                                sprintf(idle_time, "%d:%02d:%02d",
+                                        hours, minutes, seconds);
+                        if (idle >= (24*60*60))
+                                sprintf(idle_time, "%d days, %d:%02d:%02d",
+                                        days, hours, minutes, seconds);
+                }
 
-                strcpy(remote, up->utmpidlearr_val[x].ui_utmp.ut_host);
+                strncpy(remote, up->utmpidlearr_val[x].ui_utmp.ut_host, sizeof(remote)-1);
                 if (strlen(remote) != 0)
                         sprintf(remote, "(%.16s)", up->utmpidlearr_val[x].ui_utmp.ut_host);
 
                 if (longopt)
-                        printf("%-8.8s %*.*s:%-*.*s %-12.12s  %6s %.18s\n",
+                        printf("%-8.8s %*s:%-*.*s %-12.12s  %6s %.18s\n",
                                up->utmpidlearr_val[x].ui_utmp.ut_name,
-                               HOST_WIDTH, HOST_WIDTH, host,
+                               HOST_WIDTH, host,
                                LINE_WIDTH, LINE_WIDTH, up->utmpidlearr_val[x].ui_utmp.ut_line,
                                date,
                                idle_time,
