@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.16 2000/04/13 01:27:53 itohy Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.17 2000/05/27 00:45:37 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.16 2000/04/13 01:27:53 itohy Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.17 2000/05/27 00:45:37 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: ktrace.c,v 1.16 2000/04/13 01:27:53 itohy Exp $");
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>
+#include <sys/socket.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -185,6 +186,12 @@ main(argc, argv)
 	setemul(emul_name, 0, 0);
 #endif
 
+	/*
+	 * For cleaner traces, initialize malloc now rather
+	 * than in a traced subprocess.
+	 */
+	free(malloc(1));
+	
 	if (inherit)
 		trpoints |= KTRFAC_INHERIT;
 
@@ -279,12 +286,18 @@ do_ktrace(tracefile, ops, trpoints, pid)
 
 	if (!tracefile || strcmp(tracefile, "-") == 0) {
 		int pi[2], dofork, fpid;
-
+		int large = 32768;
+		
 		if (pipe(pi) < 0)
 			err(1, "pipe(2)");
 		fcntl(pi[0], F_SETFD, FD_CLOEXEC|fcntl(pi[0], F_GETFD, 0));
 		fcntl(pi[1], F_SETFD, FD_CLOEXEC|fcntl(pi[1], F_GETFD, 0));
 
+		if (setsockopt(pi[1], SOL_SOCKET, SO_SNDBUF, &large, sizeof(large)) < 0)
+			err(1, "setsockopt(SO_SNDBUF)");
+		if (setsockopt(pi[0], SOL_SOCKET, SO_RCVBUF, &large, sizeof(large)) < 0)
+			err(1, "setsockopt(SO_RCVBUF)");
+		
 		dofork = (pid == getpid());
 
 #ifdef KTRUSS
