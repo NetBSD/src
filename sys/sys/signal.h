@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.41 1998/12/19 16:27:09 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.42 1998/12/21 10:35:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -202,15 +202,12 @@ struct	sigaction {
 #if defined(_KERNEL) && defined(COMPAT_LINUX)
 #define SA_SIGINFO	0x0040
 #endif /* (_KERNEL && linux) */
-#if defined(_KERNEL) && defined(COMPAT_SUNOS)
-#define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
-#endif /* (_KERNEL && sunos) */
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
 #define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
 #ifdef _KERNEL
-#define	SA_ALLBITS	0x017f
+#define	SA_ALLBITS	0x007f
 #endif
 
 /*
