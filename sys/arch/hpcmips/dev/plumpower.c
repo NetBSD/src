@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.3 2000/02/26 15:16:19 uch Exp $ */
+/*	$NetBSD: plumpower.c,v 1.4 2000/03/25 15:08:26 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -179,8 +179,16 @@ plum_power_establish(pc, src)
 		pwrreg |= PLUM_POWER_PWRCONT_USBEN;
 		/* supply clock to the USB host controller */
 		clkreg |= PLUM_POWER_CLKCONT_USBCLK1;
-		/* clock supply is adaptively controlled by hardware */
+#if 1
+		/* 
+		 * clock supply is adaptively controlled by hardware 
+		 * (recommended)
+		 */
 		clkreg &= ~PLUM_POWER_CLKCONT_USBCLK2; 
+#else
+		/* clock is always supplied while USBCLK=1 */
+		clkreg |= PLUM_POWER_CLKCONT_USBCLK2; 
+#endif
 		break;
 	case PLUM_PWR_SM:
 		clkreg |= PLUM_POWER_CLKCONT_SMCLK;
