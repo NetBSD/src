@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.11 1999/11/02 21:17:16 jwise Exp $	*/
+/*	$NetBSD: fmt.c,v 1.12 2000/09/15 11:23:17 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.11 1999/11/02 21:17:16 jwise Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.12 2000/09/15 11:23:17 abs Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -74,6 +74,7 @@ int	max_length;		/* Max line length in output */
 int	pfx;			/* Current leading blank count */
 int	lineno;			/* Current input line */
 int	mark;			/* Last place we saw a head line */
+int	center;
 
 char	*headnames[] = {"To", "Subject", "Cc", 0};
 
@@ -116,6 +117,11 @@ main(argc, argv)
 	/*
 	 * LIZ@UOM 6/18/85 -- Check for goal and max length arguments 
 	 */
+	if (argc > 1 && !strcmp(argv[1], "-c")) {
+		center++;
+		argc--;
+		argv++;
+	}
 	if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
 		argv++;
 		argc--;
@@ -162,6 +168,26 @@ fmt(fi)
 	char *cp, *cp2;
 	int c, col, add_space;
 
+	if (center) {
+		while (1) {
+			cp = fgets(linebuf, BUFSIZ, fi);
+			if (!cp)
+				return;
+			while (*cp && isspace(*cp))
+				cp++;
+			cp2 = cp + strlen(cp) - 1;
+			while (cp2 > cp && isspace(*cp2))
+				cp2--;
+			if (cp == cp2)
+				putchar('\n');
+			col = cp2 - cp;
+			for (c = 0; c < (goal_length-col)/2; c++)
+				putchar(' ');
+			while (cp <= cp2)
+				putchar(*cp++);
+			putchar('\n');
+		}
+	}
 	c = getc(fi);
 	while (c != EOF) {
 		/*
