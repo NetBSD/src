@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.24 1998/06/15 14:21:35 is Exp $	
+	$NetBSD: hardware,v 1.25 1998/08/09 22:29:01 is Exp $	
 
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
@@ -76,7 +76,7 @@ Supported devices include:
 	CD-ROM drives:
 		Most SCSI CD-ROM drives
 	Serial cards:
-		HyperCom Z3 and HyperCom 4
+		HyperCom 3Z and HyperCom 4
 		MultiFaceCard II and III
 		A2232 (normal and clockdoubled)
 	Amiga floppy drives with Amiga (880/1760kB) and 
