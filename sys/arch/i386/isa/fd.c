@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.51 1994/07/31 01:20:52 mycroft Exp $
+ *	$Id: fd.c,v 1.52 1994/10/18 18:24:35 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -327,12 +327,11 @@ fdcattach(parent, self, aux)
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
-		if (type >= 0 && fa.fa_drive < 2) {
+		if (type >= 0 && fa.fa_drive < 2)
 			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
 			    type, fa.fa_drive);
-		} else {
+		else
 			fa.fa_deftype = NULL;		/* unknown */
-		}
 		(void)config_found(self, (void *)&fa, fdprint);
 	}
 }
@@ -406,7 +405,7 @@ fdattach(parent, self, aux)
 
 	if (type)
 		printf(": %s %d cyl, %d head, %d sec\n", type->name,
-			type->tracks, type->heads, type->sectrac);
+		    type->tracks, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
 	fd->sc_track = -1;
@@ -492,7 +491,7 @@ fdstrategy(bp)
 #ifdef DIAGNOSTIC
 	if (bp->b_blkno < 0 || fdu < 0 || fdu >= fdcd.cd_ndevs) {
 		printf("fdstrategy: fdu=%d, blkno=%d, bcount=%d\n", fdu,
-		       bp->b_blkno, bp->b_bcount);
+		    bp->b_blkno, bp->b_bcount);
 		bp->b_flags |= B_ERROR;
 		goto bad;
 	}
@@ -516,7 +515,7 @@ fdstrategy(bp)
 #endif
 #ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
-	       bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
+	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
 #endif
 	s = splbio();
 	disksort(&fd->sc_q, bp);
@@ -716,19 +715,30 @@ fdcstatus(dv, n, s)
 		n = 2;
 	}
 
-	printf("%s: %s st0 %b ", dv->dv_xname, s, fdc->sc_status[0],
-	       NE7_ST0BITS);
-	if (n == 2)
-		printf("cyl %d\n", fdc->sc_status[1]);
-	else if (n == 7)
-		printf("st1 %b st2 %b cyl %d head %d sec %d\n",
-		       fdc->sc_status[1], NE7_ST1BITS, fdc->sc_status[2],
-		       NE7_ST2BITS, fdc->sc_status[3], fdc->sc_status[4],
-		       fdc->sc_status[5]);
+	printf("%s: %s", dv->dv_xname, s);
+
+	switch (n) {
+	case 0:
+		printf("\n");
+		break;
+	case 2:
+		printf(" (st0 %b cyl %d)\n",
+		    fdc->sc_status[0], NE7_ST0BITS,
+		    fdc->sc_status[1]);
+		break;
+	case 7:
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		    fdc->sc_status[0], NE7_ST0BITS,
+		    fdc->sc_status[1], NE7_ST1BITS,
+		    fdc->sc_status[2], NE7_ST2BITS,
+		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+		break;
 #ifdef DIAGNOSTIC
-	else
+	default:
 		printf("\nfdcstatus: weird size");
+		break;
 #endif
+	}
 }
 
 void
@@ -875,16 +885,16 @@ again:
 		read = bp->b_flags & B_READ;
 #ifdef NEWCONFIG
 		at_dma(read, bp->b_data + fd->sc_skip, nblks * FDC_BSIZE,
-		       fdc->sc_drq);
+		    fdc->sc_drq);
 #else
 		isa_dmastart(read, bp->b_data + fd->sc_skip, nblks * FDC_BSIZE,
-		       fdc->sc_drq);
+		    fdc->sc_drq);
 #endif
 		outb(iobase + fdctl, type->rate);
 #ifdef DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
-		       read ? "read" : "write", fd->sc_drive, fd->sc_track, head,
-		       sec, nblks);
+		    read ? "read" : "write", fd->sc_drive, fd->sc_track, head,
+		    sec, nblks);
 #endif
 		if (read)
 			out_fdc(iobase, NE7CMD_READ);	/* READ */
@@ -942,9 +952,10 @@ again:
 			isa_dmaabort(fdc->sc_drq);
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
-				  "read failed" : "write failed");
-			printf("blkno %d skip %d cylin %d status %x\n", bp->b_blkno,
-			       fd->sc_skip, bp->b_cylin, fdc->sc_status[0]);
+			    "read failed" : "write failed");
+			printf("blkno %d skip %d cylin %d status %x\n",
+			    bp->b_blkno, fd->sc_skip, bp->b_cylin,
+			    fdc->sc_status[0]);
 			fdcretry(fdc);
 			goto again;
 		}
@@ -1057,12 +1068,12 @@ fdcretry(fdc)
 
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
-			fd->sc_skip, (struct disklabel *)NULL);
-		printf(" (st0 %b ", fdc->sc_status[0], NE7_ST0BITS);
-		printf("st1 %b ", fdc->sc_status[1], NE7_ST1BITS);
-		printf("st2 %b ", fdc->sc_status[2], NE7_ST2BITS);
-		printf("cyl %d hd %d sec %d)\n", fdc->sc_status[3],
-			fdc->sc_status[4], fdc->sc_status[5]);
+		    fd->sc_skip, (struct disklabel *)NULL);
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		    fdc->sc_status[0], NE7_ST0BITS,
+		    fdc->sc_status[1], NE7_ST1BITS,
+		    fdc->sc_status[2], NE7_ST2BITS,
+		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
