@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.163 2003/10/03 17:51:13 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.164 2003/10/04 03:45:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.163 2003/10/03 17:51:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.164 2003/10/04 03:45:49 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -961,7 +961,7 @@ psignal1(struct proc *p, int signum, int dolock)
 void
 kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data, int dolock)
 {
-	if (data) {
+	if ((p->p_flag & P_WEXIT) == 0 && data) {
 		size_t fd;
 		struct filedesc *fdp = p->p_fd;
 		ksi->ksi_fd = -1;
