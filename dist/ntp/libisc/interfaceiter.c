@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.3 2003/12/04 16:52:28 drochner Exp $	*/
 
 /*
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -73,6 +73,19 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src) {
 		memcpy(&dst->type.in6,
 		       &((struct sockaddr_in6 *) src)->sin6_addr,
 		       sizeof(struct in6_addr));
+#ifdef __KAME__
+		if (IN6_IS_ADDR_LINKLOCAL(
+			    &((struct sockaddr_in6 *)src)->sin6_addr)) {
+			u_int8_t *p;
+			p = &((struct sockaddr_in6 *)src)->sin6_addr.s6_addr[0];
+			dst->zone = ((u_int16_t)p[2] << 8) | p[3];
+			dst->type.in6.s6_addr[2] = 0;
+			dst->type.in6.s6_addr[3] = 0;
+		} else
+			dst->zone = 0;
+#else
+		dst->zone = ((struct sockaddr_in6 *)src)->sin6_scope_id;
+#endif
 		break;
 	default:
 		INSIST(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.3 2003/12/04 16:52:28 drochner Exp $	*/
 
 /*
  * Copyright (C) 1998-2002  Internet Software Consortium.
@@ -37,6 +37,7 @@ struct isc_netaddr {
     		struct in_addr in;
 		struct in6_addr in6;
 	} type;
+	isc_uint32_t zone;
 };
 
 isc_boolean_t
