@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.19 2001/11/15 09:48:13 lukem Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.20 2002/09/17 03:30:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.19 2001/11/15 09:48:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.20 2002/09/17 03:30:33 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -251,18 +251,26 @@ rf_ContinueCopyback(desc)
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_RaidAddr_t addr;
 	RF_RowCol_t testRow, testCol;
-	int     old_pctg, new_pctg, done;
+#if RF_DEBUG_RECON
+	int     old_pctg, new_pctg;
 	struct timeval t, diff;
+#endif
+	int done;
 
+#if RF_DEBUG_RECON
 	old_pctg = (-1);
+#endif
 	while (1) {
 		stripeAddr = desc->stripeAddr;
 		desc->raidPtr->copyback_stripes_done = stripeAddr
 			/ desc->sectPerStripe;
+#if RF_DEBUG_RECON
 		if (rf_prReconSched) {
 			old_pctg = 100 * desc->stripeAddr / raidPtr->totalSectors;
 		}
+#endif
 		desc->stripeAddr += desc->sectPerStripe;
+#if RF_DEBUG_RECON
 		if (rf_prReconSched) {
 			new_pctg = 100 * desc->stripeAddr / raidPtr->totalSectors;
 			if (new_pctg != old_pctg) {
@@ -271,6 +279,7 @@ rf_ContinueCopyback(desc)
 				printf("%d %d.%06d\n", new_pctg, (int) diff.tv_sec, (int) diff.tv_usec);
 			}
 		}
+#endif
 		if (stripeAddr >= raidPtr->totalSectors) {
 			rf_CopybackComplete(desc, 0);
 			return;
