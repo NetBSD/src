@@ -1,0 +1,140 @@
+#
+#	GENERIC -- everything that's currently supported
+#
+#	$Id: TEST2,v 1.4.2.2 1993/11/29 18:19:32 mycroft Exp $
+#
+
+# standard options
+machine		"i386"
+options		"I386_CPU"		# 386DX, 386SX, etc.
+options		"I486_CPU"		# 486DX, 486SX, 486SLC, etc.
+
+options		GENERIC			# historical
+maxusers	16			# estimated number of users
+options		TIMEZONE=300, DST=1	# time zone to read RTC in
+options		SWAPPAGER		# paging
+options		VNODEPAGER,DEVPAGER	# vnode and device memory mapping
+options		DDB			# kernel debugger
+options		DIAGNOSTIC		# internal consistency checking
+
+options		KTRACE			# system call tracing, a la ktrace(1)
+options		FIFO			# fifos; recommended
+options		SYSVMSG			# System V message queues; see msg.h
+options		SYSVSEM			# System V semaphores; see sem.h
+#options	SYSVSHM			# System V shared memory; broken
+#options	SHMMAXPGS=1024
+options		LKM			# loadable kernel modules
+
+# compatibility options
+options		COMPAT_NOMID		# old zmagic executables
+options		COMPAT_43		# 4.3 system calls
+options		TCP_COMPAT_42		# 4.2 TCP bugs
+
+# file system options
+options		QUOTA			# file system quotas
+options		FFS			# Berkeley fast file system
+#options	FASTLINKS		# create fast symbolic links in FFS
+options		MFS			# memory file system; uses RAM and swap
+options		NFSSERVER		# Network File System server
+options		NFSCLIENT		# Network File System client
+options		ISOFS			# ISO 9660 CD-ROM file system, with RR
+options		MSDOSFS			# MS-DOS FAT file system
+options		FDESC			# /dev/fd
+options		KERNFS			# kernel file system
+
+# networking options
+#options	MCLSHIFT=12		# log2(size) of a mbuf cluster
+#options	SUBNETSARELOCAL=0	# ??
+options		GATEWAY			# packet forwarding
+options		DIRECTED_BROADCAST	# broadcast across subnets
+options		INET			# IP
+options		NS			# XNS
+options		NSIP			# IDP over IP
+options		CCITT			# X.25
+options		ISO			# OSI
+#options	ISO_X25ESIS		# ESIS over X.25
+options		TPIP			# TP over IP
+options		EON			# CLNP over IP
+
+config		netbsd swap generic
+
+include		"std.i386"
+
+#timer1 at isa? port 0x48		# only in EISA boxes
+
+#console
+pc0 at isa?
+
+#math co-processor
+npx0 at isa? port 0xf0
+
+#serial ports
+com0 at isa? port 0x3f8			# 8250, 16450, 16550
+com1 at isa? port 0x2f8
+com2 at isa? port 0x3e8
+com3 at isa? port 0x2e8
+
+#parallel ports
+lpt0 at isa? port 0x378
+lpt1 at isa? port 0x278
+lpt2 at isa? port 0x3bc
+
+#bus mice
+mms0 at isa? port 0x23c			# MicroSoft InPort
+mms1 at isa? port 0x238
+lms0 at isa? port 0x23c			# Logitech
+lms1 at isa? port 0x238
+#pms0 at isa? port 0x60			# PS/2 auxiliary port
+
+#non-scsi disk controllers
+#wdc0 at isa? port 0x1f0		# MFM, RLL, IDE, ESDI
+#wdc1 at isa? port 0x170
+#wd* at wdc? drive ?
+
+#non-scsi floppy controllers
+fdc0 at isa? port 0x3f0 drq 2
+fdc1 at isa? port 0x370 drq 3
+fd* at fdc? drive ?
+
+#non-scsi tape drives
+#wt0 at isa? port 0x300 drq 1		# QIC-02, QIC-36
+
+#non-scsi CD-ROM drives
+mcd0 at isa? port 0x300 irq 10		# Mitsumi
+
+#scsi
+#aha0 at isa? port 0x330		# Adaptec 1542, Bustek 545
+#aha1 at isa? port 0x334
+ahb0 at isa?				# Adaptec 1742
+ahb1 at isa?
+bt0 at isa? port 0x330			# Bustek 742
+bt1 at isa? port 0x334
+uha0 at isa? port 0x330			# UltraStor 14f, 34f
+uha1 at isa? port 0x334
+#wds0 at isa? port 0x350 drq 5		# WD 7000
+
+scsibus* at scsi?
+
+sd* at scsibus? target ? lun ?		# SCSI disks
+st* at scsibus? target ? lun ?		# SCSI tapes
+cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
+ch* at scsibus? target ? lun ?		# SCSI autochangers
+
+#ethernet
+ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
+ed0 at isa? port 0x300 irq 10 iomem 0xcc000	# SMC hardware config
+ed0 at isa? port 0x280 irq 9 iomem 0xd0000	# SMC hardware config
+ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
+#hp0 at isa? port 0x300
+is0 at isa? port 0x280 drq 7			# IsoLAN AT 4141, IsoLink 4110
+ie0 at isa? port 0x360 irq 7 iomem 0xd0000	# i82586
+
+#pseudo-device	fpe			# floating point emulator
+#pseudo-device	spkr			# speaker queue
+pseudo-device	pty 64			# pseudo-terminals
+pseudo-device	loop 1			# loopback network
+pseudo-device	bpfilter 4		# packet filter
+pseudo-device	sl 1			# compressed SLIP
+pseudo-device	ppp 1			# Point-to-Point Protocol
+pseudo-device	tb 2			# tablet line discipline
+#pseudo-device	tun			# network tunneling
