@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.146 2001/03/30 14:47:48 minoura Exp $
+# $NetBSD: ALPHA,v 1.147 2001/05/06 20:32:20 ad Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.146 $"
+ident		"ALPHA-$Revision: 1.147 $"
 
 maxusers 32
 
@@ -365,6 +365,7 @@ ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
+mlx*	at	eisa? slot ?			# Mylex DAC960 / DEC SWXCR (untested)
 tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
 depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
 le*	at	depca?
