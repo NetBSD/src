@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.52 2003/02/01 06:23:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.53 2004/03/24 07:50:48 junyoung Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.52 2003/02/01 06:23:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.53 2004/03/24 07:50:48 junyoung Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -75,7 +75,7 @@ MALLOC_DEFINE(M_UVMAMAP, "UVM amap", "UVM amap and related structures");
  * local functions
  */
 
-static struct vm_amap *amap_alloc1 __P((int, int, int));
+static struct vm_amap *amap_alloc1(int, int, int);
 
 #ifdef UVM_AMAP_PPREF
 /*
@@ -111,8 +111,8 @@ static struct vm_amap *amap_alloc1 __P((int, int, int));
  * here are some in-line functions to help us.
  */
 
-static __inline void pp_getreflen __P((int *, int, int *, int *));
-static __inline void pp_setreflen __P((int *, int, int, int));
+static __inline void pp_getreflen(int *, int, int *, int *);
+static __inline void pp_setreflen(int *, int, int, int);
 
 /*
  * pp_getreflen: get the reference and length for a specific offset
@@ -1120,7 +1120,7 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 		/* Ensure that the "prevref == ref" test below always
 		 * fails, since we're starting from the beginning of
 		 * the ppref array; that is, there is no previous
-		 * chunk.  
+		 * chunk.
 		 */
 		prevref = -1;
 		prevlen = 0;
