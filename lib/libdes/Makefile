@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/07/23 05:20:17 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2003/07/23 05:43:44 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -15,5 +15,8 @@ CPPFLAGS+=-DOPENSSL_cleanse=bzero -DOPENSSL_malloc=malloc
 
 INCS=	des.h
 INCSDIR=/usr/include
+
+# pod2man --section=3 --center=libdes --release=0.9.6j des.pod > des.3
+MAN=	des.3
 
 .include <bsd.lib.mk>
