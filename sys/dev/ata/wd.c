@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.37 1994/02/25 16:40:47 mycroft Exp $
+ *	$Id: wd.c,v 1.38 1994/02/25 16:43:48 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -166,7 +166,6 @@ static int wdcontrol(struct buf *);
 static int wdsetctlr(dev_t, struct disk *);
 static int wdgetctlr(int, struct disk *);
 static void bad144intern(struct disk *);
-static void wddisksort();
 static int wdreset(int, int, int);
 static int wdtimeout(caddr_t);
 
@@ -331,10 +330,13 @@ wdstrategy(register struct buf *bp)
 		/* otherwise, process transfer request */
 	}
     
+	/* don't bother */
+	bp->b_cylin = 0;
+
 	/* queue transfer on drive, activate drive and controller if idle */
 	dp = &wdutab[lunit];
 	s = splbio();
-	wddisksort(dp, bp);
+	disksort(dp, bp);
 	if (dp->b_active == 0)
 		wdustart(du);		/* start drive */
 	if (wdtab[du->dk_ctrlr].b_active == 0)
@@ -1622,91 +1624,6 @@ bad144intern(struct disk *du)
 			    (du->dk_cpd.bad.bt_bad[i].bt_trksec & 0x00ff);
 		}
 	}
-}
-
-/* this routine was adopted from the kernel sources */
-/* more efficient because b_cylin is not really as useful at this level */
-/* so I eliminate the processing, I believe that sorting the sectors */
-/* is adequate */
-void
-wddisksort(dp, bp)
-	register struct buf *dp, *bp;
-{
-	register struct buf *ap;
-
-	/*
-	 * If nothing on the activity queue, then
-	 * we become the only thing.
-	 */
-	ap = dp->b_actf;
-	if (ap == NULL) {
-		bp->b_actf = NULL;
-		dp->b_actf = bp;
-		return;
-	}
-	while (ap->b_flags & B_XXX) {
-		if (ap->b_actf == 0 || (ap->b_actf->b_flags & B_XXX) == 0)
-			break;
-		ap = ap->b_actf;
-	}
-	/*
-	 * If we lie after the first (currently active)
-	 * request, then we must locate the second request list
-	 * and add ourselves to it.
-	 */
-	if (bp->b_blkno < ap->b_blkno) {
-		while (ap->b_actf) {
-			/*
-			 * Check for an ``inversion'' in the
-			 * normally ascending cylinder numbers,
-			 * indicating the start of the second request list.
-			 */
-			if (ap->b_actf->b_blkno < ap->b_blkno) {
-				/*
-				 * Search the second request list
-				 * for the first request at a larger
-				 * cylinder number.  We go before that;
-				 * if there is no such request, we go at end.
-				 */
-				do {
-					if (bp->b_blkno < ap->b_actf->b_blkno)
-						goto insert;
-					ap = ap->b_actf;
-				} while (ap->b_actf);
-				goto insert;		/* after last */
-			}
-			ap = ap->b_actf;
-		}
-		/*
-		 * No inversions... we will go after the last, and
-		 * be the first request in the second request list.
-		 */
-		goto insert;
-	}
-	/*
-	 * Request is at/after the current request...
-	 * sort in the first request list.
-	 */
-	while (ap->b_actf) {
-		/*
-		 * We want to go after the current request
-		 * if there is an inversion after it (i.e. it is
-		 * the end of the first request list), or if
-		 * the next request is a larger cylinder than our request.
-		 */
-		if (ap->b_actf->b_blkno < ap->b_blkno ||
-		    bp->b_blkno < ap->b_actf->b_blkno)
-			goto insert;
-		ap = ap->b_actf;
-	}
-	/*
-	 * Neither a second list nor a larger
-	 * request... we go at the end of the first list,
-	 * which is the same as the end of the whole schebang.
-	 */
-insert:
-	bp->b_actf = ap->b_actf;
-	ap->b_actf = bp;
 }
 
 static int
