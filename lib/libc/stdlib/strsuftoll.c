@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoll.c,v 1.4 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: strsuftoll.c,v 1.5 2004/01/17 23:02:51 dbj Exp $	*/
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,7 +74,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strsuftoll.c,v 1.4 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: strsuftoll.c,v 1.5 2004/01/17 23:02:51 dbj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -235,7 +235,7 @@ strsuftollx(const char *desc, const char *val,
 			/* LONGLONG */
 		snprintf(ebuf, ebuflen,
 		    "%s %lld is greater than %lld.",
-		    desc, (long long)num, (long long)min);
+		    desc, (long long)num, (long long)max);
 		return (0);
 	}
 	*ebuf = '\0';
