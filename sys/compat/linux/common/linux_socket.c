@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.32 2001/07/04 10:09:24 jdolecek Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.33 2001/07/04 10:24:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct proc *, register_t *, u_int, void *));
 static int linux_sa_get __P((caddr_t *sgp, struct sockaddr **sap,
-		struct osockaddr *osa, int osalen));
+		const struct osockaddr *osa, int osalen));
 static int linux_sa_put __P((struct osockaddr *osa));
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
@@ -973,7 +973,6 @@ linux_sys_getpeername(p, v, retval)
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
-	struct sockaddr sa;
 	int error;
 
 	if ((error = sys_getpeername(p, uap, retval)) != 0)
@@ -994,7 +993,7 @@ static int
 linux_sa_get(sgp, sap, osa, osalen)
 	caddr_t *sgp;
 	struct sockaddr **sap;
-	struct osockaddr *osa;
+	const struct osockaddr *osa;
 	int osalen;
 {
 	int error=0, bdom;
