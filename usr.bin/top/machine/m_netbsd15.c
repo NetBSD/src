@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.10 2000/11/19 01:49:29 sommerfeld Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.11 2000/11/29 11:18:33 simonb Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.10 2000/11/19 01:49:29 sommerfeld Exp $
+ * $Id: m_netbsd15.c,v 1.11 2000/11/29 11:18:33 simonb Exp $
  */
 
 #include <sys/param.h>
@@ -266,7 +266,7 @@ get_system_info(si)
 {
 	size_t ssize;
 	int mib[2];
-	struct uvmexp uvmexp;
+	struct uvmexp_sysctl uvmexp;
 	struct swapent *sep, *seporig;
 	u_int64_t totalsize, totalinuse;
 	int size, inuse, ncounted;
@@ -293,10 +293,10 @@ get_system_info(si)
 	percentages64(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
 
 	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
+	mib[1] = VM_UVMEXP2;
 	ssize = sizeof(uvmexp);
 	if (sysctl(mib, 2, &uvmexp, &ssize, NULL, 0) < 0) {
-		fprintf(stderr, "top: sysctl vm.uvmexp failed: %s\n",
+		fprintf(stderr, "top: sysctl vm.uvmexp2 failed: %s\n",
 		    strerror(errno));
 		quit(23);
 	}

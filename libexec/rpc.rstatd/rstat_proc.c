@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.35 2000/06/29 06:26:33 mrg Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.36 2000/11/29 11:18:34 simonb Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.35 2000/06/29 06:26:33 mrg Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.36 2000/11/29 11:18:34 simonb Exp $");
 #endif
 #endif
 
@@ -206,7 +206,7 @@ updatestat(int dummy)
 	int i;
 	size_t len;
 	int mib[2];
-	struct uvmexp uvmexp;
+	struct uvmexp_sysctl uvmexp;
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
@@ -272,10 +272,10 @@ updatestat(int dummy)
 #endif
 
 	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
+	mib[1] = VM_UVMEXP2;
 	len = sizeof(uvmexp);
 	if (sysctl(mib, 2, &uvmexp, &len, NULL, 0) < 0) {
-		syslog(LOG_ERR, "can't sysctl vm.uvmexp");
+		syslog(LOG_ERR, "can't sysctl vm.uvmexp2");
 		exit(1);
 	}
 	stats_all.s3.v_pgpgin = uvmexp.fltanget;
