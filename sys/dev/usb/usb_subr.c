@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.30 1999/05/09 14:37:18 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.31 1999/05/13 23:29:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1069,6 +1069,14 @@ usb_start_next(pipe)
 	DPRINTFN(10, ("usb_start_next: pipe=%p\n", pipe));
 	
 #ifdef DIAGNOSTIC
+	if (!pipe) {
+		printf("usb_start_next: pipe == 0\n");
+		return;
+	}
+	if (!pipe->methods || !pipe->methods->start) {
+		printf("usb_start_next:  no start method\n");
+		return;
+	}
 	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
 		printf("usb_start_next: empty\n");
 		return;
