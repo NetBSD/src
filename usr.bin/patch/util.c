@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.10 2002/03/11 18:47:51 kristerw Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2002/03/11 23:29:02 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.10 2002/03/11 18:47:51 kristerw Exp $");
+__RCSID("$NetBSD: util.c,v 1.11 2002/03/11 23:29:02 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -15,402 +15,429 @@ __RCSID("$NetBSD: util.c,v 1.10 2002/03/11 18:47:51 kristerw Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 
-/* Rename a file, copying it if necessary. */
-
+/*
+ * Rename a file, copying it if necessary.
+ */
 int
 move_file(char *from, char *to)
 {
-    char bakname[512];
-    char *s;
-    int i;
-    int fromfd;
+	char bakname[512];
+	char *s;
+	int i;
+	int fromfd;
 
-    /* to stdout? */
+	/* to stdout? */
 
-    if (strEQ(to, "-")) {
+	if (strEQ(to, "-")) {
 #ifdef DEBUGGING
-	if (debug & 4)
-	    say("Moving %s to stdout.\n", from);
+		if (debug & 4)
+			say("Moving %s to stdout.\n", from);
 #endif
-	fromfd = open(from, 0);
-	if (fromfd < 0)
-	    pfatal("internal error, can't reopen %s", from);
-	while ((i=read(fromfd, buf, sizeof buf)) > 0)
-	    if (write(1, buf, i) != 1)
-		pfatal("write failed");
-	Close(fromfd);
-	return 0;
-    }
+		fromfd = open(from, 0);
+		if (fromfd < 0)
+			pfatal("internal error, can't reopen %s", from);
+		while ((i = read(fromfd, buf, sizeof buf)) > 0)
+			if (write(1, buf, i) != 1)
+				pfatal("write failed");
+		Close(fromfd);
+		return 0;
+	}
 
-    if (origprae) {
-	Strcpy(bakname, origprae);
-	Strcat(bakname, to);
-    } else {
+	if (origprae) {
+		Strcpy(bakname, origprae);
+		Strcat(bakname, to);
+	} else {
 #ifndef NODIR
-	char *backupname = find_backup_file_name(to);
-	if (backupname == (char *) 0)
-	    fatal("out of memory\n");
-	Strcpy(bakname, backupname);
-	free(backupname);
+		char *backupname = find_backup_file_name(to);
+		if (backupname == NULL)
+			fatal("out of memory\n");
+		Strcpy(bakname, backupname);
+		free(backupname);
 #else /* NODIR */
-	Strcpy(bakname, to);
-    	Strcat(bakname, simple_backup_suffix);
+		Strcpy(bakname, to);
+    		Strcat(bakname, simple_backup_suffix);
 #endif /* NODIR */
-    }
+	}
 
-    if (stat(to, &filestat) == 0) {	/* output file exists */
-	dev_t to_device = filestat.st_dev;
-	ino_t to_inode  = filestat.st_ino;
-	char *simplename = bakname;
+	if (stat(to, &filestat) == 0) {	/* output file exists */
+		dev_t to_device = filestat.st_dev;
+		ino_t to_inode  = filestat.st_ino;
+		char *simplename = bakname;
 	
-	for (s=bakname; *s; s++) {
-	    if (*s == '/')
-		simplename = s+1;
+		for (s = bakname; *s; s++) {
+			if (*s == '/')
+				simplename = s + 1;
+		}
+		/*
+		 * Find a backup name that is not the same file.
+		 * Change the first lowercase char into uppercase;
+		 * if that isn't sufficient, chop off the first char
+		 * and try again.
+		 */
+		while (stat(bakname, &filestat) == 0 &&
+		       to_device == filestat.st_dev &&
+		       to_inode == filestat.st_ino) {
+			/* Skip initial non-lowercase chars. */
+			for (s = simplename;
+			     *s && !islower((unsigned char)*s);
+			     s++)
+				;
+			if (*s)
+				*s = toupper(*s);
+			else
+				Strcpy(simplename, simplename + 1);
+		}
+		while (unlink(bakname) >= 0)
+			;	/* while() is for benefit of Eunice */
+#ifdef DEBUGGING
+		if (debug & 4)
+			say("Moving %s to %s.\n", to, bakname);
+#endif
+		if (link(to, bakname) < 0) {
+			/*
+			 * Maybe `to' is a symlink into a different file
+			 * system. Copying replaces the symlink with a file;
+			 * using rename would be better.
+			 */
+			int tofd;
+			int bakfd;
+
+			bakfd = creat(bakname, 0666);
+			if (bakfd < 0) {
+				say("Can't backup %s, output is in %s: %s\n",
+				    to, from, strerror(errno));
+				return -1;
+			}
+			tofd = open(to, 0);
+			if (tofd < 0)
+				pfatal("internal error, can't open %s", to);
+			while ((i = read(tofd, buf, sizeof buf)) > 0)
+				if (write(bakfd, buf, i) != i)
+					pfatal("write failed");
+			Close(tofd);
+			Close(bakfd);
+		}
+		while (unlink(to) >= 0) ;
 	}
-	/* Find a backup name that is not the same file.
-	   Change the first lowercase char into uppercase;
-	   if that isn't sufficient, chop off the first char and try again.  */
-	while (stat(bakname, &filestat) == 0 &&
-		to_device == filestat.st_dev && to_inode == filestat.st_ino) {
-	    /* Skip initial non-lowercase chars.  */
-	    for (s=simplename; *s && !islower((unsigned char)*s); s++) ;
-	    if (*s)
-		*s = toupper(*s);
-	    else
-		Strcpy(simplename, simplename+1);
-	}
-	while (unlink(bakname) >= 0) ;	/* while() is for benefit of Eunice */
 #ifdef DEBUGGING
 	if (debug & 4)
-	    say("Moving %s to %s.\n", to, bakname);
+		say("Moving %s to %s.\n", from, to);
 #endif
-	if (link(to, bakname) < 0) {
-	    /* Maybe `to' is a symlink into a different file system.
-	       Copying replaces the symlink with a file; using rename
-	       would be better.  */
-	    int tofd;
-	    int bakfd;
+	if (link(from, to) < 0) {		/* different file system? */
+		int tofd;
 
-	    bakfd = creat(bakname, 0666);
-	    if (bakfd < 0) {
-		say("Can't backup %s, output is in %s: %s\n", to, from,
-		    strerror(errno));
-		return -1;
-	    }
-	    tofd = open(to, 0);
-	    if (tofd < 0)
-		pfatal("internal error, can't open %s", to);
-	    while ((i=read(tofd, buf, sizeof buf)) > 0)
-		if (write(bakfd, buf, i) != i)
-		    pfatal("write failed");
-	    Close(tofd);
-	    Close(bakfd);
+		tofd = creat(to, 0666);
+		if (tofd < 0) {
+			say("Can't create %s, output is in %s: %s\n",
+			    to, from, strerror(errno));
+			return -1;
+		}
+		fromfd = open(from, 0);
+		if (fromfd < 0)
+			pfatal("internal error, can't reopen %s", from);
+		while ((i = read(fromfd, buf, sizeof buf)) > 0)
+			if (write(tofd, buf, i) != i)
+				pfatal("write failed");
+		Close(fromfd);
+		Close(tofd);
 	}
-	while (unlink(to) >= 0) ;
-    }
-#ifdef DEBUGGING
-    if (debug & 4)
-	say("Moving %s to %s.\n", from, to);
-#endif
-    if (link(from, to) < 0) {		/* different file system? */
-	int tofd;
-	
-	tofd = creat(to, 0666);
-	if (tofd < 0) {
-	    say("Can't create %s, output is in %s: %s\n",
-	      to, from, strerror(errno));
-	    return -1;
-	}
-	fromfd = open(from, 0);
-	if (fromfd < 0)
-	    pfatal("internal error, can't reopen %s", from);
-	while ((i=read(fromfd, buf, sizeof buf)) > 0)
-	    if (write(tofd, buf, i) != i)
-		pfatal("write failed");
-	Close(fromfd);
-	Close(tofd);
-    }
-    Unlink(from);
-    return 0;
+	Unlink(from);
+	return 0;
 }
 
-/* Copy a file. */
-
+/*
+ * Copy a file.
+ */
 void
 copy_file(char *from, char *to)
 {
-    int tofd;
-    int fromfd;
-    int i;
-    
-    tofd = creat(to, 0666);
-    if (tofd < 0)
-	pfatal("can't create %s", to);
-    fromfd = open(from, 0);
-    if (fromfd < 0)
-	pfatal("internal error, can't reopen %s", from);
-    while ((i=read(fromfd, buf, sizeof buf)) > 0)
-	if (write(tofd, buf, i) != i)
-	    pfatal("write to %s failed", to);
-    Close(fromfd);
-    Close(tofd);
+	int tofd;
+	int fromfd;
+	int i;
+
+	tofd = creat(to, 0666);
+	if (tofd < 0)
+		pfatal("can't create %s", to);
+	fromfd = open(from, 0);
+	if (fromfd < 0)
+		pfatal("internal error, can't reopen %s", from);
+	while ((i = read(fromfd, buf, sizeof buf)) > 0)
+		if (write(tofd, buf, i) != i)
+			pfatal("write to %s failed", to);
+	Close(fromfd);
+	Close(tofd);
 }
 
-/* Allocate a unique area for a string. */
-
+/*
+ * Allocate a unique area for a string.
+ */
 char *
 savestr(char *s)
 {
-    char *rv;
-    char *t;
+	char *rv;
+	char *t;
 
-    if (!s)
-	s = "Oops";
-    t = s;
-    while (*t++);
-    rv = malloc(t - s);
-    if (rv == NULL) {
-	if (using_plan_a)
-	    out_of_mem = TRUE;
-	else
-	    fatal("out of memory\n");
-    }
-    else {
-	t = rv;
-	while ((*t++ = *s++) != '\0');
-    }
-    return rv;
+	if (!s)
+		s = "Oops";
+	t = s;
+	while (*t++)
+		;
+	rv = malloc(t - s);
+	if (rv == NULL) {
+		if (using_plan_a)
+			out_of_mem = TRUE;
+		else
+			fatal("out of memory\n");
+	} else {
+		t = rv;
+		while ((*t++ = *s++) != '\0');
+	}
+	return rv;
 }
 
-/* Vanilla terminal output (buffered). */
-
+/*
+ * Vanilla terminal output (buffered).
+ */
 void
 say(const char *pat, ...)
 {
-    va_list ap;
-    va_start(ap, pat);
+	va_list ap;
+	va_start(ap, pat);
 	
-    vfprintf(stderr, pat, ap);
-    va_end(ap);
-    Fflush(stderr);
+	vfprintf(stderr, pat, ap);
+	va_end(ap);
+	Fflush(stderr);
 }
 
-/* Terminal output, pun intended. */
-
+/*
+ * Terminal output, pun intended.
+ */
 void				/* very void */
 fatal(const char *pat, ...)
 {
-    va_list ap;
-    va_start(ap, pat);
+	va_list ap;
+	va_start(ap, pat);
 	
-    fprintf(stderr, "patch: **** ");
-    vfprintf(stderr, pat, ap);
-    va_end(ap);
-    my_exit(1);
+	fprintf(stderr, "patch: **** ");
+	vfprintf(stderr, pat, ap);
+	va_end(ap);
+	my_exit(1);
 }
 
-/* Say something from patch, something from the system, then silence . . . */
-
+/*
+ * Say something from patch, something from the system, then silence...
+ */
 void				/* very void */
 pfatal(const char *pat, ...)
 {
-    va_list ap;
-    int errnum = errno;
-    va_start(ap, pat);
+	va_list ap;
+	int errnum = errno;
+	va_start(ap, pat);
 	
-    fprintf(stderr, "patch: **** ");
-    vfprintf(stderr, pat, ap);
-    fprintf(stderr, ": %s\n", strerror(errnum));
-    va_end(ap);
-    my_exit(1);
+	fprintf(stderr, "patch: **** ");
+	vfprintf(stderr, pat, ap);
+	fprintf(stderr, ": %s\n", strerror(errnum));
+	va_end(ap);
+	my_exit(1);
 }
-/* Get a response from the user, somehow or other. */
 
+/*
+ * Get a response from the user, somehow or other.
+ */
 void
 ask(const char *pat, ...)
 {
-    int ttyfd;
-    int r;
-    bool tty2 = isatty(2);
-    va_list ap;
-    va_start(ap, pat);
+	int ttyfd;
+	int r;
+	bool tty2 = isatty(2);
+	va_list ap;
+	va_start(ap, pat);
 
-    (void) vsprintf(buf, pat, ap);
-    va_end(ap);
-    Fflush(stderr);
-    write(2, buf, strlen(buf));
-    if (tty2) {				/* might be redirected to a file */
-	r = read(2, buf, sizeof buf);
-    }
-    else if (isatty(1)) {		/* this may be new file output */
-	Fflush(stdout);
-	write(1, buf, strlen(buf));
-	r = read(1, buf, sizeof buf);
-    }
-    else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
+	(void)vsprintf(buf, pat, ap);
+	va_end(ap);
+	Fflush(stderr);
+	write(2, buf, strlen(buf));
+	if (tty2) {			/* might be redirected to a file */
+		r = read(2, buf, sizeof buf);
+	} else if (isatty(1)) {		/* this may be new file output */
+		Fflush(stdout);
+		write(1, buf, strlen(buf));
+		r = read(1, buf, sizeof buf);
+	} else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
 					/* might be deleted or unwriteable */
-	write(ttyfd, buf, strlen(buf));
-	r = read(ttyfd, buf, sizeof buf);
-	Close(ttyfd);
-    }
-    else if (isatty(0)) {		/* this is probably patch input */
-	Fflush(stdin);
-	write(0, buf, strlen(buf));
-	r = read(0, buf, sizeof buf);
-    }
-    else {				/* no terminal at all--default it */
-	buf[0] = '\n';
-	r = 1;
-    }
-    if (r <= 0)
-	buf[0] = 0;
-    else
-	buf[r] = '\0';
-    if (!tty2)
-	say("%s",buf);
+		write(ttyfd, buf, strlen(buf));
+		r = read(ttyfd, buf, sizeof buf);
+		Close(ttyfd);
+	} else if (isatty(0)) {		/* this is probably patch input */
+		Fflush(stdin);
+		write(0, buf, strlen(buf));
+		r = read(0, buf, sizeof buf);
+	} else {			/* no terminal at all--default it */
+		buf[0] = '\n';
+		r = 1;
+	}
+	if (r <= 0)
+		buf[0] = 0;
+	else
+		buf[r] = '\0';
+	if (!tty2)
+		say("%s", buf);
 }
 
-/* How to handle certain events when not in a critical region. */
-
+/*
+ * How to handle certain events when not in a critical region.
+ */
 void
 set_signals(int reset)
 {
-    static void (*hupval)(int),(*intval)(int);
+	static void (*hupval)(int);
+	static void (*intval)(int);
 
-    if (!reset) {
-	hupval = signal(SIGHUP, SIG_IGN);
-	if (hupval != SIG_IGN)
-	    hupval = my_exit;
-	intval = signal(SIGINT, SIG_IGN);
-	if (intval != SIG_IGN)
-	    intval = my_exit;
-    }
-    Signal(SIGHUP, hupval);
-    Signal(SIGINT, intval);
+	if (!reset) {
+		hupval = signal(SIGHUP, SIG_IGN);
+		if (hupval != SIG_IGN)
+			hupval = my_exit;
+		intval = signal(SIGINT, SIG_IGN);
+		if (intval != SIG_IGN)
+			intval = my_exit;
+	}
+	Signal(SIGHUP, hupval);
+	Signal(SIGINT, intval);
 }
 
-/* How to handle certain events when in a critical region. */
-
+/*
+ * How to handle certain events when in a critical region.
+ */
 void
 ignore_signals()
 {
-    Signal(SIGHUP, SIG_IGN);
-    Signal(SIGINT, SIG_IGN);
+	Signal(SIGHUP, SIG_IGN);
+	Signal(SIGINT, SIG_IGN);
 }
 
-/* Make sure we'll have the directories to create a file.
-   If `striplast' is TRUE, ignore the last element of `filename'.  */
-
+/*
+ * Make sure we'll have the directories to create a file.
+ * If `striplast' is TRUE, ignore the last element of `filename'.
+ */
 void
 makedirs(char *filename, bool striplast)
 {
-    char tmpbuf[256];
-    char *s = tmpbuf;
-    char *dirv[20];		/* Point to the NULs between elements.  */
-    int i;
-    int dirvp = 0;		/* Number of finished entries in dirv. */
+	char tmpbuf[256];
+	char *s = tmpbuf;
+	char *dirv[20];		/* Point to the NULs between elements.  */
+	int i;
+	int dirvp = 0;		/* Number of finished entries in dirv. */
 
-    /* Copy `filename' into `tmpbuf' with a NUL instead of a slash
-       between the directories.  */
-    while (*filename) {
-	if (*filename == '/') {
-	    filename++;
-	    dirv[dirvp++] = s;
-	    *s++ = '\0';
+	/*
+	 * Copy `filename' into `tmpbuf' with a NUL instead of a slash
+	 * between the directories.
+	 */
+	while (*filename) {
+		if (*filename == '/') {
+			filename++;
+			dirv[dirvp++] = s;
+			*s++ = '\0';
+		} else {
+			*s++ = *filename++;
+		}
 	}
-	else {
-	    *s++ = *filename++;
-	}
-    }
-    *s = '\0';
-    dirv[dirvp] = s;
-    if (striplast)
-	dirvp--;
-    if (dirvp < 0)
-	return;
+	*s = '\0';
+	dirv[dirvp] = s;
+	if (striplast)
+		dirvp--;
+	if (dirvp < 0)
+		return;
 
-    strcpy(buf, "mkdir");
-    s = buf;
-    for (i=0; i<=dirvp; i++) {
-	struct stat sbuf;
+	strcpy(buf, "mkdir");
+	s = buf;
+	for (i = 0; i <= dirvp; i++) {
+		struct stat sbuf;
 
-	if (stat(tmpbuf, &sbuf) && errno == ENOENT) {
-	    while (*s) s++;
-	    *s++ = ' ';
-	    strcpy(s, tmpbuf);
+		if (stat(tmpbuf, &sbuf) && errno == ENOENT) {
+			while (*s)
+				s++;
+			*s++ = ' ';
+			strcpy(s, tmpbuf);
+		}
+		*dirv[i] = '/';
 	}
-	*dirv[i] = '/';
-    }
-    if (s != buf)
-	system(buf);
+	if (s != buf)
+		system(buf);
 }
 
-/* Make filenames more reasonable. */
-
+/*
+ * Make filenames more reasonable.
+ */
 char *
 fetchname(char *at, int strip_leading, int assume_exists)
 {
-    char *fullname;
-    char *name;
-    char *t;
-    char tmpbuf[200];
-    int sleading = strip_leading;
+	char *fullname;
+	char *name;
+	char *t;
+	char tmpbuf[200];
+	int sleading = strip_leading;
 
-    if (!at)
-	return NULL;
-    while (isspace((unsigned char)*at))
-	at++;
+	if (!at)
+		return NULL;
+	while (isspace((unsigned char)*at))
+		at++;
 #ifdef DEBUGGING
-    if (debug & 128)
-	say("fetchname %s %d %d\n",at,strip_leading,assume_exists);
+	if (debug & 128)
+		say("fetchname %s %d %d\n", at, strip_leading, assume_exists);
 #endif
-    filename_is_dev_null = FALSE;
-    if (strnEQ(at, "/dev/null", 9)) {	/* so files can be created by diffing */
-        filename_is_dev_null = TRUE;
-	return NULL;			/*   against /dev/null. */
-    }
-    name = fullname = t = savestr(at);
-
-    /* Strip off up to `sleading' leading slashes and null terminate.  */
-    for (; *t && !isspace((unsigned char)*t); t++)
-	if (*t == '/')
-	    if (--sleading >= 0)
-		name = t+1;
-    *t = '\0';
-
-    /* If no -p option was given (957 is the default value!),
-       we were given a relative pathname,
-       and the leading directories that we just stripped off all exist,
-       put them back on.  */
-    if (strip_leading == 957 && name != fullname && *fullname != '/') {
-	name[-1] = '\0';
-	if (stat(fullname, &filestat) == 0 && S_ISDIR (filestat.st_mode)) {
-	    name[-1] = '/';
-	    name=fullname;
+	filename_is_dev_null = FALSE;
+	if (strnEQ(at, "/dev/null", 9)) {
+		/* So files can be created by diffing against /dev/null. */
+		filename_is_dev_null = TRUE;
+		return NULL;
 	}
-    }
+	name = fullname = t = savestr(at);
 
-    name = savestr(name);
-    free(fullname);
+	/* Strip off up to `sleading' leading slashes and null terminate. */
+	for (; *t && !isspace((unsigned char)*t); t++)
+		if (*t == '/')
+			if (--sleading >= 0)
+				name = t + 1;
+	*t = '\0';
 
-    if (stat(name, &filestat) && !assume_exists) {
-	char *filebase = basename(name);
-	int pathlen = filebase - name;
+	/*
+	 * If no -p option was given (957 is the default value!),
+	 * we were given a relative pathname,
+	 * and the leading directories that we just stripped off all exist,
+	 * put them back on. 
+	 */
+	if (strip_leading == 957 && name != fullname && *fullname != '/') {
+		name[-1] = '\0';
+		if (stat(fullname, &filestat) == 0 &&
+		    S_ISDIR(filestat.st_mode)) {
+			name[-1] = '/';
+			name = fullname;
+		}
+	}
 
-	/* Put any leading path into `tmpbuf'.  */
-	strncpy(tmpbuf, name, pathlen);
+	name = savestr(name);
+	free(fullname);
 
-#define try(f, a1, a2) (Sprintf(tmpbuf + pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
-#define try1(f, a1) (Sprintf(tmpbuf + pathlen, f, a1), stat(tmpbuf, &filestat) == 0)
-	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try1("RCS/%s"  , filebase)
-	    || try(    "%s%s", filebase, RCSSUFFIX)
-	    || try("SCCS/%s%s", SCCSPREFIX, filebase)
-	    || try(     "%s%s", SCCSPREFIX, filebase))
-	  return name;
-	free(name);
-	name = NULL;
-    }
+	if (stat(name, &filestat) && !assume_exists) {
+		char *filebase = basename(name);
+		int pathlen = filebase - name;
 
-    return name;
+		/* Put any leading path into `tmpbuf'. */
+		strncpy(tmpbuf, name, pathlen);
+
+#define try(f, a1, a2) \
+    (Sprintf(tmpbuf + pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
+#define try1(f, a1) \
+    (Sprintf(tmpbuf + pathlen, f, a1), stat(tmpbuf, &filestat) == 0)
+		if (try("RCS/%s%s", filebase, RCSSUFFIX) ||
+		    try1("RCS/%s"  , filebase) ||
+		    try(    "%s%s", filebase, RCSSUFFIX) ||
+		    try("SCCS/%s%s", SCCSPREFIX, filebase) ||
+		    try(     "%s%s", SCCSPREFIX, filebase))
+			return name;
+		free(name);
+		name = NULL;
+	}
+
+	return name;
 }
