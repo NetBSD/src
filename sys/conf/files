@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.498 2002/02/27 05:03:24 jmc Exp $
+#	$NetBSD: files,v 1.499 2002/03/04 13:24:11 sommerfeld Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -878,7 +878,6 @@ defpseudo bridge:	ifnet, ether
 defpseudo bpfilter:	ifnet, bpf_filter
 defpseudo strip:	ifnet
 defpseudo ipfilter:	ifnet
-defpseudo ipip:		ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
@@ -1264,7 +1263,6 @@ file	netinet/ip_frag.c		ipfilter
 file	netinet/ip_gre.c		inet & gre
 file	netinet/ip_icmp.c		inet
 file	netinet/ip_input.c		inet
-file	netinet/ip_ipip.c		ipip			needs-count
 file	netinet/ip_log.c		ipfilter & ipfilter_log
 file	netinet/ip_mroute.c		inet & mrouting
 file	netinet/ip_nat.c		ipfilter

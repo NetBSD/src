@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.8 2002/01/27 13:23:11 jdolecek Exp $
+# $NetBSD: NULL,v 1.9 2002/03/04 13:24:08 sommerfeld Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -306,7 +306,6 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 #pseudo-device	ppp		1	# PPP network interfaces
 #pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 #pseudo-device	bpfilter	16	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP Filter package
 
