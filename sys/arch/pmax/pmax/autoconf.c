@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1997/02/05 17:53:52 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.2.1 1997/03/02 16:17:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,7 +180,6 @@ configure()
 
 	setroot(booted_device, booted_partition, pmax_nam2blk);
 
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

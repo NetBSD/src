@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1997/01/31 01:58:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.2.1 1997/03/02 16:17:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,7 +102,6 @@ configure()
 
 	setroot(booted_device, booted_partition, pica_nam2blk);
 
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1997/01/31 01:55:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.2.1 1997/03/02 16:17:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -207,7 +207,6 @@ configure()
 
 	setroot(booted_device, 0, mvme68k_nam2blk);
 
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

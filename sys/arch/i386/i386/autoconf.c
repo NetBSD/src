@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1997/01/31 01:51:17 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.2.1 1997/03/02 16:17:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,7 +109,6 @@ configure()
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

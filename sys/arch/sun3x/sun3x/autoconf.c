@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1997/01/31 22:34:40 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.1 1997/03/02 16:17:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@ void configure()
 
 	setroot(booted_device, booted_partition, nam2blk);
 
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

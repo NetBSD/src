@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 1997/01/31 23:26:10 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47.2.1 1997/03/02 16:17:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -114,7 +114,6 @@ configure()
 #ifdef DEBUG_KERNEL_START
 	printf("survived setroot()\n");
 #endif
-	swapconf();
 	dumpconf();
 	if (dumplo < 0)
 		dumplo = 0;

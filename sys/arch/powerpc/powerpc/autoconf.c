@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1997/01/31 02:04:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.2.1 1997/03/02 16:17:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,7 +74,6 @@ configure()
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, powerpc_nam2blk);
-	swapconf();
 	dumpconf();
 	cold = 0;
 }
