@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26.2.3 2002/07/20 07:02:46 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26.2.4 2002/07/21 00:50:10 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -7,6 +7,7 @@
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 # Whether or not to regenerate tables of contents
+#
 MKTOCS?=yes
 
 M?=	${.CURDIR:T}
@@ -45,6 +46,7 @@ TOC.html=	${TOCS:M*.HTML.*}
 TOC.more=	${TOCS:M*.more.*}
 .endif
 
+
 ${TARG}.ps: ${SRCS} ${TOC.ps}
 	${GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
 
@@ -59,6 +61,12 @@ ${TARG}.html: ${SRCS} ${TOC.html}
 
 ${TARG}.more: ${SRCS} ${TOC.more}
 	${GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
+
+
+# Rules to build the table of contents (.toc) files.
+# They are generated twice to take into account the
+# space taken by the TOC itself.
+#
 
 TOCPROC=	   2>&1 >/dev/null |\
            sed -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
@@ -86,6 +94,7 @@ ${TARG}.more.toc: ${SRCS}
 	mv -f $@.tmp $@
 	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
+
 
 release: check_RELEASEDIR .WAIT ${TARGS}
 	${RELEASE_INSTALL} ${TARGS} ${RELEASEDIR}/.
