@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.136 2001/11/21 17:33:28 wiz Exp $	*/
+/*	$NetBSD: pciide.c,v 1.137 2001/12/13 20:57:22 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.136 2001/11/21 17:33:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.137 2001/12/13 20:57:22 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3602,7 +3602,6 @@ pdc202xx_setup_channel(chp)
 			    pdc2xx_udma_mb[drvp->UDMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,
 			    pdc2xx_udma_mc[drvp->UDMA_mode]);
-			drvp->drive_flags &= ~DRIVE_DMA;
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else if (drvp->drive_flags & DRIVE_DMA) {
 			mode = PDC2xx_TIM_SET_MB(mode,
