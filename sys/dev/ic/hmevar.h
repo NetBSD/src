@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.3 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.4 2000/05/09 22:51:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct hme_softc {
 	/* The following bus handles are to be provided by the bus front-end */
 	bus_space_tag_t	sc_bustag;	/* bus tag */
 	bus_dma_tag_t	sc_dmatag;	/* bus dma tag */
+	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
 	bus_space_handle_t sc_seb;	/* HME Global registers */
 	bus_space_handle_t sc_erx;	/* HME ERX registers */
 	bus_space_handle_t sc_etx;	/* HME ETX registers */
