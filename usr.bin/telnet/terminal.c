@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.13 2003/08/07 11:16:11 agc Exp $	*/
+/*	$NetBSD: terminal.c,v 1.14 2004/03/20 23:26:05 heas Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.13 2003/08/07 11:16:11 agc Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.14 2004/03/20 23:26:05 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,10 +73,10 @@ init_terminal(void)
 
 
 /*
- *		Send as much data as possible to the terminal.
+ *		Send as much data as possible to the terminal, else exits if
+ *		it encounters a permanent failure when writing to the tty.
  *
  *		Return value:
- *			-2: Permanent error writing to FD.
  *			-1: No useful work done, data waiting to go out.
  *			 0: No data was waiting, so nothing was done.
  *			 1: All waiting data was written out.
@@ -117,10 +117,16 @@ ttyflush(int drop)
 	ring_consumed(&ttyoring, n);
     }
     if (n < 0) {
-	if (errno == EAGAIN)
+	if (errno == EAGAIN || errno == EINTR) {
 	    return -1;
-	else
-	    return -2;
+	} else {
+	    ring_consumed(&ttyoring, ring_full_count(&ttyoring));
+	    setconnmode(0);
+	    setcommandmode();
+	    NetClose(net);
+	    fprintf(stderr, "Connection closed by foreign host.\n");
+	    exit(1);
+	}
     }
     if (n == n0) {
 	if (n0)

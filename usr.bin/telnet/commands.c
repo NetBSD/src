@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: commands.c,v 1.59 2004/03/20 23:26:05 heas Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: commands.c,v 1.59 2004/03/20 23:26:05 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -2399,8 +2399,7 @@ tn(int argc, char *argv[])
 	env_export((unsigned char *)"USER", NULL);
     }
     (void) call(status, "status", "notmuch", 0);
-    if (setjmp(peerdied) == 0)
-	telnet(user);
+    telnet(user); 
     (void) NetClose(net);
     ExitString("Connection closed by foreign host.\n",1);
     /*NOTREACHED*/
