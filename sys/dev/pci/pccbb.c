@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.92 2003/10/25 18:31:12 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.93 2003/12/10 02:55:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.92 2003/10/25 18:31:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.93 2003/12/10 02:55:48 briggs Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2424,10 +2424,14 @@ pccbb_pcmcia_socket_enable(pch)
 	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_CARDTYPE_MASK);
 	Pcic_write(ph, PCIC_INTR, intr);
 
-	/* power up the socket and output enable */
+	/* power up the socket */
 	power = Pcic_read(ph, PCIC_PWRCTL);
-	power |= PCIC_PWRCTL_OE;
-	Pcic_write(ph, PCIC_PWRCTL, power);
+	Pcic_write(ph, PCIC_PWRCTL, (power & ~PCIC_PWRCTL_OE));
+	pccbb_power(sc, voltage);
+
+	/* now output enable */
+	power = Pcic_read(ph, PCIC_PWRCTL);
+	Pcic_write(ph, PCIC_PWRCTL, power | PCIC_PWRCTL_OE);
 
 	if (pccbb_power(sc, voltage) == 0) {
 		power &= PCIC_PWRCTL_OE;
