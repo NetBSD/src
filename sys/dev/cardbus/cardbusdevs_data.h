@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.3 1999/11/18 15:09:59 joda Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.4 1999/11/18 16:03:43 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.5 1999/11/18 15:09:30 joda Exp 
+ *	NetBSD: cardbusdevs,v 1.6 1999/11/18 16:03:12 joda Exp 
  */
 
 /*
@@ -73,7 +73,7 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
 	    0,
 	    "Intel",
-	    "Modem /* XXX product name? */",
+	    "Modem",
 	},
 	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
