@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2002/03/25 19:53:38 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2002/03/25 22:11:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2002/03/25 19:53:38 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2002/03/25 22:11:12 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1065,7 +1065,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	}
 
 	virtual_avail = KERNEL_VM_BASE;
-	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE - 1;
+	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
@@ -1598,7 +1598,6 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 	*start = virtual_avail;
 	*end = virtual_end;
 }
-
 
 /*
  * Activate the address space for the specified process.  If the process
