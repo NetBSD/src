@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.19 2002/03/17 22:14:12 tshiozak Exp $	*/
+/*	$NetBSD: paths.h,v 1.20 2003/01/01 12:15:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,6 +80,7 @@
 #define	_PATH_SKEYKEYS	"/etc/skeykeys"
 #define	_PATH_SOUND	"/dev/sound"
 #define	_PATH_SOUND0	"/dev/sound0"
+#define	_PATH_SYSMON	"/dev/sysmon"
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/netbsd"
 #define	_PATH_VI	"/usr/bin/vi"
