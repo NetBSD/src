@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.11 1999/01/01 21:43:19 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.12 1999/01/06 14:54:45 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,6 +53,7 @@
 #include <machine/clock.h>
 
 #include "smg.h"
+#include "ncr.h"
 
 void	ka43_conf __P((struct device*, struct device*, void*));
 void	ka43_steal_pages __P((void));
@@ -368,6 +369,19 @@ ka43_steal_pages()
 	    (vm_offset_t)KA43_CT2_BASE + KA43_CT2_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
+#if NNCR > 0
+	/* SCSI controller */
+	MAPVIRT(sca_regs, (KA43_SCS_SIZE / VAX_NBPG));
+	pmap_map((vm_offset_t)sca_regs, (vm_offset_t)KA43_SCS_BASE,
+	    (vm_offset_t)KA43_SCS_BASE + KA43_SCS_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
+
+	/* SCSI DMA.  Not used right now, untested. */
+	MAPVIRT(dma_area, (KA43_DMA_SIZE / VAX_NBPG));
+	pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA43_DMA_BASE,
+	    (vm_offset_t)KA43_DMA_BASE + KA43_DMA_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
+#endif
 	/*
 	 * Oh holy shit! It took me over one year(!) to find out that
 	 * the 3100/76 has to use diag-mem instead of physical memory
