@@ -19,7 +19,10 @@ NetBSD is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
 possible, it's likely that this release wouldn't have come about.
 
-The NetBSD _VER release is a landmark. Building upon the successful
+The NetBSD _VER release is a security and bug fix update for the
+NetBSD 1.3 release.
+
+The NetBSD 1.3 release was a landmark. Building upon the successful
 NetBSD 1.2 release, we have provided numerous and significant
 functional enhancements, including support for many new devices,
 integration of many bug fixes, new and updated kernel subsystems, and
@@ -28,7 +31,7 @@ stable operating system fit for production use that rivals most
 commercially available systems.
 
 It is impossible to summarize the 18 months of development that went
-into the NetBSD _VER release. Some of the significant changes include:
+into the NetBSD 1.3 release. Some of the significant changes include:
 
 	Support for machine independent device drivers has been
 	radically improved with the addition of the "bus.h" interface,
@@ -141,7 +144,7 @@ Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
 for this trend to continue.
 
-NetBSD _VER also includes some refinement to the NetBSD binary emulation
+NetBSD 1.3 also includes some refinement to the NetBSD binary emulation
 system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
 Solaris and Ultrix compatibility), bringing NetBSD closer to the goal of
 making the emulation as accurate as possible.
