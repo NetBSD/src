@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.6 2000/03/05 07:57:52 elric Exp $ */
+/* $NetBSD: tgavar.h,v 1.7 2000/03/12 05:32:30 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,12 +56,12 @@ struct tga_conf {
 
 struct tga_devconfig {
 	bus_space_tag_t dc_memt;
-	pci_chipset_tag_t dc_pc;
+	bus_space_handle_t dc_memh;
 
 	pcitag_t   	 dc_pcitag;	/* PCI tag */
 	bus_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
 
-	tga_reg_t   *dc_regs;		/* registers; XXX: need aliases */
+	bus_space_handle_t dc_regs;	/* registers; XXX: need aliases */
 
 	int	    dc_tga_type;	/* the device type; see below */
 	int	    dc_tga2;		/* True if it is a TGA2 */
@@ -117,7 +117,7 @@ struct tga_softc {
 int tga_cnattach __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 		      int, int, int));
 
-int	tga_identify __P((tga_reg_t *));
+int	tga_identify __P((struct tga_devconfig *));
 const struct tga_conf *tga_getconf __P((int));
 
 int     tga_builtin_set_cursor __P((struct tga_devconfig *,
@@ -130,3 +130,33 @@ int     tga_builtin_get_curpos __P((struct tga_devconfig *,
 	    struct wsdisplay_curpos *));
 int     tga_builtin_get_curmax __P((struct tga_devconfig *,
 	    struct wsdisplay_curpos *));
+
+/* Read a TGA register */
+#define TGARREG(dc,reg) (bus_space_read_4((dc)->dc_memt, (dc)->dc_regs, \
+	(reg) << 2))
+
+/* Write a TGA register */
+#define TGAWREG(dc,reg,val) bus_space_write_4((dc)->dc_memt, (dc)->dc_regs, \
+	(reg) << 2, (val))
+
+/* Write a TGA register at an alternate aliased location */
+#define TGAWALREG(dc,reg,alias,val) bus_space_write_4( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((alias) * TGA_CREGS_ALIAS) + ((reg) << 2), \
+	(val))
+
+/* Insert a write barrier */
+#define TGAREGWB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), BUS_SPACE_BARRIER_WRITE)
+
+/* Insert a read barrier */
+#define TGAREGRB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), BUS_SPACE_BARRIER_READ)
+
+/* Insert a read/write barrier */
+#define TGAREGRWB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), \
+	BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
