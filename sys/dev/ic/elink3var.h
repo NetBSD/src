@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.13 1997/10/14 21:28:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -81,10 +81,15 @@ struct ep_softc {
 
 #define EP_IS_BUS_32(a)	((a) & 0x2)
 	int ep_pktlenshift;		/* scale factor for pkt lengths */
+
+	/* power management hooks */
+	int (*enable) __P((struct ep_softc *));
+	void (*disable) __P((struct ep_softc *));
+	int enabled;
 };
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-void	epconfig __P((struct ep_softc *, u_short));
+void	epconfig __P((struct ep_softc *, u_short, u_int8_t *));
 
 int	epintr __P((void *));
 void	epstop __P((struct ep_softc *));

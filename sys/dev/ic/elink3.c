@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.33 1997/07/30 18:26:23 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.34 1997/10/14 21:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -163,7 +163,10 @@ struct mbuf *epget __P((struct ep_softc *, int));
 void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
-int	epsetmedia __P((struct ep_softc *, int epmedium));
+void	epsetmedia __P((struct ep_softc *, int epmedium));
+
+int	epenable __P((struct ep_softc *));
+void	epdisable __P((struct ep_softc *));
 
 /* ifmedia callbacks */
 int	ep_media_change __P((struct ifnet *ifp));
@@ -201,15 +204,14 @@ ep_complete_cmd(sc, cmd, arg)
 #endif
 }
 
-
-
 /*
  * Back-end attach and configure.
  */
 void
-epconfig(sc, chipset)
+epconfig(sc, chipset, enaddr)
 	struct ep_softc *sc;
 	u_short chipset;
+	u_int8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -226,24 +228,27 @@ epconfig(sc, chipset)
 	 */
 	GO_WINDOW(0);
 
-	/*
-	 * Read the station address from the eeprom
-	 */
-	for (i = 0; i < 3; i++) {
-		u_int16_t x;
-		if (epbusyeeprom(sc))
-			return;		/* XXX why is eeprom busy? */
-		bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
-		    READ_EEPROM | i);
-		if (epbusyeeprom(sc))
-			return;		/* XXX why is eeprom busy? */
-		x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
-		myla[(i << 1)] = x >> 8;
-		myla[(i << 1) + 1] = x;
+	if (enaddr == NULL) {
+		/*
+		 * Read the station address from the eeprom
+		 */
+		for (i = 0; i < 3; i++) {
+			u_int16_t x;
+			if (epbusyeeprom(sc))
+				return;		/* XXX why is eeprom busy? */
+			bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
+					  READ_EEPROM | i);
+			if (epbusyeeprom(sc))
+				return;		/* XXX why is eeprom busy? */
+			x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
+			myla[(i << 1)] = x >> 8;
+			myla[(i << 1) + 1] = x;
+		}
+		enaddr = myla;
 	}
 
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(myla));
+	    ether_sprintf(enaddr));
 
 	/*
 	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
@@ -274,9 +279,9 @@ epconfig(sc, chipset)
 		break;
 
 	default:
-		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. "
+		printf("%s: wrote 0x%x to TX_AVAIL_THRESH, read back 0x%x. "
 		    "Interface disabled\n",
-		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
+		    sc->sc_dev.dv_xname, EP_LARGEWIN_PROBE, (int) i);
 		return;
 	}
 
@@ -297,7 +302,7 @@ epconfig(sc, chipset)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	if_attach(ifp);
-	ether_ifattach(ifp, myla);
+	ether_ifattach(ifp, enaddr);
 
 	/*
 	 * Finish configuration: 
@@ -311,12 +316,13 @@ epconfig(sc, chipset)
 
 	ifmedia_init(&sc->sc_media, 0, ep_media_change, ep_media_status);
 
-	/*
-	 * If we've got an indirect (ISA, PCMCIA?) board, the chipset
-	 * is unknown.  If the board has large-packet support, it's a
-	 * Vortex/Boomerang, otherwise it's a 3c509.
-	 * XXX use eeprom capability word instead?
+	/* 
+	 * If we've got an indirect (ISA) board, the chipset is
+	 * unknown.  If the board has large-packet support, it's a
+	 * Vortex/Boomerang, otherwise it's a 3c509.  XXX use eeprom
+	 * capability word instead?
 	 */
+
 	if (sc->ep_chipset == EP_CHIPSET_UNKNOWN && sc->ep_pktlenshift)  {
 		printf("warning: unknown chipset, possibly 3c515?\n");
 #ifdef notyet
@@ -629,7 +635,16 @@ ep_media_change(ifp)
 {
 	register struct ep_softc *sc = ifp->if_softc;
 
-	return	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+	/*
+	 * If the interface is not currently powered on, just return.
+	 * When it is enabled later, epinit() will properly set up the
+	 * media for us.
+	 */
+	if (sc->enabled == 0)
+		return (0);
+
+	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+	return (0);
 }
 
 /*
@@ -639,7 +654,7 @@ ep_media_change(ifp)
  * For 3c509-generation cards (3c509/3c579/3c589/3c509B),
  *	update media field in w0_address_config, and power on selected xcvr.
  */
-int
+void
 epsetmedia(sc, medium)
 	register struct ep_softc *sc;
 	int medium;
@@ -740,7 +755,6 @@ epsetmedia(sc, medium)
 	}
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
-	return (0);
 }
 
 /*
@@ -757,6 +771,12 @@ ep_media_status(ifp, req)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int config1;
 	u_int ep_mediastatus;
+
+	if (sc->enabled == 0) {
+		req->ifm_active = IFM_ETHER|IFM_NONE;
+		req->ifm_status = 0;
+		return;
+	}
 
 	/* XXX read from softc when we start autosensing media */
 	req->ifm_active = sc->sc_media.ifm_cur->ifm_media;
@@ -798,7 +818,6 @@ ep_media_status(ifp, req)
 	/* XXX look for softc heartbeat for other chips or media */
 
 	GO_WINDOW(1);
-	return;
 }
 
 
@@ -953,6 +972,12 @@ readcheck:
 			epread(sc);
 		} else {
 			/* Got an interrupt, return so that it gets serviced. */
+#if 0
+			printf("%s: S_INTR_LATCH %04x mask=%04x ipending=%04x (%04x)\n",
+			       sc->sc_dev.dv_xname, status,
+			       cpl, ipending, imask[IPL_NET]);
+#endif
+
 			return;
 		}
 	} else {
@@ -1073,14 +1098,24 @@ epintr(arg)
 	u_int16_t status;
 	int ret = 0;
 
+	if (sc->enabled == 0)
+		return (0);
+
 	for (;;) {
 		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
 
 		status = bus_space_read_2(iot, ioh, EP_STATUS);
 
 		if ((status & (S_TX_COMPLETE | S_TX_AVAIL |
-			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0)
-			break;
+			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0) {
+			if ((status & S_INTR_LATCH) == 0) {
+#if 0
+				printf("%s: intr latch cleared\n",
+				       sc->sc_dev.dv_xname);
+#endif
+				break;
+			}
+		}
 
 		ret = 1;
 
@@ -1090,7 +1125,25 @@ epintr(arg)
 		 * Due to the i386 interrupt queueing, we may get spurious
 		 * interrupts occasionally.
 		 */
-		bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR | status);
+		bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR |
+				  (status & (C_INTR_LATCH |
+					     C_CARD_FAILURE |
+					     C_TX_COMPLETE |
+					     C_TX_AVAIL |
+					     C_RX_COMPLETE |
+					     C_RX_EARLY |
+					     C_INT_RQD |
+					     C_UPD_STATS)));
+
+#if 0
+		status = bus_space_read_2(iot, ioh, EP_STATUS);
+
+		printf("%s: intr%s%s%s%s\n", sc->sc_dev.dv_xname,
+		       (status & S_RX_COMPLETE)?" RX_COMPLETE":"",
+		       (status & S_TX_COMPLETE)?" TX_COMPLETE":"",
+		       (status & S_TX_AVAIL)?" TX_AVAIL":"",
+		       (status & S_CARD_FAILURE)?" CARD_FAILURE":"");
+#endif
 
 		if (status & S_RX_COMPLETE)
 			epread(sc);
@@ -1391,8 +1444,10 @@ epioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
+		if ((error = epenable(sc)) != 0)
+			break;
+		/* epinit is called just below */
 		ifp->if_flags |= IFF_UP;
-
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -1437,14 +1492,17 @@ epioctl(ifp, cmd, data)
 			 */
 			epstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			epdisable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
+			if ((error = epenable(sc)) != 0)
+				break;
 			epinit(sc);
-		} else {
+		} else if (sc->enabled) {
 			/*
 			 * deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC.
@@ -1455,6 +1513,11 @@ epioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
@@ -1537,8 +1600,10 @@ epshutdown(arg)
 {
 	register struct ep_softc *sc = arg;
 
-	epstop(sc);
-	ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
+	if (sc->enabled) {
+		epstop(sc);
+		ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
+	}
 }
 
 /*
@@ -1646,4 +1711,32 @@ epmbufempty(sc)
 	sc->last_mb = sc->next_mb = 0;
 	untimeout(epmbuffill, sc);
 	splx(s);
+}
+
+int
+epenable(sc)
+	struct ep_softc *sc;
+{
+
+	if (sc->enabled == 0 && sc->enable != NULL) {
+		if ((*sc->enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+
+	sc->enabled = 1;
+	return (0);
+}
+
+void
+epdisable(sc)
+	struct ep_softc *sc;
+{
+
+	if (sc->enabled != 0 && sc->disable != NULL) {
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
 }
