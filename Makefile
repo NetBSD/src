@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.116 2000/05/18 23:16:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.117 2000/05/21 07:33:05 mrg Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -93,7 +93,7 @@ beforeinstall:
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 .else
-	(cd ${.CURDIR}/etc && ${MAKE} ${_M} distrib-dirs)
+	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
 .endif
 .endif
 
@@ -120,10 +120,10 @@ build: buildmsg beforeinstall
 	@false
 .endif
 .if ${MKSHARE} != "no"
-	(cd ${.CURDIR}/share/mk && ${MAKE} ${_M} install)
+	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 .endif
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
-	${MAKE} ${_M} cleandir
+	${MAKE} ${_J} ${_M} cleandir
 .endif
 .if ${MKOBJDIRS} != "no"
 	${MAKE} ${_M} obj
