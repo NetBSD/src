@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.9 1993/11/30 20:20:20 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.10 1993/12/01 15:19:57 pk Exp $
  */
 
 /*
@@ -58,6 +58,7 @@
 #include <ufs/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -486,6 +487,11 @@ sun_mmap(p, uap, retval)
 	if (flags & SUN_MAP_FIXED)
 		newflags |= MAP_FIXED;
 
+	if ((newflags & MAP_FIXED) == 0 &&
+		uap->addr != 0 &&
+		uap->addr < (caddr_t)round_page(p->p_vmspace->vm_daddr + MAXDSIZ))
+		uap->addr = (caddr_t)round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
@@ -902,4 +908,21 @@ sun_exportfs(p, uap, retval)
 	 * with MOUNT_EXPORT?
 	 */
 	return 0;
+}
+
+struct sun_mknod_args {
+	char	*fname;
+	int	fmode;
+	int	dev;
+};
+
+sun_mknod(p, uap, retval)
+	struct proc *p;
+	struct sun_mknod_args *uap;
+	int *retval;
+{
+	if (S_ISFIFO(uap->fmode))
+		return mkfifo(p, uap, retval);
+
+	return mknod(p, uap, retval);
 }
