@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/11/21 21:19:14 gwr Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 1997/12/12 22:59:47 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -16,8 +16,10 @@ LISTS=	${TOP}/common/${CBIN}.list \
 KERNEL=${SRCSYSDIR}/arch/sun3/compile/RAMDISK/netbsd
 
 MOUNT_POINT=	/mnt
-BDEV=		/dev/rd0
-CDEV=		/dev/rd0
+#BDEV=		/dev/md0
+#CDEV=		/dev/md0
+BDEV=		/dev/sd1b
+CDEV=		/dev/rsd1b
 
 # These are all the parameters for the root fs: (256K)
 DISKTYPE=	rdroot
@@ -47,7 +49,8 @@ ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	-umount ${MOUNT_POINT}
-	dd if=${CDEV} of=$@ count=${NBLKS}
+	dd if=${CDEV} of=$@ bs=16b \
+	  count=`expr ${NBLKS} / 16`
 
 # Do not delete this if I change my mind and kill make...
 .PRECIOUS: ${IMAGE}.fs

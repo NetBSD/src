@@ -1,4 +1,4 @@
-/*	$NetBSD: rdsetroot.c,v 1.3 1997/05/26 02:51:46 jeremy Exp $	*/
+/*	$NetBSD: rdsetroot.c,v 1.3.2.1 1997/12/12 22:59:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rdsetroot.c,v 1.3 1997/05/26 02:51:46 jeremy Exp $
+ *	$Id: rdsetroot.c,v 1.3.2.1 1997/12/12 22:59:44 gwr Exp $
  */
 
 /*
@@ -163,11 +163,7 @@ main(argc,argv)
 		exit(1);
 	}
 
-	msync(dataseg - data_pgoff, data_len
-#ifdef	sun
-		  ,0
-#endif
-		  );
+	msync(dataseg - data_pgoff, data_len, 0);
 
 #ifdef	DEBUG
 	printf("...copied %d bytes\n", n);
