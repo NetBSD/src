@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/06/22 13:21:35 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2001/06/24 01:15:41 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,11 +79,11 @@
 #include <machine/bus.h>
 #include <machine/walnut.h>
 
+#include <powerpc/ibm4xx/ibm405gp.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
-
-#include <powerpc/ibm4xx/ibm405gp.h>
 
 /*
  * The devices built in to the 405GP cpu.
@@ -96,9 +96,9 @@ const struct ppc405gp_dev {
 	{ "com",	UART0_BASE,	 5 },
 	{ "com",	UART1_BASE,	 6 },
 	{ "dsrtc",	NVRAM_BASE,	-1 },
-	{ "emac",	MIO6_START,	 9 }, /* XXX: really irq 9..15 */
-	{ "gpio",	MIO5_START,	-1 },
-	{ "i2c",	MIO4_START,	-1 },
+	{ "emac",	EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
+	{ "gpio",	GPIO0_BASE,	-1 },
+	{ "i2c",	IIC0_BASE,	-1 },
 	{ "wdog",	-1,        	-1 },
 	{ "pckbc",	KEY_MOUSE_BASE,	-1 }, /* XXX: really irq x..x+1 */
 	{ NULL }
