@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.57.2.2 2000/04/30 12:08:06 he Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.57.2.3 2000/04/30 20:13:11 he Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 
 u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */
+int	schedflags;		/* preemption needed? */
 
 void roundrobin __P((void *));
 void schedcpu __P((void *));
@@ -123,15 +124,15 @@ roundrobin(arg)
 
 	if (curproc != NULL) {
 		s = splstatclock();
-		if (curproc->p_schedflags & PSCHED_SEENRR) {
+		if (schedflags & PSCHED_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
 			 * without switching and may be hogging the CPU.
 			 * Indicate that the process should yield.
 			 */
-			curproc->p_schedflags |= PSCHED_SHOULDYIELD;
+			schedflags |= PSCHED_SHOULDYIELD;
 		} else
-			curproc->p_schedflags |= PSCHED_SEENRR;
+			schedflags |= PSCHED_SEENRR;
 		splx(s);
 	}
 	need_resched();
@@ -726,7 +727,7 @@ mi_switch()
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
-	p->p_schedflags &= ~PSCHED_SWITCHCLEAR;
+	schedflags &= ~PSCHED_SWITCHCLEAR;
 
 	/*
 	 * Pick a new current process and record its start time.
