@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.5 2001/11/15 06:37:15 lukem Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.6 2003/11/09 22:11:12 christos Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.5 2001/11/15 06:37:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.6 2003/11/09 22:11:12 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -90,7 +90,7 @@ afm_alloc(ifp)
 	       M_DEVBUF, M_WAITOK);
 	if (head == NULL)
 		panic("afm_alloc: malloc failed!");
-	bzero(head, sizeof(struct afm_head));
+	(void)memset(head, 0, sizeof(struct afm_head));
 
 	/* initialize per interface afmap list */
 	LIST_INIT(&head->afh_head);
@@ -169,11 +169,11 @@ int afm_add(ifp, flowmap)
 	       M_DEVBUF, M_WAITOK);
 	if (afm == NULL)
 		return (ENOMEM);
-	bzero(afm, sizeof(struct afm));
+	(void)memset(afm, 0, sizeof(struct afm));
 
 	afm->afm_vci = flowmap->af_vci;
 	afm->afm_vpi = flowmap->af_vpi;
-	bcopy(&flowmap->af_flowinfo, &afm->afm_flowinfo,
+	(void)memcpy(&afm->afm_flowinfo, &flowmap->af_flowinfo,
 	      flowmap->af_flowinfo.fi_len);
 
 	LIST_INSERT_HEAD(&head->afh_head, afm, afm_list);
