@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.106 1998/03/21 04:02:47 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.107 1998/03/22 00:55:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -170,11 +170,67 @@ char const char_type[] = {
 struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
 
+int
+ttyopen(tp, dialout, nonblock)
+	struct tty *tp;
+	int dialout, nonblock;
+{
+	int s;
+	int error;
+
+	s = spltty();
+
+	if (dialout) {
+		/*
+		 * If the device is already open for non-dialout, fail.
+		 * Otherwise, set TS_DIALOUT to block any pending non-dialout
+		 * opens.
+		 */
+		if (ISSET(tp->t_state, TS_ISOPEN) &&
+		    !ISSET(tp->t_state, TS_DIALOUT)) {
+			splx(s);
+			return (EBUSY);
+		}
+		SET(tp->t_state, TS_DIALOUT);
+	} else {
+		if (!nonblock) {
+			/*
+			 * Wait for carrier.  Also wait for any dialout
+			 * processes to close the tty first.
+			 */
+			while (ISSET(tp->t_state, TS_DIALOUT) ||
+			       (!ISSET(tp->t_state, TS_CARR_ON) && 
+				!ISSET(tp->t_cflag, CLOCAL | MDMBUF))) {
+				tp->t_wopen++;
+				error = ttysleep(tp, &tp->t_rawq,
+				    TTIPRI | PCATCH, ttopen, 0);
+				tp->t_wopen--;
+				if (error) {
+					splx(s);
+					return (error);
+				}
+			}
+		} else {
+			/*
+			 * Don't allow a non-blocking non-dialout open if the
+			 * device is already open for dialout.
+			 */
+		        if (ISSET(tp->t_state, TS_DIALOUT)) {
+				splx(s);
+				return (EBUSY);
+			}
+		}
+	}
+
+	splx(s);
+	return (0);
+}
+
 /*
  * Initial open of tty, or (re)entry to standard tty line discipline.
  */
 int
-ttyopen(device, tp)
+ttylopen(device, tp)
 	dev_t device;
 	register struct tty *tp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.20 1998/03/01 02:22:32 fvdl Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.21 1998/03/22 00:55:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -100,14 +100,14 @@ int	stripstart __P((struct tty *tp));
 
 struct	linesw linesw[] =
 {
-	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
+	{ ttylopen, ttylclose, ttread, ttwrite, nullioctl,
 	  ttyinput, ttstart, ttymodem },		/* 0- termios */
 
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },	/* 1- defunct */
 
 #if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
-	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
+	{ ttylopen, ttylclose, ttread, ttwrite, nullioctl,
 	  ttyinput, ttstart, ttymodem },		/* 2- old NTTYDISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,

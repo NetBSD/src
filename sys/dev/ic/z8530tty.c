@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.46 1998/03/21 04:31:10 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.47 1998/03/22 00:55:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -207,6 +207,9 @@ static void zs_modem __P((struct zstty_softc *zst, int onoff));
 static int	zshwiflow __P((struct tty *, int));
 static void zs_hwiflow __P((struct zstty_softc *));
 
+#define	ZSUNIT(x)	(minor(x) & 0x7ffff)
+#define	ZSDIALOUT(x)	(minor(x) & 0x80000)
+
 /*
  * zstty_match: how is this zs channel configured?
  */
@@ -374,7 +377,7 @@ zstty(dev)
 	dev_t dev;
 {
 	struct zstty_softc *zst;
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 
 #ifdef	DIAGNOSTIC
 	if (unit >= zstty_cd.cd_ndevs)
@@ -431,7 +434,7 @@ zsopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
@@ -532,22 +535,11 @@ zsopen(dev, flags, mode, p)
 		splx(s2);
 	}
 
-	/* If we're doing a blocking open... */
-	if (!ISSET(flags, O_NONBLOCK))
-		/* ...then wait for carrier. */
-		while (!ISSET(tp->t_state, TS_CARR_ON) &&
-		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
-			tp->t_wopen++;
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    ttopen, 0);
-			tp->t_wopen--;
-			if (error) {
-				splx(s);
-				goto bad;
-			}
-		}
-
 	splx(s);
+
+	error = ttyopen(tp, ZSDIALOUT(dev), ISSET(flags, O_NONBLOCK));
+	if (error)
+		goto bad;
 
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	if (error)
@@ -577,7 +569,7 @@ zsclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
 
 	/* XXX This is for cons.c. */
@@ -587,7 +579,14 @@ zsclose(dev, flags, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flags);
 	ttyclose(tp);
 
-	zs_shutdown(zst);
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * Although we got a last close, the device may still be in
+		 * use; e.g. if this was the dialout node, and there are still
+		 * processes waiting for carrier on the non-dialout node.
+		 */
+		zs_shutdown(zst);
+	}
 
 	return (0);
 }
@@ -601,7 +600,7 @@ zsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
@@ -613,7 +612,7 @@ zswrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
@@ -627,7 +626,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int error;
@@ -700,7 +699,7 @@ static void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -763,7 +762,7 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	int s;
 
 	s = splzs();
@@ -787,7 +786,7 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5, tmp15;
@@ -998,7 +997,7 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
