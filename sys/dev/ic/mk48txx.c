@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.12 2003/11/01 22:41:42 tsutsui Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.13 2004/03/01 20:29:24 kleink Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.12 2003/11/01 22:41:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.13 2004/03/01 20:29:24 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ mk48txx_attach(sc)
 	todr_chip_handle_t handle;
 	int i;
 
-	printf(": %s", sc->sc_model);
+	printf(": %s\n", sc->sc_model);
 
 	i = sizeof(mk48txx_models) / sizeof(mk48txx_models[0]);
 	while (--i >= 0) {
