@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 1999/03/04 20:32:20 wrstuden Exp $ 
+#	$NetBSD: Makefile.inc,v 1.12 1999/04/10 03:59:58 simonb Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,12 +18,6 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 ADIR=		${TOP}/../../../sys/arch/pc532
-PWDSRC=		${TOP}/../../../usr.sbin/pwd_mkdb
-.if exists(${PWDSRC}/obj)
-PWDOBJ=		${PWDSRC}/obj
-.else
-PWDOBJ=		${PWDSRC}
-.endif
 
 DISKTYPE=	boot3
 RAMDISKTYPE=	rd
@@ -45,8 +39,6 @@ all: netbsd.gz
 	    -c "exit" ${.OBJDIR}/${IMAGE} 2>/dev/null >/dev/null
 
 ramdisk.fs: ${CBIN} ${LISTS}
-	(cd ${PWDSRC}; ${MAKE})
-	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o -lutil
 .ifndef SD
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -t ${RAMDISKTYPE} -v -c ${VND_CDEV} ${.TARGET}
@@ -93,7 +85,7 @@ netbsd.gz: ramdisk.fs
 
 clean cleandir distclean:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
-	/bin/rm -f netbsd* pwd_mkdb
+	/bin/rm -f netbsd*
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
