@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 2000/08/19 12:13:47 wdk Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 2000/08/29 11:25:08 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -416,6 +416,10 @@ zs_set_speed(cs, bps)
 	int bps;	/* bits per second */
 {
 	int tconst, real_bps;
+	
+	/* Wait for transmit buffer to empty */
+	while (!(zs_read_csr(cs) & ZSRR0_TX_READY))
+		{/*nop*/}
 
 	if (bps == 0)
 		return (0);
