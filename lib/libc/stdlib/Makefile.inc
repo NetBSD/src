@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2001/02/14 05:44:29 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2001/02/16 12:25:09 msaitoh Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -23,8 +23,8 @@ SRCS+=	_rand48.c _strtoll.c _strtoull.c \
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getopt_long.3 getsubopt.3 \
-	labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 qabs.3 qdiv.3 qsort.3 \
-	radixsort.3 rand48.3 rand.3 random.3 strtod.3 \
+	hcreate.3 labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 qabs.3 \
+	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 strtod.3 \
 	strtol.3 strtoul.3 system.3 tsearch.3
 
 MLINKS+=a64l.3 l64a.3
