@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.9 1997/10/18 12:55:56 lukem Exp $	*/
+/*	$NetBSD: col.c,v 1.10 1999/02/22 22:16:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: col.c,v 1.9 1997/10/18 12:55:56 lukem Exp $");
+__RCSID("$NetBSD: col.c,v 1.10 1999/02/22 22:16:01 kleink Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -111,6 +111,7 @@ int	fine;			/* if `fine' resolution (half lines) */
 int	max_bufd_lines;		/* max # lines to keep in memory */
 int	nblank_lines;		/* # blanks after last flushed line */
 int	no_backspaces;		/* if not to output any backspaces */
+int	pass_unknown_seqs;	/* whether to pass unknown control sequences */
 
 #define	PUTC(ch) \
 	if (putchar(ch) == EOF) \
@@ -135,7 +136,8 @@ main(argc, argv)
 
 	max_bufd_lines = 128;
 	compress_spaces = 1;		/* compress spaces into tabs */
-	while ((opt = getopt(argc, argv, "bfhl:x")) != -1)
+	pass_unknown_seqs = 0;		/* remove unknown escape sequences */
+	while ((opt = getopt(argc, argv, "bfhlp:x")) != -1)
 		switch (opt) {
 		case 'b':		/* do not output backspaces */
 			no_backspaces = 1;
@@ -150,8 +152,11 @@ main(argc, argv)
 			if ((max_bufd_lines = atoi(optarg)) <= 0) {
 				(void)fprintf(stderr,
 				    "col: bad -l argument %s.\n", optarg);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
+			break;
+		case 'p':		/* pass unknown control sequences */
+			pass_unknown_seqs = 1;
 			break;
 		case 'x':		/* do not compress spaces into tabs */
 			compress_spaces = 0;
@@ -220,7 +225,8 @@ main(argc, argv)
 				cur_line -= 2;
 				continue;
 			}
-			continue;
+			if (!pass_unknown_seqs)
+				continue;
 		}
 
 		/* Must stuff ch in a line - are we at the right one? */
@@ -302,7 +308,7 @@ main(argc, argv)
 		cur_col++;
 	}
 	if (max_line == 0)
-		exit(0);	/* no lines, so just exit */
+		exit(EXIT_SUCCESS);	/* no lines, so just exit */
 
 	/* goto the last line that had a character on it */
 	for (; l->l_next; l = l->l_next)
@@ -321,7 +327,8 @@ main(argc, argv)
 		/* missing a \n on the last line? */
 		nblank_lines = 2;
 	flush_blanks();
-	exit(0);
+	exit(EXIT_SUCCESS);
+	/* NOTREACHED */
 }
 
 void
@@ -408,7 +415,7 @@ flush_line(l)
 			count = (int *)xmalloc((void *)count,
 			    (unsigned)sizeof(int) * count_size);
 		}
-		memset((char *)count, 0, sizeof(int) * l->l_max_col + 1);
+		(void)memset(count, 0, sizeof(int) * l->l_max_col + 1);
 		for (i = nchars, c = l->l_line; --i >= 0; c++)
 			count[c->c_column]++;
 
@@ -496,7 +503,7 @@ alloc_line()
 	l = line_freelist;
 	line_freelist = l->l_next;
 
-	memset(l, 0, sizeof(LINE));
+	(void)memset(l, 0, sizeof(LINE));
 	return (l);
 }
 
@@ -516,7 +523,7 @@ xmalloc(p, size)
 {
 
 	if (!(p = (void *)realloc(p, size)))
-		err(1, "realloc");
+		err(EXIT_FAILURE, "realloc");
 	return (p);
 }
 
@@ -524,8 +531,8 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: col [-bfx] [-l nline]\n");
-	exit(1);
+	(void)fprintf(stderr, "usage: col [-bfpx] [-l nline]\n");
+	exit(EXIT_FAILURE);
 }
 
 void
@@ -533,7 +540,7 @@ wrerr()
 {
 
 	(void)fprintf(stderr, "col: write error.\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 void
