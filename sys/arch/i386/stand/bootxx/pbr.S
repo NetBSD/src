@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.8 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: pbr.S,v 1.9 2003/10/13 06:08:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,6 +72,12 @@
 #define TABENTRYSIZE	(MBR_BS_PARTNAMESIZE + 1)
 #define NAMETABSIZE	(4 * TABENTRYSIZE)
 
+#ifdef BOOT_FROM_FAT
+#define MBR_AFTERBPB	90		/* BPB size in FAT32 partition BR */
+#else
+#define MBR_AFTERBPB	62		/* BPB size in floppy master BR */
+#endif
+
 #ifdef TERSE_ERROR
 /*
  * Error codes. Done this way to save space.
@@ -118,7 +124,7 @@ ENTRY(start)
 	. = start + MBR_BPB_OFFSET	/* move to start of BPB */
 					/* (ensures oemname doesn't overflow) */
 
-	. = start + MBR_BOOTCODE_OFFSET	/* skip BPB */
+	. = start + MBR_AFTERBPB	/* skip BPB */
 start0:
 	xor	%ax, %ax		/* don't trust values of ds, es or ss */
 	mov	%ax, %ds
@@ -281,7 +287,7 @@ check_lba:
  * and the disk packet capability.
  *
  * This is actually relatively pointless:
- * 1) we onlye us LBA reads if CHS ones would fail
+ * 1) we only use LBA reads if CHS ones would fail
  * 2) the MBR code managed to read the same sectors
  * 3) the BIOS will (ok should) reject the LBA read as a bad BIOS call
  */
@@ -361,7 +367,7 @@ _newline:
 	.asciz	"\r\n"
 
 #ifndef TERSE_ERROR
-ERR_READ:	.asciz	"Disk read error"
+ERR_READ:	.asciz	"Disk read"
 ERR_NO_BOOTXX:	.asciz	"Not a bootxx image"
 ERR_PTN:	.asciz	"No NetBSD partition"
 #ifndef NO_LBA_CHECK
