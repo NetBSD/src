@@ -13,7 +13,7 @@ LIB=c
 CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS 
 AINC=	-I${.CURDIR}/${MACHINE}
 
-.include "${.CURDIR}/DB/Makefile.inc"
+.include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
 .include "${.CURDIR}/locale/Makefile.inc"
