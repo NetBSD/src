@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.124 1999/02/28 17:14:57 explorer Exp $	*/
+/*	$NetBSD: cd.c,v 1.125 1999/04/05 19:19:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -508,7 +508,7 @@ cdstart(v)
 	struct scsi_rw cmd_small;
 #endif
 	struct scsipi_generic *cmdp;
-	int blkno, nblks, cmdlen;
+	int blkno, nblks, cmdlen, error;
 	struct partition *p;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart "));
@@ -600,11 +600,14 @@ cdstart(v)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsipi_command(sc_link, cmdp, cmdlen, (u_char *)bp->b_data,
-		    bp->b_bcount, CDRETRIES, 30000, bp, SCSI_NOSLEEP |
-		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))) {
+		error = scsipi_command(sc_link, cmdp, cmdlen,
+		    (u_char *)bp->b_data, bp->b_bcount,
+		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
+		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
+		if (error) {
 			disk_unbusy(&cd->sc_dk, 0); 
-			printf("%s: not queued", cd->sc_dev.dv_xname);
+			printf("%s: not queued, error %d\n",
+			    cd->sc_dev.dv_xname, error);
 		}
 	}
 }
