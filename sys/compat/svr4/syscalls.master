@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31 1998/02/19 00:45:12 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.32 1998/06/30 19:40:13 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -340,10 +340,14 @@
 			    const struct rlimit *rlp); }
 221	STD		{ int svr4_sys_getrlimit64(int which, \
 			    struct rlimit *rlp); }
-222	STD		{ ssize_t svr4_sys_pread64(int fd, void *buf, \
-			    size_t nbyte, svr4_off64_t off); }
-223	STD		{ ssize_t svr4_sys_pwrite64(int fd, \
-			    const void *buf, size_t nbyte, svr4_off64_t off); }
+
+; 222 and 223 are pread64 and pwrite64.  These system calls
+; use the same argument structure at NetBSD's pread and pwrite.
+
+222	NOARGS		{ ssize_t sys_pread(int fd, void *buf, \
+			    size_t nbyte, off_t offset); }
+223	NOARGS		{ ssize_t sys_pwrite(int fd, \
+			    const void *buf, size_t nbyte, off_t offset); }
 224	STD		{ int svr4_sys_creat64(char *path, int mode); }
 225	STD		{ int svr4_sys_open64(char *path, int flags, \
 			    int mode); }
