@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.241 2004/05/25 00:33:04 fair Exp $
+.\"	$NetBSD: options.4,v 1.242 2004/07/11 09:45:04 cube Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2129,6 +2129,11 @@ Include support for the
 Enhanced SpeedStep Technology
 present in newer
 .Tn CPU Ns s .
+.It Cd options EST_FREQ_USERWRITE
+Allow any user to change the frequency of an
+Enhanced SpeedStep Technology
+capable
+.Tn CPU .
 .It Cd options CPURESET_DELAY=value
 Specifies the time (in millisecond) to wait before doing a hardware reset
 in the last phase of a reboot.
