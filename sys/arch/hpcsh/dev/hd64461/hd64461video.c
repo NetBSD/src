@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.2 2001/06/05 17:24:48 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.3 2001/07/22 09:56:40 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -328,10 +328,6 @@ setup_hpcfbif(struct hd64461video_chip *hvc)
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
-
-	/* frame buffer access method */
-	fb->hf_swap_flags = HPCFB_SWAP_BYTE;
-
 	if (vc->vc_reverse)
 		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
 
