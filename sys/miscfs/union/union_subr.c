@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.10 1995/05/30 08:51:24 mycroft Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.11 1995/05/30 09:07:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -949,6 +949,8 @@ void
 union_removed_upper(un)
 	struct union_node *un;
 {
+
+	union_newupper(un, NULLVP);
 
 	if (un->un_flags & UN_CACHED) {
 		un->un_flags &= ~UN_CACHED;
