@@ -365,6 +365,8 @@ DICT   *dict_regexp_open(const char *map, int unused_flags, int dict_flags)
 	if (*p == 0)				/* Skip blank lines */
 	    continue;
 
+	trimblanks(p, 0)[0] = 0;		/* Trim space at end */
+
 	rule = dict_regexp_parseline(lineno, p, &nsub, map_fp);
 	if (rule) {
 	    if (nsub > max_nsub)
