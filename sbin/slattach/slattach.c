@@ -58,7 +58,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)slattach.c	4.6 (Berkeley) 6/1/90";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/slattach/slattach.c,v 1.4 1993/04/08 04:15:43 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/slattach/slattach.c,v 1.5 1993/04/28 23:13:37 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,6 +161,12 @@ int main(int argc, char **argv)
 		close(fd);
 		exit(1);
 	}
+
+	if (ioctl(fd, TIOCSDTR) < 0) {
+                perror("ioctl(TIOCSDTR)");
+                close(fd);
+                exit(1);
+        }
 
 	cfsetispeed(&tty, speed);
 	cfsetospeed(&tty, speed);
