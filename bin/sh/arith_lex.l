@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.10 1999/02/05 07:52:52 christos Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.10.14.1 2004/04/06 05:40:35 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith_lex.l,v 1.10 1999/02/05 07:52:52 christos Exp $");
+__RCSID("$NetBSD: arith_lex.l,v 1.10.14.1 2004/04/06 05:40:35 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,9 @@ extern char *arith_buf, *arith_startbuf;
 
 %%
 [ \t\n]	{ ; }
-[0-9]+	{ yylval = atol(yytext); return(ARITH_NUM); }
+0x[0-9a-fA-F]+	{ yylval = strtol(yytext, 0, 16); return(ARITH_NUM); }
+0[0-7]*		{ yylval = strtol(yytext, 0, 8); return(ARITH_NUM); }
+[1-9][0-9]*	{ yylval = strtol(yytext, 0, 10); return(ARITH_NUM); }
 "("	{ return(ARITH_LPAREN); }
 ")"	{ return(ARITH_RPAREN); }
 "||"	{ return(ARITH_OR); }
