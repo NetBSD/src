@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Motorola 68000 family.
-   Copyright (C) 1987, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,8 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* Some output-actions in m68k.md need these.  */
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
+#include "tree.h"
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -31,13 +32,14 @@ Boston, MA 02111-1307, USA.  */
 #include "insn-flags.h"
 #include "output.h"
 #include "insn-attr.h"
-#include "dwarf2.h"
+#include "recog.h"
 
 /* Needed for use_return_insn.  */
 #include "flags.h"
 
-/* Prototype for dwarf2out_cfi_label() */
-#include "tree.h"
+#if HAVE_STDLIB_H
+#include <stdlib.h>                                                
+#endif
 
 #ifdef SUPPORT_SUN_FPA
 
@@ -138,7 +140,7 @@ finalize_pic ()
 {
   if (flag_pic && current_function_uses_pic_offset_table)
     {
-      rtx insn = gen_rtx (USE, VOIDmode, pic_offset_table_rtx);
+      rtx insn = gen_rtx_USE (VOIDmode, pic_offset_table_rtx);
       emit_insn_after (insn, get_insns ());
       emit_insn (insn);
     }
@@ -219,8 +221,8 @@ output_function_prologue (stream, size)
 	}
       if (dwarf2out_do_frame ())
 	{
-	  char *l = dwarf2out_cfi_label ();
-
+	  char *l;
+          l = (char *) dwarf2out_cfi_label ();   
 	  cfa_store_offset += 4;
 	  cfa_offset = cfa_store_offset;
 	  dwarf2out_def_cfa (l, FRAME_POINTER_REGNUM, cfa_offset);
@@ -346,7 +348,7 @@ output_function_prologue (stream, size)
 #endif
 	  if (dwarf2out_do_frame ())
 	    {
-	      char *l = dwarf2out_cfi_label ();
+	      char *l = (char *) dwarf2out_cfi_label ();
 	      int n_regs;
 
 	      cfa_store_offset += num_saved_regs * 12;
@@ -410,7 +412,7 @@ output_function_prologue (stream, size)
 			 reg_names[15 - i]);
 	    if (dwarf2out_do_frame ())
 	      {
-		char *l = dwarf2out_cfi_label ();
+		char *l = (char *) dwarf2out_cfi_label ();
 
 		cfa_store_offset += 4;
  		if (! frame_pointer_needed)
@@ -461,7 +463,7 @@ output_function_prologue (stream, size)
 	}
       if (dwarf2out_do_frame ())
 	{
-	  char *l = dwarf2out_cfi_label ();
+	  char *l = (char *) dwarf2out_cfi_label ();
 	  int n_regs;
 
 	  cfa_store_offset += num_saved_regs * 4;
@@ -895,6 +897,7 @@ flags_in_68881 ()
    set.  It is assumed that valid_dbcc_comparison_p and flags_in_68881 will
    kick those out before we get here.  */
 
+void
 output_dbcc_and_branch (operands)
      rtx *operands;
 {
@@ -1030,38 +1033,65 @@ output_scc_di(op, operand1, operand2, dest)
     }
   loperands[0] = operand1;
   if (GET_CODE (operand1) == REG)
-    loperands[1] = gen_rtx (REG, SImode, REGNO (operand1) + 1);
+    loperands[1] = gen_rtx_REG (SImode, REGNO (operand1) + 1);
   else
     loperands[1] = adj_offsettable_operand (operand1, 4);
   if (operand2 != const0_rtx)
     {
       loperands[2] = operand2;
       if (GET_CODE (operand2) == REG)
-	loperands[3] = gen_rtx (REG, SImode, REGNO (operand2) + 1);
+	loperands[3] = gen_rtx_REG (SImode, REGNO (operand2) + 1);
       else
 	loperands[3] = adj_offsettable_operand (operand2, 4);
     }
   loperands[4] = gen_label_rtx();
   if (operand2 != const0_rtx)
+    {
 #ifdef MOTOROLA
 #ifdef SGS_CMP_ORDER
-    output_asm_insn ("cmp%.l %0,%2\n\tjbne %l4\n\tcmp%.l %1,%3", loperands);
+      output_asm_insn ("cmp%.l %0,%2\n\tjbne %l4\n\tcmp%.l %1,%3", loperands);
 #else
-    output_asm_insn ("cmp%.l %2,%0\n\tjbne %l4\n\tcmp%.l %3,%1", loperands);
+      output_asm_insn ("cmp%.l %2,%0\n\tjbne %l4\n\tcmp%.l %3,%1", loperands);
 #endif
 #else
 #ifdef SGS_CMP_ORDER
-    output_asm_insn ("cmp%.l %0,%2\n\tjne %l4\n\tcmp%.l %1,%3", loperands);
+      output_asm_insn ("cmp%.l %0,%2\n\tjne %l4\n\tcmp%.l %1,%3", loperands);
 #else
-    output_asm_insn ("cmp%.l %2,%0\n\tjne %l4\n\tcmp%.l %3,%1", loperands);
+      output_asm_insn ("cmp%.l %2,%0\n\tjne %l4\n\tcmp%.l %3,%1", loperands);
 #endif
 #endif
+    }
   else
-#ifdef MOTOROLA
-    output_asm_insn ("tst%.l %0\n\tjbne %l4\n\ttst%.l %1", loperands);
+    {
+      if (TARGET_68020 || TARGET_5200 || ! ADDRESS_REG_P (loperands[0]))
+	output_asm_insn ("tst%.l %0", loperands);
+      else
+	{
+#ifdef SGS_CMP_ORDER
+	  output_asm_insn ("cmp%.w %0,%#0", loperands);
 #else
-    output_asm_insn ("tst%.l %0\n\tjne %l4\n\ttst%.l %1", loperands);
+	  output_asm_insn ("cmp%.w %#0,%0", loperands);
 #endif
+	}
+
+#ifdef MOTOROLA
+      output_asm_insn ("jbne %l4", loperands);
+#else
+      output_asm_insn ("jne %l4", loperands);
+#endif
+
+      if (TARGET_68020 || TARGET_5200 || ! ADDRESS_REG_P (loperands[1]))
+	output_asm_insn ("tst%.l %1", loperands);
+      else
+	{
+#ifdef SGS_CMP_ORDER
+	  output_asm_insn ("cmp%.w %1,%#0", loperands);
+#else
+	  output_asm_insn ("cmp%.w %#0,%1", loperands);
+#endif
+	}
+    }
+
   loperands[5] = dest;
   
   switch (op_code)
@@ -1311,17 +1341,19 @@ legitimize_pic_address (orig, mode, reg)
       if (reg == 0)
 	abort ();
 
-      pic_ref = gen_rtx (MEM, Pmode,
-			 gen_rtx (PLUS, Pmode,
-				  pic_offset_table_rtx, orig));
+      pic_ref = gen_rtx_MEM (Pmode,
+			     gen_rtx_PLUS (Pmode,
+					   pic_offset_table_rtx, orig));
       current_function_uses_pic_offset_table = 1;
+      if (reload_in_progress)
+	regs_ever_live[PIC_OFFSET_TABLE_REGNUM] = 1;
       RTX_UNCHANGING_P (pic_ref) = 1;
       emit_move_insn (reg, pic_ref);
       return reg;
     }
   else if (GET_CODE (orig) == CONST)
     {
-      rtx base, offset;
+      rtx base;
 
       /* Make sure this is CONST has not already been legitimized */
       if (GET_CODE (XEXP (orig, 0)) == PLUS
@@ -1342,7 +1374,7 @@ legitimize_pic_address (orig, mode, reg)
 
       if (GET_CODE (orig) == CONST_INT)
 	return plus_constant_for_output (base, INTVAL (orig));
-      pic_ref = gen_rtx (PLUS, Pmode, base, orig);
+      pic_ref = gen_rtx_PLUS (Pmode, base, orig);
       /* Likewise, should we set special REG_NOTEs here?  */
     }
   return pic_ref;
@@ -1387,6 +1419,7 @@ const_method (constant)
   return MOVL;
 }
 
+int
 const_int_cost (constant)
      rtx constant;
 {
@@ -1424,14 +1457,14 @@ output_move_const_into_data_reg (operands)
       return "moveq %1,%0";
 #endif
     case NOTB :
-      operands[1] = gen_rtx (CONST_INT, VOIDmode, i ^ 0xff);
+      operands[1] = GEN_INT (i ^ 0xff);
 #if defined (MOTOROLA) && !defined (CRDS)
       return "moveq%.l %1,%0\n\tnot%.b %0";
 #else
       return "moveq %1,%0\n\tnot%.b %0";
 #endif	 
     case NOTW :
-      operands[1] = gen_rtx (CONST_INT, VOIDmode, i ^ 0xffff);
+      operands[1] = GEN_INT (i ^ 0xffff);
 #if defined (MOTOROLA) && !defined (CRDS)
       return "moveq%.l %1,%0\n\tnot%.w %0";
 #else
@@ -1447,7 +1480,7 @@ output_move_const_into_data_reg (operands)
       {
 	unsigned u = i;
 
-	operands[1] = gen_rtx (CONST_INT, VOIDmode, (u << 16) | (u >> 16));
+	operands[1] = GEN_INT ((u << 16) | (u >> 16));
 #if defined (MOTOROLA) && !defined (CRDS)
 	return "moveq%.l %1,%0\n\tswap %0";
 #else
@@ -1590,8 +1623,8 @@ output_move_qimode (operands)
     {
       xoperands[1] = operands[1];
       xoperands[2]
-	= gen_rtx (MEM, QImode,
-		   gen_rtx (PLUS, VOIDmode, stack_pointer_rtx, const1_rtx));
+	= gen_rtx_MEM (QImode,
+		       gen_rtx_PLUS (VOIDmode, stack_pointer_rtx, const1_rtx));
       /* Just pushing a byte puts it in the high byte of the halfword.	*/
       /* We must put it in the low-order, high-numbered byte.  */
       if (!reg_mentioned_p (stack_pointer_rtx, operands[1]))
@@ -1758,11 +1791,11 @@ output_move_double (operands)
       else
         output_asm_insn ("subq%.l %#8,%0", operands);
       if (GET_MODE (operands[1]) == XFmode)
-	operands[0] = gen_rtx (MEM, XFmode, operands[0]);
+	operands[0] = gen_rtx_MEM (XFmode, operands[0]);
       else if (GET_MODE (operands[0]) == DFmode)
-	operands[0] = gen_rtx (MEM, DFmode, operands[0]);
+	operands[0] = gen_rtx_MEM (DFmode, operands[0]);
       else
-	operands[0] = gen_rtx (MEM, DImode, operands[0]);
+	operands[0] = gen_rtx_MEM (DImode, operands[0]);
       optype0 = OFFSOP;
     }
   if (optype0 == POPOP && optype1 == PUSHOP)
@@ -1773,11 +1806,11 @@ output_move_double (operands)
       else
         output_asm_insn ("subq%.l %#8,%1", operands);
       if (GET_MODE (operands[1]) == XFmode)
-	operands[1] = gen_rtx (MEM, XFmode, operands[1]);
+	operands[1] = gen_rtx_MEM (XFmode, operands[1]);
       else if (GET_MODE (operands[1]) == DFmode)
-	operands[1] = gen_rtx (MEM, DFmode, operands[1]);
+	operands[1] = gen_rtx_MEM (DFmode, operands[1]);
       else
-	operands[1] = gen_rtx (MEM, DImode, operands[1]);
+	operands[1] = gen_rtx_MEM (DImode, operands[1]);
       optype1 = OFFSOP;
     }
 
@@ -1803,8 +1836,8 @@ output_move_double (operands)
     {
       if (optype0 == REGOP)
 	{
-	  latehalf[0] = gen_rtx (REG, SImode, REGNO (operands[0]) + 2);
-	  middlehalf[0] = gen_rtx (REG, SImode, REGNO (operands[0]) + 1);
+	  latehalf[0] = gen_rtx_REG (SImode, REGNO (operands[0]) + 2);
+	  middlehalf[0] = gen_rtx_REG (SImode, REGNO (operands[0]) + 1);
 	}
       else if (optype0 == OFFSOP)
 	{
@@ -1819,8 +1852,8 @@ output_move_double (operands)
 
       if (optype1 == REGOP)
 	{
-	  latehalf[1] = gen_rtx (REG, SImode, REGNO (operands[1]) + 2);
-	  middlehalf[1] = gen_rtx (REG, SImode, REGNO (operands[1]) + 1);
+	  latehalf[1] = gen_rtx_REG (SImode, REGNO (operands[1]) + 2);
+	  middlehalf[1] = gen_rtx_REG (SImode, REGNO (operands[1]) + 1);
 	}
       else if (optype1 == OFFSOP)
 	{
@@ -1861,14 +1894,14 @@ output_move_double (operands)
     /* size is not 12: */
     {
       if (optype0 == REGOP)
-	latehalf[0] = gen_rtx (REG, SImode, REGNO (operands[0]) + 1);
+	latehalf[0] = gen_rtx_REG (SImode, REGNO (operands[0]) + 1);
       else if (optype0 == OFFSOP)
 	latehalf[0] = adj_offsettable_operand (operands[0], size - 4);
       else
 	latehalf[0] = operands[0];
 
       if (optype1 == REGOP)
-	latehalf[1] = gen_rtx (REG, SImode, REGNO (operands[1]) + 1);
+	latehalf[1] = gen_rtx_REG (SImode, REGNO (operands[1]) + 1);
       else if (optype1 == OFFSOP)
 	latehalf[1] = adj_offsettable_operand (operands[1], size - 4);
       else if (optype1 == CNSTOP)
@@ -1893,7 +1926,7 @@ output_move_double (operands)
   if (optype0 == REGOP
       && (optype1 == OFFSOP || optype1 == MEMOP))
     {
-      rtx testlow = gen_rtx (REG, SImode, REGNO (operands[0]));
+      rtx testlow = gen_rtx_REG (SImode, REGNO (operands[0]));
 
       if (reg_overlap_mentioned_p (testlow, XEXP (operands[1], 0))
 	  && reg_overlap_mentioned_p (latehalf[0], XEXP (operands[1], 0)))
@@ -1907,13 +1940,13 @@ compadr:
 	  output_asm_insn ("lea %a1,%0", xops);
 	  if( GET_MODE (operands[1]) == XFmode )
 	    {
-	      operands[1] = gen_rtx (MEM, XFmode, latehalf[0]);
+	      operands[1] = gen_rtx_MEM (XFmode, latehalf[0]);
 	      middlehalf[1] = adj_offsettable_operand (operands[1], size-8);
 	      latehalf[1] = adj_offsettable_operand (operands[1], size-4);
 	    }
 	  else
 	    {
-	      operands[1] = gen_rtx (MEM, DImode, latehalf[0]);
+	      operands[1] = gen_rtx_MEM (DImode, latehalf[0]);
 	      latehalf[1] = adj_offsettable_operand (operands[1], size-4);
 	    }
 	}
@@ -2116,8 +2149,7 @@ output_addsi3 (operands)
       if (INTVAL (operands[2]) < 0
 	  && INTVAL (operands[2]) >= -8)
         {
-	  operands[2] = gen_rtx (CONST_INT, VOIDmode,
-			         - INTVAL (operands[2]));
+	  operands[2] = GEN_INT (-INTVAL (operands[2]));
 	  return "subq%.l %2,%0";
 	}
       /* On the CPU32 it is faster to use two addql instructions to
@@ -2128,15 +2160,13 @@ output_addsi3 (operands)
 	  if (INTVAL (operands[2]) > 8
 	      && INTVAL (operands[2]) <= 16)
 	    {
-	      operands[2] = gen_rtx (CONST_INT, VOIDmode, 
-				      INTVAL (operands[2]) - 8);
+	      operands[2] = GEN_INT (INTVAL (operands[2]) - 8);
 	      return "addq%.l %#8,%0\n\taddq%.l %2,%0";
 	    }
 	  if (INTVAL (operands[2]) < -8
 	      && INTVAL (operands[2]) >= -16)
 	    {
-	      operands[2] = gen_rtx (CONST_INT, VOIDmode,
-				      - INTVAL (operands[2]) - 8);
+	      operands[2] = GEN_INT (-INTVAL (operands[2]) - 8);
 	      return "subq%.l %#8,%0\n\tsubq%.l %2,%0";
 	    }
 	}
@@ -2167,6 +2197,7 @@ output_addsi3 (operands)
    possibly invalid to use the saved cc's.  In those cases we clear out
    some or all of the saved cc's so they won't be used.  */
 
+void
 notice_update_cc (exp, insn)
      rtx exp;
      rtx insn;
@@ -2190,11 +2221,9 @@ notice_update_cc (exp, insn)
 	}
       else if (ADDRESS_REG_P (SET_DEST (exp)))
 	{
-	  if (cc_status.value1
-	      && reg_overlap_mentioned_p (SET_DEST (exp), cc_status.value1))
+	  if (cc_status.value1 && modified_in_p (cc_status.value1, insn))
 	    cc_status.value1 = 0;
-	  if (cc_status.value2
-	      && reg_overlap_mentioned_p (SET_DEST (exp), cc_status.value2))
+	  if (cc_status.value2 && modified_in_p (cc_status.value2, insn))
 	    cc_status.value2 = 0; 
 	}
       else if (!FP_REG_P (SET_DEST (exp))
@@ -2264,6 +2293,9 @@ notice_update_cc (exp, insn)
 	   Thus, the cc's are set for r2.
 	   This can set N bit spuriously. */
 	cc_status.flags |= CC_NOT_NEGATIVE; 
+
+      default:
+	break;
       }
   if (cc_status.value1 && GET_CODE (cc_status.value1) == REG
       && cc_status.value2
@@ -2402,14 +2434,14 @@ standard_68881_constant_p (x)
 {
   REAL_VALUE_TYPE r;
   int i;
-  enum machine_mode mode;
 
 #ifdef NO_ASM_FMOVECR
   return 0;
 #endif
 
-  /* fmovecr must be emulated on the 68040, so it shouldn't be used at all. */
-  if (TARGET_68040)
+  /* fmovecr must be emulated on the 68040 and 68060, so it shouldn't be
+     used at all on those chips. */
+  if (TARGET_68040 || TARGET_68060)
     return 0;
 
 #ifndef REAL_ARITHMETIC
@@ -2695,7 +2727,9 @@ print_operand (file, op, letter)
      rtx op;			/* operand to print */
      int letter;		/* %<letter> or 0 */
 {
+#ifdef SUPPORT_SUN_FPA
   int i;
+#endif
 
   if (letter == '.')
     {
@@ -3052,7 +3086,11 @@ print_operand_address (file, addr)
 	      {
 		output_addr_const (file, addr);
 	        if (flag_pic && (breg == pic_offset_table_rtx))
-	          fprintf (file, "@GOT");
+		  {
+		    fprintf (file, "@GOT");
+		    if (flag_pic == 1)
+		      fprintf (file, ".w");
+		  }
 	      }
 	    fprintf (file, "(%s", reg_names[REGNO (breg)]);
 	    if (ireg != 0)
@@ -3208,6 +3246,8 @@ const_uint32_operand (op, mode)
      rtx op;
      enum machine_mode mode;
 {
+  if (GET_CODE (op) == CONSTANT_P_RTX)
+    return 1;
 #if HOST_BITS_PER_WIDE_INT > 32
   /* All allowed constants will fit a CONST_INT.  */
   return (GET_CODE (op) == CONST_INT
@@ -3227,6 +3267,8 @@ const_sint32_operand (op, mode)
      rtx op;
      enum machine_mode mode;
 {
+  if (GET_CODE (op) == CONSTANT_P_RTX)
+    return 1;
   /* All allowed constants will fit a CONST_INT.  */
   return (GET_CODE (op) == CONST_INT
 	  && (INTVAL (op) >= (-0x7fffffff - 1) && INTVAL (op) <= 0x7fffffff));
@@ -3245,8 +3287,7 @@ output_andsi3 (operands)
     {
       if (GET_CODE (operands[0]) != REG)
         operands[0] = adj_offsettable_operand (operands[0], 2);
-      operands[2] = gen_rtx (CONST_INT, VOIDmode,
-			     INTVAL (operands[2]) & 0xffff);
+      operands[2] = GEN_INT (INTVAL (operands[2]) & 0xffff);
       /* Do not delete a following tstl %0 insn; that would be incorrect.  */
       CC_STATUS_INIT;
       if (operands[2] == const0_rtx)
@@ -3260,12 +3301,12 @@ output_andsi3 (operands)
     {
       if (DATA_REG_P (operands[0]))
         {
-          operands[1] = gen_rtx (CONST_INT, VOIDmode, logval);
+          operands[1] = GEN_INT (logval);
         }
       else
         {
 	  operands[0] = adj_offsettable_operand (operands[0], 3 - (logval / 8));
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval % 8);
+	  operands[1] = GEN_INT (logval % 8);
         }
       /* This does not set condition codes in a standard way.  */
       CC_STATUS_INIT;
@@ -3300,12 +3341,12 @@ output_iorsi3 (operands)
     {
       if (DATA_REG_P (operands[0]))
 	{
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval);
+	  operands[1] = GEN_INT (logval);
 	}
       else
         {
 	  operands[0] = adj_offsettable_operand (operands[0], 3 - (logval / 8));
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval % 8);
+	  operands[1] = GEN_INT (logval % 8);
 	}
       CC_STATUS_INIT;
       return "bset %1,%0";
@@ -3338,12 +3379,12 @@ output_xorsi3 (operands)
     {
       if (DATA_REG_P (operands[0]))
 	{
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval);
+	  operands[1] = GEN_INT (logval);
 	}
       else
         {
 	  operands[0] = adj_offsettable_operand (operands[0], 3 - (logval / 8));
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval % 8);
+	  operands[1] = GEN_INT (logval % 8);
 	}
       CC_STATUS_INIT;
       return "bchg %1,%0";

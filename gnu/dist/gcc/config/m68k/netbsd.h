@@ -13,7 +13,7 @@
 #define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__} %{posix:-D_POSIX_SOURCE}"
 
 #undef ASM_SPEC
-#define ASM_SPEC " %| %{m68030} %{m68040} %{fpic:-k} %{fPIC:-k -K}"
+#define ASM_SPEC " %| %{m68030} %{m68040} %{m68060} %{fpic:-k} %{fPIC:-k -K}"
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
@@ -59,5 +59,5 @@
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#define DWARF2_UNWIND_INFO 0
+#undef DWARF2_UNWIND_INFO
 

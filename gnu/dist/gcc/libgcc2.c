@@ -1,6 +1,6 @@
 /* More subroutines needed by GCC output code on some machines.  */
 /* Compile this one with gcc.  */
-/* Copyright (C) 1989, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -31,6 +31,17 @@ Boston, MA 02111-1307, USA.  */
    do not apply.  */
 
 #include "tconfig.h"
+
+/* We disable this when inhibit_libc, so that gcc can still be built without
+   needing header files first.  */
+/* ??? This is not a good solution, since prototypes may be required in
+   some cases for correct code.  See also frame.c.  */
+#ifndef inhibit_libc
+/* fixproto guarantees these system headers exist. */
+#include <stdlib.h>
+#include <unistd.h>
+#endif
+
 #include "machmode.h"
 #include "defaults.h" 
 #ifndef L_trampoline
@@ -44,6 +55,13 @@ Boston, MA 02111-1307, USA.  */
 
 #if (SUPPORTS_WEAK == 1) && (defined (ASM_OUTPUT_DEF) || defined (ASM_OUTPUT_WEAK_ALIAS))
 #define WEAK_ALIAS
+#endif
+
+/* In a cross-compilation situation, default to inhibiting compilation
+   of routines that use libc.  */
+
+#if defined(CROSS_COMPILE) && !defined(inhibit_libc)
+#define inhibit_libc
 #endif
 
 /* Permit the tm.h file to select the endianness to use just for this
@@ -384,8 +402,13 @@ __udiv_w_sdiv (USItype *rp, USItype a1, USItype a0, USItype d)
 #else
 /* If sdiv_qrnnd doesn't exist, define dummy __udiv_w_sdiv.  */
 USItype
-__udiv_w_sdiv (USItype *rp, USItype a1, USItype a0, USItype d)
-{}
+__udiv_w_sdiv (USItype *rp __attribute__ ((__unused__)),
+	       USItype a1 __attribute__ ((__unused__)),
+	       USItype a0 __attribute__ ((__unused__)),
+	       USItype d __attribute__ ((__unused__)))
+{
+  return 0;
+}
 #endif
 #endif
 
@@ -926,17 +949,13 @@ XFtype
 __floatdixf (DItype u)
 {
   XFtype d;
-  SItype negate = 0;
 
-  if (u < 0)
-    u = -u, negate = 1;
-
-  d = (USItype) (u >> WORD_SIZE);
+  d = (SItype) (u >> WORD_SIZE);
   d *= HIGH_HALFWORD_COEFF;
   d *= HIGH_HALFWORD_COEFF;
   d += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (negate ? -d : d);
+  return d;
 }
 #endif
 
@@ -949,17 +968,13 @@ TFtype
 __floatditf (DItype u)
 {
   TFtype d;
-  SItype negate = 0;
 
-  if (u < 0)
-    u = -u, negate = 1;
-
-  d = (USItype) (u >> WORD_SIZE);
+  d = (SItype) (u >> WORD_SIZE);
   d *= HIGH_HALFWORD_COEFF;
   d *= HIGH_HALFWORD_COEFF;
   d += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (negate ? -d : d);
+  return d;
 }
 #endif
 
@@ -972,17 +987,13 @@ DFtype
 __floatdidf (DItype u)
 {
   DFtype d;
-  SItype negate = 0;
 
-  if (u < 0)
-    u = -u, negate = 1;
-
-  d = (USItype) (u >> WORD_SIZE);
+  d = (SItype) (u >> WORD_SIZE);
   d *= HIGH_HALFWORD_COEFF;
   d *= HIGH_HALFWORD_COEFF;
   d += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (negate ? -d : d);
+  return d;
 }
 #endif
 
@@ -1027,10 +1038,6 @@ __floatdisf (DItype u)
      so that we don't lose any of the precision of the high word
      while multiplying it.  */
   DFtype f;
-  SItype negate = 0;
-
-  if (u < 0)
-    u = -u, negate = 1;
 
   /* Protect against double-rounding error.
      Represent any low-order bits, that might be truncated in DFmode,
@@ -1042,18 +1049,19 @@ __floatdisf (DItype u)
       && DF_SIZE > (DI_SIZE - DF_SIZE + SF_SIZE))
     {
 #define REP_BIT ((USItype) 1 << (DI_SIZE - DF_SIZE))
-      if (u >= ((UDItype) 1 << DF_SIZE))
+      if (! (- ((DItype) 1 << DF_SIZE) < u
+	     && u < ((DItype) 1 << DF_SIZE)))
 	{
 	  if ((USItype) u & (REP_BIT - 1))
 	    u |= REP_BIT;
 	}
     }
-  f = (USItype) (u >> WORD_SIZE);
+  f = (SItype) (u >> WORD_SIZE);
   f *= HIGH_HALFWORD_COEFF;
   f *= HIGH_HALFWORD_COEFF;
   f += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (SFtype) (negate ? -f : f);
+  return (SFtype) f;
 }
 #endif
 
@@ -1364,6 +1372,9 @@ asm ("___builtin_saveregs:");
 #if defined(__MIPSEL__) | defined(__R3000__) | defined(__R2000__) | defined(__mips__)
 
   asm ("	.text");
+#ifdef __mips16
+  asm ("	.set nomips16");
+#endif
   asm ("	.ent __builtin_saveregs");
   asm ("	.globl __builtin_saveregs");
   asm ("__builtin_saveregs:");
@@ -1394,7 +1405,7 @@ __builtin_saveregs ()
 /* This is used by the `assert' macro.  */
 void
 __eprintf (const char *string, const char *expression,
-	   int line, const char *filename)
+	   unsigned int line, const char *filename)
 {
   fprintf (stderr, string, expression, line, filename);
   fflush (stderr);
@@ -1441,6 +1452,7 @@ char *ctime ();
 
 #include "gbl-ctors.h"
 #include "gcov-io.h"
+#include <string.h>
 
 static struct bb *bb_head;
 
@@ -1488,10 +1500,6 @@ __bb_exit_func (void)
 	  if ((da_file = fopen (ptr->filename, "r")) != 0)
 	    {
 	      long n_counts = 0;
-	      unsigned char tmp;
-	      int i;
-	      int ret = 0;
-
 	      
 	      if (__read_long (&n_counts, da_file, 8) != 0)
 		{
@@ -1507,9 +1515,6 @@ __bb_exit_func (void)
 		  for (i = 0; i < n_counts; i++)
 		    {
 		      long v = 0;
-		      unsigned char tmp;
-		      int j;
-		      int ret = 0;
 
 		      if (__read_long (&v, da_file, 8) != 0)
 			{
@@ -1525,14 +1530,14 @@ __bb_exit_func (void)
 		fprintf (stderr, "arc profiling: Error closing output file %s.\n",
 			 ptr->filename);
 	    }
-	  if ((da_file = fopen (ptr->filename, "w")) < 0)
+	  if ((da_file = fopen (ptr->filename, "w")) == 0)
 	    {
 	      fprintf (stderr, "arc profiling: Can't open output file %s.\n",
 		       ptr->filename);
 	      continue;
 	    }
 
-	  /* ??? Should first write a header to the file.  Perferably, a 4 byte
+	  /* ??? Should first write a header to the file.  Preferably, a 4 byte
 	     magic number, 4 bytes containing the time the program was
 	     compiled, 4 bytes containing the last modification time of the
 	     source file, and 4 bytes indicating the compiler options used.
@@ -1718,8 +1723,6 @@ __bb_init_func (struct bb *blocks)
 #define MACHINE_STATE_RESTORE(ID)
 #endif
 
-#include <string.h>
-
 /* Number of buckets in hashtable of basic block addresses.  */
 
 #define BB_BUCKETS 311
@@ -1876,7 +1879,6 @@ __bb_exit_trace_func ()
 {
   FILE *file = fopen ("bb.out", "a");
   struct bb_func *f;
-  struct bb_edge *e;
   struct bb *b;
         
   if (!file)
@@ -1911,7 +1913,7 @@ __bb_exit_trace_func ()
         {
           for (ptr = bb_head; ptr != (struct bb *) 0; ptr = ptr->next)
             {
-              if (!ptr->filename || p->filename != (char *) 0 && strcmp (p->filename, ptr->filename))
+              if (!ptr->filename || (p->filename != (char *) 0 && strcmp (p->filename, ptr->filename)))
                 continue;
               for (blk = 0; blk < ptr->ncounts; blk++)
                 {
@@ -2012,7 +2014,7 @@ found:        ;
                for ( ; bucket; bucket = bucket->next )
                  {
                    fprintf (file, "Jump from block 0x%.*lx to "
-                                  "block 0x%.*lx executed %*d time(s)\n", 
+                                  "block 0x%.*lx executed %*lu time(s)\n", 
                             addr_len, bucket->src_addr, 
                             addr_len, bucket->dst_addr, 
                             cnt_len, bucket->count);
@@ -2112,7 +2114,7 @@ __bb_init_prg ()
             {
               unsigned long l;
               f->next = bb_func_head;
-              if (pos = strchr (p, ':'))
+              if ((pos = strchr (p, ':')))
                 {
                   if (!(f->funcname = (char *) malloc (strlen (pos+1)+1)))
                     continue;
@@ -2157,7 +2159,7 @@ __bb_init_prg ()
       bb_hashbuckets = (struct bb_edge **) 
                    malloc (BB_BUCKETS * sizeof (struct bb_edge *));
       if (bb_hashbuckets)
-        bzero ((char *) bb_hashbuckets, BB_BUCKETS);
+        memset (bb_hashbuckets, 0, BB_BUCKETS * sizeof (struct bb_edge *));
     }
 
   if (bb_mode & 12)
@@ -2438,157 +2440,6 @@ stack_overflow:;
 #endif /* not BLOCK_PROFILER_CODE */
 #endif /* L_bb */
 
-/* Default free-store management functions for C++, per sections 12.5 and
-   17.3.3 of the Working Paper.  */
-
-#ifdef L_op_new
-/* operator new (size_t), described in 17.3.3.5.  This function is used by
-   C++ programs to allocate a block of memory to hold a single object.  */
-
-typedef void (*vfp)(void);
-extern vfp __new_handler;
-extern void __default_new_handler (void);
-
-#ifdef WEAK_ALIAS
-void * __builtin_new (size_t sz)
-     __attribute__ ((weak, alias ("___builtin_new")));
-void *
-___builtin_new (size_t sz)
-#else
-void *
-__builtin_new (size_t sz)
-#endif
-{
-  void *p;
-  vfp handler = (__new_handler) ? __new_handler : __default_new_handler;
-
-  /* malloc (0) is unpredictable; avoid it.  */
-  if (sz == 0)
-    sz = 1;
-  p = (void *) malloc (sz);
-  while (p == 0)
-    {
-      (*handler) ();
-      p = (void *) malloc (sz);
-    }
-  
-  return p;
-}
-#endif /* L_op_new */
-
-#ifdef L_op_vnew
-/* void * operator new [] (size_t), described in 17.3.3.6.  This function
-   is used by C++ programs to allocate a block of memory for an array.  */
-
-extern void * __builtin_new (size_t);
-
-#ifdef WEAK_ALIAS
-void * __builtin_vec_new (size_t sz)
-     __attribute__ ((weak, alias ("___builtin_vec_new")));
-void *
-___builtin_vec_new (size_t sz)
-#else
-void *
-__builtin_vec_new (size_t sz)
-#endif
-{
-  return __builtin_new (sz);
-}
-#endif /* L_op_vnew */
-
-#ifdef L_new_handler
-/* set_new_handler (fvoid_t *) and the default new handler, described in
-   17.3.3.2 and 17.3.3.5.  These functions define the result of a failure
-   to allocate the amount of memory requested from operator new or new [].  */
-
-#ifndef inhibit_libc
-/* This gets us __GNU_LIBRARY__.  */
-#undef NULL /* Avoid errors if stdio.h and our stddef.h mismatch.  */
-#include <stdio.h>
-
-#ifdef __GNU_LIBRARY__
-  /* Avoid forcing the library's meaning of `write' on the user program
-     by using the "internal" name (for use within the library)  */
-#define write(fd, buf, n)	__write((fd), (buf), (n))
-#endif
-#endif /* inhibit_libc */
-
-typedef void (*vfp)(void);
-void __default_new_handler (void);
-
-vfp __new_handler = (vfp) 0;
-
-vfp
-set_new_handler (vfp handler)
-{
-  vfp prev_handler;
-
-  prev_handler = __new_handler;
-  if (handler == 0) handler = __default_new_handler;
-  __new_handler = handler;
-  return prev_handler;
-}
-
-#define MESSAGE "Virtual memory exceeded in `new'\n"
-
-void
-__default_new_handler ()
-{
-#ifndef inhibit_libc
-  /* don't use fprintf (stderr, ...) because it may need to call malloc.  */
-  /* This should really print the name of the program, but that is hard to
-     do.  We need a standard, clean way to get at the name.  */
-  write (2, MESSAGE, sizeof (MESSAGE));
-#endif
-  /* don't call exit () because that may call global destructors which
-     may cause a loop.  */
-  _exit (-1);
-}
-#endif
-
-#ifdef L_op_delete
-/* operator delete (void *), described in 17.3.3.3.  This function is used
-   by C++ programs to return to the free store a block of memory allocated
-   as a single object.  */
-
-#ifdef WEAK_ALIAS
-void __builtin_delete (void *ptr)
-     __attribute__ ((weak, alias ("___builtin_delete")));
-void
-___builtin_delete (void *ptr)
-#else
-void
-__builtin_delete (void *ptr)
-#endif
-{
-  if (ptr)
-    free (ptr);
-}
-#endif
-
-#ifdef L_op_vdel
-/* operator delete [] (void *), described in 17.3.3.4.  This function is
-   used by C++ programs to return to the free store a block of memory
-   allocated as an array.  */
-
-extern void __builtin_delete (void *);
-
-#ifdef WEAK_ALIAS
-void __builtin_vec_delete (void *ptr)
-     __attribute__ ((weak, alias ("___builtin_vec_delete")));
-void
-___builtin_vec_delete (void *ptr)
-#else
-void
-__builtin_vec_delete (void *ptr)
-#endif
-{
-  __builtin_delete (ptr);
-}
-#endif
-
-/* End of C++ free-store management functions */
-
 #ifdef L_shtab
 unsigned int __shtab[] = {
     0x00000001, 0x00000002, 0x00000004, 0x00000008,
@@ -2861,6 +2712,51 @@ __enable_execute_stack ()
 
 #endif /* __sysV88__ */
 
+#ifdef __sysV68__
+
+#include <sys/signal.h>
+#include <errno.h>
+
+/* Motorola forgot to put memctl.o in the libp version of libc881.a,
+   so define it here, because we need it in __clear_insn_cache below */
+/* On older versions of this OS, no memctl or MCT_TEXT are defined;
+   hence we enable this stuff only if MCT_TEXT is #define'd.  */
+
+#ifdef MCT_TEXT
+asm("\n\
+	global memctl\n\
+memctl:\n\
+	movq &75,%d0\n\
+	trap &0\n\
+	bcc.b noerror\n\
+	jmp cerror%\n\
+noerror:\n\
+	movq &0,%d0\n\
+	rts");
+#endif
+
+/* Clear instruction cache so we can call trampolines on stack.
+   This is called from FINALIZE_TRAMPOLINE in mot3300.h.  */
+
+void
+__clear_insn_cache ()
+{
+#ifdef MCT_TEXT
+  int save_errno;
+
+  /* Preserve errno, because users would be surprised to have
+  errno changing without explicitly calling any system-call. */
+  save_errno = errno;
+
+  /* Keep it simple : memctl (MCT_TEXT) always fully clears the insn cache. 
+     No need to use an address derived from _start or %sp, as 0 works also. */
+  memctl(0, 4096, MCT_TEXT);
+  errno = save_errno;
+#endif
+}
+
+#endif /* __sysV68__ */
+
 #ifdef __pyr__
 
 #undef NULL /* Avoid errors if stdio.h and our stddef.h mismatch.  */
@@ -2913,6 +2809,7 @@ cacheflush (char *beg, int size, int flag)
 #endif /* sony_news */
 #endif /* L_trampoline */
 
+#ifndef __CYGWIN32__
 #ifdef L__main
 
 #include "gbl-ctors.h"
@@ -2994,6 +2891,7 @@ SYMBOL__MAIN ()
 #endif /* no HAS_INIT_SECTION or INVOKE__main */
 
 #endif /* L__main */
+#endif /* __CYGWIN32__ */
 
 #ifdef L_ctors
 
@@ -3089,10 +2987,16 @@ exit (int status)
 #else /* No NEED_ATEXIT */
   __do_global_dtors ();
 #endif /* No NEED_ATEXIT */
-#endif
+#endif /* !defined (INIT_SECTION_ASM_OP) || !defined (OBJECT_FORMAT_ELF) */
+/* In gbl-ctors.h, ON_EXIT is defined if HAVE_ATEXIT is defined.  In
+   __bb_init_func and _bb_init_prg, __bb_exit_func is registered with
+   ON_EXIT if ON_EXIT is defined.  Thus we must not call __bb_exit_func here
+   if HAVE_ATEXIT is defined. */
+#ifndef HAVE_ATEXIT
 #ifndef inhibit_libc
   __bb_exit_func ();
 #endif
+#endif /* !HAVE_ATEXIT */
 #ifdef EXIT_BODY
   EXIT_BODY;
 #else
@@ -3101,19 +3005,25 @@ exit (int status)
   _exit (status);
 }
 
-#else
+#else /* ON_EXIT defined */
 int _exit_dummy_decl = 0;	/* prevent compiler & linker warnings */
-#endif
+
+# ifndef HAVE_ATEXIT
+/* Provide a fake for atexit() using ON_EXIT.  */
+int atexit (func_ptr func)
+{
+  return ON_EXIT (func, NULL);
+}
+# endif /* HAVE_ATEXIT */
+#endif /* ON_EXIT defined */
 
 #endif /* L_exit */
 
 #ifdef L_eh
 
-/* Shared exception handling support routines.  */
+#include "gthr.h"
 
-/* Language-specific information about the active exception(s).  If there
-   are no active exceptions, it is set to 0.  */
-void *__eh_info;
+/* Shared exception handling support routines.  */
 
 void
 __default_terminate ()
@@ -3146,41 +3056,180 @@ __empty ()
 {
 }
 
+
+/* Include definitions of EH context and table layout */
+
+#include "eh-common.h"
+
+/* This is a safeguard for dynamic handler chain. */
+
+static void *top_elt[2];
+
+/* Allocate and return a new EH context structure. */
+
+extern void __throw ();
+
+static void *
+new_eh_context ()
+{
+  struct eh_context *eh = (struct eh_context *) malloc (sizeof *eh);
+  if (! eh)
+    __terminate ();
+
+  memset (eh, 0, sizeof *eh);
+
+  eh->dynamic_handler_chain = top_elt;
+
+  return eh;
+}
+
+#if __GTHREADS
+static __gthread_key_t eh_context_key;
+
+/* Destructor for struct eh_context. */
+static void
+eh_context_free (void *ptr)
+{
+  __gthread_key_dtor (eh_context_key, ptr);
+  if (ptr)
+    free (ptr);
+}
+#endif
+
+/* Pointer to function to return EH context. */
+
+static struct eh_context *eh_context_initialize ();
+static struct eh_context *eh_context_static ();
+#if __GTHREADS
+static struct eh_context *eh_context_specific ();
+#endif
+
+static struct eh_context *(*get_eh_context) () = &eh_context_initialize;
+
+/* Routine to get EH context.
+   This one will simply call the function pointer. */
+
+void *
+__get_eh_context ()
+{
+  return (void *) (*get_eh_context) ();
+}
+
+/* Get and set the language specific info pointer. */
+
+void **
+__get_eh_info ()
+{
+  struct eh_context *eh = (*get_eh_context) ();
+  return &eh->info;
+}
+
+#if __GTHREADS
+static void
+eh_threads_initialize ()
+{
+  /* Try to create the key.  If it fails, revert to static method,
+     otherwise start using thread specific EH contexts. */
+  if (__gthread_key_create (&eh_context_key, &eh_context_free) == 0)
+    get_eh_context = &eh_context_specific;
+  else
+    get_eh_context = &eh_context_static;
+}
+#endif /* no __GTHREADS */
+
+/* Initialize EH context.
+   This will be called only once, since we change GET_EH_CONTEXT
+   pointer to another routine. */
+
+static struct eh_context *
+eh_context_initialize ()
+{
+#if __GTHREADS
+
+  static __gthread_once_t once = __GTHREAD_ONCE_INIT;
+  /* Make sure that get_eh_context does not point to us anymore.
+     Some systems have dummy thread routines in their libc that
+     return a success (Solaris 2.6 for example). */
+  if (__gthread_once (&once, eh_threads_initialize) != 0
+      || get_eh_context == &eh_context_initialize)
+    {
+      /* Use static version of EH context. */
+      get_eh_context = &eh_context_static;
+    }
+
+#else /* no __GTHREADS */
+
+  /* Use static version of EH context. */
+  get_eh_context = &eh_context_static;
+
+#endif /* no __GTHREADS */
+
+  return (*get_eh_context) ();
+}
+
+/* Return a static EH context. */
+
+static struct eh_context *
+eh_context_static ()
+{
+  static struct eh_context *eh;
+  if (! eh)
+    eh = new_eh_context ();
+  return eh;
+}
+
+#if __GTHREADS
+/* Return a thread specific EH context. */
+
+static struct eh_context *
+eh_context_specific ()
+{
+  struct eh_context *eh;
+  eh = (struct eh_context *) __gthread_getspecific (eh_context_key);
+  if (! eh)
+    {
+      eh = new_eh_context ();
+      if (__gthread_setspecific (eh_context_key, (void *) eh) != 0)
+	__terminate ();
+    }
+
+  return eh;
+}
+#endif __GTHREADS
+
 /* Support routines for setjmp/longjmp exception handling.  */
 
 /* Calls to __sjthrow are generated by the compiler when an exception
    is raised when using the setjmp/longjmp exception handling codegen
    method.  */
 
+#ifdef DONT_USE_BUILTIN_SETJMP
 extern void longjmp (void *, int);
-
-static void *top_elt[2];
-void **__dynamic_handler_chain = top_elt;
+#endif
 
 /* Routine to get the head of the current thread's dynamic handler chain
-   use for exception handling.
-
-   TODO: make thread safe.  */
+   use for exception handling. */
 
 void ***
 __get_dynamic_handler_chain ()
 {
-  return &__dynamic_handler_chain;
+  struct eh_context *eh = (*get_eh_context) ();
+  return &eh->dynamic_handler_chain;
 }
 
 /* This is used to throw an exception when the setjmp/longjmp codegen
    method is used for exception handling.
 
-   We call __terminate if there are no handlers left (we know this
-   when the dynamic handler chain is top_elt).  Otherwise we run the
-   cleanup actions off the dynamic cleanup stack, and pop the top of
-   the dynamic handler chain, and use longjmp to transfer back to the
-   associated handler.  */
+   We call __terminate if there are no handlers left.  Otherwise we run the
+   cleanup actions off the dynamic cleanup stack, and pop the top of the
+   dynamic handler chain, and use longjmp to transfer back to the associated
+   handler.  */
 
 void
 __sjthrow ()
 {
-  void ***dhc = __get_dynamic_handler_chain ();
+  struct eh_context *eh = (*get_eh_context) ();
+  void ***dhc = &eh->dynamic_handler_chain;
   void *jmpbuf;
   void (*func)(void *, int);
   void *arg;
@@ -3228,7 +3277,7 @@ __sjthrow ()
   /* We must call terminate if we try and rethrow an exception, when
      there is no exception currently active and when there are no
      handlers left.  */
-  if (! __eh_info || (*dhc) == top_elt)
+  if (! eh->info || (*dhc) == top_elt)
     __terminate ();
     
   /* Find the jmpbuf associated with the top element of the dynamic
@@ -3255,8 +3304,8 @@ __sjthrow ()
 void
 __sjpopnthrow ()
 {
-  void ***dhc = __get_dynamic_handler_chain ();
-  void *jmpbuf;
+  struct eh_context *eh = (*get_eh_context) ();
+  void ***dhc = &eh->dynamic_handler_chain;
   void (*func)(void *, int);
   void *arg;
   void ***cleanup;
@@ -3311,19 +3360,30 @@ __sjpopnthrow ()
 /* This value identifies the place from which an exception is being
    thrown.  */
 
-void *__eh_pc;
-
 #ifdef EH_TABLE_LOOKUP
 
 EH_TABLE_LOOKUP
 
 #else
 
-typedef struct exception_table {
-  void *start;
-  void *end;
-  void *exception_handler;
-} exception_table;
+#ifdef DWARF2_UNWIND_INFO
+
+
+/* Return the table version of an exception descriptor */
+
+short 
+__get_eh_table_version (exception_descriptor *table) 
+{
+  return table->lang.version;
+}
+
+/* Return the originating table language of an exception descriptor */
+
+short 
+__get_eh_table_language (exception_descriptor *table)
+{
+  return table->lang.language;
+}
 
 /* This routine takes a PC and a pointer to the exception region TABLE for
    its translation unit, and returns the address of the exception handler
@@ -3334,7 +3394,7 @@ typedef struct exception_table {
    an inner block.  */
 
 static void *
-find_exception_handler (void *pc, exception_table *table)
+old_find_exception_handler (void *pc, old_exception_table *table)
 {
   if (table)
     {
@@ -3342,186 +3402,72 @@ find_exception_handler (void *pc, exception_table *table)
       int best = -1;
 
       /* We can't do a binary search because the table isn't guaranteed
-	 to be sorted from function to function.  */
-      for (pos = 0; table[pos].exception_handler != (void *) -1; ++pos)
-	{
-	  if (table[pos].start <= pc && table[pos].end > pc)
-	    {
-	      /* This can apply.  Make sure it is at least as small as
-		 the previous best.  */
-	      if (best == -1 || (table[pos].end <= table[best].end
-				 && table[pos].start >= table[best].start))
-		best = pos;
-	    }
-	  /* But it is sorted by starting PC within a function.  */
-	  else if (best >= 0 && table[pos].start > pc)
-	    break;
-	}
+         to be sorted from function to function.  */
+      for (pos = 0; table[pos].start_region != (void *) -1; ++pos)
+        {
+          if (table[pos].start_region <= pc && table[pos].end_region > pc)
+            {
+              /* This can apply.  Make sure it is at least as small as
+                 the previous best.  */
+              if (best == -1 || (table[pos].end_region <= table[best].end_region
+                        && table[pos].start_region >= table[best].start_region))
+                best = pos;
+            }
+          /* But it is sorted by starting PC within a function.  */
+          else if (best >= 0 && table[pos].start_region > pc)
+            break;
+        }
       if (best != -1)
-	return table[best].exception_handler;
+        return table[best].exception_handler;
     }
 
   return (void *) 0;
 }
+
+static void *
+find_exception_handler (void *pc, exception_descriptor *table, void *eh_info)
+{
+  if (table)
+    {
+      /* The new model assumed the table is sorted inner-most out so the
+         first region we find which matches is the correct one */
+
+      int pos;
+      void *ret;
+      exception_table *tab = &(table->table[0]);
+
+      /* Subtract 1 from the PC to avoid hitting the next region */
+      pc--;
+      
+      /* We can't do a binary search because the table is in inner-most
+         to outermost address ranges within functions */
+      for (pos = 0; tab[pos].start_region != (void *) -1; pos++)
+        { 
+          if (tab[pos].start_region <= pc && tab[pos].end_region > pc)
+            {
+              if (tab[pos].match_info)
+                {
+                  __eh_matcher matcher = ((__eh_info *)eh_info)->match_function;
+                  /* match info but no matcher is NOT a match */
+                  if (matcher) 
+                    {
+                      ret = (*matcher)(eh_info, tab[pos].match_info, table);
+                      if (ret)
+                        return tab[pos].exception_handler;
+                    }
+                }
+              else
+                return tab[pos].exception_handler;
+            }
+        }
+    }
+
+  return (void *) 0;
+}
+#endif /* DWARF2_UNWIND_INFO */
 #endif /* EH_TABLE_LOOKUP */
 
-#ifndef DWARF2_UNWIND_INFO
-/* Support code for exception handling using inline unwinders or
-   __unwind_function.  */
-
-#ifndef EH_TABLE_LOOKUP
-typedef struct exception_table_node {
-  exception_table *table;
-  void *start;
-  void *end;
-  struct exception_table_node *next;
-} exception_table_node;
-
-static struct exception_table_node *exception_table_list;
-
-void *
-__find_first_exception_table_match (void *pc)
-{
-  register exception_table_node *tnp;
-
-  for (tnp = exception_table_list; tnp != 0; tnp = tnp->next)
-    {
-      if (tnp->start <= pc && tnp->end >= pc)
-	return find_exception_handler (pc, tnp->table);
-    }
-
-  return (void *) 0;
-}
-
-void
-__register_exceptions (exception_table *table)
-{
-  exception_table_node *node;
-  exception_table *range = table + 1;
-
-  if (range->start == (void *) -1)
-    return;
-
-  node = (exception_table_node *) malloc (sizeof (exception_table_node));
-  node->table = table;
-
-  /* This look can be optimized away either if the table
-     is sorted, or if we pass in extra parameters.  */
-  node->start = range->start;
-  node->end = range->end;
-  for (range++ ; range->start != (void *) (-1); range++)
-    {
-      if (range->start < node->start)
-	node->start = range->start;
-      if (range->end > node->end)
-	node->end = range->end;
-    }
-
-  node->next = exception_table_list;
-  exception_table_list = node;
-}
-#endif /* !EH_TABLE_LOOKUP */
-
-/* Throw stub routine.
-
-   This is work in progress, but not completed yet.  */
-
-void
-__throw ()
-{
-  abort ();
-}
-
-/* See expand_builtin_throw for details.  */
-
-void **__eh_pcnthrow () {
-  static void *buf[2] = {
-    &__eh_pc,
-    &__throw
-  };
-  return buf;
-}
-
-#if #machine(i386)
-void
-__unwind_function(void *ptr)
-{
-  asm("movl 8(%esp),%ecx");
-  /* Undo current frame */
-  asm("movl %ebp,%esp");
-  asm("popl %ebp");
-  /* like ret, but stay here */
-  asm("addl $4,%esp");
-  
-  /* Now, undo previous frame.  */
-  /* This is a test routine, as we have to dynamically probe to find out
-     what to pop for certain, this is just a guess.  */
-  asm("leal -16(%ebp),%esp");
-  asm("pop %ebx");
-  asm("pop %esi");
-  asm("pop %edi");
-  asm("movl %ebp,%esp");
-  asm("popl %ebp");
-
-  asm("movl %ecx,0(%esp)");
-  asm("ret");
-}
-#elif #machine(rs6000) && !defined _ARCH_PPC
-__unwind_function(void *ptr)
-{
-  asm("mr 31,1");
-  asm("l 1,0(1)");
-  asm("l 31,-4(1)");
-  asm("# br");
-
-  asm("mr 31,1");
-  asm("l 1,0(1)");
-  /* use 31 as a scratch register to restore the link register.  */
-  asm("l 31, 8(1);mtlr 31 # l lr,8(1)");
-  asm("l 31,-4(1)");
-  asm("# br");
-  asm("mtctr 3;bctr # b 3");
-}
-#elif (#machine(rs6000) || #machine(powerpc)) && defined _ARCH_PPC
-__unwind_function(void *ptr)
-{
-  asm("mr 31,1");
-  asm("lwz 1,0(1)");
-  asm("lwz 31,-4(1)");
-  asm("# br");
-
-  asm("mr 31,1");
-  asm("lwz 1,0(1)");
-  /* use 31 as a scratch register to restore the link register.  */
-  asm("lwz 31, 8(1);mtlr 31 # l lr,8(1)");
-  asm("lwz 31,-4(1)");
-  asm("# br");
-  asm("mtctr 3;bctr # b 3");
-}
-#elif #machine(vax)
-__unwind_function(void *ptr)
-{
-  __label__ return_again;
-
-  /* Replace our frame's return address with the label below.
-     During execution, we will first return here instead of to
-     caller, then second return takes caller's frame off the stack.
-     Two returns matches two actual calls, so is less likely to
-     confuse debuggers.  `16' corresponds to RETURN_ADDRESS_OFFSET.  */
-  __asm ("movl %0,16(fp)" : : "p" (&& return_again));
-  return;
-
- return_again:
-  return;
-}
-#else
-__unwind_function(void *ptr)
-{
-  abort ();
-}
-#endif /* powerpc */
-
-#else /* DWARF2_UNWIND_INFO */
+#ifdef DWARF2_UNWIND_INFO
 /* Support code for exception handling using static unwind information.  */
 
 #include "frame.h"
@@ -3646,17 +3592,19 @@ in_reg_window (int reg, frame_state *udata)
 void
 __throw ()
 {
-  void *pc, *handler, *retaddr;
+  struct eh_context *eh = (*get_eh_context) ();
+  void *saved_pc, *pc, *handler, *retaddr;
   frame_state ustruct, ustruct2;
   frame_state *udata = &ustruct;
   frame_state *sub_udata = &ustruct2;
   frame_state my_ustruct, *my_udata = &my_ustruct;
   long args_size;
+  int new_exception_model;
 
   /* This is required for C++ semantics.  We must call terminate if we
      try and rethrow an exception, when there is no exception currently
      active.  */
-  if (! __eh_info)
+  if (! eh->info)
     __terminate ();
     
   /* Start at our stack frame.  */
@@ -3681,7 +3629,8 @@ label:
   __builtin_unwind_init ();
 
   /* Now reset pc to the right throw point.  */
-  pc = __eh_pc;
+  pc = __builtin_extract_return_addr (__builtin_return_address (0)) - 1;
+  saved_pc = pc;
 
   handler = 0;
   for (;;)
@@ -3694,7 +3643,16 @@ label:
       if (! udata)
 	break;
 
-      handler = find_exception_handler (pc, udata->eh_ptr);
+      if (udata->eh_ptr == NULL)
+        new_exception_model = 0;
+      else
+        new_exception_model = (((exception_descriptor *)(udata->eh_ptr))->
+                                          runtime_id_field == NEW_EH_RUNTIME);
+
+      if (new_exception_model)
+        handler = find_exception_handler (pc, udata->eh_ptr, eh->info);
+      else
+        handler = old_find_exception_handler (pc, udata->eh_ptr);
 
       /* If we found one, we can stop searching.  */
       if (handler)
@@ -3713,13 +3671,14 @@ label:
   if (! handler)
     __terminate ();
 
-  if (pc == __eh_pc)
+  eh->handler_label = handler;
+
+  if (pc == saved_pc)
     /* We found a handler in the throw context, no need to unwind.  */
     udata = my_udata;
   else
     {
       int i;
-      void *val;
 
       /* Unwind all the frames between this one and the handler by copying
 	 their saved register values into our register save slots.  */
@@ -3728,7 +3687,7 @@ label:
       void *handler_pc = pc;
 
       /* Start from the throw context again.  */
-      pc = __eh_pc;
+      pc = saved_pc;
       memcpy (udata, my_udata, sizeof (*udata));
 
       while (pc != handler_pc)
@@ -3771,7 +3730,10 @@ label:
   /* udata now refers to the frame called by the handler frame.  */
 
   /* Emit the stub to adjust sp and jump to the handler.  */
-  retaddr = __builtin_eh_stub ();
+  if (new_exception_model)
+    retaddr = __builtin_eh_stub ();
+  else
+    retaddr =  __builtin_eh_stub_old ();
 
   /* And then set our return address to point to the stub.  */
   if (my_udata->saved[my_udata->retaddr_column] == REG_SAVED_OFFSET)
@@ -3781,19 +3743,29 @@ label:
 
   /* Set up the registers we use to communicate with the stub.
      We check STACK_GROWS_DOWNWARD so the stub can use adjust_stack.  */
-  __builtin_set_eh_regs (handler,
+
+  if (new_exception_model)
+    __builtin_set_eh_regs ((void *)eh,
 #ifdef STACK_GROWS_DOWNWARD
 			 udata->cfa - my_udata->cfa
 #else
 			 my_udata->cfa - udata->cfa
 #endif
-			 + args_size
-			 );
+			 + args_size);
+  else
+    __builtin_set_eh_regs (handler,
+
+#ifdef STACK_GROWS_DOWNWARD
+			 udata->cfa - my_udata->cfa
+#else
+			 my_udata->cfa - udata->cfa
+#endif
+			 + args_size);
 
   /* Epilogue:  restore the handler frame's register values and return
      to the stub.  */
 }
-#endif /* !DWARF2_UNWIND_INFO */
+#endif /* DWARF2_UNWIND_INFO */
 
 #endif /* L_eh */
 

@@ -1,6 +1,5 @@
-/*
-   NetBSD/arm (RiscBSD) version.
-   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+/* NetBSD/arm32 version.
+   Copyright (C) 1993, 1994, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Mark Brinicombe (amb@physig.ph.kcl.ac.uk)
 
 This file is part of GNU CC.
@@ -36,12 +35,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* ARM6 family default cpu.  */
 #define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm6
 
-/* Default is to use soft float and APCS-32 mode.  */
-#if 0 /* XXX soft float doesn't seem to work! */
+/* Default is to use APCS-32 mode.  */
 #define TARGET_DEFAULT (ARM_FLAG_APCS_32 | ARM_FLAG_SOFT_FLOAT)
-#else
-#define TARGET_DEFAULT (ARM_FLAG_APCS_32)
-#endif
 
 #include "arm/aout.h"
 
@@ -56,30 +51,24 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* XXX our arm assembler seems to really want # for type specs -- cgd */
 #define TYPE_OPERAND_FMT "#%s"
 
-/* The NetBSD/arm32 assembler (or, at least the one that I have) doesn't
-   seem to do the right thing with weak references, which causes libgcc
-   c++ function lossage. */
-#undef ASM_WEAKEN_LABEL
+/* Until they use ELF or something that handles dwarf2 unwinds
+   and initialization stuff better.  */
+#undef DWARF2_UNWIND_INFO
 
 /* Some defines for CPP.  arm32 is the NetBSD port name, so we always (only)
    define __arm32__ and __NetBSD__, and add __KPRINTF_ATTRIBUTE__ since
    this compiler is hacked with the NetBSD kprintf attribute mods. */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__arm32__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__"
-
-/* Define _POSIX_SOURCE if necessary.  */
-#undef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC	"%{posix:-D_POSIX_SOURCE}"
+#define CPP_PREDEFINES "-D__arm32__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ \
+-Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
 /* Because TARGET_DEFAULT sets ARM_FLAG_APCS_32 */
 #undef CPP_APCS_PC_DEFAULT_SPEC
 #define CPP_APCS_PC_DEFAULT_SPEC "-D__APCS_32__"
 
-#if 0 /* XXX soft float doesn't seem to work! */
 /* Because TARGET_DEFAULT sets ARM_FLAG_SOFT_FLOAT */
 #undef CPP_FLOAT_DEFAULT_SPEC
 #define CPP_FLOAT_DEFAULT_SPEC "-D__SOFTFP__"
-#endif
 
 /* Pass -X to the linker so that it will strip symbols starting with 'L' */
 #undef LINK_SPEC
@@ -121,12 +110,17 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
   fprintf(STREAM, "\tbl\tmcount\n");					    \
 }
 
+/* On the ARM `@' introduces a comment, so we must use something else
+   for .type directives.  */
+#undef TYPE_OPERAND_FMT
+#define TYPE_OPERAND_FMT "%%%s"
+
 /* VERY BIG NOTE : Change of structure alignment for RiscBSD.
    There are consequences you should be aware of...
 
    Normally GCC/arm uses a structure alignment of 32 for compatibility
    with armcc.  This means that structures are padded to a word
-   boundry.  However this causes problems with bugged NetBSD kernel
+   boundary.  However this causes problems with bugged NetBSD kernel
    code (possibly userland code as well - I have not checked every
    binary).  The nature of this bugged code is to rely on sizeof()
    returning the correct size of various structures rounded to the
@@ -142,7 +136,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
            structures containing shorts will be half word alinged.
            structures containing ints will be word aligned.
 
-      This means structures should be padded to a word boundry if
+      This means structures should be padded to a word boundary if
       alignment of 32 is required for byte structures etc.
       
    2. A potential performance penalty may exist if strings are no longer
@@ -154,9 +148,3 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    requirements.  */
 #undef STRUCTURE_SIZE_BOUNDARY
 #define STRUCTURE_SIZE_BOUNDARY 8
-
-/* Until they use ELF or something that handles dwarf2 unwinds
-   and initialization stuff better.  */
-#undef DWARF2_UNWIND_INFO
-/* #define DWARF2_UNWIND_INFO 0 */
-

@@ -139,7 +139,7 @@
       {
 	cc_status.flags |= CC_REVERSED;
 	if (INTVAL (operands[1]) > 7)
-	  operands[1] = gen_rtx(CONST_INT, VOIDmode, i);
+	  operands[1] = GEN_INT (i);
 	return \"cmpqw %1,%0\";
       }
     }
@@ -150,7 +150,7 @@
       if (i <= 7 && i >= -8)
 	{
 	  if (INTVAL (operands[0]) > 7)
-	    operands[0] = gen_rtx(CONST_INT, VOIDmode, i);
+	    operands[0] = GEN_INT (i);
 	  return \"cmpqw %0,%1\";
 	}
     }
@@ -171,7 +171,7 @@
 	{
 	  cc_status.flags |= CC_REVERSED;
 	  if (INTVAL (operands[1]) > 7)
-	    operands[1] = gen_rtx(CONST_INT, VOIDmode, i);
+	    operands[1] = GEN_INT (i);
 	  return \"cmpqb %1,%0\";
 	}
     }
@@ -182,7 +182,7 @@
       if (i <= 7 && i >= -8)
 	{
 	  if (INTVAL (operands[0]) > 7)
-	    operands[0] = gen_rtx(CONST_INT, VOIDmode, i);
+	    operands[0] = GEN_INT (i);
 	  return \"cmpqb %0,%1\";
 	}
     }
@@ -277,8 +277,8 @@
       convrt.i[1] = CONST_DOUBLE_HIGH (operands[1]);
       convrt.f = convrt.d;
 
-      /* Is there a better machine-independent way to to this?  */
-      operands[1] = gen_rtx (CONST_INT, VOIDmode, convrt.i[0]);
+      /* Is there a better machine-independent way to do this?  */
+      operands[1] = GEN_INT (convrt.i[0]);
       return \"movd %1,%0\";
     }
 #endif
@@ -358,7 +358,7 @@
     return \"lprd fp,%1\";
   if (GET_CODE (operands[1]) == CONST_DOUBLE)
     operands[1]
-      = gen_rtx (CONST_INT, VOIDmode, CONST_DOUBLE_LOW (operands[1]));
+      = GEN_INT (CONST_DOUBLE_LOW (operands[1]));
   if (GET_CODE (operands[1]) == CONST_INT)
     {
       int i = INTVAL (operands[1]);
@@ -419,7 +419,7 @@
       rtx xoperands[3];
       xoperands[0] = operands[0];
       xoperands[1] = XEXP (operands[1], 0);
-      xoperands[2] = gen_rtx (CONST_INT, VOIDmode, INTVAL (XEXP (operands[1], 1)) >> 1);
+      xoperands[2] = GEN_INT (INTVAL (XEXP (operands[1], 1)) >> 1);
       return output_shift_insn (xoperands);
     }
   return \"addr %a1,%0\";
@@ -438,7 +438,7 @@
 	{
 	  if (INTVAL (operands[1]) > 7)
 	    operands[1] =
-	      gen_rtx (CONST_INT, VOIDmode, i);
+	      GEN_INT (i);
 	  return \"movqw %1,%0\";
 	}
 	return \"movw %1,%0\";
@@ -484,7 +484,7 @@
 	{
 	  if (INTVAL (operands[1]) > 7)
 	    operands[1] =
-	      gen_rtx (CONST_INT, VOIDmode, char_val);
+	      GEN_INT (char_val);
 	  return \"movqb %1,%0\";
 	}
 	return \"movb %1,%0\";
@@ -575,6 +575,34 @@
   ""
   "movmd %a1,%a0,%2")
 
+#ifdef UTEK_ASM
+  if (GET_CODE (operands[2]) == CONST_INT && (INTVAL (operands[2]) & 0x3) == 0)
+    {
+      operands[2] = GEN_INT (INTVAL (operands[2]) >> 2);
+      if ((unsigned) INTVAL (operands[2]) <= 7)
+	return \"movqd %2,r0\;movsd $0\";
+      else 
+	return \"movd %2,r0\;movsd $0\";
+    }
+  else
+    {
+      return \"movd %2,r0\;movsb $0\";
+    }
+#else
+  if (GET_CODE (operands[2]) == CONST_INT && (INTVAL (operands[2]) & 0x3) == 0)
+    {
+      operands[2] = GEN_INT (INTVAL (operands[2]) >> 2);
+      if ((unsigned) INTVAL (operands[2]) <= 7)
+	return \"movqd %2,r0\;movsd\";
+      else 
+	return \"movd %2,r0\;movsd\";
+    }
+  else
+    {
+      return \"movd %2,r0\;movsb\";
+    }
+#endif
+}")
 
 ;; Extension and truncation insns.
 ;; Those for integer source operand
@@ -1493,8 +1521,7 @@
 	    return \"movqb %$0,%0\";
 	  else
 	    {
-	      operands[2] = gen_rtx (CONST_INT, VOIDmode,
-				     INTVAL (operands[2]) & 0xff);
+	      operands[2] = GEN_INT (INTVAL (operands[2]) & 0xff);
 	      return \"andb %2,%0\";
 	    }
 	}
@@ -1504,8 +1531,7 @@
 	    return \"movqw %$0,%0\";
 	  else
 	    {
-	      operands[2] = gen_rtx (CONST_INT, VOIDmode,
-				     INTVAL (operands[2]) & 0xffff);
+	      operands[2] = GEN_INT (INTVAL (operands[2]) & 0xffff);
 	      return \"andw %2,%0\";
 	    }
 	}
@@ -1527,8 +1553,7 @@
 	return \"movqb %$0,%0\";
       else
 	{
-	  operands[2] = gen_rtx (CONST_INT, VOIDmode,
-				 INTVAL (operands[2]) & 0xff);
+	  operands[2] = GEN_INT (INTVAL (operands[2]) & 0xff);
 	  return \"andb %2,%0\";
 	}
     }
@@ -2051,7 +2076,7 @@
       rtx xoperands[3];
       xoperands[0] = operands[0];
       xoperands[1] = XEXP (operands[1], 0);
-      xoperands[2] = gen_rtx (CONST_INT, VOIDmode, INTVAL (XEXP (operands[1], 1)) >> 1);
+      xoperands[2] = GEN_INT (INTVAL (XEXP (operands[1], 1)) >> 1);
       return output_shift_insn (xoperands);
     }
   return \"addr %a1,%0\";
@@ -2231,7 +2256,7 @@
 	{
 	  operands[0] = adj_offsettable_operand (operands[0],
 					        INTVAL (operands[2]) / 8);
-          operands[2] = gen_rtx (CONST_INT, VOIDmode, INTVAL (operands[2]) % 8);
+          operands[2] = GEN_INT (INTVAL (operands[2]) % 8);
 	}
       if (INTVAL (operands[1]) <= 8)
         return \"inssb %3,%0,%2,%1\";

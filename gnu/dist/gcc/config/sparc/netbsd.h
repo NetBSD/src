@@ -37,14 +37,12 @@
 
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */
+#undef DEFAULT_PCC_STRUCT_RETURN
 #define DEFAULT_PCC_STRUCT_RETURN 0
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#define DWARF2_UNWIND_INFO 0
-
-/* Name the port */
-#define	TARGET_NAME	"sparc-netbsd"
+#undef DWARF2_UNWIND_INFO
 
 /* Name the default cpu target */
 #define TARGET_CPU_DEFAULT	TARGET_CPU_sparc
