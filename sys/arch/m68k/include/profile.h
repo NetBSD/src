@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.2 1994/10/26 07:50:49 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.3 1995/03/26 17:08:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@ extern void mcount() asm("mcount"); void mcount() { \
 	_mcount(frompcindex, selfpc); \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * The following two macros do splhigh and splx respectively.
  * They have to be defined this way because these are real
@@ -58,4 +58,4 @@ extern void mcount() asm("mcount"); void mcount() { \
 
 #define MCOUNT_EXIT \
 	asm("movw	%0,sr" : : "g" (s))
-#endif /* KERNEL */
+#endif /* _KERNEL */

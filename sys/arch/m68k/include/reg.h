@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.10 1995/01/26 19:48:48 mycroft Exp $	*/
+/*	$NetBSD: reg.h,v 1.11 1995/03/26 17:08:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@ struct fpreg {
 #define	PS	(16)
 #define	PC	(17)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Due to a mental lapse somewhere down the line, wait returns its values
  * in strange registers.  Kludge it up here so we don't have to in the
