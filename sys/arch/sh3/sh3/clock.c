@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2000/01/14 19:41:36 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2000/01/15 02:46:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -354,7 +354,13 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
+#ifdef SH4
+#define	FROMBCD2(x)	(((x) >> 12) * 1000 + ((x) >> 8) * 100 + \
+			 ((x) >> 4) * 10 + ((x) & 0xf))
+	dt.dt_year = FROMBCD2(SHREG_RYRCNT);
+#else
 	dt.dt_year = 1900 + FROMBCD(SHREG_RYRCNT);
+#endif
 	dt.dt_mon = FROMBCD(SHREG_RMONCNT);
 	dt.dt_day = FROMBCD(SHREG_RDAYCNT);
 	dt.dt_wday = FROMBCD(SHREG_RWKCNT);
@@ -368,9 +374,10 @@ inittodr(base)
 	       dt.dt_wday);
 #endif
 
-
+#ifndef SH4
 	if (dt.dt_year < 1970)
 		dt.dt_year += 100;
+#endif
 
 	if (dt.dt_mon < 1 || dt.dt_mon > 12)
 		doreset = 1;
@@ -444,7 +451,13 @@ resettodr()
 	SHREG_RWKCNT = TOBCD(dt.dt_wday);
 	SHREG_RDAYCNT = TOBCD(dt.dt_day);
 	SHREG_RMONCNT = TOBCD(dt.dt_mon);
+#ifdef SH4
+#define TOBCD2(x)	(((x) / 1000 * 4096) + ((x) / 100 * 256) + \
+			 ((x) / 10 * 16) + ((x) % 10))
+	SHREG_RYRCNT = TOBCD2(dt.dt_year);
+#else
 	SHREG_RYRCNT = TOBCD(dt.dt_year % 100);
+#endif
 
 	/* start RTC */
 	SHREG_RCR2 = SHREG_RCR2_RESET|SHREG_RCR2_ENABLE|SHREG_RCR2_START;
