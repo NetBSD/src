@@ -1,4 +1,40 @@
-/*	$NetBSD: ftpcmd.y,v 1.40 1999/12/07 05:30:54 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.41 1999/12/12 14:05:54 lukem Exp $	*/
+
+/*-
+ * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.40 1999/12/07 05:30:54 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.41 1999/12/12 14:05:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +160,7 @@ extern	jmp_buf		errcatch;
 	MAIL	MLFL	MRCP	MRSQ	MSAM	MSND
 	MSOM
 
-	UMASK	IDLE	CHMOD
+	CHMOD	IDLE	RATEGET	RATEPUT	UMASK
 
 	LEXERR
 
@@ -132,7 +168,7 @@ extern	jmp_buf		errcatch;
 %token	<s> ALL
 %token	<i> NUMBER
 
-%type	<i> check_login check_modify octal_number byte_size
+%type	<i> check_login check_modify check_upload octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code decimal_integer
 %type	<s> pathstring pathname password username
 %type	<s> mechanism_name base64data prot_code
@@ -532,7 +568,7 @@ cmd
 				free($4);
 		}
 
-	| STOR check_login SP pathname CRLF
+	| STOR check_upload SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				store($4, "w", 0);
@@ -540,7 +576,7 @@ cmd
 				free($4);
 		}
 
-	| STOU check_login SP pathname CRLF
+	| STOU check_upload SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				store($4, "w", 1);
@@ -548,7 +584,7 @@ cmd
 				free($4);
 		}
 		
-	| APPE check_login SP pathname CRLF
+	| APPE check_upload SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				store($4, "a", 0);
@@ -652,9 +688,98 @@ cmd
 			help(sitetab, NULL);
 		}
 
+	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
+		{
+			if ($4 && ($8 != NULL)) {
+				if ($6 > 0777)
+					reply(501,
+				"CHMOD: Mode value must be between 0 and 0777");
+				else if (chmod($8, $6) < 0)
+					perror_reply(550, $8);
+				else
+					reply(200, "CHMOD command successful.");
+			}
+			if ($8 != NULL)
+				free($8);
+		}
+
 	| SITE SP HELP SP STRING CRLF
 		{
 			help(sitetab, $5);
+		}
+
+	| SITE SP IDLE CRLF
+		{
+			reply(200,
+			    "Current IDLE time limit is %d seconds; max %d",
+				curclass.timeout, curclass.maxtimeout);
+		}
+
+	| SITE SP IDLE SP NUMBER CRLF
+		{
+			if ($5 < 30 || $5 > curclass.maxtimeout) {
+				reply(501,
+			"IDLE time limit must be between 30 and %d seconds",
+				    curclass.maxtimeout);
+			} else {
+				curclass.timeout = $5;
+				(void) alarm(curclass.timeout);
+				reply(200,
+				    "IDLE time limit set to %d seconds",
+				    curclass.timeout);
+			}
+		}
+
+	| SITE SP RATEGET CRLF
+		{
+			reply(200, "Current RATEGET is %d bytes/sec",
+			    curclass.rateget);
+		}
+
+	| SITE SP RATEGET SP STRING CRLF
+		{
+			char *p = $5;
+			int rate;
+
+			rate = strsuftoi(p);
+			if (rate == -1)
+				reply(501, "Invalid RATEGET %s", p);
+			else if (curclass.maxrateget &&
+			    rate > curclass.maxrateget)
+				reply(501,
+			    "RATEGET %d is larger than maximum RATEGET %d",
+				    rate, curclass.maxrateget);
+			else {
+				curclass.rateget = rate;
+				reply(200, "RATEGET set to %d bytes/sec",
+				    curclass.rateget);
+			}
+		}
+
+	| SITE SP RATEPUT CRLF
+		{
+			reply(200, "Current RATEPUT is %d bytes/sec",
+			    curclass.rateput);
+		}
+
+	| SITE SP RATEPUT SP STRING CRLF
+		{
+			char *p = $5;
+			int rate;
+
+			rate = strsuftoi(p);
+			if (rate == -1)
+				reply(501, "Invalid RATEPUT %s", p);
+			else if (curclass.maxrateput &&
+			    rate > curclass.maxrateput)
+				reply(501,
+			    "RATEPUT %d is larger than maximum RATEPUT %d",
+				    rate, curclass.maxrateput);
+			else {
+				curclass.rateput = rate;
+				reply(200, "RATEPUT set to %d bytes/sec",
+				    curclass.rateput);
+			}
 		}
 
 	| SITE SP UMASK check_login CRLF
@@ -681,43 +806,6 @@ cmd
 					    "UMASK set to %03o (was %03o)",
 					    $6, oldmask);
 				}
-			}
-		}
-
-	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
-		{
-			if ($4 && ($8 != NULL)) {
-				if ($6 > 0777)
-					reply(501,
-				"CHMOD: Mode value must be between 0 and 0777");
-				else if (chmod($8, $6) < 0)
-					perror_reply(550, $8);
-				else
-					reply(200, "CHMOD command successful.");
-			}
-			if ($8 != NULL)
-				free($8);
-		}
-
-	| SITE SP IDLE CRLF
-		{
-			reply(200,
-			    "Current IDLE time limit is %d seconds; max %d",
-				curclass.timeout, curclass.maxtimeout);
-		}
-
-	| SITE SP IDLE SP NUMBER CRLF
-		{
-			if ($5 < 30 || $5 > curclass.maxtimeout) {
-				reply(501,
-			"IDLE time limit must be between 30 and %d seconds",
-				    curclass.maxtimeout);
-			} else {
-				curclass.timeout = $5;
-				(void) alarm(curclass.timeout);
-				reply(200,
-				    "IDLE time limit set to %d seconds",
-				    curclass.timeout);
 			}
 		}
 
@@ -1197,6 +1285,26 @@ check_modify
 			}
 		}
 
+check_upload
+	: /* empty */
+		{
+			if (logged_in) {
+				if (curclass.upload)
+					$$ = 1;
+				else {
+					reply(502,
+					"No permission to use this command.");
+					$$ = 0;
+					hasyyerrored = 1;
+				}
+			} else {
+				reply(530, "Please login with USER and PASS.");
+				$$ = 0;
+				hasyyerrored = 1;
+			}
+		}
+
+
 %%
 
 #define	CMD	0	/* beginning of command */
@@ -1296,10 +1404,12 @@ struct tab cmdtab[] = {
 };
 
 struct tab sitetab[] = {
-	{ "UMASK", UMASK, ARGS,	1, 0,	"[ <sp> umask ]" },
-	{ "IDLE",  IDLE,  ARGS,	1, 0,	"[ <sp> maximum-idle-time ]" },
 	{ "CHMOD", CHMOD, NSTR,	1, 0,	"<sp> mode <sp> file-name" },
 	{ "HELP",  HELP,  OSTR,	1, 0,	"[ <sp> <string> ]" },
+	{ "IDLE",  IDLE,  ARGS,	1, 0,	"[ <sp> maximum-idle-time ]" },
+	{ "RATEGET", RATEGET, OSTR, 1,0,"[ <sp> get-throttle-rate ]" },
+	{ "RATEPUT", RATEPUT, OSTR, 1,0,"[ <sp> put-throttle-rate ]" },
+	{ "UMASK", UMASK, ARGS,	1, 0,	"[ <sp> umask ]" },
 	{ NULL,    0,     0,	0, 0,	0 }
 };
 
@@ -1398,7 +1508,8 @@ getline(s, n, iop)
 		return (NULL);
 	*cs++ = '\0';
 	if (debug) {
-		if (!guest && strncasecmp("pass ", s, 5) == 0) {
+		if (curclass.type != CLASS_GUEST &&
+		    strncasecmp("pass ", s, 5) == 0) {
 			/* Don't syslog passwords */
 			syslog(LOG_DEBUG, "command: %.5s ???", s);
 		} else {
@@ -1428,7 +1539,7 @@ toolong(signo)
 	    curclass.timeout);
 	if (logging)
 		syslog(LOG_INFO, "User %s timed out after %d seconds",
-		    (pw ? pw -> pw_name : "unknown"), curclass.timeout);
+		    (pw ? pw->pw_name : "unknown"), curclass.timeout);
 	dologout(1);
 }
 
