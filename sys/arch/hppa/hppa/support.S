@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.3 2004/08/07 21:41:18 chs Exp $	*/
+/*	$NetBSD: support.S,v 1.4 2004/08/26 16:48:06 jkunz Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -233,6 +233,22 @@ fic_none:
 	sync
 EXIT(ficache)
 
+#ifdef HP7300LC_CPU
+	.section .bss
+eaio_l2_mask:
+	.block 4
+	.text
+LEAF_ENTRY(eaio_l2)
+	ldil	L%eaio_l2_mask, %t2
+	ldw	R%eaio_l2_mask(%t2), %t1
+	or	%t1, %arg0, %t1
+	MTCPU_C(22, DR0_PCXL2_ACCEL_IO)
+	nop
+	nop
+	bv	0(%rp)
+	stw	%t1, R%eaio_l2_mask(%t2)
+EXIT(eaio_l2)
+#endif /* HP7300LC_CPU */
 
 LEAF_ENTRY(setjmp)
 /*
