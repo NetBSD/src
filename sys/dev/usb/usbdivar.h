@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.18 1999/05/06 19:12:23 thorpej Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.19 1999/05/13 23:34:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ struct usbd_bus {
 	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	void		      (*do_poll)__P((struct usbd_bus *));
-	int			has_console; /* console input on this bus */
 	/* Filled by usb driver */
 	struct usbd_device     *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
