@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.56 1997/11/23 05:49:59 enami Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.57 1997/12/30 21:36:51 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -239,7 +239,7 @@ scsi_interpret_sense(xs)
 			error = EIO;
 			break;
 		case 0x7:	/* DATA PROTECT */
-			error = EACCES;
+			error = EROFS;
 			break;
 		case 0x8:	/* BLANK CHECK */
 			error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.3 1997/10/01 01:18:38 enami Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.4 1997/12/30 21:36:55 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -126,7 +126,7 @@ atapi_interpret_sense(xs)
 			break;
 		case 0x7:	/* DATA PROTECT */
 			msg = "readonly device";
-			error = EACCES;
+			error = EROFS;
 			break;
 		case 0xb:	/* COMMAND ABORTED */
 			msg = "command aborted";
