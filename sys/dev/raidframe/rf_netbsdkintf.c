@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.48 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.49 2000/02/16 01:10:44 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -282,13 +282,14 @@ void rf_buildroothack __P((void *));
 RF_AutoConfig_t *rf_find_raid_components __P((void));
 void print_component_label __P((RF_ComponentLabel_t *));
 RF_ConfigSet_t *rf_create_auto_sets __P((RF_AutoConfig_t *));
-static int does_it_fit __P((RF_ConfigSet_t *,RF_AutoConfig_t *));
-static int reasonable_label __P((RF_ComponentLabel_t *));
-void create_configuration __P((RF_AutoConfig_t *,RF_Config_t *,RF_Raid_t *));
+static int rf_does_it_fit __P((RF_ConfigSet_t *,RF_AutoConfig_t *));
+static int rf_reasonable_label __P((RF_ComponentLabel_t *));
+void rf_create_configuration __P((RF_AutoConfig_t *,RF_Config_t *,
+				  RF_Raid_t *));
 int rf_set_autoconfig __P((RF_Raid_t *, int));
 int rf_set_rootpartition __P((RF_Raid_t *, int));
-void release_all_vps __P((RF_ConfigSet_t *));
-void cleanup_config_set __P((RF_ConfigSet_t *));
+void rf_release_all_vps __P((RF_ConfigSet_t *));
+void rf_cleanup_config_set __P((RF_ConfigSet_t *));
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place */
@@ -447,7 +448,7 @@ rf_buildroothack(arg)
 			/* XXX all this stuff should be done SOMEWHERE ELSE! */
 			raidPtr->raidid = raidID;
 			raidPtr->openings = RAIDOUTSTANDING;
-			create_configuration(cset->ac, config, raidPtr);
+			rf_create_configuration(cset->ac, config, raidPtr);
 			retcode = rf_Configure( raidPtr, config, cset->ac );
 
 			if (retcode == 0) {
@@ -469,7 +470,7 @@ rf_buildroothack(arg)
 #if DEBUG
 			printf("Releasing vp's\n");
 #endif
-			release_all_vps(cset);
+			rf_release_all_vps(cset);
 #if DEBUG
 			printf("Done.\n");
 #endif
@@ -478,7 +479,7 @@ rf_buildroothack(arg)
 #if DEBUG
 		printf("Cleaning up config set\n");
 #endif
-		cleanup_config_set(cset);
+		rf_cleanup_config_set(cset);
 #if DEBUG
 		printf("Done cleanup\n");
 #endif
@@ -2586,7 +2587,7 @@ if (raidautoconfig) {
 
 			if (!raidread_component_label(dev, vp, clabel)) {
 				/* Got the label.  Does it look reasonable? */
-				if (reasonable_label(clabel) &&
+				if (rf_reasonable_label(clabel) &&
 				    (clabel->partitionSize == 
 				     label.d_partitions[i].p_size)) {
 #if DEBUG
@@ -2629,7 +2630,7 @@ return(ac_list);
 }
 			
 static int
-reasonable_label(clabel)
+rf_reasonable_label(clabel)
 	RF_ComponentLabel_t *clabel;
 {
 	
@@ -2711,7 +2712,7 @@ rf_create_auto_sets(ac_list)
 			/* which set does this component fit into? */
 			cset = config_sets;
 			while(cset!=NULL) {
-				if (does_it_fit(cset, ac)) {
+				if (rf_does_it_fit(cset, ac)) {
 					/* looks like it matches */
 					ac->next = cset->ac;
 					cset->ac = ac;
@@ -2741,7 +2742,7 @@ rf_create_auto_sets(ac_list)
 }
 
 static int
-does_it_fit(cset, ac)	
+rf_does_it_fit(cset, ac)	
 	RF_ConfigSet_t *cset;
 	RF_AutoConfig_t *ac;
 {
@@ -2791,7 +2792,7 @@ have_enough()
 #endif
 
 void
-create_configuration(ac,config,raidPtr)
+rf_create_configuration(ac,config,raidPtr)
 	RF_AutoConfig_t *ac;
 	RF_Config_t *config;
 	RF_Raid_t *raidPtr;
@@ -2868,7 +2869,7 @@ rf_set_rootpartition(raidPtr, new_value)
 }
 
 void
-release_all_vps(cset)
+rf_release_all_vps(cset)
 	RF_ConfigSet_t *cset;
 {
 	RF_AutoConfig_t *ac;
@@ -2886,7 +2887,7 @@ release_all_vps(cset)
 
 
 void
-cleanup_config_set(cset)
+rf_cleanup_config_set(cset)
 	RF_ConfigSet_t *cset;
 {
 	RF_AutoConfig_t *ac;
