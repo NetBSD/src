@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.26 1999/03/25 01:17:51 simonb Exp $ */
+/* $NetBSD: clock.c,v 1.27 1999/08/25 00:44:36 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 1999/03/25 01:17:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 1999/08/25 00:44:36 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,9 +139,6 @@ cpu_initclocks()
 	 * hardclock, which would then fall over because p->p_stats
 	 * isn't set at that time.
 	 */
-#ifdef 	alpha
-	set_clockintr();
-#endif
 
 	/*
 	 * Get the clock started.
