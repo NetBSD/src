@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.3 2001/04/26 22:09:57 bjh21 Exp $ */
+/* $NetBSD: profile.h,v 1.4 2001/04/30 19:57:11 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -75,10 +75,9 @@
 	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+extern int int_off_save(void);
+extern void int_restore(int);
+#define	MCOUNT_ENTER	(s = int_off_save())
+#define	MCOUNT_EXIT	int_restore(s)
+		
 #endif /* _KERNEL */
