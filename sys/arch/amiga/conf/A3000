@@ -1,17 +1,14 @@
 #
 # Minimal AMIGA 3000
 #
-# $Id: A3000,v 1.1 1994/04/18 00:25:16 chopps Exp $
+# $Id: A3000,v 1.2 1994/05/26 01:55:43 chopps Exp $
+#
+# Author: Stephen Roznowski (sjr@zombie.ncsc.mil)
 #
 # This configuration file is for a multiple disk/multiple tape A3000.
 #
-machine		"amiga"
-cpu		"M68030"	# A3000
 
-#
-# Name this kernel A3000
-#
-ident		"A3000"
+include "std.amiga"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -19,22 +16,16 @@ ident		"A3000"
 #
 maxusers	16
 
-#
-# Set the timezone that the kernel will use.
-#
-timezone	5 dst
-
-#
-# Set the maximum number of file descriptors
-#
-maxfdescs	256
-
+options		TIMEZONE=300	# Set the timezone that the kernel will use
+options		DST=1		# Set the timezone that the kernel will use
 
 options		FPCOPROC	# Support for MC68881/MC68882
+options		FPSP
 
 #
 # Networking options
 #
+options		ETHER		# 
 options		INET		# Basic networking support
 
 options		FFS		# Berkeley fast file system
@@ -69,7 +60,7 @@ options		"GRF_A2024"		# Support for the A2024
 #
 # Support for System V IPC facilities.
 #
-options		SYSVSHM		# System V shared memory
+#options		SYSVSHM		# System V shared memory
 options		SYSVMSG		# System V messages
 options		SYSVSEM		# System V semaphores
 
@@ -84,13 +75,10 @@ options		GENERIC		# Mini-root boot support
 #
 # Build one kernel that can boot from any disk.
 #
-config		netbsd swap generic
+config		netbsd swap on generic
 
-pseudo-device	ite	2	# Bit-mapped display terminal emulator
 pseudo-device	view	10	# View (graphics mapping)
-pseudo-device	kbd	1	# Keyboard support
-pseudo-device	mouse	2	# Mouse support
-pseudo-device	pty		# Pseudo-tty support
+pseudo-device	pty	16	# Pseudo-tty support
 pseudo-device	loop		# Loopback network
 
 #
@@ -100,18 +88,22 @@ pseudo-device	loop		# Loopback network
 #
 # Devices on an Amiga 3000
 #
-master		a3000scsi0	at manufacturer	1	product	1
-disk		sd1	at a3000scsi0 slave 1
-disk		sd2	at a3000scsi0 slave 2
-disk		sd3	at a3000scsi0 slave 3
-disk		sd4	at a3000scsi0 slave 4
-disk		sd5	at a3000scsi0 slave 5
-disk		sd6	at a3000scsi0 slave 6
-tape		st0	at a3000scsi0 slave ?
+ahsc0		at mainbus0		# A3000 scsi
+scsibus0	at ahsc0
 
-device		ser0	at manufacturer	1	product	3
-device		par0	at manufacturer	1	product	6
-device		grf0	at manufacturer	1	product	7
-device		rtclocka0 at manufacturer 1	product 4 # A3000
+# any drives on configured controllers.
+sd0	at scsibus? target 0 lun 0
+sd1	at scsibus? target 1 lun 0
+sd2	at scsibus? target 2 lun 0
+sd3	at scsibus? target 3 lun 0
+sd4	at scsibus? target 4 lun 0
+sd5	at scsibus? target 5 lun 0
+sd6	at scsibus? target 6 lun 0
+st0	at scsibus? target ? lun 0
 
-device		fd0	at manufacturer 1	product 10
+grfcc0		at mainbus0
+grf0		at grfcc0
+ite*		at grf?
+
+#fdc		at mainbus0
+#fd0		at fdc
