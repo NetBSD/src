@@ -104,7 +104,7 @@ watch_onoff (argc, argv)
     err = start_recursion (onoff_fileproc, onoff_filesdoneproc,
 			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv, local, W_LOCAL, 0, CVS_LOCK_NONE,
-			   (char *)NULL, 0);
+			   (char *) NULL, 0, (char *) NULL);
 
     Lock_Cleanup ();
     return err;
@@ -247,7 +247,7 @@ send_notifications (argc, argv, local)
 	err += start_recursion (dummy_fileproc, (FILESDONEPROC) NULL,
 				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 				argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-				0);
+				0, (char *) NULL);
 
 	send_to_server ("noop\012", 0);
 	if (strcmp (command_name, "release") == 0)
@@ -264,7 +264,7 @@ send_notifications (argc, argv, local)
 	err += start_recursion (ncheck_fileproc, (FILESDONEPROC) NULL,
 				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 				argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-				0);
+				0, (char *) NULL);
 	Lock_Cleanup ();
     }
     return err;
@@ -440,8 +440,8 @@ edit (argc, argv)
        repository.  */
     err = start_recursion (edit_fileproc, (FILESDONEPROC) NULL,
 			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
-			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-			   0);
+			   argc, argv, local, W_LOCAL, 0, 0, (char *) NULL,
+			   0, (char *) NULL);
 
     err += send_notifications (argc, argv, local);
 
@@ -607,7 +607,7 @@ unedit (argc, argv)
     err = start_recursion (unedit_fileproc, (FILESDONEPROC) NULL,
 			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
-			   0);
+			   0,  (char *) NULL);
 
     err += send_notifications (argc, argv, local);
 
@@ -1130,6 +1130,6 @@ editors (argc, argv)
 
     return start_recursion (editors_fileproc, (FILESDONEPROC) NULL,
 			    (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
-			    argc, argv, local, W_LOCAL, 0, 1, (char *)NULL,
-			    0);
+			    argc, argv, local, W_LOCAL, 0, 1, (char *) NULL,
+			    0,  (char *) NULL);
 }

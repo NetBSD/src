@@ -96,7 +96,10 @@ cvs_SOURCES = \
 	root.h \
 	server.h \
 	update.h \
+	version.h \
 	watch.h
+
+BUILT_SOURCES = version.h
 
 cvs_LDADD = \
 	../diff/libdiff.a \
@@ -105,7 +108,7 @@ cvs_LDADD = \
 
 # extra clean targets
 # wish this could be distclean-hdr-local but it's not part of automake
-DISTCLEANFILES = check.log check.plog
+DISTCLEANFILES = options.h-SAVED check.log check.plog
 
 # General
 EXTRA_DIST = \
