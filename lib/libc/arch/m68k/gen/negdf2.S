@@ -1,4 +1,4 @@
-/*	$NetBSD: negdf2.S,v 1.5 1999/10/25 23:48:12 thorpej Exp $	*/
+/*	$NetBSD: negdf2.S,v 1.6 2001/05/18 15:13:04 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,13 +43,13 @@
 #if 0
 	RCSID("from: @(#)negdf2.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: negdf2.S,v 1.5 1999/10/25 23:48:12 thorpej Exp $")
+	RCSID("$NetBSD: negdf2.S,v 1.6 2001/05/18 15:13:04 fredette Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* -double */
 ENTRY(__negdf2)
-#ifdef __SVR4_ABI__
+#if defined(__SVR4_ABI__) && defined(__HAVE_68881__)
 	fnegd	%sp@(4),%fp0
 #else
 	movel	%sp@(4),%d0
