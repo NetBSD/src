@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.27 2003/05/14 18:28:04 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.28 2003/05/22 18:10:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.27 2003/05/14 18:28:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.28 2003/05/22 18:10:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,6 +85,7 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 2818, mach_io_connect_set_notification_port,
 	    "io_connect_set_notification_port" },
 	{ 2819, mach_io_connect_map_memory, "io_connect_map_memory" },
+	{ 2820, mach_io_connect_add_client, "io_connect_add_client" },
 	{ 2821, mach_io_connect_set_properties, "io_connect_set_properties" },
 	{ 2822, mach_io_connect_method_scalari_scalaro,
 	    "io_connect_method_scalari_scalaro" },
