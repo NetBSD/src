@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.6 1997/07/02 04:55:41 mikel Exp $	*/
+/*	$NetBSD: crypt.c,v 1.7 1997/10/09 10:28:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,12 +36,14 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#include <sys/cdefs.h>
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
+#else
+__RCSID("$NetBSD: crypt.c,v 1.7 1997/10/09 10:28:43 lukem Exp $");
 #endif
-static char rcsid[] = "$NetBSD: crypt.c,v 1.6 1997/07/02 04:55:41 mikel Exp $";
-#endif /* LIBC_SCCS and not lint */
+#endif /* not lint */
 
 #include <limits.h>
 #include <pwd.h>
@@ -103,10 +105,6 @@ static char rcsid[] = "$NetBSD: crypt.c,v 1.6 1997/07/02 04:55:41 mikel Exp $";
 /* compile with "-DSTATIC=void" when profiling */
 #ifndef STATIC
 #define	STATIC	static void
-#endif
-STATIC init_des(), init_perm(), permute();
-#ifdef DEBUG
-STATIC prtab();
 #endif
 
 /* ==================================== */
@@ -286,16 +284,25 @@ typedef union {
 #define	PERM3264(d,d0,d1,cpp,p)				\
 	{ C_block tblk; permute(cpp,&tblk,p,4); LOAD (d,d0,d1,tblk); }
 
+
+STATIC	init_des __P((void));
+STATIC	init_perm __P((C_block [][], unsigned char [], int, int));
+STATIC	permute __P((unsigned char *, C_block *, C_block *, int));
+#ifdef DEBUG
+STATIC	prtab __P((char *, unsigned char *, int));
+#endif
+
+
 STATIC
 permute(cp, out, p, chars_in)
 	unsigned char *cp;
 	C_block *out;
-	register C_block *p;
+	C_block *p;
 	int chars_in;
 {
-	register DCL_BLOCK(D,D0,D1);
-	register C_block *tp;
-	register int t;
+	DCL_BLOCK(D,D0,D1);
+	C_block *tp;
+	int t;
 
 	ZERO(D,D0,D1);
 	do {
@@ -466,12 +473,12 @@ static char	cryptresult[1+4+4+11+1];	/* encrypted result */
  */
 char *
 crypt(key, setting)
-	register const char *key;
-	register const char *setting;
+	const char *key;
+	const char *setting;
 {
-	register char *encp;
-	register int32_t i;
-	register int t;
+	char *encp;
+	int32_t i;
+	int t;
 	int32_t salt;
 	int num_iter, salt_size;
 	C_block keyblock, rsltblock;
@@ -571,11 +578,11 @@ static C_block	KS[KS_SIZE];
  */
 int
 des_setkey(key)
-	register const char *key;
+	const char *key;
 {
-	register DCL_BLOCK(K, K0, K1);
-	register C_block *ptabp;
-	register int i;
+	DCL_BLOCK(K, K0, K1);
+	C_block *ptabp;
+	int i;
 	static int des_ready = 0;
 
 	if (!des_ready) {
@@ -727,9 +734,9 @@ des_cipher(in, out, salt, num_iter)
 STATIC
 init_des()
 {
-	register int i, j;
-	register int32_t k;
-	register int tableno;
+	int i, j;
+	int32_t k;
+	int tableno;
 	static unsigned char perm[64], tmp32[32];	/* "static" for speed */
 
 	/*
@@ -874,7 +881,7 @@ init_perm(perm, p, chars_in, chars_out)
 	unsigned char p[64];
 	int chars_in, chars_out;
 {
-	register int i, j, k, l;
+	int i, j, k, l;
 
 	for (k = 0; k < chars_out*8; k++) {	/* each output bit position */
 		l = p[k] - 1;		/* where this bit comes from */
@@ -894,9 +901,9 @@ init_perm(perm, p, chars_in, chars_out)
  */
 int
 setkey(key)
-	register const char *key;
+	const char *key;
 {
-	register int i, j, k;
+	int i, j, k;
 	C_block keyblock;
 
 	for (i = 0; i < 8; i++) {
@@ -915,10 +922,10 @@ setkey(key)
  */
 int
 encrypt(block, flag)
-	register char *block;
+	char *block;
 	int flag;
 {
-	register int i, j, k;
+	int i, j, k;
 	C_block cblock;
 
 	for (i = 0; i < 8; i++) {
@@ -948,7 +955,7 @@ prtab(s, t, num_rows)
 	unsigned char *t;
 	int num_rows;
 {
-	register int i, j;
+	int i, j;
 
 	(void)printf("%s:\n", s);
 	for (i = 0; i < num_rows; i++) {
