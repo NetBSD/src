@@ -117,11 +117,13 @@ fi
 AC_ARG_ENABLE(sim-powerpc,
 [  --enable-sim-powerpc ],
 [case "${enableval}" in
-yes)	powerpc_sim=yes ;;
+yes)	powerpc_sim=yes ;; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
 no)	powerpc_sim=no ;;
 *)	AC_MSG_ERROR(bad value ${enableval} given for sim-powerpc option) ;;
 esac],[if test x"$GCC" != x""; then powerpc_sim=yes; else powerpc_sim=no; fi])
 
+AC_SUBST(SIM)
+AC_SUBST(SIM_OBS)
 
 AC_SUBST(ENABLE_CFLAGS)
 AC_SUBST(ENABLE_CLIBS)
@@ -478,16 +480,8 @@ powerpc-*-netware*)	gdb_target=ppc-nw
 powerpc-*-aix4*)	gdb_target=aix4 ;;
 powerpc-*-aix*)		gdb_target=aix ;;
 powerpcle-*-cygwin32)	gdb_target=cygwin32 ;;
-powerpc-*-eabi*)	if test x"$powerpc_sim" = x"yes"; then
-			  gdb_target=ppc-sim
-			else
-			  gdb_target=ppc-eabi
-			fi ;;
-powerpcle-*-eabi*)	if test x"$powerpc_sim" = x"yes"; then
-			  gdb_target=ppcle-sim
-			else
-			  gdb_target=ppcle-eabi
-			fi ;;
+powerpc-*-eabi*)	gdb_target=ppc-eabi ;;
+powerpcle-*-eabi*)	gdb_target=ppcle-eabi ;;
 
 pyramid-*-*)		gdb_target=pyramid ;;
 

@@ -1788,7 +1788,7 @@ fi
 if test "${enable_sim_powerpc+set}" = set; then
   enableval="$enable_sim_powerpc"
   case "${enableval}" in
-yes)	powerpc_sim=yes ;;
+yes)	powerpc_sim=yes ;; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
 no)	powerpc_sim=no ;;
 *)	{ echo "configure: error: bad value ${enableval} given for sim-powerpc option" 1>&2; exit 1; } ;;
 esac
@@ -2153,16 +2153,8 @@ powerpc-*-netware*)	gdb_target=ppc-nw
 powerpc-*-aix4*)	gdb_target=aix4 ;;
 powerpc-*-aix*)		gdb_target=aix ;;
 powerpcle-*-cygwin32)	gdb_target=cygwin32 ;;
-powerpc-*-eabi*)	if test x"$powerpc_sim" = x"yes"; then
-			  gdb_target=ppc-sim
-			else
-			  gdb_target=ppc-eabi
-			fi ;;
-powerpcle-*-eabi*)	if test x"$powerpc_sim" = x"yes"; then
-			  gdb_target=ppcle-sim
-			else
-			  gdb_target=ppcle-eabi
-			fi ;;
+powerpc-*-eabi*)	gdb_target=ppc-eabi ;;
+powerpcle-*-eabi*)	gdb_target=ppcle-eabi ;;
 
 pyramid-*-*)		gdb_target=pyramid ;;
 
@@ -2418,6 +2410,8 @@ s%@TKHDIR@%$TKHDIR%g
 s%@TKLIB@%$TKLIB%g
 s%@ENABLE_GDBTK@%$ENABLE_GDBTK%g
 s%@X_LDFLAGS@%$X_LDFLAGS%g
+s%@SIM@%$SIM%g
+s%@SIM_OBS@%$SIM_OBS%g
 s%@ENABLE_CFLAGS@%$ENABLE_CFLAGS%g
 s%@ENABLE_CLIBS@%$ENABLE_CLIBS%g
 s%@ENABLE_OBS@%$ENABLE_OBS%g
