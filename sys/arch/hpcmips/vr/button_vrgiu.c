@@ -1,4 +1,4 @@
-/*	$NetBSD: button_vrgiu.c,v 1.1 1999/12/23 06:26:10 takemura Exp $	*/
+/*	$NetBSD: button_vrgiu.c,v 1.2 2000/02/10 08:37:07 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -122,8 +122,11 @@ button_vrgiu_attach(parent, self, aux)
 			mode |= VRGIU_INTR_LOW;
 		else
 			mode |= VRGIU_INTR_HIGH;
-	} else
+		printf(" sense=level");
+	} else {
 		mode |= VRGIU_INTR_EDGE;
+		printf(" sense=edge");
+	}
 
 	if (sc->sc_port == NEWGPBUSIFCF_PORT_DEFAULT ||
 	    sc->sc_id == NEWGPBUSIFCF_ID_DEFAULT)
