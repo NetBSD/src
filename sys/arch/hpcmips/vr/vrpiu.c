@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.6 2000/12/02 08:35:45 sato Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.7 2000/12/27 12:22:07 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -647,8 +647,8 @@ vrpiu_calc_powerstate(sc)
 		sc->sc_battery.value[2]));
 	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
 #ifdef notyet
-	config_hook_call(CONFIG_HOOK_PMEVENT,
-			 CONFIG_HOOK_PMEVENT_BATTERYVAL,
+	config_hook_call(CONFIG_HOOK_SET,
+			 CONFIG_HOOK_BATTERYVAL,
 			 (void *)&sc->sc_battery);
 #endif /* notyet */
 	/*
