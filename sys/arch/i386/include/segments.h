@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.25.14.1 1997/11/13 08:10:04 mellon Exp $	*/
+/*	$NetBSD: segments.h,v 1.25.14.2 1998/10/17 22:14:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -233,6 +233,7 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
 #define	LUCODE_SEL	2	/* User code descriptor */
 #define	LUDATA_SEL	3	/* User data descriptor */
+#define	LSOL26CALLS_SEL	4	/* Solaris 2.6 system call gate */
 #define	LBSDICALLS_SEL	16	/* BSDI system call gate */
 #define	NLDT		17
 
