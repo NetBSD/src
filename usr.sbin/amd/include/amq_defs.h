@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_defs.h,v 1.2 1997/07/24 23:18:47 christos Exp $
+ * $Id: amq_defs.h,v 1.3 1997/09/22 22:11:10 christos Exp $
  *
  */
 
@@ -63,6 +63,7 @@
 #define AMQPROC_GETMNTFS ((u_long)6)
 #define AMQPROC_MOUNT ((u_long)7)
 #define AMQPROC_GETVERS ((u_long)8)
+#define AMQPROC_GETPID ((u_long)9)
 
 /*
  * TYPEDEFS
