@@ -1,4 +1,4 @@
-/*	$NetBSD: nettype.h,v 1.1 2000/06/02 22:57:55 fvdl Exp $	*/
+/*	$NetBSD: nettype.h,v 1.2 2000/07/06 03:17:19 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -54,10 +54,10 @@
 #define	_RPC_UDP	8
 
 __BEGIN_DECLS
-extern void *__rpc_setconf __P((char *));
+extern void *__rpc_setconf __P((const char *));
 extern void __rpc_endconf __P((void *));
 extern struct netconfig *__rpc_getconf __P((void *));
-extern struct netconfig *__rpc_getconfip __P((char *));
+extern struct netconfig *__rpc_getconfip __P((const char *));
 __END_DECLS
 
 #endif	/* !_RPC_NETTYPE_H */
