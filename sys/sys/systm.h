@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.42 1996/03/13 21:08:09 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.43 1996/03/14 18:59:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -198,8 +198,6 @@ void	longjmp	__P((label_t *));
 
 #ifdef DDB
 /* debugger entry points */
-#ifdef notyet	/* XXX: Lots of local decls assume int Debugger */
 void	Debugger __P((void));	/* in DDB only */
-#endif
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.42 1996/02/09 18:25:23 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.43 1996/03/14 18:59:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -138,7 +138,7 @@ struct	proc {
 #define	p_startzero	p_oppid
 
 	pid_t	p_oppid;	 /* Save parent pid during ptrace. XXX */
-	int	p_dupfd;	 /* Sideways return value from fdopen. XXX */
+	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
 	/* scheduling */
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
