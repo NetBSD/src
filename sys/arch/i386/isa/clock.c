@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.17 1993/10/26 12:07:08 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.18 1993/10/27 06:50:48 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -62,6 +62,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
 /*
   Copyright 1988, 1989 by Intel Corporation, Santa Clara, California.
 
@@ -193,6 +194,7 @@ struct timer_softc {
 static int timerprobe __P((struct device *, struct cfdata *, void *));
 static void timerforceintr __P((void *));
 static void timerattach __P((struct device *, struct device *, void *));
+static int nullintr __P((void *));
 static int timerintr __P((void *));
 
 struct cfdriver timercd =
@@ -263,7 +265,7 @@ timerattach(parent, self, aux)
 	findcpuspeed(iobase);	/* use the clock (while it's free)
 				   to find the cpu speed XXXX */
 
-	sc->sc_ih.ih_fun = timerintr;
+	sc->sc_ih.ih_fun = nullintr;
 	sc->sc_ih.ih_arg = NULL;
 	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
 
@@ -271,6 +273,19 @@ timerattach(parent, self, aux)
 	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 	outb(iobase + TIMER_CNTR0, limit);
 	outb(iobase + TIMER_CNTR0, limit>>8);
+}
+
+/*
+ * This is used between timerattach() and cpu_initclocks(), to avoid calling
+ * hardclock() before proc 0 is initialized, but still allow the timer to be
+ * running without getting `stray interrupt' messages.
+ */
+static int
+nullintr(aux)
+	void *aux;
+{
+
+	return 1;
 }
 
 /*
@@ -298,7 +313,8 @@ cpu_initclocks(void)
 	    !(sc = timercd.cd_devs[0]))
 		panic("cpu_initclocks: no timer");
 
-	/* already initialized */
+	/* set real interrupt handler */
+	sc->sc_ih.ih_fun = timerintr;
 }
 
 /*
