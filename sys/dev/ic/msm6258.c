@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.11.4.1 2005/01/03 16:47:12 kent Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.11.4.2 2005/01/05 03:31:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.11.4.1 2005/01/03 16:47:12 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.11.4.2 2005/01/05 03:31:37 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -151,7 +151,6 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 	uint8_t *d;
 	const uint8_t *s;
 	int m, err, enc_src;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
@@ -161,48 +160,46 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 	m = min(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc_src = this->src->param.encoding;
 	if (enc_src == AUDIO_ENCODING_SLINEAR_LE) {
-		while (used_dst < m && used_src >= 4) {
+		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
 #if BYTE_ORDER == LITTLE_ENDIAN
 			ss = *(int16_t*)s;
+			s = audio_stream_add_outp(this->src, s, 2);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = *(int16_t*)(s + 2);
+			ss = *(int16_t*)s;
 #else
 			ss = (s[1] << 8) | s[0];
+			s = audio_stream_add_outp(this->src, s, 2);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = (s[3] << 8) | s[2];
+			ss = (s[1] << 8) | s[0];
 #endif
 			f |= pcm2adpcm_step(mc, ss) << 4;
 			*d = f;
 			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 4);
-			used_dst += 1;
-			used_src -= 4;
+			s = audio_stream_add_outp(this->src, s, 2);
 		}
 	} else {
-		while (used_dst < m && used_src >= 4) {
+		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
 #if BYTE_ORDER == BIG_ENDIAN
 			ss = *(int16_t*)s;
+			s = audio_stream_add_outp(this->src, s, 2);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = *(int16_t*)(s + 2);
+			ss = *(int16_t*)s;
 #else
 			ss = (s[0] << 8) | s[1];
+			s = audio_stream_add_outp(this->src, s, 2);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = (s[2] << 8) | s[3];
+			ss = (s[0] << 8) | s[1];
 #endif
 			f |= pcm2adpcm_step(mc, ss) << 4;
 			*d = f;
 			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 4);
-			used_dst += 1;
-			used_src -= 4;
+			s = audio_stream_add_outp(this->src, s, 2);
 		}
 	}
 	dst->inp = d;
@@ -217,7 +214,6 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 	uint8_t *d;
 	const uint8_t *s;
 	int m, err, enc_src;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
@@ -227,36 +223,32 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 	m = min(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc_src = this->src->param.encoding;
 	if (enc_src == AUDIO_ENCODING_SLINEAR_LE) {
-		while (used_dst < m && used_src >= 4) {
+		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
 			ss = ((int16_t)s[0]) * 256;
+			s = audio_stream_add_outp(this->src, s, 1);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = ((int16_t)s[1]) * 256;
+			ss = ((int16_t)s[0]) * 256;
 			f |= pcm2adpcm_step(mc, ss) << 4;
 			*d = f;
 			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 1;
-			used_src -= 2;
+			s = audio_stream_add_outp(this->src, s, 1);
 		}
 	} else {
-		while (used_dst < m && used_src >= 4) {
+		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
 			ss = ((int16_t)(s[0] ^ 0x80)) * 256;
+			s = audio_stream_add_outp(this->src, s, 1);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = ((int16_t)(s[1] ^ 0x80)) * 256;
+			ss = ((int16_t)(s[0] ^ 0x80)) * 256;
 			f |= pcm2adpcm_step(mc, ss) << 4;
 			*d = f;
 			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 1;
-			used_src -= 2;
+			s = audio_stream_add_outp(this->src, s, 1);
 		}
 	}
 	dst->inp = d;
@@ -292,7 +284,6 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 	uint8_t *d;
 	const uint8_t *s;
 	int m, err, enc_dst;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
@@ -303,11 +294,9 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 	m = min(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc_dst = dst->param.encoding;
 	if (enc_dst == AUDIO_ENCODING_SLINEAR_LE) {
-		while (used_dst < m && used_src >= 1) {
+		while (dst->used < m && this->src->used >= 1) {
 			uint8_t a;
 			int16_t s1, s2;
 			a = s[0];
@@ -315,20 +304,20 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 			s2 = adpcm2pcm_step(mc, a >> 4);
 #if BYTE_ORDER == LITTLE_ENDIAN
 			*(int16_t*)d = s1;
-			*(int16_t*)(d + 2) = s2;
+			d = audio_stream_add_inp(dst, d, 2);
+			*(int16_t*)d = s2;
 #else
 			d[0] = s1;
 			d[1] = s1 >> 8;
-			d[2] = s2;
-			d[3] = s2 >> 8;
+			d = audio_stream_add_inp(dst, d, 2);
+			d[0] = s2;
+			d[1] = s2 >> 8;
 #endif
-			d = audio_stream_add_inp(dst, d, 4);
+			d = audio_stream_add_inp(dst, d, 2);
 			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 4;
-			used_src -= 1;
 		}
 	} else {
-		while (used_dst < m && used_src >= 1) {
+		while (dst->used < m && this->src->used >= 1) {
 			uint8_t a;
 			int16_t s1, s2;
 			a = s[0];
@@ -336,17 +325,17 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 			s2 = adpcm2pcm_step(mc, a >> 4);
 #if BYTE_ORDER == BIG_ENDIAN
 			*(int16_t*)d = s1;
-			*(int16_t*)(d + 2) = s2;
+			d = audio_stream_add_inp(dst, d, 2);
+			*(int16_t*)d = s2;
 #else
 			d[1] = s1;
 			d[0] = s1 >> 8;
-			d[3] = s2;
-			d[2] = s2 >> 8;
+			d = audio_stream_add_inp(dst, d, 2);
+			d[1] = s2;
+			d[0] = s2 >> 8;
 #endif
-			d = audio_stream_add_inp(dst, d, 4);
+			d = audio_stream_add_inp(dst, d, 2);
 			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 4;
-			used_src -= 1;
 		}
 	}
 	dst->inp = d;
@@ -361,7 +350,6 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 	uint8_t *d;
 	const uint8_t *s;
 	int m, err, enc_dst;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
@@ -372,36 +360,32 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 	m = min(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc_dst = dst->param.encoding;
 	if (enc_dst == AUDIO_ENCODING_SLINEAR_LE) {
-		while (used_dst < m && used_src >= 1) {
+		while (dst->used < m && this->src->used >= 1) {
 			uint8_t a;
 			int16_t s1, s2;
 			a = s[0];
 			s1 = adpcm2pcm_step(mc, a & 0x0f);
 			s2 = adpcm2pcm_step(mc, a >> 4);
 			d[0] = s1 / 266;
-			d[1] = s2 / 266;
-			d = audio_stream_add_inp(dst, d, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			d[0] = s2 / 266;
+			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 2;
-			used_src -= 1;
 		}
 	} else {
-		while (used_dst < m && used_src >= 1) {
+		while (dst->used < m && this->src->used >= 1) {
 			uint8_t a;
 			int16_t s1, s2;
 			a = s[0];
 			s1 = adpcm2pcm_step(mc, a & 0x0f);
 			s2 = adpcm2pcm_step(mc, a >> 4);
 			d[0] = (s1 / 266) ^ 0x80;
-			d[1] = (s2 / 266) ^ 0x80;
-			d = audio_stream_add_inp(dst, d, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			d[0] = (s2 / 266) ^ 0x80;
+			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 2;
-			used_src -= 1;
 		}
 	}
 	dst->inp = d;

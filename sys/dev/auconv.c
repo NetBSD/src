@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.10 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.11 2005/01/05 03:31:36 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.10 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.11 2005/01/05 03:31:36 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -261,39 +261,23 @@ name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 DEFINE_FILTER(change_sign8)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
-	while (used_dst < m && used_src > 0) {
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
 		*d = *s ^ 0x80;
-		d = audio_stream_add_inp(dst, d, 1);
-		s = audio_stream_add_outp(this->src, s, 1);
-		used_dst++;
-		used_src--;
-	}
-	dst->inp = d;
-	this->src->outp = s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }
 
 DEFINE_FILTER(change_sign16)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err, enc;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
@@ -301,43 +285,26 @@ DEFINE_FILTER(change_sign16)
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc = dst->param.encoding;
 	if (enc == AUDIO_ENCODING_SLINEAR_LE
 	    || enc == AUDIO_ENCODING_ULINEAR_LE) {
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 			d[0] = s[0];
 			d[1] = s[1] ^ 0x80;
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 2;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else {
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 			d[0] = s[0] ^ 0x80;
 			d[1] = s[1];
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 2;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	}
-	dst->inp = d;
-	this->src->outp = s;
 	return 0;
 }
 
 DEFINE_FILTER(swap_bytes)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
@@ -345,30 +312,17 @@ DEFINE_FILTER(swap_bytes)
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
-	while (used_dst < m && used_src >= 2) {
+	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		d[0] = s[1];
 		d[1] = s[0];
-		d = audio_stream_add_inp(dst, d, 2);
-		s = audio_stream_add_outp(this->src, s, 2);
-		used_dst += 2;
-		used_src -= 2;
-	}
-	dst->inp = d;
-	this->src->outp = s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }
 
 DEFINE_FILTER(swap_bytes_change_sign16)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err, enc;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
@@ -376,43 +330,26 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc = dst->param.encoding;
 	if (enc == AUDIO_ENCODING_SLINEAR_LE
 	    || enc == AUDIO_ENCODING_ULINEAR_LE) {
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 			d[0] = s[1];
 			d[1] = s[0] ^ 0x80;
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 2;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else {
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 			d[0] = s[1] ^ 0x80;
 			d[1] = s[0];
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 2;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	}
-	dst->inp = d;
-	this->src->outp = s;
 	return 0;
 }
 
 DEFINE_FILTER(linear8_to_linear16)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err, enc_dst, enc_src;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
@@ -420,10 +357,6 @@ DEFINE_FILTER(linear8_to_linear16)
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc_dst = dst->param.encoding;
 	enc_src = this->src->param.encoding;
 	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
@@ -434,14 +367,10 @@ DEFINE_FILTER(linear8_to_linear16)
 		 * slinear8 -> slinear16_le
 		 * ulinear8 -> ulinear16_le
 		 */
-		while (used_dst < m && used_src >= 1) {
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
 			d[0] = 0;
 			d[1] = s[0];
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 2;
-			used_src -= 1;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
 		    && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
 		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
@@ -450,14 +379,10 @@ DEFINE_FILTER(linear8_to_linear16)
 		 * slinear8 -> slinear16_be
 		 * ulinear8 -> ulinear16_be
 		 */
-		while (used_dst < m && used_src >= 1) {
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
 			d[0] = s[0];
 			d[1] = 0;
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 2;
-			used_src -= 1;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
 		    && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
 		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
@@ -466,50 +391,33 @@ DEFINE_FILTER(linear8_to_linear16)
 		 * slinear8 -> ulinear16_le
 		 * ulinear8 -> slinear16_le
 		 */
-		while (used_dst < m && used_src >= 1) {
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
 			d[0] = 0;
 			d[1] = s[0] ^ 0x80;
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 2;
-			used_src -= 1;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else {
 		/*
 		 * slinear8 -> ulinear16_be
 		 * ulinear8 -> slinear16_be
 		 */
-		while (used_dst < m && used_src >= 1) {
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
 			d[0] = s[0] ^ 0x80;
 			d[1] = 0;
-			d = audio_stream_add_inp(dst, d, 2);
-			s = audio_stream_add_outp(this->src, s, 1);
-			used_dst += 2;
-			used_src -= 1;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	}
-	dst->inp = d;
-	this->src->outp = s;
 	return 0;
 }
 
 DEFINE_FILTER(linear16_to_linear8)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err, enc_src, enc_dst;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
 	enc_dst = dst->param.encoding;
 	enc_src = this->src->param.encoding;
 	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
@@ -520,13 +428,9 @@ DEFINE_FILTER(linear16_to_linear8)
 		 * slinear16_le -> slinear8
 		 * ulinear16_le -> ulinear8
 		 */
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 1, m) {
 			d[0] = s[1];
-			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 1;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
 		    && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
 		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
@@ -535,13 +439,9 @@ DEFINE_FILTER(linear16_to_linear8)
 		 * slinear16_le -> ulinear8
 		 * ulinear16_le -> slinear8
 		 */
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 1, m) {
 			d[0] = s[1] ^ 0x80;
-			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 1;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
 		    && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
 		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
@@ -550,28 +450,18 @@ DEFINE_FILTER(linear16_to_linear8)
 		 * slinear16_be -> slinear8
 		 * ulinear16_be -> ulinear8
 		 */
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 1, m) {
 			d[0] = s[0];
-			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 1;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	} else {
 		/*
 		 * slinear16_be -> ulinear8
 		 * ulinear16_be -> slinear8
 		 */
-		while (used_dst < m && used_src >= 2) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 1, m) {
 			d[0] = s[0] ^ 0x80;
-			d = audio_stream_add_inp(dst, d, 1);
-			s = audio_stream_add_outp(this->src, s, 2);
-			used_dst += 1;
-			used_src -= 2;
-		}
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	}
-	dst->inp = d;
-	this->src->outp = s;
 	return 0;
 }
 
