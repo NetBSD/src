@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.17 2004/09/16 18:02:27 erh Exp $
+.\"	$NetBSD: atactl.8,v 1.18 2004/10/08 18:53:42 soren Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,7 +108,7 @@ Will print out if the device is in Active, Idle, or Standby power
 management mode.
 .Pp
 .Cm smart
-.Ar [enable | disable | status | selftest-log]
+.Ar [enable | disable | status | offline # | error-log | selftest-log]
 .Pp
 Controls SMART feature set of the specified device.
 SMART stands for Self-Monitoring, Analysis, and Reporting Technology.
@@ -163,8 +163,17 @@ device is online.
 The reliability field indicates whether the attribute
 value is within the acceptable threshold.
 .Pp
+.Ar offline #
+.Pp
+Runs the numbered offline self-test on the drive.
+.Pp
+.Ar error-log
+.Pp
+Prints the error log.
+.Pp
 .Ar selftest-log
-Print the selftest log.
+.Pp
+Prints the self-test log.
 .Sh BUS COMMANDS
 The following commands may be used on IDE and ATA busses.
 Note that not all devices support all commands.
