@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/09/04 21:46:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/01/09 08:52:58 enami Exp $
+
+.include <bsd.own.mk>
 
 WARNS?=	0
 
@@ -7,11 +9,8 @@ IDIST=	${.CURDIR}/../../../dist/cvs
 CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/lib \
 	-I${IDIST}/diff -I${IDIST}/src
 
-DOBJDIR!=cd $(.CURDIR)/../libdiff; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
-COBJDIR!=cd $(.CURDIR)/../libcvs; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+DOBJDIR!=cd $(.CURDIR)/../libdiff && ${PRINTOBJDIR}
+COBJDIR!=cd $(.CURDIR)/../libcvs && ${PRINTOBJDIR}
 
 LIBDIFF=	${DOBJDIR}/libdiff.a
 LIBCVS=		${COBJDIR}/libcvs.a

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/12/29 02:50:35 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/01/09 08:52:59 enami Exp $
 
 # Note that the order here is picked to look much like that in the
 # original Makefile.in in order to make it easier to visually compare
@@ -8,7 +8,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	util global dns masterlib master postfix sendmail error \
+SUBDIR= util global dns masterlib .WAIT postfix master sendmail error \
 	pickup cleanup smtpd local trivial-rewrite qmgr smtp bounce pipe \
 	showq postalias postcat postconf postdrop postkick postlock postlog \
 	postmap postsuper man # postfix-script

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/11/06 15:30:49 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2001/01/09 08:52:59 enami Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -17,9 +17,7 @@ LDADD+=		-lintl
 CPPFLAGS+=	-DENABLE_NLS=1 -DHAVE_GETTEXT=1 -DHAVE_LIBINTL_H=1
 
 DIST=		${.CURDIR}/../../../dist
-.if !make(print-objdir)
-LIBCOMMONDIR!=	cd ${.CURDIR}/../common && ${MAKE} print-objdir
-.endif
+LIBCOMMONDIR!=	cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

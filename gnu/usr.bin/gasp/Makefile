@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/24 17:48:43 drochner Exp $
+#	$NetBSD: Makefile,v 1.5 2001/01/09 08:52:58 enami Exp $
 
 DIST=		${.CURDIR}/../../dist
 
@@ -21,8 +21,7 @@ CPPFLAGS+=	-I${.CURDIR}/../gas.new/arch/${ARCHSUBDIR} \
 		-DTARGET_CPU=\"${MACHINE_GNU_ARCH}\" \
 		-DTARGET_CANONICAL=\"${MACHINE_GNU_ARCH}--netbsd\"
 
-BFDOBJ!=	cd ${.CURDIR}/../../lib/bfd; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+BFDOBJ!=	cd ${.CURDIR}/../../lib/bfd && ${PRINTOBJDIR}
 
 LDADD+=		-L${BFDOBJ} -lbfd
 DPADD+=		${BFDOBJ}/libbfd.a
