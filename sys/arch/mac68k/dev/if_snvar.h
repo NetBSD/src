@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.11 1997/11/04 13:03:48 briggs Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.12 1998/05/01 03:42:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -213,6 +213,6 @@ typedef struct sn_softc {
 #define	CDA_SIZE(sc)	((4*16 + 1) * ((sc->bitmode) ? 4 : 2))
 
 int	snsetup __P((struct sn_softc *sc, u_int8_t *));
-void	snintr __P((void *, int));
+void	snintr __P((void *));
 void	sn_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
 	    vm_offset_t o, u_char *dst));
