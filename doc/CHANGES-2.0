@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.381 2004/08/12 03:31:41 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.382 2004/08/12 03:48:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6400,3 +6400,9 @@ sys/arch/x86/include/cacheinfo.h		1.2
 
 	Enable VIA C3 CPU support
 	[briggs, ticket #742]
+
+sys/kern/kern_fork.c				1.116
+
+	When stopfork is set, we need to set p_nrlwps, since we are not going to
+	be running. PR#26468
+	[atatat, ticket #744]
