@@ -17,6 +17,12 @@ file arch/macppc/dev/dbdma.c
 file dev/cons.c
 
 #
+# Memory Disk for install floppy
+#
+file arch/macppc/macppc/md_root.c		memory_disk_hooks
+major {md = 9}
+
+#
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
