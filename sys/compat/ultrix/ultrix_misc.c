@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.43 1998/09/26 15:32:26 drochner Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.44 1998/09/26 16:24:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.43 1998/09/26 15:32:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.44 1998/09/26 16:24:14 drochner Exp $");
 
 /*
  * SunOS compatibility module.
@@ -640,6 +640,21 @@ ultrix_sys_sigpending(p, v, retval)
 }
 
 int
+ultrix_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_sigreturn_args *uap = v;
+
+	/*
+	 * XXX That's broken; the Ultrix sigcontext differs
+	 * XXX from NetBSD's.
+	 */
+	return (sys___sigreturn14(p, uap, retval));
+}
+
+int
 ultrix_sys_sigcleanup(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -652,6 +667,24 @@ ultrix_sys_sigcleanup(p, v, retval)
 	 * XXX from NetBSD's.
 	 */
 	return (sys___sigreturn14(p, uap, retval));
+}
+
+int
+ultrix_sys_sigsuspend(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_sigsuspend_args *uap = v;
+	int mask = SCARG(uap, mask);
+	sigset_t ss;
+
+	ss.__bits[0] = mask;
+	ss.__bits[1] = 0;
+	ss.__bits[2] = 0;
+	ss.__bits[3] = 0;
+
+	return (sigsuspend1(p, &ss));
 }
 
 
