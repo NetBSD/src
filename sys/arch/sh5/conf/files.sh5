@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.2.2.2 2002/07/16 00:41:11 gehenna Exp $
+#	$NetBSD: files.sh5,v 1.2.2.3 2002/07/16 01:43:15 gehenna Exp $
 
 
 #
@@ -84,20 +84,15 @@ file	arch/sh5/dev/scif.c				scif needs-flag
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
-major	{md = 17}
 
 
 # Source files
