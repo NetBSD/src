@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.229 2004/06/28 08:44:47 skrll Exp $
+#	$NetBSD: 3RDPARTY,v 1.230 2004/06/29 05:24:37 junyoung Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -87,7 +87,7 @@ nsswitch/nsdispatch need to be reimplemented.
 
 Package:	binutils
 Version:	2.14
-Current Vers:	2.14
+Current Vers:	2.15
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -156,7 +156,7 @@ gnu/dist/cvs/config.h.in.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.1.25
+Current Vers:	1.86/4.2.52
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
 Archive Site:	http://www.sleepycat.com/products.html
 Mailing List:
@@ -242,7 +242,7 @@ before importing:
 
 Package:	gdb
 Version:	5.3
-Current Vers:	6.1
+Current Vers:	6.1.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Mailing List:	bug-gdb@gnu.org
@@ -274,7 +274,7 @@ Responsible:	simonb, wiz
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
-A non-gnu grep was imported into src/usr.bin/grep on 2 Jan 2004. It 
+A non-gnu grep was imported into src/usr.bin/grep on 2 Jan 2004. It
 needs some tuning before it can replace gnu grep.
 	(cf.	http://www.vocito.com/downloads/software/grep/)
 
@@ -397,7 +397,7 @@ Version:	tcp_wrappers 7.6 w/ large amount of IPv6 changes
 Current Vers:	tcp_wrappers 7.6-ipv6.1
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
-Mailing List:	
+Mailing List:
 Responsible:	cjs, itojun
 Notes:
 We import only libwrap (under src/lib), tcpdchk and tcpdmatch (both
@@ -409,7 +409,7 @@ Version:	2.5.3
 Current Vers:	2.5.3
 Maintainer:	Mats O Jansson <maja@celsiustech.se>
 Archive Site:	ftp://ftp.stacken.kth.se/pub/OS/NetBSD/mopd/
-Mailing List:	
+Mailing List:
 Responsible:	cjs
 Notes:
 Delete the otherOS directory before importing.
@@ -442,7 +442,7 @@ Version:	1.79nb10
 Current Vers:	1.79
 Maintainer:	Keith Bostic <bostic@bsdi.com>
 Archive Site:	ftp://ftp.bostic.com/pub/
-Mailing List:	
+Mailing List:
 Responsible:	aymeric
 Notes:
 1.79 is probably the last version we will import. Nvi is now moving towards
@@ -453,7 +453,7 @@ Version:	4.2.0
 Current Vers:	4.2.0
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
-Mailing List:	
+Mailing List:
 Responsible:	simonb, jonathan
 Notes:
 See /usr/src/dist/ntp/ntp2netbsd for update instructions.
@@ -735,7 +735,7 @@ Version:      2003-10-10
 Current:      2003-10-10
 Maintainer:   grog
 URL:          http://www.vinumvm.org/
-Archive Site: none 
+Archive Site: none
 Mailing List: vinum-devel@auug.org.au
 CVS location: none
 Responsible:  grog
@@ -749,7 +749,7 @@ Version:	3.3.6/4.4.0
 Current Vers:	3.3.6/4.4.0
 Maintainer:	XFree86 consortium
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
-Mailing List:	
+Mailing List:
 Responsible:	tron
 Notes:
 3.3.6:
