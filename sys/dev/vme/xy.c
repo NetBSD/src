@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.7 1998/02/04 05:15:17 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.8 1998/02/06 00:22:45 pk Exp $	*/
 
 /*
  *
@@ -303,7 +303,9 @@ int xycmatch(parent, cf, aux)
 
 	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D;
 
-	return (vme_bus_probe(ct, bt, va->vma_reg[0], 1, mod, xyc_probe, 0));
+	return (vme_bus_probe(ct, bt, va->vma_reg[0],
+			      offsetof(struct xyc, xyc_rsetup), 1,
+			      mod, xyc_probe, 0));
 }
 
 /*
@@ -339,7 +341,6 @@ xycattach(parent, self, aux)
 	xyc->xyc = (struct xyc *) bh;
 	xyc->ipl = va->vma_pri;
 	xyc->vector = va->vma_vec;
-	printf(" pri %d", va->vma_pri);
 	xyc->no_ols = 0; /* XXX should be from config */
 
 	for (lcv = 0; lcv < XYC_MAXDEV; lcv++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.9 1998/02/04 05:15:16 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.10 1998/02/06 00:22:43 pk Exp $	*/
 
 /*
  *
@@ -384,11 +384,11 @@ int xdcmatch(parent, cf, aux)
 	vme_chipset_tag_t	ct = va->vma_chipset_tag;
 	bus_space_tag_t		bt = va->vma_bustag;
 	vme_mod_t		mod;
-	vme_addr_t		vaddr;
 
 	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
-	vaddr = va->vma_reg[0] + offsetof(struct xdc, xdc_csr);
-	return (vme_bus_probe(ct, bt, va->vma_reg[0], 1, mod, xdc_probe, 0));
+	return (vme_bus_probe(ct, bt, va->vma_reg[0],
+			      offsetof(struct xdc, xdc_csr), 1,
+			      mod, xdc_probe, 0));
 }
 
 /*
@@ -428,7 +428,6 @@ xdcattach(parent, self, aux)
 	xdc->xdc = (struct xdc *) bh;
 	xdc->ipl = va->vma_pri;
 	xdc->vector = va->vma_vec;
-	printf(" pri %d", va->vma_pri);
 
 	for (lcv = 0; lcv < XDC_MAXDEV; lcv++)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;

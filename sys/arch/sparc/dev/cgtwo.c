@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.26 1998/02/04 01:04:48 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.27 1998/02/06 00:24:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ cgtwomatch(parent, cf, aux)
 	cf->cf_flags &= FB_USERMASK;
 
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	if (vme_bus_probe(ct, bt, va->vma_reg[0] + CG2_CTLREG_OFF, 2, mod,
+	if (vme_bus_probe(ct, bt, va->vma_reg[0], CG2_CTLREG_OFF, 2, mod,
 			  0, 0)) {
 		return (1);
 	}
