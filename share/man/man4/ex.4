@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex.4,v 1.5 1999/12/17 16:23:21 abs Exp $
+.\"	$NetBSD: ex.4,v 1.6 2001/05/08 21:48:14 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -10,9 +10,11 @@
 .Nm ex
 .Nd driver for
 .Tn 3Com
-Fast EtherLink XL (3c900, 3c905, 3c980)
+Fast EtherLink XL (3c900, 3c905, 3c980) and similar
 .Tn PCI
 bus
+and
+.Tn cardbus
 .Tn Ethernet
 interfaces
 .Sh SYNOPSIS
@@ -29,9 +31,25 @@ driver include:
 .Pp
 .Bl -item -compact
 .It
+3c450-TX 10/100 Ethernet
+.It
+3c555 MiniPCI 10/100 Ethernet
+.It
+3c556 MiniPCI 10/100 Ethernet
+.It
+3c556B MiniPCI 10/100 Ethernet
+.It
+3c575-TX Ethernet
+.It
+3c575B-TX Ethernet
+.It
+3c575CT Ethernet
+.It
 3c900-TPO Ethernet
 .It
 3c900-COMBO Ethernet
+.It
+3c900B-TPC Ethernet
 .It
 3c900B-TPO Ethernet
 .It
@@ -41,6 +59,8 @@ driver include:
 .It
 3c905-TX 10/100 Ethernet
 .It
+3c905B-COMBO 10/100 Ethernet
+.It
 3c905B-FX 10/100 Ethernet
 .It
 3c905B-T4 10/100 Ethernet
@@ -48,6 +68,12 @@ driver include:
 3c905B-TX 10/100 Ethernet
 .It
 3c980 Server Adapter 10/100 Ethernet
+.It
+3c905-TX 10/100 Ethernet
+.It
+3c980C-TXM 10/100 Ethernet
+.It
+3cSOHO100-TX 10/100 Ethernet
 .El
 .Sh MEDIA SELECTION
 See
