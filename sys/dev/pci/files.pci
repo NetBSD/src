@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.143 2001/11/03 17:01:16 tsutsui Exp $
+#	$NetBSD: files.pci,v 1.144 2001/11/18 03:16:02 someya Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -325,6 +325,11 @@ file	dev/pci/mpu_yds.c		mpu_yds
 device	emuxki: audio, auconv, mulaw, ac97
 attach	emuxki at pci
 file	dev/pci/emuxki.c		emuxki
+
+# Trident 4DWAVE AC'97 audio (including SiS 7018,ALi M5451)
+device	autri: audio, auconv, mulaw, ac97, midibus
+attach	autri at pci
+file	dev/pci/autri.c			autri
 
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
