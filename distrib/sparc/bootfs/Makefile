@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/05/06 14:18:53 sjg Exp $
+#	$NetBSD: Makefile,v 1.21 2000/06/17 03:10:23 matt Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -37,7 +37,7 @@ INO_BYTES=	204800
 
 BLOCKSIZE=512
 FSTSIZE=32
-FSSIZE!=BLOCKSIZE=${BLOCKSIZE} du -s ${RAMDISK} | awk '{ print $$1 }'
+FSSIZE!=if test -f ${RAMDISK}; then BLOCKSIZE=${BLOCKSIZE} du -s ${RAMDISK} | awk '{ print $$1 }'; else echo 32; fi
 FSSIZE!= expr ${FSTSIZE} \* \( \( ${FSSIZE} + ${FSTSIZE} - 1 \) / ${FSTSIZE} \)
 FSNC!=expr ${FSSIZE} / ${FSTSIZE}
 
