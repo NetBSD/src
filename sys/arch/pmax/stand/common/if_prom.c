@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.1 2002/02/23 21:44:00 gmcgarry Exp $ */
+/*      $NetBSD: if_prom.c,v 1.2 2003/03/13 13:55:24 drochner Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,8 @@ struct netif_dif prom_ifs[] = {
 /*	dif_unit	dif_nsel	dif_stats	dif_private	*/
 {	0,		1,		&prom_stats[0],	0,		},
 };
-struct netif_stats prom_stats[NENTS(prom_ifs)];
+#define NPROM_IFS (sizeof(prom_ifs) / sizeof(prom_ifs[0]))
+struct netif_stats prom_stats[NPROM_IFS];
 
 struct netif_driver prom_netif_driver = {
 	"prom",				/* netif_bname */
@@ -99,7 +100,7 @@ struct netif_driver prom_netif_driver = {
 	prom_put,			/* netif_put */
 	prom_end,			/* netif_end */
 	prom_ifs,			/* netif_ifs */
-	NENTS(prom_ifs)			/* netif_nifs */
+	NPROM_IFS			/* netif_nifs */
 };
 
 static int sc_fd;				/* PROM file id */
@@ -135,7 +136,8 @@ prom_init(desc, machdep_hint)
 	struct iodesc *desc;
 	void *machdep_hint;
 {
-	char *device = desc->io_netif->nif_driver->netif_bname;
+	char *device =
+		((struct netif *)desc->io_netif)->nif_driver->netif_bname;
 	char *c, *enet;
 	int i, j, num;
 
