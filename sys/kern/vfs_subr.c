@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.82 1998/03/03 02:22:01 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.83 1998/03/04 09:13:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -849,11 +849,11 @@ loop:
 
 /*
  * Grab a particular vnode from the free list, increment its
- * reference count and lock it. The vnode lock bit is set the
- * vnode is being eliminated in vgone. The process is awakened
- * when the transition is completed, and an error returned to
- * indicate that the vnode is no longer usable (possibly having
- * been changed to a new file system type).
+ * reference count and lock it. If the vnode lock bit is set the
+ * vnode is being eliminated in vgone. In that case, we can not
+ * grab the vnode, so the process is awakened when the transition is
+ * completed, and an error returned to indicate that the vnode is no
+ * longer usable (possibly having been changed to a new file system type).
  */
 int
 vget(vp, flags)
