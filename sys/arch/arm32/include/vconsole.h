@@ -1,4 +1,4 @@
-/* $NetBSD: vconsole.h,v 1.2 1996/06/03 21:58:25 mark Exp $ */
+/* $NetBSD: vconsole.h,v 1.3 1996/10/14 22:35:03 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -197,6 +197,7 @@ struct vconsole {
 	int t_scrolledback;
 	int r_scrolledback;
 
+	int blanktime;
 	int blanked;
 
 	int vtty;
