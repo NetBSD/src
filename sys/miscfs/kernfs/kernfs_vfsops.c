@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1992 The Regents of the University of California
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
+ * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +16,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,7 +34,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.10 1993/12/20 12:39:10 cgd Exp $
+ * From:
+ *	Id: kernfs_vfsops.c,v 4.1 1994/01/02 14:42:00 jsp Exp
+ *
+ *	$Id: kernfs_vfsops.c,v 1.11 1994/01/05 11:05:08 cgd Exp $
  */
 
 /*
@@ -49,24 +53,17 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
-
 #include <miscfs/kernfs/kernfs.h>
-
-/* bring in the spec vnodeops for cdevvp */
-extern struct vnodeops spec_vnodeops;
-
-struct vnode *rrootdevvp;
 
 kernfs_init()
 {
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_init\n");	/* printed during system boot */
+	printf("kernfs_init\n");		/* printed during system boot */
 #endif
-
-	/* DO NOTHING */
 }
 
+#ifdef notyet
+void
 kernfs_rrootdevvp_init()
 {
 	int error, bmaj, cmaj;
@@ -77,14 +74,16 @@ kernfs_rrootdevvp_init()
 	error = ENXIO;
 	bmaj = major(rootdev);
 
-	/* hunt for the raw root device by looking in cdevsw for a matching
+	/*
+	 * hunt for the raw root device by looking in cdevsw for a matching
 	 * open routine...
 	 */
 	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
 		if (cdevsw[cmaj].d_open == bdevsw[bmaj].d_open) {
 			dev_t cdev = makedev(cmaj, minor(rootdev));
+
 			error = cdevvp(cdev, &rrootdevvp);
-			if (!error)
+			if (error == 0)
 				return;
 		}
 	}
@@ -95,6 +94,7 @@ kernfs_rrootdevvp_init()
 		rrootdevvp = NULL;
 	}
 }
+#endif
 
 /*
  * Mount the kernel parameter filesystem
@@ -129,7 +129,6 @@ kernfs_mount(mp, path, data, ndp, p)
 				 M_MISCFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
-	VTOKERN(rvp)->kf_kt = &kernfs_targets[KERNFS_TARGET_ROOT];
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: root vp = %x\n", rvp);
 #endif
@@ -146,7 +145,9 @@ kernfs_mount(mp, path, data, ndp, p)
 	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
 
+#ifdef notyet
 	kernfs_rrootdevvp_init();
+#endif
 
 	return (0);
 }
