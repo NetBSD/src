@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.67 2000/01/18 17:20:32 jlam Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.68 2000/01/23 23:56:58 chopps Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.66 2000/01/18 17:19:33 jlam Exp 
+ *	NetBSD: pcmciadevs,v 1.67 2000/01/23 23:55:45 chopps Exp 
  */
 
 /*-
@@ -69,7 +69,7 @@
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
-#define	PCMCIA_VENDOR_WEBGEAR	0x01a6	/* WebGear */
+#define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -322,10 +322,10 @@
 #define	PCMCIA_PRODUCT_BAY_STACK_650	0x0804
 #define	PCMCIA_STR_BAY_STACK_650	"BayStack 650 Wireless LAN"
 
-/* WebGear */
-#define	PCMCIA_CIS_WEBGEAR_WLAN	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_WEBGEAR_WLAN	0x0000
-#define	PCMCIA_STR_WEBGEAR_WLAN	"WLAN Adapter"
+/* Raylink/WebGear */
+#define	PCMCIA_CIS_RAYTHEON_WLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_RAYTHEON_WLAN	0x0000
+#define	PCMCIA_STR_RAYTHEON_WLAN	"WLAN Adapter"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
