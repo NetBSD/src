@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.26 2003/12/31 19:19:39 dbj Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.27 2003/12/31 19:33:13 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.26 2003/12/31 19:19:39 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.27 2003/12/31 19:33:13 dbj Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -210,9 +210,6 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 	for (i = 0; i < MAXFRAG; i++)
 		n->cg_frsum[i] = bswap32(o->cg_frsum[i]);
 	
-	/* XXX This check should probably really just be
-	 * (n->cg_magic != CG_MAGIC) -- dbj
-	 */
 	if ((fs->fs_magic != FS_UFS2_MAGIC) &&
 			(fs->fs_old_postblformat == FS_42POSTBLFMT)) { /* old format */
 		struct ocg *on, *oo;
@@ -249,7 +246,6 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 			boff = n->cg_old_boff;
 			clustersumoff = n->cg_clustersumoff;
 		} else {
-			/* XXX this shouldn't happen -- dbj */
 			btotoff = bswap32(n->cg_old_btotoff);
 			boff = bswap32(n->cg_old_boff);
 			clustersumoff = bswap32(n->cg_clustersumoff);
