@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.51 2002/04/16 02:20:17 mycroft Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.52 2002/05/24 08:07:48 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -327,6 +327,7 @@ menu fdok, title "Hit enter to continue";
 menu crypttype, title "Password cipher";
 	option "MD5", exit, action { yesno = 0; };
 	option "DES", exit, action { yesno = 1; };
+	option "Blowfish 2^7 round", exit, action { yesno = 2; };
 
 menu cdromsource, title "Change";
 	display action

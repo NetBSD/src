@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.87 2002/05/24 08:07:49 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -815,12 +815,12 @@ the timezone selection.
 
 message choose_crypt
 {Please choose the password cipher to use. NetBSD can be configured to use
-either the DES or MD5 schemes.
+either the DES, MD5 or Blowfish schemes.
 
 The traditional DES scheme is compatible with most other Unix-like operating
 systems, but only the first 8 characters of any password will be recognised.
-The MD5 scheme allows for longer passwords, and some would argue that it's
-more secure.
+The MD5 and Blowfish scheme allows for longer passwords, and some would
+argue that it's more secure.
 
 If you have a network and intend to use NIS, please bear in mind the
 capabilities of other machines on your network.
