@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.263 2002/01/29 10:21:35 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.264 2002/01/29 19:17:49 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -241,12 +241,28 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
 
+# Data-driven table using make variables to control how 
+# toolchain-dependent targets and shared libraries are built
+# for different platforms and object formats.
+#
+# OBJECT_FMT:		currently either "ELF", "a.out", or "COFF".
+#
+# All new-toolchain platforms are ELF.
+.if defined(USE_NEW_TOOLCHAIN)
+OBJECT_FMT=	ELF
+.else if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
+# SuperH defaults to COFF in its old toolchain.
+OBJECT_FMT?=	COFF
+.else
+# Everything else defaults to a.out.
+OBJECT_FMT?=	a.out
+.endif
+
 # The sh3 port is incomplete.
 .if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
 NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
-OBJECT_FMT?=	COFF
 .endif
 
 # The m68000 port is incomplete.
@@ -254,35 +270,6 @@ OBJECT_FMT?=	COFF
 NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
-.endif
-
-# Data-driven table using make variables to control how 
-# toolchain-dependent targets and shared libraries are built
-# for different platforms and object formats.
-# OBJECT_FMT:		currently either "ELF" or "a.out".
-# SHLIB_TYPE:		"ELF" or "a.out" or "" to force static libraries.
-#
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68000" || \
-    ${MACHINE} == "next68k" || \
-    ${MACHINE} == "sun3" || \
-    ${MACHINE} == "mvme68k" || \
-    ${MACHINE} == "hp300" || \
-    ${MACHINE} == "news68k" || \
-    ${MACHINE} == "cesfic" || \
-    ${MACHINE} == "luna68k" || \
-    ${MACHINE} == "atari" || \
-    ${MACHINE} == "x68k"
-OBJECT_FMT?=	ELF
-.else
-OBJECT_FMT?=	a.out
 .endif
 
 # Location of the file that contains the major and minor numbers of the
