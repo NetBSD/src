@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.17 1997/06/20 05:18:22 mikel Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.18 1997/08/12 16:30:15 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$NetBSD: kvm_proc.c,v 1.17 1997/06/20 05:18:22 mikel Exp $";
+static char *rcsid = "$NetBSD: kvm_proc.c,v 1.18 1997/08/12 16:30:15 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -606,7 +606,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	 * Check that there aren't an unreasonable number of agruments,
 	 * and that the address is in user space.
 	 */
-	if (narg > ARG_MAX || addr < VM_MIN_ADDRESS || addr >= VM_MAXUSER_ADDRESS)
+	if (narg > ARG_MAX || addr < kd->min_uva || addr >= kd->max_uva)
 		return (0);
 
 	if (kd->argv == 0) {
@@ -766,9 +766,11 @@ kvm_doargv(kd, kp, nchr, info)
 	/*
 	 * Pointers are stored at the top of the user stack.
 	 */
-	if (p->p_stat == SZOMB || 
-	    kvm_uread(kd, p, USRSTACK - sizeof(arginfo), (char *)&arginfo,
-		      sizeof(arginfo)) != sizeof(arginfo))
+	if (p->p_stat == SZOMB)
+		return (0);
+	cnt = kvm_uread(kd, p, kd->usrstack - sizeof(arginfo),
+	    (char *)&arginfo, sizeof(arginfo));
+	if (cnt != sizeof(arginfo))
 		return (0);
 
 	(*info)(&arginfo, &addr, &cnt);
