@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 1997/04/02 22:41:41 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 1997/04/09 20:07:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -314,7 +314,7 @@ trap(type, code, v, frame)
 			printf("(press a key)\n"); (void)cngetc();
 #endif
 		}
-		regdump(&frame, 128);
+		regdump((struct trapframe *)&frame, 128);
 		type &= ~T_USER;
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
