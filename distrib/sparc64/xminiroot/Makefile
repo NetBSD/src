@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/26 15:18:24 mason Exp $
+#	$NetBSD: Makefile,v 1.11 2002/01/20 05:57:10 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -13,20 +13,6 @@ SRCROOT=	${TOP}/../..
 WARNS=1
 KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 
-.if ${MACHINE_ARCH} == "i386"
-RAW_PART=	d
-.else
-RAW_PART=	c
-.endif
-
-# Need to add more cases
-.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "sparc64"
-FS_END=		be
-.else		# i386, pmax
-FS_END=		le
-.endif
-
 AUXDEPENDS= 	dot.profile disktab.preinstall termcap.mini \
 		dist/base_obsolete dist/comp_obsolete \
 		dist/games_obsolete dist/man_obsolete dist/misc_obsolete \
@@ -36,16 +22,10 @@ AUXCLEAN=	list ${CBIN}.conf dot.profile
 CBIN=		ramdiskbin
 
 
-MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
-VND?=		vnd0
-VND_DEV=	/dev/${VND}c
-VND_RDEV=	/dev/r${VND}c
-VND_CDEV=	/dev/${VND}${RAW_PART}
-VND_CRDEV=	/dev/r${VND}${RAW_PART}
-CSIZE?=		14000
+CSIZE?=		15360
 IMAGE?=		miniroot.fs
 MDEC=		${DESTDIR}/usr/mdec
+MOUNT_POINT?=	${.OBJDIR}/mountpoint
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
@@ -56,40 +36,33 @@ MDSETIMAGE?=	mdsetimage
 MTREE?=		mtree
 DISKTYPE?=	miniroot
 
+MAKEFSOPTS?=	-o optimization=space,minfree=1,nsectors=1,ntracks=${CSIZE},bsize=16k,fsize=2k
+
 all: netbsd.INSTALL ${IMAGE}
 
 netbsd.INSTALL: ${KERN} ${IMAGE}
 	cp ${KERN} netbsd.tmp
 	${MDSETIMAGE} -v netbsd.tmp ${IMAGE}
-	strip netbsd.tmp
+	${STRIP} netbsd.tmp
 	mv netbsd.tmp ${.TARGET}
 
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
-	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
-	vnconfig -v -c ${VND_CRDEV} ${IMAGE}
-	-disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
-	#newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
-	newfs -B ${FS_END} -m 0 -o space ${VND_RDEV} ${DISKTYPE}
-	mount -o softdep ${VND_DEV} ${MOUNT_POINT}
+	@echo "Building miniroot tree..."
+	-rm -rf ${MOUNT_POINT}
+	mkdir -m 755 ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	@echo "Creating miniroot image..."
+	-rm -f ${IMAGE}
+	${MAKEFS} -t ffs -B be -s ${CSIZE}b ${MAKEFSOPTS} \
+		${IMAGE}.tmp ${MOUNT_POINT} && mv ${IMAGE}.tmp ${IMAGE}
+	# use sunlabel?
+	#-disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
-	#${MDEC}/binstall -m ${DESTDIR}/usr/mdec -u -v ffs ${MOUNT_POINT}
-	umount ${MOUNT_POINT}
-	dd if=${MDEC}/bootblk of=${VND_CDEV} bs=512 count=15 conv=notrunc seek=1
-	#${MDEC}/installboot -v ${MDEC}/bootblk ${VND_CDEV}
-	vnconfig -u ${VND_CRDEV}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
+	dd if=${MDEC}/bootblk of=${IMAGE} bs=512 count=15 conv=notrunc seek=1
 
 dot.profile: dot.profile.m4
 	m4 -DMACHINE_ARCH=${MACHINE_ARCH} -DMACHINE=${MACHINE} \
