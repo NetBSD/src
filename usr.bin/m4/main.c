@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2002/03/05 15:37:35 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2002/05/02 14:24:06 wiz Exp $	*/
 /*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2002/03/05 15:37:35 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2002/05/02 14:24:06 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,7 +572,7 @@ initkwds()
 			size_t klen = strlen(k);
 			char *newk = malloc(klen + 4);
 
-			if (snprintf(newk, klen, "m4_%s", k) == -1)
+			if (snprintf(newk, klen+4, "m4_%s", k) == -1)
 				err(1, "snprintf");
 			keywrds[i].knam = newk;
 			k = newk;
