@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.45 2000/08/23 15:17:47 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.46 2000/08/26 17:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -799,7 +799,8 @@ int simple_lock_debugger = 0;
 #endif /* } */
 
 #ifdef MULTIPROCESSOR
-#define SLOCK_MP()		lock_printf("on cpu %d\n", cpu_number())
+#define SLOCK_MP()		lock_printf("on cpu %ld\n", 		\
+				    (u_long) cpu_number())
 #else
 #define SLOCK_MP()		/* nothing */
 #endif
