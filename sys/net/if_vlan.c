@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.31 2001/04/07 18:41:42 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.32 2001/06/12 06:16:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -313,6 +313,17 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		}
 
 		/*
+		 * If the parent interface can do hardware-assisted
+		 * VLAN encapsulation, then propagate its hardware-
+		 * assisted checksumming flags.
+		 */
+		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
+			ifp->if_capabilities = p->if_capabilities &
+			    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+			     IFCAP_CSUM_UDPv4|IFCAP_CSUM_TCPv6|
+			     IFCAP_CSUM_UDPv6);
+
+		/*
 		 * We inherit the parent's Ethernet address.
 		 */
 		ether_ifattach(ifp, LLADDR(p->if_sadl));
@@ -393,6 +404,7 @@ vlan_unconfig(struct ifnet *ifp)
 
 	if_down(ifp);
 	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
+	ifp->if_capabilities = 0;
 }
 
 /*
