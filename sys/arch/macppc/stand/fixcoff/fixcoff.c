@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.6 2003/12/10 23:08:14 matt Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.7 2003/12/10 23:36:07 matt Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/endian.h>
 
 struct filehdr {
 #define U802WRMAGIC     0730
@@ -149,12 +150,12 @@ main(argc, argv)
 	if (read(fd, &fh, sizeof(fh)) != sizeof(fh))
 		err(1, "%s reading header", argv[0]);
 
-	i = ntohs(*(uint16_t *)fh.f_magic);
+	i = be16toh(*(uint16_t *)fh.f_magic);
 	if ((i != U802WRMAGIC) && (i != U802ROMAGIC) && (i != U802TOCMAGIC))
 		errx(1, "%s: not a valid xcoff file", argv[0]);
 
 	/* Does the AOUT "Optional header" make sense? */
-	i = ntohs(*(uint16_t *)fh.f_opthdr);
+	i = be16toh(*(uint16_t *)fh.f_opthdr);
 
 	if (i == SMALL_AOUTSZ)
 		errx(1, "%s: file has small \"optional\" header, inappropriate for use with %s", argv[0], getprogname());
@@ -165,19 +166,19 @@ main(argc, argv)
 		err(1, "%s reading \"optional\" header", argv[0]);
 
 	/* Now start filing in the AOUT header */
-	*(uint16_t *)aoh.magic = htons(RS6K_AOUTHDR_ZMAGIC);
-	n = ntohs(*(uint16_t *)fh.f_nsect);
+	*(uint16_t *)aoh.magic = htobe16(RS6K_AOUTHDR_ZMAGIC);
+	n = be16toh(*(uint16_t *)fh.f_nsect);
 
 	for (i = 0; i < n; i++) {
 		if (read(fd, &sh, sizeof(sh)) != sizeof(sh))
 			err(1, "%s reading section headers", argv[0]);
 		if (strcmp(sh.s_name, ".text") == 0) {
-			*(uint16_t *)(aoh.o_snentry) = htons(i+1);
-			*(uint16_t *)(aoh.o_sntext) = htons(i+1);
+			*(uint16_t *)(aoh.o_snentry) = htobe16(i+1);
+			*(uint16_t *)(aoh.o_sntext) = htobe16(i+1);
 		} else if (strcmp(sh.s_name, ".data") == 0) {
-			*(uint16_t *)(aoh.o_sndata) = htons(i+1);
+			*(uint16_t *)(aoh.o_sndata) = htobe16(i+1);
 		} else if (strcmp(sh.s_name, ".bss") == 0) {
-			*(uint16_t *)(aoh.o_snbss) = htons(i+1);
+			*(uint16_t *)(aoh.o_snbss) = htobe16(i+1);
 		}
 	}
 
