@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.31 1999/11/08 04:48:18 mycroft Exp $ */
+/* $NetBSD: wskbd.c,v 1.32 1999/12/01 11:41:46 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.31 1999/11/08 04:48:18 mycroft Exp $";
+    "$NetBSD: wskbd.c,v 1.32 1999/12/01 11:41:46 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,10 +265,12 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 
 cdev_decl(wskbd);
 
+#if NWSMUX > 0 || NWSDISPLAY > 0
 struct wsmuxops wskbd_muxops = {
 	wskbdopen, wskbddoclose, wskbddoioctl, wskbd_displayioctl,
 	wskbd_set_display
 };
+#endif
 
 #if NWSDISPLAY > 0
 static void wskbd_repeat __P((void *v));
