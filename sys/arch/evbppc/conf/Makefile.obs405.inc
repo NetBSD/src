@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.1 2003/09/23 14:45:12 shige Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.1.8.1 2005/03/22 19:07:40 tron Exp $
 
-MKIMG?=	${THISPPC}/compile/walnut-mkimg.sh
+MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 
 CFLAGS+=-mcpu=403
 AFLAGS+=-mcpu=403
