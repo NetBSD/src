@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.13 2002/06/28 22:24:11 drochner Exp $ */
+/* $NetBSD: vgavar.h,v 1.14 2002/07/08 19:43:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -72,6 +72,7 @@ struct vga_config {
 	const struct vga_funcs *vc_funcs;
 
 	struct callout vc_switch_callout;
+	int vc_quirks;
 };
 
 struct vga_softc {
