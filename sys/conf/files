@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.331 1999/11/17 17:56:00 thorpej Exp $
+#	$NetBSD: files,v 1.332 1999/11/19 05:49:53 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -94,6 +94,7 @@ deffs	fs_union.h UNION
 deffs	fs_coda.h CODA
 
 # file system options
+defopt	SOFTDEP
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI
 defopt	opt_ntfs.h	NTFS_DEBUG
