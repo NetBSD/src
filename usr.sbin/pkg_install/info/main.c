@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.25 2001/08/13 20:08:58 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2001/08/19 23:33:35 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2001/08/13 20:08:58 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2001/08/19 23:33:35 hubertf Exp $");
 #endif
 #endif
 
@@ -198,6 +198,12 @@ main(int argc, char **argv)
 		/* No argument or flags specified - assume -Ia */
 		Flags = SHOW_INDEX;
 		AllInstalled = TRUE;
+	}
+
+	/* Don't do FTP stuff when operating on all pkgs */
+	if (AllInstalled) {
+		warnx("disabling PKG_PATH when operating on all packages.");
+		unsetenv("PKG_PATH");
 	}
 
 	/* Set some reasonable defaults */
