@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2.2.4 2000/10/07 01:14:15 itojun Exp $
+#	$NetBSD: Makefile,v 1.2.2.5 2002/08/29 16:48:10 he Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.2.2.4 2000/10/07 01:14:15 itojun Exp $
+#	$Id: Makefile,v 1.2.2.5 2002/08/29 16:48:10 he Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -24,13 +24,15 @@ WARNS=0
 PROG=	openssl
 
 SRCS=	openssl.c
-SRCS+=	app_rand.c apps.c asn1pars.c ca.c ciphers.c crl.c crl2p7.c dgst.c \
-	dh.c dhparam.c dsa.c dsaparam.c enc.c errstr.c gendh.c gendsa.c \
-	nseq.c passwd.c pkcs12.c pkcs7.c pkcs8.c rand.c req.c s_cb.c \
-	s_client.c s_server.c s_socket.c s_time.c sess_id.c smime.c \
-	speed.c spkac.c verify.c version.c x509.c
-
-LDADD+=	-lssl -lcrypto
+SRCS+=	apps.c
+SRCS+=	s_cb.c s_socket.c
+SRCS+=	app_rand.c
+SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c errstr.c ca.c \
+	pkcs7.c crl2p7.c crl.c \
+	rsa.c rsautl.c dsa.c dsaparam.c \
+	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \
+	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
+	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL
 
@@ -38,10 +40,22 @@ CPPFLAGS+= -DMONOLITH -DUSE_SSL
 # we nuked all of them in our header files and it is now safe.
 .if ${MKCRYPTO_RC5} == "no"
 CPPFLAGS+= -DNO_RC5
+.else
+LDADD+=	-lcrypto_rc5
+DPADD+=	${LIBCRYPTO_RC5}
 .endif
 .if ${MKCRYPTO_IDEA} == "no"
 CPPFLAGS+= -DNO_IDEA
+.else
+LDADD+=	-lcrypto_idea
+DPADD+=	${LIBCRYPTO_IDEA}
 .endif
+
+# this must be _after_ the libcrypto_rc5/libcrypto_idea entries.
+LDADD+=	-lssl -lcrypto
+DPADD+=	${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-lcompat
+DPADD+=	${LIBCOMPAT}
 
 MKMAN=	no
 
@@ -100,7 +114,6 @@ CRYPTODIST=	${.CURDIR}/../../crypto/dist
 #	openssl rc2-cfb \
 #	openssl rc2-ofb \
 
-SRCS+=	rsa.c genrsa.c 
 #LINKS+=	openssl rsa \
 #	openssl rsa-cbc \
 #	openssl rsa-ecb \
