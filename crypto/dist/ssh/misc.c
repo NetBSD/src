@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.1.2.4 2003/09/17 23:46:41 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.1.2.5 2003/09/17 23:49:10 christos Exp $	*/
 /*	$OpenBSD: misc.c,v 1.13 2001/12/05 10:06:12 deraadt Exp $	*/
 
 /*
@@ -295,7 +295,7 @@ addargs(arglist *args, char *fmt, ...)
 		nalloc = 32;
 		args->num = 0;
 	} else if (args->num+2 >= args->nalloc) 
-		alloc *= 2;
+		nalloc *= 2;
 
 	args->list = xrealloc(args->list, nalloc * sizeof(char *));
 	args->nalloc = nalloc;
