@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48t02.h,v 1.1.1.1 1997/01/14 20:57:09 gwr Exp $ */
+/*	$NetBSD: mk48t02.h,v 1.2 1997/04/25 18:47:41 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,6 @@
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <machine/idprom.h>
-
 /*
  * Sun-3/80 Mostek TOD clock.
  */
@@ -56,9 +54,7 @@
  * The clock includes 2040 bytes of RAM, the last 32 of which serve to
  * identify the kind of Sun 3x this is.
  */
-struct clockreg {
-	char	cl_nvram[2008];		/* the "EEPROM" space */
-	struct	idprom	cl_idprom;	/* `id prom' */
+struct mostek_clkreg {
 	volatile u_char	cl_csr;		/* control register */
 	volatile u_char	cl_sec;		/* seconds (0..59; BCD) */
 	volatile u_char	cl_min;		/* minutes (0..59; BCD) */
@@ -78,3 +74,9 @@ struct clockreg {
  * cl_year==0 means 1968.
  */
 #define	YEAR0	68
+
+struct mostek_all {
+	char	mk_nvram[2008]; 	/* the "EEPROM" space */
+	char	mk_idprom[32];  	/* the "ID prom" */
+	struct mostek_clkreg mk_clock;	/* clock */
+};
