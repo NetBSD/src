@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2001/03/10 20:15:46 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2001/03/10 21:27:06 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -402,6 +402,42 @@ identify_arm_cpu(cpu_number)
 	/* Print the info */
 
 	printf(": %s\n", cpu->cpu_model);
+
+	switch (cpu->cpu_class) {
+#ifdef CPU_ARM2
+	case CPU_CLASS_ARM2:
+#endif
+#ifdef CPU_ARM250
+	case CPU_CLASS_ARM2AS:
+#endif
+#ifdef CPU_ARM3
+	case CPU_CLASS_ARM3:
+#endif
+#ifdef CPU_ARM6
+	case CPU_CLASS_ARM6:
+#endif
+#ifdef CPU_ARM7
+	case CPU_CLASS_ARM7:
+#endif
+#ifdef CPU_ARM8
+	case CPU_CLASS_ARM8:
+#endif
+#ifdef CPU_SA110
+	case CPU_CLASS_SA1:
+#endif
+		break;
+	default:
+		if (cpu_classes[cpu->cpu_class].class_option != NULL)
+			printf("WARNING: %s does not fully support this CPU."
+			       "\n", ostype);
+		else
+			printf("WARNING: This kernel does not fully support "
+			       "this CPU.\nRecompile with \"options %s\" to "
+			       "correct this.\n",
+			       cpu_classes[cpu->cpu_class].class_option);
+		break;
+	}
+			       
 }
 
 
