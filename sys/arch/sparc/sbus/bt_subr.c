@@ -42,13 +42,14 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: bt_subr.c,v 1.1 93/10/12 15:28:39 torek Exp 
- * $Id: bt_subr.c,v 1.1 1993/11/11 03:36:48 deraadt Exp $
+ * $Id: bt_subr.c,v 1.2 1993/11/29 06:15:27 deraadt Exp $
  */
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/fbio.h>
+
+#include <machine/fbio.h>
 
 #include <sparc/sbus/btreg.h>
 #include <sparc/sbus/btvar.h>

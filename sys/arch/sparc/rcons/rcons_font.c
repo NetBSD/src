@@ -42,14 +42,14 @@
  *	@(#)rcons_font.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: rcons_font.c,v 1.10 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_font.c,v 1.1 1993/10/02 10:23:40 deraadt Exp $
+ * $Id: rcons_font.c,v 1.2 1993/11/29 06:14:55 deraadt Exp $
  */
 
 #ifdef KERNEL
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/fbio.h>
 #include <sys/device.h>
+#include <machine/fbio.h>
 #include <machine/fbvar.h>
 #else
 #include <sys/types.h>
