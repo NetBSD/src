@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.49 2001/09/15 20:36:37 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.50 2001/09/21 08:02:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -248,8 +248,13 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	struct iovec aiov;
 	int error;
 
-	if ((ioflg & IO_NODELOCKED) == 0)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		if (rw == UIO_READ) {
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+		} else {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	}
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = base;
@@ -299,7 +304,7 @@ unionread:
 	auio.uio_segflg = segflg;
 	auio.uio_procp = p;
 	auio.uio_resid = count;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
@@ -384,7 +389,7 @@ vn_read(fp, offset, uio, cred, flags)
 		ioflag |= IO_SYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);

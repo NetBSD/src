@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.57 2001/09/15 20:36:38 chs Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.58 2001/09/21 08:02:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -284,7 +284,7 @@ spec_read(v)
 		VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
 
 	case VBLK:
