@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.32.2.1 1997/05/04 15:20:18 mrg Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.32.2.2 1997/05/08 00:23:55 pk Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -116,10 +116,6 @@ struct swtab {
 #endif
 } swtab[NSWSIZES+1];
 
-int	dmmin, dmmax;
-
-struct	map *swapmap;
-int	nswapmap;
 
 #ifdef DEBUG
 int		swap_pager_poip;	/* pageouts in progress */
