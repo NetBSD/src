@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.33.2.2 2003/07/25 11:54:01 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.33.2.3 2003/07/29 01:39:12 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.33.2.2 2003/07/25 11:54:01 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.33.2.3 2003/07/29 01:39:12 jlam Exp $");
 #endif
 #endif
 
@@ -394,7 +394,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		add_plist(&plist, PLIST_FILE, PRESERVE_FNAME);
 	}
 	if (create_views) {
-		write_file(VIEWS_FNAME, (char *)NULL);
+		write_file(VIEWS_FNAME, "");
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, VIEWS_FNAME);
 	}
