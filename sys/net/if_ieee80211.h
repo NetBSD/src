@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.7 2000/12/18 18:00:23 thorpej Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.8 2001/06/21 12:29:39 onoe Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -143,6 +143,11 @@ struct ieee80211_nwkey {
 };
 #define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
 #define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
+/* i_wepon */
+#define	IEEE80211_NWKEY_OPEN	0		/* No privacy */
+#define	IEEE80211_NWKEY_WEP	1		/* WEP enabled */
+#define	IEEE80211_NWKEY_EAP	2		/* EAP enabled */
+#define	IEEE80211_NWKEY_PERSIST	0x100		/* designate persist keyset */
 
 /* power management parameters */
 struct ieee80211_power {
