@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.3,v 1.5 1997/07/31 00:02:49 jtc Exp $
+.\" $NetBSD: ttyaction.3,v 1.6 1997/12/04 06:00:19 mikel Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,15 +42,15 @@
 .Nd ttyaction utility function
 .Sh SYNOPSIS
 .Fd #include <util.h>
-.Ft void
+.Ft int
 .Fn ttyaction "char *ttyname" "char *action" "char *username"
 .Sh DESCRIPTION
 The
 .Fn ttyaction
 function is used by
-.Nm login
+.Xr login 1
 and
-.Nm getty
+.Xr getty 8
 to execute site-specific commands
 when a login session begins and ends.
 .Pp
