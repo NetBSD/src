@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.7.2.1 1999/04/16 20:26:51 augustss Exp $
+.\" $NetBSD: wscons.4,v 1.7.2.2 2000/04/30 10:31:51 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -232,8 +232,9 @@ arguments are colors as defined in
 .Dq WS_KERNEL_COLATTR
 and
 .Dq WS_KERNEL_MONOATTR
-are additional attribute flags used on color resp. monochrome displays,
-the arguments are defined in the same header file. Whether the attributes
+are additional attribute flags used on color or. monochrome displays,
+respectively.
+The arguments are defined in the same header file. Whether the attributes
 are supported or not depends on the actually used graphics adapter.
 These options are ignored by the
 .Dq dumb
