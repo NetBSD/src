@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.28 2003/11/25 22:26:44 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.29 2003/11/25 22:36:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.28 2003/11/25 22:26:44 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.29 2003/11/25 22:36:32 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -728,6 +728,7 @@ pthread__kill_self(pthread_t self, siginfo_t *si)
 {
 	sigset_t oldmask;
 	struct sigaction act;
+	ucontext_t uc;	/* XXX: we don't pass the right context here */
 
 	pthread_spinlock(self, &pt_sigacts_lock);
 	act = pt_sigacts[si->si_signo];
@@ -742,20 +743,7 @@ pthread__kill_self(pthread_t self, siginfo_t *si)
 
 
 	pthread_spinunlock(self, &self->pt_siglock);
-#ifdef __HAVE_SIGINFO
-	{
-		ucontext_t uc;
-		(*act.sa_sigaction)(si->si_signo, si, &uc);
-	}
-#else
-	{
-		struct sigcontext xxxsc;
-		void (*handler)(int, int, struct sigcontext *);
-		handler = (void (*)(int, int, struct sigcontext *))
-		    act.sa_handler;
-		(*handler)(si->si_signo, si->si_trap, &xxxsc);
-	}
-#endif
+	(*act.sa_sigaction)(si->si_signo, si, &uc);
 	pthread_spinlock(self, &self->pt_siglock);
 
 	self->pt_sigmask = oldmask;
@@ -921,18 +909,7 @@ pthread__signal_tramp(void (*handler)(int, siginfo_t *, void *),
 	    pthread__self(), info->si_signo, info->si_code, uc,
 	    uc->uc_sigmask.__bits[0]));
 
-#ifdef __HAVE_SIGINFO
 	(*handler)(info->si_signo, info, uc);
-#else
-	{
-		struct pthread__sigcontext psc;
-
-		PTHREAD_UCONTEXT_TO_SIGCONTEXT(&uc->uc_sigmask, uc, &psc);
-		((void *(*)(int, int, struct sigcontext *))handler)
-		    (info->si_signo, info->si_trap, &psc.psc_context);
-		PTHREAD_SIGCONTEXT_TO_UCONTEXT(&psc, uc);
-	}
-#endif
 
 	/*
 	 * We've finished the handler, so this thread can restore the
