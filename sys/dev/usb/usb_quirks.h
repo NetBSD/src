@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.8 1999/10/11 09:16:39 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.9 1999/11/15 22:04:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@ struct usbd_quirks {
 #define UQ_NO_STRINGS	0x08	/* string descriptors are broken. */
 #define UQ_BAD_ADC	0x10	/* bad audio spec version number. */
 #define UQ_BUS_POWERED	0x20	/* device is bus powered, despite claim */
+#define UQ_BAD_AUDIO	0x40	/* device claims audio class, but isn't */
+#define UQ_SPUR_BUT_UP	0x80	/* spurious mouse button up events */
 };
 
 extern struct usbd_quirks usbd_no_quirk;
