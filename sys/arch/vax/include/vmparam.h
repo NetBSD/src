@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34 2001/04/29 22:44:38 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35 2001/05/01 02:19:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,9 +118,6 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
-#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
 
 /* MD round macros */
 #define	vax_round_page(x) (((vaddr_t)(x) + VAX_PGOFSET) & ~VAX_PGOFSET)
