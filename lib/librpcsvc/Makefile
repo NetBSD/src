@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.9 1994/05/22 04:20:02 jtc Exp $
+#	$Id: Makefile,v 1.10 1994/06/14 02:45:56 cgd Exp $
 
 RPCDIR=		${.CURDIR}/src
 .PATH:		${RPCDIR}
 
-RPCSRCS=	amq.x bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
+RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
 		sm_inter.x spray.x yp.x yppasswd.x
 SRCS=		${RPCSRCS:R:S/$/.c/g}
