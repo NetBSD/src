@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.3 2002/02/20 02:32:59 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.4 2002/02/20 20:41:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -93,7 +93,6 @@ extern int ofw_handleticks;
 /*
  *  Imported routines
  */
-extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vm_offset_t));
@@ -1399,18 +1398,18 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	/* Construct the proc0 L1 pagetable. */
 	L1pagetable = proc0_pagedir.pv_va;
 
-	map_pagetable(L1pagetable, 0x0, proc0_pt_sys.pv_pa);
-	map_pagetable(L1pagetable, KERNEL_BASE, proc0_pt_kernel.pv_pa);
-	map_pagetable(L1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(L1pagetable, 0x0, proc0_pt_sys.pv_pa);
+	pmap_link_l2pt(L1pagetable, KERNEL_BASE, proc0_pt_kernel.pv_pa);
+	pmap_link_l2pt(L1pagetable, PROCESS_PAGE_TBLS_BASE,
 	    proc0_pt_pte.pv_pa);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		map_pagetable(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
+		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
 		    proc0_pt_vmdata[i].pv_pa);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		map_pagetable(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
+		pmap_link_l2pt(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
 		    proc0_pt_ofw[i].pv_pa);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
-		map_pagetable(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
+		pmap_link_l2pt(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
 		    proc0_pt_io[i].pv_pa);
 
 	/* 

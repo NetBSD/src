@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2002/02/20 02:32:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2002/02/20 20:41:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2002/02/20 02:32:57 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2002/02/20 20:41:16 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3759,4 +3759,24 @@ pmap_map_entry(vaddr_t l2pt, vaddr_t va, paddr_t pa, int prot, int cache)
 #else
 	pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa & PG_FRAME, ap, fl);
 #endif
+}
+
+/*
+ * pmap_link_l2pt:
+ *
+ *	Link the L2 page table specified by "pa" into the L1
+ *	page table at the slot for "va".
+ */
+void
+pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, paddr_t l2pa)
+{
+	pd_entry_t *pde = (pd_entry_t *) l1pt;
+	u_int slot = va >> PDSHIFT;
+
+	KASSERT((l2pa & PGOFSET) == 0);
+
+	pde[slot + 0] = L1_PTE(l2pa + 0x000);
+	pde[slot + 1] = L1_PTE(l2pa + 0x400);
+	pde[slot + 2] = L1_PTE(l2pa + 0x800);
+	pde[slot + 3] = L1_PTE(l2pa + 0xc00);
 }
