@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2003/01/06 14:16:10 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.124 2003/01/06 18:32:31 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -439,9 +439,10 @@ badtrap:
 		}
 #endif
 
-		KERNEL_PROC_LOCK(p);
 		if (fs == NULL) {
+			KERNEL_PROC_LOCK(p);
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
+			KERNEL_PROC_UNLOCK(p);
 			*fs = initfpstate;
 			p->p_md.md_fpstate = fs;
 		}
@@ -455,7 +456,6 @@ badtrap:
 			sig = SIGFPE;
 			/* XXX - ucode? */
 #endif
-			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
 		/*
@@ -465,12 +465,12 @@ badtrap:
 		 */
 		if (fs->fs_qsize) {
 			fpu_cleanup(p, fs);
-			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-#if 1
+
 		if (cpuinfo.fpproc != p) {		/* we do not have it */
 			struct cpu_info *cpi;
+			FPU_LOCK();
 			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
 				cpuinfo.fpproc->p_md.md_fpu = NULL;
@@ -492,34 +492,8 @@ badtrap:
 			loadfpstate(fs);
 			cpuinfo.fpproc = p;		/* now we do have it */
 			p->p_md.md_fpu = curcpu();
+			FPU_UNLOCK();
 		}
-#else
-		if (cpuinfo.fpproc != p) {		/* we do not have it */
-			int mid;
-
-			mid = p->p_md.md_fpumid;
-			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
-				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
-				cpuinfo.fpproc->p_md.md_fpumid = -1;
-			}
-			/*
-			 * On MP machines, some of the other FPUs might
-			 * still have our state. We can't handle that yet,
-			 * so panic if it happens. Possible solutions:
-			 * (1) send an inter-processor message to have the
-			 * other FPU save the state, or (2) don't do lazy FPU
-			 * context switching at all.
-			 */
-			if (mid != -1 && mid != cpuinfo.mid) {
-				printf("own FPU on module %d\n", mid);
-				panic("fix this");
-			}
-			loadfpstate(fs);
-			cpuinfo.fpproc = p;		/* now we do have it */
-			p->p_md.md_fpumid = cpuinfo.mid;
-		}
-#endif
-		KERNEL_PROC_UNLOCK(p);
 		tf->tf_psr |= PSR_EF;
 		break;
 	}
@@ -617,15 +591,15 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
-		KERNEL_PROC_LOCK(p);
 		if (p != cpuinfo.fpproc)
 			panic("fpe without being the FP user");
+		FPU_LOCK();
 		savefpstate(p->p_md.md_fpstate);
 		cpuinfo.fpproc = NULL;
 		p->p_md.md_fpu = NULL;
+		FPU_UNLOCK();
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(p, p->p_md.md_fpstate);
-		KERNEL_PROC_UNLOCK(p);
 		/* fpu_cleanup posts signals if needed */
 #if 0		/* ??? really never??? */
 		ADVANCE;
