@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.67 2000/06/13 00:54:21 wiz Exp $
+# $NetBSD: md.i386,v 1.68 2000/06/20 01:28:36 minoura Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/bktr
@@ -31,8 +31,8 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/biosboot.sym
 ./usr/mdec/biosboot_com0.sym
-./usr/mdec/biosboot_resetvideo.sym
 ./usr/mdec/biosboot_ps2.sym
+./usr/mdec/biosboot_resetvideo.sym
 ./usr/mdec/dosboot.com
 ./usr/mdec/installboot
 ./usr/mdec/mbr
