@@ -34,8 +34,54 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.11 1993/07/06 06:06:28 deraadt Exp $
+ *	clock.c,v 1.11 1993/07/06 06:06:28 deraadt Exp
  */
+/* 
+ * Mach Operating System
+ * Copyright (c) 1991,1990,1989 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
+ */
+/*
+  Copyright 1988, 1989 by Intel Corporation, Santa Clara, California.
+
+		All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and
+its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appears in all
+copies and that both the copyright notice and this permission notice
+appear in supporting documentation, and that the name of Intel
+not be used in advertising or publicity pertaining to distribution
+of the software without specific, written prior permission.
+
+INTEL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+IN NO EVENT SHALL INTEL BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
 
 /*
  * Primitive clock interrupt routines.
@@ -47,19 +93,15 @@
 #include "machine/segments.h"
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
+#include "i386/isa/clock.h"
 #include "i386/isa/rtc.h"
 #include "i386/isa/timerreg.h"
 
 void spinwait __P((int));
 
-/* XXX all timezone stuff should be moved out of the kernel */
-#if 1
-#define DAYST 119
-#define DAYEN 303
-#endif
-
 void
-startrtclock() {
+startrtclock(void)
+{
 	int s;
 
 	findcpuspeed();		/* use the clock (while it's free)
@@ -71,13 +113,8 @@ startrtclock() {
 	outb (IO_TIMER1, TIMER_DIV(hz)%256);
 	outb (IO_TIMER1, TIMER_DIV(hz)/256);
 
-	/* initialize brain-dead battery powered clock */
-	outb (IO_RTC, RTC_STATUSA);
-	outb (IO_RTC+1, 0x26);
-	outb (IO_RTC, RTC_STATUSB);
-	outb (IO_RTC+1, 2);
-
-	outb (IO_RTC, RTC_DIAG);
+        /* Check diagnostic status */
+        outb (IO_RTC, RTC_DIAG);
 	if (s = inb (IO_RTC+1))
 		printf("RTC BIOS diagnostic error %b\n", s, RTCDG_BITS);
 	outb (IO_RTC, RTC_DIAG);
@@ -87,7 +124,7 @@ startrtclock() {
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
 #define FIRST_GUESS	0x2000
-findcpuspeed()
+findcpuspeed(void)
 {
 	unsigned char low;
 	unsigned int remainder;
@@ -108,139 +145,14 @@ findcpuspeed()
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
 
-
-/* convert 2 digit BCD number */
-bcd(i)
-int i;
-{
-	return ((i/16)*10 + (i%16));
-}
-
-/* convert years to seconds (from 1970) */
-unsigned long
-ytos(y)
-int y;
-{
-	int i;
-	unsigned long ret;
-
-	ret = 0;
-	for(i = 1970; i < y; i++) {
-		if (i % 4) ret += 365*24*60*60;
-		else ret += 366*24*60*60;
-	}
-	return ret;
-}
-
-/* convert months to seconds */
-unsigned long
-mtos(m,leap)
-int m,leap;
-{
-	int i;
-	unsigned long ret;
-
-	ret = 0;
-	for(i=1;i<m;i++) {
-		switch(i){
-		case 1: case 3: case 5: case 7: case 8: case 10: case 12:
-			ret += 31*24*60*60; break;
-		case 4: case 6: case 9: case 11:
-			ret += 30*24*60*60; break;
-		case 2:
-			if (leap) ret += 29*24*60*60;
-			else ret += 28*24*60*60;
-		}
-	}
-	return ret;
-}
-
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-inittodr(base)
-	time_t base;
-{
-	unsigned long sec;
-	int leap,day_week,t,yd;
-	int sa,s;
-
-	/* do we have a realtime clock present? (otherwise we loop below) */
-	sa = rtcin(RTC_STATUSA);
-	if (sa == 0xff || sa == 0) return;
-
-	/* ready for a read? */
-	while ((sa&RTCSA_TUP) == RTCSA_TUP)
-		sa = rtcin(RTC_STATUSA);
-
-	sec = bcd(rtcin(RTC_YEAR)) + 1900;
-	if (sec < 1970)
-		sec += 100;
-	leap = !(sec % 4); sec = ytos(sec); /* year    */
-	yd = mtos(bcd(rtcin(RTC_MONTH)),leap); sec += yd;	/* month   */
-	t = (bcd(rtcin(RTC_DAY))-1) * 24*60*60; sec += t; yd += t; /* date    */
-	day_week = rtcin(RTC_WDAY);				/* day     */
-	sec += bcd(rtcin(RTC_HRS)) * 60*60;			/* hour    */
-	sec += bcd(rtcin(RTC_MIN)) * 60;			/* minutes */
-	sec += bcd(rtcin(RTC_SEC));				/* seconds */
-
-#ifdef DAYST
-	/* XXX off by one? Need to calculate DST on SUNDAY */
-	/* Perhaps we should have the RTC hold GMT time to save */
-	/* us the bother of converting. */
-	yd = yd / (24*60*60);
-	if ((yd >= DAYST) && ( yd <= DAYEN)) {
-		sec -= 60*60;
-	}
-#endif
-	sec += tz.tz_minuteswest * 60;
-
-	time.tv_sec = sec;
-}
-
-#ifdef garbage
-/*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-test_inittodr(base)
-	time_t base;
-{
-
-	outb(IO_RTC,9); /* year    */
-	printf("%d ",bcd(inb(IO_RTC+1)));
-	outb(IO_RTC,8); /* month   */
-	printf("%d ",bcd(inb(IO_RTC+1)));
-	outb(IO_RTC,7); /* day     */
-	printf("%d ",bcd(inb(IO_RTC+1)));
-	outb(IO_RTC,4); /* hour    */
-	printf("%d ",bcd(inb(IO_RTC+1)));
-	outb(IO_RTC,2); /* minutes */
-	printf("%d ",bcd(inb(IO_RTC+1)));
-	outb(IO_RTC,0); /* seconds */
-	printf("%d\n",bcd(inb(IO_RTC+1)));
-
-	time.tv_sec = base;
-}
-#endif
-
-/*
- * Restart the clock.
- */
-void
-resettodr()
-{
-}
-
 /*
  * Wire clock interrupt in.
  */
 #define VEC(s)	__CONCAT(X, s)
 extern VEC(clk)();
+
 void
-enablertclock() {
+enablertclock(void) {
 	setidt(ICU_OFFSET+0, &VEC(clk), SDT_SYS386IGT, SEL_KPL);
 	INTREN(IRQ0);
 }
@@ -249,8 +161,185 @@ enablertclock() {
  * Delay for some number of milliseconds.
  */
 void
-spinwait(millisecs)
-	int millisecs;
+spinwait(int millisecs)
 {
 	DELAY(1000 * millisecs);
+}
+
+static int first_rtcopen_ever = 1;
+
+void
+rtcinit(void)
+{
+        if (first_rtcopen_ever) {
+                outb(IO_RTC, RTC_STATUSA);
+                outb(IO_RTC+1, RTC_DIV2 | RTC_RATE6);
+                outb(IO_RTC, RTC_STATUSB);
+                outb(IO_RTC+1, RTC_HM);
+                first_rtcopen_ever = 0;
+        }
+}
+
+int
+rtcget(struct rtc_st *rtc_regs)
+{
+	int	i;
+        u_char *regs = (u_char *)rtc_regs;
+        
+	if (first_rtcopen_ever) {
+		rtcinit();
+	}
+	outb(IO_RTC, RTC_D); 
+	if (inb(IO_RTC+1) & RTC_VRT == 0) return(-1);
+	outb(IO_RTC, RTC_STATUSA);	
+	while (inb(IO_RTC+1) & RTC_UIP)		/* busy wait */
+		outb(IO_RTC, RTC_STATUSA);	
+	for (i = 0; i < RTC_NREG; i++) {
+		outb(IO_RTC, i);
+		regs[i] = inb(IO_RTC+1);
+	}
+	return(0);
+}	
+
+void
+rtcput(struct rtc_st *rtc_regs)
+{
+	u_char	x;
+	int	i;
+        u_char *regs = (u_char *)rtc_regs;
+
+	if (first_rtcopen_ever) {
+		rtcinit();
+	}
+	outb(IO_RTC, RTC_STATUSB);
+	x = inb(IO_RTC+1);
+	outb(IO_RTC, RTC_STATUSB);
+	outb(IO_RTC+1, x | RTC_SET); 	
+	for (i = 0; i < RTC_NREGP; i++) {
+		outb(IO_RTC, i);
+		outb(IO_RTC+1, regs[i]);
+	}
+	outb(IO_RTC, RTC_STATUSB);
+	outb(IO_RTC+1, x & ~RTC_SET); 
+}
+
+static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+static int
+yeartoday(int year)
+{
+	return((year%4) ? 365 : 366);
+}
+
+static int
+hexdectodec(char n)
+{
+	return(((n>>4)&0x0F)*10 + (n&0x0F));
+}
+
+static char
+dectohexdec(int n)
+{
+	return((char)(((n/10)<<4)&0xF0) | ((n%10)&0x0F));
+}
+
+/*
+ * Initialize the time of day register, based on the time base which is, e.g.
+ * from a filesystem.
+ */
+void
+inittodr(base)
+	time_t base;
+{
+        /*
+         * We ignore the suggested time for now and go for the RTC
+         * clock time stored in the CMOS RAM.
+         */
+	struct rtc_st rtclk;
+	time_t n;
+	int sec, min, hr, dom, mon, yr;
+	int i, days = 0;
+	int ospl;
+
+	ospl = splclock();
+	if (rtcget(&rtclk)) {
+		splx(ospl);
+		return;
+	}
+	splx (ospl);
+
+	sec = hexdectodec(rtclk.rtc_sec);
+	min = hexdectodec(rtclk.rtc_min);
+	hr = hexdectodec(rtclk.rtc_hr);
+	dom = hexdectodec(rtclk.rtc_dom);
+	mon = hexdectodec(rtclk.rtc_mon);
+	yr = hexdectodec(rtclk.rtc_yr);
+	yr = (yr < 70) ? yr+100 : yr;
+
+	n = sec + 60 * min + 3600 * hr;
+	n += (dom - 1) * 3600 * 24;
+
+	if (yeartoday(yr) == 366)
+		month[1] = 29;
+	for (i = mon - 2; i >= 0; i--)
+		days += month[i];
+	month[1] = 28;
+	for (i = 70; i < yr; i++)
+		days += yeartoday(i);
+	n += days * 3600 * 24;
+
+	n += tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		n -= 3600;
+	time.tv_sec = n;
+        time.tv_usec = 0;
+}
+
+/*
+ * Reset the clock.
+ */
+void
+resettodr()
+{
+	struct rtc_st rtclk;
+	time_t n;
+	int diff, i, j;
+	int ospl;
+
+	ospl = splclock();
+	if (rtcget(&rtclk)) {
+		splx(ospl);
+		return;
+	}
+	splx(ospl);
+
+	diff = tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		diff -= 3600;
+	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
+	rtclk.rtc_sec = dectohexdec(n%60);
+	n /= 60;
+	rtclk.rtc_min = dectohexdec(n%60);
+	rtclk.rtc_hr = dectohexdec(n/60);
+
+	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
+	rtclk.rtc_dow = (n + 4) % 7;  /* 1/1/70 is Thursday */
+
+	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
+		n -= i;
+
+	rtclk.rtc_yr = dectohexdec(j - 1900);
+
+	if (i == 366)
+		month[1] = 29;
+	for (i = 0; n >= month[i]; i++)
+		n -= month[i];
+	month[1] = 28;
+	rtclk.rtc_mon = dectohexdec(++i);
+
+	rtclk.rtc_dom = dectohexdec(++n);
+
+	ospl = splclock();
+	rtcput(&rtclk);
+	splx(ospl);
 }
