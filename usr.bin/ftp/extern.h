@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.40 1999/09/30 23:51:27 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.41 1999/10/01 06:55:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -207,14 +207,3 @@ int	xlisten __P((int, int));
 void   *xmalloc __P((size_t));
 char   *xstrdup __P((const char *));
 sig_t	xsignal __P((int, void (func) __P((int))));
-
-extern struct	cmd cmdtab[];
-extern FILE    *cout;
-extern int	data;
-extern char	home[];
-extern int	proxy;
-extern char	reply_string[];
-extern int	NCMDS;
-
-extern char *__progname;		/* from crt0.o */
-
