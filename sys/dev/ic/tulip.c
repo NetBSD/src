@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.68.4.4 2000/12/31 20:15:05 jhawk Exp $	*/
+/*	$NetBSD: tulip.c,v 1.68.4.5 2001/01/26 01:03:50 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1350,8 +1350,8 @@ tlp_rxintr(sc)
 		 */
 		if (rxstat & TDSTAT_ES &&
 		    ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-		    (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF | TDSTAT_Rx_RE |
-		    TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
+		     (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF |
+				TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
