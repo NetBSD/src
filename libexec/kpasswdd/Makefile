@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.6 2000/10/26 05:52:56 garbled Exp $
+# $NetBSD: Makefile,v 1.7 2000/12/30 17:29:25 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kpasswd
 
@@ -21,7 +24,7 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/openssl/crypto/des		\
 	-DHAVE_CONFIG_H -DINETD_SUPPORT
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${MAKE} print-objdir
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 
 LDADD=	-lkadm5srv \
 	-lhdb \
