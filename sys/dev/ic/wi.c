@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.125 2003/05/16 01:26:18 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.126 2003/05/17 16:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.125 2003/05/16 01:26:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.126 2003/05/17 16:46:03 christos Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -153,7 +153,7 @@ wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
 }
 
 static	struct timeval lasttxerror;	/* time of last tx error msg */
-static	int curtxeps;			/* current tx error msgs/sec */
+static	int curtxeps = 0;		/* current tx error msgs/sec */
 static	int wi_txerate = 0;		/* tx error rate: max msgs/sec */
 
 #ifdef WI_DEBUG
@@ -1323,6 +1323,7 @@ wi_tx_ex_intr(struct wi_softc *sc)
 		 */
 		if ((status & WI_TXSTAT_DISCONNECT) == 0) {
 			if (ppsratecheck(&lasttxerror, &curtxeps, wi_txerate)) {
+				curtxeps = 0;
 				printf("%s: tx failed", sc->sc_dev.dv_xname);
 				if (status & WI_TXSTAT_RET_ERR)
 					printf(", retry limit exceeded");
