@@ -1,10 +1,12 @@
-/*	$NetBSD: sigsetjmp.S,v 1.2 1998/05/25 15:28:02 ws Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.3 1998/07/02 18:40:24 tsubai Exp $	*/
+
+#include <sys/syscall.h>
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: sigsetjmp.S,v 1.2 1998/05/25 15:28:02 ws Exp $"
+	.asciz "$NetBSD: sigsetjmp.S,v 1.3 1998/07/02 18:40:24 tsubai Exp $"
 #endif
 
 ENTRY(sigsetjmp)
