@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.290 2004/06/22 09:05:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.291 2004/06/22 09:29:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4352,4 +4352,31 @@ sys/fs/cd9660/cd9660_node.h			1.6
 	Use unsigned long for file size and location; avoids sign extension
 	for files >2GB.
 	[dillo, ticket #525]
+
+distrib/notes/sparc/whatis			1.20
+distrib/notes/sparc/hardware			1.32
+
+	- Increment to "eight major release"
+	- hyperSPARC SMP supported
+	- XFree86 4.4.0
+	- nell has less problems
+	[mbw, ticket #530]
+
+gnu/dist/gcc/gcc/ChangeLog			1.9
+gnu/dist/gcc/gcc/emit-rtl.c			1.2
+
+	Stop programs from dumping core at runtime due to (some) alignment
+	faults.
+	[mrg, ticket #532]
+
+sys/arch/macppc/macppc/extintr.c		1.44
+
+	Make the iBook G4 keyboard almost usable (there are still some spurious
+	inputs on system startup).
+	[manu, ticket #533]
+
+sys/arch/macppc/macppc/machdep.c		1.132
+
+	Fix spurious keyboard inputs on iBook G4.
+	[manu, ticket #534]
 
