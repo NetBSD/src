@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.2 2000/12/14 18:34:59 mycroft Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.3 2000/12/14 18:44:20 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,12 +94,14 @@
  * rights to redistribute these changes.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2 2000/12/14 18:34:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3 2000/12/14 18:44:20 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
