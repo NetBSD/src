@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.11 1999/02/11 15:32:24 mrg Exp $	*/
+/*	$NetBSD: mtree.h,v 1.12 2001/10/03 14:33:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,8 +42,8 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define	KEYDEFAULT \
-	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | F_TIME | F_UID | F_FLAGS)
+#define	KEYDEFAULT	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | \
+			F_TIME | F_TYPE | F_UID | F_FLAGS)
 
 #define	MISMATCHEXIT	2
 
