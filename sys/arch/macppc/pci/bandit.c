@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.9 1999/05/05 04:37:19 thorpej Exp $	*/
+/*	$NetBSD: bandit.c,v 1.10 1999/05/05 08:43:53 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -309,8 +309,8 @@ config_slot(node, pc, irq)
 	/*
 	 * Make sure the IO and MEM enable bits are set in the CSR.
 	 */
+	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	for (; sz > 0; sz -= 5 * sizeof(u_int32_t), rp += 5) {
-		csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 		switch (rp[0] & OFW_PCI_PHYS_HI_SPACEMASK) {
 		case OFW_PCI_PHYS_HI_SPACE_IO:
 			csr |= PCI_COMMAND_IO_ENABLE;
