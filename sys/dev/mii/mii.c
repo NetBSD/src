@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.13 1999/09/25 00:10:13 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.14 1999/10/27 19:05:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,8 @@ mii_phy_probe(parent, mii, capmask)
 				 * Yes, there is already something
 				 * configured at this address.
 				 */
-				continue;
 				offset++;
+				continue;
 			}
 		}
 #endif
