@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.20 2003/02/20 12:24:05 hannken Exp $ */
+/*      $NetBSD: sv.c,v 1.21 2003/02/22 04:58:43 tsutsui Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.20 2003/02/20 12:24:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.21 2003/02/22 04:58:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -791,14 +791,14 @@ sv_set_params(addr, setmode, usemode, play, rec)
 	if (setmode & AUMODE_RECORD) {
 		/* The ADC reference frequency (f_out) is 512 * sample rate */
 
-		/* f_out is dervied from the 24.576MHZ crystal by three values:
+		/* f_out is dervied from the 24.576MHz crystal by three values:
 		   M & N & R. The equation is as follows:
 
 		   f_out = (m + 2) * f_ref / ((n + 2) * (2 ^ a))
 
 		   with the constraint that:
 
-		   80 MhZ < (m + 2) / (n + 2) * f_ref <= 150Mhz
+		   80 MHz < (m + 2) / (n + 2) * f_ref <= 150MHz
 		   and n, m >= 1
 		*/
 
