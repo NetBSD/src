@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.61 2004/01/13 06:17:14 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.62 2004/03/29 04:59:03 atatat Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.61 2004/01/13 06:17:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.62 2004/03/29 04:59:03 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1009,7 +1009,7 @@ in6_pcblookup_bind(table, laddr6, lport_arg, faith)
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	u_int16_t lport = lport_arg;
-#ifdef INET6
+#ifdef INET
 	struct in6_addr zero_mapped;
 #endif
 
