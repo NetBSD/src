@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.154 1998/11/02 04:43:23 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.155 1998/11/19 02:28:56 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 1998/11/02 04:43:23 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 1998/11/19 02:28:56 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 1998/11/02 04:43:23 ross Exp $");
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #endif
+
+#include <machine/alpha.h>
+#include <machine/intrcnt.h>
 
 #include "com.h"
 #if NCOM > 0
@@ -1008,7 +1011,6 @@ consinit()
 #include "pckbd.h"
 #if (NPCKBC > 0) && (NPCKBD == 0)
 
-#include <machine/bus.h>
 #include <dev/isa/pckbcvar.h>
 
 /*
@@ -2296,4 +2298,46 @@ cpu_mchkinfo()
 	if (mchkinfo_all_cpus == NULL)
 		return &startup_info;
 	return mchkinfo_all_cpus + alpha_pal_whami();
+}
+
+#define	NSIO_PORT  0x26e	/* Hardware enabled option: 0x398 */
+#define	NSIO_BASE  0
+#define	NSIO_INDEX NSIO_BASE
+#define	NSIO_DATA  1
+#define	NSIO_SIZE  2
+#define	NSIO_CFG0  0
+#define	NSIO_CFG1  1
+#define	NSIO_CFG2  2
+#define	NSIO_IDE_ENABLE 0x40
+
+#define	NSIO_MB(type) bus_space_barrier(iot, nsio, NSIO_BASE, NSIO_SIZE, (type))
+
+/*
+ * DEC uses a chip from NS for junk I/O, but SRM on some platforms
+ * doesn't enable that section. Do it here if called from a platform-
+ * specific init routine.
+ */
+void
+enable_nsio_ide(iot)
+	bus_space_tag_t iot;
+{
+	int cfg0val;
+	bus_space_handle_t nsio;
+
+	if (bus_space_map(iot, NSIO_PORT, NSIO_SIZE, 0, &nsio))
+		return;
+
+	bus_space_write_1(iot, nsio, NSIO_INDEX, NSIO_CFG0);
+	NSIO_MB(BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	cfg0val = bus_space_read_1(iot, nsio, NSIO_DATA);
+
+	cfg0val |= NSIO_IDE_ENABLE;
+
+	bus_space_write_1(iot, nsio, NSIO_INDEX, NSIO_CFG0);
+	NSIO_MB(BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
+	NSIO_MB(BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
+
+	/* Leave nsio mapped to catch any accidental port space collisions  */
 }
