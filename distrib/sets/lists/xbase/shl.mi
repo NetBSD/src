@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.7.10.1 2005/04/06 21:11:29 tron Exp $
+# $NetBSD: shl.mi,v 1.7.10.2 2005/04/06 21:28:01 tron Exp $
 ./usr/X11R6/lib/libFS.so.6.0
 ./usr/X11R6/lib/libGL.so.1.2
 ./usr/X11R6/lib/libGLU.so.1.3
@@ -34,6 +34,7 @@
 ./usr/X11R6/lib/libXxf86dga.so.1.1
 ./usr/X11R6/lib/libXxf86misc.so.1.1
 ./usr/X11R6/lib/libXxf86vm.so.1.0
+./usr/X11R6/lib/libdmx.so.1.0
 ./usr/X11R6/lib/libdps.so.1.0
 ./usr/X11R6/lib/libdpstk.so.1.0
 ./usr/X11R6/lib/libexpat.so.4.0
