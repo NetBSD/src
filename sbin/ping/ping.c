@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.74 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: ping.c,v 1.75 2004/01/26 02:21:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.74 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: ping.c,v 1.75 2004/01/26 02:21:30 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -147,6 +147,10 @@ int     nrepeats = 0;
 #define CLR(seq) (A(seq) &= (~B(seq)))
 #define TST(seq) (A(seq) & B(seq))
 
+struct tv32 {
+	int32_t tv32_sec;
+	int32_t tv32_usec;
+};
 
 
 u_char	*packet;
@@ -157,11 +161,11 @@ char	*fill_pat;
 int s;					/* Socket file descriptor */
 int sloop;				/* Socket file descriptor/loopback */
 
-#define PHDR_LEN sizeof(struct timeval)	/* size of timestamp header */
+#define PHDR_LEN sizeof(struct tv32)	/* size of timestamp header */
 struct sockaddr_in whereto, send_addr;	/* Who to ping */
 struct sockaddr_in src_addr;		/* from where */
 struct sockaddr_in loc_addr;		/* 127.1 */
-int datalen = 64-PHDR_LEN;		/* How much data */
+int datalen = 64 - PHDR_LEN;		/* How much data */
 
 #ifndef __NetBSD__
 static char *progname;
@@ -686,8 +690,8 @@ doit(void)
 		if (ntransmitted < npackets && d_last > 0) {
 			/* send if within 100 usec or late for next packet */
 			sec = diffsec(&next_tx,&now);
-			if (sec <= 0.0001
-			    || (lastrcvd && (pingflags & F_FLOOD))) {
+			if (sec <= 0.0001 ||
+			    (lastrcvd && (pingflags & F_FLOOD))) {
 				pinger();
 				sec = diffsec(&next_tx,&now);
 			}
@@ -701,7 +705,8 @@ doit(void)
 			 * worst case seen, or 10 times as long as the
 			 * maximum interpacket interval, whichever is longer.
 			 */
-			sec = MAX(2*tmax,10*interval) - diffsec(&now,&last_tx);
+			sec = MAX(2 * tmax, 10 * interval) -
+			    diffsec(&now, &last_tx);
 			if (d_last < sec)
 				sec = d_last;
 			if (sec <= 0)
@@ -813,6 +818,7 @@ jiggle(int delta)
 static void
 pinger(void)
 {
+	struct tv32 tv32;
 	int i, cc, sw;
 
 	opack_icmp.icmp_code = 0;
@@ -856,9 +862,11 @@ pinger(void)
 
 	opack_icmp.icmp_type = ICMP_ECHO;
 	opack_icmp.icmp_id = ident;
+	tv32.tv32_sec = htonl(now.tv_sec);
+	tv32.tv32_usec = htonl(now.tv_usec);
 	if (pingflags & F_TIMING)
-		(void) memcpy(&opack_icmp.icmp_data[0], &now, sizeof(now));
-	cc = datalen+PHDR_LEN;
+		(void) memcpy(&opack_icmp.icmp_data[0], &tv32, sizeof(tv32));
+	cc = datalen + PHDR_LEN;
 	opack_icmp.icmp_cksum = 0;
 	opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp, cc);
 
@@ -987,7 +995,11 @@ pr_pack(u_char *buf,
 		nreceived++;
 		if (pingflags & F_TIMING) {
 			struct timeval tv;
-			(void) memcpy(&tv, icp->icmp_data, sizeof(tv));
+			struct tv32 tv32;
+
+			(void) memcpy(&tv32, icp->icmp_data, sizeof(tv32));
+			tv.tv_sec = ntohl(tv32.tv32_sec);
+			tv.tv_usec = ntohl(tv32.tv32_usec);
 			triptime = diffsec(&last_rx, &tv);
 			tsum += triptime;
 			tsumsq += triptime * triptime;
