@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ln.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: ln.1,v 1.4 1993/08/01 07:48:33 mycroft Exp $
+.\"	$Id: ln.1,v 1.5 1993/08/17 01:03:49 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt LN 1
@@ -43,11 +43,11 @@
 .Nd make links
 .Sh SYNOPSIS
 .Nm ln
-.Op Fl s
+.Op Fl fs
 .Ar source_file
 .Op target_file
 .Nm ln
-.Op Fl s
+.Op Fl fs
 .Ar source_file ...
 .Op target_dir
 .Sh DESCRIPTION
@@ -64,8 +64,10 @@ There are two types of links; hard links and symbolic links.
 How a link `points' to a file is one of the differences
 between a hard or symbolic link.
 .Pp
-Option available:
+Options available:
 .Bl -tag -width flag
+.It Fl f
+Remove existing destination files.
 .It Fl s
 Create a symbolic link.
 .El
@@ -124,6 +126,12 @@ The links made will have the same name as the files being linked to.
 .Xr readlink 2 ,
 .Xr stat 2 ,
 .Xr symlink 2
+.Sh STANDARDS
+The
+.Nm ln
+utility is 
+.St -p1003.2
+compliant.
 .Sh HISTORY
 A
 .Nm ln

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ln.c	4.15 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: ln.c,v 1.4 1993/08/01 18:59:33 mycroft Exp $";
+static char rcsid[] = "$Id: ln.c,v 1.5 1993/08/17 01:03:51 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,9 +50,10 @@ static char rcsid[] = "$Id: ln.c,v 1.4 1993/08/01 18:59:33 mycroft Exp $";
 #include <stdlib.h>
 #include <unistd.h>
 
-static int	dirflag,			/* undocumented force flag */
-		sflag,				/* symbolic, not hard, link */
-		(*linkf)();			/* system link call */
+static int	forceflag,		/* force link by removing target */
+		dirflag,		/* allow hard links to directories */
+		sflag,			/* symbolic, not hard, link */
+		(*linkf)();		/* system link call */
 static linkit(), usage();
 
 main(argc, argv)
@@ -64,8 +65,11 @@ main(argc, argv)
 	int ch, exitval, link(), symlink();
 	char *sourcedir;
 
-	while ((ch = getopt(argc, argv, "Fs")) != EOF)
+	while ((ch = getopt(argc, argv, "fFs")) != EOF)
 		switch((char)ch) {
+		case 'f':
+			forceflag = 1;
+			break;
 		case 'F':
 			dirflag = 1;
 			break;
@@ -106,39 +110,45 @@ main(argc, argv)
 }
 
 static
-linkit(target, source, isdir)
-	char *target, *source;
+linkit(source, target, isdir)
+	char *source, *target;
 	int isdir;
 {
 	struct stat buf;
 	char path[MAXPATHLEN], *cp;
 
 	if (!sflag) {
-		/* if target doesn't exist, quit now */
-		if (stat(target, &buf)) {
+		/* if source doesn't exist, quit now */
+		if (stat(source, &buf)) {
 			(void)fprintf(stderr,
-			    "ln: %s: %s\n", target, strerror(errno));
+			    "ln: %s: %s\n", source, strerror(errno));
 			return(1);
 		}
 		/* only symbolic links to directories, unless -F option used */
 		if (!dirflag && (buf.st_mode & S_IFMT) == S_IFDIR) {
-			(void)printf("ln: %s is a directory.\n", target);
+			(void)printf("ln: %s is a directory.\n", source);
 			return(1);
 		}
 	}
 
-	/* if the source is a directory, append the target's name */
-	if (isdir || !stat(source, &buf) && (buf.st_mode & S_IFMT) == S_IFDIR) {
-		if (!(cp = rindex(target, '/')))
-			cp = target;
+	/* if the target is a directory, append the source's name */
+	if (isdir || !stat(target, &buf) && S_ISDIR(buf.st_mode)) {
+		if (!(cp = rindex(source, '/')))
+			cp = source;
 		else
 			++cp;
-		(void)sprintf(path, "%s/%s", source, cp);
-		source = path;
+		(void)sprintf(path, "%s/%s", target, cp);
+		target = path;
 	}
 
-	if ((*linkf)(target, source)) {
-		(void)fprintf(stderr, "ln: %s: %s\n", source, strerror(errno));
+	/* Remove existing file if -f is was specified */
+	if (forceflag && unlink (target) && errno != ENOENT) {
+		(void)fprintf(stderr, "ln: %s: %s\n", target, strerror(errno));
+		return (1);
+	}
+
+	if ((*linkf)(source, target)) {
+		(void)fprintf(stderr, "ln: %s: %s\n", target, strerror(errno));
 		return(1);
 	}
 	return(0);
@@ -148,6 +158,6 @@ static
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage:\tln [-s] file1 file2\n\tln [-s] file ... directory\n");
+	    "usage:\tln [-fs] file1 file2\n\tln [-fs] file ... directory\n");
 	exit(1);
 }
