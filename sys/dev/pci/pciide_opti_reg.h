@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_opti_reg.h,v 1.2 2000/06/07 20:42:53 scw Exp $	*/
+/*	$NetBSD: pciide_opti_reg.h,v 1.3 2001/10/21 18:49:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  * break things in subtle ways if the wdc registers are accessed
  * by an interrupt routine while this magic sequence is executing.
  */
-static __inline__ u_int8_t
+static __inline__ u_int8_t __attribute__((__unused__))
 opti_read_config(struct channel_softc *chp, int reg)
 {
 	u_int8_t rv;
@@ -136,7 +136,7 @@ opti_read_config(struct channel_softc *chp, int reg)
 	return rv;
 }
 
-static __inline__ void
+static __inline__ void __attribute__((__unused__))
 opti_write_config(struct channel_softc *chp, int reg, u_int8_t val)
 {
 	int s = splhigh();
@@ -162,21 +162,25 @@ opti_write_config(struct channel_softc *chp, int reg, u_int8_t val)
  * supported by the OPTi chip. The first index of the two-dimensional
  * arrays is used for a 33MHz PCIbus, the second for a 25MHz PCIbus.
  */
-static u_int8_t opti_tim_cp[2][8] = {		/* Command Pulse */
+static const u_int8_t opti_tim_cp[2][8] __attribute__((__unused__)) = {
+	/* Command Pulse */
 	{5, 4, 3, 2, 2, 7, 2, 2},
 	{4, 3, 2, 2, 1, 5, 2, 1}
 };
 
-static u_int8_t opti_tim_rt[2][8] = {		/* Recovery Time */
+static const u_int8_t opti_tim_rt[2][8] __attribute__((__unused__)) = {
+	/* Recovery Time */
 	{9, 4, 0, 0, 0, 6, 0, 0},
 	{6, 2, 0, 0, 0, 4, 0, 0}
 };
 
-static u_int8_t opti_tim_as[2][8] = {		/* Address Setup */
+static const u_int8_t opti_tim_as[2][8] __attribute__((__unused__)) = {
+	/* Address Setup */
 	{2, 1, 1, 1, 0, 0, 0, 0},
 	{1, 1, 0, 0, 0, 0, 0, 0}
 };
 
-static u_int8_t opti_tim_em[8] = {		/* Enhanced Mode */
+static const u_int8_t opti_tim_em[8] __attribute__((__unused__)) = {
+	/* Enhanced Mode */
 	0, 0, 0, 1, 2, 0, 1 ,2
 };
