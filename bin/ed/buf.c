@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.21 2000/04/17 23:37:50 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.22 2003/09/05 20:16:50 itojun Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.21 2000/04/17 23:37:50 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.22 2003/09/05 20:16:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ put_sbuf_line(cs)
 		;
 	if (s - cs >= LINECHARS) {
 		sprintf(errmsg, "line too long");
+		free(lp);
 		return NULL;
 	}
 	len = s - cs;
@@ -116,6 +117,7 @@ put_sbuf_line(cs)
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			sprintf(errmsg, "cannot seek temp file");
+			free(lp);
 			return NULL;
 		}
 		sfseek = ftell(sfp);
@@ -126,6 +128,7 @@ put_sbuf_line(cs)
 		sfseek = -1;
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot write temp file");
+		free(lp);
 		return NULL;
 	}
 	lp->len = len;
