@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.55 1998/01/12 20:24:02 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.56 1998/01/21 05:54:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ zs_attach(parent, self, aux)
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
-			s = splhigh();
+			s = splzs();
 			zs_write_reg(cs,  9, reset);
 			splx(s);
 		}
@@ -423,7 +423,7 @@ zshard(arg)
 			raise(0, PIL_TTY);
 		else
 #endif
-		ienab_bis(IE_ZSSOFT);
+			ienab_bis(IE_ZSSOFT);
 	}
 	return (rval);
 }
@@ -457,7 +457,7 @@ zssoft(arg)
 		zsc = zs_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
-		(void) zsc_intr_soft(zsc);
+		(void)zsc_intr_soft(zsc);
 	}
 	splx(s);
 	return (1);
@@ -586,7 +586,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
+u_char
+zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
 	register u_char val;
