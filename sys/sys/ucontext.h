@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.3 2003/09/13 15:28:36 kleink Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.4 2003/10/13 18:50:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #ifndef _SYS_UCONTEXT_H_
 #define _SYS_UCONTEXT_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd32.h"
+#endif
+
 #include <sys/sigtypes.h>
 #include <machine/mcontext.h>
 
@@ -54,6 +58,23 @@ struct __ucontext {
 	long		__uc_pad[_UC_MACHINE_PAD];
 #endif
 };
+
+#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+
+typedef struct __ucontext32       ucontext32_t;
+
+struct __ucontext32 {
+	unsigned int	uc_flags;       /* properties */
+	uint32_t 	uc_link;        /* context to resume */
+	sigset_t	uc_sigmask;     /* signals blocked in this context */
+	stack32_t	uc_stack;       /* the stack used by this context */
+	mcontext32_t	uc_mcontext;    /* machine state */
+#if defined(_UC_MACHINE32_PAD)
+	int		__uc_pad[_UC_MACHINE32_PAD];
+#endif
+};
+
+#endif /* COMPAT_NETBSD32 && _KERNEL */
 
 /* uc_flags */
 #define _UC_SIGMASK	0x01		/* valid uc_sigmask */
@@ -105,6 +126,12 @@ void	getucontext(struct lwp *, ucontext_t *);
 int	setucontext(struct lwp *, const ucontext_t *);
 void	cpu_getmcontext(struct lwp *, mcontext_t *, unsigned int *);
 int	cpu_setmcontext(struct lwp *, const mcontext_t *, unsigned int);
+#ifdef COMPAT_NETBSD32
+void	getucontext32(struct lwp *, ucontext32_t *);
+int	setucontext32(struct lwp *, const ucontext32_t *);
+void	cpu_getmcontext32(struct lwp *, mcontext32_t *, unsigned int *);
+int	cpu_setmcontext32(struct lwp *, const mcontext32_t *, unsigned int);
+#endif /* COMPAT_NETBSD32 */
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCONTEXT_H_ */
