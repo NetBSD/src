@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.40 1994/02/19 11:04:45 cgd Exp $
+#	$Id: Makefile,v 1.41 1994/03/05 08:06:41 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -32,7 +32,7 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 all clean cleandir depend etc install lint:
 
 .ifndef DESTDIR
-distribution distrib-dirs:
+distribution distrib-dirs snapshot:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
@@ -105,6 +105,38 @@ distrib-dirs:
 	mtree -u -d -p ${DESTDIR}/usr -f ${.CURDIR}/mtree/BSD.usr.dist
 	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
+
+snapshot: distribution snap_pre snap_tar snap_md
+	cd ${DESTDIR}/snapshot && cksum * > CKSUMS
+
+snap_pre:
+	/bin/rm -rf ${DESTDIR}/snapshot
+	install -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
+
+snap_tar:
+	cd ${DESTDIR} && tar cf - bin | gzip -9 > snapshot/bin.tar.gz
+	cd ${DESTDIR} && tar cf - dev | gzip -9 > snapshot/dev.tar.gz
+	cd ${DESTDIR} && tar cf - .profile .cshrc etc mnt root sys tmp | \
+	    gzip -9 > snapshot/etc.tar.gz
+	cd ${DESTDIR} && tar cf - sbin | gzip -9 > snapshot/sbin.tar.gz
+	cd ${DESTDIR} && tar cf - usr/bin | gzip -9 > snapshot/usr.bin.tar.gz
+	cd ${DESTDIR} && tar cf - usr/games | gzip -9 > \
+	    snapshot/usr.games.tar.gz
+	cd ${DESTDIR} && tar cf - usr/include | gzip -9 > \
+	    snapshot/usr.include.tar.gz
+	cd ${DESTDIR} && tar cf - usr/lib | gzip -9 > snapshot/usr.lib.tar.gz
+	cd ${DESTDIR} && tar cf - usr/libexec | gzip -9 > \
+	    snapshot/usr.libexec.tar.gz
+	cd ${DESTDIR} && tar cf - usr/mdec usr/local usr/src usr/obj | \
+	    gzip -9 > snapshot/usr.misc.tar.gz
+	cd ${DESTDIR} && tar cf - usr/sbin | gzip -9 > snapshot/usr.sbin.tar.gz
+	cd ${DESTDIR} && tar cf - usr/share | gzip -9 > \
+	    snapshot/usr.share.tar.gz
+	cd ${DESTDIR} && tar cf - var | gzip -9 > snapshot/var.tar.gz
+
+snap_md:
+# nothing here -- look in the machine-dependent Makefile.inc
+
 .endif	# DESTDIR check
 
 .include <bsd.prog.mk>
