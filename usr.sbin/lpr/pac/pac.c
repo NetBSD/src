@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.10 1997/10/05 15:12:25 mrg Exp $	*/
+/*	$NetBSD: pac.c,v 1.11 1999/12/05 22:18:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.10 1997/10/05 15:12:25 mrg Exp $");
+__RCSID("$NetBSD: pac.c,v 1.11 1999/12/05 22:18:40 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,6 @@ static int	 sort;		/* Sort by cost */
 static char	*sumfile;	/* summary file */
 static int	 summarize;	/* Compress accounting file */
 
-uid_t	uid, euid;
-
 /*
  * Grossness follows:
  *  Names to be accumulated are hashed into the following
@@ -97,82 +95,89 @@ struct hent {
 static struct	hent	*hashtab[HSHSIZE];	/* Hash table proper */
 
 static void	account __P((FILE *));
-static int	any __P((int, char []));
-static int	chkprinter __P((char *));
+static int	any __P((int, const char *));
+static int	chkprinter __P((const char *));
 static void	dumpit __P((void));
-static int	hash __P((char []));
-static struct	hent *enter __P((char []));
-static struct	hent *lookup __P((char []));
+static int	hash __P((const char *));
+static struct	hent *enter __P((const char *));
+static struct	hent *lookup __P((const char *));
 static int	qucmp __P((const void *, const void *));
 static void	rewrite __P((void));
 static void	usage __P((void));
-int		main __P((int, char *[]));
+int		main __P((int, char * const []));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char * const argv[];
 {
 	FILE *acct;
 	char *cp;
+	int errs, i;
 
-	euid = geteuid();	/* these aren't used in pac(1) */
-	uid = getuid();
-	while (--argc) {
-		cp = *++argv;
-		if (*cp++ == '-') {
-			switch(*cp++) {
-			case 'P':
-				/*
-				 * Printer name.
-				 */
-				printer = cp;
-				continue;
+	while ((i = getopt(argc, argv, "P:p:scmr")) != -1) {
+		switch(i) {
+		case 'P':
+			/*
+			 * Printer name.
+			 */
+			printer = cp;
+			continue;
 
-			case 'p':
-				/*
-				 * get the price.
-				 */
-				price = atof(cp);
-				pflag = 1;
-				continue;
+		case 'p':
+			/*
+			 * get the price.
+			 */
+			price = atof(cp);
+			pflag = 1;
+			continue;
 
-			case 's':
-				/*
-				 * Summarize and compress accounting file.
-				 */
-				summarize++;
-				continue;
+		case 's':
+			/*
+			 * Summarize and compress accounting file.
+			 */
+			summarize++;
+			continue;
 
-			case 'c':
-				/*
-				 * Sort by cost.
-				 */
-				sort++;
-				continue;
+		case 'c':
+			/*
+			 * Sort by cost.
+			 */
+			sort++;
+			continue;
 
-			case 'm':
-				/*
-				 * disregard machine names for each user
-				 */
-				mflag = 1;
-				continue;
+		case 'm':
+			/*
+			 * disregard machine names for each user
+			 */
+			mflag = 1;
+			continue;
 
-			case 'r':
-				/*
-				 * Reverse sorting order.
-				 */
-				reverse++;
-				continue;
+		case 'r':
+			/*
+			 * Reverse sorting order.
+			 */
+			reverse++;
+			continue;
 
-			default:
-				usage();
-				exit(1);
-			}
+		default:
+			usage();
+			/* NOTREACHED */
 		}
-		(void)enter(--cp);
+	}
+	argc -= optind;
+	argv += optind;
+
+	/*
+	 * If there are any arguments left, they're names of users
+	 * we want to print info for. In that case, put them in the hash
+	 * table and unset allflag.
+	 */
+	for( ; argc > 0; argc--, argv++) {
+		(void)enter(*argv);
 		allflag = 0;
 	}
+
 	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
 		printer = DEFLP;
 	if (!chkprinter(printer)) {
@@ -266,20 +271,22 @@ dumpit()
 		hp = hp->h_link;
 	}
 	qsort(base, hcount, sizeof hp, qucmp);
-	printf("  Login               pages/feet   runs    price\n");
+	printf(" pages/feet runs price    %s\n",
+		(mflag ? "login" : "host name and login"));
+	printf(" ---------- ---- -------- ----------------------\n");
 	feet = 0.0;
 	runs = 0;
 	for (ap = base, c = hcount; c--; ap++) {
 		hp = *ap;
 		runs += hp->h_count;
 		feet += hp->h_feetpages;
-		printf("%-24s %7.2f %4d   $%6.2f\n", hp->h_name,
-		    hp->h_feetpages, hp->h_count, hp->h_feetpages * price);
+		printf("    %7.2f %4d $%7.2f %s\n",
+			hp->h_feetpages, hp->h_count, hp->h_feetpages * price,
+			hp->h_name);
 	}
 	if (allflag) {
-		printf("\n");
-		printf("%-24s %7.2f %4d   $%6.2f\n", "total", feet, 
-		    runs, feet * price);
+		printf(" ---------- ---- -------- ----------------------\n");
+		printf("Sum:%7.2f %4d $%7.2f\n", feet, runs, feet * price);
 	}
 }
 
@@ -328,7 +335,7 @@ rewrite()
 
 static struct hent *
 enter(name)
-	char name[];
+	const char *name;
 {
 	struct hent *hp;
 	int h;
@@ -357,7 +364,7 @@ enter(name)
 
 static struct hent *
 lookup(name)
-	char name[];
+	const char *name;
 {
 	int h;
 	struct hent *hp;
@@ -375,10 +382,10 @@ lookup(name)
  */
 static int
 hash(name)
-	char name[];
+	const char *name;
 {
 	int h;
-	char *cp;
+	const char *cp;
 
 	for (cp = name, h = 0; *cp; h = (h << 2) + *cp++)
 		;
@@ -391,10 +398,10 @@ hash(name)
 static int
 any(ch, str)
 	int ch;
-	char str[];
+	const char *str;
 {
 	int c = ch;
-	char *cp = str;
+	const char *cp = str;
 
 	while (*cp)
 		if (*cp++ == c)
@@ -429,7 +436,7 @@ qucmp(a, b)
  */
 static int
 chkprinter(s)
-	char *s;
+	const char *s;
 {
 	int stat;
 
@@ -458,7 +465,7 @@ chkprinter(s)
 static void
 usage()
 {
-
 	fprintf(stderr,
-	    "usage: pac [-Pprinter] [-pprice] [-s] [-c] [-r] [-m] [user ...]\n");
+	  "usage: pac [-Pprinter] [-pprice] [-s] [-c] [-r] [-m] [user ...]\n");
+	exit(1);
 }
