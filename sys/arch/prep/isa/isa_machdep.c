@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2000/11/27 08:53:55 matt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2001/06/20 14:11:45 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,8 +192,10 @@ init_icu(int lvlmask)
 		}
 	}
 
+#ifdef DEBUG
 	printf("old elcr = 0x%02x%02x, new = 0x%04x\n",
 		isa_inb(IO_ELCR2), isa_inb(IO_ELCR1), lvlmask);
+#endif
 	isa_outb(IO_ELCR1, (lvlmask >> 0) & 0xff);
 	isa_outb(IO_ELCR2, (lvlmask >> 8) & 0xff);
 
