@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.25 2004/12/06 02:59:23 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.26 2005/01/23 18:41:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.25 2004/12/06 02:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.26 2005/01/23 18:41:56 matt Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -945,7 +945,7 @@ rn_init()
 #ifdef _KERNEL
 	struct domain *dom;
 
-	for (dom = domains; dom; dom = dom->dom_next)
+	DOMAIN_FOREACH(dom)
 		if (dom->dom_maxrtkey > max_keylen)
 			max_keylen = dom->dom_maxrtkey;
 #ifdef INET

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.240 2005/01/12 21:51:52 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.241 2005/01/23 18:41:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.240 2005/01/12 21:51:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.241 2005/01/23 18:41:56 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2345,12 +2345,13 @@ vfs_hang_addrlist(mp, nep, argp)
 		 * Seems silly to initialize every AF when most are not
 		 * used, do so on demand here
 		 */
-		for (dom = domains; dom; dom = dom->dom_next)
+		DOMAIN_FOREACH(dom) {
 			if (dom->dom_family == i && dom->dom_rtattach) {
 				dom->dom_rtattach((void **)&nep->ne_rtable[i],
 					dom->dom_rtoffset);
 				break;
 			}
+		}
 		if ((rnh = nep->ne_rtable[i]) == 0) {
 			error = ENOBUFS;
 			goto out;

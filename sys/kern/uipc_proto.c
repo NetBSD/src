@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.16 2005/01/23 18:41:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.16 2005/01/23 18:41:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.15 2004/04/22 01:01:40 matt Exp $")
  * Definitions of protocols supported in the UNIX domain.
  */
 
-extern	struct domain unixdomain;		/* or at least forward */
+DOMAIN_DEFINE(unixdomain);	/* forward define and add to link set */
 
 const struct protosw unixsw[] = {
 { SOCK_STREAM,	&unixdomain,	0,	PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS|PR_LISTEN,
