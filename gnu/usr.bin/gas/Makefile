@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.9 1993/10/16 03:57:39 cgd Exp $
+#	$Id: Makefile,v 1.10 1993/10/16 22:04:48 pk Exp $
 
 .include "config/Makefile.$(MACHINE)"
 
@@ -67,6 +67,6 @@ targ-env.h: Makefile config/Makefile.$(MACHINE)
 	    ( echo "updating ${.TARGET}..." ; /bin/rm -f targ-env.h ; \
 	    cp $(config_targenvfile) targ-env.h )
 
-CLEANFILES+= ${CONF_HEADERS} config.status
+CLEANFILES+= ${CONF_HEADERS}
 
 .include <bsd.prog.mk>
