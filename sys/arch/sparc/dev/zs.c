@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp $
+ * $Id: zs.c,v 1.4 1994/02/14 09:37:13 deraadt Exp $
  */
 
 /*
@@ -959,10 +959,10 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	register struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int error;
 
-	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag);
+	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
