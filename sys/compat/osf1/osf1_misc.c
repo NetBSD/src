@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.19 1999/04/24 07:23:54 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.20 1999/04/26 01:23:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -114,7 +114,7 @@ struct emul emul_osf1 = {
 };
 /* XXX END BITS THAT DON'T BELONG HERE */
 
-struct emul_flags_xtab osf1_open_flags_xtab[] = {
+const struct emul_flags_xtab osf1_open_flags_xtab[] = {
     {	OSF1_O_ACCMODE,		OSF1_O_RDONLY,		O_RDONLY	},
     {	OSF1_O_ACCMODE,		OSF1_O_WRONLY,		O_WRONLY	},
     {	OSF1_O_ACCMODE,		OSF1_O_RDWR,		O_RDWR		},
@@ -127,9 +127,6 @@ struct emul_flags_xtab osf1_open_flags_xtab[] = {
     {	OSF1_O_TRUNC,		OSF1_O_TRUNC,		O_TRUNC		},
     {	OSF1_O_EXCL,		OSF1_O_EXCL,		O_EXCL		},
     {	OSF1_O_NOCTTY,		OSF1_O_NOCTTY,		O_NOCTTY	},
-#if 0 /* kernel only */
-    {	OSF1_O_DOCLONE,		OSF1_O_DOCLONE,		???		},
-#endif
     {	OSF1_O_SYNC,		OSF1_O_SYNC,		O_SYNC		},
     {	OSF1_O_NDELAY,		OSF1_O_NDELAY,		O_NDELAY	},
 #if 0 /* no equivalent, also same value as O_NDELAY! */
@@ -242,7 +239,7 @@ osf1_sys_setrlimit(p, v, retval)
 	return sys_setrlimit(p, &a, retval);
 }
 
-struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
+const struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
 #if 0 /* pseudo-flag */
     {	OSF1_PROT_NONE,		OSF1_PROT_NONE,		PROT_NONE	},
 #endif
@@ -252,7 +249,7 @@ struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
     {	0								}
 };
 
-struct emul_flags_xtab osf1_mmap_flags_xtab[] = {
+const struct emul_flags_xtab osf1_mmap_flags_xtab[] = {
     {	OSF1_MAP_SHARED,	OSF1_MAP_SHARED,	MAP_SHARED	},
     {	OSF1_MAP_PRIVATE,	OSF1_MAP_PRIVATE,	MAP_PRIVATE	},
     {	OSF1_MAP_TYPE,		OSF1_MAP_FILE,		MAP_FILE	},
@@ -297,6 +294,11 @@ osf1_sys_mmap(p, v, retval)
 	if (leftovers != 0)
 		return (EINVAL);
 
+#if 0
+	/* XXX EVIL!!! */
+	SCARG(&a, flags) |= MAP_FIXED;
+#endif
+
 	return sys_mmap(p, &a, retval);
 }
 
@@ -332,27 +334,6 @@ osf1_sys_usleep_thread(p, v, retval)
 	}
 	return (error);
 }
-
-struct osf1_stat {
-	int32_t		st_dev;
-	u_int32_t	st_ino;
-	u_int32_t	st_mode;
-	u_int16_t	st_nlink;
-	u_int32_t	st_uid;
-	u_int32_t	st_gid;
-	int32_t		st_rdev;
-	u_int64_t	st_size;
-	int32_t		st_atime_sec;
-	int32_t		st_spare1;
-	int32_t		st_mtime_sec;
-	int32_t		st_spare2;
-	int32_t		st_ctime_sec;
-	int32_t		st_spare3;
-	u_int32_t	st_blksize;
-	int32_t		st_blocks;
-	u_int32_t	st_flags;
-	u_int32_t	st_gen;
-};
 
 /*
  * Get file status; this version follows links.
@@ -512,16 +493,38 @@ osf1_sys_mknod(p, v, retval)
 	return sys_mknod(p, &a, retval);
 }
 
-#define OSF1_F_DUPFD	0
-#define	OSF1_F_GETFD	1
-#define	OSF1_F_SETFD	2
-#define	OSF1_F_GETFL	3
-#define	OSF1_F_SETFL	4
-
 #define	OSF1_FAPPEND	0x00008		/* XXX OSF1_O_APPEND */
 #define	OSF1_FNONBLOCK	0x00004		/* XXX OSF1_O_NONBLOCK */
 #define	OSF1_FASYNC	0x00040
 #define	OSF1_FSYNC	0x04000		/* XXX OSF1_O_SYNC */
+
+const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_xtab[] = {
+    {	OSF1_FD_CLOEXEC,	OSF1_FD_CLOEXEC,	FD_CLOEXEC	},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[] = {
+    {	FD_CLOEXEC,		FD_CLOEXEC,		OSF1_FD_CLOEXEC	},
+    {	0								}
+};
+
+/* XXX THIS TABLE IS NOT COMPLETE */
+const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_xtab[] = {
+    {	OSF1_FAPPEND,		OSF1_FAPPEND,		FAPPEND		},
+    {	OSF1_FNONBLOCK,		OSF1_FNONBLOCK,		FNONBLOCK	},
+    {	OSF1_FASYNC,		OSF1_FASYNC,		FASYNC		},
+    {	OSF1_FSYNC,		OSF1_FSYNC,		FFSYNC		},
+    {	0								}
+};
+
+/* XXX THIS TABLE IS NOT COMPLETE */
+const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_rxtab[] = {
+    {	FAPPEND,		FAPPEND,		OSF1_FAPPEND	},
+    {	FNONBLOCK,		FNONBLOCK,		OSF1_FNONBLOCK	},
+    {	FASYNC,			FASYNC,			OSF1_FASYNC	},
+    {	FFSYNC,			FFSYNC,			OSF1_FSYNC	},
+    {	0								}
+};
 
 int
 osf1_sys_fcntl(p, v, retval)
@@ -531,11 +534,12 @@ osf1_sys_fcntl(p, v, retval)
 {
 	struct osf1_sys_fcntl_args *uap = v;
 	struct sys_fcntl_args a;
-	long tmp;
+	unsigned long leftovers;
 	int error;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
 
+	leftovers = 0;
 	switch (SCARG(uap, cmd)) {
 	case OSF1_F_DUPFD:
 		SCARG(&a, cmd) = F_DUPFD;
@@ -544,36 +548,48 @@ osf1_sys_fcntl(p, v, retval)
 
 	case OSF1_F_GETFD:
 		SCARG(&a, cmd) = F_GETFD;
-		SCARG(&a, arg) = SCARG(uap, arg);
+		SCARG(&a, arg) = 0;		/* ignored */
 		break;
 
 	case OSF1_F_SETFD:
 		SCARG(&a, cmd) = F_SETFD;
-		SCARG(&a, arg) = SCARG(uap, arg);
+		SCARG(&a, arg) = (void *)emul_flags_translate(
+		    osf1_fcntl_getsetfd_flags_xtab,
+		    (unsigned long)SCARG(uap, arg), &leftovers);
 		break;
 
 	case OSF1_F_GETFL:
 		SCARG(&a, cmd) = F_GETFL;
-		SCARG(&a, arg) = SCARG(uap, arg);		/* ignored */
+		SCARG(&a, arg) = 0;		/* ignored */
 		break;
 
 	case OSF1_F_SETFL:
 		SCARG(&a, cmd) = F_SETFL;
-		tmp = 0;
-		if ((long)SCARG(uap, arg) & OSF1_FAPPEND)
-			tmp |= FAPPEND;
-		if ((long)SCARG(uap, arg) & OSF1_FNONBLOCK)
-			tmp |= FNONBLOCK;
-		if ((long)SCARG(uap, arg) & OSF1_FASYNC)
-			tmp |= FASYNC;
-		if ((long)SCARG(uap, arg) & OSF1_FSYNC)
-			tmp |= FFSYNC;
-		SCARG(&a, arg) = (void *)tmp;
+		SCARG(&a, arg) = (void *)emul_flags_translate(
+		    osf1_fcntl_getsetfl_flags_xtab,
+		    (unsigned long)SCARG(uap, arg), &leftovers);
 		break;
 
-	default:					/* XXX other cases */
+	case OSF1_F_GETOWN:
+	case OSF1_F_SETOWN:
+	case OSF1_F_GETLK:
+	case OSF1_F_SETLK:
+	case OSF1_F_SETLKW:
+		/* XXX translate. */
+		return (EINVAL);
+		
+	case OSF1_F_RGETLK:		/* [lock mgr op] */
+	case OSF1_F_RSETLK:		/* [lock mgr op] */
+	case OSF1_F_CNVT:		/* [lock mgr op] */
+	case OSF1_F_RSETLKW:		/* [lock mgr op] */
+	case OSF1_F_PURGEFS:		/* [lock mgr op] */
+	case OSF1_F_PURGENFS:		/* [DECsafe op] */
+	default:
+		/* XXX syslog? */
 		return (EINVAL);
 	}
+	if (leftovers != 0)
+		return (EINVAL);
 
 	error = sys_fcntl(p, &a, retval);
 
@@ -581,8 +597,14 @@ osf1_sys_fcntl(p, v, retval)
 		return error;
 
 	switch (SCARG(uap, cmd)) {
+	case OSF1_F_GETFD:
+		retval[0] = emul_flags_translate(
+		    osf1_fcntl_getsetfd_flags_rxtab, retval[0], NULL);
+		break;
+
 	case OSF1_F_GETFL:
-		/* XXX */
+		retval[0] = emul_flags_translate(
+		    osf1_fcntl_getsetfl_flags_rxtab, retval[0], NULL);
 		break;
 	}
 
@@ -598,6 +620,8 @@ osf1_sys_socket(p, v, retval)
 	struct osf1_sys_socket_args *uap = v;
 	struct sys_socket_args a;
 
+	/* XXX TRANSLATE */
+
 	if (SCARG(uap, type) > AF_LINK)
 		return (EINVAL);	/* XXX After AF_LINK, divergence. */
 
@@ -608,6 +632,17 @@ osf1_sys_socket(p, v, retval)
 	return sys_socket(p, &a, retval);
 }
 
+const struct emul_flags_xtab osf1_sendrecv_msg_flags_xtab[] = {
+    {	OSF1_MSG_OOB,		OSF1_MSG_OOB,		MSG_OOB		},
+    {	OSF1_MSG_PEEK,		OSF1_MSG_PEEK,		MSG_PEEK	},
+    {	OSF1_MSG_DONTROUTE,	OSF1_MSG_DONTROUTE,	MSG_DONTROUTE	},
+    {	OSF1_MSG_EOR,		OSF1_MSG_EOR,		MSG_EOR		},
+    {	OSF1_MSG_TRUNC,		OSF1_MSG_TRUNC,		MSG_TRUNC	},
+    {	OSF1_MSG_CTRUNC,	OSF1_MSG_CTRUNC,	MSG_CTRUNC	},
+    {	OSF1_MSG_WAITALL,	OSF1_MSG_WAITALL,	MSG_WAITALL	},
+    {	0								}
+};
+
 int
 osf1_sys_sendto(p, v, retval)
 	struct proc *p;
@@ -616,21 +651,24 @@ osf1_sys_sendto(p, v, retval)
 {
 	struct osf1_sys_sendto_args *uap = v;
 	struct sys_sendto_args a;
-
-	if (SCARG(uap, flags) & ~0x7f)		/* unsupported flags */
-		return (EINVAL);
+	unsigned long leftovers;
 
 	SCARG(&a, s) = SCARG(uap, s);
 	SCARG(&a, buf) = SCARG(uap, buf);
 	SCARG(&a, len) = SCARG(uap, len);
-	SCARG(&a, flags) = SCARG(uap, flags);
 	SCARG(&a, to) = SCARG(uap, to);
 	SCARG(&a, tolen) = SCARG(uap, tolen);
+
+	/* translate flags */
+	SCARG(&a, flags) = emul_flags_translate(osf1_sendrecv_msg_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
 
 	return sys_sendto(p, &a, retval);
 }
 
-struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
+const struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
 #if 0 /* pseudo-flag */
     {	OSF1_RB_AUTOBOOT,	OSF1_RB_AUTOBOOT,	RB_AUTOBOOT	},
 #endif
@@ -767,11 +805,6 @@ osf1_sys_setgid(p, v, retval)
  * The structures end up being the same... but we can't be sure that
  * the other word of our iov_len is zero!
  */
-struct osf1_iovec {
-	char	*iov_base;
-	int	iov_len;
-};
-
 int
 osf1_sys_readv(p, v, retval)
 	struct proc *p;
