@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.23 2003/05/19 09:26:15 fvdl Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.24 2003/10/03 21:29:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.23 2003/05/19 09:26:15 fvdl Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.24 2003/10/03 21:29:16 christos Exp $");
 #endif
 #endif
 
@@ -500,15 +500,6 @@ xdrrec_eof(xdrs)
 	XDR *xdrs;
 {
 	RECSTREAM *rstrm = (RECSTREAM *)(xdrs->x_private);
-	enum xprt_stat xstat;
-
-	if (rstrm->nonblock) {
-		if (__xdrrec_getrec(xdrs, &xstat, FALSE))
-			return FALSE;
-		if (!rstrm->in_haveheader && xstat == XPRT_IDLE)
-			return TRUE;
-		return FALSE;
-	}
 
 	while (rstrm->fbtbc > 0 || (! rstrm->last_frag)) {
 		if (!skip_input_bytes(rstrm, rstrm->fbtbc))
