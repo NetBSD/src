@@ -1,5 +1,5 @@
-/*	$NetBSD: in_gif.c,v 1.19 2001/02/20 10:41:47 itojun Exp $	*/
-/*	$KAME: in_gif.c,v 1.51 2001/02/20 08:31:07 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.20 2001/05/10 01:37:42 itojun Exp $	*/
+/*	$KAME: in_gif.c,v 1.53 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -180,6 +180,8 @@ in_gif_output(ifp, family, m, rt)
 	iphdr.ip_len = m->m_pkthdr.len + sizeof(struct ip);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &iphdr.ip_tos, &tos);
+	else
+		ip_ecn_ingress(ECN_NOCARE, &iphdr.ip_tos, &tos);
 
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
@@ -276,6 +278,8 @@ in_gif_input(m, va_alist)
 		ip = mtod(m, struct ip *);
 		if (gifp->if_flags & IFF_LINK1)
 			ip_ecn_egress(ECN_ALLOWED, &otos, &ip->ip_tos);
+		else
+			ip_ecn_egress(ECN_NOCARE, &otos, &ip->ip_tos);
 		break;
 	    }
 #endif
@@ -294,6 +298,8 @@ in_gif_input(m, va_alist)
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (gifp->if_flags & IFF_LINK1)
 			ip_ecn_egress(ECN_ALLOWED, &otos, &itos);
+		else
+			ip_ecn_egress(ECN_NOCARE, &otos, &itos);
 		ip6->ip6_flow &= ~htonl(0xff << 20);
 		ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
 		break;
