@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2003/10/30 21:19:54 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2004/01/14 11:41:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -163,10 +163,9 @@ spllower(int nlevel)
 	 * the XOR below should only show interrupts that
 	 * are being unmasked.
 	 */
+	ci->ci_ilevel = nlevel;
 	if (ci->ci_ipending & IUNMASK(ci,nlevel))
 		Xspllower(nlevel);
-	else
-		ci->ci_ilevel = nlevel;
 }
 
 /*
