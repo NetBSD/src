@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymvar.h,v 1.6 1998/08/02 14:18:08 drochner Exp $ */
+/*	$NetBSD: wsksymvar.h,v 1.7 1998/09/17 18:10:53 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@ struct wscons_keydesc {
 
 struct wskbd_mapdata {
 	const struct wscons_keydesc *keydesc;
-	int num_keydescs;
 	kbd_t layout;
 };
 
