@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.8 1996/10/18 07:12:58 thorpej Exp $	*/
+/*	$NetBSD: time.c,v 1.9 1997/10/20 03:28:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: time.c,v 1.8 1996/10/18 07:12:58 thorpej Exp $";
+__RCSID("$NetBSD: time.c,v 1.9 1997/10/20 03:28:21 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,19 +59,23 @@ static char rcsid[] = "$NetBSD: time.c,v 1.8 1996/10/18 07:12:58 thorpej Exp $";
 int lflag;
 int portableflag;
 
+int	main __P((int, char **));
+
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	register int pid;
+	int pid;
 	int ch, status;
 	struct timeval before, after;
 	struct rusage ru;
 
+#ifdef __GNUC__		/* XXX: borken gcc */
+	(void)&argv;
+#endif
 	lflag = 0;
-	while ((ch = getopt(argc, argv, "lp")) != EOF)
+	while ((ch = getopt(argc, argv, "lp")) != -1)
 		switch((char)ch) {
 		case 'p':
 			portableflag = 1;
