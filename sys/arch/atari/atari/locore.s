@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1997/06/02 12:03:41 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1997/06/05 19:45:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -760,65 +760,75 @@ Lstart0:
 	 */
 	jmp	Lstart2
 Lstart2:
-	movl	a0@+,a5@+		|  copy the rest of the kernel
+	movl	a0@+,a5@+		| copy the rest of the kernel
 	subl	#4, d4
 	jcc	Lstart2
 Lstart3:
 
-	lea	tmpstk,sp		|  give ourselves a temporary stack
+	lea	tmpstk,sp		| give ourselves a temporary stack
 
 	/*
 	 *  save the passed parameters. `prepass' them on the stack for
 	 *  later catch by _start_c
 	 */
-	movl	a1,sp@-			|  pass address of _esym
-	movl	d1,sp@-			|  pass stmem-size
-	movl	d0,sp@-			|  pass fastmem-size
-	movl	d5,sp@-			|  pass fastmem_start
-	movl	d2,sp@-			|  pass machine id
-	movl	d3,_boothowto		|  save reboot flags
-	movl	#ATARI_68030,d1		|  68030 type from loader
+	movl	a1,sp@-			| pass address of _esym
+	movl	d1,sp@-			| pass stmem-size
+	movl	d0,sp@-			| pass fastmem-size
+	movl	d5,sp@-			| pass fastmem_start
+	movl	d2,sp@-			| pass machine id
+	movl	d3,_boothowto		| save reboot flags
+
+
+	/*
+	 * Set cputype and mmutype dependent on the machine-id passed
+	 * in from the loader. Also make sure that all caches are cleared.
+	 */
+	movl	#ATARI_68030,d1		| 68030 type from loader
 	andl	d2,d1
-	jeq	Ltestfor020		|  Not an 68030, try 68020
-	movl	#MMU_68030,_mmutype	|  Use 68030 MMU
-	movl	#CPU_68030,_cputype	|    and a 68030 CPU
-	jra	Ltestfor040		|  skip to init.
+	jeq	Ltestfor020		| Not an 68030, try 68020
+	movl	#MMU_68030,_mmutype	| Use 68030 MMU
+	movl	#CPU_68030,_cputype	|   and a 68030 CPU
+	movl	#CACHE_OFF,d0		| 68020/030 cache clear
+	jra	Lend_cpuset		| skip to init.
 Ltestfor020:
-	movl	#ATARI_68020,d1		|  68020 type from loader
+	movl	#ATARI_68020,d1		| 68020 type from loader
 	andl	d2,d1
 	jeq	Ltestfor040
-	movl	#MMU_68851,_mmutype	|  Assume 68851 with 68020
-	movl	#CPU_68020,_cputype	|    and a 68020 CPU
+	movl	#MMU_68851,_mmutype	| Assume 68851 with 68020
+	movl	#CPU_68020,_cputype	|   and a 68020 CPU
+	movl	#CACHE_OFF,d0		| 68020/030 cache clear
+	jra	Lend_cpuset		| skip to init.
 Ltestfor040:
-	movl	#CACHE_OFF,d0		|  68020/030 cache
+	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#ATARI_68040,d1
-	andl	d1,d2
+	andl	d2,d1
 	jeq	Ltestfor060
-	movl	#MMU_68040,_mmutype	|  Use a 68040 MMU
-	movl	#CPU_68040,_cputype	|    and a 68040 CPU
-	.word	0xf4f8			|  cpusha bc - push and inval caches
-	movl	#CACHE40_OFF,d0		|  68040 cache disable
-	jra	Lstartnot060
+	movl	#MMU_68040,_mmutype	| Use a 68040 MMU
+	movl	#CPU_68040,_cputype	|   and a 68040 CPU
+	.word	0xf4f8			| cpusha bc - push and inval caches
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
+	jra	Lend_cpuset		| skip to init.
 Ltestfor060:
 	movl    #ATARI_68060,d1
-	andl	d1,d2
-	jeq	Lstartnot060
+	andl	d2,d1
+	jeq	Lend_cpuset
 	movl	#MMU_68040,_mmutype	| Use a 68040 MMU
 	movl	#CPU_68060,_cputype	|   and a 68060 CPU
 	.word	0xf4f8			| cpusha bc - push and inval caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	orl	#IC60_CABC,d0		|   and clear all 060 branch cache
-Lstartnot060:
+
+Lend_cpuset:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
-	movl	#Lvectab,a0		| set address of vector table
+	movl	#_vectab,a0		| set address of vector table
 	movc	a0,vbr
 
 	/*
 	 * Initialize source/destination control registers for movs
 	 */
-	moveq	#FC_USERD,d0		|  user space
-	movc	d0,sfc			|    as source
-	movc	d0,dfc			|    and destination of transfers
+	moveq	#FC_USERD,d0		| user space
+	movc	d0,sfc			|   as source
+	movc	d0,dfc			|   and destination of transfers
 
 	/*
 	 * let the C function initialize everything and enable the MMU
@@ -1463,162 +1473,6 @@ Ltbisnot060:
 #endif /* defined(M68060) */
 
 	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	fulltflush		|  being conservative?
-	jne	__TBIA			|  yes, flush everything
-#endif
-	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbias040
-	tstl	_mmutype
-	jpl	Lmc68851c		|  68851?
-	pflush	#4,#4			|  flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			|  invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4			|  flush supervisor TLB entries
-	rts
-Ltbias040:
-/*  68040 can't specify supervisor/user on pflusha, so we flush all */
-	.word	0xf518			|  pflusha
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	fulltflush		|  being conservative?
-	jne	__TBIA			|  yes, flush everything
-#endif
-	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbiau040
-	tstl	_mmutype
-	jpl	Lmc68851d		|  68851?
-	pflush	#0,#4			|  flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			|  invalidate on-chip d-cache
-	rts
-Lmc68851d:
-	pflushs	#0,#4			|  flush user TLB entries
-	rts
-Ltbiau040:
-	/*  68040 can't specify supervisor/user on pflusha, so we flush all */
-	.word	0xf518			|  pflusha
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-ENTRY(ICPA)
-#if defined(M68030) || defined(M68020)
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype
-	jeq	Licia040
-#endif
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			|  invalidate i-cache
-	rts
-Licia040:
-#endif
-#if defined(M68040)
-	.word	0xf498			|  cinva ic
-	rts
-#endif
-
-/*
- * Invalidate data cache.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-__DCIA:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldciax
-	.word	0xf478			|  cpusha dc
-Ldciax:
-	rts
-
-ENTRY(DCIS)
-__DCIS:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldcisx
-	.word	0xf478			|  cpusha dc
-	nop
-Ldcisx:
-	rts
-
-ENTRY(DCIU)
-__DCIU:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldciux
-	.word	0xf478			|  cpusha dc
-Ldciux:
-	rts
-
-/*  Invalid single cache line */
-ENTRY(DCIAS)
-__DCIAS:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldciasx
-	movl	sp@(4),a0
-	.word	0xf468			|  cpushl dc,a0@
-Ldciasx:
-	rts
-#ifdef M68040
-ENTRY(ICPL)	/* invalidate instruction physical cache line */
-	movl    sp@(4),a0		|  address
-	.word   0xf488			|  cinvl ic,a0@
-	rts
-ENTRY(ICPP)	/* invalidate instruction physical cache page */
-	movl    sp@(4),a0		|  address
-	.word   0xf490			|  cinvp ic,a0@
-	rts
-ENTRY(DCPL)	/* invalidate data physical cache line */
-	movl    sp@(4),a0		|  address
-	.word   0xf448			|  cinvl dc,a0@
-	rts
-ENTRY(DCPP)	/* invalidate data physical cache page */
-	movl    sp@(4),a0		|  address
-	.word   0xf450			|  cinvp dc,a0@
-	rts
-ENTRY(DCPA)	/* invalidate data physical all */
-	.word   0xf458			|  cinva dc
-	rts
-ENTRY(DCFL)	/* data cache flush line */
-	movl    sp@(4),a0		|  address
-	.word   0xf468			|  cpushl dc,a0@
-	rts
-ENTRY(DCFP)	/* data cache flush page */
-	movl    sp@(4),a0		|  address
-	.word   0xf470			|  cpushp dc,a0@
-	rts
-#endif	/* M68040 */
-
-ENTRY(PCIA)
-#if defined(M68030) || defined(M68030)
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lpcia040
-#endif
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			|  invalidate on-chip d-cache
-	rts
-#endif
-#if defined(M68040)
-ENTRY(DCFA)
-Lpcia040:
-	.word	0xf478			|  cpusha dc
-	rts
-#endif
 
 ENTRY(ecacheon)
 	rts
