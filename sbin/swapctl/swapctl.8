@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.3 1997/06/15 04:08:33 mrg Exp $
+.\"	$NetBSD: swapctl.8,v 1.4 1997/06/15 15:22:48 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -147,7 +147,8 @@ file for swap devices, the following options are recognised:
 .Pp
 .Bl -tag -width nfsmntpt=/path -compact
 .It priority=N
-This option sets the priority of the specified swap device to N.
+This option sets the priority of the specified swap device to N.  The
+highest priority is 0, second priority is 1, etc.
 .It nfsmntpt=/path
 This option is useful for swapping to NFS files.  It specifies
 the local mount point to mount an NFS filesystem.  Typically, once
