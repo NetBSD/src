@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 2000/06/19 23:30:36 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.45 2000/06/24 04:24:10 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -967,11 +967,6 @@ kill_user_windows(p)
 	write_user_windows();
 	p->p_addr->u_pcb.pcb_nsaved = 0;
 }
-
-#ifdef DEBUG
-int dfdebug = 0;
-#endif
-extern struct proc *masterpaddr;
 
 void
 data_access_fault(type, addr, pc, tf)
