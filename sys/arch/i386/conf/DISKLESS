@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.66 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: DISKLESS,v 1.66.2.1 1999/09/19 15:17:30 he Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -204,9 +204,9 @@ omms1	at isa? port 0x238 irq 5
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
-ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
+we1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+we2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
