@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.15 2001/07/19 04:57:50 itojun Exp $	*/
+/*	$NetBSD: state.c,v 1.16 2001/07/19 07:26:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.15 2001/07/19 04:57:50 itojun Exp $");
+__RCSID("$NetBSD: state.c,v 1.16 2001/07/19 07:26:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1691,6 +1691,11 @@ output_data(const char *format, ...)
 
 	va_start(args, format);
 	remaining = BUFSIZ - (nfrontp - netobuf);
+	/* try a netflush() if the room is too low */
+	if (strlen(format) > remaining || BUFSIZ / 4 > remaining) {
+		netflush();
+		remaining = BUFSIZ - (nfrontp - netobuf);
+	}
 	ret = vsnprintf(nfrontp, remaining, format, args);
 	nfrontp += ret;
 	va_end(args);
@@ -1703,6 +1708,10 @@ output_datalen(const char *buf, size_t l)
 	size_t remaining;
 
 	remaining = BUFSIZ - (nfrontp - netobuf);
+	if (remaining < l) {
+		netflush();
+		remaining = BUFSIZ - (nfrontp - netobuf);
+	}
 	if (remaining < l)
 		return -1;
 	memmove(nfrontp, buf, l);
