@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.47 1999/05/11 02:11:08 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.48 2000/01/31 23:06:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1337,6 +1337,25 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 #if 0
 	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
+}
+
+/*
+ * Remove an interface from bpf.
+ */
+void
+bpfdetach(ifp)
+	struct ifnet *ifp;
+{
+	struct bpf_if *bp, **pbp;
+
+	for (bp = bpf_iflist, pbp = &bpf_iflist;
+	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
+		if (bp->bif_ifp == ifp) {
+			*pbp = bp->bif_next;
+			free(bp, M_DEVBUF);
+			break;
+		}
+	}
 }
 
 /*
