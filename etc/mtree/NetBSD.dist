@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.129 2001/01/04 21:04:43 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.130 2001/01/05 07:00:31 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2337,9 +2337,140 @@ siteconfig
 # ./usr/share/sendmail
 ..
 
+# ./usr/share/sushi
+sushi
+
+# ./usr/share/sushi/info
+info
+
+# ./usr/share/sushi/info/programming
+programming
+
+# ./usr/share/sushi/info/programming/helpapi
+helpapi
+# ./usr/share/sushi/info/programming/helpapi
+..
+
+# ./usr/share/sushi/info/programming/formapi
+formapi
+# ./usr/share/sushi/info/programming/formapi
+..
+
+# ./usr/share/sushi/info/programming/execapi
+execapi
+# ./usr/share/sushi/info/programming/execapi
+..
+
+# ./usr/share/sushi/info/programming/basics
+basics
+# ./usr/share/sushi/info/programming/basics
+..
+
+# ./usr/share/sushi/info/programming/i18n
+i18n
+# ./usr/share/sushi/info/programming/i18n
+..
+
+# ./usr/share/sushi/info/programming/scriptapi
+scriptapi
+# ./usr/share/sushi/info/programming/scriptapi
+..
+
+# ./usr/share/sushi/info/programming/searchpaths
+searchpaths
+# ./usr/share/sushi/info/programming/searchpaths
+..
+
+# ./usr/share/sushi/info/programming/indexapi
+indexapi
+# ./usr/share/sushi/info/programming/indexapi
+..
+
+# ./usr/share/sushi/info/programming
+..
+
+# ./usr/share/sushi/info/
+..
+
+# ./usr/share/sushi/install
+install
+
+# ./usr/share/sushi/install/remove
+remove
+# ./usr/share/sushi/install/remove
+..
+
+# ./usr/share/sushi/install/install
+install
+# ./usr/share/sushi/install/install
+..
+
+# ./usr/share/sushi/install/installb
+installb
+# ./usr/share/sushi/install/installb
+..
+
+# ./usr/share/sushi/install/list
+list
+# ./usr/share/sushi/install/list
+..
+
+# ./usr/share/sushi/install
+..
+
+# ./usr/share/sushi/scripton
+scripton
+# ./usr/share/sushi/scripton
+..
+
+# ./usr/share/sushi/scriptoff
+scriptoff
+# ./usr/share/sushi/scriptoff
+..
+
+# ./usr/share/sushi/system
+system
+
+# ./usr/share/sushi/system/rcconf
+rcconf
+# ./usr/share/sushi/system/rcconf
+..
+
+# ./usr/share/sushi/system
+..
+
+# ./usr/share/sushi/users
+users
+
+# ./usr/share/sushi/users/listuser
+listuser
+# ./usr/share/sushi/users/listuser
+..
+
+# ./usr/share/sushi/users/deluser
+deluser
+# ./usr/share/sushi/users/deluser
+..
+
+# ./usr/share/sushi/users/disuser
+disuser
+# ./usr/share/sushi/users/disuser
+..
+
+# ./usr/share/sushi/users/adduser
+adduser
+# ./usr/share/sushi/users/adduser
+..
+
+# ./usr/share/sushi/users
+..
+
+# ./usr/share/sushi
+..
+
 # ./usr/share/tabset
 tabset
-# ./Usr/share/tabset
+# ./usr/share/tabset
 ..
 
 # ./usr/share/tmac
