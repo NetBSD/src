@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.16 2001/07/07 16:13:51 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.17 2001/07/19 16:25:26 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -355,7 +355,7 @@ zestart(ifp)
 		totlen = 0;
 		for (m0 = m; m0; m0 = m0->m_next) {
 			error = bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
-			    mtod(m0, void *), m0->m_len, 0, 0);
+			    mtod(m0, void *), m0->m_len, 0, BUS_DMA_WRITE);
 			buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
 			len = m0->m_len;
 			if (len == 0)
@@ -572,7 +572,8 @@ ze_add_rxbuf(sc, i)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rcvmap[i],
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error)
 		panic("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, i, error);
