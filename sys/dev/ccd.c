@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.46 1998/02/06 08:13:07 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.47 1998/02/22 06:50:08 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1466,6 +1466,32 @@ ccdgetdisklabel(dev)
 	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
 	if (errstring)
 		ccdmakedisklabel(cs);
+	else {
+		int i;
+		struct partition *pp;
+
+		/*
+		 * Sanity check whether the found disklabel is valid.
+		 *
+		 * This is necessary since total size of ccd may vary
+		 * when an interleave is changed even though exactly
+		 * same componets are used, and old disklabel may used
+		 * if that is found.
+		 */
+		if (lp->d_secperunit != cs->sc_size)
+			printf("WARNING: %s: "
+			    "total sector size in disklabel (%d) != "
+			    "the size of ccd (%d)\n", cs->sc_xname,
+			    lp->d_secperunit, cs->sc_size);
+		for (i = 0; i < lp->d_npartitions; i++) {
+			pp = &lp->d_partitions[i];
+			if (pp->p_offset + pp->p_size > cs->sc_size)
+				printf("WARNING: %s: size of partition `%c' "
+				    "(%d) exceeds the size of ccd (%d)\n",
+				    cs->sc_xname, 'a' + i, pp->p_size,
+				    cs->sc_size);
+		}
+	}
 
 #ifdef DEBUG
 	/* It's actually extremely common to have unlabeled ccds. */
