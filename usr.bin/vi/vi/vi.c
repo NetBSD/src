@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.10 2001/03/31 11:37:52 aymeric Exp $	*/
+/*	$NetBSD: vi.c,v 1.11 2001/05/02 21:15:20 windsor Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -965,8 +965,8 @@ v_init(sp)
 		if (sp->t_rows > sp->rows - 1) {
 			sp->t_minrows = sp->t_rows = sp->rows - 1;
 			msgq(sp, M_INFO,
-			    "214|Windows option value is too large, max is %u",
-			    sp->t_rows);
+			    "214|Windows option value is too large, max is %lu",
+			    (u_long)sp->t_rows);
 		}
 		sp->t_maxrows = sp->rows - 1;
 	} else
