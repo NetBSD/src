@@ -56,7 +56,7 @@
  *	   by method mentioned above.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static double pone(double), qone(double);

@@ -17,7 +17,7 @@
  * for exercising the fraction-part(F) IEEE 754-1985 test vector.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 	double significand(double x)

@@ -32,7 +32,7 @@
  *	only cosh(0)=1 is exact for finite x.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double one = 1.0, half=0.5, huge = 1.0e300;

@@ -15,7 +15,7 @@
  * wrapper log10(X)
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 
 #ifdef __STDC__

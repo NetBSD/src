@@ -15,7 +15,7 @@
  * MACRO for standards
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 /*
  * define and initialize _LIB_VERSION

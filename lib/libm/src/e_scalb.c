@@ -17,7 +17,7 @@
  * should use scalbn() instead.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef _SCALB_INT
 #ifdef __STDC__

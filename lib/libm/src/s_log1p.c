@@ -76,7 +76,7 @@
  *	 See HP-15C Advanced Functions Handbook, p.193.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double

@@ -15,7 +15,7 @@
  * wrapper cosh(x)
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 	double cosh(double x)		/* wrapper cosh */
