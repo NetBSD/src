@@ -1,5 +1,6 @@
-/*	$NetBSD: dhu.c,v 1.35 2004/04/25 06:23:41 matt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.36 2004/05/12 00:45:04 wiz Exp $	*/
 /*
+ * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -32,7 +33,6 @@
  */
 
 /*
- * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.35 2004/04/25 06:23:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.36 2004/05/12 00:45:04 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
