@@ -1,4 +1,4 @@
-/*	$NetBSD: mkindex.c,v 1.5 1999/09/10 00:18:21 jsm Exp $	*/
+/*	$NetBSD: mkindex.c,v 1.6 1999/09/18 20:50:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,25 +36,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mkindex.c,v 1.5 1999/09/10 00:18:21 jsm Exp $";
+__RCSID("$NetBSD: mkindex.c,v 1.6 1999/09/18 20:50:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "bog.h"
 
+int main __P((void));
 char *nextword __P((FILE *, char *, int *, int *));
 
 int
