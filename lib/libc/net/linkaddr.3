@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkaddr.3,v 1.8 2002/02/07 07:00:21 ross Exp $
+.\"	$NetBSD: linkaddr.3,v 1.9 2003/04/16 13:34:42 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,9 +46,9 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
-.Fd #include \*[Lt]net/if_dl.h\*[Gt]
+.In sys/types.h
+.In sys/socket.h
+.In net/if_dl.h
 .Ft void
 .Fn link_addr "const char *addr" "struct sockaddr_dl *sdl"
 .Ft char *

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vattr.9,v 1.6 2003/04/06 15:57:50 wiz Exp $
+.\"     $NetBSD: vattr.9,v 1.7 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Nm VATTR_NULL
 .Nd vnode attributes
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fn vattr_null "struct vattr *vap"
 .Ft void

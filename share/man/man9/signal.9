@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.4 2002/10/14 13:43:33 wiz Exp $
+.\"	$NetBSD: signal.9,v 1.5 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,8 +64,8 @@
 .Nm sigtramp ,
 .Nd software signal facilities
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/signal.h\*[Gt]
-.Fd #include \*[Lt]sys/signalvar.h\*[Gt]
+.In sys/signal.h
+.In sys/signalvar.h
 .Ft void
 .Fn siginit "struct proc *p"
 .Ft void

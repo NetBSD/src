@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_xdr.new 1.1 89/04/06 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\" $NetBSD: rpc_xdr.3,v 1.6 2003/01/18 11:29:06 thorpej Exp $
+.\" $NetBSD: rpc_xdr.3,v 1.7 2003/04/16 13:34:43 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_XDR 3
 .Os
@@ -18,7 +18,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
+.In rpc/rpc.h
 .Ft bool_t
 .Fn xdr_accepted_reply "XDR *xdrs" "const struct accepted_reply *ar"
 .Ft bool_t

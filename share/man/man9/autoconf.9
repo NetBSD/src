@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.16 2003/04/04 20:31:43 wiz Exp $
+.\"     $NetBSD: autoconf.9,v 1.17 2003/04/16 13:35:24 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,9 +53,9 @@
 .Nm config_pending_decr
 .Nd autoconfiguration framework
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/device.h\*[Gt]
-.Fd #include \*[Lt]sys/errno.h\*[Gt]
+.In sys/param.h
+.In sys/device.h
+.In sys/errno.h
 .Ft struct cfdata *
 .Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
 .Ft struct device *

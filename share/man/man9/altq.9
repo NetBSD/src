@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.9,v 1.8 2002/05/28 11:41:45 wiz Exp $
+.\"	$NetBSD: altq.9,v 1.9 2003/04/16 13:35:24 wiz Exp $
 .\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
 .\"
 .\" Copyright (C) 2001
@@ -33,9 +33,9 @@
 .Nm ALTQ
 .Nd kernel interfaces for manipulating output queues on network interfaces
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
-.Fd #include \*[Lt]net/if.h\*[Gt]
+.In sys/types.h
+.In sys/socket.h
+.In net/if.h
 .Ft void \"macro
 .Fn IFQ_ENQUEUE "struct ifaltq *ifq" "struct mbuf *m" "int error"
 .Ft void \"macro

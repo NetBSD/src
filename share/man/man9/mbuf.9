@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.26 2003/02/25 10:35:34 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.27 2003/04/16 13:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@
 .Nm MFREE ,
 .Nd "functions and macros for managing memory used by networking code"
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/mbuf.h\*[Gt]
+.In sys/mbuf.h
 .Ft struct mbuf *
 .Fn m_get "int nowait" "int type"
 .Ft struct mbuf *

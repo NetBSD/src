@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.6 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: vnfileops.9,v 1.7 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,9 +48,9 @@
 .Nm vn_write ,
 .Nd vnode file descriptor operations
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/file.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/param.h
+.In sys/file.h
+.In sys/vnode.h
 .Ft int
 .Fn vn_closefile "struct file *fp" "struct proc *p"
 .Ft int

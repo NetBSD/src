@@ -1,4 +1,4 @@
-.\"     $NetBSD: isapnp.9,v 1.7 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: isapnp.9,v 1.8 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,12 +44,12 @@
 .Nm isapnp_unconfig
 .Nd Plug 'n' Play ISA bus
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/isa/isareg.h\*[Gt]
-.Fd #include \*[Lt]dev/isa/isavar.h\*[Gt]
-.Fd #include \*[Lt]dev/isapnp/isapnpreg.h\*[Gt]
-.Fd #include \*[Lt]dev/isapnp/isapnpvar.h\*[Gt]
-.Fd #include \*[Lt]dev/isapnp/isapnpdevs.h\*[Gt]
+.In machine/bus.h
+.In dev/isa/isareg.h
+.In dev/isa/isavar.h
+.In dev/isapnp/isapnpreg.h
+.In dev/isapnp/isapnpvar.h
+.In dev/isapnp/isapnpdevs.h
 .Ft int
 .Fn isapnp_devmatch "const struct isapnp_attach_args *ipa" \
 "const struct isapnp_devinfo *dinfo" "int *variant"

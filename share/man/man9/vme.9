@@ -1,4 +1,4 @@
-.\"     $NetBSD: vme.9,v 1.8 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: vme.9,v 1.9 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,9 +55,9 @@
 .Nm vme_space_get
 .Nd Versa Module Euroboard bus
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/vme/vmereg.h\*[Gt]
-.Fd #include \*[Lt]dev/vme/vmevar.h\*[Gt]
+.In machine/bus.h
+.In dev/vme/vmereg.h
+.In dev/vme/vmevar.h
 .Ft int
 .Fn vme_probe "void *vc" "vme_addr_t vmeaddr" "vme_size_t len" "vme_am_t am" \
 "vme_datasize_t datasize" \

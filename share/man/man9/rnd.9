@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.13 2002/10/14 13:43:31 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.14 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Nm rnd_add_uint32
 .Nd functions to make a device available for entropy collection
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/rnd.h\*[Gt]
+.In sys/rnd.h
 .Ft void
 .Fn rnd_attach_source "rndsource_element_t *rnd_source" "char *devname" "u_int32_t source_type" "u_int32_t flags"
 .Ft void

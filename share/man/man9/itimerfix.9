@@ -1,4 +1,4 @@
-.\"	$NetBSD: itimerfix.9,v 1.4 2003/02/01 10:43:20 jdolecek Exp $
+.\"	$NetBSD: itimerfix.9,v 1.5 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm itimerfix
 .Nd check that a timeval value is valid, and correct
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/time.h\*[Gt]
+.In sys/time.h
 .Ft int
 .Fn itimerfix "struct timeval *tv"
 .Sh DESCRIPTION

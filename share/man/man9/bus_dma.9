@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.28 2003/02/16 16:06:19 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.29 2003/04/16 13:35:25 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .Nm bus_dmamem_mmap
 .Nd Bus and Machine Independent DMA Mapping Interface
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
+.In machine/bus.h
 .Ft int
 .Fn bus_dmamap_create "bus_dma_tag_t tag" "bus_size_t size" "int nsegments" \
 "bus_size_t maxsegsz" "bus_size_t boundary" "int flags" "bus_dmamap_t *dmamp"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftok.3,v 1.10 2003/03/02 14:10:49 enami Exp $
+.\"	$NetBSD: ftok.3,v 1.11 2003/04/16 13:34:36 wiz Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -34,8 +34,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/ipc.h\*[Gt]
+.In sys/types.h
+.In sys/ipc.h
 .Ft key_t
 .Fn ftok "const char *path" "int id" ;
 .Sh DESCRIPTION
