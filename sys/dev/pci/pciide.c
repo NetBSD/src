@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.31 1999/02/02 17:06:05 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.32 1999/02/16 18:11:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -2031,6 +2031,9 @@ sis_setup_channel(chp)
 			 */
 			if (drvp->PIO_mode > (drvp->DMA_mode + 2))
 				drvp->PIO_mode = drvp->DMA_mode + 2;
+			if (drvp->DMA_mode + 2 > (drvp->PIO_mode))
+				drvp->DMA_mode = (drvp->PIO_mode > 2) ?
+				    drvp->PIO_mode - 2 : 0;
 			if (drvp->DMA_mode == 0)
 				drvp->PIO_mode = 0;
 		}
@@ -2166,6 +2169,9 @@ acer_setup_channel(chp)
 			 */
 			if (drvp->PIO_mode > (drvp->DMA_mode + 2))
 				drvp->PIO_mode = drvp->DMA_mode + 2;
+			if (drvp->DMA_mode + 2 > (drvp->PIO_mode))
+				drvp->DMA_mode = (drvp->PIO_mode > 2) ?
+				    drvp->PIO_mode - 2 : 0;
 			if (drvp->DMA_mode == 0)
 				drvp->PIO_mode = 0;
 		}
@@ -2174,7 +2180,7 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 		    ACER_IDETIM(chp->channel, drive),
 		    acer_pio[drvp->PIO_mode]);
 	}
-	WDCDEBUG_PRINT(("acer_setup_chip: old fifo/udma reg 0x%x\n",
+	WDCDEBUG_PRINT(("acer_setup_chip: new fifo/udma reg 0x%x\n",
 	    acer_fifo_udma), DEBUG_PROBE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA, acer_fifo_udma);
 	if (idedma_ctl != 0) {
