@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.351 2001/05/12 14:12:11 tsutsui Exp $
+# $NetBSD: mi,v 1.352 2001/05/17 23:23:38 fredette Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1459,6 +1459,7 @@
 ./usr/share/man/cat8/sun3/boot.0		man-sys-catman
 ./usr/share/man/cat8/sun3/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/sun3/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/sunndd.0			man-bootserver-catman
 ./usr/share/man/cat8/supfilesrv.0		man-sup-catman
 ./usr/share/man/cat8/supscan.0			man-sup-catman
 ./usr/share/man/cat8/supservers.0		man-sup-catman
@@ -2962,6 +2963,7 @@
 ./usr/share/man/man8/sun3/boot.8		man-sys-man
 ./usr/share/man/man8/sun3/installboot.8		man-sysutil-man
 ./usr/share/man/man8/sun3/makedev.8		man-sysutil-man
+./usr/share/man/man8/sunndd.8			man-bootserver-man
 ./usr/share/man/man8/supfilesrv.8		man-sup-man
 ./usr/share/man/man8/supscan.8			man-sup-man
 ./usr/share/man/man8/supservers.8		man-sup-man
