@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.235 2003/01/20 05:30:04 simonb Exp $ */
+/*	$NetBSD: wd.c,v 1.236 2003/01/23 00:00:32 bad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.235 2003/01/20 05:30:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.236 2003/01/23 00:00:32 bad Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -495,8 +495,7 @@ wdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (WDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
+	if (bounds_check_with_label(bp, wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
 
