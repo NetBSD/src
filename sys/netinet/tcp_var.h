@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.85 2001/09/10 20:15:15 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.86 2001/09/10 22:14:28 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -133,7 +133,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 struct tcpcb {
 	int	t_family;		/* address family on the wire */
 	struct ipqehead segq;		/* sequencing queue */
-	u_int	t_timer[TCPT_NTIMERS];	/* tcp timers */
+	struct callout t_timer[TCPT_NTIMERS];/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
