@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.35 2002/03/08 20:48:42 thorpej Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.35.8.1 2004/03/15 05:25:14 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.35 2002/03/08 20:48:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.35.8.1 2004/03/15 05:25:14 jmc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -113,7 +113,8 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
 	struct vnode *vp;
-	int vpid, error;
+	u_long vpid;
+	int error;
 
 	if (!doingcache) {
 		cnp->cn_flags &= ~MAKEENTRY;
