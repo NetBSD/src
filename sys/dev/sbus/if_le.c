@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1998/07/27 23:56:26 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 1998/07/28 12:22:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ void	leattach_sbus __P((struct device *, struct device *, void *));
  * Media types supported.
  */
 static int lemedia[] = {
-	IFM_ETHER|IFM_10_T,
+	IFM_ETHER|IFM_10_5,
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
