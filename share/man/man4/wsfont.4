@@ -1,4 +1,4 @@
-.\" $NetBSD: wsfont.4,v 1.1 2003/04/29 11:49:51 augustss Exp $
+.\" $NetBSD: wsfont.4,v 1.2 2003/05/03 23:20:01 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,12 +36,22 @@
 .Os
 .Sh NAME
 .Nm wsfont
-.Nd unknown
+.Nd dynamic font loading support
 .Sh SYNOPSIS
 .Cd "pseudo-device wsfont"
 .Sh DESCRIPTION
-No description.
+The
+.Nm
+pseudo device allows display fonts for the wscons subsystem to
+be loaded dynamically into the kernel.  The fonts are loaded dynamically
+using the
+.Xr wsfontload 8
+utility.
 .Sh SEE ALSO
-Nothing
+.Xr wscons 4 ,
+.Xr wsdisplay 4 ,
+.Xr wsfontload 8 ,
+.Xr wsconsctl 8 ,
+.Xr wsfont 9
 .Sh BUGS
-drochner@netbsd.org has not yet written this man page.
+Fonts cannot be unloaded from the kernel.
