@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.33 2002/10/05 15:16:14 tsutsui Exp $
+#	$NetBSD: files.isapnp,v 1.34 2003/08/14 10:03:03 itojun Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -23,7 +23,7 @@ attach	fmv at isapnp with fmv_isapnp
 file	dev/isapnp/if_fmv_isapnp.c		fmv_isapnp
 
 # PCnet-PnP
-attach	le at isapnp with le_isapnp: le24
+attach	le at isapnp with le_isapnp: le24, isadma
 file	dev/isapnp/if_le_isapnp.c		le_isapnp
 
 # NE2000-PnP
@@ -84,7 +84,7 @@ file	dev/isapnp/mpu_isapnp.c			mpu_isapnp
 #
 
 # Adaptec AHA-1542
-attach	aha at isapnp with aha_isapnp
+attach	aha at isapnp with aha_isapnp: isadma
 file	dev/isapnp/aha_isapnp.c			aha_isapnp
 
 # Adaptec AHA-1520B
