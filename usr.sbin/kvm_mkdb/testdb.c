@@ -1,4 +1,4 @@
-/*	$NetBSD: testdb.c,v 1.8 2001/03/19 15:18:59 msaitoh Exp $	*/
+/*	$NetBSD: testdb.c,v 1.9 2003/05/02 16:28:34 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: testdb.c,v 1.8 2001/03/19 15:18:59 msaitoh Exp $");
+__RCSID("$NetBSD: testdb.c,v 1.9 2003/05/02 16:28:34 ragge Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ int
 testdb()
 {
 	DB *db;
-	int kd, ret, dbversionlen;
+	int ret, dbversionlen;
 	DBT rec;
 	char dbversion[_POSIX2_LINE_MAX];
 	char *kversion;
@@ -72,9 +72,6 @@ testdb()
 
 	ret = 0;
 	db = NULL;
-
-	if ((kd = open(_PATH_KMEM, O_RDONLY, 0)) < 0)
-		goto close;
 
 	if ((db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL)) == NULL)
 		goto close;
@@ -104,9 +101,7 @@ testdb()
 	/* If they match, we win */
 	ret = memcmp(dbversion, kversion, dbversionlen) == 0;
 
-close:	if (kd >= 0)
-		(void)close(kd);
-	if (db)
+close:	if (db)
 		(void)(db->close)(db);
 	return (ret);
 }
