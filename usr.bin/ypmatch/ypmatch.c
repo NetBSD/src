@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.9 1996/05/07 18:27:46 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $";
+static char rcsid[] = "$NetBSD: ypmatch.c,v 1.9 1996/05/07 18:27:46 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@ struct ypalias {
 	{ "ethers", "ethers.byname" },
 };
 
+void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
@@ -86,9 +87,8 @@ char **argv;
 	int c, r, i;
 	int rval;
 
+	domainname = NULL;
 	notrans = key = 0;
-	yp_get_default_domain(&domainname);
-
 	while( (c=getopt(argc, argv, "xd:kt")) != -1)
 		switch(c) {
 		case 'x':
@@ -112,6 +112,10 @@ char **argv;
 
 	if( (argc-optind) < 2 )
 		usage();
+
+	if (!domainname) {
+		yp_get_default_domain(&domainname);
+	}
 
 	inmap = argv[argc-1];
 	if (!notrans) {
