@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.186 1999/12/17 17:19:11 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.187 1999/12/31 00:12:41 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.179 1999/12/17 17:18:48 drochner Exp 
+ *	NetBSD: pcidevs,v 1.180 1999/12/30 23:53:42 hubertf Exp 
  */
 
 /*
@@ -1323,6 +1323,7 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9350	0x9350		/* TGUI 9350 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9360	0x9360		/* TGUI 9360 */
 #define	PCI_PRODUCT_TRIDENT_CYBER_9397	0x9397		/* CYBER 9397 */
+#define	PCI_PRODUCT_TRIDENT_CYBER_9525	0x9525		/* CYBER 9525 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9420	0x9420		/* TGUI 9420 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9440	0x9440		/* TGUI 9440 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */

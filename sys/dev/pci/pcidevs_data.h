@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.184 1999/12/17 17:19:12 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.185 1999/12/31 00:12:41 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.179 1999/12/17 17:18:48 drochner Exp 
+ *	NetBSD: pcidevs,v 1.180 1999/12/30 23:53:42 hubertf Exp 
  */
 
 /*
@@ -3146,6 +3146,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "CYBER 9397",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9525,
+	    0,
+	    "Trident Microsystems",
+	    "CYBER 9525",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420,
