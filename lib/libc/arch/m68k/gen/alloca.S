@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.3 1997/04/25 00:58:44 thorpej Exp $	*/
+/*	$NetBSD: alloca.S,v 1.4 1999/05/02 20:09:29 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,18 +43,21 @@
 #if 0
 	RCSID("from: @(#)alloca.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: alloca.S,v 1.3 1997/04/25 00:58:44 thorpej Exp $")
+	RCSID("$NetBSD: alloca.S,v 1.4 1999/05/02 20:09:29 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* like alloc, but automatic free in return */
 
 ENTRY(alloca)
-	movl	sp@,a0		/* save return addr */
+	movl	sp@,a1		/* save return addr */
 	movl	sp,d0		/* get current SP value */
 	subl	sp@(4),d0	/* allocate requested space */
 	andb	#~3,d0		/* longword align for efficiency */
 	addql	#8,d0		/* reuse space of call frame */
 	movl	d0,sp		/* set new SP value */
 	lea	sp@(-4),sp	/* account for argument pop in caller */
-	jmp 	a0@		/* funny return */
+#ifdef __SVR4_ABI__
+	moveal	d0,a0
+#endif
+	jmp 	a1@		/* funny return */
