@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.4 1996/10/13 02:00:00 christos Exp $	*/
+/*	$NetBSD: natm.c,v 1.5 1996/11/09 03:26:26 chuck Exp $	*/
 
 /*
  *
@@ -361,7 +361,7 @@ next:
 
 #ifdef DIAGNOSTIC
   if ((m->m_flags & M_PKTHDR) == 0)
-    panic("ipintr no HDR");
+    panic("natmintr no HDR");
 #endif
 
   npcb = (struct natmpcb *) m->m_pkthdr.rcvif; /* XXX: overloaded */
