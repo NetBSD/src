@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2001/01/01 21:57:38 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.19 2001/01/04 01:53:24 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -307,7 +307,6 @@ void Cleansnag (struct ship *, struct ship *, int, int);
 /* dr_1.c */
 void unfoul (void);
 void boardcomp (void);
-int fightitout (struct ship *, struct ship *, int);
 void resolve (void);
 void compcombat (void);
 int next (void);
@@ -316,20 +315,10 @@ int next (void);
 void thinkofgrapples (void);
 void checkup (void);
 void prizecheck (void);
-int str_end (const char *);
 void closeon (struct ship *, struct ship *, char *, int, int, int);
-int score (char *, struct ship *, struct ship *, int);
-void move_ship (const char *, struct ship *, unsigned char *, short *, short *, char *);
-void try (char *, char *, int, int, int, int, int, struct ship *,
-    struct ship *, int *, int);
-void rmend (char *);
 
 /* dr_3.c */
 void moveall (void);
-int stillmoving (int);
-int is_isolated (struct ship *);
-int push (struct ship *, struct ship *);
-void step (int, struct ship *, char *);
 void sendbp (struct ship *, struct ship *, int, int);
 int is_toughmelee (struct ship *, struct ship *, int, int);
 void reload (void);

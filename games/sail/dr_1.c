@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.12 2001/01/01 21:57:37 jwise Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.13 2001/01/04 01:53:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.12 2001/01/01 21:57:37 jwise Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.13 2001/01/04 01:53:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "driver.h"
 #include <stdlib.h>
+
+void	unfoul(void);
+void	boardcomp(void);
+static int	fightitout(struct ship *, struct ship *, int);
+void	resolve(void);
+void	compcombat(void);
+int	next(void);
 
 void
 unfoul(void)
@@ -133,7 +140,7 @@ boardcomp(void)
 	}
 }
 
-int
+static int
 fightitout(struct ship *from, struct ship *to, int key)
 {
 	struct ship *fromcap, *tocap;

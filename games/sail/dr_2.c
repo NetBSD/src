@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.13 2001/01/01 21:57:37 jwise Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.14 2001/01/04 01:53:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.13 2001/01/01 21:57:37 jwise Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.14 2001/01/04 01:53:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,18 @@ __RCSID("$NetBSD: dr_2.c,v 1.13 2001/01/01 21:57:37 jwise Exp $");
 #include <stdlib.h>
 
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
+
+void	thinkofgrapples(void);
+void	checkup(void);
+void	prizecheck(void);
+static int	str_end(const char *);
+void	closeon(struct ship *, struct ship *, char *, int, int, int);
+static int	score(char *, struct ship *, struct ship *, int);
+static void	move_ship(const char *, struct ship *, unsigned char *, short *, short *, char *);
+static void	try(char *, char *, int, int, int, int, int, struct ship *, struct ship *, int *, int);
+static void	rmend(char *);
+
+const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
 
 void
 thinkofgrapples(void)
@@ -127,7 +139,7 @@ prizecheck(void)
 	}
 }
 
-int
+static int
 str_end(const char *str)
 {
 	const char *p;
@@ -148,9 +160,7 @@ closeon(struct ship *from, struct ship *to, char *command, int ta, int ma, int a
 	try(command, temp, ma, ta, af, ma, from->file->dir, from, to, &high, 0);
 }
 
-const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
-
-int
+static int
 score(char *movement, struct ship *ship, struct ship *to, int onlytemp)
 {
 	char drift;
@@ -181,7 +191,7 @@ score(char *movement, struct ship *ship, struct ship *to, int onlytemp)
 	return total;
 }
 
-void
+static void
 move_ship(const char *p, struct ship *ship, unsigned char *dir, short *row, short *col, char *drift)
 {
 	int dist;
@@ -221,7 +231,7 @@ move_ship(const char *p, struct ship *ship, unsigned char *dir, short *row, shor
 		*drift = 0;
 }
 
-void
+static void
 try(char *command, char *temp, int ma, int ta, int af, int vma, int dir, struct ship *f, struct ship *t, int *high, int rakeme)
 {
 	int new, n;
@@ -263,7 +273,7 @@ try(char *command, char *temp, int ma, int ta, int af, int vma, int dir, struct 
 	}
 }
 
-void
+static void
 rmend(char *str)
 {
 	char *p;

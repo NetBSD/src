@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_5.c,v 1.7 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: dr_5.c,v 1.8 2001/01/04 01:53:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_5.c,v 1.7 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: dr_5.c,v 1.8 2001/01/04 01:53:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
+
+void	subtract(struct ship *, int, int *, struct ship *, int);
+int	mensent(struct ship *, struct ship *, int *, struct ship **, int *, int);
 
 void
 subtract(struct ship *from, int totalfrom, int *crewfrom, struct ship *fromcap, int pcfrom)
