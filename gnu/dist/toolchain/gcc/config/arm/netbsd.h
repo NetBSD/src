@@ -1,4 +1,4 @@
-/* NetBSD/arm (RiscBSD) version.
+/* NetBSD/arm32 version.
    Copyright (C) 1993, 1994, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Mark Brinicombe (amb@physig.ph.kcl.ac.uk)
 
@@ -46,23 +46,27 @@ Boston, MA 02111-1307, USA.  */
 
 #include <netbsd.h>
 
+/* NetBSD uses gas so we want to use .ident */
+#undef ASM_OUTPUT_IDENT
+#define ASM_OUTPUT_IDENT(STREAM,STRING) \
+  fprintf (STREAM,"\t.ident \"%s\"\n",STRING)
+
+/* On the ARM `@' introduces a comment, so we must use something else
+   for .type directives.  Most NetBSD platforms use %, but we use #
+   because of some legacy assemblers.  */
+#undef TYPE_OPERAND_FMT
+#define TYPE_OPERAND_FMT "#%s"
+
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
 #undef DWARF2_UNWIND_INFO
 
-/* Some defines for CPP.
-   arm32 is the NetBSD port name, so we always define arm32 and __arm32__.  */
+/* Some defines for CPP.  arm32 is the NetBSD port name, so we always (only)
+   define __arm32__ and __NetBSD__, and add __KPRINTF_ATTRIBUTE__ since
+   this compiler is hacked with the NetBSD kprintf attribute mods. */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "\
--Dunix -Driscbsd -Darm32 -D__arm32__ -D__arm__ -D__NetBSD__ \
+#define CPP_PREDEFINES "-D__arm32__ -D__arm__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
-
-/* Define _POSIX_SOURCE if necessary.  */
-#undef CPP_SPEC
-#define CPP_SPEC "\
-%(cpp_cpu_arch) %(cpp_apcs_pc) %(cpp_float) %(cpp_endian) \
-%{posix:-D_POSIX_SOURCE} \
-"
 
 /* Because TARGET_DEFAULT sets ARM_FLAG_APCS_32 */
 #undef CPP_APCS_PC_DEFAULT_SPEC
@@ -71,13 +75,6 @@ Boston, MA 02111-1307, USA.  */
 /* Because TARGET_DEFAULT sets ARM_FLAG_SOFT_FLOAT */
 #undef CPP_FLOAT_DEFAULT_SPEC
 #define CPP_FLOAT_DEFAULT_SPEC "-D__SOFTFP__"
-
-/* Pass -X to the linker so that it will strip symbols starting with 'L' */
-#undef LINK_SPEC
-#define LINK_SPEC "\
--X %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} \
-%{static:-Bstatic} %{assert*} \
-"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
@@ -93,6 +90,9 @@ Boston, MA 02111-1307, USA.  */
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
+
+#undef MAX_WCHAR_TYPE_SIZE
+#define MAX_WCHAR_TYPE_SIZE 16
 
 #define HANDLE_SYSV_PRAGMA
 
@@ -111,11 +111,6 @@ Boston, MA 02111-1307, USA.  */
   fprintf(STREAM, "\tmov\t%sip, %slr\n", REGISTER_PREFIX, REGISTER_PREFIX); \
   fprintf(STREAM, "\tbl\tmcount\n");					    \
 }
-
-/* On the ARM `@' introduces a comment, so we must use something else
-   for .type directives.  */
-#undef TYPE_OPERAND_FMT
-#define TYPE_OPERAND_FMT "%%%s"
 
 /* NetBSD uses the old PCC style aggregate returning conventions. */
 #undef DEFAULT_PCC_STRUCT_RETURN
