@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.87 1999/07/17 07:07:08 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.88 1999/07/17 12:53:05 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -175,8 +175,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
-
+#ifdef INET6
 #include "faith.h"
+#endif
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
