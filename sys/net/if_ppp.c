@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.52 1999/05/12 18:50:51 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.53 1999/05/14 21:33:41 tron Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -303,15 +303,25 @@ pppdealloc(sc)
     sc->sc_rc_state = NULL;
 #endif /* PPP_COMPRESS */
 #ifdef PPP_FILTER
-    if (sc->sc_pass_filt.bf_insns != 0) {
-	FREE(sc->sc_pass_filt.bf_insns, M_DEVBUF);
-	sc->sc_pass_filt.bf_insns = 0;
-	sc->sc_pass_filt.bf_len = 0;
+    if (sc->sc_pass_filt_in.bf_insns != 0) {
+	FREE(sc->sc_pass_filt_in.bf_insns, M_DEVBUF);
+	sc->sc_pass_filt_in.bf_insns = 0;
+	sc->sc_pass_filt_in.bf_len = 0;
     }
-    if (sc->sc_active_filt.bf_insns != 0) {
-	FREE(sc->sc_active_filt.bf_insns, M_DEVBUF);
-	sc->sc_active_filt.bf_insns = 0;
-	sc->sc_active_filt.bf_len = 0;
+    if (sc->sc_pass_filt_out.bf_insns != 0) {
+	FREE(sc->sc_pass_filt_out.bf_insns, M_DEVBUF);
+	sc->sc_pass_filt_out.bf_insns = 0;
+	sc->sc_pass_filt_out.bf_len = 0;
+    }
+    if (sc->sc_active_filt_in.bf_insns != 0) {
+	FREE(sc->sc_active_filt_in.bf_insns, M_DEVBUF);
+	sc->sc_active_filt_in.bf_insns = 0;
+	sc->sc_active_filt_in.bf_len = 0;
+    }
+    if (sc->sc_active_filt_out.bf_insns != 0) {
+	FREE(sc->sc_active_filt_out.bf_insns, M_DEVBUF);
+	sc->sc_active_filt_out.bf_insns = 0;
+	sc->sc_active_filt_out.bf_len = 0;
     }
 #endif /* PPP_FILTER */
 #ifdef VJC
