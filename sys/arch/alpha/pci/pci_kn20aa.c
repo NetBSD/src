@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.44 2002/09/27 15:35:38 provos Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.45 2005/03/29 04:06:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.44 2002/09/27 15:35:38 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.45 2005/03/29 04:06:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -277,7 +277,8 @@ kn20aa_iointr(arg, vec)
 		    "kn20aa irq");
 		if (ALPHA_SHARED_INTR_DISABLE(kn20aa_pci_intr, irq))
 			kn20aa_disable_intr(irq);
-	}
+	} else
+		alpha_shared_intr_reset_strays(kn20aa_pci_intr, irq);
 }
 
 void
