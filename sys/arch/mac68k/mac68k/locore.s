@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 1998/04/20 05:41:21 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 1998/04/20 05:46:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -706,14 +706,72 @@ ENTRY_NOPROFILE(trap15)
 	jne	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
-Lkbrkpt:
+Lkbrkpt: | Kernel-mode breakpoint or trace trap. (d0=trap_type)
+	| Save the system sp rather than the user sp.
+	movw	#PSL_HIGHIPL,sr		| lock out interrupts
+	lea	sp@(FR_SIZE),a6		| Save stack pointer
+	movl	a6,sp@(FR_SP)		|  from before trap
+
+	| If were are not on tmpstk switch to it.
+	| (so debugger can change the stack pointer)
+	movl	a6,d1
+	cmpl	#_ASM_LABEL(tmpstk),d1
+	jls	Lbrkpt2			| already on tmpstk
+	| Copy frame to the temporary stack
+	movl	sp,a0			| a0=src
+	lea	_ASM_LABEL(tmpstk)-96,a1 | a1=dst
+	movl	a1,sp			| sp=new frame
+	moveq	#FR_SIZE,d1
+Lbrkpt1:
+	movl	a0@+,a1@+
+	subql	#4,d1
+	bgt	Lbrkpt1
+
+Lbrkpt2:
+	| Call the trap handler for the kernel debugger.
+	| Do not call trap() to do it, so that we can
+	| set breakpoints in trap() if we want.  We know
+	| the trap type is either T_TRACE or T_BREAKPOINT.
+	| If we have both DDB and KGDB, let KGDB see it first,
+	| because KGDB will just return 0 if not connected.
+	| Save args in d2, a2
+	movl	d0,d2			| trap type
+	movl	sp,a2			| frame ptr
 #ifdef KGDB
-	movl	d0,sp@-
-	jbsr	_C_LABEL(kgdb_trap_glue)	| returns if no debugger
-	addl	#4,sp
+	| Let KGDB handle it (if connected)
+	movl	a2,sp@-			| push frame ptr
+	movl	d2,sp@-			| push trap type
+	jbsr	_C_LABEL(kgdb_trap)	| handle the trap
+	addql	#8,sp			| pop args
+	cmpl	#0,d0			| did kgdb handle it?
+	jne	Lbrkpt3			| yes, done
 #endif
-	moveq	#T_TRAP15,d0
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
+#ifdef DDB
+	| Let DDB handle it
+	movl	a2,sp@-			| push frame ptr
+	movl	d2,sp@-			| push trap type
+	jbsr	_C_LABEL(kdb_trap)	| handle the trap
+	addql	#8,sp			| pop args
+#if 0	/* not needed on hp300 */
+	cmpl	#0,d0			| did ddb handle it?
+	jne	Lbrkpt3			| yes, done
+#endif
+#endif
+	/* Sun 3 drops into PROM here. */
+Lbrkpt3:
+	| The stack pointer may have been modified, or
+	| data below it modified (by kgdb push call),
+	| so push the hardware frame at the current sp
+	| before restoring registers and returning.
+
+	movl	sp@(FR_SP),a0		| modified sp
+	lea	sp@(FR_SIZE),a1		| end of our frame
+	movl	a1@-,a0@-		| copy 2 longs with
+	movl	a1@-,a0@-		| ... predecrement
+	movl	a0,sp@(FR_SP)		| sp = h/w frame
+	moveml	sp@+,#0x7FFF		| restore all but sp
+	movl	sp@,sp			| ... and sp
+	rte				| all done
 
 /* Use common m68k sigreturn */
 #include <m68k/m68k/sigreturn.s>
