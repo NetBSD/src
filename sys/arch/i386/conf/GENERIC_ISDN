@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.3.2.4 2002/01/28 04:21:36 sommerfeld Exp $
+# $NetBSD: GENERIC_ISDN,v 1.3.2.5 2002/04/27 20:24:44 sommerfeld Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -49,9 +49,11 @@ isic* at isapnp?
 #---------------------------------------------------------------------
 # Supported PCI cards:
 #
-options 	ISICPCI_ELSA_QS1PCI	# ELSA QuickStep 1000 (PCI Version)
-options 	ISICPCI_AVM_A1		# AVM Fritz!Card (PCI Version)
 isic* at pci?
+
+# AVM Fritz!PCI card
+ifpci* at pci?
+
 #
 #---------------------------------------------------------------------
 # Supported PCMCIA cards:
@@ -67,12 +69,12 @@ isic* at pcmcia? function ?
 # ISDN user land devices, drivers and pseudo-devices.
 #---------------------------------------------------------------------
 #
-pseudo-device	i4b		  # communication with userland daemon
-pseudo-device	i4btrc		2 # userland driver to do ISDN tracing
-pseudo-device	i4bctl		  # userland driver to control the whole thing
-pseudo-device	i4brbch		4 # userland driver for access to raw B channel
-pseudo-device	i4btel		2 # userland driver for telephony
+pseudo-device	isdn		  # communication with userland daemon
+pseudo-device	isdntrc		2 # userland driver to do ISDN tracing
+pseudo-device	isdnctl		  # userland driver to control the whole thing
+pseudo-device	isdnbchan	4 # userland driver for access to raw B channel
+pseudo-device	isdntel		2 # userland driver for telephony
 options 	IPR_VJ		  # compile support for VJ compression
-pseudo-device	i4bipr		2 # network driver for IP over raw HDLC ISDN
-pseudo-device	i4bisppp	2 # synchronous PPP over ISDN
+pseudo-device	irip		2 # network driver for IP over raw HDLC ISDN
+pseudo-device	ippp		2 # synchronous PPP over ISDN
 #---------------------------------------------------------------------

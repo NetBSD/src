@@ -1,3 +1,8 @@
+Last Synchronized: Sat Apr 27 11:54:52 EDT 2002
+
+merged with -current as of today.
+Added TRAPLOG support, fixed misc. minor bugs in ioapic.c, mpbios.c
+
 Last Synchronized: Sat Feb 23 18:41:03 EST 2002
 
 Pick up pxeboot; merge in joystick rototill, linux compat changes.

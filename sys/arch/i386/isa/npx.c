@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.16 2002/01/28 04:21:40 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.17 2002/04/27 20:24:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.70.8.16 2002/01/28 04:21:40 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.70.8.17 2002/04/27 20:24:49 sommerfeld Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -108,6 +108,11 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.70.8.16 2002/01/28 04:21:40 sommerfeld Exp
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
 int npxdna(struct cpu_info *);
+static int	npxdna_notset(struct cpu_info *);
+static int	npxdna_s87(struct cpu_info *);
+#ifdef I686_CPU
+static int	npxdna_xmm(struct cpu_info  *);
+#endif /* I686_CPU */
 
 #ifdef I686_CPU
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
@@ -139,15 +144,23 @@ fpu_save(union savefpu *addr)
 		fnsave(&addr->sv_87);
 }
 
-int	npxdna_notset(struct cpu_info *);
-int	npxdna_s87(struct cpu_info *);
-#ifdef I686_CPU
-int	npxdna_xmm(struct cpu_info *);
-#endif /* I686_CPU */
+static int
+npxdna_notset(struct cpu_info *ci)
+{
+	panic("npxdna vector not initialized");
+}
+
+static int
+npxdna_empty(struct cpu_info *ci)
+{
+
+	/* raise a DNA TRAP, math_emulate would take over eventually */
+	IPRINTF(("Emul"));
+	return 0;
+}
+
 
 int    (*npxdna_func)(struct cpu_info *) = npxdna_notset;
-
-
 
 enum npx_type
 npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
@@ -245,6 +258,11 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	idt[16].gd = save_idt_npxtrap;
 	write_eflags(save_eflags);
 
+	if ((rv == NPX_NONE) || (rv == NPX_BROKEN)) {
+		/* No FPU. Handle it here, npxattach won't be called */
+		npxdna_func = npxdna_empty;
+	}
+
 	return (rv);
 }
 
@@ -260,7 +278,6 @@ void npxinit(ci)
 	}
 	lcr0(rcr0() | (CR0_TS));
 }
-
 
 /*
  * Common attach routine.
@@ -427,25 +444,14 @@ npxintr(void *arg)
  * to simply return.
  */
 
-int
-npxdna_notset(struct cpu_info *ci)
-{
-	panic("npxdna vector not initialized");
-}
-
 #ifdef I686_CPU
-int
+static int
 npxdna_xmm(struct cpu_info *ci)
 {
 	struct proc *p;
 	int s;
 
 	KDASSERT(i386_use_fxsave == 1);
-
-	if (npx_type == NPX_NONE) {
-		IPRINTF(("%s: fp emul\n", ci->ci_dev->dv_xname));
-		return (0);
-	}
 
 	if (ci->ci_fpsaving) {
 		printf("recursive npx trap; cr0=%x\n", rcr0());
@@ -474,7 +480,7 @@ npxdna_xmm(struct cpu_info *ci)
 		IPRINTF(("Init"));
 		fninit();
 		fwait();
-		stts();		
+		stts();
 	}
 	splx(s);
 
@@ -503,18 +509,13 @@ npxdna_xmm(struct cpu_info *ci)
 }
 #endif /* I686_CPU */
 
-int
+static int
 npxdna_s87(struct cpu_info *ci)
 {
 	struct proc *p;
 	int s;
 
 	KDASSERT(i386_use_fxsave == 0);
-
-	if (npx_type == NPX_NONE) {
-		IPRINTF(("%s: fp emul\n", ci->ci_dev->dv_xname));
-		return (0);
-	}
 
 	if (ci->ci_fpsaving) {
 		printf("recursive npx trap; cr0=%x\n", rcr0());

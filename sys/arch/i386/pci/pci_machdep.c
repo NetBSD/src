@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.10 2001/12/29 21:09:10 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.11 2002/04/27 20:24:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.10 2001/12/29 21:09:10 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.11 2002/04/27 20:24:49 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -634,7 +634,8 @@ pci_intr_disestablish(pc, cookie)
 int
 pci_bus_flags()
 {
-	int rval = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	int rval = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	int device, maxndevs;
 	pcitag_t tag;
 	pcireg_t id;
@@ -668,6 +669,7 @@ pci_bus_flags()
  disable_mem:
 	printf("Warning: broken PCI-Host bridge detected; "
 	    "disabling memory-mapped access\n");
-	rval &= ~PCI_FLAGS_MEM_ENABLED;
+	rval &= ~(PCI_FLAGS_MEM_ENABLED|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
+	    PCI_FLAGS_MWI_OKAY);
 	return (rval);
 }

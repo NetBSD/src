@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.2.3 2001/12/29 21:09:08 sommerfeld Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.2.4 2002/04/27 20:24:48 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.3 2001/12/29 21:09:08 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.4 2002/04/27 20:24:48 sommerfeld Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -278,7 +278,7 @@ syscall_vm86(frame)
 
 	p = curproc;
 	KERNEL_PROC_LOCK(p);
-	trapsignal(p, SIGBUS, T_PROTFLT);
+	(*p->p_emul->e_trapsignal)(p, SIGBUS, T_PROTFLT);
 	KERNEL_PROC_UNLOCK(p);
 	userret(p);
 }
@@ -299,7 +299,7 @@ child_return(arg)
 	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);		
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(p);
 	}

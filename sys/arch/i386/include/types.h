@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24.4.4 2001/04/30 16:23:14 sommerfeld Exp $	*/
+/*	$NetBSD: types.h,v 1.24.4.5 2002/04/27 20:24:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,12 +60,12 @@ typedef int		register_t;
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
 
-#define __HAVE_DEVICE_REGISTER
-#define __HAVE_NWSCONS
-#define __HAVE_CPU_COUNTER
+#define	__HAVE_DEVICE_REGISTER
+#define	__HAVE_NWSCONS
+#define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
-#define __HAVE_OLD_DISKLABEL
+#define	__HAVE_OLD_DISKLABEL
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 #endif	/* _MACHTYPES_H_ */

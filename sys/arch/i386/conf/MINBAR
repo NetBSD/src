@@ -1,10 +1,12 @@
-#	$NetBSD: MINBAR,v 1.20.2.8 2002/02/24 00:17:43 sommerfeld Exp $
+#	$NetBSD: MINBAR,v 1.20.2.9 2002/04/27 20:24:45 sommerfeld Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 
@@ -63,6 +65,7 @@ options 	BUFCACHE=10
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -219,10 +222,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -230,7 +230,6 @@ wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 wskbd*	at pckbd? console ?
 #wsmouse*	at pms?
-#wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
@@ -408,7 +407,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 #ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -419,6 +417,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -570,7 +569,6 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
