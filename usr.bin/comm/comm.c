@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.13 2003/08/07 11:13:27 agc Exp $	*/
+/*	$NetBSD: comm.c,v 1.14 2004/07/09 11:50:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: comm.c,v 1.13 2003/08/07 11:13:27 agc Exp $");
+__RCSID("$NetBSD: comm.c,v 1.14 2004/07/09 11:50:21 wiz Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -192,6 +192,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: comm [-123] file1 file2\n");
+	(void)fprintf(stderr, "usage: comm [-123f] file1 file2\n");
 	exit(1);
 }
