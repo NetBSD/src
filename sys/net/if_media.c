@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.7 1999/11/03 23:06:35 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.8 2000/01/26 21:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -386,6 +386,27 @@ ifmedia_match(ifm, target, mask)
 	}
 
 	return match;
+}
+
+/*
+ * Delete all media for a given instance.
+ */
+void
+ifmedia_delete_instance(ifm, inst)
+	struct ifmedia *ifm;
+	int inst;
+{
+	struct ifmedia_entry *ife, *nife;
+
+	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL;
+	     ife = nife) {
+		nife = TAILQ_NEXT(ife, ifm_list);
+		if (inst == IFM_INST_ANY ||
+		    inst == IFM_INST(ife->ifm_media)) {
+			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
+			free(ife, M_DEVBUF);
+		}
+	}
 }
 
 #ifdef IFMEDIA_DEBUG

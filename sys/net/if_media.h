@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.19 2000/01/25 20:18:52 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.20 2000/01/26 21:58:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
 	    int mask));
 
+/* Delete all media for a given media instance */
+void	ifmedia_delete_instance __P((struct ifmedia *, int));
+
 #endif /*_KERNEL */
 
 /*
@@ -262,6 +265,7 @@ struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
+#define	IFM_INST_ANY	-1
 
 /*
  * Macro to create a media word.
