@@ -72,7 +72,7 @@
  * use whichver order, defined above, is correct, so that it
  * is all invisible to the user.
  */
-struct regs {
+struct reg {
 	unsigned int	r_es;
 	unsigned int	r_ds;
 	unsigned int	r_edi;
@@ -87,8 +87,6 @@ struct regs {
 	unsigned int	r_eflags;
 	unsigned int	r_esp;
 	unsigned int	r_ss;
-	unsigned int	r_fs;
-	unsigned int	r_gs;
 };
 
 #endif /* !_I386_REG_H_ */
