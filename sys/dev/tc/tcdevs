@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.1 1996/03/02 01:16:53 cgd Exp $
+$NetBSD: tcdevs,v 1.2 1996/03/02 01:20:58 cgd Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@ $NetBSD: tcdevs,v 1.1 1996/03/02 01:16:53 cgd Exp $
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-device	KTZSA-AA	TZA FWD SCSI Adapter
+device	KZTSA-AA	TZA FWD SCSI Adapter
 device	PMAD-AA		LANCE Ethernet
 device	PMAGB-BA	Smart Frame Buffer
 device	PMAG-AA		Monochrome Frame Buffer
