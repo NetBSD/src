@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.53 2003/06/03 11:54:48 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.54 2003/06/04 20:05:12 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -216,13 +216,13 @@ disp_cur_fspart(int disp, int showall)
 					fstypenames[bsdlabel[i].pi_fstype]);
 			if (PI_ISBSDFS(&bsdlabel[i]))
 				msg_table_add(MSG_fspart_row_end_bsd,
-						bsdlabel[i].pi_bsize,
-						bsdlabel[i].pi_fsize,
-						preservemount[i] ? "Yes" : "No",
-						fsmount[i]);
+					    bsdlabel[i].pi_bsize,
+					    bsdlabel[i].pi_fsize,
+					    bsdlabel[i].pi_newfs ? "No" : "Yes",
+					    bsdlabel[i].pi_mount);
 			else if (bsdlabel[i].pi_fstype == FS_MSDOS)
 				msg_table_add(MSG_fspart_row_end_msdos,
-						fsmount[i]);
+						bsdlabel[i].pi_mount);
 			else
 				msg_table_add(MSG_fspart_row_end_other);
 		}
@@ -270,7 +270,7 @@ make_filesystems(void)
 		 */
 	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a' + i);
 		if (PI_ISBSDFS(&bsdlabel[i]) && !is_active_rootpart(partname)) {
-			error = do_flfs_newfs(partname, i, fsmount[i]);
+			error = do_flfs_newfs(partname, i, bsdlabel[i].pi_mount);
 			if (error)
 				return error;
 		}
@@ -285,7 +285,7 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 	char dev_name[STRSIZE];
 	int error;
 
-	if (*mountpoint && !preservemount[partno])
+	if (*mountpoint && bsdlabel[partno].pi_newfs)
 		error = run_prog(RUN_DISPLAY, MSG_cmdfail, "%s /dev/r%s",
 		    bsdlabel[partno].pi_fstype == FS_BSDFFS ?
 		    "/sbin/newfs" : "/sbin/newfs_lfs", partname);
@@ -334,27 +334,27 @@ make_fstab(void)
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
 			char *s = "#";
 
-			if (*fsmount[i] != '\0')
+			if (*bsdlabel[i].pi_mount != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s ffs rw 1 %d\n", s,
-				       diskdev, 'a' + i, fsmount[i],
-				       fsck_num(fsmount[i]));
+				       diskdev, 'a' + i, bsdlabel[i].pi_mount,
+				       fsck_num(bsdlabel[i].pi_mount));
 		} else if (bsdlabel[i].pi_fstype == FS_BSDLFS) {
 			char *s = "#";
 
 			/* If there is no LFS, just comment it out. */
-			if (!check_lfs_progs() && *fsmount[i] != '\0')
+			if (!check_lfs_progs() && *bsdlabel[i].pi_mount != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s lfs rw 1 %d\n", s,
-				       diskdev, 'a' + i, fsmount[i],
-				       fsck_num(fsmount[i]));
+				       diskdev, 'a' + i, bsdlabel[i].pi_mount,
+				       fsck_num(bsdlabel[i].pi_mount));
 		} else if (bsdlabel[i].pi_fstype == FS_MSDOS) {
 			char *s = "#";
 
-			if (*fsmount[i] != '\0')
+			if (*bsdlabel[i].pi_mount != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s msdos rw 0 0\n", s,
-				       diskdev, 'a' + i, fsmount[i]);
+				       diskdev, 'a' + i, bsdlabel[i].pi_mount);
 		} else if (bsdlabel[i].pi_fstype == FS_SWAP) {
 			if (swap_dev == -1)
 				swap_dev = i;
