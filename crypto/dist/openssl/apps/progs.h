@@ -66,27 +66,17 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"x509",x509_main},
 	{FUNC_TYPE_GENERAL,"genrsa",genrsa_main},
 	{FUNC_TYPE_GENERAL,"gendsa",gendsa_main},
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_server",s_server_main},
-#endif
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_client",s_client_main},
-#endif
 	{FUNC_TYPE_GENERAL,"speed",speed_main},
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_time",s_time_main},
-#endif
 	{FUNC_TYPE_GENERAL,"version",version_main},
 	{FUNC_TYPE_GENERAL,"pkcs7",pkcs7_main},
 	{FUNC_TYPE_GENERAL,"crl2pkcs7",crl2pkcs7_main},
 	{FUNC_TYPE_GENERAL,"sess_id",sess_id_main},
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"ciphers",ciphers_main},
-#endif
 	{FUNC_TYPE_GENERAL,"nseq",nseq_main},
-#if !defined(NO_DES) && !defined(NO_SHA1)
 	{FUNC_TYPE_GENERAL,"pkcs12",pkcs12_main},
-#endif
 	{FUNC_TYPE_GENERAL,"pkcs8",pkcs8_main},
 	{FUNC_TYPE_GENERAL,"spkac",spkac_main},
 	{FUNC_TYPE_GENERAL,"smime",smime_main},
