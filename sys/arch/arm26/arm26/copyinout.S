@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.3 2001/01/01 16:00:42 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.4 2001/01/09 12:11:57 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.3 2001/01/01 16:00:42 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.4 2001/01/09 12:11:57 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -66,7 +66,11 @@ Lcopyinloop:
 	bne	Lcopyinloop
 	mov	r0, #0
 	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, fp, sp, pc}
+#endif
 
 /* int copyout(const void *kaddr, void *uaddr, size_t len); */
 ENTRY(copyout)
@@ -85,7 +89,11 @@ Lcopyoutloop:
 	bne	Lcopyoutloop
 	mov	r0, #0
 	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, fp, sp, pc}
+#endif
 
 /* int kcopy(const void *kfaddr, void *kdaddr, size_t len); */
 ENTRY(kcopy)
@@ -104,13 +112,21 @@ Lkcopyloop:
 	bne	Lkcopyloop
 	mov	r0, #0
 	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, fp, sp, pc}
+#endif
 
 Lcopyfault:
 	mov	r1, #0
 	str	r1, [r4, #(U_PCB + PCB_ONFAULT)]
 	/* Return value is provided by fault handler. */
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, fp, sp, pc}
+#endif
 
 /* int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done); */
 ENTRY(copyinstr)
@@ -136,7 +152,11 @@ Lcopyinstrloop:
 	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
 	teq	r4, #0
 	movne	r0, #ENAMETOOLONG
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
+#endif
 
 /* int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done); */
 ENTRY(copyoutstr)
@@ -162,7 +182,11 @@ Lcopyoutstrloop:
 	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
 	teq	r4, #0
 	movne	r0, #ENAMETOOLONG
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
+#endif
 
 /* int copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done); */
 ENTRY(copystr)
@@ -197,7 +221,11 @@ Lcopystrfault:
 	mov	r1, #0
 	str	r1, [r5, #(U_PCB + PCB_ONFAULT)]
 	/* Return value is provided by fault handler. */
+#ifdef __APCS_26__
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
+#else
+	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
+#endif
 
 /* int fubyte(void *base); */
 ENTRY(fubyte)
@@ -210,7 +238,11 @@ ENTRY(fubyte)
 	ldrbt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+#ifdef __APCS_26__
 	movs	pc, ip
+#else
+	mov	pc, ip
+#endif
 
 /* int fuword(void *base); */
 ENTRY(fuword)
@@ -223,7 +255,11 @@ ENTRY(fuword)
 	ldrt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-	movs	pc, lr
+#ifdef __APCS_26__
+	movs	pc, ip
+#else
+	mov	pc, ip
+#endif
 
 /* int subyte(void *base, int c); */
 ENTRY(subyte)
@@ -236,7 +272,11 @@ ENTRY(subyte)
 	strbt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
+#ifdef __APCS_26__
 	movs	pc, ip
+#else
+	mov	pc, ip
+#endif
 
 /* int suword(void *base, long c); */
 ENTRY(suword)
@@ -249,13 +289,21 @@ ENTRY(suword)
 	strt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
+#ifdef __APCS_26__
 	movs	pc, ip
+#else
+	mov	pc, ip
+#endif
 
 Lfusufault:
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
 	mvn	r0, #0
+#ifdef __APCS_26__
 	movs	pc, ip
+#else
+	mov	pc, ip
+#endif
 
 Lcurproc:
 	.word	_C_LABEL(curproc)
