@@ -1,3 +1,13 @@
+2000-09-07  Larry Jones  <larry.jones@sdrc.com>
+
+	* Makefile.in: Use @bindir@, @libdir@, @infodir@, and @mandir@
+	from autoconf.
+
+2000-05-03  Larry Jones  <larry.jones@sdrc.com>
+
+	* cvs.1: Correct CVSEDITOR/VISUAL/EDITOR documentation.
+	Correct KJ's botched patch application.
+
 2000-01-02  John P Cavanaugh <cavanaug@sr.hp.com>
 
 	* cvs.texinfo: document new -C option to update, now that it works

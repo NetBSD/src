@@ -542,16 +542,19 @@ in use, connection, authentication, etc., are already taken care of.
 
 The @code{Root} request must be sent only once, and it must be sent
 before any requests other than @code{Valid-responses},
-@code{valid-requests}, @code{UseUnchanged}, @code{Set} or @code{init}.
+@code{valid-requests}, @code{UseUnchanged}, @code{Set},
+@code{Global_option}, @code{init}, @code{noop}, or @code{version}.
 
 @item Valid-responses @var{request-list} \n
 Response expected: no.
 Tell the server what responses the client will accept.
 request-list is a space separated list of tokens.
+The @code{Root} request need not have been previously sent.
 
 @item valid-requests \n
 Response expected: yes.
 Ask the server to send back a @code{Valid-requests} response.
+The @code{Root} request need not have been previously sent.
 
 @item Directory @var{local-directory} \n
 Additional data: @var{repository} \n.  Response expected: no.
@@ -864,6 +867,7 @@ must not contain @samp{/}.
 Response expected: no.  To specify the version of the protocol described
 in this document, servers must support this request (although it need
 not do anything) and clients must issue it.
+The @code{Root} request need not have been previously sent.
 
 @item Notify @var{filename} \n
 Response expected: no.
@@ -955,6 +959,7 @@ strings, no variations (such as combining of options) are allowed.  For
 graceful handling of @code{valid-requests}, it is probably better to
 make new global options separate requests, rather than trying to add
 them to this request.
+The @code{Root} request need not have been previously sent.
 
 @item Gzip-stream @var{level} \n
 Response expected: no.
@@ -1012,6 +1017,7 @@ connection between the initial authentication and the
 @item Set @var{variable}=@var{value} \n
 Response expected: no.
 Set a user variable @var{variable} to @var{value}.
+The @code{Root} request need not have been previously sent.
 
 @item expand-modules \n
 Response expected: yes.  Expand the modules which are specified in the
@@ -1165,8 +1171,8 @@ commands are module names, as described for @code{co}.
 @item init @var{root-name} \n
 Response expected: yes.  If it doesn't already exist, create a @sc{cvs}
 repository @var{root-name}.  Note that @var{root-name} is a local
-directory and @emph{not} a fully qualified @code{CVSROOT} variable.  The
-@code{Root} request need not have been previously sent.
+directory and @emph{not} a fully qualified @code{CVSROOT} variable.
+The @code{Root} request need not have been previously sent.
 
 @item update \n
 Response expected: yes.  Actually do a @code{cvs update} command.  This
@@ -1299,6 +1305,7 @@ Response expected: yes.  This request is a null command in the sense
 that it doesn't do anything, but merely (as with any other requests
 expecting a response) sends back any responses pertaining to pending
 errors, pending @code{Notified} responses, etc.
+The @code{Root} request need not have been previously sent.
 
 @item update-patches \n
 Response expected: yes.
@@ -1330,6 +1337,11 @@ client actually uses this request.
 Response expected: yes.
 Request that the server transmit mappings from filenames to keyword
 expansion modes in @code{Wrapper-rcsOption} responses.
+
+@item version \n
+Response expected: yes.
+Request that the server transmit its version message.
+The @code{Root} request need not have been previously sent.
 
 @item @var{other-request} @var{text} \n
 Response expected: yes.
@@ -1988,8 +2000,8 @@ working directory, and the meaning of sending @code{Entries} without
 A number of enhancements are possible.  Also see the file @sc{todo} in
 the @sc{cvs} source distribution, which has further ideas concerning
 various aspects of @sc{cvs}, some of which impact the protocol.
-Similarly, the @code{http://www.cyclic.com} site, in particular the
-@cite{Development of CVS} page.
+Similarly, the @code{http://www.cvshome.org} site, in particular the
+@cite{Development} pages.
 
 @itemize @bullet
 @item
