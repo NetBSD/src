@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.32 2002/06/15 18:24:58 wiz Exp $	*/
+/*	$NetBSD: util.c,v 1.33 2002/09/22 01:19:08 lukem Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.32 2002/06/15 18:24:58 wiz Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.33 2002/09/22 01:19:08 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.32 2002/06/15 18:24:58 wiz Exp $");
+__RCSID("$NetBSD: util.c,v 1.33 2002/09/22 01:19:08 lukem Exp $");
 #endif
 #endif
 
@@ -144,7 +144,7 @@ char    *sys_siglist[] = {
 };
 #endif /* __hpux__ || __hpux */
 
-#ifdef __hpux
+#if defined(__hpux__) || defined(__hpux)
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/syscall.h>
@@ -162,7 +162,7 @@ killpg(int pid, int sig)
     return kill(-pid, sig);
 }
 
-#ifndef __hpux__
+#if !defined(__hpux__) && !defined(__hpux)
 void
 srandom(long seed)
 {
@@ -178,7 +178,7 @@ random(void)
 
 /* turn into bsd signals */
 void (*
-signal(int s, void (*a)(int))(int)
+signal(int s, void (*a)(int)))(int)
 {
     struct sigvec osv, sv;
 
@@ -194,7 +194,7 @@ signal(int s, void (*a)(int))(int)
     return (osv.sv_handler);
 }
 
-#ifndef __hpux__
+#if !defined(__hpux__) && !defined(__hpux)
 int
 utimes(char *file, struct timeval tvp[2])
 {
