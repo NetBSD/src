@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.4 2000/08/18 12:50:00 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.5 2000/08/22 21:22:50 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.4 2000/08/18 12:50:00 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.5 2000/08/22 21:22:50 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: irq.c,v 1.4 2000/08/18 12:50:00 bjh21 Exp $");
 #include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/machdep.h>
-#include <machine/spl.h>
 
 #include <arch/arm26/iobus/iocreg.h>
 #include <arch/arm26/iobus/iocvar.h>
