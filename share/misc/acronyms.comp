@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.36 2004/01/15 03:31:41 grant Exp $
+$NetBSD: acronyms.comp,v 1.37 2004/01/15 03:35:20 grant Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -28,6 +28,7 @@ CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CLI	command line interface
 CLV	constant linear velocity (as opposed to CAV)
+COFF	common object file format
 CPU	central processing unit
 CRLF	carriage return line feed
 CRT	cathode ray tube
@@ -51,6 +52,7 @@ EDO	extended data out
 EEPROM	electrically erasable programmable read only memory
 EGA	enhanced graphics array
 EISA	extended industry standard architecture
+ELF	executable and linking format
 EPP	enhanced parallel port
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
