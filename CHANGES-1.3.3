@@ -1235,16 +1235,35 @@ sys/dev/isa/wss.c				patch
   Work around a problem that could cause the wss driver to panic during 
   attach when a DRQ gets allocated twice.  (augustss)
 
-distrib/sets/lists/xbase/mi			1.9-1.10
+distrib/sets/lists/xbase/mi			1.9-1.11
+distrib/sets/lists/xbase/md.sparc		1.6
+distrib/sets/lists/xfont/mi			1.5
+distrib/sets/lists/xfont/md.i386		1.4
+distrib/sets/lists/xserver/md.i386		1.6-1.8
 
-  Bring the list up to date for XFree86 3.3.3.  (simonb)
+  Bring the list up to date for XFree86 3.3.3.  (simonb, cjs, tron, and fvdl)
 
 usr.sbin/bootpd/bootpd.c			1.10
 
   Ignore requests with bogus network types (which avoids an out of
   bounds array access), as discussed on BUGTRAQ.  (abs)
 
+distrib/sets/lists/base/md.i386			patch
+distrib/sets/lists/comp/md.i386			patch
+distrib/sets/lists/comp/mi			patch
+
+  Final cleanup of i386 set lists.  (fvdl)
+
+distrib/notes/mirrors				1.15-1.29
+
+  Match current install notes' mirrors lists  (cgd)
+
+distrib/notes/INSTALL				1.68
+
+  Slightly update people lists.  (cgd)
+
 sys/conf/osrelease.sh				patch
 sys/sys/param.h					patch
+gnu/usr.bin/send-pr/Makefile			patch
 
   Update version to 1.3.3.  (cgd)
