@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.5 2000/10/04 13:53:55 uch Exp $ */
+/*	$NetBSD: plumpower.c,v 1.6 2001/09/15 12:47:07 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ plumpower_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_regt	= pa->pa_regt;
 
 	if (bus_space_map(sc->sc_regt, PLUM_POWER_REGBASE, 
-			  PLUM_POWER_REGSIZE, 0, &sc->sc_regh)) {
+	    PLUM_POWER_REGSIZE, 0, &sc->sc_regh)) {
 		printf(": register map failed\n");
 		return;
 	}
@@ -106,13 +106,13 @@ plumpower_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	/* disable all power/clock */
 	plum_conf_write(sc->sc_regt, sc->sc_regh, 
-			PLUM_POWER_PWRCONT_REG, 0);
+	    PLUM_POWER_PWRCONT_REG, 0);
 	plum_conf_write(sc->sc_regt, sc->sc_regh, 
-			PLUM_POWER_CLKCONT_REG, 0);
+	    PLUM_POWER_CLKCONT_REG, 0);
 
 	/* enable MCS interface from TX3922 */
 	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_POWER_INPENA_REG,
-			PLUM_POWER_INPENA);
+	    PLUM_POWER_INPENA);
 }
 
 void
@@ -123,8 +123,8 @@ plum_power_ioreset(plum_chipset_tag_t pc)
 	bus_space_handle_t regh = sc->sc_regh;
 	
 	plum_conf_write(regt, regh, PLUM_POWER_RESETC_REG,
-			PLUM_POWER_RESETC_IO5CL1 |
-			PLUM_POWER_RESETC_IO5CL1);
+	    PLUM_POWER_RESETC_IO5CL1 |
+	    PLUM_POWER_RESETC_IO5CL1);
 	plum_conf_write(regt, regh, PLUM_POWER_RESETC_REG, 0);
 }
 
@@ -230,7 +230,7 @@ plum_power_disestablish(plum_chipset_tag_t pc, int ph)
 		break;
 	case PLUM_PWR_IO5:
 		pwrreg &= ~(PLUM_POWER_PWRCONT_IO5PWR |
-			   PLUM_POWER_PWRCONT_IO5OE);
+		    PLUM_POWER_PWRCONT_IO5OE);
 		clkreg &= ~PLUM_POWER_CLKCONT_IO5CLK;
 		break;
 	case PLUM_PWR_EXTPW0:
@@ -245,7 +245,7 @@ plum_power_disestablish(plum_chipset_tag_t pc, int ph)
 	case PLUM_PWR_USB:
 		pwrreg &= ~PLUM_POWER_PWRCONT_USBEN;
 		clkreg &= ~(PLUM_POWER_CLKCONT_USBCLK1 |
-			   PLUM_POWER_CLKCONT_USBCLK2);
+		    PLUM_POWER_CLKCONT_USBCLK2);
 		break;
 	case PLUM_PWR_SM:
 		clkreg &= ~PLUM_POWER_CLKCONT_SMCLK;
@@ -297,11 +297,11 @@ plumpower_dump(struct plumpower_softc *sc)
 	ISCLOCKSUPPLY(reg, PCCCLK1);
 	reg = plum_conf_read(regt, regh, PLUM_POWER_INPENA_REG);
 	printf("\n MCS interface %sebled",
-	       reg & PLUM_POWER_INPENA ? "en" : "dis");
+	    reg & PLUM_POWER_INPENA ? "en" : "dis");
 	reg = plum_conf_read(regt, regh, PLUM_POWER_RESETC_REG);
 	printf("\n IO5 reset:%s %s",
-	       reg & PLUM_POWER_RESETC_IO5CL0 ? "CLRL" : "",
-	       reg & PLUM_POWER_RESETC_IO5CL1 ? "CLRH" : "");
+	    reg & PLUM_POWER_RESETC_IO5CL0 ? "CLRL" : "",
+	    reg & PLUM_POWER_RESETC_IO5CL1 ? "CLRH" : "");
 	printf("\n");
 }
 #endif /* PLUMPOWERDEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.7 2001/02/22 18:38:01 uch Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.8 2001/09/15 12:47:07 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -85,14 +85,14 @@ struct tc5165buf_softc {
 	void			*sc_ih;
 };
 
-int	tc5165buf_match	__P((struct device*, struct cfdata*, void*));
-void	tc5165buf_attach __P((struct device*, struct device*, void*));
-int	tc5165buf_intr __P((void*));
-int	tc5165buf_poll __P((void*));
-void	tc5165buf_soft __P((void*));
-void	tc5165buf_ifsetup __P((struct tc5165buf_chip*));
+int	tc5165buf_match(struct device *, struct cfdata *, void *);
+void	tc5165buf_attach(struct device *, struct device *, void *);
+int	tc5165buf_intr(void *);
+int	tc5165buf_poll(void *);
+void	tc5165buf_soft(void *);
+void	tc5165buf_ifsetup(struct tc5165buf_chip *);
 
-int	tc5165buf_input_establish __P((void*, struct hpckbd_if*));
+int	tc5165buf_input_establish(void *, struct hpckbd_if *);
 
 struct tc5165buf_chip tc5165buf_chip;
 
@@ -101,19 +101,14 @@ struct cfattach tc5165buf_ca = {
 };
 
 int
-tc5165buf_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tc5165buf_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+
+	return (1);
 }
 
 void
-tc5165buf_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tc5165buf_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs_attach_args *ca = aux;
 	struct tc5165buf_softc *sc = (void*)self;
@@ -128,7 +123,7 @@ tc5165buf_attach(parent, self, aux)
 	sc->sc_chip->scc_cst = ca->ca_csio.cstag;
 
 	if (bus_space_map(sc->sc_chip->scc_cst, ca->ca_csio.csbase, 
-			  ca->ca_csio.cssize, 0, &sc->sc_chip->scc_csh)) {
+	    ca->ca_csio.cssize, 0, &sc->sc_chip->scc_csh)) {
 		printf("can't map i/o space\n");
 		return;
 	}
@@ -137,12 +132,12 @@ tc5165buf_attach(parent, self, aux)
 
 	if (ca->ca_irq1 != -1) {
 		sc->sc_ih = tx_intr_establish(sc->sc_tc, ca->ca_irq1,
-					      IST_EDGE, IPL_TTY, 
-					      tc5165buf_intr, sc);
+		    IST_EDGE, IPL_TTY, 
+		    tc5165buf_intr, sc);
 		printf("interrupt mode");
 	} else {
 		sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1, IPL_TTY, 
-						tc5165buf_intr, sc);
+		    tc5165buf_intr, sc);
 		printf("polling mode");
 	}
 
@@ -162,17 +157,16 @@ tc5165buf_attach(parent, self, aux)
 }
 
 void
-tc5165buf_ifsetup(scc)
-	struct tc5165buf_chip *scc;
+tc5165buf_ifsetup(struct tc5165buf_chip *scc)
 {
+
 	scc->scc_if.hii_ctx		= scc;
 	scc->scc_if.hii_establish	= tc5165buf_input_establish;
 	scc->scc_if.hii_poll		= tc5165buf_poll;
 }
 
 int
-tc5165buf_cnattach(addr)
-	paddr_t addr;
+tc5165buf_cnattach(paddr_t addr)
 {
 	struct tc5165buf_chip *scc = &tc5165buf_chip;
 	
@@ -182,13 +176,11 @@ tc5165buf_cnattach(addr)
 
 	hpckbd_cnattach(&scc->scc_if);
 
-	return 0;
+	return (0);
 }
 
 int
-tc5165buf_input_establish(ic, kbdif)
-	void *ic;
-	struct hpckbd_if *kbdif;
+tc5165buf_input_establish(void *ic, struct hpckbd_if *kbdif)
 {
 	struct tc5165buf_chip *scc = ic;
 
@@ -197,42 +189,39 @@ tc5165buf_input_establish(ic, kbdif)
 	
 	scc->scc_enabled = 1;
 
-	return 0;
+	return (0);
 }
 
 int
-tc5165buf_intr(arg)
-	void *arg;
+tc5165buf_intr(void *arg)
 {
 	struct tc5165buf_softc *sc = arg;
 	struct tc5165buf_chip *scc = sc->sc_chip;
 
 	if (!scc->scc_enabled || scc->scc_queued)
-		return 0;
+		return (0);
 	
 	scc->scc_queued = 1;
 	callout_reset(&scc->scc_soft_ch, 1, tc5165buf_soft, scc);
 
-	return 0;
+	return (0);
 }
 
 int
-tc5165buf_poll(arg)
-	void *arg;
+tc5165buf_poll(void *arg)
 {
 	struct tc5165buf_chip *scc = arg;
 
 	if (!scc->scc_enabled)
-		return POLL_CONT;
+		return (POLL_CONT);
 
 	tc5165buf_soft(arg);
 
-	return POLL_CONT;
+	return (POLL_CONT);
 }
 
 void
-tc5165buf_soft(arg)
-	void *arg;
+tc5165buf_soft(void *arg)
 {
 	struct tc5165buf_chip *scc = arg;
 	bus_space_tag_t t = scc->scc_cst;
@@ -255,13 +244,13 @@ tc5165buf_soft(arg)
 		if ((edge = (rpat ^ scc->scc_buf[i]))) {
 			scc->scc_buf[i] = rpat;
 			for (j = 0, mask = 1; j < TC5165_ROW_MAX; 
-			     j++, mask <<= 1) {
+			    j++, mask <<= 1) {
 				if (mask & edge) {
 					type = mask & rpat ? 1 : 0;
 					val = j * TC5165_COLUMN_MAX + i;
 					DPRINTF(("%d %d\n", j, i));
 					hpckbd_input(scc->scc_hpckbd,
-						     type, val);
+					    type, val);
 				}
 			}
 		}

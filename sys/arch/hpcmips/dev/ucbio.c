@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.3 2001/06/13 19:09:08 uch Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.4 2001/09/15 12:47:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -189,6 +189,7 @@ betty_update(hpcio_chip_t hc)
 static void
 betty_dump(hpcio_chip_t hc)
 {
+#ifdef DEBUG
 	struct ucbio_softc *sc = hc->hc_sc;
 	struct betty_port_status *stat = &sc->sc_stat;
 
@@ -199,4 +200,5 @@ betty_dump(hpcio_chip_t hc)
 	bitdisp(stat->out);
 	printf("DIR ");
 	bitdisp(stat->dir);
+#endif /* DEBUG */
 }

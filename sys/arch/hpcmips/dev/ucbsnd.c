@@ -1,29 +1,39 @@
-/*	$NetBSD: ucbsnd.c,v 1.5 2000/06/26 04:55:41 simonb Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.6 2001/09/15 12:47:08 uch Exp $ */
 
-/*
- * Copyright (c) 2000, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -142,46 +152,41 @@ struct ucbsnd_softc {
 
 cdev_decl(ucbsnd);
 
-int	ucbsnd_match	__P((struct device*, struct cfdata*, void*));
-void	ucbsnd_attach	__P((struct device*, struct device*, void*));
+int	ucbsnd_match(struct device*, struct cfdata*, void*);
+void	ucbsnd_attach(struct device*, struct device*, void*);
 
-int	ucbsnd_exec_output	__P((void*));
-int	ucbsnd_busy		__P((void*));
+int	ucbsnd_exec_output(void*);
+int	ucbsnd_busy(void*);
 
-void	ucbsnd_sound_init	__P((struct ucbsnd_softc*));
-void	__ucbsnd_sound_click	__P((tx_sound_tag_t));
-void	__ucbsnd_sound_mute	__P((tx_sound_tag_t, int));
+void	ucbsnd_sound_init(struct ucbsnd_softc*);
+void	__ucbsnd_sound_click(tx_sound_tag_t);
+void	__ucbsnd_sound_mute(tx_sound_tag_t, int);
 
-int	ucbsndwrite_subr __P((struct ucbsnd_softc *, u_int32_t *, size_t,
-			      struct uio *));
+int	ucbsndwrite_subr(struct ucbsnd_softc *, u_int32_t *, size_t,
+	    struct uio *);
 
-int	ringbuf_allocate		__P((struct ring_buf*, size_t, int));
-void	ringbuf_deallocate	__P((struct ring_buf*));
-void	ringbuf_reset		__P((struct ring_buf*));
-int	ringbuf_full		__P((struct ring_buf*));
-void	*ringbuf_producer_get	__P((struct ring_buf*));
-void	ringbuf_producer_return	__P((struct ring_buf*, size_t));
-void	*ringbuf_consumer_get	__P((struct ring_buf*, size_t*));
-void	ringbuf_consumer_return	__P((struct ring_buf*));
+int	ringbuf_allocate(struct ring_buf*, size_t, int);
+void	ringbuf_deallocate(struct ring_buf*);
+void	ringbuf_reset(struct ring_buf*);
+int	ringbuf_full(struct ring_buf*);
+void	*ringbuf_producer_get(struct ring_buf*);
+void	ringbuf_producer_return(struct ring_buf*, size_t);
+void	*ringbuf_consumer_get(struct ring_buf*, size_t*);
+void	ringbuf_consumer_return(struct ring_buf*);
 
 struct cfattach ucbsnd_ca = {
 	sizeof(struct ucbsnd_softc), ucbsnd_match, ucbsnd_attach
 };
 
 int
-ucbsnd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ucbsnd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+
+	return (1);
 }
 
 void
-ucbsnd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ucbsnd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ucb1200_attach_args *ucba = aux;
 	struct ucbsnd_softc *sc = (void*)self;
@@ -200,13 +205,13 @@ ucbsnd_attach(parent, self, aux)
 	sc->sa_snd_attenuation = UCBSND_DEFAULT_ATTENUATION;
 #define KHZ(a) ((a) / 1000), (((a) % 1000))
 	printf(": audio %d.%03d kHz telecom %d.%03d kHz",
-	       KHZ((tx39sib_clock(sc->sc_sib) * 2) / 
-		   (sc->sa_snd_rate * 64)), 
-	       KHZ((tx39sib_clock(sc->sc_sib) * 2) / 
-		   (sc->sa_tel_rate * 64)));
+	    KHZ((tx39sib_clock(sc->sc_sib) * 2) / 
+		(sc->sa_snd_rate * 64)), 
+	    KHZ((tx39sib_clock(sc->sc_sib) * 2) / 
+		(sc->sa_tel_rate * 64)));
 
 	ucb1200_state_install(parent, ucbsnd_busy, self, 
-			      UCB1200_SND_MODULE);
+	    UCB1200_SND_MODULE);
 	
 	ringbuf_allocate(&sc->sc_rb, TX39_SIBDMA_SIZE, UCBSND_BUFBLOCK);
 
@@ -214,17 +219,15 @@ ucbsnd_attach(parent, self, aux)
 }
 
 int
-ucbsnd_busy(arg)
-	void *arg;
+ucbsnd_busy(void *arg)
 {
 	struct ucbsnd_softc *sc = arg;
 	
-	return sc->sa_state != UCBSND_IDLE;
+	return (sc->sa_state != UCBSND_IDLE);
 }
 
 int
-ucbsnd_exec_output(arg)
-	void *arg;
+ucbsnd_exec_output(void *arg)
 {
 	struct ucbsnd_softc *sc = arg;	
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -240,7 +243,7 @@ ucbsnd_exec_output(arg)
 
 	case UCBSND_IDLE:
 		/* nothing to do */
-		return 0;
+		return (0);
 
 	case UCBSND_INIT:
 		sc->sa_sf0ih = tx_intr_establish(
@@ -248,7 +251,7 @@ ucbsnd_exec_output(arg)
 			IST_EDGE, IPL_TTY, ucbsnd_exec_output, sc);
 
 		sc->sa_state = UCBSND_ENABLE_SAMPLERATE;
-		return 0;
+		return (0);
 		
 	case UCBSND_ENABLE_SAMPLERATE:
 		/* Enable UCB1200 side sample rate */
@@ -258,24 +261,24 @@ ucbsnd_exec_output(arg)
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
 		
 		sc->sa_state = UCBSND_ENABLE_OUTPUTPATH;
-		return 0;
+		return (0);
 		
 	case UCBSND_ENABLE_OUTPUTPATH:
 		/* Enable UCB1200 side */
 		reg = TX39_SIBSF0_WRITE;
 		reg = TX39_SIBSF0_REGADDR_SET(reg, UCB1200_AUDIOCTRLB_REG);
 		reg = TX39_SIBSF0_REGDATA_SET(reg, sc->sa_snd_attenuation |
-					      UCB1200_AUDIOCTRLB_OUTEN);
+		    UCB1200_AUDIOCTRLB_OUTEN);
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
 
 		/* Enable SIB side */
 		reg = tx_conf_read(tc, TX39_SIBCTRL_REG);	
 		tx_conf_write(tc, TX39_SIBCTRL_REG, 
-			      reg | TX39_SIBCTRL_ENSND);
+		    reg | TX39_SIBCTRL_ENSND);
 
 		sc->sa_state = UCBSND_ENABLE_SPEAKER0;
 		sc->sa_retry = 10;
-		return 0;
+		return (0);
 	case UCBSND_ENABLE_SPEAKER0:
 		/* Speaker on */
 
@@ -283,7 +286,7 @@ ucbsnd_exec_output(arg)
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
 
 		sc->sa_state = UCBSND_ENABLE_SPEAKER1;
-		return 0;
+		return (0);
 
 	case UCBSND_ENABLE_SPEAKER1:
 		reg = tx_conf_read(tc, TX39_SIBSF0STAT_REG);
@@ -291,14 +294,14 @@ ucbsnd_exec_output(arg)
 		    --sc->sa_retry > 0) {
 
 			sc->sa_state = UCBSND_ENABLE_SPEAKER0;
-			return 0;
+			return (0);
 		}
 		
 		if (sc->sa_retry <= 0) {
 			printf("ucbsnd_exec_output: subframe0 busy\n");
 			
 			sc->sa_state = UCBSND_IDLE;
-			return 0;
+			return (0);
 		}
 
 		reg |= TX39_SIBSF0_WRITE;		
@@ -318,7 +321,7 @@ ucbsnd_exec_output(arg)
 			break;
 		}
 
-		return 0;
+		return (0);
 	case UCBSND_DMASTART:
 		/* get data */
 		if (sc->sa_dmacnt) /* return previous buffer */
@@ -326,7 +329,7 @@ ucbsnd_exec_output(arg)
 		buf = ringbuf_consumer_get(&sc->sc_rb, &bufcnt);
 		if (buf == 0) {
 			sc->sa_state = UCBSND_DMAEND;
-			return 0;
+			return (0);
 		}
 
 		if (sc->sa_dmacnt == 0) {
@@ -344,11 +347,11 @@ ucbsnd_exec_output(arg)
 
 		/* set DMA buffer address */
 		tx_conf_write(tc, TX39_SIBSNDTXSTART_REG,
-			      MIPS_KSEG0_TO_PHYS(buf));
+		    MIPS_KSEG0_TO_PHYS(buf));
 
 		/* set DMA buffer size */
 		tx_conf_write(tc, TX39_SIBSIZE_REG,
-			      TX39_SIBSIZE_SNDSIZE_SET(0, bufcnt));
+		    TX39_SIBSIZE_SNDSIZE_SET(0, bufcnt));
 				      
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, TX39_SIBSF0_SNDVALID);
 
@@ -377,19 +380,19 @@ ucbsnd_exec_output(arg)
 
 		sc->sa_state = UCBSND_PIO;
 		sc->sa_cnt = 0;
-		return 0;
+		return (0);
 
 	case UCBSND_PIO:
 	{
 		/* PIO test routine */
 		int dummy_data = sc->sa_cnt * 3;
 		tx_conf_write(tc, TX39_SIBSNDHOLD_REG, 
-			      dummy_data << 16 | dummy_data);
+		    dummy_data << 16 | dummy_data);
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, TX39_SIBSF0_SNDVALID);
 		if (sc->sa_cnt++ > 50) {
 			sc->sa_state = UCBSND_TRANSITION_DISABLE;
 		}
-		return 0;
+		return (0);
 	}
 	case UCBSND_TRANSITION_DISABLE:
 		/* change interrupt source */
@@ -402,7 +405,7 @@ ucbsnd_exec_output(arg)
 			IST_EDGE, IPL_TTY, ucbsnd_exec_output, sc);
 		
 		sc->sa_state = UCBSND_DISABLE_OUTPUTPATH;
-		return 0;
+		return (0);
 	
 	case UCBSND_DISABLE_OUTPUTPATH:
 		/* disable codec output path and mute */
@@ -413,7 +416,7 @@ ucbsnd_exec_output(arg)
 
 		sc->sa_state = UCBSND_DISABLE_SPEAKER0;
 		sc->sa_retry = 10;
-		return 0;
+		return (0);
 
 	case UCBSND_DISABLE_SPEAKER0:
 		/* Speaker off */
@@ -421,7 +424,7 @@ ucbsnd_exec_output(arg)
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
 
 		sc->sa_state = UCBSND_DISABLE_SPEAKER1;
-		return 0;
+		return (0);
 		
 	case UCBSND_DISABLE_SPEAKER1:
 		reg = tx_conf_read(tc, TX39_SIBSF0STAT_REG);
@@ -429,14 +432,14 @@ ucbsnd_exec_output(arg)
 		    --sc->sa_retry > 0) {
 
 			sc->sa_state = UCBSND_DISABLE_SPEAKER0;
-			return 0;
+			return (0);
 		}
 		
 		if (sc->sa_retry <= 0) {
 			printf("ucbsnd_exec_output: subframe0 busy\n");
 
 			sc->sa_state = UCBSND_IDLE;
-			return 0;
+			return (0);
 		}
 
 		reg |= TX39_SIBSF0_WRITE;
@@ -444,7 +447,7 @@ ucbsnd_exec_output(arg)
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
 
 		sc->sa_state = UCBSND_DISABLE_SIB;
-		return 0;
+		return (0);
 
 	case UCBSND_DISABLE_SIB:
 		/* Disable SIB side */
@@ -459,18 +462,17 @@ ucbsnd_exec_output(arg)
 		}
 		sc->sa_state = UCBSND_IDLE;
 
-		return 0;
+		return (0);
 	}
 
-	return 0;
+	return (0);
 }
 
 /*
  * global sound interface.
  */
 void
-ucbsnd_sound_init(sc)
-	struct ucbsnd_softc *sc;
+ucbsnd_sound_init(struct ucbsnd_softc *sc)
 {
 	tx_sound_tag_t ts = &sc->sc_tag;
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -483,8 +485,7 @@ ucbsnd_sound_init(sc)
 }
 
 void
-__ucbsnd_sound_click(arg)
-	tx_sound_tag_t arg;
+__ucbsnd_sound_click(tx_sound_tag_t arg)
 {
 	struct ucbsnd_softc *sc = (void*)arg;
 	
@@ -496,11 +497,10 @@ __ucbsnd_sound_click(arg)
 }
 
 void
-__ucbsnd_sound_mute(arg, onoff)
-	tx_sound_tag_t arg;
-	int onoff;
+__ucbsnd_sound_mute(tx_sound_tag_t arg, int onoff)
 {
 	struct ucbsnd_softc *sc = (void*)arg;
+
 	sc->sc_mute = onoff;
 }
 
@@ -510,10 +510,7 @@ __ucbsnd_sound_mute(arg, onoff)
 extern struct cfdriver ucbsnd_cd;
 
 int
-ucbsndopen(dev, flags, ifmt, p)
-	dev_t dev;
-	int flags, ifmt;
-	struct proc *p;
+ucbsndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
@@ -531,10 +528,7 @@ ucbsndopen(dev, flags, ifmt, p)
 }
 
 int
-ucbsndclose(dev, flags, ifmt, p)
-	dev_t dev;
-	int flags, ifmt;
-	struct proc *p;
+ucbsndclose(dev_t dev, int flags, int ifmt, struct proc *p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
@@ -547,10 +541,7 @@ ucbsndclose(dev, flags, ifmt, p)
 }
 
 int
-ucbsndread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+ucbsndread(dev_t dev, struct uio *uio, int ioflag)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
@@ -565,11 +556,8 @@ ucbsndread(dev, uio, ioflag)
 }
 
 int
-ucbsndwrite_subr(sc, buf, bufsize, uio)
-	struct ucbsnd_softc *sc;
-	u_int32_t *buf;
-	size_t bufsize;
-	struct uio *uio;
+ucbsndwrite_subr(struct ucbsnd_softc *sc, u_int32_t *buf, size_t bufsize,
+    struct uio *uio)
 {
 	int i, s, error;
 
@@ -591,14 +579,11 @@ ucbsndwrite_subr(sc, buf, bufsize, uio)
 	}
 	splx(s);
 	
-	return error;
+	return (error);
 }
 
 int
-ucbsndwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
@@ -651,12 +636,7 @@ ucbsndwrite(dev, uio, ioflag)
 }
 
 int
-ucbsndioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+ucbsndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int error = 0;
 
@@ -666,10 +646,7 @@ ucbsndioctl(dev, cmd, addr, flag, p)
 }
 
 int
-ucbsndpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+ucbsndpoll(dev_t dev, int events, struct proc *p)
 {
 	int error = 0;
 
@@ -679,10 +656,7 @@ ucbsndpoll(dev, events, p)
 }
 
 paddr_t
-ucbsndmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+ucbsndmmap(dev_t dev, off_t off, int prot)
 {
 	int error = 0;
 
@@ -695,10 +669,7 @@ ucbsndmmap(dev, off, prot)
  * Ring buffer.
  */
 int
-ringbuf_allocate(rb, blksize, maxblk)
-	struct ring_buf *rb;
-	size_t blksize;
-	int maxblk;
+ringbuf_allocate(struct ring_buf *rb, size_t blksize, int maxblk)
 {
 	rb->rb_bufsize = blksize * maxblk;
 	rb->rb_blksize = blksize;
@@ -710,29 +681,28 @@ ringbuf_allocate(rb, blksize, maxblk)
 #endif
 	if (rb->rb_buf == 0) {
 		printf("ringbuf_allocate: can't allocate buffer\n");
-		return 1;
+		return (1);
 	}
 	memset((char*)rb->rb_buf, 0, rb->rb_bufsize);
 #if notyet
 	rb->rb_bufcnt = malloc(rb->rb_maxblks * sizeof(size_t), M_DEVBUF,
-			       M_WAITOK);
+	    M_WAITOK);
 #else
 	rb->rb_bufcnt = dmabufcnt_static;
 #endif
 	if (rb->rb_bufcnt == 0) {
 		printf("ringbuf_allocate: can't allocate buffer\n");
-		return 1;
+		return (1);
 	}
 	memset((char*)rb->rb_bufcnt, 0, rb->rb_maxblks * sizeof(size_t));
 
 	ringbuf_reset(rb);
 
-	return 0;
+	return (0);
 }
 
 void
-ringbuf_deallocate(rb)
-	struct ring_buf *rb;
+ringbuf_deallocate(struct ring_buf *rb)
 {
 #if notyet
 	free((void*)rb->rb_buf, M_DEVBUF);
@@ -741,43 +711,38 @@ ringbuf_deallocate(rb)
 }
 
 void
-ringbuf_reset(rb)
-	struct ring_buf *rb;
+ringbuf_reset(struct ring_buf *rb)
 {
 	rb->rb_outp = 0;
 	rb->rb_inp = 0;
 }
 
 int
-ringbuf_full(rb)
-	struct ring_buf *rb;
+ringbuf_full(struct ring_buf *rb)
 {
 	int ret;
 
 	ret = rb->rb_outp == rb->rb_maxblks;
 
-	return ret;
+	return (ret);
 }
 
 void*
-ringbuf_producer_get(rb)
-	struct ring_buf *rb;
+ringbuf_producer_get(struct ring_buf *rb)
 {
 	u_int32_t ret;
 	int s;
 
 	s = splaudio();
 	ret = ringbuf_full(rb) ? 0 : 
-		rb->rb_buf + rb->rb_inp * rb->rb_blksize;
+	    rb->rb_buf + rb->rb_inp * rb->rb_blksize;
 	splx(s);
 
-	return (void*)ret;
+	return (void *)ret;
 }
 
 void
-ringbuf_producer_return(rb, cnt)
-	struct ring_buf *rb;
-	size_t cnt;
+ringbuf_producer_return(struct ring_buf *rb, size_t cnt)
 {
 	int s;
 
@@ -792,27 +757,24 @@ ringbuf_producer_return(rb, cnt)
 }
 
 void*
-ringbuf_consumer_get(rb, cntp)
-	struct ring_buf *rb;
-	size_t *cntp;
+ringbuf_consumer_get(struct ring_buf *rb, size_t *cntp)
 {
 	u_int32_t p;
 	int idx;
   
 	if (rb->rb_outp == 0)
-		return 0;
+		return (0);
 
 	idx = (rb->rb_inp - rb->rb_outp + rb->rb_maxblks) % rb->rb_maxblks;
 
 	p = rb->rb_buf + idx * rb->rb_blksize;
 	*cntp = rb->rb_bufcnt[idx];
 
-	return (void*)p;
+	return (void *)p;
 }
 
 void
-ringbuf_consumer_return(rb)
-	struct ring_buf *rb;
+ringbuf_consumer_return(struct ring_buf *rb)
 {
 
 	if (rb->rb_outp > 0)
