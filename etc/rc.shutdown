@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc.shutdown,v 1.6 2001/06/16 04:09:19 lukem Exp $
+# $NetBSD: rc.shutdown,v 1.7 2001/11/19 03:19:28 lukem Exp $
 #
 # rc.shutdown --
 #	Run the scripts in /etc/rc.d with reverse rcorder.
@@ -48,14 +48,9 @@ fi
 #	and perform the operation
 #
 files=`rcorder -k shutdown /etc/rc.d/*`
-nfiles=
-for i in $files; do			# reverse order of files
-	nfiles="$i $nfiles"
-done
-files=$nfiles
 
-for i in $files; do
-	run_rc_script $i stop
+for _rc_elem in `reverse_list $files`; do
+	run_rc_script $_rc_elem stop
 done
 
 
