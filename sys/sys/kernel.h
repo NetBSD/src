@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.13 1997/01/15 05:11:45 perry Exp $	*/
+/*	$NetBSD: kernel.h,v 1.14 1998/02/10 00:25:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,9 @@
  *	@(#)kernel.h	8.3 (Berkeley) 1/21/94
  */
 
+#ifndef _SYS_KERNEL_H_
+#define _SYS_KERNEL_H_
+
 /* Global variables for the kernel. */
 
 extern long hostid;
@@ -63,3 +66,5 @@ extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
+
+#endif /* _SYS_KERNEL_H_ */

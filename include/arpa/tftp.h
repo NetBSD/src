@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.h,v 1.4 1998/02/02 16:32:58 perry Exp $	*/
+/*	$NetBSD: tftp.h,v 1.5 1998/02/10 00:32:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,8 @@
  *	@(#)tftp.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _TFTP_H_
-#define	_TFTP_H_
+#ifndef _ARPA_TFTP_H_
+#define	_ARPA_TFTP_H_
 
 /*
  * Trivial File Transfer Protocol (IEN-133)
@@ -79,4 +79,4 @@ struct	tftphdr {
 #define	EEXISTS		6		/* file already exists */
 #define	ENOUSER		7		/* no such user */
 
-#endif /* !_TFTP_H_ */
+#endif /* _ARPA_TFTP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.h,v 1.4 1998/02/02 16:32:57 perry Exp $	*/
+/*	$NetBSD: ftp.h,v 1.5 1998/02/10 00:32:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -35,8 +35,8 @@
  *	@(#)ftp.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _FTP_H_
-#define	_FTP_H_
+#ifndef _ARPA_FTP_H_
+#define	_ARPA_FTP_H_
 
 /* Definitions for FTP; see RFC-765. */
 
@@ -108,4 +108,4 @@ char *modenames[] =  {"0", "Stream", "Block", "Compressed" };
 
 #define	BLK_BYTECOUNT	2	/* Bytes in this block */
 
-#endif /* !_FTP_H_ */
+#endif /* _ARPA_FTP_H_ */

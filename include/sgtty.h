@@ -1,4 +1,4 @@
-/*	$NetBSD: sgtty.h,v 1.5 1998/02/02 21:07:48 perry Exp $	*/
+/*	$NetBSD: sgtty.h,v 1.6 1998/02/10 00:30:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -35,6 +35,9 @@
  *	@(#)sgtty.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SGTTY_H_
+#define _SGTTY_H_
+
 #ifndef USE_OLD_TTY
 #define	USE_OLD_TTY
 #endif
@@ -45,3 +48,5 @@ __BEGIN_DECLS
 int gtty __P((int, struct sgttyb *));
 int stty __P((int, struct sgttyb *));
 __END_DECLS
+
+#endif /* _SGTTY_H_ */

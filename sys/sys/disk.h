@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.12 1997/10/05 18:43:23 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.13 1998/02/10 00:25:25 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
  *
  *	@(#)disk.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_DISK_H_
+#define _SYS_DISK_H_
 
 /*
  * Disk device structures.
@@ -183,3 +186,5 @@ struct	disk *disk_find __P((char *));
 struct device;
 void	dk_establish __P((struct disk *, struct device *));
 #endif
+
+#endif /* _SYS_DISK_H_ */

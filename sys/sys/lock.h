@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6 1998/02/07 02:14:05 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.7 1998/02/10 00:25:36 perry Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -39,8 +39,8 @@
  *	@(#)lock.h	8.12 (Berkeley) 5/19/95
  */
 
-#ifndef	_LOCK_H_
-#define	_LOCK_H_
+#ifndef	_SYS_LOCK_H_
+#define	_SYS_LOCK_H_
 
 #define NCPUS 1		/* XXX */
 
@@ -202,4 +202,4 @@ void simple_lock_init __P((struct simplelock *alp));
 #endif /* NCPUS == 1 */
 #endif /* !LOCKDEBUG */
 
-#endif /* !_LOCK_H_ */
+#endif /* _SYS_LOCK_H_ */

@@ -77,11 +77,11 @@
 
 /*
  *      @(#)nameser.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: nameser.h,v 1.10 1997/10/13 09:26:09 lukem Exp $
+ *	$NetBSD: nameser.h,v 1.11 1998/02/10 00:32:54 perry Exp $
  */
 
-#ifndef _NAMESER_H_
-#define _NAMESER_H_
+#ifndef _ARPA_NAMESER_H_
+#define _ARPA_NAMESER_H_
 
 #include <sys/param.h>
 #if (!defined(BSD)) || (BSD < 199306)
@@ -389,4 +389,4 @@ extern	u_int32_t	_getlong __P((const u_char *));
 	(cp) += INT32SZ; \
 }
 
-#endif /* !_NAMESER_H_ */
+#endif /* _ARPA_NAMESER_H_ */

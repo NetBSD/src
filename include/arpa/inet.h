@@ -55,11 +55,11 @@
 
 /*
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: inet.h,v 1.7 1997/10/13 09:26:08 lukem Exp $
+ *	$NetBSD: inet.h,v 1.8 1998/02/10 00:32:52 perry Exp $
  */
 
-#ifndef _INET_H_
-#define	_INET_H_
+#ifndef _ARPA_INET_H_
+#define	_ARPA_INET_H_
 
 /* External definitions for functions in inet(3) */
 
@@ -88,4 +88,4 @@ u_int		 inet_nsap_addr __P((const char *, u_char *, int));
 char		*inet_nsap_ntoa __P((int, const u_char *, char *));
 __END_DECLS
 
-#endif /* !_INET_H_ */
+#endif /* _ARPA_INET_H_ */
