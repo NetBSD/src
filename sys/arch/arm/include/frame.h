@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3.6.2 2001/11/15 06:39:22 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.3.6.3 2001/11/17 09:00:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -101,8 +101,6 @@ struct saframe {
 	int		sa_events;
 	int		sa_interrupted;
 #endif
-	int		sa_sig;
-	int		sa_code;
 	void *		sa_arg;
 	sa_upcall_t	sa_upcall;
 };

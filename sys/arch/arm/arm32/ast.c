@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.1.12.2 2001/11/15 06:39:21 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.1.12.3 2001/11/17 09:00:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -73,9 +73,9 @@ userret(l)
 	while ((sig = (CURSIG(l))) != 0)
 		postsig(sig);
 
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
