@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13 1999/03/05 21:09:50 mycroft Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13.4.1 1999/07/04 01:54:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -145,4 +145,56 @@ ufs_reclaim(vp, p)
 	}
 #endif
 	return (0);
+}
+
+/*
+ * Allocate a range of blocks in a file.
+ */
+
+int
+ufs_balloc_range(vp, off, len, cred, flags)
+	struct vnode *vp;
+	off_t off, len;
+	struct ucred *cred;
+	int flags;
+{
+	struct inode *ip = VTOI(vp);
+	int bshift, bsize, delta, error;
+
+	bshift = vp->v_mount->mnt_fs_bshift;
+	bsize = 1 << bshift;
+
+	/*
+	 * adjust off to be block-aligned.
+	 */
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	/*
+	 * allocate the range a block at a time.
+	 */
+
+	while (len > 0) {
+		bsize = min(bsize, len);
+
+		if ((error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL))) {
+			return error;
+		}
+
+		/*
+		 * increase file size now.
+		 * ffs_balloc() needs to know in the case where we loop here.
+		 */
+
+		if (ip->i_ffs_size < off + bsize) {
+			ip->i_ffs_size = off + bsize;
+			uvm_vnp_setsize(ITOV(ip), ip->i_ffs_size);
+		}
+
+		len -= bsize;
+		off += bsize;
+	}
+	return 0;
 }
