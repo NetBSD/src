@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.33 1999/12/13 04:25:08 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.34 2000/02/18 09:44:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.33 1999/12/13 04:25:08 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.34 2000/02/18 09:44:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,8 +187,7 @@ struct	filed consfile;
 int	Debug;			/* debug flag */
 char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
-int	InetInuse = 0;		/* non-zero if INET sockets are being used */
-int	*finet;			/* Internet datagram socket */
+int	*finet;			/* Internet datagram sockets */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
@@ -320,14 +319,18 @@ main(argc, argv)
 		dprintf("listening on unix dgram socket %s\n", *pp);
 	}
 
-	if (!SecureMode) 
-		finet = socksetup(PF_UNSPEC);
-	else
-		finet = NULL;
-
-	if (finet && *finet) {
-		dprintf("listening on inet and/or inet6 socket\n");
-		InetInuse = 1;
+	finet = socksetup(PF_UNSPEC);
+	if (finet) {
+		if (SecureMode) {
+			for (j = 0; j < *finet; j++) {
+				if (shutdown(finet[j+1], SHUT_RD) < 0) {
+					logerror("shutdown");
+					die(0);
+				}
+			}
+		} else
+			dprintf("listening on inet and/or inet6 socket\n");
+		dprintf("sending on inet and/or inet6 socket\n");
 	}
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
@@ -358,7 +361,7 @@ main(argc, argv)
 		readfds[nfklogix].fd = fklog;
 		readfds[nfklogix].events = POLLIN | POLLPRI;
 	}
-	if (finet) {
+	if (finet && !SecureMode) {
 		nfinetix = malloc(*finet * sizeof(*nfinetix));
 		for (j = 0; j < *finet; j++) {
 			nfinetix[j] = nfds++;
@@ -418,16 +421,19 @@ main(argc, argv)
 				logerror(buf);
 			}
 		}
-		if (finet) {
+		if (finet && !SecureMode) {
 			for (j = 0; j < *finet; j++) {
-		    		if (readfds[nfinetix[j]].revents & (POLLIN | POLLPRI)) {
+		    		if (readfds[nfinetix[j]].revents &
+				    (POLLIN | POLLPRI)) {
 					dprintf("inet socket active\n");
 					len = sizeof(frominet);
-					i = recvfrom(finet[j+1], line, MAXLINE, 0,
-			    				(struct sockaddr *)&frominet, &len);
+					i = recvfrom(finet[j+1], line, MAXLINE,
+					    0, (struct sockaddr *)&frominet,
+					    &len);
 					if (i > 0) {
 						line[i] = '\0';
-						printline(cvthname(&frominet), line);
+						printline(cvthname(&frominet),
+						    line);
 					} else if (i < 0 && errno != EINTR)
 						logerror("recvfrom inet");
 				}
@@ -439,9 +445,11 @@ main(argc, argv)
 void
 usage()
 {
+	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-f conffile] [-m markinterval] [-p logpath1] [-p logpath2 ..]\n");
+"usage: %s [-f conffile] [-m markinterval] [-p logpath1] [-p logpath2 ..]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -765,7 +773,10 @@ fprintlog(f, flags, msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		/* check for local vs remote messages (from FreeBSD PR#bin/7055) */
+			/*
+			 * check for local vs remote messages
+			 * (from FreeBSD PR#bin/7055)
+			 */
 		if (strcmp(f->f_prevhost, LocalHostName)) {
 			l = snprintf(line, sizeof(line) - 1,
 				     "<%d>%.15s [%s]: %s",
@@ -778,14 +789,19 @@ fprintlog(f, flags, msg)
 		}
 		if (l > MAXLINE)
 			l = MAXLINE;
-		if (finet && *finet) {
+		if (finet) {
 			for (r = f->f_un.f_forw.f_addr; r; r = r->ai_next) {
 				for (j = 0; j < *finet; j++) {
 #if 0 
-					/* should we check AF first, or just trial and error? FWD */
-					if (r->ai_family == address_family_of(finet[j+1])) 
+					/*
+					 * should we check AF first, or just
+					 * trial and error? FWD
+					 */
+					if (r->ai_family ==
+					    address_family_of(finet[j+1])) 
 #endif
-					lsent = sendto(finet[j+1], line, l, 0, r->ai_addr, r->ai_addrlen);
+					lsent = sendto(finet[j+1], line, l, 0,
+					    r->ai_addr, r->ai_addrlen);
 					if (lsent == l) 
 						break;
 				}
@@ -1115,7 +1131,8 @@ init(signo)
 				break;
 
 			case F_USERS:
-				for (i = 0; i < MAXUNAMES && *f->f_un.f_uname[i]; i++)
+				for (i = 0;
+				    i < MAXUNAMES && *f->f_un.f_uname[i]; i++)
 					printf("%s, ", f->f_un.f_uname[i]);
 				break;
 			}
@@ -1211,14 +1228,15 @@ cfline(line, f)
 	switch (*p)
 	{
 	case '@':
-		if (!InetInuse)
+		if (!finet)
 			break;
 		(void)strcpy(f->f_un.f_forw.f_hname, ++p);
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = 0;
-		error = getaddrinfo(f->f_un.f_forw.f_hname, "syslog", &hints, &res);
+		error = getaddrinfo(f->f_un.f_forw.f_hname, "syslog", &hints,
+		    &res);
 		if (error) {
 			logerror(gai_strerror(error));
 			break;
@@ -1331,7 +1349,8 @@ socksetup(af)
 	}
 
 	/* Count max number of sockets we may open */
-	for (maxs = 0, r = res; r; r = r->ai_next, maxs++);
+	for (maxs = 0, r = res; r; r = r->ai_next, maxs++)
+		continue;
 	socks = malloc ((maxs+1) * sizeof(int));
 	if (!socks) {
 		logerror("couldn't allocate memory for sockets");
