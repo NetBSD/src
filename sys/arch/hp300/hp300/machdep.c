@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 1998/06/25 23:57:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 1998/07/01 06:05:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -890,7 +890,7 @@ cpu_init_kcore_hdr()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	extern char end[];
+	extern int end;
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
 
@@ -934,7 +934,7 @@ cpu_init_kcore_hdr()
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)end;
+	m->relocend = (u_int32_t)&end;
 
 	/*
 	 * hp300 has one contiguous memory segment.
