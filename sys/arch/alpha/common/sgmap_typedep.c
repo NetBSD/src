@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.1.2.5 1997/06/05 02:33:02 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.1.2.6 1997/06/06 00:35:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.5 1997/06/05 02:33:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.6 1997/06/06 00:35:00 thorpej Exp $");
 
 int
-__C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
+__C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
@@ -141,7 +141,7 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 }
 
 int
-__C(SGMAP_TYPE,_sgmap_load_mbuf)(t, map, m, flags, sgmap)
+__C(SGMAP_TYPE,_load_mbuf)(t, map, m, flags, sgmap)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct mbuf *m;
@@ -149,11 +149,11 @@ __C(SGMAP_TYPE,_sgmap_load_mbuf)(t, map, m, flags, sgmap)
 	struct alpha_sgmap *sgmap;
 {
 
-	panic(__S(__C(SGMAP_TYPE,_sgmap_load_mbuf)) ": not implemented");
+	panic(__S(__C(SGMAP_TYPE,_load_mbuf)) ": not implemented");
 }
 
 int
-__C(SGMAP_TYPE,_sgmap_load_uio)(t, map, uio, flags, sgmap)
+__C(SGMAP_TYPE,_load_uio)(t, map, uio, flags, sgmap)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct uio *uio;
@@ -161,11 +161,11 @@ __C(SGMAP_TYPE,_sgmap_load_uio)(t, map, uio, flags, sgmap)
 	struct alpha_sgmap *sgmap;
 {
 
-	panic(__S(__C(SGMAP_TYPE,_sgmap_load_uio)) ": not implemented");
+	panic(__S(__C(SGMAP_TYPE,_load_uio)) ": not implemented");
 }
 
 int
-__C(SGMAP_TYPE,_sgmap_load_raw)(t, map, segs, nsegs, size, flags, sgmap)
+__C(SGMAP_TYPE,_load_raw)(t, map, segs, nsegs, size, flags, sgmap)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_dma_segment_t *segs;
@@ -175,11 +175,11 @@ __C(SGMAP_TYPE,_sgmap_load_raw)(t, map, segs, nsegs, size, flags, sgmap)
 	struct alpha_sgmap *sgmap;
 {
 
-	panic(__S(__C(SGMAP_TYPE,_sgmap_load_raw)) ": not implemented");
+	panic(__S(__C(SGMAP_TYPE,_load_raw)) ": not implemented");
 }
 
 void
-__C(SGMAP_TYPE,_sgmap_unload)(t, map, sgmap)
+__C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct alpha_sgmap *sgmap;
