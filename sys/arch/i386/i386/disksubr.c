@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 1996/09/30 21:24:49 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 1997/06/26 05:40:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -132,9 +132,9 @@ readdisklabel(dev, strat, lp, osdep)
 					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
 
 					/* update disklabel with details */
-					lp->d_partitions[0].p_size =
+					lp->d_partitions[2].p_size =
 					    dp->dp_size;
-					lp->d_partitions[0].p_offset = 
+					lp->d_partitions[2].p_offset = 
 					    dp->dp_start;
 					lp->d_ntracks = dp->dp_ehd + 1;
 					lp->d_nsectors = DPSECT(dp->dp_esect);
@@ -324,8 +324,8 @@ writedisklabel(dev, strat, lp, osdep)
 	
 #ifdef maybe
 	/* disklabel in appropriate location? */
-	if (lp->d_partitions[0].p_offset != 0
-		&& lp->d_partitions[0].p_offset != dospartoff) {
+	if (lp->d_partitions[2].p_offset != 0
+		&& lp->d_partitions[2].p_offset != dospartoff) {
 		error = EXDEV;		
 		goto done;
 	}
