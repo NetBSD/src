@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.221 2003/11/06 23:02:27 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.221 2003/11/06 23:02:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -168,7 +168,7 @@ void 	comsoft(void *);
 void 	comsoft(void);
 #else
 void 	comsoft(void *);
-struct callout comsoft_callout = CALLOUT_INITIALIZER;
+static struct callout comsoft_callout = CALLOUT_INITIALIZER;
 #endif
 #endif
 integrate void com_rxsoft(struct com_softc *, struct tty *);
