@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.17 1997/06/15 18:03:24 mhitch Exp $	*/
+/*	$NetBSD: asic.c,v 1.18 1997/06/16 01:45:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -56,7 +56,6 @@
 
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/kmin.h>
-#include <machine/machConst.h>
 #include <pmax/pmax/nameglue.h>
 
 extern int cputype;

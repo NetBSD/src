@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.12 1996/10/13 03:40:02 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.13 1997/06/16 01:45:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -86,7 +86,6 @@ int consprobeslot __P((int slot));
  *  TurboChannel autoconfiguration declarations and tables for DECstations.
  */
 
-#include <machine/machConst.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/trap.h>
 #include <pmax/pmax/asic.h>
