@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.6 2001/11/26 18:09:08 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.7 2001/11/26 22:26:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -421,6 +421,67 @@ ENTRY(xscale_cache_syncI_rng)
 	bpl	1b
 
 	CPWAIT(r0)
+
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
+	mov	pc, lr
+
+/* Used in write-through mode. */
+ENTRY(xscale_cache_flushID_rng)
+	cmp	r1, #0x4000
+	bcs	_C_LABEL(xscale_cache_flushID)
+
+	and	r2, r0, #0x1f
+	add	r1, r1, r2
+	bic	r0, r0, #0x1f
+
+1:	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
+	add	r0, r0, #32
+	subs	r1, r1, #32
+	bpl	1b
+
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
+	mov	pc, lr
+
+/* Used in write-though mode. */
+ENTRY(xscale_cache_flushD_rng)
+	cmp	r1, #0x4000
+	bcs	_C_LABEL(xscale_cache_flushD)
+
+	and	r2, r0, #0x1f
+	add	r1, r1, r2
+	bic	r0, r0, #0x1f
+
+1:	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	add	r0, r0, #32
+	subs	r1, r1, #32
+	bpl	1b
+
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
+	mov	pc, lr
+
+/* Used in write-through mode. */
+ENTRY(xscale_cache_flushI_rng)
+	cmp	r1, #0x4000
+	bcs	_C_LABEL(xscale_cache_flushI)
+
+	and	r2, r0, #0x1f
+	add	r1, r1, r2
+	bic	r0, r0, #0x1f
+
+1:	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
+	add	r0, r0, #32
+	subs	r1, r1, #32
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 

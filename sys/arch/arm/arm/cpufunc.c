@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.17 2001/11/23 19:17:04 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.18 2001/11/26 22:26:44 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -625,6 +625,74 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_setup			/* cpu setup		*/
 };
+
+struct cpu_functions xscale_writethrough_cpufuncs = {
+	/* CPU functions */
+	
+	cpufunc_id,			/* id			*/
+	xscale_cpwait,			/* cpwait		*/
+
+	/* MMU functions */
+
+	xscale_control,			/* control		*/
+	cpufunc_domains,		/* domain		*/
+	xscale_setttb,			/* setttb		*/
+	cpufunc_faultstatus,		/* faultstatus		*/
+	cpufunc_faultaddress,		/* faultaddress		*/
+
+	/* TLB functions */
+
+	armv4_tlb_flushID,		/* tlb_flushID		*/
+	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache functions */
+
+	xscale_cache_flushID,		/* cache_flushID	*/
+	(void *)xscale_cache_flushID,	/* cache_flushID_SE	*/
+	xscale_cache_flushI,		/* cache_flushI		*/
+	(void *)xscale_cache_flushI,	/* cache_flushI_SE	*/
+	xscale_cache_flushD,		/* cache_flushD		*/
+	xscale_cache_flushD_SE,		/* cache_flushD_SE	*/
+
+	cpufunc_nullop,			/* cache_cleanID	s*/
+	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
+	cpufunc_nullop,			/* cache_cleanD		s*/
+	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+
+	xscale_cache_flushID,		/* cache_purgeID	s*/
+	(void *)xscale_cache_flushID,	/* cache_purgeID_E	s*/
+	xscale_cache_flushD,		/* cache_purgeD		s*/
+	xscale_cache_flushD_SE,		/* cache_purgeD_E	s*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	xscale_cache_flushI,		/* cache_syncI		*/
+	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
+	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
+	xscale_cache_flushID_rng,	/* cache_purgeID_rng	*/
+	xscale_cache_flushD_rng,	/* cache_purgeD_rng	*/
+	xscale_cache_flushI_rng,	/* cache_syncI_rng	*/
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	xscale_context_switch,		/* context_switch	*/
+
+	xscale_setup			/* cpu setup		*/
+};
 #endif /* CPU_XSCALE */
 
 /*
@@ -706,7 +774,8 @@ set_cpufuncs()
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
-		cpufuncs = xscale_cpufuncs;
+		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
+		cpufuncs = xscale_writethrough_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		return 0;
 	}
