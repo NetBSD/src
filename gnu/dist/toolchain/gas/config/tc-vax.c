@@ -1275,7 +1275,10 @@ md_estimate_size_before_relax (fragP, segment)
 	
 		  if (((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLS
 		      || ((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLG
-		      || S_IS_FUNCTION (fragP->fr_symbol))
+#ifdef BFD_ASSEMBLER
+		      || S_IS_FUNCTION (fragP->fr_symbol)
+#endif
+		      )
 		    {
 #ifdef BFD_ASSEMBLER
 		      reloc_type = BFD_RELOC_32_PLT_PCREL;
@@ -1642,18 +1645,24 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
 		}
 		break;
 	case RELOC_JMP_SLOT:
-		r_flags |= 0x20;		/* set jmptable */
-		r_flags &= ~0x08;		/* clear extern bit */
+		if (flag_want_pic) {
+			r_flags |= 0x20;	/* set jmptable */
+			r_flags &= ~0x08;	/* clear extern bit */
+		}
 		break;
 	case RELOC_JMP_TBL:
-		r_flags |= 0x20;		/* set jmptable */
-		r_flags |= 0x08;		/* set extern bit */
+		if (flag_want_pic) {
+			r_flags |= 0x20;	/* set jmptable */
+			r_flags |= 0x08;	/* set extern bit */
+		}
 		break;
 	case RELOC_GLOB_DAT:
-		r_flags |= 0x10;	/* set baserel bit */
-		r_symbolnum = fixP->fx_addsy->sy_number;
-		if (S_IS_EXTERNAL(fixP->fx_addsy))
-			r_flags |= 8;	/* set extern bit */
+		if (flag_want_pic) {
+			r_flags |= 0x10;	/* set baserel bit */
+			r_symbolnum = fixP->fx_addsy->sy_number;
+			if (S_IS_EXTERNAL(fixP->fx_addsy))
+				r_flags |= 8;	/* set extern bit */
+		}
 		break;
   }
 

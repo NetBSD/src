@@ -43,7 +43,16 @@
 #define	BFD_ARCH	bfd_arch_vax	/* for non-BFD_ASSEMBLER */
 #define	TARGET_ARCH	bfd_arch_vax	/* BFD_ASSEMBLER */
 
+#ifdef BFD_ASSEMBLER
 #define NO_RELOC	BFD_RELOC_NONE
+#else
+enum reloc_type
+  {
+     NO_RELOC, NO_RELOC2, RELOC_32, RELOC_GLOB_DAT,
+     RELOC_JMP_TBL, RELOC_JMP_SLOT
+  };
+#define NEED_FX_R_TYPE
+#endif
 #define NOP_OPCODE	0x01
 
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
@@ -61,13 +70,14 @@ extern const struct relax_type md_relax_table[];
    the reloc is against an externally visible symbol, then the assembler
    should never do the relocation.  */
 
+#ifdef BFD_ASSEMBLER
 #define	TC_RELOC_RTSYM_LOC_FIXUP(FIX)			\
 	((FIX)->fx_addsy == NULL			\
 	 || (! S_IS_EXTERNAL ((FIX)->fx_addsy)		\
 	     && ! S_IS_WEAK ((FIX)->fx_addsy)		\
 	     && S_IS_DEFINED ((FIX)->fx_addsy)		\
 	     && ! S_IS_COMMON ((FIX)->fx_addsy)))
-
+#endif
 
 /*
  * Local Variables:
