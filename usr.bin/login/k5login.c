@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.17 2000/12/05 02:19:23 wiz Exp $	*/
+/*	$NetBSD: k5login.c,v 1.18 2001/01/10 12:23:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.17 2000/12/05 02:19:23 wiz Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.18 2001/01/10 12:23:57 lukem Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -170,7 +170,7 @@ k5_verify_creds(c, ccache)
 	else if (kerror) {
 		com_err("login", kerror,
 		        "Unable to verify Kerberos V5 TGT: %s", phost);
-		syslog(LOG_NOTICE|LOG_AUTH, "Kerberos V5 TGT bad: %s", 
+		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s", 
 		       krb5_get_err_text(kcontext, kerror));
 		retval = -1;
 		goto EGRESS;
@@ -199,7 +199,7 @@ k5_verify_creds(c, ccache)
 			retval = -1;
 		}
 		com_err("login", kerror, "Unable to verify host ticket");
-		syslog(LOG_NOTICE|LOG_AUTH, "can't verify v5 ticket: %s; %s\n",
+		syslog(LOG_NOTICE, "can't verify v5 ticket: %s; %s\n",
 		       krb5_get_err_text(kcontext, kerror),
 		       retval
 		         ? "keytab found, assuming failure"
