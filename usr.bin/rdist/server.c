@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.27 2003/08/07 11:15:38 agc Exp $	*/
+/*	$NetBSD: server.c,v 1.28 2004/08/06 15:50:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.27 2003/08/07 11:15:38 agc Exp $");
+__RCSID("$NetBSD: server.c,v 1.28 2004/08/06 15:50:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,9 @@ char	buf[BUFSIZ];		/* general purpose buffer */
 char	target[BUFSIZ];		/* target/source directory name */
 char	*tp;			/* pointer to end of target name */
 char	*Tdest;			/* pointer to last T dest*/
+char	*Destcopy;		/* pointer to current dest */
+int	Destcopylen;		/* length of destination directory name */
+int	Sourcelen;		/* length of source directory name */
 int	catname;		/* cat name to target name */
 char	*stp[32];		/* stack of saved tp's for directories */
 int	oumask;			/* old umask for creating files */
@@ -248,7 +251,14 @@ install(char *src, char *dest, int destdir, int opts)
 	if (dest == NULL) {
 		opts &= ~WHOLE; /* WHOLE mode only useful if renaming */
 		dest = src;
+	} else if (!(opts & WHOLE)) {
+		/* prepare for proper renaming of directory trees */
+		Destcopy = destcopy;
+		Destcopylen = strlen(dest);
+		while (Destcopylen > 0 && dest[Destcopylen] == '/')
+		    Destcopylen--;
 	}
+	strlcpy(destcopy, dest, sizeof(destcopy));
 
 	if (nflag || debug) {
 		printf("%s%s%s%s%s %s %s\n", opts & VERIFY ? "verify":"install",
@@ -266,6 +276,12 @@ install(char *src, char *dest, int destdir, int opts)
 	tp = target;
 	while (*tp)
 		tp++;
+	if (Destcopy) {
+		/* We can only do this after expansion of src */
+		Sourcelen = strlen(target);
+		while (Sourcelen > 0 && target[Sourcelen] == '/')
+		    Sourcelen--;
+	}
 	/*
 	 * If we are renaming a directory and we want to preserve
 	 * the directory hierarchy (-w), we must strip off the leading
@@ -296,11 +312,10 @@ install(char *src, char *dest, int destdir, int opts)
 	if (response() < 0)
 		return;
 
-	if (destdir) {
-		strlcpy(destcopy, dest, sizeof(destcopy));
+	if (destdir)
 		Tdest = destcopy;
-	}
 	sendf(rname, opts);
+	Destcopy = 0;
 	Tdest = 0;
 }
 
@@ -567,7 +582,15 @@ savelink(struct stat *stp)
 		lp->inum = stp->st_ino;
 		lp->devnum = stp->st_dev;
 		lp->count = stp->st_nlink - 1;
-		strlcpy(lp->pathname, target, sizeof(lp->pathname));
+ 		if (Destcopy) {
+ 			/*
+ 			 * Change the starting directory of target
+ 			 * into the destination directory
+ 			 */
+ 			strncpy(lp->pathname, Destcopy, Destcopylen);
+ 			strlcpy(lp->pathname + Destcopylen, target + Sourcelen, sizeof(lp->pathname) - Destcopylen);
+ 		} else
+			strlcpy(lp->pathname, target, sizeof(lp->pathname));
 		if (Tdest)
 			strlcpy(lp->target, Tdest, sizeof(lp->target));
 		else
