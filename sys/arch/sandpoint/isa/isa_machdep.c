@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2001/02/04 18:32:16 briggs Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2 2001/02/08 18:29:05 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -304,11 +304,24 @@ isa_intr_disestablish(ic, arg)
 	splx(cpl);
 }
 
+#define SUPERIO_CONF_IDX	0x15C
+#define SUPERIO_CONF_DATA	0x15D
+#define SUPERIO_CONF_LDN	0x07
+#define SUPERIO_CONF_ACTIVATE	0x30
 void
 isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
+	int	ldn;
+
+	/* Enable the 9 Super I/O devices. */
+	for (ldn=0; ldn <= 8; ldn++) {
+		isa_outb(SUPERIO_CONF_IDX,  SUPERIO_CONF_LDN);
+		isa_outb(SUPERIO_CONF_DATA, ldn);
+		isa_outb(SUPERIO_CONF_IDX,  SUPERIO_CONF_ACTIVATE);
+		isa_outb(SUPERIO_CONF_DATA, 0x01);
+	}
 }
 
 static int
