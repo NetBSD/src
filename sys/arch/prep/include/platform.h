@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/06/20 14:35:25 nonaka Exp $	*/
+/*	$NetBSD: platform.h,v 1.1 2001/06/20 14:35:24 nonaka Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,45 +36,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	__PREP_PLATFORM_H__
+#define	__PREP_PLATFORM_H__
+
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/platform.h>
-
-int cpumatch(struct device *, struct cfdata *, void *);
-void cpuattach(struct device *, struct device *, void *);
-
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
+struct platform {
+	const char	*model;
+	int		(*match)(struct platform *);
+	void		(*pci_intr_fixup)(int, int, int *);
+	void		(*ext_intr)(void);
+	void		(*cpu_setup)(struct device *);
+	void		(*reset)(void);
 };
 
-extern struct cfdriver cpu_cd;
+struct plattab {
+	struct platform **platform;
+	int num;
+};
 
-int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
-{
-	struct confargs *ca = aux;
+extern struct platform *platform;
 
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
-		return (0);
-	return (1);
-}
+int ident_platform(void);
+int platform_generic_match(struct platform *);
+void pci_intr_nofixup(int, int, int *);
+void cpu_setup_unknown(struct device *);
+void reset_unknown(void);
 
-void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
-{
+/* IBM */
+extern struct plattab plattab_ibm;
+extern struct platform platform_ibm_6050;
+extern struct platform platform_ibm_7248;
 
-	printf("\n");
+void cpu_setup_ibm_generic(struct device *);
+void reset_ibm_generic(void);
 
-	(*platform->cpu_setup)(dev);
-}
+void pci_intr_fixup_ibm_6050(int, int, int *);
+void pci_intr_fixup_ibm_7248(int, int, int *);
+
+#endif /* __PREP_PLATFORM_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2001/06/19 11:56:28 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2001/06/20 14:35:26 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,6 +63,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pmap.h>
+#include <machine/platform.h>
 #include <machine/powerpc.h>
 #include <machine/residual.h>
 #include <machine/trap.h>
@@ -140,10 +141,6 @@ paddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-
-int astpending;
-
-char *bootpath;
 
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
@@ -227,6 +224,9 @@ initppc(startkernel, endkernel, args, btinfo)
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
+
+	/* Initialize the CPU type */
+	ident_platform();
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -342,7 +342,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * external interrupt handler install
 	 */
-	install_extint(ext_intr);
+	install_extint(*platform->ext_intr);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
@@ -775,24 +775,10 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-	{
-		/* XXX: ibm_machdep */
-		int msr;
-		u_char reg;
+	(*platform->reset)();
 
-		asm volatile("mfmsr %0" : "=r"(msr));
-		msr |= PSL_IP;
-		asm volatile("mtmsr %0" :: "r"(msr));
-
-		reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-		reg &= ~1UL;
-		*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
-		reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-		reg |= 1;
-		*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
-	}
-
-	while(1);
+	for (;;)
+		continue;
 	/* NOTREACHED */
 }
 

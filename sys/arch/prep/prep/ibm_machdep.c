@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/06/20 14:35:25 nonaka Exp $	*/
+/*      $NetBSD: ibm_machdep.c,v 1.1 2001/06/20 14:35:26 nonaka Exp $        */
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,44 +37,62 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/cpu.h>
 #include <machine/platform.h>
 
-int cpumatch(struct device *, struct cfdata *, void *);
-void cpuattach(struct device *, struct device *, void *);
-
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
+static struct platform *platform_ibm[] = {
+	&platform_ibm_6050,
+	&platform_ibm_7248,
 };
 
-extern struct cfdriver cpu_cd;
+struct plattab plattab_ibm = {
+	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0])
+};
 
-int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+void
+cpu_setup_ibm_generic(struct device *dev)
 {
-	struct confargs *ca = aux;
+	u_char l2ctrl, cpuinf;
 
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
-		return (0);
-	return (1);
+	/* system control register */
+	l2ctrl = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c);
+	/* device status register */
+	cpuinf = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x80c);
+
+	/* Enable L2 cache */
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
+
+	printf("%s: ", dev->dv_xname);
+	if (((cpuinf>>1) & 1) == 0) {
+		printf("Upgrade CPU, ");
+	}
+
+	printf("L2 cache ");
+	if ((cpuinf & 1) == 0) {
+		printf("%s ", ((cpuinf>>2) & 1) ? "256KB" : "unknown size");
+		printf("%s", ((cpuinf>>3) & 1) ? "copy-back" : "write-through");
+	} else {
+		printf("not present");
+	}
+
+	printf("\n");
 }
 
 void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+reset_ibm_generic(void)
 {
+	int msr;
+	u_char reg;
 
-	printf("\n");
+	asm volatile("mfmsr %0" : "=r"(msr));
+	msr |= PSL_IP;
+	asm volatile("mtmsr %0" :: "r"(msr));
 
-	(*platform->cpu_setup)(dev);
+	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg &= ~1UL;
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg |= 1;
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 }
