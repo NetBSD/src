@@ -1,4 +1,4 @@
-/*	$NetBSD: init_disp.c,v 1.9 2000/07/03 02:51:35 matt Exp $	*/
+/*	$NetBSD: init_disp.c,v 1.10 2001/12/07 12:10:09 blymn Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-__RCSID("$NetBSD: init_disp.c,v 1.9 2000/07/03 02:51:35 matt Exp $");
+__RCSID("$NetBSD: init_disp.c,v 1.10 2001/12/07 12:10:09 blymn Exp $");
 #endif /* not lint */
 
 /*
@@ -73,7 +73,7 @@ init_display()
 	clear();
 	refresh();
 	noecho();
-	crmode();
+	cbreak();
 	signal(SIGINT, sig_sent);
 	signal(SIGPIPE, sig_sent);
 	/* curses takes care of ^Z */
