@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.7 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.8 2002/05/15 16:57:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.7 2001/07/27 00:25:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.8 2002/05/15 16:57:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ api_up1000_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
@@ -197,7 +197,7 @@ api_up1000_pciide_compat_intr_establish(void *icv, struct device *dev,
 	void *cookie = NULL;
 	int bus, irq;
 
-	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
 	/*
 	 * If this isn't PCI bus #0, all bets are off.
