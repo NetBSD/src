@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.11 2000/09/24 17:03:28 jdolecek Exp $
+.\"	$NetBSD: dosboot.8,v 1.12 2001/09/05 23:53:23 wiz Exp $
 .Dd May 13, 2000
 .Os
 .Dt DOSBOOT 8 i386
@@ -13,18 +13,18 @@
 .Op Ar path Op Fl adqsv
 .Sh DESCRIPTION
 .Nm
-is an 
+is an
 .Tn MS-DOS
 program.  It is a boot loader for
 .Nx Ns Tn /i386
 designed to permit
 .Nx
-to be booted directly from 
+to be booted directly from
 .Tn MS-DOS .
 By default, it boots a file with
 name
 .Pa NETBSD
-in the current 
+in the current
 .Tn MS-DOS
 directory.
 .Nm
@@ -34,7 +34,7 @@ shares common code with the standard boot loader,
 The recognized options are:
 .Bl -tag -width -ads -offset 04n
 .It Fl u
-Boot from a UFS filesystem instead of an 
+Boot from a UFS filesystem instead of an
 .Tn MS-DOS
 filesystem.
 .It Fl c
@@ -47,14 +47,14 @@ Enter interactive mode.
 will present a prompt, allowing input of commands (see below).
 .Pp
 .It Pa path
-Specifies the kernel file. In 
+Specifies the kernel file. In
 .Tn MS-DOS
-mode (default) a normal 
+mode (default) a normal
 .Tn MS-DOS
 filename (with or without drive specification) is accepted.
 In UFS mode (after
 .Fl u
-or after a 
+or after a
 .Ic mode ufs
 command), a path in a
 .Nx
@@ -64,7 +64,7 @@ the first harddisk. Another device or partition can be specified
 by prepending a block device name in terms of
 .Nx ,
 followed
-by a colon (see 
+by a colon (see
 .Xr boot 8
 and examples).
 .It Fl adqsv
@@ -92,7 +92,7 @@ for full details.
 .It Ic dev Op device
 Set the default device and partition for subsequent filesystem operations.
 Without an operand, print the current setting.
-This setting doesn't apply to 
+This setting doesn't apply to
 .Tn MS-DOS
 mode.
 .It Ic help
@@ -112,7 +112,7 @@ or
 .It Ic quit
 Leave the
 .Nm
-program and exit to 
+program and exit to
 .Tn MS-DOS .
 .El
 .Pp
@@ -124,7 +124,7 @@ hierarchy, under
 .Sh EXAMPLES
 To boot a
 .Nx
-kernel located on 
+kernel located on
 .Tn MS-DOS
 drive D, one would issue:
 .Bd -literal -offset indent
@@ -142,12 +142,12 @@ dosboot -u fd0a:netbsd -s
 .Sh BUGS
 .Nm
 assumes that the processor is in real mode at startup. It does not work
-well in the presence of 
+well in the presence of
 .Tn MS-DOS
 extenders and memory managers.
 .Pp
 .Nm
-does not run directly under 
+does not run directly under
 .Tn Windows 95 .
 See
 .Xr w95boot 8
@@ -163,7 +163,7 @@ used by the booted
 .Nx
 kernel.
 .Pp
-In 
+In
 .Tn MS-DOS
 mode, no useful boot device specification is passed to
 .Nx .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.19 2000/10/01 13:45:46 bjh21 Exp $
+.\"	$NetBSD: boot.8,v 1.20 2001/09/05 23:53:23 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,7 +80,7 @@ above example, it will be
 .Dq Li wd0a:netbsd
 which is the file
 .Nm netbsd
-on partition 
+on partition
 .Dq a
 of the
 .Nx
@@ -109,7 +109,7 @@ To boot from an alternate disk, the full name of the device should
 be given at the prompt.
 .Va device
 is of the form
-.Xo Va xd 
+.Xo Va xd
 .Op Va N Ns Op Va x
 .Xc
 where
@@ -125,7 +125,7 @@ installation:
 .Pp
 .Bl -hang -compact
 .It sd
-SCSI disks on a controller recognized by the BIOS. The 
+SCSI disks on a controller recognized by the BIOS. The
 unit number is the BIOS device number.
 .It wd
 ST506, IDE, ESDI, RLL disks on a WD100[2367] or
@@ -136,9 +136,9 @@ Hard disks as numbered by the BIOS.
 Floppy drives as numbered by the BIOS.
 .El
 .Pp
-The default 
+The default
 .Va filename
-is 
+is
 .Pa netbsd ;
 if the boot loader fails to successfully
 open that image, it then tries
@@ -221,7 +221,7 @@ boot block for MCA PS/2 machines, see
 .It Pa /usr/mdec/biosboot_resetvideo.sym
 boot block for machines that need their video boards reset on bootup (e.g. iOpeners).
 .It Pa /boot
-boot block (written by 
+boot block (written by
 .Xr installboot 8 ).
 .El
 .Sh SEE ALSO

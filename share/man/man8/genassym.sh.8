@@ -1,4 +1,4 @@
-.\"	$NetBSD: genassym.sh.8,v 1.5 1999/03/17 20:31:19 garbled Exp $
+.\"	$NetBSD: genassym.sh.8,v 1.6 2001/09/05 23:53:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthias Pfaller.
 .\" All rights reserved.
@@ -49,9 +49,9 @@ reads from stdin. The generated file is used by kernel sources
 written in assembler to gain access to information (e.g. structure
 offsets and sizes) normally only known to the C compiler.
 .Nm
-resides in the 
+resides in the
 .Pa /sys/kern
-directory. Arguments to 
+directory. Arguments to
 .Nm
 are usually of the form
 .Ar ${CC} ${CFLAGS} ${CPPFLAGS}
