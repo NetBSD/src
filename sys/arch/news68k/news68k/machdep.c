@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2001/01/25 14:33:32 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2001/02/17 18:15:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,8 +106,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-extern paddr_t avail_end;
-
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -117,8 +115,10 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
  */
 int	safepri = PSL_LOWIPL;
 
-extern	u_int lowram;
-extern	short exframesize[];
+extern paddr_t avail_start, avail_end;
+extern char *kernel_text, *etext;
+extern int end, *esym;
+extern u_int lowram;
 
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
@@ -168,8 +168,6 @@ news68k_init()
 {
 	int i;
 
-	extern paddr_t avail_start, avail_end;
-
 	/*
 	 * Tell the VM system about available physical memory.  The
 	 * news68k only has one segment.
@@ -213,7 +211,6 @@ news68k_init()
 void
 cpu_startup()
 {
-	extern char *kernel_text, *etext;
 	unsigned i;
 	caddr_t v;
 	int base, residual;
@@ -514,7 +511,6 @@ cpu_init_kcore_hdr()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	extern int end;
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
 
@@ -1234,9 +1230,6 @@ consinit()
 	}
 #ifdef DDB
 	{
-		extern int end;
-		extern int *esym;
-
 #ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 #else
