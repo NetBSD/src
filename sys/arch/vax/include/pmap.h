@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.9 1995/05/05 14:13:03 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.10 1995/05/11 16:53:14 jtc Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -83,7 +83,7 @@ typedef struct pv_entry {
 
 #define PHYS_TO_PV(phys_page) (&pv_table[((phys_page)>>PAGE_SHIFT)])
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 pv_entry_t	pv_table;		/* array of entries, 
 					   one per LOGICAL page */
 struct pmap	kernel_pmap_store;
@@ -93,7 +93,7 @@ struct pmap	kernel_pmap_store;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 
-#endif	KERNEL
+#endif	/* _KERNEL */
 
 /* Routines that are best to define as macros */
 #define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */

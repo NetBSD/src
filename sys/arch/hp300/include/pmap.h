@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 1995/04/10 12:41:59 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 1995/05/11 16:53:03 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -135,7 +135,7 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 #if defined(HP320) || defined(HP350)
 #define	HAVEVAC				/* include cheezy VAC support */
 #endif
