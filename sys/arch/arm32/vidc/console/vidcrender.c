@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.1 2001/02/21 00:53:36 reinoud Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.2 2001/02/27 20:23:13 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -70,6 +70,7 @@
 #include <machine/vidc.h>
 #include <machine/vconsole.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 
 #include <arm32/vidc/console/fonts/font_normal.h>
 #include <arm32/vidc/console/fonts/font_bold.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.41 2001/02/25 23:59:49 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.42 2001/02/27 20:23:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -81,6 +81,7 @@
 #include <machine/undefined.h>
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 
 #include "opt_ipkdb.h"
 

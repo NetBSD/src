@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.22 2001/02/27 19:57:51 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.23 2001/02/27 20:23:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -63,14 +63,13 @@
 #include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 #ifdef RC7500
 #include <arm32/vidc/lmc1982.h>
 #endif
 
 #include "beep.h"
 #include "locators.h"
-
-extern int *iomd_base;
 
 struct beep_softc {
 	struct device sc_device;

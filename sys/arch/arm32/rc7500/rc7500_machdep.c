@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.31 2001/02/25 23:59:49 reinoud Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.32 2001/02/27 20:23:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -76,6 +76,7 @@
 #include <machine/undefined.h>
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 
 #include "opt_ipkdb.h"
 
