@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.18 1997/01/11 10:58:12 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.19 1997/03/15 18:10:16 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -78,16 +78,17 @@
 #include "bpfilter.h"
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #if NBPFILTER > 0
 #include <sys/time.h>
 #include <net/bpf.h>
@@ -153,7 +154,7 @@ struct lpt_softc {
 #define	LPT_NOPRIME	0x40	/* don't prime on open */
 
 #if defined(INET) && defined(PLIP)
-	struct	arpcom	sc_arpcom;
+	struct	ethercom sc_ethercom;
 	u_char		*sc_ifbuf;
 	int		sc_ifierrs;	/* consecutive input errors */
 	int		sc_ifoerrs;	/* consecutive output errors */
@@ -290,7 +291,7 @@ lptopen(dev, flag, mode, p)
 		return EBUSY;
 
 #if defined(INET) && defined(PLIP)
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP)
+	if (sc->sc_ethercom.ec_if.if_flags & IFF_UP)
 		return EBUSY;
 #endif
 
@@ -446,7 +447,7 @@ lptintr(arg)
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 
 #if defined(INET) && defined(PLIP)
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_ethercom.ec_if.if_flags & IFF_UP) {
 		i8255->port_a &= ~LPA_ACKENABLE;
 		sc->sc_pending |= PLIP_IPENDING;
 		softintr(sc->sc_ifsoftint);
@@ -505,7 +506,7 @@ plipattach(sc, unit)
 	struct lpt_softc *sc;
 	int unit;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	sc->sc_ifbuf = NULL;
 	sprintf(ifp->if_xname, "plip%d", unit);
@@ -573,42 +574,37 @@ plipioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFADDR:
+		sdl = ifp->if_sadl;
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			if (!sc->sc_ifbuf)
 				sc->sc_ifbuf =
 					malloc(PLIPMTU + ifp->if_hdrlen,
 					       M_DEVBUF, M_WAITOK);
-			sc->sc_arpcom.ac_enaddr[0] = 0xfc;
-			sc->sc_arpcom.ac_enaddr[1] = 0xfc;
+			LLADDR(sdl)[0] = 0xfc;
+			LLADDR(sdl)[1] = 0xfc;
 			bcopy((caddr_t)&IA_SIN(ifa)->sin_addr,
-			      (caddr_t)&sc->sc_arpcom.ac_enaddr[2], 4);
+			      LLADDR(sdl)[2], 4);
 #if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;
-				sc->sc_arpcom.ac_enaddr[0] = 0xfd;
-				sc->sc_arpcom.ac_enaddr[1] = 0xfd;
+				LLADDR(sdl)[0] = 0xfd;
+				LLADDR(sdl)[1] = 0xfd;
 				for (i = sc->sc_adrcksum = 0; i < 5; i++)
-					sc->sc_adrcksum += sc->sc_arpcom.ac_enaddr[i];
+					sc->sc_adrcksum += LLADDR(sdl)[i];
 				sc->sc_adrcksum *= 2;
 			}
 #endif
 #if 0
-			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			    ifa = ifa->ifa_list.tqe_next)
-				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-				    sdl->sdl_family == AF_LINK) {
-					sdl->sdl_type = IFT_ETHER;
-					sdl->sdl_alen = ifp->if_addrlen;
-					bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-					      LLADDR(sdl), ifp->if_addrlen);
-					break;
-				}
+			if (sdl) {
+				sdl->sdl_type = IFT_ETHER;
+				sdl->sdl_alen = ifp->if_addrlen;
+			}
 #endif
 			ifp->if_flags |= IFF_RUNNING | IFF_UP;
 			sc->sc_i8255->port_control = LPT_IRQDISABLE;
 			sc->sc_i8255->port_b = 0;
 			sc->sc_i8255->port_a |= LPA_ACKENABLE;
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 		} else
 			error = EAFNOSUPPORT;
 		break;
@@ -741,7 +737,7 @@ static void
 plipinput(sc)
 	struct lpt_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m;
 	struct ether_header *eh;
@@ -764,11 +760,11 @@ plipinput(sc)
 
 		switch (minibuf[0]) {
 		case 0xfc:
-			p[0] = p[ 6] = ifp->ac_enaddr[0];
-			p[1] = p[ 7] = ifp->ac_enaddr[1];
-			p[2] = p[ 8] = ifp->ac_enaddr[2];
-			p[3] = p[ 9] = ifp->ac_enaddr[3];
-			p[4] = p[10] = ifp->ac_enaddr[4];
+			p[0] = p[ 6] = LLADDR(ifp->if_sadl)[0];
+			p[1] = p[ 7] = LLADDR(ifp->if_sadl)[1];
+			p[2] = p[ 8] = LLADDR(ifp->if_sadl)[2];
+			p[3] = p[ 9] = LLADDR(ifp->if_sadl)[3];
+			p[4] = p[10] = LLADDR(ifp->if_sadl)[4];
 			p += 5;
 			if ((cksum = plipreceive(i8255, p, 1)) < 0) goto err;
 			p += 6;
@@ -946,7 +942,7 @@ plipoutput(arg)
 	void *arg;
 {
 	struct lpt_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m0, *m;
 	u_char minibuf[4], cksum;

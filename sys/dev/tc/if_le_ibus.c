@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.3 1996/05/20 23:19:16 jonathan Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.4 1997/03/15 18:12:05 is Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -30,7 +30,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <dev/ic/am7990reg.h>

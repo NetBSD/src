@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.8 1995/03/08 02:56:52 cgd Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.9 1997/03/15 18:12:23 is Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -35,6 +35,8 @@
  *	@(#)if_arp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _IF_ARP_H_
+#define _IF_ARP_H_
 /*
  * Address Resolution Protocol.
  *
@@ -69,7 +71,13 @@ struct	arphdr {
 	u_int8_t  ar_tha[];	/* target hardware address */
 	u_int8_t  ar_tpa[];	/* target protocol address */
 #endif
+	u_int8_t  ar_remain[0];	/* minimum size, normally bigger */
+#define ar_sha(ap) (((ap)->ar_remain)+0)
+#define ar_spa(ap) (((ap)->ar_remain)+(ap)->ar_hln)
+#define ar_tha(ap) (((ap)->ar_remain)+(ap)->ar_hln+(ap)->ar_pln)
+#define ar_tpa(ap) (((ap)->ar_remain)+2*(ap)->ar_hln+(ap)->ar_pln)
 };
+
 
 /*
  * ARP ioctl request
@@ -85,3 +93,5 @@ struct arpreq {
 #define	ATF_PERM	0x04	/* permanent entry */
 #define	ATF_PUBL	0x08	/* publish entry (respond for other host) */
 #define	ATF_USETRAILERS	0x10	/* has requested trailers */
+
+#endif _IF_ARP_H_

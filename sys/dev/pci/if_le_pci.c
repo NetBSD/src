@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.14 1996/12/05 01:25:27 cgd Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.15 1997/03/15 18:12:00 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -53,10 +53,11 @@
 #include <vm/vm_param.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <vm/vm.h>
@@ -194,8 +195,8 @@ le_pci_attach(parent, self, aux)
 	/*
 	 * Extract the physical MAC address from the ROM.
 	 */
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
+	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
+		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.19 1997/02/12 17:57:39 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.20 1997/03/15 18:11:12 is Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -151,15 +151,14 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -200,9 +199,8 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
  */
 struct	qe_softc {
 	struct	device qe_dev;		/* Configuration common part	*/
-	struct	arpcom qe_ac;		/* Ethernet common part 	*/
-#define	qe_if	qe_ac.ac_if		/* network-visible interface 	*/
-#define	qe_addr	qe_ac.ac_enaddr		/* hardware Ethernet address 	*/
+	struct	ethercom qe_ec;		/* Ethernet common part 	*/
+#define	qe_if	qe_ec.ec_if		/* network-visible interface 	*/
 	struct	ifubinfo qe_uba;	/* Q-bus resources 		*/
 	struct	ifrw qe_ifr[NRCV]; /*	for receive buffers;	*/
 	struct	ifxmt qe_ifw[NXMT]; /*	for xmit buffers;	*/
@@ -360,6 +358,7 @@ qeattach(parent, self, aux)
 	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	struct qedevice *addr =(struct qedevice *)ua->ua_addr;
 	int i;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
 	sc->qe_vaddr = addr;
@@ -375,12 +374,12 @@ qeattach(parent, self, aux)
 	 * Read the address from the prom and save it.
 	 */
 	for (i = 0; i < 6; i++)
-		sc->setup_pkt[i][1] = sc->qe_addr[i] =
+		sc->setup_pkt[i][1] = myaddr[i] =
 		    addr->qe_sta_addr[i] & 0xff;
 	addr->qe_vector |= 1;
 	printf("qe%d: %s, hardware address %s\n", sc->qe_dev.dv_unit,
 		addr->qe_vector&01 ? "delqa":"deqna",
-		ether_sprintf(sc->qe_addr));
+		ether_sprintf(myaddr));
 	addr->qe_vector &= ~1;
 
 	/*
@@ -393,7 +392,7 @@ qeattach(parent, self, aux)
 	ifp->if_watchdog = qetimeout;
 	sc->qe_uba.iff_flags = UBA_CANTWAIT;
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 }
 
 /*
@@ -778,7 +777,7 @@ qeioctl(ifp, cmd, data)
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&sc->qe_ac, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -787,7 +786,8 @@ qeioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(sc->qe_addr);
+				ina->x_host = 
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				qe_setaddr(ina->x_host.c_host, sc);
 			break;
@@ -828,7 +828,8 @@ qe_setaddr(physaddr, sc)
 	register int i;
 
 	for (i = 0; i < 6; i++)
-		sc->setup_pkt[i][1] = sc->qe_addr[i] = physaddr[i];
+		sc->setup_pkt[i][1] = LLADDR(sc->qe_if.if_sadl)[i] 
+		    = physaddr[i];
 	sc->qe_flags |= QEF_SETADDR;
 	if (sc->qe_if.if_flags & IFF_RUNNING)
 		qesetup(sc);

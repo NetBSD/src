@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1997/02/04 03:52:16 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1997/03/15 18:09:49 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,7 +40,7 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <lib/libsa/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.22 1996/12/23 09:10:18 veego Exp $	*/
+/*	$NetBSD: if_le.c,v 1.23 1997/03/15 18:09:26 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -49,10 +49,11 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/cpu.h>
@@ -132,6 +133,7 @@ le_zbus_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct zbus_args *zap = aux;
 	u_long ser;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	lesc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
 	sc->sc_mem = (void *)(lestd[2] + (int)zap->va);
@@ -156,17 +158,17 @@ le_zbus_attach(parent, self, aux)
 	case 514:
 		/* Commodore */
 		sc->sc_memsize = 32768;
-		sc->sc_arpcom.ac_enaddr[0] = 0x00;
-		sc->sc_arpcom.ac_enaddr[1] = 0x80;
-		sc->sc_arpcom.ac_enaddr[2] = 0x10;
+		sc->sc_enaddr[0] = 0x00;
+		sc->sc_enaddr[1] = 0x80;
+		sc->sc_enaddr[2] = 0x10;
 		break;
 
 	case 1053:
 		/* Ameristar */
 		sc->sc_memsize = 32768;
-		sc->sc_arpcom.ac_enaddr[0] = 0x00;
-		sc->sc_arpcom.ac_enaddr[1] = 0x00;
-		sc->sc_arpcom.ac_enaddr[2] = 0x9f;
+		sc->sc_enaddr[0] = 0x00;
+		sc->sc_enaddr[1] = 0x00;
+		sc->sc_enaddr[2] = 0x9f;
 		break;
 
 	default:
@@ -177,9 +179,9 @@ le_zbus_attach(parent, self, aux)
 	 * Serial number for board is used as host ID.
 	 */
 	ser = (u_long)zap->serno;
-	sc->sc_arpcom.ac_enaddr[3] = (ser >> 16) & 0xff;
-	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8) & 0xff;
-	sc->sc_arpcom.ac_enaddr[5] = (ser      ) & 0xff;
+	sc->sc_enaddr[3] = (ser >> 16) & 0xff;
+	sc->sc_enaddr[4] = (ser >>  8) & 0xff;
+	sc->sc_enaddr[5] = (ser      ) & 0xff;
 
 	am7990_config(sc);
 

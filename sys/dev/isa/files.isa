@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.26 1997/02/07 17:37:34 mycroft Exp $
+#	$NetBSD: files.isa,v 1.27 1997/03/15 18:11:37 is Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -128,17 +128,17 @@ file	dev/isa/elink.c			elink
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-device	ed: ether, ifnet
+device	ed: ether, ifnet, arp
 attach	ed at isa
 file	dev/isa/if_ed.c			ed
 
 # 3Com 3C505
-device	eg: ether, ifnet
+device	eg: ether, ifnet, arp
 attach	eg at isa
 file	dev/isa/if_eg.c			eg
 
 # 3Com 3C501
-device	el: ether, ifnet
+device	el: ether, ifnet, arp
 attach	el at isa
 file	dev/isa/if_el.c			el
 
@@ -148,31 +148,31 @@ file	dev/isa/if_ep_isa.c		ep_isa
 
 # Fujitsu MB8696[05]-based boards
 # (Allied Telesis AT1700)
-device	fe: ether, ifnet
+device	fe: ether, ifnet, arp
 attach	fe at isa
 file	dev/isa/if_fe.c			fe
 
 # HP Lan Ethernet controllers
 # XXX currently broken
-#device hp: ether, ifnet
+#device hp: ether, ifnet, arp
 #attach	hp at isa
 #file	dev/isa/if_hp.c			hp
 
 # Intel i82586-based boards
 # (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
-device	ie: ether, ifnet, elink
+device	ie: ether, ifnet, elink, arp
 attach	ie at isa
 file	dev/isa/if_ie.c			ie
 
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO)
-device  iy: ether, ifnet         
+device  iy: ether, ifnet, arp
 attach	iy at isa
 file    dev/isa/if_iy.c			iy
 
 # XXX ???
 # XXX NOT IN TREE?
-#device	ix: ether, ifnet
+#device	ix: ether, ifnet, arp
 #attach	ix at isa
 #file	dev/isa/if_ix.c			ix
 

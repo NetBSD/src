@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.24 1997/01/15 18:19:35 gwr Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.2 1997/03/15 18:12:25 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,18 +54,7 @@ struct	ether_header {
 	u_int16_t ether_type;
 };
 
-#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
-#define	ETHERTYPE_IP		0x0800	/* IP protocol */
-#define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
-#define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
-
-/*
- * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
- * (type-ETHERTYPE_TRAIL)*512 bytes of data followed
- * by an ETHER type (as given above) and then the (variable-length) header.
- */
-#define	ETHERTYPE_TRAIL		0x1000		/* Trailer packet */
-#define	ETHERTYPE_NTRAILER	16
+#include <net/ethertypes.h>
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
 
@@ -92,92 +81,37 @@ struct	ether_header {
 #endif
 
 /*
- * Ethernet Address Resolution Protocol.
- *
- * See RFC 826 for protocol description.  Structure below is adapted
- * to resolving internet addresses.  Field names used correspond to 
- * RFC 826.
- */
-struct	ether_arp {
-	struct	 arphdr ea_hdr;			/* fixed-size header */
-	u_int8_t arp_sha[ETHER_ADDR_LEN];	/* sender hardware address */
-	u_int8_t arp_spa[4];			/* sender protocol address */
-	u_int8_t arp_tha[ETHER_ADDR_LEN];	/* target hardware address */
-	u_int8_t arp_tpa[4];			/* target protocol address */
-};
-#define	arp_hrd	ea_hdr.ar_hrd
-#define	arp_pro	ea_hdr.ar_pro
-#define	arp_hln	ea_hdr.ar_hln
-#define	arp_pln	ea_hdr.ar_pln
-#define	arp_op	ea_hdr.ar_op
-
-/*
  * Structure shared between the ethernet driver modules and
- * the address resolution code.  For example, each ec_softc or il_softc
+ * the multicast list code.  For example, each ec_softc or il_softc
  * begins with this structure.
  */
-struct	arpcom {
-	struct	 ifnet ac_if;			/* network-visible interface */
-	u_int8_t ac_enaddr[ETHER_ADDR_LEN];	/* ethernet hardware address */
-	char	 ac__pad[2];			/* be nice to m68k ports */
-	LIST_HEAD(, ether_multi) ac_multiaddrs;	/* list of ether multicast addrs */
-	int	 ac_multicnt;			/* length of ac_multiaddrs list */
+struct	ethercom {
+	struct	 ifnet ec_if;			/* network-visible interface */
+	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast addrs */
+	int	 ec_multicnt;			/* length of ac_multiaddrs list */
 };
-
-struct llinfo_arp {
-	LIST_ENTRY(llinfo_arp) la_list;
-	struct	rtentry *la_rt;
-	struct	mbuf *la_hold;		/* last packet until resolved/timeout */
-	long	la_asked;		/* last time we QUERIED for this addr */
-#define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
-};
-
-struct sockaddr_inarp {
-	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
-	struct	  in_addr sin_addr;
-	struct	  in_addr sin_srcaddr;
-	u_int16_t sin_tos;
-	u_int16_t sin_other;
-#define SIN_PROXY 1
-};
-
-/*
- * IP and ethernet specific routing flags
- */
-#define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
-#define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
 #ifdef	_KERNEL
 u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
-struct	ifqueue arpintrq;
 
-void	arpwhohas __P((struct arpcom *, struct in_addr *));
-void	arpintr __P((void));
-int	arpresolve __P((struct arpcom *,
-	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
-void	arp_ifinit __P((struct arpcom *, struct ifaddr *));
-void	arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-
-int	ether_addmulti __P((struct ifreq *, struct arpcom *));
-int	ether_delmulti __P((struct ifreq *, struct arpcom *));
+int	ether_addmulti __P((struct ifreq *, struct ethercom *));
+int	ether_delmulti __P((struct ifreq *, struct ethercom *));
 #endif /* _KERNEL */
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
  * multicast address or range of multicast addresses that we are supposed
  * to listen to on a particular interface.  They are kept in a linked list,
- * rooted in the interface's arpcom structure.  (This really has nothing to
+ * rooted in the interface's ethercom structure.  (This really has nothing to
  * do with ARP, or with the Internet address family, but this appears to be
  * the minimally-disrupting place to put it.)
  */
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	struct	 arpcom *enm_ac;	/* back pointer to arpcom */
+	struct	 ethercom *enm_ec;	/* back pointer to ethercom */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
@@ -192,16 +126,16 @@ struct ether_multistep {
 
 /*
  * Macro for looking up the ether_multi record for a given range of Ethernet
- * multicast addresses connected to a given arpcom structure.  If no matching
+ * multicast addresses connected to a given ethercom structure.  If no matching
  * record is found, "enm" returns NULL.
  */
-#define ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm)			\
+#define ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm)			\
 	/* u_int8_t addrlo[ETHER_ADDR_LEN]; */				\
 	/* u_int8_t addrhi[ETHER_ADDR_LEN]; */				\
-	/* struct arpcom *ac; */					\
+	/* struct ethercom *ec; */					\
 	/* struct ether_multi *enm; */					\
 {									\
-	for ((enm) = (ac)->ac_multiaddrs.lh_first;			\
+	for ((enm) = (ec)->ec_multiaddrs.lh_first;			\
 	    (enm) != NULL &&						\
 	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
 	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
@@ -223,28 +157,26 @@ struct ether_multistep {
 		(step).e_enm = (enm)->enm_list.le_next; \
 }
 
-#define ETHER_FIRST_MULTI(step, ac, enm) \
+#define ETHER_FIRST_MULTI(step, ec, enm) \
 	/* struct ether_multistep step; */ \
-	/* struct arpcom *ac; */ \
+	/* struct ethercom *ec; */ \
 	/* struct ether_multi *enm; */ \
 { \
-	(step).e_enm = (ac)->ac_multiaddrs.lh_first; \
+	(step).e_enm = (ec)->ec_multiaddrs.lh_first; \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 
-#ifdef _KERNEL
-
-void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-int arpresolve __P((struct arpcom *, struct rtentry *, struct mbuf *,
-		    struct sockaddr *, u_char *));
-void arpintr __P((void));
-int arpioctl __P((u_long, caddr_t));
-void arp_ifinit __P((struct arpcom *, struct ifaddr *));
-void revarpinput __P((struct mbuf *));
-void in_revarpinput __P((struct mbuf *));
-void revarprequest __P((struct ifnet *));
-int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
-int revarpwhoami __P((struct in_addr *, struct ifnet *));
-int db_show_arptab __P((void));
-
+/*
+ * Prototype ethers(3) functions.
+ */
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+__BEGIN_DECLS
+char *	ether_ntoa __P((struct ether_addr *));
+struct ether_addr *
+	ether_aton __P((char *));
+int	ether_ntohost __P((char *, struct ether_addr *));
+int	ether_hostton __P((char *, struct ether_addr *));
+int	ether_line __P((char *, struct ether_addr *, char *));
+__END_DECLS
 #endif

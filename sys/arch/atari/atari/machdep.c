@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1997/03/10 14:44:27 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1997/03/15 18:09:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1142,7 +1142,7 @@ badbaddr(addr, size)
 /*
  * Network interrupt handling
  */
-#include "ether.h"
+#include "arp.h"
 #include "ppp.h"
 
 #ifdef NPPP
@@ -1151,7 +1151,7 @@ void	pppintr __P((void));
 #ifdef INET
 void	ipintr __P((void));
 #endif
-#if NETHER > 0
+#if NARP > 0
 void	arpintr __P((void));
 #endif
 #ifdef NS
@@ -1165,7 +1165,7 @@ static void
 netintr()
 {
 #ifdef INET
-#if NETHER > 0
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();

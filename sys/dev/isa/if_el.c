@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.43 1996/10/21 22:40:53 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.44 1997/03/15 18:11:41 is Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -33,12 +33,14 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
+#include <net/if_ether.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -76,7 +78,7 @@ struct el_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-	struct arpcom sc_arpcom;	/* ethernet common */
+	struct ethercom sc_ethercom;	/* ethernet common */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
 };
@@ -190,7 +192,8 @@ elattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 	u_int8_t i;
 
 	printf("\n");
@@ -214,7 +217,7 @@ elattach(parent, self, aux)
 	/* Now read the address. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		bus_space_write_1(iot, ioh, EL_GPBL, i);
-		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, EL_EAW);
+		myaddr[i] = bus_space_read_1(iot, ioh, EL_EAW);
 	}
 
 	/* Stop the board. */
@@ -231,11 +234,10 @@ elattach(parent, self, aux)
 	/* Now we can attach the interface. */
 	DPRINTF(("Attaching interface...\n"));
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 	/* Print out some information for the user. */
-	printf("%s: address %s\n", self->dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("%s: address %s\n", self->dv_xname, ether_sprintf(myaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
 #if NBPFILTER > 0
@@ -293,7 +295,8 @@ el_hardreset(sc)
 	bus_space_write_1(iot, ioh, EL_AC, 0);
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		bus_space_write_1(iot, ioh, i, sc->sc_arpcom.ac_enaddr[i]);
+		bus_space_write_1(iot, ioh, i,
+		    LLADDR(sc->sc_ethercom.ec_if.if_sadl)[i]);
 }
 
 /*
@@ -303,7 +306,7 @@ void
 elinit(sc)
 	struct el_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -517,7 +520,7 @@ elintr(arg)
 			DPRINTF(("overflow.\n"));
 			el_hardreset(sc);
 			/* Put board back into receive mode. */
-			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
+			if (sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC)
 				bus_space_write_1(iot, ioh, EL_RXC,
 				    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
 				    EL_RXC_DOFLOW | EL_RXC_PROMISC);
@@ -559,7 +562,7 @@ elread(sc, len)
 	register struct el_softc *sc;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -598,7 +601,7 @@ elread(sc, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -621,7 +624,7 @@ elget(sc, totlen)
 	struct el_softc *sc;
 	int totlen;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *top, **mp, *m;
@@ -690,7 +693,7 @@ elioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			elinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -701,11 +704,10 @@ elioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			elinit(sc);
 			break;
@@ -761,7 +763,7 @@ elwatchdog(ifp)
 	struct el_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	sc->sc_arpcom.ac_if.if_oerrors++;
+	sc->sc_ethercom.ec_if.if_oerrors++;
 
 	elreset(sc);
 }

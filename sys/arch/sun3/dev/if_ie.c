@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.19 1997/03/10 21:45:01 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.20 1997/03/15 18:10:49 is Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -113,8 +113,7 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -126,7 +125,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -374,7 +373,7 @@ ie_attach(sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, sc->sc_addr);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
@@ -463,7 +462,7 @@ iewatchdog(ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_if.if_oerrors;
+	++ifp->if_oerrors;
 	iereset(sc);
 }
 
@@ -606,8 +605,10 @@ void
 ietint(sc)
 	struct ie_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp;
 	int status;
+
+	ifp = &sc->sc_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -707,7 +708,10 @@ check_eh(sc, eh, to_bpf)
 	struct ether_header *eh;
 	int *to_bpf;
 {
+	struct ifnet *ifp;
 	int i;
+
+	ifp = &sc->sc_if;
 
 	switch (sc->promisc) {
 	case IFF_ALLMULTI:
@@ -717,11 +721,11 @@ check_eh(sc, eh, to_bpf)
 		 */
 #if NBPFILTER > 0
 		/* BPF gets this packet if anybody cares */
-		*to_bpf = (sc->sc_if.if_bpf != 0);
+		*to_bpf = (ifp->if_bpf != 0);
 #endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
-		if (ether_equal(eh->ether_dhost, sc->sc_addr))
+		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
 			return 1;
 		return 0;
 
@@ -730,10 +734,10 @@ check_eh(sc, eh, to_bpf)
 		 * Receiving all packets.  These need to be passed on to BPF.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_if.if_bpf != 0);
+		*to_bpf = (ifp->if_bpf != 0);
 #endif
 		/* If for us, accept and hand up to BPF */
-		if (ether_equal(eh->ether_dhost, sc->sc_addr))
+		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
 			return 1;
 
 #if NBPFILTER > 0
@@ -769,14 +773,14 @@ check_eh(sc, eh, to_bpf)
 		 * time.  Whew!  (Hope this is a fast machine...)
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_if.if_bpf != 0);
+		*to_bpf = (ifp->if_bpf != 0);
 #endif
 		/* We want to see multicasts. */
 		if (eh->ether_dhost[0] & 1)
 			return 1;
 
 		/* We want to see our own packets */
-		if (ether_equal(eh->ether_dhost, sc->sc_addr))
+		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
 			return 1;
 
 		/* Anything else goes to BPF but nothing else. */
@@ -796,7 +800,7 @@ check_eh(sc, eh, to_bpf)
 		 * as quickly as possible.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_if.if_bpf != 0);
+		*to_bpf = (ifp->if_bpf != 0);
 #endif
 		return 1;
 	}
@@ -860,6 +864,9 @@ static void
 iexmit(sc)
 	struct ie_softc *sc;
 {
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_if;
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_XMIT)
@@ -872,8 +879,8 @@ iexmit(sc)
 	 * If BPF is listening on this interface, let it see the packet before
 	 * we push it on the wire.
 	 */
-	if (sc->sc_if.if_bpf)
-		bpf_tap(sc->sc_if.if_bpf,
+	if (ifp->if_bpf)
+		bpf_tap(ifp->if_bpf,
 		    sc->xmit_cbuffs[sc->xctail],
 		    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags));
 #endif
@@ -895,7 +902,7 @@ iexmit(sc)
 	    vtop16sw(sc, (void*) sc->xmit_cmds[sc->xctail]);
 	cmd_and_wait(sc, IE_CU_START, 0, 0);
 
-	sc->sc_if.if_timer = 5;
+	ifp->if_timer = 5;
 }
 
 /*
@@ -1525,7 +1532,9 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
+	struct ifnet *ifp;
 
+	ifp = &sc->sc_if;
 	ptr = sc->buf_area;	/* XXX - Use scb instead? */
 
 	/*
@@ -1560,7 +1569,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->sc_bcopy)(sc->sc_addr,
+		(sc->sc_bcopy)(LLADDR(ifp->if_sadl),
 		    (caddr_t)&cmd->ie_address, sizeof(cmd->ie_address));
 
 		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1588,8 +1597,8 @@ ieinit(sc)
 	iememinit(sc);
 
 	/* tell higher levels that we are here */
-	sc->sc_if.if_flags |= IFF_RUNNING;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	sc->scb->ie_recv_list =
 	    vtop16sw(sc, (void*) sc->rframes[0]);
@@ -1633,7 +1642,7 @@ ieioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			ieinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1644,11 +1653,10 @@ ieioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_addr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_addr,
-				    sizeof(sc->sc_addr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			/* Set new address. */
 			ieinit(sc);
 			break;
@@ -1697,8 +1705,8 @@ ieioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1723,17 +1731,20 @@ mc_reset(sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_if;
 
 	/*
 	 * Step through the list of addresses.
 	 */
 	sc->mcast_count = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
+	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 	while (enm) {
 		if (sc->mcast_count >= MAXMCAST ||
 		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_if.if_flags |= IFF_ALLMULTI;
-			ieioctl(&sc->sc_if, SIOCSIFFLAGS, (void *)0);
+			ifp->if_flags |= IFF_ALLMULTI;
+			ieioctl(ifp, SIOCSIFFLAGS, (void *)0);
 			goto setflag;
 		}
 		bcopy(enm->enm_addrlo, &sc->mcast_addrs[sc->mcast_count], 6);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.11 1996/10/13 02:10:58 christos Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.12 1997/03/15 18:12:22 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -56,12 +56,16 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_arp.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #endif
 #include <netinet/if_arc.h>
+
+#define ARCNET_ALLOW_BROKEN_ARP
 
 #ifndef	ARC_PHDSMTU
 #define	ARC_PHDSMTU	1500
@@ -101,7 +105,7 @@ arc_output(ifp, m0, dst, rt0)
 	struct arccom		*ac;
 	register struct arc_header *ah;
 	int			s, error, newencoding;
-	u_int8_t		atype, adst;
+	u_int8_t		atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
@@ -111,6 +115,8 @@ arc_output(ifp, m0, dst, rt0)
 	ac = (struct arccom *)ifp;
 	m = m0;
 	mcopy = m1 = NULL;
+
+	myself = *LLADDR(ifp->if_sadl);
 
 	ifp->if_lastchange = time;
 	if ((rt = rt0)) {
@@ -145,8 +151,10 @@ arc_output(ifp, m0, dst, rt0)
 		 */
 		if (m->m_flags & (M_BCAST|M_MCAST)) 
 			adst = arcbroadcastaddr; /* ARCnet broadcast address */
-		else
+		else if (ifp->if_flags & IFF_NOARP)
 			adst = ntohl(SIN(dst)->sin_addr.s_addr) & 0xFF;
+		else if (!arpresolve(ifp, rt, m, dst, &adst))
+			return 0;	/* not resolved yet */
 
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) && 
@@ -159,6 +167,50 @@ arc_output(ifp, m0, dst, rt0)
 			atype = ARCTYPE_IP_OLD;
 			newencoding = 0;
 		}
+		break;
+
+	case AF_ARP:
+		ah = mtod(m, struct arphdr *);
+		if (m->m_flags & M_BCAST)
+			adst = arcbroadcastaddr;
+		else
+			adst = *ar_tha(ah);
+
+		switch(ntohs(ah->ar_op)) {
+		case ARPOP_REVREQUEST:
+		case ARPOP_REVREPLY:
+			if (!(ifp->if_flags & IFF_LINK0)) {
+				printf("%s: can't handle af%d\n",
+				    ifp->if_xname, dst->sa_family);
+				senderr(EAFNOSUPPORT);
+			}
+
+			atype = htons(ARCTYPE_REVARP);
+			newencoding = 1;
+			break;
+
+		case ARPOP_REQUEST:
+		case ARPOP_REPLY:
+		default:
+			if (ifp->if_flags & IFF_LINK0) {
+				atype = htons(ARCTYPE_ARP);
+				newencoding = 1;
+			} else {
+				atype = htons(ARCTYPE_ARP_OLD);
+				newencoding = 0;
+			}
+		}
+#ifdef ARCNET_ALLOW_BROKEN_ARP
+		/*
+		 * XXX It's not clear per RFC826 if this is needed, but
+		 * "assigned numbers" say this is wrong.
+		 * However, e.g., AmiTCP 3.0Beta used it... we make this
+		 * switchable for emergency cases. Not perfect, but...
+		 */
+		if (ifp->if_flags & IFF_LINK2) {
+			ah->ar_pro = atype;
+		}
+#endif
 		break;
 #endif
 
@@ -206,7 +258,7 @@ arc_output(ifp, m0, dst, rt0)
 			ah = mtod(m, struct arc_header *);
 			ah->arc_type = atype;
 			ah->arc_dhost = adst;
-			ah->arc_shost = ac->ac_anaddr;
+			ah->arc_shost = myself;
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
@@ -257,7 +309,7 @@ arc_output(ifp, m0, dst, rt0)
 		}
 
 		ah->arc_dhost = adst;
-		ah->arc_shost = ac->ac_anaddr;
+		ah->arc_shost = myself;
 	} else {
 		M_PREPEND(m, ARC_HDRLEN, M_DONTWAIT);
 		if (m == 0)
@@ -265,7 +317,7 @@ arc_output(ifp, m0, dst, rt0)
 		ah = mtod(m, struct arc_header *);
 		ah->arc_type = atype;
 		ah->arc_dhost = adst;
-		ah->arc_shost = ac->ac_anaddr;
+		ah->arc_shost = myself;
 	}
 
 	s = splimp();
@@ -505,6 +557,24 @@ arc_input(ifp, m)
 		schednetisr(NETISR_IP);
 		inq = &ipintrq;
 		break;
+
+	case ARCTYPE_ARP:
+		m_adj(m, ARC_HDRNEWLEN);
+		schednetisr(NETISR_ARP);
+		inq = &arpintrq;
+#ifdef ARCNET_ALLOW_BROKEN_ARP
+		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_ARP);
+#endif
+		break;
+
+	case ARCTYPE_ARP_OLD:
+		m_adj(m, ARC_HDRLEN);
+		schednetisr(NETISR_ARP);
+		inq = &arpintrq;
+#ifdef ARCNET_ALLOW_BROKEN_ARP
+		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_ARP);
+#endif
+		break;
 #endif
 	default:
 		m_freem(m);
@@ -541,8 +611,9 @@ arc_sprintf(ap)
  * Perform common duties while attaching to interface list
  */
 void
-arc_ifattach(ifp)
+arc_ifattach(ifp, lla)
 	register struct ifnet *ifp;
+	u_int8_t lla;
 {
 	register struct ifaddr *ifa;
 	register struct sockaddr_dl *sdl;
@@ -561,19 +632,15 @@ arc_ifattach(ifp)
 	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
 	ac = (struct arccom *)ifp;
 	ac->ac_seqid = (time.tv_sec) & 0xFFFF; /* try to make seqid unique */
-	if (ac->ac_anaddr == 0) {
+	if (lla == 0) {
 		/* XXX this message isn't entirely clear, to me -- cgd */
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
 		   ifp->if_xname, ifp->if_xname); 
 	}
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_ARCNET;
-			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy((caddr_t)&((struct arccom *)ifp)->ac_anaddr,
-			      LLADDR(sdl), ifp->if_addrlen);
-			break;
-		}
+	if ((sdl = ifp->if_sadl) &&
+	   sdl->sdl_family == AF_LINK) {
+		sdl->sdl_type = IFT_ARCNET;
+		sdl->sdl_alen = ifp->if_addrlen;
+		bcopy((caddr_t)&lla, LLADDR(sdl), ifp->if_addrlen);
+	}
 }

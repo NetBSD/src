@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.12 1996/10/14 23:50:20 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.13 1997/03/15 18:09:36 is Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -64,13 +64,14 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -125,7 +126,7 @@ struct ea_softc {
 	podule_t *sc_podule;		/* Our podule */
 	int sc_podule_number;		/* Our podule number */
 	u_int sc_iobase;		/* base I/O addr */
-	struct arpcom sc_arpcom;	/* ethernet common */
+	struct ethercom sc_ethercom;	/* Ethernet common */
 	char sc_pktbuf[EA_BUFSIZ]; 	/* frame buffer */
 	int sc_config1;			/* Current config1 bits */
 	int sc_config2;			/* Current config2 bits */
@@ -281,9 +282,10 @@ eaattach(parent, self, aux)
 {
 	struct ea_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int loop;
 	int sum;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
@@ -305,9 +307,9 @@ eaattach(parent, self, aux)
 	WriteShort(sc->sc_iobase + EA_8005_CONFIG1, EA_BUFCODE_STATION_ADDR0);
 	
 	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		sc->sc_arpcom.ac_enaddr[loop] =
+		myaddr[loop] =
 		    ReadByte(sc->sc_iobase + EA_8005_BUFWIN);
-		sum += sc->sc_arpcom.ac_enaddr[loop];
+		sum += myaddr[loop];
 	}
 
 /*
@@ -318,17 +320,17 @@ eaattach(parent, self, aux)
  */
 
 	if (sum == 0) {
-		sc->sc_arpcom.ac_enaddr[0] = 0x00;
-		sc->sc_arpcom.ac_enaddr[1] = 0x00;
-		sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
-		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
-		sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
-		sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
+		myaddr[0] = 0x00;
+		myaddr[1] = 0x00;
+		myaddr[2] = bootconfig.machine_id[3];
+		myaddr[3] = bootconfig.machine_id[2];
+		myaddr[4] = bootconfig.machine_id[1];
+		myaddr[5] = bootconfig.machine_id[0];
 	}
 
 	/* Print out some information for the user. */
 
-	printf(" SEEQ8005 address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(" SEEQ8005 address %s", ether_sprintf(myaddr));
 
 	sc->sc_irqclaimed = 0;
 
@@ -367,7 +369,7 @@ eaattach(parent, self, aux)
 
 /*	dprintf(("Attaching interface...\n"));*/
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 	/* Finally, attach to bpf filter if it is present. */
 
@@ -661,7 +663,7 @@ ea_stop(sc)
 
 	/* Cancel any watchdog timer */
 	
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 
@@ -699,7 +701,9 @@ ea_hardreset(sc)
 	struct ea_softc *sc;
 {
 	u_int iobase = sc->sc_iobase;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int loop;
+	
 
 	dprintf(("ea_hardreset()\n"));
 
@@ -727,7 +731,8 @@ ea_hardreset(sc)
 	WriteShort(sc->sc_iobase + EA_8005_CONFIG1,
 	    sc->sc_config1 | EA_BUFCODE_STATION_ADDR0);
 	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		WriteByte(sc->sc_iobase + EA_8005_BUFWIN, sc->sc_arpcom.ac_enaddr[loop]);
+		WriteByte(sc->sc_iobase + EA_8005_BUFWIN,
+		    LLADDR(ifp->if_sadl)[loop]);
 	}
 }
 
@@ -846,7 +851,7 @@ static int
 ea_init(sc)
 	struct ea_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int iobase = sc->sc_iobase;
 	int s;
 
@@ -947,12 +952,12 @@ ea_start(ifp)
 
 	/* Don't do anything if output is active. */
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
 	/* Mark interface as output active */
 	
-	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+	ifp->if_flags |= IFF_OACTIVE;
 
 	/* tx packets */
 
@@ -973,16 +978,19 @@ eatxpacket(sc)
 {
 	u_int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
+	struct ifnet *ifp;
 	int len;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 /* Dequeue the next datagram. */
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+	IF_DEQUEUE(&ifp->if_snd, m0);
 
 /* If there's nothing to send, return. */
 
 	if (!m0) {
-		sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_config2 |= EA_CFG2_OUTPUT;
 		WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 #ifdef EA_TX_DEBUG
@@ -993,8 +1001,8 @@ eatxpacket(sc)
 
 	/* Give the packet to the bpf, if any. */
 #if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
 #ifdef EA_TX_DEBUG
@@ -1134,9 +1142,9 @@ eaintr(arg)
  */
 
 		if (txstatus & EA_TXHDR_COLLISION) {
-			sc->sc_arpcom.ac_if.if_collisions++;
+			ifp->if_collisions++;
 		} else if (txstatus & EA_TXHDR_ERROR_MASK) {
-			sc->sc_arpcom.ac_if.if_oerrors++;
+			ifp->if_oerrors++;
 		}
 
 /*		if (txstatus & EA_TXHDR_ERROR_MASK) {
@@ -1144,7 +1152,7 @@ eaintr(arg)
 		}*/
 
 		if (txstatus & EA_PKTHDR_DONE) {
-			sc->sc_arpcom.ac_if.if_opackets++;
+			ifp->if_opackets++;
 
 			/* Tx next packet */
 
@@ -1166,7 +1174,7 @@ eaintr(arg)
 
 /* Install a watchdog timer needed atm to fixed rx lockups */
 
-		sc->sc_arpcom.ac_if.if_timer = EA_TIMEOUT;
+		ifp->if_timer = EA_TIMEOUT;
 
 /* Processes the received packets */
 		eagetpackets(sc);
@@ -1201,6 +1209,9 @@ eagetpackets(sc)
 	int pack;
 	int status;
 	u_int rxstatus;
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 /* We start from the last rx pointer position */
 
@@ -1247,7 +1258,7 @@ eagetpackets(sc)
 /* Did we have any errors ? then note error and go to next packet */
 
 		if (status & 0x0f) {
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++ifp->if_ierrors;
 			printf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
 /*			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
@@ -1260,7 +1271,7 @@ eagetpackets(sc)
 /* Is the packet too big ? - this will probably be trapped above as a receive error */
 
 		if (len > ETHER_MAX_LEN) {
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++ifp->if_ierrors;
 			printf("rx packet size error len=%d\n", len);
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
@@ -1276,7 +1287,7 @@ eagetpackets(sc)
 		dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
 		dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
 #endif
-		sc->sc_arpcom.ac_if.if_ipackets++;
+		ifp->if_ipackets++;
 		/* Pass data up to upper levels. */
 		earead(sc, (caddr_t)sc->sc_pktbuf, len);
 
@@ -1316,14 +1327,16 @@ earead(sc, buf, len)
 {
 	register struct ether_header *eh;
 	struct mbuf *m;
+	struct ifnet *ifp;
 
+	ifp = &sc->sc_ethercom.ec_if;
 	eh = (struct ether_header *)buf;
 	len -= sizeof(struct ether_header);
 	if (len <= 0)
 		return;
 
 	/* Pull packet off interface. */
-	m = eaget(buf, len, &sc->sc_arpcom.ac_if);
+	m = eaget(buf, len, ifp);
 	if (m == 0)
 		return;
 
@@ -1332,18 +1345,18 @@ earead(sc, buf, len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_tap(sc->sc_arpcom.ac_if.if_bpf, buf, len + sizeof(struct ether_header));
-/*		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);*/
+	if (ifp->if_bpf) {
+		bpf_tap(ifp->if_bpf, buf, len + sizeof(struct ether_header));
+/*		bpf_mtap(ifp->if_bpf, m);*/
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1351,7 +1364,7 @@ earead(sc, buf, len)
 	}
 #endif
 
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -1448,7 +1461,7 @@ ea_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			dprintf(("Interface ea is coming up (AF_INET)\n"));
 			ea_init(sc);
 			break;
@@ -1461,11 +1474,10 @@ ea_ioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			/* Set new address. */
 			dprintf(("Interface ea is coming up (AF_NS)\n"));
 			ea_init(sc);
@@ -1536,7 +1548,7 @@ ea_watchdog(ifp)
 	struct ea_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	sc->sc_arpcom.ac_if.if_oerrors++;
+	ifp->if_oerrors++;
 	dprintf(("ea_watchdog: "));
 	dprintf(("st=%04x\n", ReadShort(sc->sc_iobase + EA_8005_STATUS)));
 
@@ -1544,8 +1556,8 @@ ea_watchdog(ifp)
 
 	ea_reinit(sc);
 
-/*	sc->sc_arpcom.ac_if.if_timer = EA_TIMEOUT;*/
-	sc->sc_arpcom.ac_if.if_timer = 0;
+/*	ifp->if_timer = EA_TIMEOUT;*/
+	ifp->if_timer = 0;
 }
 
 /* End of if_ea.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 1997/03/15 18:10:10 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,7 +82,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 
 #include "ppp.h"

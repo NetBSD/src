@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.11 1997/03/15 18:09:28 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -91,15 +91,14 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -132,7 +131,7 @@
 struct	qn_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
-	struct	arpcom sc_arpcom;	/* Common ethernet structures */
+	struct	ethercom sc_ethercom;	/* Common ethernet structures */
 	u_char	volatile *sc_base;
 	u_char	volatile *sc_nic_base;
 	u_short	volatile *nic_fifo;
@@ -213,7 +212,8 @@ qnattach(parent, self, aux)
 {
 	struct zbus_args *zap;
 	struct qn_softc *sc = (struct qn_softc *)self;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	zap = (struct zbus_args *)aux;
 
@@ -234,12 +234,12 @@ qnattach(parent, self, aux)
 	 * The ethernet address of the board (1st three bytes are the vendor
 	 * address, the rest is the serial number of the board).
 	 */
-	sc->sc_arpcom.ac_enaddr[0] = 0x5c;
-	sc->sc_arpcom.ac_enaddr[1] = 0x5c;
-	sc->sc_arpcom.ac_enaddr[2] = 0x00;
-	sc->sc_arpcom.ac_enaddr[3] = (zap->serno >> 16) & 0xff;
-	sc->sc_arpcom.ac_enaddr[4] = (zap->serno >> 8) & 0xff;
-	sc->sc_arpcom.ac_enaddr[5] = zap->serno & 0xff;
+	myaddr[0] = 0x5c;
+	myaddr[1] = 0x5c;
+	myaddr[2] = 0x00;
+	myaddr[3] = (zap->serno >> 16) & 0xff;
+	myaddr[4] = (zap->serno >> 8) & 0xff;
+	myaddr[5] = zap->serno & 0xff;
 
 	/* set interface to stopped condition (reset) */
 	qnstop(sc);
@@ -256,10 +256,10 @@ qnattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 #ifdef QN_DEBUG
-	printf(": hardware address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": hardware address %s\n", ether_sprintf(myaddr));
 #endif
 
 #if NBPFILTER > 0
@@ -280,14 +280,14 @@ void
 qninit(sc)
 	struct qn_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short i;
 	static retry = 0;
 
 	*sc->nic_r_mask   = NIC_R_MASK;
 	*sc->nic_t_mode   = NO_LOOPBACK;
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) {
+	if (sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) {
 		*sc->nic_r_mode = PROMISCUOUS_MODE;
 		log(LOG_INFO, "qn: Promiscuous mode (not tested)\n");
 	} else
@@ -297,8 +297,8 @@ qninit(sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		*((u_short volatile *)(sc->sc_nic_base+
 				       QNET_HARDWARE_ADDRESS+2*i)) =
-		    ((((u_short)sc->sc_arpcom.ac_enaddr[i]) << 8) |
-		    sc->sc_arpcom.ac_enaddr[i]);
+		    ((((u_short)LLADDR(ifp->if_sadl)[i]) << 8) |
+		    LLADDR(ifp->if_sadl)[i]);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -330,7 +330,7 @@ qnwatchdog(ifp)
 	struct qn_softc *sc = ifp->if_softc;
 
 	log(LOG_INFO, "qn: device timeout (watchdog)\n");
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	qnreset(sc);
 }
@@ -419,7 +419,7 @@ qnstart(ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == 0)
 		return;
 
@@ -460,7 +460,7 @@ qnstart(ifp)
 	sc->transmit_pending = 1;
 	*sc->nic_t_mask = INT_TMT_OK | INT_SIXTEEN_COL;
 
-	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+	ifp->if_flags |= IFF_OACTIVE;
 	ifp->if_timer = 2;
 }
 
@@ -581,7 +581,7 @@ qn_get_packet(sc, len)
 	if (len & 1)
 		len++;
 
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
@@ -634,10 +634,10 @@ qn_get_packet(sc, len)
 		 * no BPF listeners. And in prom. mode we have to check
 		 * if the packet is really ours...
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* not bcast or mcast */
 		    bcmp(eh->ether_dhost,
-        	        sc->sc_arpcom.ac_enaddr,
+        	        LLADDR(ifp->if_sadl),
 		        ETHER_ADDR_LEN) != 0) {
 			m_freem(head);
 			return;
@@ -646,7 +646,7 @@ qn_get_packet(sc, len)
 #endif
 
 	m_adj(head, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, head);
+	ether_input(&sc->sc_ethercom.ec_if, eh, head);
 	return;
 
 bad:
@@ -679,19 +679,19 @@ qn_rint(sc, rstat)
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Overflow\n");
 #endif
-		++sc->sc_arpcom.ac_if.if_ierrors;
+		++sc->sc_ethercom.ec_if.if_ierrors;
 	}
 	if (rstat & R_INT_CRC_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "CRC Error\n");
 #endif
-		++sc->sc_arpcom.ac_if.if_ierrors;
+		++sc->sc_ethercom.ec_if.if_ierrors;
 	}
 	if (rstat & R_INT_ALG_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Alignment error\n");
 #endif
-		++sc->sc_arpcom.ac_if.if_ierrors;
+		++sc->sc_ethercom.ec_if.if_ierrors;
 	}
 	if (rstat & R_INT_SRT_PKT) {
 		/* Short packet (these may occur and are
@@ -701,13 +701,13 @@ qn_rint(sc, rstat)
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Short packet\n");
 #endif
-		++sc->sc_arpcom.ac_if.if_ierrors;
+		++sc->sc_ethercom.ec_if.if_ierrors;
 	}
 	if (rstat & 0x4040) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Bus read error\n");
 #endif
-		++sc->sc_arpcom.ac_if.if_ierrors;
+		++sc->sc_ethercom.ec_if.if_ierrors;
 		qnreset(sc);
 	}
 
@@ -742,7 +742,7 @@ qn_rint(sc, rstat)
 			    "%s: received a %s packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname,
 			    len < ETHER_HDR_SIZE ? "partial" : "big", len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++sc->sc_ethercom.ec_if.if_ierrors;
 			continue;
 		}
 #endif
@@ -756,7 +756,7 @@ qn_rint(sc, rstat)
 		/* Read the packet. */
 		qn_get_packet(sc, len);
 
-		++sc->sc_arpcom.ac_if.if_ipackets;
+		++sc->sc_ethercom.ec_if.if_ipackets;
 	}
 
 #ifdef QN_DEBUG
@@ -810,7 +810,7 @@ qnintr(arg)
 			 * Update total number of successfully
 			 * transmitted packets.
 			 */
-			sc->sc_arpcom.ac_if.if_opackets++;
+			sc->sc_ethercom.ec_if.if_opackets++;
 		}
 
 		if (tint & T_SIXTEEN_COL) {
@@ -821,8 +821,8 @@ qnintr(arg)
 #ifdef QN_DEBUG1
 			qn_dump(sc);
 #endif
-			sc->sc_arpcom.ac_if.if_oerrors++;
-			sc->sc_arpcom.ac_if.if_collisions += 16;
+			sc->sc_ethercom.ec_if.if_oerrors++;
+			sc->sc_ethercom.ec_if.if_collisions += 16;
 			sc->transmit_pending = 0;
 		}
 
@@ -832,10 +832,10 @@ qnintr(arg)
 			/* Must return transmission interrupt mask. */
 			return_tintmask = 1;
 		} else {
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 
 			/* Clear watchdog timer. */
-			sc->sc_arpcom.ac_if.if_timer = 0;
+			sc->sc_ethercom.ec_if.if_timer = 0;
 		}
 	} else
 		return_tintmask = 1;
@@ -846,8 +846,8 @@ qnintr(arg)
 	if (rint != 0)
 		qn_rint(sc, rint);
 
-	if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
-		qnstart(&sc->sc_arpcom.ac_if);
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
+		qnstart(&sc->sc_ethercom.ec_if);
 	else if (return_tintmask == 1)
 		*sc->nic_t_mask = tintmask;
 
@@ -886,7 +886,7 @@ qnioctl(ifp, command, data)
 		case AF_INET:
 			qnstop(sc);
 			qninit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -896,11 +896,10 @@ qnioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			qnstop(sc);
 			qninit(sc);
 			break;
@@ -949,8 +948,8 @@ qnioctl(ifp, command, data)
 		log(LOG_INFO, "qnioctl: multicast not done yet\n");
 #if 0
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -990,7 +989,7 @@ qn_dump(sc)
 	log(LOG_INFO, "r_mask    : %04x\n", *sc->nic_r_mask);
 	log(LOG_INFO, "r_mode    : %04x\n", *sc->nic_r_mode);
 	log(LOG_INFO, "pending   : %02x\n", sc->transmit_pending);
-	log(LOG_INFO, "if_flags  : %04x\n", sc->sc_arpcom.ac_if.if_flags);
+	log(LOG_INFO, "if_flags  : %04x\n", sc->sc_ethercom.ec_if.if_flags);
 }
 #endif
 

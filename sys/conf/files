@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.118 1997/03/12 01:56:18 cgd Exp $
+#	$NetBSD: files,v 1.119 1997/03/15 18:11:14 is Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -23,6 +23,9 @@ define	arc
 define	atm
 define	ether
 define	fddi
+
+# devices ARPing IPv4 pull this in:
+define	arp
 
 # Device description for machine-independent IPKDB code.
 define	ipkdb
@@ -66,11 +69,11 @@ device	uha: scsi
 file	dev/ic/uha.c		uha
 
 # 3Com Etherlink-III Ethernet controller
-device	ep: ether, ifnet
+device	ep: arp, ether, ifnet
 file	dev/ic/elink3.c		ep
 
 # LANCE and PCnet Ethernet controllers
-device	le: ether, ifnet
+device	le: arp, ether, ifnet
 file	dev/ic/am7990.c		le
 
 # NCR 5380 SCSI Bus Controller
@@ -302,8 +305,8 @@ file netccitt/pk_output.c		ccitt
 file netccitt/pk_subr.c			ccitt
 file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
+file netinet/if_arp.c			arp		needs-flag
 file netinet/if_atm.c			atm
-file netinet/if_ether.c			ether
 file netinet/igmp.c			inet
 file netinet/in.c			inet
 file netinet/in_pcb.c			inet

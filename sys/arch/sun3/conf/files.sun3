@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.35 1997/03/13 20:30:19 gwr Exp $
+#	$NetBSD: files.sun3,v 1.36 1997/03/15 18:10:46 is Exp $
 
 #
 # sun3-specific configuration info
@@ -103,7 +103,7 @@ device intreg
 attach intreg at obio
 file arch/sun3/sun3/intreg.c		intreg
 
-device ie: ifnet, ether
+device ie: ifnet, ether, arp
 attach ie at obio with ie_obio
 attach ie at vmes with ie_vmes
 file arch/sun3/dev/if_ie_obio.c		ie_obio

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.25 1996/12/23 09:10:15 veego Exp $ */
+/*	$NetBSD: if_bah.c,v 1.26 1997/03/15 18:09:23 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -63,14 +63,13 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/if_arc.h>
 #endif
 
@@ -255,8 +254,6 @@ bah_zbus_attach(parent, self, aux)
 	printf(": link addr 0x%02x(%d)\n", linkaddress, linkaddress);
 #endif
 
-	sc->sc_arccom.ac_anaddr = linkaddress;
-
 	/* clear the int mask... */
 
 	sc->sc_base->status = sc->sc_intmask = 0;
@@ -287,7 +284,7 @@ bah_zbus_attach(parent, self, aux)
 	ifp->if_mtu = ARCMTU;
 
 	if_attach(ifp);
-	arc_ifattach(ifp);
+	arc_ifattach(ifp, linkaddress);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_ARCNET, ARC_HDRLEN);
@@ -364,10 +361,9 @@ bah_reset(sc)
 	printf("%s: reset: card reset, link addr = 0x%02x (%ld)\n",
 	    sc->sc_dev.dv_xname, linkaddress, linkaddress);
 #endif
-	sc->sc_arccom.ac_anaddr = linkaddress;
 
 	/* tell the routing level about the (possibly changed) link address */
-	arc_ifattach(ifp);
+	arc_ifattach(ifp, linkaddress);
 
 	/* POR is NMI, but we need it below: */
 	sc->sc_intmask = ARC_RECON|ARC_POR;

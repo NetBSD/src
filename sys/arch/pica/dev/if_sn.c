@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.8 1996/10/13 03:31:25 christos Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.9 1997/03/15 18:10:25 is Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -25,15 +25,14 @@
 #include <machine/autoconf.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -96,9 +95,8 @@ struct sn_stats {
 
 struct sn_softc {
 	struct	device sc_dev;
-	struct	arpcom sc_ac;
-#define	sc_if		sc_ac.ac_if	/* network visible interface */
-#define	sc_enaddr	sc_ac.ac_enaddr	/* hardware ethernet address */
+	struct	ethercom sc_ec;
+#define	sc_if		sc_ec.ec_if	/* network visible interface */
 
 	struct sonic_reg *sc_csr;	/* hardware pointer */
 	dma_softc_t	__dma;		/* stupid macro ... */
@@ -256,7 +254,7 @@ struct mtd *mtdnext;		/* next descriptor to give to chip */
 void mtd_free __P((struct mtd *));
 struct mtd *mtd_alloc __P((void));
 
-int sngetaddr __P((struct sn_softc *sc));
+int sngetaddr __P((struct sn_softc *sc, uchar *ap));
 int sninit __P((struct sn_softc *sc));
 int snstop __P((struct sn_softc *sc));
 int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
@@ -294,6 +292,7 @@ snattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int p, pp;
+	uchar myaddr[ETHER_ADDR_LEN];
 
 	sc->sc_csr = (struct sonic_reg *)BUS_CVTADDR(ca);
 
@@ -342,8 +341,8 @@ snattach(parent, self, aux)
 #if 0
 	camdump(sc);
 #endif
-	sngetaddr(sc);
-	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
+	sngetaddr(sc, myaddr);
+	printf(" address %s\n", ether_sprintf(myaddr));
 
 #if 0
 printf("\nsonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
@@ -365,7 +364,7 @@ printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 }
 
 int
@@ -565,7 +564,7 @@ sninit(sc)
 
 	/* program the CAM with our address */
 	caminitialise();
-	camentry(0, sc->sc_enaddr);
+	camentry(0, LLADDR(sc->sc_if.if_sadl));
 	camprogram(sc);
 
 	/* get it to read resource descriptors */
@@ -777,8 +776,9 @@ sonicput(sc, m0)
  *  have to fetch it from nv ram.
  */
 int 
-sngetaddr(sc)
+sngetaddr(sc, ap)
 	struct sn_softc *sc;
+	uchar *ap;
 {
 	unsigned i, x, y;
 	char   *cp, *ea;
@@ -789,26 +789,26 @@ sngetaddr(sc)
 	sc->sc_csr->s_cep = 0;
 	i = sc->sc_csr->s_cap2;
 	wbflush();
-	sc->sc_enaddr[5] = i >> 8;
-	sc->sc_enaddr[4] = i;
+	ap[5] = i >> 8;
+	ap[4] = i;
 	i = sc->sc_csr->s_cap1;
 	wbflush();
-	sc->sc_enaddr[3] = i >> 8;
-	sc->sc_enaddr[2] = i;
+	ap[3] = i >> 8;
+	ap[2] = i;
 	i = sc->sc_csr->s_cap0;
 	wbflush();
-	sc->sc_enaddr[1] = i >> 8;
-	sc->sc_enaddr[0] = i;
+	ap[1] = i >> 8;
+	ap[0] = i;
 
 	sc->sc_csr->s_cr = 0;
 	wbflush();
 #else
-	sc->sc_enaddr[0] = 0x08;
-	sc->sc_enaddr[1] = 0x00;
-	sc->sc_enaddr[2] = 0x20;
-	sc->sc_enaddr[3] = 0xa0;
-	sc->sc_enaddr[4] = 0x66;
-	sc->sc_enaddr[5] = 0x54;
+	ap[0] = 0x08;
+	ap[1] = 0x00;
+	ap[2] = 0x20;
+	ap[3] = 0xa0;
+	ap[4] = 0x66;
+	ap[5] = 0x54;
 #endif	
 	return (0);
 }
@@ -1239,12 +1239,12 @@ sonic_read(sc, rxp)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (sc->sc_if.if_bpf) {
+	if (ifp->if_bpf) {
 		bpf_tap(sc->sc_if.if_bpf, pkt,
 		    len + sizeof(struct ether_header));
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, sc->sc_enaddr,
+		    bcmp(et->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(et->ether_dhost)) != 0)
 			return;
 	}

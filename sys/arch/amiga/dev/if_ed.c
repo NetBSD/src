@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.24 1996/12/23 09:10:16 veego Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.25 1997/03/15 18:09:24 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -29,14 +29,14 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -71,7 +71,7 @@ struct ed_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
 
-	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct	ethercom sc_ethercom;	/* ethernet common */
 
 	u_char	volatile *nic_addr;	/* NIC (DS8390) I/O address */
 
@@ -104,7 +104,7 @@ void ed_watchdog __P((struct ifnet *));
 void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
-void ed_getmcaf __P((struct arpcom *, u_long *));
+void ed_getmcaf __P((struct ethercom *, u_long *));
 u_short ed_put __P((struct ed_softc *, struct mbuf *, caddr_t));
 
 #define inline	/* XXX for debugging porpoises */
@@ -207,7 +207,7 @@ ed_zbus_attach(parent, self, aux)
 	struct ed_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_char *prom;
 	int i;
 
@@ -255,7 +255,7 @@ ed_zbus_attach(parent, self, aux)
 	 * read the ethernet address from the board
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_arpcom.ac_enaddr[i] = *(prom + 2 * i);
+		myaddr[i] = *(prom + 2 * i);
 
 	/* Set interface to stopped condition (reset). */
 	ed_stop(sc);
@@ -271,10 +271,10 @@ ed_zbus_attach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 	/* Print additional info when attached. */
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(myaddr));
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -333,7 +333,7 @@ ed_watchdog(ifp)
 	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	ed_reset(sc);
 }
@@ -345,7 +345,7 @@ void
 ed_init(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, s;
 	u_long mcaf[2];
 
@@ -358,7 +358,7 @@ ed_init(sc)
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	ifp->if_timer = 0;
 
 	sc->txb_inuse = 0;
 	sc->txb_new = 0;
@@ -411,10 +411,10 @@ ed_init(sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		NIC_PUT(sc, ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
+		NIC_PUT(sc, ED_P1_PAR0 + i, LLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
-	ed_getmcaf(&sc->sc_arpcom, mcaf);
+	ed_getmcaf(&sc->sc_ethercom, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(sc, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
@@ -461,7 +461,7 @@ static inline void
 ed_xmit(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
@@ -526,7 +526,7 @@ outloop:
 		return;
 	}
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == 0) {
 		/*
 		 * We are using the !OACTIVE flag to indicate to the outside
@@ -559,8 +559,8 @@ outloop:
 
 #if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
 	m_freem(m0);
@@ -576,12 +576,14 @@ static inline void
 ed_rint(sc)
 	struct ed_softc *sc;
 {
-	u_char boundary, current;
+	struct ifnet *ifp;
+	caddr_t packet_ptr;
 	u_short len;
 	u_char nlen;
+	u_char boundary, current;
 	struct ed_ring packet_hdr;
-	caddr_t packet_ptr;
 
+	ifp = &sc->sc_ethercom.ec_if;
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
@@ -659,13 +661,13 @@ loop:
 			/* Go get packet. */
 			ed_get_packet(sc, packet_ptr + sizeof(struct ed_ring),
 			    len - sizeof(struct ed_ring));
-			++sc->sc_arpcom.ac_if.if_ipackets;
+			++ifp->if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++ifp->if_ierrors;
 			ed_reset(sc);
 			return;
 		}
@@ -692,6 +694,7 @@ edintr(arg)
 	void *arg;
 {
 	struct ed_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -742,27 +745,27 @@ edintr(arg)
 				}
 
 				/* Update output errors counter. */
-				++sc->sc_arpcom.ac_if.if_oerrors;
+				++ifp->if_oerrors;
 			} else {
 				/*
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				++sc->sc_arpcom.ac_if.if_opackets;
+				++ifp->if_opackets;
 			}
 
 			/* Reset TX busy and output active flags. */
 			sc->xmit_busy = 0;
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			ifp->if_flags &= ~IFF_OACTIVE;
 
 			/* Clear watchdog timer. */
-			sc->sc_arpcom.ac_if.if_timer = 0;
+			ifp->if_timer = 0;
 
 			/*
 			 * Add in total number of collisions on last
 			 * transmission.
 			 */
-			sc->sc_arpcom.ac_if.if_collisions += collisions;
+			ifp->if_collisions += collisions;
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
@@ -787,7 +790,7 @@ edintr(arg)
 			 * fixed in later revs.  -DG
 			 */
 			if (isr & ED_ISR_OVW) {
-				++sc->sc_arpcom.ac_if.if_ierrors;
+				++ifp->if_ierrors;
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING,
 				    "%s: warning - receiver ring buffer overrun\n",
@@ -802,7 +805,7 @@ edintr(arg)
 				 * missed packet.
 				 */
 				if (isr & ED_ISR_RXE) {
-					++sc->sc_arpcom.ac_if.if_ierrors;
+					++ifp->if_ierrors;
 #ifdef ED_DEBUG
 					printf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
@@ -826,8 +829,8 @@ edintr(arg)
 		 * to start output on the interface.  This is done after
 		 * handling the receiver to give the receiver priority.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
-			ed_start(&sc->sc_arpcom.ac_if);
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+			ed_start(ifp);
 
 		/*
 		 * Return NIC CR to standard state: page 0, remote DMA
@@ -879,7 +882,7 @@ ed_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			ed_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -890,11 +893,10 @@ ed_ioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			/* Set new address. */
 			ed_init(sc);
 			break;
@@ -936,8 +938,8 @@ ed_ioctl(ifp, command, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -970,6 +972,9 @@ ed_get_packet(sc, buf, len)
 {
 	struct ether_header *eh;
 	struct mbuf *m;
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 	/* round length to word boundry */
 	len = (len + 1) & ~1;
@@ -978,7 +983,7 @@ ed_get_packet(sc, buf, len)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 
@@ -1009,17 +1014,17 @@ ed_get_packet(sc, buf, len)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+	if (ifp->if_bpf) {
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1029,7 +1034,7 @@ ed_get_packet(sc, buf, len)
 
 	/* Fix up data start offset in mbuf to point past ether header. */
 	m_adj(m, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	ether_input(ifp, eh, m);
 }
 
 /*
@@ -1130,10 +1135,10 @@ ed_ring_to_mbuf(sc, src, dst, total_len)
  */
 void
 ed_getmcaf(ac, af)
-	struct arpcom *ac;
+	struct ethercom *ac;
 	u_long *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: icside_io_asm.S,v 1.1 1997/02/23 03:57:47 mark Exp $	*/
+/*	$NetBSD: icside_io_asm.S,v 1.2 1997/03/15 18:09:35 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

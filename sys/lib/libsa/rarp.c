@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
+/*	$NetBSD: rarp.c,v 1.14 1997/03/15 18:12:17 is Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -43,11 +43,11 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
-#include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <string.h>
 
+#include "if_ether.h"
 #include "stand.h"
 #include "net.h"
 #include "netif.h"
