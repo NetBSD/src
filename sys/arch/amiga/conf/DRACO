@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.25 1998/06/26 01:53:47 lukem Exp $
+#	$NetBSD: DRACO,v 1.26 1998/11/28 21:27:42 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -147,6 +147,7 @@ hyper*		at zbus?		# zbus HyperCom 3/4
 com*		at hyper? port ?	# Hypercom serial
 
 le*		at zbus0		# Lance ethernet.
+ne*		at zbus0		# ne2000 lookalike ethernet.
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
 qn0		at zbus0		# quicknet ethernet
