@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getrlimit.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: getrlimit.2,v 1.5 1994/10/17 23:49:14 cgd Exp $
+.\"	$Id: getrlimit.2,v 1.6 1994/12/08 06:49:43 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt GETRLIMIT 2
@@ -93,8 +93,8 @@ its resource limit).  The
 structure is used to specify the hard and soft limits on a resource,
 .Bd -literal -offset indent
 struct rlimit {
-	quad_t	rlim_cur;	/* current (soft) limit */
-	quad_t	rlim_max;	/* hard limit */
+	rlim_t	rlim_cur;	/* current (soft) limit */
+	rlim_t	rlim_max;	/* hard limit */
 };
 .Ed
 .Pp
@@ -110,7 +110,7 @@ An
 .Dq infinite
 value for a limit is defined as
 .Dv RLIM_INFINITY
-(0x7\&f\&f\&f\&f\&f\&f\&f).
+(0x7\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f).
 .Pp
 Because this information is stored in the per-process information,
 this system call must be executed directly by the shell if it
