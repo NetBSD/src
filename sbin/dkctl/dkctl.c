@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.7 2003/06/23 11:53:37 agc Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.8 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.7 2003/06/23 11:53:37 agc Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.8 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 
 
@@ -168,7 +168,7 @@ usage()
 {
 	int i;
 
-	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "usage: %s device command [arg [...]]\n",
 	    getprogname());
 
 	fprintf(stderr, "   Available commands:\n");

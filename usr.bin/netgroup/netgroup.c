@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.c,v 1.3 2001/02/19 23:03:49 cgd Exp $	*/
+/*	$NetBSD: netgroup.c,v 1.4 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netgroup.c,v 1.3 2001/02/19 23:03:49 cgd Exp $");
+__RCSID("$NetBSD: netgroup.c,v 1.4 2004/01/05 23:23:36 jmmv Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +51,7 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "Usage: %s [-hud] <netgroup>\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-hud] <netgroup>\n", getprogname());
 	exit(1);
 }
 

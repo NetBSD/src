@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.12 2003/10/16 06:42:18 itojun Exp $	*/
+/*	$NetBSD: apply.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.12 2003/10/16 06:42:18 itojun Exp $");
+__RCSID("$NetBSD: apply.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-a magic] [-0123456789] command arguments ...\n",
+	    "usage: %s [-a magic] [-0123456789] command arguments ...\n",
 	    getprogname());
 	exit(1);
 }

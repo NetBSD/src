@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.2 2003/07/04 12:33:08 agc Exp $	*/
+/*	$NetBSD: locale.c,v 1.3 2004/01/05 23:23:35 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.2 2003/07/04 12:33:08 agc Exp $");
+__RCSID("$NetBSD: locale.c,v 1.3 2004/01/05 23:23:35 jmmv Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -292,7 +292,7 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	printf("Usage: locale [ -a | -m ]\n"
+	printf("usage: locale [ -a | -m ]\n"
                "       locale [ -ck ] name ...\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.21 2001/02/19 23:03:51 cgd Exp $	*/
+/*	$NetBSD: rusers.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.21 2001/02/19 23:03:51 cgd Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -269,7 +269,7 @@ allhosts(void)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-la] [hosts ...]\n", getprogname());
+	fprintf(stderr, "usage: %s [-la] [hosts ...]\n", getprogname());
 	exit(1);
 }
 

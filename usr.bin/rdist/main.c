@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2003/08/07 11:15:36 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2003/08/07 11:15:36 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	printf("Usage: rdist [-nqbRhivwyD] [-f distfile] [-d var=value] [-m host] [file ...]\n");
+	printf("usage: rdist [-nqbRhivwyD] [-f distfile] [-d var=value] [-m host] [file ...]\n");
 	printf("or: rdist [-nqbRhivwyD] -c source [...] machine[:dest]\n");
 	exit(1);
 }

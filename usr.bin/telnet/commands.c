@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.57 2003/08/07 11:16:08 agc Exp $	*/
+/*	$NetBSD: commands.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.57 2003/08/07 11:16:08 agc Exp $");
+__RCSID("$NetBSD: commands.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -459,7 +459,7 @@ send_tncmd(void	(*func)(int, int), char	*cmd, char *name)
     if (isprefix(name, "?")) {
 	int col, len;
 
-	printf("Usage: send %s <value|option>\n", cmd);
+	printf("usage: send %s <value|option>\n", cmd);
 	printf("\"value\" must be from 0 to 255\n");
 	printf("Valid options are:\n\t");
 

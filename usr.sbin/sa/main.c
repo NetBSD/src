@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.17 2003/11/12 13:31:08 grant Exp $ */
+/* $NetBSD: main.c,v 1.18 2004/01/05 23:23:38 jmmv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.17 2003/11/12 13:31:08 grant Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 
 /*
@@ -559,7 +559,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n",
+	    "usage: %s [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n",
 	    getprogname());
 	exit(0);
 }

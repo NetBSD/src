@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.13 2003/08/07 11:16:15 agc Exp $	*/
+/*	$NetBSD: time.c,v 1.14 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.13 2003/08/07 11:16:15 agc Exp $");
+__RCSID("$NetBSD: time.c,v 1.14 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "Usage: %s [-lp] utility [argument ...]\n",
+	(void)fprintf(stderr, "usage: %s [-lp] utility [argument ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }

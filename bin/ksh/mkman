@@ -7,7 +7,7 @@ if [ X"$1" = X-v ] ; then
     shift
 fi
 if [ $# != 2 ] ; then
-    echo "Usage: $0 [-v] which-shell ksh.Man-file" 1>&2
+    echo "usage: $0 [-v] which-shell ksh.Man-file" 1>&2
     exit 1;
 fi
 shell=$1

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.6 2002/07/20 08:40:18 grant Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.7 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -145,7 +145,7 @@ usage()
 {
 	int i;
 
-	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "usage: %s device command [arg [...]]\n",
 	    getprogname());
 
 	fprintf(stderr, "   Available commands:\n");

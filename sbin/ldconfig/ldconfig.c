@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.36 2003/06/23 11:53:37 agc Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.37 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.36 2003/06/23 11:53:37 agc Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.37 2004/01/05 23:23:33 jmmv Exp $");
 #endif
 
 
@@ -127,7 +127,7 @@ main(argc, argv)
 			verbose = 1;
 			break;
 		default:
-			errx(1, "Usage: %s [-c][-m][-r][-s][-S][-v][dir ...]",
+			errx(1, "usage: %s [-c][-m][-r][-s][-S][-v][dir ...]",
 				getprogname());
 			break;
 		}

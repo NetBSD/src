@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.22 2003/06/23 13:05:52 agc Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.23 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -17,7 +17,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: skeyinit.c,v 1.22 2003/06/23 13:05:52 agc Exp $");
+__RCSID("$NetBSD: skeyinit.c,v 1.23 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 				zerokey = 1;
 				break;
 			default:
-				errx(1, "Usage: %s [-n count] [-t md4|md5|sha1] [-s] [-x] [-z] [user]", argv[0]);
+				errx(1, "usage: %s [-n count] [-t md4|md5|sha1] [-s] [-x] [-z] [user]", argv[0]);
 		}
 	}
 

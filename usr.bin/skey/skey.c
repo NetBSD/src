@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.15 2001/07/24 23:53:25 lukem Exp $	*/
+/*	$NetBSD: skey.c,v 1.16 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.15 2001/07/24 23:53:25 lukem Exp $");
+__RCSID("$NetBSD: skey.c,v 1.16 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 
 #include <ctype.h>
@@ -155,7 +155,7 @@ usage(char *s)
 {
 
 	fprintf(stderr,
-    "Usage: %s [-n count] [-p password] [-t hash] [-x] sequence# [/] key\n",
+    "usage: %s [-n count] [-p password] [-t hash] [-x] sequence# [/] key\n",
 	    s);
 	exit(1);
 }

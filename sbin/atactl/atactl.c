@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.26 2003/12/30 19:31:06 thorpej Exp $	*/
+/*	$NetBSD: atactl.c,v 1.27 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.26 2003/12/30 19:31:06 thorpej Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.27 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 
 
@@ -272,7 +272,7 @@ usage(void)
 {
 	int i;
 
-	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "usage: %s device command [arg [...]]\n",
 	    getprogname());
 
 	fprintf(stderr, "   Available device commands:\n");

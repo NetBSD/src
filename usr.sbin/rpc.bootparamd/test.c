@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.1 2002/09/11 18:19:42 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.2 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.1 2002/09/11 18:19:42 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.2 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 
 #include <stdio.h>
@@ -85,7 +85,7 @@ main(argc, argv)
 	uint32_t addr;
 
 	if (argc < 2) {
-		warnx("Usage: test <hostname>");
+		warnx("usage: test <hostname>");
 		errx(1, "Always talks to bootparamd at localhost");
 	}
 	if ((hp = gethostbyname(argv[1])) == NULL)

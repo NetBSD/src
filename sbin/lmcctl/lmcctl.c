@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.7 2003/06/23 11:53:39 agc Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.8 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lmcctl.c,v 1.7 2003/06/23 11:53:39 agc Exp $");
+__RCSID("$NetBSD: lmcctl.c,v 1.8 2004/01/05 23:23:33 jmmv Exp $");
 #endif
 
 
@@ -71,7 +71,7 @@ void
 usage(char *s)
 {
 	fprintf(stderr,
-		"Usage: %s [-i interface] [-l speed] [-cCeEsKkSoO]\n", s);
+		"usage: %s [-i interface] [-l speed] [-cCeEsKkSoO]\n", s);
 	fprintf(stderr,
 		"\tinterface is the interface name, default '%s'\n",
 		DEFAULT_INTERFACE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.10 2003/08/07 11:25:50 agc Exp $	*/
+/*	$NetBSD: vipw.c,v 1.11 2004/01/05 23:23:39 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: vipw.c,v 1.10 2003/08/07 11:25:50 agc Exp $");
+__RCSID("$NetBSD: vipw.c,v 1.11 2004/01/05 23:23:39 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,6 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-d directory]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-d directory]\n", getprogname());
 	exit(1);
 }

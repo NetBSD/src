@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.12 2003/10/16 06:38:11 itojun Exp $	*/
+/*	$NetBSD: soelim.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.12 2003/10/16 06:38:11 itojun Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 /*
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			(void)fprintf(stderr,
-			    "Usage: %s [-I<dir>] [files...]\n",
+			    "usage: %s [-I<dir>] [files...]\n",
 			    getprogname());
 			exit(1);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.123 2003/12/11 05:11:50 dyoung Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.124 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.123 2003/12/11 05:11:50 dyoung Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.124 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1878,7 +1878,7 @@ usage(void)
 	int i;
 
 	for (i = 0; usages[i].name; i++) {
-		(void) fputs(i ? "or " : "Usage: ", stderr);
+		(void) fputs(i ? "or " : "usage: ", stderr);
 		(void) fprintf(stderr, "%s %s", getprogname(), usages[i].name);
 		(void) fputs("\n\t", stderr);
 		(void) fprintf(stderr, "%s %s", getprogname(), usages[i].expn);

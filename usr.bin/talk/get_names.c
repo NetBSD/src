@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.10 2003/08/07 11:16:04 agc Exp $	*/
+/*	$NetBSD: get_names.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.10 2003/08/07 11:16:04 agc Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -61,7 +61,7 @@ get_names(argc, argv)
 	char *names;
 
 	if (argc < 2 ) {
-		printf("Usage: talk user [ttyname]\n");
+		printf("usage: talk user [ttyname]\n");
 		exit(1);
 	}
 	if (!isatty(0)) {

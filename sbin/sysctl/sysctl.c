@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.76 2003/12/04 20:07:59 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.77 2004/01/05 23:23:33 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.76 2003/12/04 20:07:59 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.77 2004/01/05 23:23:33 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1285,7 +1285,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
-		      "Usage:\t%s %s\n"
+		      "usage:\t%s %s\n"
 		      "\t%s %s\n"
 		      "\t%s %s\n"
 		      "\t%s %s\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.24 2003/10/16 07:07:43 itojun Exp $	*/
+/*	$NetBSD: rup.c,v 1.25 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.24 2003/10/16 07:07:43 itojun Exp $");
+__RCSID("$NetBSD: rup.c,v 1.25 2004/01/05 23:23:36 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -372,6 +372,6 @@ main(int argc, char *argv[])
 void
 usage()
 {
-	fprintf(stderr, "Usage: rup [-dhlt] [hosts ...]\n");
+	fprintf(stderr, "usage: rup [-dhlt] [hosts ...]\n");
 	exit(1);
 }

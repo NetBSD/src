@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.22 2003/09/01 04:34:16 mycroft Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.22 2003/09/01 04:34:16 mycroft Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $");
 #endif
 
 
@@ -197,7 +197,7 @@ usage()
 {
 	int i;
 
-	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "usage: %s device command [arg [...]]\n",
 	    getprogname());
 
 	fprintf(stderr, "   Commands pertaining to scsi devices:\n");

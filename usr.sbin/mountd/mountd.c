@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.85 2003/08/07 11:25:34 agc Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.86 2004/01/05 23:23:38 jmmv Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.85 2003/08/07 11:25:34 agc Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.86 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 #endif				/* not lint */
 
@@ -316,7 +316,7 @@ main(argc, argv)
 		case 'r':
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-d]"
+			fprintf(stderr, "usage: %s [-d]"
 #ifdef IPSEC
 			    " [-P ipsec policy]"
 #endif

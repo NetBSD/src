@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.19 2003/05/30 00:17:27 simonb Exp $	*/
+/*	$NetBSD: quot.c,v 1.20 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.19 2003/05/30 00:17:27 simonb Exp $");
+__RCSID("$NetBSD: quot.c,v 1.20 2004/01/05 23:23:38 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -523,9 +523,9 @@ static void
 usage()
 {
 #ifdef	COMPAT
-	fprintf(stderr, "Usage: quot [-nfcvha] [filesystem ...]\n");
+	fprintf(stderr, "usage: quot [-nfcvha] [filesystem ...]\n");
 #else	/* COMPAT */
-	fprintf(stderr, "Usage: quot [ -acfhknv ] [ filesystem ... ]\n");
+	fprintf(stderr, "usage: quot [ -acfhknv ] [ filesystem ... ]\n");
 #endif	/* COMPAT */
 	exit(1);
 }

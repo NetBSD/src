@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.70 2004/01/05 17:27:46 jmmv Exp $	*/
+/*	$NetBSD: options.c,v 1.71 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.70 2004/01/05 17:27:46 jmmv Exp $");
+__RCSID("$NetBSD: options.c,v 1.71 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1946,7 +1946,7 @@ void
 pax_usage(void)
 {
 	fprintf(stderr,
-"Usage: pax [-cdjnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
+"usage: pax [-cdjnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
 "           [-U user] ... [-G group] ... [-T [from_date][,to_date]] ...\n"
 "           [pattern ...]\n");
 	fprintf(stderr,
@@ -1974,7 +1974,7 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("Usage: tar [-]{crtux}[-befhjlmopqvwzHLOPXZ014578] [archive] "
+	(void)fputs("usage: tar [-]{crtux}[-befhjlmopqvwzHLOPXZ014578] [archive] "
 		    "[blocksize]\n"
 		    "           [-C directory] [-T file] [-s replstr] "
 		    "[file ...]\n", stderr);
@@ -1991,7 +1991,7 @@ void
 cpio_usage(void)
 {
 
-	(void)fputs("Usage: cpio -o [-aABcLvzZ] [-C bytes] [-F archive] "
+	(void)fputs("usage: cpio -o [-aABcLvzZ] [-C bytes] [-F archive] "
 		    "[-H format] [-O archive]\n"
 		    "               < name-list [> archive]\n"
 		    "       cpio -i [-bBcdfmrsStuvzZ6] [-C bytes] [-E file] "

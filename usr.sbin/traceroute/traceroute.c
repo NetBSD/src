@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.59 2003/05/17 18:13:55 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.60 2004/01/05 23:23:39 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.59 2003/05/17 18:13:55 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.60 2004/01/05 23:23:39 jmmv Exp $");
 #endif
 #endif
 
@@ -1602,7 +1602,7 @@ usage(void)
 	extern char version[];
 
 	Fprintf(stderr, "Version %s\n", version);
-	Fprintf(stderr, "Usage: %s [-adDFPIlnrvx] [-g gateway] [-i iface] \
+	Fprintf(stderr, "usage: %s [-adDFPIlnrvx] [-g gateway] [-i iface] \
 [-f first_ttl]\n\t[-m max_ttl] [-p port] [-q nqueries] [-s src_addr] [-t tos]\n\t\
 [-w waittime] [-A as_server] host [packetlen]\n",
 	    prog);

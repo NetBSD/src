@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.15 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.16 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.15 2003/12/10 12:06:26 agc Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.16 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -157,7 +157,7 @@ void
 usage()
 {
 
-	fprintf(stderr, "Usage: %s [-d domain] [-tkz] key [key ...] "
+	fprintf(stderr, "usage: %s [-d domain] [-tkz] key [key ...] "
 	    "mapname\n", getprogname());
 	fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.21 2003/08/07 11:14:17 agc Exp $	*/
+/*	$NetBSD: last.c,v 1.22 2004/01/05 23:23:35 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.21 2003/08/07 11:14:17 agc Exp $");
+__RCSID("$NetBSD: last.c,v 1.22 2004/01/05 23:23:35 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ static void	 usage(void);
 static
 void usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-#%s] [-T] [-f file]"
+	(void)fprintf(stderr, "usage: %s [-#%s] [-T] [-f file]"
 	    " [-H hostsize] [-h host] [-L linesize]\n"
 	    "\t    [-N namesize] [-t tty] [user ...]\n", getprogname(),
 #ifdef NOTYET_SUPPORT_UTMPX

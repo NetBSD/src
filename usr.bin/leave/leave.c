@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.12 2003/08/07 11:14:19 agc Exp $	*/
+/*	$NetBSD: leave.c,v 1.13 2004/01/05 23:23:35 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: leave.c,v 1.12 2003/08/07 11:14:19 agc Exp $");
+__RCSID("$NetBSD: leave.c,v 1.13 2004/01/05 23:23:35 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,6 +182,6 @@ doalarm(u_int secs)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [[+]hhmm]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [[+]hhmm]\n", getprogname());
 	exit(1);
 }

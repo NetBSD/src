@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.16 2001/10/06 15:43:33 bjh21 Exp $	*/
+/*	$NetBSD: eject.c,v 1.17 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.16 2001/10/06 15:43:33 bjh21 Exp $");
+__RCSID("$NetBSD: eject.c,v 1.17 2004/01/05 23:23:34 jmmv Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -226,7 +226,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: eject [-fv] [-l | -L | -U] "
+	fprintf(stderr, "usage: eject [-fv] [-l | -L | -U] "
 	    "[-t device-type] [-d] device\n");
 	fprintf(stderr, "       eject -n\n");
 	exit(1);

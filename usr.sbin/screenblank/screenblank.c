@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.19 2002/09/19 02:59:20 mycroft Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.20 2004/01/05 23:23:39 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.19 2002/09/19 02:59:20 mycroft Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.20 2004/01/05 23:23:39 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -391,7 +391,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-k | -m] [-d inactivity-timeout] [-e wakeup-delay]\n"
+	    "usage: %s [-k | -m] [-d inactivity-timeout] [-e wakeup-delay]\n"
 	    "\t\t[-f framebuffer] [-i input-device]\n",
 	    getprogname());
 	exit(1);

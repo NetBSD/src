@@ -1,4 +1,4 @@
-/*	$NetBSD: test-pfkey.c,v 1.1 2000/06/13 15:15:27 itojun Exp $	*/
+/*	$NetBSD: test-pfkey.c,v 1.2 2004/01/05 23:23:33 jmmv Exp $	*/
 /*	$KAME: test-pfkey.c,v 1.4 2000/06/07 00:29:14 itojun Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ void key_setsadbextbuf __P((caddr_t, int, caddr_t, int, caddr_t, int));
 void
 Usage()
 {
-	printf("Usage:\t%s number\n", pname);
+	printf("usage:\t%s number\n", pname);
 	exit(0);
 }
 

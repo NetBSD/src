@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.16 2004/01/05 12:16:25 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.17 2004/01/05 23:23:39 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.16 2004/01/05 12:16:25 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.17 2004/01/05 23:23:39 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -115,7 +115,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-d device] [-f config_file] [-m modes] [-n]\n",
+	    "usage: %s [-d device] [-f config_file] [-m modes] [-n]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }

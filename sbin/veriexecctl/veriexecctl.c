@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.3 2002/12/21 23:41:44 wiz Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.4 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -43,7 +43,7 @@ int
 main(int argc, char *argv[])
 {
 	if (argv[1] == NULL) {
-		fprintf(stderr, "Usage: veriexecctl signature_file\n");
+		fprintf(stderr, "usage: veriexecctl signature_file\n");
 		exit(1);
 	}
 

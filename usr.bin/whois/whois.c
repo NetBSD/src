@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.25 2003/10/16 06:36:51 itojun Exp $   */
+/*      $NetBSD: whois.c,v 1.26 2004/01/05 23:23:37 jmmv Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.25 2003/10/16 06:36:51 itojun Exp $");
+__RCSID("$NetBSD: whois.c,v 1.26 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-6AadgilmQRr] [-c country-code | -h hostname] "
+	    "usage: %s [-6AadgilmQRr] [-c country-code | -h hostname] "
 		"[-p port] name ...\n", getprogname());
 	exit(1);
 }

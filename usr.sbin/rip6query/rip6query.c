@@ -1,4 +1,4 @@
-/*	$NetBSD: rip6query.c,v 1.9 2003/04/15 07:23:19 itojun Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.10 2004/01/05 23:23:38 jmmv Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ main(argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "Usage: rip6query [-I iface] [-w wait] address\n");
+	fprintf(stderr, "usage: rip6query [-I iface] [-w wait] address\n");
 }
 
 /* getnameinfo() is preferred as we may be able to show ifindex as ifname */

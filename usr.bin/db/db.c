@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.11 2003/10/16 06:47:22 itojun Exp $	*/
+/*	$NetBSD: db.c,v 1.12 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.11 2003/10/16 06:47:22 itojun Exp $");
+__RCSID("$NetBSD: db.c,v 1.12 2004/01/05 23:23:34 jmmv Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -625,7 +625,7 @@ usage(void)
 	const char *p = getprogname();
 
 	fprintf(stderr,
-    "Usage: %s [-KiNqV] [-E end] [-f inf] [-O str] [-S chr] [-T str] [-X str]\n"
+    "usage: %s [-KiNqV] [-E end] [-f inf] [-O str] [-S chr] [-T str] [-X str]\n"
     "             type dbfile [key [...]]\n"
     "       %s -d [-iNq] [-E end] [-f inf] [-U chr] type dbfile [key [...]]\n"
     "       %s -w [-CDiNqR] [-E end] [-F sep] [-f inf] [-m mod] [-U chr]\n"

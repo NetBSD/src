@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: chkconfig.sh,v 1.2 2003/01/04 23:43:04 wiz Exp $
+#	$NetBSD: chkconfig.sh,v 1.3 2004/01/05 23:23:32 jmmv Exp $
 #
 # Copyright (c) 2001 Zembu Labs, Inc.
 # All rights reserved.
@@ -134,7 +134,7 @@ usage()
 
 	_err=$1
 	echo "Error: ${_err}"
-	echo "Usage: $0 flag"
+	echo "usage: $0 flag"
 	echo "       $0 flag [ on | off ] "
 	echo "       $0 [-f] flag [ on | off ]"
 	exit 1

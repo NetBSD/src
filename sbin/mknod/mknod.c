@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.28 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.29 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.28 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.29 2004/01/05 23:23:33 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -254,7 +254,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-rR] [-F format] [-m mode] [-u user] [-g group]\n",
+	    "usage: %s [-rR] [-F format] [-m mode] [-u user] [-g group]\n",
 	    progname);
 	(void)fprintf(stderr,
 	    "                   [ name [b | c] major minor\n"

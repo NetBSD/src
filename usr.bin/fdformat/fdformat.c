@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.10 2003/06/23 13:05:47 agc Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.10 2003/06/23 13:05:47 agc Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -125,7 +125,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "Usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n"
+	    "usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n"
 	    "\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n"
 	    "\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", getprogname());
 	exit(1);

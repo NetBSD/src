@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.12 2003/08/07 11:17:19 agc Exp $	*/
+/*	$NetBSD: who.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.12 2003/08/07 11:17:19 agc Exp $");
+__RCSID("$NetBSD: who.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -246,7 +246,7 @@ output_labels()
 static void
 usage()
 {
-	(void)fprintf(stderr, "Usage: %s [-mTuH] [ file ]\n       %s am i\n",
+	(void)fprintf(stderr, "usage: %s [-mTuH] [ file ]\n       %s am i\n",
 	    getprogname(), getprogname());
 	exit(1);
 }

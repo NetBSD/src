@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.5 2003/06/23 13:05:51 agc Exp $ */
+/* $NetBSD: radioctl.c,v 1.6 2004/01/05 23:23:36 jmmv Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: radioctl.c,v 1.5 2003/06/23 13:05:51 agc Exp $");
+__RCSID("$NetBSD: radioctl.c,v 1.6 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -183,7 +183,7 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
+	fprintf(stderr, "usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
 		progname, "[-n] variable ...",
 		progname, "[-n] -w name=value ...",
 		progname, "[-n] -a",

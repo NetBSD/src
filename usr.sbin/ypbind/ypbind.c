@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.50 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.51 2004/01/05 23:23:39 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.50 2003/12/10 12:06:26 agc Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.51 2004/01/05 23:23:39 jmmv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ usage(void)
 #endif
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-broadcast] [-insecure] [-ypset] [-ypsetme] %s\n",
+	    "usage: %s [-broadcast] [-insecure] [-ypset] [-ypsetme] %s\n",
 	    getprogname(), opt);
 	exit(1);
 }
