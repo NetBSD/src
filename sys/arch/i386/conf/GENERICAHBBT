@@ -1,7 +1,7 @@
 #
 # GENERICAHBBT -- Generic machine w/ahb and bt drivers -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.23 1993/09/01 05:36:33 mycroft Exp $
+#	$Id: GENERICAHBBT,v 1.24 1993/09/13 14:22:49 brezak Exp $
 #
 
 machine		"i386"
@@ -20,6 +20,7 @@ options		KERNFS
 options		SCSI
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
+options		"MACHINE_NONCONTIG"
 
 config		netbsd	root on wd0 swap on wd0 and sd0
 
