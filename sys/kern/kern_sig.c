@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.81 1998/09/18 18:48:23 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.82 1998/09/19 02:00:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -126,7 +126,7 @@ sigaction1(p, signum, nsa, osa)
 				p->p_flag |= P_NOCLDSTOP;
 			else
 				p->p_flag &= ~P_NOCLDSTOP;
-			if (sa->sa_flags & SA_NOCLDWAIT) {
+			if (nsa->sa_flags & SA_NOCLDWAIT) {
 				/*
 				 * Paranoia: since SA_NOCLDWAIT is implemented
 				 * by reparenting the dying child to PID 1 (and
