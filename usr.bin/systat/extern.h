@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 1999/12/20 04:06:25 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 1999/12/22 14:46:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -145,6 +145,7 @@ WINDOW	*opennetstat __P((void));
 WINDOW	*openpigs __P((void));
 WINDOW	*openswap __P((void));
 WINDOW	*opentcp __P((void));
+void	 ps_user __P((char *));
 void	 redraw __P((int));
 void	 showbufcache __P((void));
 void	 showicmp __P((void));

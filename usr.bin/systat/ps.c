@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.11 1999/12/20 19:31:47 jwise Exp $  */
+/*      $NetBSD: ps.c,v 1.12 1999/12/22 14:46:15 kleink Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.11 1999/12/20 19:31:47 jwise Exp $");
+__RCSID("$NetBSD: ps.c,v 1.12 1999/12/22 14:46:15 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,6 +80,9 @@ char *time2str __P((struct kinfo_proc *));
 
 static time_t now;
 
+#define SHOWUSER_ANY	(uid_t)-1
+static uid_t showuser = SHOWUSER_ANY;
+
 void
 labelps ()
 {
@@ -103,11 +106,13 @@ showps ()
 	i = nproc + 1;
 	if (i > getmaxy(wnd)-2)
 		i = getmaxy(wnd)-1;
-	for (k = 0; i > 0 ; i--, y++, k++) {
+	for (k = 0; i > 0 ; k++) {
 		if (pt[k].pt_kp == NULL) /* We're all the way down to the imaginary idle proc */
-			return;
+			break;
 
 		ep = &pt[k].pt_kp->kp_eproc;
+		if (showuser != SHOWUSER_ANY && ep->e_ucred.cr_uid != showuser)
+			continue;
 		user = user_from_uid(ep->e_ucred.cr_uid, 0);
 		pid = pt[k].pt_kp->kp_proc.p_pid;
 		pctcpu = 100.0 * pt[k].pt_pctcpu;
@@ -123,9 +128,13 @@ showps ()
 
 		wmove(wnd, y, 0);
 		wclrtoeol(wnd);
-		mvwprintw(wnd, y, 0, "%-8.8s%5d %4.1f %4.1f %6d %5d %-3s %-4s %7s %10.10s %s",
-			user, pid, pctcpu, pctmem, vsz, rss, tty, state, start, time, comm);
+		mvwprintw(wnd, y++, 0,
+		    "%-8.8s%5d %4.1f %4.1f %6d %5d %-3s %-4s %7s %10.10s %s",
+		    user, pid, pctcpu, pctmem, vsz, rss, tty, state, start, time, comm);
+		i--;
 	}
+	wmove(wnd, y, 0);
+	wclrtobot(wnd);
 }
 
 int
@@ -383,4 +392,23 @@ time2str(kp)
 	snprintf(timestr, sizeof(timestr), "%3ld:%02ld.%02ld", secs/60, secs%60, psecs);
 
 	return timestr;
+}
+
+void
+ps_user(args)
+	char *args;
+{
+	uid_t uid;
+
+	if (args == NULL)
+		args = "";
+	if (strcmp(args, "+") == 0) {
+		uid = SHOWUSER_ANY;
+	} else if (uid_from_user(args, &uid) != 0) {
+		error("%s: unknown user", args);
+		return;
+	}
+
+	showuser = uid;
+	display(0);
 }

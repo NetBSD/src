@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.11 1999/12/20 03:45:02 jwise Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.12 1999/12/22 14:46:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.11 1999/12/20 03:45:02 jwise Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.12 1999/12/22 14:46:14 kleink Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -79,6 +79,11 @@ struct command netstat_commands[] = {
 	{ "show",	netstat_show,	"show current display/ignore settings"},
 	{ "tcp",	netstat_tcp,	 "show only tcp connections"},
 	{ "udp",	netstat_udp,	 "show only udp connections"},
+	{ 0 }
+};
+
+struct command ps_commands[] = {
+	{ "user",	ps_user,	"limit displayed processes to a user"},
 	{ 0 }
 };
 
@@ -126,7 +131,7 @@ struct mode modes[] = {
 	  initnetstat,	opennetstat,	closenetstat,	netstat_commands,
 	  CF_LOADAV },
 	{ "ps",		showps,		fetchpigs,	labelps,
-	  initpigs,	openpigs,	closepigs,	0,
+	  initpigs,	openpigs,	closepigs,	ps_commands,
 	  CF_LOADAV },
 	{ "swap",	showswap,	fetchswap,	labelswap,
 	  initswap,	openswap,	closeswap,	0,
