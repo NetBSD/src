@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.30 2003/05/15 00:02:25 itojun Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.31 2003/10/13 08:02:02 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -50,7 +50,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #ifdef __NetBSD__
-#include <net/if_ieee80211.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 #include <dev/ic/wi_ieee.h>
 #else
 #include <dev/pcmcia/if_wavelan_ieee.h>
@@ -69,7 +70,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.30 2003/05/15 00:02:25 itojun Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.31 2003/10/13 08:02:02 dyoung Exp $");
 #endif
 
 struct wi_table {
