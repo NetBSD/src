@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.9 1999/11/06 15:11:46 kleink Exp $	*/
+/*	$NetBSD: touch.c,v 1.10 2000/10/11 14:46:02 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.9 1999/11/06 15:11:46 kleink Exp $");
+__RCSID("$NetBSD: touch.c,v 1.10 2000/10/11 14:46:02 is Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -173,10 +173,11 @@ filenames(nfiles, files)
 
 	if (nfiles){
 		someerrors++;
-		fprintf(stdout, terse
-			? "%d file%s"
-			: "%d file%s contain%s errors",
-			nfiles, plural(nfiles), verbform(nfiles));
+		if (terse)
+			fprintf(stdout, "%d file%s", nfiles, plural(nfiles));
+		else 
+			fprintf(stdout, "%d file%s contain%s errors",
+				nfiles, plural(nfiles), verbform(nfiles));
 		if (!terse){
 			FILEITERATE(fi, 1){
 				fprintf(stdout, "%s\"%s\" (%d)",

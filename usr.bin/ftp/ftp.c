@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.109 2000/09/28 12:29:24 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.110 2000/10/11 14:46:03 is Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.109 2000/09/28 12:29:24 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.110 2000/10/11 14:46:03 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -1331,7 +1331,8 @@ initconn(void)
 		switch (data_addr.su_family) {
 		case AF_INET:
 			if (epsv4 && !epsv4bad) {
-				result = command(pasvcmd = "EPSV");
+			  	pasvcmd = "EPSV";
+				result = command("EPSV");
 				if (!connected)
 					return (1);
 				/*
@@ -1353,14 +1354,16 @@ initconn(void)
 				}
 			}
 			if (result != COMPLETE) {
-				result = command(pasvcmd = "PASV");
+			  	pasvcmd = "PASV";
+				result = command("PASV");
 				if (!connected)
 					return (1);
 			}
 			break;
 #ifdef INET6
 		case AF_INET6:
-			result = command(pasvcmd = "EPSV");
+		  	pasvcmd = "EPSV";
+			result = command("EPSV");
 			if (!connected)
 				return (1);
 			/* this code is to be friendly with broken BSDI ftpd */
@@ -1370,8 +1373,10 @@ initconn(void)
 					ttyout);
 				result = COMPLETE + 1;
 			}
-			if (result != COMPLETE)
-				result = command(pasvcmd = "LPSV");
+			if (result != COMPLETE) {
+				pasvcmd = "LPSV";
+				result = command("LPSV");
+			}
 			if (!connected)
 				return (1);
 			break;

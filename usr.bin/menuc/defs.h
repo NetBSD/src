@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 1998/07/01 07:46:02 phil Exp $	 */
+/*	$NetBSD: defs.h,v 1.4 2000/10/11 14:46:13 is Exp $	 */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,8 @@ EXTERN action error_act INIT({NULL});
 /* Prototypes. */
 
 /* From util.c */
-void yyerror (const char *, ...);
+void yyerror (const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
 void buff_add_ch (char);
 char *buff_copy (void); 
 

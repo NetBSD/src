@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.18 1999/09/15 10:47:44 mycroft Exp $	*/
+/*	$NetBSD: nonints.h,v 1.19 2000/10/11 14:46:12 is Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,9 +68,9 @@ void For_Run  __P((void));
 void Main_ParseArgLine __P((char *));
 int main __P((int, char **));
 char *Cmd_Exec __P((char *, char **));
-void Error __P((char *, ...));
-void Fatal __P((char *, ...));
-void Punt __P((char *, ...));
+void Error __P((char *, ...)) __attribute__((__format__(__printf__, 1, 2)));
+void Fatal __P((char *, ...)) __attribute__((__format__(__printf__, 1, 2)));
+void Punt __P((char *, ...)) __attribute__((__format__(__printf__, 1, 2)));
 void DieHorribly __P((void));
 int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
@@ -81,7 +81,8 @@ void enomem __P((void));
 int eunlink __P((const char *));
 
 /* parse.c */
-void Parse_Error __P((int, char *, ...));
+void Parse_Error __P((int, char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 Boolean Parse_AnyExport __P((void));
 Boolean Parse_IsVar __P((char *));
 void Parse_DoVar __P((char *, GNode *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.5 2000/07/24 11:59:38 ad Exp $	*/
+/*	$NetBSD: rs.c,v 1.6 2000/10/11 14:46:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.5 2000/07/24 11:59:38 ad Exp $");
+__RCSID("$NetBSD: rs.c,v 1.6 2000/10/11 14:46:18 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: rs.c,v 1.5 2000/07/24 11:59:38 ad Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 long	flags;
 #define	TRANSPOSE	000001
@@ -96,7 +97,8 @@ int	propgutter;
 char	isep = ' ', osep = ' ';
 int	owidth = 80, gutter = 2;
 
-void	  usage __P((char *, char *));
+void	  usage __P((char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 void	  getargs __P((int, char *[]));
 void	  getfile __P((void));
 int	  getline __P((void));
@@ -241,10 +243,13 @@ prints(s, col)
 }
 
 void
-usage(msg, s)
-	char *msg, *s;
+usage(char *msg, ...)
 {
-	warnx(msg, s);
+	va_list ap;
+
+	va_start(ap, msg);
+	vwarnx(msg, ap);
+	va_end(ap);
 	fprintf(stderr,
 "Usage:  rs [ -[csCS][x][kKgGw][N]tTeEnyjhHm ] [ rows [ cols ] ]\n");
 	exit(1);
@@ -429,7 +434,7 @@ getargs(ac, av)
 			case 'w':		/* window width, default 80 */
 				p = getnum(&owidth, p, 0);
 				if (owidth <= 0)
-				usage("Width must be a positive integer", "");
+				usage("Width must be a positive integer");
 				break;
 			case 'K':			/* skip N lines */
 				flags |= SKIPPRINT;
@@ -499,7 +504,7 @@ getargs(ac, av)
 	case 0:
 		break;
 	default:
-		usage("Too many arguments.", "");
+		usage("Too many arguments.");
 	}
 }
 
