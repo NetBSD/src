@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2002/10/05 11:01:13 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2002/10/07 14:48:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -153,6 +153,7 @@ evbsh5_init(void)
 	__cpu_cache_dinv_iinv = _sh5_stb1_cache_dinv_iinv;
 	__cpu_cache_iinv = _sh5_stb1_cache_iinv;
 	__cpu_cache_iinv_all = _sh5_stb1_cache_iinv_all;
+	__cpu_cache_purge_all = _sh5_stb1_cache_purge_all;
 
 #if NDTFCONS > 0
 	dtfbuf = (vaddr_t) &_dtf_buffer;

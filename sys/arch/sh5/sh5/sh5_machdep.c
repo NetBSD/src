@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_machdep.c,v 1.4 2002/10/05 11:01:14 scw Exp $	*/
+/*	$NetBSD: sh5_machdep.c,v 1.5 2002/10/07 14:48:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,6 +74,7 @@ void (*__cpu_cache_dinv)(vaddr_t, paddr_t, vsize_t);
 void (*__cpu_cache_dinv_iinv)(vaddr_t, paddr_t, vsize_t);
 void (*__cpu_cache_iinv)(vaddr_t, paddr_t, vsize_t);
 void (*__cpu_cache_iinv_all)(void);
+void (*__cpu_cache_purge_all)(void);
 
 /*
  * These variables are needed by /sbin/savecore
