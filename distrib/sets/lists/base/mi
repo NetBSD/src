@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.530 2005/03/06 10:28:15 tnozaki Exp $
+# $NetBSD: mi,v 1.531 2005/03/09 05:24:38 atatat Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -591,6 +591,7 @@
 ./usr/bin/skeyinfo				base-util-bin		skey
 ./usr/bin/skeyinit				base-util-bin		skey
 ./usr/bin/slogin				base-secsh-bin		crypto
+./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/split					base-util-bin
 ./usr/bin/ssh					base-secsh-bin		crypto
