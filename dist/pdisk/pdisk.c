@@ -190,7 +190,12 @@ main(int argc, char **argv)
 		dump(argv[name_index++]);
 	    }
 	} else {
+#ifdef __linux__
 	    list_all_disks();
+#else
+	    usage("no device argument");
+	    do_help();
+#endif
 	}
     } else if (name_index < argc) {
 	while (name_index < argc) {
@@ -247,7 +252,9 @@ interact()
 	    printf("  h    print help\n");
 	    printf("  v    print the version number and release date\n");
 	    printf("  l    list device's map\n");
+#ifdef __linux__
 	    printf("  L    list all devices' maps\n");
+#endif
 	    printf("  e    edit device's map\n");
 	    printf("  E    (edit map with specified block size)\n");
 	    printf("  r    toggle readonly flag\n");
@@ -269,9 +276,11 @@ interact()
 	case 'v':
 	    printf("version " VERSION " (" RELEASE_DATE ")\n");
 	    break;
+#ifdef __linux__
 	case 'L':
 	    list_all_disks();
 	    break;
+#endif
 	case 'l':
 	    if (get_string_argument("Name of device: ", &name, 1) == 0) {
 		bad_input("Bad name");
