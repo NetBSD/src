@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.24 2001/09/24 13:22:31 wiz Exp $	*/
+/*	$NetBSD: rshd.c,v 1.25 2002/03/18 23:59:57 mjl Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.24 2001/09/24 13:22:31 wiz Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.25 2002/03/18 23:59:57 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,9 +127,7 @@ extern int __check_rhosts_file;
 extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct linger linger;
 	int ch, on = 1, fromlen;
@@ -164,7 +162,7 @@ main(argc, argv)
 	fromlen = sizeof (from); /* xxx */
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		syslog(LOG_ERR, "getpeername: %m");
-		_exit(1);
+		exit(1);
 	}
 #if 0
 	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
@@ -192,7 +190,7 @@ main(argc, argv)
 				sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0) {
 			strncpy(hbuf, "invalid", sizeof(hbuf));
 		}
-		syslog(LOG_ERR, "malformed \"from\" address (v4 mapped, %s)\n",
+		syslog(LOG_ERR, "malformed \"from\" address (v4 mapped, %s)",
 		    hbuf);
 		exit(1);
 	}
@@ -222,8 +220,7 @@ char	*envinit[] =
 char	**environ;
 
 void
-doit(fromp)
-	struct sockaddr *fromp;
+doit(struct sockaddr *fromp)
 {
 	struct passwd *pwd;
 	in_port_t port;
@@ -274,12 +271,12 @@ doit(fromp)
 		break;
 #endif
 	default:
-		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n", af);
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)", af);
 		exit(1);
 	}
 	if (getnameinfo(fromp, fromp->sa_len, naddr, sizeof(naddr),
 			pbuf, sizeof(pbuf), niflags) != 0) {
-		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n", af);
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)", af);
 		exit(1);
 	}
 #ifdef IP_OPTIONS
@@ -344,7 +341,7 @@ doit(fromp)
 			exit(1);
 		}
 		if (port >= IPPORT_RESERVED) {
-			syslog(LOG_ERR, "2nd port not reserved\n");
+			syslog(LOG_ERR, "2nd port not reserved");
 			exit(1);
 		}
 		*portp = htons(port);
@@ -373,8 +370,7 @@ doit(fromp)
 		hostname = saddr;
 		res0 = NULL;
 		if (check_all || local_domain(saddr)) {
-			strncpy(remotehost, saddr, sizeof(remotehost) - 1);
-			remotehost[sizeof(remotehost) - 1] = 0;
+			strlcpy(remotehost, saddr, sizeof(remotehost));
 			errorhost = remotehost;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = fromp->sa_family;
@@ -417,16 +413,14 @@ doit(fromp)
 				}
 			}
 		}
-		hostname = strncpy(hostnamebuf, hostname,
-		    sizeof(hostnamebuf) - 1);
+		strlcpy(hostnamebuf, hostname, sizeof(hostnamebuf));
+		hostname = hostnamebuf;
 		if (res0)
 			freeaddrinfo(res0);
 	} else {
-		errorhost = hostname = strncpy(hostnamebuf,
-		    naddr, sizeof(hostnamebuf) - 1);
+		strlcpy(hostnamebuf, naddr, sizeof(hostnamebuf));
+		errorhost = hostname = hostnamebuf;
 	}
-
-	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 
 	getstr(remuser, sizeof(remuser), "remuser");
 	getstr(locuser, sizeof(locuser), "locuser");
@@ -438,7 +432,7 @@ doit(fromp)
 		    "%s@%s as %s: unknown login. cmd='%.80s'",
 		    remuser, hostname, locuser, cmdbuf);
 		if (errorstr == NULL)
-			errorstr = "Login incorrect.\n";
+			errorstr = "Permission denied.\n";
 		goto fail;
 	}
 #ifdef LOGIN_CAP
@@ -607,7 +601,7 @@ fail:
 		cp++;
 	else
 		cp = pwd->pw_shell;
-	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
+	execl(pwd->pw_shell, cp, "-c", cmdbuf, NULL);
 	perror(pwd->pw_shell);
 	exit(1);
 }
@@ -617,29 +611,15 @@ fail:
  * connected to client, or older clients will hang waiting for that
  * connection first.
  */
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
-void
-#if __STDC__
-error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
+#include <stdarg.h>
+
+void error(const char *fmt, ...)
 {
 	va_list ap;
 	int len;
 	char *bp, buf[BUFSIZ];
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	bp = buf;
 	if (sent_null == 0) {
 		*bp++ = 1;
@@ -652,9 +632,7 @@ error(fmt, va_alist)
 }
 
 void
-getstr(buf, cnt, err)
-	char *buf, *err;
-	int cnt;
+getstr(char *buf, int cnt, char *err)
 {
 	char c;
 
@@ -678,8 +656,7 @@ getstr(buf, cnt, err)
  * interpreted as such.
  */
 int
-local_domain(h)
-	char *h;
+local_domain(char *h)
 {
 	char localhost[MAXHOSTNAMELEN + 1];
 	char *p1, *p2;
@@ -695,8 +672,7 @@ local_domain(h)
 }
 
 char *
-topdomain(h)
-	char *h;
+topdomain(char *h)
 {
 	char *p, *maybe = NULL;
 	int dots = 0;
@@ -712,7 +688,7 @@ topdomain(h)
 }
 
 void
-usage()
+usage(void)
 {
 
 	syslog(LOG_ERR, "usage: rshd [-%s]", OPTIONS);
