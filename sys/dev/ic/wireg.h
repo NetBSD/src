@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.29 2002/04/04 07:15:17 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.30 2002/04/05 00:54:52 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -425,9 +425,17 @@ struct wi_ltv_ver {
 };
 
 /* define card ident */
-#define	WI_NIC_LUCENT_ID	0x0005
+/* Lucent */
+#define	WI_NIC_LUCENT_ID	0x0001
 #define	WI_NIC_LUCENT_STR	"Lucent Technologies, WaveLAN/IEEE"
 
+#define	WI_NIC_SONY_ID		0x0002
+#define	WI_NIC_SONY_STR		"Sony WaveLAN/IEEE"
+
+#define	WI_NIC_LUCENT_EMB_ID	0x0005
+#define	WI_NIC_LUCENT_EMB_STR	"Lucent Embedded WaveLAN/IEEE"
+
+/* Intersil */
 #define	WI_NIC_EVB2_ID		0x8000
 #define	WI_NIC_EVB2_STR		"RF:PRISM2 MAC:HFA3841"
 
