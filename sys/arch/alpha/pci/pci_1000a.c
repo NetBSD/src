@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.4 1998/07/07 22:24:39 thorpej Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.5 1998/08/01 20:25:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.4 1998/07/07 22:24:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.5 1998/08/01 20:25:12 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,7 +239,21 @@ void
 dec_1000a_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-	panic("dec_1000a_intr_disestablish not implemented"); /* XXX */
+	struct alpha_shared_intrhand *ih = cookie;
+	unsigned int irq = ih->ih_num;
+	int s;
+ 
+	s = splhigh();
+
+	alpha_shared_intr_disestablish(dec_1000a_pci_intr, cookie,
+	    "dec_1000a irq");
+	if (alpha_shared_intr_isactive(dec_1000a_pci_intr, irq) == 0) {
+		dec_1000a_disable_intr(irq);
+		alpha_shared_intr_set_dfltsharetype(dec_1000a_pci_intr, irq,
+		    IST_NONE);
+	}
+ 
+	splx(s);
 }
 
 static void

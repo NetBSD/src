@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.33 1998/07/07 22:24:39 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.34 1998/08/01 20:25:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.33 1998/07/07 22:24:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.34 1998/08/01 20:25:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -227,8 +227,21 @@ dec_kn20aa_intr_disestablish(ccv, cookie)
 #if 0
 	struct cia_config *ccp = ccv;
 #endif
+	struct alpha_shared_intrhand *ih = cookie;
+	unsigned int irq = ih->ih_num;
+	int s;
+ 
+	s = splhigh();
 
-	panic("dec_kn20aa_intr_disestablish not implemented"); /* XXX */
+	alpha_shared_intr_disestablish(kn20aa_pci_intr, cookie,
+	    "kn20aa irq");
+	if (alpha_shared_intr_isactive(kn20aa_pci_intr, irq) == 0) {
+		kn20aa_disable_intr(irq);
+		alpha_shared_intr_set_dfltsharetype(kn20aa_pci_intr, irq,
+		    IST_NONE);
+	}
+ 
+	splx(s);
 }
 
 void

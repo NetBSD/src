@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.22 1998/07/07 22:24:39 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.23 1998/08/01 20:25:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.22 1998/07/07 22:24:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.23 1998/08/01 20:25:12 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -291,8 +291,21 @@ dec_eb164_intr_disestablish(ccv, cookie)
 #if 0
 	struct cia_config *ccp = ccv;
 #endif
+	struct alpha_shared_intrhand *ih = cookie;
+	unsigned int irq = ih->ih_num;
+	int s;
+ 
+	s = splhigh();
 
-	panic("dec_eb164_intr_disestablish not implemented"); /* XXX */
+	alpha_shared_intr_disestablish(eb164_pci_intr, cookie,
+	    "eb164 irq");
+	if (alpha_shared_intr_isactive(eb164_pci_intr, irq) == 0) {
+		eb164_intr_disable(irq);
+		alpha_shared_intr_set_dfltsharetype(eb164_pci_intr, irq,
+		    IST_NONE);
+	}
+ 
+	splx(s);
 }
 
 void *
