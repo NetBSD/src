@@ -1,5 +1,5 @@
-#	$NetBSD: remote,v 1.5 1996/05/08 17:19:46 thorpej Exp $
-#	@(#)remote	5.2 (Berkeley) 6/30/90
+#	$NetBSD: remote,v 1.6 1997/02/15 10:02:27 mikel Exp $
+#	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
 # remote -- remote host description file
 # see tip(1), remote(5)
@@ -32,5 +32,5 @@ dial1200|1200 Baud Hayes attributes:\
         :dv=/dev/tty00:br#1200:cu=/dev/tty00:at=hayes:du:
 
 # Hardwired line
-com0c|com0:dv=/dev/tty00:br#9600:
-com0b:dv=/dev/tty00:br#2400:
+# REMEMBER NOT TO USE PARITY!
+console:dv=/dev/tty01:br#9600:pa=none:

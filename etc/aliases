@@ -1,6 +1,6 @@
-#	$NetBSD: aliases,v 1.6 1997/01/04 14:03:37 mrg Exp $
+#	$NetBSD: aliases,v 1.7 1997/02/15 10:02:10 mikel Exp $
 #
-#	@(#)aliases	5.3 (Berkeley) 5/24/90
+#	@(#)aliases	8.2 (Berkeley) 3/5/94
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -10,26 +10,29 @@
 #	>>>>>>>>>>	show through to sendmail.
 #
 
-# Basic system aliases -- these MUST be present
+# Basic system aliases -- these MUST be present.
 MAILER-DAEMON: postmaster
 postmaster: root
 
-# General redirections for pseudo accounts
-bin:	root
-daemon:	root
-games:	root
-ingres:	root
-nobody:	root
-system:	root
-toor:	root
-uucp:	root
-ftp-bugs: root
+# General redirections for pseudo accounts.
+bin:		root
+daemon:		root
+games:		root
+ingres:		root
+nobody:		root
+system:		root
+toor:		root
+uucp:		root
+ftp-bugs:	root
 
 # Well-known aliases -- these should be filled in!
 # root:
 # manager:
 # dumper:
 # operator:
+
+# trap decode to catch security attacks
+decode:		root
 
 # uncomment this for msgs:
 # msgs: "|/usr/bin/msgs -s"
