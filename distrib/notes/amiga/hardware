@@ -49,7 +49,7 @@ Supported devices include:
 		    Merlin.
 		A2410.
 		Cybervision 64.
-		Cybervision 64/3D.
+		Cybervision 64/3D.**) 
 
 	Audio I/O:
 		Amiga builtin (currently 8bit-mode only)
@@ -98,6 +98,11 @@ Known problems with some hardware:
 
 	*) the Emplant SCSI adapter has been reported by a party to
 	hang after doing part of the installation without problems.
+
+	**) CV64/3d is not used, if in a Zorro II machine. Experimental
+	support for this mode is in the kernel sources, and you can try
+	it by using ``option "CV3DONZORRO2"'' in your kernel configuration
+	file when compiling your own custom kernel.
 
 	***) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
