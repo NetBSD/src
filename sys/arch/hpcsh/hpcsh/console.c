@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 2001/06/28 17:03:47 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.5 2001/07/08 10:42:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,9 +46,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h> /* cdev_decl */
+#include <sys/conf.h>
 #include <dev/cons.h> /* consdev */
-#include <dev/cons.h>
 
 #include <machine/bootinfo.h>
 
@@ -71,18 +70,14 @@
 
 /* serial console */
 #define scicnpollc	nullcnpollc
-cdev_decl(sci);
 cons_decl(sci);
 #define scifcnpollc	nullcnpollc
-cdev_decl(scif);
 cons_decl(scif);
-cdev_decl(com);
 cons_decl(com);
 
 /* builtin video console */
 #if NBICONSDEV > 0
 #define biconscnpollc	nullcnpollc
-cdev_decl(biconsdev);
 cons_decl(bicons);
 #endif
 
