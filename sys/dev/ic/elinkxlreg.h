@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.2.12.1 2000/12/31 20:14:50 jhawk Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.2.12.2 2001/03/20 17:24:31 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #define EEPROM_SUBSYSID		0x18	/* Subsys id */
 #define EEPROM_MEDIA		0x19	/* Media options (90xB) */
 #define EEPROM_CHECKSUM_ELXL	0x20	/* EEPROM checksum */
+
+#define READ_EEPROM8		0x0200	/* 8 bit EEPROM read command */
 
 /*
  * Flat address space registers (outside the windows)
@@ -101,6 +103,13 @@
 #	define ELINK_MEDIACAP_10BASE5	0x0020
 #	define ELINK_MEDIACAP_MII	0x0040
 #	define ELINK_MEDIACAP_10BASEFL	0x0080
+
+/*
+ * Reset options for the 90xB
+ */
+#define ELINK_W2_RESET_OPTIONS	0x0c
+#	define ELINK_RESET_OPT_LEDPOLAR	0x0010
+#	define ELINK_RESET_OPT_PHYPOWER	0x4000
 
 /*
  * Window 4, offset 8 is defined for MII/PHY access for EtherLink XL
