@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.20 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.21 2003/10/16 07:01:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.20 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.21 2003/10/16 07:01:51 itojun Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -315,6 +315,7 @@ seq(fp, line, key)
 	static char *buf, flag = 1;
 	char *end, *pos;
 	int c;
+	u_char *nlinebuf;
 
 	if (flag) {
 		flag = 0;
@@ -329,11 +330,12 @@ seq(fp, line, key)
 			return (0);
 		}
 		if (pos == end) {
-			linebuf_size *= 2;
-			linebuf = realloc(linebuf, linebuf_size);
-			if (!linebuf)
+			nlinebuf = realloc(linebuf, linebuf_size * 2);
+			if (!nlinebuf)
 				err(2, "realloc of linebuf to %lu bytes failed",
-					(unsigned long)linebuf_size);
+					(unsigned long)linebuf_size * 2);
+			linebuf = nlinebuf;
+			linebuf_size *= 2;
 		
 			end = linebuf + linebuf_size;
 			pos = linebuf + (pos - buf);

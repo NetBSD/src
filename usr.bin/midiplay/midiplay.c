@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.20 2003/07/26 20:34:14 salo Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.21 2003/10/16 07:05:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.20 2003/07/26 20:34:14 salo Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.21 2003/10/16 07:05:16 itojun Exp $");
 #endif
 
 
@@ -255,7 +255,7 @@ send_sysex(u_char *p, u_int l)
 void
 playfile(FILE *f, char *name)
 {
-	u_char *buf;
+	u_char *buf, *nbuf;
 	u_int tot, n, size, nread;
 
 	/* 
@@ -277,10 +277,11 @@ playfile(FILE *f, char *name)
 			break;
 		/* There must be more to read. */
 		nread = size;
-		size *= 2;
-		buf = realloc(buf, size);
-		if (buf == NULL)
+		nbuf = realloc(buf, size * 2);
+		if (nbuf == NULL)
 			errx(1, "realloc() failed");
+		buf = nbuf;
+		size *= 2;
 	}
 	playdata(buf, tot, name);
 	free(buf);

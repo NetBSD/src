@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.14 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.15 2003/10/16 07:01:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.14 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.15 2003/10/16 07:01:51 itojun Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -209,11 +209,12 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 			}
 
 			if (c == BUFFEND) {
-				cfile = realloc(bufs[j], bufs_sz[j] *= 2);
+				cfile = realloc(bufs[j], bufs_sz[j]);
 				if (!cfile)
 					err(2, "merge: realloc");
 
 				bufs[j] = (void *) cfile;
+				bufs_sz[j] *= 2;
 				cfile->end = (u_char *)cfile + bufs_sz[j];
 
 				c = 1;
