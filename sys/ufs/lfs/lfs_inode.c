@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.37.2.2 2000/11/01 03:56:53 tv Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.37.2.3 2001/03/23 05:26:39 he Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ lfs_truncate(v)
 	off_t osize;
 	long lastseg;
 	size_t bc;
+	int obufsize, odb;
 
 	if (length < 0)
 		return (EINVAL);
@@ -334,6 +335,8 @@ lfs_truncate(v)
 			lfs_reserve(fs, ovp, -fsbtodb(fs, 2 * NIADDR + 3));
 			return (error);
 		}
+		obufsize = bp->b_bufsize;
+		odb = btodb(bp->b_bcount);
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
@@ -341,6 +344,11 @@ lfs_truncate(v)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size);
+		if (bp->b_flags & B_DELWRI) {
+			if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
+				locked_queue_bytes -= obufsize - bp->b_bufsize;
+			fs->lfs_avail += odb - btodb(size);
+		}
 		(void) VOP_BWRITE(bp);
 	}
 	uvm_vnp_setsize(ovp, length);
@@ -646,6 +654,11 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 	if (copy != NULL) {
 		FREE(copy, M_TEMP);
 	} else {
+		if (bp->b_flags & B_DELWRI) {
+			LFS_UNLOCK_BUF(bp);
+			fs->lfs_avail += btodb(bp->b_bcount);
+			wakeup(&fs->lfs_avail);
+		}
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
@@ -691,12 +704,9 @@ restart:
 		if (bp->b_flags & B_DELWRI) {
 			bp->b_flags &= ~B_DELWRI;
 			fs->lfs_avail += btodb(bp->b_bcount);
+			wakeup(&fs->lfs_avail);
 		}
-		if (bp->b_flags & B_LOCKED) {
-			bp->b_flags &= ~B_LOCKED;
-			--locked_queue_count;
-			locked_queue_bytes -= bp->b_bcount;
-		}
+		LFS_UNLOCK_BUF(bp);
 		brelse(bp);
 	}
 
@@ -718,12 +728,9 @@ restart:
 		if (bp->b_flags & B_DELWRI) {
 			bp->b_flags &= ~B_DELWRI;
 			fs->lfs_avail += btodb(bp->b_bcount);
+			wakeup(&fs->lfs_avail);
 		}
-		if (bp->b_flags & B_LOCKED) {
-			bp->b_flags &= ~B_LOCKED;
-			--locked_queue_count;
-			locked_queue_bytes -= bp->b_bcount;
-		}
+		LFS_UNLOCK_BUF(bp);
 		brelse(bp);
 	}
 
