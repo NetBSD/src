@@ -1,6 +1,7 @@
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Portions Copyright(C) 1994, Jason Downs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.5 1994/08/28 23:32:54 mycroft Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.6 1995/07/28 07:13:52 phil Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +65,9 @@ static char *rcsid = "$Id: pwd_mkdb.c,v 1.5 1994/08/28 23:32:54 mycroft Exp $";
 #define	PERM_INSECURE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define	PERM_SECURE	(S_IRUSR|S_IWUSR)
 
+/* pull this out of the C library. */
+extern const char __yp_token[];
+
 HASHINFO openinfo = {
 	4096,		/* bsize */
 	32,		/* ffactor */
@@ -80,7 +84,7 @@ static char *pname;				/* password file name */
 void	cleanup __P((void));
 void	error __P((char *));
 void	mv __P((char *, char *));
-int	scan __P((FILE *, struct passwd *));
+int	scan __P((FILE *, struct passwd *, int *));
 void	usage __P((void));
 
 int
@@ -92,9 +96,11 @@ main(argc, argv)
 	DBT data, key;
 	FILE *fp, *oldfp;
 	sigset_t set;
-	int ch, cnt, len, makeold, tfd;
+	int ch, cnt, len, makeold, tfd, flags;
 	char *p, *t;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024];
+	int hasyp = 0;
+	DBT ypdata, ypkey;
 
 	makeold = 0;
 	while ((ch = getopt(argc, argv, "pv")) != EOF)
@@ -169,11 +175,20 @@ main(argc, argv)
 	 * _PW_KEYBYUID character.  The third key is the line number in the
 	 * original file prepended by the _PW_KEYBYNUM character.  (The special
 	 * characters are prepended to ensure that the keys do not collide.)
+	 *
+	 * If we see something go by that looks like YP, we save a special
+	 * pointer record, which if YP is enabled in the C lib, will speed
+	 * things up.
 	 */
 	data.data = (u_char *)buf;
 	key.data = (u_char *)tbuf;
-	for (cnt = 1; scan(fp, &pwd); ++cnt) {
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 #define	COMPACT(e)	t = e; while (*p++ = *t++);
+
+		/* look like YP? */
+		if((pwd.pw_name[0] == '+') || (pwd.pw_name[0] == '-'))
+			hasyp++;
+
 		/* Create insecure data. */
 		p = buf;
 		COMPACT(pwd.pw_name);
@@ -190,6 +205,8 @@ main(argc, argv)
 		COMPACT(pwd.pw_shell);
 		memmove(p, &pwd.pw_expire, sizeof(time_t));
 		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
 		data.size = p - buf;
 
 		/* Store insecure by name. */
@@ -220,6 +237,18 @@ main(argc, argv)
 			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
 			    pwd.pw_dir, pwd.pw_shell);
 	}
+
+	/* Store YP token, if needed. */
+	if(hasyp) {
+		ypkey.data = (u_char *)__yp_token;
+		ypkey.size = strlen(__yp_token);
+		ypdata.data = (u_char *)NULL;
+		ypdata.size = 0;
+
+		if ((dp->put)(dp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
+			error("put");
+	}
+
 	(void)(dp->close)(dp);
 	if (makeold) {
 		(void)fflush(oldfp);
@@ -235,7 +264,7 @@ main(argc, argv)
 	clean = FILE_SECURE;
 
 	rewind(fp);
-	for (cnt = 1; scan(fp, &pwd); ++cnt) {
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 
 		/* Create secure data. */
 		p = buf;
@@ -253,6 +282,8 @@ main(argc, argv)
 		COMPACT(pwd.pw_shell);
 		memmove(p, &pwd.pw_expire, sizeof(time_t));
 		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
 		data.size = p - buf;
 
 		/* Store secure by name. */
@@ -275,6 +306,17 @@ main(argc, argv)
 		memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
 		key.size = sizeof(pwd.pw_uid) + 1;
 		if ((dp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+			error("put");
+	}
+
+	/* Store YP token, if needed. */
+	if(hasyp) {
+		ypkey.data = (u_char *)__yp_token;
+		ypkey.size = strlen(__yp_token);
+		ypdata.data = (u_char *)NULL;
+		ypdata.size = 0;
+
+		if((dp->put)(edp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
 			error("put");
 	}
 
@@ -304,9 +346,10 @@ main(argc, argv)
 }
 
 int
-scan(fp, pw)
+scan(fp, pw, flags)
 	FILE *fp;
 	struct passwd *pw;
+	int *flags;
 {
 	static int lcnt;
 	static char line[LINE_MAX];
@@ -326,7 +369,7 @@ scan(fp, pw)
 
 	}
 	*p = '\0';
-	if (!pw_scan(line, pw)) {
+	if (!pw_scan(line, pw, flags)) {
 		warnx("at line #%d", lcnt);
 fmt:		errno = EFTYPE;	/* XXX */
 		error(pname);

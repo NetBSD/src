@@ -33,4 +33,4 @@
  *	@(#)pw_scan.h	8.1 (Berkeley) 4/1/94
  */
 
-extern int	pw_scan __P((char *, struct passwd *));
+extern int	pw_scan __P((char *, struct passwd *, int *));
