@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.64 2002/06/04 19:04:32 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.65 2002/12/01 21:20:31 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,7 +59,7 @@ void	main(void);
 
 extern	paddr_t avail_end;
 paddr_t esym;
-u_int	proc0paddr;
+struct user *proc0paddr;
 
 /*
  * The strict cpu-dependent information is set up here, in

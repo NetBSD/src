@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2002/09/25 22:21:29 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 2002/12/01 21:20:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@
 #include <machine/ka43.h>
 #include <machine/sid.h>
 
-extern	vaddr_t avail_start, avail_end, virtual_avail;
+extern	paddr_t avail_start, avail_end;
+extern  vaddr_t virtual_avail;
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, vaddr_t *, int *, int));
