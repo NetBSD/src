@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.630 2003/10/13 07:29:28 dyoung Exp $
+#	$NetBSD: mi,v 1.631 2003/10/13 08:34:15 dyoung Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -382,7 +382,6 @@
 ./usr/include/net/if_gre.h		comp-c-include
 ./usr/include/net/if_hippi.h		comp-c-include
 ./usr/include/net/if_ieee1394.h		comp-c-include
-./usr/include/net/if_ieee80211.h	comp-c-include
 ./usr/include/net/if_llc.h		comp-c-include
 ./usr/include/net/if_media.h		comp-c-include
 ./usr/include/net/if_ppp.h		comp-c-include

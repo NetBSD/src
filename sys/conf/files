@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.640 2003/10/10 21:26:38 jdolecek Exp $
+#	$NetBSD: files,v 1.641 2003/10/13 08:34:15 dyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -461,6 +461,13 @@ file	dev/ic/am79c930.c		awi
 #
 device wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
+
+# Atheros 5210/5211/5212 multi-mode 802.11
+#
+device ath: arp, wlan, ifnet
+file	dev/ic/ath.c					ath
+file	dev/ic/athcompat.c				ath
+file	../contrib/sys/dev/ic/athhal_osdep.c		ath
 
 # ADMtek ADM8211 802.11
 #
@@ -1200,7 +1207,6 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
-file	net/if_ieee80211subr.c		wlan
 file	net/if_loop.c			loop			needs-count
 file	net/if_media.c
 file	net/if_ppp.c			ppp			needs-count
@@ -1222,6 +1228,14 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto
+file	net80211/ieee80211.c		wlan
+file	net80211/ieee80211_compat.c	wlan
+file	net80211/ieee80211_crypto.c	wlan
+file	net80211/ieee80211_input.c	wlan
+file	net80211/ieee80211_ioctl.c	wlan
+file	net80211/ieee80211_node.c	wlan
+file	net80211/ieee80211_output.c	wlan
+file	net80211/ieee80211_proto.c	wlan
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
