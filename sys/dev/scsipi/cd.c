@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.67 1995/04/15 05:01:26 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.68 1995/05/03 19:38:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -537,12 +537,12 @@ cdstart(cd)
 		 */
 		bzero(&cmd, sizeof(cmd));
 		cmd.opcode = (bp->b_flags & B_READ) ? READ_BIG : WRITE_BIG;
-		cmd.addr_3 = (blkno & 0xff000000) >> 24;
-		cmd.addr_2 = (blkno & 0xff0000) >> 16;
-		cmd.addr_1 = (blkno & 0xff00) >> 8;
+		cmd.addr_3 = (blkno >> 24) & 0xff;
+		cmd.addr_2 = (blkno >> 16) & 0xff;
+		cmd.addr_1 = (blkno >> 8) & 0xff;
 		cmd.addr_0 = blkno & 0xff;
-		cmd.length2 = (nblks & 0xff00) >> 8;
-		cmd.length1 = (nblks & 0xff);
+		cmd.length2 = (nblks >> 8) & 0xff;
+		cmd.length1 = nblks & 0xff;
 
 		/*
 		 * Call the routine that chats with the adapter.
@@ -1084,8 +1084,8 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	scsi_cmd.byte3 = SRS_SUBQ;
 	scsi_cmd.subchan_format = format;
 	scsi_cmd.track = track;
-	scsi_cmd.data_len[0] = (len) >> 8;
-	scsi_cmd.data_len[1] = (len) & 0xff;
+	scsi_cmd.data_len[0] = (len >> 8) & 0xff;
+	scsi_cmd.data_len[1] = len & 0xff;
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_subchannel), (u_char *)data, len,
 	    CDRETRIES, 5000, NULL, SCSI_DATA_IN);
@@ -1112,8 +1112,8 @@ cd_read_toc(cd, mode, start, data, len)
 	if (mode == CD_MSF_FORMAT)
 		scsi_cmd.byte2 |= CD_MSF;
 	scsi_cmd.from_track = start;
-	scsi_cmd.data_len[0] = (ntoc) >> 8;
-	scsi_cmd.data_len[1] = (ntoc) & 0xff;
+	scsi_cmd.data_len[0] = (ntoc >> 8) & 0xff;
+	scsi_cmd.data_len[1] = ntoc & 0xff;
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_toc), (u_char *)data, len, CDRETRIES,
 	    5000, NULL, SCSI_DATA_IN);
