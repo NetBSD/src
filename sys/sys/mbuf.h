@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.31 1998/02/06 20:53:47 matt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.32 1998/05/01 03:21:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -173,12 +173,14 @@ struct mbuf {
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_BCAST		0x0100	/* send/received as link-level broadcast */
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
+#define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
+				   be fast-forwarded */
 #define	M_LINK0		0x1000	/* link layer specific flag */
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_LINK0|M_LINK1|M_LINK2)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_LINK0|M_LINK1|M_LINK2)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
