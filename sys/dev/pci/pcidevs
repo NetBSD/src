@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.429 2002/05/24 11:50:20 lukem Exp $
+$NetBSD: pcidevs,v 1.430 2002/05/25 07:28:15 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1443,6 +1443,7 @@ product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)
 product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
+product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
