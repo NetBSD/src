@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.16 1993/10/18 07:50:29 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.17 1993/10/26 12:07:08 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -96,6 +96,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
+#include <i386/isa/isa.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/nvram.h>
@@ -166,20 +167,17 @@ clockattach(parent, self, aux)
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 }
 
+/*
+ * Read a value from non-volatile RAM.
+ * This function is not generic.
+ */
 u_char
 nvram(pos)
 	u_char pos;
 {
-	struct clock_softc *sc;
-	u_short iobase;
 
-	if (clockcd.cd_ndevs < 1 ||
-	    !(sc = clockcd.cd_devs[0]))
-		panic("nvram: no clock");
-	iobase = sc->sc_iobase;
-
-	outb(iobase, pos);
-	return inb(iobase + 1);
+	outb(IO_RTC, pos);
+	return inb(IO_RTC + 1);
 }
 
 struct timer_softc {
@@ -253,25 +251,26 @@ timerattach(parent, self, aux)
 	u_short iobase = ia->ia_iobase;
 	u_int limit = TIMER_DIV(hz);
 
-	printf(": i8253\n");
 	sc->sc_iobase = iobase;
 	sc->sc_irq = ia->ia_irq;
 	sc->sc_limit = limit;
-
-	if (sc->sc_dev.dv_unit == 0) {
-		/* need to do this here so the rest of autoconfig can
-		   use delay(); interrupt line is still masked */
-
-		findcpuspeed(iobase);	/* use the clock (while it's free)
-					   to find the cpu speed XXXX */
-
-		--limit;
-		outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-		outb(iobase + TIMER_CNTR0, limit);
-		outb(iobase + TIMER_CNTR0, limit>>8);
-	}
-
+	printf(": i8253\n");
 	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	/* need to do this here so the rest of autoconfig can
+	   use delay(); interrupt line is still masked */
+
+	findcpuspeed(iobase);	/* use the clock (while it's free)
+				   to find the cpu speed XXXX */
+
+	sc->sc_ih.ih_fun = timerintr;
+	sc->sc_ih.ih_arg = NULL;
+	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
+
+	--limit;
+	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	outb(iobase + TIMER_CNTR0, limit);
+	outb(iobase + TIMER_CNTR0, limit>>8);
 }
 
 /*
@@ -281,6 +280,7 @@ static int
 timerintr(aux)
 	void *aux;
 {
+
 	hardclock((struct clockframe *)aux);
 	return 1;
 }
@@ -298,9 +298,7 @@ cpu_initclocks(void)
 	    !(sc = timercd.cd_devs[0]))
 		panic("cpu_initclocks: no timer");
 
-	sc->sc_ih.ih_fun = timerintr;
-	sc->sc_ih.ih_arg = sc;
-	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
+	/* already initialized */
 }
 
 /*
@@ -314,7 +312,7 @@ setstatclockrate(newhz)
 	/* nothing */
 }
 
-static __inline u_int
+static __inline int
 gettick(iobase)
 	u_short iobase;
 {
@@ -335,7 +333,7 @@ u_int delaycount;	/* calibrated loop variable (1 millisecond) */
 findcpuspeed(iobase)
 	u_short iobase;
 {
-	u_int remainder;
+	int remainder;
 
 	/* put counter in count down mode */
 	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_INTTC|TIMER_16BIT);
@@ -357,11 +355,11 @@ findcpuspeed(iobase)
  */
 void
 delay(n)
-	u_int n;
+	int n;
 {
 	struct timer_softc *sc;
 	u_short iobase;
-	u_int limit, tick, otick;
+	int limit, tick, otick;
 
 	if (timercd.cd_ndevs < 1 ||
 	    !(sc = timercd.cd_devs[0]))
@@ -379,7 +377,7 @@ delay(n)
 	 * loss of significance.
 	 */
 	n -= 10;
-	{register u_int m;
+	{register int m;
 	__asm __volatile("mul %3"
 			 : "=a" (n), "=d" (m)
 			 : "0" (n), "r" (TIMER_FREQ));
@@ -419,8 +417,10 @@ delay(n)
 void
 spinwait(int millisecs)
 {
-	/* XXXX */
-	delay(1000 * millisecs);
+	register int i;
+
+	for (i = delaycount * millisecs; i; i--)
+		;
 }
 
 int
