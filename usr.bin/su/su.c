@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.29 1999/02/20 00:20:59 scottr Exp $	*/
+/*	$NetBSD: su.c,v 1.30 1999/03/15 08:05:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.29 1999/02/20 00:20:59 scottr Exp $");
+__RCSID("$NetBSD: su.c,v 1.30 1999/03/15 08:05:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,9 @@ __RCSID("$NetBSD: su.c,v 1.29 1999/02/20 00:20:59 scottr Exp $");
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#ifdef SHADOWPASSWORDS
+#include <shadow.h>
+#endif
 #include <stdio.h>
 #ifdef SKEY
 #include <skey.h>
@@ -87,7 +90,6 @@ static int koktologin __P((char *, char *, char *));
 #define	SUGROUP	"wheel"
 #endif
 
-
 int main __P((int, char **));
 
 static int chshell __P((const char *));
@@ -102,6 +104,9 @@ main(argc, argv)
 	extern char *__progname;
 	extern char **environ;
 	struct passwd *pwd;
+#ifdef SHADOWPASSWORDS
+	struct spwd *shapwd;
+#endif
 	char *p;
 	struct group *gr;
 #ifdef BSD4_4
@@ -111,6 +116,7 @@ main(argc, argv)
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
+	char *userpass;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
 	asme = asthem = fastlogin = 0;
@@ -143,6 +149,14 @@ main(argc, argv)
 		}
 	argv += optind;
 
+#ifndef BSD4_4
+	if (*argv && strcmp(*argv, "-") == 0) {
+		asme = 0;
+		asthem = 1;
+		argv++;
+	}
+#endif
+
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 0);
 	if (errno)
@@ -159,7 +173,8 @@ main(argc, argv)
 	if (pwd == NULL)
 		errx(1, "who are you?");
 	username = strdup(pwd->pw_name);
-	if (username == NULL)
+	userpass = strdup(pwd->pw_passwd);
+	if (username == NULL || userpass == NULL)
 		err(1, "strdup");
 
 	if (asme) {
@@ -184,26 +199,54 @@ main(argc, argv)
 	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
 	    ) {
+		char *pass = pwd->pw_passwd;
+		int ok = pwd->pw_uid != 0;
+		char **g;
+
 		/*
 		 * Only allow those in group SUGROUP to su to root,
 		 * but only if that group has any members.
 		 * If SUGROUP has no members, allow anyone to su root
 		 */
-		if (pwd->pw_uid == 0 &&
+		if (!ok &&
 		    (gr = getgrnam(SUGROUP)) && *gr->gr_mem) {
-			char **g;
 
 			for (g = gr->gr_mem; ; g++) {
-				if (*g == NULL)
-					errx(1,
-	    "you are not listed in the correct secondary group (%s) to su %s.",
-					    SUGROUP, user);
-				if (strcmp(username, *g) == 0)
+				if (*g == NULL) {
+					ok = 0;
 					break;
+				}
+				if (strcmp(username, *g) == 0) {
+					ok = 1;
+					break;
+				}
 			}
 		}
+#ifdef ROOTAUTH
+		/*
+		 * Allow those in group rootauth to su to root, by supplying
+		 * their own password.
+		 */
+		if (!ok && (gr = getgrnam(ROOTAUTH)))
+			for (g = gr->gr_mem;; ++g) {
+				if (!*g) {
+					ok = 0;
+					break;
+				}
+				if (!strcmp(username, *g)) {
+					pass = userpass;
+					user = username;
+					ok = 1;
+					break;
+				}
+			}
+#endif
+		if (!ok)
+			errx(1,
+	    "you are not listed in the correct secondary group (%s) to su %s.",
+					    SUGROUP, user);
 		/* if target requires a password, verify it */
-		if (*pwd->pw_passwd) {
+		if (*pass) {
 			p = getpass("Password:");
 #ifdef SKEY
 			if (strcasecmp(p, "s/key") == 0) {
@@ -217,14 +260,26 @@ main(argc, argv)
 
 			} else
 #endif
-			if (strcmp(pwd->pw_passwd, crypt(p, pwd->pw_passwd))) {
-#ifdef SKEY
+#ifdef SHADOWPASSWORDS
+			if (strcmp(pass, "x") == 0) {
+				if ((shapwd = getspnam(user)) == NULL)
+					errx(1,
+				    "Could not find shadow passwd entry for %s",
+					    user);
+				if (strcmp(shapwd->sp_pwdp,
+				    crypt(p, shapwd->sp_pwdp))) {
+					goto badlogin;
+				}
+			} else
+#endif
+			if (strcmp(pass, crypt(p, pass))) {
+#if defined(SKEY) || defined(SHADOWPASSWORDS)
 badlogin:
 #endif
 				fprintf(stderr, "Sorry\n");
 				syslog(LOG_AUTH|LOG_WARNING,
 					"BAD SU %s to %s%s", username,
-					user, ontty());
+					pwd->pw_name, ontty());
 				exit(1);
 			}
 		}
@@ -323,7 +378,7 @@ badlogin:
 #endif
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
-		    username, user, ontty());
+		    username, pwd->pw_name, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
 
