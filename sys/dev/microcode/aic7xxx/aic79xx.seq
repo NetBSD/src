@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.4 2003/08/29 00:10:01 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.5 2003/08/29 00:46:07 thorpej Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -39,10 +39,10 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.8 2003/05/04 00:20:07 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.10 2003/05/26 21:18:48 gibbs Exp $
  */
 
-VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#91 $"
+VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#93 $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -263,6 +263,15 @@ fetch_new_scb_done:
 	clr	A;
 	add	CMDS_PENDING, 1;
 	adc	CMDS_PENDING[1], A;
+	if ((ahd->bugs & AHD_PKT_LUN_BUG) != 0) {
+		/*
+		 * "Short Luns" are not placed into outgoing LQ
+		 * packets in the correct byte order.  Use a full
+		 * sized lun field instead and fill it with the
+		 * one byte of lun information we support.
+		 */
+		mov	SCB_PKT_LUN[6], SCB_LUN;
+	}
 	/*
 	 * The FIFO use count field is shared with the
 	 * tag set by the host so that our SCB dma engine

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.5 2003/08/29 00:10:03 thorpej Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.6 2003/08/29 00:46:06 thorpej Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx_inline.h#48 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx_inline.h#49 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_inline.h,v 1.9 2003/05/04 00:20:07 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_inline.h,v 1.10 2003/05/26 21:18:48 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -267,11 +267,6 @@ ahd_setup_scb_common(struct ahd_softc *ahd, struct scb *scb)
 	if ((scb->flags & SCB_PACKETIZED) != 0) {
 		/* XXX what about ACA??  It is type 4, but TAG_TYPE == 0x3. */
 		scb->hscb->task_attribute= scb->hscb->control & SCB_TAG_TYPE;
-		/*
-		 * For Rev A short lun workaround.
-		 */
-		memset(scb->hscb->pkt_long_lun, 0, sizeof(scb->hscb->pkt_long_lun));
-		scb->hscb->pkt_long_lun[6] = scb->hscb->lun;
 	}
 
 	if (scb->hscb->cdb_len <= MAX_CDB_LEN_WITH_SENSE_ADDR
