@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.6 1998/04/28 17:48:35 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.7 1998/05/03 09:57:50 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -71,7 +71,7 @@
 struct pckbd_internal {
 	int t_isconsole;
 	pckbc_tag_t t_kbctag;
-	int t_kbcslot;
+	pckbc_slot_t t_kbcslot;
 
 	int t_led_state;
 	int t_lastchar;
@@ -88,6 +88,8 @@ struct pckbd_softc {
 
 	struct device *sc_wskbddev;
 };
+
+static int pckbd_is_console __P((pckbc_tag_t, pckbc_slot_t));
 
 int pckbdprobe __P((struct device *, struct cfdata *, void *));
 void pckbdattach __P((struct device *, struct device *, void *));
@@ -140,17 +142,31 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 2;
 		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+#ifdef DEBUG
 		if (res)
 			printf("pckbd: error setting scanset 2\n");
+#endif
 	} else {
 		/* Stupid 8042; set keyboard to XT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 1;
 		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+#ifdef DEBUG
 		if (res)
 			printf("pckbd: error setting scanset 1\n");
+#endif
 	}
 	return (res);
+}
+
+static int
+pckbd_is_console(tag, slot)
+	pckbc_tag_t tag;
+	pckbc_slot_t slot;
+{
+	return (pckbd_consdata.t_isconsole &&
+		(tag == pckbd_consdata.t_kbctag) &&
+		(slot == pckbd_consdata.t_kbcslot));
 }
 
 /*
@@ -176,7 +192,6 @@ pckbdprobe(parent, cf, aux)
 	    (cf->cf_loc[PCKBCCF_SLOT] == PCKBCCF_SLOT_DEFAULT))
 		return (0);
 
-#if 1
 	/* Flush any garbage. */
 	pckbc_flush(pa->pa_tag, pa->pa_slot);
 
@@ -184,12 +199,19 @@ pckbdprobe(parent, cf, aux)
 	cmd[0] = KBC_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
 	if (res) {
-		printf("pckbdprobe: reset error %d\n", 1);
-		goto lose;
+#ifdef DEBUG
+		printf("pckbdprobe: reset error %d\n", res);
+#endif
+		/*
+		 * There is probably no keyboard connected.
+		 * Let the probe succeed if the keyboard is used
+		 * as console input - it can be connected later.
+		 */
+		return (pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0);
 	}
 	if (resp[0] != KBR_RSTDONE) {
-		printf("pckbdprobe: reset error %d\n", 2);
-		goto lose;
+		printf("pckbdprobe: reset response 0x%x\n", resp[0]);
+		return (0);
 	}
 
 	/*
@@ -203,22 +225,14 @@ pckbdprobe(parent, cf, aux)
 	cmd[0] = KBC_ENABLE;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
 	if (res) {
-		printf("pckbdprobe: reset error %d\n", 3);
-		goto lose;
+		printf("pckbdprobe: enable error %d\n", res);
+		return (0);
 	}
 
 	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot))
-		goto lose;
+		return (0);
 
 	return (2);
-
-lose:
-	/*
-	 * Technically, we should probably fail the probe.  But we'll be nice
-	 * and allow keyboard-less machines to boot with the console.
-	 */
-#endif
-	return (1);
 }
 
 void
@@ -233,9 +247,7 @@ pckbdattach(parent, self, aux)
 
 	printf("\n");
 
-	isconsole = pckbd_consdata.t_isconsole &&
-	    (pckbd_consdata.t_kbctag == pa->pa_tag) &&
-	    (pckbd_consdata.t_kbcslot == pa->pa_slot);
+	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 
 	if (isconsole)
 		sc->id = &pckbd_consdata;
@@ -449,8 +461,10 @@ pckbd_cnattach(kbctag, kbcslot)
 	struct wskbddev_attach_args a;
 
 	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
+#if 0 /* we allow the console to be attached if no keyboard is present */
 	if (res)
 		return (res);
+#endif
 
 	a.console = 1;
 #ifdef PCKBD_LAYOUT
