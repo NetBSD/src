@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.176 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.177 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -424,3 +424,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	share/mk: Rename many make(1) variables that contain names of
 		programs from `FOO' to `TOOL_FOO'.  [lukem 20030711]
 	libtelnet: no longer shipped under /usr/lib [itojun 20030716]
+	share/mk: Replace MANZ=, UPDATE=, UNPRIVED= with MKMANZ=yes,
+		MKUPDATE=yes, MKUNPRIVED=yes respectively.  [lukem 20030718]
