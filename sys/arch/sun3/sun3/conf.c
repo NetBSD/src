@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 1995/08/22 19:39:23 jtc Exp $	*/
+/*	$NetBSD: conf.c,v 1.44 1995/10/08 23:46:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -46,34 +46,62 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
-bdev_decl(sw);
-#include "vnd.h"
-bdev_decl(vnd);
-#include "sd.h"
-bdev_decl(sd);
-#include "st.h"
-bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+cdev_decl(cd);
+
 #include "ccd.h"
 bdev_decl(ccd);
+cdev_decl(ccd);
+
+#include "rd.h"
+bdev_decl(rd);
+/* no cdev for rd */
+
+#include "sd.h"
+bdev_decl(sd);
+cdev_decl(sd);
+
+#include "st.h"
+bdev_decl(st);
+cdev_decl(st);
+
+/* swap device (required) */
+bdev_decl(sw);
+cdev_decl(sw);
+
+#include "vnd.h"
+bdev_decl(vnd);
+cdev_decl(vnd);
+
+#include "xd.h"
+bdev_decl(xd);
+cdev_decl(xd);
+
+#define	NXT 0	/* XXX */
+bdev_decl(xt);
+cdev_decl(xt);
+
+#include "xy.h"
+bdev_decl(xy);
+cdev_decl(xy);
 
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1: tapemaster tape */
 	bdev_notdef(),			/* 2 */
-	bdev_notdef(),			/* 3: SMD disk on Xylogics 450/451 */
+	bdev_disk_init(NXY,xy),		/* 3: SMD disk on Xylogics 450/451 */
 	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
 	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
-	bdev_notdef(),			/* 8: Xylogics tape */
+	bdev_tape_init(NXT,xt),		/* 8: Xylogics tape */
 	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
-	bdev_notdef(),			/* 10: SMD disk on Xylogics 7053 */
+	bdev_disk_init(NXD,xd),		/* 10: SMD disk on Xylogics 7053 */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12: Sun ns? */
-	bdev_notdef(),			/* 13: RAM disk - for install tape */
+	bdev_disk_init(NRD,rd),		/* 13: RAM disk - for install tape */
 	bdev_notdef(),			/* 14: Sun ft? */
 	bdev_notdef(),			/* 15: Sun hd? */
 	bdev_notdef(),			/* 16: Sun fd? */
@@ -87,16 +115,15 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+/*
+ * Devices that have only CHR nodes are declared below.
+ */
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
-cdev_decl(sw);
-
-/* XXX - prom driver is dead code! */
-#include "prom.h"
-cdev_decl(prom);
 
 #include "zs.h"
 cdev_decl(zs);
@@ -104,10 +131,12 @@ cdev_decl(kd);
 cdev_decl(ms);
 cdev_decl(kbd);
 
-/* scsi */
-cdev_decl(sd);
-cdev_decl(st);
-cdev_decl(cd);
+/* XXX - Should make keyboard/mouse real children of zs. */
+#if NZS > 1
+#define NKD 1
+#else
+#define NKD 0
+#endif
 
 #include "pty.h"
 #define	ptstty		ptytty
@@ -127,12 +156,11 @@ cdev_decl(cg2);
 cdev_decl(cg4);
 
 cdev_decl(log);
-cdev_decl(vnd);
-cdev_decl(ccd);
 cdev_decl(fd);
 
 #include "bpfilter.h"
 cdev_decl(bpf);
+
 #include "tun.h"
 cdev_decl(tun);
 
@@ -140,15 +168,15 @@ cdev_decl(tun);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NZS-1,kd),	/* 1: Sun keyboard/display */
+	cdev_tty_init(NKD,kd),	/* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
-	cdev_tty_init(NPROM,prom),	/* 4: PROM console */
+	cdev_notdef(),			/* 4: was PROM console */
 	cdev_notdef(),			/* 5: tapemaster tape */
 	cdev_notdef(),			/* 6: systech/versatec */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum {swap pseudo-device) */
 	cdev_notdef(),			/* 8: Archive QIC-11 tape */
-	cdev_notdef(),			/* 9: SMD disk on Xylogics 450/451 */
+	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
 	cdev_tty_init(NZS,zs),		/* 12: Zilog 8350 serial port */
@@ -169,7 +197,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NBWTWO,bw2),	/* 27: bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
 	cdev_mouse_init(NZS-1,kbd),	/* 29: Sun keyboard */
-	cdev_notdef(),			/* 30: Xylogics tape */
+	cdev_tape_init(NXT,xt),		/* 30: Xylogics tape */
 	cdev_fb_init(NCGTWO,cg2),	/* 31: cgtwo */
 	cdev_notdef(),			/* 32: /dev/gpone */
 	cdev_disk_init(NCCD,ccd),	/* 33: concatenated disk driver */
@@ -181,7 +209,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NCGFOUR,cg4),	/* 39: cgfour */
 	cdev_notdef(),			/* 40: (sni) */
 	cdev_notdef(),			/* 41: (sun dump) */
-	cdev_notdef(),			/* 42: SMD disk on Xylogics 7053 */
+	cdev_disk_init(NXD,xd),		/* 42: SMD disk on Xylogics 7053 */
 	cdev_notdef(),			/* 43: (sun hrc) */
 	cdev_notdef(),			/* 44: (mcp) */
 	cdev_notdef(),			/* 45: (sun ifd) */
@@ -349,9 +377,8 @@ chrtoblk(dev)
 #include <dev/cons.h>
 
 cons_decl(kd);
-#define	promcnpollc	nullcnpollc
-cons_decl(prom);
 #define	zscnpollc	nullcnpollc
+
 cons_decl(zs);
 dev_type_cnprobe(zscnprobe_a);
 dev_type_cnprobe(zscnprobe_b);
@@ -361,11 +388,8 @@ struct	consdev constab[] = {
 	{ zscnprobe_a, zscninit, zscngetc, zscnputc, zscnpollc },
 	{ zscnprobe_b, zscninit, zscngetc, zscnputc, zscnpollc },
 #endif
-#if NZS > 1
+#if NKD > 1
 	cons_init(kd),
 #endif
-#if NPROM
-	cons_init(prom),
-#endif
-	{ 0 },
+	{ 0 },	/* REQIURED! */
 };
