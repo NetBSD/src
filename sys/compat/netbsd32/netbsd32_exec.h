@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.1 1998/08/26 10:20:35 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.2 1999/03/25 16:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -31,7 +31,7 @@
 #ifndef	_SPARC32_EXEC_H_
 #define	_SPARC32_EXEC_H_
 
-#include <compat/sparc32/sparc32.h>
+#include <compat/netbsd32/netbsd32.h>
 
 /* from <sys/exec_aout.h> */
 /*
@@ -39,17 +39,17 @@
  * only manipulate the a_midmag field via the
  * N_SETMAGIC/N_GET{MAGIC,MID,FLAG} macros below.
  */
-struct sparc32_exec {
-	sparc32_u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
-	sparc32_u_long	a_text;		/* text segment size */
-	sparc32_u_long	a_data;		/* initialized data size */
-	sparc32_u_long	a_bss;		/* uninitialized data size */
-	sparc32_u_long	a_syms;		/* symbol table size */
-	sparc32_u_long	a_entry;	/* entry point */
-	sparc32_u_long	a_trsize;	/* text relocation size */
-	sparc32_u_long	a_drsize;	/* data relocation size */
+struct netbsd32_exec {
+	netbsd32_u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
+	netbsd32_u_long	a_text;		/* text segment size */
+	netbsd32_u_long	a_data;		/* initialized data size */
+	netbsd32_u_long	a_bss;		/* uninitialized data size */
+	netbsd32_u_long	a_syms;		/* symbol table size */
+	netbsd32_u_long	a_entry;	/* entry point */
+	netbsd32_u_long	a_trsize;	/* text relocation size */
+	netbsd32_u_long	a_drsize;	/* data relocation size */
 };
 
-int exec_sparc32_makecmds __P((struct proc *, struct exec_package *));
+int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* !_SPARC32_EXEC_H_ */

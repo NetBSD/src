@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.1 1998/08/26 10:20:35 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.2 1999/03/25 16:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 /*
- * handle ioctl conversions from sparc32 -> sparc64
+ * handle ioctl conversions from netbsd32 -> sparc64
  */
 
 #include <sys/param.h>
@@ -57,13 +57,13 @@
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
 
-#include <compat/sparc32/sparc32.h>
-#include <compat/sparc32/sparc32_ioctl.h>
-#include <compat/sparc32/sparc32_syscallargs.h>
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_ioctl.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
 
 void
-sparc32_to_fbcmap(s32p, p)
-	struct sparc32_fbcmap *s32p;
+netbsd32_to_fbcmap(s32p, p)
+	struct netbsd32_fbcmap *s32p;
 	struct fbcmap *p;
 {
 
@@ -75,8 +75,8 @@ sparc32_to_fbcmap(s32p, p)
 }
 
 void
-sparc32_to_fbcursor(s32p, p)
-	struct sparc32_fbcursor *s32p;
+netbsd32_to_fbcursor(s32p, p)
+	struct netbsd32_fbcursor *s32p;
 	struct fbcursor *p;
 {
 
@@ -84,15 +84,15 @@ sparc32_to_fbcursor(s32p, p)
 	p->enable = s32p->enable;
 	p->pos = s32p->pos;
 	p->hot = s32p->hot;
-	sparc32_to_fbcmap(&s32p->cmap, &p->cmap);
+	netbsd32_to_fbcmap(&s32p->cmap, &p->cmap);
 	p->size = s32p->size;
 	p->image = (char *)(u_long)s32p->image;
 	p->mask = (char *)(u_long)s32p->mask;
 }
 
 void
-sparc32_to_opiocdesc(s32p, p)
-	struct sparc32_opiocdesc *s32p;
+netbsd32_to_opiocdesc(s32p, p)
+	struct netbsd32_opiocdesc *s32p;
 	struct opiocdesc *p;
 {
 
@@ -104,8 +104,8 @@ sparc32_to_opiocdesc(s32p, p)
 }
 
 void
-sparc32_to_partinfo(s32p, p)
-	struct sparc32_partinfo *s32p;
+netbsd32_to_partinfo(s32p, p)
+	struct netbsd32_partinfo *s32p;
 	struct partinfo *p;
 {
 
@@ -114,8 +114,8 @@ sparc32_to_partinfo(s32p, p)
 }
 
 void
-sparc32_to_format_op(s32p, p)
-	struct sparc32_format_op *s32p;
+netbsd32_to_format_op(s32p, p)
+	struct netbsd32_format_op *s32p;
 	struct format_op *p;
 {
 
@@ -127,8 +127,8 @@ sparc32_to_format_op(s32p, p)
 
 #if 0 /* XXX see below */
 void
-sparc32_to_ifreq(s32p, p, cmd)
-	struct sparc32_ifreq *s32p;
+netbsd32_to_ifreq(s32p, p, cmd)
+	struct netbsd32_ifreq *s32p;
 	struct ifreq *p;
 	u_long cmd;	/* XXX unused yet */
 {
@@ -144,8 +144,8 @@ sparc32_to_ifreq(s32p, p, cmd)
 #endif
 
 void
-sparc32_to_ifconf(s32p, p)
-	struct sparc32_ifconf *s32p;
+netbsd32_to_ifconf(s32p, p)
+	struct netbsd32_ifconf *s32p;
 	struct ifconf *p;
 {
 
@@ -155,8 +155,8 @@ sparc32_to_ifconf(s32p, p)
 }
 
 void
-sparc32_to_ifmediareq(s32p, p)
-	struct sparc32_ifmediareq *s32p;
+netbsd32_to_ifmediareq(s32p, p)
+	struct netbsd32_ifmediareq *s32p;
 	struct ifmediareq *p;
 {
 
@@ -165,8 +165,8 @@ sparc32_to_ifmediareq(s32p, p)
 }
 
 void
-sparc32_to_ifdrv(s32p, p)
-	struct sparc32_ifdrv *s32p;
+netbsd32_to_ifdrv(s32p, p)
+	struct netbsd32_ifdrv *s32p;
 	struct ifdrv *p;
 {
 
@@ -175,8 +175,8 @@ sparc32_to_ifdrv(s32p, p)
 }
 
 void
-sparc32_to_sioc_vif_req(s32p, p)
-	struct sparc32_sioc_vif_req *s32p;
+netbsd32_to_sioc_vif_req(s32p, p)
+	struct netbsd32_sioc_vif_req *s32p;
 	struct sioc_vif_req *p;
 {
 
@@ -188,8 +188,8 @@ sparc32_to_sioc_vif_req(s32p, p)
 }
 
 void
-sparc32_to_sioc_sg_req(s32p, p)
-	struct sparc32_sioc_sg_req *s32p;
+netbsd32_to_sioc_sg_req(s32p, p)
+	struct netbsd32_sioc_sg_req *s32p;
 	struct sioc_sg_req *p;
 {
 
@@ -201,66 +201,66 @@ sparc32_to_sioc_sg_req(s32p, p)
 }
 
 /*
- * handle ioctl conversions from sparc64 -> sparc32
+ * handle ioctl conversions from sparc64 -> netbsd32
  */
 
 void
-sparc32_from_fbcmap(p, s32p)
+netbsd32_from_fbcmap(p, s32p)
 	struct fbcmap *p;
-	struct sparc32_fbcmap *s32p;
+	struct netbsd32_fbcmap *s32p;
 {
 
 	s32p->index = p->index;
 	s32p->count = p->count;
 /* filled in */
 #if 0
-	s32p->red = (sparc32_u_charp)p->red;
-	s32p->green = (sparc32_u_charp)p->green;
-	s32p->blue = (sparc32_u_charp)p->blue;
+	s32p->red = (netbsd32_u_charp)p->red;
+	s32p->green = (netbsd32_u_charp)p->green;
+	s32p->blue = (netbsd32_u_charp)p->blue;
 #endif
 }
 
 void
-sparc32_from_fbcursor(p, s32p)
+netbsd32_from_fbcursor(p, s32p)
 	struct fbcursor *p;
-	struct sparc32_fbcursor *s32p;
+	struct netbsd32_fbcursor *s32p;
 {
 
 	s32p->set = p->set;
 	s32p->enable = p->enable;
 	s32p->pos = p->pos;
 	s32p->hot = p->hot;
-	sparc32_from_fbcmap(&p->cmap, &s32p->cmap);
+	netbsd32_from_fbcmap(&p->cmap, &s32p->cmap);
 	s32p->size = p->size;
 /* filled in */
 #if 0
-	s32p->image = (sparc32_charp)p->image;
-	s32p->mask = (sparc32_charp)p->mask;
+	s32p->image = (netbsd32_charp)p->image;
+	s32p->mask = (netbsd32_charp)p->mask;
 #endif
 }
 
 void
-sparc32_from_opiocdesc(p, s32p)
+netbsd32_from_opiocdesc(p, s32p)
 	struct opiocdesc *p;
-	struct sparc32_opiocdesc *s32p;
+	struct netbsd32_opiocdesc *s32p;
 {
 
 	s32p->op_nodeid = p->op_nodeid;
 	s32p->op_namelen = p->op_namelen;
-	s32p->op_name = (sparc32_charp)(u_long)p->op_name;
+	s32p->op_name = (netbsd32_charp)(u_long)p->op_name;
 	s32p->op_buflen = p->op_buflen;
-	s32p->op_buf = (sparc32_charp)(u_long)p->op_buf;
+	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
 }
 
 void
-sparc32_from_format_op(p, s32p)
+netbsd32_from_format_op(p, s32p)
 	struct format_op *p;
-	struct sparc32_format_op *s32p;
+	struct netbsd32_format_op *s32p;
 {
 
 /* filled in */
 #if 0
-	s32p->df_buf = (sparc32_charp)p->df_buf;
+	s32p->df_buf = (netbsd32_charp)p->df_buf;
 #endif
 	s32p->df_count = p->df_count;
 	s32p->df_startblk = p->df_startblk;
@@ -269,9 +269,9 @@ sparc32_from_format_op(p, s32p)
 
 #if 0 /* XXX see below */
 void
-sparc32_from_ifreq(p, s32p, cmd)
+netbsd32_from_ifreq(p, s32p, cmd)
 	struct ifreq *p;
-	struct sparc32_ifreq *s32p;
+	struct netbsd32_ifreq *s32p;
 	u_long cmd;	/* XXX unused yet */
 {
 
@@ -286,66 +286,66 @@ sparc32_from_ifreq(p, s32p, cmd)
 #endif
 
 void
-sparc32_from_ifconf(p, s32p)
+netbsd32_from_ifconf(p, s32p)
 	struct ifconf *p;
-	struct sparc32_ifconf *s32p;
+	struct netbsd32_ifconf *s32p;
 {
 
 	s32p->ifc_len = p->ifc_len;
 	/* ifc_buf & ifc_req are the same size so this works */
-	s32p->ifc_buf = (sparc32_caddr_t)(u_long)p->ifc_buf;
+	s32p->ifc_buf = (netbsd32_caddr_t)(u_long)p->ifc_buf;
 }
 
 void
-sparc32_from_ifmediareq(p, s32p)
+netbsd32_from_ifmediareq(p, s32p)
 	struct ifmediareq *p;
-	struct sparc32_ifmediareq *s32p;
+	struct netbsd32_ifmediareq *s32p;
 {
 
 	memcpy(s32p, p, sizeof *p);
 /* filled in? */
 #if 0
-	s32p->ifm_ulist = (sparc32_intp_t)p->ifm_ulist;
+	s32p->ifm_ulist = (netbsd32_intp_t)p->ifm_ulist;
 #endif
 }
 
 void
-sparc32_from_ifdrv(p, s32p)
+netbsd32_from_ifdrv(p, s32p)
 	struct ifdrv *p;
-	struct sparc32_ifdrv *s32p;
+	struct netbsd32_ifdrv *s32p;
 {
 
 	memcpy(s32p, p, sizeof *p);
 /* filled in? */
 #if 0
-	s32p->ifm_data = (sparc32_u_longp_t)p->ifm_data;
+	s32p->ifm_data = (netbsd32_u_longp_t)p->ifm_data;
 #endif
 }
 
 void
-sparc32_from_sioc_vif_req(p, s32p)
+netbsd32_from_sioc_vif_req(p, s32p)
 	struct sioc_vif_req *p;
-	struct sparc32_sioc_vif_req *s32p;
+	struct netbsd32_sioc_vif_req *s32p;
 {
 
 	s32p->vifi = p->vifi;
-	s32p->icount = (sparc32_u_long)p->icount;
-	s32p->ocount = (sparc32_u_long)p->ocount;
-	s32p->ibytes = (sparc32_u_long)p->ibytes;
-	s32p->obytes = (sparc32_u_long)p->obytes;
+	s32p->icount = (netbsd32_u_long)p->icount;
+	s32p->ocount = (netbsd32_u_long)p->ocount;
+	s32p->ibytes = (netbsd32_u_long)p->ibytes;
+	s32p->obytes = (netbsd32_u_long)p->obytes;
 }
 
 void
-sparc32_from_sioc_sg_req(p, s32p)
+netbsd32_from_sioc_sg_req(p, s32p)
 	struct sioc_sg_req *p;
-	struct sparc32_sioc_sg_req *s32p;
+	struct netbsd32_sioc_sg_req *s32p;
 {
 
 	s32p->src = p->src;
 	s32p->grp = p->grp;
-	s32p->pktcnt = (sparc32_u_long)p->pktcnt;
-	s32p->bytecnt = (sparc32_u_long)p->bytecnt;
-	s32p->wrong_if = (sparc32_u_long)p->wrong_if;
+	s32p->pktcnt = (netbsd32_u_long)p->pktcnt;
+	s32p->bytecnt = (netbsd32_u_long)p->bytecnt;
+	s32p->wrong_if = (netbsd32_u_long)p->wrong_if;
 }
 
 
@@ -356,15 +356,15 @@ sparc32_from_sioc_sg_req(p, s32p)
  * on the ioctl command before and afterwards.
  */
 int
-compat_sparc32_ioctl(p, v, retval)
+compat_netbsd32_ioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_sparc32_ioctl_args /* {
+	struct compat_netbsd32_ioctl_args /* {
 		syscallarg(int) fd;
-		syscallarg(sparc32_u_long) com;
-		syscallarg(sparc32_voidp) data;
+		syscallarg(netbsd32_u_long) com;
+		syscallarg(netbsd32_voidp) data;
 	} */ *uap = v;
 	struct sys_ioctl_args ua;
 	void *data = NULL;
@@ -378,21 +378,21 @@ compat_sparc32_ioctl(p, v, retval)
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(type)	\
 	data = malloc(sizeof(struct type), M_TEMP, M_WAITOK); \
-	__CONCAT(sparc32_to_, type)((struct __CONCAT(sparc32_, type) *) \
+	__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
 	    (u_long)SCARG(uap, data), data)
 
 #define IOCTL_STRUCT_CONV_CMD_TO(type, cmd)	\
 	data = malloc(sizeof(struct type), M_TEMP, M_WAITOK); \
-	__CONCAT(sparc32_to_, type)((struct __CONCAT(sparc32_, type) *) \
+	__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
 	    (u_long)SCARG(uap, data), data, cmd)
 
 #define IOCTL_STRUCT_CONV_FROM(type)	\
-	__CONCAT(sparc32_from_, type)(data, \
-	    (struct __CONCAT(sparc32_, type) *) (u_long)SCARG(uap, data))
+	__CONCAT(netbsd32_from_, type)(data, \
+	    (struct __CONCAT(netbsd32_, type) *) (u_long)SCARG(uap, data))
 
 #define IOCTL_STRUCT_CONV_CMD_FROM(type, cmd)	\
-	__CONCAT(sparc32_from_, type)(data, \
-	    (struct __CONCAT(sparc32_, type) *) (u_long)SCARG(uap, data), cmd)
+	__CONCAT(netbsd32_from_, type)(data, \
+	    (struct __CONCAT(netbsd32_, type) *) (u_long)SCARG(uap, data), cmd)
 
 	/*
 	 * convert various structures, pointers, and other objects that
