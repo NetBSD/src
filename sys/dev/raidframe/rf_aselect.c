@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.11 2004/01/02 21:41:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.11 2004/01/02 21:41:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -266,6 +266,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			RF_Free(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
 			RF_Free(asmh_u, asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
 		}
+		desc->numStripes = 0;
 		return (1);
 	} else {
 		/* begin dag creation */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.30 2004/01/01 19:27:36 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.31 2004/01/02 21:41:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.30 2004/01/01 19:27:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.31 2004/01/02 21:41:08 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -624,13 +624,13 @@ ProcessNode(RF_DagNode_t *node, int context)
 		    (node->dagHdr->numCommitNodes == 0)) {
 			/* crossed commit barrier */
 			node->dagHdr->status = rf_rollForward;	
-			if (rf_engineDebug || 1) {
+			if (rf_engineDebug) {
 				printf("raid%d: node (%s) returned fail, rolling forward\n", raidPtr->raidid, node->name);
 			}
 		} else {
 			/* never reached commit barrier */
 			node->dagHdr->status = rf_rollBackward;	
-			if (rf_engineDebug || 1) {
+			if (rf_engineDebug) {
 				printf("raid%d: node (%s) returned fail, rolling backward\n", raidPtr->raidid, node->name);
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.24 2004/01/01 23:35:08 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.25 2004/01/02 21:41:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.24 2004/01/01 23:35:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.25 2004/01/02 21:41:08 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -189,13 +189,15 @@ rf_ContinueDagAccess(RF_DagList_t *dagList)
 		 * all other dags in the desc to execute to
 		 * completion.  then, free all dags and start over */
 		desc->status = 1;	/* bad status */
-
-		printf("raid%d: DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
+#if 0
+		printf("raid%d: DAG failure: %c addr 0x%lx "
+		       "(%ld) nblk 0x%x (%d) buf 0x%lx state %d\n",
 		       desc->raidPtr->raidid, desc->type, 
 		       (long) desc->raidAddress,
 		       (long) desc->raidAddress, (int) desc->numBlocks,
 		       (int) desc->numBlocks, 
-		       (unsigned long) (desc->bufPtr));
+		       (unsigned long) (desc->bufPtr), desc->state);
+#endif
 	}
 	dagList->numDagsDone++;
 	rf_ContinueRaidAccess(desc);
@@ -438,6 +440,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
 	RF_DagHeader_t *dag_h;
+	struct buf *bp;
 	int     i, selectStatus;
 
 	/* generate a dag for the access, and fire it off.  When the dag
@@ -461,8 +464,16 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 		/* failed to create a dag */
 		/* this happens when there are too many faults or incomplete
 		 * dag libraries */
-		printf("[Failed to create a DAG]\n");
-		RF_PANIC();
+		printf("raid%d: failed to create a dag. "
+		       "Too many component failures.\n", 
+		       desc->raidPtr->raidid);
+
+		desc->status = 1; /* bad status */ 
+		/* skip straight to rf_State_Cleanup() */
+		desc->state = rf_CleanupState;
+		bp = (struct buf *)desc->bp;
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
 	} else {
 		/* bind dags to desc */
 		for (i = 0; i < desc->numStripes; i++) {
