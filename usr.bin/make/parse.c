@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.68 2001/06/09 05:22:47 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.69 2001/06/10 02:31:00 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.68 2001/06/09 05:22:47 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.69 2001/06/10 02:31:00 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.68 2001/06/09 05:22:47 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.69 2001/06/10 02:31:00 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1585,9 +1585,9 @@ Parse_DoVar (line, ctxt)
 	 * Normal assignment -- just do it.
 	 */
 	Var_Set(line, cp, ctxt);
-	if (strcmp(line, MAKEOVERRIDES) == 0)
-	    ExportMAKEFLAGS(0);		/* re-export MAKEFLAGS */
     }
+    if (strcmp(line, MAKEOVERRIDES) == 0)
+	ExportMAKEFLAGS(0);		/* re-export MAKEFLAGS */
 }
 
 
