@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.31 2003/01/19 16:52:10 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.32 2003/04/01 01:57:36 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.31 2003/01/19 16:52:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.32 2003/04/01 01:57:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -168,7 +168,7 @@ kdbattach(parent, self, aux)
 	 * response packets into Unibus space.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct mscp_pack),
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("Alloc ctrl area %d\n", error);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.6 2002/10/05 22:34:05 chs Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.7 2003/04/01 01:54:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.6 2002/10/05 22:34:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.7 2003/04/01 01:54:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ sunos_exec_aout_prep_nmagic(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
+	baddr = roundup(epp->ep_daddr + execp->a_data, PAGE_SIZE);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
@@ -210,7 +210,7 @@ sunos_exec_aout_prep_omagic(p, epp)
 	    SUNOS_N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
+	baddr = roundup(epp->ep_daddr + execp->a_data, PAGE_SIZE);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
