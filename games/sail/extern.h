@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1998/03/29 04:57:19 mrg Exp $ */
+/*	$NetBSD: extern.h,v 1.7 1998/07/25 10:52:14 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -317,7 +317,7 @@ void prizecheck __P((void));
 int strend __P((char *));
 void closeon __P((struct ship *, struct ship *, char[], int, int, int));
 int score __P((char[], struct ship *, struct ship *, int));
-void move __P((char *, struct ship *, unsigned char *, short *, short *, char *));
+void move_ship __P((char *, struct ship *, unsigned char *, short *, short *, char *));
 void try __P((char[], char [], int, int, int, int, int, struct ship *,
     struct ship *, int *, int));
 void rmend __P((char *));
