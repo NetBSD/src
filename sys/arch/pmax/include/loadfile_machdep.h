@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/28 09:19:35 christos Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.2 2000/01/09 15:34:43 ad Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _PMAX_LOADFILE_MACHDEP_H_
+#define _PMAX_LOADFILE_MACHDEP_H_
+
 #define BOOT_AOUT
 #define BOOT_ECOFF
 #define BOOT_ELF
@@ -56,3 +59,5 @@
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
 #define OKMAGIC(a)		((a) == OMAGIC)
+
+#endif	/* !_PMAX_LOADFILE_MACHDEP_H_ */
