@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.9 2001/12/05 14:50:14 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.10 2001/12/05 19:59:54 augustss Exp $	*/
 
 /*
  * TODO
@@ -96,6 +96,7 @@ struct irframet_softc {
 	struct tty *sc_tp;
 
 	int sc_dongle;
+	int sc_dongle_private;
 
 	int sc_state;
 #define	IRT_RSLP		0x01	/* waiting for data (read) */
@@ -146,15 +147,44 @@ Static int	irframet_get_speeds(void *h, int *speeds);
 Static int	irframet_get_turnarounds(void *h, int *times);
 
 /* internal */
-Static int	irt_write_frame(void *h, u_int8_t *buf, size_t len);
-Static int	irt_putc(int c, struct tty *tp);
+Static int	irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len);
+Static int	irt_putc(struct tty *tp, int c);
 Static void	irt_frame(struct irframet_softc *sc, u_char *buf, u_int len);
 Static void	irt_timeout(void *v);
+Static void	irt_setspeed(struct tty *tp, u_int speed);
+Static void	irt_setline(struct tty *tp, u_int line);
+Static void	irt_delay(struct tty *tp, u_int delay);
 
-Static struct irframe_methods irframet_methods = {
+Static const struct irframe_methods irframet_methods = {
 	irframet_open, irframet_close, irframet_read, irframet_write,
 	irframet_poll, irframet_set_params,
 	irframet_get_speeds, irframet_get_turnarounds
+};
+
+Static void irts_none(struct tty *tp, u_int speed);
+Static void irts_tekram(struct tty *tp, u_int speed);
+Static void irts_jeteye(struct tty *tp, u_int speed);
+Static void irts_actisys(struct tty *tp, u_int speed);
+Static void irts_litelink(struct tty *tp, u_int speed);
+Static void irts_girbil(struct tty *tp, u_int speed);
+
+#define NORMAL_SPEEDS (IRDA_SPEEDS_SIR & ~IRDA_SPEED_2400)
+#define TURNT_POS (IRDA_TURNT_10000 | IRDA_TURNT_5000 | IRDA_TURNT_1000 | \
+	IRDA_TURNT_500 | IRDA_TURNT_100 | IRDA_TURNT_50 | IRDA_TURNT_10)
+Static const struct dongle {
+	void (*setspeed)(struct tty *tp, u_int speed);
+	u_int speedmask;
+	u_int turnmask;
+} irt_dongles[DONGLE_MAX] = {
+	/* Indexed by dongle number from irdaio.h */
+	{ irts_none, IRDA_SPEEDS_SIR, IRDA_TURNT_10000 },
+	{ irts_tekram, IRDA_SPEEDS_SIR, IRDA_TURNT_10000 },
+	{ irts_jeteye, IRDA_SPEED_9600|IRDA_SPEED_19200|IRDA_SPEED_115200,
+	  				IRDA_TURNT_10000 },
+	{ irts_actisys, NORMAL_SPEEDS & ~IRDA_SPEED_38400, TURNT_POS },
+	{ irts_actisys, NORMAL_SPEEDS, TURNT_POS },
+	{ irts_litelink, NORMAL_SPEEDS, TURNT_POS },
+	{ irts_girbil, IRDA_SPEEDS_SIR, IRDA_TURNT_10000 | IRDA_TURNT_5000 },
 };
 
 void
@@ -205,6 +235,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	ttyflush(tp, FREAD | FWRITE);
 
 	sc->sc_dongle = DONGLE_NONE;
+	sc->sc_dongle_private = 0;
 
 	splx(s);
 
@@ -252,6 +283,7 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error;
+	int d;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
@@ -267,7 +299,10 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 		*(int *)data = sc->sc_dongle;
 		break;
 	case IRFRAMETTY_SET_DONGLE:
-		sc->sc_dongle = *(int *)data;
+		d = *(int *)data;
+		if (d < 0 || d >= DONGLE_MAX)
+			return (EINVAL);
+		sc->sc_dongle = d;
 		break;
 	default:
 		error = EINVAL;
@@ -511,7 +546,7 @@ irframet_read(void *h, struct uio *uio, int flag)
 }
 
 int
-irt_putc(int c, struct tty *tp)
+irt_putc(struct tty *tp, int c)
 {
 	int s;
 	int error;
@@ -561,20 +596,19 @@ irframet_write(void *h, struct uio *uio, int flag)
 	n = irda_sir_frame(buf, MAX_IRDA_FRAME, uio, sc->sc_ebofs);
 	if (n < 0)
 		return (-n);
-	return (irt_write_frame(h, buf, n));
+	return (irt_write_frame(tp, buf, n));
 }
 
 int
-irt_write_frame(void *h, u_int8_t *buf, size_t len)
+irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len)
 {
-	struct tty *tp = h;
 	int error, i;
 
 	DPRINTF(("%s: tp=%p len=%d\n", __FUNCTION__, tp, len));
 
 	error = 0;
 	for (i = 0; !error && i < len; i++)
-		error = irt_putc(buf[i], tp);
+		error = irt_putc(tp, buf[i]);
 
 	irframetstart(tp);
 
@@ -618,7 +652,6 @@ irframet_set_params(void *h, struct irda_params *p)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
-	struct termios tt;
 	int i;
 
 	DPRINTF(("%s: tp=%p speed=%d ebofs=%d maxsize=%d\n",
@@ -635,9 +668,8 @@ irframet_set_params(void *h, struct irda_params *p)
 			break;
 		default: return (EINVAL);
 		}
-		ttioctl(tp, TIOCGETA,  (caddr_t)&tt, 0, curproc);
-		sc->sc_speed = tt.c_ispeed = tt.c_ospeed = p->speed;
-		ttioctl(tp, TIOCSETAF, (caddr_t)&tt, 0, curproc);
+		irt_dongles[sc->sc_dongle].setspeed(tp, p->speed);
+		sc->sc_speed = p->speed;
 	}
 
 	sc->sc_ebofs = p->ebofs;
@@ -669,10 +701,11 @@ int
 irframet_get_speeds(void *h, int *speeds)
 {
 	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
 
-	tp = tp;
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
-	*speeds = IRDA_SPEEDS_SIR;
+
+	*speeds = irt_dongles[sc->sc_dongle].speedmask;
 	return (0);
 }
 
@@ -680,9 +713,242 @@ int
 irframet_get_turnarounds(void *h, int *turnarounds)
 {
 	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
 
-	tp = tp;
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
-	*turnarounds = IRDA_TURNT_10000;
+
+	*turnarounds = irt_dongles[sc->sc_dongle].turnmask;
 	return (0);
+}
+
+void
+irt_setspeed(struct tty *tp, u_int speed)
+{
+	struct termios tt;
+
+	ttioctl(tp, TIOCGETA,  (caddr_t)&tt, 0, curproc);
+	tt.c_ispeed = tt.c_ospeed = speed;
+	ttioctl(tp, TIOCSETAF, (caddr_t)&tt, 0, curproc);
+}
+
+void
+irt_setline(struct tty *tp, u_int line)
+{
+	int mline = line;
+	ttioctl(tp, TIOCMSET, (caddr_t)&mline, 0, curproc);
+}
+
+void
+irt_delay(struct tty *tp, u_int ms)
+{
+	if (cold)
+		delay(ms * 1000);
+	else
+		tsleep(&irt_delay, PZERO, "irtdly", ms * hz / 1000);
+		
+}
+
+/**********************************************************************
+ * No dongle
+ **********************************************************************/
+void
+irts_none(struct tty *tp, u_int speed)
+{
+	irt_setspeed(tp, speed);
+}
+
+/**********************************************************************
+ * Tekram
+ **********************************************************************/
+#define TEKRAM_PW     0x10
+
+#define TEKRAM_115200 (TEKRAM_PW|0x00)
+#define TEKRAM_57600  (TEKRAM_PW|0x01)
+#define TEKRAM_38400  (TEKRAM_PW|0x02)
+#define TEKRAM_19200  (TEKRAM_PW|0x03)
+#define TEKRAM_9600   (TEKRAM_PW|0x04)
+#define TEKRAM_2400   (TEKRAM_PW|0x08)
+
+#define TEKRAM_TV     (TEKRAM_PW|0x05)
+
+void
+irts_tekram(struct tty *tp, u_int speed)
+{
+	int s;
+
+	irt_setspeed(tp, 9600);
+	irt_setline(tp, 0);
+	irt_delay(tp, 50);
+	irt_setline(tp, TIOCM_RTS);
+	irt_delay(tp, 1);
+	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+	irt_delay(tp, 1);	/* 50 us */
+	irt_setline(tp, TIOCM_DTR);
+	irt_delay(tp, 1);	/* 7 us */
+	switch(speed) {
+	case 115200: s = TEKRAM_115200; break;
+	case 57600:  s = TEKRAM_57600; break;
+	case 38400:  s = TEKRAM_38400; break;
+	case 19200:  s = TEKRAM_19200; break;
+	case 2400:   s = TEKRAM_2400; break;
+	default:     s = TEKRAM_9600; break;
+	}
+	irt_putc(tp, s);
+	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+	if (speed != 9600)
+		irt_setspeed(tp, speed);
+	irt_delay(tp, 1);	/* 50 us */
+}
+
+/**********************************************************************
+ * Jeteye
+ **********************************************************************/
+void
+irts_jeteye(struct tty *tp, u_int speed)
+{
+	switch (speed) {
+	case 19200:
+		irt_setline(tp, TIOCM_DTR);
+		break;
+	case 115200:
+		irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+		break;
+	default: /*9600*/
+		irt_setline(tp, TIOCM_RTS);
+		break;
+	}
+	irt_setspeed(tp, speed);
+}
+
+/**********************************************************************
+ * Actisys
+ **********************************************************************/
+void
+irts_actisys(struct tty *tp, u_int speed)
+{
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int pulses;
+
+	irt_setspeed(tp, speed);
+
+	switch(speed) {
+	case 19200:  pulses=1; break;
+	case 57600:  pulses=2; break;
+	case 115200: pulses=3; break;
+	case 38400:  pulses=4; break;
+	default: /* 9600 */ pulses=0; break;
+	}
+
+	if (sc->sc_dongle_private == 0) {
+		sc->sc_dongle_private = 1;
+		irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+		/* 
+		 * Must wait at least 50ms after initial
+		 * power on to charge internal capacitor
+		 */
+		irt_delay(tp, 50);
+	}
+	irt_setline(tp, TIOCM_RTS);
+	delay(2);
+	for (;;) {
+		irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+		delay(2);
+		if (--pulses <= 0)
+			break;
+		irt_setline(tp, TIOCM_DTR);    
+		delay(2);
+	}
+}
+
+/**********************************************************************
+ * Litelink
+ **********************************************************************/
+void
+irts_litelink(struct tty *tp, u_int speed)
+{
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int pulses;
+
+	irt_setspeed(tp, speed);
+
+	switch(speed) {
+	case 57600:  pulses=1; break;
+	case 38400:  pulses=2; break;
+	case 19200:  pulses=3; break;
+	case 9600:   pulses=4; break;
+	default: /* 115200 */ pulses=0; break;
+	}
+
+	if (sc->sc_dongle_private == 0) {
+		sc->sc_dongle_private = 1;
+		irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+	}
+	irt_setline(tp, TIOCM_RTS);
+	irt_delay(tp, 1); /* 15 us */;
+	for (;;) {
+		irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+		irt_delay(tp, 1); /* 15 us */;
+		if (--pulses <= 0)
+			break;
+		irt_setline(tp, TIOCM_DTR);    
+		irt_delay(tp, 1); /* 15 us */;
+	}
+}
+
+/**********************************************************************
+ * Girbil
+ **********************************************************************/
+/* Control register 1 */
+#define GIRBIL_TXEN      0x01 /* Enable transmitter */
+#define GIRBIL_RXEN      0x02 /* Enable receiver */
+#define GIRBIL_ECAN      0x04 /* Cancel self emmited data */
+#define GIRBIL_ECHO      0x08 /* Echo control characters */
+
+/* LED Current Register */
+#define GIRBIL_HIGH      0x20
+#define GIRBIL_MEDIUM    0x21
+#define GIRBIL_LOW       0x22
+
+/* Baud register */
+#define GIRBIL_2400      0x30
+#define GIRBIL_4800      0x31	
+#define GIRBIL_9600      0x32
+#define GIRBIL_19200     0x33
+#define GIRBIL_38400     0x34	
+#define GIRBIL_57600     0x35	
+#define GIRBIL_115200    0x36
+
+/* Mode register */
+#define GIRBIL_IRDA      0x40
+#define GIRBIL_ASK       0x41
+
+/* Control register 2 */
+#define GIRBIL_LOAD      0x51 /* Load the new baud rate value */
+
+void
+irts_girbil(struct tty *tp, u_int speed)
+{
+	int s;
+
+	irt_setspeed(tp, 9600);
+	irt_setline(tp, TIOCM_DTR);
+	irt_delay(tp, 5);
+	irt_setline(tp, TIOCM_RTS);
+	irt_delay(tp, 20);
+	switch(speed) {
+	case 115200: s = GIRBIL_115200; break;
+	case 57600:  s = GIRBIL_57600; break;
+	case 38400:  s = GIRBIL_38400; break;
+	case 19200:  s = GIRBIL_19200; break;
+	case 4800:   s = GIRBIL_4800; break;
+	case 2400:   s = GIRBIL_2400; break;
+	default:     s = GIRBIL_9600; break;
+	}
+	irt_putc(tp, GIRBIL_TXEN|GIRBIL_RXEN);
+	irt_putc(tp, s);
+	irt_putc(tp, GIRBIL_LOAD);
+	irt_delay(tp, 100);
+	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
+	if (speed != 9600)
+		irt_setspeed(tp, speed);
 }
