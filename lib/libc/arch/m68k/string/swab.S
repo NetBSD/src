@@ -1,6 +1,6 @@
-/*	$NetBSD: swab.S,v 1.5 1997/01/04 03:21:20 jtc Exp $	*/
+/*	$NetBSD: swab.S,v 1.6 1997/01/04 03:26:29 jtc Exp $	*/
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(swab)
 	movl	sp@(4),a0		| source
