@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.38.2.3 2000/11/01 03:57:18 tv Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.38.2.4 2000/11/01 16:34:31 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -284,8 +284,6 @@ lfs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
-		off_t offlo;
-		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	
@@ -328,7 +326,8 @@ lfs_inactive(v)
 static int lfs_set_dirop __P((struct vnode *));
 extern int lfs_dirvcount;
 
-static int lfs_set_dirop(vp)
+static int
+lfs_set_dirop(vp)
 	struct vnode *vp;
 {
 	struct lfs *fs;
@@ -369,6 +368,9 @@ static int lfs_set_dirop(vp)
 	++fs->lfs_dirops;						
 	fs->lfs_doifile = 1;						
 
+	/* Hold a reference so SET_ENDOP will be happy */
+	lfs_vref(vp);
+
 	return 0;
 }
 
@@ -383,6 +385,7 @@ static int lfs_set_dirop(vp)
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
 	lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3)); /* XXX */	\
+	lfs_vunref(vp);							\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
@@ -491,7 +494,7 @@ lfs_mknod(v)
 	 * return.  But, that leaves this vnode in limbo, also not good.
 	 * Can this ever happen (barring hardware failure)?
 	 */
-	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, curproc)) != 0) {
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, curproc)) != 0) {
 		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
 		       VTOI(*vpp)->i_number);
 		return (error);
