@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.43 1999/05/05 20:01:09 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.44 1999/07/01 05:56:32 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -68,6 +68,9 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * System call interface to the socket abstraction.
@@ -183,12 +186,21 @@ sys_accept(p, v, retval)
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof(namelen))))
 		return (error);
+	if (SCARG(uap, name) != NULL &&
+	    uvm_useracc((caddr_t)SCARG(uap, name), sizeof(struct sockaddr),
+	     B_WRITE) == FALSE)
+		return (EFAULT);
+
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
 	so = (struct socket *)fp->f_data;
 	FILE_UNUSE(fp, p);
+	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
+		splx(s);
+		return (EOPNOTSUPP);
+	}
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
 		splx(s);
 		return (EINVAL);
@@ -242,6 +254,8 @@ sys_accept(p, v, retval)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
+		if (error != 0)
+			(void) closef(fp, p);
 	}
 	m_freem(nam);
 	splx(s);
