@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.24 2001/02/06 02:49:12 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.25 2001/03/09 07:42:24 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -269,6 +269,9 @@ void	sip_tick __P((void *));
 void	sip_sis900_set_filter __P((struct sip_softc *));
 void	sip_dp83815_set_filter __P((struct sip_softc *));
 
+void	sip_sis900_read_macaddr __P((struct sip_softc *, u_int8_t *));
+void	sip_dp83815_read_macaddr __P((struct sip_softc *, u_int8_t *));
+
 int	sip_intr __P((void *));
 void	sip_txintr __P((struct sip_softc *));
 void	sip_rxintr __P((struct sip_softc *));
@@ -301,16 +304,19 @@ struct sip_variant {
 	void	(*sipv_mii_writereg) __P((struct device *, int, int, int));
 	void	(*sipv_mii_statchg) __P((struct device *));
 	void	(*sipv_set_filter) __P((struct sip_softc *));
+	void	(*sipv_read_macaddr) __P((struct sip_softc *, u_int8_t *));
 };
 
 const struct sip_variant sip_variant_sis900 = {
 	sip_sis900_mii_readreg, sip_sis900_mii_writereg,
-	    sip_sis900_mii_statchg, sip_sis900_set_filter
+	    sip_sis900_mii_statchg, sip_sis900_set_filter,
+	    sip_sis900_read_macaddr
 };
 
 const struct sip_variant sip_variant_dp83815 = {
 	sip_dp83815_mii_readreg, sip_dp83815_mii_writereg,
-	    sip_dp83815_mii_statchg, sip_dp83815_set_filter
+	    sip_dp83815_mii_statchg, sip_dp83815_set_filter,
+	    sip_dp83815_read_macaddr
 };
 
 /*
@@ -386,7 +392,6 @@ sip_attach(parent, self, aux)
 	int i, rseg, error;
 	const struct sip_product *sip;
 	pcireg_t pmode;
-	u_int16_t myea[ETHER_ADDR_LEN / 2];
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int pmreg;
 
@@ -542,15 +547,7 @@ sip_attach(parent, self, aux)
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
-	sip_read_eeprom(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
-	    sizeof(myea) / sizeof(myea[0]), myea);
-
-	enaddr[0] = myea[0] & 0xff;
-	enaddr[1] = myea[0] >> 8;
-	enaddr[2] = myea[1] & 0xff;
-	enaddr[3] = myea[1] >> 8;
-	enaddr[4] = myea[2] & 0xff;
-	enaddr[5] = myea[2] >> 8;
+	sip->sip_variant->sipv_read_macaddr(sc, enaddr);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
@@ -1336,6 +1333,29 @@ sip_init(ifp)
 	 * Reset the chip to a known state.
 	 */
 	sip_reset(sc);
+
+	if (   sc->sc_model->sip_vendor == PCI_VENDOR_NS
+	    && sc->sc_model->sip_product == PCI_PRODUCT_NS_DP83815) {
+		/*
+		 * DP83815 manual, page 78:
+		 *    4.4 Recommended Registers Configuration
+		 *    For optimum performance of the DP83815, version noted
+		 *    as DP83815CVNG (SRR = 203h), the listed register
+		 *    modifications must be followed in sequence...
+		 *
+		 * It's not clear if this should be 302h or 203h because that
+		 * chip name is listed as SRR 302h in the description of the
+		 * SRR register.
+		 */
+		cfg = bus_space_read_4(st, sh, SIP_NS_SRR);
+		if (cfg == 0x203) {
+			bus_space_write_4(st, sh, 0x00cc, 0x0001);
+			bus_space_write_4(st, sh, 0x00e4, 0x189C);
+			bus_space_write_4(st, sh, 0x00fc, 0x0000);
+			bus_space_write_4(st, sh, 0x00f4, 0x5040);
+			bus_space_write_4(st, sh, 0x00f8, 0x008c);
+		}
+	}
 
 	/*
 	 * Initialize the transmit descriptor ring.
@@ -2128,6 +2148,82 @@ sip_dp83815_mii_statchg(self)
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+}
+
+void
+sip_sis900_read_macaddr(sc, enaddr)
+	struct sip_softc *sc;
+	u_int8_t *enaddr;
+{
+	u_int16_t myea[ETHER_ADDR_LEN / 2];
+
+	sip_read_eeprom(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
+	    sizeof(myea) / sizeof(myea[0]), myea);
+
+	enaddr[0] = myea[0] & 0xff;
+	enaddr[1] = myea[0] >> 8;
+	enaddr[2] = myea[1] & 0xff;
+	enaddr[3] = myea[1] >> 8;
+	enaddr[4] = myea[2] & 0xff;
+	enaddr[5] = myea[2] >> 8;
+}
+
+static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+#define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
+
+void
+sip_dp83815_read_macaddr(sc, enaddr)
+	struct sip_softc *sc;
+	u_int8_t *enaddr;
+{
+	u_int16_t eeprom_data[SIP_DP83815_EEPROM_LENGTH / 2], *ea;
+	u_int8_t cksum, *e, match;
+	int i;
+
+	sip_read_eeprom(sc, 0, sizeof(eeprom_data) / sizeof(eeprom_data[0]),
+	    eeprom_data);
+
+	match = eeprom_data[SIP_DP83815_EEPROM_CHECKSUM/2] >> 8;
+	match = ~(match - 1);
+
+	cksum = 0x55;
+	e = (u_int8_t *) eeprom_data;
+	for (i=0 ; i<SIP_DP83815_EEPROM_CHECKSUM ; i++) {
+		cksum += *e++;
+	}
+	if (cksum != match) {
+		printf("%s: Checksum (%x) mismatch (%x)",
+		    sc->sc_dev.dv_xname, cksum, match);
+	}
+
+	/*
+	 * Unrolled because it makes slightly more sense this way.
+	 * The DP83815 stores the MAC address in bit 0 of word 6
+	 * through bit 15 of word 8.
+	 */
+	ea = &eeprom_data[6];
+	enaddr[0] = ((*ea & 0x1) << 7);
+	ea++;
+	enaddr[0] |= ((*ea & 0xFE00) >> 9);
+	enaddr[1] = ((*ea & 0x1FE) >> 1);
+	enaddr[2] = ((*ea & 0x1) << 7);
+	ea++;
+	enaddr[2] |= ((*ea & 0xFE00) >> 9);
+	enaddr[3] = ((*ea & 0x1FE) >> 1);
+	enaddr[4] = ((*ea & 0x1) << 7);
+	ea++;
+	enaddr[4] |= ((*ea & 0xFE00) >> 9);
+	enaddr[5] = ((*ea & 0x1FE) >> 1);
+
+	/*
+	 * In case that's not weird enough, we also need to reverse
+	 * the bits in each byte.  This all actually makes more sense
+	 * if you think about the EEPROM storage as an array of bits
+	 * being shifted into bytes, but that's not how we're looking
+	 * at it here...
+	 */
+	for (i=0 ; i<6 ; i++)
+		enaddr[i] = bbr(enaddr[i]);
 }
 
 /*
