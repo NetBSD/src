@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1995/01/11 20:39:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1995/01/24 06:18:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -108,9 +108,6 @@ void configure()
 	/* Install non-device interrupt handlers. */
 	isr_add_autovect(nmi_intr, 0, 7);
 	isr_add_autovect(soft1intr, 0, 1);
-
-	/* Now ready for interrupts. */
-	(void)spl0();
 
 	/* Build table for CHR-to-BLK translation, etc. */
 	conf_init();
@@ -288,7 +285,9 @@ bus_mapin(bustype, paddr, sz)
 		return (NULL);
 
 	off = paddr & PGOFSET;
-	pa = paddr & ~PGOFSET;
+	pa = paddr - off;
+	sz += off;
+
 	pa |= bustype_to_pmaptype[bustype];
 	pa |= PMAP_NC;
 
