@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.10 2001/08/28 14:51:28 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.11 2001/08/31 17:10:54 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -195,6 +195,7 @@ consinit()
 	
 	DBPRINT(("setting up stdin\r\n"));
 	chosen = OF_finddevice("/chosen");
+	DBPRINT(("chosen = %x, stdin @ %p\r\n", chosen, &stdin));
 	OF_getprop(chosen, "stdin",  &stdin, sizeof(stdin));
 	DBPRINT(("stdin instance = %x\r\n", stdin));
 	
@@ -202,6 +203,7 @@ consinit()
 		printf("WARNING: no PROM stdin\n");
 	} 
 		
+	DBPRINT(("stdin node = %x\r\n", stdinnode));
 	DBPRINT(("setting up stdout\r\n"));
 	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
 	
@@ -211,6 +213,7 @@ consinit()
 		printf("WARNING: no PROM stdout\n");
 	
 	DBPRINT(("stdout package = %x\r\n", fbnode));
+	DBPRINT(("buffer @ %p\r\n", buffer));
 	
 	if (stdinnode && (OF_getproplen(stdinnode,"keyboard") >= 0)) {
 #if NKBD > 0		
@@ -218,7 +221,7 @@ consinit()
 #endif
 		consname = "keyboard/display";
 	} else if (fbnode && 
-		(OF_instance_to_path(stdinnode, buffer, sizeof(buffer)) >= 0)) {
+		(OF_instance_to_path(stdin, buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}
 	printf("console is %s\n", consname);
