@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.137 2001/04/19 07:49:00 jdolecek Exp $
+#	$NetBSD: MAKEDEV,v 1.138 2001/06/17 11:48:09 jdolecek Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -152,7 +152,6 @@ case $i in
 
 all)
 	sh $0 std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
-	sh $0 ed0
 	sh $0 tty0 tty1 tty2 tty3 pty0 pty1 pty2 pty3
 	sh $0 raid0 raid1 raid2 raid3
 	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
@@ -171,6 +170,7 @@ all)
 	sh $0 bktr
 	sh $0 ttyCZ0 ttyCY0
 	sh $0 altq
+	sh $0 ed0 ed1
 	;;
 
 audio)
@@ -183,7 +183,7 @@ audio)
 
 floppy)
 	sh $0 std wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4 tty0 tty1 tty2
-	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0 ld0 ld1 ld2 ld3
+	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0 ld0 ld1 ld2 ld3 ed0 ed1
 	;;
 
 ramdisk)
