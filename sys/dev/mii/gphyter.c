@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.1 2001/05/31 16:06:58 thorpej Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.2 2001/05/31 18:47:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ gphyterattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const char *model;
-	uint16_t strap;
+	int anar, strap;
 
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_xxNATSEMI_DP83861:
@@ -163,6 +163,20 @@ gphyterattach(parent, self, aux)
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+
+	/*
+	 * The Gig PHYTER seems to have the 10baseT BMSR bits
+	 * hard-wired to 0, even though the device supports
+	 * 10baseT.  What we do instead is read the post-reset
+	 * ANAR, who's 10baseT-related bits are set by strapping
+	 * pin 180, and fake the BMSR bits.
+	 */
+	anar = PHY_READ(sc, MII_ANAR);
+	if (anar & ANAR_10)
+		sc->mii_capabilities |= (BMSR_10THDX & ma->mii_capmask);
+	if (anar & ANAR_10_FD)
+		sc->mii_capabilities |= (BMSR_10TFDX & ma->mii_capmask);
+
 	printf("%s: ", sc->mii_dev.dv_xname);
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
@@ -283,6 +297,9 @@ gphyter_status(sc)
 		switch (physup & (PHY_SUP_SPEED1|PHY_SUP_SPEED0)) {
 		case PHY_SUP_SPEED1:
 			mii->mii_media_active |= IFM_1000_TX;
+			gtsr = PHY_READ(sc, MII_100T2SR);
+			if (gtsr & GTSR_MS_RES)
+				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
 
 		case PHY_SUP_SPEED0:
@@ -299,12 +316,6 @@ gphyter_status(sc)
 		}
 		if (physup & PHY_SUP_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
-
-		gtsr = PHY_READ(sc, MII_100T2SR);
-#if 0
-		if (gtsr & GTSR_MS_RES)
-			mii->mii_media_active |= IFM_MASTER;
-#endif
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
