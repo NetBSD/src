@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/10/15 15:23:23 ws Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1999/04/18 00:18:49 fvdl Exp $
 
 
 .if (${MACHINE} == "i386" || ${MACHINE} == "powerpc")
@@ -9,7 +9,7 @@ LDADD+=	-lutil
 .endif
 
 .if ${MACHINE} == "i386"
-SUBDIR=	mbr
+SUBDIR=	mbr mbr_bootsel
 .endif
 
 MAN=	fdisk.8
