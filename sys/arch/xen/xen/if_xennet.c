@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.7 2004/04/24 18:55:02 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.8 2004/04/24 19:32:37 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.7 2004/04/24 18:55:02 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.8 2004/04/24 19:32:37 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -184,8 +184,6 @@ xennet_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-static struct xennet_softc *thesc;
-
 void
 xennet_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -252,9 +250,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	thesc = sc;
-
-	event_set_handler(_EVENT_NET, &xen_network_handler, IPL_NET);
+	event_set_handler(_EVENT_NET, &xen_network_handler, sc, IPL_NET);
 	hypervisor_enable_event(_EVENT_NET);
 
         aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
@@ -288,7 +284,6 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	DPRINTFN(XEDB_MBUF, ("xennet_rx_mbuf_free id %d, mbuf %p, buf %p, "
 	    "size %d\n", id, m, buf, size));
-	KASSERT(sc == thesc);
 
 	ringidx = sc->sc_net_idx->rx_req_prod;
 
@@ -320,7 +315,7 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 static int
 xen_network_handler(void *arg)
 {
-	struct xennet_softc *sc = thesc;
+	struct xennet_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	rx_resp_entry_t *rx;
 	paddr_t pa;
