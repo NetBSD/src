@@ -1,6 +1,6 @@
 #! /bin/sh -
 #	from: @(#)makesyscalls.sh	7.6 (Berkeley) 4/20/91
-#	$Id: makesyscalls.sh,v 1.2 1993/05/20 02:54:49 cgd Exp $
+#	$Id: makesyscalls.sh,v 1.3 1993/05/20 02:57:57 cgd Exp $
 
 set -e
 
@@ -169,4 +169,4 @@ awk < $1 "
 
 cat $sysdcl $syscompat $sysent >$syssw
 
-chmod 444 $sysnames $syshdr $syssw
+#chmod 444 $sysnames $syshdr $syssw
