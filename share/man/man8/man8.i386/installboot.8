@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.16 2001/11/24 16:38:08 perry Exp $
+.\" $NetBSD: installboot.8,v 1.17 2001/12/26 01:45:35 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Perry E. Metzger.  All rights reserved.
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -138,9 +138,19 @@ harddisk, use the following command:
 .Bd -literal -offset indent
 /usr/mdec/installboot /usr/mdec/biosboot.sym /dev/rwd0a
 .Ed
-.Pp
+.Sh SEE ALSO
+.Xr vnd 4 ,
+.Xr boot 8 ,
+.Xr disklabel 8 ,
+.Xr init 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nx Ns Tn /i386
+.Nm
+command first appeared in
+.Nx 1.3 .
 .Sh BUGS
-.Pp
 .Nx
 is in transition from using the 386BSD MBR partition-ID of 165 (0xa5),
 to using a new, unique partition-ID of 169 (0xa9).
@@ -190,15 +200,3 @@ set to a value greater than one, or with
 set to one if the
 .Dq boot
 partition is mounted.
-.Sh SEE ALSO
-.Xr vnd 4 ,
-.Xr boot 8 ,
-.Xr disklabel 8 ,
-.Xr init 8 ,
-.Xr sysctl 8
-.Sh HISTORY
-The
-.Nx Ns Tn /i386
-.Nm
-command first appeared in
-.Nx 1.3 .
