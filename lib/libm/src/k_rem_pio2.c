@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_rem_pio2.c,v 1.10 2002/05/26 22:01:53 wiz Exp $");
+__RCSID("$NetBSD: k_rem_pio2.c,v 1.11 2003/01/04 23:43:03 wiz Exp $");
 #endif
 
 /*
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: k_rem_pio2.c,v 1.10 2002/05/26 22:01:53 wiz Exp $");
  *			z    = (z-x[i])*2**24
  *
  *
- *	y[]	ouput result in an array of double precision numbers.
+ *	y[]	output result in an array of double precision numbers.
  *		The dimension of y[] is:
  *			24-bit  precision	1
  *			53-bit  precision	2

@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.9 2002/11/24 22:35:44 christos Exp $	*/
+/*	$NetBSD: echo.c,v 1.10 2003/01/04 23:43:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,7 +49,7 @@
  * The Single Unix Spec requires that \ escapes be treated as if -e
  * were set, but that -n not be treated as an option.
  * (ksh supports 'echo [-eEn] args', but not -- so that it is actually
- * impossible to actually ouput '-n')
+ * impossible to actually output '-n')
  *
  * It is suggested that 'printf "%b" "string"' be used to get \ sequences
  * expanded.  printf is now a builtin of netbsd's sh and csh.

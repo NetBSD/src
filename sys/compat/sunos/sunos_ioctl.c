@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.41 2002/05/30 18:44:30 thorpej Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.42 2003/01/04 23:43:04 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.41 2002/05/30 18:44:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.42 2003/01/04 23:43:04 wiz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -779,7 +779,7 @@ sunos_sys_ioctl(p, v, retval)
 		/*
 		 * The bsd driver does not distinguish between paused and
 		 * active. (In the sun driver, not active means samples are
-		 * not ouput at all, but paused means the last streams buffer
+		 * not output at all, but paused means the last streams buffer
 		 * is drained and then output stops.)  If either are 0, then
 		 * when stop output. Otherwise, if either are non-zero,
 		 * we resume.

@@ -1,4 +1,4 @@
-/*	$NetBSD: README.hdlc,v 1.4 1994/06/29 06:36:58 cgd Exp $	*/
+/*	$NetBSD: README.hdlc,v 1.5 2003/01/04 23:43:06 wiz Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -16,7 +16,7 @@
  *
  *  The HDLC protocol layer interface consists of the following procedures:
  *    Hd_init       (pr_init) 
- *    Hd_ouput      (pr_output)
+ *    Hd_output     (pr_output)
  *    Hd_input      (pr_input)
  *    Hd_timer      (pr_slowtimo)                       
  *             
