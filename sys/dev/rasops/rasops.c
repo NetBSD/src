@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.42 2002/09/27 15:37:31 provos Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.43 2003/05/03 18:32:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.42 2002/09/27 15:37:31 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.43 2003/05/03 18:32:42 uwe Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -508,7 +508,7 @@ rasops_copyrows(cookie, src, dst, num)
 /*
  * Copy columns. This is slow, and hard to optimize due to alignment,
  * and the fact that we have to copy both left->right and right->left.
- * We simply cop-out here and use bcopy(), since it handles all of
+ * We simply cop-out here and use memmove(), since it handles all of
  * these cases anyway.
  */
 void
@@ -558,7 +558,7 @@ rasops_copycols(cookie, row, src, dst, num)
 	dp = ri->ri_bits + row + dst * ri->ri_xscale;
 
 	while (height--) {
-		bcopy(sp, dp, num);
+		memmove(dp, sp, num);
 		dp += ri->ri_stride;
 		sp += ri->ri_stride;
 	}
