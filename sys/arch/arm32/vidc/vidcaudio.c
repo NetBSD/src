@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.36 2001/02/27 20:23:12 reinoud Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.37 2001/07/09 21:46:21 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -239,16 +239,13 @@ vidcaudio_attach(parent, self, aux)
 	id = IOMD_ID;
 
 	switch (id) {
-#ifndef CPU_ARM7500
 	case RPC600_IOMD_ID:
 		sound_dma_intr = IRQ_DMASCH0;
 		break;
-#else
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
 		sound_dma_intr = IRQ_SDMA;
 		break;
-#endif
 	}
 
 	disable_irq(sound_dma_intr);

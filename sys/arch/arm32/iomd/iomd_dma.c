@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.9 2001/02/27 20:23:11 reinoud Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.10 2001/07/09 21:46:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -49,7 +49,11 @@
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/iomd/iomd_dma.h>
 
-#ifndef CPU_ARM7500
+
+/*
+ * Only for non ARM7500 machines but the kernel could be booted on a different machine
+ */
+
 static struct dma_ctrl ctrl[6];
 
 void dma_dumpdc __P((struct dma_ctrl *));
@@ -319,81 +323,4 @@ dma_init(ch, extp, dmasize, ipl)
 
 	return(dp);
 }
-#else
-void
-dma_go(dp)
-	struct dma_ctrl *dp;
-{
-	panic("dma_go\n");
-}
 
-int
-dma_reset(dp)
-	struct dma_ctrl *dp;
-{
-	panic("dma_reset\n");
-	return(0);
-}
-
-/*
- * Setup dma transfer, prior to the dma_go call
- */
-int
-dma_setup(dp, start, len, readp)
-	struct dma_ctrl *dp;
-	int readp;
-	u_char *start;
-	int len;
-{
-	panic("dma_setup\n");
-	return(0);
-}
-
-/*
- * return true if DMA is active
- */
-int
-dma_isactive(dp)
-	struct dma_ctrl *dp;
-{
-	panic("dma_isactive\n");
-	return(0);
-}
-
-/*
- * return true if interrupt pending
- */
-int
-dma_isintr(dp)
-	struct dma_ctrl *dp;
-{
-	panic("dma_isintr\n");
-	return(0);
-}
-
-int
-dma_intr(dp)
-	struct dma_ctrl *dp;
-{
-	panic("dma_intr\n");
-	return(0);
-}
-
-void
-dma_dumpdc(dc)
-	struct dma_ctrl *dc;
-{
-	panic("dma_dumpdc\n");
-}
-
-struct dma_ctrl *
-dma_init(ch, extp, dmasize, ipl)
-	int ch;
-	int extp;
-	int dmasize;
-	int ipl;
-{
-	panic("dma_init\n");
-	return(NULL);
-}
-#endif
