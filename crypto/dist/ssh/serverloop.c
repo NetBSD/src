@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.20 2002/10/01 14:07:37 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.21 2003/04/03 06:21:34 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.104 2002/09/19 16:03:15 stevesk Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.107 2003/04/02 09:48:07 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -770,8 +770,14 @@ server_loop2(Authctxt *authctxt)
 		    &nalloc, 0);
 
 		collect_children();
-		if (!rekeying)
+		if (!rekeying) {
 			channel_after_select(readset, writeset);
+			if (packet_need_rekeying()) {
+				debug("need rekeying");
+				xxx_kex->done = 0;
+				kex_send_kexinit(xxx_kex);
+			}
+		}
 		process_input(readset);
 		if (connection_closed)
 			break;

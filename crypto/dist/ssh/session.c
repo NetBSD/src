@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.30 2003/03/26 11:16:13 lukem Exp $	*/
+/*	$NetBSD: session.c,v 1.31 2003/04/03 06:21:34 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.150 2002/09/16 19:55:33 stevesk Exp $");
+RCSID("$OpenBSD: session.c,v 1.154 2003/03/05 22:33:43 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -189,6 +189,8 @@ auth_input_request_forwarding(struct passwd * pw)
 void
 do_authenticated(Authctxt *authctxt)
 {
+	setproctitle("%s", authctxt->pw->pw_name);
+
 	/*
 	 * Cancel the alarm we set to limit the time taken for
 	 * authentication.
@@ -901,7 +903,7 @@ do_setup_env(Session *s, const char *shell)
 {
 	char buf[256];
 	u_int i, envsize;
-	char **env;
+	char **env, *laddr;
 	struct passwd *pw = s->pw;
 
 	/* Initialize the environment. */
@@ -959,9 +961,10 @@ do_setup_env(Session *s, const char *shell)
 	    get_remote_ipaddr(), get_remote_port(), get_local_port());
 	child_set_env(&env, &envsize, "SSH_CLIENT", buf);
 
+	laddr = get_local_ipaddr(packet_get_connection_in());
 	snprintf(buf, sizeof buf, "%.50s %d %.50s %d",
-	    get_remote_ipaddr(), get_remote_port(),
-	    get_local_ipaddr(packet_get_connection_in()), get_local_port());
+	    get_remote_ipaddr(), get_remote_port(), laddr, get_local_port());
+	xfree(laddr);
 	child_set_env(&env, &envsize, "SSH_CONNECTION", buf);
 
 	if (s->ttyfd != -1)
@@ -1049,8 +1052,10 @@ do_rc_files(Session *s, const char *shell)
 		/* Add authority data to .Xauthority if appropriate. */
 		if (debug_flag) {
 			fprintf(stderr,
-			    "Running %.500s add "
-			    "%.100s %.100s %.100s\n",
+			    "Running %.500s remove %.100s\n",
+  			    options.xauth_location, s->auth_display);
+			fprintf(stderr,
+			    "%.500s add %.100s %.100s %.100s\n",
 			    options.xauth_location, s->auth_display,
 			    s->auth_proto, s->auth_data);
 		}
@@ -1058,6 +1063,8 @@ do_rc_files(Session *s, const char *shell)
 		    options.xauth_location);
 		f = popen(cmd, "w");
 		if (f) {
+			fprintf(f, "remove %s\n",
+			    s->auth_display);
 			fprintf(f, "add %s %s %s\n",
 			    s->auth_display, s->auth_proto,
 			    s->auth_data);
@@ -1177,11 +1184,16 @@ do_child(Session *s, const char *command)
 	 * legal, and means /bin/sh.
 	 */
 	shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
+
+	/*
+	 * Make sure $SHELL points to the shell from the password file,
+	 * even if shell is overridden from login.conf
+	 */
+	env = do_setup_env(s, shell);
+
 #ifdef HAVE_LOGIN_CAP
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
 #endif
-
-	env = do_setup_env(s, shell);
 
 	/* we have to stash the hostname before we close our socket. */
 	if (options.use_login)

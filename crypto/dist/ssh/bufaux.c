@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.2 2002/12/06 03:39:08 thorpej Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.3 2003/04/03 06:21:32 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: bufaux.c,v 1.27 2002/06/26 08:53:12 markus Exp $");
+RCSID("$OpenBSD: bufaux.c,v 1.28 2002/10/23 10:40:16 markus Exp $");
 
 #include <openssl/bn.h>
 #include "bufaux.h"
@@ -222,7 +222,7 @@ buffer_get_string(Buffer *buffer, u_int *length_ptr)
 	/* Get the length. */
 	len = buffer_get_int(buffer);
 	if (len > 256 * 1024)
-		fatal("buffer_get_string: bad string length %d", len);
+		fatal("buffer_get_string: bad string length %u", len);
 	/* Allocate space for the string.  Add one byte for a null character. */
 	value = xmalloc(len + 1);
 	/* Get the string. */

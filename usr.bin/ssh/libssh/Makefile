@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/10/01 14:07:50 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2003/04/03 06:21:38 itojun Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -17,7 +17,7 @@ SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
 	rsa.c tildexpand.c ttymodes.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
 	rijndael.c ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
-	scard.c monitor_wrap.c monitor_fdpass.c msg.c
+	kexdhc.c kexgexc.c scard.c msg.c progressmeter.c
 SRCS+=	random.c
 SRCS+=	readpassphrase.c getpeereid.c
 

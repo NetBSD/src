@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.11 2002/10/01 14:07:26 itojun Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.12 2003/04/03 06:21:31 itojun Exp $	*/
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
  *
@@ -29,7 +29,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-krb5.c,v 1.9 2002/09/09 06:48:06 itojun Exp $");
+RCSID("$OpenBSD: auth-krb5.c,v 1.10 2002/11/21 23:03:51 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -98,7 +98,7 @@ auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *reply)
 	if (problem)
 		goto err;
 
-	problem = krb5_sname_to_principal(authctxt->krb5_ctx,  NULL, NULL ,
+	problem = krb5_sname_to_principal(authctxt->krb5_ctx, NULL, NULL,
 	    KRB5_NT_SRV_HST, &server);
 	if (problem)
 		goto err;

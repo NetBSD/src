@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.10 2002/06/24 05:48:32 itojun Exp $	*/
-/*	$OpenBSD: readconf.h,v 1.43 2002/06/08 05:17:01 markus Exp $	*/
+/*	$NetBSD: readconf.h,v 1.11 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$OpenBSD: readconf.h,v 1.47 2003/04/02 09:48:07 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -100,6 +100,9 @@ typedef struct {
 	int     num_remote_forwards;
 	Forward remote_forwards[SSH_MAX_FORWARDS_PER_DIRECTION];
 	int	clear_forwardings;
+
+	int	enable_ssh_keysign;
+	int	rekey_limit;
 	int	no_host_authentication_for_localhost;
 }       Options;
 

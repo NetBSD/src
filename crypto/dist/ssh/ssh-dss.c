@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.11 2002/10/01 14:07:42 itojun Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.12 2003/04/03 06:21:35 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.17 2002/07/04 10:41:47 markus Exp $");
+RCSID("$OpenBSD: ssh-dss.c,v 1.18 2003/02/12 09:33:04 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -35,7 +35,6 @@ RCSID("$OpenBSD: ssh-dss.c,v 1.17 2002/07/04 10:41:47 markus Exp $");
 #include "compat.h"
 #include "log.h"
 #include "key.h"
-#include "ssh-dss.h"
 
 #define INTBLOB_LEN	20
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)

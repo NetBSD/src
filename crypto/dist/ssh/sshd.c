@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.27 2002/12/06 03:39:12 thorpej Exp $	*/
+/*	$NetBSD: sshd.c,v 1.28 2003/04/03 06:21:37 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.260 2002/09/27 10:42:09 mickey Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.263 2003/02/16 17:09:57 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -190,8 +190,8 @@ int *startup_pipes = NULL;
 int startup_pipe;		/* in child */
 
 /* variables used for privilege separation */
-extern struct monitor *pmonitor;
-extern int use_privsep;
+int use_privsep;
+struct monitor *pmonitor;
 
 /* Prototypes for various functions defined later in this file. */
 void destroy_sensitive_data(void);
@@ -924,7 +924,7 @@ main(int ac, char **av)
 	    SYSLOG_LEVEL_INFO : options.log_level,
 	    options.log_facility == SYSLOG_FACILITY_NOT_SET ?
 	    SYSLOG_FACILITY_AUTH : options.log_facility,
-	    !inetd_flag);
+	    log_stderr || !inetd_flag);
 
 	/* Read server configuration options from the configuration file. */
 	read_server_config(&options, config_file_name);
@@ -1022,8 +1022,8 @@ main(int ac, char **av)
 			fatal("Missing privilege separation directory: %s",
 			    _PATH_PRIVSEP_CHROOT_DIR);
 		if (st.st_uid != 0 || (st.st_mode & (S_IWGRP|S_IWOTH)) != 0)
-			fatal("Bad owner or mode for %s",
-			    _PATH_PRIVSEP_CHROOT_DIR);
+			fatal("%s must be owned by root and not group or "
+			    "world-writable.", _PATH_PRIVSEP_CHROOT_DIR);
 	}
 
 	/* Configuration looks good, so exit if in test mode. */
@@ -1750,6 +1750,8 @@ do_ssh2_kex(void)
 
 	/* start key exchange */
 	kex = kex_setup(myproposal);
+	kex->kex[KEX_DH_GRP1_SHA1] = kexdh_server;
+	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 	kex->server = 1;
 	kex->client_version_string=client_version_string;
 	kex->server_version_string=server_version_string;
