@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts.equiv.5,v 1.5 2002/01/21 17:41:01 wiz Exp $
+.\"	$NetBSD: hosts.equiv.5,v 1.6 2004/11/25 03:11:17 ginsbach Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,8 @@ wildcard (allow all remote users).
 If a
 .Em username
 is specified, only that user from the specified host may login to the
-local machine.  If a
+local machine.
+If a
 .Em username
 is not specified, any user may login with the same user name.
 .Sh EXAMPLES
@@ -97,7 +98,8 @@ The user
 .Em username
 on
 .Em somehost
-may login to the local host.  If specified in
+may login to the local host.
+If specified in
 .Em /etc/hosts.equiv ,
 the user may login with only the same user name.
 .Ed
@@ -113,17 +115,19 @@ may login to the local host from any machine listed in the netgroup
 + +
 .Ed
 .Bd -filled -offset indent -compact
-Two severe security hazards.  In the first case, allows a user on any
-machine to login to the local host as the same user name.  In the second
-case, allows any user on any machine to login to the local host (as any
-user, if in
+Two severe security hazards.
+In the first case, allows a user on any
+machine to login to the local host as the same user name.
+In the second case, allows any user on any
+machine to login to the local host (as any user, if in
 .Em /etc/hosts.equiv ) .
 .Ed
 .Sh WARNINGS
 The username checks provided by this mechanism are
 .Em not
 secure, as the remote user name is received by the server unchecked
-for validity.  Therefore this mechanism should only be used
+for validity.
+Therefore this mechanism should only be used
 in an environment where all hosts are completely trusted.
 .Pp
 A numeric host address instead of a host name can help security
@@ -148,7 +152,8 @@ Logins as root only check root's
 .Em .rhosts
 file; the
 .Em /etc/hosts.equiv
-file is not checked for security.  Access permitted through root's
+file is not checked for security.
+Access permitted through root's
 .Em .rhosts
 file is typically only for
 .Xr rsh 1 ,
