@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.7 1999/04/27 17:50:23 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.8 1999/04/27 18:38:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -218,6 +218,15 @@ struct osf1_auxv {
 #define OSF1_MAP_HASSEMAPHORE	0x0200
 #define OSF1_MAP_INHERIT	0x0400
 #define OSF1_MAP_UNALIGNED	0x0800
+
+/* madvise operations */
+#define OSF1_MADV_NORMAL	0
+#define OSF1_MADV_RANDOM	1
+#define OSF1_MADV_SEQUENTIAL	2
+#define OSF1_MADV_WILLNEED	3
+#define OSF1_MADV_DONTNEED_COMPAT 4
+#define OSF1_MADV_SPACEAVAIL	5
+#define OSF1_MADV_DONTNEED	6
 
 
 /* mount.h */
