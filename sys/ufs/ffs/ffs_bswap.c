@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.23 2003/12/30 03:30:43 dbj Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.24 2003/12/31 18:32:47 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.23 2003/12/30 03:30:43 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.24 2003/12/31 18:32:47 dbj Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -87,6 +87,7 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 			/* fs_sparecon[28] - ignore for now */
 	n->fs_pendingblocks = bswap64(o->fs_pendingblocks);
 	n->fs_pendinginodes = bswap32(o->fs_pendinginodes);
+	n->fs_flags = bswap32(o->fs_flags);
 	n->fs_contigsumsize = bswap32(o->fs_contigsumsize);
 	n->fs_maxsymlinklen = bswap32(o->fs_maxsymlinklen);
 	n->fs_old_inodefmt = bswap32(o->fs_old_inodefmt);
