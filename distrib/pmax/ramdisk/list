@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2002/05/27 11:02:21 lukem Exp $
+#	$NetBSD: list,v 1.16 2003/12/25 11:14:36 martin Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -57,7 +57,7 @@ ARGVLN	sh -sh
 
 SPECIAL	ping	srcdir	distrib/utils/x_ping
 
-LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
+LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
