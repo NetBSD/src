@@ -1,7 +1,7 @@
-#	$NetBSD: MIMORI,v 1.1 2000/06/17 07:29:07 soda Exp $
+#	$NetBSD: MIMORI,v 1.1.2.1 2000/08/10 21:55:32 soda Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
-#	MIMORI -- URATA-san's NEC RISCstation 2250
+#	MIMORI -- My NEC RISCstation 2250 (ur)
 #
 
 include		"arch/arc/conf/std.arc"
@@ -76,8 +76,8 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
@@ -101,6 +101,9 @@ options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
+
+# wscons terminal emulation
+options 	WSEMUL_VT100	# VT100 emulation
 
 # Kernel root file system and dump configuration.
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
