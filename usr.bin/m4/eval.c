@@ -1,4 +1,4 @@
-/*      $NetBSD: eval.c,v 1.5 1996/01/13 23:25:23 pk Exp $      */
+/*      $NetBSD: eval.c,v 1.6 1996/11/06 00:11:56 pk Exp $      */
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.5 1996/01/13 23:25:23 pk Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.6 1996/11/06 00:11:56 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -433,6 +433,17 @@ register int argc;
 				}
 				pbstr(argv[2]);
 				break;
+                        case '@':
+                                for (n = argc - 1; n > 2; n--) {
+                                        pbstr(rquote);
+                                        pbstr(argv[n]);
+                                        pbstr(lquote);
+                                        putback(',');
+                                }
+				pbstr(rquote);
+                                pbstr(argv[2]);
+				pbstr(lquote);
+                                break;
 			default:
 				putback(*p);
 				putback('$');
