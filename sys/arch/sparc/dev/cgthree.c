@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.22 1996/02/27 22:09:32 thorpej Exp $ */
+/*	$NetBSD: cgthree.c,v 1.23 1996/02/28 22:09:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,6 +218,7 @@ cgthreeattach(parent, self, args)
 		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
 
 	/* make sure we are not blanked */
+	cgthree_set_video(sc, 1);
 	BT_INIT(bt, 0);
 
 	if (isconsole) {
@@ -335,7 +336,7 @@ cgthree_set_video(sc, enable)
 	if (enable)
 		sc->sc_fbc->fbc_ctrl |= FBC_VENAB;
 	else
-		sc->sc_fbc->fbc_ctrl &= FBC_VENAB;
+		sc->sc_fbc->fbc_ctrl &= ~FBC_VENAB;
 }
 
 static int
