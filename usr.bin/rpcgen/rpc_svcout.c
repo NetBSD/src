@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.19 2003/06/25 19:31:08 christos Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.20 2003/07/14 11:53:20 itojun Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.19 2003/06/25 19:31:08 christos Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.20 2003/07/14 11:53:20 itojun Exp $");
 #endif
 #endif
 
@@ -808,9 +808,9 @@ write_caller_func()
 	P("	hp = gethostbyaddr((char *)&actual.sin_addr, sizeof(actual.sin_addr), AF_INET);\n");
 	P("	if (hp == NULL) {                       /* dummy one up */\n");
 	P("		extern char *inet_ntoa();\n");
-	P("		strcpy(cname, inet_ntoa(actual.sin_addr));\n");
+	P("		strlcpy(cname, inet_ntoa(actual.sin_addr), sizeof(cname));\n");
 	P("	} else {\n");
-	P("		strcpy(cname, hp->h_name);\n");
+	P("		strlcpy(cname, hp->h_name, sizeof(cname));\n");
 	P("	}\n\n");
 
 	P("	return (cname);\n");
