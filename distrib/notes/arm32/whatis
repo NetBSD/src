@@ -1,0 +1,9 @@
+NetBSD/arm32 _VER is the first official binary release of NetBSD for the
+arm32 platform, although binary release have been available in the past
+under a different name (RiscBSD).
+
+The _VER release brings with it two major enhancements; full shared
+library support, and soft-float library support.
+
+Because of this some of your existing binaries will require
+recompilation. But the up side is that they should run faster.
