@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1997/03/15 13:04:25 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.8 1997/04/10 21:25:21 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -73,8 +73,8 @@ int	cnvtab[] = {
 	BDEV_TK,
 	-1,
 	BDEV_RD,
-	BDEV_SCSI,
-	BDEV_SCSI,
+	BDEV_SD,
+	BDEV_ST,
 	BDEV_LE,
 };
 
