@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2000/09/28 12:46:43 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2000/10/20 14:12:01 pk Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@ TOP= $(.CURDIR)/..
 # Set this for any kernels beyond GENERIC you want to include
 # in the distribution.
 EXTRA_KERNELS+= GENERIC_SCSI3
-BUILD_KERNELS+= INSTALL INSTALL_SYSINST
+BUILD_KERNELS+= INSTALL
 
 # Add sparc installation directories
 MD_INSTALLATION_DIRS= \
@@ -28,7 +28,7 @@ snap_md_post:
 	(cd $(TOP)/distrib; ${MAKE})
 
 	# transfer images to release hierarchy
-.for dir in notes miniroot sparc/ramdisk sparc/bootfs sparc/ramdisk.sysinst sparc/bootfs.sysinst
+.for dir in notes miniroot sparc/ramdisk sparc/bootfs
 	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
 .endfor
 
