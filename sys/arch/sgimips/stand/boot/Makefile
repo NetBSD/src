@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/12/23 19:31:25 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2003/11/11 06:30:39 sekiya Exp $
 
 PROG=	boot
 
@@ -7,7 +7,8 @@ PROG=	boot
 #
 STRIPFLAG=
 
-SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c disk.c
+SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
+	getopt.c disk.c
 
 ${PROG}: ${PROG}.elf ${PROG}.ip32
 	${ELF2ECOFF} ${PROG}.elf ${PROG}
