@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.10 2002/01/22 03:53:56 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.11 2002/05/29 01:43:25 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10 2002/01/22 03:53:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.11 2002/05/29 01:43:25 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -519,7 +519,6 @@ in6_recoverscope(sin6, in6, ifp)
 
 /*
  * just clear the embedded scope identifer.
- * XXX: currently used for bsdi4 only as a supplement function.
  */
 void
 in6_clearscope(addr)
