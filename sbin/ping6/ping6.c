@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.28 2000/12/31 05:04:15 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.29 2001/01/12 18:50:58 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.109 2000/12/27 11:32:37 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.28 2000/12/31 05:04:15 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.29 2001/01/12 18:50:58 itojun Exp $");
 #endif
 #endif
 
@@ -976,7 +976,7 @@ main(argc, argv)
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
 	}
 
-	fdmasks = howmany(s+1, NFDBITS);
+	fdmasks = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
 
