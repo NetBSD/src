@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.2 2002/10/01 12:56:46 fvdl Exp $ */	
+/* $NetBSD: apicvec.s,v 1.3 2002/10/05 21:17:35 fvdl Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ XINTR(ipi):
 #if defined(DDB)
 	.globl	XINTR(ddbipi)	
 XINTR(ddbipi):			
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY		
 	MAKE_FRAME		
@@ -70,6 +70,24 @@ XINTR(ddbipi):
 	call	_C_LABEL(ddb_ipi)
 	jmp	_C_LABEL(Xdoreti)
 #endif
+	.globl  XINTR_TSS(ddbipi)
+XINTR_TSS(ddbipi):
+1:
+	str	%ax
+	GET_TSS
+	movzwl	(%eax),%eax
+	GET_TSS
+	pushl	CPL
+	pushl	%eax
+	movl	_C_LABEL(lapic_ppr),%eax
+	movl	%eax,CPL
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	sti
+	call	_C_LABEL(ddb_ipi_tss)
+	addl	$4,%esp
+	popl	CPL
+	iret
+	jmp	1b
 #endif
 	
 	/*
@@ -77,7 +95,7 @@ XINTR(ddbipi):
 	 */
 	.globl XINTR(ltimer)
 XINTR(ltimer):			
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY		
 	MAKE_FRAME		
