@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.10 2002/01/26 13:22:16 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.11 2002/01/26 13:27:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.10 2002/01/26 13:22:16 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.11 2002/01/26 13:27:53 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -227,8 +227,8 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	ffs_validate(dir, root, fsopts);
 	TIMER_RESULTS(start, "ffs_validate");
 
-	printf("Image size: %lld bytes, %lld inodes\n",
-	    (long long)fsopts->size, (long long)fsopts->inodes);
+	printf("Calculated size of `%s': %lld bytes, %lld inodes\n",
+	    image, (long long)fsopts->size, (long long)fsopts->inodes);
 
 		/* create image */
 	TIMER_START(start);
@@ -242,6 +242,7 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		putchar('\n');
 
 		/* populate image */
+	printf("Populating `%s'\n", image);
 	TIMER_START(start);
 	if (! ffs_populate_dir(dir, root, fsopts))
 		errx(1, "Image file `%s' not populated.", image);
@@ -253,6 +254,7 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		/* write out superblock; image is now complete */
 	ffs_write_superblock(fsopts->superblock, fsopts);
+	printf("Image `%s' complete\n", image);
 }
 
 	/* end of public functions */
