@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.3 1999/05/04 02:12:15 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.4 1999/05/05 00:48:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -90,59 +90,41 @@
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
-const struct emul_flags_xtab osf1_open_flags_xtab[] = {
-    {	OSF1_O_ACCMODE,		OSF1_O_RDONLY,		O_RDONLY	},
-    {	OSF1_O_ACCMODE,		OSF1_O_WRONLY,		O_WRONLY	},
-    {	OSF1_O_ACCMODE,		OSF1_O_RDWR,		O_RDWR		},
-    {	OSF1_O_NONBLOCK,	OSF1_O_NONBLOCK,	O_NONBLOCK	},
-    {	OSF1_O_APPEND,		OSF1_O_APPEND,		O_APPEND	},
-#if 0 /* no equivalent +++ */
-    {	OSF1_O_DEFER,		OSF1_O_DEFER,		???		},
-#endif
-    {	OSF1_O_CREAT,		OSF1_O_CREAT,		O_CREAT		},
-    {	OSF1_O_TRUNC,		OSF1_O_TRUNC,		O_TRUNC		},
-    {	OSF1_O_EXCL,		OSF1_O_EXCL,		O_EXCL		},
-    {	OSF1_O_NOCTTY,		OSF1_O_NOCTTY,		O_NOCTTY	},
-    {	OSF1_O_SYNC,		OSF1_O_SYNC,		O_SYNC		},
-    {	OSF1_O_NDELAY,		OSF1_O_NDELAY,		O_NDELAY	},
-#if 0 /* no equivalent, also same value as O_NDELAY! */
-    {	OSF1_O_DRD,		OSF1_O_DRD,		???		},
-#endif
-    {	OSF1_O_DSYNC,		OSF1_O_DSYNC,		O_DSYNC		},
-    {	OSF1_O_RSYNC,		OSF1_O_RSYNC,		O_RSYNC		},
-    {	0								}
-};
+/* XXX these don't belong here */
+#define osf1_sigmask(n)		(1UL << ((n) - 1))
+#define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
+#define osf1_sigismember(s, n)	(*(s) & osf1_sigmask(n))
+#define osf1_sigaddset(s, n)	(*(s) |= osf1_sigmask(n))
 
-const struct emul_flags_xtab osf1_open_flags_rxtab[] = {
-    {	O_ACCMODE,		O_RDONLY,		OSF1_O_RDONLY	},
-    {	O_ACCMODE,		O_WRONLY,		OSF1_O_WRONLY	},
-    {	O_ACCMODE,		O_RDWR,			OSF1_O_RDWR	},
-    {	O_NONBLOCK,		O_NONBLOCK,		OSF1_O_NONBLOCK	},
-    {	O_APPEND,		O_APPEND,		OSF1_O_APPEND	},
-#if 0 /* no equivalent +++ */
-    {	???,			???,			O_DEFER		},
-#endif
-    {	O_CREAT,		O_CREAT,		OSF1_O_CREAT	},
-    {	O_TRUNC,		O_TRUNC,		OSF1_O_TRUNC	},
-    {	O_EXCL,			O_EXCL,			OSF1_O_EXCL	},
-    {	O_NOCTTY,		O_NOCTTY,		OSF1_O_NOCTTY	},
-    {	O_SYNC,			O_SYNC,			OSF1_O_SYNC	},
-    {	O_NDELAY,		O_NDELAY,		OSF1_O_NDELAY	},
-#if 0 /* no equivalent, also same value as O_NDELAY! */
-    {	???,			???,			O_DRD		},
-#endif
-    {	O_DSYNC,		O_DSYNC,		OSF1_O_DSYNC	},
-    {	O_RSYNC,		O_RSYNC,		OSF1_O_RSYNC	},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
+const struct emul_flags_xtab osf1_access_flags_xtab[] = {
 #if 0 /* pseudo-flag */
-    {	OSF1_PROT_NONE,		OSF1_PROT_NONE,		PROT_NONE	},
+    {	OSF1_F_OK,		OSF1_F_OK,		F_OK		},
 #endif
-    {	OSF1_PROT_READ,		OSF1_PROT_READ,		PROT_READ	},
-    {	OSF1_PROT_WRITE,	OSF1_PROT_WRITE,	PROT_READ|PROT_WRITE },
-    {	OSF1_PROT_EXEC,		OSF1_PROT_EXEC,		PROT_READ|PROT_EXEC },
+    {	OSF1_X_OK,		OSF1_X_OK,		X_OK		},
+    {	OSF1_W_OK,		OSF1_W_OK,		W_OK		},
+    {	OSF1_R_OK,		OSF1_R_OK,		R_OK		},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[] = {
+    {	FD_CLOEXEC,		FD_CLOEXEC,		OSF1_FD_CLOEXEC	},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_xtab[] = {
+    {	OSF1_FD_CLOEXEC,	OSF1_FD_CLOEXEC,	FD_CLOEXEC	},
+    {	0								}
+};
+
+/* flags specific to GETFL/SETFL; also uses open rxtab */
+const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_rxtab[] = {
+    {	FASYNC,			FASYNC,			OSF1_FASYNC	},
+    {	0								}
+};
+
+/* flags specific to GETFL/SETFL; also uses open xtab */
+const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_xtab[] = {
+    {	OSF1_FASYNC,		OSF1_FASYNC,		FASYNC		},
     {	0								}
 };
 
@@ -163,170 +145,15 @@ const struct emul_flags_xtab osf1_mmap_flags_xtab[] = {
     {	0								}
 };
 
-/*
- * Convert from a stat structure to an osf1 stat structure.
- */
-void
-osf1_cvt_stat_from_native(st, ost)
-	const struct stat *st;
-	struct osf1_stat *ost;
-{
-
-	ost->st_dev = osf1_cvt_dev_from_native(st->st_dev);
-	ost->st_ino = st->st_ino;
-	ost->st_mode = st->st_mode;
-	ost->st_nlink = st->st_nlink;
-	ost->st_uid = st->st_uid == -2 ? (u_int16_t) -2 : st->st_uid;
-	ost->st_gid = st->st_gid == -2 ? (u_int16_t) -2 : st->st_gid;
-	ost->st_rdev = osf1_cvt_dev_from_native(st->st_rdev);
-	ost->st_size = st->st_size;
-	ost->st_atime_sec = st->st_atime;
-	ost->st_spare1 = 0;
-	ost->st_mtime_sec = st->st_mtime;
-	ost->st_spare2 = 0;
-	ost->st_ctime_sec = st->st_ctime;
-	ost->st_spare3 = 0;
-	ost->st_blksize = st->st_blksize;
-	ost->st_blocks = st->st_blocks;
-	ost->st_flags = st->st_flags;
-	ost->st_gen = st->st_gen;
-}
-
-const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_xtab[] = {
-    {	OSF1_FD_CLOEXEC,	OSF1_FD_CLOEXEC,	FD_CLOEXEC	},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[] = {
-    {	FD_CLOEXEC,		FD_CLOEXEC,		OSF1_FD_CLOEXEC	},
-    {	0								}
-};
-
-/* flags specific to GETFL/SETFL; also uses open xtab */
-const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_xtab[] = {
-    {	OSF1_FASYNC,		OSF1_FASYNC,		FASYNC		},
-    {	0								}
-};
-
-/* flags specific to GETFL/SETFL; also uses open rxtab */
-const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_rxtab[] = {
-    {	FASYNC,			FASYNC,			OSF1_FASYNC	},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_sendrecv_msg_flags_xtab[] = {
-    {	OSF1_MSG_OOB,		OSF1_MSG_OOB,		MSG_OOB		},
-    {	OSF1_MSG_PEEK,		OSF1_MSG_PEEK,		MSG_PEEK	},
-    {	OSF1_MSG_DONTROUTE,	OSF1_MSG_DONTROUTE,	MSG_DONTROUTE	},
-    {	OSF1_MSG_EOR,		OSF1_MSG_EOR,		MSG_EOR		},
-    {	OSF1_MSG_TRUNC,		OSF1_MSG_TRUNC,		MSG_TRUNC	},
-    {	OSF1_MSG_CTRUNC,	OSF1_MSG_CTRUNC,	MSG_CTRUNC	},
-    {	OSF1_MSG_WAITALL,	OSF1_MSG_WAITALL,	MSG_WAITALL	},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
+const struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
 #if 0 /* pseudo-flag */
-    {	OSF1_RB_AUTOBOOT,	OSF1_RB_AUTOBOOT,	RB_AUTOBOOT	},
+    {	OSF1_PROT_NONE,		OSF1_PROT_NONE,		PROT_NONE	},
 #endif
-    {	OSF1_RB_ASKNAME,	OSF1_RB_ASKNAME,	RB_ASKNAME	},
-    {	OSF1_RB_SINGLE,		OSF1_RB_SINGLE,		RB_SINGLE	},
-    {	OSF1_RB_NOSYNC,		OSF1_RB_NOSYNC,		RB_NOSYNC	},
-#if 0 /* same value as O_NDELAY, only used at boot time? */
-    {	OSF1_RB_KDB,		OSF1_RB_KDB,		RB_KDB		},
-#endif
-    {	OSF1_RB_HALT,		OSF1_RB_HALT,		RB_HALT		},
-    {	OSF1_RB_INITNAME,	OSF1_RB_INITNAME,	RB_INITNAME	},
-    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	RB_DFLTROOT	},
-#if 0 /* no equivalents +++ */
-    {	OSF1_RB_ALTBOOT,	OSF1_RB_ALTBOOT,	???		},
-    {	OSF1_RB_UNIPROC,	OSF1_RB_UNIPROC,	???		},
-    {	OSF1_RB_PARAM,		OSF1_RB_PARAM,		???		},
-#endif
-    {	OSF1_RB_DUMP,		OSF1_RB_DUMP,		RB_DUMP		},
+    {	OSF1_PROT_READ,		OSF1_PROT_READ,		PROT_READ	},
+    {	OSF1_PROT_WRITE,	OSF1_PROT_WRITE,	PROT_READ|PROT_WRITE },
+    {	OSF1_PROT_EXEC,		OSF1_PROT_EXEC,		PROT_READ|PROT_EXEC },
     {	0								}
 };
-
-/*
- * Convert from as rusage structure to an osf1 rusage structure.
- */
-void
-osf1_cvt_rusage_from_native(ru, oru)
-	const struct rusage *ru;
-	struct osf1_rusage *oru;
-{
-
-	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
-	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
-
-	oru->ru_stime.tv_sec = ru->ru_stime.tv_sec;
-	oru->ru_stime.tv_usec = ru->ru_stime.tv_usec;
-
-	oru->ru_maxrss = ru->ru_maxrss;
-	oru->ru_ixrss = ru->ru_ixrss;
-	oru->ru_idrss = ru->ru_idrss;
-	oru->ru_isrss = ru->ru_isrss;
-	oru->ru_minflt = ru->ru_minflt;
-	oru->ru_majflt = ru->ru_majflt;
-	oru->ru_nswap = ru->ru_nswap;
-	oru->ru_inblock = ru->ru_inblock;
-	oru->ru_oublock = ru->ru_oublock;
-	oru->ru_msgsnd = ru->ru_msgsnd;
-	oru->ru_msgrcv = ru->ru_msgrcv;
-	oru->ru_nsignals = ru->ru_nsignals;
-	oru->ru_nvcsw = ru->ru_nvcsw;
-	oru->ru_nivcsw = ru->ru_nivcsw;
-}
-
-const struct emul_flags_xtab osf1_access_flags_xtab[] = {
-#if 0 /* pseudo-flag */
-    {	OSF1_F_OK,		OSF1_F_OK,		F_OK		},
-#endif
-    {	OSF1_X_OK,		OSF1_X_OK,		X_OK		},
-    {	OSF1_W_OK,		OSF1_W_OK,		W_OK		},
-    {	OSF1_R_OK,		OSF1_R_OK,		R_OK		},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_wait_options_xtab[] = {
-    {	OSF1_WNOHANG,		OSF1_WNOHANG,		WNOHANG		},
-    {	OSF1_WUNTRACED,		OSF1_WUNTRACED,		WUNTRACED	},
-    {	0								}
-};
-
-void
-osf1_cvt_statfs_from_native(bsfs, osfs)
-	const struct statfs *bsfs;
-	struct osf1_statfs *osfs;
-{
-
-	memset(osfs, 0, sizeof (struct osf1_statfs));
-	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_UFS;
-	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_NFS;
-	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_MFS;
-	else
-		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */
-		osfs->f_type = OSF1_MOUNT_ADDON;
-	osfs->f_flags = bsfs->f_flags;		/* XXX translate */
-	osfs->f_fsize = bsfs->f_bsize;
-	osfs->f_bsize = bsfs->f_iosize;
-	osfs->f_blocks = bsfs->f_blocks;
-	osfs->f_bfree = bsfs->f_bfree;
-	osfs->f_bavail = bsfs->f_bavail;
-	osfs->f_files = bsfs->f_files;
-	osfs->f_ffree = bsfs->f_ffree;
-	memcpy(&osfs->f_fsid, &bsfs->f_fsid,
-	    max(sizeof bsfs->f_fsid, sizeof osfs->f_fsid));
-	/* osfs->f_spare zeroed above */
-	memcpy(osfs->f_mntonname, bsfs->f_mntonname,
-	    max(sizeof bsfs->f_mntonname, sizeof osfs->f_mntonname));
-	memcpy(osfs->f_mntfromname, bsfs->f_mntfromname,
-	    max(sizeof bsfs->f_mntfromname, sizeof osfs->f_mntfromname));
-	/* XXX osfs->f_xxx should be filled in... */
-}
 
 const struct emul_flags_xtab osf1_nfs_mount_flags_xtab[] = {
     {	OSF1_NFSMNT_SOFT,	OSF1_NFSMNT_SOFT,	NFSMNT_SOFT,	},
@@ -355,59 +182,83 @@ const struct emul_flags_xtab osf1_nfs_mount_flags_xtab[] = {
     {	0								}
 };
 
-
-#define osf1_sigmask(n)		(1UL << ((n) - 1))
-#define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
-#define osf1_sigismember(s, n)	(*(s) & osf1_sigmask(n))
-#define osf1_sigaddset(s, n)	(*(s) |= osf1_sigmask(n))
-
-int
-osf1_cvt_sigset_to_native(oss, bss)
-	const osf1_sigset_t *oss;
-	sigset_t *bss;
-{
-	int i, newsig;
-
-	sigemptyset(bss);
-	for (i = 1; i < OSF1_NSIG; i++) {
-		if (osf1_sigismember(oss, i)) {
-			newsig = osf1_signal_xlist[i];
-			if (newsig)
-				sigaddset(bss, newsig);
-		}
-	}
-	return (0);
-}
-
-
-void
-osf1_cvt_sigset_from_native(bss, oss)
-	const sigset_t *bss;
-	osf1_sigset_t *oss;
-{
-	int i, newsig;
-
-	osf1_sigemptyset(oss);
-	for (i = 1; i < NSIG; i++) {
-		if (sigismember(bss, i)) {
-			newsig = osf1_signal_rxlist[i];
-			if (newsig)
-				osf1_sigaddset(oss, newsig);
-		}
-	}
-}
-
-const struct emul_flags_xtab osf1_sigaction_flags_xtab[] = {
-    {	OSF1_SA_ONSTACK,	OSF1_SA_ONSTACK,	SA_ONSTACK	},
-    {	OSF1_SA_RESTART,	OSF1_SA_RESTART,	SA_RESTART	},
-    {	OSF1_SA_NOCLDSTOP,	OSF1_SA_NOCLDSTOP,	SA_NOCLDSTOP	},
-    {	OSF1_SA_NODEFER,	OSF1_SA_NODEFER,	SA_NODEFER	},
-    {	OSF1_SA_RESETHAND,	OSF1_SA_RESETHAND,	SA_RESETHAND	},
-    {	OSF1_SA_NOCLDWAIT,	OSF1_SA_NOCLDWAIT,	SA_NOCLDWAIT	},
-#if 0 /* XXX not yet */
-    {	OSF1_SA_SIGINFO,	OSF1_SA_SIGINFO,	SA_SIGINFO	},
+const struct emul_flags_xtab osf1_open_flags_rxtab[] = {
+    {	O_ACCMODE,		O_RDONLY,		OSF1_O_RDONLY	},
+    {	O_ACCMODE,		O_WRONLY,		OSF1_O_WRONLY	},
+    {	O_ACCMODE,		O_RDWR,			OSF1_O_RDWR	},
+    {	O_NONBLOCK,		O_NONBLOCK,		OSF1_O_NONBLOCK	},
+    {	O_APPEND,		O_APPEND,		OSF1_O_APPEND	},
+#if 0 /* no equivalent +++ */
+    {	???,			???,			O_DEFER		},
 #endif
-    {	0								},
+    {	O_CREAT,		O_CREAT,		OSF1_O_CREAT	},
+    {	O_TRUNC,		O_TRUNC,		OSF1_O_TRUNC	},
+    {	O_EXCL,			O_EXCL,			OSF1_O_EXCL	},
+    {	O_NOCTTY,		O_NOCTTY,		OSF1_O_NOCTTY	},
+    {	O_SYNC,			O_SYNC,			OSF1_O_SYNC	},
+    {	O_NDELAY,		O_NDELAY,		OSF1_O_NDELAY	},
+#if 0 /* no equivalent, also same value as O_NDELAY! */
+    {	???,			???,			O_DRD		},
+#endif
+    {	O_DSYNC,		O_DSYNC,		OSF1_O_DSYNC	},
+    {	O_RSYNC,		O_RSYNC,		OSF1_O_RSYNC	},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_open_flags_xtab[] = {
+    {	OSF1_O_ACCMODE,		OSF1_O_RDONLY,		O_RDONLY	},
+    {	OSF1_O_ACCMODE,		OSF1_O_WRONLY,		O_WRONLY	},
+    {	OSF1_O_ACCMODE,		OSF1_O_RDWR,		O_RDWR		},
+    {	OSF1_O_NONBLOCK,	OSF1_O_NONBLOCK,	O_NONBLOCK	},
+    {	OSF1_O_APPEND,		OSF1_O_APPEND,		O_APPEND	},
+#if 0 /* no equivalent +++ */
+    {	OSF1_O_DEFER,		OSF1_O_DEFER,		???		},
+#endif
+    {	OSF1_O_CREAT,		OSF1_O_CREAT,		O_CREAT		},
+    {	OSF1_O_TRUNC,		OSF1_O_TRUNC,		O_TRUNC		},
+    {	OSF1_O_EXCL,		OSF1_O_EXCL,		O_EXCL		},
+    {	OSF1_O_NOCTTY,		OSF1_O_NOCTTY,		O_NOCTTY	},
+    {	OSF1_O_SYNC,		OSF1_O_SYNC,		O_SYNC		},
+    {	OSF1_O_NDELAY,		OSF1_O_NDELAY,		O_NDELAY	},
+#if 0 /* no equivalent, also same value as O_NDELAY! */
+    {	OSF1_O_DRD,		OSF1_O_DRD,		???		},
+#endif
+    {	OSF1_O_DSYNC,		OSF1_O_DSYNC,		O_DSYNC		},
+    {	OSF1_O_RSYNC,		OSF1_O_RSYNC,		O_RSYNC		},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
+#if 0 /* pseudo-flag */
+    {	OSF1_RB_AUTOBOOT,	OSF1_RB_AUTOBOOT,	RB_AUTOBOOT	},
+#endif
+    {	OSF1_RB_ASKNAME,	OSF1_RB_ASKNAME,	RB_ASKNAME	},
+    {	OSF1_RB_SINGLE,		OSF1_RB_SINGLE,		RB_SINGLE	},
+    {	OSF1_RB_NOSYNC,		OSF1_RB_NOSYNC,		RB_NOSYNC	},
+#if 0 /* same value as O_NDELAY, only used at boot time? */
+    {	OSF1_RB_KDB,		OSF1_RB_KDB,		RB_KDB		},
+#endif
+    {	OSF1_RB_HALT,		OSF1_RB_HALT,		RB_HALT		},
+    {	OSF1_RB_INITNAME,	OSF1_RB_INITNAME,	RB_INITNAME	},
+    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	RB_DFLTROOT	},
+#if 0 /* no equivalents +++ */
+    {	OSF1_RB_ALTBOOT,	OSF1_RB_ALTBOOT,	???		},
+    {	OSF1_RB_UNIPROC,	OSF1_RB_UNIPROC,	???		},
+    {	OSF1_RB_PARAM,		OSF1_RB_PARAM,		???		},
+#endif
+    {	OSF1_RB_DUMP,		OSF1_RB_DUMP,		RB_DUMP		},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_sendrecv_msg_flags_xtab[] = {
+    {	OSF1_MSG_OOB,		OSF1_MSG_OOB,		MSG_OOB		},
+    {	OSF1_MSG_PEEK,		OSF1_MSG_PEEK,		MSG_PEEK	},
+    {	OSF1_MSG_DONTROUTE,	OSF1_MSG_DONTROUTE,	MSG_DONTROUTE	},
+    {	OSF1_MSG_EOR,		OSF1_MSG_EOR,		MSG_EOR		},
+    {	OSF1_MSG_TRUNC,		OSF1_MSG_TRUNC,		MSG_TRUNC	},
+    {	OSF1_MSG_CTRUNC,	OSF1_MSG_CTRUNC,	MSG_CTRUNC	},
+    {	OSF1_MSG_WAITALL,	OSF1_MSG_WAITALL,	MSG_WAITALL	},
+    {	0								}
 };
 
 const struct emul_flags_xtab osf1_sigaction_flags_rxtab[] = {
@@ -423,46 +274,15 @@ const struct emul_flags_xtab osf1_sigaction_flags_rxtab[] = {
     {	0								},
 };
 
-/*
- * XXX: Only a subset of the flags is currently implemented.
- */
-int
-osf1_cvt_sigaction_to_native(osa, bsa)
-	const struct osf1_sigaction *osa;
-	struct sigaction *bsa;
-{
-
-	bsa->sa_handler = osa->sa_handler;
-	osf1_cvt_sigset_to_native(&osa->sa_mask, &bsa->sa_mask);
-
-        /* translate flags */
-	bsa->sa_flags = emul_flags_translate(osf1_sigaction_flags_xtab,
-            osa->sa_flags, NULL);
-	/* XXX error if we can't translate */
-
-	return (0);
-}
-
-void
-osf1_cvt_sigaction_from_native(bsa, osa)
-	const struct sigaction *bsa;
-	struct osf1_sigaction *osa;
-{
-
-	osa->sa_handler = bsa->sa_handler;
-	osf1_cvt_sigset_from_native(&bsa->sa_mask, &osa->sa_mask);
-
-        /* translate flags */
-	osa->sa_flags = emul_flags_translate(osf1_sigaction_flags_rxtab,
-            bsa->sa_flags, NULL);
-}
-
-const struct emul_flags_xtab osf1_sigaltstack_flags_xtab[] = {
-    {	OSF1_SS_ONSTACK,	OSF1_SS_ONSTACK,	SS_ONSTACK	},
-    {	OSF1_SS_DISABLE,	OSF1_SS_DISABLE,	SS_DISABLE	},
-#if 0 /* XXX no equivalents */
-    {	OSF1_SS_NOMASK,		OSF1_SS_NOMASK,		???		},
-    {	OSF1_SS_UCONTEXT,	OSF1_SS_UCONTEXT,	???		},
+const struct emul_flags_xtab osf1_sigaction_flags_xtab[] = {
+    {	OSF1_SA_ONSTACK,	OSF1_SA_ONSTACK,	SA_ONSTACK	},
+    {	OSF1_SA_RESTART,	OSF1_SA_RESTART,	SA_RESTART	},
+    {	OSF1_SA_NOCLDSTOP,	OSF1_SA_NOCLDSTOP,	SA_NOCLDSTOP	},
+    {	OSF1_SA_NODEFER,	OSF1_SA_NODEFER,	SA_NODEFER	},
+    {	OSF1_SA_RESETHAND,	OSF1_SA_RESETHAND,	SA_RESETHAND	},
+    {	OSF1_SA_NOCLDWAIT,	OSF1_SA_NOCLDWAIT,	SA_NOCLDWAIT	},
+#if 0 /* XXX not yet */
+    {	OSF1_SA_SIGINFO,	OSF1_SA_SIGINFO,	SA_SIGINFO	},
 #endif
     {	0								},
 };
@@ -477,42 +297,21 @@ const struct emul_flags_xtab osf1_sigaltstack_flags_rxtab[] = {
     {	0								},
 };
 
-int
-osf1_cvt_sigaltstack_to_native(oss, bss)
-	const struct osf1_sigaltstack *oss;
-	struct sigaltstack *bss;
-{
-	unsigned long leftovers;
+const struct emul_flags_xtab osf1_sigaltstack_flags_xtab[] = {
+    {	OSF1_SS_ONSTACK,	OSF1_SS_ONSTACK,	SS_ONSTACK	},
+    {	OSF1_SS_DISABLE,	OSF1_SS_DISABLE,	SS_DISABLE	},
+#if 0 /* XXX no equivalents */
+    {	OSF1_SS_NOMASK,		OSF1_SS_NOMASK,		???		},
+    {	OSF1_SS_UCONTEXT,	OSF1_SS_UCONTEXT,	???		},
+#endif
+    {	0								},
+};
 
-	bss->ss_sp = oss->ss_sp;
-	bss->ss_size = oss->ss_size;
-
-        /* translate flags */
-	bss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_xtab,
-            oss->ss_flags, &leftovers);
-
-	if (leftovers != 0) {
-		printf("osf1_cvt_sigaltstack_to_native: leftovers = 0x%lx\n",
-		    leftovers);
-		return (EINVAL);
-	}
-
-	return (0);
-}
-
-void
-osf1_cvt_sigaltstack_from_native(bss, oss)
-	const struct sigaltstack *bss;
-	struct osf1_sigaltstack *oss;
-{
-
-	oss->ss_sp = bss->ss_sp;
-	oss->ss_size = bss->ss_size;
-
-        /* translate flags */
-	oss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_rxtab,
-            bss->ss_flags, NULL);
-}
+const struct emul_flags_xtab osf1_wait_options_xtab[] = {
+    {	OSF1_WNOHANG,		OSF1_WNOHANG,		WNOHANG		},
+    {	OSF1_WUNTRACED,		OSF1_WUNTRACED,		WUNTRACED	},
+    {	0								}
+};
 
 int
 osf1_cvt_pathconf_name_to_native(oname, bnamep)
@@ -564,4 +363,204 @@ osf1_cvt_pathconf_name_to_native(oname, bnamep)
 	}
 
 	return (error);
+}
+
+/*
+ * Convert from as rusage structure to an osf1 rusage structure.
+ */
+void
+osf1_cvt_rusage_from_native(ru, oru)
+	const struct rusage *ru;
+	struct osf1_rusage *oru;
+{
+
+	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
+	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
+
+	oru->ru_stime.tv_sec = ru->ru_stime.tv_sec;
+	oru->ru_stime.tv_usec = ru->ru_stime.tv_usec;
+
+	oru->ru_maxrss = ru->ru_maxrss;
+	oru->ru_ixrss = ru->ru_ixrss;
+	oru->ru_idrss = ru->ru_idrss;
+	oru->ru_isrss = ru->ru_isrss;
+	oru->ru_minflt = ru->ru_minflt;
+	oru->ru_majflt = ru->ru_majflt;
+	oru->ru_nswap = ru->ru_nswap;
+	oru->ru_inblock = ru->ru_inblock;
+	oru->ru_oublock = ru->ru_oublock;
+	oru->ru_msgsnd = ru->ru_msgsnd;
+	oru->ru_msgrcv = ru->ru_msgrcv;
+	oru->ru_nsignals = ru->ru_nsignals;
+	oru->ru_nvcsw = ru->ru_nvcsw;
+	oru->ru_nivcsw = ru->ru_nivcsw;
+}
+
+/*
+ * XXX: Only a subset of the flags is currently implemented.
+ */
+void
+osf1_cvt_sigaction_from_native(bsa, osa)
+	const struct sigaction *bsa;
+	struct osf1_sigaction *osa;
+{
+
+	osa->sa_handler = bsa->sa_handler;
+	osf1_cvt_sigset_from_native(&bsa->sa_mask, &osa->sa_mask);
+
+        /* translate flags */
+	osa->sa_flags = emul_flags_translate(osf1_sigaction_flags_rxtab,
+            bsa->sa_flags, NULL);
+}
+
+int
+osf1_cvt_sigaction_to_native(osa, bsa)
+	const struct osf1_sigaction *osa;
+	struct sigaction *bsa;
+{
+
+	bsa->sa_handler = osa->sa_handler;
+	osf1_cvt_sigset_to_native(&osa->sa_mask, &bsa->sa_mask);
+
+        /* translate flags */
+	bsa->sa_flags = emul_flags_translate(osf1_sigaction_flags_xtab,
+            osa->sa_flags, NULL);
+	/* XXX error if we can't translate */
+
+	return (0);
+}
+
+void
+osf1_cvt_sigaltstack_from_native(bss, oss)
+	const struct sigaltstack *bss;
+	struct osf1_sigaltstack *oss;
+{
+
+	oss->ss_sp = bss->ss_sp;
+	oss->ss_size = bss->ss_size;
+
+        /* translate flags */
+	oss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_rxtab,
+            bss->ss_flags, NULL);
+}
+
+int
+osf1_cvt_sigaltstack_to_native(oss, bss)
+	const struct osf1_sigaltstack *oss;
+	struct sigaltstack *bss;
+{
+	unsigned long leftovers;
+
+	bss->ss_sp = oss->ss_sp;
+	bss->ss_size = oss->ss_size;
+
+        /* translate flags */
+	bss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_xtab,
+            oss->ss_flags, &leftovers);
+
+	if (leftovers != 0) {
+		printf("osf1_cvt_sigaltstack_to_native: leftovers = 0x%lx\n",
+		    leftovers);
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+void
+osf1_cvt_sigset_from_native(bss, oss)
+	const sigset_t *bss;
+	osf1_sigset_t *oss;
+{
+	int i, newsig;
+
+	osf1_sigemptyset(oss);
+	for (i = 1; i < NSIG; i++) {
+		if (sigismember(bss, i)) {
+			newsig = osf1_signal_rxlist[i];
+			if (newsig)
+				osf1_sigaddset(oss, newsig);
+		}
+	}
+}
+
+int
+osf1_cvt_sigset_to_native(oss, bss)
+	const osf1_sigset_t *oss;
+	sigset_t *bss;
+{
+	int i, newsig;
+
+	sigemptyset(bss);
+	for (i = 1; i < OSF1_NSIG; i++) {
+		if (osf1_sigismember(oss, i)) {
+			newsig = osf1_signal_xlist[i];
+			if (newsig)
+				sigaddset(bss, newsig);
+		}
+	}
+	return (0);
+}
+
+/*
+ * Convert from a stat structure to an osf1 stat structure.
+ */
+void
+osf1_cvt_stat_from_native(st, ost)
+	const struct stat *st;
+	struct osf1_stat *ost;
+{
+
+	ost->st_dev = osf1_cvt_dev_from_native(st->st_dev);
+	ost->st_ino = st->st_ino;
+	ost->st_mode = st->st_mode;
+	ost->st_nlink = st->st_nlink;
+	ost->st_uid = st->st_uid == -2 ? (u_int16_t) -2 : st->st_uid;
+	ost->st_gid = st->st_gid == -2 ? (u_int16_t) -2 : st->st_gid;
+	ost->st_rdev = osf1_cvt_dev_from_native(st->st_rdev);
+	ost->st_size = st->st_size;
+	ost->st_atime_sec = st->st_atime;
+	ost->st_spare1 = 0;
+	ost->st_mtime_sec = st->st_mtime;
+	ost->st_spare2 = 0;
+	ost->st_ctime_sec = st->st_ctime;
+	ost->st_spare3 = 0;
+	ost->st_blksize = st->st_blksize;
+	ost->st_blocks = st->st_blocks;
+	ost->st_flags = st->st_flags;
+	ost->st_gen = st->st_gen;
+}
+
+void
+osf1_cvt_statfs_from_native(bsfs, osfs)
+	const struct statfs *bsfs;
+	struct osf1_statfs *osfs;
+{
+
+	memset(osfs, 0, sizeof (struct osf1_statfs));
+	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
+		osfs->f_type = OSF1_MOUNT_UFS;
+	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
+		osfs->f_type = OSF1_MOUNT_NFS;
+	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN))
+		osfs->f_type = OSF1_MOUNT_MFS;
+	else
+		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */
+		osfs->f_type = OSF1_MOUNT_ADDON;
+	osfs->f_flags = bsfs->f_flags;		/* XXX translate */
+	osfs->f_fsize = bsfs->f_bsize;
+	osfs->f_bsize = bsfs->f_iosize;
+	osfs->f_blocks = bsfs->f_blocks;
+	osfs->f_bfree = bsfs->f_bfree;
+	osfs->f_bavail = bsfs->f_bavail;
+	osfs->f_files = bsfs->f_files;
+	osfs->f_ffree = bsfs->f_ffree;
+	memcpy(&osfs->f_fsid, &bsfs->f_fsid,
+	    max(sizeof bsfs->f_fsid, sizeof osfs->f_fsid));
+	/* osfs->f_spare zeroed above */
+	memcpy(osfs->f_mntonname, bsfs->f_mntonname,
+	    max(sizeof bsfs->f_mntonname, sizeof osfs->f_mntonname));
+	memcpy(osfs->f_mntfromname, bsfs->f_mntfromname,
+	    max(sizeof bsfs->f_mntfromname, sizeof osfs->f_mntfromname));
+	/* XXX osfs->f_xxx should be filled in... */
 }
