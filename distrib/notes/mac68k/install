@@ -181,8 +181,7 @@ more information on how to add a new user.
 Some of the files in the NetBSD _VER distribution might need to be
 tailored for your site.  In particular, the /etc/resolv.conf file will
 almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified, as well.  In particular, you will want to
-take a look at /etc/rc.conf and modify it to your tastes.  Make sure
-that you set "rc_configured=YES" so that your changes will be enabled.
-If you are unfamiliar with UN*X-like system administration, it's
-recommended that you buy a book that discusses it.
+probably need to be modified, as well.  Many of these files are described
+in section 5 of the manual pages.  See intro(5) for more information.  If
+you are unfamiliar with UN*X-like system administration, it's recommended
+that you buy a book that discusses it. 
