@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.1 1996/03/09 03:46:21 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.1.1.1 1996/03/11 21:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -22,6 +22,58 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * from Id: pdq_ifsubr.c,v 1.2 1995/08/20 18:59:00 thomas Exp
+ *
+ * Log: pdq_ifsubr.c,v
+ * Revision 1.2  1995/08/20  18:59:00  thomas
+ * Changes for NetBSD
+ *
+ * Revision 1.1  1995/08/20  15:43:49  thomas
+ * Initial revision
+ *
+ * Revision 1.13  1995/08/04  21:54:56  thomas
+ * Clean IRQ processing under BSD/OS.
+ * A receive tweaks.  (print source of MAC CRC errors, etc.)
+ *
+ * Revision 1.12  1995/06/02  16:04:22  thomas
+ * Use correct PCI defs for BSDI now that they have fixed them.
+ * Increment the slot number 0x1000, not one! (*duh*)
+ *
+ * Revision 1.11  1995/04/21  13:23:55  thomas
+ * Fix a few pub in the DEFPA BSDI support
+ *
+ * Revision 1.10  1995/04/20  21:46:42  thomas
+ * Why???
+ * ,
+ *
+ * Revision 1.9  1995/04/20  20:17:33  thomas
+ * Add PCI support for BSD/OS.
+ * Fix BSD/OS EISA support.
+ * Set latency timer for DEFPA to recommended value if 0.
+ *
+ * Revision 1.8  1995/04/04  22:54:29  thomas
+ * Fix DEFEA support
+ *
+ * Revision 1.7  1995/03/14  01:52:52  thomas
+ * Update for new FreeBSD PCI Interrupt interface
+ *
+ * Revision 1.6  1995/03/10  17:06:59  thomas
+ * Update for latest version of FreeBSD.
+ * Compensate for the fast that the ifp will not be first thing
+ * in softc on BSDI.
+ *
+ * Revision 1.5  1995/03/07  19:59:42  thomas
+ * First pass at BSDI EISA support
+ *
+ * Revision 1.4  1995/03/06  17:06:03  thomas
+ * Add transmit timeout support.
+ * Add support DEFEA (untested).
+ *
+ * Revision 1.3  1995/03/03  13:48:35  thomas
+ * more fixes
+ *
+ *
  */
 
 /*
@@ -29,21 +81,32 @@
  *
  * Written by Matt Thomas
  *
- * Network interface subroutines.
+ *   This driver supports the following FDDI controllers:
+ *
+ *	Device:			Config file entry:
+ *	  DEC DEFPA (PCI)         device fpa0
+ *	  DEC DEFEA (EISA)        device fea0 at isa0 net irq ? vector feaintr
+ *
+ *   Eventually, the following adapters will also be supported:
+ *
+ *	  DEC DEFTA (TC)	  device fta0 at tc? slot * vector ftaintr
+ *	  DEC DEFQA (Q-Bus)	  device fta0 at uba? csr 0?? vector fqaintr
+ *	  DEC DEFAA (FB+)	  device faa0 at fbus? slot * vector faaintr
  */
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-
-#ifdef __NetBSD__
+#if defined(__FreeBSD__)
+#include <sys/devconf.h>
+#elif defined(__bsdi__) || defined(__NetBSD__)
 #include <sys/device.h>
 #endif
 
@@ -65,11 +128,11 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-#ifdef __NetBSD__
-#include <net/if_fddi.h>
-#else
+#if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
-#endif /* __NetBSD__ */
+#else
+#include <net/if_fddi.h>
+#endif
 
 #ifdef NS
 #include <netns/ns.h>
@@ -78,9 +141,14 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#include <vm/vm_param.h>
 
-#include <dev/ic/pdqreg.h>
-#include <dev/ic/pdqvar.h>
+#include "pdqreg.h"
+#if defined(__NetBSD__)
+#include "pdqvar.h"
+#else
+#include "pdq_os.h"
+#endif
 
 void
 pdq_ifinit(
@@ -243,19 +311,11 @@ pdq_os_addr_fill(
 
 int
 pdq_ifioctl(
-#ifdef __NetBSD__
-    pdq_softc_t *sc,
-#else
     struct ifnet *ifp,
-#endif /* __NetBSD__ */
     ioctl_cmd_t cmd,
     caddr_t data)
 {
-#ifdef __NetBSD__
-    struct ifnet *ifp = &sc->sc_if;
-#else
     pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
-#endif /* __NetBSD__ */
     int s, error = 0;
 
     s = splimp();
@@ -268,18 +328,15 @@ pdq_ifioctl(
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET: {
-#ifdef __NetBSD__
-		    (*sc->if_init)(ifp->if_unit);
+		    sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+		    pdq_ifinit(sc);
+#if !defined(__bsdi__)
 		    arp_ifinit(&sc->sc_ac, ifa);
-#else /* ! __NetBSD__ */
-		    ((struct arpcom *)ifp)->ac_ipaddr = IA_SIN(ifa)->sin_addr;
-		    (*sc->if_init)(ifp->if_unit);
-#ifdef __FreeBSD__
-		    arp_ifinit((struct arpcom *)ifp, ifa);
-#else /* ! __FreeBSD__ */
-		    arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
-#endif /* __FreeBSD__ */
-#endif /* __NetBSD__ */
+#else
+		    arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
+		    ifa->ifa_rtrequest = arp_rtrequest;
+		    ifa->ifa_flags |= RTF_CLONING;
+#endif
 		    break;
 		}
 #endif /* INET */
@@ -300,13 +357,13 @@ pdq_ifioctl(
 			      sizeof sc->sc_ac.ac_enaddr);
 		    }
 
-		    (*sc->if_init)(ifp->if_unit);
+		    pdq_ifinit(sc);
 		    break;
 		}
 #endif /* NS */
 
 		default: {
-		    (*sc->if_init)(ifp->if_unit);
+		    pdq_ifinit(sc);
 		    break;
 		}
 	    }
@@ -314,7 +371,7 @@ pdq_ifioctl(
 	}
 
 	case SIOCSIFFLAGS: {
-	    (*sc->if_init)(ifp->if_unit);
+	    pdq_ifinit(sc);
 	    break;
 	}
 
@@ -350,28 +407,21 @@ void
 pdq_ifattach(
     pdq_softc_t *sc,
     ifnet_ret_t (*ifinit)(int unit),
-#ifdef __NetBSD__
-    ifnet_ret_t (*ifwatchdog)(int unit),
-    int (*ifioctl)(struct ifnet *ifp, ioctl_cmd_t cmd, caddr_t data))
-#else
     ifnet_ret_t (*ifwatchdog)(int unit))
-#endif /* __NetBSD__ */
 {
     struct ifnet *ifp = &sc->sc_if;
 
-    ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST;
+    ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 
-    sc->if_init = ifinit;
+#if !defined(__NetBSD__)
+    ifp->if_init = ifinit;
+#endif
     ifp->if_watchdog = ifwatchdog;
 
-#ifdef __NetBSD__
-    ifp->if_ioctl = ifioctl;
-#else
     ifp->if_ioctl = pdq_ifioctl;
-#endif /* __NetBSD__ */
     ifp->if_output = fddi_output;
     ifp->if_start = pdq_ifstart;
-
+  
     if_attach(ifp);
     fddi_ifattach(ifp);
 #if NBPFILTER > 0
