@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.42 2004/01/03 19:32:58 dbj Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.43 2004/01/04 00:21:29 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.42 2004/01/03 19:32:58 dbj Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.43 2004/01/04 00:21:29 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: dumpfs.c,v 1.42 2004/01/03 19:32:58 dbj Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -401,7 +402,7 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 		else
 			printf("(no rotational position table)\n\n");
 		if (ISOPT(opt_verbose)) {
-			int c, i, j, k;
+			int c, j, k;
 			for (c = 0; c < fs->fs_old_cpc; c++) {
 				printf("cylinder number %d:", c);
 				for (i = 0; i < fs->fs_old_nrpos; i++) {
