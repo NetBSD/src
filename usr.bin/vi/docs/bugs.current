@@ -1,5 +1,9 @@
 List of known bugs:
 
++ Large numbers of matches (e.g. %, g or v commands), with the
+  ignorecase option set, triggers a memory corruption bug in the
+  regex routines.
+
 + Autoindent doesn't work in the ex editor.
 
 + ^C isn't passed to the shell in the script windows as an interrupt
@@ -14,7 +18,8 @@ List of known bugs:
 + The options edcompatible, hardtabs*, lisp*, optimize*, redraw*,
   and slowopen* are recognized, but not implemented.  Options with
   an asterisk are unlikely to ever be implemented, so if you want
-  them you might want to say something!
+  them you might want to say something!  I will implement lisp if
+  anyone ever documents how it really worked.
 
 + Screen repainting over slow lines, for some screen changes, is not
   as good as the historic vi's.
@@ -25,12 +30,8 @@ List of known bugs:
 + If the ex append command is used from vi, the input command buffer
   is overwritten by the ex_append function, causing random errors.
 
-+ The "b" command stops at every empty line.
-
 + Colon commands longer than a single line cause the display to be
   incorrect.
-
-+ Left-right scrolling is currently broken.
 
 + When switching files in a small screen (O_WINDOW) with :e, the status
   message isn't displayed.
