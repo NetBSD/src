@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.8 2000/11/19 11:15:01 mrg Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.9 2000/11/28 22:31:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,6 +71,34 @@ static	char err_str[BUFSIZE];
 static	void badval (struct keytabent *, char *);
 static	int doio (struct keytabent *, u_char *, ssize_t, int);
 
+struct	keytabent eekeytab[] = {
+	{ "hwupdate",		0x10,	ee_hwupdate },
+	{ "memsize",		0x14,	ee_num8 },
+	{ "memtest",		0x15,	ee_num8 },
+	{ "scrsize",		0x16,	ee_screensize },
+	{ "watchdog_reboot",	0x17,	ee_truefalse },
+	{ "default_boot",	0x18,	ee_truefalse },
+	{ "bootdev",		0x19,	ee_bootdev },
+	{ "kbdtype",		0x1e,	ee_kbdtype },
+	{ "console",		0x1f,	ee_constype },
+	{ "keyclick",		0x21,	ee_truefalse },
+	{ "diagdev",		0x22,	ee_bootdev },
+	{ "diagpath",		0x28,	ee_diagpath },
+	{ "columns",		0x50,	ee_num8 },
+	{ "rows",		0x51,	ee_num8 },
+	{ "ttya_use_baud",	0x58,	ee_truefalse },
+	{ "ttya_baud",		0x59,	ee_num16 },
+	{ "ttya_no_rtsdtr",	0x5b,	ee_truefalse },
+	{ "ttyb_use_baud",	0x60,	ee_truefalse },
+	{ "ttyb_baud",		0x61,	ee_num16 },
+	{ "ttyb_no_rtsdtr",	0x63,	ee_truefalse },
+	{ "banner",		0x68,	ee_banner },
+	{ "secure",		0,	ee_notsupp },
+	{ "bad_login",		0,	ee_notsupp },
+	{ "password",		0,	ee_notsupp },
+	{ NULL,			0,	ee_notsupp },
+};
+
 #define BARF(kt) {							\
 	badval((kt), arg);						\
 	++eval;								\
@@ -89,6 +117,32 @@ static	int doio (struct keytabent *, u_char *, ssize_t, int);
 	warnx("failed to update field `%s'", (kt)->kt_keyword);		\
 	++eval;								\
 	return;								\
+}
+
+void
+ee_action(keyword, arg)
+	char *keyword, *arg;
+{
+	struct keytabent *ktent;
+
+	for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent) {
+		if (strcmp(ktent->kt_keyword, keyword) == 0) {
+			(*ktent->kt_handler)(ktent, arg);
+			return; 
+		}
+	}
+
+	warnx("unknown keyword %s", keyword);
+	++eval;
+}
+
+void
+ee_dump()
+{
+	struct keytabent *ktent;
+
+	for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent)
+		(*ktent->kt_handler)(ktent, NULL);
 }
 
 void

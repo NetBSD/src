@@ -1,4 +1,4 @@
-.\"	$NetBSD: eeprom.8,v 1.4 2000/11/07 06:43:36 lukem Exp $
+.\"	$NetBSD: eeprom.8,v 1.5 2000/11/28 22:31:37 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 25, 1995
+.Dd November 19, 2000
 .Dt EEPROM 8
 .Os
 .Sh NAME
@@ -51,14 +51,13 @@
 .Li = Ns Ar value
 .Oc ...
 .Oc
-.Sh SPARC SYNOPSIS
+.Sh SPARC and SPARC64 SYNOPSIS
 .Nm ""
 .Op Fl
 .Op Fl c
 .Op Fl f Ar device
 .Op Fl i
 .Op Fl v
-.Op Fl N Ar system
 .Oo
 .Ar field Ns Oo
 .Li = Ns Ar value
@@ -107,12 +106,11 @@ error when used on a Sun 3:
 .It Fl v
 On systems with an OpenProm, be verbose when setting a value.  Systems
 with an EEPROM are always verbose.
-.It Fl N Ar system
-Use the system image
-.Ar system
-instead of the default
-.Pa /netbsd .
 .El
+.Pp
+The
+.Fl v
+option is also present on sparc64 systems.
 .Sh FIELDS AND VALUES
 The following fields and values are for systems with an EEPROM:
 .Bl -tag -width "watchdog_reboot  "

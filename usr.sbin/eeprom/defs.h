@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5 2000/11/19 11:15:01 mrg Exp $	*/
+/*	$NetBSD: defs.h,v 1.6 2000/11/28 22:31:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ struct	timeb;
 time_t	get_date (char *, struct timeb *);
 
 /* Sun 3/4 EEPROM handlers. */
+void	ee_action (char *, char *);
+void	ee_dump (void);
 void	ee_hwupdate (struct keytabent *, char *);
 void	ee_num8 (struct keytabent *, char *);
 void	ee_num16 (struct keytabent *, char *);
@@ -114,5 +116,7 @@ void	ee_verifychecksums (void);
 #ifdef __sparc__
 /* Sparc Openprom handlers. */
 char	*op_handler (char *, char *);
+void	op_action (char *, char *);
 void	op_dump (void);
+int	check_for_openprom (void);
 #endif /* __sparc__ */

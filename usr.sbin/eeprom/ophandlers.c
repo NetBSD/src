@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.7 2000/11/19 11:15:01 mrg Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.8 2000/11/28 22:31:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,35 @@ static	struct extabent opextab[] = {
 	++eval;								\
 	return (err_str);						\
 };
+
+void
+op_action(keyword, arg)
+	char *keyword, *arg;
+{
+	char	*cp;
+
+	if ((cp = op_handler(keyword, arg)) != NULL)
+		warnx("%s", cp);
+	return;
+}
+
+#if defined(__sparc__) && !defined(__arch64__)
+int
+check_for_openprom()
+{
+	int fd, rv, optnode;
+
+	/* if we can't open it, obviously we can't use it. */
+	if ((fd = open(path_openprom, O_RDONLY)) < 0)
+		return (0);
+
+	/* check for the presence of OpenFirmware with OPIOCGETOPTNODE */
+	rv = ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode);
+	close (fd);
+
+	return (rv == 0);
+}
+#endif
 
 char *
 op_handler(keyword, arg)
