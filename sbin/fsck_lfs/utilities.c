@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.13 2003/04/02 10:39:28 fvdl Exp $	 */
+/* $NetBSD: utilities.c,v 1.14 2003/07/13 08:13:19 itojun Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -186,7 +186,7 @@ freeblk(daddr_t blkno, long frags)
  * Find a pathname
  */
 void
-getpathname(char *namebuf, ino_t curdir, ino_t ino)
+getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 {
 	int len;
 	register char *cp;
@@ -194,12 +194,12 @@ getpathname(char *namebuf, ino_t curdir, ino_t ino)
 	static int busy = 0;
 
 	if (curdir == ino && ino == ROOTINO) {
-		(void) strcpy(namebuf, "/");
+		(void) strlcpy(namebuf, "/", namebuflen);
 		return;
 	}
 	if (busy ||
 	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
-		(void) strcpy(namebuf, "?");
+		(void) strlcpy(namebuf, "?", namebuflen);
 		return;
 	}
 	busy = 1;

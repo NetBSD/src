@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.8 2003/04/02 10:39:28 fvdl Exp $	 */
+/* $NetBSD: pass2.c,v 1.9 2003/07/13 08:13:19 itojun Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -145,7 +145,8 @@ pass2()
 				inodirty(VTOI(vp));
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
-			getpathname(pathbuf, inp->i_number, inp->i_number);
+			getpathname(pathbuf, sizeof(pathbuf), inp->i_number,
+			    inp->i_number);
 			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
 			    pathbuf, (unsigned long) inp->i_isize, DIRBLKSIZ);
 			if (preen)
@@ -237,7 +238,7 @@ pass2check(struct inodesc * idesc)
 	proto.d_ino = idesc->id_number;
 	proto.d_type = DT_DIR;
 	proto.d_namlen = 1;
-	(void) strcpy(proto.d_name, ".");
+	(void) strlcpy(proto.d_name, ".", sizeof(proto.d_name));
 	entrysize = DIRSIZ(0, &proto, 0);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
@@ -268,7 +269,7 @@ chk1:
 	proto.d_ino = inp->i_parent;
 	proto.d_type = DT_DIR;
 	proto.d_namlen = 2;
-	(void) strcpy(proto.d_name, "..");
+	(void) strlcpy(proto.d_name, "..", sizeof(proto.d_name));
 	entrysize = DIRSIZ(0, &proto, 0);
 	if (idesc->id_entryno == 0) {
 		n = DIRSIZ(0, dirp, 0);
@@ -393,9 +394,10 @@ again:
 		case DFOUND:
 			inp = getinoinfo(dirp->d_ino);
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
-				getpathname(namebuf, dirp->d_ino, dirp->d_ino);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
+				getpathname(namebuf, sizeof(namebuf),
+				    dirp->d_ino, dirp->d_ino);
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);

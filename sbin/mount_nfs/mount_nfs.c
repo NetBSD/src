@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.42 2003/05/16 15:33:45 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.43 2003/07/13 08:08:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.42 2003/05/16 15:33:45 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.43 2003/07/13 08:08:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ mount_nfs(argc, argv)
 
 	last_ruid = -1;
 	if (krb_get_lrealm(realm, 0) != KSUCCESS)
-	    (void)strcpy(realm, KRB_REALM);
+	    (void)strlcpy(realm, KRB_REALM, sizeof(realm));
 	if (sizeof (struct nfsrpc_nickverf) != RPCX_NICKVERF ||
 	    sizeof (struct nfsrpc_fullblock) != RPCX_FULLBLOCK ||
 	    ((char *)&ktick.kt) - ((char *)&ktick) != NFSX_UNSIGNED ||
@@ -336,8 +336,7 @@ mount_nfs(argc, argv)
 			break;
 #ifdef NFSKERB
 		case 'm':
-			(void)strncpy(realm, optarg, REALM_SZ - 1);
-			realm[REALM_SZ - 1] = '\0';
+			(void)strlcpy(realm, optarg, sizeof(realm));
 			break;
 #endif
 		case 'o':

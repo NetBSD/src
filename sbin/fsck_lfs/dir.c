@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.9 2003/04/02 10:39:27 fvdl Exp $	 */
+/* $NetBSD: dir.c,v 1.10 2003/07/13 08:13:19 itojun Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -292,7 +292,7 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 	pwarn("%s ", errmesg);
 	pinode(ino);
 	printf("\n");
-	getpathname(pathbuf, cwd, ino);
+	getpathname(pathbuf, sizeof(pathbuf), cwd, ino);
 	if (ino < ROOTINO || ino >= maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
@@ -533,7 +533,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
 		return (1);
-	getpathname(pathbuf, parent, parent);
+	getpathname(pathbuf, sizeof(pathbuf), parent, parent);
 	vp = vget(fs, parent);
 	dp = VTOD(vp);
 	if (expanddir(vp, dp, pathbuf) == 0)

@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.5 2003/04/02 10:39:27 fvdl Exp $	 */
+/* $NetBSD: extern.h,v 1.6 2003/07/13 08:13:19 itojun Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -48,7 +48,7 @@ void freeblk(daddr_t, long);
 void freeino(ino_t);
 void freeinodebuf(void);
 int ftypeok(struct ufs1_dinode *);
-void getpathname(char *, ino_t, ino_t);
+void getpathname(char *, size_t, ino_t, ino_t);
 void inocleanup(void);
 void inodirty(struct inode *);
 int linkup(ino_t, ino_t);

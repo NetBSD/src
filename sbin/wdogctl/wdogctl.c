@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.8 2003/06/23 11:53:45 agc Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.9 2003/07/13 08:05:58 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.8 2003/06/23 11:53:45 agc Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.9 2003/07/13 08:05:58 itojun Exp $");
 #endif
 
 
@@ -139,7 +139,7 @@ enable_kernel(const char *name, u_int period)
 
 	if (strlen(name) >= WDOG_NAMESIZE)
 		errx(1, "invalid watchdog timer name: %s", name);
-	strcpy(wm.wm_name, name);
+	strlcpy(wm.wm_name, name, sizeof(wm.wm_name));
 	wm.wm_mode = WDOG_MODE_KTICKLE;
 	wm.wm_period = period;
 
@@ -164,7 +164,7 @@ enable_user(const char *name, u_int period)
 
 	if (strlen(name) >= WDOG_NAMESIZE)
 		errx(1, "invalid watchdog timer name: %s", name);
-	strcpy(wm.wm_name, name);
+	strlcpy(wm.wm_name, name, sizeof(wm.wm_name));
 	wm.wm_mode = WDOG_MODE_UTICKLE;
 	wm.wm_period = period;
 
@@ -321,7 +321,7 @@ list_timers(void)
 	printf("Available watchdog timers:\n");
 	for (i = 0, cp = buf; i < count; i++, cp += WDOG_NAMESIZE) {
 		cp[WDOG_NAMESIZE - 1] = '\0';
-		strcpy(wm.wm_name, cp);
+		strlcpy(wm.wm_name, cp, sizeof(wm.wm_name));
 
 		if (ioctl(fd, WDOGIOC_GMODE, &wm) == -1)
 			wm.wm_mode = -1;
