@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.42 1995/06/02 16:46:22 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.43 1995/06/09 21:58:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -260,7 +260,7 @@ int keep;	/* true: steal, false: clear */
 sun3_save_symtab(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
-	int *symsz, *strsz;
+	int x, *symsz, *strsz;
 	char *endp;
 
 	/*
@@ -271,12 +271,10 @@ sun3_save_symtab(kehp)
 		mon_printf("bad magic\n");
 		return;
 	}
-	if (kehp->a_text != ((etext+4) - kernel_text)) {
-		mon_printf("bad a_text\n");
-		return;
-	}
-	if (kehp->a_data != (edata - (etext+4))) {
-		mon_printf("bad a_data\n");
+	/* Boundary between text and data varries a little. */
+	x = kehp->a_text + kehp->a_data;
+	if (x != (edata - kernel_text)) {
+		mon_printf("bad a_text+a_data\n");
 		return;
 	}
 	if (kehp->a_bss != (end - edata)) {
@@ -585,57 +583,45 @@ void sun3_verify_hardware()
 	switch (cpu_machine_id) {
 
 	case SUN3_MACH_50 :
-#ifdef SUN3_50
 		cpu_match++;
 		hole_start = OBMEM_BW50_ADDR;
 		hole_size  = OBMEM_BW2_SIZE;
-#endif
 		cpu_string = "50";
 		cpuspeed = 16; /* MHz */
 		break;
 
 	case SUN3_MACH_60 :
-#ifdef SUN3_60
 		cpu_match++;
-#endif
 		cpu_string = "60";
 		cpuspeed = 20; /* MHz */
 		break;
 
 	case SUN3_MACH_110:
-#ifdef SUN3_110
 		cpu_match++;
-#endif
 		cpu_string = "110";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_160:
-#ifdef SUN3_160
 		cpu_match++;
-#endif
 		cpu_string = "160";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_260:
-#ifdef SUN3_260
 		cpu_match++;
-#endif
 		cpu_string = "260";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
 #if 0	/* def	HAVECACHE */
-		cache_size = 0x10000;	/* 64K */
+		cache_size = 0x10000;	/* XXX: not tested yet... */
 #endif
 		break;
 
 	case SUN3_MACH_E  :
-#ifdef SUN3_E
 		cpu_match++;
-#endif
 		cpu_string = "E";
 		cpuspeed = 30; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
