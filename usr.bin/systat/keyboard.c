@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.6 1999/08/02 02:01:57 sommerfeld Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.7 1999/11/15 06:16:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.6 1999/08/02 02:01:57 sommerfeld Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.7 1999/11/15 06:16:56 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,6 +93,11 @@ keyboard()
 					sigprocmask(SIG_BLOCK, &set, NULL);
 					status();
 					sigprocmask(SIG_UNBLOCK, &set, NULL);
+					continue;
+				}
+				if (ch == '?' || ch == 'h') {
+					command("help");
+					move(CMDLINE, 0);
 					continue;
 				}
 				if (ch != ':')
