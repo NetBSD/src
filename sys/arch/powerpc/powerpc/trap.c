@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2000/05/27 00:40:40 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.26.4.1 2001/07/02 14:05:44 jhawk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,8 +105,14 @@ trap(frame)
 			else
 				ftype = VM_PROT_READ;
 			if (uvm_fault(map, trunc_page(va), 0, ftype)
-			    == KERN_SUCCESS)
+			    == KERN_SUCCESS) {
+				/*
+				 * Grow the stack is needed...
+				 */
+				if (map != kernel_map)
+					uvm_grow(p, trunc_page(va));
 				return;
+			}
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
@@ -129,8 +135,13 @@ trap(frame)
 				ftype = VM_PROT_READ;
 			if ((rv = uvm_fault(&p->p_vmspace->vm_map,
 					    trunc_page(frame->dar), 0, ftype))
-			    == KERN_SUCCESS)
+			    == KERN_SUCCESS) {
+				/*
+				 * Grow the stack is needed...
+				 */
+				uvm_grow(p, trunc_page(frame->dar));
 				break;
+			}
 			if (rv == KERN_RESOURCE_SHORTAGE) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
