@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.12 1999/06/27 12:55:59 mrg Exp $
+#	$NetBSD: install.md,v 1.13 2000/07/08 11:32:05 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,9 +47,6 @@ if [ "$MODE" = upgrade ]; then
 	RELOCATED_FILES_13="${RELOCATED_FILES_13} /usr/sbin/installboot /usr/mdec/installboot"
 fi
 
-# Mount /kern to get at /kern/msgbuf
-mount -t kernfs none /kern
-
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
@@ -81,17 +78,17 @@ __mfs_failed_1
 
 md_get_diskdevs() {
 	# return available disk devices
-	< /kern/msgbuf sed -n -e 's/^\(sd[0-9]\) .*/\1/p' -e 's/^\(x[dy][0-9]\) .*/\1/p' | sort -u
+	dmesg | sed -n -e 's/^\(sd[0-9]\) .*/\1/p' -e 's/^\(x[dy][0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	< /kern/msgbuf sed -n -e 's/^\(cd[0-9]\) .*/\1/p' | sort -u
+	dmesg | sed -n -e 's/^\(cd[0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	< /kern/msgbuf sed -n -e 's/^\(le[0-9]\) .*/\1/p' -e 's/^\(ie[0-9]\) .*/\1/p' | sort -u
+	dmesg | sed -n -e 's/^\(le[0-9]\) .*/\1/p' -e 's/^\(ie[0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_partition_range() {
