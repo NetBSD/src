@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.23 1999/11/28 20:03:17 bouyer Exp $	*/
+/*	$NetBSD: pass5.c,v 1.23.4.1 2000/07/27 02:05:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.23 1999/11/28 20:03:17 bouyer Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.23.4.1 2000/07/27 02:05:13 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,8 @@ pass5()
 						continue;
 					if (cg_inosused(cg, 0)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED FRAG %ld MARKED FREE",
+					pwarn("ALLOCATED FRAG %ld "
+					    "MARKED FREE\n",
 					    c * fs->fs_fpg + i * 8 + k);
 				}
 			}
