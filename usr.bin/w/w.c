@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)w.c	5.29 (Berkeley) 4/23/91";*/
-static char rcsid[] = "$Id: w.c,v 1.8 1993/08/01 18:03:14 mycroft Exp $";
+static char rcsid[] = "$Id: w.c,v 1.9 1993/10/26 20:52:51 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -308,7 +308,7 @@ main(argc, argv)
 		if (ep->idle >= 36 * 60)
 			printf(" %ddays ", (ep->idle + 12 * 60) / (24 * 60));
 		else if (ep->idle == 0)
-			printf("       ");
+			printf("     - ");
 		else
 			prttime(ep->idle, " ");
 		if (ep->args)
@@ -345,11 +345,9 @@ prttime(tim, tail)
 	char *tail;
 {
 
-	if (tim >= 60) {
-		printf(" %2d:", tim/60);
-		tim %= 60;
-		printf("%02d", tim);
-	} else if (tim >= 0)
+	if (tim >= 60)
+		printf(" %2d:%02d", tim/60, tim%60);
+	else if (tim >= 0)
 		printf("    %2d", tim);
 	printf("%s", tail);
 }

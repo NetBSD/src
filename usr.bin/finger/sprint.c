@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$Id: sprint.c,v 1.2 1993/08/01 18:15:58 mycroft Exp $";
+static char rcsid[] = "$Id: sprint.c,v 1.3 1993/10/26 20:54:41 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ stimeprint(w)
 	if (!delta->tm_yday)
 		if (!delta->tm_hour)
 			if (!delta->tm_min)
-				(void)printf("     ");
+				(void)printf("    -");
 			else
 				(void)printf("%5d", delta->tm_min);
 		else
