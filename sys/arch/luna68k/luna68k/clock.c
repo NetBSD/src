@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $ */
+/* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $");
 
 #define CLOCK_LEVEL 5
 #include <luna68k/luna68k/isr.h>
-
-extern int machtype;
 
 static struct device *clockdev;
 static struct clockfns *clockfns;
