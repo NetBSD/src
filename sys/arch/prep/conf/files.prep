@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.15 2001/01/19 01:51:16 manu Exp $
+#	$NetBSD: files.prep,v 1.16 2001/01/23 14:12:25 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -165,9 +165,6 @@ include	"dev/mii/files.mii"
 
 # USB drivers
 include "dev/usb/files.usb"
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 # PCMCIA drivers/support
 defopt	PCIC_ISA_ALLOC_IOBASE
