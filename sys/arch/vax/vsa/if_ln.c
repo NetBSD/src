@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.10 1999/02/28 17:11:33 explorer Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.11 1999/03/13 15:16:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -218,6 +218,8 @@ void	ln_reset __P((struct ln_softc *));
 static	short *lance_csr; /* LANCE CSR virtual address */
 static	int *lance_addr; /* Ethernet address */
 
+caddr_t	le_iomem;
+
 struct cfattach ln_ca = {
 	sizeof(struct ln_softc), lnmatch, lnattach
 };
@@ -234,15 +236,18 @@ lnmatch(parent, cf, aux)
 	void *aux;
 {
 	struct	vsbus_attach_args *va = aux;
+	volatile short *lance_csr = (short *)va->va_addr;
 
-	if (lance_csr == 0)
-		lance_csr = (short *)vax_map_physmem(NI_BASE, 1);
-	if (lance_csr == 0)
-		return 0;
-	if (lance_addr == 0)
-		lance_addr = (int *)vax_map_physmem(NI_ADDR, 1);
-	if (va->va_type == inr_ni)
-		return 2;
+	/* Make sure the chip is stopped. */
+	LEWRCSR(LE_CSR0, LE_C0_STOP);
+	DELAY(100);
+	LEWRCSR(LE_CSR0, LE_C0_INIT|LE_C0_INEA);
+	/* Wait for initialization to finish. */
+	DELAY(100000);
+	va->va_ivec = ln_intr;
+	/* Should have interrupted by now */
+	if (LERDCSR(LE_CSR0) & LE_C0_IDON)
+		return 1;
 	return 0;
 }
 
@@ -255,6 +260,11 @@ lnattach(parent, self, aux)
 	u_int highmark;
 	int i;
 
+	/* Allocate the needed virtual space */
+	if (lance_csr == 0)
+		lance_csr = (short *)vax_map_physmem(NI_BASE, 1);
+	if (lance_addr == 0)
+		lance_addr = (int *)vax_map_physmem(NI_ADDR, 1);
 	/*
 	 * Get the ethernet address out of rom
 	 */
@@ -311,9 +321,6 @@ lnattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-
-	vsbus_intr_attach(inr_ni, ln_intr, 0);
-	vsbus_intr_enable(inr_ni);
 
 	/*
 	 * Register this device as boot device if we booted from it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.13 1998/11/05 19:48:05 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.14 1999/03/13 15:16:48 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -323,10 +323,6 @@ dzopen(dev, flag, mode, p)
 	(void) splx(s);
 	if (error)
 		return (error);
-	if (sc->sc_rxon)
-		(*sc->sc_rxon)();
-	if (sc->sc_txon)
-		(*sc->sc_txon)();
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 

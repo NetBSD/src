@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43 1999/03/09 12:57:57 ragge Exp $
+#	$NetBSD: GENERIC,v 1.44 1999/03/13 15:16:47 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -24,7 +24,7 @@ maxusers	8
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KTRACE
-#options 	DIAGNOSTIC
+#options 	DIAGNOSTIC,DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
@@ -43,6 +43,7 @@ file-system 	NULLFS
 file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
+file-system 	CD9660
 
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
@@ -130,13 +131,18 @@ mt*		at mscpbus? drive?	# MSCP tape
 #hdc0		at vsbus0		# The strange builtin MFM controller
 #rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
 
-# VAXstation builtin SCSI-controller (NCR5380)
-#ncr0		at vsbus0		# 1st built-in SCSI interface
-#ncr1		at vsbus0		# 2nd built-in SCSI interface
-#scsibus*	at ncr?
+# SCSI controllers.
+ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
+ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
+scsibus*	at ncr?
 
-#sd*		at scsibus? target? lun?
-#st*		at scsibus? target? lun?
+# SCSI devices
+sd*		at scsibus? target? lun?
+st*		at scsibus? target? lun?
+cd*		at scsibus? target? lun?
+ch*		at scsibus? target? lun?
+ss*		at scsibus? target? lun?
+uk*		at scsibus? target? lun?
 
 # Graphic adapters.
 qd0		at uba? csr 0177400
@@ -144,16 +150,16 @@ qd0		at uba? csr 0177400
 # Ethernet cards
 de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
-ln0		at vsbus0		# LANCE
+ln0		at vsbus0 csr 0x200e0000# LANCE
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
-dz0		at vsbus0		# DC-367
+dz0		at vsbus0 csr 0x200a0000# DC-367
 dl0		at uba? csr 0176500	# DL-11
 
 # VAXstation graphics support
-smg0		at vsbus0		# Small monochrome display ctlr.
+smg0		at vsbus0 csr 0x200f0000# Small monochrome display ctlr.
 wsdisplay0	at smg0			# display device driver.
 lkc0		at dz0			# Keyboard LK201
 

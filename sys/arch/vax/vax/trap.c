@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 1999/01/19 21:04:49 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.42 1999/03/13 15:16:48 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -237,7 +237,6 @@ ufault:			if (rv == KERN_RESOURCE_SHORTAGE)
 	case T_PTELEN:
 		if (p->p_addr)
 			FAULTCHK;
-asm("halt");
 		panic("ptelen fault in system space: addr %lx pc %lx",
 		    frame->code, frame->pc);
 
