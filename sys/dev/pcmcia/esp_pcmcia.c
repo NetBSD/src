@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.8.4.2 2000/11/20 11:42:42 bouyer Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.8.4.3 2001/01/22 17:58:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -200,6 +200,8 @@ esp_pcmcia_attach(parent, self, aux)
 	 *  Initialize nca board itself.
 	 */
 	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
 	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
 	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
