@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.3 1995/04/10 21:11:42 jtc Exp $ */
+/*	$NetBSD: float.h,v 1.4 1995/06/20 20:32:53 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,12 @@
  *	@(#)float.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
 extern int __flt_rounds();
+__END_DECLS
+
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	__flt_rounds()
 
