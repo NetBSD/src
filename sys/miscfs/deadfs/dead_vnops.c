@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dead_vnops.c	7.13 (Berkeley) 4/15/91
- *	$Id: dead_vnops.c,v 1.6 1993/12/18 03:48:27 mycroft Exp $
+ *	$Id: dead_vnops.c,v 1.7 1993/12/22 13:12:09 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -176,7 +176,7 @@ int	dead_bmap __P((
 		daddr_t *bnp));
 int	dead_strategy __P((
 		struct buf *bp));
-void	dead_print __P((
+int	dead_print __P((
 		struct vnode *vp));
 #define dead_islocked ((int (*) __P(( \
 		struct vnode *vp))) nullop)
@@ -378,12 +378,13 @@ dead_bmap(vp, bn, vpp, bnp)
  * Print out the contents of a dead vnode.
  */
 /* ARGSUSED */
-void
+int
 dead_print(vp)
 	struct vnode *vp;
 {
 
 	printf("tag VT_NON, dead vnode\n");
+	return (0);
 }
 
 /*
