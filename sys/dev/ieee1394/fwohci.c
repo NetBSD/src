@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.58 2002/11/22 16:20:18 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.59 2002/11/25 02:30:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.58 2002/11/22 16:20:18 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.59 2002/11/25 02:30:38 thorpej Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3160,8 +3160,8 @@ fwohci_read(struct ieee1394_abuf *ab)
 	fcb->count = 0;
 	fcb->abuf_valid = 1;
 	
-	high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
-	lo = (ab->ab_addr & 0x00000000ffffffff);
+	high = ((ab->ab_addr & 0x0000ffff00000000ULL) >> 32);
+	lo = (ab->ab_addr & 0x00000000ffffffffULL);
 
 	memset(&pkt, 0, sizeof(pkt));
 	pkt.fp_hdr[1] = ((0xffc0 | ab->ab_req->sc1394_node_id) << 16) | high;
@@ -3245,8 +3245,8 @@ fwohci_write(struct ieee1394_abuf *ab)
 		break;
 	default:
 		pkt.fp_hlen = 16;
-		high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
-		lo = (ab->ab_addr & 0x00000000ffffffff);
+		high = ((ab->ab_addr & 0x0000ffff00000000ULL) >> 32);
+		lo = (ab->ab_addr & 0x00000000ffffffffULL);
 		pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
 		    (psc->sc_tlabel << 10) | (pkt.fp_tcode << 4);
 		psc->sc_tlabel = (psc->sc_tlabel + 1) & 0x3f;
@@ -3353,8 +3353,8 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 		memset(&newpkt, 0, sizeof(newpkt));
 
-		high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
-		lo = (ab->ab_addr & 0x00000000ffffffff);
+		high = ((ab->ab_addr & 0x0000ffff00000000ULL) >> 32);
+		lo = (ab->ab_addr & 0x00000000ffffffffULL);
 
 		newpkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
 		newpkt.fp_hlen = 12;
@@ -3474,8 +3474,8 @@ fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
 	if (ab->ab_retlen < ab->ab_length) {
 		memset(&newpkt, 0, sizeof(newpkt));
 
-		high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
-		lo = (ab->ab_addr & 0x00000000ffffffff) + ab->ab_retlen;
+		high = ((ab->ab_addr & 0x0000ffff00000000ULL) >> 32);
+		lo = (ab->ab_addr & 0x00000000ffffffffULL) + ab->ab_retlen;
 
 		newpkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
 		newpkt.fp_hlen = 12;
@@ -3556,8 +3556,8 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 	u_int32_t high, lo;
 	int i, j, rv;
 
-	high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
-	lo = (ab->ab_addr & 0x00000000ffffffff);
+	high = ((ab->ab_addr & 0x0000ffff00000000ULL) >> 32);
+	lo = (ab->ab_addr & 0x00000000ffffffffULL);
 
 	rv = 0;
 	switch (ab->ab_tcode) {
