@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.1.1 1999/09/16 12:23:28 takemura Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2000/01/03 05:59:40 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -84,11 +84,16 @@ parsebootfile(fnamexx, fsmode, devname, unit, partition, file)
 		if (wcstombs(name, (TCHAR*)fname, sizeof(name)) < 0) {
 			return (ENOENT);
 		}
+		if ('1' <= name[0] && name[0] <= '9' && name[1] == ':') {
+			*unit = name[0] - '0';
+			*file = &name[2];
+		} else {
+		        *unit = 1;
+			*file = name;
+		}
 	        *fsmode = "ufs";
 	        *devname = "DSK";
-	        *unit = 1;
 	        *partition = 0;
-		*file = name;
 	}
 
 	return (0);
