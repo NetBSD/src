@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.14 2001/03/26 12:58:44 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.15 2001/04/01 03:28:11 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -648,13 +648,13 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: uplcom status = %02x\n", USBDEVNAME(sc->sc_dev), buf[8]));
 
-		sc->sc_lsr = sc->sc_msr = 0;
-		pstatus = buf[8];
-		if (ISSET(pstatus, RSAQ_STATUS_DSR))
-			sc->sc_msr |= UMSR_DSR;
-		if (ISSET(pstatus, RSAQ_STATUS_DCD))
-			sc->sc_msr |= UMSR_DCD;
-		ucom_status_change((struct ucom_softc *) sc->sc_subdev);
+	sc->sc_lsr = sc->sc_msr = 0;
+	pstatus = buf[8];
+	if (ISSET(pstatus, RSAQ_STATUS_DSR))
+		sc->sc_msr |= UMSR_DSR;
+	if (ISSET(pstatus, RSAQ_STATUS_DCD))
+		sc->sc_msr |= UMSR_DCD;
+	ucom_status_change((struct ucom_softc *) sc->sc_subdev);
 }
 
 void
