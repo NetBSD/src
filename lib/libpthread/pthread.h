@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.13 2002/10/27 23:35:01 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.14 2002/10/27 23:35:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 			 * be in signal.h instead of here.
 			 */
 #include "pthread_types.h"
-#include <sched.h>
 
 __BEGIN_DECLS
 int	pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
