@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.12 2003/09/26 18:10:01 christos Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.13 2003/10/21 12:08:11 kleink Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.12 2003/09/26 18:10:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.13 2003/10/21 12:08:11 kleink Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -155,7 +155,7 @@ sunos32_setregs(l, pack, stack)
 
 	stack -= sizeof(struct rwindow32);
 	tf->tf_out[6] = stack;
-	tf->tf_out[7] = NULL;
+	tf->tf_out[7] = 0;
 }
 
 void
