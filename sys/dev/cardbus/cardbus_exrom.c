@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.4 2000/02/03 06:47:31 thorpej Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.5 2000/05/08 18:23:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ cardbus_read_exrom(romt, romh, head)
      bus_space_handle_t romh;
      struct cardbus_rom_image_head *head;
 {
-    static const char __func__[] = "cardbus_read_exrom";
+    static const char thisfunc[] = "cardbus_read_exrom";
 
     size_t addr = 0; /* offset of current rom image */
     size_t dataptr;
@@ -107,7 +107,7 @@ cardbus_read_exrom(romt, romh, head)
 	val = READ_INT16(romt, romh, addr + CARDBUS_EXROM_SIGNATURE);
 	if(val != 0xaa55) {
 	    printf("%s: bad header signature in ROM image %u: 0x%04x\n", 
-		   __func__, rom_image, val);
+		   thisfunc, rom_image, val);
 	    return 1;
 	}
 	dataptr = addr + READ_INT16(romt, romh, addr + CARDBUS_EXROM_DATA_PTR);
@@ -121,7 +121,7 @@ cardbus_read_exrom(romt, romh, head)
 	image_size <<= 9;
 	image = malloc(sizeof(*image), M_DEVBUF, M_NOWAIT);
 	if(image == NULL) {
-	    printf("%s: out of memory\n", __func__);
+	    printf("%s: out of memory\n", thisfunc);
 	    return 1;
 	}
 	image->rom_image = rom_image;
@@ -129,7 +129,7 @@ cardbus_read_exrom(romt, romh, head)
 	image->romt = romt;
 	if(bus_space_subregion(romt, romh, addr, 
 			       image_size, &image->romh)) {
-	    printf("%s: bus_space_subregion failed", __func__);
+	    printf("%s: bus_space_subregion failed", thisfunc);
 	    free(image, M_DEVBUF);
 	    return 1;
 	}
