@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.37 1999/11/12 01:26:28 simonb Exp $	*/
+/*	$NetBSD: stand.h,v 1.38 1999/11/12 12:24:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -233,6 +233,7 @@ void	bcopy __P((const void *, void *, size_t));
 void	bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void *, size_t));
+void	*memset __P((void *, int, size_t));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));
 int	close __P((int));
