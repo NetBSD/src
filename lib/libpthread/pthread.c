@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.18 2002/03/01 01:20:09 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.19 2002/03/25 03:46:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ucontext.h>
+#include <sys/cdefs.h>
 
 #include "sched.h"
 #include "pthread.h"
@@ -68,6 +69,10 @@ extern struct pthread_queue_t idlequeue;
 extern pthread_spin_t runqueue_lock;
 
 static int started;
+
+/* Aliases for use by libc */
+__weak_alias(_libc_pthread_exit, pthread_exit)
+__weak_alias(_libc_pthread__erno, pthread__errno)
 
 /* This needs to be started by the library loading code, before main() 
  * gets to run, for various things that use the state of the initial thread

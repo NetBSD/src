@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.22 2002/02/19 23:57:52 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.23 2002/03/25 03:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ucontext.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 #include "pthread.h"

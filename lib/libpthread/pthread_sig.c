@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.8 2002/02/19 23:59:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.9 2002/03/25 03:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <ucontext.h>
 #include <unistd.h>
+#include <sys/cdefs.h>
 #include <sys/syscall.h>
 
 #include "sched.h"
@@ -59,6 +60,9 @@ static sigset_t	pt_process_siglist;
 static void 
 pthread__signal_tramp(int, int, struct sigaction *, ucontext_t *, int, 
     struct pthread_queue_t *, pthread_spin_t *);
+
+/* Aliases for use by libc */
+__weak_alias(_libc_pthread_sigmask, pthread_sigmask)
 
 int
 pthread_kill(pthread_t thread, int sig)
