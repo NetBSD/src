@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.13 2000/10/17 20:55:36 tv Exp $	*/
+/*	$NetBSD: announce.c,v 1.14 2002/03/04 01:37:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.13 2000/10/17 20:55:36 tv Exp $");
+__RCSID("$NetBSD: announce.c,v 1.14 2002/03/04 01:37:52 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ print_mesg(tty, request, remote_machine)
 	max_size = max(max_size, sizes[i]);
 	i++;
 	bptr = big_buf;
-	*bptr++ = ''; /* send something to wake them up */
+	*bptr++ = '\a'; /* send something to wake them up */
 	*bptr++ = '\r';	/* add a \r in case of raw mode */
 	*bptr++ = '\n';
 	for (i = 0; i < N_LINES; i++) {
