@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.2 1996/02/01 22:29:34 mycroft Exp $ */
+/* $NetBSD: cpu.h,v 1.3 1996/02/22 22:22:07 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -45,7 +45,7 @@
  *
  * Based on kate/katelib/arm6.h
  *
- *    $Id: cpu.h,v 1.2 1996/02/01 22:29:34 mycroft Exp $
+ *    $Id: cpu.h,v 1.3 1996/02/22 22:22:07 mark Exp $
  */
 
 #ifndef _ARM_CPU_H
@@ -175,12 +175,10 @@
 
 #define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_IRQ32_MODE)
 
-/* Hack to monitor FPE this requires sys/user.h to be included in kern/kern_clock.h */
-/*#define CLKF_INTR(frame) (p && (p->p_addr->u_pcb.pcb_fpstate.fp_flags & 2) != 0)*/
+/* Hack to treat FPE time as interrupt time so we can measure it */
+/*#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)*/
 
 #define cpu_set_init_frame(p, frame) (p->p_md.md_regs = frame)
-
-#define DELAY(x)	delay(x)
 
 /*
  * definitions of cpu-dependent requirements
