@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1996/12/28 23:15:59 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1997/01/01 21:08:02 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@
 #include <sys/bankeddev.h>
 #endif
 
-#define	bdev_rd_init(c,n) { \
+#define	bdev_md_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,strategy), \
 	dev_init(c,n,ioctl), (dev_type_dump((*))) enxio, dev_size_init(c,n), 0 }
 
@@ -72,7 +72,7 @@ bdev_decl(ccd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
-	bdev_rd_init(NRD,md),		/* 1: memory disk - for install disk */
+	bdev_md_init(NMD,md),		/* 1: memory disk - for install disk */
 	bdev_disk_init(NFD+NHDFD,fd),	/* 2: floppy disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
