@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.20 2000/06/14 22:02:27 veego Exp $
+#	$NetBSD: DR-EVIL,v 1.21 2000/06/16 03:49:12 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -15,13 +15,16 @@ maxusers	32		# estimated number of users
 #options 	I586_CPU
 options 	I686_CPU
 
+#makeoptions	CC="/usr/local/bin/gcc"
+#makeoptions	COPTS="-O2 -mcpu=pentiumpro -freorder-blocks"
 makeoptions	COPTS="-O2 -mcpu=pentiumpro"
+options 	__AUDIT__
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-options 	MTRR		# MTRR support
+#options 	MTRR		# MTRR support
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 options 	DUMMY_NOPS
 
@@ -188,7 +191,7 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 apm0	at mainbus0			# Advanced power management
-
+options 	APMDEBUG
 
 # Basic Bus Support
 
@@ -196,11 +199,14 @@ apm0	at mainbus0			# Advanced power management
 
 pnpbios*	at mainbus?
 
+options 	PNPBIOSEVENTS
+options 	PNPBIOSEVENTSDEBUG
+
 # mainboard audio chips
-#ess*		at pnpbios* index ?	# ESS AudioDrive  
-#sb*		at pnpbios* index ?	# NeoMagic 256AV in sb mode
-#wss*		at pnpbios* index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios* index ?	# OPL3-SA3 
+#ess*		at pnpbios? index ?	# ESS AudioDrive  
+#sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
+#wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
+#ym*		at pnpbios? index ?	# OPL3-SA3 
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
@@ -216,6 +222,8 @@ lpt*		at pnpbios? index ?	# parallel ports
 
 pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 fdc*		at pnpbios? index ?	# floppy controller
+
+npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide* at pnpbios* index ?
@@ -282,7 +290,7 @@ pcmcia*		at cardslot?
 # Coprocessor Support
 
 # Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
+#npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
@@ -812,7 +820,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	bpfilter	16	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
