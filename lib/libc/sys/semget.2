@@ -1,4 +1,4 @@
-.\"	$NetBSD: semget.2,v 1.6 1999/03/22 19:45:08 garbled Exp $	
+.\"	$NetBSD: semget.2,v 1.7 1999/08/25 20:55:36 thorpej Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,15 +29,13 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 1995
+.Dd August 25, 1999
 .Dt SEMGET 2
 .Os
 .Sh NAME
 .Nm semget
-.Nd get semaphore set
+.Nd get set of semaphores
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ipc.h>
 .Fd #include <sys/sem.h>
 .Ft int
 .Fn semget "key_t key" "int nsems" "int semflg"
@@ -136,3 +134,11 @@ was found.
 .Sh SEE ALSO
 .Xr semctl 2 ,
 .Xr semop 2
+.Sh STANDARDS
+The
+.Nm
+system call conforms to
+.St -xsh5 .
+.Sh HISTORY
+Semaphores appeared in the first release of
+.At V .
