@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $	*/
+/*	$NetBSD: memset.S,v 1.3 1998/04/03 22:59:29 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3 1998/04/03 22:59:29 matthias Exp $")
 # if defined(BZERO)
 	RCSID("$Masqueraded: as bzero $")
 # endif
@@ -22,7 +22,7 @@
  */
 #define SETMEMB(d)	movb	r4,d
 #define SETMEMD(d)	movd	r4,d
-ENTRY(memset)
+KENTRY(memset, 12)
 	enter	[r3,r4],0
 
 	movd	B_ARG0,r1		/* b */
@@ -38,7 +38,7 @@ ENTRY(memset)
  */
 #define SETMEMB(d)	movqb	0,d
 #define SETMEMD(d)	movqd	0,d
-ENTRY(bzero)
+KENTRY(bzero, 8)
 	enter	[r3],0
 
 	movd	B_ARG0,r1		/* b */
@@ -117,10 +117,10 @@ ENTRY(bzero)
 #ifndef	BZERO
 5:	movd	B_ARG0,r0
 	exit	[r3,r4]
-	ret	0
+	ret	ARGS
 #else
 5:	exit	[r3]
-	ret	0
+	ret	ARGS
 #endif
 
 	/*

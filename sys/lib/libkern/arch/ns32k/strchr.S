@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.1 1998/02/22 09:08:35 mycroft Exp $	*/
+/*	$NetBSD: strchr.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.1 1998/02/22 09:08:35 mycroft Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
 # if defined(INDEX)
 	RCSID("$Masqueraded: as index $")
 # endif
@@ -20,14 +20,14 @@
  * strchr (const char *s, int c)
  *	locate the first occurrence of c in the string s.
  */
-ENTRY(strchr)
+KENTRY(strchr, 8)
 #else
 /*
  * char *
  * index (const char *s, int c)
  *	locate the first occurrence of c in the string s.
  */
-ENTRY(index)
+KENTRY(index, 8)
 #endif
 	enter	[r3,r4,r5],0
 	movd	B_ARG0,r0
@@ -123,19 +123,19 @@ ENTRY(index)
 notfound:
 	movqd	0,r0
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
 	
 6:	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
 
 7:	addqd	1,r0
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
 
 8:	addqd	2,r0
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS
 
 9:	addqd	3,r0
 	exit	[r3,r4,r5]
-	ret	0
+	ret	ARGS

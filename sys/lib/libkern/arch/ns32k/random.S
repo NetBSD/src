@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.1 1998/02/22 08:53:33 mycroft Exp $	*/
+/*	$NetBSD: random.S,v 1.2 1998/04/03 22:59:29 matthias Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -46,7 +46,7 @@
 
 ASDATA_D(randseed, 1)
 
-ENTRY(random)
+KENTRY(random, 0)
 	movzwd	16807,r0
 	meid	_ASM_LABEL(randseed)(pc),r0
 	addd	r0,r0
@@ -56,4 +56,4 @@ ENTRY(random)
 	addcd	1,r0
 	lshd	-1,r0
 	movd	r0,_ASM_LABEL(randseed)(pc)
-	ret	0
+	ret	ARGS
