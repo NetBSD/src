@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.99 2005/03/19 23:19:17 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.100 2005/03/23 03:45:25 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.99 2005/03/19 23:19:17 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.100 2005/03/23 03:45:25 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,6 +127,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.99 2005/03/19 23:19:17 atatat Exp $");
  */
 static const struct handlespec *findhandler(const char *, int);
 static void canonicalize(const char *, char *);
+static void purge_tree(struct sysctlnode *);
 static void print_tree(int *, u_int, struct sysctlnode *, u_int, int);
 static void write_number(int *, u_int, struct sysctlnode *, char *);
 static void write_string(int *, u_int, struct sysctlnode *, char *);
@@ -238,7 +239,7 @@ struct sysctlnode my_root = {
 int	Aflag, aflag, dflag, Mflag, nflag, qflag, rflag, wflag, xflag;
 size_t	nr;
 char	*fn;
-int	req;
+int	req, stale;
 FILE	*warnfp = stderr;
 
 /*
@@ -320,7 +321,7 @@ main(int argc, char *argv[])
 
 	if (Aflag)
 		warnfp = stdout;
-	req = 0;
+	stale = req = 0;
 
 	if (aflag) {
 		print_tree(&name[0], 0, NULL, CTLTYPE_NODE, 1);
@@ -497,6 +498,37 @@ st(u_int t)
 	}
 
 	return "???";
+}
+
+/*
+ * ********************************************************************
+ * recursively eliminate all data belonging to the given node
+ * ********************************************************************
+ */
+static void
+purge_tree(struct sysctlnode *rnode)
+{
+	struct sysctlnode *node;
+
+	if (rnode == NULL ||
+	    SYSCTL_TYPE(rnode->sysctl_flags) != CTLTYPE_NODE ||
+	    rnode->sysctl_child == NULL)
+		return;
+
+	for (node = rnode->sysctl_child;
+	     node < &rnode->sysctl_child[rnode->sysctl_clen];
+	     node++)
+		purge_tree(node);
+	free(rnode->sysctl_child);
+	rnode->sysctl_csize = 0;
+	rnode->sysctl_clen = 0;
+	rnode->sysctl_child = NULL;
+
+	if (rnode->sysctl_desc == (const char*)-1)
+		rnode->sysctl_desc = NULL;
+	if (rnode->sysctl_desc != NULL)
+		free((void*)rnode->sysctl_desc);
+	rnode->sysctl_desc = NULL;
 }
 
 /*
@@ -787,6 +819,10 @@ parse(char *l)
 		return;
 	}
 
+	if (stale) {
+		purge_tree(&my_root);
+		stale = 0;
+	}
 	node = &my_root;
 	namelen = CTL_MAXNAME;
 	sz = sizeof(gsname);
@@ -1310,8 +1346,11 @@ parse_create(char *l)
 			     nname, strerror(errno));
 		EXIT(1);
 	}
-	else if (!qflag && !nflag)
-		printf("%s(%s): (created)\n", nname, st(type));
+	else {
+		if (!qflag && !nflag)
+			printf("%s(%s): (created)\n", nname, st(type));
+		stale = 1;
+	}
 }
 
 static void
@@ -1350,9 +1389,12 @@ parse_destroy(char *l)
 			     l, strerror(errno));
 		EXIT(1);
 	}
-	else if (!qflag && !nflag)
-		printf("%s(%s): (destroyed)\n", gsname,
-		       st(SYSCTL_TYPE(node.sysctl_flags)));
+	else {
+		if (!qflag && !nflag)
+			printf("%s(%s): (destroyed)\n", gsname,
+			       st(SYSCTL_TYPE(node.sysctl_flags)));
+		stale = 1;
+	}
 }
 
 static void
