@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.4 2001/02/16 03:21:35 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -406,6 +406,18 @@ set_form_page(FORM *form, int page)
 
 	form->page = page;
 	return E_OK;
+}
+
+/*
+ * Return the maximum page of the form.
+ */
+int
+form_max_page(FORM *form)
+{
+	if (form == NULL)
+		return _formi_default_form.max_page;
+	else
+		return form->max_page;
 }
 
 /*
