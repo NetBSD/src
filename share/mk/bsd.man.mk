@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.69 2001/11/28 05:01:28 jmc Exp $
+#	$NetBSD: bsd.man.mk,v 1.70 2001/11/28 20:19:08 tv Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -72,7 +72,7 @@ _F:=		${DESTDIR}${MANDIR}/man${F:T:E}${MANSUBDIR}/${F}${MANSUFFIX}
 ${_F}:		${F}${MANSUFFIX} __installpage		# install rule
 manpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
+.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
@@ -119,7 +119,7 @@ _F:=		${DESTDIR}${MANDIR}/${F:T:E}${MANSUBDIR}/${F:R}.0${MANSUFFIX}
 ${_F}:		${F}${MANSUFFIX} __installpage		# install rule
 catpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:U${_F}}			# noclobber install
+.PHONY:		${UPDATE:D:U${_F}}			# noclobber install
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
@@ -162,7 +162,7 @@ _F:=		${HTMLDIR}/${F:T:E}/${F:R}.html		# installed path
 ${_F}:		${F} __installpage			# install rule
 htmlpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:U${_F}}			# noclobber install
+.PHONY:		${UPDATE:D:U${_F}}			# noclobber install
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
