@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.68.4.2 2000/08/09 14:39:02 castor Exp $	*/
+/*	$NetBSD: tulip.c,v 1.68.4.3 2000/10/17 21:43:45 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -509,6 +509,10 @@ tlp_attach(sc, enaddr)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+#if NRND > 0
+	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -619,6 +623,9 @@ tlp_detach(sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
+#if NRND > 0
+	rnd_detach_source(&sc->sc_rnd_source);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -1271,6 +1278,10 @@ tlp_intr(arg)
 	/* Try to get more packets going. */
 	tlp_start(ifp);
 
+#if NRND > 0
+	if (handled)
+		rnd_add_uint32(&sc->sc_rnd_source, status);
+#endif
 	return (handled);
 }
 
