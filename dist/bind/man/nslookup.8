@@ -1,4 +1,4 @@
-.\"     $NetBSD: nslookup.8,v 1.1.1.1 1999/11/20 18:53:57 veego Exp $
+.\"     $NetBSD: nslookup.8,v 1.2 1999/11/29 18:28:18 christos Exp $
 .\"
 .\"
 .\" ++Copyright++ 1985, 1989
@@ -518,12 +518,14 @@ initial domain name and name server addresses
 user's initial options
 .It Pa /usr/share/misc/nslookup.help
 summary of commands
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width "HOSTALIASESXXXX" -compact
 .It Ev HOSTALIASES
 file containing host aliases
 .It Ev LOCALDOMAIN
 overrides default domain
+.El
 .Sh SEE ALSO
 .Xr named 8 ,
 .Xr resolver 3 , 
