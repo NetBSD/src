@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.17 1999/04/23 04:24:32 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.18 1999/07/14 23:57:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -212,11 +212,10 @@ nsphy_service(sc, mii, cmd)
 		reg |= PCR_CIMDIS;
 
 		/*
-		 * Make sure "force link good" is not set.  It's only
-		 * intended for debugging, but sometimes it's set
-		 * after a reset.
+		 * Make sure "force link good" is set to normal mode.
+		 * It's only intended for debugging.
 		 */
-		reg &= ~PCR_FLINK100;
+		reg |= PCR_FLINK100;
 
 #if 0
 		/*
