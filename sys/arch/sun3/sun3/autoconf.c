@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 1997/03/27 00:15:31 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 1997/04/25 18:07:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,83 +79,6 @@ configure()
 	printf("enabling interrupts\n");
 	(void)spl0();
 	cold = 0;
-}
-
-/****************************************************************/
-
-/*
- * bus_scan:
- * This function is passed to config_search() by the attach function
- * for each of the "bus" drivers (obctl, obio, obmem, vmes, vmel).
- * The purpose of this function is to copy the "locators" into our
- * confargs structure, so child drivers may use the confargs both
- * as match parameters and as temporary storage for the defaulted
- * locator values determined in the child_match and preserved for
- * the child_attach function.  If the bus attach functions just
- * used config_found, then we would not have an opportunity to
- * setup the confargs for each child match and attach call.
- *
- * bus_print:
- * Just prints out the final (non-default) locators.
- */
-int bus_scan(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct confargs *ca = aux;
-	cfmatch_t mf;
-
-#ifdef	DIAGNOSTIC
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("bus_scan: FSTATE_STAR");
-#endif
-
-	/* ca->ca_bustype set by parent */
-	ca->ca_paddr  = cf->cf_loc[0];
-	ca->ca_intpri = cf->cf_loc[1];
-	ca->ca_intvec = -1;
-
-	if ((ca->ca_bustype == BUS_VME16) ||
-		(ca->ca_bustype == BUS_VME32))
-	{
-		ca->ca_intvec = cf->cf_loc[2];
-	}
-
-	/*
-	 * Note that this allows the match function to save
-	 * defaulted locators in the confargs that will be
-	 * preserved for the related attach call.
-	 */
-	mf = cf->cf_attach->ca_match;
-	if ((*mf)(parent, cf, ca) > 0) {
-		config_attach(parent, cf, ca, bus_print);
-	}
-	return (0);
-}
-
-/*
- * Print out the confargs.  The parent name is non-NULL
- * when there was no match found by config_found().
- */
-int
-bus_print(args, name)
-	void *args;
-	const char *name;
-{
-	struct confargs *ca = args;
-
-	if (name)
-		printf("%s:", name);
-
-	if (ca->ca_paddr != -1)
-		printf(" addr 0x%x", ca->ca_paddr);
-	if (ca->ca_intpri != -1)
-		printf(" level %d", ca->ca_intpri);
-	if (ca->ca_intvec != -1)
-		printf(" vector 0x%x", ca->ca_intvec);
-
-	return(UNCONF);
 }
 
 /****************************************************************/
