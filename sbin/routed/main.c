@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1995/03/21 14:05:04 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1995/03/21 14:05:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.8 1995/03/21 14:05:04 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.9 1995/03/21 14:05:36 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ main(argc, argv)
 		 * just poll.
 		 */
 		if (needupdate) {
-			timevalsub(&nextbcast, &now, &waittime);
+			timersub(&nextbcast, &now, &waittime);
 			if (waittime.tv_sec < 0) {
 				waittime.tv_sec = 0;
 				waittime.tv_usec = 0;
