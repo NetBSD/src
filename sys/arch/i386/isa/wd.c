@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.68 1994/03/10 22:30:09 mycroft Exp $
+ *	$Id: wd.c,v 1.69 1994/03/11 23:29:12 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -76,9 +76,9 @@
 #define WDCDELAY	100
 #define	RECOVERYTIME	hz/2	/* time to recover from an error */
 
-#if 0
+#if 1
 /* If you enable this, it will report any delays more than 100us * N long. */
-#define WDCNDELAY_DEBUG	50
+#define WDCNDELAY_DEBUG	10
 #endif
 
 #define	WDIORETRIES	5	/* number of retries before giving up */
@@ -95,9 +95,11 @@
  * Drive states.  Used to initialize drive.
  */
 #define	CLOSED		0		/* disk is closed */
-#define	WANTOPEN	1		/* open requested, not started */
-#define	RECAL		2		/* doing restore */
-#define	OPEN		3		/* done with open */
+#define	RECAL		1		/* recalibrate */
+#define	RECAL_WAIT	2		/* done recalibrating */
+#define	GEOMETRY	3		/* upload geometry */
+#define	GEOMETRY_WAIT	4		/* done uploading geometry */
+#define	OPEN		5		/* done with open */
 
 /*
  * Drive status.
@@ -118,8 +120,6 @@ struct wd_softc {
 	u_long  sc_openpart;    /* all units open on this drive */
 	short	sc_wlabel;	/* label writable? */
 	short	sc_flags;	/* drive characteistics found */
-#define	WDF_SINGLE	0x00004	/* sector at a time mode */
-#define	WDF_ERROR	0x00008	/* processing a disk error */
 #define	WDF_BSDLABEL	0x00010	/* has a BSD disk label */
 #define	WDF_BADSECT	0x00020	/* has a bad144 badsector table */
 #define	WDF_WRITEPROT	0x00040	/* manual unit write protect */
@@ -134,6 +134,9 @@ struct wdc_softc {
 	struct device sc_dev;
 
 	struct buf sc_q;
+	u_char	sc_flags;
+#define	WDCF_SINGLE	0x00004	/* sector at a time mode */
+#define	WDCF_ERROR	0x00008	/* processing a disk error */
 	u_char	sc_status;	/* copy of status register */
 	u_char	sc_error;	/* copy of error register */
 	u_short	sc_iobase;	/* i/o port base */
@@ -154,7 +157,7 @@ void wdfinish __P((struct wd_softc *, struct buf *));
 static void wdstart __P((struct wd_softc *));
 static void wdcstart __P((struct wdc_softc *));
 static int wdcommand __P((struct wd_softc *, int, int, int, int, int));
-static int wdcontrol __P((struct buf *));
+static int wdcontrol __P((struct wd_softc *));
 static int wdsetctlr __P((struct wd_softc *));
 static int wdgetctlr __P((struct wd_softc *));
 static void bad144intern __P((struct wd_softc *));
@@ -286,8 +289,11 @@ wdattach(dev)
 	wd->sc_dev.dv_unit = dev->id_unit;
 	wd->sc_dev.dv_parent = (void *)wdc;
 
-	if (wdgetctlr(wd) != 0)
+	if (wdgetctlr(wd) != 0) {
+		wd_softc[lunit] = NULL;
+		free(wd, M_TEMP);
 		return 0;
+	}
 
 	printf("%s at %s targ %d: ", wd->sc_dev.dv_xname, wdc->sc_dev.dv_xname,
 	    dev->id_physid);
@@ -439,7 +445,7 @@ wdfinish(wd, bp)
 #ifdef INSTRUMENT
 	dk_busy &= ~(1 << wd->sc_unit);
 #endif
-	wd->sc_flags &= ~(WDF_SINGLE | WDF_ERROR);
+	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR);
 	wdc->sc_q.b_errcnt = 0;
 	/*
 	 * If this is the only buf or the last buf in the transfer (taking into
@@ -512,26 +518,33 @@ loop:
 		goto loop;
 	}
     
-	/* Clear any pending timeout, just in case. */
-	wdc->sc_timeout = 0;
-
-	/* If not really a transfer, do control operations specially. */
+	/* Mark controller active and set a timeout. */
+	wdc->sc_q.b_active = 1;
+	wdc->sc_timeout = 4;
+    
+	/* Do control operations specially. */
 	if (wd->sc_state < OPEN) {
-		(void) wdcontrol(bp);
+		/*
+		 * Actually, we want to be careful not to mess with the control
+		 * state if the device is currently busy, but we can assume
+		 * that we never get to this point if that's the case.
+		 */
+		(void) wdcontrol(wd);
 		return;
 	}
 
 	/*
-	 * WDF_ERROR is set by wdcunwedge() and wdintr() when an error is
-	 * encountered *only* in multi-sector mode.  We switch to single-sector
-	 * mode and retry the operation from the start.
+	 * WDCF_ERROR is set by wdcunwedge() and wdintr() when an error is
+	 * encountered.  If we are in multi-sector mode, then we switch to
+	 * single-sector mode and retry the operation from the start.
 	 */
-	if (wd->sc_flags & WDF_ERROR) {
-		/* Switch to single-sector mode. */
-		wd->sc_flags &= ~WDF_ERROR;
-		wd->sc_flags |= WDF_SINGLE;
-		wd->sc_skip = 0;
-		wd->sc_mskip = 0;
+	if (wdc->sc_flags & WDCF_ERROR) {
+		wdc->sc_flags &= ~WDCF_ERROR;
+		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
+			wdc->sc_flags |= WDCF_SINGLE;
+			wd->sc_skip = 0;
+			wd->sc_mskip = 0;
+		}
 	}
 
 	/* Calculate transfer details. */
@@ -552,8 +565,8 @@ loop:
 		nextbp = bp->b_actf;
 		wd->sc_mbcount = wd->sc_bcount;
 		oldbp->b_flags |= B_XXX;
-		while (nextbp && (oldbp->b_flags & WDF_SINGLE) == 0 &&
-		    oldbp->b_dev == nextbp->b_dev && nextbp->b_blkno ==
+		while (nextbp && oldbp->b_dev == nextbp->b_dev &&
+		    nextbp->b_blkno ==
 		    (oldbp->b_blkno + (oldbp->b_bcount / DEV_BSIZE)) &&
 		    (oldbp->b_flags & B_READ) == (nextbp->b_flags & B_READ)) {
 			if ((wd->sc_mbcount + nextbp->b_bcount) / DEV_BSIZE >= 240)
@@ -583,7 +596,7 @@ loop:
 #ifdef B_FORMAT
 	    (bp->b_flags & B_FORMAT) == 0 &&
 #endif
-	    (wd->sc_mskip == 0 || (wd->sc_flags & WDF_SINGLE))) {
+	    (wd->sc_mskip == 0 || (wdc->sc_flags & WDCF_SINGLE))) {
 
 		long blkchk, blkend, blknew;
 		int i;
@@ -598,16 +611,16 @@ loop:
 				cylin = blknew / secpercyl;
 				head = (blknew % secpercyl) / secpertrk;
 				sector = blknew % secpertrk;
-				wd->sc_flags |= WDF_SINGLE;
+				wdc->sc_flags |= WDCF_SINGLE;
 				/* Found and replaced first blk of transfer; done. */
 				break;
 			} else if (blkchk > blknum) {
-				wd->sc_flags |= WDF_SINGLE;
+				wdc->sc_flags |= WDCF_SINGLE;
 				break;	/* Bad block inside transfer; done. */
 			}
 		}
 	}
-	if (wd->sc_flags & WDF_SINGLE) {
+	if (wdc->sc_flags & WDCF_SINGLE) {
 		wd->sc_mbcount = wd->sc_bcount;
 		wd->sc_mskip = wd->sc_skip;
 	}
@@ -618,8 +631,6 @@ loop:
 
 	sector++;	/* Sectors begin with 1, not 0. */
     
-	wdc->sc_q.b_active = 1;		/* Mark controller active. */
-    
 #ifdef INSTRUMENT
 	if (wd->sc_skip == 0) {
 		dk_busy |= 1 << wd->sc_lunit;
@@ -628,7 +639,7 @@ loop:
 #endif
 
 	/* If starting a multisector transfer, or doing single transfers. */
-	if (wd->sc_mskip == 0 || (wd->sc_flags & WDF_SINGLE)) {
+	if (wd->sc_mskip == 0 || (wdc->sc_flags & WDCF_SINGLE)) {
 		int command, count;
 
 #ifdef INSTRUMENT
@@ -642,7 +653,7 @@ loop:
 			count = lp->d_nsectors;
 			command = WDCC_FORMAT;
 		} else {
-			if (wd->sc_flags & WDF_SINGLE)
+			if (wdc->sc_flags & WDCF_SINGLE)
 				count = 1;
 			else
 				count = howmany(wd->sc_mbcount, DEV_BSIZE);
@@ -650,7 +661,7 @@ loop:
 			    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
 		}
 #else
-		if (wd->sc_flags & WDF_SINGLE)
+		if (wdc->sc_flags & WDCF_SINGLE)
 			count = 1;
 		else
 			count = howmany(wd->sc_mbcount, DEV_BSIZE);
@@ -670,8 +681,6 @@ loop:
 #endif
 	}
     
-	wdc->sc_timeout = 4;
-
 	/* If this is a read operation, just go away until it's done. */
 	if (bp->b_flags & B_READ)
 		return;
@@ -724,8 +733,7 @@ wdintr(ctrlr)
     
 	/* Is it not a transfer, but a control operation? */
 	if (wd->sc_state < OPEN) {
-		wdc->sc_q.b_active = 0;
-		if (wdcontrol(bp))
+		if (wdcontrol(wd))
 			wdcstart(wdc);
 		return 1;
 	}
@@ -736,8 +744,8 @@ wdintr(ctrlr)
 #ifdef WDDEBUG
 		wderror(wd, NULL, "wdintr");
 #endif
-		if ((wd->sc_flags & WDF_SINGLE) == 0) {
-			wd->sc_flags |= WDF_ERROR;
+		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
+			wdc->sc_flags |= WDCF_ERROR;
 			goto restart;
 		}
 #ifdef B_FORMAT
@@ -798,7 +806,6 @@ done:
 
 restart:
 	/* Start the next transfer, if any. */
-	wdc->sc_q.b_active = 0;
 	wdcstart(wdc);
 
 	return 1;
@@ -843,7 +850,7 @@ wdopen(dev, flag, fmt, p)
 		wd->sc_label.d_nsectors = 17;
 		wd->sc_label.d_secpercyl = 17*8;
 		wd->sc_label.d_secperunit = 17*8*1024;
-		wd->sc_state = WANTOPEN;
+		wd->sc_state = RECAL;
 
 		/* Read label using "raw" partition. */
 #ifdef notdef
@@ -859,7 +866,8 @@ wdopen(dev, flag, fmt, p)
 			if (part != WDRAW)
 				return EINVAL;	/* XXX needs translation */
 		} else {
-			wdsetctlr(wd);
+			if (wd->sc_state > GEOMETRY)
+				wd->sc_state = GEOMETRY;
 			wd->sc_flags |= WDF_BSDLABEL;
 			wd->sc_flags &= ~WDF_WRITEPROT;
 			if (wd->sc_label.d_flags & D_BADSECT)
@@ -919,31 +927,44 @@ wdopen(dev, flag, fmt, p)
  * Returns 0 if operation still in progress, 1 if completed.
  */
 static int
-wdcontrol(bp)
-	struct buf *bp;
+wdcontrol(wd)
+	struct wd_softc *wd;
 {
-	struct wd_softc *wd = wd_softc[WDUNIT(bp->b_dev)];
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
     
 	switch (wd->sc_state) {
-	case WANTOPEN:			/* Set SDH, step rate, do restore. */
-	tryagainrecal:
-		wdgetctlr(wd);		/* XXX Is this necessary? */
-		wdc->sc_q.b_active = 1;
+	case RECAL:			/* Set SDH, step rate, do restore. */
 		if (wdcommand(wd, 0, 0, 0, 0, WDCC_RESTORE | WD_STEP) != 0) {
 			wderror(wd, NULL, "wdcontrol: wdcommand failed");
 			wdcunwedge(wdc);
 			return 0;
 		}
-		wd->sc_state = RECAL;
+		wd->sc_state = RECAL_WAIT;
 		return 0;
 
-	case RECAL:
-		if (wdc->sc_status & WDCS_ERR || wdsetctlr(wd) != 0) {
+	case RECAL_WAIT:
+		if (wdc->sc_status & WDCS_ERR) {
 			wderror(wd, NULL, "wdcontrol: recal failed");
 			wdcunwedge(wdc);
 			return 0;
 		}
+		/* fall through */
+	case GEOMETRY:
+		if (wdsetctlr(wd) != 0) {
+			/* Already printed a message. */
+			wdcunwedge(wdc);
+			return 0;
+		}
+		wd->sc_state = GEOMETRY_WAIT;
+		return 0;
+
+	case GEOMETRY_WAIT:
+		if (wdc->sc_status & WDCS_ERR) {
+			wderror(wd, NULL, "wdcontrol: geometry failed");
+			wdcunwedge(wdc);
+			return 0;
+		}
+
 		wdc->sc_q.b_errcnt = 0;
 		wd->sc_state = OPEN;
 		/*
@@ -1016,11 +1037,11 @@ wdsetctlr(wd)
 #endif
     
 	if (wdcommand(wd, wd->sc_label.d_ncylinders, wd->sc_label.d_ntracks - 1,
-	    0, wd->sc_label.d_nsectors, WDCC_IDC) != 0 ||
-	    wdcwait(wdc, WDCS_READY) != 0) {
-		wderror(wd, NULL, "wdsetctlr: failed");
+	    0, wd->sc_label.d_nsectors, WDCC_IDC) != 0) {
+		wderror(wd, NULL, "wdsetctlr: wdcommand failed");
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -1157,7 +1178,8 @@ wdioctl(dev, cmd, addr, flag, p)
 		    &wd->sc_cpulabel);
 		if (error == 0) {
 			wd->sc_flags |= WDF_BSDLABEL;
-			wdsetctlr(wd);
+			if (wd->sc_state > GEOMETRY)
+				wd->sc_state = GEOMETRY;
 		}
 		return error;
 	
@@ -1180,7 +1202,8 @@ wdioctl(dev, cmd, addr, flag, p)
 			int wlab;
 	    
 			wd->sc_flags |= WDF_BSDLABEL;
-			wdsetctlr(wd);
+			if (wd->sc_state > GEOMETRY)
+				wd->sc_state = GEOMETRY;
 	    
 			/* Simulate opening partition 0 so write succeeds. */
 			wd->sc_openpart |= (1 << 0);	    /* XXX */
@@ -1331,7 +1354,8 @@ wddump(dev)
 
 	/* Recalibrate. */
 	if (wdcommand(wd, 0, 0, 0, 0, WDCC_RESTORE | WD_STEP) != 0 ||
-	    wait_for_ready(wdc) != 0 || wdsetctlr(wd) != 0) {
+	    wait_for_ready(wdc) != 0 || wdsetctlr(wd) != 0 ||
+	    wait_for_ready(wdc) != 0) {
 		wderror(wd, NULL, "wddump: recal failed");
 		return EIO;
 	}
@@ -1495,12 +1519,11 @@ wdcunwedge(wdc)
 		struct wd_softc *wd = wd_softc[lunit];
 		if (!wd || (void *)wd->sc_dev.dv_parent != wdc)
 			continue;
-		if (wd->sc_state > WANTOPEN)
-			wd->sc_state = WANTOPEN;
-		if (wd->sc_q.b_active && (wd->sc_flags & WDF_SINGLE) == 0)
-			wd->sc_flags |= WDF_ERROR;
+		if (wd->sc_state > RECAL)
+			wd->sc_state = RECAL;
 	}
 
+	wdc->sc_flags |= WDCF_ERROR;
 	++wdc->sc_q.b_errcnt;
 
 	/* Wake up in a little bit and restart the operation. */
