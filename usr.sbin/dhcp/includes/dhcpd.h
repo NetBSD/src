@@ -213,6 +213,7 @@ struct group {
 	int use_host_decl_names;
 	int use_lease_addr_for_default_route;
 	int authoritative;
+	int always_reply_rfc1048;
 
 	struct tree_cache *options [256];
 };
