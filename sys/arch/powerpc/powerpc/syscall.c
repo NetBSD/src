@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.4 2002/08/06 22:47:11 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.5 2002/08/06 23:00:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -41,6 +41,8 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
