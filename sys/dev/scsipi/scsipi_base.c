@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.96 2003/10/16 17:34:43 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.97 2003/10/16 22:46:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.96 2003/10/16 17:34:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.97 2003/10/16 22:46:07 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1074,22 +1074,24 @@ scsipi_inquire(periph, inqbuf, flags)
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = INQUIRY;
-	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
 	else
 		retries = SCSIPIRETRIES;
 
+	scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2,
 	    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
-	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4)
+	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+		scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI3;
 		error = scsipi_command(periph,
 		    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 		    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3,
 		    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
+	}
 	
 #ifdef SCSI_OLD_NOINQUIRY
 	/*
