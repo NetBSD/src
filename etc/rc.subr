@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.20.2.2 2000/08/23 11:31:54 lukem Exp $
+# $NetBSD: rc.subr,v 1.20.2.3 2000/10/02 00:33:23 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -170,91 +170,111 @@ check_process()
 #		force	Set ${rcvar} to YES.
 #
 #	The following globals are used:
+#
 #	name		needed	function
 #	----		------	--------
 #	name		y	Name of script.
+#
 #	command		n	Full path to command.
 #				Not needed if ${arg}_cmd is set for
 #				each keyword.
+#
 #	command_args	n	Optional args/shell directives for command.
+#
 #	extra_commands	n	List of extra commands supported.
+#
 #	pidfile		n	If set, use check_pidfile $pidfile, else if
 #				$command is set, use check_process $command.
-#	rcvar		n	If the default command is being run, this is
-#				checked with checkyesno to determine if
-#				the action should be run.
-#				If this variable isn't set, ${name} is checked 
-#				instead.
+#
+#	rcvar		n	This is checked with checkyesno to determine
+#				if the action should be run.
+#
 #	${name}_chroot	n	Directory to chroot to before running ${command}
+#
 #	${name}_chdir	n	Directory to cd to before running ${command}
 #				(if not using ${name}_chroot).
+#
 #	${name}_flags	n	Arguments to call ${command} with.
-#				NOTE:	if $flags is set (e.g, from the parent
-#					environment), it overrides this.
+#				NOTE:	$flags from the parent environment
+#					can be used to override this.
+#
 #	${name}_nice	n	Nice level to run ${command} at.
+#
 #	${name}_user	n	User to run ${command} as, using su(1) if not
 #				using ${name}_chroot.
+#
 #	${name}_group	n	Group to run chrooted ${command} as.
-#	${name}_groups	n	Group list to run chrooted ${command} with.
+#
+#	${name}_groups	n	Supplementary group list to run chrooted
+#				${command} with.
+#
 #	${_arg}_cmd	n	If set, use this as the action when invoked;
 #				$_arg is available to the action to use.
 #				Otherwise, use default command (see below)
-#				NOTE:	checkyesno ${rcvar} is NOT performed
-#					for ${_arg}_cmd; use ${_arg}_precmd to
-#					do this.
+#
 #	${_arg}_precmd	n	If set, run just before performing the main
 #				action in the default command (i.e, after
 #				checking for required bits and process
 #				(non)existance).
 #				If this completes with a non-zero exit code,
 #				don't run ${_arg}_cmd.
+#
 #	required_dirs	n	If set, check for the existence of the given
 #				directories before running the default
 #				(re)start command.
+#
 #	required_files	n	If set, check for the readability of the given
 #				files before running the default (re)start
 #				command.
+#
 #	required_vars	n	If set, perform checkyesno on each of the
 #				listed variables before running the default
 #				(re)start command.
 #
 #	Default commands for a given arg:
+#
 #	arg		default
 #	---		-------
 #	status		Show if ${command} is running, etc.
+#
 #	start		if !running && checkyesno ${rcvar}
 #				${command}
+#
 #	stop		if ${pidfile}
 #				kill $sig_stop `check_pidfile $pidfile`
 #			else
 #				kill $sig_stop `check_process $command`
 #			$sig_stop defaults to TERM.
+#
 #	reload		As stop, except use $sig_reload instead.
 #			$sig_reload defaults to HUP.
+#
 #	restart		Run `stop' then `start'.
+#
 #
 run_rc_command()
 {
 	_arg=$1
-	_ckvar=${rcvar:-$name}
-	if [ -z "$_ckvar" ]; then
-		err 3 'neither $rcvar or $name is set.'
+	if [ -z "$name" ]; then
+		err 3 '$name is not set.'
 	fi
 
 	case "$_arg" in
-	fast*)
+	fast*)				# "fast" prefix; don't check pid
 		_arg=${_arg#fast}
 		_rc_fast_run=YES
 		;;
-	force*)
+	force*)				# "force prefix; always start
 		_arg=${_arg#force}
-		eval ${_ckvar}=YES
+		_rc_force_run=YES
+		eval ${rcvar}=YES
 		;;
 	esac
 
 	_keywords="start stop restart rcvar $extra_commands"
 	_pid=
 	_pidcmd=
+					# setup pid check command if not fast
 	if [ -z "$_rc_fast_run" ]; then
 		if [ -n "$pidfile" ]; then
 			_pidcmd='_pid=`check_pidfile '$pidfile' '$command'`'
@@ -282,22 +302,40 @@ run_rc_command()
 	eval _group=\$${name}_group
 	eval _groups=\$${name}_groups
 
-	eval $_pidcmd
+					# if ${rcvar} is set and we're not
+					# running `rcvar', then check it
+					#
+	if [ -n "${rcvar}" -a "$_arg" != "rcvar" ]; then
+		if ! checkyesno ${rcvar}; then
+			return 0
+		fi
+	fi
+
+	eval $_pidcmd			# determine the pid if necessary
 
 	for _elem in $_keywords; do
 		if [ "$_elem" != "$_arg" ]; then
 			continue
 		fi
 
+					# if there's a custom ${XXX_cmd},
+					# run that instead of the default
+					#
 		eval _cmd=\$${_arg}_cmd
 		eval _precmd=\$${_arg}_precmd
 		if [ -n "$_cmd" ]; then
-			eval $_precmd || return 1
+					# if the precmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
+
 			eval $_cmd
 			return 0
 		fi
 
-		case "$_arg" in
+		case "$_arg" in		# default operations...
 
 		status)
 			if [ -n "$_pid" ]; then
@@ -313,33 +351,47 @@ run_rc_command()
 				exit 1
 			fi
 
-			if ! checkyesno ${_ckvar} || [ ! -x $command ]; then
+			if [ ! -x $command ]; then
 				return 0
 			fi
 
+					# check for required variables,
+					# directories, and files
+					#
 			for _f in $required_vars; do
 				if ! checkyesno $_f; then
-					warn \
-			    "\$${_f} is not set; ${name} not started."
-					return 1
+					warn "\$${_f} is not set."
+					if [ -z "$_rc_force_run" ]; then
+						return 1
+					fi
 				fi
 			done
 			for _f in $required_dirs; do
 				if [ ! -d "${_f}/." ]; then
-					warn \
-			    "${_f} is not a directory; ${name} not started."
-					return 1
+					warn "\$${_f} is not a directory."
+					if [ -z "$_rc_force_run" ]; then
+						return 1
+					fi
 				fi
 			done
 			for _f in $required_files; do
 				if [ ! -r "${_f}" ]; then
-					warn \
-			"${_f} is not readable; ${name} not started."
-					return 1
+					warn "\$${_f} is not readable."
+					if [ -z "$_rc_force_run" ]; then
+						return 1
+					fi
 				fi
 			done
 
-			eval $_precmd || return 1
+					# if the precmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
+
+
+					# setup the command to run, and run it
 			echo "Starting ${name}."
 			if [ -n "$_chroot" ]; then
 				_doit="\
@@ -359,19 +411,18 @@ ${_user:+\"'}"
 
 		stop)
 			if [ -z "$_pid" ]; then
-				if checkyesno ${_ckvar}; then
-					if [ -n "$pidfile" ]; then
-						echo \
-					"${name} not running? (check $pidfile)."
-					else
-						echo "${name} not running?"
-					fi
-					exit 1
+				if [ -n "$pidfile" ]; then
+					echo \
+				    "${name} not running? (check $pidfile)."
+				else
+					echo "${name} not running?"
 				fi
-				return 0
+				exit 1
 			fi
 
-			eval $_precmd || return 1
+			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
 			echo "Stopping ${name}."
 			_doit=\
 "${_user:+su -m $_user -c '}kill -${sig_stop:-TERM} $_pid${_user:+'}"
@@ -380,29 +431,27 @@ ${_user:+\"'}"
 
 		reload)
 			if [ -z "$_pid" ]; then
-				if checkyesno ${_ckvar}; then
-					if [ -n "$pidfile" ]; then
-						echo \
+				if [ -n "$pidfile" ]; then
+					echo \
 				    "${name} not running? (check $pidfile)."
-					else
-						echo "${name} not running?"
-					fi
-					exit 1
+				else
+					echo "${name} not running?"
 				fi
-				return 0
+				exit 1
 			fi
 			echo "Reloading ${name} config files."
-			eval $_precmd || return 1
+			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
 			_doit=\
 "${_user:+su -m $_user -c '}kill -${sig_reload:-HUP} $_pid${_user:+'}"
 			eval $_doit
 			;;
 
 		restart)
-			if ! checkyesno ${_ckvar}; then
-				return 0
+			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
+				return 1
 			fi
-			eval $_precmd || return 1
 			( $0 stop )
 			sleep 1
 			$0 start
@@ -411,10 +460,12 @@ ${_user:+\"'}"
 
 		rcvar)
 			echo "# $name"
-			if checkyesno ${_ckvar}; then
-				echo "\$${_ckvar}=YES"
-			else
-				echo "\$${_ckvar}=NO"
+			if [ -n "$rcvar" ]; then
+				if checkyesno ${rcvar}; then
+					echo "\$${rcvar}=YES"
+				else
+					echo "\$${rcvar}=NO"
+				fi
 			fi
 			;;
 
