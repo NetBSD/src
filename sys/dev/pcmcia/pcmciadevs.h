@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.134 2001/08/07 13:57:41 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.135 2001/08/21 16:13:14 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -72,6 +72,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
@@ -326,6 +327,11 @@
 #define	PCMCIA_CIS_PANASONIC_KXLC003	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PANASONIC_KXLC003	0x0504
 #define	PCMCIA_STR_PANASONIC_KXLC003	"Panasonic 8X CD-ROM Interface Card"
+
+/* Psion */
+#define	PCMCIA_CIS_PSION_GOLDCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PSION_GOLDCARD	0x0020
+#define	PCMCIA_STR_PSION_GOLDCARD	"Psion Gold Card"
 
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
