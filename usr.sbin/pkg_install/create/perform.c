@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.22.4.1 2000/12/15 04:06:32 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.22.4.1 2000/12/15 04:06:32 he Exp $");
 #endif
 #endif
 
@@ -62,7 +62,10 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	args[nargs++] = "-c";
 	args[nargs++] = "-f";
 	args[nargs++] = tball;
-	if (strchr(suffix, 'z'))/* Compress/gzip? */
+	if (strstr(suffix, "bz")) {
+		args[nargs++] = "--use-compress-program";
+		args[nargs++] = "bzip2";
+	} else if (strchr(suffix, 'z'))/* Compress/gzip? */
 		args[nargs++] = "-z";
 	if (Dereference)
 		args[nargs++] = "-h";
