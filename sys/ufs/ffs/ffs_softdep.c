@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.22 2001/12/23 08:53:46 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.23 2001/12/23 11:54:46 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.22 2001/12/23 08:53:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.23 2001/12/23 11:54:46 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1775,19 +1775,22 @@ setup_allocindir_phase2(bp, ip, aip)
 				    oldaip; oldaip = LIST_NEXT(oldaip, ai_next))
 					if (oldaip->ai_offset == aip->ai_offset)
 						break;
+			freefrag = NULL;
 			if (oldaip != NULL) {
 				if (oldaip->ai_newblkno != aip->ai_oldblkno)
 					panic("setup_allocindir_phase2: blkno");
 				aip->ai_oldblkno = oldaip->ai_oldblkno;
-				freefrag = oldaip->ai_freefrag;
-				oldaip->ai_freefrag = aip->ai_freefrag;
-				aip->ai_freefrag = freefrag;
+				freefrag = aip->ai_freefrag;
+				aip->ai_freefrag = oldaip->ai_freefrag;
+				oldaip->ai_freefrag = NULL;
 				free_allocindir(oldaip, NULL);
 			}
 			LIST_INSERT_HEAD(&indirdep->ir_deplisthd, aip, ai_next);
 			((ufs_daddr_t *)indirdep->ir_savebp->b_data)
 			    [aip->ai_offset] = aip->ai_oldblkno;
 			FREE_LOCK(&lk);
+			if (freefrag != NULL)
+				handle_workitem_freefrag(freefrag);
 		}
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
@@ -1929,6 +1932,8 @@ softdep_setup_freeblocks(ip, length)
 	 * with this inode are obsolete and can simply be de-allocated.
 	 * We must first merge the two dependency lists to get rid of
 	 * any duplicate freefrag structures, then purge the merged list.
+	 * If we still have a bitmap dependency, then the inode has never
+	 * been written to disk, so we can free any fragments without delay.
 	 * We must remove any pagecache markers from the pagecache
 	 * hashtable first because any I/Os in flight will want to see
 	 * dependencies attached to their pagecache markers.  We cannot
@@ -1938,7 +1943,7 @@ softdep_setup_freeblocks(ip, length)
 	softdep_collect_pagecache(ip);
 	merge_inode_lists(inodedep);
 	while ((adp = TAILQ_FIRST(&inodedep->id_inoupdt)) != 0)
-		free_allocdirect(&inodedep->id_inoupdt, adp, 1);
+		free_allocdirect(&inodedep->id_inoupdt, adp, delay);
 	FREE_LOCK(&lk);
 	bdwrite(bp);
 	/*
@@ -3647,6 +3652,7 @@ handle_allocdirect_partdone(adp)
 	struct allocdirect *listadp;
 	struct inodedep *inodedep;
 	long bsize;
+	int delay;
 
 	if ((adp->ad_state & ALLCOMPLETE) != ALLCOMPLETE)
 		return;
@@ -3696,12 +3702,16 @@ handle_allocdirect_partdone(adp)
 	/*
 	 * If we have found the just finished dependency, then free
 	 * it along with anything that follows it that is complete.
+	 * If the inode still has a bitmap dependency, then it has
+	 * never been written to disk, hence the on-disk inode cannot
+	 * reference the old fragment so we can free it without delay.
 	 */
+	delay = (inodedep->id_state & DEPCOMPLETE);
 	for (; adp; adp = listadp) {
 		listadp = TAILQ_NEXT(adp, ad_next);
 		if ((adp->ad_state & ALLCOMPLETE) != ALLCOMPLETE)
 			return;
-		free_allocdirect(&inodedep->id_inoupdt, adp, 1);
+		free_allocdirect(&inodedep->id_inoupdt, adp, delay);
 	}
 }
 
