@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.14 2004/03/21 20:30:38 dsl Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.15 2004/03/24 17:07:12 ws Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.14 2004/03/21 20:30:38 dsl Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.15 2004/03/24 17:07:12 ws Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ fs_read_sblock(char *superblock)
 			continue;
 		break;
         }
-	return 0;
+	return ns;
 }
 
 /*
