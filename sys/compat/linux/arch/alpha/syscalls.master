@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2001/03/30 17:16:33 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.33 2001/03/30 17:59:46 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -595,4 +595,8 @@
 371	UNIMPL		setresgid
 372	UNIMPL		getresgid
 373	UNIMPL		sys_dipc
-374	UNIMPL		shmget
+374	UNIMPL		pivot_root
+375	UNIMPL		mincore
+376	UNIMPL		pciconfig_iobase
+377	UNIMPL		getdents64
+
