@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.5 2001/12/04 19:56:17 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.6 2001/12/05 04:06:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@ int irframe_match(struct device *parent, struct cfdata *match, void *aux);
 void irframe_attach(struct device *parent, struct device *self, void *aux);
 int irframe_activate(struct device *self, enum devact act);
 int irframe_detach(struct device *self, int flags);
+
+static int irf_reset_params(struct irframe_softc *sc);
 
 #if NIRFRAME == 0
 /* In case we just have tty attachment. */
@@ -180,6 +182,7 @@ irframeopen(dev_t dev, int flag, int mode, struct proc *p)
 			return (error);
 	}
 	sc->sc_open = 1;
+	irf_reset_params(sc);
 	return (0);
 }
 
@@ -227,11 +230,21 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
+irf_reset_params(struct irframe_softc *sc)
+{
+	struct irda_params params;
+
+	params.speed = IRDA_DEFAULT_SPEED;
+	params.ebofs = IRDA_DEFAULT_EBOFS;
+	params.maxsize = IRDA_DEFAULT_SIZE;
+	return (sc->sc_methods->im_set_params(sc->sc_handle, &params));
+}
+
+int
 irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;
-	struct irda_params params;
 	int error;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
@@ -251,10 +264,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_RESET_PARAMS:
-		params.speed = IRDA_DEFAULT_SPEED;
-		params.ebofs = IRDA_DEFAULT_EBOFS;
-		params.maxsize = IRDA_DEFAULT_SIZE;
-		error = sc->sc_methods->im_set_params(sc->sc_handle, &params);
+		irf_reset_params(sc);
 		break;
 
 	case IRDA_GET_SPEEDMASK:
@@ -311,6 +321,7 @@ irframe_alloc(size_t size, struct irframe_methods *m, void *h)
 
 	ia.ia_methods = m;
 	ia.ia_handle = h;
+	printf("%s", dev->dv_xname);
 	irframe_attach(NULL, dev, &ia);
 
 	return (dev);
