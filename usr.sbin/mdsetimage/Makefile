@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/06/21 22:58:36 eeh Exp $
+#	$NetBSD: Makefile,v 1.12 2001/10/21 23:10:48 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -37,4 +37,6 @@ CPPFLAGS+=-DNLIST_AOUT
 #CPPFLAGS+=-DNLIST_COFF
 .endif
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
