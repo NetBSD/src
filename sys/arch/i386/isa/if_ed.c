@@ -14,7 +14,7 @@
  * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
  * similar clones.
  *
- *	$Id: if_ed.c,v 1.53 1994/10/14 13:05:13 mycroft Exp $
+ *	$Id: if_ed.c,v 1.54 1994/10/23 21:22:13 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -451,8 +451,8 @@ ed_probe_WD80x3(sc, cf, ia)
 
 	sc->tx_page_start = ED_WD_PAGE_OFFSET;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + memsize / ED_PAGE_SIZE;
-	sc->mem_ring = sc->mem_start + sc->rec_page_start * ED_PAGE_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + (memsize >> ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
 
@@ -743,7 +743,7 @@ ed_probe_3Com(sc, cf, ia)
 		sc->tx_page_start = ED_3COM_TX_PAGE_OFFSET_16BIT;
 		sc->rec_page_start = ED_3COM_RX_PAGE_OFFSET_16BIT;
 		sc->rec_page_stop =
-		    memsize / ED_PAGE_SIZE + ED_3COM_RX_PAGE_OFFSET_16BIT;
+		    (memsize >> ED_PAGE_SHIFT) + ED_3COM_RX_PAGE_OFFSET_16BIT;
 		sc->mem_ring = sc->mem_start;
 	} else {
 		sc->txb_cnt = 1;
@@ -751,8 +751,9 @@ ed_probe_3Com(sc, cf, ia)
 		sc->rec_page_start =
 		    ED_TXBUF_SIZE + ED_3COM_TX_PAGE_OFFSET_8BIT;
 		sc->rec_page_stop =
-		    memsize / ED_PAGE_SIZE + ED_3COM_TX_PAGE_OFFSET_8BIT;
-		sc->mem_ring = sc->mem_start + (ED_PAGE_SIZE * ED_TXBUF_SIZE);
+		    (memsize >> ED_PAGE_SHIFT) + ED_3COM_TX_PAGE_OFFSET_8BIT;
+		sc->mem_ring =
+		    sc->mem_start + (ED_TXBUF_SIZE << ED_PAGE_SHIFT);
 	}
 
 	sc->isa16bit = isa16bit;
@@ -886,8 +887,8 @@ ed_probe_Novell(sc, cf, ia)
 	/* Temporarily initialize DCR for byte operations. */
 	outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
 
-	outb(sc->nic_addr + ED_P0_PSTART, 8192 / ED_PAGE_SIZE);
-	outb(sc->nic_addr + ED_P0_PSTOP, 16384 / ED_PAGE_SIZE);
+	outb(sc->nic_addr + ED_P0_PSTART, 8192 >> ED_PAGE_SHIFT);
+	outb(sc->nic_addr + ED_P0_PSTOP, 16384 >> ED_PAGE_SHIFT);
 
 	sc->isa16bit = 0;
 
@@ -904,8 +905,8 @@ ed_probe_Novell(sc, cf, ia)
 
 		outb(sc->nic_addr + ED_P0_DCR,
 		    ED_DCR_WTS | ED_DCR_FT1 | ED_DCR_LS);
-		outb(sc->nic_addr + ED_P0_PSTART, 16384 / ED_PAGE_SIZE);
-		outb(sc->nic_addr + ED_P0_PSTOP, 32768 / ED_PAGE_SIZE);
+		outb(sc->nic_addr + ED_P0_PSTART, 16384 >> ED_PAGE_SHIFT);
+		outb(sc->nic_addr + ED_P0_PSTOP, 32768 >> ED_PAGE_SHIFT);
 
 		sc->isa16bit = 1;
 
@@ -938,7 +939,7 @@ ed_probe_Novell(sc, cf, ia)
 	/* NIC memory doesn't start at zero on an NE board. */
 	/* The start address is tied to the bus width. */
 	sc->mem_start = (caddr_t)(8192 + sc->isa16bit * 8192);
-	sc->tx_page_start = memsize / ED_PAGE_SIZE;
+	sc->tx_page_start = memsize >> ED_PAGE_SHIFT;
 
 #ifdef GWETHER
 	{
@@ -950,15 +951,15 @@ ed_probe_Novell(sc, cf, ia)
 
 		/* Search for the start of RAM. */
 		for (x = 1; x < 256; x++) {
-			ed_pio_writemem(sc, pbuf0, x * ED_PAGE_SIZE, ED_PAGE_SIZE);
-			ed_pio_readmem(sc, x * ED_PAGE_SIZE, tbuf, ED_PAGE_SIZE);
+			ed_pio_writemem(sc, pbuf0, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
+			ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
 			if (!bcmp(pbuf0, tbuf, ED_PAGE_SIZE)) {
 				for (i = 0; i < ED_PAGE_SIZE; i++)
 					pbuf[i] = 255 - x;
-				ed_pio_writemem(sc, pbuf, x * ED_PAGE_SIZE, ED_PAGE_SIZE);
-				ed_pio_readmem(sc, x * ED_PAGE_SIZE, tbuf, ED_PAGE_SIZE);
+				ed_pio_writemem(sc, pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
+				ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
 				if (!bcmp(pbuf, tbuf, ED_PAGE_SIZE)) {
-					mstart = x * ED_PAGE_SIZE;
+					mstart = x << ED_PAGE_SHIFT;
 					memsize = ED_PAGE_SIZE;
 					break;
 				}
@@ -972,14 +973,14 @@ ed_probe_Novell(sc, cf, ia)
 		}
 
 		/* Search for the end of RAM. */
-		for (x = (mstart / ED_PAGE_SIZE) + 1; x < 256; x++) {
-			ed_pio_writemem(sc, pbuf0, x * ED_PAGE_SIZE, ED_PAGE_SIZE);
-			ed_pio_readmem(sc, x * ED_PAGE_SIZE, tbuf, ED_PAGE_SIZE);
+		for (++x; x < 256; x++) {
+			ed_pio_writemem(sc, pbuf0, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
+			ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
 			if (!bcmp(pbuf0, tbuf, ED_PAGE_SIZE)) {
 				for (i = 0; i < ED_PAGE_SIZE; i++)
 					pbuf[i] = 255 - x;
-				ed_pio_writemem(sc, pbuf, x * ED_PAGE_SIZE, ED_PAGE_SIZE);
-				ed_pio_readmem(sc, x * ED_PAGE_SIZE, tbuf, ED_PAGE_SIZE);
+				ed_pio_writemem(sc, pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
+				ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
 				if (!bcmp(pbuf, tbuf, ED_PAGE_SIZE))
 					memsize += ED_PAGE_SIZE;
 				else
@@ -992,7 +993,7 @@ ed_probe_Novell(sc, cf, ia)
 		    sc->sc_dev.dv_xname, mstart, memsize);
 
 		sc->mem_start = (caddr_t)mstart;
-		sc->tx_page_start = mstart / ED_PAGE_SIZE;
+		sc->tx_page_start = mstart >> ED_PAGE_SHIFT;
 	}
 #endif /* GWETHER */
 
@@ -1009,10 +1010,10 @@ ed_probe_Novell(sc, cf, ia)
 		sc->txb_cnt = 2;
 
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + memsize / ED_PAGE_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + (memsize >> ED_PAGE_SHIFT);
 
 	sc->mem_ring =
-	    sc->mem_start + sc->txb_cnt * ED_PAGE_SIZE * ED_TXBUF_SIZE;
+	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	ed_pio_readmem(sc, 0, romdata, 16);
 	for (n = 0; n < ETHER_ADDR_LEN; n++)
@@ -1406,7 +1407,7 @@ outloop:
 	m0 = m;
 
 	/* txb_new points to next open buffer slot. */
-	buffer = sc->mem_start + (sc->txb_new * ED_TXBUF_SIZE * ED_PAGE_SIZE);
+	buffer = sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	if (sc->mem_shared) {
 		/* Special case setup for 16 bit boards... */
@@ -1493,6 +1494,7 @@ ed_rint(sc)
 {
 	u_char boundary, current;
 	u_short len;
+	u_char nlen;
 	struct ed_ring packet_hdr;
 	caddr_t packet_ptr;
 
@@ -1510,7 +1512,7 @@ ed_rint(sc)
 	while (sc->next_packet != inb(sc->nic_addr + ED_P1_CURR)) {
 		/* Get pointer to this buffer's header structure. */
 		packet_ptr = sc->mem_ring +
-		    (sc->next_packet - sc->rec_page_start) * ED_PAGE_SIZE;
+		    ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
 
 		/*
 		 * The byte count includes a 4 byte header that was added by
@@ -1522,25 +1524,35 @@ ed_rint(sc)
 			ed_pio_readmem(sc, (u_short)packet_ptr,
 			    (caddr_t) &packet_hdr, sizeof(packet_hdr));
 		len = packet_hdr.count;
-		if (len > ETHER_MAX_LEN) {
-			/*
-			 * Length is a wild value.  There's a good chance that
-			 * this was caused by the NIC being old and buggy.
-			 * The bug is that the length low byte is duplicated in
-			 * the high byte.  Try to recalculate the length based
-			 * on the pointer to the next packet.
-			 *
-			 * NOTE: sc->next_packet is pointing at the current
-			 * packet.
-			 */
-			len &= ED_PAGE_SIZE - 1;
-			if (packet_hdr.next_packet >= sc->next_packet) {
-				len += (packet_hdr.next_packet - sc->next_packet) * ED_PAGE_SIZE;
-			} else {
-				len += ((packet_hdr.next_packet - sc->rec_page_start) +
-					(sc->rec_page_stop - sc->next_packet)) * ED_PAGE_SIZE;
-			}
+
+		/*
+		 * Try do deal with old, buggy chips that sometimes duplicate
+		 * the low byte of the length into the high byte.  We do this
+		 * by simply ignoring the high byte of the length and always
+		 * recalculating it.
+		 *
+		 * NOTE: sc->next_packet is pointing at the current packet.
+		 */
+		if (packet_hdr.next_packet >= sc->next_packet)
+			nlen = (packet_hdr.next_packet - sc->next_packet);
+		else
+			nlen = ((packet_hdr.next_packet - sc->rec_page_start) +
+				(sc->rec_page_stop - sc->next_packet));
+		--nlen;
+		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
+			--nlen;
+		if ((len >> ED_PAGE_SHIFT) != nlen) {
+#ifdef DIAGNOSTIC
+			printf("%s: length does not match next packet pointer\n",
+			    sc->sc_dev.dv_xname);
+			printf("%s: len %04x nlen %02x start %02x curr %02x next %02x stop %02x\n",
+			    sc->sc_dev.dv_xname, len, nlen, sc->rec_page_start,
+			    sc->next_packet, packet_hdr.next_packet,
+			    sc->rec_page_stop);
+#endif
+			len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 		}
+
 		/*
 		 * Be fairly liberal about what we allow as a "reasonable"
 		 * length so that a [crufty] packet will make it to BPF (and
