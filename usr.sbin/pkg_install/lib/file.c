@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.44 2000/12/13 03:17:54 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.45 2000/12/13 03:49:56 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.44 2000/12/13 03:17:54 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.45 2000/12/13 03:49:56 hubertf Exp $");
 #endif
 #endif
 
@@ -310,7 +310,7 @@ fileGet1URL(char *base, char *spec, char *sfx)
 
 /*
  * Try and fetch a file by URL, returning the directory name for where
- * it's unpacked, if successful.
+ * it's unpacked, if successful. To be handed to leave_playpen() later.
  */
 char   *
 fileGetURL(char *base, char *spec)
@@ -329,6 +329,7 @@ fileGetURL(char *base, char *spec)
  *   - current dir, and if not found there, look
  *   - $base/../All
  *   - all dirs in $PKG_PATH
+ * Returns a full path/URL where the pkg can be found
  */
 char   *
 fileFindByPath(char *base, char *fname)
@@ -457,7 +458,7 @@ fileFindByPath(char *base, char *fname)
 			 */
 			{
 				char *s;
-
+				
 				if ((s = strstr(tmp, ".tgz")) ||
 				    (s = strstr(tmp, ".tgz")) ||
 				    (s = strstr(tmp, ".t[bg]z"))) {
@@ -498,9 +499,12 @@ fileFindByPath(char *base, char *fname)
 					char *s;
 					char buf2[FILENAME_MAX];
 					
-					s = strstr(tmp, ".tgz");
-					*s = '\0';
-					snprintf(buf2, FILENAME_MAX, "%s-[0-9]*.tgz", tmp);
+					if ((s = strstr(tmp, ".tgz")) ||
+					    (s = strstr(tmp, ".tgz")) ||
+					    (s = strstr(tmp, ".t[bg]z"))) {
+						*s = '\0';
+					}
+					snprintf(buf2, FILENAME_MAX, "%s-[0-9]*.t[bg]z", tmp);
 					s = findbestmatchingname(dirname_of(buf2), basename_of(buf2));
 					if (s) {
 						char *t;
