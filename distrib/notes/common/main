@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.169 2002/04/14 13:34:31 bjh21 Exp $
+.\"	$NetBSD: main,v 1.170 2002/04/17 13:04:05 shell Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1684,6 +1684,7 @@ them, and would like to mentioned, tell us!)
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
+.It Ta Shell Hung Ta Mt shell@netbsd.org
 .
 .El
 .
