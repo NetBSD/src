@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.15 2000/07/11 11:39:46 ad Exp $
+.\"	$NetBSD: newsyslog.8,v 1.16 2000/07/18 15:59:24 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -50,6 +50,7 @@
 .Nm newsyslog
 .Op Fl nrvF
 .Op Fl f Ar config_file
+.Op Pa file ...
 .Sh DESCRIPTION
 .Nm Newsyslog
 is a program that should be scheduled to run periodically by
@@ -69,13 +70,16 @@ period's logs in it and so on, up to a user-specified number of
 archived logs.  Optionally the archived logs can be compressed to save
 space.  
 .Pp
-A log can be archived for two reasons:
+A log can be archived for three reasons:
 .Bl -enum -offset indent
 .It
 It is larger than the configured size (in kilobytes).
 .It
 A configured number of hours have elapsed since the log was last
 archived.
+.It
+The configured time for rotation of the log occurred within the last 60
+minutes.
 .El
 .Pp
 The granularity of
@@ -129,15 +133,165 @@ is replaced by an asterisk
 .Pq Ql \&* ,
 then the size of the log file is not taken into account
 when determining when to trim the log file.
-.It Ar interval
+.It Ar when
 The
-.Ar interval
-field specifies the time separation (in hours) between trimming of the 
-log file.  If this field
-is replaced by an asterisk
-.Pq Ql \&* ,
-then the interval is not taken into account
-when determining when to trim the log file.
+.Ar when
+field can consist of an interval, a specific time, or both.  If
+the
+.Ar when
+field is an asterisk
+.Pq Ql \&*
+log rotation will depend only on the contents of the
+.Ar size
+field.
+Otherwise, the
+.Ar when
+field consists of an optional interval in hours, optionally followed
+by an
+.So Li \&@ Sc Ns No -sign
+and a time in a restricted
+.Tn ISO 8601
+format or by an 
+.So Li \&$ Sc Ns No -sign
+and a time specification for logfile rotation at a fixed time once 
+per day, per week or per month.
+.Pp
+If a time is specified, the log file will only be trimmed if
+.Nm
+is run within one hour of the specified time.  If an 
+interval is specified, the log file will be trimmed if that many hours have
+passed since the last rotation.  When both a time and an interval are
+specified, both conditions must be satisfied for the rotation to take
+place.
+.Pp
+There is no provision for specification of a timezone.  There is
+little point in specifying an explicit minutes or seconds component in
+the current implementation, since the only comparison is `within the
+hour'.
+.Pp
+.Em ISO 8601 restricted time format
+.Pp
+The lead-in character for a restricted
+.Tn ISO 8601
+time is
+an
+.So Li \&@ Sc Ns No -sign .
+The particular format of the time in restricted
+.Tn ISO 8601
+is:
+.Sm off
+.Oo
+.Oo
+.Oo
+.Oo
+.Oo
+.Va \&cc
+.Oc
+.Va \&yy
+.Oc
+.Va \&mm
+.Oc
+.Va \&dd
+.Oc
+.Oo
+.Li \&T
+.Oo
+.Va \&hh
+.Oo
+.Va \&mm
+.Oo
+.Va \&ss
+.Oc
+.Oc
+.Oc
+.Oc
+.Oc .
+.Sm on
+Optional date fields default to the appropriate component of the
+current date; optional time fields default to midnight; hence if today
+is January 22, 1999, the following date specifications are all
+equivalent:
+.Pp
+.Bl -item -compact -offset indent
+.It
+.Sq Li 19990122T000000
+.It
+.Sq Li 990122T000000
+.It
+.Sq Li 0122T000000
+.It
+.Sq Li 22T000000
+.It
+.Sq Li T000000
+.It
+.Sq Li T0000
+.It
+.Sq Li T00
+.It
+.Sq Li 22T
+.It
+.Sq Li \&T
+.It
+.Sq Li \&
+.El
+.Pp
+.Em Day, week and month time format
+.Pp
+The lead-in character for day, week and month specification is a
+.So Li \&$ Sc Ns No -sign .
+The particular format of day, week and month specification is:
+.Sm off
+.Oo
+.Va D\&hh
+.Oc ,
+.Oo
+.Va W\&w
+.Oo
+.Va D\&hh
+.Oc
+.Oc 
+and
+.Oo
+.Va M\&dd
+.Oo
+.Va D\&hh
+.Oc
+.Oc
+.Sm on
+respectively.
+Optional time fields default to midnight. 
+The ranges for day and hour secifications are:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It Ar hh
+hours, range 0 ... 23
+.It Ar w
+day of week, range 0 ... 6, 0 = Sunday
+.It Ar dd
+day of month, range 1 ... 31, or the letter
+.Em L
+or
+.Em l
+to specify the last day of the month.
+.El
+.Pp
+Some examples:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It Ar $D0
+rotate every night at midnight
+.It Ar $D23
+rotate every day at 23:00 hr
+.It Ar $W0D23
+rotate every week on Sunday at 23:00 hr
+.It Ar $W5D16
+rotate every week on Friday at 16:00 hr
+.It Ar $MLD0
+rotate at the last day of every month at midnight
+.It Ar $M5D6
+rotate on every 5th day of month at 6:00 hr
+.El
+.Pp
 .It Ar flags
 This field specifies any special processing that is required.  Individual 
 flags and their meanings:
@@ -182,16 +336,14 @@ a SIGHUP (hang-up) will be sent.
 The following options can be used with newsyslog:
 .Bl -tag -width indent
 .It Fl f Ar config_file
-Instruct newsyslog to use 
+Use 
 .Ar config_file
 instead of
 .Pa /etc/newsyslog.conf
-as its configuration file.
+as the configuration file.
 .It Fl n
-Cause
-.Nm
-not to trim the logs, but to print out what it would do if this option
-were not specified: 
+Do not trim the logs, but print out would be done if this option were not 
+specified: 
 .Fl n
 implies
 .Fl v .
@@ -205,17 +357,17 @@ will not be able to send a HUP signal to
 so this option should be used only when debugging or trimming user generated
 logs.
 .It Fl v
-Place 
-.Nm
-in verbose mode.  In this mode it will print out each log and its
-reasons for either trimming that log or skipping it.
+Run in verbose mode.  In this mode each action that is taken will be printed.
 .It Fl F
-Force
-.Nm
-to trim the logs, even if the trim conditions have not been met.  This
-option is useful for diagnosing system problems by providing you with
+Force trimming of the logs, even if the trim conditions have not been met.  
+This option is useful for diagnosing system problems by providing you with
 fresh logs.
 .El
+.Pp
+If additional command line arguments are given,
+.Nm
+will only examine log files that match those arguments; otherwise, it
+will examine all files listed in the configuration file.
 .Sh FILES
 .Bl -tag -width /etc/newsyslog.confxxxx -compact
 .It Pa /etc/newsyslog.conf
