@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.83 2003/12/03 18:14:02 erh Exp $
+.\"	$NetBSD: packages.7,v 1.84 2003/12/03 19:44:42 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd September 15, 2003
+.Dd December 3, 2003
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -111,10 +111,13 @@ etc.) and architecture (
 .Dq mipsel ,
 etc.).
 .It PKGMAKECONF
-Location of the mk.conf file used by a package's BSD-style Makefile.
+Location of the
+.Pa mk.conf
+file used by a package's BSD-style Makefile.
 If this is not set, MAKECONF is set to
 .Pa /dev/null
-to avoid picking up settings used by builds in /usr/src.
+to avoid picking up settings used by builds in
+.Pa /usr/src .
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
