@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.50 1995/08/27 20:30:53 thorpej Exp $
+#	$Id: rc,v 1.51 1995/09/02 17:19:22 thorpej Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -213,14 +213,14 @@ fi
 
 echo -n ' inetd';		inetd
 
-# $rarpd_flags is importent from /etc/netstart;
+# $rarpd_flags is imported from /etc/netstart;
 # If $rarpd_flags == NO or /etc/ethers doesn't exist, then
 # rarpd isn't run.
 if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
 	echo -n ' rarpd';		rarpd ${rarpd_flags}
 fi
 
-# $bootparamd_flags is importent from /etc/netstart;
+# $bootparamd_flags is imported from /etc/netstart;
 # If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
 # bootparamd isn't run.
 if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
