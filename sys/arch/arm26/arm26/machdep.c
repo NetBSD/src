@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2001/04/29 15:13:45 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.10 2001/06/02 18:09:10 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2001/04/29 15:13:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2001/06/02 18:09:10 chs Exp $");
 
 #include <sys/buf.h>
 #include <sys/mbuf.h>
@@ -52,9 +52,9 @@ char cpu_model[] = "Archimedes";
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-vm_map_t exec_map = NULL;
-vm_map_t phys_map = NULL;
-vm_map_t mb_map = NULL; /* and ever more shall be so */
+struct vm_map *exec_map = NULL;
+struct vm_map *phys_map = NULL;
+struct vm_map *mb_map = NULL; /* and ever more shall be so */
 
 void
 cpu_reboot(howto, b)

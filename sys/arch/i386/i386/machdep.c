@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.443 2001/05/30 15:24:31 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.444 2001/06/02 18:09:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -211,9 +211,9 @@ paddr_t	idt_paddr;
 vaddr_t	pentium_idt_vaddr;
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.46 2001/05/26 16:32:47 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.47 2001/06/02 18:09:27 chs Exp $	*/
 
 /*
  *
@@ -71,7 +71,7 @@ struct uvm_pagerops *uvmpagerops[] = {
  * the pager map: provides KVA for I/O
  */
 
-vm_map_t pager_map;		/* XXX */
+struct vm_map *pager_map;		/* XXX */
 struct simplelock pager_map_wanted_lock;
 boolean_t pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
@@ -205,7 +205,7 @@ uvm_pagermapout(kva, npages)
 	int npages;
 {
 	vsize_t size = npages << PAGE_SHIFT;
-	vm_map_entry_t entries;
+	struct vm_map_entry *entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, " (kva=0x%x, npages=%d)", kva, npages,0,0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2001/05/26 16:32:45 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2001/06/02 18:09:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ extern	struct pmap	kernel_pmap_store;
  * This function does that, and calls vm_fault if it
  * could not resolve the fault by reloading the MMU.
  */
-int _pmap_fault __P((vm_map_t, vm_offset_t, vm_prot_t));
+int _pmap_fault __P((struct vm_map *, vm_offset_t, vm_prot_t));
 
 /* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vm_offset_t, vm_offset_t *);

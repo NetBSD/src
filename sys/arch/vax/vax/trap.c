@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2001/05/29 21:27:25 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.63 2001/06/02 18:09:24 chs Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -146,7 +146,7 @@ trap(struct trapframe *frame)
 	u_int	rv, addr, umode;
 	struct	proc *p = curproc;
 	u_quad_t oticks = 0;
-	vm_map_t map;
+	struct vm_map *map;
 	vm_prot_t ftype;
 	
 	uvmexp.traps++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2001/05/11 04:53:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2001/06/02 18:09:20 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -96,9 +96,9 @@ struct cpu_info cpu_info_store;
 unsigned long cpuspeed;	/* Approximate number of instructions per usec */
 
 /* Maps for VM objects. */
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int mach_type;		/* IPxx type */
 int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */

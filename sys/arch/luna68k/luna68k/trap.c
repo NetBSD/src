@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.16 2001/05/30 15:24:31 lukem Exp $ */
+/* $NetBSD: trap.c,v 1.17 2001/06/02 18:09:14 chs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2001/05/30 15:24:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2001/06/02 18:09:14 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -499,10 +499,10 @@ trap(type, code, v, frame)
 	    {
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
-		vm_map_t map;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))

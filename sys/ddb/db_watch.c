@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.14 2001/04/24 04:31:17 thorpej Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.15 2001/06/02 18:09:25 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -85,7 +85,7 @@ db_watchpoint_free(watch)
 
 void
 db_set_watchpoint(map, addr, size)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 	vsize_t	size;
 {
@@ -128,7 +128,7 @@ db_set_watchpoint(map, addr, size)
 
 void
 db_delete_watchpoint(map, addr)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 {
 	db_watchpoint_t	watch;
@@ -240,7 +240,7 @@ db_clear_watchpoints()
 
 boolean_t
 db_find_watchpoint(map, addr, regs)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 	db_regs_t	*regs;
 {

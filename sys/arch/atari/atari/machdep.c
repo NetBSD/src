@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2001/05/15 13:57:43 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2001/06/02 18:09:11 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,9 +102,9 @@ void	straytrap __P((int, u_short));
 void	nmihandler __P((void));
 #endif
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 caddr_t	msgbufaddr;
 vaddr_t	msgbufpa;

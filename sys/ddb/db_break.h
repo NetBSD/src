@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.14 2000/06/27 17:55:38 mrg Exp $	*/
+/*	$NetBSD: db_break.h,v 1.15 2001/06/02 18:09:25 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,7 +38,7 @@
  * Breakpoints.
  */
 typedef struct db_breakpoint {
-	vm_map_t map;			/* in this map */
+	struct vm_map *map;			/* in this map */
 	db_addr_t address;		/* set here */
 	int	init_count;		/* number of times to skip bkpt */
 	int	count;			/* current count */
@@ -51,9 +51,9 @@ typedef struct db_breakpoint {
 
 db_breakpoint_t db_breakpoint_alloc __P((void));
 void db_breakpoint_free __P((db_breakpoint_t));
-void db_set_breakpoint __P((vm_map_t, db_addr_t, int));
-void db_delete_breakpoint __P((vm_map_t, db_addr_t));
-db_breakpoint_t db_find_breakpoint __P((vm_map_t, db_addr_t));
+void db_set_breakpoint __P((struct vm_map *, db_addr_t, int));
+void db_delete_breakpoint __P((struct vm_map *, db_addr_t));
+db_breakpoint_t db_find_breakpoint __P((struct vm_map *, db_addr_t));
 db_breakpoint_t db_find_breakpoint_here __P((db_addr_t));
 void db_set_breakpoints __P((void));
 void db_clear_breakpoints __P((void));
@@ -61,8 +61,8 @@ void db_list_breakpoints __P((void));
 void db_delete_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_breakpoint_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_listbreak_cmd __P((db_expr_t, int, db_expr_t, char *));
-boolean_t db_map_equal __P((vm_map_t, vm_map_t));
-boolean_t db_map_current __P((vm_map_t));
-vm_map_t db_map_addr __P((vaddr_t));
+boolean_t db_map_equal __P((struct vm_map *, struct vm_map *));
+boolean_t db_map_current __P((struct vm_map *));
+struct vm_map *db_map_addr __P((vaddr_t));
 
 #endif	/* _DDB_DB_BREAK_H_ */

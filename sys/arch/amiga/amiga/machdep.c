@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 2001/05/27 20:22:57 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 2001/06/02 18:09:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,9 +127,9 @@ void fdintr __P((int));
  */
 u_int16_t amiga_serialspl = PSL_S|PSL_IPL4;
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 caddr_t	msgbufaddr;
 paddr_t msgbufpa;

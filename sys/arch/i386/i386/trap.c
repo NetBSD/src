@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.157 2001/05/30 15:24:31 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.158 2001/06/02 18:09:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -356,9 +356,9 @@ copyfault:
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		register struct vm_map *map;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 		unsigned nss;
 
 		if (vm == NULL)

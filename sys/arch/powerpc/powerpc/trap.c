@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 2001/06/02 18:09:19 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -98,7 +98,7 @@ trap(frame)
 		break;
 	case EXC_DSI:
 		{
-			vm_map_t map;
+			struct vm_map *map;
 			vaddr_t va;
 			faultbuf *fb;
 

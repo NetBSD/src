@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2001/05/26 21:27:15 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.181 2001/06/02 18:09:21 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -136,8 +136,8 @@
 #include <sparc/dev/tctrlvar.h>
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
 extern paddr_t avail_end;
 
 int	physmem;

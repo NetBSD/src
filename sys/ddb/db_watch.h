@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.h,v 1.13 2001/02/15 21:59:38 cgd Exp $	*/
+/*	$NetBSD: db_watch.h,v 1.14 2001/06/02 18:09:25 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,7 +36,7 @@
  * Watchpoint.
  */
 typedef struct db_watchpoint {
-	vm_map_t map;			/* in this map */
+	struct vm_map *map;			/* in this map */
 	db_addr_t loaddr;		/* from this address */
 	db_addr_t hiaddr;		/* to this address */
 	struct db_watchpoint *link;	/* link in in-use or free chain */
@@ -44,14 +44,14 @@ typedef struct db_watchpoint {
 
 db_watchpoint_t db_watchpoint_alloc __P((void));
 void db_watchpoint_free __P((db_watchpoint_t));
-void db_set_watchpoint __P((vm_map_t, db_addr_t, vsize_t));
-void db_delete_watchpoint __P((vm_map_t, db_addr_t));
+void db_set_watchpoint __P((struct vm_map *, db_addr_t, vsize_t));
+void db_delete_watchpoint __P((struct vm_map *, db_addr_t));
 void db_list_watchpoints __P((void));
 void db_deletewatch_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_watchpoint_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_listwatch_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_set_watchpoints __P((void));
 void db_clear_watchpoints __P((void));
-boolean_t db_find_watchpoint __P((vm_map_t, db_addr_t, db_regs_t *));
+boolean_t db_find_watchpoint __P((struct vm_map *, db_addr_t, db_regs_t *));
 
 #endif	/* _DDB_DB_WATCH_ */

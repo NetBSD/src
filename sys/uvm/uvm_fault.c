@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.63 2001/05/25 04:06:13 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.64 2001/06/02 18:09:26 chs Exp $	*/
 
 /*
  *
@@ -556,7 +556,7 @@ uvmfault_anonget(ufi, amap, anon)
 
 int
 uvm_fault(orig_map, vaddr, fault_type, access_type)
-	vm_map_t orig_map;
+	struct vm_map *orig_map;
 	vaddr_t vaddr;
 	vm_fault_t fault_type;
 	vm_prot_t access_type;
@@ -1793,7 +1793,7 @@ Case2:
 
 int
 uvm_fault_wire(map, start, end, access_type)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start, end;
 	vm_prot_t access_type;
 {
@@ -1828,7 +1828,7 @@ uvm_fault_wire(map, start, end, access_type)
 
 void
 uvm_fault_unwire(map, start, end)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start, end;
 {
 
@@ -1845,10 +1845,10 @@ uvm_fault_unwire(map, start, end)
 
 void
 uvm_fault_unwire_locked(map, start, end)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start, end;
 {
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;

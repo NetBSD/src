@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2001/05/26 21:27:14 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2001/06/02 18:09:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1257,7 +1257,7 @@ pmap_free_pvpage()
 {
 	int s;
 	struct vm_map *map;
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	struct pv_page *pvp;
 
 	s = splvm(); /* protect kmem_map */

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.33 2001/06/02 11:17:32 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.34 2001/06/02 18:09:10 chs Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.33 2001/06/02 11:17:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.34 2001/06/02 18:09:10 chs Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.33 2001/06/02 11:17:32 bjh21 Exp $");
 #endif
 
 void syscall(struct trapframe *);
-static void do_fault(struct trapframe *, struct proc *, vm_map_t, vaddr_t,
-    vm_prot_t);
+static void do_fault(struct trapframe *, struct proc *, struct vm_map *,
+    vaddr_t, vm_prot_t);
 static void data_abort_fixup(struct trapframe *);
 static vaddr_t data_abort_address(struct trapframe *, vsize_t *);
 static vm_prot_t data_abort_atype(struct trapframe *);
@@ -399,7 +399,7 @@ data_abort_handler(struct trapframe *tf)
 	struct proc *p;
 	vm_prot_t atype;
 	boolean_t usrmode, twopages;
-	vm_map_t map;
+	struct vm_map *map;
 
 	/*
 	 * Data aborts in kernel mode are possible (copyout etc), so
@@ -445,7 +445,7 @@ data_abort_handler(struct trapframe *tf)
  */
 void
 do_fault(struct trapframe *tf, struct proc *p,
-    vm_map_t map, vaddr_t va, vm_prot_t atype)
+    struct vm_map *map, vaddr_t va, vm_prot_t atype)
 {
 	int error;
 	struct pcb *curpcb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2001/05/13 13:44:35 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2001/06/02 18:09:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -74,9 +74,9 @@
 #include "md.h"
 #include "opt_mdsize.h"
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern int physmem;
 

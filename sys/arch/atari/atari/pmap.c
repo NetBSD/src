@@ -274,7 +274,7 @@ u_int		*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
-vm_map_t	pt_map;
+struct vm_map	*pt_map;
 struct vm_map	pt_map_store;
 
 vsize_t		mem_size;	/* memory size in bytes */

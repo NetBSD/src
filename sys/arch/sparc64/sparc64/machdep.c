@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2001/05/26 21:27:15 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.106 2001/06/02 18:09:21 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -139,8 +139,8 @@ int bus_space_debug = 1; /* This may be used by macros elsewhere. */
 #define DPRINTF(l, s)
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
 extern vaddr_t avail_end;
 
 int	physmem;

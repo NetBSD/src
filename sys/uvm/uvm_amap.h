@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.16 2001/05/26 16:32:46 chs Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.17 2001/06/02 18:09:25 chs Exp $	*/
 
 /*
  *
@@ -87,12 +87,12 @@ void		amap_add 	/* add an anon to an amap */
 struct vm_amap	*amap_alloc	/* allocate a new amap */
 			__P((vaddr_t, vaddr_t, int));
 void		amap_copy	/* clear amap needs-copy flag */
-			__P((vm_map_t, vm_map_entry_t, int,
+			__P((struct vm_map *, struct vm_map_entry *, int,
 			     boolean_t,	vaddr_t, vaddr_t));
 void		amap_cow_now	/* resolve all COW faults now */
-			__P((vm_map_t, vm_map_entry_t));
+			__P((struct vm_map *, struct vm_map_entry *));
 void		amap_extend	/* make amap larger */
-			__P((vm_map_entry_t, vsize_t));
+			__P((struct vm_map_entry *, vsize_t));
 int		amap_flags	/* get amap's flags */
 			__P((struct vm_amap *));
 void		amap_free	/* free amap */
@@ -114,7 +114,7 @@ void		amap_ref	/* add a reference to an amap */
 int		amap_refs	/* get number of references of amap */
 			__P((struct vm_amap *));
 void		amap_share_protect /* protect pages in a shared amap */
-			__P((vm_map_entry_t, vm_prot_t));
+			__P((struct vm_map_entry *, vm_prot_t));
 void		amap_splitref	/* split reference to amap into two */
 			__P((struct vm_aref *, struct vm_aref *,
 			     vaddr_t));

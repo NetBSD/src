@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.14 2001/05/30 15:24:37 lukem Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15 2001/06/02 18:09:20 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,9 +101,9 @@ char cpu_model[120];
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern int physmem;
 

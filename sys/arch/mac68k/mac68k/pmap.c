@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2001/05/26 21:27:08 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2001/06/02 18:09:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
-vm_map_t	st_map, pt_map;
+struct vm_map	*st_map, *pt_map;
 struct vm_map	st_map_store, pt_map_store;
 
 paddr_t		avail_start;	/* PA of first available physical page */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.22 2001/05/25 04:06:18 chs Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.23 2001/06/02 18:09:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -177,8 +177,8 @@ uvm_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	struct vmspace *vm = p->p_vmspace;
-	vm_map_t map = &vm->vm_map;
-	vm_map_entry_t entry;
+	struct vm_map *map = &vm->vm_map;
+	struct vm_map_entry *entry;
 	vaddr_t start, end, maxstack;
 	struct coreseg cseg;
 	off_t offset;
@@ -258,8 +258,8 @@ uvm_coredump32(p, vp, cred, chdr)
 	struct core32 *chdr;
 {
 	struct vmspace *vm = p->p_vmspace;
-	vm_map_t map = &vm->vm_map;
-	vm_map_entry_t entry;
+	struct vm_map *map = &vm->vm_map;
+	struct vm_map_entry *entry;
 	vaddr_t start, end, maxstack;
 	struct coreseg32 cseg;
 	off_t offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.263 2001/05/30 15:24:32 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.264 2001/06/02 18:09:14 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,9 +184,9 @@ u_int32_t mac68k_vidlen;	/* mem length */
 int	(*mac68k_bell_callback) __P((void *, int, int, int));
 caddr_t	mac68k_bell_cookie;
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */

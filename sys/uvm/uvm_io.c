@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.14 2001/05/25 04:06:13 chs Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.15 2001/06/02 18:09:26 chs Exp $	*/
 
 /*
  *
@@ -60,12 +60,12 @@
 
 int
 uvm_io(map, uio)
-	vm_map_t map;
+	struct vm_map *map;
 	struct uio *uio;
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	int error;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2001/05/30 15:24:36 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 2001/06/02 18:09:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -120,9 +120,9 @@ int	boothowto;
 vaddr_t msgbuf_vaddr;
 paddr_t msgbuf_paddr;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern	char etext[], end[];
 #if defined(DDB)

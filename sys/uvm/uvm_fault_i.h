@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.12 2001/05/25 04:06:13 chs Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.13 2001/06/02 18:09:26 chs Exp $	*/
 
 /*
  *
@@ -148,7 +148,7 @@ uvmfault_lookup(ufi, write_lock)
 	struct uvm_faultinfo *ufi;
 	boolean_t write_lock;
 {
-	vm_map_t tmpmap;
+	struct vm_map *tmpmap;
 
 	/*
 	 * init ufi values for lookup.

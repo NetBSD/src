@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.52 2001/05/26 21:27:21 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.53 2001/06/02 18:09:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -136,9 +136,9 @@ sys_mincore(p, v, retval)
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
 	struct vm_anon *anon;
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	vaddr_t start, end, lim;
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t len;
 	int error = 0, npgs;
 
@@ -510,7 +510,7 @@ sys___msync13(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	vm_map_t map;
+	struct vm_map *map;
 	int error, rv, flags, uvmflags;
 
 	/*
@@ -560,7 +560,7 @@ sys___msync13(p, v, retval)
 	 */
 
 	if (size == 0) {
-		vm_map_entry_t entry;
+		struct vm_map_entry *entry;
 
 		vm_map_lock_read(map);
 		rv = uvm_map_lookup_entry(map, addr, &entry);
@@ -605,7 +605,7 @@ sys_munmap(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	struct vm_map_entry *dead_entries;
 
@@ -1007,7 +1007,7 @@ sys_munlockall(p, v, retval)
 
 int
 uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t *addr;
 	vsize_t size;
 	vm_prot_t prot, maxprot;
