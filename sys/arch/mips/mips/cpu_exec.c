@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.9 1996/10/07 03:15:06 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.10 1996/10/11 00:22:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,7 +191,7 @@ mips_elf_makecmds (p, epp)
 	if (epp -> ep_hdrvalid < sizeof (struct ehdr)) {
 #ifdef DIAGNOSTIC
 	    if (epp -> ep_hdrlen < sizeof (struct ehdr))
-		printf ("mips_elf_makecmds: execsw hdrsize too short!\n");
+		kprintf ("mips_elf_makecmds: execsw hdrsize too short!\n");
 #endif
 	    return ENOEXEC;
 	}
@@ -231,7 +231,7 @@ mips_elf_makecmds (p, epp)
 
 	for (i = 0; i < ex -> phcount; i++) {
 #ifdef DEBUG
-		/*printf("obsolete elf: mapping %x %x %x\n", resid);*/
+		/*kprintf("obsolete elf: mapping %x %x %x\n", resid);*/
 #endif
 		if ((error = vn_rdwr(UIO_READ, epp -> ep_vp, (caddr_t)&ph,
 				    sizeof ph, ex -> phoff + i * sizeof ph,
@@ -265,7 +265,7 @@ mips_elf_makecmds (p, epp)
 					  length, vaddr,
 					  epp->ep_vp, offset, prot);
 #ifdef OLD_ELF_DEBUG
-/*XXX*/		printf(
+/*XXX*/		kprintf(
 	"obsolete elf: NEW_VNCMD len %x va %x off %x prot %x residue %x\n",
 			length, vaddr, offset, prot, residue);
 #endif /*ELF_DEBUG*/
@@ -297,7 +297,7 @@ mips_elf_makecmds (p, epp)
 			   map that. */
 			if (residue > 0) {
 #ifdef OLD_ELF_DEBUG
-/*XXX*/			printf(
+/*XXX*/			kprintf(
 	"old elf:resid NEW_VNCMD len %x va %x off %x prot %x residue %x\n",
 				length, vaddr + length, offset, prot, residue);
 #endif /*ELF_DEBUG*/

@@ -762,7 +762,7 @@ sys_stk_chk:
 	sw	a2, 16(sp)
 	sw	a3, 20(sp)
 	move	a2, ra
-	jal	printf
+	jal	kprintf
 	dmfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:
