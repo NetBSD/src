@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.11 1997/04/13 19:47:06 cgd Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.12 1997/04/13 20:14:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -87,7 +87,7 @@ bha_pci_match(parent, match, aux)
 	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
 		return (0);
 
-	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
 	    NULL, &iosize))
 		return (0);
 
@@ -124,7 +124,7 @@ bha_pci_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
 	    NULL, NULL)) {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
