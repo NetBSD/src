@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.103 2001/04/27 08:00:03 jdolecek Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.104 2001/05/28 22:20:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -465,7 +465,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	SCHED_ASSERT_LOCKED();
 	mi_switch(p);
 
-#ifdef	DDB
+#if	defined(DDB) && !defined(GPROF)
 	/* handy breakpoint location after process "wakes" */
 	asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
