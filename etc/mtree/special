@@ -118,7 +118,7 @@ at		type=dir mode=0755 uname=root gname=daemon ignore
 backups		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/backups
 db		type=dir mode=0755 uname=root gname=wheel ignore
-kvm_vmunix.db	type=file mode=0644 uname=root gname=wheel
+kvm_netbsd.db	type=file mode=0644 uname=root gname=wheel
 ..	#var/db
 log		type=dir mode=0755 uname=root gname=wheel
 secure		type=file mode=0600 uname=root gname=wheel
