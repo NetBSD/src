@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.54 1999/10/15 14:42:17 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.55 1999/10/19 21:16:04 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.54 1999/10/15 14:41:43 augustss Exp 
+ *	NetBSD: usbdevs,v 1.55 1999/10/19 21:15:35 augustss Exp 
  */
 
 /*
@@ -72,6 +72,7 @@
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corp. */
+#define	USB_VENDOR_ALTEC	0x04d2		/* Altec Lansing */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics Co., Ltd. */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
@@ -193,6 +194,9 @@
 
 /* Konica Corp. Products */
 #define	USB_PRODUCT_KONICA_CAMERA	0x0720		/* Digital Color Camera */
+
+/* Altec Lansing products */
+#define	USB_PRODUCT_ALTEC_ASC495	0xff05		/* ASC495 Speakers */
 
 /* Shuttle Technology products */
 #define	USB_PRODUCT_SHUTTLE_EUSB	0x0001		/* E-USB Bridge */
