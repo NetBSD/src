@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.9 2004/12/25 07:45:53 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -67,8 +67,8 @@ extern int rtw_debug;
 	if (((__sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) != 0)	\
 		RTW_DPRINTF(__flags, __x)
 #else /* RTW_DEBUG */
-#define RTW_DPRINTF(__x)
-#define	DPRINTF(__sc, __x)
+#define RTW_DPRINTF(__flags, __x)
+#define	DPRINTF(__sc, __flags, __x)
 #endif /* RTW_DEBUG */
 
 #if 0
