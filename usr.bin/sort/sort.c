@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.24 2001/02/21 19:24:30 christos Exp $	*/
+/*	$NetBSD: sort.c,v 1.25 2001/02/22 22:45:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.24 2001/02/21 19:24:30 christos Exp $");
+__RCSID("$NetBSD: sort.c,v 1.25 2001/02/22 22:45:49 christos Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ extern int ncols;
  */
 int stable_sort = 1;
 
-char toutpath[_POSIX_PATH_MAX];
+char toutpath[MAXPATHLEN];
 
 const char *tmpdir;	/* where temporary files should be put */
 
@@ -255,9 +255,10 @@ main(argc, argv)
 			err(2, "%s", outpath);
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXXXX",
 		    outpath);
-		if ((outfd = mkstemp(toutpath)) < 0 ||
-		    (outfp = fdopen(outfd, "w")) == 0)
-			err(2, "temporary file %s", toutpath);
+		if ((outfd = mkstemp(toutpath)) == -1)
+			err(2, "Cannot create temporary file `%s'", toutpath);
+		if ((outfp = fdopen(outfd, "w")) == NULL)
+			err(2, "Cannot open temporary file `%s'", toutpath);
 		outfile = toutpath;
 		(void)atexit(cleanup);
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
