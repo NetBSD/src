@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.3 2004/04/07 20:27:54 christos Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.4 2004/05/09 04:12:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -29,7 +29,7 @@
 #include "netinet/ipl.h"
 #if defined(STATETOP)
 # if defined(_BSDI_VERSION)
-#  undef STATETOP)
+#  undef STATETOP
 # endif
 # if defined(__FreeBSD__) && \
      (!defined(__FreeBSD_version) || (__FreeBSD_version < 430000))
@@ -52,6 +52,7 @@
 #endif
 #ifdef STATETOP
 # include <ctype.h>
+# include <signal.h>
 # if SOLARIS || defined(__NetBSD__) || defined(_BSDI_VERSION) || \
      defined(__sgi)
 #  ifdef ERR
@@ -78,6 +79,7 @@ static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.4 2004/03/19 23:06:50 da
 
 extern	char	*optarg;
 extern	int	optind;
+extern	int	opterr;
 
 #define	PRINTF	(void)printf
 #define	FPRINTF	(void)fprintf
@@ -116,6 +118,7 @@ typedef struct statetop {
 	u_short		st_sport;
 	u_short 	st_dport;
 	u_char		st_p;
+	u_char		st_v;
 	u_char		st_state[2];
 	U_QUAD_T	st_pkts;
 	U_QUAD_T	st_bytes;
@@ -123,22 +126,27 @@ typedef struct statetop {
 } statetop_t;
 #endif
 
-extern	int	main __P((int, char *[]));
+int		main __P((int, char *[]));
+
 static	void	showstats __P((friostat_t *, u_32_t));
 static	void	showfrstates __P((ipfrstat_t *));
 static	void	showlist __P((friostat_t *));
 static	void	showipstates __P((ips_stat_t *));
 static	void	showauthstates __P((fr_authstat_t *));
 static	void	showgroups __P((friostat_t *));
-static	void	Usage __P((char *));
+static	void	usage __P((char *));
 static	void	printlist __P((frentry_t *, char *));
-static	void	parse_ipportstr __P((const char *, struct in_addr *, int *));
+static	void	parse_ipportstr __P((const char *, i6addr_t *, int *));
 static	void	ipfstate_live __P((char *, friostat_t **, ips_stat_t **,
 				   ipfrstat_t **, fr_authstat_t **, u_32_t *));
 static	void	ipfstate_dead __P((char *, friostat_t **, ips_stat_t **,
 				   ipfrstat_t **, fr_authstat_t **, u_32_t *));
 #ifdef STATETOP
-static	void	topipstates __P((struct in_addr, struct in_addr, int, int, int, int, int));
+static	void	topipstates __P((i6addr_t, i6addr_t, int, int, int,
+				 int, int, int));
+static	void	sig_break __P((int));
+static	void	sig_resize __P((int));
+static	char	*getip __P((int, i6addr_t *));
 static	char	*ttl_to_string __P((long));
 static	int	sort_p __P((const void *, const void *));
 static	int	sort_pkts __P((const void *, const void *));
@@ -149,16 +157,21 @@ static	int	sort_dstip __P((const void *, const void *));
 #endif
 
 
-static void Usage(name)
+static void usage(name)
 char *name;
 {
 #ifdef  USE_INET6
-	fprintf(stderr, "Usage: %s [-6aACdfghIilnoRstv] [-d <device>]\n", name);
+	fprintf(stderr, "Usage: %s [-6aAdfghIilnoRsv]\n", name);
 #else
-	fprintf(stderr, "Usage: %s [-aACdfghIilnoRstv] [-d <device>]\n", name);
+	fprintf(stderr, "Usage: %s [-aAdfghIilnoRsv]\n", name);
 #endif
-	fprintf(stderr, "\t\t[-M corefile] [-N symbol-list]\n");
-	fprintf(stderr, "       %s -t [-S source address] [-D destination address] [-P protocol] [-T refreshtime] [-C] [-d <device>]\n", name);
+	fprintf(stderr, "       %s [-M corefile] [-N symbol-list]\n", name);
+#ifdef	USE_INET6
+	fprintf(stderr, "       %s -t [-6C] ", name);
+#else
+	fprintf(stderr, "       %s -t [-C] ", name);
+#endif
+	fprintf(stderr, "[-D destination address] [-P protocol] [-S source address] [-T refresh time]\n");
 	exit(1);
 }
 
@@ -176,7 +189,7 @@ char *argv[];
 	ipfrstat_t ifrst;
 	ipfrstat_t *ifrstp = &ifrst;
 	char	*device = IPL_NAME, *memf = NULL;
-	char	*kern = NULL;
+	char	*options, *kern = NULL;
 	int	c, myoptind;
 
 	int protocol = -1;		/* -1 = wild card for any protocol */
@@ -184,18 +197,31 @@ char *argv[];
 	int sport = -1;			/* -1 = wild card for any source port */
 	int dport = -1;			/* -1 = wild card for any dest port */
 	int topclosed = 0;		/* do not show closed tcp sessions */
-	struct in_addr saddr, daddr;
+	i6addr_t saddr, daddr;
 	u_32_t frf;
 
-	saddr.s_addr = INADDR_ANY; 	/* default any source addr */
-	daddr.s_addr = INADDR_ANY; 	/* default any dest addr */
+#ifdef	USE_INET6
+	options = "6aACdfghIilnostvD:M:N:P:RS:T:";
+#else
+	options = "aACdfghIilnostvD:M:N:P:RS:T:";
+#endif
+
+	saddr.in4.s_addr = INADDR_ANY; 	/* default any v4 source addr */
+	daddr.in4.s_addr = INADDR_ANY; 	/* default any v4 dest addr */
+#ifdef	USE_INET6
+	saddr.in6 = in6addr_any;	/* default any v6 source addr */
+	daddr.in6 = in6addr_any;	/* default any v6 dest addr */
+#endif
+
+	/* Don't warn about invalid flags when we run getopt for the 1st time */
+	opterr = 0;
 
 	/*
 	 * Parse these two arguments now lest there be any buffer overflows
 	 * in the parsing of the rest.
 	 */
 	myoptind = optind;
-	while ((c = getopt(argc, argv, "6aACdfghIilnostvD:M:N:P:RS:T:")) != -1)
+	while ((c = getopt(argc, argv, options)) != -1) {
 		switch (c)
 		{
 		case 'M' :
@@ -207,6 +233,7 @@ char *argv[];
 			live_kernel = 0;
 			break;
 		}
+	}
 	optind = myoptind;
 
 	if (live_kernel == 1) {
@@ -221,8 +248,7 @@ char *argv[];
 		}
 	}
 
-	if (kern != NULL || memf != NULL)
-	{
+	if (kern != NULL || memf != NULL) {
 		(void)setgid(getgid());
 		(void)setuid(getuid());
 	}
@@ -235,7 +261,9 @@ char *argv[];
 	(void)setgid(getgid());
 	(void)setuid(getuid());
 
-	while ((c = getopt(argc, argv, "6aACdfghIilnostvD:M:N:P:RS:T:")) != -1)
+	opterr = 1;
+
+	while ((c = getopt(argc, argv, options)) != -1)
 	{
 		switch (c)
 		{
@@ -290,7 +318,7 @@ char *argv[];
 		case 'P' :
 			protocol = getproto(optarg);
 			if (protocol == -1) {
-				fprintf(stderr, "%s : Invalid protocol: %s\n",
+				fprintf(stderr, "%s: Invalid protocol: %s\n",
 					argv[0], optarg);
 				exit(-2);
 			}
@@ -310,7 +338,7 @@ char *argv[];
 			break;
 #else
 			fprintf(stderr,
-				"%s : state top facility not compiled in\n",
+				"%s: state top facility not compiled in\n",
 				argv[0]);
 			exit(-2);
 #endif
@@ -318,7 +346,7 @@ char *argv[];
 			if (!sscanf(optarg, "%d", &refreshtime) ||
 				    (refreshtime <= 0)) {
 				fprintf(stderr,
-					"%s : Invalid refreshtime < 1 : %s\n",
+					"%s: Invalid refreshtime < 1 : %s\n",
 					argv[0], optarg);
 				exit(-2);
 			}
@@ -327,7 +355,7 @@ char *argv[];
 			opts |= OPT_VERBOSE;
 			break;
 		default :
-			Usage(argv[0]);
+			usage(argv[0]);
 			break;
 		}
 	}
@@ -350,21 +378,20 @@ char *argv[];
 			opts &= ~OPT_OUTQUE;
 			showlist(fiop);
 		}
-	} else {
-		if (opts & OPT_FRSTATES)
-			showfrstates(ifrstp);
+	} else if (opts & OPT_FRSTATES)
+		showfrstates(ifrstp);
 #ifdef STATETOP
-		else if (opts & OPT_STATETOP)
-			topipstates(saddr, daddr, sport, dport,
-				    protocol, refreshtime, topclosed);
+	else if (opts & OPT_STATETOP)
+		topipstates(saddr, daddr, sport, dport, protocol,
+			    use_inet6 ? 6 : 4, refreshtime, topclosed);
 #endif
-		else if (opts & OPT_AUTHSTATS)
-			showauthstates(frauthstp);
-		else if (opts & OPT_GROUPS)
-			showgroups(fiop);
-		else
-			showstats(fiop, frf);
-	}
+	else if (opts & OPT_AUTHSTATS)
+		showauthstates(frauthstp);
+	else if (opts & OPT_GROUPS)
+		showgroups(fiop);
+	else
+		showstats(fiop, frf);
+
 	return 0;
 }
 
@@ -962,19 +989,23 @@ ips_stat_t *ipsp;
 
 
 #ifdef STATETOP
-static void topipstates(saddr, daddr, sport, dport, protocol,
+static int handle_resize = 0, handle_break = 0;
+
+static void topipstates(saddr, daddr, sport, dport, protocol, ver,
 		        refreshtime, topclosed)
-struct in_addr saddr;
-struct in_addr daddr;
+i6addr_t saddr;
+i6addr_t daddr;
 int sport;
 int dport;
 int protocol;
+int ver;
 int refreshtime;
 int topclosed;
 {
 	char str1[STSTRSIZE], str2[STSTRSIZE], str3[STSTRSIZE], str4[STSTRSIZE];
 	int maxtsentries = 0, reverse = 0, sorting = STSORT_DEFAULT;
-	int i, j, winx, tsentry, maxx, maxy, redraw = 0;
+	int i, j, winy, tsentry, maxx, maxy, redraw = 0;
+	int len, srclen, dstlen, forward = 1, c = 0;
 	ips_stat_t ipsst, *ipsstp = &ipsst;
 	statetop_t *tstable = NULL, *tp;
 	ipstate_t ips;
@@ -983,18 +1014,26 @@ int topclosed;
 	char hostnm[HOSTNMLEN];
 	struct protoent *proto;
 	fd_set readfd;
-	int c = 0;
 	time_t t;
+
+	/* install signal handlers */
+	signal(SIGINT, sig_break);
+	signal(SIGQUIT, sig_break);
+	signal(SIGTERM, sig_break);
+	signal(SIGWINCH, sig_resize);
 
 	/* init ncurses stuff */
   	initscr();
   	cbreak();
   	noecho();
+	curs_set(0);
+	timeout(0);
+	getmaxyx(stdscr, maxy, maxx);
 
 	/* init hostname */
 	gethostname(hostnm, sizeof(hostnm) - 1);
 	hostnm[sizeof(hostnm) - 1] = '\0';
-	
+
 	/* init ipfobj_t stuff */
 	bzero((caddr_t)&ipfo, sizeof(ipfo));
 	ipfo.ipfo_rev = IPFILTER_VERSION;
@@ -1015,66 +1054,103 @@ int topclosed;
 		/* clear the history */
 		tsentry = -1;
 
+		/* reset max str len */
+		srclen = dstlen = 0;
+
 		/* read the state table and store in tstable */
-		while (ipsstp->iss_list) {
+		for (; ipsstp->iss_list; ipsstp->iss_list = ips.is_next) {
+
 			if (kmemcpy((char *)&ips, (u_long)ipsstp->iss_list,
 				    sizeof(ips)))
 				break;
-			ipsstp->iss_list = ips.is_next;
 
-			if (((saddr.s_addr == INADDR_ANY) ||
-			     (saddr.s_addr == ips.is_saddr)) &&
-			    ((daddr.s_addr == INADDR_ANY) ||
-			     (daddr.s_addr == ips.is_daddr)) &&
-			    ((protocol < 0) || (protocol == ips.is_p)) &&
-			    (((ips.is_p != IPPROTO_TCP) &&
-			     (ips.is_p != IPPROTO_UDP)) ||
-			     (((sport < 0) ||
-			       (htons(sport) == ips.is_sport)) &&
-			      ((dport < 0) ||
-			       (htons(dport) == ips.is_dport)))) &&
-			     (topclosed || (ips.is_p != IPPROTO_TCP) ||
-			     (ips.is_state[0] < IPF_TCPS_LAST_ACK) ||
-			     (ips.is_state[1] < IPF_TCPS_LAST_ACK))) {
-				/*
-				 * if necessary make room for this state
-				 * entry
-				 */
-				tsentry++;
-				if (!maxtsentries ||
-				    (tsentry == maxtsentries)) {
+			if (ips.is_v != ver)
+				continue;
 
-					maxtsentries += STGROWSIZE;
-					tstable = realloc(tstable, maxtsentries * sizeof(statetop_t));
-					if (!tstable) {
-						perror("malloc");
-						exit(-1);
-					}
+			/* check v4 src/dest addresses */
+			if (ips.is_v == 4) {
+				if ((saddr.in4.s_addr != INADDR_ANY &&
+				     saddr.in4.s_addr != ips.is_saddr) ||
+				    (daddr.in4.s_addr != INADDR_ANY &&
+				     daddr.in4.s_addr != ips.is_daddr))
+					continue;
+			}
+#ifdef	USE_INET6
+			/* check v6 src/dest addresses */
+			if (ips.is_v == 6) {
+				if ((IP6_NEQ(&saddr, &in6addr_any) &&
+				     IP6_NEQ(&saddr, &ips.is_src)) ||
+				    (IP6_NEQ(&daddr, &in6addr_any) &&
+				     IP6_NEQ(&daddr, &ips.is_dst)))
+					continue;
+			}
+#endif
+			/* check protocol */
+			if (protocol > 0 && protocol != ips.is_p)
+				continue;
+
+			/* check ports if protocol is TCP or UDP */
+			if (((ips.is_p == IPPROTO_TCP) ||
+			     (ips.is_p == IPPROTO_UDP)) &&
+			   (((sport > 0) && (htons(sport) != ips.is_sport)) ||
+			    ((dport > 0) && (htons(dport) != ips.is_dport))))
+				continue;
+
+			/* show closed TCP sessions ? */
+			if ((topclosed == 0) && (ips.is_p == IPPROTO_TCP) &&
+			    (ips.is_state[0] >= IPF_TCPS_LAST_ACK) &&
+			    (ips.is_state[1] >= IPF_TCPS_LAST_ACK))
+				continue;
+
+			/*
+			 * if necessary make room for this state
+			 * entry
+			 */
+			tsentry++;
+			if (!maxtsentries || tsentry == maxtsentries) {
+				maxtsentries += STGROWSIZE;
+				tstable = realloc(tstable,
+				    maxtsentries * sizeof(statetop_t));
+				if (tstable == NULL) {
+					perror("realloc");
+					exit(-1);
 				}
+			}
 
-				/* fill structure */
-				tp = tstable + tsentry;
-				tp->st_src = ips.is_src;
-				tp->st_dst = ips.is_dst;
-				tp->st_p = ips.is_p;
-				tp->st_state[0] = ips.is_state[0];
-				tp->st_state[1] = ips.is_state[1];
-				tp->st_pkts = ips.is_pkts[0] + ips.is_pkts[1];
-				tp->st_bytes = ips.is_bytes[0] +
-					       ips.is_bytes[1];
-				tp->st_age = ips.is_die - ipsstp->iss_ticks;
-				if ((ips.is_p == IPPROTO_TCP) ||
-				    (ips.is_p == IPPROTO_UDP)) {
-					tp->st_sport = ips.is_sport;
-					tp->st_dport = ips.is_dport;
-				}
+			/* get max src/dest address string length */
+			len = strlen(getip(ips.is_v, &ips.is_src));
+			if (srclen < len)
+				srclen = len;
+			len = strlen(getip(ips.is_v, &ips.is_dst));
+			if (dstlen < len)
+				dstlen = len;
 
+			/* fill structure */
+			tp = tstable + tsentry;
+			tp->st_src = ips.is_src;
+			tp->st_dst = ips.is_dst;
+			tp->st_p = ips.is_p;
+			tp->st_v = ips.is_v;
+			tp->st_state[0] = ips.is_state[0];
+			tp->st_state[1] = ips.is_state[1];
+			if (forward) {
+				tp->st_pkts = ips.is_pkts[0]+ips.is_pkts[1];
+				tp->st_bytes = ips.is_bytes[0]+ips.is_bytes[1];
+			} else {
+				tp->st_pkts = ips.is_pkts[2]+ips.is_pkts[3];
+				tp->st_bytes = ips.is_bytes[2]+ips.is_bytes[3];
+			}
+			tp->st_age = ips.is_die - ipsstp->iss_ticks;
+			if ((ips.is_p == IPPROTO_TCP) ||
+			    (ips.is_p == IPPROTO_UDP)) {
+				tp->st_sport = ips.is_sport;
+				tp->st_dport = ips.is_dport;
 			}
 		}
 
 
 		/* sort the array */
-		if (tsentry != -1)
+		if (tsentry != -1) {
 			switch (sorting)
 			{
 			case STSORT_PR:
@@ -1104,13 +1180,30 @@ int topclosed;
 			default:
 				break;
 			}
+		}
+
+		/* handle window resizes */
+		if (handle_resize) {
+			endwin();
+			initscr();
+			cbreak();
+			noecho();
+			curs_set(0);
+			timeout(0);
+			getmaxyx(stdscr, maxy, maxx);
+			redraw = 1;
+			handle_resize = 0;
+                }
+
+		/* stop program? */
+		if (handle_break)
+			break;
 
 		/* print title */
 		erase();
-		getmaxyx(stdscr, maxy, maxx);
 		attron(A_BOLD);
-		winx = 0;
-		move(winx,0);
+		winy = 0;
+		move(winy,0);
 		sprintf(str1, "%s - %s - state top", hostnm, IPL_VERSION);
 		for (j = 0 ; j < (maxx - 8 - strlen(str1)) / 2; j++)
 			printw(" ");
@@ -1118,7 +1211,7 @@ int topclosed;
 		attroff(A_BOLD);
 
 		/* just for fun add a clock */
-		move(winx, maxx - 8);
+		move(winy, maxx - 8);
 		t = time(NULL);
 		strftime(str1, 80, "%T", localtime(&t));
 		printw("%s\n", str1);
@@ -1129,14 +1222,14 @@ int topclosed;
 		 * while the programming is running :-)
 		 */
 		if (sport >= 0)
-			sprintf(str1, "%s,%d", inet_ntoa(saddr), sport);
+			sprintf(str1, "%s,%d", getip(ver, &saddr), sport);
 		else
-			sprintf(str1, "%s", inet_ntoa(saddr));
+			sprintf(str1, "%s", getip(ver, &saddr));
 
 		if (dport >= 0)
-			sprintf(str2, "%s,%d", inet_ntoa(daddr), dport);
+			sprintf(str2, "%s,%d", getip(ver, &daddr), dport);
 		else
-			sprintf(str2, "%s", inet_ntoa(daddr));
+			sprintf(str2, "%s", getip(ver, &daddr));
 
 		if (protocol < 0)
 			strcpy(str3, "any");
@@ -1160,10 +1253,10 @@ int topclosed;
 			sprintf(str4, "ttl");
 			break;
 		case STSORT_SRCIP:
-			sprintf(str4, "srcip");
+			sprintf(str4, "src ip");
 			break;
 		case STSORT_DSTIP:
-			sprintf(str4, "dstip");
+			sprintf(str4, "dest ip");
 			break;
 		default:
 			sprintf(str4, "unknown");
@@ -1173,17 +1266,24 @@ int topclosed;
 		if (reverse)
 			strcat(str4, " (reverse)");
 
-		winx += 2;
-		move(winx,0);
-		printw("Src = %s  Dest = %s  Proto = %s  Sorted by = %s\n\n",
+		winy += 2;
+		move(winy,0);
+		printw("Src: %s, Dest: %s, Proto: %s, Sorted by: %s\n\n",
 		       str1, str2, str3, str4);
 
+		/* need at least 14 + 7 characters */
+		if (srclen < 14)
+			srclen = 14;
+		if (dstlen < 14)
+			dstlen = 14;
+
 		/* print column description */
-		winx += 2;
-		move(winx,0);
+		winy += 2;
+		move(winy,0);
 		attron(A_BOLD);
-		printw("%-21s %-21s %3s %4s %7s %9s %9s\n", "Source IP",
-		       "Destination IP", "ST", "PR", "#pkts", "#bytes", "ttl");
+		printw("%-*s %-*s %3s %4s %7s %9s %9s\n",
+		       srclen + 7, "Source IP", dstlen + 7, "Destination IP",
+		       "ST", "PR", "#pkts", "#bytes", "ttl");
 		attroff(A_BOLD);
 
 		/* print all the entries */
@@ -1198,25 +1298,27 @@ int topclosed;
 			if ((tp->st_p == IPPROTO_TCP) ||
 			    (tp->st_p == IPPROTO_UDP)) {
 				sprintf(str1, "%s,%hu",
-					inet_ntoa(tp->st_src.in4),
+					getip(tp->st_v, &tp->st_src),
 					ntohs(tp->st_sport));
 				sprintf(str2, "%s,%hu",
-					inet_ntoa(tp->st_dst.in4),
+					getip(tp->st_v, &tp->st_dst),
 					ntohs(tp->st_dport));
 			} else {
-				sprintf(str1, "%s", inet_ntoa(tp->st_src.in4));
-				sprintf(str2, "%s", inet_ntoa(tp->st_dst.in4));
+				sprintf(str1, "%s", getip(tp->st_v,
+				    &tp->st_src));
+				sprintf(str2, "%s", getip(tp->st_v,
+				    &tp->st_dst));
 			}
-			winx++;
-			move(winx, 0);
-			printw("%-21s %-21s", str1, str2);
+			winy++;
+			move(winy, 0);
+			printw("%-*s %-*s", srclen + 7, str1, dstlen + 7, str2);
 
 			/* print state */
 			sprintf(str1, "%X/%X", tp->st_state[0],
 				tp->st_state[1]);
 			printw(" %3s", str1);
 
-			/* print proto */
+			/* print protocol */
 			proto = getprotobynumber(tp->st_p);
 			if (proto) {
 				strncpy(str1, proto->p_name, 4);
@@ -1224,8 +1326,12 @@ int topclosed;
 			} else {
 				sprintf(str1, "%d", tp->st_p);
 			}
+			/* just print icmp for IPv6-ICMP */
+			if (tp->st_p == IPPROTO_ICMPV6)
+				strcpy(str1, "icmp");
 			printw(" %4s", str1);
-				/* print #pkt/#bytes */
+
+			/* print #pkt/#bytes */
 #ifdef	USE_QUAD_T
 			printw(" %7qu %9qu", (unsigned long long) tp->st_pkts,
 				(unsigned long long) tp->st_bytes);
@@ -1264,23 +1370,27 @@ int topclosed;
 			if (c == ERR)
 				continue;
 
-			if (tolower(c) == 'l') {
+			if (isalpha(c) && isupper(c))
+				c = tolower(c);
+			if (c == 'l') {
 				redraw = 1;
-			} else if (tolower(c) == 'q') {
-				nocbreak();
-				endwin();
-				exit(0);
-			} else if (tolower(c) == 'r') {
+			} else if (c == 'q') {
+				break;
+			} else if (c == 'r') {
 				reverse = !reverse;
-			} else if (tolower(c) == 's') {
-				sorting++;
-				if (sorting > STSORT_MAX)
+			} else if (c == 'b') {
+				forward = 0;
+			} else if (c == 'f') {
+				forward = 1;
+			} else if (c == 's') {
+				if (++sorting > STSORT_MAX)
 					sorting = 0;
 			}
 		}
 	} /* while */
 
 	printw("\n");
+	curs_set(1);
 	nocbreak();
 	endwin();
 
@@ -1405,11 +1515,11 @@ struct friostat	*fiop;
 
 static void parse_ipportstr(argument, ip, port)
 const char *argument;
-struct in_addr *ip;
+i6addr_t *ip;
 int *port;
 {
-
 	char *s, *comma;
+	int ok = 0;
 
 	/* make working copy of argument, Theoretically you must be able
 	 * to write to optarg, but that seems very ugly to me....
@@ -1435,8 +1545,16 @@ int *port;
 
 	/* get ip address */
 	if (!strcasecmp(s, "any")) {
-		ip->s_addr = INADDR_ANY;
-	} else	if (!inet_aton(s, ip)) {
+		ip->in4.s_addr = INADDR_ANY;
+#ifdef	USE_INET6
+		ip->in6 = in6addr_any;
+	} else if (use_inet6 && inet_pton(AF_INET6, s, &ip->in6)) {
+		ok = 1;
+#endif
+	} else if (inet_aton(s, &ip->in4))
+		ok = 1;
+
+	if (ok == 0) {
 		fprintf(stderr, "Invalid IP address: %s\n", s);
 		free(s);
 		exit(-2);
@@ -1448,12 +1566,41 @@ int *port;
 
 
 #ifdef STATETOP
-static char ttlbuf[STSTRSIZE];
+static void sig_resize(s)
+int s;
+{
+	handle_resize = 1;
+}
+
+static void sig_break(s)
+int s;
+{
+	handle_break = 1;
+}
+
+static char *getip(v, addr)
+int v;
+i6addr_t *addr;
+{
+	static char hostbuf[MAXHOSTNAMELEN+1];
+
+	if (v == 4)
+		return inet_ntoa(addr->in4);
+
+#ifdef  USE_INET6
+	(void) inet_ntop(AF_INET6, &addr->in6, hostbuf, sizeof(hostbuf) - 1);
+	hostbuf[MAXHOSTNAMELEN] = '\0';
+	return hostbuf;
+#else
+	return "IPv6";
+#endif
+}
+
 
 static char *ttl_to_string(ttl)
 long int ttl;
 {
-
+	static char ttlbuf[STSTRSIZE];
 	int hours, minutes, seconds;
 
 	/* ttl is in half seconds */
@@ -1464,7 +1611,7 @@ long int ttl;
 	minutes = ttl / 60;
 	seconds = ttl % 60;
 
-	if (hours > 0 )
+	if (hours > 0)
 		sprintf(ttlbuf, "%2d:%02d:%02d", hours, minutes, seconds);
 	else
 		sprintf(ttlbuf, "%2d:%02d", minutes, seconds);
@@ -1539,10 +1686,22 @@ const void *b;
 	register const statetop_t *ap = a;
 	register const statetop_t *bp = b;
 
-	if (ntohl(ap->st_src.in4.s_addr) == ntohl(bp->st_src.in4.s_addr))
-		return 0;
-	else if (ntohl(ap->st_src.in4.s_addr) > ntohl(bp->st_src.in4.s_addr))
-		return 1;
+#ifdef USE_INET6
+	if (use_inet6) {
+		if (IP6_EQ(&ap->st_src, &bp->st_src))
+			return 0;
+		else if (IP6_GT(&ap->st_src, &bp->st_src))
+			return 1;
+	} else
+#endif
+	{
+		if (ntohl(ap->st_src.in4.s_addr) ==
+		    ntohl(bp->st_src.in4.s_addr))
+			return 0;
+		else if (ntohl(ap->st_src.in4.s_addr) >
+		         ntohl(bp->st_src.in4.s_addr))
+			return 1;
+	}
 	return -1;
 }
 
@@ -1553,10 +1712,22 @@ const void *b;
 	register const statetop_t *ap = a;
 	register const statetop_t *bp = b;
 
-	if (ntohl(ap->st_dst.in4.s_addr) == ntohl(bp->st_dst.in4.s_addr))
-		return 0;
-	else if (ntohl(ap->st_dst.in4.s_addr) > ntohl(bp->st_dst.in4.s_addr))
-		return 1;
+#ifdef USE_INET6
+	if (use_inet6) {
+		if (IP6_EQ(&ap->st_dst, &bp->st_dst))
+			return 0;
+		else if (IP6_GT(&ap->st_dst, &bp->st_dst))
+			return 1;
+	} else
+#endif
+	{
+		if (ntohl(ap->st_dst.in4.s_addr) ==
+		    ntohl(bp->st_dst.in4.s_addr))
+			return 0;
+		else if (ntohl(ap->st_dst.in4.s_addr) >
+		         ntohl(bp->st_dst.in4.s_addr))
+			return 1;
+	}
 	return -1;
 }
 #endif
