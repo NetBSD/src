@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.22 2003/06/29 22:29:46 fvdl Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.23 2003/10/31 14:04:36 drochner Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -66,10 +66,6 @@
  * the end of the data segment.
  */
 #define SVR4_INTERP_ADDR	0x10000000
-#endif
-
-#ifndef SVR4_INTERP_ADDR
-# define SVR4_INTERP_ADDR	ELFDEFNNAME(NO_ADDR)
 #endif
 
 extern const struct emul emul_svr4;

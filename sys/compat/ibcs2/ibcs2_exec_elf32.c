@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.6 2003/06/29 22:29:20 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.7 2003/10/31 14:04:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.6 2003/06/29 22:29:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.7 2003/10/31 14:04:35 drochner Exp $");
 
 #define ELFSIZE		32
 
@@ -132,10 +132,9 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
 	if ((error = ibcs2_elf32_signature(p, epp, eh)) != 0)
                 return error;
 
-	if (itp[0]) {
+	if (itp) {
 		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 	}
-	*pos = ELF32_NO_ADDR;
 	return 0;
 }
