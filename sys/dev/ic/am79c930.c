@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.4 2000/03/22 11:22:22 onoe Exp $ */
+/* $NetBSD: am79c930.c,v 1.5 2000/03/23 13:57:58 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -290,7 +290,16 @@ static void mem_write_2 (sc, off, val)
 	u_int32_t off;
 	u_int16_t val;
 {
-	bus_space_write_2(sc->sc_memt, sc->sc_memh, off,    val);
+	bus_space_tag_t t = sc->sc_memt;
+	bus_space_handle_t h = sc->sc_memh;
+
+	/* could be unaligned */
+	if ((off & 0x1) == 0)
+		bus_space_write_2(t, h, off,    val);
+	else {
+		bus_space_write_1(t, h, off,    val        & 0xff);
+		bus_space_write_1(t, h, off+1, (val >>  8) & 0xff);
+	}
 }
 
 static void mem_write_4 (sc, off, val)
@@ -298,7 +307,18 @@ static void mem_write_4 (sc, off, val)
 	u_int32_t off;
 	u_int32_t val;
 {
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, val);
+	bus_space_tag_t t = sc->sc_memt;
+	bus_space_handle_t h = sc->sc_memh;
+
+	/* could be unaligned */
+	if ((off & 0x3) == 0)
+		bus_space_write_4(t, h, off,    val);
+	else {
+		bus_space_write_1(t, h, off,    val        & 0xff);
+		bus_space_write_1(t, h, off+1, (val >>  8) & 0xff);
+		bus_space_write_1(t, h, off+2, (val >> 16) & 0xff);
+		bus_space_write_1(t, h, off+3, (val >> 24) & 0xff);
+	}
 }
 
 static void mem_write_bytes (sc, off, ptr, len)
@@ -322,14 +342,28 @@ static u_int16_t mem_read_2 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	return bus_space_read_2(sc->sc_memt, sc->sc_memh, off);
+	/* could be unaligned */
+	if ((off & 0x1) == 0)
+		return bus_space_read_2(sc->sc_memt, sc->sc_memh, off);
+	else
+		return
+		     bus_space_read_1(sc->sc_memt, sc->sc_memh, off  )       |
+		    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+1) << 8);
 }
 
 static u_int32_t mem_read_4 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+	/* could be unaligned */
+	if ((off & 0x3) == 0)
+		return bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+	else
+		return
+		     bus_space_read_1(sc->sc_memt, sc->sc_memh, off  )       |
+		    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+1) << 8) |
+		    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+2) <<16) |
+		    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+3) <<24);
 }
 
 
