@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.6 2002/10/08 09:19:45 kent Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.7 2002/10/14 08:48:15 kent Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -57,8 +57,8 @@ struct ac97_codec_if_vtbl {
 	int (*mixer_set_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);
 	int (*query_devinfo)(struct ac97_codec_if *addr, mixer_devinfo_t *cp);
 	int (*get_portnum_by_name)(struct ac97_codec_if *addr,
-				      char *class, char *device,
-				      char *qualifier);
+				   const char *class, const char *device,
+				   const char *qualifier);
 	/*
 	 * The AC97 codec driver records the various port settings.  This
 	 * function can be used to restore the port settings, e.g. after
