@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.2 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_bus_locio.c,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,49 +36,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
-#include "opt_algor_p6032.h"
+/*
+ * Platform-specific local bus I/O support for the Algorithmics P-4032.
+ */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
 
-#include <machine/autoconf.h>
+#include <uvm/uvm_extern.h>
 
-#ifdef ALGOR_P4032
+#include <machine/locore.h>
+
 #include <algor/algor/algor_p4032reg.h>
-#endif
+#include <algor/algor/algor_p4032var.h>
 
-#ifdef ALGOR_P5064
-#include <algor/algor/algor_p5064reg.h>
-#endif 
- 
-#ifdef ALGOR_P6032
-#include <algor/algor/algor_p6032reg.h>
-#endif
+#define	CHIP		algor_p4032loc
 
-#if defined(ALGOR_P4032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P4032_LED)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P5064)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P5064_LED1)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P6032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(XXX)
-#define	LED(x)		XXX
-#endif
+/* log2(4) */
+#define	CHIP_ALIGN_STRIDE	2
 
-/*
- * led_display:
- *
- *	Set the LED display to the characters provided.
- */
-void
-led_display(u_int8_t a, u_int8_t b, u_int8_t c, u_int8_t d)
-{
-	u_int8_t *leds = (u_int8_t *) LEDBASE;
+/* IO region 1 */
+#define	CHIP_IO_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_IO_W1_BUS_END(v)	0xffffffffUL
+#define	CHIP_IO_W1_SYS_START(v)	0
+#define	CHIP_IO_W1_SYS_END(v)	CHIP_IO_W1_BUS_END(v)
 
-	leds[LED(0)] = a;
-	leds[LED(1)] = b;
-	leds[LED(2)] = c;
-	leds[LED(3)] = d;
-}
+#include <algor/pci/pci_alignstride_bus_io_chipdep.c>

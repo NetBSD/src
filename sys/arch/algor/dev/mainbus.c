@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2001/05/28 16:22:16 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2001/06/01 16:00:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,15 +72,39 @@ int	mainbus_submatch(struct device *, struct cfdata *, void *);
 /* There can be only one. */
 int	mainbus_found;
 
+struct mainbusdev {
+	const char *md_name;
+	bus_addr_t md_addr;
+	int md_irq;
+};
+
+#if defined(ALGOR_P4032)
+#include <algor/algor/algor_p4032reg.h>
+#include <algor/algor/algor_p4032var.h>
+
+struct mainbusdev mainbusdevs[] = {
+	{ "cpu",		-1,			-1 },
+	{ "mcclock",		P4032_RTC,		P4032_IRQ_RTC },
+	{ "com",		P4032_COM1,		P4032_IRQ_COM1 },
+	{ "com",		P4032_COM2,		P4032_IRQ_COM2 },
+	{ "lpt",		P4032_LPT,		P4032_IRQ_LPT },
+	{ "pckbc",		P4032_PCKBC,		P4032_IRQ_PCKBC },
+	{ "fdc",		P4032_FDC,		P4032_IRQ_FLOPPY },
+	{ "vtpbc",		P4032_V962PBC,		-1 },
+
+	{ NULL,			0,			0 },
+};
+#endif /* ALGOR_P4032 */
+
 #if defined(ALGOR_P5064)
 #include <algor/algor/algor_p5064reg.h>
 #include <algor/algor/algor_p5064var.h>
 
-struct mainbus_attach_args mainbusdevs[] = {
-	{ "cpu",		-1 },
-	{ "vtpbc",		P5064_V360EPC },
+struct mainbusdev mainbusdevs[] = {
+	{ "cpu",		-1,			-1 },
+	{ "vtpbc",		P5064_V360EPC,		-1 },
 
-	{ NULL,			0 },
+	{ NULL,			0,			0 },
 };
 #endif /* ALGOR_P5064 */
 
@@ -97,7 +121,9 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args *ma;
+	struct mainbus_attach_args ma;
+	struct mainbusdev *md;
+	bus_space_tag_t st;
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext, *memext;
 	pci_chipset_tag_t pc;
@@ -108,7 +134,17 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-#if defined(ALGOR_P5064)
+#if defined(ALGOR_P4032)
+	/*
+	 * Reserve the bottom 64K of the I/O space for ISA devices.
+	 */
+	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", 0x01000000, 0x07ffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+
+	pc = &p4032_configuration.ac_pc;
+#elif defined(ALGOR_P5064)
 	/*
 	 * Reserve the bottom 512K of the I/O space for ISA devices.
 	 * According to the PMON sources, this is a work-around for
@@ -120,16 +156,27 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	pc = &p5064_configuration.ac_pc;
-#endif /* ALGOR_P5064 */
+#endif /* ALGOR_P4032 || ALGOR_P5064 */
 
 	pci_configure_bus(pc, ioext, memext, NULL);
 	extent_destroy(ioext);
 	extent_destroy(memext);
 #endif /* NPCI > 0 && defined(PCI_NETBSD_CONFIGURE) */
 
-	for (ma = mainbusdevs; ma->ma_name != NULL; ma++)
-		(void) config_found_sm(self, ma, mainbus_print,
+#if defined(ALGOR_P4032)
+	st = &p4032_configuration.ac_lociot;
+#elif defined(ALGOR_P5064)
+	st = NULL;
+#endif
+
+	for (md = mainbusdevs; md->md_name != NULL; md++) {
+		ma.ma_name = md->md_name;
+		ma.ma_st = st;
+		ma.ma_addr = md->md_addr;
+		ma.ma_irq = md->md_irq;
+		(void) config_found_sm(self, &ma, mainbus_print,
 		    mainbus_submatch);
+	}
 }
 
 int
