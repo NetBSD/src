@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.182 2002/04/23 17:28:43 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.183 2002/05/05 06:01:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.182 2002/04/23 17:28:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.183 2002/05/05 06:01:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,6 +861,7 @@ scsi_probe_device(sc, target, lun)
 				break;
 			default: /* ST only or invalid */
 				/* nothing to do */
+				break;
 			}
 			if (inqbuf.flags4 & SID_IUS)
 				periph->periph_cap |= PERIPH_CAP_IUS;
