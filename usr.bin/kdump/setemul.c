@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.10 2001/12/02 16:18:01 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.11 2002/01/07 23:45:10 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.10 2001/12/02 16:18:01 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.11 2002/01/07 23:45:10 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,7 +140,9 @@ static const struct emulation emulations[] = {
 	  native_to_hpux_errno,  NELEM(native_to_hpux_errno)  },
 	{    "ibcs2",    ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL,
 	 native_to_ibcs2_errno,  NELEM(native_to_ibcs2_errno) },
-	{    "irix",    irix_syscallnames,   IRIX_SYS_MAXSYSCALL,
+	{    "irix o32",    irix_syscallnames,   IRIX_SYS_MAXSYSCALL,
+	 native_to_irix_errno,  NELEM(native_to_irix_errno) },
+	{    "irix n32",    irix_syscallnames,   IRIX_SYS_MAXSYSCALL,
 	 native_to_irix_errno,  NELEM(native_to_irix_errno) },
 	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
 	 native_to_linux_errno,  NELEM(native_to_linux_errno) },
