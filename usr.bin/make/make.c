@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.19 1997/09/28 03:31:07 lukem Exp $	*/
+/*	$NetBSD: make.c,v 1.19.2.1 1998/05/08 06:12:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.19 1997/09/28 03:31:07 lukem Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.19.2.1 1998/05/08 06:12:07 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.19 1997/09/28 03:31:07 lukem Exp $");
+__RCSID("$NetBSD: make.c,v 1.19.2.1 1998/05/08 06:12:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1003,7 +1003,7 @@ Make_Run (targs)
 	(void)MakeStartJobs();
     }
 
-    errors = Job_End();
+    errors = Job_Finish();
 
     /*
      * Print the final status of each target. E.g. if it wasn't made

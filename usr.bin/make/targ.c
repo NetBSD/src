@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.14 1997/09/28 03:31:12 lukem Exp $	*/
+/*	$NetBSD: targ.c,v 1.14.2.1 1998/05/08 06:12:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.14 1997/09/28 03:31:12 lukem Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.14.2.1 1998/05/08 06:12:08 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.14 1997/09/28 03:31:12 lukem Exp $");
+__RCSID("$NetBSD: targ.c,v 1.14.2.1 1998/05/08 06:12:08 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -494,17 +494,10 @@ Targ_FmtTime (time)
     time_t    time;
 {
     struct tm	  	*parts;
-    static char	  	buf[40];
-    static char	  	*months[] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    };
+    static char	  	buf[128];
 
     parts = localtime(&time);
-
-    sprintf (buf, "%d:%02d:%02d %s %d, %d",
-	     parts->tm_hour, parts->tm_min, parts->tm_sec,
-	     months[parts->tm_mon], parts->tm_mday, 1900 + parts->tm_year);
+    (void)strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);
     return(buf);
 }
 
