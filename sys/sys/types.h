@@ -1,4 +1,5 @@
-/* NetBSD $Id: types.h,v 1.15 1994/06/27 19:32:33 cgd Exp $ */
+/*	$NetBSD: types.h,v 1.16 1994/06/29 06:46:00 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

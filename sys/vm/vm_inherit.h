@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_inherit.h,v 1.6 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_inherit.h,v 1.7 1994/06/29 06:47:58 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

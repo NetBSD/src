@@ -1,3 +1,5 @@
+/*	$NetBSD: ns.c,v 1.6 1994/06/29 06:41:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns.c	8.2 (Berkeley) 11/15/93
- *	$Id: ns.c,v 1.5 1994/05/13 06:11:09 mycroft Exp $
+ *	@(#)ns.c	8.2 (Berkeley) 11/15/93
  */
 
 #include <sys/param.h>

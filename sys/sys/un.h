@@ -1,4 +1,5 @@
-/* NetBSD $Id: un.h,v 1.7 1994/06/27 19:32:37 cgd Exp $ */
+/*	$NetBSD: un.h,v 1.8 1994/06/29 06:46:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.

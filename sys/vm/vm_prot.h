@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_prot.h,v 1.5 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_prot.h,v 1.6 1994/06/29 06:48:42 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: sysctl.h,v 1.3 1994/06/27 19:32:10 cgd Exp $ */
+/*	$NetBSD: sysctl.h,v 1.4 1994/06/29 06:45:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

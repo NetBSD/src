@@ -1,4 +1,5 @@
-/* NetBSD $Id: vcmd.h,v 1.5 1994/06/27 19:32:46 cgd Exp $ */
+/*	$NetBSD: vcmd.h,v 1.6 1994/06/29 06:46:14 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.

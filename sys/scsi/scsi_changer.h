@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_changer.h,v 1.4 1994/06/29 06:43:02 cgd Exp $	*/
+
 /*
  * SCSI changer interface description
  */
@@ -18,8 +20,6 @@
  * functioning of this software in any circumstances.
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- *
- *	$Id: scsi_changer.h,v 1.3 1994/03/29 04:29:32 mycroft Exp $
  */
 #ifndef _SCSI_SCSI_CHANGER_H
 #define _SCSI_SCSI_CHANGER_H 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: nfsnode.h,v 1.11 1994/06/29 06:42:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfsnode.h	8.4 (Berkeley) 2/13/94
- *	$Id: nfsnode.h,v 1.10 1994/06/08 11:37:12 mycroft Exp $
+ *	@(#)nfsnode.h	8.4 (Berkeley) 2/13/94
  */
 
 /*

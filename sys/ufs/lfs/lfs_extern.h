@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs_extern.h,v 1.2 1994/06/29 06:46:55 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lfs_extern.h	8.2 (Berkeley) 4/16/94
- *	$Id: lfs_extern.h,v 1.1 1994/06/08 11:42:33 mycroft Exp $
+ *	@(#)lfs_extern.h	8.2 (Berkeley) 4/16/94
  */
 
 struct fid;

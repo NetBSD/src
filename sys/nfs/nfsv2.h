@@ -1,3 +1,5 @@
+/*	$NetBSD: nfsv2.h,v 1.9 1994/06/29 06:42:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfsv2.h	8.1 (Berkeley) 6/10/93
- *	$Id: nfsv2.h,v 1.8 1994/06/08 11:37:16 mycroft Exp $
+ *	@(#)nfsv2.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

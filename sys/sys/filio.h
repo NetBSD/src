@@ -1,4 +1,5 @@
-/* NetBSD $Id: filio.h,v 1.4 1994/06/27 19:31:14 cgd Exp $ */
+/*	$NetBSD: filio.h,v 1.5 1994/06/29 06:44:14 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

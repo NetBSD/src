@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_socket.c,v 1.15 1994/06/29 06:42:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfs_socket.c	8.3 (Berkeley) 1/12/94
- *	$Id: nfs_socket.c,v 1.14 1994/06/08 11:36:57 mycroft Exp $
+ *	@(#)nfs_socket.c	8.3 (Berkeley) 1/12/94
  */
 
 /*

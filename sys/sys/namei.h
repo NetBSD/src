@@ -1,4 +1,5 @@
-/* NetBSD $Id: namei.h,v 1.5 1994/06/27 19:31:41 cgd Exp $ */
+/*	$NetBSD: namei.h,v 1.6 1994/06/29 06:44:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

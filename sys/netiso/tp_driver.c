@@ -1,3 +1,5 @@
+/*	$NetBSD: tp_driver.c,v 1.6 1994/06/29 06:40:01 cgd Exp $	*/
+
 #define _XEBEC_PG static
 
 #include "tp_states.h"
@@ -9,8 +11,7 @@ static struct act_ent {
 #include "tp_states.init"
 };
 
-/* from: @(#)tp.trans	8.1 (Berkeley) 6/10/93 */
-/* $Id: tp_driver.c,v 1.5 1994/05/13 06:09:15 mycroft Exp $ */
+/* @(#)tp.trans	8.1 (Berkeley) 6/10/93 */
 
 #include <sys/param.h>
 #include <sys/systm.h>

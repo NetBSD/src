@@ -1,3 +1,5 @@
+/*	$NetBSD: dinode.h,v 1.3 1994/06/29 06:47:18 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dinode.h	8.3 (Berkeley) 1/21/94
- *	$Id: dinode.h,v 1.2 1994/06/14 22:56:19 mycroft Exp $
+ *	@(#)dinode.h	8.3 (Berkeley) 1/21/94
  */
 
 /*

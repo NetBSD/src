@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs_bio.c,v 1.2 1994/06/29 06:46:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lfs_bio.c	8.4 (Berkeley) 12/30/93
- *	$Id: lfs_bio.c,v 1.1 1994/06/08 11:42:28 mycroft Exp $
+ *	@(#)lfs_bio.c	8.4 (Berkeley) 12/30/93
  */
 
 #include <sys/param.h>

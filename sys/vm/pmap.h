@@ -1,4 +1,5 @@
-/* NetBSD $Id: pmap.h,v 1.8 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: pmap.h,v 1.9 1994/06/29 06:47:46 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs_syscalls.c,v 1.3 1994/06/29 06:47:02 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lfs_syscalls.c	8.5 (Berkeley) 4/20/94
- *	$Id: lfs_syscalls.c,v 1.2 1994/06/16 03:25:40 mycroft Exp $
+ *	@(#)lfs_syscalls.c	8.5 (Berkeley) 4/20/94
  */
 
 #include <sys/param.h>

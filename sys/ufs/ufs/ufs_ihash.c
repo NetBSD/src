@@ -1,3 +1,5 @@
+/*	$NetBSD: ufs_ihash.c,v 1.2 1994/06/29 06:47:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_ihash.c	8.4 (Berkeley) 12/30/93
- *	$Id: ufs_ihash.c,v 1.1 1994/06/08 11:43:16 mycroft Exp $
+ *	@(#)ufs_ihash.c	8.4 (Berkeley) 12/30/93
  */
 
 #include <sys/param.h>

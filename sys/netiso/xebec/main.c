@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.4 1994/05/13 06:10:23 mycroft Exp $ */
+/*	$NetBSD: main.c,v 1.5 1994/06/29 06:41:07 cgd Exp $	*/
 
 /*
  * TODO:

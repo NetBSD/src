@@ -1,4 +1,4 @@
-/* $Id: putdriver.c,v 1.3 1994/05/13 06:10:34 mycroft Exp $ */
+/*	$NetBSD: putdriver.c,v 1.4 1994/06/29 06:41:15 cgd Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.

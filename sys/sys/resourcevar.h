@@ -1,4 +1,5 @@
-/* NetBSD $Id: resourcevar.h,v 1.8 1994/06/27 19:31:54 cgd Exp $ */
+/*	$NetBSD: resourcevar.h,v 1.9 1994/06/29 06:45:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

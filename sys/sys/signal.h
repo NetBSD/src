@@ -1,4 +1,5 @@
-/* NetBSD $Id: signal.h,v 1.12 1994/06/27 19:32:00 cgd Exp $ */
+/*	$NetBSD: signal.h,v 1.13 1994/06/29 06:45:21 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

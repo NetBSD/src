@@ -1,5 +1,6 @@
-#	from: @(#)README	8.1 (Berkeley) 6/11/93
-#	$Id: README,v 1.1 1994/06/08 11:42:16 mycroft Exp $
+#	$NetBSD: README,v 1.2 1994/06/29 06:46:43 cgd Exp $
+
+#	@(#)README	8.1 (Berkeley) 6/11/93
 
 The file system is reasonably stable, but incomplete.  There are
 places where cleaning performance can be improved dramatically (see

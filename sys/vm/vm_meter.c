@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_meter.c,v 1.14 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_meter.c,v 1.15 1994/06/29 06:48:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

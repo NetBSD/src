@@ -1,3 +1,5 @@
+/*	$NetBSD: tp_tpdu.h,v 1.6 1994/06/29 06:40:41 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_tpdu.h	8.1 (Berkeley) 6/10/93
- *	$Id: tp_tpdu.h,v 1.5 1994/05/13 06:09:53 mycroft Exp $
+ *	@(#)tp_tpdu.h	8.1 (Berkeley) 6/10/93
  */
 
 /***********************************************************

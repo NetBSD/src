@@ -1,4 +1,4 @@
-/* $Id: sets.c,v 1.3 1994/05/13 06:10:36 mycroft Exp $ */
+/*	$NetBSD: sets.c,v 1.4 1994/06/29 06:41:16 cgd Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: exec_ecoff.h,v 1.4 1994/06/27 19:31:07 cgd Exp $ */
+/*	$NetBSD: exec_ecoff.h,v 1.5 1994/06/29 06:44:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.

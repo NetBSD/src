@@ -1,4 +1,5 @@
-/* NetBSD $Id: ioctl.h,v 1.15 1994/06/27 19:31:19 cgd Exp $ */
+/*	$NetBSD: ioctl.h,v 1.16 1994/06/29 06:44:23 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

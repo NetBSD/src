@@ -1,4 +1,5 @@
-/* NetBSD $Id: sockio.h,v 1.2 1994/06/27 19:32:07 cgd Exp $ */
+/*	$NetBSD: sockio.h,v 1.3 1994/06/29 06:45:32 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

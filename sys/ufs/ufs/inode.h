@@ -1,3 +1,5 @@
+/*	$NetBSD: inode.h,v 1.2 1994/06/29 06:47:21 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)inode.h	8.4 (Berkeley) 1/21/94
- *	$Id: inode.h,v 1.1 1994/06/08 11:43:07 mycroft Exp $
+ *	@(#)inode.h	8.4 (Berkeley) 1/21/94
  */
 
 #include <ufs/ufs/dinode.h>

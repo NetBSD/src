@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_fault.c,v 1.14 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_fault.c,v 1.15 1994/06/29 06:47:55 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

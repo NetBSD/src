@@ -1,3 +1,5 @@
+/*	$NetBSD: swapnfs.c,v 1.8 1994/06/29 06:42:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
- *	$Id: swapnfs.c,v 1.7 1994/04/29 15:54:10 glass Exp $
+ *	@(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
  */
 
 /*

@@ -1,4 +1,5 @@
-/* NetBSD $Id: vnode.h,v 1.23 1994/06/27 19:32:50 cgd Exp $ */
+/*	$NetBSD: vnode.h,v 1.24 1994/06/29 06:46:18 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

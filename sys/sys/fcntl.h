@@ -1,4 +1,5 @@
-/* NetBSD $Id: fcntl.h,v 1.6 1994/06/27 19:31:10 cgd Exp $ */
+/*	$NetBSD: fcntl.h,v 1.7 1994/06/29 06:44:08 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/* $Id: xebec.h,v 1.3 1994/05/13 06:10:47 mycroft Exp $ */
+/*	$NetBSD: xebec.h,v 1.4 1994/06/29 06:41:25 cgd Exp $	*/
 
 union llattrib {
 	struct {

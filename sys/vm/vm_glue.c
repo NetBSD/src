@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_glue.c,v 1.38 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_glue.c,v 1.39 1994/06/29 06:47:57 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

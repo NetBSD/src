@@ -1,3 +1,5 @@
+/*	$NetBSD: ns_cksum.c,v 1.2 1994/06/29 06:41:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_cksum.c	8.1 (Berkeley) 6/10/93
- *	$Id: ns_cksum.c,v 1.1 1994/05/13 06:11:12 mycroft Exp $
+ *	@(#)ns_cksum.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,3 @@
-/* $Id: malloc.h,v 1.3 1994/05/13 06:10:28 mycroft Exp $ */
+/*	$NetBSD: malloc.h,v 1.4 1994/06/29 06:41:11 cgd Exp $	*/
 
 char *Malloc();

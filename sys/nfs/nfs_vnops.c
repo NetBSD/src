@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_vnops.c,v 1.34 1994/06/29 06:42:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfs_vnops.c	8.5 (Berkeley) 2/13/94
- *	$Id: nfs_vnops.c,v 1.33 1994/06/22 14:01:47 pk Exp $
+ *	@(#)nfs_vnops.c	8.5 (Berkeley) 2/13/94
  */
 
 /*

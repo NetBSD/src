@@ -1,4 +1,4 @@
-/* $Id: malloc.c,v 1.3 1994/05/13 06:10:26 mycroft Exp $ */
+/*	$NetBSD: malloc.c,v 1.4 1994/06/29 06:41:10 cgd Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.

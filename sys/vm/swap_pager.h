@@ -1,4 +1,5 @@
-/* NetBSD $Id: swap_pager.h,v 1.5 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: swap_pager.h,v 1.6 1994/06/29 06:47:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993

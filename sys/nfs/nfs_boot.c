@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_boot.c,v 1.5 1994/06/29 06:42:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
  * All rights reserved.
@@ -23,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: nfs_boot.c,v 1.4 1994/06/21 08:30:20 pk Exp $
  */
 
 #include <sys/param.h>

@@ -1,4 +1,5 @@
-/* NetBSD $Id: mount.h,v 1.32 1994/06/27 19:31:35 cgd Exp $ */
+/*	$NetBSD: mount.h,v 1.33 1994/06/29 06:44:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

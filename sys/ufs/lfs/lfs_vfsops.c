@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs_vfsops.c,v 1.2 1994/06/29 06:47:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lfs_vfsops.c	8.7 (Berkeley) 4/16/94
- *	$Id: lfs_vfsops.c,v 1.1 1994/06/08 11:42:48 mycroft Exp $
+ *	@(#)lfs_vfsops.c	8.7 (Berkeley) 4/16/94
  */
 
 #include <sys/param.h>

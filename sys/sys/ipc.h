@@ -1,4 +1,5 @@
-/* NetBSD $Id: ipc.h,v 1.10 1994/06/27 19:31:22 cgd Exp $ */
+/*	$NetBSD: ipc.h,v 1.11 1994/06/29 06:44:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993

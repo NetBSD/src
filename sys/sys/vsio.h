@@ -1,4 +1,5 @@
-/* NetBSD $Id: vsio.h,v 1.5 1994/06/27 19:32:51 cgd Exp $ */
+/*	$NetBSD: vsio.h,v 1.6 1994/06/29 06:46:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.

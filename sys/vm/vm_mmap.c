@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_mmap.c,v 1.30 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_mmap.c,v 1.31 1994/06/29 06:48:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1991, 1993

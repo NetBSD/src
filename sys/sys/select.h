@@ -1,4 +1,5 @@
-/* NetBSD $Id: select.h,v 1.8 1994/06/27 19:31:56 cgd Exp $ */
+/*	$NetBSD: select.h,v 1.9 1994/06/29 06:45:12 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

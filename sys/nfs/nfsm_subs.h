@@ -1,3 +1,5 @@
+/*	$NetBSD: nfsm_subs.h,v 1.5 1994/06/29 06:42:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfsm_subs.h	8.1 (Berkeley) 6/16/93
- *	$Id: nfsm_subs.h,v 1.4 1994/06/08 11:37:09 mycroft Exp $
+ *	@(#)nfsm_subs.h	8.1 (Berkeley) 6/16/93
  */
 
 /*

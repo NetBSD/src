@@ -1,3 +1,5 @@
+/*	$NetBSD: iso_snpac.c,v 1.6 1994/06/29 06:39:51 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso_snpac.c	8.1 (Berkeley) 6/10/93
- *	$Id: iso_snpac.c,v 1.5 1994/05/13 06:09:01 mycroft Exp $
+ *	@(#)iso_snpac.c	8.1 (Berkeley) 6/10/93
  */
 
 /***********************************************************

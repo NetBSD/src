@@ -1,4 +1,4 @@
-/* $Id: tp_events.h,v 1.3 1994/05/13 06:09:18 mycroft Exp $ */
+/*	$NetBSD: tp_events.h,v 1.4 1994/06/29 06:40:08 cgd Exp $	*/
 
 struct tp_event {
 	int ev_number;

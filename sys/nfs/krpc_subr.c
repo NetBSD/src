@@ -1,3 +1,5 @@
+/*	$NetBSD: krpc_subr.c,v 1.3 1994/06/29 06:42:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon Ross, Adam Glass 
  * Copyright (c) 1992 Regents of the University of California.
@@ -38,7 +40,6 @@
  * partially based on:
  *      libnetboot/rpc.c
  *               @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
- *   $Id: krpc_subr.c,v 1.2 1994/06/13 15:28:55 gwr Exp $
  */
 
 #include <sys/param.h>
