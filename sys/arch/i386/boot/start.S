@@ -29,12 +29,15 @@
 /*
  * HISTORY
  * $Log: start.S,v $
- * Revision 1.2  1993/07/11 12:02:24  andrew
- * Fixes from bde, including support for loading @ any MB boundary (e.g. a
- * kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
- * buffering to speed booting from floppies.  Also works with aha174x
- * controllers in enhanced mode.
+ * Revision 1.3  1993/10/18 14:41:32  pk
+ * Made "start" the entry point (for consistency with other "ld" lines).
  *
+Revision 1.2  1993/07/11  12:02:24  andrew
+Fixes from bde, including support for loading @ any MB boundary (e.g. a
+kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+buffering to speed booting from floppies.  Also works with aha174x
+controllers in enhanced mode.
+
  *
  * 93/07/06  bde
  *	Restored BOOTSEG to 0x9000 for distribution.  It should be decided
@@ -153,14 +156,16 @@ BSDPART		=	0xA5	# value of boot_ind, means bootable partition
 BOOTABLE	=	0x80	# value of boot_ind, means bootable partition
 
 	.text	
+	.globl	start
 
 ENTRY(boot1)
+start:
 	# start (aka boot1) is loaded at 0x0:0x7c00 but we want 0x7c0:0
 	# ljmp to the next instruction to adjust %cs
 	data32
-	ljmp $0x7c0, $start
+	ljmp $0x7c0, $start1
 
-start:
+start1:
 	# set up %ds
 	mov	%cs, %ax
 	mov	%ax, %ds
