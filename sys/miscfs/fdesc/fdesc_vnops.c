@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.28 1996/02/01 00:31:05 jtc Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.29 1996/02/09 14:45:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -845,6 +845,49 @@ fdesc_vfree(ap)
 	return (0);
 }
 
+int
+fdesc_link(ap) 
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;  
+		struct componentname *a_cnp;
+	} */ *ap;
+{
+ 
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+fdesc_symlink(ap)
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	} */ *ap;
+{
+  
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+fdesc_abortop(ap)
+	struct vop_abortop_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+	} */ *ap;
+{
+ 
+	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
+		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	return (0);
+}
+
 /*
  * /dev/fd vnode unsupported operation
  */
@@ -884,12 +927,9 @@ fdesc_nullop()
 #define fdesc_fsync ((int (*) __P((struct  vop_fsync_args *)))nullop)
 #define fdesc_seek ((int (*) __P((struct  vop_seek_args *)))nullop)
 #define fdesc_remove ((int (*) __P((struct  vop_remove_args *)))fdesc_enotsupp)
-#define fdesc_link ((int (*) __P((struct  vop_link_args *)))fdesc_enotsupp)
 #define fdesc_rename ((int (*) __P((struct  vop_rename_args *)))fdesc_enotsupp)
 #define fdesc_mkdir ((int (*) __P((struct  vop_mkdir_args *)))fdesc_enotsupp)
 #define fdesc_rmdir ((int (*) __P((struct  vop_rmdir_args *)))fdesc_enotsupp)
-#define fdesc_symlink ((int (*) __P((struct vop_symlink_args *)))fdesc_enotsupp)
-#define fdesc_abortop ((int (*) __P((struct  vop_abortop_args *)))nullop)
 #define fdesc_lock ((int (*) __P((struct  vop_lock_args *)))nullop)
 #define fdesc_unlock ((int (*) __P((struct  vop_unlock_args *)))nullop)
 #define fdesc_bmap ((int (*) __P((struct  vop_bmap_args *)))fdesc_badop)
