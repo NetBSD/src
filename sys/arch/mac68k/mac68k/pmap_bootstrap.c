@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.2 1995/06/22 03:09:49 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3 1995/06/25 04:49:05 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -563,7 +563,7 @@ bootstrap_mac68k(tc)
 		nbnumranges = 0;
 		numranges = 1;
 		low[0] = 0;
-		high[0] = mac68k_machine.mach_memsize;
+		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
 	}
 	nextpa = load_addr + ((int)esym + NBPG - 1) & PG_FRAME;
 
