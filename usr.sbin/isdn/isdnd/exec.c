@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.5 2002/12/06 15:00:15 thorpej Exp $ 
+ *	$Id: exec.c,v 1.6 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -362,7 +362,8 @@ upd_callstat_file(char *filename, int rotateflag)
 
 			/* new day, write last days stats */
 
-			sprintf(buf, "%s-%02d", filename, stmp->tm_mday);
+			snprintf(buf, sizeof(buf), "%s-%02d", filename,
+			    stmp->tm_mday);
 
 			nfp = fopen(buf, "w");
 			if(nfp == NULL)
