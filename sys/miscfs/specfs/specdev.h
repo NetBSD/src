@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.19.6.3 2002/11/11 22:14:51 nathanw Exp $	*/
+/*	$NetBSD: specdev.h,v 1.19.6.4 2003/01/07 21:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)specdev.h	8.6 (Berkeley) 5/21/95
  */
+#ifndef _MISCFS_SPECFS_SPECDEV_H_
+#define _MISCFS_SPECFS_SPECDEV_H_
 
 /*
  * This structure defines the information maintained about
@@ -127,3 +129,5 @@ int	spec_advlock	__P((void *));
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
 int	spec_size	__P((void *));
+
+#endif /* _MISCFS_SPECFS_SPECDEV_H_ */

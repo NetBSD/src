@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.89.2.9 2002/11/11 22:16:44 nathanw Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89.2.10 2003/01/07 21:42:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -240,7 +240,7 @@ extern const int	vttoif_tab[];
  */
 #define	SKIPSYSTEM	0x0001		/* vflush: skip vnodes marked VSYSTEM */
 #define	FORCECLOSE	0x0002		/* vflush: force file closeure */
-#define	WRITECLOSE	0x0004		/* vflush: only close writeable files */
+#define	WRITECLOSE	0x0004		/* vflush: only close writable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 
