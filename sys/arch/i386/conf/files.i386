@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.239 2003/05/15 13:13:25 wiz Exp $
+#	$NetBSD: files.i386,v 1.240 2003/06/02 04:02:20 gmcgarry Exp $
 #
 # new style config file for i386 architecture
 #
@@ -286,6 +286,11 @@ file	arch/i386/isa/isapnp_machdep.c	isapnp
 # VME support
 #
 include	"dev/vme/files.vme"
+
+#
+# GPIB support
+#
+include "dev/gpib/files.gpib"
 
 #
 # Other mainbus-attached devices
