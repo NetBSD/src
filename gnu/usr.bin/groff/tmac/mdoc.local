@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.6 2003/07/04 12:20:11 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.7 2003/09/08 17:22:18 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,8 +129,6 @@
 .as str-St--isoC-tcor1      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Technical Corrigendum 1\*[Rq])
 .ds str-St--isoC-tcor2      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899/TCOR2:1995
 .as str-St--isoC-tcor2      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Technical Corrigendum 2\*[Rq])
-.ds str-St--xns5.2d2.0      \*[doc-Tn-font-size]X/Open\*[doc-str-St] Networking Services Issue\~5.2 Draft\~2.0
-.as str-St--xns5.2d2.0      " (\*[Lq]\*[doc-Tn-font-size]XNS\*[doc-str-St]\^5.2D2.0\*[Rq])
 .ds str-St--ieee1275-94     \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1275-1994
 .as str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
 .\" for a short time only -- use -isoC-90 or -isoC
