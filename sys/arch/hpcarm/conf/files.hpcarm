@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.22 2001/07/10 18:10:46 ichiro Exp $
+#	$NetBSD: files.hpcarm,v 1.23 2001/07/29 15:21:33 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -30,7 +30,6 @@ file	arch/hpcarm/hpcarm/exception.S
 file	arch/hpcarm/hpcarm/fault.c
 file	arch/hpcarm/hpcarm/fusu.S
 file	arch/hpcarm/hpcarm/intr.c
-file	arch/hpcarm/hpcarm/machdep.c
 file	arch/hpcarm/hpcarm/mem.c
 file	arch/hpcarm/hpcarm/process_machdep.c
 file	arch/hpcarm/hpcarm/procfs_machdep.c	procfs

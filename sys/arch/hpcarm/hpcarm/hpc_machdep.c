@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.16 2001/07/28 18:12:46 chris Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.17 2001/07/29 15:21:34 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -115,7 +115,8 @@ u_int cpu_reset_address = 0;
 
 BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
-char booted_kernel[80];
+static char booted_kernel_storage[80];
+char *booted_kernel = booted_kernel_storage;
 
 paddr_t physical_start;
 paddr_t physical_freestart;
@@ -352,7 +353,7 @@ initarm(argc, argv, bi)
 	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
 
 	/* parse kernel args */
-	strncpy(booted_kernel, *argv, sizeof(booted_kernel));
+	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
 	for(argc--, argv++; argc; argc--, argv++)
 		switch(**argv) {
 		case 'a':
@@ -732,6 +733,18 @@ initarm(argc, argv, bi)
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+}
+
+void
+consinit(void)
+{
+	static int consinit_called = 0;
+
+	if (consinit_called != 0)
+		return;
+
+	consinit_called = 1;
+	cninit();
 }
 
 #ifdef DEBUG_BEFOREMMU
