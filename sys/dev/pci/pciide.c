@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.51 2000/01/16 21:31:28 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.52 2000/01/18 13:58:07 bouyer Exp $	*/
 
 
 /*
@@ -2135,9 +2135,10 @@ sis_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	u_int32_t rev;
 	u_int8_t sis_ctr0 = pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_CTRL0);
 	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
+				    sc->sc_tag, PCI_CLASS_REG));
+	pcireg_t rev = PCI_REVISION(pci_conf_read(sc->sc_pc,
 				    sc->sc_tag, PCI_CLASS_REG));
 	bus_size_t cmdsize, ctlsize;
 
@@ -2147,8 +2148,6 @@ sis_chip_map(sc, pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	printf("\n");
-	rev = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG) & \
-	    PCI_REVISION_MASK;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		if (rev >= 0xd0)
