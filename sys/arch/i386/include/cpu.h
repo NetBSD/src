@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.21 1994/05/23 03:00:56 cgd Exp $
+ *	$Id: cpu.h,v 1.22 1994/05/27 11:22:58 mycroft Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -56,6 +56,7 @@
 #define	cpu_exec(p)		/* nothing */
 #define	cpu_swapin(p)		/* nothing */
 #define	cpu_wait(p)		/* nothing */
+#define	cpu_set_init_frame(p,frame)	(p->p_md.md_regs = frame)
 
 /*
  * Arguments to hardclock, softclock and statclock
