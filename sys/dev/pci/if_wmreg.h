@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.1.6.1 2002/07/15 16:14:01 thorpej Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.1.6.2 2002/11/08 08:50:42 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -201,6 +201,8 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_LU	(1U << 1)	/* link up */
 #define	STATUS_TCKOK	(1U << 2)	/* Tx clock running */
 #define	STATUS_RBCOK	(1U << 3)	/* Rx clock running */
+#define	STATUS_FUNCID_SHIFT 2		/* 82546 function ID */
+#define	STATUS_FUNCID_MASK  3		/* ... */
 #define	STATUS_TXOFF	(1U << 4)	/* Tx paused */
 #define	STATUS_TBIMODE	(1U << 5)	/* fiber mode (Livengood) */
 #define	STATUS_SPEED(x)	((x) << 6)	/* speed indication */
@@ -225,6 +227,11 @@ struct livengood_tcpip_ctxdesc {
 #define	EECD_FWE(x)	((x) << 4)	/* flash write enable control */
 #define	EECD_FWE_DISABLED EECD_FWE(1)
 #define	EECD_FWE_ENABLED  EECD_FWE(2)
+#define	EECD_EE_REQ	(1U << 6)	/* (shared) EEPROM request */
+#define	EECD_EE_GNT	(1U << 7)	/* (shared) EEPROM grant */
+#define	EECD_EE_PRES	(1U << 8)	/* EEPROM present */
+#define	EECD_EE_SIZE	(1U << 9)	/* EEPROM size
+					   (0 = 64 word, 1 = 256 word) */
 
 #define	UWIRE_OPC_ERASE	0x04		/* MicroWire "erase" opcode */
 #define	UWIRE_OPC_WRITE	0x05		/* MicroWire "write" opcode */
