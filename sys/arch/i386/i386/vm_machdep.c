@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.6 2000/08/18 13:38:36 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.7 2000/08/24 02:33:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -151,7 +151,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_esp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_ppl = 0;
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
