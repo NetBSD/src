@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.177 2004/07/22 20:30:43 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.178 2004/07/22 20:34:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,10 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.177 2004/07/22 20:30:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.178 2004/07/22 20:34:52 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
+#undef WI_HISTOGRAM
 #define STATIC static
 
 #include "bpfilter.h"
@@ -2396,6 +2397,12 @@ wi_write_wep(struct wi_softc *sc)
 STATIC int
 wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 {
+#ifdef WI_HISTOGRAM
+	static int hist1[11];
+	static int hist1count;
+	static int hist2[11];
+	static int hist2count;
+#endif
 	int i, status;
 
 	/* wait for the busy bit to clear */
@@ -2409,6 +2416,20 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 		    sc->sc_dev.dv_xname);
 		return(ETIMEDOUT);
   	}
+#ifdef WI_HISTOGRAM
+	if (i > 490)
+		hist1[500 - i]++;
+	else
+		hist1[10]++;
+	if (++hist1count == 1000) {
+		hist1count = 0;
+		printf("%s: hist1: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist1[0], hist1[1], hist1[2], hist1[3], hist1[4],
+		    hist1[5], hist1[6], hist1[7], hist1[8], hist1[9],
+		    hist1[10]);
+	}
+#endif
 	CSR_WRITE_2(sc, WI_PARAM0, val0);
 	CSR_WRITE_2(sc, WI_PARAM1, val1);
 	CSR_WRITE_2(sc, WI_PARAM2, val2);
@@ -2424,6 +2445,20 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 			break;
 		DELAY(WI_DELAY);
 	}
+#ifdef WI_HISTOGRAM
+	if (i < 100)
+		hist2[i/10]++;
+	else
+		hist2[10]++;
+	if (++hist2count == 1000) {
+		hist2count = 0;
+		printf("%s: hist2: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist2[0], hist2[1], hist2[2], hist2[3], hist2[4],
+		    hist2[5], hist2[6], hist2[7], hist2[8], hist2[9],
+		    hist2[10]);
+	}
+#endif
 
 	status = CSR_READ_2(sc, WI_STATUS);
 
@@ -2447,6 +2482,10 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 STATIC int
 wi_seek_bap(struct wi_softc *sc, int id, int off)
 {
+#ifdef WI_HISTOGRAM
+	static int hist4[11];
+	static int hist4count;
+#endif
 	int i, status;
 
 	CSR_WRITE_2(sc, WI_SEL0, id);
@@ -2464,6 +2503,20 @@ wi_seek_bap(struct wi_softc *sc, int id, int off)
 		}
 		DELAY(1);
 	}
+#ifdef WI_HISTOGRAM
+	if (i < 100)
+		hist4[i/10]++;
+	else
+		hist4[10]++;
+	if (++hist4count == 2500) {
+		hist4count = 0;
+		printf("%s: hist4: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist4[0], hist4[1], hist4[2], hist4[3], hist4[4],
+		    hist4[5], hist4[6], hist4[7], hist4[8], hist4[9],
+		    hist4[10]);
+	}
+#endif
 	if (status & WI_OFF_ERR) {
 		printf("%s: failed in wi_seek to %x/%x\n",
 		    sc->sc_dev.dv_xname, id, off);
