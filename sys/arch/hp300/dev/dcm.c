@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.65 2004/08/28 17:37:00 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.65 2004/08/28 17:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -147,6 +147,8 @@ __KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.65 2004/08/28 17:37:00 thorpej Exp $");
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/dcmreg.h>
+
+#include "ioconf.h"
 
 #ifndef DEFAULT_BAUD_RATE
 #define DEFAULT_BAUD_RATE 9600
@@ -360,8 +362,6 @@ static struct consdev dcm_cons = {
 int	dcmconscode;
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
-
-extern struct cfdriver dcm_cd;
 
 static dev_type_open(dcmopen);
 static dev_type_close(dcmclose);
