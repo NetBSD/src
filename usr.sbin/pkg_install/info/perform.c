@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.4 1997/10/17 14:54:17 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.5 1998/05/18 23:47:23 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.4 1997/10/17 14:54:17 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.5 1998/05/18 23:47:23 hubertf Exp $");
 #endif
 #endif
 
@@ -113,6 +113,11 @@ pkg_do(char *pkg)
 	    strncpy(fname, cp, FILENAME_MAX);
     }
     if (cp) {
+      if (isURL(pkg)) {
+	/* file is already unpacked by fileGetURL() */
+	strcpy(PlayPen,cp);
+      }
+      else {
 	/*
 	 * Apply a crude heuristic to see how much space the package will
 	 * take up once it's unpacked.  I've noticed that most packages
@@ -130,6 +135,7 @@ pkg_do(char *pkg)
 	    code = 1;
 	    goto bail;
 	}
+      }
     }
     /* It's not an ininstalled package, try and find it among the installed */
     else {
