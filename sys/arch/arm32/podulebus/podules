@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.2 1996/11/23 03:23:49 mark Exp $
+$NetBSD: podules,v 1.3 1997/01/03 23:21:28 mark Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -54,6 +54,7 @@ manufacturer	ICUBED		0x0046	I-Cubed
 manufacturer	BRINI		0x0050	Brini
 manufacturer	ANT		0x0053	ANT
 manufacturer	ALSYSTEMS	0x005b	Alsystems
+manufacturer	YES		0x0060	Yellowstone Educational Solutions
 manufacturer	MCS		0x0063	MCS
 
 /*
@@ -107,5 +108,7 @@ podule	ANT		ETHER3		0x00a4	ether 3/5 interface
 podule	ANT		ETHERB		0x00e4	ether B network slot interface
 
 podule	ALSYSTEMS	SCSI		0x0107	SCSI II host adapter
+
+podule	YES		RAPIDE		0x0114	RapIDE32 interface
 
 podule	MCS		SCSI		0x0125	Connect32 SCSI II interface
