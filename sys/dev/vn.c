@@ -216,6 +216,7 @@ vnstrategy(bp)
 
 		nra = 0;
 #if (BSD > 199103)
+#warning if should go away now
 		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn, &nra);
 #else
 		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn);
