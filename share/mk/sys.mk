@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.56 1999/11/15 06:14:23 matt Exp $
+#	$NetBSD: sys.mk,v 1.57 2000/05/02 03:44:36 sjg Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -27,10 +27,11 @@ CC?=		cc
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "vax"
-CFLAGS?=	-O2
+DBG?=	-O2
 .else
-CFLAGS?=	-O
+DBG?=	-O
 .endif
+CFLAGS?=	${DBG}
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
