@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.10 2002/05/03 14:12:59 drochner Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.11 2003/05/08 21:18:42 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.10 2002/05/03 14:12:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.11 2003/05/08 21:18:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -299,7 +299,8 @@ isic_intr_qs1p(vsc)
 static void
 elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 {
-	int s, v;
+	intptr_t v;
+	int s;
 	struct pci_isic_softc *psc = (struct pci_isic_softc *)sc;
 
 	switch (cmd) {
@@ -320,7 +321,7 @@ elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 		splx(s);
 		break;
 	case CMR_SETLEDS:
-		v = (int)data;
+		v = (intptr_t)data;
 		callout_stop(&psc->ledcallout);
 
 		/* the magic value and keep reset off */
