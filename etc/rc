@@ -79,7 +79,7 @@ syslogd
 
 # $timed_flags is imported from /etc/netstart;
 # if $timed_flags == NO, timed isn't run.
-if [ X${timed_flags} != X"NO" ]; then
+if [ "X${timed_flags}" != X"NO" ]; then
 	echo -n ', time daemon'; timed $timed_flags
 fi
 echo '.'
@@ -137,7 +137,7 @@ echo -n starting network daemons:
 # If $routed_flags == NO, routed isn't run.
 if [ X${gated} = X"YES" -a -r /etc/gated.conf ]; then
 	echo -n ' gated';	gated $gated_flags
-elif [ X${routed_flags} != X"NO" ]; then
+elif [ "X${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';	routed $routed_flags
 fi
 
