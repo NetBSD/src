@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.40 2002/09/11 05:36:26 itojun Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.41 2003/01/19 23:13:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.40 2002/09/11 05:36:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.41 2003/01/19 23:13:46 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -570,7 +570,6 @@ arc_input(ifp, m)
 	struct ifqueue *inq;
 	u_int8_t atype;
 	int s;
-	struct arphdr *arph;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -619,7 +618,6 @@ arc_input(ifp, m)
 		m_adj(m, ARC_HDRLEN);
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
-		arph = mtod(m, struct arphdr *);
 #ifdef ARCNET_ALLOW_BROKEN_ARP
 		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_IP);
 #endif
