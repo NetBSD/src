@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.10 1995/03/18 14:59:22 cgd Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.11 1995/11/28 05:25:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$NetBSD: quotacheck.c,v 1.10 1995/03/18 14:59:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: quotacheck.c,v 1.11 1995/11/28 05:25:56 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ needchk(fs)
 	register struct quotaname *qnp;
 	char *qfnp;
 
-	if (strcmp(fs->fs_vfstype, "ufs") ||
+	if (strcmp(fs->fs_vfstype, "ffs") ||
 	    strcmp(fs->fs_type, FSTAB_RW))
 		return (NULL);
 	if ((qnp = malloc(sizeof(*qnp))) == NULL)
