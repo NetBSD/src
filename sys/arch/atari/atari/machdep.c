@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1996/03/10 21:54:46 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1996/03/27 10:16:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1208,6 +1208,8 @@ static void call_sicallbacks()
 			rock1    = si->rock1;
 			rock2    = si->rock2;
 			s = splhigh ();
+			if(si_callbacks)
+				setsoftcback();
 			si->next = si_free;
 			si_free  = si;
 			splx(s);
