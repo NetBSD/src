@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.8 2000/03/20 01:35:30 augustss Exp $
+.\" $NetBSD: uhid.4,v 1.9 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ calls:
 .Bl -tag -width indent -compact
 .It Dv USB_GET_REPORT_DESC (struct usb_ctl_report_desc)
 Get the HID report descriptor.  Using
-this descriptor the exact layout and meaning of data to/from 
+this descriptor the exact layout and meaning of data to/from
 the device can be found.  The report descriptor is delivered
 without any processing.
 .Bd -literal
@@ -76,7 +76,7 @@ interrupt pipe.  This call may fail if the device does not support
 this feature.
 .It Dv USB_GET_REPORT (struct usb_ctl_report)
 Get a report from the device without waiting for data on
-the interrupt pipe.  The 
+the interrupt pipe.  The
 .Dv report
 field indicates which report is requested.  It should be
 .Dv UHID_INPUT_REPORT ,
@@ -90,7 +90,7 @@ struct usb_ctl_report {
 	u_char	data[1024];	/* used data size will vary */
 };
 .It Dv USB_SET_REPORT (struct usb_ctl_report)
-Set a report in the device.  The 
+Set a report in the device.  The
 .Dv report
 field indicates which report is to be set.  It should be
 .Dv UHID_INPUT_REPORT ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.12 2001/06/21 16:35:47 bouyer Exp $
+.\"	$NetBSD: tl.4,v 1.13 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -19,8 +19,8 @@
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,    
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 .\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 .\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 .\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -48,7 +48,7 @@ the Texas Instruments ThunderLAN chip.
 Supported cards include:
 .Pp
 .Bl -tag -width xxxxxx -offset indent
-.It Compaq Netelligent 
+.It Compaq Netelligent
 in baseboard and PCI variants (10bT-only variant untested).
 .It Compaq NetFlex 3/P
 in baseboard variant only (the PCI variant doesn't use the same chip !).
@@ -65,7 +65,7 @@ using the standard
 mechanism.  Refer to those manual pages for more information.
 .Pp
 The
-.Nm 
+.Nm
 driver don't have full automatic media selection. By default it will do an NWay
 on the UTP port for negotiation of the speed and duplex mode with the
 link partner. If the AUI or BNC port is used, an explicit medium must be

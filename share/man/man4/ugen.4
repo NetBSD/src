@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.12 2000/09/08 01:11:15 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.13 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,7 +71,7 @@ which is always endpoint 0.  The control endpoint accepts request
 and may respond with an answer to such request.  Control request
 are issued by
 .Xr ioctl 2
-calls.  
+calls.
 .\" .Pp
 .\" The isochronous transfer mode can be in or out depending on the
 .\" endpoint.  To perform IO on an isochronous endpoint
@@ -130,7 +130,7 @@ is the sole open endpoint.
 .It Dv USB_GET_ALTINTERFACE (struct usb_alt_interface)
 Get the alternative setting number for the interface with the given
 index.
-The 
+The
 .Dv config_index
 is ignored in this call.
 .Bd -literal
@@ -143,7 +143,7 @@ struct usb_alt_interface {
 .It Dv USB_SET_ALTINTERFACE (struct usb_alt_interface)
 Set the alternative setting to the given number in the interface with the
 given index.
-The 
+The
 .Dv config_index
 is ignored in this call.
 .br
@@ -200,7 +200,7 @@ struct usb_full_desc {
 	u_char	*data;
 };
 .Ed
-The 
+The
 .Dv data
 field should point to a memory area of of the size given in the
 .Dv size
@@ -225,7 +225,7 @@ Any data sent to/from the device is located at
 .Dv data .
 The size of the transferred data is determined from the
 .Dv request .
-The 
+The
 .Dv addr
 field is ignored in this call.
 The
@@ -252,7 +252,7 @@ Get an information summary for the device.  This call will not
 issue any USB transactions.
 .El
 .Pp
-Note that there are two different ways of addressing configurations, interfaces, 
+Note that there are two different ways of addressing configurations, interfaces,
 alternatives, and endpoints: by index or by number.
 The index is the ordinal number (starting from 0) of the descriptor
 as presented by the device.  The number is the respective number of
@@ -269,7 +269,7 @@ and for each of these iterating the
 .Dv endpoint_index
 from 0 to
 .Dv interface_desc->bNumEndpoints .
-The 
+The
 .Dv config_index
 should set to
 .Dv USB_CURRENT_CONFIG_INDEX
