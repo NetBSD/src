@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/10/11 01:53:31 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1998/08/24 22:07:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1997/10/11 01:53:31 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1998/08/24 22:07:37 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ main(argc, argv)
 	if (setuid(getuid()) < 0)
 		warn("setuid");
 
-	init(NULL);		/* Initialize everything */
+	init();		/* Initialize everything */
 	signal(SIGINT, trapdel);
 
 	if (argc > 1) {		/* Restore file specified */
@@ -83,7 +83,7 @@ main(argc, argv)
 		i = restore(argv[1]);	/* See what we've got */
 		switch (i) {
 		case 0:	/* The restore worked fine */
-			yea = Start(0);
+			yea = Start();
 			k = null;
 			unlink(argv[1]);	/* Don't re-use the save */
 			goto l8;		/* Get where we're going */
@@ -113,7 +113,7 @@ l2000:		if (loc == 0)
 		kk = &stext[loc];
 		if ((abb[loc] % abbnum) == 0 || kk->seekadr == 0)
 			kk = &ltext[loc];
-		if (!forced(loc) && dark(0)) {
+		if (!forced(loc) && dark()) {
 			if (wzdark && pct(35)) {
 				die(90);
 				goto l2000;
@@ -131,7 +131,7 @@ l2001:
 			goto l8;
 		if (loc == 33 && pct(25) && !closng)
 			rspeak(8);
-		if (!dark(0)) {
+		if (!dark()) {
 			abb[loc]++;
 			for (i = atloc[loc]; i != 0; i = links[i]) { /* 2004 */
 				obj = i;
@@ -170,7 +170,7 @@ l2600:		checkhints();	/* to 2600-2602 */
 				if (toting(i) && prop[i] < 0)	/* 2604 */
 					prop[i] = -1 - prop[i];
 		}
-		wzdark = dark(0);	/* 2605 */
+		wzdark = dark();	/* 2605 */
 		if (knfloc > 0 && knfloc != loc)
 			knfloc = 1;
 		getin(&wd1, &wd2);
@@ -442,7 +442,7 @@ l4080:
 				obj = obj * 100 + messag;
 			if (closed && toting(oyster))
 				obj = oyster;
-			if (obj > 100 || obj == 0 || dark(0))
+			if (obj > 100 || obj == 0 || dark())
 				goto l8000;
 			goto l9270;
 		case 30:	/* suspend=8300 */
@@ -456,7 +456,7 @@ l4080:
 			if (!yes(200, 54, 54))
 				goto l2012;
 			datime(&saved, &savet);
-			ciao(argv[0]);	/* Do we quit? */
+			ciao();	/* Do we quit? */
 			continue;	/* Maybe not */
 		case 31:	/* hours=8310 */
 			printf("Colossal cave is closed 9am-5pm Mon ");
@@ -533,7 +533,7 @@ l4090:
 				goto l2011;
 			prop[lamp] = 0;
 			rspeak(40);
-			if (dark(0))
+			if (dark())
 				rspeak(16);
 			goto l2012;
 
@@ -571,7 +571,7 @@ l4090:
 			}
 		l9130: case 13:/* pour */
 			if (obj == bottle || obj == 0)
-				obj = liq(0);
+				obj = liq();
 			if (obj == 0)
 				goto l8000;
 			if (!toting(obj))
@@ -608,12 +608,12 @@ l4090:
 				spk = 71;
 			goto l2011;
 		l9150: case 15:/* 9150 - drink */
-			if (obj == 0 && liqloc(loc) != water && (liq(0) != water
+			if (obj == 0 && liqloc(loc) != water && (liq() != water
 				|| !here(bottle)))
 				goto l8000;
 			if (obj != 0 && obj != water)
 				spk = 110;
-			if (spk == 110 || liq(0) != water || !here(bottle))
+			if (spk == 110 || liq() != water || !here(bottle))
 				goto l2011;
 			prop[bottle] = 1;
 			place[water] = 0;
@@ -640,7 +640,7 @@ l4090:
 			}
 		case 19:
 		case 20:	/* 9190: find, invent */
-			if (at(obj) || (liq(0) == obj && at(bottle))
+			if (at(obj) || (liq() == obj && at(bottle))
 			    || k == liqloc(loc))
 				spk = 94;
 			for (i = 1; i <= 5; i++)
@@ -680,7 +680,7 @@ l4090:
 			rspeak(bonus);
 			done(2);
 		l9270: case 27:/* read */
-			if (dark(0))
+			if (dark())
 				goto l5190;
 			if (obj == magzin)
 				spk = 190;
@@ -749,7 +749,7 @@ l5110:		if (k != dwarf)
 		for (i = 1; i <= 5; i++)
 			if (dloc[i] == loc && dflag >= 2)
 				goto l5010;
-l5120:		if ((liq(0) == k && here(bottle)) || k == liqloc(loc))
+l5120:		if ((liq() == k && here(bottle)) || k == liqloc(loc))
 			goto l5010;
 		if (obj != plant || !at(plant2) || prop[plant2] == 0)
 			goto l5130;
