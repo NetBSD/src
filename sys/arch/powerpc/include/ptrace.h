@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.5 2003/03/05 05:27:25 matt Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.6 2003/06/29 11:02:23 darrenr Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -25,8 +25,8 @@
 	case PT_GETVECREGS: \
 	case PT_SETVECREGS:
 
-int ptrace_machdep_dorequest(struct proc *, struct lwp *, int, caddr_t, int);
-int process_machdep_dovecregs(struct proc *, struct lwp *, struct uio *);
+int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, caddr_t, int);
+int process_machdep_dovecregs(struct lwp *, struct lwp *, struct uio *);
 int process_machdep_validvecregs(struct proc *);
 
 /* We have machine-dependent procfs nodes.  */
@@ -48,9 +48,9 @@ int process_machdep_validvecregs(struct proc *);
 /* Functions used by procfs.  */
 struct mount;
 struct pfsnode;
-int procfs_machdep_dovecregs(struct proc *, struct lwp *,
+int procfs_machdep_dovecregs(struct lwp *, struct lwp *,
 	struct pfsnode *, struct uio *);
-int procfs_machdep_validvecregs(struct proc *, struct mount *);
+int procfs_machdep_validvecregs(struct lwp *, struct mount *);
 
 #endif /* ALTIVEC */
 #endif /* _KERNEL */
