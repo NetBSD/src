@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.505 2004/11/12 05:02:46 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.506 2004/11/12 05:07:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7863,3 +7863,9 @@ bin/pax/extern.h				1.45
 	we can append to it. Modify the code so that file_write is re-entrant,
 	even in the gnu long name/link hack.
 	[christos, ticket #921]
+
+bin/pax/buf_subs.c				1.25
+
+	fd can be -1 or -2 for the gnu long name/link hack. So check for >= 0
+	instead of -1 if we need to flush.
+	[christos, ticket #922]
