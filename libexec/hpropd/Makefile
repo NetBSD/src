@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:41 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/03 04:09:28 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
@@ -7,8 +7,7 @@ MKLINT= no
 
 PROG= hpropd
 
-SRCS= 	hpropd.c				\
-	hprop-common.c
+SRCS= 	hpropd.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kdc			\
@@ -31,6 +30,7 @@ LDADD=	-lhdb					\
 	-lcrypto				\
 	-lasn1					\
 	-lcom_err				\
+	-lvers					\
 	-lroken					\
 	-lcrypt
 

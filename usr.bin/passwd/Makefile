@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2000/07/06 11:16:50 ad Exp $
+#	$NetBSD: Makefile,v 1.28 2000/08/03 04:02:32 assar Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ INSTALLFLAGS=-fschg
 .if (${MKKERBEROS} != "no")
 CPPFLAGS+= -DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 SRCS+=	krb5_passwd.c
-LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
+LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lvers -lroken -lcrypt
 .endif
 
 .include <bsd.prog.mk>
