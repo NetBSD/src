@@ -1,5 +1,5 @@
-/*	$NetBSD: ah.h,v 1.10.2.1 2000/07/25 04:24:46 itojun Exp $	*/
-/*	$KAME: ah.h,v 1.11 2000/07/15 16:07:47 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.10.2.2 2000/07/30 05:38:49 itojun Exp $	*/
+/*	$KAME: ah.h,v 1.12 2000/07/20 17:41:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,8 +41,6 @@
 #include "opt_inet.h"
 #endif
 
-struct secasvar;
-
 struct ah {
 	u_int8_t	ah_nxt;		/* Next Header */
 	u_int8_t	ah_len;		/* Length of data, in 32bit */
@@ -59,6 +57,9 @@ struct newah {
 	u_int32_t	ah_seq;		/* Sequence number field */
 	/* variable size, 32bit bound*/	/* Authentication data */
 };
+
+#ifdef _KERNEL
+struct secasvar;
 
 struct ah_algorithm_state {
 	struct secasvar *sav;
@@ -78,7 +79,6 @@ struct ah_algorithm {
 
 #define	AH_MAXSUMSIZE	16
 
-#ifdef _KERNEL
 extern const struct ah_algorithm *ah_algorithm_lookup __P((int));
 
 /* cksum routines */
