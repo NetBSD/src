@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.3 1997/10/12 12:13:48 oki Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.4 1998/06/25 23:59:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 /*
  * Graphics routines for the X68K native custom chip set.
  */
+
+#include "opt_compat_hpux.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.14 1998/01/12 18:30:59 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.15 1998/06/25 23:57:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 /*
  * Graphics routines for TOPCAT and CATSEYE frame buffers
  */
+
+#include "opt_compat_hpux.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/errno.h>

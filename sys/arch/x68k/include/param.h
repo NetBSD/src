@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1997/10/09 12:58:31 oki Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1998/06/25 23:59:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,6 +122,10 @@ int	cpuspeed;
 #define	delay(n)	do { register int N = cpuspeed * (n); while (--N > 0); } while(0)
 #define DELAY(n)	delay(n)
 #endif
+#endif
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_hpux.h"
 #endif
 
 #ifdef COMPAT_HPUX
