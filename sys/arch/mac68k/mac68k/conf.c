@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46 1998/10/23 01:16:25 ender Exp $	*/
+/*	$NetBSD: conf.c,v 1.47 1998/11/13 04:47:05 oster Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,15 +50,18 @@
 #include "cd.h"
 #include "ch.h"
 #include "md.h"
+#include "raid.h"
 #include "sd.h"
 #include "st.h"
 #include "vnd.h"
+
 /* No cdev for md */
 
 bdev_decl(ccd);
 bdev_decl(cd);
 bdev_decl(ch);
 bdev_decl(md);
+bdev_decl(raid);
 bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(sw);
@@ -86,6 +89,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 17 */
 	bdev_lkm_dummy(),		/* 18 */
 	bdev_lkm_dummy(),		/* 19 */
+	bdev_disk_init(NRAID,raid),	/* 20: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -135,6 +139,7 @@ cdev_decl(ptc);
 #define	ptsioctl	ptyioctl
 #define	ptstty		ptytty
 cdev_decl(pts);
+cdev_decl(raid);
 cdev_decl(sd);
 cdev_decl(se);
 cdev_decl(ss);
@@ -199,7 +204,11 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd),	/* 40: wscons keyboard driver */
 	cdev_mouse_init(NWSMOUSE,
 	    wsmouse),			/* 41: wscons mouse driver */
+#else
+	cdev_notdef(),			/* 40 */
+	cdev_notdef(),			/* 41 */
 #endif
+	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -283,6 +292,7 @@ static int chrtoblktab[] = {
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
+	/* 42 */	20,
 };
 
 dev_t

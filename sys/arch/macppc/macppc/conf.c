@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1998/10/18 09:31:43 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1998/11/13 04:47:06 oster Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,8 @@ bdev_decl(sw);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "raid.h"
+bdev_decl(raid);
 #include "sd.h"
 bdev_decl(sd);
 #include "st.h"
@@ -68,6 +70,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NMD,md),		/* 9: memory disk driver */
 	bdev_notdef(),			/* 10: reserved for IDE disk driver */
 	bdev_lkm_dummy(),		/* 11 */
+	bdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -87,6 +90,7 @@ cdev_decl(log);
 cdev_decl(sw);
 #include "bpfilter.h"
 cdev_decl(bpf);
+cdev_decl(raid);
 #include "rnd.h"
 cdev_decl(sd);
 cdev_decl(st);
@@ -160,6 +164,7 @@ struct cdevsw cdevsw[] = {
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 35: wsdisplay */
 	cdev_mouse_init(NWSKBD,wskbd),	/* 36: wskbd */
 	cdev_mouse_init(NWSMOUSE,wsmouse), /* 37: wsmouse */
+	cdev_disk_init(NRAID,raid),	/* 38: RAIDframe disk driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -232,6 +237,7 @@ static int chrtoblktbl[] = {
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
+	/* 38 */	12,
 };
 
 /*

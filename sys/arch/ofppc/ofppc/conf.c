@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1998/02/24 05:46:07 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1998/11/13 04:47:07 oster Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,9 +42,13 @@
 bdev_decl(ofdisk_);
 bdev_decl(sw);
 
+#include "raid.h"
+bdev_decl(raid);
+
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NOFDISK,ofdisk_),/* 0: Openfirmware disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo device */
+	bdev_disk_init(NRAID,raid),	/* 3: RAIDframe disk driver */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -71,6 +75,8 @@ cdev_decl(ofrtc_);
 cdev_decl(bpf);
 #include "rnd.h"
 
+cdev_decl(raid);
+
 #define	cdev_rtc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
 	dev_init(c,n,read), dev_init(c,n,write), \
@@ -90,6 +96,7 @@ struct cdevsw cdevsw[] = {
 	cdev_rtc_init(NOFRTC,ofrtc_),	/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
 	cdev_rnd_init(NRND,rnd),	/* 11: random source pseudo-device */
+	cdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -135,6 +142,7 @@ static int chrtoblktbl[] = {
 	/*  9 */	NODEV,
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
+	/* 12 */	3,
 };
 
 /*
