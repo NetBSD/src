@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.20 1999/02/25 21:54:53 is Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.21 1999/03/13 00:57:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -65,9 +65,7 @@
 #define	ISSET(t, f)	((t) & (f))
 
 #if !defined(UVM)
-static int procfs_rwmem __P((struct proc *, struct uio *));
-
-static int
+int
 procfs_rwmem(p, uio)
 	struct proc *p;
 	struct uio *uio;
