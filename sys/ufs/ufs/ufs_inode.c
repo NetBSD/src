@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.17 2000/12/01 09:54:42 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.18 2000/12/03 03:57:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -274,10 +274,11 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	 */
 
 out:
-	if (error) {
-		uvm_vnp_setsize(vp, oldeof);
-	}
 	simple_lock(&uobj->vmobjlock);
+	if (error) {
+		(void) (uobj->pgops->pgo_flush)(uobj, oldeof, pagestart + ppb,
+		    PGO_FREE);
+	}
 	if (pgs1[0] != NULL) {
 		uvm_page_unbusy(pgs1, npages1);
 
