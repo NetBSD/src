@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 2001/08/08 18:30:46 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1121,19 +1121,17 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		if (!(addr&TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
 			rv = uvm_fault(kernel_map, va, 0, access_type);
-			if (rv == 0) {
-#ifdef DEBUG
-				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-					printf("data_access_fault: kernel uvm_fault(%p, %lx, %x, 0) sez %x -- success\n",
-					       kernel_map, (vaddr_t)va, 0, rv);
-#endif
-				return;
-			}
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-				printf("data_access_fault: kernel uvm_fault(%p, %lx, 0, 0) sez %x -- failure\n",
-				       (void *)(u_long)kernel_map, (vaddr_t)va, rv);
+				printf("data_access_fault: kernel "
+					"uvm_fault(%p, %lx, %x, %x) "
+					"sez %x -- %s\n",
+					kernel_map, (vaddr_t)va, 0,
+					access_type, rv,
+					rv ? "failure" : "success");
 #endif
+			if (rv == 0)
+				return;
 			goto kfault;
 		}
 	} else
@@ -1148,8 +1146,11 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-		printf("data_access_fault: user uvm_fault(%p, %lx, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vaddr_t)va, 0, rv);
+		printf("data_access_fault: %s uvm_fault(%p, %lx, %x, %x) "
+			"sez %x -- %s\n",
+			&vm->vm_map == kernel_map ? "kernel!!!" : "user",
+			&vm->vm_map, (vaddr_t)va, 0, access_type, rv,
+			rv ? "failure" : "success");
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1201,6 +1202,11 @@ kfault:
 			extern int trap_trace_dis;
 			trap_trace_dis = 1;
 			printf("data_access_fault at addr %p: sending SIGSEGV\n", (void *)addr);
+			printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
+				"nsaved=%d\n",
+				(long)(curproc?curproc->p_pid:-1), tf, type,
+				(void*)addr, (void*)pc,
+				sfva, sfsr, (int)cpcb->pcb_nsaved);
 			Debugger();
 		}
 #endif
@@ -1368,7 +1374,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
 		printf("data_access_error at %p: sending SIGSEGV\n",
-			(void *)(u_long)va);
+			(void *)(u_long)afva);
 		Debugger();
 	}
 #endif
