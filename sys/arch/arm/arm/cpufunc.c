@@ -1,9 +1,10 @@
-/*	$NetBSD: cpufunc.c,v 1.11 2001/07/09 19:51:14 reinoud Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.12 2001/10/18 14:10:07 rearnsha Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
  * arm8 support code Copyright (c) 1997 ARM Limited
  * arm8 support code Copyright (c) 1997 Causality Limited
+ * arm9 support code Copyright (C) 2001 ARM Ltd
  * Copyright (c) 1997 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -409,6 +410,76 @@ struct cpu_functions arm8_cpufuncs = {
 };          
 #endif	/* CPU_ARM8 */
 
+#ifdef CPU_ARM9
+struct cpu_functions arm9_cpufuncs = {
+	/* CPU functions */
+
+	cpufunc_id,			/* id			*/
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* Domain		*/
+	arm9_setttb,			/* Setttb		*/
+	cpufunc_faultstatus,		/* Faultstatus		*/
+	cpufunc_faultaddress,		/* Faultaddress		*/
+
+	/* TLB functions */
+
+	armv4_tlb_flushID,		/* tlb_flushID		*/
+	arm9_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache functions */
+
+	arm9_cache_flushID,		/* cache_flushID	*/
+	arm9_cache_flushID_SE,		/* cache_flushID_SE	*/
+	arm9_cache_flushI,		/* cache_flushI		*/
+	arm9_cache_flushI_SE,		/* cache_flushI_SE	*/
+	arm9_cache_flushD,		/* cache_flushD		*/
+	arm9_cache_flushD_SE,		/* cache_flushD_SE	*/
+
+	/* ... lets use the cache in write-through mode.  */
+	arm9_cache_cleanID,		/* cache_cleanID	*/
+	(void *)arm9_cache_cleanID,	/* cache_cleanID_SE	*/
+	arm9_cache_cleanID,		/* cache_cleanD		*/
+	(void *)arm9_cache_cleanID,	/* cache_cleanD_SE	*/
+
+	arm9_cache_flushID,		/* cache_purgeID	*/
+	arm9_cache_flushID_SE,		/* cache_purgeID_SE	*/
+	arm9_cache_flushD,		/* cache_purgeD		*/
+	arm9_cache_flushD_SE,		/* cache_purgeD_SE	*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+	arm9_cache_syncI,		/* cache_syncI		*/
+	(void *)arm9_cache_cleanID,	/* cache_cleanID_rng	*/
+	(void *)arm9_cache_cleanID,	/* cache_cleanD_rng	*/
+	arm9_cache_flushID_rng,		/* cache_purgeID_rng	*/
+	arm9_cache_flushD_rng,		/* cache_purgeD_rng	*/
+	arm9_cache_syncI_rng,		/* cache_syncI_rng	*/
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	arm9_context_switch,		/* context_switch	*/
+
+	arm9_setup			/* cpu setup		*/
+
+};
+#endif /* CPU_ARM9 */
+
 #ifdef CPU_SA110
 struct cpu_functions sa110_cpufuncs = {
 	/* CPU functions */
@@ -425,12 +496,12 @@ struct cpu_functions sa110_cpufuncs = {
 
 	/* TLB functions */
 
-	sa110_tlb_flushID,		/* tlb_flushID		*/
+	armv4_tlb_flushID,		/* tlb_flushID		*/
 	sa110_tlb_flushID_SE,		/* tlb_flushID_SE		*/
-	sa110_tlb_flushI,		/* tlb_flushI		*/
-	(void *)sa110_tlb_flushI,	/* tlb_flushI_SE	*/
-	sa110_tlb_flushD,		/* tlb_flushD		*/
-	sa110_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
 	/* Cache functions */
 
@@ -454,7 +525,7 @@ struct cpu_functions sa110_cpufuncs = {
 	/* Other functions */
 
 	cpufunc_nullop,			/* flush_prefetchbuf	*/
-	sa110_drain_writebuf,		/* drain_writebuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
 	cpufunc_nullop,			/* flush_brnchtgt_C	*/
 	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
 
@@ -540,6 +611,14 @@ set_cpufuncs()
 		return 0;
 	}
 #endif	/* CPU_ARM8 */
+#ifdef CPU_ARM9
+	if (cputype == CPU_ID_ARM920T) {
+		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
+		cpufuncs = arm9_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1; /* V4 or higher */
+		return 0;
+	}
+#endif /* CPU_ARM9 */
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110 || cputype == CPU_ID_SA1100 ||
 	    cputype == CPU_ID_SA1110) {
@@ -951,7 +1030,7 @@ late_abort_fixup(arg)
  */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
-	defined(CPU_ARM8) || defined(CPU_SA110)
+	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110)
 int cpuctrl;
 
 #define IGN	0
@@ -1199,6 +1278,48 @@ arm8_setup(args)
 		arm8_clock_config(0x7f, clocktest);
 }
 #endif	/* CPU_ARM8 */
+
+#ifdef CPU_ARM9
+struct cpu_option arm9_options[] = {
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "arm9.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "arm9.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
+	{ "arm9.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ "arm9.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm9_setup(args)
+	char *args;
+{
+	int cpuctrlmask;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+	    | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+	    | CPU_CONTROL_WBUF_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
+		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
+		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
+		 | CPU_CONTROL_CPCLK;
+
+	cpuctrl = parse_cpu_options(args, arm9_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/* Set the control register */    
+	cpu_control(0xffffffff, cpuctrl);
+
+}
+#endif	/* CPU_ARM9 */
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {
