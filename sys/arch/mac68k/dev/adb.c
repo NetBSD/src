@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.7 1996/05/05 06:16:19 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.8 1996/05/05 14:33:55 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -322,22 +322,34 @@ adb_processevent(event)
 		 */
 		max_byte = event->byte_count;
 		button_bit = 1;
-		/* Classic Mouse Protocol (up to 2 buttons) */
-		for (i = 0; i < 2; i++, button_bit <<= 1)
-			/* 0 when button down */
-			if (!(event->bytes[i] & 0x80))
-				buttons |= button_bit;
+		switch (event->hand_id) {
+		case ADBMS_USPEED:
+			/* MicroSpeed mouse */
+			if (max_byte == 4)
+				buttons = (~event->bytes[2]) & 0xff
 			else
-				buttons &= ~button_bit;
-		/* Extended Protocol (up to 6 more buttons) */
-		for (mask = 0x80; i < max_byte;
-		     i += (mask == 0x80), button_bit <<= 1) {
-			/* 0 when button down */
-			if (!(event->bytes[i] & mask))
-				buttons |= button_bit;
-			else
-				buttons &= ~button_bit;
-			mask = ((mask >> 4) & 0xf) | ((mask & 0xf) << 4);
+				buttons = (event->bytes[0] & 0x80) ? 0 : 1;
+			break;
+		default:
+			/* Classic Mouse Protocol (up to 2 buttons) */
+			for (i = 0; i < 2; i++, button_bit <<= 1)
+				/* 0 when button down */
+				if (!(event->bytes[i] & 0x80))
+					buttons |= button_bit;
+				else
+					buttons &= ~button_bit;
+			/* Extended Protocol (up to 6 more buttons) */
+			for (mask = 0x80; i < max_byte;
+			     i += (mask == 0x80), button_bit <<= 1) {
+				/* 0 when button down */
+				if (!(event->bytes[i] & mask))
+					buttons |= button_bit;
+				else
+					buttons &= ~button_bit;
+				mask = ((mask >> 4) & 0xf)
+					| ((mask & 0xf) << 4);
+			}
+			break;
 		}
 		new_event.u.m.buttons = adb_ms_buttons | buttons;
 		new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.17 1996/05/05 06:16:22 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.18 1996/05/05 14:34:02 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -108,7 +108,39 @@ extdms_init()
 		/* Get the ADB information */
 		adbaddr = GetIndADB(&adbdata, adbindex);
 		if (adbdata.origADBAddr == ADBADDR_MS &&
-		    (adbdata.devType == 1 || adbdata.devType == 2)) {
+		    (adbdata.devType == ADBMS_USPEED)) {
+			/* Found MicroSpeed Mouse Deluxe Mac */
+			cmd = 0x39;	/* listen 1 */
+
+			/*
+			 * To setup the MicroSpeed, it appears that we can
+			 * send the following command to the mouse and then
+			 * expect data back in the form:
+			 *  buffer[0] = 4 (bytes)
+			 *  buffer[1], buffer[2] as std. mouse
+			 *  buffer[3] = buffer[4] = 0xff when no buttons
+			 *   are down.  When button N down, bit N is clear.
+			 * For the following command, buffer[1] appears to
+			 * be ignored?  buffer[4]'s locking mask enables a
+			 * click to toggle the button down state--sort of
+			 * like the "Easy Access" shift/control/etc. keys.
+			 */
+			buffer[0] = 4;
+			buffer[1] = 0x03;	/* not significant? */
+			buffer[2] = 0x00;	/* speed = maximum */
+			buffer[3] = 0x10;	/* enable extended protocol */
+			buffer[4] = 0x07;	/* Locking mask = 0000b,
+						   enable buttons = 0111b */
+
+			extdms_done = 0;
+			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				(Ptr)&extdms_done, cmd);
+			while (!extdms_done)
+				/* busy wait until done */;
+		}
+		if (adbdata.origADBAddr == ADBADDR_MS &&
+		    (   adbdata.devType == ADBMS_100DPI
+		     || adbdata.devType == ADBMS_200DPI)) {
 			/* found a mouse */
 			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
 
@@ -180,15 +212,15 @@ adb_init()
 		/* Print out the glory */
 		printf("adb: ");
 		switch (adbdata.origADBAddr) {
-		case 2:
+		case ADBADDR_MAP:
 			switch (adbdata.devType) {
-			case 1:
+			case ADB_STDKBD:
 				printf("keyboard");
 				break;
-			case 2:
+			case ADB_EXTKBD:
 				printf("extended keyboard");
 				break;
-			case 12:
+			case ADB_PBKBD:
 				printf("PowerBook keyboard");
 				break;
 			default:
@@ -197,7 +229,7 @@ adb_init()
 				break;
 			}
 			break;
-		case 3:
+		case ADBADDR_REL:
 			extdms_done = 0;
 			/* talk register 3 */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
@@ -205,13 +237,16 @@ adb_init()
 			while (!extdms_done)
 				/* busy-wait until done */;
 			switch (buffer[2]) {
-			case 1:
+			case ADBMS_100DPI:
 				printf("100 dpi mouse");
 				break;
-			case 2:
+			case ADBMS_200DPI:
 				printf("200 dpi mouse");
 				break;
-			case 4:
+			case ADBMS_USPEED:
+				printf("MicroSpeed mouse, default parameters");
+				break;
+			case ADBMS_EXTENDED:
 				extdms_done = 0;
 				/* talk register 1 */
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
@@ -237,7 +272,7 @@ adb_init()
 				break;
 			}
 			break;
-		case 4:
+		case ADBADDR_ABS:
 			printf("absolute positioning device (tablet?) (%d)", adbdata.devType);
 			break;
 		default:
