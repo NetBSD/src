@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.14 2003/05/27 15:24:25 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.15 2003/07/17 18:15:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.14 2003/05/27 15:24:25 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.15 2003/07/17 18:15:21 fvdl Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -419,7 +419,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 		error = __sigtimedwait(&wset, info, (timeout) ? &timo : NULL);
 
 		pthread_spinlock(self, &pt_sigwaiting_lock);
-		if ((error && errno != ECANCELED)
+		if ((error && (errno != ECANCELED || self->pt_cancel))
 		    || (!error && __sigismember14(set, info->si_signo)) ) {
 			/*
 			 * Normal function return. Clear pt_sigwmaster,
