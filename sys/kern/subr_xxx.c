@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
- *	$Id: subr_xxx.c,v 1.4 1993/06/06 03:35:39 cgd Exp $
+ *	$Id: subr_xxx.c,v 1.5 1993/06/27 06:01:54 andrew Exp $
  */
 
 /*
@@ -45,6 +45,7 @@
 /*
  * Unsupported device function (e.g. writing to read-only device).
  */
+int
 enodev()
 {
 
@@ -54,6 +55,7 @@ enodev()
 /*
  * Unconfigured device function; driver not configured.
  */
+int
 enxio()
 {
 
@@ -63,6 +65,7 @@ enxio()
 /*
  * Unsupported ioctl function.
  */
+int
 enoioctl()
 {
 
@@ -74,6 +77,7 @@ enoioctl()
  * This is used for an otherwise-reasonable operation
  * that is not supported by the current system binary.
  */
+int
 enosys()
 {
 
@@ -84,6 +88,7 @@ enosys()
  * Return error for operation not supported
  * on a specific object or file type.
  */
+int
 eopnotsupp()
 {
 
@@ -93,6 +98,7 @@ eopnotsupp()
 /*
  * Generic null operation, always returns success.
  */
+int
 nullop()
 {
 
@@ -100,10 +106,19 @@ nullop()
 }
 
 /*
+ * Generic null operation, returning void.
+ */
+void
+voidop()
+{
+}
+
+/*
  * Definitions of various trivial functions;
  * usually expanded inline rather than being defined here.
  */
 #ifdef NEED_MINMAX
+int
 imin(a, b)
 	int a, b;
 {
@@ -111,6 +126,7 @@ imin(a, b)
 	return (a < b ? a : b);
 }
 
+int
 imax(a, b)
 	int a, b;
 {
@@ -168,6 +184,7 @@ ulmax(a, b)
 #endif /* NEED_MINMAX */
 
 #ifdef NEED_FFS
+int
 ffs(mask)
 	register long mask;
 {
@@ -180,10 +197,13 @@ ffs(mask)
 			return(bit);
 		mask >>= 1;
 	}
+
+	return 0;
 }
 #endif /* NEED_FFS */
 
 #ifdef NEED_BCMP
+int
 bcmp(v1, v2, len)
 	void *v1, *v2;
 	register unsigned len;

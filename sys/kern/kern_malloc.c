@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_malloc.c	7.25 (Berkeley) 5/8/91
- *	$Id: kern_malloc.c,v 1.4 1993/05/27 14:35:22 deraadt Exp $
+ *	$Id: kern_malloc.c,v 1.5 1993/06/27 06:01:38 andrew Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "kernel.h"
 #include "malloc.h"
@@ -57,7 +58,7 @@ malloc(size, type, flags)
 {
 	register struct kmembuckets *kbp;
 	register struct kmemusage *kup;
-	long indx, npg, alloc, allocsize;
+	long indx, npg, allocsize;
 	int s;
 	caddr_t va, cp, savedlist;
 #ifdef KMEMSTATS
@@ -175,7 +176,10 @@ free(addr, type)
 {
 	register struct kmembuckets *kbp;
 	register struct kmemusage *kup;
-	long alloc, size;
+#ifdef DIAGNOSTIC
+	long alloc;
+#endif
+	long size;
 	int s;
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
@@ -236,6 +240,7 @@ free(addr, type)
 /*
  * Initialize the kernel memory allocator
  */
+void
 kmeminit()
 {
 	register long indx;

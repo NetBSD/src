@@ -33,7 +33,7 @@
  * from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.8 1993/05/22 11:42:11 cgd Exp $
+ *	if_sl.c,v 1.8 1993/05/22 11:42:11 cgd Exp
  */
 
 /*
@@ -249,9 +249,8 @@ slinit(sc)
  * Attach the given tty to the first available sl unit.
  */
 /* ARGSUSED */
-slopen(dev, tp)
-	dev_t dev;
-	register struct tty *tp;
+int
+slopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	register struct sl_softc *sc;
@@ -282,8 +281,10 @@ slopen(dev, tp)
  * Detach the tty from the sl unit.
  * Mimics part of ttyclose().
  */
-slclose(tp)
+void
+slclose(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	register struct sl_softc *sc;
 	int s;
@@ -405,6 +406,7 @@ sloutput(ifp, m, dst)
  * to send from the interface queue and map it to
  * the interface before starting output.
  */
+void
 slstart(tp)
 	register struct tty *tp;
 {
@@ -628,6 +630,7 @@ sl_btom(sc, len)
 /*
  * tty interface receiver interrupt.
  */
+void
 slinput(c, tp)
 	register int c;
 	register struct tty *tp;

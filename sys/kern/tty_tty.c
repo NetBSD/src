@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tty.c	7.15 (Berkeley) 5/28/91
- *	$Id: tty_tty.c,v 1.4 1993/05/22 11:41:52 cgd Exp $
+ *	$Id: tty_tty.c,v 1.5 1993/06/27 06:01:58 andrew Exp $
  */
 
 /*
@@ -49,6 +49,7 @@
 #define cttyvp(p) ((p)->p_flag&SCTTY ? (p)->p_session->s_ttyvp : NULL)
 
 /*ARGSUSED*/
+int
 cttyopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -69,9 +70,11 @@ cttyopen(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 cttyread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
@@ -85,9 +88,11 @@ cttyread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 cttywrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
@@ -101,6 +106,7 @@ cttywrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 cttyioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	int cmd;
@@ -123,6 +129,7 @@ cttyioctl(dev, cmd, addr, flag, p)
 }
 
 /*ARGSUSED*/
+int
 cttyselect(dev, flag, p)
 	dev_t dev;
 	int flag;

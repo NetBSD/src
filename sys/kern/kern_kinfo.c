@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.4 1993/05/22 11:41:38 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.5 1993/06/27 06:01:36 andrew Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "kinfo.h"
 #include "ioctl.h"
@@ -51,6 +52,7 @@ extern int kinfo_doproc(), kinfo_rtable(), kinfo_vnode(), kinfo_file();
 struct kinfo_lock kinfo_lock;
 
 /* ARGSUSED */
+int
 getkerninfo(p, uap, retval)
 	struct proc *p;
 	register struct args {
@@ -99,7 +101,7 @@ getkerninfo(p, uap, retval)
 
 	while (kinfo_lock.kl_lock) {
 		kinfo_lock.kl_want++;
-		sleep(&kinfo_lock, PRIBIO+1);
+		sleep((caddr_t)&kinfo_lock, PRIBIO+1);
 		kinfo_lock.kl_want--;
 		kinfo_lock.kl_locked++;
 	}
@@ -119,7 +121,7 @@ getkerninfo(p, uap, retval)
 release:
 	kinfo_lock.kl_lock--;
 	if (kinfo_lock.kl_want)
-		wakeup(&kinfo_lock);
+		wakeup((caddr_t)&kinfo_lock);
 done:
 	if (!error)
 		*retval = needed;
@@ -131,9 +133,12 @@ done:
  */
 #define KINFO_PROCSLOP	(5 * sizeof (struct kinfo_proc))
 
+int
 kinfo_doproc(op, where, acopysize, arg, aneeded)
+	int op;
 	char *where;
 	int *acopysize, *aneeded;
+	int arg;
 {
 	register struct proc *p;
 	register struct kinfo_proc *dp = (struct kinfo_proc *)where;
@@ -252,9 +257,12 @@ fill_eproc(p, ep)
 /*
  * Get file structures.
  */
+int
 kinfo_file(op, where, acopysize, arg, aneeded)
+	int op;
 	register char *where;
 	int *acopysize, *aneeded;
+	int arg;
 {
 	int buflen, needed, error;
 	struct file *fp;

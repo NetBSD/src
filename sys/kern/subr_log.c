@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_log.c,v 1.2 1993/05/18 18:19:20 cgd Exp $
+ *	$Id: subr_log.c,v 1.3 1993/06/27 06:01:52 andrew Exp $
  */
 
 /*
@@ -39,6 +39,7 @@
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "vnode.h"
 #include "ioctl.h"
@@ -60,6 +61,7 @@ struct logsoftc {
 int	log_open;			/* also used in log() */
 
 /*ARGSUSED*/
+int
 logopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
@@ -88,15 +90,19 @@ logopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
+int
 logclose(dev, flag)
 	dev_t dev;
+	int flag;
 {
 	log_open = 0;
 	logsoftc.sc_state = 0;
 	bzero(&logsoftc.sc_selp, sizeof(logsoftc.sc_selp));
+	return 0;
 }
 
 /*ARGSUSED*/
+int
 logread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -142,6 +148,7 @@ logread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 logselect(dev, rw, p)
 	dev_t dev;
 	int rw;
@@ -163,6 +170,7 @@ logselect(dev, rw, p)
 	return (0);
 }
 
+void
 logwakeup()
 {
 	struct proc *p;
@@ -183,8 +191,12 @@ logwakeup()
 }
 
 /*ARGSUSED*/
+int
 logioctl(dev, com, data, flag)
+	dev_t dev;
+	int com;
 	caddr_t data;
+	int flag;
 {
 	long l;
 	int s;

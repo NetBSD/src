@@ -23,12 +23,17 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_interface.c,v 1.2 1993/05/22 07:59:44 cgd Exp $
+ *	$Id: db_interface.c,v 1.3 1993/06/27 06:02:50 andrew Exp $
  */
 /*
  * HISTORY
  * $Log: db_interface.c,v $
- * Revision 1.2  1993/05/22 07:59:44  cgd
+ * Revision 1.3  1993/06/27 06:02:50  andrew
+ * ANSIfications - removed all implicit function return types and argument
+ * definitions.  Ensured that all files include "systm.h" to gain access to
+ * general prototypes.  Casts where necessary.
+ *
+ * Revision 1.2  1993/05/22  07:59:44  cgd
  * add rcsids to everything and clean up headers
  *
  * Revision 1.1.1.1  1993/03/21  09:45:52  cgd
@@ -256,8 +261,8 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-Debugger (msg)
-char *msg;
+int
+Debugger()
 {
 	asm ("int $3");
 }
