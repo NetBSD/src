@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.1 1997/03/29 20:56:03 thorpej Exp $	*/
+/*	$NetBSD: exect.S,v 1.2 1998/02/03 19:34:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,4 +45,4 @@
 
 #include "SYS.h"
 
-RSYSCALL(execve)
+PSEUDO(exect,execve)
