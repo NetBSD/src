@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.15 2004/05/08 21:03:43 jmc Exp $
+#	$NetBSD: mkioctls,v 1.16 2004/05/10 15:25:57 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 #
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
+echo "/* Automatically generated file, do not edit! */"
 echo "#define const" 	# XXX: timepps lossage
 echo "struct ap_control { int _xxx; };" # XXX: ip_nat.h lossage
 echo "#define COMPAT_43"
@@ -45,6 +46,7 @@ echo "#include <sys/param.h>"
 echo "#include <sys/disk.h>"
 echo "#include <sys/mount.h>"
 echo "#include <sys/termios.h>"
+echo "#include <sys/disklabel.h>"
 echo "#include <net/if.h>"
 echo "#include <net/route.h>"
 echo "#include <net/ppp_defs.h>"
@@ -60,8 +62,14 @@ do
 	echo "#include <$i>"
 done | sed -e "s,${DESTDIR}/usr/include/,,g"
 
-${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
+${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | tee sourcefile | awk '
 BEGIN {
+	keep["SLIOCGUNIT"] = 1;	/* Same as PPPIOCGASYNCMAP */
+	keep["SIOCRMNAT"] = 1;	/* Same as SIOCRMAFR */
+	keep["SIOCADNAT"] = 1;	/* Same as SIOCADAFR */
+	keep["SIOCDELST"] = 1;	/* Same as SIOCRMNAT */
+	keep["CHIOGPICKER"] = 1; /* Same as CDIOREADTOCHEADER */
+
 	print ""
 	print "char *ioctlname __P((long));"
 	print ""
@@ -70,9 +78,10 @@ BEGIN {
 	print "\tlong val;"
 	print "{"
 	print ""
+	print "\tswitch (val) {\n"
 }
 
-/^#[ 	]*define[ 	]*(TIO|FIO|SIO|OSIO|CIO|CRIO)[A-Z]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*[A-Z]*IO[A-Z]*[ 	]*_IO/ {
 	
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
@@ -80,11 +89,14 @@ BEGIN {
 			break;
 	++i;
 	# 
-	printf("\tif (val == %s)\n\t\treturn (\"%s\");\n", $i, $i);
-
+	if (keep[$i] != 1) {
+		printf("\tcase %s:\n\t\treturn \"%s\";\n", $i, $i);
+		keep[$i] = 1;
+	}
 }
 END {
-	print "\n\treturn (NULL);"
+	print "\tdefault:\n\t\treturn NULL;\n"
+	print "\t}\n"
 	print "}"
 }
 '
