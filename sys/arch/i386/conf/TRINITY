@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.36 1994/05/13 06:22:14 mycroft Exp $
+#	$Id: TRINITY,v 1.37 1994/05/21 08:37:49 cgd Exp $
 #
 
 machine		"i386"
@@ -14,7 +14,6 @@ options		"USER_LDT"
 
 ident		TRINITY
 maxusers	16
-maxfdescs	2048
 timezone	5 dst
 
 options		SWAPPAGER

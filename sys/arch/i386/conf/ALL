@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.51 1994/05/19 09:11:57 mycroft Exp $
+#	$Id: ALL,v 1.52 1994/05/21 08:37:27 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -27,9 +27,6 @@ timezone	8 dst
 
 # estimated number of users
 maxusers	32
-
-# maximum number of file descriptors per process
-maxfdescs	2048
 
 # paging of processes, and caching vnodes and devices; REQUIRED
 options		SWAPPAGER
