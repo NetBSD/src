@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.93 2000/09/06 23:28:30 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.94 2000/09/07 17:20:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_user_ldt.h"
+#include "opt_largepages.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +307,13 @@ pagemove(from, to, size)
 		panic("pagemove");
 	fpte = kvtopte((vaddr_t)from);
 	tpte = kvtopte((vaddr_t)to);
+#ifdef LARGEPAGES
+	/* XXX For now... */
+	if (*fpte & PG_PS)
+		panic("pagemove: fpte PG_PS");
+	if (*tpte & PG_PS)
+		panic("pagemove: tpte PG_PS");
+#endif
 	while (size > 0) {
 		otpte = *tpte;
 		ofpte = *fpte;
