@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.39.2.1 2000/04/11 20:42:33 billc Exp $
+#	$NetBSD: HOMEWORLD,v 1.39.2.2 2000/04/11 22:39:34 billc Exp $
 #
 #	HOMEWORLD - TNF mail/gnats
 #
@@ -178,7 +178,7 @@ mainbus0 at root
 # PCI bus support
 pci*	at mainbus? bus ?
 #pci*	at pchb? bus ?
-#pci*	at ppb? bus ?
+pci*	at ppb? bus ?
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
