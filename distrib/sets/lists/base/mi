@@ -98,6 +98,7 @@
 ./sbin/route
 ./sbin/routed
 ./sbin/rrestore
+./sbin/rtquery
 ./sbin/savecore
 ./sbin/shutdown
 ./sbin/slattach
@@ -348,6 +349,8 @@
 ./usr/include
 ./usr/include/arpa
 ./usr/include/dev
+./usr/include/dev/microcode
+./usr/include/dev/ofw
 ./usr/include/g++
 ./usr/include/g++/gen
 ./usr/include/kerberosIV
@@ -356,6 +359,7 @@
 ./usr/include/netccitt
 ./usr/include/netinet
 ./usr/include/netiso
+./usr/include/netnatm
 ./usr/include/netns
 ./usr/include/nfs
 ./usr/include/protocols
@@ -407,6 +411,7 @@
 ./usr/libexec/uucp/uuconv
 ./usr/libexec/uucp/uuxqt
 ./usr/libexec/uucpd
+./usr/lkm
 ./usr/local
 ./usr/local/bin
 ./usr/local/lib
@@ -449,6 +454,7 @@
 ./usr/sbin/chroot
 ./usr/sbin/cron
 ./usr/sbin/dev_mkdb
+./usr/sbin/dhcpd
 ./usr/sbin/dig
 ./usr/sbin/diskpart
 ./usr/sbin/dnsquery
@@ -464,9 +470,11 @@
 ./usr/sbin/lpd
 ./usr/sbin/lptest
 ./usr/sbin/mailstats
+./usr/sbin/makedbm
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
 ./usr/sbin/mk-amd-map
+./usr/sbin/mknetid
 ./usr/sbin/mrinfo
 ./usr/sbin/mrouted
 ./usr/sbin/mtrace
@@ -490,17 +498,21 @@
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
+./usr/sbin/rdsetimage
 ./usr/sbin/rdconfig
 ./usr/sbin/repquota
 ./usr/sbin/rmt
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.pcnfsd
+./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/sendmail
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/spray
+./usr/sbin/stdethers
+./usr/sbin/stdhosts
 ./usr/sbin/sysctl
 ./usr/sbin/syslogd
 ./usr/sbin/tcpdump
@@ -513,8 +525,13 @@
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
 ./usr/sbin/ypbind
+./usr/sbin/ypinit
 ./usr/sbin/yppoll
+./usr/sbin/yppush
+./usr/sbin/ypserv
 ./usr/sbin/ypset
+./usr/sbin/yptest
+./usr/sbin/ypxfr
 ./usr/sbin/zdump
 ./usr/sbin/zic
 ./usr/share
@@ -644,6 +661,7 @@
 ./usr/share/man/cat3
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
+./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/amiga
 ./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/atari
@@ -651,6 +669,7 @@
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/pc532
+./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/vax
@@ -659,6 +678,7 @@
 ./usr/share/man/cat6
 ./usr/share/man/cat7
 ./usr/share/man/cat8
+./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
@@ -677,6 +697,7 @@
 ./usr/share/man/man3
 ./usr/share/man/man3f
 ./usr/share/man/man4
+./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
@@ -684,6 +705,7 @@
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/pc532
+./usr/share/man/man4/pmax
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sun3
 ./usr/share/man/man4/vax
@@ -692,6 +714,7 @@
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man8
+./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
@@ -788,11 +811,13 @@
 ./usr/share/zoneinfo/Africa/Bujumbura
 ./usr/share/zoneinfo/Africa/Cairo
 ./usr/share/zoneinfo/Africa/Casablanca
+./usr/share/zoneinfo/Africa/Ceuta
 ./usr/share/zoneinfo/Africa/Conakry
 ./usr/share/zoneinfo/Africa/Dakar
 ./usr/share/zoneinfo/Africa/Dar_es_Salaam
 ./usr/share/zoneinfo/Africa/Djibouti
 ./usr/share/zoneinfo/Africa/Douala
+./usr/share/zoneinfo/Africa/El_Aaiun
 ./usr/share/zoneinfo/Africa/Freetown
 ./usr/share/zoneinfo/Africa/Gaborone
 ./usr/share/zoneinfo/Africa/Harare
@@ -805,7 +830,7 @@
 ./usr/share/zoneinfo/Africa/Libreville
 ./usr/share/zoneinfo/Africa/Lome
 ./usr/share/zoneinfo/Africa/Luanda
-./usr/share/zoneinfo/Africa/Lumumbashi
+./usr/share/zoneinfo/Africa/Lubumbashi
 ./usr/share/zoneinfo/Africa/Lusaka
 ./usr/share/zoneinfo/Africa/Malabo
 ./usr/share/zoneinfo/Africa/Maputo
@@ -843,6 +868,8 @@
 ./usr/share/zoneinfo/America/Chicago
 ./usr/share/zoneinfo/America/Costa_Rica
 ./usr/share/zoneinfo/America/Curacao
+./usr/share/zoneinfo/America/Dawson
+./usr/share/zoneinfo/America/Dawson_Creek
 ./usr/share/zoneinfo/America/Denver
 ./usr/share/zoneinfo/America/Detroit
 ./usr/share/zoneinfo/America/Dominica
@@ -850,6 +877,7 @@
 ./usr/share/zoneinfo/America/El_Salvador
 ./usr/share/zoneinfo/America/Ensenada
 ./usr/share/zoneinfo/America/Fort_Wayne
+./usr/share/zoneinfo/America/Glace_Bay
 ./usr/share/zoneinfo/America/Godthab
 ./usr/share/zoneinfo/America/Grand_Turk
 ./usr/share/zoneinfo/America/Grenada
@@ -865,6 +893,8 @@
 ./usr/share/zoneinfo/America/Indiana/Marengo
 ./usr/share/zoneinfo/America/Indiana/Vevay
 ./usr/share/zoneinfo/America/Indianapolis
+./usr/share/zoneinfo/America/Inuvik
+./usr/share/zoneinfo/America/Iqaluit
 ./usr/share/zoneinfo/America/Jamaica
 ./usr/share/zoneinfo/America/Juneau
 ./usr/share/zoneinfo/America/Knox_IN
@@ -884,15 +914,19 @@
 ./usr/share/zoneinfo/America/Montserrat
 ./usr/share/zoneinfo/America/Nassau
 ./usr/share/zoneinfo/America/New_York
+./usr/share/zoneinfo/America/Nipigon
 ./usr/share/zoneinfo/America/Nome
 ./usr/share/zoneinfo/America/Noronha
 ./usr/share/zoneinfo/America/Panama
+./usr/share/zoneinfo/America/Pangnirtung
 ./usr/share/zoneinfo/America/Paramaribo
 ./usr/share/zoneinfo/America/Phoenix
 ./usr/share/zoneinfo/America/Port-au-Prince
 ./usr/share/zoneinfo/America/Port_of_Spain
 ./usr/share/zoneinfo/America/Porto_Acre
 ./usr/share/zoneinfo/America/Puerto_Rico
+./usr/share/zoneinfo/America/Rainy_River
+./usr/share/zoneinfo/America/Rankin_Inlet
 ./usr/share/zoneinfo/America/Regina
 ./usr/share/zoneinfo/America/Santiago
 ./usr/share/zoneinfo/America/Santo_Domingo
@@ -903,8 +937,10 @@
 ./usr/share/zoneinfo/America/St_Kitts
 ./usr/share/zoneinfo/America/St_Lucia
 ./usr/share/zoneinfo/America/St_Thomas
+./usr/share/zoneinfo/America/Swift_Current
 ./usr/share/zoneinfo/America/St_Vincent
 ./usr/share/zoneinfo/America/Tegucigalpa
+./usr/share/zoneinfo/America/Thunder_Bay
 ./usr/share/zoneinfo/America/Thule
 ./usr/share/zoneinfo/America/Tijuana
 ./usr/share/zoneinfo/America/Tortola
@@ -912,6 +948,14 @@
 ./usr/share/zoneinfo/America/Virgin
 ./usr/share/zoneinfo/America/Whitehorse
 ./usr/share/zoneinfo/America/Winnipeg
+./usr/share/zoneinfo/America/Yellowknife
+./usr/share/zoneinfo/Antarctica
+./usr/share/zoneinfo/Antarctica/Casey
+./usr/share/zoneinfo/Antarctica/Mawson
+./usr/share/zoneinfo/Antarctica/McMurdo
+./usr/share/zoneinfo/Antarctica/South_Pole
+./usr/share/zoneinfo/Arctic
+./usr/share/zoneinfo/Arctic/Longyearbyen
 ./usr/share/zoneinfo/America/Yakutat
 ./usr/share/zoneinfo/Asia
 ./usr/share/zoneinfo/Asia/Aden
@@ -938,6 +982,7 @@
 ./usr/share/zoneinfo/Asia/Harbin
 ./usr/share/zoneinfo/Asia/Hong_Kong
 ./usr/share/zoneinfo/Asia/Irkutsk
+./usr/share/zoneinfo/Asia/Ishigaki
 ./usr/share/zoneinfo/Asia/Istanbul
 ./usr/share/zoneinfo/Asia/Jakarta
 ./usr/share/zoneinfo/Asia/Jayapura
@@ -949,6 +994,7 @@
 ./usr/share/zoneinfo/Asia/Katmandu
 ./usr/share/zoneinfo/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur
+./usr/share/zoneinfo/Asia/Kuching
 ./usr/share/zoneinfo/Asia/Kuwait
 ./usr/share/zoneinfo/Asia/Macao
 ./usr/share/zoneinfo/Asia/Magadan
@@ -1293,3 +1339,5 @@
 ./var/spool/uucppublic
 ./var/tmp
 ./var/tmp/vi.recover
+./var/yp
+./var/yp/binding

@@ -41,6 +41,7 @@
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/cons.h
 ./usr/include/dev/eisa
+./usr/include/dev/eisa/ahbreg.h
 ./usr/include/dev/eisa/eisadevs.h
 ./usr/include/dev/eisa/eisadevs_data.h
 ./usr/include/dev/eisa/eisareg.h
@@ -52,8 +53,12 @@
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
+./usr/include/dev/ic/bhareg.h
+./usr/include/dev/ic/bhavar.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/cs4231reg.h
+./usr/include/dev/ic/cyreg.h
+./usr/include/dev/ic/cyvar.h
 ./usr/include/dev/ic/dc21040reg.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/elink3reg.h
@@ -61,11 +66,14 @@
 ./usr/include/dev/ic/hayespreg.h
 ./usr/include/dev/ic/i8042reg.h
 ./usr/include/dev/ic/i8237reg.h
+./usr/include/dev/ic/i8253reg.h
 ./usr/include/dev/ic/i82586reg.h
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/ics2101reg.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
+./usr/include/dev/ic/midwayreg.h
+./usr/include/dev/ic/midwayvar.h
 ./usr/include/dev/ic/ncr5380reg.h
 ./usr/include/dev/ic/ncr5380var.h
 ./usr/include/dev/ic/nec765reg.h
@@ -73,13 +81,17 @@
 ./usr/include/dev/ic/ns16550reg.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
+./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc93cx6var.h
+./usr/include/dev/ic/uhareg.h
+./usr/include/dev/ic/uhavar.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
+./usr/include/dev/ic/z8530var.h
 ./usr/include/dev/isa
-./usr/include/dev/isa/ahareg.h
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
+./usr/include/dev/isa/ahavar.h
 ./usr/include/dev/isa/btreg.h
 ./usr/include/dev/isa/comreg.h
 ./usr/include/dev/isa/comvar.h
@@ -109,7 +121,10 @@
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
+./usr/include/dev/microcode/aic7xxx
+./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
 ./usr/include/dev/mulaw.h
+./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/ncr_reg.h
@@ -128,6 +143,7 @@
 ./usr/include/dev/sun/kbd_tables.h
 ./usr/include/dev/sun/kbd_xlate.h
 ./usr/include/dev/tc
+./usr/include/dev/tc/ascvar.h
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h
 ./usr/include/dev/tc/tcdevs.h
@@ -485,6 +501,7 @@
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/if.h
 ./usr/include/net/if_arp.h
+./usr/include/net/if_atm.h
 ./usr/include/net/if_dl.h
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_llc.h
@@ -495,6 +512,7 @@
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
 ./usr/include/net/netisr.h
+./usr/include/net/pfil.h
 ./usr/include/net/ppp-comp.h
 ./usr/include/net/ppp_defs.h
 ./usr/include/net/radix.h
@@ -518,6 +536,7 @@
 ./usr/include/netinet/icmp_var.h
 ./usr/include/netinet/if_arc.h
 ./usr/include/netinet/if_arp.h
+./usr/include/netinet/if_atm.h
 ./usr/include/netinet/if_ether.h
 ./usr/include/netinet/igmp.h
 ./usr/include/netinet/igmp_var.h
@@ -568,6 +587,7 @@
 ./usr/include/netiso/tp_user.h
 ./usr/include/netiso/tp_var.h
 ./usr/include/netiso/tuba_table.h
+./usr/include/netnatm/natm.h
 ./usr/include/netns/idp.h
 ./usr/include/netns/idp_var.h
 ./usr/include/netns/ns.h
@@ -598,6 +618,7 @@
 ./usr/include/paths.h
 ./usr/include/pcap-namedb.h
 ./usr/include/pcap.h
+./usr/include/poll.h
 ./usr/include/protocols/dumprestore.h
 ./usr/include/protocols/routed.h
 ./usr/include/protocols/rwhod.h
@@ -609,6 +630,7 @@
 ./usr/include/regex.h
 ./usr/include/regexp.h
 ./usr/include/resolv.h
+./usr/include/rmt.h
 ./usr/include/rpc/auth.h
 ./usr/include/rpc/auth_unix.h
 ./usr/include/rpc/clnt.h
@@ -691,6 +713,7 @@
 ./usr/include/sys/exec_ecoff.h
 ./usr/include/sys/exec_elf.h
 ./usr/include/sys/exec_script.h
+./usr/include/sys/extent.h
 ./usr/include/sys/fcntl.h
 ./usr/include/sys/file.h
 ./usr/include/sys/filedesc.h
@@ -716,6 +739,7 @@
 ./usr/include/sys/mtio.h
 ./usr/include/sys/namei.h
 ./usr/include/sys/param.h
+./usr/include/sys/poll.h
 ./usr/include/sys/proc.h
 ./usr/include/sys/protosw.h
 ./usr/include/sys/ptrace.h
@@ -812,6 +836,7 @@
 ./usr/include/vm/vm_param.h
 ./usr/include/vm/vm_prot.h
 ./usr/include/vm/vnode_pager.h
+./usr/include/zlib.h
 ./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
@@ -843,6 +868,7 @@
 ./usr/lib/libpcap_p.a
 ./usr/lib/libresolv.a
 ./usr/lib/libresolv_p.a
+./usr/lib/librmt.a
 ./usr/lib/librpcsvc.a
 ./usr/lib/librpcsvc_p.a
 ./usr/lib/libskey.a
@@ -859,6 +885,9 @@
 ./usr/lib/libutil_p.a
 ./usr/lib/liby.a
 ./usr/lib/liby_p.a
+./usr/lib/libz.a
+./usr/lib/libz_p.a
+./usr/lib/libz_pic.a
 ./usr/libdata/lint/llib-lposix.ln
 ./usr/libdata/lint/llib-lstdc.ln
 ./usr/libexec/cc1
@@ -866,6 +895,17 @@
 ./usr/libexec/cc1plus
 ./usr/libexec/lint1
 ./usr/libexec/lint2
+./usr/lkm/cd9660.o
+./usr/lkm/compat_sunos.o
+./usr/lkm/fdesc.o
+./usr/lkm/kernfs.o
+./usr/lkm/mfs.o
+./usr/lkm/msdosfs.o
+./usr/lkm/nullfs.o
+./usr/lkm/portal.o
+./usr/lkm/procfs.o
+./usr/lkm/umapfs.o
+./usr/lkm/union.o
 ./usr/sbin/config
 ./usr/sbin/gspa
 ./usr/sbin/gspahextoc
@@ -954,6 +994,7 @@
 ./usr/share/man/cat2/getpeername.0
 ./usr/share/man/cat2/getpgrp.0
 ./usr/share/man/cat2/getpid.0
+./usr/share/man/cat2/getpgid.0
 ./usr/share/man/cat2/getppid.0
 ./usr/share/man/cat2/getpriority.0
 ./usr/share/man/cat2/getrlimit.0
@@ -989,6 +1030,7 @@
 ./usr/share/man/cat2/open.0
 ./usr/share/man/cat2/pathconf.0
 ./usr/share/man/cat2/pipe.0
+./usr/share/man/cat2/poll.0
 ./usr/share/man/cat2/profil.0
 ./usr/share/man/cat2/ptrace.0
 ./usr/share/man/cat2/quotactl.0
@@ -1020,6 +1062,8 @@
 ./usr/share/man/cat2/setpgid.0
 ./usr/share/man/cat2/setpgrp.0
 ./usr/share/man/cat2/setpriority.0
+./usr/share/man/cat2/setregid.0
+./usr/share/man/cat2/setreuid.0
 ./usr/share/man/cat2/setrlimit.0
 ./usr/share/man/cat2/setsid.0
 ./usr/share/man/cat2/setsockopt.0
@@ -1374,8 +1418,9 @@
 ./usr/share/man/cat3/ldiv.0
 ./usr/share/man/cat3/lfind.0
 ./usr/share/man/cat3/lgamma.0
+./usr/share/man/cat3/link_addr.0
+./usr/share/man/cat3/link_ntoa.0
 ./usr/share/man/cat3/linkaddr.0
-./usr/share/man/cat3/linkntoa.0
 ./usr/share/man/cat3/list_entry.0
 ./usr/share/man/cat3/list_head.0
 ./usr/share/man/cat3/list_init.0
@@ -1492,6 +1537,7 @@
 ./usr/share/man/cat3/rexec.0
 ./usr/share/man/cat3/rindex.0
 ./usr/share/man/cat3/rint.0
+./usr/share/man/cat3/rmtops.0
 ./usr/share/man/cat3/rpc.0
 ./usr/share/man/cat3/rpc_createerr.0
 ./usr/share/man/cat3/rresvport.0
@@ -1525,8 +1571,6 @@
 ./usr/share/man/cat3/setprotoent.0
 ./usr/share/man/cat3/setpwent.0
 ./usr/share/man/cat3/setpwfile.0
-./usr/share/man/cat3/setregid.0
-./usr/share/man/cat3/setreuid.0
 ./usr/share/man/cat3/setrgid.0
 ./usr/share/man/cat3/setrpcent.0
 ./usr/share/man/cat3/setruid.0
@@ -1764,6 +1808,7 @@
 ./usr/share/mk/bsd.README
 ./usr/share/mk/bsd.dep.mk
 ./usr/share/mk/bsd.doc.mk
+./usr/share/mk/bsd.kmod.mk
 ./usr/share/mk/bsd.lib.mk
 ./usr/share/mk/bsd.man.mk
 ./usr/share/mk/bsd.nls.mk

@@ -71,3 +71,5 @@
 ./var/log/wtmp
 ./var/msgs/bounds
 ./var/run/utmp
+./var/yp/Makefile.main
+./var/yp/Makefile.yp
