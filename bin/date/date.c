@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.28 1998/11/04 12:51:00 christos Exp $	*/
+/*	$NetBSD: date.c,v 1.29 2000/01/04 14:15:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.28 1998/11/04 12:51:00 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.29 2000/01/04 14:15:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(argc, argv)
 			tval = atol(optarg);
 			break;
 		case 'u':		/* do everything in UTC */
-			(void)setenv("TZ", "UTC", 1);
+			(void)putenv("TZ=UTC0");
 			break;
 		default:
 			usage();
