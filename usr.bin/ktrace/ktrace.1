@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.19 2003/05/02 07:40:20 gmcgarry Exp $
+.\"	$NetBSD: ktrace.1,v 1.20 2003/05/02 07:52:23 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 .Op Fl adis
 .Op Fl f Ar trfile
 .Op Fl t Ar trstr
-command
+.Ar command
 .Nm ktruss
 .Op Fl aCcdilRT
 .Op Fl e Ar emulation
@@ -113,11 +113,15 @@ Clear the trace points associated with the specified file or processes.
 .It Fl d
 Descendants; perform the operation for all current children of the
 designated processes.
-.It Fl f Ar file
+.It Fl f Ar trfile
 Log trace records to
-.Ar file
+.Ar trfile
 instead of
 .Pa ktrace.out .
+It Fl f Ar infile
+Read the trace records from 
+.Ar infile
+and print them in a human readable format to standard out.
 .It Fl g Ar pgid
 Enable (disable) tracing on all processes in the process group (only one
 .Fl g
@@ -126,7 +130,20 @@ flag is permitted).
 Inherit; pass the trace flags to all future children of the designated
 processes.
 .It Fl l
-Continue monitoring process after it has finished.
+Poll the trace file for new data and prints it to standard out.
+Only for use together with the
+.Fl f
+option.
+.It Fl m Ar maxdata
+Print at most
+.Ar maxdata
+bytes of data. This is used for pointer type arguments e.g. strings.
+The data will be escaped in C-Style.
+.It Fl o Ar outfile     
+Log trace records to
+.Ar outfile .
+Without this option ktruss will print its output in a human
+readable format to standard out.
 .It Fl p Ar pid
 Enable (disable) tracing on the indicated process id (only one
 .Fl p
@@ -134,9 +151,11 @@ flag is permitted).
 .It Fl s
 Write to the trace file with synchronized I/O.
 .It Fl R
-Display relative time stamps.
+Display relative time stamps to output.
 .It Fl T
-Display time stamps.
+Same as
+.Fl R
+options but use absolute timestamps instead.
 .It Fl t Ar trstr
 The string argument represents the kernel trace points, one per letter.
 The following table equates the letters with the tracepoints:
@@ -179,6 +198,11 @@ The
 and
 .Ar command
 options are mutually exclusive.
+The
+.Fl R
+and
+.Fl T
+options are also mutually exclusive.
 .Sh EXAMPLES
 # trace all kernel operations of process id 34
 .Dl $ ktrace -p 34
@@ -211,6 +235,12 @@ on process 67
 .Pp
 # run the command "w", displaying to standard output
 .Dl $ ktruss w
+.Pp
+# trace process 42 and log the records to "ktruss.out"
+.Dl $ ktruss -p 42 -o ktruss.out
+.Pp
+# poll ktruss.out for available records and print them
+.Dl $ ktruss -lf ktruss.out
 .Sh SEE ALSO
 .Xr kdump 1
 .Sh HISTORY
