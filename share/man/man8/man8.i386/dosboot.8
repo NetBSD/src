@@ -14,15 +14,19 @@
 
 .Sh DESCRIPTION
 .Nm
-is a program running under DOS which allows to load and start NetBSD/i386.
-Per default, it boots a file with name
+is an MS-DOS program.  It is a boot loader for the i386 version of
+.Nx
+designed to permit
+.Nx
+to be booted directly from MS-DOS. Per default, it boots a file with
+name
 .Pa NETBSD
-in the current DOS directory.
+in the current MS-DOS directory.
 .Pp
 The recognized options are
 .Bl -tag -width bootopts
 .It Fl u
-Boot from a UFS instead of a DOS file system.
+Boot from an UFS filesystem instead of an MS-DOS filesystem.
 .It Fl c
 Execute <command> (see below).
 .It Fl i
@@ -31,7 +35,7 @@ Enter interactive mode.
 will present a prompt, allowing input of commands (see below).
 .Pp
 .It path
-Specifies the kernel file. In DOS mode (default) a normal DOS
+Specifies the kernel file. In MS-DOS mode (default) a normal MS-DOS
 filename (with or without drive specification) is accepted.
 In UFS mode (after
 .Fl u
@@ -65,7 +69,7 @@ contain a device specification.
 .It quit
 Leave the
 .Nm
-program and exit to DOS.
+program and exit to MS-DOS.
 .It boot Op path Op Fl bootopts
 Boot
 .Nx .
@@ -76,7 +80,7 @@ Switch filesystem type.
 .Sh EXAMPLES
 To boot a
 .Nx
-kernel located on DOS drive D, one would issue:
+kernel located on MS-DOS drive D, one would issue:
 .Bd -literal -offset indent
 dosboot D:\\NODOS\\NETBSD
 .Ed
@@ -91,7 +95,7 @@ dosboot -u fd0a:netbsd -s
 .Sh BUGS
 .Nm
 assumes that the processor is in real mode at startup. It does not work
-well in the presence of DOS extenders and memory managers.
+well in the presence of MS-DOS extenders and memory managers.
 .Pp
 In UFS mode, files can only be loaded from devices known to the BIOS.
 The device names do not necessarily comply with the names later
@@ -99,7 +103,7 @@ used by the booted
 .Nx
 kernel.
 .Pp
-In DOS mode, no useful boot device specification is passed to
+In MS-DOS mode, no useful boot device specification is passed to
 .Nx .
 It is necessary to have the root device hardwired into the kernel
 configuration or to enter it manually.
