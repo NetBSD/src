@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.44 1998/12/12 16:58:11 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.45 1999/02/28 17:09:25 explorer Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -497,7 +497,8 @@ egattach(parent, self, aux)
 	    IPL_NET, egintr, sc);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.9 1998/08/04 16:51:52 minoura Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.10 1999/02/28 17:11:43 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -513,7 +513,7 @@ edattach(parent, self, aux)
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET);
+			  RND_TYPE_NET, 0);
 #endif
 }
 
