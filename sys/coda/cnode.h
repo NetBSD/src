@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.11 2003/02/02 02:34:54 christos Exp $	*/
+/*	$NetBSD: cnode.h,v 1.12 2003/08/25 10:05:47 drochner Exp $	*/
 
 /*
  * 
@@ -154,6 +154,7 @@ struct coda_mntinfo {
     struct vnode	*mi_rootvp;
     struct mount	*mi_vfsp;
     struct vcomm	 mi_vcomm;
+    int			 mi_started;	
 };
 extern struct coda_mntinfo coda_mnttbl[]; /* indexed by minor device number */
 
@@ -161,7 +162,8 @@ extern struct coda_mntinfo coda_mnttbl[]; /* indexed by minor device number */
  * vfs pointer to mount info
  */
 #define vftomi(vfsp)    ((struct coda_mntinfo *)(vfsp->mnt_data))
-#define	CODA_MOUNTED(vfsp)   (vftomi((vfsp)) != (struct coda_mntinfo *)0)
+#define	CODA_MOUNTED(vfsp)   ((vftomi(vfsp) != (struct coda_mntinfo *)0) \
+	&& (vftomi(vfsp)->mi_started))
 
 /*
  * vnode pointer to mount info
