@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.13 1994/10/25 23:03:26 deraadt Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.14 1994/10/31 05:18:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -159,9 +159,20 @@ stios2btios(st, bt)
 	bt->c_oflag = r;
 
 	l = st->c_cflag;
-	r = 	((l & 0x00000010) ? CS6		: 0);
-	r |=	((l & 0x00000020) ? CS7		: 0);
-	r |=	((l & 0x00000030) ? CS8		: 0);
+	switch (l & 0x00000030) {
+	case 0:
+		r = CS5;
+		break;
+	case 0x00000010:
+		r = CS6;
+		break;
+	case 0x00000020:
+		r = CS7;
+		break;
+	case 0x00000030:
+		r = CS8;
+		break;
+	}		
 	r |=	((l & 0x00000040) ? CSTOPB	: 0);
 	r |=	((l & 0x00000080) ? CREAD	: 0);
 	r |= 	((l & 0x00000100) ? PARENB	: 0);
@@ -266,9 +277,20 @@ btios2stios(bt, st)
 	st->c_oflag = r;
 
 	l = bt->c_cflag;
-	r = 	((l &     CS6) ? 0x00000010	: 0);
-	r |=	((l &     CS7) ? 0x00000020	: 0);
-	r |=	((l &     CS8) ? 0x00000030	: 0);
+	switch (l & CSIZE) {
+	case CS5:
+		r = 0;
+		break;
+	case CS6:
+		r = 0x00000010;
+		break;
+	case CS7:
+		r = 0x00000020;
+		break;
+	case CS8:
+		r = 0x00000030;
+		break;
+	}
 	r |=	((l &  CSTOPB) ? 0x00000040	: 0);
 	r |=	((l &   CREAD) ? 0x00000080	: 0);
 	r |=	((l &  PARENB) ? 0x00000100	: 0);
