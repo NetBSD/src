@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 1998/12/20 14:24:52 thomas Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15 1999/01/01 19:54:52 thomas Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -63,7 +63,8 @@
  * devices and standard vga.
  */
 #define PCI_MEM_START   0x00100000      /*   1 MByte */
-#define PCI_IO_START    0x00010000      /*  64 kByte */
+#define PCI_IO_START    0x00004000      /*  16 kByte (some PCI cards allow only
+					    I/O addresses up to 0xffff) */
 
 /*
  * Struct to hold the memory and I/O datas of the pci devices
