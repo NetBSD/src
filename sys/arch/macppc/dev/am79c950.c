@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.6 1998/09/03 14:06:06 tsubai Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.7 1999/05/18 23:52:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -679,9 +679,8 @@ mace_read(sc, pkt, len)
 
 	ifp->if_ipackets++;
 
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	(*ifp->if_input)(ifp, m);
 }
 
 /*
