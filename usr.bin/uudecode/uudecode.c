@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.7 1997/05/17 20:18:10 pk Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: uudecode.c,v 1.7 1997/05/17 20:18:10 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -123,7 +123,7 @@ decode()
 			    filename);
 			return(1);
 		}
-		*p++ = NULL;
+		*p++ = '\0';
 		if (!(pw = getpwnam(buf + 1))) {
 			(void)fprintf(stderr, "uudecode: %s: no user %s.\n",
 			    filename, buf);
