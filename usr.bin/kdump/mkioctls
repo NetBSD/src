@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.17 2004/05/10 20:41:32 hannken Exp $
+#	$NetBSD: mkioctls,v 1.18 2004/05/10 20:46:44 drochner Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@ do
 	echo "#include <$i>"
 done | sed -e "s,${DESTDIR}/usr/include/,,g"
 
-${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | tee sourcefile | awk '
+${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
 BEGIN {
 	keep["SLIOCGUNIT"] = 1;	# Same as PPPIOCGASYNCMAP
 	keep["SIOCRMNAT"] = 1;	# Same as SIOCRMAFR
