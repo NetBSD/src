@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.5 1996/05/21 18:53:56 pk Exp $
+#	$NetBSD: install.sub,v 1.6 1996/05/27 12:39:04 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,8 +38,6 @@
 
 #	NetBSD installation/upgrade script - common subroutines.
 
-VERSION=1.1A
-export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
 
 ALLSETS="base comp etc games man misc text"	# default install sets
@@ -64,7 +62,8 @@ isin() {
 
 rmel() {
 # remove first argument from list formed by the remaining arguments
-	local _a
+	local	_a
+
 	_a=$1; shift
 	while [ $# != 0 ]; do
 		if [ "$_a" != "$1" ]; then
@@ -83,7 +82,7 @@ cutword () {
 	# optional field separator
 	_oifs="$IFS"
 	case "$1" in
-	-t?*) IFS=${1#-t}; shift;;
+		-t?*) IFS=${1#-t}; shift;;
 	esac
 
 	_n=$1
@@ -101,7 +100,7 @@ cutlast () {
 	# optional field separator
 	_oifs="$IFS"
 	case "$1" in
-	-t?*) IFS=${1#-t}; shift;;
+		-t?*) IFS=${1#-t}; shift;;
 	esac
 
 	read _a; set -- $_a
@@ -554,6 +553,7 @@ install_common_nfs_cdrom() {
 
 install_cdrom() {
 	local _drive
+	local _partition_range
 	local _partition
 	local _fstype
 	local _directory
@@ -562,7 +562,7 @@ install_cdrom() {
 	cat << \__install_cdrom_1
 
 The following CD-ROM devices are installed on your system; please select
-the CD-ROM device containing the installation media:
+the CD-ROM device containing the partition with the installation sets:
 
 __install_cdrom_1
 	_CDDEVS=`md_get_cddevs`
@@ -589,12 +589,13 @@ __install_cdrom_1
 	esac
 
 	# Get partition
+	_partition_range=`md_get_partition_range`
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Partition? [c] "
 		getresp "c"
 		case "$resp" in
-			[a-h])
+			$_partition_range)
 				_partition=$resp
 				;;
 
@@ -652,6 +653,7 @@ __install_cdrom_2
 install_disk() {
 	# Get the disk device info
 	local _drive
+	local _partition_range
 	local _partition
 	local _fstype
 	local _fsopts
@@ -689,12 +691,13 @@ __install_disk_1
 	esac
 
 	# Get partition
+	_partition_range=`md_get_partition_range`
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Partition? [d] "
 		getresp "d"
 		case "$resp" in
-			[a-p])
+			$_partition_range)
 				_partition=$resp
 				;;
 
@@ -906,6 +909,22 @@ __install_tape_2
 
 get_timezone() {
 	local _a
+	local _zonepath
+
+	#
+	# If the zoneinfo is not on the installation medium or on the
+	# installed filesystem, set TZ to GMT and return immediatly.
+	#
+	if [ ! -e /etc/timezone -a ! -e /mnt/usr/share/zoneinfo ]; then
+		TZ=GMT
+		return
+	fi
+	if [ ! -d /usr/share/zoneinfo ]; then
+		_zonepath=/mnt
+	else
+		_zonepath=""
+	fi
+		
 cat << \__get_timezone_1
 
 Select a time zone for your location. Timezones are represented on the
@@ -919,7 +938,7 @@ at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /etc/localtime 2>/dev/null | cutlast`
+		TZ=`ls -l /etc/timezone 2>/dev/null | cutlast`
 		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
 	while :; do
@@ -932,25 +951,25 @@ __get_timezone_1
 			break;
 			;;
 		"?")
-			ls /usr/share/zoneinfo
+			ls ${_zonepath}/usr/share/zoneinfo
 			;;
 		*)
 			_a=$resp
-			while [ -d /usr/share/zoneinfo/$_a ]; do
+			while [ -d ${_zonepath}/usr/share/zoneinfo/$_a ]; do
 				echo -n "There are several timezones available"
 				echo " within zone '$_a'"
 				echo -n "Select a sub-timezone [\`?' for list]: "
 				getresp ""
 				case "$resp" in
-				"?") ls /usr/share/zoneinfo/$_a ;;
+				"?") ls ${_zonepath}/usr/share/zoneinfo/$_a ;;
 				*)	_a=${_a}/${resp}
-					if [ -f /usr/share/zoneinfo/$_a ]; then
+					if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
 						break;
 					fi
 					;;
 				esac
 			done
-			if [ -f /usr/share/zoneinfo/$_a ]; then
+			if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
 				TZ="$_a"
 				echo "You have selected timezone \"$_a\"".
 				break 2
@@ -972,20 +991,20 @@ Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
-if [ -f $RELDIR/$1.tar.gz ]; then
-	echo -n "Install from sets in the current root filesystem? [y] "
+if [ -f /mnt/$RELDIR/$1.tar.gz ]; then
+	echo -n "Are you sure to install sets from $RELDIR ? [y] "
 	getresp "y"
 	case "$resp" in
 	y*|Y*)
 		for _f do
-			if [ ! -f $RELDIR/${_f}.tar.gz ]; then
+			if [ ! -f /mnt/$RELDIR/${_f}.tar.gz ]; then
 				continue
 			fi
 			echo -n "Install \"$_f\" ? [y]"
 			getresp "y"
 			case "$resp" in
 			y*|Y*)
-			     cat $RELDIR/${_f}.tar.gz |
+			     cat /mnt/$RELDIR/${_f}.tar.gz |
 					(cd /mnt; tar --unlink -zxvpf -)
 				_yup="TRUE"
 				echo "Extraction complete."
@@ -1017,7 +1036,6 @@ while [ "X${resp}" = X"" ]; do
 		d*|D*)
 			install_disk
 			;;
-
 		f*|F*)
 			install_ftp
 			;;
@@ -1067,6 +1085,7 @@ munge_fstab()
 	local _dev
 	local _mp
 	local _rest
+
 	# Now that the 'real' fstab is configured, we munge it into a 'shadow'
 	# fstab which we'll use for mounting and unmounting all of the target
 	# filesystems relative to /mnt.  Mount all filesystems.
@@ -1078,7 +1097,7 @@ munge_fstab()
 		else
 			echo $_dev /mnt$_mp $_rest
 		fi
-	done ) < $_fstab > $_fstab_shadow
+	    done ) < $_fstab > $_fstab_shadow
 }
 
 mount_fs()

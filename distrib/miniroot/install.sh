@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.5 1996/05/21 18:53:54 pk Exp $
+#	$NetBSD: install.sh,v 1.6 1996/05/27 12:39:02 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,21 +49,29 @@ MODE="install"
 
 # include machine-dependent functions
 # The following functions must be provided:
+#	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_ifdevs()		- return available network interfaces
+#	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
 #	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
+#	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
 #	md_native_fstype()	- native filesystem type for disk installs
 #	md_native_fsopts()	- native filesystem options for disk installs
+
+# include machine dependent subroutines
 . install.md
 
 # include common subroutines
 . install.sub
+
+# include version number
+. VERSION
 
 # decide upon an editor
 if [ X$EDITOR = X ]; then
@@ -409,21 +417,29 @@ install_sets $ALLSETS
 		fi
 	done
 
-	echo -n "Installing timezone link..."
-	rm -f /mnt/etc/localtime
-	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-	echo "done."
-
-	echo -n "Making devices..."
-	pid=`twiddle`
-	cd /mnt/dev
-	sh MAKEDEV all
-	kill $pid
-	echo "done."
-
-	echo -n "Copying kernel..."
-	cp -p /netbsd /mnt/netbsd
-	echo "done."
+	# If no zoneinfo on the installfs, give them a second chance
+	if [ ! -e /usr/share/zoneinfo ]; then
+		get_timezone
+	fi
+	if [ ! -e /mnt/usr/share/zoneinfo ]; then
+		echo "Cannot install timezone link..."
+	else
+		echo -n "Installing timezone link..."
+		rm -f /mnt/etc/localtime
+		ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+		echo "done."
+	fi
+	if [ ! -x /mnt/dev/MAKEDEV ]; then
+		echo "No /dev/MAKEDEV installed, something is wrong here..."
+	else
+		echo -n "Making devices..."
+		pid=`twiddle`
+		cd /mnt/dev
+		sh MAKEDEV all
+		kill $pid
+		echo "done."
+	fi
+	md_copy_kernel
 
 	md_installboot ${ROOTDISK}
 )
