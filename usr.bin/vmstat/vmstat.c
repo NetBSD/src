@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.35 1997/04/10 15:23:50 is Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.36 1997/04/10 15:49:30 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.35 1997/04/10 15:23:50 is Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.36 1997/04/10 15:49:30 is Exp $";
 #endif
 #endif /* not lint */
 
@@ -863,11 +863,11 @@ domem()
 	(void)printf(
 	    "\nMemory statistics by type                        Type  Kern\n");
 	(void)printf(
-"       Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
+"         Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
 		if (ks->ks_calls == 0)
 			continue;
-		(void)printf("%12s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
+		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
 		    kmemnames[i] ? kmemnames[i] : "undefined",
 		    ks->ks_inuse, (ks->ks_memuse + 1023) / 1024,
 		    (ks->ks_maxused + 1023) / 1024,
