@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.46 2001/07/27 18:40:28 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.47 2001/08/12 18:33:12 scw Exp $
 
 # config file for mvme68k
 
@@ -88,6 +88,11 @@ device memc
 attach memc at mainbus
 file arch/mvme68k/dev/memc.c			memc
 
+# TimeKeeper NVRAM device
+device timekeeper: mk48txx
+attach timekeeper at mainbus
+file arch/mvme68k/dev/timekeeper.c		timekeeper
+
 # Memory disk for boot tape
 file dev/md_root.c				memory_disk_hooks
 
@@ -131,6 +136,7 @@ file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c
 file arch/mvme68k/mvme68k/vm_machdep.c
 file arch/m68k/m68k/cacheops.c
+file dev/clock_subr.c
 file dev/cons.c
 file dev/cninit.c
 
