@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.22 1998/06/30 03:42:23 jonathan Exp $	*/
+/*	$NetBSD: sem.c,v 1.23 1999/09/21 15:50:19 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -856,7 +856,7 @@ adddev(name, at, loclist, flags)
 				break;
 			}
 		if (!hit) {
-			error("%s's cannot attach to the root", ib->d_name);
+			error("A %s cannot attach to the root", ib->d_name);
 			goto bad;
 		}
 		attr = &errattr;	/* a convenient "empty" attr */
@@ -924,7 +924,7 @@ adddev(name, at, loclist, flags)
 			if (onlist(attr->a_devs, ib))
 				goto findattachment;
 		}
-		error("%s's cannot attach to %s's", ib->d_name, atbuf);
+		error("A %s cannot attach to a %s", ib->d_name, atbuf);
 		goto bad;
 
 findattachment:
