@@ -1,5 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1998/10/03 21:24:00 thorpej Exp $	*/
-/*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1998/12/06 15:39:12 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,60 +68,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
- * Copyright (c) 1996 Niklas Hallqvist.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 #ifndef _MACPPC_BUS_H_
 #define _MACPPC_BUS_H_
 
 #include <machine/pio.h>
 
 /*
- * Values for the PowerMac bus space tag, not to be used directly by MI code.
- */
-/* #define MACPPC_BUS_REVERSE	1 */
-
-/*
- * Bus access types.
- */
-typedef u_int32_t bus_addr_t;
-typedef u_int32_t bus_size_t;
-typedef	u_int32_t bus_space_handle_t;
-typedef	u_int32_t bus_space_tag_t;
-
-/*
- * Access methods for bus resources
+ * Values for the macppc bus space tag, not to be used directly by MI code.
  */
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
+
+#define MACPPC_BUS_ADDR_MASK	0xfffff000
+#define MACPPC_BUS_STRIDE_MASK	0x0000000f
+
+#define macppc_make_bus_space_tag(addr, stride) \
+	(((addr) & MACPPC_BUS_ADDR_MASK) | (stride))
+#define __BA(t, h, o) ((void *)((h) + ((o) << ((t) & MACPPC_BUS_STRIDE_MASK))))
+
+/*
+ * Bus address and size types
+ */
+typedef u_int32_t bus_addr_t;
+typedef u_int32_t bus_size_t;
+
+/*
+ * Access methods for bus resources and address space.
+ */
+typedef u_int32_t bus_space_tag_t;
+typedef u_int32_t bus_space_handle_t;
 
 /*
  *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
@@ -131,12 +105,26 @@ typedef	u_int32_t bus_space_tag_t;
  * Map a region of bus space.
  */
 
-#define BUS_SPACE_MAP_CACHEABLE         0x01
-#define BUS_SPACE_MAP_LINEAR            0x02
+#define BUS_SPACE_MAP_CACHEABLE	0x01
+#define BUS_SPACE_MAP_LINEAR	0x02
 
-#define bus_space_map(t, addr, size, cacheable, bshp)			      \
-    ((*(bshp) = (bus_space_handle_t)mapiodev(((u_int)(t)) + (addr), size)), 0)
 extern void * mapiodev __P((paddr_t, psize_t));
+
+static __inline int
+bus_space_map(t, addr, size, flags, bshp)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	bus_size_t size;
+	int flags;
+	bus_space_handle_t *bshp;
+{
+	paddr_t base = t & MACPPC_BUS_ADDR_MASK;
+	int stride = t & MACPPC_BUS_STRIDE_MASK;
+
+	*bshp = (bus_space_handle_t)
+		mapiodev(base + (addr << stride), size << stride);
+	return 0;
+}
 
 /*
  *	int bus_space_unmap __P((bus_space_tag_t t,
@@ -155,8 +143,8 @@ extern void * mapiodev __P((paddr_t, psize_t));
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
 
-#define	bus_space_subregion(t, bsh, offset, size, bshp)			      \
-    ((*(bshp) = (bsh) + (offset)), 0)
+#define	bus_space_subregion(t, bsh, offset, size, bshp)			\
+	((*(bshp) = (bus_space_handle_t)__BA(t, bsh, offset)), 0)
 
 /*
  *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
@@ -189,16 +177,16 @@ extern void * mapiodev __P((paddr_t, psize_t));
  * described by tag/handle/offset.
  */
 
-#define bus_space_read_1(t, h, o)	(in8((h) + (o)))
-#define bus_space_read_2(t, h, o)	(in16rb((h) + (o)))
-#define bus_space_read_4(t, h, o)	(in32rb((h) + (o)))
+#define bus_space_read_1(t, h, o)	(in8(__BA(t, h, o)))
+#define bus_space_read_2(t, h, o)	(in16rb(__BA(t, h, o)))
+#define bus_space_read_4(t, h, o)	(in32rb(__BA(t, h, o)))
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define bus_space_read_8(t, h, o)	!!! unimplemented !!!
 #endif
 
-#define bus_space_read_stream_1(t, h, o)	(in8((h) + (o)))
-#define bus_space_read_stream_2(t, h, o)	(in16((h) + (o)))
-#define bus_space_read_stream_4(t, h, o)	(in32((h) + (o)))
+#define bus_space_read_stream_1(t, h, o)	(in8(__BA(t, h, o)))
+#define bus_space_read_stream_2(t, h, o)	(in16(__BA(t, h, o)))
+#define bus_space_read_stream_4(t, h, o)	(in32(__BA(t, h, o)))
 #if 0	/* Cause a link error for bus_space_read_stream_8 */
 #define bus_space_read_8(t, h, o)	!!! unimplemented !!!
 #endif
@@ -212,33 +200,33 @@ extern void * mapiodev __P((paddr_t, psize_t));
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define bus_space_read_multi_1(t, h, o, a, c) do {			      \
-		ins8((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi_1(t, h, o, a, c) do {			\
+		ins8(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
-#define bus_space_read_multi_2(t, h, o, a, c) do {			      \
-		ins16rb((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi_2(t, h, o, a, c) do {			\
+		ins16rb(__BA(t, h, o), (a), (c));			\
+	} while (0)
 
-#define bus_space_read_multi_4(t, h, o, a, c) do {			      \
-		ins32rb((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi_4(t, h, o, a, c) do {			\
+		ins32rb(__BA(t, h, o), (a), (c));			\
+	} while (0)
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define bus_space_read_multi_8		!!! unimplemented !!!
 #endif
 
-#define bus_space_read_multi_stream_1(t, h, o, a, c) do {		      \
-		ins8((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi_stream_1(t, h, o, a, c) do {		\
+		ins8(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
-#define bus_space_read_multi_stream_2(t, h, o, a, c) do {		      \
-		ins16((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi_stream_2(t, h, o, a, c) do {		\
+		ins16(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
-#define bus_space_read_multi_stream_4(t, h, o, a, c) do {		      \
-		ins32((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi_stream_4(t, h, o, a, c) do {		\
+		ins32(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
 #if 0	/* Cause a link error for bus_space_read_multi_stream_8 */
 #define bus_space_read_multi_stream_8	!!! unimplemented !!!
@@ -262,12 +250,11 @@ bus_space_read_region_1(tag, bsh, offset, addr, count)
 	u_int8_t *addr;
 	size_t count;
 {
-	volatile u_int8_t *s;
+	volatile u_int8_t *s = __BA(tag, bsh, offset);
 
-	s = (volatile u_int8_t *)(bsh + offset);
 	while (count--)
 		*addr++ = *s++;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -278,13 +265,12 @@ bus_space_read_region_2(tag, bsh, offset, addr, count)
 	u_int16_t *addr;
 	size_t count;
 {
-	volatile u_int16_t *s;
+	volatile u_int16_t *s = __BA(tag, bsh, offset);
 
-	s = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("lhbrx %0, 0, %1" :
+		__asm __volatile("lhbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -295,13 +281,12 @@ bus_space_read_region_4(tag, bsh, offset, addr, count)
 	u_int32_t *addr;
 	size_t count;
 {
-	volatile u_int32_t *s;
+	volatile u_int32_t *s = __BA(tag, bsh, offset);
 
-	s = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("lwbrx %0, 0, %1" :
+		__asm __volatile("lwbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
@@ -316,12 +301,11 @@ bus_space_read_region_stream_2(tag, bsh, offset, addr, count)
 	u_int16_t *addr;
 	size_t count;
 {
-	volatile u_int16_t *s;
+	volatile u_int16_t *s = __BA(tag, bsh, offset);
 
-	s = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
 		*addr++ = *s++;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -332,12 +316,11 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 	u_int32_t *addr;
 	size_t count;
 {
-	volatile u_int32_t *s;
+	volatile u_int32_t *s = __BA(tag, bsh, offset);
 
-	s = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
 		*addr++ = *s++;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error */
@@ -353,16 +336,16 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
  * described by tag/handle/offset.
  */
 
-#define bus_space_write_1(t, h, o, v)	out8((h) + (o), (v))
-#define bus_space_write_2(t, h, o, v)	out16rb((h) + (o), (v))
-#define bus_space_write_4(t, h, o, v)	out32rb((h) + (o), (v))
+#define bus_space_write_1(t, h, o, v)	out8(__BA(t, h, o), (v))
+#define bus_space_write_2(t, h, o, v)	out16rb(__BA(t, h, o), (v))
+#define bus_space_write_4(t, h, o, v)	out32rb(__BA(t, h, o), (v))
 
-#define bus_space_write_stream_1(t, h, o, v)	out8((h) + (o), (v))
-#define bus_space_write_stream_2(t, h, o, v)	out16((h) + (o), (v))
-#define bus_space_write_stream_4(t, h, o, v)	out32((h) + (o), (v))
+#define bus_space_write_stream_1(t, h, o, v)	out8(__BA(t, h, o), (v))
+#define bus_space_write_stream_2(t, h, o, v)	out16(__BA(t, h, o), (v))
+#define bus_space_write_stream_4(t, h, o, v)	out32(__BA(t, h, o), (v))
 
 #if 0	/* Cause a link error for bus_space_write_8 */
-#define bus_space_write_8
+#define bus_space_write_8		!!! unimplemented !!!
 #endif
 
 /*
@@ -374,32 +357,32 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
  * provided to bus space described by tag/handle/offset.
  */
 
-#define bus_space_write_multi_1(t, h, o, a, c) do {			      \
-		outsb((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_write_multi_1(t, h, o, a, c) do {			\
+		outsb(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
-#define bus_space_write_multi_2(t, h, o, a, c) do {			      \
-		outsw((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_write_multi_2(t, h, o, a, c) do {			\
+		outsw(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
-#define bus_space_write_multi_4(t, h, o, a, c) do {			      \
-		outsl((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_write_multi_4(t, h, o, a, c) do {			\
+		outsl(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
 #if 0
-#define bus_space_write_multi_8
+#define bus_space_write_multi_8		!!! unimplemented !!!
 #endif
 
-#define bus_space_write_multi_stream_2(t, h, o, a, c) do {		      \
-		outsw((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_write_multi_stream_2(t, h, o, a, c) do {		\
+		outsw(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
-#define bus_space_write_multi_stream_4(t, h, o, a, c) do {		      \
-		outsl((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_write_multi_stream_4(t, h, o, a, c) do {		\
+		outsl(__BA(t, h, o), (a), (c));				\
+	} while (0)
 
 #if 0
-#define bus_space_write_multi_stream_8
+#define bus_space_write_multi_stream_8	!!! unimplemented !!!
 #endif
 
 /*
@@ -419,12 +402,11 @@ bus_space_write_region_1(tag, bsh, offset, addr, count)
 	const u_int8_t *addr;
 	size_t count;
 {
-	volatile u_int8_t *d;
+	volatile u_int8_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int8_t *)(bsh + offset);
 	while (count--)
 		*d++ = *addr++;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -435,13 +417,12 @@ bus_space_write_region_2(tag, bsh, offset, addr, count)
 	const u_int16_t *addr;
 	size_t count;
 {
-	volatile u_int16_t *d;
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("sthbrx %0, 0, %1" ::
+		__asm __volatile("sthbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -452,13 +433,12 @@ bus_space_write_region_4(tag, bsh, offset, addr, count)
 	const u_int32_t *addr;
 	size_t count;
 {
-	volatile u_int32_t *d;
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("stwbrx %0, 0, %1" ::
+		__asm __volatile("stwbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0
@@ -473,12 +453,11 @@ bus_space_write_region_stream_2(tag, bsh, offset, addr, count)
 	const u_int16_t *addr;
 	size_t count;
 {
-	volatile u_int16_t *d;
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
 		*d++ = *addr++;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -489,12 +468,11 @@ bus_space_write_region_stream_4(tag, bsh, offset, addr, count)
 	const u_int32_t *addr;
 	size_t count;
 {
-	volatile u_int32_t *d;
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
 		*d++ = *addr++;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0
@@ -518,12 +496,11 @@ bus_space_set_multi_1(tag, bsh, offset, val, count)
 	u_int8_t val;
 	size_t count;
 {
-	volatile u_int8_t *d;
+	volatile u_int8_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int8_t *)(bsh + offset);
 	while (count--)
 		*d = val;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -534,13 +511,12 @@ bus_space_set_multi_2(tag, bsh, offset, val, count)
 	u_int16_t val;
 	size_t count;
 {
-	volatile u_int16_t *d;
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("sthbrx %0, 0, %1" ::
+		__asm __volatile("sthbrx %0, 0, %1" ::
 			"r"(val), "r"(d));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -551,13 +527,12 @@ bus_space_set_multi_4(tag, bsh, offset, val, count)
 	u_int32_t val;
 	size_t count;
 {
-	volatile u_int32_t *d;
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("stwbrx %0, 0, %1" ::
+		__asm __volatile("stwbrx %0, 0, %1" ::
 			"r"(val), "r"(d));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0
@@ -572,12 +547,11 @@ bus_space_set_multi_stream_2(tag, bsh, offset, val, count)
 	u_int16_t val;
 	size_t count;
 {
-	volatile u_int16_t *d;
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
 		*d = val;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -588,17 +562,15 @@ bus_space_set_multi_stream_4(tag, bsh, offset, val, count)
 	u_int32_t val;
 	size_t count;
 {
-	volatile u_int32_t *d;
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
 		*d = val;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0
-#define	bus_space_set_multi_stream_8					      \
-	!!! bus_space_set_multi_stream_8 unimplemented !!!
+#define	bus_space_set_multi_stream_8	!!! unimplemented !!!
 #endif
 
 /*
@@ -618,12 +590,11 @@ bus_space_set_region_1(tag, bsh, offset, val, count)
 	u_int8_t val;
 	size_t count;
 {
-	volatile u_int8_t *d;
+	volatile u_int8_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int8_t *)(bsh + offset);
 	while (count--)
 		*d++ = val;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -634,13 +605,12 @@ bus_space_set_region_2(tag, bsh, offset, val, count)
 	u_int16_t val;
 	size_t count;
 {
-	volatile u_int16_t *d;
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("sthbrx %0, 0, %1" ::
+		__asm __volatile("sthbrx %0, 0, %1" ::
 			"r"(val), "r"(d++));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -651,13 +621,12 @@ bus_space_set_region_4(tag, bsh, offset, val, count)
 	u_int32_t val;
 	size_t count;
 {
-	volatile u_int32_t *d;
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
-		__asm__ volatile("stwbrx %0, 0, %1" ::
+		__asm __volatile("stwbrx %0, 0, %1" ::
 			"r"(val), "r"(d++));
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0
@@ -672,12 +641,11 @@ bus_space_set_region_stream_2(tag, bsh, offset, val, count)
 	u_int16_t val;
 	size_t count;
 {
-	volatile u_int16_t *d;
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int16_t *)(bsh + offset);
 	while (count--)
 		*d++ = val;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 static __inline void
@@ -688,17 +656,15 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 	u_int32_t val;
 	size_t count;
 {
-	volatile u_int32_t *d;
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
-	d = (volatile u_int32_t *)(bsh + offset);
 	while (count--)
 		*d++ = val;
-	__asm__ volatile("eieio; sync");
+	__asm __volatile("eieio; sync");
 }
 
 #if 0
-#define	bus_space_set_region_stream_8					      \
-	!!! bus_space_set_region_stream_8 unimplemented !!!
+#define	bus_space_set_region_stream_8	!!! unimplemented !!!
 #endif
 
 /*
@@ -723,10 +689,17 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
  * Note: the macppc does not currently require barriers, but we must
  * provide the flags to MI code.
  */
+
 #define bus_space_barrier(t, h, o, l, f)	\
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
-#define BUS_BARRIER_READ	0x01		/* force read barrier */
-#define BUS_BARRIER_WRITE	0x02		/* force write barrier */
+#define BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
+#define BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
+#define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
+#define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
+#endif
 
 /*
  * Bus DMA methods.
