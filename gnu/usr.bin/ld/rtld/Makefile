@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1995/08/25 10:08:45 pk Exp $
+#	$NetBSD: Makefile,v 1.11 1995/10/09 00:11:24 pk Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
