@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46 1997/01/31 00:07:06 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.46.2.1 1997/03/12 14:04:44 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,9 +63,13 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/obio.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 
 #include <sun3/dev/zs_cons.h>
+#include "kbd.h"
+
+extern void Debugger __P((void));
 
 /*
  * XXX: Hard code this to make console init easier...
@@ -145,9 +149,6 @@ static u_char zs_init_reg[16] = {
 	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
 };
 
-static struct zschan *
-zs_get_chan_addr __P((int zsc_unit, int channel));
-
 
 /* Find PROM mappings (for console support). */
 void
@@ -161,7 +162,7 @@ zs_init()
 	}
 }
 
-static struct zschan *
+struct zschan *
 zs_get_chan_addr(zsc_unit, channel)
 	int zsc_unit, channel;
 {
@@ -301,10 +302,11 @@ zsc_attach(parent, self, aux)
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
+		/* Make these correspond to cs_defcflag (-crtscts) */
 		cs->cs_rr0_dcd = ZSRR0_DCD;
-		cs->cs_rr0_cts = ZSRR0_CTS;
-		cs->cs_wr5_dtr = ZSWR5_DTR;
-		cs->cs_wr5_rts = ZSWR5_RTS;
+		cs->cs_rr0_cts = 0;
+		cs->cs_wr5_dtr = ZSWR5_DTR | ZSWR5_RTS;
+		cs->cs_wr5_rts = 0;
 
 		/*
 		 * Clear the master interrupt enable.
@@ -617,6 +619,27 @@ void  zs_write_data(cs, val)
 void *zs_conschan;
 
 /*
+ * Handle user request to enter kernel debugger.
+ */
+void
+zs_abort(cs)
+	struct zs_chanstate *cs;
+{
+	register volatile struct zschan *zc = zs_conschan;
+	int rr0;
+
+	/* Wait for end of break to avoid PROM abort. */
+	/* XXX - Limit the wait? */
+	do {
+		rr0 = zc->zc_csr;
+		ZS_DELAY();
+	} while (rr0 & ZSRR0_BREAK);
+
+	/* XXX - Always available, but may be the PROM monitor. */
+	Debugger();
+}
+
+/*
  * Polled input char.
  */
 int
@@ -671,10 +694,6 @@ extern struct consdev consdev_kd;	/* keyboard/display */
 extern struct consdev consdev_tty;
 extern struct consdev *cn_tab;	/* physical console device info */
 
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
-static void zscninit __P((struct consdev *));
-
 static struct {
 	int zsc_unit, channel;
 } zstty_conf[NZSC*2] = {
@@ -684,6 +703,11 @@ static struct {
 	{ 0, 0 },	/* ttyc */
 	{ 0, 1 },	/* ttyd */
 };
+
+static char *prom_inSrc_name[] = {
+	"keyboard/display",
+	"ttya", "ttyb",
+	"ttyc", "ttyd" };
 
 /*
  * This function replaces sys/dev/cninit.c
@@ -708,6 +732,26 @@ cninit()
 
 	switch (inSource) {
 
+	default:
+		mon_printf("cninit: invalid inSource=%d\n", inSource);
+		sunmon_abort();
+		inSource = 0;
+		/* fall through */
+
+	case 0:	/* keyboard/display */
+#if NKBD > 0
+		zsc_unit = 0;
+		channel = 0;
+		cn = &consdev_kd;
+		/* Set cn_dev, cn_pri in kd.c */
+		break;
+#else	/* NKBD */
+		mon_printf("cninit: kdb/display not configured\n");
+		sunmon_abort();
+		inSource = 1;
+		/* fall through */
+#endif	/* NKBD */
+
 	case 1:	/* ttya */
 	case 2:	/* ttyb */
 	case 3:	/* ttyc (rewired keyboard connector) */
@@ -720,17 +764,9 @@ cninit()
 		cn->cn_pri = CN_REMOTE;
 		break;
 
-	default:
-		mon_printf("cninit: invalid PROM console selector\n");
-		/* assume keyboard/display */
-		/* fallthrough */
-	case 0:	/* keyboard/display */
-		zsc_unit = 0;
-		channel = 0;
-		cn = &consdev_kd;
-		/* Set cn_dev, cn_pri in kd.c */
-		break;
 	}
+	/* Now that inSource has been validated, print it. */
+	mon_printf("console is %s\n", prom_inSrc_name[inSource]);
 
 	zc = zs_get_chan_addr(zsc_unit, channel);
 	if (zc == NULL) {
@@ -741,23 +777,28 @@ cninit()
 	zs_hwflags[zsc_unit][channel] = ZS_HWFLAG_CONSOLE;
 	cn_tab = cn;
 	(*cn->cn_init)(cn);
+#ifdef	KGDB
+	zs_kgdb_init();
+#endif
 }
 
-/* We never call this. */
-void
-nullcnprobe(cn)
+
+static void zscn_nop __P((struct consdev *));
+static int  zscngetc __P((dev_t));
+static void zscnputc __P((dev_t, int));
+
+struct consdev consdev_tty = {
+	zscn_nop,
+	zscn_nop,
+	zscngetc,
+	zscnputc,
+	nullcnpollc,
+};
+
+static void
+zscn_nop(cn)
 	struct consdev *cn;
 {
-}
-
-void
-zscninit(cn)
-	struct consdev *cn;
-{
-	int unit = minor(cn->cn_dev) & 1;
-
-	mon_printf("console is zstty%d (tty%c)\n",
-		   unit, unit + 'a');
 }
 
 /*
@@ -785,33 +826,3 @@ zscnputc(dev, c)
 	zs_putc(zs_conschan, c);
 }
 
-
-struct consdev consdev_tty = {
-	nullcnprobe,
-	zscninit,
-	zscngetc,
-	zscnputc,
-	nullcnpollc,
-};
-
-
-/*
- * Handle user request to enter kernel debugger.
- */
-void
-zs_abort(cs)
-	struct zs_chanstate *cs;
-{
-	register volatile struct zschan *zc = zs_conschan;
-	int rr0;
-
-	/* Wait for end of break to avoid PROM abort. */
-	/* XXX - Limit the wait? */
-	do {
-		rr0 = zc->zc_csr;
-		ZS_DELAY();
-	} while (rr0 & ZSRR0_BREAK);
-
-	/* XXX - Always available, but may be the PROM monitor. */
-	Debugger();
-}

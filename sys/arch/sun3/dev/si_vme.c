@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.9 1997/01/27 19:40:55 gwr Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.9.4.1 1997/03/12 14:04:39 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -124,8 +124,12 @@ struct cfattach si_vmes_ca = {
 	sizeof(struct si_softc), si_vmes_match, si_vmes_attach
 };
 
-/* Options.  Interesting values are: 1,3,7 */
-int si_vme_options = 3;
+/*
+ * Options for disconnect/reselect, DMA, and interrupts.
+ * By default, allow disconnect/reselect on targets 4-6.
+ * Those are normally tapes that really need it enabled.
+ */
+int si_vme_options = 0x0f;
 
 
 static int
@@ -190,9 +194,13 @@ si_vmes_attach(parent, self, args)
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
 
-	/* Get options from config flags... */
-	sc->sc_options = cf->cf_flags | si_vme_options;
-	printf(": options=%d\n", sc->sc_options);
+	/* Get options from config flags if specified. */
+	if (cf->cf_flags)
+		sc->sc_options = cf->cf_flags;
+	else
+		sc->sc_options = si_vme_options;
+
+	printf(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
 	sc->sc_regs = (struct si_regs *)

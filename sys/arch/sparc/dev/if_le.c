@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.42.6.2 1997/03/10 15:47:55 is Exp $	*/
+/*	$NetBSD: if_le.c,v 1.42.6.3 1997/03/12 13:55:11 is Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -230,10 +230,11 @@ leattach(parent, self, aux)
 	struct confargs *ca = aux;
 	int pri;
 	struct bootpath *bp;
-	u_long laddr;
 #if defined(SUN4C) || defined(SUN4M)
 	int sbuschild = strncmp(parent->dv_xname, "sbus", 4) == 0;
 	int lebufchild = strncmp(parent->dv_xname, "lebuffer", 8) == 0;
+	int dmachild = strncmp(parent->dv_xname, "ledma", 5) == 0;
+	struct lebuf_softc *lebuf;
 #endif
 
 	/* XXX the following declarations should be elsewhere */
@@ -250,11 +251,33 @@ leattach(parent, self, aux)
 					      sizeof(struct lereg1),
 					      ca->ca_bustype);
 #if defined(SUN4C) || defined(SUN4M)
-	laddr = 0; /*XXX-gcc*/
+	lebuf = NULL;
 	if (lebufchild) {
-		sc->sc_mem = ((struct lebuf_softc *)parent)->sc_buffer;
-		sc->sc_memsize = ((struct lebuf_softc *)parent)->sc_bufsiz;
+		lebuf = (struct lebuf_softc *)parent;
+	} else if (sbuschild) {
+		struct sbus_softc *sbus = (struct sbus_softc *)parent;
+		struct sbusdev *sd;
+
+		/*
+		 * Find last "unallocated" lebuffer and pair it with
+		 * this `le' device on the assumption that we're on
+		 * a pre-historic ROM that doesn't establish le<=>lebuffer
+		 * parent-child relationships.
+		 */
+		for (sd = sbus->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
+			if (strncmp("lebuffer", sd->sd_dev->dv_xname, 8) != 0)
+				continue;
+			if (((struct lebuf_softc *)sd->sd_dev)->attached == 0) {
+				lebuf = (struct lebuf_softc *)sd->sd_dev;
+				break;
+			}
+		}
+	}
+	if (lebuf != NULL) {
+		sc->sc_mem = lebuf->sc_buffer;
+		sc->sc_memsize = lebuf->sc_bufsiz;
 		sc->sc_addr = 0; /* Lance view is offset by buffer location */
+		lebuf->attached = 1;
 
 		/* That old black magic... */
 		sc->sc_conf3 = getpropint(ca->ca_ra.ra_node,
@@ -263,6 +286,7 @@ leattach(parent, self, aux)
 	} else
 #endif
 	{
+		u_long laddr;
 		laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
 #if defined (SUN4M)
 		if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
@@ -271,6 +295,13 @@ leattach(parent, self, aux)
 		sc->sc_addr = laddr & 0xffffff;
 		sc->sc_memsize = MEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
+#if defined(SUN4C) || defined(SUN4M)
+		if (dmachild) {
+			lesc->sc_dma = (struct dma_softc *)parent;
+			lesc->sc_dma->sc_le = lesc;
+			lesc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
+		}
+#endif
 	}
 
 	bp = ca->ca_ra.ra_bp;
@@ -283,17 +314,8 @@ leattach(parent, self, aux)
 	case BUS_SBUS:
 		lesc->sc_sd.sd_reset = (void *)am7990_reset;
 		if (sbuschild) {
-			lesc->sc_dma = NULL;
 			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 		} else {
-			if (lebufchild) {
-				lesc->sc_dma = NULL;
-			} else {
-				lesc->sc_dma = (struct dma_softc *)parent;
-				lesc->sc_dma->sc_le = lesc;
-				lesc->sc_dma->sc_regs->en_bar =
-					laddr & 0xff000000;
-			}
 			/* Assume SBus is grandparent */
 			sbus_establish(&lesc->sc_sd, parent);
 		}

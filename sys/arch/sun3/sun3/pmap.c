@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 1997/02/02 08:35:27 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68.4.1 1997/03/12 14:05:19 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@
 #include <machine/pmap.h>
 #include <machine/machdep.h>
 
+extern void copypage __P((const void*, void*));
+extern void zeropage __P((void*));
 
 #if	(PMAP_OBIO << PG_MOD_SHIFT) != PGT_OBIO
 #error	"PMAP_XXX definitions don't match pte.h!"
@@ -1520,8 +1522,8 @@ pmap_virtual_space(v_start, v_end)
  * all addresses provided by pmap_next_page().  This
  * return value is used to allocate per-page data.
  *
- * Note that a machine with a "hole" in physical memory
- * may include the pages in the hole in this count, and
+ * Machines with a small "hole" in physical memory may
+ * include the pages in the hole in this count, and
  * skip the pages in the hole in pmap_next_page().
  */
 u_int
@@ -1529,8 +1531,8 @@ pmap_free_pages()
 {
 	int bytes;
 
-	bytes = avail_end - avail_start;
-	return(sun3_btop(bytes));
+	bytes = avail_end - avail_next;
+	return(atop(bytes));
 }
 
 /*
@@ -1539,10 +1541,10 @@ pmap_free_pages()
  * return FALSE to indicate that there are no more free pages.
  * Note that avail_next is set to avail_start in pmap_bootstrap().
  *
- * Imporant:  The page indices of the pages returned here must be
+ * Important:  The page indices of the pages returned here must be
  * in ascending order.
  */
-int
+boolean_t
 pmap_next_page(paddr)
 	vm_offset_t *paddr;
 {
@@ -1556,7 +1558,7 @@ pmap_next_page(paddr)
 
 	/* Have memory, will travel... */
 	*paddr = avail_next;
-	avail_next += NBPG;
+	avail_next += PAGE_SIZE;
 	return TRUE;
 }
 
@@ -1569,9 +1571,9 @@ pmap_next_page(paddr)
  * as long as the range of indices returned by this function
  * is smaller than the value returned by pmap_free_pages().
  * The returned index does NOT need to start at zero.
- *
- * XXX - Should make this a macro in pmap.h
+ * (This is normally a macro in pmap.h)
  */
+#ifndef	pmap_page_index
 int
 pmap_page_index(pa)
 	vm_offset_t pa;
@@ -1581,16 +1583,12 @@ pmap_page_index(pa)
 #ifdef	DIAGNOSTIC
 	if (pa < avail_start || pa >= avail_end)
 		panic("pmap_page_index: pa=0x%x", pa);
-	if (hole_start && pa >= hole_start) {
-		/* Make sure pa is not in the hole. */
-		if (pa < (hole_start + hole_size))
-			panic("pmap_page_index: pa=0x%x", pa);
-	}
-#endif
+#endif	/* DIAGNOSTIC */
 
-	idx = sun3_btop(pa);
+	idx = atop(pa);
 	return (idx);
 }
+#endif	/* !pmap_page_index */
 
 
 /*
@@ -2857,12 +2855,14 @@ pmap_pageable(pmap, sva, eva, pageable)
  * XXX	this should almost certainly be done differently, and
  *	elsewhere, or even not at all
  */
+#ifndef	pmap_phys_address
 vm_offset_t
 pmap_phys_address(x)
 	int x;
 {
 	return (x);
 }
+#endif
 
 /*
  * Initialize a preallocated and zeroed pmap structure,
@@ -3132,9 +3132,8 @@ pmap_protect(pmap, sva, eva, prot)
 }
 
 /*
- * Count pages resident in this pmap.
- * XXX - Should be called: pmap_resident_count()
- * but that has to be a macro (see kern_sysctl.c)
+ * Count resident pages in this pmap.
+ * See: kern_sysctl.c:pmap_resident_count
  */
 segsz_t
 pmap_resident_pages(pmap)
@@ -3143,14 +3142,45 @@ pmap_resident_pages(pmap)
 	int i, sme, pages;
 	pmeg_t pmeg;
 
+	if (pmap->pm_segmap == 0)
+		return (0);
+
 	pages = 0;
-	if (pmap->pm_segmap) {
-		for (i = 0; i < NUSEG; i++) {
-			sme = pmap->pm_segmap[i];
-			if (sme != SEGINV) {
-				pmeg = pmeg_p(sme);
-				pages += pmeg->pmeg_vpages;
-			}
+	for (i = 0; i < NUSEG; i++) {
+		sme = pmap->pm_segmap[i];
+		if (sme != SEGINV) {
+			pmeg = pmeg_p(sme);
+			pages += pmeg->pmeg_vpages;
+		}
+	}
+	return (pages);
+}
+
+/*
+ * Count wired pages in this pmap.
+ * See vm_mmap.c:pmap_wired_count
+ */
+segsz_t
+pmap_wired_pages(pmap)
+	pmap_t pmap;
+{
+	int i, mask, sme, pages;
+	pmeg_t pmeg;
+
+	if (pmap->pm_segmap == 0)
+		return (0);
+
+	pages = 0;
+	for (i = 0; i < NUSEG; i++) {
+		sme = pmap->pm_segmap[i];
+		if (sme != SEGINV) {
+			pmeg = pmeg_p(sme);
+			mask = 0x8000;
+			do {
+				if (pmeg->pmeg_wired & mask)
+					pages++;
+				mask = (mask >> 1);
+			} while (mask);
 		}
 	}
 	return (pages);

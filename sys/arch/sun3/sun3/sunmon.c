@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.3 1997/01/27 21:59:55 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.3.2.1 1997/03/12 14:05:26 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sun3/sun3/vector.h>
 
 static void **sunmon_vbr;
+static void *sunmon_vcmd;	/* XXX: always 0? */
 
 static void tracedump __P((int));
 static void v_handler __P((int addr, char *str));
@@ -117,6 +118,7 @@ void sunmon_halt()
 {
 	(void) splhigh();
 	_mode_monitor();
+	*romVectorPtr->vector_cmd = sunmon_vcmd;
 #ifdef sun3x
 	loadcrp(&mon_crp);
 #endif
@@ -130,16 +132,10 @@ void sunmon_halt()
 void sunmon_reboot(bs)
 	char *bs;
 {
-#ifdef	DIAGNOSTIC
-	extern char end[];
-
-	if (bs > end)
-		bs = "?";
-#endif
 
 	(void) splhigh();
 	_mode_monitor();
-
+	*romVectorPtr->vector_cmd = sunmon_vcmd;
 #ifdef	sun3x
 	loadcrp(&mon_crp);
 #endif
@@ -254,20 +250,23 @@ void
 sunmon_init()
 {
 	MachMonRomVector *rvec;
-	MachMonBootParam *bpp;
+	MachMonBootParam *bp;
 	char **argp;
 	char *p;
+
+	rvec = romVectorPtr;
+	bp = *rvec->bootParam;
 
 	/* Save the PROM monitor Vector Base Register (VBR). */
 	sunmon_vbr = getvbr();
 
-	rvec = romVectorPtr;
+	/* Save and replace the "v command" handler. */
+	sunmon_vcmd = *rvec->vector_cmd;
 	if (rvec->romvecVersion >= 2)
 		*rvec->vector_cmd = v_handler;
 
 	/* Set boothowto flags from PROM args. */
-	bpp = *rvec->bootParam;
-	argp = bpp->argPtr;
+	argp = bp->argPtr;
 
 	/* Skip argp[0] (the device string) */
 	argp++;

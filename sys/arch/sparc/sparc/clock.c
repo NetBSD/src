@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 1996/12/10 23:17:42 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.49.6.1 1997/03/12 13:55:25 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,7 @@
 #include <machine/cpu.h>
 
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
@@ -213,7 +214,9 @@ oclockmatch(parent, cf, aux)
 	register struct confargs *ca = aux;
 
 	/* Only these sun4s have oclock */
-	if (!CPU_ISSUN4 || (cpumod != SUN4_100 && cpumod != SUN4_200))
+	if (!CPU_ISSUN4 ||
+	    (cpuinfo.cpu_type != CPUTYP_4_100 &&
+	     cpuinfo.cpu_type != CPUTYP_4_200))
 		return (0);
 
 	/* Check configuration name */
@@ -298,7 +301,8 @@ eeprom_match(parent, cf, aux)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if (cpumod != SUN4_100 && cpumod != SUN4_200)
+	if (cpuinfo.cpu_type != CPUTYP_4_100 &&
+	    cpuinfo.cpu_type != CPUTYP_4_200)
 		return (0);
 
 	if (strcmp(eeprom_cd.cd_name, ca->ca_ra.ra_name) != 0)
@@ -347,7 +351,8 @@ clockmatch(parent, cf, aux)
 
 	if (CPU_ISSUN4) {
 		/* Only these sun4s have "clock" (others have "oclock") */
-		if (cpumod != SUN4_300 && cpumod != SUN4_400)
+		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
+		    cpuinfo.cpu_type != CPUTYP_4_400)
 			return (0);
 
 		if (strcmp(clock_cd.cd_name, ca->ca_ra.ra_name) != 0)
@@ -421,7 +426,8 @@ clockattach(parent, self, aux)
 	if (CPU_ISSUN4) {
 		idp = &idprom;
 
-		if (cpumod == SUN4_300 || cpumod == SUN4_400) {
+		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
+		    cpuinfo.cpu_type == CPUTYP_4_400) {
 			eeprom_va = (char *)cl->cl_nvram;
 			eeprom_nvram = 1;
 		}
@@ -448,7 +454,8 @@ timermatch(parent, cf, aux)
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
-		if (cpumod != SUN4_300 && cpumod != SUN4_400)
+		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
+		    cpuinfo.cpu_type != CPUTYP_4_400)
 			return (0);
 
 		if (strcmp("timer", ca->ca_ra.ra_name) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.14 1996/12/10 22:55:02 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.14.6.1 1997/03/12 13:55:14 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -237,12 +237,13 @@ sbus_establish(sd, dev)
 	 */
 	for (curdev = dev->dv_parent; ; curdev = curdev->dv_parent) {
 		if (!curdev || !curdev->dv_xname)
-		    panic("sbus_establish: can't find sbus parent for %s",
-			  (sd->sd_dev->dv_xname ? sd->sd_dev->dv_xname :
-			   "<unknown>"));
+			panic("sbus_establish: can't find sbus parent for %s",
+			      sd->sd_dev->dv_xname
+					? sd->sd_dev->dv_xname
+					: "<unknown>" );
 
 		if (strncmp(curdev->dv_xname, "sbus", 4) == 0)
-		    break;
+			break;
 	}
 	sc = (struct sbus_softc *) curdev;
 

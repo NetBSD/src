@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.29 1996/12/10 22:55:06 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.29.6.1 1997/03/12 13:55:16 is Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.29 1996/12/10 22:55:06 pk Exp $
+ * id: $NetBSD: xd.c,v 1.29.6.1 1997/03/12 13:55:16 is Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -85,6 +85,7 @@
 #include <sparc/dev/xdvar.h>
 #include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 /*
  * macros
@@ -1220,7 +1221,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 					XDPC_RBC | XDPC_ECC2;
 			ctrl->throttle = XDC_THROTTLE;
 #ifdef sparc
-			if (CPU_ISSUN4 && cpumod == SUN4_300)
+			if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 				ctrl->delay = XDC_DELAY_4_300;
 			else
 				ctrl->delay = XDC_DELAY_SPARC;

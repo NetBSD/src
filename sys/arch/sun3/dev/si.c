@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.33 1997/01/27 19:40:53 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.33.4.1 1997/03/12 14:04:36 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,14 +153,19 @@ si_attach(sc)
 
 	/*
 	 * Support the "options" (config file flags).
+	 * Disconnect/reselect is a per-target mask.
+	 * Interrupts and DMA are per-controller.
 	 */
-	if ((sc->sc_options & SI_DO_RESELECT) != 0)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
-	if ((sc->sc_options & SI_DMA_INTR) == 0)
+	ncr_sc->sc_no_disconnect =
+		(sc->sc_options & SI_NO_DISCONNECT);
+	ncr_sc->sc_parity_disable = 
+		(sc->sc_options & SI_NO_PARITY_CHK) >> 8;
+	if (sc->sc_options & SI_FORCE_POLLING)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+
 #if 1	/* XXX - Temporary */
 	/* XXX - In case we think DMA is completely broken... */
-	if ((sc->sc_options & SI_ENABLE_DMA) == 0) {
+	if (sc->sc_options & SI_DISABLE_DMA) {
 		/* Override this function pointer. */
 		ncr_sc->sc_dma_alloc = NULL;
 	}

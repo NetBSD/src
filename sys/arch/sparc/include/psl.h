@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1996/03/31 22:20:14 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.11.8.1 1997/03/12 13:55:20 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@ static __inline void setpsr __P((int));
 static __inline int spl0 __P((void));
 static __inline int splhigh __P((void));
 static __inline void splx __P((int));
+static __inline int getmid __P((void));
 
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
@@ -94,6 +95,14 @@ static __inline int getpsr()
 
 	__asm __volatile("rd %%psr,%0" : "=r" (psr));
 	return (psr);
+}
+
+static __inline int getmid()
+{
+	int mid;
+
+	__asm __volatile("rd %%tbr,%0" : "=r" (mid));
+	return ((mid >> 20) & 0x3);
 }
 
 static __inline void setpsr(newpsr)

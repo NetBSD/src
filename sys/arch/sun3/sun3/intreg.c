@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.8 1997/01/27 20:50:38 gwr Exp $	*/
+/*	$NetBSD: intreg.c,v 1.8.4.1 1997/03/12 14:05:11 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
+
+#include <m68k/asm_single.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -169,50 +171,27 @@ soft1intr(arg)
 }
 
 
-static int isr_soft_pending;
 void isr_soft_request(level)
 	int level;
 {
-	u_char bit, reg_val;
-	int s;
+	register u_char bit;
 
 	if ((level < 1) || (level > 3))
-		panic("isr_soft_request");
-
-	bit = 1 << level;
-
-	/* XXX - Should do this in the callers... */
-	if (isr_soft_pending & bit)
 		return;
 
-	s = splhigh();
-	isr_soft_pending |= bit;
-	reg_val = *interrupt_reg;
-	*interrupt_reg &= ~IREG_ALL_ENAB;
-
-	*interrupt_reg |= bit;
-	*interrupt_reg |= IREG_ALL_ENAB;
-	splx(s);
+	bit = 1 << level;
+	single_inst_bset_b(*interrupt_reg, bit);
 }
 
 void isr_soft_clear(level)
 	int level;
 {
-	u_char bit, reg_val;
-	int s;
+	register u_char bit;
 
 	if ((level < 1) || (level > 3))
-		panic("isr_soft_clear");
+		return;
 
 	bit = 1 << level;
-
-	s = splhigh();
-	isr_soft_pending &= ~bit;
-	reg_val = *interrupt_reg;
-	*interrupt_reg &= ~IREG_ALL_ENAB;
-
-	*interrupt_reg &= ~bit;
-	*interrupt_reg |= IREG_ALL_ENAB;
-	splx(s);
+	single_inst_bclr_b(*interrupt_reg, bit);
 }
 

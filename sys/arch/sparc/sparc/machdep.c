@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 1997/01/27 21:18:17 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.73.4.1 1997/03/12 13:55:33 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,23 +339,23 @@ allocsys(v)
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0) {
-		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS)/2;
+		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+			   (MAXBSIZE/NBPG) / 2;
 		bufpages = (physmem / 20) / CLSIZE;
-		if (bufpages > bmax)
+		if (nbuf == 0 && bufpages > bmax)
 			bufpages = bmax;
+		/*
+		 * XXX stopgap measure to prevent wasting too much KVM on
+		 * the sparsely filled buffer cache.
+		 */
+		if (CPU_ISSUN4C && bufpages > 128)
+			bufpages = 128;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-
-	/*
-	 * XXX stopgap measure to prevent wasting too much KVM on
-	 * the sparsely filled buffer cache.
-	 */
-	if (nbuf > 128)
-		nbuf = 128;
 
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */

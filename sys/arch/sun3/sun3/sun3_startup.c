@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.61 1997/02/02 08:36:39 thorpej Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.61.2.1 1997/03/12 14:05:24 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,13 +79,18 @@ vm_offset_t avail_start, avail_end;
 vm_offset_t hole_start, hole_size;
 int cache_size;
 
-/* m68k common code needs these */
-int	cputype, mmutype;
+/*
+ * XXX: m68k common code needs these...
+ * ... but this port does not need to deal with anything except
+ * an mc68020, so these two variables are always ignored.
+ * XXX: Need to do something about <m68k/include/cpu.h>
+ */
+int cputype = 0;	/* CPU_68020 */
+int mmutype = 2;	/* MMU_SUN */
 
 /*
  * Now our own stuff.
  */
-int cold = 1;
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
@@ -556,10 +561,6 @@ _verify_hardware()
 		mon_printf("not a sun3?\n");
 		sunmon_abort();
 	}
-
-	/* Set cputype and mmutype for common m68k code. */
-	cputype = CPU_68020;
-	mmutype = MMU_SUN;
 
 	cpu_machine_id = machtype & SUN3_IMPL_MASK;
 	switch (cpu_machine_id) {
