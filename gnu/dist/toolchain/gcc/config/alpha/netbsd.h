@@ -134,18 +134,6 @@ do {								\
   alpha_output_lineno (STREAM, LINE)
 extern void alpha_output_lineno ();
 
-/* netbsd.h re-defined these, but we want the values from alpha.h  */
-
-#undef ASM_DECLARE_FUNCTION_NAME
-#define ASM_DECLARE_FUNCTION_NAME(FILE,NAME,DECL) \
-  alpha_start_function(FILE,NAME,DECL);
-extern void alpha_start_function ();
-
-#undef ASM_DECLARE_FUNCTION_SIZE
-#define ASM_DECLARE_FUNCTION_SIZE(FILE,NAME,DECL) \
-  alpha_end_function(FILE,NAME,DECL)
-extern void alpha_end_function ();
-
 extern void output_file_directive ();
 
 /* Attach a special .ident directive to the end of the file to identify
@@ -470,6 +458,55 @@ void FN ()								\
        fputs(" = ", FILE);		 \
        assemble_name(FILE, NAME2);	 \
        fputc('\n', FILE); } while (0)
+
+/* These macros generate the special .type and .size directives which
+   are used to set the corresponding fields of the linker symbol table
+   entries in an ELF object file under SVR4.  These macros also output  
+   the starting labels for the relevant functions/objects.  */          
+
+/* Write the extra assembler code needed to declare an object properly.  */
+
+#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
+  do {									\
+    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
+    assemble_name (FILE, NAME);						\
+    putc (',', FILE);							\
+    fprintf (FILE, TYPE_OPERAND_FMT, "object");				\
+    putc ('\n', FILE);							\
+    size_directive_output = 0;						\
+    if (!flag_inhibit_size_directive && DECL_SIZE (DECL))		\
+      {									\
+	size_directive_output = 1;					\
+	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
+	assemble_name (FILE, NAME);					\
+	fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL)));	\
+      }									\
+    ASM_OUTPUT_LABEL(FILE, NAME);					\
+  } while (0)
+
+/* Output the size directive for a decl in rest_of_decl_compilation
+   in the case where we did not do so before the initializer.
+   Once we find the error_mark_node, we know that the value of
+   size_directive_output was set
+   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
+
+#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	\
+do {									\
+  char *name = XSTR (XEXP (DECL_RTL (DECL), 0), 0);			\
+  if (!flag_inhibit_size_directive && DECL_SIZE (DECL)			\
+      && ! AT_END && TOP_LEVEL						\
+      && DECL_INITIAL (DECL) == error_mark_node				\
+      && !size_directive_output)					\
+    {									\
+      size_directive_output = 1;					\
+      fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
+      assemble_name (FILE, name);					\
+      putc (',', FILE);							\
+      fprintf (FILE, HOST_WIDE_INT_PRINT_DEC,				\
+	       int_size_in_bytes (TREE_TYPE (DECL)));			\
+      putc ('\n', FILE);						\
+    }									\
+} while (0)
 
 /* A table of bytes codes used by the ASM_OUTPUT_ASCII and
    ASM_OUTPUT_LIMITED_STRING macros.  Each byte in the table
