@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sci.c	7.5 (Berkeley) 5/4/91
- *	$Id: sci.c,v 1.1 1994/02/28 06:06:23 chopps Exp $
+ *	$Id: sci.c,v 1.2 1994/03/08 10:30:16 chopps Exp $
  *
  */
 
@@ -54,7 +54,7 @@
 #endif
 #if NSCI < NSUPRASCSI
 #undef NSCI
-#define NSCI	NSUPRASCI
+#define NSCI	NSUPRASCSI
 #endif
 #if NSCI < NIVSSCSI
 #undef NSCI
@@ -62,7 +62,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/sci.c,v 1.1 1994/02/28 06:06:23 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/sci.c,v 1.2 1994/03/08 10:30:16 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
