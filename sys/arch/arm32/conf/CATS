@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.39 2000/10/28 22:42:08 tsutsui Exp $
+#	$NetBSD: CATS,v 1.40 2000/11/13 18:40:34 abs Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -32,7 +32,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
-makeoptions	COPTS="-O2 -march=strongarm -mtune=strongarm"
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 #options 	IOMD		# We have an IOMD
