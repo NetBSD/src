@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.3 2004/06/07 10:20:39 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.4 2004/09/16 03:31:08 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -701,7 +701,7 @@ extract_file(int set, int update, char *path)
 
 	if (update && set == SET_ETC) {
 		run_program(RUN_DISPLAY | RUN_CHROOT,
-			"/etc/postinstall -s /.sysinst -d / fix");
+			"/.sysinst/etc/postinstall -s /.sysinst -d / fix");
 	}
 
 	tarstats.nsuccess++;
