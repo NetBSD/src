@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
+/*	$NetBSD: if_we.c,v 1.12 1998/10/27 22:45:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -490,6 +490,7 @@ we_attach(parent, self, aux)
 	sc->write_mbuf = we_write_mbuf;
 	sc->read_hdr = we_read_hdr;
 	sc->recv_int = we_recv_int;
+	sc->init_card = we_init_card;
 
 	sc->sc_mediachange = we_mediachange;
 	sc->sc_mediastatus = we_mediastatus;
