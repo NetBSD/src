@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.36 2000/06/12 10:28:20 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.37 2000/08/09 21:00:39 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,17 +9,13 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.36 2000/06/12 10:28:20 veego Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.37 2000/08/09 21:00:39 veego Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.10 2000/06/09 14:07:47 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
 #endif
 #endif
 
-#if defined(_KERNEL) && defined(__FreeBSD_version) && \
-    (__FreeBSD_version >= 400000) && !defined(KLD_MODULE)
-#include "opt_inet6.h"
-#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -31,6 +27,14 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.10 2000/06/09 14:07:47 darre
 #endif
 #if (defined(KERNEL) || defined(_KERNEL)) && defined(__FreeBSD_version) && \
     (__FreeBSD_version >= 220000)
+# if (__FreeBSD_version >= 400000)
+#  ifndef KLD_MODULE
+#   include "opt_inet6.h"
+#  endif
+#  if (__FreeBSD_version == 400019)
+#   define CSUM_DELAY_DATA
+#  endif
+# endif
 # include <sys/filio.h>
 # include <sys/fcntl.h>
 #else
@@ -663,8 +667,11 @@ void *m;
 		 * Just log this packet...
 		 */
 		passt = fr->fr_flags;
-		if ((passt & FR_CALLNOW) && fr->fr_func)
-			passt = (*fr->fr_func)(passt, ip, fin);
+#if (BSD >= 199306) && (defined(_KERNEL) || defined(KERNEL))
+		if (securelevel <= 0)
+#endif
+			if ((passt & FR_CALLNOW) && fr->fr_func)
+				passt = (*fr->fr_func)(passt, ip, fin);
 		fin->fin_fr = fr;
 #ifdef  IPFILTER_LOG
 		if ((passt & FR_LOGMASK) == FR_LOG) {
@@ -819,18 +826,6 @@ int out;
 	fin->fin_qfm = m;
 	fin->fin_qif = qif;
 # endif
-# ifdef	USE_INET6
-	if (v == 6) {
-		ATOMIC_INCL(frstats[0].fr_ipv6[out]);
-	} else
-# endif
-		if (!out && fr_chksrc && !fr_verifysrc(ip->ip_src, ifp)) {
-			ATOMIC_INCL(frstats[0].fr_badsrc);
-#  if !SOLARIS
-			m_freem(m);
-#  endif
-			return error;
-		}
 #endif /* _KERNEL */
 	
 	/*
@@ -846,8 +841,27 @@ int out;
 	fin->fin_out = out;
 	fin->fin_mp = mp;
 	fr_makefrip(hlen, ip, fin);
-	pass = fr_pass;
 
+#ifdef _KERNEL
+# ifdef	USE_INET6
+	if (v == 6) {
+		ATOMIC_INCL(frstats[0].fr_ipv6[out]);
+	} else
+# endif
+		if (!out && fr_chksrc && !fr_verifysrc(ip->ip_src, ifp)) {
+			ATOMIC_INCL(frstats[0].fr_badsrc);
+			if (fr_chksrc == 2) {
+				fin->fin_group = -2;
+				pass = FR_INQUE|FR_NOMATCH|FR_LOGB;
+				(void) IPLLOG(pass, ip, fin, m);
+			}
+# if !SOLARIS
+			m_freem(m);
+# endif
+			return error;
+		}
+#endif
+	pass = fr_pass;
 	if (fin->fin_fi.fi_fl & FI_SHORT) {
 		ATOMIC_INCL(frstats[out].fr_short);
 	}
@@ -969,8 +983,11 @@ int out;
 			pass &= ~(FR_LOGFIRST|FR_LOG);
 	}
 
-	if (fr && fr->fr_func && !(pass & FR_CALLNOW))
-		pass = (*fr->fr_func)(pass, ip, fin);
+#if (BSD >= 199306) && (defined(_KERNEL) || defined(KERNEL))
+	if (securelevel <= 0)
+#endif
+		if (fr && fr->fr_func && !(pass & FR_CALLNOW))
+			pass = (*fr->fr_func)(pass, ip, fin);
 
 	/*
 	 * Only count/translate packets which will be passed on, out the
@@ -1363,7 +1380,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.10 2000/06/09 14:07:47 darrenr Exp
+ * Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1811,6 +1828,7 @@ void frsync()
 		ip_natsync(ifp);
 		ip_statesync(ifp);
 	}
+	ip_natsync((struct ifnet *)-1);
 # endif
 
 	WRITE_ENTER(&ipf_mutex);
@@ -1841,11 +1859,14 @@ size_t c;
 	int err;
 
 #if SOLARIS
-	copyin(a, &ca, sizeof(ca));
+	if (copyin(a, &ca, sizeof(ca)))
+		return EFAULT;
 #else
 	bcopy(a, &ca, sizeof(ca));
 #endif
 	err = copyin(ca, b, c);
+	if (err)
+		err = EFAULT;
 	return err;
 }
 
@@ -1858,11 +1879,14 @@ size_t c;
 	int err;
 
 #if SOLARIS
-	copyin(b, &ca, sizeof(ca));
+	if (copyin(b, &ca, sizeof(ca)))
+		return EFAULT;
 #else
 	bcopy(b, &ca, sizeof(ca));
 #endif
 	err = copyout(a, ca, c);
+	if (err)
+		err = EFAULT;
 	return err;
 }
 
