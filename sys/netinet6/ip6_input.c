@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.12 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.13 2000/01/31 10:33:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -325,6 +325,29 @@ ip6_input(m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
+	/*
+	 * The following check is not documented in the spec.  Malicious party
+	 * may be able to use IPv4 mapped addr to confuse tcp/udp stack and
+	 * bypass security checks (act as if it was from 127.0.0.1 by using
+	 * IPv6 src ::ffff:127.0.0.1).	Be cautious.
+	 */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		goto bad;
+	}
+#if 1
+	/*
+	 * We don't support it, so it is strange to get this.
+	 */
+	if (IN6_IS_ADDR_V4COMPAT(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		goto bad;
+	}
+#endif
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
 		if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
