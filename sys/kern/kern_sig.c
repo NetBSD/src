@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.172 2003/10/30 16:32:58 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.173 2003/11/01 07:44:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.172 2003/10/30 16:32:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.173 2003/11/01 07:44:14 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2151,8 +2151,6 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
  *
  * This only handles single LWP in signal wait. libpthread provides
  * it's own sigtimedwait() wrapper to DTRT WRT individual threads.
- *
- * XXX no support for queued signals, si_code is always SI_USER.
  */
 int
 sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
@@ -2162,7 +2160,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 		syscallarg(siginfo_t *) info;
 		syscallarg(struct timespec *) timeout;
 	} */ *uap = v;
-	sigset_t waitset, twaitset;
+	sigset_t *waitset, twaitset;
 	struct proc *p = l->l_proc;
 	int error, signum, s;
 	int timo = 0;
@@ -2170,21 +2168,25 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	struct timespec ts;
 	ksiginfo_t *ksi;
 
-	if ((error = copyin(SCARG(uap, set), &waitset, sizeof(waitset))))
+	MALLOC(waitset, sigset_t *, sizeof(sigset_t), M_TEMP, M_WAITOK);
+
+	if ((error = copyin(SCARG(uap, set), waitset, sizeof(sigset_t)))) {
+		FREE(waitset, M_TEMP);
 		return (error);
+	}
 
 	/*
 	 * Silently ignore SA_CANTMASK signals. psignal1() would
 	 * ignore SA_CANTMASK signals in waitset, we do this
 	 * only for the below siglist check.
 	 */
-	sigminusset(&sigcantmask, &waitset);
+	sigminusset(&sigcantmask, waitset);
 
 	/*
 	 * First scan siglist and check if there is signal from
 	 * our waitset already pending.
 	 */
-	twaitset = waitset;
+	twaitset = *waitset;
 	__sigandset(&p->p_sigctx.ps_siglist, &twaitset);
 	if ((signum = firstsig(&twaitset))) {
 		/* found pending signal */
@@ -2227,11 +2229,14 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	}
 
 	/*
-	 * Setup ps_sigwait list.
+	 * Setup ps_sigwait list. Pass pointer to malloced memory
+	 * here; it's not possible to pass pointer to a structure
+	 * on current process's stack, the current process might
+	 * be swapped out at the time the signal would get delivered.
 	 */
 	ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
 	p->p_sigctx.ps_sigwaited = ksi;
-	p->p_sigctx.ps_sigwait = &waitset;
+	p->p_sigctx.ps_sigwait = waitset;
 
 	/*
 	 * Wait for signal to arrive. We can either be woken up or
@@ -2307,6 +2312,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	error = copyout(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
 
  fail:
+	FREE(waitset, M_TEMP);
 	pool_put(&ksiginfo_pool, ksi);
 	p->p_sigctx.ps_sigwait = NULL;
 
