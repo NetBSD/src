@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.18 2003/01/28 01:07:52 kent Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.19 2003/01/28 08:46:53 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.18 2003/01/28 01:07:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.19 2003/01/28 08:46:53 kent Exp $");
 
 #include "opt_largepages.h"
 
@@ -867,13 +867,33 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	pt_entry_t *pte;
+	vaddr_t va, endva;
+	int cpumask;
+	int marked;
 
+	cpumask = 0;
+	marked = 0;
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
 	size = round_page(size);
+	/*
+         * mark pages cacheable again.
+         */
+	for (va = (vaddr_t)kva, endva = (vaddr_t)kva + size;
+	     va < endva; va += PAGE_SIZE) {
+		pte = kvtopte(va);
+		if ((*pte & PG_N) != 0) {
+			*pte &= ~PG_N;
+			pmap_tlb_shootdown(pmap_kernel(), va, *pte, &cpumask);
+			marked = 1;
+		}
+	}
+	if (marked)
+		pmap_tlb_shootnow(cpumask);
 
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
