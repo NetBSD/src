@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.4.2.4 1997/11/06 00:32:35 mellon Exp $ */
+/*	$NetBSD: disks.c,v 1.4.2.5 1997/11/10 19:22:50 thorpej Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,17 +57,6 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-
-/*
- *  Default command to use for disklabel. Some ports may need to override this.
- */
-#ifndef DISLABEL_CMD
-#if 1
-# define DISKLABEL_CMD "/sbin/disklabel -w -r"	/* Works on i386. */
-#else
-# define DISKLABEL_CMD "/sbin/disklabel -w"	/* On sun proms, -r loses. */
-#endif
-#endif
 
 
 /* Local prototypes */
@@ -272,11 +261,26 @@ void scsi_fake (void)
 }
 
 
+/*
+ * Label a disk using an MD-specific string DISKLABEL_CMD for
+ * to invoke  disklabel.
+ * if MD code does not define DISKLABEL_CMD, this is a no-op.
+ *
+ * i386  port uses "/sbin/disklabel -w -r", just like i386
+ * miniroot scripts, though this may leave a bogus incore label.
+ *
+ * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"	
+ * to get incore  to ondisk inode translation for the Sun proms.
+ */
 void write_disklabel (void)
 {
+
+#ifdef DISKLABEL_CMD
 	/* disklabel the disk */
 	printf ("%s", msg_string (MSG_dodisklabel));
 	run_prog_or_continue ("%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
+#endif
+
 }
 
 
@@ -336,7 +340,7 @@ void make_fstab (void)
 	}
 	(void)fprintf (f, "/dev/%sa / ffs rw 1 1\n", diskdev);
 	(void)fprintf (f, "/dev/%sb none swap sw 0 0\n", diskdev);
-	for (i=4; i<getmaxpartitions(); i++)
+	for (i=getrawpartition()+1; i<getmaxpartitions(); i++)
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
 			(void)fprintf (f, "/dev/%s%c %s ffs rw 1 2\n",
 				       diskdev, 'a'+i, fsmount[i]);

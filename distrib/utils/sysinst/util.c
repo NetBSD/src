@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.3 1997/11/06 00:52:03 mellon Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.4 1997/11/10 19:23:31 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -98,7 +98,10 @@ ask_ynquestion (char *quest, char def, ...)
 	vsnprintf (line, STRSIZE, quest, ap);
 	va_end(ap);
 
-	printf ("%s [%c]: ", line, def);
+	if (def)
+		printf ("%s [%c]: ", line, def);
+	else
+		printf ("%s: ", line);
 	c = getchar();
 	if (c == '\n')
 		return def == 'y';
@@ -212,6 +215,28 @@ get_via_cdrom(void)
 	return 1;
 }
 
+int
+get_via_localfs(void)
+{
+	/* Get device, filesystem, and filepath */
+	process_menu (MENU_localfssource);
+
+	/* Mount it */
+	while (run_prog ("/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
+	    localfs_dev)) {
+		process_menu (MENU_localfsbadmount);
+		if (!yesno)
+			return 0;
+		/* Verify distribution files exist.  XXX */
+	}
+
+	/* return location, don't clean... */
+	strcpy (dist_dir, "/mnt2");
+	strncat (dist_dir, localfs_dir, STRSIZE-strlen(dist_dir)-1);
+	clean_dist_dir = 0;
+	mnt2_mounted = 1;
+	return 1;
+}
 
 void cd_dist_dir (char *forwhat)
 {
@@ -272,17 +297,12 @@ extract_file (char *path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	endwin();
 	(void)printf (msg_string(MSG_extracting), path);
 	tarexit = run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
 			    verbose ? "v":"", path);
-	if (tarexit) {
-		sleep(5);
-	}
-	puts(CL);
-	wrefresh(stdscr);
-
-	/* XXXX Check tarexit for errors and give warning ... */
+	/* Check tarexit for errors and give warning. */
+	if (tarexit)
+		ask_ynquestion (msg_string(MSG_tarerror), 0, path);
 
 	chdir (owd);
 	free (owd);
@@ -296,15 +316,10 @@ extract_dist (void)
 	distinfo *list;
 	char extdir[STRSIZE];
 
-#if 0
-	/* XXX buggy code: does floppy extraction depend onthis?  */
-	/* Current directory has the distribution included. */
-	strncpy(extdir, target_expand(dist_dir), STRSIZE);
-#else
 	/* For NFS,  distdir is mounted in the _current_ root.  */
 	strncpy(extdir, dist_dir, STRSIZE);
-#endif
 
+	endwin();
 	list = dist_list;
 	while (list->name) {
 		if (list->getit) {
@@ -316,6 +331,8 @@ extract_dist (void)
 		}
 		list++;
 	}
+	puts(CL);
+	wrefresh(stdscr);
 }
 
 
@@ -398,12 +415,12 @@ struct check_table { const char *testarg; const char *path;} checks[] = {
  */
 static int check_for(const char *type, const char *pathname)
 {
-	int result; 
+	int found; 
 
-	result = (target_test(type, pathname) == 0);
-	if (result != 0) 
+	found = (target_test(type, pathname) == 0);
+	if (found == 0) 
 		msg_display(MSG_rootmissing, pathname);
-	return result;
+	return found;
 }
 
 int

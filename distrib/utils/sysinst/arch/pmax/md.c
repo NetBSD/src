@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.2 1997/11/02 20:51:14 mellon Exp $	*/
+/*	$NetBSD: md.c,v 1.3.2.3 1997/11/10 19:24:08 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,27 +100,27 @@ int	md_get_info (void)
 	return 1;
 }
 
+
+/* 
+ * hook called before editing new disklabel.
+ */
 void	md_pre_disklabel (void)
 {
 }
 
+
+/* 
+ * hook called after writing  disklabel to new target disk.
+ */
 void	md_post_disklabel (void)
+
 {
 }
 
-void	md_post_newfs (void)
-{
-	/* XXX boot blocks ... */
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
-			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
-}
-
-void	md_copy_filesystem (void)
-{
-}
-
-void md_make_bsd_partitions (void)
+/*
+ * md back-end code for menu-driven  BSD disklabel editor.
+ */
+ void md_make_bsd_partitions (void)
 {
 	FILE *f;
 	int i, part;
@@ -335,16 +335,104 @@ void md_make_bsd_partitions (void)
 }
 
 
+
+/*
+ * md_copy_filesystem() -- MD hook called  after the target
+ * disk's filesystems are newfs'ed (install) or /fsck'ed (upgrade)
+ * and mounted.
+ * Gives MD code an opportunity to copy data from the install-tools
+ * boot disk to the  target disk.  (e.g., on i386, put a copy of the 
+ * complete install ramdisk onto the hard disk, so it's at least
+ * minimally bootable.)
+ *
+ * On pmax, we're probably running off a release diskimage.
+ * Copy the diskimage to the target disk, since it's probably
+ * the  same as the  install sets and it makes the target bootable
+ * to standalone.  But don't do anything if the target is
+ * already  the current root: we'd clobber the files we're trying to copy.
+ */
+
+void	md_copy_filesystem (void)
+{
+	/*
+	 * Make sure any binaries in a diskimage /usr.install get copied 
+	 * into the current root's /usr/bin. (may be same as target /usr/bin.)
+	 * The rest of sysinst uses /usr/bin/{tar,ftp,chgrp}.
+	 * We cannot ship those in /usr/bin, because if we did
+	 * an install with target root == current root, they'd
+	 * be be hidden under the  target's /usr filesystem.
+	 *
+	 * Now copy them into the standard  location under /usr.
+	 * (the target /usr is already mounted so they always end
+	 * up in the correct place.
+	 */
+
+	/*  diskimage location of  /usr subset  -- patchable. */
+	const char *diskimage_usr = "/usr.install";
+	int dir_exists;
+
+
+	/* test returns 0  on success */
+	dir_exists = (run_prog("test -d %s", diskimage_usr) == 0);
+	if (dir_exists) {
+		run_prog (
+		  "tar --one-file-system -cf - -C %s . | tar -xpf - -C /usr",
+		  diskimage_usr);
+	}
+
+	if (target_already_root()) {
+
+	  	/* The diskimage /usr subset has served its purpose. */
+	  	/* (but leave it for now, in case of errors.) */
+#if 0
+		run_prog("rm -fr %s 2> /dev/null", diskimage_usr);
+#endif
+		return;
+	}
+
+	/* Copy all the diskimage/ramdisk binaries to the target disk. */
+	printf ("%s", msg_string(MSG_dotar));
+	run_prog ("tar --one-file-system -cf - / |"
+		  "(cd /mnt ; tar --unlink -xpf - )");
+
+	/* Make sure target has a copy of install kernel. */
+	dup_file_into_target("/netbsd");
+
+	/* Copy next-stage profile into target /.profile. */
+	dup_file_into_target ("/tmp/.hdprofile" "/.profile");
+}
+
+
+/*
+ * MD hook called after upgrade() or install() hasve finished the 
+ * setting up the target disk but immediately before the user is
+ * given thte ``disks are now set up'' message, that if power fails,
+ * they can continue installation by  booting the target  disk and
+ * doing an `upgrade'.
+ *
+ * On pmax, this is a convenient place to write up-to-date bootblocks 
+ * to the target root filesystem.
+ */
+void	md_post_newfs (void)
+{
+	/* XXX boot blocks ... */
+	printf (msg_string(MSG_dobootblks), diskdev);
+	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
+			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+}
+
+
+
 /* Upgrade support */
 int
 md_update(void)
 {
-#ifdef notyet	/* stolen from i386 -- untested */
+	/* stolen from i386 -- untested */
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
 	puts (CL);
 	wrefresh(stdscr);
-#endif
+
 	return 1;
 }

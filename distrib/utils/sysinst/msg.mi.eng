@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.4 1997/11/06 00:38:42 mellon Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.5 1997/11/10 19:23:14 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,10 @@
 
 /* MI Message catalog -- english, machine independent */
 
+message usage
+{usage: sysinst [-r release]
+}
+
 message yes {Yes}
 
 message no {No}
@@ -61,11 +65,16 @@ Thank you for using NetBSD!
 }
 
 message installusure
-{Ok, lets get NetBSD installed on your hard disk.  As always, this will
-change information on your hard disk.  You should have made a full backup
-before this procedure!  Do you really want to install NetBSD?
-(You get one more warning before this procedure writes anything to your
-disk.)
+{You have chosen to install NetBSD on your hard disk.  This will change
+information on your hard disk.  You should have made a full backup
+before this procedure!  This procedure will do the following things:
+	a) Partition your disk
+	b) Create new BSD file systems
+	c) Load and install distribution sets
+
+(After you enter the partition information but before your disk is 
+changed, you will have the opportunity to quit this procedure.)
+Shall we continue?  
 }
 
 message upgradeusure
@@ -94,6 +103,17 @@ message badname
 {You did not choose one of the listed disks.  Please try again.
 The following disks are available: %s
 \nOn which disk do you want to install NetBSD? }
+
+message pleasemountroot
+{The root device is not mounted.  Please mount it.
+
+Your selected target disk %s also holds the current root device.  I
+need to know whether I'm currently running out of the target root
+(%sa), or out of an alternate root (say, in %sb, your swap partition).
+I can't tell unless you mount the root.
+
+I'm aborting back to the main menu so you can fork a subshell.
+}
 
 message scsigeom1
 {It appears that your disk, %s, has already been labeled with a BSD 
@@ -226,7 +246,7 @@ message disksetupdone
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
 If you see error messages above that indicate problems with the
-target-disk filesystems -- espeically / and /usr --  abort now.
+target-disk filesystems -- especially / and /usr --  abort now.
 
 If the target filesystems look good, the next step is to fetch and
 unpack the distribution filesets.  Press <return> to proceed.
@@ -325,8 +345,24 @@ device:    %s
 directory: %s
 }
 
+message localfssource
+{Enter the local device to be used and directory where the
+distribution is located.  Remember, the directory should contain
+the tar.gz files.
+
+device:     %s
+filesystem: %s
+directory:  %s
+}
+
+message filesys
+{filesystem}
+
 message cdrombadmount
 {The CDROM could not be mounted on device %s.}
+
+message localfsbadmount
+{%s could not be mounted on local device %s.}
 
 message asknetdev
 {I have found the following network interfaces: %s
@@ -525,4 +561,19 @@ in regular operation and do you want it installed in /etc? }
 message cur_distsets
 {The following is the list of distribution sets that will be used.
 
+}
+
+message tarerror
+{There was an error in extracting the file %s.  That means some files
+were not extracted correctly and your system will not be complete.
+CR to continue
+}
+
+message etc_hosts
+{
+#
+#Added by NetBSD sysinst
+#
+%s %s.%s %s
+127.0.0.1 localhost
 }

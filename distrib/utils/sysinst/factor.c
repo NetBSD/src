@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.2 1997/10/01 05:04:26 phil Exp $ */
+/*	$NetBSD: factor.c,v 1.2.2.1 1997/11/10 19:22:54 thorpej Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,6 +36,7 @@
  *
  */
 
+#include <stdio.h>			/* defs.h uses FILE* */
 #include "defs.h"
 
 /*

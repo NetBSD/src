@@ -1,10 +1,11 @@
-/*	$NetBSD: md.h,v 1.1.1.1.2.2 1997/11/10 19:24:00 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.1.2.2 1997/11/10 19:23:40 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +37,7 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the pc532 */
+/* md.h -- Machine specific definitions for the arm32 */
 
 /* Constants and defines */
 
@@ -46,12 +47,12 @@
 /* Disk names. */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"sd", NULL}
+= {"wd", "sd", NULL}
 #endif
 ;
 
 /* Legal start character for a disk for checking input. */
-#define ISDISKSTART(dn)	(dn == 's')
+#define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
 
 /* Definition of files to retreive from ftp. */
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
@@ -59,16 +60,25 @@ EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"base%s%s", 1, NULL, "Base         : "},
-    {"etc%s%s",  1, NULL, "System (/etc): "},
-    {"comp%s%s", 1, NULL, "Compiler     : "},
-    {"games%s%s", 1, NULL,"Games        : "},
-    {"man%s%s",  1, NULL, "Manuals      : "},
-    {"misc%s%s", 1, NULL, "Miscellaneous: "},
-    {"text%s%s", 1, NULL, "Text tools   : "},
+    {"kern%s%s",    1, NULL, "Kernel       : "},
+    {"base%s%s",    1, NULL, "Base         : "},
+    {"etc%s%s",	    1, NULL, "System (/etc): "},
+    {"comp%s%s",    1, NULL, "Compiler     : "},
+    {"games%s%s",   1, NULL, "Games        : "},
+    {"man%s%s",     1, NULL, "Manuals      : "},
+    {"misc%s%s",    1, NULL, "Miscellaneous: "},
+    {"text%s%s",    1, NULL, "Text tools   : "},
+/*
+    {"xbase%s%s",   1, NULL, "X11 clients  : "},
+    {"xfont%s%s",   1, NULL, "X11 fonts    : "},
+    {"xfont%s%s",   1, NULL, "X11 servers  : "},
+    {"xcontrib%s%s",1, NULL, "X11 contrib  : "},
+    {"xcomp%s%s",   1, NULL, "X programming: "},
+*/
+
     {NULL, 0, NULL }
 }
 #endif
 ;
 
-EXTERN char *fdtype INIT("");
+EXTERN char *fdtype INIT("msdos");

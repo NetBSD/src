@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4.2.1 1997/10/27 19:36:39 thorpej Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.2 1997/11/10 19:23:48 thorpej Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -280,7 +280,7 @@ void md_make_bsd_partitions (void)
 		partstart += partsize;
 
 		/* swap */
-		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
+		i = NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
@@ -322,7 +322,7 @@ void md_make_bsd_partitions (void)
 		
 		/* swap */
 		remain = fsdsize - partstart;
-		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
+		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
