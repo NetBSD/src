@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.19 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.20 2003/12/31 00:42:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.19 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.20 2003/12/31 00:42:46 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -124,17 +124,18 @@ void
 rf_FreeParityStripeStatusTable(RF_Raid_t *raidPtr, 
 			       RF_PSStatusHeader_t *pssTable)
 {
+#if RF_DEBUG_PSS
 	int     i;
 
-#if RF_DEBUG_PSS
 	if (rf_pssDebug)
 		RealPrintPSStatusTable(raidPtr, pssTable);
-#endif
+
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		if (pssTable[i].chain) {
 			printf("ERROR: pss hash chain not null at recon shutdown\n");
 		}
 	}
+#endif
 	RF_Free(pssTable, raidPtr->pssTableSize * sizeof(RF_PSStatusHeader_t));
 }
 
