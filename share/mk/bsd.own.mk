@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.178 2001/09/08 11:10:41 thomas Exp $
+#	$NetBSD: bsd.own.mk,v 1.179 2001/09/16 18:50:29 chris Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -110,7 +110,6 @@ NOPIC?=1
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68000" || \
-    ${MACHINE_ARCH} == "arm" || \
     ${MACHINE} == "next68k" || \
     ${MACHINE} == "sun3" || \
     ${MACHINE} == "mvme68k" || \
