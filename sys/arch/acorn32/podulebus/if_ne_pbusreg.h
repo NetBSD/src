@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbusreg.h,v 1.1 2001/10/05 22:27:56 reinoud Exp $	*/
+/*	$NetBSD: if_ne_pbusreg.h,v 1.2 2001/12/16 00:23:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,10 +69,6 @@
 #define EH600_ASIC_SIZE		(NE2000_ASIC_NPORTS << EH600_REGSHIFT)
 #define EH600_REGSHIFT		2
 
-#define EH600_MCRA		0x0a	/* master control reg A */
-#define EH600_MCRB		0x0b	/* master control reg B */
-#define EH600_10BTSEL		0	/* 10BaseT interface */
-#define EH600_10B2SEL		1	/* 10Base2 interface */
 #define EH600_MEM_START         0x100   /* buffer ram start */
 #define EH600_MEM_END           0x8000  /* buffer ram end */
 

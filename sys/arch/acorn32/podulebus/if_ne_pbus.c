@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.3 2001/12/15 20:30:06 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.4 2001/12/16 00:23:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,8 @@
 #include <dev/ic/dp8390var.h>
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+#include <dev/ic/dp83905reg.h>
+#include <dev/ic/dp83905var.h>
 #include <dev/ic/mx98905var.h>
 
 #include <arch/acorn32/podulebus/podulebus.h>
@@ -114,15 +116,9 @@ static void eh600_postattach	__P((struct ne_pbus_softc *sc));
 static void eh600_preattach	__P((struct ne_pbus_softc *sc));
 static u_int8_t *eh600_ea	__P((struct ne_pbus_softc *sc, u_int8_t *buffer));
 
-int	eh600_mediachange       __P((struct dp8390_softc *));
-void	eh600_mediastatus       __P((struct dp8390_softc *, struct ifmediareq *));
-void	eh600_init_card         __P((struct dp8390_softc *));
 void	eh600_init_media        __P((struct dp8390_softc *));
 
 void	en_postattach		__P((struct ne_pbus_softc *));
-int	en_mediachange          __P((struct dp8390_softc *));
-void	en_mediastatus          __P((struct dp8390_softc *, struct ifmediareq *));
-void	en_init_card            __P((struct dp8390_softc *));
 void	en_init_media           __P((struct dp8390_softc *));
 
 /*
@@ -180,7 +176,7 @@ struct ne_clone {
 	  EH600_CONTROL_OFFSET, EH600_CONTROL_SIZE, NE_SPACE_FAST,
 	  NE_SPACE_FAST, NE_SPACE_FAST, 0,
 	  "EtherLan 600", eh600_ea, eh600_preattach, eh600_postattach,
-	  eh600_mediachange, eh600_mediastatus, eh600_init_card,
+	  dp83905_mediachange, dp83905_mediastatus, dp83905_init_card,
 	  eh600_init_media
 	},
 	/* Acorn EtherLan EtherH netslot interface */
@@ -190,7 +186,7 @@ struct ne_clone {
 	  EH600_CONTROL_OFFSET, EH600_CONTROL_SIZE, NE_SPACE_FAST,
 	  NE_SPACE_FAST, NE_SPACE_FAST, 0,
 	  "EtherLan 600A", eh600_ea , eh600_preattach, eh600_postattach,
-	  eh600_mediachange, eh600_mediastatus, eh600_init_card,
+	  dp83905_mediachange, dp83905_mediastatus, dp83905_init_card,
 	  eh600_init_media
 	},
 	/* Irlam EtherN podule. (supplied with NC) */
@@ -200,7 +196,7 @@ struct ne_clone {
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
 	  "EtherN", em_ea, NULL, en_postattach,
-	  en_mediachange, en_mediastatus, en_init_card,
+	  dp83905_mediachange, dp83905_mediastatus, dp83905_init_card,
 	  en_init_media
 	},
 	/* Acorn EtherI podule. (supplied with NC) */
@@ -210,7 +206,7 @@ struct ne_clone {
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
 	  "EtherI", em_ea, NULL, en_postattach,
-	  en_mediachange, en_mediastatus, en_init_card,
+	  dp83905_mediachange, dp83905_mediastatus, dp83905_init_card,
 	  en_init_media
 	},
 };
@@ -514,8 +510,8 @@ eh600_preattach(sc)
 	bus_space_handle_t nich = dsc->sc_regh;
 	
 	/* initialise EH600 config register */
-	bus_space_read_1(nict, nich, EH600_MCRA);
-	bus_space_write_1(nict,nich,EH600_MCRA,0x18);
+	bus_space_read_1(nict, nich, DP83905_MCRA);
+	bus_space_write_1(nict, nich, DP83905_MCRA, DP83905_MCRA_INT3);
 
 	/* enable interrupts for the card */
 	tmp = bus_space_read_1(&sc->sc_tag,sc->sc_extrah,0); 
@@ -584,84 +580,6 @@ void eh600_init_media(sc)
 }
 
 
-
-
-void eh600_init_card(sc)
-     struct dp8390_softc *sc;
-{
-	struct ifmedia *ifm = &sc->sc_media;
-	bus_space_tag_t nict = sc->sc_regt;
-	bus_space_handle_t nich = sc->sc_regh;
-	u_int8_t reg;
-
-
-	/* Set basic media type. */
-	switch (IFM_SUBTYPE(ifm->ifm_cur->ifm_media)) {
-	case IFM_AUTO:
-		/* software auto detect the media */
-		reg = bus_space_read_1(nict, nich, EH600_MCRB);
-		reg = (reg & 0xf8) | EH600_10BTSEL;
-		bus_space_write_1(nict, nich, EH600_MCRB, reg);
-		reg = bus_space_read_1(nict, nich, EH600_MCRB);
-		if ((reg & 0x04) != 0x04) {
-			/* No UTP use BNC */
-			reg = (reg & 0xf8) | EH600_10B2SEL;
-			bus_space_write_1(nict, nich, EH600_MCRB, reg);
-		} 
-
-		break;
-
-	case IFM_10_T:
-		reg = bus_space_read_1(nict, nich, EH600_MCRB);
-		reg = (reg & 0xf8) | EH600_10BTSEL;
-		bus_space_write_1(nict, nich, EH600_MCRB, reg);
-		/* seems that re-reading config B here is required to 
-	         * prevent the interface hanging when manually selecting.
-		 */
-		bus_space_read_1(nict, nich, EH600_MCRB);
-		break;
-
-	case IFM_10_2:
-		reg = bus_space_read_1(nict, nich, EH600_MCRB);
-		reg = (reg & 0xf8) | EH600_10B2SEL;
-		bus_space_write_1(nict, nich, EH600_MCRB,reg);
-		/* seems that re-reading config B here is required to 
-	         * prevent the interface hanging when manually selecting.
-		 */
-		bus_space_read_1(nict, nich, EH600_MCRB);
-		break;
-	}
-}
-
-int
-eh600_mediachange(dsc)
-	struct dp8390_softc *dsc;
-{
-	/* media is already set up. Interface reset will invoke new
-	 * new media setting. */
-	dp8390_reset(dsc);
-	return (0);
-}
-
-
-void
-eh600_mediastatus(sc, ifmr)
-	struct dp8390_softc *sc;
-	struct ifmediareq *ifmr;
-{
-	bus_space_tag_t nict = sc->sc_regt;
-	bus_space_handle_t nich = sc->sc_regh;
-	u_int8_t reg;
-	reg = bus_space_read_1(nict, nich, EH600_MCRB);
-	if ((reg & 0x3) == 1) {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_2;
-	}
-	else {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
-	}
-}
-
-
 void
 en_postattach(sc)
 	struct ne_pbus_softc *sc;
@@ -686,32 +604,6 @@ en_init_media(sc)
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	ifmedia_add(&sc->sc_media, en_media[0], 0, NULL);
 	ifmedia_set(&sc->sc_media, en_media[0]);
-}
-
-
-
-
-void
-en_init_card(sc)
-     struct dp8390_softc *sc;
-{
-}
-
-int
-en_mediachange(dsc)
-	struct dp8390_softc *dsc;
-{
-	/* media is static so any change is invalid. */
-	return (EINVAL);
-}
-
-
-void
-en_mediastatus(sc, ifmr)
-	struct dp8390_softc *sc;
-	struct ifmediareq *ifmr;
-{
-	ifmr->ifm_active = IFM_ETHER|IFM_10_T;
 }
 
 
