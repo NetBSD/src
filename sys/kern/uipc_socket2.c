@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.23 1998/03/01 02:22:34 fvdl Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.24 1998/04/25 17:35:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -172,6 +172,8 @@ sonewconn1(head, connstatus)
 	so->so_proto = head->so_proto;
 	so->so_timeo = head->so_timeo;
 	so->so_pgid = head->so_pgid;
+	so->so_send = head->so_send;
+	so->so_receive = head->so_receive;
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
@@ -321,6 +323,8 @@ sowakeup(so, sb)
 		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
 			psignal(p, SIGIO);
 	}
+	if (sb->sb_flags & SB_UPCALL)
+		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
 }
 
 /*
