@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2003/03/18 14:59:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2003/03/18 19:33:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -419,6 +419,11 @@ gt_bus_space_init(void)
 	    ex_storage[2], sizeof(ex_storage[2]));
 
 	/*
+	 * Make sure PCI0 Memory is BAT mapped.
+	 */
+	oea_iobat_add(gt_pci0_mem_bs_tag.pbs_base & SEGMENT_MASK, BAT_BL_256M);
+
+	/*
 	 * Make sure that I/O space start at 0.
 	 */
 	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Remap, 0);
@@ -447,6 +452,11 @@ gt_bus_space_init(void)
 
 	error = bus_space_init(&gt_pci1_mem_bs_tag, "pci1-mem",
 	    ex_storage[4], sizeof(ex_storage[4]));
+
+	/*
+	 * Make sure PCI1 Memory is BAT mapped.
+	 */
+	oea_iobat_add(gt_pci1_mem_bs_tag.pbs_base & SEGMENT_MASK, BAT_BL_256M);
 
 	/*
 	 * Make sure that I/O space start at 0.
