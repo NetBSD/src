@@ -1,0 +1,10 @@
+*_stub.c
+*.lo
+grep
+install.sub
+less
+miniroot.*
+mini_usr
+mini_usr.*
+tip
+vi
