@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.5 2000/11/20 19:35:29 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.6 2000/11/24 09:36:41 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -261,6 +261,7 @@ pcctwoattach(parent, self, args)
 	/*
 	 * Attach configured children.
 	 */
+	npa._pa_base = ma->ma_offset;
 	while (pd->pcc_name != NULL) {
 		/*
 		 * Note that IPL is filled in by match function.
@@ -289,7 +290,7 @@ pcctwoprint(aux, cp)
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset);
+	printf(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
 	if (pa->pa_ipl != -1)
 		printf(" ipl %d", pa->pa_ipl);
 
