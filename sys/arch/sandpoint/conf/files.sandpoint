@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.5 2001/06/10 03:16:29 briggs Exp $
+#	$NetBSD: files.sandpoint,v 1.6 2001/06/12 17:13:35 tsubai Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -14,6 +14,7 @@ file	arch/sandpoint/sandpoint/disksubr.c		disk
 file	arch/sandpoint/sandpoint/extintr.c
 file	arch/sandpoint/sandpoint/machdep.c
 file	arch/sandpoint/sandpoint/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/bus_dma.c
 
 # General files
 file	dev/cons.c
