@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.39 1999/03/29 05:56:29 nisimura Exp $
+# 	$NetBSD: GENERIC,v 1.40 1999/04/13 18:53:28 ad Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -84,6 +84,13 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	COMPAT_12	# Netbsd 1.2 reboot()
 options 	COMPAT_13	# Netbsd 1.3
 
+# Raster console options
+options		RASOPS1			# 1-bit framebuffer ops (XXX)
+options		RASOPS8			# 8-bit framebuffer ops (XXX)
+options		FONT_BOLD8x16		# Font for fb devices
+options		FONT_LUCIDA16x29	# Font for px devices
+#options	RASTERCONSOLE_FGCOL=WSCOL_GREEN
+#options	RASTERCONSOLE_BGCOL=WSCOL_BLACK
 
 # pmax specific
 options 	COMPAT_ULTRIX	# Ultrix compatibility

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.18 1999/03/28 05:46:53 simonb Exp $
+# 	$NetBSD: INSTALL,v 1.19 1999/04/13 18:53:28 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -59,6 +59,14 @@ options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 
 options 	COMPAT_12
 options 	COMPAT_13
+
+# Raster console options
+options		RASOPS1			# 1-bit framebuffer ops (XXX)
+options		RASOPS8			# 8-bit framebuffer ops (XXX)
+options		FONT_BOLD8x16		# Font for fb devices
+options		FONT_LUCIDA16x29	# Font for px devices
+#options	RASTERCONSOLE_FGCOL=WSCOL_GREEN
+#options	RASTERCONSOLE_BGCOL=WSCOL_BLACK
 
 # pmax specific
 options 	"HZ=256"	# RTC rate required
