@@ -1,4 +1,4 @@
-/*	$NetBSD: rwall.c,v 1.6 1997/01/09 20:21:22 tls Exp $	*/
+/*	$NetBSD: rwall.c,v 1.7 1997/10/19 14:30:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -34,32 +34,35 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$NetBSD: rwall.c,v 1.6 1997/01/09 20:21:22 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
+#else
+__RCSID("$NetBSD: rwall.c,v 1.7 1997/10/19 14:30:08 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
  * This program is not related to David Wall, whose Stanford Ph.D. thesis
  * is entitled "Mechanisms for Broadcast and Selective Broadcast".
  */
-
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <err.h>
+#include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <pwd.h>
 #include <unistd.h>
-#include <paths.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/rwall.h>
@@ -68,7 +71,8 @@ struct timeval timeout = { 25, 0 };
 int mbufsize;
 char *mbuf;
 
-void makemsg ();
+int	main __P((int, char **));
+void	makemsg __P((char *));
 
 int
 main(argc, argv)
@@ -128,10 +132,8 @@ makemsg(fname)
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
-	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+"))) {
-		(void)fprintf(stderr, "wall: can't open temporary file.\n");
-		exit(1);
-	}
+	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+")))
+		err(1, "can't open temporary file.");
 	(void)unlink(tmpname);
 
 	if (!(whom = getlogin()))
@@ -154,26 +156,18 @@ makemsg(fname)
 
 	putc('\n', fp);
 
-	if (fname && !(freopen(fname, "r", stdin))) {
-		(void)fprintf(stderr, "wall: can't read %s.\n", fname);
-		exit(1);
-	}
+	if (fname && !(freopen(fname, "r", stdin)))
+		err(1, "can't read %s.", fname);
 	while (fgets(lbuf, sizeof(lbuf), stdin))
 		fputs(lbuf, fp);
 	rewind(fp);
 
-	if (fstat(fd, &sbuf)) {
-		(void)fprintf(stderr, "wall: can't stat temporary file.\n");
-		exit(1);
-	}
+	if (fstat(fd, &sbuf))
+		err(1, "can't stat temporary file.");
 	mbufsize = sbuf.st_size;
-	if (!(mbuf = malloc((u_int)mbufsize))) {
-		(void)fprintf(stderr, "wall: out of memory.\n");
-		exit(1);
-	}
-	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize) {
-		(void)fprintf(stderr, "wall: can't read temporary file.\n");
-		exit(1);
-	}
+	if (!(mbuf = malloc((u_int)mbufsize)))
+		err(1, "malloc");
+	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
+		err(1, "can't read temporary file.");
 	(void)close(fd);
 }
