@@ -1,4 +1,4 @@
-/*	$NetBSD: regnum.h,v 1.2 1996/03/19 15:20:39 jonathan Exp $	*/
+/*	$NetBSD: regnum.h,v 1.3 1998/07/05 04:14:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,7 +80,10 @@
 #define S8	30
 #define RA	31
 #define	SR	32
+#ifndef _KERNEL		/* clashes with netccitt/pk.h */
 #define	PS	SR	/* alias for SR */
+#endif
+
 #define MULLO	33
 #define MULHI	34
 #define BADVADDR 35
