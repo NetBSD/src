@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.35 1995/04/01 10:27:56 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.36 1995/04/15 05:02:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -439,7 +439,8 @@ mcdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, &sc->sc_dk.dk_label,
+	if (MCDPART(bp->b_dev) != RAW_PART &&
+	    bounds_check_with_label(bp, &sc->sc_dk.dk_label,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
 	
