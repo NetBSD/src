@@ -181,6 +181,8 @@ $ ENOSR
 90 Keine STREAM-Ressourcen verfügbar
 $ ENOSTR
 91 Kein STREAM
+$ ETIME
+92 Zeitüberschreitung bei STREAM Ioctl
 $set 2
 $ SIGHUP
 1 Verbindungsende
