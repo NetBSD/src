@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.35 1998/05/01 05:22:16 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.36 1998/05/19 00:20:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 1998/05/01 05:22:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 1998/05/19 00:20:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
  */
 void	pmap_create_lev1map __P((pmap_t));
 void	pmap_destroy_lev1map __P((pmap_t));
-void	pmap_alloc_ptpage __P((pmap_t, pt_entry_t *));
+void	pmap_alloc_ptpage __P((pmap_t, pt_entry_t *, int));
 void	pmap_free_ptpage __P((pmap_t, pt_entry_t *));
 int	pmap_ptpage_addref __P((pt_entry_t *));
 int	pmap_ptpage_delref __P((pt_entry_t *));
@@ -435,7 +435,7 @@ void	pmap_alloc_asn __P((pmap_t));
 /*
  * Misc. functions.
  */
-vm_offset_t pmap_alloc_physpage __P((void));
+vm_offset_t pmap_alloc_physpage __P((int));
 void	pmap_free_physpage __P((vm_offset_t));
 
 #ifdef DEBUG
@@ -1452,7 +1452,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		l1pte = pmap_l1pte(pmap, va);
 		if (pmap_pte_v(l1pte) == 0) {
-			pmap_alloc_ptpage(pmap, l1pte);
+			pmap_alloc_ptpage(pmap, l1pte, PGU_L2PT);
 			pmap_ptpage_addref(l1pte);
 			pmap->pm_nlev2++;
 #ifdef DEBUG
@@ -1470,7 +1470,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		l2pte = pmap_l2pte(pmap, va, l1pte);
 		if (pmap_pte_v(l2pte) == 0) {
-			pmap_alloc_ptpage(pmap, l2pte);
+			pmap_alloc_ptpage(pmap, l2pte, PGU_L3PT);
 			pmap_ptpage_addref(l2pte);
 			pmap->pm_nlev3++;
 #ifdef DEBUG
@@ -2804,7 +2804,7 @@ pmap_alloc_pv()
 		/*
 		 * No free pv_entry's; allocate a new pv_page.
 		 */
-		pvppa = pmap_alloc_physpage();
+		pvppa = pmap_alloc_physpage(PGU_PVENT);
 		pvp = (struct pv_page *)ALPHA_PHYS_TO_K0SEG(pvppa);
 		LIST_INIT(&pvp->pvp_pgi.pgi_freelist);
 		for (i = 0; i < NPVPPG; i++)
@@ -2969,9 +2969,11 @@ pmap_collect_pv()
  *	physical address for that page.
  */
 vm_offset_t
-pmap_alloc_physpage()
+pmap_alloc_physpage(usage)
+	int usage;
 {
 	struct vm_page *pg;
+	struct pv_head *pvh;
 	vm_offset_t pa;
 	pmap_t pmap;
 	int try;
@@ -2987,6 +2989,10 @@ pmap_alloc_physpage()
 		if (pg != NULL) {
 			pa = VM_PAGE_TO_PHYS(pg);
 			pmap_zero_page(pa);
+
+			pvh = pa_to_pvh(pa);
+			pvh->pvh_usage = usage;
+
 			return (pa);
 		}
 
@@ -3025,13 +3031,17 @@ pmap_alloc_physpage()
  *	Free the single page table page at the specified physical address.
  */
 void
-pmap_free_physpage(ptpage)
-	vm_offset_t ptpage;
+pmap_free_physpage(pa)
+	vm_offset_t pa;
 {
+	struct pv_head *pvh;
 	struct vm_page *pg;
 
-	if ((pg = PHYS_TO_VM_PAGE(ptpage)) == NULL)
+	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
 		panic("pmap_free_physpage: bogus physical page address");
+
+	pvh = pa_to_pvh(pa);
+	pvh->pvh_usage = PGU_NORMAL;
 
 #if defined(UVM)
 	uvm_pagefree(pg);
@@ -3073,14 +3083,13 @@ pmap_create_lev1map(pmap)
 	/*
 	 * Allocate a page for the level 1 table.
 	 */
-	ptpa = pmap_alloc_physpage();
+	ptpa = pmap_alloc_physpage(PGU_L1PT);
 	pmap->pm_lev1map = (pt_entry_t *) ALPHA_PHYS_TO_K0SEG(ptpa);
 
 	/*
 	 * Initialize PT page bookkeeping.
 	 */
 	pvh = pa_to_pvh(ptpa);
-	pvh->pvh_attrs |= PMAP_ATTR_PTPAGE;
 	pvh->pvh_ptref = 0;
 
 	/*
@@ -3116,7 +3125,6 @@ void
 pmap_destroy_lev1map(pmap)
 	pmap_t pmap;
 {
-	struct pv_head *pvh;
 	vm_offset_t ptpa;
 
 #ifdef DIAGNOSTIC
@@ -3154,12 +3162,6 @@ pmap_destroy_lev1map(pmap)
 		PMAP_ACTIVATE(pmap, curproc);
 
 	/*
-	 * Clear PT page bookkeeping.
-	 */
-	pvh = pa_to_pvh(ptpa);
-	pvh->pvh_attrs &= ~PMAP_ATTR_PTPAGE;
-
-	/*
 	 * Free the old level 1 page table page.
 	 */
 	pmap_free_physpage(ptpa);
@@ -3172,9 +3174,10 @@ pmap_destroy_lev1map(pmap)
  *	initialize the PTE that references it.
  */
 void
-pmap_alloc_ptpage(pmap, pte)
+pmap_alloc_ptpage(pmap, pte, usage)
 	pmap_t pmap;
 	pt_entry_t *pte;
+	int usage;
 {
 	struct pv_head *pvh;
 	vm_offset_t ptpa;
@@ -3182,13 +3185,12 @@ pmap_alloc_ptpage(pmap, pte)
 	/*
 	 * Allocate the page table page.
 	 */
-	ptpa = pmap_alloc_physpage();
+	ptpa = pmap_alloc_physpage(usage);
 
 	/*
 	 * Initialize PT page bookkeeping.
 	 */
 	pvh = pa_to_pvh(ptpa);
-	pvh->pvh_attrs |= PMAP_ATTR_PTPAGE;
 	pvh->pvh_ptref = 0;
 
 	/*
@@ -3210,7 +3212,6 @@ pmap_free_ptpage(pmap, pte)
 	pmap_t pmap;
 	pt_entry_t *pte;
 {
-	struct pv_head *pvh;
 	vm_offset_t ptpa;
 
 	/*
@@ -3223,12 +3224,6 @@ pmap_free_ptpage(pmap, pte)
 #ifdef DEBUG
 	pmap_zero_page(ptpa);
 #endif
-
-	/*
-	 * Clear PT page bookkeeping.
-	 */
-	pvh = pa_to_pvh(ptpa);
-	pvh->pvh_attrs &= ~PMAP_ATTR_PTPAGE;
 
 	/*
 	 * Free the page table page.
@@ -3253,7 +3248,7 @@ pmap_ptpage_addref(pte)
 	pvh = pa_to_pvh(ptpa);
 
 #ifdef DIAGNOSTIC
-	if ((pvh->pvh_attrs & PMAP_ATTR_PTPAGE) == 0)
+	if (PGU_ISPTPAGE(pvh->pvh_usage) == 0)
 		panic("pmap_ptpage_addref: not a PT page");
 #endif
 
@@ -3289,7 +3284,7 @@ pmap_ptpage_delref(pte)
 	pvh = pa_to_pvh(ptpa);
 
 #ifdef DIAGNOSTIC
-	if ((pvh->pvh_attrs & PMAP_ATTR_PTPAGE) == 0)
+	if (PGU_ISPTPAGE(pvh->pvh_usage) == 0)
 		panic("pmap_ptpage_delref: not a PT page");
 #endif
 
