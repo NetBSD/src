@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.6 1998/11/08 02:06:27 jonathan Exp $	*/
+/*	$NetBSD: label.c,v 1.7 1998/11/08 02:56:27 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.6 1998/11/08 02:06:27 jonathan Exp $");
+__RCSID("$NetBSD: label.c,v 1.7 1998/11/08 02:56:27 jonathan Exp $");
 #endif
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ savenewlabel(lp, nparts)
 		    'a'+i, bsdlabel[i][D_OFFSET],
 		    'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
-			(void)fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",,
+			(void)fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
 				       'a'+i, bsdlabel[i][D_BSIZE],
 				       'a'+i, bsdlabel[i][D_FSIZE]);
 		if (i < 7)
