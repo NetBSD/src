@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2001/06/14 12:57:10 fredette Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2001/06/27 02:53:07 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,22 +44,33 @@
 #include <machine/bus.h>
 #include <machine/promlib.h>
 
-/*
- * This is the "args" parameter to the bus match/attach functions.
- */
-struct confargs {
-	bus_space_tag_t	ca_bustag;	/* parent bus tag */
-	bus_dma_tag_t	ca_dmatag;
-	const char	*ca_name;	/* device name */
-	bus_addr_t	ca_paddr;	/* physical address */
-	int		ca_intpri;	/* interrupt priority level */
-	int		ca_intvec;	/* interrupt vector index */
+/* Attach arguments presented by mainbus_attach() */
+struct mainbus_attach_args {
+	bus_space_tag_t	ma_bustag;	/* parent bus tag */
+	bus_dma_tag_t	ma_dmatag;
+	const char	*ma_name;	/* device name */
+	bus_addr_t	ma_paddr;	/* physical address */
+	int		ma_pri;		/* priority (IPL) */
 };
+
+/* Aliases for other buses */
+#define	obio_attach_args	mainbus_attach_args
+#define	oba_bustag		ma_bustag
+#define	oba_dmatag		ma_dmatag
+#define	oba_name		ma_name
+#define	oba_paddr		ma_paddr
+#define	oba_pri			ma_pri
+
+#define	obmem_attach_args	mainbus_attach_args
+#define	obma_bustag		ma_bustag
+#define	obma_dmatag		ma_dmatag
+#define	obma_name		ma_name
+#define	obma_paddr		ma_paddr
+#define	obma_pri		ma_pri
 
 /* Locator aliases */
 #define cf_paddr	cf_loc[0]
 #define cf_intpri	cf_loc[1]
-#define cf_intvec	cf_loc[2]
 #define	LOCATOR_OPTIONAL	(0)
 #define	LOCATOR_REQUIRED	(1)
 #define	LOCATOR_FORBIDDEN	(2)
