@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.31 1998/11/08 00:29:08 jonathan Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.32 1999/01/27 21:41:31 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,11 +29,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.31 1998/11/08 00:29:08 jonathan Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.32 1999/01/27 21:41:31 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_mbr.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -65,10 +66,10 @@ struct disklabel disklabel;		/* disk parameters */
 int cylinders, sectors, heads, cylindersectors, disksectors;
 
 struct mboot {
-	unsigned char padding[2]; /* force the longs to be long alligned */
-	unsigned char bootinst[DOSPARTOFF];
-	struct	dos_partition parts[4];
-	unsigned short int	signature;
+	u_int8_t	padding[2]; /* force the longs to be long alligned */
+	u_int8_t	bootinst[MBR_PARTOFF];
+	struct mbr_partition parts[NMBRPART];
+	u_int16_t	signature;
 };
 struct mboot mboot;
 
@@ -77,7 +78,6 @@ struct mboot mboot;
 #endif
 
 #define ACTIVE 0x80
-#define BOOT_MAGIC 0xAA55
 
 int dos_cylinders;
 int dos_heads;
@@ -366,7 +366,7 @@ main(argc, argv)
 		if (!f_flag)
 			printf("Information from DOS bootblock is:\n");
 		if (partition == -1) 
-			for (part = 0; part < NDOSPART; part++)
+			for (part = 0; part < NMBRPART; part++)
 				change_part(part,-1, -1, -1);
 		else
 			change_part(partition, csysid, cstart, csize);
@@ -409,7 +409,7 @@ print_s0(which)
 	if (!sh_flag)
 		printf("Information from DOS bootblock is:\n");
 	if (which == -1) {
-		for (part = 0; part < NDOSPART; part++) {
+		for (part = 0; part < NMBRPART; part++) {
 			if (!sh_flag)
 				printf("%d: ", part);
 			print_part(part);
@@ -418,7 +418,7 @@ print_s0(which)
 		print_part(which);
 }
 
-static struct dos_partition mtpart = { 0 };
+static struct mbr_partition mtpart = { 0 };
 
 static inline unsigned short
 getshort(p)
@@ -466,11 +466,11 @@ void
 print_part(part)
 	int part;
 {
-	struct dos_partition *partp;
+	struct mbr_partition *partp;
 	int empty;
 
 	partp = &mboot.parts[part];
-	empty = !memcmp(partp, &mtpart, sizeof(struct dos_partition));
+	empty = !memcmp(partp, &mtpart, sizeof(struct mbr_partition));
 
 	if (sh_flag) {
 		if (empty) {
@@ -478,18 +478,18 @@ print_part(part)
 			return;
 		}
 
-		printf("PART%dID=%d\n", part, partp->dp_typ);
-		printf("PART%dSIZE=%ld\n", part, getlong(&partp->dp_size));
-		printf("PART%dSTART=%ld\n", part, getlong(&partp->dp_start));
-		printf("PART%dFLAG=0x%x\n", part, partp->dp_flag);
-		printf("PART%dBCYL=%d\n", part, DPCYL(partp->dp_scyl,
-						      partp->dp_ssect));
-		printf("PART%dBHEAD=%d\n", part, partp->dp_shd);
-		printf("PART%dBSEC=%d\n", part, DPSECT(partp->dp_ssect));
-		printf("PART%dECYL=%d\n", part, DPCYL(partp->dp_ecyl,
-						      partp->dp_esect));
-		printf("PART%dEHEAD=%d\n", part, partp->dp_ehd);
-		printf("PART%dESEC=%d\n", part, DPSECT(partp->dp_esect));
+		printf("PART%dID=%d\n", part, partp->mbrp_typ);
+		printf("PART%dSIZE=%ld\n", part, getlong(&partp->mbrp_size));
+		printf("PART%dSTART=%ld\n", part, getlong(&partp->mbrp_start));
+		printf("PART%dFLAG=0x%x\n", part, partp->mbrp_flag);
+		printf("PART%dBCYL=%d\n", part, MBR_PCYL(partp->mbrp_scyl,
+						      partp->mbrp_ssect));
+		printf("PART%dBHEAD=%d\n", part, partp->mbrp_shd);
+		printf("PART%dBSEC=%d\n", part, MBR_PSECT(partp->mbrp_ssect));
+		printf("PART%dECYL=%d\n", part, MBR_PCYL(partp->mbrp_ecyl,
+						      partp->mbrp_esect));
+		printf("PART%dEHEAD=%d\n", part, partp->mbrp_ehd);
+		printf("PART%dESEC=%d\n", part, MBR_PSECT(partp->mbrp_esect));
 		return;
 	}
 
@@ -498,16 +498,16 @@ print_part(part)
 		printf("<UNUSED>\n");
 		return;
 	}
-	printf("sysid %d (%s)\n", partp->dp_typ, get_type(partp->dp_typ));
+	printf("sysid %d (%s)\n", partp->mbrp_typ, get_type(partp->mbrp_typ));
 	printf("    start %ld, size %ld (%ld MB), flag 0x%x\n",
-	    getlong(&partp->dp_start), getlong(&partp->dp_size),
-	    getlong(&partp->dp_size) * 512 / (1024 * 1024), partp->dp_flag);
+	    getlong(&partp->mbrp_start), getlong(&partp->mbrp_size),
+	    getlong(&partp->mbrp_size) * 512 / (1024 * 1024), partp->mbrp_flag);
 	printf("\tbeg: cylinder %4d, head %3d, sector %2d\n",
-	    DPCYL(partp->dp_scyl, partp->dp_ssect),
-	    partp->dp_shd, DPSECT(partp->dp_ssect));
+	    MBR_PCYL(partp->mbrp_scyl, partp->mbrp_ssect),
+	    partp->mbrp_shd, MBR_PSECT(partp->mbrp_ssect));
 	printf("\tend: cylinder %4d, head %3d, sector %2d\n",
-	    DPCYL(partp->dp_ecyl, partp->dp_esect),
-	    partp->dp_ehd, DPSECT(partp->dp_esect));
+	    MBR_PCYL(partp->mbrp_ecyl, partp->mbrp_esect),
+	    partp->mbrp_ehd, MBR_PSECT(partp->mbrp_esect));
 }
 
 void
@@ -533,7 +533,7 @@ read_boot(name)
 	/*
 	 * Do some sanity checking here
 	 */
-	if (getshort(bootcode + 0x1fe) != BOOT_MAGIC)
+	if (getshort(bootcode + MBR_MAGICOFF) != MBR_MAGIC)
 		errx(1, "%s: invalid magic", name);
 	bootsize = (bootsize + 0x1ff) / 0x200;
 	bootsize *= 0x200;
@@ -551,11 +551,11 @@ init_sector0(start, dopart)
 #endif
 
 	memcpy(mboot.bootinst, bootcode, sizeof(mboot.bootinst));
-	putshort(&mboot.signature, BOOT_MAGIC);
+	putshort(&mboot.signature, MBR_MAGIC);
 	
 	if (dopart)
 		for (i=0; i<3; i++) 
-			memset (&mboot.parts[i], 0, sizeof(struct dos_partition));
+			memset (&mboot.parts[i], 0, sizeof(struct mbr_partition));
 
 }
 
@@ -582,7 +582,7 @@ intuit_translated_geometry()
 	quad_t num, denom;
 
 	/* Try to deduce the number of heads from two different mappings. */
-	for (i = 0; i < NDOSPART * 2; i++) {
+	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
 		for (j = 0; j < 8; j++) {
@@ -603,7 +603,7 @@ intuit_translated_geometry()
 		return;
 
 	/* Now figure out the number of sectors from a single mapping. */
-	for (i = 0; i < NDOSPART * 2; i++) {
+	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
 		num = a1 - s1;
@@ -623,7 +623,7 @@ intuit_translated_geometry()
 	/* Now verify consistency with each of the partition table entries.
 	 * Be willing to shove cylinders up a little bit to make things work,
 	 * but translation mismatches are fatal. */
-	for (i = 0; i < NDOSPART * 2; i++) {
+	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
 		if (sectors * (c1 * heads + h1) + s1 != a1)
@@ -650,21 +650,21 @@ get_mapping(i, cylinder, head, sector, absolute)
 	int i, *cylinder, *head, *sector;
 	long *absolute;
 {
-	struct dos_partition *part = &mboot.parts[i / 2];
+	struct mbr_partition *part = &mboot.parts[i / 2];
 
-	if (part->dp_typ == 0)
+	if (part->mbrp_typ == 0)
 		return -1;
 	if (i % 2 == 0) {
-		*cylinder = DPCYL(part->dp_scyl, part->dp_ssect);
-		*head = part->dp_shd;
-		*sector = DPSECT(part->dp_ssect) - 1;
-		*absolute = getlong(&part->dp_start);
+		*cylinder = MBR_PCYL(part->mbrp_scyl, part->mbrp_ssect);
+		*head = part->mbrp_shd;
+		*sector = MBR_PSECT(part->mbrp_ssect) - 1;
+		*absolute = getlong(&part->mbrp_start);
 	} else {
-		*cylinder = DPCYL(part->dp_ecyl, part->dp_esect);
-		*head = part->dp_ehd;
-		*sector = DPSECT(part->dp_esect) - 1;
-		*absolute = getlong(&part->dp_start)
-		    + getlong(&part->dp_size) - 1;
+		*cylinder = MBR_PCYL(part->mbrp_ecyl, part->mbrp_esect);
+		*head = part->mbrp_ehd;
+		*sector = MBR_PSECT(part->mbrp_esect) - 1;
+		*absolute = getlong(&part->mbrp_start)
+		    + getlong(&part->mbrp_size) - 1;
 	}
 	return 0;
 }
@@ -673,7 +673,7 @@ void
 change_part(part, csysid, cstart, csize)
 	int part, csysid, cstart, csize;
 {
-	struct dos_partition *partp;
+	struct mbr_partition *partp;
 
 	partp = &mboot.parts[part];
 
@@ -681,17 +681,17 @@ change_part(part, csysid, cstart, csize)
 		if (csysid == 0 && cstart == 0 && csize == 0)
 			memset(partp, 0, sizeof *partp);
 		else {
-			partp->dp_typ = csysid;
+			partp->mbrp_typ = csysid;
 #if 0
 			checkcyl(cstart / dos_cylindersectors);
 #endif
-			putlong(&partp->dp_start, cstart);
-			putlong(&partp->dp_size, csize);
-			dos(getlong(&partp->dp_start),
-			    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
-			dos(getlong(&partp->dp_start)
-			    + getlong(&partp->dp_size) - 1,
-			    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+			putlong(&partp->mbrp_start, cstart);
+			putlong(&partp->mbrp_size, csize);
+			dos(getlong(&partp->mbrp_start),
+			    &partp->mbrp_scyl, &partp->mbrp_shd, &partp->mbrp_ssect);
+			dos(getlong(&partp->mbrp_start)
+			    + getlong(&partp->mbrp_size) - 1,
+			    &partp->mbrp_ecyl, &partp->mbrp_ehd, &partp->mbrp_esect);
 		}
 		if (f_flag)
 			return;
@@ -706,59 +706,59 @@ change_part(part, csysid, cstart, csize)
 		{
 			int sysid, start, size;
 
-			sysid = partp->dp_typ,
-			start = getlong(&partp->dp_start),
-			size = getlong(&partp->dp_size);
+			sysid = partp->mbrp_typ,
+			start = getlong(&partp->mbrp_start),
+			size = getlong(&partp->mbrp_size);
 			decimal("sysid", &sysid);
 			decimal("start", &start);
 			decimal("size", &size);
-			partp->dp_typ = sysid;
-			putlong(&partp->dp_start, start);
-			putlong(&partp->dp_size, size);
+			partp->mbrp_typ = sysid;
+			putlong(&partp->mbrp_start, start);
+			putlong(&partp->mbrp_size, size);
 		}
 
 		if (yesno("Explicitly specify beg/end address?")) {
 			int tsector, tcylinder, thead;
 
-			tcylinder = DPCYL(partp->dp_scyl, partp->dp_ssect);
-			thead = partp->dp_shd;
-			tsector = DPSECT(partp->dp_ssect);
+			tcylinder = MBR_PCYL(partp->mbrp_scyl, partp->mbrp_ssect);
+			thead = partp->mbrp_shd;
+			tsector = MBR_PSECT(partp->mbrp_ssect);
 			decimal("beginning cylinder", &tcylinder);
 #if 0
 			checkcyl(tcylinder);
 #endif
 			decimal("beginning head", &thead);
 			decimal("beginning sector", &tsector);
-			partp->dp_scyl = DOSCYL(tcylinder);
-			partp->dp_shd = thead;
-			partp->dp_ssect = DOSSECT(tsector, tcylinder);
+			partp->mbrp_scyl = DOSCYL(tcylinder);
+			partp->mbrp_shd = thead;
+			partp->mbrp_ssect = DOSSECT(tsector, tcylinder);
 
-			tcylinder = DPCYL(partp->dp_ecyl, partp->dp_esect);
-			thead = partp->dp_ehd;
-			tsector = DPSECT(partp->dp_esect);
+			tcylinder = MBR_PCYL(partp->mbrp_ecyl, partp->mbrp_esect);
+			thead = partp->mbrp_ehd;
+			tsector = MBR_PSECT(partp->mbrp_esect);
 			decimal("ending cylinder", &tcylinder);
 			decimal("ending head", &thead);
 			decimal("ending sector", &tsector);
-			partp->dp_ecyl = DOSCYL(tcylinder);
-			partp->dp_ehd = thead;
-			partp->dp_esect = DOSSECT(tsector, tcylinder);
+			partp->mbrp_ecyl = DOSCYL(tcylinder);
+			partp->mbrp_ehd = thead;
+			partp->mbrp_esect = DOSSECT(tsector, tcylinder);
 		} else {
 
-			if (partp->dp_typ == 0
-			    && getlong(&partp->dp_start) == 0
-			    && getlong(&partp->dp_size) == 0)
+			if (partp->mbrp_typ == 0
+			    && getlong(&partp->mbrp_start) == 0
+			    && getlong(&partp->mbrp_size) == 0)
 				memset(partp, 0, sizeof *partp);
 			else {
 #if 0
-				checkcyl(getlong(&partp->dp_start)
+				checkcyl(getlong(&partp->mbrp_start)
 					 / dos_cylindersectors);
 #endif
-				dos(getlong(&partp->dp_start), &partp->dp_scyl,
-				    &partp->dp_shd, &partp->dp_ssect);
-				dos(getlong(&partp->dp_start)
-				    + getlong(&partp->dp_size) - 1,
-				    &partp->dp_ecyl, &partp->dp_ehd,
-				    &partp->dp_esect);
+				dos(getlong(&partp->mbrp_start), &partp->mbrp_scyl,
+				    &partp->mbrp_shd, &partp->mbrp_ssect);
+				dos(getlong(&partp->mbrp_start)
+				    + getlong(&partp->mbrp_size) - 1,
+				    &partp->mbrp_ecyl, &partp->mbrp_ehd,
+				    &partp->mbrp_esect);
 			}
 		}
 
@@ -793,7 +793,7 @@ void
 change_active(which)
 	int which;
 {
-	struct dos_partition *partp;
+	struct mbr_partition *partp;
 	int part;
 	int active = 4;
 
@@ -802,8 +802,8 @@ change_active(which)
 	if (a_flag && which != -1)
 		active = which;
 	else {
-		for (part = 0; part < NDOSPART; part++)
-			if (partp[part].dp_flag & ACTIVE)
+		for (part = 0; part < NMBRPART; part++)
+			if (partp[part].mbrp_flag & ACTIVE)
 				active = part;
 	}
 	if (!f_flag) {
@@ -818,10 +818,10 @@ change_active(which)
 		if (active != 4)
 			printf ("Making partition %d active.\n", active);
 
-	for (part = 0; part < NDOSPART; part++)
-		partp[part].dp_flag &= ~ACTIVE;
+	for (part = 0; part < NMBRPART; part++)
+		partp[part].mbrp_flag &= ~ACTIVE;
 	if (active < 4)
-		partp[active].dp_flag |= ACTIVE;
+		partp[active].mbrp_flag |= ACTIVE;
 }
 
 void
@@ -962,7 +962,7 @@ read_s0()
 		warn("can't read fdisk partition table");
 		return (-1);
 	}
-	if (getshort(&mboot.signature) != BOOT_MAGIC) {
+	if (getshort(&mboot.signature) != MBR_MAGIC) {
 		warnx("invalid fdisk partition table found");
 		return (-1);
 	}
