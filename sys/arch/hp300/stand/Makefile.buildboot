@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.8 1999/12/14 20:54:04 thorpej Exp $
+#	$NetBSD: Makefile.buildboot,v 1.9 1999/12/14 21:38:31 thorpej Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -14,7 +14,7 @@ BINMODE=	444
 CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
-CFLAGS=		-O3 -msoft-float
+CFLAGS=		-Os -msoft-float
 
 CPPFLAGS+=	-DBOOT_AOUT
 #CPPFLAGS+=	-DBOOT_ELF
