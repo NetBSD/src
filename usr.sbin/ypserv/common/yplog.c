@@ -1,4 +1,4 @@
-/*	$NetBSD: yplog.c,v 1.1.1.1 1996/08/09 10:14:51 thorpej Exp $	*/
+/*	$NetBSD: yplog.c,v 1.2 1997/04/17 17:46:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -37,6 +37,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -85,7 +86,8 @@ vyplog(fmt, ap)
 {
         time_t t;
 
-	if (!logfp) return;
+	if (logfp == NULL)
+		return;
 	(void)time(&t);
 	fprintf(logfp,"%.15s ", ctime(&t) + 4);
 	vfprintf(logfp, fmt, ap);
@@ -100,8 +102,13 @@ vyplog(fmt, ap)
 void
 ypopenlog()
 {
-	logfp = fopen("/var/yp/ypserv.log", "a");
-	if (!logfp) return;
+	static char logfn[] = "/var/yp/ypserv.log";
+
+	if (access(logfn, W_OK) == -1)
+		return;
+	logfp = fopen(logfn, "a");
+	if (logfp == NULL)
+		return;
 	yplog("yplog opened");
 }
 
