@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.33 1997/12/01 14:43:20 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.34 1998/01/31 12:45:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.33 1997/12/01 14:43:20 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.34 1998/01/31 12:45:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,12 +143,13 @@ expandarg(arg, arglist, flag)
 {
 	struct strlist *sp;
 	char *p;
+	int recorded;
 
 	argbackq = arg->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifsfirst.next = NULL;
 	ifslastp = NULL;
-	(void)argstr(arg->narg.text, flag);
+	recorded = argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		return;			/* here document expanded */
 	}
@@ -159,6 +160,8 @@ expandarg(arg, arglist, flag)
 	 * TODO - EXP_REDIR
 	 */
 	if (flag & EXP_FULL) {
+		if (!recorded && (flag & EXP_RECORD))
+			recordregion(0, expdest - p - 1, 0);
 		ifsbreakup(p, &exparg);
 		*exparg.lastp = NULL;
 		exparg.lastp = &exparg.list;

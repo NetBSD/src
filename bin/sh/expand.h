@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.8 1995/05/11 21:29:08 christos Exp $	*/
+/*	$NetBSD: expand.h,v 1.9 1998/01/31 12:45:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,7 @@ struct arglist {
 #define	EXP_VARTILDE	0x4	/* expand tildes in an assignment */
 #define	EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
 #define EXP_CASE	0x10	/* keeps quotes around for CASE pattern */
+#define EXP_RECORD	0x20	/* need to record arguments for ifs breakup */
 
 
 union node;
