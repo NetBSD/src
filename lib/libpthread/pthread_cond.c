@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.16 2004/07/27 21:44:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.17 2004/12/10 17:11:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.16 2004/07/27 21:44:48 nathanw Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.17 2004/12/10 17:11:53 nathanw Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -372,7 +372,11 @@ pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
 		tvp = &tv;
 		gettimeofday(&now, NULL);
 		TIMESPEC_TO_TIMEVAL(tvp, abstime);
-		timersub(tvp, &now, tvp);
+
+		if  (timercmp(tvp, &now, <))
+			timerclear(tvp);
+		else
+			timersub(tvp, &now, tvp);
 	}
 
 	/*
