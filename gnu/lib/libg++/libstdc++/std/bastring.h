@@ -139,7 +139,7 @@ public:
   size_type capacity () const
     { return rep ()->res; }
   size_type max_size () const
-    { return npos - 1; }		// XXX
+    { return (npos - 1)/sizeof (charT); }		// XXX
   bool empty () const
     { return size () == 0; }
 
@@ -221,20 +221,20 @@ public:
   basic_string& insert (size_type pos, size_type n, charT c)
     { return replace (pos, 0, n, c); }
   iterator insert(iterator p, charT c)
-    { insert (p - begin (), 1, c); return p; }
+    { size_type pos = p - begin (); insert (pos, 1, c); return pos +begin (); }
   iterator insert(iterator p, size_type n, charT c)
-    { insert (p - begin (), n, c); return p; }
+    { size_type pos = p - begin (); insert (pos, n, c); return pos +begin (); }
 #if 0
   template<class InputIterator>
     void insert(iterator p, InputIterator first, InputIterator last);
 #endif
 
   basic_string& remove (size_type pos = 0, size_type n = npos)
-    { return replace (pos, n, 0, (charT)0); }
+    { return replace (pos, n, (size_type)0, (charT)0); }
   basic_string& remove (iterator pos)
-    { return replace (pos - begin (), 1, 0, (charT)0); }
+    { return replace (pos - begin (), 1, (size_type)0, (charT)0); }
   basic_string& remove (iterator first, iterator last)
-    { return replace (first - begin (), last - first, 0, (charT)0); }
+    { return replace (first - begin (), last - first, (size_type)0, (charT)0);}
 
   basic_string& replace (size_type pos1, size_type n1, const basic_string& str,
 			 size_type pos2 = 0, size_type n2 = npos);

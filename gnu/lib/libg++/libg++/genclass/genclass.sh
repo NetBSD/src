@@ -49,9 +49,9 @@ case "$1" in
     #
     # -version
     #
-    # 2.7.1 is substituted by the build process.
+    # 2.7.2 is substituted by the build process.
     # We currently use the libg++ version number (extracted from ../Makefile).
-    echo "$name: version 2.7.1" ;
+    echo "$name: version 2.7.2" ;
     exit 0;
     ;;
 -requires)
