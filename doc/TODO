@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.10 2003/09/24 06:27:54 agc Exp $
+#	$NetBSD: TODO,v 1.11 2004/05/27 03:46:32 agc Exp $
 
 THINGS TO BE DONE:
 
@@ -60,7 +60,6 @@ i386 kernel support:
 
 This is a list of suggested smaller projects (in no particular order):
 
-+ implement Unix98 ptys
 + speed up sort(1) by using mmap(2) rather than temp files
 + autoconf version of nawk, for use in non-NetBSD pkgsrc
 + port valgrind to NetBSD for pkgsrc, then use it to do an audit of
