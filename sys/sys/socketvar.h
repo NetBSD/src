@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.22 1996/12/22 10:14:06 cgd Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.23 1997/01/11 05:17:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -227,6 +227,8 @@ int	sbappendcontrol __P((struct sockbuf *sb, struct mbuf *m0,
 void	sbappendrecord __P((struct sockbuf *sb, struct mbuf *m0));
 void	sbcheck __P((struct sockbuf *sb));
 void	sbcompress __P((struct sockbuf *sb, struct mbuf *m, struct mbuf *n));
+struct mbuf *
+	sbcreatecontrol __P((caddr_t p, int size, int type, int level));
 void	sbdrop __P((struct sockbuf *sb, int len));
 void	sbdroprecord __P((struct sockbuf *sb));
 void	sbflush __P((struct sockbuf *sb));
