@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.18 2003/08/29 23:11:40 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.19 2003/09/10 16:44:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.18 2003/08/29 23:11:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.19 2003/09/10 16:44:56 christos Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -75,7 +75,6 @@ static void darwin_e_proc_fork(struct proc *, struct proc *);
 static void darwin_e_proc_exit(struct proc *);
 static void darwin_e_proc_init(struct proc *, struct vmspace *);
 
-extern char sigcode[], esigcode[];
 extern struct sysent darwin_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const darwin_syscallnames[];
@@ -86,7 +85,10 @@ void syscall(void);
 void mach_syscall_intern(struct proc *);
 #endif
 
+#if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
+extern char sigcode[], esigcode[];
 struct uvm_object *emul_darwin_object;
+#endif
 
 const struct emul emul_darwin = {
 	"darwin",
@@ -105,9 +107,15 @@ const struct emul emul_darwin = {
 #endif
 	darwin_sendsig,
 	trapsignal,
+#if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
 	sigcode,
 	esigcode,
 	&emul_darwin_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	setregs,
 	darwin_e_proc_exec,
 	darwin_e_proc_fork,
