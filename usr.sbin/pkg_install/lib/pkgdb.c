@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.20 2005/02/04 09:03:03 jlam Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.21 2005/02/04 12:13:18 drochner Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.20 2005/02/04 09:03:03 jlam Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.21 2005/02/04 12:13:18 drochner Exp $");
 #endif
 
 /*
@@ -249,7 +249,7 @@ pkgdb_refcount_dir(void)
 	static char buf[MaxPathSize];
 	char *tmp;
 
-	if (tmp = getenv(PKG_REFCOUNT_DBDIR_VNAME))
+	if ((tmp = getenv(PKG_REFCOUNT_DBDIR_VNAME)))
 		strlcpy(buf, tmp, sizeof(buf));
 	else
 		snprintf(buf, sizeof(buf), "%s.refcount", _pkgdb_getPKGDB_DIR());
