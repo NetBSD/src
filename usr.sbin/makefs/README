@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1.1.1 2001/10/26 06:50:48 lukem Exp $
+$NetBSD: README,v 1.2 2004/05/31 22:21:12 lukem Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -37,7 +37,7 @@ specified, such as:
 File system specific parameters can be given as well, with a command
 line option such as "-o fsspeccific-options,comma-separated".
 For example, ffs would allow tuning of:
-	- block & fragement size
+	- block & fragment size
 	- cylinder groups
 	- number of blocks per inode
 	- minimum free space
