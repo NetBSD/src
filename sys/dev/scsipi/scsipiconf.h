@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.36 2000/01/17 17:59:49 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.37 2000/01/20 17:10:18 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -353,6 +353,7 @@ struct scsipi_inquiry_pattern {
 struct scsipibus_attach_args {
 	struct scsipi_link *sa_sc_link;
 	struct scsipi_inquiry_pattern sa_inqbuf;
+	struct scsipi_inquiry_data *sa_inqptr; 
 	union {				/* bus-type specific infos */
 		u_int8_t scsi_version;	/* SCSI version */
 	} scsipi_info;
