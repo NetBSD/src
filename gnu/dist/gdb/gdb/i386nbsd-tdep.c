@@ -238,9 +238,10 @@ i386nbsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
 	  || i386nbsd_sigtramp_offset (pc) >= 0);
 }
 
-/* From <machine/signal.h>.  */
-int i386nbsd_sc_pc_offset = 44;
-int i386nbsd_sc_sp_offset = 56;
+/* offset of eip/esp in ucontext, from sys/ucontext.h
+   and machine/mcontext.h */
+int i386nbsd_sc_pc_offset = 92;
+int i386nbsd_sc_sp_offset = 64;
 
 static void 
 i386nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
