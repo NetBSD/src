@@ -42,7 +42,7 @@
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#undef DWARF2_UNWIND_INFO
+#define DWARF2_UNWIND_INFO 0
 
 /* Name the default cpu target */
 #define TARGET_CPU_DEFAULT	TARGET_CPU_sparc
