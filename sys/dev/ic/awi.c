@@ -1,4 +1,4 @@
-/* $NetBSD: awi.c,v 1.7 1999/11/08 15:56:16 sommerfeld Exp $ */
+/* $NetBSD: awi.c,v 1.8 1999/11/09 14:58:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,12 +44,12 @@
 
 /*
  * todo:
- *	- don't print "management timeout"/"assoc with" for normal
- *		association keepalive goo.
+ *	- flush tx queue on resynch.
+ *	- clear oactive on "down".
+ *	- rewrite copy-into-mbuf code
+ *	- mgmt state machine gets stuck retransmitting assoc requests.
  *	- multicast filter.
- *	- use cluster mbufs on rx?
  *	- fix device reset so it's more likely to work
- *	- allow i/o-space-only access to device (over in am79c930.c)
  *	- show status goo through ifmedia.
  *
  * more todo:
@@ -59,7 +59,6 @@
  *		- send/deal with disassociation
  *	- deal with "full" access points (no room for me).
  *	- power save mode
- *	- if no traffic, let ourselves gracefully desync?
  *
  * later:
  *	- SSID preferences
@@ -132,6 +131,7 @@ void awi_intunlock __P((struct awi_softc *sc));
 void awi_intrinit __P((struct awi_softc *sc));
 u_int8_t awi_read_intst __P((struct awi_softc *sc));
 void awi_stop __P((struct awi_softc *sc));
+void awi_flush __P((struct awi_softc *sc));
 void awi_init __P((struct awi_softc *sc));
 void awi_set_mc __P((struct awi_softc *sc));
 void awi_rxint __P((struct awi_softc *));
@@ -208,6 +208,18 @@ void awi_drop_input __P((struct ifnet *, struct mbuf *));
 struct mbuf *awi_output_kludge __P((struct awi_softc *, struct mbuf *));
 void awi_set_timer __P((struct awi_softc *));
 void awi_restart_scan __P((struct awi_softc *));
+
+struct awi_rxd
+{
+	u_int32_t next;
+	u_int16_t len;
+	u_int8_t state, rate, rssi, index;
+	u_int32_t frame;
+	u_int32_t rxts;
+};
+
+void awi_copy_rxd __P((struct awi_softc *, u_int32_t, struct awi_rxd *));
+u_int32_t awi_parse_rxd __P((struct awi_softc *, u_int32_t, struct awi_rxd *));
 
 static const u_int8_t snap_magic[] = { 0xaa, 0xaa, 3, 0, 0, 0 };
 
@@ -1193,6 +1205,163 @@ awi_rcv (sc, m, rxts, rssi)
 	if (m) m_freem(m);
 }
 
+void
+awi_copy_rxd (sc, cur, rxd)
+	struct awi_softc *sc;
+	u_int32_t cur;
+	struct awi_rxd *rxd;
+{
+	char bitbuf[64];
+	if (sc->sc_ifp->if_flags & IFF_LINK0) {
+		printf("%x: ", cur);
+		awi_card_hexdump(sc, "rxd", cur, AWI_RXD_SIZE);
+	}
+	
+	rxd->next = awi_read_4(sc, cur + AWI_RXD_NEXT);
+	rxd->state = awi_read_1(sc, cur + AWI_RXD_HOST_DESC_STATE);
+	rxd->len = awi_read_2 (sc, cur + AWI_RXD_LEN);
+	rxd->rate = awi_read_1 (sc, cur + AWI_RXD_RATE);
+	rxd->rssi = awi_read_1 (sc, cur + AWI_RXD_RSSI);		
+	rxd->index = awi_read_1 (sc, cur + AWI_RXD_INDEX);
+	rxd->frame = awi_read_4 (sc, cur + AWI_RXD_START_FRAME);
+	rxd->rxts = awi_read_4 (sc, cur + AWI_RXD_LOCALTIME);
+
+	/*
+	 * only the low order bits of "frame" and "next" are valid.
+	 * (the documentation doesn't mention this).
+	 */
+	rxd->frame &= 0xffff;
+	rxd->next &= (0xffff | AWI_RXD_NEXT_LAST);
+
+	/*
+	 * XXX after masking, sanity check that rxd->frame and
+	 * rxd->next lie within the receive area.
+	 */
+	if (sc->sc_ifp->if_flags & IFF_LINK0) {
+		printf("nxt %x frame %x state %s len %d\n",
+		    rxd->next, rxd->frame,
+		    bitmask_snprintf(rxd->state, AWI_RXD_ST_BITS,
+			bitbuf, sizeof(bitbuf)),
+		    rxd->len);
+	}
+}
+	
+
+u_int32_t
+awi_parse_rxd (sc, cur, rxd)
+	struct awi_softc *sc;
+	u_int32_t cur;
+	struct awi_rxd *rxd;
+{
+	struct mbuf *top;
+	struct ifnet *ifp = sc->sc_ifp;
+	u_int32_t next;
+	
+	if ((rxd->state & AWI_RXD_ST_CONSUMED) == 0) {
+		if (ifp->if_flags & IFF_LINK1) {
+			int xx = awi_read_1(sc, rxd->frame);
+			if (xx != (IEEEWL_FC_VERS |
+			    (IEEEWL_FC_TYPE_MGT<<IEEEWL_FC_TYPE_SHIFT) |
+			    (IEEEWL_SUBTYPE_BEACON << IEEEWL_FC_SUBTYPE_SHIFT))) {
+				char bitbuf[64];
+				printf("floosh: %d state ", sc->sc_flushpkt);
+				awi_card_hexdump(sc,
+				    bitmask_snprintf(rxd->state,
+					AWI_RXD_ST_BITS,
+					bitbuf, sizeof(bitbuf)),
+				    rxd->frame, rxd->len);
+			}
+			
+		}
+		if ((sc->sc_flushpkt == 0) &&
+		    (sc->sc_nextpkt == NULL)) {
+			MGETHDR(top, M_DONTWAIT, MT_DATA);
+			
+			if (top == NULL) {
+				sc->sc_flushpkt = 1;
+				sc->sc_m = NULL;
+				sc->sc_mptr = NULL;
+				sc->sc_mleft = 0;
+			} else {
+				if (rxd->len >= MINCLSIZE)
+					MCLGET(top, M_DONTWAIT);
+		
+				top->m_pkthdr.rcvif = ifp;
+				top->m_pkthdr.len = 0;
+				top->m_len = 0;
+		
+				sc->sc_mleft = (top->m_flags & M_EXT) ?
+				    MCLBYTES : MHLEN;
+				sc->sc_mptr = mtod(top, u_int8_t *);
+				sc->sc_m = top;
+				sc->sc_nextpkt = top;
+			}
+		}
+		if (sc->sc_flushpkt == 0) {
+			/* copy data into mbuf */
+
+			while (rxd->len > 0) {
+				int nmove = min (rxd->len, sc->sc_mleft);
+
+				awi_read_bytes (sc, rxd->frame, sc->sc_mptr,
+				    nmove);
+
+				rxd->len -= nmove;
+				rxd->frame += nmove;
+				sc->sc_mleft -= nmove;
+				sc->sc_mptr += nmove;
+				
+				sc->sc_nextpkt->m_pkthdr.len += nmove;
+				sc->sc_m->m_len += nmove;
+						
+				if ((rxd->len > 0) && (sc->sc_mleft == 0)) {
+					struct mbuf *m1;
+					
+					/* Get next mbuf.. */
+					MGET(m1, M_DONTWAIT, MT_DATA);
+					if (m1 == NULL) {
+						m_freem(sc->sc_nextpkt);
+						sc->sc_nextpkt = NULL;
+						sc->sc_flushpkt = 1;
+						sc->sc_m = NULL;
+						sc->sc_mptr = NULL;
+						sc->sc_mleft = 0;
+						break;
+					}
+					sc->sc_m->m_next = m1;
+					sc->sc_m = m1;
+					m1->m_len = 0;
+
+					sc->sc_mleft = MLEN;
+					sc->sc_mptr = mtod(m1, u_int8_t *);
+				}
+			}
+		}
+		if (rxd->state & AWI_RXD_ST_LF) {
+			if (sc->sc_flushpkt) {
+				sc->sc_flushpkt = 0;
+			}
+			else if (sc->sc_nextpkt != NULL) {
+				struct mbuf *m = sc->sc_nextpkt;
+				sc->sc_nextpkt = NULL;
+				sc->sc_flushpkt = 0;
+				sc->sc_m = NULL;
+				sc->sc_mptr = NULL;
+				sc->sc_mleft = 0;
+				awi_rcv(sc, m, rxd->rxts, rxd->rssi);
+			}
+		}
+	}
+	rxd->state |= AWI_RXD_ST_CONSUMED;
+	awi_write_1(sc, cur + AWI_RXD_HOST_DESC_STATE, rxd->state);
+	next = cur;
+	if ((rxd->next & AWI_RXD_NEXT_LAST) == 0) {
+		rxd->state |= AWI_RXD_ST_OWN;
+		awi_write_1(sc, cur + AWI_RXD_HOST_DESC_STATE, rxd->state);
+		next = rxd->next;
+	}
+	return next;
+}
 
 void
 awi_dump_rxchain (sc, what, descr)
@@ -1200,130 +1369,28 @@ awi_dump_rxchain (sc, what, descr)
 	char *what;
 	u_int32_t *descr;
 {
-	u_int32_t next, cur;
-	int i;
-	struct ifnet *ifp = sc->sc_ifp;
-	u_int8_t *mptr;
-	int mleft;
+	u_int32_t cur, next;
+	struct awi_rxd rxd;
 	
-	struct mbuf *top = NULL, *m = NULL, *m1 = NULL;
 	cur = *descr;
-	
-	
+
 	if (cur & AWI_RXD_NEXT_LAST)
 		return;
 	
-	for (i=0;i<1000;i++) {
-		u_int16_t len;
-		u_int8_t state, rate, rssi, index;
-		u_int32_t frame;
-		u_int32_t rxts;
+	do {
+		awi_copy_rxd(sc, cur, &rxd);
 
-		top = 0;
-		
-		next = awi_read_4(sc, cur + AWI_RXD_NEXT);
-
-		if (next & AWI_RXD_NEXT_LAST)
+		next = awi_parse_rxd(sc, cur, &rxd);
+		if ((rxd.state & AWI_RXD_ST_OWN) && (next == cur)) {
+			printf("%s: loop in rxd list?",
+			    sc->sc_dev.dv_xname);
 			break;
-
-		state = awi_read_1(sc, cur + AWI_RXD_HOST_DESC_STATE);
-		len = awi_read_2 (sc, cur + AWI_RXD_LEN);
-		rate = awi_read_1 (sc, cur + AWI_RXD_RATE);
-		rssi = awi_read_1 (sc, cur + AWI_RXD_RSSI);		
-		index = awi_read_1 (sc, cur + AWI_RXD_INDEX);
-		frame = awi_read_4 (sc, cur + AWI_RXD_START_FRAME);
-		rxts = awi_read_4 (sc, cur + AWI_RXD_LOCALTIME);
-		
-		/*
-		 * only the low order bits of "frame" and "next" are valid.
-		 * (the documentation doesn't mention this).
-		 */
-		frame &= 0xffff;
-		next &= 0xffff;
-
-		if (state & AWI_RXD_ST_CONSUMED) {
-			state |= AWI_RXD_ST_CONSUMED | AWI_RXD_ST_OWN;
-			awi_write_1(sc, cur + AWI_RXD_HOST_DESC_STATE, state);
-		} else {
-			MGETHDR(top, M_DONTWAIT, MT_DATA);
-			if (top != 0) {
-				if (len >= MINCLSIZE)
-					MCLGET(top, M_DONTWAIT);
-				
-				m = top;
-				m->m_pkthdr.rcvif = ifp;
-				m->m_pkthdr.len = 0;
-				m->m_len = 0;
-				
-				mleft = (m->m_flags & M_EXT) ?
-				    MCLBYTES : MHLEN;
-				mptr = mtod(m, u_int8_t *);
-			}
-			for(;;) {
-				if (top != 0) {
-					/* copy data into mbuf */
-					while (len > 0) {
-						int nmove = min (len, mleft);
-						
-						awi_read_bytes (sc, frame, mptr, nmove);
-						len -= nmove;
-						mleft -= nmove;
-						mptr += nmove;
-						frame += nmove;
-						
-						top->m_pkthdr.len += nmove;
-						m->m_len += nmove;
-						
-						if (mleft == 0) {
-							/* Get next mbuf.. */
-							MGET(m1, M_DONTWAIT, MT_DATA);
-							if (m1 == NULL) {
-								m_freem(top);
-								top = NULL;
-								break;
-							}
-							m->m_next = m1;
-							m = m1;
-							m->m_len = 0;
-
-							mleft = MLEN;
-							mptr = mtod(m, u_int8_t *);
-						}
-					}
-				}
-				state |= AWI_RXD_ST_CONSUMED | AWI_RXD_ST_OWN;
-				awi_write_1(sc, cur + AWI_RXD_HOST_DESC_STATE, state);
-
-				if (state & AWI_RXD_ST_LF)
-					break;
-
-				if (next & AWI_RXD_NEXT_LAST)
-					panic("awi oops"); /* XXX */
-
-				/* XXX deal with dummy frames here?? */
-
-				cur = next;
-				state = awi_read_1(sc, cur + AWI_RXD_HOST_DESC_STATE);
-				len = awi_read_2 (sc, cur + AWI_RXD_LEN);
-				rate = awi_read_1 (sc, cur + AWI_RXD_RATE);
-				rssi = awi_read_1 (sc, cur + AWI_RXD_RSSI);		
-				index = awi_read_1 (sc, cur + AWI_RXD_INDEX);
-				frame = awi_read_4 (sc, cur + AWI_RXD_START_FRAME);
-				frame &= 0xffff; 
-				next &= 0xffff;
-			}
-		}
-		if (top) {
-			awi_rcv(sc, top, rxts, rssi);
-			top = 0;
 		}
 		cur = next;
-	}
+	} while (rxd.state & AWI_RXD_ST_OWN);
+
 	*descr = cur;
 }
-
-
-	
 
 void
 awi_rxint (sc)
@@ -1514,6 +1581,30 @@ awi_intr(arg)
 }
 
 /*
+ * flush tx queues..
+ */
+
+void
+awi_flush(sc)
+	struct awi_softc *sc;
+{
+	struct ifnet *ifp = sc->sc_ifp;
+	struct mbuf *m;
+
+	do {
+		IF_DEQUEUE (&sc->sc_mgtq, m);
+		m_freem(m);
+	} while (m != NULL);
+	
+	do {
+		IF_DEQUEUE (&ifp->if_snd, m);
+		m_freem(m);
+	} while (m != NULL);
+}
+
+
+
+/*
  * device stop routine
  */
 
@@ -1523,6 +1614,8 @@ awi_stop(sc)
 {
 	struct ifnet *ifp = sc->sc_ifp;
 	
+	awi_flush(sc);
+
 	/* Turn off timer.. */
 	ifp->if_timer = 0;
 	sc->sc_state = AWI_ST_OFF;
@@ -1826,14 +1919,18 @@ int awi_attach (sc, macaddr)
 	u_int8_t version[AWI_BANNER_LEN];
 
 	sc->sc_ifp = ifp;
-
+	sc->sc_nextpkt = NULL;
+	sc->sc_m = NULL;
+	sc->sc_mptr = NULL;
+	sc->sc_mleft = 0;
+	sc->sc_flushpkt = 0;
+	
 	awi_read_bytes (sc, AWI_BANNER, version, AWI_BANNER_LEN);
 	printf("%s: firmware %s\n", sc->sc_dev.dv_xname, version);
 
 	memcpy(sc->sc_my_addr, macaddr, ETHER_ADDR_LEN);
 	printf("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_my_addr));
-	
 	
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -2376,6 +2473,8 @@ awi_try_sync (sc)
 	int i;
 	struct awi_bss_binding *bp = NULL;
 	
+	awi_flush(sc);
+
 	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
 		printf("%s: looking for best of %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_nbindings);
