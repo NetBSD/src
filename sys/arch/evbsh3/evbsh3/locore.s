@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 1999/09/16 21:23:40 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 1999/09/16 21:39:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1109,7 +1109,6 @@ NENTRY(exphandler)
 	jmp	@r0
 1:
 	cmp/eq	#0x60, r0	/* T_TLBINVALIDW */
-	cmp/eq	r0, r1
 	bt	3b
 
 	mov.l	XL_TLBPROTWR, r1
@@ -1235,7 +1234,6 @@ _MonTrap600_end:
 /************************************************************************/
 /*	Immediate Data							*/
 /************************************************************************/
-
 		.align	2
 
 XL_curpcb:	.long	_curpcb
@@ -1387,7 +1385,6 @@ XL_splimit_low2:	.long	0x80000000
 1:	INTRFASTEXIT
 
 	.align	2
-XL_INTEVTREG:		.long	SHREG_INTEVT
 XL_intrhandler:		.long	_intrhandler
 XXL_astpending:		.long	_astpending
 XXLT_ASTFLT:		.long	T_ASTFLT
@@ -1460,7 +1457,7 @@ load_and_reset:
 
 	.align	2
 XL_start_address:
-	.long 0x8c010000
+	.long	0x8c010000
 load_and_reset_end:
 
 ENTRY(XLoadAndReset)
