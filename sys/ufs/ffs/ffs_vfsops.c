@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.154 2004/09/19 11:58:29 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.155 2004/09/21 03:10:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.154 2004/09/19 11:58:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.155 2004/09/21 03:10:36 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1413,6 +1413,8 @@ ffs_vget(mp, ino, vpp)
 			return (0);
 		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
+	vp->v_flag |= VLOCKSWORK;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
