@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 1998/11/24 12:55:56 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.21 1998/12/14 16:18:47 kleink Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -664,6 +664,7 @@ badtrap:
 			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
+			fs->fs_qsize = 0;
 			p->p_md.md_fpstate = fs;
 		}
 		/*
