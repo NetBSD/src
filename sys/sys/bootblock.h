@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.26 2004/04/23 16:26:18 matt Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.27 2004/04/26 21:00:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -200,6 +200,7 @@
 #define	MBR_BPB_OFFSET		11	/* offsetof(mbr_sector, mbr_bpb) */
 #define	MBR_BOOTCODE_OFFSET	90	/* offsetof(mbr_sector, mbr_bootcode) */
 #define	MBR_BS_OFFSET		400	/* offsetof(mbr_sector, mbr_bootsel) */
+#define	MBR_BS_OLD_OFFSET	404	/* where mbr_bootsel used to be */
 #define	MBR_DSN_OFFSET		440	/* offsetof(mbr_sector, mbr_dsn) */
 #define	MBR_BS_MAGIC_OFFSET	444	/* offsetof(mbr_sector, mbr_bootsel_magic) */
 #define	MBR_PART_OFFSET		446	/* offsetof(mbr_sector, mbr_part[0]) */
@@ -244,8 +245,9 @@
 		/* values for mbr_bootsel.mbrbs_flags */
 #define	MBR_BS_ACTIVE	0x01	/* Bootselector active (or code present) */
 #define	MBR_BS_EXTINT13	0x02	/* Set by fdisk if LBA needed (deprecated) */
-#define	MBR_BS_READ_LBA	0x04	/* Force LBA reads - even for low numbers */
+#define	MBR_BS_READ_LBA	0x04	/* Force LBA reads (deprecated) */
 #define	MBR_BS_EXTLBA	0x08	/* Extended ptn capable (LBA reads) */
+/* This is always set, the bootsel is located using the magic number...  */
 #define	MBR_BS_NEWMBR	0x80	/* New bootsel at offset 440 */
 
 #if !defined(__ASSEMBLER__)					/* { */
