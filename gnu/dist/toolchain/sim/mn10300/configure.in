@@ -1,0 +1,37 @@
+dnl Process this file with autoconf to produce a configure script.
+sinclude(../common/aclocal.m4)
+dnl 2.12 botches SHELL substitution
+AC_PREREQ(2.12.1)dnl
+AC_INIT(Makefile.in)
+
+SIM_AC_COMMON
+
+SIM_AC_OPTION_ENDIAN(LITTLE_ENDIAN)
+SIM_AC_OPTION_ALIGNMENT(NONSTRICT_ALIGNMENT)
+SIM_AC_OPTION_HOSTENDIAN
+SIM_AC_OPTION_WARNINGS
+SIM_AC_OPTION_RESERVED_BITS
+SIM_AC_OPTION_BITSIZE(32,31)
+SIM_AC_OPTION_INLINE()
+SIM_AC_OPTION_HARDWARE(yes,,mn103cpu mn103int mn103tim mn103ser mn103iop)
+
+AC_CHECK_FUNCS(time chmod utime fork execve execv chown)
+AC_CHECK_HEADERS(unistd.h stdlib.h string.h strings.h utime.h time.h)
+
+#
+# Enable common
+#
+AC_ARG_ENABLE(sim-common,
+[  --enable-sim-common			Enable common simulator],
+[case "${enableval}" in
+  yes) sim_gen="-DWITH_COMMON=1"; mn10300_common="WITH";;
+  no)  sim_gen="-DWITH_COMMON=0"; mn10300_common="WITHOUT";;
+  *)   AC_MSG_ERROR("Unknown value $enableval passed to --enable-sim-common"); sim_gen="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_gen" != x""; then
+  echo "Setting sim_common = $sim_common" 6>&1
+fi],[sim_gen="-DWITH_COMMON=1"; mn10300_common="WITH"])dnl
+AC_SUBST(sim_gen)
+AC_SUBST(mn10300_common)
+
+SIM_AC_OUTPUT
