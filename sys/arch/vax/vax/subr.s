@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.50 2000/07/17 02:54:04 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.51 2000/07/19 18:15:03 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -114,7 +114,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	mtpr	r0,$PR_PCBB			# Save in IPR PCBB
 	addl3	$USPACE,_C_LABEL(proc0paddr),r0	# Get kernel stack top
 	mtpr	r0,$PR_KSP			# put in IPR KSP
-	movl	r0,_Sysmap			# SPT start addr after KSP
+	movl	r0,_C_LABEL(Sysmap)		# SPT start addr after KSP
 	movab	IFTRAP(r0),4(r0)		# Save trap address in ESP
 	mtpr	4(r0),$PR_ESP			# Put it in ESP also
 
@@ -144,7 +144,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 #endif
 
 1:	pushl	4(ap)				# Address of old rpb
-2:	calls	$1,_C_LABEL(start)		# Jump away.
+2:	calls	$1,_C_LABEL(_start)		# Jump away.
 	/* NOTREACHED */
 
 
