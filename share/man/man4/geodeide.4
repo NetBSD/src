@@ -1,4 +1,4 @@
-.\"	$NetBSD: geodeide.4,v 1.1 2004/07/09 18:38:39 bouyer Exp $
+.\"	$NetBSD: geodeide.4,v 1.2 2004/07/30 23:12:16 rumble Exp $
 .\"
 .\" Copyright (c) 2004 Manuel Bouyer.
 .\"
@@ -27,7 +27,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 9, 2004
+.Dd July 30, 2004
 .Dt GEODEIDE 4
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the AMD Geode CS5530A IDE controller,
+driver supports the AMD Geode CS5530A and SC1100 IDE controllers,
 and provides the interface with the hardware for the
 .Xr ata 4
 driver.
@@ -57,3 +57,6 @@ problems where the IDE controller is wired up to the system incorrectly.
 .Xr pciide 4 ,
 .Xr wd 4 ,
 .Xr wdc 4
+.Sh BUGS
+The SC1100 controller requires 4-byte aligned data transfers and
+cannot handle transfers of exactly 64 kilobytes.
