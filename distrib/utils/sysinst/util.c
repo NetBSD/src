@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.1 1997/10/30 06:14:37 mellon Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.2 1997/11/02 20:45:47 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* util.c -- routines that don't really fit anywhere else... */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +50,7 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
 
 
 void get_ramsize(void)
@@ -65,13 +67,19 @@ void get_ramsize(void)
 
 static int asked = 0;
 
-void ask_sizemult ()
+void ask_sizemult (void)
 {
 	if (!asked) {
 		msg_display (MSG_sizechoice, dlcylsize);
 		process_menu (MENU_sizechoice);
 	}
 	asked = 1;
+}
+
+void reask_sizemult (void)
+{
+	asked = 0;
+	ask_sizemult ();
 }
 
 /* Returns 1 for "y" or "Y" and "n" otherwise.  CR => default. */
@@ -116,17 +124,8 @@ extract_dist (void)
 	}
 	files[numchar] = '\0';
 
-#ifndef DEBUG
-	if (chdir("/mnt")) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), "/mnt");
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", "/mnt");
-#endif
+	target_chdir_or_die("/");
 
-	endwin();
 	p = strtok (files, " \n");
 	while (p != NULL) {
 		(void)printf (msg_string(MSG_extracting), p);
@@ -145,15 +144,7 @@ void run_makedev (void)
 {
 	msg_display (MSG_makedev);
 	sleep (1);
-#ifndef DEBUG
-	if (chdir("/mnt/dev")) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), "/mnt");
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", "/mnt/dev");
-#endif
+	target_chdir_or_die("/dev");
 	run_prog ("/bin/sh MAKEDEV all");
 }
 
@@ -216,7 +207,7 @@ int get_via_floppy (void)
 		list++;
 	}
 #ifndef DEBUG
-	chdir("/");
+	chdir("/");	/* back to current real root */
 #endif
 	return 1;
 }
@@ -246,26 +237,16 @@ get_via_cdrom(void)
 
 void cd_dist_dir (char *forwhat)
 {
-	char realdir[STRSIZE];
-
+	/* ask user for the mountpoint. */
 	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
-	if (*dist_dir == '/')
-		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
-	else
-		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
-	strcpy (dist_dir, realdir);
-	run_prog ("/bin/mkdir %s", realdir);
+
+	/* make sure the directory exists. */
+	make_target_dir(dist_dir);
+
 	clean_dist_dir = 1;
-#ifndef DEBUG
-	if (chdir(realdir)) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), realdir);
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", realdir);
-#endif
+	target_chdir_or_die(dist_dir);
 }
+
 
 /* Support for custom distribution fetches / unpacks. */
 
@@ -284,5 +265,46 @@ void show_cur_distsets (void)
 		msg_printf_add ("%s%s\n", list->desc, list->getit ?
 				msg_string(MSG_yes) : msg_string(MSG_no));
 		list++;
+	}
+}
+
+
+/*
+ * Get  and unpack the distribution.
+ * show success_msg if installation  completes. Otherwise,,
+ * sHow failure_msg and wait for the user to ack it before continuing.
+ * success_msg and failure_msg must both be 0-adic messages.
+ */
+void get_and_unpack_sets(int success_msg, int failure_msg)
+{
+	/* Get the distribution files */
+	process_menu (MENU_distmedium);
+	if (nodist)
+		return;
+
+	if (got_dist) {
+		/* Extract the distribution */
+		extract_dist ();
+
+		/* Configure the system */
+		run_makedev ();
+
+		/* Other configuration. */
+		mnt_net_config();
+		
+		/* Clean up ... */
+		if (clean_dist_dir)
+			run_prog ("/bin/rm -rf %s", dist_dir);
+
+		/* Mounted dist dir? */
+		if (mnt2_mounted)
+			run_prog ("/sbin/umount /mnt2");
+		
+		/* Install/Upgrade  complete ... reboot or exit to script */
+		msg_display (success_msg);
+		process_menu (MENU_ok);
+	} else {
+		msg_display (failure_msg);
+		process_menu (MENU_ok);
 	}
 }
