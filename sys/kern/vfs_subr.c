@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.155.2.5 2002/02/11 20:10:25 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.155.2.6 2002/03/15 19:21:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.155.2.5 2002/02/11 20:10:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.155.2.6 2002/03/15 19:21:26 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1580,7 +1580,7 @@ vclean(vp, flags, p)
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
 	simple_lock(&vp->v_interlock);
-	VN_KNOTE(vp, NOTE_REVOKE);	/* XXXLUKEM: this is in vn_pollgone on FreeBSD */
+	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
 	vp->v_flag &= ~VXLOCK;
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
