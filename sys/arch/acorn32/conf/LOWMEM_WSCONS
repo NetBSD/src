@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.23 2004/03/13 18:25:25 bjh21 Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.24 2004/03/13 19:27:40 bjh21 Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -185,8 +185,8 @@ wsmouse*	at pms?
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
-wsqms*		at iomd?		# ws quadmouse driver
-wsmouse*	at wsqms?		# wsmouse on ws quadmouse
+qms*		at iomd?		# ws quadmouse driver
+wsmouse*	at qms?			# wsmouse on ws quadmouse
 
 pseudo-device	wsmux
 

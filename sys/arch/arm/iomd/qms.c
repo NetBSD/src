@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.8 2002/06/20 19:33:20 bjh21 Exp $ */
+/*	$NetBSD: qms.c,v 1.7 2004/03/13 19:27:40 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -34,17 +34,14 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
- *
- * Quadratic mouse driver for the wscons as used in the IOMD but is in
- * principle more generic.
- *
  */
-
+/*
+ * Quadrature mouse driver for the wscons as used in the IOMD
+ */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wsqms.c,v 1.8 2002/06/20 19:33:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.7 2004/03/13 19:27:40 bjh21 Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -53,44 +50,81 @@ __KERNEL_RCSID(0, "$NetBSD: wsqms.c,v 1.8 2002/06/20 19:33:20 bjh21 Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/types.h>
 #include <sys/syslog.h> 
 #include <sys/systm.h>
+#include <sys/select.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
- 
+
+#include <arm/iomd/iomdvar.h>
+
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <arm/iomd/wsqmsvar.h>
+struct qms_softc {
+	struct device  sc_dev;
+	struct device *sc_wsmousedev;
 
+	bus_space_tag_t sc_iot;		/* bus tag */
+	bus_space_handle_t sc_ioh;	/* bus handle for XY */
+	bus_space_handle_t sc_butioh;	/* bus handle for buttons */
+
+	struct callout sc_callout;
+
+	u_int16_t lastx;
+	u_int16_t lasty;
+	int lastb;
+};
 
 /* Offsets of hardware registers */
 #define QMS_MOUSEX	0		/* 16 bits X register */
 #define QMS_MOUSEY	1		/* 16 bits Y register */
 #define QMS_BUTTONS	0 		/* mouse buttons in bits 4,5,6 */
 
-/* forward declarations */
+static int  qms_match(struct device *, struct cfdata *, void *);
+static void qms_attach(struct device *, struct device *, void *);
 
-static int wsqms_enable(void *);
-static int wsqms_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static void wsqms_disable(void *cookie);
-static void wsqms_intr(void *arg);
+static int qms_enable(void *);
+static int qms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void qms_disable(void *cookie);
+static void qms_intr(void *arg);
 
+CFATTACH_DECL(qms, sizeof(struct qms_softc),
+    qms_match, qms_attach, NULL, NULL);
 
-static struct wsmouse_accessops wsqms_accessops = {
-	wsqms_enable, wsqms_ioctl, wsqms_disable
+static struct wsmouse_accessops qms_accessops = {
+	qms_enable, qms_ioctl, qms_disable
 };
 
 
-void
-wsqms_attach(struct wsqms_softc *sc)
+static int
+qms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct qms_attach_args *qa = aux;
+
+	if (strcmp(qa->qa_name, "qms") == 0)
+		return(1);
+
+	return(0);
+}
+
+
+static void
+qms_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct qms_softc *sc = (void *)self;
+	struct qms_attach_args *qa = aux;
 	struct wsmousedev_attach_args wsmouseargs;
 
+	sc->sc_iot = qa->qa_iot;
+	sc->sc_ioh = qa->qa_ioh;
+	sc->sc_butioh = qa->qa_ioh_but;
+
 	/* set up wsmouse attach arguments */
-	wsmouseargs.accessops = &wsqms_accessops;
+	wsmouseargs.accessops = &qms_accessops;
 	wsmouseargs.accesscookie = sc;
 
 	printf("\n");
@@ -103,9 +137,9 @@ wsqms_attach(struct wsqms_softc *sc)
 
 
 static int
-wsqms_enable(void *cookie)
+qms_enable(void *cookie)
 {
-	struct wsqms_softc *sc = cookie;
+	struct qms_softc *sc = cookie;
 	int b;
 
 	/* We don't want the mouse to warp on open. */
@@ -117,22 +151,22 @@ wsqms_enable(void *cookie)
 	b >>= 4;
 	sc->lastb = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
-	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
+	callout_reset(&sc->sc_callout, hz / 100, qms_intr, sc);
 	return 0;
 }
 
 
 static void
-wsqms_disable(void *cookie)
+qms_disable(void *cookie)
 {
-	struct wsqms_softc *sc = cookie;
+	struct qms_softc *sc = cookie;
 
 	callout_stop(&sc->sc_callout);
 }
 
 
 static int
-wsqms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
+qms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 
 	switch (cmd) {
@@ -146,9 +180,9 @@ wsqms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 
 static void
-wsqms_intr(void *arg)
+qms_intr(void *arg)
 {
-	struct wsqms_softc *sc = arg;
+	struct qms_softc *sc = arg;
 	int b;
 	u_int16_t x, y;
 	int16_t dx, dy;
@@ -173,8 +207,8 @@ wsqms_intr(void *arg)
 		sc->lasty = y;
 		sc->lastb = b;
 	};
-	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
+	callout_reset(&sc->sc_callout, hz / 100, qms_intr, sc);
 }
 
 
-/* end of wsqms.c */
+/* end of qms.c */
