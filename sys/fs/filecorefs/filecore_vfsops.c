@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.5.2.5 2004/08/25 06:58:58 skrll Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.5.2.6 2004/08/26 07:46:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.5 2004/08/25 06:58:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.6 2004/08/26 07:46:51 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -461,10 +461,9 @@ filecore_unmount(mp, mntflags, l)
  * Return root of a filesystem
  */
 int
-filecore_root(mp, vpp, l)
+filecore_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *nvp;
         int error;
