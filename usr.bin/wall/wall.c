@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.10 1998/07/05 10:12:51 mrg Exp $	*/
+/*	$NetBSD: wall.c,v 1.11 1998/07/26 23:15:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.10 1998/07/05 10:12:51 mrg Exp $");
+__RCSID("$NetBSD: wall.c,v 1.11 1998/07/26 23:15:38 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -138,7 +138,8 @@ makemsg(fname)
 	time_t now;
 	FILE *fp;
 	int fd;
-	char *p, *whom, hostname[MAXHOSTNAMELEN+1], lbuf[100], tmpname[15];
+	const char *whom;
+	char *p, hostname[MAXHOSTNAMELEN+1], lbuf[100], tmpname[15];
 
 	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
 	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+")))

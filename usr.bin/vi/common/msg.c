@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.2 1998/01/09 08:06:55 perry Exp $	*/
+/*	$NetBSD: msg.c,v 1.3 1998/07/26 23:14:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -364,7 +364,7 @@ void
 msgq_str(sp, mtype, str, fmt)
 	SCR *sp;
 	mtype_t mtype;
-	char *str, *fmt;
+	const char *str, *fmt;
 {
 	int nf, sv_errno;
 	char *p;
