@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1997/10/18 14:44:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $";
+__RCSID("$NetBSD: main.c,v 1.4 1997/10/18 14:44:35 lukem Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -74,8 +74,11 @@ boolean	terse	= FALSE;	/* Terse output */
 
 char	*suffixlist = ".*";	/* initially, can touch any file */
 
-int	errorsort();
-void	onintr();
+int	errorsort __P((const void *, const void *));
+void	forkvi __P((int, char **));
+int	main __P((int, char **));
+void	try __P((char *, int, char **));
+
 /*
  *	error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
  *	
@@ -119,6 +122,7 @@ void	onintr();
  *	infile:	The error messages come from this file.
  *		Default: stdin
  */
+int
 main(argc, argv)
 	int	argc;
 	char	*argv[];
@@ -218,8 +222,10 @@ main(argc, argv)
 	fflush(stdout);
 	if (touchfiles(nfiles, files, &ed_argc, &ed_argv) && edit_files)
 		forkvi(ed_argc, ed_argv);
+	return (0);
 }
 
+void
 forkvi(argc, argv)
 	int	argc;
 	char	**argv;
@@ -246,6 +252,7 @@ forkvi(argc, argv)
 	fprintf(stdout, "Can't find any editors.\n");
 }
 
+void
 try(name, argc, argv)
 	char	*name;
 	int	argc;
@@ -264,11 +271,12 @@ try(name, argc, argv)
 	execvp(name, argv);
 }
 
-int errorsort(epp1, epp2)
-		Eptr	*epp1, *epp2;
+int errorsort(x1, x2)
+	const void *x1, *x2;
 {
-	reg	Eptr	ep1, ep2;
-		int	order;
+	Eptr	*epp1 = (Eptr *)x1, *epp2 = (Eptr *)x2;
+	Eptr	ep1, ep2;
+	int	order;
 	/*
 	 *	Sort by:
 	 *	1)	synchronization, non specific, discarded errors first;

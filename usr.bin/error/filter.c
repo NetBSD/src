@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.3 1995/09/02 06:15:28 jtc Exp $	*/
+/*	$NetBSD: filter.c,v 1.4 1997/10/18 14:44:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: filter.c,v 1.3 1995/09/02 06:15:28 jtc Exp $";
+__RCSID("$NetBSD: filter.c,v 1.4 1997/10/18 14:44:28 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,21 +59,24 @@ char	*lint_libs[] = {
 	0
 };
 extern	char*	processname;
-int	lexsort();
+int	lexsort __P((const void *, const void *));
+int	search_ignore __P((char *));
+
 /*
  *	Read the file ERRORNAME of the names of functions in lint
  *	to ignore complaints about.
  */
+void
 getignored(auxname)
 	char	*auxname;
 {
-	reg	int	i;
-		FILE	*fyle;
-		char	inbuffer[256];
-		int	uid;
-		char	filename[128];
-		char	*username;
-		struct	passwd *passwdentry;
+	int	i;
+	FILE	*fyle;
+	char	inbuffer[256];
+	int	uid;
+	char	filename[128];
+	char	*username;
+	struct	passwd *passwdentry;
 
 	nignored = 0;
 	if (auxname == 0){	/* use the default */
@@ -129,18 +133,24 @@ getignored(auxname)
 #endif
 }
 
-int lexsort(cpp1, cpp2)
-	char	**cpp1, **cpp2;
+int
+lexsort(c1, c2)
+	const void *c1, *c2;
 {
+	char	**cpp1, **cpp2;
+
+	cpp1 = (char **)c1;
+	cpp2 = (char **)c2;
 	return(strcmp(*cpp1, *cpp2));
 }
 
-int search_ignore(key)
+int
+search_ignore(key)
 	char	*key;
 {
-	reg	int	ub, lb;
-	reg	int	halfway;
-		int	order;
+	int	ub, lb;
+	int	halfway;
+	int	order;
 
 	if (nignored == 0)
 		return(-1);
@@ -163,11 +173,12 @@ int search_ignore(key)
  *	and the linenumber the second.
  *	Return the new categorization of the error class.
  */
-Errorclass discardit(errorp)
-	reg	Eptr	errorp;
+Errorclass
+discardit(errorp)
+	Eptr		errorp;
 {
-		int	language;
-	reg	int	i;
+	int		language;
+	int		i;
 	Errorclass	errorclass = errorp->error_e_class;
 
 	switch(errorclass){
