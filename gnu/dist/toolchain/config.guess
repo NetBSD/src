@@ -119,12 +119,12 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	    mips:*)			UNAME_MACHINE_ARCH=mipsel;;
 	    i386:*|m68k:*|ns32k:*|sparc:*|vax:*)
 		if echo __ELF__ | cc -E - | grep -q __ELF__; then
-		    UNAME_OBJFORMAT=
+		    UNAME_OBJFORMAT= # (a.out)
 		else
 		    UNAME_OBJFORMAT=elf
 		fi;;
 	esac
-	echo ${UNAME_MACHINE_ARCH}-unknown-netbsd${UNAME_OBJFORMAT}`echo ${UNAME_RELEASE} | sed -e 's/[-_].*/\./'`
+	echo ${UNAME_MACHINE_ARCH}-unknown-netbsd${UNAME_OBJFORMAT}`echo ${UNAME_RELEASE} | sed -e 's/_.*$//'`
 	exit 0 ;;
     alpha:OSF1:*:*)
 	if test $UNAME_RELEASE = "V4.0"; then
