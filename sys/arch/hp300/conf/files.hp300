@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.23 1997/03/17 19:46:43 gwr Exp $
+#	$NetBSD: files.hp300,v 1.24 1997/04/09 19:59:57 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -175,9 +175,7 @@ file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
 
-file	arch/m68k/m68k/copy.s
-file	arch/m68k/m68k/bcopy.s
-file	arch/m68k/m68k/copypage.s
+file	arch/m68k/m68k/sig_machdep.c
 
 file	dev/cons.c
 file	dev/cninit.c
