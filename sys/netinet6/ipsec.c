@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.83 2003/10/02 07:19:37 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.84 2003/10/02 10:01:11 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.83 2003/10/02 07:19:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84 2003/10/02 10:01:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2213,9 +2213,15 @@ ipsec6_encapsulate(m, sav)
 	}
 	ip6->ip6_nxt = IPPROTO_IPV6;
 	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.src)->sin6_addr,
-		&ip6->ip6_src, sizeof(ip6->ip6_src));
+	    &ip6->ip6_src, sizeof(ip6->ip6_src));
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] =
+		    htons(((struct sockaddr_in6 *)&sav->sah->saidx.src)->sin6_scope_id) & 0xffff;
 	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.dst)->sin6_addr,
-		&ip6->ip6_dst, sizeof(ip6->ip6_dst));
+	    &ip6->ip6_dst, sizeof(ip6->ip6_dst));
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] =
+		    htons(((struct sockaddr_in6 *)&sav->sah->saidx.dst)->sin6_scope_id) & 0xffff;
 	ip6->ip6_hlim = IPV6_DEFHLIM;
 
 	/* XXX Should ip6_src be updated later ? */
