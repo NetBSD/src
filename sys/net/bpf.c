@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.50 2000/02/02 08:36:02 enami Exp $	*/
+/*	$NetBSD: bpf.c,v 1.51 2000/02/02 09:03:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -54,6 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/map.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <sys/file.h>
 #if defined(sparc) && BSD < 199103
@@ -1336,6 +1337,30 @@ bpfdetach(ifp)
 	struct ifnet *ifp;
 {
 	struct bpf_if *bp, **pbp;
+	struct bpf_d *d;
+	int i, s, cmaj;
+
+	/* locate the major number */
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == bpfopen)
+			break;
+
+	/* Nuke the the vnodes for any open instances */
+	for (i = 0; i < NBPFILTER; ++i) {
+		d = &bpf_dtab[i];
+		if (!D_ISFREE(d) && d->bd_bif != NULL &&
+		    d->bd_bif->bif_ifp == ifp) {
+			/*
+			 * Detach the descriptor from an interface now.
+			 * It will be free'ed later by close routine.
+			 */
+			s = splimp();
+			d->bd_promisc = 0;	/* we can't touch device. */
+			bpf_detachd(d);
+			splx(s);
+			vdevgone(cmaj, i, i, VCHR);
+		}
+	}
 
 	for (bp = bpf_iflist, pbp = &bpf_iflist;
 	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
