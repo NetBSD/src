@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.1 2002/10/24 18:15:57 junyoung Exp $	*/
+/*	$NetBSD: machfb.c,v 1.2 2002/10/24 20:41:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -84,9 +84,9 @@ struct mach64_softc {
 	bus_space_handle_t sc_regh;
 	bus_space_handle_t sc_memh;
 
-	u_int aperbase;
+	u_long aperbase;
 	size_t apersize;
-	u_int regbase;
+	u_long regbase;
 	size_t regsize;
 	size_t memsize;
 	int memtype;
@@ -520,7 +520,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	sc->mclk_post_div = (sc->mclk_fb_div * 2 * sc->ref_freq) /
 	    (sc->mem_freq * sc->ref_div);
 	sc->ramdac_freq = mach64_get_max_ramdac(sc);
-	printf("%s: %d KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
+	printf("%s: %ld KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
 	    sc->sc_dev.dv_xname, sc->memsize, 
 	    mach64_memtype_names[sc->memtype],
 	    sc->mem_freq / 1000, sc->mem_freq % 1000,
@@ -594,7 +594,9 @@ void
 mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
     const struct wsscreen_descr *type, int existing, long *attrp)
 {
+#if !defined(__sparc__)
 	struct videomode *mode = (struct videomode *)type->modecookie;
+#endif
 
 	scr->sc = sc;
 	scr->type = type;
