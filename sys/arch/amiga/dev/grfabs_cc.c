@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_cc.c,v 1.3 1994/03/27 06:23:30 chopps Exp $
+ *	$Id: grfabs_cc.c,v 1.4 1994/06/29 13:13:02 chopps Exp $
  *
  *  abstract interface for custom chips to the amiga abstract graphics driver.
  *
@@ -96,6 +96,14 @@ dmode_t *hdl_this;
 dmdata_t *hdl_this_data;
 #  endif /* GRF_A2024 */
 
+#  if defined (GRF_AGA)
+dmode_t aga_mode;
+dmdata_t aga_mode_data;
+cop_t *aga_frames[F_TOTAL];
+dmode_t *aga_this;
+dmdata_t *aga_this_data;
+#  endif /* GRF_AGA */
+
 dmode_t hires_lace_mode;
 dmdata_t hires_lace_mode_data;
 cop_t  *hires_lace_frames[F_LACE_TOTAL];
@@ -110,6 +118,16 @@ dmode_t *h_this;
 dmdata_t *h_this_data;
 #endif /* GRF_NTSC */
 
+#ifdef GRF_AGA
+#define	AGA_ENABLE	0x0001
+#define	AGA_ENABLE2	0x0002
+#define AGA_TRACE	0x0004
+#define AGA_TRACE2	0x0008
+#define AGA_VGAONLY	0x0010
+#define AGA_VGA31KHZ	0x0020
+
+int aga_enable = 0;	/* set by start_c(), or can be patched */
+#endif
 
 /* monitor functions. */
 monitor_t *
@@ -147,7 +165,7 @@ cc_init_monitor()
 	CWAIT(cp, 255, 255);	/* COPEND */
 	CWAIT(cp, 255, 255);	/* COPEND really */
 
-	/* install m_this list and turn DMA on */
+	/* install this list and turn DMA on */
 	custom.cop1lc = PREP_DMA_MEM(null_mode_copper_list);
 	custom.copjmp1 = 0;
 	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER \
@@ -221,12 +239,22 @@ get_best_mode(size, depth)
 		dy = abs(dm->nominal_size.height - size->height);
 		ct = dx + dy;
 
+#ifdef GRF_AGA
+		if (ct < dt || save == NULL ||
+		    (size->width >= 640 && dmd->frames == aga_frames)) {
+#else
 		if (ct < dt || save == NULL) {
+#endif
 			save = dm;
 			dt = ct;
 		}
 		dm = dm->link.le_next;
 	}
+#if defined(DEBUG) && defined(GRF_AGA)
+	if (aga_enable & AGA_TRACE)
+		printf("best mode(%dx%dx%d) - %s\n",
+		    size->width, size->height, depth, save->name);
+#endif
 	return (save);
 }
 /* bitmap functions */
@@ -236,7 +264,12 @@ alloc_bitmap(width, height, depth, flags)
 {
 	int     i;
 	u_long  total_size;
+#ifdef GRF_AGA
+	u_short lwpr = (flags & BMF_ALIGN64) ? ((width + 63) / 64) * 2 :
+	    (width + 31) / 32;			/* AGA needs 64 bit align */
+#else
 	u_short lwpr = (width + 31) / 32;
+#endif
 	u_short wpr = lwpr << 1;
 	u_short bpr = wpr << 1;
 	u_short array_size = sizeof(u_char *) * depth;
@@ -246,7 +279,7 @@ alloc_bitmap(width, height, depth, flags)
 
 	/* note the next allocation will give everything, also note that all
 	 * the stuff we want (including bitmaps) will be long short aligned.
-	 * M_This is a function of the data being allocated and the fact that
+	 * This is a function of the data being allocated and the fact that
 	 * alloc_chipmem() returns long short aligned data. note also that
 	 * each row of the bitmap is long word aligned and made of exactly n
 	 * longwords. -ch */
@@ -254,7 +287,7 @@ alloc_bitmap(width, height, depth, flags)
 	/* Sigh, it seems for mapping to work we need the bitplane data to 1:
 	 * be aligned on a page boundry. 2: be n pages large.
 	 * 
-	 * why? becuase the user gets a page aligned address, if m_this is before
+	 * why? becuase the user gets a page aligned address, if this is before
 	 * your allocation, too bad.  Also it seems that the mapping routines
 	 * do not watch to closely to the allowable length. so if you go over
 	 * n pages by less than another page, the user gets to write all over
@@ -305,8 +338,16 @@ void
 cc_load_mode(d)
 	dmode_t *d;
 {
+#if defined(GRF_AGA) && defined(DEBUG)
+	if (aga_enable & AGA_TRACE)
+		printf("cc_load_mode - %s ", d->name);
+#endif
 	if (d) {
 		m_this_data->current_mode = d;
+#if defined(GRF_AGA) && defined(DEBUG)
+	if (aga_enable & AGA_TRACE)
+		printf("new\n");
+#endif
 		return;
 	}
 	/* turn off display */
@@ -314,6 +355,10 @@ cc_load_mode(d)
 	wait_tof();
 	wait_tof();
 	custom.cop1lc = PREP_DMA_MEM(null_mode_copper_list);
+#if defined(GRF_AGA) && defined(DEBUG)
+	if (aga_enable & AGA_TRACE)
+		printf("off\n");
+#endif
 }
 /*
  * CC Mode Stuff.
@@ -327,6 +372,9 @@ dmode_t *(*mode_init_funcs[]) (void) = {
 #endif /* GRF_A2024 */
 	cc_init_ntsc_hires_lace,
 	cc_init_ntsc_hires,
+#if defined (GRF_AGA)
+	cc_init_ntsc_aga,
+#endif /* GRF_AGA */
 #endif /* GRF_NTSC */
 #if defined (GRF_PAL)
 #if defined (GRF_A2024)
@@ -374,7 +422,8 @@ cc_alloc_view(mode, dim, depth)
 {
 	view_t *v = alloc_chipmem(sizeof(*v) + sizeof(vdata_t));
 	if (v) {
-		bmap_t *bm = cc_monitor->alloc_bitmap(dim->width, dim->height, depth, BMF_CLEAR);
+		bmap_t *bm = cc_monitor->alloc_bitmap(dim->width, dim->height,
+		    depth, BMF_CLEAR | (DMDATA(mode)->max_depth == 8 ? BMF_ALIGN64 : 0));
 		if (bm) {
 			int     i;
 			box_t   box;
@@ -408,13 +457,39 @@ cc_alloc_colormap(depth)
 		cm->first = 0;
 		cm->size = size;
 		cm->entry = (u_long *) & cm[1];	/* table directly after. */
-		for (i = 0; i < min(size, 32); i++) {
-			cm->entry[i] = CM_WTOL(cc_default_colors[i]);
+		for (i = 0; i < size; i++) {
+			cm->entry[i] = CM_WTOL(cc_default_colors[i&31]);
 		}
 		return (cm);
 	}
 	return (NULL);
 }
+
+#ifdef GRF_AGA
+colormap_t *
+cc_alloc_aga_colormap(depth)
+	int depth;
+{
+	u_long  size = 1U << depth, i;
+	colormap_t *cm = alloc_chipmem(sizeof(u_long) * size + sizeof(*cm));
+
+	if (cm) {
+		cm->type = CM_COLOR;
+		cm->red_mask = 0x0FF;
+		cm->green_mask = 0x0FF;
+		cm->blue_mask = 0x0FF;
+		cm->first = 0;
+		cm->size = size;
+		cm->entry = (u_long *) & cm[1];	/* table directly after. */
+		for (i = 0; i < size; i++) {
+			cm->entry[i] = CM_WTOL(cc_default_colors[i&31]) |
+			    (CM_WTOL(cc_default_colors[i&31]) << 4);
+		}
+		return (cm);
+	}
+	return (NULL);
+}
+#endif
 
 int
 cc_colormap_checkvals(vcm, cm, use)
@@ -519,7 +594,7 @@ cc_use_colormap(v, cm)
 			tmp = find_copper_inst(cp, CI_MOVE(R_COLOR07));
 			tmp -= 7;
 
-			for (j = 0; j < 16; j++) {
+			for (j = 0; j < 32; j++) {
 				CMOVE(tmp, R_COLOR00 + (j << 1), CM_LTOW(vcm->entry[j]));
 			}
 		}
@@ -527,6 +602,68 @@ cc_use_colormap(v, cm)
 	splx(s);
 	return (0);
 }
+
+#ifdef GRF_AGA
+/* does sanity check on values */
+int
+cc_use_aga_colormap(v, cm)
+	view_t *v;
+	colormap_t *cm;
+{
+	colormap_t *vcm = VDATA(v)->colormap;
+	int     s, i;
+
+	if (!cc_colormap_checkvals(vcm, cm, 1)) {
+		return (EINVAL);
+	}
+	/* check to see if its the view's colormap, if so just do update. */
+	if (vcm != cm) {
+		/* copy entries into colormap. */
+		for (i = cm->first; i < (cm->first + cm->size); i++) {
+			vcm->entry[i] = cm->entry[i];
+		}
+	}
+	s = spltty();
+
+	/* is view currently being displayed? */
+	if (VDATA(v)->flags & VF_DISPLAY) {
+		/* yes, update the copper lists */
+		cop_t  *tmp, *cp;
+		int     nframes = 1, j;
+
+		if (DMDATA(VDATA(v)->mode)->flags & DMF_INTERLACE) {
+			nframes = 2;
+		}
+		for (i = 0; i < nframes; i++) {
+			cp = DMDATA(VDATA(v)->mode)->frames[i];
+
+			tmp = cp;
+			for (j = 0; j < vcm->size; j += 32) {
+				int k;
+
+				tmp = find_copper_inst(tmp, CI_MOVE(R_COLOR00));
+
+				if (tmp == NULL)
+					break;
+				for (k = 0; k < 32; k++) {
+					int ce = vcm->entry[j + k] >> 4;
+					CMOVE(tmp, R_COLOR00 + (k << 1), CM_LTOW(ce));
+				}
+				tmp = find_copper_inst(tmp, CI_MOVE(R_COLOR00));
+				if (tmp == NULL)
+					break;
+				for (k = 0; k < 32; k++) {
+					int ce =vcm->entry[j + k];
+					CMOVE(tmp, R_COLOR00 + (k << 1), CM_LTOW(ce));
+				}
+			}
+		}
+	}
+	splx(s);
+	return (0);
+}
+#endif
+
 #if defined (GRF_A2024)
 colormap_t *
 cc_a2024_alloc_colormap(depth)
@@ -626,6 +763,10 @@ cc_init_view(v, bm, mode, dbox)
 	v->free_view = cc_free_view;
 	v->get_display_mode = cc_get_display_mode;
 	v->remove_view = cc_remove_view;
+#if defined(GRF_AGA) && defined(DEBUG)
+	if (aga_enable & AGA_TRACE)
+		printf("init view - %s\n", mode->name);
+#endif
 }
 
 void
@@ -636,6 +777,7 @@ cc_free_view(v)
 		vdata_t *vd = VDATA(v);
 		dmode_t *md = vd->mode;
 		v->remove_view(v);
+		free_chipmem(VDATA(v)->colormap);
 		cc_monitor->free_bitmap(v->bitmap);
 		free_chipmem(v);
 	}
@@ -706,7 +848,7 @@ cc_lace_mode_vbl_handler(d)
 dmode_t *
 cc_init_ntsc_hires()
 {
-	/* h_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!h_this) {
 		u_short len = std_copper_list_len;
 		cop_t  *cp;
@@ -716,7 +858,7 @@ cc_init_ntsc_hires()
 		bzero(h_this, sizeof(dmode_t));
 		bzero(h_this_data, sizeof(dmdata_t));
 
-		h_this->name = "ntsc: hires interlace";
+		h_this->name = "ntsc: hires";
 		h_this->nominal_size.width = 640;
 		h_this->nominal_size.height = 200;
 		h_this_data->max_size.width = 724;
@@ -748,8 +890,7 @@ cc_init_ntsc_hires()
 		bcopy(std_copper_list, h_this_data->frames[F_LONG], std_copper_list_size);
 
 		h_this_data->bplcon0 = 0x8200 | USE_CON3;	/* hires, color
-								 * composite enable,
-								 * lace. */
+								 * composite enable */
 		h_this_data->std_start_x = STANDARD_VIEW_X;
 		h_this_data->std_start_y = STANDARD_VIEW_Y;
 		h_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
@@ -781,7 +922,7 @@ display_hires_view(v)
 
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
 
-		/* H_This will center the any overscanned display */
+		/* This will center the any overscanned display */
 		/* and allow user to modify. */
 		x = v->display.x + h_this_data->std_start_x - ((w - 640) >> 2);
 		y = v->display.y + h_this_data->std_start_y - ((h - 200) >> 1);
@@ -827,6 +968,12 @@ display_hires_view(v)
 
 		cp = h_this_data->frames[F_STORE_LONG];
 #if defined GRF_ECS
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
+		tmp->cp.inst.operand = 0x0020;
+#if defined GRF_AGA
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0;
+#endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
 		tmp->cp.inst.operand = h_this_data->beamcon0;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
@@ -876,7 +1023,7 @@ display_hires_view(v)
 dmode_t *
 cc_init_ntsc_hires_lace()
 {
-	/* hl_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!hl_this) {
 		u_short len = std_copper_list_len;
 		cop_t  *cp;
@@ -959,7 +1106,7 @@ display_hires_lace_view(v)
 
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
 
-		/* Hl_This will center the any overscanned display */
+		/* This will center the any overscanned display */
 		/* and allow user to modify. */
 		x = v->display.x + hl_this_data->std_start_x - ((w - 640) >> 2);
 		y = v->display.y + hl_this_data->std_start_y - ((h - 400) >> 2);
@@ -1005,6 +1152,12 @@ display_hires_lace_view(v)
 
 		cp = hl_this_data->frames[F_LACE_STORE_LONG];
 #if defined GRF_ECS
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
+		tmp->cp.inst.operand = 0x0020;
+#if defined GRF_AGA
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0;
+#endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
 		tmp->cp.inst.operand = hl_this_data->beamcon0;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
@@ -1078,7 +1231,7 @@ display_hires_lace_view(v)
 dmode_t *
 cc_init_ntsc_hires_dlace()
 {
-	/* hdl_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!hdl_this) {
 		u_short len = std_dlace_copper_list_len;
 		cop_t  *cp;
@@ -1160,7 +1313,7 @@ display_hires_dlace_view(v)
 
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
 
-		/* Hdl_This will center the any overscanned display */
+		/* This will center the any overscanned display */
 		/* and allow user to modify. */
 		x = v->display.x + hdl_this_data->std_start_x - ((w - 640) >> 2);
 		y = v->display.y + hdl_this_data->std_start_y - ((h - 800) >> 3);
@@ -1207,6 +1360,12 @@ display_hires_dlace_view(v)
 
 		cp = hdl_this_data->frames[F_LACE_STORE_LONG];
 #if defined GRF_ECS
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
+		tmp->cp.inst.operand = 0x0020;
+#if defined GRF_AGA
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0;
+#endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
 		tmp->cp.inst.operand = hdl_this_data->beamcon0;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
@@ -1291,7 +1450,7 @@ display_hires_dlace_view(v)
 dmode_t *
 cc_init_ntsc_a2024()
 {
-	/* a24_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!a24_this) {
 		int     i;
 		u_short len = std_a2024_copper_list_len;
@@ -1526,6 +1685,306 @@ a2024_mode_vbl_handler(d)
 	a24_this_data->hedley_current &= 0x3;	/* if 4 then 0. */
 }
 #endif /* GRF_A2024 */
+
+#if defined (GRF_AGA)
+
+dmode_t *
+cc_init_ntsc_aga()
+{
+	/* this function should only be called once. */
+	if (!aga_this && (custom.deniseid & 0xff) == 0xf8 &&
+	    aga_enable & AGA_ENABLE) {
+		u_short len = aga_copper_list_len;
+		cop_t  *cp;
+
+		aga_this = &aga_mode;
+		aga_this_data = &aga_mode_data;
+		bzero(aga_this, sizeof(dmode_t));
+		bzero(aga_this_data, sizeof(dmdata_t));
+
+		aga_this->name = "ntsc: AGA dbl";
+		aga_this->nominal_size.width = 640;
+		aga_this->nominal_size.height = 400;
+		aga_this_data->max_size.width = 724;
+		aga_this_data->max_size.height = 482;
+		aga_this_data->min_size.width = 320;
+		aga_this_data->min_size.height = 200;
+		aga_this_data->min_depth = 1;
+		aga_this_data->max_depth = 8;
+		aga_this->data = aga_this_data;
+
+		aga_this->get_monitor = cc_get_monitor;
+		aga_this->alloc_view = cc_alloc_view;
+		aga_this->get_current_view = cc_get_current_view;
+
+		aga_this_data->use_colormap = cc_use_aga_colormap;
+		aga_this_data->get_colormap = cc_get_colormap;
+		aga_this_data->alloc_colormap = cc_alloc_aga_colormap;
+		aga_this_data->display_view = display_aga_view;
+		aga_this_data->monitor = cc_monitor;
+
+		aga_this_data->frames = aga_frames;
+		aga_this_data->frames[F_LONG] = alloc_chipmem(aga_copper_list_size * F_TOTAL);
+		if (!aga_this_data->frames[F_LONG]) {
+			panic("couldn't get chipmem for copper list");
+		}
+		aga_this_data->frames[F_STORE_LONG] = &aga_this_data->frames[F_LONG][len];
+
+		bcopy(aga_copper_list, aga_this_data->frames[F_STORE_LONG], aga_copper_list_size);
+		bcopy(aga_copper_list, aga_this_data->frames[F_LONG], aga_copper_list_size);
+
+		aga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
+								 * enable,
+								 * shres. */
+		aga_this_data->std_start_x = 0x4f /*STANDARD_VIEW_X*/;
+		aga_this_data->std_start_y = 0x2b /*STANDARD_VIEW_Y*/;
+		aga_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
+		aga_this_data->beamcon0 = SPECIAL_BEAMCON ^ VSYNCTRUE;
+
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes,
+		    aga_this, link);
+	}
+	return (aga_this);
+}
+
+/* static, so I can patch and play */
+
+int	AGA_htotal = 0x79;
+int	AGA_hsstrt = 0xe;
+int	AGA_hsstop = 0x1c;
+int	AGA_hbstrt = 0x8;
+int	AGA_hbstop = 0x1e;
+int	AGA_vtotal = 0x1ec;
+int	AGA_vsstrt = 0x3;
+int	AGA_vsstop = 0x6;
+int	AGA_vbstrt = 0x0;
+int	AGA_vbstop = 0x19;
+int	AGA_hcenter = 0x4a;
+
+void
+display_aga_view(v)
+	view_t *v;
+{
+	if (aga_this_data->current_view != v) {
+		vdata_t *vd = VDATA(v);
+		monitor_t *monitor = aga_this_data->monitor;
+		cop_t  *cp = aga_this_data->frames[F_STORE_LONG], *tmp;
+		int     depth = v->bitmap->depth, i;
+		int     hstart, hstop, vstart, vstop, j;
+		int     x, y, w = v->display.width, h = v->display.height;
+		u_short ddfstart, ddfwidth, con1;
+
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE)
+			printf("display_aga_view(%dx%dx%d) %x\n", w, h,
+			    depth, v);
+#endif
+		/* round down to nearest even width */
+		/* w &= 0xfffe; */
+		/* calculate datafetch width. */
+
+		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 4) << 1;
+
+		/* this will center the any overscanned display */
+		/* and allow user to modify. */
+		x = v->display.x + aga_this_data->std_start_x - ((w - 640) >> 3);
+		y = v->display.y + aga_this_data->std_start_y - ((h - 400) >> 1);
+
+		if (y & 1)
+			y--;
+
+		if (!(x & 1))
+			x--;
+
+		hstart = x;
+		hstop = x + (w >> 2);
+		vstart = y;
+		vstop = y + (h >> 0);
+		ddfstart = (hstart >> 1) - 8;
+
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2) {
+			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			    x, y);
+			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			    hstart, hstop, vstart, vstop, ddfstart);
+		}
+#endif
+		/* check for hardware limits, AGA may allow more..? */
+		/* anyone got a 4000 I can borrow :^) -ch */
+		if ((ddfstart & 0xfffc) + ddfwidth > 0xd8) {
+			int     d = 0;
+
+			/* XXX anyone know the equality properties of
+			 * intermixed logial AND's */
+			/* XXX and arithmetic operators? */
+			while (((ddfstart & 0xfffc) + ddfwidth - d) > 0xd8) {
+				d++;
+			}
+
+			ddfstart -= d;
+			hstart -= d << 1;
+			hstop -= d << 1;
+		}
+		/* correct the datafetch to proper limits. */
+		/* delay the actual display of the data until we need it. */
+		ddfstart &= 0xfffc;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2) {
+			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			    x, y);
+			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			    hstart, hstop, vstart, vstop, ddfstart);
+		}
+#endif
+		con1 = ((hstart - 9) - (ddfstart << 1)) | (((hstart - 9) - (ddfstart << 1)) << 4);
+
+		if (aga_this_data->current_view) {
+			VDATA(aga_this_data->current_view)->flags &= ~VF_DISPLAY;	/* mark as no longer */
+			/* displayed. */
+		}
+		aga_this_data->current_view = v;
+
+		cp = aga_this_data->frames[F_STORE_LONG];
+		tmp = cp;
+		for (i = 0; i < 8; ++i) {
+			if (tmp == NULL)
+				break;
+			tmp = find_copper_inst(tmp + 1, CI_MOVE(R_BPLCON3));
+			if (tmp == NULL)
+				break;
+			tmp->cp.inst.operand = 0x0ca1 | (i << 13);
+			tmp = find_copper_inst(tmp + 1, CI_MOVE(R_BPLCON3));
+			if (tmp == NULL)
+				break;
+			tmp->cp.inst.operand = 0x0ea1 | (i << 13);
+		}
+		if (tmp)
+			tmp = find_copper_inst(tmp + 1, CI_MOVE(R_BPLCON3));
+		if (tmp)
+			tmp->cp.inst.operand = 0x0ca1;
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0x8003;
+		tmp = find_copper_inst(cp, CI_MOVE(R_HTOTAL));
+		tmp->cp.inst.operand = AGA_htotal; /* 81/71/73/79? */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HBSTRT));
+		tmp->cp.inst.operand = AGA_hbstrt; /* 0x0008 */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HSSTRT));
+		tmp->cp.inst.operand = AGA_hsstrt; /* 0x000e */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HSSTOP));
+		tmp->cp.inst.operand = AGA_hsstop; /* 0x001c */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HBSTOP));
+		tmp->cp.inst.operand = AGA_hsstop; /* 0x001e */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HCENTER));
+		tmp->cp.inst.operand = AGA_hcenter; /*AGA_htotal / 2 + AGA_hsstrt */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VBSTRT));
+		tmp->cp.inst.operand = AGA_vbstrt; /* 0x0000 */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VSSTRT));
+		tmp->cp.inst.operand = AGA_vsstrt; /* 0x016b / AGA_htotal */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VSSTOP));
+		tmp->cp.inst.operand = AGA_vsstop; /* 0x02d6 / AGA_htotal */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VBSTOP));
+		tmp->cp.inst.operand = AGA_vbstop; /* 0x0bd1 / AGA_htotal */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VTOTAL));
+		tmp->cp.inst.operand = AGA_vtotal;
+		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
+		tmp->cp.inst.operand = aga_this_data->beamcon0;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf("  beamcon0 %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
+		tmp->cp.inst.operand = CALC_DIWHIGH(hstart, vstart, hstop, vstop);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" diwhigh %04x>", tmp->cp.inst.operand);
+#endif
+#if 0
+		tmp->cp.inst.operand = (vstop & 0x0700) | ((hstop & 0x0100) << 5);
+#endif
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf("%04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON0));
+		tmp->cp.inst.operand = aga_this_data->bplcon0 |
+		    ((depth & 0x7) << 12) | ((depth & 0x8) << 1);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" bplcon0 %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON1));
+		tmp->cp.inst.operand = con1;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" bplcon1 %04x>0000\n", con1);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTART));
+		tmp->cp.inst.operand = ((vstart & 0xff) << 8) | (hstart & 0xff);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf("  diwstart %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTOP));
+		tmp->cp.inst.operand = ((vstop & 0xff) << 8) | (hstop & 0xff);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" diwstop %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTART));
+		tmp->cp.inst.operand = ddfstart;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" ddfstart %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTOP));
+		tmp->cp.inst.operand = ddfstart + ddfwidth;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" ddfstop %04x", tmp->cp.inst.operand);
+#endif
+
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
+		for (i = 0, j = 0; i < depth; j += 2, i++) {
+			/* update the plane pointers */
+			tmp[j].cp.inst.operand = HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf (" bpl%dpth %08x", i, v->bitmap->plane[i]);
+#endif
+		}
+
+		/* set mods correctly. */
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL1MOD));
+		tmp[0].cp.inst.operand = v->bitmap->row_mod;
+		tmp[1].cp.inst.operand = v->bitmap->row_mod;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" bplxmod %04x\n", v->bitmap->row_mod);
+#endif
+
+		/* set next pointers correctly */
+		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
+		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(aga_this_data->frames[F_STORE_LONG]));
+		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(aga_this_data->frames[F_STORE_LONG]));
+
+		cp = aga_this_data->frames[F_LONG];
+		aga_this_data->frames[F_LONG] = aga_this_data->frames[F_STORE_LONG];
+		aga_this_data->frames[F_STORE_LONG] = cp;
+
+		vd->flags |= VF_DISPLAY;
+
+		cc_use_colormap(v, vd->colormap);
+	}
+	cc_load_mode(aga_this);
+#ifdef DEBUG
+	if (aga_enable & AGA_TRACE)
+		aga_enable |= AGA_TRACE2;	/* XXXX */
+#endif
+}
+
+#endif /* GRF_AGA */
 #endif /* GRF_NTSC */
 
 /*
@@ -1537,7 +1996,7 @@ a2024_mode_vbl_handler(d)
 dmode_t *
 cc_init_pal_hires()
 {
-	/* ph_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!ph_this) {
 		u_short len = std_copper_list_len;
 		cop_t  *cp;
@@ -1612,7 +2071,7 @@ display_pal_hires_view(v)
 		/* calculate datafetch width. */
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
 
-		/* Ph_This will center the any overscanned display */
+		/* This will center the any overscanned display */
 		/* and allow user to modify. */
 		x = v->display.x + ph_this_data->std_start_x - ((w - 640) >> 2);
 		y = v->display.y + ph_this_data->std_start_y - ((h - 256) >> 1);
@@ -1657,6 +2116,10 @@ display_pal_hires_view(v)
 
 		cp = ph_this_data->frames[F_STORE_LONG];
 #if defined GRF_ECS
+#if defined GRF_AGA
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0;
+#endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
 		tmp->cp.inst.operand = ph_this_data->beamcon0;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
@@ -1705,7 +2168,7 @@ display_pal_hires_view(v)
 dmode_t *
 cc_init_pal_hires_lace()
 {
-	/* phl_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!phl_this) {
 		u_short len = std_copper_list_len;
 		cop_t  *cp;
@@ -1786,7 +2249,7 @@ display_pal_hires_lace_view(v)
 		/* calculate datafetch width. */
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
 
-		/* Phl_This will center the any overscanned display */
+		/* This will center the any overscanned display */
 		/* and allow user to modify. */
 		x = v->display.x + phl_this_data->std_start_x - ((w - 640) >> 2);
 		y = v->display.y + phl_this_data->std_start_y - ((h - 512) >> 2);
@@ -1832,6 +2295,10 @@ display_pal_hires_lace_view(v)
 
 		cp = phl_this_data->frames[F_LACE_STORE_LONG];
 #if defined GRF_ECS
+#if defined GRF_AGA
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0;
+#endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
 		tmp->cp.inst.operand = phl_this_data->beamcon0;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
@@ -1904,7 +2371,7 @@ display_pal_hires_lace_view(v)
 dmode_t *
 cc_init_pal_hires_dlace()
 {
-	/* phdl_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!phdl_this) {
 		u_short len = std_dlace_copper_list_len;
 		cop_t  *cp;
@@ -1986,7 +2453,7 @@ display_pal_hires_dlace_view(v)
 		/* calculate datafetch width. */
 		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 2) << 2;
 
-		/* Phdl_This will center the any overscanned display */
+		/* This will center the any overscanned display */
 		/* and allow user to modify. */
 		x = v->display.x + phdl_this_data->std_start_x - ((w - 640) >> 2);
 		y = v->display.y + phdl_this_data->std_start_y - ((h - 1024) >> 3);
@@ -2032,6 +2499,10 @@ display_pal_hires_dlace_view(v)
 
 		cp = phdl_this_data->frames[F_LACE_STORE_LONG];
 #if defined GRF_ECS
+#if defined GRF_AGA
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0;
+#endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
 		tmp->cp.inst.operand = phdl_this_data->beamcon0;
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
@@ -2120,7 +2591,7 @@ display_pal_hires_dlace_view(v)
 dmode_t *
 cc_init_pal_a2024()
 {
-	/* p24_this function should only be called once. */
+	/* this function should only be called once. */
 	if (!p24_this) {
 		int     i;
 		u_short len = std_pal_a2024_copper_list_len;
