@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.4 1997/01/13 14:04:51 oki Exp $	*/
+/*	$NetBSD: genassym.c,v 1.5 1997/01/18 11:46:31 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -116,6 +116,13 @@ main()
 	def("CPU_68030", CPU_68030);
 	def("CPU_68040", CPU_68040);
 	def("CPU_68060", CPU_68060);
+
++ 	/* FPU types */
+	def("FPU_NONE", FPU_NONE);
+	def("FPU_68881", FPU_68881);
+	def("FPU_68882", FPU_68882);
+	def("FPU_68040", FPU_68040);
+	def("FPU_68060", FPU_68060);
 
 	/* values for ectype */
 	def("EC_NONE", EC_NONE);
