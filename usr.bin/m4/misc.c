@@ -1,357 +1,266 @@
-/*  File   : misc.c
-    Author : Ozan Yigit
-    Updated: 26-Mar-1993
-    Purpose: Miscellaneous support code for PD M4.
-*/
+/*
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ozan Yigit at York University.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
+#ifndef lint
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
+#endif /* not lint */
+
+#include <sys/types.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "mdef.h"
-#include "extr.h"
-#include "ourlims.h"
+#include "stdd.h"
+#include "extern.h"
+#include "pathnames.h"
 
-#ifdef	DUFFCP
-
-/*  This version of the ANSI standard function memcpy()
-    uses Duff's Device (tm Tom Duff)  to unroll the copying loop:
-	while (count-- > 0) *to++ = *from++;
-*/
-void memcpy(to, from, count)
-    register char *from, *to;
-    register int count;
-    {
-	if (count > 0) {
-	    register int loops = (count+8-1) >> 3;	/* div 8 round up */
-
-	    switch (count & (8-1)) {	/* mod 8 */
-	        case 0: do {	*to++ = *from++;
-		case 7:		*to++ = *from++;
-		case 6:		*to++ = *from++;
-		case 5:		*to++ = *from++;
-		case 4:		*to++ = *from++;
-		case 3:		*to++ = *from++;
-		case 2:		*to++ = *from++;
-		case 1:		*to++ = *from++;
-			} while (--loops > 0);
-	    }
-	}
-    }
-
-#endif
-
-
-/*  strsave(s)
-    return a new malloc()ed copy of s -- same as V.3's strdup().
-*/
-char *strsave(s)
-    char *s;
-    {
-	register int n = strlen(s)+1;
-	char *p = malloc(n);
-
-	if (p) memcpy(p, s, n);
-	return p;
-    }
-
-
-/*  indx(s1, s2)
-    if s1 can be decomposed as alpha || s2 || omega, return the length
-    of the shortest such alpha, otherwise return -1.
-*/
-int indx(s1, s2)
-    char *s1;
-    char *s2;
-    {
+/*
+ * find the index of second str in the first str.
+ */
+int
+indx(s1, s2)
+char *s1;
+char *s2;
+{
 	register char *t;
-	register char *m;
 	register char *p;
+	register char *m;
 
 	for (p = s1; *p; p++) {
-	    for (t = p, m = s2; *m && *m == *t; m++, t++);
-	    if (!*m) return p-s1;
+		for (t = p, m = s2; *m && *m == *t; m++, t++);
+		if (!*m)
+			return (p - s1);
 	}
-	return -1;
-    }
+	return (-1);
+}
+/*
+ *  putback - push character back onto input
+ */
+void
+putback(c)
+char c;
+{
+	if (bp < endpbb)
+		*bp++ = c;
+	else
+		oops("too many characters pushed back");
+}
 
-
-char pbmsg[] = "m4: too many characters pushed back";
-
-/*  Xputback(c)
-    push character c back onto the input stream.
-    This is now macro putback() in misc.h
-*/
-void Xputback(c)
-    char c;
-    {
-	if (bp < endpbb) *bp++ = c; else error(pbmsg);
-    }
-
-
-/*  pbstr(s)
-    push string s back onto the input stream.
-    putback() has been unfolded here to improve performance.
-    Example:
-	s = <ABC>
-	bp = <more stuff>
-    After the call:
-	bp = <more stuffCBA>
-    It would be more efficient if we ran the pushback buffer in the
-    opposite direction
-*/
-void pbstr(s)
-    register char *s;
-    {
+/*
+ *  pbstr - push string back onto input
+ *          putback is replicated to improve
+ *          performance.
+ */
+void
+pbstr(s)
+register char *s;
+{
 	register char *es;
 	register char *zp;
 
+	es = s;
 	zp = bp;
-	for (es = s; *es; ) es++;	/* now es points to terminating NUL */
-	bp += es-s;			/* advance bp as far as it should go */
-	if (bp >= endpbb) error("m4: too many characters to push back");
-	while (es > s) *zp++ = *--es;
-    }
 
+	while (*es)
+		es++;
+	es--;
+	while (es >= s)
+		if (zp < endpbb)
+			*zp++ = *es--;
+	if ((bp = zp) == endpbb)
+		oops("too many characters pushed back");
+}
 
-/*  pbqtd(s)
-    pushes string s back "quoted", doing whatever has to be done to it to
-    make sure that the result will evaluate to the original value.  As it
-    happens, we have only to add lquote and rquote.
-*/
-void pbqtd(s)
-    register char *s;
-    {
-	register char *es;
-	register char *zp;
-
-	zp = bp;
-	for (es = s; *es; ) es++;	/* now es points to terminating NUL */
-	bp += 2+es-s;			/* advance bp as far as it should go */
-	if (bp >= endpbb) error("m4: too many characters to push back");
-	*zp++ = rquote;
-	while (es > s) *zp++ = *--es;
-	*zp++ = lquote;
-    }
-
-
-/*  pbnum(n)
-    convert a number to a (decimal) string and push it back.
-    The original definition did not work for MININT; this does.
-*/
-void pbnum(n)
-    int n;
-    {
+/*
+ *  pbnum - convert number to string, push back on input.
+ */
+void
+pbnum(n)
+int n;
+{
 	register int num;
 
-	num = n > 0 ? -n : n;	/* MININT <= num <= 0 */
+	num = (n < 0) ? -n : n;
 	do {
-	    putback('0' - (num % 10));
-	} while ((num /= 10) < 0);
-	if (n < 0) putback('-');
-    }
-
-
-/*  pbrad(n, r, m)
-    converts a number n to base r ([-36..-2] U [2..36]), with at least
-    m digits.  If r == 10 and m == 1, this is exactly the same as pbnum.
-    However, this uses the function int2str() from R.A.O'Keefe's public
-    domain string library, and puts the results of that back.
-    The Unix System V Release 3 version of m4 accepts radix 1;
-    THIS VERSION OF M4 DOES NOT ACCEPT RADIX 1 OR -1,
-    nor do we accept radix < -36 or radix > 36.  At the moment such bad
-    radices quietly produce nothing.  The V.3 treatment of radix 1 is
-	push back abs(n) "1"s, then
-	if n < 0, push back one "-".
-    Until I come across something which uses it, I can't bring myself to
-    implement this.
-
-    I have, however, found a use for radix 0.  Unsurprisingly, it is
-    related to radix 0 in Edinburgh Prolog.
-	eval('c1c2...cn', 0, m)
-    pushes back max(m-n,0) blanks and the characters c1...cn.  This can
-    adjust to any byte size as long as UCHAR_MAX = (1 << CHAR_BIT) - 1.
-    In particular, eval(c, 0) where 0 < c <= UCHAR_MAX, pushes back the
-    character with code c.  Note that this has to agree with eval(); so
-    both of them have to use the same byte ordering.
-*/
-void pbrad(n, r, m)
-    long int n;
-    int r, m;
-    {
-	char buffer[34];
-	char *p;
-	int L;
-
-	if (r == 0) {
-	    unsigned long int x = (unsigned long)n;
-	    int n;
-
-	    for (n = 0; x; x >>= CHAR_BIT, n++) buffer[n] = x & UCHAR_MAX;
-	    for (L = n; --L >= 0; ) putback(buffer[L]);
-	    for (L = m-n; --L >= 0; ) putback(' ');
-	    return;
+		putback(num % 10 + '0');
 	}
-	L = m - (int2str(p = buffer, -r, n)-buffer);
-	if (buffer[0] == '-') L++, p++;
-	if (L > 0) {
-	    pbstr(p);
-	    while (--L >= 0) putback('0');
-	    if (p != buffer) putback('-');
-	} else {
-	    pbstr(buffer);
-	}
-    }
+	while ((num /= 10) > 0);
 
+	if (n < 0)
+		putback('-');
+}
 
-char csmsg[] = "m4: string space overflow";
+/*
+ *  chrsave - put single char on string space
+ */
+void
+chrsave(c)
+char c;
+{
+	if (ep < endest)
+		*ep++ = c;
+	else
+		oops("string space overflow");
+}
 
-/*  chrsave(c)
-    put the character c in the string space.
-*/
-void Xchrsave(c)
-    char c;
-    {
-#if 0
-	if (sp < 0) putc(c, active); else
-#endif
-	if (ep < endest) *ep++ = c; else
-	error(csmsg);
-    }
-
-
-/*  getdiv(ind)
-    read in a diversion file and then delete it.
-*/
-void getdiv(ind)
-    int ind;
-    {
+/*
+ * read in a diversion file, and dispose it.
+ */
+void
+getdiv(n)
+int n;
+{
 	register int c;
 	register FILE *dfil;
-	register FILE *afil;
 
-	afil = active;
-	if (outfile[ind] == afil)
-	    error("m4: undivert: diversion still active.");
-	(void) fclose(outfile[ind]);
-	outfile[ind] = NULL;
-	m4temp[UNIQUE] = '0' + ind;
+	if (active == outfile[n])
+		oops("%s: diversion still active.", "undivert");
+	(void) fclose(outfile[n]);
+	outfile[n] = NULL;
+	m4temp[UNIQUE] = n + '0';
 	if ((dfil = fopen(m4temp, "r")) == NULL)
-	    error("m4: cannot undivert.");
-	while ((c = getc(dfil)) != EOF) putc(c, afil);
+		oops("%s: cannot undivert.", m4temp);
+	else
+		while ((c = getc(dfil)) != EOF)
+			putc(c, active);
 	(void) fclose(dfil);
 
-#if vms
-	if (remove(m4temp)) error("m4: cannot unlink.");
+#ifdef vms
+	if (remove(m4temp))
 #else
-	if (unlink(m4temp) == -1) error("m4: cannot unlink.");
+	if (unlink(m4temp) == -1)
 #endif
-    }
+		oops("%s: cannot unlink.", m4temp);
+}
 
+void
+onintr(signo)
+	int signo;
+{
+	oops("interrupted.");
+}
 
-/*  killdiv()
-    delete all the diversion files which have been created.
-*/
-void killdiv()
-    {
+/*
+ * killdiv - get rid of the diversion files
+ */
+void
+killdiv()
+{
 	register int n;
 
-	for (n = 0; n < MAXOUT; n++) {
-	    if (outfile[n] != NULL) {
-		(void) fclose(outfile[n]);
-		m4temp[UNIQUE] = '0' + n;
-#if unix
-		(void) unlink(m4temp);
+	for (n = 0; n < MAXOUT; n++)
+		if (outfile[n] != NULL) {
+			(void) fclose(outfile[n]);
+			m4temp[UNIQUE] = n + '0';
+#ifdef vms
+			(void) remove(m4temp);
 #else
-		(void) remove(m4temp);
+			(void) unlink(m4temp);
 #endif
-	    }
-	}
-    }
+		}
+}
 
+char *
+xalloc(n)
+unsigned long n;
+{
+	register char *p = malloc(n);
 
-/*  error(s)
-    close all files, report a fatal error, and quit, letting the caller know.
-*/
-void error(s)
-    char *s;
-    {
-	killdiv();
-	fprintf(stderr, "%s\n", s);
+	if (p == NULL)
+		oops("malloc: %s", strerror(errno));
+	return p;
+}
+
+char *
+xstrdup(s)
+const char *s;
+{
+	register char *p = strdup(s);
+	if (p == NULL)
+		oops("strdup: %s", strerror(errno));
+	return p;
+}
+
+char *
+basename(s)
+register char *s;
+{
+	register char *p;
+	extern char *strrchr();
+
+	if ((p = strrchr(s, '/')) == NULL)
+		return s;
+
+	return ++p;
+}
+
+void
+usage()
+{
+	fprintf(stderr, "usage: m4 [-Dname[=val]] [-Uname]\n");
 	exit(1);
-    }
+}
 
-
-/*  Interrupt handling
-*/
-static char *msg = "\ninterrupted.";
-
-#ifdef	__STDC__
-void onintr(int signo)
+#if __STDC__
+#include <stdarg.h>
 #else
-onintr()
+#include <varargs.h>
 #endif
-    {
-	error(msg);
-    }
 
-
-void usage()
-    {
-	fprintf(stderr, "Usage: m4 [-e] [-[BHST]int] [-Dname[=val]] [-Uname]\n");
+void
+#if __STDC__
+oops(const char *fmt, ...)
+#else
+oops(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "%s: ", progname);
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
 	exit(1);
-    }
-
-#ifdef GETOPT
-/* Henry Spencer's getopt() - get option letter from argv */
-
-char *optarg;			/* Global argument pointer. */
-int optind = 0;			/* Global argv index. */
-
-static char *scan = NULL;	/* Private scan pointer. */
-
-#ifndef	__STDC__
-extern	char *index();
-#define strchr index
-#endif
-
-int getopt(argc, argv, optstring)
-    int argc;
-    char **argv;
-    char *optstring;
-    {
-	register char c;
-	register char *place;
-
-	optarg = NULL;
-
-	if (scan == NULL || *scan == '\0') {
-	    if (optind == 0) optind++;
-	    if (optind >= argc
-	     || argv[optind][0] != '-'
-	     || argv[optind][1] == '\0')
-		return EOF;
-	    if (strcmp(argv[optind], "--") == 0) {
-		optind++;
-		return EOF;
-	    }
-	    scan = argv[optind]+1;
-	    optind++;
-	}
-	c = *scan++;
-	place = strchr(optstring, c);
-
-	if (place == NULL || c == ':') {
-	    fprintf(stderr, "%s: unknown option -%c\n", argv[0], c);
-	    return '?';
-	}
-	place++;
-	if (*place == ':') {
-	    if (*scan != '\0') {
-		optarg = scan;
-		scan = NULL;
-	    } else {
-		optarg = argv[optind];
-		optind++;
-	    }
-	}
-	return c;
-    }
-#endif
-
+	/* NOTREACHED */
+}
