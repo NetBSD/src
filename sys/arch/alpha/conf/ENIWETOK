@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.19 2000/02/27 00:15:30 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.20 2000/03/22 00:58:16 cgd Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -101,6 +101,7 @@ options 	INSECURE
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices
 #options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)

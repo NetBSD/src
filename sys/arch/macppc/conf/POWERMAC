@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.21 2000/02/09 13:10:16 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.22 2000/03/22 00:58:21 cgd Exp $
 #
 # POWERMAC config file
 #
@@ -44,6 +44,7 @@ options 	NMBCLUSTERS=1024
 # These options enable verbose messages for several subsystems.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 #options 	ZS_TXDMA	# Use dma on zs output
 options 	WSEMUL_VT100	# VT100 / VT220 emulation

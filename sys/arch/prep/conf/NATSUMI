@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.1 2000/02/29 15:21:25 nonaka Exp $
+#	$NetBSD: NATSUMI,v 1.2 2000/03/22 00:58:22 cgd Exp $
 #
 #	for IBM 6050/6070
 #
@@ -99,6 +99,7 @@ options 	INET6		# IPv6
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 
 #options 	NFS_BOOT_BOOTP

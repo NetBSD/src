@@ -1,4 +1,4 @@
-# $NetBSD: CANE,v 1.6 1999/07/29 10:37:12 augustss Exp $
+# $NetBSD: CANE,v 1.7 2000/03/22 00:58:16 cgd Exp $
 #
 # cane.nas.nasa.gov - thorpej's Multia
 #
@@ -74,6 +74,7 @@ options 	LKM
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.33 1999/11/16 07:37:43 dan Exp $
+# $NetBSD: INSTALL,v 1.34 2000/03/22 00:58:17 cgd Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -56,6 +56,7 @@ options 	COMPAT_14
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices
 #options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)

@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.13 2000/03/06 03:16:25 mark Exp $
+#	$NetBSD: EBSA285,v 1.14 2000/03/22 00:58:18 cgd Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -116,6 +116,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options		PCIVERBOSE	# Verbose PCI descriptions
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 

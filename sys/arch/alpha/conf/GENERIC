@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145 2000/03/09 22:27:26 cjs Exp $
+# $NetBSD: GENERIC,v 1.146 2000/03/22 00:58:17 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.145 $"
+#ident 		"GENERIC-$Revision: 1.146 $"
 
 maxusers 32
 
@@ -104,6 +104,7 @@ options 	LKM
 # Misc. options
 options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
