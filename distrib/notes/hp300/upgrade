@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.15 2002/05/04 21:36:57 mbw Exp $
+.\"	$NetBSD: upgrade,v 1.16 2002/06/29 11:01:28 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,8 @@ While you can boot the miniroot using the same methods described above for
 a fresh install of
 .Nx*M
 there are easier and less intrusive options since your disk is already
-labeled and bootable.  The easiest is to dump the miniroot to your swap
+labeled and bootable.
+The easiest is to dump the miniroot to your swap
 partition and boot from that.
 .(enum
 Download the files you'll need to upgrade
@@ -61,12 +62,12 @@ In particular, make sure you have on your locally mounted filesystems
 and
 .Pa miniroot.fs.gz
 .It
-Boot your \*M into 
+Boot your \*M into
 .Sq "single-user mode" :
 .Pp
-Follow the instructions in the section above on 
+Follow the instructions in the section above on
 .Sx Chosing a kernel location
-and type 
+and type
 .Li -s
 at the prompt.
 .It
@@ -81,16 +82,16 @@ Make sure you install the bootstrap program distributed with this version of
 E.g.:
 .Ar root-disk
 could be
-.Li sd0 
-or 
+.Li sd0
+or
 .Li rd0 .
-We'll assume 
+We'll assume
 .Li rd0
 for now.
 .It
 Install the miniroot filesystem:
 .Pp
-First make sure that your 
+First make sure that your
 .Sq Li "b"
 partition has enough room for the uncompressed miniroot (otherwise it
 might overwrite another partition or the end of the disk).
@@ -101,9 +102,9 @@ might overwrite another partition or the end of the disk).
 .It
 Boot the miniroot:
 .Pp
-Follow the instructions in the section above on 
+Follow the instructions in the section above on
 .Sx Chosing a kernel location
-and type 
+and type
 .Li rd0b:netbsd
 at the prompt.
 .enum)
@@ -151,15 +152,16 @@ You'll have to reboot your system manually
 .
 While using the miniroot's upgrade program is the preferred method
 of upgrading your system, it is possible to upgrade your system
-manually. To do this, follow the following procedure:
+manually.
+To do this, follow the following procedure:
 .(enum
 Place
 .Em at least
 the
 .Sy base
 binary set in a file system
-accessible to the target machine. A local file system
-is preferred, since the NFS subsystem in the
+accessible to the target machine.
+A local file system is preferred, since the NFS subsystem in the
 .Nx \*V
 kernel may be incompatible with your old binaries.
 .It
@@ -179,8 +181,8 @@ Make sure you install the bootstrap program distributed with this version of
 E.g.:
 .Ar root-disk
 could be
-.Li sd0 
-or 
+.Li sd0
+or
 .Li rd0 .
 .\}
 .It
@@ -243,6 +245,7 @@ You
 .Em should not
 extract the
 .Sy etc
-set if upgrading. Instead, you should extract that set into another
+set if upgrading.
+Instead, you should extract that set into another
 area and carefully merge the changes by hand.
 .Note)

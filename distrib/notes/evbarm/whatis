@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.1 2001/11/30 23:48:52 thorpej Exp $
+.\"	$NetBSD: whatis,v 1.2 2002/06/29 10:54:15 lukem Exp $
 .
 This is the first major release of
 .Nx*M .
@@ -6,7 +6,8 @@ This is the first major release of
 Unlike previous releases of
 .Nx
 for the ARM architecture, the \*M port uses the ELF
-binary format.  However,
+binary format.
+However,
 .Nx \*V
 on \*M is, as usual, also fully backward compatible with
 old
