@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.88 2002/04/24 16:09:24 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.89 2002/04/27 21:31:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.88 2002/04/24 16:09:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.89 2002/04/27 21:31:41 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,7 @@ fdexpand(struct proc *p)
 	 * and zero the new portion of each array.
 	 */
 	memcpy(newofile, fdp->fd_ofiles,
-		(i = sizeof(struct file *) * fdp->fd_nfiles));
+	    (i = sizeof(struct file *) * fdp->fd_nfiles));
 	memset((char *)newofile + i, 0,
 	    nfiles * sizeof(struct file *) - i);
 	memcpy(newofileflags, fdp->fd_ofileflags,
@@ -1201,7 +1201,7 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 
 	/*
 	 * XXX Kludge: set p->p_dupfd to contain the value of the
-	 * the file descriptor being sought for duplication. The error 
+	 * the file descriptor being sought for duplication. The error
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
@@ -1395,7 +1395,7 @@ fdcheckstd(p)
 	int fd, i, error, flags = FREAD|FWRITE, devnull = -1, logged = 0;
 
 	if ((fdp = p->p_fd) == NULL)
-	       return 0;
+		return (0);
 	for (i = 0; i < 3; i++) {
 		if (fdp->fd_ofiles[i] != NULL)
 			continue;
@@ -1406,14 +1406,14 @@ fdcheckstd(p)
 		}
 		if (devnull < 0) {
 			if ((error = falloc(p, &fp, &fd)) != 0)
-				return error;
+				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
 			    p);
 			if ((error = vn_open(&nd, flags, 0)) != 0) {
 				FILE_UNUSE(fp, p);
 				ffree(fp);
 				fdremove(p->p_fd, fd);
-				return error;
+				return (error);
 			}
 			fp->f_data = (caddr_t)nd.ni_vp;
 			fp->f_flag = flags;
@@ -1431,14 +1431,14 @@ restart:
 					fdexpand(p);
 					goto restart;
 				}
-				return error;
+				return (error);
 			}
 
 			FILE_USE(devnullfp);
 			/* finishdup() will unuse the descriptors for us */
 			if ((error = finishdup(p, devnull, fd, &retval)) != 0)
-				return error;
+				return (error);
 		}
 	}
-	return 0;
+	return (0);
 }
