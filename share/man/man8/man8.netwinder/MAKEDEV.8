@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.1 2001/08/23 01:36:32 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.2 2001/09/08 01:32:47 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
@@ -131,14 +131,14 @@ Contatenated disk devices, see
 RAIDframe disk driver, see
 .Xr \&raid 4
 . El
-.It Console ports:
+.It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyv0
 Pccons console
 . It Ar ttyE#
 Wscons
 . El
-.It Pointing devices:
+.It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar quadmouse#
 ``quadrature mouse''
@@ -149,13 +149,13 @@ Wscons
 Wscons mouse events, see
 .Xr \&wsmouse 4
 . El
-.It Keyboard devices:
+.It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
 Wscons keyboard events, see
 .Xr \&wskbd 4
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Serial ports, see
@@ -163,20 +163,20 @@ Serial ports, see
 . It Ar fcom
 DC21285 COM port
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp
 . It Ar lpa#
 Interruptless lp
 . El
-.It USB devices:
+.It USB devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar usb#
 Bus control devices used by usbd for attach/detach, see
@@ -199,7 +199,7 @@ Scanners, see
 . It Ar ttyU#
 Modem
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -212,7 +212,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar md
 Memory disk, see
