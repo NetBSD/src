@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.7 1997/06/18 10:05:44 kleink Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.7.8.1 1998/10/01 18:36:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,7 +59,8 @@
 
 #define	TCPS_HAVERCVDSYN(s)	((s) >= TCPS_SYN_RECEIVED)
 #define	TCPS_HAVEESTABLISHED(s)	((s) >= TCPS_ESTABLISHED)
-#define	TCPS_HAVERCVDFIN(s)	((s) >= TCPS_TIME_WAIT)
+#define	TCPS_HAVERCVDFIN(s) \
+    ((s) == TCPS_CLOSE_WAIT || ((s) >= TCPS_CLOSING && (s) != TCPS_FIN_WAIT_2))
 
 #ifdef	TCPOUTFLAGS
 /*
@@ -71,7 +72,7 @@
 u_char	tcp_outflags[TCP_NSTATES] = {
     TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
     TH_ACK, TH_ACK,
-    TH_FIN|TH_ACK, TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
+    TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
 };
 #endif
 
