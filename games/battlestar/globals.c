@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.15 2000/09/24 09:47:22 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.16 2000/09/24 14:11:09 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.15 2000/09/24 09:47:22 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.16 2000/09/24 14:11:09 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -270,5 +270,3 @@ char    injuries[NUMOFINJURIES];
 int     verbose = 0;
 
 const char *username;
-
-struct wlist *hashtab[HASHSIZE];
