@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.17 1997/05/13 21:01:55 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.18 1997/05/13 21:18:24 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -2270,8 +2270,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  .if n .sp
  .if t .sp 0.4
  ..
--.Id $Id: gcc2netbsd,v 1.17 1997/05/13 21:01:55 phil Exp $
-+.Id $Id: gcc2netbsd,v 1.17 1997/05/13 21:01:55 phil Exp $
+-.Id $Id: gcc2netbsd,v 1.18 1997/05/13 21:18:24 phil Exp $
++.Id $Id: gcc2netbsd,v 1.18 1997/05/13 21:18:24 phil Exp $
  .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
  .SH NAME
  gcc, g++ \- GNU project C and C++ Compiler (v2.7)
@@ -2726,5 +2726,4 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
      {
        *--p = '\0';
        gcc = (char *) malloc ((strlen (argv[0]) + 1 + strlen (GCC_NAME) + 1)
-diff -ru gcc/libgcc/Makefile gcc.current/libgcc/Makefile
 %% end patch
