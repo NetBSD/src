@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.9 1997/06/26 19:19:07 drochner Exp $	*/
+/*	$NetBSD: alloc.c,v 1.10 1997/07/04 18:47:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -112,22 +112,23 @@ struct fl {
 	struct fl	*next;
 } *freelist = (struct fl *)0;
 
-#ifdef HEAP_START
-static char *top = (char*)HEAP_START;
-#else
-extern char end[];
-static char *top = end;
-#endif
 #ifdef HEAP_VARIABLE
-static char *heaplimit;
+static char *top, *heapstart, *heaplimit;
 void setheap(start, limit)
 void *start, *limit;
 {
-    top = start;
+    heapstart = top = start;
     heaplimit = limit;
 }
+#define HEAP_START heapstart
 #define HEAP_LIMIT heaplimit
+#else /* !HEAP_VARIABLE */
+#ifndef HEAP_START
+extern char end[];
+#define HEAP_START end
 #endif
+static char *top = (char*)HEAP_START;
+#endif /* HEAP_VARIABLE */
 
 void *
 alloc(size)
@@ -217,11 +218,8 @@ free(ptr, size)
         if (size > f->size)
 	        printf("free %u bytes @%lx, should be <=%u\n",
 		    size, ptr, f->size);
-#ifdef HEAP_START
+
 	if (ptr < (void *)HEAP_START)
-#else
-	if (ptr < (void *)end[])
-#endif
 		printf("free: %lx before start of heap.\n", (u_long)ptr);
 
 #ifdef HEAP_LIMIT
