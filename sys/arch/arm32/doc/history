@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.5 2001/06/19 12:59:14 wiz Exp $
+#	$NetBSD: history,v 1.6 2001/06/19 13:45:52 wiz Exp $
 
 3135	- fixed mode selection on boot
 	- page up/down, insert and delete now generate the correct codes in
@@ -294,7 +294,7 @@
 	  mainbus/cpu.c
 	- Added new function initialise_fpe() to fpe-sp/fpe.c This is the
 	  new initialisation point for the FPE. All vector claiming is done
-	  in this routine. Routine is also responcible for IDing the FPE.
+	  in this routine. Routine is also responsible for IDing the FPE.
 	- ramdisc memory allocation now only ever done in the ramdisc driver
 	- cpu_model now declared in mainbus/cpu.c
 	- rpc_configure() renamed to configure()

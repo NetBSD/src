@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.23 2001/06/19 12:59:17 wiz Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.24 2001/06/19 13:45:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -844,7 +844,7 @@ esh_fpopen(dev, oflags, devtype, p)
 	 * Create the ring:
 	 *
 	 * XXX:  HTF are we gonna deal with the fact that we don't know
-	 *	 if the open succeeded until we get a responce from 
+	 *	 if the open succeeded until we get a response from 
 	 *	 the event handler?  I guess we could go to sleep waiting
 	 *	 for the interrupt, and get woken up by the eshintr
 	 *       case handling it.
