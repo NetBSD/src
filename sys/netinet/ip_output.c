@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.9 1994/01/06 23:00:22 ws Exp $
+ *	$Id: ip_output.c,v 1.10 1994/01/07 22:16:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -491,15 +491,6 @@ ip_ctloutput(op, so, level, optname, mp)
 	register int optval;
 	int error = 0;
 
-#if defined(COMPAT_OLDSOCKOPT) && !defined(MULTICAST)
-	/*
-	 * XXX this is a *very* ugly hack, and should go away ASAP...
-	 * note that it only affects intput to the function, not
-	 * output...
-	 */
-	if (optname >= 2 && optname <= 8)
-		optname += 5;
-#endif
 	if (level != IPPROTO_IP)
 		error = EINVAL;
 	else switch (op) {
