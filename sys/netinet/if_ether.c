@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.5 1997/02/17 20:16:31 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.6 1997/02/18 13:27:45 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -59,6 +59,12 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 
+/* 
+ * XXX The next one should go away, but the ETHERTYPE_* symbols are used
+ * by Ethernet stuff in their role as Ethernet protocol types, and by 
+ * ARP stuff in their role as ARP protocol numbers. We should move them 
+ * into a seperate file. -is
+ */
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
@@ -272,7 +278,8 @@ arp_rtrequest(req, rt, sa)
 			rt->rt_expire = 0;
 			Bcopy(LLADDR(rt->rt_ifp->if_sadl),
 			    LLADDR(SDL(gate)),
-			    SDL(gate)->sdl_alen = ETHER_ADDR_LEN);
+			    SDL(gate)->sdl_alen = 
+			    rt->rt_ifp->if_data.ifi_addrlen);
 			if (useloopback)
 				rt->rt_ifp = &loif;
 		}
@@ -643,8 +650,10 @@ revarpinput(m)
 	if (m->m_len < sizeof(struct arphdr))
 		goto out;
 	ar = mtod(m, struct arphdr *);
+#if 0 /* XXX I don't think we need this... and it will prevent other LL */
 	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER)
 		goto out;
+#endif
 	if (m->m_len < sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
 		goto out;
 	switch (ntohs(ar->ar_pro)) {
