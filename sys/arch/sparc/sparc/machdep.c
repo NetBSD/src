@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 1999/05/21 00:08:14 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.150 1999/05/25 23:14:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1566,7 +1566,8 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ | VM_PROT_WRITE);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
