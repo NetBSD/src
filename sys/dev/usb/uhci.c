@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.79 2000/01/19 01:04:26 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.80 2000/01/19 01:16:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -2575,7 +2575,7 @@ uhci_open(pipe)
 			ival = pipe->interval;
 			if (ival == USBD_DEFAULT_INTERVAL)
 				ival = ed->bInterval;
-			return (ohci_device_setintr(sc, opipe, ival));
+			return (uhci_device_setintr(sc, upipe, ival));
 		case UE_ISOCHRONOUS:
 			pipe->methods = &uhci_device_isoc_methods;
 			return (uhci_setup_isoc(pipe));
