@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.23 1994/01/08 16:07:42 mycroft Exp $
+ *	$Id: machdep.c,v 1.24 1994/01/09 21:37:20 mycroft Exp $
  */
 
 #include "param.h"
@@ -1191,7 +1191,7 @@ intrhand(sr)
 	}
 }
 
-#if defined(DEBUG) && !defined(PANICBUTTON)
+#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
 #define PANICBUTTON
 #endif
 
@@ -1227,6 +1227,9 @@ nmihand(frame)
 			printf("Got a keyboard NMI\n");
 			innmihand = 0;
 		}
+#ifdef DDB
+		Debugger();
+#else
 		if (panicbutton) {
 			if (crashandburn) {
 				crashandburn = 0;
@@ -1236,6 +1239,7 @@ nmihand(frame)
 			crashandburn++;
 			timeout(candbtimer, (caddr_t)0, candbdelay);
 		}
+#endif
 #endif
 		return;
 	}
