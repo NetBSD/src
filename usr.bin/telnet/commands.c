@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.16 1998/02/28 12:36:20 enami Exp $	*/
+/*	$NetBSD: commands.c,v 1.17 1998/03/03 07:32:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.16 1998/02/28 12:36:20 enami Exp $");
+__RCSID("$NetBSD: commands.c,v 1.17 1998/03/03 07:32:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -2369,7 +2369,7 @@ tn(argc, argv)
     /*NOTREACHED*/
 }
 
-#define HELPINDENT (sizeof ("connect"))
+#define HELPINDENT ((int)sizeof ("connect"))
 
 static char
 	openhelp[] =	"connect to a site",
