@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nireg.h,v 1.2 2000/04/16 09:55:39 ragge Exp $	*/
+/*	$NetBSD: if_nireg.h,v 1.3 2001/08/20 12:20:07 wiz Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -103,7 +103,7 @@ struct ni_regs {
 #define	PSR_ERR		0x00000040
 
 /*
- * The DEBNx uses a very wierd (set of) structure(s) to communicate
+ * The DEBNx uses a very weird (set of) structure(s) to communicate
  * with something as simple as an ethernet controller. This is not
  * very different to the way communication is done over CI with disks.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.101 2001/08/16 01:37:50 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.102 2001/08/20 12:20:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2601,7 +2601,7 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			default:
-				panic("uvm_map_clean: wierd flags");
+				panic("uvm_map_clean: weird flags");
 			}
 		}
 		amap_unlock(amap);
