@@ -1,3 +1,5 @@
+/*	$NetBSD: union_subr.c,v 1.4 1994/06/29 06:35:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
  * Copyright (c) 1994
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union_subr.c	8.9 (Berkeley) 5/17/94
- *	$Id: union_subr.c,v 1.3 1994/06/17 15:21:35 mycroft Exp $
+ *	@(#)union_subr.c	8.9 (Berkeley) 5/17/94
  */
 
 #include <sys/param.h>

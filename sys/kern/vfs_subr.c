@@ -1,3 +1,5 @@
+/*	$NetBSD: vfs_subr.c,v 1.32 1994/06/29 06:33:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vfs_subr.c	8.13 (Berkeley) 4/18/94
- *	$Id: vfs_subr.c,v 1.31 1994/06/13 15:37:55 mycroft Exp $
+ *	@(#)vfs_subr.c	8.13 (Berkeley) 4/18/94
  */
 
 /*

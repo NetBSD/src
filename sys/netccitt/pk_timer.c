@@ -1,3 +1,5 @@
+/*	$NetBSD: pk_timer.c,v 1.5 1994/06/29 06:37:40 cgd Exp $	*/
+
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1984
  * Copyright (C) Computer Science Department IV, 
@@ -38,8 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk_timer.c	8.1 (Berkeley) 6/10/93
- *	$Id: pk_timer.c,v 1.4 1994/05/13 06:05:01 mycroft Exp $
+ *	@(#)pk_timer.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: slcompress.c,v 1.9 1994/06/29 06:36:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)slcompress.c	8.2 (Berkeley) 4/16/94
- *	$Id: slcompress.c,v 1.8 1994/05/13 06:03:25 mycroft Exp $
+ *	@(#)slcompress.c	8.2 (Berkeley) 4/16/94
  */
 
 /*

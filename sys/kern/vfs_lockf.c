@@ -1,3 +1,5 @@
+/*	$NetBSD: vfs_lockf.c,v 1.5 1994/06/29 06:33:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_lockf.c	8.3 (Berkeley) 1/6/94
- *	$Id: vfs_lockf.c,v 1.4 1994/05/19 06:13:50 mycroft Exp $
+ *	@(#)ufs_lockf.c	8.3 (Berkeley) 1/6/94
  */
 
 #include <sys/param.h>

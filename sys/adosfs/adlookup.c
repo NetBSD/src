@@ -1,4 +1,5 @@
-/* NetBSD $Id: adlookup.c,v 1.6 1994/06/27 19:27:39 cgd Exp $ */
+/*	$NetBSD: adlookup.c,v 1.7 1994/06/29 06:29:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.

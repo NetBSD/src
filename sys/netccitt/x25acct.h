@@ -1,3 +1,5 @@
+/*	$NetBSD: x25acct.h,v 1.5 1994/06/29 06:37:46 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (c) 1990, 1993
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)x25acct.h	8.1 (Berkeley) 6/10/93
- *	$Id: x25acct.h,v 1.4 1994/05/13 06:05:08 mycroft Exp $
+ *	@(#)x25acct.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

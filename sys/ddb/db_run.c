@@ -1,3 +1,5 @@
+/*	$NetBSD: db_run.c,v 1.5 1994/06/29 06:31:16 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,7 +27,6 @@
  *
  * 	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_run.c,v 1.4 1993/12/18 04:46:37 mycroft Exp $
  */
 
 /*

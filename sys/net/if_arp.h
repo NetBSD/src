@@ -1,3 +1,5 @@
+/*	$NetBSD: if_arp.h,v 1.7 1994/06/29 06:36:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_arp.h	8.1 (Berkeley) 6/10/93
- *	$Id: if_arp.h,v 1.6 1994/05/13 06:02:31 mycroft Exp $
+ *	@(#)if_arp.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

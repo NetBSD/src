@@ -1,3 +1,5 @@
+/*	$NetBSD: db_watch.c,v 1.5 1994/06/29 06:31:26 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,7 +27,6 @@
  *
  * 	Author: Richard P. Draves, Carnegie Mellon University
  *	Date:	10/90
- *	$Id: db_watch.c,v 1.4 1994/01/08 01:01:51 mycroft Exp $
  */
 
 #include <sys/param.h>

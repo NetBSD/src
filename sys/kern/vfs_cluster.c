@@ -1,3 +1,5 @@
+/*	$NetBSD: vfs_cluster.c,v 1.2 1994/06/29 06:33:49 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vfs_cluster.c	8.7 (Berkeley) 2/13/94
- *	$Id: vfs_cluster.c,v 1.1 1994/06/08 11:28:51 mycroft Exp $
+ *	@(#)vfs_cluster.c	8.7 (Berkeley) 2/13/94
  */
 
 #include <sys/param.h>

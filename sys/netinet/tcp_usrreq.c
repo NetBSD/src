@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_usrreq.c,v 1.10 1994/06/29 06:38:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_usrreq.c	8.2 (Berkeley) 1/3/94
- *	$Id: tcp_usrreq.c,v 1.9 1994/05/13 06:06:49 mycroft Exp $
+ *	@(#)tcp_usrreq.c	8.2 (Berkeley) 1/3/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ccd.c,v 1.2 1994/06/29 06:31:30 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,9 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ccd.c 1.6 90/11/28
- *	from: @(#)cd.c	7.4 (Berkeley) 5/7/91
- *	$Id: ccd.c,v 1.1 1994/06/24 14:11:02 hpeyerl Exp $
+ * from: Utah $Hdr: cd.c 1.6 90/11/28$
+ *
+ *	@(#)cd.c	7.4 (Berkeley) 5/7/91
  */
 
 /*

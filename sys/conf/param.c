@@ -1,4 +1,5 @@
-/* NetBSD $Id: param.c,v 1.10 1994/06/27 19:44:07 cgd Exp $ */
+/*	$NetBSD: param.c,v 1.11 1994/06/29 06:30:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
  * All rights reserved.

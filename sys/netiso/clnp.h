@@ -1,3 +1,5 @@
+/*	$NetBSD: clnp.h,v 1.6 1994/06/29 06:39:05 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp.h	8.2 (Berkeley) 4/16/94
- *	$Id: clnp.h,v 1.5 1994/05/13 06:08:07 mycroft Exp $
+ *	@(#)clnp.h	8.2 (Berkeley) 4/16/94
  */
 
 /***********************************************************

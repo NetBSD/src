@@ -1,3 +1,5 @@
+/*	$NetBSD: db_output.c,v 1.7 1994/06/29 06:31:12 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -22,8 +24,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- *	$Id: db_output.c,v 1.6 1993/12/18 04:46:35 mycroft Exp $
  */
 
 /*

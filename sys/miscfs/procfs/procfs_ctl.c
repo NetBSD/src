@@ -1,3 +1,5 @@
+/*	$NetBSD: procfs_ctl.c,v 1.12 1994/06/29 06:34:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
  * Copyright (c) 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)procfs_ctl.c	8.4 (Berkeley) 6/15/94
- *	$Id: procfs_ctl.c,v 1.11 1994/06/15 22:59:04 mycroft Exp $
+ *	@(#)procfs_ctl.c	8.4 (Berkeley) 6/15/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: slip.h,v 1.6 1994/06/29 06:36:53 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)slip.h	8.1 (Berkeley) 2/12/94
- *	$Id: slip.h,v 1.5 1994/05/13 06:03:30 mycroft Exp $
+ *	@(#)slip.h	8.1 (Berkeley) 2/12/94
  */
 
 /* Ioctls operating on SLIP ttys. */

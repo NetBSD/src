@@ -1,3 +1,5 @@
+/*	$NetBSD: hd_input.c,v 1.7 1994/06/29 06:37:07 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (c) 1990, 1993
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_input.c	8.1 (Berkeley) 6/10/93
- *	$Id: hd_input.c,v 1.6 1994/05/13 06:04:18 mycroft Exp $
+ *	@(#)hd_input.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

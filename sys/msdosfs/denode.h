@@ -1,3 +1,5 @@
+/*	$NetBSD: denode.h,v 1.4 1994/06/29 06:35:30 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: denode.h,v 1.3 1994/03/03 00:51:31 paulus Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: vfs_lookup.c,v 1.13 1994/06/29 06:33:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vfs_lookup.c	8.4 (Berkeley) 2/16/94
- *	$Id: vfs_lookup.c,v 1.12 1994/06/08 11:28:55 mycroft Exp $
+ *	@(#)vfs_lookup.c	8.4 (Berkeley) 2/16/94
  */
 
 #include <sys/param.h>

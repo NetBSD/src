@@ -1,3 +1,5 @@
+/*	$NetBSD: pk_subr.c,v 1.7 1994/06/29 06:37:38 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (C) Computer Science Department IV, 
@@ -38,8 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk_subr.c	8.1 (Berkeley) 6/10/93
- *	$Id: pk_subr.c,v 1.6 1994/05/13 06:04:58 mycroft Exp $
+ *	@(#)pk_subr.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

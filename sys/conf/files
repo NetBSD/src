@@ -1,4 +1,5 @@
-# NetBSD $Id: files,v 1.54 1994/06/27 19:44:02 cgd Exp $
+#	$NetBSD: files,v 1.55 1994/06/29 06:30:45 cgd Exp $
+#
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
 adosfs/advfsops.c	optional adosfs

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_sl.c,v 1.29 1994/06/29 06:36:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_sl.c	8.6 (Berkeley) 2/1/94
- *	$Id: if_sl.c,v 1.28 1994/05/13 06:02:53 mycroft Exp $
+ *	@(#)if_sl.c	8.6 (Berkeley) 2/1/94
  */
 
 /*

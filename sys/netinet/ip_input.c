@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_input.c,v 1.14 1994/06/29 06:38:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip_input.c	8.2 (Berkeley) 1/4/94
- *	$Id: ip_input.c,v 1.13 1994/05/13 06:06:21 mycroft Exp $
+ *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

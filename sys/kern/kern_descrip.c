@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_descrip.c,v 1.22 1994/06/29 06:32:23 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_descrip.c	8.6 (Berkeley) 4/19/94
- *	$Id: kern_descrip.c,v 1.21 1994/06/22 03:00:21 mycroft Exp $
+ *	@(#)kern_descrip.c	8.6 (Berkeley) 4/19/94
  */
 
 #include <sys/param.h>

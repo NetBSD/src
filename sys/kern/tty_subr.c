@@ -1,3 +1,5 @@
+/*	$NetBSD: tty_subr.c,v 1.8 1994/06/29 06:33:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
  * All rights reserved.
@@ -29,8 +31,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: tty_subr.c,v 1.7 1994/05/25 10:00:26 deraadt Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: uipc_domain.c,v 1.12 1994/06/29 06:33:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uipc_domain.c	8.2 (Berkeley) 10/18/93
- *	$Id: uipc_domain.c,v 1.11 1994/05/13 06:01:30 mycroft Exp $
+ *	@(#)uipc_domain.c	8.2 (Berkeley) 10/18/93
  */
 
 #include <sys/param.h>

@@ -1,5 +1,5 @@
- 	$Id: syscalls.master,v 1.21 1994/06/14 05:18:03 cgd Exp $
-;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
+ 	$NetBSD: syscalls.master,v 1.22 1994/06/29 06:33:10 cgd Exp $
+;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
 

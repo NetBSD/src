@@ -1,3 +1,5 @@
+/*	$NetBSD: msdosfs_conv.c,v 1.6 1994/06/29 06:35:35 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: msdosfs_conv.c,v 1.5 1994/04/25 03:50:05 cgd Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: in.h,v 1.12 1994/06/29 06:38:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in.h	8.3 (Berkeley) 1/3/94
- *	$Id: in.h,v 1.11 1994/05/14 06:25:32 cgd Exp $
+ *	@(#)in.h	8.3 (Berkeley) 1/3/94
  */
 
 /*
