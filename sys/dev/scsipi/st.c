@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114.2.1 1999/10/19 17:39:45 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.114.2.2 1999/10/20 20:39:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1152,7 +1152,6 @@ ststart(periph)
 
 		/*
 		 * Fill out the scsi command
-		 * XXX Really need NOSLEEP?
 		 */
 		bzero(&cmd, sizeof(cmd));
 		flags = XS_CTL_NOSLEEP | XS_CTL_ASYNC;

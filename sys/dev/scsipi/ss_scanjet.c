@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.18.2.1 1999/10/19 17:39:43 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.18.2.2 1999/10/20 20:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -284,7 +284,6 @@ scanjet_read(ss, bp)
 
 	/*
 	 * go ask the adapter to do all this for us
-	 * XXX really need NOSLEEP?
 	 */
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
