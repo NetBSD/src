@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.7 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.8 2004/03/08 05:00:02 simonb Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -75,6 +75,8 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
+STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr
+
 .elif defined(SECONDARY_PROG)
 PROG=		${SECONDARY_PROG}
 LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
@@ -124,7 +126,8 @@ ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
 .if defined(PRIMARY_PROG)
 	mv ${PROG} ${PROG}.elf
-	${OBJCOPY} --strip-all -O ecoff-bigmips -R .reginfo ${PROG}.elf ${PROG}
+	${OBJCOPY} --strip-all -O ecoff-bigmips ${STRIPSECTIONS} \
+	    ${PROG}.elf ${PROG}
 .endif
 .if defined(CHECKSIZE_CMD)
 	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} || \
