@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
-.\"	$Id: rcmd.3,v 1.6 1994/10/28 17:56:40 mycroft Exp $
+.\"	$Id: rcmd.3,v 1.7 1994/10/28 17:59:47 mycroft Exp $
 .\"
 .Dd June 4, 1993
 .Dt RCMD 3
@@ -167,11 +167,11 @@ If the local domain (as obtained from
 .Xr gethostname 2 )
 is the same as the remote domain, only the machine name need be specified.
 .Pp
-If the IP address of the remote host is known, the
+If the IP address of the remote host is known,
 .Fn iruserok
 should be used in preference to
 .Fn ruserok ,
-as it does not require trusting the DNS server for the remote host.
+as it does not require trusting the DNS server for the remote host's domain.
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
