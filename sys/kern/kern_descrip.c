@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.99 2003/01/18 10:06:24 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.100 2003/01/19 22:54:47 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.99 2003/01/18 10:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.100 2003/01/19 22:54:47 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,13 +521,12 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 	int		fd;
 	struct filedesc	*fdp;
 	struct proc *p;
-	struct file	*fp;
 
 	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
 
 	return (fdrelease(p, fd));
