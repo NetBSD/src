@@ -20,7 +20,7 @@
 
 #include "minires/resolv.h"
 #include "minires/res_update.h"
-#include "isc/result.h"
+#include "isc-dhcp/result.h"
 
 /*
  * Based on the Dynamic DNS reference implementation by Viraj Bais

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.1.1.1 2001/04/02 21:57:16 mellon Exp $ Copyright (c) 2000-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.1.1.2 2001/06/18 18:13:23 drochner Exp $ Copyright (c) 2000-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -51,9 +51,6 @@ static char copyright[] =
 #include "minires/minires.h"
 
 #ifdef NSUPDATE
-
-/* Have to use TXT records for now. */
-#define T_DHCID T_TXT
 
 /* DN: No way of checking that there is enough space in a data_string's
    buffer.  Be certain to allocate enough!
@@ -67,232 +64,6 @@ static void data_string_append (struct data_string *ds1,
 		ds2 -> len);
 	ds1 -> len += ds2 -> len;
 }
-
-static isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
-				   struct iaddr ddns_addr,
-				   struct data_string *ddns_dhcid,
-				   unsigned long ttl)
-{
-	ns_updque updqueue;
-	ns_updrec *updrec;
-	isc_result_t result;
-	char ddns_address [16];
-
-	if (ddns_addr.len != 4)
-		return ISC_R_INVALIDARG;
-#ifndef NO_SNPRINTF
-	snprintf (ddns_address, 16, "%d.%d.%d.%d",
-		  ddns_addr.iabuf[0], ddns_addr.iabuf[1],
-		  ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#else
-	sprintf (ddns_address, "%d.%d.%d.%d",
-		 ddns_addr.iabuf[0], ddns_addr.iabuf[1],
-		 ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#endif
-
-	/*
-	 * When a DHCP client or server intends to update an A RR, it first
-	 * prepares a DNS UPDATE query which includes as a prerequisite the
-	 * assertion that the name does not exist.  The update section of the
-	 * query attempts to add the new name and its IP address mapping (an A
-	 * RR), and the DHCID RR with its unique client-identity.
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-	ISC_LIST_INIT (updqueue);
-
-	/*
-	 * A RR does not exist.
-	 */
-	updrec = minires_mkupdrec (S_PREREQ,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)0;
-	updrec -> r_size = 0;
-	updrec -> r_opcode = NXDOMAIN;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Add A RR.
-	 */
-	updrec = minires_mkupdrec (S_UPDATE,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, ttl);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)ddns_address;
-	updrec -> r_size = strlen (ddns_address);
-	updrec -> r_opcode = ADD;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Add DHCID RR.
-	 */
-	updrec = minires_mkupdrec (S_UPDATE,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_DHCID, ttl);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = ddns_dhcid -> data;
-	updrec -> r_size = ddns_dhcid -> len;
-	updrec -> r_opcode = ADD;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Attempt to perform the update.
-	 */
-	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
-
-	print_dns_status ((int)result, &updqueue);
-
-	while (!ISC_LIST_EMPTY (updqueue)) {
-		updrec = ISC_LIST_HEAD (updqueue);
-		ISC_LIST_UNLINK (updqueue, updrec, r_link);
-		minires_freeupdrec (updrec);
-	}
-
-
-	/*
-	 * If this update operation succeeds, the updater can conclude that it
-	 * has added a new name whose only RRs are the A and DHCID RR records.
-	 * The A RR update is now complete (and a client updater is finished,
-	 * while a server might proceed to perform a PTR RR update).
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-	if (result == ISC_R_SUCCESS)
-		return result;
-
-
-	/*
-	 * If the first update operation fails with YXDOMAIN, the updater can
-	 * conclude that the intended name is in use.  The updater then
-	 * attempts to confirm that the DNS name is not being used by some
-	 * other host. The updater prepares a second UPDATE query in which the
-	 * prerequisite is that the desired name has attached to it a DHCID RR
-	 * whose contents match the client identity.  The update section of
-	 * this query deletes the existing A records on the name, and adds the
-	 * A record that matches the DHCP binding and the DHCID RR with the
-	 * client identity.
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-	if (result != ISC_R_YXDOMAIN)
-		return result;
-
-
-	/*
-	 * DHCID RR exists, and matches client identity.
-	 */
-	updrec = minires_mkupdrec (S_PREREQ,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_DHCID, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = ddns_dhcid -> data;
-	updrec -> r_size = ddns_dhcid -> len;
-	updrec -> r_opcode = YXRRSET;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Delete A RRset.
-	 */
-	updrec = minires_mkupdrec (S_UPDATE,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)0;
-	updrec -> r_size = 0;
-	updrec -> r_opcode = DELETE;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Add A RR.
-	 */
-	updrec = minires_mkupdrec (S_UPDATE,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, ttl);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)ddns_address;
-	updrec -> r_size = strlen (ddns_address);
-	updrec -> r_opcode = ADD;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Attempt to perform the update.
-	 */
-	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
-
-	print_dns_status ((int)result, &updqueue);
-
-	/*
-	 * If this query succeeds, the updater can conclude that the current
-	 * client was the last client associated with the domain name, and that
-	 * the name now contains the updated A RR. The A RR update is now
-	 * complete (and a client updater is finished, while a server would
-	 * then proceed to perform a PTR RR update).
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-	/*
-	 * If the second query fails with NXRRSET, the updater must conclude
-	 * that the client's desired name is in use by another host.  At this
-	 * juncture, the updater can decide (based on some administrative
-	 * configuration outside of the scope of this document) whether to let
-	 * the existing owner of the name keep that name, and to (possibly)
-	 * perform some name disambiguation operation on behalf of the current
-	 * client, or to replace the RRs on the name with RRs that represent
-	 * the current client. If the configured policy allows replacement of
-	 * existing records, the updater submits a query that deletes the
-	 * existing A RR and the existing DHCID RR, adding A and DHCID RRs that
-	 * represent the IP address and client-identity of the new client.
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-  error:
-	while (!ISC_LIST_EMPTY (updqueue)) {
-		updrec = ISC_LIST_HEAD (updqueue);
-		ISC_LIST_UNLINK (updqueue, updrec, r_link);
-		minires_freeupdrec (updrec);
-	}
-
-	return result;
-}
-
 
 static isc_result_t ddns_update_ptr (struct data_string *ddns_fwd_name,
 				     struct data_string *ddns_rev_name,
@@ -354,186 +125,6 @@ static isc_result_t ddns_update_ptr (struct data_string *ddns_fwd_name,
 
 	/* Fall through. */
       error:
-
-	while (!ISC_LIST_EMPTY (updqueue)) {
-		updrec = ISC_LIST_HEAD (updqueue);
-		ISC_LIST_UNLINK (updqueue, updrec, r_link);
-		minires_freeupdrec (updrec);
-	}
-
-	return result;
-}
-
-
-static isc_result_t ddns_remove_a (struct data_string *ddns_fwd_name,
-				   struct iaddr ddns_addr,
-				   struct data_string *ddns_dhcid)
-{
-	ns_updque updqueue;
-	ns_updrec *updrec;
-	isc_result_t result = SERVFAIL;
-	char ddns_address [16];
-
-	if (ddns_addr.len != 4)
-		return ISC_R_INVALIDARG;
-
-#ifndef NO_SNPRINTF
-	snprintf (ddns_address, 16, "%d.%d.%d.%d",
-		  ddns_addr.iabuf[0], ddns_addr.iabuf[1],
-		  ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#else
-	sprintf (ddns_address, "%d.%d.%d.%d",
-		 ddns_addr.iabuf[0], ddns_addr.iabuf[1],
-		 ddns_addr.iabuf[2], ddns_addr.iabuf[3]);
-#endif
-
-
-	/*
-	 * The entity chosen to handle the A record for this client (either the
-	 * client or the server) SHOULD delete the A record that was added when
-	 * the lease was made to the client.
-	 *
-	 * In order to perform this delete, the updater prepares an UPDATE
-	 * query which contains two prerequisites.  The first prerequisite
-	 * asserts that the DHCID RR exists whose data is the client identity
-	 * described in Section 4.3. The second prerequisite asserts that the
-	 * data in the A RR contains the IP address of the lease that has
-	 * expired or been released.
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-	ISC_LIST_INIT (updqueue);
-
-	/*
-	 * DHCID RR exists, and matches client identity.
-	 */
-	updrec = minires_mkupdrec (S_PREREQ,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_DHCID,0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = ddns_dhcid -> data;
-	updrec -> r_size = ddns_dhcid -> len;
-	updrec -> r_opcode = YXRRSET;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * A RR matches the expiring lease.
-	 */
-	updrec = minires_mkupdrec (S_PREREQ,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)ddns_address;
-	updrec -> r_size = strlen (ddns_address);
-	updrec -> r_opcode = YXRRSET;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-
-	/*
-	 * Delete appropriate A RR.
-	 */
-	updrec = minires_mkupdrec (S_UPDATE,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)ddns_address;
-	updrec -> r_size = strlen (ddns_address);
-	updrec -> r_opcode = DELETE;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-	/*
-	 * Attempt to perform the update.
-	 */
-	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
-	print_dns_status ((int)result, &updqueue);
-
-	/*
-	 * If the query fails, the updater MUST NOT delete the DNS name.  It
-	 * may be that the host whose lease on the server has expired has moved
-	 * to another network and obtained a lease from a different server,
-	 * which has caused the client's A RR to be replaced. It may also be
-	 * that some other client has been configured with a name that matches
-	 * the name of the DHCP client, and the policy was that the last client
-	 * to specify the name would get the name.  In this case, the DHCID RR
-	 * will no longer match the updater's notion of the client-identity of
-	 * the host pointed to by the DNS name.
-	 *   -- "Interaction between DHCP and DNS"
-	 */
-
-	if (result != ISC_R_SUCCESS)
-		goto error;
-
-	while (!ISC_LIST_EMPTY (updqueue)) {
-		updrec = ISC_LIST_HEAD (updqueue);
-		ISC_LIST_UNLINK (updqueue, updrec, r_link);
-		minires_freeupdrec (updrec);
-	}
-
-	/* If the deletion of the A succeeded, and there are no A records
-	   left for this domain, then we can blow away the DHCID record
-	   as well.   We can't blow away the DHCID record above because
-	   it's possible that more than one A has been added to this
-	   domain name. */
-	ISC_LIST_INIT (updqueue);
-
-	/*
-	 * A RR does not exist.
-	 */
-	updrec = minires_mkupdrec (S_PREREQ,
-				   (const char *)ddns_fwd_name -> data,
-				   C_IN, T_A, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = (unsigned char *)0;
-	updrec -> r_size = 0;
-	updrec -> r_opcode = NXRRSET;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-	/*
-	 * Delete appropriate DHCID RR.
-	 */
-	updrec = minires_mkupdrec (S_UPDATE,
-				  (const char *)ddns_fwd_name -> data,
-				   C_IN, T_DHCID, 0);
-	if (!updrec) {
-		result = ISC_R_NOMEMORY;
-		goto error;
-	}
-
-	updrec -> r_data = ddns_dhcid -> data;
-	updrec -> r_size = ddns_dhcid -> len;
-	updrec -> r_opcode = DELETE;
-
-	ISC_LIST_APPEND (updqueue, updrec, r_link);
-
-	/*
-	 * Attempt to perform the update.
-	 */
-	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
-	print_dns_status ((int)result, &updqueue);
-
-	/* Fall through. */
-  error:
 
 	while (!ISC_LIST_EMPTY (updqueue)) {
 		updrec = ISC_LIST_HEAD (updqueue);
@@ -675,7 +266,7 @@ int ddns_updates (struct packet *packet,
 	   specifically configured to do so.   If the client asked to do its
 	   own update and we allowed that, we don't do this test. */
 	if (lease -> flags & STATIC_LEASE) {
-		if (!(oc = lookup_option (&fqdn_universe, packet -> options,
+		if (!(oc = lookup_option (&server_universe, packet -> options,
 					  SV_UPDATE_STATIC_LEASES)) ||
 		    !evaluate_boolean_option_cache (&ignorep, packet, lease,
 						    (struct client_state *)0,
@@ -867,7 +458,16 @@ int ddns_updates (struct packet *packet,
 	 */
 	if (server_updates_a) {
 		memset (&ddns_dhcid, 0, sizeof ddns_dhcid);
-		get_dhcid (&ddns_dhcid, lease);
+		if (lease -> uid && lease -> uid_len)
+			result = get_dhcid (&ddns_dhcid,
+					    DHO_DHCP_CLIENT_IDENTIFIER,
+					    lease -> uid, lease -> uid_len);
+		else
+			result = get_dhcid (&ddns_dhcid, 0,
+					    lease -> hardware_addr.hbuf,
+					    lease -> hardware_addr.hlen);
+		if (!result)
+			goto badfqdn;
 	}
 
 	/*
@@ -885,7 +485,7 @@ int ddns_updates (struct packet *packet,
 	 */
 	if (ddns_fwd_name.len && ddns_dhcid.len)
 		rcode1 = ddns_update_a (&ddns_fwd_name, lease -> ip_addr,
-					&ddns_dhcid, ddns_ttl);
+					&ddns_dhcid, ddns_ttl, 0);
 	
 	if (rcode1 == ISC_R_SUCCESS) {
 		if (ddns_fwd_name.len && ddns_rev_name.len)

@@ -55,6 +55,7 @@ trace_type_t *trace_connect;
 trace_type_t *trace_disconnect;
 extern omapi_array_t *trace_listeners;
 #endif
+static isc_result_t omapi_connection_connect_internal (omapi_object_t *);
 
 OMAPI_OBJECT_ALLOC (omapi_connection,
 		    omapi_connection_object_t, omapi_type_connection)
@@ -223,7 +224,8 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 			   omapi_connection_reaper));
 		if (status != ISC_R_SUCCESS)
 			goto out;
-		status = omapi_connection_connect ((omapi_object_t *)obj);
+		status = omapi_connection_connect_internal ((omapi_object_t *)
+							    obj);
 #if defined (TRACING)
 	}
 	omapi_connection_register (obj, MDL);
@@ -271,6 +273,7 @@ void omapi_connection_register (omapi_connection_object_t *obj,
 		return;
 	}
 
+#if defined (TRACING)
 	if (trace_record ()) {
 		/* Connection registration packet:
 		   
@@ -303,6 +306,7 @@ void omapi_connection_register (omapi_connection_object_t *obj,
 		status = trace_write_packet_iov (trace_connect,
 						 iov_count, iov, file, line);
 	}
+#endif
 }
 
 static void trace_connect_input (trace_type_t *ttype,
@@ -553,6 +557,16 @@ int omapi_connection_writefd (omapi_object_t *h)
 
 isc_result_t omapi_connection_connect (omapi_object_t *h)
 {
+	isc_result_t status;
+
+	status = omapi_connection_connect_internal (h);
+	if (status != ISC_R_SUCCESS)
+		omapi_signal (h, "status", status);
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
+{
 	int error;
 	omapi_connection_object_t *c;
 	SOCKLEN_T sl;
@@ -575,14 +589,25 @@ isc_result_t omapi_connection_connect (omapi_object_t *h)
 	if (c -> state == omapi_connection_connecting ||
 	    c -> state == omapi_connection_unconnected) {
 		if (c -> cptr >= c -> connect_list -> count) {
+			switch (error) {
+			      case ECONNREFUSED:
+				status = ISC_R_CONNREFUSED;
+				break;
+			      case ENETUNREACH:
+				status = ISC_R_NETUNREACH;
+				break;
+			      default:
+				status = uerr2isc (error);
+				break;
+			}
 			omapi_disconnect (h, 1);
-			return ISC_R_SUCCESS;
+			return status;
 		}
 
 		if (c -> connect_list -> addresses [c -> cptr].addrtype !=
 		    AF_INET) {
 			omapi_disconnect (h, 1);
-			return ISC_R_SUCCESS;
+			return ISC_R_INVALIDARG;
 		}
 
 		memcpy (&c -> remote_addr.sin_addr,
@@ -613,7 +638,7 @@ isc_result_t omapi_connection_connect (omapi_object_t *h)
 					status = ISC_R_NETUNREACH;
 					break;
 				      default:
-					status = ISC_R_UNEXPECTED;
+					status = uerr2isc (error);
 					break;
 				}
 				return status;
