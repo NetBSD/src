@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.18 2001/01/25 07:40:04 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.19 2001/01/25 14:40:23 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -457,12 +457,13 @@ sys/dev/ic/rtl81x9var.h				1.6-1.7
   Add missed bus_dmamem_free() in rtk_detach().
   Some cosmetic fixes.
 
-crypto/dist/heimdal/lib/gssapi/acquire_cred.c	1.2-1.3
-crypto/dist/heimdal/lib/gssapi/gssapi.h		1.2
-crypto/dist/heimdal/lib/gssapi/init_sec_context.c 1.2
-crypto/dist/heimdal/lib/gssapi/release_cred.c	1.2
+usr.sbin/user/user.c				1.35
+usr.sbin/user/usermod.8				1.8
 
-  Make gss_acquire_cred() work for cases other than GSS_C_NO_CREDENTIAL
-  (i.e 'get current, default credentials').  This is needed to support
-  things like gss-api authentication with IKE, as currently implemented
-  in racoon.
+  Make moving a user's homedirectory with -md work correctly,
+  and clarify the meaning of -d in the absence of -m. Fixing PR11707 
+
+sbin/modload/elf.c				1.4
+
+  Ensure that data_hole is aligned to a section, otherwise
+  elf_mod_sizes() may report a size too small, affecting LKM loading.
