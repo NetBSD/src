@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.495 2003/01/10 16:41:39 augustss Exp $
+$NetBSD: pcidevs,v 1.496 2003/01/16 00:32:46 gendalia Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -626,6 +626,7 @@ product 3COM 3C905BT4	0x9056	3c905B-T4 10/100 Ethernet
 product 3COM 3C905BCOMBO 0x9058	3c905B-COMBO 10/100 Ethernet
 product 3COM 3C905BFX	0x905a	3c905B-FX 100 Ethernet
 product 3COM 3C905CTX	0x9200	3c905C-TX 10/100 Ethernet with mngmt
+product 3COM 3C905CXTX	0x9201	3c905CX-TX 10/100 Ethernet with mngmt
 product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 product 3COM 3C980CTXM	0x9805	3c980C-TXM 10/100 Ethernet
 product 3COM 3CR990TX95	0x9902	3CR990-TX-95 10/100 Ethernet with 3XP
@@ -1785,6 +1786,7 @@ product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
 product NVIDIA	QUADRO2		0x0153	Quadro2
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
+product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
