@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.23.2.6 2002/02/26 20:14:37 he Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.23.2.7 2002/09/23 13:48:36 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
 
 /*
@@ -1147,7 +1147,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			mopt->m_len += JUMBOOPTLEN;
 		}
 		optbuf[0] = IP6OPT_PADN;
-		optbuf[1] = 1;
+		optbuf[1] = 0;
 
 		/*
 		 * Adjust the header length according to the pad and
