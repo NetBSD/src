@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.25 2001/05/12 08:03:01 tron Exp $	*/
+/*	$NetBSD: tape.c,v 1.26 2001/05/27 14:17:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.25 2001/05/12 08:03:01 tron Exp $");
+__RCSID("$NetBSD: tape.c,v 1.26 2001/05/27 14:17:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,16 +86,16 @@ extern	int cartridge;
 extern	char *host;
 char	*nexttape;
 
-static	ssize_t atomic_read __P((int, char *, int));
-static	ssize_t atomic_write __P((int, char *, int));
-static	void doslave __P((int, int));
-static	void enslave __P((void));
-static	void flushtape __P((void));
-static	void killall __P((void));
-static	void proceed __P((int));
-static	void rollforward __P((void));
-static	void sigpipe __P((int));
-static	void tperror __P((int));
+static	ssize_t atomic_read(int, char *, int);
+static	ssize_t atomic_write(int, char *, int);
+static	void doslave(int, int);
+static	void enslave(void);
+static	void flushtape(void);
+static	void killall(void);
+static	void proceed(int);
+static	void rollforward(void);
+static	void sigpipe(int);
+static	void tperror(int);
 
 /*
  * Concurrent dump mods (Caltech) - disk block reading and tape writing
@@ -140,7 +140,7 @@ static jmp_buf jmpbuf;	/* where to jump to if we are ready when the */
 			/* SIGUSR2 arrives from the previous slave */
 
 int
-alloctape()
+alloctape(void)
 {
 	int pgoff = getpagesize() - 1;
 	char *buf;
@@ -180,9 +180,7 @@ alloctape()
 }
 
 void
-writerec(dp, isspcl)
-	char *dp;
-	int isspcl;
+writerec(char *dp, int isspcl)
 {
 
 	slp->req[trecno].dblk = (daddr_t)0;
@@ -197,9 +195,7 @@ writerec(dp, isspcl)
 }
 
 void
-dumpblock(blkno, size)
-	daddr_t blkno;
-	int size;
+dumpblock(daddr_t blkno, int size)
 {
 	int avail, tpblks, dblkno;
 
@@ -220,8 +216,7 @@ dumpblock(blkno, size)
 int	nogripe = 0;
 
 static void
-tperror(signo)
-	int signo;
+tperror(int signo)
 {
 
 	if (pipeout) {
@@ -242,8 +237,7 @@ tperror(signo)
 }
 
 static void
-sigpipe(signo)
-	int signo;
+sigpipe(int signo)
 {
 
 	quit("Broken pipe\n");
@@ -254,7 +248,7 @@ sigpipe(signo)
  *	Update xferrate stats
  */
 time_t
-do_stats()
+do_stats(void)
 {
 	time_t tnow, ttaken;
 	int blocks;
@@ -280,8 +274,7 @@ do_stats()
  *	(derived from optr.c::timeest())
  */
 void
-statussig(notused)
-	int notused;
+statussig(int notused)
 {
 	time_t	tnow, deltat;
 	char	msgbuf[128];
@@ -300,7 +293,7 @@ statussig(notused)
 }
 
 static void
-flushtape()
+flushtape(void)
 {
 	int i, blks, got;
 	long lastfirstrec;
@@ -438,7 +431,7 @@ trewind(int eject)
 }
 
 void
-close_rewind()
+close_rewind(void)
 {
 	trewind(1);
 	(void)do_stats();
@@ -456,7 +449,7 @@ close_rewind()
 }
 
 void
-rollforward()
+rollforward(void)
 {
 	struct req *p, *q, *prev;
 	struct slave *tslp;
@@ -571,8 +564,7 @@ rollforward()
  * everything continues as if nothing had happened.
  */
 void
-startnewtape(top)
-	int top;
+startnewtape(int top)
 {
 	int	parentpid;
 	int	childpid;
@@ -709,8 +701,7 @@ restore_check_point:
 }
 
 void
-dumpabort(signo)
-	int signo;
+dumpabort(int signo)
 {
 
 	if (master != 0 && master != getpid())
@@ -727,8 +718,7 @@ dumpabort(signo)
 }
 
 void
-Exit(status)
-	int status;
+Exit(int status)
 {
 
 #ifdef TDEBUG
@@ -741,8 +731,7 @@ Exit(status)
  * proceed - handler for SIGUSR2, used to synchronize IO between the slaves.
  */
 static void
-proceed(signo)
-	int signo;
+proceed(int signo)
 {
 
 	if (ready)
@@ -751,7 +740,7 @@ proceed(signo)
 }
 
 void
-enslave()
+enslave(void)
 {
 	int cmd[2];
 	int i, j;
@@ -796,7 +785,7 @@ enslave()
 }
 
 void
-killall()
+killall(void)
 {
 	int i;
 
@@ -813,9 +802,7 @@ killall()
  * get the lock back for the next cycle by swapping descriptors.
  */
 static void
-doslave(cmd, slave_number)
-	int cmd;
-        int slave_number;
+doslave(int cmd, int slave_number)
 {
 	int nread;
 	int nextslave, size, wrote, eot_count;
@@ -927,10 +914,7 @@ doslave(cmd, slave_number)
  * loop until the count is satisfied (or error).
  */
 static ssize_t
-atomic_read(fd, buf, count)
-	int fd;
-	char *buf;
-	int count;
+atomic_read(int fd, char *buf, int count)
 {
 	ssize_t got, need = count;
 
@@ -944,10 +928,7 @@ atomic_read(fd, buf, count)
  * loop until the count is satisfied (or error).
  */
 static ssize_t
-atomic_write(fd, buf, count)
-	int fd;
-	char *buf;
-	int count;
+atomic_write(int fd, char *buf, int count)
 {
 	ssize_t got, need = count;
 

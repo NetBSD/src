@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2001/05/12 10:26:22 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2001/05/27 14:17:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2001/05/12 10:26:22 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2001/05/27 14:17:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,15 +92,13 @@ char	*host;			/* remote host (if any) */
 int	readcache = -1;		/* read cache size (in readblksize blks) */
 int	readblksize = 32 * 1024; /* read block size */
 
-int	main __P((int, char *[]));
-static long numarg __P((char *, long, long));
-static void obsolete __P((int *, char **[]));
-static void usage __P((void));
+int	main(int, char *[]);
+static long numarg(char *, long, long);
+static void obsolete(int *, char **[]);
+static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	ino_t ino;
 	int dirty; 
@@ -570,7 +568,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.28 1999/10/01 04:35:23 perseant Exp $	*/
+/*	$NetBSD: traverse.c,v 1.29 2001/05/27 14:17:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.28 1999/10/01 04:35:23 perseant Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.29 2001/05/27 14:17:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,11 +80,9 @@ typedef	quad_t fsizeT;
 typedef	int32_t fsizeT;
 #endif
 
-static	int dirindir __P((ino_t ino, daddr_t blkno, int level, long *size,
-    long *tapesize, int nodump));
-static	void dmpindir __P((ino_t ino, daddr_t blk, int level, fsizeT *size));
-static	int searchdir __P((ino_t ino, daddr_t blkno, long size, long filesize,
-    long *tapesize, int nodump));
+static	int dirindir(ino_t, daddr_t, int, long *, long *, int);
+static	void dmpindir(ino_t, daddr_t, int, fsizeT *);
+static	int searchdir(ino_t, daddr_t, long, long, long *, int);
 
 /*
  * This is an estimation of the number of TP_BSIZE blocks in the file.
@@ -94,8 +92,7 @@ static	int searchdir __P((ino_t ino, daddr_t blkno, long size, long filesize,
  * hence the estimate may be high.
  */
 long
-blockest(dp)
-	struct dinode *dp;
+blockest(struct dinode *dp)
 {
 	long blkest, sizeest;
 
@@ -143,10 +140,7 @@ blockest(dp)
  * Determine if given inode should be dumped
  */
 void
-mapfileino(ino, tapesize, dirskipped)
-	ino_t ino;
-	long *tapesize;
-	int *dirskipped;
+mapfileino(ino_t ino, long *tapesize, int *dirskipped)
 {
 	int mode;
 	struct dinode *dp;
@@ -192,11 +186,7 @@ mapfileino(ino, tapesize, dirskipped)
  * the directories in the filesystem.
  */
 int
-mapfiles(maxino, tapesize, disk, dirv)
-	ino_t maxino;
-	long *tapesize;
-	char *disk;
-	char * const *dirv;
+mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
 {
 	int anydirskipped = 0;
 
@@ -295,9 +285,7 @@ mapfiles(maxino, tapesize, disk, dirv)
  * pass using this algorithm.
  */
 int
-mapdirs(maxino, tapesize)
-	ino_t maxino;
-	long *tapesize;
+mapdirs(ino_t maxino, long *tapesize)
 {
 	struct  dinode *dp, di;
 	int i, isdir, nodump;
@@ -369,13 +357,8 @@ mapdirs(maxino, tapesize)
  * require the directory to be dumped.
  */
 static int
-dirindir(ino, blkno, ind_level, filesize, tapesize, nodump)
-	ino_t ino;
-	daddr_t blkno;
-	int ind_level;
-	long *filesize;
-	long *tapesize;
-	int nodump;
+dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
+	long *tapesize, int nodump)
 {
 	int ret = 0;
 	int i;
@@ -413,13 +396,8 @@ dirindir(ino, blkno, ind_level, filesize, tapesize, nodump)
  * contains any subdirectories.
  */
 static int
-searchdir(dino, blkno, size, filesize, tapesize, nodump)
-	ino_t dino;
-	daddr_t blkno;
-	long size;
-	long filesize;
-	long *tapesize;
-	int nodump;
+searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
+	long *tapesize, int nodump)
 {
 	struct direct *dp;
 	struct dinode *ip;
@@ -480,9 +458,7 @@ searchdir(dino, blkno, size, filesize, tapesize, nodump)
  * Dump the contents of an inode to tape.
  */
 void
-dumpino(dp, ino)
-	struct dinode *dp;
-	ino_t ino;
+dumpino(struct dinode *dp, ino_t ino)
 {
 	int ind_level, cnt;
 	fsizeT size;
@@ -514,10 +490,11 @@ dumpino(dp, ino)
 		if (dp->di_size > 0 &&
 #ifdef FS_44INODEFMT
 		    (dp->di_size < ufsib->ufs_maxsymlinklen ||
-		     (ufsib->ufs_maxsymlinklen == 0 && dp->di_blocks == 0))) {
+		     (ufsib->ufs_maxsymlinklen == 0 && dp->di_blocks == 0))
 #else
-		    dp->di_blocks == 0) {
+		    dp->di_blocks == 0
 #endif
+			) {
 			spcl.c_addr[0] = 1;
 			spcl.c_count = iswap32(1);
 			writeheader(ino);
@@ -563,11 +540,7 @@ dumpino(dp, ino)
  * Read indirect blocks, and pass the data blocks to be dumped.
  */
 static void
-dmpindir(ino, blk, ind_level, size)
-	ino_t ino;
-	daddr_t blk;
-	int ind_level;
-	fsizeT *size;
+dmpindir(ino_t ino, daddr_t blk, int ind_level, fsizeT *size)
 {
 	int i, cnt;
 	daddr_t idblk[MAXNINDIR];
@@ -598,10 +571,7 @@ dmpindir(ino, blk, ind_level, size)
  * Collect up the data into tape record sized buffers and output them.
  */
 void
-blksout(blkp, frags, ino)
-	daddr_t *blkp;
-	int frags;
-	ino_t ino;
+blksout(daddr_t *blkp, int frags, ino_t ino)
 {
 	daddr_t *bp;
 	int i, j, count, blks, tbperdb;
@@ -636,10 +606,7 @@ blksout(blkp, frags, ino)
  * Dump a map to the tape.
  */
 void
-dumpmap(map, type, ino)
-	char *map;
-	int type;
-	ino_t ino;
+dumpmap(char *map, int type, ino_t ino)
 {
 	int i;
 	char *cp;
@@ -655,8 +622,7 @@ dumpmap(map, type, ino)
  * Write a header record to the dump tape.
  */
 void
-writeheader(ino)
-	ino_t ino;
+writeheader(ino_t ino)
 {
 	int32_t sum, cnt, *lp;
 
