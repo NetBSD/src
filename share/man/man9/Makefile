@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.114 2002/07/14 04:08:44 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.115 2002/07/16 00:36:45 lha Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -253,7 +253,13 @@ MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_cis_read_4.9 \
 	pcmcia.9 pcmcia_cis_read_n.9 \
 	pcmcia.9 pcmcia_scan_cis.9
-MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
+MLINKS+=pfil.9 pfil_hook_get.9 \
+	pfil.9 pfil_add_hook.9 \
+	pfil.9 pfil_remove_hook.9 \
+	pfil.9 pfil_head_register.9 \
+	pfil.9 pfil_head_unregister.9 \
+	pfil.9 pfil_get_head.9 \
+	pfil.9 pfil_run_hooks.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
