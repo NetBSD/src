@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.c,v 1.7 1999/04/24 08:10:41 simonb Exp $	*/
+/* $NetBSD: mips_mcclock.c,v 1.8 1999/12/03 02:56:37 nisimura Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,30 +34,39 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.7 1999/04/24 08:10:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.8 1999/12/03 02:56:37 nisimura Exp $");
 
-
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
-#include <dev/ic/mc146818reg.h>		/* clock rates */
-#include <sys/param.h>			/* guaranteed to get splXXX() */
-#include <machine/clock_machdep.h>
+#include <sys/device.h>
+
+#include <dev/ic/mc146818reg.h>	
+#include <dev/dec/mcclockvar.h>
+#include <dev/dec/mcclock_pad32.h>
+
 #include <mips/cpu.h>			/* CPUISMIPS3 */
 #include <mips/mips/mips_mcclock.h>
-#include <pmax/pmax/clockreg.h>		/* XXX struct chiptime */
 
+
+unsigned mips_mc_cpuspeed __P((void *, int, int (*)(void *, int)));
+int mips_mcclock_tickloop __P((void *, int));
+unsigned mips_mcclock_to_mhz __P((unsigned iters));
 
 extern u_int mips_read_causereg __P((void));
 
-unsigned mips_mc_cpuspeed __P((
-	volatile struct  chiptime *mcaddr, int clockmask,
-	int (*tickpollfn) __P((volatile struct chiptime *mcclock_addr,
-			       int clockmask)) ));
 
-unsigned mips_mcclock_to_mhz __P((unsigned iters));
-
-int mips_mcclock_tickloop __P((volatile struct  chiptime *mcclock_addr,
-			       int clockmask));
+/*
+ * Compute MHz and DELAY() constants using the default
+ * polling function.
+ */
+unsigned
+mc_cpuspeed(mcclock_addr, cpuintmask)
+	vaddr_t mcclock_addr;
+    	int cpuintmask;
+{
+	return mips_mc_cpuspeed((void *)mcclock_addr, cpuintmask,
+	           mips_mcclock_tickloop);
+}
 
 
 /*
@@ -71,15 +80,15 @@ int mips_mcclock_tickloop __P((volatile struct  chiptime *mcclock_addr,
  */
 unsigned
 mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
-	volatile struct  chiptime *mcclock_addr;
+	void *mcclock_addr;
 	int clockmask;
-	int (*tickpollfn) __P((volatile struct chiptime *mcclock_addr,
+	int (*tickpollfn) __P((void *mcclock_addr,
 			     int clockmask));
 {
 	int s;
 	int iters = 0;
 	int saved_rega, saved_regb;
-
+	volatile struct mcclock_pad32_clockdatum *clk = (void *)mcclock_addr;
 
 	/*
 	 * Block all interrupts, including clock ticks.
@@ -91,22 +100,22 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 	 * and set it up for 256Hz (4ms) interrupts.
 	 * Save any state we change so we can restore it on exit.
 	 */
-	saved_rega = mcclock_addr->rega;
-	saved_regb = mcclock_addr->regb;
+	saved_rega = clk[MC_REGA].datum;
+	saved_regb = clk[MC_REGB].datum;
 
 #if 0
 	mcclock_addr->rega = (saved_rega & ~MC_BASE_RESET) | MC_RATE_256_Hz;
 	mcclock_addr->regb = MC_REGB_BINARY|MC_REGB_24HR|MC_REGB_PIE;
 #else
-	mcclock_addr->rega = MC_BASE_32_KHz | MC_RATE_256_Hz;
-	mcclock_addr->regb = MC_REGB_BINARY|MC_REGB_24HR|MC_REGB_PIE| MC_REGB_SQWE;
+	clk[MC_REGA].datum = MC_BASE_32_KHz | MC_RATE_256_Hz;
+	clk[MC_REGB].datum = MC_REGB_BINARY|MC_REGB_24HR|MC_REGB_PIE| MC_REGB_SQWE;
 #endif
 	/* count loop iterations between ticks */
 	iters = (*tickpollfn)(mcclock_addr, clockmask);
 
 	/* Restore mcclock registers */
-	mcclock_addr->rega = saved_rega;
-	mcclock_addr->regb = saved_regb;
+	clk[MC_REGA].datum = saved_rega;
+	clk[MC_REGB].datum = saved_regb;
 
 	splx(s);
 
@@ -136,14 +145,15 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 
 int
 mips_mcclock_tickloop(mcclock_addr, clockmask)
-	volatile struct  chiptime *mcclock_addr;
+	void *mcclock_addr;
 	int clockmask;
 {
 	int iters = 0;
 	volatile int junk;
+	volatile struct mcclock_pad32_clockdatum *clk = mcclock_addr;
 
 	/* clear any old pending interrupts */
-	junk = mcclock_addr->regc;
+	junk = clk[MC_REGC].datum;
 	junk++;	junk++;	junk++;	junk++;
 
 	/* Poll clock interrupt, waiting for next tick to happen. */
@@ -151,7 +161,7 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 		;
 
 	/* Ack the mc146818 interrupt caused by starting tick. */
-	junk = mcclock_addr->regc;
+	junk = clk[MC_REGC].datum;
 
 	junk++;	junk++;	junk++;	junk++;
 
@@ -169,25 +179,10 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 	}
 
 	/* Ack the  interrupt from the just-gone-off tick */
-	junk = mcclock_addr->regc;
+	junk = clk[MC_REGC].datum;
 
 	return (iters);
 }
-
-
-/*
- * Compute MHz and  DELAY() constants using the default
- * polling function.
- */
-unsigned
-mc_cpuspeed(mcclock_addr, clockmask)
-	volatile struct  chiptime *mcclock_addr;
-    	int clockmask;
-{
-	return mips_mc_cpuspeed(mcclock_addr, clockmask,
-	           mips_mcclock_tickloop);
-}
-
 
 
 /*
