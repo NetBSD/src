@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.73 1999/06/04 19:02:34 is Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.74 1999/07/21 17:56:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.73 1999/06/04 19:02:34 is Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.74 1999/07/21 17:56:34 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ extern char *__progname;
 
 static char	*dkname;
 static char	*specname;
-static char	tmpfil[] = _PATH_TMP;
+static char	tmpfil[MAXPATHLEN];
 
 static char	namebuf[BBSIZE], *np = namebuf;
 static struct	disklabel lab;
@@ -1253,8 +1253,12 @@ edit(lp, f)
 {
 	int first, ch, fd;
 	struct disklabel label;
+	const char *tmpdir;
 	FILE *fp;
 
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(tmpfil, sizeof (tmpfil), "%s/%s", tmpdir, TMPFILE);
 	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
 		warn("%s", tmpfil);
 		return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 1995/03/18 14:54:43 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 1999/07/21 17:56:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,5 +38,4 @@
 #include <paths.h>
 
 #define	_PATH_BOOTDIR	"/usr/mdec"
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/EdDk.aXXXXXX"
+#define	TMPFILE		"EdDk.aXXXXXX"
