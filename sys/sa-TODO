@@ -2,11 +2,8 @@ Things to do for scheduler activations/LWP code.
 
 - Document! Not everyone wants to read the thesis. Man pages, etc.
 
-- Prevent multiple LWP/SAs from entering sigexit(). Not at all useful,
-  and causes deadlock panics in exit1().
-
-- Port to other architectures. I have alpha, m68k, arm32, mips, sparc.
-  Other people will need to do the intimately MD parts for ppc, sh3, sparc64,
+- Port to other architectures. I have alpha, m68k, arm32, mips, sparc, ppc.
+  Other people will need to do the intimately MD parts for sh3, sparc64,
   pc532, vax. Documenting what is needed and what changes have been made
   to the MI/MD boundary would be a good step here.
 
@@ -26,12 +23,6 @@ Things to do for scheduler activations/LWP code.
 
 - Adapt /proc and libkvm interfaces to support examining LWP/SA data
   structures. Adapt ps and friends to display such.
-
-- scheduler activation "preemption" upcall: currently called once per
-  clock tick, as preempt() is called whether or not there are other
-  runnable processes. This introduces a large upcall-handling overhead
-  on a process. Figure out how to make this cheaper, or ideally, only
-  invoke the preemption upcall for "real" preemption.
 
 - scheduler activation upcalls: user-stack storage of all upcall state
   has problems if a process causes multiple upcalls in one kernel entry.
