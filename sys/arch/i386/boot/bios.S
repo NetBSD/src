@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.6 1994/10/27 04:14:31 cgd Exp $	*/
+/*	$NetBSD: bios.S,v 1.7 1995/01/16 02:50:33 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -118,15 +118,19 @@ ENTRY(biosread)
 
 
 /*
-# putc(ch)
+#ifndef SERIAL
 # BIOS call "INT 10H Function 0Eh" to write character to console
 #	Call with	%ah = 0x0e
 #			%al = character
 #			%bh = page
-#			%bl = foreground color ( graphics modes)
+#			%bl = foreground color
+#else
+# BIOS call "INT 14H Function 01h" to write character to console
+#	Call with	%ah = 0x01
+#			%al = character
+#			%dx = port number
+#endif
 */
-
-
 ENTRY(putc)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -136,15 +140,22 @@ ENTRY(putc)
 	movb	0x8(%ebp), %cl
 
 	call	EXT(prot_to_real)
-
-	data32
-	movl	$0x1, %ebx	# %bh=0, %bl=1 (blue)
-	movb	$0xe, %ah
-	movb	%cl, %al
 	sti
-	int	$0x10		# display a byte
-	cli
 
+	movb	%cl, %al
+
+#ifndef SERIAL
+	movb	$0x0e, %ah
+	data32
+	movl	$0x0001, %ebx
+	int	$0x10		# display a byte
+#else
+	movb	$0x01, %ah
+	xorl	%edx, %edx
+	int	$0x14		# display a byte
+#endif
+
+	cli
 	data32
 	call	EXT(real_to_prot)
 
@@ -155,27 +166,39 @@ ENTRY(putc)
 
 
 /*
-# getc()
-# BIOS call "INT 16H Function 00H" to read character from keyboard
-#	Call with	%ah = 0x0
+#ifndef SERIAL
+# BIOS call "INT 16H Function 00H" to read character from the keyboard
+#	Call with	%ah = 0x00
 #	Return:		%ah = keyboard scan code
 #			%al = ASCII character
+#else
+# BIOS call "INT 14H Function 02H" to read character from the serial port
+#	Call with	%ah = 0x02
+#			%dx = port number
+#	Return:		%ah = line status
+#			%al = ASCII character
+#endif
 */
-
 ENTRY(getc)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	%ebx		# save %ebx
+	pushl	%ebx
 
 	call	EXT(prot_to_real)
-
-	movb	$0x0, %ah
 	sti
+
+#ifndef SERIAL
+	movb	$0x00, %ah
 	int	$0x16
-	cli
+#else
+	movb	$0x02, %ah
+	xorl	%edx, %edx
+	int	$0x14
+#endif
 
 	movb	%al, %bl	# real_to_prot uses %eax
 
+	cli
 	data32
 	call	EXT(real_to_prot)
 
@@ -185,36 +208,49 @@ ENTRY(getc)
 	popl	%ebx
 	popl	%ebp
 	ret
+
+
 /*
-# ischar()
-#       if there is a character pending, return it; otherwise return 0
+#ifndef SERIAL
 # BIOS call "INT 16H Function 01H" to check whether a character is pending
-#	Call with	%ah = 0x1
-#	Return:
+#	Call with	%ah = 0x01
+#	Return:	
 #		If key waiting to be input:
 #			%ah = keyboard scan code
 #			%al = ASCII character
-#			Zero flag = clear
+#			ZF  = clear
 #		else
-#			Zero flag = set
+#			ZF  = set
+#else
+# BIOS call "INT 14H Function 03H" to check whether a character is pending
+#	Call with	%ah = 0x03
+#			%dx = port number
+#	Return:		%ah = line status
+#			%al = modem status
+#endif
 */
 ENTRY(ischar)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
 
-	call	EXT(prot_to_real)		# enter real mode
-
-	xorl	%ebx, %ebx
-	movb	$0x1, %ah
+	call	EXT(prot_to_real)
 	sti
-	int	$0x16
-	cli
-	data32
-	jz	nochar
-	movb	%al, %bl
 
-nochar:
+#ifndef SERIAL
+	movb	$0x01, %ah
+	int	$0x16
+	setnz	%ah
+#else
+	movb	$0x03, %ah
+	xorl	%edx, %edx
+	int	$0x14
+	andb	$0x1f, %ah
+#endif
+
+	movb	%ah, %bl	# real_to_prot uses %eax
+
+	cli
 	data32
 	call	EXT(real_to_prot)
 
@@ -241,15 +277,14 @@ ENTRY(get_diskinfo)
 	pushl	%edx
 
 	movb	0x8(%ebp), %dl		# diskinfo(drive #)
+
 	call	EXT(prot_to_real)	# enter real mode
-
-	movb	$0x8, %ah		# ask for disk info
-
 	sti
-	int	$0x13
-	cli
 
+	movb	$0x08, %ah		# ask for disk info
+	int	$0x13
 	jnc	ok
+
 	/*
 	 * Urk.  Call failed.  It is not supported for floppies by old BIOS's.
 	 * Guess it's a 15-sector floppy.  Initialize all the registers for
@@ -264,12 +299,13 @@ ENTRY(get_diskinfo)
 	movb	$1, %dl			# # floppy drives installed
 	# es:di = parameter table
 	# carry = 0
-ok:
 
+ok:
+	cli
 	data32
 	call	EXT(real_to_prot)	# back to protected mode
 
-	xor	%eax, %eax
+	xorl	%eax, %eax
 
 	/*form a longword representing all this gunk*/
 	movb	%dh, %ah		# max head
