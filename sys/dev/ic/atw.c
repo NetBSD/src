@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.40 2004/07/15 06:06:53 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.41 2004/07/15 06:20:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.40 2004/07/15 06:06:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.41 2004/07/15 06:20:58 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3338,6 +3338,9 @@ atw_start(struct ifnet *ifp)
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
 		} else {
+			/* send no data packets until we are associated */
+			if (ic->ic_state != IEEE80211_S_RUN)
+				break;
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
