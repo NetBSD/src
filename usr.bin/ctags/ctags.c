@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.5 1997/10/18 13:18:31 lukem Exp $	*/
+/*	$NetBSD: ctags.c,v 1.6 1998/08/25 20:59:36 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.5 1997/10/18 13:18:31 lukem Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.6 1998/08/25 20:59:36 ross Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -154,7 +154,7 @@ usage:		(void)fprintf(stderr,
 			(void)fclose(inf);
 		}
 
-	if (head)
+	if (head) {
 		if (xflag)
 			put_entries(head);
 		else {
@@ -178,6 +178,7 @@ usage:		(void)fprintf(stderr,
 				system(cmd);
 			}
 		}
+	}
 	exit(exit_val);
 }
 

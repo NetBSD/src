@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.7 1998/07/26 22:27:42 mycroft Exp $	*/
+/*	$NetBSD: log.c,v 1.8 1998/08/25 20:59:41 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: log.c,v 1.7 1998/07/26 22:27:42 mycroft Exp $");
+__RCSID("$NetBSD: log.c,v 1.8 1998/08/25 20:59:41 ross Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -65,11 +65,12 @@ logent(group, num, acu, message)
 		perror("tip: flock");
 		return;
 	}
-	if ((user = getlogin()) == NULL)
+	if ((user = getlogin()) == NULL) {
 		if ((pwd = getpwuid(getuid())) == NULL)
 			user = "???";
 		else
 			user = pwd->pw_name;
+	}
 	t = time(0);
 	timestamp = ctime(&t);
 	timestamp[24] = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.13 1998/07/26 23:16:14 mycroft Exp $	*/
+/*	$NetBSD: write.c,v 1.14 1998/08/25 20:59:43 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.13 1998/07/26 23:16:14 mycroft Exp $");
+__RCSID("$NetBSD: write.c,v 1.14 1998/08/25 20:59:43 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,12 +264,11 @@ do_write(tty, mytty, myuid)
 	char path[MAXPATHLEN], host[MAXHOSTNAMELEN + 1], line[512];
 
 	/* Determine our login name before the we reopen() stdout */
-	if ((login = getlogin()) == NULL)
+	if ((login = getlogin()) == NULL) {
 		if ((pwd = getpwuid(myuid)) != NULL)
 			login = pwd->pw_name;
-		else
-			login = "???";
-
+		else	login = "???";
+	}
 	(void)snprintf(path, sizeof path, "/dev/%s", tty);
 	if ((freopen(path, "w", stdout)) == NULL)
 		err(1, "%s", path);

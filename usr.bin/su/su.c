@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.25 1998/07/26 15:24:34 mycroft Exp $	*/
+/*	$NetBSD: su.c,v 1.26 1998/08/25 20:59:40 ross Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.25 1998/07/26 15:24:34 mycroft Exp $");
+__RCSID("$NetBSD: su.c,v 1.26 1998/08/25 20:59:40 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ main(argc, argv)
 	if (username == NULL)
 		err(1, "strdup");
 
-	if (asme)
+	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
 			shell = strncpy(shellbuf, pwd->pw_shell,
 			    sizeof(shellbuf) - 1);
@@ -167,7 +167,7 @@ main(argc, argv)
 			shell = _PATH_BSHELL;
 			iscsh = NO;
 		}
-
+	}
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv-1;
@@ -291,7 +291,7 @@ badlogin:
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
-	if (pwd->pw_change)
+	if (pwd->pw_change) {
 		if (tp.tv_sec >= pwd->pw_change) {
 			(void)printf("%s -- %s's password has expired.\n",
 				     (ruid ? "Sorry" : "Note"), user);
@@ -301,7 +301,8 @@ badlogin:
 		    _PASSWORD_WARNDAYS * SECSPERDAY)
 			(void)printf("Warning: %s's password expires on %s",
 				     user, ctime(&pwd->pw_change));
-	if (pwd->pw_expire)
+	}
+	if (pwd->pw_expire) {
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("%s -- %s's account has expired.\n",
 				     (ruid ? "Sorry" : "Note"), user);
@@ -311,7 +312,7 @@ badlogin:
 		    _PASSWORD_WARNDAYS * SECSPERDAY)
 			(void)printf("Warning: %s's account expires on %s",
 				     user, ctime(&pwd->pw_expire));
-  
+ 	}
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, user, ontty());

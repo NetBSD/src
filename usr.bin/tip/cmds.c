@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.11 1998/07/12 09:59:29 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.12 1998/08/25 20:59:41 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.11 1998/07/12 09:59:29 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.12 1998/08/25 20:59:41 ross Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -385,11 +385,12 @@ out:
 	stop_t = time(0);
 	fclose(fd);
 	signal(SIGINT, f);
-	if (boolean(value(VERBOSE)))
+	if (boolean(value(VERBOSE))) {
 		if (boolean(value(RAWFTP)))
 			prtime(" chars transferred in ", stop_t-start_t);
 		else
 			prtime(" lines transferred in ", stop_t-start_t);
+	}
 	write(fildes[1], (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
 }

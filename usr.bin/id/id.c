@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.9 1997/10/19 03:18:54 lukem Exp $");
+__RCSID("$NetBSD: id.c,v 1.10 1998/08/25 20:59:37 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,16 +174,18 @@ pretty(pw)
 		else
 			(void)printf("uid\t%u\n", rid);
 		
-		if ((eid = geteuid()) != rid)
+		if ((eid = geteuid()) != rid) {
 			if ((pw = getpwuid(eid)) != NULL)
 				(void)printf("euid\t%s", pw->pw_name);
 			else
 				(void)printf("euid\t%u", eid);
-		if ((rid = getgid()) != (eid = getegid()))
+		}
+		if ((rid = getgid()) != (eid = getegid())) {
 			if ((gr = getgrgid(rid)) != NULL)
 				(void)printf("rgid\t%s\n", gr->gr_name);
 			else
 				(void)printf("rgid\t%u\n", rid);
+		}
 		(void)printf("groups\t");
 		group(NULL, 1);
 	}

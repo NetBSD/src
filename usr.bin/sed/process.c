@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.22 1998/03/30 02:29:28 mrg Exp $	*/
+/*	$NetBSD: process.c,v 1.23 1998/08/25 20:59:40 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.22 1998/03/30 02:29:28 mrg Exp $");
+__RCSID("$NetBSD: process.c,v 1.23 1998/08/25 20:59:40 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,7 @@ lputs(s)
 	struct winsize win;
 	static int termwidth = -1;
 
-	if (termwidth == -1)
+	if (termwidth == -1) {
 		if ((p = getenv("COLUMNS")) != NULL)
 			termwidth = atoi(p);
 		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
@@ -478,7 +478,7 @@ lputs(s)
 			termwidth = win.ws_col;
 		else
 			termwidth = 60;
-
+	}
 	for (count = 0; *s; ++s) { 
 		if (count >= termwidth) {
 			(void)printf("\\\n");

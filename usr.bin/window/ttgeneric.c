@@ -1,4 +1,4 @@
-/*	$NetBSD: ttgeneric.c,v 1.4 1997/11/21 08:36:28 lukem Exp $	*/
+/*	$NetBSD: ttgeneric.c,v 1.5 1998/08/25 20:59:43 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttgeneric.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttgeneric.c,v 1.4 1997/11/21 08:36:28 lukem Exp $");
+__RCSID("$NetBSD: ttgeneric.c,v 1.5 1998/08/25 20:59:43 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,13 +237,14 @@ gen_putc(c)
 	if (tt.tt_nmodes != tt.tt_modes)
 		gen_setmodes(tt.tt_nmodes);
 	ttputc(c);
-	if (++tt.tt_col == gen_CO)
+	if (++tt.tt_col == gen_CO) {
 		if (gen_XN)
 			tt.tt_col = tt.tt_row = -10;
 		else if (gen_AM)
 			tt.tt_col = 0, tt.tt_row++;
 		else
 			tt.tt_col--;
+	}
 }
 
 void
@@ -257,13 +258,14 @@ gen_write(p, n)
 		gen_setmodes(tt.tt_nmodes);
 	ttwrite(p, n);
 	tt.tt_col += n;
-	if (tt.tt_col == gen_CO)
+	if (tt.tt_col == gen_CO) {
 		if (gen_XN)
 			tt.tt_col = tt.tt_row = -10;
 		else if (gen_AM)
 			tt.tt_col = 0, tt.tt_row++;
 		else
 			tt.tt_col--;
+	}
 }
 
 void
@@ -377,13 +379,14 @@ gen_inschar(c)
 	ttputc(c);
 	if (gen_IP)
 		tttputs(gen_IP, gen_CO - tt.tt_col);
-	if (++tt.tt_col == gen_CO)
+	if (++tt.tt_col == gen_CO) {
 		if (gen_XN)
 			tt.tt_col = tt.tt_row = -10;
 		else if (gen_AM)
 			tt.tt_col = 0, tt.tt_row++;
 		else
 			tt.tt_col--;
+	}
 }
 
 void
@@ -508,13 +511,14 @@ tt_generic()
 	/*
 	 * Deal with obsolete termcap fields.
 	 */
-	if (gen_LE == 0)
+	if (gen_LE == 0) {
 		if (gen_BC)
 			gen_LE = gen_BC;
 		else if (gen_BS) {
 			static struct tt_str bc = { "\b", 1 };
 			gen_BC = &bc;
 		}
+	}
 	if (gen_NL == 0) {
 		static struct tt_str nl = { "\n", 1 };
 		gen_NL = &nl;
