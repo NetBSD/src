@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2000/11/08 17:53:46 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2000/11/09 11:58:09 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -40,6 +40,7 @@
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
+#include <powerpc/hid.h>
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
@@ -111,11 +112,6 @@ cpumatch(parent, cf, aux)
 #define MPC604ev	9
 #define MPC7400		12
 
-#define HID0_DOZE	0x00800000
-#define HID0_NAP	0x00400000
-#define HID0_SLEEP	0x00200000
-#define HID0_DPM	0x00100000	/* 1: DPM enable */
-
 void
 cpuattach(parent, self, aux)
 	struct device *parent, *self;
@@ -123,7 +119,7 @@ cpuattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 	int id = ca->ca_reg[0];
-	int hid0, pvr, vers;
+	u_int hid0, pvr, vers;
 	char model[80];
 
 	ncpus++;
@@ -190,7 +186,27 @@ cpuattach(parent, self, aux)
 	}
 #endif
 
+	switch (vers) {
+	case MPC750:
+		hid0 &= ~HID0_DBP;		/* XXX correct? */
+		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
+		break;
+	case MPC7400:
+		hid0 &= ~HID0_SPD;
+		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
+		hid0 |= HID0_EIEC;
+		break;
+	}
+
 	asm volatile ("mtspr 1008,%0" :: "r"(hid0));
+
+#if 0
+	if (1) {
+		char hidbuf[128];
+		bitmask_snprintf(hid0, HID0_BITMASK, hidbuf, sizeof hidbuf);
+		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
+	}
+#endif
 
 	/*
 	 * Display cache configuration.
