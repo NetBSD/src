@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.18 2002/11/20 18:32:51 skrll Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.19 2002/11/20 21:56:05 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -2116,9 +2116,8 @@ syscall(tf, code, pc)
 		tf->tf_out[0] = error;
 		tf->tf_tstate |= (((int64_t)(ICC_C | XCC_C)) <<
 				  TSTATE_CCR_SHIFT);	/* fail */
-		dest = tf->tf_npc;
-		tf->tf_pc = dest;
-		tf->tf_npc = dest + 4;
+		tf->tf_pc = onpc;
+		tf->tf_npc = tf->tf_pc + 4;
 #ifdef DEBUG
 		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) 
 			printf("syscall: return tstate=%llx fail %d to %p\n", 
