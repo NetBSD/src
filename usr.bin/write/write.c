@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
+/*	$NetBSD: write.c,v 1.6 1997/01/17 01:52:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $";
+static char *rcsid = "$NetBSD: write.c,v 1.6 1997/01/17 01:52:12 perry Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,8 +96,11 @@ main(argc, argv)
 		mytty = cp + 1;
 	if (term_chk(mytty, &msgsok, &atime, 1))
 		exit(1);
-	if (!msgsok)
-		errx(1, "you have write permission turned off");
+	if (!msgsok) {
+		(void)fprintf(stderr,
+		    "warning: you have write permission turned off; "
+		    "no reply possible\n");
+	}
 
 	myuid = getuid();
 
