@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.16 2005/03/29 09:52:31 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.17 2005/03/30 11:38:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1308,13 +1308,17 @@ re_txeof(struct rtk_softc *sc)
 	    0, sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
-	while (idx != sc->rtk_ldata.rtk_txq_prodidx) {
+	while (/* CONSTCOND */ 1) {
 		struct rtk_txq *txq = &sc->rtk_ldata.rtk_txq[idx];
-		int descidx = txq->txq_descidx;
+		int descidx;
 		u_int32_t txstat;
 
-		KASSERT(txq->txq_mbuf != NULL);
+		if (txq->txq_mbuf == NULL) {
+			KASSERT(idx == sc->rtk_ldata.rtk_txq_prodidx);
+			break;
+		}
 
+		descidx = txq->txq_descidx;
 		txstat =
 		    le32toh(sc->rtk_ldata.rtk_tx_list[descidx].rtk_cmdstat);
 		KASSERT((txstat & RTK_TDESC_CMD_EOF) != 0);
@@ -1511,8 +1515,9 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	u_int32_t		cmdstat, rtk_flags;
 	struct rtk_txq		*txq;
 
-	if (sc->rtk_ldata.rtk_tx_free <= 4)
+	if (sc->rtk_ldata.rtk_tx_free <= 4) {
 		return EFBIG;
+	}
 
 	/*
 	 * Set up checksum offload. Note: checksum offload bits must
@@ -1653,40 +1658,54 @@ static void
 re_start(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
-	struct mbuf		*m_head = NULL;
 	int			idx;
 
 	sc = ifp->if_softc;
 
 	idx = sc->rtk_ldata.rtk_txq_prodidx;
-	while (sc->rtk_ldata.rtk_txq[idx].txq_mbuf == NULL) {
+	while (/* CONSTCOND */ 1) {
+		struct mbuf *m;
 		int error;
 
-		IF_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
-		error = re_encap(sc, m_head, &idx);
-		if (error == EFBIG &&
-		    sc->rtk_ldata.rtk_tx_free == RTK_TX_DESC_CNT(sc)) {
-			ifp->if_oerrors++;
-			m_freem(m_head);
-			continue;
-		}
-		if (error) {
-			IF_PREPEND(&ifp->if_snd, m_head);
+		if (sc->rtk_ldata.rtk_txq[idx].txq_mbuf != NULL) {
+			KASSERT(idx == sc->rtk_ldata.rtk_txq_considx);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		error = re_encap(sc, m, &idx);
+		if (error == EFBIG &&
+		    sc->rtk_ldata.rtk_tx_free == RTK_TX_DESC_CNT(sc)) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
+		}
+		if (error) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
 #if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 	}
+
+	if (sc->rtk_ldata.rtk_txq_prodidx == idx) {
+		return;
+	}
+	sc->rtk_ldata.rtk_txq_prodidx = idx;
 
 	/* Flush the TX descriptors */
 
@@ -1694,8 +1713,6 @@ re_start(struct ifnet *ifp)
 	    sc->rtk_ldata.rtk_tx_list_map,
 	    0, sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-	sc->rtk_ldata.rtk_txq_prodidx = idx;
 
 	/*
 	 * RealTek put the TX poll request register in a different
