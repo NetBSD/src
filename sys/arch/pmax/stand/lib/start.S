@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.9 1999/03/25 05:17:27 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.10 1999/03/25 05:23:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
+#ifdef BOOTXX
 /*
  * Boot block that starts in sector 0
  */
@@ -79,6 +80,7 @@ Label_goes_here:
 	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
 	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
 	.word	0,0, 0,0, 0
+#endif
 
 	.extern callv, 4		/* XXX SNARK XXX */
 /*
