@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.44 2002/04/12 22:34:13 leo Exp $
+# $NetBSD: FALCON,v 1.45 2002/04/12 22:37:21 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.16 2002/04/12 22:29:14 leo Exp $
+#		NetBSD: GENERIC.in,v 1.17 2002/04/12 22:34:13 leo Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -132,6 +132,7 @@ options 	SYSVSEM			# System V semaphores
 
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
