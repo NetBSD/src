@@ -127,3 +127,7 @@ Transferring the miniroot file system:
 	where /dev/rsd0b should be the device path of the swap partition
 	your system is configured to use.  Once the file is copied,
 	reboot back to AmigaDOS to boot the upgrade kernel.
+
+	CAVEAT: Once you have started installation once, whenever you abort it
+	and want to retry, you must reinstall the miniroot.fs on the swap
+	partition.
