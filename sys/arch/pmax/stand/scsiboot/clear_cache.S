@@ -1,4 +1,4 @@
-/*	$NetBSD: clear_cache.S,v 1.3 1999/03/26 05:23:59 simonb Exp $	*/
+/*	$NetBSD: clear_cache.S,v 1.4 1999/09/28 02:26:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,6 @@ LEAF(clear_cache)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
 	lw	v0, 0x7c(v0)	# offset for callv->_clear_cache
 	nop
-	j	v0		# call PROM printf
+	j	v0		# call PROM clear_cache
 	nop
 END(clear_cache)
