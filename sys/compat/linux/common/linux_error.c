@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_error.c,v 1.4 1998/02/10 14:37:43 kleink Exp $	*/
+/*	$NetBSD: linux_error.c,v 1.5 1998/10/01 02:32:24 erh Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -33,6 +33,10 @@
 
 #include <compat/linux/linux_errno.h>
 
+/*
+ * This list is used to translate NetBSD errors to linux errors
+ * when returning from a system call. (NetBSD system call->linux program)
+ */
 int linux_error[] = {
 	0,
 	-LINUX_EPERM,
@@ -117,7 +121,7 @@ int linux_error[] = {
 	-LINUX_ENOSYS,		/* not mapped (EAUTH) */
 	-LINUX_ENOSYS,		/* not mapped (ENEEDAUTH) */
 	-LINUX_EIDRM,
-	-LINUX_ENOMSG,
+	-LINUX_ENOMSG,		/* 83 */
 
 	/*
 	 * The rest of the list consists of errors that only
@@ -172,5 +176,5 @@ int linux_error[] = {
 	-LINUX_ENOTNAM,
 	-LINUX_ENAVAIL,
 	-LINUX_EISNAM,
-	-LINUX_EREMOTEIO
+	-LINUX_EREMOTEIO,
 };
