@@ -1,45 +1,43 @@
-#	$NetBSD: Makefile.pc532,v 1.18 1996/02/02 13:38:24 mycroft Exp $
+#	$NetBSD: Makefile.pc532,v 1.19 1996/02/02 20:09:27 mycroft Exp $
 
-# Copyright 1990 W. Jolitz
-# 	@(#)Makefile.i386	7.1 5/10/91
-#
-# Makefile for NetBSD/532
-#
-#  Edited by Philip A. Nelson
+# Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
 #	/sys/arch/pc532/conf/``machineid''
 # after which you should do
-#	 config machineid
-# Generic makefile changes should be made in
+#	config machineid
+# Machine generic makefile changes should be made in
 #	/sys/arch/pc532/conf/Makefile.pc532
-# after which config should be rerun for all machines.
+# after which config should be rerun for all machines of that type.
 #
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE INVISIBLE TO MAKEFILE
+# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
 #	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
 #
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
-#
 
-TOUCH=	touch -f -c
+# DEBUG is set to -g if debugging.
+# PROF is set to -pg if profiling.
+
 AS=	as
-LD=	ld
-CC=	cc 
-CPP=	cpp
 AWK=	awk
+CC=	cc
+CPP=	cpp
+LD=	ld
+STRIP=	strip -d
+TOUCH=	touch -f -c
 
+# source tree is located via $S relative to the compilation directory
 S=	../../../..
 PC532=	../..
 
-.s.o:; (${CPP} ${COPTS} ${PC532}/pc532/$*.s | ${AS} ${ASFLAGS} -o $*.o)
-
-INCLUDES= -I. -I$S -I$S/sys -I${PC532}
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-ASFLAGS=
-CFLAGS=	-O -Werror -fno-builtin -msb ${COPTS}
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
+CFLAGS=		${DEBUG} -O2 -Werror -msb
+AFLAGS=		-D_LOCORE
+LINKFLAGS=	-z -Ttext FE002000 -e start
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -57,99 +55,123 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-NORMAL_S= (${CPP} ${COPTS} ${PROF} $< | ${AS} ${ASFLAGS} -o $*.o)
-NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
-NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
-DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o vnode_if.o ${LIBKERN} \
-	${LIBCOMPAT}
-SYSTEM_DEP=Makefile ${SYSTEM_OBJS}
-SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
-SYSTEM_LD= @${LD} -z -T FE002000 -o $@ -X vers.o ${SYSTEM_OBJS} 
-SYSTEM_LD_TAIL= size $@ ; nm -n $@ > SYMMS ; chmod 755 $@
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
+
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+NORMAL_S=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
 
+%SFILES
+
+# load lines for config "xxx" will be emitted as:
+# xxx: ${SYSTEM_DEP} swapxxx.o
+#	${SYSTEM_LD_HEAD}
+#	${SYSTEM_LD} swapxxx.o
+#	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o \
+		vnode_if.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
+DEBUG?=
+.if ${DEBUG} == "-g"
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} $@; ${STRIP} $@
+.else
+LINKFLAGS+=	-x
+.endif
+
 %LOAD
-
-clean::
-	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
-		vnode_if.[ch] errs linterrs makelinks genassym
-
-#lint: /tmp param.c
-#	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \
-#	  ${I386}/i386/Locore.c ${CFILES} ioconf.c param.c | \
-#	    grep -v 'struct/union .* never defined' | \
-#	    grep -v 'possible pointer alignment problem'
-
-locore.o: assym.h ${PC532}/pc532/locore.s \
-	${PC532}/pc532/bcopy.s 
-
-# the following is necessary because autoconf.o depends on #if GENERIC
-autoconf.o: Makefile
-
-# depend on network configuration
-af.o uipc_proto.o locore.o: Makefile
-
-# depend on maxusers
-assym.h machdep.o: Makefile 
-
-# depends on KDB (cons.o also depends on GENERIC)
-trap.o cons.o: Makefile
-
-assym.h: $S/sys/param.h machine/pte.h $S/sys/buf.h \
-    $S/sys/vmmeter.h \
-    $S/sys/proc.h $S/sys/msgbuf.h machine/vmparam.h
 
 assym.h: genassym
 	./genassym >assym.h
 
-genassym: ${PC532}/pc532/genassym.c
-	${CC} -static ${INCLUDES} -D_KERNEL ${IDENT} ${PARAM} \
-		 ${PC532}/pc532/genassym.c -o genassym
+genassym: genassym.o
+	${CC} -o $@ genassym.o
 
-depend: assym.h param.c vnode_if.h
-	sh /usr/bin/mkdep ${COPTS} ${CFILES} ioconf.c
-	sh /usr/bin/mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${PC532}/pc532/genassym.c
+genassym.o: ${PC532}/pc532/genassym.c
+	${NORMAL_C_C}
+
+vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+
+param.c: $S/conf/param.c
+	rm -f param.c
+	cp $S/conf/param.c .
+
+param.o: param.c Makefile
+	${NORMAL_C_C}
+
+ioconf.o: ioconf.c
+	${NORMAL_C}
+
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${PC532}/pc532/Locore.c ${CFILES} ${PC532}/pc532/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
 	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
 	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-tags:
-	@echo "see $S/kern/Makefile for tags"
+SRCS=	${PC532}/pc532/locore.s \
+	vnode_if.c param.c ioconf.c ${CFILES} ${SFILES}
+depend: .depend
+.depend: ${SRCS} assym.h vnode_if.h param.c
+	mkdep -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PC532}/pc532/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} vnode_if.c param.c ioconf.c ${CFILES}
+	mkdep -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${PC532}/pc532/genassym.c
 
-ioconf.o: ioconf.c $S/sys/param.h $S/sys/buf.h \
-    ${PC532}/dev/device.h  machine/icu.h
-	${CC} -c ${CFLAGS} ioconf.c
 
-param.c: $S/conf/param.c
-	-rm -f param.c
-	cp $S/conf/param.c .
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
 
-param.o: param.c Makefile
-	${CC} -c ${CFLAGS} ${PARAM} param.c
+# depend on maxusers
+genassym.o machdep.o: Makefile
 
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
-	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
+# depend on CPU configuration 
+#: Makefile
 
-# for config.new
-newvers:
-	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
 
-# This allows you to specify which "awk" you will run, i.e.:
-#   make AWK=nawk ...
-vnode_if.c vnode_if.h : $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK=${AWK} sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+locore.o: ${PC532}/pc532/locore.s assym.h
+	${NORMAL_S}
 
 %RULES
-
