@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.41 2003/03/05 05:43:50 matt Exp $
+#	$NetBSD: files.prep,v 1.42 2003/03/18 16:40:22 matt Exp $
 #
 # prep-specific configuration info
 #
@@ -28,7 +28,6 @@ file	arch/prep/prep/mot_ulmb60xa.c	platform_motorola_ulmb60xa
 file	arch/prep/prep/platform.c
 
 file	arch/prep/prep/autoconf.c
-file	arch/prep/prep/bus_space.c
 file	arch/prep/prep/clock.c
 file	arch/prep/prep/consinit.c
 file	arch/prep/prep/disksubr.c		disk
@@ -37,6 +36,7 @@ file	arch/prep/prep/machdep.c
 file	arch/prep/prep/residual.c		residual_data_dump
 
 file	arch/powerpc/powerpc/bus_dma.c
+file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 
 # General files

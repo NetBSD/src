@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2003/02/03 17:10:13 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2003/03/18 16:40:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
+#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -84,10 +85,11 @@ void comsoft(void);
 #include <ddb/db_extern.h>
 #endif
 
-void initppc __P((u_long, u_long, u_int, void *));
-void dumpsys __P((void));
-void strayintr __P((int));
-int lcsplx __P((int));
+void initppc(u_long, u_long, u_int, void *);
+void dumpsys(void);
+void strayintr(int);
+int lcsplx(int);
+void prep_bus_space_init(void);
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
@@ -259,7 +261,7 @@ cpu_startup()
 	/*
 	 * Now safe for bus space allocation to use malloc.
 	 */
-	prep_bus_space_mallocok();
+	bus_space_mallocok();
 }
 
 /*
@@ -375,4 +377,55 @@ lcsplx(ipl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
+}
+
+struct powerpc_bus_space prep_io_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x80000000, 0x00000000, 0x3f800000,
+};
+struct powerpc_bus_space prep_isa_io_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x80000000, 0x00000000, 0x00010000,
+};
+struct powerpc_bus_space prep_mem_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xC0000000, 0x00000000, 0x3f000000,
+};
+struct powerpc_bus_space prep_isa_mem_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xC0000000, 0x00000000, 0x01000000,
+};
+
+static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+
+void
+prep_bus_space_init(void)
+{
+	int error;
+
+	error = bus_space_init(&prep_io_space_tag, "ioport",
+	    ex_storage[0], sizeof(ex_storage[0]));
+	if (error)
+		panic("prep_bus_space_init: can't init io tag");
+
+	error = extent_alloc_region(prep_io_space_tag.pbs_extent,
+	    0x10000, 0x7F0000, EX_NOWAIT);
+	if (error)
+		panic("prep_bus_space_init: can't block out reserved I/O"
+		    " space 0x10000-0x7fffff: error=%d", error);
+	error = bus_space_init(&prep_mem_space_tag, "iomem",
+	    ex_storage[1], sizeof(ex_storage[1]));
+	if (error)
+		panic("prep_bus_space_init: can't init mem tag");
+
+	prep_isa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
+	error = bus_space_init(&prep_isa_io_space_tag, "isa-ioport", NULL, 0);
+	if (error)
+		panic("prep_bus_space_init: can't init isa io tag");
+
+	prep_isa_mem_space_tag.pbs_extent = prep_mem_space_tag.pbs_extent;
+	error = bus_space_init(&prep_isa_mem_space_tag, "isa-iomem", NULL, 0);
+	if (error)
+		panic("prep_bus_space_init: can't init isa mem tag");
 }
