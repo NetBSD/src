@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2005/01/17 04:37:20 atatat Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 2005/02/25 17:29:04 heas Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,9 +73,9 @@
 
 #define HOLESHIFT	(43)
 
-#define PTSZ	(PAGE_SIZE/8)
-#define PDSZ	(PTSZ)
-#define STSZ	(PTSZ)
+#define PTSZ	(PAGE_SIZE/8)			/* page table entry */
+#define PDSZ	(PTSZ)				/* page directory */
+#define STSZ	(PTSZ)				/* psegs */
 
 #define PTSHIFT		(13)
 #define	PDSHIFT		(10+PTSHIFT)
@@ -112,7 +112,7 @@ struct pmap {
 	struct uvm_object pm_obj;
 #define pm_lock pm_obj.vmobjlock
 #define pm_refs pm_obj.uo_refs
-	LIST_ENTRY(pmap) pm_list;
+	LIST_ENTRY(pmap) pm_list;		/* pmap_ctxlist */
 
 	struct pmap_statistics pm_stats;
 
