@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.2 1995/06/02 16:44:20 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.3 1995/06/09 22:23:01 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,91 +41,136 @@
 
 #include "stand.h"
 
-char bki_magic[8] = "NetBSD1";
+extern int debug;
 
 /*ARGSUSED*/
-exec_sun(file, addr)
+exec_sun(file, loadaddr)
 	char	*file;
-	char	*addr;
+	char	*loadaddr;
 {
-	register int	io;
+	register int io;
 	struct exec x;
-	int i, strtablen;
-	void (*entry)() = (void (*)())addr;
-	char *cp;
+	int cc, magic;
+	void (*entry)();
+	register char *cp;
+	register int *ip;
 
 #ifdef	DEBUG
-	printf("exec_sun: file=%s addr=0x%x\n", file, addr);
+	printf("exec_sun: file=%s loadaddr=0x%x\n", file, loadaddr);
 #endif
 
 	io = open(file, 0);
 	if (io < 0)
 		return(-1);
 
-	i = read(io, (char *)&x, sizeof(x));
-	if (i != sizeof(x) || N_BADMAG(x)) {
-		close(io);
+	/*
+	 * Read in the exec header, and validate it.
+	 */
+	if (read(io, (char *)&x, sizeof(x)) != sizeof(x))
+		goto shread;
+	if (N_BADMAG(x)) {
 		errno = EFTYPE;
-		return(-1);
+		goto closeout;
 	}
+
+	cp = loadaddr;
+	magic = N_GETMAGIC(x);
+	if (magic == ZMAGIC)
+		cp += sizeof(x);
+	entry = (void (*)())cp;
+
+	/*
+	 * Leave a copy of the exec header before the text.
+	 * The sun3 kernel uses this to verify that the
+	 * symbols were loaded by this boot program.
+	 */
+	bcopy(&x, cp - sizeof(x), sizeof(x));
+
+	/*
+	 * Read in the text segment.
+	 */
 	printf("%d", x.a_text);
-	if (N_GETMAGIC(x) == ZMAGIC) {
-		addr += sizeof(struct exec);
-		entry = (void (*)())addr;
+	if (read(io, cp, x.a_text) != x.a_text)
+		goto shread;
+	cp += x.a_text;
+
+	/*
+	 * NMAGIC may have a gap between text and data.
+	 */
+	if (magic == NMAGIC) {
+		register int mask = N_PAGSIZ(x) - 1;
+		while ((int)cp & mask)
+			*cp++ = 0;
 	}
 
-	/* Leave a copy of the exec header just before the text. */
-	bcopy(&x, addr - sizeof(x), sizeof(x));
-
-	if (read(io, (char *)addr, x.a_text) != x.a_text)
-		goto shread;
-	addr += x.a_text;
-	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int)addr & __LDPGSZ)
-			*addr++ = 0;
+	/*
+	 * Read in the data segment.
+	 */
 	printf("+%d", x.a_data);
-	if (read(io, addr, x.a_data) != x.a_data)
+	if (read(io, cp, x.a_data) != x.a_data)
 		goto shread;
-	addr += x.a_data;
+	cp += x.a_data;
+
+	/*
+	 * Zero out the BSS section.
+	 * (Kernel doesn't care, but do it anyway.)
+	 */
 	printf("+%d", x.a_bss);
-	for (i = 0; i < x.a_bss; i++)
-		*addr++ = 0;
-
-	/* Always set the symtab size word. */
-	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
-	addr += sizeof(x.a_syms);
-
-	if (x.a_syms != 0) {
-		printf("+[%d+", x.a_syms);
-
-		/* Copy symbol table (nlist part). */
-		if (read(io, addr, x.a_syms) != x.a_syms)
-			goto shread;
-		addr += x.a_syms;
-
-		/* Copy string table length word. */
-		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
-			goto shread;
-
-		/* Copy string table itself. */
-		bcopy(&strtablen, addr, sizeof(int));
-		if (i = strtablen) {
-			i -= sizeof(int);
-			addr += sizeof(int);
-			if (read(io, addr, i) != i)
-			    goto shread;
-			addr += i;
-		}
-		printf("%d]", i);
+	cc = x.a_bss;
+	while ((int)cp & 3) {
+		*cp++ = 0;
+		--cc;
 	}
-	printf("=0x%x\n", addr);
+	ip = (int*)cp;
+	cp += cc;
+	while ((char*)ip < cp)
+		*ip++ = 0;
 
-	(*entry)();	/* XXX */
+	/*
+	 * Read in the symbol table and strings.
+	 * (Always set the symtab size word.)
+	 */
+	*ip++ = x.a_syms;
+	cp = (char*) ip;
+
+	if (x.a_syms > 0) {
+
+		/* Symbol table and string table length word. */
+		cc = x.a_syms;
+		printf("+[%d", cc);
+		cc += sizeof(int);	/* strtab length too */
+		if (read(io, cp, cc) != cc)
+			goto shread;
+		cp += x.a_syms;
+		ip = (int*)cp;  	/* points to strtab length */
+		cp += sizeof(int);
+
+		/* String table.  Length word includes itself. */
+		cc = *ip;
+		printf("+%d]", cc);
+		cc -= sizeof(int);
+		if (cc <= 0)
+			goto shread;
+		if (read(io, cp, cc) != cc)
+			goto shread;
+		cp += cc;
+	}
+	printf("=0x%x\n", cp - loadaddr);
+	close(io);
+
+	if (debug) {
+		printf("Debug mode - enter c to continue\n");
+		asm("	trap #0");
+	}
+
+	printf("Starting program at 0x%x\n", (int)entry);
+	(*entry)();
 	panic("exec returned");
 
 shread:
-	close(io);
 	printf("exec: short read\n");
 	errno = EIO;
+closeout:
+	close(io);
 	return(-1);
 }

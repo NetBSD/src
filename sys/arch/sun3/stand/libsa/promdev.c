@@ -1,6 +1,7 @@
-/*	$NetBSD: promdev.c,v 1.1.1.2 1995/06/01 20:38:01 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.2 1995/06/09 22:23:04 gwr Exp $ */
 
 /*
+ * Copyright (c) 1995 Gordon W. Ross
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
  *
