@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.2 2002/11/23 13:55:16 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.3 2002/11/27 01:08:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2002/11/23 13:55:16 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.3 2002/11/27 01:08:07 uwe Exp $");
 #endif
 
 #include <inttypes.h>
@@ -56,10 +56,33 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	unsigned long *sp;
 	va_list ap;
 
+	/*
+	 * The SUSv2 man page for makecontext says:
+	 * The value of argc must match the number of integer
+	 * arguments passed to func, otherwise the behaviour is
+	 * undefined.
+	 *
+	 * Irix and Digital Unix say roughly the same thing.
+	 *
+	 * Solaris says:
+	 * The integer value of argc must be one-greater-than the
+	 * number of arguments that follow argc; otherwise, the
+	 * behavior is undefined.  For 5 arguments, the value of argc
+	 * must be 6.
+	 *
+	 * The NetBSD implementation follows Solaris. :/
+	 *
+	 * Fortunately, Irix and Digital Unix seem not to blow up if you
+	 * pass in a value that's one greater.
+	 */
+	--argc;			/* normalize */
+
 	sp  = (unsigned long *)
 	    ((unsigned long)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
-	/* Make room for: argx, argd, struct return pointer, rwindow. */
-	sp -= (argc > 6 ? argc - 6 : 1) + 6 + 1 + 8 + 8;
+	/* Make room for: rwindow, struct return pointer, argd, argx */
+	sp -= 8 + 8 + 1 + 6 + 1; /* CCFSZ, only in words */
+	if (argc > 7)
+		sp -= argc - 7;
 	/* Align on double-word boundary. */
 	sp = (unsigned long *)((unsigned long)sp & ~0x7);
 
@@ -69,11 +92,11 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	gr[_REG_O7] = (__greg_t)_resumecontext - 8;
 
 	va_start(ap, argc);
-	/* Pass up to 6 arguments in %o0-5. */
+	/* Pass up to 6 arguments in %o0..%o5. */
 	for (i = 0; i < argc && i < 6; i++)
 		gr[_REG_O0 + i] = va_arg(ap, unsigned long);
 	/* Pass any additional arguments on the stack. */
-	for (sp += 6 + 1 + 8 + 8; argc > 0; argc--)
-		*sp++ = va_arg(ap, unsigned long);
+	for (/* i = 6 */; i < argc; i++)
+		sp[8 + 8 + 1 + 6 + 1 + (i - 6)] = va_arg(ap, unsigned long);
 	va_end(ap);
 }
