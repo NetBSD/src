@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.12 2001/02/19 22:46:14 cgd Exp $	*/
+/*	$NetBSD: talkd.c,v 1.13 2001/09/27 14:38:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.12 2001/02/19 22:46:14 cgd Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.13 2001/09/27 14:38:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ main(argc, argv)
 {
 	CTL_MSG *mp = &request;
 	int cc, ch;
+	struct sockaddr ctl_addr;
 
 	openlog("talkd", LOG_PID, LOG_DAEMON);
 	while ((ch = getopt(argc, argv, "dl")) != -1)
@@ -129,10 +130,14 @@ main(argc, argv)
 		}
 		lastmsgtime = time(0);
 		process_request(mp, &response);
+
+		(void)memcpy(&ctl_addr, &mp->ctl_addr, sizeof(ctl_addr));
+		ctl_addr.sa_family = mp->ctl_addr.sa_family;
+		ctl_addr.sa_len = sizeof(ctl_addr);
+
 		/* can block here, is this what I want? */
-		cc = sendto(sockt, (char *)&response,
-		    sizeof (response), 0, (struct sockaddr *)&mp->ctl_addr,
-		    sizeof (mp->ctl_addr));
+		cc = sendto(sockt, (char *)&response, sizeof (response), 0,
+		    &ctl_addr, sizeof (ctl_addr));
 		if (cc != sizeof (response))
 			syslog(LOG_WARNING, "sendto: %m");
 	}
