@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.1 2000/05/09 21:55:47 bjh21 Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.2 2000/12/29 13:39:39 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -109,6 +109,6 @@ ENTRY(_longjmp)
 
 	/* validation failed, die die die. */
 botch:
-	bl	_C_FUNC(longjmperror)
-	bl	_C_FUNC(abort)
+	bl	_C_LABEL(longjmperror)
+	bl	_C_LABEL(abort)
 	b	. - 8		/* Cannot get here */

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.1 2000/05/09 21:55:49 bjh21 Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.2 2000/12/29 13:39:39 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,7 +50,7 @@ ENTRY(setjmp)
 	stmfd	r13!, {r0, r14}
 	mov	r0, #0x00000000
 
-	bl	_C_FUNC(sigblock)
+	bl	_C_LABEL(sigblock)
 	mov	r1, r0
 
 	ldmfd	r13!, {r0, r14}
@@ -96,7 +96,7 @@ ENTRY(longjmp)
 	stmfd	r13!, {r0, r1, r14}
 
 	mov	r0, r2
-	bl	_C_FUNC(sigsetmask)
+	bl	_C_LABEL(sigsetmask)
 
 	ldmfd	r13!, {r0, r1, r14} 
 
@@ -132,6 +132,6 @@ ENTRY(longjmp)
 
 	/* validation failed, die die die. */
 botch:
-	bl	_C_FUNC(longjmperror)
-	bl	_C_FUNC(abort)
+	bl	_C_LABEL(longjmperror)
+	bl	_C_LABEL(abort)
 	b	. - 8		/* Cannot get here */
