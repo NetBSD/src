@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.29 2000/09/12 03:22:53 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.30 2000/09/13 00:07:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,11 +142,14 @@ lfs_reserve(fs, vp, nb)
 	while (nb > 0 && !lfs_fits(fs, nb + fs->lfs_ravail)) {
 		VOP_UNLOCK(vp, 0);
 
-		if (!slept)
+		if (!slept) {
+#ifdef DEBUG
 			printf("lfs_reserve: waiting for %ld (bfree = %d,"
-			       " est_bfree = %ld)\n",
+			       " est_bfree = %d)\n",
 			       nb + fs->lfs_ravail, fs->lfs_bfree,
-			       (long)LFS_EST_BFREE(fs));
+			       LFS_EST_BFREE(fs));
+#endif
+		}
 		++slept;
 
 		/* Wake up the cleaner */
