@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.7 1998/10/30 01:04:52 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.8 1999/03/06 12:36:46 drochner Exp $
 #
 # DECstation-specific configuration info
 
@@ -82,7 +82,6 @@ file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 
 # Machine-independent SCSI driver.
 device	asc: ncr53c9x,scsi
-file	arch/pmax/tc/asc.c		asc needs-flag
 attach	asc at tc with asc_pmaz
 file	arch/pmax/tc/asc_pmaz.c		asc_pmaz
 attach	asc at ioasic with asc_ioasic
@@ -95,6 +94,9 @@ major { sd = 19 }
 major { cd = 25 }
 major { st = 18 }
 
+# Memory Disk
+file	arch/pmax/pmax/md_root.c	memory_disk_hooks
+major { md = 17 }
 
 # LANCE ethernet driver.
 #   device defined in sys/conf/files.
