@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.43 2003/01/09 19:27:51 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.44 2003/01/11 01:21:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -312,6 +312,7 @@ pthread__idle(void)
 
 	PTHREADD_ADD(PTHREADD_IDLE);
 	self = pthread__self();
+	SDPRINTF(("(pthread__idle %p).\n", self));
 
 	/*
 	 * The drill here is that we want to yield the processor,
@@ -328,10 +329,13 @@ pthread__idle(void)
 	 * (because the upcall handler will not continue an idle thread with
 	 * PT_FLAG_IDLED set), and so we can yield the processor safely.
 	 */
-         sa_yield();
+	SDPRINTF(("(pthread__idle %p) yielding.\n", self));
+	sa_yield();
 
-	 /* NOTREACHED*/
-	 assert(0);
+	/* NOTREACHED */
+	self->pt_spinlocks++; /* XXX make sure we get to finish the assert! */
+	SDPRINTF(("(pthread__idle %p) Returned! Error.\n", self));
+	assert(0);
 }
 
 
