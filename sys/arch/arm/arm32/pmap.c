@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.126 2003/02/23 23:40:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.127 2003/03/23 15:59:23 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2003/02/23 23:40:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2003/03/23 15:59:23 chris Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -983,36 +983,6 @@ pmap_unmap_in_l1(struct pmap *pmap, vaddr_t va)
 	PTE_SYNC_CURRENT(pmap, (pt_entry_t *)(pmap->pm_vptpt + ptva));
 }
 #endif
-
-/*
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- *
- *	XXX This routine should eventually go away; it's only used
- *	XXX by machine-dependent crash dump code.
- */
-vaddr_t
-pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
-{
-	pt_entry_t *pte;
-
-	while (spa < epa) {
-		pte = vtopte(va);
-
-		*pte = L2_S_PROTO | spa |
-		    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
-		PTE_SYNC(pte);
-		cpu_tlb_flushID_SE(va);
-		va += NBPG;
-		spa += NBPG;
-	}
-	pmap_update(pmap_kernel());
-	return(va);
-}
-
 
 /*
  * void pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
