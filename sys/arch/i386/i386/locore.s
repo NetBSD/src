@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28 1993/08/29 12:48:54 brezak Exp $
+ *	$Id: locore.s,v 1.29 1993/09/11 00:12:56 jtc Exp $
  */
 
 
@@ -573,7 +573,6 @@ ENTRY(inw)
 	inw	%dx,%ax
 	ret
 
-
 ENTRY(rtcin)
 	movl	4(%esp),%eax
 	outb	%al,$0x70
@@ -598,29 +597,8 @@ ENTRY(outw)
 	ret
 
 	/*
-	 * void bzero(void *base, u_int cnt)
-	 */
-
-ENTRY(bzero)
-	pushl	%edi
-	movl	8(%esp),%edi
-	movl	12(%esp),%ecx
-	xorl	%eax,%eax
-	shrl	$2,%ecx	
-	cld
-	rep
-	stosl
-	movl	12(%esp),%ecx
-	andl	$3,%ecx
-	rep
-	stosb
-	popl	%edi
-	ret
-
-	/*
 	 * fillw (pat,base,cnt)
 	 */
-
 ENTRY(fillw)
 	pushl	%edi
 	movl	8(%esp),%eax
@@ -765,49 +743,6 @@ ENTRY(bcopy)
 	popl	%edi
 	popl	%esi
 	cld
-	ret
-
-/*
- * strlen (s)
- *	compute the length of the string s.
- *
- * Written by:
- *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
- */
-
-ENTRY(strlen)
-	pushl	%edi
-	movl	8(%esp),%edi		/* string address */
-	cld				/* set search forward */
-	xorl	%eax,%eax		/* set search for null terminator */
-	movl	$-1,%ecx		/* set search for lots of characters */
-	repne				/* search! */
-	scasb
-	movl	%ecx,%eax		/* get length by taking	twos-	*/
-	notl	%eax			/* complement and subtracting	*/
-	decl	%eax			/* one */
-	popl	%edi
-	ret
-
-/*
- * ffs(value)
- *	finds the first bit set in value and returns the index of 
- *	that bit.  Bits are numbered starting from 1, starting at the
- *	rightmost bit.  A return value of 0 means that the argument
- *	was zero.
- *
- * Written by:
- *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
- */
-
-ENTRY(ffs)
-	bsfl	4(%esp),%eax
-	jz	1f	 		/* ZF is set if all bits are 0 */
-	incl	%eax			/* bits numbered from 1, not 0 */
-	ret
-
-	ALIGN_TEXT
-1:	xorl	%eax,%eax		/* clear result */
 	ret
 
 /*
@@ -2112,30 +2047,6 @@ IDTVEC(syscall)
 	pushl	_cpl
 	pushl	$0
 	jmp	doreti
-
-ENTRY(htonl)
-ENTRY(ntohl)
-	movl	4(%esp),%eax
-#ifndef I386_CPU
-	/* XXX */
-	/* Since Gas 1.38 does not grok bswap this has been coded as the
-	 * equivalent bytes.  This can be changed back to bswap when we
-	 * upgrade to a newer version of Gas */
-	/* bswap	%eax */
-	.byte 	0x0f
-	.byte	0xc8
-#else
-	xchgb	%al,%ah
-	roll	$16,%eax
-	xchgb	%al,%ah
-#endif
-	ret
-
-ENTRY(htons)
-ENTRY(ntohs)
-	movzwl	4(%esp),%eax
-	xchgb	%al,%ah
-	ret
 
 #ifdef SHOW_A_LOT
 
