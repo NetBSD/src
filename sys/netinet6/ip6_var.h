@@ -1,10 +1,10 @@
-/*	$NetBSD: ip6_var.h,v 1.12 2000/03/21 23:53:31 itojun Exp $	*/
-/*	$KAME: ip6_var.h,v 1.28 2000/03/09 00:46:12 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.13 2000/07/06 12:36:19 itojun Exp $	*/
+/*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -208,6 +208,9 @@ struct	ip6stat {
 	u_quad_t ip6s_sources_otherscope[16];
 	/* number of times that an deprecated address is chosen */
 	u_quad_t ip6s_sources_deprecated[16];
+
+	u_quad_t ip6s_forward_cachehit;
+	u_quad_t ip6s_forward_cachemiss;
 };
 
 #ifdef _KERNEL
