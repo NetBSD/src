@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.20 1998/04/19 23:18:45 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.21 1998/04/19 23:25:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -802,8 +802,10 @@ prefetch_abort_handler(frame)
 		fault_code |= FAULT_USER;
 		p->p_md.md_regs = frame;
 	} else {
-		/* All the kernel code pages are loaded at boot and do not get paged */
-		s = spltty();
+		/*
+		 * All the kernel code pages are loaded at boot time
+		 * and do not get paged
+		 */
 		printf("Prefetch address = %08x\n", frame->tf_pc);
 	        panic("Prefetch abort in non-USR mode (frame=%p)\n", frame);
 	}
@@ -817,8 +819,9 @@ prefetch_abort_handler(frame)
 #endif
 	/* Ok validate the address, can only execute in USER space */
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
-		printf("prefetch: pc (%08x) not in user process space\n",
-		    fault_pc);
+		if (verbose_faults)
+			printf("prefetch: pc (%08x) not in user process space\n",
+			    fault_pc);
 		trapsignal(p, SIGSEGV, fault_pc);
 		userret(p, frame->tf_pc, sticks);
 		return;
@@ -843,8 +846,9 @@ prefetch_abort_handler(frame)
 	
 	/* Ok read the fault address. This will fault the page in for us */
 	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
-		printf("prefetch: faultin failed for address %08x!!\n",
-		    fault_pc);
+		if (verbose_faults)
+			printf("prefetch: faultin failed for address %08x\n",
+			    fault_pc);
 		trapsignal(p, SIGSEGV, fault_pc);
 	} else {
 
