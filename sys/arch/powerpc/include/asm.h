@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 2001/06/13 06:01:48 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.9 2002/06/23 17:26:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -69,6 +69,8 @@
 #endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
+
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	GLOBAL(y)	_GLOBAL(_C_LABEL(y))
 
