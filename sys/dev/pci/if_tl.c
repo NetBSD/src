@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.44 2001/08/06 19:20:26 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.45 2001/08/07 16:53:06 bouyer Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -1098,6 +1098,8 @@ tl_intr(v)
 		    sizeof(struct tl_Tx_list) * TL_NBUF,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/* if this was an EOC, ACK immediatly */
+		if (ack)
+			sc->tl_if.if_flags &= ~IFF_OACTIVE;
 		if (int_type == TL_INTR_TxEOC) {
 #ifdef TLDEBUG_TX
 			printf("TL_INTR_TxEOC: ack %d (will be set to 1)\n",
@@ -1309,14 +1311,17 @@ tl_ifstart(ifp)
 	struct mbuf *mb_head;
 	struct Tx_list *Tx;
 	int segment, size;
-	int again = 0, error;
-
+	int again, error;
+	
+	if ((sc->tl_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 txloop:
 	/* If we don't have more space ... */
 	if (sc->Free_Tx == NULL) {
 #ifdef TLDEBUG
 		printf("tl_ifstart: No free TX list\n");
 #endif
+		sc->tl_if.if_flags |= IFF_OACTIVE;
 		return;
 	}
 	/* Grab a paquet for output */
@@ -1330,6 +1335,7 @@ txloop:
 	Tx = sc->Free_Tx;
 	sc->Free_Tx = Tx->next;
 	Tx->next = NULL;
+	again = 0;
 	/*
 	 * Go through each of the mbufs in the chain and initialize
 	 * the transmit list descriptors with the physical address
@@ -1441,6 +1447,9 @@ tbdinit:
 		    (int)Tx->hw_listaddr);
 #endif
 		sc->last_Tx->hw_list->fwd = htole32(Tx->hw_listaddr);
+		bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
+		    sizeof(struct tl_Tx_list) * TL_NBUF,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		sc->last_Tx->next = Tx;
 		sc->last_Tx = Tx;
 #ifdef DIAGNOSTIC
@@ -1449,9 +1458,6 @@ tbdinit:
 			   "aligned\n",
 			   sc->sc_dev.dv_xname, sc->last_Rx->hw_list->fwd);
 #endif
-		bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
-		    sizeof(struct tl_Tx_list) * TL_NBUF,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 #if NBPFILTER > 0
 	/* Pass packet to bpf if there is a listener */
