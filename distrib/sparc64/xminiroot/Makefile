@@ -1,10 +1,17 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/07 09:33:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2001/07/21 06:01:03 eeh Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
+
+.include "${TOP}/Makefile.inc"
+
+.include <bsd.own.mk>	# So we use /etc/mk.conf.
+.include <bsd.kernobj.mk>
+
 HACKSRC=	${TOP}/../utils/libhack
 SRCROOT=	${TOP}/../..
 WARNS=1
+KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 
 .if ${MACHINE_ARCH} == "i386"
 RAW_PART=	d
@@ -28,9 +35,6 @@ AUXCLEAN=	list ${CBIN}.conf dot.profile
 
 CBIN=		ramdiskbin
 
-.if ${MACHINE_ARCH} == "sparc64"
-CSIZE?=		10240
-.endif
 
 MOUNT_POINT?=	/mnt
 # DEV/RDEV file system device, CDEV/RDEV vnconfig device
@@ -39,8 +43,8 @@ VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
 VND_CDEV=	/dev/${VND}${RAW_PART}
 VND_CRDEV=	/dev/r${VND}${RAW_PART}
+CSIZE?=		14000
 IMAGE?=		miniroot.fs
-CSIZE?=         3312
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
@@ -50,11 +54,21 @@ MTREE=		mtree.conf
 CRUNCHGEN?=	crunchgen
 DISKTYPE?=	miniroot
 
-all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
+all: netbsd.INSTALL ${IMAGE}
+
+netbsd.INSTALL: ${KERN} ${IMAGE}
+	cp ${KERN} netbsd.tmp
+	mdsetimage -v netbsd.tmp ${IMAGE}
+	strip netbsd.tmp
+	mv netbsd.tmp ${.TARGET}
+
+
+${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
+	-disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
+	#newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -B ${FS_END} -m 0 -o space ${VND_RDEV} ${DISKTYPE}
 	mount -o softdep ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -64,8 +78,10 @@ all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	@echo "installing new bootblocks"
-	${MDEC}/binstall -m ${DESTDIR}/usr/mdec -u -v ffs ${MOUNT_POINT}
+	#${MDEC}/binstall -m ${DESTDIR}/usr/mdec -u -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
+	dd if=${MDEC}/bootblk of=${VND_CDEV} bs=512 count=15 conv=notrunc seek=1
+	#${MDEC}/installboot -v ${MDEC}/bootblk ${VND_CDEV}
 	vnconfig -u ${VND_CDEV}
 
 unconfig:
