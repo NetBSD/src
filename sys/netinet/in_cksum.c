@@ -33,8 +33,8 @@
  *	@(#)in_cksum.c	7.3 (Berkeley) 6/28/90
  */
 
-#include "../h/types.h"
-#include "../h/mbuf.h"
+#include "types.h"
+#include "mbuf.h"
 
 /*
  * Checksum routine for Internet Protocol family headers (Portable Version).
