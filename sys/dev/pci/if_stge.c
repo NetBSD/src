@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.4 2001/07/25 15:44:48 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.5 2001/07/27 22:46:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -591,7 +591,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, stge_mediachange,
 	    stge_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -1554,8 +1554,12 @@ stge_init(struct ifnet *ifp)
 	    DMAC_TxBurstLimit(3));
 
 	/*
-	 * XXX Configure flow control thresholds.
+	 * Send a PAUSE frame when we reach 29,696 bytes in the Rx
+	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
+	 * empty again.
 	 */
+	bus_space_write_4(st, sh, STGE_FlowOnTresh, 29696 / 16);
+	bus_space_write_4(st, sh, STGE_FlowOffThresh, 0);
 
 	/*
 	 * Set the maximum frame size.
