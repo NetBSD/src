@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.83 1998/06/08 14:17:29 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.84 1998/06/27 21:22:56 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -34,8 +34,8 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
 	clock_settime.o close.o connect.o dup.o dup2.o execve.o \
-	fchdir.o fchflags.o fchmod.o fchown.o fcntl.o fdatasync.o flock.o \
-	fpathconf.o __fstat13.o fstatfs.o fsync.o futimes.o \
+	fchdir.o fchflags.o fchmod.o fchown.o fcntl.o fdatasync.o fktrace.o \
+	flock.o fpathconf.o __fstat13.o fstatfs.o fsync.o futimes.o \
 	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
 	getpriority.o getrlimit.o getrusage.o getsid.o getsockname.o \
@@ -207,6 +207,7 @@ MLINKS+=getsockopt.2 setsockopt.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=intro.2 errno.2
+MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mount.2 unmount.2
