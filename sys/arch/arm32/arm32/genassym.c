@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1997/02/10 04:01:08 mark Exp $	*/
+/*	$NetBSD: genassym.c,v 1.12 1997/10/06 00:47:34 mark Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -120,7 +120,7 @@ main()
 	def("V_SOFT", &vm->v_soft);
 
 	def("VM_MAP", &vms->vm_map);
-	def("VM_PMAP", &vms->vm_pmap);
+	def("VM_PMAP", &vms->vm_map.pmap);
 
 	def("PR_BASE", &uprof->pr_base);
 	def("PR_SIZE", &uprof->pr_size);
