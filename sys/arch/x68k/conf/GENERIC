@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 1997/10/19 16:04:57 oki Exp $
+#	$NetBSD: GENERIC,v 1.14.2.1 1997/11/20 08:51:15 mellon Exp $
 
 #
 #	GENERIC
@@ -146,3 +146,5 @@ pseudo-device	pow		2	# software power switch
 pseudo-device	loop			# loopback; recommended
 #pseudo-device	vnd		10	# vn virtual filesystem device
 #pseudo-device	ccd		4	# concatenating disk driver
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
