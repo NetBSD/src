@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1997/08/27 06:21:06 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1997/10/13 00:46:22 explorer Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -137,6 +137,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "lp.h"
 #include "mouse.h"
 #include "pty.h"
+#include "rnd.h"
 #include "ser.h"
 #include "ss.h"
 #include "tun.h"
@@ -220,6 +221,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NSER,ser),	/* 35: 68901 UART	*/
 	cdev_ipf_init(NIPFILTER,ipl),	/* 36: ip-filter device */
 	cdev_disk_init(NMD,md),		/* 37: memory disk - for install disk */
+	cdev_rnd_init(NRND,rnd),	/* 38: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -320,6 +322,7 @@ static int chrtoblktab[] = {
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,
 	/* 37 */	1,
+	/* 38 */	NODEV,
 };
 
 /*

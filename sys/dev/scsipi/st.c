@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.81 1997/10/12 18:34:00 mjacob Exp $	*/
+/*	$NetBSD: st.c,v 1.82 1997/10/13 00:48:02 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -54,6 +54,7 @@
  */
 
 #include "opt_scsiverbose.h"
+#include "rnd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +69,9 @@
 #include <sys/mtio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -273,7 +276,9 @@ struct st_softc {
 						 */
 	struct buf buf_queue;		/* the queue of pending IO */
 					/* operations */
+#if NRND > 0
 	rndsource_element_t	rnd_source;
+#endif
 };
 
 
@@ -319,7 +324,11 @@ struct scsipi_device st_switch = {
 	st_interpret_sense,
 	ststart,
 	NULL,
+#if NRND > 0
 	stdone,  /* only needed to gather timing data for randomness */
+#else
+	NULL,
+#endif
 };
 
 #define	ST_INFO_VALID	0x0001
@@ -427,7 +436,9 @@ stattach(parent, self, aux)
 	st->buf_queue.b_actf = 0;
 	st->buf_queue.b_actb = &st->buf_queue.b_actf;
 
+#if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname, RND_TYPE_TAPE);
+#endif
 }
 
 /*
@@ -1061,6 +1072,7 @@ ststart(v)
 	} /* go back and see if we can cram more work in.. */
 }
 
+#if NRND > 0
 void
 stdone(xs)
 	struct scsipi_xfer *xs;
@@ -1070,6 +1082,7 @@ stdone(xs)
 	if (xs->bp != NULL)
 		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
 }
+#endif
 
 int
 stread(dev, uio, iomode)

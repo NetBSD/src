@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.51 1997/10/10 00:44:33 explorer Exp $	*/
+/*	$NetBSD: conf.h,v 1.52 1997/10/13 00:48:19 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -293,6 +293,14 @@ extern struct cdevsw cdevsw[];
 #define	cdev_uk_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_se_init(c,n)	cdev__oci_init(c,n)
 
+/* open, close, read, write, ioctl, poll */
+#define cdev__ocrwip_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+#define cdev_rnd_init(c,n)	cdev__ocrwip_init(c,n)
+
 /* open, close, ioctl, poll, mmap */
 #define	cdev_fb_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -319,13 +327,6 @@ extern struct cdevsw cdevsw[];
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) nullop, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, ioctl, poll -- XXX should be a generic device */
-#define cdev_rnd_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];

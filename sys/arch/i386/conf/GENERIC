@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.102 1997/10/08 10:09:38 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.103 1997/10/13 00:46:27 explorer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -254,3 +254,4 @@ pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
 pseudo-device	ccd	4		# concatenated disk devices
+#pseudo-device	rnd			# /dev/random and in-kernel generator

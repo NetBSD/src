@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.29 1997/10/10 01:51:09 explorer Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.30 1997/10/13 00:48:12 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -35,6 +35,8 @@
  *	@(#)tcp_subr.c	8.1 (Berkeley) 6/10/93
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -45,7 +47,9 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <net/route.h>
 #include <net/if.h>
@@ -633,6 +637,8 @@ tcp_rmx_rtt(tp)
 #endif
 }
 
+tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
+
 /*
  * Get a new sequence value given a tcp control block
  */
@@ -643,23 +649,25 @@ tcp_new_iss(tp, len, addin)
 	tcp_seq		 addin;
 {
 	tcp_seq          tcp_iss;
-	static tcp_seq	 tcp_iss_seq = 0;
-
-#define TCP_ISS_RANDOM_MASK 0x003fffff
-#define TCP_ISS_INCR        0x00400000
 
 	/*
 	 * add randomness about this connection, but do not estimate
 	 * entropy from the timing, since the physical device driver would
 	 * have done that for us.
 	 */
+#if NRND > 0
 	if (tp != NULL)
 		rnd_add_data(NULL, tp, len, 0);
+#endif
 
 	/*
 	 * randomize.
 	 */
+#if NRND > 0
 	rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
+#else
+	tcp_iss = random();
+#endif
 
 	/*
 	 * If we were asked to add some amount to a known value,
@@ -676,13 +684,15 @@ tcp_new_iss(tp, len, addin)
 		printf("Random %08x, ", tcp_iss);
 #endif
 		tcp_iss &= TCP_ISS_RANDOM_MASK;
-		tcp_iss = tcp_iss + addin + TCP_ISS_INCR;
+		tcp_iss = tcp_iss + addin + TCP_ISSINCR;
+		tcp_iss_seq += TCP_ISSINCR;
+		tcp_iss += tcp_iss_seq;
 #ifdef TCPISS_DEBUG
 		printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
 #endif
 	} else {
 		tcp_iss &= TCP_ISS_RANDOM_MASK;
-		tcp_iss_seq += TCP_ISS_INCR;
+		tcp_iss_seq += TCP_ISSINCR;
 		tcp_iss += tcp_iss_seq;
 #ifdef TCPISS_DEBUG
 		printf("ISS %08x\n", tcp_iss);
