@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.54 1995/04/17 12:06:30 cgd Exp $
+#	$NetBSD: Makefile.i386,v 1.55 1995/05/16 22:24:50 jtc Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -36,7 +36,7 @@ S=	../../../..
 I386=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL -Di386
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
 CFLAGS=	-O6 ${COPTS}
 LOAD_ADDRESS= F8100000
 
