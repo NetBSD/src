@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.12 2000/06/14 17:26:07 cgd Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.13 2001/03/16 14:12:43 agc Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.12 2000/06/14 17:26:07 cgd Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.13 2001/03/16 14:12:43 agc Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -184,6 +184,8 @@ ELFNAMEEND(create_knlist)(name, db)
 		}
 	}
 
+	if (symshdrp == NULL)
+		badfmt("no symbol section header found");
 	if (symshdrp->sh_offset == 0)
 		badfmt("stripped");
 	if (check(symshdrp->sh_offset, symshdrp->sh_size))
