@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.54 1999/06/07 20:31:34 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.55 1999/07/09 02:32:31 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -80,7 +80,7 @@ file arch/sun3/sun3/vme.c		vme
 #
 # Machine-independent SCSI drivers
 #
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 
 #
 # Devices and attributes needed below

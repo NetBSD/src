@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.16 1999/06/22 01:48:33 sakamoto Exp $
+#	$NetBSD: files.bebox,v 1.17 1999/07/09 02:32:30 thorpej Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -50,7 +50,7 @@ file	arch/bebox/bebox/mainbus.c	mainbus
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
 # XXX devices to 'pci'.
 #
-include "../../../dev/pci/files.pci"
+include "dev/pci/files.pci"
 file	arch/bebox/pci/pci_machdep.c	pci
 
 # PCI-Host bridge chipsets
