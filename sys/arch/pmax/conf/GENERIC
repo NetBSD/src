@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.22 1998/01/09 17:25:30 drochner Exp $
+# 	$NetBSD: GENERIC,v 1.23 1998/03/18 16:34:44 bouyer Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -58,6 +58,7 @@ file-system 	UNION
 options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
 options 	INET		# Internet protocols

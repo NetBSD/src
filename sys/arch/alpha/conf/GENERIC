@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 1998/03/12 06:04:31 thorpej Exp $
+# $NetBSD: GENERIC,v 1.78 1998/03/18 16:34:41 bouyer Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -38,6 +38,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 # File system options
 options 	FIFO		# POSIX fifo support (in all file systems)
 options 	NFSSERVER	# Sun NFS-compatible file system server
+#options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
 options 	INET		# Internet protocol suite

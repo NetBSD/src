@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.28 1998/02/08 14:05:16 ragge Exp $
+#	$NetBSD: GENERIC,v 1.29 1998/03/18 16:34:44 bouyer Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -43,6 +43,7 @@ file-system 	UMAPFS
 file-system 	UNION
 
 options 	QUOTA
+#options 	FFS_EI		# FFS Endian Independant support
 options 	FIFO
 options 	NFSSERVER
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.37 1997/12/01 15:25:37 kleink Exp $
+#	$NetBSD: GENERIC,v 1.38 1998/03/18 16:34:42 bouyer Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -52,6 +52,7 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	QUOTA		# User and group quotas in FFS
+#options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network filesystem server
 
 # Networking options

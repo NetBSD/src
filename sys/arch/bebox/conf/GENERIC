@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1998/02/03 03:59:53 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.7 1998/03/18 16:34:42 bouyer Exp $
 #
 # First try for BEBOX config file
 #
@@ -48,6 +48,7 @@ file-system 	UMAPFS
 file-system 	UNION
 
 options 	FIFO
+#options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 
 options 	INET
