@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.9 2002/03/09 21:30:58 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.10 2002/03/09 23:24:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -48,21 +48,6 @@
 
 #define CPU_MASTER	0
 
-enum cpu_class {
-	CPU_CLASS_NONE,
-	CPU_CLASS_ARM2,
-	CPU_CLASS_ARM2AS,
-	CPU_CLASS_ARM3,
-	CPU_CLASS_ARM6,
-	CPU_CLASS_ARM7,
-	CPU_CLASS_ARM7TDMI,
-	CPU_CLASS_ARM8,
-	CPU_CLASS_ARM9TDMI,
-	CPU_CLASS_ARM9ES,
-	CPU_CLASS_SA1,
-	CPU_CLASS_XSCALE,
-};
-
 #define FPU_CLASS_NONE		0	/* no Floating point support */
 #define FPU_CLASS_FPE		1	/* Floating point emulator installed */
 #define FPU_CLASS_FPA		2	/* Floating point accelerator installed */
@@ -79,7 +64,6 @@ enum cpu_class {
 typedef struct _cpu {
 /* These are generic CPU variables */
 
-	u_int	cpu_class;	/* The CPU class */
 	char	cpu_model[256];	/* Text description of CPU */
 
 /* These are generic FPU variables */

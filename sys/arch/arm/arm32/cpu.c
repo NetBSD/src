@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2002/03/09 21:30:58 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2002/03/09 23:24:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -146,7 +146,7 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	identify_arm_cpu(dv, cpu_number, curcpu());
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
-	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SA1
+	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_SA110
 	    && (curcpu()->ci_cpuid & CPU_ID_REVISION_MASK) < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
@@ -245,6 +245,21 @@ identify_master_cpu(struct device *dv, int cpu_number)
 
 	identify_arm_fpu(dv, cpu_number);
 }
+
+enum cpu_class {
+	CPU_CLASS_NONE,
+	CPU_CLASS_ARM2,
+	CPU_CLASS_ARM2AS,
+	CPU_CLASS_ARM3,
+	CPU_CLASS_ARM6,
+	CPU_CLASS_ARM7,
+	CPU_CLASS_ARM7TDMI,
+	CPU_CLASS_ARM8,
+	CPU_CLASS_ARM9TDMI,
+	CPU_CLASS_ARM9ES,
+	CPU_CLASS_SA1,
+	CPU_CLASS_XSCALE,
+};
 
 static const char *generic_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"rev 3",
@@ -402,6 +417,7 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 {
 	cpu_t *cpu;
 	u_int cpuid;
+	enum cpu_class cpu_class;
 	int i;
 
 	cpu = &cpus[cpu_number];
@@ -414,19 +430,19 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
-			cpu->cpu_class = cpuids[i].cpu_class;
+			cpu_class = cpuids[i].cpu_class;
 			sprintf(cpu->cpu_model, "%s %s (%s core)",
 			    cpuids[i].cpu_name,
 			    cpuids[i].cpu_steppings[cpuid &
 						    CPU_ID_REVISION_MASK],
-			    cpu_classes[cpu->cpu_class].class_name);
+			    cpu_classes[cpu_class].class_name);
 			break;
 		}
 
 	if (cpuids[i].cpuid == 0)
 		sprintf(cpu->cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
-	switch (cpu->cpu_class) {
+	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
 	case CPU_CLASS_ARM7:
 	case CPU_CLASS_ARM7TDMI:
@@ -447,6 +463,8 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 			strcat(cpu->cpu_model, " IC disabled");
 		else
 			strcat(cpu->cpu_model, " IC enabled");
+		break;
+	default:
 		break;
 	}
 	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
@@ -486,7 +504,7 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 
  skip_pcache:
 
-	switch (cpu->cpu_class) {
+	switch (cpu_class) {
 #ifdef CPU_ARM2
 	case CPU_CLASS_ARM2:
 #endif
@@ -519,7 +537,7 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 #endif
 		break;
 	default:
-		if (cpu_classes[cpu->cpu_class].class_option != NULL)
+		if (cpu_classes[cpu_class].class_option != NULL)
 			printf("%s: %s does not fully support this CPU."
 			       "\n", dv->dv_xname, ostype);
 		else {
@@ -527,7 +545,7 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 			       "this CPU.\n", dv->dv_xname);
 			printf("%s: Recompile with \"options %s\" to "
 			       "correct this.\n", dv->dv_xname,
-			       cpu_classes[cpu->cpu_class].class_option);
+			       cpu_classes[cpu_class].class_option);
 		}
 		break;
 	}
