@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.88 2005/02/24 04:06:53 lukem Exp $
+# $NetBSD: postinstall,v 1.89 2005/02/27 00:06:25 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -641,7 +641,7 @@ do_rc()
 #	pam
 #
 # disabled for now
-additem pam "/etc/pam.d being up to date"
+additem pam "/etc/pam.d is populated"
 do_pam()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_pam  fix|check"
