@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.137 2002/04/02 20:20:00 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.138 2002/06/17 16:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -200,6 +200,7 @@ struct proc {
 
 	int		p_traceflag;	/* Kernel trace points */
 	struct file	*p_tracep;	/* Trace to file */
+	void		*p_systrace;	/* Back pointer to systrace */
 
 	struct vnode	*p_textvp;	/* Vnode of executable */
 
@@ -296,6 +297,7 @@ struct proc {
 #define	P_32		0x040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_BIGLOCK	0x080000 /* Process needs kernel "big lock" to run */
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
+#define	P_SYSTRACE	0x200000 /* Process system call tracing active */
 
 
 /*
