@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.18 2000/04/15 22:53:05 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.19 2000/04/18 22:45:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.18 2000/04/15 22:53:05 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.19 2000/04/18 22:45:23 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -177,7 +177,9 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			    *win->lines[y]->lastchp);
 #endif
 			if (lp->line[x].ch != c ||
-			    lp->line[x].attr != attributes) {
+			    lp->line[x].attr != attributes ||
+			    lp->line[x].bch != win->bch ||
+			    lp->line[x].battr != win->battr) {
 				newx = x + win->ch_off;
 				if (!(lp->flags & __ISDIRTY))
 					lp->flags |= __ISDIRTY;
@@ -197,6 +199,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 #endif
 			}
 			lp->line[x].ch = c;
+			lp->line[x].bch = win->bch;
 			if (attributes & __STANDOUT)
 				lp->line[x].attr |= __STANDOUT;
 			else
@@ -238,6 +241,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 				lp->line[x].attr |= attributes & __COLOR;
 			} else
 				lp->line[x].attr &= ~__COLOR;
+			lp->line[x].battr = win->battr;
 			if (x == win->maxx - 1)
 				lp->flags |= __ISPASTEOL;
 			else

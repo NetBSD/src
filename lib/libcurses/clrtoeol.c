@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.12 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.13 2000/04/18 22:45:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.12 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.13 2000/04/18 22:45:24 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,12 +82,15 @@ wclrtoeol(WINDOW *win)
 	minx = -1;
 	maxx = &win->lines[y]->line[x];
 	for (sp = maxx; sp < end; sp++)
-		if (sp->ch != ' ' || sp->attr != 0) {
+		if (sp->ch != ' ' || sp->attr != 0 ||
+		    sp->bch != win->bch || sp->battr != win->battr) {
 			maxx = sp;
 			if (minx == -1)
 				minx = sp - win->lines[y]->line;
 			sp->ch = ' ';
+			sp->bch = win->bch;
 			sp->attr = 0;
+			sp->battr = win->battr;
 		}
 #ifdef DEBUG
 	__CTRACE("CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n",
