@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2002/03/18 13:27:02 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.193 2002/03/28 15:45:01 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
+#include <machine/bootinfo.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -464,6 +465,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	char *cp;
+	struct btinfo_kernelfile *bi_file;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
@@ -471,7 +473,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
-		cp = prom_getbootfile();
+		if ((bi_file = lookup_bootinfo(BTINFO_KERNELFILE)) != NULL)
+			cp = bi_file->name;
+		else
+			cp = prom_getbootfile();
 		if (cp == NULL)
 			return (ENOENT);
 		if (*cp == '\0')
