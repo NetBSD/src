@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.14 1997/10/18 13:04:29 lukem Exp $	*/
+/*	$NetBSD: compress.c,v 1.15 1997/10/19 15:18:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.14 1997/10/18 13:04:29 lukem Exp $");
+__RCSID("$NetBSD: compress.c,v 1.15 1997/10/19 15:18:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,10 +287,10 @@ compress(in, out, bits)
 			(void)printf("%s: ", out);
 			if (isb.st_size > sb.st_size)
 				(void)printf("%.0f%% compression\n",
-				    ((float)sb.st_size / isb.st_size) * 100.0);
+				    ((double)sb.st_size / isb.st_size) * 100.0);
 			else
 				(void)printf("%.0f%% expansion\n",
-				    ((float)isb.st_size / sb.st_size) * 100.0);
+				    ((double)isb.st_size / sb.st_size) * 100.0);
 		}
 	}
 	return;
