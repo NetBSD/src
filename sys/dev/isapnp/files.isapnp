@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.22 1999/03/22 07:39:33 mycroft Exp $
+#	$NetBSD: files.isapnp,v 1.23 1999/03/22 22:33:36 bad Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -25,6 +25,10 @@ file	dev/isapnp/if_le_isapnp.c		le_isapnp
 # NE2000-PnP
 attach	ne at isapnp with ne_isapnp: rtl80x9
 file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
+
+# TROPIC based Token-Ring (IBM/3COM)
+attach	tr at isapnp with tr_isapnp
+file  dev/isapnp/if_tr_isapnp.c			tr_isapnp
 
 # serial ports/modems
 attach	com at isapnp with com_isapnp
