@@ -1,10 +1,11 @@
-#	$NetBSD: bsd.prog.mk,v 1.166 2003/05/18 07:36:23 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.167 2003/05/31 20:33:16 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
+.include <bsd.gcc.mk>
 
 ##### Basic targets
 .PHONY:		cleanextra cleanobjs cleanprog proginstall scriptsinstall
@@ -22,16 +23,11 @@ CFLAGS+=	-mcmodel=medlow
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
 .if ${OBJECT_FMT} == "ELF"
 .ifndef LIBCRTBEGIN
-LIBCRTBEGIN=	${DESTDIR}/usr/lib/crti.o ${DESTDIR}/usr/lib/crtbegin.o
+LIBCRTBEGIN=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGIN}
 .MADE: ${LIBCRTBEGIN}
 .endif
 .ifndef LIBCRTEND
-.if ${MACHINE_ARCH} == "powerpc" && defined(HAVE_GCC3)
-LIBCRTEND=	${DESTDIR}/usr/lib/crtsavres.o \
-		${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crtn.o
-.else
-LIBCRTEND=	${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crtn.o
-.endif
+LIBCRTEND=	${_GCC_CRTEND} ${DESTDIR}/usr/lib/crtn.o
 .MADE: ${LIBCRTEND}
 .endif
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
@@ -150,7 +146,7 @@ _CCLINK=	${CC}
 
 ${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
-	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
+	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
 .endif
 
 .else

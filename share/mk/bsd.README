@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.112 2003/05/30 18:43:24 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.113 2003/05/31 20:33:16 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -422,6 +422,32 @@ SHLINKINSTALLDIR Base path for shared linker. [/libexec]
 SHLINKDIR	Path to use for shared linker when building a program.
 		[/libexec for programs in /bin and /sbin, /usr/libexec for
 		all others.]
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.gcc.mk> computes various parameters related to GCC
+support libraries.  It defines no targets.  <bsd.own.mk> MUST be included
+before bsd.gcc.mk.
+
+The primary users of bsd.gcc.mk are <bsd.prog.mk> and <bsd.lib.mk>, each
+of which need to know where to find certain GCC support libraries.
+
+The behavior of bsd.gcc.mk is influenced by the EXTERNAL_TOOLCHAIN variable,
+which is generally set by the user.  If EXTERNAL_TOOLCHAIN it set, then
+the compiler is asked where to find the support libraries, otherwise the
+support libraries are found in ${DESTDIR}/usr/lib.
+
+bsd.gcc.mk sets the following variables:
+
+_GCC_CRTBEGIN	The full path name to crtbegin.o.
+
+_GCC_CRTBEGINS	The full path name to crtbeginS.o.
+
+_GCC_CRTEND	The full path name to crtend.o.
+
+_GCC_CRTENDS	The full path name to crtendS.o.
+
+_GCC_LIBGCCDIR	The directory where libgcc.a is located.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
