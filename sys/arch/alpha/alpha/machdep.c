@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.172 1999/04/29 03:02:20 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.173 1999/05/20 08:21:42 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap_new.h"
@@ -78,11 +77,10 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_natm.h"
-#include "opt_sysv.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 1999/04/29 03:02:20 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 1999/05/20 08:21:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,15 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 1999/04/29 03:02:20 ross Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -194,26 +183,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-
-#ifndef	BUFPAGES
-#define BUFPAGES 0
-#endif
-#ifndef BUFCACHE
-#define BUFCACHE 10
-#endif
-
-int	bufpages = BUFPAGES;	/* optional hardwired count */
-int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
-
 caddr_t msgbufaddr;
 
 int	maxmem;			/* max memory per process */
@@ -245,7 +214,7 @@ u_int64_t	cycles_per_usec;
 /* number of cpus in the box.  really! */
 int		ncpus;
 
-/* machine check info array, valloc()'ed in allocsys() */
+/* machine check info array, valloc()'ed in mdallocsys() */
 
 static struct mchkinfo startup_info,
 			*mchkinfo_all_cpus;
@@ -280,12 +249,12 @@ int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];	/* low size bits overloaded */
 int	mem_cluster_cnt;
 
-caddr_t	allocsys __P((caddr_t));
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
+caddr_t	mdallocsys __P((caddr_t));
 void	netintr __P((void));
 void	printregs __P((struct reg *));
 
@@ -900,69 +869,17 @@ nobootinfo:
 	}
 }
 
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and the call
- * allocsys() again with the correct base virtual address.
- */
 caddr_t
-allocsys(v)
-	caddr_t v;
+mdallocsys(v)
+	caddr_t	v;
 {
-
-#define valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcache % of memory for buffer space.  Insure a
-	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
-	 * headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / CLSIZE * bufcache / 100;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-
 	/*
 	 * There appears to be a correlation between the number
 	 * of processor slots defined in the HWRPB and the whami
 	 * value that can be returned.
 	 */
-	valloc(mchkinfo_all_cpus, struct mchkinfo, hwrpb->rpb_pcs_cnt);
-
+	ALLOCSYS(v, mchkinfo_all_cpus, struct mchkinfo, hwrpb->rpb_pcs_cnt);
 	return (v);
-#undef valloc
 }
 
 void
@@ -1007,6 +924,7 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 #if defined(DEBUG)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -1019,14 +937,20 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %lu (%lu reserved for PROM, %lu used by NetBSD)\n",
-	    ((psize_t) totalphysmem << (psize_t) PAGE_SHIFT),
-	    ptoa(resvmem), ptoa(physmem));
-	if (unusedmem)
-		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
-	if (unknownmem)
-		printf("WARNING: %d bytes of memory with unknown purpose\n",
-		    ctob(unknownmem));
+	format_bytes(pbuf, sizeof(pbuf), totalphysmem << PAGE_SHIFT);
+	printf("total memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(resvmem));
+	printf("(%s reserved for PROM, ", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
+	printf("%s used by NetBSD)\n", pbuf);
+	if (unusedmem) {
+		format_bytes(pbuf, sizeof(pbuf), ctob(unusedmem));
+		printf("WARNING: unused memory = %s\n", pbuf);
+	}
+	if (unknownmem) {
+		format_bytes(pbuf, sizeof(pbuf), ctob(unknownmem));
+		printf("WARNING: %s of memory with unknown purpose\n", pbuf);
+	}
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -1101,16 +1025,18 @@ cpu_startup()
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", (long)ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
 #if 0
 	{
 		extern u_long pmap_pages_stolen;
-		printf("stolen memory for VM structures = %ld bytes\n",
-		    pmap_pages_stolen * PAGE_SIZE);
+
+		format_bytes(pbuf, sizeof(pbuf), pmap_pages_stolen * PAGE_SIZE);
+		printf("stolen memory for VM structures = %s\n", pbuf);
 	}
 #endif
-	printf("using %ld buffers containing %ld bytes of memory\n",
-		(long)nbuf, (long)(bufpages * CLBYTES));
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %ld buffers containing %s of memory\n", (long)nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 1999/05/18 01:36:51 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 1999/05/20 08:21:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -180,7 +180,6 @@ void	child_return __P((void *));
 int	kdbpeek __P((vaddr_t));
 
 /* mips_machdep.c */
-caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
 int	savectx __P((struct user *));
 void	mips_init_msgbuf __P((void));
