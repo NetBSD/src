@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.9 1998/03/03 00:34:38 mycroft Exp $	*/
+/*	$NetBSD: errlist.c,v 1.10 1998/12/01 20:38:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,9 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.9 1998/03/03 00:34:38 mycroft Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.10 1998/12/01 20:38:02 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+__warn_references(sys_errlist,
+    "warning: reference to compatibility sys_errlist[]; include <errno.h> for correct reference")
+__warn_references(__sys_errlist,
+    "warning: reference to deprecated __sys_errlist[]; include <errno.h> and use sys_errlist")
+
+__warn_references(sys_nerr,
+    "warning: reference to compatibility sys_nerr; include <errno.h> for correct reference")
+__warn_references(__sys_nerr,
+    "warning: reference to deprecated __sys_nerr; include <errno.h> and use sys_nerr")
 
 const char *const _sys_errlist[] = {
 	"Undefined error: 0",			/*  0 - ENOERROR */
