@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.16 2001/02/04 20:36:33 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.17 2001/02/25 14:47:22 mrg Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
