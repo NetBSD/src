@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.214 2002/09/20 01:30:41 jdarrow Exp $
+.\"	$NetBSD: main,v 1.215 2002/09/23 03:32:04 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,14 +141,14 @@ For systems without floppy drives, fetch the bootloader
 and the installation kernel
 .Pa binary/kernel/netbsd.GENERIC_MD.gz .
 Alternatively, you can fetch the CD image,
-.Pa macppc_bootable.iso
+.Pa macppccd.iso
 or the boot floppy image
 .Pa installation/floppy/boot.fs
 which include the bootloader and installation kernel.
 .\}
 .if \n[sparc] \{\
 CD image,
-.Pa sparc_bootable.iso
+.Pa sparccd.iso
 or the floppy disk images,
 .Pa install/floppy/disk1.gz No and Pa install/floppy/disk2 .
 You need either the pair of floppies or the CD to boot your system.
