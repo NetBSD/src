@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.11 2002/09/23 03:53:14 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.12 2003/07/01 23:36:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.11 2002/09/23 03:53:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.12 2003/07/01 23:36:01 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -130,12 +130,13 @@ rf_real_AddToAllocList(l, p, size)
 }
 
 
-/* we use the debug_mem_mutex here because we need to lock it anyway to call free.
- * this is probably a bug somewhere else in the code, but when I call malloc/free
- * outside of any lock I have endless trouble with malloc appearing to return the
- * same pointer twice.  Since we have to lock it anyway, we might as well use it
- * as the lock around the al_free_list.  Note that we can't call Free with the
- * debug_mem_mutex locked.
+/* we use the debug_mem_mutex here because we need to lock it anyway
+ * to call free.  this is probably a bug somewhere else in the code,
+ * but when I call malloc/free outside of any lock I have endless
+ * trouble with malloc appearing to return the same pointer twice.
+ * Since we have to lock it anyway, we might as well use it as the
+ * lock around the al_free_list.  Note that we can't call Free with
+ * the debug_mem_mutex locked.  
  */
 void 
 rf_FreeAllocList(l)
@@ -145,7 +146,8 @@ rf_FreeAllocList(l)
 	RF_AllocListElem_t *temp, *p;
 
 	for (p = l; p; p = p->next) {
-		RF_ASSERT(p->numPointers >= 0 && p->numPointers <= RF_POINTERS_PER_ALLOC_LIST_ELEMENT);
+		RF_ASSERT(p->numPointers >= 0 && 
+			  p->numPointers <= RF_POINTERS_PER_ALLOC_LIST_ELEMENT);
 		for (i = 0; i < p->numPointers; i++) {
 			RF_ASSERT(p->pointers[i]);
 			RF_Free(p->pointers[i], p->sizes[i]);
@@ -176,9 +178,9 @@ rf_real_MakeAllocList()
 		al_free_list_count--;
 	} else {
 		fl_miss_count++;
-		RF_Malloc(p, sizeof(RF_AllocListElem_t), (RF_AllocListElem_t *));	/* no allocation locking
-											 * in kernel, so this is
-											 * fine */
+		RF_Malloc(p, sizeof(RF_AllocListElem_t), 
+			  (RF_AllocListElem_t *));	
+		/* no allocation locking in kernel, so this is fine */
 	}
 	if (p == NULL) {
 		return (NULL);
