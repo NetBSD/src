@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.52 2000/03/28 23:57:33 simonb Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.52.4.1 2001/03/30 21:42:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,25 +66,12 @@ linux_sys_oldolduname(p, v, retval)
 		syscallarg(struct linux_oldoldutsname *) up;
 	} */ *uap = v;
 	struct linux_oldoldutsname luts;
-	int len;
-	char *cp;
 
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
-	strncpy(luts.l_version, version, sizeof(luts.l_version));
+	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
+	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-
-	/* This part taken from the uname() in libc */
-	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp) {
-		if (*cp == '\n' || *cp == '\t') {
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
-		}
-	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
