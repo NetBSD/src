@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.44 2001/03/21 23:16:33 cgd Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.45 2001/05/28 03:37:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.44 2001/03/21 23:16:33 cgd Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.45 2001/05/28 03:37:22 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -525,17 +525,18 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	 * now if it's empty, so let's not bother.
 	 */
 	if (size > 0) {
+
 		/*
-		 * Mmap and write if less than 8M (the limit is so we don't totally
-		 * trash memory on big files).  This is really a minor hack, but it
-		 * wins some CPU back.
+		 * Mmap and write if less than 8M (the limit is so we
+		 * don't totally trash memory on big files).  This is
+		 * really a minor hack, but it wins some CPU back.
 		 */
+
 		if (size <= 8 * 1048576) {
 			if ((p = mmap(NULL, (size_t)size, PROT_READ,
-			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == MAP_FAILED) {
-				serrno = errno;
-				(void)unlink(to_name);
-				errx(1, "%s: %s", from_name, strerror(serrno));
+			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0))
+			    == MAP_FAILED) {
+				goto mmap_failed;
 			}
 #ifdef MADV_SEQUENTIAL
 			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1
@@ -550,12 +551,13 @@ copy(from_fd, from_name, to_fd, to_name, size)
 				    to_name, strerror(serrno));
 			}
 		} else {
+mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
 				if ((nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
-					errx(1, "%s: %s",
-					    to_name, strerror(nw > 0 ? EIO : serrno));
+					errx(1, "%s: %s", to_name,
+					    strerror(nw > 0 ? EIO : serrno));
 				}
 			}
 			if (nr != 0) {
