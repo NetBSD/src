@@ -101,4 +101,6 @@ pam_set_data(pam_handle_t *pamh,
  *
  * This function and its counterpart =pam_get_data are useful for managing
  * data that are meaningful only to a particular service module.
+ *
+ * >openpam_free_data
  */
