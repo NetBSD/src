@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.76 2004/05/22 18:06:14 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.77 2004/06/05 21:18:59 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -481,31 +481,17 @@ composants optionnels.
 }
 
 message ftpsource
-{Vous trouverez ci dessous le site ftp, le répertoire, le code utilisateur et
-le mot de passe prêt à l'emplois actuellement. Si l'utilisateur est ftp, alors
-le mot de passe n'est pas nécessaire.
+{Vous trouverez ci dessous le site ftp, le répertoire, le code utilisateur
+et le mot de passe prêt à l'emplois actuellement.
+Si l'utilisateur est ftp, alors le mot de passe n'est pas nécessaire.
 
-serveur:	%s
-répertoire:	%s
-utilisateur:	%s
-mot de passe:	%s
+serveur:	%s 
+répertoire:	%s 
+répertoire:	%s 
+utilisateur:	%s 
+mot de passe:	%s 
 proxy:		%s
 }
-
-message host
-{serveur}
-
-message dir
-{répertoire}
-
-message user
-{utilisateur}
-
-message passwd
-{mot de passe}
-
-message proxy
-{proxy}
 
 message email
 {adresse e-mail}
@@ -520,6 +506,7 @@ Rappelez vous que le répertoire doit contenir les
 fichiers .tgz et qu'il doit être accessible par nfs.
 
 serveur:	%s 
+répertoire:	%s 
 répertoire:	%s
 }
 
@@ -543,6 +530,7 @@ Rappelez vous que le répertoire doit contenir les fichiers .tgz .
 
 device:			%s 
 système de fichiers:	%s 
+répertoire:		%s 
 répertoire:		%s
 }
 
@@ -622,7 +610,7 @@ message net_media
 {Type de réseau (media)}
 
 message netok
-{Vous avez spécifié les valeurs suivantes. Veuillez confirmer.
+{Vous avez spécifié les valeurs suivantes.
 
 Domaine (DNS):			 %s 
 Nom de machine:			 %s 
@@ -637,6 +625,9 @@ message netokv6
 {Autoconfiguration IPv6:		 %s 
 Adresse du serveur de noms IPv6: %s 
 }
+
+message netok_ok
+{Veuillez confirmer?}
 
 message netagain
 {Veuillez indiquer à nouveau les informations sur votre réseau.
@@ -657,11 +648,9 @@ message realdir
 L'installation a échoué.
 }
 
-message ftperror_cont
-{Ftp a détecté une erreur. Appuyer sur <entrée> pour continuer.}
-
 message ftperror
-{Impossible de télécharger un fichier par ftp. Voulez vous réessayer ?}
+{Impossible de télécharger un fichier par ftp.
+Voulez vous réessayer ?}
 
 message distdir
 {Quel répertoire dois je utiliser pour %s ?}
@@ -677,9 +666,10 @@ voir pendant qu'ils seront extraits ?
 }
 
 message notarfile
-{Le composant %s n'existe pas.
+{Le composant %s n'existe pas.}
 
-Voulez-vous continuer à extraire les composants ?}
+message notarfile_ok
+{Voulez-vous continuer à extraire les composants ?}
 
 message endtarok
 {Tous les fichiers sont extraits. Veuillez appuyer sur <entrée> pour continuer.}
@@ -924,8 +914,8 @@ message choose_timezone
 Appuyez sur ENTREE pour confirmer votre choix. 
 Appuyez sur 'x' puis ENTREE pour quitter la selection de la zone horaire.
 
- Défaut:	%s
- Séléctionée:	%s
+ Défaut:	%s 
+ Séléctionée:	%s 
  Heure Locale:	%s %s
 }
 
@@ -1029,6 +1019,8 @@ message Custom_installation {Installation personnalisée}
 message Change {Changer}
 message hidden {** caché **}
 message Host {Serveur ftp}
+message Base_dir {Répertoire}
+message Set_dir {Répertoire}
 message Directory {Répertoire}
 message User {Utilisateur}
 message Password {Mot de passe}
@@ -1048,16 +1040,15 @@ message Blowfish_2_7_round {Blowfish 2^7 round}
 message do_not_change {ne rien changer}
 message Device {Device}
 message File_system {Système de fichier}
-message Change_directory_path {Changer le chemin d'accès}
 message Select_IPv6_DNS_server {  Choisissez un serveur de noms IPv6 :}
 message other {autre }
 message Perform_IPv6_autoconfiguration {Faire la configuration automatique IPv6 ?}
 message Perform_DHCP_autoconfiguration {Exécutez la configuration automatique de DHCP?}
 message Root_shell {Interpreteur de commande de root}
 message Select_set_extraction_verbosity {Methode d'indication de l'extraction d'ensemble ?}
-message Progress_bar_recommended {Barre de progression (recommendeé)}
+message Progress_bar {Barre de progression (recommendeé)}
 message Silent {Silencieux}
-message Verbose_file_name_listing_slow {Liste verbeuse des fichiers (lent)}
+message Verbose {Liste verbeuse des fichiers (lent)}
 
 .if AOUT2ELF
 message aoutfail
