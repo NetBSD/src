@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_machdep.c,v 1.29 1998/04/26 22:37:21 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.30 1998/05/04 18:49:07 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,6 +98,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 int pci_mode = -1;
 
@@ -458,4 +459,50 @@ pci_intr_disestablish(pc, cookie)
 {
 
 	return isa_intr_disestablish(NULL, cookie);
+}
+
+/*
+ * Determine which flags should be passed to the primary PCI bus's
+ * autoconfiguration node.  We use this to detect broken chipsets
+ * which cannot safely use memory-mapped device access.
+ */
+int
+pci_bus_flags()
+{
+	int rval = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	int device, maxndevs;
+	pcitag_t tag;
+	pcireg_t id;
+
+	maxndevs = pci_bus_maxdevs(NULL, 0);
+
+	for (device = 0; device < maxndevs; device++) {
+		tag = pci_make_tag(NULL, 0, device, 0);
+		id = pci_conf_read(NULL, tag, PCI_ID_REG);
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		switch (PCI_VENDOR(id)) {
+		case PCI_VENDOR_SIS:
+			switch (PCI_PRODUCT(id)) {
+			case PCI_PRODUCT_SIS_85C496:
+				goto disable_mem;
+				break;
+			}
+			break;
+		}
+	}
+
+	return (rval);
+
+ disable_mem:
+	printf("Warning: broken PCI-Host bridge detected; "
+	    "disabling memory-mapped access\n");
+	rval &= ~PCI_FLAGS_MEM_ENABLED;
+	return (rval);
 }
