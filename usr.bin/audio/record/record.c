@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.12 2000/12/22 11:38:43 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.13 2001/02/05 01:24:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -76,6 +76,8 @@ int timeleft (struct timeval *, struct timeval *);
 void cleanup (int) __attribute__((__noreturn__));
 void write_header (void);
 void rewrite_header (void);
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -371,8 +373,6 @@ rewrite_header()
 void
 usage()
 {
-	extern char *__progname;
-
 	fprintf(stderr, "Usage: %s [-afhqV] [options] {files ...|-}\n", __progname);
 	fprintf(stderr, "Options:\n\t"
 	    "-C audio control device\n\t"
