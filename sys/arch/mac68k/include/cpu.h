@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 1997/05/22 18:40:10 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50 1997/06/29 18:56:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -303,6 +303,7 @@ void	TBIS __P((vm_offset_t));
 void	DCFP __P((vm_offset_t));
 void	ICPP __P((vm_offset_t));
 void	DCIU __P((void));
+void	DCIS __P((void));
 void	ICIA __P((void));
 void	DCFL __P((vm_offset_t));
 int	suline __P((caddr_t, caddr_t));
