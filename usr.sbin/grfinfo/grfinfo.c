@@ -19,41 +19,52 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$Id: grfinfo.c,v 1.4 1997/02/01 13:04:36 carrel Exp $
+ *	$NetBSD: grfinfo.c,v 1.5 1997/10/17 06:09:15 lukem Exp $
  */
 
-#include <stdio.h>
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: grfinfo.c,v 1.5 1997/10/17 06:09:15 lukem Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <dev/grfioctl.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
 int aflg = 0;
 int tflg = 0;
-char *pname;
-char *dname, *tname();
+char *dname;
 struct grfinfo gi;
 
 struct grf_info {
 	int	grf_id;
 	char	*grf_name;
 } info[] = {
-	GRFGATOR,	"gatorbox",
-	GRFBOBCAT,	"topcat",
-	GRFRBOX,	"renaissance",
-	GRFFIREEYE,	"fireeye",
-	GRFHYPERION,	"hyperion",
-	GRFDAVINCI,	"davinci",
-	-1,		"unknown",
+	{ GRFGATOR,	"gatorbox" },
+	{ GRFBOBCAT,	"topcat" },
+	{ GRFRBOX,	"renaissance" },
+	{ GRFFIREEYE,	"fireeye" },
+	{ GRFHYPERION,	"hyperion" },
+	{ GRFDAVINCI,	"davinci" },
+	{ -1,		"unknown" }
 };
 
+void	getinfo __P((void));
+int	main __P((int, char **));
+void	printall __P((void));
+char   *tname __P((void));
+void	usage __P((void));
+
+int
 main(argc, argv)
+	int argc;
 	char **argv;
 {
-	extern int optind, optopt;
-	extern char *optarg;
-	register int c;
+	int c;
 
-	pname = argv[0];
 	while ((c = getopt(argc, argv, "at")) != EOF)
 		switch (c) {
 		/* everything */
@@ -79,6 +90,7 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 getinfo()
 {
 	int f;
@@ -94,6 +106,7 @@ getinfo()
 	close(f);
 }
 
+void
 printall()
 {
 	printf("%s: %d x %d ", dname, gi.gd_dwidth, gi.gd_dheight);
@@ -114,7 +127,7 @@ printall()
 char *
 tname()
 {
-	register struct grf_info *gp;
+	struct grf_info *gp;
 
 	for (gp = info; gp->grf_id >= 0; gp++)
 		if (gi.gd_id == gp->grf_id)
@@ -126,13 +139,16 @@ tname()
 	 */
 	if (gi.gd_id == GRFBOBCAT &&
 	    (gi.gd_dwidth == 1280 ||
-	     gi.gd_fbsize == 0x100000 && gi.gd_colors == 64))
+	    (gi.gd_fbsize == 0x100000 && gi.gd_colors == 64)))
 		return("catseye");
 	return(gp->grf_name);
 }
 
+void
 usage()
 {
-	fprintf(stderr, "usage: %s [-at] device\n", pname);
+	extern char *__progname;	/* from crt0.o */
+
+	fprintf(stderr, "usage: %s [-at] device\n", __progname);
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfinfo.1,v 1.1 1997/01/31 23:06:53 carrel Exp $
+.\"	$NetBSD: grfinfo.1,v 1.2 1997/10/17 06:09:11 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,12 +43,12 @@
 .Nm grfinfo
 .Nd Display information about grf graphics devices.
 .Sh SYNOPSIS
-.Nm grfinfo
+.Nm
 .Op Fl at
 .Ar file
 .Sh DESCRIPTION
 The
-.Nm grfinfo
+.Nm
 utility displays information about grf graphics frame buffer devices.  By
 default, only the frame buffer type is displayed.
 .Ar file
@@ -62,7 +62,7 @@ Display all possible information.
 Display only the type, even if an error occurs.
 .Sh DIAGNOSTICS
 The
-.Nm grfinfo
+.Nm
 utility exits 0 on success, and >0 if an error occurs.  If the
 .Fl t
 option is used and an error occurs, no error message is displayed, and the
