@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.63 2000/08/06 21:37:02 thorpej Exp $
+# $NetBSD: mi,v 1.64 2000/08/22 08:38:54 lukem Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -79,7 +79,7 @@
 ./etc/rc.d/dhcpd
 ./etc/rc.d/dhcrelay
 ./etc/rc.d/dmesg
-./etc/rc.d/fsck.sh
+./etc/rc.d/fsck
 ./etc/rc.d/gated
 ./etc/rc.d/inetd
 ./etc/rc.d/ipfilter
