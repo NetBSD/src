@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.241 2004/08/26 01:31:30 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.242 2004/08/26 01:37:58 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -358,7 +358,7 @@ Notes:
 Package:	less
 Version:	less381
 Current Vers:	less382
-Maintainer:	Mark Nudleman <marknu@flash.net>
+Maintainer:	Mark Nudleman <markn@greenwoodsoftware.com>
 Archive Site:	ftp://ftp.gnu.org/gnu/less/
 Mailing List:
 Responsible:	mrg
