@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.27 2003/10/25 22:35:46 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.28 2003/10/26 00:02:02 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -42,6 +42,7 @@ union __long_double_u {
 /*
  * ANSI/POSIX
  */
+/* 7.12#3 HUGE_VAL, HUGELF, HUGE_VALL */
 extern __const union __double_u __infinity;
 #define HUGE_VAL	__infinity.__val
 
@@ -54,12 +55,21 @@ extern __const union __double_u __infinity;
     ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     ((_XOPEN_SOURCE  - 0) >= 600) || \
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+/* 7.12#3 HUGE_VAL, HUGELF, HUGE_VALL */
 extern __const union __float_u __infinityf;
 #define	HUGE_VALF	__infinityf.__val
 
 extern __const union __long_double_u __infinityl;
 #define	HUGE_VALL	__infinityl.__val
 
+/* 7.12#4 INFINITY */
+#ifdef __INFINITY
+#define	INFINITY	__INFINITY	/* float constant which overflows */
+#else
+#define	INFINITY	HUGE_VALF	/* positive infinity */
+#endif /* __INFINITY */
+
+/* 7.12#5 NAN: a quiet NaN, if supported */
 #ifdef __HAVE_NANF
 extern __const union __float_u __nanf;
 #define	NAN		__nanf.__val
