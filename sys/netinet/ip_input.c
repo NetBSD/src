@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.193 2003/12/12 21:17:59 scw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.194 2003/12/14 00:09:24 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.193 2003/12/12 21:17:59 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.194 2003/12/14 00:09:24 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -236,6 +236,19 @@ uint16_t ip_id;
 struct pfil_head inet_pfil_hook;
 #endif
 
+/*
+ * Cached copy of nmbclusters. If nbclusters is different,
+ * recalculate IP parameters derived from nmbclusters.
+ */
+static int	ip_nmbclusters;			/* copy of nmbclusters */
+static void	ip_nmbclusters_changed __P((void));	/* recalc limits */
+
+#define CHECK_NMBCLUSTER_PARAMS() \
+do { if __predict_false(ip_nmbclusters != nmbclusters)	\
+	ip_nmbclusters_changed();			\
+} while  (0)
+
+
 /* IP datagram reassembly queues (hashed) */
 #define IPREASS_NHASH_LOG2      6
 #define IPREASS_NHASH           (1 << IPREASS_NHASH_LOG2)
@@ -244,9 +257,27 @@ struct pfil_head inet_pfil_hook;
 	(((((x) & 0xF) | ((((x) >> 8) & 0xF) << 4)) ^ (y)) & IPREASS_HMASK)
 struct ipqhead ipq[IPREASS_NHASH];
 int	ipq_locked;
-int	ip_nfragpackets = 0;
-int	ip_maxfragpackets = 200;
-int	ip_nfrags = 0;         /* total fragments in reass queues */
+static int	ip_nfragpackets;	/* packets in reass queue */ 
+static int	ip_nfrags;		/* total fragments in reass queues */
+
+int	ip_maxfragpackets = 200;	/* limit on packets. XXX sysctl */
+int	ip_maxfrags;		        /* limit on fragments. XXX sysctl */
+
+
+/*
+ * Additive-Increase/Multiplicative-Decrease (AIMD) strategy for
+ * IP reassembly queue buffer managment.
+ * 
+ * We keep a count of total IP fragments (NB: not fragmented packets!)
+ * awaiting reassembly (ip_nfrags) and a limit (ip_maxfrags) on fragments.
+ * If ip_nfrags exceeds ip_maxfrags the limit, we drop half the
+ * total fragments in  reassembly queues.This AIMD policy avoids
+ * repeatedly deleting single packets under heavy fragmentation load
+ * (e.g., from lossy NFS peers).
+ */
+static u_int	ip_reass_ttl_decr __P((u_int ticks)); 
+static void	ip_reass_drophalf __P((void));
+
 
 static __inline int ipq_lock_try __P((void));
 static __inline void ipq_unlock __P((void));
@@ -346,6 +377,16 @@ struct mowner ip_tx_mowner = { "internet", "tx" };
 #endif
 
 /*
+ * Compute IP limits derived from the value of nmbclusters.
+ */
+static void
+ip_nmbclusters_changed(void)
+{
+	ip_maxfrags = nmbclusters / 4;
+	ip_nmbclusters =  nmbclusters;
+}
+
+/*
  * IP initialization: fill in IP protocol switch table.
  * All protocols not implemented in kernel go to raw IP protocol handler.
  */
@@ -375,7 +416,10 @@ ip_init()
 	    	LIST_INIT(&ipq[i]);
 
 	ip_id = time.tv_sec & 0xfffff;
+
 	ipintrq.ifq_maxlen = ipqmaxlen;
+	ip_nmbclusters_changed();
+
 	TAILQ_INIT(&in_ifaddrhead);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
 	    M_WAITOK, &in_ifaddrhash);
@@ -1023,6 +1067,15 @@ ip_reass(ipqe, fp, ipqhead)
 	m->m_data += hlen;
 	m->m_len -= hlen;
 
+#ifdef	notyet
+	/* make sure fragment limit is up-to-date */
+	CHECK_NMBCLUSTER_PARAMS();
+
+	/* If we have too many fragments, drop the older half. */
+	if (ip_nfrags >= ip_maxfrags)
+		ip_reass_drophalf(void);
+#endif
+
 	/*
 	 * We are about to add a fragment; increment frag count.
 	 */
@@ -1221,6 +1274,74 @@ ip_freef(fp)
 }
 
 /*
+ * IP reassembly TTL machinery for  multiplicative drop.
+ */
+static u_int	fragttl_histo[(IPFRAGTTL+1)];
+
+
+/*
+ * Decrement TTL of all reasembly queue entries by `ticks'.
+ * Count number of distinct fragments (as opposed to partial, fragmented
+ * datagrams) in the reassembly queue.  While we  traverse the entire
+ * reassembly queue, compute and return the median TTL over all fragments.
+ */
+static u_int
+ip_reass_ttl_decr(u_int ticks)
+{
+	u_int i, nfrags, median;
+	struct ipq *fp, *nfp;
+	u_int dropfraction, keepfraction;
+	
+	nfrags = 0;
+	memset(fragttl_histo, 0, sizeof fragttl_histo);
+	
+	for (i = 0; i < IPREASS_NHASH; i++) {
+		for (fp = LIST_FIRST(&ipq[i]); fp != NULL; fp = nfp) {
+			fp->ipq_ttl = ((fp->ipq_ttl  <= ticks) ?
+				       0 : fp->ipq_ttl - ticks);
+			nfp = LIST_NEXT(fp, ipq_q);
+			if (fp->ipq_ttl == 0) {
+				ipstat.ips_fragtimeout++;
+				ip_freef(fp);
+			} else {
+				nfrags += fp->ipq_nfrags;
+				fragttl_histo[fp->ipq_ttl] += fp->ipq_nfrags;
+			}
+		}
+	}
+
+	KASSERT(ip_nfrags == nfrags);
+
+	/* Find median (or other drop fraction) in histogram. */
+	dropfraction = (ip_nfrags / 2);
+	keepfraction = ip_nfrags - dropfraction;
+	for (i = IPFRAGTTL, median = 0; i >= 0; i--) {
+		median +=  fragttl_histo[i];
+		if (median >= keepfraction)
+			break;
+	}
+
+	/* Return TTL of median (or other fraction). */
+	return (u_int)i;
+}
+
+void
+ip_reass_drophalf(void)
+{
+
+	u_int median_ticks;
+	/*
+	 * Compute median TTL of all fragments, and count frags
+	 * with that TTL or lower (roughly half of all fragments).
+	 */
+	median_ticks = ip_reass_ttl_decr(0);
+
+	/* Drop half. */
+	median_ticks = ip_reass_ttl_decr(median_ticks);
+
+}
+
+/*
  * IP timer processing;
  * if a timer expires on a reassembly
  * queue, discard it.
@@ -1230,21 +1351,23 @@ ip_slowtimo()
 {
 	static u_int dropscanidx = 0;
 	u_int i;
-	struct ipq *fp, *nfp;
+	u_int median_ttl;
 	int s = splsoftnet();
 
 	IPQ_LOCK();
-	for (i = 0; i < IPREASS_NHASH; i++) {
-		for (fp = LIST_FIRST(&ipq[i]); fp != NULL; fp = nfp) {
-			nfp = LIST_NEXT(fp, ipq_q);
-			if (--fp->ipq_ttl == 0) {
-				ipstat.ips_fragtimeout++;
-				ip_freef(fp);
-			}
-		}
-	}
+
+	/* Age TTL of all fragments by 1 tick .*/
+	median_ttl = ip_reass_ttl_decr(1);
+
+	/* make sure fragment limit is up-to-date */
+	CHECK_NMBCLUSTER_PARAMS();
+
+	/* If we have too many fragments, drop the older half. */
+	if (ip_nfrags > ip_maxfrags)
+		ip_reass_ttl_decr(median_ttl);
+
 	/*
-	 * If we are over the maximum number of fragments
+	 * If we are over the maximum number of fragmented packets
 	 * (due to the limit being lowered), drain off
 	 * enough to get down to the new limit. Start draining
 	 * from the reassembly hashqueue most recently drained.
@@ -1283,7 +1406,6 @@ ip_slowtimo()
 void
 ip_drain()
 {
-	int i;
 
 	/*
 	 * We may be called from a device's interrupt context.  If
@@ -1292,15 +1414,11 @@ ip_drain()
 	if (ipq_lock_try() == 0)
 		return;
 
-	for (i = 0; i < IPREASS_NHASH; i++) {
-		struct ipqhead *ipqh = &ipq[i];
-		struct ipq *fp, *nfp;
-		for (fp = LIST_FIRST(ipqh); fp != NULL; fp = nfp) {
-			nfp = LIST_NEXT(fp, ipq_q);
-			ip_freef(fp);
-			ipstat.ips_fragdropped++;
-		}
-	}
+	/*
+	 * Drop half the total fragments now. If more mbufs are needed,
+	 *  we will be called again soon.
+	 */
+	ip_reass_drophalf();
 
 	IPQ_UNLOCK();
 }
