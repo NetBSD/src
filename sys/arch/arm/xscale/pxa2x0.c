@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.1 2002/10/19 19:31:38 bsh Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.2 2003/01/01 00:46:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -128,13 +128,13 @@ pxa2x0_print(void *aux, const char *name)
 	struct pxa2x0_attach_args *sa = (struct pxa2x0_attach_args*)aux;
 
 	if (sa->pxa_size)
-                printf(" addr 0x%lx", sa->pxa_addr);
+                aprint_normal(" addr 0x%lx", sa->pxa_addr);
         if (sa->pxa_size > 1)
-                printf("-0x%lx", sa->pxa_addr + sa->pxa_size - 1);
+                aprint_normal("-0x%lx", sa->pxa_addr + sa->pxa_size - 1);
         if (sa->pxa_intr > 1)
-                printf(" intr %d", sa->pxa_intr);
+                aprint_normal(" intr %d", sa->pxa_intr);
 	if (sa->pxa_gpio != -1)
-		printf(" gpio %d", sa->pxa_gpio);
+		aprint_normal(" gpio %d", sa->pxa_gpio);
 
         return (UNCONF);
 }

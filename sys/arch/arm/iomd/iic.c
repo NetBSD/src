@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.6 2002/10/23 09:10:42 jdolecek Exp $	*/
+/*	$NetBSD: iic.c,v 1.7 2003/01/01 00:46:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -250,7 +250,7 @@ iicprint(aux, name)
 
 	if (!name) {
 		if (iba->ib_addr)
-			printf(" addr 0x%02x", iba->ib_addr);
+			aprint_normal(" addr 0x%02x", iba->ib_addr);
 	}
 
 	/* XXXX print flags */
