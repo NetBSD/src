@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.12 2002/10/24 10:37:35 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.13 2002/11/01 08:28:34 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -497,3 +497,11 @@ sys/netinet/ipl.h				1.14
 			make dependall install
 
 	[martti, ticket #905]
+
+libexec/ftpd/cmds.c				1.19
+
+Turns out that our implementation of STAT wasn't RFC 959 compliant.
+This version is now RFC 959 compliant. using a patch adapted from one
+
+	[itojun, ticket #942]
+
