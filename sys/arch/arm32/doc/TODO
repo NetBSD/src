@@ -29,8 +29,8 @@ instead and are marked with *.
 19. improve fiq handling code
 20. Debug kernel linking with the NetBSD linker
 21. Complete hydra support
-22. Debug GCC/arm (*)
-23. PIC support in GCC/arm (*)
+22. Debug GCC/arm
+23. PIC support in GCC/arm
 24. Shared libraries
 25. Remove debug.c
 26. Remove stubs.c
@@ -51,15 +51,28 @@ instead and are marked with *.
 41. Debug multiple mappings in pmap.c UNDER DEVELOPMENT
 42. Optimise data xfers for the ea and eb drivers
 43. Debug printer support
-44. Implement new bus space macros UNDER DEVELOPMENT
+44. Update drivers to use new bus space macros UNDER DEVELOPMENT
 45. Develop ICS IDE driver UNDER DEVELOPMENT
 46. Develop Cumana SCSI I driver
-47. Fix serial ibuf overflows UNDER DEVELOPMENT
-48. Debug FAS216/53C94 SCSI drivers
-49. Kernel multithreading
-50. Kernel mutliprocessor support
-51. Removed dependancy on IOMD.
-52. Split code dependant on RiscPC's into separate files.
-53. Rewrite IDE driver, split into ATA, ATAPI, wd devices etc.
-54. Removed dependancy on VIDC20.
-55. Debug serial consoles.
+47. Kernel multithreading
+48. Kernel mutliprocessor support
+49. Removed dependancy on IOMD.
+50. Split code dependant on RiscPC's into separate files.
+51. Rewrite IDE driver, split into ATA, ATAPI, wd devices etc.
+52. Removed dependancy on VIDC20.
+53. Debug serial consoles.
+54. Develop RapIDE driver UNDER DEVELOPMENT
+55. Restructure config and attach of IOMD dependant devices.
+56. Implement EtherM driver
+57. Create generic DMA handling routines
+58. Implement PIOC driver as parent for wd, fd, com & lpt.
+59. the podule attach args should pass the interrupt number for
+    podule or network slot so that the podulebus is the only
+    driver that needs to know about the irq numbers.
+60. A mechanism for obtaining the MAC address for netslot cards
+    is needed instead of drivers building it from the bootconfig
+    machine ID.
+61. Implement interrupts on the Connect32 driver
+62. Debug IOMD DMA handling.
+63. Implement driver for etherlan500 podule
+64. Improve com driver.
