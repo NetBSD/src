@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.22 1999/10/25 21:17:21 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.23 1999/10/31 19:45:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -352,7 +352,7 @@ out:
 		
 /*
  * Routine locks ntnode and increase usecount, just opposite of
- * ntfs_ntput.
+ * ntfs_ntput().
  */
 int
 ntfs_ntget(ip)
@@ -405,9 +405,6 @@ ntfs_ntlookup(
 	ip->i_dev = ntmp->ntm_dev;
 	ip->i_number = ino;
 	ip->i_mp = ntmp;
-	ip->i_uid = ntmp->ntm_uid;
-	ip->i_gid = ntmp->ntm_gid;
-	ip->i_mode = ntmp->ntm_mode;
 
 	LIST_INIT(&ip->i_fnlist);
 
@@ -435,8 +432,8 @@ ntfs_ntlookup(
  * ntnode should be locked on entry, and unlocked on return.
  */
 void
-ntfs_ntput(
-	   struct ntnode *ip)
+ntfs_ntput(ip)
+	struct ntnode *ip;
 {
 	struct ntvattr *vap;
 
