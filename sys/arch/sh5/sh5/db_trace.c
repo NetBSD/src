@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 2002/09/22 20:31:19 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.7 2002/10/10 08:53:22 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -216,18 +216,23 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		(*pr)("\n");
 
 		/*
-		 * There really is no point trying to trace back
-		 * through "idle". It has no valid "context" anyway.
+		 * There really is no point trying to trace back through
+		 * "idle" or "proc_trampoline". The former has no valid
+		 * "context" anyway, and the latter is the first function
+		 * called for each new process/kernel thread.
 		 */
-		if (strcmp(symp, "idle") == 0)
+		if (strcmp(symp, "idle") == 0 ||
+		    strcmp(symp, ___STRING(_C_LABEL(proc_trampoline))) == 0) {
+			pc = fp = SH5_KSEG0_BASE;
 			break;
+		}
 
 		if (strcmp(symp, "Lsh5_event_sync") == 0 ||
 		    strcmp(symp, "Ltrapagain") == 0 ||
 		    strcmp(symp, "Ltrapepilogue") == 0 ||
 		    strcmp(symp, "Ltrapexit") == 0) {
 			/*
-			 * We're tracing back through a syncronous exception.
+			 * We're tracing back through a synchronous exception.
 			 * The previous PC and FP are available from the
 			 * 'struct trapframe' saved on the stack.
 			 */
@@ -250,7 +255,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (strcmp(symp, "Lsh5_event_interrupt") == 0 ||
 		    strcmp(symp, "Lintrexit") == 0) {
 			/*
-			 * We're tracing back through an asyncronous
+			 * We're tracing back through an asynchronous
 			 * exception (hardware interrupt). The previous PC
 			 * and FP are available from the 'struct intrframe'
 			 * saved on the stack.
