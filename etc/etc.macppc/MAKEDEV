@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.39 2001/09/10 21:23:55 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.40 2001/09/14 21:15:03 nathanw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -101,6 +101,7 @@
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	wsmux*	wscons event multiplexor
+#	pci*	PCI bus access devices
 #
 
 dialin=0
@@ -123,6 +124,7 @@ all)
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 isdn
+	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	;;
 
 audio)
@@ -689,6 +691,13 @@ i4btrc*)
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 57 $unit
 	chmod 600 i4btrc$unit
+	;;
+
+pci*)
+	unit=${i#pci};
+	rm -f pci$unit
+	mknod pci$unit c 60 $unit
+	chmod 644 pci$unit
 	;;
 
 local)
