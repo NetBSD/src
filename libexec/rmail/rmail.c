@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
+/*	$NetBSD: rmail.c,v 1.9 1997/10/07 11:08:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,17 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $";
+__RCSID("$NetBSD: rmail.c,v 1.9 1997/10/07 11:08:54 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +87,7 @@ static char rcsid[] = "$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $";
 
 void err __P((int, const char *, ...));
 void usage __P((void));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -107,6 +105,8 @@ main(argc, argv)
 	char *from_path, *from_sys, *from_user;
 	char *args[100], buf[2048], lbuf[2048];
 
+	addrp = NULL;	/* XXX gcc */
+	fplen = fptlen = 0;	/* XXX gcc */
 	debug = 0;
 	domain = "UUCP";		/* Default "domain". */
 	while ((ch = getopt(argc, argv, "D:T")) != EOF)
