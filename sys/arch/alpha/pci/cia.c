@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.39 1998/06/05 02:13:42 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.40 1998/06/05 02:15:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.39 1998/06/05 02:13:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.40 1998/06/05 02:15:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +130,9 @@ cia_init(ccp, mallocsafe)
 		ccp->cc_flags |= CCF_ISPYXIS;
 
 	/*
-	 * Revisions >= 2 have the CNFG register.
+	 * ALCOR/ALCOR2 Revisions >= 2 and Pyxis have the CNFG register.
 	 */
-	if (ccp->cc_rev >= 2)
+	if (ccp->cc_rev >= 2 || (ccp->cc_flags & CCF_ISPYXIS) != 0)
 		ccp->cc_cnfg = REGVAL(CIA_CSR_CNFG);
 	else
 		ccp->cc_cnfg = 0;
