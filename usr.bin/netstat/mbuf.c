@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.12 1997/10/19 05:50:04 lukem Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.13 1999/02/27 17:37:25 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.12 1997/10/19 05:50:04 lukem Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.13 1999/02/27 17:37:25 sommerfe Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: mbuf.c,v 1.12 1997/10/19 05:50:04 lukem Exp $");
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 
 #include <stdio.h>
 #include "netstat.h"
@@ -54,6 +55,7 @@ __RCSID("$NetBSD: mbuf.c,v 1.12 1997/10/19 05:50:04 lukem Exp $");
 typedef int bool;
 
 struct	mbstat mbstat;
+struct pool mbpool, mclpool;
 
 static struct mbtypes {
 	int	mt_type;
@@ -76,11 +78,12 @@ bool seen[256];			/* "have we seen this type yet?" */
  * Print mbuf statistics.
  */
 void
-mbpr(mbaddr, msizeaddr, mclbaddr)
+mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	u_long mbaddr;
 	u_long msizeaddr, mclbaddr;
+	u_long mbpooladdr, mclpooladdr;
 {
-	int totmem, totfree, totmbufs;
+	int totmem, totused, totmbufs, totpct;
 	int i;
 	struct mbtypes *mp;
 
@@ -90,6 +93,11 @@ mbpr(mbaddr, msizeaddr, mclbaddr)
 		fprintf(stderr,
 		    "%s: unexpected change to mbstat; check source\n",
 		        __progname);
+		return;
+	}
+	if (mbaddr == 0) {
+		fprintf(stderr, "%s: mbstat: symbol not in namelist\n",
+		    __progname);
 		return;
 	}
 	if (mbaddr == 0) {
@@ -110,6 +118,13 @@ mbpr(mbaddr, msizeaddr, mclbaddr)
 
 	if (kread(mbaddr, (char *)&mbstat, sizeof (mbstat)))
 		return;
+
+	if (kread(mbpooladdr, (char *)&mbpool, sizeof (mbpool)))
+		return;
+
+	if (kread(mclpooladdr, (char *)&mclpool, sizeof (mclpool)))
+		return;
+
 	totmbufs = 0;
 	for (mp = mbtypes; mp->mt_name; mp++)
 		totmbufs += mbstat.m_mtypes[mp->mt_type];
@@ -126,12 +141,17 @@ mbpr(mbaddr, msizeaddr, mclbaddr)
 			printf("\t%u mbufs allocated to <mbuf type %d>\n",
 			    mbstat.m_mtypes[i], i);
 		}
+
 	printf("%lu/%lu mapped pages in use\n",
-		mbstat.m_clusters - mbstat.m_clfree, mbstat.m_clusters);
-	totmem = totmbufs * msize + mbstat.m_clusters * mclbytes;
-	totfree = mbstat.m_clfree * mclbytes;
+	       (u_long)(mclpool.pr_nget - mclpool.pr_nput),
+	       ((u_long)mclpool.pr_npages * mclpool.pr_itemsperpage));
+	totmem = (mbpool.pr_npages << mbpool.pr_pageshift) +
+	    (mclpool.pr_npages << mclpool.pr_pageshift);
+	totused = (mbpool.pr_nget - mbpool.pr_nput) * mbpool.pr_size + 
+	    (mclpool.pr_nget - mclpool.pr_nput) * mclpool.pr_size;
+	totpct = (totmem == 0)? 0 : ((totused * 100)/totmem);
 	printf("%u Kbytes allocated to network (%d%% in use)\n",
-		totmem / 1024, (totmem - totfree) * 100 / totmem);
+	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
