@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.52 2002/03/10 14:43:38 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.53 2002/03/17 02:52:59 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.52 2002/03/10 14:43:38 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.53 2002/03/17 02:52:59 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1985,7 +1985,7 @@ wi_get_id(sc)
 		break;
 	case WI_NIC_LUCENT:
 		printf("Lucent Technologies, WaveLAN/IEEE");
-		sc->sc_prism2 = 1;
+		sc->sc_prism2 = 0;
 		break;
 	default:
 		printf("Lucent chip or unknown chip\n");
