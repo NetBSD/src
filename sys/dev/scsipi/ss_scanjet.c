@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.20 2000/06/09 08:54:29 enami Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.21 2000/07/08 17:12:08 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -457,9 +457,9 @@ scanjet_compute_sizes(ss)
 	struct ss_softc *ss;
 {
 	int error;
-	static char *wfail = "%s: interrogate write failed\n";
-	static char *rfail = "%s: interrogate read failed\n";
-	static char *dfail = "%s: bad data returned\n";
+	static const char wfail[] = "%s: interrogate write failed\n";
+	static const char rfail[] = "%s: interrogate read failed\n";
+	static const char dfail[] = "%s: bad data returned\n";
 	char escape_codes[20];
 	char response[20];
 	char *p;
