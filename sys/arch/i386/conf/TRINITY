@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.30 1994/03/29 04:40:51 mycroft Exp $
+#	$Id: TRINITY,v 1.31 1994/04/15 00:25:20 cgd Exp $
 #
 
 machine		"i386"
@@ -27,6 +27,7 @@ options		FIFO
 options		LKM
 
 options		"COMPAT_NOMID"
+options		"COMPAT_09"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 

@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.30 1994/04/13 07:47:08 deraadt Exp $
+#	$Id: TDR,v 1.31 1994/04/15 00:25:19 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -16,6 +16,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		DDB,SCSI,KTRACE
 options		COMPAT_NOMID
+options		"COMPAT_09"
 options		DUMMY_NOPS
 options		MACHINE_NONCONTIG
 
