@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:33:26 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/12/28 12:06:43 davidb Exp $
 
 DIR=	ps1/18.curses
 DOC=	18.curses
@@ -29,7 +29,7 @@ VFONT=	/usr/libexec/vfontedpr
 .c.gr:
 	( cd ${.CURDIR} ; ${VFONT} $*.c ) | grep -v "^'wh" > $*.gr
 
-.VPATH:	${CURDIR}/obj
+.VPATH:	${.OBJDIR}
 
 intro.5: doc.I doc.II doc.III doc.IV
 appen.B: win_st.gr
