@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.112 1997/06/18 20:38:59 pk Exp $	*/
+/*	$NetBSD: sd.c,v 1.113 1997/06/24 00:28:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -1050,7 +1050,8 @@ sdsize(dev)
 	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = sd->sc_dk.dk_label->d_partitions[part].p_size;
+		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
+		    (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 	return (size);
