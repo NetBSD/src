@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.17 2000/11/13 21:32:18 jdolecek Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.18 2000/11/30 19:17:57 jdolecek Exp $ */
 
 /*
  * System call names.
@@ -243,11 +243,7 @@ const char * const netbsd32_syscallnames[] = {
 	"netbsd32_pread",			/* 173 = netbsd32_pread */
 	"netbsd32_pwrite",			/* 174 = netbsd32_pwrite */
 	"netbsd32_ntp_gettime",			/* 175 = netbsd32_ntp_gettime */
-#if defined(NTP) || !defined(_KERNEL)
 	"netbsd32_ntp_adjtime",			/* 176 = netbsd32_ntp_adjtime */
-#else
-	"#176 (excluded ntp_adjtime)",		/* 176 = excluded ntp_adjtime */
-#endif
 	"#177 (unimplemented)",		/* 177 = unimplemented */
 	"#178 (unimplemented)",		/* 178 = unimplemented */
 	"#179 (unimplemented)",		/* 179 = unimplemented */

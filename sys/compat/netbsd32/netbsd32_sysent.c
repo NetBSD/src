@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.16 2000/08/18 19:35:22 cgd Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.17 2000/11/30 19:17:57 jdolecek Exp $ */
 
 /*
  * System call switch table.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.14 2000/08/07 17:59:36 bjh21 Exp 
  */
 
+#if defined ( _KERNEL )  && !defined ( _LKM ) 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
@@ -15,6 +16,7 @@
 #include "opt_compat_43.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
+#endif
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
@@ -472,13 +474,8 @@ struct sysent netbsd32_sysent[] = {
 	    netbsd32_pwrite },			/* 174 = netbsd32_pwrite */
 	{ 1, s(struct netbsd32_ntp_gettime_args),
 	    netbsd32_ntp_gettime },		/* 175 = netbsd32_ntp_gettime */
-#if defined(NTP) || !defined(_KERNEL)
 	{ 1, s(struct netbsd32_ntp_adjtime_args),
 	    netbsd32_ntp_adjtime },		/* 176 = netbsd32_ntp_adjtime */
-#else
-	{ 0, 0,
-	    sys_nosys },			/* 176 = excluded ntp_adjtime */
-#endif
 	{ 0, 0,
 	    sys_nosys },			/* 177 = unimplemented */
 	{ 0, 0,

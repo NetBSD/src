@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.16 2000/08/18 19:35:21 cgd Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.17 2000/11/30 19:17:56 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -451,7 +451,6 @@
 /* syscall: "netbsd32_ntp_adjtime" ret: "int" args: "netbsd32_timexp_t" */
 #define	netbsd32_SYS_netbsd32_ntp_adjtime	176
 
-				/* 176 is excluded ntp_adjtime */
 /* syscall: "netbsd32_setgid" ret: "int" args: "gid_t" */
 #define	netbsd32_SYS_netbsd32_setgid	181
 
