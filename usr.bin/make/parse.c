@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.82 2002/02/21 22:21:34 reinoud Exp $	*/
+/*	$NetBSD: parse.c,v 1.83 2002/03/20 18:10:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.82 2002/02/21 22:21:34 reinoud Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.83 2002/03/20 18:10:31 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.82 2002/02/21 22:21:34 reinoud Exp $");
+__RCSID("$NetBSD: parse.c,v 1.83 2002/03/20 18:10:31 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -578,6 +578,8 @@ ParseDoOp (gnp, opp)
 	 */
 	cohort->type = op | OP_INVISIBLE;
 	(void)Lst_AtEnd(gn->cohorts, (ClientData)cohort);
+	cohort->centurion = gn;
+	gn->unmade_cohorts += 1;
     } else {
 	/*
 	 * We don't want to nuke any previous flags (whatever they were) so we
