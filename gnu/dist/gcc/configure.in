@@ -1769,7 +1769,7 @@ for machine in $build $host $target; do
 			use_collect2=yes
 	      fi
 	      ;;
-	mips-dec-netbsd*)                  # Decstation running NetBSD
+	mipsel-*-netbsd* | mips-dec-netbsd*)    # Decstation running NetBSD
 		tm_file=mips/netbsd.h
 		xm_file=mips/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
