@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pms.c,v 1.10 1994/07/17 19:24:40 mycroft Exp $
+ *	$Id: pms.c,v 1.11 1994/07/17 19:35:32 mycroft Exp $
  */
 
 /*
@@ -50,9 +50,9 @@
 
 #include <i386/isa/isavar.h>
 
-#define PMS_DATA	0       /* offset for data port, read-write */
-#define PMS_CNTRL	4       /* offset for control port, write-only */
-#define PMS_STATUS	4	/* offset for status port, read-only */
+#define	PMS_DATA	0       /* offset for data port, read-write */
+#define	PMS_CNTRL	4       /* offset for control port, write-only */
+#define	PMS_STATUS	4	/* offset for status port, read-only */
 #define	PMS_NPORTS	8
 
 /* status bits */
@@ -67,7 +67,7 @@
 #define	PMS_MAGIC_1	0xa9	/* XXX */
 #define	PMS_MAGIC_2	0xaa	/* XXX */
 
-#define PMS_8042_CMD	0x65
+#define	PMS_8042_CMD	0x65
 
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
@@ -80,8 +80,8 @@
 #define	PMS_DEV_DISABLE	0xf5	/* mouse off */
 #define	PMS_RESET	0xff	/* reset */
 
-#define PMS_CHUNK	128	/* chunk size for read */
-#define PMS_BSIZE	1020	/* buffer size */
+#define	PMS_CHUNK	128	/* chunk size for read */
+#define	PMS_BSIZE	1020	/* buffer size */
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
@@ -90,9 +90,9 @@ struct pms_softc {		/* driver status information */
 	struct clist sc_q;
 	struct selinfo sc_rsel;
 	u_short sc_iobase;	/* I/O port base */
-	u_char	sc_state;	/* mouse driver state */
-#define PMS_OPEN	0x01	/* device is open */
-#define PMS_ASLP	0x02	/* waiting for mouse data */
+	u_char sc_state;	/* mouse driver state */
+#define	PMS_OPEN	0x01	/* device is open */
+#define	PMS_ASLP	0x02	/* waiting for mouse data */
 	u_char sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
@@ -105,44 +105,51 @@ struct cfdriver pmscd = {\
 	NULL, "pms", pmsprobe, pmsattach, DV_TTY, sizeof(struct pms_softc)
 };
 
-#define PMSUNIT(dev)	(minor(dev))
+#define	PMSUNIT(dev)	(minor(dev))
 
 static inline void
-pms_flush(int ioport)
+pms_flush(iobase)
+	u_short iobase;
 {
 	u_char c;
-	while (c = inb(ioport+PMS_STATUS) & 0x03)
+	while (c = inb(iobase+PMS_STATUS) & 0x03)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) inb(ioport+PMS_DATA);
+			(void) inb(iobase+PMS_DATA);
 		}
 }
 
 static inline void
-pms_dev_cmd(int ioport, u_char value)
+pms_dev_cmd(iobase, value)
+	u_short iobase;
+	u_char value;
 {
-	pms_flush(ioport);
-	outb(ioport+PMS_CNTRL, 0xd4);
-	pms_flush(ioport);
-	outb(ioport+PMS_DATA, value);
+	pms_flush(iobase);
+	outb(iobase+PMS_CNTRL, 0xd4);
+	pms_flush(iobase);
+	outb(iobase+PMS_DATA, value);
 }
 
 static inline void
-pms_aux_cmd(int ioport, u_char value)
+pms_aux_cmd(iobase, value)
+	u_short iobase;
+	u_char value;
 {
-	pms_flush(ioport);
-	outb(ioport+PMS_CNTRL, value);
+	pms_flush(iobase);
+	outb(iobase+PMS_CNTRL, value);
 }
 
 static inline void
-pms_pit_cmd(int ioport, u_char value)
+pms_pit_cmd(iobase, value)
+	u_short iobase;
+	u_char value;
 {
-	pms_flush(ioport);
-	outb(ioport+PMS_CNTRL, 0x60);
-	pms_flush(ioport);
-	outb(ioport+PMS_DATA, value);
+	pms_flush(iobase);
+	outb(iobase+PMS_CNTRL, 0x60);
+	pms_flush(iobase);
+	outb(iobase+PMS_DATA, value);
 }
 
 int
@@ -152,14 +159,14 @@ pmsprobe(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
-	u_char c;
+	u_char x;
 
 	pms_dev_cmd(iobase, PMS_RESET);
 	pms_aux_cmd(iobase, PMS_MAGIC_1);
 	pms_aux_cmd(iobase, PMS_MAGIC_2);
-	c = inb(iobase+PMS_DATA);
+	x = inb(iobase+PMS_DATA);
 	pms_pit_cmd(iobase, PMS_INT_DISABLE);
-	if (c & 0x04)
+	if (x & 0x04)
 		return 0;
 
 	ia->ia_iosize = PMS_NPORTS;
@@ -178,7 +185,7 @@ pmsattach(parent, self, aux)
 
 	printf("\n");
 
-	/* Save I/O base address. */
+	/* Other initialization was done by pmsprobe. */
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
@@ -283,15 +290,15 @@ pmsread(dev, uio, flag)
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
-		/* Remove a small chunk from input queue. */
+		/* Remove a small chunk from the input queue. */
 		(void) q_to_b(&sc->sc_q, buffer, length);
 
-		/* Copy data to user process. */
+		/* Copy the data to the user process. */
 		if (error = uiomove(buffer, length, uio))
 			break;
 	}
 
-        return error;
+	return error;
 }
 
 int
@@ -324,8 +331,8 @@ pmsioctl(dev, cmd, addr, flag)
 
 		if (sc->sc_y > 127)
 			info.ymotion = 127;
-		else if (sc->sc_y < -128)
-			info.ymotion = -128;
+		else if (sc->sc_y < -127)
+			info.ymotion = -127;
 		else
 			info.ymotion = sc->sc_y;
 
