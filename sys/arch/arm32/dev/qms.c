@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.20 1998/09/05 01:09:42 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.21 1999/02/02 04:02:26 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -425,11 +425,12 @@ qmspoll(dev, events, p)
 	int revents = 0;
 	int s = spltty();
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_buffer.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	(void)splx(s);
 	return (revents);
