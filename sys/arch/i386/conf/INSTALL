@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.59.2.9 1998/07/27 15:33:32 mellon Exp $
+#	$NetBSD: INSTALL,v 1.59.2.10 1998/11/22 07:37:24 cgd Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -47,6 +47,9 @@ options 	MATH_EMULATE	# floating point emulation
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
+
+# Avoid irq 5 and 7, the most likely cause of problems on modern laptops.
+options		PCIC_ISA_INTR_ALLOC_MASK=0xff5f
 
 # Standard system options
 
