@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.5 1999/03/16 21:29:23 erh Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.6 1999/03/19 22:43:11 erh Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -932,6 +932,7 @@ sca_start(ifp)
 	sca_desc_t *desc;
 	u_int8_t *buf;
 	u_int32_t buf_p;
+	int nexttx;
 	int trigger_xmit;
 
 	/*
@@ -958,14 +959,22 @@ sca_start(ifp)
 	if (mb_head == NULL)
 		goto start_xmit;
 
-	desc = &scp->txdesc[scp->txcur];
 	if (scp->txinuse != 0) {
-		/* Kill EOT interrupts on the previous packet. */
+		/* Kill EOT interrupts on the previous descriptor. */
+		desc = &scp->txdesc[scp->txcur];
 		desc->stat &= ~SCA_DESC_EOT;
-		desc = &scp->txdesc[scp->txcur+1];
-	}
-	buf = scp->txbuf + SCA_BSIZE * scp->txcur;
-	buf_p = scp->txbuf_p + SCA_BSIZE * scp->txcur;
+
+		/* Figure out what the next free descriptor is. */
+		if ((scp->txcur + 1) == SCA_NtxBUFS)
+			nexttx = 0;
+		else
+			nexttx = scp->txcur + 1;
+	} else
+		nexttx = 0;
+
+	desc = &scp->txdesc[nexttx];
+	buf = scp->txbuf + SCA_BSIZE * nexttx;
+	buf_p = scp->txbuf_p + SCA_BSIZE * nexttx;
 
 	desc->bp = (u_int16_t)(buf_p & 0x0000ffff);
 	desc->bpb = (u_int8_t)((buf_p & 0x00ff0000) >> 16);
