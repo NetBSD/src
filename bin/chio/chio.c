@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.11 1999/08/05 02:47:09 hubertf Exp $	*/
+/*	$NetBSD: chio.c,v 1.12 1999/09/08 04:57:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -39,7 +39,7 @@
 #ifndef lint
 __COPYRIGHT(
     "@(#) Copyright (c) 1996, 1998 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.11 1999/08/05 02:47:09 hubertf Exp $");
+__RCSID("$NetBSD: chio.c,v 1.12 1999/09/08 04:57:37 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -90,18 +90,36 @@ const struct element_type elements[] = {
 
 /* Valid commands. */
 const struct changer_command commands[] = {
-	{ "move", 	" <from ET> <from EU> <to ET> <to EU> [inv]", 	do_move },
+	{ "move", 	" <from ET> <from EU> <to ET> <to EU> [inv]",
+	  do_move },
+
 	{ "exchange",	" <src ET> <src EU> <dst1 ET> <dst1 EU>\n"
-	                "\t\t [<dst2 ET> <dst2 EU>] [inv1] [inv2]", 		do_exchange },
-	{ "position",	" <to ET> <to EU> [inv]", 				do_position },
-	{ "params",	"", 							do_params },
-	{ "getpicker",	"", 							do_getpicker },
-	{ "setpicker",	" <picker>", 						do_setpicker },
-	{ "status",	" [<element type>]", 					do_status },
-	{ "ielem", 	"", 							do_ielem },
+	                "\t\t [<dst2 ET> <dst2 EU>] [inv1] [inv2]",
+	  do_exchange },
+
+	{ "position",	" <to ET> <to EU> [inv]", do_position },
+
+	{ "params",	"",
+	  do_params },
+
+	{ "getpicker",	"",
+	  do_getpicker },
+
+	{ "setpicker",	" <picker>",
+	  do_setpicker },
+
+	{ "status",	" [<element type>]",
+	  do_status },
+
+	{ "ielem", 	"",
+	  do_ielem },
+
 	{ "cdlu",	" load|unload <slot>\n"
-	                "\t     abort", 						do_cdlu },
-	{ NULL,		NULL, 							0 },
+	                "\t     abort",
+	  do_cdlu },
+
+	{ NULL,		NULL,
+	  NULL },
 };
 
 /* Valid special words. */
