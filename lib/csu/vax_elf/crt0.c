@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.4 2000/06/14 22:52:51 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.5 2000/07/03 03:56:56 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Matt Thomas
@@ -43,8 +43,9 @@ void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
 __asm("
 	.text
 	.align	2
-	.globl	__start
+	.globl	_start
 __start:
+_start:
 	.word	0x0101
 	pushl	r9		# ps_strings
 	pushl	r8		# obj
@@ -97,7 +98,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.4 2000/06/14 22:52:51 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5 2000/07/03 03:56:56 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
