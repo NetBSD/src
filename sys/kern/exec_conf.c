@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.10 1995/02/28 23:06:21 cgd Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.11 1995/03/08 01:20:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 #define	EXEC_SCRIPT			/* XXX */
 #define EXEC_AOUT			/* XXX */
 
-#ifdef COMPAT_ULTRIX
+#if defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)
 #define EXEC_ECOFF
 #endif
 
