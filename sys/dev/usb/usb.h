@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.6 1998/12/08 15:18:45 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.7 1998/12/09 00:18:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -292,7 +292,8 @@ typedef struct {
 #define  USUBCLASS_AUDIOCONTROL	1
 #define  USUBCLASS_AUDIOSTREAM	2
 #define UCLASS_CDC		2
-#define  USUBCLASS_MODEM	2
+#define  USUBCLASS_ABSTRACT_CONTROL_MODEL	2
+#define   UPROTO_CDC_AT		1
 #define UCLASS_HID		3
 #define  USUBCLASS_BOOT	 	1
 #define UCLASS_PRINTER		7
@@ -331,6 +332,7 @@ struct usb_ctl_request {
 };
 
 struct usb_alt_interface {
+	int	config_index;
 	int	interface_index;
 	int	alt_no;
 };
@@ -362,6 +364,12 @@ struct usb_full_desc {
 	int	config_index;
 	u_int	size;
 	u_char	*data;
+};
+
+struct usb_string_desc {
+	int	string_index;
+	int	language_id;
+	usb_string_descriptor_t desc;
 };
 
 struct usb_ctl_report_desc {
@@ -411,14 +419,15 @@ struct usb_device_stats {
 #define USB_GET_CONFIG		_IOR ('U', 100, int)
 #define USB_SET_CONFIG		_IOW ('U', 101, int)
 #define USB_GET_ALTINTERFACE	_IOWR('U', 102, struct usb_alt_interface)
-#define USB_SET_ALTINTERFACE	_IOW ('U', 103, struct usb_alt_interface)
+#define USB_SET_ALTINTERFACE	_IOWR('U', 103, struct usb_alt_interface)
 #define USB_GET_NO_ALT		_IOWR('U', 104, struct usb_alt_interface)
 #define USB_GET_DEVICE_DESC	_IOR ('U', 105, usb_device_descriptor_t)
-#define USB_GET_CONFIG_DESC	_IOR ('U', 106, struct usb_config_desc)
+#define USB_GET_CONFIG_DESC	_IOWR('U', 106, struct usb_config_desc)
 #define USB_GET_INTERFACE_DESC	_IOWR('U', 107, struct usb_interface_desc)
 #define USB_GET_ENDPOINT_DESC	_IOWR('U', 108, struct usb_endpoint_desc)
-#define USB_GET_FULL_DESC	_IOR ('U', 109, struct usb_full_desc)
-#define USB_DO_REQUEST		_IOWR('U', 110, struct usb_ctl_request)
-
+#define USB_GET_FULL_DESC	_IOWR('U', 109, struct usb_full_desc)
+#define USB_GET_STRING_DESC	_IOWR('U', 110, struct usb_string_desc)
+#define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
+#define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
 
 #endif /* _USB_H_ */
