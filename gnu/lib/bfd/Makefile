@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1998/08/24 16:32:48 tv Exp $
+#	$NetBSD: Makefile,v 1.19 1998/08/28 16:47:13 tv Exp $
 
 LIB=		bfd
 
@@ -13,12 +13,13 @@ SRCS=		archive.c archures.c bfd.c cache.c coffgen.c corefile.c \
 		dis-buf.c disassemble.c \
 		argv.c basename.c choose-temp.c concat.c cplus-dem.c \
 		fdmatch.c fnmatch.c getopt.c getopt1.c getruntime.c hex.c \
-		floatformat.c objalloc.c obstack.c spaces.c strerror.c \
-		strsignal.c xatexit.c xexit.c xmalloc.c xstrdup.c xstrerror.c \
-		insque.c vasprintf.c ${BFD_ARCH_SRCS}
+		floatformat.c objalloc.c obstack.c pexecute.c spaces.c \
+		strerror.c strsignal.c xatexit.c xexit.c xmalloc.c xstrdup.c \
+		xstrerror.c asprintf.c insque.c vasprintf.c \
+		${BFD_ARCH_SRCS}
 CPPFLAGS+= 	-I. -I${.CURDIR} \
 		-I${DIST}/bfd -I${DIST}/opcodes -I${DIST}/include \
-		${BFD_ARCH_DEFS}
+		${BFD_ARCH_DEFS} -DHAVE_CONFIG_H
 
 DIST=		${.CURDIR}/../../dist
 
