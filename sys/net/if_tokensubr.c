@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.5 1999/05/18 23:57:21 thorpej Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.6 1999/05/29 22:36:07 bad Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -214,7 +214,7 @@ token_output(ifp, m0, dst, rt0)
 		break;
 	case AF_ARP:
 /*
- * XXX source routing, assume m->pktdat contains the useful stuff
+ * XXX source routing, assume m->m_data contains the useful stuff
  */
 		ah = mtod(m, struct arphdr *);
 		ah->ar_hrd = htons(ARPHRD_IEEE802);
@@ -245,7 +245,7 @@ token_output(ifp, m0, dst, rt0)
 		}
 		else {
 			bcopy((caddr_t)ar_tha(ah), (caddr_t)edst, sizeof(edst));
-			trh = (struct token_header *) m->m_pktdat;
+			trh = mtod(m, struct token_header *);
 			trh->token_ac = TOKEN_AC;
 			trh->token_fc = TOKEN_FC;
 			if (trh->token_shost[0] & TOKEN_RI_PRESENT) {

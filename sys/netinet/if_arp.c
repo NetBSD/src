@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.59 1999/05/23 20:21:51 ad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.60 1999/05/29 22:36:08 bad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -639,15 +639,15 @@ in_arpinput(m)
 		}
 #if NTOKEN > 0
 		/*
-		 * XXX uses m_pktdat and assumes the complete answer including
+		 * XXX uses m_data and assumes the complete answer including
 		 * XXX token-ring headers is in the same buf
 		 */
 		if (ifp->if_type == IFT_ISO88025 &&
-			m->m_pktdat[8] & TOKEN_RI_PRESENT) {
+			m->m_data[8] & TOKEN_RI_PRESENT) {
 			struct token_rif	*rif;
 			size_t	riflen;
 
-			rif = TOKEN_RIF((struct token_header *) m->m_pktdat);
+			rif = TOKEN_RIF(mtod(m, struct token_header *));
 			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 
 			if (riflen > 2 && riflen < sizeof(struct token_rif) &&
