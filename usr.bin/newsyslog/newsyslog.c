@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.43 2002/02/11 10:57:58 wiz Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.43.2.1 2002/06/26 23:32:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.43 2002/02/11 10:57:58 wiz Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.43.2.1 2002/06/26 23:32:53 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,8 +143,8 @@ main(int argc, char **argv)
 	needroot = 1;
 	cfile = _PATH_NEWSYSLOGCONF;
 
-	gethostname(hostname, sizeof (hostname));
-	hostname[sizeof (hostname) - 1] = '\0';
+	gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 
 	/* Truncate domain. */
 	if ((p = strchr(hostname, '.')) != NULL)
@@ -236,7 +236,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 
 		for (ap = argv, nf = 0; (*ap = strsep(&line, " \t")) != NULL;)
 			if (**ap != '\0') {
-				if (++nf == sizeof (argv) / sizeof (argv[0])) {
+				if (++nf == sizeof(argv) / sizeof(argv[0])) {
 					warnx("config line %d: "
 					    "too many fields", lineno);
 					goto bad;
@@ -248,11 +248,11 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	if (nf < 6)
 		errx(EXIT_FAILURE, "config line %d: too few fields", lineno);
 	
-	memset(log, 0, sizeof (*log));
+	memset(log, 0, sizeof(*log));
 	
 	/* logfile_name */
 	ap = argv;
-	strlcpy(log->logfile, *ap++, sizeof (log->logfile));
+	strlcpy(log->logfile, *ap++, sizeof(log->logfile));
 	if (log->logfile[0] != '/')
 		errx(EXIT_FAILURE, 
 		    "config line %d: logfile must have a full path", lineno);
@@ -372,7 +372,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 
 	/* path_to_pidfile */
 	if (*ap != NULL && **ap == '/')
-		strlcpy(log->pidfile, *ap++, sizeof (log->pidfile));
+		strlcpy(log->pidfile, *ap++, sizeof(log->pidfile));
 	else
 		log->pidfile[0] = '\0';
 
@@ -441,10 +441,10 @@ log_examine(struct conf_entry *log, int force)
 	 * Get the age (expressed in hours) of the current log file with
 	 * respect to the newest historical log file.
 	 */
-	strlcpy(tmp, log->logfile, sizeof (tmp));
-	strlcat(tmp, ".0", sizeof (tmp));
+	strlcpy(tmp, log->logfile, sizeof(tmp));
+	strlcat(tmp, ".0", sizeof(tmp));
 	if (stat(tmp, &sb) < 0) {
-		strlcat(tmp, ".gz", sizeof (tmp));
+		strlcat(tmp, ".gz", sizeof(tmp));
 		if (stat(tmp, &sb) < 0)
 			age = -1;
 		else
@@ -498,25 +498,25 @@ log_trim(struct conf_entry *log)
 	pid_t pid;
 
 	/* Remove oldest historical log. */
-	snprintf(file1, sizeof (file1), "%s.%d", log->logfile,
+	snprintf(file1, sizeof(file1), "%s.%d", log->logfile,
 	    log->numhist - 1);
 
 	PRINFO(("rm -f %s\n", file1));
 	if (!noaction)
 		unlink(file1);
-	strlcat(file1, ".gz", sizeof (file1));
+	strlcat(file1, ".gz", sizeof(file1));
 	PRINFO(("rm -f %s\n", file1));
 	if (!noaction)
 		unlink(file1);
 
 	/* Move down log files. */
 	for (i = log->numhist - 1; i != 0; i--) {
-		snprintf(file1, sizeof (file1), "%s.%d", log->logfile, i - 1);
-		snprintf(file2, sizeof (file2), "%s.%d", log->logfile, i);
+		snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i - 1);
+		snprintf(file2, sizeof(file2), "%s.%d", log->logfile, i);
 
 		if (lstat(file1, &st) != 0) {
-			strlcat(file1, ".gz", sizeof (file1));
-			strlcat(file2, ".gz", sizeof (file2));
+			strlcat(file1, ".gz", sizeof(file1));
+			strlcat(file2, ".gz", sizeof(file2));
 			if (lstat(file1, &st) != 0)
 				continue;
 		}
@@ -542,14 +542,16 @@ log_trim(struct conf_entry *log)
 	 * if 'p' has been specified.)  It should be noted that gzip(1)
 	 * preserves file ownership and file mode.
 	 */
-	for (i = (log->flags & CE_PLAIN0) != 0; i < log->numhist; i++) {
-		snprintf(file1, sizeof (file1), "%s.%d", log->logfile, i);
-		if (lstat(file1, &st) != 0)
-			continue;
-		snprintf(file2, sizeof (file2), "%s.gz", file1);
-		if (lstat(file2, &st) == 0)
-			continue;
-		log_compress(log, file1);
+	if ((log->flags & CE_COMPRESS) != 0) {
+		for (i = (log->flags & CE_PLAIN0) != 0; i < log->numhist; i++) {
+			snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i);
+			if (lstat(file1, &st) != 0)
+				continue;
+			snprintf(file2, sizeof(file2), "%s.gz", file1);
+			if (lstat(file2, &st) == 0)
+				continue;
+			log_compress(log, file1);
+		}
 	}
 
 	log_trimmed(log);
@@ -561,7 +563,7 @@ log_trim(struct conf_entry *log)
 			if (unlink(log->logfile))
 				err(EXIT_FAILURE, "%s", log->logfile);
 	} else {
-		snprintf(file1, sizeof (file1), "%s.0", log->logfile);
+		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		PRINFO(("mv %s %s\n", log->logfile, file1));
 		if (!noaction)
 			if (rename(log->logfile, file1))
@@ -596,7 +598,7 @@ log_trim(struct conf_entry *log)
 
 	/* If the newest historical log is to be compressed, do it here. */
 	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS) {
-		snprintf(file1, sizeof (file1), "%s.0", log->logfile);
+		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		if ((log->flags & CE_NOSIGNAL) == 0) {
 			PRINFO(("sleep for 10 seconds before compressing...\n"));
 			sleep(10);
@@ -678,7 +680,7 @@ log_compress(struct conf_entry *log, const char *fn)
 			errx(EXIT_FAILURE, "gzip failed");
 	}
 
-	snprintf(tmp, sizeof (tmp), "%s.gz", fn);
+	snprintf(tmp, sizeof(tmp), "%s.gz", fn);
 	PRINFO(("chown %d:%d %s\n", log->uid, log->gid, tmp));
 	if (!noaction)
 		if (chown(tmp, log->uid, log->gid))
@@ -746,9 +748,9 @@ readpidfile(const char *file)
 
 #ifdef notyet
 	if (file[0] != '/')
-		snprintf(tmp, sizeof (tmp), "%s%s", _PATH_VARRUN, file);
+		snprintf(tmp, sizeof(tmp), "%s%s", _PATH_VARRUN, file);
 	else
-		strlcpy(tmp, file, sizeof (tmp));
+		strlcpy(tmp, file, sizeof(tmp));
 #endif
 
 	if ((fd = fopen(file, "rt")) == NULL) {
@@ -756,8 +758,8 @@ readpidfile(const char *file)
 		return (-1);
 	}
 	
-	if (fgets(line, sizeof (line) - 1, fd) != NULL) {
-		line[sizeof (line) - 1] = '\0';
+	if (fgets(line, sizeof(line) - 1, fd) != NULL) {
+		line[sizeof(line) - 1] = '\0';
 		pid = (pid_t)strtol(line, NULL, 0);
 	} else {
 		warnx("unable to read %s", file);
@@ -778,7 +780,7 @@ parse_userspec(const char *name, struct passwd **pw, struct group **gr)
 {
 	char buf[MAXLOGNAME * 2 + 2], *group;
 
-	strlcpy(buf, name, sizeof (buf));
+	strlcpy(buf, name, sizeof(buf));
 	*gr = NULL;
 
 	/* 
