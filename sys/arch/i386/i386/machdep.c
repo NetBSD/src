@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 1996/06/18 01:53:19 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.204 1996/06/23 19:59:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
@@ -144,6 +145,15 @@ extern	int biosbasemem, biosextmem;
 extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
+
+/*
+ * Extent map to manage I/O space.  Allocate storage for 8 regions,
+ * initially.  Later, ioport_malloc_safe will indicate that it's
+ * safe to use malloc() to dynamically allocate region descriptors.
+ */
+static	char ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)];
+static	struct extent *ioport_ex;
+static	ioport_malloc_safe;
 
 caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
@@ -269,6 +279,7 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
+	ioport_malloc_safe = 1;
 	configure();
 
 	/*
@@ -1062,6 +1073,12 @@ init386(first_avail)
 
 	proc0.p_addr = proc0paddr;
 
+	/*
+	 * Initialize the I/O port extent map.
+	 */
+	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
+	    ioport_ex_storage, sizeof(ioport_ex_storage), EX_NOWAIT);
+
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/* make gdt gates and memory segments */
@@ -1436,4 +1453,41 @@ bus_mem_unmap(t, memh, size)
 #endif
 
 	kmem_free(kernel_map, va, endva - va);
+}
+
+int
+bus_io_map(t, port, size, iohp)
+	bus_chipset_tag_t t;
+	bus_io_addr_t port;
+	bus_io_size_t size;
+	bus_io_handle_t *iohp;
+{
+	extern struct extent *ioport_ex;
+	int error;
+
+	error = extent_alloc_region(ioport_ex, port, size,
+	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+	if (error)
+		return (error);
+
+	*iohp = port;
+	return (0);
+}
+
+void
+bus_io_unmap(t, ioh, size)
+	bus_chipset_tag_t t;
+	bus_io_handle_t ioh;
+	bus_io_size_t size;
+{
+	extern struct extent *ioport_ex;
+	int error;
+
+	error = extent_free(ioport_ex, ioh, size,
+	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+	if (error) {
+		printf("bus_io_unmap: port 0x%x, size 0x%x\n",
+		    ioh, size);
+		printf("bus_io_unmap: can't free region\n");
+	}
 }
