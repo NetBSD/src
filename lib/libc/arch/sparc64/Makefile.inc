@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/12/19 21:17:59 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/02/05 07:54:01 jmc Exp $
 
 KMINCLUDES= arch/sparc64/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
@@ -36,3 +36,16 @@ urem.S: ${.CURDIR}/arch/sparc64/gen/divrem.m4
 	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	@chmod 444 ${.TARGET}
+
+.PATH: ${ARCHDIR}/softfloat
+SRCS+= qp.c
+CPPFLAGS+=	-DSOFTQUADFLOAT_FOR_GCC
+.if ${MKSOFTFLOAT} != "no"
+.include <softfloat/Makefile.inc>
+.else
+#
+# Can't directly use softfloat.c due to .PATH issues with the other source
+# in softfloat. Just provide a wrapper which pulls it in via a #include
+SRCS+= softfloat-wrapper.c
+CPPFLAGS+=      -I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat
+.endif
