@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.20 2004/06/06 01:36:25 christos Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.21 2004/06/07 18:41:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -119,10 +119,10 @@
 #ifndef __lint__
 #define	__link_set_make_entry(set, sym)					\
 	static void const * const __link_set_##set##_sym_##sym		\
-	    __section("link_set_" #set) __unused = &sym
+	    __section("link_set_" #set) __used = &sym
 #define	__link_set_make_entry2(set, sym, n)				\
 	static void const * const __link_set_##set##_sym_##sym##_##n	\
-	    __section("link_set_" #set) __unused = &sym[n]
+	    __section("link_set_" #set) __used = &sym[n]
 #else
 #define	__link_set_make_entry(set, sym)					\
 	extern void const * const __link_set_##set##_sym_##sym
