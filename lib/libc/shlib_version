@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.148 2004/03/25 19:36:27 atatat Exp $
+#	$NetBSD: shlib_version,v 1.149 2004/04/21 00:02:46 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -15,4 +15,4 @@
 # - libc/arch/vax/gen/is{inf,nan}.c: remove
 #
 major=12
-minor=114
+minor=115
