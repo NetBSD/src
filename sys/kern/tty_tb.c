@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.16 1994/12/13 20:03:13 mycroft Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.17 1995/05/10 16:53:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/tablet.h>
 #include <sys/ioctl.h>
+#include <sys/ioctl_compat.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
 

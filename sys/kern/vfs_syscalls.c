@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.51 1995/03/09 12:05:45 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.52 1995/05/10 16:53:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1129,8 +1129,8 @@ lseek(p, uap, retval)
 	return (0);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) \
-    || defined (COMPAT_LINUX)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
+    defined (COMPAT_LINUX) || defined(COMPAT_HPUX)
 /*
  * Reposition read/write file offset.
  */
@@ -1159,7 +1159,7 @@ compat_43_lseek(p, uap, retval)
 	*(long *)retval = qret;
 	return (error);
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 || COMPAT_LINUX */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 || COMPAT_LINUX || COMPAT_HPUX */
 
 /*
  * Check access permissions.
@@ -1800,7 +1800,8 @@ ftruncate(p, uap, retval)
 	return (error);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+    defined(COMPAT_HPUX)
 /*
  * Truncate a file given its path name.
  */
