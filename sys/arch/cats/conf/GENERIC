@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 2001/06/12 08:27:08 chris Exp $
+#	$NetBSD: GENERIC,v 1.4 2001/06/16 05:47:37 tsutsui Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -238,16 +238,16 @@ de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
-#epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
-#fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
-#sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21040
 #options 	TLP_MATCH_21041
 #options 	TLP_MATCH_21140
@@ -259,12 +259,12 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
 #icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
-#inphy*	at mii? phy ?			# Intel 82555 PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 #nsphyter* at mii? phy ?		# NS83843 PHYs
-#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
 #tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
