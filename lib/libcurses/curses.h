@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.84 2004/03/22 18:57:38 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.85 2004/03/23 21:35:29 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -306,8 +306,8 @@ extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 
-#define	ERR	(0)			/* Error return. */
-#define	OK	(1)			/* Success return. */
+#define	ERR	(-1)			/* Error return. */
+#define	OK	(0)			/* Success return. */
 
 /*
  * The following have, traditionally, been macros but X/Open say they
