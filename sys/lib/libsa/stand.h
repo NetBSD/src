@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.16 1996/10/13 02:29:07 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.17 1996/11/30 04:20:14 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -116,6 +116,7 @@ int	dkcksum __P((struct disklabel *));
 
 void	printf __P((const char *, ...));
 void	sprintf __P((char *, const char *, ...));
+void	vprintf __P((const char *, ...));
 void	twiddle __P((void));
 void	gets __P((char *));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
