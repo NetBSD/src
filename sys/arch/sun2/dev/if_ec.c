@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.8 2003/07/15 03:36:11 lukem Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.9 2003/10/30 07:47:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.8 2003/07/15 03:36:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.9 2003/10/30 07:47:57 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -330,6 +330,7 @@ ec_start(ifp)
 	int s;
 	u_int count, realcount;
 	bus_size_t off;
+	static u_int8_t padding[ETHER_MIN_LEN - ETHER_CRC_LEN] = {0};
 
 	s = splnet();
 
@@ -352,8 +353,7 @@ ec_start(ifp)
 #endif
 
 	/* Size the packet. */
-	for (count = EC_BUF_SZ, m = m0; m != NULL; m = m->m_next)
-		count -= m->m_len;
+	count = EC_BUF_SZ - m0->m_pkthdr.len;
 
 	/* Copy the packet into the xmit buffer. */
 	realcount = MIN(count, EC_PKT_MAXTDOFF);
@@ -361,11 +361,8 @@ ec_start(ifp)
 	for (off = realcount, m = m0; m != 0; off += m->m_len, m = m->m_next)
 		ec_copyout(sc, mtod(m, u_int8_t *), ECREG_TBUF + off, m->m_len);
 	m_freem(m0);
-#if 0
-	bus_space_set_region_1(sc->sc_iot, sc->sc_ioh, ECREG_TBUF + off, 0,
-	    count - realcount);
-#endif
-	w16zero((u_int8_t *)(ECREG_TBUF + off), count - realcount);
+	if (count - realcount)
+		ec_copyout(sc, padding, ECREG_TBUF + off, count - realcount);
 
 	/* Enable the transmitter. */
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_PA) | EC_CSR_TBSW | EC_CSR_TINT | EC_CSR_JINT);
