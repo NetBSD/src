@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 2001/04/06 16:48:11 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4 2001/05/06 14:25:09 simonb Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -291,9 +291,9 @@ const struct opcode opcodes_1f[] = {
 	{ "tlbsync",	0xfc0007fe, 0x7c00046c, 0 },
 	{ "lfsux",	0xfc0007fe, 0x7c00046e, Op_D | Op_A | Op_B },
 	{ "mfsr",	0xfc0007fe, 0x7c0004a6, Op_D | Op_SR },
-	{ "iswi",	0xfc0007fe, 0x7c0004a6, Op_D | Op_A | Op_NB },
+	{ "iswi",	0xfc0007fe, 0x7c0004aa, Op_D | Op_A | Op_NB },
 	{ "sync",	0xfc0007fe, 0x7c0004ac, 0 },
-	{ "lfdx",	0xfc0007fe, 0x7c0004ac, Op_D | Op_A | Op_B },
+	{ "lfdx",	0xfc0007fe, 0x7c0004ae, Op_D | Op_A | Op_B },
 	{ "lfdux",	0xfc0007fe, 0x7c0004ec, Op_D | Op_A | Op_B },
 	{ "mfsrin",	0xfc0007fe, 0x7c000526, Op_D | Op_B },
 	{ "stswx",	0xfc0007fe, 0x7c00052a, Op_S | Op_A | Op_B },
