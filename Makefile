@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 1999/02/16 03:37:26 cjs Exp $
+#	$NetBSD: Makefile,v 1.88 1999/02/17 08:00:52 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -105,11 +105,6 @@ build: beforeinstall
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
 	    ${MAKE} MKMAN=no install)
-.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
-	(cd ${.CURDIR}/domestic/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
-	    ${MAKE} MKMAN=no install)
-.endif
 	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} _BUILD= install
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/domestic && ${MAKE} ${_J} _SLAVE_BUILD= build)
