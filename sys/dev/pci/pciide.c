@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.18 1998/11/21 15:55:31 drochner Exp $	*/
+/*	$NetBSD: pciide.c,v 1.19 1998/11/24 19:54:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -686,16 +686,14 @@ int
 pciide_compat_intr(arg)
 	void *arg;
 {
-	struct channel_softc *wdc_cp = arg;
+	struct pciide_channel *cp = arg;
 
 #ifdef DIAGNOSTIC
-	struct pciide_softc *sc = (struct pciide_softc*)wdc_cp->wdc;
-	struct pciide_channel *cp = &sc->pciide_channels[wdc_cp->channel];
 	/* should only be called for a compat channel */
 	if (cp->compat == 0)
 		panic("pciide compat intr called for non-compat chan %p\n", cp);
 #endif
-	return (wdcintr(wdc_cp));
+	return (wdcintr(&cp->wdc_channel));
 }
 
 int
@@ -1019,7 +1017,7 @@ pciide_map_compat_intr(sc, pa, cp, compatchan, interface)
 		return;
 
 	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_dev,
-	    pa, compatchan, pciide_compat_intr, wdc_cp);
+	    pa, compatchan, pciide_compat_intr, cp);
 	if (cp->ih == NULL) {
 		printf("%s: no compatibility interrupt for use by %s "
 		    "channel\n", sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
