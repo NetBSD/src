@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.63.4.1 2003/10/22 04:03:00 jmc Exp $
+	$NetBSD: syscalls.master,v 1.63.4.2 2004/05/11 14:30:38 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -329,7 +329,7 @@
 			    linux_off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
-194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \
+194	STD		{ int linux_sys_ftruncate64(int fd, \
 			    off_t length); }
 195	STD		{ int linux_sys_stat64(const char *path, \
 			    struct linux_stat64 *sp); }
