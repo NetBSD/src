@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.21 1997/10/10 01:53:32 fvdl Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.22 1997/10/12 23:13:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -109,6 +109,7 @@ struct nfsnode {
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
 	time_t			n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
+	time_t			n_nctime;	/* Last neg cache entry (dir) */
 	time_t			n_expiry;	/* Lease expiry time */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vnode		*n_vnode;	/* associated vnode */
