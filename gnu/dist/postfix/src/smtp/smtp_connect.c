@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.11 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.12 2004/07/28 23:19:42 heas Exp $	*/
 
 /*++
 /* NAME
@@ -351,6 +351,7 @@ int     smtp_connect(SMTP_STATE *state)
 	    if (++addr_count == var_smtp_mxaddr_limit)
 		next = 0;
 	    if ((state->session = smtp_connect_addr(addr, port, why)) != 0) {
+		state->features = 0;		/* XXX should be SESSION info */
 		if (++sess_count == var_smtp_mxsess_limit)
 		    next = 0;
 		state->final_server = (cpp[1] == 0 && next == 0);
@@ -358,13 +359,20 @@ int     smtp_connect(SMTP_STATE *state)
 		debug_peer_check(state->session->host, state->session->addr);
 		if (smtp_helo(state, misc_flags) == 0)
 		    smtp_xfer(state);
-		if (state->history != 0
-		    && (state->error_mask & name_mask(VAR_NOTIFY_CLASSES,
-				     mail_error_masks, var_notify_classes)))
-		    smtp_chat_notify(state);
+		if (state->history != 0) {
+		    if (state->error_mask & name_mask(VAR_NOTIFY_CLASSES,
+				      mail_error_masks, var_notify_classes))
+			smtp_chat_notify(state);
+		    smtp_chat_reset(state);
+		}
+		state->error_mask = 0;
+		state->size_limit = 0;
 		/* XXX smtp_xfer() may abort in the middle of DATA. */
 		smtp_session_free(state->session);
 		state->session = 0;
+#ifdef USE_SASL_AUTH
+		smtp_sasl_cleanup(state);
+#endif
 		debug_peer_restore();
 		smtp_rcpt_cleanup(state);
 	    } else {

@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.9 2004/05/20 22:06:52 dan Exp $
+#	$NetBSD: master.cf,v 1.10 2004/07/28 23:19:42 heas Exp $
 #
 #
 # Postfix master process configuration file.  Each logical line 

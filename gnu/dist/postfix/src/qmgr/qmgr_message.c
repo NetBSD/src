@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.11 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.12 2004/07/28 23:19:42 heas Exp $	*/
 
 /*++
 /* NAME
@@ -982,10 +982,9 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * agent resources. We use recipient@nexthop as queue name rather
 	 * than the actual recipient domain name, so that one recipient in
 	 * multiple equivalent domains cannot evade the per-recipient
-	 * concurrency limit. XXX Should split the address on the recipient
-	 * delimiter if one is defined, but doing a proper job requires
-	 * knowledge of local aliases. Yuck! I don't want to duplicate
-	 * delivery-agent specific knowledge in the queue manager.
+	 * concurrency limit. Split the address on the recipient delimiter if
+	 * one is defined, so that extended addresses don't get extra
+	 * delivery slots.
 	 * 
 	 * Fold the result to lower case so that we don't have multiple queues
 	 * for the same name.
@@ -993,18 +992,32 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * Important! All recipients in a queue must have the same nexthop
 	 * value. It is OK to have multiple queues with the same nexthop
 	 * value, but only when those queues are named after recipients.
+	 * 
+	 * The single-recipient code below was written for local(8) like
+	 * delivery agents, and assumes that all domains that deliver to the
+	 * same (transport + nexthop) are aliases for $nexthop. Delivery
+	 * concurrency is changed from per-domain into per-recipient, by
+	 * changing the queue name from nexthop into localpart@nexthop.
+	 * 
+	 * XXX This assumption is incorrect when different destinations share
+	 * the same (transport + nexthop). In reality, such transports are
+	 * rarely configured to use single-recipient deliveries. The fix is
+	 * to decouple the per-destination recipient limit from the
+	 * per-destination concurrency.
 	 */
 	vstring_strcpy(queue_name, STR(reply.nexthop));
 	if (strcmp(transport->name, MAIL_SERVICE_ERROR) != 0
 	    && transport->recipient_limit == 1) {
+	    /* Copy the recipient localpart. */
 	    at = strrchr(STR(reply.recipient), '@');
 	    len = (at ? (at - STR(reply.recipient))
 		   : strlen(STR(reply.recipient)));
-	    VSTRING_SPACE(queue_name, len + 2);
-	    memmove(STR(queue_name) + len + 1, STR(queue_name),
-		    LEN(queue_name) + 1);
-	    memcpy(STR(queue_name), STR(reply.recipient), len);
-	    STR(queue_name)[len] = '@';
+	    vstring_strncpy(queue_name, STR(reply.recipient), len);
+	    /* Remove the address extension from the recipient localpart. */
+	    if (*var_rcpt_delim && split_addr(STR(queue_name), *var_rcpt_delim))
+		vstring_truncate(queue_name, strlen(STR(queue_name)));
+	    /* Assume the recipient domain is equivalent to nexthop. */
+	    vstring_sprintf_append(queue_name, "@%s", STR(reply.nexthop));
 	}
 	lowercase(STR(queue_name));
 
