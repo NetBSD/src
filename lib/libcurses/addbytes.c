@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.23 2002/07/19 13:22:41 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.24 2002/12/23 12:26:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.23 2002/07/19 13:22:41 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.24 2002/12/23 12:26:07 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -173,27 +173,27 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			    y, x, *win->lines[y]->firstchp,
 			    *win->lines[y]->lastchp);
 #endif
-			if (lp->line[x].ch != c ||
-			    lp->line[x].attr != attributes ||
-			    lp->line[x].bch != win->bch ||
-			    lp->line[x].battr != win->battr) {
-				newx = x + win->ch_off;
-				lp->flags |= __ISDIRTY;
-				/*
-				 * firstchp/lastchp are shared between
-				 * parent window and sub-window.
-				 */
-				if (newx < *lp->firstchp)
-					*lp->firstchp = newx;
-				if (newx > *lp->lastchp)
-					*lp->lastchp = newx;
+			/*
+			 * Always update the change pointers.  Otherwise,
+			 * we could end up not displaying 'blank' characters
+			 * when overlapping windows are displayed.
+			 */
+			newx = x + win->ch_off;
+			lp->flags |= __ISDIRTY;
+			/*
+			 * firstchp/lastchp are shared between
+			 * parent window and sub-window.
+			 */
+			if (newx < *lp->firstchp)
+				*lp->firstchp = newx;
+			if (newx > *lp->lastchp)
+				*lp->lastchp = newx;
 #ifdef DEBUG
-				__CTRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
-				    *lp->firstchp, *lp->lastchp,
-				    *lp->firstchp - win->ch_off,
-				    *lp->lastchp - win->ch_off);
+			__CTRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
+			    *lp->firstchp, *lp->lastchp,
+			    *lp->firstchp - win->ch_off,
+			    *lp->lastchp - win->ch_off);
 #endif
-			}
 			lp->line[x].ch = c;
 			lp->line[x].bch = win->bch;
 			lp->line[x].attr = attributes;
