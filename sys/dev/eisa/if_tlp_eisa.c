@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.11 2002/10/02 16:33:47 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.12 2004/08/23 05:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.11 2002/10/02 16:33:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.12 2004/08/23 05:50:02 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -118,15 +118,15 @@ struct tulip_eisa_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-int	tlp_eisa_match __P((struct device *, struct cfdata *, void *));
-void	tlp_eisa_attach __P((struct device *, struct device *, void *));
+static int	tlp_eisa_match(struct device *, struct cfdata *, void *);
+static void	tlp_eisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tlp_eisa, sizeof(struct tulip_eisa_softc),
     tlp_eisa_match, tlp_eisa_attach, NULL, NULL);
 
-const int tlp_eisa_irqs[] = { 5, 9, 10, 11 };
+static const int tlp_eisa_irqs[] = { 5, 9, 10, 11 };
 
-const struct tulip_eisa_product {
+static const struct tulip_eisa_product {
 	const char	*tep_eisaid;	/* EISA ID */
 	const char	*tep_name;	/* device name */
 	tulip_chip_t	tep_chip;	/* base Tulip chip type */
@@ -138,12 +138,8 @@ const struct tulip_eisa_product {
 	  TULIP_CHIP_INVALID },
 };
 
-const struct tulip_eisa_product *tlp_eisa_lookup
-    __P((const struct eisa_attach_args *));
-
-const struct tulip_eisa_product *
-tlp_eisa_lookup(ea)
-	const struct eisa_attach_args *ea;
+static const struct tulip_eisa_product *
+tlp_eisa_lookup(const struct eisa_attach_args *ea)
 {
 	const struct tulip_eisa_product *tep;
 
@@ -154,11 +150,8 @@ tlp_eisa_lookup(ea)
 	return (NULL);
 }
 
-int
-tlp_eisa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+tlp_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
@@ -168,10 +161,8 @@ tlp_eisa_match(parent, match, aux)
 	return (0);
 }
 
-void
-tlp_eisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	static const u_int8_t testpat[] =
 	    { 0xff, 0, 0x55, 0xaa, 0xff, 0, 0x55, 0xaa };
