@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.361 2001/09/27 07:10:38 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.362 2001/09/28 22:06:26 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.358 2001/09/27 07:09:27 itojun Exp 
+ *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
  */
 
 /*
@@ -2773,19 +2773,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82452)",
+	    "i82452 Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_FIBER,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82453)",
+	    "i82453 Gigabit Ethernet (1000BASE-X)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_SC,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
+	    "i82453-SC Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_COPPER,
+	    0,
+	    "Intel",
+	    "i82543 Gigabit Ethernet (1000BASE-T)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
