@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.h	8.3 (Berkeley) 1/21/94
- *	$Id: conf.h,v 1.11 1994/05/05 05:40:05 cgd Exp $
+ *	$Id: conf.h,v 1.12 1994/05/11 04:29:11 mycroft Exp $
  */
 
 /*
@@ -54,7 +54,7 @@ struct bdevsw {
 				     struct proc *p));
 	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
 				     struct proc *p));
-	int	(*d_strategy)	__P((struct buf *bp));
+	void	(*d_strategy)	__P((struct buf *bp));
 	int	(*d_ioctl)	__P((dev_t dev, int cmd, caddr_t data,
 				     int fflag, struct proc *p));
 	int	(*d_dump)	();	/* parameters vary by architecture */
@@ -80,7 +80,7 @@ struct cdevsw {
 	struct	tty **d_ttys;
 	int	(*d_select)	__P((dev_t dev, int which, struct proc *p));
 	int	(*d_mmap)	__P(());
-	int	(*d_strategy)	__P((struct buf *bp));
+	void	(*d_strategy)	__P((struct buf *bp));
 };
 
 #ifdef KERNEL
