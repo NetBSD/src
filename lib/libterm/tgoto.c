@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.19 2001/01/09 07:18:50 lukem Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.20 2002/06/26 18:08:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.19 2001/01/09 07:18:50 lukem Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.20 2002/06/26 18:08:49 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <assert.h>
 #include <errno.h>
-#include <string.h>
 #include <termcap.h>
 #include <termcap_private.h>
 #include <stdlib.h>
@@ -108,18 +107,22 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 	char *buffer;
 	size_t limit;
 {
-	static char added[10];
+	char added[10];
 	const char *cp = CM;
 	char *dp = buffer;
 	int c;
 	int oncol = 0;
 	int which = destline;
+	char *buf_lim = buffer + limit;
+	char dig_buf[3 * sizeof(which)];
+	char *ap = added;
+	char *eap = &added[sizeof(added) / sizeof(added[0])];
+	int k;
 
 	/* CM is checked below */
 	_DIAGASSERT(buffer != NULL);
 
-	if (info != NULL)
-	{
+	if (info != NULL) {
 		if (!UP)
 			UP = info->up;
 		if (!BC)
@@ -128,69 +131,46 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 
 	if (cp == 0) {
 		errno = EINVAL;
-toohard:
 		return -1;
 	}
 	added[0] = '\0';
 	while ((c = *cp++) != '\0') {
-		if (c != '%') {
-copy:
+		if (c != '%' || ((c = *cp++) == '%')) {
 			*dp++ = c;
-			if (dp >= &buffer[limit])
-			{
+			if (dp >= buf_lim) {
 				errno = E2BIG;
-				goto toohard;
+				return -1;
 			}
 			continue;
 		}
-		switch (c = *cp++) {
+		switch (c) {
 
 #ifdef CM_N
 		case 'n':
 			destcol ^= 0140;
 			destline ^= 0140;
-			goto setwhich;
+			/* flip oncol here so it doesn't actually change */
+			oncol = 1 - oncol;
+			break;
 #endif
 
-		case 'd':
-			if (which < 10)
-				goto one;
-			if (which < 100)
-				goto two;
-			/* FALLTHROUGH */
-
 		case '3':
-			if (which >= 1000) {
-				errno = E2BIG;
-				goto toohard;
-			}
-			*dp++ = (which / 100) | '0';
-			if (dp >= &buffer[limit]) {
-				errno = E2BIG;
-				goto toohard;
-			}
-			which %= 100;
-			/* FALLTHROUGH */
-
 		case '2':
-two:
-			*dp++ = which / 10 | '0';
-			if (dp >= &buffer[limit]) {
+		case 'd':
+			/* Generate digits into temp buffer in reverse order */
+			k = 0;
+			do
+				dig_buf[k++] = which % 10 | '0';
+			while ((which /= 10) != 0);
+			if (dp + k >= buf_lim) {
 				errno = E2BIG;
-				goto toohard;
+				return -1;
 			}
-one:
-			*dp++ = which % 10 | '0';
-			if (dp >= &buffer[limit]) {
-				errno = E2BIG;
-				goto toohard;
-			}
-			
-swap:
-			oncol = 1 - oncol;
-setwhich:
-			which = oncol ? destcol : destline;
-			continue;
+			/* then unwind into callers buffer */
+			do
+				*dp++ = dig_buf[--k];
+			while (k);
+			break;
 
 #ifdef CM_GT
 		case '>':
@@ -225,7 +205,8 @@ setwhich:
 			 * because some terminals use ^I for other things,
 			 * like nondestructive space.
 			 */
-			if (which == 0 || which == CTRL('d') || /* which == '\t' || */ which == '\n') {
+			if (which == 0 || which == CTRL('d') || 
+			    /* which == '\t' || */ which == '\n') {
 				if (oncol || UP) { /* Assumption: backspace works */
 					char *add = oncol ? (BC ? BC : "\b") : UP;
 
@@ -234,28 +215,27 @@ setwhich:
 					 * to be the successor of tab.
 					 */
 					do {
-						if (strlen(added) + strlen(add) >= sizeof(added))
-						{
-							errno = E2BIG;
-							goto toohard;
-						}
-						
-						(void)strcat(added, add);
+						char *as = add;
+
+						while ((*ap++ = *as++) != '\0')
+							if (ap >= eap) {
+								errno = E2BIG;
+								return -1;
+							}
 						which++;
 					} while (which == '\n');
 				}
 			}
 			*dp++ = which;
-			if (dp >= &buffer[limit])
-			{
+			if (dp >= buf_lim) {
 				errno = E2BIG;
-				goto toohard;
+				return -1;
 			}
-			goto swap;
+			break;
 
 		case 'r':
-			oncol = 1;
-			goto setwhich;
+			oncol = 0;
+			break;
 
 		case 'i':
 			destcol++;
@@ -263,32 +243,35 @@ setwhich:
 			which++;
 			continue;
 
-		case '%':
-			goto copy;
-
 #ifdef CM_B
 		case 'B':
-			which = (which/10 << 4) + which%10;
+			which = (which / 10 << 4) + which % 10;
 			continue;
 #endif
 
 #ifdef CM_D
 		case 'D':
-			which = which - 2 * (which%16);
+			which = which - 2 * (which % 16);
 			continue;
 #endif
 
 		default:
 			errno = EINVAL;
-			goto toohard;
+			return -1;
 		}
+
+		/* flip to other number... */
+		oncol = 1 - oncol;
+		which = oncol ? destcol : destline;
 	}
-	if (dp + strlen(added) >= &buffer[limit])
-	{
+	if (dp + (ap - added) >= buf_lim) {
 		errno = E2BIG;
-		goto toohard;
+		return -1;
 	}
 
-	(void)strcpy(dp, added);
+	*ap = '\0';
+	while ((*dp++ = *ap++) != '\0')
+	    continue;
+
 	return 0;
 }
