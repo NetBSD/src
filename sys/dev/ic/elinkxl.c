@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.57 2001/10/01 09:26:29 yamt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.58 2001/10/03 06:58:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1131,8 +1131,6 @@ ex_intr(arg)
 		return (0);
 
 	for (;;) {
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
-
 		stat = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
 		if ((stat & S_MASK) == 0) {
@@ -1151,7 +1149,7 @@ ex_intr(arg)
 		 * Acknowledge interrupts.
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
-				  (stat & S_MASK));
+				  (stat & (S_MASK | S_INTR_LATCH)));
 		if (sc->intr_ack)
 			(*sc->intr_ack)(sc);
 
