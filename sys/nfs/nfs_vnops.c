@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.37 1994/08/08 19:29:29 deraadt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.38 1994/08/13 08:46:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1119,11 +1119,23 @@ nfs_remove(ap)
 	caddr_t bpos, dpos;
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct vattr vattr;
 
 	if (vp->v_usecount > 1) {
 		if (!np->n_sillyrename)
 			error = nfs_sillyrename(dvp, vp, cnp);
+		else if (VOP_GETATTR(vp, &vattr, cnp->cn_cred, cnp->cn_proc)
+			 == 0 && vattr.va_nlink > 1)
+			/*
+			 * If we already have a silly name but there are more
+			 * than one links, just proceed with the NFS remove
+			 * request, as the bits will remain available (modulo
+			 * network races). This avoids silently ignoring the
+			 * attempted removal of a non-silly entry.
+			 */
+			goto doit;
 	} else {
+	doit:
 		/*
 		 * Purge the name cache so that the chance of a lookup for
 		 * the name succeeding while the remove is in progress is
