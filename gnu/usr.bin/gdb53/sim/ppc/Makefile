@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/04/02 13:12:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2004/05/23 02:24:51 lukem Exp $
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 .include <bsd.own.mk>
 
@@ -18,10 +16,6 @@ SRCS=	debug.c filter_filename.o bits.c sim-endian.c os_emul.c emul_generic.c \
 	hw_iobus.c hw_htab.c hw_disk.c hw_trace.c hw_register.c hw_vm.c \
 	hw_init.c hw_core.c hw_pal.c hw_com.c hw_eeprom.c hw_opic.c hw_glue.c \
 	hw_phb.c hw_ide.c options.c sim_calls.c callback.o targ-map.c
-
-all: libsim.a
-
-libinstall:
 
 .include <bsd.lib.mk>
 .include "../../Makefile.inc"

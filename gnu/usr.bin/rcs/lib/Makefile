@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 2002/09/19 03:09:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2004/05/23 02:24:51 lukem Exp $
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes
@@ -20,8 +18,5 @@ LIB=	rcs
 SRCS=	maketime.c merger.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
 	rcskeep.c rcskeys.c rcslex.c rcsmap.c rcsrev.c rcssyn.c rcstime.c \
 	rcsutil.c version.c
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2004/05/23 02:24:51 lukem Exp $
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 .include <bsd.own.mk>
 
@@ -13,8 +11,5 @@ DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${LIB}
 
 SRCS=	single_server.c multi_server.c trigger_server.c master_proto.c \
 	mail_flow.c
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>

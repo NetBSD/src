@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.7 2002/09/18 13:31:53 lukem Exp $
+# $NetBSD: Makefile,v 1.8 2004/05/23 02:24:52 lukem Exp $
 
-NOLINT=	# defined
-NOPIC=	# defined
-NOPROFILE=# defined
+MKPRIVATELIB=	yes
 
 LIB    = minires
 SRCS   = res_mkupdate.c res_init.c res_update.c res_send.c res_comp.c \
@@ -13,8 +11,5 @@ SRCS   = res_mkupdate.c res_init.c res_update.c res_send.c res_comp.c \
 DHCPSRCDIR=	minires
 
 CFLAGS += -DMINIRES_LIB
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>

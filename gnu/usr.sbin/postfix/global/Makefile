@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.11 2004/04/27 05:33:55 heas Exp $
+#	$NetBSD: Makefile,v 1.12 2004/05/23 02:24:51 lukem Exp $
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 .include <bsd.own.mk>
 
@@ -38,8 +36,5 @@ SRCS=	abounce.c been_here.c bounce.c bounce_log.c \
 
 # IPv6
 #SRCS+=	wildcard_inet_addr.c
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>

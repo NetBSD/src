@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2003/09/26 19:45:48 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2004/05/23 02:24:51 lukem Exp $
 
 .include <bsd.own.mk>
 
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk)
-MKPIC=no
-MKPROFILE=no  
-MKLINT=no	# lint misses important ifdef magic on 64 bit archs
+MKPRIVATELIB=	yes
 
 TOP=		${NETBSDSRCDIR}/gnu
 DIST=		${TOP}/dist/gdb
@@ -17,8 +15,6 @@ SRCS=		${G_OPCODES_OBJS:.o=.c}
 CPPFLAGS=	-I${.CURDIR}  -I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/include -I${DIST}/bfd -I${.CURDIR}/../bfd \
 		-DHAVE_CONFIG_H
-
-libinstall::
 
 .endif
 

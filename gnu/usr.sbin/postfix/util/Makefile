@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.11 2004/04/27 05:33:56 heas Exp $
+#	$NetBSD: Makefile,v 1.12 2004/05/23 02:24:51 lukem Exp $
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 .include <bsd.own.mk>
 
@@ -44,8 +42,5 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 
 # IPv6
 #SRCS+=	get_port.c
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
