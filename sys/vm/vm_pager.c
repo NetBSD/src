@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.21 1996/03/16 23:15:25 christos Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.22 1996/10/10 17:16:25 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -340,8 +340,8 @@ vm_pager_unmap_pages(kva, npages)
 		if (m->flags & PG_PAGEROWNED)
 			m->flags &= ~PG_PAGEROWNED;
 		else
-			printf("vm_pager_unmap_pages: %p(%lx/%lx) not owned\n",
-			       m, va, VM_PAGE_TO_PHYS(m));
+			kprintf("vm_pager_unmap_pages: %p(%lx/%lx) not owned\n",
+			    m, va, VM_PAGE_TO_PHYS(m));
 	}
 #endif
 	pmap_remove(vm_map_pmap(pager_map), kva, kva + size);

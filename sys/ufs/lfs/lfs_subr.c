@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.3 1996/02/09 22:28:55 christos Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.4 1996/10/10 17:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -152,7 +152,7 @@ lfs_segunlock(fs)
 			free((*sp->bpp)->b_data, M_SEGMENT);
 			free(*sp->bpp, M_SEGMENT);
 		} else
-			printf ("unlock to 0 with no summary");
+			kprintf ("unlock to 0 with no summary");
 		free(sp->bpp, M_SEGMENT);
 		free(sp, M_SEGMENT);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.6 1996/09/01 23:49:27 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.7 1996/10/10 17:21:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -300,7 +300,7 @@ lfs_truncate(v)
 
 #ifdef DIAGNOSTIC
 	if (ip->i_blocks < fsbtodb(fs, blocksreleased)) {
-		printf("lfs_truncate: block count < 0\n");
+		kprintf("lfs_truncate: block count < 0\n");
 		blocksreleased = ip->i_blocks;
 	}
 #endif
@@ -334,7 +334,7 @@ lfs_truncate(v)
 	blocksreleased = fsbtodb(fs, i_released);
 #ifdef DIAGNOSTIC
 	if (blocksreleased > ip->i_blocks) {
-		printf("lfs_inode: Warning! %s\n",
+		kprintf("lfs_inode: Warning! %s\n",
 		    "more blocks released from inode than are in inode");
 		blocksreleased = ip->i_blocks;
 	}
@@ -343,7 +343,7 @@ lfs_truncate(v)
 	ip->i_blocks -= blocksreleased;
 #ifdef DIAGNOSTIC
 	if (length == 0 && ip->i_blocks != 0)
-		printf("lfs_inode: Warning! %s%d%s\n",
+		kprintf("lfs_inode: Warning! %s%d%s\n",
 		    "Truncation to zero, but ", ip->i_blocks,
 		    " blocks left on inode");
 #endif

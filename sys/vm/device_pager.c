@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.21 1996/03/16 23:15:18 christos Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.22 1996/10/10 17:16:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -93,7 +93,7 @@ dev_pager_init()
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_init()\n");
+		kprintf("dev_pager_init()\n");
 #endif
 	TAILQ_INIT(&dev_pager_list);
 	TAILQ_INIT(&dev_pager_fakelist);
@@ -115,8 +115,8 @@ dev_pager_alloc(handle, size, prot, foff)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_alloc(%p, %lx, %x, %lx)\n",
-		       handle, size, prot, foff);
+		kprintf("dev_pager_alloc(%p, %lx, %x, %lx)\n",
+		    handle, size, prot, foff);
 #endif
 #ifdef DIAGNOSTIC
 	/*
@@ -196,8 +196,8 @@ top:
 		TAILQ_INSERT_TAIL(&dev_pager_list, pager, pg_list);
 #ifdef DEBUG
 		if (dpagerdebug & DDB_ALLOC) {
-			printf("dev_pager_alloc: pager %p devp %p object %p\n",
-			       pager, devp, object);
+			kprintf("dev_pager_alloc: pager %p devp %p object %p\n",
+			    pager, devp, object);
 			vm_object_print(object, FALSE);
 		}
 #endif
@@ -226,7 +226,7 @@ dev_pager_dealloc(pager)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_dealloc(%p)\n", pager);
+		kprintf("dev_pager_dealloc(%p)\n", pager);
 #endif
 	TAILQ_REMOVE(&dev_pager_list, pager, pg_list);
 	/*
@@ -238,7 +238,7 @@ dev_pager_dealloc(pager)
 	object = devp->devp_object;
 #ifdef DEBUG
 	if (dpagerdebug & DDB_ALLOC)
-		printf("dev_pager_dealloc: devp %p object %p\n", devp, object);
+		kprintf("dev_pager_dealloc: devp %p object %p\n", devp, object);
 #endif
 	/*
 	 * Free up our fake pages.
@@ -267,7 +267,7 @@ dev_pager_getpage(pager, mlist, npages, sync)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_getpage(%p, %p, %x, %x)\n",
+		kprintf("dev_pager_getpage(%p, %p, %x, %x)\n",
 		       pager, mlist, npages, sync);
 #endif
 
@@ -320,8 +320,8 @@ dev_pager_putpage(pager, mlist, npages, sync)
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_putpage(%p, %p, %x, %x)\n",
-		       pager, mlist, npages, sync);
+		kprintf("dev_pager_putpage(%p, %p, %x, %x)\n",
+		    pager, mlist, npages, sync);
 #endif
 	if (pager == NULL)
 		return (FALSE);
@@ -335,7 +335,7 @@ dev_pager_haspage(pager, offset)
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_haspage(%p, %lx)\n", pager, offset);
+		kprintf("dev_pager_haspage(%p, %lx)\n", pager, offset);
 #endif
 	return(TRUE);
 }
