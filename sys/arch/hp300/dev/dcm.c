@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.18 1995/10/04 06:39:06 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.19 1995/10/04 08:39:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -330,7 +330,7 @@ dcmprobe(hd)
 	if (isconsole) {
 		dcmconsinit = 0;
 		dcmsoftCAR[brd] |= (1 << PORT(dcmconsole));
-		printf("dcm%d: console\n");
+		printf("dcm%d: console on port %d\n", brd, PORT(dcmconsole));
 	}
 	return (1);
 }
