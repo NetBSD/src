@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.58 2001/03/05 06:52:12 tron Exp $
+#	$NetBSD: bsd.man.mk,v 1.59 2001/03/05 14:17:06 tron Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -39,13 +39,12 @@ TBL?=		tbl
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1: \
     ${CATDEPS}
 .if !defined(USETBL)
-	@echo "${GROFF} -Wall -mtty-char -mandoc ${.IMPSRC} > ${.TARGET}"
-	@${GROFF} -Wall -mtty-char -mandoc ${.IMPSRC} > ${.TARGET} || \
+	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
+	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || \
 	 (rm -f ${.TARGET}; false)
 .else
-	@echo "${TBL} ${.IMPSRC} | ${GROFF} -Wall -mtty-char -mandoc > ${.TARGET}"
-	@${TBL} ${.IMPSRC} | \
-	 ${GROFF} -Wall -mtty-char -mandoc > ${.TARGET} || \
+	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET}"
+	@${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET} || \
 	 (rm -f ${.TARGET}; false)
 .endif
 
