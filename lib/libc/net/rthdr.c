@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.11 2001/11/04 13:57:30 lukem Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.12 2002/06/27 10:22:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rthdr.c,v 1.11 2001/11/04 13:57:30 lukem Exp $");
+__RCSID("$NetBSD: rthdr.c,v 1.12 2002/06/27 10:22:12 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -123,7 +123,7 @@ inet6_rthdr_add(cmsg, addr, flags)
 	 struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)(void *)rthdr;
 	 if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT) {
 #ifdef DEBUG
-	     fprintf(stderr, "inet6_rthdr_add: unsupported flag(%d)\n", flags);
+	     fprintf(stderr, "inet6_rthdr_add: unsupported flag(%u)\n", flags);
 #endif 
 	     return(-1);
 	 }
@@ -148,7 +148,7 @@ inet6_rthdr_add(cmsg, addr, flags)
      }
      default:
 #ifdef DEBUG
-	 fprintf(stderr, "inet6_rthdr_add: unknown type(%d)\n",
+	 fprintf(stderr, "inet6_rthdr_add: unknown type(%u)\n",
 		 rthdr->ip6r_type);
 #endif 
 	 return(-1);
@@ -174,7 +174,7 @@ inet6_rthdr_lasthop(cmsg, flags)
 	 struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)(void *)rthdr;
 	 if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT) {
 #ifdef DEBUG
-	     fprintf(stderr, "inet6_rthdr_lasthop: unsupported flag(%d)\n", flags);
+	     fprintf(stderr, "inet6_rthdr_lasthop: unsupported flag(%u)\n", flags);
 #endif 
 	     return(-1);
 	 }
@@ -194,7 +194,7 @@ inet6_rthdr_lasthop(cmsg, flags)
      }
      default:
 #ifdef DEBUG
-	 fprintf(stderr, "inet6_rthdr_lasthop: unknown type(%d)\n",
+	 fprintf(stderr, "inet6_rthdr_lasthop: unknown type(%u)\n",
 		 rthdr->ip6r_type);
 #endif 
 	 return(-1);
@@ -235,7 +235,7 @@ inet6_rthdr_segments(cmsg)
 
 	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
 #ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_segments: invalid size(%d)\n",
+	    fprintf(stderr, "inet6_rthdr_segments: invalid size(%u)\n",
 		rt0->ip6r0_len);
 #endif 
 	    return -1;
@@ -246,7 +246,7 @@ inet6_rthdr_segments(cmsg)
 
     default:
 #ifdef DEBUG
-	fprintf(stderr, "inet6_rthdr_segments: unknown type(%d)\n",
+	fprintf(stderr, "inet6_rthdr_segments: unknown type(%u)\n",
 	    rthdr->ip6r_type);
 #endif 
 	return -1;
@@ -272,7 +272,7 @@ inet6_rthdr_getaddr(cmsg, idx)
 
 	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
 #ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_getaddr: invalid size(%d)\n",
+	    fprintf(stderr, "inet6_rthdr_getaddr: invalid size(%u)\n",
 		rt0->ip6r0_len);
 #endif 
 	    return NULL;
@@ -289,7 +289,7 @@ inet6_rthdr_getaddr(cmsg, idx)
 
     default:
 #ifdef DEBUG
-	fprintf(stderr, "inet6_rthdr_getaddr: unknown type(%d)\n",
+	fprintf(stderr, "inet6_rthdr_getaddr: unknown type(%u)\n",
 	    rthdr->ip6r_type);
 #endif 
 	return NULL;
@@ -317,7 +317,7 @@ inet6_rthdr_getflags(cmsg, idx)
 
 	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
 #ifdef DEBUG
-	    fprintf(stderr, "inet6_rthdr_getflags: invalid size(%d)\n",
+	    fprintf(stderr, "inet6_rthdr_getflags: invalid size(%u)\n",
 		rt0->ip6r0_len);
 #endif 
 	    return -1;
@@ -337,7 +337,7 @@ inet6_rthdr_getflags(cmsg, idx)
 
     default:
 #ifdef DEBUG
-	fprintf(stderr, "inet6_rthdr_getflags: unknown type(%d)\n",
+	fprintf(stderr, "inet6_rthdr_getflags: unknown type(%u)\n",
 	    rthdr->ip6r_type);
 #endif 
 	return -1;

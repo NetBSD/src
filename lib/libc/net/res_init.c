@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.37 2001/09/13 11:05:02 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.38 2002/06/27 10:22:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.37 2001/09/13 11:05:02 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.38 2002/06/27 10:22:11 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -330,7 +330,7 @@ res_init()
 		    hints.ai_family = PF_UNSPEC;
 		    hints.ai_socktype = SOCK_DGRAM;
 		    hints.ai_flags = AI_NUMERICHOST;
-		    snprintf(pbuf, sizeof(pbuf), "%d", NAMESERVER_PORT);
+		    snprintf(pbuf, sizeof(pbuf), "%u", NAMESERVER_PORT);
 		    res = NULL;
 		    if (getaddrinfo(cp, pbuf, &hints, &res) == 0 &&
 			minsiz >= res->ai_addrlen) {
@@ -540,7 +540,7 @@ res_setoptions(options, source)
 				_res.ndots = RES_MAXNDOTS;
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
-				printf(";;\tndots=%d\n", _res.ndots);
+				printf(";;\tndots=%u\n", _res.ndots);
 #endif
 		} else if (!strncmp(cp, "debug", sizeof("debug") - 1)) {
 #ifdef DEBUG
