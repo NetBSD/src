@@ -1,4 +1,4 @@
-.\"	$NetBSD: err.3,v 1.11 2001/02/19 22:20:15 cgd Exp $
+.\" $NetBSD: err.3,v 1.12 2001/03/22 01:47:17 cgd Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)err.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd March 21, 2001
 .Dt ERR 3
 .Os
 .Sh NAME
@@ -51,13 +51,13 @@
 .Sh SYNOPSIS
 .Fd #include <err.h>
 .Ft void
-.Fn err "int eval" "const char *fmt" "..."
+.Fn err "int status" "const char *fmt" "..."
 .Ft void
-.Fn verr "int eval" "const char *fmt" "va_list args"
+.Fn verr "int status" "const char *fmt" "va_list args"
 .Ft void
-.Fn errx "int eval" "const char *fmt" "..."
+.Fn errx "int status" "const char *fmt" "..."
 .Ft void
-.Fn verrx "int eval" "const char *fmt" "va_list args"
+.Fn verrx "int status" "const char *fmt" "va_list args"
 .Ft void
 .Fn warn "const char *fmt" "..."
 .Ft void
@@ -98,21 +98,32 @@ The
 .Fn errx ,
 and
 .Fn verrx
-functions do not return, but exit with the value of the argument
-.Fa eval .
+functions do not return, but instead cause the program to terminate
+with the status value given by the argument
+.Fa status .
+It is often appropriate to use the value
+.Dv EXIT_FAILURE ,
+defined in
+.Aq Ar stdlib.h ,
+as the
+.Fa status
+argument given to these functions.
 .Sh EXAMPLES
-Display the current errno information string and exit:
+Display the current
+.Va errno
+information string and terminate with status indicating failure:
 .Bd -literal -offset indent
 if ((p = malloc(size)) == NULL)
-	err(1, NULL);
+	err(EXIT_FAILURE, NULL);
 if ((fd = open(file_name, O_RDONLY, 0)) == -1)
-	err(1, "%s", file_name);
+	err(EXIT_FAILURE, "%s", file_name);
 .Ed
 .Pp
-Display an error message and exit:
+Display an error message and terminate with status indicating failure:
 .Bd -literal -offset indent
 if (tm.tm_hour < START_TIME)
-	errx(1, "too early, wait until %s", start_time_string);
+	errx(EXIT_FAILURE, "too early, wait until %s",
+	    start_time_string);
 .Ed
 .Pp
 Warn of an error:
@@ -124,6 +135,7 @@ if ((fd = open(block_device, O_RDONLY, 0)) == -1)
 	warn("%s", block_device);
 .Ed
 .Sh SEE ALSO
+.Xr exit 3 ,
 .Xr getprogname 3 ,
 .Xr strerror 3
 .Sh HISTORY
