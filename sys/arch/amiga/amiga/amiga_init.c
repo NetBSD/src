@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.77.4.2 2003/01/12 00:03:12 jmc Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.77.4.3 2003/06/30 03:22:24 grant Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.77.4.2 2003/01/12 00:03:12 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.77.4.3 2003/06/30 03:22:24 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,6 +714,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	 */
 	RELOC(protorp[1], u_int) = RELOC(Sysseg_pa, u_int);	/* + segtable address */
 
+	RELOC(start_c_fphystart, u_int) = fphystart;
+	RELOC(start_c_pstart, u_int) = pstart;
+
 	/*
 	 * copy over the kernel (and all now initialized variables)
 	 * to fastram.  DONT use bcopy(), this beast is much larger
@@ -777,9 +780,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		(RELOC(protorp[0], u_int)) = 0x80000202;
 		asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
 	}
-
-	RELOC(start_c_fphystart, u_int) = fphystart;
-	RELOC(start_c_pstart, u_int) = pstart;
 }
 
 void
