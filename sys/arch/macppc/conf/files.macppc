@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.24 1999/10/15 06:43:05 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.25 1999/10/15 07:16:16 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -170,7 +170,7 @@ include "dev/usb/files.usb"
 # XXX dev/pcmcia needs fdc
 device fdc {drive = -1}
 
-include "dev/files.cardbus"
+include "dev/cardbus/files.cardbus"
 include "dev/pcmcia/files.pcmcia"
 
 file arch/macppc/macppc/rbus_machdep.c		cardbus
