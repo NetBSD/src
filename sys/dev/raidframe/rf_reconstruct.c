@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.85 2005/02/12 03:27:33 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.86 2005/02/12 03:44:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.85 2005/02/12 03:27:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.86 2005/02/12 03:44:41 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1184,7 +1184,7 @@ TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	/* should be ok to use a NULL proc pointer here, all the bufs we use
 	 * should be in kernel space */
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_READ, ctrl->diskOffset, sectorsPerRU, ctrl->rbuf->buffer, psid, which_ru,
-	    ReconReadDoneProc, (void *) ctrl, NULL, 
+	    ReconReadDoneProc, (void *) ctrl,
 #if RF_ACC_TRACE > 0
 				     &raidPtr->recon_tracerecs[col],
 #else
@@ -1372,7 +1372,7 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_WRITE, rbuf->spOffset,
 	    sectorsPerRU, rbuf->buffer,
 	    rbuf->parityStripeID, rbuf->which_ru,
-	    ReconWriteDoneProc, (void *) rbuf, NULL,
+	    ReconWriteDoneProc, (void *) rbuf,
 #if RF_ACC_TRACE > 0
 	    &raidPtr->recon_tracerecs[fcol],
 #else
@@ -1701,7 +1701,7 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					/* use NULL b_proc b/c all addrs
 					 * should be in kernel space */
 					req = rf_CreateDiskQueueData(RF_IO_TYPE_READ, offset + which_ru * sectorsPerRU, sectorsPerRU, new_rbuf->buffer,
-					    psid, which_ru, (int (*) (void *, int)) ForceReconReadDoneProc, (void *) new_rbuf, NULL,
+					    psid, which_ru, (int (*) (void *, int)) ForceReconReadDoneProc, (void *) new_rbuf,
 					    NULL, (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 					new_rbuf->arg = req;

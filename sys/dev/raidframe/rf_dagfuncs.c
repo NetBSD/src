@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.21 2005/02/12 03:27:33 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.22 2005/02/12 03:44:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.21 2005/02/12 03:27:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.22 2005/02/12 03:44:41 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -290,7 +290,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
-	    node, NULL, 
+	    node,
 #if RF_ACC_TRACE > 0
 	     node->dagHdr->tracerec,
 #else
@@ -330,7 +330,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
-	    (void *) node, NULL,
+	    (void *) node,
 #if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
 #else
@@ -364,7 +364,6 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, 
 #if RF_ACC_TRACE > 0
 	     node->dagHdr->tracerec,
 #else
@@ -395,7 +394,6 @@ rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, 
 #if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
 #else
