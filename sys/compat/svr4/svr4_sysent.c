@@ -7,6 +7,7 @@
 
 #include <sys/param.h>
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
@@ -76,7 +77,7 @@ int	getgroups();
 int	setgroups();
 int	fchmod();
 int	fchown();
-int	sigprocmask();
+int	svr4_sigprocmask();
 int	sigaltstack();
 int	sigsuspend();
 int	sigaction();
@@ -84,6 +85,8 @@ int	svr4_sigpending();
 #ifdef NFSSERVER
 #else
 #endif
+int	svr4_waitsys();
+int	svr4_hrtsys();
 int	svr4_mmap();
 int	mprotect();
 int	munmap();
@@ -380,15 +383,15 @@ struct sysent svr4_sysent[] = {
 	    fchmod },				/* 93 = fchmod */
 	{ 3, s(struct fchown_args),
 	    fchown },				/* 94 = fchown */
-	{ 2, s(struct sigprocmask_args),
-	    sigprocmask },			/* 95 = sigprocmask */
+	{ 3, s(struct svr4_sigprocmask_args),
+	    svr4_sigprocmask },			/* 95 = svr4_sigprocmask */
 	{ 2, s(struct sigaltstack_args),
 	    sigaltstack },			/* 96 = sigaltstack */
 	{ 1, s(struct sigsuspend_args),
 	    sigsuspend },			/* 97 = sigsuspend */
 	{ 3, s(struct sigaction_args),
 	    sigaction },			/* 98 = sigaction */
-	{ 1, s(struct svr4_sigpending_args),
+	{ 2, s(struct svr4_sigpending_args),
 	    svr4_sigpending },			/* 99 = svr4_sigpending */
 	{ 0, 0,
 	    nosys },				/* 100 = unimplemented svr4_context */
@@ -409,12 +412,12 @@ struct sysent svr4_sysent[] = {
 	{ 0, 0,
 	    nosys },				/* 106 = unimplemented nosys */
 #endif
-	{ 0, 0,
-	    nosys },				/* 107 = unimplemented svr4_waitsys */
+	{ 4, s(struct svr4_waitsys_args),
+	    svr4_waitsys },			/* 107 = svr4_waitsys */
 	{ 0, 0,
 	    nosys },				/* 108 = unimplemented svr4_sigsendsys */
-	{ 0, 0,
-	    nosys },				/* 109 = unimplemented svr4_hrtsys */
+	{ 5, s(struct svr4_hrtsys_args),
+	    svr4_hrtsys },			/* 109 = svr4_hrtsys */
 	{ 0, 0,
 	    nosys },				/* 110 = unimplemented svr4_acancel */
 	{ 0, 0,

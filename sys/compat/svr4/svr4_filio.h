@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.h,v 1.1 1994/11/14 06:13:15 christos Exp $	 */
+/*	$NetBSD: svr4_filio.h,v 1.2 1994/11/18 02:53:45 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas

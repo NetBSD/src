@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.3 1994/10/29 00:43:25 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.4 1994/11/18 02:53:59 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -64,6 +64,7 @@
 #define	SVR4_SIGPROF	29
 #define	SVR4_SIGXCPU	30
 #define	SVR4_SIGXFSZ	31
+#define SVR4_NSIG	32
 
 #define	SVR4_SIGNO_MASK		0x00FF
 #define	SVR4_SIGNAL_MASK	0x0000
@@ -78,8 +79,14 @@
 #define	SVR4_SIG_IGN	(void (*)())	 1
 #define	SVR4_SIG_HOLD	(void(*)())	 2
 
-
 #define SVR4_SIGNO(a)	((a) & SVR4_SIGNO_MASK)
 #define SVR4_SIGCALL(a) ((a) & ~SVR4_SIGNO_MASK)
 
+#define SVR4_SIG_BLOCK		1
+#define SVR4_SIG_UNBLOCK	2
+#define SVR4_SIG_SETMASK	3
+
+typedef struct {
+        u_long bits[4];
+} svr4_sigset_t;
 #endif /* !_SVR4_SIGNAL_H_ */

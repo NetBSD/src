@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.5 1994/11/14 06:10:37 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.6 1994/11/18 02:53:43 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -42,6 +42,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
@@ -367,7 +368,7 @@ svr4_poll(p, uap, retval)
 	int error, error2;
 	size_t sz = sizeof(struct svr4_pollfd) * SCARG(uap, nfds);
 	struct svr4_pollfd *pl;
-	int usec = SCARG(uap, timeout);
+	int msec = SCARG(uap, timeout);
 	struct timeval atv;
 	int timo;
 	u_int ni;
@@ -384,9 +385,9 @@ svr4_poll(p, uap, retval)
 		pl[i].revents = 0;
 	}
 
-	if (usec != -1) {
-		atv.tv_sec = usec / 1000000;
-		atv.tv_usec = usec - atv.tv_sec;
+	if (msec != -1) {
+		atv.tv_sec = msec / 1000;
+		atv.tv_usec = (msec - (atv.tv_sec * 1000)) * 1000;
 
 		if (itimerfix(&atv)) {
 			error = EINVAL;

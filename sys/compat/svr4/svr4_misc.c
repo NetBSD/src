@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.11 1994/11/14 06:10:40 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.12 1994/11/18 02:53:51 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -64,13 +64,17 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_dirent.h>
 #include <compat/svr4/svr4_ulimit.h>
+#include <compat/svr4/svr4_hrt.h>
+#include <compat/svr4/svr4_wait.h>
 
 #include <vm/vm.h>
+/* XXX */ extern struct proc * pfind();
 
 int
 svr4_wait(p, uap, retval)
@@ -140,17 +144,6 @@ svr4_time(p, uap, retval)
 	return error;
 }
 
-
-int
-svr4_sigpending(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_sigpending_args	*uap;
-	register_t				*retval;
-{
-	int	mask = p->p_siglist & p->p_sigmask;
-
-	return copyout(&mask, SCARG(uap, mask), sizeof(int));
-}
 
 /*
  * Read SVR4-style directory entries.  We suck them into kernel space so
@@ -654,7 +647,6 @@ svr4_pgrpsys(p, uap, retval)
 	register_t				*retval;
 {
 	int error;
-	/* XXX */ extern struct proc * pfind();
 
 	switch (SCARG(uap, cmd)) {
 	case 0:			/* getpgrp() */
@@ -707,4 +699,237 @@ svr4_pgrpsys(p, uap, retval)
 	default:
 		return EINVAL;
 	}
+}
+
+#define syscallarg(x)   union { x datum; register_t pad; }
+
+struct svr4_hrtcntl_args {
+	syscallarg(int) 			cmd;
+	syscallarg(int) 			fun;
+	syscallarg(int) 			clk;
+	syscallarg(svr4_hrt_interval_t *)	iv;
+	syscallarg(svr4_hrt_time_t *)		ti;
+};
+
+static int
+svr4_hrtcntl(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_hrtcntl_args	*uap;
+	register_t				*retval;
+{
+	switch (SCARG(uap, fun)) {
+	case SVR4_HRT_CNTL_RES:
+		DPRINTF(("htrcntl(RES)\n"));
+		*retval = SVR4_HRT_USEC;
+		return 0;
+
+	case SVR4_HRT_CNTL_TOFD:
+		DPRINTF(("htrcntl(TOFD)\n"));
+		{
+			struct timeval tv;
+			svr4_hrt_time_t t;
+			if (SCARG(uap, clk) != SVR4_HRT_CLK_STD) {
+				DPRINTF(("clk == %d\n", SCARG(uap, clk)));
+				return EINVAL;
+			}
+			if (SCARG(uap, ti) == NULL) {
+				DPRINTF(("ti NULL\n"));
+				return EINVAL;
+			}
+			microtime(&tv);
+			t.h_sec = tv.tv_sec;
+			t.h_rem = tv.tv_usec;
+			t.h_res = SVR4_HRT_USEC;
+			return copyout(&t, SCARG(uap, ti), sizeof(t));
+		}
+
+	case SVR4_HRT_CNTL_START:
+		DPRINTF(("htrcntl(START)\n"));
+		return ENOSYS;
+
+	case SVR4_HRT_CNTL_GET:
+		DPRINTF(("htrcntl(GET)\n"));
+		return ENOSYS;
+	default:
+		DPRINTF(("Bad htrcntl command %d\n", SCARG(uap, fun)));
+		return ENOSYS;
+	}
+}
+
+int
+svr4_hrtsys(p, uap, retval) 
+	register struct proc			*p;
+	register struct svr4_hrtsys_args	*uap;
+	register_t				*retval;
+{
+	int error;
+	struct timeval tv;
+
+	switch (SCARG(uap, cmd)) {
+	case SVR4_HRT_CNTL:
+		return svr4_hrtcntl(p, (struct svr4_hrtcntl_args *) uap,
+				    retval);
+
+	case SVR4_HRT_ALRM:
+		DPRINTF(("hrtalarm\n"));
+		return ENOSYS;
+
+	case SVR4_HRT_SLP:
+		DPRINTF(("hrtsleep\n"));
+		return ENOSYS;
+
+	case SVR4_HRT_CAN:
+		DPRINTF(("hrtcancel\n"));
+		return ENOSYS;
+
+	default:
+		DPRINTF(("Bad hrtsys command %d\n", SCARG(uap, cmd)));
+		return EINVAL;
+	}
+}
+
+static int
+svr4_setinfo(st, s)
+	int st;
+	struct svr4_siginfo *s;
+{
+	/* Not a very good status translation */
+	struct svr4_siginfo i;
+
+	bzero(&i, sizeof(i));
+
+	if (WIFSTOPPED(st))
+	    i.si_signo = WSTOPSIG(st);
+	else
+	    i.si_signo = WTERMSIG(st);
+
+	if (WIFEXITED(st))
+	    i.si_errno = WEXITSTATUS(st);
+
+	if (WCOREDUMP(st))
+	    i.si_addr = (svr4_caddr_t) 0xfeedbeef;
+
+	return copyout(&i, s, sizeof(i));
+}
+
+
+int
+svr4_waitsys(p, uap, retval) 
+	register struct proc			*p;
+	register struct svr4_waitsys_args	*uap;
+	register_t				*retval;
+{
+	int nfound;
+	int error;
+	struct proc *q, *t;
+
+	switch (SCARG(uap, grp)) {
+	case SVR4_P_PID:	
+		break;
+
+	case SVR4_P_PGID:
+		SCARG(uap, id) = -p->p_pgid;
+		break;
+
+	case SVR4_P_ALL:
+		SCARG(uap, id) = WAIT_ANY;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+loop:
+	nfound = 0;
+	for (q = p->p_children.lh_first; q != 0; q = q->p_sibling.le_next) {
+		if (SCARG(uap, id) != WAIT_ANY &&
+		    q->p_pid != SCARG(uap, id) &&
+		    q->p_pgid != -SCARG(uap, id))
+			continue;
+		nfound++;
+		if (q->p_stat == SZOMB && 
+		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
+			retval[0] = q->p_pid;
+			if ((error = svr4_setinfo((int) q->p_xstat,
+						  SCARG(uap, info))) != 0)
+				return error;
+
+
+		        if ((SCARG(uap, options) & SVR4_WNOWAIT))
+				return 0;
+
+			/*
+			 * If we got the child via a ptrace 'attach',
+			 * we need to give it back to the old parent.
+			 */
+			if (q->p_oppid && (t = pfind(q->p_oppid))) {
+				q->p_oppid = 0;
+				proc_reparent(p, t);
+				psignal(t, SIGCHLD);
+				wakeup((caddr_t)t);
+				return 0;
+			}
+			q->p_xstat = 0;
+			ruadd(&q->p_stats->p_cru, q->p_ru);
+			FREE(q->p_ru, M_ZOMBIE);
+
+			/*
+			 * Decrement the count of procs running with this uid.
+			 */
+			(void)chgproccnt(q->p_cred->p_ruid, -1);
+
+			/*
+			 * Free up credentials.
+			 */
+			if (--q->p_cred->p_refcnt == 0) {
+				crfree(q->p_cred->pc_ucred);
+				FREE(q->p_cred, M_SUBPROC);
+			}
+
+			/*
+			 * Release reference to text vnode
+			 */
+			if (q->p_textvp)
+				vrele(q->p_textvp);
+
+			/*
+			 * Finally finished with old proc entry.
+			 * Unlink it from its process group and free it.
+			 */
+			leavepgrp(q);
+			LIST_REMOVE(q, p_list);	/* off zombproc */
+			LIST_REMOVE(q, p_sibling);
+
+			/*
+			 * Give machine-dependent layer a chance
+			 * to free anything that cpu_exit couldn't
+			 * release while still running in process context.
+			 */
+			cpu_wait(p);
+			FREE(p, M_PROC);
+			nprocs--;
+			return 0;
+		}
+		if (q->p_stat == SSTOP && (q->p_flag & P_WAITED) == 0 &&
+		    (q->p_flag & P_TRACED ||
+		     (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED)))) {
+		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
+				q->p_flag |= P_WAITED;
+			*retval = q->p_pid;
+			return svr4_setinfo(W_STOPCODE(q->p_xstat),
+					    SCARG(uap, info));
+		}
+	}
+
+	if (nfound == 0)
+		return ECHILD;
+
+	if (SCARG(uap, options) & SVR4_WNOHANG) {
+		*retval = 0;
+		return 0;
+	}
+
+	if (error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0))
+		return error;
+	goto loop;
 }
