@@ -1,10 +1,8 @@
-/*	$NetBSD: vmevar.h,v 1.5 1998/04/07 20:31:26 pk Exp $	*/
-/*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+/* $NetBSD: vmevar.h,v 1.6 1999/06/30 15:06:05 drochner Exp $ */
+
+/*
+ * Copyright (c) 1999
+ *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,104 +12,200 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#include <machine/bus.h>
+#ifndef _vmevar_h_
+#define _vmevar_h_
+
+typedef u_int32_t vme_addr_t, vme_size_t;
+typedef int vme_am_t;
+
+typedef enum {
+	VME_D8 = 1,
+	VME_D16 = 2,
+	VME_D32 = 4
+} vme_datasize_t;
+
+typedef int vme_swap_t; /* hardware swap capabilities,
+			 placeholder - contents to be specified */
+
+#ifdef _KERNEL
+
+/* generic placeholder for any ressources needed for a mapping,
+ overloaded by bus interface driver */
+typedef void *vme_mapresc_t; 
+
+/* describes interrupt mapping, overloaded by bus interface driver */
+typedef void *vme_intr_handle_t;
 
 /*
- * VME address modifiers
+ * tag structure passed to VME bus devices,
+ * contains the bus dependant functions, accessed via macros below
  */
-#define VMEMOD_A32	0x00		/* 32-bit address */
-#define VMEMOD_A16	0x20		/* 16-bit address */
-#define VMEMOD_A24	0x30		/* 24-bit address */
+typedef struct vme_chipset_tag {
+	void *cookie;
 
-#define VMEMOD_BLT64	0x08		/* 64-bit block transfer */
-#define VMEMOD_D	0x09		/* data access */
-#define VMEMOD_I	0x0a		/* instruction access */
-#define VMEMOD_B	0x0b		/* block access */
+	int (*vct_map) __P((void *, vme_addr_t, vme_size_t,
+			    vme_am_t, vme_datasize_t, vme_swap_t,
+			    bus_space_tag_t *, bus_space_handle_t *,
+			    vme_mapresc_t *));
+	void (*vct_unmap) __P((void *, vme_mapresc_t));
 
-#define VMEMOD_S	0x04		/* Supervisor access */
+	int (*vct_probe) __P((void *, vme_addr_t, vme_size_t,
+			      vme_am_t, vme_datasize_t,
+			int (*)(void *, bus_space_tag_t, bus_space_handle_t),
+			      void *));
 
-#define VMEMOD_D32	0x40		/* 32-bit access */
+	int (*vct_int_map) __P((void *, int, int, vme_intr_handle_t *));
+	void *(*vct_int_establish) __P((void *, vme_intr_handle_t, int,
+					int (*)(void *), void *));
+	void (*vct_int_disestablish) __P((void *, void *));
 
+	int (*vct_dmamap_create) __P((void *, vme_size_t,
+				      vme_am_t, vme_datasize_t, vme_swap_t,
+				      int, vme_size_t, vme_addr_t,
+				      int, bus_dmamap_t *));
+	void (*vct_dmamap_destroy) __P((void *, bus_dmamap_t));
 
-typedef u_int32_t	vme_addr_t;
-typedef u_int32_t	vme_size_t;
-typedef int		vme_mod_t;
+	/*
+	 * This sucks: we have to give all the VME specific arguments
+	 * twice - for dmamem_alloc and for dmamem_create. Perhaps
+	 * give a "dmamap" argument here, meaning: "allocate memory which
+	 * can be accessed through this DMA map".
+	 */
+	int (*vct_dmamem_alloc) __P((void *, vme_size_t,
+				     vme_am_t, vme_datasize_t, vme_swap_t,
+				     bus_dma_segment_t *, int, int *, int));
+	void (*vct_dmamem_free) __P((void *, bus_dma_segment_t *, int));
 
-typedef void		*vme_intr_handle_t;
+	struct vmebus_softc *bus;
+} *vme_chipset_tag_t;
 
-struct vme_chipset_tag {
-	void	*cookie;
-	int	(*vct_probe) __P((void *, bus_space_tag_t, vme_addr_t,
-				  size_t, vme_size_t, vme_mod_t,
-				  int (*) __P((void *, void *)), void *));
+/*
+ * map / unmap: map VME address ranges into kernel address space
+ * XXX should have mapping to CPU only to allow user mmap() without
+ *     wasting kvm
+ */
+#define vme_space_map(vc, vmeaddr, len, am, datasize, swap, tag, handle, resc) \
+  (*((vc)->vct_map))((vc)->cookie, (vmeaddr), (len), (am), (datasize), \
+  (swap), (tag), (handle), (resc))
+#define vme_space_unmap(vc, resc) \
+  (*((vc)->vct_unmap))((vc)->cookie, (resc))
 
-	int	(*vct_map) __P((void *, vme_addr_t, vme_size_t, vme_mod_t,
-				bus_space_tag_t, bus_space_handle_t *));
-	void	(*vct_unmap) __P((void *));
-	int	(*vct_mmap_cookie) __P((void *, vme_addr_t, vme_mod_t,
-				bus_space_tag_t, bus_space_handle_t *));
+/*
+ * probe: check readability or call callback
+ */
+#define vme_probe(vc, vmeaddr, len, am, datasize, callback, cbarg) \
+  (*((vc)->vct_probe))((vc)->cookie, (vmeaddr), (len), (am), (datasize), \
+  (callback), (cbarg))
 
-	int	(*vct_intr_map) __P((void *, int, int, vme_intr_handle_t *));
+/*
+ * install / deinstall VME interrupt handler
+ */
+#define vme_intr_map(vc, level, vector, handlep) \
+  (*((vc)->vct_int_map))((vc)->cookie, (level), (vector), (handlep))
+#define vme_intr_establish(vc, handle, prio, func, arg) \
+  (*((vc)->vct_int_establish))((vc)->cookie, \
+                        (handle), (prio), (func), (arg))
+#define vme_intr_disestablish(vc, cookie) \
+  (*((vc)->vct_int_unmap))((vc)->cookie, (cookie))
 
-	void	*(*vct_intr_establish) __P((void *, vme_intr_handle_t,
-					int (*) __P((void *)), void *));
-	void	(*vct_intr_disestablish) __P((void *, void *));
-	void	(*vct_bus_establish) __P((void *, struct device *));
+/*
+ * create DMA map (which is later used by bus independant
+ * DMA functions)
+ */
+#define vme_dmamap_create(vc, size, am, datasize, swap, nsegs, segsz, bound, \
+  flags, map) \
+  (*((vc)->vct_dmamap_create))((vc)->cookie, (size), (am), (datasize), (swap), \
+  (nsegs), (segsz), (bound), (flags), (map))
+#define vme_dmamap_destroy(vc, map) \
+  (*((vc)->vct_dmamap_destroy))((vc)->cookie, (map))
 
+/*
+ * allocate memory directly accessible from VME
+ */
+#define vme_dmamem_alloc(vc, size, am, datasize, swap, \
+  segs, nsegs, rsegs, flags) \
+  (*((vc)->vct_dmamem_alloc))((vc)->cookie, (size), (am), (datasize), (swap), \
+  (segs), (nsegs), (rsegs), (flags))
+#define vme_dmamem_free(vc, segs, nsegs) \
+  (*((vc)->vct_dmamem_free))((vc)->cookie, (segs), (nsegs))
+
+/*
+ * autoconfiguration data structures
+ */
+
+struct vme_attach_args;
+typedef void (*vme_slaveconf_callback) __P((struct device *,
+					    struct vme_attach_args *));
+
+struct vmebus_attach_args {
+	vme_chipset_tag_t va_vct;
+	bus_dma_tag_t va_bdt;
+
+	vme_slaveconf_callback va_slaveconfig;
 };
-typedef struct vme_chipset_tag *vme_chipset_tag_t;
 
-#define vme_bus_probe(ct, bt, addr, offset, size, mod, callback, arg) \
-	(*ct->vct_probe)(ct->cookie, bt, addr, offset, size, mod, callback, arg)
-#define vme_bus_map(ct, addr, size, mod, bt, bhp) \
-	(*ct->vct_map)(ct->cookie, addr, size, mod, bt, bhp)
-#define vme_bus_mmap_cookie(ct, addr, mod, bt, hp) \
-	(*ct->vct_mmap_cookie)(ct->cookie, addr, mod, bt, hp)
-#define vme_intr_map(ct, vec, pri, hp) \
-	(*ct->vct_intr_map)(ct->cookie, vec, pri, hp)
-#define vme_intr_establish(ct, h, f, a) \
-	(*ct->vct_intr_establish)(ct->cookie, h, f, a)
-#define vme_bus_establish(ct, d) \
-	(*ct->vct_bus_establish)(ct->cookie, d)
+struct vmebus_softc {
+	struct device sc_dev;
 
-struct vme_busattach_args {
-	bus_space_tag_t		vba_bustag;
-	bus_dma_tag_t		vba_dmatag;
-	vme_chipset_tag_t	vba_chipset_tag;
+	vme_chipset_tag_t sc_vct;
+	bus_dma_tag_t sc_bdt;
+
+	vme_slaveconf_callback slaveconfig;
+
+	struct extent *vme32ext, *vme24ext, *vme16ext;
+};
+
+#define VME_MAXCFRANGES 3
+
+struct vme_range {
+	vme_addr_t offset;
+	vme_size_t size;
+	vme_am_t am;
 };
 
 struct vme_attach_args {
-	bus_space_tag_t		vma_bustag;
-	bus_dma_tag_t		vma_dmatag;
-	vme_chipset_tag_t	vma_chipset_tag;
+	vme_chipset_tag_t va_vct;
+	bus_dma_tag_t va_bdt;
 
-#define VMA_MAX_PADDR 1
-	int			vma_nreg;	/* # of address locators */
-	u_long			vma_reg[VMA_MAX_PADDR];
-
-	int			vma_vec;	/* VMEbus interrupt vector */
-	int			vma_pri;	/* VMEbus interrupt priority */
+	int ivector, ilevel;
+	int numcfranges;
+	struct vme_range r[VME_MAXCFRANGES];
 };
 
-int	vmesearch __P((struct device *, struct cfdata *, void *));
+/*
+ * address space accounting
+ */
+int _vme_space_alloc __P((struct vmebus_softc *, vme_addr_t,
+			  vme_size_t, vme_am_t));
+void _vme_space_free __P((struct vmebus_softc *, vme_addr_t,
+			  vme_size_t, vme_am_t));
+int _vme_space_get __P((struct vmebus_softc *, vme_size_t, vme_am_t,
+			u_long, vme_addr_t*));
+
+#define vme_space_alloc(tag, addr, size, ams) \
+  _vme_space_alloc(tag->bus, addr, size, ams)
+
+#define vme_space_free(tag, addr, size, ams) \
+  _vme_space_free(tag->bus, addr, size, ams)
+
+#define vme_space_get(tag, size, ams, align, addr) \
+  _vme_space_get(tag->bus, size, ams, align, addr)
+
+#endif /* KERNEL */
+#endif /* _vmevar_h_ */
