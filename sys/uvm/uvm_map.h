@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.7 1998/08/13 02:11:01 eeh Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.8 1998/08/31 01:50:10 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -109,6 +109,11 @@
 #define UVM_EXTRACT_QREF	0x4	/* use quick refs */
 #define UVM_EXTRACT_FIXPROT	0x8	/* set prot to maxprot as we go */
 
+/*
+ * pool for vm_map's; needed by inline functions in uvm_map_i.h
+ */
+
+extern struct pool uvm_map_pool;
 
 /*
  * handle inline options
