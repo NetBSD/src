@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.2 (Berkeley) 6/30/90
+#	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
+#	$Id: Makefile,v 1.5 1993/07/31 15:30:35 mycroft Exp $
 
 DIR=	usd/09.newsread
 DOC=	09.newsread

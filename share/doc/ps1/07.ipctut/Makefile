@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.5 (Berkeley) 1/2/91
+#	from: @(#)Makefile	6.5 (Berkeley) 1/2/91
+#	$Id: Makefile,v 1.5 1993/07/31 15:33:50 mycroft Exp $
 
 DIR=	ps1/07.ipctut
 DOC=	07.ipctut

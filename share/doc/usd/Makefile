@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.4 1993/07/31 15:29:28 mycroft Exp $
 
 #Missing: 01.begin 02.learn 03.shell 05.dc 06.bc 08.mh 12.edtut 13.edadv
 #	  17.jove 18.sed 19.awk 20.msmacros 24.troff 25.trofftut 26.eqn
