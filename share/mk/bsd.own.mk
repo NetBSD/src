@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.192 2001/10/23 17:15:21 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.193 2001/10/23 22:55:30 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -62,7 +62,7 @@ LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
 MDSETIMAGE=	${TOOLDIR}/bin/mdsetimage
 MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/menuc
-MKDEP=		CC=${CC} ${TOOLDIR}/bin/mkdep
+MKDEP=		CC="${CC}" ${TOOLDIR}/bin/mkdep
 MKLOCALE=	${TOOLDIR}/bin/mklocale
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/msgc
 MTREE=		${TOOLDIR}/bin/mtree
