@@ -1,5 +1,5 @@
 # from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC,v 1.8 1994/08/01 19:26:27 deraadt Exp $
+# $Id: SPARC,v 1.9 1994/08/12 01:16:27 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -14,8 +14,8 @@ options               TIMEZONE=480, DST=1
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		DEBUG, DIAGNOSTIC	# extra kernel debugging
 options		KTRACE			# system call tracing support
-options		KGDB			# support for kernel gdb
-options		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
+#options	KGDB			# support for kernel gdb
+#options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
 
 # Filesystem options
