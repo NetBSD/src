@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.13 2001/07/18 16:53:52 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.14 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -34,6 +34,9 @@
  * Things that is still to do:
  *	Collect statistics.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.14 2001/11/13 12:51:34 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
