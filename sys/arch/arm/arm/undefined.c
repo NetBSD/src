@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.1 2001/03/05 23:06:14 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.2 2001/03/05 23:14:22 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -74,11 +74,8 @@ extern int want_resched;
 undef_handler_t undefined_handlers[MAX_COPROCS];
 
 int
-default_undefined_handler(address, instruction, frame, fault_code)
-	u_int address;
-	u_int instruction;
-	trapframe_t *frame;
-	int fault_code;
+default_undefined_handler(u_int address, u_int instruction,
+    trapframe_t *frame, int fault_code)
 {
 	struct proc *p;
 
@@ -94,9 +91,7 @@ default_undefined_handler(address, instruction, frame, fault_code)
 
 
 int
-install_coproc_handler(coproc, handler)
-	int coproc;
-	undef_handler_t handler;
+install_coproc_handler(int coproc, undef_handler_t handler)
 {
 	if (coproc < 0 || coproc > MAX_COPROCS)
 		return(EINVAL);
@@ -119,8 +114,7 @@ undefined_init()
 
 
 void
-undefinedinstruction(frame)
-	trapframe_t *frame;
+undefinedinstruction(trapframe_t *frame)
 {
 	struct proc *p;
 	u_int fault_pc;
@@ -262,8 +256,7 @@ undefinedinstruction(frame)
 
 
 void
-resethandler(frame)
-	trapframe_t *frame;
+resethandler(trapframe_t *frame)
 {
 #ifdef DDB
 	/* Extra info incase panic drops us into the debugger */
