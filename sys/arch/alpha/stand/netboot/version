@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.8 2000/07/21 21:25:19 jdolecek Exp $
+$NetBSD: version,v 1.9 2001/08/02 12:24:05 bjh21 Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,3 +11,4 @@ is taken as the current.
 1.5:	Search for a kernel, if none specified.
 1.6:	Add support for gzipped kernels.
 1.7:	The Great Boot Block Cleanup of April 1999.
+1.8:	loadfile() update:  ELF symbols no longer need backward seeks.
