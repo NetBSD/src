@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 1995/08/08 21:05:48 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 1995/08/21 21:37:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -100,7 +100,6 @@ int clockmatch(parent, vcf, args)
 	return (1);
 }
 
-extern void level5intr_clock();
 void clockattach(parent, self, args)
 	struct device *parent;
 	struct device *self;
@@ -206,12 +205,13 @@ void
 cpu_initclocks(void)
 {
 	int s;
+	extern void _isr_clock();
 
 	if (!intersil_clock)
 		panic("cpu_initclocks");
 	s = splhigh();
 
-	isr_add_custom(5, level5intr_clock);
+	isr_add_custom(5, _isr_clock);
 #ifdef	DIAGNOSTIC
 	clk_intr_ready = 1;
 #endif

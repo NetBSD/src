@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.18 1995/07/04 12:37:42 paulus Exp $	*/
+/*	$NetBSD: isr.c,v 1.19 1995/08/21 21:37:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,7 +53,7 @@
 
 extern int intrcnt[];	/* statistics */
 
-#define NISR 8
+#define NUM_LEVELS 8
 
 struct isr {
 	struct	isr *isr_next;
@@ -62,7 +62,9 @@ struct isr {
 	int	isr_ipl;
 };
 
-static struct isr *isr_autovec_list[NISR];
+
+void set_vector_entry __P((int, void (*handler)()));
+unsigned int get_vector_entry __P((int));
 
 volatile u_char *interrupt_reg;
 
@@ -79,7 +81,7 @@ void isr_add_custom(level, handler)
 	int level;
 	void (*handler)();
 {
-	set_vector_entry(AUTO_VECTOR_BASE + level, handler);
+	set_vector_entry(AUTOVEC_BASE + level, handler);
 }
 
 static int isr_soft_pending;
@@ -220,15 +222,22 @@ int soft1intr(fp)
 }
 
 
+static struct isr *isr_autovec_list[NUM_LEVELS];
+
 /*
  * This is called by the assembly routines
  * for handling auto-vectored interupts.
  */
-void isr_autovec(ipl)
-	int ipl;
+void isr_autovec(evec)
+	int evec;		/* format | vector offset */
 {
 	struct isr *isr;
-	register int n;
+	register int n, ipl, vec;
+
+	vec = (evec & 0xFFF) >> 2;
+	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE+8)))
+		panic("isr_autovec: bad vec");
+	ipl = vec - 0x18;
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n+1;
@@ -262,7 +271,7 @@ void isr_add_autovect(handler, arg, level)
 {
 	struct isr *new_isr;
 
-	if ((level < 0) || (level >= NISR))
+	if ((level < 0) || (level >= NUM_LEVELS))
 		panic("isr_add: bad level=%d", level);
 	new_isr = (struct isr *)
 		malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
@@ -289,11 +298,12 @@ static struct vector_handler isr_vector_handlers[192];
  */
 void
 isr_vectored(evec)
-	u_short evec;
+	int evec;		/* format | vector offset */
 {
-	int ipl, vec = evec >> 4;
 	struct vector_handler *vh;
+	register int ipl, vec;
 
+	vec = (evec & 0xFFF) >> 2;
 	ipl = getsr();
 	ipl = (ipl >> 8) & 7;
 
@@ -320,7 +330,7 @@ isr_vectored(evec)
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
-extern void vect_intr();
+extern void _isr_vectored();
 void isr_add_vectored(func, arg, level, vec)
 	int (*func)();
 	void *arg;
@@ -339,5 +349,24 @@ void isr_add_vectored(func, arg, level, vec)
 	}
 	vh->func = func;
 	vh->arg = arg;
-	set_vector_entry(vec, vect_intr);
+	set_vector_entry(vec, _isr_vectored);
+}
+
+/*
+ * XXX - could just kill these...
+ */
+void set_vector_entry(entry, handler)
+	int entry;
+	void (*handler)();
+{
+	if ((entry <0) || (entry >= NVECTORS))
+	panic("set_vector_entry: setting vector too high or low\n");
+	vector_table[entry] =  handler;
+}
+unsigned int get_vector_entry(entry)
+	int entry;
+{
+	if ((entry <0) || (entry >= NVECTORS))
+	panic("get_vector_entry: setting vector too high or low\n");
+	return (unsigned int) vector_table[entry];
 }
