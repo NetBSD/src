@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.60 1998/02/05 07:57:48 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.61 1998/02/08 19:24:28 thorpej Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -35,12 +35,8 @@ options 	RASTERCONSOLE	# fast rasterop console
 config		netbsd	root on ? type ?
 
 ## Virtual memory configuration.  There are two choices, the old Mach
-## based VM system, or the new UVM system.  Old VM requires the pager
-## options.
+## based VM system, or the new UVM system.
 options 	OLDVM		# MACH VM
-options 	SWAPPAGER	# swap paging
-options 	DEVPAGER	# paging to devices
-options 	VNODEPAGER	# paging to vnodes
 #options 	UVM		# UVM VM
 
 ## System call tracing (see ktrace(1)).
