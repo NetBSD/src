@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.33 1997/05/24 10:26:32 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.34 1997/05/25 11:09:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -591,19 +591,6 @@ ultrix_sys_sigcleanup(p, v, retval)
 	return sys_sigreturn(p, (struct sys_sigreturn_args *)uap, retval);
 }
 
-int
-ultrix_sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_sigcleanup_args *uap = v;
-
-#ifdef DEBUG
-	printf("ultrix sigreturn\n");
-#endif
-	return sys_sigreturn(p, (struct sys_sigreturn_args  *)uap, retval);
-}
 
 int
 ultrix_sys_shmsys(p, v, retval)
