@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.1 2000/06/13 15:15:26 itojun Exp $
-.\"     $KAME: setkey.8,v 1.27 2000/06/10 14:17:44 sakane Exp $
+.\"	$NetBSD: setkey.8,v 1.2 2000/07/01 01:04:04 itojun Exp $
+.\"     $KAME: setkey.8,v 1.28 2000/06/16 12:03:46 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -217,6 +217,7 @@ IPCOMP
 .It Ar spi
 Security Parameter Index (SPI) for the SAD and the SPD.
 It must be decimal number or hexadecimal number
+You can not use the set of SPI values in the range 0 through 255.
 .Po
 with
 .Li 0x
