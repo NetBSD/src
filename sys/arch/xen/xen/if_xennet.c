@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.3 2004/04/21 12:14:45 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.4 2004/04/21 12:43:43 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.3 2004/04/21 12:14:45 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.4 2004/04/21 12:43:43 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -233,6 +233,8 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	network_alloc_rx_buffers(sc);
 	SLIST_INIT(&sc->sc_tx_bufs);
 	network_alloc_tx_buffers(sc);
+
+	sc->sc_tx_resp_cons = 0;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -739,19 +741,16 @@ xennet_init(struct xennet_softc *sc)
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n", sc->sc_dev.dv_xname));
 
 	if (ifp->if_flags & IFF_UP) {
-
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			xennet_reset(sc);
 
-		sc->sc_tx_resp_cons = 0;
-
-		if ((ifp->if_flags & IFF_RUNNING) == 0) {
-			ifp->if_flags |= IFF_RUNNING;
-			ifp->if_flags &= ~IFF_OACTIVE;
-			ifp->if_timer = 0;
-		}
-	} else
+		ifp->if_flags |= IFF_RUNNING;
+		ifp->if_flags &= ~IFF_OACTIVE;
+		ifp->if_timer = 0;
+	} else {
+		ifp->if_flags &= ~IFF_RUNNING;
 		xennet_reset(sc);
+	}
 }
 
 void
