@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.45 2004/06/03 18:31:53 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.46 2004/07/16 01:07:02 xtraeme Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -170,6 +170,7 @@ SATA	serial advanced technology attachment
 SCSI	small computer system interface
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
+SIP	Session Initiation Protocol
 SLDRAM	synchronous-link dynamic random access memory
 SMART	self-monitoring analysis and reporting technology
 SMP	symmetric multiprocessing
