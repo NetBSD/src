@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.12 2002/12/09 22:28:16 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.13 2002/12/10 21:36:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.12 2002/12/09 22:28:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.13 2002/12/10 21:36:45 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,3 +201,65 @@ mach_port_type(p, msgh, maxlen, dst)
 	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
+int 
+mach_port_set_attributes(p, msgh, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	mach_port_set_attributes_request_t req;
+	mach_port_set_attributes_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	switch(req.req_flavor) {
+	case MACH_PORT_LIMITS_INFO:
+	case MACH_PORT_RECEIVE_STATUS:
+	case MACH_PORT_DNREQUESTS_SIZE:
+		break;
+	default:
+		uprintf("mach_port_get_attributes: unknown flavor %d\n",
+		    req.req_flavor);
+		break;
+	}
+
+	bzero(&rep, sizeof(rep));
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+}
+
+int 
+mach_port_insert_member(p, msgh, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	mach_port_insert_member_request_t req;
+	mach_port_insert_member_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	bzero(&rep, sizeof(rep));
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.7 2002/12/07 21:23:04 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.8 2002/12/10 21:36:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.7 2002/12/07 21:23:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.8 2002/12/10 21:36:45 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,15 +58,18 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 206, mach_host_get_clock_service, "host_get_clock_service" },
  	{ 404, mach_bootstrap_look_up, "bootstrap_look_up" }, 
 	{ 1000, mach_clock_get_time, "clock_get_time" },
-	{ 3201, mach_port_type, "mach_port_type" },
+	{ 3201, mach_port_type, "port_type" },
 	{ 3204, mach_port_allocate, "port_allocate" },
 	{ 3206, mach_port_deallocate, "port_deallocate" },
+	{ 3218, mach_port_set_attributes, "port_set_attributes" },
 	{ 3214, mach_port_insert_right, "port_insert_right" },
+	{ 3226, mach_port_insert_member, "port_insert_member" },
 	{ 3404, mach_ports_lookup, "ports_lookup" },
 	{ 3409, mach_task_get_special_port, "task_get_special_port" },
 	{ 3616, mach_thread_policy, "thread_policy" },
 	{ 3801, mach_vm_allocate, "vm_allocate" },
 	{ 3802, mach_vm_deallocate, "vm_deallocate" },
+	{ 3803, mach_vm_protect, "vm_protect" },
 	{ 3812, mach_vm_map, "vm_map" },
 	{ 0, NULL, NULL },
 };
