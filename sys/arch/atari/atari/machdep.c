@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.1.4.1 1999/06/28 06:36:47 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.1.4.2 1999/11/30 13:32:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

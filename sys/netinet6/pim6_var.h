@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pim6_var.h,v 1.1.2.1 1999/06/28 06:37:07 itojun Exp $ */
+/* KAME Id: pim6_var.h,v 1.2 1999/08/01 15:58:13 itojun Exp */
 
 #ifndef _NETINET6_PIM6_VAR_H_
 #define _NETINET6_PIM6_VAR_H_
@@ -58,7 +58,6 @@ int pim6_input __P((struct mbuf **, int*, int));
 /*
  * Names for PIM sysctl objects
  */
-#if (defined(__bsdi__)) || (defined(__NetBSD__))
 #define PIMCTL_STATS		1	/* statistics (read-only) */
 #define PIMCTL_MAXID		2
 
@@ -66,6 +65,5 @@ int pim6_input __P((struct mbuf **, int*, int));
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 }
-#endif /* bsdi || NetBSD */
 
 #endif /* _NETINET6_PIM6_VAR_H_ */

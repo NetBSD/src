@@ -34,6 +34,12 @@
 #ifndef _NETINET6_ESP_H_
 #define _NETINET6_ESP_H_
 
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
+
 #include <netkey/keydb.h>		/* for struct secas */
 
 struct esp {
@@ -65,28 +71,27 @@ struct esptail {
 };
 
 struct esp_algorithm_state {
-	struct secas *sa;
+	struct secasvar *sav;
 	void* foo;	/*per algorithm data - maybe*/
 };
 
 /* XXX yet to be defined */
 struct esp_algorithm {
 	size_t padbound;	/* pad boundary, in byte */
-	int (*mature) __P((struct secas *));
+	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	int (*ivlen) __P((struct secas *));
+	int (*ivlen) __P((struct secasvar *));
 	int (*decrypt) __P((struct mbuf *, size_t,
-		struct secas *, struct esp_algorithm *, int));
+		struct secasvar *, struct esp_algorithm *, int));
 	int (*encrypt) __P((struct mbuf *, size_t, size_t,
-		struct secas *, struct esp_algorithm *, int));
+		struct secasvar *, struct esp_algorithm *, int));
 };
 
 #ifdef KERNEL
 extern struct esp_algorithm esp_algorithms[];
 
 /* crypt routines */
-struct secasb;
 extern int esp4_output __P((struct mbuf *, struct ipsecrequest *));
 extern void esp4_input __P((struct mbuf *, ...));
 extern size_t esp_hdrsiz __P((struct ipsecrequest *));
@@ -98,8 +103,8 @@ extern int esp6_input __P((struct mbuf **, int *, int));
 #endif /* INET6 */
 #endif /*KERNEL*/
 
-struct secas;
+struct secasvar;
 extern int esp_auth __P((struct mbuf *, size_t, size_t,
-	struct secas *, u_char *));
+	struct secasvar *, u_char *));
 
 #endif /*_NETINET6_ESP_H_*/

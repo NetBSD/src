@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.50.6.1 1999/06/28 06:36:56 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.50.6.2 1999/11/30 13:35:06 itojun Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*

@@ -62,6 +62,10 @@
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
 
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -80,7 +84,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
@@ -157,15 +160,15 @@ rip6_input(mp, offp, proto)
 		if (in6p->in6p_ip6.ip6_nxt &&
 		    in6p->in6p_ip6.ip6_nxt != proto)
 			continue;
-		if (!IN6_IS_ADDR_ANY(&in6p->in6p_laddr) &&
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
 			continue;
-		if (!IN6_IS_ADDR_ANY(&in6p->in6p_faddr) &&
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) &&
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
 			continue;
 		if (in6p->in6p_cksum != -1
-		 && in6_cksum(m, ip6->ip6_nxt, *offp,
-			 sizeof(struct ip6_hdr) + ip6->ip6_plen - *offp)) {
+		 && in6_cksum(m, ip6->ip6_nxt, *offp, m->m_pkthdr.len - *offp))
+		{
 			/* XXX bark something */
 			continue;
 		}
@@ -239,6 +242,7 @@ rip6_output(m, va_alist)
 	int error = 0;
 	struct ip6_pktopts opt, *optp = NULL;
 	struct ifnet *oifp = NULL;
+	int type, code;		/* for ICMPv6 output statistics only */
 	int priv = 0;
 	va_list ap;
 
@@ -250,12 +254,18 @@ rip6_output(m, va_alist)
 
 	in6p = sotoin6pcb(so);
 
-	{
-		struct proc *p = curproc;	/* XXX */
+	priv = 0;
+#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
+    {
+	struct proc *p = curproc;	/* XXX */
 
-		if (p && !suser(p->p_ucred, &p->p_acflag))
-			priv = 1;
-	}
+	if (p && !suser(p->p_ucred, &p->p_acflag))
+		priv = 1;
+    }
+#else
+	if ((so->so_state & SS_PRIV) != 0)
+		priv = 1;
+#endif
 	dst = &dstsock->sin6_addr;
 	if (control) {
 		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
@@ -263,6 +273,22 @@ rip6_output(m, va_alist)
 		optp = &opt;
 	} else
 		optp = in6p->in6p_outputopts;
+
+	/*
+	 * For an ICMPv6 packet, we should know its type and code
+	 * to update statistics.
+	 */
+	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
+		struct icmp6_hdr *icmp6;
+		if (m->m_len < sizeof(struct icmp6_hdr) &&
+		    (m = m_pullup(m, sizeof(struct icmp6_hdr))) == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+		icmp6 = mtod(m, struct icmp6_hdr *);
+		type = icmp6->icmp6_type;
+		code = icmp6->icmp6_code;
+	}
 
 	M_PREPEND(m, sizeof(*ip6), M_WAIT);
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -278,12 +304,13 @@ rip6_output(m, va_alist)
 	 *
 	 * XXX advanced-api value overrides sin6_scope_id 
 	 */
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
+	if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst)) {
 		struct in6_pktinfo *pi;
 
 		/*
 		 * XXX Boundary check is assumed to be already done in
-		 * in6_setpktoptions().
+		 * ip6_setpktoptions().
 		 */
 		if (optp && (pi = optp->ip6po_pktinfo) && pi->ipi6_ifindex) {
 			ip6->ip6_dst.s6_addr16[1] = htons(pi->ipi6_ifindex);
@@ -292,9 +319,8 @@ rip6_output(m, va_alist)
 		else if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) &&
 			 in6p->in6p_moptions &&
 			 in6p->in6p_moptions->im6o_multicast_ifp) {
-			ip6->ip6_dst.s6_addr16[1] =
-				htons(in6p->in6p_moptions->im6o_multicast_ifp->if_index);
-			oifp = ifindex2ifnet[in6p->in6p_moptions->im6o_multicast_ifp->if_index];
+			oifp = in6p->in6p_moptions->im6o_multicast_ifp;
+			ip6->ip6_dst.s6_addr16[1] = htons(oifp->if_index);
 		} else if (dstsock->sin6_scope_id) {
 			/* boundary check */
 			if (dstsock->sin6_scope_id < 0 
@@ -307,12 +333,16 @@ rip6_output(m, va_alist)
 		}
 	}
 
-	if (IN6_IS_ADDR_ANY(&in6p->in6p_laddr)) {
+	/*
+	 * Source address selection.
+	 */
+	{
 		struct in6_addr *in6a;
 
 		if ((in6a = in6_selectsrc(dstsock, optp,
 					  in6p->in6p_moptions,
 					  &in6p->in6p_route,
+					  &in6p->in6p_laddr,
 					  &error)) == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
@@ -321,8 +351,7 @@ rip6_output(m, va_alist)
 		ip6->ip6_src = *in6a;
 		if (in6p->in6p_route.ro_rt)
 			oifp = ifindex2ifnet[in6p->in6p_route.ro_rt->rt_ifp->if_index];
-	} else
-		ip6->ip6_src = in6p->in6p_laddr;
+	}
 
 	ip6->ip6_flow = in6p->in6p_flowinfo & IPV6_FLOWINFO_MASK;
 	ip6->ip6_vfc  = IPV6_VERSION;
@@ -330,10 +359,7 @@ rip6_output(m, va_alist)
 	ip6->ip6_plen  = htons((u_short)plen);
 #endif
 	ip6->ip6_nxt   = in6p->in6p_ip6.ip6_nxt;
-	if (oifp)
-		ip6->ip6_hlim = nd_ifinfo[oifp->if_index].chlim;
-	else
-		ip6->ip6_hlim = in6p->in6p_ip6.ip6_hlim;
+	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
@@ -369,8 +395,15 @@ rip6_output(m, va_alist)
 #ifdef IPSEC
 	m->m_pkthdr.rcvif = (struct ifnet *)so;
 #endif /*IPSEC*/
+	
+	error = ip6_output(m, optp, &in6p->in6p_route, 0, in6p->in6p_moptions,
+			   &oifp);
+	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
+		if (oifp)
+			icmp6_ifoutstat_inc(oifp, type, code);
+		icmp6stat.icp6s_outhist[type]++;
+	}
 
-	error = ip6_output(m, optp, &in6p->in6p_route, 0, in6p->in6p_moptions);
 	goto freectl;
 
  bad:
@@ -448,20 +481,38 @@ rip6_usrreq(so, req, m, nam, control, p)
 	int s;
 	int error = 0;
 /*	extern	struct socket *ip6_mrouter; */ /* xxx */
+	int priv;
+
+	priv = 0;
+#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	if (p && !suser(p->p_ucred, &p->p_acflag))
+		priv++;
+#else
+	if ((so->so_state & SS_PRIV) != 0)
+		priv++;
+#endif
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
-				    (struct ifnet *)control, p));
+				    (struct ifnet *)control
+#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
+				    , p
+#endif
+				    ));
 
 	switch (req) {
 	case PRU_ATTACH:
 		if (in6p)
 			panic("rip6_attach");
-		if (p == 0 || suser(p->p_ucred, &p->p_acflag)) {
+		if (!priv) {
 			error = EACCES;
 			break;
 		}
+#ifdef __NetBSD__
 		s = splsoftnet();
+#else
+		s = splnet();
+#endif
 		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
 		    (error = in6_pcballoc(so, &rawin6pcb))) {
 			splx(s);
@@ -469,15 +520,23 @@ rip6_usrreq(so, req, m, nam, control, p)
 		}
 		splx(s);
 		in6p = sotoin6pcb(so);
-		in6p->in6p_ip6.ip6_nxt = (int)nam;
+		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 #ifdef IPSEC
-		if ((error = ipsec_init_policy(&in6p->in6p_sp)) != 0)
+		error = ipsec_init_policy(so, &in6p->in6p_sp);
+		if (error != 0) {
+			in6_pcbdetach(in6p);
 			break;
+		}
 #endif /*IPSEC*/
 		
 		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
 			sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
+		if (in6p->in6p_icmp6filt == NULL) {
+			in6_pcbdetach(in6p);
+			error = ENOMEM;
+			break;
+		}
 		ICMP6_FILTER_SETPASSALL(in6p->in6p_icmp6filt);
 		break;
 
@@ -515,9 +574,14 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EINVAL;
 			break;
 		}
-		if ((ifnet.tqh_first == 0) ||
+		if (
+#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
+		   (ifnet == 0) ||
+#else
+		   (ifnet.tqh_first == 0) ||
+#endif
 		   (addr->sin6_family != AF_INET6) ||
-		   (!IN6_IS_ADDR_ANY(&addr->sin6_addr) &&
+		   (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
 		    (ia = ifa_ifwithaddr((struct sockaddr *)addr)) == 0)) {
 			error = EADDRNOTAVAIL;
 			break;
@@ -542,7 +606,12 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EINVAL;
 			break;
 		}
-		if (ifnet.tqh_first == 0) {
+#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
+		if (ifnet == 0)
+#else
+		if (ifnet.tqh_first == 0)
+#endif
+		{
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -552,11 +621,12 @@ rip6_usrreq(so, req, m, nam, control, p)
 		}
 
 		/* Source address selection. XXX: need pcblookup? */
-		in6a = &in6p->in6p_laddr;
-		if (IN6_IS_ADDR_ANY(in6a) &&
-		    (in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-					  in6p->in6p_moptions, &in6p->in6p_route,
-					  &error)) == NULL) {
+		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
+				     in6p->in6p_moptions,
+				     &in6p->in6p_route,
+				     &in6p->in6p_laddr,
+				     &error);
+		if (in6a == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			break;

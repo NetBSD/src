@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1.4.1 1999/07/06 11:02:40 itojun Exp $
+#	$NetBSD: Makefile,v 1.3.2.1.4.2 1999/11/30 13:34:58 itojun Exp $
 
 KDIR=	/sys/net
 INCSDIR= /usr/include/net
@@ -9,5 +9,6 @@ INCS=	bpf.h bpfdesc.h ethertypes.h if.h if_arc.h if_arp.h if_atm.h if_dl.h \
 	if_types.h netisr.h pfil.h ppp-comp.h ppp_defs.h radix.h raw_cb.h \
 	route.h slcompress.h slip.h zlib.h
 INCS+=	pfkeyv2.h if_gif.h
+INCS+=	if_altq.h altq_conf.h
 
 .include <bsd.kinc.mk>

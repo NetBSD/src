@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keyv2.h,v 1.1.2.1 1999/06/28 06:37:11 itojun Exp $ */
+/* KAME Id: keyv2.h,v 1.1.6.1.6.4 1999/06/08 05:33:39 itojun Exp */
 
 /*
  * This file has been derived rfc 2367,
@@ -69,11 +69,15 @@ you leave this credit intact on any copies of this file.
 #define SADB_DUMP        10
 #define SADB_X_PROMISC   11
 #define SADB_X_PCHANGE   12
-#define SADB_X_SPDADD    13
-#define SADB_X_SPDDELETE 14
-#define SADB_X_SPDDUMP   15
-#define SADB_X_SPDFLUSH  16
-#define SADB_MAX         16
+
+#define SADB_X_SPDUPDATE  13	/* not yet */
+#define SADB_X_SPDADD     14
+#define SADB_X_SPDDELETE  15
+#define SADB_X_SPDGET     16	/* not yet */
+#define SADB_X_SPDACQUIRE 17	/* not yet */
+#define SADB_X_SPDDUMP    18
+#define SADB_X_SPDFLUSH   19
+#define SADB_MAX          19
 
 struct sadb_msg {
   u_int8_t sadb_msg_version;
@@ -81,9 +85,13 @@ struct sadb_msg {
   u_int8_t sadb_msg_errno;
   u_int8_t sadb_msg_satype;
   u_int16_t sadb_msg_len;
-  u_int16_t sadb_msg_reserved;
+  u_int8_t sadb_msg_mode;	/* XXX */
+  u_int8_t sadb_msg_reserved1;
   u_int32_t sadb_msg_seq;
   u_int32_t sadb_msg_pid;
+  u_int32_t sadb_msg_reqid;	/* XXX */
+  				/* when policy mng, value is zero. */
+  u_int32_t sadb_msg_reserved2;
 };
 
 struct sadb_ext {
@@ -132,6 +140,15 @@ struct sadb_ident {
   u_int16_t sadb_ident_type;
   u_int16_t sadb_ident_reserved;
   u_int64_t sadb_ident_id;
+};
+/* in order to use to divide sadb_ident.sadb_ident_id */
+union sadb_x_ident_id {
+  u_int64_t sadb_x_ident_id;
+  struct _sadb_x_ident_id_addr {
+    u_int16_t prefix;
+    u_int16_t ul_proto;
+    u_int32_t reserved;
+  } sadb_x_ident_id_addr;
 };
 
 struct sadb_sens {
@@ -204,28 +221,37 @@ struct sadb_x_kmprivate {
 struct sadb_x_policy {
   u_int16_t sadb_x_policy_len;
   u_int16_t sadb_x_policy_exttype;
-  u_int16_t sadb_x_policy_type;		/* See ipsec.h */
-  u_int16_t sadb_x_policy_reserved;
+  u_int16_t sadb_x_policy_type;		/* See policy type of ipsec.h */
+  u_int8_t sadb_x_policy_dir;		/* direction, see ipsec.h */
+  u_int8_t sadb_x_policy_reserved;
 };
 /*
- * followed by some of the ipsec policy request, if policy_type == IPSEC.
+ * When policy_type == IPSEC, it is followed by some of
+ * the ipsec policy request.
  * [total length of ipsec policy requests]
  *	= (sadb_x_policy_len * sizeof(uint64_t) - sizeof(struct sadb_x_policy))
  */
 
 /* XXX IPsec Policy Request Extension */
 /*
- * This structure is aligned 8 bytes. Also it's aligned with proxy address
- * if present.
+ * This structure is aligned 8 bytes.
  */
 struct sadb_x_ipsecrequest {
-  u_int16_t sadb_x_ipsecrequest_len;	/* structure length aligned 8 bytes.
+  u_int16_t sadb_x_ipsecrequest_len;	/* structure length aligned to 8 bytes.
 					 * This value is true length of bytes.
 					 * Not in units of 64 bits. */
   u_int16_t sadb_x_ipsecrequest_proto;	/* See ipsec.h */
-  u_int16_t sadb_x_ipsecrequest_mode;	/* See ipsec.h */
-  u_int16_t sadb_x_ipsecrequest_level;	/* See ipsec.h */
-  /* If mode != 0, the proxy address encoded struct sockaddr is following. */
+  u_int8_t sadb_x_ipsecrequest_mode;	/* See IPSEC_MODE_XX in ipsec.h. */
+  u_int8_t sadb_x_ipsecrequest_level;	/* See IPSEC_LEVEL_XX in ipsec.h */
+  u_int16_t sadb_x_ipsecrequest_reqid;	/* See ipsec.h */
+
+  /*
+   * followed by source IP address of SA, and immediately followed by
+   * destination IP address of SA.  These encoded into two of sockaddr
+   * structure without any padding.  Must set each sa_len exactly.
+   * Each of length of the sockaddr structure are not aligned to 64bits,
+   * but sum of x_request and addresses is aligned to 64bits.
+   */
 };
 
 #define SADB_EXT_RESERVED             0
@@ -295,22 +321,27 @@ struct sadb_x_ipsecrequest {
 #define SADB_IDENTTYPE_PREFIX     1
 #define SADB_IDENTTYPE_FQDN       2
 #define SADB_IDENTTYPE_USERFQDN   3
-#define SADB_IDENTTYPE_MAX        3
+#define SADB_X_IDENTTYPE_ADDR     4
+#define SADB_IDENTTYPE_MAX        4
 
-/* `flags' in SA structure holds followings */
+/* `flags' in sadb_sa structure holds followings */
 #define SADB_X_EXT_NONE		0x0000	/* i.e. new format. */
 #define SADB_X_EXT_OLD		0x0001	/* old format. */
+
 #define SADB_X_EXT_IV4B		0x0010	/* IV length of 4 bytes in use */
 #define SADB_X_EXT_DERIV	0x0020	/* DES derived */
 #define SADB_X_EXT_CYCSEQ	0x0040	/* allowing to cyclic sequence. */
-	/* the followings are exclusive flags */
+
+	/* three of followings are exclusive flags each them */
 #define SADB_X_EXT_PSEQ		0x0000	/* sequencial padding for ESP */
 #define SADB_X_EXT_PRAND	0x0100	/* random padding for ESP */
-#define SADB_X_EXT_PZERO	0x0300	/* zero padding for ESP */
+#define SADB_X_EXT_PZERO	0x0200	/* zero padding for ESP */
 #define SADB_X_EXT_PMASK	0x0300	/* mask for padding flag */
+
 #if 1
 #define SADB_X_EXT_RAWCPI	0x0080	/* use well known CPI (IPComp) */
 #endif
+
 #define SADB_KEY_FLAGS_MAX	0x0fff
 
 /* SPI size for PF_KEYv2 */
@@ -350,50 +381,47 @@ extern void pfkey_sadump(struct sadb_msg *m);
 extern void pfkey_spdump(struct sadb_msg *m);
 
 struct sockaddr;
-extern int ipsec_check_keylen(u_int supported, u_int alg_id, u_int keylen);
-extern int pfkey_check(struct sadb_msg *msg, caddr_t *mhp);
-extern u_int pfkey_set_softrate(u_int type, u_int rate);
-extern u_int pfkey_get_softrate(u_int type);
-extern int pfkey_send_getspi(int so, u_int satype,
-	struct sockaddr *src, u_int prefs,
-	struct sockaddr *dst, u_int prefd, u_int proto,
-	u_int32_t min, u_int32_t max, u_int32_t seq);
-extern int pfkey_send_update( int so, u_int satype,
-	struct sockaddr *src, u_int prefs,
-	struct sockaddr *dst, u_int prefd, u_int proto,
-	struct sockaddr *proxy,
-	u_int32_t spi, caddr_t keymat,
-	u_int e_type, u_int e_keylen, u_int a_type, u_int a_keylen,
-	u_int flags,
-	u_int32_t l_alloc, u_int32_t l_bytes,
-	u_int32_t l_addtime, u_int32_t l_usetime, u_int32_t seq);
-extern int pfkey_send_add( int so, u_int satype,
-	struct sockaddr *src, u_int prefs,
-	struct sockaddr *dst, u_int prefd, u_int proto,
-	struct sockaddr *proxy,
-	u_int32_t spi, caddr_t keymat,
-	u_int e_type, u_int e_keylen, u_int a_type, u_int a_keylen,
-	u_int flags,
-	u_int32_t l_alloc, u_int32_t l_bytes,
-	u_int32_t l_addtime, u_int32_t l_usetime, u_int32_t seq);
-extern int pfkey_send_delete( int so, u_int satype,
-	struct sockaddr *src, u_int prefs,
-	struct sockaddr *dst, u_int prefd, u_int proto,
-	u_int32_t spi);
-extern int pfkey_send_get( int so, u_int satype,
-	struct sockaddr *src, u_int prefs,
-	struct sockaddr *dst, u_int prefd, u_int proto,
-	u_int32_t spi);
-extern int pfkey_send_register(int so, u_int satype);
-extern int pfkey_recv_register(int so);
-extern int pfkey_send_flush(int so, u_int satype);
-extern int pfkey_send_dump(int so, u_int satype);
-extern int pfkey_send_promisc_toggle(int so, int flag);
+int ipsec_check_keylen __P((u_int supported, u_int alg_id, u_int keylen));
+u_int pfkey_set_softrate __P((u_int type, u_int rate));
+u_int pfkey_get_softrate __P((u_int type));
+int pfkey_send_getspi __P((int so, u_int satype, u_int mode,
+	struct sockaddr *src, struct sockaddr *dst,
+	u_int32_t min, u_int32_t max, u_int32_t reqid, u_int32_t seq));
+int pfkey_send_update __P((int so, u_int satype, u_int mode,
+	struct sockaddr *src, struct sockaddr *dst, u_int32_t spi,
+	u_int32_t reqid, u_int wsize,
+	caddr_t keymat, u_int e_type, u_int e_keylen, u_int a_type,
+	u_int a_keylen, u_int flags, u_int32_t l_alloc, u_int64_t l_bytes,
+	u_int64_t l_addtime, u_int64_t l_usetime, u_int32_t seq));
+int pfkey_send_add __P((int so, u_int satype, u_int mode,
+	struct sockaddr *src, struct sockaddr *dst, u_int32_t spi,
+	u_int32_t reqid, u_int wsize,
+	caddr_t keymat, u_int e_type, u_int e_keylen, u_int a_type,
+	u_int a_keylen, u_int flags, u_int32_t l_alloc, u_int64_t l_bytes,
+	u_int64_t l_addtime, u_int64_t l_usetime, u_int32_t seq));
+int pfkey_send_delete __P((int so, u_int satype, u_int mode,
+	struct sockaddr *src, struct sockaddr *dst, u_int32_t spi));
+int pfkey_send_get __P((int so, u_int satype, u_int mode,
+	struct sockaddr *src, struct sockaddr *dst, u_int32_t spi));
+int pfkey_send_register __P((int so, u_int satype));
+int pfkey_recv_register __P((int so));
+int pfkey_send_flush __P((int so, u_int satype));
+int pfkey_send_dump __P((int so, u_int satype));
+int pfkey_send_promisc_toggle __P((int so, int flag));
+int pfkey_send_spdadd __P((int so, struct sockaddr *src, u_int prefs,
+	struct sockaddr *dst, u_int prefd, u_int proto, caddr_t policy,
+	int policylen, u_int32_t seq));
+int pfkey_send_spddelete __P((int so, struct sockaddr *src, u_int prefs,
+	struct sockaddr *dst, u_int prefd, u_int proto, u_int32_t seq));
+int pfkey_send_spdflush __P((int so));
+int pfkey_send_spddump __P((int so));
 
-extern int pfkey_open(void);
-extern void pfkey_close(int so);
-extern struct sadb_msg *pfkey_recv(int so);
-extern int pfkey_send(int so, struct sadb_msg *msg, int len);
+int pfkey_open __P((void));
+void pfkey_close __P((int so));
+struct sadb_msg *pfkey_recv __P((int so));
+int pfkey_send __P((int so, struct sadb_msg *msg, int len));
+int pfkey_align __P((struct sadb_msg *msg, caddr_t *mhp));
+int pfkey_check __P((caddr_t *mhp));
 
 #endif /*!KERNEL*/
 

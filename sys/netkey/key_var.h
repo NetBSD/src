@@ -30,6 +30,12 @@
 #ifndef _NETKEY_KEY_VAR_H_
 #define _NETKEY_KEY_VAR_H_
 
+#ifdef __NetBSD__
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
+
 /* sysctl */
 #define KEYCTL_DEBUG_LEVEL		1
 #define KEYCTL_SPI_TRY			2

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.18.12.1 1999/06/28 06:36:55 itojun Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.18.12.2 1999/11/30 13:35:00 itojun Exp $       */
 
 /*
  *
@@ -35,6 +35,9 @@
 /*
  * if_atmsubr.c
  */
+#ifdef ALTQ
+#include "opt_altq.h"
+#endif
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -71,6 +74,13 @@
 #include <netnatm/natm.h>
 #endif
 
+#ifdef ALTQ
+#include <netinet/altq.h>
+#ifdef AFMAP
+#include <netinet/altq_afmap.h>
+#endif
+#endif
+
 #define senderr(e) { error = (e); goto bad;}
 
 /*
@@ -103,10 +113,25 @@ atm_output(ifp, m0, dst, rt0)
 	struct atmllc *atmllc;
 	struct atmllc *llc_hdr = NULL;
 	u_int32_t atm_flags;
+#ifdef ALTQ
+	struct pr_hdr pr_hdr;
+#endif
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	ifp->if_lastchange = time;
+
+#ifdef ALTQ
+	/*
+	 * save a pointer to the protocol level header before adding
+	 * link headers.
+	 */
+	if (dst)
+		pr_hdr.ph_family = dst->sa_family;
+	else
+		pr_hdr.ph_family = AF_UNSPEC;
+	pr_hdr.ph_hdr = mtod(m, caddr_t);
+#endif /* ALTQ */
 
 	/*
 	 * check route
@@ -147,6 +172,10 @@ atm_output(ifp, m0, dst, rt0)
 		case AF_INET6:
 #endif
 #if defined(INET) || defined(INET6)
+			if (dst->sa_family == AF_INET)
+				etype = ETHERTYPE_IP;
+			else
+				etype = ETHERTYPE_IPV6;
 # ifdef ATM_PVCEXT
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				/* pvc subinterface */
@@ -162,10 +191,6 @@ atm_output(ifp, m0, dst, rt0)
 				/* XXX: put ATMARP stuff here */
 				/* XXX: watch who frees m on failure */
 			}
-			if (dst->sa_family == AF_INET)
-				etype = ETHERTYPE_IP;
-			else
-				etype = ETHERTYPE_IPV6;
 			break;
 #endif
 
@@ -190,6 +215,29 @@ atm_output(ifp, m0, dst, rt0)
 			senderr(EAFNOSUPPORT);
 		}
 
+#if defined(ALTQ) && defined(AFMAP)
+		if (ifp->if_altqflags & ALTQF_DRIVER1) {
+		        /* try to map flow to vpi/vci. */
+			struct flowinfo flow;
+		        struct afm *afm;
+
+			altq_extractflow(m, &pr_hdr, &flow, FIMB_ALL);
+		        if ((afm = afm_match(ifp, &flow)) != NULL) {
+			        /* matching entry found.  overwrite vpi:vci. */
+#if 0
+				printf("%s%d: atm_output:afmap vci %d -> %d\n",
+				       ifp->if_name, ifp->if_unit,
+				       ATM_PH_VCI(&atmdst), afm->afm_vci);
+#endif
+			        ATM_PH_VPI(&atmdst) = afm->afm_vpi;
+			        ATM_PH_SETVCI(&atmdst, afm->afm_vci);
+
+				afm->afms_packets++;
+				afm->afms_bytes = m->m_pkthdr.len;
+			}
+		}
+#endif /* ALTQ && AFMAP */
+
 		/*
 		 * must add atm_pseudohdr to data
 		 */
@@ -213,10 +261,29 @@ atm_output(ifp, m0, dst, rt0)
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
+#ifdef ALTQ
+	if (ALTQ_IS_ON(ifp)) {
+	        s = splimp();
+		error = (*ifp->if_altqenqueue)(ifp, m, &pr_hdr, ALTEQ_NORMAL);
+		splx(s);
+		if (error) {
+			IF_DROP(&ifp->if_snd);
+		}
+		else {
+			ifp->if_obytes += m->m_pkthdr.len;
+			if (m->m_flags & M_MCAST)
+				ifp->if_omcasts++;
+		}
+		return (error);
+	}
+#endif /* ALTQ */
 
 	s = splimp();
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
+#ifdef ALTQ_ACCOUNT
+		ALTQ_ACCOUNTING(ifp, m, &pr_hdr, ALTEQ_ACCDROP);
+#endif
 		splx(s);
 		senderr(ENOBUFS);
 	}
@@ -292,6 +359,33 @@ atm_input(ifp, ah, m, rxhand)
 	    etype = ATM_LLC_TYPE(alc);
 	    m_adj(m, sizeof(*alc));
 	  }
+
+#ifdef ATM_PVCEXT
+	  /* atm bridging support */
+	  if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LINK2)) ==
+	      (IFF_POINTOPOINT|IFF_LINK2)) {
+		  struct pvcsif *pvcsif = (struct pvcsif *)ifp;
+
+		  if (pvcsif->sif_fwdifp != NULL) {
+			  struct sockaddr dst;
+
+			  /* set address family to dummy dst addr */
+			  switch (etype) {
+			  case ETHERTYPE_IP:
+				  dst.sa_family = AF_INET;
+				  break;
+			  case ETHERTYPE_IPV6:
+				  dst.sa_family = AF_INET6;
+				  break;
+			  default:
+				  m_freem(m);
+				  return;
+			  }
+			  atm_output(pvcsif->sif_fwdifp, m, &dst, NULL);
+			  return;
+		  }
+	  }
+#endif /* ATM_PVCEXT */
 
 	  switch (etype) {
 #ifdef INET
@@ -393,5 +487,60 @@ pvcsif_alloc()
 	pvcsif->sif_if.if_unit = pvc_number++;
 #endif
 	return (&pvcsif->sif_if);
+}
+
+/*
+ * pvc bridging support:
+ * add or delete brigding between 2 pvc interfaces.
+ */
+int
+pvc_set_fwd(if_name, if_name2, op)
+	char *if_name, *if_name2;
+	int op;		/* 0:delete 1:add 2:get */
+{
+	struct ifnet *ifp, *ifp2;
+	struct pvcsif *pvcsif, *pvcsif2;
+
+	if (strncmp(if_name, "pvc", 3) != 0
+	    || (ifp = ifunit(if_name)) == NULL)
+		return (EINVAL);
+	pvcsif = (struct pvcsif *)ifp;
+
+	if (op == 2) {
+		/* get bridging info */
+		if ((ifp2 = pvcsif->sif_fwdifp) == NULL)
+			*if_name2 = '\0';
+		else
+#ifdef __NetBSD__
+			sprintf(if_name2, "%s", ifp2->if_xname);
+#else
+			sprintf(if_name2, "%s%d",
+				ifp2->if_name, ifp2->if_unit);
+#endif
+		return (0);
+	}
+
+	if (strncmp(if_name2, "pvc", 3) != 0
+	    || (ifp2 = ifunit(if_name2)) == NULL)
+		return (EINVAL);
+	pvcsif2 = (struct pvcsif *)ifp2;
+
+	if (op) {
+		/* set up bridging */
+		pvcsif->sif_fwdifp = ifp2;
+		pvcsif2->sif_fwdifp = ifp;
+		ifp->if_flags |= IFF_LINK2;	/* use IFF_LINK2 to show */
+		ifp2->if_flags |= IFF_LINK2;	/* bridging is enabled   */
+	}
+	else {
+		/* delete bridging */
+		if (pvcsif->sif_fwdifp != ifp2 || pvcsif2->sif_fwdifp != ifp)
+			return (EINVAL);
+		pvcsif->sif_fwdifp = NULL;
+		pvcsif2->sif_fwdifp = NULL;
+		ifp->if_flags &= ~IFF_LINK2;
+		ifp2->if_flags &= ~IFF_LINK2;
+	}
+	return (0);
 }
 #endif /* ATM_PVCEXT */

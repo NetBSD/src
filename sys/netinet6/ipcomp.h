@@ -34,9 +34,15 @@
 #ifndef _NETINET6_IPCOMP_H_
 #define _NETINET6_IPCOMP_H_
 
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
+
 struct ipcomp {
 	u_int8_t comp_nxt;	/* Next Header */
-	u_int8_t comp_flags;	/* Length of data, in 32bit */
+	u_int8_t comp_flags;	/* reserved, must be zero */
 	u_int16_t comp_cpi;	/* Compression parameter index */
 };
 

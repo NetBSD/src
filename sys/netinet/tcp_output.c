@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.47.6.2 1999/07/06 11:02:48 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.47.6.3 1999/11/30 13:35:37 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -115,6 +115,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,32 +240,34 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	 */
 	if (inp) {
 #ifdef IPSEC
-		size_t t = ipsec4_hdrsiz_tcp(tp);
-		if (t < size)
-			size -= t;
+		size -= ipsec4_hdrsiz_tcp(tp);
 #endif
 		size -= ip_optlen(inp);
 	}
 #ifdef INET6
 	else if (in6p && tp->t_family == AF_INET) {
 #ifdef IPSEC
-		size_t t = ipsec4_hdrsiz_tcp(tp);
-		if (t < size)
-			size -= t;
+		size -= ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
 	}
 	else if (in6p && tp->t_family == AF_INET6) {
 #if defined(IPSEC) && !defined(TCP6)
-		size_t t = ipsec6_hdrsiz_tcp(tp);
-		if (t < size)
-			size -= t;
+		size -= ipsec6_hdrsiz_tcp(tp);
 #endif
 		size -= ip6_optlen(in6p);
 	}
 #endif
 
  out:
+	/*
+	 * *rxsegsizep holds *estimated* inbound segment size (estimation
+	 * assumes that path MTU is the same for both ways).  this is only
+	 * for silly window avoidance, do not use the value for other purposes.
+	 *
+	 * ipseclen is subtracted from both sides, this may not be right.
+	 * I'm not quite sure about this (could someone comment).
+	 */
 	*txsegsizep = min(tp->t_peermss, size);
 	*rxsegsizep = min(tp->t_ourmss, size);
 
@@ -584,6 +587,9 @@ send:
 		iphdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif
+	default:	/*pacify gcc*/
+		iphdrlen = 0;
+		break;
 	}
 	hdrlen = iphdrlen;
 	if (flags & TH_SYN) {
@@ -600,24 +606,7 @@ send:
 
 		tp->snd_nxt = tp->iss;
 		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ? 
-						    rt->rt_ifp : NULL);
-#ifdef IPSEC
-	    {
-		size_t t;
-		switch (af) {
-		case AF_INET:
-			t = ipsec4_hdrsiz_tcp(tp);
-			break;
-#if defined(INET6) && !defined(TCP6)
-		case AF_INET6:
-			t = ipsec6_hdrsiz_tcp(tp);
-			break;
-#endif
-		}
-		if (t < tp->t_ourmss)
-			tp->t_ourmss -= t;
-	    }
-#endif
+						    rt->rt_ifp : NULL, af);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
@@ -768,6 +757,13 @@ send:
 		th = (struct tcphdr *)(ip6 + 1);
 		break;
 #endif
+	default:	/*pacify gcc*/
+		ip = NULL;
+#ifdef INET6
+		ip6 = NULL;
+#endif
+		th = NULL;
+		break;
 	}
 	if (tp->t_template == 0)
 		panic("tcp_output");
@@ -950,8 +946,16 @@ send:
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_nxt = IPPROTO_TCP;
-		if (tp->t_in6pcb)
-			ip6->ip6_hlim = tp->t_in6pcb->in6p_ip6.ip6_hlim;
+		if (tp->t_in6pcb) {
+			/*
+			 * we separately set hoplimit for every segment, since
+			 * the user might want to change the value via
+			 * setsockopt. Also, desired default hop limit might
+			 * be changed via Neighbor Discovery.
+			 */
+			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb,
+				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+		}
 		/* ip6->ip6_flow = ??? */
 		/* ip6_plen will be filled in ip6_output(). */
 		break;
@@ -1047,21 +1051,18 @@ send:
 	    {
 		struct ip6_pktopts *opts;
 
-#if BSD >= 43
 		if (tp->t_in6pcb)
 			opts = tp->t_in6pcb->in6p_outputopts;
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE, 0);
-#else
-		opts = NULL;
-		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE);
-#endif
+			so->so_options & SO_DONTROUTE, 0, NULL);
 		break;
 	    }
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 	if (error) {
 out:

@@ -57,6 +57,8 @@
 
 #include <machine/stdarg.h>
 
+#include <net/net_osdep.h>
+
 static void *deflate_alloc __P((void *, u_int, u_int));
 static void deflate_free __P((void *, void *));
 static int deflate_common __P((struct mbuf *, struct mbuf *, size_t *, int));
@@ -64,32 +66,15 @@ static int deflate_compress __P((struct mbuf *, struct mbuf *, size_t *));
 static int deflate_decompress __P((struct mbuf *, struct mbuf *, size_t *));
 
 static int deflate_policy = Z_DEFAULT_COMPRESSION;
+static int deflate_window = 12;		/* 2^12 = 4Kbytes */
+static int deflate_memlevel = MAX_MEM_LEVEL; 
 
-#if 1
 struct ipcomp_algorithm ipcomp_algorithms[] = {
 	{ NULL, NULL, -1 },
 	{ NULL, NULL, -1 },
 	{ deflate_compress, deflate_decompress, 90 },
 	{ NULL, NULL, 90 },
 };
-#else
-struct ipcomp_algorithm ipcomp_algorithms_dummy[] = {
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-	{ deflate_compress, deflate_decompress, 90 },
-	{ NULL, NULL, 90 },
-};
-struct ipcomp_algorithm ipcomp_algorithms[] = {
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-};
-#endif
-
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
 
 static void *
 deflate_alloc(aux, items, siz)
@@ -135,8 +120,10 @@ deflate_common(m, md, lenp, mode)
 	zs.zalloc = deflate_alloc;
 	zs.zfree = deflate_free;
 
-	zerror = mode ? inflateInit(&zs)
-		      : deflateInit(&zs, deflate_policy);
+	zerror = mode ? inflateInit2(&zs, deflate_window)
+		      : deflateInit2(&zs, deflate_policy, Z_DEFLATED,
+				deflate_window, deflate_memlevel,
+				Z_DEFAULT_STRATEGY);
 	if (zerror != Z_OK) {
 		error = ENOBUFS;
 		goto fail;

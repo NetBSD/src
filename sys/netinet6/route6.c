@@ -30,11 +30,12 @@
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet6/in6.h>
+#include <netinet6/in6_var.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 
@@ -52,14 +53,31 @@ route6_input(mp, offp, proto)
 	register struct ip6_rthdr *rh;
 	int off = *offp, rhlen;
 
+#ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(*rh), IPPROTO_DONE);
 	ip6 = mtod(m, struct ip6_hdr *);
 	rh = (struct ip6_rthdr *)((caddr_t)ip6 + off);
+#else
+	ip6 = mtod(m, struct ip6_hdr *);
+	IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, sizeof(*rh));
+	if (rh == NULL) {
+		ip6stat.ip6s_tooshort++;
+		return IPPROTO_DONE;
+	}
+#endif
 
 	switch(rh->ip6r_type) {
 	 case IPV6_RTHDR_TYPE_0:
 		 rhlen = (rh->ip6r_len + 1) << 3;
+#ifndef PULLDOWN_TEST
 		 IP6_EXTHDR_CHECK(m, off, rhlen, IPPROTO_DONE);
+#else
+		 IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, rhlen);
+		 if (rh == NULL) {
+			ip6stat.ip6s_tooshort++;
+			return IPPROTO_DONE;
+		 }
+#endif
 		 if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
 			 return(IPPROTO_DONE);
 		 break;

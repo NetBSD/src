@@ -34,6 +34,13 @@
 #ifndef _NET_IF_GIF_H_
 #define _NET_IF_GIF_H_
 
+
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
+
 #include <netinet/in.h>
 /* xxx sigh, why route have struct route instead of pointer? */
 
@@ -45,7 +52,7 @@ struct gif_softc {
 		struct route  gifscr_ro;    /* xxx */
 #ifdef INET6
 		struct route_in6 gifscr_ro6; /* xxx */
-#endif /*INET6*/
+#endif
 	} gifsc_gifscr;
 	int		gif_flags;
 };
@@ -53,7 +60,7 @@ struct gif_softc {
 #define gif_ro gifsc_gifscr.gifscr_ro
 #ifdef INET6
 #define gif_ro6 gifsc_gifscr.gifscr_ro6
-#endif /*INET6*/
+#endif
 
 #define	GIFF_INUSE	0x1	/* gif is in use */
 
@@ -68,6 +75,10 @@ extern struct gif_softc *gif;
 void gif_input __P((struct mbuf *, int, struct ifnet *));
 int gif_output __P((struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *));
+#if defined(__FreeBSD__) && __FreeBSD__ < 3
+int gif_ioctl __P((struct ifnet *, int, caddr_t));
+#else
 int gif_ioctl __P((struct ifnet *, u_long, caddr_t));
+#endif
 
 #endif /* _NET_IF_GIF_H_ */

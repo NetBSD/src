@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.10.20.1 1999/06/28 06:36:51 itojun Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.10.20.2 1999/11/30 13:33:49 itojun Exp $	*/
 
 /*
  *

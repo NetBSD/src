@@ -61,29 +61,24 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <netinet6/ipsec.h>
-#endif
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
 
 #include <machine/stdarg.h>
 
-#define IPLEN_FLIPPED
+#include <net/net_osdep.h>
 
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
+#define IPLEN_FLIPPED
 
 #ifdef INET
 extern struct protosw inetsw[];
@@ -108,7 +103,7 @@ ipcomp4_input(m, va_alist)
 	size_t hlen;
 	int error;
 	size_t newlen, olen;
-	struct secas *sa = NULL;
+	struct secasvar *sav = NULL;
 	int off, proto;
 	va_list ap;
 
@@ -159,16 +154,16 @@ ipcomp4_input(m, va_alist)
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
-		sa = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
+		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
 			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi));
-		if (sa != NULL
-		 && (sa->state == SADB_SASTATE_MATURE
-		  || sa->state == SADB_SASTATE_DYING)) {
-			cpi = sa->alg_enc;	/*XXX*/
+		if (sav != NULL
+		 && (sav->state == SADB_SASTATE_MATURE
+		  || sav->state == SADB_SASTATE_DYING)) {
+			cpi = sav->alg_enc;	/*XXX*/
 			/* other parameters to look at? */
 		}
 	}
-	if (cpi < IPCOMP_MAX || ipcomp_algorithms[cpi].decompress != NULL)
+	if (cpi < IPCOMP_MAX && ipcomp_algorithms[cpi].decompress != NULL)
 		algo = &ipcomp_algorithms[cpi];
 	else
 		algo = NULL;
@@ -231,10 +226,10 @@ ipcomp4_input(m, va_alist)
 	ip->ip_p = nxt;
     }
 
-	if (sa) {
-		key_sa_recordxfer(sa, m);
-		key_freesa(sa);
-		sa = NULL;
+	if (sav) {
+		key_sa_recordxfer(sav, m);
+		key_freesav(sav);
+		sav = NULL;
 	}
 
 	if (nxt != IPPROTO_DONE)
@@ -247,8 +242,8 @@ ipcomp4_input(m, va_alist)
 	return;
 
 fail:
-	if (sa)
-		key_freesa(sa);
+	if (sav)
+		key_freesav(sav);
 	if (m)
 		m_freem(m);
 	return;
@@ -271,7 +266,7 @@ ipcomp6_input(mp, offp, proto)
 	u_int16_t nxt;
 	int error;
 	size_t newlen;
-	struct secas *sa = NULL;
+	struct secasvar *sav = NULL;
 
 	m = *mp;
 	off = *offp;
@@ -323,16 +318,16 @@ ipcomp6_input(mp, offp, proto)
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
-		sa = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
+		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
 			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, htonl(cpi));
-		if (sa != NULL
-		 && (sa->state == SADB_SASTATE_MATURE
-		  || sa->state == SADB_SASTATE_DYING)) {
-			cpi = sa->alg_enc;	/*XXX*/
+		if (sav != NULL
+		 && (sav->state == SADB_SASTATE_MATURE
+		  || sav->state == SADB_SASTATE_DYING)) {
+			cpi = sav->alg_enc;	/*XXX*/
 			/* other parameters to look at? */
 		}
 	}
-	if (cpi < IPCOMP_MAX || ipcomp_algorithms[cpi].decompress != NULL)
+	if (cpi < IPCOMP_MAX && ipcomp_algorithms[cpi].decompress != NULL)
 		algo = &ipcomp_algorithms[cpi];
 	else
 		algo = NULL;
@@ -374,10 +369,10 @@ ipcomp6_input(mp, offp, proto)
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
     }
 
-	if (sa) {
-		key_sa_recordxfer(sa, m);
-		key_freesa(sa);
-		sa = NULL;
+	if (sav) {
+		key_sa_recordxfer(sav, m);
+		key_freesav(sav);
+		sav = NULL;
 	}
 	*offp = off;
 	*mp = m;
@@ -387,8 +382,8 @@ ipcomp6_input(mp, offp, proto)
 fail:
 	if (m)
 		m_freem(m);
-	if (sa)
-		key_freesa(sa);
+	if (sav)
+		key_freesav(sav);
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */

@@ -97,11 +97,12 @@ struct ip6_hdr {
 #if BYTE_ORDER == BIG_ENDIAN
 #define IPV6_FLOWINFO_MASK	0x0fffffff	/* flow info (28 bits) */
 #define IPV6_FLOWLABEL_MASK	0x000fffff	/* flow label (20 bits) */
-#endif /* BIG_ENDIAN */
+#else
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define IPV6_FLOWINFO_MASK	0xffffff0f	/* flow info (28 bits) */
 #define IPV6_FLOWLABEL_MASK	0xffff0f00	/* flow label (20 bits) */
 #endif /* LITTLE_ENDIAN */
+#endif
 #if 1
 /* ECN bits proposed by Sally Floyd */
 #define IP6TOS_CE		0x01	/* congestion experienced */
@@ -212,27 +213,73 @@ struct ip6_frag {
  */
 
 #define IP6_EXTHDR_CHECK(m, off, hlen, ret)				\
-if ((m)->m_next != NULL) {						\
+do {									\
+    if ((m)->m_next != NULL) {						\
 	if (((m)->m_flags & M_LOOP) &&					\
 	    ((m)->m_len < (off) + (hlen)) &&				\
 	    (((m) = m_pullup((m), (off) + (hlen))) == NULL)) {		\
 		ip6stat.ip6s_exthdrtoolong++;				\
 		return ret;						\
 	} else if ((m)->m_flags & M_EXT) {				\
-		if ((m)->m_data + (off) + (hlen)			\
-		    > (caddr_t)(m)->m_ext.ext_buf + MCLBYTES) {		\
+		if ((m)->m_len < (off) + (hlen)) {			\
 			ip6stat.ip6s_exthdrtoolong++;			\
 			m_freem(m);					\
 			return ret;					\
 		}							\
 	} else {							\
-		if ((m)->m_data + (off) + (hlen)			\
-		    > (caddr_t)(m) + MSIZE) {				\
+		if ((m)->m_len < (off) + (hlen)) {			\
 			ip6stat.ip6s_exthdrtoolong++;			\
 			m_freem(m);					\
 			return ret;					\
 		}							\
 	}								\
-}
+    }									\
+    else {								\
+	if ((m)->m_len < (off) + (hlen)) {				\
+		ip6stat.ip6s_tooshort++;				\
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);	\
+		m_freem(m);						\
+		return ret;						\
+	}								\
+    }									\
+} while (0)
+
+#ifdef __NetBSD__
+/*
+ * IP6_EXTHDR_GET ensures that intermediate protocol header (from "off" to
+ * "len") is located in single mbuf, on contiguous memory region.
+ * The pointer to the region will be returned to pointer variable "val",
+ * with type "typ".
+ * IP6_EXTHDR_GET0 does the same, except that it aligns the structure at the
+ * very top of mbuf.  GET0 is likely to make memory copy than GET.
+ *
+ * XXX we're now testing this, needs m_pulldown()
+ */
+#define IP6_EXTHDR_GET(val, typ, m, off, len) \
+do {									\
+	struct mbuf *t;							\
+	int tmp;							\
+	t = m_pulldown((m), (off), (len), &tmp);			\
+	if (t) {							\
+		if (t->m_len < tmp + (len))				\
+			panic("m_pulldown malfunction");		\
+		(val) = (typ)(mtod(t, caddr_t) + tmp);			\
+	} else								\
+		(val) = (typ)NULL;					\
+} while (0)
+
+#define IP6_EXTHDR_GET0(val, typ, m, off, len) \
+do {									\
+	struct mbuf *t;							\
+	t = m_pulldown((m), (off), (len), NULL);			\
+	if (t) {							\
+		if (t->m_len < (len))					\
+			panic("m_pulldown malfunction");		\
+		(val) = (typ)mtod(t, caddr_t);				\
+	} else								\
+		(val) = (typ)NULL;					\
+} while (0)
+
+#endif /*NetBSD*/
 
 #endif /* not _NETINET_IPV6_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.7.2.1.4.1 1999/06/28 06:36:55 itojun Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.7.2.1.4.2 1999/11/30 13:35:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -98,14 +98,14 @@ struct	ether_header {
  */
 #define ETHER_MAP_IPV6_MULTICAST(ip6addr, enaddr)			\
 	/* struct in6_addr *ip6addr; */					\
-	/* u_char enaddr[ETHER_ADDR_LEN]; */				\
+	/* u_int8_t enaddr[ETHER_ADDR_LEN]; */				\
 {                                                                       \
 	(enaddr)[0] = 0x33;						\
 	(enaddr)[1] = 0x33;						\
-	(enaddr)[2] = ((u_char *)ip6addr)[12];				\
-	(enaddr)[3] = ((u_char *)ip6addr)[13];				\
-	(enaddr)[4] = ((u_char *)ip6addr)[14];				\
-	(enaddr)[5] = ((u_char *)ip6addr)[15];				\
+	(enaddr)[2] = ((u_int8_t *)ip6addr)[12];			\
+	(enaddr)[3] = ((u_int8_t *)ip6addr)[13];			\
+	(enaddr)[4] = ((u_int8_t *)ip6addr)[14];			\
+	(enaddr)[5] = ((u_int8_t *)ip6addr)[15];			\
 }
 #endif
 

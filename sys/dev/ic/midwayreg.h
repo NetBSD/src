@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.8.6.1 1999/06/28 06:36:51 itojun Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.8.6.2 1999/11/30 13:33:48 itojun Exp $	*/
 
 /*
  * m i d w a y r e g . h

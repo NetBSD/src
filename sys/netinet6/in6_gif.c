@@ -33,6 +33,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -41,7 +44,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
 #endif
 #include <sys/protosw.h>
@@ -54,7 +57,6 @@
 #ifdef INET
 #include <netinet/ip.h>
 #endif
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
@@ -64,6 +66,8 @@
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
+
+#include <net/net_osdep.h>
 
 int
 in6_gif_output(ifp, family, m, rt)
@@ -198,9 +202,11 @@ in6_gif_output(ifp, family, m, rt)
 	}
 	
 #ifdef IPSEC
+#ifndef __OpenBSD__ /*KAME IPSEC*/
 	m->m_pkthdr.rcvif = NULL;
+#endif
 #endif /*IPSEC*/
-	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0));
+	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
 }
 
 int in6_gif_input(mp, offp, proto)
@@ -225,6 +231,8 @@ int in6_gif_input(mp, offp, proto)
 		    sc->gif_pdst->sa_family != AF_INET6) {
 			continue;
 		}
+		if ((sc->gif_if.if_flags & IFF_UP) == 0)
+			continue;
 		if ((sc->gif_if.if_flags & IFF_LINK0) &&
 		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc), &ip6->ip6_dst) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&satoin6(sc->gif_pdst))) {

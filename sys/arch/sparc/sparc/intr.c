@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39.6.1 1999/06/28 06:36:49 itojun Exp $ */
+/*	$NetBSD: intr.c,v 1.39.6.2 1999/11/30 13:32:56 itojun Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

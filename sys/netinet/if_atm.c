@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.10.10.1 1999/06/28 06:36:58 itojun Exp $       */
+/*      $NetBSD: if_atm.c,v 1.10.10.2 1999/11/30 13:35:21 itojun Exp $       */
 
 /*
  *

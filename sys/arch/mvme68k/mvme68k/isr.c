@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13.6.1 1999/06/28 06:36:49 itojun Exp $	*/
+/*	$NetBSD: isr.c,v 1.13.6.2 1999/11/30 13:32:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

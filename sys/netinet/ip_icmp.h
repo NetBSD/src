@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.13.12.2 1999/07/06 11:02:46 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.13.12.3 1999/11/30 13:35:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

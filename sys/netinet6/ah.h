@@ -34,7 +34,13 @@
 #ifndef _NETINET6_AH_H_
 #define _NETINET6_AH_H_
 
-#include <netkey/keydb.h>		/* for struct secas */
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
+
+#include <netkey/keydb.h>		/* for struct secasvar */
 
 struct ah {
 	u_int8_t	ah_nxt;		/* Next Header */
@@ -54,16 +60,16 @@ struct newah {
 };
 
 struct ah_algorithm_state {
-	struct secas *sa;
+	struct secasvar *sav;
 	void* foo;	/*per algorithm data - maybe*/
 };
 
 struct ah_algorithm {
-	int (*sumsiz) __P((struct secas *));
-	int (*mature) __P((struct secas *));
+	int (*sumsiz) __P((struct secasvar *));
+	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	void (*init) __P((struct ah_algorithm_state *, struct secas *));
+	void (*init) __P((struct ah_algorithm_state *, struct secasvar *));
 	void (*update) __P((struct ah_algorithm_state *, caddr_t, size_t));
 	void (*result) __P((struct ah_algorithm_state *, caddr_t));
 };
@@ -79,21 +85,20 @@ struct in6pcb;
 #endif
 
 /* cksum routines */
-extern int ah_hdrlen __P((struct secas *));
+extern int ah_hdrlen __P((struct secasvar *));
 
 extern size_t ah_hdrsiz __P((struct ipsecrequest *));
 extern void ah4_input __P((struct mbuf *, ...));
-struct secasb;
 extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
 extern int ah4_calccksum __P((struct mbuf *, caddr_t,
-				struct ah_algorithm *, struct secas *));
+				struct ah_algorithm *, struct secasvar *));
 
 #ifdef INET6
 extern int ah6_input __P((struct mbuf **, int *, int));
 extern int ah6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
 extern int ah6_calccksum __P((struct mbuf *, caddr_t,
-			      struct ah_algorithm *, struct secas *));
+			      struct ah_algorithm *, struct secasvar *));
 #endif /* INET6 */
 
 #endif /*KERNEL*/

@@ -61,9 +61,8 @@
 #include <netinet/in_pcb.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
@@ -75,6 +74,8 @@
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
+
+#include <net/net_osdep.h>
 
 static struct in_addr *ah4_finaldst __P((struct mbuf *));
 
@@ -94,17 +95,17 @@ ah_hdrsiz(isr)
 	if (isr == NULL)
 		panic("ah_hdrsiz: NULL was passed.\n");
 
-	if (isr->proto != IPPROTO_AH)
+	if (isr->saidx.proto != IPPROTO_AH)
 		panic("unsupported mode passed to ah_hdrsiz");
 
-	if (isr->sa == NULL)
+	if (isr->sav == NULL)
 		goto contrive;
-	if (isr->sa->state != SADB_SASTATE_MATURE
-	 && isr->sa->state != SADB_SASTATE_DYING)
+	if (isr->sav->state != SADB_SASTATE_MATURE
+	 && isr->sav->state != SADB_SASTATE_DYING)
 		goto contrive;
 
 	/* we need transport mode AH. */
-	algo = &ah_algorithms[isr->sa->alg_auth];
+	algo = &ah_algorithms[isr->sav->alg_auth];
 	if (!algo)
 		goto contrive;
 
@@ -115,8 +116,8 @@ ah_hdrsiz(isr)
 	 *
 	 * XXX variable size padding support
 	 */
-	hdrsiz = (((*algo->sumsiz)(isr->sa) + 3) & ~(4 - 1));
-	if (isr->sa->flags & SADB_X_EXT_OLD)
+	hdrsiz = (((*algo->sumsiz)(isr->sav) + 3) & ~(4 - 1));
+	if (isr->sav->flags & SADB_X_EXT_OLD)
 		hdrsiz += sizeof(struct ah);
 	else
 		hdrsiz += sizeof(struct newah);
@@ -143,7 +144,7 @@ ah4_output(m, isr)
 	struct mbuf *m;
 	struct ipsecrequest *isr;
 {
-	struct secas *sa = isr->sa;
+	struct secasvar *sav = isr->sav;
 	struct ah_algorithm *algo;
 	u_int32_t spi;
 	u_char *ahdrpos;
@@ -157,34 +158,34 @@ ah4_output(m, isr)
 	int error;
 
 	/* sanity checks */
-	if ((sa->flags & SADB_X_EXT_OLD) == 0 && !sa->replay) {
+	if ((sav->flags & SADB_X_EXT_OLD) == 0 && !sav->replay) {
 		struct ip *ip;
 
 		ip = mtod(m, struct ip *);
 		printf("ah4_output: internal error: "
-			"sa->replay is null: "
+			"sav->replay is null: "
 			"%x->%x, SPI=%u\n",
 			(u_int32_t)ntohl(ip->ip_src.s_addr),
 			(u_int32_t)ntohl(ip->ip_dst.s_addr),
-			(u_int32_t)ntohl(sa->spi));
+			(u_int32_t)ntohl(sav->spi));
 		ipsecstat.out_inval++;
 		m_freem(m);
 		return EINVAL;
 	}
 
-	algo = &ah_algorithms[sa->alg_auth];
-	spi = sa->spi;
+	algo = &ah_algorithms[sav->alg_auth];
+	spi = sav->spi;
 
 	/*
 	 * determine the size to grow.
 	 */
-	if (sa->flags & SADB_X_EXT_OLD) {
+	if (sav->flags & SADB_X_EXT_OLD) {
 		/* RFC 1826 */
-		plen = ((*algo->sumsiz)(sa) + 3) & ~(4 - 1); /*XXX pad to 8byte?*/
+		plen = ((*algo->sumsiz)(sav) + 3) & ~(4 - 1); /*XXX pad to 8byte?*/
 		ahlen = plen + sizeof(struct ah);
 	} else {
 		/* RFC 2402 */
-		plen = ((*algo->sumsiz)(sa) + 3) & ~(4 - 1); /*XXX pad to 8byte?*/
+		plen = ((*algo->sumsiz)(sav) + 3) & ~(4 - 1); /*XXX pad to 8byte?*/
 		ahlen = plen + sizeof(struct newah);
 	}
 
@@ -225,7 +226,7 @@ ah4_output(m, isr)
 	/*
 	 * initialize AH.
 	 */
-	if (sa->flags & SADB_X_EXT_OLD) {
+	if (sav->flags & SADB_X_EXT_OLD) {
 		struct ah *ahdr;
 
 		ahdr = (struct ah *)ahdrpos;
@@ -244,12 +245,12 @@ ah4_output(m, isr)
 		ahdr->ah_nxt = ip->ip_p;
 		ahdr->ah_reserve = htons(0);
 		ahdr->ah_spi = spi;
-		sa->replay->count++;
+		sav->replay->count++;
 		/*
 		 * XXX sequence number must not be cycled, if the SA is
 		 * installed by IKE daemon.
 		 */
-		ahdr->ah_seq = htonl(sa->replay->count);
+		ahdr->ah_seq = htonl(sav->replay->count);
 		bzero(ahdr + 1, plen);
 	}
 
@@ -283,7 +284,7 @@ ah4_output(m, isr)
 	 * calcurate the checksum, based on security association
 	 * and the algorithm specified.
 	 */
-	error = ah4_calccksum(m, (caddr_t)ahsumpos, algo, sa);
+	error = ah4_calccksum(m, (caddr_t)ahsumpos, algo, sav);
 	if (error) {
 		printf("error after ah4_calccksum, called from ah4_output");
 		m = NULL;
@@ -296,28 +297,28 @@ ah4_output(m, isr)
 		ip->ip_dst.s_addr = dst.s_addr;
 	}
 	ipsecstat.out_success++;
-	ipsecstat.out_ahhist[sa->alg_auth]++;
-	key_sa_recordxfer(sa, m);
+	ipsecstat.out_ahhist[sav->alg_auth]++;
+	key_sa_recordxfer(sav, m);
 
 	return 0;
 }
 
 /* Calculate AH length */
 int
-ah_hdrlen(sa)
-	struct secas *sa;
+ah_hdrlen(sav)
+	struct secasvar *sav;
 {
 	struct ah_algorithm *algo;
 	int plen, ahlen;
 	
-	algo = &ah_algorithms[sa->alg_auth];
-	if (sa->flags & SADB_X_EXT_OLD) {
+	algo = &ah_algorithms[sav->alg_auth];
+	if (sav->flags & SADB_X_EXT_OLD) {
 		/* RFC 1826 */
-		plen = ((*algo->sumsiz)(sa) + 3) & ~(4 - 1);	/*XXX pad to 8byte?*/
+		plen = ((*algo->sumsiz)(sav) + 3) & ~(4 - 1);	/*XXX pad to 8byte?*/
 		ahlen = plen + sizeof(struct ah);
 	} else {
 		/* RFC 2402 */
-		plen = ((*algo->sumsiz)(sa) + 3) & ~(4 - 1);	/*XXX pad to 8byte?*/
+		plen = ((*algo->sumsiz)(sav) + 3) & ~(4 - 1);	/*XXX pad to 8byte?*/
 		ahlen = plen + sizeof(struct newah);
 	}
 
@@ -337,7 +338,7 @@ ah6_output(m, nexthdrp, md, isr)
 {
 	struct mbuf *mprev;
 	struct mbuf *mah;
-	struct secas *sa = isr->sa;
+	struct secasvar *sav = isr->sav;
 	struct ah_algorithm *algo;
 	u_int32_t spi;
 	u_char *ahsumpos = NULL;
@@ -352,7 +353,7 @@ ah6_output(m, nexthdrp, md, isr)
 		return EINVAL;
 	}
 
-	ahlen = ah_hdrlen(sa);
+	ahlen = ah_hdrlen(sav);
 	if (ahlen == 0)
 		return 0;
 
@@ -391,21 +392,21 @@ ah6_output(m, nexthdrp, md, isr)
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 
-	if ((sa->flags & SADB_X_EXT_OLD) == 0 && !sa->replay) {
+	if ((sav->flags & SADB_X_EXT_OLD) == 0 && !sav->replay) {
 		printf("ah6_output: internal error: "
-			"sa->replay is null: SPI=%u\n",
-			(u_int32_t)ntohl(sa->spi));
+			"sav->replay is null: SPI=%u\n",
+			(u_int32_t)ntohl(sav->spi));
 		ipsec6stat.out_inval++;
 		return 0;	/* no change at all */
 	}
 
-	algo = &ah_algorithms[sa->alg_auth];
-	spi = sa->spi;
+	algo = &ah_algorithms[sav->alg_auth];
+	spi = sav->spi;
 
 	/*
 	 * initialize AH.
 	 */
-	if (sa->flags & SADB_X_EXT_OLD) {
+	if (sav->flags & SADB_X_EXT_OLD) {
 		struct ah *ahdr = mtod(mah, struct ah *);
 
 		plen = mah->m_len - sizeof(struct ah);
@@ -426,12 +427,12 @@ ah6_output(m, nexthdrp, md, isr)
 		ahdr->ah_len = (plen >> 2) + 1;	/* plus one for seq# */
 		ahdr->ah_reserve = htons(0);
 		ahdr->ah_spi = spi;
-		sa->replay->count++;
+		sav->replay->count++;
 		/*
 		 * XXX sequence number must not be cycled, if the SA is
 		 * installed by IKE daemon.
 		 */
-		ahdr->ah_seq = htonl(sa->replay->count);
+		ahdr->ah_seq = htonl(sav->replay->count);
 		bzero(ahdr + 1, plen);
 	}
 
@@ -439,13 +440,13 @@ ah6_output(m, nexthdrp, md, isr)
 	 * calcurate the checksum, based on security association
 	 * and the algorithm specified.
 	 */
-	error = ah6_calccksum(m, (caddr_t)ahsumpos, algo, sa);
+	error = ah6_calccksum(m, (caddr_t)ahsumpos, algo, sav);
 	if (error)
 		ipsec6stat.out_inval++;
 	else
 		ipsec6stat.out_success++;
-	ipsec6stat.out_ahhist[sa->alg_auth]++;
-	key_sa_recordxfer(sa, m);
+	ipsec6stat.out_ahhist[sav->alg_auth]++;
+	key_sa_recordxfer(sav, m);
 
 	return(error);
 }

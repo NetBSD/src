@@ -36,7 +36,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
 #endif
 #include <sys/syslog.h>
@@ -48,16 +48,13 @@
 #include <net/radix.h>
 
 #include <netinet/in.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/icmp6.h>
 
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
-#define time_second time.tv_sec
-#endif
+#include <net/net_osdep.h>
 
 #define SDL(s)	((struct sockaddr_dl *)s)
 
@@ -74,8 +71,6 @@ static void pfxlist_onlink_check __P((void));
 static void nd6_detach_prefix __P((struct nd_prefix *));
 static void nd6_attach_prefix __P((struct nd_prefix *));
 
-static int in6_are_prefix_equal __P((struct in6_addr *, struct in6_addr *, int));
-static void in6_prefixlen2mask __P((struct in6_addr *, int));
 static void in6_init_address_ltimes __P((struct nd_prefix *ndpr,
 					 struct in6_addrlifetime *lt6));
 
@@ -159,7 +154,7 @@ nd6_rs_input(m, off, icmp6len)
 			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2);
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT, 0);
 }
 
 /*
@@ -215,6 +210,9 @@ nd6_ra_input(m, off, icmp6len)
     {
 	struct nd_defrouter dr0;
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 
 	dr0.rtaddr = saddr6;
 	dr0.flags  = nd_ra->nd_ra_flags_reserved;
@@ -290,19 +288,12 @@ nd6_ra_input(m, off, icmp6len)
 			pr.ndpr_prefix.sin6_family = AF_INET6;
 			pr.ndpr_prefix.sin6_len = sizeof(pr.ndpr_prefix);
 			pr.ndpr_prefix.sin6_addr = pi->nd_opt_pi_prefix;
-			pr.ndpr_ifpr.ifpr_prefix =
-				(struct sockaddr *)&pr.ndpr_prefix;
-			/* TODO: link into interface prefix list */
-
 			pr.ndpr_ifp = (struct ifnet *)m->m_pkthdr.rcvif;
 
 			pr.ndpr_raf_onlink = (pi->nd_opt_pi_flags_reserved &
 					      ND_OPT_PI_FLAG_ONLINK) ? 1 : 0;
 			pr.ndpr_raf_auto = (pi->nd_opt_pi_flags_reserved &
 					    ND_OPT_PI_FLAG_AUTO) ? 1 : 0;
-			pr.ndpr_rrf_decrvalid = 1;
-			pr.ndpr_rrf_decrprefd = 1;
-			pr.ndpr_origin = PR_ORIG_RA;
 			pr.ndpr_plen = pi->nd_opt_pi_prefix_len;
 			pr.ndpr_vltime = ntohl(pi->nd_opt_pi_valid_time);
 			pr.ndpr_pltime =
@@ -373,7 +364,7 @@ nd6_ra_input(m, off, icmp6len)
 			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2);
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_ADVERT);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_ADVERT, 0);
     }
 }
 
@@ -406,7 +397,11 @@ defrouter_addreq(new)
 	gate.sin6_addr = new->rtaddr;
 
 #if 1
+#ifdef __NetBSD__
 	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	(void)rtrequest(RTM_ADD, (struct sockaddr *)&def,
 		(struct sockaddr *)&gate, (struct sockaddr *)&mask,
 		RTF_GATEWAY, NULL);
@@ -419,11 +414,15 @@ defrouter_addreq(new)
 	if ((rnh = rt_tables[AF_INET6]) == 0)
 		return;
 
+#ifdef __NetBSD__
 	s = splsoftnet();
-#if 0
-	R_Malloc(rt, struct rtentry *, sizeof(*rt));
 #else
+	s = splnet();
+#endif
+#ifdef __NetBSD__
 	rt = pool_get(&rtentry_pool, PR_NOWAIT);
+#else
+	R_Malloc(rt, struct rtentry *, sizeof(*rt));
 #endif
 	if (!rt)
 		goto bad;
@@ -547,7 +546,11 @@ defrtrlist_update(new)
 	struct nd_defrouter *new;
 {
 	struct nd_defrouter *dr, *n;
+#ifdef __NetBSD__
 	int s = splsoftnet();
+#else
+	int s = splnet();
+#endif
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
 		/* entry exists */
@@ -663,8 +666,6 @@ prelist_add(pr, dr)
 		return ENOMEM;
 	bzero(new, sizeof(*new));
 	*new = *pr;
-	/* let ndpr_ifpr.ifpr_prefix point ndpr_prefix. */
-	new->ndpr_ifpr.ifpr_prefix = (struct sockaddr *)&new->ndpr_prefix;
 
 	/* initilization */
 	new->ndpr_statef_onlink = pr->ndpr_statef_onlink;
@@ -677,20 +678,11 @@ prelist_add(pr, dr)
 
 	/* xxx ND_OPT_PI_FLAG_ONLINK processing */
 
+#ifdef __NetBSD__
 	s = splsoftnet();
-	/* link ndpr_entry to if_prefixlist */
-	{
-		struct ifnet *ifp = new->ndpr_ifp;
-		struct ifprefix *ifpr;
-
-		if ((ifpr = ifp->if_prefixlist) != NULL) {
-			for ( ; ifpr->ifpr_next; ifpr = ifpr->ifpr_next)
-				continue;
-			ifpr->ifpr_next = ndpr2ifpr(new);
-		}
-		else
-			ifp->if_prefixlist = ndpr2ifpr(new);
-	}
+#else
+	s = splnet();
+#endif
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
 	splx(s);
@@ -708,24 +700,11 @@ prelist_remove(pr)
 	struct nd_pfxrouter *pfr, *next;
 	int s;
 
+#ifdef __NetBSD__
 	s = splsoftnet();
-	/* unlink ndpr_entry from if_prefixlist */
-	{
-		struct ifnet *ifp = pr->ndpr_ifp;
-		struct ifprefix *ifpr;
-
-		if ((ifpr = ifp->if_prefixlist) == ndpr2ifpr(pr))
-			ifp->if_prefixlist = ifpr->ifpr_next;
-		else {
-			while (ifpr->ifpr_next &&
-			       (ifpr->ifpr_next != ndpr2ifpr(pr)))
-				ifpr = ifpr->ifpr_next;
-			if (ifpr->ifpr_next)
-				ifpr->ifpr_next = ndpr2ifpr(pr)->ifpr_next;
-			else
-				printf("Couldn't unlink nd_prefix from ifp\n");
-		}
-	}
+#else
+	s = splnet();
+#endif
 	/* unlink ndpr_entry from nd_prefix list */
 	LIST_REMOVE(pr, ndpr_entry);
 	splx(s);
@@ -755,45 +734,38 @@ prelist_update(new, dr, m)
 {
 	struct in6_ifaddr *ia6 = NULL;
 	struct nd_prefix *pr;
+#ifdef __NetBSD__
 	int s = splsoftnet();
+#else
+	int s = splnet();
+#endif
 	int error = 0;
 	int auth;
 	struct in6_addrlifetime *lt6;
 
+	auth = 0;
 	if (m) {
 		/*
 		 * Authenticity for NA consists authentication for
 		 * both IP header and IP datagrams, doesn't it ?
 		 */
+#if defined(M_AUTHIPHDR) && defined(M_AUTHIPDGM)
 		auth = (m->m_flags & M_AUTHIPHDR
 		     && m->m_flags & M_AUTHIPDGM) ? 1 : 0;
-	} else
-		auth = 0;
+#endif
+	}
 
 	if ((pr = prefix_lookup(new)) != NULL) {
 		if (pr->ndpr_ifp != new->ndpr_ifp) {
 			error = EADDRNOTAVAIL;
 			goto end;
 		}
-
-		/*
-		 * If the origin of the already-installed prefix is more
-		 * preferable than the new one, ignore installation request.
-		 */
-		if (pr->ndpr_origin > new->ndpr_origin) {
-			error = EPERM;
-			goto end;
-		}
-
 		/* update prefix information */
-		pr->ndpr_flags.prf_ra = new->ndpr_flags.prf_ra;
-		if (pr->ndpr_origin >= PR_ORIG_RR)
-			pr->ndpr_flags.prf_rr = new->ndpr_flags.prf_rr;
+		pr->ndpr_flags = new->ndpr_flags;
 		pr->ndpr_vltime = new->ndpr_vltime;
 		pr->ndpr_pltime = new->ndpr_pltime;
 		pr->ndpr_preferred = new->ndpr_preferred;
 		pr->ndpr_expire = new->ndpr_expire;
-		pr->ndpr_statef_delmark = 0; /* cancel deletion */
 
 		/*
 		 * RFC 2462 5.5.3 (d) or (e)
@@ -869,38 +841,24 @@ prelist_update(new, dr, m)
 				lt6->ia6t_vltime = TWOHOUR;
 				update++;
 			}
-			if (TWOHOUR < new->ndpr_pltime
-			 || lt6->ia6t_pltime < new->ndpr_pltime) {
-				new->ndpr_apltime = new->ndpr_pltime;
-				lt6->ia6t_pltime = new->ndpr_pltime;
-				update++;
-			} else if (auth
-				&& lt6->ia6t_pltime <= TWOHOUR
-				&& new->ndpr_pltime <= lt6->ia6t_pltime) {
-				lt6->ia6t_pltime = new->ndpr_pltime;
-				update++;
-			} else {
-				lt6->ia6t_pltime = TWOHOUR;
-				update++;
-			}
 
+			/* 2 hour rule is not imposed for pref lifetime */
+			new->ndpr_apltime = new->ndpr_pltime;
+			lt6->ia6t_pltime = new->ndpr_pltime;
+			update++;
 #else	/* update from Jim Bound, (ipng 6712) */
 			if (TWOHOUR < new->ndpr_vltime
 			 || lt6->ia6t_vltime < new->ndpr_vltime) {
 				lt6->ia6t_vltime = new->ndpr_vltime;
 				update++;
 			} else if (auth) {
-				lt6->ia6t_pltime = new->ndpr_pltime;
+				lt6->ia6t_vltime = new->ndpr_vltime;
 				update++;
 			}
-			if (TWOHOUR < new->ndpr_pltime
-			 || lt6->ia6t_pltime < new->ndpr_pltime) {
-				lt6->ia6t_pltime = new->ndpr_pltime;
-				update++;
-			} else if (auth) {
-				lt6->ia6t_pltime = new->ndpr_pltime;
-				update++;
-			}
+
+			/* jim bound rule is not imposed for pref lifetime */
+			lt6->ia6t_pltime = new->ndpr_pltime;
+			update++;
 #endif
 			if (update)
 				in6_init_address_ltimes(new, lt6);
@@ -1044,7 +1002,7 @@ nd6_detach_prefix(pr)
 			    "nd6_detach_prefix: failed to delete route: "
 			    "%s/%d (errno = %d)\n",
 			    ip6_sprintf(&sa6.sin6_addr),
-			    pr->ndpr_ifpr.ifpr_plen,
+			    pr->ndpr_plen,
 			    e);
 		}
 	}
@@ -1148,7 +1106,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 	/* prefixlen + ifidlen must be equal to 128 */
 	if (prefixlen != in6_mask2len(&ib->ia_prefixmask.sin6_addr)) {
 		log(LOG_ERR, "in6_ifadd: wrong prefixlen for %s"
-			"(prefix=%d ifid=%d)\n", ifp->if_xname,
+			"(prefix=%d ifid=%d)\n", if_name(ifp),
 			prefixlen,
 			128 - in6_mask2len(&ib->ia_prefixmask.sin6_addr));
 		return NULL;
@@ -1176,10 +1134,18 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		in6_ifaddr = ia;
 
 	/* link to if_addrlist */
+#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
+	if ((ifa = ifp->if_addrlist) != NULL) {
+		for ( ; ifa->ifa_next; ifa = ifa->ifa_next)
+			continue;
+		ifa->ifa_next = (struct ifaddr *)ia;
+	}
+#else
 	if (ifp->if_addrlist.tqh_first != NULL) {
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			ifa_list);
 	}
+#endif
 #if 0
 	else {
 		/*
@@ -1223,17 +1189,10 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 
 	/* add interface route */
 	if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_UP|RTF_CLONING))) {
-#ifdef __NetBSD__
 		log(LOG_NOTICE, "in6_ifadd: failed to add an interface route "
 		    "for %s/%d on %s, errno = %d\n",
 		    ip6_sprintf(&ia->ia_addr.sin6_addr), prefixlen,
-		    ifp->if_xname, error);
-#else
-		log(LOG_NOTICE, "in6_ifadd: failed to add an interface route "
-		    "for %s/%d on %s%d, errno = %d\n",
-		    ip6_sprintf(&ia->ia_addr.sin6_addr), prefixlen,
-		    ifp->if_name, ifp->if_unit, error);
-#endif 
+		    if_name(ifp), error);
 	}
 	else
 		ia->ia_flags |= IFA_ROUTE;
@@ -1244,7 +1203,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		int error;	/* not used */
 		struct in6_addr sol6;
 
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		/* Restore saved multicast addresses(if any). */
 		in6_restoremkludge(ia, ifp);
 #endif
@@ -1283,6 +1242,9 @@ in6_ifdel(ifp, in6)
 	struct ifnet *ifp;
 	struct in6_addr *in6;
 {
+#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
+	struct ifaddr *ifa;
+#endif
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)NULL;
 	struct in6_ifaddr *oia = (struct in6_ifaddr *)NULL;
 
@@ -1318,7 +1280,21 @@ in6_ifdel(ifp, in6)
 		ia->ia_flags &= ~IFA_ROUTE;
 	}
 
+#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
+	if ((ifa = ifp->if_addrlist) == (struct ifaddr *)ia) {
+		ifp->if_addrlist = ifa->ifa_next;
+	} else {
+		while (ifa->ifa_next &&
+		      (ifa->ifa_next != (struct ifaddr *)ia))
+			ifa = ifa->ifa_next;
+		if (ifa->ifa_next)
+			ifa->ifa_next = ((struct ifaddr *)ia)->ifa_next;
+		else
+			return -1;
+	}
+#else
 	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+#endif
 
 	/* lladdr is never deleted */
 	oia = ia;
@@ -1333,7 +1309,7 @@ in6_ifdel(ifp, in6)
 			return -1;
 	}
 
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	in6_savemkludge(oia);
 #endif
 	IFAFREE((&oia->ia_ifa));
@@ -1348,59 +1324,13 @@ in6_ifdel(ifp, in6)
 	return 0;
 }
 
-static int
-in6_are_prefix_equal(p1, p2, len)
-	struct in6_addr *p1, *p2;
-	int len;
-{
-	int bytelen, bitlen;
-
-	/* sanity check */
-	if (0 > len || len > 128) {
-		log(LOG_ERR, "in6_are_prefix_equal: invalid prefix length(%d)\n",
-		    len);
-		return(0);
-	}
-
-	bytelen = len / 8;
-	bitlen = len % 8;
-
-	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
-		return(0);
-	if (p1->s6_addr[bytelen] >> (8 - bitlen) !=
-	    p2->s6_addr[bytelen] >> (8 - bitlen))
-		return(0);
-
-	return(1);
-}
-
-static void
-in6_prefixlen2mask(maskp, len)
-	struct in6_addr *maskp;
-	int len;
-{
-	u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int bytelen, bitlen, i;
-
-	/* sanity check */
-	if (0 > len || len > 128) {
-		log(LOG_ERR, "in6_prefixlen2mask: invalid prefix length(%d)\n",
-		    len);
-		return;
-	}
-
-	bzero(maskp, sizeof(*maskp));
-	bytelen = len / 8;
-	bitlen = len % 8;
-	for (i = 0; i < bytelen; i++)
-		maskp->s6_addr[i] = 0xff;
-	if (bitlen)
-		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
-}
-
 int
 in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 {
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
+
 	/* check if preferred lifetime > valid lifetime */
 	if (ndpr->ndpr_pltime > ndpr->ndpr_vltime) {
 		log(LOG_INFO, "in6_init_prefix_ltimes: preferred lifetime"
@@ -1408,13 +1338,11 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 		    (u_int)ndpr->ndpr_pltime, (u_int)ndpr->ndpr_vltime);
 		return (EINVAL);
 	}
-	if (ndpr->ndpr_pltime == ND6_INFINITE_LIFETIME ||
-	    ndpr->ndpr_rrf_decrprefd == 0)
+	if (ndpr->ndpr_pltime == ND6_INFINITE_LIFETIME)
 		ndpr->ndpr_preferred = 0;
 	else
 		ndpr->ndpr_preferred = time_second + ndpr->ndpr_pltime;
-	if (ndpr->ndpr_vltime == ND6_INFINITE_LIFETIME ||
-	    ndpr->ndpr_rrf_decrvalid == 0)
+	if (ndpr->ndpr_vltime == ND6_INFINITE_LIFETIME)
 		ndpr->ndpr_expire = 0;
 	else
 		ndpr->ndpr_expire = time_second + ndpr->ndpr_vltime;
@@ -1425,17 +1353,19 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 static void
 in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 {
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
+
 	/* init ia6t_expire */
-	if (lt6->ia6t_vltime == ND6_INFINITE_LIFETIME ||
-	    (new->ndpr_origin >= PR_ORIG_RR && new->ndpr_rrf_decrvalid == 0))
+	if (lt6->ia6t_vltime == ND6_INFINITE_LIFETIME)
 		lt6->ia6t_expire = 0;
 	else {
 		lt6->ia6t_expire = time_second;
 		lt6->ia6t_expire += lt6->ia6t_vltime;
 	}
 	/* init ia6t_preferred */
-	if (lt6->ia6t_pltime == ND6_INFINITE_LIFETIME ||
-	    (new->ndpr_origin >= PR_ORIG_RR && new->ndpr_rrf_decrprefd == 0))
+	if (lt6->ia6t_pltime == ND6_INFINITE_LIFETIME)
 		lt6->ia6t_preferred = 0;
 	else {
 		lt6->ia6t_preferred = time_second;
@@ -1461,7 +1391,11 @@ rt6_flush(gateway, ifp)
     struct ifnet *ifp;
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
+#ifdef __NetBSD__
 	int s = splsoftnet();
+#else
+	int s = splnet();
+#endif
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway)) {

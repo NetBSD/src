@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.2.1.4.1 1999/07/06 11:02:35 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.2.1.4.2 1999/11/30 13:32:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15.6.1 1999/07/06 11:02:37 itojun Exp $	*/
+/*	$NetBSD: trap.c,v 1.15.6.2 1999/11/30 13:32:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

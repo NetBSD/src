@@ -52,8 +52,15 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#include <sys/sockio.h>
+#else
 #include <sys/ioctl.h>
+#endif
 #include <sys/time.h>
+#ifdef __bsdi__
+#include <machine/cpu.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -98,14 +105,26 @@
 
 #include "bpfilter.h"
 
+#include <net/net_osdep.h>
+
+#if defined(__FreeBSD__) && __FreeBSD__ < 3
+static int dummyioctl __P((struct ifnet *, int, caddr_t));
+#else
 static int dummyioctl __P((struct ifnet *, u_long, caddr_t));
+#endif
 int dummyoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
 	register struct rtentry *));
+#ifdef __bsdi__
+static void dummyrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
+#else
 static void dummyrtrequest __P((int, struct rtentry *, struct sockaddr *));
+#endif
 
-void dummyattach __P((int));
 #ifdef __FreeBSD__
+void dummyattach __P((void *));
 PSEUDO_SET(dummyattach, if_dummy);
+#else
+void dummyattach __P((int));
 #endif
 
 #ifdef TINY_DUMMYMTU
@@ -119,15 +138,26 @@ static struct	ifnet dummyif[NDUMMY];
 /* ARGSUSED */
 void
 dummyattach(dummy)
+#ifdef __FreeBSD__
+	void *dummy;
+#else
 	int dummy;
+#endif
 {
 	register struct ifnet *ifp;
 	register int i;
 
 	for (i = 0; i < NDUMMY; i++) {
 		ifp = &dummyif[i];
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(ifp->if_xname, "dummy%d", i);
+#else
+		ifp->if_name = "dummy";
+		ifp->if_unit = i;
+#endif
+#ifndef __bsdi__
 		ifp->if_softc = NULL;
+#endif
 		ifp->if_mtu = DUMMYMTU;
 		/* Change to BROADCAST experimentaly to announce its prefix. */
 		ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
@@ -138,7 +168,11 @@ dummyattach(dummy)
 		ifp->if_addrlen = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
+#ifdef HAVE_OLD_BPF
+		bpfattach(ifp, DLT_NULL, sizeof(u_int));
+#else
 		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+#endif
 #endif
 	}
 }
@@ -179,7 +213,11 @@ dummyoutput(ifp, m, dst, rt)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 
+#ifdef HAVE_OLD_BPF
+		bpf_mtap(ifp, &m0);
+#else
 		bpf_mtap(ifp->if_bpf, &m0);
+#endif
 	}
 #endif
 	m->m_pkthdr.rcvif = ifp;
@@ -231,7 +269,7 @@ dummyoutput(ifp, m, dst, rt)
 #endif NETATALK
 	default:
 		printf("%s: can't handle af%d\n",
-		       ifp->if_xname, dst->sa_family);
+		       if_name(ifp), dst->sa_family);
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
@@ -252,10 +290,17 @@ dummyoutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 static void
+#ifdef __bsdi__
+dummyrtrequest(cmd, rt, info)
+	int cmd;
+	struct rtentry *rt;
+	struct rt_addrinfo *info;
+#else
 dummyrtrequest(cmd, rt, sa)
 	int cmd;
 	struct rtentry *rt;
 	struct sockaddr *sa;
+#endif
 {
 	if (rt) {
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
@@ -276,7 +321,11 @@ dummyrtrequest(cmd, rt, sa)
 static int
 dummyioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
+#if defined(__FreeBSD__) && __FreeBSD__ < 3
+	int cmd;
+#else
 	u_long cmd;
+#endif
 	caddr_t data;
 {
 	register struct ifaddr *ifa;
@@ -317,9 +366,13 @@ dummyioctl(ifp, cmd, data)
 		}
 		break;
 
+#ifdef SIOCSIFMTU
+#ifndef __OpenBSD__
 	case SIOCSIFMTU:
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
+#endif
+#endif
 
 	case SIOCSIFFLAGS:
 		break;

@@ -38,11 +38,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#include <sys/malloc.h>
+#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if defined(__FreeBSD__) || __FreeBSD__ >= 3
+/*nothing*/
+#else
 #include <sys/ioctl.h>
 #endif
 #include <sys/time.h>
@@ -71,7 +76,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
-#include <netinet6/in6_ifattach.h>
 #endif /* INET6 */
 
 #include <net/if_gif.h>
@@ -79,9 +83,15 @@
 #include "gif.h"
 #include "bpfilter.h"
 
+#include <net/net_osdep.h>
+
 #if NGIF > 0
 
+#ifdef __FreeBSD__
 void gifattach __P((void *));
+#else
+void gifattach __P((int));
+#endif
 
 /*
  * gif global variable definitions
@@ -91,7 +101,11 @@ struct gif_softc *gif = 0;
 
 void
 gifattach(dummy)
+#ifdef __FreeBSD__
 	void *dummy;
+#else
+	int dummy;
+#endif
 {
 	register struct gif_softc *sc;
 	register int i;
@@ -99,7 +113,12 @@ gifattach(dummy)
 	gif = sc = malloc (ngif * sizeof(struct gif_softc), M_DEVBUF, M_WAIT);
 	bzero(sc, ngif * sizeof(struct gif_softc));
 	for (i = 0; i < ngif; sc++, i++) {
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(sc->gif_if.if_xname, "gif%d", i);
+#else
+		sc->gif_if.if_name = "gif";
+		sc->gif_if.if_unit = i;
+#endif
 		sc->gif_if.if_mtu    = GIF_MTU;
 		sc->gif_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
 		sc->gif_if.if_ioctl  = gif_ioctl;
@@ -107,7 +126,11 @@ gifattach(dummy)
 		sc->gif_if.if_type   = IFT_GIF;
 		if_attach(&sc->gif_if);
 #if NBPFILTER > 0
+#ifdef HAVE_OLD_BPF
+		bpfattach(&sc->gif_if, DLT_NULL, sizeof(u_int));
+#else
 		bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL, sizeof(u_int));
+#endif
 #endif
 	}
 }
@@ -144,7 +167,11 @@ gif_output(ifp, m, dst, rt)
 		goto end;
 	}
 
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+	getmicrotime(&ifp->if_lastchange);
+#else
 	ifp->if_lastchange = time;	
+#endif
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
 #if 0	    
@@ -172,7 +199,11 @@ gif_output(ifp, m, dst, rt)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
+#ifdef HAVE_OLD_BPF
+		bpf_mtap(ifp, &m0);
+#else
 		bpf_mtap(ifp->if_bpf, &m0);
+#endif
 	}
 #endif
 	ifp->if_opackets++;	
@@ -242,7 +273,11 @@ gif_input(m, af, gifp)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
+#ifdef HAVE_OLD_BPF
+		bpf_mtap(gifp, &m0);
+#else
 		bpf_mtap(gifp->if_bpf, &m0);
+#endif
 	}
 #endif /*NBPFILTER > 0*/
 
@@ -297,7 +332,11 @@ gif_input(m, af, gifp)
 int
 gif_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
+#if defined(__FreeBSD__) && __FreeBSD__ < 3
+	int cmd;
+#else
 	u_long cmd;
+#endif
 	caddr_t data;
 {
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
@@ -314,6 +353,7 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
@@ -327,9 +367,11 @@ gif_ioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
+#endif /*not FreeBSD3*/
 		break;
 
 #ifdef	SIOCSIFMTU /* xxx */
+#ifndef __OpenBSD__
 	case SIOCGIFMTU:
 		break;
 	case SIOCSIFMTU:
@@ -347,21 +389,13 @@ gif_ioctl(ifp, cmd, data)
 			ifp->if_mtu = mtu;
 		}
 		break;
+#endif
 #endif /* SIOCSIFMTU */
 
 	case SIOCSIFPHYADDR:
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
-#ifdef INET6
-		if (found_first_ifid) 
-			in6_ifattach(ifp, IN6_IFT_P2P, NULL, 1);
-		else {
-			error = ENXIO; /* xxx */
-			goto bad;
-		}
-#endif /* INET6 */
-
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:

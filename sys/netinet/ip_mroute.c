@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.42.6.1 1999/06/28 06:37:00 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.42.6.2 1999/11/30 13:35:32 itojun Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -13,6 +13,8 @@
  *
  * MROUTING Revision: 1.2
  */
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1617,7 +1619,6 @@ tbf_process_q(vifp)
 			break;
 	}
 	splx(s);
-	return;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.66.6.2 1999/07/06 11:02:49 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.66.6.3 1999/11/30 13:35:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #include "opt_tcp_compat_42.h"
 #include "rnd.h"
 
@@ -137,6 +138,8 @@
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6protosw.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -148,10 +151,6 @@
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#include <netinet6/ah.h>
-#ifdef IPSEC_ESP
-#include <netinet6/esp.h>
-#endif
 #endif /*IPSEC*/
 
 #ifdef INET6
@@ -256,6 +255,7 @@ tcp_template(tp)
 		return NULL;	/*EINVAL*/
 #endif
 	default:
+		hlen = 0;	/*pacify gcc*/
 		return NULL;	/*EAFNOSUPPORT*/
 	}
 	if ((m = tp->t_template) == 0) {
@@ -269,7 +269,7 @@ tcp_template(tp)
 		}
 		if (m == NULL)
 			return NULL;
-		m->m_len = hlen + sizeof(struct tcphdr);
+		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
 	bzero(mtod(m, caddr_t), m->m_len);
 	switch (tp->t_family) {
@@ -352,10 +352,11 @@ tcp_template(tp)
  * segment are as specified by the parameters.
  */
 int
-tcp_respond(tp, template, m, ack, seq, flags)
+tcp_respond(tp, template, m, th0, ack, seq, flags)
 	struct tcpcb *tp;
-	struct mbuf *template;		/* XXX should be struct mbuf? */
+	struct mbuf *template;
 	register struct mbuf *m;
+	struct tcphdr *th0;
 	tcp_seq ack, seq;
 	int flags;
 {
@@ -389,12 +390,8 @@ tcp_respond(tp, template, m, ack, seq, flags)
 	ip6 = NULL;
 #endif
 	if (m == 0) {
-		if (template
-		 && template->m_len < hlen + sizeof(struct tcphdr)) {
-			if (m)
-				m_freem(m);
+		if (!template)
 			return EINVAL;
-		}
 
 		/* get family information from template */
 		switch (mtod(template, struct ip *)->ip_v) {
@@ -409,15 +406,13 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			break;
 #endif
 		default:
-			if (m)
-				m_freem(m);
 			return EAFNOSUPPORT;
 		}
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT)) {
+			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				m = NULL;
 			}
@@ -444,6 +439,12 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			th = (struct tcphdr *)(ip6 + 1);
 			break;
 #endif
+#if 0
+		default:
+			/* noone will visit here */
+			m_freem(m);
+			return EAFNOSUPPORT;
+#endif
 		}
 		flags = TH_ACK;
 	} else {
@@ -460,8 +461,7 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			break;
 #endif
 		default:
-			if (m)
-				m_freem(m);
+			m_freem(m);
 			return EAFNOSUPPORT;
 		}
 
@@ -482,15 +482,24 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			ip = mtod(m, struct ip *);
 			th = (struct tcphdr *)(ip + 1);
 			xchg(ip->ip_dst, ip->ip_src, struct in_addr);
+			ip->ip_p = IPPROTO_TCP;
 			break;
 #ifdef INET6
 		case AF_INET6:
 			ip6 = mtod(m, struct ip6_hdr *);
 			th = (struct tcphdr *)(ip6 + 1);
 			xchg(ip6->ip6_dst, ip6->ip6_src, struct in6_addr);
+			ip6->ip6_nxt = IPPROTO_TCP;
 			break;
 #endif
+#if 0
+		default:
+			/* noone will visit here */
+			m_freem(m);
+			return EAFNOSUPPORT;
+#endif
 		}
+		*th = *th0;
 		xchg(th->th_dport, th->th_sport, u_int16_t);
 #undef xchg
 	}
@@ -532,7 +541,13 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 				tlen);
 		ip6->ip6_plen = ntohs(tlen);
-		ip6->ip6_hlim = ip6_defhlim;
+		if (tp && tp->t_in6pcb) {
+			struct ifnet *oifp;
+			ro = (struct route *)&tp->t_in6pcb->in6p_route;
+			oifp = ro->ro_rt ? ro->ro_rt->rt_ifp : NULL;
+			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb, oifp);
+		} else
+			ip6->ip6_hlim = ip6_defhlim;
 		ip6->ip6_flow &= ~IPV6_FLOWINFO_MASK;
 		if (ip6_auto_flowlabel) {
 			ip6->ip6_flow |= 
@@ -650,9 +665,13 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL);
+		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL,
+			NULL);
 		break;
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 
 	if (ro == (struct route *)&iproute) {
@@ -696,6 +715,7 @@ tcp_newtcpcb(family, aux)
 	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
+	LIST_INIT(&tp->t_sc);
 
 	tp->t_flags = 0;
 	if (tcp_do_rfc1323 && tcp_do_win_scale)
@@ -737,7 +757,9 @@ tcp_newtcpcb(family, aux)
 #ifdef INET6
 	else if (family == AF_INET6) {
 		struct in6pcb *in6p = (struct in6pcb *)aux;
-		in6p->in6p_ip6.ip6_hlim = ip6_defhlim;
+		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
+			in6p->in6p_route.ro_rt ? in6p->in6p_route.ro_rt->rt_ifp
+					       : NULL);
 		in6p->in6p_ppcb = (caddr_t)tp;
 	}
 #endif
@@ -888,6 +910,7 @@ tcp_close(tp)
 	TCP_REASS_UNLOCK(tp);
 
 	TCP_CLEAR_DELACK(tp);
+	syn_cache_cleanup(tp);
 
 	if (tp->t_template) {
 		m_free(tp->t_template);
@@ -1004,14 +1027,124 @@ tcp_notify(inp, error)
 
 #if defined(INET6) && !defined(TCP6)
 void
-tcp6_ctlinput(cmd, sa, ip6, m, off)
+tcp6_notify(in6p, error)
+	struct in6pcb *in6p;
+	int error;
+{
+	register struct tcpcb *tp = (struct tcpcb *)in6p->in6p_ppcb;
+	register struct socket *so = in6p->in6p_socket;
+
+	/*
+	 * Ignore some errors if we are hooked up.
+	 * If connection hasn't completed, has retransmitted several times,
+	 * and receives a second error, give up now.  This is better
+	 * than waiting a long time to establish a connection that
+	 * can never complete.
+	 */
+	if (tp->t_state == TCPS_ESTABLISHED &&
+	     (error == EHOSTUNREACH || error == ENETUNREACH ||
+	      error == EHOSTDOWN)) {
+		return;
+	} else if (TCPS_HAVEESTABLISHED(tp->t_state) == 0 &&
+	    tp->t_rxtshift > 3 && tp->t_softerror)
+		so->so_error = error;
+	else 
+		tp->t_softerror = error;
+	wakeup((caddr_t) &so->so_timeo);
+	sorwakeup(so);
+	sowwakeup(so);
+}
+#endif
+
+#if defined(INET6) && !defined(TCP6)
+void
+tcp6_ctlinput(cmd, sa, d)
 	int cmd;
 	struct sockaddr *sa;
+	void *d;
+{
+	register struct tcphdr *thp;
+	struct tcphdr th;
+	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
+	int nmatch;
+	extern struct in6_addr zeroin6_addr;	/* netinet6/in6_pcb.c */
+	struct sockaddr_in6 sa6;
 	register struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
-{
-	(void)tcp_ctlinput(cmd, sa, (void *)ip6);
+
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	else if (cmd == PRC_QUENCH) {
+		/* XXX there's no PRC_QUENCH in IPv6 */
+		notify = tcp6_quench;
+	} else if (PRC_IS_REDIRECT(cmd))
+		notify = in6_rtchange, d = NULL;
+	else if (cmd == PRC_MSGSIZE)
+		notify = tcp6_mtudisc, d = NULL;
+	else if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (inet6ctlerrmap[cmd] == 0)
+		return;
+
+	/* translate addresses into internal form */
+	sa6 = *(struct sockaddr_in6 *)sa;
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
+		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+	} else {
+		m = NULL;
+		ip6 = NULL;
+	}
+
+	if (ip6) {
+		/*
+		 * XXX: We assume that when ip6 is non NULL,
+		 * M and OFF are valid.
+		 */
+		struct in6_addr s;
+
+		/* translate addresses into internal form */
+		memcpy(&s, &ip6->ip6_src, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+		if (m->m_len < off + sizeof(th)) {
+			/*
+			 * this should be rare case,
+			 * so we compromise on this copy...
+			 */
+			m_copydata(m, off, sizeof(th), (caddr_t)&th);
+			thp = &th;
+		} else
+			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
+		nmatch = in6_pcbnotify(&tcb6, (struct sockaddr *)&sa6,
+		    thp->th_dport, &s, thp->th_sport, cmd, notify);
+		if (nmatch == 0 && syn_cache_count &&
+		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
+		     inet6ctlerrmap[cmd] == ENETUNREACH ||
+		     inet6ctlerrmap[cmd] == EHOSTDOWN)) {
+			struct sockaddr_in6 sin6;
+			bzero(&sin6, sizeof(sin6));
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_port = thp->th_sport;
+			sin6.sin6_addr = s;
+			syn_cache_unreach((struct sockaddr *)&sin6, sa, thp);
+		}
+	} else {
+		(void) in6_pcbnotify(&tcb6, (struct sockaddr *)&sa6, 0,
+				     &zeroin6_addr, 0, cmd, notify);
+	}
 }
 #endif
 
@@ -1029,6 +1162,9 @@ tcp_ctlinput(cmd, sa, v)
 	int errno;
 	int nmatch;
 
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	errno = inetctlerrmap[cmd];
@@ -1061,17 +1197,9 @@ tcp_ctlinput(cmd, sa, v)
 
 		/* XXX mapped address case */
 	}
-#ifdef INET6
-	else if (ip && ip->ip_v == 6 && sa->sa_family == AF_INET6) {
-		/* XXX do something for ip6 */
-	}
-#endif
 	else {
 		(void)in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
 		    notify);
-#ifdef INET6
-		/* XXX do something for ip6 */
-#endif
 	}
 	return NULL;
 }
@@ -1091,6 +1219,19 @@ tcp_quench(inp, errno)
 	if (tp)
 		tp->snd_cwnd = tp->t_segsz;
 }
+
+#if defined(INET6) && !defined(TCP6)
+void
+tcp6_quench(in6p, errno)
+	struct in6pcb *in6p;
+	int errno;
+{
+	struct tcpcb *tp = in6totcpcb(in6p);
+
+	if (tp)
+		tp->snd_cwnd = tp->t_segsz;
+}
+#endif
 
 /*
  * On receipt of path MTU corrections, flush old route and replace it
@@ -1138,6 +1279,48 @@ tcp_mtudisc(inp, errno)
 	}
 }
 
+#if defined(INET6) && !defined(TCP6)
+void
+tcp6_mtudisc(in6p, errno)
+	struct in6pcb *in6p;
+	int errno;
+{
+	struct tcpcb *tp = in6totcpcb(in6p);
+	struct rtentry *rt = in6_pcbrtentry(in6p);
+
+	if (tp != 0) {
+		if (rt != 0) {
+			/*
+			 * If this was not a host route, remove and realloc.
+			 */
+			if ((rt->rt_flags & RTF_HOST) == 0) {
+				in6_rtchange(in6p, errno);
+				if ((rt = in6_pcbrtentry(in6p)) == 0)
+					return;
+			}
+
+			/*
+			 * Slow start out of the error condition.  We
+			 * use the MTU because we know it's smaller
+			 * than the previously transmitted segment.
+			 *
+			 * Note: This is more conservative than the
+			 * suggestion in draft-floyd-incr-init-win-03.
+			 */
+			if (rt->rt_rmx.rmx_mtu != 0)
+				tp->snd_cwnd =
+				    TCP_INITIAL_WINDOW(tcp_init_win,
+				    rt->rt_rmx.rmx_mtu);
+		}
+
+		/*
+		 * Resend unacknowledged packets.
+		 */
+		tp->snd_nxt = tp->snd_una;
+		tcp_output(tp);
+	}
+}
+#endif
 
 /*
  * Compute the MSS to advertise to the peer.  Called only during
@@ -1146,13 +1329,20 @@ tcp_mtudisc(inp, errno)
  * on which the SYN packet arrived.  If we are the client (we 
  * initiated connection), we are called with a pointer to the
  * interface out which this connection should go.
+ *
+ * NOTE: Do not subtract IP option/extension header size nor IPsec
+ * header size from MSS advertisement.  MSS option must hold the maximum
+ * segment size we can accept, so it must always be:
+ *	 max(if mtu) - ip header - tcp header
  */
 u_long
-tcp_mss_to_advertise(ifp)
+tcp_mss_to_advertise(ifp, af)
 	const struct ifnet *ifp;
+	int af;
 {
 	extern u_long in_maxmtu;
 	u_long mss = 0;
+	u_long hdrsiz;
 
 	/*
 	 * In order to avoid defeating path MTU discovery on the peer,
@@ -1175,8 +1365,22 @@ tcp_mss_to_advertise(ifp)
 	if (tcp_mss_ifmtu == 0)
 		mss = max(in_maxmtu, mss);
 
-	if (mss > sizeof(struct tcpiphdr))
-		mss -= sizeof(struct tcpiphdr);
+	switch (af) {
+	case AF_INET:
+		hdrsiz = sizeof(struct ip);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		hdrsiz = sizeof(struct ip6_hdr);
+		break;
+#endif
+	default:
+		hdrsiz = 0;
+		break;
+	}
+	hdrsiz += sizeof(struct tcphdr);
+	if (mss > hdrsiz)
+		mss -= hdrsiz;
 
 	mss = max(tcp_mssdflt, mss);
 	return (mss);
@@ -1458,7 +1662,8 @@ ipsec4_hdrsiz_tcp(tp)
 		return 0;
 	switch (tp->t_family) {
 	case AF_INET:
-		hdrsiz = ipsec4_hdrsiz(tp->t_template, inp);
+		/* XXX: should use currect direction. */
+		hdrsiz = ipsec4_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, inp);
 		break;
 	default:
 		hdrsiz = 0;
@@ -1480,7 +1685,8 @@ ipsec6_hdrsiz_tcp(tp)
 		return 0;
 	switch (tp->t_family) {
 	case AF_INET6:
-		hdrsiz = ipsec6_hdrsiz(tp->t_template, in6p);
+		/* XXX: should use currect direction. */
+		hdrsiz = ipsec6_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, in6p);
 		break;
 	case AF_INET:
 		/* mapped address case - tricky */

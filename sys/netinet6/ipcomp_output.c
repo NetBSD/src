@@ -61,27 +61,22 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <netinet6/ipsec.h>
-#endif
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
 
 #include <machine/stdarg.h>
 
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
+#include <net/net_osdep.h>
 
 static int ipcomp_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *, int));
@@ -116,7 +111,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	struct mbuf *md0;
 	struct mbuf *mprev;
 	struct ipcomp *ipcomp;
-	struct secas *sa = isr->sa;
+	struct secasvar *sav = isr->sav;
 	struct ipcomp_algorithm *algo;
 	u_int16_t cpi;		/* host order */
 	size_t plen0, plen;	/*payload length to be compressed*/
@@ -141,17 +136,17 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	}
 
 	/* grab parameters */
-	if ((ntohl(sa->spi) & ~0xffff) != 0 || sa->alg_enc >= IPCOMP_MAX
-	 || ipcomp_algorithms[sa->alg_enc].compress == NULL) {
+	if ((ntohl(sav->spi) & ~0xffff) != 0 || sav->alg_enc >= IPCOMP_MAX
+	 || ipcomp_algorithms[sav->alg_enc].compress == NULL) {
 		ipsecstat.out_inval++;
 		m_freem(m);
 		return EINVAL;
 	}
-	if ((sa->flags & SADB_X_EXT_RAWCPI) == 0)
-		cpi = ntohl(sa->spi) & 0xffff;
+	if ((sav->flags & SADB_X_EXT_RAWCPI) == 0)
+		cpi = sav->alg_enc;
 	else
-		cpi = sa->alg_enc;
-	algo = &ipcomp_algorithms[sa->alg_enc];	/*XXX*/
+		cpi = ntohl(sav->spi) & 0xffff;
+	algo = &ipcomp_algorithms[sav->alg_enc];	/*XXX*/
 
 	/* compute original payload length */
 	plen = 0;
@@ -334,17 +329,17 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		ipsecstat.out_esphist[sa->alg_enc]++;
+		ipsecstat.out_esphist[sav->alg_enc]++;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		ipsec6stat.out_esphist[sa->alg_enc]++;
+		ipsec6stat.out_esphist[sav->alg_enc]++;
 		break;
 #endif
 	}
 #endif
-	key_sa_recordxfer(sa, m);
+	key_sa_recordxfer(sav, m);
 	return 0;
 
 fail:
