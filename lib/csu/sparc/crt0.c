@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.26 1998/09/05 13:20:08 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.27 1999/01/22 11:29:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 
 #include "common.h"
 
-extern	unsigned char	etext;
-extern	unsigned char	eprol __asm__ ("eprol");
 extern void		start __P((void)) __asm__ ("start");
 
 #if defined(sun) && defined(sparc)
@@ -60,13 +58,7 @@ __asm__("
 	.text
 	.align 4
 	.global start
-	start:
-");
-
-/*
- * Set up `argc', `argv', and `envp' into local registers.
- */
-__asm__("
+start:
 	mov	0, %fp
 	ld	[%sp + 64], %l0		! get argc
 	add	%sp, 68, %l1		! get argv
@@ -225,7 +217,7 @@ __call()
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.26 1998/09/05 13:20:08 pk Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.27 1999/01/22 11:29:17 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
