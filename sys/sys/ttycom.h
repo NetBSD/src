@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.14 2004/05/27 04:23:36 simonb Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.15 2004/11/24 22:17:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -66,7 +66,6 @@ struct ptmget {
 };
 
 #define _PATH_PTMDEV	"/dev/ptm"
-#define _TTY_GID	4	/* XXX evil hardcoding of tty gid */
 
 #define		TIOCM_LE	0001		/* line enable */
 #define		TIOCM_DTR	0002		/* data terminal ready */
