@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.4 2000/10/29 12:32:06 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.5 2001/02/16 23:55:05 thorpej Exp $	*/
 /*	$KAME: token.l,v 1.16 2000/08/28 16:41:10 itojun Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ hostname	{name}(({dot}{name})+{dot}?)?
 
 add		{ PREPROC; return(ADD); }
 delete		{ PREPROC; return(DELETE); }
+deleteall	{ PREPROC; return(DELETEALL); }
 get		{ PREPROC; return(GET); }
 flush		{ PREPROC; return(FLUSH); }
 dump		{ PREPROC; return(DUMP); }
