@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2000/07/19 15:48:25 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 2000/07/20 13:28:39 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -140,27 +140,40 @@
 /* reg that points to base of data/text segment */
 #define	BASEREG	%g4
 /* first constants for storage allocation */
-#define PTRSZ	8
-#define PTRSHFT	3
-#define	POINTER	.xword
-/* Now instructions to load/store pointers */
-#define LDPTR	ldx
-#define LDPTRA	ldxa
-#define STPTR	stx
-#define STPTRA	stxa
-#define	CASPTR	casxa
+#define LONGINTSIZE	8
+#define LONGINTSHFT	3
+#define PTRSZ		8
+#define PTRSHFT		3
+#define	POINTER		.xword
+/* Now instructions to load/store pointers & long ints */
+#define LDLONGINT	ldx
+#define LDULONGINT	ldx
+#define STLONGINT	stx
+#define STULONGINT	stx
+#define LDPTR		ldx
+#define LDPTRA		ldxa
+#define STPTR		stx
+#define STPTRA		stxa
+#define	CASPTR		casxa
 /* Now something to calculate the stack bias */
 #define STKB	BIAS
 #else
 #define	BASEREG	%g0
-#define PTRSZ	4
-#define PTRSHFT	2
-#define POINTER	.word
-#define LDPTR	lduw
-#define LDPTRA	lduwa
-#define STPTR	stw
-#define STPTRA	stwa
-#define	CASPTR	casa
+#define LONGINTSIZE	4
+#define LONGINTSHFT	2
+#define PTRSZ		4
+#define PTRSHFT		2
+#define POINTER		.word
+/* Instructions to load/store pointers & long ints */
+#define LDLONGINT	ldsw
+#define LDULONGINT	lduw
+#define STLONGINT	stw
+#define STULONGINT	stw
+#define LDPTR		lduw
+#define LDPTRA		lduwa
+#define STPTR		stw
+#define STPTRA		stwa
+#define	CASPTR		casa
 #define STKB	0
 #endif
 
@@ -3915,7 +3928,7 @@ return_from_syscall:
 	.data
 	.globl	intrpending
 intrpending:
-	.space	15 * 8 * PTRSZ
+	.space	16 * 8 * PTRSZ
 
 #ifdef DEBUG
 #define INTRDEBUG_VECTOR	0x1
@@ -4250,11 +4263,11 @@ _C_LABEL(sparc_interrupt):
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
 	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l6, PTRSHFT, %l3
+	sll	%l6, LONGINTSHFT, %l3
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
-	ld	[%l4 + %l3], %o0
+	LDULONGINT	[%l4 + %l3], %o0
 	inc	%o0
-	st	%o0, [%l4 + %l3]
+	STULONGINT	%o0, [%l4 + %l3]
 	wrpr	%l6, %pil
 
 	clr	%l5			! Zero handled count
@@ -4482,11 +4495,11 @@ tickhndlr:
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
 	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l6, PTRSHFT, %l3
+	sll	%l6, LONGINTSHFT, %l3
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
-	ld	[%l4 + %l3], %o0
+	LDULONGINT	[%l4 + %l3], %o0
 	inc	%o0
-	st	%o0, [%l4 + %l3]
+	STULONGINT	%o0, [%l4 + %l3]
 	wr	%g0, 1, CLEAR_SOFTINT
 	wrpr	%l6, %pil
 	set	_C_LABEL(intrlev), %l3
@@ -11000,7 +11013,7 @@ _C_LABEL(intrnames):
 _C_LABEL(eintrnames):
 	_ALIGN
 _C_LABEL(intrcnt):
-	.space	4*15
+	.space	16 * LONGINTSIZE
 _C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(curproc), PTRSZ
