@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5 1998/01/18 03:43:46 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6 1998/01/19 23:51:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -225,7 +225,7 @@ void	arm8_context_switch	__P((void));
 
 void	arm8_setup		__P((char *string));
 
-void	arm8_clock_config	__P((u_int, u_int));
+u_int	arm8_clock_config	__P((u_int, u_int));
 #endif
 
 #ifdef CPU_SA110
