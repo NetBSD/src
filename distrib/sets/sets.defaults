@@ -1,7 +1,7 @@
 #!/bin/sh
 
 for x in $(
-${MAKE:-make} -f- all <<EOF
+${MAKE:-make} -B -f- all <<EOF
 .include <bsd.own.mk>
 all:
 	@echo krb=\${MKKERBEROS}
