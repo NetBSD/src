@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.60 2004/03/26 17:38:44 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.61 2004/03/27 20:47:33 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1359,7 +1359,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 	int rval = -1;
 #ifdef BOOTSEL
 	mbr_info_t *ombri = mbri;
-	int bootkey;
+	int bootkey = 0;
 #endif
 
 	/*
@@ -1402,16 +1402,21 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 			ext = NULL;
 		}
 #if BOOTSEL
-		else {
-			if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC))
-				bootkey = mbrs->mbr_bootsel.mbrbs_defkey;
-			else
-				bootkey = 0;
-			bootkey -= SCAN_1;
+		if (mbrs->mbr_bootsel_magic == htole16(MBR_MAGIC)) {
+			/* old bootsel, move to new location */
+			memmove(&mbrs->mbr_bootsel,
+				(u_int8_t *)&mbrs->mbr_bootsel + 4,
+				sizeof mbrs->mbr_bootsel);
+			mbrs->mbr_bootsel_magic = htole16(MBR_BS_MAGIC);
+			mbrs->mbr_bootsel.mbrbs_flags &= ~MBR_BS_NEWMBR;
 		}
-		if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC))
+		if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
+			if (ext_base == 0)
+				bootkey = mbrs->mbr_bootsel.mbrbs_defkey
+					    - SCAN_1;
 			memcpy(mbri->nametab, mbrs->mbr_bootsel.mbrbs_nametab,
 				sizeof mbri->nametab);
+		}
 #endif
 		mbri->sector = next_ext + ext_base;
 		next_ext = 0;
