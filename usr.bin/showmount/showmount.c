@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.12 2003/08/07 11:15:51 agc Exp $	*/
+/*	$NetBSD: showmount.c,v 1.13 2004/08/06 16:10:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\n\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.12 2003/08/07 11:15:51 agc Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.13 2004/08/06 16:10:54 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,6 +94,10 @@ void	print_dump __P((struct mountlist *));
 void	usage __P((void));
 int	xdr_mntdump __P((XDR *, struct mountlist **));
 int	xdr_exports __P((XDR *, struct exportslist **));
+int	tcp_callrpc __P((char *host,
+		     int prognum, int versnum, int procnum,
+		     xdrproc_t inproc, char *in,
+		     xdrproc_t outproc, char *out));
 
 /*
  * This command queries the NFS mount daemon for it's mount list and/or
@@ -152,7 +156,7 @@ main(argc, argv)
 		rpcs = DODUMP;
 
 	if (rpcs & DODUMP)
-		if ((estat = callrpc(host, RPCPROG_MNT, mntvers,
+		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
 			RPCMNT_DUMP, xdr_void, (char *)0,
 			xdr_mntdump, (char *)&mntdump)) != 0) {
 			fprintf(stderr, "showmount: Can't do Mountdump rpc: ");
@@ -160,7 +164,7 @@ main(argc, argv)
 			exit(1);
 		}
 	if (rpcs & DOEXPORTS)
-		if ((estat = callrpc(host, RPCPROG_MNT, mntvers,
+		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
 			RPCMNT_EXPORT, xdr_void, (char *)0,
 			xdr_exports, (char *)&exports)) != 0) {
 			fprintf(stderr, "showmount: Can't do Exports rpc: ");
@@ -205,6 +209,71 @@ main(argc, argv)
 	}
 
 	exit(0);
+}
+
+/*
+ * tcp_callrpc has the same interface as callrpc, but tries to
+ * use tcp as transport method in order to handle large replies.
+ */
+
+int 
+tcp_callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
+	char *host;
+	int prognum;
+	int versnum;
+	int procnum;
+	xdrproc_t inproc;
+	char *in;
+	xdrproc_t outproc;
+	char *out;
+{
+	struct hostent *hp;
+	struct sockaddr_in server_addr;
+	CLIENT *client;
+	int sock;	
+	struct timeval timeout;
+	int rval;
+	
+	hp = gethostbyname(host);
+
+	if (!hp)
+		return ((int) RPC_UNKNOWNHOST);
+
+	memset(&server_addr,0,sizeof(server_addr));
+	memcpy((char *) &server_addr.sin_addr,
+	       hp->h_addr,
+	       hp->h_length);
+	server_addr.sin_len = sizeof(struct sockaddr_in);
+	server_addr.sin_family =AF_INET;
+	server_addr.sin_port = 0;
+			
+	sock = RPC_ANYSOCK;
+			
+	client = clnttcp_create(&server_addr,
+				(u_long) prognum,
+				(u_long) versnum, &sock, 0, 0);
+	if (!client) {
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+		server_addr.sin_port = 0;
+		sock = RPC_ANYSOCK;
+		client = clntudp_create(&server_addr,
+					(u_long) prognum,
+					(u_long) versnum,
+					timeout,
+					&sock);
+	}
+	if (!client)
+		return ((int) rpc_createerr.cf_stat);
+
+	timeout.tv_sec = 25;
+	timeout.tv_usec = 0;
+	rval = (int) clnt_call(client, procnum, 
+			       inproc, in,
+			       outproc, out,
+			       timeout);
+	clnt_destroy(client);
+ 	return rval;
 }
 
 /*
