@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1996/02/06 00:31:51 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 1996/05/19 02:00:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+#include <machine/locore.h>
 #include <machine/machConst.h>
 
 /*
@@ -240,8 +241,9 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 	while (size > 0) {
-		MachTLBFlushAddr(from);
-		MachTLBUpdate(to, *fpte);
+		MachTLBFlushAddr((vm_offset_t)from);
+		MachTLBUpdate( (u_int)to,
+			       (u_int) (*fpte).pt_entry);    /* XXX casts? */
 		*tpte++ = *fpte;
 		fpte->pt_entry = 0;
 		fpte++;
