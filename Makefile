@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.15 1994/02/07 05:08:57 cgd Exp $
+#	$Id: Makefile,v 1.16 1994/02/08 23:20:40 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -21,7 +21,7 @@ afterinstall:
 	(cd share/man && make makedb)
 
 build:
-	(cd install && make install)
+	(cd include && make install)
 	make cleandir
 	(cd lib && make depend && make && make install)
 	(cd gnu/lib && make depend && make && make install)
