@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.36 1994/08/07 10:49:06 mycroft Exp $
+ *      $Id: aha1742.c,v 1.37 1994/08/22 21:53:23 mycroft Exp $
  */
 
 /*
@@ -467,11 +467,13 @@ ahbprobe(parent, self, aux)
 			continue;
 		}
 
+#ifdef notyet
 		outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 		delay(10);
 		outb(iobase + EISA_CONTROL, EISA_ENABLE);
 		/* Wait for reset? */
 		delay(1000);
+#endif
 
 		ia->ia_iobase = iobase;
 		if (ahbprobe1(ahb, ia))
