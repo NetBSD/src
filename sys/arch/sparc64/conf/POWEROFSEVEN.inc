@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.15 2002/09/18 02:44:09 lukem Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.16 2003/01/01 07:45:21 mrg Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -242,10 +242,9 @@ timer0	at mainbus0				# sun4c
 ##	Siemens SAB82532 controller: ttya and ttyb (sab)
 ##	Part of NS PC87332VLJ Super I/O controller: kbd/mouse (com)
 
-## These are two SAB82532 controllers
-#sab0	at ebus?
-#sabtty0	at sab0 channel 0	# ttya
-#sabtty1	at sab0 channel 1	# ttyb
+## The SAB82532 controller has two serial ports
+sab*	at ebus?				# ttya/ttyb
+sabtty*	at sab? channel ?
 
 ## Part of a PC87332VLJ
 com*	at ebus?				# `com' driver for `su'
