@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_ns32k.c,v 1.8 1997/10/28 06:22:40 phil Exp $	*/
+/*	$NetBSD: kvm_ns32k.c,v 1.9 1998/06/30 20:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_ns32k.c,v 1.8 1997/10/28 06:22:40 phil Exp $");
+__RCSID("$NetBSD: kvm_ns32k.c,v 1.9 1998/06/30 20:29:39 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,24 +133,16 @@ _kvm_kvatop(kd, va, pa)
         }
 
 	pde_pa = _kvm_pa2off(kd, cpu_kh->ptd + sizeof(pt_entry_t) * pdei(va));
-	if (lseek(kd->pmfd, (off_t)pde_pa, 0) == -1 && errno != 0) {
-		_kvm_syserr(kd, 0, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, &pde, sizeof(pde)) != sizeof(pde)) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
+	if (pread(kd->pmfd, &pde, sizeof(pde), (off_t)pde_pa) != sizeof(pde)) {
+		_kvm_syserr(kd, kd->program, "could not read PDE");
 		goto invalid;
 	}
 	if ((pde & PG_V) == 0)
 		goto invalid;
 
 	pte_pa = _kvm_pa2off(kd, (pde & PG_FRAME) + sizeof(pt_entry_t) * ptei(va));
-	if (lseek(kd->pmfd, (off_t)pte_pa, 0) == -1 && errno != 0) {
-		_kvm_syserr(kd, 0, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, &pte, sizeof pte) != sizeof pte) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
+	if (pread(kd->pmfd, &pte, sizeof(pte), (off_t)pte_pa) != sizeof(pte)) {
+		_kvm_syserr(kd, kd->program, "could not read PTE");
 		goto invalid;
 	}
 

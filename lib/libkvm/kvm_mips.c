@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mips.c,v 1.10 1998/02/19 23:32:35 thorpej Exp $	*/
+/*	$NetBSD: kvm_mips.c,v 1.11 1998/06/30 20:29:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.10 1998/02/19 23:32:35 thorpej Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.11 1998/06/30 20:29:39 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -146,8 +146,8 @@ _kvm_kvatop(kd, va, pa)
 	 */
 	pte_pa = cpu_kh->sysmappa +
 	    (((va - MIPS_KSEG2_START) >> PGSHIFT) * sizeof(u_int));
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pte_pa), SEEK_SET) == -1 ||
-	    read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte)) {
+	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_pa2off(kd, pte_pa)) !=
+	    sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
 		goto lose;
 	}

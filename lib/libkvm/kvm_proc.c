@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.23 1998/02/12 06:55:29 chs Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.24 1998/06/30 20:29:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.23 1998/02/12 06:55:29 chs Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.24 1998/06/30 20:29:40 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -190,16 +190,13 @@ _kvm_uread(kd, p, va, cnt)
 		if (KREAD(kd, addr, &pg))
 			return NULL;
 
-		if (lseek(kd->pmfd, (off_t)pg.phys_addr, SEEK_SET) == -1)
-			return NULL;
-
-		if (read(kd->pmfd, kd->swapspc, kd->nbpg) != kd->nbpg)
+		if (pread(kd->pmfd, kd->swapspc, kd->nbpg,
+		    (off_t)pg.phys_addr) != kd->nbpg)
 			return NULL;
 	}
 	else {
-		if (lseek(kd->swfd, anon.an_swslot * kd->nbpg, SEEK_SET) == -1)
-			return NULL;
-		if (read(kd->swfd, kd->swapspc, kd->nbpg) != kd->nbpg)
+		if (pread(kd->swfd, kd->swapspc, kd->nbpg,
+		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return NULL;
 	}
 #else
@@ -299,9 +296,7 @@ _kvm_readfromcore(kd, object, offset)
 
 	seekpoint = mem.phys_addr;
 
-	if (lseek(kd->pmfd, seekpoint, 0) == -1)
-		return (-1);
-	if (read(kd->pmfd, kd->swapspc, kd->nbpg) != kd->nbpg)
+	if (pread(kd->pmfd, kd->swapspc, kd->nbpg, seekpoint) != kd->nbpg)
 		return (-1);
 
 	return (1);
@@ -380,9 +375,7 @@ _kvm_readfrompager(kd, vmop, offset)
 	/* Calculate the physical address and read the page. */
 	seekpoint = dbtob(swb.swb_block) + (offset & ~(kd->nbpg -1));
 
-	if (lseek(kd->swfd, seekpoint, 0) == -1)
-		return (-1);
-	if (read(kd->swfd, kd->swapspc, kd->nbpg) != kd->nbpg)
+	if (pread(kd->swfd, kd->swapspc, kd->nbpg, seekpoint) != kd->nbpg)
 		return (-1);
 
 	return (1);
