@@ -239,13 +239,6 @@ struct cfdriver fecd = {
 
 /*
  * Fe driver specific constants which relate to 86960/86965.
- * They are here (not in if_fereg.h), since selection of those
- * values depend on driver design.  I want to keep definitions in
- * if_fereg.h "clean", so that if someone wrote another driver
- * for 86960/86965, if_fereg.h were usable unchanged.
- *
- * The above statement sounds somothing like it's better to name
- * it "ic/mb86960.h" but "if_fereg.h"...  Should I do so?  FIXME.
  */
 
 /* Interrupt masks. */
