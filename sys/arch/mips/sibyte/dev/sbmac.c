@@ -1,7 +1,7 @@
-/* $NetBSD: sbmac.c,v 1.18 2004/03/19 06:01:31 cgd Exp $ */
+/* $NetBSD: sbmac.c,v 1.19 2004/03/19 07:11:33 cgd Exp $ */
 
 /*
- * Copyright 2000, 2001
+ * Copyright 2000, 2001, 2004
  * Broadcom Corporation. All rights reserved.
  *
  * This software is furnished under license and may be used and copied only
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.18 2004/03/19 06:01:31 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.19 2004/03/19 07:11:33 cgd Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -106,9 +106,7 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 #define	SBMAC_EVENT_COUNTERS	/* Include counters for various events */
 
-#define	SBDMA_NEXTBUF(d, f) ((((d)->f+1) == (d)->sbdma_dscrtable_end) ? \
-			  (d)->sbdma_dscrtable : (d)->f+1)
-
+#define	SBDMA_NEXTBUF(d, f)	((f + 1) & (d)->sbdma_dscr_mask)
 
 #define	CACHELINESIZE 32
 #define	NUMCACHEBLKS(x) (((x)+CACHELINESIZE-1)/CACHELINESIZE)
@@ -126,7 +124,7 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
-/* These are limited to fit within one virtual page.  */
+/* These are limited to fit within one virtual page, and must be 2**N.  */
 #define	SBMAC_MAX_TXDESCR	256		/* should be 1024 */
 #define	SBMAC_MAX_RXDESCR	256		/* should be 512 */
 
@@ -162,15 +160,12 @@ typedef struct sbmacdma_s {
 	/*
 	 * This stuff is for maintenance of the ring
 	 */
-
 	sbdmadscr_t	*sbdma_dscrtable;	/* base of descriptor table */
-	sbdmadscr_t	*sbdma_dscrtable_end;	/* end of descriptor table */
-
 	struct mbuf	**sbdma_ctxtable;	/* context table, one per descr */
-
+	unsigned int	sbdma_dscr_mask;	/* sbdma_maxdescr - 1 */
 	paddr_t		sbdma_dscrtable_phys;	/* and also the phys addr */
-	sbdmadscr_t	*sbdma_addptr;		/* next dscr for sw to add */
-	sbdmadscr_t	*sbdma_remptr;		/* next dscr for sw to remove */
+	unsigned int	sbdma_add_index;	/* next dscr for sw to add */
+	unsigned int	sbdma_rem_index;	/* next dscr for sw to remove */
 } sbmacdma_t;
 
 
@@ -423,13 +418,12 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	 */
 
 	d->sbdma_maxdescr = maxdescr;
+	d->sbdma_dscr_mask = d->sbdma_maxdescr - 1;
 
 	d->sbdma_dscrtable = (sbdmadscr_t *)
-	    KMALLOC(d->sbdma_maxdescr*sizeof(sbdmadscr_t));
+	    KMALLOC(d->sbdma_maxdescr * sizeof(sbdmadscr_t));
 
 	bzero(d->sbdma_dscrtable, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
-
-	d->sbdma_dscrtable_end = d->sbdma_dscrtable + d->sbdma_maxdescr;
 
 	d->sbdma_dscrtable_phys = KVTOPHYS(d->sbdma_dscrtable);
 
@@ -472,8 +466,8 @@ sbdma_channel_start(sbmacdma_t *d)
 	 * Initialize ring pointers
 	 */
 
-	d->sbdma_addptr = d->sbdma_dscrtable;
-	d->sbdma_remptr = d->sbdma_dscrtable;
+	d->sbdma_add_index = 0;
+	d->sbdma_rem_index = 0;
 }
 
 /*
@@ -494,14 +488,13 @@ sbdma_channel_start(sbmacdma_t *d)
 static int
 sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 {
-	sbdmadscr_t *dsc;
-	sbdmadscr_t *nextdsc;
+	unsigned int dsc, nextdsc;
 	struct mbuf *m_new = NULL;
 
 	/* get pointer to our current place in the ring */
 
-	dsc = d->sbdma_addptr;
-	nextdsc = SBDMA_NEXTBUF(d, sbdma_addptr);
+	dsc = d->sbdma_add_index;
+	nextdsc = SBDMA_NEXTBUF(d, d->sbdma_add_index);
 
 	/*
 	 * figure out if the ring is full - if the next descriptor
@@ -509,7 +502,7 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * the ring, the ring is full
 	 */
 
-	if (nextdsc == d->sbdma_remptr)
+	if (nextdsc == d->sbdma_rem_index)
 		return ENOSPC;
 
 	/*
@@ -546,24 +539,24 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * fill in the descriptor
 	 */
 
-	dsc->dscr_a = KVTOPHYS(mtod(m_new, caddr_t)) |
+	d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new, caddr_t)) |
 	    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(ETHER_ALIGN + m_new->m_len)) |
 	    M_DMA_DSCRA_INTERRUPT;
 
 	/* receiving: no options */
-	dsc->dscr_b = 0;
+	d->sbdma_dscrtable[dsc].dscr_b = 0;
 
 	/*
 	 * fill in the context
 	 */
 
-	d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = m_new;
+	d->sbdma_ctxtable[dsc] = m_new;
 
 	/*
 	 * point at next packet
 	 */
 
-	d->sbdma_addptr = nextdsc;
+	d->sbdma_add_index = nextdsc;
 
 	/*
 	 * Give the buffer to the DMA engine.
@@ -592,18 +585,15 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 static int
 sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 {
-	sbdmadscr_t *dsc;
-	sbdmadscr_t *nextdsc;
-	sbdmadscr_t *prevdsc;
-	sbdmadscr_t *origdesc;
+        unsigned int dsc, nextdsc, prevdsc, origdesc;
 	int length;
 	int num_mbufs = 0;
 	struct sbmac_softc *sc = d->sbdma_eth;
 
 	/* get pointer to our current place in the ring */
 
-	dsc = d->sbdma_addptr;
-	nextdsc = SBDMA_NEXTBUF(d, sbdma_addptr);
+	dsc = d->sbdma_add_index;
+	nextdsc = SBDMA_NEXTBUF(d, d->sbdma_add_index);
 
 	/*
 	 * figure out if the ring is full - if the next descriptor
@@ -611,7 +601,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * the ring, the ring is full
 	 */
 
-	if (nextdsc == d->sbdma_remptr) {
+	if (nextdsc == d->sbdma_rem_index) {
 		SBMAC_EVCNT_INCR(sc->sbm_ev_txstall);
 		return ENOSPC;
 	}
@@ -628,23 +618,23 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * Loop thru this mbuf record.
 		 * The head mbuf will have SOP set.
 		 */
-		dsc->dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
 		    M_DMA_ETHTX_SOP;
 
 		/*
 		 * transmitting: set outbound options,buffer A size(+ low 5
 		 * bits of start addr),and packet length.
 		 */
-		dsc->dscr_b =
+		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_A_SIZE((m->m_len +
 		      (mtod(m,unsigned int) & 0x0000001F))) |
 		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
 		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
-		d->sbdma_addptr = nextdsc;
+		d->sbdma_add_index = nextdsc;
 		origdesc = prevdsc = dsc;
-		dsc = d->sbdma_addptr;
+		dsc = d->sbdma_add_index;
 		num_mbufs++;
 
 		/* Start with first non-head mbuf */
@@ -685,30 +675,30 @@ again:
 			/*
 			 * fill in the descriptor
 			 */
-			dsc->dscr_a = addr;
+			d->sbdma_dscrtable[dsc].dscr_a = addr;
 
 			/*
 			 * transmitting: set outbound options,buffer A
 			 * size(+ low 5 bits of start addr)
 			 */
-			dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
+			d->sbdma_dscrtable[dsc].dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
 			    V_DMA_DSCRB_A_SIZE((len + (addr & 0x0000001F)));
 
-			d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = NULL;
+			d->sbdma_ctxtable[dsc] = NULL;
 
 			/*
 			 * point at next descriptor
 			 */
-			nextdsc = SBDMA_NEXTBUF(d,sbdma_addptr);
-			if (nextdsc == d->sbdma_remptr) {
-				d->sbdma_addptr = origdesc;
+			nextdsc = SBDMA_NEXTBUF(d, d->sbdma_add_index);
+			if (nextdsc == d->sbdma_rem_index) {
+				d->sbdma_add_index = origdesc;
 				SBMAC_EVCNT_INCR(sc->sbm_ev_txstall);
 				return ENOSPC;
 			}
-			d->sbdma_addptr = nextdsc;
+			d->sbdma_add_index = nextdsc;
 
 			prevdsc = dsc;
-			dsc = d->sbdma_addptr;
+			dsc = d->sbdma_add_index;
 			num_mbufs++;
 
 			if (next_len != 0) {
@@ -721,10 +711,10 @@ again:
 
 		}
 		/* Set head mbuf to last context index */
-		d->sbdma_ctxtable[prevdsc-d->sbdma_dscrtable] = m;
+		d->sbdma_ctxtable[prevdsc] = m;
 
 		/* Interrupt on last dscr of packet.  */
-	        prevdsc->dscr_a |= M_DMA_DSCRA_INTERRUPT;
+	        d->sbdma_dscrtable[prevdsc].dscr_a |= M_DMA_DSCRA_INTERRUPT;
 	} else {
 		struct mbuf *m_new = NULL;
 		/*
@@ -778,13 +768,13 @@ again:
 		 * fill in the descriptor
 		 */
 
-		dsc->dscr_a = KVTOPHYS(mtod(m_new,caddr_t)) |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new,caddr_t)) |
 		    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(m_new->m_len)) |
 		    M_DMA_DSCRA_INTERRUPT |
 		    M_DMA_ETHTX_SOP;
 
 		/* transmitting: set outbound options and length */
-		dsc->dscr_b =
+		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_PKT_SIZE(length);
 
@@ -794,12 +784,12 @@ again:
 		 * fill in the context
 		 */
 
-		d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = m_new;
+		d->sbdma_ctxtable[dsc] = m_new;
 
 		/*
 		 * point at next packet
 		 */
-		d->sbdma_addptr = nextdsc;
+		d->sbdma_add_index = nextdsc;
 	}
 
 	/*
@@ -882,7 +872,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 {
 	int curidx;
 	int hwidx;
-	sbdmadscr_t *dsc;
+	sbdmadscr_t *dscp;
 	struct mbuf *m;
 	int len;
 
@@ -897,10 +887,11 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * descriptor table was page-aligned and contiguous in
 		 * both virtual and physical memory -- you could then
 		 * just compare the low-order bits of the virtual address
-		 * (sbdma_remptr) and the physical address (sbdma_curdscr CSR)
+		 * (sbdma_rem_index) and the physical address
+		 * (sbdma_curdscr CSR).
 		 */
 
-		curidx = d->sbdma_remptr - d->sbdma_dscrtable;
+		curidx = d->sbdma_rem_index;
 		hwidx = (int)
 		    (((SBMAC_READCSR(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
 		    d->sbdma_dscrtable_phys) / sizeof(sbdmadscr_t));
@@ -918,11 +909,11 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * Otherwise, get the packet's mbuf ptr back
 		 */
 
-		dsc = &(d->sbdma_dscrtable[curidx]);
+		dscp = &(d->sbdma_dscrtable[curidx]);
 		m = d->sbdma_ctxtable[curidx];
 		d->sbdma_ctxtable[curidx] = NULL;
 
-		len = (int)G_DMA_DSCRB_PKT_SIZE(dsc->dscr_b) - 4;
+		len = (int)G_DMA_DSCRB_PKT_SIZE(dscp->dscr_b) - 4;
 
 		/*
 		 * Check packet status.  If good, process it.
@@ -930,7 +921,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * receive ring.
 		 */
 
-		if (! (dsc->dscr_a & M_DMA_ETHRX_BAD)) {
+		if (! (dscp->dscr_a & M_DMA_ETHRX_BAD)) {
 
 			/*
 			 * Set length into the packet
@@ -975,7 +966,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * .. and advance to the next buffer.
 		 */
 
-		d->sbdma_remptr = SBDMA_NEXTBUF(d, sbdma_remptr);
+		d->sbdma_rem_index = SBDMA_NEXTBUF(d, d->sbdma_rem_index);
 	}
 }
 
@@ -1014,10 +1005,11 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * descriptor table was page-aligned and contiguous in
 		 * both virtual and physical memory -- you could then
 		 * just compare the low-order bits of the virtual address
-		 * (sbdma_remptr) and the physical address (sbdma_curdscr CSR)
+		 * (sbdma_rem_index) and the physical address
+		 * (sbdma_curdscr CSR).
 		 */
 
-		curidx = d->sbdma_remptr - d->sbdma_dscrtable;
+		curidx = d->sbdma_rem_index;
 		hwidx = (int)
 		    (((SBMAC_READCSR(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
 		    d->sbdma_dscrtable_phys) / sizeof(sbdmadscr_t));
@@ -1048,7 +1040,7 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * .. and advance to the next buffer.
 		 */
 
-		d->sbdma_remptr = SBDMA_NEXTBUF(d, sbdma_remptr);
+		d->sbdma_rem_index = SBDMA_NEXTBUF(d, d->sbdma_rem_index);
 	}
 
 	/*
