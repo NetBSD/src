@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.13 2002/02/12 23:20:11 atatat Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.14 2002/06/05 10:56:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,9 +63,10 @@ mkswap(void)
 {
 	struct config *cf;
 
-	for (cf = allcf; cf != NULL; cf = cf->cf_next)
+	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		if (mkoneswap(cf))
 			return (1);
+	}
 	return (0);
 }
 
@@ -154,7 +155,7 @@ mkoneswap(struct config *cf)
 		return (1);
 	}
 	return (0);
-wrerror:
+ wrerror:
 	(void)fprintf(stderr, "config: error writing %s: %s\n",
 	    fname, strerror(errno));
 	if (fp != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.9 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: hash.c,v 1.10 2002/06/05 10:56:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,22 +50,12 @@
 #include "defs.h"
 
 /*
- * These are really for MAKE_BOOTSTRAP but harmless.
- * XXX - Why not just use malloc in here, anyway?
- */
-#ifndef	ALIGNBYTES
-#define	ALIGNBYTES 7
-#endif
-#ifndef ALIGN
-#define	ALIGN(p)	(((long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#endif
-
-/*
  * Interned strings are kept in a hash table.  By making each string
  * unique, the program can compare strings by comparing pointers.
  */
 struct hashent {
-	struct	hashent *h_next;	/* hash buckets are chained */
+	// XXXLUKEM: a SIMPLEQ might be more appropriate
+	TAILQ_ENTRY(hashent) h_next;
 	const char *h_name;		/* the string */
 	u_int	h_hash;			/* its hash value */
 	void	*h_value;		/* other values (for name=value) */
@@ -75,9 +65,12 @@ struct hashtab {
 	u_int	ht_mask;		/* == ht_size - 1 */
 	u_int	ht_used;		/* number of entries used */
 	u_int	ht_lim;			/* when to expand */
-	struct	hashent **ht_tab;	/* base of table */
+	TAILQ_HEAD(hashenthead, hashent) *ht_tab;
 };
+
 static struct hashtab strings;
+
+static struct hashenthead hefreelist = TAILQ_HEAD_INITIALIZER(hefreelist);
 
 /*
  * HASHFRACTION controls ht_lim, which in turn controls the average chain
@@ -86,42 +79,10 @@ static struct hashtab strings;
  */
 #define	HASHFRACTION(sz) ((sz) * 3 / 2)
 
-/* round up to next multiple of y, where y is a power of 2 */
-#define	ROUND(x, y) (((x) + (y) - 1) & ~((y) - 1))
-
-static void		       *poolalloc(size_t);
 static void			ht_expand(struct hashtab *);
 static void			ht_init(struct hashtab *, size_t);
 static inline u_int		hash(const char *);
 static inline struct hashent   *newhashent(const char *, u_int);
-
-/*
- * Allocate space that will never be freed.
- */
-static void *
-poolalloc(size_t size)
-{
-	char *p;
-	size_t alloc;
-	static char *pool;
-	static size_t nleft;
-
-	if (nleft < size) {
-		/*
-		 * Compute a `good' size to allocate via malloc.
-		 * 16384 is a guess at a good page size for malloc;
-		 * 32 is a guess at malloc's overhead.
-		 */
-		alloc = ROUND(size + 32, 16384) - 32;
-		p = emalloc(alloc);
-		nleft = alloc - size;
-	} else {
-		p = pool;
-		nleft -= size;
-	}
-	pool = p + size;
-	return (p);
-}
 
 /*
  * Initialize a new hash table.  The size must be a power of 2.
@@ -129,15 +90,13 @@ poolalloc(size_t size)
 static void
 ht_init(struct hashtab *ht, size_t sz)
 {
-	struct hashent **h;
 	u_int n;
 
-	h = emalloc(sz * sizeof *h);
-	ht->ht_tab = h;
+	ht->ht_tab = emalloc(sz * sizeof (ht->ht_tab[0]));
 	ht->ht_size = sz;
 	ht->ht_mask = sz - 1;
 	for (n = 0; n < sz; n++)
-		*h++ = NULL;
+		TAILQ_INIT(&ht->ht_tab[n]);
 	ht->ht_used = 0;
 	ht->ht_lim = HASHFRACTION(sz);
 }
@@ -148,20 +107,21 @@ ht_init(struct hashtab *ht, size_t sz)
 static void
 ht_expand(struct hashtab *ht)
 {
-	struct hashent *p, **h, **oldh, *q;
+	struct hashenthead *h, *oldh;
+	struct hashent *p;
 	u_int n, i;
 
 	n = ht->ht_size * 2;
 	h = emalloc(n * sizeof *h);
 	for (i = 0; i < n; i++)
-		h[i] = NULL;
+		TAILQ_INIT(&h[i]);
 	oldh = ht->ht_tab;
 	n--;
-	for (i = ht->ht_size; i != 0; i--) {
-		for (p = *oldh++; p != NULL; p = q) {
-			q = p->h_next;
-			p->h_next = h[p->h_hash & n];
-			h[p->h_hash & n] = p;
+	for (i = 0; i < ht->ht_size; i++) {
+		while ((p = TAILQ_FIRST(&oldh[i])) != NULL) {
+			TAILQ_REMOVE(&oldh[i], p, h_next);
+				// XXXLUKEM: really should be TAILQ_INSERT_TAIL
+			TAILQ_INSERT_HEAD(&h[p->h_hash & n], p, h_next);
 		}
 	}
 	free(ht->ht_tab);
@@ -173,18 +133,23 @@ ht_expand(struct hashtab *ht)
 
 /*
  * Make a new hash entry, setting its h_next to NULL.
+ * If the free list is not empty, use the first entry from there,
+ * otherwise allocate a new entry.
  */
 static inline struct hashent *
 newhashent(const char *name, u_int h)
 {
 	struct hashent *hp;
-	char *m;
 
-	m = poolalloc(sizeof(*hp) + ALIGNBYTES);
-	hp = (struct hashent *)ALIGN(m);
+	if (TAILQ_EMPTY(&hefreelist))
+		hp = emalloc(sizeof(*hp));
+	else {
+		hp = TAILQ_FIRST(&hefreelist);
+		TAILQ_REMOVE(&hefreelist, hp, h_next);
+	}
+
 	hp->h_name = name;
 	hp->h_hash = h;
-	hp->h_next = NULL;
 	return (hp);
 }
 
@@ -216,21 +181,21 @@ const char *
 intern(const char *s)
 {
 	struct hashtab *ht;
-	struct hashent *hp, **hpp;
+	struct hashent *hp;
+	struct hashenthead *hpp;
 	u_int h;
 	char *p;
-	size_t l;
 
 	ht = &strings;
 	h = hash(s);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
-	for (; (hp = *hpp) != NULL; hpp = &hp->h_next)
+	TAILQ_FOREACH(hp, hpp, h_next) {
 		if (hp->h_hash == h && strcmp(hp->h_name, s) == 0)
 			return (hp->h_name);
-	l = strlen(s) + 1;
-	p = poolalloc(l);
-	memmove(p, s, l);
-	*hpp = newhashent(p, h);
+	}
+	p = estrdup(s);
+	hp = newhashent(p, h);
+	TAILQ_INSERT_TAIL(hpp, hp, h_next);
 	if (++ht->ht_used > ht->ht_lim)
 		ht_expand(ht);
 	return (p);
@@ -252,34 +217,61 @@ ht_new(void)
 int
 ht_insrep(struct hashtab *ht, const char *nam, void *val, int replace)
 {
-	struct hashent *hp, **hpp;
+	struct hashent *hp;
+	struct hashenthead *hpp;
 	u_int h;
 
 	h = hash(nam);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
-	for (; (hp = *hpp) != NULL; hpp = &hp->h_next) {
+	TAILQ_FOREACH(hp, hpp, h_next) {
 		if (hp->h_name == nam) {
 			if (replace)
 				hp->h_value = val;
 			return (1);
 		}
 	}
-	*hpp = hp = newhashent(nam, h);
+	hp = newhashent(nam, h);
+	TAILQ_INSERT_TAIL(hpp, hp, h_next);
 	hp->h_value = val;
 	if (++ht->ht_used > ht->ht_lim)
 		ht_expand(ht);
 	return (0);
 }
 
+/*
+ * Remove.
+ */
+int
+ht_remove(struct hashtab *ht, const char *name)
+{
+	struct hashent *hp;
+	struct hashenthead *hpp;
+	u_int h;
+
+	h = hash(name);
+	hpp = &ht->ht_tab[h & ht->ht_mask];
+
+	TAILQ_FOREACH(hp, hpp, h_next) {
+		if (hp->h_name != name)
+			continue;
+		TAILQ_REMOVE(hpp, hp, h_next);
+		TAILQ_INSERT_TAIL(&hefreelist, hp, h_next);
+		ht->ht_used--;
+		return (0);
+	}
+	return (1);
+}
+
 void *
 ht_lookup(struct hashtab *ht, const char *nam)
 {
-	struct hashent *hp, **hpp;
+	struct hashent *hp;
+	struct hashenthead *hpp;
 	u_int h;
 
 	h = hash(nam);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
-	for (; (hp = *hpp) != NULL; hpp = &hp->h_next)
+	TAILQ_FOREACH(hp, hpp, h_next)
 		if (hp->h_name == nam)
 			return (hp->h_value);
 	return (NULL);
@@ -294,13 +286,14 @@ ht_lookup(struct hashtab *ht, const char *nam)
 int
 ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)
 {
-	struct hashent *hp, **hpp;
+	struct hashent *hp;
+	struct hashenthead *hpp;
 	u_int i;
 	int rval = 0;
 	
 	for (i = 0; i < ht->ht_size; i++) {
 		hpp = &ht->ht_tab[i];
-		for (; (hp = *hpp) != NULL; hpp = &hp->h_next)
+		TAILQ_FOREACH(hp, hpp, h_next)
 			rval += (*cbfunc)(hp->h_name, hp->h_value, arg);
 	}
 	return rval;
