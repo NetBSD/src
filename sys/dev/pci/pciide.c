@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.13 1998/10/22 15:11:39 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.14 1998/11/09 09:21:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -74,6 +74,36 @@ int wdcdebug_pciide_mask = DEBUG_PROBE;
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
+/* inlines for reading/writing 8-bit PCI registers */
+static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
+		int));
+static __inline u_int8_t
+pciide_pci_read(pc, pa, reg)
+	pci_chipset_tag_t pc;
+	pcitag_t pa;
+	int reg;
+{
+	return ((pci_conf_read(pc, pa, (reg & ~0x03)) >> (reg & 0x03)) & 0xff);
+}
+
+
+static __inline void pciide_pci_write __P((pci_chipset_tag_t, pcitag_t,
+		int, u_int8_t));
+static __inline void
+pciide_pci_write(pc, pa, reg, val)
+	pci_chipset_tag_t pc;
+	pcitag_t pa;
+	int reg;
+	u_int8_t val;
+{
+	pcireg_t pcival;
+
+	pcival = pci_conf_read(pc, pa, (reg & ~0x03));
+	pcival &= ~(0xff << (reg & 0x03));
+	pcival |= (val << (reg & 0x03));
+	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
+}
+
 struct pciide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
 
@@ -130,6 +160,9 @@ const char *apollo_channel_probe __P((struct pciide_softc *,
 int apollo_channel_disable __P((struct pciide_softc *,
 		struct pci_attach_args *, int));
 
+void cmd0643_6_setup_cap __P((struct pciide_softc*));
+void cmd0643_6_setup_chip __P((struct pciide_softc*,
+		pci_chipset_tag_t, pcitag_t));
 const char *cmd_channel_probe __P((struct pciide_softc *,
 		struct pci_attach_args *, int));
 int cmd_channel_disable __P((struct pciide_softc *,
@@ -215,6 +248,22 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
       "CMD Technology PCI0640",
       default_setup_cap,
       default_setup_chip,
+      cmd_channel_probe,
+      cmd_channel_disable
+    },
+    { PCI_PRODUCT_CMDTECH_643,
+      ONE_QUEUE | CMD_PCI064x_IOEN,
+      "CMD Technology PCI0643",
+      cmd0643_6_setup_cap,
+      cmd0643_6_setup_chip,
+      cmd_channel_probe,
+      cmd_channel_disable
+    },
+    { PCI_PRODUCT_CMDTECH_646,
+      ONE_QUEUE | CMD_PCI064x_IOEN,
+      "CMD Technology PCI0646",
+      cmd0643_6_setup_cap,
+      cmd0643_6_setup_chip,
       cmd_channel_probe,
       cmd_channel_disable
     },
@@ -1357,9 +1406,9 @@ cmd_channel_probe(sc, pa, chan)
 	if (chan == 0)
 		return NULL;
 
-	/* Second channel is enabled if CMD_CONF_2PORT is set */
-	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, CMD_CONF_CTRL0) &
-	    CMD_CONF_2PORT) == 0)
+	/* Second channel is enabled if CMD_CTRL_2PORT is set */
+	if ((pciide_pci_read(pa->pa_pc, pa->pa_tag, CMD_CTRL) &
+	    CMD_CTRL_2PORT) == 0)
 		return "disabled";
 
 	return NULL;
@@ -1370,14 +1419,93 @@ cmd_channel_disable(sc, pa, chan)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
-	u_int32_t ctrl0;
+	u_int8_t ctrl;
 	/* with a CMD PCI64x, the first channel is always enabled */
 	if (chan == 0)
 		return 0;
-	ctrl0 = pci_conf_read(pa->pa_pc, pa->pa_tag, CMD_CONF_CTRL0);
-	ctrl0 &= ~CMD_CONF_2PORT;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, CMD_CONF_CTRL0, ctrl0);
+	ctrl = pciide_pci_read(pa->pa_pc, pa->pa_tag, CMD_CTRL);
+	ctrl &= ~CMD_CTRL_2PORT;
+	pciide_pci_write(pa->pa_pc, pa->pa_tag, CMD_CTRL_2PORT, ctrl);
 	return 1;
+}
+
+void
+cmd0643_6_setup_cap(sc)
+	struct pciide_softc *sc;
+{
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
+	    WDC_CAPABILITY_DMA;
+	sc->sc_wdcdev.pio_mode = 4;
+	sc->sc_wdcdev.dma_mode = 2;
+}
+
+void
+cmd0643_6_setup_chip(sc, pc, tag)
+	struct pciide_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	struct channel_softc *chp;
+	struct ata_drive_datas *drvp;
+	int channel, drive;
+	u_int8_t tim;
+	u_int32_t idedma_ctl;
+
+	WDCDEBUG_PRINT(("cmd0643_6_setup_chip: old timings reg 0x%x 0x%x\n",
+		pci_conf_read(pc, tag, 0x54), pci_conf_read(pc, tag, 0x58)),
+		DEBUG_PROBE);
+	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
+		chp = &sc->wdc_channels[channel];
+		idedma_ctl = 0;
+		for (drive = 0; drive < 2; drive++) {
+			drvp = &chp->ch_drive[drive];
+			/* If no drive, skip */
+			if ((drvp->drive_flags & DRIVE) == 0)
+				continue;
+			/* add timing values, setup DMA if needed */
+			tim = cmd0643_6_data_tim_pio[drvp->PIO_mode];
+			if ((drvp->drive_flags & DRIVE_DMA) == 0 ||
+			    sc->sc_dma_ok == 0) {
+				drvp->drive_flags &= ~DRIVE_DMA;
+				goto end;
+			}
+			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
+				/* Abort DMA setup */
+				drvp->drive_flags &= ~DRIVE_DMA;
+				goto end;
+			}
+			/*
+			 * use Multiword DMA.
+			 * Timings will be used for both PIO and DMA, so adjust
+			 * DMA mode if needed
+			 */
+			if (drvp->PIO_mode >= 3 &&
+			    (drvp->DMA_mode + 2) > drvp->PIO_mode) {
+				drvp->DMA_mode = drvp->PIO_mode - 2;
+			}
+			tim = cmd0643_6_data_tim_dma[drvp->DMA_mode];
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+
+end:			pciide_pci_write(pc, tag,
+			    CMD_DATA_TIM(channel, drive), tim);
+			printf("%s(%s:%d:%d): using PIO mode %d",
+			    drvp->drv_softc->dv_xname,
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    channel, drive, drvp->PIO_mode);
+			if (drvp->drive_flags & DRIVE_DMA)
+			    printf(", DMA mode %d", drvp->DMA_mode);
+			printf("\n");
+		}
+		if (idedma_ctl != 0) {
+			/* Add software bits in status register */
+			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * channel),
+			    idedma_ctl);
+		}
+	}
+	WDCDEBUG_PRINT(("cmd0643_6_setup_chip: timings reg now 0x%x 0x%x\n",
+		pci_conf_read(pc, tag, 0x54), pci_conf_read(pc, tag, 0x58)),
+		DEBUG_PROBE);
 }
 
 int
