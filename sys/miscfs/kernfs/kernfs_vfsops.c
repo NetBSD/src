@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.54 2003/09/08 06:51:54 itojun Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.55 2003/09/26 03:08:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.54 2003/09/08 06:51:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.55 2003/09/26 03:08:18 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -209,7 +209,7 @@ kernfs_root(mp, vpp)
 {
 
 	/* setup "." */
-	return (kernfs_allocvp(mp, vpp, Pkern, &kern_targets[0], 0));
+	return (kernfs_allocvp(mp, vpp, Kern, &kern_targets[0], 0));
 }
 
 int
