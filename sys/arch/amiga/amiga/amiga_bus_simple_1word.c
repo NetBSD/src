@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_2word.c,v 1.2 2000/01/23 21:02:18 aymeric Exp $ */
+/* $NetBSD: amiga_bus_simple_1word.c,v 1.1 2000/01/23 21:02:17 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define AMIGA_SIMPLE_BUS_STRIDE 2		/* 1 byte per word */
+#define AMIGA_SIMPLE_BUS_STRIDE 1		/* 1 byte per word */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
 
 #include "simple_busfuncs.c"
