@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_procfs.8,v 1.8 1997/05/13 04:15:07 mikel Exp $
+.\"	$NetBSD: mount_procfs.8,v 1.9 1997/09/15 06:02:20 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,13 +44,13 @@
 .Nm mount_procfs
 .Nd mount the process file system
 .Sh SYNOPSIS
-.Nm mount_procfs
+.Nm
 .Op Fl o Ar options
 .Pa /proc
 .Pa mount_point
 .Sh DESCRIPTION
 The
-.Nm mount_procfs
+.Nm
 command attaches an instance of the process
 namespace to the global filesystem namespace.
 The conventional mount point is
@@ -234,5 +234,5 @@ since most of the functionality of
 requires that state be maintained.
 .Sh HISTORY
 The
-.Nm mount_procfs
+.Nm
 utility first appeared in 4.4BSD.
