@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2002/07/28 07:07:46 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2002/08/06 06:16:04 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -697,6 +697,9 @@ mp_save_fpu_proc(p)
 	 */
 
 	fpcpu = pcb->pcb_fpcpu;
+	if (fpcpu == NULL) {
+		return;
+	}
 	macppc_send_ipi(fpcpu, MACPPC_IPI_FLUSH_FPU);
 
 	/* Wait for flush. */
@@ -737,6 +740,9 @@ mp_save_vec_proc(p)
 	 */
 
 	veccpu = pcb->pcb_veccpu;
+	if (veccpu == NULL) {
+		return;
+	}
 	macppc_send_ipi(veccpu, MACPPC_IPI_FLUSH_VEC);
 
 	/* Wait for flush. */
