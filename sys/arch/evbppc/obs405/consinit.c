@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2005/01/13 17:07:24 shige Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3 2005/01/21 19:24:11 shige Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,9 +31,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2005/01/13 17:07:24 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2005/01/21 19:24:11 shige Exp $");
 
-#include <sys/systm.h>
 #include <machine/obs405.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 
@@ -42,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2005/01/13 17:07:24 shige Exp $");
  *   Initialize the system console.
  */
 void
-consinit(void)
+obs405_consinit(void)
 {
 
 #if (NCOM > 0)
