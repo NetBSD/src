@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.1 1998/07/21 17:26:46 drochner Exp $	*/
+/*	$NetBSD: am79900.c,v 1.2 1998/07/24 13:42:29 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -423,6 +423,10 @@ am79900_intr(arg)
 		am79900_rint(sc);
 	if (isr & LE_C0_TINT)
 		am79900_tint(sc);
+	
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, isr);
+#endif
 
 	return (1);
 }
