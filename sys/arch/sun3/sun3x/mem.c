@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 2002/02/27 01:20:56 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.24 2002/02/27 06:51:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,7 +200,7 @@ mmrw(dev, uio, flags)
 			/* Yes, return (not break) so EOF works. */
 			return (error);
 
-		case DEL_ZERO:
+		case DEV_ZERO:
 			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
