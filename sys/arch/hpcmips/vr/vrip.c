@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.5 2000/03/05 05:22:13 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.6 2000/03/10 09:18:00 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -50,10 +50,17 @@
 
 #define VRIPDEBUG
 #ifdef VRIPDEBUG
-int	vrip_debug = 0;
-#define	DPRINTF(arg) if (vrip_debug) printf arg;
+#ifndef VRIPDEBUG_CONF
+#define VRIPDEBUG_CONF 0
+#endif /* VRIPDEBUG_CONF */
+int	vrip_debug = VRIPDEBUG_CONF;
+#define DPRINTF(arg) if (vrip_debug) printf arg;
+#define DBITDISP32(reg) if (vrip_debug) bitdisp32(reg);
+#define DDUMP_LEVEL2MASK(sc,arg) if (vrip_debug) vrip_dump_level2mask(sc,arg)
 #else
-#define	DPRINTF(arg)
+#define DPRINTF(arg)
+#define DBITDISP32(arg)
+#define DDUMP_LEVEL2MASK(sc,arg)
 #endif
 
 int	vripmatch __P((struct device*, struct cfdata*, void*));
@@ -304,10 +311,7 @@ vrip_intr_setmask1(vc, arg, enable)
 	sc->sc_intrmask = reg;
 	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
 	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
-#ifdef VRIPDEBUG
-	if (vrip_debug)
-		bitdisp32(reg);
-#endif /* VRIPDEBUG */
+	DBITDISP32(reg);
     
 	return;
 }
@@ -361,12 +365,8 @@ vrip_intr_setmask2(vc, arg, mask, onoff)
 	struct intrhand *ih = arg;
 	u_int16_t reg;
 
-#ifdef VRIPDEBUG
-	if (vrip_debug) {
-		printf("vrip_intr_setmask2:\n");
-		vrip_dump_level2mask (vc, arg);
-	}
-#endif /* VRIPDEBUG */
+	DPRINTF(("vrip_intr_setmask2:\n"));
+	DDUMP_LEVEL2MASK(vc, arg);
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
@@ -388,10 +388,7 @@ vrip_intr_setmask2(vc, arg, mask, onoff)
 		}
 	}
 #endif /* WINCE_DEFAULT_SETTING */
-#ifdef VRIPDEBUG
-	if (vrip_debug)
-		vrip_dump_level2mask (vc, arg);
-#endif /* VRIPDEBUG */
+	DDUMP_LEVEL2MASK(vc, arg);
 
 	return;
 }
