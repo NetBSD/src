@@ -1,3 +1,4 @@
+.\" $NetBSD: isdnmonitor.8,v 1.2 2001/04/09 13:42:48 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnmonitor.8,v 1.1.1.1 2001/01/06 13:00:26 martin Exp $
+.\"	$Id: isdnmonitor.8,v 1.2 2001/04/09 13:42:48 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -43,7 +44,7 @@
 .Op Fl l Ar pathname
 .Op Fl p Ar portspec
 .Sh DESCRIPTION
-.Nm Isdnmonitor
+.Nm
 is used to remotely monitor the operation of the isdn demon,
 .Xr isdnd 8 ,
 which manages all ISDN related connection and disconnection of ISDN
@@ -118,7 +119,7 @@ disable displaying debug messages on the full-screen display.
 .Pp
 .It Fl f
 Specifying this option causes
-.Nm isdnmonitor
+.Nm
 to write its normal output and - if enabled - debugging output to a file
 which name is specified as the argument.
 .It Fl l
@@ -126,10 +127,10 @@ is used to specify a Unix local domain socket name to be used for communication
 between
 .Xr isdnd 8
 and
-.Nm isdnmonitor .
+.Nm
 .It Fl h
 is used to specify a hostname or a dotted-quad IP address of a machine
-where an 
+where an
 .Xr isdnd 8
 is running which should be monitored.
 .It Fl p
@@ -138,7 +139,6 @@ with the
 .Fl h
 option.
 .El
-
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm isdnmonitor :
@@ -149,7 +149,6 @@ See
 .Xr environ 7
 for more information.
 .El
-
 .Sh EXAMPLES
 For a first try, the following command should be used to start
 .Nm
@@ -157,24 +156,18 @@ to monitor a locally running isdnd:
 .Bd -literal -offset indent
 isdnmonitor -h localhost
 .Ed
-.Pp
-
 .Sh DIAGNOSTICS
 Exit status is 0 on success, 1 on error.
-.Pp
-
 .Sh SEE ALSO
 .Xr isdnd 8
-
 .Sh BUGS
 Still one (or) more left.
-
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
-utility was written by 
+utility was written by
 .An Martin Husemann
-and 
+and
 .An Hellmuth Michaelis .
-This manual page was written by 
+This manual page was written by
 .An Hellmuth Michaelis Aq hm@kts.org .
