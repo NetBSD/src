@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.45 2002/05/29 02:58:30 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.46 2002/05/29 07:53:40 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.45 2002/05/29 02:58:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.46 2002/05/29 07:53:40 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,6 +579,14 @@ in6_ifattach(ifp, altifp)
 		return;
 	}
 
+	/*
+	 * if link mtu is too small, don't try to configure IPv6.
+	 * remember there could be some link-layer that has special
+	 * fragmentation logic.
+	 */
+	if (ifp->if_mtu < IPV6_MMTU)
+		return;
+
 	/* create a multicast kludge storage (if we have not had one) */
 	in6_createmkludge(ifp);
 
@@ -594,7 +602,7 @@ in6_ifattach(ifp, altifp)
 		 * linklocals for 6to4 interface, but there's no use and
 		 * it is rather harmful to have one.
 		 */
-		goto statinit;
+		return;
 #endif
 	default:
 		break;
@@ -624,7 +632,7 @@ in6_ifattach(ifp, altifp)
 			    if_name(ifp));
 
 			/* we can't initialize multicasts without link-local */
-			goto statinit;
+			return;
 		}
 	}
 
@@ -733,15 +741,6 @@ in6_ifattach(ifp, altifp)
 			}
 		}
 	}
-
-statinit:;
-
-	/* update dynamically. */
-	if (in6_maxmtu < ifp->if_mtu)
-		in6_maxmtu = ifp->if_mtu;
-
-	/* initialize NDP variables */
-	nd6_ifattach(ifp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.29 2002/05/29 07:53:41 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.29 2002/05/29 07:53:41 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $")
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>
 #include <netinet6/pim6_var.h>
+#include <netinet6/nd6.h>
 
 #include <net/net_osdep.h>
 
@@ -1416,6 +1417,7 @@ phyint_send(ip6, mifp, m)
 	static struct route_in6 ro;
 	struct	in6_multi *in6m;
 	struct sockaddr_in6 *dst6;
+	u_long linkmtu;
 
 	/*
 	 * Make a new reference to the packet; make sure that
@@ -1475,7 +1477,8 @@ phyint_send(ip6, mifp, m)
 	 * Put the packet into the sending queue of the outgoing interface
 	 * if it would fit in the MTU of the interface.
 	 */
-	if (mb_copy->m_pkthdr.len < ifp->if_mtu || ifp->if_mtu < IPV6_MMTU) {
+	linkmtu = IN6_LINKMTU(ifp);
+	if (mb_copy->m_pkthdr.len < linkmtu || linkmtu < IPV6_MMTU) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
@@ -1492,7 +1495,7 @@ phyint_send(ip6, mifp, m)
 #endif
 	} else {
 #ifdef MULTICAST_PMTUD
-		icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+		icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, linkmtu);
 #else
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)

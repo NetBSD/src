@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.25 2002/05/28 11:26:43 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.26 2002/05/29 07:53:42 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -70,6 +70,12 @@ struct	llinfo_nd6 {
 
 #define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
 
+/*
+ * Since the granularity of our retransmission timer is seconds, we should
+ * ensure that a positive timer value will be mapped to at least one second.
+ */
+#define ND6_RETRANS_SEC(r) (((r) + 999) / 1000)
+
 struct nd_ifinfo {
 	u_int32_t linkmtu;		/* LinkMTU */
 	u_int32_t maxmtu;		/* Upper bound of LinkMTU */
@@ -79,10 +85,23 @@ struct nd_ifinfo {
 	u_int32_t flags;		/* Flags */
 	int recalctm;			/* BaseReacable re-calculation timer */
 	u_int8_t chlim;			/* CurHopLimit */
-	u_int8_t receivedra;
+	u_int8_t initialized; /* Flag to see the entry is initialized */
+#define receivedra initialized	/* obsoleted */
+	/* the following 3 members are for privacy extension for addrconf */
+	u_int8_t randomseed0[8]; /* upper 64 bits of MD5 digest */
+	u_int8_t randomseed1[8]; /* lower 64 bits (usually the EUI64 IFID) */
+	u_int8_t randomid[8];	/* current random ID */
 };
 
 #define ND6_IFF_PERFORMNUD	0x1
+
+#ifdef _KERNEL
+#define ND_IFINFO(ifp) \
+	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->nd_ifinfo)
+#define IN6_LINKMTU(ifp) \
+	((ND_IFINFO(ifp)->linkmtu && ND_IFINFO(ifp)->linkmtu < (ifp)->if_mtu) \
+		? ND_IFINFO(ifp)->linkmtu : (ifp)->if_mtu)
+#endif
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
@@ -121,6 +140,23 @@ struct	in6_prlist {
 		struct	in6_addr advrtr[DRLSTSIZ]; /* XXX: explicit limit */
 	} prefix[PRLSTSIZ];
 };
+
+#ifdef _KERNEL
+struct	in6_ondireq {
+	char ifname[IFNAMSIZ];
+	struct {
+		u_int32_t linkmtu;	/* LinkMTU */
+		u_int32_t maxmtu;	/* Upper bound of LinkMTU */
+		u_int32_t basereachable; /* BaseReachableTime */
+		u_int32_t reachable;	/* Reachable Time */
+		u_int32_t retrans;	/* Retrans Timer */
+		u_int32_t flags;	/* Flags */
+		int recalctm;		/* BaseReacable re-calculation timer */
+		u_int8_t chlim;		/* CurHopLimit */
+		u_int8_t receivedra;
+	} ndi;
+};
+#endif
 
 struct	in6_ndireq {
 	char ifname[IFNAMSIZ];
@@ -242,7 +278,6 @@ extern int nd6_useloopback;
 extern int nd6_maxnudhint;
 extern int nd6_gctimer;
 extern struct llinfo_nd6 llinfo_nd6;
-extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
 extern int nd6_debug;
@@ -260,7 +295,7 @@ union nd_opts {
 		struct nd_opt_hdr *zero;
 		struct nd_opt_hdr *src_lladdr;
 		struct nd_opt_hdr *tgt_lladdr;
-		struct nd_opt_prefix_info *pi_beg;/* multiple opts, start */
+		struct nd_opt_prefix_info *pi_beg; /* multiple opts, start */
 		struct nd_opt_rd_hdr *rh;
 		struct nd_opt_mtu *mtu;
 		struct nd_opt_hdr *search;	/* multiple opts */
@@ -282,13 +317,14 @@ union nd_opts {
 /* XXX: need nd6_var.h?? */
 /* nd6.c */
 void nd6_init __P((void));
-void nd6_ifattach __P((struct ifnet *));
+struct nd_ifinfo *nd6_ifattach __P((struct ifnet *));
+void nd6_ifdetach __P((struct nd_ifinfo *));
 int nd6_is_addr_neighbor __P((struct sockaddr_in6 *, struct ifnet *));
 void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
 struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
-void nd6_setmtu __P((struct ifnet *));
+void nd6_setmtu __P((struct ifnet *, struct nd_ifinfo *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
