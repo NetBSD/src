@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.11 2003/02/10 20:09:43 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.12 2003/07/14 15:56:39 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11 2003/02/10 20:09:43 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.12 2003/07/14 15:56:39 aymeric Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -125,7 +125,8 @@ static int amidisplaycc_setcmap(view_t *, struct wsdisplay_cmap *);
 static int amidisplaycc_getcmap(view_t *, struct wsdisplay_cmap *);
 static int amidisplaycc_gfxscreen(struct amidisplaycc_softc *, int);
 
-static int amidisplaycc_setnamedfont(struct amidisplaycc_screen *, char *);
+static int amidisplaycc_setnamedfont(struct amidisplaycc_screen *,
+				     const char *);
 static void amidisplaycc_setfont(struct amidisplaycc_screen *,
 				 struct wsdisplay_font *, int);
 static struct wsdisplay_font *amidisplaycc_findfont(struct amidisplaycc_softc *,
@@ -1544,7 +1545,7 @@ amidisplaycc_setfont(struct amidisplaycc_screen *scr,
  */
 
 static int
-amidisplaycc_setnamedfont(struct amidisplaycc_screen *scr, char *fontname)
+amidisplaycc_setnamedfont(struct amidisplaycc_screen *scr, const char *fontname)
 {
 	struct wsdisplay_font  * font;
 	int  wsfontcookie;
