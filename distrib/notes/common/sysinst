@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.68 2004/01/09 05:26:47 sekiya Exp $
+.\"	$NetBSD: sysinst,v 1.69 2004/06/11 06:28:53 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[atari]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -292,7 +292,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" \n[i386]
-.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
 .if \n[mac68k] \{\
 .It
 .To 2 "Possible hardware-specific issues"
@@ -373,7 +373,7 @@ an example.
 What you need.
 .(bullet
 The distribution sets (in this example, they are on CD).
-.if !\n[pmax]:\n[sgimips] \{\
+.if !\n[pmax]:\n[sgimips]:\n[sparc64] \{\
 .It
 .ie \n[alpha] Two floppy disks.
 .el \{\
@@ -392,7 +392,7 @@ See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
 .\}\}\}\}
-.\} \" !\n[pmax]:\n[sgimips]
+.\} \" !\n[pmax]:\n[sgimips]:\n[sparc64]
 .if \n[i386] \{\
 .It
 A PC with a 386 or newer processor.
@@ -405,9 +405,9 @@ An FPU is not required but will be used if present
 .\}
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc]:\n[sparc64] (SCSI or ATAPI),
 .el (SCSI),
-a harddisk and a minimum of
+a hard disk and a minimum of
 .if \n[acorn26] 8 MB
 .if \n[alpha] 32 MB
 .if \n[atari] 4 MB (TT030/Falcon) or 16 MB (Hades/Milan)
@@ -420,10 +420,11 @@ a harddisk and a minimum of
 .if \n[newsmips] 16 MB
 .if \n[pmax] 8 MB
 .if \n[sparc] 4 MB
+.if \n[sparc64] 16 MB
 .if \n[sgimips] 16 MB
 of memory installed.
 .It
-The harddisk should have at least
+The hard disk should have at least
 .if \n[acorn26] 200
 .if \n[alpha] 200
 .if \n[atari] 120
@@ -436,6 +437,7 @@ The harddisk should have at least
 .if \n[newsmips] 200
 .if \n[pmax] 200
 .if \n[sparc] 200
+.if \n[sparc64] 200
 .if \n[sgimips] 200
 +
 .Em n
@@ -517,7 +519,7 @@ kernels while booting.
 .It
 The Quick Installation
 .(bullet
-.ie \n[acorn26]:\n[atari]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.ie \n[acorn26]:\n[atari]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 Boot the system as described above.
 You should be at the
 .Ic sysinst
@@ -573,7 +575,7 @@ progress as this may leave the keyboard locked to
 .Nx .
 .Pp
 The main menu will be displayed.
-.\}
+.\} \" \n[mac68k]
 .el \{\
 Insert the first boot floppy you just created.
 .ie \n[i386] Restart
@@ -609,7 +611,7 @@ The main menu will be displayed.
 . cs \n(.f 22
 .\" )   - appease vi showmatch
   .***********************************************.
-  * NetBSD-1.6 Install System                     *
+  * NetBSD-2.0 Install System                     *
   *                                               *
   *\*>a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
@@ -655,6 +657,17 @@ When in doubt, refer to the rest of this document for details.
 WARNING: If you want your disk to retain an AHDI compatible partitioning,
 make sure to use the 'existing' disk layout.
 .\}
+.if \n[sparc64] \{\
+.Pp
+WARNING: If you are installing onto a disk which you want to use with 
+.Tn Solaris ,
+stop here.  You will need to perform a manual installation as 
+.Ic sysinst
+overwrites the
+.Tn Solaris
+partition table.  See the section on
+.Sx "Manual Installation of NetBSD using Solaris"
+.\}
 .It
 After your disk has been prepared, choose
 .ie \n[sgimips] \{\
@@ -672,7 +685,7 @@ The default values for the path and device should be ok.
 .It
 After all the files have been unpacked, go back to
 the main menu and select
-.ie \n[mac68k]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.ie \n[mac68k]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 .Me reboot.
 .\}
 .el \{\
@@ -680,7 +693,7 @@ the main menu and select
 after you have removed the bootfloppy from the drive.
 .\}
 .It
-.if \n[macppc] \{\
+.if \n[macppc]:\n[sparc64] \{\
 Once the system reaches the Open Firmware prompt, you will need to type
 the correct command to boot from your hard drive.
 .\}
@@ -708,7 +721,7 @@ Your installation is now complete.
 .It
 For configuring the X window system, if installed, see the files in
 .Pa /usr/X11R6/lib/X11/doc .
-.if !\n[macppc]:\n[sparc] \{\
+.if !\n[macppc] \{\
 Further information can be found on
 .Lk http://www.xfree86.org/ .
 .\}
@@ -722,14 +735,14 @@ Further information can be found on
 .To 2 "Booting NetBSD"
 .Em Booting NetBSD
 .
-.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
 .ie \n[mac68k] \{\
 .Pp
 Prior to attempting to boot
@@ -808,15 +821,15 @@ describing your software, your hardware, and as complete a description of
 the problem as you can.
 As an alternative, try using the Traditional
 method of installation described in the next section.
-.\}
+.\} \" \n[mac68k]
 .el \{\
-.ie \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.ie \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 .Pp
 You may want to read the
 boot messages, to notice your disk's name and capacity.
 Its name will be something like
 .Li sd0
-.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc] \{\
+.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc64] \{\
 or
 .Li wd0
 .\}
@@ -830,7 +843,7 @@ You will also need to know the name, to tell
 on which disk
 to install.
 The most important thing to know is that
-.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc] \{\
+.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc64] \{\
 .Li wd0
 is
 .Nx 's
@@ -937,12 +950,12 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
@@ -984,7 +997,7 @@ They can still be used by
 for a
 .Nx
 installation.
-.\}
+.\} \" \n[mac68k]
 .if \n[macppc] \{\
 .It
 .To 2 "Preparing a disk for Open Firmware 3 systems"
@@ -1124,7 +1137,7 @@ Clean up and return to
 .Dl # Ic "cd /"
 .Dl # Ic "umount /mnt"
 .Dl # Ic exit
-.\}
+.\} \" \n[macppc]
 .It
 .To 2 "Installation drive selection and parameters"
 .Em Installation drive selection and parameters
@@ -1165,7 +1178,7 @@ or
 .Li rz1
 .\}
 .el \{\
-.if \n[acorn26]:\n[alpha]:\n[cats]:\n[i386]:\n[mac68k]:\n[macppc] \{\
+.if \n[acorn26]:\n[alpha]:\n[cats]:\n[i386]:\n[mac68k]:\n[macppc]:\n[sparc64] \{\
 .Li wd0 ,
 .Li wd1 ,
 .\}
@@ -1468,7 +1481,7 @@ automatically mounts all
 Root partitions after the first as Usr type partitions.
 However, it is best to be very specific about mount points and partition
 type and use.
-.\}
+.\} \" \n[mac68k]
 .bullet)
 .if \n[i386] \{\
 .Pp
@@ -1514,7 +1527,7 @@ editing the
 .Nx
 disklabel.
 .Pp
-.\}
+.\} \" \n[i386]
 .\} \" !\n[atari]:\n[macppc]:\n[sgimips]
 .
 .if !\n[mac68k] \{\
@@ -1996,6 +2009,6 @@ should be issued as the firmware prompt.
 .if !\n[macppc] \{\
 You can now reboot the machine, and boot
 .Nx
-from harddisk.
+from hard disk.
 .\} \" !\n[macppc]
 .enum)
