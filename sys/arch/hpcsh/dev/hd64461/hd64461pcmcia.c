@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.2 2001/03/08 15:13:14 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
 #include <hpcsh/dev/hd64461/hd64461gpioreg.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciareg.h>
+
+#include "locators.h"
 
 #ifdef HD64461PCMCIA_DEBUG
 int	hd64461pcmcia_debug = 1;
@@ -226,12 +228,13 @@ static void power_on(enum controller_channel);
 static void memory_window_mode(enum controller_channel,
 			       enum memory_window_mode);
 static void memory_window_16(enum controller_channel, enum memory_window_16);
-static void memory_window_32(enum controller_channel, enum memory_window_32)
-	__attribute__((__unused__));
+/* bus width */
+static void set_bus_width(enum controller_channel, int);
 #ifdef DEBUG
 static void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 #endif
-#define __delay(x)	delay((x) * 100)	//XXX
+
+#define DELAY_MS(x)	delay((x) * 1000)
 
 static int
 hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -323,7 +326,20 @@ static int
 hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
+	struct hd64461pcmcia_channel *ch =
+		(struct hd64461pcmcia_channel *)paa->pch;
 
+	if (ch->ch_channel == CHANNEL_0) {
+		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+			return 0;
+	} else {
+		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 1)
+			return 0;
+	}
 	paa->pct = (pcmcia_chipset_tag_t)&hd64461pcmcia_functions;
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
@@ -366,7 +382,6 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	_chip_socket_disable(ch); /* enable CSC interrupt only */
 
 	if (channel == CHANNEL_0) {
-		/* real I/O space */
 		ch->ch_iobase = 0;
 		ch->ch_iosize = HD64461_PCC0_IOSIZE;
 		ch->ch_iot = bus_space_create("PCMCIA I/O port", 
@@ -377,13 +392,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 		hd64461_intr_establish(HD64461_IRQ_PCC0, IST_LEVEL, IPL_TTY,
 				       hd64461pcmcia_channel0_intr, ch);
 	} else {
-		/* Compact Flash memory mapped mode (Common memory space) */
-		ch->ch_iobase = 0;
-		ch->ch_iosize = 0x10; /* 16byte (dont' use 0x400-0x7ff) */
-		ch->ch_iot = bus_space_create("PCMCIA memory mapped I/O port", 
-					      HD64461_PCC1_MEMBASE +
-					      0x01000000, ch->ch_iosize);
-
+		set_bus_width(CHANNEL_1, PCMCIA_WIDTH_IO16);
 		hd64461_intr_establish(HD64461_IRQ_PCC1, IST_EDGE, IPL_TTY,
 				       hd64461pcmcia_channel1_intr, ch);
 	}
@@ -561,7 +570,9 @@ _chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
 	pcmhp->memh = ch->ch_memh;
 	pcmhp->size = size;
 	pcmhp->realsize = size;
-	
+
+	DPRINTF("base 0x%08lx size %#lx\n", pcmhp->addr, size);
+
 	return (0);
 }
 
@@ -578,13 +589,16 @@ _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	struct hd64461pcmcia_window_cookie *cookie;
+	bus_addr_t ofs;
 
 	cookie = malloc(sizeof(struct hd64461pcmcia_window_cookie),
 			M_DEVBUF, M_NOWAIT);
 	KASSERT(cookie);
 	memset(cookie, 0, sizeof(struct hd64461pcmcia_window_cookie));
 
-	if (kind == PCMCIA_MEM_ATTR) {
+	/* Address */
+	if ((kind & ~PCMCIA_WIDTH_MEM_MASK) == PCMCIA_MEM_ATTR) {
+		cookie->wc_tag = ch->ch_memt;
 		if (bus_space_subregion(ch->ch_memt, ch->ch_memh, card_addr,
 					size, &cookie->wc_handle) != 0)
 			goto bad;
@@ -595,20 +609,23 @@ _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 		int window = card_addr / ch->ch_memsize;
 		KASSERT(window < MEMWIN_16M_MAX);
 
-		*offsetp = card_addr - window * ch->ch_memsize;
-
-		if (bus_space_map(ch->ch_cmemt[window], *offsetp, size, 0,
+		cookie->wc_tag = ch->ch_cmemt[window];
+		ofs = card_addr - window * ch->ch_memsize;
+		if (bus_space_map(cookie->wc_tag, ofs, size, 0,
 				  &cookie->wc_handle) != 0)
 			goto bad;
-
+		
 		// XXX bogus. bus_space_tag should be vtbl...
 		memory_window_16(ch->ch_channel, window);
+		*offsetp = ofs + 0x01000000; /* skip attribute area */
 		cookie->wc_window = window;
 	}
 	cookie->wc_size = size;
 	*windowp = (int)cookie;
 
-	DPRINTF("%#lx-> %#lx+%#lx\n", card_addr, *offsetp, size);
+	DPRINTF("(%s) %#lx+%#lx-> %#lx+%#lx\n", kind == PCMCIA_MEM_ATTR ?
+		"attribute" : "common", ch->ch_memh, card_addr, *offsetp,
+		size);
 
 	return (0);
  bad:
@@ -626,6 +643,7 @@ _chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 	if (cookie->wc_window != -1)
 		bus_space_unmap(cookie->wc_tag, cookie->wc_handle,
 				cookie->wc_size);
+	DPRINTF("%#lx-%#x\n", cookie->wc_handle, cookie->wc_size);
 	free(cookie, M_DEVBUF);
 }
 
@@ -634,6 +652,9 @@ _chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 	       bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
+
+	if (ch->ch_channel == CHANNEL_1)
+		return (1);
 
 	if (start) {
 		if (bus_space_map(ch->ch_iot, start, size, 0, &pcihp->ioh)) {
@@ -667,18 +688,10 @@ _chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 #ifdef HD64461PCMCIA_DEBUG
 	static char *width_names[] = { "auto", "io8", "io16" };
 #endif
-	u_int16_t r16;
+	if (ch->ch_channel == CHANNEL_1)
+		return (1);
 
-	/* Set bus width */
-	r16 = SHREG_BCR2;
-	if (ch->ch_channel == CHANNEL_0) {
-		r16 &= ~((1 << 13)|(1 << 12));
-		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 12 : 13);
-	} else {
-		r16 &= ~((1 << 11)|(1 << 10));
-		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 10 : 11);
-	}
-	SHREG_BCR2 = r16;
+	set_bus_width(CHANNEL_0, width);
 
 	DPRINTF("%#lx:%#lx+%#lx %s\n", pcihp->ioh, offset, size,
 		width_names[width]);
@@ -689,6 +702,11 @@ _chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 static void
 _chip_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pcihp)
 {
+	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
+
+	if (ch->ch_channel == CHANNEL_1)
+		return;
+
 	if (pcihp->flags & PCMCIA_IO_ALLOCATED)
 		bus_space_free(pcihp->iot, pcihp->ioh, pcihp->size);
 	else
@@ -728,18 +746,18 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 	/*
 	 * hold RESET at least 10us.
 	 */
-	__delay(20);
+	DELAY_MS(20);
 	
 	/* clear the reset flag */
 	r &= ~HD64461_PCCGCR_PCCR;
 	hd64461_reg_write_1(gcr, r);
-	__delay(20000);
+	DELAY_MS(2000);
 
 	/* wait for the chip to finish initializing */	
 	for (i = 0; i < 10000; i++) {
 		if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
 			goto reset_ok;
-		__delay(500);
+		DELAY_MS(500);
 
 		if ((i > 5000) && (i % 100 == 99))
 			printf(".");
@@ -816,7 +834,7 @@ power_off(enum controller_channel channel)
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
-	__delay(300 + 100);
+	DELAY_MS(300 + 100);
 
 	/* stop clock */
 	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
@@ -856,7 +874,7 @@ power_on(enum controller_channel channel)
 	r16 &= ~(channel == CHANNEL_0 ? HD64461_SYSSTBCR_SPC0ST :
 		 HD64461_SYSSTBCR_SPC1ST);
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
-	__delay(2000);
+	DELAY_MS(200);
 
 	/* detect voltage and supply VCC */
 	r = hd64461_reg_read_1(isr);
@@ -892,7 +910,7 @@ power_on(enum controller_channel channel)
 	 * some machines require some more time to be settled
 	 * (300ms is added here).
 	 */
-	__delay(100 + 20 + 300);
+	DELAY_MS(100 + 20 + 300);
 
 	/* DRV (external buffer) low level */
 	r = hd64461_reg_read_1(gcr);
@@ -967,6 +985,7 @@ memory_window_16(enum controller_channel channel, enum memory_window_16 window)
 	hd64461_reg_write_1(a, r);
 }
 
+#if unused
 static void
 memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 {
@@ -988,6 +1007,23 @@ memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 	}
 
 	hd64461_reg_write_1(a, r);
+}
+#endif
+
+static void
+set_bus_width(enum controller_channel channel, int width)
+{
+	u_int16_t r16;
+
+	r16 = SHREG_BCR2;
+	if (channel == CHANNEL_0) {
+		r16 &= ~((1 << 13)|(1 << 12));
+		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 12 : 13);
+	} else {
+		r16 &= ~((1 << 11)|(1 << 10));
+		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 10 : 11);
+	}
+	SHREG_BCR2 = r16;
 }
 
 #ifdef DEBUG
