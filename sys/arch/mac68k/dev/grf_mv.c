@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.4 1995/06/30 05:21:33 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.5 1995/07/02 00:30:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -177,6 +177,7 @@ grfmv_init(sc)
 
 	sc->curr_mode.mode_id = mode;
 	sc->curr_mode.fbbase = (caddr_t) (base + image.offset);
+	sc->curr_mode.fboff = image.offset;
 	sc->curr_mode.rowbytes = image.rowbytes;
 	sc->curr_mode.width = image.right - image.left;
 	sc->curr_mode.height = image.bottom - image.top;

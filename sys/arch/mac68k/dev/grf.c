@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.22 1995/07/01 23:40:38 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.23 1995/07/02 00:30:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -385,7 +385,7 @@ grfmap(dev, addrp, p)
 	    0);
 
 	/* Offset into page: */
-	*addrp += (unsigned long) gp->curr_mode.fbbase & 0xfff;
+	*addrp += (unsigned long) gp->curr_mode.fboff & 0xfff;
 
 	return (error);
 }
