@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.25 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.26 2004/01/06 18:07:17 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.25 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.26 2004/01/06 18:07:17 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1570,6 +1570,11 @@ spc_datain_pio(sc, p, n)
 			    (sstat & SSTS_DREG_EMPTY) == 0)
 				break;
 		}
+
+#ifdef NEED_DREQ_ON_HARDWARE_XFER
+		if (intstat != 0)
+			goto phasechange;
+#endif
 
 		if (sstat & SSTS_DREG_FULL) {
 			xfer = DINAMOUNT;
