@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.9 2000/07/26 19:39:07 mycroft Exp $	*/
+/*	$NetBSD: ldd.c,v 1.10 2000/11/10 23:53:04 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -106,7 +106,7 @@ main(
 	_rtld_objtail = &_rtld_objmain->next;
 	++_rtld_objmain->refcount;
 
-	(void) _rtld_load_needed_objects(_rtld_objmain, true);
+	(void) _rtld_load_needed_objects(_rtld_objmain, 0, true);
 
 	printf("%s:\n", _rtld_objmain->path);
 	print_needed(_rtld_objmain);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.42 2000/11/10 21:31:30 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.43 2000/11/10 23:53:04 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -94,8 +94,6 @@ Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 #endif
 
-Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
-  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
 Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 
@@ -944,30 +942,6 @@ _rtld_obj_from_addr(const void *addr)
 			continue; /* No "end" symbol?! */
 		if (addr < (void *) (obj->relocbase + endsym->st_value))
 			return obj;
-	}
-	return NULL;
-}
-
-void
-_rtld_objlist_add(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
-{
-	Objlist_Entry *elm;
-
-	elm = NEW(Objlist_Entry);
-	elm->obj = obj;
-	SIMPLEQ_INSERT_TAIL(list, elm, link);
-}
-
-Objlist_Entry *
-_rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
-{
-	Objlist_Entry *elm;
-
-	for (elm = SIMPLEQ_FIRST(list); elm; elm = SIMPLEQ_NEXT(elm, link)) {
-		if (elm->obj == obj)
-			return elm;
 	}
 	return NULL;
 }
