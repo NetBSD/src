@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.2 2004/07/08 11:46:55 christos Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.3 2004/07/16 04:56:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -116,3 +116,15 @@ _C_LABEL(darwin_commpage_spinlock_relinquish):
 	.long	0x0
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish_size)
 _C_LABEL(darwin_commpage_spinlock_relinquish_size) = .-_C_LABEL(darwin_commpage_spinlock_relinquish)
+
+	.globl	_C_LABEL(darwin_commpage_pthread_getspecific)
+_C_LABEL(darwin_commpage_pthread_getspecific):
+	.long	0x0
+	.globl	_C_LABEL(darwin_commpage_pthread_getspecific_size)
+_C_LABEL(darwin_commpage_pthread_getspecific_size) = .-_C_LABEL(darwin_commpage_pthread_getspecific)
+
+	.globl	_C_LABEL(darwin_commpage_bcopy)
+_C_LABEL(darwin_commpage_bcopy):
+	.long	0x0
+	.globl	_C_LABEL(darwin_commpage_bcopy_size)
+_C_LABEL(darwin_commpage_bcopy_size) = .-_C_LABEL(darwin_commpage_bcopy)
