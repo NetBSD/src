@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.109 1998/01/05 04:52:48 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.110 1998/01/06 08:06:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -125,10 +125,6 @@ static void check_console __P((struct proc *p));
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
 void main __P((void *));
-
-#ifdef cpu_set_init_frame
-void *initframep;				/* XXX should go away */
-#endif
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -366,32 +362,12 @@ main(framep)
 	/* Create process 1 (init(8)). */
 	if (sys_fork(p, NULL, rval))
 		panic("fork init");
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	if (rval[1]) {
-		/*
-		 * Now in process 1.
-		 */
-		initframep = framep;
-		start_init(curproc);
-		return;
-	}
-#else
 	cpu_set_kpc(pfind(1), start_init);
-#endif
 
 	/* Create process 2 (the pageout daemon). */
 	if (sys_fork(p, NULL, rval))
 		panic("fork pager");
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	if (rval[1]) {
-		/*
-		 * Now in process 2.
-		 */
-		start_pagedaemon(curproc);
-	}
-#else
 	cpu_set_kpc(pfind(2), start_pagedaemon);
-#endif
 
 	/* The scheduler is an infinite loop. */
 	scheduler();
@@ -448,17 +424,6 @@ start_init(p)
 	 * Now in process 1.
 	 */
 	initproc = p;
-
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	/*
-	 * We need to set the system call frame as if we were entered through
-	 * a syscall() so that when we call sys_execve() below, it will be able
-	 * to set the entry point (see setregs) when it tries to exec.  The
-	 * startup code in "locore.s" has allocated space for the frame and
-	 * passed a pointer to that space as main's argument.
-	 */
-	cpu_set_init_frame(p, initframep);
-#endif
 
 	/*
 	 * This is not the right way to do this.  We really should
