@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.5 1995/11/08 02:31:03 christos Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.6 1995/11/10 21:27:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -45,6 +45,7 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
+#include	  "make.h"
 #include	  "lst.h"
 
 typedef struct ListNode {
