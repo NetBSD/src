@@ -1,18 +1,19 @@
-.\"	$NetBSD: prep,v 1.7 2000/10/29 14:08:12 lukem Exp $
+.\"	$NetBSD: prep,v 1.8 2002/06/30 13:06:06 lukem Exp $
 .
 .(Note
 Currently
 .Nx*M
 requires a dedicated disk when you install
-it for the first time.  In other words
+it for the first time.
+In other words
 .Nx*M
 cannot be installed
 on the hard disk on which
 .Tn Human68k
 or any other operating systems reside.
 This is because of the poor installer, and the system itself
-can share a single disk with other OSs.  This problem should be fixed
-in the next release.
+can share a single disk with other OSs.
+This problem should be fixed in the next release.
 .Note)
 .Pp
 What you have to do to prepare the disk is only to physically format
