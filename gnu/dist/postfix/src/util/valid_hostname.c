@@ -234,7 +234,7 @@ int     valid_hostliteral(const char *addr, int gripe)
 	    msg_warn("%s: unexpected text after ']': %.100s", myname, addr);
 	return (0);
     }
-    if (last - addr >= sizeof(buf)) {
+    if (last >= addr + sizeof(buf)) {
 	if (gripe)
 	    msg_warn("%s: too much text: %.100s", myname, addr);
 	return (0);

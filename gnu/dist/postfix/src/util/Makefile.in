@@ -3,81 +3,83 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	attr_scan0.c attr_scan64.c base64_code.c basename.c binhash.c \
 	chroot_uid.c clean_env.c close_on_exec.c concatenate.c ctable.c \
 	dict.c dict_alloc.c dict_db.c dict_dbm.c dict_debug.c dict_env.c \
-	dict_ht.c dict_ldap.c dict_mysql.c dict_ni.c dict_nis.c \
-	dict_nisplus.c dict_open.c dict_pcre.c dict_regexp.c dict_static.c \
-	dict_tcp.c dict_unix.c dir_forest.c doze.c duplex_pipe.c \
-	environ.c events.c exec_command.c fifo_listen.c fifo_trigger.c \
-	file_limit.c find_inet.c fsspace.c fullname.c get_domainname.c \
-	get_hostname.c hex_quote.c htable.c inet_addr_host.c \
-	inet_addr_list.c inet_addr_local.c inet_connect.c inet_listen.c \
-	inet_trigger.c inet_util.c intv.c line_wrap.c lowercase.c \
-	lstat_as.c mac_expand.c mac_parse.c make_dirs.c match_list.c \
-	match_ops.c msg.c msg_output.c msg_syslog.c msg_vstream.c \
-	mvect.c myflock.c mymalloc.c myrand.c mystrtok.c name_mask.c \
-	netstring.c non_blocking.c open_as.c open_limit.c open_lock.c \
-	peekfd.c percentm.c posix_signals.c printable.c rand_sleep.c \
-	read_wait.c readable.c readlline.c ring.c safe_getenv.c \
-	safe_open.c sane_accept.c sane_link.c sane_rename.c \
-	sane_socketpair.c sane_time.c scan_dir.c set_eugid.c set_ugid.c \
-	sigdelay.c skipblanks.c spawn_command.c split_at.c \
-	split_nameval.c stat_as.c stream_connect.c stream_listen.c \
-	stream_trigger.c sys_compat.c timed_connect.c timed_read.c \
-	timed_wait.c timed_write.c translit.c trimblanks.c unescape.c \
-	unix_connect.c unix_listen.c unix_trigger.c unsafe.c username.c \
-	valid_hostname.c vbuf.c vbuf_print.c vstream.c vstream_popen.c \
-	vstring.c vstring_vstream.c watchdog.c writable.c write_buf.c \
-	write_wait.c strcasecmp.c nvtable.c host_port.c sane_connect.c
+	dict_cidr.c dict_ht.c dict_ni.c dict_nis.c \
+	dict_nisplus.c dict_open.c dict_pcre.c dict_regexp.c \
+	dict_static.c dict_tcp.c dict_unix.c dir_forest.c doze.c \
+	duplex_pipe.c environ.c events.c exec_command.c fifo_listen.c \
+	fifo_trigger.c file_limit.c find_inet.c fsspace.c fullname.c \
+	get_domainname.c get_hostname.c hex_quote.c host_port.c htable.c \
+	inet_addr_host.c inet_addr_list.c inet_addr_local.c inet_connect.c \
+	inet_listen.c inet_trigger.c inet_util.c line_wrap.c \
+	lowercase.c lstat_as.c mac_expand.c mac_parse.c make_dirs.c \
+	match_list.c match_ops.c msg.c msg_output.c msg_syslog.c \
+	msg_vstream.c mvect.c myflock.c mymalloc.c myrand.c mystrtok.c \
+	name_mask.c netstring.c non_blocking.c nvtable.c open_as.c \
+	open_limit.c open_lock.c peekfd.c percentm.c posix_signals.c \
+	printable.c rand_sleep.c read_wait.c readable.c readlline.c \
+	ring.c safe_getenv.c safe_open.c sane_accept.c sane_link.c \
+	sane_rename.c sane_socketpair.c sane_time.c scan_dir.c \
+	set_eugid.c set_ugid.c sigdelay.c skipblanks.c spawn_command.c \
+	split_at.c split_nameval.c stat_as.c strcasecmp.c stream_connect.c \
+	stream_listen.c stream_trigger.c sys_compat.c timed_connect.c \
+	timed_read.c timed_wait.c timed_write.c translit.c trimblanks.c \
+	unescape.c unix_connect.c unix_listen.c unix_trigger.c unsafe.c \
+	username.c valid_hostname.c vbuf.c vbuf_print.c vstream.c \
+	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
+	write_buf.c write_wait.c auto_clnt.c attr_clnt.c attr_scan_plain.c \
+	attr_print_plain.c sane_connect.c neuter.c name_code.c \
+	uppercase.c
 OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	attr_scan0.o attr_scan64.o base64_code.o basename.o binhash.o \
 	chroot_uid.o clean_env.o close_on_exec.o concatenate.o ctable.o \
 	dict.o dict_alloc.o dict_db.o dict_dbm.o dict_debug.o dict_env.o \
-	dict_ht.o dict_ldap.o dict_mysql.o dict_ni.o dict_nis.o \
-	dict_nisplus.o dict_open.o dict_pcre.o dict_regexp.o dict_static.o \
-	dict_tcp.o dict_unix.o dir_forest.o doze.o duplex_pipe.o \
-	environ.o events.o exec_command.o fifo_listen.o fifo_trigger.o \
-	file_limit.o find_inet.o fsspace.o fullname.o get_domainname.o \
-	get_hostname.o hex_quote.o htable.o inet_addr_host.o \
-	inet_addr_list.o inet_addr_local.o inet_connect.o inet_listen.o \
-	inet_trigger.o inet_util.o intv.o line_wrap.o lowercase.o \
-	lstat_as.o mac_expand.o mac_parse.o make_dirs.o match_list.o \
-	match_ops.o msg.o msg_output.o msg_syslog.o msg_vstream.o \
-	mvect.o myflock.o mymalloc.o myrand.o mystrtok.o name_mask.o \
-	netstring.o non_blocking.o open_as.o open_limit.o open_lock.o \
-	peekfd.o percentm.o posix_signals.o printable.o rand_sleep.o \
-	read_wait.o readable.o readlline.o ring.o safe_getenv.o \
-	safe_open.o sane_accept.o sane_link.o sane_rename.o \
-	sane_socketpair.o sane_time.o scan_dir.o set_eugid.o set_ugid.o \
-	sigdelay.o skipblanks.o spawn_command.o split_at.o \
-	split_nameval.o stat_as.o stream_connect.o stream_listen.o \
-	stream_trigger.o sys_compat.o timed_connect.o timed_read.o \
-	timed_wait.o timed_write.o translit.o trimblanks.o unescape.o \
-	unix_connect.o unix_listen.o unix_trigger.o unsafe.o username.o \
-	valid_hostname.o vbuf.o vbuf_print.o vstream.o vstream_popen.o \
-	vstring.o vstring_vstream.o watchdog.o writable.o write_buf.o \
-	write_wait.o nvtable.o host_port.o sane_connect.o $(STRCASE)
+	dict_cidr.o dict_ht.o dict_ni.o dict_nis.o \
+	dict_nisplus.o dict_open.o dict_pcre.o dict_regexp.o \
+	dict_static.o dict_tcp.o dict_unix.o dir_forest.o doze.o \
+	duplex_pipe.o environ.o events.o exec_command.o fifo_listen.o \
+	fifo_trigger.o file_limit.o find_inet.o fsspace.o fullname.o \
+	get_domainname.o get_hostname.o hex_quote.o host_port.o htable.o \
+	inet_addr_host.o inet_addr_list.o inet_addr_local.o inet_connect.o \
+	inet_listen.o inet_trigger.o inet_util.o line_wrap.o \
+	lowercase.o lstat_as.o mac_expand.o mac_parse.o make_dirs.o \
+	match_list.o match_ops.o msg.o msg_output.o msg_syslog.o \
+	msg_vstream.o mvect.o myflock.o mymalloc.o myrand.o mystrtok.o \
+	name_mask.o netstring.o non_blocking.o nvtable.o open_as.o \
+	open_limit.o open_lock.o peekfd.o percentm.o posix_signals.o \
+	printable.o rand_sleep.o read_wait.o readable.o readlline.o \
+	ring.o safe_getenv.o safe_open.o sane_accept.o sane_link.o \
+	sane_rename.o sane_socketpair.o sane_time.o scan_dir.o \
+	set_eugid.o set_ugid.o sigdelay.o skipblanks.o spawn_command.o \
+	split_at.o split_nameval.o stat_as.o stream_connect.o \
+	stream_listen.o stream_trigger.o sys_compat.o timed_connect.o \
+	timed_read.o timed_wait.o timed_write.o translit.o trimblanks.o \
+	unescape.o unix_connect.o unix_listen.o unix_trigger.o unsafe.o \
+	username.o valid_hostname.o vbuf.o vbuf_print.o vstream.o \
+	vstream_popen.o vstring.o vstring_vstream.o watchdog.o writable.o \
+	write_buf.o write_wait.o auto_clnt.o attr_clnt.o attr_scan_plain.o \
+	attr_print_plain.o sane_connect.o $(STRCASE) neuter.o name_code.o \
+	uppercase.o
 HDRS	= argv.h attr.h base64_code.h binhash.h chroot_uid.h clean_env.h \
 	connect.h ctable.h dict.h dict_db.h dict_dbm.h dict_env.h \
-	dict_ht.h dict_ldap.h dict_mysql.h dict_ni.h dict_nis.h \
-	dict_nisplus.h dict_pcre.h dict_regexp.h dict_static.h dict_tcp.h \
-	dict_unix.h dir_forest.h events.h exec_command.h find_inet.h \
-	fsspace.h fullname.h get_domainname.h get_hostname.h hex_quote.h \
-	htable.h inet_addr_host.h inet_addr_list.h inet_addr_local.h \
-	inet_util.h intv.h iostuff.h line_wrap.h listen.h lstat_as.h \
-	mac_expand.h mac_parse.h make_dirs.h match_list.h match_ops.h \
-	msg.h msg_output.h msg_syslog.h msg_vstream.h mvect.h myflock.h \
-	mymalloc.h myrand.h name_mask.h netstring.h open_as.h open_lock.h \
+	dict_cidr.h dict_ht.h dict_ni.h dict_nis.h \
+	dict_nisplus.h dict_pcre.h dict_regexp.h \
+	dict_static.h dict_tcp.h dict_unix.h dir_forest.h events.h \
+	exec_command.h find_inet.h fsspace.h fullname.h get_domainname.h \
+	get_hostname.h hex_quote.h host_port.h htable.h inet_addr_host.h \
+	inet_addr_list.h inet_addr_local.h inet_util.h iostuff.h \
+	line_wrap.h listen.h lstat_as.h mac_expand.h mac_parse.h \
+	make_dirs.h match_list.h match_ops.h msg.h msg_output.h \
+	msg_syslog.h msg_vstream.h mvect.h myflock.h mymalloc.h myrand.h \
+	name_mask.h netstring.h nvtable.h open_as.h open_lock.h \
 	percentm.h posix_signals.h readlline.h ring.h safe.h safe_open.h \
 	sane_accept.h sane_fsops.h sane_socketpair.h sane_time.h \
 	scan_dir.h set_eugid.h set_ugid.h sigdelay.h spawn_command.h \
 	split_at.h stat_as.h stringops.h sys_defs.h timed_connect.h \
 	timed_wait.h trigger.h username.h valid_hostname.h vbuf.h \
 	vbuf_print.h vstream.h vstring.h vstring_vstream.h watchdog.h \
-	nvtable.h host_port.h sane_connect.h
+	auto_clnt.h attr_clnt.h sane_connect.h name_code.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 FILES	= Makefile $(SRCS) $(HDRS)
@@ -90,7 +92,7 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	vstring vstring_vstream doze select_bug stream_test mac_expand \
 	watchdog unescape hex_quote name_mask rand_sleep sane_time ctable \
 	inet_addr_list attr_print64 attr_scan64 base64_code attr_print0 \
-	attr_scan0 host_port
+	attr_scan0 host_port attr_scan_plain attr_print_plain htable
 
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
@@ -324,6 +326,21 @@ host_port: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
+attr_scan_plain: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+attr_print_plain: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+htable: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
@@ -337,7 +354,8 @@ stream_test: stream_test.c $(LIB)
 
 tests: valid_hostname_test mac_expand_test dict_test unescape_test \
 	hex_quote_test ctable_test inet_addr_list_test base64_code_test \
-	attr_scan64_test attr_scan0_test dict_pcre_test host_port_test
+	attr_scan64_test attr_scan0_test dict_pcre_test host_port_test \
+	dict_cidr_test attr_scan_plain_test htable_test
 
 valid_hostname_test: valid_hostname valid_hostname.in valid_hostname.ref
 	./valid_hostname <valid_hostname.in 2>valid_hostname.tmp
@@ -403,10 +421,23 @@ dict_regexp_test: dict_open dict_regexp.in dict_regexp.map dict_regexp.ref
 	diff dict_regexp.ref dict_regexp.tmp
 	rm -f dict_regexp.tmp
 
+dict_cidr_test: dict_open dict_cidr.in dict_cidr.map dict_cidr.ref
+	./dict_open cidr:dict_cidr.map read <dict_cidr.in >dict_cidr.tmp 2>&1
+	diff dict_cidr.ref dict_cidr.tmp
+	rm -f dict_cidr.tmp
+
 host_port_test: host_port host_port.in host_port.ref
 	./host_port <host_port.in >host_port.tmp 2>&1
 	diff host_port.ref host_port.tmp
 	rm -f host_port.tmp
+
+attr_scan_plain_test: attr_print_plain attr_scan_plain attr_scan_plain.ref
+	(./attr_print_plain 2>&3 | (sleep 1; ./attr_scan_plain)) >attr_scan_plain.tmp 2>&1 3>&1
+	diff attr_scan_plain.ref attr_scan_plain.tmp
+	rm -f attr_scan_plain.tmp
+
+htable_test: htable /usr/share/dict/words
+	./htable < /usr/share/dict/words
 
 # do not edit below this line - it is generated by 'make depend'
 alldig.o: alldig.c
@@ -417,6 +448,7 @@ alldig.o: vbuf.h
 argv.o: argv.c
 argv.o: sys_defs.h
 argv.o: mymalloc.h
+argv.o: msg.h
 argv.o: argv.h
 argv_split.o: argv_split.c
 argv_split.o: sys_defs.h
@@ -425,6 +457,19 @@ argv_split.o: stringops.h
 argv_split.o: vstring.h
 argv_split.o: vbuf.h
 argv_split.o: argv.h
+attr_clnt.o: attr_clnt.c
+attr_clnt.o: sys_defs.h
+attr_clnt.o: msg.h
+attr_clnt.o: mymalloc.h
+attr_clnt.o: split_at.h
+attr_clnt.o: vstream.h
+attr_clnt.o: vbuf.h
+attr_clnt.o: connect.h
+attr_clnt.o: iostuff.h
+attr_clnt.o: htable.h
+attr_clnt.o: attr.h
+attr_clnt.o: auto_clnt.h
+attr_clnt.o: attr_clnt.h
 attr_print0.o: attr_print0.c
 attr_print0.o: sys_defs.h
 attr_print0.o: msg.h
@@ -443,6 +488,14 @@ attr_print64.o: htable.h
 attr_print64.o: base64_code.h
 attr_print64.o: vstring.h
 attr_print64.o: attr.h
+attr_print_plain.o: attr_print_plain.c
+attr_print_plain.o: sys_defs.h
+attr_print_plain.o: msg.h
+attr_print_plain.o: mymalloc.h
+attr_print_plain.o: vstream.h
+attr_print_plain.o: vbuf.h
+attr_print_plain.o: htable.h
+attr_print_plain.o: attr.h
 attr_scan0.o: attr_scan0.c
 attr_scan0.o: sys_defs.h
 attr_scan0.o: msg.h
@@ -463,6 +516,24 @@ attr_scan64.o: vstring.h
 attr_scan64.o: htable.h
 attr_scan64.o: base64_code.h
 attr_scan64.o: attr.h
+attr_scan_plain.o: attr_scan_plain.c
+attr_scan_plain.o: sys_defs.h
+attr_scan_plain.o: msg.h
+attr_scan_plain.o: mymalloc.h
+attr_scan_plain.o: vstream.h
+attr_scan_plain.o: vbuf.h
+attr_scan_plain.o: vstring.h
+attr_scan_plain.o: htable.h
+attr_scan_plain.o: attr.h
+auto_clnt.o: auto_clnt.c
+auto_clnt.o: sys_defs.h
+auto_clnt.o: msg.h
+auto_clnt.o: mymalloc.h
+auto_clnt.o: vstream.h
+auto_clnt.o: vbuf.h
+auto_clnt.o: events.h
+auto_clnt.o: iostuff.h
+auto_clnt.o: auto_clnt.h
 base64_code.o: base64_code.c
 base64_code.o: sys_defs.h
 base64_code.o: msg.h
@@ -518,6 +589,7 @@ dict.o: vstring.h
 dict.o: readlline.h
 dict.o: mac_parse.h
 dict.o: stringops.h
+dict.o: iostuff.h
 dict.o: dict.h
 dict.o: argv.h
 dict.o: dict_ht.h
@@ -529,6 +601,19 @@ dict_alloc.o: dict.h
 dict_alloc.o: vstream.h
 dict_alloc.o: vbuf.h
 dict_alloc.o: argv.h
+dict_cidr.o: dict_cidr.c
+dict_cidr.o: sys_defs.h
+dict_cidr.o: mymalloc.h
+dict_cidr.o: msg.h
+dict_cidr.o: vstream.h
+dict_cidr.o: vbuf.h
+dict_cidr.o: vstring.h
+dict_cidr.o: stringops.h
+dict_cidr.o: readlline.h
+dict_cidr.o: dict.h
+dict_cidr.o: argv.h
+dict_cidr.o: dict_cidr.h
+dict_cidr.o: split_at.h
 dict_db.o: dict_db.c
 dict_db.o: sys_defs.h
 dict_db.o: msg.h
@@ -571,10 +656,6 @@ dict_ht.o: vstream.h
 dict_ht.o: vbuf.h
 dict_ht.o: argv.h
 dict_ht.o: dict_ht.h
-dict_ldap.o: dict_ldap.c
-dict_ldap.o: sys_defs.h
-dict_mysql.o: dict_mysql.c
-dict_mysql.o: sys_defs.h
 dict_ni.o: dict_ni.c
 dict_ni.o: sys_defs.h
 dict_nis.o: dict_nis.c
@@ -613,11 +694,10 @@ dict_open.o: dict_db.h
 dict_open.o: dict_nis.h
 dict_open.o: dict_nisplus.h
 dict_open.o: dict_ni.h
-dict_open.o: dict_ldap.h
-dict_open.o: dict_mysql.h
 dict_open.o: dict_pcre.h
 dict_open.o: dict_regexp.h
 dict_open.o: dict_static.h
+dict_open.o: dict_cidr.h
 dict_open.o: stringops.h
 dict_open.o: vstring.h
 dict_open.o: split_at.h
@@ -833,11 +913,6 @@ inet_util.o: sys_defs.h
 inet_util.o: mymalloc.h
 inet_util.o: split_at.h
 inet_util.o: inet_util.h
-intv.o: intv.c
-intv.o: sys_defs.h
-intv.o: mymalloc.h
-intv.o: msg.h
-intv.o: intv.h
 line_wrap.o: line_wrap.c
 line_wrap.o: sys_defs.h
 line_wrap.o: line_wrap.h
@@ -948,6 +1023,9 @@ mystrtok.o: sys_defs.h
 mystrtok.o: stringops.h
 mystrtok.o: vstring.h
 mystrtok.o: vbuf.h
+name_code.o: name_code.c
+name_code.o: sys_defs.h
+name_code.o: name_code.h
 name_mask.o: name_mask.c
 name_mask.o: sys_defs.h
 name_mask.o: msg.h
@@ -963,6 +1041,11 @@ netstring.o: vstream.h
 netstring.o: vbuf.h
 netstring.o: vstring.h
 netstring.o: netstring.h
+neuter.o: neuter.c
+neuter.o: sys_defs.h
+neuter.o: stringops.h
+neuter.o: vstring.h
+neuter.o: vbuf.h
 non_blocking.o: non_blocking.c
 non_blocking.o: sys_defs.h
 non_blocking.o: msg.h
@@ -1206,6 +1289,11 @@ unix_trigger.o: trigger.h
 unsafe.o: unsafe.c
 unsafe.o: sys_defs.h
 unsafe.o: safe.h
+uppercase.o: uppercase.c
+uppercase.o: sys_defs.h
+uppercase.o: stringops.h
+uppercase.o: vstring.h
+uppercase.o: vbuf.h
 username.o: username.c
 username.o: sys_defs.h
 username.o: username.h

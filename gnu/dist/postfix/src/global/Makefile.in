@@ -1,71 +1,74 @@
 SHELL	= /bin/sh
-SRCS	= been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
-	debug_peer.c debug_process.c defer.c deliver_completed.c \
-	deliver_flock.c deliver_pass.c deliver_request.c domain_list.c \
-	dot_lockfile.c dot_lockfile_as.c ext_prop.c file_id.c \
-	header_opts.c is_header.c mail_addr.c mail_addr_crunch.c \
-	mail_addr_find.c mail_addr_map.c mail_command_server.c \
-	mail_command_client.c mail_conf.c mail_conf_bool.c mail_conf_int.c \
-	mail_conf_raw.c mail_conf_str.c mail_connect.c mail_copy.c \
-	mail_date.c mail_error.c mail_flush.c mail_open_ok.c mail_params.c \
-	mail_pathname.c mail_queue.c mail_run.c \
-	mail_scan_dir.c mail_stream.c mail_task.c mail_trigger.c maps.c \
-	mark_corrupt.c mkmap_db.c mkmap_dbm.c mkmap_open.c mynetworks.c \
-	mypwd.c namadr_list.c off_cvt.c opened.c own_inet_addr.c \
-	pipe_command.c post_mail.c quote_821_local.c \
+SRCS	= abounce.c been_here.c bounce.c bounce_log.c \
+	canon_addr.c cfg_parser.c cleanup_strerror.c cleanup_strflags.c \
+	clnt_stream.c debug_peer.c debug_process.c defer.c \
+	deliver_completed.c deliver_flock.c deliver_pass.c deliver_request.c \
+	dict_ldap.c dict_mysql.c dict_pgsql.c dict_proxy.c domain_list.c \
+	dot_lockfile.c dot_lockfile_as.c ext_prop.c file_id.c flush_clnt.c \
+	header_opts.c header_token.c hold_message.c input_transp.c \
+	is_header.c log_adhoc.c mail_addr.c mail_addr_crunch.c \
+	mail_addr_find.c mail_addr_map.c mail_command_client.c \
+	mail_command_server.c mail_conf.c mail_conf_bool.c mail_conf_int.c \
+	mail_conf_raw.c mail_conf_str.c mail_conf_time.c mail_connect.c \
+	mail_copy.c mail_date.c mail_dict.c mail_error.c mail_flush.c \
+	mail_open_ok.c mail_params.c mail_pathname.c mail_queue.c \
+	mail_run.c mail_scan_dir.c mail_stream.c mail_task.c mail_trigger.c \
+	maps.c mark_corrupt.c match_parent_style.c mbox_conf.c \
+	mbox_open.c mime_state.c mkmap_db.c mkmap_dbm.c mkmap_open.c \
+	mynetworks.c mypwd.c namadr_list.c off_cvt.c opened.c \
+	own_inet_addr.c pipe_command.c post_mail.c quote_821_local.c \
 	quote_822_local.c rec_streamlf.c rec_type.c recipient_list.c \
 	record.c remove.c resolve_clnt.c resolve_local.c rewrite_clnt.c \
-	sent.c smtp_stream.c split_addr.c string_list.c sys_exits.c \
-	timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
-	tok822_resolve.c tok822_rewrite.c tok822_tree.c xtext.c bounce_log.c \
-	flush_clnt.c mail_conf_time.c mbox_conf.c mbox_open.c abounce.c \
-	verp_sender.c match_parent_style.c mime_state.c header_token.c \
-	strip_addr.c virtual8_maps.c hold_message.c dict_proxy.c mail_dict.c
-OBJS	= been_here.o bounce.o canon_addr.o cleanup_strerror.o clnt_stream.o \
-	debug_peer.o debug_process.o defer.o deliver_completed.o \
-	deliver_flock.o deliver_pass.o deliver_request.o domain_list.o \
-	dot_lockfile.o dot_lockfile_as.o ext_prop.o file_id.o \
-	header_opts.o is_header.o mail_addr.o mail_addr_crunch.o \
-	mail_addr_find.o mail_addr_map.o mail_command_server.o \
-	mail_command_client.o mail_conf.o mail_conf_bool.o mail_conf_int.o \
-	mail_conf_raw.o mail_conf_str.o mail_connect.o mail_copy.o \
-	mail_date.o mail_error.o mail_flush.o mail_open_ok.o mail_params.o \
-	mail_pathname.o mail_queue.o mail_run.o \
-	mail_scan_dir.o mail_stream.o mail_task.o mail_trigger.o maps.o \
-	mark_corrupt.o mkmap_db.o mkmap_dbm.o mkmap_open.o mynetworks.o \
-	mypwd.o namadr_list.o off_cvt.o opened.o own_inet_addr.o \
-	pipe_command.o post_mail.o quote_821_local.o \
+	sent.c smtp_stream.c split_addr.c string_list.c strip_addr.c \
+	sys_exits.c timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
+	tok822_resolve.c tok822_rewrite.c tok822_tree.c trace.c verify.c \
+	verify_clnt.c verp_sender.c virtual8_maps.c xtext.c
+OBJS	= abounce.o been_here.o bounce.o bounce_log.o \
+	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
+	clnt_stream.o debug_peer.o debug_process.o defer.o \
+	deliver_completed.o deliver_flock.o deliver_pass.o deliver_request.o \
+	dict_ldap.o dict_mysql.o dict_pgsql.o dict_proxy.o domain_list.o \
+	dot_lockfile.o dot_lockfile_as.o ext_prop.o file_id.o flush_clnt.o \
+	header_opts.o header_token.o hold_message.o input_transp.o \
+	is_header.o log_adhoc.o mail_addr.o mail_addr_crunch.o \
+	mail_addr_find.o mail_addr_map.o mail_command_client.o \
+	mail_command_server.o mail_conf.o mail_conf_bool.o mail_conf_int.o \
+	mail_conf_raw.o mail_conf_str.o mail_conf_time.o mail_connect.o \
+	mail_copy.o mail_date.o mail_dict.o mail_error.o mail_flush.o \
+	mail_open_ok.o mail_params.o mail_pathname.o mail_queue.o \
+	mail_run.o mail_scan_dir.o mail_stream.o mail_task.o mail_trigger.o \
+	maps.o mark_corrupt.o match_parent_style.o mbox_conf.o \
+	mbox_open.o mime_state.o mkmap_db.o mkmap_dbm.o mkmap_open.o \
+	mynetworks.o mypwd.o namadr_list.o off_cvt.o opened.o \
+	own_inet_addr.o pipe_command.o post_mail.o quote_821_local.o \
 	quote_822_local.o rec_streamlf.o rec_type.o recipient_list.o \
 	record.o remove.o resolve_clnt.o resolve_local.o rewrite_clnt.o \
-	sent.o smtp_stream.o split_addr.o string_list.o sys_exits.o \
-	timed_ipc.o tok822_find.o tok822_node.o tok822_parse.o \
-	tok822_resolve.o tok822_rewrite.o tok822_tree.o xtext.o bounce_log.o \
-	flush_clnt.o mail_conf_time.o mbox_conf.o mbox_open.o abounce.o \
-	verp_sender.o match_parent_style.o mime_state.o header_token.o \
-	strip_addr.o virtual8_maps.o hold_message.o dict_proxy.o mail_dict.o
-HDRS	= been_here.h bounce.h canon_addr.h cleanup_user.h clnt_stream.h \
-	config.h debug_peer.h debug_process.h defer.h deliver_completed.h \
-	deliver_flock.h deliver_pass.h deliver_request.h domain_list.h \
-	dot_lockfile.h dot_lockfile_as.h ext_prop.h file_id.h \
-	header_opts.h is_header.h mail_addr.h mail_addr_crunch.h \
+	sent.o smtp_stream.o split_addr.o string_list.o strip_addr.o \
+	sys_exits.o timed_ipc.o tok822_find.o tok822_node.o tok822_parse.o \
+	tok822_resolve.o tok822_rewrite.o tok822_tree.o trace.o verify.o \
+	verify_clnt.o verp_sender.o virtual8_maps.o xtext.o
+HDRS	= abounce.h been_here.h bounce.h bounce_log.h \
+	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
+	debug_peer.h debug_process.h defer.h deliver_completed.h \
+	deliver_flock.h deliver_pass.h deliver_request.h dict_ldap.h \
+	dict_mysql.h dict_pgsql.h dict_proxy.h domain_list.h dot_lockfile.h \
+	dot_lockfile_as.h ext_prop.h file_id.h flush_clnt.h header_opts.h \
+	header_token.h hold_message.h input_transp.h is_header.h \
+	lex_822.h log_adhoc.h mail_addr.h mail_addr_crunch.h \
 	mail_addr_find.h mail_addr_map.h mail_conf.h mail_copy.h \
-	mail_date.h mail_error.h mail_flush.h mail_open_ok.h mail_params.h \
-	mail_proto.h mail_queue.h mail_run.h mail_scan_dir.h mail_stream.h \
-	mail_task.h mail_version.h maps.h mark_corrupt.h mkmap.h \
-	mynetworks.h mypwd.h namadr_list.h off_cvt.h opened.h \
-	own_inet_addr.h pipe_command.h post_mail.h \
-	quote_821_local.h quote_822_local.h rec_streamlf.h rec_type.h \
-	recipient_list.h record.h resolve_clnt.h resolve_local.h \
-	rewrite_clnt.h sent.h smtp_stream.h split_addr.h string_list.h \
-	sys_exits.h timed_ipc.h tok822.h xtext.h bounce_log.h flush_clnt.h \
-	mbox_conf.h mbox_open.h abounce.h qmqp_proto.h verp_sender.h \
-	match_parent_style.h quote_flags.h mime_state.h header_token.h \
-	lex_822.h strip_addr.h virtual8_maps.h hold_message.h dict_proxy.h \
-	mail_dict.h
+	mail_date.h mail_dict.h mail_error.h mail_flush.h mail_open_ok.h \
+	mail_params.h mail_proto.h mail_queue.h mail_run.h mail_scan_dir.h \
+	mail_stream.h mail_task.h mail_version.h maps.h mark_corrupt.h \
+	match_parent_style.h mbox_conf.h mbox_open.h mime_state.h \
+	mkmap.h mynetworks.h mypwd.h namadr_list.h off_cvt.h opened.h \
+	own_inet_addr.h pipe_command.h post_mail.h qmgr_user.h \
+	qmqp_proto.h quote_821_local.h quote_822_local.h quote_flags.h \
+	rec_streamlf.h rec_type.h recipient_list.h record.h resolve_clnt.h \
+	resolve_local.h rewrite_clnt.h sent.h smtp_stream.h split_addr.h \
+	string_list.h strip_addr.h sys_exits.h timed_ipc.h tok822.h \
+	trace.h verify.h verify_clnt.h verp_sender.h virtual8_maps.h \
+	xtext.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 INCL	=
@@ -75,7 +78,7 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	off_cvt quote_822_local rec2stream recdump resolve_clnt \
 	resolve_local rewrite_clnt stream2rec string_list tok822_parse \
 	quote_821_local mail_conf_time mime_state strip_addr \
-	virtual8_maps
+	virtual8_maps verify_clnt xtext anvil_clnt
 
 LIBS	= ../../lib/libutil.a
 LIB_DIR	= ../../lib
@@ -208,11 +211,6 @@ local_transport: $(LIB) $(LIBS)
 quote_821_local: quote_821_local.c $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIBS) $(SYSLIBS)
 
-peer_name: $(LIB)
-	mv $@.o junk
-	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
-	mv junk $@.o
-
 mail_conf_time: $(LIB) $(LIBS)
 	mv $@.o junk
 	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
@@ -233,9 +231,24 @@ virtual8_maps: $(LIB) $(LIBS)
 	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
+verify_clnt: $(LIB) $(LIBS)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+	mv junk $@.o
+
+xtext: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+	mv junk $@.o
+
+anvil_clnt: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+	mv junk $@.o
+
 tests: tok822_test mime_test mime_nest mime_8bit mime_dom mime_trunc \
 	mime_cvt mime_cvt2 mime_cvt3 strip_addr_test tok822_limit_test \
-	virtual8_test
+	virtual8_test xtext_test
 
 tok822_test: tok822_parse tok822_parse.in tok822_parse.ref
 	./tok822_parse <tok822_parse.in >tok822_parse.tmp 2>&1
@@ -299,6 +312,12 @@ virtual8_test: virtual8_maps virtual8_map virtual8.in virtual8.ref \
 	diff virtual8.ref virtual8.tmp
 	rm -f virtual8.tmp virtual8_map.db
 
+xtext_test: xtext
+	./xtext <xtext.c | od -cb >xtext.tmp
+	od -cb <xtext.c >xtext.ref
+	cmp xtext.ref xtext.tmp
+	rm -f xtext.ref xtext.tmp
+
 # Requires: Postfix running, root privileges
 
 rewrite_clnt_test: rewrite_clnt rewrite_clnt.in rewrite_clnt.ref
@@ -310,6 +329,10 @@ rewrite_clnt_test: rewrite_clnt rewrite_clnt.in rewrite_clnt.ref
 # Requires: Postfix, root, relayhost=$mydomain, no transport map
 
 resolve_clnt_test: resolve_clnt resolve_clnt.in resolve_clnt.ref
+	test "`postconf -h relayhost`" = '$$mydomain' || { \
+	    echo 'This test requires relayhost=$$mydomain'; exit 1; }
+	test "`postconf -h transport_maps`" = "" || { \
+	    echo 'This test requires no transport map'; exit 1; }
 	sed -e "s/MYDOMAIN/`postconf -h mydomain`/g" \
 	    -e "s/MYHOSTNAME/`postconf -h myhostname`/g" \
 	    resolve_clnt.in | ./resolve_clnt >resolve_clnt.tmp
@@ -358,6 +381,9 @@ abounce.o: ../../include/iostuff.h
 abounce.o: ../../include/attr.h
 abounce.o: abounce.h
 abounce.o: bounce.h
+abounce.o: deliver_request.h
+abounce.o: ../../include/vstring.h
+abounce.o: recipient_list.h
 been_here.o: been_here.c
 been_here.o: ../../include/sys_defs.h
 been_here.o: ../../include/msg.h
@@ -377,8 +403,13 @@ bounce.o: mail_proto.h
 bounce.o: ../../include/vstream.h
 bounce.o: ../../include/iostuff.h
 bounce.o: ../../include/attr.h
+bounce.o: log_adhoc.h
+bounce.o: verify.h
+bounce.o: deliver_request.h
+bounce.o: recipient_list.h
 bounce.o: defer.h
 bounce.o: bounce.h
+bounce.o: trace.h
 bounce_log.o: bounce_log.c
 bounce_log.o: ../../include/sys_defs.h
 bounce_log.o: ../../include/msg.h
@@ -388,6 +419,10 @@ bounce_log.o: ../../include/vbuf.h
 bounce_log.o: ../../include/vstring.h
 bounce_log.o: ../../include/vstring_vstream.h
 bounce_log.o: ../../include/stringops.h
+bounce_log.o: mail_params.h
+bounce_log.o: mail_proto.h
+bounce_log.o: ../../include/iostuff.h
+bounce_log.o: ../../include/attr.h
 bounce_log.o: mail_queue.h
 bounce_log.o: bounce_log.h
 canon_addr.o: canon_addr.c
@@ -397,11 +432,28 @@ canon_addr.o: ../../include/vbuf.h
 canon_addr.o: ../../include/mymalloc.h
 canon_addr.o: rewrite_clnt.h
 canon_addr.o: canon_addr.h
+cfg_parser.o: cfg_parser.c
+cfg_parser.o: ../../include/sys_defs.h
+cfg_parser.o: ../../include/msg.h
+cfg_parser.o: ../../include/mymalloc.h
+cfg_parser.o: ../../include/vstring.h
+cfg_parser.o: ../../include/vbuf.h
+cfg_parser.o: ../../include/dict.h
+cfg_parser.o: ../../include/vstream.h
+cfg_parser.o: ../../include/argv.h
+cfg_parser.o: mail_conf.h
+cfg_parser.o: cfg_parser.h
 cleanup_strerror.o: cleanup_strerror.c
 cleanup_strerror.o: ../../include/sys_defs.h
 cleanup_strerror.o: ../../include/vstring.h
 cleanup_strerror.o: ../../include/vbuf.h
 cleanup_strerror.o: cleanup_user.h
+cleanup_strflags.o: cleanup_strflags.c
+cleanup_strflags.o: ../../include/sys_defs.h
+cleanup_strflags.o: ../../include/msg.h
+cleanup_strflags.o: ../../include/vstring.h
+cleanup_strflags.o: ../../include/vbuf.h
+cleanup_strflags.o: cleanup_user.h
 clnt_stream.o: clnt_stream.c
 clnt_stream.o: ../../include/sys_defs.h
 clnt_stream.o: ../../include/msg.h
@@ -441,6 +493,11 @@ defer.o: mail_proto.h
 defer.o: ../../include/iostuff.h
 defer.o: ../../include/attr.h
 defer.o: flush_clnt.h
+defer.o: verify.h
+defer.o: deliver_request.h
+defer.o: recipient_list.h
+defer.o: log_adhoc.h
+defer.o: trace.h
 defer.o: bounce.h
 defer.o: defer.h
 deliver_completed.o: deliver_completed.c
@@ -490,6 +547,12 @@ deliver_request.o: ../../include/attr.h
 deliver_request.o: mail_open_ok.h
 deliver_request.o: recipient_list.h
 deliver_request.o: deliver_request.h
+dict_ldap.o: dict_ldap.c
+dict_ldap.o: ../../include/sys_defs.h
+dict_mysql.o: dict_mysql.c
+dict_mysql.o: ../../include/sys_defs.h
+dict_pgsql.o: dict_pgsql.c
+dict_pgsql.o: ../../include/sys_defs.h
 dict_proxy.o: dict_proxy.c
 dict_proxy.o: ../../include/sys_defs.h
 dict_proxy.o: ../../include/msg.h
@@ -548,8 +611,12 @@ flush_clnt.o: mail_proto.h
 flush_clnt.o: ../../include/iostuff.h
 flush_clnt.o: ../../include/attr.h
 flush_clnt.o: mail_flush.h
-flush_clnt.o: flush_clnt.h
 flush_clnt.o: mail_params.h
+flush_clnt.o: domain_list.h
+flush_clnt.o: ../../include/match_list.h
+flush_clnt.o: ../../include/match_ops.h
+flush_clnt.o: match_parent_style.h
+flush_clnt.o: flush_clnt.h
 header_opts.o: header_opts.c
 header_opts.o: ../../include/sys_defs.h
 header_opts.o: ../../include/msg.h
@@ -576,9 +643,20 @@ hold_message.o: ../../include/vbuf.h
 hold_message.o: ../../include/vstream.h
 hold_message.o: mail_params.h
 hold_message.o: hold_message.h
+input_transp.o: input_transp.c
+input_transp.o: ../../include/sys_defs.h
+input_transp.o: ../../include/name_mask.h
+input_transp.o: mail_params.h
+input_transp.o: input_transp.h
 is_header.o: is_header.c
 is_header.o: ../../include/sys_defs.h
 is_header.o: is_header.h
+log_adhoc.o: log_adhoc.c
+log_adhoc.o: ../../include/sys_defs.h
+log_adhoc.o: ../../include/msg.h
+log_adhoc.o: ../../include/vstring.h
+log_adhoc.o: ../../include/vbuf.h
+log_adhoc.o: log_adhoc.h
 mail_addr.o: mail_addr.c
 mail_addr.o: ../../include/sys_defs.h
 mail_addr.o: ../../include/stringops.h
@@ -737,6 +815,9 @@ mail_dict.o: ../../include/vbuf.h
 mail_dict.o: ../../include/argv.h
 mail_dict.o: ../../include/msg.h
 mail_dict.o: dict_proxy.h
+mail_dict.o: dict_ldap.h
+mail_dict.o: dict_mysql.h
+mail_dict.o: dict_pgsql.h
 mail_dict.o: mail_dict.h
 mail_error.o: mail_error.c
 mail_error.o: ../../include/sys_defs.h
@@ -1007,11 +1088,6 @@ own_inet_addr.o: ../../include/vstring.h
 own_inet_addr.o: ../../include/vbuf.h
 own_inet_addr.o: mail_params.h
 own_inet_addr.o: own_inet_addr.h
-peer_name.o: peer_name.c
-peer_name.o: ../../include/sys_defs.h
-peer_name.o: ../../include/msg.h
-peer_name.o: ../../include/valid_hostname.h
-peer_name.o: peer_name.h
 pipe_command.o: pipe_command.c
 pipe_command.o: ../../include/sys_defs.h
 pipe_command.o: ../../include/msg.h
@@ -1036,6 +1112,8 @@ post_mail.o: ../../include/msg.h
 post_mail.o: ../../include/vstream.h
 post_mail.o: ../../include/vbuf.h
 post_mail.o: ../../include/vstring.h
+post_mail.o: ../../include/mymalloc.h
+post_mail.o: ../../include/events.h
 post_mail.o: mail_params.h
 post_mail.o: record.h
 post_mail.o: rec_type.h
@@ -1147,6 +1225,15 @@ sent.o: ../../include/sys_defs.h
 sent.o: ../../include/msg.h
 sent.o: ../../include/vstring.h
 sent.o: ../../include/vbuf.h
+sent.o: mail_params.h
+sent.o: verify.h
+sent.o: deliver_request.h
+sent.o: ../../include/vstream.h
+sent.o: recipient_list.h
+sent.o: log_adhoc.h
+sent.o: trace.h
+sent.o: defer.h
+sent.o: bounce.h
 sent.o: sent.h
 smtp_stream.o: smtp_stream.c
 smtp_stream.o: ../../include/sys_defs.h
@@ -1238,6 +1325,51 @@ tok822_tree.o: ../../include/vstring.h
 tok822_tree.o: ../../include/vbuf.h
 tok822_tree.o: tok822.h
 tok822_tree.o: resolve_clnt.h
+trace.o: trace.c
+trace.o: ../../include/sys_defs.h
+trace.o: ../../include/msg.h
+trace.o: ../../include/vstring.h
+trace.o: ../../include/vbuf.h
+trace.o: mail_params.h
+trace.o: mail_proto.h
+trace.o: ../../include/vstream.h
+trace.o: ../../include/iostuff.h
+trace.o: ../../include/attr.h
+trace.o: verify_clnt.h
+trace.o: deliver_request.h
+trace.o: recipient_list.h
+trace.o: log_adhoc.h
+trace.o: bounce.h
+trace.o: trace.h
+verify.o: verify.c
+verify.o: ../../include/sys_defs.h
+verify.o: ../../include/msg.h
+verify.o: ../../include/vstring.h
+verify.o: ../../include/vbuf.h
+verify.o: mail_params.h
+verify.o: mail_proto.h
+verify.o: ../../include/vstream.h
+verify.o: ../../include/iostuff.h
+verify.o: ../../include/attr.h
+verify.o: verify_clnt.h
+verify.o: deliver_request.h
+verify.o: recipient_list.h
+verify.o: log_adhoc.h
+verify.o: verify.h
+verify_clnt.o: verify_clnt.c
+verify_clnt.o: ../../include/sys_defs.h
+verify_clnt.o: ../../include/msg.h
+verify_clnt.o: ../../include/vstream.h
+verify_clnt.o: ../../include/vbuf.h
+verify_clnt.o: ../../include/vstring.h
+verify_clnt.o: ../../include/attr.h
+verify_clnt.o: mail_params.h
+verify_clnt.o: mail_proto.h
+verify_clnt.o: ../../include/iostuff.h
+verify_clnt.o: clnt_stream.h
+verify_clnt.o: verify_clnt.h
+verify_clnt.o: deliver_request.h
+verify_clnt.o: recipient_list.h
 verp_sender.o: verp_sender.c
 verp_sender.o: ../../include/sys_defs.h
 verp_sender.o: ../../include/vstring.h
@@ -1258,7 +1390,7 @@ virtual8_maps.o: strip_addr.h
 virtual8_maps.o: virtual8_maps.h
 xtext.o: xtext.c
 xtext.o: ../../include/sys_defs.h
-xtext.o: ../../include/vstream.h
-xtext.o: ../../include/vbuf.h
+xtext.o: ../../include/msg.h
 xtext.o: ../../include/vstring.h
+xtext.o: ../../include/vbuf.h
 xtext.o: xtext.h

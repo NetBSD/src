@@ -25,6 +25,7 @@
 #include <mail_stream.h>
 #include <mail_conf.h>
 #include <mime_state.h>
+#include <string_list.h>
 
  /*
   * These state variables are accessed by many functions, and there is only
@@ -46,28 +47,32 @@ typedef struct CLEANUP_STATE {
     char   *orig_rcpt;			/* original recipient address */
     char   *return_receipt;		/* return-receipt address */
     char   *errors_to;			/* errors-to address */
-    int     flags;			/* processing options */
+    int     flags;			/* processing options, status flags */
+    int     qmgr_opts;			/* qmgr processing options */
     int     errs;			/* any badness experienced */
     int     err_mask;			/* allowed badness */
     int     headers_seen;		/* which headers were seen */
     int     hop_count;			/* count of received: headers */
-    ARGV   *recipients;			/* recipients from regular headers */
-    ARGV   *resent_recip;		/* recipients from resent headers */
     char   *resent;			/* any resent- header seen */
     BH_TABLE *dups;			/* recipient dup filter */
-    long    warn_time;			/* cleanup_envelope.c */
-    void    (*action) (struct CLEANUP_STATE *, int, char *, int);
-    off_t   mesg_offset;		/* start of message segment */
+    void    (*action) (struct CLEANUP_STATE *, int, const char *, int);
     off_t   data_offset;		/* start of message content */
     off_t   xtra_offset;		/* start of extra segment */
-    int     end_seen;			/* REC_TYPE_END seen */
     int     rcpt_count;			/* recipient count */
     char   *reason;			/* failure reason */
     NVTABLE *attr;			/* queue file attribute list */
     MIME_STATE *mime_state;		/* MIME state engine */
     int     mime_errs;			/* MIME error flags */
     char   *filter;			/* from header/body patterns */
+    char   *redirect;			/* from header/body patterns */
 } CLEANUP_STATE;
+
+ /*
+  * Status flags. Flags 0-15 are reserved for cleanup_user.h.
+  */
+#define CLEANUP_FLAG_INRCPT	(1<<16)	/* Processing recipient records */
+#define CLEANUP_FLAG_WARN_SEEN	(1<<17)	/* REC_TYPE_WARN record seen */
+#define CLEANUP_FLAG_END_SEEN	(1<<18)	/* REC_TYPE_END record seen */
 
  /*
   * Mappings.
@@ -81,7 +86,10 @@ extern MAPS *cleanup_nesthdr_checks;
 extern MAPS *cleanup_body_checks;
 extern MAPS *cleanup_virt_alias_maps;
 extern ARGV *cleanup_masq_domains;
+extern STRING_LIST *cleanup_masq_exceptions;
 extern int cleanup_masq_flags;
+extern MAPS *cleanup_send_bcc_maps;
+extern MAPS *cleanup_rcpt_bcc_maps;
 
  /*
   * Address masquerading fine control.
@@ -120,6 +128,7 @@ extern void cleanup_pre_jail(char *, char **);
 extern void cleanup_post_jail(char *, char **);
 extern CONFIG_BOOL_TABLE cleanup_bool_table[];
 extern CONFIG_INT_TABLE cleanup_int_table[];
+extern CONFIG_BOOL_TABLE cleanup_bool_table[];
 extern CONFIG_STR_TABLE cleanup_str_table[];
 extern CONFIG_TIME_TABLE cleanup_time_table[];
 
@@ -141,17 +150,17 @@ extern void PRINTFLIKE(3, 4) cleanup_out_format(CLEANUP_STATE *, int, const char
  /*
   * cleanup_envelope.c
   */
-extern void cleanup_envelope(CLEANUP_STATE *, int, char *, int);
+extern void cleanup_envelope(CLEANUP_STATE *, int, const char *, int);
 
  /*
   * cleanup_message.c
   */
-extern void cleanup_message(CLEANUP_STATE *, int, char *, int);
+extern void cleanup_message(CLEANUP_STATE *, int, const char *, int);
 
  /*
   * cleanup_extracted.c
   */
-extern void cleanup_extracted(CLEANUP_STATE *, int, char *, int);
+extern void cleanup_extracted(CLEANUP_STATE *, int, const char *, int);
 
  /*
   * cleanup_rewrite.c
@@ -180,9 +189,16 @@ extern void cleanup_masquerade_internal(VSTRING *, ARGV *);
 extern void cleanup_masquerade_tree(TOK822 *, ARGV *);
 
  /*
-  * Cleanup_recipient.c
+  * cleanup_recipient.c
   */
 extern void cleanup_out_recipient(CLEANUP_STATE *, const char *, const char *);
+
+ /*
+  * cleanup_addr.c.
+  */
+extern void cleanup_addr_sender(CLEANUP_STATE *, const char *);
+extern void cleanup_addr_recipient(CLEANUP_STATE *, const char *);
+extern void cleanup_addr_bcc(CLEANUP_STATE *, const char *);
 
 /* LICENSE
 /* .ad
