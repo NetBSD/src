@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.5 2000/04/24 13:01:24 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.6 2000/10/04 03:53:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,7 +36,7 @@ static const char rcsid[] =
     "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-isakmp.c,v 1.3 1999/12/01 01:41:25 itojun Exp";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-isakmp.c,v 1.5 2000/04/24 13:01:24 itojun Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.6 2000/10/04 03:53:24 itojun Exp $");
 #endif
 #endif
 
@@ -91,6 +91,8 @@ static u_char *isakmp_id_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 	u_int32_t, u_int32_t));
 static u_char *isakmp_cert_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 	u_int32_t, u_int32_t));
+static u_char *isakmp_cr_print __P((struct isakmp_gen *, u_char *, u_int32_t,
+	u_int32_t, u_int32_t));
 static u_char *isakmp_sig_print __P((struct isakmp_gen *, u_char *, u_int32_t,
 	u_int32_t, u_int32_t));
 static u_char *isakmp_hash_print __P((struct isakmp_gen *, u_char *,
@@ -138,7 +140,7 @@ static u_char *(*npfunc[]) __P((struct isakmp_gen *, u_char *, u_int32_t,
 	isakmp_ke_print,
 	isakmp_id_print,
 	isakmp_cert_print,
-	isakmp_cert_print,
+	isakmp_cr_print,
 	isakmp_hash_print,
 	isakmp_sig_print,
 	isakmp_nonce_print,
@@ -358,11 +360,11 @@ struct attrmap {
 static u_char *
 isakmp_attrmap_print(u_char *p, u_char *ep, struct attrmap *map, size_t nmap)
 {
-	u_short *q;
+	u_int16_t *q;
 	int totlen;
 	u_int32_t t, v;
 
-	q = (u_short *)p;
+	q = (u_int16_t *)p;
 	if (p[0] & 0x80)
 		totlen = 4;
 	else
@@ -396,11 +398,11 @@ isakmp_attrmap_print(u_char *p, u_char *ep, struct attrmap *map, size_t nmap)
 static u_char *
 isakmp_attr_print(u_char *p, u_char *ep)
 {
-	u_short *q;
+	u_int16_t *q;
 	int totlen;
 	u_int32_t t;
 
-	q = (u_short *)p;
+	q = (u_int16_t *)p;
 	if (p[0] & 0x80)
 		totlen = 4;
 	else
@@ -503,11 +505,12 @@ static char *isakmp_p_map[] = {
 
 static char *ah_p_map[] = {
 	NULL, "(reserved)", "md5", "sha", "1des",
+	"sha2-256", "sha2-384", "sha2-512",
 };
 
 static char *esp_p_map[] = {
 	NULL, "1des-iv64", "1des", "3des", "rc5", "idea", "cast",
-	"blowfish", "3idea", "1des-iv32", "rc4", "null"
+	"blowfish", "3idea", "1des-iv32", "rc4", "null", "aes"
 };
 
 static char *ipcomp_p_map[] = {
@@ -530,9 +533,10 @@ struct attrmap ipsec_t_map[] = {
 
 struct attrmap oakley_t_map[] = {
 	{ NULL,	0 },
-	{ "enc", 7,	{ NULL, "1des", "idea", "blowfish", "rc5",
-		 	  "3des", "cast"}, },
-	{ "hash", 4,	{ NULL, "md5", "sha1", "tiger", }, },
+	{ "enc", 8,	{ NULL, "1des", "idea", "blowfish", "rc5",
+		 	  "3des", "cast", "aes", }, },
+	{ "hash", 7,	{ NULL, "md5", "sha1", "tiger",
+			  "sha2-256", "sha2-384", "sha2-512", }, },
 	{ "auth", 6,	{ NULL, "preshared", "dss", "rsa sig", "rsa enc",
 			  "rsa enc revised", }, },
 	{ "group desc", 5,	{ NULL, "modp768", "modp1024", "EC2N 2^155",
@@ -675,13 +679,16 @@ isakmp_id_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 
 		p = (struct ipsecdoi_id *)ext;
 		printf(" idtype=%s", STR_OR_ID(p->type, ipsecidtypestr));
-		setprotoent(1);
-		pe = getprotobynumber(p->proto_id);
-		if (pe)
-			printf(" protoid=%s", pe->p_name);
-		else
-			printf(" protoid=%s", PROTOIDSTR(p->proto_id));
-		endprotoent();
+		if (p->proto_id) {
+			setprotoent(1);
+			pe = getprotobynumber(p->proto_id);
+			if (pe)
+				printf(" protoid=%s", pe->p_name);
+			endprotoent();
+		} else {
+			/* it DOES NOT mean IPPROTO_IP! */
+			printf(" protoid=%s", "0");
+		}
 		printf(" port=%d", ntohs(p->port));
 		if (!len)
 			break;
@@ -774,6 +781,29 @@ isakmp_cert_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 	};
 
 	printf("%s:", NPSTR(ISAKMP_NPTYPE_CERT));
+
+	p = (struct isakmp_pl_cert *)ext;
+	printf(" len=%d", ntohs(ext->len) - 4);
+	printf(" type=%s", STR_OR_ID((p->encode), certstr));
+	if (2 < vflag && 4 < ntohs(ext->len)) {
+		printf(" ");
+		rawprint((caddr_t)(ext + 1), ntohs(ext->len) - 4);
+	}
+	return (u_char *)ext + ntohs(ext->len);
+}
+
+static u_char *
+isakmp_cr_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
+	u_int32_t doi0, u_int32_t proto0)
+{
+	struct isakmp_pl_cert *p;
+	static char *certstr[] = {
+		"none",	"pkcs7", "pgp", "dns",
+		"x509sign", "x509ke", "kerberos", "crl",
+		"arl", "spki", "x509attr",
+	};
+
+	printf("%s:", NPSTR(ISAKMP_NPTYPE_CR));
 
 	p = (struct isakmp_pl_cert *)ext;
 	printf(" len=%d", ntohs(ext->len) - 4);
