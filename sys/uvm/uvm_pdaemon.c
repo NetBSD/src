@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.47 2002/06/20 15:05:29 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.48 2002/11/24 11:50:32 scw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.47 2002/06/20 15:05:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.48 2002/11/24 11:50:32 scw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -359,7 +359,7 @@ uvmpd_scan_inactive(pglst)
 	struct pglist *pglst;
 {
 	int error;
-	struct vm_page *p, *nextpg;
+	struct vm_page *p, *nextpg = NULL; /* Quell compiler warning */
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
 	struct vm_page *swpps[MAXBSIZE >> PAGE_SHIFT];
