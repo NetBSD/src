@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.113 2003/04/02 10:39:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.114 2003/04/16 21:44:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.113 2003/04/02 10:39:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.114 2003/04/16 21:44:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -349,7 +349,6 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct lfs *fs = NULL;				/* LFS */
-	size_t size;
 	int error;
 	mode_t accessmode;
 
@@ -446,13 +445,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;					/* LFS */
-	(void)copyinstr(path, fs->lfs_fsmnt, sizeof(fs->lfs_fsmnt) - 1, &size);
-	bzero(fs->lfs_fsmnt + size, sizeof(fs->lfs_fsmnt) - size);
-	bcopy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-			 &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	return (0);
+	return set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	    UIO_USERSPACE, mp, p);
 }
 
 /*
@@ -1483,11 +1477,7 @@ lfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	
 	sbp->f_files = fs->lfs_bfree / btofsb(fs, fs->lfs_ibsize) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
-	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 

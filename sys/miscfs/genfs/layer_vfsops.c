@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.5 2001/11/15 09:48:21 lukem Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.6 2003/04/16 21:44:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.5 2001/11/15 09:48:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.6 2003/04/16 21:44:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,12 +177,7 @@ layerfs_statfs(mp, sbp, p)
 	sbp->f_bavail = mstat.f_bavail;
 	sbp->f_files = mstat.f_files;
 	sbp->f_ffree = mstat.f_ffree;
-	if (sbp != &mp->mnt_stat) {
-		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 

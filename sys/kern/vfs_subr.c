@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.191 2003/04/03 09:13:10 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.192 2003/04/16 21:44:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.191 2003/04/03 09:13:10 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.192 2003/04/16 21:44:20 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.191 2003/04/03 09:13:10 enami Exp $")
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/dirent.h>
+#include <sys/filedesc.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
@@ -2770,6 +2771,89 @@ vfs_reinit(void)
 			(*vfs->vfs_reinit)();
 		}
 	}
+}
+
+void
+copy_statfs_info(struct statfs *sbp, const struct mount *mp)
+{
+	if (sbp == &mp->mnt_stat)
+		return;
+	(void)strncpy(sbp->f_fstypename, mp->mnt_stat.f_fstypename,
+	    sizeof(sbp->f_fstypename));
+	(void)memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
+	(void)memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname,
+	    sizeof(sbp->f_mntonname));
+	(void)memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname,
+	    sizeof(sbp->f_mntfromname));
+}
+
+int
+set_statfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
+    struct mount *mp, struct proc *p)
+{
+	int error;
+	size_t size;
+	struct statfs *sfs = &mp->mnt_stat;
+	int (*fun)(const void *, void *, size_t, size_t *);
+
+	(void)strncpy(mp->mnt_stat.f_fstypename, mp->mnt_op->vfs_name, 
+	    sizeof(mp->mnt_stat.f_fstypename));
+
+	if (onp) {
+		struct cwdinfo *cwdi = p->p_cwdi;
+		fun = (ukon == UIO_SYSSPACE) ? copystr : copyinstr;
+		if (cwdi->cwdi_rdir != NULL) {
+			size_t len;
+			char *bp;
+			char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+
+			if (!path)
+				return ENOMEM;
+
+			bp = path + MAXPATHLEN;
+			*--bp = '\0';
+			error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+			    path, MAXPATHLEN / 2, 0, p);
+			if (error) {
+				free(path, M_TEMP);
+				return error;
+			}
+
+			len = strlen(bp);
+			if (len > sizeof(sfs->f_mntonname) - 1)
+				len = sizeof(sfs->f_mntonname) - 1;
+			(void)strncpy(sfs->f_mntonname, bp, len);
+			free(path, M_TEMP);
+
+			if (len < sizeof(sfs->f_mntonname) - 1) {
+				error = (*fun)(onp, &sfs->f_mntonname[len],
+				    len - sizeof(sfs->f_mntonname) - 1, &size);
+				if (error)
+					return error;
+				size += len;
+			} else {
+				size = len;
+			}
+		} else {
+			error = (*fun)(onp, &sfs->f_mntonname,
+			    sizeof(sfs->f_mntonname) - 1, &size);
+			if (error)
+				return error;
+		}
+		(void)memset(sfs->f_mntonname + size, 0,
+		    sizeof(sfs->f_mntonname) - size);
+	}
+
+	if (fromp) {
+		fun = (ukfrom == UIO_SYSSPACE) ? copystr : copyinstr;
+		error = (*fun)(fromp, sfs->f_mntfromname,
+		    sizeof(sfs->f_mntfromname) - 1, &size);
+		if (error)
+			return error;
+		(void)memset(sfs->f_mntfromname + size, 0,
+		    sizeof(sfs->f_mntfromname) - size);
+	}
+	return 0;
 }
 
 #ifdef DDB

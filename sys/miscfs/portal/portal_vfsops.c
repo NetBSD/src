@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.32 2003/02/23 14:37:37 pk Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.33 2003/04/16 21:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.32 2003/02/23 14:37:37 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.33 2003/04/16 21:44:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -113,7 +113,6 @@ portal_mount(mp, path, data, ndp, p)
 	struct portalmount *fmp;
 	struct socket *so;
 	struct vnode *rvp;
-	size_t size;
 	int error;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -165,12 +164,8 @@ portal_mount(mp, path, data, ndp, p)
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.pa_config, mp->mnt_stat.f_mntfromname,
-	    MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
-	return (0);
+	return set_statfs_info(path, UIO_USERSPACE, args.pa_config,
+	    UIO_USERSPACE, mp, p);
 }
 
 int
@@ -287,12 +282,7 @@ portal_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	if (sbp != &mp->mnt_stat) {
-		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 

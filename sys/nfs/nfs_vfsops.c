@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.124 2003/04/02 15:14:24 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.125 2003/04/16 21:44:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.124 2003/04/02 15:14:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.125 2003/04/16 21:44:25 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -205,11 +205,7 @@ nfs_statfs(mp, sbp, p)
 		sbp->f_files = 0;
 		sbp->f_ffree = 0;
 	}
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	nfsm_reqdone;
 	crfree(cred);
 	return (error);
@@ -743,10 +739,9 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
-	    MFSNAMELEN);
-	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
-	memcpy(mp->mnt_stat.f_mntonname, pth, MNAMELEN);
+	error = set_statfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, p);
+	if (error)
+		goto bad;
 	nmp->nm_nam = nam;
 
 	/* Set up the sockets and per-host congestion */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.4 2003/04/03 15:37:55 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.5 2003/04/16 21:44:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.4 2003/04/03 15:37:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.5 2003/04/16 21:44:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -177,7 +177,6 @@ cd9660_mount(mp, path, data, ndp, p)
 {
 	struct vnode *devvp;
 	struct iso_args args;
-	size_t size;
 	int error;
 	struct iso_mnt *imp = NULL;
 	
@@ -249,12 +248,8 @@ cd9660_mount(mp, path, data, ndp, p)
 		return error;
 	}
 	imp = VFSTOISOFS(mp);
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
-	return 0;
+	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	    mp, p);
 }
 
 /*
@@ -643,11 +638,7 @@ cd9660_statfs(mp, sbp, p)
 	sbp->f_bavail = 0; /* blocks free for non superuser */
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	/* Use the first spare for flags: */
 	sbp->f_spare[0] = isomp->im_flags;
 	return 0;

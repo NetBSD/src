@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.184 2003/03/21 23:11:25 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.185 2003/04/16 21:44:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.184 2003/03/21 23:11:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.185 2003/04/16 21:44:21 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -76,6 +76,8 @@ static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *,
 static int change_utimes __P((struct vnode *vp, const struct timeval *,
 	       struct proc *p));
 static int rename_files __P((const char *, const char *, struct proc *, int));
+static int dostatfs __P((struct mount *, struct statfs *, struct proc *, int,
+    int));
 
 void checkdirs __P((struct vnode *));
 
@@ -141,7 +143,7 @@ sys_mount(l, v, retval)
 	/*
 	 * Get vnode to be covered
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW , UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -635,6 +637,70 @@ sys_quotactl(l, v, retval)
 	    SCARG(uap, arg), p));
 }
 
+static int
+dostatfs(struct mount *mp, struct statfs *sp, struct proc *p, int flags,
+    int root)
+{
+	struct cwdinfo *cwdi = p->p_cwdi;
+	int error = 0;
+
+	/*
+	 * If MNT_NOWAIT or MNT_LAZY is specified, do not
+	 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+	 * overrides MNT_NOWAIT.
+	 */
+	if (flags == MNT_NOWAIT	|| flags == MNT_LAZY ||
+	    (flags != MNT_WAIT && flags != 0)) {
+		memcpy(sp, &mp->mnt_stat, sizeof(*sp));
+		goto done;
+	}
+		
+	if ((error = VFS_STATFS(mp, sp, p)) != 0) {
+		return error;
+	}
+
+	if (cwdi->cwdi_rdir == NULL)
+		(void)memcpy(&mp->mnt_stat, sp, sizeof(mp->mnt_stat));
+done:
+	if (cwdi->cwdi_rdir != NULL) {
+		size_t len;
+		char *bp;
+		char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		if (!path)
+			return ENOMEM;
+
+		bp = path + MAXPATHLEN;
+		*--bp = '\0';
+		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
+		    MAXPATHLEN / 2, 0, p);
+		if (error) {
+			free(path, M_TEMP);
+			return error;
+		}
+		len = strlen(bp);
+		/*
+		 * for mount points that are below our root, we can see
+		 * them, so we fix up the pathname and return them. The
+		 * rest we cannot see, so we don't allow viewing the
+		 * data.
+		 */
+		if (strncmp(bp, sp->f_mntonname, len) == 0) {
+			strcpy(sp->f_mntonname, &sp->f_mntonname[len]);
+			if (sp->f_mntonname[0] == '\0')
+			    (void)strcpy(sp->f_mntonname, "/");
+		} else {
+			if (root)
+				(void)strcpy(sp->f_mntonname, "/");
+			else
+				error = EPERM;
+		}
+		free(path, M_TEMP);
+	}
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_oflags = sp->f_flags & 0xffff;
+	return error;
+}
+
 /*
  * Get filesystem statistics.
  */
@@ -651,21 +717,18 @@ sys_statfs(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statfs sbuf;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		return error;
 	mp = nd.ni_vp->v_mount;
-	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	sp->f_oflags = sp->f_flags & 0xffff;
-	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
+	if ((error = dostatfs(mp, &sbuf, p, 0, 1)) != 0)
+		return error;
+	return copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf));
 }
 
 /*
@@ -685,23 +748,21 @@ sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statfs sbuf;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
-	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = dostatfs(mp, &sbuf, p, 0, 1)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	sp->f_oflags = sp->f_flags & 0xffff;
-	error = copyout(sp, SCARG(uap, buf), sizeof(*sp));
+	error = copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf));
  out:
 	FILE_UNUSE(fp, p);
-	return (error);
+	return error;
 }
+
 
 /*
  * Get statistics on all filesystems.
@@ -717,11 +778,12 @@ sys_getfsstat(l, v, retval)
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	int root = 0;
 	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
-	struct statfs *sp;
+	struct statfs sbuf;
 	caddr_t sfsp;
-	long count, maxcount, error;
+	long count, maxcount, error = 0;
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
 	sfsp = (caddr_t)SCARG(uap, buf);
@@ -734,42 +796,41 @@ sys_getfsstat(l, v, retval)
 			continue;
 		}
 		if (sfsp && count < maxcount) {
-			sp = &mp->mnt_stat;
-			/*
-			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
-			 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
-			 * overrides MNT_NOWAIT.
-			 */
-			if (SCARG(uap, flags) != MNT_NOWAIT &&
-			    SCARG(uap, flags) != MNT_LAZY &&
-			    (SCARG(uap, flags) == MNT_WAIT ||
-			     SCARG(uap, flags) == 0) &&
-			    (error = VFS_STATFS(mp, sp, p)) != 0) {
-				simple_lock(&mountlist_slock);
+			error = dostatfs(mp, &sbuf, p, SCARG(uap, flags), 0);
+			if (error) {
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
 			}
-			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-			sp->f_oflags = sp->f_flags & 0xffff;
-			error = copyout(sp, sfsp, sizeof(*sp));
+			error = copyout(&sbuf, sfsp, sizeof(sbuf));
 			if (error) {
 				vfs_unbusy(mp);
 				return (error);
 			}
-			sfsp += sizeof(*sp);
+			sfsp += sizeof(sbuf);
+			root |= strcmp(sbuf.f_mntonname, "/") == 0;
 		}
 		count++;
-		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
+	if (root == 0 && p->p_cwdi->cwdi_rdir) {
+		/*
+		 * fake a root entry
+		 */
+		if ((error = dostatfs(p->p_cwdi->cwdi_rdir->v_mount, &sbuf, p,
+		    SCARG(uap, flags), 1)) != 0)
+			return error;
+		if (sfsp)
+			error = copyout(&sbuf, sfsp, sizeof(sbuf));
+		count++;
+	}
 	if (sfsp && count > maxcount)
 		*retval = maxcount;
 	else
 		*retval = count;
-	return (0);
+	return error;
 }
 
 /*
@@ -1313,7 +1374,7 @@ sys_fhstatfs(l, v, retval)
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statfs sp;
+	struct statfs sbuf;
 	fhandle_t fh;
 	struct mount *mp;
 	struct vnode *vp;
@@ -1334,11 +1395,9 @@ sys_fhstatfs(l, v, retval)
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);
-	if ((error = VFS_STATFS(mp, &sp, p)) != 0)
+	if ((error = VFS_STATFS(mp, &sbuf, p)) != 0)
 		return (error);
-	sp.f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	sp.f_oflags = sp.f_flags & 0xffff;
-	return (copyout(&sp, SCARG(uap, buf), sizeof(sp)));
+	return (copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf)));
 }
 
 /*

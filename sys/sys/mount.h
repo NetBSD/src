@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.100 2003/04/06 07:04:42 gmcgarry Exp $	*/
+/*	$NetBSD: mount.h,v 1.101 2003/04/16 21:44:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -501,6 +501,11 @@ void	vfs_bufstats __P((void));
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
+
+int	set_statfs_info __P((const char *, int, const char *, int,
+    struct mount *, struct proc *p));
+void	copy_statfs_info __P((struct statfs *, const struct mount *));
+
 
 #else /* _KERNEL */
 

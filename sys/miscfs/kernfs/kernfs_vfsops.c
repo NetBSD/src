@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.47 2003/02/01 06:23:46 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.48 2003/04/16 21:44:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.47 2003/02/01 06:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.48 2003/04/16 21:44:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -132,7 +132,6 @@ kernfs_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	int error = 0;
-	size_t size;
 	struct kernfs_mount *fmp;
 	struct vnode *rvp;
 
@@ -164,16 +163,14 @@ kernfs_mount(mp, path, data, ndp, p)
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
-	memcpy(mp->mnt_stat.f_mntfromname, "kernfs", sizeof("kernfs"));
+	error = set_statfs_info(path, UIO_USERSPACE, "kernfs", UIO_SYSSPACE,
+	    mp, p);
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
 
 	kernfs_get_rrootdev();
-	return (0);
+	return error;
 }
 
 int
@@ -288,12 +285,7 @@ kernfs_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	if (sbp != &mp->mnt_stat) {
-		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 

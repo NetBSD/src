@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.21 2003/02/01 06:23:36 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.22 2003/04/16 21:44:18 christos Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.21 2003/02/01 06:23:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.22 2003/04/16 21:44:18 christos Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -266,8 +266,9 @@ coda_mount(vfsp, path, data, ndp, p)
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
     else
 	MARK_INT_SAT(CODA_MOUNT_STATS);
-    
-    return(error);
+
+    return set_statfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE, vfsp,
+	p);
 }
 
 int
@@ -453,11 +454,7 @@ coda_nb_statfs(vfsp, sbp, p)
 	sbp->f_bavail = fsstat.f_bavail;
 	sbp->f_files  = fsstat.f_files;
 	sbp->f_ffree  = fsstat.f_ffree;
-        bcopy((caddr_t)&(vfsp->mnt_stat.f_fsid),
-	      (caddr_t)&(sbp->f_fsid), sizeof (fsid_t));
-        strncpy(sbp->f_fstypename, MOUNT_CODA, MFSNAMELEN-1);
-        strcpy(sbp->f_mntonname, "/coda");
-        strcpy(sbp->f_mntfromname, "CODA");
+	copy_statfs_info(sbp, vfsp);
     }
 
     MARK_INT_SAT(CODA_STATFS_STATS);

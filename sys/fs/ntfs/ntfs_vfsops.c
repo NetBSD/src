@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.3 2003/04/09 16:18:17 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.3 2003/04/09 16:18:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,6 @@ ntfs_mount (
 	struct nameidata *ndp,
 	struct proc *p )
 {
-	size_t		size;
 	int		err = 0;
 	struct vnode	*devvp;
 	struct ntfs_args args;
@@ -369,12 +368,8 @@ ntfs_mount (
 		 * Update device name only on success
 		 */
 		if( !err) {
-			/* Save "mounted from" info for mount point (NULL pad)*/
-			copyinstr(	args.fspec,
-					mp->mnt_stat.f_mntfromname,
-					MNAMELEN - 1,
-					&size);
-			bzero( mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+			err = set_statfs_info(NULL, UIO_USERSPACE, args.fspec,
+			    UIO_USERSPACE, mp, p);
 		}
 #endif
 	} else {
@@ -391,20 +386,11 @@ ntfs_mount (
 		 * upper level code.
 		 */
 		/* Save "last mounted on" info for mount point (NULL pad)*/
-		copyinstr(	path,				/* mount point*/
-				mp->mnt_stat.f_mntonname,	/* save area*/
-				MNAMELEN - 1,			/* max size*/
-				&size);				/* real size*/
-		bzero( mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-
-		/* Save "mounted from" info for mount point (NULL pad)*/
-		copyinstr(	args.fspec,			/* device name*/
-				mp->mnt_stat.f_mntfromname,	/* save area*/
-				MNAMELEN - 1,			/* max size*/
-				&size);				/* real size*/
-		bzero( mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-
-		err = ntfs_mountfs(devvp, mp, &args, p);
+		err = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+		    UIO_USERSPACE, mp, p);
+		if ( !err) {
+			err = ntfs_mountfs(devvp, mp, &args, p);
+		}
 	}
 	if (err) {
 		goto error_2;
@@ -799,17 +785,8 @@ ntfs_statfs(
 	sbp->f_ffree = sbp->f_bfree / ntmp->ntm_bpmftrec;
 	sbp->f_files = mftallocated / ntfs_bntob(ntmp->ntm_bpmftrec) +
 		       sbp->f_ffree;
-	if (sbp != &mp->mnt_stat) {
-		bcopy((caddr_t)mp->mnt_stat.f_mntonname,
-			(caddr_t)&sbp->f_mntonname[0], MNAMELEN);
-		bcopy((caddr_t)mp->mnt_stat.f_mntfromname,
-			(caddr_t)&sbp->f_mntfromname[0], MNAMELEN);
-	}
 	sbp->f_flags = mp->mnt_flag;
-#ifdef __NetBSD__
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-#endif
-	
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.24 2003/04/08 16:26:31 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.25 2003/04/16 21:44:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.24 2003/04/08 16:26:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.25 2003/04/16 21:44:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	struct smb_vc *vcp;
 	struct smb_share *ssp = NULL;
 	struct smb_cred scred;
-	size_t size;
 	int error;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -171,17 +170,13 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	smp->sm_args.dir_mode  = (smp->sm_args.dir_mode &
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
 
-	error = copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	error = set_statfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	    mp, p);
 	if (error)
 		goto bad;
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
-		"//%s@%s/%s",
-		vcp->vc_username,
-		vcp->vc_srvname,
-		ssp->ss_name);
+	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
 
 	vfs_getnewfsid(mp);
 	return (0);
@@ -395,14 +390,9 @@ smbfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	if (error)
 		return error;
 	sbp->f_flags = 0;		/* copy of mount exported flags */
-	if (sbp != &mp->mnt_stat) {
-		sbp->f_fsid = mp->mnt_stat.f_fsid;	/* file system id */
-		sbp->f_owner = mp->mnt_stat.f_owner;	/* user that mounted the filesystem */
-		sbp->f_type = 0;
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_owner = mp->mnt_stat.f_owner;	/* user that mounted the filesystem */
+	sbp->f_type = 0;
+	copy_statfs_info(sbp, mp);
 	return 0;
 }
 

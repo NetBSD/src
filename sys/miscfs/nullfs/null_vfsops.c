@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.39 2003/04/16 21:44:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.39 2003/04/16 21:44:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,6 @@ nullfs_mount(mp, path, data, ndp, p)
 	struct vnode *lowerrootvp, *vp;
 	struct null_mount *nmp;
 	struct layer_mount *lmp;
-	size_t size;
 	int error = 0;
 
 #ifdef NULLFS_DIAGNOSTIC
@@ -210,16 +209,13 @@ nullfs_mount(mp, path, data, ndp, p)
 	vp->v_flag |= VROOT;
 	nmp->nullm_rootvp = vp;
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.la.target, mp->mnt_stat.f_mntfromname,
-	    MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
+	error = set_statfs_info(path, UIO_USERSPACE, args.la.target,
+	    UIO_USERSPACE, mp, p);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
-	return (0);
+	return error; 
 }
 
 /*
