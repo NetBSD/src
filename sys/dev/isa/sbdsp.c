@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.47 1997/05/16 07:07:22 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.48 1997/05/17 23:26:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -128,7 +128,6 @@ void	sbdsp_pause __P((struct sbdsp_softc *));
 int	sbdsp16_setrate __P((struct sbdsp_softc *, int, int, int *));
 int	sbdsp_tctosr __P((struct sbdsp_softc *, int));
 int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
-int	sbdsp_set_io_params __P((struct sbdsp_softc *, struct audio_params *));
 
 #ifdef AUDIO_DEBUG
 void sb_printsc __P((struct sbdsp_softc *));
@@ -179,7 +178,7 @@ sbdsp_probe(sc)
 		sc->sc_model = sbversion(sc);
 	}
 
-#if 1
+#if 0
 	sc->sc_model = 0x100;	/* XXX pretend to be just a tired old SB XXX */
 #endif
 
@@ -315,11 +314,14 @@ sbdsp_mix_write(sc, mixerport, val)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
+	s = splaudio();
 	bus_space_write_1(iot, ioh, SBP_MIXER_ADDR, mixerport);
-	delay(10);
+	delay(20);
 	bus_space_write_1(iot, ioh, SBP_MIXER_DATA, val);
 	delay(30);
+	splx(s);
 }
 
 int
@@ -329,10 +331,16 @@ sbdsp_mix_read(sc, mixerport)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int val;
+	int s;
 
+	s = splaudio();
 	bus_space_write_1(iot, ioh, SBP_MIXER_ADDR, mixerport);
-	delay(10);
-	return bus_space_read_1(iot, ioh, SBP_MIXER_DATA);
+	delay(20);
+	val = bus_space_read_1(iot, ioh, SBP_MIXER_DATA);
+	delay(30);
+	splx(s);
+	return val;
 }
 
 int
@@ -455,19 +463,19 @@ sbdsp_set_params(addr, mode, p, q)
 			if (ISSB2CLASS(sc) && SBVER_MINOR(sc->sc_model) > 0)
 				maxspeed = 44100;
 			else
-				maxspeed = 23000;
+				maxspeed = 22727;
 		} else
-			maxspeed = 13000;
+			maxspeed = 12987;
 		if (p->sample_rate < 4000 || p->sample_rate > maxspeed) 
 			return EINVAL;
 		if (p->channels != 1)
 			return EINVAL;
 	} else if (!can16) {
-		/* v 3.x */
+		/* v 3.x (SBPRO) */
 		if (p->channels == 1)
-			maxspeed = 44100;
+			maxspeed = 45454;
 		else
-			maxspeed = 23000;
+			maxspeed = 22727;
 		if (p->sample_rate < 4000 || p->sample_rate > maxspeed) 
 			return EINVAL;
 	} else {
@@ -496,6 +504,13 @@ sbdsp_set_params(addr, mode, p, q)
 	q->encoding = p->encoding;
 	q->channels = p->channels;
 	q->precision = p->precision;
+
+	/*
+	 * XXX
+	 * Should wait for chip to be idle.
+	 */
+	sc->sc_dmadir = SB_DMA_NONE;
+
 	return 0;
 }
 
@@ -673,6 +688,9 @@ sbdsp_round_blocksize(addr, blk)
 	/* Round to a multiple of the sample size. */
 	blk &= -(sc->sc_channels * sc->sc_precision / 8);
 
+	if (blk > 1364)
+		blk = 1364;	/* XXX */
+
 	return (blk);
 }
 
@@ -680,14 +698,6 @@ int
 sbdsp_commit_settings(addr)
 	void *addr;
 {
-	register struct sbdsp_softc *sc = addr;
-
-	/*
-	 * XXX
-	 * Should wait for chip to be idle.
-	 */
-	sc->sc_dmadir = SB_DMA_NONE;
-
 	return 0;
 }
 
@@ -1312,7 +1322,6 @@ sbdsp_intr(arg)
 	void *arg;
 {
 	register struct sbdsp_softc *sc = arg;
-	u_char x;
 
 #ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
@@ -1336,7 +1345,7 @@ sbdsp_intr(arg)
 #endif
 	if (sc->sc_intr != 0) {
 		/* clear interrupt */
-		x = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_precision == 16 ? SBP_DSP_IRQACK16 :
 					     SBP_DSP_IRQACK8);
 		if (!ISSB2CLASS(sc))
@@ -1485,7 +1494,7 @@ sbdsp_mixer_set_port(addr, cp)
 			return EINVAL;
 		}
 
-		sbdsp_mix_write(sc, src, gain);
+		sbdsp_mix_write(sc, src, gain & 0xee);
 		sc->gain[cp->dev] = gain;
 		break;
 
@@ -1521,7 +1530,7 @@ sbdsp_mixer_get_port(addr, cp)
 	register struct sbdsp_softc *sc = addr;
 	int gain;
     
-	DPRINTF(("sbdsp_mixer_get_port: port=%d", cp->dev));
+	DPRINTF(("sbdsp_mixer_get_port: port=%d\n", cp->dev));
 
 	if (!ISSBPROCLASS(sc))
 		return EINVAL;
