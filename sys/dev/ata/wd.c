@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.278 2004/06/01 20:53:03 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.279 2004/06/22 19:20:14 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.278 2004/06/01 20:53:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.279 2004/06/22 19:20:14 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -693,7 +693,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	 * the sector number of the problem, and will eventually allow the
 	 * transfer to succeed.
 	 */
-	if (wd->sc_multi == 1 || wd->retries >= WDIORETRIES_SINGLE)
+	if (wd->retries >= WDIORETRIES_SINGLE)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
@@ -1453,12 +1453,9 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	}
 
 	while (nblks > 0) {
-again:
 		wd->sc_bp = NULL;
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
-		if (wddumpmulti == 1)
-			wd->sc_wdc_bio.flags |= ATA_SINGLE;
 		if (wd->sc_flags & WDF_LBA48 && blkno > LBA48_THRESHOLD)
 			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
@@ -1502,11 +1499,6 @@ again:
 			panic("wddump: unknown error type");
 		}
 		if (err != 0) {
-			if (wddumpmulti != 1) {
-				wddumpmulti = 1; /* retry in single-sector */
-				printf(", retrying\n");
-				goto again;
-			}
 			printf("\n");
 			return err;
 		}
