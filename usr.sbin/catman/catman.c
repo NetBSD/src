@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.23 2004/05/10 19:23:48 kleink Exp $       */
+/*      $NetBSD: catman.c,v 1.24 2004/10/29 20:35:16 dsl Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ setdefentries(m_path, m_add, sections)
 		sectnewp = getlist("_section_new", 1);
 		for (p = sections; *p;) {
 			i = snprintf(buf, sizeof(buf), "man%c", *p++);
-			for (; *p && !isdigit(*p) && i < sizeof(buf) - 1; i++)
+			for (; *p && !isdigit((unsigned char)*p) && i < sizeof(buf) - 1; i++)
 				buf[i] = *p++;
 			buf[i] = '\0';
 			addentry(sectnewp, buf, 0);
@@ -526,7 +526,7 @@ splitentry(s, first, firstlen, second, secondlen)
 {
 	char *c;
 
-	for (c = s; *c != '\0' && !isspace(*c); ++c)
+	for (c = s; *c != '\0' && !isspace((unsigned char)*c); ++c)
 		;
 	if (*c == '\0')
 		return(0);
@@ -534,7 +534,7 @@ splitentry(s, first, firstlen, second, secondlen)
 		return(0);
 	strncpy(first, s, c-s);
 	first[c-s] = '\0';
-	for (; *c != '\0' && isspace(*c); ++c)
+	for (; *c != '\0' && isspace((unsigned char)*c); ++c)
 		;
 	if (strlcpy(second, c, secondlen) >= secondlen)
 		return(0);

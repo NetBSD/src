@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.43 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: sem.c,v 1.44 2004/10/29 20:40:33 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -240,12 +240,12 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 		strlcat(classenum, name, l);
 		for (cp = classenum + 3; *cp; cp++) {
 			if (!errored &&
-			    (!isalnum(*cp) ||
-			      (isalpha(*cp) && !islower(*cp)))) {
+			    (!isalnum((unsigned char)*cp) ||
+			      (isalpha((unsigned char)*cp) && !islower((unsigned char)*cp)))) {
 				error("device class names must be lower-case alphanumeric characters");
 				errored = 1;
 			}
-			*cp = toupper(*cp);
+			*cp = toupper((unsigned char)*cp);
 		}
 		a->a_devclass = intern(classenum);
 	} else
@@ -724,7 +724,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	l = i = strlen(nv->nv_str);
 	cp = &nv->nv_str[l];
 	if (l > 1 && *--cp >= 'a' && *cp < 'a' + maxpartitions &&
-	    isdigit(cp[-1])) {
+	    isdigit((unsigned char)cp[-1])) {
 		l--;
 		part = *cp - 'a';
 	}
@@ -1270,7 +1270,7 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 	int c, l;
 
 	l = nlen;
-	if (l < 2 || l >= bsize || isdigit(*name))
+	if (l < 2 || l >= bsize || isdigit((unsigned char)*name))
 		return (1);
 	c = (u_char)name[--l];
 	if (!isdigit(c)) {
@@ -1282,7 +1282,7 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 			return (1);
 	} else {
 		cp = &name[l];
-		while (isdigit(cp[-1]))
+		while (isdigit((unsigned char)cp[-1]))
 			l--, cp--;
 		*aunit = atoi(cp);
 	}
