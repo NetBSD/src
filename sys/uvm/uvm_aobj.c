@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.18.2.1.2.2 1999/06/21 01:47:19 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.18.2.1.2.3 1999/06/21 15:53:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -673,7 +673,7 @@ uao_detach_locked(uobj)
 	/*
  	 * detaching from kernel_object is a noop.
  	 */
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
 		simple_unlock(&uobj->vmobjlock);
 		return;
 	}
