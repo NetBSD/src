@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.42.2.1 2004/06/22 07:30:28 tron Exp $
+#	$NetBSD: configure.ac,v 1.42.2.2 2004/07/25 07:50:06 tron Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -100,7 +100,6 @@ AC_CHECK_MEMBERS([DIR.dd_fd, struct dirent.d_namlen],,,
 AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
 	struct stat.st_birthtime, struct stat.st_atim,
 	struct stat.st_mtimensec],,, [#include <sys/stat.h>])
-AC_CHECK_MEMBERS(struct statfs.f_iosize,,, [#include <sys/mount.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([optind, optreset],,, [
