@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_output.c	7.22 (Berkeley) 8/31/90
- *	$Id: tcp_output.c,v 1.6 1994/01/08 23:07:20 mycroft Exp $
+ *	$Id: tcp_output.c,v 1.7 1994/01/10 20:14:30 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -453,7 +453,7 @@ send:
 	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
 #if BSD >= 43
 	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
-	    so->so_options & SO_DONTROUTE);
+	    so->so_options & SO_DONTROUTE, NULL);
 #else
 	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route,
 	    so->so_options & SO_DONTROUTE);

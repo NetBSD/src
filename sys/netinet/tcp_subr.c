@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
- *	$Id: tcp_subr.c,v 1.7 1994/01/08 23:07:21 mycroft Exp $
+ *	$Id: tcp_subr.c,v 1.8 1994/01/10 20:14:32 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -191,7 +191,7 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	ti->ti_sum = in_cksum(m, tlen);
 	((struct ip *)ti)->ip_len = tlen;
 	((struct ip *)ti)->ip_ttl = tcp_ttl;
-	(void) ip_output(m, (struct mbuf *)0, ro, 0);
+	(void) ip_output(m, NULL, ro, 0, NULL);
 }
 
 /*

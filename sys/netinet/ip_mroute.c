@@ -845,8 +845,7 @@ phyint_send(ip, vifp, m)
 	imo->imo_multicast_ttl = ip->ip_ttl - 1;
 	imo->imo_multicast_loop = 1;
 
-	error = ip_output(mb_copy, NULL, NULL,
-			  IP_FORWARDING|IP_MULTICASTOPTS, imo);
+	error = ip_output(mb_copy, NULL, NULL, IP_FORWARDING, imo);
 }
 
 static void

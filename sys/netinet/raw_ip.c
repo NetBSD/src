@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.9 1994/01/09 01:06:21 mycroft Exp $
+ *	$Id: raw_ip.c,v 1.10 1994/01/10 20:14:28 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -94,6 +94,7 @@ rip_output(m, so)
 	register struct ip *ip;
 	register struct raw_inpcb *rp = sotorawinpcb(so);
 	register struct sockaddr_in *sin;
+	struct mbuf *opts;
 
 	/*
 	 * If the user handed us a complete IP packet, use it.
@@ -104,6 +105,7 @@ rip_output(m, so)
 		if (ip->ip_len > m->m_pkthdr.len)
 			return EMSGSIZE;
 		ip->ip_len = m->m_pkthdr.len;
+		opts = NULL;
 	} else {
 		M_PREPEND(m, sizeof(struct ip), M_WAIT);
 		ip = mtod(m, struct ip *);
@@ -118,15 +120,16 @@ rip_output(m, so)
 		if (sin = satosin(rp->rinp_rcb.rcb_faddr))
 		    ip->ip_dst = sin->sin_addr;
 		ip->ip_ttl = MAXTTL;
+		opts = rp->rinp_options;
 	}
-	return (ip_output(m,
-	   (rp->rinp_flags & RINPF_HDRINCL)? (struct mbuf *)0: rp->rinp_options,
-	    &rp->rinp_route,
-	   (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
+	return (ip_output(m, opts, &rp->rinp_route,
+	    (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
 #ifdef MULTICAST
-		| IP_MULTICASTOPTS, rp->rinp_rcb.rcb_moptions
+	    , rp->rinp_rcb.rcb_moptions
+#else
+	    , NULL
 #endif
-	));
+	    ));
 }
 
 /*

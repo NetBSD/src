@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.8 1994/01/09 01:06:13 mycroft Exp $
+ *	$Id: ip_input.c,v 1.9 1994/01/10 20:14:19 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1099,7 +1099,11 @@ ip_forward(m, srcrt)
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)0, &ipforward_rt, IP_FORWARDING);
+	error = ip_output(m, NULL, &ipforward_rt, IP_FORWARDING
+#ifdef DIRECTED_BROADCAST
+	    | IP_ALLOWBROADCAST
+#endif
+	    , NULL);
 	if (error)
 		ipstat.ips_cantforward++;
 	else {

@@ -313,7 +313,7 @@ igmp_sendreport(inm)
 	imo->imo_multicast_loop = 0;
 #endif
 
-	ip_output(m, NULL, NULL, IP_MULTICASTOPTS, imo);
+	ip_output(m, NULL, NULL, 0, imo);
 
 	++igmpstat.igps_snd_reports;
 }

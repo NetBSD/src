@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
- *	$Id: ip_icmp.c,v 1.6 1994/01/08 23:50:43 mycroft Exp $
+ *	$Id: ip_icmp.c,v 1.7 1994/01/10 20:14:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -514,7 +514,7 @@ icmp_send(m, opts)
 	if (icmpprintfs)
 		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
 #endif
-	(void) ip_output(m, opts, (struct route *)0, 0);
+	(void) ip_output(m, opts, NULL, 0, NULL);
 }
 
 n_time
