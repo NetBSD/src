@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.37 1995/04/07 04:44:55 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.38 1995/04/08 04:46:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -448,17 +448,25 @@ void sun3_vm_init()
 	 * the fault handler will get a NULL reference.
 	 */
 	proc0.p_addr = proc0paddr;
+	curproc = &proc0;
+	curpcb = &proc0paddr->u_pcb;
 
 	/* Initialize cached PTEs for u-area mapping. */
 	save_u_area(&proc0, proc0paddr);
 
-	/* map proc0's u-area at the standard address */
-	curproc = &proc0;
+	/*
+	 * Map proc0's u-area at the standard address (UADDR).
+	 * Note that this uses curproc to get the PTEs.
+	 */
 	load_u_area();
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)UADDR, UPAGES*NBPG);
-	curpcb = &proc0paddr->u_pcb;
+
+	/*
+	 * XXX  It might be possible to move much of what is
+	 * XXX  done after this point into pmap_bootstrap...
+	 */
 
 	/*
 	 * unmap user virtual segments
