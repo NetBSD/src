@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.62 2004/10/30 23:10:37 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.62 2004/10/30 23:10:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -985,7 +985,7 @@ ata_print_modes(struct ata_channel *chp)
 				aprint_normal(" (Ultra/133)");
 		}
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
-			aprint_normal(" (using DMA data transfers)");
+			aprint_normal(" (using DMA)");
 		aprint_normal("\n");
 	}
 }
