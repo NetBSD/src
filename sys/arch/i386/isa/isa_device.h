@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa_device.h	7.1 (Berkeley) 5/9/91
- *	$Id: isa_device.h,v 1.7 1993/08/28 00:13:55 brezak Exp $
+ *	$Id: isa_device.h,v 1.8 1994/03/12 03:28:16 mycroft Exp $
  */
 
 /*
@@ -52,7 +52,8 @@ struct isa_device {
 	int	id_unit;	/* unit number */
 	int	id_flags;	/* flags */
 	int	id_physid;	/* eg. scsi id if needed */
-	int	id_masunit;	/* for biotab_dktp, the master unit number */
+	struct	isa_device *id_parent;
+	unsigned *id_mask;	/* for devices which use an IRQ */
 	int	id_alive;	/* device is present */
 };
 
@@ -69,7 +70,6 @@ struct isa_driver {
 	char	*name;			/* device name */
 };
 
-extern struct isa_device isa_devtab_bio[], isa_devtab_tty[], isa_devtab_net[],
-		isa_devtab_null[], isa_subdev[];
+extern struct isa_device isa_devtab[];
 
 extern struct isa_device *find_isadev(/* table, driver, unit*/);
