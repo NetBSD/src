@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.146 2004/04/24 04:56:59 atatat Exp $	 */
+/* $NetBSD: machdep.c,v 1.146.6.1 2005/02/12 15:47:26 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2004/04/24 04:56:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.6.1 2005/02/12 15:47:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -571,7 +571,8 @@ vax_map_physmem(phys, size)
 		panic("vax_map_physmem: called before rminit()?!?");
 #endif
 	if (size >= LTOHPN) {
-		addr = uvm_km_valloc(kernel_map, size * VAX_NBPG);
+		addr = uvm_km_alloc(kernel_map, size * VAX_NBPG, 0,
+		    UVM_KMF_VAONLY);
 		if (addr == 0)
 			panic("vax_map_physmem: kernel map full");
 	} else {
@@ -607,7 +608,7 @@ vax_unmap_physmem(addr, size)
 	addr &= ~VAX_PGOFSET;
 	iounaccess(addr, size);
 	if (size >= LTOHPN)
-		uvm_km_free(kernel_map, addr, size * VAX_NBPG);
+		uvm_km_free(kernel_map, addr, size * VAX_NBPG, UVM_KMF_VAONLY);
 	else if (extent_free(iomap_ex, addr, size * VAX_NBPG,
 			     EX_NOWAIT |
 			     (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85 2004/09/17 14:11:23 skrll Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.85.6.1 2005/02/12 15:47:26 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2004/09/17 14:11:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.6.1 2005/02/12 15:47:26 yamt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -329,7 +329,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
 	while (len--) {
@@ -368,7 +368,7 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
 	pmap_update(vm_map_pmap(phys_map));
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.10 2003/07/15 02:15:02 lukem Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.10.10.1 2005/02/12 15:47:26 yamt Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_mem.c,v 1.10 2003/07/15 02:15:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_mem.c,v 1.10.10.1 2005/02/12 15:47:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ vax_mem_bus_space_map(
 	vaddr_t va;
 
 	size += (pa & VAX_PGOFSET);	/* have to include the byte offset */
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -97,7 +97,7 @@ vax_mem_bus_space_unmap(
          * Free the kernel virtual mapping.
          */
 	iounaccess(va, size >> VAX_PGSHIFT);
-	uvm_km_free(kernel_map, va, endva - va);
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
 static int
