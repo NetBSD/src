@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.13 2001/04/06 01:30:10 he Exp $
+.\"	$NetBSD: main,v 1.61.2.14 2001/04/06 02:52:53 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,7 +153,7 @@ The intermediate development versions of code available on the main trunk
 in our CVS repository (also known as ``NetBSD-current'') from
 .Em after
 the point where the release cycle for 1.5 was started are designated
-by version identifisers such as 1.5A, 1.5B, etc.
+by version identifiers such as 1.5A, 1.5B, etc.
 These identifisers do not designate releases, but indicate major changes
 in internal kernel APIs.
 Note that the kernel from
