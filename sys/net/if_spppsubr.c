@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.16 2000/12/18 20:50:36 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.17 2001/01/07 21:47:28 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -4945,7 +4945,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 
 	switch (subcmd) {
 	case SPPPIOGDEFS:
-		if (cmd != SIOCGIFGENERIC)
+		if (cmd != (int)SIOCGIFGENERIC)
 			return EINVAL;
 		/*
 		 * We copy over the entire current state, but clean
@@ -4962,7 +4962,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
 
 	case SPPPIOSDEFS:
-		if (cmd != SIOCSIFGENERIC)
+		if (cmd != (int)SIOCSIFGENERIC)
 			return EINVAL;
 		/*
 		 * We have a very specific idea of which fields we allow
