@@ -1,14 +1,45 @@
-#       $NetBSD: Makefile,v 1.25 1997/08/12 07:29:22 mikel Exp $
+#       $NetBSD: Makefile,v 1.26 1997/08/13 08:34:34 cgd Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 arp.9 busdma.9 copy.9 cpu_reboot.9 ctxsw.9 \
+MAN=	access.9 arp.9 bus_space.9 busdma.9 copy.9 cpu_reboot.9 ctxsw.9 \
 	disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9 extent.9 \
 	fetch.9 inittodr.9 intro.9 log.9 malloc.9 panic.9 pfil.9 physio.9 \
 	psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
 	store.9 time.9 timeout.9 vslock.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
+MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
+	bus_space.9 bus_space_copy_region_1.9 \
+	bus_space.9 bus_space_copy_region_2.9 \
+	bus_space.9 bus_space_copy_region_4.9 \
+	bus_space.9 bus_space_copy_region_8.9 \
+	bus_space.9 bus_space_free.9 bus_space.9 bus_space_map.9 \
+	bus_space.9 bus_space_read_1.9 bus_space.9 bus_space_read_2.9 \
+	bus_space.9 bus_space_read_4.9 bus_space.9 bus_space_read_8.9 \
+	bus_space.9 bus_space_read_multi_1.9 \
+	bus_space.9 bus_space_read_multi_2.9 \
+	bus_space.9 bus_space_read_multi_4.9 \
+	bus_space.9 bus_space_read_multi_8.9 \
+	bus_space.9 bus_space_read_region_1.9 \
+	bus_space.9 bus_space_read_region_2.9 \
+	bus_space.9 bus_space_read_region_4.9 \
+	bus_space.9 bus_space_read_region_8.9 \
+	bus_space.9 bus_space_set_region_1.9 \
+	bus_space.9 bus_space_set_region_2.9 \
+	bus_space.9 bus_space_set_region_4.9 \
+	bus_space.9 bus_space_set_region_8.9 \
+	bus_space.9 bus_space_subregion.9 bus_space.9 bus_space_unmap.9 \
+	bus_space.9 bus_space_write_1.9 bus_space.9 bus_space_write_2.9 \
+	bus_space.9 bus_space_write_4.9 bus_space.9 bus_space_write_8.9 \
+	bus_space.9 bus_space_write_multi_1.9 \
+	bus_space.9 bus_space_write_multi_2.9 \
+	bus_space.9 bus_space_write_multi_4.9 \
+	bus_space.9 bus_space_write_multi_8.9 \
+	bus_space.9 bus_space_write_region_1.9 \
+	bus_space.9 bus_space_write_region_2.9 \
+	bus_space.9 bus_space_write_region_4.9 \
+	bus_space.9 bus_space_write_region_8.9
 MLINKS+=busdma.9 bus_dmamap_create.9 busdma.9 bus_dmamap_destroy.9 \
 	busdma.9 bus_dmamap_load.9 busdma.9 bus_dmamap_load_mbuf.9 \
 	busdma.9 bus_dmamap_load_uio.9 busdma.9 bus_dmamap_load_raw.9 \
