@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.98 2000/07/08 18:24:28 sommerfeld Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.99 2000/07/15 03:45:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.98 2000/07/08 18:24:28 sommerfeld Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.99 2000/07/15 03:45:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	hostname[0] = '\0';
 	gidcount = 0;
 
-	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:Uv")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlst:T:u:Uv")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -267,6 +267,12 @@ main(int argc, char *argv[])
 
 		case 'h':
 			strlcpy(hostname, optarg, sizeof(hostname));
+			break;
+
+		case 'H':
+			if (gethostname(hostname, sizeof(hostname)) == -1)
+				hostname[0] = '\0';
+			hostname[sizeof(hostname) - 1] = '\0';
 			break;
 
 		case 'l':
