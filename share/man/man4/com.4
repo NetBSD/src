@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.13 2001/03/19 21:56:44 jdolecek Exp $
+.\"	$NetBSD: com.4,v 1.1 2001/04/20 09:35:56 jdolecek Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
 .Dd August 6, 1993
-.Dt COM 4 i386
+.Dt COM 4
 .Os
 .Sh NAME
 .Nm com
@@ -55,6 +55,9 @@ serial communications interface
 .Cd "com* at pnpbios? index ?"
 .Cd "com* at puc? port ?"
 .Cd "com* at mca? slot ?"
+.Ss Arm32
+.Cd "com0 at mainbus? base 0x00210fe0"
+.Cd "com1 at mainbus? base 0x00210be0"
 .Sh DESCRIPTION
 The
 .Nm
@@ -74,6 +77,14 @@ of 115200.
 The ttyXX devices are traditional dialin devices; the dtyXX devices are
 used for dialout.  (See
 .Xr tty 4 . )
+.Ss Arm32 specific
+If
+.Dq flags 1
+is specified, the
+.Nm
+driver will not set the MCR_IENABLE bit on the UART.  This is mainly for
+use on AST multiport boards, where the MCR_IENABLE bit is used to control
+whether or not the devices use a shared interrupt.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/dty00
