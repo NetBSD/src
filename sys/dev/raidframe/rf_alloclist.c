@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.13 2003/07/01 23:50:54 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.14 2003/07/01 23:53:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.13 2003/07/01 23:50:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.14 2003/07/01 23:53:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -121,15 +121,6 @@ rf_real_AddToAllocList(l, p, size)
 
 }
 
-
-/* we use the debug_mem_mutex here because we need to lock it anyway
- * to call free.  this is probably a bug somewhere else in the code,
- * but when I call malloc/free outside of any lock I have endless
- * trouble with malloc appearing to return the same pointer twice.
- * Since we have to lock it anyway, we might as well use it as the
- * lock around the al_free_list.  Note that we can't call Free with
- * the debug_mem_mutex locked.  
- */
 void 
 rf_FreeAllocList(l)
 	RF_AllocListElem_t *l;
