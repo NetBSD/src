@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.11 2000/07/13 03:53:03 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.12 2000/08/13 18:41:38 jhawk Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.11 2000/07/13 03:53:03 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.12 2000/08/13 18:41:38 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -667,8 +667,8 @@ ip6_stats(off, name)
 			printf("\t\t%s: %llu\n", ip6nh[i],
 			       (unsigned long long)ip6stat.ip6s_nxthist[i]);
 		}
-	printf("\tMbuf statics:\n");
-	printf("\t\t%llu one mbuf\n", (unsigned long long)ip6stat.ip6s_m1);
+	printf("\tMbuf statistics:\n");
+	p(ip6s_m1, "\t\t%llu one mbuf%s\n");
 	for (first = 1, i = 0; i < 32; i++) {
 		char ifbuf[IFNAMSIZ];
 		if (ip6stat.ip6s_m2m[i] != 0) {		
@@ -681,10 +681,8 @@ ip6_stats(off, name)
 			       (unsigned long long)ip6stat.ip6s_m2m[i]);
 		}
 	}
-	printf("\t\t%llu one ext mbuf\n",
-	    (unsigned long long)ip6stat.ip6s_mext1);
-	printf("\t\t%llu two or more ext mbuf\n",
-	    (unsigned long long)ip6stat.ip6s_mext2m);	
+	p(ip6s_mext1,"\t\t%llu one ext mbuf%s\n");
+	p(ip6s_mext2m, "\t\t%llu two or more ext mbuf%s\n");
 	p(ip6s_exthdrtoolong,
 	    "\t%llu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%llu tunneling packet%s that can't find gif\n");
