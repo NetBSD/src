@@ -1,6 +1,6 @@
-.\"	$NetBSD: postinstall,v 1.10 2000/08/04 14:51:36 hubertf Exp $
+.\"	$NetBSD: postinstall,v 1.11 2000/10/04 00:44:24 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ the system will drop you into single user mode on first reboot with the
 message
 .Dl /etc/rc.conf is not configured. Multiuser boot aborted.
 and with the root filesystem mounted read-write. When the system
-asks you to choose a shell, simply hit return to get to a
+asks you to choose a shell, simply press return to get to a
 prompt. If you are asked for a terminal type, respond with
 .ie r_pmax \{\
 the correct terminal type as discussed in the
@@ -56,7 +56,7 @@ section.
 .Ic vt220
 (or whatever is appropriate for your terminal type)
 .\}
-and hit return. At this point, you need to configure at least
+and press return. At this point, you need to configure at least
 one file in the
 .Pa /etc No directory. Change to the
 .Pa /etc
@@ -65,7 +65,13 @@ directory and take a look at the
 file. Modify it to your tastes, making sure that you set
 .Li rc_configured=YES
 so that your changes will be enabled and a multi-user boot can
-proceed. If your
+proceed.
+Default values for the various programs can be found in
+/etc/defaults/rc.conf, where some in-line documentation may be found.
+More complete documentation can be found in
+.Xr rc.conf 5 .
+.Pp
+If your
 .Pa /usr No directory is on a separate partition
 and you do not know how to use 'ed' or 'ex', you will have to mount your
 .Pa /usr
@@ -80,7 +86,7 @@ partition to gain access to 'vi'. Do the following:
 .\}
 If you have
 .Pa /var
-on a seperate partition, you need to repeat
+on a separate partition, you need to repeat
 that step for it. After that, you can edit
 .Pa /etc/rc.conf
 with
@@ -166,7 +172,7 @@ Don't forget to add
 .Pa /usr/X11R6/bin
 to your path in your shell's dot file so that you have access to the X binaries.
 .It
-Installing 3rd party packages
+Installing third party packages
 .Pp
 If you wish to install any of the software freely available for unix systems
 you are strongly advised to first check the
@@ -205,11 +211,6 @@ for more information.
 .It
 Misc
 .Bl -bullet
-.It
-To adjust the system to your local timezone, point the
-.Pa /etc/localtime
-symlink to the appropriate file under
-.Pa /usr/share/zoneinfo .
 .It
 Edit
 .Pa /etc/mail/aliases
