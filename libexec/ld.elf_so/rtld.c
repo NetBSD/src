@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.83 2002/10/03 01:09:21 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.84 2002/10/03 20:35:20 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -221,7 +221,6 @@ _rtld(sp, relocbase)
 	const char     *ld_bind_now;
 	const char    **argv;
 	long		argc;
-	Obj_Entry	*obj;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
@@ -344,8 +343,8 @@ _rtld(sp, relocbase)
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
 		int             fd = pAUX_execfd->a_v;
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(argv[0] ? xstrdup(argv[0]) :
-		    xstrdup("main program"), fd, NULL);
+		_rtld_objmain = _rtld_map_object(xstrdup(argv[0] ? argv[0] :
+		    "main program"), fd, NULL);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();
@@ -364,6 +363,8 @@ _rtld(sp, relocbase)
 		assert(pAUX_entry != NULL);
 		entry = (caddr_t) pAUX_entry->a_v;
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
+		_rtld_objmain->path = xstrdup(argv[0] ? argv[0] :
+		    "main program");
 	}
 
 	_rtld_objmain->mainprog = true;
@@ -381,13 +382,16 @@ _rtld(sp, relocbase)
 	
 	_rtld_digest_dynamic(_rtld_objmain);
 
-	_rtld_linkmap_add(_rtld_objmain);
-	_rtld_linkmap_add(&_rtld_objself);
-
 	/* Link the main program into the list of objects. */
 	*_rtld_objtail = _rtld_objmain;
 	_rtld_objtail = &_rtld_objmain->next;
+
+	_rtld_linkmap_add(_rtld_objmain);
+	_rtld_linkmap_add(&_rtld_objself);
+
 	++_rtld_objmain->refcount;
+	_rtld_objmain->mainref = 1;
+	_rtld_objlist_add(&_rtld_list_main, _rtld_objmain);
 
 	/* Initialize a fake symbol for resolving undefined weak references. */
 	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
@@ -402,13 +406,8 @@ _rtld(sp, relocbase)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_MAIN) == -1)
 		_rtld_die();
-
-	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
-		obj->main = 1;
-		_rtld_objlist_add(&_rtld_list_main, obj);
-	}
 
 	dbg(("relocating objects"));
 	if (_rtld_relocate_objects(_rtld_objmain, bind_now) == -1)
@@ -499,9 +498,14 @@ _rtld_init_dag1(root, obj)
 {
 	const Needed_Entry *needed;
 
-	_rtld_objlist_add(&obj->dldags, root);
-	if (!obj->main)
+	if (!obj->mainref) {
+		if (_rtld_objlist_find(&obj->dldags, root))
+			return;
+		rdbg(("add %p (%s) to %p (%s) DAG", obj, obj->path, root,
+		    root->path));
+		_rtld_objlist_add(&obj->dldags, root);
 		_rtld_objlist_add(&root->dagmembers, obj);
+	}
 	for (needed = obj->needed; needed != NULL; needed = needed->next)
 		if (needed->obj != NULL)
 			_rtld_init_dag1(root, needed->obj);
@@ -532,7 +536,10 @@ _rtld_unload_object(root, do_fini_funcs)
 			_rtld_objlist_remove(&elm->obj->dldags, root);
 
 		/* Remove the DAG from the RTLD_GLOBAL list. */
-		_rtld_objlist_remove(&_rtld_list_global, root);
+		if (root->globalref) {
+			root->globalref = 0;
+			_rtld_objlist_remove(&_rtld_list_global, root);
+		}
 
 		/* Unmap all objects that are no longer referenced. */
 		linkp = &_rtld_objlist->next;

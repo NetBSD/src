@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.19 2002/09/23 23:56:46 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.20 2002/10/03 20:35:19 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -153,9 +153,16 @@ _rtld_load_object(filepath, mode)
 		free(filepath);
 
 	++obj->refcount;
-	if ((mode & RTLD_GLOBAL) &&
-	    _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
+	if (mode & RTLD_MAIN && !obj->mainref) {
+		obj->mainref = 1;
+		rdbg(("adding %p (%s) to _rtld_list_main", obj, obj->path));
+		_rtld_objlist_add(&_rtld_list_main, obj);
+	}
+	if (mode & RTLD_GLOBAL && !obj->globalref) {
+		obj->globalref = 1;
+		rdbg(("adding %p (%s) to _rtld_list_global", obj, obj->path));
 		_rtld_objlist_add(&_rtld_list_global, obj);
+	}
 	return obj;
 }
 
@@ -291,7 +298,7 @@ _rtld_preload(preload_path)
 	if (preload_path != NULL) {
 		cp = buf = xstrdup(preload_path);
 		while ((path = strsep(&cp, " :")) != NULL && status == 0) {
-			if (!_rtld_load_object(xstrdup(path), RTLD_GLOBAL))
+			if (!_rtld_load_object(xstrdup(path), RTLD_MAIN))
 				status = -1;
 			else
 				dbg((" preloaded \"%s\"", path));
