@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.8 1998/11/09 16:36:16 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.9 1998/11/11 19:22:08 rvb Exp $	*/
 
 /*
  * 
@@ -52,6 +52,13 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.9  1998/11/11 19:22:08  rvb
+ * Lookup now passes up an extra flag.  But old veni will
+ * be ok; new veni will check /dev/cfs0 to make sure that a new
+ * kernel is running.
+ * Also, a bug in vc_nb_close iff CODA_SIGNAL's were seen has been
+ * fixed.
+ *
  * Revision 1.8  1998/11/09 16:36:16  rvb
  * Change the way unmounting happens to guarantee that the
  * client programs are allowed to finish up (coda_call is
@@ -285,7 +292,7 @@ vc_nb_close (dev, flag, mode, p)
     struct proc *p;
 {
     register struct vcomm *vcp;
-    register struct vmsg *vmp;
+    register struct vmsg *vmp, *nvmp = NULL;
     struct coda_mntinfo *mi;
     int                 err;
 	
@@ -321,8 +328,9 @@ vc_nb_close (dev, flag, mode, p)
     /* Wakeup clients so they can return. */
     for (vmp = (struct vmsg *)GETNEXT(vcp->vc_requests);
 	 !EOQ(vmp, vcp->vc_requests);
-	 vmp = (struct vmsg *)GETNEXT(vmp->vm_chain))
+	 nvmp = vmp)
     {	    
+    	nvmp = (struct vmsg *)GETNEXT(vmp->vm_chain);
 	/* Free signal request messages and don't wakeup cause
 	   no one is waiting. */
 	if (vmp->vm_opcode == CODA_SIGNAL) {
@@ -547,6 +555,22 @@ vc_nb_ioctl(dev, cmd, addr, flag, p)
 	    return(ENODEV);
 	}
 	break;
+    case CIOC_KERNEL_VERSION:
+	switch (*(u_int *)addr) {
+	case 0:
+		*(u_int *)addr = coda_kernel_version;
+		return 0;
+		break;
+	case 1:
+	case 2:
+		if (coda_kernel_version != *(u_int *)addr)
+		    return ENOENT;
+		else
+		    return 0;
+	default:
+		return ENOENT;
+	}
+    	break;
     default :
 	return(EINVAL);
 	break;

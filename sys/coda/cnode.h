@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.4 1998/09/15 02:02:58 rvb Exp $	*/
+/*	$NetBSD: cnode.h,v 1.5 1998/11/11 19:22:08 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,13 @@
 /* 
  * HISTORY
  * $Log: cnode.h,v $
+ * Revision 1.5  1998/11/11 19:22:08  rvb
+ * Lookup now passes up an extra flag.  But old veni will
+ * be ok; new veni will check /dev/cfs0 to make sure that a new
+ * kernel is running.
+ * Also, a bug in vc_nb_close iff CODA_SIGNAL's were seen has been
+ * fixed.
+ *
  * Revision 1.4  1998/09/15 02:02:58  rvb
  * Final piece of rename cfs->coda
  *
@@ -293,19 +300,20 @@ enum dc_status {
 };
 
 /* cfs_psdev.h */
-int coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize, caddr_t buffer);
+extern int coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize, caddr_t buffer);
+extern int coda_kernel_version;
 
 /* cfs_subr.h */
-int  handleDownCall(int opcode, union outputArgs *out);
-void coda_unmounting(struct mount *whoIam);
-int  coda_vmflush(struct cnode *cp);
+extern int  handleDownCall(int opcode, union outputArgs *out);
+extern void coda_unmounting(struct mount *whoIam);
+extern int  coda_vmflush(struct cnode *cp);
 
 /* cfs_vnodeops.h */
-struct cnode *make_coda_node(ViceFid *fid, struct mount *vfsp, short type);
-int coda_vnodeopstats_init(void);
+extern struct cnode *make_coda_node(ViceFid *fid, struct mount *vfsp, short type);
+extern int coda_vnodeopstats_init(void);
 
 /* coda_vfsops.h */
-struct mount *devtomp(dev_t dev);
+extern struct mount *devtomp(dev_t dev);
 
 /* sigh */
 #define CODA_RDWR ((u_long) 31)
