@@ -31,7 +31,7 @@ or implied warranty.
 
 #include <kdc.h>
 
-RCSID("$Id: krb_kdb_utils.c,v 1.2 2000/12/29 02:52:36 assar Exp $");
+RCSID("$Id: krb_kdb_utils.c,v 1.3 2001/09/17 12:21:42 assar Exp $");
 
 /* always try /.k for backwards compatibility */
 static char *master_key_files[] = { MKEYFILE, "/.k", NULL };
@@ -196,8 +196,8 @@ kdb_encrypt_key (des_cblock (*in), des_cblock (*out),
 #ifdef NOENCRYPTION
   memcpy(out, in, sizeof(des_cblock));
 #else
-  des_pcbc_encrypt((const void *)in,(void *)out,(long)sizeof(des_cblock),master_key_sched,master_key,
-		   e_d_flag);
+  des_pcbc_encrypt((const void *)in, (void *)out, sizeof(des_cblock),
+		   master_key_sched,master_key, e_d_flag);
 #endif
 }
 
