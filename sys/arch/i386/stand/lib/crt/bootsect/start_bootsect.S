@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.11 1999/04/01 17:07:54 drochner Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.12 1999/04/01 19:36:09 drochner Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -473,6 +473,7 @@ ENTRY(exit)
 	data32
 	call	message
 
+#ifdef notyet
 	/* sleep for 3s = 0x2dc6c0 us */
 	movb	$0x86, %ah
 	data32
@@ -483,6 +484,10 @@ ENTRY(exit)
 
 	/* call ROM BASIC */
 	int	$0x18
+#else
+	cli
+	hlt
+#endif
 
 CR0_PE		=	0x1
 
