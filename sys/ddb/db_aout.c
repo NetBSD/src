@@ -26,7 +26,10 @@
 /*
  * HISTORY
  * $Log: db_aout.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/07 09:13:53  cgd
+ * make SYMTAB_SPACE user-definable, as an "option"
+ *
+ * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 1.1  1992/03/25  21:44:55  pace
@@ -80,7 +83,9 @@
 	(sp = (struct nlist *)((symtab) + 1), \
 	 ep = (struct nlist *)((char *)sp + *(symtab)))
 
+#ifndef SYMTAB_SPACE
 #define SYMTAB_SPACE 63000
+#endif
 int db_symtabsize = SYMTAB_SPACE;
 char db_symtab[SYMTAB_SPACE] = { 1 };
 
