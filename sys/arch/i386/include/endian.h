@@ -31,8 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.4 1993/08/16 18:30:35 jtc Exp $
+ *	$Id: endian.h,v 1.5 1993/09/16 02:25:45 mycroft Exp $
  */
+
+/*
+ * Define the order of 32-bit words in 64-bit words.
+ */
+#define _QUAD_HIGHWORD 1
+#define _QUAD_LOWWORD 0
 
 /*
  * Definitions for byte order, according to byte significance from low
