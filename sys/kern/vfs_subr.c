@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.111 1999/10/01 21:57:42 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112 1999/10/01 22:03:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -909,6 +909,12 @@ vget(vp, flags)
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_usecount++;
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount == 0) {
+		vprint("vget", vp);
+		panic("vget: usecount overflow");
+	}
+#endif
 	if (flags & LK_TYPE_MASK) {
 		if ((error = vn_lock(vp, flags | LK_INTERLOCK)))
 			vrele(vp);
@@ -1031,6 +1037,12 @@ vref(vp)
 	if (vp->v_usecount <= 0)
 		panic("vref used where vget required");
 	vp->v_usecount++;
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount == 0) {
+		vprint("vref", vp);
+		panic("vref: usecount overflow");
+	}
+#endif
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
@@ -1143,9 +1155,16 @@ vclean(vp, flags, p)
 	 * so that its count cannot fall to zero and generate a
 	 * race against ourselves to recycle it.
 	 */
-	if ((active = vp->v_usecount) != 0)
+	if ((active = vp->v_usecount) != 0) {
 		/* We have the vnode interlock. */
 		vp->v_usecount++;
+#ifdef DIAGNOSTIC
+		if (vp->v_usecount == 0) {
+			vprint("vclean", vp);
+			panic("vclean: usecount overflow");
+		}
+#endif
+	}
 
 	/*
 	 * Prevent the vnode from being recycled or
@@ -1459,7 +1478,7 @@ vprint(label, vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("type %s, usecount %d, writecount %d, refcount %ld,",
+	printf("type %s, usecount %ld, writecount %ld, refcount %ld,",
 	    typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 	    vp->v_holdcnt);
 	buf[0] = '\0';
