@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.6 (Berkeley) 8/30/92";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:08:54 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1993/12/22 07:38:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -294,6 +294,8 @@ mf_fgets(sp, spflag)
 	p = fgetline(f, &len);
 	if (ferror(f))
 		err(FATAL, "%s: %s", fname, strerror(errno ? errno : EIO));
+	if (p[len-1] == '\n')
+		p[--len] = '\0';
 	cspace(sp, p, len, spflag);
 
 	linenum++;
