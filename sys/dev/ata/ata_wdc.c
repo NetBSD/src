@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.13 1998/10/04 15:50:23 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.14 1998/10/04 19:19:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -312,8 +312,6 @@ again:
 	}
 	/* If this was a write and not using DMA, push the data. */
 	if ((ata_bio->flags & ATA_READ) == 0) {
-		/* Wait for at last 400ns for status bit to be valid */
-		delay(1);
 		if (wait_for_drq(chp, ATA_DELAY) != 0) {
 			printf("%s:%d:%d: timeout waiting for DRQ, "
 			    "st=0x%02x, err=0x%02x\n",
