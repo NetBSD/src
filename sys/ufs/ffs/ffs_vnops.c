@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.62 2003/11/08 04:22:36 dbj Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.63 2003/11/08 04:39:00 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.62 2003/11/08 04:22:36 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.63 2003/11/08 04:39:00 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,12 +373,18 @@ loop:
 		bp->b_flags &= ~B_SCANNED;
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		if (bp->b_flags & (B_BUSY | B_SCANNED))
+		simple_lock(&bp->b_interlock);
+		if (bp->b_flags & (B_BUSY | B_SCANNED)) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
-		if (skipmeta && bp->b_lblkno < 0)
+		if (skipmeta && bp->b_lblkno < 0) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
+		simple_unlock(&bp->b_interlock);
 		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
 		splx(s);
 		/*
