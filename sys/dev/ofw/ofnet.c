@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.12 1998/01/27 23:55:18 cgd Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.13 1998/02/24 05:44:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,41 +64,41 @@ struct cfattach ipkdb_ofn_ca = {
 };
 
 static struct ipkdb_if *kifp;
-static struct ofn_softc *ipkdb_of;
+static struct ofnet_softc *ipkdb_of;
 
 static int ipkdbprobe __P((struct cfdata *, void *));
 #endif
 
-struct ofn_softc {
+struct ofnet_softc {
 	struct device sc_dev;
 	int sc_phandle;
 	int sc_ihandle;
 	struct ethercom sc_ethercom;
 };
 
-static int ofnprobe __P((struct device *, struct cfdata *, void *));
-static void ofnattach __P((struct device *, struct device *, void *));
+static int ofnet_match __P((struct device *, struct cfdata *, void *));
+static void ofnet_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ofnet_ca = {
-	sizeof(struct ofn_softc), ofnprobe, ofnattach
+	sizeof(struct ofnet_softc), ofnet_match, ofnet_attach
 };
 
-static void ofnread __P((struct ofn_softc *));
-static void ofntimer __P((struct ofn_softc *));
-static void ofninit __P((struct ofn_softc *));
-static void ofnstop __P((struct ofn_softc *));
+static void ofnet_read __P((struct ofnet_softc *));
+static void ofnet_timer __P((struct ofnet_softc *));
+static void ofnet_init __P((struct ofnet_softc *));
+static void ofnet_stop __P((struct ofnet_softc *));
 
-static void ofnstart __P((struct ifnet *));
-static int ofnioctl __P((struct ifnet *, u_long, caddr_t));
-static void ofnwatchdog __P((struct ifnet *));
+static void ofnet_start __P((struct ifnet *));
+static int ofnet_ioctl __P((struct ifnet *, u_long, caddr_t));
+static void ofnet_watchdog __P((struct ifnet *));
 
 static int
-ofnprobe(parent, match, aux)
+ofnet_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char type[32];
 	int l;
 	
@@ -106,7 +106,10 @@ ofnprobe(parent, match, aux)
 	if (!parent)
 		return ipkdbprobe(match, aux);
 #endif
-	if ((l = OF_getprop(ofp->phandle, "device_type", type, sizeof type - 1)) < 0)
+	if (strcmp(oba->oba_busname, "ofw"))
+		return (0);
+	if ((l = OF_getprop(oba->oba_phandle, "device_type", type,
+	    sizeof type - 1)) < 0)
 		return 0;
 	if (l >= sizeof type)
 		return 0;
@@ -117,41 +120,41 @@ ofnprobe(parent, match, aux)
 }
 
 static void
-ofnattach(parent, self, aux)
+ofnet_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ofn_softc *of = (void *)self;
+	struct ofnet_softc *of = (void *)self;
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char path[256];
 	int l;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	
-	of->sc_phandle = ofp->phandle;
+	of->sc_phandle = oba->oba_phandle;
 #if NIPKDB_OFN > 0
-	if (kifp
-	    && kifp->unit - 1 == of->sc_dev.dv_unit
-	    && OF_instance_to_package(kifp->port) == ofp->phandle)  {
+	if (kifp &&
+	    kifp->unit - 1 == of->sc_dev.dv_unit &&
+	    OF_instance_to_package(kifp->port) == oba->oba_phandle)  {
 		ipkdb_of = of;
 		of->sc_ihandle = kifp->port;
 	} else
 #endif
-	if ((l = OF_package_to_path(ofp->phandle, path, sizeof path - 1)) < 0
-	    || l >= sizeof path
-	    || (path[l] = 0, !(of->sc_ihandle = OF_open(path))))
-		panic("ofnattach: unable to open");
-	if (OF_getprop(ofp->phandle, "mac-address",
-		       myaddr, sizeof myaddr)
-	    < 0)
-		panic("ofnattach: no mac-address");
+	if ((l = OF_package_to_path(oba->oba_phandle, path,
+	    sizeof path - 1)) < 0 ||
+	    l >= sizeof path ||
+	    (path[l] = 0, !(of->sc_ihandle = OF_open(path))))
+		panic("ofnet_attach: unable to open");
+	if (OF_getprop(oba->oba_phandle, "mac-address", myaddr,
+	    sizeof myaddr) < 0)
+		panic("ofnet_attach: no mac-address");
 	printf(": address %s\n", ether_sprintf(myaddr));
 	
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = of;
-	ifp->if_start = ofnstart;
-	ifp->if_ioctl = ofnioctl;
-	ifp->if_watchdog = ofnwatchdog;
+	ifp->if_start = ofnet_start;
+	ifp->if_ioctl = ofnet_ioctl;
+	ifp->if_watchdog = ofnet_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	if_attach(ifp);
@@ -167,8 +170,8 @@ ofnattach(parent, self, aux)
 static char buf[ETHERMTU + sizeof(struct ether_header)];
 
 static void
-ofnread(of)
-	struct ofn_softc *of;
+ofnet_read(of)
+	struct ofnet_softc *of;
 {
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct ether_header *eh;
@@ -264,16 +267,16 @@ ofnread(of)
 }
 
 static void
-ofntimer(of)
-	struct ofn_softc *of;
+ofnet_timer(of)
+	struct ofnet_softc *of;
 {
-	ofnread(of);
-	timeout(ofntimer, of, 1);
+	ofnet_read(of);
+	timeout(ofnet_timer, of, 1);
 }
 
 static void
-ofninit(of)
-	struct ofn_softc *of;
+ofnet_init(of)
+	struct ofnet_softc *of;
 {
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 
@@ -282,24 +285,24 @@ ofninit(of)
 
 	ifp->if_flags |= IFF_RUNNING;
 	/* Start reading from interface */
-	ofntimer(of);
+	ofnet_timer(of);
 	/* Attempt to start output */
-	ofnstart(ifp);
+	ofnet_start(ifp);
 }
 
 static void
-ofnstop(of)
-	struct ofn_softc *of;
+ofnet_stop(of)
+	struct ofnet_softc *of;
 {
-	untimeout(ofntimer, of);
+	untimeout(ofnet_timer, of);
 	of->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
 }
 
 static void
-ofnstart(ifp)
+ofnet_start(ifp)
 	struct ifnet *ifp;
 {
-	struct ofn_softc *of = ifp->if_softc;
+	struct ofnet_softc *of = ifp->if_softc;
 	struct mbuf *m, *m0;
 	char *bufp;
 	int len;
@@ -309,7 +312,7 @@ ofnstart(ifp)
 
 	for (;;) {
 		/* First try reading any packets */
-		ofnread(of);
+		ofnet_read(of);
 		
 		/* Now get the first packet on the queue */
 		IF_DEQUEUE(&ifp->if_snd, m0);
@@ -317,7 +320,7 @@ ofnstart(ifp)
 			return;
 		
 		if (!(m0->m_flags & M_PKTHDR))
-			panic("ofnstart: no header mbuf");
+			panic("ofnet_start: no header mbuf");
 		len = m0->m_pkthdr.len;
 
 #if NBPFILTER > 0
@@ -345,12 +348,12 @@ ofnstart(ifp)
 }
 
 static int
-ofnioctl(ifp, cmd, data)
+ofnet_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	struct ofn_softc *of = ifp->if_softc;
+	struct ofnet_softc *of = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int error = 0;
@@ -368,17 +371,17 @@ ofnioctl(ifp, cmd, data)
 		default:
 			break;
 		}
-		ofninit(of);
+		ofnet_init(of);
 		break;
 	case SIOCSIFFLAGS:
-		if (!(ifp->if_flags & IFF_UP)
-		    && (ifp->if_flags & IFF_RUNNING)) {
+		if ((ifp->if_flags & IFF_UP) == 0 &&
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/* If interface is down, but running, stop it. */
-			ofnstop(of);
-		} else if ((ifp->if_flags & IFF_UP)
-			   && !(ifp->if_flags & IFF_RUNNING)) {
+			ofnet_stop(of);
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/* If interface is up, but not running, start it. */
-			ofninit(of);
+			ofnet_init(of);
 		} else {
 			/* Other flags are ignored. */
 		}
@@ -391,15 +394,15 @@ ofnioctl(ifp, cmd, data)
 }
 
 static void
-ofnwatchdog(ifp)
+ofnet_watchdog(ifp)
 	struct ifnet *ifp;
 {
-	struct ofn_softc *of = ifp->if_softc;
+	struct ofnet_softc *of = ifp->if_softc;
 	
 	log(LOG_ERR, "%s: device timeout\n", of->sc_dev.dv_xname);
 	ifp->if_oerrors++;
-	ofnstop(of);
-	ofninit(of);
+	ofnet_stop(of);
+	ofnet_init(of);
 }
 
 #if NIPKDB_OFN > 0
@@ -458,14 +461,14 @@ ipkdbprobe(match, aux)
 
 	if (!(kip->port = OF_open("net")))
 		return -1;
-	if ((len = OF_instance_to_path(kip->port, name, sizeof name - 1)) < 0
-	    || len >= sizeof name)
+	if ((len = OF_instance_to_path(kip->port, name, sizeof name - 1)) < 0 ||
+	    len >= sizeof name)
 		return -1;
 	name[len] = 0;
 	if ((phandle = OF_instance_to_package(kip->port)) == -1)
 		return -1;
-	if (OF_getprop(phandle, "mac-address", kip->myenetaddr, sizeof kip->myenetaddr)
-	    < 0)
+	if (OF_getprop(phandle, "mac-address", kip->myenetaddr,
+	    sizeof kip->myenetaddr) < 0)
 		return -1;
 	
 	kip->flags |= IPKDB_MYHW;

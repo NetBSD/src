@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.9 1998/02/03 16:58:25 cgd Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.10 1998/02/24 05:44:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,27 +37,23 @@
 
 #include <dev/ofw/openfirm.h>
 
-int ofbprobe __P((struct device *, struct cfdata *, void *));
-void ofbattach __P((struct device *, struct device *, void *));
-static int ofbprint __P((void *, const char *));
+int ofbus_match __P((struct device *, struct cfdata *, void *));
+void ofbus_attach __P((struct device *, struct device *, void *));
+static int ofbus_print __P((void *, const char *));
 
 struct cfattach ofbus_ca = {
-	sizeof(struct device), ofbprobe, ofbattach
+	sizeof(struct device), ofbus_match, ofbus_attach
 };
 
-struct cfattach ofroot_ca = {
-	sizeof(struct device), ofbprobe, ofbattach
-};
- 
 static int
-ofbprint(aux, pnp)
+ofbus_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char name[64];
 
-	(void)of_packagename(ofp->phandle, name, sizeof name);
+	(void)of_packagename(oba->oba_phandle, name, sizeof name);
 	if (pnp)
 		printf("%s at %s", name, pnp);
 	else
@@ -66,27 +62,29 @@ ofbprint(aux, pnp)
 }
 
 int
-ofbprobe(parent, cf, aux)
+ofbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
-	
-	if (!OF_child(ofp->phandle))
-		return 0;
-	return 1;
+	struct ofbus_attach_args *oba = aux;
+
+	if (strcmp(oba->oba_busname, "ofw"))
+		return (0);
+	if (!OF_child(oba->oba_phandle))
+		return (0);
+	return (1);
 }
 
 void
-ofbattach(parent, dev, aux)
+ofbus_attach(parent, dev, aux)
 	struct device *parent, *dev;
 	void *aux;
 {
 	int child;
 	char name[5];
-	struct ofprobe *ofp = aux;
-	struct ofprobe probe;
+	struct ofbus_attach_args *oba = aux;
+	struct ofbus_attach_args oba2;
 	int units;
 
 	printf("\n");
@@ -97,14 +95,15 @@ ofbattach(parent, dev, aux)
 	 * DEVICES ON THESE BUSSES.
 	 */
 	units = 1;
-	if (OF_getprop(ofp->phandle, "name", name, sizeof name) > 0) {
+	if (OF_getprop(oba->oba_phandle, "name", name, sizeof name) > 0) {
 		if (!strcmp(name, "scsi"))
 			units = 7; /* What about wide or hostid != 7?	XXX */
 		else if (!strcmp(name, "ide"))
 			units = 2;
 	}
 
-	for (child = OF_child(ofp->phandle); child; child = OF_peer(child)) {
+	for (child = OF_child(oba->oba_phandle); child;
+	    child = OF_peer(child)) {
 		/*
 		 * This is a hack to skip all the entries in the tree
 		 * that aren't devices (packages, openfirmware etc.).
@@ -112,8 +111,9 @@ ofbattach(parent, dev, aux)
 		if (OF_getprop(child, "device_type", name, sizeof name) < 0 &&
 		    OF_getprop(child, "compatible", name, sizeof name) < 0)
 			continue;
-		probe.phandle = child;
-		for (probe.unit = 0; probe.unit < units; probe.unit++)
-			config_found(dev, &probe, ofbprint);
+		oba2.oba_busname = "ofw";
+		oba2.oba_phandle = child;
+		for (oba2.oba_unit = 0; oba2.oba_unit < units; oba2.oba_unit++)
+			config_found(dev, &oba2, ofbus_print);
 	}
 }

@@ -1,39 +1,35 @@
-#	$NetBSD: files.ofw,v 1.7 1998/02/16 22:12:49 thorpej Exp $
+#	$NetBSD: files.ofw,v 1.8 1998/02/24 05:44:39 mycroft Exp $
 #
 # First cut on Openfirmware interface
 #
 
-define	openfirm {}
+define	ofbus {}
 
-file	dev/ofw/ofw_subr.c		openfirm
+file	dev/ofw/ofw_subr.c		ofbus
 
 # Generic disk support
 device	ofdisk: disk
-attach	ofdisk at openfirm
+attach	ofdisk at ofbus
 file	dev/ofw/ofdisk.c		ofdisk needs-flag
 
 # Generic net support
 define	ipkdbofn { [ disable = 0 ] }
 device	ofnet: ether, ifnet, ipkdbofn, arp
-attach	ofnet at openfirm
+attach	ofnet at ofbus
 file	dev/ofw/ofnet.c			ofnet | ipkdb_ofn needs-flag
 attach	ipkdbif at ipkdbofn with ipkdb_ofn
 
 # Generic console support
 device	ofcons: tty
-attach	ofcons at openfirm
+attach	ofcons at ofbus
 file	dev/ofw/ofcons.c		ofcons needs-flag
 
 # Generic RTC support
-device ofrtc
-attach	ofrtc at openfirm
+device	ofrtc
+attach	ofrtc at ofbus
 file	dev/ofw/ofrtc.c			ofrtc needs-flag
 
 # Generic bus support
-device	ofbus: openfirm
-attach	ofbus at openfirm
-file	dev/ofw/ofbus.c			openfirm
-
-device	ofroot: openfirm
-attach	ofroot at root
-
+device	ofbus
+attach	ofbus at ofbus
+file	dev/ofw/ofbus.c			ofbus

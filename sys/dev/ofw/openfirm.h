@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.6 1998/02/03 16:58:27 cgd Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.7 1998/02/24 05:44:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,8 +47,9 @@
  * This is how all probe structures must start
  * in order to support generic OpenFirmware device drivers.
  */
-struct ofprobe {
-	int phandle;
+struct ofbus_attach_args {
+	char *oba_busname;
+	int oba_phandle;
 	/*
 	 * Special unit field for disk devices.
 	 * This is a KLUDGE to work around the fact that OpenFirmware
@@ -56,7 +57,7 @@ struct ofprobe {
 	 * YES, I THINK THIS IS A BUG IN THE OPENFIRMWARE DEFINITION!!!	XXX
 	 * See also ofdisk.c.
 	 */
-	int unit;
+	int oba_unit;
 };
 
 /*
