@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.225 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: wd.c,v 1.226 2002/09/27 17:17:53 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.225 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.226 2002/09/27 17:17:53 drochner Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1266,10 +1266,6 @@ wddump(dev, blkno, va, size)
 		return (ENXIO);
 
 	part = WDPART(dev);
-
-	/* Make sure it was initialized. */
-	if (wd->drvp->state < READY)
-		return ENXIO;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = wd->sc_dk.dk_label;
