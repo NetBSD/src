@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/07/24 09:27:40 tsubai Exp $
+#	$NetBSD: Makefile,v 1.11 2000/09/13 15:53:29 matt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,6 +12,7 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
+VND_RDEVC=	/dev/r${VND}c
 FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
 MDEC=		${DESTDIR}/usr/mdec
@@ -25,7 +26,7 @@ DISKTYPE=	floppy
 
 CLEANFILES+=	netbsd.ram.gz netbsd.tmp
 
-all: netbsd.ram.gz
+dependall all: netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
@@ -38,7 +39,7 @@ all: netbsd.ram.gz
 	@echo ""
 	@echo "installing new bootblocks"
 	sync
-	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEV}
+	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEVC}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
 
