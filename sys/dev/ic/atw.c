@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.72 2004/07/23 08:36:01 mycroft Exp $	*/
+/*	$NetBSD: atw.c,v 1.73 2004/07/23 10:15:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.72 2004/07/23 08:36:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.73 2004/07/23 10:15:13 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -2542,13 +2542,12 @@ atw_next_scan(void *arg)
 {
 	struct atw_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	int s;
 
 	/* don't call atw_start w/o network interrupts blocked */
 	s = splnet();
 	if (ic->ic_state == IEEE80211_S_SCAN)
-		ieee80211_next_scan(ifp);
+		ieee80211_next_scan(ic);
 	splx(s);
 }
 
