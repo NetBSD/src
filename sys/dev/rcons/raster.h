@@ -1,4 +1,4 @@
-/*	$NetBSD: raster.h,v 1.3 1995/11/24 23:50:51 cgd Exp $ */
+/*	$NetBSD: raster.h,v 1.4 1999/01/11 11:08:14 drochner Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@
 
 /* CONFIGURE: The text routines can optionally keep a cache of 8-bit
 ** characters.  This uses about 30K, but makes text on a color screen
-** go 3.2 times faster.
+** go 3.2 times faster.  XXX: it will also break 2bpp displays.
 */
 #undef COLORFONT_CACHE
 
@@ -85,7 +85,7 @@
 /* Raster struct. */
 struct raster {
     int width, height;	/* size in pixels */
-    int depth;		/* bits per pixel - 1 or 8 */
+    int depth;		/* bits per pixel - 1, 2, or 8 */
     int linelongs;	/* longs from one line to the next - for padding */
     u_int32_t *pixels;	/* pointer to the actual bits */
     caddr_t data;	/* special pointer for frame buffers and subregions */
