@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.21 2001/02/25 17:17:56 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.22 2001/02/27 19:57:51 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -69,6 +69,8 @@
 
 #include "beep.h"
 #include "locators.h"
+
+extern int *iomd_base;
 
 struct beep_softc {
 	struct device sc_device;
