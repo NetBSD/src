@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.19 1997/04/07 23:40:29 cgd Exp $ */
+/* $NetBSD: cia.c,v 1.20 1997/04/10 23:12:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.19 1997/04/07 23:40:29 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.20 1997/04/10 23:12:17 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ ciaattach(parent, self, aux)
 	pba.pba_memt = ccp->cc_memt;
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &pba, ciaprint);
 }
 

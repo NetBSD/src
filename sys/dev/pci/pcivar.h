@@ -1,7 +1,7 @@
-/*	$NetBSD: pcivar.h,v 1.18 1996/12/01 21:02:18 leo Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.19 1997/04/10 23:12:23 cgd Exp $	*/
 
 /*
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,10 +70,11 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  * PCI bus attach arguments.
  */
 struct pcibus_attach_args {
-	char	*pba_busname;		/* XXX should be common */
+	char		*pba_busname;	/* XXX should be common */
 	bus_space_tag_t pba_iot;	/* pci i/o space tag */
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
 	pci_chipset_tag_t pba_pc;
+	int		pba_flags;	/* flags; see below */
 
 	int		pba_bus;	/* PCI bus number */
 
@@ -92,6 +93,7 @@ struct pci_attach_args {
 	bus_space_tag_t pa_iot;		/* pci i/o space tag */
 	bus_space_tag_t pa_memt;	/* pci mem space tag */
 	pci_chipset_tag_t pa_pc;
+	int		pa_flags;	/* flags; see below */
 
 	u_int		pa_device;
 	u_int		pa_function;
@@ -111,6 +113,12 @@ struct pci_attach_args {
 	pci_intr_pin_t	pa_intrpin;	/* intr. appears on this pin */
 	pci_intr_line_t	pa_intrline;	/* intr. routing information */
 };
+
+/*
+ * Flags given in the bus and device attachment args.
+ */
+#define	PCI_FLAGS_IO_ENABLED	0x01		/* I/O space is enabled */
+#define	PCI_FLAGS_MEM_ENABLED	0x02		/* memory space is enabled */
 
 /*
  * Locators devices that attach to 'pcibus', as specified to config.
