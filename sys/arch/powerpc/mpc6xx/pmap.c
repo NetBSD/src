@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2002/07/07 00:43:11 dbj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2002/07/17 03:11:08 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -122,13 +122,6 @@ u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_remove_depth;
 #endif
 u_int64_t pmap_pte_spills = 0;
-struct pvo_entry *pmap_pvo_syncicache;
-struct pvo_entry *pmap_pvo_zeropage;
-struct pvo_entry *pmap_pvo_copypage_src;
-struct pvo_entry *pmap_pvo_copypage_dst;
-
-vaddr_t pmap_rkva_start = VM_MIN_KERNEL_ADDRESS;
-unsigned int pmap_rkva_count = 4;
 
 int physmem;
 #ifndef MSGBUFADDR
@@ -242,12 +235,8 @@ STATIC void pmap_pvo_remove(struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
-STATIC struct pvo_entry *pmap_rkva_alloc(int);
-STATIC void pmap_pa_map(struct pvo_entry *, paddr_t, pte_t *, int *);
-STATIC void pmap_pa_unmap(struct pvo_entry *, pte_t *, int *);
 STATIC void tlbia(void);
 
-STATIC void pmap_syncicache(paddr_t, psize_t);
 STATIC void pmap_release (pmap_t);
 STATIC void *pmap_boot_find_memory(psize_t, psize_t, int);
 
@@ -834,7 +823,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 	 * For now, reserve one segment (minus some overhead) for kernel
 	 * virtual memory
 	 */
-	*start = VM_MIN_KERNEL_ADDRESS + pmap_rkva_count * NBPG;
+	*start = VM_MIN_KERNEL_ADDRESS;
 	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
@@ -987,70 +976,6 @@ pmap_collect(pmap_t pm)
 {
 }
 
-/*
- * Fill the given physical page with zeroes.
- */
-void
-pmap_zero_page(paddr_t pa)
-{
-	caddr_t va;
-
-	if (pa < SEGMENT_LENGTH) {
-		va = (caddr_t) pa;
-	} else if (pmap_initialized) {
-		if (__predict_false(pmap_pvo_zeropage == NULL))
-			pmap_pvo_zeropage = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		pmap_pa_map(pmap_pvo_zeropage, pa, NULL, NULL);
-		va = (caddr_t) PVO_VADDR(pmap_pvo_zeropage);
-	} else {
-		panic("pmap_zero_page: can't zero pa %#lx", pa);
-	}
-#if 1
-	memset(va, 0, NBPG);
-#else
-	{
-		int i;
-
-		for (i = NBPG/CACHELINESIZE; i > 0; i--) {
-			__asm __volatile ("dcbz 0,%0" :: "r"(va));
-			va += CACHELINESIZE;
-		}
-	}
-#endif
-	if (pa >= SEGMENT_LENGTH)
-		pmap_pa_unmap(pmap_pvo_zeropage, NULL, NULL);
-}
-
-/*
- * Copy the given physical source page to its destination.
- */
-void
-pmap_copy_page(paddr_t src, paddr_t dst)
-{
-	if (src < SEGMENT_LENGTH && dst < SEGMENT_LENGTH) {
-		memcpy((void *) dst, (void *) src, NBPG);
-		return;
-	}
-	if (pmap_initialized) {
-		if (__predict_false(pmap_pvo_copypage_src == NULL))
-			pmap_pvo_copypage_src = pmap_rkva_alloc(VM_PROT_READ);
-		if (__predict_false(pmap_pvo_copypage_dst == NULL))
-			pmap_pvo_copypage_dst = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-
-		pmap_pa_map(pmap_pvo_copypage_src, src, NULL, NULL);
-		pmap_pa_map(pmap_pvo_copypage_dst, dst, NULL, NULL);
-
-		memcpy((caddr_t)PVO_VADDR(pmap_pvo_copypage_dst),
-		    (caddr_t)PVO_VADDR(pmap_pvo_copypage_src),
-		    NBPG);
-
-		pmap_pa_unmap(pmap_pvo_copypage_src, NULL, NULL);
-		pmap_pa_unmap(pmap_pvo_copypage_dst, NULL, NULL);
-		return;
-	}
-	panic("pmap_copy_page: failed to copy contents of pa %#lx to pa %#lx", src, dst);
-}
-
 static __inline int
 pmap_pvo_pte_index(const struct pvo_entry *pvo, int ptegidx)
 {
@@ -1156,164 +1081,6 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 		}
 	}
 	return NULL;
-}
-
-void
-pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
-{
-	u_int32_t msr;
-	int s;
-
-	s = splvm();
-	msr = pmap_interrupts_off();
-	/*
-	 * If this pvo already has a valid PTE, we need to save it
-	 * so it can restored later.  We then just reload the new
-	 * PTE over the old slot.
-	 */
-	if (saved_pt != NULL) {
-		volatile pte_t *pt;
-		pt = pmap_pvo_to_pte(pvo, -1);
-		if (pt != NULL) {
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-			if (depth_p != NULL && *depth_p == 0)
-				panic("pmap_pa_map: pvo %p: valid pt %p"
-				    " on 0 depth", pvo, pt);
-#endif
-			pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-			PVO_PTEGIDX_CLR(pvo);
-			pmap_pte_overflow++;
-		}
-		*saved_pt = pvo->pvo_pte;
-		DPRINTFN(PAMAP,
-		    ("pmap_pa_map: saved pte %#x/%#x va %#lx\n",
-		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo,
-		    pvo->pvo_vaddr));
-		pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	} else if ((pvo->pvo_pte.pte_hi & PTE_VALID) ||
-	    (depth_p != NULL && (*depth_p) > 0)) {
-		panic("pmap_pa_map: unprotected recursive use of pvo %p", pvo);
-#endif
-	}
-	pvo->pvo_pte.pte_lo |= pa;
-	if (!pmap_pte_spill(pvo->pvo_vaddr))
-		panic("pmap_pa_map: could not spill pvo %p", pvo);
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
-		panic("pmap_pa_map: pvo %p: pte not valid after spill", pvo);
-	if (PVO_PTEGIDX_ISSET(pvo) == 0)
-		panic("pmap_pa_map: pvo %p: no pte index spill", pvo);
-#endif
-	if (depth_p != NULL)
-		(*depth_p)++;
-	pmap_interrupts_restore(msr);
-	splx(s);
-}
-
-void
-pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
-{
-	volatile pte_t *pt;
-	u_int32_t msr;
-	int s;
-	
-	s = splvm();
-	msr = pmap_interrupts_off();
-	pt = pmap_pvo_to_pte(pvo, -1);
-	if (pt != NULL) {
-		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-		PVO_PTEGIDX_CLR(pvo);
-		pmap_pte_overflow++;
-	}
-	pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
-
-	/*
-	 * If there is a saved PTE and its valid, restore it
-	 * and return.
-	 */
-	if (saved_pt != NULL && (saved_pt->pte_lo & PTE_RPGN) != 0) {
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-		if (pvo->pvo_pte.pte_hi != saved_pt->pte_hi)
-			panic("pmap_pa_unmap: pvo %p pte_hi %#x "
-			    "!= saved pte_hi %#x", pvo, pvo->pvo_pte.pte_hi,
-			    saved_pt->pte_hi);
-#endif
-		if (depth_p != NULL && --(*depth_p) == 0)
-			panic("pmap_pa_unmap: restoring but depth == 0");
-		pvo->pvo_pte = *saved_pt;
-		DPRINTFN(PAMAP,
-		    ("pmap_pa_unmap: restored pte %#x/%#x va %#lx\n",
-		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
-		if (!pmap_pte_spill(pvo->pvo_vaddr))
-			panic("pmap_pa_unmap: could not spill pvo %p", pvo);
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
-			panic("pmap_pa_unmap: pvo %p: pte not valid after "
-			    "spill", pvo);
-	} else {
-		if (depth_p != NULL && --(*depth_p) != 0)
-			panic("pmap_pa_unmap: reseting but depth (%u) > 0",
-			    *depth_p);
-#endif
-	}
-
-	pmap_interrupts_restore(msr);
-	splx(s);
-}
-
-void
-pmap_syncicache(paddr_t pa, psize_t len)
-{
-	static int depth;
-	static u_int calls;
-	DPRINTFN(SYNCICACHE, ("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
-	if (pa + len <= SEGMENT_LENGTH) {
-		__syncicache((void *)pa, len);
-		return;
-	}
-	if (pmap_initialized) {
-		pte_t saved_pte;
-		psize_t offset = pa & ADDR_POFF;
-		if (__predict_false(pmap_pvo_syncicache == NULL))
-			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		calls++;
-		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte, &depth);
-		__syncicache((void *)(PVO_VADDR(pmap_pvo_syncicache)|offset),
-		    len);
-		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte, &depth);
-		return;
-	}
-	panic("pmap_syncicache: can't sync the icache @ pa %#lx", pa);
-}
-
-/*
- * Return a unmapped pvo for a kernel virtual address.
- * Used by pmap function that operate of physical pages.
- */
-struct pvo_entry *
-pmap_rkva_alloc(int prot)
-{
-	struct pvo_entry *pvo;
-	volatile pte_t *pt;
-	vaddr_t kva;
-	int pteidx;
-
-	if (pmap_rkva_count == 0)
-		panic("pmap_kva_alloc: no more reserved KVAs!");
-	
-	kva = pmap_rkva_start + (NBPG * --pmap_rkva_count);
-	pmap_kenter_pa(kva, 0, prot);
-	pvo = pmap_pvo_find_va(pmap_kernel(), kva, &pteidx);
-	if (pvo == NULL)
-		panic("pmap_kva_alloc: pmap_pvo_find_va failed!");
-	pt = pmap_pvo_to_pte(pvo, pteidx);
-	if (pt == NULL)
-		panic("pmap_kva_alloc: pmap_pvo_to_pte failed!");
-	pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-	PVO_PTEGIDX_CLR(pvo);
-	pmap_pte_overflow++;
-	return pvo;
 }
 
 #if defined(DEBUG) || defined(PMAPCHECK)
@@ -2463,7 +2230,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	if (uvm.page_init_done == TRUE)
 		panic("pmap_steal_memory: called _after_ bootstrap");
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS + pmap_rkva_count * NBPG;
+	*vstartp = VM_MIN_KERNEL_ADDRESS;
 	*vendp = VM_MAX_KERNEL_ADDRESS;
 
 	size = round_page(vsize);
