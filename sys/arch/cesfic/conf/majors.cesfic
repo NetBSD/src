@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.10 2003/10/15 18:20:19 jdolecek Exp $
+#	$NetBSD: majors.cesfic,v 1.11 2003/10/24 08:18:36 jdolecek Exp $
 #
 # Device majors for cesfic
 #
@@ -20,6 +20,7 @@ device-major	tun		char 13			tun
 device-major	lkm		char 14			lkm
 device-major	md		char 15  block 3	md
 device-major	raid		char 16  block 5	raid
+device-major	sd		char 17  block 6	sd
 
 device-major	rnd		char 21			rnd
 device-major	clockctl	char 22			clockctl
