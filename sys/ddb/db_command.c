@@ -24,9 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
+ * $Id: db_command.c,v 1.3 1993/05/20 03:39:10 cgd Exp $
+ *
  * HISTORY
  * $Log: db_command.c,v $
- * Revision 1.2  1993/03/21 18:04:42  cgd
+ * Revision 1.3  1993/05/20 03:39:10  cgd
+ * add explicit rcs id
+ *
+ * Revision 1.2  1993/03/21  18:08:04  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 1.1.1.1  93/03/21  09:46:26  cgd
