@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.2 1999/04/25 09:10:07 veego Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@ static int do_echo = 1;
 
 /* Routines */
 
-void beep (void)
+void msg_beep (void)
 {
 	fprintf (stderr, "\a");
 }
@@ -155,14 +155,14 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 					wdelch(msg_win);
 				}
 			} else
-				beep ();
+				msg_beep ();
 		}
 		else if (count < max_chars && isprint(ch)) {
 			if (do_echo)
 				waddch (msg_win, ch);
 			val[count++] = ch;
 		} else
-			beep ();
+			msg_beep ();
 		if (do_echo)
 			wrefresh(msg_win);
 	}
