@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.1 1998/07/15 19:44:04 mjacob Exp $ */
-/* $Id: isp_netbsd.c,v 1.1 1998/07/15 19:44:04 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.2 1998/07/18 21:05:04 mjacob Exp $ */
+/* $Id: isp_netbsd.c,v 1.2 1998/07/18 21:05:04 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -45,24 +45,6 @@
  *  2339 3rd Street
  *  Suite 24
  *  San Francisco, CA, 94107
- */
-/*
- * $Log: isp_netbsd.c,v $
- * Revision 1.1  1998/07/15 19:44:04  mjacob
- * NetBSD OS specific routines and definitions.
- *
- * Revision 1.5  1998/07/15 19:35:35  mjacob
- * checkpoint
- *
- * Revision 1.4  1998/06/12 19:48:24  mjacob
- * checkpoint
- *
- * Revision 1.3  1998/04/15 17:40:25  mjacob
- * oops
- *
- * Revision 1.2  1998/04/14 17:31:49  mjacob
- * fix headers
- *
  */
 
 #include <dev/ic/isp_netbsd.h>
