@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.35 2001/01/22 13:56:57 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.36 2001/05/30 15:24:33 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -28,6 +28,7 @@
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2001/05/18 23:32:48 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.48 2001/05/30 15:24:37 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,6 +48,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

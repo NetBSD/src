@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2001/04/24 04:31:06 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2001/05/30 15:24:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>

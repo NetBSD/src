@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2001/02/21 22:52:03 jdolecek Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6 2001/05/30 15:24:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.4 1996/10/13 03:35:22 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.5 2001/05/30 15:24:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,9 +47,12 @@
 /*
  * "Stub" to allow remote cpu to debug over a serial line using gdb.
  */
+
+#include "opt_kgdb.h"
+
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.4 1996/10/13 03:35:22 christos Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.5 2001/05/30 15:24:40 lukem Exp $";
 #endif
 
 #include <sys/param.h>

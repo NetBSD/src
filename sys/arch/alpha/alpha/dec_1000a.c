@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.12 2001/04/25 17:53:04 bouyer Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.13 2001/05/30 15:24:26 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,9 +68,11 @@
  * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.12 2001/04/25 17:53:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.13 2001/05/30 15:24:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

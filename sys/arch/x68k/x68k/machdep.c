@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2001/04/24 04:31:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2001/05/30 15:24:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_m680x0.h"
 #include "opt_fpuemulate.h"

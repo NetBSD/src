@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.95 2001/04/29 06:54:04 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.96 2001/05/30 15:24:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,12 +67,13 @@
 .stabs	__FILE__,100,0,0,kernel_text
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.95 2001/04/29 06:54:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.96 2001/05/30 15:24:27 lukem Exp $");
 
 #include "assym.h"
 

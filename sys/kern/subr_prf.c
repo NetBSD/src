@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.79 2001/05/06 13:23:42 simonb Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.80 2001/05/30 15:24:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -42,6 +42,7 @@
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/04/25 17:53:24 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2001/05/30 15:24:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
  * determined (from possibilities mentioned in ioconf.c), and
  * the drivers are initialized.
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2001/04/24 15:41:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2001/05/30 15:24:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2001/04/24 15:41:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2001/05/30 15:24:30 lukem Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2001/04/24 15:41:39 thorpej Exp $")
 #include "biconsdev.h"
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
 #include "fs_nfs.h"
 

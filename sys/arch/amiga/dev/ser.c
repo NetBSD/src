@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.56 2001/05/02 10:32:13 scw Exp $	*/
+/*	$NetBSD: ser.c,v 1.57 2001/05/30 15:24:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -38,6 +38,8 @@
  * XXX This file needs major cleanup it will never service more than one
  * XXX unit.
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

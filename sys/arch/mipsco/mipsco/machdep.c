@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2001/04/28 04:20:27 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2001/05/30 15:24:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,9 +43,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2001/04/28 04:20:27 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2001/05/30 15:24:34 lukem Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
+
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/signalvar.h>

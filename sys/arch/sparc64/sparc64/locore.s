@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 2001/04/25 02:33:08 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 2001/05/30 15:24:37 lukem Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -74,6 +74,7 @@
 #undef	SCHED_DEBUG
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd32.h"

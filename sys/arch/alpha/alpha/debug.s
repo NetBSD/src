@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.7 2001/04/19 17:48:46 thorpej Exp $ */
+/* $NetBSD: debug.s,v 1.8 2001/05/30 15:24:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.7 2001/04/19 17:48:46 thorpej Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.8 2001/05/30 15:24:27 lukem Exp $")
+
+#include "opt_kgdb.h"
 
 /*
  * Debugger glue.

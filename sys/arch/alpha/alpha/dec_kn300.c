@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.20 2001/05/02 01:24:29 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.21 2001/05/30 15:24:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -30,9 +30,11 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.20 2001/05/02 01:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.21 2001/05/30 15:24:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.16 2001/05/02 10:32:19 scw Exp $ */
+/* $NetBSD: scif.c,v 1.17 2001/05/30 15:24:37 lukem Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -103,6 +103,7 @@
  * This code is derived from both z8530tty.c and com.c
  */
 
+#include "opt_kgdb.h"
 #include "opt_pclock.h"
 #include "opt_scif.h"
 

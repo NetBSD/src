@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 2001/05/14 14:44:11 fredette Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 2001/05/30 15:24:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -47,6 +47,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
+#include "opt_kgdb.h"
 
 #include "assym.h"
 #include <machine/asm.h>

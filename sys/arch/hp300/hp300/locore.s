@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.113 2001/05/12 00:55:34 kleink Exp $	*/
+/*	$NetBSD: locore.s,v 1.114 2001/05/30 15:24:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -48,6 +48,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
+#include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 2000/07/14 08:21:14 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 2001/05/30 15:24:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -41,6 +41,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include "assym.h"
 

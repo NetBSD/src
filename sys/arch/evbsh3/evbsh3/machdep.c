@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2001/04/24 04:30:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2001/05/30 15:24:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
 #include "opt_memsize.h"
 #include "opt_initbsc.h"
