@@ -47,7 +47,7 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.2 2003/08/25 10:23:42 tron Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.3 2003/08/25 10:52:23 tron Exp $");
 #endif
 
 static int	vfcexec(const char *, const char *, va_list);
@@ -55,10 +55,11 @@ static int	vfcexec(const char *, const char *, va_list);
 static int
 vfcexec(const char *path, const char *arg, va_list ap)
 {
-	static int		max = 4;
+	static unsigned int	max = 4;
 	static const char	**argv = NULL;
-	int			argc, status;
+	unsigned int		argc;
 	pid_t			child;
+	int			status;
 
 	if (argv == NULL) {
 		argv = malloc(max * sizeof(const char *));
@@ -73,15 +74,17 @@ vfcexec(const char *path, const char *arg, va_list ap)
 
 	do {
 		if (argc == max) {
-			const char **ptr;
+			unsigned int	new;
+			const char	**ptr;
 
-			max <<= 1;
-			ptr = realloc(argv, max * sizeof(const char *));
+			new = max * 2;
+			ptr = realloc(argv, new * sizeof(const char *));
 			if (ptr == NULL) {
 				warnx("vfcexec can't alloc arg space");
 				return -1;
 			}
 			argv = ptr;
+			max = new;
 		}
 		arg = va_arg(ap, const char *);
 		argv[argc++] = arg;
