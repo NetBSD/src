@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.13 2000/09/12 08:25:44 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.14 2000/10/01 03:45:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.13 2000/09/12 08:25:44 sato Exp $";
+    "$Id: hpcfb.c,v 1.14 2000/10/01 03:45:33 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,8 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 		
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
+	case WSDISPLAYIO_GETPARAM:
+	case WSDISPLAYIO_SETPARAM:
 	case HPCFBIO_GCONF:
 	case HPCFBIO_SCONF:
 	case HPCFBIO_GDSPCONF:
