@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.178 1999/12/04 04:41:40 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.179 1999/12/04 05:43:02 castor Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.173 1999/12/04 04:40:57 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.174 1999/12/04 05:41:08 castor Exp 
  */
 
 /*
@@ -6463,6 +6463,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TEKRAM2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tekram Technology (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LAVA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Lava Semiconductor Manufacturing, Inc.",
 	    NULL,
 	},
 	{

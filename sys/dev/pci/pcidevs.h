@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.180 1999/12/04 04:41:40 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.181 1999/12/04 05:43:02 castor Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.173 1999/12/04 04:40:57 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.174 1999/12/04 05:41:08 castor Exp 
  */
 
 /*
@@ -530,6 +530,7 @@
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
