@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.12 1999/04/16 21:29:47 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.13 1999/12/04 20:29:02 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12 1999/04/16 21:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.13 1999/12/04 20:29:02 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,6 +81,8 @@ static int savirqs[NIRQ];
 
 static struct alpha_shared_intr *kn300_pci_intr;
 
+static struct mcpcia_config *mcpcia_eisaccp = NULL;
+
 #ifdef EVCNT_COUNTERS
 struct evcnt kn300_intr_evcnt;
 #endif
@@ -117,12 +119,13 @@ pci_kn300_pickintr(ccp, first)
 	/* Not supported on KN300. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#if NSIO > 0
 	if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
+		mcpcia_eisaccp = ccp;
+#if NSIO > 0
 		sio_intr_setup(pc, &ccp->cc_iot);
 		kn300_enable_intr(ccp, KN300_PCEB_IRQ);
-	}
 #endif
+	}
 }
 
 int     
@@ -238,9 +241,14 @@ kn300_iointr(framep, vec)
 		sio_iointr(framep, vec);
 		return;
 #else
-		printf("kn300_iointr: (E)ISA interrupt support not configured"
-			" for vector 0x%x", vec);
-		kn300_disable_intr(mcpcia_eisaccp, KN300_PCEB_IRQ);
+		static char *plaint = "kn300_iointr: (E)ISA interrupt support "
+		    "not configured for vector 0x%x";
+		if (mcpcia_eisaccp) {
+			kn300_disable_intr(mcpcia_eisaccp, KN300_PCEB_IRQ);
+			printf(plaint, vec);
+		} else {
+			panic(plaint, vec);
+		}
 #endif
 	} 
 
