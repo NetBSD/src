@@ -165,13 +165,13 @@ only one bit to be in error in the deciphered plaintext.
 
 =item *
 
-OFB mode is not self-synchronising.  If the two operation of
+OFB mode is not self-synchronizing.  If the two operation of
 encipherment and decipherment get out of synchronism, the system needs
-to be re-initialised.
+to be re-initialized.
 
 =item *
 
-Each re-initialisation should use a value of the start variable
+Each re-initialization should use a value of the start variable
 different from the start variable values used before with the same
 key.  The reason for this is that an identical bit stream would be
 produced each time from the same parameters.  This would be
@@ -204,8 +204,8 @@ just one key.
 =item *
 
 If the first and last key are the same, the key length is 112 bits.
-There are attacks that could reduce the key space to 55 bit's but it
-requires 2^56 blocks of memory.
+There are attacks that could reduce the effective key strength
+to only slightly more than 56 bits, but these require a lot of memory.
 
 =item *
 
