@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177 2000/12/29 22:03:47 mycroft Exp $
+# $NetBSD: GENERIC,v 1.178 2001/01/10 17:32:08 nathanw Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.177 $"
+#ident 		"GENERIC-$Revision: 1.178 $"
 
 maxusers 32
 
@@ -418,6 +418,11 @@ scsibus* at umass? channel ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Serial adapters
+# FTDI FT8U100AX serial adapter
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
