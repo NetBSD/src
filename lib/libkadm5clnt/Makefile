@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:47 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2000/06/21 06:36:24 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
 
@@ -61,5 +61,15 @@ CPPFLAGS+= -I.					\
 $(SRCS:.c=.o): kadm5_err.h
 
 CLEANFILES = kadm5_err.h kadm5_err.c
+
+# Prevent collision with old MIT Kerberos includes -- require manual
+# intervention of the operator.
+.BEGIN:
+.ifmake includes
+	@if [ -f ${DESTDIR}${INCSDIR}/kadm_err.h ]; then \
+		echo "Error: you must first remove the MIT headers from ${DESTDIR}${INCSDIR}" >&2; \
+		false; \
+	fi
+.endif
 
 .include <bsd.lib.mk>
