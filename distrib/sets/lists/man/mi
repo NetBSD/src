@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.725 2004/09/13 23:35:19 thorpej Exp $
+# $NetBSD: mi,v 1.726 2004/09/24 13:50:06 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -815,6 +815,19 @@
 ./usr/share/man/cat4/hp300/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/tc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/asc.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/cpu.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/dino.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/gsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/gsckbc.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/harmony.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/io.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/lasi.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/mem.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/mongoose.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/phantomas.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/wax.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
@@ -1174,6 +1187,7 @@
 ./usr/share/man/cat4/ste.0			man-sys-catman		.cat
 ./usr/share/man/cat4/stf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/stge.0			man-sys-catman		.cat
+./usr/share/man/cat4/sti.0			man-sys-catman		.cat
 ./usr/share/man/cat4/stpcide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/strip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sun2/autoconf.0		man-sys-catman		.cat
@@ -2947,6 +2961,19 @@
 ./usr/share/man/man4/hp300/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/tc.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man		.man
+./usr/share/man/man4/hp700/asc.4		man-sys-man		.man
+./usr/share/man/man4/hp700/cpu.4		man-sys-man		.man
+./usr/share/man/man4/hp700/dino.4		man-sys-man		.man
+./usr/share/man/man4/hp700/gsc.4		man-sys-man		.man
+./usr/share/man/man4/hp700/gsckbc.4		man-sys-man		.man
+./usr/share/man/man4/hp700/harmony.4		man-sys-man		.man
+./usr/share/man/man4/hp700/intro.4		man-sys-man		.man
+./usr/share/man/man4/hp700/io.4		man-sys-man		.man
+./usr/share/man/man4/hp700/lasi.4		man-sys-man		.man
+./usr/share/man/man4/hp700/mem.4		man-sys-man		.man
+./usr/share/man/man4/hp700/mongoose.4		man-sys-man		.man
+./usr/share/man/man4/hp700/phantomas.4		man-sys-man		.man
+./usr/share/man/man4/hp700/wax.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
@@ -3308,6 +3335,7 @@
 ./usr/share/man/man4/ste.4			man-sys-man		.man
 ./usr/share/man/man4/stf.4			man-sys-man		.man
 ./usr/share/man/man4/stge.4			man-sys-man		.man
+./usr/share/man/man4/sti.4			man-sys-man		.man
 ./usr/share/man/man4/stpcide.4			man-sys-man		.man
 ./usr/share/man/man4/strip.4			man-sys-man		.man
 ./usr/share/man/man4/sun2/autoconf.4		man-sys-man		.man
