@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.82 2002/06/09 14:43:11 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.83 2002/06/30 22:40:38 thorpej Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.82 2002/06/09 14:43:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.83 2002/06/30 22:40:38 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -469,6 +469,7 @@ icmp6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 #endif
+	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
 	code = icmp6->icmp6_code;
 
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {

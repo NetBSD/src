@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.145 2002/06/29 04:13:21 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.146 2002/06/30 22:40:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.145 2002/06/29 04:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.146 2002/06/30 22:40:35 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -921,6 +921,8 @@ tcp_input(m, va_alist)
 		return;
 	}
 
+	KASSERT(TCP_HDR_ALIGNED_P(th));
+
 	/*
 	 * Check that TCP offset makes sense,
 	 * pull out TCP options and adjust length.		XXX
@@ -971,6 +973,7 @@ tcp_input(m, va_alist)
 		 * (as they're before toff) and we don't need to update those.
 		 */
 #endif
+		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
 		optp = ((caddr_t)th) + sizeof(struct tcphdr);
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.68 2002/06/13 16:25:54 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.69 2002/06/30 22:40:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.68 2002/06/13 16:25:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.69 2002/06/30 22:40:34 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -419,6 +419,7 @@ icmp_input(m, va_alist)
 	m->m_len -= hlen;
 	m->m_data += hlen;
 	icp = mtod(m, struct icmp *);
+	/* Don't need to assert alignment, here. */
 	if (in_cksum(m, icmplen)) {
 		icmpstat.icps_checksum++;
 		goto freeit;
