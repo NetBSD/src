@@ -1,4 +1,4 @@
-.\"	$NetBSD: pr.1,v 1.9 1999/11/19 22:29:26 kristerw Exp $
+.\"	$NetBSD: pr.1,v 1.10 2000/10/22 15:06:52 kleink Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: pr.1,v 1.9 1999/11/19 22:29:26 kristerw Exp $
+.\"	$NetBSD: pr.1,v 1.10 2000/10/22 15:06:52 kleink Exp $
 .\"
 .Dd June 6, 1993
 .Dt PR 1
@@ -81,6 +81,9 @@
 .Op Fl s
 .Op Ar char
 .Oc
+.Ek
+.Bk -words
+.Op Fl T Ar timefmt
 .Ek
 .Bk -words
 .Oo
@@ -277,6 +280,11 @@ instead of by the appropriate number of
 is the
 .Em <tab>
 character).
+.It Fl T
+Specify an
+.Xr strftime 3
+format string to be used to format the date and time information in the page
+header.
 .It Fl t
 Print neither the five-line identifying
 header nor the five-line trailer usually supplied for each page.
@@ -340,7 +348,8 @@ process (if output is redirected) or after all successful
 file printing is complete (when printing to a terminal).
 .Sh SEE ALSO
 .Xr cat 1 ,
-.Xr more 1
+.Xr more 1 ,
+.Xr strftime 3
 .Sh STANDARDS
 The
 .Nm
