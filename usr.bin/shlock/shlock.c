@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.5 2000/10/11 14:46:18 is Exp $	*/
+/*	$NetBSD: shlock.c,v 1.6 2002/06/14 00:34:58 wiz Exp $	*/
 
 /*
 ** Program to produce reliable locks for shell scripts.
@@ -67,17 +67,13 @@ const char E_open[] = "%s: open(%s): %s\n";
 ** (and wasn't that sufficient?)
 */
 
-#ifdef __STDC__
 /* the following is in case you need to make the prototypes go away. */
-#define _P(x)	x
-
-char	*xtmpfile _P((char *, pid_t, int));
-int	p_exists _P((pid_t));
-int	cklock _P((char *, int));
-int	mklock _P((char *, pid_t, int));
-void	bad_usage _P((void));
-int	main _P((int, char **));
-#endif /* __STDC__ */
+char	*xtmpfile(char *, pid_t, int);
+int	p_exists(pid_t);
+int	cklock(char *, int);
+int	mklock(char *, pid_t, int);
+void	bad_usage(void);
+int	main(int, char **);
 
 /*
 ** Create a temporary file, all ready to lock with.
@@ -86,10 +82,7 @@ int	main _P((int, char **));
 ** which might not be in the same filesystem.
 */
 char *
-xtmpfile(file, pid, uucpstyle)
-char	*file;
-pid_t	pid;
-int	uucpstyle;
+xtmpfile(char *file, __pid_t pid, int uucpstyle)
 {
 	int	fd;
 	int	len;
@@ -155,8 +148,7 @@ openloop:
 ** Send null signal to find out.
 */
 int
-p_exists(pid)
-pid_t	pid;
+p_exists(__pid_t pid)
 {
 	dprintf("%s: process %ld is ", Pname, (u_long)pid);
 	if (pid <= 0) {
@@ -196,9 +188,7 @@ pid_t	pid;
 **
 */
 int
-cklock(file, uucpstyle)
-char	*file;
-int	uucpstyle;
+cklock(char *file, int uucpstyle)
 {
 	int	fd = open(file, O_RDONLY);
 	ssize_t len;
@@ -226,10 +216,7 @@ int	uucpstyle;
 }
 
 int
-mklock(file, pid, uucpstyle)
-char	*file;
-pid_t	pid;
-int	uucpstyle;
+mklock(char *file, __pid_t pid, int uucpstyle)
 {
 	char	*tmp;
 	int	retcode = FALSE;
@@ -277,16 +264,14 @@ linkloop:
 }
 
 void
-bad_usage()
+bad_usage(void)
 {
 	fprintf(stderr, USAGE, Pname);
 	exit(LOCK_FAIL);
 }
 
 int
-main(ac, av)
-int	ac;
-char	*av[];
+main(int ac, char **av)
 {
 	int	x;
 	char	*file = (char *)NULL;
