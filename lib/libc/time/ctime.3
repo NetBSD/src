@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.11 1997/04/18 17:32:04 is Exp $
+.\"	$NetBSD: ctime.3,v 1.12 1997/06/18 01:12:42 jtc Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -37,7 +37,7 @@ asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to 
 converts a long integer, pointed to by
 .IR clock ,
 representing the time in seconds since
-00:00:00 UTC, January 1, 1970,
+00:00:00 UTC, 1970-01-01,
 and returns a pointer to a
 26-character string
 of the form
@@ -211,4 +211,4 @@ will also be overwritten at the next call
 Avoid using out-of-range values with
 .I mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" @(#)newctime.3	7.12
+.\" @(#)newctime.3	7.14
