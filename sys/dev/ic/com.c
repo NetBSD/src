@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.210 2003/06/14 17:01:06 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.211 2003/06/15 01:34:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.210 2003/06/14 17:01:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.211 2003/06/15 01:34:34 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1894,7 +1894,8 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 				if (sc->sc_type == COM_TYPE_PXA2x0)
 					SET(sc->sc_ier, IER_ERXTOUT);
 #endif
-				bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+				bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+				    com_ier, sc->sc_ier);
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -2128,7 +2129,8 @@ again:	do {
 				if (sc->sc_type == COM_TYPE_PXA2x0)
 					CLR(sc->sc_ier, IER_ERXTOUT);
 #endif
-				bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+				bus_space_write_1(iot, ioh, com_ier,
+				    sc->sc_ier);
 			}
 		} else {
 			if ((iir & IIR_IMASK) == IIR_RXRDY) {
