@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.1.1.1 2001/01/06 13:00:34 martin Exp $ 
+ *	$Id: trace.c,v 1.2 2001/03/24 18:08:11 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -75,13 +75,13 @@ static char rBPfilename[MAXPATHLEN];
 
 static struct stat fst;
 
-static void dumpbuf( int n, unsigned char *buf, i4b_trace_hdr_t *hdr, int raw );
+static void dumpbuf( int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw );
 static int switch_driver( int value, int rx, int tx );
 static void usage( void );
 static void exit_hdl( void );
 static void reopenfiles( int );
 void add_datetime(char *filename, char *rfilename);
-char * fmt_hdr(i4b_trace_hdr_t *hdr, int frm_len);
+char * fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len);
 
 /*---------------------------------------------------------------------------*
  *	usage instructions
@@ -137,11 +137,11 @@ main(int argc, char *argv[])
 	int raw = 1;
 	int noct = -1;
 	time_t tm;
-	i4b_trace_hdr_t *ithp = NULL;
+	struct i4b_trace_hdr *ithp = NULL;
 	int l;
 	static struct stat fstnew;	
 
-	b = &buf[sizeof(i4b_trace_hdr_t)];
+	b = &buf[sizeof(struct i4b_trace_hdr)];
 	
 	while( (c = getopt(argc, argv, "abdf:hiln:op:ru:xBFPR:T:")) != -1)
 	{
@@ -396,12 +396,12 @@ main(int argc, char *argv[])
 				}
 			}
 
-			n -= sizeof(i4b_trace_hdr_t);			
+			n -= sizeof(struct i4b_trace_hdr);			
 		}
 		else
 		{			
 again:
-			if((fread(buf, 1, sizeof(i4b_trace_hdr_t), BP)) != sizeof(i4b_trace_hdr_t))
+			if((fread(buf, 1, sizeof(struct i4b_trace_hdr), BP)) != sizeof(struct i4b_trace_hdr))
 			{
 				if(feof(BP))
 				{
@@ -450,10 +450,10 @@ again:
 				}
 			}
 
-			ithp = (i4b_trace_hdr_t *)buf;
-			l = ithp->length - sizeof(i4b_trace_hdr_t);
+			ithp = (struct i4b_trace_hdr *)buf;
+			l = ithp->length - sizeof(struct i4b_trace_hdr);
 			
-			if((n = fread(buf+sizeof(i4b_trace_hdr_t), 1, l , BP)) != l)
+			if((n = fread(buf+sizeof(struct i4b_trace_hdr), 1, l , BP)) != l)
 			{
 				char buffer[80];
 				sprintf(buffer, "Error reading data from file [%s]", rBPfilename);
@@ -465,7 +465,7 @@ again:
 
 		if((n > 0) && (n > noct))
 		{
-			dumpbuf(n, b, (i4b_trace_hdr_t *)buf, raw);
+			dumpbuf(n, b, (struct i4b_trace_hdr *)buf, raw);
 		}
 	}
 }
@@ -474,7 +474,7 @@ again:
  *	format header into static buffer, return buffer address
  *---------------------------------------------------------------------------*/
 char *
-fmt_hdr(i4b_trace_hdr_t *hdr, int frm_len)
+fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 {
 	struct tm *s;
 	static char hbuf[256];
@@ -484,9 +484,9 @@ fmt_hdr(i4b_trace_hdr_t *hdr, int frm_len)
 
 	if(hdr->type == TRC_CH_I)		/* Layer 1 INFO's */
 	{
-		sprintf(hbuf,"\n-- %s - unit:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
+		sprintf(hbuf,"\n-- %s - bri:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
 			((hdr->dir) ? "NT->TE" : "TE->NT"),
-			hdr->unit,
+			hdr->bri,
 			s->tm_mday,
 			s->tm_mon + 1,
 			s->tm_hour,
@@ -498,9 +498,9 @@ fmt_hdr(i4b_trace_hdr_t *hdr, int frm_len)
 	{
 		if(hdr->trunc > 0)
 		{
-			sprintf(hbuf,"\n-- %s - unit:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
+			sprintf(hbuf,"\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
 				((hdr->dir) ? "NT->TE" : "TE->NT"),
-				hdr->unit,
+				hdr->bri,
 				hdr->count,
 				s->tm_mday,
 				s->tm_mon + 1,
@@ -513,9 +513,9 @@ fmt_hdr(i4b_trace_hdr_t *hdr, int frm_len)
 		}
 		else
 		{
-			sprintf(hbuf,"\n-- %s - unit:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ",
+			sprintf(hbuf,"\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ",
 				((hdr->dir) ? "NT->TE" : "TE->NT"),
-				hdr->unit,
+				hdr->bri,
 				hdr->count,
 				s->tm_mday,
 				s->tm_mon + 1,
@@ -540,7 +540,7 @@ fmt_hdr(i4b_trace_hdr_t *hdr, int frm_len)
  *	decode protocol and output to file(s)
  *---------------------------------------------------------------------------*/
 static void
-dumpbuf(int n, unsigned char *buf, i4b_trace_hdr_t *hdr, int raw)
+dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 {
 	static char l1buf[128];
 	static unsigned char l2buf[32000];
