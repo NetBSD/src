@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.65 1999/06/25 12:10:42 pk Exp $	*/
+/*	$NetBSD: ld.c,v 1.66 1999/11/08 21:58:00 lukem Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.65 1999/06/25 12:10:42 pk Exp $");
+__RCSID("$NetBSD: ld.c,v 1.66 1999/11/08 21:58:00 lukem Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -4049,6 +4049,8 @@ mywrite(buf, count, eltsize, fd)
 	FILE *fd;
 {
 
+	if (count == 0)
+		return;
 	if (fwrite(buf, eltsize, count, fd) != count)
 		err(1, "write");
 }
