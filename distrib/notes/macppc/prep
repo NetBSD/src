@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.21 2001/07/24 17:57:45 nra Exp $
+.\"	$NetBSD: prep,v 1.22 2001/08/17 07:04:42 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -17,6 +17,23 @@ annoying.  If you assume the worst, you'll be pleasantly surprised when
 everything works easier than you expected.  Also, forget everything you've
 been told about installing 
 .Nx*M No Ns .
+That's right, flush your knowledge cache -- some of it is almost 
+certainly dirty.
+.Pp
+Some of this document assumes familiarity with 
+.Tn MacOS ,
+e.g. how to download BinHex files and extract things with StuffIt 
+Expander.  If you've never heard of those terms before, it is possible to 
+install
+.Nx*M
+without booting or knowing how to use
+.Tn MacOS ,
+but depending on your model it may be almost as painful as learning a 
+little
+.Tn MacOS .
+If you 
+.Em really
+want to bypass it, you should mail port-macppc@netbsd.org for guidance.
 .Pp
 It's done printing?  Fine, now get a dark writing implement.
 .Pp
@@ -126,13 +143,16 @@ rewrite the BootROM with garbage, rendering your machine unbootable.  We
 recommend not doing this.
 .Note)
 .(Note
-The most recent BootROMs available (4.1.7 and 4.1.8) as of May 2001 are
-known to have some problems.  Some PowerBook G4 users find they are
-unable to boot 
-.Nx
-after upgrading, and some PowerMacintosh users find that their third-party 
+The most recent BootROMs available (4.1.7 and 4.1.8) as of August 2001 are
+known to have some problems.  
+Some PowerMacintosh users find that their third-party 
 RAM has been disabled.  See the discussion at
 .Lk http://www.macfixit.com/archives/april.01.a.shtml#firm-04-07
+.Pp
+The PowerBook (FireWire) and PowerBook G4 
+(Titanium) models with BootROM 4.1.8 are not supported in this release.  
+If your system has this BootROM, you must use a kernel from the -current
+branch.
 .Note)
 .Pp
 .
@@ -245,6 +265,8 @@ APS Tech M*Power 604e/200,
 PowerComputing PowerBase,
 .br
 Umax Apus 2000, Apus 3000, C500, and C600
+.br
+Umax S900
 .Pp
 For every other model, download System Disk from Apple's site:
 .Lk ftp://ftp.apple.com/developer/macosxserver/utilities/SystemDisk2.3.1.smi.bin
@@ -800,6 +822,9 @@ file system with an installation kernel.
 .
 (All Open Firmware versions)
 .Pp
+This section gives a quick description of the various media that can be 
+used by Open Firmware to load the bootloader.
+.Pp
 .(bullet -offset indent
 .
 .Em "Partition zero"
@@ -1017,6 +1042,10 @@ systems).
 .Em Dq "Re-install sets" 
 .Em "option.  More information is provided below on this process."
 .Pp
+There are several contradictory partition numbering schemes.  You may want 
+to look at the explanation in the FAQ.
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#partitions
+.Pp
 Unfortunately, the partitioning tools for
 .Nx
 are not advanced enough to create HFS or HFS+ file systems or a 
@@ -1209,6 +1238,37 @@ from
 .Em "From a MacOS machine"
 .Pp
 Get
+.Ic DiskCopy
+6.3.3 from 
+.Lk http://downloAd.info.apple.com/Apple_Support_Area/Apple_Software_Updates/English-North_American/Macintosh/Utilities/Disk_Copy/Disk_Copy_6.3.3.smi.bin
+.Pp
+If you are running a
+.Tn MacOS
+version prior to 9.0, get
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/macos-utils/MakeDiskCopyFloppyType.hqx
+and un-BinHex it.  Then, drag the 
+.Pa boot.fs
+file onto this application, which will change the type and creator to
+.Pa dimg No and Pa ddsk ,
+which is necessary for DiskCopy to work.
+.(enum
+Open the 
+.Sq Utilities
+menu and pick
+.Sq Make Floppy
+.Pp
+.It
+In the dialog box, select
+.Pa boot.fs
+.Pp
+.It
+At the prompt, insert a blank floppy disk
+.enum)
+.Pp
+.It
+.Em "From a MacOS machine (Alternate)"
+.Pp
+Get
 .Ic suntar
 from 
 .Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
@@ -1278,11 +1338,12 @@ Skip forward to
 .br
 (All Open Firmware versions)
 .Pp
-Check the FAQ for the location of the official 
-.Nx*M \*V
-CD-R image.
-.br
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#cdr151
+Go to one of the 
+.Nx
+mirror sites and download CD-R image from the
+.Pa pub/NetBSD/iso
+directory.
+.Lk http://www.netbsd.org/mirrors/#iso
 .Pp
 .(bullet
 .Em "From a UNIX machine"
