@@ -1,6 +1,6 @@
-# $NetBSD: FOURMEG,v 1.6 2000/09/18 18:30:01 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.7 2000/09/23 12:58:26 bjh21 Exp $
 
-# GENERIC arm26 configuration -- everything I've implemented so far
+# FOURMEG arm26 configuration -- something small
 
 include "arch/arm26/conf/std.arm26"
 
@@ -48,6 +48,7 @@ file-system	FDESC		# /dev/fd
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
 #options 	SOFTDEP		# FFS soft updates support.
+options 	NFS_V2_ONLY	# Make a smaller NFS
 
 # Executable format options
 #options 	EXEC_AOUT
