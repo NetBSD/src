@@ -1,5 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.11 2000/09/01 04:34:03 hubertf Exp $
-# Original from Freebsd, no rcs id.
+# $NetBSD: Makefile.inc,v 1.12 2000/10/25 15:55:44 hubertf Exp $
+# Original from FreeBSD, no rcs id.
 
 LIBINSTALL != cd ${.CURDIR}/../lib;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
