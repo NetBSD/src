@@ -1,4 +1,4 @@
-#	$Id: files,v 1.50 1994/05/19 06:11:04 cgd Exp $
+#	$Id: files,v 1.51 1994/05/27 16:27:13 glass Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -30,6 +30,7 @@ isofs/isofs_vfsops.c	optional isofs
 isofs/isofs_vnops.c	optional isofs
 kern/exec_aout.c	standard
 kern/exec_conf.c	standard
+kern/exec_ecoff.c	optional compat_ultrix
 kern/exec_script.c	standard
 kern/exec_subr.c	standard
 kern/init_main.c	standard
