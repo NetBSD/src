@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.7 1999/08/06 23:01:41 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.8 1999/08/06 23:40:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -322,7 +322,8 @@ main(argc, argv)
 
 	printf(">>> CREATING SYSV SHM SEGMENT <<<\n");
 
-	if ((shmid = shmget(IPC_PRIVATE, npgs * pgsize, IPC_CREAT)) == -1)
+	if ((shmid = shmget(IPC_PRIVATE, npgs * pgsize,
+	    IPC_CREAT|S_IRUSR|S_IWUSR)) == -1)
 		err(1, "shmget");
 
 	if ((addr = shmat(shmid, NULL, 0)) == (void *) -1)
