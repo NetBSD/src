@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.16 1998/10/23 01:16:23 ender Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.17 1998/10/26 07:09:37 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2182,8 +2182,10 @@ adb_reinit(void)
 	}
 #endif
 
+#ifndef MRG_ADB
 	/* enable the programmer's switch, if we have one */
 	adb_prog_switch_enable();
+#endif
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
@@ -2377,48 +2379,50 @@ adb_setup_hw_type(void)
 	 * Determine what type of ADB hardware we are running on.
 	 */
 	switch (response) {
-	case 6:		/* II */
-	case 7:		/* IIx */
-	case 8:		/* IIcx */
-	case 9:		/* SE/30 */
-	case 11:	/* IIci */
-	case 22:	/* Quadra 700 */
-	case 30:	/* Centris 650 */
-	case 35:	/* Quadra 800 */
-	case 36:	/* Quadra 650 */
-	case 52:	/* Centris 610 */
-	case 53:	/* Quadra 610 */
+	case MACH_MACC610:		/* Centris 610 */
+	case MACH_MACC650:		/* Centris 650 */
+	case MACH_MACII:		/* II */
+	case MACH_MACIICI:		/* IIci */
+	case MACH_MACIICX:		/* IIcx */
+	case MACH_MACIIX:		/* IIx */
+	case MACH_MACQ610:		/* Quadra 610 */
+	case MACH_MACQ650:		/* Quadra 650 */
+	case MACH_MACQ700:		/* Quadra 700 */
+	case MACH_MACQ800:		/* Quadra 800 */
+	case MACH_MACSE30:		/* SE/30 */
 		adbHardware = ADB_HW_II;
 #ifdef ADB_DEBUG
 		if (adb_debug)
 			printf_intr("adb: using II series hardware support\n");
 #endif
 		break;
-	case 18:	/* IIsi */
-	case 20:	/* Quadra 900 - not sure if IIsi or not */
-	case 23:	/* Classic II */
-	case 26:	/* Quadra 950 - not sure if IIsi or not */
-	case 27:	/* LC III, Performa 450 */
-	case 37:	/* LC II, Performa 400/405/430 */
-	case 44:	/* IIvi */
-	case 45:	/* Performa 600 */
-	case 48:	/* IIvx */
-	case 62:	/* Performa 460/465/467 */
+
+	case MACH_MACCLASSICII:		/* Classic II */
+	case MACH_MACLCII:		/* LC II, Performa 400/405/430 */
+	case MACH_MACLCIII:		/* LC III, Performa 450 */
+	case MACH_MACIISI:		/* IIsi */
+	case MACH_MACIIVI:		/* IIvi */
+	case MACH_MACIIVX:		/* IIvx */
+	case MACH_MACP460:		/* Performa 460/465/467 */
+	case MACH_MACP600:		/* Performa 600 */
+	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
+	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbHardware = ADB_HW_IISI;
 #ifdef ADB_DEBUG
 		if (adb_debug)
 			printf_intr("adb: using IIsi series hardware support\n");
 #endif
 		break;
-	case 21:	/* PowerBook 170 */
-	case 25:	/* PowerBook 140 */
-	case 54:	/* PowerBook 145 */
-	case 34:	/* PowerBook 160 */
-	case 84:	/* PowerBook 165 */
-	case 50:	/* PowerBook 165c */
-	case 33:	/* PowerBook 180 */
-	case 71:	/* PowerBook 180c */
-	case 115:	/* PowerBook 150 */
+
+	case MACH_MACPB140:		/* PowerBook 140 */
+	case MACH_MACPB145:		/* PowerBook 145 */
+	case MACH_MACPB150:		/* PowerBook 150 */
+	case MACH_MACPB160:		/* PowerBook 160 */
+	case MACH_MACPB165:		/* PowerBook 165 */
+	case MACH_MACPB165C:		/* PowerBook 165c */
+	case MACH_MACPB170:		/* PowerBook 170 */
+	case MACH_MACPB180:		/* PowerBook 180 */
+	case MACH_MACPB180C:		/* PowerBook 180c */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
 #ifdef ADB_DEBUG
@@ -2426,13 +2430,14 @@ adb_setup_hw_type(void)
 			printf_intr("adb: using PowerBook 100-series hardware support\n");
 #endif
 		break;
-	case 29:	/* PowerBook Duo 210 */
-	case 32:	/* PowerBook Duo 230 */
-	case 38:	/* PowerBook Duo 250 */
-	case 72:	/* PowerBook 500 series */
-	case 77:	/* PowerBook Duo 270 */
-	case 102:	/* PowerBook Duo 280 */
-	case 103:	/* PowerBook Duo 280c */
+
+	case MACH_MACPB210:		/* PowerBook Duo 210 */
+	case MACH_MACPB230:		/* PowerBook Duo 230 */
+	case MACH_MACPB250:		/* PowerBook Duo 250 */
+	case MACH_MACPB270:		/* PowerBook Duo 270 */
+	case MACH_MACPB280:		/* PowerBook Duo 280 */
+	case MACH_MACPB280C:		/* PowerBook Duo 280c */
+	case MACH_MACPB500:		/* PowerBook 500 series */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
 #ifdef ADB_DEBUG
@@ -2440,17 +2445,20 @@ adb_setup_hw_type(void)
 			printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
 #endif
 		break;
-	case 49:	/* Color Classic */
-	case 56:	/* LC 520 */
-	case 60:	/* Centris 660AV */
-	case 78:	/* Quadra 840AV */
-	case 80:	/* LC 550, Performa 550 */
-	case 83:	/* Color Classic II */
-	case 89:	/* LC 475, Performa 475/476 */
-	case 92:	/* LC 575, Performa 575/577/578 */
-	case 94:	/* Quadra 605 */
-	case 98:	/* LC 630, Performa 630, Quadra 630 */
-	case 99:	/* Performa 580(?)/588 */
+
+	case MACH_MACC660AV:		/* Centris 660AV */
+	case MACH_MACCCLASSIC:		/* Color Classic */
+	case MACH_MACCCLASSICII:	/* Color Classic II */
+	case MACH_MACLC475:		/* LC 475, Performa 475/476 */
+	case MACH_MACLC475_33:		/* Clock-chipped 47x */
+	case MACH_MACLC520:		/* LC 520 */
+	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
+	case MACH_MACP550:		/* LC 550, Performa 550 */
+	case MACH_MACP580:		/* Performa 580/588 */
+	case MACH_MACQ605:		/* Quadra 605 */
+	case MACH_MACQ605_33:		/* Clock-chipped Quadra 605 */
+	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
+	case MACH_MACQ840AV:		/* Quadra 840AV */
 		adbHardware = ADB_HW_CUDA;
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -2472,19 +2480,19 @@ adb_setup_hw_type(void)
 	 * Determine whether this machine has ADB based soft power.
 	 */
 	switch (response) {
-	case 18:	/* IIsi */
-	case 20:	/* Quadra 900 - not sure if IIsi or not */
-	case 26:	/* Quadra 950 - not sure if IIsi or not */
-	case 44:	/* IIvi */
-	case 45:	/* Performa 600 */
-	case 48:	/* IIvx */
-	case 49:	/* Color Classic */
-	case 83:	/* Color Classic II */
-	case 56:	/* LC 520 */
-	case 78:	/* Quadra 840AV */
-	case 80:	/* LC 550, Performa 550 */
-	case 92:	/* LC 575, Performa 575/577/578 */
-	case 98:	/* LC 630, Performa 630, Quadra 630 */
+	case MACH_MACCCLASSIC:		/* Color Classic */
+	case MACH_MACCCLASSICII:	/* Color Classic II */
+	case MACH_MACIISI:		/* IIsi */
+	case MACH_MACIIVI:		/* IIvi */
+	case MACH_MACIIVX:		/* IIvx */
+	case MACH_MACLC520:		/* LC 520 */
+	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
+	case MACH_MACP550:		/* LC 550, Performa 550 */
+	case MACH_MACP600:		/* Performa 600 */
+	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
+	case MACH_MACQ840AV:		/* Quadra 840AV */
+	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
+	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbSoftPower = 1;
 		break;
 	}
@@ -2581,7 +2589,6 @@ mrg_pmintr(void)
 	pm_intr();
 	return 1;	/* mimic mrg_pmintr in macrom.h just in case */
 }
-#endif
 
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
@@ -2807,8 +2814,6 @@ adb_prog_switch_disable(void)
 		return -1;
 	}
 }
-
-#ifndef MRG_ADB
 
 int 
 CountADBs(void)
