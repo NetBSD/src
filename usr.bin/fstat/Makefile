@@ -2,7 +2,6 @@
 
 PROG=	fstat
 SRCS=	fstat.c devname.c
-CFLAGS+=-I/sys
 .PATH:	${.CURDIR}/../../bin/ps
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
