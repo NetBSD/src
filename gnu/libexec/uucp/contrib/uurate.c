@@ -84,6 +84,9 @@
  *        get knowledge of
  */
 /* $Log: uurate.c,v $
+/* Revision 1.4  2003/05/17 15:05:19  itojun
+/* possible scanf overrun
+/*
 /* Revision 1.3  1995/08/24 05:19:21  jtc
 /* Upgraded to Taylor UUCP 1.06.1 (Thanks to John Kohl).
 /*
@@ -142,7 +145,7 @@
  * */
 
 char version[] = "@(#) Taylor UUCP Log File Summary Filter, Version 1.2.2";
-static char rcsid[] = "$Id: uurate.c,v 1.3 1995/08/24 05:19:21 jtc Exp $";
+static char rcsid[] = "$Id: uurate.c,v 1.4 2003/05/17 15:05:19 itojun Exp $";
 #include <ctype.h>            /* Character Classification      */
 #include <math.h>
 #include "uucp.h"
@@ -552,7 +555,7 @@ int main(argc, argv)
          {  
 
 #if HAVE_TAYLOR_LOGGING
-         sscanf(++stt,"%s%*c%[^.]",in_date,in_time);
+         sscanf(++stt,"%13s%*c%[^.]",in_date,in_time);
 #endif /* HAVE_TAYLOR_LOGGING */
 
 #if HAVE_V2_LOGGING
@@ -830,7 +833,7 @@ int main(argc, argv)
     {  
 
 #if HAVE_TAYLOR_LOGGING
-         sscanf(dt_info,"%s%*c%[^.]",in_date,in_time);
+         sscanf(dt_info,"%13s%*c%[^.]",in_date,in_time);
 #endif /* HAVE_TAYLOR_LOGGING */
 
 #if HAVE_V2_LOGGING
@@ -1659,7 +1662,8 @@ int chk_config(char *T_conf,int be_quiet, int type)
       {
         if (logline[0] == '#')
            continue;
-        sscanf(logline,"%8s %s",keywrd,name);
+	/* XXX sizeof(name) == 1024 */
+        sscanf(logline,"%8s %1023s",keywrd,name);
         if (0 == strncmp(keywrd,"logfile",7))
         {
            pos1 = pos2 = name;
