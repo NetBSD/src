@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.10 2000/02/25 00:27:18 itojun Exp $	*/
-/*	$KAME: ah_input.c,v 1.20 2000/02/24 12:02:09 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.11 2000/02/26 11:49:44 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.21 2000/02/26 11:37:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -449,13 +449,49 @@ ah4_input(m, va_alist)
 			stripsiz = sizeof(struct newah) + siz1;
 		}
 
-#ifndef PULLDOWN_TEST
 		ip = mtod(m, struct ip *);
+#ifndef PULLDOWN_TEST
 		ovbcopy((caddr_t)ip, (caddr_t)(((u_char *)ip) + stripsiz), off);
 		m->m_data += stripsiz;
 		m->m_len -= stripsiz;
 		m->m_pkthdr.len -= stripsiz;
+#else
+		/*
+		 * in m_pulldown case, we don't really need to strip off AH.
+		 * however, upper-layer protocols (for example, ICMPv4)
+		 * chokes if we don't.
+		 */
+		if (m->m_len >= stripsiz + off) {
+			ovbcopy((caddr_t)ip, ((caddr_t)ip) + stripsiz, off);
+			m->m_data += stripsiz;
+			m->m_len -= stripsiz;
+			m->m_pkthdr.len -= stripsiz;
+		} else {
+			/* 
+			 * this comes with no copy if the boundary is on
+			 * cluster
+			 */
+			struct mbuf *n;
 
+			n = m_split(m, off, M_DONTWAIT);
+			if (n == NULL) {
+				/* m is retained by m_split */
+				goto fail;
+			}
+			m_adj(n, stripsiz);
+			m_cat(m, n);
+			/* m_cat does not update m_pkthdr.len */
+			m->m_pkthdr.len += n->m_pkthdr.len;
+		}
+#endif
+
+		if (m->m_len < sizeof(*ip)) {
+			m = m_pullup(m, sizeof(*ip));
+			if (m == NULL) {
+				ipsecstat.in_inval++;
+				goto fail;
+			}
+		}
 		ip = mtod(m, struct ip *);
 #if 1
 		/*ip_len is in host endian*/
@@ -466,9 +502,7 @@ ah4_input(m, va_alist)
 #endif
 		ip->ip_p = nxt;
 		/* forget about IP hdr checksum, the check has already been passed */
-#else
-		off += stripsiz;
-#endif
+
 		if (nxt != IPPROTO_DONE)
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
 		else
