@@ -2,23 +2,23 @@
 .\"
 .\" Project:      DHCP
 .\" File:         dhcpctl.3
-.\" RCSId:        $Id: dhcpctl.3,v 1.1.1.1 2001/08/03 11:35:34 drochner Exp $
+.\" RCSId:        $Id: dhcpctl.3,v 1.2 2003/03/17 07:28:59 wiz Exp $
 .\" 
 .\"     Copyright (C) 2000  Nominum, Inc.
 .\"     
 .\" Description:	dhcpctl man page.
 .\" 
 .\"
-.Dd Nov 15, 2000
+.Dd November 15, 2000
 .Dt DHCPCTL 3
-.Os DHCP 3
+.Os
 .ds vT DHCP Programmer's Manual
 .\"
 .\"
 .\"
 .Sh NAME
 .Nm dhcpctl_initialize
-.Nd dhcpctl library initialization.
+.Nd dhcpctl library initialization
 .\"
 .\"
 .\"
@@ -460,11 +460,15 @@ int main (int argc, char **argv) {
 }
 .Ed
 .Sh SEE ALSO
-.SH SEE ALSO
-omapi(3), omshell(3), dhcpd(8), dhclient(8), dhcpd.conf(5), dhclient.conf(5).
-.SH AUTHOR
-.B dhcpctl
+.Xr omshell 1 ,
+.\" .Xr omapi 3 ,
+.Xr dhclient.conf 5 ,
+.Xr dhcpd.conf 5 ,
+.Xr dhclient 8 ,
+.Xr dhcpd 8
+.Sh AUTHORS
+.Nm
 was written by Ted Lemon of Nominum, Inc.  Information about Nominum
 and support contracts for DHCP and BIND can be found at
-.B http://www.nominum.com.   This preliminary documentation was
+http://www.nominum.com.   This preliminary documentation was
 written by James Brister of Nominum, Inc.
