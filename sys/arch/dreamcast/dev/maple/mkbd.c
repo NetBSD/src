@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.2 2001/01/21 22:44:40 marcus Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.3 2001/01/31 00:08:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -118,16 +118,26 @@ mkbdattach(parent, self, aux)
 	struct wskbddev_attach_args a;
 	static int mkbd_console_initted = 0;
 #endif
+	u_int32_t kbdtype;
 
 	sc->sc_parent = parent;
 	sc->sc_port = ma->ma_port;
 	sc->sc_subunit = ma->ma_subunit;
 
-	switch(maple_get_function_data(ma->ma_devinfo,
-				       MAPLE_FUNC_KEYBOARD)>>24) {
- 	  case 1: printf(" (Japanese keyboard)"); break;
-	  case 3: printf(" (European keyboard)"); break;	   
-	  default: printf(" (Unknown keyboard)");
+	kbdtype = maple_get_function_data(ma->ma_devinfo,
+	    MAPLE_FUNC_KEYBOARD) >> 24;
+	switch(kbdtype) {
+ 	case 1:
+ 		printf(" (Japanese keyboard)");
+ 		break;
+	case 2:
+		printf(" (US keyboard)");
+		break;
+	case 3:
+		printf(" (European keyboard)");
+		break;
+	default:
+		printf(" (Unknown keyboard %d)", kbdtype);
 	}
 	printf("\n");
 
