@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.7 2000/08/03 00:01:53 fvdl Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.8 2001/01/04 14:57:17 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.7 2000/08/03 00:01:53 fvdl Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.8 2001/01/04 14:57:17 lukem Exp $");
 #endif
 #endif
 
@@ -278,7 +278,7 @@ makefd_xprt(fd, sendsize, recvsize)
 	svc_vc_ops(xprt);  /* truely deals with calls */
 	xprt->xp_port = 0;  /* this is a connection, not a rendezvouser */
 	xprt->xp_fd = fd;
-        if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
+	if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
 		xprt->xp_netid = strdup(netid);
 
 	xprt_register(xprt);
