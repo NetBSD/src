@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.43 1999/01/10 22:52:55 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.44 1999/06/12 00:21:13 ender Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -683,7 +683,7 @@ mrg_aline_super(struct frame *frame)
 		 * A printf(""); is sufficient, but gcc -Wall is noisy about
 		 * it, so I figured backspace is harmless enough...
 		 */
-		printf("\010"); printf("\010");
+		printf(" "); printf("\010");
 	}
 
 #if defined(MRG_DEBUG)
