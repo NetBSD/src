@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.2 1997/07/18 21:57:01 thorpej Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.3 1997/10/07 14:39:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -56,14 +56,14 @@
  *	 NULL on failure
  */
 
-extern DBM *
+DBM *
 ypdb_open(file, flags, mode)
 	const char *file;
 	int flags, mode;
 {
+	char path[MAXPATHLEN];
 #ifdef YPDB_PATCH
 	HASHINFO info;
-	char path[MAXPATHLEN];
 
 	info.bsize = 4096;
 	info.ffactor = 40;
@@ -75,8 +75,6 @@ ypdb_open(file, flags, mode)
 	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
 #else
 	BTREEINFO info;
-	char path[MAXPATHLEN];
-	DBM *db;
 
 	info.flags = 0;
 	info.cachesize = 0;
@@ -87,12 +85,11 @@ ypdb_open(file, flags, mode)
 	info.prefix = NULL;
 	info.lorder = 0;
 	snprintf(path, sizeof(path), "%s%s", file, YPDB_SUFFIX);
-	db = (DBM *)__bt_open(path, flags, mode, &info, 0);
-	return (db);
+	return ((DBM *)__bt_open(path, flags, mode, &info, 0));
 #endif
 }
 
-extern void
+void
 ypdb_close(db)
 	DBM *db;
 {
@@ -105,7 +102,7 @@ ypdb_close(db)
  *	NULL on failure
  */
 
-extern datum
+datum
 ypdb_fetch(db, key)
 	DBM *db;
 	datum key;
@@ -127,7 +124,7 @@ ypdb_fetch(db, key)
  *	NULL on failure
  */
 
-extern datum
+datum
 ypdb_firstkey(db)
 	DBM *db;
 {
@@ -146,7 +143,7 @@ ypdb_firstkey(db)
  *	NULL on failure
  */
 
-extern datum
+datum
 ypdb_nextkey(db)
 	DBM *db;
 {
@@ -165,7 +162,7 @@ ypdb_nextkey(db)
  *	NULL on failure
  */
 
-extern datum
+datum
 ypdb_setkey(db, key)
 	DBM *db;
         datum key;
