@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 1999/01/13 07:30:09 ross Exp $	
+.\"	$NetBSD: install,v 1.7 2000/03/13 22:37:14 soren Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,7 @@ the swap device as described in the next section.
 If the miniroot was installed on partition 'b' of the disk with
 SCSI target ID=0 then the PROM boot command would be:
 .Dl \*> Ns Ic "b sd(0,0,1) -s
-With SCSI target ID=2, the the PROM is:
+With SCSI target ID=2, the PROM is:
 .Dl \*> Ns Ic "b sd(0,10,1) -s
 The numbers in parentheses above are:
 .Bl -enum -compact -offset indent
