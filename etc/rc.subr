@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.61 2004/01/06 00:52:24 lukem Exp $
+# $NetBSD: rc.subr,v 1.62 2004/04/02 13:13:47 jmmv Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,8 @@
 #	functions used by various rc scripts
 #
 
+: ${rcvar_manpage:='rc.conf(5)'}
+
 #
 #	functions
 #	---------
@@ -62,7 +64,7 @@ checkyesno()
 		return 1
 		;;
 	*)
-		warn "\$${1} is not set properly - see rc.conf(5)."
+		warn "\$${1} is not set properly - see ${rcvar_manpage}."
 		return 1
 		;;
 	esac

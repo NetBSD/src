@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: monthly,v 1.8 2000/01/10 17:03:49 ad Exp $
+#	$NetBSD: monthly,v 1.9 2004/04/02 13:13:47 jmmv Exp $
 #	from: @(#)monthly	8.1 (Berkeley) 6/9/93
 #
 
@@ -13,6 +13,7 @@ fi
 
 host=`hostname`
 date=`date`
+rcvar_manpage='monthly.conf(5)'
 
 echo "To: ${MAILTO:-root}"
 echo "Subject: $host monthly output for $date"

@@ -1,10 +1,12 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.88 2004/02/09 09:04:13 jdolecek Exp $
+#	$NetBSD: security,v 1.89 2004/04/02 13:13:47 jmmv Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+rcvar_manpage='security.conf(5)'
 
 if [ -f /etc/rc.subr ]; then
 	. /etc/rc.subr
