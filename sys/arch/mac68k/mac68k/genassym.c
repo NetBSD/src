@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.16 1996/02/27 03:29:16 briggs Exp $	*/
+/*	$NetBSD: genassym.c,v 1.17 1996/03/25 03:27:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,7 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/syscall.h>
+#include <sys/systm.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -53,7 +54,8 @@
 
 #include "clockreg.h"
 
-main()
+int
+main(void)
 {
 	register struct proc *p = (struct proc *)0;
 	register struct mdproc *mdproc = (struct mdproc *)0;
@@ -64,33 +66,32 @@ main()
 	struct vmspace *vms = (struct vmspace *)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
-	register unsigned i;
 
-	printf("#define\tP_FORW %d\n", &p->p_forw);
-	printf("#define\tP_BACK %d\n", &p->p_back);
-	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
-	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_MD %d\n", &p->p_md);
-	printf("#define\tP_PID %d\n", &p->p_pid);
-	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
-	printf("#define\tP_STAT %d\n", &p->p_stat);
-	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
-	printf("#define\tP_FLAG %d\n", &p->p_flag);
-	printf("#define\tP_MD_REGS %d\n", &p->p_md.md_regs);
-	printf("#define\tP_MD_FLAGS %d\n", &p->p_md.md_flags);
+	printf("#define\tP_FORW %p\n", &p->p_forw);
+	printf("#define\tP_BACK %p\n", &p->p_back);
+	printf("#define\tP_VMSPACE %p\n", &p->p_vmspace);
+	printf("#define\tP_ADDR %p\n", &p->p_addr);
+	printf("#define\tP_MD %p\n", &p->p_md);
+	printf("#define\tP_PID %p\n", &p->p_pid);
+	printf("#define\tP_PRIORITY %p\n", &p->p_priority);
+	printf("#define\tP_STAT %p\n", &p->p_stat);
+	printf("#define\tP_WCHAN %p\n", &p->p_wchan);
+	printf("#define\tP_FLAG %p\n", &p->p_flag);
+	printf("#define\tP_MD_REGS %p\n", &p->p_md.md_regs);
+	printf("#define\tP_MD_FLAGS %p\n", &p->p_md.md_flags);
 	printf("#define\tSSLEEP %d\n", SSLEEP);
 	printf("#define\tSRUN %d\n", SRUN);
 
-	printf("#define\tMD_REGS %d\n", &mdproc->md_regs);
+	printf("#define\tMD_REGS %p\n", &mdproc->md_regs);
 
-	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
+	printf("#define\tPM_STCHG %p\n", &pmap->pm_stchanged);
 
-	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
-	printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
-	printf("#define\tV_TRAP %d\n", &vm->v_trap);
-	printf("#define\tV_SYSCALL %d\n", &vm->v_syscall);
-	printf("#define\tV_INTR %d\n", &vm->v_intr);
-	printf("#define\tV_SOFT %d\n", &vm->v_soft);
+	printf("#define\tVM_PMAP %p\n", &vms->vm_pmap);
+	printf("#define\tV_SWTCH %p\n", &vm->v_swtch);
+	printf("#define\tV_TRAP %p\n", &vm->v_trap);
+	printf("#define\tV_SYSCALL %p\n", &vm->v_syscall);
+	printf("#define\tV_INTR %p\n", &vm->v_intr);
+	printf("#define\tV_SOFT %p\n", &vm->v_soft);
 
 	printf("#define\tUPAGES %d\n", UPAGES);
 	printf("#define\tUSPACE %d\n", USPACE);
@@ -112,9 +113,9 @@ main()
 #ifdef SYSVSHM
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
-	printf("#define\tU_PROF %d\n", &up->u_stats.p_prof);
-	printf("#define\tU_PROFSCALE %d\n", &up->u_stats.p_prof.pr_scale);
-	printf("#define\tRU_MINFLT %d\n", &rup->ru_minflt);
+	printf("#define\tU_PROF %p\n", &up->u_stats.p_prof);
+	printf("#define\tU_PROFSCALE %p\n", &up->u_stats.p_prof.pr_scale);
+	printf("#define\tRU_MINFLT %p\n", &rup->ru_minflt);
 
 	printf("#define\tT_BUSERR %d\n", T_BUSERR);
 	printf("#define\tT_ADDRERR %d\n", T_ADDRERR);
@@ -159,18 +160,18 @@ main()
 	printf("#define\tPG_FRAME %d\n", PG_FRAME);
 
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
-	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
-	printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
-	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
-	printf("#define\tPCB_USP %d\n", &pcb->pcb_usp);
-	printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
-	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
-	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
+	printf("#define\tPCB_FLAGS %p\n", &pcb->pcb_flags);
+	printf("#define\tPCB_PS %p\n", &pcb->pcb_ps);
+	printf("#define\tPCB_USTP %p\n", &pcb->pcb_ustp);
+	printf("#define\tPCB_USP %p\n", &pcb->pcb_usp);
+	printf("#define\tPCB_REGS %p\n", pcb->pcb_regs);
+	printf("#define\tPCB_ONFAULT %p\n", &pcb->pcb_onfault);
+	printf("#define\tPCB_FPCTX %p\n", &pcb->pcb_fpregs);
 	printf("#define\tPCB_TRCB %d\n", 5);
 
-	printf("#define\tFR_SP %d\n", &frame->f_regs[15]);
-	printf("#define\tFR_HW %d\n", &frame->f_sr);
-	printf("#define\tFR_ADJ %d\n", &frame->f_stackadj);
+	printf("#define\tFR_SP %p\n", &frame->f_regs[15]);
+	printf("#define\tFR_HW %p\n", &frame->f_sr);
+	printf("#define\tFR_ADJ %p\n", &frame->f_stackadj);
 
 	printf("#define\tB_READ %d\n", B_READ);
 
