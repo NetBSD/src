@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.3 2002/07/10 11:31:25 scw Exp $	*/
+/*	$NetBSD: profile.h,v 1.4 2003/03/24 14:24:38 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,89 +38,63 @@
 #ifndef _SH5_PROFILE_H
 #define _SH5_PROFILE_H
 
-#define	_MCOUNT_DECL	void __mcount
+#define	_MCOUNT_DECL	static void _mcount
+
+__weak_alias(mcount, __mcount)
+extern void mcount(void) __asm__("__mcount");
 
 /*
  * See _PROF_PROLOGUE in <sh5/asm.h>
  * The "selfpc" value is passed on r0, while the "frompc" is passed in r18
  */
 
-#ifdef _LP64
-
 #define	MCOUNT					\
-__asm("	.globl	_mcount				\n" \
-"	.type	_mcount,@function		\n" \
-"_mcount:					\n" \
-"	addi	r15, -96, r15			\n" \
-"	st.q	r15, 88, r0			\n" \
-"	st.q	r15, 80, r14			\n" \
+__asm("	.globl	mcount				\n" \
+"	.type	mcount,@function		\n" \
+"mcount:					\n" \
+"	addi	r15, -0x88, r15			\n" \
+"	st.q	r15, 0x78, r14			\n" \
+"	st.q	r15, 0x80, r18			\n" \
 "	or	r15, r63, r14			\n" \
-"	pta/l	___mcount, tr0			\n" \
-"	st.q	r15, 72, r18			\n" \
-"	st.q	r15, 64, r2			\n" \
-"	st.q	r15, 56, r3			\n" \
-"	st.q	r15, 48, r4			\n" \
-"	st.q	r15, 40, r5			\n" \
-"	st.q	r15, 32, r6			\n" \
-"	st.q	r15, 24, r7			\n" \
-"	st.q	r15, 16, r8			\n" \
-"	st.q	r15, 8, r9			\n" \
+"	pta/l	_mcount, tr0			\n" \
+"	st.q	r15, 0x00, r2			\n" \
+"	st.q	r15, 0x08, r3			\n" \
+"	st.q	r15, 0x10, r4			\n" \
+"	st.q	r15, 0x18, r5			\n" \
+"	st.q	r15, 0x20, r6			\n" \
+"	st.q	r15, 0x28, r7			\n" \
+"	st.q	r15, 0x30, r8			\n" \
+"	st.q	r15, 0x38, r9			\n" \
+"	fst.d	r15, 0x40, dr0			\n" \
+"	fst.d	r15, 0x48, dr2			\n" \
+"	fst.d	r15, 0x50, dr4			\n" \
+"	fst.d	r15, 0x58, dr6			\n" \
+"	fst.d	r15, 0x60, dr8			\n" \
+"	fst.d	r15, 0x68, dr10			\n" \
+"	st.q	r15, 0x70, r0			\n" \
 "	or	r18, r63, r2			\n" \
 "	or	r0, r63, r3			\n" \
 "	blink	tr0, r18			\n" \
-"	ld.q	r15, 88, r0			\n" \
-"	ld.q	r15, 72, r18			\n" \
-"	ld.q	r15, 64, r2			\n" \
-"	ld.q	r15, 56, r3			\n" \
-"	ld.q	r15, 48, r4			\n" \
-"	ld.q	r15, 40, r5			\n" \
-"	ld.q	r15, 32, r6			\n" \
-"	ld.q	r15, 24, r7			\n" \
-"	ld.q	r15, 16, r8			\n" \
-"	ld.q	r15, 8, r9			\n" \
+"	ld.q	r15, 0x00, r2			\n" \
+"	ld.q	r15, 0x08, r3			\n" \
+"	ld.q	r15, 0x10, r4			\n" \
+"	ld.q	r15, 0x18, r5			\n" \
+"	ld.q	r15, 0x20, r6			\n" \
+"	ld.q	r15, 0x28, r7			\n" \
+"	ld.q	r15, 0x30, r8			\n" \
+"	ld.q	r15, 0x38, r9			\n" \
+"	fld.d	r15, 0x40, dr0			\n" \
+"	fld.d	r15, 0x48, dr2			\n" \
+"	fld.d	r15, 0x50, dr4			\n" \
+"	fld.d	r15, 0x58, dr6			\n" \
+"	fld.d	r15, 0x60, dr8			\n" \
+"	fld.d	r15, 0x68, dr10			\n" \
+"	ld.q	r15, 0x70, r0			\n" \
 "	ptabs/l	r0, tr0				\n" \
-"	ld.q	r15, 80, r14			\n" \
-"	addi	r15, 96, r15			\n" \
+"	ld.q	r15, 0x78, r14			\n" \
+"	ld.q	r15, 0x80, r18			\n" \
+"	addi	r15, 0x88, r15			\n" \
 "	blink	tr0, r63			\n");
-
-#else	/* !_LP64 */
-
-#define	MCOUNT					\
-__asm("	.globl	_mcount				\n" \
-"	.type	_mcount,@function		\n" \
-"_mcount:					\n" \
-"	addi.l	r15, -80, r15			\n" \
-"	st.l	r15, 76, r0			\n" \
-"	st.l	r15, 72, r14			\n" \
-"	or	r15, r63, r14			\n" \
-"	pta/l	___mcount, tr0			\n" \
-"	st.q	r15, 64, r18			\n" \
-"	st.q	r15, 56, r2			\n" \
-"	st.q	r15, 48, r3			\n" \
-"	st.q	r15, 40, r4			\n" \
-"	st.q	r15, 32, r5			\n" \
-"	st.q	r15, 24, r6			\n" \
-"	st.q	r15, 16, r7			\n" \
-"	st.q	r15, 8, r8			\n" \
-"	st.q	r15, 0, r9			\n" \
-"	or	r18, r63, r2			\n" \
-"	or	r0, r63, r3			\n" \
-"	blink	tr0, r18			\n" \
-"	ld.l	r15, 76, r0			\n" \
-"	ld.q	r15, 64, r18			\n" \
-"	ld.q	r15, 56, r2			\n" \
-"	ld.q	r15, 48, r3			\n" \
-"	ld.q	r15, 40, r4			\n" \
-"	ld.q	r15, 32, r5			\n" \
-"	ld.q	r15, 24, r6			\n" \
-"	ld.q	r15, 16, r7			\n" \
-"	ld.q	r15, 8, r8			\n" \
-"	ld.q	r15, 0, r9			\n" \
-"	ptabs/l	r0, tr0				\n" \
-"	ld.l	r15, 72, r14			\n" \
-"	addi.l	r15, 80, r15			\n" \
-"	blink	tr0, r63			\n");
-#endif
 
 #ifdef _KERNEL
 #define	MCOUNT_ENTER					\
