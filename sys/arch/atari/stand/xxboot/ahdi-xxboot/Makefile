@@ -1,11 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:40 tv Exp $
+# $NetBSD: Makefile,v 1.7 2003/05/23 21:56:39 leo Exp $
 
-PROG=	xxboot.ahdi
-SRCS=	xxboot.ahdi.s
-NOMAN=	# defined
-LIBCRT0=
-INCL=	-I${.CURDIR} -I${.CURDIR}/..
+BTYPE=STD
 
-CPPFLAGS+= ${INCL}
+SUBDIR= std milan
 
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>

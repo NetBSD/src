@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/08/13 20:06:32 leo Exp $
+#	$NetBSD: Makefile.xxboot,v 1.1 2003/05/23 21:56:37 leo Exp $
 
-BINDIR=		/usr/mdec
+BINDIR=		/usr/mdec/${BTYPE:tl}
 BINMODE=	${NONBINMODE}
 
 STRIPFLAG=
 LDFLAGS=	-nostdlib -static -Wl,-x,-Ttext,0,-N
-CPPFLAGS+=	-I- -I. -I..
+CPPFLAGS+=	-I- -I.. -I../.. -D${BTYPE}
 
 beforeinstall:
 	${OBJCOPY} -O binary ${PROG} ${PROG}X
@@ -15,13 +15,13 @@ beforeinstall:
 afterinstall:
 	@mv -f ${PROG}XX ${PROG}
 
-.s.o: ../LOADADDR
+.s.o: ../${BTYPE}_LOADADDR
 	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
 	@if nm ${.TARGET} | grep -q "00000200 t end";	\
 	 then						\
 		true;					\
 	 else						\
-		nm ${.TARGET} | grep -q " end";		\
+		nm ${.TARGET} | grep " end";		\
 		rm -f ${.TARGET};			\
 		false;					\
 	 fi
@@ -29,4 +29,4 @@ afterinstall:
 ${PROG}:
 	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS}
 
-.include "../LOADADDR"
+.include "../${BTYPE}_LOADADDR"

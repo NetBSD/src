@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.fdboot,v 1.1 2003/05/23 21:56:40 leo Exp $
+
+PROG=	fdboot
+SRCS=	fdboot.s
+NOMAN=	# defined
+LIBCRT0=
+
+.PATH: ${.CURDIR}/..
+
+.include <../../Makefile.xxboot>
+.include <bsd.prog.mk>
