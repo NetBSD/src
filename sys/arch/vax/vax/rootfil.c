@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.9 1996/02/24 21:20:01 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.10 1996/03/02 13:45:47 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <machine/macros.h>
 #include <machine/nexus.h>
