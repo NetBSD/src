@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.5 2002/07/06 21:51:30 wiz Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.6 2003/05/15 14:34:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.5 2002/07/06 21:51:30 wiz Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.6 2003/05/15 14:34:39 itojun Exp $");
 #endif
 #endif
 
@@ -76,7 +76,6 @@ struct rtentry;
 #endif
 
 #include "ifaddrlist.h"
-#include "savestr.h"
 
 
 /* Not all systems have IFF_LOOPBACK */
@@ -135,7 +134,7 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 				continue;
 
 		al->addr = sin->sin_addr.s_addr;
-		al->device = savestr(ifa->ifa_name);
+		al->device = strdup(ifa->ifa_name);
 		++al;
 		++nipaddr;
 	}
@@ -220,7 +219,7 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 		device[sizeof(device) - 1] = '\0';
 
 		al->addr = sin->sin_addr.s_addr;
-		al->device = savestr(device);
+		al->device = strdup(device);
 		++al;
 		++nipaddr;
 	}
