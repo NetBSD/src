@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.15 2003/01/19 19:49:52 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.16 2003/01/22 13:38:51 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -463,8 +463,7 @@ Lbadsw3_panic:
  * Switch to a specific next LWP.
  */
 ENTRY(cpu_switchto)
-
-	LDPTR	r2, CI_CURPCB, r4	/* Fetch current->l_addr */
+	LDPTR	r2, L_ADDR, r4		/* Fetch current->l_addr (PCB) */
 	ld.l	r2, L_MD_FLAGS, r5	/* Fetch current->l_md.md_flags */
 	LDPTR	r2, L_MD_REGS, r0	/* Fetch current->l_md.md_regs */
 	ld.q	r0, TF_USR, r1		/* Fetch saved USR */
