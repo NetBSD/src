@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
+/* $NetBSD: vgavar.h,v 1.3 1999/01/13 16:48:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -144,6 +144,6 @@ int	vga_cnattach __P((bus_space_tag_t, bus_space_tag_t, int, int));
 
 struct wsscreen_descr;
 void vga_loadchars __P((struct vga_handle *, int, int, int, int, char *));
-void vga_setfontset __P((struct vga_handle *, int));
+void vga_setfontset __P((struct vga_handle *, int, int));
 void vga_setscreentype __P((struct vga_handle *,
 			    const struct wsscreen_descr *));
