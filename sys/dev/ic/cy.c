@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.9 1998/03/21 23:26:15 mjacob Exp $	*/
+/*	$NetBSD: cy.c,v 1.10 1998/03/22 19:36:52 mycroft Exp $	*/
 
 /*
  * cy.c
@@ -919,7 +919,7 @@ cy_poll(arg)
 		    port++) {
 			cy = &sc->sc_ports[port];
 			if ((tp = cy->cy_tty) == NULL || cy->cy_ibuf == NULL ||
-			    !ISSET(tp->t_state, TS_ISOPEN) || tp->t_wopen == 0)
+			    (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0))
 				continue;
 
 			/*
