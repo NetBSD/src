@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.37 2002/02/09 23:38:10 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.38 2002/02/13 23:44:56 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1749,6 +1749,7 @@ sys/kern/vfs_subr.c				1.163
 sys/nfs/nfs_syscalls.c				1.50
 sys/sys/mount.h					1.92
 sys/nfs/nfs.h					1.32
+usr.sbin/mountd/mountd.c			1.79
 
   Widen cr_ref to prevent overflow.
 
@@ -1757,10 +1758,11 @@ share/man/man4/man4.sparc/intro.4		1.12
   Document support for HyperSPARC and sun4u.  Fixes PR#14851.
 
 sbin/init/init.c				1.38-1.48
+sbin/init/Makefile				1.26
 
-  Add optional support to try to set up an MFS based /dev file
-  system if /dev/console is missing.  Also fix PR#11847 -- handling
-  of EOF at altshell prompt, and convert to ANSI C code style.
+  Add support to try to set up an MFS based /dev file system if
+  /dev/console is missing.  Also fix PR#11847 -- handling of EOF
+  at altshell prompt, and convert to ANSI C code style.
 
 sys/kern/kern_descrip.c				1.84 via patch
 
@@ -1813,3 +1815,50 @@ crypto/dist/heimdal/lib/kadm5/init_c.c		1.2 via patch
 sys/arch/sun3/stand/libsa/Makefile		1.31 via patch
 
   Add ashldi3.c, needed by ufs.c after fs.h update.
+
+sys/kern/subr_extent.c				1.43,1.45
+
+  Two fixes:
+   o Make sure that extent_alloc_subregion() does not allocate a region
+     past the end of a subregion.
+   o Avoid allocating a region over an already-allocated one when
+     boundary is non-null.
+
+sys/netinet/ip_raudio_pxy.c			patch
+sys/netinet/ip_rcmd_pxy.c			patch
+
+  Bump first argument to __KERNEL_RCSID for these files, to allow
+  kernels with IPF to build on a.out systems.  Fixes PR#15589.
+
+regress/sys/kern/extent/tests			1.6-1.7
+
+  Add two tests to match recent pull-ups:
+   o extent_alloc_subregion() should not allocate region past the
+     end of subregion
+   o Do not allocate a region over an already allocated one when
+     boundary is non-null
+
+sys/kern/vfs_bio.c				1.78 via patch
+
+  Do not apply ``block size invariant'' for VBLK vnodes, since a
+  buffer which crosses the end of the partition will be truncated.
+  Fixes PR#7938, PR#12156, PR#12698, PR#13076, PR#13210, and
+  PR#13288.
+
+sys/dev/ic/elinkxl.c				patch
+
+  Correct typo in previous pull-up.
+
+sys/arch/macppc/stand/ofwboot/Makefile		1.14-1.15,1.25 via patch
+sys/arch/macppc/stand/ofwboot/boot1.c		1.1 (new)
+
+  Make it so that we can use load-base 600000 for ofwboot, ofwboot.elf,
+  and ofwboot.xcf.  The fundamental problem is that for ofwboot,
+  load-base needs to be the load point, while for ofwboot.xcf and
+  ofwboot.elf, it needs to not be the load point, but rather a
+  scratch buffer used for loading.
+
+usr.bin/fstat/fstat.c				1.55
+
+  Add an extra column for inode numbers, and pull back the mode field
+  to just 5 columns if in "numeric" mode.
