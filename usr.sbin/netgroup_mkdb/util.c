@@ -1,3 +1,5 @@
+/*	$NetBSD: util.c,v 1.3 1996/10/04 05:15:31 christos Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.2 1995/04/24 13:25:56 cgd Exp $";
+static char *rcsid = "$NetBSD: util.c,v 1.3 1996/10/04 05:15:31 christos Exp $";
 #endif
 
 #include <err.h>
@@ -91,7 +93,7 @@ getline(fp, size)
 	}
 	if (ptr[s - 1] == '\n')		/* the newline may be missing at EOF */
 	    s--;			/* forget newline */
-	if ((cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
+	if (s && (cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
 	    s--;			/* forget \\ */
 
 	buf = erealloc(buf, len + s + 1);
