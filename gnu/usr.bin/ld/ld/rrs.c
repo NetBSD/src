@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.29 1999/02/27 03:31:12 tv Exp $	*/
+/*	$NetBSD: rrs.c,v 1.30 2000/01/07 20:23:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -318,10 +318,7 @@ printf("claim_rrs_reloc: %s in %s\n", sp->name, get_file_name(entry));
 	r->r_address = rp->r_address;
 	r->r_symbolnum = sp->rrs_symbolnum;
 
-	if (link_mode & SYMBOLIC) {
-		if (!sp->defined)
-			warnx("Cannot reduce symbol \"%s\" in %s",
-				sp->name, get_file_name(entry));
+	if (sp->defined && (link_mode & SYMBOLIC)) {
 		RELOC_EXTERN_P(r) = 0;
 		*relocation += sp->value;
 		(void) md_make_reloc(rp, r, RELTYPE_RELATIVE);
@@ -362,11 +359,8 @@ printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
 	sp->name, sp->rrs_symbolnum, sp->jmpslot_offset);
 #endif
 
-	if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
-		if (!sp->defined)
-			warnx("Cannot reduce symbol \"%s\" in %s",
-				sp->name, get_file_name(entry));
-
+	if (sp->defined &&
+	    ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL)) {
 		md_fix_jmpslot( rrs_plt + sp->jmpslot_offset/sizeof(jmpslot_t),
 				rrs_sdt.sdt_plt + sp->jmpslot_offset,
 				sp->value, 0);
@@ -375,6 +369,9 @@ printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
 			discarded_rrs_relocs++;
 			return rrs_sdt.sdt_plt + sp->jmpslot_offset;
 		}
+	} else if (rrs_section_type == RRS_PARTIAL) {
+		warnx("Cannot reduce symbol \"%s\" in %s",
+		      sp->name, get_file_name(entry));
 	} else {
 		md_make_jmpslot(rrs_plt + sp->jmpslot_offset/sizeof(jmpslot_t),
 				sp->jmpslot_offset,
@@ -390,7 +387,7 @@ printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
 
 	r->r_address = (long)rrs_sdt.sdt_plt + sp->jmpslot_offset;
 
-	if (link_mode & SYMBOLIC) {
+	if (sp->defined && (link_mode & SYMBOLIC)) {
 		RELOC_EXTERN_P(r) = 0;
 		md_make_jmpreloc(rp, r, RELTYPE_RELATIVE);
 	} else {
@@ -432,8 +429,8 @@ claim_rrs_gotslot(entry, rp, lsp, addend)
 	if (sp->gotslot_offset != -1) {
 #ifdef DIAGNOSTIC
 		if (*GOTP(sp->gotslot_offset) != addend +
-		    ((!(link_mode & SHAREABLE) || (link_mode & SYMBOLIC))
-		       ? sp->value : 0))
+		    (((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL)
+		       && sp->defined ? sp->value : 0))
 			errx(1, "%s: %s: gotslot at %#x is multiple valued, "
 				"*got = %#x, addend = %#x, sp->value = %#x",
 				get_file_name(entry), sp->name,
@@ -461,8 +458,7 @@ printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
 #endif
 
 	if (sp->defined &&
-	    (!(link_mode & SHAREABLE) || (link_mode & SYMBOLIC))) {
-
+	    ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL)) {
 		/*
 		 * Reduce to just a base-relative translation.
 		 */
@@ -473,12 +469,7 @@ printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
 #endif
 		reloc_type = RELTYPE_RELATIVE;
 
-	} else if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
-		/*
-		 * SYMBOLIC: all symbols must be known.
-		 * RRS_PARTIAL: we don't link against shared objects,
-		 * so again all symbols must be known.
-		 */
+	} else if (rrs_section_type == RRS_PARTIAL) {
 		warnx("Cannot reduce symbol \"%s\" in %s",
 		      sp->name, get_file_name(entry));
 

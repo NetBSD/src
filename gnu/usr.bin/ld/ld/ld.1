@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.1,v 1.20 1999/03/22 18:51:52 garbled Exp $
+.\"	$NetBSD: ld.1,v 1.21 2000/01/07 20:23:41 mycroft Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,11 +107,10 @@ in effect is flagged as an error.
 Instructs the linker to build a shared object from the object files rather
 than a normal executable image.
 .It Fl B Ns Ar symbolic
-This option causes all symbolic references in the output to be resolved in
-this link-edit session. The only remaining run-time relocation requirements are
-.Em base-relative
-relocations, ie. translation with respect to the load address. Failure to
-resolve any symbolic reference causes an error to be reported.
+Causes symbolic references to symbols within the object to be resolved and
+changed to base-relative references.  This can be used, e.g., to make a shared
+library use an internal symbol when the executable that loads it has its own
+definition.  References to undefined symbols are not affected by this flag.
 .It Fl B Ns Ar forcearchive
 Force all members of archives to be loaded, whether or not such members
 contribute a definition to any plain object files. Useful for making a
