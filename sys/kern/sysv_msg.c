@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.22 1998/05/07 18:00:49 kleink Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.23 1998/10/19 22:19:27 tron Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -18,6 +18,8 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
