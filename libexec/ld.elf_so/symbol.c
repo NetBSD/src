@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.18 2002/09/12 22:56:29 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.19 2002/09/13 03:40:40 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -134,9 +134,10 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 			    || (!in_plt && symp->st_value != 0 &&
 			        ELF_ST_TYPE(symp->st_info) == STT_FUNC)
 #endif
-				) {
+				)
 				return symp;
-			}
+			else
+				return NULL;
 		}
 		symnum = obj->chains[symnum];
 	}
