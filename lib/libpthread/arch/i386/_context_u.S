@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.7 2002/03/01 22:44:40 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.8 2002/04/24 20:04:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@
 	movl	%ebp,  (UC_REGS + _REG_EBP * 4)(%ecx)	; \
 	movl	%ebx,  (UC_REGS + _REG_EBX * 4)(%ecx)	; \
 	movl	%edx,  (UC_REGS + _REG_EIP * 4)(%ecx)	; \
-	movl	$(_UC_USER | _UC_CPU),%eax		; \
+	fnsave  UC_FPREGS(%ecx)				; \
+	movl	$(_UC_USER | _UC_CPU | _UC_FPU),%eax	; \
  	movl	%eax,   UC_FLAGS(%ecx)	
 
 #define SETC \
