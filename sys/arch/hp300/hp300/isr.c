@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.5 1996/12/09 17:38:25 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.6 1997/04/01 03:12:18 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,8 +42,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+
 #include <net/netisr.h>
 
 #include <machine/cpu.h>
@@ -257,7 +259,7 @@ isrdispatch(evec)
 
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
-		panic("isrdispatch: bad vec 0x%x\n");
+		panic("isrdispatch: bad vec 0x%x\n", vec);
 	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;
@@ -271,6 +273,7 @@ isrdispatch(evec)
 		return;
 	}
 
+	handled = 0;
 	/* Give all the handlers a chance. */
 	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next)
 		handled |= (*isr->isr_func)(isr->isr_arg);
@@ -286,6 +289,14 @@ isrdispatch(evec)
 /*
  * XXX Why on earth isn't this in a common file?!
  */
+void	netintr __P((void));
+void	arpintr __P((void));
+void	ipintr __P((void));
+void	nsintr __P((void));
+void	clnintr __P((void));
+void	ccittintr __P((void));
+void	pppintr __P((void));
+
 void
 netintr()
 {

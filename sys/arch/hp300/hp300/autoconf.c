@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1997/03/26 22:38:58 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 1997/04/01 03:12:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -65,17 +65,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/disklabel.h>
-#include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/dmap.h>
+#include <sys/malloc.h>
+#include <sys/map.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>
+#include <sys/tty.h>
 
 #include <dev/cons.h>
 
@@ -90,8 +91,11 @@
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
+#include <hp300/dev/dmavar.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 
 #include <hp300/dev/hpibvar.h>
 #include <hp300/dev/scsivar.h>
@@ -167,14 +171,6 @@ void	setbootdev __P((void));
 
 static	struct dev_data *dev_data_lookup __P((struct device *));
 static	void dev_data_insert __P((struct dev_data *, ddlist_t *));
-
-static	struct device *parsedisk __P((char *str, int len, int defpart,
-	    dev_t *devp));
-static	struct device *getdisk __P((char *str, int len, int defpart,
-	    dev_t *devp));
-static	int findblkmajor __P((struct device *dv));
-static	char *findblkname __P((int));
-static	int getstr __P((char *cp, int size));  
 
 int	mainbusmatch __P((struct device *, struct cfdata *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
