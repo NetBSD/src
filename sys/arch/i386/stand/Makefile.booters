@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.5 1997/06/26 19:03:32 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.6 1997/07/15 13:02:04 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -16,8 +16,16 @@ GENPROM= ${.CURDIR}/../genprom/genprom
 .PATH: ${.CURDIR}/../lib/crt/dos
 DOSSTART= start_dos.o doscommain.o exec_fromdos.o
 
-CPPFLAGS += -I$S -I${.CURDIR}/../lib -I$S/lib/libsa
+CPPFLAGS += -I${.OBJDIR} -I$S -I${.CURDIR}/../lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
+
+.BEGIN: ${.OBJDIR}/machine
+depend all: ${.OBJDIR}/machine
+CLEANFILES+= ${.OBJDIR}/machine
+
+${.OBJDIR}/machine::
+	-rm $@
+	ln -s $S/arch/i386/include $@
 
 .include <bsd.prog.mk>
 
@@ -66,4 +74,3 @@ ${PROG}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 ${GENPROM}:
 	@echo "genprom" missing
 	@false
-
