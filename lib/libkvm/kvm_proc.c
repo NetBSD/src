@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.39 2000/07/16 02:04:11 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.40 2000/07/16 02:20:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.39 2000/07/16 02:04:11 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.40 2000/07/16 02:20:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,7 @@ struct miniproc {
 	} while (/*CONSTCOND*/0);
 
 
-#define	PTRTOINT64(foo)	((u_int64_t)(u_long)(void *)(foo))
+#define	PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(void *)(foo))
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
