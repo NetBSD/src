@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1996/02/22 10:11:00 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1996/04/18 08:51:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,6 +70,17 @@
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
+
+void syscall __P((register_t, struct frame));
+void trap __P((int, u_int, u_int, struct frame));
+
+static void panictrap __P((int, u_int, u_int, struct frame *));
+static void trapmmufault __P((int, u_int, u_int, struct frame *,
+					struct proc *, u_quad_t));
+static void trapcpfault __P((struct proc *, struct frame *));
+static void userret __P((struct proc *, int, u_quad_t));
+static void _wb_fault __P((void));
+static int _write_back __P((u_int, u_int, u_int, u_int, vm_map_t));
 
 /*
  * XXX Hack until I can figure out what to do about this code's removal
@@ -212,7 +223,7 @@ userret(p, pc, oticks)
 	curpriority = p->p_priority;
 }
 
-void
+static void
 panictrap(type, code, v, fp)
 	int type;
 	u_int code, v;
@@ -234,7 +245,7 @@ panictrap(type, code, v, fp)
 /*
  * return to fault handler
  */
-void
+static void
 trapcpfault(p, fp)
 	struct proc *p;
 	struct frame *fp;
@@ -250,7 +261,7 @@ trapcpfault(p, fp)
 	fp->f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
 }
 
-void 
+static void 
 trapmmufault(type, code, v, fp, p, sticks)
 	int type;
 	u_int code, v;
@@ -434,7 +445,7 @@ nogo:
 			trapcpfault(p, fp);
 			return;
 		}
-		printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+		printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 		       map, va, ftype, rv);
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
@@ -865,7 +876,7 @@ child_return(p, frame)
 /*
  * Process a pending write back
  */
-int
+static int
 _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb;	/* writeback type: 1, 2, or 3 */
 	u_int wb_sts;	/* writeback status information */
@@ -876,7 +887,6 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb_extra_page = 0;
 	u_int mmusr;
 	int   wb_rc;
-	void _wb_fault ();	/* fault handler for write back */
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -998,7 +1008,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 /*
  * fault handler for write back
  */
-void
+static void
 _wb_fault()
 {
 #ifdef DEBUG

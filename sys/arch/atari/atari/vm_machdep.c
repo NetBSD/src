@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 1996/02/22 10:11:01 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 1996/04/18 08:51:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,15 +49,17 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/core.h>
+#include <sys/cpu.h>
 #include <sys/exec_aout.h>
 #include <m68k/reg.h>
 
-#include <machine/cpu.h>
+#include <kern/kern_extern.h>
 
 #include <vm/vm.h>
 #include <sys/user.h>
 #include <vm/vm_kern.h>
 #include <machine/pte.h>
+#include <machine/cpu.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -75,11 +77,12 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
 	register struct switchframe *sf;
-	extern void proc_trampoline(), child_return();
+	extern struct pcb *curpcb;
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* Copy pcb from proc p1 to p2. */
+	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
+	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
@@ -110,17 +113,16 @@ cpu_fork(p1, p2)
  */
 void
 cpu_set_kpc(p, pc)
-	struct proc *p;
-	u_int32_t pc;
+	struct proc	*p;
+	void		(*pc)(struct proc *);
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
-	extern void proc_trampoline(), child_return();
 
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *)pcbp->pcb_regs[11];
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcbp->pcb_regs[6] = pc;			/* A2 */
+	pcbp->pcb_regs[6] = (int)pc;		/* A2 */
 	pcbp->pcb_regs[7] = (int)p;		/* A3 */
 }
 
@@ -150,8 +152,8 @@ cpu_exit(p)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
+	register caddr_t	from, to;
+		 size_t		size;
 {
 	register vm_offset_t pa;
 
@@ -182,6 +184,7 @@ pagemove(from, to, size)
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
  */ 
+void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;

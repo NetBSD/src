@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 1996/04/12 09:05:35 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.20 1996/04/18 08:51:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -68,6 +68,7 @@
 #include <machine/mfp.h>
 #include <machine/dma.h>
 #include <machine/video.h>
+#include <machine/cpu.h>
 #include <atari/dev/ym2149reg.h>
 #include <atari/dev/fdreg.h>
 
@@ -740,7 +741,7 @@ int	drive, head, dense;
 	}
 	if(i != selected) {
 		selected = i;
-		ym2149_fd_select(i ^ PA_FDSEL);
+		ym2149_fd_select((i ^ PA_FDSEL));
 	}
 	return(spinning);
 }
