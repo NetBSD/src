@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.27 1994/08/30 03:05:44 mycroft Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.28 1994/08/30 05:37:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -677,43 +677,45 @@ resetpriority(p)
 }
 
 #ifdef DDB
-void db_show_all_procs(long addr, int haddr, int count, char *modif)
+void
+db_show_all_procs(addr, haddr, count, modif)
+	long addr;
+	int haddr;
+	int count;
+	char *modif;
 {
-    int np;
-    struct proc *ap, *p, *pp;
+	int map = modif[0] == 'm';
+	int doingzomb = 0;
+	struct proc *p, *pp;
     
-    np = nprocs;
-    p = ap = allproc.lh_first;
-    if (modif[0] == 'm')
-        db_printf("  pid  proc    addr     map      comm         wchan\n");
-    else
-        db_printf("  pid  proc    addr     uid     ppid  pgrp   flag stat comm         wchan\n");
-    while (--np >= 0) {
-        pp = p->p_pptr;
-        if (pp == 0)
-	    pp = p;
-        if (p->p_stat) {
-            if (modif[0] == 'm') {
-                db_printf("%5d %06x %06x %06x %s   ",
-                          p->p_pid, ap, p->p_addr, p->p_vmspace, p->p_comm);
-            }
-            else {
-                db_printf("%5d %06x %06x %3d %5d %5d  %06x  %d  %s   ",
-                          p->p_pid, ap, p->p_addr, p->p_cred->p_ruid,
-                          pp->p_pid, p->p_pgrp->pg_id, p->p_flag,
-                          p->p_stat, p->p_comm);
-            }
-            if (p->p_wchan) {
-                if (p->p_wmesg)
-                    db_printf("%s ", p->p_wmesg);
-                db_printf("%x", p->p_wchan);
-	    }
-            db_printf("\n");
+	p = allproc.lh_first;
+	db_printf("  pid proc     addr     %s comm         wchan\n",
+	    map ? "map     " : "uid  ppid  pgrp  flag stat ");
+	while (p != 0) {
+		pp = p->p_pptr;
+		if (p->p_stat) {
+			db_printf("%5d %06x %06x ",
+			    p->p_pid, p, p->p_addr);
+			if (map)
+				db_printf("%06x %s   ",
+				    p->p_vmspace, p->p_comm);
+			else
+				db_printf("%3d %5d %5d  %06x  %d  %s   ",
+				    p->p_cred->p_ruid, pp ? pp->p_pid : -1,
+				    p->p_pgrp->pg_id, p->p_flag, p->p_stat,
+				    p->p_comm);
+			if (p->p_wchan) {
+				if (p->p_wmesg)
+					db_printf("%s ", p->p_wmesg);
+				db_printf("%x", p->p_wchan);
+			}
+			db_printf("\n");
+		}
+		p = p->p_list.le_next;
+		if (p == 0 && doingzomb == 0) {
+			doingzomb = 1;
+			p = zombproc.lh_first;
+		}
 	}
-        ap = p->p_list.le_next;
-        if (ap == 0 && np > 0)
-	    ap = zombproc.lh_first;
-        p = ap;
-    }
 }
 #endif
