@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.7 2000/06/14 13:51:45 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.8 2000/06/15 21:07:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.7 2000/06/14 13:51:45 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.8 2000/06/15 21:07:37 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -428,12 +428,7 @@ play(arg)
 
 	if (!arg || !*arg) {
 		/* Play the whole disc */
-		if (!msf)
-			return (play_blocks(0, be32toh(toc_buffer[n].addr.lba)));
-		
-		return (play_blocks(0, msf2lba(toc_buffer[n].addr.msf.minute,
-		    toc_buffer[n].addr.msf.second, 
-		    toc_buffer[n].addr.msf.frame)));
+		return (play_track(h.starting_track, 1, h.ending_track, 1));
 	}
 	
 	if (strchr(arg, '#')) {
