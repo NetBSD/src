@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1995/12/21 05:02:06 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1996/04/26 19:40:53 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,7 +101,6 @@ struct clockframe {
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
-
 /*
  * simulated software interrupt register
  */
@@ -145,6 +144,16 @@ extern unsigned long allocate_sir();
 extern	int mmutype, ectype;
 extern	int cpuspeed;			/* XXX kill */
 extern	char *intiobase, *intiolimit;
+
+struct frame;
+void	doboot __P((int)) 
+	__attribute__((__noreturn__));
+void	nmihand __P((struct frame *));
+void	mvme68k_abort __P((const char *));
+void	physaccess __P((caddr_t, caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
+void	*iomap __P((u_long, size_t));
+void	iounmap __P((void *, size_t));
 #endif
 
 /* physical memory sections for mvme147 */
