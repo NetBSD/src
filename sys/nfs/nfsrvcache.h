@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.6 1994/08/17 12:34:14 mycroft Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.7 1994/08/18 22:48:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,8 +45,8 @@
 #define	NFSRVCACHESIZ	256
 
 struct nfsrvcache {
-	LIST_ENTRY(nfsrvcache) rc_hash;		/* Hash chain */
 	TAILQ_ENTRY(nfsrvcache) rc_lru;		/* LRU chain */
+	LIST_ENTRY(nfsrvcache) rc_hash;		/* Hash chain */
 	u_long	rc_xid;				/* rpc id number */
 	union {
 		struct mbuf *ru_repmb;		/* Reply mbuf list OR */
