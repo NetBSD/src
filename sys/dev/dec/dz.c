@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.4 2002/09/18 16:51:16 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.5 2002/09/18 17:06:07 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.4 2002/09/18 16:51:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.5 2002/09/18 17:06:07 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,14 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.4 2002/09/18 16:51:16 ad Exp $");
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
 
 #include "ioconf.h"
-
-/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. We use 8 by default */
-
-#define	NDZLINE 	8
-
-#define DZ_C2I(c)	((c)<<3)	/* convert controller # to index */
-#define DZ_I2C(c)	((c)>>3)	/* convert minor to controller # */
-#define DZ_PORT(u)	((u)&07)	/* extract the port # */
 
 /* Flags used to monitor modem bits, make them understood outside driver */
 
