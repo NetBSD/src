@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.44 1999/12/16 02:21:37 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.45 1999/12/16 07:05:18 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -290,8 +290,7 @@ shell is assumed to be
 .Pa /bin/sh .
 .It
 If directed by the file
-.Pa /etc/ftpchroot
-(see below)
+.Xr ftpchroot 5
 the session's root will be changed to the user's login directory by
 .Xr chroot 2
 as for an
@@ -466,7 +465,8 @@ as login shell.
 .Sh FILES
 .Bl -tag -width /etc/ftpwelcome -compact
 .It Pa /etc/ftpchroot
-List of normal users who should be chroot'd.
+List of normal users who should be
+.Xr chroot 2 ed.
 .It Pa /etc/ftpd.conf
 Configure file conversions and other settings.
 .It Pa /etc/ftpusers
@@ -483,6 +483,7 @@ If it exists, displayed and access is refused.
 .Xr skey 1 ,
 .Xr getusershell 3 ,
 .Xr ftpd.conf 5 ,
+.Xr ftpchroot 5 ,
 .Xr ftpusers 5 ,
 .Xr syslogd 8
 .Sh STANDARDS
