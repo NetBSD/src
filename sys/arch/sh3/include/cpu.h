@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2002/02/19 17:22:34 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2002/02/22 19:44:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -178,8 +178,6 @@ void sh3_startup(void);
 void delay(int);
 struct pcb;
 void savectx(struct pcb *);
-
-void startrtclock(void);
 #endif /* _KERNEL */
 
 /*
