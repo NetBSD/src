@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 1998/08/12 05:42:45 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.210 1998/08/12 06:48:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2595,7 +2595,7 @@ u_int
 get_mapping(void)
 {
 	int i, last, same;
-	u_long addr, lastpage, phys, len;
+	u_long addr, lastpage, phys, len, limit;
 
 	numranges = 0;
 	for (i = 0; i < 8; i++) {
@@ -2681,17 +2681,20 @@ get_mapping(void)
 	    phys >= (u_long)intvid_info[i].fbbase &&
 	    phys < (u_long)(intvid_info[i].fbbase + intvid_info[i].fblen)) {
 		mac68k_vidphys = phys;
-		mac68k_vidlen = 32768;
-		if (mac68k_vidlen > intvid_info[i].fblen) {
-			mac68k_vidlen = intvid_info[i].fblen;
+		mac68k_vidlen = 32768 - (phys & 0x7fff);
+		phys &= ~0x7fff;
+
+		limit = (u_long)(intvid_info[i].fbbase + intvid_info[i].fblen) -
+		    mac68k_vidphys;
+		if (mac68k_vidlen > limit) {
+			mac68k_vidlen = limit;
 		} else {
-			addr = videoaddr + 32768;
+			addr = videoaddr + mac68k_vidlen;
 			while (get_physical(addr, &phys)) {
 				if ((phys - mac68k_vidphys) != mac68k_vidlen)
 					break;
-				if (mac68k_vidlen + 32768 >
-				    intvid_info[i].fblen) {
-					mac68k_vidlen = intvid_info[i].fblen;
+				if ((mac68k_vidphys + 32768) > limit) {
+					mac68k_vidlen = limit;
 					break;
 				}
 				mac68k_vidlen += 32768;
