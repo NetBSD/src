@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.19 2001/11/12 22:06:41 tv Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.20 2001/11/13 17:36:14 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -49,6 +49,10 @@ LIBY?=		/usr/lib/liby.a
 LIBZ?=		/usr/lib/libz.a
 
 CFLAGS+=	${COPTS}
+
+# Override these:
+INSTALL:=	${INSTALL:NSTRIP=*}
+MKDEP:=		CC=${HOST_CC:Q} ${MKDEP:NCC=*}
 
 .if defined(USE_NEW_TOOLCHAIN)
 OBJHOSTMACHINE=	# set
