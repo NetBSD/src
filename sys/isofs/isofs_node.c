@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isofs_inode.c
- *	$Id: isofs_node.c,v 1.7 1993/10/28 17:38:45 ws Exp $
+ *	$Id: isofs_node.c,v 1.8 1993/11/26 19:56:53 ws Exp $
  */
 
 #include "param.h"
@@ -455,7 +455,11 @@ isofs_defattr(isodir,inop,bp)
 	
 	if (isonum_711(isodir->flags)&2) {
 		inop->inode.iso_mode = S_IFDIR;
-		inop->inode.iso_links = 2;
+		/*
+		 * If we return 2, fts() will assume there are no subdirectories
+		 * (just links for the path and .), so instead we return 1.
+		 */
+		inop->inode.iso_links = 1;
 	} else {
 		inop->inode.iso_mode = S_IFREG;
 		inop->inode.iso_links = 1;
