@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.57 2002/03/25 18:00:18 he Exp $
+.\"	$NetBSD: main,v 1.61.2.58 2002/03/29 23:13:08 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -428,15 +428,15 @@ A driver for the 3ware Escalade 5000 and 6000 series RAID controllers
 has been added, see
 .Xr twe 4 .
 .It
-Network device driver fixes for
+Various different fixes have been applied to the network device drivers
+.Xr ep 4 ,
 .Xr ex 4 ,
 .Xr rtk 4 ,
 .Xr sip 4 ,
 .Xr ti 4 ,
 .Xr tl 4 ,
 and
-.Xr wi 4
-have been applied.
+.Xr wi 4 .
 .It
 Support for some more variants of
 .Xr rtk 4
