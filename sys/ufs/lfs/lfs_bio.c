@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.27 2000/09/09 04:49:54 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.28 2000/09/10 00:20:45 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ lfs_reserve(fs, vp, nb)
 
 		if (!slept)
 			printf("lfs_reserve: waiting for %ld (bfree = %d,"
-			       " est_bfree = %ld)\n",
+			       " est_bfree = %qd)\n",
 			       nb + fs->lfs_ravail, fs->lfs_bfree,
 			       LFS_EST_BFREE(fs));
 		++slept;
