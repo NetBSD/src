@@ -1,4 +1,4 @@
-/*      $NetBSD: cmds.c,v 1.11 1996/12/06 02:06:46 lukem Exp $      */
+/*      $NetBSD: cmds.c,v 1.12 1996/12/25 16:00:38 christos Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.11 1996/12/06 02:06:46 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.12 1996/12/25 16:00:38 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -2257,7 +2257,7 @@ remotesize(file)
 		verbose = -1;
 	if (command("SIZE %s", file) == COMPLETE)
 		sscanf(reply_string, "%*s %qd", &size);
-	else if (debug == 0)
+	else if (debug != 0)
 		printf("%s\n", reply_string);
 	verbose = overbose;
 	return (size);
@@ -2316,7 +2316,7 @@ remotemodtime(file)
 			printf("Can't convert %s to a time\n", reply_string);
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
-	} else if (debug == 0)
+	} else if (debug != 0)
 		printf("%s\n", reply_string);
 	verbose = overbose;
 	return(rtime);
@@ -2344,7 +2344,7 @@ modtime(argc, argv)
 }
 
 /*
- * show status on reomte machine
+ * show status on remote machine
  */
 void
 rmtstatus(argc, argv)
