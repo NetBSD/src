@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.119 1998/06/24 20:58:46 sommerfe Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.120 1998/06/30 19:36:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1227,6 +1227,182 @@ sys_lseek(p, v, retval)
 
 	*(off_t *)retval = fp->f_offset = newoff;
 	return (0);
+}
+
+/*
+ * Positional read system call.
+ */
+int
+sys_pread(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_pread_args /* {
+		syscallarg(int) fd;
+		syscallarg(void *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(off_t) offset;
+	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	off_t offset;
+	int error, fd = SCARG(uap, fd);
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FREAD) == 0)
+		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || vp->v_type == VFIFO)
+		return (ESPIPE);
+
+	offset = SCARG(uap, offset);
+
+	/*
+	 * XXX This works because no file systems actually
+	 * XXX take any action on the seek operation.
+	 */
+	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+		return (error);
+
+	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	    &offset, 0, retval));
+}
+
+/*
+ * Positional scatter read system call.
+ */
+int
+sys_preadv(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_preadv_args /* {
+		syscallarg(int) fd;
+		syscallarg(const struct iovec *) iovp;
+		syscallarg(int) iovcnt;
+		syscallarg(off_t) offset;
+	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	off_t offset;
+	int error, fd = SCARG(uap, fd);
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FREAD) == 0)
+		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || vp->v_type == VFIFO)
+		return (ESPIPE);
+
+	offset = SCARG(uap, offset);
+
+	/*
+	 * XXX This works because no file systems actually
+	 * XXX take any action on the seek operation.
+	 */
+	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+		return (error);
+
+	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+	    &offset, 0, retval));
+}
+
+/*
+ * Positional write system call.
+ */
+int
+sys_pwrite(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_pwrite_args /* {
+		syscallarg(int) fd;
+		syscallarg(const void *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(off_t) offset;
+	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	off_t offset;
+	int error, fd = SCARG(uap, fd);
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FWRITE) == 0)
+		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || vp->v_type == VFIFO)
+		return (ESPIPE);
+
+	offset = SCARG(uap, offset);
+
+	/*
+	 * XXX This works because no file systems actually
+	 * XXX take any action on the seek operation.
+	 */
+	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+		return (error);
+
+	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	    &offset, 0, retval));
+}
+
+/*
+ * Positional gather write system call.
+ */
+int
+sys_pwritev(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_pwritev_args /* {
+		syscallarg(int) fd;
+		syscallarg(const struct iovec *) iovp;
+		syscallarg(int) iovcnt;
+		syscallarg(off_t) offset;
+	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	off_t offset;
+	int error, fd = SCARG(uap, fd);
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FWRITE) == 0)
+		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || vp->v_type == VFIFO)
+		return (ESPIPE);
+
+	offset = SCARG(uap, offset);
+
+	/*
+	 * XXX This works because no file systems actually
+	 * XXX take any action on the seek operation.
+	 */
+	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+		return (error);
+
+	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+	    &offset, 0, retval));
 }
 
 /*
