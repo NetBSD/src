@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.194 2003/12/14 00:09:24 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.195 2003/12/14 01:14:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.194 2003/12/14 00:09:24 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.195 2003/12/14 01:14:24 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -243,11 +243,11 @@ struct pfil_head inet_pfil_hook;
 static int	ip_nmbclusters;			/* copy of nmbclusters */
 static void	ip_nmbclusters_changed __P((void));	/* recalc limits */
 
-#define CHECK_NMBCLUSTER_PARAMS() \
-do { if __predict_false(ip_nmbclusters != nmbclusters)	\
-	ip_nmbclusters_changed();			\
-} while  (0)
-
+#define CHECK_NMBCLUSTER_PARAMS()				\
+do {								\
+	if (__predict_false(ip_nmbclusters != nmbclusters))	\
+		ip_nmbclusters_changed();			\
+} while (/*CONSTCOND*/0)
 
 /* IP datagram reassembly queues (hashed) */
 #define IPREASS_NHASH_LOG2      6
