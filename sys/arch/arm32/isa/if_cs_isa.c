@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.19 1998/07/21 19:54:56 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.20 1998/07/21 22:58:31 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -200,6 +200,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
@@ -244,8 +245,8 @@
 /*
  * FUNCTION PROTOTYPES
  */
-int	cs_probe __P((struct device *, struct cfdata *, void *));
-void	cs_attach __P((struct device *, struct device *, void *));
+int	cs_isa_probe __P((struct device *, struct cfdata *, void *));
+void	cs_isa_attach __P((struct device *, struct device *, void *));
 int	cs_get_params __P((struct cs_softc *));
 int	cs_validate_params __P((struct cs_softc *));
 int	cs_get_enaddr __P((struct cs_softc *));
@@ -269,6 +270,9 @@ void	cs_set_ladr_filt __P((struct cs_softc *, struct ethercom *));
 u_int16_t cs_hash_index __P((char *));
 void	cs_counter_event __P((struct cs_softc *, u_int16_t));
 void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
+
+int	cs_mediachange __P((struct ifnet *));
+void	cs_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 /*
  * GLOBAL DECLARATIONS
@@ -303,11 +307,11 @@ struct cs_xmit_early {
 };
 
 struct cfattach cs_ca = {
-	sizeof(struct cs_softc), cs_probe, cs_attach
+	sizeof(struct cs_softc), cs_isa_probe, cs_isa_attach
 };
 
 int 
-cs_probe(parent, cf, aux)
+cs_isa_probe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -368,7 +372,7 @@ cs_probe(parent, cf, aux)
 }
 
 void 
-cs_attach(parent, self, aux)
+cs_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -407,7 +411,7 @@ cs_attach(parent, self, aux)
 		chipname = "CS8920M";
 		break;
 	default:
-		panic("cs_attach: impossible");
+		panic("cs_isa_attach: impossible");
 	}
 
 	printf(": %s, rev. %c\n", chipname, ((reg & PROD_REV_MASK) >> 8) + 'A');
@@ -480,8 +484,24 @@ cs_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_mediatype = MEDIA_10BASET;	/* XXX get from OpenFirmware */
+	/*
+	 * XXX Media goop needs to come from OpenFirmware.
+	 */
+
+	/* Initialize ifmedia structures. */
+	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
+
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
 #else
+	/* Initialize ifmedia structures. */
+	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
+
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_2, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_5, 0, NULL);
+	/* Default is set in cs_get_params()... */
+
 	/* Get parameters, which were not specified, from the EEPROM */
 	if (cs_get_params(sc) == CS_ERROR) {
 		printf("%s: unable to get settings from EEPROM\n",
@@ -584,7 +604,7 @@ cs_get_params(sc)
 
 	/* If all of these parameters were specified */
 	if (sc->sc_cfgflags != 0 && sc->sc_pktpgaddr != (bus_addr_t)MADDRUNK
-	    && sc->sc_irq != 0 && sc->sc_mediatype != 0) {
+	    && sc->sc_irq != 0) {
 		return CS_OK;
 	}
 
@@ -657,20 +677,17 @@ cs_get_params(sc)
 			sc->sc_irq += 10;
 	}
 
-	/* If the media type was not specified */
-	if (sc->sc_mediatype == 0) {
-		switch (adapterConfig & ADPTR_CFG_MEDIA) {
-		case ADPTR_CFG_AUI:
-			sc->sc_mediatype = MEDIA_AUI;
-			break;
-		case ADPTR_CFG_10BASE2:
-			sc->sc_mediatype = MEDIA_10BASE2;
-			break;
-		case ADPTR_CFG_10BASET:
-		default:
-			sc->sc_mediatype = MEDIA_10BASET;
-			break;
-		}
+	switch (adapterConfig & ADPTR_CFG_MEDIA) {
+	case ADPTR_CFG_AUI:
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_5);
+		break;
+	case ADPTR_CFG_10BASE2:
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_2);
+		break;
+	case ADPTR_CFG_10BASET:
+	default:
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
+		break;
 	}
 	return CS_OK;
 }
@@ -692,13 +709,6 @@ cs_validate_params(sc)
 	if (!(sc->sc_irq == 5 || sc->sc_irq == 10 || sc->sc_irq == 11 ||
 	      sc->sc_irq == 12)) {
 		printf("%s: invalid IRQ\n", sc->sc_dev.dv_xname);
-		return CS_ERROR;
-	}
-
-	if (!(sc->sc_mediatype == MEDIA_AUI ||
-	      sc->sc_mediatype == MEDIA_10BASE2 ||
-	      sc->sc_mediatype == MEDIA_10BASET)) {
-		printf("%s: invalid media type\n", sc->sc_dev.dv_xname);
 		return CS_ERROR;
 	}
 
@@ -846,6 +856,7 @@ cs_initChip(sc)
 	u_int16_t selfCtl;
 	u_int16_t *myea;
 	u_int16_t isaId;
+	int media = IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media);
 
 	/* Disable reception and transmission of frames */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LINE_CTL,
@@ -867,11 +878,10 @@ cs_initChip(sc)
 	}
 
 	/* Set the Line Control register to match the media type */
-	if (sc->sc_mediatype == MEDIA_10BASET) {
+	if (media == IFM_10_T)
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_LINE_CTL, LINE_CTL_10BASET);
-	} else {
+	else
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_LINE_CTL, LINE_CTL_AUI_ONLY);
-	}
 
 	/*
 	 * Set the BSTATUS/HC1 pin to be used as HC1.  HC1 is used to
@@ -880,7 +890,7 @@ cs_initChip(sc)
 	selfCtl = SELF_CTL_HC1E;
 
 	/* If the media type is 10Base2 */
-	if (sc->sc_mediatype == MEDIA_10BASE2) {
+	if (media == IFM_10_2) {
 		/*
 		 * Enable the DC/DC converter if it has a low enable.
 		 */
@@ -905,14 +915,13 @@ cs_initChip(sc)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_SELF_CTL, selfCtl);
 
 	/* If media type is 10BaseT */
-	if (sc->sc_mediatype == MEDIA_10BASET) {
+	if (media == IFM_10_T) {
 		/*
 		 * If full duplex mode then set the FDX bit in TestCtl
 		 * register
 		 */
-		if (sc->sc_cfgflags & CFGFLG_FDX) {
+		if (sc->sc_cfgflags & CFGFLG_FDX)
 			CS_WRITE_PACKET_PAGE(sc, PKTPG_TEST_CTL, TEST_CTL_FDX);
-		}
 	}
 
 	/* RX_CTL set in cs_set_ladr_filt(), below */
@@ -1310,6 +1319,11 @@ cs_ioctl(ifp, cmd, data)
 		}
 		break;
 
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		result = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
 	default:
 		result = EINVAL;
 		break;
@@ -1318,6 +1332,34 @@ cs_ioctl(ifp, cmd, data)
 	splx(state);
 
 	return result;
+}
+
+int
+cs_mediachange(ifp)
+	struct ifnet *ifp;
+{
+
+	/*
+	 * Current media is already set up.  Just reset the interface
+	 * to let the new value take hold.
+	 */
+	cs_init((struct cs_softc *)ifp->if_softc);
+	return (0);
+}
+
+void
+cs_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct cs_softc *sc = ifp->if_softc;
+
+	/*
+	 * The currently selected media is always the active media.
+	 */
+	ifmr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
+
+	/* XXX Carrier status */
 }
 
 int 
