@@ -40,7 +40,7 @@ To upgrade your system, follow the following instructions:
 
 	* Directly booting NetBSD, with boot blocks installed:
 
-	[This description is for V41 (OS 3.1) ROMs. For older ROMs,
+	[This description is for V40 (OS 3.1) ROMs. For older ROMs,
 	there might be small differences. Check your AmigaOS documentation
 	to learn about the exact procedure.]
 
