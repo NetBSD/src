@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.11 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: scanw.c,v 1.12 2000/04/13 07:07:33 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.12 2000/04/13 07:07:33 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -60,10 +60,10 @@ __RCSID("$NetBSD: scanw.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
  */
 int
 #ifdef __STDC__
-scanw(char *fmt,...)
+scanw(const char *fmt,...)
 #else
 scanw(fmt, va_alist)
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -85,11 +85,11 @@ va_dcl
  */
 int
 #ifdef __STDC__
-wscanw(WINDOW * win, char *fmt,...)
+wscanw(WINDOW * win, const char *fmt,...)
 #else
 wscanw(win, fmt, va_alist)
 	WINDOW *win;
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -112,11 +112,11 @@ va_dcl
  */
 int
 #ifdef __STDC__
-mvscanw(int y, int x, char *fmt,...)
+mvscanw(int y, int x, const char *fmt,...)
 #else
 mvscanw(y, x, fmt, va_alist)
 	int     y, x;
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -138,12 +138,12 @@ va_dcl
 int
 #ifdef __STDC__
 mvwscanw(WINDOW * win, int y, int x,
-    char *fmt,...)
+    const char *fmt,...)
 #else
 mvwscanw(win, y, x, fmt, va_alist)
 	WINDOW *win;
 	int     y, x;
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -168,7 +168,7 @@ va_dcl
 int
 vwscanw(win, fmt, ap)
 	WINDOW *win;
-	char *fmt;
+	const char *fmt;
 	va_list ap;
 {
 
