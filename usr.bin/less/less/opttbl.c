@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.9 2003/04/14 02:56:47 mrg Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.10 2003/04/14 03:02:29 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -509,7 +509,6 @@ findopt_name(p_optname, p_oname, p_err)
 	int maxlen = 0;
 	int ambig = 0;
 	int exact = 0;
-	char *eq;
 
 	/*
 	 * Check all options.

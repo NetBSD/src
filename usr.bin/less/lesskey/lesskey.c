@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.c,v 1.7 2003/04/14 02:56:49 mrg Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.8 2003/04/14 03:02:29 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -422,7 +422,7 @@ tstr(pp, xlate)
 				case 'e': ch = SK_END; break;
 				case 'x': ch = SK_DELETE; break;
 				default:
-					error("illegal char after \\k");
+					terror("illegal char after \\k");
 					*pp = p+1;
 					return ("");
 				}
