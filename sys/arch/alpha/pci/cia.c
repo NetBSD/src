@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.60 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.61 2003/01/01 00:39:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.60 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.61 2003/01/01 00:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,8 +434,8 @@ ciaprint(aux, pnp)
 
 	/* only PCIs can attach to CIAs; easy. */
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
 

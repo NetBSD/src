@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.9 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.10 2003/01/01 00:39:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.9 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.10 2003/01/01 00:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ tscprint(aux, p)
 	register struct tsp_attach_args *tsp = aux;
 
 	if(p)
-		printf("%s%d at %s", tsp->tsp_name, tsp->tsp_slot, p);
+		aprint_normal("%s%d at %s", tsp->tsp_name, tsp->tsp_slot, p);
 	return UNCONF;
 }
 
@@ -238,8 +238,8 @@ tspprint(aux, p)
 	register struct pcibus_attach_args *pci = aux;
 
 	if(p)
-		printf("%s at %s", pci->pba_busname, p);
-	printf(" bus %d", pci->pba_bus);
+		aprint_normal("%s at %s", pci->pba_busname, p);
+	aprint_normal(" bus %d", pci->pba_bus);
 	return UNCONF;
 }
 
