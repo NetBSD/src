@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: accounting,v 1.2 2000/05/13 08:45:06 lukem Exp $
+# $NetBSD: accounting,v 1.2.4.1 2000/10/02 01:07:16 lukem Exp $
 #
 
 # PROVIDE: accounting
@@ -9,9 +9,8 @@
 . /etc/rc.subr
 
 name="accounting"
-start_precmd="checkyesno accounting"
+rcvar=$name
 start_cmd="accounting_start"
-stop_precmd=$start_precmd
 stop_cmd="accounting_stop"
 
 accounting_start()
