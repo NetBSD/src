@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: save.c,v 1.6 1999/09/13 17:19:55 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
+__RCSID("$NetBSD: save.c,v 1.6 1999/09/13 17:19:55 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,15 +83,23 @@ save_into_file(sfile)
 {
 	FILE *fp;
 	int file_id;
-	char name_buffer[80];
+	char *name_buffer;
+	size_t len;
 	char *hptr;
 	struct rogue_time rt_buf;
 
 	if (sfile[0] == '~') {
 		if ((hptr = md_getenv("HOME")) != NULL) {
-			(void) strcpy(name_buffer, hptr);
-			(void) strcat(name_buffer, sfile+1);
-			sfile = name_buffer;
+			len = strlen(hptr) + strlen(sfile);
+			name_buffer = md_malloc(len);
+			if (name_buffer == NULL) {
+				message("out of memory for save file name", 0);
+				sfile = error_file;
+			} else {
+				(void) strcpy(name_buffer, hptr);
+				(void) strcat(name_buffer, sfile+1);
+				sfile = name_buffer;
+			}
 		}
 	}
 	if (	((fp = fopen(sfile, "w")) == NULL) ||
