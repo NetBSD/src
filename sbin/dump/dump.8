@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.39 2001/10/15 13:25:33 blymn Exp $
+.\"	$NetBSD: dump.8,v 1.40 2001/10/15 13:43:06 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -66,7 +66,7 @@ is not documented here).
 .Sh DESCRIPTION
 .Nm
 examines files on a file system and determines which files need to
-be backed up. 
+be backed up.
 These files are copied to the given disk, tape or other storage
 medium for safe keeping (see the
 .Fl f
@@ -174,7 +174,6 @@ on the remote host, via the environment variable
 See
 .Xr rcmd 3
 for more details.
-
 .It Fl h Ar level
 Honor the user
 .Qq nodump
@@ -209,10 +208,10 @@ notify all operators in the group
 by means similar to a
 .Xr wall 1 .
 .It Fl r Ar cachesize
-Use that many buffers for read cache operations. 
+Use that many buffers for read cache operations.
 A value of zero disables the read cache altogether, higher values
 improve read performance by reading larger data blocks from the
-disk and maintaining them in an LRU cache. See the 
+disk and maintaining them in an LRU cache. See the
 .Fl k
 option for the size of the buffers. Maximum is 512, the size of the cache is
 limited to 15% of the avail RAM by default.
@@ -428,16 +427,16 @@ on the remote machine.
 .It Ev TIMEFORMAT
 can be used to control the format of the timestamps produced by the
 .Fl t
-option.  
+option.
 .Ev TIMEFORMAT
 is a string containing embedded formatting commands for
 .Xr strftime 3 .
 The total formatted string is limited to about 80 characters, if this
-limit is exceeded then 
+limit is exceeded then
 .Qo
 ERROR: TIMEFORMAT too long, reverting to default
 .Qc
-will be printed and the time format will revert to the default one.  If 
+will be printed and the time format will revert to the default one.  If
 .Ev TIMEFORMAT
 is not set then the format string defaults to
 .Qo
@@ -447,7 +446,7 @@ is not set then the format string defaults to
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
 .It Pa /dev/nrst0
-default tape unit to use. Taken from 
+default tape unit to use. Taken from
 .Dv _PATH_DEFTAPE
 in
 .Pa /usr/include/paths.h .
@@ -461,15 +460,6 @@ dump table: file systems and frequency
 to find group
 .Em operator
 .El
-.Sh SEE ALSO
-.Xr chflags 1 ,
-.Xr stty 1 ,
-.Xr fts 3 ,
-.Xr fstab 5 ,
-.Xr restore 8 ,
-.Xr rmt 8 ,
-.Xr st 4 ,
-.Xr environ 7
 .Sh DIAGNOSTICS
 Many, and verbose.
 .Pp
@@ -477,6 +467,20 @@ Many, and verbose.
 exits with zero status on success.
 Startup errors are indicated with an exit code of 1;
 abnormal termination is indicated with an exit code of 3.
+.Sh SEE ALSO
+.Xr chflags 1 ,
+.Xr stty 1 ,
+.Xr fts 3 ,
+.Xr st 4 ,
+.Xr fstab 5 ,
+.Xr environ 7 ,
+.Xr restore 8 ,
+.Xr rmt 8
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .
 .Sh BUGS
 Fewer than 32 read errors on the file system are ignored.
 .Pp
@@ -508,8 +512,3 @@ told the operator which tape to mount when,
 and provided more assistance
 for the operator running
 .Xr restore 8 .
-.Sh HISTORY
-A
-.Nm
-command appeared in
-.At v6 .
