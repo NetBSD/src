@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.169 2001/09/08 02:05:39 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.170 2001/09/08 15:34:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1901,6 +1901,7 @@ sys_access(p, v, retval)
 	struct nameidata nd;
 
 	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
+	cred->cr_ref = 1;
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
