@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.11 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.11.2.1 2004/04/07 06:59:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.11 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.11.2.1 2004/04/07 06:59:04 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ syswarn(int set, int errnum, const char *fmt, ...)
 	 * line by itself
 	 */
 	if (vflag && vfpart) {
-		(void)fputc('\n', stderr);
+		(void)fputc('\n', stdout);
 		vfpart = 0;
 	}
 	(void)fprintf(stderr, "%s: ", argv0);
@@ -195,6 +195,6 @@ syswarn(int set, int errnum, const char *fmt, ...)
 	 * format and print the errno
 	 */
 	if (errnum > 0)
-		(void)fprintf(stderr, " <%s>", strerror(errnum));
+		(void)fprintf(stderr, " (%s)", strerror(errnum));
 	(void)fputc('\n', stderr);
 }
