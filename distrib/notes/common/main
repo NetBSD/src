@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.87 2000/11/10 06:56:11 lukem Exp $
+.\"	$NetBSD: main,v 1.88 2000/11/12 02:57:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,7 +144,7 @@ release is a substantial improvement over its predecessors.  We have
 provided numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many userland enhancements. The
-results of these improvements is a stable operating system fit for
+result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
 It is impossible to completely summarize over one year of
@@ -167,7 +167,7 @@ sparc64.
 Improved performance and stability of the UVM virtual memory subsystem.
 .It
 Implementation of generic kernel locking code, as well as a
-restructure and re-tuning of the scheduler, to by used by the
+restructure and re-tuning of the scheduler, to be used by the
 future symmetric multi-processing (SMP) implementation.
 .It
 Improved compatibility support for Linux, OSF1, and SVR4 programs.
@@ -200,10 +200,10 @@ Addition of IP version 6 (IPv6) and IPsec to the networking stack,
 from the KAME project.
 This includes addition of kernel code for IPv6/IPsec,
 IPv4/v6 dual-stack user applications and supporting libraries.
-Due to this, shlib major version for
+Due to this, the shlib major version for
 .Xr pcap 3
-is incremented and you may need a recompilation of your userland tools.
-The KAME IPv6 part includes result from unified-ipv6 effort.
+is incremented and you may need to recompile userland tools.
+The KAME IPv6 part includes results from the unified-ipv6 effort.
 .bullet)
 .
 .Ss2 File system
@@ -470,9 +470,7 @@ There are also
 .Pa README.export-control
 files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
-distribution (i.e. the
-.Sq domestic
-portion) that may be subject to
+distribution that may be subject to
 export regulations of the United States.  It is your responsibility
 to determine whether or not it is legal for you to export these portions
 and to act accordingly.
@@ -762,7 +760,7 @@ is moved from
 .Pa /usr/sbin/sysctl
 to
 .Pa /sbin/sysctl .
-If you have hardcoded reference to full pathname
+If you have hardcoded references to the full pathname
 .Pq in shell scripts, for example
 please be sure to update those.
 .\"
@@ -790,7 +788,7 @@ is now called
 and so forth.
 If you have customized
 .Xr sendmail.cf 5
-and friends, you will need to move files to new location.
+and friends, you will need to move the files to the new locations.
 See
 .Pa /usr/share/sendmail/README
 for more information.
@@ -893,7 +891,9 @@ the cracks.
 There are also port-specific mailing lists, to discuss aspects of
 each port of
 .Nx .
-Use majordomo to find their addresses. If
+Use majordomo to find their addresses, or visit
+.Lk http://www.netbsd.org/MailingLists/ .
+If
 you're interested in doing a serious amount of work on a specific
 port, you probably should contact the
 .Sq owner
