@@ -68,13 +68,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: clock.c,v 1.1.1.1 1993/09/29 06:09:19 briggs Exp $"
-
 /*
  *
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
- *   @(#)clock.c   7.6 (Berkeley) 5/7/91
+ *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
+ *	$Id: clock.c,v 1.2 1993/11/29 00:40:38 briggs Exp $
  */
 
 #if !defined(STANDALONE)

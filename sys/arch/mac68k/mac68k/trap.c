@@ -35,11 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ident "$Id: trap.c,v 1.1.1.1 1993/09/29 06:09:15 briggs Exp $"
 /*
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
- *	@(#)trap.c	7.15 (Berkeley) 8/2/91
+ *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
+ *	$Id: trap.c,v 1.2 1993/11/29 00:41:06 briggs Exp $
  */
 
 #include "param.h"
@@ -144,9 +144,9 @@ trap(type, code, v, frame)
 	default:
 dopanic:
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		/* regdump(frame.f_regs, 128); */  /* BARF LAK: do this later */
+		regdump(frame.f_regs, 128);
 		type &= ~T_USER;
-/* stacknquit(); */
+stacknquit();
 		if ((unsigned)type < TRAP_TYPES)
 			panic(trap_type[type]);
 		panic("trap");
@@ -281,6 +281,11 @@ copyfault:
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
+		if (ssir & SIR_SERIAL) {
+			siroff(SIR_SERIAL);
+			cnt.v_soft++;
+			sersir();
+		}
 		if (ssir & SIR_NET) {
 			siroff(SIR_NET);
 			cnt.v_soft++;

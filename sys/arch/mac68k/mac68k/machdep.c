@@ -68,11 +68,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: machdep.c,v 1.1.1.1 1993/09/29 06:09:17 briggs Exp $"
 /*
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
- *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
+ *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
+ *	$Id: machdep.c,v 1.2 1993/11/29 00:40:54 briggs Exp $
  */
 
 #include "param.h"
@@ -181,8 +181,13 @@ cpu_startup(void)
 #endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+#ifdef MACHINE_NONCONTIG
 		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
 			   VM_PROT_ALL, TRUE);
+#else  /* MACHINE_NONCONTIG */
+		pmap_enter(pmap_kernel(), (caddr_t) msgbufp + i * NBPG,
+			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+#endif /* MACHINE_NONCONTIG */
 	msgbufmapped = 1;
 
 	/*
@@ -221,14 +226,22 @@ again:
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
-
-	if(dbg_flg)printf ("\n*** After shitloads of valloc()'s ***\n\n");
-	
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
 	/*
 	 * Determine how many buffers to allocate.
-	 * We allocate the BSD standard of
-	 * use 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
+	 * Use 10% of memory for the first 2 Meg, 5% of the remaining
+	 * memory. Insure a minimum of 16 buffers.
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
@@ -237,16 +250,13 @@ again:
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
 
-	bufpages = min(NKMEMCLUSTERS*2/5,bufpages);
+	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);
 
 	if (nbuf == 0) {
-		nbuf = bufpages/2;
-		if (nbuf < 16) {
+		nbuf = bufpages;
+		if (nbuf < 16)
 			nbuf = 16;
-			bufpages = 32;
-		}
 	}
-	/* freebufspace = bufpages * NBPG; */
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -254,6 +264,7 @@ again:
 	}
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
+
 	/*
 	 * End of first pass, size has been calculated so allocate memory
 	 */
@@ -270,7 +281,7 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
-#if 0
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -284,6 +295,10 @@ again:
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 	if(dbg_flg)printf ("\n*** Breakpoint Number Two ***\n\n");
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		/* Don't want to alloc more physical mem than needed. */
+		bufpages = btoc(MAXBSIZE) * nbuf;
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
@@ -304,21 +319,6 @@ again:
 		vm_map_simplify(buffer_map, curbuf);
 		if(dbg_flg)printf ("\n*** Breakpoint Number Four (pass %d of %d) ***\n\n",i+1,nbuf);
 	}
-#else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&minaddr,
-				   &maxaddr, bufpages*CLBYTES, TRUE);
-#endif
-	if(dbg_flg)printf ("\n*** After allocating buffers proper ***\n\n");
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-
-#if 0	/* in 386BSD, execve() doesn't use an exec_map. */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif 
-	if(dbg_flg)printf ("\n*** After allocating submap of exec args ***\n\n");
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -347,7 +347,7 @@ again:
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %d\n", ptoa(vm_page_free_count));
-	if(dbg_flg)printf("using %d buffers containing %d bytes of memory\n",
+	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -428,10 +428,10 @@ identifycpu()
 		printf("IIfx ");
 		break;
 	case MACH_MACSE30:
-		printf("SE30 ");
+		printf("SE/30 ");
 		break;
 	default:
-		printf("Pentium ");
+		printf("Pentium (gestalt %d) ", (machineid >> 2) & 0x3f);
 		break;
 	}
 
@@ -830,7 +830,7 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
+unsigned int	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -935,15 +935,16 @@ initcpu()
 {
 	/* 06/22/92,22:49:49 BG */
 	/* I'm not sure we have to do anything here. */
-	/* printf ("Kernel booting; please have lunch, maybe a pizza.\n"); */
+	printf ("Kernel booting; please have lunch, maybe a pizza.\n");
 }
 
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	printf("unexpected trap (vector offset (%x&0xfff) %x) from %x\n",
+	       evec, evec & 0xFFF, pc);
+	stacknquit();
 }
 
 int	*nofault;
@@ -1069,6 +1070,7 @@ extern long via1_spent[2][7];
 
 nmihand(struct frame frame)
 {
+#ifdef never
    int i;
   /* LAK: Should call debugger */
 	printf("VIA1 interrupt timings:\n");
@@ -1076,9 +1078,9 @@ nmihand(struct frame frame)
 		if(via1_spent[0][i] != 0)
 			printf("# %d: %d usec inside, %d invocations.\n",
 			    via1_spent[1][i], via1_spent[0][i]);
-
-  
-  panic("debugger switch\n");
+#endif
+	regdump(&frame.f_regs, 128);
+	panic("debugger switch");
 }
 
 #if defined(PARITY)
@@ -1222,6 +1224,7 @@ done:
 	splx(s);
 	return(found);
 }
+#endif
 
 regdump(rp, sbytes)
   int *rp; /* must not be register */
@@ -1315,7 +1318,6 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-#endif
 
 /* LAK: The following function was taken from the i386 machdep.c file,
    probably written by Bill Jolitz. */
@@ -1835,7 +1837,7 @@ printf("copyinstr: exited nametoolong tally=%d\n",tally);
  */
 
 #define COMPAT_NOMID	1
-cpu_exec_makecmds(p, epp)
+cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
 {
@@ -2002,4 +2004,50 @@ likeyuhknow(void)
 	  printf("proc NULL in.\n", p->p_pid, p->p_comm);
 /*	printf("proc %d (%s, pc=0x%x, sp=0x%x being switched in.\n",
 		p->p_pid, p->p_comm, p->p_regs[PC], p->p_regs[SP]);*/
+}
+
+/*
+ * XXX -- these functions need to be implemented
+ */
+int
+ptrace_set_pc (struct proc *p, unsigned int addr)
+{
+	return EINVAL;
+}
+
+int
+ptrace_single_step (struct proc *p)
+{
+	return EINVAL;
+}
+
+int
+ptrace_getregs (struct proc *p, unsigned int *addr)
+{
+	return EINVAL;
+}
+
+int
+ptrace_setregs (struct proc *p, unsigned int *addr)
+{
+	return EINVAL;
+}
+
+int
+pslisting(void)
+{
+	struct proc	*p;
+	char		*s;
+
+	printf("curproc = 0x%x.\n", curproc);
+	printf("allproc = 0x%x.\n", allproc);
+	printf("nprocs  = %d.\n", nprocs);
+	p = allproc;
+	do {
+		s = p->p_wmesg;
+		if (strlen(s) > 16) s = "> 16 char.";
+		printf("0x%x: pid %d, flag 0x%x, stat %d, comm %s, wmsg %s.\n",
+			p, p->p_pid, p->p_flag, p->p_stat, p->p_comm, s);
+		p = p->p_nxt;
+	} while (p && p != allproc);
 }

@@ -35,11 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ident "$Id: vm_machdep.c,v 1.1.1.1 1993/09/29 06:09:14 briggs Exp $"
 /*
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
- *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	$Id: vm_machdep.c,v 1.2 1993/11/29 00:41:11 briggs Exp $
  */
 
 #include "param.h"
