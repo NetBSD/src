@@ -20,8 +20,8 @@ system time-of-day in synchronism with Internet standard time servers.
 defined by RFC-1305, and version 1 and 2, as defined by RFC-1059 and
 RFC-1119, respectively. <TT>ntpd</TT> does most computations in 64-bit
 floating point arithmetic and does relatively clumsy 64-bit fixed point
-operations only when necessary to preserve the unltimate precision,
-about 232 picoseconds. While the ultimate precision, is not achievable
+operations only when necessary to preserve the ultimate precision,
+about 232 picoseconds. While the ultimate precision is not achievable
 with ordinary workstations and networks of today, it may be required
 with future nanosecond CPU clocks and gigabit LANs.
 
@@ -86,7 +86,7 @@ each occurrence indicating greater detail of display.</DD>
 <DD>Normally, the daemon exits if the offset exceeds a 1000-s sanity
 limit. This option overrides this limit and allows the time to be set to
 any value without restriction; however, this can happen only once. After
-that, the daemon will exit of the limit is exceeded.
+that, the daemon will exit if the limit is exceeded.
 
 <DT><TT>-k <I>keyfile</I></TT></DT>
 <DD>Specify the name and path of the file containing the NTP
@@ -173,7 +173,7 @@ NTP Subnet </A>page contains an extended discussion of these options.
 <H4>Bugs</H4>
 
 <TT>ntpd</TT> has gotten rather fat. While not huge, it has gotten
-larger than might be desireable for an elevated-priority daemon running
+larger than might be desirable for an elevated-priority daemon running
 on a workstation, particularly since many of the fancy features which
 consume the space were designed more with a busy primary server, rather
 than a high stratum workstation, in mind.
