@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.10 1998/02/10 01:27:15 perry Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.11 1998/09/04 22:34:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -60,8 +60,8 @@
 	(tp)->snd_una = (tp)->snd_nxt = (tp)->snd_max = (tp)->snd_up = \
 	    (tp)->iss
 
-#define TCP_ISS_RANDOM_MASK 0x0003ffff /* bits of randomness in a TCP ISS */
-#define TCP_ISSINCR         0x00040000 /* increment per time and per conn */
+#define TCP_ISS_RANDOM_MASK 0x00ffffff /* bits of randomness in a TCP ISS */
+#define TCP_ISSINCR         0x01000000 /* increment per time and per conn */
 
 #ifdef _KERNEL
 extern tcp_seq	 tcp_iss_seq;		/* tcp initial seq # */
