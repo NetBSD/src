@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.2 1999/12/09 02:14:00 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -59,9 +59,11 @@ static int	vrbcu_vrip_match __P((struct device *,
 static void	vrbcu_vrip_attach __P((struct device *,
 
 				       struct device *, void*));
-char	*vrbcu_vrip_getcpuname __P((void));
-int	vrbcu_vrip_getcpumajor __P((void));
-int	vrbcu_vrip_getcpuminor __P((void));
+
+char	*vr_cpuname=NULL;
+int	vr_major=-1;
+int	vr_minor=-1;
+int	vr_cpuid=-1;
 
 struct cfattach vrbcu_ca = {
 	sizeof(struct vrbcu_vrip_softc), vrbcu_vrip_match, vrbcu_vrip_attach
@@ -73,7 +75,7 @@ vrbcu_vrip_match(parent, cf, aux)
      struct cfdata *cf;
      void *aux;
 {
-	return 1;
+	return 2;
 }
 
 static void
@@ -103,41 +105,63 @@ static char *cpuname[] = {
 	"UNKNOWN",
 	"UNKNOWN" };
 
+int
+vrbcu_vrip_getcpuid(void)
+{
+	volatile u_int16_t *revreg;
+
+	if (vr_cpuid != -1)
+		return vr_cpuid; 
+
+	if (vr_cpuid == -1) {
+		revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
+
+		vr_cpuid = *revreg;
+		vr_cpuid = (vr_cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
+	}
+	return vr_cpuid;
+}	
+
 char *
 vrbcu_vrip_getcpuname(void)
 {
-	volatile u_int16_t *revreg;
-	int cpuid;
+	int cpuid;	
 
-	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
+	if (vr_cpuname != NULL)
+		return vr_cpuname;
 
-	cpuid = *revreg;
-	cpuid = (cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
-	return cpuname[cpuid];
+	cpuid = vrbcu_vrip_getcpuid();
+	vr_cpuname = cpuname[cpuid];
+	return vr_cpuname;
 }	
+
 
 int
 vrbcu_vrip_getcpumajor(void)
 {
 	volatile u_int16_t *revreg;
-	int major;
+
+	if (vr_major != -1)
+		return vr_major;
 
 	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
-	major = *revreg;
-	major = (major&BCUREVID_MJREVMASK)>>BCUREVID_MJREVSHFT;
-	return major;
+	vr_major = *revreg;
+	vr_major = (vr_major&BCUREVID_MJREVMASK)>>BCUREVID_MJREVSHFT;
+	return vr_major;
 }	
 
 int
 vrbcu_vrip_getcpuminor(void)
 {
 	volatile u_int16_t *revreg;
-	int minor;
+
+	if (vr_minor != -1)
+		return vr_minor;
 
 	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
-	minor = *revreg;
-	minor = (minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
-	return minor;
+	vr_minor = *revreg;
+	vr_minor = (vr_minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
+	return vr_minor;
 }	
