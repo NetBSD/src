@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.4,v 1.10 2000/06/12 11:11:19 ad Exp $
+.\"	$NetBSD: wdc.4,v 1.10.2.1 2000/08/07 00:14:53 augustss Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -40,6 +40,8 @@
 .Cd "wdc0 at isa? port 0x1f0 irq 14 flags 0x00"
 .Cd "wdc1 at isa? port 0x170 irq 15 flags 0x00"
 .Cd "wdc* at isapnp?"
+.Ss Open Firmware ISA
+.Cd "wdc* at ofisa?"
 .Ss PCMCIA controllers
 .Cd "wdc* at pcmcia? function ?"
 .Ss arm32
@@ -66,6 +68,11 @@ the driver. This is known to cause problems with some motherboards.
 .Sh SEE ALSO
 .Xr atapi 4 ,
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr mainbus 4 ,
+.Xr ofisa 4 ,
 .Xr pciide 4 ,
+.Xr pcmcia 4 ,
 .Xr scsi 4 ,
 .Xr wd 4
