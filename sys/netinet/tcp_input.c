@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.156 2002/10/16 15:15:28 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.157 2002/10/22 03:07:06 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.156 2002/10/16 15:15:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.157 2002/10/22 03:07:06 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -772,7 +772,6 @@ tcp_input(m, va_alist)
 	struct mbuf *m;
 #endif
 {
-	int proto;
 	struct tcphdr *th;
 	struct ip *ip;
 	struct inpcb *inp;
@@ -787,7 +786,9 @@ tcp_input(m, va_alist)
 	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
+#ifdef TCP_DEBUG
 	short ostate = 0;
+#endif
 	int iss = 0;
 	u_long tiwin;
 	struct tcp_opt_info opti;
@@ -798,7 +799,7 @@ tcp_input(m, va_alist)
 
 	va_start(ap, m);
 	toff = va_arg(ap, int);
-	proto = va_arg(ap, int);
+	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	va_end(ap);
 
 	tcpstat.tcps_rcvtotal++;
@@ -1245,7 +1246,9 @@ findpcb:
 		}
 
 		if (so->so_options & SO_DEBUG) {
+#ifdef TCP_DEBUG
 			ostate = tp->t_state;
+#endif
 
 			tcp_saveti = NULL;
 			if (iphlen + sizeof(struct tcphdr) > MHLEN)
@@ -3190,11 +3193,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	 * we also copy the flowinfo from the original pcb
 	 * to the new one.
 	 */
-    {
-	struct inpcb *parentinpcb;
-
-	parentinpcb = (struct inpcb *)so->so_pcb;
-
 	oso = so;
 	so = sonewconn(so, SS_ISCONNECTED);
 	if (so == NULL)
@@ -3212,7 +3210,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		break;
 #endif
 	}
-    }
 	switch (src->sa_family) {
 #ifdef INET
 	case AF_INET:
