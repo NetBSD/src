@@ -8,7 +8,7 @@
 # solution would probably be for ctags to generate "struct vmmeter" tags.
 
 COMM=	/sys/conf/*.[ch] \
-	/sys/dev/*.[ch] /sys/scsi/*.[ch] \
+	/sys/dev/*.[ch] /sys/dev/scsipi/*.[ch] \
 	/sys/kern/*.[ch] /sys/lib/libkern/*.[ch] \
 	/sys/miscfs/*/*.[ch] \
 	/sys/net/*.[ch] /sys/netccitt/*.[ch] /sys/netinet/*.[ch] \
