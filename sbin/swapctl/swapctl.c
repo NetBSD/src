@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.22 2003/06/23 11:53:44 agc Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.23 2003/10/21 02:32:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.22 2003/06/23 11:53:44 agc Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.23 2003/10/21 02:32:54 fvdl Exp $");
 #endif
 
 
@@ -401,7 +401,7 @@ set_dumpdev(path)
 	const char *path;
 {
 
-	if (swapctl(SWAP_DUMPDEV, path, NULL) == -1)
+	if (swapctl(SWAP_DUMPDEV, path, 0) == -1)
 		warn("could not set dump device to %s", path);
 	else
 		printf("%s: setting dump device to %s\n", getprogname(), path);
@@ -413,7 +413,7 @@ get_dumpdev()
 	dev_t	dev;
 	char 	*name;
 
-	if (swapctl(SWAP_GETDUMPDEV, &dev, NULL) == -1)
+	if (swapctl(SWAP_GETDUMPDEV, &dev, 0) == -1)
 		warn("could not get dump device");
 	else if (dev == NODEV)
 		printf("no dump device set\n");
