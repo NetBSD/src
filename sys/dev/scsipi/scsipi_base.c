@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.121 2004/10/01 03:39:11 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.122 2004/12/03 20:20:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.121 2004/10/01 03:39:11 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.122 2004/12/03 20:20:32 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -1026,22 +1026,47 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 u_int64_t
 scsipi_size(struct scsipi_periph *periph, int flags)
 {
-	struct scsipi_read_capacity cmd;
-	struct scsipi_read_cap_data data;
+	union {
+		struct scsipi_read_capacity cmd;
+		struct scsipi_read_capacity_16 cmd16;
+	} cmd;
+	union {
+		struct scsipi_read_cap_data data;
+		struct scsipi_read_capacity_16_data data16;
+	} data;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = READ_CAPACITY;
+	cmd.cmd.opcode = READ_CAPACITY;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	if (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)&data, sizeof(data), SCSIPIRETRIES, 20000, NULL,
+	if (scsipi_command(periph, (void *)&cmd.cmd, sizeof(cmd.cmd),
+	    (void *)&data.data, sizeof(data.data), SCSIPIRETRIES, 20000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
-	return (_4btol(data.addr) + 1);
+	if (_4btol(data.data.addr) != 0xffffffff)
+		return (_4btol(data.data.addr) + 1);
+
+	/*
+	 * Device is larger than can be reflected by READ CAPACITY (10).
+	 * Try READ CAPACITY (16).
+	 */
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.cmd16.opcode = READ_CAPACITY_16;
+	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
+	_lto4b(sizeof(data.data16), cmd.cmd16.len);
+
+	if (scsipi_command(periph, (void *)&cmd.cmd16, sizeof(cmd.cmd16),
+	    (void *)&data.data16, sizeof(data.data16), SCSIPIRETRIES, 20000,
+	    NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
+		return (0);
+
+	return (_8btol(data.data16.addr) + 1);
 }
 
 /*
