@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.44 2003/09/29 04:03:55 junyoung Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.45 2003/11/26 08:36:49 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.44 2003/09/29 04:03:55 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.45 2003/11/26 08:36:49 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -132,7 +132,7 @@ cpu_exec_ecoff_setregs(l, epp, stack)
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
-	f->f_regs[GP] = (register_t)execp->a.gp_value;
+	f->f_regs[_R_GP] = (register_t)execp->a.gp_value;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.188 2003/11/06 04:17:11 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.189 2003/11/26 08:36:49 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188 2003/11/06 04:17:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.189 2003/11/26 08:36:49 he Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -182,9 +182,9 @@ child_return(arg)
 	struct lwp *l = arg;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
-	frame->f_regs[V0] = 0;
-	frame->f_regs[V1] = 1;
-	frame->f_regs[A3] = 0;
+	frame->f_regs[_R_V0] = 0;
+	frame->f_regs[_R_V1] = 1;
+	frame->f_regs[_R_A3] = 0;
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
@@ -248,7 +248,7 @@ trap(status, cause, vaddr, opc, frame)
 		if (curlwp != NULL) {
 			fp = (struct frame *)l->l_md.md_regs;
 			printf("pid=%d cmd=%s usp=0x%x ",
-			    p->p_pid, p->p_comm, (int)fp->f_regs[SP]);
+			    p->p_pid, p->p_comm, (int)fp->f_regs[_R_SP]);
 		} else
 			printf("curlwp == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
@@ -271,7 +271,7 @@ trap(status, cause, vaddr, opc, frame)
 			db_set_ddb_regs(type, (mips_reg_t *) frame);
 			PC_BREAK_ADVANCE(f);
 			if (kgdb_trap(type, &ddb_regs)) {
-				((mips_reg_t *)frame)[21] = f->f_regs[PC];
+				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
 				return;
 			}
 		}
@@ -493,7 +493,7 @@ trap(status, cause, vaddr, opc, frame)
 				printf("kgdb: ignored %s\n",
 				       trap_type[TRAPTYPE(cause)]);
 			else
-				((mips_reg_t *)frame)[21] = f->f_regs[PC];
+				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
 
 			return;
 		}
@@ -558,7 +558,7 @@ trap(status, cause, vaddr, opc, frame)
 			loadfpregs(l);          	/* load FPA */
 			fpcurlwp = l;
 			l->l_md.md_flags |= MDP_FPUSED;
-			f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
+			f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 		} else
 #endif
 		{
@@ -579,13 +579,13 @@ trap(status, cause, vaddr, opc, frame)
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
 		fp = (struct frame *)l->l_md.md_regs;
-		ksi.ksi_addr = (void *)fp->f_regs[PC];
+		ksi.ksi_addr = (void *)fp->f_regs[_R_PC];
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
 	fp = (struct frame *)l->l_md.md_regs;
-	fp->f_regs[CAUSE] = cause;
-	fp->f_regs[BADVADDR] = vaddr;
+	fp->f_regs[_R_CAUSE] = cause;
+	fp->f_regs[_R_BADVADDR] = vaddr;
 #ifdef __HAVE_SIGINFO
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 #else
@@ -678,7 +678,7 @@ mips_singlestep(l)
 			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}
-	pc = (vaddr_t)f->f_regs[PC];
+	pc = (vaddr_t)f->f_regs[_R_PC];
 	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
 		va = MachEmulateBranch(f, pc, PCB_FSR(&l->l_addr->u_pcb), 1);
 	else

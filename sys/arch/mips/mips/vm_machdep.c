@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.98 2003/08/07 16:28:34 agc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.99 2003/11/26 08:36:51 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98 2003/08/07 16:28:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2003/11/26 08:36:51 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		f->f_regs[SP] = (u_int)stack + stacksize;
+		f->f_regs[_R_SP] = (u_int)stack + stacksize;
 
 	l2->l_md.md_regs = (void *)f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;

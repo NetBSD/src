@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.20 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21 2003/11/26 08:36:49 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2003/11/26 08:36:49 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -208,12 +208,12 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	uvmexp.syscalls++;
 
 	if (DELAYBRANCH(cause))
-		frame->f_regs[PC] = MachEmulateBranch(frame, opc, 0, 0);
+		frame->f_regs[_R_PC] = MachEmulateBranch(frame, opc, 0, 0);
 	else
-		frame->f_regs[PC] = opc + sizeof(int);
+		frame->f_regs[_R_PC] = opc + sizeof(int);
 
 	callp = p->p_emul->e_sysent;
-	ov0 = code = frame->f_regs[V0] - SYSCALL_SHIFT;
+	ov0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
 
 	switch (code) {
 	case SYS_syscall:
@@ -223,20 +223,20 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
-			code = frame->f_regs[A0] - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[A1];
-			args[1] = frame->f_regs[A2];
-			args[2] = frame->f_regs[A3];
+			code = frame->f_regs[_R_A0] - SYSCALL_SHIFT;
+			args[0] = frame->f_regs[_R_A1];
+			args[1] = frame->f_regs[_R_A2];
+			args[2] = frame->f_regs[_R_A3];
 			nsaved = 3;
 		} else {
 			/*
 			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
-			code = frame->f_regs[A0 + _QUAD_LOWWORD] 
+			code = frame->f_regs[_R_A0 + _QUAD_LOWWORD] 
 			    - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[A2];
-			args[1] = frame->f_regs[A3];
+			args[0] = frame->f_regs[_R_A2];
+			args[1] = frame->f_regs[_R_A3];
 			nsaved = 2;
 		}
 
@@ -248,7 +248,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 
 		if (nargs > nsaved) {
 			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
 			    (args + nsaved),
 			    (nargs - nsaved) * sizeof(register_t));
 			if (error)
@@ -265,28 +265,28 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 
 		if (nargs < 5) {
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-			args = (register_t *)&frame->f_regs[A0];
+			args = (register_t *)&frame->f_regs[_R_A0];
 #elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
 			args = copyargs;
-			args[0] = frame->f_regs[A0];
-			args[1] = frame->f_regs[A1];
-			args[2] = frame->f_regs[A2];
-			args[3] = frame->f_regs[A3];
+			args[0] = frame->f_regs[_R_A0];
+			args[1] = frame->f_regs[_R_A1];
+			args[2] = frame->f_regs[_R_A2];
+			args[3] = frame->f_regs[_R_A3];
 #else
 # error syscall not implemented for current MIPS ABI
 #endif
 		} else {
 			args = copyargs;
 			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
 			    (&copyargs[4]),
 			    (nargs - 4) * sizeof(register_t));
 			if (error)
 				goto bad;
-			args[0] = frame->f_regs[A0];
-			args[1] = frame->f_regs[A1];
-			args[2] = frame->f_regs[A2];
-			args[3] = frame->f_regs[A3];
+			args[0] = frame->f_regs[_R_A0];
+			args[1] = frame->f_regs[_R_A1];
+			args[2] = frame->f_regs[_R_A2];
+			args[3] = frame->f_regs[_R_A3];
 		}
 		break;
 	}
@@ -296,13 +296,13 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 #endif
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-	rval = (register_t *)&frame->f_regs[V0];
+	rval = (register_t *)&frame->f_regs[_R_V0];
 	rval[0] = 0;
 	/* rval[1] already has V1 */
 #elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
 	rval = copyrval;
 	rval[0] = 0;
-	rval[1] = frame->f_regs[V1];
+	rval[1] = frame->f_regs[_R_V1];
 #endif
 
 	error = (*callp->sy_call)(l, args, rval);
@@ -310,14 +310,14 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	switch (error) {
 	case 0:
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-		frame->f_regs[V0] = rval[0];
-		frame->f_regs[V1] = rval[1];
+		frame->f_regs[_R_V0] = rval[0];
+		frame->f_regs[_R_V1] = rval[1];
 #endif
-		frame->f_regs[A3] = 0;
+		frame->f_regs[_R_A3] = 0;
 		break;
 	case ERESTART:
-		frame->f_regs[V0] = ov0;	/* restore syscall code */
-		frame->f_regs[PC] = opc;
+		frame->f_regs[_R_V0] = ov0;	/* restore syscall code */
+		frame->f_regs[_R_PC] = opc;
 		break;
 	case EJUSTRETURN:
 		break;	/* nothing to do */
@@ -325,8 +325,8 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame->f_regs[V0] = error;
-		frame->f_regs[A3] = 1;
+		frame->f_regs[_R_V0] = error;
+		frame->f_regs[_R_A3] = 1;
 		break;
 	}
 
@@ -355,12 +355,12 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	uvmexp.syscalls++;
 
 	if (DELAYBRANCH(cause))
-		frame->f_regs[PC] = MachEmulateBranch(frame, opc, 0, 0);
+		frame->f_regs[_R_PC] = MachEmulateBranch(frame, opc, 0, 0);
 	else
-		frame->f_regs[PC] = opc + sizeof(int);
+		frame->f_regs[_R_PC] = opc + sizeof(int);
 
 	callp = p->p_emul->e_sysent;
-	ov0 = code = frame->f_regs[V0] - SYSCALL_SHIFT;
+	ov0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
 
 	switch (code) {
 	case SYS_syscall:
@@ -370,20 +370,20 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
-			code = frame->f_regs[A0] - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[A1];
-			args[1] = frame->f_regs[A2];
-			args[2] = frame->f_regs[A3];
+			code = frame->f_regs[_R_A0] - SYSCALL_SHIFT;
+			args[0] = frame->f_regs[_R_A1];
+			args[1] = frame->f_regs[_R_A2];
+			args[2] = frame->f_regs[_R_A3];
 			nsaved = 3;
 		} else {
 			/*
 			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
-			code = frame->f_regs[A0 + _QUAD_LOWWORD] 
+			code = frame->f_regs[_R_A0 + _QUAD_LOWWORD] 
 			    - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[A2];
-			args[1] = frame->f_regs[A3];
+			args[0] = frame->f_regs[_R_A2];
+			args[1] = frame->f_regs[_R_A3];
 			nsaved = 2;
 		}
 
@@ -395,7 +395,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 
 		if (nargs > nsaved) {
 			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
 			    (args + nsaved),
 			    (nargs - nsaved) * sizeof(register_t));
 			if (error)
@@ -412,28 +412,28 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 
 		if (nargs < 5) {
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-			args = (register_t *)&frame->f_regs[A0];
+			args = (register_t *)&frame->f_regs[_R_A0];
 #elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
 			args = copyargs;
-			args[0] = frame->f_regs[A0];
-			args[1] = frame->f_regs[A1];
-			args[2] = frame->f_regs[A2];
-			args[3] = frame->f_regs[A3];
+			args[0] = frame->f_regs[_R_A0];
+			args[1] = frame->f_regs[_R_A1];
+			args[2] = frame->f_regs[_R_A2];
+			args[3] = frame->f_regs[_R_A3];
 #else
 # error syscall not implemented for current MIPS ABI
 #endif
 		} else {
 			args = copyargs;
 			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
 			    (&copyargs[4]),
 			    (nargs - 4) * sizeof(register_t));
 			if (error)
 				goto bad;
-			args[0] = frame->f_regs[A0];
-			args[1] = frame->f_regs[A1];
-			args[2] = frame->f_regs[A2];
-			args[3] = frame->f_regs[A3];
+			args[0] = frame->f_regs[_R_A0];
+			args[1] = frame->f_regs[_R_A1];
+			args[2] = frame->f_regs[_R_A2];
+			args[3] = frame->f_regs[_R_A3];
 		}
 		break;
 	}
@@ -442,13 +442,13 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 		goto bad;
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-	rval = (register_t *)&frame->f_regs[V0];
+	rval = (register_t *)&frame->f_regs[_R_V0];
 	rval[0] = 0;
 	/* rval[1] already has V1 */
 #elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
 	rval = copyrval;
 	rval[0] = 0;
-	rval[1] = frame->f_regs[V1];
+	rval[1] = frame->f_regs[_R_V1];
 #endif
 
 	error = (*callp->sy_call)(l, args, rval);
@@ -456,14 +456,14 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	switch (error) {
 	case 0:
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-		frame->f_regs[V0] = rval[0];
-		frame->f_regs[V1] = rval[1];
+		frame->f_regs[_R_V0] = rval[0];
+		frame->f_regs[_R_V1] = rval[1];
 #endif
-		frame->f_regs[A3] = 0;
+		frame->f_regs[_R_A3] = 0;
 		break;
 	case ERESTART:
-		frame->f_regs[V0] = ov0;	/* restore syscall code */
-		frame->f_regs[PC] = opc;
+		frame->f_regs[_R_V0] = ov0;	/* restore syscall code */
+		frame->f_regs[_R_PC] = opc;
 		break;
 	case EJUSTRETURN:
 		break;	/* nothing to do */
@@ -471,8 +471,8 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame->f_regs[V0] = error;
-		frame->f_regs[A3] = 1;
+		frame->f_regs[_R_V0] = error;
+		frame->f_regs[_R_A3] = 1;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1 2003/10/29 23:39:45 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/11/26 08:36:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/10/29 23:39:45 christos Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/11/26 08:36:49 he Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -110,12 +110,12 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Build stack frame for signal trampoline. */
-	ksc.sc_pc = f->f_regs[PC];
-	ksc.mullo = f->f_regs[MULLO];
-	ksc.mulhi = f->f_regs[MULHI];
+	ksc.sc_pc = f->f_regs[_R_PC];
+	ksc.mullo = f->f_regs[_R_MULLO];
+	ksc.mulhi = f->f_regs[_R_MULHI];
 
 	/* Save register context. */
-	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
+	ksc.sc_regs[_R_ZERO] = 0xACEDBADE;		/* magic number */
 	memcpy(&ksc.sc_regs[1], &f->f_regs[1],
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 
@@ -168,24 +168,24 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	 * handler.  The return address will be set up to point
 	 * to the signal trampoline to bounce us back.
 	 */
-	f->f_regs[A0] = sig;
-	f->f_regs[A1] = ksi->ksi_trap;
-	f->f_regs[A2] = (int)scp;
-	f->f_regs[A3] = (int)catcher;		/* XXX ??? */
+	f->f_regs[_R_A0] = sig;
+	f->f_regs[_R_A1] = ksi->ksi_trap;
+	f->f_regs[_R_A2] = (int)scp;
+	f->f_regs[_R_A3] = (int)catcher;		/* XXX ??? */
 
-	f->f_regs[PC] = (int)catcher;
-	f->f_regs[T9] = (int)catcher;
-	f->f_regs[SP] = (int)scp;
+	f->f_regs[_R_PC] = (int)catcher;
+	f->f_regs[_R_T9] = (int)catcher;
+	f->f_regs[_R_SP] = (int)scp;
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 #if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
-		f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
+		f->f_regs[_R_RA] = (int)p->p_sigctx.ps_sigcode;
 		break;
 #endif /* COMPAT_16 */
 
 	case 1:
-		f->f_regs[RA] = (int)ps->sa_sigdesc[sig].sd_tramp;
+		f->f_regs[_R_RA] = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
@@ -240,20 +240,20 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if ((u_int) ksc.sc_regs[ZERO] != 0xacedbadeU)	/* magic number */
+	if ((u_int) ksc.sc_regs[_R_ZERO] != 0xacedbadeU)/* magic number */
 		return (EINVAL);
 
 	/* Restore the register context. */
 	f = (struct frame *)l->l_md.md_regs;
-	f->f_regs[PC] = ksc.sc_pc;
-	f->f_regs[MULLO] = ksc.mullo;
-	f->f_regs[MULHI] = ksc.mulhi;
+	f->f_regs[_R_PC] = ksc.sc_pc;
+	f->f_regs[_R_MULLO] = ksc.mullo;
+	f->f_regs[_R_MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 #ifndef	SOFTFLOAT
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
-		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		if (l == fpcurlwp) {
 			fpcurlwp = (struct lwp *)0;
 		}

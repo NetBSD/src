@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.8 2003/10/29 23:39:45 christos Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.9 2003/11/26 08:36:49 he Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.8 2003/10/29 23:39:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.9 2003/11/26 08:36:49 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,8 @@ MachEmulateInst(status, cause, opc, frame)
 		break;
 #endif
 	default:
-		frame->f_regs[CAUSE] = cause;
-		frame->f_regs[BADVADDR] = opc;
+		frame->f_regs[_R_CAUSE] = cause;
+		frame->f_regs[_R_BADVADDR] = opc;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = cause; /* XXX */
@@ -274,8 +274,8 @@ send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
 {
 	ksiginfo_t ksi;
 	cause = (cause & 0xFFFFFF00) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
-	frame->f_regs[CAUSE] = cause;
-	frame->f_regs[BADVADDR] = vaddr;
+	frame->f_regs[_R_CAUSE] = cause;
+	frame->f_regs[_R_BADVADDR] = vaddr;
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_trap = cause;
@@ -293,10 +293,11 @@ update_pc(struct frame *frame, u_int32_t cause)
 {
 
 	if (cause & MIPS_CR_BR_DELAY)
-		frame->f_regs[PC] = MachEmulateBranch(frame, frame->f_regs[PC],
-		    PCB_FSR(curpcb), 0);
+		frame->f_regs[_R_PC] = 
+		    MachEmulateBranch(frame, frame->f_regs[_R_PC],
+			PCB_FSR(curpcb), 0);
 	else
-		frame->f_regs[PC] += 4;
+		frame->f_regs[_R_PC] += 4;
 }
 
 /*
@@ -315,8 +316,8 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	/* segment and alignment check */
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		ksiginfo_t ksi;
-		frame->f_regs[CAUSE] = cause;
-		frame->f_regs[BADVADDR] = vaddr;
+		frame->f_regs[_R_CAUSE] = cause;
+		frame->f_regs[_R_BADVADDR] = vaddr;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = cause;
@@ -361,8 +362,8 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	/* segment and alignment check */
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		ksiginfo_t ksi;
-		frame->f_regs[CAUSE] = cause;
-		frame->f_regs[BADVADDR] = vaddr;
+		frame->f_regs[_R_CAUSE] = cause;
+		frame->f_regs[_R_BADVADDR] = vaddr;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = cause;
@@ -420,13 +421,13 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		/* nothing */
 		break;
 	default:
-		frame->f_regs[CAUSE] = cause;
-		frame->f_regs[BADVADDR] = frame->f_regs[PC];
+		frame->f_regs[_R_CAUSE] = cause;
+		frame->f_regs[_R_BADVADDR] = frame->f_regs[_R_PC];
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = cause;
 		ksi.ksi_code = SEGV_MAPERR;
-		ksi.ksi_addr = (void *)frame->f_regs[PC];
+		ksi.ksi_addr = (void *)frame->f_regs[_R_PC];
 #ifdef __HAVE_SIGINFO
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 #else
@@ -468,17 +469,17 @@ MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	pc = frame->f_regs[PC];
+	pc = frame->f_regs[_R_PC];
 	update_pc(frame, cause);
 
 	if (cause & MIPS_CR_BR_DELAY)
 		return;
 
 	for (i = 1; i < LWSWC1_MAXLOOP; i++) {
-		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
+		if (mips_btop(frame->f_regs[_R_PC]) != mips_btop(pc))
 			return;
 
-		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
+		vaddr = frame->f_regs[_R_PC];	/* XXX truncates to 32 bits */
 		inst = fuiword((u_int32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_LWC1)
 			return;
@@ -499,7 +500,7 @@ MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 			return;
 		}
 
-		pc = frame->f_regs[PC];
+		pc = frame->f_regs[_R_PC];
 		update_pc(frame, cause);
 	}
 }
@@ -555,17 +556,17 @@ MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	pc = frame->f_regs[PC];
+	pc = frame->f_regs[_R_PC];
 	update_pc(frame, cause);
 
 	if (cause & MIPS_CR_BR_DELAY)
 		return;
 
 	for (i = 1; i < LWSWC1_MAXLOOP; i++) {
-		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
+		if (mips_btop(frame->f_regs[_R_PC]) != mips_btop(pc))
 			return;
 
-		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
+		vaddr = frame->f_regs[_R_PC];	/* XXX truncates to 32 bits */
 		inst = fuiword((u_int32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_SWC1)
 			return;
@@ -586,7 +587,7 @@ MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 			return;
 		}
 
-		pc = frame->f_regs[PC];
+		pc = frame->f_regs[_R_PC];
 		update_pc(frame, cause);
 	}
 }

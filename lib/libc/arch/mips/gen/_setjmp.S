@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.17 2003/08/07 16:42:15 agc Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.18 2003/11/26 08:36:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.17 2003/08/07 16:42:15 agc Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.18 2003/11/26 08:36:49 he Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
@@ -71,16 +71,16 @@ LEAF(_setjmp)
 	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
 	REG_S	ra, (2 * 4)(a0)			# sc_pc = return address
 	REG_S	v0, (_OFFSETOF_SC_REGS)(a0)	#   saved in sc_regs[0]
-	REG_S	s0, (S0 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s1, (S1 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s2, (S2 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s3, (S3 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s4, (S4 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s5, (S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s6, (S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s7, (S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	sp, (SP * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s8, (S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s0, (_R_S0 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s1, (_R_S1 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s2, (_R_S2 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s3, (_R_S3 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s4, (_R_S4 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s5, (_R_S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s6, (_R_S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s7, (_R_S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	sp, (_R_SP * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	s8, (_R_S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	cfc1	v0, $31				# too bad cant check if FP used
 	swc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	swc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
@@ -115,17 +115,17 @@ LEAF(_longjmp)
 	REG_LI	t0, 0xACEDBADE
 	bne	v0, t0, botch		# jump if error
 	addu	sp, sp, 32			# does not matter, sanity
-	REG_L	s0, (S0 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s1, (S1 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s2, (S2 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s3, (S3 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s4, (S4 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s5, (S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s6, (S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s7, (S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s0, (_R_S0 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s1, (_R_S1 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s2, (_R_S2 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s3, (_R_S3 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s4, (_R_S4 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s5, (_R_S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s6, (_R_S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s7, (_R_S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	lw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)	# get fpu status
-	REG_L	sp, (SP * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s8, (S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	sp, (_R_SP * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_L	s8, (_R_S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	ctc1	v0, $31
 	lwc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	lwc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
