@@ -184,7 +184,6 @@ int getlist __P((void));
 long getnum __P((int));
 long getone __P((void));
 line_t *getptr __P((long));
-long getrange __P((line_t *, line_t *));
 int getrhs __P((char *, int));
 char *gettxt __P((line_t *));
 int join __P((long, long));
