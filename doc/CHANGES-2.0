@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.418 2004/08/30 08:31:31 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.419 2004/08/30 08:41:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6900,4 +6900,14 @@ usr.sbin/wiconfig/wiconfig.c			1.34
 	type. Eventually we want ifconfig to handle this, but we support
 	it here until ifconfig gets updated.
 	[wrstuden, ticket #792]
+
+usr.sbin/wiconfig/wiconfig.8			1.29
+
+	Bump date for -A documentation, and sort option descriptions.
+	[wrstuden, ticket #793]
+
+usr.bin/sed/compile.c				1.29-1.30
+
+	Make patterns larger than _POSIX2_LINE_MAX*2-1 work.
+	[manu, ticket #795]
 
