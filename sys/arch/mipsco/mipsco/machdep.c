@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2000/09/06 07:52:47 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2000/09/10 06:26:51 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2000/09/06 07:52:47 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2000/09/10 06:26:51 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -289,10 +289,8 @@ mach_init(argc, argv, envp)
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
-	if (boothowto & RB_MINIROOT) {
-		boothowto |= RB_DFLTROOT;
+	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-	}
 #endif
 
 	/*
