@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $
+.\"	$NetBSD: msgc.1,v 1.2 1997/10/19 05:19:15 lukem Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -85,13 +85,13 @@ lists messages with associated names is given to
 .Nm
 and produces both a .c and a .h file that implement the menu system.
 The standard root name of the files is 
-.Nm msg_defs .
+.Pa msg_defs .
 The 
 .Fl o Ar name
 can be used to specify a different root name.
 .Sh SOURCE DESCRIPTION
 The format is very simple.  Each message is started with the word
-.Nm message
+.Sq message
 followed by the name of the message.  The body of the message is
 next and is started by a { and closed by a }.  The braces are not
 part of the message.  Everything, including newlines between the
@@ -99,18 +99,18 @@ braces are part of the message.
 .Sh MESSAGE FUNCTIONS 
 The defined messages are used through calls routines that manipulate
 the messages.  You first need to set the 
-.Nm curses
+.Xr curses 3
 environment up and then tell the message system which window to use
 for displaying message by calling the function
-.Nm msg_window .
+.Fn msg_window .
 .Pp
 All variable argument lists in the functions are used as 
 are arguments to sprintf.  The messages
 may have sprintf conversions in them and the corresponding parameters
 should match.  Messages are identified by name using the notation
-.Nm MENU_name
+.Sq MENU_name
 where 
-.Nm name
+.Dq name
 is the name in the message source file.  (The definitions are accessed
 by including the genereated .h file into a source file wanting to use
 the message routines.)
