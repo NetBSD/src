@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.20 2002/10/08 23:48:24 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.21 2002/10/09 22:28:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -277,7 +277,7 @@ ASENTRY_NP(idle)
 
 	/* if saving power, don't want to pageidlezero */
 	mov	r0, #0
-	add	lr, pc, #3b - . - 8
+	adr	lr, 3b
 	ldr	pc, [r4, #(CF_SLEEP)]
 	/* loops back around */
 
