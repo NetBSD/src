@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.11 2004/08/12 05:02:50 thorpej Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.12 2004/08/20 17:37:16 thorpej Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.11 2004/08/12 05:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.12 2004/08/20 17:37:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,6 +392,8 @@ uisdata_exec_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	if (status != STATUS_CMD_OK)
 		cmd->flags |= AT_DF; /* XXX */
 	cmd->flags |= AT_DONE;
+	if (cmd->flags & (AT_READ | AT_WRITE))
+		cmd->flags |= AT_XFDONE;
 	if (cmd->flags & (AT_POLL | AT_WAIT)) {
 		DPRINTF(("%s: wakeup %p\n", __func__, cmd));
 		wakeup(cmd);
