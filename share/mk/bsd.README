@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.73 2001/01/05 12:59:25 blymn Exp $
+#	$NetBSD: bsd.README,v 1.74 2001/01/24 07:57:07 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -87,7 +87,8 @@ MKLINT		If "no", don't build or install the lint libraries.
 MKMAN		If "no", don't build or install the man or catman pages.
 		Also acts as "MKCATPAGES=no"
 
-MKNLS		If "no", don't build or install the NLS files.
+MKNLS		If "no", don't build or install the NLS files and locale
+		definition files.
 
 MKOBJ		If "no", don't enable the rule which creates objdirs.
 		"yes" by default.
