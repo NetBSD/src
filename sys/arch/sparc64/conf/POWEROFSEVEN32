@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.9 2001/07/08 16:32:24 abs Exp $
+# 	$NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -131,11 +131,11 @@ options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
-options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options 	EXEC_ELF64	# Exec module for sparc64 & SunOS 5.x binaries. -- 64-bit only
-options 	EXEC_AOUT	# execve(2) support for a.out binaries
+#options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	EXEC_ELF32	# Exec module for 32 bit ELF binaries.
+#options 	EXEC_ELF64	# Exec module for 64 bit ELF binaries. -- 64-bit only
+#options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
