@@ -2,6 +2,7 @@
 
 PROG = amq
 SRCS = amq.c amq_clnt.c misc_rpc.c
+MAN8 = amq.0
 CFLAGS+=-I${.CURDIR}/../config
 CFLAGS+=-I${.CURDIR}/../include
 CFLAGS+=-DARCH_REP=\"${MACHINE}\"
