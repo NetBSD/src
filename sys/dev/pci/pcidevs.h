@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.473 2002/09/19 18:53:00 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.474 2002/09/20 15:03:22 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.469 2002/09/19 18:50:45 nathanw Exp 
+ *	NetBSD: pcidevs,v 1.470 2002/09/20 14:59:58 pooka Exp 
  */
 
 /*
@@ -57,6 +57,7 @@
 #define	PCI_VENDOR_PEAK	0x001c		/* Peak System Technik */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta Corporation */
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works */
+#define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI Technologies */
@@ -856,6 +857,9 @@
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
 
+/* Asustek products */
+#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x1043		/* Asustek ISDN */
+
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
@@ -1187,6 +1191,9 @@
 
 /* Domex products */
 #define	PCI_PRODUCT_DOMEX_PCISCSI	0x0001		/* DMX-3191D */
+
+/* Dynalink products */
+#define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* Dynalink IS64PH ISDN Adapter */
 
 /* ELSA products */
 #define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN card */
@@ -2296,6 +2303,7 @@
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F_1	0x5a5a		/* W89C940F Ethernet */
+#define	PCI_PRODUCT_WINBOND_W6692	0x6692		/* W6692 ISDN */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
