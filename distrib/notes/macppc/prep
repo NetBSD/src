@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.27.2.2 2002/06/14 17:50:38 lukem Exp $
+.\"	$NetBSD: prep,v 1.27.2.3 2002/06/19 01:05:48 lukem Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1119,7 +1119,7 @@ known to work) to partition the hard drive you will be using for
 .Nx .
 Drive Setup will erase the contents of your drive -- it does not preserve 
 data from any of your partitions.  Make the following partitions:
-.(tag "A/UXxUserxxA/UXxFree1xxA/UXxFree2xxA/UXxFree3" -offset indent
+.(tag "A/UXxUserxandxA/UXxFree1" -offset indent
 .It Em HFS No or Em HFS+
 Must be large enough to hold the bootloader, over 100 KB.  May be as large
 as you desire for 
@@ -1161,7 +1161,7 @@ interprets these partitions as normal
 .Nx No Ns -style
 partitions.
 These partitions are not readable from
-.Tn MacOS No Ns .
+.Tn MacOS .
 .It Em HFS
 Any size.  You may want to leave an additional partition available to 
 transfer files between
