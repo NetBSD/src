@@ -183,7 +183,7 @@ seconds.  Acceptable values are from 1 to 3600, and the default is 15 if a NTP
 host is specified and 300 otherwise.
 .TP
 .BI \-x " separation"
-causes the program to run as a daemon (i.e. forever), and to estimate and 
+causes the program to run as a daemon (i.e. forever), and to estimate and
 correct for the clock drift.
 .I separation
 sets the minimum time between calls to the server in minutes if a NTP host is
@@ -204,7 +204,7 @@ has to be restarted (e.g. because of network or server outages).  In order to
 restart the data,
 .I msntp
 must be restarted reasonably soon after it died (within a few times the value of
-.IR separation ),
+.IR separation ) ,
 with the same value of the
 .B \-c
 option, the same value of
@@ -240,7 +240,7 @@ must be less than half of
 In update mode,
 .B maxerr
 must be less than
-.BR prompt.
+.BR prompt .
 .IP
 In daemon mode (i.e. when
 .B \-x
@@ -264,7 +264,7 @@ It can be run as a unprivileged background process to check on the clock drift
 as well as the current error; this will probably fail if the local clock is
 reset while it is running.  For example:
 .IP
-.B msntp -x ntpserver.somewhere > output 2>\&1 \&
+.B msntp -x ntpserver.somewhere > output 2>\*[Am]1 \*[Am]
 .PP
 With suitable privilege, it can be run as a command or in a
 .I cron
@@ -278,7 +278,7 @@ commands.  For example:
 .PP
 It can also be run as a daemon to keep the local clock in step.  For example:
 .IP
-.B msntp -a -x ntpserver.somewhere > output 2>\&1 \&
+.B msntp -a -x ntpserver.somewhere > output 2>\*[Am]1 \*[Am]
 .PP
 More information on how to use this utility is given in the
 .I README
@@ -291,7 +291,7 @@ When used as a client in non-daemon mode, the program returns a zero exit
 status for success, and a non-zero one otherwise. When used as a daemon
 (either client or server), it does not return except after a serious error.
 .SH BUGS
-The program implements the SNTP protocol, and does not provide all NTP 
+The program implements the SNTP protocol, and does not provide all NTP
 facilities.  In particular, it contains no checks against any form of spoofing.
 If this is a serious concern, some network security mechanism (like a firewall
 or even just
