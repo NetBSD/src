@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14.8.6 2002/07/15 02:15:51 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.14.8.7 2002/07/17 02:33:30 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -359,7 +359,7 @@ fixdevsw(void)
 			}
 		} else {
 			if (ht_insert(fixdevmtab, intern(dm->dm_name), dm)) {
-				panic("fixdevm: %s char %d block %d",
+				panic("fixdevsw: %s char %d block %d",
 				      dm->dm_name, dm->dm_cmajor,
 				      dm->dm_bmajor);
 			}
@@ -380,7 +380,7 @@ fixdevsw(void)
 		}
 		if (ht_insert(cdevmtab, intern(dm->dm_name), dm) ||
 		    ht_insert(cdevmtab, intern(mstr), dm)) {
-			panic("fixdevm: %s character major %d",
+			panic("fixdevsw: %s character major %d",
 			      dm->dm_name, dm->dm_cmajor);
 		}
 		if (dm->dm_bmajor != -1) {
@@ -399,7 +399,7 @@ fixdevsw(void)
 			}
 			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) || 
 			    ht_insert(bdevmtab, intern(mstr), dm)) {
-				panic("fixdevm: %s block major %d",
+				panic("fixdevsw: %s block major %d",
 				      dm->dm_name, dm->dm_bmajor);
 			}
 		}
