@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.4.2 1999/03/06 12:30:17 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.4.3 1999/04/26 07:16:12 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.2 1999/03/06 12:30:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.3 1999/04/26 07:16:12 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,26 +57,23 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.2 1999/03/06 12:30:17 drochner E
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
-/* 
- * The following several variables are related to
- * the configuration process, and are used in initializing 
- * the machine.
- */
 int     cold = 1;       /* if 1, still working on cold-start */
 
-extern u_int32_t iplmask[];
-
-struct devnametobdevmaj pmax_nam2blk[] = {
-	{ "sd",		19 },
-	{ "cd",		25 },
-	{ "md",		17 },
-	{ NULL,		0 },
-};
+struct intrhand intrtab[MAX_DEV_NCOOKIES];
+u_int32_t	iplmask[IPL_HIGH+1];	/* interrupt mask bits for each IPL */
+u_int32_t	oldiplmask[IPL_HIGH+1];	/* old values for splx(s) */
 
 struct device	*booted_device;
 int	booted_slot, booted_unit, booted_partition;
 char	*booted_protocol;
 void	calculate_iplmask __P((void));
+int	nullintr __P((void *));
+
+struct devnametobdevmaj pmax_nam2blk[] = {
+	{ "sd",		19 },
+	{ "cd",		25 },
+	{ NULL,		0 },
+};
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -89,6 +86,12 @@ void
 configure()
 {
 	int s;
+
+	/* Initialize interrupt table array */
+	for (s = 0; s < MAX_DEV_NCOOKIES; s++) {
+		intrtab[s].ih_func = nullintr;
+		intrtab[s].ih_arg = (void *)s;
+	}
 
 	s = splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
@@ -195,6 +198,14 @@ calculate_iplmask()
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
 	iplmask[IPL_HIGH] |= iplmask[IPL_CLOCK];
+}
+
+int
+nullintr(v)
+	void *v;
+{
+	printf("uncaught interrupt: cookie %d\n", (int)v);
+	return 1;
 }
 
 #include <dev/scsipi/scsipi_all.h>

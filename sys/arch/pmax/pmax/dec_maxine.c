@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.8 1999/04/03 15:21:13 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.9 1999/04/26 07:16:12 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.8 1999/04/03 15:21:13 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.9 1999/04/26 07:16:12 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,7 @@ extern void dtopkbd_cnattach __P((tc_addr_t));
 
 extern char cpu_model[];
 extern int zs_major;
-extern u_int32_t latched_cycle_cnt;
-extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern unsigned latched_cycle_cnt;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -135,6 +134,8 @@ struct splsw spl_maxine = {
 	{ _splraise,		MIPS_SPL_0_1_3 },
 	{ _splx_ioasic,		0 },
 };
+
+extern volatile struct chiptime *mcclock_addr; /* XXX */
 
 /*
  * Fill in platform struct.
@@ -282,10 +283,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	unsigned status;
 	unsigned cause;
 {
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
-	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
-	void *clk = (void *)(sc->sc_base + IOASIC_SLOT_8_START);
+	void *clk = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	struct clockframe cf;
 
 	if (cpumask & MIPS_INT_MASK_4)
@@ -302,18 +300,19 @@ dec_maxine_intr(cpumask, pc, status, cause)
 		intrcnt[HARDCLOCK]++;
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;
+		/* re-enable clock interrupt */
+		_splset(MIPS_SR_INT_IE | MIPS_INT_MASK_1);
 	}
-
-	/* If clock interrups were enabled, re-enable them ASAP. */
-	splx(status & MIPS_INT_MASK_1);
 
 	if (cpumask & MIPS_INT_MASK_3) {
 		int ifound;
-		u_int32_t can_serve, xxxintr;
+		u_int32_t imsk, intr, can_serve, xxxintr;
 
 		do {
 			ifound = 0;
-			can_serve = *intr & *imsk;
+			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			can_serve = intr & imsk;
 
 #define	CHECKINTR(slot, bits)					\
 	if (can_serve & (bits)) {				\
@@ -354,14 +353,15 @@ dec_maxine_intr(cpumask, pc, status, cause)
 			xxxintr = can_serve & (ERRORS | PTRLOAD);
 			if (xxxintr) {
 				ifound = 1;
-				*intr &= ~xxxintr;
+				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+					= intr &~ xxxintr;
 			}
 		} while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_2)
 		kn02ba_memerr();
 
-	return (status & ~cause & MIPS_HARD_INT_MASK);
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 void

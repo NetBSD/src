@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.8 1999/03/29 16:50:34 drochner Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.9 1999/04/26 07:16:12 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.8 1999/03/29 16:50:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.9 1999/04/26 07:16:12 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -118,8 +118,7 @@ extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
 
 extern char cpu_model[];
-extern u_int32_t latched_cycle_cnt;
-extern volatile struct chiptime *mcclock_addr;
+extern unsigned latched_cycle_cnt;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -133,6 +132,8 @@ struct splsw spl_3maxplus = {
 	{ _splraise,		MIPS_SPL_0_1 },
 	{ _splx_ioasic,		0 },
 };
+
+extern volatile struct chiptime *mcclock_addr;	/* XXX */
 
 /*
  * Fill in platform struct. 
@@ -297,12 +298,11 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
+		/* re-enable clock interrupt ASAP. */
+		_splset(MIPS_SR_INT_IE | MIPS_INT_MASK_1);
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;
 	}
-
-	/* If clock interrups were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_ENA_CUR | (status & MIPS_INT_MASK_1));
 
 	/*
 	 * Check for late clock interrupts (allow 10% slop). Be careful
