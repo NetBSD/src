@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.38 2004/06/27 18:24:46 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.39 2004/06/28 10:14:13 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -184,6 +184,3 @@ void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 void	bootstrap __P((void));
 struct device *getdevunit __P((char *, int));
 int	romgetcursoraddr __P((int **, int **));
-
-int	bus_translate_address_generic(struct openprom_range *, int,
-	    bus_addr_t *);

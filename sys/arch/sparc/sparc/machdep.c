@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2004/06/27 18:24:46 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.250 2004/06/28 10:14:13 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2004/06/27 18:24:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2004/06/28 10:14:13 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -2141,7 +2141,7 @@ static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
  * Generic routine to translate an address using OpenPROM `ranges'.
  */
 int
-bus_translate_address_generic(struct openprom_range *ranges, int nranges,
+bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
     bus_addr_t *bap)
 {
 	int i, space = BUS_ADDR_IOSPACE(*bap);
@@ -2187,7 +2187,7 @@ static	vaddr_t iobase;
 		if (t->ranges != NULL) {
 			int error;
 
-			if ((error = bus_translate_address_generic(
+			if ((error = bus_space_translate_address_generic(
 					t->ranges, t->nranges, &ba)) != 0)
 				return (error);
 		}
@@ -2276,7 +2276,7 @@ sparc_bus_mmap(t, ba, off, prot, flags)
 		if (t->ranges != NULL) {
 			int error;
 
-			if ((error = bus_translate_address_generic(
+			if ((error = bus_space_translate_address_generic(
 					t->ranges, t->nranges, &ba)) != 0)
 				return (-1);
 		}
