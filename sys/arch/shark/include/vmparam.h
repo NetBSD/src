@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2002/09/14 12:58:39 mycroft Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2002/09/14 15:54:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -82,8 +82,6 @@
 
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
-#endif /* _KERNEL */
-
 /*
  * max number of non-contig chunks of physical RAM you can have
  */
@@ -117,5 +115,7 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
 #define VM_FREELIST_RPCDMA	1
+
+#endif /* _KERNEL */
 
 #endif	/* _ARM32_VMPARAM_H_ */
