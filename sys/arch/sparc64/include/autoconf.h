@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.17 2004/03/16 23:05:46 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.18 2004/03/17 15:22:57 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ int	PROM_getpropint __P((int node, char *name, int deflt));
 extern int optionsnode;
 
 	/* new interfaces: */
-char	*PROM_getpropstringA __P((int, char *, char *));
+char	*PROM_getpropstringA __P((int, char *, char *, size_t));
 
 struct idprom	*prom_getidprom(void);
 void		prom_getether(int, u_char *);
