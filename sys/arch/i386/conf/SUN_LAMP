@@ -15,10 +15,6 @@ options		FDESC,KERNFS
 options		KTRACE
 options		SCSI
 
-#options 	COM_IGNOREFIFO
-options 	COM_MULTIPORT
-options 	COM_BIDIR
-
 config		"386bsd"	root on sd0 swap on sd0
 
 controller	isa0
