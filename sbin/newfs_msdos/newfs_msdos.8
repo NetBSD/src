@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.13 2004/09/22 23:46:38 thorpej Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.14 2004/09/22 23:52:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -83,6 +83,8 @@ Volume ID.
 Volume label (up to 11 characters).
 The label should consist of only those characters permitted
 in regular DOS (8+3) filenames.
+The default is
+.Qq Li "NO_NAME" .
 .It Fl O Ar OEM
 OEM string (up to 8 characters).
 The default is
