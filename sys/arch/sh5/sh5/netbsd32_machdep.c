@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.4 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5 2004/03/17 20:23:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2004/03/17 20:23:28 scw Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -74,21 +74,23 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2003/07/15 03:36:00 lukem E
 
 char	machine_arch32[] = "sh5";
 
+#ifdef COMPAT_16
 int
-netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
-	struct netbsd32___sigreturn14_args /* {
+	struct compat_16_netbsd32___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sys___sigreturn14_args csra;
+	struct compat_16_sys___sigreturn14_args csra;
 	netbsd32_sigcontextp_t scp;
 
 	scp = (netbsd32_sigcontextp_t) SCARG(uap, sigcntxp);
 
 	SCARG(&csra, sigcntxp) = (struct sigcontext *)(intptr_t)scp;
 
-	return (sys___sigreturn14(l, &csra, retval));
+	return (compat_16_sys___sigreturn14(l, &csra, retval));
 }
+#endif
 
 /*ARGSUSED*/
 int
