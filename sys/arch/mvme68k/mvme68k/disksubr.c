@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 1998/08/08 20:57:55 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 1998/08/22 10:55:34 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -156,12 +156,12 @@ readdisklabel(dev, strat, lp, clp)
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
@@ -225,7 +225,7 @@ setdisklabel(olp, nlp, openmask, clp)
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)();
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp;

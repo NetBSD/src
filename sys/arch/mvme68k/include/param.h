@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1997/09/20 12:08:24 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.13 1998/08/22 10:55:34 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,7 @@
 
 #define _spl(s) \
 ({ \
-        register int _spl_r; \
+        int _spl_r; \
 \
         __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
