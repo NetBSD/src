@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_util.h,v 1.4 1998/09/05 14:50:27 christos Exp $	*/
+/*	$NetBSD: ultrix_util.h,v 1.5 1999/02/09 20:30:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -72,5 +72,8 @@ extern const char ultrix_emul_path[];
 
 #define ULTRIX_CHECK_ALT_EXIST(p, sgp, path) \
     CHECK_ALT_EXIST(p, sgp, ultrix_emul_path, path)
+
+#define ULTRIX_CHECK_ALT_CREAT(p, sgp, path) \
+    CHECK_ALT_CREAT(p, sgp, ultrix_emul_path, path)
 
 #endif /* !_ULTRIX_UTIL_H_ */
