@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.12 1994/05/06 17:39:53 briggs Exp $
+ *	$Id: trap.c,v 1.13 1994/06/26 13:05:33 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -49,21 +49,20 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
-#include <sys/user.h>
 #include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+#include <vm/vm.h>
+#include <sys/user.h>
+#include <vm/pmap.h>
 
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
-
-#include <vm/vm.h>
-#include <vm/pmap.h>
-#include <sys/vmmeter.h>
 
 struct	sysent	sysent[];
 int	nsysent;
@@ -113,18 +112,19 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
-extern char	  fubail[], subail[];
+int fubail();
+int subail();
 
 static void
 userret(p, pc, oticks)
 	struct proc *p;
 	int pc;
-	struct timeval *oticks;
+	u_quad_t oticks;
 {
 	int sig, s;
 
 	while ((sig = CURSIG(p)) != 0)
-		psig(sig);
+		postsig(sig);
 
 	p->p_priority = p->p_usrpri;
 
@@ -133,35 +133,26 @@ userret(p, pc, oticks)
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
+		 * If that happened after we setrunqueue ourselves but before
+		 * we switch'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
-		s = splclock();
-		setrq(p);
+		s = splstatclock();
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		splx(s);
 		while ((sig = CURSIG(p)) != 0)
-			psig(sig);
+			postsig(sig);
 	}
-#ifdef notyet
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - oticks->tv_sec) * 1000 +
-		    (tv->tv_usec - oticks->tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
-#else
-			addupc(pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
+	/*
+	 * If profiling, charge recent system time.
+	 */
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+		
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-#endif
 	curpriority = p->p_priority;
 }
 
@@ -209,7 +200,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	u_int code, v;
 	struct frame *fp;
 	struct proc *p;
-	struct timeval *sticks;
+	u_quad_t sticks;
 {
 	extern vm_map_t kernel_map;
 	struct vmspace *vm;
@@ -244,12 +235,12 @@ trapmmufault(type, code, v, fp, p, sticks)
 #endif
 	if (type == T_MMUFLT && 
 	    (p->p_addr->u_pcb.pcb_onfault == 0 ||
-	    (cpu040 && (code & SSW_TMMASK) == FC_SUPERD) ||
+	    (cpu040 && (code & SSW4_TMMASK) == FC_SUPERD) ||
 	    (!cpu040 && (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
 		map = kernel_map;
 	else
 		map = &vm->vm_map;
-	if ((cpu040 && (code & SSW_RW040) == 0) ||
+	if ((cpu040 && (code & SSW4_RW) == 0) ||
 	    (!cpu040 && (code & (SSW_DF|SSW_RW)) ==
 	    SSW_DF))	/* what about RMW? */
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
@@ -310,7 +301,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		 */	
 
 		/* Check WB1 */
-		if (fp->f_fmt7.f_wb1s & WBS_VALID) {
+		if (fp->f_fmt7.f_wb1s & SSW4_WBSV) {
 			printf ("trap: wb1 was valid, not handled yet\n");
 			panictrap(type, code, v, fp);
 		}
@@ -319,22 +310,22 @@ trapmmufault(type, code, v, fp, p, sticks)
 		 * Check WB2
 		 * skip if it's for a move16 instruction 
 		 */
-		if(fp->f_fmt7.f_wb2s & WBS_VALID &&
-		   ((fp->f_fmt7.f_wb2s & WBS_TTMASK)==WBS_TT_MOVE16) == 0) {
+		if(fp->f_fmt7.f_wb2s & SSW4_WBSV &&
+		   ((fp->f_fmt7.f_wb2s & SSW4_TTMASK)==SSW4_TTM16) == 0) {
 			if (_write_back(2, fp->f_fmt7.f_wb2s, 
 			    fp->f_fmt7.f_wb2d, fp->f_fmt7.f_wb2a, map)
 			    != KERN_SUCCESS)
 				goto nogo;
-			if ((fp->f_fmt7.f_wb2s & WBS_TMMASK) 
-			    != (code & SSW_TMMASK))
+			if ((fp->f_fmt7.f_wb2s & SSW4_TMMASK) 
+			    != (code & SSW4_TMMASK))
 				panictrap(type, code, v, fp);
 		}
 
 		/* Check WB3 */
-		if(fp->f_fmt7.f_wb3s & WBS_VALID) {
+		if(fp->f_fmt7.f_wb3s & SSW4_WBSV) {
 			vm_map_t wb3_map;
 
-			if ((fp->f_fmt7.f_wb3s & WBS_TMMASK) == WBS_TM_SDATA)
+			if ((fp->f_fmt7.f_wb3s & SSW4_TMMASK) == SSW4_TMKD)
 				wb3_map = kernel_map;
 			else
 				wb3_map = &vm->vm_map;
@@ -409,20 +400,18 @@ trap(type, code, v, frame)
 	u_int code, v;
 	struct frame frame;
 {
-	struct timeval syst;
 	struct proc *p;
 	u_int ncode, ucode;
+	u_quad_t sticks;
 	int i, s;
 
 	p = curproc;
 	ucode = 0;
 	cnt.v_trap++;
-#ifdef notyet
-	syst = p->p_stime;
-#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
+		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
 
@@ -432,16 +421,6 @@ trap(type, code, v, frame)
 			return;
 	}
 #endif
-
-	if (!p) /* XXX Is this ever going to happen? */
-		p = &proc0;
-
-	if ( p->p_addr->u_pcb.pcb_onfault &&
-	    (type == T_MMUFLT || p->p_addr->u_pcb.pcb_onfault == fubail
-	                      || p->p_addr->u_pcb.pcb_onfault == subail)) {
-		trapcpfault(p, &frame);
-		return;
-	}
 
 	switch (type) {
 	default:
@@ -556,7 +535,7 @@ trap(type, code, v, frame)
 		 * DONT trap on it.. 
 		 */
 		if (p->p_emul == EMUL_SUNOS) {
-			userret(p, frame.f_pc, &syst); 
+			userret(p, frame.f_pc, sticks); 
 			return;
 		}
 #endif
@@ -601,6 +580,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
+			/* XXXX softclock(&frame.f_stackadj); */
 			softclock();
 		}
 		/*
@@ -612,19 +592,25 @@ trap(type, code, v, frame)
 		}
 		spl0();
 #ifndef PROFTIMER
-		if ((p->p_flag&P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag & P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
 			p->p_flag &= ~P_OWEUPC;
 		}
 #endif
-		userret(p, frame.f_pc, &syst); 
+		userret(p, frame.f_pc, sticks); 
 		return;
 	/*
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
+		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail) {
+			trapcpfault(p, &frame);
+			return;
+		}
+		/*FALLTHROUGH*/
 	case T_MMUFLT|T_USER:	/* page fault */
-		trapmmufault(type, code, v, &frame, p, &syst);
+		trapmmufault(type, code, v, &frame, p, sticks);
 		return;
 	}
 
@@ -636,7 +622,7 @@ trap(type, code, v, frame)
 	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
-	userret(p, frame.f_pc, &syst); 
+	userret(p, frame.f_pc, sticks); 
 }
 
 /*
@@ -646,11 +632,11 @@ syscall(code, frame)
 	volatile int code;
 	struct frame frame;
 {
-	struct timeval syst;
 	struct sysent *callp;
 	struct sysent *systab;
 	int rval[2], args[8], error, opc, numsys, s, i;
 	caddr_t params;
+	u_quad_t sticks;
 	struct proc *p;
 
 	if (USERMODE(frame.f_sr) == 0)
@@ -661,9 +647,7 @@ syscall(code, frame)
 	p = curproc;
 	p->p_md.md_regs = frame.f_regs;
 	p->p_md.md_flags &= ~MDP_STACKADJ;
-#ifdef notyet
-	syst = p->p_stime;
-#endif
+	sticks = p->p_sticks;
 	opc = frame.f_pc - 2;
 	error = 0;
 
@@ -735,7 +719,10 @@ syscall(code, frame)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, args);
 #endif
-	
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD) /* XXX */
+		scdebug_call(p, code, callp->sy_narg, args);
+#endif
 	if (error == 0) {
 		rval[0] = 0;
 		rval[1] = frame.f_regs[D1];
@@ -763,6 +750,10 @@ syscall(code, frame)
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD)			 /* XXX */
+		scdebug_ret(p, code, error, rval[0]);
+#endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ)) {
@@ -770,7 +761,7 @@ syscall(code, frame)
 		p->p_md.md_flags &= ~MDP_STACKADJ;
 	}
 #endif
-	userret(p, frame.f_pc, &syst);
+	userret(p, frame.f_pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -799,12 +790,12 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 
 	/* See if we're going to span two pages (for word or long transfers) */
 
-	if((wb_sts & WBS_SZMASK) == WBS_SIZE_WORD)
+	if((wb_sts & SSW4_SZMASK) == SSW4_SZW)
 		if(trunc_page((vm_offset_t)wb_addr) !=
 		    trunc_page((vm_offset_t)wb_addr+1))
 			wb_extra_page = 1;
 
-	if((wb_sts & WBS_SZMASK) == WBS_SIZE_LONG)
+	if((wb_sts & SSW4_SZMASK) == SSW4_SZLN)
 		if(trunc_page((vm_offset_t)wb_addr) !=
 		    trunc_page((vm_offset_t)wb_addr+3))
 			wb_extra_page = 3;
@@ -813,14 +804,14 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	 * if it's writeback 3, we need to check the first page
 	 */
 	if (wb == 3) {
-		mmusr = probeva(wb_addr, wb_sts & WBS_TMMASK);
+		mmusr = probeva(wb_addr, wb_sts & SSW4_TMMASK);
 #ifdef DEBUG
 	if (mmudebug)
 		printf("wb3: probeva(%x,%x) = %x\n",
-		    wb_addr + wb_extra_page, wb_sts & WBS_TMMASK, mmusr);
+		    wb_addr + wb_extra_page, wb_sts & SSW4_TMMASK, mmusr);
 #endif
 
-		if(!(mmusr & MMUSR_R)) {
+		if(!(mmusr & SSW4_TMUD)) {
 #ifdef DEBUG
 			if (mmudebug)
 				printf("wb3: need to bring in first page\n");
@@ -843,15 +834,15 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	 */
 	if(wb_extra_page) {
 
-		mmusr = probeva(wb_addr+wb_extra_page, wb_sts & WBS_TMMASK);
+		mmusr = probeva(wb_addr+wb_extra_page, wb_sts & SSW4_TMMASK);
 #ifdef DEBUG
 		if (mmudebug)
 			printf("wb%d: probeva %x %x = %x\n",
 			    wb, wb_addr + wb_extra_page, 
-			    wb_sts & WBS_TMMASK,mmusr);
+			    wb_sts & SSW4_TMMASK,mmusr);
 #endif
 
-		if(!(mmusr & MMUSR_R)) {
+		if(!(mmusr & SSW4_TMUD)) {
 #ifdef DEBUG
 			if (mmudebug)
 				printf("wb%d: page boundary crossed."
@@ -873,27 +864,27 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 
 	/* Actually do the write now */
 
-	if ((wb_sts & WBS_TMMASK) == FC_USERD &&
+	if ((wb_sts & SSW4_TMMASK) == FC_USERD &&
 	    !curpcb->pcb_onfault) {
 	    	curpcb->pcb_onfault = (caddr_t) _wb_fault;
 	}
 
-	switch(wb_sts & WBS_SZMASK) {
+	switch(wb_sts & SSW4_SZMASK) {
 
-	case WBS_SIZE_BYTE :
-		asm volatile ("movec %0,dfc ; movesb %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+	case SSW4_SZB :
+		asm volatile ("movec %0,dfc ; movesb %1,%2@" : : "d" (wb_sts & SSW4_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
-	case WBS_SIZE_WORD :
-		asm volatile ("movec %0,dfc ; movesw %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+	case SSW4_SZW :
+		asm volatile ("movec %0,dfc ; movesw %1,%2@" : : "d" (wb_sts & SSW4_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
-	case WBS_SIZE_LONG :
-		asm volatile ("movec %0,dfc ; movesl %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+	case SSW4_SZLN :
+		asm volatile ("movec %0,dfc ; movesl %1,%2@" : : "d" (wb_sts & SSW4_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
@@ -901,7 +892,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	}
 	if (curpcb->pcb_onfault == (caddr_t) _wb_fault)
 		curpcb->pcb_onfault = NULL;
-	if ((wb_sts & WBS_TMMASK) != FC_USERD)
+	if ((wb_sts & SSW4_TMMASK) != FC_USERD)
 		asm volatile ("movec %0,dfc\n" : : "d" (FC_USERD));
 	return (KERN_SUCCESS);
 }
