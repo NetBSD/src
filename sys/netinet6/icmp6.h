@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.8 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.9 2000/01/18 05:36:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -303,7 +303,7 @@ struct icmp6_namelookup {
  */
 struct icmp6_nodeinfo {
 	struct icmp6_hdr icmp6_ni_hdr;
-	u_int64_t icmp6_ni_nonce;
+	u_int8_t icmp6_ni_nonce[8];
 	/* could be followed by reply data */
 };
 
