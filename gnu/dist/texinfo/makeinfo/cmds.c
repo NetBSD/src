@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.1.1.5 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: cmds.c,v 1.2 2004/07/14 00:12:28 wiz Exp $	*/
 
 /* cmds.c -- Texinfo commands.
    Id: cmds.c,v 1.47 2004/04/07 20:17:38 karl Exp
@@ -1634,7 +1634,7 @@ handle_include (int verbatim_include)
       fflush (stdout);
     }
 
-  if (!find_and_load (filename))
+  if (!find_and_load (filename, 1))
     {
       popfile ();
       line_number--;
