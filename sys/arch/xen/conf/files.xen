@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.14.4.8 2005/02/12 22:07:15 bouyer Exp $
+#	$NetBSD: files.xen,v 1.14.4.9 2005/02/16 14:01:47 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -242,6 +242,9 @@ file	arch/xen/xen/vga_xen.c		vga_xen		needs-flag
 # Domain-0 operations
 defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
+file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
+file	arch/xen/xen/xbdback.c		dom0ops
+file	arch/xen/xen/xennetback.c	dom0ops
 file	arch/xen/xen/pci_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 
