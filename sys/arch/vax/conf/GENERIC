@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46 1999/07/29 10:37:25 augustss Exp $
+#	$NetBSD: GENERIC,v 1.47 1999/08/04 19:15:56 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -94,13 +94,12 @@ uba0		at mainbus0	# MicroVAXen only have QBUS.
 vsbus0		at mainbus0	# Internal "virtual" VAXstation bus
 
 # Devices connected at VAXBI
-cpu0		at bi? node?	# KA820/KA825 cpu
-cpu*		at bi? node?
+cpu*		at bi? node?	# KA820/KA825 cpu
 mem*		at bi? node?	# Memory subsystems
-uba*		at bi? node?	# DWBUA BI-Unibus adapter
+#uba*		at bi? node?	# DWBUA BI-Unibus adapter
 #ni*		at bi? node?	# DEBNA/DEBNT ethernet adapter
-kdb*		at bi? node?	# KDB50 MSCP disk ctlr
-mscpbus*	at kdb?
+#kdb*		at bi? node?	# KDB50 MSCP disk ctlr
+#mscpbus*	at kdb?
 
 # Devices connected at cmi
 mem*		at cmi? tr?	# Memory subsystems
@@ -150,10 +149,10 @@ ss*		at scsibus? target? lun?
 uk*		at scsibus? target? lun?
 
 # Graphic adapters.
-qd0		at uba? csr 0177400
+#qd0		at uba? csr 0177400
 
 # Ethernet cards
-de0		at uba? csr 0174510	# DELUA/DEUNA
+#de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
 ln0		at vsbus0 csr 0x200e0000# LANCE
 
