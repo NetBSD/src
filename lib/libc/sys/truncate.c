@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.4 1995/04/19 23:31:15 jtc Exp $	*/
+/*	$NetBSD: truncate.c,v 1.5 1996/12/20 20:17:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: truncate.c,v 1.4 1995/04/19 23:31:15 jtc Exp $";
+static char rcsid[] = "$NetBSD: truncate.c,v 1.5 1996/12/20 20:17:29 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 /*
  * This function provides 64-bit offset padding that
