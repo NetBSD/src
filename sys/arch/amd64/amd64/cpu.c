@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2004/04/30 17:58:04 toshii Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2004/06/15 11:35:27 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2004/04/30 17:58:04 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2004/06/15 11:35:27 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -153,6 +153,8 @@ u_int32_t cpus_attached = 0;
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
+
+extern char x86_64_doubleflt_stack[];
 
 void    	cpu_hatch __P((void *));
 static void    	cpu_boot_secondary __P((struct cpu_info *ci));
@@ -303,6 +305,7 @@ cpu_attach(parent, self, aux)
 	pcb->pcb_tss.tss_rsp0 = kstack + USPACE - 16;
 	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = kstack + PAGE_SIZE - 16;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack;
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
