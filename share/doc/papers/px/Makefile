@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.3 (Berkeley) 6/8/93
+#	@(#)Makefile	5.4 (Berkeley) 10/9/94
 
 DIR=	papers/px
 SRCS=	pxin0.n pxin1.n pxin2.n pxin3.n pxin4.n

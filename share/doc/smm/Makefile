@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.12 1997/10/13 11:19:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/17 09:44:39 mrg Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 5/10/94
 
 # The following modules do not build/install:
 # 10.named, 13.amd
@@ -25,9 +25,12 @@ SUBDIR+= 08.sendmailop
 .if exists(09.sendmail)
 SUBDIR+= 09.sendmail
 .endif
+#SUBDIR=	01.setup 02.config 03.fsck 04.quotas 05.fastfs 06.nfs 07.lpd \
+#	08.sendmailop 09.sendmail 11.timedop 12.timed 14.uucpimpl \
+#	15.uucpnet 16.security 17.password 18.net 19.perl
 
 Title.ps: ${FILES}
-	groff Title > ${.TARGET}
+	groff -ms Title > ${.TARGET}
 
 contents.ps: ${FILES}
 	groff -ms 00.contents > ${.TARGET}

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tmac.p	5.2 (Berkeley) 4/17/91
+.\"	@(#)tmac.p	5.3 (Berkeley) 10/9/94
 .\"
 .if n .nr FM 1.2i
 .if t .tr *\(**=\(eq/\(sl+\(pl
