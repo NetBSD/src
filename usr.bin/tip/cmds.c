@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.12 1998/08/25 20:59:41 ross Exp $	*/
+/*	$NetBSD: cmds.c,v 1.13 1998/12/19 22:59:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.12 1998/08/25 20:59:41 ross Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.13 1998/12/19 22:59:21 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -82,8 +82,8 @@ getfl(c)
 	if (prompt("Local file name? ", copyname, sizeof copyname))
 		return;
 	cp = expand(copyname);
-	if ((sfd = creat(cp, 0666)) < 0) {
-		printf("\r\n%s: cannot creat\r\n", copyname);
+	if ((sfd = open(cp, O_CREAT, 0666)) < 0) {
+		printf("\r\n%s: cannot create\r\n", copyname);
 		return;
 	}
 	
@@ -117,7 +117,7 @@ cu_take(cc)
 	if (argc == 1)
 		argv[1] = argv[0];
 	cp = expand(argv[1]);
-	if ((fd = creat(cp, 0666)) < 0) {
+	if ((fd = open(cp, O_CREAT, 0666)) < 0) {
 		printf("\r\n%s: cannot create\r\n", argv[1]);
 		return;
 	}
