@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.123 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.124 2004/04/25 12:41:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.123 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.124 2004/04/25 12:41:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,14 +552,10 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
 		brelse(bp);
 	}
 
-	if (vp != NULL) {
-		if (vp->v_type == VBLK)
-			mp = vp->v_specmountpoint;
-		else
-			mp = vp->v_mount;
-	} else {
-		mp = NULL;
-	}
+	if (vp->v_type == VBLK)
+		mp = vp->v_specmountpoint;
+	else
+		mp = vp->v_mount;
 
 	/*
 	 * Collect statistics on synchronous and asynchronous reads.
