@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.45 2002/10/23 09:13:01 jdolecek Exp $	*/
+/*	$NetBSD: cons.c,v 1.46 2003/03/06 00:38:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.45 2002/10/23 09:13:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.46 2003/03/06 00:38:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,10 +76,7 @@ struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp;	/* vnode for underlying device. */
 
 int
-cnopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cnopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	const struct cdevsw *cdev;
 	dev_t cndev;
@@ -122,10 +119,7 @@ cnopen(dev, flag, mode, p)
 }
  
 int
-cnclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	const struct cdevsw *cdev;
 	struct vnode *vp;
@@ -153,10 +147,7 @@ cnclose(dev, flag, mode, p)
 }
  
 int
-cnread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cnread(dev_t dev, struct uio *uio, int flag)
 {
 	const struct cdevsw *cdev;
 
@@ -180,10 +171,7 @@ cnread(dev, uio, flag)
 }
  
 int
-cnwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cnwrite(dev_t dev, struct uio *uio, int flag)
 {
 	const struct cdevsw *cdev;
 
@@ -204,12 +192,7 @@ cnwrite(dev, uio, flag)
 }
 
 int
-cnioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	const struct cdevsw *cdev;
 	int error;
@@ -246,10 +229,7 @@ cnioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-cnpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+cnpoll(dev_t dev, int events, struct proc *p)
 {
 	const struct cdevsw *cdev;
 
@@ -272,9 +252,7 @@ cnpoll(dev, events, p)
 
 /*ARGSUSED*/
 int
-cnkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+cnkqfilter(dev_t dev, struct knote *kn)
 {
 	const struct cdevsw *cdev;
 
@@ -296,18 +274,15 @@ cnkqfilter(dev, kn)
 }
 
 int
-cngetc()
+cngetc(void)
 {
-
 	if (cn_tab == NULL)
 		return (0);
 	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
 }
 
 int
-cngetsn(cp, size)
-	char *cp;
-	int size;
+cngetsn(char *cp, int size)
 {
 	char *lp;
 	int c, len;
@@ -353,8 +328,7 @@ cngetsn(cp, size)
 }
 
 void
-cnputc(c)
-	int c;
+cnputc(int c)
 {
 
 	if (cn_tab == NULL)
@@ -368,8 +342,7 @@ cnputc(c)
 }
 
 void
-cnpollc(on)
-	int on;
+cnpollc(int on)
 {
 	static int refcount = 0;
 
@@ -384,19 +357,32 @@ cnpollc(on)
 }
 
 void
-nullcnpollc(dev, on)
-	dev_t dev;
-	int on;
+nullcnpollc(dev_t dev, int on)
 {
 
 }
 
 void
-cnbell(pitch, period, volume)
-	u_int pitch, period, volume;
+cnbell(u_int pitch, u_int period, u_int volume)
 {
 
 	if (cn_tab == NULL || cn_tab->cn_bell == NULL)
 		return;
 	(*cn_tab->cn_bell)(cn_tab->cn_dev, pitch, period, volume);
+}
+
+void
+cnflush(void)
+{
+	if (cn_tab == NULL || cn_tab->cn_flush == NULL)
+		return;
+	(*cn_tab->cn_flush)(cn_tab->cn_dev);
+}
+  
+void
+cnhalt(void)
+{
+	if (cn_tab == NULL || cn_tab->cn_halt == NULL)
+		return;
+	(*cn_tab->cn_halt)(cn_tab->cn_dev);
 }
