@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.35.2.6 2002/09/25 21:36:58 jdolecek Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.35.2.7 2002/09/29 09:58:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.6 2002/09/25 21:36:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.7 2002/09/29 09:58:16 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1719,7 +1719,7 @@ genfs_kqfilter(void *v)
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)vp;
+	kn->kn_hook = vp;
 
 	/* XXXLUKEM lock the struct? */
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
