@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.65 2002/03/30 06:29:02 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.66 2002/04/03 15:57:39 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -243,6 +243,7 @@
 /usr/include/dev/scsipi/atapiconf.h
 /usr/include/dev/scsipi/cd_link.h
 /usr/include/dev/scsipi/cdvar.h
+/usr/include/dev/scsipi/scsi_cd.h
 /usr/include/dev/scsipi/scsi_changer.h
 /usr/include/dev/scsipi/scsi_ctron_ether.h
 /usr/include/dev/scsipi/scsi_message.h
@@ -584,6 +585,7 @@
 /usr/lib/libusb_p.a
 /usr/lib/libusb_pic.a
 /usr/libdata/lint/llib-lntp.ln
+/usr/libdata/lint/llib-lusb.ln
 /usr/sbin/config.new
 /usr/share/ldscripts/m68kelf.x
 /usr/share/ldscripts/m68kelf.xbn
