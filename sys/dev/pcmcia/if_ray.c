@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.38 2003/10/13 06:43:22 dyoung Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.39 2003/10/22 09:13:17 mjl Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.38 2003/10/13 06:43:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.39 2003/10/22 09:13:17 mjl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -138,9 +138,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.38 2003/10/13 06:43:22 dyoung Exp $");
 #endif
 
 /*
- * the number of times the HW is reset in 30s before disabling
- * this is needed becuase resets take ~2s and currently pcmcia
- * spins for the reset
+ * The number of times the HW is reset in 30s before disabling.
+ * This is needed because resets take ~2s and currently pcmcia
+ * spins for the reset.
  */
 #ifndef	RAY_MAX_RESETS
 #define	RAY_MAX_RESETS	3
@@ -1882,7 +1882,7 @@ ray_check_ccs(arg)
 breakout:
 	/* see if we got one of the commands we are looking for */
 	if (i > RAY_CCS_CMD_LAST)
-		; /* nothign */
+		; /* nothing */
 	else if (stat == RAY_CCS_STATUS_FREE) {
 		stat = RAY_CCS_STATUS_COMPLETE;
 		if ((fp = ray_ccs_done(sc, ccs)))
@@ -1911,7 +1911,7 @@ breakout:
  * to keep the values from being changed while read:  It checks
  * the `own' bit and if zero writes the current internal counter
  * value, it then sets the `own' bit to 1.  If the `own' bit was 1 it
- * incremenets its internal counter.  The user thus reads the counter
+ * increments its internal counter.  The user thus reads the counter
  * if the `own' bit is one and then sets the own bit to 0.
  */
 static void
@@ -2042,7 +2042,7 @@ done:
 }
 
 /*
- * an unsolicted interrupt, i.e., the ECF is sending us a command
+ * an unsolicited interrupt, i.e., the ECF is sending us a command
  */
 static ray_cmd_func_t
 ray_rccs_intr(sc, ccs)
@@ -2061,7 +2061,7 @@ ray_rccs_intr(sc, ccs)
 	rcmd = 0;
 	switch (cmd) {
 	/*
-	 * unsolicted commands
+	 * unsolicited commands
 	 */
 	case RAY_ECMD_RX_DONE:
 		ray_recv(sc, ccs);
@@ -2273,7 +2273,7 @@ ray_cmd_schedule(sc, cmdf)
 	if ((cmdf & SCP_UPD_MASK) == 0)
 		ray_set_pending(sc, track);
 	else if (ray_cmd_is_running(sc, SCP_UPDATESUBCMD)) {
-		/* don't do timeout mechaniscm if subcmd already going */
+		/* don't do timeout mechanism if subcmd already going */
 		sc->sc_scheduled |= cmdf;
 	} else
 		ray_set_pending(sc, cmdf | SCP_UPDATESUBCMD);
@@ -2447,7 +2447,7 @@ ray_update_subcmd(sc)
 		if (!RAY_ECF_READY(sc))
 			break;
 		/*
-		 * give priority to LSB -- e.g., if previous loop reschuled
+		 * give priority to LSB -- e.g., if previous loop rescheduled
 		 * doing this command after calling the function won't catch
 		 * if a later command sets an earlier bit
 		 */
@@ -2618,7 +2618,7 @@ ray_download_params(sc)
 	sp->sp_promisc = sc->sc_promisc;
 	PUT2(sp->sp_uniq_word, 0x0cbd);
 	if (sc->sc_version == SC_BUILD_4) {
-	/* XXX whats this value anyway.. the std says 50us */
+	/* XXX what is this value anyway..? the std says 50us */
 		/* XXX sp->sp_slot_time = 0x4e; */
 		sp->sp_slot_time = 0x4e;
 #if 1
@@ -2994,9 +2994,9 @@ ray_update_mcast(sc)
  */
 
 /*
- * issue a update params
+ * issue an "update params"
  *
- * expected to be called in sleapable context -- intended for user stuff
+ * expected to be called in sleepable context -- intended for user stuff
  */
 static int
 ray_user_update_params(sc, pr)
