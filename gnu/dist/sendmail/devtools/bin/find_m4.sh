@@ -8,7 +8,7 @@
 # the sendmail distribution.
 #
 #
-#       $Id: find_m4.sh,v 1.1.1.1 2000/05/03 09:27:17 itojun Exp $
+#       Id: find_m4.sh,v 8.7 1999/02/07 07:25:58 gshapiro Exp
 #
 
 # Try to find a working M4 program.
