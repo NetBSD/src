@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,15 +32,18 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)devname.c	5.14 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: devname.c,v 1.5 1993/08/01 18:59:11 mycroft Exp $";
+static char sccsid[] = "@(#)devname.c	8.1 (Berkeley) 5/31/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <fcntl.h>
+
 #include <db.h>
-#include <stdio.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
+#include <stdio.h>
+#include <string.h>
 
 char *
 devname(dev, type)
@@ -57,20 +60,21 @@ devname(dev, type)
 
 	if (!db && !failure &&
 	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
-		(void)fprintf(stderr,
-		    "warning: no device database %s\n", _PATH_DEVDB);
+		warn("warning: %s", _PATH_DEVDB);
 		failure = 1;
 	}
 	if (failure)
-		return("??");
+		return ("??");
 
 	/*
 	 * Keys are a mode_t followed by a dev_t.  The former is the type of
-	 * the file (mode & S_IFMT), the latter is the st_rdev field.
+	 * the file (mode & S_IFMT), the latter is the st_rdev field.  Be
+	 * sure to clear any padding that may be found in bkey.
 	 */
+	memset(&bkey, 0, sizeof(bkey));
 	bkey.dev = dev;
 	bkey.type = type;
 	key.data = &bkey;
 	key.size = sizeof(bkey);
-	return((db->get)(db, &key, &data, 0L) ? "??" : (char *)data.data);
+	return ((db->get)(db, &key, &data, 0) ? "??" : (char *)data.data);
 }
