@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.53 2001/11/23 21:44:26 chs Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.54 2001/12/18 07:51:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.53 2001/11/23 21:44:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.54 2001/12/18 07:51:17 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -413,6 +413,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 		++fs->lfs_nadirop;
 	ip->i_flag |= IN_ADIROP;
 #endif
+	genfs_node_init(vp, &lfs_genfsops);
 	VREF(ip->i_devvp);
 	/* Set superblock modified bit and increment file count. */
 	fs->lfs_fmod = 1;

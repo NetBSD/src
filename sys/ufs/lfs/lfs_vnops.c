@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.59 2001/11/23 21:44:29 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.60 2001/12/18 07:51:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.59 2001/11/23 21:44:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.60 2001/12/18 07:51:18 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
-#if 0 /* XXX until LFS is fixed */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
-#endif
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
@@ -152,6 +150,8 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, lfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, lfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_vnodeop_opv_desc =
@@ -290,12 +290,20 @@ lfs_fsync(void *v)
 		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int error;
 	
 	/* Ignore the trickle syncer */
 	if (ap->a_flags & FSYNC_LAZY)
 		return 0;
 
-	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, ap->a_offlo, ap->a_offhi,
+	    PGO_CLEANIT | PGO_SYNCIO);
+	if (error) {
+		return error;
+	}
+	return (VOP_UPDATE(vp, NULL, NULL,
 			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0));
 }
 
@@ -849,4 +857,33 @@ lfs_reclaim(void *v)
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
+}
+
+int
+lfs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	if ((ap->a_access_type & VM_PROT_WRITE) != 0) {
+		LFS_SET_UINO(VTOI(ap->a_vp), IN_MODIFIED);
+	}
+	return genfs_compat_getpages(v);
+}
+
+int
+lfs_putpages(void *v)
+{
+	int error;
+
+	error = genfs_putpages(v);
+	return error;
 }
