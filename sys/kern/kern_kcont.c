@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.7 2004/03/24 10:01:46 pooka Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.8 2004/03/25 23:02:58 enami Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.7 2004/03/24 10:01:46 pooka Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.8 2004/03/25 23:02:58 enami Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.7 2004/03/24 10:01:46 pooka Exp $ "
 
 
 /* Accessors for struct kc_queue */
-static __inline struct kc * kc_set(struct kc *,
+static __inline struct kc *kc_set(struct kc *,
 	void (*func)(void *, void *, int),
 	void *env_arg, int ipl);
 
@@ -102,7 +102,7 @@ kcont_enqueue_atomic(kcq_t *kcq, struct kc *kc)
 {
 	int s;
 
-	s =  splvm();
+	s = splvm();
 	SIMPLEQ_INSERT_TAIL(kcq, kc, kc_next);
 	splx(s);
 }
@@ -113,7 +113,7 @@ kcont_dequeue_atomic(kcq_t *kcq)
 	struct kc *kc;
 	int s;
 
-	s =  splvm();
+	s = splvm();
 	kc = SIMPLEQ_FIRST(kcq);
 	if (kc != NULL) {
 		SIMPLEQ_REMOVE_HEAD(kcq, kc_next);
@@ -130,8 +130,9 @@ kcont_dequeue_atomic(kcq_t *kcq)
  */
 static __inline struct kc *
 kc_set(struct kc *kc, void (*func)(void *, void *, int),
-	void *env_arg, int ipl)
+    void *env_arg, int ipl)
 {
+
 	kc->kc_fn = func;
 	kc->kc_env_arg = env_arg;
 	kc->kc_ipl = ipl;
@@ -145,12 +146,13 @@ kc_set(struct kc *kc, void (*func)(void *, void *, int),
 }
 
 /*
- * Request a continuation. Caller provides space for the struct kc *.
+ * Request a continuation.  Caller provides space for the struct kc *.
  */
 struct kc *
 kcont(struct kc *kc, void (*func)(void *, void *, int),
-	void *env_arg, int continue_ipl)
+    void *env_arg, int continue_ipl)
 {
+
 	/* Just save the arguments in the kcont *. */
 	return kc_set(kc, func, env_arg, continue_ipl);
 }
@@ -160,12 +162,12 @@ kcont(struct kc *kc, void (*func)(void *, void *, int),
  * mallocs the struct kc, and initializes it with the caller-supplied args.
  * Once the asynchronous operation completes and the continuation function
  * has been called, the kcont framework will free the struct kc *
- * immediately after the continuation function  returns.
+ * immediately after the continuation function returns.
  */
 struct kc *
 kcont_malloc(int malloc_flags,
-	       void (*func)(void *, void *, int),
-	       void *env_arg, int continue_ipl)
+    void (*func)(void *, void *, int),
+    void *env_arg, int continue_ipl)
 {
 	struct kc *kc;
 	int pool_flags;
@@ -198,10 +200,10 @@ kcont_defer(struct kc *kc, void *obj, int status)
 	 */
 
 	/*
-	 * If we already deferred this kcont,don't clobber
+	 * If we already deferred this kcont, don't clobber
 	 * the previously-saved kc_object and kc_status.
 	 * (The obj/status arguments passed in by ck_run() should
-	 * be the same as kc_object/kc_status, but don't rely  on that.)
+	 * be the same as kc_object/kc_status, but don't rely on that.)
 	 */
 	if ((kc->kc_flags & KC_DEFERRED) == 0) {
 		kc->kc_flags |= KC_DEFERRED;
@@ -209,7 +211,7 @@ kcont_defer(struct kc *kc, void *obj, int status)
 		kc->kc_status = status;
 	}
 
-  	switch (kc->kc_ipl) {
+	switch (kc->kc_ipl) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	case KC_IPL_DEFER_SOFTCLOCK:
 		kcont_enqueue_atomic(&kcq_softclock, kc);
@@ -218,19 +220,19 @@ kcont_defer(struct kc *kc, void *obj, int status)
 	case KC_IPL_DEFER_SOFTNET:
 		kcont_enqueue_atomic(&kcq_softnet, kc);
 		softintr_schedule(kc_si_softnet);
-  		break;
+		break;
 	case KC_IPL_DEFER_SOFTSERIAL:
 		kcont_enqueue_atomic(&kcq_softserial, kc);
 		softintr_schedule(kc_si_softserial);
 		break;
 
-#else /*  !__HAVE_GENERIC_SOFT_INTERRUPTS */
+#else /* !__HAVE_GENERIC_SOFT_INTERRUPTS */
 	/* What to do? For now, punt to process context */
 	case KC_IPL_DEFER_SOFTCLOCK:
 	case KC_IPL_DEFER_SOFTSERIAL:
 	case KC_IPL_DEFER_SOFTNET:
 		/*FALLTHROUGH*/
-#endif /*  __HAVE_GENERIC_SOFT_INTERRUPTS */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 	case KC_IPL_DEFER_PROCESS:
 		kcont_enqueue_atomic(&kcq_process_ctxt, kc);
@@ -243,8 +245,8 @@ kcont_defer(struct kc *kc, void *obj, int status)
 
 void
 kcont_defer_malloc(int mallocflags,
-	void (*func)(void *, void *, int),
-	void * obj, void *env_arg, int status, int ipl)
+    void (*func)(void *, void *, int),
+    void *obj, void *env_arg, int status, int ipl)
 {
 	struct kc *kc;
 
@@ -258,8 +260,9 @@ kcont_defer_malloc(int mallocflags,
  * of some pre-existing kernel object.
  */
 void
-kcont_enqueue(kcq_t * kcq, struct kc* kc)
+kcont_enqueue(kcq_t *kcq, struct kc *kc)
 {
+
 	kcont_enqueue_atomic(kcq, kc);
 }
 
@@ -267,7 +270,7 @@ kcont_enqueue(kcq_t * kcq, struct kc* kc)
 /*
  * Run through a list of continuations, calling (or handing off)
  * continuation functions.
- * If the caller-provided IPL is the same as the requested  IPL,
+ * If the caller-provided IPL is the same as the requested IPL,
  * deliver the callback.
  * If the caller-provided IPL is higher than the requested
  * callback IPL, re-enqueue the continuation to a lower-priority queue.
@@ -276,6 +279,7 @@ void
 kcont_run(kcq_t *kcq, void *obj, int status, int curipl)
 {
 	struct kc *kc;
+
 	while ((kc = kcont_dequeue_atomic(kcq)) != NULL) {
 
 		/* If execution of kc was already deferred, restore context. */
@@ -289,16 +293,17 @@ kcont_run(kcq_t *kcq, void *obj, int status, int curipl)
 		if (kc->kc_ipl == KC_IPL_IMMED || curipl <= kc->kc_ipl) {
 			int saved_flags = kc->kc_flags; /* XXX see below */
 
-			/* satisfy our raison d'e^tre */
+			/* Satisfy our raison d'e^tre */
 			(*kc->kc_fn)(obj, kc->kc_env_arg, status);
 
-			/* We must not touch (*kc) after calling
-			 * (*kc->kc_fn),  unless we were specifically
+			/*
+			 * We must not touch (*kc) after calling
+			 * (*kc->kc_fn), unless we were specifically
 			 * asked to free it.  The memory for (*kc) may
 			 * be a sub-field of some other object (for example,
-			 * of kc->kc_env_arg) and (*kc_fn)()  may already
-			 * have freed it by the time we get here. So save
-			 * kc->kc_flags  (above) and use that saved copy
+			 * of kc->kc_env_arg) and (*kc_fn)() may already
+			 * have freed it by the time we get here.  So save
+			 * kc->kc_flags (above) and use that saved copy
 			 * to test for auto-free.
 			 */
 			if (saved_flags & KC_AUTOFREE)
@@ -316,18 +321,21 @@ kcont_run(kcq_t *kcq, void *obj, int status, int curipl)
 static void
 kcont_run_softclock(void *arg)
 {
+
 	kcont_run((struct kcqueue *)arg, NULL, 0, KC_IPL_DEFER_SOFTCLOCK);
 }
 
 static void
 kcont_run_softnet(void *arg)
 {
+
 	kcont_run((struct kcqueue *)arg, NULL, 0, KC_IPL_DEFER_SOFTNET);
 }
 
 static void
 kcont_run_softserial(void *arg)
 {
+
 	kcont_run((struct kcqueue *)arg, NULL, 0, KC_IPL_DEFER_SOFTSERIAL);
 }
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
@@ -346,9 +354,9 @@ kcont_worker(void *arg)
 	while (1) {
 		status = ltsleep(&kcq_process_ctxt, PCATCH, "kcont", 0, NULL);
 		if (status != 0)
-		    break;
+			break;
 		kcont_run(&kcq_process_ctxt, NULL, 0, KC_IPL_DEFER_PROCESS);
-    	}
+	}
 	kthread_exit(0);
 }
 
@@ -357,7 +365,7 @@ kcont_worker(void *arg)
  * Initialize kcont subsystem.
  */
 void
-kcont_init()
+kcont_init(void)
 {
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
