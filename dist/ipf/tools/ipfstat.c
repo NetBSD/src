@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.7 2004/11/13 19:16:10 he Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.8 2005/01/10 02:08:51 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1592,7 +1592,9 @@ static char *getip(v, addr)
 int v;
 i6addr_t *addr;
 {
+#ifdef  USE_INET6
 	static char hostbuf[MAXHOSTNAMELEN+1];
+#endif
 
 	if (v == 4)
 		return inet_ntoa(addr->in4);
