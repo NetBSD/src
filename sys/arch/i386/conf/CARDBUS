@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.14.2.10 2001/05/06 15:19:39 he Exp $
+#	$NetBSD: CARDBUS,v 1.14.2.11 2002/01/19 21:57:04 he Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -700,6 +700,7 @@ clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
@@ -742,6 +743,7 @@ audio*	at clcs?
 audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at emuxki?
 audio*	at eso?
 audio*	at ess?
 audio*	at fms?
