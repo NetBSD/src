@@ -1,4 +1,4 @@
-.\" $NetBSD: doshutdownhooks.9,v 1.5 2000/06/14 17:25:53 cgd Exp $
+.\" $NetBSD: doshutdownhooks.9,v 1.6 2001/04/29 19:14:09 jhawk Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -50,11 +50,11 @@ function.  Shutdown hooks are called in reverse order, i.e.
 the shutdown hook established last will be called first.
 .Pp
 This function is called from
-.Xr boot 9
+.Fn boot
 with interrupts turned off.
 It is called immediately before the system is halted or rebooted,
 after file systems have been unmounted, after the clock has been updated,
 and after a system dump has been done (if necessary).
 .Sh SEE ALSO
-.Xr boot 9 ,
+.\" .Xr boot 9 ,
 .Xr shutdownhook_establish 9
