@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.22 1999/08/19 14:12:35 agc Exp $ */
+/* $NetBSD: lib.h,v 1.23 1999/08/20 09:20:20 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -197,7 +197,6 @@ Boolean		make_preserve_name(char *, size_t, char *, char *);
 void		write_file(char *, char *);
 void		copy_file(char *, char *, char *);
 void		move_file(char *, char *, char *);
-void		copy_hierarchy(char *, char *, Boolean);
 int		delete_hierarchy(char *, Boolean, Boolean);
 int		unpack(char *, char *);
 void		format_cmd(char *, size_t , char *, char *, char *);
