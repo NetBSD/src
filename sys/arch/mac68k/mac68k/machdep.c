@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 1996/10/23 14:12:37 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.125 1996/10/28 03:54:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2483,7 +2483,16 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc000;
 		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base + 0xf000;
+		switch (current_mac_model->machineid) {
+		case MACH_MACQ900:
+		case MACH_MACQ950:
+		case MACH_MACQ700:
+			SCSIBase = base + 0xf000;
+			break;
+		default:
+			SCSIBase = base + 0x10000;
+			break;
+		}
 		break;
 	case MACH_CLASSQ2:
 		/*
@@ -2494,12 +2503,12 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc020;
 		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base + 0xf000;
+		SCSIBase = base + 0x10000;
 		break;
 	case MACH_CLASSAV:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = NULL;
+		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base + 0x18000;
 		break;
 	case MACH_CLASSII:
