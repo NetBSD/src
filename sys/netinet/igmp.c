@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)igmp.c	8.1 (Berkeley) 7/19/93
- *	$Id: igmp.c,v 1.5 1994/05/13 06:05:58 mycroft Exp $
+ *	$Id: igmp.c,v 1.6 1994/06/04 08:13:23 mycroft Exp $
  */
 
 /* Internet Group Management Protocol (IGMP) routines. */
@@ -56,8 +56,6 @@
 #include <netinet/ip_var.h>
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
-
-extern struct ifnet loif;
 
 static int igmp_timers_are_running = 0;
 static u_long igmp_all_hosts_group;
@@ -127,7 +125,7 @@ igmp_input(m, iphlen)
 	case IGMP_HOST_MEMBERSHIP_QUERY:
 		++igmpstat.igps_rcv_queries;
 
-		if (ifp == &loif)
+		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
 		if (ip->ip_dst.s_addr != igmp_all_hosts_group) {
@@ -158,7 +156,7 @@ igmp_input(m, iphlen)
 	case IGMP_HOST_MEMBERSHIP_REPORT:
 		++igmpstat.igps_rcv_reports;
 
-		if (ifp == &loif)
+		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
 		if (!IN_MULTICAST(ntohl(igmp->igmp_group.s_addr)) ||
@@ -209,7 +207,7 @@ igmp_joingroup(inm)
 	register int s = splnet();
 
 	if (inm->inm_addr.s_addr == igmp_all_hosts_group ||
-	    inm->inm_ifp == &loif)
+	    (inm->inm_ifp->if_flags & IFF_LOOPBACK))
 		inm->inm_timer = 0;
 	else {
 		igmp_sendreport(inm);
