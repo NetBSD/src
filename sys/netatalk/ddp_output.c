@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.4 2001/11/15 09:48:26 lukem Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.4.10.1 2003/06/19 09:36:58 grant Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.4 2001/11/15 09:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.4.10.1 2003/06/19 09:36:58 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,9 @@ ddp_output(va_alist)
 	ddp = va_arg(ap, struct ddpcb *);
 	va_end(ap);
 
-	M_PREPEND(m, sizeof(struct ddpehdr), M_WAIT);
+	M_PREPEND(m, sizeof(struct ddpehdr), M_DONTWAIT);
+	if (!m)
+		return (ENOBUFS);
 
 	deh = mtod(m, struct ddpehdr *);
 	deh->deh_pad = 0;
@@ -141,7 +143,6 @@ ddp_route(m, ro)
 {
 	struct sockaddr_at gate;
 	struct elaphdr *elh;
-	struct mbuf    *m0;
 	struct at_ifaddr *aa = NULL;
 	struct ifnet   *ifp = NULL;
 	u_short         net;
@@ -168,16 +169,9 @@ ddp_route(m, ro)
          * packets end up poorly aligned due to the three byte elap header.
          */
 	if (!(aa->aa_flags & AFA_PHASE2)) {
-		MGET(m0, M_WAIT, MT_HEADER);
-		if (m0 == 0) {
-			m_freem(m);
-			printf("ddp_route: no buffers\n");
+		M_PREPEND(m, SZ_ELAPHDR, M_DONTWAIT);
+		if (!m)
 			return (ENOBUFS);
-		}
-		m0->m_next = m;
-		/* XXX perhaps we ought to align the header? */
-		m0->m_len = SZ_ELAPHDR;
-		m = m0;
 
 		elh = mtod(m, struct elaphdr *);
 		elh->el_snode = satosat(&aa->aa_addr)->sat_addr.s_node;
