@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.31 2004/07/29 22:59:19 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.32 2004/07/29 23:17:29 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.31 2004/07/29 22:59:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.32 2004/07/29 23:17:29 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -522,8 +522,6 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	ni->ni_refcnt = 1;		/* mark referenced */
 
 	IEEE80211_NODE_LOCK_BH(ic);
-	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
-	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
 	/* 
 	 * Note we don't enable the inactive timer when acting
 	 * as a station.  Nodes created in this mode represent
@@ -536,6 +534,8 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
+	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
+	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
 	IEEE80211_NODE_UNLOCK_BH(ic);
 }
 
