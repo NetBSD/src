@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_dma.c,v 1.1 1998/01/29 21:42:51 ross Exp $ */
+/* $NetBSD: a12c_dma.c,v 1.2 1998/03/02 07:07:41 ross Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.1 1998/01/29 21:42:51 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.2 1998/03/02 07:07:41 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.1 1998/01/29 21:42:51 ross Exp $");
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/a12creg.h>
 #include <alpha/pci/a12cvar.h>
+
+#define	A12C_DMA()	/* Generate ctags(1) key */
 
 bus_dma_tag_t a12c_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
 
