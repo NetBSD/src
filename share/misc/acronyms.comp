@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.27 2003/11/22 18:01:46 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.28 2003/12/02 18:14:17 sketch Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -148,7 +148,7 @@ SCSI	small computer system interface
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
 SLDRAM	synchronous-link dynamic random access memory
-SMART	self-monitoring analysis ans reporting technology
+SMART	self-monitoring analysis and reporting technology
 SMP	symmetric multiprocessing
 SMTP	simple mail transfer protocol
 SPD	serial presence detect
