@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1998/08/17 02:25:44 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1998/08/17 02:55:39 tv Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -16,6 +16,7 @@ CPPFLAGS+=	-I${.CURDIR}/../arch \
 		-I${DIST} \
 		-I${DIST}/config \
 		-DIN_GCC -DNETBSD_NATIVE
+HOST_CPPFLAGS=	${CPPFLAGS}
 
 LDADD+=		-lgnumalloc
 DPADD+=		${LIBGNUMALLOC}

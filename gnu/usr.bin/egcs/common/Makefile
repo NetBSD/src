@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/04/15 21:54:05 tv Exp $
+#	$NetBSD: Makefile,v 1.11 1998/08/17 02:55:39 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -8,173 +8,78 @@ NOLINT=
 NOMAN=
 NOPROFILE=
 NOSTATICLIB=
-CPICFLAGS=-fPIC -DPIC
 YHEADER=1
 
-MD= ${DIST}/config/${TARGET_GNU_ARCH}/${TARGET_GNU_ARCH}.md
+CPPFLAGS+=	-DTARGET_NAME=\"${MACHINE_GNU_ARCH}-netbsd\"
+CPICFLAGS=	-fPIC -DPIC
+HOST_CPPFLAGS=	${CPPFLAGS}
 
-BCDEF= ${DIST}/bytecode.def
-CPPFLAGS+=	-DTARGET_NAME=\"${target_alias}\"
+MD=		${DIST}/config/${MACHINE_GNU_ARCH}/${MACHINE_GNU_ARCH}.md
 
-.PATH:	${DIST}
+BCDEF=		${DIST}/bytecode.def
 
-SRCS= \
-	${TARGET_GNU_ARCH}.c alias.c bc-arity.h bc-emit.c bc-opcode.h \
-	bc-opname.h bc-optab.c bitmap.c c-aux-info.c c-convert.c c-parse.h \
-	c-pragma.c caller-save.c calls.c combine.c convert.c cse.c dbxout.c \
-	dwarf2out.c dwarfout.c emit-rtl.c explow.c expmed.c expr.c except.c \
-	final.c flow.c fold-const.c function.c getpwd.c global.c insn-attr.h \
-	insn-attrtab.c insn-codes.h insn-config.h insn-emit.c insn-extract.c \
-	insn-flags.h insn-opinit.c insn-output.c insn-peep.c insn-recog.c \
-	integrate.c jump.c local-alloc.c loop.c obstack.c optabs.c \
-	print-rtl.c print-tree.c profile.c real.c recog.c reg-stack.c \
-	regclass.c regmove.c reload.c reload1.c reorg.c rtl.c rtlanal.c \
-	sched.c sdbout.c stmt.c stor-layout.c stupid.c toplev.c tree.c \
-	unroll.c varasm.c version.c xcoffout.c
+.PATH:		${DIST}
 
-insn-attr.h: genattr ${MD}
-	./genattr ${MD} > insn-attr.h
-CLEANFILES += insn-attr.h genattr genattr.o
+SRCS=		${MACHINE_GNU_ARCH}.c toplev.c version.c tree.c print-tree.c \
+		stor-layout.c fold-const.c function.c stmt.c except.c expr.c \
+		calls.c expmed.c explow.c optabs.c varasm.c rtl.c print-rtl.c \
+		rtlanal.c emit-rtl.c genrtl.c real.c regmove.c dbxout.c \
+		sdbout.c dwarfout.c dwarf2out.c xcoffout.c bitmap.c alias.c \
+		integrate.c jump.c cse.c loop.c unroll.c flow.c stupid.c \
+		combine.c varray.c regclass.c local-alloc.c global.c reload.c \
+		reload1.c caller-save.c gcse.c insn-peep.c reorg.c final.c \
+		recog.c reg-stack.c insn-opinit.c insn-recog.c insn-extract.c \
+		insn-output.c insn-emit.c profile.c insn-attrtab.c getpwd.c \
+		convert.c dyn-string.c obstack.c
 
-insn-flags.h: genflags ${MD}
-	./genflags ${MD} > insn-flags.h
-CLEANFILES += insn-flags.h genflags genflags.o
+.if defined(USE_HAIFA)
+SRCS+=		haifa-sched.c
+.else
+SRCS+=		sched.c
+.endif
 
-insn-codes.h: gencodes ${MD}
-	./gencodes ${MD} > insn-codes.h
-CLEANFILES += insn-codes.h gencodes gencodes.o
+DPSRCS+=	gengenrtl.c gencheck.c
+CLEANFILES+=	bitmap.lo obstack.lo print-rtl.lo rtl.lo rtlanal.lo \
+		gengenrtl gengenrtl.lo genrtl.c genrtl.h \
+		gencheck gencheck.lo tree-check.h
 
-insn-config.h: genconfig ${MD}
-	./genconfig ${MD} > insn-config.h
-CLEANFILES += insn-config.h genconfig genconfig.o
+gengenrtl: gengenrtl.lo
+	${HOST_LINK.c} -o $@ $>
+genrtl.h genrtl.c: gengenrtl
+	./gengenrtl genrtl.h genrtl.c
 
-bc-opcode.h: bi-opcode ${BCDEF}
-	./bi-opcode < ${BCDEF} > bc-opcode.h
-CLEANFILES += bc-opcode.h bi-opcode bi-opcode.o
+gencheck: gencheck.lo
+	${HOST_LINK.c} -o $@ $>
+tree-check.h: gencheck
+	./gencheck >tree-check.h
 
-bc-opname.h: bi-opname ${BCDEF}
-	./bi-opname < ${BCDEF} > bc-opname.h
-CLEANFILES += bc-opname.h bi-opname bi-opname.o
+genattrtab: rtlanal.lo
 
-bc-arity.h: bi-arity ${BCDEF}
-	./bi-arity < ${BCDEF} > bc-arity.h
-CLEANFILES += bc-arity.h bi-arity bi-arity.o
+.for _GEN_ in attrtab emit extract opinit output peep recog
+DPSRCS+=	gen${_GEN_}.c
+CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.c
+gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo genrtl.h ${MD}
+	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
+insn-${_GEN_}.c: gen${_GEN_}
+	./gen${_GEN_} ${MD} >$@
+.endfor
 
-insn-peep.c: genpeep ${MD}
-	./genpeep ${MD} > insn-peep.c
-CLEANFILES += insn-peep.c genpeep genpeep.o
-
-insn-opinit.c: genopinit ${MD}
-	./genopinit ${MD} > insn-opinit.c
-CLEANFILES += insn-opinit.c genopinit genopinit.o
-
-insn-recog.c: genrecog ${MD}
-	./genrecog ${MD} > insn-recog.c
-CLEANFILES += insn-recog.c genrecog genrecog.o
-
-insn-extract.c: genextract ${MD}
-	./genextract ${MD} > insn-extract.c
-CLEANFILES += insn-extract.c genextract genextract.o
-
-insn-output.c: genoutput ${MD}
-	./genoutput ${MD} > insn-output.c
-CLEANFILES += insn-output.c genoutput genoutput.o
-
-insn-emit.c: genemit ${MD}
-	./genemit ${MD} > insn-emit.c
-CLEANFILES += insn-emit.c genemit genemit.o
-
-insn-attrtab.c: genattrtab ${MD}
-	./genattrtab ${MD} > insn-attrtab.c
-CLEANFILES += insn-attrtab.c genattrtab genattrtab.o
-
-genattr.o: genattr.c
-
-genattr: genattr.o rtl.o obstack.o
-	${CC} -o genattr genattr.o rtl.o obstack.o
-
-genflags.o: genflags.c
-
-genflags: genflags.o rtl.o obstack.o
-	${CC} -o genflags genflags.o rtl.o obstack.o
-
-gencodes.o: gencodes.c
-
-gencodes: gencodes.o rtl.o obstack.o
-	${CC} -o gencodes gencodes.o rtl.o obstack.o
-
-genconfig.o: genconfig.c
-
-genconfig: genconfig.o rtl.o obstack.o
-	${CC} -o genconfig genconfig.o rtl.o obstack.o
-
-genpeep.o: genpeep.c
-
-genpeep: genpeep.o rtl.o obstack.o
-	${CC} -o genpeep genpeep.o rtl.o obstack.o
-
-genopinit.o: genopinit.c
-
-genopinit: genopinit.o rtl.o obstack.o
-	${CC} -o genopinit genopinit.o rtl.o obstack.o
-
-genrecog.o: genrecog.c
-
-genrecog: genrecog.o rtl.o obstack.o
-	${CC} -o genrecog genrecog.o rtl.o obstack.o
-
-genextract.o: genextract.c
-
-genextract: genextract.o rtl.o obstack.o
-	${CC} -o genextract genextract.o rtl.o obstack.o
-
-genoutput.o: genoutput.c
-
-genoutput: genoutput.o rtl.o obstack.o
-	${CC} -o genoutput genoutput.o rtl.o obstack.o
-
-genemit.o: genemit.c
-
-genemit: genemit.o rtl.o obstack.o
-	${CC} -o genemit genemit.o rtl.o obstack.o
-
-genattrtab.o: genattrtab.c insn-config.h
-
-
-genattrtab: genattrtab.o rtl.o obstack.o print-rtl.o rtlanal.o
-	${CC} -o genattrtab genattrtab.o rtl.o obstack.o print-rtl.o rtlanal.o
-
-bi-opcode.o: bi-opcode.c
-
-bi-opcode: bi-opcode.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-	${CC} -o bi-opcode bi-opcode.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-CLEANFILES+= bi-reverse.o
-
-bi-opname.o: bi-opname.c
-
-bi-opname: bi-opname.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-	${CC} -o bi-opname bi-opname.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-
-bi-arity.o: bi-arity.c
-
-bi-arity: bi-arity.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-	${CC} -o bi-arity bi-arity.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-
-CLEANFILES += bi-lexer.o bi-parser.o bi-parser.c bi-parser.h
-
-bi-lexer.o: bi-parser.h
-
-bi-parser.h bi-parser.o: bi-parser.c
-
-CLEANFILES += c-parse.c c-parse.h
-
-c-lex.o: c-parse.h
-
-c-parse.h c-parse.o: c-parse.c
+.for _GEN_ in attr codes config flags
+CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.h
+gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo genrtl.h ${MD}
+	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
+insn-${_GEN_}.h: gen${_GEN_}
+	./gen${_GEN_} ${MD} >$@
+.endfor
 
 install: __libinstall
 
 .include <bsd.lib.mk>
+
+${OBJS} genattrtab.lo genextract.lo: \
+		insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
+
+.PATH:		${DIST}/config/${MACHINE_GNU_ARCH}
 
 .if !defined(NOPIC)
 __libinstall: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
