@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.5 2003/08/29 12:56:59 dsl Exp $
+# $NetBSD: Makefile.bootxx,v 1.6 2005/01/05 12:16:49 simonb Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c
@@ -19,7 +19,7 @@ CPPFLAGS += ${PRIMARY_CPPFLAGS} \
 		-DLIBSA_NO_DISKLABEL_MSGS \
 		-DLIBSA_USE_MEMCPY
 
-CLEANFILES+= ${PROG}.sym ${PROG}.map
+CLEANFILES+= ${PROG}.sym ${PROG}.map ${PROG}.lds
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
@@ -32,8 +32,17 @@ ${PROG}: ${PROG}.sym
 SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 .include "../Makefile.bootprogs"
 
+# We need to strip out the .eh_frame section from the final object.
+# To do this, we get the linker's idea of the ldscript, and assign
+# any .eh_frame sections to the special "DISCARD" section so that
+# they are not included in the final object.
+
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
-	    ${OBJS} ${LIBSA} ${LIBKERN} -Map ${PROG}.map
+	@${LD} -Ttext 0x20000000 -N --verbose 2>&1 \
+	    | sed -n '/^==========/,/^===========/{/^========/d; \
+	    s,^[[:blank:]]*\.eh_frame[[:blank:]]*:,  /DISCARD/ : ,;p;}' \
+	    > ${PROG}.lds
+	${LD} -T ${PROG}.lds -Ttext ${BOOT_RELOC} -N -e start \
+	    -o ${PROG}.sym ${OBJS} ${LIBSA} ${LIBKERN} -Map ${PROG}.map
 	@chmod 644 ${PROG}.sym
 	@${SIZE} ${PROG}.sym
