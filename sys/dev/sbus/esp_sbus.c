@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.6 1999/03/26 06:48:40 mjacob Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.6.8.1 1999/10/19 17:54:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -96,13 +96,6 @@ struct cfattach esp_sbus_ca = {
 };
 struct cfattach esp_dma_ca = {
 	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
-};
-
-static struct scsipi_device esp_sbus_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -399,13 +392,13 @@ espattach(esc, gluep)
 	/* register interrupt stats */
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &esp_sbus_dev);
-
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
+
+	/* Do the common parts of attachment. */
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
+	ncr53c9x_attach(sc);
 
 	bootpath_store(1, NULL);
 }
