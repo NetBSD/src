@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.36 1995/04/04 01:59:28 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.37 1995/04/07 22:27:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -156,7 +156,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #define	IED_CNA		0x08
 #define	IED_READFRAME	0x10
 #define	IED_ENQ		0x20
-#defien	IED_XMIT	0x40
+#define	IED_XMIT	0x40
 #define	IED_ALL		0x7f
 
 #define	ETHER_MIN_LEN	64
@@ -256,12 +256,12 @@ struct ie_softc {
 #endif
 };
 
-int iewatchdog __P((/* short */));
+void iewatchdog __P((/* short */));
 int ieintr __P((struct ie_softc *));
 void iestop __P((struct ie_softc *));
 int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
-int iestart __P((struct ifnet *));
+void iestart __P((struct ifnet *));
 static void el_reset_586 __P((struct ie_softc *));
 static void sl_reset_586 __P((struct ie_softc *));
 static void el_chan_attn __P((struct ie_softc *));
@@ -534,7 +534,6 @@ ieattach(parent, self, aux)
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iecd.cd_name;
-	ifp->if_output = ether_output;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -564,7 +563,7 @@ ieattach(parent, self, aux)
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-int
+void
 iewatchdog(unit)
 	short unit;
 {
@@ -1207,7 +1206,7 @@ ie_drop_packet_buffer(sc)
 /*
  * Start transmission on an interface.
  */
-int
+void
 iestart(ifp)
 	struct ifnet *ifp;
 {
@@ -1769,14 +1768,7 @@ ieioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			ieinit(sc);
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
