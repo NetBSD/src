@@ -1,8 +1,8 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.1.4.2 1998/11/02 03:29:36 lukem Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.1.4.3 1999/01/14 06:57:37 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,15 +51,15 @@
 
 BLANK		[ \t]
 CR		\n
-DBNAME		[a-zA-Z][a-zA-Z0-9_]*
+STRING		[a-zA-Z][a-zA-Z0-9_]*
 
 %%
 
-{BLANK}+	;	/* skip whitespace */
+{BLANK}+	;			/* skip whitespace */
 
-#.*		;	/* nuke comments */
+#.*		;			/* skip comments */
 
-\\{CR}		;	/* allow continuation */
+\\{CR}		;			/* allow continuation */
 
 {CR}		return NL;
 
@@ -71,25 +71,21 @@ DBNAME		[a-zA-Z][a-zA-Z0-9_]*
 [rR][eE][tT][uU][rR][nN]		return RETURN;
 [cC][oO][nN][tT][iI][nN][uU][eE]	return CONTINUE;
 
-[fF][iI][lL][eE][sS]			return FILES;
-[dD][nN][sS]				return DNS;
-[nN][iI][sS]				return NIS;
-[nN][iI][sS][pP][lL][uU][sS]		return NISPLUS;
-[cC][oO][mM][pP][aA][tT]		return COMPAT;
+{STRING}	{
+			char *p;
+			int i;
 
-{DBNAME}	{
-			int i, c;
+			if (yyleng > NS_MAXSTR)
+				yytext[NS_MAXSTR] = '\0';
+			if ((p = strdup(yytext)) == NULL)
+				err(1, "nsdispatch: memory allocation failure");
 
-			for (i = 0; i < NS_MAXDBLEN; i++) {
-				c = yytext[i];
-				if (isupper(c))
-					c = tolower(c);
-				_nsyylval.dbstr[i] = c;
-				if (! yytext[i])
-					break;
+			for (i = 0; i < strlen(p); i++) {
+				if (isupper((unsigned char)p[i]))
+					p[i] = tolower((unsigned char)p[i]);
 			}
-			_nsyylval.dbstr[NS_MAXDBLEN - 1] = '\0';
-			return DATABASE;
+			_nsyylval.str = p;
+			return STRING;
 		}
 
 [:=\[\]]	return yytext[0];
@@ -111,5 +107,5 @@ _nsyyerror(msg)
 {
 
 		/* XXX: syslog the following */
-	 fprintf(stderr, "nsswitch.conf: %s at '%s'\n", msg, yytext);
+	 warnx("%s: %s at '%s'", _PATH_NS_CONF, msg, yytext);
 } /* _nsyyerror */
