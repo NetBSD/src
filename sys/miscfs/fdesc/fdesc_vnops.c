@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64 2001/06/16 08:28:39 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.2.1 2001/07/10 13:59:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -490,6 +490,7 @@ fdesc_attr(fd, vap, cred, p)
 
 	case DTYPE_SOCKET:
 	case DTYPE_PIPE:
+	case DTYPE_KQUEUE:
 		FILE_USE(fp);
 		error = (*fp->f_ops->fo_stat)(fp, &stb, p);
 		FILE_UNUSE(fp, p);
@@ -645,6 +646,7 @@ fdesc_setattr(v)
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
 	case DTYPE_SOCKET:
+	case DTYPE_KQUEUE:
 		error = 0;
 		break;
 
