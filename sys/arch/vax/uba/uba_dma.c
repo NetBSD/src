@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.4 2000/05/27 21:44:35 ragge Exp $ */
+/* $NetBSD: uba_dma.c,v 1.5 2000/06/29 07:14:22 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
