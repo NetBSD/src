@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.11 2001/08/22 05:24:37 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.12 2002/01/11 04:20:56 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -214,18 +214,23 @@ main(argc, argv)
 		/*NOTREACHED*/
 	}
 
+	if (!fflag)
+		daemon(0, 0);		/* act as a daemon */
+
 	/*
 	 * Open a socket for sending RS and receiving RA.
 	 * This should be done before calling ifinit(), since the function
 	 * uses the socket.
 	 */
 	if ((s = sockopen()) < 0) {
-		errx(1, "failed to open a socket");
+		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
+		exit(1);
 		/*NOTREACHED*/
 	}
 	maxfd = s;
 	if ((rtsock = rtsock_open()) < 0) {
-		errx(1, "failed to open a socket");
+		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
+		exit(1);
 		/*NOTREACHED*/
 	}
 	if (rtsock > maxfd)
@@ -233,12 +238,16 @@ main(argc, argv)
 
 	/* configuration per interface */
 	if (ifinit()) {
-		errx(1, "failed to initilizatoin interfaces");
+		warnmsg(LOG_ERR, __FUNCTION__,
+		    "failed to initilizatoin interfaces");
+		exit(1);
 		/*NOTREACHED*/
 	}
 	while (argc--) {
 		if (ifconfig(*argv)) {
-			errx(1, "failed to initialize %s", *argv);
+			warnmsg(LOG_ERR, __FUNCTION__,
+			    "failed to initialize %s", *argv);
+			exit(1);
 			/*NOTREACHED*/
 		}
 		argv++;
@@ -246,12 +255,11 @@ main(argc, argv)
 
 	/* setup for probing default routers */
 	if (probe_init()) {
-		errx(1, "failed to setup for probing routers");
+		warnmsg(LOG_ERR, __FUNCTION__,
+		    "failed to setup for probing routers");
+		exit(1);
 		/*NOTREACHED*/
 	}
-
-	if (!fflag)
-		daemon(0, 0);		/* act as a daemon */
 
 	/* dump the current pid */
 	if (!once) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.22 2001/11/21 06:53:13 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.23 2002/01/11 04:20:55 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
 
 /*
@@ -311,6 +311,8 @@ daemon_main(int argc, char **argv)
 		break;
 	}
 
+	start_daemon();
+
 	/*
 	 * Opening wild card socket for this service.
 	 */
@@ -322,17 +324,17 @@ daemon_main(int argc, char **argv)
 	hints.ai_protocol = 0;
 	error = getaddrinfo(NULL, service, &hints, &res);
 	if (error)
-		exit_stderr("getaddrinfo: %s", gai_strerror(error));
+		exit_failure("getaddrinfo: %s", gai_strerror(error));
 
 	s_wld = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (s_wld == -1)
-		exit_stderr("socket: %s", strerror(errno));
+		exit_failure("socket: %s", strerror(errno));
 
 #ifdef IPV6_FAITH
 	if (res->ai_family == AF_INET6) {
 		error = setsockopt(s_wld, IPPROTO_IPV6, IPV6_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_stderr("setsockopt(IPV6_FAITH): %s",
+			exit_failure("setsockopt(IPV6_FAITH): %s",
 			    strerror(errno));
 	}
 #endif
@@ -341,7 +343,7 @@ daemon_main(int argc, char **argv)
 	if (res->ai_family == AF_INET) {
 		error = setsockopt(s_wld, IPPROTO_IP, IP_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_stderr("setsockopt(IP_FAITH): %s",
+			exit_failure("setsockopt(IP_FAITH): %s",
 			    strerror(errno));
 	}
 #endif
@@ -349,24 +351,24 @@ daemon_main(int argc, char **argv)
 
 	error = setsockopt(s_wld, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if (error == -1)
-		exit_stderr("setsockopt(SO_REUSEADDR): %s", strerror(errno));
+		exit_failure("setsockopt(SO_REUSEADDR): %s", strerror(errno));
 	
 	error = setsockopt(s_wld, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_stderr("setsockopt(SO_OOBINLINE): %s", strerror(errno));
+		exit_failure("setsockopt(SO_OOBINLINE): %s", strerror(errno));
 
 	error = bind(s_wld, (struct sockaddr *)res->ai_addr, res->ai_addrlen);
 	if (error == -1)
-		exit_stderr("bind: %s", strerror(errno));
+		exit_failure("bind: %s", strerror(errno));
 
 	error = listen(s_wld, 5);
 	if (error == -1)
-		exit_stderr("listen: %s", strerror(errno));
+		exit_failure("listen: %s", strerror(errno));
 
 #ifdef USE_ROUTE
 	sockfd = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
 	if (sockfd < 0) {
-		exit_stderr("socket(PF_ROUTE): %s", strerror(errno));
+		exit_failure("socket(PF_ROUTE): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 #endif
@@ -374,8 +376,6 @@ daemon_main(int argc, char **argv)
 	/*
 	 * Everything is OK.
 	 */
-
-	start_daemon();
 
 	snprintf(logname, sizeof(logname), "faithd %s", service);
 	snprintf(procname, sizeof(procname), "accepting port %s", service);

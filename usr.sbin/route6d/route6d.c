@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.30 2001/09/24 13:22:38 wiz Exp $	*/
+/*	$NetBSD: route6d.c,v 1.31 2002/01/11 04:20:56 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.30 2001/09/24 13:22:38 wiz Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.31 2002/01/11 04:20:56 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -351,6 +351,14 @@ main(argc, argv)
 		nflag = 1;
 		fprintf(stderr, "No kernel update is allowed\n");
 	}
+
+	if (dflag == 0) {
+		if (daemon(0, 0) < 0) {
+			fatal("daemon");
+			/*NOTREACHED*/
+		}
+	}
+
 	openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 	logopened++;
 
@@ -386,21 +394,6 @@ main(argc, argv)
 	if (dflag)
 		ifrtdump(0);
 
-	if (dflag == 0) {
-#if 1
-		if (daemon(0, 0) < 0) {
-			fatal("daemon");
-			/*NOTREACHED*/
-		}
-#else
-		if (fork())
-			exit(0);
-		if (setsid() < 0) {
-			fatal("setid");
-			/*NOTREACHED*/
-		}
-#endif
-	}
 	pid = getpid();
 	if ((pidfile = fopen(ROUTE6D_PID, "w")) != NULL) {
 		fprintf(pidfile, "%d\n", pid);
