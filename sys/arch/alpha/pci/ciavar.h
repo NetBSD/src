@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.15 1998/07/29 01:28:44 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.16 1999/11/04 19:11:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,8 +57,9 @@ struct cia_config {
 	int	cc_flags;
 
 #define	CCF_ISPYXIS	0x01		/* chip is a 21174 Pyxis */
-#define	CCF_PCI_USE_BWX	0x02		/* use BWX for PCI config space */
-#define	CCF_BUS_USE_BWX	0x04		/* use BWX for bus space */
+#define	CCF_PYXISBUG	0x02
+#define	CCF_PCI_USE_BWX	0x04		/* use BWX for PCI config space */
+#define	CCF_BUS_USE_BWX	0x08		/* use BWX for bus space */
 
 	struct extent *cc_io_ex, *cc_d_mem_ex, *cc_s_mem_ex;
 	int	cc_mallocsafe;
