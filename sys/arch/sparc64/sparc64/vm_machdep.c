@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 2004/01/04 11:33:31 jdolecek Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.54 2004/01/16 12:42:41 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2004/01/04 11:33:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2004/01/16 12:42:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
 	else
-		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT); 
+		/* clear condition codes and disable FPU */
+		tf2->tf_tstate &=
+		    ~((PSTATE_PEF<<TSTATE_PSTATE_SHIFT)|TSTATE_CCR);
 
 
 #ifdef NOTDEF_DEBUG
