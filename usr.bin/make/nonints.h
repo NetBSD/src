@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.15 1998/03/26 19:20:37 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.16 1998/04/01 14:18:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -56,6 +56,7 @@ int Arch_IsLib __P((GNode *));
 void Compat_Run __P((Lst));
 
 /* cond.c */
+int Cond_EvalExpression __P((int dosetup, char *line, Boolean *value));
 int Cond_Eval __P((char *));
 void Cond_End __P((void));
 

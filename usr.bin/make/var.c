@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.24 1998/03/26 19:20:37 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.25 1998/04/01 14:18:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.24 1998/03/26 19:20:37 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.25 1998/04/01 14:18:10 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.24 1998/03/26 19:20:37 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.25 1998/04/01 14:18:10 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1283,7 +1283,7 @@ VarModify (str, modProc, datum)
  *	uninterpreted) and 2) unescaped $'s that aren't before
  *	the delimiter (expand the variable substitution).
  *	Return the expanded string or NULL if the delimiter was missing
- *	If pattern is specified, handle escaped ampersants, and replace
+ *	If pattern is specified, handle escaped ampersands, and replace
  *	unescaped ampersands with the lhs of the pattern.
  *
  * Results:
@@ -1721,6 +1721,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *  	  	    	each word
      *  	  :R	    	Substitute the root of each word
      *  	  	    	(pathname minus the suffix).
+     *		  :?<true-value>:<false-value>
+     *				If the variable evaluates to true, return
+     *				true value, else return the second value.
      *	    	  :lhs=rhs  	Like :S, but the rhs goes to the end of
      *	    	    	    	the invocation.
      */
@@ -1842,6 +1845,37 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		     */
 		    free(pattern.lhs);
 		    free(pattern.rhs);
+		    break;
+		}	
+		case '?':
+		{
+		    VarPattern 	pattern;
+		    Boolean	value;
+
+		    /* find ':', and then substitute accordingly */
+
+		    pattern.flags = 0;
+
+		    cp = ++tstr;
+		    if ((pattern.lhs = VarGetPattern(ctxt, err, &cp, ':',
+			NULL, &pattern.leftLen, NULL)) == NULL)
+			goto cleanup;
+
+		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, '}',
+			NULL, &pattern.rightLen, NULL)) == NULL)
+			goto cleanup;
+
+		    termc = *--cp;
+		    if (Cond_EvalExpression(1, str, &value) == COND_INVALID)
+			goto cleanup;
+
+		    if (value) {
+			newStr = pattern.lhs;
+			free(pattern.rhs);
+		    } else {
+			newStr = pattern.rhs;
+			free(pattern.lhs);
+		    }
 		    break;
 		}
 #ifndef MAKE_BOOTSTRAP
