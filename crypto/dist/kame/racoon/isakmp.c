@@ -1385,8 +1385,10 @@ isakmp_close()
 	for (p = lcconf->myaddrs; p; p = next) {
 		next = p->next;
 
-		if (!p->addr)
+		if (!p->addr) {
+			racoon_free(p);
 			continue;
+		}
 		close(p->sock);
 		racoon_free(p->addr);
 		racoon_free(p);
