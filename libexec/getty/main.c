@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.9 1994/08/24 07:54:50 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.10 1994/08/24 16:42:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -374,7 +374,7 @@ getname()
 		else if (c == ERASE || c == '#' || c == '\b') {
 			if (np > name) {
 				np--;
-				if (tmode.c_ospeed >= B1200)
+				if (cfgetospeed(&tmode) >= 1200)
 					puts("\b \b");
 				else
 					putchr(cs);
@@ -383,7 +383,7 @@ getname()
 		} else if (c == KILL || c == '@') {
 			putchr(cs);
 			putchr('\r');
-			if (tmode.c_ospeed < B1200)
+			if (cfgetospeed(&tmode) < 1200)
 				putchr('\n');
 			/* this is the way they do it down under ... */
 			else if (np > name)
@@ -409,17 +409,12 @@ getname()
 	return (1);
 }
 
-static
-short	tmspc10[] = {
-	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5, 15
-};
-
 static void
 putpad(s)
 	register char *s;
 {
 	register pad = 0;
-	register mspc10;
+	speed_t ospeed = cfgetospeed(&tmode);
 
 	if (isdigit(*s)) {
 		while (isdigit(*s)) {
@@ -438,10 +433,7 @@ putpad(s)
 	 * If no delay needed, or output speed is
 	 * not comprehensible, then don't try to delay.
 	 */
-	if (pad == 0)
-		return;
-	if (tmode.c_ospeed <= 0 ||
-	    tmode.c_ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
+	if (pad == 0 || ospeed <= 0)
 		return;
 
 	/*
@@ -450,9 +442,8 @@ putpad(s)
 	 * Transmitting pad characters slows many terminals down and also
 	 * loads the system.
 	 */
-	mspc10 = tmspc10[tmode.c_ospeed];
-	pad += mspc10 / 2;
-	for (pad /= mspc10; pad > 0; pad--)
+	pad = (pad * ospeed + 50000) / 100000;
+	while (pad--)
 		putchr(*PC);
 }
 
