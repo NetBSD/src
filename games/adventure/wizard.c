@@ -1,3 +1,5 @@
+/*	$NetBSD: wizard.c,v 1.2 1995/03/21 12:05:15 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +39,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
+#else
+static char rcsid[] = "$NetBSD: wizard.c,v 1.2 1995/03/21 12:05:15 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: privileged operations                 */
