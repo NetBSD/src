@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.41 2000/10/04 16:11:27 sommerfeld Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.42 2000/10/05 03:21:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.41 2000/10/04 16:11:27 sommerfeld Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.42 2000/10/05 03:21:01 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -701,8 +701,8 @@ kvm_getprocs(kd, op, arg, cnt)
 		}
 		if (size % sizeof(struct kinfo_proc) != 0) {
 			_kvm_err(kd, kd->program,
-				"proc size mismatch (%d total, %d chunks)",
-				size, sizeof(struct kinfo_proc));
+			    "proc size mismatch (%lu total, %lu chunks)",
+			    (u_long)size, (u_long)sizeof(struct kinfo_proc));
 			return NULL;
 		}
 		nprocs = size / sizeof(struct kinfo_proc);
