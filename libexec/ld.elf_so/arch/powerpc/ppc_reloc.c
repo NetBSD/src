@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.19 2002/09/06 12:00:41 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.20 2002/09/06 13:20:33 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -207,7 +207,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			 * COPY relocation is not in a shared library.  They
 			 * are allowed only in executable files.
 			 */
-			if (!obj->mainprog) {
+			if (obj->isdynamic) {
 				_rtld_error(
 			"%s: Unexpected R_COPY relocation in shared library",
 				    obj->path);
