@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.14 1996/05/14 10:21:48 leo Exp $
+#	$NetBSD: GENERIC,v 1.15 1996/05/15 09:21:29 leo Exp $
 #
 # Generic atari
 #
@@ -103,6 +103,9 @@ options		STATCLOCK		# Separate {stat,prof}clock
 options		RAMDISK_HOOKS		# Boot RAM-disk
 options		DISKLABEL_NBDA		# NetBSD disklabels (required)
 options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
+
+# Try linked commands on all targets
+options		TRY_SCSI_LINKED_COMMANDS=0x7f
 
 #
 # Build one kernel that can boot from any disk.
