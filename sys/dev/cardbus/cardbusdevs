@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $
+$NetBSD: cardbusdevs,v 1.8 2000/04/10 07:42:57 haya Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -46,6 +46,8 @@ vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor OPTI		0x1045	Opti
 vendor XIRCOM		0x115d	Xircom
+vendor ACCTON		0x1113	Accton Technology
+vendor REALTEK		0x10ec	Realtek Semiconductor
 vendor INTEL		0x8086	Intel
 vendor INVALID		0xffff	INVALID VENDOR ID
 
@@ -61,6 +63,9 @@ product 3COM 3CCFE575CT	0x5257	3CCFE575CT 100Base-TX
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480
+
+/* Accton products */
+product ACCTON MPX5030  0x1211  MPX 5030/5038 Ethernet
 
 /* DEC products */
 product DEC 21142	0x0019	DECchip 21142/3
@@ -79,3 +84,7 @@ product OPTI 82C861	0xc861	82C861 USB Host Controller (OHCI)
 product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
+
+/* Realtek (Creative Labs?) products */
+product REALTEK RT8138	0x8138	8138 Ethernet
+

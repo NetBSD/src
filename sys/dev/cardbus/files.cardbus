@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
+#	$NetBSD: files.cardbus,v 1.9 2000/04/10 07:42:57 haya Exp $
 #
 # files.cardbus
 #
@@ -51,3 +51,10 @@ file	dev/cardbus/ohci_cardbus.c		ohci_cardbus
 #
 attach	ahc at cardbus with ahc_cardbus: ahc_seeprom, smc93cx6
 file	dev/cardbus/ahc_cardbus.c		ahc_cardbus
+
+#
+# RealTek 8139
+#
+attach	rl at cardbus with rl_cardbus
+file	dev/cardbus/if_rl_cardbus.c		rl_cardbus
+

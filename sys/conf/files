@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.359 2000/03/25 19:58:04 mycroft Exp $
+#	$NetBSD: files,v 1.360 2000/04/10 07:42:55 haya Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -410,6 +410,10 @@ file	dev/ic/lsi64854.c		lsi64854
 # RealTek 8019/8029 NE2000-compatible network interface subroutines
 define	rtl80x9
 file	dev/ic/rtl80x9.c		rtl80x9
+
+# RealTek 8129/8139 Ethernet controllers
+device	rl: ether, ifnet, arp, mii
+file	dev/ic/rtl81x9.c		rl
 
 # Common code for ESDI/IDE/etc. controllers
 device  wdc: ata, atapi, wdc_base
