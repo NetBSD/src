@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.2 1995/05/06 18:44:48 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.3 1995/06/21 02:52:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -83,8 +83,10 @@ grfmv_intr(sc, slot)
 	int	slot;
 {
 	struct grf_softc *gp;
+	caddr_t		 slotbase;
 
-	((char *) (((u_long) (0xf0 | slot)) << 24))[0xa0000] = zero;
+	slotbase = (caddr_t) NUBUS_SLOT_TO_BASE(slot);
+	slotbase[0xa0000] = zero;
 }
 
 extern int
