@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2000/07/16 21:56:12 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2001/02/04 08:57:21 jmc Exp $
 
 .if defined(SA_PROG)
 
@@ -10,9 +10,6 @@ LIBSA!=cd ${.CURDIR}/../libsa; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 MDEC_DIR?=/usr/mdec
-
-SRCS?=	${SA_PROG}.c
-OBJS?=	${SRCS:.c=.o}
 
 RELOC?= 240000
 DEFS?= -Dsun3 -D_STANDALONE
