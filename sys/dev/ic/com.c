@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.93 1996/11/13 19:41:35 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.94 1996/12/05 01:25:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -138,7 +138,11 @@ static u_char tiocm_xxx2mcr __P((int));
  * XXX the following two cfattach structs should be different, and possibly
  * XXX elsewhere.
  */
+#ifdef __BROKEN_INDIRECT_CONFIG
 int comprobe __P((struct device *, void *, void *));
+#else
+int comprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void comattach __P((struct device *, struct device *, void *));
 
 #if NCOM_ISA
@@ -296,7 +300,12 @@ comprobeHAYESP(hayespioh, sc)
 int
 comprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;

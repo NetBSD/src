@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.14 1996/12/05 01:25:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -80,7 +80,11 @@
 #define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int le_pci_match __P((struct device *, void *, void *));
+#else
+int le_pci_match __P((struct device *, struct cfdata *, void *));
+#endif
 void le_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_pci_ca = {
@@ -127,7 +131,12 @@ le_pci_rdcsr(sc, port)
 int
 le_pci_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
