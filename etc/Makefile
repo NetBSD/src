@@ -1,5 +1,36 @@
-#	$NetBSD: Makefile,v 1.95 1999/01/22 01:41:19 mycroft Exp $
+#	$NetBSD: Makefile,v 1.96 1999/02/05 03:01:49 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
+
+# Environment variables without default values:
+#   DESTDIR must be set before anything in this file will work.
+#   RELEASEDIR is where the tarred up stuff for a snapshot or
+#	release will be placed.
+#
+# Environment variables with default values:
+#   LOCALTIME will set the default local time for the system you
+#	build; it determines what /etc/localtime is symlink'd to.
+#   KERNSRCDIR points to kernel source; it is set by default to ../sys,
+#	but can be overridden.
+#   KERNOBJDIR is the kernel build directory, it defaults to
+#	${KERNSRCDIR}/arch/${MACHINE}/compile/KERNELNAME, but can be
+#	overridden.
+#   KERNCONFDIR is where the configuration files for kernels are found;
+#	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
+#   NO_SENDMAIL is normally undefined; if defined, it will not do a
+#	`make distribution' in the sendmail config file source directory.
+#   USE_BIND4 is normally unset; if set, it will install a named.boot
+#	instead of a named.conf in etc/namedb.
+#   EXTRA_KERNELS has a machine-dependent list of kernels to build added
+#	to it, but you may also set this to have extra ones built.
+# 
+# Targets:
+#    distribution: makes a full NetBSD distribution in DESTDIR. If
+#	INSTALL_DONE is set, it will not do a `make install.'
+#    distrib-dirs: creates an empty NetBSD directory tree in DESTDIR.
+#	Called by distribution.
+#    snapshot: calls distribution, above, and then tars up the files
+#	into a release(7) format in RELEASEDIR. Any port-dependent
+#	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 
 # XXX: For NO_SENDMAIL and USE_BIND4
 .include <bsd.own.mk>
@@ -19,6 +50,12 @@ BIN3=
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
+.endif
+
+# Use multiple jobs for kernel builds, if NBUILDJOBS set.
+# (Taken from src/Makefile.)
+.if defined(NBUILDJOBS)
+_J= -j${NBUILDJOBS}
 .endif
 
 # -rw-r--r--
@@ -160,33 +197,69 @@ distrib-dirs:
 	-mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -u
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
-snapshot: distribution snap_pre snap_tar snap_md
-	cd ${DESTDIR}/snapshot && cksum * > CKSUMS
+.if !defined(RELEASEDIR)
+snapshot snap_pre:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+.else
+snapshot: distribution snap_pre snap_md snap_kern 
+	sh ../distrib/sets/maketars -s ../distrib/sets \
+		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
+	(cd ${RELEASEDIR}/binary/sets && \
+		cksum -o 1 *.tgz >BSDSUM && \
+		cksum *.tgz >CKSUM && \
+		cksum -m *.tgz >MD5 && \
+		cksum -o 2 *.tgz >SYSVSUM )
+	(cd ${RELEASEDIR}/binary/kernel && if [ -r *.gz ]; then \
+		cksum -o 1 *.gz >BSDSUM && \
+		cksum *.gz >CKSUM && \
+		cksum -m *.gz >MD5 && \
+		cksum -o 2 *.gz >SYSVSUM \
+		; fi )
 
 snap_pre:
-	/bin/rm -rf ${DESTDIR}/snapshot
-	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
+	/bin/rm -rf ${RELEASEDIR}
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary/sets
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary/kernel
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary/security
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/installation
 
-snap_tar:
-	cd ${DESTDIR} && tar cf - bin | gzip -9 > snapshot/bin.tar.gz
-	cd ${DESTDIR} && tar cf - dev | gzip -9 > snapshot/dev.tar.gz
-	cd ${DESTDIR} && tar cf - .profile .cshrc etc mnt root sys tmp | \
-	    gzip -9 > snapshot/etc.tar.gz
-	cd ${DESTDIR} && tar cf - sbin | gzip -9 > snapshot/sbin.tar.gz
-	cd ${DESTDIR} && tar cf - usr/bin | gzip -9 > snapshot/usr.bin.tar.gz
-	cd ${DESTDIR} && tar cf - usr/games | gzip -9 > \
-	    snapshot/usr.games.tar.gz
-	cd ${DESTDIR} && tar cf - usr/include | gzip -9 > \
-	    snapshot/usr.include.tar.gz
-	cd ${DESTDIR} && tar cf - usr/lib | gzip -9 > snapshot/usr.lib.tar.gz
-	cd ${DESTDIR} && tar cf - usr/libexec | gzip -9 > \
-	    snapshot/usr.libexec.tar.gz
-	cd ${DESTDIR} && tar cf - usr/mdec usr/libdata usr/local usr/src \
-	    usr/obj | gzip -9 > snapshot/usr.misc.tar.gz
-	cd ${DESTDIR} && tar cf - usr/sbin | gzip -9 > snapshot/usr.sbin.tar.gz
-	cd ${DESTDIR} && tar cf - usr/share | gzip -9 > \
-	    snapshot/usr.share.tar.gz
-	cd ${DESTDIR} && tar cf - var | gzip -9 > snapshot/var.tar.gz
+# the regular expression does a basename(1) on .CURDIR so that we don't
+# have to keep looking up .. at compile time.
+KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
+KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
+KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
+
+# This target builds the GENERIC kernel (which must exist for all
+# ports) and puts it in binary/sets/kern.tgz, and also builds any
+# kernels specified in EXTRA_KERNELS and puts them in
+# binary/kernel/netbsd.${KERN}.gz
+#
+snap_kern:
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/GENERIC -s ${KERNSRCDIR} GENERIC
+.ifndef BUILD
+	cd ${KERNOBJDIR}/GENERIC && ${MAKE} clean 
+.endif
+	cd ${KERNOBJDIR}/GENERIC &&	\
+		${MAKE} depend && ${MAKE} ${_J} &&	\
+		tar cf - netbsd |\
+		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
+.for kernel in ${EXTRA_KERNELS}
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/${kernel} -s ${KERNSRCDIR} ${kernel}
+.ifndef BUILD
+	cd ${KERNOBJDIR}/${kernel} && ${MAKE} clean 
+.endif
+	cd ${KERNOBJDIR}/${kernel} &&	\
+		${MAKE} depend && ${MAKE} ${_J} &&	\
+		tar cf - netbsd |\
+		gzip -c -9 > ${RELEASEDIR}/binary/kernel/netbsd.${kernel}.gz
+.endfor # EXTRA_KERNELS
+	
+.endif # RELEASEDIR check
 
 snap_md:
 # nothing here -- look in the machine-dependent Makefile.inc
