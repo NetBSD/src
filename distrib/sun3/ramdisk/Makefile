@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/02/13 03:11:26 jmc Exp $
+#	$NetBSD: Makefile,v 1.16 2001/05/19 03:30:22 chs Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -95,4 +95,5 @@ release: $(KERNELS)
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
+.include <bsd.sys.mk>
 .include <bsd.subdir.mk>
