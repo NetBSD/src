@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.37 1997/09/16 23:09:11 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.37.2.1 1997/11/10 21:56:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,14 +27,18 @@
  * rights to redistribute these changes.
  */
 
+.stabs	__FILE__,100,0,0,kernel_text
+
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.37 1997/09/16 23:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.37.2.1 1997/11/10 21:56:38 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
 #include "assym.h"
+
+.stabs	__FILE__,132,0,0,kernel_text
 
 /*
  * Perform actions necessary to switch to a new context.  The
@@ -59,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.37 1997/09/16 23:09:11 thorpej Exp $");
  * of the kernel text segment (not necessarily the same as kernbase).
  */
 	EXPORT(kernel_text)
+.loc	1 __LINE__
 kernel_text:
 
 /*
@@ -69,7 +74,9 @@ kernel_text:
 bootstack:
 
 /*
- * __start: Kernel start.
+ * locorestart: Kernel start. This is no longer the actual entry
+ * point, although jumping to here (the first kernel address) will
+ * in fact work just fine.
  *
  * Arguments:
  *	a0 is the first free page frame number (PFN)
@@ -79,7 +86,7 @@ bootstack:
  *
  * All arguments are passed to alpha_init().
  */
-NESTED_NOPROFILE(__start,1,0,ra,0,0)
+NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	br	pv,Lstart1
 Lstart1: LDGP(pv)
 
@@ -124,7 +131,7 @@ Lstart1: LDGP(pv)
 	 * exception to user-land, running process 1, init!
 	 */
 	jmp	zero, exception_return		/* "And that's all she wrote." */
-	END(__start)
+	END(locorestart)
 
 /**************************************************************************/
 
@@ -160,6 +167,9 @@ EXPORT(cold)
 	.long 1			/* cold start flag (.long -> _4_ bytes) */
 	.text
 
+.stabs	__FILE__,132,0,0,backtolocore1	/* done with includes */
+.loc	1 __LINE__
+backtolocore1:
 /**************************************************************************/
 
 /*
@@ -311,17 +321,11 @@ LEAF(exception_restore_regs, 0)
  * System arithmetic trap entry point.
  */
 
-LEAF(XentArith, 2)				/* XXX should be NESTED */
-	.set noat
-	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	at_reg,(FRAME_AT*8)(sp)
-	.set at
-	stq	ra,(FRAME_RA*8)(sp)
-	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
+	PALVECT(XentArith)		/* setup frame, save registers */
 
 	/* a0, a1, & a2 already set up */
 	ldiq	a3, ALPHA_KENTRY_ARITH
-	mov	sp, a4
+	mov	sp, a4			; .loc 1 __LINE__
 	CALL(trap)
 
 	jmp	zero, exception_return
@@ -334,20 +338,13 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
  * System instruction fault trap entry point.
  */
 
-LEAF(XentIF, 1)					/* XXX should be NESTED */
-	.set noat
-	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	at_reg,(FRAME_AT*8)(sp)
-	.set at
-	stq	ra,(FRAME_RA*8)(sp)
-	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
+	PALVECT(XentIF)			/* setup frame, save registers */
 
 	/* a0, a1, & a2 already set up */
 	ldiq	a3, ALPHA_KENTRY_IF
-	mov	sp, a4
+	mov	sp, a4			; .loc 1 __LINE__
 	CALL(trap)
-
-	jmp	zero, exception_return
+	jmp	zero, exception_return	
 	END(XentIF)
 
 /**************************************************************************/
@@ -357,18 +354,11 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
  * System interrupt entry point.
  */
 
-LEAF(XentInt, 2)				/* XXX should be NESTED */
-	.set noat
-	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	at_reg,(FRAME_AT*8)(sp)
-	.set at
-	stq	ra,(FRAME_RA*8)(sp)
-	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
+	PALVECT(XentInt)		/* setup frame, save registers */
 
 	/* a0, a1, & a2 already set up */
-	mov	sp, a3
+	mov	sp, a3			; .loc 1 __LINE__
 	CALL(interrupt)
-
 	jmp	zero, exception_return
 	END(XentInt)
 
@@ -379,17 +369,11 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
  * System memory management fault entry point.
  */
 
-LEAF(XentMM, 3)					/* XXX should be NESTED */
-	.set noat
-	lda	sp,-(FRAME_SW_SIZE*8)(sp)
-	stq	at_reg,(FRAME_AT*8)(sp)
-	.set at
-	stq	ra,(FRAME_RA*8)(sp)
-	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
+	PALVECT(XentMM)			/* setup frame, save registers */
 
 	/* a0, a1, & a2 already set up */
 	ldiq	a3, ALPHA_KENTRY_MM
-	mov	sp, a4
+	mov	sp, a4			; .loc 1 __LINE__
 	CALL(trap)
 
 	jmp	zero, exception_return
@@ -402,8 +386,8 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
  * System call entry point.
  */
 
-LEAF(XentSys, 0)				/* XXX should be NESTED */
-	lda	sp,-(FRAME_SW_SIZE*8)(sp)
+	ESETUP(XentSys)			; .loc 1 __LINE__
+
 	stq	v0,(FRAME_V0*8)(sp)		/* in case we need to restart */
 	stq	s0,(FRAME_S0*8)(sp)
 	stq	s1,(FRAME_S1*8)(sp)
@@ -422,7 +406,7 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 
 	/* syscall number, passed in v0, is first arg, frame pointer second */
 	mov	v0,a0
-	mov	sp,a1
+	mov	sp,a1			; .loc 1 __LINE__
 	CALL(syscall)
 
 	jmp	zero, exception_return
@@ -445,7 +429,7 @@ LEAF(XentUna, 3)				/* XXX should be NESTED */
 
 	/* a0, a1, & a2 already set up */
 	ldiq	a3, ALPHA_KENTRY_UNA
-	mov	sp, a4
+	mov	sp, a4			; .loc 1 __LINE__
 	CALL(trap)
 
 	jmp	zero, exception_return
@@ -1642,5 +1626,9 @@ longjmp_botchmsg:
 	.asciz	"longjmp botch from %p"
 	.text
 END(longjmp)
+
+NESTED(transfer_check,0,0,ra,0,0)
+	CALL(U_need_2_run_config)
+	END(transfer_check)
 
 /**************************************************************************/

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.37 1997/10/04 17:20:07 gwr Exp $
+# $NetBSD: Makefile.alpha,v 1.37.2.1 1997/11/10 22:03:49 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -43,7 +43,7 @@ CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
 AFLAGS=		-traditional -D_LOCORE
 LOADADDRESS?=	fffffc0000230000
-LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __start -G 4
+LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __transfer -G 4
 STRIPFLAGS=	-g -X -x
 
 ### find out what to use for libkern
@@ -79,7 +79,7 @@ NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TAR
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o \
+SYSTEM_OBJ=	locore.o transfer.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
@@ -154,12 +154,14 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${ALPHA}/alpha/locore.s \
+SRCS=	${ALPHA}/alpha/locore.s ${ALPHA}/alpha/transfer.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
 	    ${ALPHA}/alpha/locore.s
+	${MKDEP} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
+	    ${ALPHA}/alpha/transfer.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/genassym.c
@@ -178,6 +180,9 @@ genassym.o machdep.o: Makefile
 clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
 
 locore.o: ${ALPHA}/alpha/locore.s assym.h
+	${NORMAL_S}
+
+transfer.o: ${ALPHA}/alpha/transfer.s
 	${NORMAL_S}
 
 %RULES

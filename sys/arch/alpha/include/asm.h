@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.17 1997/09/06 01:23:52 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.17.4.1 1997/11/10 21:59:41 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -178,6 +178,17 @@
  *			end for the encoding of this 32bit value.
  *	 "f_mask"	is the same, for floating point registers.
  *
+ * Note, 10/31/97: This is interesting but it isn't the way gcc outputs
+ * frame directives and it isn't the way the macros below output them
+ * either. Frame directives look like this:
+ *
+ *		.frame	$15,framesize,$26,0
+ *
+ * If no fp is set up then $30 should be used instead of $15.
+ * Also, gdb expects to find a <lda sp,-framesize(sp)> at the beginning
+ * of a procedure. Don't use things like sub sp,framesize,sp for this
+ * reason. End Note 10/31/97. ross@netbsd.org
+ *
  * Note that registers should be saved starting at "old_sp-8", where the
  * return address should be stored. Other registers follow at -16-24-32..
  * starting from register 0 (if saved) and up. Then float registers (ifany)
@@ -222,6 +233,38 @@
 	jsr	at_reg,_mcount;					\
 	.set at
 #endif
+/*
+ * PALVECT, ESETUP, and ERSAVE
+ *	Declare a palcode transfer point, and carefully construct
+ *	gdb symbols with an unusual _negative_ register-save offset
+ *	so that gdb can find the otherwise lost PC and then
+ *	invert the vector for traceback. Also, fix up framesize,
+ *	allowing for the palframe for the same reason.
+ */
+
+#define PALVECT(_name_)						\
+	ESETUP(_name_);						\
+	ERSAVE()
+
+#define	ESETUP(_name_)						\
+	.loc	1 __LINE__;					\
+	.globl	_name_;						\
+	.ent	_name_ 0;					\
+_name_:;							\
+	.set	noat;						\
+	lda	sp,-(FRAME_SW_SIZE*8)(sp);			\
+	.frame	$30,(FRAME_SW_SIZE+6)*8,$26,0;   /* give gdb the real size */\
+	.mask	0x4000000,-0x28;				\
+	.set	at
+
+#define	ERSAVE()						\
+	.set	noat;						\
+	stq	at_reg,(FRAME_AT*8)(sp);			\
+	.set	at;						\
+	stq	ra,(FRAME_RA*8)(sp);				\
+	.loc	1 __LINE__;					\
+	bsr	ra,exception_save_regs         /* jmp/CALL trashes pv/t12 */
+
 
 /*
  * LEAF
@@ -369,6 +412,7 @@ _name_:
  *	Function invocation
  */
 #define	CALL(_name_)						\
+	.loc	1 __LINE__;					\
 	jsr	ra,_name_;					\
 	ldgp	gp,0(ra)
 /* but this would cover longer jumps

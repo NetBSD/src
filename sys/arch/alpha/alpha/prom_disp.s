@@ -1,4 +1,4 @@
-/* $NetBSD: prom_disp.s,v 1.7 1997/04/08 00:19:03 cgd Exp $ */
+/* $NetBSD: prom_disp.s,v 1.7.8.1 1997/11/10 21:56:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #ifndef _LOCORE
 #include <machine/asm.h>
 #else
-__KERNEL_RCSID(2, "$NetBSD: prom_disp.s,v 1.7 1997/04/08 00:19:03 cgd Exp $");
+__KERNEL_RCSID(2, "$NetBSD: prom_disp.s,v 1.7.8.1 1997/11/10 21:56:57 thorpej Exp $");
 #endif
 
 	.globl	prom_dispatch_v
@@ -39,6 +39,7 @@ __KERNEL_RCSID(2, "$NetBSD: prom_disp.s,v 1.7 1997/04/08 00:19:03 cgd Exp $");
 	.text
 	.align	4
 
+inc3:	.stabs	__FILE__,132,0,0,inc3; .loc	1 __LINE__
 /*
  * Dispatcher routine.  Implements prom's calling machinery, saves our
  * callee-saved registers as required by C.
