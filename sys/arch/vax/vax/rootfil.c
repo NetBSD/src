@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.10 1996/03/02 13:45:47 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.11 1996/04/08 18:32:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
@@ -55,6 +56,7 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 #include <machine/pte.h>
+#include <machine/cpu.h>
 
 #include <vax/uba/ubavar.h>
 
@@ -66,23 +68,23 @@ u_long  bootdev;                /* should be dev_t, but not until 32 bits */
 extern dev_t rootdev, dumpdev;
 
 static  char devname[][2] = {
-        'h','p',        /* 0 = hp */
-        0,0,            /* 1 = ht */
-        'u','p',        /* 2 = up */
-        'r','k',        /* 3 = hk */
-        0,0,            /* 4 = sw */
-        0,0,            /* 5 = tm */
-        0,0,            /* 6 = ts */
-        0,0,            /* 7 = mt */
-        0,0,            /* 8 = tu */
-        'r','a',        /* 9 = ra */
-        0,0,            /* 10 = ut */
-        'r','b',        /* 11 = rb */
-        0,0,            /* 12 = uu */
-        0,0,            /* 13 = rx */
-        'r','l',        /* 14 = rl */
-        0,0,            /* 15 = tmscp */
-        'k','r',        /* 16 = ra on kdb50 */
+        {'h','p'},        /* 0 = hp */
+        {0,0},            /* 1 = ht */
+        {'u','p'},        /* 2 = up */
+        {'r','k'},        /* 3 = hk */
+        {0,0},            /* 4 = sw */
+        {0,0},            /* 5 = tm */
+        {0,0},            /* 6 = ts */
+        {0,0},            /* 7 = mt */
+        {0,0},            /* 8 = tu */
+        {'r','a'},        /* 9 = ra */
+        {0,0},            /* 10 = ut */
+        {'r','b'},        /* 11 = rb */
+        {0,0},            /* 12 = uu */
+        {0,0},            /* 13 = rx */
+        {'r','l'},        /* 14 = rl */
+        {0,0},            /* 15 = tmscp */
+        {'k','r'},        /* 16 = ra on kdb50 */
 };
 
 #define PARTITIONMASK   0x7
@@ -93,10 +95,11 @@ static  char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+void
 setroot()
 {
         int  majdev, mindev, unit, part, controller, adaptor;
-        dev_t temp, orootdev;
+        dev_t temp = 0, orootdev;
 #if NUDA > 0
 	extern struct uba_device ubdinit[];
 #endif
@@ -179,6 +182,7 @@ setroot()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
         register struct swdevt *swp;

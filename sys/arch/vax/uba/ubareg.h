@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.6 1996/03/09 23:38:36 ragge Exp $	*/
+/*	$NetBSD: ubareg.h,v 1.7 1996/04/08 18:37:35 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -223,7 +223,7 @@ struct uba_regs {
 #define	UBADPR_BS	0x007f0000	/* buffer state field */
 #define	UBADPR_BUBA	0x0000ffff	/* buffered UNIBUS address */
 #define	UBA_PURGE780(uba, bdp) \
-    ((uba)->uba_dpr[bdp] |= UBADPR_BNE)
+    ((uba)->uba_dpr[(int)bdp] |= UBADPR_BNE)
 #else
 #define UBA_PURGE780(uba, bdp)
 #endif
@@ -234,8 +234,8 @@ struct uba_regs {
 #define	UBADPR_PURGE	0x00000001	/* purge bdp */
 /* the DELAY is for a hardware problem */
 #define	UBA_PURGE750(uba, bdp) { \
-    ((uba)->uba_dpr[bdp] |= (UBADPR_PURGE|UBADPR_NXM|UBADPR_UCE)); \
-    {int N=8;while(N--);} \
+    ((uba)->uba_dpr[(int)bdp] |= (UBADPR_PURGE|UBADPR_NXM|UBADPR_UCE)); \
+    {volatile int N=8;while(N--);} \
 }
 #else
 #define UBA_PURGE750(uba, bdp)

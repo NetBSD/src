@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.2 1996/02/02 18:08:55 mycroft Exp $	*/
+/*	$NetBSD: ka650.c,v 1.3 1996/04/08 18:32:41 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -62,6 +62,9 @@ struct	ka650_ipcr *ka650ipcr_ptr;
 int	*KA650_CACHE_ptr;
 static	int subtyp;
 
+void	ka650encache __P((void));
+void	ka650discache __P((void));
+
 /*
  * uvaxIII_conf() is called by cpu_attach to do the cpu_specific setup.
  */
@@ -80,11 +83,12 @@ uvaxIII_conf(parent, self, aux)
 	ka650encache();
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
-		    ctob(physmem), ka650merr_ptr->merr_qbmbr);
+		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
 }
 
+void
 uvaxIII_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
@@ -125,15 +129,16 @@ uvaxIII_steal_pages()
 
 	jon = (int *)0x20040004;
 	subtyp = *jon;
-	return 0;
 }
 
+int
 uvaxIII_clock()
 {
 	mtpr(0x40, PR_ICCS); /* Start clock and enable interrupt */
 	return 1;
 }
 
+void
 uvaxIII_memerr()
 {
 	printf("memory err!\n");
@@ -193,6 +198,7 @@ struct mc650frame {
 	int	mc65_psl;		/* trapped psl */
 };
 
+int
 uvaxIII_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -209,8 +215,9 @@ uvaxIII_mchk(cmcf)
 	    mcf->mc65_mrvaddr, mcf->mc65_istate1, mcf->mc65_istate2,
 	    mcf->mc65_pc, mcf->mc65_psl);
 	printf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
-	    ka650merr_ptr->merr_dser, DMASER_BITS, ka650merr_ptr->merr_qbear,
-	    ka650merr_ptr->merr_dear);
+	    ka650merr_ptr->merr_dser, DMASER_BITS, 
+	    (int)ka650merr_ptr->merr_qbear,
+	    (int)ka650merr_ptr->merr_dear);
 	ka650merr_ptr->merr_dser = DSER_CLEAR;
 
 	i = mfpr(PR_CAER);
@@ -259,6 +266,7 @@ uvaxIII_mchk(cmcf)
  * 2nd level cache (by writing to each quadword entry), then enable it.
  * Enable 1st level cache too.
  */
+void
 ka650encache()
 {
 	register int i;
@@ -270,6 +278,7 @@ ka650encache()
 	mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
 }
 
+void
 ka650discache()
 {
 	mtpr(0, PR_CADR);

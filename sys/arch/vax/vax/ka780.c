@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.2 1996/03/17 22:56:22 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.3 1996/04/08 18:32:43 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -41,6 +41,8 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/systm.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -51,6 +53,14 @@
 #include <machine/nexus.h>
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
+
+/* Prototypes. XXX These should be somewhere else */
+void	ka780_conf __P((struct device *, struct device *, void *));
+int	ka780_clock __P((void));
+void	ka780_memenable __P((struct sbi_attach_args *, void *));
+void	ka780_memerr __P((void));
+int	ka780_mchk __P((caddr_t));
+void	ka780_steal_pages __P((void));
 
 /*
  * Memory controller register usage varies per controller.
@@ -100,10 +110,12 @@ struct	mcr780 {
 #define	M780EU_ADDR(mcr)	(((mcr)->mc_reg[3] >> 11) & 0x1ffff)
 
 /* enable crd interrrupts */
-ka780_memenable(sa, sc)
+void
+ka780_memenable(sa, osc)
 	struct	sbi_attach_args *sa;
-	struct	mem_softc *sc;
+	void *osc;
 {
+	struct	mem_softc *sc = osc;
 	register struct mcr780 *mcr = (void *)sc->sc_memaddr;
 
 	printf(": ");
@@ -129,6 +141,7 @@ ka780_memenable(sa, sc)
 }
 
 /* log crd errors */
+void
 ka780_memerr()
 {
 	extern	struct cfdriver mem_cd;
@@ -249,6 +262,7 @@ struct mc780frame {
 	int	mc8_psl;		/* trapped psl */
 };
 
+int
 ka780_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -313,6 +327,7 @@ ka780_clock()
 	return 0;
 }
 
+void
 ka780_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail;
@@ -323,6 +338,4 @@ ka780_steal_pages()
 	MAPVIRT(nexus, btoc(8192*16));
 	pmap_map((vm_offset_t)nexus, 0x20000000, 0x20020000,
 	    VM_PROT_READ|VM_PROT_WRITE);
-
-	return 0;
 }

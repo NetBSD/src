@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.3 1996/02/24 21:23:00 ragge Exp $ */
+/*	$NetBSD: mbavar.h,v 1.4 1996/04/08 18:39:01 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -70,7 +70,6 @@ enum    sc_state {
  */
 enum	xfer_action {
 	XFER_RESTART,
-	XFER_ERROR,
 	XFER_FINISH
 };
 
@@ -116,4 +115,7 @@ struct  mbaunit {
 	char    *name;
 	enum	mb_devices devtyp;
 };
+
+/* Common prototypes */
+void	mbaqueue __P((struct mba_device *));
 

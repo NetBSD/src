@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1 1996/04/02 13:52:28 ragge Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2 1996/04/08 18:32:38 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -37,6 +37,9 @@
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#include <sys/systm.h>
+
+#include <netinet/in.h>
 
 /*
  * Checksum routine for Internet Protocol family headers.

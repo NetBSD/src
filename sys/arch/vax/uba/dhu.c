@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.3 1996/03/18 16:47:29 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.4 1996/04/08 18:37:28 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -146,14 +146,18 @@ struct	cfattach dhu_ca = {
 
 static	void	dhurint __P((int));
 static	void	dhuxint __P((int));
-
 static	void	dhustart __P((struct tty *));
 static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
-
 	int	dhustop __P((struct tty *, int));
-
 static unsigned	dhumctl __P((int, int, int));
+	int	dhuopen __P((dev_t, int, int, struct proc *));
+	int	dhuclose __P((dev_t, int, int, struct proc *));
+	int	dhuread __P((dev_t, struct uio *, int));
+	int	dhuwrite __P((dev_t, struct uio *, int));
+	int	dhuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+struct tty *	dhutty __P((dev_t));
+
 
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */
@@ -163,7 +167,6 @@ dhu_match (parent, match, aux)
         struct device *parent;
         void *match, *aux;
 {
-	struct device *dev = match;
 	struct uba_attach_args *ua = aux;
 	static int nunits = 0;
 	register dhuregs *dhuaddr;
@@ -512,7 +515,7 @@ dhuwrite (dev, uio, flag)
 int
 dhuioctl (dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

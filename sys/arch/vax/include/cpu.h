@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.15 1996/03/02 14:27:52 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.16 1996/04/08 18:35:46 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -45,11 +45,11 @@ extern int cpunumber, cpu_type;
 extern struct cpu_dep cpu_calls[];
 
 struct	cpu_dep {
-	int	(*cpu_steal_pages)(); /* pmap init before mm is on */
-	int	(*cpu_clock)();	 /* CPU dependent clock handling */
-	int	(*cpu_mchk)();   /* Machine check handling */
-	int	(*cpu_memerr)(); /* Memory subsystem errors */
-	int	(*cpu_conf)();	 /* Autoconfiguration */
+	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
+	int	(*cpu_clock) __P((void)); /* CPU dependent clock handling */
+	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
+	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
+	void	(*cpu_conf) __P((void *, void *, void *)); /* Autoconfiguration */
 };
 
 struct clockframe {
@@ -86,3 +86,17 @@ extern	int     want_resched;   /* resched() was called */
  */
 #define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
 
+/* Some low-level prototypes */
+int	badaddr __P((caddr_t, int));
+void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+void	cpu_swapin __P((struct proc *));
+int	hp_getdev __P((int, int));
+void	configure __P((void));
+void	dumpconf __P((void));
+void	dumpsys __P((void));
+void	setroot __P((void));
+void	setconf __P((void));
+void	swapconf __P((void));
+#ifdef DDB
+int	kdbrint __P((int));
+#endif

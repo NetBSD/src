@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.19 1996/03/17 22:49:59 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.20 1996/04/08 18:32:58 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -42,14 +42,21 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+#include <sys/cpu.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
 #include <machine/mtpr.h>
 #include <machine/pte.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 #include <kern/syscalls.c>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -60,6 +67,15 @@ extern 	int want_resched,whichqs;
 volatile int startsysc=0,faultdebug=0;
 #endif
 
+static	void userret __P((struct proc *, u_int, u_int));
+void	arithflt __P((struct trapframe *));
+void	syscall __P((struct trapframe *));
+void	showregs __P((struct trapframe *));
+void	showstate __P((struct proc *));
+void	stray __P((int, int));
+void	printstack __P((u_int *, u_int *));
+
+void
 userret(p, pc, psl)
 	struct proc *p;
 	u_int pc, psl;
@@ -80,7 +96,7 @@ userret(p, pc, psl)
                  */
                 s=splstatclock();
                 setrunqueue(curproc);
-                cpu_switch();
+                cpu_switch(0);
                 splx(s);
                 while ((sig = CURSIG(curproc)) != 0)
                         postsig(sig);
@@ -111,11 +127,12 @@ char *traptypes[]={
 };
 int no_traps = 18;
 
+void
 arithflt(frame)
 	struct trapframe *frame;
 {
 	u_int	sig, type=frame->trap,trapsig=1,s;
-	u_int	rv, addr,*i,j;
+	u_int	rv, addr;
 	struct	proc *p=curproc;
 	struct	pmap *pm;
 	vm_map_t map;
@@ -229,9 +246,8 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 	
 				sig=SIGSEGV;
 				goto bad;
-			} else trapsig=0;
-/*			return; /* We don't know if it was a trap only for PTE*/
-/*			break; */
+			} else
+				trapsig=0;
 		}
 		addr=(frame->code& ~PAGE_MASK);
 		if((frame->pc>(unsigned)0x80000000)&&
@@ -327,6 +343,7 @@ uret:
 	userret(curproc, frame->pc, frame->psl);
 };
 
+void
 showstate(p)
 	struct proc *p;
 {
@@ -336,9 +353,9 @@ if(p){
 		p->p_vmspace->vm_tsize, p->p_vmspace->vm_dsize,p->p_vmspace->
 		vm_ssize);
 	printf("virt text %x, virt data %x, max stack %x\n",
-		p->p_vmspace->vm_taddr,p->p_vmspace->vm_daddr,
-		p->p_vmspace->vm_maxsaddr);
-	printf("kernel uarea %x, end uarea %x\n",p->p_addr, 
+		(u_int)p->p_vmspace->vm_taddr, (u_int)p->p_vmspace->vm_daddr,
+		(u_int)p->p_vmspace->vm_maxsaddr);
+	printf("kernel uarea %x, end uarea %x\n",(u_int)p->p_addr, 
 		(u_int)p->p_addr + USPACE);
 } else {
 	printf("No process\n");
@@ -364,14 +381,15 @@ setregs(p, pack, stack, retval)
 	retval[0] = retval[1] = 0;
 }
 
+void
 syscall(frame)
 	struct	trapframe *frame;
 {
 	struct sysent *callp;
 	int nsys;
-	int err,rval[2],args[8],sig;
+	int err, rval[2], args[8];
 	struct trapframe *exptr;
-	struct proc *p=curproc;
+	struct proc *p = curproc;
 
 #ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
@@ -379,7 +397,7 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 		curproc->p_pid,frame);
 #endif
 
-	p->p_addr->u_pcb.framep = frame;
+	exptr = p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
 
@@ -414,7 +432,7 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 		ktrsyscall(p->p_tracep, frame->code, callp->sy_argsize, args);
 #endif
 	err=(*callp->sy_call)(curproc,args,rval);
-	exptr=curproc->p_addr->u_pcb.framep;
+	exptr = curproc->p_addr->u_pcb.framep;
 
 #ifdef TRAPDEBUG
 if(startsysc)
@@ -450,10 +468,14 @@ bad:
 #endif
 }
 
-stray(scb, vec){
+void
+stray(scb, vec)
+	int scb, vec;
+{
 	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
 }
 
+void
 printstack(loaddr, highaddr)
 	u_int *loaddr, *highaddr;
 {
@@ -463,9 +485,10 @@ printstack(loaddr, highaddr)
 
 	for (;tmp < highaddr;tmp += 4)
 		printf("%8x:  %8x  %8x  %8x  %8x\n",
-		    tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
+		    (int)tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
 }
 
+void
 showregs(frame)
 	struct trapframe *frame;
 {

@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.23 1996/03/02 13:45:49 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.24 1996/04/08 18:33:01 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,15 +34,19 @@
 		
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
 #include <sys/mount.h>
+#include <sys/cpu.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
 #include <machine/vmparam.h>
 #include <machine/mtpr.h>
 #include <machine/pmap.h>
@@ -51,6 +55,7 @@
 #include <machine/trap.h>
 #include <machine/pcb.h>
 #include <machine/frame.h>
+#include <machine/cpu.h>
 
 #include <sys/syscallargs.h>
 
@@ -63,7 +68,7 @@ volatile int whichqs;
 void
 pagemove(from, to, size)
 	caddr_t from, to;
-	int size;
+	size_t size;
 {
 	pt_entry_t *fpte, *tpte;
 	int	stor;
@@ -97,8 +102,6 @@ cpu_fork(p1, p2)
 	struct pcb *nyproc;
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
-	u_int *p2pte;
-	extern vm_map_t pte_map;
 
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
@@ -153,8 +156,8 @@ cpu_fork(p1, p2)
  */
 void
 cpu_set_kpc(p, pc)
-        struct proc *p;
-        u_int pc;
+	struct proc *p;
+	void (*pc) __P((struct proc *));
 {
 	struct pcb *nyproc;
 	struct {
@@ -177,7 +180,7 @@ cpu_set_kpc(p, pc)
 	nyproc->framep = (void *)&kc->tf;
 	nyproc->AP = (unsigned)&kc->cf.ca_argno;
 	nyproc->FP = nyproc->KSP = (unsigned)kc;
-	nyproc->PC = pc + 2;
+	nyproc->PC = (unsigned)pc + 2;
 }
 
 /*
@@ -233,11 +236,12 @@ volatile caddr_t curpcb, nypcb;
  * sleep waiting for something to happen. The idle loop resides here.
  */
 void
-cpu_switch()
+cpu_switch(pp)
+	struct proc *pp;
 {
-	int	i,j,s;
+	int	i,s;
 	struct	proc *p, *q;
-	extern	unsigned int want_resched, scratch;
+	extern	unsigned int scratch;
 
 again:	
 	/* First: Search for a queue. */
@@ -245,7 +249,6 @@ again:
 	if ((i = ffs(whichqs) -1 ) < 0)
 		goto idle;
 
-found:
 	/*
 	 * A queue with runnable processes found.
 	 * Get first process from queue. 
@@ -290,6 +293,7 @@ idle:
 }
 
 /* Should check that values is in bounds XXX */
+int
 copyinstr(from, to, maxlen, lencopied)
 	void *from, *to;
 	u_int *lencopied,maxlen;
@@ -313,6 +317,7 @@ ok:
 asm("Lstr:	ret");
 
 /* Should check that values is in bounds XXX */
+int
 copyoutstr(from, to, maxlen, lencopied)
 	void *from, *to;
 	u_int *lencopied,maxlen;
@@ -333,6 +338,10 @@ ok:
 	return 0;
 }
 
+int	reno_zmagic __P((struct proc *, struct exec_package *));
+
+
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -440,13 +449,14 @@ cpu_exit(p)
 	/* Must change kernel stack before freeing */
 	mtpr(scratch + NBPG, PR_KSP);
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	cpu_switch();
+	cpu_switch(0);
 	/* NOTREACHED */
 }
 
-suword(ptr,val)
+int
+suword(ptr, val)
 	void *ptr;
-	int val;
+	long val;
 {
         void *addr=&curproc->p_addr->u_pcb.iftrap;
 
@@ -500,16 +510,23 @@ cpu_coredump(p, vp, cred, chdr)
         return error;
 }
 
+int	locopyout __P((void *, void *, size_t, void *));
+int	locopyin __P((void *, void *, size_t, void *));
+
+int
 copyout(from, to, len)
 	void *from, *to;
+	size_t len;
 {
 	void *addr=&curproc->p_addr->u_pcb.iftrap;
 
 	return locopyout(from, to, len, addr);
 }
 
+int
 copyin(from, to, len)
 	void *from, *to;
+	size_t len;
 {
 	void *addr = &curproc->p_addr->u_pcb.iftrap;
 

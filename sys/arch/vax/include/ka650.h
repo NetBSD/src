@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.2 1996/02/01 22:33:30 mycroft Exp $	*/
+/*	$NetBSD: ka650.h,v 1.3 1996/04/08 18:35:49 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -233,3 +233,14 @@ struct ka650_ipcr {
 #define	KA650ROM_PUTS	0x2006000c	/* (jsb) put string to console */
 #define	KA650ROM_GETS	0x20060010	/* (jsb) read string with prompt */
 #define KA650_CONSTYPE	0x20140401	/* byte at which console type resides */
+
+/* prototypes */
+struct sbi_attach_args;
+
+void	uvaxIII_conf __P((void *, void *, void *));
+int	uvaxIII_clock __P((void));
+void	uvaxIII_memenable __P((struct sbi_attach_args *, struct device *));
+void	uvaxIII_memerr __P((void));
+int	uvaxIII_mchk __P((caddr_t));
+void	uvaxIII_steal_pages __P((void));
+

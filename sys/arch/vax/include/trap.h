@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.12 1996/02/02 19:08:42 mycroft Exp $     */
+/*      $NetBSD: trap.h,v 1.13 1996/04/08 18:35:52 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,7 +103,7 @@ struct ivec_dsp {
 	char	pushlarg;	/* $? */
 	char	nop;      	/* nop, for foolish gcc */
 	char	calls[3]; 	/* calls $1,? */
-	void	(*hoppaddr)();	/* jump for calls */
+	void	(*hoppaddr) __P((int));	/* jump for calls */
 	char	popr;	  	/* popr $0x3f */
 	char	poprarg;
 	char	rei;      	/* rei */

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.15 1996/03/09 23:39:51 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.16 1996/04/08 18:35:51 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -117,4 +117,8 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_pinit(pmap)	(pmap)->ref_count=1;
 #define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
 
+/* Prototypes */
+void	pmap_bootstrap __P((void));
+void	pmap_expandp0 __P((struct pmap *, int));
+void	pmap_expandp1 __P((struct pmap *));
 #endif PMAP_H

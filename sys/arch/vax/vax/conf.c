@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1996/03/14 21:36:55 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1996/04/08 18:32:29 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -47,8 +47,6 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
 #define lkmenodev       enodev
-#else
-int     lkmenodev();
 #endif
 
 #include "hp.h" /* 0 */
@@ -457,6 +455,7 @@ int	chrtoblktbl[] = {
 	18,	/* 55 */
 };
 
+int
 chrtoblk(dev)
 	dev_t dev;
 {
@@ -468,6 +467,7 @@ chrtoblk(dev)
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -479,6 +479,7 @@ iskmemdev(dev)
  * Returns true if dev is /dev/zero.
  * ?? Shall I use 12 as /dev/zero?
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {

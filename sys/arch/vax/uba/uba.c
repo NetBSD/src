@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.21 1996/03/18 16:47:31 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.22 1996/04/08 18:37:34 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,14 @@ void	uba_dw780int __P((int));
 void	ubaerror __P((int, struct uba_softc *, int *, int *,
 	    struct uba_regs *));
 void	ubainit __P((struct uba_softc *));
-void	ubareset __P((int));
+void	ubastray __P((int));
+void	unifind __P((struct uba_softc *, caddr_t));
+void	ubapurge __P((struct uba_ctlr *));
+void	ubainitmaps __P((struct uba_softc *));
+int	qbgetpri __P((void));
+int	ubamem __P((int, int, int, int));
+void    uba_dw780int __P((int));
+
 
 struct	cfdriver uba_cd = {
 	NULL, "uba", DV_DULL, 1
@@ -124,7 +131,7 @@ ubastray(arg)
  * and then fills in the tables, with help from a per-driver
  * slave initialization routine.
  */
-
+void
 unifind(uhp0, pumem)
 	struct uba_softc *uhp0;
 	caddr_t pumem;
@@ -136,8 +143,6 @@ unifind(uhp0, pumem)
 	u_short *reg, *ap, addr;
 	struct uba_driver *udp;
 	int i;
-	caddr_t ualloc;
-	volatile extern int br, cvec;
 	volatile extern int rbr, rcvec;
 
 #define	ubaddr(uhp, off)    (u_short *)((int)(uhp)->uh_iopage + ubdevreg(off))
@@ -147,9 +152,9 @@ unifind(uhp0, pumem)
 	 * see if it is really there, and if it is record it and
 	 * then go looking for slaves.
 	 */
-	for (um = ubminit; udp = um->um_driver; um++) {
-		if (um->um_ubanum != uhp->uh_dev.dv_unit &&
-		    um->um_ubanum != '?' || um->um_alive)
+	for (um = ubminit; (udp = um->um_driver); um++) {
+		if ((um->um_ubanum != uhp->uh_dev.dv_unit &&
+		    um->um_ubanum != '?') || um->um_alive)
 			continue;
 		addr = (u_short)(u_long)um->um_addr;
 		/*
@@ -170,7 +175,7 @@ unifind(uhp0, pumem)
 		}
 #endif
 		rcvec = 0x200;
-		i = (*udp->ud_probe)(reg, um->um_ctlr, um, uhp);
+		i = (*udp->ud_probe)((caddr_t)reg, um->um_ctlr, um, uhp);
 #if DW780
 		if (uhp->uh_type == DW780 && ubar->uba_sr) {
 			ubar->uba_sr = ubar->uba_sr;
@@ -201,13 +206,13 @@ unifind(uhp0, pumem)
 			int t;
 
 			if (ui->ui_driver != udp || ui->ui_alive ||
-			    ui->ui_ctlr != um->um_ctlr && ui->ui_ctlr != '?' ||
-			    ui->ui_ubanum != uhp->uh_dev.dv_unit &&
-			    ui->ui_ubanum != '?')
+			    (ui->ui_ctlr != um->um_ctlr && ui->ui_ctlr != '?') ||
+			    (ui->ui_ubanum != uhp->uh_dev.dv_unit &&
+			    ui->ui_ubanum != '?'))
 				continue;
 			t = ui->ui_ctlr;
 			ui->ui_ctlr = um->um_ctlr;
-			if ((*udp->ud_slave)(ui, reg) == 0)
+			if ((*udp->ud_slave)(ui, (caddr_t)reg) == 0)
 				ui->ui_ctlr = t;
 			else {
 				ui->ui_alive = 1;
@@ -257,6 +262,7 @@ char	ubasr_bits[] = UBASR_BITS;
  * to the controller, unless it is zero, indicating that the controller
  * does not now have a BDP.
  */
+int
 ubaqueue(ui, onq)
 	register struct uba_device *ui;
 	int onq;
@@ -272,7 +278,7 @@ ubaqueue(ui, onq)
 	/*
 	 * Honor exclusive BDP use requests.
 	 */
-	if (ud->ud_xclu && uh->uh_users > 0 || uh->uh_xclu)
+	if ((ud->ud_xclu && uh->uh_users > 0) || uh->uh_xclu)
 		goto rwait;
 	if (ud->ud_keepbdp) {
 		/*
@@ -321,6 +327,7 @@ rwait:
 	return (0);
 }
 
+void
 ubadone(um)
 	struct uba_ctlr *um;
 {
@@ -341,6 +348,7 @@ ubadone(um)
  * Return value encodes map register plus page offset,
  * bdp number and number of map registers.
  */
+int
 ubasetup(uban, bp, flags)
 	struct	buf *bp;
 	int	uban, flags;
@@ -451,6 +459,7 @@ ubasetup(uban, bp, flags)
 /*
  * Non buffer setup interface... set up a buffer and call ubasetup.
  */
+int
 uballoc(uban, addr, bcnt, flags)
 	caddr_t addr;
 	int	uban, bcnt, flags;
@@ -544,6 +553,7 @@ ubarelse(uban, amr)
 		;
 }
 
+void
 ubapurge(um)
 	register struct uba_ctlr *um;
 {
@@ -571,6 +581,7 @@ ubapurge(um)
 	}
 }
 
+void
 ubainitmaps(uhp)
 	register struct uba_softc *uhp;
 {
@@ -695,13 +706,14 @@ ubainit(uhp)
  * delaying as necessary, then call this routine
  * before resetting the device.
  */
+int
 qbgetpri()
 {
+#ifdef notyet
 	int pri;
 	extern int cvec;
 
 	panic("qbgetpri");
-#if 0
 	for (pri = 0x17; pri > 0x14; ) {
 		if (cvec && cvec != 0x200)	/* interrupted at pri */
 			break;
@@ -710,6 +722,8 @@ qbgetpri()
 	}
 	(void) spl0();
 	return (pri);
+#else
+	return 0x17;
 #endif
 }
 #endif
@@ -750,7 +764,7 @@ ubaerror(uban, uh, ipl, uvec, uba)
 		}
 		if (++uh->uh_zvcnt > zvcnt_max) {
 			printf("uba%d: too many zero vectors (%d in <%d sec)\n",
-				uban, uh->uh_zvcnt, dt + 1);
+				uban, uh->uh_zvcnt, (int)dt + 1);
 			printf("\tIPL 0x%x\n\tcnfgr: %b  Adapter Code: 0x%x\n",
 				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
 				uba->uba_cnfgr&0xff);
@@ -843,11 +857,6 @@ jdhfgsjdkfhgsdjkfghak
 }
 #endif
 
-rmget(){
-	showstate(curproc);
-	panic("rmget() not implemented. (in uba.c)");
-}
-
 /*
  * Allocate UNIBUS memory.  Allocates and initializes
  * sufficient mapping registers for access.  On a 780,
@@ -859,6 +868,7 @@ rmget(){
  * the last unibus memory would free unusable map registers.
  * Doalloc is 1 to allocate, 0 to deallocate.
  */
+int
 ubamem(uban, addr, npg, doalloc)
 	int uban, addr, npg, doalloc;
 {
@@ -869,7 +879,8 @@ ubamem(uban, addr, npg, doalloc)
 	a = (addr >> 9) + 1;
 	s = spluba();
 	if (doalloc)
-		a = rmget(uh->uh_map, npg, a);
+		panic("uba: rmget");
+/*		a = rmget(uh->uh_map, npg, a); */
 	else
 		rmfree(uh->uh_map, (long)npg, (long)a);
 	splx(s);
@@ -925,12 +936,6 @@ unmaptouser(vaddress)
 }
 #endif
 
-resuba()
-{
-	showstate(curproc);
-	panic("resuba");
-}
-
 #ifdef DW780
 void
 uba_dw780int(uba)
@@ -939,7 +944,7 @@ uba_dw780int(uba)
 	int	br, svec, vec, arg;
 	struct	uba_softc *sc = uba_cd.cd_devs[uba];
 	struct	uba_regs *ur = sc->uh_uba;
-	void	(*func)();
+	void	(*func) __P((int));
 
 	br = mfpr(PR_IPL);
 	svec = ur->uba_brrvr[br - 0x14];
@@ -1008,7 +1013,6 @@ uba_attach(parent, self, aux)
 	struct uba_softc *sc = (struct uba_softc *)self;
 	vm_offset_t	min, max, ubaphys, ubaiophys;
 	extern	struct	ivec_dsp idsptch;
-	void ubascan();
 
 	printf("\n");
 	/*
@@ -1088,6 +1092,9 @@ uba_attach(parent, self, aux)
 			ubaiophys = QIOPAGE630;
 			break;
 #endif
+		default:
+			ubaphys = QMEM630;
+			ubaiophys = QIOPAGE630;
 		};
 		break;
 #endif
@@ -1160,7 +1167,7 @@ uba_attach(parent, self, aux)
 	/*
 	 * Now start searching for devices.
 	 */
-	unifind(sc, ubaiophys);	/* Some devices are not yet converted */
+	unifind(sc, (caddr_t)ubaiophys);/* Some devices are not yet converted */
 	config_scan(ubascan,self);
 
 #ifdef DW780
@@ -1246,7 +1253,7 @@ void
 ubasetvec(dev, vec, func)
 	struct	device *dev;
 	int	vec;
-	void	(*func)();
+	void	(*func) __P((int));
 {
 	struct	uba_softc *sc = (void *)dev->dv_parent;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.5 1996/03/17 22:56:39 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.6 1996/04/08 18:38:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
@@ -57,15 +58,15 @@
 #include <vax/mba/mbavar.h>
 
 struct	mbaunit mbaunit[] = {
-	MBADT_RP04,	"rp04", MB_RP,
-	MBADT_RP05,	"rp05", MB_RP,
-	MBADT_RP06,	"rp06", MB_RP,
-	MBADT_RP07,	"rp07", MB_RP,
-	MBADT_RM02,	"rm02", MB_RP,
-	MBADT_RM03,	"rm03", MB_RP,
-	MBADT_RM05,	"rm05", MB_RP,
-	MBADT_RM80,	"rm80", MB_RP,
-	0,		0,	0
+	{MBADT_RP04,	"rp04", MB_RP},
+	{MBADT_RP05,	"rp05", MB_RP},
+	{MBADT_RP06,	"rp06", MB_RP},
+	{MBADT_RP07,	"rp07", MB_RP},
+	{MBADT_RM02,	"rm02", MB_RP},
+	{MBADT_RM03,	"rm03", MB_RP},
+	{MBADT_RM05,	"rm05", MB_RP},
+	{MBADT_RM80,	"rm80", MB_RP},
+	{0,		0,	0}
 };
 
 int	mbamatch __P((struct device *, void *, void *));
@@ -171,7 +172,7 @@ mbaintr(mba)
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	mba_device *md;
 	struct	buf *bp;
-	int	itype, attn, anr, serv = 0;
+	int	itype, attn, anr;
 
 	itype = mr->mba_sr;
 	mr->mba_sr = itype;	/* Write back to clear bits */
