@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.5 1999/08/04 05:21:18 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.6 1999/08/05 01:35:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ struct fxp_softc {
 
 	int	sc_flags;		/* misc. flags */
 
-#define	FXPF_NEEDMCSETUP	0x01	/* multicast setup needed */
+#define	FXPF_WANTINIT		0x01	/* want a re-init */
 #define	FXPF_MII		0x02	/* device uses MII */
 
 	int	sc_txpending;		/* number of TX requests pending */
