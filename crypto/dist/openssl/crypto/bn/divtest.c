@@ -16,16 +16,24 @@ static void bug(char *m, BIGNUM *a, BIGNUM *b)
     BN_print_fp(stdout, b);
     printf("\n");
     fflush(stdout);
+    exit(1);
 }
 
-main()
+main(int argc, char **argv)
 {
     BIGNUM *a=BN_new(), *b=BN_new(), *c=BN_new(), *d=BN_new(),
 	*C=BN_new(), *D=BN_new();
     BN_RECP_CTX *recp=BN_RECP_CTX_new();
     BN_CTX *ctx=BN_CTX_new();
+    int end;
+    int i = 0;
 
-    for(;;) {
+    if (argc > 1)
+	end = atoi(argv[1]);
+    else
+	end = 0;
+
+    for (i = 0; end ? i < end : 1; i++) {
 	BN_pseudo_rand(a,rand(),0,0);
 	BN_pseudo_rand(b,rand(),0,0);
 	if (BN_is_zero(b)) continue;
@@ -38,4 +46,5 @@ main()
 	else if (BN_cmp(c,C) != 0 || BN_cmp(c,C) != 0)
 	    bug("mismatch",a,b);
     }
+    exit(0);
 }

@@ -63,42 +63,18 @@
 extern "C" {
 #endif
 
-#ifndef NO_MD2
 #include <openssl/md2.h>
-#endif
-#ifndef NO_MD5
 #include <openssl/md5.h>
-#endif
-#ifndef NO_SHA
 #include <openssl/sha.h>
-#endif
-#ifndef NO_RIPEMD
 #include <openssl/ripemd.h>
-#endif
-#ifndef NO_DES
 #include <openssl/des.h>
-#endif
-#ifndef NO_RC4
 #include <openssl/rc4.h>
-#endif
-#ifndef NO_RC2
 #include <openssl/rc2.h>
-#endif
-#ifndef NO_RC5
 #include <openssl/rc5.h>
-#endif
-#ifndef NO_BF
 #include <openssl/blowfish.h>
-#endif
-#ifndef NO_CAST
 #include <openssl/cast.h>
-#endif
-#ifndef NO_IDEA
 #include <openssl/idea.h>
-#endif
-#ifndef NO_MDC2
 #include <openssl/mdc2.h>
-#endif
 
 #define EVP_RC2_KEY_SIZE		16
 #define EVP_RC4_KEY_SIZE		16
@@ -113,17 +89,11 @@ extern "C" {
 /* Default PKCS#5 iteration count */
 #define PKCS5_DEFAULT_ITER		2048
 
-#ifndef NO_RSA
 #include <openssl/rsa.h>
-#endif
 
-#ifndef NO_DSA
 #include <openssl/dsa.h>
-#endif
 
-#ifndef NO_DH
 #include <openssl/dh.h>
-#endif
 
 #include <openssl/objects.h>
 
@@ -157,15 +127,9 @@ typedef struct evp_pkey_st
 	int references;
 	union	{
 		char *ptr;
-#ifndef NO_RSA
 		struct rsa_st *rsa;	/* RSA */
-#endif
-#ifndef NO_DSA
 		struct dsa_st *dsa;	/* DSA */
-#endif
-#ifndef NO_DH
 		struct dh_st *dh;	/* DH */
-#endif
 		} pkey;
 	int save_parameters;
 	STACK /*X509_ATTRIBUTE*/ *attributes; /* [ 0 ] */
@@ -265,25 +229,16 @@ typedef struct env_md_st
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
-#ifndef NO_DSA
 #define EVP_PKEY_DSA_method	DSA_sign,DSA_verify, \
 				{EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3, \
 					EVP_PKEY_DSA4,0}
-#else
-#define EVP_PKEY_DSA_method	EVP_PKEY_NULL_method
-#endif
 
-#ifndef NO_RSA
 #define EVP_PKEY_RSA_method	RSA_sign,RSA_verify, \
 				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
 #define EVP_PKEY_RSA_ASN1_OCTET_STRING_method \
 				RSA_sign_ASN1_OCTET_STRING, \
 				RSA_verify_ASN1_OCTET_STRING, \
 				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
-#else
-#define EVP_PKEY_RSA_method	EVP_PKEY_NULL_method
-#define EVP_PKEY_RSA_ASN1_OCTET_STRING_method EVP_PKEY_NULL_method
-#endif
 
 #endif /* !EVP_MD */
 
@@ -292,21 +247,11 @@ typedef struct env_md_ctx_st
 	const EVP_MD *digest;
 	union	{
 		unsigned char base[4];
-#ifndef NO_MD2
 		MD2_CTX md2;
-#endif
-#ifndef NO_MD5
 		MD5_CTX md5;
-#endif
-#ifndef NO_RIPEMD
 		RIPEMD160_CTX ripemd160;
-#endif
-#ifndef NO_SHA
 		SHA_CTX sha;
-#endif
-#ifndef NO_MDC2
 		MDC2_CTX mdc2;
-#endif
 		} md;
 	} EVP_MD_CTX;
 
@@ -345,14 +290,11 @@ typedef struct evp_cipher_ctx_st
 
 	char *app_data;		/* application stuff */
 	union	{
-#ifndef NO_RC4
 		struct
 			{
 			unsigned char key[EVP_RC4_KEY_SIZE];
 			RC4_KEY ks;	/* working key */
 			} rc4;
-#endif
-#ifndef NO_DES
 		des_key_schedule des_ks;/* key schedule */
 		struct
 			{
@@ -366,22 +308,11 @@ typedef struct evp_cipher_ctx_st
 			des_key_schedule ks2;/* key schedule (for ede) */
 			des_key_schedule ks3;/* key schedule (for ede3) */
 			} des_ede;
-#endif
-#ifndef NO_IDEA
 		IDEA_KEY_SCHEDULE idea_ks;/* key schedule */
-#endif
-#ifndef NO_RC2
 		RC2_KEY rc2_ks;/* key schedule */
-#endif
-#ifndef NO_RC5
 		RC5_32_KEY rc5_ks;/* key schedule */
-#endif
-#ifndef NO_BF
 		BF_KEY bf_ks;/* key schedule */
-#endif
-#ifndef NO_CAST
 		CAST_KEY cast_ks;/* key schedule */
-#endif
 		} c;
 	} EVP_CIPHER_CTX;
 
@@ -616,18 +547,12 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
-#ifndef NO_RSA
 int 		EVP_PKEY_set1_RSA(EVP_PKEY *pkey,RSA *key);
 RSA *		EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
-#endif
-#ifndef NO_DSA
 int 		EVP_PKEY_set1_DSA(EVP_PKEY *pkey,DSA *key);
 DSA *		EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
-#endif
-#ifndef NO_DH
 int 		EVP_PKEY_set1_DH(EVP_PKEY *pkey,DH *key);
 DH *		EVP_PKEY_get1_DH(EVP_PKEY *pkey);
-#endif
 EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
 EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, unsigned char **pp,

@@ -61,9 +61,8 @@
 #include <openssl/opensslconf.h>
 #include <openssl/md5.h>
 
-#ifndef MD5_LONG_LOG2
-#define MD5_LONG_LOG2 2 /* default to 32 bits */
-#endif
+/* MD5_LONG is u_int32_t, 4 = 2^2 */
+#define	MD5_LONG_LOG2	2
 
 #ifdef MD5_ASM
 # if defined(__i386) || defined(_M_IX86) || defined(__INTEL__)

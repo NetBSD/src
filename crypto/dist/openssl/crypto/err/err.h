@@ -73,11 +73,7 @@ extern "C" {
 
 #define ERR_file_name	__FILE__
 
-#ifndef NO_ERR
 #define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,d,e)
-#else
-#define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,NULL,0)
-#endif
 
 #include <errno.h>
 

@@ -67,10 +67,10 @@
 void RC2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	     RC2_KEY *schedule, unsigned char *ivec, int *num, int encrypt)
 	{
-	register unsigned long v0,v1,t;
+	register u_int32_t v0,v1,t;
 	register int n= *num;
 	register long l=length;
-	unsigned long ti[2];
+	u_int32_t ti[2];
 	unsigned char *iv,c,cc;
 
 	iv=(unsigned char *)ivec;
@@ -82,7 +82,7 @@ void RC2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				RC2_encrypt((unsigned long *)ti,schedule);
+				RC2_encrypt((u_int32_t *)ti,schedule);
 				iv=(unsigned char *)ivec;
 				t=ti[0]; l2c(t,iv);
 				t=ti[1]; l2c(t,iv);
@@ -102,7 +102,7 @@ void RC2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				RC2_encrypt((unsigned long *)ti,schedule);
+				RC2_encrypt((u_int32_t *)ti,schedule);
 				iv=(unsigned char *)ivec;
 				t=ti[0]; l2c(t,iv);
 				t=ti[1]; l2c(t,iv);

@@ -64,6 +64,8 @@
 #endif
 #include <openssl/opensslconf.h>
 
+#include <sys/types.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -78,87 +80,14 @@ extern "C" {
 #define RECP_MUL_MOD
 #define MONT_MUL_MOD
 
-/* This next option uses the C libraries (2 word)/(1 word) function.
- * If it is not defined, I use my C version (which is slower).
- * The reason for this flag is that when the particular C compiler
- * library routine is used, and the library is linked with a different
- * compiler, the library is missing.  This mostly happens when the
- * library is built with gcc and then linked using normal cc.  This would
- * be a common occurrence because gcc normally produces code that is
- * 2 times faster than system compilers for the big number stuff.
- * For machines with only one compiler (or shared libraries), this should
- * be on.  Again this in only really a problem on machines
- * using "long long's", are 32bit, and are not using my assembler code. */
-#if defined(MSDOS) || defined(WINDOWS) || defined(WIN32) || defined(linux)
-#define BN_DIV2W
-#endif
-
-/* assuming long is 64bit - this is the DEC Alpha
- * unsigned long long is only 64 bits :-(, don't define
- * BN_LLONG for the DEC Alpha */
-#ifdef SIXTY_FOUR_BIT_LONG
-#define BN_ULLONG	unsigned long long
-#define BN_ULONG	unsigned long
-#define BN_LONG		long
-#define BN_BITS		128
-#define BN_BYTES	8
-#define BN_BITS2	64
-#define BN_BITS4	32
-#define BN_MASK		(0xffffffffffffffffffffffffffffffffLL)
-#define BN_MASK2	(0xffffffffffffffffL)
-#define BN_MASK2l	(0xffffffffL)
-#define BN_MASK2h	(0xffffffff00000000L)
-#define BN_MASK2h1	(0xffffffff80000000L)
-#define BN_TBIT		(0x8000000000000000L)
-#define BN_DEC_CONV	(10000000000000000000UL)
-#define BN_DEC_FMT1	"%lu"
-#define BN_DEC_FMT2	"%019lu"
-#define BN_DEC_NUM	19
-#endif
-
-/* This is where the long long data type is 64 bits, but long is 32.
- * For machines where there are 64bit registers, this is the mode to use.
- * IRIX, on R4000 and above should use this mode, along with the relevant
- * assembler code :-).  Do NOT define BN_LLONG.
- */
-#ifdef SIXTY_FOUR_BIT
-#undef BN_LLONG
-#undef BN_ULLONG
-#define BN_ULONG	unsigned long long
-#define BN_LONG		long long
-#define BN_BITS		128
-#define BN_BYTES	8
-#define BN_BITS2	64
-#define BN_BITS4	32
-#define BN_MASK2	(0xffffffffffffffffLL)
-#define BN_MASK2l	(0xffffffffL)
-#define BN_MASK2h	(0xffffffff00000000LL)
-#define BN_MASK2h1	(0xffffffff80000000LL)
-#define BN_TBIT		(0x8000000000000000LL)
-#define BN_DEC_CONV	(10000000000000000000LL)
-#define BN_DEC_FMT1	"%llu"
-#define BN_DEC_FMT2	"%019llu"
-#define BN_DEC_NUM	19
-#endif
-
-#ifdef THIRTY_TWO_BIT
-#if defined(WIN32) && !defined(__GNUC__)
-#define BN_ULLONG	unsigned _int64
-#else
-#define BN_ULLONG	unsigned long long
-#endif
-#define BN_ULONG	unsigned long
-#define BN_LONG		long
+#define BN_ULLONG	u_int64_t
+#define BN_ULONG	u_int32_t
+#define BN_LONG		int32_t
 #define BN_BITS		64
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
-#ifdef WIN32
-/* VC++ doesn't like the LL suffix */
-#define BN_MASK		(0xffffffffffffffffL)
-#else
 #define BN_MASK		(0xffffffffffffffffLL)
-#endif
 #define BN_MASK2	(0xffffffffL)
 #define BN_MASK2l	(0xffff)
 #define BN_MASK2h1	(0xffff8000L)
@@ -168,53 +97,12 @@ extern "C" {
 #define BN_DEC_FMT1	"%lu"
 #define BN_DEC_FMT2	"%09lu"
 #define BN_DEC_NUM	9
-#endif
 
-#ifdef SIXTEEN_BIT
-#ifndef BN_DIV2W
-#define BN_DIV2W
-#endif
-#define BN_ULLONG	unsigned long
-#define BN_ULONG	unsigned short
-#define BN_LONG		short
-#define BN_BITS		32
-#define BN_BYTES	2
-#define BN_BITS2	16
-#define BN_BITS4	8
-#define BN_MASK		(0xffffffff)
-#define BN_MASK2	(0xffff)
-#define BN_MASK2l	(0xff)
-#define BN_MASK2h1	(0xff80)
-#define BN_MASK2h	(0xff00)
-#define BN_TBIT		(0x8000)
-#define BN_DEC_CONV	(100000)
-#define BN_DEC_FMT1	"%u"
-#define BN_DEC_FMT2	"%05u"
-#define BN_DEC_NUM	5
-#endif
-
-#ifdef EIGHT_BIT
-#ifndef BN_DIV2W
-#define BN_DIV2W
-#endif
-#define BN_ULLONG	unsigned short
-#define BN_ULONG	unsigned char
-#define BN_LONG		char
-#define BN_BITS		16
-#define BN_BYTES	1
-#define BN_BITS2	8
-#define BN_BITS4	4
-#define BN_MASK		(0xffff)
-#define BN_MASK2	(0xff)
-#define BN_MASK2l	(0xf)
-#define BN_MASK2h1	(0xf8)
-#define BN_MASK2h	(0xf0)
-#define BN_TBIT		(0x80)
-#define BN_DEC_CONV	(100)
-#define BN_DEC_FMT1	"%u"
-#define BN_DEC_FMT2	"%02u"
-#define BN_DEC_NUM	2
-#endif
+#undef SIXTY_FOUR_BIT_LONG
+#undef SIXTY_FOUR_BIT
+#define THIRTY_TWO_BIT
+#undef SIXTEEN_BIT
+#undef EIGHT_BIT
 
 #define BN_DEFAULT_BITS	1280
 

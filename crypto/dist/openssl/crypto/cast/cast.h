@@ -63,14 +63,12 @@
 extern "C" {
 #endif
 
-#ifdef NO_CAST
-#error CAST is disabled.
-#endif
 
 #define CAST_ENCRYPT	1
 #define CAST_DECRYPT	0
 
-#define CAST_LONG unsigned long
+#include <sys/types.h>
+#define CAST_LONG u_int32_t
 
 #define CAST_BLOCK	8
 #define CAST_KEY_LENGTH	16
