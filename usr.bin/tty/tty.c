@@ -39,32 +39,46 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tty.c	4.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tty.c,v 1.2 1993/08/01 18:04:12 mycroft Exp $";
+static char rcsid[] = "$Id: tty.c,v 1.3 1993/09/20 23:53:24 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
+static void usage	__P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	int ch, sflag;
-	char *t, *ttyname();
+	char *t;
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "s")) != EOF)
+	while ((ch = getopt(argc, argv, "s")) != -1) {
 		switch((char)ch) {
 		case 's':
 			sflag = 1;
 			break;
 		case '?':
 		default:
-			fputs("usage: tty [-s]\n", stderr);
-			exit(2);
+			usage();
+			/* NOTREACHED */
 		}
+	}
 
-	t = ttyname(0);
+	t = ttyname(STDIN_FILENO);
 	if (!sflag)
 		puts(t ? t : "not a tty");
 	exit(t ? 0 : 1);
+}
+
+
+static void
+usage ()
+{
+	fprintf(stderr, "usage: tty [-s]\n");
+	exit(2);
 }
