@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.6 2002/12/30 05:23:27 fredette Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.7 2002/12/31 13:10:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -236,7 +236,6 @@ int	esm_intr(void *);
 
 int	esm_allocmem(struct esm_softc *, size_t, size_t,
 	    struct esm_dma *);
-int	esm_freemem(struct esm_softc *, struct esm_dma *);
 
 int	esm_suspend(struct esm_softc *);
 int	esm_resume(struct esm_softc *);
