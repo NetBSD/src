@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.13 2005/03/21 21:27:27 jwise Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.14 2005/03/21 23:12:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -184,3 +184,29 @@ share/man/man3/dlfcn.3				1.19
 
 	Add restrict qualifiers to dlsym() (XSI) and dladdr() arguments.
 	[kleink, ticket #39]
+
+include/netdb.h					1.50
+lib/libc/net/getaddrinfo.3			1.42
+lib/libc/net/getnameinfo.3			1.35
+
+	Add restrict qualifiers to getaddrinfo() and getnameinfo() arguments.
+	[kleink, ticket #40]
+
+lib/libc/net/getaddrinfo.3			1.43
+lib/libc/net/getnameinfo.3			1.36
+
+	Only name <netdb.h> in the synopsis, like the old manual page used to.
+	[kleink, ticket #41]
+
+lib/librt/sem_getvalue.3			1.2
+
+	Add restrict qualifiers to function arguments (already in
+	<semaphore.h>).
+	[kleink, ticket #42]
+
+lib/libpam/modules/pam_skey/pam_skey.c		1.2
+
+	Make S/Key prompt compliant with RFC 2289. Patch supplied by Dave Huang
+	in PR bin/23167.
+	[christos, ticket #43]
+
