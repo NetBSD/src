@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1998/08/27 06:23:32 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1998/08/30 02:12:02 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -206,9 +206,9 @@ int		iotsbsize; /* tsbents = 1024 * 2 ^^ tsbsize */
 struct pmap kernel_pmap_;
 
 int physmem;
-u_int ksegv;				/* vaddr start of kernel */
+u_long ksegv;				/* vaddr start of kernel */
 u_int64_t ksegp;			/* paddr of start of kernel */
-u_int ksegend;
+u_long ksegend;
 u_int64_t ksegpend;
 static int npgs;
 static u_int nextavail;
@@ -355,16 +355,18 @@ int numctx;
  */
 void
 pmap_bootstrap(kernelstart, kernelend, maxctx)
-	u_int kernelstart, kernelend, maxctx;
+	u_long kernelstart, kernelend;
+	u_int maxctx;
 {
 	extern int msgbufmapped;
 	struct mem_region *mp, *mp1;
 	int msgbufsiz;
 	int pcnt;
-	u_int s, sz, i, j;
+	size_t s, sz;
+	int i, j;
 	u_int64_t phys_msgbuf;
-	u_int firstaddr, newkp, ksize;
-	unsigned int *newkv;
+	u_long firstaddr, newkp, ksize;
+	u_long *newkv;
 #ifdef DEBUG
 	int opmapdebug = pmapdebug;
 	pmapdebug = 0;
@@ -414,9 +416,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	msgbufsiz = NBPG /* round_page(sizeof(struct msgbuf)) */;
 #ifdef BOOT_DEBUG
 	prom_printf("Trying to allocate msgbuf at %x, size %x\r\n", 
-		    (int)msgbufp, (int)msgbufsiz);
+		    (long)msgbufp, (long)msgbufsiz);
 #endif
-	if( (int)msgbufp != (int)(phys_msgbuf = prom_claim_virt((int)msgbufp, msgbufsiz) ) )
+	if( (long)msgbufp != (long)(phys_msgbuf = prom_claim_virt((vaddr_t)msgbufp, msgbufsiz) ) )
 		prom_printf("cannot get msgbuf VA, msgbufp=%x, phys_msgbuf=%x\r\n", 
 			    msgbufp, (int)phys_msgbuf);
 	phys_msgbuf = prom_get_msgbuf(msgbufsiz, MMU_PAGE_ALIGN);
@@ -496,7 +498,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef BOOT1_DEBUG
 		prom_printf("Allocating new va for buffer at %x\r\n", newkp);
 #endif
-		if( (newkv = (u_int*)prom_alloc_virt(ksize, 8)) == (u_int*)-1) {
+		if( (newkv = (u_long*)prom_alloc_virt(ksize, 8)) == (u_long*)-1) {
 			prom_printf("Cannot allocate new kernel va\r\n");
 			OF_exit();
 		}
@@ -675,7 +677,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		 * Find out how much space we need, allocate it,
 		 * and then give everything true virtual addresses.
 		 */
-		sz = (int)allocsys((caddr_t)0);
+		sz = (size_t)allocsys((caddr_t)0);
 		
 #ifdef BOOT1_DEBUG
 		prom_printf("allocsys needs %08x bytes RAM...", sz);
@@ -1193,7 +1195,6 @@ void
 pmap_pinit(pm)
 	struct pmap *pm;
 {
-	int i;
 
 	/*
 	 * Allocate some segment registers for this pmap.
@@ -1278,15 +1279,15 @@ pmap_release(pm)
 
 	s=splimp();
 	for(i=0; i<STSZ; i++)
-		if((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t *)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V && 
 						    IS_VM_PHYSADDR(data&TLB_PA_MASK))
 							pmap_remove_pv(pm, 
-								       (i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT), 
+								       ((long)i<<STSHIFT)|((long)k<<PDSHIFT)|((long)j<<PTSHIFT), 
 								       data&TLB_PA_MASK);
 					}
 					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
@@ -1363,14 +1364,14 @@ pmap_collect(pm)
 	 * no valid mappings in them and free them. */
 	
 	for (i=0; i<STSZ; i++) {
-		if ((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if ((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			m = 0;
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+				if (ptbl = (paddr_t)ldxa(&pdir[k], ASI_PHYS_CACHED)) {
 					m++;
 					n = 0;
 					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V)
 							n++;
 					}
@@ -2195,14 +2196,14 @@ pmap_extract(pm, va)
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			paddr_t pa;
-			pa = ldda(&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			pa = ldxa(&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
 			printf("pmap_extract: va=%p segs[%d]=%lx", va, (int)va_to_seg(va), (long)pa);
 			if (pa) {
-				pa = ldda(&((paddr_t*)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
+				pa = ldxa(&((paddr_t*)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
 				printf(" segs[%d][%d]=%lx", va_to_seg(va), (int)va_to_dir(va), (long)pa);
 			}
 			if (pa)	{
-				pa = (paddr_t*)ldda(&((paddr_t*)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
+				pa = ldxa(&((paddr_t*)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
 				printf(" segs[%d][%d][%d]=%lx", (int)va_to_seg(va), 
 				       (int)va_to_dir(va), (int)va_to_pte(va), (long)pa);
 			}
@@ -2297,7 +2298,7 @@ int size;
 		i = ptelookup_va(sva);
 		/* Then update the page table */
 		s = splimp();
-		if (data = pseg_get(pm, sva)) {
+		if ((data = pseg_get(pm, sva))) {
 			data |= set;
 			data &= ~clr;
 			ASSERT((data & TLB_NFO) == 0);
@@ -2384,7 +2385,7 @@ pmap_dumpmmu(dump, blkno)
 	ksegp->c_size = dbtob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
-	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));
+	kcpup = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpup->cputype = CPU_SUN4U;
 	kcpup->kernbase = KERNBASE;
 	kcpup->kphys = (paddr_t)ksegp;
@@ -2398,7 +2399,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup->pmegoffset = 0; /* We don't do this. */
 
 	/* Note: we have assumed everything fits in buffer[] so far... */
-	bp = (int *)((int)kcpup + ALIGN(sizeof(cpu_kcore_hdr_t)));
+	bp = (int *)((long)kcpup + ALIGN(sizeof(cpu_kcore_hdr_t)));
 
 	for (i = 0; i < memsize; i++) {
 		memseg.start = mem[i].start;
@@ -2509,12 +2510,11 @@ int
 ptelookup_va(va)
 	vaddr_t va;
 {
-	int tsbptr;
+	long tsbptr;
 #define TSBBASEMASK	(0xffffffffffffe000LL<<tsbsize)
 
-	tsbptr = (((vaddr_t)tsb & TSBBASEMASK)
-		| (((va >> 9) & 0xfffffffffffffff0LL) & ~TSBBASEMASK ));
-	return ((struct sun4u_tte*)tsbptr) - tsb;
+	tsbptr = (((va >> 9) & 0xfffffffffffffff0LL) & ~TSBBASEMASK );
+	return (tsbptr/sizeof(pte_t));
 }
 
 void tsb_enter(ctx, va, data)
@@ -2962,7 +2962,7 @@ pmap_page_protect(pa, prot)
 		/* copy_on_write */
 
 		set = TLB_V;
-		clear = TLB_REAL_W|TLB_W|TLB_MODIFY;
+		clear = TLB_REAL_W|TLB_W;
 		if(VM_PROT_EXECUTE & prot)
 			set |= TLB_EXEC;
 		else
@@ -3034,7 +3034,7 @@ pmap_page_protect(pa, prot)
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS) 
 				firstpv->pv_va |= PV_REF;
-			if (data & (TLB_W|TLB_REAL_W|TLB_MODIFY))
+			if (data & (TLB_W|TLB_MODIFY))
 				firstpv->pv_va |= PV_MOD;
 			if (data & TLB_TSB_LOCK) {
 #ifdef DEBUG
@@ -3085,7 +3085,7 @@ pmap_page_protect(pa, prot)
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS) 
 				pv->pv_va |= PV_REF;
-			if (data & (TLB_W|TLB_REAL_W|TLB_MODIFY))
+			if (data & (TLB_W|TLB_MODIFY))
 				pv->pv_va |= PV_MOD;
 			if (data & TLB_TSB_LOCK) {
 #ifdef DEBUG
@@ -3138,11 +3138,11 @@ pmap_count_res(pm)
 
 	n = 0;
 	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+				if (ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED)) {
 					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V)
 							n++;
 					}
@@ -3322,7 +3322,7 @@ pmap_remove_pv(pmap, va, pa)
 	/* Save ref/mod info */
 	if (data & TLB_ACCESS) 
 		opv->pv_va |= PV_REF;
-	if (data & (TLB_W|TLB_REAL_W|TLB_MODIFY))
+	if (data & (TLB_W|TLB_MODIFY))
 		opv->pv_va |= PV_MOD;
 	splx(s);
 	pv_check();
