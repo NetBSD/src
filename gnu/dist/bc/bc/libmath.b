@@ -158,10 +158,11 @@ define s(x) {
 
 /* Cosine : cos(x) = sin(x+pi/2) */
 define c(x) {
-  auto v;
-  scale += 1;
+  auto v, z;
+  z = scale;
+  scale = scale*1.2;
   v = s(x+a(1)*2);
-  scale -= 1;
+  scale = z;
   return (v/1);
 }
 
@@ -244,7 +245,7 @@ define a(x) {
             - x^6/(2^6*3!*(n+1)*(n+2)*(n+3)) .... )
 */
 define j(n,x) {
-  auto a, d, e, f, i, m, s, v, z
+  auto a, b, d, e, f, i, m, s, v, z
 
   /* Make n an integer and check for negative n. */
   z = scale;
@@ -255,6 +256,10 @@ define j(n,x) {
     if (n%2 == 1) m = 1;
   }
 
+  /* save ibase */
+  b = ibase;
+  ibase = A;
+
   /* Compute the factor of x^n/(2^n*n!) */
   f = 1;
   for (i=2; i<=n; i++) f = f*i;
@@ -264,12 +269,13 @@ define j(n,x) {
   /* Initialize the loop .*/
   v = e = 1;
   s = -x*x/4
-  scale = 1.5*z
+  scale = 1.5*z + length(f) - scale(f);
 
   /* The Loop.... */
   for (i=1; 1; i++) {
     e =  e * s / i / (n+i);
     if (e == 0) {
+       ibase = b;
        scale = z
        if (m) return (-f*v/1);
        return (f*v/1);
