@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.6 2000/11/22 18:18:32 wiz Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.7 2001/06/08 00:21:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <machine/psl.h>
 #include <machine/stdarg.h>
@@ -494,11 +497,12 @@ OF_read(handle, addr, len)
 			ofbcopy(OF_buf, p, args.actual);
 			act += args.actual;
 		}
-		if (args.actual < l)
+		if (args.actual < l) {
 			if (act)
 				return act;
 			else
 				return args.actual;
+		}
 	}
 	return act;
 }
