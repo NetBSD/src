@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.128 1998/07/27 23:54:12 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.129 1998/08/05 02:28:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1478,9 +1478,10 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
-						bcopy(crtAt + vs.ncol * cx,
-						    crtAt, vs.ncol * (nrow -
-						    cx) * CHR);
+						memcpy(crtAt,
+						     crtAt + vs.ncol * cx,
+						    vs.ncol *
+						    (nrow - cx) * CHR);
 					fillw((vs.at << 8) | ' ',
 					    crtAt + vs.ncol * (nrow - cx),
 					    vs.ncol * cx);
@@ -1494,9 +1495,10 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
-						bcopy(Crtat + vs.ncol * cx,
-						    Crtat, vs.ncol * (vs.nrow -
-						    cx) * CHR);
+						memcpy(Crtat,
+						    Crtat + vs.ncol * cx,
+						    vs.ncol *
+						    (vs.nrow - cx) * CHR);
 					fillw((vs.at << 8) | ' ',
 					    Crtat + vs.ncol * (vs.nrow - cx),
 					    vs.ncol * cx);
@@ -1516,8 +1518,8 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
-						bcopy(crtAt,
-						    crtAt + vs.ncol * cx,
+						memcpy(crtAt + vs.ncol * cx,
+						    crtAt,
 						    vs.ncol * (nrow - cx) *
 						    CHR);
 					fillw((vs.at << 8) | ' ', 
@@ -1532,8 +1534,8 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
-						bcopy(Crtat,
-						    Crtat + vs.ncol * cx,
+						memcpy(Crtat + vs.ncol * cx,
+						    Crtat,
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
 					fillw((vs.at << 8) | ' ', 
@@ -1600,7 +1602,7 @@ sput(cp, n)
 			scroll = 0;
 			/* scroll check */
 			if (crtat >= Crtat + vs.nchr) {
-				bcopy(Crtat + vs.ncol, Crtat,
+				memcpy(Crtat, Crtat + vs.ncol,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
 				    Crtat + vs.nchr - vs.ncol,

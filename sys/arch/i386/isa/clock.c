@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.50 1998/08/05 01:21:54 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.51 1998/08/05 02:28:26 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -605,7 +605,7 @@ resettodr()
 
 	s = splclock();
 	if (rtcget(&rtclk))
-		bzero(&rtclk, sizeof(rtclk));
+		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
 	diff = rtc_offset * 60;
