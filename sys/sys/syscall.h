@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.h,v 1.77 1998/02/19 03:31:12 thorpej Exp $	*/
+/*	$NetBSD: syscall.h,v 1.78 1998/02/25 21:31:19 perry Exp $	*/
 
 /*
  * System call numbers.
@@ -423,7 +423,7 @@
 
 				/* 164 is compat_09 ouname */
 
-/* syscall: "sysarch" ret: "int" args: "int" "char *" */
+/* syscall: "sysarch" ret: "int" args: "int" "void *" */
 #define	SYS_sysarch	165
 
 				/* 169 is compat_10 osemsys */
