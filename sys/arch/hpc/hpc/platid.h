@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.2 2001/03/25 12:17:35 takemura Exp $	*/
+/*	$NetBSD: platid.h,v 1.3 2001/04/23 10:08:28 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -146,6 +146,7 @@ tchar* platid_name(platid_t *);
 struct platid_data *platid_search(platid_t *, struct platid_data *);
 __END_DECLS
 
+#include "opt_spec_platform.h"
 #include <machine/platid_generated.h>
 
 #endif /* _HPC_PLATID_H_ */
