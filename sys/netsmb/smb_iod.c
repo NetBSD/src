@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.13 2003/03/23 10:32:05 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.14 2003/03/24 07:49:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.13 2003/03/23 10:32:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.14 2003/03/24 07:49:49 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.13 2003/03/23 10:32:05 jdolecek Exp $"
 #include <netsmb/smb_tran.h>
 #include <netsmb/smb_trantcp.h>
 
-
-#define SMBIOD_SLEEP_TIMO	2
-#define	SMBIOD_PING_TIMO	60	/* seconds */
+#define SMBIOD_SLEEP_TIMO 2
 
 #define	SMB_IOD_EVLOCKPTR(iod)	(&((iod)->iod_evlock))
 #define	SMB_IOD_EVLOCK(iod)	smb_sl_lock(&((iod)->iod_evlock))
@@ -270,6 +268,7 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 #endif
 		rqp->sr_flags |= SMBR_SENT;
 		rqp->sr_state = SMBRQ_SENT;
+		smb_iod_wakeup(iod);
 		return 0;
 	}
 	/*
@@ -660,10 +659,11 @@ smb_iod_thread(void *arg)
 	smb_makescred(&iod->iod_scred, iod->iod_p, NULL);
 	while ((iod->iod_flags & SMBIOD_SHUTDOWN) == 0) {
 		smb_iod_main(iod);
-		SMBIODEBUG("going to sleep for %d ticks\n", iod->iod_sleeptimo);
+		SMBIODEBUG("going to sleep for %d ticks\n",
+			SMBIOD_SLEEP_TIMO * hz);
 		if (iod->iod_flags & SMBIOD_SHUTDOWN)
 			break;
-		tsleep(&iod->iod_flags, PWAIT, "smbidle", iod->iod_sleeptimo);
+		tsleep(&iod->iod_flags, PWAIT, "smbidle", SMBIOD_SLEEP_TIMO * hz);
 	}
 	kthread_exit(0);
 }
@@ -678,9 +678,8 @@ smb_iod_create(struct smb_vc *vcp)
 	iod->iod_id = smb_iod_next++;
 	iod->iod_state = SMBIOD_ST_NOTCONN;
 	iod->iod_vc = vcp;
-	iod->iod_sleeptimo = hz * SMBIOD_SLEEP_TIMO;
-	iod->iod_pingtimo.tv_sec = SMBIOD_PING_TIMO;
 #if 0
+	iod->iod_pingtimo.tv_sec = SMBIOD_PING_TIMO;
 	microtime(&iod->iod_lastrqsent);
 #endif
 	vcp->vc_iod = iod;
