@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.7 1999/07/25 00:24:38 hubertf Exp $	*/
+/*	$NetBSD: graphics.c,v 1.8 1999/07/28 02:01:30 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.7 1999/07/25 00:24:38 hubertf Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.8 1999/07/28 02:01:30 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,15 +69,14 @@ WINDOW	*radar, *cleanradar, *credit, *input, *planes;
 int
 getAChar()
 {
-#ifdef BSD
-	return (getchar());
-#endif
-#ifdef SYSV
 	int c;
 
-	while ((c = getchar()) == -1 && errno == EINTR) ;
+	errno = 0;
+	while ((c = getchar()) == -1 && errno == EINTR) {
+		errno = 0;
+		clearerr(stdin);
+	}
 	return(c);
-#endif
 }
 
 void
