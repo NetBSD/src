@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.48 1998/06/30 08:24:57 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.49 1998/06/30 08:27:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -120,7 +120,9 @@ void
 wssattach(sc)
 	struct wss_softc *sc;
 {
+#if 0 /* loses on CS423X chips */
 	int version;
+#endif
     
 	madattach(sc);
 
@@ -135,6 +137,7 @@ wssattach(sc)
 		  & WSS_VERSMASK;
 	printf(" (vers %d)", version);
 #endif
+
 	switch(sc->mad_chip_type) {
 	case MAD_82C928:
 		printf(", 82C928");
