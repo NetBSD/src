@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_denode.c,v 1.1.2.2 1993/11/27 19:50:14 mycroft Exp $
+ *	$Id: msdosfs_denode.c,v 1.1.2.3 1993/12/02 07:01:48 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -22,7 +22,7 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/kernel.h>		/* defines "time"			 */
+#include <sys/kernel.h>		/* defines "time" */
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/msdosfsmount.h>
