@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 1997/03/21 15:19:29 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.74 1997/03/21 16:29:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5574,7 +5574,7 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
-			setpgt4m(ptd++, SRMMU_TEINVALID);
+			setpgt4m(&ptd[i], SRMMU_TEINVALID);
 		setpgt4m(&pm->pm_reg_ptps[vr],
 			 (VA2PA((caddr_t)ptd) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 	}
@@ -5598,10 +5598,10 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 #endif
 
 		sp->sg_pte = pte;
-		for (i = 0; i < SRMMU_L3SIZE; i++)
-			setpgt4m(pte++, SRMMU_TEINVALID);
 		sp->sg_npte = 1;
 		rp->rg_nsegmap++;
+		for (i = 0; i < SRMMU_L3SIZE; i++)
+			setpgt4m(&pte[i], SRMMU_TEINVALID);
 		setpgt4m(&rp->rg_seg_ptps[vs],
 			(VA2PA((caddr_t)pte) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 	} else {
