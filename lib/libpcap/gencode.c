@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.14 1999/07/02 16:03:41 simonb Exp $	*/
+/*	$NetBSD: gencode.c,v 1.15 1999/07/05 20:04:50 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.14 1999/07/02 16:03:41 simonb Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.15 1999/07/05 20:04:50 mjacob Exp $");
 #endif
 #endif
 
@@ -2231,7 +2231,7 @@ gen_mcode6(s1, s2, masklen, q)
 	addr = &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
 
 	if (sizeof(mask) * 8 < masklen)
-		bpf_error("mask length must be <= %d", sizeof(mask) * 8);
+		bpf_error("mask length must be <= %u", (int)(sizeof(mask) * 8));
 	memset(&mask, 0xff, masklen / 8);
 	if (masklen % 8) {
 		mask.s6_addr8[masklen / 8] =
