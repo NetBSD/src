@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.12.2.1 1998/11/09 06:06:38 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.12.2.2 1999/02/25 04:14:12 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -494,7 +494,7 @@ uvm_loanuobj(ufi, output, flags, va)
 
 			if (pg->flags & PG_WANTED)
 				/* still holding object lock */
-				thread_wakeup(pg);
+				wakeup(pg);
 
 			if (pg->flags & PG_RELEASED) {
 #ifdef DIAGNOSTIC
@@ -533,7 +533,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		**output = pg;
 		*output = (*output) + 1;
 		if (pg->flags & PG_WANTED)
-			thread_wakeup(pg);
+			wakeup(pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);		/* got it! */
@@ -557,7 +557,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		uvm_pageactivate(pg);	/* reactivate */
 		uvm_unlock_pageq();
 		if (pg->flags & PG_WANTED)
-			thread_wakeup(pg);
+			wakeup(pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		return(1);
@@ -570,7 +570,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	anon = uvm_analloc();
 	if (anon == NULL) {		/* out of VM! */
 		if (pg->flags & PG_WANTED)
-			thread_wakeup(pg);
+			wakeup(pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
@@ -587,7 +587,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	**output = anon;
 	*output = (*output) + 1;
 	if (pg->flags & PG_WANTED)
-		thread_wakeup(pg);
+		wakeup(pg);
 	pg->flags &= ~(PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 	return(1);
