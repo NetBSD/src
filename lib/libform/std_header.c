@@ -1,4 +1,4 @@
-/*	$NetBSD: std_header.c,v 1.2 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: std_header.c,v 1.3 2003/03/09 00:57:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,4 +28,7 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: std_header.c,v 1.3 2003/03/09 00:57:19 lukem Exp $");
 
