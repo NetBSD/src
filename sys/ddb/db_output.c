@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.15 1996/10/28 08:42:13 fvdl Exp $	*/
+/*	$NetBSD: db_output.c,v 1.16 1997/02/03 19:56:24 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -30,6 +30,7 @@
  * Printf and character output for debugger.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/stdarg.h>
 
