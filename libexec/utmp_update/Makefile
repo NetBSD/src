@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/07/28 22:38:50 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/18 06:21:15 lukem Exp $
+
+NOMAN=	# defined
 
 PROG=	utmp_update
-NOMAN=	1
 BINOWN=	root
 BINMODE=4555
 
