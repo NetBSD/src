@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.429 2002/05/19 00:01:29 sommerfeld Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.430 2002/05/19 00:19:22 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.426 2002/05/18 23:58:00 sommerfeld Exp 
+ *	NetBSD: pcidevs,v 1.427 2002/05/19 00:17:34 sommerfeld Exp 
  */
 
 /*
@@ -3460,10 +3460,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 PCI-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
 	    0,
 	    "Intel",
 	    "82870P2 P64H2 IOxAPIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 Hot Plug Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
@@ -3730,22 +3742,52 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82820 AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HB,
 	    0,
 	    "Intel",
-	    "82870P2 P64H2 PCI-to-PCI Bridge",
+	    "E7500 MCH Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_DRAM,
 	    0,
 	    "Intel",
-	    "82870P2 P64H2 IOxAPIC",
+	    "E7500 MCH DRAM Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B1,
 	    0,
 	    "Intel",
-	    "82870P2 P64H2 Hot Plug Controller",
+	    "E7500 MCH HI_B vppb 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B2,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_B vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C1,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C2,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D1,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
