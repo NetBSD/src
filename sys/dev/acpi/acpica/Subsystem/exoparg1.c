@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg1 - AML execution - opcodes with 1 argument
- *              xRevision: 146 $
+ *              xRevision: 147 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.3 2002/12/23 00:22:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.4 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXOPARG1_C__
 

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwgpe - Low level GPE enable/disable/clear functions
- *              xRevision: 42 $
+ *              xRevision: 43 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.5 2003/02/13 14:16:21 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acevents.h"

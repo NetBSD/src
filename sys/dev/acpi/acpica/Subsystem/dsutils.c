@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsutils - Dispatcher utilities
- *              xRevision: 97 $
+ *              xRevision: 99 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsutils.c,v 1.4 2002/12/23 00:22:08 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsutils.c,v 1.5 2003/02/13 14:16:18 kanaoka Exp $");
 
 #define __DSUTILS_C__
 
@@ -448,7 +448,7 @@ AcpiDsCreateOperand (
     UINT32                  ArgIndex)
 {
     ACPI_STATUS             Status = AE_OK;
-    NATIVE_CHAR             *NameString;
+    char                    *NameString;
     UINT32                  NameLength;
     ACPI_OPERAND_OBJECT     *ObjDesc;
     ACPI_PARSE_OBJECT       *ParentOp;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: uteval - Object evaluation
- *              xRevision: 42 $
+ *              xRevision: 45 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.5 2003/02/13 14:16:26 kanaoka Exp $");
 
 #define __UTEVAL_C__
 
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
 ACPI_STATUS
 AcpiUtEvaluateObject (
     ACPI_NAMESPACE_NODE     *PrefixNode,
-    NATIVE_CHAR             *Path,
+    char                    *Path,
     UINT32                  ExpectedReturnBtypes,
     ACPI_OPERAND_OBJECT     **ReturnDesc)
 {
@@ -174,7 +174,7 @@ AcpiUtEvaluateObject (
         }
         else
         {
-            ACPI_REPORT_METHOD_ERROR ("Method execution failed", 
+            ACPI_REPORT_METHOD_ERROR ("Method execution failed",
                 PrefixNode, Path, Status);
         }
 
@@ -187,7 +187,7 @@ AcpiUtEvaluateObject (
     {
         if (ExpectedReturnBtypes)
         {
-            ACPI_REPORT_METHOD_ERROR ("No object was returned from", 
+            ACPI_REPORT_METHOD_ERROR ("No object was returned from",
                 PrefixNode, Path, AE_NOT_EXIST);
 
             return_ACPI_STATUS (AE_NOT_EXIST);
@@ -225,7 +225,7 @@ AcpiUtEvaluateObject (
 
     if (!(ExpectedReturnBtypes & ReturnBtype))
     {
-        ACPI_REPORT_METHOD_ERROR ("Return object type is incorrect", 
+        ACPI_REPORT_METHOD_ERROR ("Return object type is incorrect",
             PrefixNode, Path, AE_TYPE);
 
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
@@ -264,7 +264,7 @@ AcpiUtEvaluateObject (
 
 ACPI_STATUS
 AcpiUtEvaluateNumericObject (
-    NATIVE_CHAR             *ObjectName,
+    char                    *ObjectName,
     ACPI_NAMESPACE_NODE     *DeviceNode,
     ACPI_INTEGER            *Address)
 {
@@ -275,7 +275,7 @@ AcpiUtEvaluateNumericObject (
     ACPI_FUNCTION_TRACE ("UtEvaluateNumericObject");
 
 
-    Status = AcpiUtEvaluateObject (DeviceNode, ObjectName, 
+    Status = AcpiUtEvaluateObject (DeviceNode, ObjectName,
                 ACPI_BTYPE_INTEGER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
@@ -321,7 +321,7 @@ AcpiUtExecute_HID (
     ACPI_FUNCTION_TRACE ("UtExecute_HID");
 
 
-    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__HID, 
+    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__HID,
                 ACPI_BTYPE_INTEGER | ACPI_BTYPE_STRING, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
@@ -376,7 +376,7 @@ AcpiUtExecute_CID (
     ACPI_FUNCTION_TRACE ("UtExecute_CID");
 
 
-    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__CID, 
+    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__CID,
                 ACPI_BTYPE_INTEGER | ACPI_BTYPE_STRING | ACPI_BTYPE_PACKAGE, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
@@ -452,8 +452,7 @@ AcpiUtExecute_UID (
     ACPI_FUNCTION_TRACE ("UtExecute_UID");
 
 
-
-    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__UID, 
+    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__UID,
                 ACPI_BTYPE_INTEGER | ACPI_BTYPE_STRING, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
@@ -508,7 +507,7 @@ AcpiUtExecute_STA (
     ACPI_FUNCTION_TRACE ("UtExecute_STA");
 
 
-    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__STA, 
+    Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__STA,
                 ACPI_BTYPE_INTEGER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {

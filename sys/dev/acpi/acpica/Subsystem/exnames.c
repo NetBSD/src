@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              xRevision: 92 $
+ *              xRevision: 94 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.5 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXNAMES_C__
 
@@ -152,13 +152,13 @@ __KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiExAllocateNameString (
     UINT32                  PrefixCount,
     UINT32                  NumNameSegs)
 {
-    NATIVE_CHAR             *TempPtr;
-    NATIVE_CHAR             *NameString;
+    char                    *TempPtr;
+    char                    *NameString;
     UINT32                   SizeNeeded;
 
     ACPI_FUNCTION_TRACE ("ExAllocateNameString");
@@ -248,7 +248,7 @@ AcpiExAllocateNameString (
 ACPI_STATUS
 AcpiExNameSegment (
     UINT8                   **InAmlAddress,
-    NATIVE_CHAR             *NameString)
+    char                    *NameString)
 {
     char                    *AmlAddress = (void *) *InAmlAddress;
     ACPI_STATUS             Status = AE_OK;
@@ -343,12 +343,12 @@ ACPI_STATUS
 AcpiExGetNameString (
     ACPI_OBJECT_TYPE        DataType,
     UINT8                   *InAmlAddress,
-    NATIVE_CHAR             **OutNameString,
+    char                    **OutNameString,
     UINT32                  *OutNameLength)
 {
     ACPI_STATUS             Status = AE_OK;
     UINT8                   *AmlAddress = InAmlAddress;
-    NATIVE_CHAR             *NameString = NULL;
+    char                    *NameString = NULL;
     UINT32                  NumSegments;
     UINT32                  PrefixCount = 0;
     BOOLEAN                 HasPrefix = FALSE;

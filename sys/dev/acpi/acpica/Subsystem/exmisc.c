@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              xRevision: 113 $
+ *              xRevision: 115 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.4 2002/12/23 00:22:10 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.5 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXMISC_C__
 
@@ -327,7 +327,7 @@ AcpiExDoConcatenate (
     UINT32                  i;
     ACPI_INTEGER            ThisInteger;
     ACPI_OPERAND_OBJECT     *ReturnDesc;
-    NATIVE_CHAR             *NewBuf;
+    char                    *NewBuf;
 
 
     ACPI_FUNCTION_ENTRY ();
@@ -353,14 +353,14 @@ AcpiExDoConcatenate (
             return (AE_NO_MEMORY);
         }
 
-        NewBuf = (NATIVE_CHAR *) ReturnDesc->Buffer.Pointer;
+        NewBuf = (char *) ReturnDesc->Buffer.Pointer;
 
         /* Convert the first integer */
 
         ThisInteger = ObjDesc1->Integer.Value;
         for (i = 0; i < AcpiGbl_IntegerByteWidth; i++)
         {
-            NewBuf[i] = (NATIVE_CHAR) ThisInteger;
+            NewBuf[i] = (char) ThisInteger;
             ThisInteger >>= 8;
         }
 
@@ -369,7 +369,7 @@ AcpiExDoConcatenate (
         ThisInteger = ObjDesc2->Integer.Value;
         for (; i < (ACPI_MUL_2 (AcpiGbl_IntegerByteWidth)); i++)
         {
-            NewBuf[i] = (NATIVE_CHAR) ThisInteger;
+            NewBuf[i] = (char) ThisInteger;
             ThisInteger >>= 8;
         }
 
@@ -424,7 +424,7 @@ AcpiExDoConcatenate (
             return (AE_NO_MEMORY);
         }
 
-        NewBuf = (NATIVE_CHAR *) ReturnDesc->Buffer.Pointer;
+        NewBuf = (char *) ReturnDesc->Buffer.Pointer;
 
         /* Concatenate the buffers */
 

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              xRevision: 174 $
+ *              xRevision: 175 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.5 2003/02/13 14:16:21 kanaoka Exp $");
 
 #define __EXSTORE_C__
 

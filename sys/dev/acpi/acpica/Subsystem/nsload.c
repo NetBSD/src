@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsload - namespace loading/expanding/contracting procedures
- *              xRevision: 61 $
+ *              xRevision: 64 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,13 +115,12 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsload.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsload.c,v 1.5 2003/02/13 14:16:22 kanaoka Exp $");
 
 #define __NSLOAD_C__
 
 #include "acpi.h"
 #include "acnamesp.h"
-#include "acparser.h"
 #include "acdispat.h"
 
 
@@ -174,10 +173,12 @@ AcpiNsLoadTable (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "AML block at %p\n", TableDesc->AmlStart));
 
+    /* Ignore table if there is no AML contained within */
+
     if (!TableDesc->AmlLength)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Zero-length AML block\n"));
-        return_ACPI_STATUS (AE_BAD_PARAMETER);
+        ACPI_REPORT_WARNING (("Zero-length AML block in table [%4.4s]\n", TableDesc->Pointer->Signature));
+        return_ACPI_STATUS (AE_OK);
     }
 
     /*

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              xRevision: 104 $
+ *              xRevision: 106 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,11 +115,10 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.5 2003/02/13 14:16:19 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
-#include "acnamesp.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evevent")
@@ -258,7 +257,7 @@ ACPI_STATUS
 AcpiEvFixedEventInitialize (
     void)
 {
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
     ACPI_STATUS             Status;
 
 
@@ -307,7 +306,7 @@ AcpiEvFixedEventDetect (
     UINT32                  IntStatus = ACPI_INTERRUPT_NOT_HANDLED;
     UINT32                  FixedStatus;
     UINT32                  FixedEnable;
-    NATIVE_UINT_MAX32       i;
+    ACPI_NATIVE_UINT        i;
 
 
     ACPI_FUNCTION_NAME ("EvFixedEventDetect");
@@ -336,7 +335,7 @@ AcpiEvFixedEventDetect (
         {
             /* Found an active (signalled) event */
 
-            IntStatus |= AcpiEvFixedEventDispatch (i);
+            IntStatus |= AcpiEvFixedEventDispatch ((UINT32) i);
         }
     }
 

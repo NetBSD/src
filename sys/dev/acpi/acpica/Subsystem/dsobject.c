@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 111 $
+ *              xRevision: 113 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.4 2002/12/23 00:22:08 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.5 2003/02/13 14:16:18 kanaoka Exp $");
 
 #define __DSOBJECT_C__
 
@@ -294,23 +294,24 @@ AcpiDsBuildInternalBufferObj (
     {
         ObjDesc->Buffer.Pointer = NULL;
         ACPI_REPORT_WARNING (("Buffer created with zero length in AML\n"));
-        return_ACPI_STATUS (AE_OK);
     }
-
-    ObjDesc->Buffer.Pointer = ACPI_MEM_CALLOCATE (
-                                    ObjDesc->Buffer.Length);
-    if (!ObjDesc->Buffer.Pointer)
+    else
     {
-        AcpiUtDeleteObjectDesc (ObjDesc);
-        return_ACPI_STATUS (AE_NO_MEMORY);
-    }
+        ObjDesc->Buffer.Pointer = ACPI_MEM_CALLOCATE (
+                                        ObjDesc->Buffer.Length);
+        if (!ObjDesc->Buffer.Pointer)
+        {
+            AcpiUtDeleteObjectDesc (ObjDesc);
+            return_ACPI_STATUS (AE_NO_MEMORY);
+        }
 
-    /* Initialize buffer from the ByteList (if present) */
+        /* Initialize buffer from the ByteList (if present) */
 
-    if (ByteList)
-    {
-        ACPI_MEMCPY (ObjDesc->Buffer.Pointer, ByteList->Named.Data,
-                     ByteListLength);
+        if (ByteList)
+        {
+            ACPI_MEMCPY (ObjDesc->Buffer.Pointer, ByteList->Named.Data,
+                         ByteListLength);
+        }
     }
 
     ObjDesc->Buffer.Flags |= AOPOBJ_DATA_VALID;

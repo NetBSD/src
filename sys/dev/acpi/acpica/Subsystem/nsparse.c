@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsparse - namespace interface to AML parser
- *              $Revision: 1.1.1.2 $
+ *              xRevision: 3 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.2 2003/02/13 14:16:23 kanaoka Exp $");
 
 #define __NSPARSE_C__
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              $Revision: 1.1.1.2 $
+ *              xRevision: 81 $
  *
  ******************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.2 2003/02/13 14:16:17 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

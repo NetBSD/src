@@ -2,7 +2,7 @@
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              xRevision: 85 $
+ *              xRevision: 87 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $");
 
 #define __NSOBJECT_C__
 
@@ -282,7 +282,7 @@ AcpiNsAttachObject (
  *
  * RETURN:      None.
  *
- * DESCRIPTION: Detach/delete an object associated with a namespace node.  
+ * DESCRIPTION: Detach/delete an object associated with a namespace node.
  *              if the object is an allocated object, it is freed.
  *              Otherwise, the field is simply cleared.
  *

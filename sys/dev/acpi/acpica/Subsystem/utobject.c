@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utobject - ACPI object create/delete/size/cache routines
- *              xRevision: 79 $
+ *              xRevision: 82 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.6 2002/12/23 00:22:17 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.7 2003/02/13 14:16:27 kanaoka Exp $");
 
 #define __UTOBJECT_C__
 
@@ -151,7 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.6 2002/12/23 00:22:17 kanaoka Exp $")
 
 ACPI_OPERAND_OBJECT  *
 AcpiUtCreateInternalObjectDbg (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
     ACPI_OBJECT_TYPE        Type)
@@ -249,7 +249,7 @@ AcpiUtCreateBufferObject (
     Buffer = ACPI_MEM_CALLOCATE (BufferSize);
     if (!Buffer)
     {
-        ACPI_REPORT_ERROR (("CreateBuffer: could not allocate size %X\n", 
+        ACPI_REPORT_ERROR (("CreateBuffer: could not allocate size %X\n",
             (UINT32) BufferSize));
         AcpiUtRemoveReference (BufferDesc);
         return_PTR (NULL);
@@ -350,7 +350,7 @@ AcpiUtValidInternalObject (
 
 void *
 AcpiUtAllocateObjectDescDbg (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {

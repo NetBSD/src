@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsaddr - Address resource descriptors (16/32/64)
- *              xRevision: 26 $
+ *              xRevision: 28 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsaddr.c,v 1.4 2002/12/23 00:22:14 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsaddr.c,v 1.5 2003/02/13 14:16:24 kanaoka Exp $");
 
 #define __RSADDR_C__
 
@@ -299,7 +299,7 @@ AcpiRsAddress16Resource (
         /* Point the String pointer to the end of this structure */
 
         OutputStruct->Data.Address16.ResourceSource.StringPtr =
-                (NATIVE_CHAR *)((UINT8 * )OutputStruct + StructSize);
+                (char *)((UINT8 * )OutputStruct + StructSize);
 
         TempPtr = (UINT8 *) OutputStruct->Data.Address16.ResourceSource.StringPtr;
 
@@ -376,7 +376,7 @@ AcpiRsAddress16Stream (
     UINT8                   *Buffer = *OutputBuffer;
     UINT8                   *LengthField;
     UINT8                   Temp8;
-    NATIVE_CHAR             *TempPointer = NULL;
+    char                    *TempPointer = NULL;
     ACPI_SIZE               ActualBytes;
 
 
@@ -484,7 +484,7 @@ AcpiRsAddress16Stream (
         *Buffer = Temp8;
         Buffer += 1;
 
-        TempPointer = (NATIVE_CHAR *) Buffer;
+        TempPointer = (char *) Buffer;
 
         /*
          * Copy the string
@@ -695,7 +695,7 @@ AcpiRsAddress32Resource (
         /* Point the String pointer to the end of this structure */
 
         OutputStruct->Data.Address32.ResourceSource.StringPtr =
-                (NATIVE_CHAR *)((UINT8 *)OutputStruct + StructSize);
+                (char *)((UINT8 *)OutputStruct + StructSize);
 
         TempPtr = (UINT8 *) OutputStruct->Data.Address32.ResourceSource.StringPtr;
 
@@ -770,7 +770,7 @@ AcpiRsAddress32Stream (
     UINT8                   *Buffer;
     UINT16                  *LengthField;
     UINT8                   Temp8;
-    NATIVE_CHAR             *TempPointer;
+    char                    *TempPointer;
 
 
     ACPI_FUNCTION_TRACE ("RsAddress32Stream");
@@ -879,7 +879,7 @@ AcpiRsAddress32Stream (
         *Buffer = Temp8;
         Buffer += 1;
 
-        TempPointer = (NATIVE_CHAR *) Buffer;
+        TempPointer = (char *) Buffer;
 
         /*
          * Copy the string
@@ -1091,7 +1091,7 @@ AcpiRsAddress64Resource (
         /* Point the String pointer to the end of this structure */
 
         OutputStruct->Data.Address64.ResourceSource.StringPtr =
-                (NATIVE_CHAR *)((UINT8 *)OutputStruct + StructSize);
+                (char *)((UINT8 *)OutputStruct + StructSize);
 
         TempPtr = (UINT8 *) OutputStruct->Data.Address64.ResourceSource.StringPtr;
 
@@ -1167,7 +1167,7 @@ AcpiRsAddress64Stream (
     UINT8                   *Buffer;
     UINT16                  *LengthField;
     UINT8                   Temp8;
-    NATIVE_CHAR             *TempPointer;
+    char                    *TempPointer;
 
 
     ACPI_FUNCTION_TRACE ("RsAddress64Stream");
@@ -1277,7 +1277,7 @@ AcpiRsAddress64Stream (
         *Buffer = Temp8;
         Buffer += 1;
 
-        TempPointer = (NATIVE_CHAR *) Buffer;
+        TempPointer = (char *) Buffer;
 
         /*
          * Copy the string

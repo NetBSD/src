@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
- *              xRevision: 60 $
+ *              xRevision: 62 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.5 2003/02/13 14:16:21 kanaoka Exp $");
 
 #define __HWACPI_C__
 
@@ -199,7 +199,7 @@ AcpiHwSetMode (
      */
     if (!AcpiGbl_FADT->SmiCmd)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No SMI_CMD in FADT, mode transition failed.\n")); 
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No SMI_CMD in FADT, mode transition failed.\n"));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 

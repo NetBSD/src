@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              xRevision: 90 $
+ *              xRevision: 94 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.6 2002/12/23 00:22:07 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.7 2003/02/13 14:16:17 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -255,7 +255,7 @@ static const COMMAND_INFO       AcpiGbl_DbCommands[] =
 
 void
 AcpiDbDisplayHelp (
-    NATIVE_CHAR             *HelpType)
+    char                    *HelpType)
 {
 
 
@@ -361,12 +361,12 @@ AcpiDbDisplayHelp (
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiDbGetNextToken (
-    NATIVE_CHAR             *String,
-    NATIVE_CHAR             **Next)
+    char                    *String,
+    char                    **Next)
 {
-    NATIVE_CHAR             *Start;
+    char                    *Start;
 
 
     /* At end of buffer? */
@@ -429,12 +429,12 @@ AcpiDbGetNextToken (
 
 UINT32
 AcpiDbGetLine (
-    NATIVE_CHAR             *InputBuffer)
+    char                    *InputBuffer)
 {
     UINT32                  i;
     UINT32                  Count;
-    NATIVE_CHAR             *Next;
-    NATIVE_CHAR             *This;
+    char                    *Next;
+    char                    *This;
 
 
     ACPI_STRCPY (AcpiGbl_DbParsedBuf, InputBuffer);
@@ -483,7 +483,7 @@ AcpiDbGetLine (
 
 UINT32
 AcpiDbMatchCommand (
-    NATIVE_CHAR             *UserCommand)
+    char                    *UserCommand)
 {
     UINT32                  i;
 
@@ -524,14 +524,14 @@ AcpiDbMatchCommand (
 
 ACPI_STATUS
 AcpiDbCommandDispatch (
-    NATIVE_CHAR             *InputBuffer,
+    char                    *InputBuffer,
     ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op)
 {
     UINT32                  Temp;
     UINT32                  CommandIndex;
     UINT32                  ParamCount;
-    NATIVE_CHAR             *CommandLine;
+    char                    *CommandLine;
     ACPI_STATUS             Status = AE_CTRL_TRUE;
 
 
@@ -617,7 +617,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_FIND:
-        Status = AcpiDbFindNameInNamespace (AcpiGbl_DbArgs[1]);
+        AcpiDbFindNameInNamespace (AcpiGbl_DbArgs[1]);
         break;
 
     case CMD_GO:
@@ -702,7 +702,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_LOAD:
-        Status = AcpiDbLoadAcpiTable (AcpiGbl_DbArgs[1]);
+        Status = AcpiDbGetTableFromFile (AcpiGbl_DbArgs[1], NULL);
         if (ACPI_FAILURE (Status))
         {
             return (Status);
@@ -718,7 +718,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_METHODS:
-        Status = AcpiDbDisplayObjects ("METHOD", AcpiGbl_DbArgs[1]);
+        AcpiDbDisplayObjects ("METHOD", AcpiGbl_DbArgs[1]);
         break;
 
     case CMD_NAMESPACE:
@@ -732,7 +732,7 @@ AcpiDbCommandDispatch (
 
     case CMD_OBJECT:
         ACPI_STRUPR (AcpiGbl_DbArgs[1]);
-        Status = AcpiDbDisplayObjects (AcpiGbl_DbArgs[1], AcpiGbl_DbArgs[2]);
+        AcpiDbDisplayObjects (AcpiGbl_DbArgs[1], AcpiGbl_DbArgs[2]);
         break;
 
     case CMD_OPEN:
@@ -764,7 +764,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_STATS:
-        Status = AcpiDbDisplayStatistics (AcpiGbl_DbArgs[1]);
+        AcpiDbDisplayStatistics (AcpiGbl_DbArgs[1]);
         break;
 
     case CMD_STOP:
@@ -915,7 +915,7 @@ AcpiDbSingleThread (
 
 ACPI_STATUS
 AcpiDbUserCommands (
-    NATIVE_CHAR             Prompt,
+    char                    Prompt,
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_STATUS             Status = AE_OK;

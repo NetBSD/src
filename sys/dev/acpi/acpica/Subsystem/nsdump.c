@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              xRevision: 149 $
+ *              xRevision: 151 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.6 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.7 2003/02/13 14:16:22 kanaoka Exp $");
 
 #define __NSDUMP_C__
 
@@ -192,7 +192,7 @@ AcpiNsPrintPathname (
 void
 AcpiNsDumpPathname (
     ACPI_HANDLE             Handle,
-    NATIVE_CHAR             *Msg,
+    char                    *Msg,
     UINT32                  Level,
     UINT32                  Component)
 {

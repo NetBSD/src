@@ -2,7 +2,7 @@
  *
  * Module Name: nsutils - Utilities for accessing ACPI namespace, accessing
  *                        parents and siblings and Scope manipulation
- *              xRevision: 118 $
+ *              xRevision: 122 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $");
 
 #define __NSUTILS_C__
 
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
 
 void
 AcpiNsReportError (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
     char                    *InternalName,
@@ -155,12 +155,12 @@ AcpiNsReportError (
     ACPI_STATUS             Status;
     char                    *Name;
 
-    
+
     /* Convert path to external format */
 
     Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, InternalName, NULL, &Name);
 
-    AcpiOsPrintf ("%8s-%04d: *** Error: Looking up ", 
+    AcpiOsPrintf ("%8s-%04d: *** Error: Looking up ",
         ModuleName, LineNumber);
 
     /* Print target name */
@@ -174,7 +174,7 @@ AcpiNsReportError (
         AcpiOsPrintf ("[COULD NOT EXTERNALIZE NAME]");
     }
 
-    AcpiOsPrintf (" in namespace, %s\n", 
+    AcpiOsPrintf (" in namespace, %s\n",
         AcpiFormatException (LookupStatus));
 
     if (Name)
@@ -201,7 +201,7 @@ AcpiNsReportError (
 
 void
 AcpiNsReportMethodError (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId,
     char                    *Message,
@@ -212,7 +212,7 @@ AcpiNsReportMethodError (
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node = PrefixNode;
 
- 
+
     if (Path)
     {
         Status = AcpiNsGetNodeByPath (Path, PrefixNode, ACPI_NS_NO_UPSEARCH, &Node);
@@ -244,7 +244,7 @@ AcpiNsReportMethodError (
 void
 AcpiNsPrintNodePathname (
     ACPI_NAMESPACE_NODE     *Node,
-    NATIVE_CHAR             *Msg)
+    char                    *Msg)
 {
     ACPI_BUFFER             Buffer;
     ACPI_STATUS             Status;
@@ -277,7 +277,7 @@ AcpiNsPrintNodePathname (
 
 BOOLEAN
 AcpiNsValidRootPrefix (
-    NATIVE_CHAR             Prefix)
+    char                    Prefix)
 {
 
     return ((BOOLEAN) (Prefix == '\\'));
@@ -298,7 +298,7 @@ AcpiNsValidRootPrefix (
 
 BOOLEAN
 AcpiNsValidPathSeparator (
-    NATIVE_CHAR             Sep)
+    char                    Sep)
 {
 
     return ((BOOLEAN) (Sep == '.'));
@@ -380,7 +380,7 @@ void
 AcpiNsGetInternalNameLength (
     ACPI_NAMESTRING_INFO    *Info)
 {
-    NATIVE_CHAR             *NextExternalChar;
+    char                    *NextExternalChar;
     UINT32                  i;
 
 
@@ -461,10 +461,10 @@ AcpiNsBuildInternalName (
     ACPI_NAMESTRING_INFO    *Info)
 {
     UINT32                  NumSegments = Info->NumSegments;
-    NATIVE_CHAR             *InternalName = Info->InternalName;
-    NATIVE_CHAR             *ExternalName = Info->NextExternalChar;
-    NATIVE_CHAR             *Result = NULL;
-    NATIVE_UINT             i;
+    char                    *InternalName = Info->InternalName;
+    char                    *ExternalName = Info->NextExternalChar;
+    char                    *Result = NULL;
+    ACPI_NATIVE_UINT        i;
 
 
     ACPI_FUNCTION_TRACE ("NsBuildInternalName");
@@ -514,13 +514,13 @@ AcpiNsBuildInternalName (
         else if (NumSegments == 2)
         {
             InternalName[i] = AML_DUAL_NAME_PREFIX;
-            Result = &InternalName[i+1];
+            Result = &InternalName[(ACPI_NATIVE_UINT) (i+1)];
         }
         else
         {
             InternalName[i] = AML_MULTI_NAME_PREFIX_OP;
-            InternalName[i+1] = (char) NumSegments;
-            Result = &InternalName[i+2];
+            InternalName[(ACPI_NATIVE_UINT) (i+1)] = (char) NumSegments;
+            Result = &InternalName[(ACPI_NATIVE_UINT) (i+2)];
         }
     }
 
@@ -596,10 +596,10 @@ AcpiNsBuildInternalName (
 
 ACPI_STATUS
 AcpiNsInternalizeName (
-    NATIVE_CHAR             *ExternalName,
-    NATIVE_CHAR             **ConvertedName)
+    char                    *ExternalName,
+    char                    **ConvertedName)
 {
-    NATIVE_CHAR             *InternalName;
+    char                    *InternalName;
     ACPI_NAMESTRING_INFO    Info;
     ACPI_STATUS             Status;
 
@@ -664,12 +664,12 @@ AcpiNsExternalizeName (
     UINT32                  *ConvertedNameLength,
     char                    **ConvertedName)
 {
-    NATIVE_UINT_MIN32       PrefixLength = 0;
-    NATIVE_UINT_MIN32       NamesIndex = 0;
-    NATIVE_UINT_MIN32       NumSegments = 0;
-    NATIVE_UINT_MIN32       i = 0;
-    NATIVE_UINT_MIN32       j = 0;
-    NATIVE_UINT_MIN32       RequiredLength;
+    ACPI_NATIVE_UINT        NamesIndex = 0;
+    ACPI_NATIVE_UINT        NumSegments = 0;
+    ACPI_NATIVE_UINT        RequiredLength;
+    ACPI_NATIVE_UINT        PrefixLength = 0;
+    ACPI_NATIVE_UINT        i = 0;
+    ACPI_NATIVE_UINT        j = 0;
 
 
     ACPI_FUNCTION_TRACE ("NsExternalizeName");
@@ -728,7 +728,7 @@ AcpiNsExternalizeName (
             /* <count> 4-byte names */
 
             NamesIndex = PrefixLength + 2;
-            NumSegments = (UINT32) (UINT8) InternalName[PrefixLength + 1];
+            NumSegments = (UINT32) (UINT8) InternalName[(ACPI_NATIVE_UINT) (PrefixLength + 1)];
             break;
 
         case AML_DUAL_NAME_PREFIX:
@@ -1014,14 +1014,14 @@ AcpiNsOpensScope (
 
 ACPI_STATUS
 AcpiNsGetNodeByPath (
-    NATIVE_CHAR             *Pathname,
+    char                    *Pathname,
     ACPI_NAMESPACE_NODE     *StartNode,
     UINT32                  Flags,
     ACPI_NAMESPACE_NODE     **ReturnNode)
 {
     ACPI_GENERIC_STATE      ScopeInfo;
     ACPI_STATUS             Status;
-    NATIVE_CHAR             *InternalPath = NULL;
+    char                    *InternalPath = NULL;
 
 
     ACPI_FUNCTION_TRACE_PTR ("NsGetNodeByPath", Pathname);

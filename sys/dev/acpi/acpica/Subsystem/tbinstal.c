@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbinstal - ACPI table installation and removal
- *              xRevision: 64 $
+ *              xRevision: 68 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.5 2003/02/13 14:16:25 kanaoka Exp $");
 
 #define __TBINSTAL_C__
 
@@ -143,11 +143,11 @@ __KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $")
 
 ACPI_STATUS
 AcpiTbMatchSignature (
-    NATIVE_CHAR             *Signature,
+    char                    *Signature,
     ACPI_TABLE_DESC         *TableInfo,
     UINT8                   SearchType)
 {
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
 
 
     ACPI_FUNCTION_TRACE ("TbMatchSignature");
@@ -158,7 +158,7 @@ AcpiTbMatchSignature (
      */
     for (i = 0; i < NUM_ACPI_TABLES; i++)
     {
-        if ((AcpiGbl_AcpiTableData[i].Flags & ACPI_TABLE_TYPE_MASK) != SearchType)
+        if (!(AcpiGbl_AcpiTableData[i].Flags & SearchType))
         {
             continue;
         }
@@ -174,7 +174,7 @@ AcpiTbMatchSignature (
             }
 
             ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-                "Table [%4.4s] matched and is a required ACPI table\n",
+                "Table [%4.4s] is an ACPI table consumed by the core subsystem\n",
                 (char *) AcpiGbl_AcpiTableData[i].Signature));
 
             return_ACPI_STATUS (AE_OK);
@@ -182,7 +182,7 @@ AcpiTbMatchSignature (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-        "Table [%4.4s] is not a required ACPI table - ignored\n",
+        "Table [%4.4s] is not an ACPI table consumed by the core subsystem - ignored\n",
         (char *) Signature));
 
     return_ACPI_STATUS (AE_TABLE_NOT_SUPPORTED);
@@ -227,7 +227,7 @@ AcpiTbInstallTable (
     Status = AcpiTbInitTableDescriptor (TableInfo->Type, TableInfo);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not install ACPI table [%s], %s\n",
+        ACPI_REPORT_ERROR (("Could not install ACPI table [%4.4s], %s\n",
             TableInfo->Pointer->Signature, AcpiFormatException (Status)));
     }
 

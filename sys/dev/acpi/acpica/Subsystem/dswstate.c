@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswstate - Dispatcher parse tree walk management routines
- *              xRevision: 71 $
+ *              xRevision: 75 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.5 2003/02/13 14:16:18 kanaoka Exp $");
 
 #define __DSWSTATE_C__
 
@@ -275,7 +275,7 @@ AcpiDsResultPop (
     ACPI_OPERAND_OBJECT     **Object,
     ACPI_WALK_STATE         *WalkState)
 {
-    NATIVE_UINT             Index;
+    ACPI_NATIVE_UINT        Index;
     ACPI_GENERIC_STATE      *State;
 
 
@@ -339,7 +339,7 @@ AcpiDsResultPopFromBottom (
     ACPI_OPERAND_OBJECT     **Object,
     ACPI_WALK_STATE         *WalkState)
 {
-    NATIVE_UINT             Index;
+    ACPI_NATIVE_UINT        Index;
     ACPI_GENERIC_STATE      *State;
 
 
@@ -815,7 +815,7 @@ AcpiDsObjStackGetValue (
         return_PTR (NULL);
     }
 
-    return_PTR (WalkState->Operands[(NATIVE_UINT)(WalkState->NumOperands - 1) -
+    return_PTR (WalkState->Operands[(ACPI_NATIVE_UINT)(WalkState->NumOperands - 1) -
                     Index]);
 }
 
@@ -846,7 +846,7 @@ AcpiDsGetCurrentWalkState (
         return (NULL);
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "DsGetCurrentWalkState, =%p\n",
+    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Current WalkState %p\n",
         Thread->WalkStateList));
 
     return (Thread->WalkStateList);
@@ -1064,7 +1064,7 @@ AcpiDsInitAmlWalk (
     }
     else
     {
-        /* 
+        /*
          * Setup the current scope.
          * Find a Named Op that has a namespace node associated with it.
          * search upwards from this Op.  Current scope is the first
@@ -1083,7 +1083,7 @@ AcpiDsInitAmlWalk (
         {
             ParserState->StartNode = ExtraOp->Common.Node;
         }
-        
+
         if (ParserState->StartNode)
         {
             /* Push start scope on scope stack and make it current  */

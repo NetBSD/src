@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exutils - interpreter/scanner utilities
- *              xRevision: 106 $
+ *              xRevision: 108 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.5 2003/02/13 14:16:21 kanaoka Exp $");
 
 #define __EXUTILS_C__
 
@@ -403,7 +403,7 @@ AcpiExDigitsNeeded (
 void
 AcpiExEisaIdToString (
     UINT32                  NumericId,
-    NATIVE_CHAR             *OutString)
+    char                    *OutString)
 {
     UINT32                  EisaId;
 
@@ -440,7 +440,7 @@ AcpiExEisaIdToString (
 void
 AcpiExUnsignedIntegerToString (
     ACPI_INTEGER            Value,
-    NATIVE_CHAR             *OutString)
+    char                    *OutString)
 {
     UINT32                  Count;
     UINT32                  DigitsNeeded;
@@ -457,7 +457,7 @@ AcpiExUnsignedIntegerToString (
     for (Count = DigitsNeeded; Count > 0; Count--)
     {
         (void) AcpiUtShortDivide (&Value, 10, &Quotient, &Remainder);
-        OutString[Count-1] = (NATIVE_CHAR) ('0' + Remainder);\
+        OutString[Count-1] = (char) ('0' + Remainder);\
         Value = Quotient;
     }
 }

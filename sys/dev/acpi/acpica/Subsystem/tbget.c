@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbget - ACPI Table get* routines
- *              xRevision: 81 $
+ *              xRevision: 83 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.4 2002/12/23 00:22:15 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.5 2003/02/13 14:16:25 kanaoka Exp $");
 
 #define __TBGET_C__
 
@@ -229,8 +229,8 @@ AcpiTbGetTableHeader (
         if (ACPI_FAILURE (Status))
         {
             ACPI_REPORT_ERROR (("Could not map memory at %8.8X%8.8X for length %X\n",
-                ACPI_HIDWORD (Address->Pointer.Physical), 
-                ACPI_LODWORD (Address->Pointer.Physical), 
+                ACPI_HIDWORD (Address->Pointer.Physical),
+                ACPI_LODWORD (Address->Pointer.Physical),
                 sizeof (ACPI_TABLE_HEADER)));
             return_ACPI_STATUS (Status);
         }
@@ -454,7 +454,7 @@ AcpiTbGetThisTable (
         {
             ACPI_REPORT_ERROR (("Could not map memory for table [%4.4s] at %8.8X%8.8X for length %X\n",
                 Header->Signature,
-                ACPI_HIDWORD (Address->Pointer.Physical), 
+                ACPI_HIDWORD (Address->Pointer.Physical),
                 ACPI_LODWORD (Address->Pointer.Physical), Header->Length));
             return (Status);
         }

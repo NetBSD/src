@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psopcode - Parser/Interpreter opcode information table
- *              xRevision: 74 $
+ *              xRevision: 76 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -825,7 +825,7 @@ AcpiPsGetOpcodeInfo (
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiPsGetOpcodeName (
     UINT16                  Opcode)
 {

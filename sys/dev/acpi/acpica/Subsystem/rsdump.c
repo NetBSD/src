@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsdump - Functions to display the resource structures.
- *              xRevision: 34 $
+ *              xRevision: 35 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.6 2002/12/23 00:22:15 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.7 2003/02/13 14:16:24 kanaoka Exp $");
 
 #define __RSDUMP_C__
 
