@@ -1,8 +1,0 @@
-*
-* system file for "ipf" module
-*
-$VERSION	1
-$CONFIGURE	Y
-$LOADABLE	Y
-$TUNABLE
-$$$
