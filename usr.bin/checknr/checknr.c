@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.9 2002/01/21 16:46:37 wiz Exp $	*/
+/*	$NetBSD: checknr.c,v 1.10 2002/01/21 18:28:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.9 2002/01/21 16:46:37 wiz Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.10 2002/01/21 18:28:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,19 @@ struct brstr {
 	{"(q",	")q"},
 	{"(x",	")x"},
 	{"(z",	")z"},
+	/* The -mdoc package */
+	{"Ao",  "Ac"},
+	{"Bd",  "Ed"},
+	{"Bk",  "Ek"},
+	{"Bo",  "Bc"},
+	{"Do",  "Dc"},
+	{"Fo",  "Fc"},
+	{"Oo",  "Oc"},
+	{"Po",  "Pc"},
+	{"Qo",  "Qc"},
+	{"Rs",  "Re"},
+	{"So",  "Sc"},
+	{"Xo",  "Xc"},
 	/* Things needed by preprocessors */
 	{"EQ",	"EN"},
 	{"TS",	"TE"},
@@ -137,37 +150,48 @@ struct brstr {
  * Used so we can complain about unrecognized commands.
  */
 char *knowncmds[MAXCMDS] = {
-"$c", "$f", "$h", "$p", "$s", "(b", "(c", "(d", "(f", "(l", "(q", "(t",
-"(x", "(z", ")b", ")c", ")d", ")f", ")l", ")q", ")t", ")x", ")z", "++",
-"+c", "1C", "1c", "2C", "2c", "@(", "@)", "@C", "@D", "@F", "@I", "@M",
-"@c", "@e", "@f", "@h", "@m", "@n", "@o", "@p", "@r", "@t", "@z", "AB",
-"AE", "AF", "AI", "AL", "AM", "AS", "AT", "AU", "AX", "B",  "B1", "B2",
-"BD", "BE", "BG", "BL", "BS", "BT", "BX", "C1", "C2", "CD", "CM", "CT",
-"D",  "DA", "DE", "DF", "DL", "DS", "DT", "EC", "EF", "EG", "EH", "EM",
-"EN", "EQ", "EX", "FA", "FD", "FE", "FG", "FJ", "FK", "FL", "FN", "FO",
-"FQ", "FS", "FV", "FX", "H",  "HC", "HD", "HM", "HO", "HU", "I",  "ID",
-"IE", "IH", "IM", "IP", "IX", "IZ", "KD", "KE", "KF", "KQ", "KS", "LB",
-"LC", "LD", "LE", "LG", "LI", "LP", "MC", "ME", "MF", "MH", "ML", "MR",
-"MT", "ND", "NE", "NH", "NL", "NP", "NS", "OF", "OH", "OK", "OP", "P",
-"P1", "PF", "PH", "PP", "PT", "PX", "PY", "QE", "QP", "QS", "R",  "RA",
-"RC", "RE", "RL", "RP", "RQ", "RS", "RT", "S",  "S0", "S2", "S3", "SA",
-"SG", "SH", "SK", "SM", "SP", "SY", "T&", "TA", "TB", "TC", "TD", "TE",
-"TH", "TL", "TM", "TP", "TQ", "TR", "TS", "TX", "UL", "US", "UX", "VL",
-"WC", "WH", "XA", "XD", "XE", "XF", "XK", "XP", "XS", "[",  "[-", "[0",
-"[1", "[2", "[3", "[4", "[5", "[<", "[>", "[]", "]",  "]-", "]<", "]>",
-"][", "ab", "ac", "ad", "af", "am", "ar", "as", "b",  "ba", "bc", "bd",
-"bi", "bl", "bp", "br", "bx", "c.", "c2", "cc", "ce", "cf", "ch", "cs",
-"ct", "cu", "da", "de", "di", "dl", "dn", "ds", "dt", "dw", "dy", "ec",
-"ef", "eh", "el", "em", "eo", "ep", "ev", "ex", "fc", "fi", "fl", "fo",
-"fp", "ft", "fz", "hc", "he", "hl", "hp", "ht", "hw", "hx", "hy", "i",
-"ie", "if", "ig", "in", "ip", "it", "ix", "lc", "lg", "li", "ll", "ln",
-"lo", "lp", "ls", "lt", "m1", "m2", "m3", "m4", "mc", "mk", "mo", "n1",
-"n2", "na", "ne", "nf", "nh", "nl", "nm", "nn", "np", "nr", "ns", "nx",
-"of", "oh", "os", "pa", "pc", "pi", "pl", "pm", "pn", "po", "pp", "ps",
-"q",  "r",  "rb", "rd", "re", "rm", "rn", "ro", "rr", "rs", "rt", "sb",
-"sc", "sh", "sk", "so", "sp", "ss", "st", "sv", "sz", "ta", "tc", "th",
-"ti", "tl", "tm", "tp", "tr", "u",  "uf", "uh", "ul", "vs", "wh", "xp",
-"yr", 0
+"$c", "$f", "$h", "$p", "$s", "%A", "%B", "%C", "%D", "%I", "%J", "%N",
+"%O", "%P", "%Q", "%R", "%T", "%V", "(b", "(c", "(d", "(f", "(l", "(q",
+"(t", "(x", "(z", ")b", ")c", ")d", ")f", ")l", ")q", ")t", ")x",
+")z", "++", "+c", "1C", "1c", "2C", "2c", "@(", "@)", "@C", "@D",
+"@F", "@I", "@M", "@c", "@e", "@f", "@h", "@m", "@n", "@o", "@p",
+"@r", "@t", "@z", "AB", "AE", "AF", "AI", "AL", "AM", "AS", "AT",
+"AU", "AX", "Ac", "Ad", "An", "Ao", "Ap", "Aq", "Ar", "At", "B" ,  "B1",
+"B2", "BD", "BE", "BG", "BL", "BS", "BT", "BX", "Bc", "Bd", "Bf",
+"Bk", "Bl", "Bo", "Bq", "Bsx", "Bx", "C1", "C2", "CD", "CM", "CT",
+"Cd", "Cm", "D" , "D1", "DA", "DE", "DF", "DL", "DS", "DT", "Db", "Dc",
+"Dd", "Dl", "Do", "Dq", "Dt", "Dv", "EC", "EF", "EG", "EH", "EM",
+"EN", "EQ", "EX", "Ec", "Ed", "Ef", "Ek", "El", "Em", "Eo", "Er",
+"Ev", "FA", "FD", "FE", "FG", "FJ", "FK", "FL", "FN", "FO", "FQ",
+"FS", "FV", "FX", "Fa", "Fc", "Fd", "Fl", "Fn", "Fo", "Ft", "Fx",
+"H" , "HC", "HD", "HM", "HO", "HU", "I" , "ID", "IE", "IH", "IM",
+"IP", "IX", "IZ", "Ic", "It", "KD", "KE", "KF", "KQ", "KS", "LB",
+"LC", "LD", "LE", "LG", "LI", "LP", "Lb", "Li", "MC", "ME", "MF",
+"MH", "ML", "MR", "MT", "ND", "NE", "NH", "NL", "NP", "NS", "Nd",
+"Nm", "No", "Ns", "Nx", "OF", "OH", "OK", "OP", "Oc", "Oo", "Op",
+"Os", "Ot", "Ox", "P" , "P1", "PF", "PH", "PP", "PT", "PX", "PY",
+"Pa", "Pc", "Pf", "Po", "Pp", "Pq", "QE", "QP", "QS", "Qc", "Ql",
+"Qo", "Qq", "R" , "RA", "RC", "RE", "RL", "RP", "RQ", "RS", "RT",
+"Re", "Rs", "S" , "S0", "S2", "S3", "SA", "SG", "SH", "SK", "SM",
+"SP", "SY", "Sc", "Sh", "Sm", "So", "Sq", "Ss", "St", "Sx", "Sy",
+"T&", "TA", "TB", "TC", "TD", "TE", "TH", "TL", "TM", "TP", "TQ",
+"TR", "TS", "TX", "Tn", "UL", "US", "UX", "Ud", "Ux", "VL", "Va", "Vt",
+"WC", "WH", "XA", "XD", "XE", "XF", "XK", "XP", "XS", "Xc", "Xo",
+"Xr", "[" , "[-", "[0", "[1", "[2", "[3", "[4", "[5", "[<", "[>",
+"[]", "\\{", "\\}", "]" , "]-", "]<", "]>", "][", "ab", "ac", "ad", "af", "am",
+"ar", "as", "b" , "ba", "bc", "bd", "bi", "bl", "bp", "br", "bx",
+"c.", "c2", "cc", "ce", "cf", "ch", "cs", "ct", "cu", "da", "de",
+"di", "dl", "dn", "ds", "dt", "dw", "dy", "ec", "ef", "eh", "el",
+"em", "eo", "ep", "ev", "ex", "fc", "fi", "fl", "fo", "fp", "ft",
+"fz", "hc", "he", "hl", "hp", "ht", "hw", "hx", "hy", "i" , "ie",
+"if", "ig", "in", "ip", "it", "ix", "lc", "lg", "li", "ll", "ln",
+"lo", "lp", "ls", "lt", "m1", "m2", "m3", "m4", "mc", "mk", "mo",
+"n1", "n2", "na", "ne", "nf", "nh", "nl", "nm", "nn", "np", "nr",
+"ns", "nx", "of", "oh", "os", "pa", "pc", "pi", "pl", "pm", "pn",
+"po", "pp", "ps", "q" , "r" , "rb", "rd", "re", "rm", "rn", "ro",
+"rr", "rs", "rt", "sb", "sc", "sh", "sk", "so", "sp", "ss", "st",
+"sv", "sz", "ta", "tc", "th", "ti", "tl", "tm", "tp", "tr", "u",
+"uf", "uh", "ul", "vs", "wh", "xp", "yr", 0
 };
 
 int	lineno;		/* current line number in input file */
@@ -263,6 +287,7 @@ main(int argc, char **argv)
 				perror(cfilename);
 			else
 				process(f);
+			fclose(f);
 		}
 	} else {
 		cfilename = "stdin";
