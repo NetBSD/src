@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10 1995/05/13 06:58:20 jtc Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.10 1995/05/13 06:58:20 jtc Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,11 +99,13 @@ getdiskbyname(name)
 
 #define getnumdflt(field, dname, dflt) \
         { long f; (field) = (cgetnum(buf, dname, &f) == -1) ? (dflt) : f; }
+#define	getnum(field, dname) \
+	{ long f; cgetnum(buf, dname, &f); field = f; }
 
 	getnumdflt(dp->d_secsize, "se", DEV_BSIZE);
-	cgetnum(buf, "nt",(long *) &dp->d_ntracks);
-	cgetnum(buf, "ns",(long *) &dp->d_nsectors);
-	cgetnum(buf, "nc",(long *) &dp->d_ncylinders);
+	getnum(dp->d_ntracks, "nt");
+	getnum(dp->d_nsectors, "ns");
+	getnum(dp->d_ncylinders, "nc");
 
 	if (cgetstr(buf, "dt", &cq) > 0)
 		dp->d_type = gettype(cq, dktypenames);
@@ -127,11 +129,14 @@ getdiskbyname(name)
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
+		long f;
+
 		psize[1] = pbsize[1] = pfsize[1] = poffset[1] = ptype[1] = p;
-		if (cgetnum(buf, psize,(long *) &pp->p_size) == -1)
+		if (cgetnum(buf, psize, &f) == -1)
 			pp->p_size = 0;
 		else {
-			cgetnum(buf, poffset, (long *) &pp->p_offset);
+			pp->p_size = f;
+			getnum(pp->p_offset, poffset);
 			getnumdflt(pp->p_fsize, pfsize, 0);
 			if (pp->p_fsize) {
 				long bsize;
