@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2001/11/25 10:41:27 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2001/12/01 18:24:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ Llocked_no_old_preempt:
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
 	movl	%a1,%a1@(PT_SWITCHTO)	/* next->pt_switchto = next */
-	movl	%a3,%a2@(PT_SWITCHTOUC)
+	movl	%a3,%a1@(PT_SWITCHTOUC)
 	movl	%d0,%a2
 	jbra	Lpthread__switch_away_no_decrement
 
@@ -312,7 +312,6 @@ Lupcall_no_old_preempt:
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
 	movl	%a3,%a3@(PT_SWITCHTO)
 	movl	%a4,%a3@(PT_SWITCHTOUC)
-	movl	%a3,%a1			/* from(a1) = next */
 	movl	%d0,%a2			/* to(a2)   = self->pt_next */
 	jbra	Lpthread__switch_away_no_decrement
 	/* NOTREACHED */
