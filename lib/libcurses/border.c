@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.1.2.1 2000/03/05 23:26:12 jdc Exp $	*/
+/*	$NetBSD: border.c,v 1.1.2.2 2000/03/06 12:54:03 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,23 +62,26 @@ wborder(win, left, right, top, bottom, topleft, topright, botleft, botright)
 	if (!(botright & __CHARTEXT)) botright = ACS_LRCORNER;
 
 #ifdef DEBUG
-	__CTRACE("wborder: left = %c%s", left,
-	    left & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: right = %c%s", right,
-	    right & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: top = %c%s", top,
-	    top & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: bottom = %c%s", bottom,
-	    bottom & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: topleft = %c%s", topleft,
-	    topleft & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: topright = %c%s", topright,
-	    topright & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: botleft = %c%s", botleft,
-	    botleft & __ALTCHARSET ? " (A)\n" : "\n");
-	__CTRACE("wborder: botright = %c%s", botright,
-	    botright & __ALTCHARSET ? " (A)\n" : "\n");
+	__CTRACE("wborder: left = %c, 0x%x\n", left, left & __ATTRIBUTES);
+	__CTRACE("wborder: right = %c, 0x%x\n", right, right & __ATTRIBUTES);
+	__CTRACE("wborder: top = %c, 0x%x\n", top, top & __ATTRIBUTES);
+	__CTRACE("wborder: bottom = %c, 0x%x\n", bottom, bottom & __ATTRIBUTES);
+	__CTRACE("wborder: topleft = %c, 0x%x\n", topleft, topleft & __ATTRIBUTES);
+	__CTRACE("wborder: topright = %c, 0x%x\n", topright, topright & __ATTRIBUTES);
+	__CTRACE("wborder: botleft = %c, 0x%x\n", botleft, botleft & __ATTRIBUTES);
+	__CTRACE("wborder: botright = %c, 0x%x\n", botright, botright & __ATTRIBUTES);
 #endif
+
+	/* Merge window attributes */
+	left |= win->wattr;
+	right |= win->wattr;
+	top |= win->wattr;
+	bottom |= win->wattr;
+	topleft |= win->wattr;
+	topright |= win->wattr;
+	botleft |= win->wattr;
+	botright |= win->wattr;
+
 	endx = win->maxx - 1;
 	endy = win->maxy - 1;
 	fp = win->lines[0]->line;
@@ -99,7 +102,8 @@ wborder(win, left, right, top, bottom, topleft, topright, botleft, botright)
 	}
 
 	/* Corners */
-	if (!(win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN)) {
+	if (!(win->maxx == LINES && win->maxy == COLS &&
+	    (win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN))) {
 		fp[0].ch = (wchar_t) topleft & __CHARTEXT;
 		fp[0].attr = (attr_t) topleft & __ATTRIBUTES;
 		fp[endx].ch = (wchar_t) topright & __CHARTEXT;
