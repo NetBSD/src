@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.25 1996/08/31 20:58:17 mycroft Exp $	*/
+/*	$NetBSD: config.h,v 1.26 1996/08/31 21:15:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,6 @@ struct deva {
 	int	d_isdef;		/* set once properly defined */
 	struct	devbase *d_devbase;	/* the base device */
 	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
-	struct	nvlist *d_vectors;	/* interrupt vectors, if any */
 	struct	nvlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
@@ -177,7 +176,6 @@ struct devi {
 	short	i_pvlen;	/* number of parents */
 	short	i_pvoff;	/* offset in parents.vec */
 	short	i_locoff;	/* offset in locators.vec */
-	short	i_ivoff;	/* offset in interrupt vectors, if any */
 	struct	devi **i_parents;/* the parents themselves */
 
 };

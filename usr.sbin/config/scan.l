@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.6 1996/08/31 20:58:28 mycroft Exp $	*/
+/*	$NetBSD: scan.l,v 1.7 1996/08/31 21:15:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,6 @@ options		{ return OPTIONS; }
 root		{ return ROOT; }
 source		{ return SOURCE; }
 swap		{ return SWAP; }
-vector		{ return VECTOR; }
 with		{ return WITH; }
 
 		/* keywords with values */
