@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __setjmp14.S,v 1.6 2002/03/27 18:38:50 matt Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.7 2002/03/30 05:32:32 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,7 +49,7 @@
 
 #include "DEFS.h"
 
-ENTRY(__setjmp14, 0)
+ENTRY(__setjmp14, R6)
 	movl	4(%ap),%r2		# construct sigcontext
 	subl2	$12,%sp			# space for current struct sigstack
 	pushl	%sp			# get current values
@@ -65,14 +65,14 @@ ENTRY(__setjmp14, 0)
 	clrl	%r0			# assume no stack arguments
 	bbc	$13,6(%fp),1f		# handle callg
 	addl3	$1,(%ap),%r0		# get argument count +1 if calls
-1:	moval	20(%fp)[%r0],(%r2)+	# save sp of caller
+1:	moval	24(%fp)[%r0],(%r2)+	# save sp of caller
 	movl	12(%fp),(%r2)+		# save frame pointer of caller
 	movl	8(%fp),(%r2)+		# save argument pointer of caller
 	movl	16(%fp),(%r2)+		# save pc of caller
 	movpsl	(%r2)			# save current psl
 	movw	4(%fp),(%r2)		# save psw of caller
 #ifdef __ELF__
-	addl2	$4,%r2			# get past caller psl
+	addl3	$44,4(%ap),%r2		# point to past signal context
 	movq	%r6,(%r2)+		# save r6/r7
 	movq	%r8,(%r2)+		# save r8/r9
 	movq	%r10,(%r2)+		# save r10/r11
