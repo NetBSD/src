@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.2 2001/12/30 02:19:26 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.3 2002/03/01 01:29:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,6 +111,17 @@ pthread_key_delete(pthread_key_t key)
 	self = pthread__self();
 	/* XXX this is a long operation to protect with a spinlock */
 	pthread_spinlock(self, &allqueue_lock);
+	/* XXX this is a memory leak; standards-compliant, but
+	 * pthread_key_delete() is not a well-thought-out part of the
+	 * standard. Reconsider.
+	 * (well, it could be worse. we could be running destructors here,
+	 * which would be a total mess.)
+	 * See David Butenhof's article in comp.programming.threads:
+	 * Subject: Re: TSD key reusing issue
+	 * Message-ID: <u97d8.29$fL6.200@news.cpqcorp.net>
+	 * Date: Thu, 21 Feb 2002 09:06:17 -0500
+	 * http://groups.google.com/groups?hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
+	 */
 	PTQ_FOREACH(thread, &allqueue, pt_allq)
 		thread->pt_specific[key] = NULL;
 	pthread_spinunlock(self, &allqueue_lock);
