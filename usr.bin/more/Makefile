@@ -1,13 +1,13 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
-#	$Id: Makefile,v 1.4 1993/11/09 05:07:24 cgd Exp $
+#	$Id: Makefile,v 1.5 1993/11/11 01:30:28 jtc Exp $
 
 PROG=	more
 CFLAGS+=-I${.CURDIR} -DREGEX 
 SRCS=	ch.c command.c decode.c filename.c help.c input.c line.c \
 	linenum.c main.c option.c os.c output.c position.c prim.c \
 	screen.c signal.c tags.c ttyin.c 
-LDADD+=	-ltermcap -lgnuregex
-DPADD+=	${LIBTERM} /usr/lib/libgnuregex.a
+LDADD+=	-ltermcap
+DPADD+=	${LIBTERM}
 MLINKS=	more.1 page.1
 LINKS=	${BINDIR}/more ${BINDIR}/page
 
