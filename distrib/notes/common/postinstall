@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9.4.11 2001/05/21 02:06:07 jhawk Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.12 2001/05/26 22:26:36 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,7 +231,7 @@ for information.
 .if \n[macppc] \{\
 Also, you may want to read through the 
 .Nx*M
-X11R6 HOW-TO.
+X11R6 FAQ.
 .br
 .Lk http://www.netbsd.org/Ports/macppc/x11.html
 .\}
