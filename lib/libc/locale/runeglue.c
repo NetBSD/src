@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.6 2001/01/21 03:49:02 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.6 2001/01/21 03:49:02 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _CTYPE_PRIVATE
@@ -123,8 +123,21 @@ __runetable_to_netbsd_ctype(locale)
 			new_ctype[i + 1] |= _C;
 		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_X)
 			new_ctype[i + 1] |= _X;
+		/*
+		 * TWEAK!  _B has been used incorrectly (or with older
+		 * declaration) in ctype.h isprint() macro.
+		 * _B does not mean isblank, it means "isprint && !isgraph".
+		 * the following is okay since isblank() was hardcoded in
+		 * function (i.e. isblank() is inherently locale unfriendly).
+		 */
+#if 1
+		if ((_CurrentRuneLocale->__runetype[i] & (_CTYPE_R | _CTYPE_G))
+		    == _CTYPE_R)
+			new_ctype[i + 1] |= _B;
+#else
 		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_B)
 			new_ctype[i + 1] |= _B;
+#endif
 		new_toupper[i + 1] = (short)_CurrentRuneLocale->__mapupper[i];
 		new_tolower[i + 1] = (short)_CurrentRuneLocale->__maplower[i];
 	}
