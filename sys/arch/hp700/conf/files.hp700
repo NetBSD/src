@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.12 2004/08/26 16:48:06 jkunz Exp $
+#	$NetBSD: files.hp700,v 1.13 2005/01/28 17:38:50 jkunz Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -11,6 +11,7 @@ maxusers 2 8 64
 
 # Status LEDs
 defflag 			USELEDS
+defflag				POWER_SWITCH
 
 # 
 # "workstation console" routines
@@ -70,7 +71,7 @@ define	gscbus	{ }
 # Mainbus
 #
 
-device	mainbus {[irq = -1]}
+device	mainbus {[irq = -1]}: sysmon_power, sysmon_taskq
 attach	mainbus at root
 file	arch/hp700/hp700/mainbus.c	mainbus
 
@@ -228,6 +229,7 @@ file	arch/hp700/hp700/intr.c
 file	arch/hp700/hp700/machdep.c
 file	arch/hp700/hp700/softintr.c
 file	arch/hp700/hp700/sys_machdep.c
+file	arch/hp700/hp700/power.c		power_switch
 file	arch/hp700/dev/clock.c
 
 file	dev/cons.c
