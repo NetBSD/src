@@ -86,12 +86,14 @@ CLEANADD=\
 
 all: make_examples
 
-.PHONY: make_examples
+.PHONY: make_examples prepare_make_examples
 make_examples: prepare_make_examples $(PROCESSEDEXAMPLEFILES)
 
 prepare_make_examples: examples/penguin.ps
 	test -d examples || $(mkinstalldirs) examples
 	test -f penguin.ps || cp $(srcdir)/examples/penguin.ps .
+
+$(PROCESSEDEXAMPLEFILES): prepare_make_examples
 
 install_data: $(NORMALFILES) $(HTMLDOCFILES) \
               $(EXAMPLEFILES) $(PROCESSEDEXAMPLEFILES)
