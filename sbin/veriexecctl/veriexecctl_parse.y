@@ -2,7 +2,7 @@
 /*
  * Parser for verified exec fingerprint file.
  *
- * $NetBSD: veriexecctl_parse.y,v 1.2 2002/12/21 23:41:44 wiz Exp $
+ * $NetBSD: veriexecctl_parse.y,v 1.3 2004/03/06 11:59:30 blymn Exp $
  *
  */
 
@@ -22,7 +22,7 @@ static int
 convert(char *fp, unsigned int count, unsigned char *out);
 
 /* ioctl parameter struct */
-struct verified_exec_params params;
+static struct verified_exec_params params;
 extern int fd;
 extern int lineno;
 
@@ -41,11 +41,21 @@ extern int lineno;
 
 statement: /* empty */
   | statement path type fingerprint flags eol
+  | statement error eol {
+				yyclearin; /* discard lookahead */
+				yyerrok;   /* no more error */
+				fprintf(stderr,
+					"skipping to next fingerprint\n");
+			}
   ;
 
 path: PATH 
 {
-	strncpy(params.file, $1, 255);
+	if (strlen($1) >= MAXPATHLEN) {
+		yyerror("Path >= MAXPATHLEN");
+		YYERROR;
+	}
+	strncpy(params.file, $1, MAXPATHLEN);
 	params.type = VERIEXEC_DIRECT;
 };
 
@@ -95,7 +105,8 @@ flag_spec: STRING
 
 eol: EOL
 {
-	do_ioctl();
+	if (!YYRECOVERING) /* Don't do the ioctl if we saw an error */
+		do_ioctl();
 };
 
 %%
