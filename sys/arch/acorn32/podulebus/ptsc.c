@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.8 2002/10/05 17:16:35 chs Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.9 2003/04/01 02:13:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -49,6 +49,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -163,7 +166,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_config_flags = SFAS_NO_DMA /*| SFAS_NF_DEBUG*/;
 	sc->sc_softc.sc_host_id      = 7;    /* Should check the jumpers */
 
-	sc->sc_softc.sc_bump_sz = NBPG;
+	sc->sc_softc.sc_bump_sz = PAGE_SIZE;
 	sc->sc_softc.sc_bump_pa = 0x0;
 
 	sfasinitialize((struct sfas_softc *)sc);
@@ -417,7 +420,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 		lastpa = 0;
 		while(len > 3) {
 			pa = kvtop(ptr);
-			max_t = NBPG - (pa & PGOFSET);
+			max_t = PAGE_SIZE - (pa & PGOFSET);
 			if (max_t > len)
 			  max_t = len;
 
