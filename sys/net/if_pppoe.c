@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.53 2004/04/21 18:40:40 itojun Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.54 2004/11/28 11:44:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.53 2004/04/21 18:40:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.54 2004/11/28 11:44:36 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.53 2004/04/21 18:40:40 itojun Exp $")
 #include <net/if_sppp.h>
 #include <net/if_spppvar.h>
 #include <net/if_pppoe.h>
+#include "opt_pfil_hooks.h"
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -196,6 +197,10 @@ static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *);
 static struct pppoe_softc * pppoe_find_softc_by_hunique(u_int8_t *, size_t, struct ifnet *);
 static struct mbuf *pppoe_get_mbuf(size_t len);
 
+#ifdef PFIL_HOOKS
+static int pppoe_ifattach_hook(void *, struct mbuf **, struct ifnet *, int);
+#endif
+
 LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
 int	pppoe_clone_create __P((struct if_clone *, int));
@@ -260,6 +265,11 @@ pppoe_clone_create(ifc, unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #endif
+#ifdef PFIL_HOOKS
+	if (LIST_EMPTY(&pppoe_softc_list))
+		pfil_add_hook(pppoe_ifattach_hook, NULL,
+		    PFIL_IFNET|PFIL_WAITOK, &if_pfil);
+#endif
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
 	return 0;
 }
@@ -271,6 +281,11 @@ pppoe_clone_destroy(ifp)
 	struct pppoe_softc * sc = ifp->if_softc;
 
 	LIST_REMOVE(sc, sc_list);
+#ifdef PFIL_HOOKS
+	if (LIST_EMPTY(&pppoe_softc_list))
+		pfil_remove_hook(pppoe_ifattach_hook, NULL,
+		    PFIL_IFNET|PFIL_WAITOK, &if_pfil);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -1413,3 +1428,31 @@ pppoe_start(struct ifnet *ifp)
 		pppoe_output(sc, m);
 	}
 }
+
+
+#ifdef PFIL_HOOKS
+static int
+pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	struct pppoe_softc *sc;
+	int s;
+
+	if (mp != (struct mbuf **)PFIL_IFNET_DETACH)
+		return 0;
+
+	s = splnet();
+	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+		if (sc->sc_eth_if != ifp)
+			continue;
+		if (sc->sc_sppp.pp_if.if_flags & IFF_UP) {
+			sc->sc_sppp.pp_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
+			printf("%s: ethernet interface detached, going down\n",
+			    sc->sc_sppp.pp_if.if_xname);
+		}
+		sc->sc_eth_if = NULL;
+	}
+	splx(s);
+
+	return 0;
+}
+#endif
