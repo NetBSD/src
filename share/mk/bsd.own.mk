@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.300 2002/07/03 11:51:34 tron Exp $
+#	$NetBSD: bsd.own.mk,v 1.301 2002/07/11 15:00:57 scw Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -66,7 +66,7 @@ USETOOLS?=	yes
 USETOOLS?=	no
 
 
-.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3"
+.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3" || ${MACHINE_ARCH} == "sh5"
 .BEGIN:
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
 	@false
@@ -297,6 +297,17 @@ OBJECT_FMT=	ELF
 NOPIC=		# defined
 .endif
 
+# The sh5 port is incomplete.
+.if (${MACHINE_ARCH} == "sh5eb" || ${MACHINE_ARCH} == "sh5el") && \
+    !defined(HAVE_GCC3)
+NOPIC=		# defined
+NOPROFILE=	# defined
+NOLINT=		# defined
+NOGCCERROR=	# defined - The SuperH Gnu C compiler is too pedantic in places
+MKGDB:=	no
+MKGCC:=	no
+.endif
+
 # The m68000 port is incomplete.
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
@@ -326,6 +337,8 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
+GNU_ARCH.sh5eb=sh64
+GNU_ARCH.sh5el=sh64le
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 # In order to identify NetBSD to GNU packages, we sometimes need
@@ -339,6 +352,8 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
      ${MACHINE_ARCH} == "m68000" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
      ${MACHINE_GNU_ARCH} == "shle" || \
+     ${MACHINE_GNU_ARCH} == "sh64" || \
+     ${MACHINE_GNU_ARCH} == "sh64le" || \
      ${MACHINE_ARCH} == "sparc" || \
      ${MACHINE_ARCH} == "vax")
 MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsdelf
@@ -347,7 +362,7 @@ MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
 # CPU model, derived from MACHINE_ARCH
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html installhtml cleanhtml
