@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.87 2004/11/24 00:02:50 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.88 2004/11/24 15:14:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.87 2004/11/24 00:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.88 2004/11/24 15:14:13 briggs Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -787,13 +787,26 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		if (i == PCI_MAPREG_END)
 			aprint_error("%s: WARNING: unable to find I/O BAR\n",
 			    sc->sc_dev.dv_xname);
-		else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
+		else {
+			/*
+			 * The i8254x doesn't apparently respond when the
+			 * I/O BAR is 0, which looks somewhat like it's not
+			 * been configured.
+			 */
+			preg = pci_conf_read(pc, pa->pa_tag, i);
+			if (PCI_MAPREG_MEM_ADDR(preg) == 0) {
+				aprint_error("%s: WARNING: I/O BAR at zero.",
+				    sc->sc_dev.dv_xname);
+			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
-					NULL, NULL) == 0)
-			sc->sc_flags |= WM_F_IOH_VALID;
-		else
-			aprint_error("%s: WARNING: unable to map I/O space\n",
-			    sc->sc_dev.dv_xname);
+					NULL, NULL) == 0) {
+				sc->sc_flags |= WM_F_IOH_VALID;
+			} else {
+				aprint_error("%s: WARNING: unable to map "
+				    "I/O space\n", sc->sc_dev.dv_xname);
+			}
+		}
+
 	}
 
 	/* Enable bus mastering.  Disable MWI on the i82542 2.0. */
@@ -2421,9 +2434,15 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82541:
 	case WM_T_82541_2:
 		/*
-		 * These chips have a problem with the memory-mapped
-		 * write cycle when issuing the reset, so use I/O-mapped
-		 * access, if possible.
+		 * On some chipsets, a reset through a memory-mapped write
+		 * cycle can cause the chip to reset before completing the
+		 * write cycle.  This causes major headache that can be
+		 * avoided by issuing the reset via indirect register writes
+		 * through I/O space.
+		 *
+		 * So, if we successfully mapped the I/O BAR at attach time,
+		 * use that.  Otherwise, try our luck with a memory-mapped
+		 * reset.
 		 */
 		if (sc->sc_flags & WM_F_IOH_VALID)
 			wm_io_write(sc, WMREG_CTRL, CTRL_RST);
