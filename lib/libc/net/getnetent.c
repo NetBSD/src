@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.8 1997/04/13 10:30:37 mrg Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.9 1997/07/13 19:57:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,12 +42,13 @@
  * from getnetent.c   1.1 (Coimbra) 93/06/02
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.3 1996/08/05 08:31:35 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: getnetent.c,v 1.8 1997/04/13 10:30:37 mrg Exp $";
+__RCSID("$NetBSD: getnetent.c,v 1.9 1997/07/13 19:57:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

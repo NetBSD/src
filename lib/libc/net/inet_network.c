@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.6 1997/07/13 19:57:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $";
+__RCSID("$NetBSD: inet_network.c,v 1.6 1997/07/13 19:57:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +67,7 @@ again:
 		base = 8, cp++;
 	if (*cp == 'x' || *cp == 'X')
 		base = 16, cp++;
-	while (c = *cp) {
+	while ((c = *cp) != '\0') {
 		if (isdigit(c)) {
 			val = (val * base) + (c - '0');
 			cp++;

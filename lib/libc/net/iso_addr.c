@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.4 1995/02/25 06:20:47 cgd Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.5 1997/07/13 19:57:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: iso_addr.c,v 1.4 1995/02/25 06:20:47 cgd Exp $";
+__RCSID("$NetBSD: iso_addr.c,v 1.5 1997/07/13 19:57:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,16 +62,17 @@ iso_addr(addr)
 	static struct iso_addr out_addr;
 	register char *cp = out_addr.isoa_genaddr;
 	char *cplim = cp + sizeof(out_addr.isoa_genaddr);
-	register int byte = 0, state = VIRGIN, new;
+	register int byte = 0, state = VIRGIN;
+	register int newaddr = 0;	/* pacify gcc */
 
 	bzero((char *)&out_addr, sizeof(out_addr));
 	do {
 		if ((*addr >= '0') && (*addr <= '9')) {
-			new = *addr - '0';
+			newaddr = *addr - '0';
 		} else if ((*addr >= 'a') && (*addr <= 'f')) {
-			new = *addr - 'a' + 10;
+			newaddr = *addr - 'a' + 10;
 		} else if ((*addr >= 'A') && (*addr <= 'F')) {
-			new = *addr - 'A' + 10;
+			newaddr = *addr - 'A' + 10;
 		} else if (*addr == 0) 
 			state |= END;
 		else
@@ -80,9 +82,9 @@ iso_addr(addr)
 		case GOTTWO | DIGIT:
 			*cp++ = byte; /*FALLTHROUGH*/
 		case VIRGIN | DIGIT:
-			state = GOTONE; byte = new; continue;
+			state = GOTONE; byte = newaddr; continue;
 		case GOTONE | DIGIT:
-			state = GOTTWO; byte = new + (byte << 4); continue;
+			state = GOTTWO; byte = newaddr + (byte << 4); continue;
 		default: /* | DELIM */
 			state = VIRGIN; *cp++ = byte; byte = 0; continue;
 		case GOTONE | END:

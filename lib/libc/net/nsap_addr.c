@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.2 1997/04/13 10:30:46 mrg Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.3 1997/07/13 19:57:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,11 +48,12 @@
  * SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char rcsid[] = "Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: nsap_addr.c,v 1.2 1997/04/13 10:30:46 mrg Exp $";
+__RCSID("$NetBSD: nsap_addr.c,v 1.3 1997/07/13 19:57:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,8 +61,11 @@ static char rcsid[] = "$NetBSD: nsap_addr.c,v 1.2 1997/04/13 10:30:46 mrg Exp $"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <resolv.h>
+
+static char xtob __P((int));
 
 static char
 xtob(c)
@@ -94,7 +98,7 @@ inet_nsap_addr(ascii, binary, maxlen)
 			c = toupper(c);
 		if (isxdigit(c)) {
 			nib = xtob(c);
-			if (c = *ascii++) {
+			if ((c = *ascii++) != '\0') {
 				c = toupper(c);
 				if (isxdigit(c)) {
 					*binary++ = (nib << 4) | xtob(c);
