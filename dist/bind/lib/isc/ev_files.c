@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_files.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ev_files.c,v 1.2 2000/10/08 20:03:13 is Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -55,7 +55,7 @@ evSelectFD(evContext opaqueCtx,
 	int mode;
 
 	evPrintf(ctx, 1,
-		 "evSelectFD(ctx %#x, fd %d, mask 0x%x, func %#x, uap %#x)\n",
+		 "evSelectFD(ctx %p, fd %d, mask 0x%x, func %p, uap %p)\n",
 		 ctx, fd, eventmask, func, uap);
 	if (eventmask == 0 || (eventmask & ~EV_MASK_ALL) != 0)
 		ERR(EINVAL);

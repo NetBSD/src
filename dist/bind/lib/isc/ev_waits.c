@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_waits.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ev_waits.c,v 1.2 2000/10/08 20:03:13 is Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium
@@ -193,14 +193,14 @@ print_waits(evContext_p *ctx) {
 	evPrintf(ctx, 9, "wait waiting:\n");
 	for (wl = ctx->waitLists; wl != NULL; wl = wl->next) {
 		INSIST(wl->first != NULL);
-		evPrintf(ctx, 9, "  tag %#x:", wl->first->tag);
+		evPrintf(ctx, 9, "  tag %p:", wl->first->tag);
 		for (this = wl->first; this != NULL; this = this->next)
-			evPrintf(ctx, 9, " %#x", this);
+			evPrintf(ctx, 9, " %p", this);
 		evPrintf(ctx, 9, "\n");
 	}
 	evPrintf(ctx, 9, "wait done:");
 	for (this = ctx->waitDone.first; this != NULL; this = this->next)
-		evPrintf(ctx, 9, " %#x", this);
+		evPrintf(ctx, 9, " %p", this);
 	evPrintf(ctx, 9, "\n");
 }
 
