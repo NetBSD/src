@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 2003/01/03 15:44:55 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.122 2003/01/05 19:26:17 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -622,6 +622,7 @@ badtrap:
 			panic("fpe without being the FP user");
 		savefpstate(p->p_md.md_fpstate);
 		cpuinfo.fpproc = NULL;
+		p->p_md.md_fpu = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(p, p->p_md.md_fpstate);
 		KERNEL_PROC_UNLOCK(p);
