@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.1 2001/02/13 01:43:02 thorpej Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.2 2001/06/03 04:39:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,8 +117,10 @@ dl10019_mii_reset(struct dp8390_softc *sc)
 	for (i = 0; i < 2; i++) {
 		bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO,
 		    0x08);
+		delay(1);
 		bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO,
 		    0x0c);
+		delay(1);
 	}
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x00);
 }
@@ -211,7 +213,12 @@ dl10019_mii_bitbang_write(struct device *self, u_int32_t val)
 int
 dl10019_mii_readreg(struct device *self, int phy, int reg)
 {
+	struct ne2000_softc *nsc = (void *) self;
+	const struct mii_bitbang_ops *ops;
 	int val;
+
+	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
+	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
 	val = mii_bitbang_readreg(self, &dl10019_mii_bitbang_ops, phy, reg);
 
@@ -221,6 +228,11 @@ dl10019_mii_readreg(struct device *self, int phy, int reg)
 void
 dl10019_mii_writereg(struct device *self, int phy, int reg, int val)
 {
+	struct ne2000_softc *nsc = (void *) self;
+	const struct mii_bitbang_ops *ops;
+
+	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
+	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
 	mii_bitbang_writereg(self, &dl10019_mii_bitbang_ops, phy, reg, val);
 }
