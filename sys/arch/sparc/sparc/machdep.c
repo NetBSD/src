@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.7 1993/10/15 03:37:33 deraadt Exp $
+ * $Id: machdep.c,v 1.8 1993/10/15 06:13:17 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -403,7 +403,7 @@ sendsig(catcher, sig, mask, code)
 	if (!psp->ps_onstack && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(psp->ps_sigsp
-					 - sizeof(struct sigframe));
+					- sizeof(struct sigframe));
 		psp->ps_onstack = 1;
 	} else
 		fp = (struct sigframe *)oldsp;
@@ -904,8 +904,11 @@ struct sunos_aout_magic {
 	switch (sunmag.a_magic) {
 	case ZMAGIC:
 		return exec_aout_prep_zmagic(p, epp);
-	case OMAGIC:
 	case NMAGIC:
+		return exec_aout_prep_nmagic(p, epp);
+	case OMAGIC:
+	printf("SUN OMAGIC: currently unsupported (fixme)\n");
+		break;
 	default:
 		break;
 	}
