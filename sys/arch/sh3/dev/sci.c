@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.9 2000/06/19 09:32:00 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.9.2.1 2001/09/30 19:56:19 he Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -275,11 +275,9 @@ void InitializeSci  __P((unsigned int));
 #define USART_ON (unsigned int)~0x08
 
 static void WaitFor __P((int));
-void PutcSci __P((unsigned char));
-void PutStrSci __P((unsigned char *));
+void sci_putc __P((unsigned char));
+unsigned char sci_getc __P((void));
 int SciErrCheck __P((void));
-unsigned char GetcSci __P((void));
-int GetStrSci __P((unsigned char *, int));
 
 /*
  * WaitFor
@@ -333,7 +331,7 @@ InitializeSci(bps)
 	 */
 	WaitFor(1);
 
-	/* Send permission, Recieve permission ON */
+	/* Send permission, Receive permission ON */
 	SHREG_SCSCR = SCSCR_TE | SCSCR_RE;
 
 	/* Serial Status Register */
@@ -346,13 +344,16 @@ InitializeSci(bps)
 
 
 /*
- * PutcSci
+ * sci_putc
  *  : unsigned char c;
  */
 void
-PutcSci(c)
+sci_putc(c)
 	unsigned char c;
 {
+
+	if (c == '\n')
+		sci_putc('\r');
 
 	/* wait for ready */
 	while ((SHREG_SCSSR & SCSSR_TDRE) == NULL)
@@ -363,35 +364,6 @@ PutcSci(c)
 
 	/* clear ready flag */
 	SHREG_SCSSR &= ~SCSSR_TDRE;
-
-	if (c == '\n') {
-		while ((SHREG_SCSSR & SCSSR_TDRE) == NULL)
-			;
-
-		SHREG_SCTDR = '\r';
-
-		SHREG_SCSSR &= ~SCSSR_TDRE;
-	}
-}
-
-/*
- * PutStrSci
- * : unsigned char *s;
- */
-void
-PutStrSci(s)
-	unsigned char *s;
-{
-#if 0
-	static int SciInit = 0;
-	if (SciInit == 0) {
-		InitializeSci(scicn_speed);
-		SciInit = 1;
-	}
-#endif
-
-	while (*s)
-		PutcSci(*s++);
 }
 
 /*
@@ -408,10 +380,10 @@ SciErrCheck(void)
 }
 
 /*
- * GetcSci
+ * sci_getc
  */
 unsigned char
-GetcSci(void)
+sci_getc(void)
 {
 	unsigned char c, err_c;
 
@@ -428,32 +400,6 @@ GetcSci(void)
 	SHREG_SCSSR &= ~SCSSR_RDRF;
 
 	return(c);
-}
-
-/*
- * GetStrSci
- *  : unsigned char *s;
- *  : int size;
- */
-int
-GetStrSci(s, size)
-	unsigned char *s;
-	int size;
-{
-
-	for(; size ; size--) {
-		*s = GetcSci();
-		if (*s & 0x80)
-			return -1;
-		if (*s == CR) {
-			*s = 0;
-			break;
-		}
-		s++;
-	}
-	if (size == 0)
-		*s = 0;
-	return 0;
 }
 
 #if 0
@@ -586,7 +532,7 @@ scistart(tp)
 	/* Output the first byte of the contiguous buffer. */
 	{
 		if (sc->sc_tbc > 0) {
-			PutcSci(*(sc->sc_tba));
+			sci_putc(*(sc->sc_tba));
 			sc->sc_tba++;
 			sc->sc_tbc--;
 		}
@@ -733,23 +679,6 @@ sci_iflush(sc)
 
 		SHREG_SCSSR &= ~SCSSR_RDRF;
 	}
-}
-
-int sci_getc __P((void));
-void sci_putc __P((int));
-
-int
-sci_getc()
-{
-
-	return (GetcSci());
-}
-
-void
-sci_putc(int c)
-{
-
-	PutcSci(c);
 }
 
 int
@@ -1457,7 +1386,7 @@ sciintr(arg)
 
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
-			PutcSci(*(sc->sc_tba));
+			sci_putc(*(sc->sc_tba));
 			sc->sc_tba++;
 			sc->sc_tbc--;
 		} else {
@@ -1515,9 +1444,6 @@ scicnprobe(cp)
 #endif
 }
 
-#define sci_gets GetStrSci
-#define sci_puts PutStrSci
-
 void
 scicninit(cp)
 	struct consdev *cp;
@@ -1526,9 +1452,6 @@ scicninit(cp)
 	InitializeSci(scicn_speed);
 	sciisconsole = 1;
 }
-
-#define sci_getc GetcSci
-#define sci_putc PutcSci
 
 int
 scicngetc(dev)
@@ -1552,6 +1475,6 @@ scicnputc(dev, c)
 	int s;
 
 	s = splserial();
-	sci_putc(c);
+	sci_putc((u_char)c);
 	splx(s);
 }
