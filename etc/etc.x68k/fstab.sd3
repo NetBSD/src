@@ -1,3 +1,5 @@
+#	$NetBSD: fstab.sd3,v 1.2 1998/01/09 06:09:53 perry Exp $
+#
 /dev/sd3a	/	ffs	rw	1	1
 /dev/sd3d	/usr	ffs	rw	1	1
 #/dev/sd3f	/usr/local ffs	rw	1	1
