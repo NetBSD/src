@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.4.6 2002/08/06 22:47:10 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.3.4.7 2002/08/06 23:06:50 nathanw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -112,6 +112,7 @@ define	L_ADDR		offsetof(struct lwp, l_addr)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
+define	L_PROC		offsetof(struct lwp, l_proc)
 
 define	LSONPROC		LSONPROC
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
