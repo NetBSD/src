@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.50 1999/07/13 17:58:42 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.51 1999/07/26 02:01:47 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -598,11 +598,12 @@ For example, a typical program Makefile should do the following:
 	.
 	.
 	.if defined(CRYPTOPATH)
-	.include "${CRYPTOPATH}/usr.bin/login/Makefile.frag"
+	.sinclude "${CRYPTOPATH}/usr.bin/login/Makefile.frag"
 	.endif
 
-The Makefile.frag included will now influence the build of the login(1)
-program, specifying additional source files, libraries, and CPP flags.
+The Makefile.frag included (if it exists) will now influence the build
+of the login(1) program, specifying additional source files, libraries,
+and CPP flags.
 
 The "EXPORTABLE_SYSTEM" variable, if set, causes CRYPTOBASE to be set
 to "none".  This is for compatibilty with older NetBSD build environments.
