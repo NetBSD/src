@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.7 1996/10/13 02:10:08 christos Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.8 1998/02/14 19:34:14 kleink Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -348,7 +348,7 @@ llc_seq2slot(linkp, seqn)
 	struct llc_linkcb *linkp;
 	short seqn;
 {
-	register        sn = 0;
+	register int sn = 0;
 
 	sn = (linkp->llcl_freeslot + linkp->llcl_window -
 	      (linkp->llcl_projvs + LLC_MAX_SEQUENCE - seqn) %
@@ -2322,7 +2322,7 @@ llc_dellink(linkp)
 	register struct mbuf *m;
 	register struct mbuf *n;
 	register struct npaidbentry *sapinfo = linkp->llcl_sapinfo;
-	register        i;
+	register int i;
 
 	/* notify upper layer of imminent death */
 	if (linkp->llcl_nlnext && sapinfo->si_ctlinput)

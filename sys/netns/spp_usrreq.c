@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.18 1997/07/18 19:30:44 thorpej Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.19 1998/02/14 19:34:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1180,7 +1180,7 @@ void
 spp_setpersist(cb)
 	register struct sppcb *cb;
 {
-	register t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
+	register int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
 	extern int spp_backoff[];
 
 	if (cb->s_timer[SPPT_REXMT] && spp_do_persist_panics)
