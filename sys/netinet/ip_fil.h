@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.6 1997/03/29 01:57:56 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.7 1997/03/29 03:05:15 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.6 1997/03/29 01:57:56 thorpej Exp $
+ * $Id: ip_fil.h,v 1.7 1997/03/29 03:05:15 thorpej Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -358,4 +358,15 @@ extern	int	iplread __P((dev_t, struct uio *));
 #  endif /* IPFILTER_LOG */
 # endif /* SOLARIS */
 #endif /* _KERNEL */
+
+/*
+ * Post NetBSD 1.2 has the PFIL interface for packet filters.  This turns
+ * on those hooks.  We don't need any special mods in non-IP Filter code
+ * with this!
+ */
+#if (defined(NetBSD) && (NetBSD > 199609) && (NetBSD <= 1991011)) || \
+    (defined(NetBSD1_2) && NetBSD1_2 > 1)
+# define NETBSD_PF
+#endif
+
 #endif	/* __IP_FIL_H__ */
