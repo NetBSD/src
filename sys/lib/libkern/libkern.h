@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.30 2000/05/08 23:33:15 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.31 2000/10/12 03:42:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -149,7 +149,9 @@ abs(j)
 #endif
 #endif
 
+#ifndef offsetof
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
 
 /* Prototypes for non-quad routines. */
 void	 __assert __P((const char *, const char *, int, const char *))
