@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.49 2000/04/30 14:23:29 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.50 2000/05/22 22:03:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -116,8 +116,10 @@ ms1_cache_enable()
 {
 	u_int pcr;
 
-	cache_alias_bits = GUESS_CACHE_ALIAS_BITS;
-	cache_alias_dist = GUESS_CACHE_ALIAS_DIST;
+	cache_alias_dist = max(
+		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
+		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
+	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
@@ -131,6 +133,15 @@ ms1_cache_enable()
 	sta(SRMMU_PCR, ASI_SRMMU, pcr | MS1_PCR_DCE | MS1_PCR_ICE);
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
+
+	/*
+	 * When zeroing or copying pages, there might still be entries in
+	 * the cache, since we don't flush pages from the cache when
+	 * unmapping them (`vactype' is VAC_NONE).  Fortunately, the
+	 * MS1 cache is write-through and not write-allocate, so we can
+	 * use cacheable access while not displacing cache lines.
+	 */
+	cpuinfo.flags |= CPUFLG_CACHE_MANDATORY;
 }
 
 void
@@ -686,10 +697,12 @@ srmmu_cache_flush(base, len)
 	}
 }
 
+int ms1_cacheflush_magic = 0;
+#define MS1_CACHEFLUSH_MAGIC	ms1_cacheflush_magic
 void
 ms1_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
 	/*
 	 * Although physically tagged, we still need to flush the
@@ -697,8 +710,39 @@ ms1_cache_flush(base, len)
 	 * (in case of write-back caches) DMA operations.
 	 */
 
-	/* XXX investigate other methods instead of blowing the entire cache */
-	sta(0, ASI_DCACHECLR, 0);
+#if MS1_CACHEFLUSH_MAGIC
+	if (len <= MS1_CACHEFLUSH_MAGIC) {
+		/*
+		 * If the range to be flushed is sufficiently small
+		 * invalidate the covered cache lines by hand.
+		 *
+		 * The MicroSPARC I has a direct-mapped virtually addressed
+		 * physically tagged data cache which is organised as
+		 * 128 lines of 16 bytes. Virtual address bits [4-10]
+		 * select the cache line. The cache tags are accessed
+		 * through the standard DCACHE control space using the
+		 * same address bits as those used to select the cache
+		 * line in the virtual address.
+		 *
+		 * Note: we don't bother to compare the actual tags
+		 * since that would require looking up physical addresses.
+		 */
+		int tagaddr = ((u_int)base & 0x7f0);
+
+		len = roundup(len, 16);
+		while (len != 0) {
+			int tag = lda(tagaddr, ASI_DCACHETAG);
+			if ((tag & 1) == 1) {
+				/* Mark this cache line invalid */
+				sta(tagaddr, ASI_DCACHETAG, 0);
+			}
+			len -= 16;
+			tagaddr = (tagaddr + 16) & 0x7f0;
+		}
+	} else
+#endif
+		/* Flush entire data cache */
+		sta(0, ASI_DCACHECLR, 0);
 }
 
 /*
