@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.4 2002/03/17 19:40:53 atatat Exp $	*/
+/*	$NetBSD: pccons.c,v 1.4.4.1 2002/05/19 07:41:21 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
 
@@ -124,7 +125,6 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/pccons.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -226,6 +226,21 @@ struct cfattach pcconskbd_ca = {
 
 extern struct cfdriver pcconskbd_cd;
 #endif
+
+dev_type_open(pcopen);
+dev_type_close(pcclose);
+dev_type_read(pcread);
+dev_type_write(pcwrite);
+dev_type_ioctl(pcioctl);
+dev_type_stop(pcstop);
+dev_type_tty(pctty);
+dev_type_poll(pcpoll);
+dev_type_mmap(pcmmap);
+
+const struct cdevsw pc_cdevsw = {
+	pcopen, pcclose, pcread, pcwrite, pcioctl,
+	pcstop, pctty, pcpoll, pcmmap, D_TTY
+};
 
 #define	COL		80
 #define	ROW		25
@@ -767,9 +782,7 @@ pcattach(parent, self, aux)
 		int maj;
 
 		/* Locate the major number. */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == pcopen)
-				break;
+		maj = cdevsw_lookup_major(&pc_cdevsw);
 
 		/* There can be only one, but it can have any unit number. */
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);

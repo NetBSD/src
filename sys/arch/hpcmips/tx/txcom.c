@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.16 2002/03/17 19:40:40 atatat Exp $ */
+/*	$NetBSD: txcom.c,v 1.16.4.1 2002/05/19 07:41:32 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -163,8 +163,6 @@ const char *__txcom_slotname(int);
 void	txcom_dump(struct txcom_chip *);
 #endif
 
-cdev_decl(txcom);
-
 struct consdev txcomcons = {
 	NULL, NULL, txcom_cngetc, txcom_cnputc, txcom_cnpollc, 
 	NULL, NODEV, CN_NORMAL
@@ -175,6 +173,20 @@ struct txcom_chip txcom_chip;
 
 struct cfattach txcom_ca = {
 	sizeof(struct txcom_softc), txcom_match, txcom_attach
+};
+
+dev_type_open(txcomopen);
+dev_type_close(txcomclose);
+dev_type_read(txcomread);
+dev_type_write(txcomwrite);
+dev_type_ioctl(txcomioctl);
+dev_type_stop(txcomstop);
+dev_type_tty(txcomtty);
+dev_type_poll(txcompoll);
+
+const struct cdevsw txcom_cdevsw = {
+	txcomopen, txcomclose, txcomread, txcomwrite, txcomioctl,
+	txcomstop, txcomtty, txcompoll, nommap, D_TTY
 };
 
 int
@@ -238,9 +250,7 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 	if (ISSET(chip->sc_hwflags, TXCOM_HW_CONSOLE)) {
 		int maj;
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == txcomopen)
-				break;
+		maj = cdevsw_lookup_major(&txcom_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 

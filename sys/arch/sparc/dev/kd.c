@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.21 2002/03/17 19:40:50 atatat Exp $	*/
+/*	$NetBSD: kd.c,v 1.21.4.1 2002/05/19 07:41:25 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 #include <machine/cpu.h>
 #include <machine/kbd.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #if defined(RASTERCONSOLE) && NFB > 0
 #include <dev/sun/fbio.h>
@@ -79,7 +78,6 @@
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
 
-#define	KDMAJOR 1
 #define PUT_WSIZE	64
 
 struct kd_softc {
@@ -102,6 +100,19 @@ static void kdstart(struct tty *);
 static void kd_init __P((struct kd_softc *));
 static void kd_cons_input __P((int));
 
+dev_type_open(kdopen);
+dev_type_close(kdclose);
+dev_type_read(kdread);
+dev_type_write(kdwrite);
+dev_type_ioctl(kdioctl);
+dev_type_tty(kdtty);
+dev_type_poll(kdpoll);
+
+const struct cdevsw kd_cdevsw = {
+	kdopen, kdclose, kdread, kdwrite, kdioctl,
+	nostop, kdtty, kdpoll, nommap, D_TTY
+};
+
 /*
  * Prepare the console tty; called on first open of /dev/console
  */
@@ -114,7 +125,7 @@ kd_init(kd)
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_dev = makedev(KDMAJOR, 0);
+	tp->t_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 
 	tty_attach(tp);
 	kd->kd_tty = tp;
@@ -340,15 +351,6 @@ kdioctl(dev, cmd, data, flag, p)
 
 	return EPASSTHROUGH;
 }
-
-void
-kdstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-
-}
-
 
 static int
 kdparam(tp, t)
@@ -706,7 +708,7 @@ consinit()
 	}
 
 	/* Wire up /dev/console */
-	cn_tab->cn_dev = makedev(KDMAJOR, 0);
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 	cn_tab->cn_pri = CN_INTERNAL;
 
 	/* Set up initial PROM input channel for /dev/console */
