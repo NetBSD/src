@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.1 1997/10/23 22:24:12 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.2 1997/10/23 22:51:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.1 1997/10/23 22:24:12 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.2 1997/10/23 22:51:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ static EditLine *e = NULL;
 /* internal functions */
 static unsigned char _el_rl_complete __P((EditLine *, int));
 static char *_get_prompt __P((EditLine *));
-static const HIST_ENTRY *_move_history __P((int));
+static HIST_ENTRY *_move_history __P((int));
 static int _history_search_gen __P((const char *, int, int));
 static int _history_expand_command __P((const char *, int, char **));
 static char *_rl_compat_sub __P((const char *, const char *,
@@ -116,7 +116,7 @@ _get_prompt(el)
 /*
  * generic function for moving around history
  */
-static const HIST_ENTRY *
+static HIST_ENTRY *
 _move_history(op)
 	int op;
 {
@@ -386,7 +386,7 @@ _history_expand_command(command, len, result)
 	}
 
 	if (!event_data && event_num >= 0) {
-		const HIST_ENTRY *rl_he;
+		HIST_ENTRY *rl_he;
 		rl_he = history_get(event_num);
 		if (!rl_he)
 			return 0;
@@ -800,7 +800,7 @@ write_history(filename)
  *
  * returned pointer points to static variable
  */
-const HIST_ENTRY *
+HIST_ENTRY *
 history_get(num)
 	int             num;
 {
@@ -885,7 +885,7 @@ where_history()
 /*
  * returns current history event or NULL if there is no such event
  */
-const HIST_ENTRY *
+HIST_ENTRY *
 current_history()
 {
 	return _move_history(H_CURR);
@@ -947,7 +947,7 @@ history_set_pos(pos)
 /*
  * returns previous event in history and shifts pointer accordingly
  */
-const HIST_ENTRY *
+HIST_ENTRY *
 previous_history()
 {
 	return _move_history(H_PREV);
@@ -956,7 +956,7 @@ previous_history()
 /*
  * returns next event in history and shifts pointer accordingly
  */
-const HIST_ENTRY *
+HIST_ENTRY *
 next_history()
 {
 	return _move_history(H_NEXT);
@@ -1060,9 +1060,9 @@ history_search_pos(str, direction, pos)
  *
  * it's callers's responsibility to free() returned string
  */
-char           *
+char *
 tilde_expand(txt)
-	const char     *txt;
+	char     *txt;
 {
 	struct passwd  *pass;
 	char           *temp;
