@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.47 2000/08/01 04:57:30 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.48 2000/12/11 16:39:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -496,6 +496,7 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct file *fp)
 	 */
 	if (KTRPOINT(p, KTR_EMUL))
 		ktremul(p);
+	(*p->p_emul->e_syscall_intern)(p);
 
 	return (1);
 }
