@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.1 2001/01/19 01:31:26 manu Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.2 2001/01/20 18:56:42 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,13 @@
 
 #ifndef _POWERPC_LINUX_TERMIOS_H
 #define _POWERPC_LINUX_TERMIOS_H
+
+#define LINUX_NCC 10
+ 
+/*
+ * Enable optional part of struct termios in sys/compat/linux/common/termios.h
+ */
+#define LINUX_LARGE_STRUCT_TERMIOS
 
 /* 
  * From Linux's include/asm-ppc/termios.h 
