@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.38 2001/03/22 03:58:31 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.39 2001/03/29 14:37:05 lukem Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2094,3 +2094,33 @@ distrib/sets/lists/misc/mi			patch
 
   Add sendmail/ostype files for aix5 and solaris8 after
   last sendmail upgrade.
+
+include/glob.h					1.12-1.13
+lib/libc/gen/__glob13.c				1.14-1.20
+
+  Various updates:
+  o deal with buffer overflows for fixed length buffers
+  o set gl_pathv to NULL after we free it
+  o implement GLOB_LIMIT to limit the amount of memory used to ARG_MAX
+  o squash lint errors by using size_t instead of u_int
+
+libexec/ftpd/Makefile				1.43-1.44
+libexec/ftpd/cmds.c				1.7-1.8,  1.10-1.12
+libexec/ftpd/conf.c				1.35-1.40
+libexec/ftpd/extern.h				1.32-1.38
+libexec/ftpd/ftpcmd.y				1.53-1.59
+libexec/ftpd/ftpd.8				1.58-1.63
+libexec/ftpd/ftpd.c				1.102-1.104,  1.106-1.122
+libexec/ftpd/ftpd.conf.5			1.12-1.15
+libexec/ftpd/ftpusers.5				1.8
+libexec/ftpd/logwtmp.c				1.16
+libexec/ftpd/popen.c				1.23-1.25
+libexec/ftpd/version.h				1.28
+
+  Summary of user-visible changes;
+  o fix glob denial of service by using GLOB_LIMIT
+  o add ftpd.conf directives `advertise', `maxfilesize', `sanenames'
+  o add flags: -P dataport, -X - wuftpd style log entries,
+    -q/-Q - (en|dis)able pidfiles, -u/-U - (en|dis)able utmp,
+    -w/-W - (en|dis)able wtmp
+
