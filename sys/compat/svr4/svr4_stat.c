@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.17 1996/02/01 00:19:52 jtc Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.18 1996/02/09 23:12:21 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -66,6 +66,7 @@
 #endif
 
 static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
+int svr4_ustat __P((struct proc *, void *, register_t *));
 
 
 #ifndef SVR4_NO_OSTAT
@@ -341,14 +342,15 @@ struct svr4_ustat_args {
 };
 
 int
-svr4_ustat(p, uap, retval)
+svr4_ustat(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_ustat_args /* {
 		syscallarg(svr4_dev_t)		dev;
 		syscallarg(struct svr4_ustat *) name;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct svr4_ustat	us;
 	int			error;
 
@@ -533,7 +535,8 @@ svr4_sys_utime(p, v, retval)
 		tbuf[1].tv_sec = ub.modtime;
 		tbuf[1].tv_usec = 0;
 		SCARG(&ap, tptr) = stackgap_alloc(&sg, sizeof(tbuf));
-		if (error = copyout(tbuf, SCARG(&ap, tptr), sizeof(tbuf)) != 0)
+		error = copyout(tbuf, SCARG(&ap, tptr), sizeof(tbuf));
+		if (error)
 			return error;
 	}
 	else
