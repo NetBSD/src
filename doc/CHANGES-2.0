@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.252 2004/06/04 03:42:56 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.253 2004/06/05 04:57:35 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3482,3 +3482,8 @@ etc/etc.alpha/MAKEDEV.conf			1.6
 	so installation can be done to Mylex DAC960 raid drives.
 
 	[mhitch, ticket #438]
+
+bin/df/df.1					patch
+
+	Mention -g in synopsis. PR#25800.
+	[cjep, ticket #439]
