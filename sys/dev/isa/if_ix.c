@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.13 2002/01/07 21:47:08 thorpej Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.14 2002/01/08 17:20:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.13 2002/01/07 21:47:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.14 2002/01/08 17:20:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,7 +680,7 @@ ix_match(parent, cf, aux)
 	/*
 	 * Get the encoded interrupt number from the EEPROM, check it
 	 * against the passed in IRQ.  Issue a warning if they do not
-	 * match, and fail the probe.  If irq is 'IRQUNK' then we
+	 * match, and fail the probe.  If irq is 'ISACF_IRQ_DEFAULT' then we
 	 * use the EEPROM irq, and continue.
 	 */
 	irq_encoded = ix_read_eeprom(iot, ioh, IX_EEPROM_CONFIG1);
