@@ -35,10 +35,18 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_log1p.S,v 1.2.2.1 1994/08/18 22:41:34 mycroft Exp $")
+RCSID("$Id: s_log1p.S,v 1.2.2.2 1994/08/26 13:02:32 mycroft Exp $")
+
+/*
+ * Since the fyl2xp1 instruction has such a limited range:
+ *	-(1 - (sqrt(2) / 2)) <= x <= sqrt(2) - 1
+ * it's not worth trying to use it.  
+ */
 
 ENTRY(log1p)
 	fldln2
 	fldl 4(%esp)
-	fyl2xp1
+	fld1
+	faddp
+	fyl2x
 	ret
