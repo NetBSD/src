@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.107 2003/10/31 03:28:14 simonb Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.108 2004/03/11 15:17:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.107 2003/10/31 03:28:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.108 2004/03/11 15:17:55 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -716,6 +716,10 @@ dopowerhooks(why)
 static struct device fakemdrootdev[NMD];
 #endif
 
+#ifdef MEMORY_DISK_IS_ROOT
+#define BOOT_FROM_MEMORY_HOOKS 1
+#endif
+
 #include "raid.h"
 #if NRAID == 1
 #define BOOT_FROM_RAID_HOOKS 1 
@@ -1061,16 +1065,27 @@ finddevice(name)
 	const char *name;
 {
 	struct device *dv;
-#ifdef BOOT_FROM_RAID_HOOKS
+#if defined(BOOT_FROM_RAID_HOOKS) || defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
+#endif /* BOOT_FROM_RAID_HOOKS || BOOT_FROM_MEMORY_HOOKS */
 
+#ifdef BOOT_FROM_RAID_HOOKS
 	for (j = 0; j < numraid; j++) {
 		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
 			dv = &raidrootdev[j];
 			return (dv);
 		}
 	}
-#endif
+#endif /* BOOT_FROM_RAID_HOOKS */
+
+#ifdef BOOT_FROM_MEMORY_HOOKS
+	for (j = 0; j < NMD; j++) {
+		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0) {
+			dv = &fakemdrootdev[j];
+			return (dv);
+		}
+	}
+#endif /* BOOT_FROM_MEMORY_HOOKS */
 
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	    dv = TAILQ_NEXT(dv, dv_list))
