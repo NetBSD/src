@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.25 1999/01/25 02:20:08 msaitoh Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.26 1999/03/12 18:45:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -166,6 +166,7 @@ loop:
 
 	case Pmap:	/* /proc/N/map = -r--r--r-- */
 	case Pstatus:	/* /proc/N/status = -r--r--r-- */
+	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -263,6 +264,9 @@ procfs_rw(v)
 
 	case Pmem:
 		return (procfs_domem(curp, p, pfs, uio));
+
+	case Pcmdline:
+		return (procfs_docmdline(curp, p, pfs, uio));
 
 	default:
 		return (EOPNOTSUPP);

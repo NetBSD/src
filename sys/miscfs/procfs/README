@@ -1,4 +1,4 @@
-/*	$NetBSD: README,v 1.4 1994/06/29 06:34:43 cgd Exp $	*/
+/*	$NetBSD: README,v 1.5 1999/03/12 18:45:40 christos Exp $	*/
 
 saute procfs lyonnais
 
@@ -47,6 +47,8 @@ are:
 			will get the "right" register values.
 			a multi-proc kernel would need to do some
 			synchronisation.
+	cmdline - r/o.	process command line parameters, separated
+			by NULLs
 
 this then looks like:
 
@@ -76,13 +78,17 @@ total 0
 3273 dr-xr-xr-x  2 jsp   staff  0 Sep 21 15:06 curproc
 % ls -li /proc/curproc
 total 408
-3341 --w-------  1 jsp  staff       0 Sep 21 15:06 ctl
-1554 -r-xr-xr-x  1 bin  bin     90112 Mar 29 04:52 file
-3339 -rw-------  1 jsp  staff  118784 Sep 21 15:06 mem
-3343 --w-------  1 jsp  staff       0 Sep 21 15:06 note
-3344 --w-------  1 jsp  staff       0 Sep 21 15:06 notepg
-3340 -rw-------  1 jsp  staff       0 Sep 21 15:06 regs
-3342 -r--r--r--  1 jsp  staff       0 Sep 21 15:06 status
+total 460
+7692 -r--r--r--  1 dolecek  staff       0 Mar 12 12:02 cmdline
+7687 --w-------  1 dolecek  staff       0 Mar 12 12:02 ctl
+2003 -r-xr-xr-x  1 root     wheel  180224 Jan 31 23:32 file*
+7686 -rw-------  1 dolecek  staff     108 Mar 12 12:02 fpregs
+7691 -r--r--r--  1 dolecek  staff       0 Mar 12 12:02 map
+7684 -rw-------  1 dolecek  staff  282624 Mar 12 12:02 mem
+7689 --w-------  1 dolecek  staff       0 Mar 12 12:02 note
+7690 --w-------  1 dolecek  staff       0 Mar 12 12:02 notepg
+7685 -rw-------  1 dolecek  staff      64 Mar 12 12:02 regs
+7688 -r--r--r--  1 dolecek  staff       0 Mar 12 12:02 status
 % df /proc/curproc /proc/curproc/file
 Filesystem  512-blocks    Used   Avail Capacity  Mounted on
 proc                 2       2       0   100%    /proc
