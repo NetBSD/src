@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.15 1996/04/29 21:11:24 jtc Exp $
+#	$NetBSD: Makefile,v 1.16 1996/05/08 19:24:04 pk Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
