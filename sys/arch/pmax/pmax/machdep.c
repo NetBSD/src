@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 1999/05/11 05:06:35 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142 1999/05/18 01:36:51 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 1999/05/11 05:06:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 1999/05/18 01:36:51 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -189,6 +189,7 @@ struct platform platform = {
 };
 
 extern caddr_t esym;
+extern struct user *proc0paddr;
 extern struct consdev promcd;
 
 /*
@@ -351,11 +352,14 @@ mach_init(argc, argv, code, cv, bim, bip)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
 	/*
-	 * Init mapping for u page(s) for proc0, pm_tlbpid 1.
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
-	mips_init_proc0(kernend);
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
 	kernend += UPAGES * PAGE_SIZE;
 

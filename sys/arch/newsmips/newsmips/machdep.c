@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1999/04/11 04:04:08 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1999/05/18 01:36:52 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 1999/04/11 04:04:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 1999/05/18 01:36:52 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -174,6 +174,8 @@ struct idrom idrom;
 /* locore callback-vector setup */
 extern void mips_vector_init  __P((void));
 
+extern struct user *proc0paddr;
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the prom monitor.
@@ -252,9 +254,13 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 #endif
 
 	/*
-	 * Init mapping for u page(s) for proc0, pm_tlbpid 1.
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
-	mips_init_proc0(kernend);
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
 	kernend += UPAGES * PAGE_SIZE;
 

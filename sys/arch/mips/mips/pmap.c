@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 1999/05/17 11:12:44 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 1999/05/18 01:36:51 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 1999/05/17 11:12:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 1999/05/18 01:36:51 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -185,10 +185,10 @@ struct pv_entry	*pv_table;
 int		 pv_table_npages;
 
 struct segtab	*free_segtab;		/* free list kept locally */
-u_int		tlbpid_gen = 1;		/* TLB PID generation count */
-int		tlbpid_cnt = 2;		/* next available TLB PID */
 pt_entry_t	*Sysmap;		/* kernel pte table */
-u_int		Sysmapsize;		/* number of pte's in Sysmap */
+unsigned	Sysmapsize;		/* number of pte's in Sysmap */
+unsigned pmap_next_asid = 2;		/* next available ASID */
+unsigned pmap_asid_generation = 1;	/* ASID generation count */
 
 boolean_t	pmap_initialized = FALSE;
 
@@ -213,7 +213,7 @@ boolean_t	pmap_initialized = FALSE;
 
 /* Forward function declarations */
 int pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
-int pmap_alloc_tlbpid __P((struct proc *p));
+int pmap_alloc_asid __P((struct proc *p));
 void pmap_zero_page __P((paddr_t phys));
 void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
 pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
@@ -250,9 +250,41 @@ mips_flushcache_allpvh(paddr_t pa)
  */
 void
 pmap_bootstrap()
+{
+	extern int physmem;
 
 	/*
-	 * Initialize `FYI' variables.  Note we're relying on
+	 * Figure out how many PTE's are necessary to map the kernel.
+	 * The '2048' comes from PAGER_MAP_SIZE in vm_pager_init().
+	 * This should be kept in sync.
+	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
+	 */
+	Sysmapsize = (VM_KMEM_SIZE + VM_PHYS_SIZE +
+		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 2048 +
+		(maxproc * UPAGES);
+
+#ifdef SYSVSHM
+	Sysmapsize += shminfo.shmall;
+#endif
+	Sysmap = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * Sysmapsize, NULL, NULL);
+
+	/*
+	 * Allocate memory for the pv_heads.  (A few more of the latter
+	 * are allocated than are needed.)
+	 *
+	 * We could do this in pmap_init when we know the actual
+	 * managed page pool size, but its better to use kseg0
+	 * addresses rather than kernel virtual addresses mapped
+	 * through the TLB.
+	 */
+	pv_table_npages = physmem;
+	pv_table = (struct pv_entry *)
+	    pmap_steal_memory(sizeof(struct pv_entry) * pv_table_npages,
+		NULL, NULL);
+
+	/*
+	 * Initialize `FYI' variables.	Note we're relying on
 	 * the fact that BSEARCH sorts the vm_physmem[] array
 	 * for us.
 	 */
@@ -269,8 +301,10 @@ pmap_bootstrap()
 	 */
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_tlbpid = 1;
-	pmap_kernel()->pm_tlbgen = tlbpid_gen;
+	pmap_kernel()->pm_asid = 1;
+	pmap_kernel()->pm_asidgen = pmap_asid_generation;
+
+	MachSetPID(1);
 
 #if 0	/* no need, no good, no use */
 	proc0paddr->u_pcb.pcb_segtab = pmap_kernel()->pm_segtab = NULL;
@@ -504,8 +538,8 @@ pmap_pinit(pmap)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
 			panic("pmap_pinit: pm_segtab != 0");
 #endif
-	pmap->pm_tlbpid = 0;
-	pmap->pm_tlbgen = 0;
+	pmap->pm_asid = 0;
+	pmap->pm_asidgen = 0;
 }
 
 /*
@@ -625,8 +659,8 @@ pmap_activate(p)
 
         p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
         if (p == curproc) {
-                int tlbpid = pmap_alloc_tlbpid(p);
-                MachSetPID(tlbpid);
+                int asid = pmap_alloc_asid(p);
+                MachSetPID(asid);
 #ifdef	MIPS3
 		if (CPUISMIPS3) {
 			mips3_write_xcontext_upper((u_int32_t)pmap->pm_segtab);
@@ -747,8 +781,8 @@ pmap_remove(pmap, sva, eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			if (pmap->pm_tlbgen == tlbpid_gen) {
-				MachTLBFlushAddr(sva | (pmap->pm_tlbpid <<
+			if (pmap->pm_asidgen == pmap_asid_generation) {
+				MachTLBFlushAddr(sva | (pmap->pm_asid <<
 					MIPS_TLB_PID_SHIFT));
 #ifdef DEBUG
 				remove_stats.flushes++;
@@ -910,8 +944,8 @@ pmap_protect(pmap, sva, eva, prot)
 			/*
 			 * Update the TLB if the given address is in the cache.
 			 */
-			if (pmap->pm_tlbgen == tlbpid_gen)
-				MachTLBUpdate(sva | (pmap->pm_tlbpid <<
+			if (pmap->pm_asidgen == pmap_asid_generation)
+				MachTLBUpdate(sva | (pmap->pm_asid <<
 					MIPS_TLB_PID_SHIFT), entry);
 		}
 	}
@@ -1020,10 +1054,10 @@ pmap_page_cache(pa, mode)
 					entry = (entry & ~MIPS3_PG_CACHEMODE)
 					    | newmode;
 					pte->pt_entry = entry;
-					if (pv->pv_pmap->pm_tlbgen ==
-					    tlbpid_gen)
+					if (pv->pv_pmap->pm_asidgen ==
+					    pmap_asid_generation)
 						MachTLBUpdate(pv->pv_va |
-						    (pv->pv_pmap->pm_tlbpid <<
+						    (pv->pv_pmap->pm_asid <<
 						    MIPS3_TLB_PID_SHIFT),
 						    entry);
 				}
@@ -1233,8 +1267,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER) {
 		printf("pmap_enter: new pte %x", npte);
-		if (pmap->pm_tlbgen == tlbpid_gen)
-			printf(" tlbpid %d", pmap->pm_tlbpid);
+		if (pmap->pm_asidgen == pmap_asid_generation)
+			printf(" asid %d", pmap->pm_asid);
 		printf("\n");
 	}
 #endif
@@ -1249,8 +1283,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		if (!mips_pg_v(pte->pt_entry))
 			pmap->pm_stats.resident_count++;
 		pte->pt_entry = npte;
-		if (pmap->pm_tlbgen == tlbpid_gen)
-			MachTLBUpdate(va | (pmap->pm_tlbpid <<
+		if (pmap->pm_asidgen == pmap_asid_generation)
+			MachTLBUpdate(va | (pmap->pm_asid <<
 				MIPS_TLB_PID_SHIFT), npte);
 		va += NBPG;
 		npte += vad_to_pfn(NBPG);
@@ -1737,46 +1771,46 @@ pmap_phys_address(ppn)
  */
 
 /*
- * Allocate a hardware PID and return it.
+ * Allocate TLB address space tag (called ASID or TLBPID) and return it.
  * It takes almost as much or more time to search the TLB for a
- * specific PID and flush those entries as it does to flush the entire TLB.
- * Therefore, when we allocate a new PID, we just take the next number. When
+ * specific ASID and flush those entries as it does to flush the entire TLB.
+ * Therefore, when we allocate a new ASID, we just take the next number. When
  * we run out of numbers, we flush the TLB, increment the generation count
- * and start over. PID zero is reserved for kernel use.
+ * and start over. ASID zero is reserved for kernel use.
  */
 int
-pmap_alloc_tlbpid(p)
+pmap_alloc_asid(p)
 	struct proc *p;
 {
 	pmap_t pmap;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_tlbgen == tlbpid_gen)
+	if (pmap->pm_asidgen == pmap_asid_generation)
 		;
 	else {
-		if (tlbpid_cnt == MIPS_TLB_NUM_PIDS) {
+		if (pmap_next_asid == MIPS_TLB_NUM_PIDS) {
 			MachTLBFlush();
-			/* reserve tlbpid_gen == 0 to alway mean invalid */
-			if (++tlbpid_gen == 0)
-				tlbpid_gen = 1;
-			tlbpid_cnt = 1;
+			/* reserve == 0 to always mean invalid */
+			if (++pmap_asid_generation == 0)
+				pmap_asid_generation = 1;
+			pmap_next_asid = 1;
 		}
-		pmap->pm_tlbpid = tlbpid_cnt++;
-		pmap->pm_tlbgen = tlbpid_gen;
+		pmap->pm_asid = pmap_next_asid++;
+		pmap->pm_asidgen = pmap_asid_generation;
 	}
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
 		if (curproc)
-			printf("pmap_alloc_tlbpid: curproc %d '%s' ",
+			printf("pmap_alloc_asid: curproc %d '%s' ",
 				curproc->p_pid, curproc->p_comm);
 		else
-			printf("pmap_alloc_tlbpid: curproc <none> ");
-		printf("segtab %p tlbpid %d pid %d '%s'\n",
-			pmap->pm_segtab, pmap->pm_tlbpid, p->p_pid, p->p_comm);
+			printf("pmap_alloc_asid: curproc <none> ");
+		printf("segtab %p asid %d pid %d '%s'\n",
+			pmap->pm_segtab, pmap->pm_asid, p->p_pid, p->p_comm);
 	}
 #endif
-	return (pmap->pm_tlbpid);
+	return (pmap->pm_asid);
 }
 
 /*
