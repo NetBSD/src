@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.8 1998/11/24 01:33:47 kim Exp $	*/
+/*	$NetBSD: whois.c,v 1.8.2.1 1999/12/04 19:57:23 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.8 1998/11/24 01:33:47 kim Exp $");
+__RCSID("$NetBSD: whois.c,v 1.8.2.1 1999/12/04 19:57:23 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: whois.c,v 1.8 1998/11/24 01:33:47 kim Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#define	NICHOST	"whois.internic.net"
+#define	NICHOST	"whois.networksolutions.com"
 
 int main __P((int, char **));
 static void usage __P((void));
