@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.44 2000/02/01 05:13:17 enami Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.44.4.1 2001/02/26 17:07:03 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@ static const char *srcpath __P((struct files *));
 static const char *prefix_prologue __P((const char *));
 
 static int emitdefs __P((FILE *));
-static int emitfiles __P((FILE *, int));
+static int emitfiles __P((FILE *, int, int));
 
 static int emitobjs __P((FILE *));
 static int emitcfiles __P((FILE *));
@@ -301,7 +301,7 @@ emitcfiles(fp)
 	FILE *fp;
 {
 
-	return (emitfiles(fp, 'c'));
+	return (emitfiles(fp, 'c', 0));
 }
 
 static int
@@ -309,13 +309,14 @@ emitsfiles(fp)
 	FILE *fp;
 {
 
-	return (emitfiles(fp, 's'));
+	return (emitfiles(fp, 's', 1));
 }
 
 static int
-emitfiles(fp, suffix)
+emitfiles(fp, suffix, upper_suffix)
 	FILE *fp;
 	int suffix;
+	int upper_suffix;
 {
 	struct files *fi;
 	struct config *cf;
@@ -333,7 +334,8 @@ emitfiles(fp, suffix)
 		if ((fpath = srcpath(fi)) == NULL)
                         return (1);
 		len = strlen(fpath);
-		if (fpath[len - 1] != suffix)
+		if (! ((fpath[len - 1] == suffix) ||
+		    (upper_suffix && fpath[len - 1] == toupper(suffix))))
 			continue;
 		if (*fpath != '/') {
 			len += 3;	/* "$S/" */
