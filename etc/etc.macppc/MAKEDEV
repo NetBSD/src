@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.32 2000/10/14 12:36:06 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.33 2000/11/14 21:21:31 matt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -81,6 +81,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
+#	openfirm OpenFireware queries
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	audio*	audio devices
@@ -106,7 +107,7 @@ all)
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
 	sh $0 random tty00 tty01 tty10 pty0 pty1 pty2 pty3 adb grf0 wscons
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1 ipl usbs ttyCZ0 audio
+	sh $0 tun0 tun1 ipl usbs ttyCZ0 audio openfirm
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
@@ -493,6 +494,13 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+openfirm)
+	rm -f openfirm
+	mknod openfirm c 53 0
+	chown root.wheel openfirm
+	chmod 444 openfirm
 	;;
 
 nvram)
