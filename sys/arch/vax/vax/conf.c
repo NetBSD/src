@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	7.18 (Berkeley) 5/9/91
- *	$Id: conf.c,v 1.2 1994/08/16 23:47:25 ragge Exp $
+ *	$Id: conf.c,v 1.3 1994/10/08 15:48:02 ragge Exp $
  */
 
 #include "param.h"
@@ -294,7 +294,7 @@ int	cnopen(),cnclose(),cnread(),cnwrite(),cnioctl(),cnselect();
 int	gencnprobe(), gencninit(), gencngetc(), gencnputc();
 int	gencnopen(), gencnclose(), gencnwrite(), gencnread(), gencnioctl();
 
-extern 	struct tty gencnttyst;
+extern 	struct tty *gencntty[];
 
 struct	consdev	constab[]={
 
@@ -413,7 +413,7 @@ int	lpopen(),lpclose(),lpwrite(),lpreset();
 #define	lpreset		nullop
 #endif
 
-int	syopen(),syread(),sywrite(),syioctl(),syselect();
+int	cttyopen(),cttyread(),cttywrite(),cttyioctl(),cttyselect();
 
 int 	mmrw();
 #define	mmselect	seltrue
@@ -649,22 +649,27 @@ int	ttselect(), seltrue();
 
 struct cdevsw	cdevsw[] =
 {
+/* /dev/console */
 	cnopen,		cnclose,	cnread,		cnwrite,	/*0*/
 	cnioctl,	nullop,		nullop,		NULL,
 	cnselect,	enodev,		NULL,
 
+/* DZ11 */
 	dzopen,		dzclose,	dzread,		dzwrite,	/*1*/
 	dzioctl,	dzstop,		dzreset,	dz_tty,
 	ttselect,	enodev,		NULL,
 
-	syopen,		nullop,	syread,		sywrite,	/*2*/
-	syioctl,	nullop,	nullop,	NULL,
-	syselect,	enodev,		NULL,
+/* Controlling tty */
+	cttyopen,	nullop,		cttyread,	cttywrite,	/*2*/
+	cttyioctl,	nullop,		nullop,		NULL,
+	cttyselect,	enodev,		NULL,
 
+/* /dev/null, dev/kmem, /dev/kUmem etc... */
 	nullop,	nullop,	mmrw,		mmrw,		/*3*/
 	enodev,		nullop,	nullop,	NULL,
 	mmselect,	enodev,		NULL,
 
+/* RP06/07, RM03/05/80 */
 	hpopen,		hpclose,	rawread,	rawwrite,	/*4*/
 	hpioctl,	enodev,		nullop,	NULL,
 	seltrue,	enodev,		hpstrategy,
@@ -750,8 +755,8 @@ struct cdevsw	cdevsw[] =
 	seltrue,	enodev,		NULL,
 
 /* Generic console on VAXen */
-	gencnopen,	gencnclose,	gencnwrite,	gencnread,	/*25*/
-	gencnioctl,	nullop,		nullop,		&gencnttyst,
+	gencnopen,	gencnclose,	gencnread,	gencnwrite,	/*25*/
+	gencnioctl,	nullop,		nullop,		gencntty,
 	ttselect,	enodev,		NULL,
 
 	lpaopen,	lpaclose,	lparead,	lpawrite,	/*26*/

@@ -41,7 +41,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	from: machdep.c,v 1.12 1993/10/13 09:36:43 cgd Exp $
- *	$Id: machdep.c,v 1.2 1994/08/16 23:47:34 ragge Exp $
+ *	$Id: machdep.c,v 1.3 1994/10/08 15:48:09 ragge Exp $
  */
 
 #include "sys/param.h"
@@ -85,11 +85,6 @@ int	todrstopped,glurg;
 
 caddr_t allocsys __P((caddr_t));
 
-/*   */
-#if 0
-#define valloc(name, type, num) \
-		(name) = (type *)v; v = (caddr_t)((name)+(num))
-#endif
 #define valloclim(name, type, num, lim) \
 		(name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 
@@ -112,11 +107,12 @@ cpu_startup() {
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
 	extern int cpu_type,boothowto,startpmapdebug;
+	extern unsigned int avail_end;
 	extern char *panicstr;
 
 	printf("%s\n", version);
-	printf("realmem = %d\n", mem_size);
-	physmem=btoc(mem_size); 
+	printf("realmem = %d\n", avail_end);
+	physmem=btoc(avail_end); 
 	panicstr=NULL;
 	mtpr(AST_NO,PR_ASTLVL);
 	spl0();
@@ -175,76 +171,6 @@ cpu_startup() {
     exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
                              16*NCARGS, TRUE);
 
-
-
-
-
-
-
-        /*
-         * Allocate space for system data structures.
-	 * First the sizes of the buffers are calculated and then 
-	 * memory is allocated for those buffers. The first
-	 * available kernel virtual address is then saved to "v".
-	 * Last of all, the pointers to the buffers are set to point
-	 * to their respective memory area.
-	 *
-         * An index into the kernel page table corresponding to the
-         * virtual memory address maintained in "v" is kept in "mapaddr".
-         */
-#if 0
-	bufpages = bufpages ? bufpages : mem_size/NBPG/CLSIZE/10;
-	nbuf     = nbuf     ? nbuf     : max(bufpages, 16);
-	nswbuf   = nswbuf   ? nswbuf   : min((nbuf/2)&~1, 256);
-
-        v = (caddr_t) kmem_alloc(kernel_map,(nswbuf+nbuf)*sizeof(struct buf));
-
-        if (v == 0) {
-          panic("cpu_startup(): Cannot allocate physical memory for buffers");
-        }
-        swbuf = (struct buf *) v;
-        buf   = swbuf + nswbuf;
-        v    += round_page((nswbuf+nbuf)*sizeof(struct buf));
-#endif
-        /*
-         * XXX Now allocate buffers proper.  They are different than the above
-         * in that they usually occupy more virtual memory than physical.
-         */
-#if 0
-        size = MAXBSIZE * nbuf;
-        buffer_map = kmem_suballoc(kernel_map, (vm_offset_t) &buffers,
-                                   &maxaddr, size, FALSE);
-        minaddr = (vm_offset_t) buffers;
-        if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-                        &minaddr, size, FALSE) != KERN_SUCCESS)
-                panic("cpu_startup(): Cannot allocate buffers");
-
-        base = bufpages / nbuf;
-        residual = bufpages % nbuf;
-#endif
-	/*
-	 * The first (residual) buffers get (base+1) number of
-	 * physical pages allocated from the beginning.
-	 * The other buffers only get (base) number of physical
-	 * pages allocated. The remaining virtual space of the
-	 * buffers stays unmapped.
-	 */
-#if 0
-        for (i = 0; i < nbuf; i++) {
-	  vm_size_t   curbufsize;
-	  vm_offset_t curbuf;
-glurg=i;
-	  curbuf = (vm_offset_t) buffers + i * MAXBSIZE;
-	  curbufsize = CLBYTES * (i < residual ? base+1 : base);
-	  vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
-	  vm_map_simplify(buffer_map, curbuf);
-        }
-#endif
-	/* We found it cleaner to allocate the i/o buffers in autoconf.c
-	 * instead of here, as the previous (horrid) code did.
-	 * Look in autoconf.c for its specification.   (Aqua)
-	 */
-
         /*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
          * we use the more space efficient malloc in place of kmem_alloc.
@@ -255,14 +181,9 @@ glurg=i;
         bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
         mb_map = kmem_suballoc(kernel_map, (vm_offset_t*)&mbutl, &maxaddr,
                                VM_MBUF_SIZE, FALSE);
-
         /*
          * Initialize callouts
          */
-#if 0
-	callout=(struct callout *)
-		kmem_alloc(kernel_map, ncallout*sizeof(struct callout));
-#endif
 
         callfree = callout;
         for (i = 1; i < ncallout; i++)
@@ -278,14 +199,7 @@ glurg=i;
          */
 
         bufinit();
-	/*
-	 * XXX Det h{r skall inte alls g|ras s} h{r! (och inte h{r :)
-	 */
-#if 0
-	swapmap=(struct map *)
-		kmem_alloc(kernel_map, (sizeof(struct map)*512)); /* XXX */
-	nswapmap=512;
-#endif
+
         /*
          * Configure the system.
          */
@@ -312,6 +226,7 @@ glurg=i;
          * Configure swap area and related system
          * parameter based on device(s) used.
          */
+	gencnslask(); /* XXX inte g|ras h{r */
         swapconf();
 	cold=0;
         return;
@@ -390,6 +305,7 @@ printf("physmem: %x, btoc %x, CLSIZE %x\n",physmem,btoc(2*1024*1024),CLSIZE);
  * (And that was the way they did it in old BSD Unix... :)
  * One year is about 3153600000 in todr.
  */
+#if 0
 inittodr(time_t disktid){
 	int todrtid,nytid;
 
@@ -415,6 +331,7 @@ inittodr(time_t disktid){
 resettodr(){
 	printf("Time reset routine resettodr() not implemented yet.\n");
 }
+#endif
 
 dumpconf(){
 	printf("dumpconf() not implemented - yet!\n");
@@ -469,7 +386,12 @@ _remque(elem)
         prev->q_next = next;
         elem->q_prev = 0;
 }
-
+#if 0
 microtime(){
-	printf("Microtime...\n");
+/* XXX Should be fixed and moved to clock.c */
+}
+#endif
+
+consinit(){
+/*	cninit(); */
 }
