@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 2001/09/16 05:32:20 uch Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 2001/09/16 15:45:44 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,3 @@ struct mainbus_attach_args {
 	const char *ma_name;		/* device name */
         bus_space_tag_t ma_iot;    
 };
-
-int	badaddr(void *, u_int);
-void	makebootdev(char *);
