@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.10 2003/12/15 09:18:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -199,14 +199,14 @@ void validate_trapframe __P((trapframe_t *, int));
  */
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	mrs	r4, cpsr_all		/* save CPSR */			;\
+	mrs	r4, cpsr		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	3f			/* Nope, get out now */		;\
 	bic	r4, r4, #(I32_bit)					;\
 1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
-	msr	cpsr_all, r0						;\
+	msr	cpsr_c, r0						;\
 	ldr	r1, [r5]		/* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
 	bne	2f			/* Yup. Go deal with it */	;\
@@ -223,7 +223,7 @@ void validate_trapframe __P((trapframe_t *, int));
 	ldr	pc, [r2, #CF_CONTROL]	/* Set new CTRL reg value */	;\
 2:	mov	r1, #0x00000000						;\
 	str	r1, [r5]		/* Clear astpending */		;\
-	msr	cpsr_all, r4		/* Restore interrupts */	;\
+	msr	cpsr_c, r4		/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	adr	lr, 1b							;\
 	b	_C_LABEL(ast)		/* ast(frame) */		;\
@@ -239,20 +239,20 @@ void validate_trapframe __P((trapframe_t *, int));
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	mrs	r4, cpsr_all		/* save CPSR */			;\
+	mrs	r4, cpsr		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	2f			/* Nope, get out now */		;\
 	bic	r4, r4, #(I32_bit)					;\
 1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
-	msr	cpsr_all, r0						;\
+	msr	cpsr_c, r0						;\
 	ldr	r1, [r5]		/* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
 	beq	2f			/* Nope. Just bail */		;\
 	mov	r1, #0x00000000						;\
 	str	r1, [r5]		/* Clear astpending */		;\
-	msr	cpsr_all, r4		/* Restore interrupts */	;\
+	msr	cpsr_c, r4		/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	adr	lr, 1b							;\
 	b	_C_LABEL(ast)		/* ast(frame) */		;\
