@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.178.2.1 2002/12/18 01:06:17 gmcgarry Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.178.2.2 2002/12/19 05:20:16 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.178.2.1 2002/12/18 01:06:17 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.178.2.2 2002/12/19 05:20:16 gmcgarry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1899,13 +1899,11 @@ sys_access(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct ucred *cred = crget();
+	struct ucred *cred = crdup(p->p_ucred);
 	struct vnode *vp;
 	int error, flags;
 	struct nameidata nd;
 
-	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
-	cred->cr_ref = 1;
 	cred->cr_uid = p->p_ucred->cr_ruid;
 	cred->cr_gid = p->p_ucred->cr_rgid;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
