@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.34 1998/07/12 20:14:30 augustss Exp $	
+	$NetBSD: hardware,v 1.35 1998/07/29 09:04:10 augustss Exp $	
 
 NetBSD/i386 _VER runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
@@ -152,9 +152,9 @@ Supported devices include:
 	Sound Cards:
 		SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
 		Gravis Ultrasound and Ultrasound Max [*] [+]
+		Windows Sound System [*] [+]
 			[The following drivers are not extensively tested]
 		Personal Sound System [*] [+]
-		Windows Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
 		Gravis Ultrasound Plug&Play [*] [+]
 		Ensoniq AudioPCI [*] [+]
@@ -168,6 +168,14 @@ Supported devices include:
 		Printers.
 	Miscellaneous:
 		Advanced power management (APM) [*]
+        Universal Serial Bus:
+                UHCI host controllers [*] [+]
+                OHCI host controllers [*] [+]
+                Hubs [*] [+]
+                Keyboards using the boot protocol [*] [+]
+                Mice [*] [+]
+		Printers [*] [+]
+		Generic support for HID devices [*] [+]
 
 Drivers for hardware marked with "[*]" are NOT present in kernels on the
 distribution floppies.  Except as noted above, all drivers are present
