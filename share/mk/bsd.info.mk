@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.1 1999/02/11 13:25:42 tv Exp $
+#	$NetBSD: bsd.info.mk,v 1.2 1999/02/11 15:31:44 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -16,7 +16,7 @@ INSTALL_INFO?=	install-info
 .SUFFIXES: .txi .texi .info
 
 .txi.info .texi.info:
-	${MAKEINFO} --no-split -o $@ $<
+	@${MAKEINFO} --no-split -o $@ $<
 
 .if defined(TEXINFO) && !empty(TEXINFO) && !defined(NOSHARE)
 INFOFILES=	${TEXINFO:C/\.te?xi$/.info/}
