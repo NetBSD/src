@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.31 1999/02/19 00:43:00 nathanw Exp $
+$NetBSD: pcmciadevs,v 1.32 1999/02/19 02:52:17 nathanw Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
 /* Fujutsu Products */
-product FUJUTSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
+product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
 
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
