@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.5 1996/10/13 03:34:48 christos Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.6 1996/12/09 16:12:19 oki Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -63,7 +63,7 @@ extern int x68k_realconfig;
 int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, void *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
-void grfbusscan __P((struct device *, void *));
+int grfbussearch __P((struct device *, void *, void *));
 
 void grfattach __P((struct device *, struct device *, void *));
 int grfmatch __P((struct device *, void *, void *));
@@ -124,17 +124,18 @@ grfbusattach(pdp, dp, auxp)
 		x68k_config_found(cfdata_gbus, NULL, (void*)&i, grfbusprint);
 	} else {
 		printf("\n");
-		config_scan(grfbusscan, dp);
+		config_search(grfbussearch, dp, NULL);
 	}
 }
 
-void
-grfbusscan(dp, auxp)
+int
+grfbussearch(dp, match, aux)
 	struct device *dp;
-	void *auxp;
+	void *match, *aux;
 {
 	int i = 0;
 	config_found(dp, (void*)&i, grfbusprint);
+	return (0);
 }
 
 int
