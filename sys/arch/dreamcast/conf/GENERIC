@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2002/04/25 15:06:25 atatat Exp $
+# $NetBSD: GENERIC,v 1.24 2002/05/03 01:36:02 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -30,16 +30,6 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
 #options 	MEMORY_DISK_ROOT_SIZE=6000
-
-# CPU support
-options 	SH4
-options 	SH7750
-options 	PCLOCK=49900000			# 50MHz
-#options 	PCLOCK=50000000			# 50MHz
-options 	IOM_ROM_BEGIN=0x00000000
-options 	IOM_ROM_SIZE=0x00100000		# 1MB
-options 	IOM_RAM_BEGIN=0x8c000000
-options 	IOM_RAM_SIZE=0x01000000		# 16MB
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
