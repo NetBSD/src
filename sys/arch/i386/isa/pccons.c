@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.1 1993/09/14 17:32:48 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.2 1993/09/24 08:49:23 mycroft Exp $
  */
 
 /*
@@ -1755,19 +1755,20 @@ int pcmmap(dev_t dev, int offset, int nprot)
 
 pc_xmode_on ()
 {
-	struct syscframe *fp;
+	struct trapframe *fp;
 
 	if (pc_xmode)
 		return;
 	pc_xmode = 1;
 
-	fp = (struct syscframe *)curproc->p_regs;
-	fp->sf_eflags |= PSL_IOPL;
+	/* XXXX use /dev/io instead? */
+	fp = (struct trapframe *)curproc->p_regs;
+	fp->tf_eflags |= PSL_IOPL;
 }
 
 pc_xmode_off ()
 {
-	struct syscframe *fp;
+	struct trapframe *fp;
 
 	if (pc_xmode == 0)
 		return;
@@ -1775,7 +1776,8 @@ pc_xmode_off ()
 
 	cursor(0);
 
-	fp = (struct syscframe *)curproc->p_regs;
-	fp->sf_eflags &= ~PSL_IOPL;
+	/* XXXX use /dev/io instead? */
+	fp = (struct trapframe *)curproc->p_regs;
+	fp->tf_eflags &= ~PSL_IOPL;
 }
 #endif	/* XSERVER*/

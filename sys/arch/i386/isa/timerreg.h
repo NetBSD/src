@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: timerreg.h,v 1.3.4.1 1993/09/14 17:32:50 mycroft Exp $
+ *	$Id: timerreg.h,v 1.3.4.2 1993/09/24 08:49:28 mycroft Exp $
  */
 
 /*
@@ -98,3 +98,4 @@
 #define		TIMER_16BIT	0x30	/* r/w counter 16 bits, LSB first */
 #define		TIMER_BCD	0x01	/* count in BCD */
 
+#define	TIMER_NPORTS	16
