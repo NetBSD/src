@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.17 1996/12/21 21:48:20 pk Exp $";
+static char rcsid[] = "$Id: read.c,v 1.17.2.1 1997/11/12 23:54:12 mellon Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -2095,8 +2095,11 @@ unsigned int next_char_of_string() {
 		case '8':
 		case '9': {
 			long number;
+                        int nchar;
 			
-			for (number = 0; isdigit(c); c = *input_line_pointer++) {
+			for (nchar = 0, number = 0; 
+                             nchar < 3 && isdigit(c); 
+                             c = *input_line_pointer++, nchar++) {
 				number = number * 8 + c - '0';
 			}
 			c = number & 0xff;
