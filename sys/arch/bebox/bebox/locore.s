@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 2000/11/16 05:34:03 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 2000/12/04 17:05:50 tsubai Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -51,6 +51,9 @@
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
+
+#define	INTSTK	(8*1024)	/* 8K interrupt stack */
+#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals
