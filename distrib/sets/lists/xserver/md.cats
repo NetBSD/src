@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.5 2004/10/07 13:50:18 rtr Exp $
+# $NetBSD: md.cats,v 1.6 2004/11/13 21:14:17 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
@@ -127,6 +127,7 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/wsfb.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
