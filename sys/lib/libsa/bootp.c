@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.13.2.1 1998/05/08 06:56:55 mycroft Exp $	*/
+/*	$NetBSD: bootp.c,v 1.13.2.2 1998/05/08 06:59:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -129,7 +129,7 @@ bootp(sock)
 	bp->bp_vend[4] = TAG_END;
 #endif
 
-	d->myip = myip;
+	d->myip.s_addr = INADDR_ANY;
 	d->myport = htons(IPPORT_BOOTPC);
 	d->destip.s_addr = INADDR_BROADCAST;
 	d->destport = htons(IPPORT_BOOTPS);
