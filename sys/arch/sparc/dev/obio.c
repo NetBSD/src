@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.47 2000/01/11 12:59:46 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.47.4.1 2000/07/26 09:33:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ obioattach(parent, self, aux)
 		static const char *const special4[] = {
 			/* find these first */
 			"timer",
+			"dma",		/* need this before `esp', if any */
 			NULL
 		};
 
