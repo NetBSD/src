@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2003/10/19 14:10:13 lukem Exp $
+# $NetBSD: Makefile,v 1.18 2003/10/21 10:01:20 lukem Exp $
 
 NOMAN=	# defined
 
@@ -324,16 +324,14 @@ SYMLINKS+=	${LOCALEDIR}/${locale}/LC_CTYPE ${LOCALEDIR}/${alias}/LC_CTYPE
 .for locale in ${LOCALES}
 ${locale}.out: ${LOCALESRC_${locale}}.src \
 		${NETBSDSRCDIR}/lib/libc/locale/runetable.c
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${CPP} -I${.CURDIR} < ${.CURDIR}/${LOCALESRC_${locale}}.src | \
 	    sed -e '/^#/d' | ${TOOL_MKLOCALE} -o ${.TARGET}
 .endfor
 
 .SUFFIXES: .src .out
 .src.out:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${CPP} -I${.CURDIR} < ${.IMPSRC} | sed -e '/^#/d' | \
             ${TOOL_MKLOCALE} -o ${.TARGET}
 

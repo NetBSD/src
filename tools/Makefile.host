@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.21 2003/10/19 04:45:01 lukem Exp $
+#	$NetBSD: Makefile.host,v 1.22 2003/10/21 10:01:22 lukem Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -52,10 +52,8 @@ SRCS+=		${HOST_SRCS}
 realinstall: install.host install.files
 install.host: ${HOST_BINDIR}/${HOSTPROGNAME}
 ${HOST_BINDIR}/${HOSTPROGNAME}:: ${HOSTPROG}
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	mkdir -p ${HOST_BINDIR}
-	${_MKCMD}\
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
 
 .if !defined(UPDATE)
@@ -66,10 +64,8 @@ install.files:
 .for F in ${HOSTFILES}
 install.files: ${HOST_FILESDIR}/${F}
 ${HOST_FILESDIR}/${F}: ${F}
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	mkdir -p ${HOST_FILESDIR}
-	${_MKCMD}\
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 
 .if !defined(UPDATE)

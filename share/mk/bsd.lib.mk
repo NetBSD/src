@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.237 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.238 2003/10/21 10:01:21 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -171,207 +171,149 @@ CFLAGS+=	${COPTS}
 FFLAGS+=	${FOPTS}
 
 .c.o:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .c.po:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .c.so:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .c.ln:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[-IDU]*} -i ${.IMPSRC}
 
 .cc.o .cpp.o .cxx.o .C.o:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .cc.po .cpp.po .cxx.o .C.po:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .cc.so .cpp.so .cxx.so .C.so:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .f.o:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .f.po:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .f.so:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .f.ln:
-	${_MKMSGCOMPILE}
+	${_MKTARGET_COMPILE}
 	@echo Skipping lint for Fortran libraries.
 
 .m.o:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .m.po:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .m.so:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${_MKCMD}\
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 .endif
 
 .S.o .s.o:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 
 .S.po .s.po:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
-	${_MKCMD}\
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 
 .S.so .s.so:
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
-	${_MKCMD}\
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
-	${_MKCMD}\
 	rm -f ${.TARGET}.tmp
 
 .if defined(LIB)
@@ -434,23 +376,18 @@ SOBJS=
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
 __archivebuild: .USE
-	${_MKMSGBUILD}
-	${_MKCMD}\
+	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${_MKCMD}\
 	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
-	${_MKCMD}\
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${UPDATE:D:U-a "${RANLIB} -t"} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 __archivesymlinkpic: .USE
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	${INSTALL_SYMLINK} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
@@ -478,11 +415,9 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 
 lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
-	${_MKMSGBUILD}
-	${_MKCMD}\
+	${_MKTARGET_BUILD}
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
-	${_MKCMD}\
 	${CC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
 	    ${_LIBLDOPTS} \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
@@ -490,7 +425,6 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	    -Wl,--no-whole-archive ${LDADD} \
 	    -L${_GCC_LIBGCCDIR}
 .else
-	${_MKCMD}\
 	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
@@ -499,43 +433,30 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
-	${_MKCMD}\
 	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
-	${_MKCMD}\
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
-	${_MKCMD}\
 	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
-	${_MKCMD}\
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
 .endif
 
 .if !empty(LOBJS)
 LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
-	${_MKMSGCOMPILE}
-	${_MKCMD}\
+	${_MKTARGET_COMPILE}
 	rm -f llib-l${LIB}.ln
 .if defined(DESTDIR)
-	${_MKCMD}\
 	${LINT} -C${LIB} ${.ALLSRC} -L${DESTDIR}/usr/libdata ${LLIBS}
 .else
-	${_MKCMD}\
 	${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
 .endif
 .endif
 
 cleanlib:
-	${_MKCMD}\
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
-	${_MKCMD}\
 	rm -f lib${LIB}.a ${OBJS}
-	${_MKCMD}\
 	rm -f lib${LIB}_p.a ${POBJS}
-	${_MKCMD}\
 	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${SOBJS}
-	${_MKCMD}\
 	rm -f ${OBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp}
-	${_MKCMD}\
 	rm -f llib-l${LIB}.ln ${LOBJS}
 
 .if defined(SRCS)
@@ -624,38 +545,31 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 .endif
 ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${_MKCMD}\
 	${INSTALL_SYMLINK} ${SYSPKGTAG} \
 		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
-	${_MKCMD}\
 	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	${_MKCMD}\
 	${INSTALL_SYMLINK} ${SYSPKGTAG} \
 		lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${_MKCMD}\
 	${INSTALL_SYMLINK} ${SYSPKGTAG} \
 		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .endif
 .if ${MKLINKLIB} != "no"
-	${_MKCMD}\
 	${INSTALL_SYMLINK} ${SYSPKGTAG} \
 		lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${_LIBSODIR}/lib${LIB}.so
 .if ${_LIBSODIR} != ${LIBDIR}
-	${_MKCMD}\
 	${INSTALL_SYMLINK} ${SYSPKGTAG} \
 		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so
@@ -679,8 +593,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/10/20 00:40:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/10/21 10:01:20 lukem Exp $
 # Makefile for uusched
 
 BINDIR=		$(bindir)
@@ -8,8 +8,7 @@ CLEANFILES=	uusched
 realall:	${CLEANFILES}
 
 uusched:	uusched.in
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e "s|@BINDIR@|$(bindir)|g" -e "s|@SBINDIR@|$(sbindir)|g" \
 		$(.CURDIR)/uusched.in > $(.TARGET)
 

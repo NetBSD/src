@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.35 2003/10/19 04:54:53 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.36 2003/10/21 10:01:21 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -23,8 +23,7 @@ realall:	${INFOFILES}
 .SUFFIXES: .txi .texi .texinfo .info
 
 .txi.info .texi.info .texinfo.info:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split -o ${.TARGET} ${.IMPSRC}
 
 .endif # ${MKINFO} != "no"
@@ -37,8 +36,7 @@ INFODIRFILE=${DESTDIR}${INFODIR}/dir
 
 # serialize access to ${INFODIRFILE}; needed for parallel makes
 __infoinstall: .USE
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} \
 	    -o ${INFOOWN_${.ALLSRC:T}:U${INFOOWN}} \
 	    -g ${INFOGRP_${.ALLSRC:T}:U${INFOGRP}} \
@@ -83,7 +81,6 @@ CLEANFILES+=	${INFOFILES}
 
 cleaninfo:
 .if !empty(CLEANFILES)
-	${_MKCMD}\
 	rm -f ${CLEANFILES}
 .endif
 

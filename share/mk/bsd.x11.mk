@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.6 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.7 2003/10/21 10:01:22 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -53,10 +53,8 @@ LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
 .SUFFIXES:	.cpp
 
 .cpp:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${_MKCMD}\
 	${CPP} -undef -traditional \
 	    ${CPPSCRIPTFLAGS_${.TARGET}:U${CPPSCRIPTFLAGS}} \
 	    < ${.IMPSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
@@ -65,7 +63,6 @@ realall: ${CPPSCRIPTS}
 
 clean: cleancppscripts
 cleancppscripts:
-	${_MKCMD}\
 	rm -f ${CPPSCRIPTS}
 .endif								# }
 
@@ -101,10 +98,8 @@ cleanx11man:
 .SUFFIXES:	.man .1 .3 .7
 
 .man.1 .man.3 .man.7:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${_MKCMD}\
 	${CPP} -undef -traditional \
 	    -D__apploaddir__=${X11ROOTDIR}/lib/X11/app-defaults \
 	    -D__filemansuffix__=5 -D__libmansuffix__=3 \

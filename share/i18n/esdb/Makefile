@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2003/10/19 14:08:52 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2003/10/21 10:01:21 lukem Exp $
 
 NOMAN=
 
@@ -9,8 +9,7 @@ BINDIR?=	/usr/share/i18n/esdb
 .SUFFIXES: .src .esdb
 
 .src.esdb:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_MKESDB} -o $@ $>
 
 SUBDIR=	CP EUC EBCDIC ISO-2022 ISO-8859 ISO646 MISC UTF
@@ -24,21 +23,17 @@ SUBDIR=	CP EUC EBCDIC ISO-2022 ISO-8859 ISO646 MISC UTF
 #
 
 esdb.dir: ${SRC_esdb.dir}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	cat $> > $@
 esdb.dir.db: esdb.dir
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_MKESDB} -m -o $@ $>
 
 esdb.alias: ${SRC_esdb.alias}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	cat $> > $@
 esdb.alias.db: esdb.alias
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_MKESDB} -m -o $@ $>
 
 FILES+=		esdb.dir esdb.dir.db esdb.alias esdb.alias.db

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2003/10/20 00:54:37 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2003/10/21 10:01:20 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -15,8 +15,7 @@ CLEANFILES=	majorminor.cpp ${MAN}
 .include <bsd.prog.mk>
 
 majorminor.cpp: ${GROFF_DIST}/VERSION ${GROFF_DIST}/REVISION
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(\
 	    maj=`sed -e 's/^\([^.]*\)\..*$$/\1/' ${GROFF_DIST}/VERSION` ;\
 	    min=`sed -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' ${GROFF_DIST}/VERSION` ;\

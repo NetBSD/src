@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2003/10/20 00:54:37 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2003/10/21 10:01:20 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/libs/libgroff/Makefile,v 1.5 2003/05/01 13:22:19 ru Exp $
 
@@ -24,8 +24,7 @@ libinstall::
 .include <bsd.lib.mk>
 
 version.cpp: ${GROFF_DIST}/VERSION ${GROFF_DIST}/REVISION
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(\
 	    v=`cat ${GROFF_DIST}/VERSION`;\
 	    r=`cat ${GROFF_DIST}/REVISION`;\

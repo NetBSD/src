@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/10/19 14:52:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/10/21 10:01:20 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -41,10 +41,8 @@ INCSDIR=	/usr/include/objc
 DPSRCS+=	runtime-info.h
 CLEANFILES+=	rtscratch rtscratch.s runtime-info.h
 runtime-info.h:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	touch rtscratch
-	${_MKCMD}\
 	`${OBJC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@
 
 .PATH: ${DIST}/libobjc ${DIST}/libobjc/objc

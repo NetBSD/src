@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2003/10/19 04:45:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.38 2003/10/21 10:01:19 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -28,13 +28,11 @@ FILESDIR=/var/games/hackdir
 
 CLEANFILES+=hack.onames.h
 hack.onames.h: makedefs def.objects.h
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
 makedefs: makedefs.c
-	${_MKMSGLINK}
-	${_MKCMD}\
+	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o makedefs ${.CURDIR}/makedefs.c
 
 hack.h:	hack.onames.h
@@ -44,16 +42,13 @@ afterinstall: clobber
 .endif
 
 clobber: 
-	${_MKMSGINSTALL.m} ${DESTDIR}/var/games/hackdir/perm
-	${_MKCMD}\
+	${_MKMSG_INSTALL} ${DESTDIR}/var/games/hackdir/perm
 	${INSTALL_FILE} -o games -g games -m 660 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
-	${_MKMSGINSTALL.m} ${DESTDIR}/var/games/hackdir/record
-	${_MKCMD}\
+	${_MKMSG_INSTALL} ${DESTDIR}/var/games/hackdir/record
 	${INSTALL_FILE} -o games -g games -m 660 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
-	${_MKMSG} " remove  ${DESTDIR}/var/games/hackdir/bones*"
-	${_MKCMD}\
+	${_MKMSG_REMOVE} "${DESTDIR}/var/games/hackdir/bones*"
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 
 .include <bsd.prog.mk>

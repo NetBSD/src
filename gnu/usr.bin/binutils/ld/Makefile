@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/10/20 01:15:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/10/21 10:01:20 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -45,8 +45,7 @@ BUILDSYMLINKS+=	${G_STRINGIFY} stringify.sed
 .endif
 
 .depend.${f}: ${f}.sh
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(srcdir=${DIST}/ld . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
 			temp_emul=$$TEMPLATE_NAME.em; \
@@ -65,8 +64,7 @@ DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
 	LIB_PATH=/usr/lib srcdir=${DIST}/ld \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
@@ -91,5 +89,4 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 
 cleanprog: __cleanldscripts 
 __cleanldscripts:
-	${_MKCMD}\
 	rm -rf ldscripts

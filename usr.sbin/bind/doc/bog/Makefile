@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/10/19 06:12:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/10/21 10:01:22 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -17,10 +17,8 @@ CLEANFILES+=	bog.ps
 all: bog.ps
 
 bog.ps: ${SRCS}
-	${_MKMSGFORMAT}
-	${_MKCMD}\
+	${_MKTARGET_FORMAT}
 	rm -f ${.TARGET}
-	${_MKCMD}\
 	${TOOL_TBL} ${.ALLSRC} | ${TOOL_ROFF_PS} ${MACROS} >${.TARGET}
 
 .include <bsd.doc.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2003/10/19 14:10:13 lukem Exp $
+# $NetBSD: Makefile,v 1.8 2003/10/21 10:01:20 lukem Exp $
 
 FONTS=	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 	vt220l.816 vt220h.816 vt220l.810 vt220h.810 \
@@ -13,8 +13,7 @@ realall:	${FONTS}
 
 .for i in ${FONTS}
 $i: ${.CURDIR}/$i.uu
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_UUDECODE} ${.CURDIR}/$i.uu
 .endfor
 

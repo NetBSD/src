@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.27 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.28 2003/10/21 10:01:21 lukem Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -20,8 +20,7 @@ FILESMODE?=	${NONBINMODE}
 filesinstall::	# ensure existence
 
 __fileinstall: .USE
-	${_MKMSGINSTALL}
-	${_MKCMD}\
+	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} \
 	    -o ${FILESOWN_${.ALLSRC:T}:U${FILESOWN}} \
 	    -g ${FILESGRP_${.ALLSRC:T}:U${FILESGRP}} \
@@ -65,10 +64,8 @@ filesinstall::	${_F}
 BUILDSYMLINKS.s+=	${_SL}
 BUILDSYMLINKS.t+=	${_TL}
 ${_TL}: ${_SL}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${_MKCMD}\
 	ln -s ${.ALLSRC} ${.TARGET}
 .endfor
 
@@ -77,7 +74,6 @@ realall: ${BUILDSYMLINKS.t}
 .PHONY:   cleanbuildsymlinks
 cleandir: cleanbuildsymlinks
 cleanbuildsymlinks:
-	${_MKCMD}\
 	rm -f ${BUILDSYMLINKS.t}
 
 .endif								# }
