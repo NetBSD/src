@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.66 2003/01/24 21:55:11 fvdl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.67 2003/02/14 16:21:49 grant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.66 2003/01/24 21:55:11 fvdl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.67 2003/02/14 16:21:49 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -725,7 +725,7 @@ initcg(int cylno, time_t utime)
 		if (isappleufs) {
 			/* Apple PR2216969 gives rationale for this change.
 			 * I believe they were mistaken, but we need to
-			 * duplicate it for compatibility.  -- dbj@netbsd.org
+			 * duplicate it for compatibility.  -- dbj@NetBSD.org
 			 */
 			acg.cg_clustersumoff += sizeof(int32_t);
 		}
