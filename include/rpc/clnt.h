@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.16 2001/06/19 12:52:20 wiz Exp $	*/
+/*	$NetBSD: clnt.h,v 1.17 2002/11/08 00:10:58 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,6 +41,8 @@
 #ifndef _RPC_CLNT_H_
 #define _RPC_CLNT_H_
 #include <sys/cdefs.h>
+
+#include <rpc/rpc_com.h>
 
 /*
  * Well-known IPV6 RPC broadcast address.
