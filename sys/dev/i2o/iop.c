@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.1 2000/11/08 19:45:31 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.2 2000/11/09 12:51:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1230,10 +1230,11 @@ iop_msg_map(struct iop_softc *sc, struct iop_msg *im, void *xferaddr,
 	 * If this is the first xfer we've mapped for this message, adjust
 	 * the SGL offset field in the message header.
 	 */
-	if ((im->im_flags & IM_SGLOFFADJ) == 0)
+	if ((im->im_flags & IM_SGLOFFADJ) == 0) {
 		im->im_msg[0] += ((im->im_msg[0] >> 16) + seg * 2) << 4;
+		im->im_flags |= IM_SGLOFFADJ;
+	}
 	im->im_msg[0] += (seg << 17);
-	im->im_flags |= IM_SGLOFFADJ;
 	return (0);
 }
 
@@ -1248,7 +1249,7 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
 	
 	for (i = 0, ix = im->im_xfer; i < IOP_MAX_MSG_XFERS; i++, ix++) {
 		if (ix->ix_size == 0)
-			continue;
+			break;
 		bus_dmamap_sync(sc->sc_dmat, ix->ix_map, 0, ix->ix_size,
 		    ix->ix_flags & IX_OUT ? BUS_DMASYNC_POSTWRITE :
 		    BUS_DMASYNC_POSTREAD);
@@ -1270,7 +1271,7 @@ int
 iop_msg_send(struct iop_softc *sc, struct iop_msg *im, int timo)
 {
 	u_int32_t mfa, mask;
-	int rv, status, i;
+	int rv, status, i, s;
 
 #ifdef I2ODEBUG
 	if ((im->im_flags & IM_NOICTX) == 0)
@@ -1283,15 +1284,13 @@ iop_msg_send(struct iop_softc *sc, struct iop_msg *im, int timo)
 
 	im->im_tid = im->im_msg[1] & 4095;	/* XXX */
 
-	/* Disable interrupts from the IOP. */
-	mask = IOP_INL(sc, IOP_REG_INTR_MASK);
-	IOP_OUTL(sc, IOP_REG_INTR_MASK, mask | IOP_INTR_OFIFO);
+	s = splbio();	/* XXX */
 
 	/* Wait up to 250ms for an MFA. */
 	POLL(250, (mfa = IOP_INL(sc, IOP_REG_IFIFO)) != IOP_MFA_EMPTY);
 	if (mfa == IOP_MFA_EMPTY) {
 		DPRINTF(("%s: mfa not forthcoming\n", sc->sc_dv.dv_xname));
-		IOP_OUTL(sc, IOP_REG_INTR_MASK, mask);
+		splx(s);
 		return (EBUSY);
 	}
 
@@ -1320,7 +1319,7 @@ iop_msg_send(struct iop_softc *sc, struct iop_msg *im, int timo)
 	IOP_OUTL(sc, IOP_REG_IFIFO, mfa);
 
 	if (timo == 0) {
-		IOP_OUTL(sc, IOP_REG_INTR_MASK, mask);
+		splx(s);
 		return (0);
 	}
 
@@ -1333,8 +1332,7 @@ iop_msg_send(struct iop_softc *sc, struct iop_msg *im, int timo)
 		DELAY(100);
 	}
 
-	/* Re-enable interrupts. */
-	IOP_OUTL(sc, IOP_REG_INTR_MASK, mask);
+	splx(s);
 
 	if (timo == 0) {
 		DPRINTF(("%s: poll - no reply\n", sc->sc_dv.dv_xname));
