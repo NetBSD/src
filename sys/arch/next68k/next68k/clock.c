@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2002/09/11 01:46:34 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2003/01/18 06:09:54 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -145,7 +145,7 @@ clock_intr(arg)
 		int s;
 		
 		timer = (volatile struct timer_reg *)IIOV(NEXT_P_TIMER);
-		timer->csr |= TIMER_UPDATE;
+		timer->csr |= TIMER_REG_UPDATE;
 
 		if (! in_hardclock) {
 			in_hardclock = 1;
@@ -180,7 +180,7 @@ cpu_initclocks()
 	timer->csr = 0;
 	timer->msb = (cnt >> 8);
 	timer->lsb = cnt;
-	timer->csr = TIMER_ENABLE|TIMER_UPDATE;
+	timer->csr = TIMER_REG_ENABLE|TIMER_REG_UPDATE;
 	isrlink_autovec(clock_intr, NULL, NEXT_I_IPL(NEXT_I_TIMER), 0, NULL);
 	INTR_ENABLE(NEXT_I_TIMER);
 	splx(s);
