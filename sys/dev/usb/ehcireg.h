@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.14.2.1 2004/06/24 08:14:42 tron Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.14.2.2 2004/06/24 08:16:18 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ typedef struct {
 #define EHCI_QH_HRECL		0x00008000
 #define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
 #define EHCI_QH_SET_MPL(x)	((x) << 16)
-#define EHCI_QG_MPLMASK		0x07ff0000
+#define EHCI_QH_MPLMASK		0x07ff0000
 #define EHCI_QH_GET_CTL(x)	(((x) >> 27) & 0x01) /* control endpoint */
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
