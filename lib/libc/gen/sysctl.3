@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.25 1998/04/28 20:11:35 fair Exp $
+.\"	$NetBSD: sysctl.3,v 1.26 1998/04/30 21:32:47 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -495,11 +495,18 @@ The currently defined protocols and names are:
 .It tcp	rfc1323	integer	yes
 .It tcp	sendspace	integer	yes
 .It tcp	recvspace	integer	yes
+.It tcp	mssdflt	integer	yes
 .It tcp	syn_cache_limit	integer	yes
 .It tcp	syn_bucket_limit	integer	yes
 .It tcp	syn_cache_interval	integer	yes
 .It tcp	init_win	integer	yes
 .It tcp	mss_ifmtu	integer	yes
+.It tcp	sack	integer	yes
+.It tcp	win_scale	integer	yes
+.It tcp	timestamps	integer	yes
+.It tcp	compat_42	integer	yes
+.It tcp	cwm	integer	yes
+.It tcp	cwm_burstsize	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -544,6 +551,11 @@ Returns 1 if RFC1323 extensions to TCP are enabled.
 Returns the default TCP send buffer size.
 .It Li tcp.recvspace
 Returns the default TCP receive buffer size.
+.It Li tcp.mssdflt
+Returns the default maximum segment size both advertsized to the peer
+and to use when the peer does not advertize a maximum segment size to
+us during connection setup.  Do not change this value unless you really
+know what you are doing.
 .It Li tcp.syn_cache_limit
 Returns the maximum number of entries allowed in the TCP compressed state
 engine.
@@ -553,14 +565,37 @@ compressed state engine.
 .It Li tcp.syn_cache_interval
 Returns the TCP compressed state engine's timer interval.
 .It Li tcp.init_win
-If greater than 0, returns the number of segments used for the inital
-slow start congestion window.  A value of 0 indicates that an experimental
-auto-tuning algorithm is being used to compute the initial window.
+Returns a value indicating the TCP initial congestion window.  If this
+value is 0, an auto-tuning algorithm designed to use an initial window
+of approximately 4K bytes is in use.  Otherwise, this value indicates
+a fixed number of packets.
 .It Li tcp.mss_ifmtu
-If greater than 0, calculate the outgoing MSS based on the MTU of
-the appropriate interface.  Otherwise, calculate it based on
+Returns 1 if TCP calculates the outgoing maximum segment size based on
+the MTU of the appropriate interface.  Otherwise, it is calculated based on
 the greater of the MTU of the interface, and the largest (non-loopback)
 interface MTU on the system.
+.It Li tcp.sack
+Returns a value which determines the level of Selective Acknowledgement
+supported by TCP.  If 2, we will transmit and receive SACK options.
+If 1, we will transmit SACK options, but ignore any SACK options received.
+If 0, SACK is disabled.
+.It Li tcp.win_scale
+If rfc1323 is enabled, a value of 1 indicates RFC1323 window scale options,
+for increasing the TCP window size, are enabled.
+.It Li tcp.timestamps
+If rfc1323 is enabled, a value of 1 indicates RFC1323 time stamp options,
+used for measuring TCP round trip times, are enabled.
+.It Li tcp.compat_42
+Returns 1 if work-arounds for bugs in the 4.2BSD TCP implementation are
+enabled.  Use of this option is not recommended, although it may be
+required in order to communicate with extremely old TCP implementations.
+.It Li tcp.cwm
+Returns 1 if use of the Hughes/Touch/Heidemann Congestion Window Monitoring
+algorithm is enabled.  This algorithm prevents line-rate bursts of packets
+that could otherwise occur when data begins flowing on an idle TCP
+connection.  These line-rate bursts can contribute to network and router
+congestion.  This can be particularly useful on World Wide Web servers
+which support HTTP/1.1, which has lingering connections.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
