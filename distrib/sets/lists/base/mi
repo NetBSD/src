@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.425 2003/09/12 02:19:05 lukem Exp $
+# $NetBSD: mi,v 1.426 2003/09/14 06:13:26 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -314,6 +314,9 @@
 ./usr/X11R6/man/man4				base-x11-root
 ./usr/X11R6/man/man5				base-x11-root
 ./usr/X11R6/man/man7				base-x11-root
+./usr/X11R6/share				base-x11-root
+./usr/X11R6/share/examples			base-x11-root
+./usr/X11R6/share/examples/ssh-askpass		base-x11-root
 ./usr/bin		base-sys-usr
 ./usr/bin/Mail		base-mail-bin
 ./usr/bin/apply		base-util-bin
