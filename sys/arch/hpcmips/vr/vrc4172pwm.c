@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.12 2001/04/13 08:09:07 itojun Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.13 2001/09/16 05:32:21 uch Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -56,25 +56,25 @@ int vrc4172pwmdebug = VRC2PWMDEBUG_CONF;
 #define VDUMPREG(arg) if (bootverbose) vrc4172pwm_dumpreg(arg);
 #endif /* VRC2PWMDEBUG */
 
-static int vrc4172pwmprobe __P((struct device *, struct cfdata *, void *));
-static void vrc4172pwmattach __P((struct device *, struct device *, void *));
+static int vrc4172pwmprobe(struct device *, struct cfdata *, void *);
+static void vrc4172pwmattach(struct device *, struct device *, void *);
 
-static void vrc4172pwm_write __P((struct vrc4172pwm_softc *, int, unsigned short));
-static unsigned short vrc4172pwm_read __P((struct vrc4172pwm_softc *, int));
+static void vrc4172pwm_write(struct vrc4172pwm_softc *, int, unsigned short);
+static unsigned short vrc4172pwm_read(struct vrc4172pwm_softc *, int);
 
-static int vrc4172pwm_event __P((void *, int, long, void *));
-static int vrc4172pwm_pmevent __P((void *, int, long, void *));
+static int vrc4172pwm_event(void *, int, long, void *);
+static int vrc4172pwm_pmevent(void *, int, long, void *);
 
-static void vrc4172pwm_dumpreg __P((struct vrc4172pwm_softc *));
-static void vrc4172pwm_init_brightness __P((struct vrc4172pwm_softc *));
-void vrc4172pwm_light __P((struct vrc4172pwm_softc *, int));
-int vrc4172pwm_get_light __P((struct vrc4172pwm_softc *));
-int vrc4172pwm_get_brightness __P((struct vrc4172pwm_softc *));
-void vrc4172pwm_set_brightness __P((struct vrc4172pwm_softc *, int));
-int vrc4172pwm_rawduty2brightness __P((struct vrc4172pwm_softc *));
-int vrc4172pwm_brightness2rawduty __P((struct vrc4172pwm_softc *));
-struct vrc4172pwm_param * vrc4172pwm_getparam __P((void));
-void vrc4172pwm_dumpreg __P((struct vrc4172pwm_softc *));
+static void vrc4172pwm_dumpreg(struct vrc4172pwm_softc *);
+static void vrc4172pwm_init_brightness(struct vrc4172pwm_softc *);
+void vrc4172pwm_light(struct vrc4172pwm_softc *, int);
+int vrc4172pwm_get_light(struct vrc4172pwm_softc *);
+int vrc4172pwm_get_brightness(struct vrc4172pwm_softc *);
+void vrc4172pwm_set_brightness(struct vrc4172pwm_softc *, int);
+int vrc4172pwm_rawduty2brightness(struct vrc4172pwm_softc *);
+int vrc4172pwm_brightness2rawduty(struct vrc4172pwm_softc *);
+struct vrc4172pwm_param * vrc4172pwm_getparam(void);
+void vrc4172pwm_dumpreg(struct vrc4172pwm_softc *);
 
 struct cfattach vrc4172pwm_ca = {
 	sizeof(struct vrc4172pwm_softc), vrc4172pwmprobe, vrc4172pwmattach
@@ -109,51 +109,36 @@ struct vrc4172pwm_param vrc4172pwm_sigmarion_param = {
 
 
 struct platid_data vrc4172pwm_platid_param_table[] = {
-	{ &platid_mask_MACH_NEC_MCR_430, 
-		&vrc4172pwm_mcr530_param},
-	{ &platid_mask_MACH_NEC_MCR_510, 
-		&vrc4172pwm_mcr520_param},
-	{ &platid_mask_MACH_NEC_MCR_520, 
-		&vrc4172pwm_mcr520_param},
-	{ &platid_mask_MACH_NEC_MCR_520A, 
-		&vrc4172pwm_mcr520_param},
-	{ &platid_mask_MACH_NEC_MCR_530, 
-		&vrc4172pwm_mcr530_param},
-	{ &platid_mask_MACH_NEC_MCR_530A, 
-		&vrc4172pwm_mcr530_param},
-	{ &platid_mask_MACH_NEC_MCR_SIGMARION, 
-		&vrc4172pwm_sigmarion_param},
-	{ &platid_mask_MACH_NEC_MCR_700, 
-		&vrc4172pwm_mcr700_param},
-	{ &platid_mask_MACH_NEC_MCR_700A, 
-		&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_430,	&vrc4172pwm_mcr530_param},
+	{ &platid_mask_MACH_NEC_MCR_510,	&vrc4172pwm_mcr520_param},
+	{ &platid_mask_MACH_NEC_MCR_520,	&vrc4172pwm_mcr520_param},
+	{ &platid_mask_MACH_NEC_MCR_520A,	&vrc4172pwm_mcr520_param},
+	{ &platid_mask_MACH_NEC_MCR_530,	&vrc4172pwm_mcr530_param},
+	{ &platid_mask_MACH_NEC_MCR_530A,	&vrc4172pwm_mcr530_param},
+	{ &platid_mask_MACH_NEC_MCR_SIGMARION,	&vrc4172pwm_sigmarion_param},
+	{ &platid_mask_MACH_NEC_MCR_700,	&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_700A,	&vrc4172pwm_mcr700_param},
 	{ NULL, NULL}
 };
 
 struct vrc4172pwm_softc *this_pwm;
 
 static inline void
-vrc4172pwm_write(sc, port, val)
-	struct vrc4172pwm_softc *sc;
-	int port;
-	unsigned short val;
+vrc4172pwm_write(struct vrc4172pwm_softc *sc, int port, unsigned short val)
 {
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
 }
 
 static inline unsigned short
-vrc4172pwm_read(sc, port)
-	struct vrc4172pwm_softc *sc;
-	int port;
+vrc4172pwm_read(struct vrc4172pwm_softc *sc, int port)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, port));
 }
 
 static int
-vrc4172pwmprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vrc4172pwmprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	platid_mask_t mask;
 	struct vrip_attach_args *va = aux;
@@ -169,45 +154,47 @@ vrc4172pwmprobe(parent, cf, aux)
 	int ret = 0;
 
 	if (va->va_addr == VRIPCF_ADDR_DEFAULT)
-		return 0;
+		return (0);
  
 	if (cf->cf_loc[VRIPCF_PLATFORM] == 0)
-		return 0;
+		return (0);
 	if (cf->cf_loc[VRIPCF_PLATFORM] != -1) { /* if specify */
 		mask = PLATID_DEREF(cf->cf_loc[VRIPCF_PLATFORM]);
 		VPRINTF(("vrc4172pwmprobe: check platid\n"));
 		if (platid_match(&platid, &mask) == 0)	
-			return 0;
+			return (0);
 		param = vrc4172pwm_getparam();
 		if (param != NULL && param->brokenprobe)
 			probe = 0;
 	}
 	if (probe) {
-		if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0, &ioh)) {
-			return 0;
+		if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0,
+		    &ioh)) {
+			return (0);
 		}
 		data =  bus_space_read_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN);
 		bus_space_write_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN, 0xff);
-		if ((data2 = bus_space_read_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN))
-			== VRC2_PWM_LCDEN_MASK) {
-			VPRINTF(("vrc4172pwmprobe: VRC2_PWM_LCDDUTYEN found\n"));
+		if ((data2 = bus_space_read_2(va->va_iot, ioh,
+		    VRC2_PWM_LCDDUTYEN)) == VRC2_PWM_LCDEN_MASK) {
+			VPRINTF(("vrc4172pwmprobe:"
+			    " VRC2_PWM_LCDDUTYEN found\n"));
 			ret = 1;
 		} else {
-			VPRINTF(("vrc4172pwmprobe: VRC2_PWM_LCDDUTYEN not found org=%x, data=%x!=%x\n", data, data2, VRC2_PWM_LCDEN_MASK));
+			VPRINTF(("vrc4172pwmprobe: VRC2_PWM_LCDDUTYEN"
+			    " not found org=%x, data=%x!=%x\n",
+			    data, data2, VRC2_PWM_LCDEN_MASK));
 		}
 		bus_space_write_2(va->va_iot, ioh, VRC2_PWM_LCDDUTYEN, data);
 		bus_space_unmap(va->va_iot, ioh, va->va_size);
 	} else
 		ret = 1;
 	VPRINTF(("vrc4172pwmprobe: return %d\n", ret));
-	return ret;
+
+	return (ret);
 }
 
 static void
-vrc4172pwmattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrc4172pwmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrc4172pwm_softc *sc = (struct vrc4172pwm_softc *)self;
 	struct vrip_attach_args *va = aux;
@@ -228,33 +215,27 @@ vrc4172pwmattach(parent, self, aux)
 	VDUMPREG(sc);
 	/* basic setup */
 	sc->sc_pmhook = config_hook(CONFIG_HOOK_PMEVENT,
-					CONFIG_HOOK_PMEVENT_HARDPOWER,
-					CONFIG_HOOK_SHARE,
-					vrc4172pwm_pmevent, sc);
+	    CONFIG_HOOK_PMEVENT_HARDPOWER, CONFIG_HOOK_SHARE,
+	    vrc4172pwm_pmevent, sc);
 	sc->sc_lcdhook = config_hook(CONFIG_HOOK_POWERCONTROL,
-					CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-					CONFIG_HOOK_SHARE,
-					vrc4172pwm_event, sc);
+	    CONFIG_HOOK_POWERCONTROL_LCDLIGHT, CONFIG_HOOK_SHARE,
+	    vrc4172pwm_event, sc);
 	sc->sc_getlcdhook = config_hook(CONFIG_HOOK_GET,
-					CONFIG_HOOK_POWER_LCDLIGHT,
-					CONFIG_HOOK_SHARE,
-					vrc4172pwm_event, sc);
+	    CONFIG_HOOK_POWER_LCDLIGHT, CONFIG_HOOK_SHARE,
+	    vrc4172pwm_event, sc);
 	sc->sc_sethook = config_hook(CONFIG_HOOK_SET,
-					CONFIG_HOOK_BRIGHTNESS,
-					CONFIG_HOOK_SHARE,
-					vrc4172pwm_event, sc);
+	    CONFIG_HOOK_BRIGHTNESS, CONFIG_HOOK_SHARE,
+	    vrc4172pwm_event, sc);
 	sc->sc_gethook = config_hook(CONFIG_HOOK_GET,
-					CONFIG_HOOK_BRIGHTNESS,
-					CONFIG_HOOK_SHARE,
-					vrc4172pwm_event, sc);
+	    CONFIG_HOOK_BRIGHTNESS, CONFIG_HOOK_SHARE,
+	    vrc4172pwm_event, sc);
 	sc->sc_getmaxhook = config_hook(CONFIG_HOOK_GET,
-					CONFIG_HOOK_BRIGHTNESS_MAX,
-					CONFIG_HOOK_SHARE,
-					vrc4172pwm_event, sc);
+	    CONFIG_HOOK_BRIGHTNESS_MAX, CONFIG_HOOK_SHARE,
+	    vrc4172pwm_event, sc);
 
 	vrc4172pwm_init_brightness(sc);
 	if (sc->sc_param == NULL)
-		printf("vrc4172pwm: NO parameter found. DISABLE pwm control\n");;
+		printf("vrc4172pwm: NO parameter found. DISABLE pwm control\n");
 	this_pwm = sc;
 }
 
@@ -267,8 +248,9 @@ vrc4172pwm_getparam()
 	struct platid_data *p;
 
 	if ((p = platid_search(&platid, vrc4172pwm_platid_param_table)))
-		return p->data;
-	return NULL;
+		return (p->data);
+
+	return (NULL);
 }
 
 /*
@@ -277,23 +259,23 @@ vrc4172pwm_getparam()
  *
  */
 void
-vrc4172pwm_init_brightness(sc)
-struct vrc4172pwm_softc *sc;
+vrc4172pwm_init_brightness(struct vrc4172pwm_softc *sc)
 {
 	sc->sc_param = vrc4172pwm_getparam();
 	sc->sc_raw_freq = vrc4172pwm_read(sc, VRC2_PWM_LCDFREQ);
 	sc->sc_raw_duty = vrc4172pwm_read(sc, VRC2_PWM_LCDDUTY);
 	sc->sc_brightness = vrc4172pwm_rawduty2brightness(sc);
 	sc->sc_light = vrc4172pwm_get_light(sc);
-	DPRINTF(("vrc4172pwm_init_brightness: param=0x%x, freq=0x%x, duty=0x%x, blightness=%d light=%d\n", (int)sc->sc_param, sc->sc_raw_freq, sc->sc_raw_duty, sc->sc_brightness, sc->sc_light));
+	DPRINTF(("vrc4172pwm_init_brightness: param=0x%x, freq=0x%x,"
+	    " duty=0x%x, blightness=%d light=%d\n", (int)sc->sc_param,
+	    sc->sc_raw_freq, sc->sc_raw_duty, sc->sc_brightness,
+	    sc->sc_light));
 }
 /*
  * backlight on/off
  */
 void
-vrc4172pwm_light(sc, on)
-	struct vrc4172pwm_softc *sc;
-	int on;
+vrc4172pwm_light(struct vrc4172pwm_softc *sc, int on)
 {
 	int brightness;
 
@@ -304,7 +286,7 @@ vrc4172pwm_light(sc, on)
 	} else {
 		brightness = sc->sc_brightness; /* save */
 		vrc4172pwm_set_brightness(sc, 0);
-			/* need this, break sc->sc_brightness */
+		/* need this, break sc->sc_brightness */
 		sc->sc_brightness = brightness; /* resume */
 		vrc4172pwm_write(sc, VRC2_PWM_LCDDUTYEN, VRC2_PWM_LCD_DIS);
 	}
@@ -315,19 +297,17 @@ vrc4172pwm_light(sc, on)
  * get backlight on/off
  */
 int
-vrc4172pwm_get_light(sc)
-	struct vrc4172pwm_softc *sc;
+vrc4172pwm_get_light(struct vrc4172pwm_softc *sc)
 {
-	return VRC2_PWM_LCDEN_MASK&vrc4172pwm_read(sc, VRC2_PWM_LCDDUTYEN);
+
+	return (VRC2_PWM_LCDEN_MASK&vrc4172pwm_read(sc, VRC2_PWM_LCDDUTYEN));
 }
 
 /*
  * set brightness
  */
 void
-vrc4172pwm_set_brightness(sc, val)
-	struct vrc4172pwm_softc *sc;
-	int val;
+vrc4172pwm_set_brightness(struct vrc4172pwm_softc *sc, int val)
 {
 	int raw;
 
@@ -349,33 +329,33 @@ vrc4172pwm_set_brightness(sc, val)
  * get brightness
  */
 int
-vrc4172pwm_get_brightness(sc)
-	struct vrc4172pwm_softc *sc;
+vrc4172pwm_get_brightness(struct vrc4172pwm_softc *sc)
 {
+
 	if (sc->sc_param == NULL)
-		return VRC2_PWM_MAX_BRIGHTNESS;
-	return sc->sc_brightness;
+		return (VRC2_PWM_MAX_BRIGHTNESS);
+
+	return (sc->sc_brightness);
 }
 
 /*
  * PWM duty to brightness
  */
 int
-vrc4172pwm_rawduty2brightness(sc)
-struct vrc4172pwm_softc *sc;
+vrc4172pwm_rawduty2brightness(struct vrc4172pwm_softc *sc)
 {
 	int i;
 
 	if (sc->sc_param == NULL)
-		return VRC2_PWM_MAX_BRIGHTNESS;
+		return (VRC2_PWM_MAX_BRIGHTNESS);
 	for (i = 0; i < sc->sc_param->n_brightness; i++) {
 		if (sc->sc_raw_duty <= sc->sc_param->bvalues[i])
 			break;
 	}
 	if (i >= sc->sc_param->n_brightness-1)
-		return sc->sc_param->n_brightness-1;
+		return (sc->sc_param->n_brightness-1);
 	else
-		return i;
+		return (i);
 
 }
 
@@ -383,12 +363,13 @@ struct vrc4172pwm_softc *sc;
  * brightness to raw duty
  */
 int
-vrc4172pwm_brightness2rawduty(sc)
-struct vrc4172pwm_softc *sc;
+vrc4172pwm_brightness2rawduty(struct vrc4172pwm_softc *sc)
 {
+
 	if (sc->sc_param == NULL)
-		return VRC2_PWM_LCDDUTY_MASK;
-	return sc->sc_param->bvalues[sc->sc_brightness];
+		return (VRC2_PWM_LCDDUTY_MASK);
+
+	return (sc->sc_param->bvalues[sc->sc_brightness]);
 }
 
 
@@ -397,63 +378,55 @@ struct vrc4172pwm_softc *sc;
  *
  */
 int
-vrc4172pwm_event(ctx, type, id, msg)
-	void *ctx;
-        int type;
-        long id;
-        void *msg;
+vrc4172pwm_event(void *ctx, int type, long id, void *msg)
 {
 	struct vrc4172pwm_softc *sc = (struct vrc4172pwm_softc *)ctx;
         int why =(int)msg;
 
 	if (type == CONFIG_HOOK_POWERCONTROL 
-		&& id == CONFIG_HOOK_POWERCONTROL_LCDLIGHT) {
+	    && id == CONFIG_HOOK_POWERCONTROL_LCDLIGHT) {
 		DPRINTF(("vrc4172pwm:POWERCONTROL_LCDLIGHT: %d\n", why));
 		vrc4172pwm_light(sc, why);
 	} else if (type == CONFIG_HOOK_GET
-		&& id == CONFIG_HOOK_POWER_LCDLIGHT) {
+	    && id == CONFIG_HOOK_POWER_LCDLIGHT) {
 		*(int *)msg = vrc4172pwm_get_light(sc);
 		DPRINTF(("vrc4172pwm:GET LCDLIGHT: %d\n", *(int *)msg));
 	} else if (type == CONFIG_HOOK_GET
-		&& id == CONFIG_HOOK_BRIGHTNESS) {
+	    && id == CONFIG_HOOK_BRIGHTNESS) {
 		*(int *)msg = vrc4172pwm_get_brightness(sc);
 		DPRINTF(("vrc4172pwm:GET BRIGHTNESS: %d\n", *(int *)msg));
 	} else if (type == CONFIG_HOOK_GET
-		&& id == CONFIG_HOOK_BRIGHTNESS_MAX) {
+	    && id == CONFIG_HOOK_BRIGHTNESS_MAX) {
 		if (sc->sc_param == NULL)
 			*(int *)msg = VRC2_PWM_MAX_BRIGHTNESS;
 		else
 			*(int *)msg = sc->sc_param->n_brightness-1;
 		DPRINTF(("vrc4172pwm:GET MAX BRIGHTNESS: %d\n", *(int *)msg));
 	} else if (type == CONFIG_HOOK_SET
-		&& id == CONFIG_HOOK_BRIGHTNESS) {
+	    && id == CONFIG_HOOK_BRIGHTNESS) {
 		DPRINTF(("vrc4172pwm:SET BRIGHTNESS: %d\n", *(int *)msg));
 		vrc4172pwm_set_brightness(sc, *(int *)msg);
 	} else {
-		DPRINTF(("vrc4172pwm:unknown event: type %d id %ld\n", type, id));
-		return 1;
+		DPRINTF(("vrc4172pwm:unknown event: type %d id %ld\n",
+		    type, id));
+		return (1);
 	}
 	
         return (0);
 }
-
 
 /*
  * PWM config hook events 
  *
  */
 int
-vrc4172pwm_pmevent(ctx, type, id, msg)
-	void *ctx;
-        int type;
-        long id;
-        void *msg;
+vrc4172pwm_pmevent(void *ctx, int type, long id, void *msg)
 {
 	struct vrc4172pwm_softc *sc = (struct vrc4172pwm_softc *)ctx;
         int why =(int)msg;
 
 	if (type != CONFIG_HOOK_PMEVENT)
-		return 1;
+		return (1);
 		
         switch (why) {
 	case PWR_STANDBY:
@@ -465,7 +438,7 @@ vrc4172pwm_pmevent(ctx, type, id, msg)
 		vrc4172pwm_light(sc, sc->sc_light_save);
 		break;
 	default:
-		return 1;
+		return (1);
         }
 
         return (0);
@@ -475,8 +448,7 @@ vrc4172pwm_pmevent(ctx, type, id, msg)
  * dump pwm registers
  */
 void
-vrc4172pwm_dumpreg(sc)
-	struct vrc4172pwm_softc *sc;
+vrc4172pwm_dumpreg(struct vrc4172pwm_softc *sc)
 {
 	int en, freq, duty;
 
@@ -484,8 +456,8 @@ vrc4172pwm_dumpreg(sc)
 	freq = vrc4172pwm_read(sc, VRC2_PWM_LCDFREQ);
 	duty = vrc4172pwm_read(sc, VRC2_PWM_LCDDUTY);
 
-	printf("vrc4172pwm: dumpreg: lightenable = %d, freq = 0x%x, duty = 0x%x\n",
-		en, freq, duty);
+	printf("vrc4172pwm: dumpreg: lightenable = %d,"
+	    " freq = 0x%x, duty = 0x%x\n", en, freq, duty);
 }
 
 /* end */

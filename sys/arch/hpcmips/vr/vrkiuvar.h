@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiuvar.h,v 1.3 2001/06/11 06:04:55 enami Exp $	*/
+/*	$NetBSD: vrkiuvar.h,v 1.4 2001/09/16 05:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -54,5 +54,5 @@ struct vrkiu_softc {
 	void *sc_handler;
 };
 
-extern int vrkiu_getc __P((void));
-extern int vrkiu_cnattach __P((bus_space_tag_t iot, int iobase));
+extern int vrkiu_getc(void);
+extern int vrkiu_cnattach(bus_space_tag_t, int);
