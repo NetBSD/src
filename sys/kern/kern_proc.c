@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.36 2000/01/13 21:55:36 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.37 2000/01/22 16:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,8 +119,9 @@ struct proclist zombproc;	/* resources have been freed */
  *
  * We have two types of locks on the proclists: read locks and write
  * locks.  Read locks can be used in interrupt context, so while we
- * hold the write lock, we must also block softclock interrupts (since
- * the interrupt context is the timeout-driven schedcpu()).
+ * hold the write lock, we must also block statclock interrupts to
+ * lock out any scheduling changes that may happen in interrupt
+ * context.
  *
  * The proclist lock locks the following structures:
  *
@@ -202,7 +203,7 @@ proclist_lock_read()
 {
 	int error, s;
 
-	s = splsoftclock();
+	s = splstatclock();
 	error = spinlockmgr(&proclist_lock, LK_SHARED, NULL);
 #ifdef DIAGNOSTIC
 	if (error)
@@ -219,7 +220,7 @@ proclist_unlock_read()
 {
 	int s;
 
-	s = splsoftclock();
+	s = splstatclock();
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
 	splx(s);
 }
@@ -232,7 +233,7 @@ proclist_lock_write()
 {
 	int error, s;
 
-	s = splsoftclock();
+	s = splstatclock();
 	error = spinlockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
 #ifdef DIAGNOSTIC
 	if (error != 0)
