@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2000/05/04 14:12:13 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2000/05/05 20:13:32 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -14,21 +14,16 @@ VND_CRDEV=	/dev/r${VND}d
 BASENAME=	boot
 IMAGE1=		${BASENAME}1.fs
 FSTMP=		ustar.tmp
-KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE=	${MDEC}/biosboot.sym
 #BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
 
-RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-	${MAKE} -s -f-
-
 DISKTYPE?=	floppy3
 DISKSIZE?=	2880
 BLOCK8K?=	179
 
-CLEANFILES+=	netbsd.ram.gz netbsd boot ustar.tmp
+CLEANFILES+=	netbsd boot ustar.tmp
 
 realall:	netbsd boot
 	@echo Making disk number one
@@ -45,7 +40,7 @@ realall:	netbsd boot
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
-	${MDEC}/installboot -b 17 -v ${BOOTCODE} ${VND_RDEV}
+	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${VND_RDEV}
 	vnconfig -u ${VND_CDEV}
 	:
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
@@ -79,21 +74,14 @@ realall:	netbsd boot
 			done; \
 		fi; )
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
 # Let the kernel on the diskette be called "netbsd" although
 # it is compressed.  This is because the boot code will search
 # for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz" 
 # we avoid scanning all the diskettes before reading the file.
 
-netbsd: netbsd.ram.gz
+netbsd: ${KERN}
 	rm -f netbsd
-	ln netbsd.ram.gz netbsd
+	cp ${KERN} netbsd
 
 # This is "cheating", just so that we have the available
 # space at the start of the tar file.  Installboot will overwrite
