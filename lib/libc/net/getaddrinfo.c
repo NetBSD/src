@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.8 1999/07/06 02:00:41 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.9 1999/07/14 22:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -527,20 +527,34 @@ get_addr(hostname, af, res0, pai, port0)
 	int i, error, ekeep;
 	struct addrinfo *cur;
 	struct addrinfo **res;
+	int retry;
+	int s;
 
 	res = res0;
 	ekeep = 0;
 	for (i = 0; afdl[i].a_af; i++) {
-		if (af == AF_UNSPEC || af == afdl[i].a_af) 
-			;
-		else
-			continue;
+		retry = 0;
+		if (af == AF_UNSPEC) {
+			/*
+			 * filter out AFs that are not supported by the kernel
+			 * XXX errno?
+			 */
+			s = socket(afdl[i].a_af, SOCK_DGRAM, 0);
+			if (s < 0)
+				continue;
+			close(s);
+		} else {
+			if (af != afdl[i].a_af)
+				continue;
+		}
 		/* It is WRONG, we need getipnodebyname(). */
 again:
 		error = get_addr0(hostname, afdl[i].a_af, res, pai, port0);
 		switch (error) {
 		case EAI_AGAIN:
-			goto again;
+			if (++retry < 3)
+				goto again;
+			/* FALL THROUGH*/
 		default:
 			if (ekeep == 0)
 				ekeep = error;
@@ -612,6 +626,7 @@ get_addr0(hostname, af, res, pai, port0)
 			error = EAI_AGAIN;
 			break;
 		case NO_RECOVERY:
+		case NETDB_INTERNAL:
 		default:
 			error = EAI_FAIL;
 			break;
