@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.5 1997/07/01 21:17:19 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.6 1997/09/28 03:31:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -33,14 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#ifdef MAKE_BOOTSTRAP
+static char rcsid[] = "$NetBSD: for.c,v 1.6 1997/09/28 03:31:03 lukem Exp $";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.5 1997/07/01 21:17:19 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.6 1997/09/28 03:31:03 lukem Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 /*-
  * for.c --

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.35 1997/07/11 20:17:37 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.36 1997/09/28 03:31:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,14 +38,18 @@
  * SUCH DAMAGE.
  */
 
+#ifdef MAKE_BOOTSTRAP
+static char rcsid[] = "$NetBSD: parse.c,v 1.36 1997/09/28 03:31:09 lukem Exp $";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.35 1997/07/11 20:17:37 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.36 1997/09/28 03:31:09 lukem Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 /*-
  * parse.c --
