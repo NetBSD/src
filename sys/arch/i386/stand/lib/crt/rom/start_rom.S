@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.7 1999/11/03 09:55:32 mycroft Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.8 1999/11/07 01:06:37 mycroft Exp $	*/
 	
 /*
  * ROM startup
@@ -279,7 +279,7 @@ bootdataseg = . - gdt
 	/* 16 bit real mode */
 bootrealseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x9b, 0x0f, 0
+	.byte	0, 0x9f, 0x0f, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__
