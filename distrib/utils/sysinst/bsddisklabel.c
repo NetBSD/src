@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.33 2005/01/21 17:02:40 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.34 2005/02/20 20:42:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -369,8 +369,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		{ PART_SWAP,	{ 's', 'w', 'a', 'p', '\0' },
 	 	  DEFSWAPSIZE,	DEFSWAPSIZE },
 		{ PART_TMP_MFS,	
-		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' },
-		  64 },
+		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' }, 64 },
 #define PI_USR 3
 		{ PART_USR,	{ '/', 'u', 's', 'r', '\0' },	DEFUSRSIZE },
 		{ PART_ANY,	{ '/', 'v', 'a', 'r', '\0' },	DEFVARSIZE },
@@ -393,20 +392,29 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		if (sets_selected & SET_X11)
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
 
-		if (root_limit != 0 && part_start + sectors > root_limit) {
-			/* root can't have all the space... */
+		/* Start of planning to give free space to / */
+		pi.pool_part = &pi.ptn_sizes[PI_ROOT];
+		/* Make size of root include default size of /usr */
+		pi.ptn_sizes[PI_ROOT].size += pi.ptn_sizes[PI_USR].dflt_size;
+
+		if (root_limit != 0) {
+			/* Bah - bios can not read all the disk, limit root */
 			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
-			pi.ptn_sizes[PI_ROOT].changed = 1;
-			/* Give free space to /usr */
-			pi.ptn_sizes[PI_USR].size =
+			/* Allocate a /usr partition if bios can't read
+			 * everything except swap.
+			 */
+			if (pi.ptn_sizes[PI_ROOT].limit
+			    + pi.ptn_sizes[PI_SWAP].size > sectors) {
+				/* Root won't be able to access all the space */
+				/* Claw back space for /usr */
+				pi.ptn_sizes[PI_USR].size =
 						pi.ptn_sizes[PI_USR].dflt_size;
-			pi.pool_part = &pi.ptn_sizes[PI_USR];
-		} else {
-			/* Make size of root include default size of /usr */
-			pi.ptn_sizes[PI_ROOT].size +=
+				pi.ptn_sizes[PI_ROOT].size -=
 						pi.ptn_sizes[PI_USR].dflt_size;
-			/* Give free space to / */
-			pi.pool_part = &pi.ptn_sizes[PI_ROOT];
+				pi.ptn_sizes[PI_ROOT].changed = 1;
+				/* Give free space to /usr */
+				pi.pool_part = &pi.ptn_sizes[PI_USR];
+			}
 		}
 
 		/* Change preset sizes from MB to sectors */
@@ -492,8 +500,11 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 	for (p = pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
 		size = p->size;
-		if (p == pi.pool_part)
+		if (p == pi.pool_part) {
 			size += ROUNDDOWN(pi.free_space, dlcylsize);
+			if (p->limit != 0 && size > p->limit)
+				size = p->limit;
+		}
 		i = p->ptn_id;
 		if (i == PART_TMP_MFS) {
 			tmp_mfs_size = size;
