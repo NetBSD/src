@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2002/08/19 13:35:08 lukem Exp $
+# $NetBSD: Makefile,v 1.19 2002/08/29 01:31:31 itojun Exp $
 
 NOLINT=		# defined
 
@@ -6,7 +6,7 @@ NOLINT=		# defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/krb4/lib/krb ${DIST}/krb4/doc \
-		${DIST}/openssl/crypto/des ${DIST}/krb4/man
+		${DIST}/krb4/man
 
 MAN=		kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
 		krb.conf.5 krb.equiv.5 krb.extra.5 krb.realms.5
@@ -122,7 +122,6 @@ INCS=	krb.h					\
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/krb			\
-	-I${DIST}/openssl/crypto		\
 	-I${DIST}/heimdal/lib/com_err		\
 	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${NETBSDSRCDIR}/lib/libroken		\
