@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.25 2000/02/02 17:09:47 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.26 2000/02/08 00:22:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -748,10 +748,10 @@ epic_intr(arg)
 			if (ifp->if_bpf) {
 				bpf_mtap(ifp->if_bpf, m);
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-					 ETHER_ADDR_LEN) != 0 &&
-				    (rxd->er_rxstatus &
-				     (ER_RXSTAT_BCAST|ER_RXSTAT_MCAST)) == 0) {
+				    memcmp(LLADDR(ifp->if_sadl),
+				           eh->ether_dhost,
+				           ETHER_ADDR_LEN) != 0 &&
+				    ETHER_IS_MULTICAST(eh->ether_dhost) == 0) {
 					m_freem(m);
 					continue;
 				}
