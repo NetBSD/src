@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.81 2000/11/01 06:57:56 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.82 2000/11/07 17:01:34 matt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.82 $"
 
 maxusers	32
 
@@ -139,7 +139,7 @@ sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
@@ -203,8 +203,8 @@ scsibus* at ahc?
 scsibus* at bha?
 scsibus* at esp?
 scsibus* at mesh?
-scsibus* at ncr?
 scsibus* at pcscp?
+scsibus* at siop?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
