@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.25 2001/05/06 19:22:32 manu Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.26 2001/05/07 02:28:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -102,15 +102,15 @@ soo_ioctl(fp, cmd, data, p)
 	case FIOASYNC:
 		if ((!(so->so_state & SS_ISAPIPE) ||
 		    (p->p_emul->e_flags & EMUL_BSD_ASYNCIO_PIPE)) &&
-			 (*(int *)data)) {
-				so->so_state |= SS_ASYNC;
-				so->so_rcv.sb_flags |= SB_ASYNC;
-				so->so_snd.sb_flags |= SB_ASYNC;
-			} else {
-				so->so_state &= ~SS_ASYNC;
-				so->so_rcv.sb_flags &= ~SB_ASYNC;
-				so->so_snd.sb_flags &= ~SB_ASYNC;
-			}
+		    (*(int *)data)) {
+			so->so_state |= SS_ASYNC;
+			so->so_rcv.sb_flags |= SB_ASYNC;
+			so->so_snd.sb_flags |= SB_ASYNC;
+		} else {
+			so->so_state &= ~SS_ASYNC;
+			so->so_rcv.sb_flags &= ~SB_ASYNC;
+			so->so_snd.sb_flags &= ~SB_ASYNC;
+		}
 		return (0);
 
 	case FIONREAD:
