@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2001/10/18 02:25:34 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2001/11/19 17:35:15 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -49,7 +49,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-struct device *booted_device;
+struct device *booted_device = NULL;
 static struct device *booted_controller;
 static int	booted_slot, booted_unit, booted_partition;
 static char	*booted_protocol;
@@ -89,9 +89,11 @@ void
 makebootdev(cp)
 	char *cp;
 {
-	booted_device = NULL;
 	booted_slot = booted_unit = booted_partition = 0;
 	booted_protocol = NULL;
+
+	if (booted_device != NULL)
+		return;
 
 	if (strncmp(cp, "scsi(", 5) == NULL) {
 		cp += 5;
@@ -106,7 +108,8 @@ makebootdev(cp)
 		if (strncmp(cp, ")rdisk(0)partition(", 19) == NULL) {
 			cp += 19;
 			while (*cp >= '0' && *cp <= '9')
-				booted_partition = booted_partition * 10 + *cp++ - '0';
+				booted_partition =
+					booted_partition * 10 + *cp++ - '0';
 		}
 		if (*cp != ')')
 			return;	/* XXX ? */
@@ -133,7 +136,8 @@ makebootdev(cp)
 		return;
 	}
 	if (strncmp(cp, "bootp(", 6) == 0) {
-		/* XXX controller number?  Needed to handle > 1 network controller */
+		/* XXX controller number?  Needed to
+		   handle > 1 network controller */
 		booted_protocol = "BOOTP";
 		return;
 	}
