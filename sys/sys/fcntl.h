@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.12 1997/11/06 01:59:21 thorpej Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.13 1998/01/15 02:33:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -87,7 +87,9 @@
 #define	O_SHLOCK	0x0010		/* open with shared file lock */
 #define	O_EXLOCK	0x0020		/* open with exclusive file lock */
 #define	O_ASYNC		0x0040		/* signal pgrp when data ready */
-#define	O_FSYNC		0x0080		/* synchronous writes */
+#endif
+#if !defined(_POSIX_SOURCE) || defined(_XOPEN_SOURCE)
+#define	O_SYNC		0x0080		/* synchronous writes */
 #endif
 #define	O_CREAT		0x0200		/* create if nonexistant */
 #define	O_TRUNC		0x0400		/* truncate to zero length */
@@ -103,7 +105,7 @@
 
 /* all bits settable during open(2) */
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
-			 O_ASYNC|O_FSYNC|O_CREAT|O_TRUNC|O_EXCL|O_NOCTTY)
+			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_NOCTTY)
 
 #define	FMARK		0x1000		/* mark during gc() */
 #define	FDEFER		0x2000		/* defer for next gc pass */
@@ -122,7 +124,10 @@
 #ifndef _POSIX_SOURCE
 #define	FAPPEND		O_APPEND	/* kernel/compat */
 #define	FASYNC		O_ASYNC		/* kernel/compat */
-#define	FFSYNC		O_FSYNC		/* kernel */
+#define	FFSYNC		O_SYNC		/* kernel */
+#ifndef _XOPEN_SOURCE
+#define	O_FSYNC		O_SYNC		/* compat */
+#endif
 #define	FNONBLOCK	O_NONBLOCK	/* kernel */
 #define	FNDELAY		O_NONBLOCK	/* compat */
 #define	O_NDELAY	O_NONBLOCK	/* compat */
