@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.51 2000/05/16 00:59:12 itojun Exp $
+.\"	$NetBSD: ftpd.8,v 1.52 2000/06/14 13:44:24 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 13, 2000
+.Dd June 14, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -543,7 +543,10 @@ recognizes all commands in
 .Cm RFC 2228
 (although they are not supported yet),
 and supports the extensions from
-.Cm RFC 2389.
+.Cm RFC 2389 ,
+.Cm RFC 2428
+and
+.Cm draft-ietf-ftpext-mlst-10 .
 .Sh HISTORY
 The
 .Nm
