@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetround.c,v 1.1 1996/05/12 20:29:33 mark Exp $ */
+/*	$NetBSD: fpsetround.c,v 1.2 1997/10/06 00:23:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -56,5 +56,9 @@ fp_rnd
 fpsetround(rnd_dir)
 	fp_rnd rnd_dir;
 {
+#ifdef SOFTFLOAT
+	spf_setround(rnd_dir);
+#else
 	abort();
+#endif
 }
