@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.44 2000/05/30 02:32:21 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.45 2000/06/01 02:29:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.44 2000/05/30 02:32:21 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.45 2000/06/01 02:29:21 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.44 2000/05/30 02:32:21 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.45 2000/06/01 02:29:21 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1856,7 +1856,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *				the form '${x:P}'.
      *		  :!<cmd>!	Run cmd much the same as :sh run's the
      *				current value of the variable.
-     * The := modifiers, actually assign a value to the variable.
+     * The ::= modifiers, actually assign a value to the variable.
      * Their main purpose is in supporting modifiers of .for loop
      * iterators and other obscure uses.  They always expand to
      * nothing.  In a target rule that would otherwise expand to an
@@ -1865,19 +1865,15 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      * 
      * foo:	.USE
      * .for i in ${.TARGET} ${.TARGET:R}.gz
-     * 		@: ${t:=$i}
+     * 		@: ${t::=$i}
      *		@echo blah ${t:T}
      * .endfor
      * 
-     * It would be neater if :=[+?!] were :[+?!]= but that would be
-     * much messier to implement given the existing ! and ? modifiers.
-     * Also the fact that substitution is always done on <str> makes
-     * these modifiers more like variations on the normal ':=' assignment.
-     *		  :=<str>	Assigns <str> as the new value of variable.
-     *		  :=?<str>	Assigns <str> as value of variable if
+     *		  ::=<str>	Assigns <str> as the new value of variable.
+     *		  ::?=<str>	Assigns <str> as value of variable if
      *				it was not already set.
-     *		  :=+<str>	Appends <str> to variable.
-     *		  :=!<cmd>	Assigns output of <cmd> as the new value of
+     *		  ::+=<str>	Appends <str> to variable.
+     *		  ::!=<cmd>	Assigns output of <cmd> as the new value of
      *				variable.
      */
     if ((str != (char *)NULL) && haveModifier) {
@@ -1893,13 +1889,17 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		printf("Applying :%c to \"%s\"\n", *tstr, str);
 	    }
 	    switch (*tstr) {
-	        case '=':
-		{
+	        case ':':
+		    
+		if (tstr[1] == '=' ||
+		    (tstr[2] == '=' &&
+		     (tstr[1] == '!' || tstr[1] == '+' || tstr[1] == '?'))) {
 		    GNode *v_ctxt;		/* context where v belongs */
 		    char *emsg;
 		    VarPattern	pattern;
 		    int	how;
-		    
+
+		    ++tstr;
 		    if (v->flags & VAR_JUNK) {
 			/*
 			 * JUNK vars get name = &str[1]
@@ -1919,7 +1919,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			    v_ctxt = ctxt;
 		    }
 			
-		    switch ((how = tstr[1])) {
+		    switch ((how = *tstr)) {
 		    case '+':
 		    case '?':
 		    case '!':
@@ -1972,6 +1972,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    newStr = var_Error;
 		    break;
 		}
+		goto default_case;
 	        case '@':
 		{
 		    VarLoop_t	loop;
@@ -2374,6 +2375,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 #endif
                 default:
+		default_case: 
 		{
 #ifdef SYSVVARSUB
 		    /*
