@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.15 2000/03/31 03:11:24 soren Exp $ */
+/* $NetBSD: user.c,v 1.16 2000/03/31 04:09:04 soren Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.15 2000/03/31 03:11:24 soren Exp $");
+__RCSID("$NetBSD: user.c,v 1.16 2000/03/31 04:09:04 soren Exp $");
 #endif
 
 #include <sys/types.h>
@@ -962,25 +962,38 @@ void
 usermgmt_usage(char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
-		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] [-f inactive] [-g group] [-r lowuid..highuid] [-s shell]\n", prog);
-		(void) fprintf(stderr, "Usage: %s [-G group] [-b basedir] [-c comment] [-d homedir] [-e expiry] [-f inactive]\n\t[-g group] [-k skeletondir] [-m] [-o] [-p password] [-r lowuid..highuid] [-s shell]\n\t[-u uid] [-v] user\n", prog);
+		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] "
+		    "[-f inactive] [-g group] [-r lowuid..highuid] [-s shell]"
+		    "\n", prog);
+		(void) fprintf(stderr, "Usage: %s [-G group] [-b basedir] "
+		    "[-c comment] [-d homedir] [-e expiry] [-f inactive]\n"
+		    "\t[-g group] [-k skeletondir] [-m] [-o] [-p password] "
+		    "[-r lowuid..highuid] [-s shell]\n\t[-u uid] [-v] user\n",
+		    prog);
 	} else if (strcmp(prog, "usermod") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-G group] [-c comment] [-d homedir] [-e expire] [-f inactive] [-g group] [-l newname] [-m] [-o] [-p password] [-s shell] [-u uid] [-v] user\n", prog);
+		(void) fprintf(stderr, "Usage: %s [-G group] [-c comment] "
+		    "[-d homedir] [-e expire] [-f inactive] [-g group] "
+		    "[-l newname] [-m] [-o] [-p password] [-s shell] [-u uid] "
+		    "[-v] user\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
 		(void) fprintf(stderr, "Usage: %s -D [-p preserve]\n", prog);
-		(void) fprintf(stderr, "Usage: %s [-p preserve] [-r] [-v] user\n", prog);
+		(void) fprintf(stderr, "Usage: %s [-p preserve] [-r] [-v] "
+		    "user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-e] [-v] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-v] group\n", prog);
+		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-v] group\n",
+		    prog);
 	} else if (strcmp(prog, "groupdel") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-v] group\n", prog);
 	} else if (strcmp(prog, "groupmod") == 0) {
-		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-n newname] [-v] group\n", prog);
+		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-n newname] "
+		    "[-v] group\n", prog);
 	} else if (strcmp(prog, "user") == 0 || strcmp(prog, "group") == 0) {
-		(void) fprintf(stderr, "Usage: %s ( add | del | mod ) ...\n", prog);
+		(void) fprintf(stderr, "Usage: %s ( add | del | mod ) ...\n",
+		    prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "groupinfo") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-e] [-v] group\n", prog);
@@ -1119,7 +1132,6 @@ usermod(int argc, char **argv)
 	int	have_new_user;
 	int	c;
 
-	checkeuid();
 	(void) memset(&u, 0, sizeof(u));
 	(void) memset(newuser, 0, sizeof(newuser));
 	read_defaults(&u);
@@ -1180,6 +1192,7 @@ usermod(int argc, char **argv)
 	if (argc == optind) {
 		usermgmt_usage("usermod");
 	}
+	checkeuid();
 	return moduser(argv[optind], (have_new_user) ? newuser : argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -1201,9 +1214,6 @@ userdel(int argc, char **argv)
 	int		bigD;
 	int		c;
 
-	if (geteuid() != 0) {
-		errx(EXIT_FAILURE, "Program must be run as root");
-	}
 	(void) memset(&u, 0, sizeof(u));
 	read_defaults(&u);
 	defaultfield = bigD = rmhome = 0;
@@ -1281,7 +1291,6 @@ groupadd(int argc, char **argv)
 	int	gid;
 	int	c;
 
-	checkeuid();
 	gid = -1;
 	dupgid = 0;
 	while ((c = getopt(argc, argv, "g:o" GROUP_ADD_OPT_EXTENSIONS)) != -1) {
@@ -1305,6 +1314,7 @@ groupadd(int argc, char **argv)
 	if (argc == optind) {
 		usermgmt_usage("groupadd");
 	}
+	checkeuid();
 	if (gid < 0 && !getnextgid(&gid, LowGid, HighGid)) {
 		err(EXIT_FAILURE, "can't add group: can't get next gid");
 	}
@@ -1332,7 +1342,6 @@ groupdel(int argc, char **argv)
 {
 	int	c;
 
-	checkeuid();
 	while ((c = getopt(argc, argv, "" GROUP_DEL_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 #ifdef EXTENSIONS
@@ -1345,6 +1354,7 @@ groupdel(int argc, char **argv)
 	if (argc == optind) {
 		usermgmt_usage("groupdel");
 	}
+	checkeuid();
 	if (!modify_gid(argv[optind], NULL)) {
 		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
 	}
@@ -1370,7 +1380,6 @@ groupmod(int argc, char **argv)
 	int		cc;
 	int		c;
 
-	checkeuid();
 	gid = -1;
 	dupgid = 0;
 	newname = NULL;
@@ -1398,6 +1407,7 @@ groupmod(int argc, char **argv)
 	if (argc == optind) {
 		usermgmt_usage("groupmod");
 	}
+	checkeuid();
 	if (gid < 0 && newname == NULL) {
 		err(EXIT_FAILURE, "Nothing to change");
 	}
