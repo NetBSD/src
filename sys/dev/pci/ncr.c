@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.71 1998/08/20 19:55:07 veego Exp $	*/
+/*	$NetBSD: ncr.c,v 1.72 1998/09/08 07:30:32 mjacob Exp $	*/
 
 /**************************************************************************
 **
@@ -1386,7 +1386,6 @@ static	void	ncr_int_ma	(ncb_p np, u_char dstat);
 static	void	ncr_int_sir	(ncb_p np);
 static  void    ncr_int_sto     (ncb_p np);
 #ifdef __NetBSD__
-static	u_long	ncr_lookup	(char* id);
 static	void	ncr_minphys	(struct buf *bp);
 #else
 static	void	ncr_min_phys	(struct buf *bp);
@@ -1434,7 +1433,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.71 1998/08/20 19:55:07 veego Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.72 1998/09/08 07:30:32 mjacob Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4414,18 +4413,33 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 
 	/*----------------------------------------------------
 	**
-	**	Get device quirks from a speciality table.
-	**
-	**	@GENSCSI@
-	**	This should be a part of the device table
-	**	in "scsi_conf.c".
+	**	Check device quirks.
 	**
 	**----------------------------------------------------
 	*/
 
 	if (tp->quirks & QUIRK_UPDATE) {
 #ifdef __NetBSD__
-		tp->quirks = ncr_lookup ((char*) &tp->inqdata[0]);
+		if ((flags & SCSI_AUTOCONF) == 0) {
+			tp->quirks = QUIRK_NOMSG;
+			if (xp->sc_link->quirks & SDEV_NOSYNC)
+				tp->quirks |= QUIRK_NOSYNC;
+			if (xp->sc_link->quirks & SDEV_NOWIDE)
+				tp->quirks |= QUIRK_NOWIDE16;
+			if (xp->sc_link->quirks & SDEV_NOTAG)
+				tp->quirks |= QUIRK_NOTAGS;
+			/*
+			**	set number of tags
+			*/
+			ncr_setmaxtags (tp, tp->usrtags);
+		} else {
+			/*
+			 * Retain state.
+			 */
+			tp->quirks = QUIRK_UPDATE;
+			nego = 0;
+			goto skip_nego;
+		}
 #else
 		int q = xp->sc_link->quirks;
 		tp->quirks = QUIRK_NOMSG;
@@ -4435,7 +4449,6 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 			tp->quirks |= QUIRK_NOSYNC;
 		if (q & SD_Q_NO_WIDE)
 			tp->quirks |= QUIRK_NOWIDE16;
-#endif
 		if (bootverbose && (tp->quirks & ~QUIRK_NOMSG)) {
 			PRINT_ADDR(xp);
 			printf ("NCR quirks=0x%x\n", tp->quirks);
@@ -4444,6 +4457,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 		**	set number of tags
 		*/
 		ncr_setmaxtags (tp, tp->usrtags);
+#endif
 	};
 
 	/*---------------------------------------------------
@@ -4495,6 +4509,10 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 		if (nego)
 			tp->nego_cp = cp;
 	};
+
+#ifdef	__NetBSD__
+skip_nego:
+#endif
 
 	/*---------------------------------------------------
 	**
@@ -7648,65 +7666,6 @@ static	void ncb_profile (ncb_p np, ccb_p cp)
 	np->profile.ms_post	+= post;
 }
 #undef PROFILE
-
-#ifdef __NetBSD__
-/*==========================================================
-**
-**
-**	Device lookup.
-**
-**	@GENSCSI@ should be integrated to scsiconf.c
-**
-**
-**==========================================================
-*/
-
-struct table_entry {
-	char *	manufacturer;
-	char *	model;
-	char *	version;
-	u_long	info;
-};
-
-static struct table_entry device_tab[] =
-{
-#ifdef NCR_GETCC_WITHMSG
-	{"HP      ", "C372", "", QUIRK_NOTAGS|QUIRK_NOMSG},
-	{"", "", "", QUIRK_NOMSG},
-	{"SONY", "SDT-5000", "3.17", QUIRK_NOMSG},
-	{"WangDAT", "Model 2600", "01.7", QUIRK_NOMSG},
-	{"WangDAT", "Model 3200", "02.2", QUIRK_NOMSG},
-	{"WangDAT", "Model 1300", "02.4", QUIRK_NOMSG},
-#endif
-	{"", "", "", 0} /* catch all: must be last entry. */
-};
-
-static u_long ncr_lookup(char * id)
-{
-	struct table_entry * p = device_tab;
-	char *d, *r, c;
-
-	for (;;p++) {
-
-		d = id+8;
-		r = p->manufacturer;
-		while ((c=*r++)) if (c!=*d++) break;
-		if (c) continue;
-
-		d = id+16;
-		r = p->model;
-		while ((c=*r++)) if (c!=*d++) break;
-		if (c) continue;
-
-		d = id+32;
-		r = p->version;
-		while ((c=*r++)) if (c!=*d++) break;
-		if (c) continue;
-
-		return (p->info);
-	}
-}
-#endif /* __NetBSD__ */
 
 /*==========================================================
 **
