@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.30 2000/06/08 13:51:34 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.30.2.1 2000/10/17 00:48:51 tv Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.52 2000/06/05 00:41:58 itojun Exp $	*/
 
 /*
@@ -527,6 +527,10 @@ udp6_ctlinput(cmd, sa, d)
 		memcpy(&s, &ip6->ip6_src, sizeof(s));
 		if (IN6_IS_ADDR_LINKLOCAL(&s))
 			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+		/* check if we can safely examine src and dst ports */
+		if (m->m_pkthdr.len < off + sizeof(uh))
+			return;
 
 		if (m->m_len < off + sizeof(uh)) {
 			/*
