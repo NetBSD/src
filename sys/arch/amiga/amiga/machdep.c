@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1995/05/11 23:04:57 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1995/05/13 05:17:56 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1448,16 +1448,12 @@ regdump(fp, sbytes)
 	splx(s);
 }
 
-#if kstack_defined
-extern char kstack[];
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
-#endif
+#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz;
 {
-#if kstack_defined
 	register int i, val;
 	extern char *hexstr();
 
@@ -1477,9 +1473,6 @@ dumpmem(ptr, sz, ustack)
 		}
 		printf("%s", hexstr(val, 8));
 	}
-#else
-	printf("no kstack");
-#endif
 	printf("\n");
 }
 
