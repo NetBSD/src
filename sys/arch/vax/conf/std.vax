@@ -1,12 +1,11 @@
-#	$NetBSD: std.vax,v 1.6 1997/11/17 01:58:38 lukem Exp $
+#	$NetBSD: std.vax,v 1.7 1998/11/16 04:32:56 mrg Exp $
 #
 # Std vaxfiles
 #
 machine	vax
 
-options 	SWAPPAGER	# swap and anonymous memory
-options 	VNODEPAGER	# mapped files
-options 	DEVPAGER	# mapped devices
+options 	UVM		# UVM virtual memory
+options 	PMAP_NEW	# new pmap(9) interfaces
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
