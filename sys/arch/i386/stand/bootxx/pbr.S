@@ -1,7 +1,7 @@
-/*	$NetBSD: pbr.S,v 1.10 2003/12/21 20:56:40 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.11 2004/03/22 07:11:00 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -396,6 +396,14 @@ _lba_info:
 _lba_sector:
 	.long	0x0000				/* sector # goes here... */
 	.long	0x0000
+
+/* Drive Serial Number */
+	. = _C_LABEL(start) + MBR_DSN_OFFSET
+	.long	0
+
+/* mbr_bootsel_magic (not used here) */
+	. = _C_LABEL(start) + MBR_BS_MAGIC_OFFSET
+	.word	0
 
 /*
  * Provide empty MBR partition table.
