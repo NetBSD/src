@@ -1,7 +1,7 @@
-/*	$NetBSD: it8368.c,v 1.4 1999/12/30 16:50:43 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.5 2000/01/03 18:29:03 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@
  *
  */
 #include "opt_tx39_debug.h"
-#include "opt_it8368debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,6 +222,8 @@ it8368e_attach(parent, self, aux)
 		IT8368_PIN_BCRDRST;
 	it8368_reg_write(csregt, csregh, IT8368_GPIODIR_REG, reg);
 
+	printf("\n");
+
 	/* 
 	 *	Separate I/O and attribute memory region 
 	 */
@@ -233,13 +234,13 @@ it8368e_attach(parent, self, aux)
 	if (IT8368_CTRL_FIXATTRIO & it8368_reg_read(csregt, csregh, 
 						    IT8368_CTRL_REG)) {
 		sc->sc_fixattr = 1;
-		printf(":fix attr mode");
+		printf("%s: fix attr mode\n", sc->sc_dev.dv_xname);
 		sc->sc_csmemt = sc->sc_csiot;
 		sc->sc_csiosize /= 2;
 		sc->sc_csmemsize = sc->sc_csiosize;
 		sc->sc_csmembase = sc->sc_csiosize;
 	} else {
-		printf(":legacy attr mode");
+		printf("%s: legacy attr mode", sc->sc_dev.dv_xname);
 		sc->sc_fixattr = 0;
 		sc->sc_csmemt = sc->sc_csiot;
 		sc->sc_csmemh = sc->sc_csmemh;
@@ -258,7 +259,7 @@ it8368e_attach(parent, self, aux)
 	sc->sc_irq = ca->ca_irq1;
 	sc->sc_card_irq = ca->ca_irq3;
 
-	printf("\n");
+
 
 	it8368_attach_socket(sc);
 }
