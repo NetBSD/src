@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.4.12.1 1997/08/23 07:09:05 thorpej Exp $	*/
+/*	$NetBSD: pccons.h,v 1.4.12.2 1997/09/01 18:34:26 thorpej Exp $	*/
 
 /*
  * pccons.h -- pccons ioctl definitions
@@ -15,10 +15,7 @@
 #define CONSOLE_SET_TYPEMATIC_RATE	_IOW('t',124,u_char)
 
 #ifdef _KERNEL
-int pccngetc __P((dev_t));
-void pccnputc __P((dev_t, int));
-void pccnpollc __P((dev_t, int));
-void pccninit __P((struct consdev *));
+int pccnattach __P((void));
 #endif
 
 #endif /* _PCCONS_H_ */
