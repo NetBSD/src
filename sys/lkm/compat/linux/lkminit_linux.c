@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_linux.c,v 1.2 1996/10/07 19:55:07 cgd Exp $ */
+/* $NetBSD: lkminit_linux.c,v 1.3 1996/10/22 19:32:08 explorer Exp $ */
 
 /*
  * Copyright (C) Michael Graff, 1996.
@@ -81,7 +81,7 @@ compat_linux_lkmload(lkmtp, cmd)
 	struct lkm_table *lkmtp;	
 	int cmd;
 {
-	if (elf_probe_funcs_insert(linux_elf_probe))
+	if (elf_probe_funcs_insert(linux_elf32_probe))
 		return 1;  /* Failure! */
 	emul_linux_aout = &_emul_linux_aout;
 	emul_linux_elf = &_emul_linux_elf;
@@ -97,7 +97,7 @@ compat_linux_lkmunload(lkmtp, cmd)
 	struct lkm_table *lkmtp;	
 	int cmd;
 {
-	if (elf_probe_funcs_insert(linux_elf_probe))
+	if (elf_probe_funcs_insert(linux_elf32_probe))
 		return 1;  /* Failure! */
 	emul_linux_aout = NULL;
 	emul_linux_elf = NULL;
