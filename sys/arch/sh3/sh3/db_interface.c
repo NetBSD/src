@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2002/02/08 06:12:01 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 2002/02/11 17:50:17 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -49,6 +49,8 @@
 
 void kdb_printtrap(u_int, int);
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
+void __db_tlbdump_page_size_sh4(u_int32_t);
+void __db_tlbdump_pfn(u_int32_t);
 
 extern label_t *db_recover;
 extern char *trap_type[];
@@ -187,10 +189,10 @@ void
 db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 #define ON(x, c)	((x) & (c) ? '|' : '.')
-	static const char *pr[] = { ".r", ".w", "rr", "ww" };
+	static const char *pr[] = { "_r", "_w", "rr", "ww" };
 	static const char title[] = 
-	    "   VPN    ASID    PFN     VDCGWtPR  SZ";
-	static const char title2[] = "\t\t\t    (user/kernel)";
+	    "   VPN    ASID    PFN  AREA VDCGWtPR  SZ";
+	static const char title2[] = "\t\t\t      (user/kernel)";
 	int i, cpu_is_sh4;
 	u_int32_t r, e, a;
 #ifdef SH4
@@ -218,8 +220,9 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 				    r & SH3_MMUAA_D_VPN_MASK,
 				    r & SH3_MMUAA_D_ASID_MASK);
 				r = _reg_read_4(SH3_MMUDA | a);
-				printf(" 0x%08x %c%c%c%c_ %s %2dK\n",
-				    r & SH3_MMUDA_D_PPN_MASK,
+
+				__db_tlbdump_pfn(r);
+				printf(" %c%c%c%cx %s %2dK\n",
 				    ON(r, SH3_MMUDA_D_V),
 				    ON(r, SH3_MMUDA_D_D),
 				    ON(r, SH3_MMUDA_D_C),
@@ -245,27 +248,14 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			    r & SH4_ITLB_AA_VPN_MASK,
 			    r & SH4_ITLB_AA_ASID_MASK);
 			r = _reg_read_4(SH4_ITLB_DA1 | e);
-			printf(" 0x%08x %c_%c%c_ %s ",
-			    r & SH4_ITLB_DA1_PPN_MASK,
+			__db_tlbdump_pfn(r);
+			printf(" %c_%c%c_ %s ",
 			    ON(r, SH4_ITLB_DA1_V),
 			    ON(r, SH4_ITLB_DA1_C),
 			    ON(r, SH4_ITLB_DA1_SH),
 			    pr[(r & SH4_ITLB_DA1_PR) >>
 				SH4_UTLB_DA1_PR_SHIFT]);
-			switch (r & SH4_PTEL_SZ_MASK) {
-			case SH4_PTEL_SZ_1K:
-				printf(" 1K");
-				break;
-			case SH4_PTEL_SZ_4K:
-				printf(" 4K");
-				break;
-			case SH4_PTEL_SZ_64K:
-				printf("64K");
-				break;
-			case SH4_PTEL_SZ_1M:
-				printf(" 1M");
-				break;
-			}
+			__db_tlbdump_page_size_sh4(r);
 			r = _reg_read_4(SH4_ITLB_DA2 | e);
 			printf(" %c  %d\n",
 			    ON(r, SH4_ITLB_DA2_TC), 
@@ -280,8 +270,8 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			    r & SH4_UTLB_AA_VPN_MASK,
 			    r & SH4_UTLB_AA_ASID_MASK);
 			r = _reg_read_4(SH4_UTLB_DA1 | e);
-			printf(" 0x%08x %c%c%c%c%c %s ",
-			    r & SH4_UTLB_DA1_PPN_MASK,
+			__db_tlbdump_pfn(r);
+			printf(" %c%c%c%c%c %s ",
 			    ON(r, SH4_UTLB_DA1_V),
 			    ON(r, SH4_UTLB_DA1_D),
 			    ON(r, SH4_UTLB_DA1_C),
@@ -290,20 +280,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			    pr[(r & SH4_UTLB_DA1_PR_MASK) >>
 				SH4_UTLB_DA1_PR_SHIFT]
 			    );
-			switch (r & SH4_PTEL_SZ_MASK) {
-			case SH4_PTEL_SZ_1K:
-				printf(" 1K");
-				break;
-			case SH4_PTEL_SZ_4K:
-				printf(" 4K");
-				break;
-			case SH4_PTEL_SZ_64K:
-				printf("64K");
-				break;
-			case SH4_PTEL_SZ_1M:
-				printf(" 1M");
-				break;
-			}
+			__db_tlbdump_page_size_sh4(r);
 			r = _reg_read_4(SH4_UTLB_DA2 | e);
 			printf(" %c  %d\n",
 			    ON(r, SH4_UTLB_DA2_TC),
@@ -311,4 +288,31 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		}
 	}
 #undef ON
+}
+
+void
+__db_tlbdump_page_size_sh4(u_int32_t r)
+{
+	switch (r & SH4_PTEL_SZ_MASK) {
+	case SH4_PTEL_SZ_1K:
+		printf(" 1K");
+		break;
+	case SH4_PTEL_SZ_4K:
+		printf(" 4K");
+		break;
+	case SH4_PTEL_SZ_64K:
+		printf("64K");
+		break;
+	case SH4_PTEL_SZ_1M:
+		printf(" 1M");
+		break;
+	}
+}
+
+void
+__db_tlbdump_pfn(u_int32_t r)
+{
+	u_int32_t pa = (r & SH3_MMUDA_D_PPN_MASK);
+
+	printf(" 0x%08x %d", pa, (pa >> 26) & 7);
 }
