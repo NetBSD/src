@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993, 1994
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,26 +30,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.2 (Berkeley) 4/1/94
+ *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
 typedef struct {
-	char *p_end;			/* pointer to NULL at end of path */
-	char *target_end;               /* pointer to end of target base */
-	char p_path[MAXPATHLEN + 1];	/* pointer to the start of a path */
-} PATH_T;
+	int cnt;
+	char *buf;
+} BUF;
 
-extern PATH_T to;
-extern uid_t myuid;
-extern int iflag, pflag, myumask;
+extern int iamremote;
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-int	copy_fifo __P((struct stat *, int));
-int	copy_file __P((FTSENT *, int));
-int	copy_link __P((FTSENT *, int));
-int	copy_special __P((struct stat *, int));
-int	setfile __P((struct stat *, int));
-void	usage __P((void));
-__END_DECLS
+BUF	*allocbuf __P((BUF *, int, int));
+char	*colon __P((char *));
+void	 lostconn __P((int));
+void	 nospace __P((void));
+int	 okname __P((char *));
+void	 run_err __P((const char *, ...));
+int	 susystem __P((char *, int));
+void	 verifydir __P((char *));
