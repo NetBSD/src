@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.4 1993/10/01 00:38:51 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.5 1993/10/06 12:10:31 mycroft Exp $
  */
 
 #include "param.h"
@@ -49,21 +49,16 @@
 #define	MMS_NPORTS	4
 
 #define	MMS_CHUNK	128	/* chunk size for read */
-#define	MMS_BSIZE	1024	/* buffer size */
+#define	MMS_BSIZE	1020	/* buffer size */
 
 struct mms_softc {		/* Driver status information */
 	struct	device sc_dev;
 	struct	isadev sc_id;
 	struct	intrhand sc_ih;
 
-	struct	ringbuf {	/* Input queue */
-		int rb_count, rb_first, rb_last;
-		char rb_data[MMS_BSIZE];
-	} sc_q;
+	struct	clist sc_q;
 	struct	selinfo sc_rsel;
 	u_short	sc_iobase;	/* I/O port base */
-	u_char	sc_flags;	/* Driver flags */
-#define	MMS_NOBLOCK	0x01
 	u_char	sc_state;	/* Mouse driver state */
 #define MMS_OPEN	0x01	/* Device is open */
 #define MMS_ASLP	0x02	/* Waiting for mouse data */
@@ -79,8 +74,7 @@ static int mmsintr __P((void *));
 struct cfdriver mmscd =
 { NULL, "mms", mmsprobe, mmsattach, sizeof (struct mms_softc) };
 
-#define MMSUNIT(dev)	(minor(dev) >> 1)
-#define	MMSFLAGS(dev)	(minor(dev) & 0x01)
+#define MMSUNIT(dev)	(minor(dev))
 
 static int
 mmsprobe(parent, cf, aux)
@@ -167,10 +161,12 @@ mmsopen(dev, flag)
 	if (sc->sc_state & MMS_OPEN)
 		return EBUSY;
 
+	if (clalloc(&sc->sc_q, MMS_BSIZE, 0) == -1)
+		return ENOMEM;
+
 	sc->sc_state |= MMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
-	sc->sc_q.rb_count = sc->sc_q.rb_first = sc->sc_q.rb_last = 0;
 
 	/* enable interrupts */
 	iobase = sc->sc_iobase;
@@ -193,6 +189,8 @@ mmsclose(dev, flag)
 
 	sc->sc_state &= ~MMS_OPEN;
 
+	clfree(&sc->sc_q);
+
 	return 0;
 }
 
@@ -212,8 +210,8 @@ mmsread(dev, uio, flag)
 	/* Block until mouse activity occured */
 
 	s = spltty();
-	while (sc->sc_q.rb_count == 0) {
-		if (sc->sc_flags & MMS_NOBLOCK) {
+	while (sc->sc_q.c_cc == 0) {
+		if (flag & IO_NDELAY) {
 			splx(s);
 			return EWOULDBLOCK;
 		}
@@ -227,27 +225,15 @@ mmsread(dev, uio, flag)
 
 	/* Transfer as many chunks as possible */
 
-	while (sc->sc_q.rb_count > 0 && uio->uio_resid > 0) {
-		length = min(sc->sc_q.rb_count, uio->uio_resid);
+	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0) {
+		length = min(sc->sc_q.c_cc, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
-		/* Remove a small chunk from input queue */
+		/* remove a small chunk from input queue */
+		(void) q_to_b(&sc->sc_q, buffer, length);
 
-		if (sc->sc_q.rb_first + length >= MMS_BSIZE) {
-			size_t	left = MMS_BSIZE - sc->sc_q.rb_first;
-			bcopy(&sc->sc_q.rb_data[sc->sc_q.rb_first], buffer,
-			      left);
-			bcopy(sc->sc_q.rb_data, &buffer[left], length - left);
-		} else
-			bcopy(&sc->sc_q.rb_data[sc->sc_q.rb_first], buffer,
-			      length);
-	
-		sc->sc_q.rb_first = (sc->sc_q.rb_first + length) % MMS_BSIZE;
-		sc->sc_q.rb_count -= length;
-
-		/* Copy data to user process */
-
+		/* copy data to user process */
 		if (error = uiomove(buffer, length, uio))
 			break;
 	}
@@ -295,9 +281,11 @@ mmsioctl(dev, cmd, addr, flag)
 		else
 			info.ymotion = sc->sc_y;
 
+		/* reset historical information */
 		sc->sc_x = 0;
 		sc->sc_y = 0;
 		sc->sc_status &= ~BUTCHNGMASK;
+		flushq(&sc->sc_q);
 
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
@@ -319,6 +307,7 @@ mmsintr(arg)
 	u_short	iobase = sc->sc_iobase;
 	u_char	buttons, changed, status;
 	char	dx, dy;
+	u_char	buffer[5];
 
 	if ((sc->sc_state & MMS_OPEN) == 0)
 		/* interrupts not expected */
@@ -350,35 +339,15 @@ mmsintr(arg)
 	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
 
 	if (dx || dy || changed) {
-		int	last = sc->sc_q.rb_last;
-		char	*cp = &sc->sc_q.rb_data[last];
-		int	count = sc->sc_q.rb_count;
-
-		/* Update accumulated movements */
+		/* update accumulated movements */
 		sc->sc_x += dx;
 		sc->sc_y += dy;
 
-		if ((count += 5) > MMS_BSIZE)
-			return 1;
-		sc->sc_q.rb_count = count;
-
-#define	next() \
-		if (++last >= MMS_BSIZE) {	\
-			last = 0;		\
-			cp = sc->sc_q.rb_data;	\
-		} else				\
-			cp++;
-		*cp = 0x80 | (~status & BUTSTATMASK);
-		next();
-		*cp = dx;
-		next();
-		*cp = dy;
-		next();
-		*cp = 0;
-		next();
-		*cp = 0;
-		next();
-		sc->sc_q.rb_last = last;
+		buffer[0] = 0x80 | (~status & BUTSTATMASK);
+		buffer[1] = dx;
+		buffer[2] = dy;
+		buffer[3] = buffer[4] = 0;
+		(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
 
 		if (sc->sc_state & MMS_ASLP) {
 			sc->sc_state &= ~MMS_ASLP;
@@ -405,7 +374,7 @@ mmsselect(dev, rw, p)
 		return 0;
 
 	s = spltty();
-	if (sc->sc_q.rb_count)
+	if (sc->sc_q.c_cc)
 		ret = 1;
 	else {
 		selrecord(p, &sc->sc_rsel);
