@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.3 2005/03/25 10:27:03 yamt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.4 2005/03/28 16:40:41 bouyer Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.3 2005/03/25 10:27:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.4 2005/03/28 16:40:41 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -349,12 +349,17 @@ gdt_put_slot(int slot)
 void
 gdt_put_slot1(int slot, int which)
 {
+	union descriptor d;
+	d.raw[0] = 0;
+	d.raw[1] = 0;
 
 	gdt_lock();
 	gdt_count[which]--;
 
-	gdt[slot].gd.gd_type = SDT_SYSNULL;
-	gdt[slot].gd.gd_selector = gdt_free[which];
+	d.gd.gd_type = SDT_SYSNULL;
+	d.gd.gd_selector = gdt_free[which];
+	xen_update_descriptor(&gdt[slot], &d);
+
 	gdt_free[which] = slot;
 
 	gdt_unlock();
