@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.23 1998/03/29 22:02:46 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.24 1998/03/30 14:15:12 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -124,8 +124,8 @@ struct mainbus_attach_args {
 	bus_dma_tag_t	ma_dmatag;
 	char		*ma_name;	/* PROM node name */
 	int		ma_node;	/* PROM handle */
-	int		ma_iospace;	/* device I/O space */
-	void		*ma_paddr;	/* register physical address */
+	bus_type_t	ma_iospace;	/* device I/O space */
+	bus_addr_t	ma_paddr;	/* register physical address */
 	int		ma_size;	/* register physical size */
 	int		ma_pri;		/* priority (IPL) */
 	void		*ma_promvaddr;	/* PROM virtual address, if any */
