@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2001/04/06 11:13:56 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -13,9 +13,11 @@
 
 #include <stdio.h>
 #include <strings.h>
+#include <time.h>
 #include "malloc.h"
 #include "debug.h"
 #include "main.h"
+#include "procs.h"
 
 int	debug[128];
 
@@ -42,8 +44,16 @@ char *synonyms[] = {
 	0
 };
 
+void FakeFilename();
+extern void llparse();
+extern void initsets();
+extern void init_alloc();
+extern void dump_predtable();
+extern void printprotoerrs();
+
+void
 usage(a)
-char *a;
+	char *a;
 {
 	fprintf(stderr, 
 	"usage: %s <transition file> {-D<debug options>} <other options>\n",
@@ -68,8 +78,9 @@ char *a;
 	Exit(-1);
 }
 
+void
 openfiles(proto)
-register char *proto;
+	register char *proto;
 {
 	register char *junk;
 	register int lenp = strlen(proto);
@@ -123,9 +134,10 @@ register char *proto;
 	initsets(eventfile_h, statefile);
 }
 
+void
 includecode(file, f)
-FILE *file;
-register char *f;
+	FILE *file;
+	register char *f;
 {
 	register int count=1;
 	static char o='{';
@@ -133,7 +145,7 @@ register char *f;
 	register char *g;
 
 	IFDEBUG(a)
-		fprintf(stdout, "including: %s, f=0x%x", f,f);
+		fprintf(stdout, "including: %s, f=0x%p", f,f);
 	ENDDEBUG
 	g = ++f;
 	while(count>0) {
@@ -149,6 +161,7 @@ register char *f;
 	FakeFilename(file, Transfilename, lineno);
 }
 
+void
 putincludes()
 {
 	FakeFilename(actfile, Transfilename, lineno);
@@ -161,6 +174,7 @@ putincludes()
 	FakeFilename(actfile, Transfilename, lineno);
 }
 
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -201,12 +215,12 @@ char *argv[];
 			fprintf(stdout, "debugging file is %s\n",actfile_name);
 			break;
 		case 'K':
-			debug[c]=1;
+			debug[(unsigned char) c]=1;
 			fprintf(OUT, "option %c file %s\n",c, &argv[i][j+1]);
 			(void) strcpy(kerneldirname,&argv[i][++j]);
 			break;
 		case 'X':
-			debug[c]=1;
+			debug[(unsigned char) c]=1;
 			name = &argv[i][++j];
 			astringfile_name = Malloc( strlen(name)+4);
 			astringfile_name =  (char *)strcpy(astringfile_name,name);
@@ -255,13 +269,13 @@ char *argv[];
 				debug['X']);
 			break;
 		case 'D':
-			while( c = argv[i][++j] ) {
+			while((c = argv[i][++j])) {
 				if(c ==  'X') {
 					fprintf(OUT, "debugging on");
 					if(debug['X']) fprintf(OUT,
 						" - overrides any -%d flags used\n", debug['X']);
 				}
-				debug[c]=1;
+				debug[(unsigned char) c]=1;
 				fprintf(OUT, "debug %c\n",c);
 			}
 			break;
@@ -371,10 +385,13 @@ char *argv[];
 	fprintf(stdout, "%d seconds\n", finish - start);
 	if( print_protoerrs ) 
 		printprotoerrs();
+
+	exit(0);
 }
 
 int transno = 0;
 
+void
 Exit(n)
 {
 	fprintf(stderr, "Error at line %d\n",lineno);
@@ -386,6 +403,7 @@ Exit(n)
 	exit(n);
 }
 
+#if 0
 syntax() 
 {
 	static char *synt[] = {
@@ -397,11 +415,13 @@ syntax()
 		"*TRANSITIONS <string>\n",
 	};
 }
+#endif
 	
+void
 FakeFilename(outfile, name, l)
-FILE *outfile;
-char *name;
-int l;
+	FILE *outfile;
+	char *name;
+	int l;
 {
 	/*
 	doesn't work

@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.h,v 1.4 1994/06/29 06:41:17 cgd Exp $	*/
+/*	$NetBSD: sets.h,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 #define MAXEVENTS 200
 #define MAXSTATES 200
@@ -30,6 +30,10 @@ extern int Nevents, Nstates;
 int Eventshift;
 extern struct Object *CurrentEvent;
 
-extern struct Object *Lookup();
+extern struct Object *lookup();
 extern struct Object *defineset();
-
+extern void end_states();
+extern struct Object *Lookup();
+extern void defineitem();
+extern void member();
+extern void dump_trans();
