@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.124 2004/04/21 02:27:34 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.125 2004/04/21 02:37:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.124 2004/04/21 02:27:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.125 2004/04/21 02:37:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,8 +357,9 @@ linux_sys_statfs(l, v, retval)
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;
+	SCARG(&bsa, flags) = ST_WAIT;
 
-	if ((error = sys_statvfs(l, &bsa, retval)))
+	if ((error = sys_statvfs1(l, &bsa, retval)))
 		return error;
 
 	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
@@ -382,7 +383,7 @@ linux_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct statvfs btmp, *bsp;
 	struct linux_statfs ltmp;
-	struct sys_fstatvfs_args bsa;
+	struct sys_fstatvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
@@ -391,8 +392,9 @@ linux_sys_fstatfs(l, v, retval)
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
+	SCARG(&bsa, flags) = ST_WAIT;
 
-	if ((error = sys_fstatvfs(l, &bsa, retval)))
+	if ((error = sys_fstatvfs1(l, &bsa, retval)))
 		return error;
 
 	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
