@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.2 2001/02/23 21:23:52 reinoud Exp $ */
+/* $NetBSD: bus.h,v 1.3 2001/06/18 21:37:34 bjh21 Exp $ */
 
-#include <arm/arm32/bus.h>
+#include <arm/bus.h>
 
