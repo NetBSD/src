@@ -1,3 +1,10 @@
 #
-arch/sun3/dev/obio.c		optional obio device-driver
+arch/sun3/sun3/clock.c		standard
+arch/sun3/sun3/conf.c		standard
+arch/sun3/sun3/cons.c		standard
+arch/sun3/sun3/disksubr.c	standard
+arch/sun3/sun3/sun3_startup.c	standard
+arch/sun3/sun3/vector.c		standard
+arch/sun3/dev/prom.c		optional prom device-driver
 arch/sun3/dev/obmem.c		optional obmem device-driver
+arch/sun3/dev/obio.c		optional obio device-driver
