@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.6 2001/11/08 03:20:36 thorpej Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.7 2001/11/09 03:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -161,6 +161,8 @@
 #define	I80312_PPB_SDER		0x5c	/* Secondary Decode Enable Register */
 #define	I80312_PPB_QCR		0x5e	/* Queue Control Register */
 
+#define	PPB_SDER_PMSE		(1U << 2) /* Private Memory Space Enable */
+
 /*
  * Performance Monitoring Unit
  */
@@ -227,6 +229,21 @@
 
 #define	ATU_LIMIT(x) \
 	((0xffffffffUL - ((x) - 1)) & 0xfffffff0UL)
+
+#define	ATU_ACR_POAE		(1U << 1)
+#define	ATU_ACR_SOAE		(1U << 2)
+#define	ATU_ACR_SDAS		(1U << 7)
+#define	ATU_ACR_DAE		(1U << 8)
+#define	ATU_ACR_PSERRIE		(1U << 9)
+#define	ATU_ACR_SSERRIE		(1U << 10)
+#define	ATU_ACR_SBMUAE		(1U << 12)
+#define	ATU_ACR_ADTS		(1U << 15)
+#define	ATU_ACR_PSERRMA		(1U << 16)
+#define	ATU_ACR_SSERRMA		(1U << 17)
+#define	ATU_ACR_DAU2GTE		(1U << 18)
+#define	ATU_ACR_PATUDRCA	(1U << 19)
+#define	ATU_ACR_SATUDRCA	(1U << 20)
+#define	ATU_ACR_BFN		(1U << 21)
 
 /*
  * Messaging Unit
