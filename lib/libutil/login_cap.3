@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.4 2000/03/08 00:02:54 mjl Exp $
+.\" $NetBSD: login_cap.3,v 1.4.4.1 2000/10/16 23:56:31 tv Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -49,6 +49,7 @@
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <login_cap.h>
 .Ft login_cap_t *
 .Fn login_getclass "char *class"
