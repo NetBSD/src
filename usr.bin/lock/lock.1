@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)lock.1	6.9 (Berkeley) 7/27/91
-.\"	$Id: lock.1,v 1.2 1993/08/01 07:31:37 mycroft Exp $
+.\"	$Id: lock.1,v 1.3 1994/06/30 03:49:46 deraadt Exp $
 .\"
 .Dd July 27, 1991
 .Dt LOCK 1
@@ -57,11 +57,18 @@ Options:
 .It Fl p
 A password is not requested, instead the user's current login password
 is used.
+If the user has an S/Key key, they may also use it
+to unlock the terminal. To do this the user should enter "s/key"
+at the unlock "Key:" prompt. The user will then be issued an S/Key
+challange to which they may respond with a six-word S/Key one-time
+password.
 .It Fl t Ar timeout 
 The time limit (default 15 minutes) is changed to
 .Ar timeout
 minutes.
 .El
+.Sh SEE ALSO
+.Xr skey 1
 .Sh HISTORY
 The
 .Nm lock

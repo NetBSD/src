@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lock.c	5.13 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lock.c,v 1.2 1993/08/01 18:13:41 mycroft Exp $";
+static char rcsid[] = "$Id: lock.c,v 1.3 1994/06/30 03:49:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -88,6 +88,13 @@ main(argc, argv)
 	sectimeout = TIMEOUT;
 	mypw = NULL;
 	usemine = 0;
+
+	if (!(pw = getpwuid(getuid()))) {
+		(void)fprintf(stderr,
+		    "lock: unknown uid %d.\n", getuid());
+		exit(1);
+	}
+	
 	while ((ch = getopt(argc, argv, "pt:")) != EOF)
 		switch((char)ch) {
 		case 't':
@@ -99,11 +106,6 @@ main(argc, argv)
 			break;
 		case 'p':
 			usemine = 1;
-			if (!(pw = getpwuid(getuid()))) {
-				(void)fprintf(stderr,
-				    "lock: unknown uid %d.\n", getuid());
-				exit(1);
-			}
 			mypw = strdup(pw->pw_passwd);
 			break;
 		case '?':
@@ -182,6 +184,12 @@ main(argc, argv)
 		}
 		if (usemine) {
 			s[strlen(s) - 1] = '\0';
+#ifdef SKEY
+			if (strcasecmp(s, "s/key") == 0) {
+				if (skey_auth(pw->pw_name))
+					break;
+			}
+#endif
 			if (!strcmp(mypw, crypt(s, mypw)))
 				break;
 		}
@@ -193,6 +201,33 @@ main(argc, argv)
 	}
 	quit();
 }
+
+#ifdef SKEY
+/*
+ * We can't use libskey's skey_authenticate() since it
+ * handles signals in a way that's inappropriate
+ * for our needs. Instead we roll our own.
+ */
+int
+skey_auth(char *user)
+{
+	char s[128], *ask, *skey_keyinfo __P((char *name));
+	int ret = 0;
+
+	if (!skey_haskey(user) && (ask = skey_keyinfo(user))) {
+		printf("\n[%s]\nResponse: ", ask);		
+		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
+			clearerr(stdin);
+		else {
+			s[strlen(s) - 1] = '\0';
+			if (skey_passcheck(user, s) != -1)
+				ret = 1;
+		}
+	} else
+		printf("Sorry, you have no s/key.\n");
+	return ret;
+}
+#endif
 
 void
 hi()
