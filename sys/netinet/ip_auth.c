@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.1.1.1 1997/07/06 05:02:26 thorpej Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.1.1.2 1997/09/21 16:49:25 veego Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.11 1997/06/23 09:20:44 darrenr Exp";
+static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.14 1997/09/13 07:13:04 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -41,14 +41,6 @@ static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.11 1997/06/23 09:20:44 darrenr Exp"
 # include <sys/stream.h>
 # include <sys/kmem.h>
 #endif
-#ifdef	__NetBSD__
-# if defined(__amiga__) || defined(__pc532__) || defined(__atari__) || \
-     defined(__vax__) || defined(__hp300__)
-#  include <machine/mtpr.h>
-# endif
-# include <machine/cpu.h>
-#endif
-
 #include <net/if.h>
 #ifdef sun
 #include <net/af.h>
@@ -268,7 +260,7 @@ frentry_t *fr, **frptr;
 			else {
 				*faep = fae->fae_next;
 				*frptr = fr->fr_next;
-				(void) KFREE(fae);
+				KFREE(fae);
 			}
 		} else {
 			KMALLOC(fae, frauthent_t *, sizeof(*fae));
