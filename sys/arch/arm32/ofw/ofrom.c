@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.10.4.2 2001/10/10 11:55:57 fvdl Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.10.4.3 2001/10/13 23:25:55 fvdl Exp $	*/
 
 /*
  * Copyright 1998
@@ -102,7 +102,8 @@ ofromattach(parent, self, aux)
 	sc->size = of_decode_int(&regbuf[4]);
 	sc->enabled = 1;
 
-	printf(": %#lx-%#lx\n", sc->base, sc->base + sc->size - 1);
+	printf(": %#lx-%#lx\n", (u_long)sc->base,
+		(u_long)(sc->base + sc->size - 1));
 }
 
 int
@@ -211,6 +212,7 @@ ofrommmap(devvp, off, prot)
 	int prot;
 {
 	struct ofrom_softc *sc;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= ofrom_cd.cd_ndevs)
