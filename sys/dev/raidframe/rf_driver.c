@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.67 2002/11/09 19:50:03 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.68 2002/11/14 03:04:20 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.67 2002/11/09 19:50:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.68 2002/11/14 03:04:20 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,12 +708,30 @@ rf_FailDisk(
     int initRecon)
 {
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->numFailures++;
-	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
-	raidPtr->status[frow] = rf_rs_degraded;
+	if ((raidPtr->Disks[frow][fcol].status == rf_ds_optimal) &&
+	    (raidPtr->numFailures > 0)) { 
+		/* some other component has failed.  Let's not make
+                   things worse. XXX wrong for RAID6 */
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		return (EINVAL);
+	}
+	if (raidPtr->Disks[frow][fcol].status == rf_ds_spared) {
+		/* Can't fail a spared disk! */
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		return (EINVAL);
+	}
+	if (raidPtr->Disks[frow][fcol].status != rf_ds_failed) {
+		/* must be failing something that is valid, or else it's
+		   already marked as failed (in which case we don't 
+		   want to mark it failed again!) */
+		raidPtr->numFailures++;
+		raidPtr->Disks[frow][fcol].status = rf_ds_failed;
+		raidPtr->status[frow] = rf_rs_degraded;		
+	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
-
+	
 	/* Close the component, so that it's not "locked" if someone 
 	   else want's to use it! */
 
