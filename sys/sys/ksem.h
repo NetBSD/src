@@ -1,4 +1,4 @@
-/* $NetBSD: ksem.h,v 1.2 2003/01/21 14:11:31 christos Exp $ */
+/*	$NetBSD: ksem.h,v 1.3 2003/01/23 23:52:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -24,18 +24,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$FreeBSD: src/sys/posix4/_semaphore.h,v 1.1 2002/09/19 00:43:32 alfred Exp $
  */
+
 #ifndef _SYS_KSEM_H_
 #define _SYS_KSEM_H_
 
 #include <sys/cdefs.h>
 
-__BEGIN_DECLS
-
 #ifndef _KERNEL
 
+__BEGIN_DECLS
 int _ksem_close(semid_t);
 int _ksem_destroy(semid_t);
 int _ksem_getvalue(semid_t, int *);
@@ -45,13 +43,12 @@ int _ksem_post(semid_t);
 int _ksem_trywait(semid_t);
 int _ksem_unlink(const char *);
 int _ksem_wait(semid_t);
+__END_DECLS
 
 #else
 
 void ksem_init(void);
 
 #endif /* !_KERNEL */
-
-__END_DECLS
 
 #endif /* _SYS_KSEM_H_ */
