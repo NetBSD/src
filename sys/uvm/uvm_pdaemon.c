@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.35 2001/06/23 20:52:03 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.36 2001/06/27 18:52:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -372,14 +372,6 @@ uvmpd_scan_inactive(pglst)
 	vaddr_t start;
 	int dirtyreacts, t;
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
-
-	/*
-	 * note: we currently keep swap-backed pages on a seperate inactive
-	 * list from object-backed pages.   however, merging the two lists
-	 * back together again hasn't been ruled out.   thus, we keep our
-	 * swap cluster in "swpps" rather than in pps (allows us to mix
-	 * clustering types in the event of a mixed inactive queue).
-	 */
 
 	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
