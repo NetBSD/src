@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.2 1995/04/21 02:47:41 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.3 1995/06/30 01:23:21 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -242,7 +242,7 @@ adb_keymaybemouse(event)
 		} else if (ADBK_MODIFIER(event->u.k.key)) {
 		/* ctrl, shift, cmd */
 			adb_dokeyupdown(event);
-		} else if (event->u.k.key & 0x80) {
+		} else if (!(event->u.k.key & 0x80)) {
 		/* key down */
 			new_event = *event;
 
@@ -259,13 +259,14 @@ adb_keymaybemouse(event)
 			adb_dokeyupdown(&new_event);
 
 			/* send key-up */
-			new_event.u.k.key = ADBK_KEYVAL(event->bytes[0]);
-			adb_dokeyupdown(&new_event);
+			new_event.u.k.key =
+				ADBK_KEYUP(ADBK_KEYVAL(event->bytes[0]));
 			microtime(&new_event.timestamp);
 			new_event.bytes[0] = new_event.u.k.key;
+			adb_dokeyupdown(&new_event);
 
 			/* send option-up */
-			new_event.u.k.key = ADBK_OPTION;
+			new_event.u.k.key = ADBK_KEYUP(ADBK_OPTION);
 			new_event.bytes[0] = new_event.u.k.key;
 			microtime(&new_event.timestamp);
 			adb_dokeyupdown(&new_event);
