@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.17 2002/12/06 11:22:25 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.18 2003/06/13 02:33:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.17 2002/12/06 11:22:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.18 2003/06/13 02:33:09 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -178,6 +178,8 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	    (u_int32_t)le64toh(param.p.sci.maxsyncrate) / 1000,
 	    le32toh(param.p.sci.initiatorid));
 #endif
+
+	sc->sc_openings = 1;
 
 	sc->sc_adapter.adapt_dev = &sc->sc_dv;
 	sc->sc_adapter.adapt_nchannels = 1;
@@ -410,7 +412,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct iop_msg *im;
 	struct iop_softc *iop;
 	struct i2o_scsi_scb_exec *mf;
-	int error, flags, tid, s;
+	int error, flags, tid;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (void *)chan->chan_adapter->adapt_dev;
@@ -496,14 +498,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				mf->flags |= I2O_SCB_FLAG_XFER_FROM_DEVICE;
 		}
 
-		s = splbio();
-		sc->sc_curqd++;
-		splx(s);
-
 		if (iop_msg_post(iop, im, mb, xs->timeout)) {
-			s = splbio();
-			sc->sc_curqd--;
-			splx(s);
 			if (xs->datalen != 0)
 				iop_msg_unmap(iop, im);
 			iop_msg_free(iop, im);
@@ -631,9 +626,6 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 		iop_msg_unmap(iop, im);
 	iop_msg_free(iop, im);
 
-	if (--sc->sc_curqd == sc->sc_adapter.adapt_openings)
-		wakeup(&sc->sc_curqd);
-
 	scsipi_done(xs);
 }
 
@@ -680,8 +672,7 @@ iopsp_adjqparam(struct device *dv, int mpi)
 	sc = (struct iopsp_softc *)dv;
 
 	s = splbio();
-	sc->sc_adapter.adapt_openings = mpi;
-	if (mpi < sc->sc_curqd)
-		tsleep(&sc->sc_curqd, PWAIT, "iopspdrn", 0);
+	sc->sc_adapter.adapt_openings += mpi - sc->sc_openings;
+	sc->sc_openings = mpi;
 	splx(s);
 }
