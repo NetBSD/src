@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_cbq.c,v 1.5 2001/11/12 23:14:21 lukem Exp $	*/
-/*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.6 2002/10/07 02:57:39 itojun Exp $	*/
+/*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.5 2001/11/12 23:14:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6 2002/10/07 02:57:39 itojun Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -682,7 +682,7 @@ cbq_ifdetach(ifacep)
 	else {
 		cbq_state_t *cp;
 
-		for (cp = cbq_list; cp != NULL; cp = cbqp->cbq_next)
+		for (cp = cbq_list; cp != NULL; cp = cp->cbq_next)
 			if (cp->cbq_next == cbqp) {
 				cp->cbq_next = cbqp->cbq_next;
 				break;
