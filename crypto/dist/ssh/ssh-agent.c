@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.20 2003/04/03 06:21:35 itojun Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.21 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +37,7 @@
 #include "includes.h"
 #include <sys/queue.h>
 RCSID("$OpenBSD: ssh-agent.c,v 1.108 2003/03/13 11:44:50 markus Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.21 2003/07/10 01:09:47 lukem Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshtty.c,v 1.1.1.2 2002/03/08 01:21:47 itojun Exp $	*/
+/*	$NetBSD: sshtty.c,v 1.2 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshtty.c,v 1.3 2002/03/04 17:27:39 stevesk Exp $");
+__RCSID("$NetBSD: sshtty.c,v 1.2 2003/07/10 01:09:49 lukem Exp $");
 
 #include "sshtty.h"
 #include "log.h"

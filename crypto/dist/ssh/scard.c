@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.c,v 1.6 2002/12/06 03:39:10 thorpej Exp $	*/
+/*	$NetBSD: scard.c,v 1.7 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -26,6 +26,7 @@
 #ifdef SMARTCARD
 #include "includes.h"
 RCSID("$OpenBSD: scard.c,v 1.26 2002/06/23 03:30:17 deraadt Exp $");
+__RCSID("$NetBSD: scard.c,v 1.7 2003/07/10 01:09:46 lukem Exp $");
 
 #include <openssl/evp.h>
 #include <sectok.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.21 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.22 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: serverloop.c,v 1.107 2003/04/02 09:48:07 markus Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.22 2003/07/10 01:09:46 lukem Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"

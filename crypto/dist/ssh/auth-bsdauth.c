@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.5 2002/07/01 06:17:11 itojun Exp $	*/
+/*	$NetBSD: auth-bsdauth.c,v 1.6 2003/07/10 01:09:41 lukem Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,6 +24,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: auth-bsdauth.c,v 1.5 2002/06/30 21:59:45 deraadt Exp $");
+__RCSID("$NetBSD: auth-bsdauth.c,v 1.6 2003/07/10 01:09:41 lukem Exp $");
 
 #ifdef BSD_AUTH
 #include "xmalloc.h"

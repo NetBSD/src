@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.15 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: authfd.c,v 1.16 2003/07/10 01:09:43 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: authfd.c,v 1.58 2003/01/23 13:50:27 markus Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.16 2003/07/10 01:09:43 lukem Exp $");
 
 #include <openssl/evp.h>
 

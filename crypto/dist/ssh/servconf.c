@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.23 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.24 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,6 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.116 2003/02/21 09:05:53 markus Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.24 2003/07/10 01:09:46 lukem Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 #include <krb.h>

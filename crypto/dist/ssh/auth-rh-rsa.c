@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.2 2002/12/06 03:39:07 thorpej Exp $	*/
+/*	$NetBSD: auth-rh-rsa.c,v 1.3 2003/07/10 01:09:41 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,6 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth-rh-rsa.c,v 1.34 2002/03/25 09:25:06 markus Exp $");
+__RCSID("$NetBSD: auth-rh-rsa.c,v 1.3 2003/07/10 01:09:41 lukem Exp $");
 
 #include "packet.h"
 #include "uidswap.h"

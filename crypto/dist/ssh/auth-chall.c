@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-chall.c,v 1.5 2001/06/23 19:37:38 itojun Exp $	*/
+/*	$NetBSD: auth-chall.c,v 1.6 2003/07/10 01:09:41 lukem Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth-chall.c,v 1.8 2001/05/18 14:13:28 markus Exp $");
+__RCSID("$NetBSD: auth-chall.c,v 1.6 2003/07/10 01:09:41 lukem Exp $");
 
 #include "auth.h"
 #include "log.h"

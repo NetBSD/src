@@ -1,4 +1,4 @@
-/*	$NetBSD: nchan.c,v 1.2 2002/12/06 03:39:09 thorpej Exp $	*/
+/*	$NetBSD: nchan.c,v 1.3 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: nchan.c,v 1.47 2002/06/19 00:27:55 deraadt Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.3 2003/07/10 01:09:45 lukem Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
