@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.16 1999/01/14 18:45:46 castor Exp $	*/
+/*	$NetBSD: locore.h,v 1.17 1999/01/15 10:07:12 castor Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -41,7 +41,9 @@
 #ifndef _MIPS_LOCORE_H
 #define  _MIPS_LOCORE_H
 
+#ifndef _LKM
 #include "opt_mips_cache.h"
+#endif
 
 /*
  * locore service routine for exception vectors. Used outside locore
