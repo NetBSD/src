@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.21 2001/07/10 00:41:12 bjh21 Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.22 2001/12/06 11:54:07 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,10 +43,6 @@
 #ifndef _ARM32_IRQHANDLER_H_
 #define _ARM32_IRQHANDLER_H_
 
-#if defined(_KERNEL_OPT)
-#include "iomd.h"
-#endif
-
 #ifndef _LOCORE
 #include <sys/types.h>
 #endif /* _LOCORE */
@@ -57,104 +53,6 @@
  * XXX this is really getting rather horrible.
  * Shortly to be replaced with system specific interrupt tables and handling
  */
-
-#if NIOMD > 0
-
-/* Only for ARM7500 : */
-
-/*#define IRQ_PRINTER	0x00*/
-/*#define IRQ_RESERVED0	0x01*/
-#define IRQ_BUTTON	0x02
-#define IRQ_FLYBACK	0x03
-#define IRQ_POR		0x04
-#define IRQ_TIMER0	0x05
-#define IRQ_TIMER1 	0x06
-
-#define IRQ_DREQ3	0x08
-/*#define IRQ_HD1	0x09*/
-/*#define IRQ_HD	IRQ_HD1*/
-#define IRQ_DREQ2	0x0A
-/*#define IRQ_FLOPPY	0x0C*/
-/*#define IRQ_SERIAL	0x0D*/
-#define IRQ_KBDTX	0x0E
-#define IRQ_KBDRX	0x0F
-
-#define IRQ_IRQ3	0x10
-#define IRQ_IRQ4	0x11
-#define IRQ_IRQ5	0x12
-#define IRQ_IRQ6	0x13
-#define IRQ_IRQ7	0x14
-#define IRQ_IRQ9	0x15
-#define IRQ_IRQ10	0x16
-#define IRQ_IRQ11	0x17
-
-#define IRQ_MSDRX	0x18
-#define IRQ_MSDTX	0x19
-#define IRQ_ATOD	0x1A
-#define IRQ_CLOCK	0x1B
-#define IRQ_PANIC	0x1C
-/*#define IRQ_RESERVED2	0x1D*/
-/*#define IRQ_RESERVED3	0x1E*/
-
-
-/*
- * Note that Sound DMA IRQ is on the 31st vector.
- * It's not part of the IRQD.
- */
-#define IRQ_SDMA	0x1F
-
-/* Several interrupts are different between the A7000 and RC7500 */
-#ifdef RC7500
-
-#define IRQ_FIQDOWN	0x07
-#define IRQ_ETHERNET	0x0B
-#define IRQ_HD2		IRQ_IRQ11
-
-#else	/* RC7500 */
-
-/*#define IRQ_RESERVED1	0x07 */
-#define IRQ_EXTENDED	0x0B
-#define IRQ_PODULE	0x0D
-
-#endif	/* RC7500 */
-
-
-
-
-/* for non ARM7500 machines : */
-
-#ifdef	RISCPC
-/*#define IRQ_PRINTER	0x00*/
-/*#define IRQ_RESERVED0	0x01*/
-/*#define IRQ_FLOPPYIDX	0x02*/
-#define IRQ_FLYBACK	0x03
-#define IRQ_POR		0x04
-#define IRQ_TIMER0	0x05
-#define IRQ_TIMER1	0x06
-/*#define IRQ_RESERVED1	0x07*/
-
-/*#define IRQ_RESERVED2	0x08*/
-/*#define IRQ_HD	0x09*/
-/*#define IRQ_SERIAL	0x0A*/
-#define IRQ_EXTENDED	0x0B
-/*#define IRQ_FLOPPY	0x0C*/
-#define IRQ_PODULE	0x0D
-#define IRQ_KBDTX	0x0E
-#define IRQ_KBDRX	0x0F
-
-#define IRQ_DMACH0	0x10
-#define IRQ_DMACH1	0x11
-#define IRQ_DMACH2	0x12
-#define IRQ_DMACH3	0x13
-#define IRQ_DMASCH0	0x14
-#define IRQ_DMASCH1	0x15
-/*#define IRQ_RESERVED3	0x16*/
-/*#define IRQ_RESERVED4	0x17*/
-
-
-#endif	/* RISCPC */
-
-#endif	/* NIOMD > 0 */
 
 #ifdef  OFWGENCFG
 /* These are just made up for now!  -JJK */
