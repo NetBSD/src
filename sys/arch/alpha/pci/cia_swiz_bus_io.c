@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_swiz_bus_io.c,v 1.2 1996/04/12 06:08:21 cgd Exp $	*/
+/*	$NetBSD: cia_swiz_bus_io.c,v 1.3 1996/06/10 00:04:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -38,6 +38,6 @@
 #include <alpha/pci/ciareg.h>
 
 #define	CHIP		cia
-#define	CHIP_IO_BASE	CIA_PCI_SIO0
+#define	CHIP_IO_BASE	CIA_PCI_SIO1
 
 #include "pcs_bus_io_common.c"
