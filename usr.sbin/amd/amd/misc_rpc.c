@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)misc_rpc.c	8.1 (Berkeley) 6/6/93
- *	$Id: misc_rpc.c,v 1.3 1994/06/13 20:47:36 mycroft Exp $
+ *	$Id: misc_rpc.c,v 1.4 1994/12/08 21:41:05 christos Exp $
  */
 
 /*
@@ -132,7 +132,7 @@ AUTH *auth;
 	/*
 	 * Called procedure number
 	 */
-	if (!xdr_enum(&msg_xdr, &proc))
+	if (!xdr_enum(&msg_xdr, (enum_t *) &proc))
 		return -EIO;
 	/*
 	 * Authorization

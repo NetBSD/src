@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_xdr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_xdr.c,v 1.2 1994/06/13 20:50:51 mycroft Exp $
+ *	$Id: amq_xdr.c,v 1.3 1994/12/08 21:41:23 christos Exp $
  *
  */
 
@@ -63,7 +63,7 @@ xdr_time_type(xdrs, objp)
 	XDR *xdrs;
 	time_type *objp;
 {
-	if (!xdr_long(xdrs, objp)) {
+	if (!xdr_long(xdrs, (long *) objp)) {
 		return (FALSE);
 	}
 	return (TRUE);
