@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.7 1998/05/14 00:04:58 kml Exp $	*/
+/*	$NetBSD: sockio.h,v 1.8 1998/09/06 17:52:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -72,6 +72,7 @@
 #define	SIOCSIFMETRIC	 _IOW('i', 24, struct ifreq)	/* set IF metric */
 #define	SIOCDIFADDR	 _IOW('i', 25, struct ifreq)	/* delete IF addr */
 #define	SIOCAIFADDR	 _IOW('i', 26, struct ifaliasreq)/* add/chg IF alias */
+#define SIOCGIFALIAS	_IOWR('i', 27, struct ifaliasreq)/* get IF alias */
 
 #define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
