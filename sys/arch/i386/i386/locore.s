@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.1 1993/09/14 17:28:35 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.2 1993/09/24 08:45:45 mycroft Exp $
  */
 
 
@@ -548,26 +548,6 @@ ENTRY(outw)
 	ret
 
 	/*
-	 * void bzero(void *base, u_int cnt)
-	 */
-
-ENTRY(bzero)
-	pushl	%edi
-	movl	8(%esp),%edi
-	movl	12(%esp),%ecx
-	xorl	%eax,%eax
-	shrl	$2,%ecx	
-	cld
-	rep
-	stosl
-	movl	12(%esp),%ecx
-	andl	$3,%ecx
-	rep
-	stosb
-	popl	%edi
-	ret
-
-	/*
 	 * fillw (pat,base,cnt)
 	 */
 
@@ -715,49 +695,6 @@ ENTRY(bcopy)
 	popl	%edi
 	popl	%esi
 	cld
-	ret
-
-/*
- * strlen (s)
- *	compute the length of the string s.
- *
- * Written by:
- *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
- */
-
-ENTRY(strlen)
-	pushl	%edi
-	movl	8(%esp),%edi		/* string address */
-	cld				/* set search forward */
-	xorl	%eax,%eax		/* set search for null terminator */
-	movl	$-1,%ecx		/* set search for lots of characters */
-	repne				/* search! */
-	scasb
-	movl	%ecx,%eax		/* get length by taking	twos-	*/
-	notl	%eax			/* complement and subtracting	*/
-	decl	%eax			/* one */
-	popl	%edi
-	ret
-
-/*
- * ffs(value)
- *	finds the first bit set in value and returns the index of 
- *	that bit.  Bits are numbered starting from 1, starting at the
- *	rightmost bit.  A return value of 0 means that the argument
- *	was zero.
- *
- * Written by:
- *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
- */
-
-ENTRY(ffs)
-	bsfl	4(%esp),%eax
-	jz	1f	 		/* ZF is set if all bits are 0 */
-	incl	%eax			/* bits numbered from 1, not 0 */
-	ret
-
-	ALIGN_TEXT
-1:	xorl	%eax,%eax		/* clear result */
 	ret
 
 /*
@@ -1681,6 +1618,20 @@ swfnd:
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
 
+#ifdef	USER_LDT
+	cmpl	$0, PCB_USERLDT(%edx)
+	jne	1f
+	movl	__default_ldt,%eax
+	cmpl	_currentldt,%eax
+	je	2f
+	lldt	__default_ldt
+	movl	%eax,_currentldt
+	jmp	2f
+1:	pushl	%edx
+	call	_set_user_ldt
+	popl	%edx
+2:
+#endif
 	sti				# splx() doesn't do an sti/cli
 	SHOW_STI
 
@@ -1988,7 +1939,7 @@ calltrap:
 	 * Return through doreti to handle ASTs.  Have to change trap frame
 	 * to interrupt frame.
 	 */
-	movl	$T_ASTFLT,4+4+32(%esp)	/* new trap type (err code not used) */
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* new trap type (err code not used) */
 	pushl	_cpl
 	pushl	$0			/* dummy unit */
 	jmp	doreti
@@ -2004,8 +1955,8 @@ bpttraps:
 #ifdef I386_CPU
 	nop
 #endif
-	pushl	%es
 	pushl	%ds
+	pushl	%es
 	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
@@ -2022,71 +1973,29 @@ bpttraps:
 
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
-	pushfl	# only for stupid carry bit and more stupid wait3 cc kludge
-		# XXX - also for direction flag (bzero, etc. clear it)
-	pushal	# only need eax,ecx,edx - trap resaves others
-#ifdef I386_CPU
-	nop
-#endif
-	movl	$KDSEL,%eax		# switch to kernel segments
-	movl	%ax,%ds
-	movl	%ax,%es
-	incl	_cnt+V_SYSCALL  # kml 3/25/93
-	call	_syscall
-	/*
-	 * Return through doreti to handle ASTs.  Have to change syscall frame
-	 * to interrupt frame.
-	 *
-	 * XXX - we should have set up the frame earlier to avoid the
-	 * following popal/pushal (not much can be done to avoid shuffling
-	 * the flags).  Consistent frames would simplify things all over.
-	 */
-	movl	32+0(%esp),%eax	/* old flags, shuffle to above cs:eip */
-	movl	32+4(%esp),%ebx	/* `int' frame should have been ef, eip, cs */
-	movl	32+8(%esp),%ecx
-	movl	%ebx,32+0(%esp)
-	movl	%ecx,32+4(%esp)
-	movl	%eax,32+8(%esp)
-	popal
-#ifdef I386_CPU
-	nop
-#endif
-	pushl	$0		/* dummy error code */
-	pushl	$T_ASTFLT
+	pushfl		# Room for tf_err
+	pushfl		# Room for tf_trapno
 	pushal
 #ifdef I386_CPU
 	nop
 #endif
-	movl	__udatasel,%eax	/* switch back to user segments */
-	push	%eax		/* XXX - better to preserve originals? */
-	push	%eax
+	pushl	%ds
+	pushl	%es
+	movl	$KDSEL,%eax		# switch to kernel segments
+	movl	%ax,%ds
+	movl	%ax,%es
+	movl	TF_ERR(%esp),%eax	# copy eflags from tf_err to tf_eflags
+	movl	%eax,TF_EFLAGS(%esp)
+	movl	$0,TF_ERR(%esp)
+	incl	_cnt+V_SYSCALL  # kml 3/25/93
+	call	_syscall
+	/*
+	 * Return through doreti to handle ASTs.
+	 */
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)	# new trap type (err code not used)
 	pushl	_cpl
 	pushl	$0
 	jmp	doreti
-
-ENTRY(htonl)
-ENTRY(ntohl)
-	movl	4(%esp),%eax
-#ifndef I386_CPU
-	/* XXX */
-	/* Since Gas 1.38 does not grok bswap this has been coded as the
-	 * equivalent bytes.  This can be changed back to bswap when we
-	 * upgrade to a newer version of Gas */
-	/* bswap	%eax */
-	.byte 	0x0f
-	.byte	0xc8
-#else
-	xchgb	%al,%ah
-	roll	$16,%eax
-	xchgb	%al,%ah
-#endif
-	ret
-
-ENTRY(htons)
-ENTRY(ntohs)
-	movzwl	4(%esp),%eax
-	xchgb	%al,%ah
-	ret
 
 #ifdef SHOW_A_LOT
 

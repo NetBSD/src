@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.1 1993/09/14 17:28:44 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.2 1993/09/24 08:46:04 mycroft Exp $
  */
 
 /*
@@ -872,6 +872,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Page Directory table entry not valid, we need a new PT page
 	 */
 	if (!pmap_pde_v(pmap_pde(pmap, va))) {
+		/* XXXX printf and panic? */
 		pg("ptdi %x", pmap->pm_pdir[PTDPTDI]);
 	}
 

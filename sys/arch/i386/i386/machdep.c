@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.1 1993/09/14 17:28:39 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.2 1993/09/24 08:45:53 mycroft Exp $
  */
 
 #include "npx.h"
@@ -58,6 +58,7 @@
 #include "malloc.h"
 #include "mbuf.h"
 #include "msgbuf.h"
+#include "mount.h"
 #include "net/netisr.h"
 
 #ifdef SYSVSHM
@@ -68,24 +69,21 @@
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
 
+#include "sys/device.h"
 #include "sys/exec.h"
 #include "sys/vnode.h"
-
-vm_map_t buffer_map;
-
-extern vm_offset_t avail_start, avail_end;
-static vm_offset_t hole_start, hole_end;
-static vm_offset_t avail_next;
-static vm_size_t avail_remaining;
 
 #include "machine/cpu.h"
 #include "machine/cpufunc.h"
 #include "machine/reg.h"
-#include "machine/psl.h"
 #include "machine/specialreg.h"
+#include "machine/sysarch.h"
 
 #include "i386/isa/isa.h"
+#include "i386/isa/isavar.h"
 #include "i386/isa/nvram.h"
+
+int _udatasel, _ucodesel;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -108,6 +106,15 @@ int	cpu_class;
 
 struct	msgbuf *msgbufp;
 int	msgbufmapped;
+
+vm_map_t buffer_map;
+
+extern	vm_offset_t avail_start, avail_end;
+static	vm_offset_t hole_start, hole_end;
+static	vm_offset_t avail_next;
+static	vm_size_t avail_remaining;
+
+int	_udatasel, _ucodesel;
 
 void dumpsys __P((void));
 
@@ -318,8 +325,10 @@ identifycpu()
 		printf("%s", i386_cpus[cpu].cpu_name);
 		cpu_class = i386_cpus[cpu].cpu_class;
 	} else {
+#ifdef DIAGNOSTIC
 		printf("unknown cpu type %d\n", cpu);
 		panic("startup: bad cpu id");
+#endif
 	}
 	printf(" (");
 	switch(cpu_class) {
@@ -378,17 +387,6 @@ vmtime(otime, olbolt, oicr)
 }
 #endif
 
-struct sigframe {
-	int	sf_signum;
-	int	sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
-	int	sf_eax;	
-	int	sf_edx;	
-	int	sf_ecx;	
-	struct	sigcontext sf_sc;
-} ;
-
 extern int kstack[];
 
 /*
@@ -411,12 +409,11 @@ sendsig(catcher, sig, mask, code)
 	register int *regs;
 	register struct sigframe *fp;
 	struct sigacts *ps = p->p_sigacts;
-	int oonstack, frmtrap;
+	int oonstack;
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_regs;
-        oonstack = ps->ps_onstack;
-	frmtrap = curpcb->pcb_flags & FM_TRAP;
+	oonstack = ps->ps_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -424,18 +421,13 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-        if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(ps->ps_sigsp
 				- sizeof(struct sigframe));
-                ps->ps_onstack = 1;
-	} else {
-		if (frmtrap)
-			fp = (struct sigframe *)(regs[tESP]
+		ps->ps_onstack = 1;
+	} else
+		fp = (struct sigframe *)(regs[tESP]
 				- sizeof(struct sigframe));
-		else
-			fp = (struct sigframe *)(regs[sESP]
-				- sizeof(struct sigframe));
-	}
 
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
@@ -462,36 +454,35 @@ sendsig(catcher, sig, mask, code)
 	fp->sf_scp = &fp->sf_sc;
 	fp->sf_handler = catcher;
 
-	/* save scratch registers */
-	if(frmtrap) {
-		fp->sf_eax = regs[tEAX];
-		fp->sf_edx = regs[tEDX];
-		fp->sf_ecx = regs[tECX];
-	} else {
-		fp->sf_eax = regs[sEAX];
-		fp->sf_edx = regs[sEDX];
-		fp->sf_ecx = regs[sECX];
-	}
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
 	fp->sf_sc.sc_onstack = oonstack;
 	fp->sf_sc.sc_mask = mask;
-	if(frmtrap) {
-		fp->sf_sc.sc_sp = regs[tESP];
-		fp->sf_sc.sc_fp = regs[tEBP];
-		fp->sf_sc.sc_pc = regs[tEIP];
-		fp->sf_sc.sc_ps = regs[tEFLAGS];
-		regs[tESP] = (int)fp;
-		regs[tEIP] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
-	} else {
-		fp->sf_sc.sc_sp = regs[sESP];
-		fp->sf_sc.sc_fp = regs[sEBP];
-		fp->sf_sc.sc_pc = regs[sEIP];
-		fp->sf_sc.sc_ps = regs[sEFLAGS];
-		regs[sESP] = (int)fp;
-		regs[sEIP] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
-	}
+	fp->sf_sc.sc_sp = regs[tESP];
+	fp->sf_sc.sc_fp = regs[tEBP];
+	fp->sf_sc.sc_pc = regs[tEIP];
+	fp->sf_sc.sc_ps = regs[tEFLAGS];
+	fp->sf_sc.sc_eax = regs[tEAX];
+	fp->sf_sc.sc_ebx = regs[tEBX];
+	fp->sf_sc.sc_ecx = regs[tECX];
+	fp->sf_sc.sc_edx = regs[tEDX];
+	fp->sf_sc.sc_esi = regs[tESI];
+	fp->sf_sc.sc_edi = regs[tEDI];
+	fp->sf_sc.sc_cs = regs[tCS];
+	fp->sf_sc.sc_ds = regs[tDS];
+	fp->sf_sc.sc_es = regs[tES];
+	fp->sf_sc.sc_ss = regs[tSS];
+
+	/*
+	 * Build context to run handler in.
+	 */
+	regs[tESP] = (int)fp;
+	regs[tEIP] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	regs[tCS] = _ucodesel;
+	regs[tDS] = _udatasel;
+	regs[tES] = _udatasel;
+	regs[tSS] = _udatasel;
 }
 
 /*
@@ -515,6 +506,7 @@ sigreturn(p, uap, retval)
 {
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
+	register struct trapframe *tf;
 	register int *regs = p->p_regs;
 
 	/*
@@ -526,29 +518,44 @@ sigreturn(p, uap, retval)
 	fp = (struct sigframe *)
 	     ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
 
-	if (useracc((caddr_t)fp, sizeof (*fp), 0) == 0)
+	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
 		return(EINVAL);
 
-	/* restore scratch registers */
-	regs[sEAX] = fp->sf_eax ;
-	regs[sEDX] = fp->sf_edx ;
-	regs[sECX] = fp->sf_ecx ;
-
-	if (useracc((caddr_t)scp, sizeof (*scp), 0) == 0)
+	if (useracc((caddr_t)scp, sizeof(*scp), 0) == 0)
 		return(EINVAL);
-#ifdef notyet
-	/* XXX */
+
+	/* make sure they aren't trying to do anything funny */
 	if ((scp->sc_ps & PSL_MBZ) != 0 || (scp->sc_ps & PSL_MBO) != PSL_MBO) {
 		return(EINVAL);
 	}
-#endif
-        p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	/* compare IOPL; we can't insist that it's always 3 or the X server
+	   will fail */
+	tf = (struct trapframe *)curproc->p_regs;
+	if ((tf->tf_eflags & PSL_IOPL) != (regs[tEFLAGS] & PSL_IOPL))
+		return(EINVAL);
+
+	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
-	regs[sEBP] = scp->sc_fp;
-	regs[sESP] = scp->sc_sp;
-	regs[sEIP] = scp->sc_pc;
-	regs[sEFLAGS] = scp->sc_ps;
+
+	/*
+	 * Restore signal context.
+	 */
+	regs[tEBP] = scp->sc_ebp;
+	regs[tESP] = scp->sc_esp;
+	regs[tISP] = scp->sc_isp;
+	regs[tEIP] = scp->sc_eip;
+	regs[tEFLAGS] = scp->sc_efl;
+	regs[tEAX] = scp->sc_eax;
+	regs[tEBX] = scp->sc_ebx;
+	regs[tECX] = scp->sc_ecx;
+	regs[tEDX] = scp->sc_edx;
+	regs[tESI] = scp->sc_esi;
+	regs[tEDI] = scp->sc_edi;
+	regs[tCS] = scp->sc_cs;
+	regs[tDS] = scp->sc_ds;
+	regs[tES] = scp->sc_es;
+	regs[tSS] = scp->sc_ss;
 	return(EJUSTRETURN);
 }
 
@@ -609,7 +616,7 @@ boot(howto)
 		cngetc();
 #endif
 	} else if (howto & RB_DUMP)
-		dumpsys();	
+		dumpsys();
 	printf("rebooting\n\n");
 	/* XXX need to pass RB_SINGLE, RB_KDB, and RB_ASKNAME */
 	cpu_reset();
@@ -668,7 +675,7 @@ dumpvaddr(maddr, n)
 	(void) pmap_map(dumpspace, (vm_offset_t)maddr,
 			(vm_offset_t)maddr + (vm_size_t)n, VM_PROT_READ);
 	return((caddr_t)dumpspace);
-}	
+}
 
 void
 dumpsys()
@@ -806,9 +813,13 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	p->p_regs[sEBP] = 0;	/* bottom of the fp chain */
-	p->p_regs[sEIP] = entry;
-	p->p_regs[sESP] = stack;
+	p->p_regs[tEBP] = 0;	/* bottom of the fp chain */
+	p->p_regs[tEIP] = entry;
+	p->p_regs[tESP] = stack;
+	p->p_regs[tSS] = _udatasel;
+	p->p_regs[tDS] = _udatasel;
+	p->p_regs[tES] = _udatasel;
+	p->p_regs[tCS] = _ucodesel;
 	/* XXX -- do something with retval? */
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
@@ -833,15 +844,15 @@ setregs(p, entry, stack, retval)
 #define	GTGATE_SEL	4	/* Process task switch gate */
 #define	GPANIC_SEL	5	/* Task state to consider panic from */
 #define	GPROC0_SEL	6	/* Task state process slot zero and up */
-#define NGDT 	GPROC0_SEL+1
+#define	GUSERLDT_SEL	7	/* User LDT */
+#define NGDT 	GUSERLDT_SEL+1
 
-union descriptor gdt[GPROC0_SEL+1];
+union descriptor gdt[NGDT];
 
 /* interrupt descriptor table */
 struct gate_descriptor idt[NIDT];
 
 /* local descriptor table */
-union descriptor ldt[5];
 #define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
 #define	LSYS5SIGR_SEL	1
 
@@ -850,6 +861,11 @@ union descriptor ldt[5];
 #define	LUDATA_SEL	4
 /* seperate stack, es,fs,gs sels ? */
 /* #define	LPOSIXCALLS_SEL	5	/* notyet */
+#define NLDT		LUDATA_SEL+1
+
+union descriptor ldt[NLDT];
+
+int _default_ldt, currentldt;
 
 struct	i386tss	tss, panic_tss;
 
@@ -919,7 +935,17 @@ struct soft_segment_descriptor gdt_segs[] = {
 	1,			/* segment descriptor present */
 	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ }};
+	0  			/* limit granularity (byte/page units)*/ },
+	/* User LDT Descriptor per process */
+{	(int) ldt,			/* segment base address  */
+	(512 * sizeof(union descriptor)-1),		/* length */
+	SDT_SYSLDT,		/* segment type */
+	0,			/* segment descriptor priority level */
+	1,			/* segment descriptor present */
+	0, 0,
+	0,			/* unused - default 32 vs 16 bit size */
+	0  			/* limit granularity (byte/page units)*/ },
+};
 
 struct soft_segment_descriptor ldt_segs[] = {
 	/* Null Descriptor - overwritten by call gate */
@@ -992,7 +1018,7 @@ extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall);
 
 int lcr0(), lcr3(), rcr0(), rcr2();
-int _udatasel, _ucodesel, _gsel_tss;
+int _gsel_tss;
 
 init386(first_avail)
 	vm_offset_t first_avail;
@@ -1018,7 +1044,7 @@ init386(first_avail)
 	ldt_segs[LUCODE_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
 	ldt_segs[LUDATA_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
 	/* Note. eventually want private ldts per process */
-	for (x=0; x < 5; x++) ssdtosd(ldt_segs+x, ldt+x);
+	for (x=0; x < NLDT; x++) ssdtosd(ldt_segs+x, ldt+x);
 
 	/* exceptions */
 	setidt(0, &IDTVEC(div),  SDT_SYS386TGT, SEL_KPL);
@@ -1061,7 +1087,9 @@ init386(first_avail)
 	r_idt.rd_limit = sizeof(idt)-1;
 	r_idt.rd_base = (int) idt;
 	lidt(&r_idt);
-	lldt(GSEL(GLDT_SEL, SEL_KPL));
+	_default_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	lldt(_default_ldt);
+	currentldt = _default_ldt;
 
 #ifdef DDB
 	ddb_init();
@@ -1114,7 +1142,7 @@ init386(first_avail)
 	avail_next = avail_start;
 	avail_remaining = atop((avail_end - avail_start) -
 			       (hole_end - hole_start));
-	
+
 	if (avail_remaining < 2048/4) {
 		printf("Too little RAM available; running in degraded mode.\n"
 		       "Press a key to confirm.\n\n");
@@ -1129,7 +1157,7 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
-	
+
 	/* now running on new page tables, configured,and u/iom is accessible */
 
 	/* make a initial tss so microp can get interrupt stack on syscall! */
@@ -1144,11 +1172,11 @@ init386(first_avail)
 
 	/* make a call gate to reenter kernel with */
 	gdp = &ldt[LSYS5CALLS_SEL].gd;
-	
+
 	x = (int) &IDTVEC(syscall);
 	gdp->gd_looffset = x++;
 	gdp->gd_selector = GSEL(GCODE_SEL,SEL_KPL);
-	gdp->gd_stkcpy = 0;
+	gdp->gd_stkcpy = 1;	/* leaves from for eflags like a trap */
 	gdp->gd_type = SDT_SYS386CGT;
 	gdp->gd_dpl = SEL_UPL;
 	gdp->gd_p = 1;
@@ -1431,10 +1459,7 @@ ptrace_set_pc (struct proc *p, unsigned int addr) {
 		((char*) p->p_regs - (char*) kstack);
 
 	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_flags & FM_TRAP)
-		((struct trapframe *)regs)->tf_eip = addr;
-	else
-		((struct syscframe *)regs)->sf_eip = addr;
+	((struct trapframe *)regs)->tf_eip = addr;
 	return 0;
 }
 
@@ -1445,10 +1470,7 @@ ptrace_single_step (struct proc *p) {
 		((char*) p->p_regs - (char*) kstack);
 
 	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_flags & FM_TRAP)
-		((struct trapframe *)regs)->tf_eflags |= PSL_T;
-	else
-		((struct syscframe *)regs)->sf_eflags |= PSL_T;
+	((struct trapframe *)regs)->tf_eflags |= PSL_T;
 	return 0;
 }
 /*
@@ -1460,51 +1482,27 @@ int
 ptrace_getregs (struct proc *p, unsigned int *addr) {
 	int error;
 	struct trapframe *tp;
-	struct syscframe *sp;
 	struct pcb *pcb;
 	struct regs regs = {0};
 	void *ptr = (char*)p->p_addr +
 		((char*) p->p_regs - (char*) kstack);
 
 	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_flags & FM_TRAP) {
-		tp = ptr;
-		regs.r_es = tp->tf_es;
-		regs.r_ds = tp->tf_ds;
-		regs.r_edi = tp->tf_edi;
-		regs.r_esi = tp->tf_esi;
-		regs.r_ebp = tp->tf_ebp;
-		regs.r_ebx = tp->tf_ebx;
-		regs.r_edx = tp->tf_edx;
-		regs.r_ecx = tp->tf_ecx;
-		regs.r_eax = tp->tf_eax;
-		regs.r_eip = tp->tf_eip;
-		regs.r_cs = tp->tf_cs;
-		regs.r_eflags = tp->tf_eflags;
-		regs.r_esp = tp->tf_esp;
-		regs.r_ss = tp->tf_ss;
-	} else {
-		sp = ptr;
-		/*
-		 * No sf_es or sf_ds... dunno why.
-		 */
-		/*
-		 * regs.r_es = sp->sf_es;
-		 * regs.r_ds = sp->sf_ds;
-		 */
-		regs.r_edi = sp->sf_edi;
-		regs.r_esi = sp->sf_esi;
-		regs.r_ebp = sp->sf_ebp;
-		regs.r_ebx = sp->sf_ebx;
-		regs.r_edx = sp->sf_edx;
-		regs.r_ecx = sp->sf_ecx;
-		regs.r_eax = sp->sf_eax;
-		regs.r_eip = sp->sf_eip;
-		regs.r_cs = sp->sf_cs;
-		regs.r_eflags = sp->sf_eflags;
-		regs.r_esp = sp->sf_esp;
-		regs.r_ss = sp->sf_ss;
-	}
+	tp = ptr;
+	regs.r_es = tp->tf_es;
+	regs.r_ds = tp->tf_ds;
+	regs.r_edi = tp->tf_edi;
+	regs.r_esi = tp->tf_esi;
+	regs.r_ebp = tp->tf_ebp;
+	regs.r_ebx = tp->tf_ebx;
+	regs.r_edx = tp->tf_edx;
+	regs.r_ecx = tp->tf_ecx;
+	regs.r_eax = tp->tf_eax;
+	regs.r_eip = tp->tf_eip;
+	regs.r_cs = tp->tf_cs;
+	regs.r_eflags = tp->tf_eflags;
+	regs.r_esp = tp->tf_esp;
+	regs.r_ss = tp->tf_ss;
 	return copyout (&regs, addr, sizeof (regs));
 }
 
@@ -1512,7 +1510,6 @@ int
 ptrace_setregs (struct proc *p, unsigned int *addr) {
 	int error;
 	struct trapframe *tp;
-	struct syscframe *sp;
 	struct pcb *pcb;
 	struct regs regs = {0};
 	void *ptr = (char*)p->p_addr +
@@ -1522,45 +1519,232 @@ ptrace_setregs (struct proc *p, unsigned int *addr) {
 		return error;
 
 	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_flags & FM_TRAP) {
-		tp = ptr;
-		tp->tf_es = regs.r_es;
-		tp->tf_ds = regs.r_ds;
-		tp->tf_edi = regs.r_edi;
-		tp->tf_esi = regs.r_esi;
-		tp->tf_ebp = regs.r_ebp;
-		tp->tf_ebx = regs.r_ebx;
-		tp->tf_edx = regs.r_edx;
-		tp->tf_ecx = regs.r_ecx;
-		tp->tf_eax = regs.r_eax;
-		tp->tf_eip = regs.r_eip;
-		tp->tf_cs = regs.r_cs;
-		tp->tf_eflags = regs.r_eflags;
-		tp->tf_esp = regs.r_esp;
-		tp->tf_ss = regs.r_ss;
-	} else {
-		sp = ptr;
-		/*
-		 * No sf_es or sf_ds members, dunno why...
-		 */
-		/*
-		 * sp->sf_es = regs.r_es;
-		 * sp->sf_ds = regs.r_ds;
-		 */
-		sp->sf_edi = regs.r_edi;
-		sp->sf_esi = regs.r_esi;
-		sp->sf_ebp = regs.r_ebp;
-		sp->sf_ebx = regs.r_ebx;
-		sp->sf_edx = regs.r_edx;
-		sp->sf_ecx = regs.r_ecx;
-		sp->sf_eax = regs.r_eax;
-		sp->sf_eip = regs.r_eip;
-		sp->sf_cs = regs.r_cs;
-		regs.r_eflags = sp->sf_eflags;
-		regs.r_esp = sp->sf_esp;
-		regs.r_ss = sp->sf_ss;
-	}
+	tp = ptr;
+	tp->tf_es = regs.r_es;
+	tp->tf_ds = regs.r_ds;
+	tp->tf_edi = regs.r_edi;
+	tp->tf_esi = regs.r_esi;
+	tp->tf_ebp = regs.r_ebp;
+	tp->tf_ebx = regs.r_ebx;
+	tp->tf_edx = regs.r_edx;
+	tp->tf_ecx = regs.r_ecx;
+	tp->tf_eax = regs.r_eax;
+	tp->tf_eip = regs.r_eip;
+	tp->tf_cs = regs.r_cs;
+	tp->tf_eflags = regs.r_eflags;
+	tp->tf_esp = regs.r_esp;
+	tp->tf_ss = regs.r_ss;
 	return 0;
+}
+
+#ifdef USER_LDT
+void
+set_user_ldt(struct pcb *pcb)
+{
+	gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)pcb->pcb_ldt;
+	gdt_segs[GUSERLDT_SEL].ssd_limit = (pcb->pcb_ldt_len * sizeof(union descriptor)) - 1;
+	ssdtosd(gdt_segs+GUSERLDT_SEL, gdt+GUSERLDT_SEL);
+	lldt(GSEL(GUSERLDT_SEL, SEL_KPL));
+	currentldt = GSEL(GUSERLDT_SEL, SEL_KPL);
+}
+
+struct i386_get_ldt_args {
+	int start;
+	union descriptor *desc;
+	int num;
+};
+
+i386_get_ldt(p, args, retval)
+	struct proc *p;
+	char *args;
+	int *retval;
+{
+	int error = 0;
+	struct pcb *pcb = (struct pcb *)p->p_addr;
+	int nldt, num;
+	union descriptor *lp;
+	int s;
+	struct i386_get_ldt_args ua, *uap;
+
+	if ((error = copyin(args, &ua, sizeof(struct i386_get_ldt_args))) < 0)
+		return(error);
+
+	uap = &ua;
+#ifdef	DEBUG
+	printf("i386_get_ldt: start=%d num=%d descs=%x\n", uap->start, uap->num, uap->desc);
+#endif
+
+	if (uap->start < 0 || uap->num < 0)
+		return(EINVAL);
+
+	s = splhigh();
+
+	if (pcb->pcb_ldt) {
+		nldt = pcb->pcb_ldt_len;
+		num = min(uap->num, nldt);
+		lp = &((union descriptor *)(pcb->pcb_ldt))[uap->start];
+	} else {
+		nldt = sizeof(ldt)/sizeof(ldt[0]);
+		num = min(uap->num, nldt);
+		lp = &ldt[uap->start];
+	}
+	if (uap->start > nldt) {
+		splx(s);
+		return(EINVAL);
+	}
+
+	error = copyout(lp, uap->desc, num * sizeof(union descriptor));
+	if (!error)
+		*retval = num;
+
+	splx(s);
+	return(error);
+}
+
+struct i386_set_ldt_args {
+	int start;
+	union descriptor *desc;
+	int num;
+};
+
+i386_set_ldt(p, args, retval)
+	struct proc *p;
+	char *args;
+	int *retval;
+{
+	int error = 0, i, n;
+	struct pcb *pcb = (struct pcb *)p->p_addr;
+	union descriptor *lp;
+	int s;
+	struct i386_set_ldt_args ua, *uap;
+
+	if ((error = copyin(args, &ua, sizeof(struct i386_set_ldt_args))) < 0)
+		return(error);
+
+	uap = &ua;
+
+#ifdef	DEBUG
+	printf("i386_set_ldt: start=%d num=%d descs=%x\n", uap->start, uap->num, uap->desc);
+#endif
+
+	if (uap->start < 0 || uap->num < 0)
+		return(EINVAL);
+
+	/* XXX Should be 8192 ! */
+	if (uap->start > 512 ||
+	    (uap->start + uap->num) > 512)
+		return(EINVAL);
+
+	/* allocate user ldt */
+	if (!pcb->pcb_ldt) {
+		union descriptor *new_ldt =
+			(union descriptor *)kmem_alloc(kernel_map, 512*sizeof(union descriptor));
+		bcopy(ldt, new_ldt, sizeof(ldt));
+		pcb->pcb_ldt = (caddr_t)new_ldt;
+		pcb->pcb_ldt_len = 512;		/* XXX need to grow */
+#ifdef DEBUG
+		printf("i386_set_ldt(%d): new_ldt=%x\n", p->p_pid, new_ldt);
+#endif
+	}
+
+	/* Check descriptors for access violations */
+	for (i = 0, n = uap->start; i < uap->num; i++, n++) {
+		union descriptor desc, *dp;
+		dp = &uap->desc[i];
+		error = copyin(dp, &desc, sizeof(union descriptor));
+		if (error)
+			return(error);
+
+		/* Only user (ring-3) descriptors */
+		if (desc.sd.sd_dpl != SEL_UPL)
+			return(EACCES);
+
+		/* Must be "present" */
+		if (desc.sd.sd_p == 0)
+			return(EACCES);
+
+		switch (desc.sd.sd_type) {
+		case SDT_SYSNULL:
+		case SDT_SYS286CGT:
+		case SDT_SYS386CGT:
+			break;
+		case SDT_MEMRO:
+		case SDT_MEMROA:
+		case SDT_MEMRW:
+		case SDT_MEMRWA:
+		case SDT_MEMROD:
+		case SDT_MEMRODA:
+		case SDT_MEME:
+		case SDT_MEMEA:
+		case SDT_MEMER:
+		case SDT_MEMERA:
+		case SDT_MEMEC:
+		case SDT_MEMEAC:
+		case SDT_MEMERC:
+		case SDT_MEMERAC: {
+#if 0
+			unsigned long base = (desc.sd.sd_hibase << 24)&0xFF000000;
+			base |= (desc.sd.sd_lobase&0x00FFFFFF);
+			if (base >= KERNBASE)
+				return(EACCES);
+#endif
+			break;
+		}
+		default:
+			return(EACCES);
+			/*NOTREACHED*/
+		}
+	}
+
+	s = splhigh();
+
+	/* Fill in range */
+	for (i = 0, n = uap->start; i < uap->num && !error; i++, n++) {
+		union descriptor desc, *dp;
+		dp = &uap->desc[i];
+		lp = &((union descriptor *)(pcb->pcb_ldt))[n];
+#ifdef DEBUG
+		printf("i386_set_ldt(%d): ldtp=%x\n", p->p_pid, lp);
+#endif
+		error = copyin(dp, lp, sizeof(union descriptor));
+	}
+	if (!error) {
+		*retval = uap->start;
+		need_resched();
+	}
+
+	splx(s);
+	return(error);
+}
+#endif	/* USER_LDT */
+
+struct sysarch_args {
+	int op;
+	char *parms;
+};
+
+sysarch(p, uap, retval)
+	struct proc *p;
+	register struct sysarch_args *uap;
+	int *retval;
+{
+	int error = 0;
+
+	switch(uap->op) {
+#ifdef	USER_LDT
+	case I386_GET_LDT: 
+		error = i386_get_ldt(p, uap->parms, retval);
+		break;
+
+	case I386_SET_LDT: 
+		error = i386_set_ldt(p, uap->parms, retval);
+		break;
+#endif
+	default:
+		error = EINVAL;
+		break;
+	}
+	return(error);
 }
 
 /* XXX probably should be in pmap.c */
@@ -1575,12 +1759,11 @@ pmap_next_page(addrp)
 {
 	if (avail_next == avail_end)
 		return FALSE;
-	
+
 	/* skip the hole */
-	
 	if (avail_next == hole_start)
 		avail_next = hole_end;
-	
+
 	*addrp = avail_next;
 	avail_next += PAGE_SIZE;
 	avail_remaining--;
