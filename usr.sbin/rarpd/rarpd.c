@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.52 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.53 2004/12/01 23:04:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.52 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.53 2004/12/01 23:04:58 christos Exp $");
 #endif
 
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: rarpd.c,v 1.52 2004/09/07 13:20:40 jrf Exp $");
 
 #include <errno.h>
 #include <dirent.h>
+#include <paths.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,8 +136,9 @@ main(int argc, char **argv)
 {
 	int     op;
 
+	setprogname(*argv);
 	/* All error reporting is done through syslogs. */
-	openlog("rarpd", LOG_PID, LOG_DAEMON);
+	openlog(getprogname(), LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "adfl")) != -1) {
@@ -271,8 +273,9 @@ init_some(char *name)
 void
 usage(void)
 {
-	(void) fprintf(stderr, "usage: rarpd -a [-d|-f] [-l]\n");
-	(void) fprintf(stderr, "       rarpd [-d|-f] [-l] interface [...]\n");
+	(void) fprintf(stderr, "Usage: %s -a [-d|-f] [-l]\n", getprogname());
+	(void) fprintf(stderr, "\t%s [-d|-f] [-l] interface [...]\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -280,6 +283,10 @@ static int
 bpf_open(void)
 {
 	int     fd;
+#ifdef _PATH_BPF
+	const char *device = _PATH_BPF;
+	fd = open(device, O_RDWR);
+#else
 	int     n = 0;
 	char    device[sizeof "/dev/bpf000"];
 
@@ -288,6 +295,7 @@ bpf_open(void)
 		(void)snprintf(device, sizeof(device), "/dev/bpf%d", n++);
 		fd = open(device, O_RDWR);
 	} while (fd < 0 && errno == EBUSY);
+#endif
 
 	if (fd < 0) {
 		rarperr(FATAL, "%s: %s", device, strerror(errno));
@@ -871,9 +879,9 @@ rarperr(int fatal, const char *fmt,...)
 	va_start(ap, fmt);
 	if (dflag) {
 		if (fatal)
-			(void)fprintf(stderr, "rarpd: error: ");
+			(void)fprintf(stderr, "%s: error: ", getprogname());
 		else
-			(void)fprintf(stderr, "rarpd: warning: ");
+			(void)fprintf(stderr, "%s: warning: ", getprogname());
 		(void)vfprintf(stderr, fmt, ap);
 		va_end(ap);
 		va_start(ap, fmt);
@@ -893,7 +901,7 @@ debug(const char *fmt,...)
 
 	va_start(ap, fmt);
 	if (dflag) {
-		(void)fprintf(stderr, "rarpd: ");
+		(void)fprintf(stderr, "%s: ", getprogname());
 		(void)vfprintf(stderr, fmt, ap);
 		va_end(ap);
 		va_start(ap, fmt);
