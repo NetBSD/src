@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.6 1997/01/23 14:03:13 mrg Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.7 1997/03/14 07:56:39 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: tgoto.c,v 1.6 1997/01/23 14:03:13 mrg Exp $";
+static char rcsid[] = "$NetBSD: tgoto.c,v 1.7 1997/03/14 07:56:39 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,10 +95,13 @@ toohard:
 		 */
 		return ("OOPS");
 	}
-	added[0] = 0;
+	added[0] = '\0';
 	while ((c = *cp++) != '\0') {
 		if (c != '%') {
+copy:
 			*dp++ = c;
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			continue;
 		}
 		switch (c = *cp++) {
@@ -118,15 +121,23 @@ toohard:
 			/* fall into... */
 
 		case '3':
+			if (which >= 1000)
+				goto toohard;
 			*dp++ = (which / 100) | '0';
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			which %= 100;
 			/* fall into... */
 
 		case '2':
 two:	
 			*dp++ = which / 10 | '0';
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 one:
 			*dp++ = which % 10 | '0';
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 swap:
 			oncol = 1 - oncol;
 setwhich:
@@ -167,17 +178,24 @@ setwhich:
 			 * like nondestructive space.
 			 */
 			if (which == 0 || which == CTRL('d') || /* which == '\t' || */ which == '\n') {
-				if (oncol || UP) /* Assumption: backspace works */
+				if (oncol || UP) { /* Assumption: backspace works */
+					char *add = oncol ? (BC ? BC : "\b") : UP;
+
 					/*
 					 * Loop needed because newline happens
 					 * to be the successor of tab.
 					 */
 					do {
-						strcat(added, oncol ? (BC ? BC : "\b") : UP);
+						if (strlen(added) + strlen(add) >= sizeof(added))
+							goto toohard;
+						(void)strcat(added, add);
 						which++;
 					} while (which == '\n');
+				}
 			}
 			*dp++ = which;
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			goto swap;
 
 		case 'r':
@@ -191,8 +209,7 @@ setwhich:
 			continue;
 
 		case '%':
-			*dp++ = c;
-			continue;
+			goto copy;
 
 #ifdef CM_B
 		case 'B':
@@ -210,6 +227,8 @@ setwhich:
 			goto toohard;
 		}
 	}
-	(void)strncpy(dp, added, (sizeof(result) - (dp - result) - 1));
+	if (dp + strlen(added) >= &result[MAXRETURNSIZE])
+		goto toohard;
+	(void)strcpy(dp, added);
 	return (result);
 }
