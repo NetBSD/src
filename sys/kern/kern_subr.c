@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.104 2003/09/10 10:55:50 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.105 2003/09/14 11:12:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.104 2003/09/10 10:55:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.105 2003/09/14 11:12:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -155,6 +155,7 @@ uiomove(buf, n, uio)
 		iov = uio->uio_iov;
 		cnt = iov->iov_len;
 		if (cnt == 0) {
+			KASSERT(uio->uio_iovcnt > 0);
 			uio->uio_iov++;
 			uio->uio_iovcnt--;
 			continue;
