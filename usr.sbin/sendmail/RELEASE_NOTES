@@ -1,3 +1,11 @@
+8.1C/8.1B	93/06/27
+	Serious security bug fix: it was possible to read any file on
+		the system, regardless of ownership and permissions.
+	If a subroutine returns a fully qualified address, return it
+		immediately instead of feeding it back into rewriting.
+		This fixes a problem with mailertable lookups.
+	CONFIG: fix some M4 frotz (concat => CONCAT)
+
 8.1B/8.1A	93/06/12
 	Serious bug fix: pattern matching backup algorithm stepped by
 		two tokens in classes instead of one.  Found by Claus
@@ -504,7 +512,8 @@
 		intentional from the 821 draft days when the order wasn't
 		clear, but is silly now.
 	Fix bug in nis_magic routine that was initializing parameters
-		incorrectly.  Fix from Takahiro Kanbe of Fujixerox.
+		incorrectly.  Fix from Takahiro Kanbe of Fuji Xerox
+		Information Systems Co., Ltd.
 	Change default for PrivacyFlags in conf.c to 0 -- since it always
 		"or"s in new values, there was no way to turn off the
 		AuthWarning stuff.
@@ -945,7 +954,7 @@
 		negative numbers passed to isspace() et al.
 	Add YP_LAST_MODIFIED and YP_MASTER_NAME to DBM version of alias
 		database if YPCOMPAT is #defined.  Enhancement from
-		Takahiro Kanbe of Fuji/Xerox (?).
+		Takahiro Kanbe of Fuji Xerox Information Systems Co., Ltd.
 	Add "list" Precedence (-30); this can be used with old sendmails
 		which will map to precedence 0 (which will return error
 		messages).  Suggested by Stephen R. van den Berg.
