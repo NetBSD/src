@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.11 2003/09/21 15:11:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.11 2003/09/21 15:11:04 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -289,7 +289,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		/* Disable interrupts */
 		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
 		/* Call common attach routines */
-		wdcattach(cp);
+		wdcattach(self);
 		/* Disable interrupts */
 		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
 		pa->pa_podule->irq_addr = iobase + ide->irqstatregs[channel];
