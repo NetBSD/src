@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10 1996/10/16 20:43:40 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.11 1996/12/17 20:46:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,18 +57,22 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/signal.h>
+#include <sys/signalvar.h>
+#include <sys/time.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/poll.h>
 
+#include <machine/vuid_event.h>
+
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
-#include <machine/vuid_event.h>
 
 #include "event_var.h"
 
@@ -141,7 +145,7 @@ struct zsops zsops_ms;
  * Definition of the driver for autoconfig.
  ****************************************************************/
 
-static int	ms_match(struct device *, void *, void *);
+static int	ms_match(struct device *, struct cfdata *, void *);
 static void	ms_attach(struct device *, struct device *, void *);
 
 struct cfattach ms_ca = {
@@ -157,11 +161,11 @@ struct cfdriver ms_cd = {
  * ms_match: how is this zs channel configured?
  */
 int 
-ms_match(parent, match, aux)
+ms_match(parent, cf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	struct cfdata *cf;
+	void   *aux;
 {
-	struct cfdata *cf = match;
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match required for keyboard. */
@@ -183,12 +187,12 @@ ms_attach(parent, self, aux)
 	struct zs_chanstate *cs;
 	struct cfdata *cf;
 	int channel, ms_unit;
-	int reset, s, tconst;
+	int reset, s;
 
 	cf = ms->ms_dev.dv_cfdata;
 	ms_unit = ms->ms_dev.dv_unit;
 	channel = args->channel;
-	cs = &zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[channel];
 	cs->cs_private = ms;
 	cs->cs_ops = &zsops_ms;
 	ms->ms_cs = cs;
@@ -196,16 +200,15 @@ ms_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_brg_clk, MS_BPS);
 	s = splzs();
 	/* May need reset... */
 	reset = (channel == 0) ?
 		ZSWR9_A_RESET : ZSWR9_B_RESET;
 	zs_write_reg(cs, 9, reset);
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
-	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
-	cs->cs_preg[12] = tconst;
-	cs->cs_preg[13] = tconst >> 8;
+	/* We don't care about status or tx interrupts. */
+	cs->cs_preg[1] = ZSWR1_RIE;
+	(void) zs_set_speed(cs, MS_BPS);
 	zs_loadchannelregs(cs);
 	splx(s);
 
@@ -225,7 +228,7 @@ msopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct ms_softc *ms;
-	int error, s, unit;
+	int unit;
 
 	unit = minor(dev);
 	if (unit >= ms_cd.cd_ndevs)
@@ -338,6 +341,9 @@ mspoll(dev, events, p)
 /****************************************************************
  * Middle layer (translator)
  ****************************************************************/
+
+static void ms_input __P((struct ms_softc *, int c));
+
 
 /*
  * Called by our ms_softint() routine on input.
@@ -480,6 +486,11 @@ out:
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
+static void ms_rxint __P((struct zs_chanstate *));
+static void ms_txint __P((struct zs_chanstate *));
+static void ms_stint __P((struct zs_chanstate *));
+static void ms_softint __P((struct zs_chanstate *));
+
 static void
 ms_rxint(cs)
 	register struct zs_chanstate *cs;
@@ -572,7 +583,6 @@ ms_softint(cs)
 	register int get, c, s;
 	int intr_flags;
 	register u_short ring_data;
-	register u_char rr0, rr1;
 
 	ms = cs->cs_private;
 
