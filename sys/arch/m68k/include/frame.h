@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.12 1996/05/16 16:51:30 is Exp $	*/
+/*	$NetBSD: frame.h,v 1.13 1997/01/27 22:58:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)frame.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef	_M68K_FRAME_H_
+#define	_M68K_FRAME_H_
 
 struct frame {
 	struct trapframe {
@@ -305,3 +308,5 @@ struct fpframe060 {
 
 	u_long	fpf6_upper, fpf6_lower;
 };
+
+#endif	/* _M68K_FRAME_H_ */
