@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.178.2.1.2.2 2005/04/06 12:15:36 tron Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.178.2.1.2.3 2005/04/06 12:17:58 tron Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.178.2.1.2.2 2005/04/06 12:15:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.178.2.1.2.3 2005/04/06 12:17:58 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1283,6 +1283,12 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 
 		RF_LOCK_MUTEX(raidPtr->mutex);
+		if (raidPtr->status == rf_rs_reconstructing) {
+			/* you can't fail a disk while we're reconstructing! */
+			/* XXX wrong for RAID6 */
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
 		if ((raidPtr->Disks[rr->col].status == 
 		     rf_ds_optimal) && (raidPtr->numFailures > 0)) { 
 			/* some other component has failed.  Let's not make
