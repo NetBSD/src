@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
+/*	$NetBSD: asc.c,v 1.11 1995/08/04 00:26:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -128,8 +128,15 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/device.h>
+
+#ifdef notyet
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+#endif
 
 #include <machine/machConst.h>
+#include <machine/autoconf.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
@@ -138,6 +145,7 @@
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/pmaxtype.h>
+
 
 #define	readback(a)	{ register int foo; foo = (a); }
 extern int pmax_boardtype;
@@ -400,10 +408,11 @@ typedef struct scsi_state {
  * State kept for each active SCSI host interface (53C94).
  */
 struct asc_softc {
+	struct device sc_dev;			/* us as a device */
 	asc_regmap_t	*regs;		/* chip address */
 	volatile int	*dmar;		/* DMA address register address */
 	u_char		*buff;		/* RAM buffer address (uncached) */
-	int		myid;		/* SCSI ID of this interface */
+	int		sc_id;		/* SCSI ID of this interface */
 	int		myidmask;	/* ~(1 << myid) */
 	int		state;		/* current SCSI connection state */
 	int		target;		/* target SCSI ID if busy */
@@ -419,6 +428,9 @@ struct asc_softc {
 	int		ccf;		/* CCF, whatever that really is? */
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
+#ifdef USE_NEW_SCSI
+	struct scsi_link sc_link;		/* scsi lint struct */
+#endif
 } asc_softc[NASC];
 
 #define	ASC_STATE_IDLE		0	/* idle state */
@@ -438,7 +450,42 @@ extern u_long asc_iomem;
 extern u_long asic_base;
 
 /*
- * Definition of the controller for the auto-configuration program.
+ * Autoconfiguration data for config.new.
+ * Use the statically-allocated softc until the config.old program,
+ * old autoconfiguration code, and statically-allocated softcs are
+ * are completely gone.
+ * 
+ */
+int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
+void	ascattach __P((struct device *parent, struct device *self, void *aux));
+int	ascprint(void*, char*);
+
+int asc_doprobe __P((void *addr, int unit, int pri, struct device *self));
+
+extern struct cfdriver asccd;
+struct  cfdriver asccd = {
+	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct device), 0
+};
+
+#ifdef USE_NEW_SCSI
+/* Glue to the machine-independent scsi */
+struct scsi_adapter asc_switch = {
+	NULL, /* XXX - asc_scsi_cmd */
+/*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
+	NULL,
+	NULL,
+};
+
+struct scsi_device asc_dev = {
+/*XXX*/	NULL,			/* Use default error handler */
+/*XXX*/	NULL,			/* have a queue, served by this */
+/*XXX*/	NULL,			/* have no async handler */
+/*XXX*/	NULL,			/* Use default 'done' routine */
+};
+#endif
+
+/*
+ * Definition of the controller for the old auto-configuration program.
  */
 int	asc_probe();
 void	asc_start();
@@ -447,33 +494,103 @@ struct	driver ascdriver = {
 	"asc", asc_probe, asc_start, 0, asc_intr,
 };
 
+
+/*
+ * Match driver based on name
+ */
+int
+ascmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+
+	static int nunits = 0;
+
+	if (!BUS_MATCHNAME(ca, "asc") && !BUS_MATCHNAME(ca, "PMAZ-AA "))
+		return (0);
+
+	/*
+	 * Use statically-allocated softc and attach code until
+	 * old config is completely gone.  Don't  over-run softc.
+	 */
+	if (nunits > NASC) {
+		printf("asc: too many units for old config\n");
+		return (0);
+	}
+	nunits++;
+	return (1);
+}
+
+void
+ascattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	if (!asc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+			   self->dv_unit, ca->ca_slot, self)) {
+		printf(": failed to attach");
+		return;
+	}
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, asc_intr, self->dv_unit);
+}
+
+
 /*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
+int
 asc_probe(cp)
 	register struct pmax_ctlr *cp;
 {
+	return asc_doprobe(cp->pmax_addr, cp->pmax_unit, cp->pmax_pri, NULL);
+}
+
+/*
+ * Test to see if device is present.
+ * Return true if found and initialized ok.
+ */
+int
+asc_doprobe(addr, unit, priority, self)
+	void *addr;
+	int unit, priority;
+	struct device *self;
+{
 	register asc_softc_t asc;
 	register asc_regmap_t *regs;
-	int unit, id, s, i;
+	int id, s, i;
 	int bufsiz;
+	static int nunits = 0;
 
-	if ((unit = cp->pmax_unit) >= NASC)
+	if (unit >= NASC)
 		return (0);
-	if (badaddr(cp->pmax_addr + ASC_OFFSET_53C94, 1))
+	if (badaddr(addr + ASC_OFFSET_53C94, 1))
 		return (0);
+
+	/* allow both new and old config to coexist in a running kernel*/
+	if (++nunits > NASC) {
+		printf("asc%d: static softc full\n", unit);
+		return (0);
+	}
+
 	asc = &asc_softc[unit];
 
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
-	asc->regs = (asc_regmap_t *)(cp->pmax_addr + ASC_OFFSET_53C94);
+	asc->regs = (asc_regmap_t *)(addr + ASC_OFFSET_53C94);
 
 	/*
 	 * Set up machine dependencies.
-	 * 1) how to do dma
-	 * 2) timing based on turbochannel frequency
+	 * (1) how to do dma
+	 * (2) timing based on turbochannel frequency
 	 */
 	switch (pmax_boardtype) {
 	case DS_3MIN:
@@ -494,8 +611,8 @@ asc_probe(cp)
 	     */
 	case DS_3MAX:
 	default:
-	    asc->dmar = (volatile int *)(cp->pmax_addr + ASC_OFFSET_DMAR);
-	    asc->buff = (u_char *)(cp->pmax_addr + ASC_OFFSET_RAM);
+	    asc->dmar = (volatile int *)(addr + ASC_OFFSET_DMAR);
+	    asc->buff = (u_char *)(addr + ASC_OFFSET_RAM);
 	    bufsiz = PER_TGT_DMA_SIZE;
 	    asc->dma_start = tb_dma_start;
 	    asc->dma_end = tb_dma_end;
@@ -535,8 +652,8 @@ asc_probe(cp)
 	s = splbio();
 
 	/* preserve our ID for now */
-	asc->myid = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
-	asc->myidmask = ~(1 << asc->myid);
+	asc->sc_id = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
+	asc->myidmask = ~(1 << asc->sc_id);
 
 	asc_reset(asc, regs);
 
@@ -549,8 +666,10 @@ asc_probe(cp)
 #ifdef	unneeded
 	regs->asc_cnfg1 = (regs->asc_cnfg1 & ~ASC_CNFG1_MY_BUS_ID) |
 			      (scsi_initiator_id[unit] & 0x7);
+	asc->sc_id = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
 #endif
-	id = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
+
+	id = asc->sc_id;
 	splx(s);
 
 	/*
@@ -568,8 +687,43 @@ asc_probe(cp)
 		asc->st[i].dmaBufSize = bufsiz;
 	}
 	printf("asc%d at nexus0 csr 0x%x priority %d SCSI id %d\n",
-		unit, cp->pmax_addr, cp->pmax_pri, id);
+		unit, addr, priority, id);
+
+/*XXX*/
+#ifdef USE_NEW_SCSI
+	if (self == NULL)
+	    /* old-style config? */
+	    return (1);
+
+	/*
+	 * fill in the prototype scsi_link.
+	 */
+	asc->sc_link.adapter_softc = asc;
+	asc->sc_link.adapter_target = asc->sc_id;
+	asc->sc_link.adapter = &asc_switch;
+	asc->sc_link.device = &asc_dev;
+	asc->sc_link.openings = 2;
+
+	
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	config_found(self, &asc->sc_link, ascprint);
+
+#endif /* USE_NEW_SCSI */
+/*XXX*/
 	return (1);
+}
+
+/*
+ * Does anyone actually use this, and what for ?
+ */
+int
+ascprint(aux, name)
+	void *aux;
+	char *name;
+{
+	return -1;
 }
 
 /*
@@ -626,7 +780,7 @@ asc_reset(asc, regs)
 	MachEmptyWriteBuffer(); DELAY(25);
 	regs->asc_sel_timo = asc->timeout_250;
 	/* restore our ID */
-	regs->asc_cnfg1 = asc->myid | ASC_CNFG1_P_CHECK;
+	regs->asc_cnfg1 = asc->sc_id | ASC_CNFG1_P_CHECK;
 	/* include ASC_CNFG2_SCSI2 if you want to allow SCSI II commands */
 	regs->asc_cnfg2 = /* ASC_CNFG2_RFB | ASC_CNFG2_SCSI2 | */ ASC_CNFG2_EPL;
 	regs->asc_cnfg3 = 0;
@@ -1796,7 +1950,7 @@ asc_msg_in(asc, status, ss, ir)
 			return (0);
 		}
 		goto status;
-#endif
+#endif /*0*/
 
 	case SCSI_EXTENDED_MSG: /* read an extended message */
 		/* setup to read message length next */
@@ -1867,7 +2021,7 @@ asc_disconnect(asc, status, ss, ir)
 		printf("asc_disconnect: device %d: DISCONN not set!\n",
 			asc->target);
 	}
-#endif
+#endif /*DIAGNOSTIC*/
 	asc->target = -1;
 	asc->state = ASC_STATE_RESEL;
 	return (1);
@@ -1997,7 +2151,7 @@ asc_dma_intr()
 		ASIC_DMA_ADDR(next_phys);
 	MachEmptyWriteBuffer();
 }
-#endif
+#endif /*notdef*/
 
 #ifdef DEBUG
 asc_DumpLog(str)
@@ -2024,6 +2178,6 @@ asc_DumpLog(str)
 			lp = asc_log;
 	} while (lp != asc_logp);
 }
-#endif
+#endif /*DEBUG*/
 
 #endif	/* NASC > 0 */

@@ -1,3 +1,5 @@
+/*	$NetBSD: scc.c,v 1.9 1995/08/04 00:26:35 jonathan Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
- *      $Id: scc.c,v 1.8 1995/04/21 01:24:30 mellon Exp $
+ *      $Id: scc.c,v 1.9 1995/08/04 00:26:35 jonathan Exp $
  */
 
 /* 
@@ -86,6 +88,10 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
+#include <machine/machConst.h>
+
 #include <machine/pmioctl.h>
 
 #include <pmax/dev/device.h>
@@ -97,19 +103,38 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
-#include <pmax/include/machConst.h>
+
+#include "sccvar.h"
 
 extern int pmax_boardtype;
 extern struct consdev cn_tab;
 extern void ttrstrt	__P((void *));
 
 /*
- * Driver information for auto-configuration stuff.
+ * Autoconfiguration data for config.new.
+ * Use the statically-allocated softc until old autoconfig code and
+ * config.old are completely gone.
+ * 
  */
-int	sccprobe(), sccopen(), sccparam();
+int	sccmatch  __P((struct device * parent, void *cfdata, void *aux));
+void	sccattach __P((struct device *parent, struct device *self, void *aux));
+
+int scc_doprobe __P((void *addr, int unit, int flags, int priority));
+
+extern struct cfdriver scccd;
+struct  cfdriver scccd = {
+	NULL, "scc", sccmatch, sccattach, DV_DULL, sizeof(struct device), 0
+};
+
+/*
+ * Autoconfiguration data for config.old
+ */
+int	sccprobe __P ((struct pmax_ctlr *cp)), sccopen(), sccparam();
+
 void	sccintr(), sccstart();
 int sccGetc __P((dev_t));
 void sccPutc __P((dev_t, int));
+
 struct	driver sccdriver = {
 	"scc", sccprobe, 0, 0, sccintr,
 };
@@ -167,11 +192,67 @@ struct speedtab sccspeedtab[] = {
 #endif
 
 /*
+ * Match driver based on name
+ */
+
+int
+sccmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+
+	static int nunits = 0;
+
+	if (!BUS_MATCHNAME(ca, "scc"))
+		return (0);
+
+	/*
+	 * Use statically-allocated softc and attach code until
+	 * old config is completely gone.  Don't  over-run softc.
+	 */
+	if (nunits > NSCC) {
+		printf("scc: too many units for old config\n");
+		return (0);
+	}
+	nunits++;
+	return (1);
+}
+
+void
+sccattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	(void) scc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+			   self->dv_unit, self->dv_cfdata->cf_flags,
+			   ca->ca_slot);
+
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);
+}
+
+/*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
+int
 sccprobe(cp)
 	register struct pmax_ctlr *cp;
+{
+	return scc_doprobe(cp->pmax_addr, cp->pmax_unit,
+			   cp->pmax_flags, cp->pmax_pri);
+}
+
+int
+scc_doprobe(addr, unit, flags, priority)
+	void *addr;
+	int unit, flags, priority;
 {
 	register struct scc_softc *sc;
 	register struct pdma *pdp;
@@ -180,36 +261,42 @@ sccprobe(cp)
 	struct tty ctty;
 	struct termios cterm;
 	int s;
+	static int nunits = 0;
 
-        volatile u_int *imaskp = (volatile u_int *)
-                MACH_PHYS_TO_UNCACHED(XINE_REG_IMSK);
 
-	if (cp->pmax_unit >= NSCC)
+	if (unit >= NSCC)
 		return (0);
-	if (badaddr(cp->pmax_addr, 2))
+
+	if (badaddr(addr, 2))
 		return (0);
+
+	if (++nunits > NSCC) {
+		printf("scc%d: static softc full\n", unit);
+		return (0);
+	}
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
 	if (major(cn_tab.cn_dev) == SCCDEV && cn_tab.cn_screen == 0 &&
-		SCCUNIT(cn_tab.cn_dev) == cp->pmax_unit)
+		SCCUNIT(cn_tab.cn_dev) == unit)
 		DELAY(10000);
 
-	sc = &scc_softc[cp->pmax_unit];
+	sc = &scc_softc[unit];
 	pdp = &sc->scc_pdma[0];
 
 	/* init pseudo DMA structures */
 	for (cntr = 0; cntr < 2; cntr++) {
-		pdp->p_addr = (void *)cp->pmax_addr;
-		tp = scc_tty[cp->pmax_unit * 2 + cntr] = ttymalloc();
+		pdp->p_addr = (void *)addr;
+		tp = scc_tty[unit * 2 + cntr] = ttymalloc();
 		pdp->p_arg = (int)tp;
 		pdp->p_fcn = (void (*)())0;
-		tp->t_dev = (dev_t)((cp->pmax_unit << 1) | cntr);
+		tp->t_dev = (dev_t)((unit << 1) | cntr);
 		pdp++;
 	}
-	sc->scc_softCAR = cp->pmax_flags | 0x2;
+
+       	sc->scc_softCAR = flags | 0x2;
 
 	/* reset chip */
 	sccreset(sc);
@@ -219,7 +306,7 @@ sccprobe(cp)
 	 */
 	if (cn_tab.cn_screen) {
 		if (cn_tab.cn_kbdgetc == sccGetc) {
-			if (cp->pmax_unit == 1) {
+			if (unit == 1) {
 				s = spltty();
 				ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);
 				cterm.c_cflag = CS8;
@@ -236,7 +323,7 @@ sccprobe(cp)
 #endif
 				DELAY(10000);
 				splx(s);
-			} else if (cp->pmax_unit == 0) {
+			} else if (unit == 0) {
 				s = spltty();
 				ctty.t_dev = makedev(SCCDEV, SCCMOUSE_PORT);
 				cterm.c_cflag = CS8 | PARENB | PARODD;
@@ -248,7 +335,7 @@ sccprobe(cp)
 				splx(s);
 			}
 		}
-	} else if (SCCUNIT(cn_tab.cn_dev) == cp->pmax_unit) {
+	} else if (SCCUNIT(cn_tab.cn_dev) == unit) {
 		s = spltty();
 		ctty.t_dev = cn_tab.cn_dev;
 		cterm.c_cflag = CS8 | CLOCAL;
@@ -259,7 +346,7 @@ sccprobe(cp)
 		splx(s);
 	}
 	printf("scc%d at nexus0 csr 0x%x priority %d\n",
-		cp->pmax_unit, cp->pmax_addr, cp->pmax_pri);
+		unit, addr, priority);
 	return (1);
 }
 
@@ -635,6 +722,7 @@ sccintr(unit)
 	register struct scc_softc *sc;
 	register int cc, chan, rr1, rr2, rr3;
 	int overrun = 0;
+
 
 	sc = &scc_softc[unit];
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
