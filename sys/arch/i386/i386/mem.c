@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 1995/04/10 01:26:43 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.25 1995/04/10 01:57:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,7 @@ mmclose(dev, flag, mode)
 }
 
 /*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
@@ -190,10 +191,6 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-
-/*
- * mmap() physical memory sections
- */
 int
 mmmmap(dev, offset)
 	dev_t dev;

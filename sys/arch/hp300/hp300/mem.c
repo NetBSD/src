@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1995/04/10 01:23:19 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1995/04/10 01:56:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,7 @@ mmclose(dev, flag, mode)
 }
 
 /*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
@@ -196,6 +197,7 @@ unlock:
 	return (error);
 }
 
+int
 mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
