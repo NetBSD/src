@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_msdos.c,v 1.20 1999/06/25 19:28:36 perseant Exp $	*/
+/*	$NetBSD: mount_msdos.c,v 1.21 2000/03/27 09:33:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.20 1999/06/25 19:28:36 perseant Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.21 2000/03/27 09:33:22 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: mount_msdos.c,v 1.20 1999/06/25 19:28:36 perseant Exp $");
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_ASYNC,
+	MOPT_SYNC,
 	MOPT_UPDATE,
 	{ NULL }
 };
