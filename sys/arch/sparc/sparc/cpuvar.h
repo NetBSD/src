@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.44 2002/12/19 16:31:38 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.45 2002/12/28 02:35:56 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -411,8 +411,8 @@ struct cpu_info {
 /*
  * Useful macros.
  */
-#define CPU_READY(cpi)	((cpi) == NULL || cpuinfo.mid == (cpi)->mid || \
-			    ((cpi)->flags & CPUFLG_READY) == 0)
+#define CPU_NOTREADY(cpi)	((cpi) == NULL || cpuinfo.mid == (cpi)->mid || \
+				    ((cpi)->flags & CPUFLG_READY) == 0)
 
 /*
  * Related function prototypes
