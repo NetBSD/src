@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/sparc a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 94, 95, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 

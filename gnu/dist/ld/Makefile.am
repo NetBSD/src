@@ -98,6 +98,7 @@ ALL_EMULATIONS = \
 	earmaoutb.o \
 	earmaoutl.o \
 	earmcoff.o \
+	earmnbsd.o \
 	earmpe.o \
 	ecoff_sparc.o \
 	ed10velf.o \
@@ -253,6 +254,9 @@ earmaoutl.c:	$(srcdir)/emulparams/armaoutl.sh \
 earmcoff.c:	$(srcdir)/emulparams/armcoff.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/armcoff.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armcoff "$(tdir_armcoff)"
+earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/armaout.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
 earmpe.c: $(srcdir)/emulparams/armpe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/pe.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armpe "$(tdir_armpe)"
