@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/11 12:19:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/11 23:35:44 thorpej Exp $
+
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
