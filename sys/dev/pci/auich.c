@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.61 2004/08/07 16:12:57 soren Exp $	*/
+/*	$NetBSD: auich.c,v 1.62 2004/09/22 12:20:24 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.61 2004/08/07 16:12:57 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.62 2004/09/22 12:20:24 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ struct audio_hw_if auich_hw_if = {
 int	auich_attach_codec(void *, struct ac97_codec_if *);
 int	auich_read_codec(void *, u_int8_t, u_int16_t *);
 int	auich_write_codec(void *, u_int8_t, u_int16_t);
-void	auich_reset_codec(void *);
+int	auich_reset_codec(void *);
 
 static const struct auich_devtype {
 	int	vendor;
@@ -600,7 +600,7 @@ auich_attach_codec(void *v, struct ac97_codec_if *cif)
 	return 0;
 }
 
-void
+int
 auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
@@ -620,17 +620,17 @@ auich_reset_codec(void *v)
 	}
 	if (i <= 0) {
 		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
-		/* XXX: should not attach the audio device */
-	} else {
-#ifdef DEBUG
-		if (status & ICH_SCR)
-			printf("%s: The 2nd codec is ready.\n",
-			       sc->sc_dev.dv_xname);
-		if (status & ICH_S2CR)
-			printf("%s: The 3rd codec is ready.\n",
-			       sc->sc_dev.dv_xname);
-#endif
+		return ETIMEDOUT;
 	}
+#ifdef DEBUG
+	if (status & ICH_SCR)
+		printf("%s: The 2nd codec is ready.\n",
+		       sc->sc_dev.dv_xname);
+	if (status & ICH_S2CR)
+		printf("%s: The 3rd codec is ready.\n",
+		       sc->sc_dev.dv_xname);
+#endif
+	return 0;
 }
 
 int

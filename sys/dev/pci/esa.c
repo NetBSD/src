@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.24 2004/07/21 07:36:18 scw Exp $ */
+/* $NetBSD: esa.c,v 1.25 2004/09/22 12:20:25 kent Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.24 2004/07/21 07:36:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.25 2004/09/22 12:20:25 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -142,7 +142,7 @@ int		esa_init_codec(struct esa_softc *);
 int		esa_attach_codec(void *, struct ac97_codec_if *);
 int		esa_read_codec(void *, u_int8_t, u_int16_t *);
 int		esa_write_codec(void *, u_int8_t, u_int16_t);
-void		esa_reset_codec(void *);
+int		esa_reset_codec(void *);
 enum ac97_host_flags	esa_flags_codec(void *);
 int		esa_wait(struct esa_softc *);
 int		esa_init(struct esa_softc *);
@@ -1244,11 +1244,11 @@ esa_write_codec(void *aux, u_int8_t reg, u_int16_t data)
 	return (0);
 }
 
-void
+int
 esa_reset_codec(void *aux)
 {
 
-	return;
+	return 0;
 }
 
 enum ac97_host_flags

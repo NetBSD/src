@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.71 2004/08/03 18:42:30 drochner Exp $	*/
+/*	$NetBSD: eap.c,v 1.72 2004/09/22 12:20:25 kent Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.71 2004/08/03 18:42:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.72 2004/09/22 12:20:25 kent Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -223,7 +223,7 @@ int	eap1371_query_devinfo(void *addr, mixer_devinfo_t *dip);
 int     eap1371_attach_codec(void *sc, struct ac97_codec_if *);
 int	eap1371_read_codec(void *sc, u_int8_t a, u_int16_t *d);
 int	eap1371_write_codec(void *sc, u_int8_t a, u_int16_t d);
-void    eap1371_reset_codec(void *sc);
+int     eap1371_reset_codec(void *sc);
 int     eap1371_get_portnum_by_name(struct eap_softc *, char *, char *,
 					 char *);
 #if NMIDI > 0
@@ -862,7 +862,7 @@ eap1371_attach_codec(void *sc_, struct ac97_codec_if *codec_if)
 	return (0);
 }
 
-void
+int
 eap1371_reset_codec(void *sc_)
 {
 	struct eap_softc *sc = sc_;
@@ -877,7 +877,7 @@ eap1371_reset_codec(void *sc_)
 	delay(1);
 	splx(s);
 
-	return;
+	return 0;
 }
 
 int
