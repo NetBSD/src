@@ -1,4 +1,4 @@
-.\"	$NetBSD: do_setresuid.9,v 1.1 2003/09/28 09:09:55 dsl Exp $
+.\"	$NetBSD: do_setresuid.9,v 1.2 2003/09/28 10:23:22 wiz Exp $
 .\"
 .\"-
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 .Os
 .Sh NAME
 .Nm do_setresuid ,
-.Nm do_setresgid 
+.Nm do_setresgid
 .Nd set process uid and gid
 .Sh SYNOPSIS
 .In sys/ucred.h
@@ -46,13 +46,11 @@
 .Fn do_setresgid "struct lwp *lwp" "uid_t ruid" "uid_t euid" "uid_t svuid" "u_int flags"
 .Sh DESCRIPTION
 The
-.Nm
-do_setresuid
+.Nm do_setresuid
 and
-.Nm
-do_setresgid
+.Nm do_setresgid
 functions are used to implement the various system calls that allow a
-process to change its real, effective and saved uid and gid values.
+process to change its real, effective, and saved uid and gid values.
 .Pp
 The
 .Nm do_setresuid
@@ -62,9 +60,11 @@ its effective user ID to
 .Ar euid ,
 and its saved user ID to
 .Ar svuid .
-If any of the uid arguments are \-1 then that assigment is skipped.
+If any of the uid arguments are \-1 then that assignment is skipped.
 .Pp
-If suser() is true, then any values may be assigned, otherwise the new uid
+If
+.Fn suser
+is true, then any values may be assigned, otherwise the new uid
 values must match one of the existing values and the caller must have
 set the relevant bit in
 .Ar flags .
@@ -79,15 +79,18 @@ real ID.
 The
 .Nm do_setresgid
 function sets the group IDs but otherwise behaves in the same manner as
-.Nm . The processes group list is neither examined nor effected.
+.Nm .
+The processes group list is neither examined nor effected.
 .Sh SEE ALSO
-.Xr setreuid 2
-.Xr setregid 2
-.Xr setuid 2
+.Xr setregid 2 ,
+.Xr setreuid 2 ,
+.Xr setuid 2 ,
 .Xr suser 9
 .Sh CODE REFERENCES
 These functions are implemented in:
 .Pa sys/kern/kern_prot.c .
 .Sh HISTORY
-Implemented For NetBSD 2.0 to replace ad-hoc code in each system call
-routine and in the various compat modules.
+Implemented for
+.Nx 2.0
+to replace ad-hoc code in each system call routine and in the
+various compat modules.
