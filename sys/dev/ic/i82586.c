@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.29 2000/11/02 21:42:41 bjh21 Exp $	*/
+/*	$NetBSD: i82586.c,v 1.30 2000/11/02 21:56:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,15 +143,14 @@ Mode of operation:
    the synchronization.
 */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.30 2000/11/02 21:56:46 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
@@ -167,19 +166,6 @@ Mode of operation:
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/bus.h>
