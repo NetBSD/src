@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.41 2003/06/29 22:31:30 fvdl Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.42 2003/08/06 20:34:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.41 2003/06/29 22:31:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.42 2003/08/06 20:34:35 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -115,7 +115,7 @@ domaininit()
 #ifdef NETATALK
 	ADDDOMAIN(atalk);
 #endif
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	ADDDOMAIN(key);
 #endif
 #ifdef INET
@@ -242,7 +242,7 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOPROTOOPT);
 
 	switch (family) {
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	case PF_KEY:
 		pr = dp->dom_protosw;
 		if (pr->pr_sysctl)
