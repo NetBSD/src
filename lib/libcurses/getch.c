@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.32 2000/09/23 09:34:07 itojun Exp $	*/
+/*	$NetBSD: getch.c,v 1.33 2001/01/10 14:02:32 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.32 2000/09/23 09:34:07 itojun Exp $");
+__RCSID("$NetBSD: getch.c,v 1.33 2001/01/10 14:02:32 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -305,9 +305,9 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 	__CTRACE("Adding character %s of type %d, symbol 0x%x\n", unctrl(chr),
 		 key_type, symbol);
 #endif
-	if (current->mapping[(unsigned) chr] < 0) {
+	if (current->mapping[(unsigned char) chr] < 0) {
 		  /* first time for this char */
-		current->mapping[(unsigned) chr] = current->count;	/* map new entry */
+		current->mapping[(unsigned char) chr] = current->count;	/* map new entry */
 		  /* make sure we have room in the key array first */
 		if ((current->count & (KEYMAP_ALLOC_CHUNK - 1)) == 0)
 		{
@@ -360,7 +360,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 #ifdef DEBUG
 		__CTRACE("Keymap already known\n");
 #endif
-		the_key = current->key[current->mapping[(unsigned) chr]];
+		the_key = current->key[current->mapping[(unsigned char) chr]];
 	}
 
         return the_key;
@@ -419,7 +419,7 @@ __init_getch(void)
 				  /* index into the key array - it's
 				     clearer if we stash this */
 				key_ent = current->mapping[
-					(unsigned) entry[j]];
+					(unsigned char) entry[j]];
 
 				current->key[key_ent] = tmp_key;
 				
