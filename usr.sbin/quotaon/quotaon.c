@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.15 2000/07/07 15:11:46 itojun Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.16 2001/02/19 23:22:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.15 2000/07/07 15:11:46 itojun Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.16 2001/02/19 23:22:46 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,6 @@ int	gflag;		/* operate on group quotas */
 int	uflag;		/* operate on user quotas */
 int	vflag;		/* verbose */
 
-extern char *__progname;
-
 int main __P((int, char *[]));
 
 static void usage __P((void));
@@ -94,9 +92,9 @@ main(argc, argv)
 	int i, offmode = 0, errs = 0;
 	int ch;
 
-	if (strcmp(__progname, "quotaoff") == 0)
+	if (strcmp(getprogname(), "quotaoff") == 0)
 		offmode++;
-	else if (strcmp(__progname, "quotaon") != 0)
+	else if (strcmp(getprogname(), "quotaon") != 0)
 		errx(1, "Name must be quotaon or quotaoff\n");
 
 	while ((ch = getopt(argc, argv, "avug")) != -1) {
@@ -160,8 +158,10 @@ static void
 usage()
 {
 
-	(void) fprintf(stderr, "Usage:\n\t%s [-g] [-u] [-v] -a\n", __progname);
-	(void) fprintf(stderr, "\t%s [-g] [-u] [-v] filesys ...\n", __progname);
+	(void) fprintf(stderr, "Usage:\n\t%s [-g] [-u] [-v] -a\n",
+	    getprogname());
+	(void) fprintf(stderr, "\t%s [-g] [-u] [-v] filesys ...\n",
+	    getprogname());
 	exit(1);
 }
 

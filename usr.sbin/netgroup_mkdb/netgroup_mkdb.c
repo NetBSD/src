@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.10 2000/07/07 15:11:46 itojun Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.11 2001/02/19 23:22:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.10 2000/07/07 15:11:46 itojun Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.11 2001/02/19 23:22:45 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -732,7 +732,7 @@ ng_rwrite(odb, idb, k)
 static void
 usage()
 {
-	extern const char *__progname;
-	fprintf(stderr, "usage: %s [-o db] file\n", __progname);
+
+	fprintf(stderr, "usage: %s [-o db] file\n", getprogname());
 	exit(1);
 }

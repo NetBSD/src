@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.16 2001/01/11 01:54:08 lukem Exp $	*/
+/*	$NetBSD: yppush.c,v 1.17 2001/02/19 23:22:52 cgd Exp $	*/
 
 /*
  *
@@ -87,7 +87,6 @@ struct yppush_info {
  * global vars
  */
 
-extern char *__progname;	/* from crt0.o */
 int     verbo = 0;		/* verbose */
 
 /*
@@ -289,7 +288,7 @@ void
 usage()
 {
 	fprintf(stderr, "usage: %s [-d domain] [-h host] [-v] map\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

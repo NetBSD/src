@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.6 2001/01/11 01:42:50 lukem Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.7 2001/02/19 23:22:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopprobe.c,v 1.6 2001/01/11 01:42:50 lukem Exp $");
+__RCSID("$NetBSD: mopprobe.c,v 1.7 2001/02/19 23:22:45 cgd Exp $");
 #endif
 
 /*
@@ -67,8 +67,6 @@ int	Not3Flag = 0;		/* Not MOP V3 messages         */
 int	Not4Flag = 0;		/* Not MOP V4 messages         */
 int     oflag = 0;		/* print only once             */
 int	promisc = 1;		/* Need promisc mode           */
-
-extern char *__progname;	/* from crt0.o */
 
 int
 main(argc, argv)
@@ -125,8 +123,9 @@ main(argc, argv)
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %s -a [ -3 | -4 ]\n", __progname);
-	(void) fprintf(stderr, "       %s [ -3 | -4 ] interface\n", __progname);
+	(void) fprintf(stderr, "usage: %s -a [ -3 | -4 ]\n", getprogname());
+	(void) fprintf(stderr, "       %s [ -3 | -4 ] interface\n",
+	    getprogname());
 	exit(1);
 }
 

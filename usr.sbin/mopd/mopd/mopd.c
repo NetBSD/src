@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.7 2001/01/11 01:42:50 lukem Exp $	*/
+/*	$NetBSD: mopd.c,v 1.8 2001/02/19 23:22:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.7 2001/01/11 01:42:50 lukem Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.8 2001/02/19 23:22:45 cgd Exp $");
 #endif
 
 /*
@@ -73,8 +73,6 @@ int	Not3Flag = 0;		/* Not MOP V3 messages.       */
 int	Not4Flag = 0;		/* Not MOP V4 messages.       */
 int	promisc = 1;		/* Need promisc mode    */
 
-extern char *__progname;	/* from crt0.o */
-
 int
 main(argc, argv)
 	int     argc;
@@ -111,7 +109,7 @@ main(argc, argv)
 		}
 	
 	if (VersionFlag) {
-		fprintf(stdout,"%s: version %s\n", __progname, version);
+		fprintf(stdout,"%s: version %s\n", getprogname(), version);
 		exit(0);
 	}
 
@@ -128,7 +126,7 @@ main(argc, argv)
 
 	if ((!ForegroundFlag) && DebugFlag)
 		fprintf(stdout,
-		    "%s: not running as daemon, -d given.\n", __progname);
+		    "%s: not running as daemon, -d given.\n", getprogname());
 
 	if ((!ForegroundFlag) && (!DebugFlag)) {
 		pid = fork();
@@ -146,7 +144,7 @@ main(argc, argv)
 		pidfile(NULL);
 	}
 
-	syslog(LOG_INFO, "%s %s started.", __progname, version);
+	syslog(LOG_INFO, "%s %s started.", getprogname(), version);
 
 	if (AllFlag)
  		deviceInitAll();
@@ -162,9 +160,9 @@ void
 Usage()
 {
 	(void) fprintf(stderr, "usage: %s -a [ -d -f -v ] [ -3 | -4 ]\n",
-	    __progname);
+	    getprogname());
 	(void) fprintf(stderr, "       %s [ -d -f -v ] [ -3 | -4 ] interface\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

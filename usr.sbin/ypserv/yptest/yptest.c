@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.4 2000/07/04 20:27:41 matt Exp $	 */
+/*	$NetBSD: yptest.c,v 1.5 2001/02/19 23:22:52 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yptest.c,v 1.4 2000/07/04 20:27:41 matt Exp $");
+__RCSID("$NetBSD: yptest.c,v 1.5 2001/02/19 23:22:52 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,8 +51,6 @@ __RCSID("$NetBSD: yptest.c,v 1.4 2000/07/04 20:27:41 matt Exp $");
 int	main __P((int, char *[]));
 static	int yptest_foreach __P((int, char *, int, char *, int, char *));
 
-extern	char *__progname;		/* from crt0.o */
-
 int
 main(argc, argv)
 	int argc;
@@ -66,7 +64,7 @@ main(argc, argv)
 	struct ypmaplist *ypml, *y;
 
 	if (argc != 1) {
-		fprintf(stderr, "usage: %s\n", __progname);
+		fprintf(stderr, "usage: %s\n", getprogname());
 		exit(1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.11 2000/07/07 15:11:47 itojun Exp $	*/
+/*	$NetBSD: rdate.c,v 1.12 2001/02/19 23:22:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.11 2000/07/07 15:11:47 itojun Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.12 2001/02/19 23:22:47 cgd Exp $");
 #endif/* lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: rdate.c,v 1.11 2000/07/07 15:11:47 itojun Exp $");
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
@@ -63,15 +64,13 @@ __RCSID("$NetBSD: rdate.c,v 1.11 2000/07/07 15:11:47 itojun Exp $");
 #define DIFFERENCE 2208988800
 #endif
 
-extern char    *__progname;
-
 	int	main __P((int, char **));
 static	void	usage __P((void));
 
 static void
 usage()
 {
-	(void) fprintf(stderr, "Usage: %s [-psa] host\n", __progname);
+	(void) fprintf(stderr, "Usage: %s [-psa] host\n", getprogname());
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
 	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
@@ -175,7 +174,7 @@ main(argc, argv)
 		if (slidetime)
 		    (void) fprintf(stdout, 
 				   "%s: adjust local clock by %d seconds\n",
-				   __progname, adjustment);
+				   getprogname(), adjustment);
 	}
 	return 0;
 }

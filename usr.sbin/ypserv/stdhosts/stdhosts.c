@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.12 2000/07/30 02:25:08 itojun Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.13 2001/02/19 23:22:52 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.12 2000/07/30 02:25:08 itojun Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.13 2001/02/19 23:22:52 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: stdhosts.c,v 1.12 2000/07/30 02:25:08 itojun Exp $");
 
 int	main __P((int, char *[]));
 void	usage __P((void));
-
-extern	char *__progname;	/* from crt0.o */
 
 int
 main(argc, argv)
@@ -138,6 +136,6 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s [-n] [file]\n", __progname);
+	fprintf(stderr, "usage: %s [-n] [file]\n", getprogname());
 	exit(1);
 }

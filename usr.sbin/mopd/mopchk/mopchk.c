@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.7 2001/01/11 01:42:50 lukem Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.8 2001/02/19 23:22:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.7 2001/01/11 01:42:50 lukem Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.8 2001/02/19 23:22:45 cgd Exp $");
 #endif
 
 /*
@@ -61,7 +61,6 @@ int     AllFlag = 0;		/* listen on "all" interfaces  */
 int	VersionFlag = 0;	/* Show version */
 int	promisc = 0;		/* promisc mode not needed */
 
-extern char	*__progname;	/* from crt0.o */
 extern char	version[];
 
 int
@@ -93,7 +92,7 @@ main(argc, argv)
 	}
 	
 	if (VersionFlag)
-		printf("%s: Version %s\n", __progname, version);
+		printf("%s: Version %s\n", getprogname(), version);
 
 	if (AllFlag) {
 		if (VersionFlag)
@@ -151,7 +150,7 @@ void
 Usage()
 {
 	(void) fprintf(stderr, "usage: %s [-a] [-v] [filename...]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

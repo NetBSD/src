@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.5 2001/01/26 20:25:25 hubertf Exp $ */
+/* $NetBSD: wsfontload.c,v 1.6 2001/02/19 23:22:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -77,12 +78,11 @@ static struct {
 static void
 usage()
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr,
 		"Usage: %s [-f wsdev] [-w width] [-h height] [-e encoding]"
 		" [-N name] [-b] [-B] [fontfile]\n",
-		      __progname);
+		      getprogname());
 	exit(1);
 }
 

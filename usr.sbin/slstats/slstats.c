@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.12 1999/11/19 10:45:23 bouyer Exp $	*/
+/*	$NetBSD: slstats.c,v 1.13 2001/02/19 23:22:48 cgd Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slstats.c,v 1.12 1999/11/19 10:45:23 bouyer Exp $");
+__RCSID("$NetBSD: slstats.c,v 1.13 2001/02/19 23:22:48 cgd Exp $");
 #endif
 
 #define INET
@@ -64,8 +64,6 @@ struct nlist nl[] = {
 	{ "_sl_softc" },
 	{ "" },
 };
-
-extern	char *__progname;	/* from crt0.o */
 
 char	*kernel;		/* kernel for namelist */
 char	*kmemf;			/* memory file */
@@ -168,7 +166,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "usage: %s [-M core] [-N system] [-i interval] %s",
-	    __progname, "[-v] [unit]\n");
+	    getprogname(), "[-v] [unit]\n");
 	exit(1);
 }
 

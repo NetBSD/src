@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.4 2000/07/02 00:55:47 augustss Exp $ */
+/*	$NetBSD: envstat.c,v 1.5 2001/02/19 23:22:43 cgd Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.4 2000/07/02 00:55:47 augustss Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.5 2001/02/19 23:22:43 cgd Exp $");
 #endif
 
 #include <fcntl.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: envstat.c,v 1.4 2000/07/02 00:55:47 augustss Exp $");
 #include <sys/envsys.h>
 #include <sys/ioctl.h>
 
-extern char *__progname;
 const char E_CANTENUM[] = "cannot enumerate sensors";
 
 #define	_PATH_SYSMON	"/dev/sysmon"
@@ -280,7 +279,8 @@ values(width, celsius, etds, cetds, ns)
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-c] [-s s1,s2,...]", __progname);
+
+	fprintf(stderr, "usage: %s [-c] [-s s1,s2,...]", getprogname());
 	fprintf(stderr, " [-i interval] [-n headrep] [-w width] [device]\n");
 	fprintf(stderr, "       envstat -l [device]\n");
 	exit(1);

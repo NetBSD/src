@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.5 2000/07/04 20:27:37 matt Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.6 2001/02/19 23:22:44 cgd Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.5 2000/07/04 20:27:37 matt Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.6 2001/02/19 23:22:44 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: lastlogin.c,v 1.5 2000/07/04 20:27:37 matt Exp $");
 #include <utmp.h>
 #include <unistd.h>
 
-extern	char *__progname;
 static	char *logfile = _PATH_LASTLOG;
 
 	int	main __P((int, char **));
@@ -129,6 +128,6 @@ output(p, l)
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [user ...]\n", __progname);
+	fprintf(stderr, "usage: %s [user ...]\n", getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.45 2001/01/11 01:47:55 lukem Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.45 2001/01/11 01:47:55 lukem Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -159,7 +159,6 @@ static int direct_set __P((char *, int, struct _dom_binding *));
 static void
 usage()
 {
-	extern char *__progname;
 	char *opt = "";
 #ifdef DEBUG
 	opt = " [-d]";
@@ -167,7 +166,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "Usage: %s [-broadcast] [-insecure] [-ypset] [-ypsetme] %s\n",
-	    __progname, opt);
+	    getprogname(), opt);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.4 2000/11/16 08:33:33 msaitoh Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.5 2001/02/19 23:22:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -49,8 +49,6 @@ int main __P((int, char *[], char *[]));
 
 static void initarg __P((struct arglist *));
 static void addarg __P((struct arglist *, const char *, int));
-
-extern const char *__progname;	/* from crt0.o */
 
 static void
 initarg(al)
@@ -125,7 +123,7 @@ main(argc, argv, envp)
 		if ((to = strsep(&cp, WS)) == NULL)
 			goto parse_error;
 
-		if (strcmp(from, __progname) == 0) {
+		if (strcmp(from, getprogname()) == 0) {
 			for (ap = strsep(&cp, WS); ap != NULL; 
 			    ap = strsep(&cp, WS))
 			    if (*ap)

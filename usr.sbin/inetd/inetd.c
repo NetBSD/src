@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.72 2001/01/11 01:36:40 lukem Exp $	*/
+/*	$NetBSD: inetd.c,v 1.73 2001/02/19 23:22:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.72 2001/01/11 01:36:40 lukem Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.73 2001/02/19 23:22:43 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,7 +433,6 @@ u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0};
 char	*CONFIG = _PATH_INETDCONF;
 char	**Argv;
 char 	*LastArg;
-extern char	*__progname;
 
 int
 main(argc, argv, envp)
@@ -2108,9 +2107,9 @@ usage()
 {
 
 #ifdef LIBWRAP
-	(void)fprintf(stderr, "usage: %s [-dl] [conf]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-dl] [conf]\n", getprogname());
 #else
-	(void)fprintf(stderr, "usage: %s [-d] [conf]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-d] [conf]\n", getprogname());
 #endif
 	exit(1);
 }

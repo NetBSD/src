@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.13 2001/01/16 02:36:29 cgd Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.14 2001/02/19 23:22:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.13 2001/01/16 02:36:29 cgd Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.14 2001/02/19 23:22:46 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,6 @@ __RCSID("$NetBSD: rbootd.c,v 1.13 2001/01/16 02:36:29 cgd Exp $");
 #include "defs.h"
 
 int	main __P((int, char *[]));
-
-extern	char *__progname;	/* from crt0.o */
 
 int
 main(argc, argv)

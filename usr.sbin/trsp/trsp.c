@@ -1,4 +1,4 @@
-/*	$NetBSD: trsp.c,v 1.5 1998/07/06 07:50:21 mrg Exp $	*/
+/*	$NetBSD: trsp.c,v 1.6 2001/02/19 23:22:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trsp.c,v 1.5 1998/07/06 07:50:21 mrg Exp $");
+__RCSID("$NetBSD: trsp.c,v 1.6 2001/02/19 23:22:48 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,8 +142,6 @@ caddr_t	spp_pcbs[SPP_NDEBUG];
 int	spp_debx;
 
 kvm_t	*kd;
-
-extern	char *__progname;
 
 int	main __P((int, char *[]));
 void	dotrace __P((caddr_t));
@@ -479,6 +477,6 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s [-azstj] [-p hex-address]"
-	    " [-N system] [-M core]\n", __progname);
+	    " [-N system] [-M core]\n", getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mopa.out.c,v 1.6 2000/05/20 10:58:05 ragge Exp $	*/
+/*	$NetBSD: mopa.out.c,v 1.7 2001/02/19 23:22:44 cgd Exp $	*/
 
 /* mopa.out - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopa.out.c,v 1.6 2000/05/20 10:58:05 ragge Exp $");
+__RCSID("$NetBSD: mopa.out.c,v 1.7 2001/02/19 23:22:44 cgd Exp $");
 #endif
 
 #include "os.h"
@@ -80,14 +80,13 @@ main (int argc, char **argv)
 	int	i;
 	struct dllist dl;
 
-	extern char *__progname;	/* from crt0.o */
-	
 #ifdef NOAOUT
 	errx(1, "has no function in NetBSD");
 #endif	
 
 	if (argc != 3) {
-		fprintf (stderr, "usage: %s kernel-in sys-out\n", __progname);
+		fprintf (stderr, "usage: %s kernel-in sys-out\n",
+		    getprogname());
 		return (1);
 	}
 	

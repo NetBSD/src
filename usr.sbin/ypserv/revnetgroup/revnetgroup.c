@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.8 2000/07/07 15:11:48 itojun Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.9 2001/02/19 23:22:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.8 2000/07/07 15:11:48 itojun Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.9 2001/02/19 23:22:51 cgd Exp $");
 #endif
 
 #include <ctype.h>
@@ -76,9 +76,8 @@ struct member_entry *mtable[TABLESIZE];
 void
 usage()
 {
-	extern char *__progname;		/* from crt0.o */
 
-	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n", __progname);
+	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n", getprogname());
 	exit(1);
 }
 

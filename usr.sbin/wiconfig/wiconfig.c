@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.10 2000/11/24 09:53:36 jdolecek Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.11 2001/02/19 23:22:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.10 2000/11/24 09:53:36 jdolecek Exp $";
+	"@(#) $Id: wiconfig.c,v 1.11 2001/02/19 23:22:49 cgd Exp $";
 #endif
 
 struct wi_table {
@@ -632,7 +632,6 @@ static void wi_dumpstats(iface)
 static void
 usage()
 {
-	extern char *__progname;
 
 	fprintf(stderr,
 	    "usage: %s interface "
@@ -642,7 +641,7 @@ usage()
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
 	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
 	    ,
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.18 2001/01/10 22:53:22 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2001/02/19 23:22:46 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2001/01/10 22:53:22 jdolecek Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2001/02/19 23:22:46 cgd Exp $");
 #endif
 
 /*
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: main.c,v 1.18 2001/01/10 22:53:22 jdolecek Exp $");
 #include "lib.h"
 
 void    usage(void);
-
-extern const char *__progname;	/* from crt0.o */
 
 int     filecnt;
 int     pkgcnt;
@@ -560,7 +558,7 @@ usage(void)
 	    " delete key       - delete reference to key\n"
 #endif
 	    " dump             - dump database\n"
-	    ,__progname);
+	    , getprogname());
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: moptrace.c,v 1.6 2001/01/11 01:42:50 lukem Exp $	*/
+/*	$NetBSD: moptrace.c,v 1.7 2001/02/19 23:22:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moptrace.c,v 1.6 2001/01/11 01:42:50 lukem Exp $");
+__RCSID("$NetBSD: moptrace.c,v 1.7 2001/02/19 23:22:45 cgd Exp $");
 #endif
 
 /*
@@ -66,8 +66,6 @@ int     DebugFlag = 0;		/* print debugging messages    */
 int	Not3Flag = 0;		/* Ignore MOP V3 messages      */
 int	Not4Flag = 0;		/* Ignore MOP V4 messages      */ 
 int	promisc = 1;		/* Need promisc mode           */
-
-extern char *__progname;	/* from crt0.o */
 
 int
 main(argc, argv)
@@ -121,9 +119,10 @@ main(argc, argv)
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %s -a [ -d ] [ -3 | -4 ]\n", __progname);
+	(void) fprintf(stderr, "usage: %s -a [ -d ] [ -3 | -4 ]\n",
+		       getprogname());
 	(void) fprintf(stderr, "       %s [ -d ] [ -3 | -4 ] interface\n",
-		       __progname);
+		       getprogname());
 	exit(1);
 }
 
