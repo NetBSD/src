@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.4 2002/05/02 20:31:19 rafal Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.5 2003/12/30 23:48:07 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -127,49 +127,54 @@ struct sq_softc {
 #if NRND > 0
 	rndsource_element_t 	rnd_source;	/* random source */
 #endif
+	struct hpc_values       *hpc_regs;      /* HPC register definitions */
 };
 
 #define	SQ_CDTXADDR(sc, x)	((sc)->sc_cddma + SQ_CDTXOFF((x)))
 #define	SQ_CDRXADDR(sc, x)	((sc)->sc_cddma + SQ_CDRXOFF((x)))
 
-#define	SQ_CDTXSYNC(sc, x, n, ops)					\
-do {									\
-	int __x, __n;							\
-									\
-	__x = (x);							\
-	__n = (n);							\
-									\
-	/* If it will wrap around, sync to the end of the ring. */	\
-	if ((__x + __n) > SQ_NTXDESC) {					\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,		\
-		    SQ_CDTXOFF(__x), sizeof(struct hpc_dma_desc) *	\
-		    (SQ_NTXDESC - __x), (ops));				\
-		__n -= (SQ_NTXDESC - __x);				\
-		__x = 0;						\
-	}								\
-									\
-	/* Now sync whatever is left. */				\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,			\
-	    SQ_CDTXOFF(__x), sizeof(struct hpc_dma_desc) * __n, (ops));	\
-} while (0)
+static inline void
+SQ_CDTXSYNC(struct sq_softc *sc, int __x, int __n, int ops)
+{
+	/* If it will wrap around, sync to the end of the ring. */
+	if ((__x + __n) > SQ_NTXDESC) {
+		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,
+		    SQ_CDTXOFF(__x), sizeof(struct hpc_dma_desc) *
+		    (SQ_NTXDESC - __x), (ops));
+		__n -= (SQ_NTXDESC - __x);
+		__x = 0;
+	}
+
+	/* Now sync whatever is left. */
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,
+	    SQ_CDTXOFF(__x), sizeof(struct hpc_dma_desc) * __n, (ops));
+}
 
 #define	SQ_CDRXSYNC(sc, x, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,			\
 	    SQ_CDRXOFF((x)), sizeof(struct hpc_dma_desc), (ops))
 
-#define	SQ_INIT_RXDESC(sc, x)						\
-do {									\
-	struct hpc_dma_desc* __rxd = &(sc)->sc_rxdesc[(x)];		\
-	struct mbuf *__m = (sc)->sc_rxmbuf[(x)];			\
-									\
-	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->hdd_bufptr = (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;	\
-	__rxd->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));		\
-	__rxd->hdd_ctl = 						\
-		__m->m_ext.ext_size | HDD_CTL_INTR | HDD_CTL_EOPACKET | \
-		HDD_CTL_OWN | ((x) == (SQ_NRXDESC  - 1) ? 		\
-						HDD_CTL_EOCHAIN : 0);	\
-	SQ_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);\
-} while (0)
+static inline void
+SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
+{
+	struct hpc_dma_desc* __rxd = &(sc)->sc_rxdesc[(x)];
+	struct mbuf *__m = (sc)->sc_rxmbuf[(x)];
+
+	__m->m_data = __m->m_ext.ext_buf;
+	if (sc->hpc_regs->revision == 3) {
+		__rxd->hpc3_hdd_bufptr =
+			(sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;
+		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HDD_CTL_OWN |
+			HDD_CTL_INTR | HDD_CTL_EOPACKET |
+			((x) == (SQ_NRXDESC  - 1) ? HDD_CTL_EOCHAIN : 0);
+	} else {
+		__rxd->hpc1_hdd_bufptr = (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr
+			| ((x) == (SQ_NRXDESC - 1) ? HPC1_HDD_CTL_EOCHAIN : 0);
+        	__rxd->hpc1_hdd_ctl = __m->m_ext.ext_size | HPC1_HDD_CTL_OWN |
+			HPC1_HDD_CTL_INTR | HPC1_HDD_CTL_EOPACKET;
+	}
+	__rxd->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));	
+	SQ_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+}
 
 #endif	/* _ARCH_SGIMIPS_HPC_SQVAR_H_ */
