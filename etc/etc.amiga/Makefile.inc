@@ -1,7 +1,7 @@
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.3 1994/06/14 09:10:32 chopps Exp $
+#	$Id: Makefile.inc,v 1.4 1994/06/15 13:04:46 chopps Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd-generic netbsd-a3000
@@ -12,10 +12,10 @@ snap_md: netbsd-generic netbsd-a3000
 netbsd-generic:
 	cd ${.CURDIR}/../sys/arch/amiga/conf && config.new GENERIC
 	cd ${.CURDIR}/../sys/arch/amiga/compile/GENERIC && \
-	    make clean && make depend && make && gzip -9 $@
+	    make clean && make depend && make && gzip -9 netbsd
 
 netbsd-a3000:
 	cd ${.CURDIR}/../sys/arch/amiga/conf && config.new A3000
 	cd ${.CURDIR}/../sys/arch/amiga/compile/A3000 && \
-	    make clean && make depend && make && gzip -9 $@
+	    make clean && make depend && make && gzip -9 netbsd
 .endif	# DESTDIR check
