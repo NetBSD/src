@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.20 1997/07/20 20:51:09 christos Exp $	*/
+/*	$NetBSD: rm.c,v 1.21 1997/12/21 15:28:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.20 1997/07/20 20:51:09 christos Exp $");
+__RCSID("$NetBSD: rm.c,v 1.21 1997/12/21 15:28:27 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,14 @@ void	rm_overwrite __P((char *, struct stat *));
 void	rm_tree __P((char **));
 void	usage __P((void));
 int	main __P((int, char *[]));
+
+/*
+ * For the sake of the `-f' flag, check whether an error number indicates the
+ * failure of an operation due to an non-existent file, either per se (ENOENT)
+ * or because its filename argument was illegal (ENAMETOOLONG, ENOTDIR).
+ */
+#define NONEXISTENT(x) \
+    ((x) == ENOENT || (x) == ENAMETOOLONG || (x) == ENOTDIR)
 
 /*
  * rm --
@@ -183,7 +191,7 @@ rm_tree(argv)
 			 */
 			if (!needstat)
 				break;
-			if (!fflag || p->fts_errno != ENOENT) {
+			if (!fflag || !NONEXISTENT(p->fts_errno)) {
 				warnx("%s: %s",
 				    p->fts_path, strerror(p->fts_errno));
 				eval = 1;
@@ -231,7 +239,7 @@ rm_tree(argv)
 			if (Pflag)
 				rm_overwrite(p->fts_accpath, NULL);
 			if (!unlink(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			    (fflag && NONEXISTENT(errno)))
 				continue;
 		}
 		warn("%s", p->fts_path);
@@ -259,7 +267,7 @@ rm_file(argv)
 			if (Wflag) {
 				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
 			} else {
-				if (!fflag || errno != ENOENT) {
+				if (!fflag || !NONEXISTENT(errno)) {
 					warn("%s", f);
 					eval = 1;
 				}
@@ -287,7 +295,7 @@ rm_file(argv)
 				rm_overwrite(f, &sb);
 			rval = unlink(f);
 		}
-		if (rval && (!fflag || errno != ENOENT)) {
+		if (rval && (!fflag || !NONEXISTENT(errno))) {
 			warn("%s", f);
 			eval = 1;
 		}
