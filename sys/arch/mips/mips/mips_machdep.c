@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.99 2000/08/02 06:46:47 jeffs Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.100 2000/09/13 01:53:01 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.99 2000/08/02 06:46:47 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.100 2000/09/13 01:53:01 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -115,6 +115,8 @@ int	mips_L2CacheMixed;
 struct	user *proc0paddr;
 struct	proc *fpcurproc;
 struct	pcb  *curpcb;
+struct	segtab *segbase;
+
 
 caddr_t	msgbufaddr;
 
