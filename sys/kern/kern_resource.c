@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.87 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.88 2005/03/20 19:15:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.87 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.88 2005/03/20 19:15:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,8 @@ rlim_t maxsmap = MAXSSIZ;
 
 struct uihashhead *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
+struct simplelock uihashtbl_slock = SIMPLELOCK_INITIALIZER;
 
-static struct uidinfo *getuidinfo(uid_t);
-static void freeuidinfo(struct uidinfo *);
-static struct uidinfo *allocuidinfo(uid_t);
 
 /*
  * Resource controls and accounting.
@@ -891,39 +889,25 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
 }
 
-static struct uidinfo *
-getuidinfo(uid_t uid)
+struct uidinfo *
+uid_find(uid_t uid)
 {
 	struct uidinfo *uip;
 	struct uihashhead *uipp;
 
+	simple_lock(&uihashtbl_slock);
 	uipp = UIHASH(uid);
 
 	LIST_FOREACH(uip, uipp, ui_hash)
-		if (uip->ui_uid == uid)
+		if (uip->ui_uid == uid) {
+			simple_unlock(&uihashtbl_slock);
 			return uip;
-	return NULL;
-}
+		}
 
-static void
-freeuidinfo(struct uidinfo *uip)
-{
-	LIST_REMOVE(uip, ui_hash);
-	FREE(uip, M_PROC);
-}
-
-static struct uidinfo *
-allocuidinfo(uid_t uid)
-{
-	struct uidinfo *uip;
-	struct uihashhead *uipp;
-
-	uipp = UIHASH(uid);
-	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
+	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK|M_ZERO);
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
-	uip->ui_proccnt = 0;
-	uip->ui_sbsize = 0;
+	simple_unlock(&uihashtbl_slock);
 	return uip;
 }
 
@@ -939,23 +923,10 @@ chgproccnt(uid_t uid, int diff)
 	if (diff == 0)
 		return 0;
 
-	if ((uip = getuidinfo(uid)) != NULL) {
-		uip->ui_proccnt += diff;
-		KASSERT(uip->ui_proccnt >= 0);
-		if (uip->ui_proccnt > 0)
-			return uip->ui_proccnt;
-		else {
-			if (uip->ui_sbsize == 0)
-				freeuidinfo(uip);
-			return 0;
-		}
-	} else {
-		if (diff < 0)
-			panic("chgproccnt: lost user %lu", (unsigned long)uid);
-		uip = allocuidinfo(uid);
-		uip->ui_proccnt = diff;
-		return uip->ui_proccnt;
-	}
+	uip = uid_find(uid);
+	uip->ui_proccnt += diff;
+	KASSERT(uip->ui_proccnt >= 0);
+	return uip->ui_proccnt;
 }
 
 int
@@ -963,23 +934,15 @@ chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
 {
 	*hiwat = to;
 	return 1;
-#ifdef notyet
 	struct uidinfo *uip;
 	rlim_t nsb;
-	int rv = 0;
 
-	if ((uip = getuidinfo(uid)) == NULL)
-		uip = allocuidinfo(uid);
+	uip = uid_find(uid);
 	nsb = uip->ui_sbsize + to - *hiwat;
 	if (to > *hiwat && nsb > max)
-		goto done;
+		return 0;
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
-	rv = 1;
 	KASSERT(uip->ui_sbsize >= 0);
-done:
-	if (uip->ui_sbsize == 0 && uip->ui_proccnt == 0)
-		freeuidinfo(uip);
-	return rv;
-#endif
+	return 1;
 }
