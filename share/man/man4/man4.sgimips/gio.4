@@ -1,4 +1,4 @@
-.\"	$NetBSD: gio.4,v 1.4 2004/02/08 13:25:39 sekiya Exp $
+.\"	$NetBSD: gio.4,v 1.5 2004/02/08 23:23:59 snj Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,15 +45,17 @@
 .Cd "gio0 at pic0"
 .Sh DESCRIPTION
 The
-.Nm gio
+.Nm
 bus is a bus for connecting high-speed peripherals to the main memory and
-CPU. The devices themselves are connected to the
+CPU.
+The devices themselves are connected to the
 .Xr hpc 4
 peripheral controller, and memory and CPU are accessed through the
 .Xr imc 4
 (Indy Memory Controller) or
 .Xr pic 4
-(Processor Interface Controller). The
+(Processor Interface Controller).
+The
 .Nm
 bus is found on the Indigo, Indy and Indigo2 machines.
 .Sh SEE ALSO
