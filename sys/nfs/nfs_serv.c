@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.54 2000/03/30 12:51:15 augustss Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.54.4.1 2000/12/14 23:36:57 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3061,10 +3061,6 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 
-	/*
-	 * XXX At this time VOP_FSYNC() does not accept offset and byte
-	 * count parameters, so these arguments are useless (someday maybe).
-	 */
 	off = fxdr_hyper(tl);
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
@@ -3076,7 +3072,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	for_ret = VOP_GETATTR(vp, &bfor, cred, procp);
-	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, procp);
+	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, off + cnt, procp);
 	aft_ret = VOP_GETATTR(vp, &aft, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3WCCDATA + NFSX_V3WRITEVERF);
