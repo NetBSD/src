@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2000/03/19 23:07:43 soren Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2000/04/28 13:28:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,7 @@ struct cdevsw cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 24: SCSI bus */
 	cdev_ses_init(NSES,ses),	/* 25: SCSI SES/SAF-TE */
 	cdev_tty_init(NCOM,com),        /* 26: com serial port */
+	cdev_disk_init(NCA,ca),         /* 27: Compaq array */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -165,7 +166,24 @@ static int chrtoblktbl[] =  {
 	/*  7 */	7,
 	/*  8 */	8,
 	/*  9 */	9,
-	/* 10 */	10,
+	/* 10 */	27,
+	/* 11 */	NODEV,
+	/* 12 */	NODEV,
+	/* 13 */	NODEV,
+	/* 14 */	NODEV,
+	/* 15 */	NODEV,
+	/* 16 */	NODEV,
+	/* 17 */	NODEV,
+	/* 18 */	NODEV,
+	/* 19 */	NODEV,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
 };
 
 dev_t
