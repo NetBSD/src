@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.16 2003/09/13 03:16:49 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.17 2003/10/13 01:47:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.16 2003/09/13 03:16:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.17 2003/10/13 01:47:55 dyoung Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.16 2003/09/13 03:16:49 mycroft Ex
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsi_changer.h>
-
-#include <dev/scsipi/atapi_disk.h>
 
 #include <sys/disk.h>		/* XXX */
 #include <dev/scsipi/sdvar.h>	/* XXX */
