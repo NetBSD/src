@@ -38,7 +38,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$NetBSD: MAKEDEV.8,v 1.8 2000/11/07 06:43:27 lukem Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.9 2000/12/05 21:25:36 wrstuden Exp $
 .\"
 .Dd February 17, 1996
 .Dt MAKEDEV 8 arm32
@@ -51,7 +51,7 @@
 MAKEDEV name ...
 .Sh DESCRIPTION
 The shell script
-.Nm "" ,
+.Nm MAKEDEV ,
 found in the ``/dev'' directory, is used to create the common special
 files.
 .\" See
@@ -183,6 +183,12 @@ Printer devices, see
 . It Ar ugen#
 Generic device, see
 .Xr ugen 4 
+. It Ar urio#
+Diamond Rio 500, see
+.Xr urio 4 
+. It Ar uscanner#
+Scanners, see
+.Xr uscanner 4 
 . It Ar ttyU#
 Modem
 . El
@@ -206,6 +212,8 @@ Riscpc speaker, see
 .Xr beep 4 
 . It Ar ipl
 IP filter control
+. It Ar openfirm
+OpenFirmware accessor
 . It Ar random
 Random number generator
 . It Ar lkm

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.4 2000/11/07 06:43:28 lukem Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.5 2000/12/05 21:25:36 wrstuden Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 .Ar device_name Ar ...
 .Sh DESCRIPTION
 The shell script
-.Nm "" ,
+.Nm MAKEDEV ,
 found in the
 .Pa /dev
 directory, is used to create the common special
@@ -61,7 +61,7 @@ files.
 .\".Xr special 8
 .\"for a more complete discussion of special files.
 .Pp
-.Nm
+.Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
 There are several special devices:
@@ -176,6 +176,14 @@ Printer devices, see
 . It Ar ugen#
 Generic device, see
 .Xr ugen 4 
+. It Ar urio#
+Diamond Rio 500, see
+.Xr urio 4 
+. It Ar uscanner#
+Scanners, see
+.Xr uscanner 4 
+. It Ar ttyU#
+Modem
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact

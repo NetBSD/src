@@ -38,7 +38,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	8.1 (Berkeley) 6/5/93
-.\"	$NetBSD: MAKEDEV.8,v 1.7 2000/11/07 06:43:34 lukem Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.8 2000/12/05 21:25:38 wrstuden Exp $
 .\"
 .Dd July 23, 1997
 .Dt MAKEDEV 8 x68k
@@ -51,7 +51,7 @@
 .Ar device_name Ar ...
 .Sh DESCRIPTION
 The shell script
-.Nm "" ,
+.Nm MAKEDEV ,
 found in the
 .Pa /dev
 directory, is used to create the common special
@@ -60,7 +60,7 @@ files.
 .\".Xr special 8
 .\"for a more complete discussion of special files.
 .Pp
-.Nm
+.Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
 There are several special devices:
