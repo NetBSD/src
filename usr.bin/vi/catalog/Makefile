@@ -1,22 +1,22 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/12 01:48:48 tv Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2002/06/18 14:42:21 lukem Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
-CAT=		dutch english french german ru_RU.KOI8-R spanish swedish
+CATALOG=	dutch english french german ru_RU.KOI8-R spanish swedish
 VI_FILES=	${.CURDIR}/../cl/*.c ${.CURDIR}/../common/*.c \
 		${.CURDIR}/../ex/*.c ${.CURDIR}/../vi/*.c
-FILES=		${CAT}
+FILES=		${CATALOG}
 FILESDIR=	/usr/share/vi/catalog
 
 HOSTPROG=	dump
 SRCS=		dump.c
 NOMAN=		# defined
 
-CLEANFILES+=	${CAT} english.base *.check __ck1 __ck2
+CLEANFILES+=	${CATALOG} english.base *.check __ck1 __ck2
 
-realall: ${CAT}
+realall: ${CATALOG}
 
-${CAT}: english.base ${HOSTPROG}
+${CATALOG}: english.base ${HOSTPROG}
 	@echo "... $@";							\
 	rm -f $@;							\
 	if test -f $@.base; then					\
@@ -52,7 +52,7 @@ ${CAT}: english.base ${HOSTPROG}
 CHK=	dutch.check english.check french.check german.check \
 	ru_RU.KOI8-R.check spanish.check swedish.check
 check: ${CHK}
-${CHK}: ${CAT}
+${CHK}: ${CATALOG}
 	@echo "... $@";							\
 	f=`basename $@ .check`;						\
 	(echo "Unused message id's (this is okay):";			\
