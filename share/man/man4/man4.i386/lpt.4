@@ -27,11 +27,11 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lpt.4,v 1.5 1995/02/17 09:43:44 jtc Exp $
+.\"	$Id: lpt.4,v 1.6 1996/10/04 01:58:58 explorer Exp $
 .\"
 .Dd August 6, 1993
 .Dt LPT 4 i386
-.Os NetBSD 0.8a
+.Os NetBSD 1.2
 .Sh NAME
 .Nm lpt
 .Nd
@@ -41,9 +41,16 @@ Parallel port driver
 .Cd "lpt0 at isa? port" \&"IO_LPT1\&" irq 7
 .Cd "lpt1 at isa? port" \&"IO_LPT2\&"
 .Sh DESCRIPTION
-This driver provides access to parallel ports.  The highest bit in the minor
-number selects whether to do polling or wait for interrupts.  If no IRQ is
+This driver provides access to parallel ports.  The bits in the minor
+number select various features of the driver.  If no IRQ is
 specified in the kernel configuration, only the polling device may be used.
+.Pp
+.Bl -column BIT "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
+.It Sy Pa Bit	Function
+.It 128	Use the interruptless driver. (polling)
+.It  64	Do not initialize the device on the port.
+.It  32	Automatic LF on CR.
+.El
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/lpt0
