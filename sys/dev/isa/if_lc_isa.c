@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.4 1997/10/20 18:43:15 thorpej Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.5 1997/11/17 03:34:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -78,6 +78,8 @@
 
 #include <dev/isa/isavar.h>
 
+extern struct cfdriver lc_cd;
+
 static int
 lemac_isa_probe(
     struct device *parent,
@@ -89,61 +91,69 @@ lemac_isa_probe(
     void *aux)
 {
     struct isa_attach_args * const ia = aux;
-    int irq;
-    bus_addr_t iobase;
-    bus_addr_t iolimit;
+#ifdef __BROKEN_INDIRECT_CONFIG
+    struct cfdata *cf = ((struct device *)match)->dv_cfdata;
+#else
+    struct cfdata *cf = match;
+#endif
+    int irq, rv = 0;
     bus_addr_t maddr;
     bus_addr_t msize;
     bus_space_handle_t memh;
     bus_space_handle_t ioh;
 
     /*
-     * Determine if we are probing for any card or a specific card.
+     * Disallow wildcarded i/o addresses.
      */
-    if (ia->ia_iobase == IOBASEUNK) {
-	iobase = LEMAC_IOBASE_LOW;
-	iolimit = LEMAC_IOBASE_HIGH;
-    } else if (ia->ia_iobase & (LEMAC_IOSIZE-1)) {
+    if (ia->ia_iobase == IOBASEUNK)
 	return 0;
-    } else {
-	iobase = ia->ia_iobase;
-	iolimit = ia->ia_iobase + LEMAC_IOSIZE;
-    }
 
-    for (; iobase < iolimit; iobase += LEMAC_IOSIZE) {
-	/*
-	 * Map the LEMACs port-space for the probe sequence.
-	 */
-	if (bus_space_map(ia->ia_iot, iobase, LEMAC_IOSIZE, 0, &ioh))
-	    continue;
+    /*
+     * Make sure this is a valid LEMAC address.
+     */
+    if (ia->ia_iobase & (LEMAC_IOSIZE - 1))
+	return 0;
 
-	/*
-	 * Read the Ethernet address from the EEPROM.
-	 * It must start with on the DEC OUIs and pass the
-	 * DEC ethernet checksum test.
-	 */
+    /*
+     * Map the LEMAC's port space for the probe sequence.
+     */
+    if (bus_space_map(ia->ia_iot, ia->ia_iobase, LEMAC_IOSIZE, 0, &ioh))
+	return 0;
 
-	if (lemac_port_check(ia->ia_iot, ioh)) {
-	    lemac_info_get(ia->ia_iot, ioh, &maddr, &msize, &irq);
-	    if (!bus_space_map(ia->ia_memt, maddr, msize, 0, &memh)) {
-		bus_space_unmap(ia->ia_memt, memh, msize);
-		if ((ia->ia_maddr == MADDRUNK || ia->ia_maddr == maddr)
-			&& (ia->ia_irq == IRQUNK || ia->ia_irq == irq)) {
-		    ia->ia_iobase = iobase;
-		    ia->ia_irq    = irq;
-		    ia->ia_iosize = LEMAC_IOSIZE;
-		    ia->ia_maddr  = maddr;
-		    ia->ia_msize  = msize;
-		    bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
-		    return 1;
-		}
-	    }
-	}
+    /*
+     * Read the Ethernet address from the EEPROM.
+     * It must start with one of the DEC OUIs and pass the
+     * DEC ethernet checksum test.
+     */
+    if (lemac_port_check(ia->ia_iot, ioh) == 0)
+	goto out;
 
-	bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
-    }
+    /*
+     * Get information about memory space and attempt to map it.
+     */
+    lemac_info_get(ia->ia_iot, ioh, &maddr, &msize, &irq);
+    if (ia->ia_maddr != maddr && ia->ia_maddr != MADDRUNK)
+	goto out;
+    if (bus_space_map(ia->ia_memt, maddr, msize, 0, &memh))
+	goto out;
+    bus_space_unmap(ia->ia_memt, memh, msize);
 
-    return 0;
+    /*
+     * Double-check IRQ configuration.
+     */
+    if (ia->ia_irq != irq && ia->ia_irq != IRQUNK)
+	printf("%s%d: overriding IRQ %d to %d\n", lc_cd.cd_name, cf->cf_unit,
+	       ia->ia_irq, irq);
+    ia->ia_irq = irq;
+
+    /*
+     * I guess we've found one.
+     */
+    rv = 1;
+
+ out:
+    bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
+    return rv;
 }
 
 static void
