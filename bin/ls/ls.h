@@ -33,35 +33,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ls.h	5.11 (Berkeley) 7/22/90
- *	$Id: ls.h,v 1.4 1993/08/01 18:59:31 mycroft Exp $
+ *	from: @(#)ls.h	5.18 (Berkeley) 6/28/92
+ *	$Id: ls.h,v 1.5 1993/08/07 03:57:00 mycroft Exp $
  */
 
-typedef struct _lsstruct {
-	char *name;			/* file name */
-	int len;			/* file name length */
-	struct stat lstat;		/* lstat(2) for file */
-} LS;
+#define NO_PRINT	1
 
-/*
- * overload -- we probably have to save blocks and/or maxlen with the lstat
- * array, so tabdir() stuffs it into unused fields in the first stat structure.
- * If there's ever a type larger than u_long, fix this.  Any calls to qsort
- * must save and restore the values.
- */
-#define	st_btotal	st_flags
-#define	st_maxlen	st_gen
-
-extern int errno;
+extern long blocksize;		/* block size units */
 
 extern int f_accesstime;	/* use time of last access */
-extern int f_group;		/* show group ownership of a file */
+extern int f_flags;		/* show flags associated with a file */
 extern int f_inode;		/* print inode */
-extern int f_kblocks;		/* print size in kilobytes */
 extern int f_longform;		/* long listing format */
 extern int f_sectime;		/* print the real time for all files */
-extern int f_singlecol;		/* use single column output */
 extern int f_size;		/* list size in short listing */
 extern int f_statustime;	/* use time of last mode change */
-extern int f_total;		/* if precede with "total" line */
 extern int f_type;		/* add type character for non-regular files */
+
+typedef struct {
+	FTSENT *list;
+	u_long btotal;
+	int bcfile;
+	int entries;
+	int maxlen;
+	int s_block;
+	int s_flags;
+	int s_group;
+	int s_inode;
+	int s_nlink;
+	int s_size;
+	int s_user;
+} DISPLAY;
+
+typedef struct {
+	char *user;
+	char *group;
+	char *flags;
+	char data[1];
+} NAMES;

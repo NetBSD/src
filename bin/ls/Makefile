@@ -1,9 +1,9 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:47:24 mycroft Exp $
+#	from: @(#)Makefile	5.4 (Berkeley) 3/1/92
+#	$Id: Makefile,v 1.5 1993/08/07 03:56:47 mycroft Exp $
 
 PROG=	ls
 SRCS=	cmp.c ls.c print.c util.c
-DPADD=	${LIBUTIL}
 LDADD=	-lutil
+DPADD=	${LIBUTIL}
 
 .include <bsd.prog.mk>
