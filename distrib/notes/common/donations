@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.10 1999/12/07 15:07:47 mason Exp $	
+.\"	$NetBSD: donations,v 1.11 1999/12/07 18:17:01 soren Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,9 +34,11 @@
 
 
 .Bd -unfilled -offset indent
+Steve Allen
 Jason Birnschein
 Mason Loring Bliss
 Jason Brazile
+Mark Brinicombe
 David Brownlee
 Simon Burge
 Dave Burgess
@@ -50,21 +52,31 @@ Charles D. Cranor
 Christopher G. Demetriou
 Scott Ellis
 Hubert Feyrer
+Castor Fu
 Greg Gingerich
+William Gnadt
+Michael Graff
 Guenther Grau
 Ross Harvey
 Charles M. Hannum
 Michael L. Hitch
+Kenneth Alan Hornstein
 Jordan K. Hubbard
+S\(/oren J\(/orvang
 Scott Kaplan
 Noah M. Keiserman
 John Kohl
 Chris Legrow
+Ted Lemon
 Neil J. McRae
 Perry E. Metzger
 Herb Peyerl
 Mike Price
 Dave Rand
+Michael Richardson
+Heiko W. Rupp
+Brad Salai
+Chuck Silvers
 Thor Lancelot Simon
 Bill Sommerfeld
 Paul Southworth
@@ -72,7 +84,9 @@ Ted Spradley
 Kimmo Suominen
 Jason R. Thorpe
 Steve Wadlow
+Krister Walfridsson
 Jim Wise
+Christos Zoulas
 .Ed
 
 .Bd -unfilled -offset indent
@@ -80,7 +94,9 @@ AboveNet Communications, Inc.
 Advanced System Products, Inc.
 Avalon Computer Systems
 Bay Area Internet Solutions
+Brains Corporation, Japan
 Canada Connect Corporation
+Co-operative Research Centre for Enterprise Distributed Systems Technology
 Demon Internet, UK
 Digital Equipment Corporation
 Easynet, UK
