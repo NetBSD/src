@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.15 2000/10/10 20:24:54 is Exp $	*/
+/*	$NetBSD: show.c,v 1.16 2001/01/27 04:26:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.15 2000/10/10 20:24:54 is Exp $");
+__RCSID("$NetBSD: show.c,v 1.16 2001/01/27 04:26:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ static const struct bits bits[] = {
 	{ RTF_XRESOLVE,	'X' },
 	{ RTF_LLINFO,	'L' },
 	{ RTF_STATIC,	'S' },
+	{ RTF_BLACKHOLE, 'B' },
 	{ RTF_PROTO1,	'1' },
 	{ RTF_PROTO2,	'2' },
 	{ 0 }
