@@ -1,4 +1,4 @@
-/*	$NetBSD: bt8xx.h,v 1.2 2000/05/07 03:01:59 wiz Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.3 2000/12/30 16:52:36 wiz Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
@@ -34,13 +34,15 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/i386/include/ioctl_meteor.h,v 1.11 1999/12/29 04:33:02 peter Exp
  */
 /*
  *	ioctl constants for Matrox Meteor Capture card.
  */
 
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/types.h>
 #endif
 #include <sys/ioccom.h>
@@ -190,7 +192,7 @@ struct meteor_mem {
 /*
  * extensions to ioctl_meteor.h for the bt848 cards
  *
- * FreeBSD: src/sys/i386/include/ioctl_bt848.h,v 1.24 1999/08/28 00:44:16 peter Exp
+ * FreeBSD: src/sys/i386/include/ioctl_bt848.h,v 1.27 2000/10/26 16:41:48 roger Exp
  */
 
 
@@ -335,6 +337,16 @@ struct eeProm {
  * b31-b24:  1 = write, 0 = read 
  */
 #define BT848_I2CWR     _IOWR('x', 57, u_long)    /* i2c read-write */
+
+struct bktr_msp_control {
+	unsigned char function;
+	unsigned int  address;
+	unsigned int  data;
+};
+
+#define BT848_MSP_RESET _IO('x', 76)				/* MSP chip reset */
+#define BT848_MSP_READ  _IOWR('x', 77, struct bktr_msp_control)	/* MSP chip reset */
+#define BT848_MSP_WRITE _IOWR('x', 78, struct bktr_msp_control)	/* MSP chip reset */
 
 /* Support for radio tuner */
 #define RADIO_SETMODE	 _IOW('x', 58, unsigned int)  /* set radio modes */
