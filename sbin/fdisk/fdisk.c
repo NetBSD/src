@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.48 2001/11/07 14:50:32 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.49 2002/03/04 04:22:22 dbj Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.48 2001/11/07 14:50:32 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.49 2002/03/04 04:22:22 dbj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -229,7 +229,9 @@ struct part_type {
 	{0xA5, "FreeBSD or 386BSD or old NetBSD"},
 	{0xA6, "OpenBSD"},
 	{0xA7, "NeXTSTEP 486"},
+	{0xa8, "Apple UFS"},
 	{0xa9, "NetBSD"},
+	{0xab, "Apple Boot"},
 	{0xb1, reserved},
 	{0xb3, reserved},
 	{0xb4, reserved},
