@@ -1,4 +1,4 @@
-/*	$NetBSD: statfs.c,v 1.1 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: statfs.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 #define __LIBC12_SOURCE__
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mount.h>
