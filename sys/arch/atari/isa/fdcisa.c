@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.7 2003/09/25 01:12:43 mycroft Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.8 2003/09/25 19:06:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.7 2003/09/25 01:12:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.8 2003/09/25 19:06:19 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,5 +224,5 @@ void		*aux;
 	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, fdcintr, fdc);
 
-	config_interrupts(self, fdcattach);
+	fdcattach(fdc);
 }

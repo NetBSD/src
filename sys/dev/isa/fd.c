@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48 2003/09/25 01:05:06 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.49 2003/09/25 19:06:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2003/09/25 01:05:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2003/09/25 19:06:19 mycroft Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -200,6 +200,7 @@ const struct fd_type fd_types[] = {
 };
 #endif /* defined(atari) */
 
+void fdcfinishattach __P((struct device *));
 int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
@@ -281,19 +282,9 @@ fdprint(aux, fdc)
 }
 
 void
-fdcattach(self)
-	struct device *self;
+fdcattach(fdc)
+	struct fdc_softc *fdc;
 {
-	struct fdc_softc *fdc = (void *)self;
-	struct fdc_attach_args fa;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-#if defined(i386)
-	int type;
-#endif
-
-	iot = fdc->sc_iot;
-	ioh = fdc->sc_ioh;
 	callout_init(&fdc->sc_timo_ch);
 	callout_init(&fdc->sc_intr_ch);
 
@@ -314,7 +305,22 @@ fdcattach(self)
 		    fdc->sc_dev.dv_xname);
 		return;
 	}
+
+	config_interrupts(&fdc->sc_dev, fdcfinishattach);
+}
  
+void
+fdcfinishattach(self)
+	struct device *self;
+{
+	struct fdc_softc *fdc = (void *)self;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
+	struct fdc_attach_args fa;
+#if defined(i386)
+	int type;
+#endif
+
 	/* 
 	 * Reset the controller to get it into a known state. Not all
 	 * probes necessarily need do this to discover the controller up
