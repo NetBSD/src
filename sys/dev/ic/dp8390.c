@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.8 1997/11/02 00:23:54 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.9 1997/11/02 06:18:27 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1195,8 +1195,9 @@ dp8390_write_mbuf(sc, m, buf)
 		data = mtod(m, u_char *);
 		len = m->m_len;
 		if (len > 0) {
-			totlen += len;
 			bus_space_write_region_1(buft, bufh, buf, data, len);
+			totlen += len;
+			buf += len;
 		}
 	}
 
