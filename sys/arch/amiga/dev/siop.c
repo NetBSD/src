@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.13 1994/06/14 01:01:56 chopps Exp $
+ *	$Id: siop.c,v 1.14 1994/06/22 16:20:53 chopps Exp $
  */
 
 /*
@@ -80,126 +80,133 @@ int  siopintr __P((struct siop_softc *));
 
 /* 53C710 script */
 unsigned long scripts[] = {
-	0x47000000, 0x00000298,	/* 000 -   0 */
-	0x838b0000, 0x000000d0,	/* 008 -   8 */
-	0x7a1b1000, 0x00000000,	/* 010 -  16 */
-	0x828a0000, 0x00000088,	/* 018 -  24 */
-	0x9e020000, 0x0000ff01,	/* 020 -  32 */
-	0x72350000, 0x00000000,	/* 028 -  40 */
-	0x808c0000, 0x00000048,	/* 030 -  48 */
-	0x58000008, 0x00000000,	/* 038 -  56 */
-	0x1e000024, 0x00000024,	/* 040 -  64 */
-	0x838b0000, 0x00000090,	/* 048 -  72 */
-	0x1f00002c, 0x0000002c,	/* 050 -  80 */
-	0x838b0000, 0x00000080,	/* 058 -  88 */
-	0x868a0000, 0xffffffd0,	/* 060 -  96 */
-	0x838a0000, 0x00000070,	/* 068 - 104 */
-	0x878a0000, 0x00000120,	/* 070 - 112 */
-	0x80880000, 0x00000028,	/* 078 - 120 */
-	0x1e000004, 0x00000004,	/* 080 - 128 */
-	0x838b0000, 0x00000050,	/* 088 - 136 */
-	0x868a0000, 0xffffffe8,	/* 090 - 144 */
-	0x838a0000, 0x00000040,	/* 098 - 152 */
-	0x878a0000, 0x000000f0,	/* 0a0 - 160 */
-	0x9a020000, 0x0000ff02,	/* 0a8 - 168 */
-	0x1a00000c, 0x0000000c,	/* 0b0 - 176 */
-	0x878b0000, 0x00000130,	/* 0b8 - 184 */
-	0x838a0000, 0x00000018,	/* 0c0 - 192 */
-	0x818a0000, 0x000000b0,	/* 0c8 - 200 */
-	0x808a0000, 0x00000080,	/* 0d0 - 208 */
-	0x98080000, 0x0000ff03,	/* 0d8 - 216 */
-	0x1b000014, 0x00000014,	/* 0e0 - 224 */
-	0x72090000, 0x00000000,	/* 0e8 - 232 */
-	0x6a340000, 0x00000000,	/* 0f0 - 240 */
-	0x9f030000, 0x0000ff04,	/* 0f8 - 248 */
-	0x1f00001c, 0x0000001c,	/* 100 - 256 */
-	0x98040000, 0x0000ff26,	/* 108 - 264 */
-	0x60000040, 0x00000000,	/* 110 - 272 */
-	0x48000000, 0x00000000,	/* 118 - 280 */
-	0x7c1bef00, 0x00000000,	/* 120 - 288 */
-	0x72340000, 0x00000000,	/* 128 - 296 */
-	0x980c0002, 0x0000fffc,	/* 130 - 304 */
-	0x980c0008, 0x0000fffb,	/* 138 - 312 */
-	0x980c0018, 0x0000fffd,	/* 140 - 320 */
-	0x98040000, 0x0000fffe,	/* 148 - 328 */
-	0x98080000, 0x0000ff00,	/* 150 - 336 */
-	0x18000034, 0x00000034,	/* 158 - 344 */
-	0x808b0000, 0x000001c0,	/* 160 - 352 */
-	0x838b0000, 0xffffff70,	/* 168 - 360 */
-	0x878a0000, 0x000000d0,	/* 170 - 368 */
-	0x98080000, 0x0000ff05,	/* 178 - 376 */
-	0x19000034, 0x00000034,	/* 180 - 384 */
-	0x818b0000, 0x00000160,	/* 188 - 392 */
-	0x80880000, 0xffffffd0,	/* 190 - 400 */
-	0x1f00001c, 0x0000001c,	/* 198 - 408 */
-	0x808c0001, 0x00000018,	/* 1a0 - 416 */
-	0x980c0002, 0x0000ff08,	/* 1a8 - 424 */
-	0x808c0004, 0x00000020,	/* 1b0 - 432 */
-	0x98080000, 0x0000ff06,	/* 1b8 - 440 */
-	0x60000040, 0x00000000,	/* 1c0 - 448 */
-	0x1f00002c, 0x0000002c,	/* 1c8 - 456 */
-	0x98080000, 0x0000ff07,	/* 1d0 - 464 */
-	0x60000040, 0x00000000,	/* 1d8 - 472 */
-	0x48000000, 0x00000000,	/* 1e0 - 480 */
-	0x98080000, 0x0000ff09,	/* 1e8 - 488 */
-	0x1f00001c, 0x0000001c,	/* 1f0 - 496 */
-	0x808c0001, 0x00000018,	/* 1f8 - 504 */
-	0x980c0002, 0x0000ff10,	/* 200 - 512 */
-	0x808c0004, 0x00000020,	/* 208 - 520 */
-	0x98080000, 0x0000ff11,	/* 210 - 528 */
-	0x60000040, 0x00000000,	/* 218 - 536 */
-	0x1f00002c, 0x0000002c,	/* 220 - 544 */
-	0x98080000, 0x0000ff12,	/* 228 - 552 */
-	0x60000040, 0x00000000,	/* 230 - 560 */
-	0x48000000, 0x00000000,	/* 238 - 568 */
-	0x98080000, 0x0000ff13,	/* 240 - 576 */
-	0x1f00001c, 0x0000001c,	/* 248 - 584 */
-	0x808c0001, 0x00000018,	/* 250 - 592 */
-	0x980c0002, 0x0000ff14,	/* 258 - 600 */
-	0x808c0004, 0x00000020,	/* 260 - 608 */
-	0x98080000, 0x0000ff15,	/* 268 - 616 */
-	0x60000040, 0x00000000,	/* 270 - 624 */
-	0x1f00002c, 0x0000002c,	/* 278 - 632 */
-	0x98080000, 0x0000ff16,	/* 280 - 640 */
-	0x60000040, 0x00000000,	/* 288 - 648 */
-	0x48000000, 0x00000000,	/* 290 - 656 */
-	0x98080000, 0x0000ff17,	/* 298 - 664 */
-	0x54000000, 0x00000040,	/* 2a0 - 672 */
-	0x9f030000, 0x0000ff18,	/* 2a8 - 680 */
-	0x1f00001c, 0x0000001c,	/* 2b0 - 688 */
-	0x990b0000, 0x0000ff19,	/* 2b8 - 696 */
-	0x980a0000, 0x0000ff20,	/* 2c0 - 704 */
-	0x9f0a0000, 0x0000ff21,	/* 2c8 - 712 */
-	0x9b0a0000, 0x0000ff22,	/* 2d0 - 720 */
-	0x9e0a0000, 0x0000ff23,	/* 2d8 - 728 */
-	0x98080000, 0x0000ff24,	/* 2e0 - 736 */
-	0x98080000, 0x0000ff25,	/* 2e8 - 744 */
-	0x76100800, 0x00000000,	/* 2f0 - 752 */
-	0x80840700, 0x00000008,	/* 2f8 - 760 */
-	0x7e110100, 0x00000000,	/* 300 - 768 */
-	0x6a100000, 0x00000000,	/* 308 - 776 */
-	0x19000034, 0x00000034,	/* 310 - 784 */
-	0x818b0000, 0xffffffd0,	/* 318 - 792 */
-	0x98080000, 0x0000ff27,	/* 320 - 800 */
-	0x76100800, 0x00000000,	/* 328 - 808 */
-	0x80840700, 0x00000008,	/* 330 - 816 */
-	0x7e110100, 0x00000000,	/* 338 - 824 */
-	0x6a100000, 0x00000000,	/* 340 - 832 */
-	0x18000034, 0x00000034,	/* 348 - 840 */
-	0x808b0000, 0xffffffd0,	/* 350 - 848 */
-	0x98080000, 0x0000ff27	/* 358 - 856 */
+	0x47000000, 0x000002d0,			/* 000 -   0 */
+	0x838b0000, 0x000000d0,			/* 008 -   8 */
+	0x7a1b1000, 0x00000000,			/* 010 -  16 */
+	0x828a0000, 0x00000088,			/* 018 -  24 */
+	0x9e020000, 0x0000ff01,			/* 020 -  32 */
+	0x72350000, 0x00000000,			/* 028 -  40 */
+	0x808c0000, 0x00000048,			/* 030 -  48 */
+	0x58000008, 0x00000000,			/* 038 -  56 */
+	0x1e000024, 0x00000024,			/* 040 -  64 */
+	0x838b0000, 0x00000090,			/* 048 -  72 */
+	0x1f00002c, 0x0000002c,			/* 050 -  80 */
+	0x838b0000, 0x00000080,			/* 058 -  88 */
+	0x868a0000, 0xffffffd0,			/* 060 -  96 */
+	0x838a0000, 0x00000070,			/* 068 - 104 */
+	0x878a0000, 0x00000158,			/* 070 - 112 */
+	0x80880000, 0x00000028,			/* 078 - 120 */
+	0x1e000004, 0x00000004,			/* 080 - 128 */
+	0x838b0000, 0x00000050,			/* 088 - 136 */
+	0x868a0000, 0xffffffe8,			/* 090 - 144 */
+	0x838a0000, 0x00000040,			/* 098 - 152 */
+	0x878a0000, 0x00000128,			/* 0a0 - 160 */
+	0x9a020000, 0x0000ff02,			/* 0a8 - 168 */
+	0x1a00000c, 0x0000000c,			/* 0b0 - 176 */
+	0x878b0000, 0x00000168,			/* 0b8 - 184 */
+	0x838a0000, 0x00000018,			/* 0c0 - 192 */
+	0x818a0000, 0x000000e8,			/* 0c8 - 200 */
+	0x808a0000, 0x000000b8,			/* 0d0 - 208 */
+	0x98080000, 0x0000ff03,			/* 0d8 - 216 */
+	0x1b000014, 0x00000014,			/* 0e0 - 224 */
+	0x72090000, 0x00000000,			/* 0e8 - 232 */
+	0x6a340000, 0x00000000,			/* 0f0 - 240 */
+	0x9f030000, 0x0000ff04,			/* 0f8 - 248 */
+	0x1f00001c, 0x0000001c,			/* 100 - 256 */
+	0x808c0007, 0x00000050,			/* 108 - 264 */
+	0x98040000, 0x0000ff26,			/* 110 - 272 */
+	0x60000040, 0x00000000,			/* 118 - 280 */
+	0x48000000, 0x00000000,			/* 120 - 288 */
+	0x7c1bef00, 0x00000000,			/* 128 - 296 */
+	0x72340000, 0x00000000,			/* 130 - 304 */
+	0x980c0002, 0x0000fffc,			/* 138 - 312 */
+	0x980c0008, 0x0000fffb,			/* 140 - 320 */
+	0x980c0018, 0x0000fffd,			/* 148 - 328 */
+	0x98040000, 0x0000fffe,			/* 150 - 336 */
+	0x98080000, 0x0000ff00,			/* 158 - 344 */
+	0x60000008, 0x00000000,			/* 160 - 352 */
+	0x98080000, 0x0000ff26,			/* 168 - 360 */
+	0x60000040, 0x00000000,			/* 170 - 368 */
+	0x828b0000, 0xffffff28,			/* 178 - 376 */
+	0x838b0000, 0xffffff58,			/* 180 - 384 */
+	0x878b0000, 0xffffff68,			/* 188 - 392 */
+	0x18000034, 0x00000034,			/* 190 - 400 */
+	0x808b0000, 0x000001c0,			/* 198 - 408 */
+	0x838b0000, 0xffffff38,			/* 1a0 - 416 */
+	0x878a0000, 0x000000d0,			/* 1a8 - 424 */
+	0x98080000, 0x0000ff05,			/* 1b0 - 432 */
+	0x19000034, 0x00000034,			/* 1b8 - 440 */
+	0x818b0000, 0x00000160,			/* 1c0 - 448 */
+	0x80880000, 0xffffffd0,			/* 1c8 - 456 */
+	0x1f00001c, 0x0000001c,			/* 1d0 - 464 */
+	0x808c0001, 0x00000018,			/* 1d8 - 472 */
+	0x980c0002, 0x0000ff08,			/* 1e0 - 480 */
+	0x808c0004, 0x00000020,			/* 1e8 - 488 */
+	0x98080000, 0x0000ff06,			/* 1f0 - 496 */
+	0x60000040, 0x00000000,			/* 1f8 - 504 */
+	0x1f00002c, 0x0000002c,			/* 200 - 512 */
+	0x98080000, 0x0000ff07,			/* 208 - 520 */
+	0x60000040, 0x00000000,			/* 210 - 528 */
+	0x48000000, 0x00000000,			/* 218 - 536 */
+	0x98080000, 0x0000ff09,			/* 220 - 544 */
+	0x1f00001c, 0x0000001c,			/* 228 - 552 */
+	0x808c0001, 0x00000018,			/* 230 - 560 */
+	0x980c0002, 0x0000ff10,			/* 238 - 568 */
+	0x808c0004, 0x00000020,			/* 240 - 576 */
+	0x98080000, 0x0000ff11,			/* 248 - 584 */
+	0x60000040, 0x00000000,			/* 250 - 592 */
+	0x1f00002c, 0x0000002c,			/* 258 - 600 */
+	0x98080000, 0x0000ff12,			/* 260 - 608 */
+	0x60000040, 0x00000000,			/* 268 - 616 */
+	0x48000000, 0x00000000,			/* 270 - 624 */
+	0x98080000, 0x0000ff13,			/* 278 - 632 */
+	0x1f00001c, 0x0000001c,			/* 280 - 640 */
+	0x808c0001, 0x00000018,			/* 288 - 648 */
+	0x980c0002, 0x0000ff14,			/* 290 - 656 */
+	0x808c0004, 0x00000020,			/* 298 - 664 */
+	0x98080000, 0x0000ff15,			/* 2a0 - 672 */
+	0x60000040, 0x00000000,			/* 2a8 - 680 */
+	0x1f00002c, 0x0000002c,			/* 2b0 - 688 */
+	0x98080000, 0x0000ff16,			/* 2b8 - 696 */
+	0x60000040, 0x00000000,			/* 2c0 - 704 */
+	0x48000000, 0x00000000,			/* 2c8 - 712 */
+	0x98080000, 0x0000ff17,			/* 2d0 - 720 */
+	0x54000000, 0x00000040,			/* 2d8 - 728 */
+	0x9f030000, 0x0000ff18,			/* 2e0 - 736 */
+	0x1f00001c, 0x0000001c,			/* 2e8 - 744 */
+	0x990b0000, 0x0000ff19,			/* 2f0 - 752 */
+	0x980a0000, 0x0000ff20,			/* 2f8 - 760 */
+	0x9f0a0000, 0x0000ff21,			/* 300 - 768 */
+	0x9b0a0000, 0x0000ff22,			/* 308 - 776 */
+	0x9e0a0000, 0x0000ff23,			/* 310 - 784 */
+	0x98080000, 0x0000ff24,			/* 318 - 792 */
+	0x98080000, 0x0000ff25,			/* 320 - 800 */
+	0x76100800, 0x00000000,			/* 328 - 808 */
+	0x80840700, 0x00000008,			/* 330 - 816 */
+	0x7e110100, 0x00000000,			/* 338 - 824 */
+	0x6a100000, 0x00000000,			/* 340 - 832 */
+	0x19000034, 0x00000034,			/* 348 - 840 */
+	0x818b0000, 0xffffffd0,			/* 350 - 848 */
+	0x98080000, 0x0000ff27,			/* 358 - 856 */
+	0x76100800, 0x00000000,			/* 360 - 864 */
+	0x80840700, 0x00000008,			/* 368 - 872 */
+	0x7e110100, 0x00000000,			/* 370 - 880 */
+	0x6a100000, 0x00000000,			/* 378 - 888 */
+	0x18000034, 0x00000034,			/* 380 - 896 */
+	0x808b0000, 0xffffffd0,			/* 388 - 904 */
+	0x98080000, 0x0000ff27	/* 390 - 912 */
 };
 
 #define	Ent_msgout	0x00000018
-#define	Ent_cmd		0x000000a8
+#define	Ent_cmd	0x000000a8
 #define	Ent_status	0x000000e0
 #define	Ent_msgin	0x000000f8
-#define	Ent_dataout	0x00000158
-#define	Ent_datain	0x00000180
+#define	Ent_dataout	0x00000190
+#define	Ent_datain	0x000001b8
 
 /* default to not inhibit sync negotiation on any drive */
 /* XXXX - unit 2 inhibits sync for my WangTek tape drive - mlh */
-u_char siop_inhibit_sync[8] = { 0, 0, 1, 0, 0, 0, 0 }; /* initialize, so patchable */
+u_char siop_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0 }; /* initialize, so patchable */
 int siop_no_dma = 0;
 
 int siop_reset_delay = 2000;	/* delay after reset, in milleseconds */
@@ -252,6 +259,7 @@ int	siop_debug = 0;
 int	siopsync_debug = 0;
 int	siopdma_hits = 0;
 int	siopdma_misses = 0;
+int	siopchain_ints = 0;
 #endif
 
 
@@ -542,8 +550,10 @@ siopinitialize(dev)
 	struct siop_softc *dev;
 {
 	/*
-	 * check that scripts is on a long word boundary
-	 * and that DS is on a long word boundary
+	 * Need to check that scripts is on a long word boundary
+	 * and that DS is on a long word boundary.
+	 * Also need to verify that dev doesn't non-contiguous
+	 * physical pages.
 	 */
 	dev->sc_scriptspa = kvtop(scripts);
 	dev->sc_dspa = kvtop(&dev->sc_ds);
@@ -566,7 +576,7 @@ siopreset(dev)
 	if (dev->sc_flags & SIOP_ALIVE)
 		siopabort(dev, regs, "reset");
 		
-	printf("\n%s: ", dev->sc_dev.dv_xname);		/* XXXX */
+	printf("%s: ", dev->sc_dev.dv_xname);		/* XXXX */
 
 	s = splbio();
 	my_id = 7;
@@ -644,8 +654,7 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 	dev->sc_ds.msgbuf = (char *) dev->sc_msgpa;
 	dev->sc_ds.sdtrolen = 0;
 	dev->sc_ds.sdtrilen = 0;
-	dev->sc_ds.chain[0].datalen = len;
-	dev->sc_ds.chain[0].databuf = (char *) kvtop(buf);
+	bzero(&dev->sc_ds.chain, sizeof (dev->sc_ds.chain));
 
 	if (dev->sc_sync[target].state == SYNC_START) {
 		if (siop_inhibit_sync[target]) {
@@ -666,7 +675,7 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 			dev->sc_msg[6] = SIOP_MAX_OFFSET;
 			dev->sc_ds.sdtrolen = 6;
 			dev->sc_ds.sdtrilen = 6;
-			dev->sc_ds.sdtrobuf = dev->sc_ds.sdtribuf = (char *) kvtop(dev->sc_msg + 1);
+			dev->sc_ds.sdtrobuf = dev->sc_ds.sdtribuf = (char *) (dev->sc_msgpa + 1);
 			dev->sc_sync[target].state = SYNC_SENT;
 #ifdef DEBUG
 			if (siopsync_debug)
@@ -702,10 +711,13 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 			    dev->sc_ds.chain[nchain].datalen;
 			dev->sc_ds.chain[nchain].datalen = tcount;
 #ifdef DEBUG
-			++siopdma_misses;
+			if (nchain)	/* Don't count miss on first one */
+				++siopdma_misses;
 #endif
 		}
 		++nchain;
+		if (nchain < DMAMAXIO)	/* force error if buffer too small */
+			dev->sc_ds.chain[nchain].datalen = 0;
 	}
 #ifdef DEBUG
 	if (nchain != 1 && len != 0 && siop_debug & 3) {
@@ -723,14 +735,11 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 	else
 		regs->siop_scratch = regs->siop_scratch & ~0xff00;
 	regs->siop_dsa = dev->sc_dspa;
-#if 0
-	DCIS();				/* push data cache */
-#else
+	/* push data case on things the 53c710 needs to access */
 	dma_cachectl (dev, sizeof (struct siop_softc));
 	dma_cachectl (cbuf, clen);
 	if (buf != NULL && len != 0)
 		dma_cachectl (buf, len);
-#endif
 	regs->siop_dsp = dev->sc_scriptspa;
 }
 
@@ -776,6 +785,9 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 				    dev->sc_msg[1], dev->sc_msg[2], dev->sc_msg[3],
 				    dev->sc_msg[4], dev->sc_msg[5], dev->sc_msg[6]);
 #endif
+			if (dev->sc_msg[0] == MSG_REJECT)
+				printf ("target %d sync request was rejected\n",
+				    target);
 			dev->sc_sync[target].state = SYNC_DONE;
 			dev->sc_sync[target].period = 0;
 			dev->sc_sync[target].offset = 0;
@@ -810,7 +822,7 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 			}
 		}
 #if 0
-		DCIAS(kvtop(&dev->sc_stat));	/* XXX */
+		DCIAS(dev->sc_statuspa);	/* XXX */
 #else
 		dma_cachectl(&dev->sc_stat[0], 1);
 #endif
@@ -875,6 +887,7 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 		if (siop_debug & 3)
 			printf ("DMA chaining completed: dsa %x dnad %x addr %x\n",
 				regs->siop_dsa,	regs->siop_dnad, regs->siop_addr);
+		++siopchain_ints;
 #endif
 		regs->siop_dsa = dev->sc_dspa;
 		regs->siop_dsp = dev->sc_scriptspa + Ent_status;
@@ -897,6 +910,8 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 			regs->siop_dsp = dev->sc_scriptspa + Ent_msgout;
 			return (0);
 		}
+		regs->siop_dcntl |= SIOP_DCNTL_STD;
+		return (0);
 	}
 	if ((dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff13) ||
 	    sstat0 & SIOP_SSTAT0_UDC) {
@@ -937,7 +952,8 @@ bad_phase:
 /*
  * temporary panic for unhandled conditions
  * displays various things about the 53C710 status and registers
- * then panics
+ * then panics.
+ * XXXX need to clean this up to print out the info, reset, and continue
  */
 printf ("siopchkintr: target %x ds %x\n", target, &dev->sc_ds);
 printf ("scripts %x ds %x regs %x dsp %x dcmd %x\n", dev->sc_scriptspa,
@@ -1002,9 +1018,8 @@ siopicmd(dev, target, cbuf, clen, buf, len)
 			if (--i <= 0) {
 				printf ("waiting: tgt %d cmd %02x sbcl %02x dsp %x (+%x) dcmd %x ds %x\n",
 				    target, *((char *)cbuf),
-				    regs->siop_dsp - dev->sc_scriptspa,
 				    regs->siop_sbcl, regs->siop_dsp,
-				    regs->siop_dsp - kvtop(scripts),
+				    regs->siop_dsp - dev->sc_scriptspa,
 				    *((long *)&regs->siop_dcmd), &dev->sc_ds);
 				i = siop_cmd_wait << 2;
 				/* XXXX need an upper limit and reset */
