@@ -36,6 +36,9 @@
  *	@(#)nfsdiskless.h	7.1 (Berkeley) 3/4/91
  */
 
+#ifndef _NFS_NFSDISKLESS_H_
+#define _NFS_NFSDISKLESS_H_
+
 /*
  * Structure that must be initialized for a diskless nfs client.
  * This structure is used by nfs_mountroot() to set up the root and swap
@@ -56,3 +59,5 @@ struct nfs_diskless {
 	struct sockaddr	root_saddr;	/* Address of root server */
 	char		*root_hostnam;	/* Host name for mount pt */
 };
+
+#endif /* !_NFS_NFSDISKLESS_H_ */
