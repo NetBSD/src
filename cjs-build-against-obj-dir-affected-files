@@ -27,6 +27,7 @@ lib/csu/ns32k/Makefile
 lib/csu/powerpc/Makefile
 lib/csu/sparc/Makefile
 lib/csu/vax/Makefile
+lib/libc/sys/Makefile.inc
 lib/libposix/Makefile
 lib/libposix/sys/Makefile.inc
 libexec/ld.elf_so/Makefile
