@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.18 2004/10/27 19:59:24 dsl Exp $	*/
+/*	$NetBSD: emacs.c,v 1.19 2004/10/28 21:14:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.18 2004/10/27 19:59:24 dsl Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.19 2004/10/28 21:14:52 dsl Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -290,8 +290,8 @@ em_upper_case(EditLine *el, int c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (islower(*cp & 0xff))
-			*cp = toupper(*cp & 0xff);
+		if (islower((unsigned char)*cp))
+			*cp = toupper((unsigned char)*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -314,16 +314,16 @@ em_capitol_case(EditLine *el, int c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++) {
-		if (isalpha(*cp & 0xff)) {
-			if (islower(*cp & 0xff))
-				*cp = toupper(*cp & 0xff);
+		if (isalpha((unsigned char)*cp)) {
+			if (islower((unsigned char)*cp))
+				*cp = toupper((unsigned char)*cp);
 			cp++;
 			break;
 		}
 	}
 	for (; cp < ep; cp++)
-		if (isupper(*cp & 0xff))
-			*cp = tolower(*cp & 0xff);
+		if (isupper((unsigned char)*cp))
+			*cp = tolower((unsigned char)*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -346,8 +346,8 @@ em_lower_case(EditLine *el, int c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (isupper(*cp & 0xff))
-			*cp = tolower(*cp & 0xff);
+		if (isupper((unsigned char)*cp))
+			*cp = tolower((unsigned char)*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)

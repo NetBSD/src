@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.11 2004/10/27 19:59:24 dsl Exp $	*/
+/*	$NetBSD: put.c,v 1.12 2004/10/28 21:14:52 dsl Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: put.c,v 1.11 2004/10/27 19:59:24 dsl Exp $");
+__RCSID("$NetBSD: put.c,v 1.12 2004/10/28 21:14:52 dsl Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -2271,8 +2271,8 @@ static void standard(char *word)
   {
     if (!isascii (*word))
       break;
-    if (islower (*word & 0xff))
-      *word = toupper (*word & 0xff);
+    if (islower ((unsigned char)*word))
+      *word = toupper ((unsigned char)*word);
     if (*word == '1')
       *word = 'L';
     if (*word == '0')

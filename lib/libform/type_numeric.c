@@ -1,4 +1,4 @@
-/*	$NetBSD: type_numeric.c,v 1.7 2004/10/27 19:59:24 dsl Exp $	*/
+/*	$NetBSD: type_numeric.c,v 1.8 2004/10/28 21:14:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_numeric.c,v 1.7 2004/10/27 19:59:24 dsl Exp $");
+__RCSID("$NetBSD: type_numeric.c,v 1.8 2004/10/28 21:14:52 dsl Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -132,14 +132,14 @@ numeric_check_field(FIELD *field, char *args)
 	if ((buf[cur] == '-') || (buf[cur] == '+'))
 		cur++;
 	
-	while(isdigit(buf[cur] & 0xff))
+	while(isdigit((unsigned char)buf[cur]))
 		cur++;
 
 	  /* if not at end of string then check for decimal... */
 	if ((buf[cur] != '\0') && (buf[cur] == '.')) {
 		cur++;
 		  /* check for more digits now.... */
-		while(isdigit(buf[cur] & 0xff))
+		while(isdigit((unsigned char)buf[cur]))
 			cur++;
 	}
 	
@@ -158,11 +158,11 @@ numeric_check_field(FIELD *field, char *args)
 			return FALSE;
 			
 		  /* we expect a digit now */
-		if (!isdigit(buf[cur] & 0xff))
+		if (!isdigit((unsigned char)buf[cur]))
 			return FALSE;
 			
 		  /* skip digits for the final time */
-		while(isdigit(buf[cur] & 0xff))
+		while(isdigit((unsigned char)buf[cur]))
 			cur++;
 	}
 			
