@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.2 2003/10/02 16:05:33 christos Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.3 2003/10/31 20:54:18 mycroft Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.2 2003/10/02 16:05:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.3 2003/10/31 20:54:18 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -76,15 +76,13 @@ acpi_find_quirks(void)
 {
 	int i, nquirks;
 	struct acpi_quirk *aqp;
-	ACPI_TABLE_HEADER *ap;
 
-	ap = &AcpiGbl_XSDT->Header;
 	nquirks = sizeof(acpi_quirks) / sizeof(struct acpi_quirk);
 
 	for (i = 0; i < nquirks; i++) {
 		aqp = &acpi_quirks[i];
-		if (!strncmp(aqp->aq_oemid, ap->OemId, strlen(aqp->aq_oemid)) &&
-		    aqp->aq_oemrev == ap->OemRevision)
+		if (!strncmp(aqp->aq_oemid, AcpiGbl_XSDT->OemId, strlen(aqp->aq_oemid)) &&
+		    aqp->aq_oemrev == AcpiGbl_XSDT->OemRevision)
 			return aqp->aq_quirks;
 	}
 	return 0;
