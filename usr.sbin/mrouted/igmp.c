@@ -7,13 +7,9 @@
  * Leland Stanford Junior University.
  *
  *
- * from: Id: igmp.c,v 1.5 1993/06/23 18:47:17 pavel Exp
- *      $Id: igmp.c,v 1.2 1994/06/09 16:05:28 brezak Exp $
+ * $Id: igmp.c,v 1.3 1995/06/01 02:25:53 mycroft Exp $
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: igmp.c,v 1.2 1994/06/09 16:05:28 brezak Exp $";
-#endif
 
 #include "defs.h"
 
@@ -21,12 +17,13 @@ static char rcsid[] = "$Id: igmp.c,v 1.2 1994/06/09 16:05:28 brezak Exp $";
 /*
  * Exported variables.
  */
-char		recv_buf[MAX_IP_PACKET_LEN]; /* input packet buffer         */
-char		send_buf[MAX_IP_PACKET_LEN]; /* output packet buffer        */
+char		*recv_buf; 		     /* input packet buffer         */
+char		*send_buf; 		     /* output packet buffer        */
 int		igmp_socket;		     /* socket for all network I/O  */
-u_long		allhosts_group;		     /* allhosts  addr in net order */
-u_long		dvmrp_group;		     /* DVMRP grp addr in net order */
-
+u_int32_t	allhosts_group;		     /* All hosts addr in net order */
+u_int32_t	allrtrs_group;		     /* All-Routers "  in net order */
+u_int32_t	dvmrp_group;		     /* DVMRP grp addr in net order */
+u_int32_t	dvmrp_genid;		     /* IGMP generation id          */
 
 /*
  * Open and initialize the igmp socket, and fill in the non-changing
@@ -35,6 +32,9 @@ u_long		dvmrp_group;		     /* DVMRP grp addr in net order */
 void init_igmp()
 {
     struct ip *ip;
+
+    recv_buf = malloc(RECV_BUF_SIZE);
+    send_buf = malloc(RECV_BUF_SIZE);
 
     if ((igmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0) 
 	log(LOG_ERR, errno, "IGMP socket");
@@ -45,23 +45,35 @@ void init_igmp()
     k_set_loop(FALSE);		/* disable multicast loopback     */
 
     ip         = (struct ip *)send_buf;
+    ip->ip_hl  = sizeof(struct ip) >> 2;
+    ip->ip_v   = IPVERSION;
     ip->ip_tos = 0;
     ip->ip_off = 0;
-    ip->ip_v   = IPVERSION;
     ip->ip_p   = IPPROTO_IGMP;
     ip->ip_ttl = MAXTTL;	/* applies to unicasts only */
-    ip->ip_hl  = (MIN_IP_HEADER_LEN >> 2);
 
     allhosts_group = htonl(INADDR_ALLHOSTS_GROUP);
     dvmrp_group    = htonl(INADDR_DVMRP_GROUP);
+    allrtrs_group  = htonl(INADDR_ALLRTRS_GROUP);
 }
+
+#define PIM_QUERY        0
+#define PIM_REGISTER     1
+#define PIM_REGISTER_STOP 	2
+#define PIM_JOIN_PRUNE   3
+#define PIM_RP_REACHABLE 4
+#define PIM_ASSERT       5
+#define PIM_GRAFT        6
+#define PIM_GRAFT_ACK    7
 
 static char *packet_kind(type, code)
      u_char type, code;
 {
     switch (type) {
 	case IGMP_HOST_MEMBERSHIP_QUERY:	return "membership query  ";
-	case IGMP_HOST_MEMBERSHIP_REPORT:	return "membership report ";
+	case IGMP_v1_HOST_MEMBERSHIP_REPORT:	return "membership report ";
+	case IGMP_v2_HOST_MEMBERSHIP_REPORT:	return "new member report ";
+	case IGMP_HOST_LEAVE_MESSAGE:           return "leave message     ";
 	case IGMP_DVMRP:
 	  switch (code) {
 	    case DVMRP_PROBE:	    		return "neighbor probe    ";
@@ -70,8 +82,25 @@ static char *packet_kind(type, code)
 	    case DVMRP_NEIGHBORS:	    	return "neighbor list     ";
 	    case DVMRP_ASK_NEIGHBORS2:   	return "neighbor request 2";
 	    case DVMRP_NEIGHBORS2:	    	return "neighbor list 2   ";
-	    default:		    		return "unknown DVMRP msg ";
+	    case DVMRP_PRUNE:			return "prune message     ";
+	    case DVMRP_GRAFT:			return "graft message     ";
+	    case DVMRP_GRAFT_ACK:		return "graft message ack ";
+	    default:	    			return "unknown DVMRP msg ";
 	  }
+ 	case IGMP_PIM:
+ 	  switch (code) {
+ 	    case PIM_QUERY:			return "PIM Router-Query  ";
+ 	    case PIM_REGISTER:			return "PIM Register      ";
+ 	    case PIM_REGISTER_STOP:		return "PIM Register-Stop ";
+ 	    case PIM_JOIN_PRUNE:		return "PIM Join/Prune    ";
+ 	    case PIM_RP_REACHABLE:		return "PIM RP-Reachable  ";
+ 	    case PIM_ASSERT:			return "PIM Assert        ";
+ 	    case PIM_GRAFT:			return "PIM Graft         ";
+ 	    case PIM_GRAFT_ACK:			return "PIM Graft-Ack     ";
+ 	    default:		    		return "unknown PIM msg   ";
+ 	  }
+	case IGMP_MTRACE_QUERY:			return "IGMP trace query  ";
+	case IGMP_MTRACE_REPLY:			return "IGMP trace reply  ";
 	default:			    	return "unknown IGMP msg  ";
     }
 }
@@ -83,8 +112,7 @@ static char *packet_kind(type, code)
 void accept_igmp(recvlen)
     int recvlen;
 {
-    register vifi_t vifi;
-    register u_long src, dst, group;
+    register u_int32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
     int ipdatalen, iphdrlen, igmpdatalen;
@@ -98,6 +126,20 @@ void accept_igmp(recvlen)
     ip        = (struct ip *)recv_buf;
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
+
+    /* 
+     * this is most likely a message from the kernel indicating that
+     * a new src grp pair message has arrived and so, it would be 
+     * necessary to install a route into the kernel for this.
+     */
+    if (ip->ip_p == 0) {
+	if (src == 0 || dst == 0)
+	    log(LOG_WARNING, 0, "kernel request not accurate");
+	else
+	    add_table_entry(src, dst);
+	return;
+    }
+
     iphdrlen  = ip->ip_hl << 2;
     ipdatalen = ip->ip_len;
     if (iphdrlen + ipdatalen != recvlen) {
@@ -124,22 +166,30 @@ void accept_igmp(recvlen)
     switch (igmp->igmp_type) {
 
 	case IGMP_HOST_MEMBERSHIP_QUERY:
-	    return;	/* Answered automatically by the kernel. */
+	    accept_membership_query(src, dst, group, igmp->igmp_code);
+	    return;
 
-	case IGMP_HOST_MEMBERSHIP_REPORT:
-	    accept_group_report(src, dst, group);
+	case IGMP_v1_HOST_MEMBERSHIP_REPORT:
+	case IGMP_v2_HOST_MEMBERSHIP_REPORT:
+	    accept_group_report(src, dst, group, igmp->igmp_type);
+	    return;
+	    
+	case IGMP_HOST_LEAVE_MESSAGE:
+	    accept_leave_message(src, dst, group);
 	    return;
 
 	case IGMP_DVMRP:
-	    switch (igmp->igmp_code) {
+	    group = ntohl(group);
 
+	    switch (igmp->igmp_code) {
 		case DVMRP_PROBE:
-		    accept_probe(src, dst);
+		    accept_probe(src, dst,
+				 (char *)(igmp+1), igmpdatalen, group);
 		    return;
 
 		case DVMRP_REPORT:
-		    accept_report(src, dst,
-				  (char *)(igmp+1), igmpdatalen);
+ 		    accept_report(src, dst,
+				  (char *)(igmp+1), igmpdatalen, group);
 		    return;
 
 		case DVMRP_ASK_NEIGHBORS:
@@ -152,12 +202,24 @@ void accept_igmp(recvlen)
 
 		case DVMRP_NEIGHBORS:
 		    accept_neighbors(src, dst, (char *)(igmp+1), igmpdatalen,
-				     group);
+					     group);
 		    return;
 
 		case DVMRP_NEIGHBORS2:
 		    accept_neighbors2(src, dst, (char *)(igmp+1), igmpdatalen,
-				     group);
+					     group);
+		    return;
+
+		case DVMRP_PRUNE:
+		    accept_prune(src, dst, (char *)(igmp+1), igmpdatalen);
+		    return;
+
+		case DVMRP_GRAFT:
+		    accept_graft(src, dst, (char *)(igmp+1), igmpdatalen);
+		    return;
+
+		case DVMRP_GRAFT_ACK:
+		    accept_g_ack(src, dst, (char *)(igmp+1), igmpdatalen);
 		    return;
 
 		default:
@@ -168,9 +230,20 @@ void accept_igmp(recvlen)
 		    return;
 	    }
 
+ 	case IGMP_PIM:
+ 	    return;
+
+	case IGMP_MTRACE_REPLY:
+	    return;
+
+	case IGMP_MTRACE_QUERY:
+	    accept_mtrace(src, dst, group, (char *)(igmp+1),
+		   igmp->igmp_code, igmpdatalen);
+	    return;
+
 	default:
 	    log(LOG_INFO, 0,
-		"ignoring unknown IGMP message type %u from %s to %s",
+		"ignoring unknown IGMP message type %x from %s to %s",
 		igmp->igmp_type, inet_fmt(src, s1),
 		inet_fmt(dst, s2));
 	    return;
@@ -183,13 +256,14 @@ void accept_igmp(recvlen)
  * have already placed data in that buffer, of length 'datalen'.  Then send
  * the message from the interface with IP address 'src' to destination 'dst'.
  */
-void send_igmp(src, dst, type, code, group, datalen)
-    u_long src, dst;
+void
+send_igmp(src, dst, type, code, group, datalen)
+    u_int32_t src, dst;
     int type, code;
-    u_long group;
+    u_int32_t group;
     int datalen;
 {
-    static struct sockaddr_in sdst = {AF_INET};
+    static struct sockaddr_in sdst;
     struct ip *ip;
     struct igmp *igmp;
 
@@ -209,11 +283,20 @@ void send_igmp(src, dst, type, code, group, datalen)
     if (IN_MULTICAST(ntohl(dst))) k_set_if(src);
     if (dst == allhosts_group) k_set_loop(TRUE);
 
+    bzero(&sdst, sizeof(sdst));
+    sdst.sin_family = AF_INET;
+#if (defined(BSD) && (BSD >= 199103))
+    sdst.sin_len = sizeof(sdst);
+#endif
     sdst.sin_addr.s_addr = dst;
     if (sendto(igmp_socket, send_buf, ip->ip_len, 0,
 			(struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
-	if (errno == ENETDOWN) check_vif_state();
-	else log(LOG_WARNING, errno, "sendto on %s", inet_fmt(src, s1));
+	if (errno == ENETDOWN)
+	    check_vif_state();
+	else
+	    log(LOG_WARNING, errno,
+		"sendto to %s on %s",
+		inet_fmt(dst, s1), inet_fmt(src, s2));
     }
 
     if (dst == allhosts_group) k_set_loop(FALSE);
