@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.52.2.2 1999/11/21 15:24:08 he Exp $	 */
+/* $NetBSD: mountd.c,v 1.52.2.3 2000/02/04 22:52:26 he Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.52.2.2 1999/11/21 15:24:08 he Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.52.2.3 2000/02/04 22:52:26 he Exp $");
 #endif
 #endif				/* not lint */
 
@@ -176,6 +176,14 @@ struct fhreturn {
 	nfsfh_t         fhr_fh;
 };
 
+union mount_args {
+	struct ufs_args ua;
+	struct iso_args ia;
+	struct mfs_args ma;
+	struct msdosfs_args da;
+	struct adosfs_args aa;
+};
+
 /* Global defs */
 static char    *add_expdir __P((struct dirlist **, char *, int));
 static void add_dlist __P((struct dirlist **, struct dirlist *,
@@ -191,6 +199,9 @@ static int do_mount __P((const char *, size_t, struct exportlist *,
 static int do_opt __P((const char *, size_t, char **, char **,
     struct exportlist *, struct grouplist *, int *, int *, struct ucred *));
 static struct exportlist *ex_search __P((fsid_t *));
+static int mount_export __P((char *, int, struct statfs *,
+    union mount_args *));
+static int mount_unexport __P((struct statfs *));
 static int parse_directory __P((const char *, size_t, struct grouplist *,
     int, char *, struct exportlist **, struct statfs *));
 static int parse_host_netgroup __P((const char *, size_t, struct exportlist *,
@@ -1018,14 +1029,6 @@ nextline:
 	 *      instead of just MOUNT_FFS.
 	 */
 	for (i = 0; i < num; i++, fsp++) {
-		union {
-			struct ufs_args ua;
-			struct iso_args ia;
-			struct mfs_args ma;
-			struct msdosfs_args da;
-			struct adosfs_args aa;
-		} targs;
-
 		if (debug)
 			(void)fprintf(stderr,
 			    "seeing if we want to delete %s.\n",
@@ -1037,28 +1040,9 @@ nextline:
 		if (ex_search(&fsp->f_fsid))
 			continue;
 
-		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_NULL, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_UMAP, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_UNION, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
-			if (debug)
-				(void)fprintf(stderr,
-				    "Deleting export for mount %s.\n",
-				    fsp->f_mntonname);
-
-			bzero((char *) &targs, sizeof(targs));
-			targs.ua.fspec = NULL;
-			targs.ua.export.ex_flags = MNT_DELEXPORT;
-			if (mount(fsp->f_fstypename, fsp->f_mntonname,
-			    fsp->f_flags | MNT_UPDATE, &targs) == -1)
-				syslog(LOG_ERR, "Can't delete exports for %s",
-				    fsp->f_mntonname);
-		}
+		if (mount_unexport(fsp) == -1)
+			syslog(LOG_ERR, "Can't delete exports for %s",
+			    fsp->f_mntonname);
 	}
 }
 
@@ -1678,6 +1662,85 @@ estrdup(s)
 	return n;
 }
 
+static int
+mount_unexport(fsp)
+	struct statfs *fsp;
+{
+	union mount_args targs;
+
+	if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_NULL, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_UMAP, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_UNION, MFSNAMELEN) ||
+	    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
+		if (debug)
+			(void)fprintf(stderr,
+			    "Deleting export for mount %s.\n",
+			    fsp->f_mntonname);
+
+		memset(&targs, 0, sizeof(targs));
+		targs.ua.fspec = NULL;
+		targs.ua.export.ex_flags = MNT_DELEXPORT;
+		return (mount(fsp->f_fstypename, fsp->f_mntonname,
+		    fsp->f_flags | MNT_UPDATE, &targs));
+	}
+
+	return (0);
+}
+
+static int
+mount_export(dirp, dirplen, fsb, mntargs)
+	char *dirp;
+	int dirplen;
+	struct statfs *fsb;
+	union mount_args *mntargs;
+{
+	int error;
+	char *cp, savedc;
+
+	cp = dirp + dirplen;		/* First, cp points terminating NUL. */
+	savedc = *cp;
+
+	/*
+	 * XXX:
+	 * Maybe I should just use the fsb->f_mntonname path instead
+	 * of looping back up the dirp to the mount point??
+	 * Also, needs to know how to export all types of local
+	 * exportable file systems and not just MOUNT_FFS.
+	 */
+	while ((error = mount(fsb->f_fstypename, dirp,
+	    fsb->f_flags | MNT_UPDATE, mntargs)) == -1) {
+		if (errno == EPERM ||
+		    (opt_flags & OP_ALLDIRS) != 0)
+			break;
+
+		*cp-- = savedc;
+		/* back up over the last component */
+		while (cp > dirp && *cp != '/')
+			cp--;
+		while (cp > dirp && *(cp - 1) != '/')
+			cp--;
+		if (cp == dirp) {
+			if (debug)
+				(void)fprintf(stderr, "mnt unsucc\n");
+			errno = 0;	/* This is not a system error. XXX */
+			goto out;	/* Don't restore the savedc. */
+		}
+		/* Now, cp points the first slash. */
+		savedc = *cp;
+		*cp = '\0';
+	}
+
+	*cp = savedc;
+
+ out:
+	return (error);
+}
+
 /*
  * Do the mount syscall with the update flag to push the export info into
  * the kernel.
@@ -1694,18 +1757,10 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	int dirplen;
 	struct statfs *fsb;
 {
-	char *cp = NULL;
 	u_int32_t **addrp;
-	int done;
-	char savedc = '\0';
+	int done, saved_errno;
 	struct sockaddr_in sin, imask;
-	union {
-		struct ufs_args ua;
-		struct iso_args ia;
-		struct mfs_args ma;
-		struct msdosfs_args da;
-		struct adosfs_args aa;
-	} args;
+	union mount_args args;
 	u_int32_t net;
 
 	args.ua.fspec = 0;
@@ -1770,57 +1825,41 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		default:
 			syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
 			    line, (unsigned long)lineno);
-			if (cp)
-				*cp = savedc;
 			return (1);
 		};
 
-		/*
-		 * XXX:
-		 * Maybe I should just use the fsb->f_mntonname path instead
-		 * of looping back up the dirp to the mount point??
-		 * Also, needs to know how to export all types of local
-		 * exportable file systems and not just MOUNT_FFS.
-		 */
-		while (mount(fsb->f_fstypename, dirp,
-		    fsb->f_flags | MNT_UPDATE, &args) == -1) {
-			if (cp)
-				*cp-- = savedc;
-			else
-				cp = dirp + dirplen - 1;
-			if (errno == EPERM) {
-				syslog(LOG_ERR,
-		    "\"%s\", line %ld: Can't change attributes for %s to %s",
-				    line, (unsigned long)lineno,
-				    dirp, (grp->gr_type == GT_HOST) ?
-				    grp->gr_ptr.gt_hostent->h_name :
-				    (grp->gr_type == GT_NET) ?
-				    grp->gr_ptr.gt_net.nt_name :
-				    "Unknown");
+		if (mount_export(dirp, dirplen, fsb, &args) == -1) {
+			saved_errno = errno;
+			/*
+			 * It may be just some export options are modified.
+			 * Unexport and retry.
+			 */
+			if (mount_unexport(fsb) == -1 ||
+			    mount_export(dirp, dirplen, fsb, &args) == -1) {
+				errno = saved_errno;
+				if (errno == EPERM)
+					syslog(LOG_ERR,
+					    "\"%s\", line %ld: "
+					    "Can't change attributes for %s "
+					    "to %s",
+					    line, (unsigned long)lineno,
+					    dirp, (grp->gr_type == GT_HOST) ?
+					    grp->gr_ptr.gt_hostent->h_name :
+					    (grp->gr_type == GT_NET) ?
+					    grp->gr_ptr.gt_net.nt_name :
+					    "Unknown");
+				else if (errno != 0)
+					syslog(LOG_ERR,
+					    "\"%s\", line %ld: "
+					    "Could not remount %s: %m",
+					    line, (unsigned long)lineno, dirp);
+				else
+					syslog(LOG_ERR, 
+					    "\"%s\", line %ld: "
+					    "Can't export %s",
+					    line, (unsigned long)lineno, dirp);
 				return (1);
 			}
-			if (opt_flags & OP_ALLDIRS) {
-				syslog(LOG_ERR,
-				"\"%s\", line %ld: Could not remount %s: %m",
-				    line, (unsigned long)lineno,
-				    dirp);
-				return (1);
-			}
-			/* back up over the last component */
-			while (*cp == '/' && cp > dirp)
-				cp--;
-			while (*(cp - 1) != '/' && cp > dirp)
-				cp--;
-			if (cp == dirp) {
-				if (debug)
-					(void)fprintf(stderr, "mnt unsucc\n");
-				syslog(LOG_ERR, 
-				    "\"%s\", line %ld: Can't export %s",
-				    line, (unsigned long)lineno, dirp);
-				return (1);
-			}
-			savedc = *cp;
-			*cp = '\0';
 		}
 		if (addrp) {
 			++addrp;
@@ -1829,8 +1868,6 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		} else
 			done = TRUE;
 	}
-	if (cp)
-		*cp = savedc;
 	return (0);
 }
 
