@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.119 2002/12/29 17:40:26 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.120 2003/01/12 01:48:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.119 2002/12/29 17:40:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.120 2003/01/12 01:48:56 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -248,7 +248,7 @@ schedcpu(void *arg)
 {
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct proc *p;
-	int s, s1;
+	int s;
 	unsigned int newcpu;
 	int clkhz;
 
@@ -286,7 +286,8 @@ schedcpu(void *arg)
 		p->p_cpticks = 0;
 		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
 		p->p_estcpu = newcpu;
-		SCHED_LOCK(s1);
+		splx(s);	/* Done with the process CPU ticks update */
+		SCHED_LOCK(s);
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
 			if (p->p_stat == SRUN &&
@@ -298,8 +299,7 @@ schedcpu(void *arg)
 			} else
 				p->p_priority = p->p_usrpri;
 		}
-		SCHED_UNLOCK(s1);
-		splx(s);
+		SCHED_UNLOCK(s);
 	}
 	proclist_unlock_read();
 	uvm_meter();
