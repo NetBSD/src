@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.63 2001/05/02 23:11:29 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.64 2001/05/03 22:59:11 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3965,6 +3965,7 @@ distrib/sets/lists/base/mi			patch
 distrib/sets/lists/etc/obsolete.mi		1.6
 distrib/i386/floppies/ramdisk-big/list		patch
 etc/mtree/special				1.36 via patch
+etc/changelist					1.20
 
   /etc/dhclient-script moved to /sbin/dhclient-script.
 
@@ -4479,3 +4480,36 @@ distrib/macppc/floppies/ramdisk/ramdiskbin.conf	1.14
 distrib/macppc/floppies/ramdisk/Makefile	1.14 (via patch)
 
   Use libhack to make the image fit on 1.44M floppy.
+
+sys/dev/pci/esm.c				1.1-1.10 (new) via patch
+sys/dev/pci/esmreg.h				1.1-1.2 (new)
+sys/dev/pci/esmvar.h				1.1-1.4 (new)
+sys/dev/pci/files.pci				1.115-1.116
+sys/arch/i386/conf/GENERIC			1.389
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+sys/dev/ic/ac97.c				1.13-1.18
+sys/dev/ic/ac97var.h				1.2-1.3
+sys/dev/pci/pcidevs		1.244,1.284,1.288,1.294-1.295,1.319 via patch
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+share/man/man4/Makefile				1.177 via patch
+share/man/man4/esm.4				1.1-1.2 (new) via patch
+share/man/man4/audio.4				1.36
+share/man/man4/pci.4				1.41 via patch
+distrib/sets/lists/man/mi			patch
+
+  Add a driver for the ESS Technology Maestro-1/2/2E AC97 audio chips,
+  ES1968 and ES1978.
+
+sys/arch/sh3/include/ieee.h			1.3
+
+  There is no extended-precision format on sh3.
+
+sys/dev/ic/elinkxlreg.h				1.5
+
+  Bump number of descriptors so that you will not run out of them
+  when saturating a 100Mbit/s link.
+
+gnu/libexec/uucp/libunix/serial.c		1.6
+
+  Avoid division by zero when computing timeouts for pipe connections.
