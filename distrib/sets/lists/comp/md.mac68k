@@ -12,8 +12,8 @@
 ./usr/include/m68k/psl.h
 ./usr/include/m68k/ptrace.h
 ./usr/include/m68k/reg.h
-./usr/include/m68k/signal.h
 ./usr/include/m68k/setjmp.h
+./usr/include/m68k/signal.h
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
