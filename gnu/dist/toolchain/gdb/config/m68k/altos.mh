@@ -1,0 +1,5 @@
+# OBSOLETE # Host: Altos 3068 (m68k, System V release 2)
+# OBSOLETE 
+# OBSOLETE XM_FILE= xm-altos.h
+# OBSOLETE XDEPFILES= infptrace.o inftarg.o fork-child.o altos-xdep.o
+

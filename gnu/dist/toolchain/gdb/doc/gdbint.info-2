@@ -1,0 +1,1282 @@
+This is gdbint.info, produced by Makeinfo version 3.12f from
+./gdbint.texinfo.
+
+START-INFO-DIR-ENTRY
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+END-INFO-DIR-ENTRY
+
+   This file documents the internals of the GNU debugger GDB.
+
+   Copyright 1990-1999 Free Software Foundation, Inc.  Contributed by
+Cygnus Solutions.  Written by John Gilmore.  Second Edition by Stan
+Shebs.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy or distribute modified versions of this
+manual under the terms of the GPL (for which purpose this text may be
+regarded as a program in the language TeX).
+
+
+File: gdbint.info,  Node: Target Architecture Definition,  Next: Target Vector Definition,  Prev: Host Definition,  Up: Top
+
+Target Architecture Definition
+******************************
+
+   GDB's target architecture defines what sort of machine-language
+programs GDB can work with, and how it works with them.
+
+   At present, the target architecture definition consists of a number
+of C macros.
+
+Registers and Memory
+====================
+
+   GDB's model of the target machine is rather simple.  GDB assumes the
+machine includes a bank of registers and a block of memory.  Each
+register may have a different size.
+
+   GDB does not have a magical way to match up with the compiler's idea
+of which registers are which; however, it is critical that they do
+match up accurately.  The only way to make this work is to get accurate
+information about the order that the compiler uses, and to reflect that
+in the `REGISTER_NAME' and related macros.
+
+   GDB can handle big-endian, little-endian, and bi-endian
+architectures.
+
+Using Different Register and Memory Data Representations
+========================================================
+
+   Some architectures use one representation for a value when it lives
+in a register, but use a different representation when it lives in
+memory.  In GDB's terminology, the "raw" representation is the one used
+in the target registers, and the "virtual" representation is the one
+used in memory, and within GDB `struct value' objects.
+
+   For almost all data types on almost all architectures, the virtual
+and raw representations are identical, and no special handling is
+needed.  However, they do occasionally differ.  For example:
+
+   * The x86 architecture supports an 80-bit long double type.
+     However, when we store those values in memory, they occupy twelve
+     bytes: the floating-point number occupies the first ten, and the
+     final two bytes are unused.  This keeps the values aligned on
+     four-byte boundaries, allowing more efficient access.  Thus, the
+     x86 80-bit floating-point type is the raw representation, and the
+     twelve-byte loosely-packed arrangement is the virtual
+     representation.
+
+   * Some 64-bit MIPS targets present 32-bit registers to GDB as 64-bit
+     registers, with garbage in their upper bits.  GDB ignores the top
+     32 bits.  Thus, the 64-bit form, with garbage in the upper 32
+     bits, is the raw representation, and the trimmed 32-bit
+     representation is the virtual representation.
+
+
+   In general, the raw representation is determined by the
+architecture, or GDB's interface to the architecture, while the virtual
+representation can be chosen for GDB's convenience.  GDB's register
+file, `registers', holds the register contents in raw format, and the
+GDB remote protocol transmits register values in raw format.
+
+   Your architecture may define the following macros to request raw /
+virtual conversions:
+
+ - Target Macro: int REGISTER_CONVERTIBLE (int REG)
+     Return non-zero if register number REG's value needs different raw
+     and virtual formats.
+
+ - Target Macro: int REGISTER_RAW_SIZE (int REG)
+     The size of register number REG's raw value.  This is the number
+     of bytes the register will occupy in `registers', or in a GDB
+     remote protocol packet.
+
+ - Target Macro: int REGISTER_VIRTUAL_SIZE (int REG)
+     The size of register number REG's value, in its virtual format.
+     This is the size a `struct value''s buffer will have, holding that
+     register's value.
+
+ - Target Macro: struct type *REGISTER_VIRTUAL_TYPE (int REG)
+     This is the type of the virtual representation of register number
+     REG.  Note that there is no need for a macro giving a type for the
+     register's raw form; once the register's value has been obtained,
+     GDB always uses the virtual form.
+
+ - Target Macro: void REGISTER_CONVERT_TO_VIRTUAL (int REG, struct type
+          *TYPE, char *FROM, char *TO)
+     Convert the value of register number REG to TYPE, which should
+     always be `REGISTER_VIRTUAL_TYPE (REG)'.  The buffer at FROM holds
+     the register's value in raw format; the macro should convert the
+     value to virtual format, and place it at TO.
+
+     Note that REGISTER_CONVERT_TO_VIRTUAL and REGISTER_CONVERT_TO_RAW
+     take their REG and TYPE arguments in different orders.
+
+ - Target Macro: void REGISTER_CONVERT_TO_RAW (struct type *TYPE, int
+          REG, char *FROM, char *TO)
+     Convert the value of register number REG to TYPE, which should
+     always be `REGISTER_VIRTUAL_TYPE (REG)'.  The buffer at FROM holds
+     the register's value in raw format; the macro should convert the
+     value to virtual format, and place it at TO.
+
+     Note that REGISTER_CONVERT_TO_VIRTUAL and REGISTER_CONVERT_TO_RAW
+     take their REG and TYPE arguments in different orders.
+
+Frame Interpretation
+====================
+
+Inferior Call Setup
+===================
+
+Compiler Characteristics
+========================
+
+Target Conditionals
+===================
+
+   This section describes the macros that you can use to define the
+target machine.
+
+`ADDITIONAL_OPTIONS'
+
+`ADDITIONAL_OPTION_CASES'
+
+`ADDITIONAL_OPTION_HANDLER'
+
+`ADDITIONAL_OPTION_HELP'
+     These are a set of macros that allow the addition of additional
+     command line options to GDB.  They are currently used only for the
+     unsupported i960 Nindy target, and should not be used in any other
+     configuration.
+
+`ADDR_BITS_REMOVE (addr)'
+     If a raw machine instruction address includes any bits that are not
+     really part of the address, then define this macro to expand into
+     an expression that zeros those bits in ADDR.  This is only used for
+     addresses of instructions, and even then not in all contexts.
+
+     For example, the two low-order bits of the PC on the
+     Hewlett-Packard PA 2.0 architecture contain the privilege level of
+     the corresponding instruction.  Since instructions must always be
+     aligned on four-byte boundaries, the processor masks out these
+     bits to generate the actual address of the instruction.
+     ADDR_BITS_REMOVE should filter out these bits with an expression
+     such as `((addr) & ~3)'.
+
+`BEFORE_MAIN_LOOP_HOOK'
+     Define this to expand into any code that you want to execute
+     before the main loop starts.  Although this is not, strictly
+     speaking, a target conditional, that is how it is currently being
+     used.  Note that if a configuration were to define it one way for
+     a host and a different way for the target, GDB will probably not
+     compile, let alone run correctly.  This is currently used only for
+     the unsupported i960 Nindy target, and should not be used in any
+     other configuration.
+
+`BELIEVE_PCC_PROMOTION'
+     Define if the compiler promotes a short or char parameter to an
+     int, but still reports the parameter as its original type, rather
+     than the promoted type.
+
+`BELIEVE_PCC_PROMOTION_TYPE'
+     Define this if GDB should believe the type of a short argument when
+     compiled by pcc, but look within a full int space to get its value.
+     Only defined for Sun-3 at present.
+
+`BITS_BIG_ENDIAN'
+     Define this if the numbering of bits in the targets does *not*
+     match the endianness of the target byte order.  A value of 1 means
+     that the bits are numbered in a big-endian order, 0 means
+     little-endian.
+
+`BREAKPOINT'
+     This is the character array initializer for the bit pattern to put
+     into memory where a breakpoint is set.  Although it's common to
+     use a trap instruction for a breakpoint, it's not required; for
+     instance, the bit pattern could be an invalid instruction.  The
+     breakpoint must be no longer than the shortest instruction of the
+     architecture.
+
+     BREAKPOINT has been deprecated in favour of BREAKPOINT_FROM_PC.
+
+`BIG_BREAKPOINT'
+
+`LITTLE_BREAKPOINT'
+     Similar to BREAKPOINT, but used for bi-endian targets.
+
+     BIG_BREAKPOINT and LITTLE_BREAKPOINT have been deprecated in
+     favour of BREAKPOINT_FROM_PC.
+
+`REMOTE_BREAKPOINT'
+
+`LITTLE_REMOTE_BREAKPOINT'
+
+`BIG_REMOTE_BREAKPOINT'
+     Similar to BREAKPOINT, but used for remote targets.
+
+     BIG_REMOTE_BREAKPOINT and LITTLE_REMOTE_BREAKPOINT have been
+     deprecated in favour of BREAKPOINT_FROM_PC.
+
+`BREAKPOINT_FROM_PC (pcptr, lenptr)'
+     Use the program counter to determine the contents and size of a
+     breakpoint instruction.  It returns a pointer to a string of bytes
+     that encode a breakpoint instruction, stores the length of the
+     string to *lenptr, and adjusts pc (if necessary) to point to the
+     actual memory location where the breakpoint should be inserted.
+
+     Although it is common to use a trap instruction for a breakpoint,
+     it's not required; for instance, the bit pattern could be an
+     invalid instruction.  The breakpoint must be no longer than the
+     shortest instruction of the architecture.
+
+     Replaces all the other BREAKPOINT macros.
+
+`MEMORY_INSERT_BREAKPOINT (addr, contents_cache)'
+
+`MEMORY_REMOVE_BREAKPOINT (addr, contents_cache)'
+     Insert or remove memory based breakpoints.  Reasonable defaults
+     (`default_memory_insert_breakpoint' and
+     `default_memory_remove_breakpoint' respectively) have been
+     provided so that it is not necessary to define these for most
+     architectures.  Architectures which may want to define
+     MEMORY_INSERT_BREAKPOINT and MEMORY_REMOVE_BREAKPOINT will likely
+     have instructions that are oddly sized or are not stored in a
+     conventional manner.
+
+     It may also be desirable (from an efficiency standpoint) to define
+     custom breakpoint insertion and removal routines if
+     BREAKPOINT_FROM_PC needs to read the target's memory for some
+     reason.
+
+`CALL_DUMMY_P'
+     A C expresson that is non-zero when the target suports inferior
+     function calls.
+
+`CALL_DUMMY_WORDS'
+     Pointer to an array of LONGEST words of data containing
+     host-byte-ordered REGISTER_BYTES sized values that partially
+     specify the sequence of instructions needed for an inferior
+     function call.
+
+     Should be deprecated in favour of a macro that uses
+     target-byte-ordered data.
+
+`SIZEOF_CALL_DUMMY_WORDS'
+     The size of CALL_DUMMY_WORDS.  When CALL_DUMMY_P this must return
+     a positive value.  See also CALL_DUMMY_LENGTH.
+
+`CALL_DUMMY'
+     A static initializer for CALL_DUMMY_WORDS.  Deprecated.
+
+`CALL_DUMMY_LOCATION'
+     inferior.h
+
+`CALL_DUMMY_STACK_ADJUST'
+     Stack adjustment needed when performing an inferior function call.
+
+     Should be deprecated in favor of something like STACK_ALIGN.
+
+`CALL_DUMMY_STACK_ADJUST_P'
+     Predicate for use of CALL_DUMMY_STACK_ADJUST.
+
+     Should be deprecated in favor of something like STACK_ALIGN.
+
+`CANNOT_FETCH_REGISTER (regno)'
+     A C expression that should be nonzero if REGNO cannot be fetched
+     from an inferior process.  This is only relevant if
+     `FETCH_INFERIOR_REGISTERS' is not defined.
+
+`CANNOT_STORE_REGISTER (regno)'
+     A C expression that should be nonzero if REGNO should not be
+     written to the target.  This is often the case for program
+     counters, status words, and other special registers.  If this is
+     not defined, GDB will assume that all registers may be written.
+
+`DO_DEFERRED_STORES'
+
+`CLEAR_DEFERRED_STORES'
+     Define this to execute any deferred stores of registers into the
+     inferior, and to cancel any deferred stores.
+
+     Currently only implemented correctly for native Sparc
+     configurations?
+
+`COERCE_FLOAT_TO_DOUBLE (FORMAL, ACTUAL)'
+     If we are calling a function by hand, and the function was declared
+     (according to the debug info) without a prototype, should we
+     automatically promote floats to doubles?  This macro must evaluate
+     to non-zero if we should, or zero if we should leave the value
+     alone.
+
+     The argument ACTUAL is the type of the value we want to pass to
+     the function.  The argument FORMAL is the type of this argument,
+     as it appears in the function's definition.  Note that FORMAL may
+     be zero if we have no debugging information for the function, or if
+     we're passing more arguments than are officially declared (for
+     example, varargs).  This macro is never invoked if the function
+     definitely has a prototype.
+
+     The default behavior is to promote only when we have no type
+     information for the formal parameter.  This is different from the
+     obvious behavior, which would be to promote whenever we have no
+     prototype, just as the compiler does.  It's annoying, but some
+     older targets rely on this.  If you want GDB to follow the typical
+     compiler behavior -- to always promote when there is no prototype
+     in scope -- your gdbarch init function can call
+     `set_gdbarch_coerce_float_to_double' and select the
+     `standard_coerce_float_to_double' function.
+
+`CPLUS_MARKER'
+     Define this to expand into the character that G++ uses to
+     distinguish compiler-generated identifiers from
+     programmer-specified identifiers.  By default, this expands into
+     `'$''.  Most System V targets should define this to `'.''.
+
+`DBX_PARM_SYMBOL_CLASS'
+     Hook for the `SYMBOL_CLASS' of a parameter when decoding DBX symbol
+     information.  In the i960, parameters can be stored as locals or as
+     args, depending on the type of the debug record.
+
+`DECR_PC_AFTER_BREAK'
+     Define this to be the amount by which to decrement the PC after the
+     program encounters a breakpoint.  This is often the number of
+     bytes in BREAKPOINT, though not always.  For most targets this
+     value will be 0.
+
+`DECR_PC_AFTER_HW_BREAK'
+     Similarly, for hardware breakpoints.
+
+`DISABLE_UNSETTABLE_BREAK addr'
+     If defined, this should evaluate to 1 if ADDR is in a shared
+     library in which breakpoints cannot be set and so should be
+     disabled.
+
+`DO_REGISTERS_INFO'
+     If defined, use this to print the value of a register or all
+     registers.
+
+`END_OF_TEXT_DEFAULT'
+     This is an expression that should designate the end of the text
+     section (? FIXME ?)
+
+`EXTRACT_RETURN_VALUE(type,regbuf,valbuf)'
+     Define this to extract a function's return value of type TYPE from
+     the raw register state REGBUF and copy that, in virtual format,
+     into VALBUF.
+
+`EXTRACT_STRUCT_VALUE_ADDRESS(regbuf)'
+     When EXTRACT_STRUCT_VALUE_ADDRESS_P this is used to to extract
+     from an array REGBUF (containing the raw register state) the
+     address in which a function should return its structure value, as a
+     CORE_ADDR (or an expression that can be used as one).
+
+`EXTRACT_STRUCT_VALUE_ADDRESS_P'
+     Predicate for EXTRACT_STRUCT_VALUE_ADDRESS.
+
+`FLOAT_INFO'
+     If defined, then the `info float' command will print information
+     about the processor's floating point unit.
+
+`FP_REGNUM'
+     If the virtual frame pointer is kept in a register, then define
+     this macro to be the number (greater than or equal to zero) of
+     that register.
+
+     This should only need to be defined if `TARGET_READ_FP' and
+     `TARGET_WRITE_FP' are not defined.
+
+`FRAMELESS_FUNCTION_INVOCATION(fi)'
+     Define this to an expression that returns 1 if the function
+     invocation represented by FI does not have a stack frame
+     associated with it.  Otherwise return 0.
+
+`FRAME_ARGS_ADDRESS_CORRECT'
+     stack.c
+
+`FRAME_CHAIN(frame)'
+     Given FRAME, return a pointer to the calling frame.
+
+`FRAME_CHAIN_COMBINE(chain,frame)'
+     Define this to take the frame chain pointer and the frame's nominal
+     address and produce the nominal address of the caller's frame.
+     Presently only defined for HP PA.
+
+`FRAME_CHAIN_VALID(chain,thisframe)'
+     Define this to be an expression that returns zero if the given
+     frame is an outermost frame, with no caller, and nonzero
+     otherwise.  Several common definitions are available.
+
+     `file_frame_chain_valid' is nonzero if the chain pointer is nonzero
+     and given frame's PC is not inside the startup file (such as
+     `crt0.o').  `func_frame_chain_valid' is nonzero if the chain
+     pointer is nonzero and the given frame's PC is not in `main()' or a
+     known entry point function (such as `_start()').
+     `generic_file_frame_chain_valid' and
+     `generic_func_frame_chain_valid' are equivalent implementations for
+     targets using generic dummy frames.
+
+`FRAME_INIT_SAVED_REGS(frame)'
+     See `frame.h'.  Determines the address of all registers in the
+     current stack frame storing each in `frame->saved_regs'.  Space for
+     `frame->saved_regs' shall be allocated by `FRAME_INIT_SAVED_REGS'
+     using either `frame_saved_regs_zalloc' or `frame_obstack_alloc'.
+
+     FRAME_FIND_SAVED_REGS and EXTRA_FRAME_INFO are deprecated.
+
+`FRAME_NUM_ARGS (fi)'
+     For the frame described by FI return the number of arguments that
+     are being passed.  If the number of arguments is not known, return
+     `-1'.
+
+`FRAME_SAVED_PC(frame)'
+     Given FRAME, return the pc saved there.  That is, the return
+     address.
+
+`FUNCTION_EPILOGUE_SIZE'
+     For some COFF targets, the `x_sym.x_misc.x_fsize' field of the
+     function end symbol is 0.  For such targets, you must define
+     `FUNCTION_EPILOGUE_SIZE' to expand into the standard size of a
+     function's epilogue.
+
+`FUNCTION_START_OFFSET'
+     An integer, giving the offset in bytes from a function's address
+     (as used in the values of symbols, function pointers, etc.), and
+     the function's first genuine instruction.
+
+     This is zero on almost all machines: the function's address is
+     usually the address of its first instruction.  However, on the
+     VAX, for example, each function starts with two bytes containing a
+     bitmask indicating which registers to save upon entry to the
+     function.  The VAX `call' instructions check this value, and save
+     the appropriate registers automatically.  Thus, since the offset
+     from the function's address to its first instruction is two bytes,
+     `FUNCTION_START_OFFSET' would be 2 on the VAX.
+
+`GCC_COMPILED_FLAG_SYMBOL'
+
+`GCC2_COMPILED_FLAG_SYMBOL'
+     If defined, these are the names of the symbols that GDB will look
+     for to detect that GCC compiled the file.  The default symbols are
+     `gcc_compiled.' and `gcc2_compiled.', respectively. (Currently
+     only defined for the Delta 68.)
+
+`GDB_MULTI_ARCH'
+     If defined and non-zero, enables suport for multiple architectures
+     within GDB.
+
+     The support can be enabled at two levels.  At level one, only
+     definitions for previously undefined macros are provided; at level
+     two, a multi-arch definition of all architecture dependant macros
+     will be defined.
+
+`GDB_TARGET_IS_HPPA'
+     This determines whether horrible kludge code in dbxread.c and
+     partial-stab.h is used to mangle multiple-symbol-table files from
+     HPPA's.  This should all be ripped out, and a scheme like elfread.c
+     used.
+
+`GET_LONGJMP_TARGET'
+     For most machines, this is a target-dependent parameter.  On the
+     DECstation and the Iris, this is a native-dependent parameter,
+     since <setjmp.h> is needed to define it.
+
+     This macro determines the target PC address that longjmp() will
+     jump to, assuming that we have just stopped at a longjmp
+     breakpoint.  It takes a CORE_ADDR * as argument, and stores the
+     target PC value through this pointer.  It examines the current
+     state of the machine as needed.
+
+`GET_SAVED_REGISTER'
+     Define this if you need to supply your own definition for the
+     function `get_saved_register'.
+
+`HAVE_REGISTER_WINDOWS'
+     Define this if the target has register windows.
+
+`REGISTER_IN_WINDOW_P (regnum)'
+     Define this to be an expression that is 1 if the given register is
+     in the window.
+
+`IBM6000_TARGET'
+     Shows that we are configured for an IBM RS/6000 target.  This
+     conditional should be eliminated (FIXME) and replaced by
+     feature-specific macros.  It was introduced in haste and we are
+     repenting at leisure.
+
+`SYMBOLS_CAN_START_WITH_DOLLAR'
+     Some systems have routines whose names start with `$'.  Giving this
+     macro a non-zero value tells GDB's expression parser to check for
+     such routines when parsing tokens that begin with `$'.
+
+     On HP-UX, certain system routines (millicode) have names beginning
+     with `$' or `$$'.  For example, `$$dyncall' is a millicode routine
+     that handles inter-space procedure calls on PA-RISC.
+
+`IEEE_FLOAT'
+     Define this if the target system uses IEEE-format floating point
+     numbers.
+
+`INIT_EXTRA_FRAME_INFO (fromleaf, frame)'
+     If additional information about the frame is required this should
+     be stored in `frame->extra_info'.  Space for `frame->extra_info'
+     is allocated using `frame_obstack_alloc'.
+
+`INIT_FRAME_PC (fromleaf, prev)'
+     This is a C statement that sets the pc of the frame pointed to by
+     PREV.  [By default...]
+
+`INNER_THAN (lhs,rhs)'
+     Returns non-zero if stack address LHS is inner than (nearer to the
+     stack top) stack address RHS. Define this as `lhs < rhs' if the
+     target's stack grows downward in memory, or `lhs > rsh' if the
+     stack grows upward.
+
+`IN_SIGTRAMP (pc, name)'
+     Define this to return true if the given PC and/or NAME indicates
+     that the current function is a sigtramp.
+
+`SIGTRAMP_START (pc)'
+
+`SIGTRAMP_END (pc)'
+     Define these to be the start and end address of the sigtramp for
+     the given PC.  On machines where the address is just a compile time
+     constant, the macro expansion will typically just ignore the
+     supplied PC.
+
+`IN_SOLIB_CALL_TRAMPOLINE pc name'
+     Define this to evaluate to nonzero if the program is stopped in the
+     trampoline that connects to a shared library.
+
+`IN_SOLIB_RETURN_TRAMPOLINE pc name'
+     Define this to evaluate to nonzero if the program is stopped in the
+     trampoline that returns from a shared library.
+
+`IN_SOLIB_DYNSYM_RESOLVE_CODE pc'
+     Define this to evaluate to nonzero if the program is stopped in the
+     dynamic linker.
+
+`SKIP_SOLIB_RESOLVER pc'
+     Define this to evaluate to the (nonzero) address at which execution
+     should continue to get past the dynamic linker's symbol resolution
+     function.  A zero value indicates that it is not important or
+     necessary to set a breakpoint to get through the dynamic linker
+     and that single stepping will suffice.
+
+`IS_TRAPPED_INTERNALVAR (name)'
+     This is an ugly hook to allow the specification of special actions
+     that should occur as a side-effect of setting the value of a
+     variable internal to GDB.  Currently only used by the h8500.  Note
+     that this could be either a host or target conditional.
+
+`NEED_TEXT_START_END'
+     Define this if GDB should determine the start and end addresses of
+     the text section.  (Seems dubious.)
+
+`NO_HIF_SUPPORT'
+     (Specific to the a29k.)
+
+`REGISTER_CONVERTIBLE (REG)'
+     Return non-zero if REG uses different raw and virtual formats.
+     *Note Using Different Register and Memory Data Representations:
+     Target Architecture Definition.
+
+`REGISTER_RAW_SIZE (REG)'
+     Return the raw size of REG.  *Note Using Different Register and
+     Memory Data Representations: Target Architecture Definition.
+
+`REGISTER_VIRTUAL_SIZE (REG)'
+     Return the virtual size of REG.  *Note Using Different Register
+     and Memory Data Representations: Target Architecture Definition.
+
+`REGISTER_VIRTUAL_TYPE (REG)'
+     Return the virtual type of REG.  *Note Using Different Register
+     and Memory Data Representations: Target Architecture Definition.
+
+`REGISTER_CONVERT_TO_VIRTUAL(REG, TYPE, FROM, TO)'
+     Convert the value of register REG from its raw form to its virtual
+     form.  *Note Using Different Register and Memory Data
+     Representations: Target Architecture Definition.
+
+`REGISTER_CONVERT_TO_RAW(TYPE, REG, FROM, TO)'
+     Convert the value of register REG from its virtual form to its raw
+     form.  *Note Using Different Register and Memory Data
+     Representations: Target Architecture Definition.
+
+`SOFTWARE_SINGLE_STEP_P'
+     Define this as 1 if the target does not have a hardware single-step
+     mechanism. The macro `SOFTWARE_SINGLE_STEP' must also be defined.
+
+`SOFTWARE_SINGLE_STEP(signal,insert_breapoints_p)'
+     A function that inserts or removes (dependant on
+     INSERT_BREAPOINTS_P) breakpoints at each possible destinations of
+     the next instruction. See `sparc-tdep.c' and `rs6000-tdep.c' for
+     examples.
+
+`SOFUN_ADDRESS_MAYBE_MISSING'
+     Somebody clever observed that, the more actual addresses you have
+     in the debug information, the more time the linker has to spend
+     relocating them.  So whenever there's some other way the debugger
+     could find the address it needs, you should omit it from the debug
+     info, to make linking faster.
+
+     `SOFUN_ADDRESS_MAYBE_MISSING' indicates that a particular set of
+     hacks of this sort are in use, affecting `N_SO' and `N_FUN'
+     entries in stabs-format debugging information.  `N_SO' stabs mark
+     the beginning and ending addresses of compilation units in the text
+     segment.  `N_FUN' stabs mark the starts and ends of functions.
+
+     `SOFUN_ADDRESS_MAYBE_MISSING' means two things:
+        * `N_FUN' stabs have an address of zero.  Instead, you should
+          find the addresses where the function starts by taking the
+          function name from the stab, and then looking that up in the
+          minsyms (the linker/ assembler symbol table).  In other
+          words, the stab has the name, and the linker / assembler
+          symbol table is the only place that carries the address.
+
+        * `N_SO' stabs have an address of zero, too.  You just look at
+          the `N_FUN' stabs that appear before and after the `N_SO'
+          stab, and guess the starting and ending addresses of the
+          compilation unit from them.
+
+
+`PCC_SOL_BROKEN'
+     (Used only in the Convex target.)
+
+`PC_IN_CALL_DUMMY'
+     inferior.h
+
+`PC_LOAD_SEGMENT'
+     If defined, print information about the load segment for the
+     program counter.  (Defined only for the RS/6000.)
+
+`PC_REGNUM'
+     If the program counter is kept in a register, then define this
+     macro to be the number (greater than or equal to zero) of that
+     register.
+
+     This should only need to be defined if `TARGET_READ_PC' and
+     `TARGET_WRITE_PC' are not defined.
+
+`NPC_REGNUM'
+     The number of the "next program counter" register, if defined.
+
+`NNPC_REGNUM'
+     The number of the "next next program counter" register, if defined.
+     Currently, this is only defined for the Motorola 88K.
+
+`PARM_BOUNDARY'
+     If non-zero, round arguments to a boundary of this many bits before
+     pushing them on the stack.
+
+`PRINT_REGISTER_HOOK (regno)'
+     If defined, this must be a function that prints the contents of the
+     given register to standard output.
+
+`PRINT_TYPELESS_INTEGER'
+     This is an obscure substitute for `print_longest' that seems to
+     have been defined for the Convex target.
+
+`PROCESS_LINENUMBER_HOOK'
+     A hook defined for XCOFF reading.
+
+`PROLOGUE_FIRSTLINE_OVERLAP'
+     (Only used in unsupported Convex configuration.)
+
+`PS_REGNUM'
+     If defined, this is the number of the processor status register.
+     (This definition is only used in generic code when parsing "$ps".)
+
+`POP_FRAME'
+     Used in `call_function_by_hand' to remove an artificial stack
+     frame.
+
+`PUSH_ARGUMENTS (nargs, args, sp, struct_return, struct_addr)'
+     Define this to push arguments onto the stack for inferior function
+     call. Return the updated stack pointer value.
+
+`PUSH_DUMMY_FRAME'
+     Used in `call_function_by_hand' to create an artificial stack
+     frame.
+
+`REGISTER_BYTES'
+     The total amount of space needed to store GDB's copy of the
+     machine's register state.
+
+`REGISTER_NAME(i)'
+     Return the name of register I as a string.  May return NULL or NUL
+     to indicate that register I is not valid.
+
+`REGISTER_NAMES'
+     Deprecated in favor of REGISTER_NAME.
+
+`REG_STRUCT_HAS_ADDR (gcc_p, type)'
+     Define this to return 1 if the given type will be passed by pointer
+     rather than directly.
+
+`SAVE_DUMMY_FRAME_TOS (sp)'
+     Used in `call_function_by_hand' to notify the target dependent code
+     of the top-of-stack value that will be passed to the the inferior
+     code.  This is the value of the SP after both the dummy frame and
+     space for parameters/results have been allocated on the stack.
+
+`SDB_REG_TO_REGNUM'
+     Define this to convert sdb register numbers into GDB regnums.  If
+     not defined, no conversion will be done.
+
+`SHIFT_INST_REGS'
+     (Only used for m88k targets.)
+
+`SKIP_PERMANENT_BREAKPOINT'
+     Advance the inferior's PC past a permanent breakpoint.  GDB
+     normally steps over a breakpoint by removing it, stepping one
+     instruction, and re-inserting the breakpoint.  However, permanent
+     breakpoints are hardwired into the inferior, and can't be removed,
+     so this strategy doesn't work.  Calling SKIP_PERMANENT_BREAKPOINT
+     adjusts the processor's state so that execution will resume just
+     after the breakpoint.  This macro does the right thing even when
+     the breakpoint is in the delay slot of a branch or jump.
+
+`SKIP_PROLOGUE (pc)'
+     A C expression that returns the address of the "real" code beyond
+     the function entry prologue found at PC.
+
+`SKIP_PROLOGUE_FRAMELESS_P'
+     A C expression that should behave similarly, but that can stop as
+     soon as the function is known to have a frame.  If not defined,
+     `SKIP_PROLOGUE' will be used instead.
+
+`SKIP_TRAMPOLINE_CODE (pc)'
+     If the target machine has trampoline code that sits between
+     callers and the functions being called, then define this macro to
+     return a new PC that is at the start of the real function.
+
+`SP_REGNUM'
+     If the stack-pointer is kept in a register, then define this macro
+     to be the number (greater than or equal to zero) of that register.
+
+     This should only need to be defined if `TARGET_WRITE_SP' and
+     `TARGET_WRITE_SP' are not defined.
+
+`STAB_REG_TO_REGNUM'
+     Define this to convert stab register numbers (as gotten from `r'
+     declarations) into GDB regnums.  If not defined, no conversion
+     will be done.
+
+`STACK_ALIGN (addr)'
+     Define this to adjust the address to the alignment required for the
+     processor's stack.
+
+`STEP_SKIPS_DELAY (addr)'
+     Define this to return true if the address is of an instruction
+     with a delay slot.  If a breakpoint has been placed in the
+     instruction's delay slot, GDB will single-step over that
+     instruction before resuming normally.  Currently only defined for
+     the Mips.
+
+`STORE_RETURN_VALUE (type, valbuf)'
+     A C expression that stores a function return value of type TYPE,
+     where VALBUF is the address of the value to be stored.
+
+`SUN_FIXED_LBRAC_BUG'
+     (Used only for Sun-3 and Sun-4 targets.)
+
+`SYMBOL_RELOADING_DEFAULT'
+     The default value of the `symbol-reloading' variable.  (Never
+     defined in current sources.)
+
+`TARGET_BYTE_ORDER_DEFAULT'
+     The ordering of bytes in the target.  This must be either
+     `BIG_ENDIAN' or `LITTLE_ENDIAN'.  This macro replaces
+     TARGET_BYTE_ORDER which is deprecated.
+
+`TARGET_BYTE_ORDER_SELECTABLE_P'
+     Non-zero if the target has both `BIG_ENDIAN' and `LITTLE_ENDIAN'
+     variants.  This macro replaces TARGET_BYTE_ORDER_SELECTABLE which
+     is deprecated.
+
+`TARGET_CHAR_BIT'
+     Number of bits in a char; defaults to 8.
+
+`TARGET_COMPLEX_BIT'
+     Number of bits in a complex number; defaults to `2 *
+     TARGET_FLOAT_BIT'.
+
+     At present this macro is not used.
+
+`TARGET_DOUBLE_BIT'
+     Number of bits in a double float; defaults to `8 *
+     TARGET_CHAR_BIT'.
+
+`TARGET_DOUBLE_COMPLEX_BIT'
+     Number of bits in a double complex; defaults to `2 *
+     TARGET_DOUBLE_BIT'.
+
+     At present this macro is not used.
+
+`TARGET_FLOAT_BIT'
+     Number of bits in a float; defaults to `4 * TARGET_CHAR_BIT'.
+
+`TARGET_INT_BIT'
+     Number of bits in an integer; defaults to `4 * TARGET_CHAR_BIT'.
+
+`TARGET_LONG_BIT'
+     Number of bits in a long integer; defaults to `4 *
+     TARGET_CHAR_BIT'.
+
+`TARGET_LONG_DOUBLE_BIT'
+     Number of bits in a long double float; defaults to `2 *
+     TARGET_DOUBLE_BIT'.
+
+`TARGET_LONG_LONG_BIT'
+     Number of bits in a long long integer; defaults to `2 *
+     TARGET_LONG_BIT'.
+
+`TARGET_PTR_BIT'
+     Number of bits in a pointer; defaults to `TARGET_INT_BIT'.
+
+`TARGET_SHORT_BIT'
+     Number of bits in a short integer; defaults to `2 *
+     TARGET_CHAR_BIT'.
+
+`TARGET_READ_PC'
+
+`TARGET_WRITE_PC (val, pid)'
+
+`TARGET_READ_SP'
+
+`TARGET_WRITE_SP'
+
+`TARGET_READ_FP'
+
+`TARGET_WRITE_FP'
+     These change the behavior of `read_pc', `write_pc', `read_sp',
+     `write_sp', `read_fp' and `write_fp'.  For most targets, these may
+     be left undefined.  GDB will call the read and write register
+     functions with the relevant `_REGNUM' argument.
+
+     These macros are useful when a target keeps one of these registers
+     in a hard to get at place; for example, part in a segment register
+     and part in an ordinary register.
+
+`TARGET_VIRTUAL_FRAME_POINTER(pc,regp,offsetp)'
+     Returns a `(register, offset)' pair representing the virtual frame
+     pointer in use at the code address `"pc"'.  If virtual frame
+     pointers are not used, a default definition simply returns
+     `FP_REGNUM', with an offset of zero.
+
+`USE_STRUCT_CONVENTION (gcc_p, type)'
+     If defined, this must be an expression that is nonzero if a value
+     of the given TYPE being returned from a function must have space
+     allocated for it on the stack.  GCC_P is true if the function
+     being considered is known to have been compiled by GCC; this is
+     helpful for systems where GCC is known to use different calling
+     convention than other compilers.
+
+`VARIABLES_INSIDE_BLOCK (desc, gcc_p)'
+     For dbx-style debugging information, if the compiler puts variable
+     declarations inside LBRAC/RBRAC blocks, this should be defined to
+     be nonzero.  DESC is the value of `n_desc' from the `N_RBRAC'
+     symbol, and GCC_P is true if GDB has noticed the presence of
+     either the `GCC_COMPILED_SYMBOL' or the `GCC2_COMPILED_SYMBOL'.
+     By default, this is 0.
+
+`OS9K_VARIABLES_INSIDE_BLOCK (desc, gcc_p)'
+     Similarly, for OS/9000.  Defaults to 1.
+
+   Motorola M68K target conditionals.
+
+`BPT_VECTOR'
+     Define this to be the 4-bit location of the breakpoint trap
+     vector.  If not defined, it will default to `0xf'.
+
+`REMOTE_BPT_VECTOR'
+     Defaults to `1'.
+
+Adding a New Target
+===================
+
+   The following files define a target to GDB:
+
+`gdb/config/ARCH/TTT.mt'
+     Contains a Makefile fragment specific to this target.  Specifies
+     what object files are needed for target TTT, by defining
+     `TDEPFILES=...' and `TDEPLIBS=...'.  Also specifies the header
+     file which describes TTT, by defining `TM_FILE= tm-TTT.h'.
+
+     You can also define `TM_CFLAGS', `TM_CLIBS', `TM_CDEPS', but these
+     are now deprecated, replaced by autoconf, and may go away in
+     future versions of GDB.
+
+`gdb/config/ARCH/tm-TTT.h'
+     (`tm.h' is a link to this file, created by configure).  Contains
+     macro definitions about the target machine's registers, stack frame
+     format and instructions.
+
+`gdb/TTT-tdep.c'
+     Contains any miscellaneous code required for this target machine.
+     On some machines it doesn't exist at all.  Sometimes the macros in
+     `tm-TTT.h' become very complicated, so they are implemented as
+     functions here instead, and the macro is simply defined to call the
+     function.  This is vastly preferable, since it is easier to
+     understand and debug.
+
+`gdb/config/ARCH/tm-ARCH.h'
+     This often exists to describe the basic layout of the target
+     machine's processor chip (registers, stack, etc).  If used, it is
+     included by `tm-TTT.h'.  It can be shared among many targets that
+     use the same processor.
+
+`gdb/ARCH-tdep.c'
+     Similarly, there are often common subroutines that are shared by
+     all target machines that use this particular architecture.
+
+   If you are adding a new operating system for an existing CPU chip,
+add a `config/tm-OS.h' file that describes the operating system
+facilities that are unusual (extra symbol table info; the breakpoint
+instruction needed; etc).  Then write a `ARCH/tm-OS.h' that just
+`#include's `tm-ARCH.h' and `config/tm-OS.h'.
+
+
+File: gdbint.info,  Node: Target Vector Definition,  Next: Native Debugging,  Prev: Target Architecture Definition,  Up: Top
+
+Target Vector Definition
+************************
+
+   The target vector defines the interface between GDB's abstract
+handling of target systems, and the nitty-gritty code that actually
+exercises control over a process or a serial port.  GDB includes some
+30-40 different target vectors; however, each configuration of GDB
+includes only a few of them.
+
+File Targets
+============
+
+   Both executables and core files have target vectors.
+
+Standard Protocol and Remote Stubs
+==================================
+
+   GDB's file `remote.c' talks a serial protocol to code that runs in
+the target system.  GDB provides several sample "stubs" that can be
+integrated into target programs or operating systems for this purpose;
+they are named `*-stub.c'.
+
+   The GDB user's manual describes how to put such a stub into your
+target code.  What follows is a discussion of integrating the SPARC
+stub into a complicated operating system (rather than a simple
+program), by Stu Grossman, the author of this stub.
+
+   The trap handling code in the stub assumes the following upon entry
+to trap_low:
+
+  1. %l1 and %l2 contain pc and npc respectively at the time of the trap
+
+  2. traps are disabled
+
+  3. you are in the correct trap window
+
+
+   As long as your trap handler can guarantee those conditions, then
+there is no reason why you shouldn't be able to `share' traps with the
+stub.  The stub has no requirement that it be jumped to directly from
+the hardware trap vector.  That is why it calls `exceptionHandler()',
+which is provided by the external environment.  For instance, this could
+setup the hardware traps to actually execute code which calls the stub
+first, and then transfers to its own trap handler.
+
+   For the most point, there probably won't be much of an issue with
+`sharing' traps, as the traps we use are usually not used by the kernel,
+and often indicate unrecoverable error conditions.  Anyway, this is all
+controlled by a table, and is trivial to modify.  The most important
+trap for us is for `ta 1'.  Without that, we can't single step or do
+breakpoints.  Everything else is unnecessary for the proper operation
+of the debugger/stub.
+
+   From reading the stub, it's probably not obvious how breakpoints
+work.  They are simply done by deposit/examine operations from GDB.
+
+ROM Monitor Interface
+=====================
+
+Custom Protocols
+================
+
+Transport Layer
+===============
+
+Builtin Simulator
+=================
+
+
+File: gdbint.info,  Node: Native Debugging,  Next: Support Libraries,  Prev: Target Vector Definition,  Up: Top
+
+Native Debugging
+****************
+
+   Several files control GDB's configuration for native support:
+
+`gdb/config/ARCH/XYZ.mh'
+     Specifies Makefile fragments needed when hosting _or native_ on
+     machine XYZ.  In particular, this lists the required
+     native-dependent object files, by defining `NATDEPFILES=...'.
+     Also specifies the header file which describes native support on
+     XYZ, by defining `NAT_FILE= nm-XYZ.h'.  You can also define
+     `NAT_CFLAGS', `NAT_ADD_FILES', `NAT_CLIBS', `NAT_CDEPS', etc.; see
+     `Makefile.in'.
+
+`gdb/config/ARCH/nm-XYZ.h'
+     (`nm.h' is a link to this file, created by configure).  Contains C
+     macro definitions describing the native system environment, such as
+     child process control and core file support.
+
+`gdb/XYZ-nat.c'
+     Contains any miscellaneous C code required for this native support
+     of this machine.  On some machines it doesn't exist at all.
+
+   There are some "generic" versions of routines that can be used by
+various systems.  These can be customized in various ways by macros
+defined in your `nm-XYZ.h' file.  If these routines work for the XYZ
+host, you can just include the generic file's name (with `.o', not
+`.c') in `NATDEPFILES'.
+
+   Otherwise, if your machine needs custom support routines, you will
+need to write routines that perform the same functions as the generic
+file.  Put them into `XYZ-nat.c', and put `XYZ-nat.o' into
+`NATDEPFILES'.
+
+`inftarg.c'
+     This contains the _target_ops vector_ that supports Unix child
+     processes on systems which use ptrace and wait to control the
+     child.
+
+`procfs.c'
+     This contains the _target_ops vector_ that supports Unix child
+     processes on systems which use /proc to control the child.
+
+`fork-child.c'
+     This does the low-level grunge that uses Unix system calls to do a
+     "fork and exec" to start up a child process.
+
+`infptrace.c'
+     This is the low level interface to inferior processes for systems
+     using the Unix `ptrace' call in a vanilla way.
+
+Native core file Support
+========================
+
+`core-aout.c::fetch_core_registers()'
+     Support for reading registers out of a core file.  This routine
+     calls `register_addr()', see below.  Now that BFD is used to read
+     core files, virtually all machines should use `core-aout.c', and
+     should just provide `fetch_core_registers' in `XYZ-nat.c' (or
+     `REGISTER_U_ADDR' in `nm-XYZ.h').
+
+`core-aout.c::register_addr()'
+     If your `nm-XYZ.h' file defines the macro `REGISTER_U_ADDR(addr,
+     blockend, regno)', it should be defined to set `addr' to the
+     offset within the `user' struct of GDB register number `regno'.
+     `blockend' is the offset within the "upage" of `u.u_ar0'.  If
+     `REGISTER_U_ADDR' is defined, `core-aout.c' will define the
+     `register_addr()' function and use the macro in it.  If you do not
+     define `REGISTER_U_ADDR', but you are using the standard
+     `fetch_core_registers()', you will need to define your own version
+     of `register_addr()', put it into your `XYZ-nat.c' file, and be
+     sure `XYZ-nat.o' is in the `NATDEPFILES' list.  If you have your
+     own `fetch_core_registers()', you may not need a separate
+     `register_addr()'.  Many custom `fetch_core_registers()'
+     implementations simply locate the registers themselves.
+
+   When making GDB run native on a new operating system, to make it
+possible to debug core files, you will need to either write specific
+code for parsing your OS's core files, or customize `bfd/trad-core.c'.
+First, use whatever `#include' files your machine uses to define the
+struct of registers that is accessible (possibly in the u-area) in a
+core file (rather than `machine/reg.h'), and an include file that
+defines whatever header exists on a core file (e.g. the u-area or a
+`struct core').  Then modify `trad_unix_core_file_p()' to use these
+values to set up the section information for the data segment, stack
+segment, any other segments in the core file (perhaps shared library
+contents or control information), "registers" segment, and if there are
+two discontiguous sets of registers (e.g.  integer and float), the
+"reg2" segment.  This section information basically delimits areas in
+the core file in a standard way, which the section-reading routines in
+BFD know how to seek around in.
+
+   Then back in GDB, you need a matching routine called
+`fetch_core_registers()'.  If you can use the generic one, it's in
+`core-aout.c'; if not, it's in your `XYZ-nat.c' file.  It will be
+passed a char pointer to the entire "registers" segment, its length,
+and a zero; or a char pointer to the entire "regs2" segment, its
+length, and a 2.  The routine should suck out the supplied register
+values and install them into GDB's "registers" array.
+
+   If your system uses `/proc' to control processes, and uses ELF
+format core files, then you may be able to use the same routines for
+reading the registers out of processes and out of core files.
+
+ptrace
+======
+
+/proc
+=====
+
+win32
+=====
+
+shared libraries
+================
+
+Native Conditionals
+===================
+
+   When GDB is configured and compiled, various macros are defined or
+left undefined, to control compilation when the host and target systems
+are the same.  These macros should be defined (or left undefined) in
+`nm-SYSTEM.h'.
+
+`ATTACH_DETACH'
+     If defined, then GDB will include support for the `attach' and
+     `detach' commands.
+
+`CHILD_PREPARE_TO_STORE'
+     If the machine stores all registers at once in the child process,
+     then define this to ensure that all values are correct.  This
+     usually entails a read from the child.
+
+     [Note that this is incorrectly defined in `xm-SYSTEM.h' files
+     currently.]
+
+`FETCH_INFERIOR_REGISTERS'
+     Define this if the native-dependent code will provide its own
+     routines `fetch_inferior_registers' and `store_inferior_registers'
+     in `HOST-nat.c'.  If this symbol is _not_ defined, and
+     `infptrace.c' is included in this configuration, the default
+     routines in `infptrace.c' are used for these functions.
+
+`FILES_INFO_HOOK'
+     (Only defined for Convex.)
+
+`FP0_REGNUM'
+     This macro is normally defined to be the number of the first
+     floating point register, if the machine has such registers.  As
+     such, it would appear only in target-specific code.  However,
+     /proc support uses this to decide whether floats are in use on
+     this target.
+
+`GET_LONGJMP_TARGET'
+     For most machines, this is a target-dependent parameter.  On the
+     DECstation and the Iris, this is a native-dependent parameter,
+     since <setjmp.h> is needed to define it.
+
+     This macro determines the target PC address that longjmp() will
+     jump to, assuming that we have just stopped at a longjmp
+     breakpoint.  It takes a CORE_ADDR * as argument, and stores the
+     target PC value through this pointer.  It examines the current
+     state of the machine as needed.
+
+`KERNEL_U_ADDR'
+     Define this to the address of the `u' structure (the "user
+     struct", also known as the "u-page") in kernel virtual memory.  GDB
+     needs to know this so that it can subtract this address from
+     absolute addresses in the upage, that are obtained via ptrace or
+     from core files.  On systems that don't need this value, set it to
+     zero.
+
+`KERNEL_U_ADDR_BSD'
+     Define this to cause GDB to determine the address of `u' at
+     runtime, by using Berkeley-style `nlist' on the kernel's image in
+     the root directory.
+
+`KERNEL_U_ADDR_HPUX'
+     Define this to cause GDB to determine the address of `u' at
+     runtime, by using HP-style `nlist' on the kernel's image in the
+     root directory.
+
+`ONE_PROCESS_WRITETEXT'
+     Define this to be able to, when a breakpoint insertion fails, warn
+     the user that another process may be running with the same
+     executable.
+
+`PREPARE_TO_PROCEED SELECT_IT'
+     This (ugly) macro allows a native configuration to customize the
+     way the `proceed' function in `infrun.c' deals with switching
+     between threads.
+
+     In a multi-threaded task we may select another thread and then
+     continue or step.  But if the old thread was stopped at a
+     breakpoint, it will immediately cause another breakpoint stop
+     without any execution (i.e. it will report a breakpoint hit
+     incorrectly).  So GDB must step over it first.
+
+     If defined, `PREPARE_TO_PROCEED' should check the current thread
+     against the thread that reported the most recent event.  If a
+     step-over is required, it returns TRUE.  If SELECT_IT is non-zero,
+     it should reselect the old thread.
+
+`PROC_NAME_FMT'
+     Defines the format for the name of a `/proc' device.  Should be
+     defined in `nm.h' _only_ in order to override the default
+     definition in `procfs.c'.
+
+`PTRACE_FP_BUG'
+     mach386-xdep.c
+
+`PTRACE_ARG3_TYPE'
+     The type of the third argument to the `ptrace' system call, if it
+     exists and is different from `int'.
+
+`REGISTER_U_ADDR'
+     Defines the offset of the registers in the "u area".
+
+`SHELL_COMMAND_CONCAT'
+     If defined, is a string to prefix on the shell command used to
+     start the inferior.
+
+`SHELL_FILE'
+     If defined, this is the name of the shell to use to run the
+     inferior.  Defaults to `"/bin/sh"'.
+
+`SOLIB_ADD (filename, from_tty, targ)'
+     Define this to expand into an expression that will cause the
+     symbols in FILENAME to be added to GDB's symbol table.
+
+`SOLIB_CREATE_INFERIOR_HOOK'
+     Define this to expand into any shared-library-relocation code that
+     you want to be run just after the child process has been forked.
+
+`START_INFERIOR_TRAPS_EXPECTED'
+     When starting an inferior, GDB normally expects to trap twice;
+     once when the shell execs, and once when the program itself execs.
+     If the actual number of traps is something other than 2, then
+     define this macro to expand into the number expected.
+
+`SVR4_SHARED_LIBS'
+     Define this to indicate that SVR4-style shared libraries are in
+     use.
+
+`USE_PROC_FS'
+     This determines whether small routines in `*-tdep.c', which
+     translate register values between GDB's internal representation
+     and the /proc representation, are compiled.
+
+`U_REGS_OFFSET'
+     This is the offset of the registers in the upage.  It need only be
+     defined if the generic ptrace register access routines in
+     `infptrace.c' are being used (that is, `infptrace.c' is configured
+     in, and `FETCH_INFERIOR_REGISTERS' is not defined).  If the
+     default value from `infptrace.c' is good enough, leave it
+     undefined.
+
+     The default value means that u.u_ar0 _points to_ the location of
+     the registers.  I'm guessing that `#define U_REGS_OFFSET 0' means
+     that u.u_ar0 _is_ the location of the registers.
+
+`CLEAR_SOLIB'
+     objfiles.c
+
+`DEBUG_PTRACE'
+     Define this to debug ptrace calls.
+

@@ -1,0 +1,1792 @@
+This is ./gdb.info, produced by Makeinfo version 3.12f from gdb.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Eighth Edition, March 2000, of `Debugging with GDB: the
+GNU Source-Level Debugger' for GDB Version 5.0.
+
+   Copyright (C) 1988-2000 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: gdb.info,  Node: GDB/MI Stack Manipulation,  Next: GDB/MI Symbol Query,  Prev: GDB/MI Miscellaneous Commands,  Up: GDB/MI
+
+Stack manipulation commands in GDB/MI
+=====================================
+
+The `-stack-info-frame' Command
+-------------------------------
+
+Synopsis
+........
+
+      -stack-info-frame
+
+   Get info on the current frame.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `info frame' or `frame' (without
+arguments).
+
+Example
+.......
+
+   N.A.
+
+The `-stack-info-depth' Command
+-------------------------------
+
+Synopsis
+........
+
+      -stack-info-depth [ MAX-DEPTH ]
+
+   Return the depth of the stack.  If the integer argument MAX-DEPTH is
+specified, do not count beyond MAX-DEPTH frames.
+
+GDB Command
+...........
+
+   There's no equivalent GDB command.
+
+Example
+.......
+
+   For a stack with frame levels 0 through 11:
+
+     (gdb)
+     -stack-info-depth
+     ^done,depth="12"
+     (gdb)
+     -stack-info-depth 4
+     ^done,depth="4"
+     (gdb)
+     -stack-info-depth 12
+     ^done,depth="12"
+     (gdb)
+     -stack-info-depth 11
+     ^done,depth="11"
+     (gdb)
+     -stack-info-depth 13
+     ^done,depth="12"
+     (gdb)
+
+The `-stack-list-arguments' Command
+-----------------------------------
+
+Synopsis
+........
+
+      -stack-list-arguments SHOW-VALUES
+         [ LOW-FRAME HIGH-FRAME ]
+
+   Display a list of the arguments for the frames between LOW-FRAME and
+HIGH-FRAME (inclusive).  If LOW-FRAME and HIGH-FRAME are not provided,
+list the arguments for the whole call stack.
+
+   The SHOW-VALUES argument must have a value of 0 or 1.  A value of 0
+means that only the names of the arguments are listed, a value of 1
+means that both names and values of the arguments are printed.
+
+GDB Command
+...........
+
+   GDB does not have an equivalent command.  `gdbtk' has a
+`gdb_get_args' command which partially overlaps with the functionality
+of `-stack-list-arguments'.
+
+Example
+.......
+
+     (gdb)
+     -stack-list-frames
+     ^done,
+     stack={
+     frame={level="0 ",addr="0x00010734",func="callee4",
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="8"},
+     frame={level="1 ",addr="0x0001076c",func="callee3",
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="17"},
+     frame={level="2 ",addr="0x0001078c",func="callee2",
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="22"},
+     frame={level="3 ",addr="0x000107b4",func="callee1",
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="27"},
+     frame={level="4 ",addr="0x000107e0",func="main",
+     file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="32"}}
+     (gdb)
+     -stack-list-arguments 0
+     ^done,
+     stack-args={
+     frame={level="0",args={}},
+     frame={level="1",args={name="strarg"}},
+     frame={level="2",args={name="intarg",name="strarg"}},
+     frame={level="3",args={name="intarg",name="strarg",name="fltarg"}},
+     frame={level="4",args={}}}
+     (gdb)
+     -stack-list-arguments 1
+     ^done,
+     stack-args={
+     frame={level="0",args={}},
+     frame={level="1",
+      args={{name="strarg",value="0x11940 \"A string argument.\""}}},
+     frame={level="2",args={
+     {name="intarg",value="2"},
+     {name="strarg",value="0x11940 \"A string argument.\""}}},
+     {frame={level="3",args={
+     {name="intarg",value="2"},
+     {name="strarg",value="0x11940 \"A string argument.\""},
+     {name="fltarg",value="3.5"}}},
+     frame={level="4",args={}}}
+     (gdb)
+     -stack-list-arguments 0 2 2
+     ^done,stack-args={frame={level="2",args={name="intarg",name="strarg"}}}
+     (gdb)
+     -stack-list-arguments 1 2 2
+     ^done,stack-args={frame={level="2",
+     args={{name="intarg",value="2"},
+     {name="strarg",value="0x11940 \"A string argument.\""}}}}
+     (gdb)
+
+The `-stack-list-frames' Command
+--------------------------------
+
+Synopsis
+........
+
+      -stack-list-frames [ LOW-FRAME HIGH-FRAME ]
+
+   List the frames currently on the stack.  For each frame it displays
+the following info:
+
+`LEVEL'
+     The frame number, 0 being the topmost frame, i.e. the innermost
+     function.
+
+`ADDR'
+     The `$pc' value for that frame.
+
+`FUNC'
+     Function name.
+
+`FILE'
+     File name of the source file where the function lives.
+
+`LINE'
+     Line number corresponding to the `$pc'.
+
+   If invoked without arguments, this command prints a backtrace for the
+whole stack.  If given two integer arguments, it shows the frames whose
+levels are between the two arguments (inclusive).  If the two arguments
+are equal, it shows the single frame at the corresponding level.
+
+GDB Command
+...........
+
+   The corresponding GDB commands are `backtrace' and `where'.
+
+Example
+.......
+
+   Full stack backtrace:
+
+     (gdb)
+     -stack-list-frames
+     ^done,stack=
+     {frame={level="0 ",addr="0x0001076c",func="foo",
+       file="recursive2.c",line="11"},
+     frame={level="1 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="2 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="3 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="4 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="5 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="6 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="7 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="8 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="9 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="10",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="11",addr="0x00010738",func="main",
+       file="recursive2.c",line="4"}}
+     (gdb)
+
+   Show frames between low_frame and high_frame:
+
+     (gdb)
+     -stack-list-frames 3 5
+     ^done,stack=
+     {frame={level="3 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="4 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"},
+     frame={level="5 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"}}
+     (gdb)
+
+   Show a single frame:
+
+     (gdb)
+     -stack-list-frames 3 3
+     ^done,stack=
+     {frame={level="3 ",addr="0x000107a4",func="foo",
+       file="recursive2.c",line="14"}}
+     (gdb)
+
+The `-stack-list-locals' Command
+--------------------------------
+
+Synopsis
+........
+
+      -stack-list-locals PRINT-VALUES
+
+   Display the local variable names for the current frame.  With an
+argument of 0 prints only the names of the variables, with argument of 1
+prints also their values.
+
+GDB Command
+...........
+
+   `info locals' in GDB, `gdb_get_locals' in `gdbtk'.
+
+Example
+.......
+
+     (gdb)
+     -stack-list-locals 0
+     ^done,locals={name="A",name="B",name="C"}
+     (gdb)
+     -stack-list-locals 1
+     ^done,locals={{name="A",value="1"},{name="B",value="2"},
+       {name="C",value="3"}}
+     (gdb)
+
+The `-stack-select-frame' Command
+---------------------------------
+
+Synopsis
+........
+
+      -stack-select-frame FRAMENUM
+
+   Change the current frame.  Select a different frame FRAMENUM on the
+stack.
+
+GDB Command
+...........
+
+   The corresponding GDB commands are `frame', `up', `down',
+`select-frame', `up-silent', and `down-silent'.
+
+Example
+.......
+
+     (gdb)
+     -stack-select-frame 2
+     ^done
+     (gdb)
+
+
+File: gdb.info,  Node: GDB/MI Symbol Query,  Next: GDB/MI Target Manipulation,  Prev: GDB/MI Stack Manipulation,  Up: GDB/MI
+
+GDB/MI Symbol Query Commands
+============================
+
+The `-symbol-info-address' Command
+----------------------------------
+
+Synopsis
+........
+
+      -symbol-info-address SYMBOL
+
+   Describe where SYMBOL is stored.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `info address'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-info-file' Command
+-------------------------------
+
+Synopsis
+........
+
+      -symbol-info-file
+
+   Show the file for the symbol.
+
+GDB Command
+...........
+
+   There's no equivalent GDB command.  `gdbtk' has `gdb_filnd_file'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-info-function' Command
+-----------------------------------
+
+Synopsis
+........
+
+      -symbol-info-function
+
+   Show which function the symbol lives in.
+
+GDB Command
+...........
+
+   `gdb_get_function' in `gdbtk'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-info-line' Command
+-------------------------------
+
+Synopsis
+........
+
+      -symbol-info-line
+
+   Show the core addresses of the code for a source line.
+
+GDB Command
+...........
+
+   The corresponding GDB comamnd is `info line'.  `gdbtk' has the
+`gdb_get_line' `gdb_get_file' commands.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-info-symbol' Command
+---------------------------------
+
+Synopsis
+........
+
+      -symbol-info-symbol ADDR
+
+   Describe what symbol is at location ADDR.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `info symbol'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-list-functions' Command
+------------------------------------
+
+Synopsis
+........
+
+      -symbol-list-functions
+
+   List the functions in the executable.
+
+GDB Command
+...........
+
+   `info functions' in GDB, `gdb_listfunc' `gdb_search' in `gdbtk'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-list-types' Command
+--------------------------------
+
+Synopsis
+........
+
+      -symbol-list-types
+
+   List all the type names.
+
+GDB Command
+...........
+
+   The corresponding commands are `info types' in GDB, `gdb_search' in
+`gdbtk'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-list-variables' Command
+------------------------------------
+
+Synopsis
+........
+
+      -symbol-list-variables
+
+   List all the global and static variable names.
+
+GDB Command
+...........
+
+   `info variables' in GDB, `gdb_search' in `gdbtk'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-locate' Command
+----------------------------
+
+Synopsis
+........
+
+      -symbol-locate
+
+GDB Command
+...........
+
+   `gdb_loc' in `gdbtk'.
+
+Example
+.......
+
+   N.A.
+
+The `-symbol-type' Command
+--------------------------
+
+Synopsis
+........
+
+      -symbol-type VARIABLE
+
+   Show type of VARIABLE.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `ptype', `gdbtk' has
+`gdb_obj_variable'.
+
+Example
+.......
+
+   N.A.
+
+
+File: gdb.info,  Node: GDB/MI Target Manipulation,  Next: GDB/MI Thread Commands,  Prev: GDB/MI Symbol Query,  Up: GDB/MI
+
+GDB/MI Target Manipulation Commands
+===================================
+
+The `-target-attach' Command
+----------------------------
+
+Synopsis
+........
+
+      -target-attach PID | FILE
+
+   Attach to a process PID or a file FILE outside of GDB.
+
+GDB command
+...........
+
+   The corresponding GDB command is `attach'.
+
+Example
+.......
+
+   N.A.
+
+The `-target-compare-sections' Command
+--------------------------------------
+
+Synopsis
+........
+
+      -target-compare-sections [ SECTION ]
+
+   Compare data of section SECTION on target to the exec file.  Without
+the argument, all sections are compared.
+
+GDB Command
+...........
+
+   The GDB equivalent is `compare-sections'.
+
+Example
+.......
+
+   N.A.
+
+The `-target-detach' Command
+----------------------------
+
+Synopsis
+........
+
+      -target-detach
+
+   Disconnect from the remote target.  There's no output.
+
+GDB command
+...........
+
+   The corresponding GDB command is `detach'.
+
+Example
+.......
+
+     (gdb)
+     -target-detach
+     ^done
+     (gdb)
+
+The `-target-download' Command
+------------------------------
+
+Synopsis
+........
+
+      -target-download
+
+   Loads the executable onto the remote target.  It prints out an
+update message every half second, which includes the fields:
+
+`section'
+     The name of the section.
+
+`section-sent'
+     The size of what has been sent so far for that section.
+
+`section-size'
+     The size of the section.
+
+`total-sent'
+     The total size of what was sent so far (the current and the
+     previous sections).
+
+`total-size'
+     The size of the overall executable to download.
+
+Each message is sent as status record (*note GDB/MI Output Syntax:
+GDB/MI Output Syntax.).
+
+   In addition, it prints the name and size of the sections, as they are
+downloaded.  These messages include the following fields:
+
+`section'
+     The name of the section.
+
+`section-size'
+     The size of the section.
+
+`total-size'
+     The size of the overall executable to download.
+
+At the end,  a summary is printed.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `load'.
+
+Example
+.......
+
+   Note: each status message appears on a single line.  Here the
+messages have been broken down so that they can fit onto a page.
+
+     (gdb)
+     -target-download
+     +download,{section=".text",section-size="6668",total-size="9880"}
+     +download,{section=".text",section-sent="512",section-size="6668",
+     total-sent="512",total-size="9880"}
+     +download,{section=".text",section-sent="1024",section-size="6668",
+     total-sent="1024",total-size="9880"}
+     +download,{section=".text",section-sent="1536",section-size="6668",
+     total-sent="1536",total-size="9880"}
+     +download,{section=".text",section-sent="2048",section-size="6668",
+     total-sent="2048",total-size="9880"}
+     +download,{section=".text",section-sent="2560",section-size="6668",
+     total-sent="2560",total-size="9880"}
+     +download,{section=".text",section-sent="3072",section-size="6668",
+     total-sent="3072",total-size="9880"}
+     +download,{section=".text",section-sent="3584",section-size="6668",
+     total-sent="3584",total-size="9880"}
+     +download,{section=".text",section-sent="4096",section-size="6668",
+     total-sent="4096",total-size="9880"}
+     +download,{section=".text",section-sent="4608",section-size="6668",
+     total-sent="4608",total-size="9880"}
+     +download,{section=".text",section-sent="5120",section-size="6668",
+     total-sent="5120",total-size="9880"}
+     +download,{section=".text",section-sent="5632",section-size="6668",
+     total-sent="5632",total-size="9880"}
+     +download,{section=".text",section-sent="6144",section-size="6668",
+     total-sent="6144",total-size="9880"}
+     +download,{section=".text",section-sent="6656",section-size="6668",
+     total-sent="6656",total-size="9880"}
+     +download,{section=".init",section-size="28",total-size="9880"}
+     +download,{section=".fini",section-size="28",total-size="9880"}
+     +download,{section=".data",section-size="3156",total-size="9880"}
+     +download,{section=".data",section-sent="512",section-size="3156",
+     total-sent="7236",total-size="9880"}
+     +download,{section=".data",section-sent="1024",section-size="3156",
+     total-sent="7748",total-size="9880"}
+     +download,{section=".data",section-sent="1536",section-size="3156",
+     total-sent="8260",total-size="9880"}
+     +download,{section=".data",section-sent="2048",section-size="3156",
+     total-sent="8772",total-size="9880"}
+     +download,{section=".data",section-sent="2560",section-size="3156",
+     total-sent="9284",total-size="9880"}
+     +download,{section=".data",section-sent="3072",section-size="3156",
+     total-sent="9796",total-size="9880"}
+     ^done,address="0x10004",load-size="9880",transfer-rate="6586",
+     write-rate="429"
+     (gdb)
+
+The `-target-exec-status' Command
+---------------------------------
+
+Synopsis
+........
+
+      -target-exec-status
+
+   Provide information on the state of the target (whether it is
+running or not, for instance).
+
+GDB Command
+...........
+
+   There's no equivalent GDB command.
+
+Example
+.......
+
+   N.A.
+
+The `-target-list-available-targets' Command
+--------------------------------------------
+
+Synopsis
+........
+
+      -target-list-available-targets
+
+   List the possible targets to connect to.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `help target'.
+
+Example
+.......
+
+   N.A.
+
+The `-target-list-current-targets' Command
+------------------------------------------
+
+Synopsis
+........
+
+      -target-list-current-targets
+
+   Describe the current target.
+
+GDB Command
+...........
+
+   The corresponding information is printed by `info file' (among other
+things).
+
+Example
+.......
+
+   N.A.
+
+The `-target-list-parameters' Command
+-------------------------------------
+
+Synopsis
+........
+
+      -target-list-parameters
+
+GDB Command
+...........
+
+   No equivalent.
+
+Example
+.......
+
+   N.A.
+
+The `-target-select' Command
+----------------------------
+
+Synopsis
+........
+
+      -target-select TYPE PARAMETERS ...
+
+   Connect GDB to the remote target.  This command takes two args:
+
+`TYPE'
+     The type of target, for instance `async', `remote', etc.
+
+`PARAMETERS'
+     Device names, host names and the like.  *Note Commands for
+     managing targets: Target Commands, for more details.
+
+   The output is a connection notification, followed by the address at
+which the target program is, in the following form:
+
+     ^connected,addr="ADDRESS",func="FUNCTION NAME",
+       args={ARG LIST}
+
+GDB Command
+...........
+
+   The corresponding GDB command is `target'.
+
+Example
+.......
+
+     (gdb)
+     -target-select async /dev/ttya
+     ^connected,addr="0xfe00a300",func="??",args={}
+     (gdb)
+
+
+File: gdb.info,  Node: GDB/MI Thread Commands,  Next: GDB/MI Tracepoint Commands,  Prev: GDB/MI Target Manipulation,  Up: GDB/MI
+
+GDB/MI Thread Commands
+======================
+
+The `-thread-info' Command
+--------------------------
+
+Synopsis
+........
+
+      -thread-info
+
+GDB command
+...........
+
+   No equivalent.
+
+Example
+.......
+
+   N.A.
+
+The `-thread-list-all-threads' Command
+--------------------------------------
+
+Synopsis
+........
+
+      -thread-list-all-threads
+
+GDB Command
+...........
+
+   The equivalent GDB command is `info threads'.
+
+Example
+.......
+
+   N.A.
+
+The `-thread-list-ids' Command
+------------------------------
+
+Synopsis
+........
+
+      -thread-list-ids
+
+   Produces a list of the currently known gdb thread ids.  At the end
+of the list it also prints the total number of such threads.
+
+GDB Command
+...........
+
+   Part of `info threads' supplies the same information.
+
+Example
+.......
+
+   No threads present, besides the main process.
+
+     (gdb)
+     -thread-list-ids
+     ^done,thread-ids={},number-of-threads="0"
+     (gdb)
+
+   Several threads.
+
+     (gdb)
+     -thread-list-ids
+     ^done,thread-ids={thread-id="3",thread-id="2",thread-id="1"},
+     number-of-threads="3"
+     (gdb)
+
+The `-thread-select' Command
+----------------------------
+
+Synopsis
+........
+
+      -thread-select THREADNUM
+
+   Make THREADNUM the current thread.  It prints the number of the new
+current thread, and the topmost frame for that thread.
+
+GDB Command
+...........
+
+   The corresponding GDB command is `thread'.
+
+Example
+.......
+
+     (gdb)
+     -exec-next
+     ^running
+     (gdb)
+     *stopped,reason="end-stepping-range",thread-id="2",line="187",
+     file="../../../devo/gdb/testsuite/gdb.threads/linux-dp.c"
+     (gdb)
+     -thread-list-ids
+     ^done,
+     thread-ids={thread-id="3",thread-id="2",thread-id="1"},
+     number-of-threads="3"
+     (gdb)
+     -thread-select 3
+     ^done,new-thread-id="3",
+     frame={level="0 ",func="vprintf",
+     args={{name="format",value="0x8048e9c \"%*s%c %d %c\\n\""},
+     {name="arg",value="0x2"}},file="vprintf.c",line="31"}
+     (gdb)
+
+
+File: gdb.info,  Node: GDB/MI Tracepoint Commands,  Next: GDB/MI Variable Objects,  Prev: GDB/MI Thread Commands,  Up: GDB/MI
+
+GDB/MI Tracepoint Commands
+==========================
+
+   The tracepoint commands are not yet implemented.
+
+
+File: gdb.info,  Node: GDB/MI Variable Objects,  Next: GDB/MI Draft Changes to Output Syntax,  Prev: GDB/MI Tracepoint Commands,  Up: GDB/MI
+
+GDB/MI Variable Objects
+=======================
+
+Motivation for Variable Objects in GDB/MI
+-----------------------------------------
+
+   For the implementation of a variable debugger window (locals, watched
+expressions, etc.), we are proposing the adaptation of the existing code
+used by `Insight'.
+
+   The two main reasons for that are:
+
+  1. It has been proven in practice (it is already on its second
+     generation).
+
+  2. It will shorten development time (needless to say how important it
+     is now).
+
+   The original interface was designed to be used by Tcl code, so it was
+slightly changed so it could be used through flathead.  This document
+describes the flathead operations that will be available and gives some
+hints about their use.
+
+   _Note_: In addition to the set of operations described here, we
+expect the GUI implementation of a variable window to require, at
+least, the following operations:
+
+   * -gdb-show output-radix
+
+   * -stack-list-arguments
+
+   * -stack-list-locals
+
+   * -stack-select-frame
+
+Introduction to Variable Objects in GDB/MI
+------------------------------------------
+
+   The basic idea behind variable objects is the creation of a named
+object to represent a variable, an expression, a memory location or
+even a CPU register.  For each object created, a set of operations is
+available for examining or changing its properties.
+
+   Furthermore, complex data types, such as C structures, are
+represented in a tree format.  For instance, the `struct' type variable
+is the root and the children will represent the struct members.  If a
+child is itself of a complex type, it will also have children of its
+own.  Appropriate language differences are handled for C, C++ and Java.
+
+   When returning the actual values of the objects, this facility allows
+for the individual selection of the display format used in the result
+creation.  It can be chosen among: binary, decimal, hexadecimal, octal
+and natural.  Natural refers to a default format automatically chosen
+based on the variable type (like decimal for an `int', hex for
+pointers, etc.).
+
+   The following is the complete set of flathead operations defined to
+access this functionality:
+
+*Operation*            *Description*                               
+-var-create            create a variable object                    
+-var-delete            delete the variable object and its children 
+-var-set-format        set the display format of this variable     
+-var-show-format       show the display format of this variable    
+-var-info-num-children tells how many children this object has     
+-var-list-children     return a list of the object's children      
+-var-info-type         show the type of this variable object       
+-var-info-expression   print what this variable object represents  
+-var-show-attributes   is this variable editable? does it exist    
+                       here?                                       
+-var-evaluate-expressionget the value of this variable              
+-var-assign            set the value of this variable              
+-var-update            update the variable and its children        
+
+   In the next subsection we describe each operation in detail and
+suggest how it can be used.
+
+Description And Use of Operations on Variable Objects
+-----------------------------------------------------
+
+The `-var-create' Command
+-------------------------
+
+Synopsis
+........
+
+      -var-create {NAME | "-"}
+         {FRAME-ADDR | "*"} EXPRESSION
+
+   This operation creates a variable object, which allows the
+monitoring of a variable, the result of an expression, a memory cell or
+a CPU register.
+
+   The NAME parameter is the string by which the object can be
+referenced.  It must be unique.  If `-' is specified, the varobj system
+will generate a string "varNNNNNN" automatically.  It will be unique
+provided that one does not specify NAME on that format.  The command
+fails if a duplicate name is found.
+
+   The frame under which the expression should be evaluated can be
+specified by FRAME-ADDR.  A `*' indicates that the current frame should
+be used.
+
+   EXPRESSION is any expression valid on the current language set (must
+not begin with a `*'), or one of the following:
+
+   * `*ADDR', where ADDR is the address of a memory cell
+
+   * `*ADDR-ADDR' - a memory address range (TBD)
+
+   * `$REGNAME' - a CPU register name
+
+Result
+......
+
+   This operation returns the name, number of children and the type of
+the object created.  Type is returned as a string as the ones generated
+by the GDB CLI:
+
+      name="NAME",numchild="N",type="TYPE"
+
+The `-var-delete' Command
+-------------------------
+
+Synopsis
+........
+
+      -var-delete NAME
+
+   Deletes a previously created variable object and all of its children.
+
+   Returns an error if the object NAME is not found.
+
+The `-var-set-format' Command
+-----------------------------
+
+Synopsis
+........
+
+      -var-set-format NAME FORMAT-SPEC
+
+   Sets the output format for the value of the object NAME to be
+FORMAT-SPEC.
+
+   The syntax for the FORMAT-SPEC is as follows:
+
+      FORMAT-SPEC ==>
+      {binary | decimal | hexadecimal | octal | natural}
+
+The `-var-show-format' Command
+------------------------------
+
+Synopsis
+........
+
+      -var-show-format NAME
+
+   Returns the format used to display the value of the object NAME.
+
+      format ==>
+      FORMAT-SPEC
+
+The `-var-info-num-children' Command
+------------------------------------
+
+Synopsis
+........
+
+      -var-info-num-children NAME
+
+   Returns the number of children of a variable object NAME:
+
+      numchild=N
+
+The `-var-list-children' Command
+--------------------------------
+
+Synopsis
+........
+
+      -var-list-children NAME
+
+   Returns a list of the children of the specified variable object:
+
+      numchild=N,children={{name=NAME,
+      numchild=N,type=TYPE},(repeats N times)}
+
+The `-var-info-type' Command
+----------------------------
+
+Synopsis
+........
+
+      -var-info-type NAME
+
+   Returns the type of the specified variable NAME.  The type is
+returned as a string in the same format as it is output by the GDB CLI:
+
+      type=TYPENAME
+
+The `-var-info-expression' Command
+----------------------------------
+
+Synopsis
+........
+
+      -var-info-expression NAME
+
+   Returns what is represented by the variable object NAME:
+
+      lang=LANG-SPEC,exp=EXPRESSION
+
+where LANG-SPEC is `{"C" | "C++" | "Java"}'.
+
+The `-var-show-attributes' Command
+----------------------------------
+
+Synopsis
+........
+
+      -var-show-attributes NAME
+
+   List attributes of the specified variable object NAME:
+
+      status=ATTR [ ( ,ATTR )* ]
+
+where ATTR is `{ { editable | noneditable } | TBD }'.
+
+The `-var-evaluate-expression' Command
+--------------------------------------
+
+Synopsis
+........
+
+      -var-evaluate-expression NAME
+
+   Evaluates the expression that is represented by the specified
+variable object and returns its value as a string in the current format
+specified for the object:
+
+      value=VALUE
+
+The `-var-assign' Command
+-------------------------
+
+Synopsis
+........
+
+      -var-assign NAME EXPRESSION
+
+   Assigns the value of EXPRESSION to the variable object specified by
+NAME.  The object must be "editable".
+
+The `-var-update' Command
+-------------------------
+
+Synopsis
+........
+
+      -var-update {NAME | "*"}
+
+   Update the value of the variable object NAME by evaluating its
+expression after fetching all the new values from memory or registers.
+A `*' causes all existing variable objects to be updated.
+
+
+File: gdb.info,  Node: GDB/MI Draft Changes to Output Syntax,  Prev: GDB/MI Variable Objects,  Up: GDB/MI
+
+GDB/MI Draft Changes to Output Syntax
+=====================================
+
+   One problem identified in the existing GDB/MI output syntax was the
+difficulty in differentiating between a tuple such as:
+
+     {number="1",type="breakpoint",disp="keep",enabled="y"}
+
+   where each value has a unique label, and a list such as:
+
+     {"1","2","4"}
+     {bp="1",bp="2",bp="4"}
+
+   where values are un-labeled or the label is duplicated.
+
+   What follows is a draft revision to the output specification that
+addresses this problem.
+
+   The output from GDB/MI consists of zero or more out-of-band records
+optionally followed by a single result record, the result record being
+for the most recent command input.  The sequence is terminated by
+"(gdb)".
+
+   Asynchronous GDB/MI output is similar.
+
+   Each output record directly associated with an input command is
+prefixed by the input commands `TOKEN'.
+
+`OUTPUT ==>'
+     { OUT-OF-BAND-RECORD } `[' RESULT-RECORD `]' "(gdb)" NL
+
+`RESULT-RECORD ==>'
+     `[' TOKEN `]' "^" RESULT-CLASS { "," RESULT } NL
+
+`OUT-OF-BAND-RECORD ==>'
+     ASYNC-RECORD `|' STREAM-RECORD
+
+`ASYNC-RECORD ==>'
+     EXEC-ASYNC-OUTPUT `|' STATUS-ASYNC-OUTPUT `|' NOTIFY-ASYNC-OUTPUT
+
+`EXEC-ASYNC-OUTPUT ==>'
+     `[' TOKEN `]' "*" ASYNC-OUTPUT
+
+`STATUS-ASYNC-OUTPUT ==>'
+     `[' TOKEN `]' "+" ASYNC-OUTPUT
+
+`NOTIFY-ASYNC-OUTPUT ==>'
+     `[' TOKEN `]' "=" ASYNC-OUTPUT
+
+`ASYNC-OUTPUT ==>'
+     ASYNC-CLASS { "," RESULT } NL
+
+`RESULT-CLASS ==>'
+     "done" `|' "running" `|' "connected" `|' "error" `|' "exit"
+
+`ASYNC-CLASS ==>'
+     "stopped" `|' _others depending on need as still in development_
+
+`RESULT ==>'
+     STRING "=" VALUE
+
+`VALUE ==>'
+     C-STRING `|' TUPPLE `|' LIST
+
+`TUPPLE ==>'
+     "{}" `|' "{" RESULT { "," RESULT } "}"
+
+`LIST ==>'
+     "`[]'" `|' "`['" VALUE { "," VALUE } "`]'"
+
+`STRING ==>'
+     _[-A-Za-z\.0-9_]*_
+
+`C-STRING ==>'
+     _See the input specification_
+
+`STREAM-RECORD ==>'
+     CONSOLE-STREAM-OUTPUT `|' TARGET-STREAM-OUTPUT `|'
+     LOG-STREAM-OUTPUT
+
+`CONSOLE-STREAM-OUTPUT ==>'
+     "~" C-STRING
+
+`TARGET-STREAM-OUTPUT ==>'
+     "@" C-STRING
+
+`LOG-STREAM-OUTPUT ==>'
+     "&" C-STRING
+
+`NL ==>'
+     CR `|' CR-LF
+
+`TOKEN ==>'
+     "any sequence of digits"
+
+   In addition, the following are still being developed.
+
+`QUERY'
+     This action is currently undefined.
+
+   Notes:
+
+   * All output sequences end in a single line containing a period.
+
+   * The `TOKEN' is from the corresponding request.  If an execution
+     command is interrupted by the -exec-interrupt command, the token
+     associated with the `*stopped' message is the one of the original
+     execution command, not the one of the interrupt-command.
+
+   * STATUS-ASYNC-OUTPUT contains on-going status information about the
+     progress of a slow operation.  It can be discarded. All status
+     output is prefixed by the prefix `+'.
+
+   * EXEC-ASYNC-OUTPUT contains asynchronous state change on the target
+     (stopped, started, disappeared). All async output is prefixed by
+     the prefix `*'.
+
+   * NOTIFY-ASYNC-OUTPUT contains supplementary information that the
+     client should handle (new breakpoint information). All notify
+     output is prefixed by the prefix `='.
+
+   * CONSOLE-STREAM-OUTPUT is output that should be displayed as is, in
+     the console.  It is the textual response to a CLI command. All the
+     console output is prefixed by the prefix "~".
+
+   * TARGET-STREAM-OUTPUT is the output produced by the target program.
+     All the target output is prefixed by the prefix "@".
+
+   * LOG-STREAM-OUTPUT is output text coming from GDB's internals, for
+     instance messages that should be displayed as part of an error
+     log.  All the log output is prefixed by the prefix "&".
+
+
+
+File: gdb.info,  Node: GDB Bugs,  Next: Formatting Documentation,  Prev: GDB/MI,  Up: Top
+
+Reporting Bugs in GDB
+*********************
+
+   Your bug reports play an essential role in making GDB reliable.
+
+   Reporting a bug may help you by bringing a solution to your problem,
+or it may not.  But in any case the principal function of a bug report
+is to help the entire community by making the next version of GDB work
+better.  Bug reports are your contribution to the maintenance of GDB.
+
+   In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+* Menu:
+
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+
+
+File: gdb.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: GDB Bugs
+
+Have you found a bug?
+=====================
+
+   If you are not sure whether you have found a bug, here are some
+guidelines:
+
+   * If the debugger gets a fatal signal, for any input whatever, that
+     is a GDB bug.  Reliable debuggers never crash.
+
+   * If GDB produces an error message for valid input, that is a bug.
+     (Note that if you're cross debugging, the problem may also be
+     somewhere in the connection to the target.)
+
+   * If GDB does not produce an error message for invalid input, that
+     is a bug.  However, you should note that your idea of "invalid
+     input" might be our idea of "an extension" or "support for
+     traditional practice".
+
+   * If you are an experienced user of debugging tools, your suggestions
+     for improvement of GDB are welcome in any case.
+
+
+File: gdb.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: GDB Bugs
+
+How to report bugs
+==================
+
+   A number of companies and individuals offer support for GNU products.
+If you obtained GDB from a support organization, we recommend you
+contact that organization first.
+
+   You can find contact information for many support companies and
+individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
+
+   In any event, we also recommend that you send bug reports for GDB to
+this addresses:
+
+     bug-gdb@gnu.org
+
+   *Do not send bug reports to `info-gdb', or to `help-gdb', or to any
+newsgroups.*  Most users of GDB do not want to receive bug reports.
+Those that do have arranged to receive `bug-gdb'.
+
+   The mailing list `bug-gdb' has a newsgroup `gnu.gdb.bug' which
+serves as a repeater.  The mailing list and the newsgroup carry exactly
+the same messages.  Often people think of posting bug reports to the
+newsgroup instead of mailing them.  This appears to work, but it has one
+problem which can be crucial: a newsgroup posting often lacks a mail
+path back to the sender.  Thus, if we need to ask for more information,
+we may be unable to reach you.  For this reason, it is better to send
+bug reports to the mailing list.
+
+   As a last resort, send bug reports on paper to:
+
+     GNU Debugger Bugs
+     Free Software Foundation Inc.
+     59 Temple Place - Suite 330
+     Boston, MA 02111-1307
+     USA
+
+   The fundamental principle of reporting bugs usefully is this:
+*report all the facts*.  If you are not sure whether to state a fact or
+leave it out, state it!
+
+   Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of the variable you use in an example does not
+matter.  Well, probably it does not, but one cannot be sure.  Perhaps
+the bug is a stray memory reference which happens to fetch from the
+location where that name is stored in memory; perhaps, if the name were
+different, the contents of that location would fool the debugger into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+   Keep in mind that the purpose of a bug report is to enable us to fix
+the bug.  It may be that the bug has been reported previously, but
+neither you nor we can know that unless your bug report is complete and
+self-contained.
+
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  Those bug reports are useless, and we urge everyone to _refuse
+to respond to them_ except to chide the sender to report bugs properly.
+
+   To enable us to fix the bug, you should include all these things:
+
+   * The version of GDB.  GDB announces it if you start with no
+     arguments; you can also print it at any time using `show version'.
+
+     Without this, we will not know whether there is any point in
+     looking for the bug in the current version of GDB.
+
+   * The type of machine you are using, and the operating system name
+     and version number.
+
+   * What compiler (and its version) was used to compile GDB--e.g.
+     "gcc-2.8.1".
+
+   * What compiler (and its version) was used to compile the program
+     you are debugging--e.g.  "gcc-2.8.1", or "HP92453-01 A.10.32.03 HP
+     C Compiler".  For GCC, you can say `gcc --version' to get this
+     information; for other compilers, see the documentation for those
+     compilers.
+
+   * The command arguments you gave the compiler to compile your
+     example and observe the bug.  For example, did you use `-O'?  To
+     guarantee you will not omit something important, list them all.  A
+     copy of the Makefile (or the output from make) is sufficient.
+
+     If we were to try to guess the arguments, we would probably guess
+     wrong and then we might not encounter the bug.
+
+   * A complete input script, and all necessary source files, that will
+     reproduce the bug.
+
+   * A description of what behavior you observe that you believe is
+     incorrect.  For example, "It gets a fatal signal."
+
+     Of course, if the bug is that GDB gets a fatal signal, then we
+     will certainly notice it.  But if the bug is incorrect output, we
+     might not notice unless it is glaringly wrong.  You might as well
+     not give us a chance to make a mistake.
+
+     Even if the problem you experience is a fatal signal, you should
+     still say so explicitly.  Suppose something strange is going on,
+     such as, your copy of GDB is out of synch, or you have encountered
+     a bug in the C library on your system.  (This has happened!)  Your
+     copy might crash and ours would not.  If you told us to expect a
+     crash, then when ours fails to crash, we would know that the bug
+     was not happening for us.  If you had not told us to expect a
+     crash, then we would not be able to draw any conclusion from our
+     observations.
+
+   * If you wish to suggest changes to the GDB source, send us context
+     diffs.  If you even discuss something in the GDB source, refer to
+     it by context, not by line number.
+
+     The line numbers in our development sources will not match those
+     in your sources.  Your line numbers would convey no useful
+     information to us.
+
+
+   Here are some things that are not necessary:
+
+   * A description of the envelope of the bug.
+
+     Often people who encounter a bug spend a lot of time investigating
+     which changes to the input file will make the bug go away and which
+     changes will not affect it.
+
+     This is often time consuming and not very useful, because the way
+     we will find the bug is by running a single example under the
+     debugger with breakpoints, not by pure deduction from a series of
+     examples.  We recommend that you save your time for something else.
+
+     Of course, if you can find a simpler example to report _instead_
+     of the original one, that is a convenience for us.  Errors in the
+     output will be easier to spot, running under the debugger will take
+     less time, and so on.
+
+     However, simplification is not vital; if you do not want to do
+     this, report the bug anyway and send us the entire test case you
+     used.
+
+   * A patch for the bug.
+
+     A patch for the bug does help us if it is a good one.  But do not
+     omit the necessary information, such as the test case, on the
+     assumption that a patch is all we need.  We might see problems
+     with your patch and decide to fix the problem another way, or we
+     might not understand it at all.
+
+     Sometimes with a program as complicated as GDB it is very hard to
+     construct an example that will make the program follow a certain
+     path through the code.  If you do not send us the example, we will
+     not be able to construct one, so we will not be able to verify
+     that the bug is fixed.
+
+     And if we cannot understand what bug you are trying to fix, or why
+     your patch should be an improvement, we will not install it.  A
+     test case will help us to understand.
+
+   * A guess about what the bug is or what it depends on.
+
+     Such guesses are usually wrong.  Even we cannot guess right about
+     such things without first using the debugger to find the facts.
+
+
+File: gdb.info,  Node: Command Line Editing,  Next: Using History Interactively,  Prev: Formatting Documentation,  Up: Top
+
+Command Line Editing
+********************
+
+   This chapter describes the basic features of the GNU command line
+editing interface.
+
+* Menu:
+
+* Introduction and Notation::	Notation used in this text.
+* Readline Interaction::	The minimum set of commands for editing a line.
+* Readline Init File::		Customizing Readline from a user's view.
+* Bindable Readline Commands::	A description of most of the Readline commands
+				available for binding
+* Readline vi Mode::		A short description of how to make Readline
+				behave like the vi editor.
+
+
+File: gdb.info,  Node: Introduction and Notation,  Next: Readline Interaction,  Up: Command Line Editing
+
+Introduction to Line Editing
+============================
+
+   The following paragraphs describe the notation used to represent
+keystrokes.
+
+   The text <C-k> is read as `Control-K' and describes the character
+produced when the <k> key is pressed while the Control key is depressed.
+
+   The text <M-k> is read as `Meta-K' and describes the character
+produced when the meta key (if you have one) is depressed, and the <k>
+key is pressed.  If you do not have a meta key, the identical keystroke
+can be generated by typing <ESC> first, and then typing <k>.  Either
+process is known as "metafying" the <k> key.
+
+   The text <M-C-k> is read as `Meta-Control-k' and describes the
+character produced by "metafying" <C-k>.
+
+   In addition, several keys have their own names.  Specifically,
+<DEL>, <ESC>, <LFD>, <SPC>, <RET>, and <TAB> all stand for themselves
+when seen in this text, or in an init file (*note Readline Init
+File::.).
+
+
+File: gdb.info,  Node: Readline Interaction,  Next: Readline Init File,  Prev: Introduction and Notation,  Up: Command Line Editing
+
+Readline Interaction
+====================
+
+   Often during an interactive session you type in a long line of text,
+only to notice that the first word on the line is misspelled.  The
+Readline library gives you a set of commands for manipulating the text
+as you type it in, allowing you to just fix your typo, and not forcing
+you to retype the majority of the line.  Using these editing commands,
+you move the cursor to the place that needs correction, and delete or
+insert the text of the corrections.  Then, when you are satisfied with
+the line, you simply press <RETURN>.  You do not have to be at the end
+of the line to press <RETURN>; the entire line is accepted regardless
+of the location of the cursor within the line.
+
+* Menu:
+
+* Readline Bare Essentials::	The least you need to know about Readline.
+* Readline Movement Commands::	Moving about the input line.
+* Readline Killing Commands::	How to delete text, and how to get it back!
+* Readline Arguments::		Giving numeric arguments to commands.
+* Searching::			Searching through previous lines.
+
+
+File: gdb.info,  Node: Readline Bare Essentials,  Next: Readline Movement Commands,  Up: Readline Interaction
+
+Readline Bare Essentials
+------------------------
+
+   In order to enter characters into the line, simply type them.  The
+typed character appears where the cursor was, and then the cursor moves
+one space to the right.  If you mistype a character, you can use your
+erase character to back up and delete the mistyped character.
+
+   Sometimes you may miss typing a character that you wanted to type,
+and not notice your error until you have typed several other
+characters.  In that case, you can type <C-b> to move the cursor to the
+left, and then correct your mistake.  Afterwards, you can move the
+cursor to the right with <C-f>.
+
+   When you add text in the middle of a line, you will notice that
+characters to the right of the cursor are `pushed over' to make room
+for the text that you have inserted.  Likewise, when you delete text
+behind the cursor, characters to the right of the cursor are `pulled
+back' to fill in the blank space created by the removal of the text.  A
+list of the basic bare essentials for editing the text of an input line
+follows.
+
+<C-b>
+     Move back one character.
+
+<C-f>
+     Move forward one character.
+
+<DEL>
+     Delete the character to the left of the cursor.
+
+<C-d>
+     Delete the character underneath the cursor.
+
+Printing characters
+     Insert the character into the line at the cursor.
+
+<C-_>
+     Undo the last editing command.  You can undo all the way back to an
+     empty line.
+
+
+File: gdb.info,  Node: Readline Movement Commands,  Next: Readline Killing Commands,  Prev: Readline Bare Essentials,  Up: Readline Interaction
+
+Readline Movement Commands
+--------------------------
+
+   The above table describes the most basic possible keystrokes that
+you need in order to do editing of the input line.  For your
+convenience, many other commands have been added in addition to <C-b>,
+<C-f>, <C-d>, and <DEL>.  Here are some commands for moving more rapidly
+about the line.
+
+<C-a>
+     Move to the start of the line.
+
+<C-e>
+     Move to the end of the line.
+
+<M-f>
+     Move forward a word, where a word is composed of letters and
+     digits.
+
+<M-b>
+     Move backward a word.
+
+<C-l>
+     Clear the screen, reprinting the current line at the top.
+
+   Notice how <C-f> moves forward a character, while <M-f> moves
+forward a word.  It is a loose convention that control keystrokes
+operate on characters while meta keystrokes operate on words.
+
+
+File: gdb.info,  Node: Readline Killing Commands,  Next: Readline Arguments,  Prev: Readline Movement Commands,  Up: Readline Interaction
+
+Readline Killing Commands
+-------------------------
+
+   "Killing" text means to delete the text from the line, but to save
+it away for later use, usually by "yanking" (re-inserting) it back into
+the line.  If the description for a command says that it `kills' text,
+then you can be sure that you can get the text back in a different (or
+the same) place later.
+
+   When you use a kill command, the text is saved in a "kill-ring".
+Any number of consecutive kills save all of the killed text together, so
+that when you yank it back, you get it all.  The kill ring is not line
+specific; the text that you killed on a previously typed line is
+available to be yanked back later, when you are typing another line.
+
+   Here is the list of commands for killing text.
+
+<C-k>
+     Kill the text from the current cursor position to the end of the
+     line.
+
+<M-d>
+     Kill from the cursor to the end of the current word, or if between
+     words, to the end of the next word.
+
+<M-DEL>
+     Kill from the cursor the start of the previous word, or if between
+     words, to the start of the previous word.
+
+<C-w>
+     Kill from the cursor to the previous whitespace.  This is
+     different than <M-DEL> because the word boundaries differ.
+
+   Here is how to "yank" the text back into the line.  Yanking means to
+copy the most-recently-killed text from the kill buffer.
+
+<C-y>
+     Yank the most recently killed text back into the buffer at the
+     cursor.
+
+<M-y>
+     Rotate the kill-ring, and yank the new top.  You can only do this
+     if the prior command is <C-y> or <M-y>.
+
+
+File: gdb.info,  Node: Readline Arguments,  Next: Searching,  Prev: Readline Killing Commands,  Up: Readline Interaction
+
+Readline Arguments
+------------------
+
+   You can pass numeric arguments to Readline commands.  Sometimes the
+argument acts as a repeat count, other times it is the sign of the
+argument that is significant.  If you pass a negative argument to a
+command which normally acts in a forward direction, that command will
+act in a backward direction.  For example, to kill text back to the
+start of the line, you might type `M-- C-k'.
+
+   The general way to pass numeric arguments to a command is to type
+meta digits before the command.  If the first `digit' typed is a minus
+sign (<->), then the sign of the argument will be negative.  Once you
+have typed one meta digit to get the argument started, you can type the
+remainder of the digits, and then the command.  For example, to give
+the <C-d> command an argument of 10, you could type `M-1 0 C-d'.
+
+
+File: gdb.info,  Node: Searching,  Prev: Readline Arguments,  Up: Readline Interaction
+
+Searching for Commands in the History
+-------------------------------------
+
+   Readline provides commands for searching through the command history
+for lines containing a specified string.  There are two search modes:
+INCREMENTAL and NON-INCREMENTAL.
+
+   Incremental searches begin before the user has finished typing the
+search string.  As each character of the search string is typed,
+Readline displays the next entry from the history matching the string
+typed so far.  An incremental search requires only as many characters
+as needed to find the desired history entry.  The characters present in
+the value of the ISEARCH-TERMINATORS variable are used to terminate an
+incremental search.  If that variable has not been assigned a value,
+the <ESC> and <C-J> characters will terminate an incremental search.
+<C-g> will abort an incremental search and restore the original line.
+When the search is terminated, the history entry containing the search
+string becomes the current line.  To find other matching entries in the
+history list, type <C-s> or <C-r> as appropriate.  This will search
+backward or forward in the history for the next entry matching the
+search string typed so far.  Any other key sequence bound to a Readline
+command will terminate the search and execute that command.  For
+instance, a <RET> will terminate the search and accept the line,
+thereby executing the command from the history list.
+
+   Non-incremental searches read the entire search string before
+starting to search for matching history lines.  The search string may be
+typed by the user or be part of the contents of the current line.
+

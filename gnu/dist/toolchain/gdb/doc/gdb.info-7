@@ -1,0 +1,899 @@
+This is ./gdb.info, produced by Makeinfo version 3.12f from gdb.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Eighth Edition, March 2000, of `Debugging with GDB: the
+GNU Source-Level Debugger' for GDB Version 5.0.
+
+   Copyright (C) 1988-2000 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: gdb.info,  Node: Bootstrapping,  Next: Debug Session,  Prev: Stub Contents,  Up: Remote Serial
+
+What you must do for the stub
+.............................
+
+   The debugging stubs that come with GDB are set up for a particular
+chip architecture, but they have no information about the rest of your
+debugging target machine.
+
+   First of all you need to tell the stub how to communicate with the
+serial port.
+
+`int getDebugChar()'
+     Write this subroutine to read a single character from the serial
+     port.  It may be identical to `getchar' for your target system; a
+     different name is used to allow you to distinguish the two if you
+     wish.
+
+`void putDebugChar(int)'
+     Write this subroutine to write a single character to the serial
+     port.  It may be identical to `putchar' for your target system; a
+     different name is used to allow you to distinguish the two if you
+     wish.
+
+   If you want GDB to be able to stop your program while it is running,
+you need to use an interrupt-driven serial driver, and arrange for it
+to stop when it receives a `^C' (`\003', the control-C character).
+That is the character which GDB uses to tell the remote system to stop.
+
+   Getting the debugging target to return the proper status to GDB
+probably requires changes to the standard stub; one quick and dirty way
+is to just execute a breakpoint instruction (the "dirty" part is that
+GDB reports a `SIGTRAP' instead of a `SIGINT').
+
+   Other routines you need to supply are:
+
+`void exceptionHandler (int EXCEPTION_NUMBER, void *EXCEPTION_ADDRESS)'
+     Write this function to install EXCEPTION_ADDRESS in the exception
+     handling tables.  You need to do this because the stub does not
+     have any way of knowing what the exception handling tables on your
+     target system are like (for example, the processor's table might
+     be in ROM, containing entries which point to a table in RAM).
+     EXCEPTION_NUMBER is the exception number which should be changed;
+     its meaning is architecture-dependent (for example, different
+     numbers might represent divide by zero, misaligned access, etc).
+     When this exception occurs, control should be transferred directly
+     to EXCEPTION_ADDRESS, and the processor state (stack, registers,
+     and so on) should be just as it is when a processor exception
+     occurs.  So if you want to use a jump instruction to reach
+     EXCEPTION_ADDRESS, it should be a simple jump, not a jump to
+     subroutine.
+
+     For the 386, EXCEPTION_ADDRESS should be installed as an interrupt
+     gate so that interrupts are masked while the handler runs.  The
+     gate should be at privilege level 0 (the most privileged level).
+     The SPARC and 68k stubs are able to mask interrupts themselves
+     without help from `exceptionHandler'.
+
+`void flush_i_cache()'
+     On SPARC and SPARCLITE only, write this subroutine to flush the
+     instruction cache, if any, on your target machine.  If there is no
+     instruction cache, this subroutine may be a no-op.
+
+     On target machines that have instruction caches, GDB requires this
+     function to make certain that the state of your program is stable.
+
+You must also make sure this library routine is available:
+
+`void *memset(void *, int, int)'
+     This is the standard library function `memset' that sets an area of
+     memory to a known value.  If you have one of the free versions of
+     `libc.a', `memset' can be found there; otherwise, you must either
+     obtain it from your hardware manufacturer, or write your own.
+
+   If you do not use the GNU C compiler, you may need other standard
+library subroutines as well; this varies from one stub to another, but
+in general the stubs are likely to use any of the common library
+subroutines which `gcc' generates as inline code.
+
+
+File: gdb.info,  Node: Debug Session,  Next: Protocol,  Prev: Bootstrapping,  Up: Remote Serial
+
+Putting it all together
+.......................
+
+   In summary, when your program is ready to debug, you must follow
+these steps.
+
+  1. Make sure you have defined the supporting low-level routines
+     (*note What you must do for the stub: Bootstrapping.):
+          `getDebugChar', `putDebugChar',
+          `flush_i_cache', `memset', `exceptionHandler'.
+
+  2. Insert these lines near the top of your program:
+
+          set_debug_traps();
+          breakpoint();
+
+  3. For the 680x0 stub only, you need to provide a variable called
+     `exceptionHook'.  Normally you just use:
+
+          void (*exceptionHook)() = 0;
+
+     but if before calling `set_debug_traps', you set it to point to a
+     function in your program, that function is called when `GDB'
+     continues after stopping on a trap (for example, bus error).  The
+     function indicated by `exceptionHook' is called with one
+     parameter: an `int' which is the exception number.
+
+  4. Compile and link together: your program, the GDB debugging stub for
+     your target architecture, and the supporting subroutines.
+
+  5. Make sure you have a serial connection between your target machine
+     and the GDB host, and identify the serial port on the host.
+
+  6. Download your program to your target machine (or get it there by
+     whatever means the manufacturer provides), and start it.
+
+  7. To start remote debugging, run GDB on the host machine, and specify
+     as an executable file the program that is running in the remote
+     machine.  This tells GDB how to find your program's symbols and
+     the contents of its pure text.
+
+  8. Establish communication using the `target remote' command.  Its
+     argument specifies how to communicate with the target
+     machine--either via a devicename attached to a direct serial line,
+     or a TCP port (usually to a terminal server which in turn has a
+     serial line to the target).  For example, to use a serial line
+     connected to the device named `/dev/ttyb':
+
+          target remote /dev/ttyb
+
+     To use a TCP connection, use an argument of the form `HOST:port'.
+     For example, to connect to port 2828 on a terminal server named
+     `manyfarms':
+
+          target remote manyfarms:2828
+
+   Now you can use all the usual commands to examine and change data
+and to step and continue the remote program.
+
+   To resume the remote program and stop debugging it, use the `detach'
+command.
+
+   Whenever GDB is waiting for the remote program, if you type the
+interrupt character (often <C-C>), GDB attempts to stop the program.
+This may or may not succeed, depending in part on the hardware and the
+serial drivers the remote system uses.  If you type the interrupt
+character once again, GDB displays this prompt:
+
+     Interrupted while waiting for the program.
+     Give up (and stop debugging it)?  (y or n)
+
+   If you type `y', GDB abandons the remote debugging session.  (If you
+decide you want to try again later, you can use `target remote' again
+to connect once more.)  If you type `n', GDB goes back to waiting.
+
+
+File: gdb.info,  Node: Protocol,  Next: Server,  Prev: Debug Session,  Up: Remote Serial
+
+Communication protocol
+......................
+
+   The stub files provided with GDB implement the target side of the
+communication protocol, and the GDB side is implemented in the GDB
+source file `remote.c'.  Normally, you can simply allow these
+subroutines to communicate, and ignore the details.  (If you're
+implementing your own stub file, you can still ignore the details: start
+with one of the existing stub files.  `sparc-stub.c' is the best
+organized, and therefore the easiest to read.)
+
+   However, there may be occasions when you need to know something about
+the protocol--for example, if there is only one serial port to your
+target machine, you might want your program to do something special if
+it recognizes a packet meant for GDB.
+
+   In the examples below, `<-' and `->' are used to indicate
+transmitted and received data respectfully.
+
+   All GDB commands and responses (other than acknowledgments) are sent
+as a PACKET.  A PACKET is introduced with the character `$', the actual
+PACKET-DATA, and the terminating character `#' followed by a two-digit
+CHECKSUM:
+
+     `$'PACKET-DATA`#'CHECKSUM
+
+The two-digit CHECKSUM is computed as the modulo 256 sum of all
+characters between the leading `$' and the trailing `#' (an eight bit
+unsigned checksum).
+
+   Implementors should note that prior to GDB 5.0 the protocol
+specification also included an optional two-digit SEQUENCE-ID:
+
+     `$'SEQUENCE-ID`:'PACKET-DATA`#'CHECKSUM
+
+That SEQUENCE-ID was appended to the acknowledgment.  GDB has never
+output SEQUENCE-IDs.  Stubs that handle packets added since GDB 5.0
+must not accept SEQUENCE-ID.
+
+   When either the host or the target machine receives a packet, the
+first response expected is an acknowledgment: either `+' (to indicate
+the package was received correctly) or `-' (to request retransmission):
+
+     <- `$'PACKET-DATA`#'CHECKSUM
+     -> `+'
+
+The host (GDB) sends COMMANDs, and the target (the debugging stub
+incorporated in your program) sends a RESPONSE.  In the case of step
+and continue COMMANDs, the response is only sent when the operation has
+completed (the target has again stopped).
+
+   PACKET-DATA consists of a sequence of characters with the exception
+of `#' and `$' (see `X' packet for additional exceptions).
+
+   Fields within the packet should be separated using `,' `;' or `:'.
+Except where otherwise noted all numbers are represented in HEX with
+leading zeros suppressed.
+
+   Implementors should note that prior to GDB 5.0, the character `:'
+could not appear as the third character in a packet (as it would
+potentially conflict with the SEQUENCE-ID).
+
+   Response DATA can be run-length encoded to save space.  A `*' means
+that the next character is an ASCII encoding giving a repeat count
+which stands for that many repetitions of the character preceding the
+`*'.  The encoding is `n+29', yielding a printable character where `n
+>=3' (which is where rle starts to win).  The printable characters `$',
+`#', `+' and `-' or with a numeric value greater than 126 should not be
+used.
+
+   Some remote systems have used a different run-length encoding
+mechanism loosely refered to as the cisco encoding.  Following the `*'
+character are two hex digits that indicate the size of the packet.
+
+   So:
+     "`0* '"
+
+means the same as "0000".
+
+   The error response returned for some packets includes a two character
+error number.  That number is not well defined.
+
+   For any COMMAND not supported by the stub, an empty response
+(`$#00') should be returned.  That way it is possible to extend the
+protocol.  A newer GDB can tell if a packet is supported based on that
+response.
+
+   A stub is required to support the `g', `G', `m', `M', `c', and `s'
+COMMANDs.  All other COMMANDs are optional.
+
+   Below is a complete list of all currently defined COMMANDs and their
+corresponding response DATA:
+
+Packet                 Request                Description                   
+extended ops           `!'                    Use the extended remote       
+                                              protocol.  Sticky--only       
+                                              needs to be set once.  The    
+                                              extended remote protocol      
+                                              supports the `R' packet.      
+                       reply `'               Stubs that support the        
+                                              extended remote protocol      
+                                              return `' which,              
+                                              unfortunately, is identical   
+                                              to the response returned by   
+                                              stubs that do not support     
+                                              protocol extensions.          
+last signal            `?'                    Indicate the reason the       
+                                              target halted.  The reply is  
+                                              the same as for step and      
+                                              continue.                     
+                       reply                  see below                     
+reserved               `a'                    Reserved for future use       
+set program arguments  `A'ARGLEN`,'ARGNUM`,'ARG`,...'                              
+*(reserved)*                                                                
+                                              Initialized `argv[]' array    
+                                              passed into program. ARGLEN   
+                                              specifies the number of       
+                                              bytes in the hex encoded      
+                                              byte stream ARG.  See         
+                                              `gdbserver' for more details. 
+                       reply `OK'                                           
+                       reply `E'NN                                          
+set baud               `b'BAUD                Change the serial line speed  
+*(deprecated)*                                to BAUD.  JTC: _When does the 
+                                              transport layer state         
+                                              change?  When it's received,  
+                                              or after the ACK is           
+                                              transmitted.  In either       
+                                              case, there are problems if   
+                                              the command or the            
+                                              acknowledgment packet is      
+                                              dropped._ Stan: _If people    
+                                              really wanted to add          
+                                              something like this, and get  
+                                              it working for the first      
+                                              time, they ought to modify    
+                                              ser-unix.c to send some kind  
+                                              of out-of-band message to a   
+                                              specially-setup stub and      
+                                              have the switch happen "in    
+                                              between" packets, so that     
+                                              from remote protocol's point  
+                                              of view, nothing actually     
+                                              happened._                    
+set breakpoint         `B'ADDR,MODE           Set (MODE is `S') or clear    
+*(deprecated)*                                (MODE is `C') a breakpoint    
+                                              at ADDR.  _This has been      
+                                              replaced by the `Z' and `z'   
+                                              packets._                     
+continue               `c'ADDR                ADDR is address to resume.    
+                                              If ADDR is omitted, resume at 
+                                              current address.              
+                       reply                  see below                     
+continue with signal   `C'SIG`;'ADDR          Continue with signal SIG      
+                                              (hex signal number).  If      
+                                              `;'ADDR is omitted, resume    
+                                              at same address.              
+                       reply                  see below                     
+toggle debug           `d'                    toggle debug flag.            
+*(deprecated)*                                                              
+detach                 `D'                    Detach GDB from the remote    
+                                              system.  Sent to the remote   
+                                              target before GDB             
+                                              disconnects.                  
+                       reply _no response_    GDB does not check for any    
+                                              response after sending this   
+                                              packet.                       
+reserved               `e'                    Reserved for future use       
+reserved               `E'                    Reserved for future use       
+reserved               `f'                    Reserved for future use       
+reserved               `F'                    Reserved for future use       
+read registers         `g'                    Read general registers.       
+                       reply XX...            Each byte of register data    
+                                              is described by two hex       
+                                              digits.  The bytes with the   
+                                              register are transmitted in   
+                                              target byte order.  The size  
+                                              of each register and their    
+                                              position within the `g'       
+                                              PACKET are determined by the  
+                                              GDB internal macros           
+                                              REGISTER_RAW_SIZE and         
+                                              REGISTER_NAME macros.  The    
+                                              specification of several      
+                                              standard `g' packets is       
+                                              specified below.              
+                       `E'NN                  for an error.                 
+write regs             `G'XX...               See `g' for a description of  
+                                              the XX... data.               
+                       reply `OK'             for success                   
+                       reply `E'NN            for an error                  
+reserved               `h'                    Reserved for future use       
+set thread             `H'CT...               Set thread for subsequent     
+                                              operations (`m', `M', `g',    
+                                              `G', et.al.).  C = `c' for    
+                                              thread used in step and       
+                                              continue; T... can be -1 for  
+                                              all threads.  C = `g' for     
+                                              thread used in other          
+                                              operations.  If zero, pick a  
+                                              thread, any thread.           
+                       reply `OK'             for success                   
+                       reply `E'NN            for an error                  
+cycle step *(draft)*   `i'ADDR`,'NNN          Step the remote target by a   
+                                              single clock cycle.  If       
+                                              `,'NNN is present, cycle      
+                                              step NNN cycles.  If ADDR is  
+                                              present, cycle step starting  
+                                              at that address.              
+signal then cycle      `I'                    See `i' and `S' for likely    
+step *(reserved)*                             syntax and semantics.         
+reserved               `j'                    Reserved for future use       
+reserved               `J'                    Reserved for future use       
+kill request           `k'                    FIXME: _There is no           
+                                              description of how operate    
+                                              when a specific thread        
+                                              context has been selected     
+                                              (ie. does 'k' kill only that  
+                                              thread?)_.                    
+reserved               `l'                    Reserved for future use       
+reserved               `L'                    Reserved for future use       
+read memory            `m'ADDR`,'LENGTH       Read LENGTH bytes of memory   
+                                              starting at address ADDR.     
+                                              Neither GDB nor the stub      
+                                              assume that sized memory      
+                                              transfers are assumed using   
+                                              word alligned accesses.       
+                                              FIXME: _A word aligned memory 
+                                              transfer mechanism is         
+                                              needed._                      
+                       reply XX...            XX... is mem contents. Can    
+                                              be fewer bytes than           
+                                              requested if able to read     
+                                              only part of the data.        
+                                              Neither GDB nor the stub      
+                                              assume that sized memory      
+                                              transfers are assumed using   
+                                              word alligned accesses.       
+                                              FIXME: _A word aligned        
+                                              memory transfer mechanism is  
+                                              needed._                      
+                       reply `E'NN            NN is errno                   
+write mem              `M'ADDR,LENGTH`:'XX... Write LENGTH bytes of memory  
+                                              starting at address ADDR.     
+                                              XX... is the data.            
+                       reply `OK'             for success                   
+                       reply `E'NN            for an error (this includes   
+                                              the case where only part of   
+                                              the data was written).        
+reserved               `n'                    Reserved for future use       
+reserved               `N'                    Reserved for future use       
+reserved               `o'                    Reserved for future use       
+reserved               `O'                    Reserved for future use       
+read reg *(reserved)*  `p'N...                See write register.           
+                       return R....           The hex encoded value of the  
+                                              register in target byte       
+                                              order.                        
+write reg              `P'N...`='R...         Write register N... with      
+                                              value R..., which contains    
+                                              two hex digits for each byte  
+                                              in the register (target byte  
+                                              order).                       
+                       reply `OK'             for success                   
+                       reply `E'NN            for an error                  
+general query          `q'QUERY               Request info about QUERY.     
+                                              In general GDB queries have   
+                                              a leading upper case letter.  
+                                              Custom vendor queries         
+                                              should use a company prefix   
+                                              (in lower case) ex:           
+                                              `qfsf.var'.  QUERY may        
+                                              optionally be followed by a   
+                                              `,' or `;' separated list.    
+                                              Stubs must ensure that they   
+                                              match the full QUERY name.    
+                       reply `XX...'          Hex encoded data from query.  
+                                              The reply can not be empty.   
+                       reply `E'NN            error reply                   
+                       reply `'               Indicating an unrecognized    
+                                              QUERY.                        
+general set            `Q'VAR`='VAL           Set value of VAR to VAL.      
+                                              See `q' for a discussing of   
+                                              naming conventions.           
+reset *(deprecated)*   `r'                    Reset the entire system.      
+remote restart         `R'XX                  Restart the remote server.    
+                                              XX while needed has no clear  
+                                              definition.  FIXME: _An       
+                                              example interaction           
+                                              explaining how this packet    
+                                              is used in extended-remote    
+                                              mode is needed_.              
+step                   `s'ADDR                ADDR is address to resume.    
+                                              If ADDR is omitted, resume at 
+                                              same address.                 
+                       reply                  see below                     
+step with signal       `S'SIG`;'ADDR          Like `C' but step not         
+                                              continue.                     
+                       reply                  see below                     
+search                 `t'ADDR`:'PP`,'MM      Search backwards starting at  
+                                              address ADDR for a match      
+                                              with pattern PP and mask MM.  
+                                              PP and MM are 4 bytes.        
+                                              ADDR must be at least 3       
+                                              digits.                       
+thread alive           `T'XX                  Find out if the thread XX is  
+                                              alive.                        
+                       reply `OK'             thread is still alive         
+                       reply `E'NN            thread is dead                
+reserved               `u'                    Reserved for future use       
+reserved               `U'                    Reserved for future use       
+reserved               `v'                    Reserved for future use       
+reserved               `V'                    Reserved for future use       
+reserved               `w'                    Reserved for future use       
+reserved               `W'                    Reserved for future use       
+reserved               `x'                    Reserved for future use       
+write mem (binary)     `X'ADDR`,'LENGTH:XX... ADDR is address, LENGTH is    
+                                              number of bytes, XX... is     
+                                              binary data.  The characters  
+                                              `$', `#', and `0x7d' are      
+                                              escaped using `0x7d'.         
+                       reply `OK'             for success                   
+                       reply `E'NN            for an error                  
+reserved               `y'                    Reserved for future use       
+reserved               `Y'                    Reserved for future use       
+remove break or        `z'T`,'ADDR`,'LENGTH   See `Z'.                      
+watchpoint *(draft)*                                                        
+insert break or        `Z'T`,'ADDR`,'LENGTH   T is type: `0' - software     
+watchpoint *(draft)*                          breakpoint, `1' - hardware    
+                                              breakpoint, `2' - write       
+                                              watchpoint, `3' - read        
+                                              watchpoint, `4' - access      
+                                              watchpoint; ADDR is address;  
+                                              LENGTH is in bytes.  For a    
+                                              software breakpoint, LENGTH   
+                                              specifies the size of the     
+                                              instruction to be patched.    
+                                              For hardware breakpoints and  
+                                              watchpoints LENGTH specifies  
+                                              the memory region to be       
+                                              monitored.  To avoid          
+                                              potential problems with       
+                                              duplicate packets, the        
+                                              operations should be          
+                                              implemented in an idempotent  
+                                              way.                          
+                       reply `E'NN            for an error                  
+                       reply `OK'             for success                   
+                       `'                     If not supported.             
+reserved               <other>                Reserved for future use       
+
+   The `C', `c', `S', `s' and `?' packets can receive any of the below
+as a reply.  In the case of the `C', `c', `S' and `s' packets, that
+reply is only returned when the target halts.  In the below the exact
+meaning of `signal number' is poorly defined.  In general one of the
+UNIX signal numbering conventions is used.
+
+`S'AA                         AA is the signal number                     
+`T'AAN...`:'R...`;'N...`:'R...`;'N...`:'R...`;'AA = two hex digit signal number; N... =    
+                              register number (hex), R...  = target byte  
+                              ordered register contents, size defined by  
+                              `REGISTER_RAW_SIZE'; N... = `thread', R...  
+                              = thread process ID, this is a hex          
+                              integer; N... = other string not starting   
+                              with valid hex digit.  GDB should ignore    
+                              this N..., R... pair and go on to the       
+                              next.  This way we can extend the protocol. 
+`W'AA                         The process exited, and AA is the exit      
+                              status.  This is only applicable for        
+                              certains sorts of targets.                  
+`X'AA                         The process terminated with signal AA.      
+`N'AA`;'T...`;'D...`;'B...    AA = signal number; T... = address of       
+*(obsolete)*                  symbol "_start"; D... = base of data        
+                              section; B... = base of bss section.        
+                              _Note: only used by Cisco Systems targets.  
+                              The difference between this reply and the   
+                              "qOffsets" query is that the 'N' packet     
+                              may arrive spontaneously whereas the        
+                              'qOffsets' is a query initiated by the host 
+                              debugger._                                  
+`O'XX...                      XX... is hex encoding of ASCII data.  This  
+                              can happen at any time while the program    
+                              is running and the debugger should          
+                              continue to wait for 'W', 'T', etc.         
+
+   The following set and query packets have already been defined.
+
+current thread `q'`C'         Return the current thread id.               
+               reply `QC'PID  Where PID is a HEX encoded 16 bit process   
+                              id.                                         
+               reply *        Any other reply implies the old pid.        
+all thread ids `q'`fThreadInfo'                                            
+               `q'`sThreadInfo'Obtain a list of active thread ids from     
+                              the target (OS).  Since there may be too    
+                              many active threads to fit into one reply   
+                              packet, this query works iteratively: it    
+                              may require more than one query/reply       
+                              sequence to obtain the entire list of       
+                              threads.  The first query of the sequence   
+                              will be the `qf'`ThreadInfo' query;         
+                              subsequent queries in the sequence will be  
+                              the `qs'`ThreadInfo' query.                 
+                              NOTE: replaces the `qL' query (see below).  
+               reply `m'<ID>  A single thread id                          
+               reply          a comma-separated list of thread ids        
+               `m'<ID>,<ID>...                                            
+               reply `l'      (lower case 'el') denotes end of list.      
+                              In response to each query, the target will  
+                              reply with a list of one or more thread     
+                              ids, in big-endian hex, separated by        
+                              commas.  GDB will respond to each reply     
+                              with a request for more thread ids (using   
+                              the `qs' form of the query), until the      
+                              target responds with `l' (lower-case el,    
+                              for `'last'').                              
+extra thread   `q'`ThreadExtraInfo'`,'ID                                            
+info                                                                      
+                              Where <ID> is a thread-id in big-endian     
+                              hex.  Obtain a printable string             
+                              description of a thread's attributes from   
+                              the target OS.  This string may contain     
+                              anything that the target OS thinks is       
+                              interesting for GDB to tell the user about  
+                              the thread.  The string is displayed in     
+                              GDB's `info threads' display.  Some         
+                              examples of possible thread extra info      
+                              strings are "Runnable", or "Blocked on      
+                              Mutex".                                     
+               reply XX...    Where XX... is a hex encoding of ASCII      
+                              data, comprising the printable string       
+                              containing the extra information about the  
+                              thread's attributes.                        
+query LIST or  `q'`L'STARTFLAGTHREADCOUNTNEXTTHREAD                                            
+THREADLIST                                                                
+*(deprecated)*                                                            
+                              Obtain thread information from RTOS.        
+                              Where: STARTFLAG (one hex digit) is one to  
+                              indicate the first query and zero to        
+                              indicate a subsequent query; THREADCOUNT    
+                              (two hex digits) is the maximum number of   
+                              threads the response packet can contain;    
+                              and NEXTTHREAD (eight hex digits), for      
+                              subsequent queries (STARTFLAG is zero), is  
+                              returned in the response as ARGTHREAD.      
+                              NOTE: this query is replaced by the         
+                              `q'`fThreadInfo' query (see above).         
+               reply                                                      
+               `q'`M'COUNTDONEARGTHREADTHREAD...                                            
+                              Where: COUNT (two hex digits) is the        
+                              number of threads being returned; DONE      
+                              (one hex digit) is zero to indicate more    
+                              threads and one indicates no further        
+                              threads; ARGTHREADID (eight hex digits) is  
+                              NEXTTHREAD from the request packet;         
+                              THREAD... is a sequence of thread IDs from  
+                              the target.  THREADID (eight hex digits).   
+                              See `remote.c:parse_threadlist_response()'. 
+compute CRC    `q'`CRC:'ADDR`,'LENGTH                                            
+of memory                                                                 
+block                                                                     
+               reply `E'NN    An error (such as memory fault)             
+               reply `C'CRC32 A 32 bit cyclic redundancy check of the     
+                              specified memory region.                    
+query sect     `q'`Offsets'   Get section offsets that the target used    
+offs                          when re-locating the downloaded image.      
+                              _Note: while a `Bss' offset is included in  
+                              the response, GDB ignores this and instead  
+                              applies the `Data' offset to the `Bss'      
+                              section._                                   
+               reply                                                      
+               `Text='XXX`;Data='YYY`;Bss='ZZZ                                            
+thread info    `q'`P'MODETHREADID                                            
+request                                                                   
+                              Returns information on THREADID.  Where:    
+                              MODE is a hex encoded 32 bit mode;          
+                              THREADID is a hex encoded 64 bit thread ID. 
+               reply *        See                                         
+                              `remote.c:remote_unpack_thread_info_response()'.
+remote command `q'`Rcmd,'COMMAND                                            
+                              COMMAND (hex encoded) is passed to the      
+                              local interpreter for execution.  Invalid   
+                              commands should be reported using the       
+                              output string.  Before the final result     
+                              packet, the target may also respond with a  
+                              number of intermediate `O'OUTPUT console    
+                              output packets.  _Implementors should note  
+                              that providing access to a stubs's          
+                              interpreter may have security               
+                              implications_.                              
+               reply `OK'     A command response with no output.          
+               reply OUTPUT   A command response with the hex encoded     
+                              output string OUTPUT.                       
+               reply `E'NN    Indicate a badly formed request.            
+               reply `'       When `q'`Rcmd' is not recognized.           
+
+   The following `g'/`G' packets have previously been defined.  In the
+below, some thirty-two bit registers are transferred as sixty-four
+bits.  Those registers should be zero/sign extended (which?) to fill the
+space allocated.  Register bytes are transfered in target byte order.
+The two nibbles within a register byte are transfered most-significant -
+least-significant.
+
+MIPS32                               All registers are transfered as      
+                                     thirty-two bit quantities in the     
+                                     order: 32 general-purpose; sr; lo;   
+                                     hi; bad; cause; pc; 32               
+                                     floating-point registers; fsr; fir;  
+                                     fp.                                  
+MIPS64                               All registers are transfered as      
+                                     sixty-four bit quantities (including 
+                                     thirty-two bit registers such as     
+                                     `sr').  The ordering is the same as  
+                                     `MIPS32'.                            
+
+   Example sequence of a target being re-started.  Notice how the
+restart does not get any direct output:
+
+     <- `R00'
+     -> `+'
+     _target restarts_
+     <- `?'
+     -> `+'
+     -> `T001:1234123412341234'
+     <- `+'
+
+   Example sequence of a target being stepped by a single instruction:
+
+     <- `G1445...'
+     -> `+'
+     <- `s'
+     -> `+'
+     _time passes_
+     -> `T001:1234123412341234'
+     <- `+'
+     <- `g'
+     -> `+'
+     -> `1455...'
+     <- `+'
+
+
+File: gdb.info,  Node: Server,  Next: NetWare,  Prev: Protocol,  Up: Remote Serial
+
+Using the `gdbserver' program
+.............................
+
+   `gdbserver' is a control program for Unix-like systems, which allows
+you to connect your program with a remote GDB via `target remote'--but
+without linking in the usual debugging stub.
+
+   `gdbserver' is not a complete replacement for the debugging stubs,
+because it requires essentially the same operating-system facilities
+that GDB itself does.  In fact, a system that can run `gdbserver' to
+connect to a remote GDB could also run GDB locally!  `gdbserver' is
+sometimes useful nevertheless, because it is a much smaller program
+than GDB itself.  It is also easier to port than all of GDB, so you may
+be able to get started more quickly on a new system by using
+`gdbserver'.  Finally, if you develop code for real-time systems, you
+may find that the tradeoffs involved in real-time operation make it
+more convenient to do as much development work as possible on another
+system, for example by cross-compiling.  You can use `gdbserver' to
+make a similar choice for debugging.
+
+   GDB and `gdbserver' communicate via either a serial line or a TCP
+connection, using the standard GDB remote serial protocol.
+
+_On the target machine,_
+     you need to have a copy of the program you want to debug.
+     `gdbserver' does not need your program's symbol table, so you can
+     strip the program if necessary to save space.  GDB on the host
+     system does all the symbol handling.
+
+     To use the server, you must tell it how to communicate with GDB;
+     the name of your program; and the arguments for your program.  The
+     syntax is:
+
+          target> gdbserver COMM PROGRAM [ ARGS ... ]
+
+     COMM is either a device name (to use a serial line) or a TCP
+     hostname and portnumber.  For example, to debug Emacs with the
+     argument `foo.txt' and communicate with GDB over the serial port
+     `/dev/com1':
+
+          target> gdbserver /dev/com1 emacs foo.txt
+
+     `gdbserver' waits passively for the host GDB to communicate with
+     it.
+
+     To use a TCP connection instead of a serial line:
+
+          target> gdbserver host:2345 emacs foo.txt
+
+     The only difference from the previous example is the first
+     argument, specifying that you are communicating with the host GDB
+     via TCP.  The `host:2345' argument means that `gdbserver' is to
+     expect a TCP connection from machine `host' to local TCP port 2345.
+     (Currently, the `host' part is ignored.)  You can choose any number
+     you want for the port number as long as it does not conflict with
+     any TCP ports already in use on the target system (for example,
+     `23' is reserved for `telnet').(1)  You must use the same port
+     number with the host GDB `target remote' command.
+
+_On the GDB host machine,_
+     you need an unstripped copy of your program, since GDB needs
+     symbols and debugging information.  Start up GDB as usual, using
+     the name of the local copy of your program as the first argument.
+     (You may also need the `--baud' option if the serial line is
+     running at anything other than 9600bps.)  After that, use `target
+     remote' to establish communications with `gdbserver'.  Its argument
+     is either a device name (usually a serial device, like
+     `/dev/ttyb'), or a TCP port descriptor in the form `HOST:PORT'.
+     For example:
+
+          (gdb) target remote /dev/ttyb
+
+     communicates with the server via serial line `/dev/ttyb', and
+
+          (gdb) target remote the-target:2345
+
+     communicates via a TCP connection to port 2345 on host
+     `the-target'.  For TCP connections, you must start up `gdbserver'
+     prior to using the `target remote' command.  Otherwise you may get
+     an error whose text depends on the host system, but which usually
+     looks something like `Connection refused'.
+
+   ---------- Footnotes ----------
+
+   (1) If you choose a port number that conflicts with another service,
+`gdbserver' prints an error message and exits.
+
+
+File: gdb.info,  Node: NetWare,  Prev: Server,  Up: Remote Serial
+
+Using the `gdbserve.nlm' program
+................................
+
+   `gdbserve.nlm' is a control program for NetWare systems, which
+allows you to connect your program with a remote GDB via `target
+remote'.
+
+   GDB and `gdbserve.nlm' communicate via a serial line, using the
+standard GDB remote serial protocol.
+
+_On the target machine,_
+     you need to have a copy of the program you want to debug.
+     `gdbserve.nlm' does not need your program's symbol table, so you
+     can strip the program if necessary to save space.  GDB on the host
+     system does all the symbol handling.
+
+     To use the server, you must tell it how to communicate with GDB;
+     the name of your program; and the arguments for your program.  The
+     syntax is:
+
+          load gdbserve [ BOARD=BOARD ] [ PORT=PORT ]
+                        [ BAUD=BAUD ] PROGRAM [ ARGS ... ]
+
+     BOARD and PORT specify the serial line; BAUD specifies the baud
+     rate used by the connection.  PORT and NODE default to 0, BAUD
+     defaults to 9600bps.
+
+     For example, to debug Emacs with the argument `foo.txt'and
+     communicate with GDB over serial port number 2 or board 1 using a
+     19200bps connection:
+
+          load gdbserve BOARD=1 PORT=2 BAUD=19200 emacs foo.txt
+
+_On the GDB host machine,_
+     you need an unstripped copy of your program, since GDB needs
+     symbols and debugging information.  Start up GDB as usual, using
+     the name of the local copy of your program as the first argument.
+     (You may also need the `--baud' option if the serial line is
+     running at anything other than 9600bps.  After that, use `target
+     remote' to establish communications with `gdbserve.nlm'.  Its
+     argument is a device name (usually a serial device, like
+     `/dev/ttyb').  For example:
+
+          (gdb) target remote /dev/ttyb
+
+     communications with the server via serial line `/dev/ttyb'.
+
+
+File: gdb.info,  Node: KOD,  Prev: Remote,  Up: Targets
+
+Kernel Object Display
+=====================
+
+   Some targets support kernel object display.  Using this facility,
+GDB communicates specially with the underlying operating system and can
+display information about operating system-level objects such as
+mutexes and other synchronization objects.  Exactly which objects can be
+displayed is determined on a per-OS basis.
+
+   Use the `set os' command to set the operating system.  This tells
+GDB which kernel object display module to initialize:
+
+     (gdb) set os cisco
+
+   If `set os' succeeds, GDB will display some information about the
+operating system, and will create a new `info' command which can be
+used to query the target.  The `info' command is named after the
+operating system:
+
+     (gdb) info cisco
+     List of Cisco Kernel Objects
+     Object     Description
+     any        Any and all objects
+
+   Further subcommands can be used to query about particular objects
+known by the kernel.
+
+   There is currently no way to determine whether a given operating
+system is supported other than to try it.
+
