@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
+/*	$NetBSD: execute.c,v 1.4 1997/10/12 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,37 +33,41 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $";
+__RCSID("$NetBSD: execute.c,v 1.4 1997/10/12 17:45:09 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
-# include	<sys/types.h>
-# include	<sys/stat.h>
-# include	<sys/time.h>
+#include "monop.ext"
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
 # define	SEGSIZE	8192
 
 typedef	struct stat	STAT;
 typedef	struct tm	TIME;
 
-extern char	etext[],	/* end of text space			*/
-		rub();
-
-static char	buf[257],
-		*yn_only[]	= { "yes", "no"};
+static char	buf[257];
 
 static bool	new_play;	/* set if move on to new player		*/
+
+static void show_move __P((void));
 
 /*
  *	This routine executes the given command by index number
  */
+void
 execute(com_num)
-reg int	com_num; {
+int	com_num; 
+{
 
 	new_play = FALSE;	/* new_play is true if fixing	*/
 	(*func[com_num])();
@@ -77,10 +81,12 @@ reg int	com_num; {
 /*
  *	This routine moves a piece around.
  */
-do_move() {
+void
+do_move() 
+{
 
-	reg int		r1, r2;
-	reg bool	was_jail;
+	int		r1, r2;
+	bool	was_jail;
 
 	new_play = was_jail = FALSE;
 	printf("roll is %d, %d\n", r1=roll(1, 6), r2=roll(1, 6));
@@ -108,10 +114,12 @@ ret:
 /*
  *	This routine moves a normal move
  */
+void
 move(rl)
-reg int	rl; {
+int	rl; 
+{
 
-	reg int	old_loc;
+	int	old_loc;
 
 	old_loc = cur_p->loc;
 	cur_p->loc = (cur_p->loc + rl) % N_SQRS;
@@ -124,9 +132,11 @@ reg int	rl; {
 /*
  *	This routine shows the results of a move
  */
-show_move() {
+static void
+show_move() 
+{
 
-	reg SQUARE	*sqp;
+	SQUARE	*sqp;
 
 	sqp = &board[cur_p->loc];
 	printf("That puts you on %s\n", sqp->name);
@@ -154,7 +164,7 @@ show_move() {
 				cur_p->money -= sqp->cost;
 			}
 			else if (num_play > 2)
-				bid(sqp);
+				bid();
 		}
 		else if (sqp->owner == player)
 			printf("You own it.\n");
@@ -165,14 +175,15 @@ show_move() {
 /*
  *	This routine saves the current game for use at a later date
  */
-save() {
+void
+save() 
+{
 
-	reg char	*sp;
-	reg int		outf, num;
+	char	*sp;
+	int		outf, num;
 	time_t		t;
-	int		*dat_end;
 	struct stat	sb;
-	unsgn		start, end;
+	char 		*start, *end;
 
 	printf("Which file do you wish to save it in? ");
 	sp = buf;
@@ -185,7 +196,7 @@ save() {
 	 */
 
 	if (stat(buf, &sb) > -1
-	    && getyn("File exists.  Do you wish to overwrite? ", yn_only) > 0)
+	    && getyn("File exists.  Do you wish to overwrite? ") > 0)
 		return;
 
 	if ((outf=creat(buf, 0644)) < 0) {
@@ -198,11 +209,7 @@ save() {
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
-# if 0
-	start = (((int) etext + (SEGSIZE-1)) / SEGSIZE ) * SEGSIZE;
-# else
 	start = 0;
-# endif
 	end = sbrk(0);
 	while (start < end) {		/* write out entire data space */
 		num = start + 16 * 1024 > end ? end - start : 16 * 1024;
@@ -215,9 +222,11 @@ save() {
 /*
  *	This routine restores an old game from a file
  */
-restore() {
+void
+restore() 
+{
 
-	reg char	*sp;
+	char	*sp;
 
 	printf("Which file do you wish to restore from? ");
 	for (sp = buf; (*sp=getchar()) != '\n'; sp++)
@@ -229,13 +238,15 @@ restore() {
  *	This does the actual restoring.  It returns TRUE if the
  * backup was successful, else false.
  */
+int
 rest_f(file)
-reg char	*file; {
+char	*file; 
+{
 
-	reg char	*sp;
-	reg int		inf, num;
+	char	*sp;
+	int		inf, num;
 	char		buf[80];
-	unsgn		start, end;
+	char 		*start, *end;
 	STAT		sbuf;
 
 	if ((inf=open(file, 0)) < 0) {
@@ -247,11 +258,7 @@ reg char	*file; {
 		perror(file);
 		exit(1);
 	}
-# if 0
-	start = (((int) etext + (SEGSIZE-1)) / SEGSIZE ) * SEGSIZE;
-# else
 	start = 0;
-# endif
 	brk(end = start + sbuf.st_size);
 	while (start < end) {		/* write out entire data space */
 		num = start + 16 * 1024 > end ? end - start : 16 * 1024;

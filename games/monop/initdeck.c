@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.4 1997/03/29 20:42:23 thorpej Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.5 1997/10/12 17:45:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,22 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: initdeck.c,v 1.4 1997/03/29 20:42:23 thorpej Exp $";
+__RCSID("$NetBSD: initdeck.c,v 1.5 1997/10/12 17:45:12 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	"deck.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "deck.h"
 
 /*
  *	This program initializes the card files for monopoly.
@@ -70,13 +71,17 @@ static char rcsid[] = "$NetBSD: initdeck.c,v 1.4 1997/03/29 20:42:23 thorpej Exp
 char	*infile		= "cards.inp",		/* input file		*/
 	*outfile	= "cards.pck";		/* "packed" file	*/
 
-extern long	ftell();
-extern char *calloc();
-
 DECK	deck[2];
 
 FILE	*inf, *outf;
 
+/* initdeck.c */
+int main __P((int, char *[]));
+static void getargs __P((int, char *[]));
+static void count __P((void));
+static void putem __P((void));
+
+int
 main(ac, av)
 int	ac;
 char	*av[]; {
@@ -113,9 +118,11 @@ char	*av[]; {
 	exit(0);
 }
 
+static void
 getargs(ac, av)
 int	ac;
-char	*av[]; {
+char	*av[];
+{
 
 	if (ac > 1)
 		infile = av[1];
@@ -126,7 +133,9 @@ char	*av[]; {
 /*
  * count the cards
  */
-count() {
+static void
+count() 
+{
 
 	reg bool	newline;
 	reg DECK	*in_deck;
@@ -148,7 +157,9 @@ count() {
 /*
  *	put strings in the file
  */
-putem() {
+static void
+putem() 
+{
 
 	reg bool	newline;
 	reg DECK	*in_deck;

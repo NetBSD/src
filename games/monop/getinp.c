@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.5 1997/03/29 20:42:22 thorpej Exp $	*/
+/*	$NetBSD: getinp.c,v 1.6 1997/10/12 17:45:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,32 +33,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getinp.c,v 1.5 1997/03/29 20:42:22 thorpej Exp $";
+__RCSID("$NetBSD: getinp.c,v 1.6 1997/10/12 17:45:10 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	<string.h>
-# include	<ctype.h>
-
-# define	reg	register
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include "monop.ext"
 
 # define	LINE	70
 
 static char	buf[257];
 
-getinp(prompt, list)
-char	*prompt, *list[]; {
+static int comp __P((char *));
 
-	reg int	i, n_match, match;
+int
+getinp(prompt, list)
+char	*prompt, *list[]; 
+{
+
+	int	i, n_match, match = 0;
 	char	*sp;
 	int	c;
-	int	plen;
-	static int comp();
 
 	for (;;) {
 inter:
@@ -108,11 +110,12 @@ inter:
 	}
 }
 
-static
+static int
 comp(s1)
-char	*s1; {
+char	*s1;
+{
 
-	reg char	*sp, *tsp, c;
+	char	*sp, *tsp, c;
 
 	if (buf[0] != '\0')
 		for (sp = buf, tsp = s1; *sp; ) {

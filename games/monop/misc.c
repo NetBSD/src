@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/03/29 20:42:24 thorpej Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1997/10/12 17:45:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/03/29 20:42:24 thorpej Exp $";
+__RCSID("$NetBSD: misc.c,v 1.6 1997/10/12 17:45:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +50,12 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/03/29 20:42:24 thorpej Exp $";
  *	This routine executes a truncated set of commands until a
  * "yes or "no" answer is gotten.
  */
+int
 getyn(prompt)
-reg char	*prompt; {
+char	*prompt;
+{
 
-	reg int	com;
+	int	com;
 
 	for (;;)
 		if ((com=getinp(prompt, yn)) < 2)
@@ -63,7 +66,9 @@ reg char	*prompt; {
 /*
  *	This routine tells the player if he's out of money.
  */
-notify() {
+void
+notify()
+{
 
 	if (cur_p->money < 0)
 		printf("That leaves you $%d in debt\n", -cur_p->money);
@@ -77,7 +82,9 @@ notify() {
 /*
  *	This routine switches to the next player
  */
-next_play() {
+void
+next_play()
+{
 
 	player = ++player % num_play;
 	cur_p = &play[player];
@@ -87,11 +94,13 @@ next_play() {
  *	This routine gets an integer from the keyboard after the
  * given prompt.
  */
+int
 get_int(prompt)
-reg char	*prompt; {
+char	*prompt;
+{
 
-	reg int		num;
-	reg char	*sp;
+	int		num;
+	char	*sp;
 	int		c;
 	char		buf[257];
 
@@ -118,12 +127,14 @@ inter:
 /*
  *	This routine sets the monopoly flag from the list given.
  */
+void
 set_ownlist(pl)
-int	pl; {
+int	pl; 
+{
 
-	reg int	num;		/* general counter		*/
-	reg MON	*orig;		/* remember starting monop ptr	*/
-	reg OWN	*op;		/* current owned prop		*/
+	int	num;		/* general counter		*/
+	MON	*orig;		/* remember starting monop ptr	*/
+	OWN	*op;		/* current owned prop		*/
 	OWN	*orig_op;		/* origianl prop before loop	*/
 
 	op = play[pl].own_list;
@@ -186,17 +197,17 @@ int	pl; {
 			printf("num = %d\n");
 #endif
 			if (orig == 0) {
-				printf("panic:  bad monopoly descriptor: orig = %d\n", orig);
+				printf("panic:  bad monopoly descriptor: orig = %p\n", orig);
 				printf("player # %d\n", pl+1);
 				printhold(pl);
-				printf("orig_op = %d\n", orig_op);
+				printf("orig_op = %p\n", orig_op);
 				printf("orig_op->sqr->type = %d (PRPTY)\n", op->sqr->type);
-				printf("orig_op->next = %d\n", op->next);
-				printf("orig_op->sqr->desc = %d\n", op->sqr->desc);
-				printf("op = %d\n", op);
+				printf("orig_op->next = %p\n", op->next);
+				printf("orig_op->sqr->desc = %p\n", op->sqr->desc);
+				printf("op = %p\n", op);
 				printf("op->sqr->type = %d (PRPTY)\n", op->sqr->type);
-				printf("op->next = %d\n", op->next);
-				printf("op->sqr->desc = %d\n", op->sqr->desc);
+				printf("op->next = %p\n", op->next);
+				printf("op->sqr->desc = %p\n", op->sqr->desc);
 				printf("num = %d\n", num);
 			}
 #ifdef DEBUG
@@ -213,12 +224,13 @@ int	pl; {
 /*
  *	This routine sets things up as if it is a new monopoly
  */
+void
 is_monop(mp, pl)
-reg MON	*mp;
-int	pl; {
+MON	*mp;
+int	pl; 
+{
 
-	reg char	*sp;
-	reg int		i;
+	int		i;
 
 	mp->owner = pl;
 	mp->num_own = mp->num_in;
@@ -229,11 +241,12 @@ int	pl; {
 /*
  *	This routine sets things up as if it is no longer a monopoly
  */
+void
 isnot_monop(mp)
-reg MON	*mp; {
+MON	*mp; 
+{
 
-	reg char	*sp;
-	reg int		i;
+	int		i;
 
 	mp->owner = -1;
 	for (i = 0; i < mp->num_in; i++)
@@ -243,16 +256,20 @@ reg MON	*mp; {
 /*
  *	This routine gives a list of the current player's routine
  */
-list() {
+void
+list() 
+{
 
 	printhold(player);
 }
 /*
  *	This routine gives a list of a given players holdings
  */
-list_all() {
+void
+list_all() 
+{
 
-	reg int	pl;
+	int	pl;
 
 	while ((pl=getinp("Whose holdings do you want to see? ", name_list)) < num_play)
 		printhold(pl);
@@ -261,20 +278,10 @@ list_all() {
  *	This routine gives the players a chance before it exits.
  */
 void
-quit() {
+quit()
+{
 
 	putchar('\n');
-	if (getyn("Do you all really want to quit? ", yn) == 0)
+	if (getyn("Do you all really want to quit? ") == 0)
 		exit(0);
-	signal(SIGINT, quit);
-}
-/*
- *	This routine copies one structure to another
- */
-cpy_st(s1, s2, size)
-reg int	*s1, *s2, size; {
-
-	size /= 2;
-	while (size--)
-		*s1++ = *s2++;
 }
