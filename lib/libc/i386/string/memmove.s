@@ -43,6 +43,7 @@
 	 */
 
 ENTRY(memmove)
+ENTRY(memcpy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%edi
