@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.452 2001/12/28 17:37:03 augustss Exp $
+# $NetBSD: GENERIC,v 1.453 2002/01/01 16:52:23 hpeyerl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.452 $"
+#ident 		"GENERIC-$Revision: 1.453 $"
 
 maxusers	32		# estimated number of users
 
@@ -972,6 +972,9 @@ joy*	at pci?				# Game ports (usually on audio cards)
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
 
+# Middle Digital, Inc. PCI-Weasel serial console board control
+# devices (watchdog timer, etc.)
+weasel* at pci?
 
 # Pull in optional local configuration
 include	"arch/i386/conf/GENERIC.local"
