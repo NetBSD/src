@@ -1,4 +1,4 @@
-/*	$NetBSD: icureg.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: icureg.h,v 1.2 1999/12/28 03:15:17 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -60,7 +60,7 @@
 #define SYSINT1_BAT			(1<<0)	/* Battery intr */
 
 
-#define PIUINT_REG_W		0x002	/* Level2 PIU intr reg */
+#define ICUPIUINT_REG_W		0x002	/* Level2 PIU intr reg */
 #define MPIUINT_REG_W		0x00e	/* Level2 Mask PIU intr reg */
 
 #define		PIUINT_PADCMD		(1<<6)	/* PIU command scan intr */
