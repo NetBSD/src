@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.14 1999/07/29 00:19:43 mycroft Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.15 1999/07/29 08:58:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.14 1999/07/29 00:19:43 mycroft Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.15 1999/07/29 08:58:46 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -426,11 +426,15 @@ __addel(hashp, bufp, key, val)
 			if (!bufp)
 				return (-1);
 			bp = (u_int16_t *)(void *)bufp->page;
-		} else
+		} else if (bp[bp[0]] != OVFLPAGE) {
+			/* Short key/data pairs, no more pages */
+			break;
+		} else {
 			/* Try to squeeze key on this page */
-			if (FREESPACE(bp) > PAIRSIZE(key, val)) {
+			if (bp[2] >= REAL_KEY &&
+			    FREESPACE(bp) >= PAIRSIZE(key, val)) {
 				squeeze_key(bp, key, val);
-				return (0);
+				goto stats;
 			} else {
 				bufp = __get_buf(hashp,
 				    (u_int32_t)bp[bp[0] - 1], bufp, 0);
@@ -438,6 +442,7 @@ __addel(hashp, bufp, key, val)
 					return (-1);
 				bp = (u_int16_t *)(void *)bufp->page;
 			}
+		}
 
 	if (PAIRFITS(bp, key, val))
 		putpair(bufp->page, key, val);
@@ -454,6 +459,7 @@ __addel(hashp, bufp, key, val)
 			if (__big_insert(hashp, bufp, key, val))
 				return (-1);
 	}
+stats:
 	bufp->flags |= BUF_MOD;
 	/*
 	 * If the average number of keys per bucket exceeds the fill factor,
