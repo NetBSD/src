@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.32 2003/09/18 22:37:38 cl Exp $	*/
+/*	$NetBSD: fault.c,v 1.33 2003/09/19 11:42:20 agc Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,11 +82,12 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.32 2003/09/18 22:37:38 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.33 2003/09/19 11:42:20 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
 
