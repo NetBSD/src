@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.39.2.1 1999/10/12 21:42:41 he Exp $	*/
+/*	$NetBSD: print.c,v 1.39.2.2 1999/11/08 06:40:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.39.2.1 1999/10/12 21:42:41 he Exp $");
+__RCSID("$NetBSD: print.c,v 1.39.2.2 1999/11/08 06:40:14 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: print.c,v 1.39.2.1 1999/10/12 21:42:41 he Exp $");
 #include "ps.h"
 
 extern kvm_t *kd;
-extern int needenv, needcomm, commandonly;
+extern int needenv, needcomm, commandonly, dontuseprocfs, use_procfs;
 
 static char *cmdpart __P((char *));
 static void  printval __P((char *, VAR *));
@@ -156,7 +156,7 @@ command(ki, ve)
 			left = v->width;
 	} else
 		left = -1;
-	if (needenv) {
+	if (needenv && kd) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
@@ -169,7 +169,11 @@ command(ki, ve)
 	if (needcomm) {
 		name = KI_PROC(ki)->p_comm;
 		if (!commandonly) {
-			argv = kvm_getargv(kd, ki->ki_p, termwidth);
+			argv = NULL;
+			if (!use_procfs)
+				argv = kvm_getargv(kd, ki->ki_p, termwidth);
+			else
+				argv = procfs_getargv(ki->ki_p, termwidth);
 			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
@@ -181,6 +185,10 @@ command(ki, ve)
 				fmt_putc('(', &left);
 				fmt_puts(name, &left);
 				fmt_putc(')', &left);
+			}
+			if (use_procfs && argv) {
+				free(argv[0]);
+				free(argv);
 			}
 		} else {
 			fmt_puts(name, &left);
@@ -548,7 +556,7 @@ getpcpu(k)
 	static int failure;
 
 	if (!nlistread)
-		failure = donlist();
+		failure = (kd) ? donlist() : 1;
 	if (failure)
 		return (0.0);
 
@@ -587,7 +595,7 @@ getpmem(k)
 	int szptudot;
 
 	if (!nlistread)
-		failure = donlist();
+		failure = (kd) ? donlist() : 1;
 	if (failure)
 		return (0.0);
 
