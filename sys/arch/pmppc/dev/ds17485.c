@@ -1,0 +1,425 @@
+/*	$NetBSD: ds17485.c,v 1.1 2002/05/30 20:02:03 augustss Exp $	*/
+
+/*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net) at Sandburst Corp.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*-
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz and Don Ahn.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)clock.c	7.2 (Berkeley) 5/12/91
+ */
+/* 
+ * Mach Operating System
+ * Copyright (c) 1991,1990,1989 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
+ */
+/*
+  Copyright 1988, 1989 by Intel Corporation, Santa Clara, California.
+
+		All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and
+its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appears in all
+copies and that both the copyright notice and this permission notice
+appear in supporting documentation, and that the name of Intel
+not be used in advertising or publicity pertaining to distribution
+of the software without specific, written prior permission.
+
+INTEL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+IN NO EVENT SHALL INTEL BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+
+/*
+ * Primitive clock interrupt routines.
+ */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+
+#include <dev/ic/mc146818reg.h>
+
+#include <machine/cpu.h>
+#include <machine/intr.h>
+#include <machine/bus.h>
+
+#include <machine/mainbus.h>
+#include <machine/pmppc.h>
+
+void	rtcinit(void);
+int	rtcget(mc_todregs *);
+void	rtcput(mc_todregs *);
+static int yeartoday(int);
+int 	hexdectodec(int);
+int	dectohexdec(int);
+void	rtc_print(void);
+
+__inline u_int mc146818_read(void *, u_int);
+__inline void mc146818_write(void *, u_int, u_int);
+
+#define	SECMIN	((unsigned)60)			/* seconds per minute */
+#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
+#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
+#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
+
+struct rtc_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_handle;
+};
+struct rtc_softc *rtc_sc = NULL;
+
+static int	rtc_match(struct device *, struct cfdata *, void *);
+static void	rtc_attach(struct device *, struct device *, void *);
+
+struct cfattach rtc_ca = {
+	sizeof(struct rtc_softc), rtc_match, rtc_attach
+};
+
+void
+rtc_print(void)
+{
+	/* Print clock as debug */
+	mc_todregs rtclk;
+
+	if (rtcget(&rtclk) == 0) {
+		printf("%s: %02x-%02x-%02x %02x:%02x:%02x\n",
+		       rtc_sc->sc_dev.dv_xname, rtclk[MC_YEAR], rtclk[MC_MONTH],
+		       rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN],
+		       rtclk[MC_SEC]);
+	} else {
+		printf("%s: clock not set\n", rtc_sc->sc_dev.dv_xname);
+	}
+}
+
+int
+rtc_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct mainbus_attach_args *maa = aux;
+
+	return (!rtc_sc && strcmp(maa->mb_name, "tod") == 0);
+}
+
+void
+rtc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct rtc_softc *sc = (struct rtc_softc *)self;
+	struct mainbus_attach_args *maa = aux;
+
+	printf(": Dallas Semiconductor DS17485\n");
+
+	sc->sc_tag = maa->mb_bt;
+	if (bus_space_map(sc->sc_tag, maa->mb_addr, PMPPC_RTC_SIZE, 0,
+			  &sc->sc_handle)) {
+		printf("%s: can't map i/o space\n", self->dv_xname);
+		return;
+	}
+
+	rtc_sc = sc;
+#ifdef DEBUG
+	rtc_print();
+#endif
+}
+
+__inline u_int
+mc146818_read(void *vsc, u_int reg)
+{
+	struct rtc_softc *sc = vsc;
+
+	return (bus_space_read_1(sc->sc_tag, sc->sc_handle, reg));
+}
+
+__inline void
+mc146818_write(void *vsc, u_int reg, u_int datum)
+{
+	struct rtc_softc *sc = vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, reg, datum);
+}
+
+void
+rtcinit(void)
+{
+	struct rtc_softc *sc = rtc_sc;
+	static int first_rtcopen_ever = 1;
+
+	if (!first_rtcopen_ever)
+		return;
+	first_rtcopen_ever = 0;
+
+	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
+	mc146818_write(sc, MC_REGB, MC_REGB_24HR);
+}
+
+int
+rtcget(mc_todregs *regs)
+{
+	struct rtc_softc *sc = rtc_sc;
+
+	rtcinit();
+	if ((mc146818_read(sc, MC_REGD) & MC_REGD_VRT) == 0)
+		return (-1);
+	MC146818_GETTOD(sc, regs);
+	return (0);
+}	
+
+void
+rtcput(mc_todregs *regs)
+{
+	struct rtc_softc *sc = rtc_sc;
+
+	rtcinit();
+	MC146818_PUTTOD(sc, regs);
+}
+
+static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+static int
+yeartoday(year)
+	int year;
+{
+
+	return ((year % 4) ? 365 : 366);
+}
+
+int
+hexdectodec(n)
+	int n;
+{
+
+	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
+}
+
+int
+dectohexdec(n)
+	int n;
+{
+
+	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
+}
+
+static int timeset;
+
+/*
+ * Initialize the time of day register, based on the time base which is, e.g.
+ * from a filesystem.
+ */
+void
+inittodr(time_t base)
+{
+	mc_todregs rtclk;
+	time_t n;
+	int sec, min, hr, dom, mon, yr;
+	int i, days = 0;
+	int s;
+
+	/*
+	 * We mostly ignore the suggested time and go for the RTC clock time
+	 * stored in the CMOS RAM.  If the time can't be obtained from the
+	 * CMOS, or if the time obtained from the CMOS is 5 or more years
+	 * less than the suggested time, we used the suggested time.  (In
+	 * the latter case, it's likely that the CMOS battery has died.)
+	 */
+
+	if (base < 15*SECYR) {	/* if before 1985, something's odd... */
+		printf("WARNING: preposterous time in file system\n");
+		/* read the system clock anyway */
+		base = 17*SECYR + 186*SECDAY + SECDAY/2;
+	}
+
+	s = splclock();
+	if (rtcget(&rtclk)) {
+		splx(s);
+		printf("WARNING: invalid time in clock chip\n");
+		goto fstime;
+	}
+	splx(s);
+
+	sec = hexdectodec(rtclk[MC_SEC]);
+	min = hexdectodec(rtclk[MC_MIN]);
+	hr = hexdectodec(rtclk[MC_HOUR]);
+	dom = hexdectodec(rtclk[MC_DOM]);
+	mon = hexdectodec(rtclk[MC_MONTH]);
+	yr = hexdectodec(rtclk[MC_YEAR]);
+	yr = (yr < 70) ? yr+100 : yr;
+
+	n = sec + 60 * min + 3600 * hr;
+	n += (dom - 1) * 3600 * 24;
+
+	if (yeartoday(yr) == 366)
+		month[1] = 29;
+	for (i = mon - 2; i >= 0; i--)
+		days += month[i];
+	month[1] = 28;
+	for (i = 70; i < yr; i++)
+		days += yeartoday(i);
+	n += days * 3600 * 24;
+
+	n += rtc_offset * 60;
+
+	if (base < n - 5*SECYR)
+		printf("WARNING: file system time much less than clock time\n");
+	else if (base > n + 5*SECYR) {
+		printf("WARNING: clock time much less than file system time\n");
+		printf("WARNING: using file system time\n");
+		goto fstime;
+	}
+
+	timeset = 1;
+	time.tv_sec = n;
+	time.tv_usec = 0;
+	return;
+
+fstime:
+	timeset = 1;
+	time.tv_sec = base;
+	time.tv_usec = 0;
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
+}
+
+/*
+ * Reset the clock.
+ */
+void
+resettodr(void)
+{
+	mc_todregs rtclk;
+	time_t n;
+	int diff, i, j;
+	int s;
+
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip in this case.
+	 */
+	if (!timeset)
+		return;
+
+	s = splclock();
+	if (rtcget(&rtclk))
+		memset(&rtclk, 0, sizeof(rtclk));
+	splx(s);
+
+	diff = rtc_offset * 60;
+	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
+	rtclk[MC_SEC] = dectohexdec(n % 60);
+	n /= 60;
+	rtclk[MC_MIN] = dectohexdec(n % 60);
+	rtclk[MC_HOUR] = dectohexdec(n / 60);
+
+	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
+	rtclk[MC_DOW] = (n + 4) % 7;  /* 1/1/70 is Thursday */
+
+	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
+		n -= i;
+
+	j -= 1900;
+	while (j >= 100)
+		j -= 100;
+	rtclk[MC_YEAR] = dectohexdec(j);
+
+	if (i == 366)
+		month[1] = 29;
+	for (i = 0; n >= month[i]; i++)
+		n -= month[i];
+	month[1] = 28;
+	rtclk[MC_MONTH] = dectohexdec(++i);
+
+	rtclk[MC_DOM] = dectohexdec(++n);
+
+	s = splclock();
+	rtcput(&rtclk);
+	splx(s);
+}
