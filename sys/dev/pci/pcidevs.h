@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.57 1998/03/04 00:10:38 cgd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.58 1998/03/04 00:15:21 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.51 1998/03/04 00:09:11 cgd Exp 
+ *	NetBSD: pcidevs,v 1.52 1998/03/04 00:14:45 cgd Exp 
  */
 
 /*
@@ -632,12 +632,14 @@
 
 /* CMD Technology products -- info gleaned from their web site */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
-#define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 /* not on web, Mar. 3 '98 */ */
+/* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+#define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
 #define	PCI_PRODUCT_CMDTECH_646	0x0646		/* PCI0646 */
 #define	PCI_PRODUCT_CMDTECH_647	0x0647		/* PCI0647 */
-/* inclusion of 'A' in the following entry is probably wrong. */
-#define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A /* not on web, Mar. 3 '98 */ */
+/* Inclusion of 'A' in the following entry is probably wrong. */
+/* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+#define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A */
 #define	PCI_PRODUCT_CMDTECH_670	0x0670		/* USB0670 */
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 	
