@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15 2001/09/10 21:19:34 chris Exp $ */
+/* $NetBSD: machdep.c,v 1.16 2001/12/03 21:11:27 aymeric Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 
 #include <machine/powerpc.h>
 #include <machine/bat.h>
+#include <machine/mtpr.h>
 #include <machine/trap.h>
 #include <machine/hid.h>
 #include <machine/cpu.h>
