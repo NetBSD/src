@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.85 2004/05/16 02:41:46 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.86 2004/05/16 02:59:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.85 2004/05/16 02:41:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.86 2004/05/16 02:59:04 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -429,6 +429,12 @@ fxp_attach(struct fxp_softc *sc)
 	    NULL, sc->sc_dev.dv_xname, "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
+	if (sc->sc_rev >= FXP_REV_82558_A4) {
+		evcnt_attach_dynamic(&sc->sc_ev_txpause, EVCNT_TYPE_MISC,
+		    NULL, sc->sc_dev.dv_xname, "txpause");
+		evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_MISC,
+		    NULL, sc->sc_dev.dv_xname, "rxpause");
+	}
 #endif /* FXP_EVENT_COUNTERS */
 
 	/*
@@ -1456,6 +1462,12 @@ fxp_tick(void *arg)
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
+#ifdef FXP_EVENT_COUNTERS
+	if (sc->sc_rev >= FXP_REV_82558_A4) {
+		sc->sc_ev_txpause.ev_count += sp->tx_pauseframes;
+		sc->sc_ev_rxpause.ev_count += sp->rx_pauseframes;
+	}
+#endif
 
 	/*
 	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
@@ -1499,6 +1511,10 @@ fxp_tick(void *arg)
 		sp->rx_alignment_errors = 0;
 		sp->rx_rnr_errors = 0;
 		sp->rx_overrun_errors = 0;
+		if (sc->sc_rev >= FXP_REV_82558_A4) {
+			sp->tx_pauseframes = 0;
+			sp->rx_pauseframes = 0;
+		}
 	}
 
 	if (sc->sc_flags & FXPF_MII) {
@@ -1786,6 +1802,7 @@ fxp_init(struct ifnet *ifp)
 		cbp->rx_fc_restart =	1;	/* enable FC restart frames */
 		cbp->fc_filter =	!prm;	/* drop FC frames to host */
 		cbp->pri_fc_loc =	1;	/* FC pri location (byte31) */
+		cbp->ext_stats_dis =	0;	/* enable extended stats */
 	}
 
 	FXP_CDCONFIGSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1969,6 +1986,14 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+
+	/*
+	 * XXX Flow control is always turned on if the chip supports
+	 * XXX it; we can't easily control it dynamically, since it
+	 * XXX requires sending a setup packet.
+	 */
+	if (sc->sc_rev >= FXP_REV_82558_A4)
+		ifmr->ifm_active |= IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE;
 }
 
 int
