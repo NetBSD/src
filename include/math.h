@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.16 1998/11/15 15:57:25 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.17 1998/11/15 16:51:45 christos Exp $	*/
 
 /*
  * ====================================================
@@ -24,7 +24,7 @@
  * ANSI/POSIX
  */
 extern const char __infinity[];
-#define HUGE_VAL	(*(const double *)(void *)__infinity)
+#define HUGE_VAL	(*(const double *)(const void *)__infinity)
 
 /*
  * XOPEN/SVID
