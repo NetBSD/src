@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.17 2000/12/20 20:52:24 christos Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.18 2003/05/29 18:15:25 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.17 2000/12/20 20:52:24 christos Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.18 2003/05/29 18:15:25 christos Exp $");
 #endif
 #endif
 
@@ -125,7 +125,7 @@ xdr_accepted_reply(xdrs, ar)
 	/* personalized union, rather than calling xdr_union */
 	if (! xdr_opaque_auth(xdrs, &(ar->ar_verf)))
 		return (FALSE);
-	if (! xdr_enum(xdrs, (enum_t *)&(ar->ar_stat)))
+	if (! xdr_enum(xdrs, (enum_t *)(void *)&(ar->ar_stat)))
 		return (FALSE);
 	switch (ar->ar_stat) {
 
@@ -159,7 +159,7 @@ xdr_rejected_reply(xdrs, rr)
 	_DIAGASSERT(rr != NULL);
 
 	/* personalized union, rather than calling xdr_union */
-	if (! xdr_enum(xdrs, (enum_t *)&(rr->rj_stat)))
+	if (! xdr_enum(xdrs, (enum_t *)(void *)&(rr->rj_stat)))
 		return (FALSE);
 	switch (rr->rj_stat) {
 
@@ -169,7 +169,7 @@ xdr_rejected_reply(xdrs, rr)
 		return (xdr_u_int32_t(xdrs, &(rr->rj_vers.high)));
 
 	case AUTH_ERROR:
-		return (xdr_enum(xdrs, (enum_t *)&(rr->rj_why)));
+		return (xdr_enum(xdrs, (enum_t *)(void *)&(rr->rj_why)));
 	}
 	/* NOTREACHED */
 	return (FALSE);
@@ -193,9 +193,9 @@ xdr_replymsg(xdrs, rmsg)
 
 	if (
 	    xdr_u_int32_t(xdrs, &(rmsg->rm_xid)) && 
-	    xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) &&
+	    xdr_enum(xdrs, (enum_t *)(void *)&(rmsg->rm_direction)) &&
 	    (rmsg->rm_direction == REPLY) )
-		return (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),
+		return (xdr_union(xdrs, (enum_t *)(void *)&(rmsg->rm_reply.rp_stat),
 		   (caddr_t)(void *)&(rmsg->rm_reply.ru), reply_dscrm,
 		   NULL_xdrproc_t));
 	return (FALSE);
@@ -221,7 +221,7 @@ xdr_callhdr(xdrs, cmsg)
 	if (
 	    (xdrs->x_op == XDR_ENCODE) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_xid)) &&
-	    xdr_enum(xdrs, (enum_t *)&(cmsg->rm_direction)) &&
+	    xdr_enum(xdrs, (enum_t *)(void *)&(cmsg->rm_direction)) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_prog)) )
 		return (xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)));
