@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile,v 1.76 2003/11/08 05:02:33 sekiya Exp $
+#	$NetBSD: Makefile,v 1.77 2003/12/04 10:08:58 mrg Exp $
 
 .include <bsd.own.mk>
 
 .if ${TOOLCHAIN_MISSING} != "yes"
+TOOLCHAIN_BITS= binutils .WAIT
 .  if ${USE_TOOLS_TOOLCHAIN} != "yes"
-TOOLCHAIN_BITS= binutils .WAIT gcc
+TOOLCHAIN_BITS+= gcc
 .    if ${MKCROSSGDB:Uno} != "no"
 TOOLCHAIN_BITS+= gdb
 .    endif
 .  else
-TOOLCHAIN_BITS= toolchain
+TOOLCHAIN_BITS+= toolchain
 .  endif
 TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
 # XXX Eventually, we want to be able to build dbsym and mdsetimage
