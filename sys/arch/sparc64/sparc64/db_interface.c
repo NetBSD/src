@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 1998/11/24 12:50:27 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.12 1998/11/27 19:58:46 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -340,16 +340,24 @@ db_pload_cmd(addr, have_addr, count, modif)
 	extern void print_dtlb __P((void));
 	static paddr_t oldaddr = -1;
 
-	if (have_addr) {
-		oldaddr = addr;
+	if (!have_addr) {
+		addr = oldaddr;
 	}
-	if (oldaddr == -1) {
+	if (addr == -1) {
 		db_printf("no address\n");
 		return;
 	}
-	db_printf("%016.16lx:\t%08.8lx\n", (long)oldaddr, 
-		  (long)lda(oldaddr, ASI_PHYS_CACHED));
-	oldaddr+=4;
+	while (count--) {
+		if (db_print_position() == 0) {
+			/* Always print the address. */
+			db_printf("%016.16lx:\t", addr);
+		}
+		oldaddr=addr;
+		db_printf("%08.8lx\n", (long)ldxa(addr, ASI_PHYS_CACHED));
+		addr += 4;
+		if (db_print_position() != 0)
+			db_end_line();
+	}
 }
 
 int64_t pseg_get __P((struct pmap *, vaddr_t));
@@ -366,10 +374,10 @@ struct pmap* pm;
 	n = 0;
 	for (i=0; i<STSZ; i++) {
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
-			db_printf("pdir %ld at %xl:\n", i, (long)pdir);
+			db_printf("pdir %ld at %lx:\n", i, (long)pdir);
 			for (k=0; k<PDSZ; k++) {
 				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
-					db_printf("ptable %ld:%ld at %xl:\n", i, k, (long)ptbl);
+					db_printf("\tptable %ld:%ld at %lx:\n", i, k, (long)ptbl);
 					for (j=0; j<PTSZ; j++) {
 						int64_t data0, data1;
 						data0 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
