@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 2001/06/23 03:09:20 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.5 2001/06/24 17:40:08 nonaka Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -107,6 +107,7 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -115,6 +116,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
+scsibus* at ahc?
 scsibus* at aic?
 scsibus* at iha?
 scsibus* at pcscp?
@@ -163,18 +165,26 @@ fd*	at fdc? drive ?
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+
+# ISA network interfaces
+ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
 
 # ISA Plug-and-Play network intefaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
+ne*	at isapnp?			# NE2000-compatible Ethernet
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
