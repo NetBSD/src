@@ -213,7 +213,7 @@ typedef struct {
 
 void    dict_register(const char *dict_name, DICT *dict_info)
 {
-    char   *myname = "dict_register";
+    const char *myname = "dict_register";
     DICT_NODE *node;
 
     if (dict_table == 0)
@@ -255,7 +255,7 @@ static void dict_node_free(char *ptr)
 
 void    dict_unregister(const char *dict_name)
 {
-    char   *myname = "dict_unregister";
+    const char *myname = "dict_unregister";
     DICT_NODE *node;
 
     if ((node = dict_node(dict_name)) == 0)
@@ -270,7 +270,7 @@ void    dict_unregister(const char *dict_name)
 
 void    dict_update(const char *dict_name, const char *member, const char *value)
 {
-    char   *myname = "dict_update";
+    const char *myname = "dict_update";
     DICT_NODE *node;
     DICT   *dict;
 
@@ -290,7 +290,7 @@ void    dict_update(const char *dict_name, const char *member, const char *value
 
 const char *dict_lookup(const char *dict_name, const char *member)
 {
-    char   *myname = "dict_lookup";
+    const char *myname = "dict_lookup";
     DICT_NODE *node;
     DICT   *dict;
     const char *ret = 0;
@@ -313,7 +313,7 @@ const char *dict_lookup(const char *dict_name, const char *member)
 
 int     dict_delete(const char *dict_name, const char *member)
 {
-    char   *myname = "dict_delete";
+    const char *myname = "dict_delete";
     DICT_NODE *node;
     DICT   *dict;
     int     result;
@@ -338,7 +338,7 @@ int     dict_delete(const char *dict_name, const char *member)
 int     dict_sequence(const char *dict_name, const int func,
 		              const char **member, const char **value)
 {
-    char   *myname = "dict_sequence";
+    const char *myname = "dict_sequence";
     DICT_NODE *node;
     DICT   *dict;
 
@@ -428,7 +428,7 @@ struct dict_eval_context {
 static int dict_eval_action(int type, VSTRING *buf, char *ptr)
 {
     struct dict_eval_context *ctxt = (struct dict_eval_context *) ptr;
-    char   *myname = "dict_eval_action";
+    const char *myname = "dict_eval_action";
     const char *pp;
 
     if (msg_verbose)
@@ -521,7 +521,7 @@ void    dict_walk(DICT_WALK_ACTION action, char *ptr)
 
 int     dict_changed(void)
 {
-    char   *myname = "dict_changed";
+    const char *myname = "dict_changed";
     struct stat st;
     HTABLE_INFO **ht_info_list;
     HTABLE_INFO **ht;

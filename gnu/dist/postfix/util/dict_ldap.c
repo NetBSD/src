@@ -128,7 +128,7 @@ static void dict_ldap_timeout(int unused_sig)
 
 static const char *dict_ldap_lookup(DICT *dict, const char *name)
 {
-    char   *myname = "dict_ldap_lookup";
+    const char *myname = "dict_ldap_lookup";
     DICT_LDAP *dict_ldap = (DICT_LDAP *) dict;
     static VSTRING *result;
     LDAPMessage *res = 0;
@@ -365,7 +365,7 @@ static void dict_ldap_update(DICT *dict, const char *unused_name,
 
 static void dict_ldap_close(DICT *dict)
 {
-    char   *myname = "dict_ldap_close";
+    const char *myname = "dict_ldap_close";
     DICT_LDAP *dict_ldap = (DICT_LDAP *) dict;
 
     if (dict_ldap->ld)
@@ -385,7 +385,7 @@ static void dict_ldap_close(DICT *dict)
 
 DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
 {
-    char   *myname = "dict_ldap_open";
+    const char *myname = "dict_ldap_open";
     DICT_LDAP *dict_ldap;
     VSTRING *config_param;
     int     rc = 0;

@@ -242,7 +242,7 @@ static int dict_dbm_delete(DICT *dict, const char *key)
 static int dict_dbm_sequence(DICT *dict, const int function,
 			             const char **key, const char **value)
 {
-    char   *myname = "dict_dbm_sequence";
+    const char *myname = "dict_dbm_sequence";
     DICT_DBM *dict_dbm = (DICT_DBM *) dict;
     datum   dbm_key;
     datum   dbm_value;
