@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.12 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.13 2002/12/17 22:47:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.12 2002/12/17 18:42:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.13 2002/12/17 22:47:07 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,22 +117,19 @@ mach_ports_lookup(args)
 	mach_ports_lookup_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct proc *p = args->p;
-	struct exec_vmcmd evc;
+	vaddr_t va;
 	int error;
 
 	/* 
 	 * This is some out of band data sent with the reply. In the 
-	 * encoutered situation the out of band data has laways been
-	 * null. We have to see more of his in order to fully understand
-	 * How this trap works.
+	 * encountered situation the out of band data has always been null
+	 * filled. We have to see more of his in order to fully understand
+	 * how this trap works.
 	 */
-	bzero(&evc, sizeof(evc));
-	evc.ev_addr = 0x00008000;
-	evc.ev_len = PAGE_SIZE;
-	evc.ev_prot = UVM_PROT_RW;
-	evc.ev_proc = *vmcmd_map_zero;
- 
-	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+	va = vm_map_min(&p->p_vmspace->vm_map);
+	if ((error = uvm_map(&p->p_vmspace->vm_map, &va, PAGE_SIZE, NULL, 
+	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -142,7 +139,7 @@ mach_ports_lookup(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
-	rep->rep_init_port_set.address = (void *)evc.ev_addr;
+	rep->rep_init_port_set.address = (void *)va;
 	rep->rep_init_port_set.count = 3; /* XXX why ? */
 	rep->rep_init_port_set.copy = 2; /* XXX why ? */
 	rep->rep_init_port_set.disposition = 0x11; /* XXX why? */
