@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 1997/08/30 06:54:34 mycroft Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19 1997/10/15 01:20:33 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,6 +49,7 @@
 #include "apm.h"
 
 #if NAPM > 0
+#include <machine/bioscall.h>
 #include <machine/apmvar.h>
 #endif
 
