@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.8 1997/11/02 08:20:42 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.9 1997/11/03 00:04:53 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <util.h>
 
 #include <sys/param.h>
 #include <ufs/ufs/dinode.h>
@@ -70,6 +71,8 @@
 /* Local prototypes */
 static void get_disks (void);
 static void foundffs (struct data *list, int num);
+static void 
+    do_ffs_newfs(const char *partname, int part, const char *mountpoint);
 
 
 static void get_disks(void)
@@ -172,7 +175,7 @@ void disp_cur_fspart (int disp, int showall)
 
 	if (disp < 0) {
 		start = 0;
-		stop = 8;
+		stop = getmaxpartitions();
 	} else {
 		start = disp;
 		stop = disp+1;
@@ -270,30 +273,41 @@ void write_disklabel (void)
 
 
 
-
 void make_filesystems (void)
 {
 	int i;
+	char partname[STRSIZE];
 
 	/* Making new file systems and mounting them*/
 	printf ("%s", msg_string (MSG_donewfs));
-	for (i=0; i<8; i++)
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD) {
-			run_prog_or_continue ("/sbin/newfs /dev/r%s%c", 
-			    diskdev, 'a'+i);
-			if (*fsmount[i]) { 
-				if (i > 0) {
-					make_target_dir(fsmount[i]);
-					run_prog_or_continue ("/sbin/mount -v /dev/%s%c"
-						  " /mnt%s",
-						  diskdev, 'a'+i,
-						  fsmount[i]);
-				} else
-					run_prog_or_continue ("/sbin/mount -v /dev/%s%c"
-						  " /mnt", diskdev, 'a'+i);
-			}
+	for (i=0; i<getmaxpartitions(); i++) {
+		/*
+		 * newfs and mount. For now, process only BSD filesystems. 
+		 * but if this is the  mounted-on root, don't touch it! 
+		 */
+	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a'+i);
+		if (bsdlabel[i][D_FSTYPE] == T_42BSD && 
+		    !is_active_rootpart(partname)) {
+		    do_ffs_newfs(partname, i, fsmount[i]);
 		}
+	}
+}
 
+
+/* newfs and mount an ffs filesystem. */
+static void 
+do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
+{
+	run_prog_or_continue ("/sbin/newfs /dev/r%s", partname);
+	if (*mountpoint) { 
+		if (partno > 0) {
+			make_target_dir(mountpoint);
+			run_prog_or_continue ("/sbin/mount -v /dev/%s /mnt%s", 
+				  partname, mountpoint);
+		} else
+			run_prog_or_continue ("/sbin/mount -v /dev/%s%c"
+				  " /mnt", partname);
+	}
 }
 
 void make_fstab (void)
@@ -314,7 +328,7 @@ void make_fstab (void)
 	}
 	(void)fprintf (f, "/dev/%sa / ffs rw 1 1\n", diskdev);
 	(void)fprintf (f, "/dev/%sb none swap sw 0 0\n", diskdev);
-	for (i=4; i<8; i++)
+	for (i=4; i<getmaxpartitions(); i++)
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
 			(void)fprintf (f, "/dev/%s%c %s ffs rw 1 2\n",
 				       diskdev, 'a'+i, fsmount[i]);
