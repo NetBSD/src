@@ -1,5 +1,5 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.5 1999/05/19 21:05:59 ad Exp $
-# 	From: GENERIC,v 1.76 1999/01/17 20:45:26 pk Exp
+# 	$NetBSD: BILL-THE-CAT,v 1.6 1999/06/06 13:06:38 mrg Exp $
+# 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
 
@@ -126,7 +126,7 @@ options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
+options 	COMPAT_AOUT	# NetBSD a.out compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -533,6 +533,5 @@ pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
-## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
 pseudo-device	rnd
