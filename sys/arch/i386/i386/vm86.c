@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.5 1996/04/11 03:21:42 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.6 1996/04/11 05:11:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -444,6 +444,28 @@ i386_vm86(p, args, retval)
 
 	p->p_addr->u_pcb.vm86_userp = (void *)args;
 
+	/*
+	 * Keep mask of flags we simulate to simulate a particular type of
+	 * processor.
+	 */
+	switch (vm86s.ss_cpu_type) {
+	case VCPU_086:
+	case VCPU_186:
+	case VCPU_286:
+		VM86_FLAGMASK(p) = 0;
+		break;
+	case VCPU_386:
+		VM86_FLAGMASK(p) = PSL_NT|PSL_IOPL;
+		break;
+	case VCPU_486:
+		VM86_FLAGMASK(p) = PSL_AC|PSL_NT|PSL_IOPL;
+		break;
+	case VCPU_586:
+	default:
+		VM86_FLAGMASK(p) = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
+		break;
+	}
+
 #define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
 #define DOREG(reg) tf->tf_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
 
@@ -470,30 +492,8 @@ i386_vm86(p, args, retval)
 	SETFLAGS(tf->tf_eflags, vm86s.regs.vmsc.sc_eflags, SETDIRECT);
 	tf->tf_eflags |= PSL_VM;
 
-	/*
-	 * Keep mask of flags we simulate to simulate a particular type of
-	 * processor.
-	 */
-	switch (vm86s.ss_cpu_type) {
-	case VCPU_086:
-	case VCPU_186:
-	case VCPU_286:
-		VM86_FLAGMASK(p) = 0;
-		break;
-	case VCPU_386:
-		VM86_FLAGMASK(p) = PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_486:
-		VM86_FLAGMASK(p) = PSL_AC|PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_586:
-	default:
-		VM86_FLAGMASK(p) = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
-		break;
-	}
-
 	/* Going into vm86 mode jumps off the signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (EJUSTRETURN);
 }
