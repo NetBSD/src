@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.7 1998/02/05 05:19:45 jonathan Exp $ */
+/* $NetBSD: lk201.c,v 1.8 1998/03/22 09:27:07 jonathan Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -14,7 +14,7 @@
 
 #include <machine/pmioctl.h>
 
-#include <pmax/dev/lk201.h>
+#include <dev/dec/lk201.h>
 #include <pmax/dev/lk201var.h>
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.10 1998/03/12 05:45:54 thorpej Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.11 1998/03/22 09:27:07 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -83,12 +83,13 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <machine/pmioctl.h>
+#include <dev/dec/lk201.h>		/* LK-201 keycodes */
+
+#include <machine/pmioctl.h>		/* X11R5 Xserver ioctls */
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>		/* XXX should be renamed fbvar.h */
-#include <pmax/dev/lk201.h>
 
 /*#include <pmax/stand/dec_prom.h>*/
 

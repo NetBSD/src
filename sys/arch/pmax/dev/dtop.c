@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.31 1998/03/22 07:04:13 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.32 1998/03/22 09:27:07 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.31 1998/03/22 07:04:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.32 1998/03/22 09:27:07 jonathan Exp $");
 
 #include "rasterconsole.h"
 
@@ -129,9 +129,9 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.31 1998/03/22 07:04:13 jonathan Exp $");
 #include <pmax/pmax/maxine.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
+#include <dev/dec/lk201.h>
 
 #include <pmax/dev/dtopreg.h>
-#include <pmax/dev/lk201.h>
 #include <pmax/dev/lk201var.h>
 #include <pmax/dev/dtopvar.h>
 
