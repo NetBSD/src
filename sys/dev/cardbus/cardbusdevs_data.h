@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.8.2.3 2002/02/05 12:55:32 he Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.8.2.4 2002/12/15 15:50:01 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.10.2.3 2002/02/05 12:54:48 he Exp 
+ *	NetBSD: cardbusdevs,v 1.10.2.4 2002/12/15 15:49:34 he Exp 
  */
 
 /*
@@ -68,6 +68,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "AboCom Systems",
 	    "FE2500 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3603_TX,
+	    0,
+	    "Planex Communications Inc",
+	    "FNW-3603-TX 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
@@ -217,6 +223,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ABOCOM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "AboCom Systems",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_PLANEX, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Planex Communications Inc",
 	    NULL,
 	},
 	{

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.8.2.3 2002/02/05 12:55:32 he Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.8.2.4 2002/12/15 15:50:01 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.10.2.3 2002/02/05 12:54:48 he Exp 
+ *	NetBSD: cardbusdevs,v 1.10.2.4 2002/12/15 15:49:34 he Exp 
  */
 
 /*
@@ -58,6 +58,7 @@
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* AboCom Systems */
+#define	CARDBUS_VENDOR_PLANEX	0x14ea		/* Planex Communications Inc */
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -75,6 +76,9 @@
 /* AboCom products */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* FE2500 10/100 Ethernet */
+
+/* Planex products */
+#define	CARDBUS_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 Ethernet */
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
