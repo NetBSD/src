@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.5 1999/11/17 21:18:03 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.6 1999/11/19 18:04:11 veego Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,9 +74,9 @@ pax -rvw probe_ipv6 $d/bin
 cd $r/doc/man
 pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 $d/man
 
-### Remove lib/bsd and lib/irs
+### Remove lib/bsd
 cd $d/lib
-rm -r bsd irs
+rm -r bsd
 
 ### Remove .cvsignore, Makefiles and *.mdoc files
 find $d -name '.cvsignore' -exec rm {} \;
