@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.15.4.1 1999/06/21 01:17:53 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.15.4.2 1999/08/02 21:59:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -936,6 +936,9 @@ epic_init(sc)
 	 *	- automatic advance to next receive frame
 	 */
 	genctl = GENCTL_RX_FIFO_THRESH0 | GENCTL_ONECOPY;
+#if BYTE_ORDER == BIG_ENDIAN
+	genctl |= GENCTL_BIG_ENDIAN;
+#endif
 	bus_space_write_4(st, sh, EPIC_GENCTL, genctl);
 
 	/*

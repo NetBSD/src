@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.2 1999/03/24 20:59:21 augustss Exp $	*/
+/*	$NetBSD: mpu.c,v 1.2.2.2 1999/08/02 21:59:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,21 +52,17 @@
 
 #include <dev/midi_if.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/isa/mpuvar.h>
+#include <dev/ic/mpuvar.h>
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (mpudebug) printf x
 #define DPRINTFN(n,x)	if (mpudebug >= (n)) printf x
-int	mpudebug = 100;
+int	mpudebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
 
-#define MPU401_NPORT	2
 #define MPU_DATA		0
 #define MPU_COMMAND	1
 #define  MPU_RESET	0xff
@@ -83,6 +79,13 @@ int	mpudebug = 100;
 int	mpu_reset(struct mpu_softc *);
 static	__inline int mpu_waitready(struct mpu_softc *);
 void	mpu_readinput(struct mpu_softc *);
+
+int	mpu_open __P((void *, int, 
+			 void (*iintr)__P((void *, int)),
+			 void (*ointr)__P((void *)), void *arg));
+void	mpu_close __P((void *));
+int	mpu_output __P((void *, int));
+void	mpu_getinfo __P((void *, struct midi_info *));
 
 struct midi_hw_if mpu_midi_hw_if = {
 	mpu_open,
@@ -106,6 +109,15 @@ mpu_find(sc)
 		return 1;
 bad:
 	return 0;
+}
+
+void
+mpu_attach(sc)
+	struct mpu_softc *sc;
+{
+	printf("\n");
+
+	midi_attach_mi(&mpu_midi_hw_if, sc, &sc->sc_dev);
 }
 
 static __inline int
@@ -229,8 +241,9 @@ mpu_getinfo(addr, mi)
 	void *addr;
 	struct midi_info *mi;
 {
+	struct mpu_softc *sc = addr;
 
-	mi->name = "MPU-401 MIDI UART";
+	mi->name = sc->model;
 	mi->props = 0;
 }
 
