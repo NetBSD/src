@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2000/12/12 20:22:50 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2000/12/12 20:30:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ syscall_plain(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax & (SYS_NSYSENT - 1);
+	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -124,6 +124,7 @@ syscall_plain(frame)
 		break;
 	}
 
+	code &= (SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
@@ -183,7 +184,7 @@ syscall_fancy(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax & (SYS_NSYSENT - 1);
+	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -207,6 +208,7 @@ syscall_fancy(frame)
 		break;
 	}
 
+	code &= (SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
