@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.58 2004/01/18 16:27:25 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.59 2004/03/22 07:11:00 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1369,13 +1369,13 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 		}
 #if BOOTSEL
 		else {
-			if (mbrs->mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC))
+			if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC))
 				bootkey = mbrs->mbr_bootsel.mbrbs_defkey;
 			else
 				bootkey = 0;
 			bootkey -= SCAN_1;
 		}
-		if (mbrs->mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC))
+		if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC))
 			memcpy(mbri->nametab, mbrs->mbr_bootsel.mbrbs_nametab,
 				sizeof mbri->nametab);
 #endif
@@ -1483,14 +1483,14 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 	 * copy in all the menu strings and set the default keycode
 	 * to be that for the default partition.
 	 */
-	if (mbri->mbr.mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC)) {
+	if (mbri->mbr.mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
 		int8_t key = SCAN_1;
 		mbri->mbr.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
 		for (ext = mbri; ext != NULL; ext = ext->extended) {
 			mbrs = &ext->mbr;
 			mbrp = &mbrs->mbr_parts[0];
 			/* Ensure marker is set in each sector */
-			mbrs->mbr_bootsel.mbrbs_magic = htole16(MBR_MAGIC);
+			mbrs->mbr_bootsel_magic = htole16(MBR_BS_MAGIC);
 			/* and copy in menu strings */
 			memcpy(&mbrs->mbr_bootsel.mbrbs_nametab, &ext->nametab,
 			    sizeof mbrs->mbr_bootsel.mbrbs_nametab);

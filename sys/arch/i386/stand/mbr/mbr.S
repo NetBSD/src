@@ -1,7 +1,7 @@
-/*	$NetBSD: mbr.S,v 1.4 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: mbr.S,v 1.5 2004/03/22 07:11:00 lukem Exp $	*/
 
 /*
- * Copyright (c) 1999-2003 The NetBSD Foundation, Inc. 
+ * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
  * All rights reserved.
  *     
  * This code is derived from software contributed to The NetBSD Foundation
@@ -523,7 +523,7 @@ ERR_KEY:	.asciz	"bad key"
  * (Unfortunately I can't seem to get the value reported when it is -ve)
  */
 mbr_space	= defkey - .
-	. = start + MBR_BOOTSEL_OFFSET
+	. = start + MBR_BS_OFFSET
 /*
  * Default action, as a keyvalue we'd normally read from the BIOS.
  */
@@ -540,14 +540,26 @@ flags:	.byte	MBR_BS_NEWMBR | BOOTSEL_FLAGS
 timeout:
 	.word	182			/* default to 10 seconds */
 /*
- * Space for name/select table and partition table.
+ * mbr_bootsel
  */
 nametab:
 	.fill	MBR_PART_COUNT * (MBR_BS_PARTNAMESIZE + 1), 0x01, 0x00
 
-	. = start + MBR_PART_OFFSET - 2
-	.word	MBR_MAGIC
+/* space for mbr_dsn */
+	. = start + MBR_DSN_OFFSET
+	.long	0
 
+/* mbr_bootsel_magic */
+	. = start + MBR_BS_MAGIC_OFFSET
+#ifdef BOOTSEL
+	.word	MBR_BS_MAGIC
+#else
+	.word	0
+#endif
+
+/*
+ * MBR partition table
+ */
 	. = start + MBR_PART_OFFSET
 parttab:
 	.fill	0x40, 0x01, 0x00
