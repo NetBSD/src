@@ -1,4 +1,4 @@
-/*	$NetBSD: pms_iomd.c,v 1.2 1998/08/15 03:02:33 mycroft Exp $	*/
+/*	$NetBSD: pms_iomd.c,v 1.3 1999/01/23 22:18:43 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -58,7 +58,7 @@ static int  pms_iomd_probe     __P((struct device *, struct cfdata *, void *));
 static void pms_iomd_attach    __P((struct device *, struct device *, void *));
 static void pms_iomd_intenable __P((struct pms_softc *sc, int enable));
 
-struct cfattach pms_iomd_ca = {
+struct cfattach opms_iomd_ca = {
 	sizeof(struct pms_softc), pms_iomd_probe, pms_iomd_attach
 };
 
