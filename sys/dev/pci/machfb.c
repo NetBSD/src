@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.7 2002/10/31 14:10:07 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.8 2002/11/02 15:54:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -535,7 +535,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		mach64_get_mode(sc, &default_mode);
 		setmode = 0;
 	} else {
-		memcpy(&default_mode, &mach64_modes[0], sizeof(struct videomode));
+		memcpy(&default_mode, &mach64_modes[4], sizeof(struct videomode));
 		setmode = 1;
 	}
 #else
@@ -565,7 +565,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	mach64_console_screen.ri.ri_hw = sc;
 	mach64_console_screen.ri.ri_depth = sc->bits_per_pixel;
-	mach64_console_screen.ri.ri_bits = (void *)sc->sc_aperbase;
+	mach64_console_screen.ri.ri_bits = (void*)(u_long)sc->sc_aperbase;
 	mach64_console_screen.ri.ri_width = default_mode.hdisplay;
 	mach64_console_screen.ri.ri_height = default_mode.vdisplay;
 	mach64_console_screen.ri.ri_stride = mach64_console_screen.ri.ri_width;
