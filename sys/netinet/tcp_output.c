@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.120 2005/03/06 00:35:07 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.121 2005/03/06 00:48:52 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.120 2005/03/06 00:35:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.121 2005/03/06 00:48:52 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -700,11 +700,15 @@ again:
 	sack_bytes_rxmt = 0;
 	len = 0;
 	p = NULL;
-	if (!TCP_SACK_ENABLED(tp))
-		goto after_sack_rexmit;
-	if ((tp->t_partialacks >= 0) &&
-			(p = tcp_sack_output(tp, &sack_bytes_rxmt))) {
+	do {
 		long cwin;
+		if (!TCP_SACK_ENABLED(tp))
+			break;
+		if (tp->t_partialacks == 0) 
+			break;
+		p = tcp_sack_output(tp, &sack_bytes_rxmt);
+		if (p == NULL)
+			break;
 		
 		cwin = min(tp->snd_wnd, tp->snd_cwnd) - sack_bytes_rxmt;
 		if (cwin < 0)
@@ -724,11 +728,10 @@ again:
 				 * moves past p->rxmit.
 				 */
 				p = NULL;
-				goto after_sack_rexmit;
-			} else
-				/* Can rexmit part of the current hole */
-				len = ((long)ulmin(cwin,
-						   tp->snd_recover - p->rxmit));
+				break;
+			}
+			/* Can rexmit part of the current hole */
+			len = ((long)ulmin(cwin, tp->snd_recover - p->rxmit));
 		} else
 			len = ((long)ulmin(cwin, p->end - p->rxmit));
 		off = p->rxmit - tp->snd_una;
@@ -736,8 +739,7 @@ again:
 			sack_rxmit = 1;
 			sendalot = 1;
 		}
-	}
-after_sack_rexmit:
+	} while (0);
 
 	/*
 	 * If in persist timeout with window of 0, send 1 byte.
