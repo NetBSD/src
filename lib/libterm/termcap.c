@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termcap.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: termcap.c,v 1.4 1994/01/24 23:40:10 cgd Exp $";
+static char rcsid[] = "$Id: termcap.c,v 1.5 1994/04/18 12:35:39 deraadt Exp $";
 #endif /* not lint */
 
 #define	PBUFSIZ		512	/* max length of filename path */
@@ -71,7 +71,7 @@ tgetent(bp, name)
 	register char *p;
 	register char *cp;
 	int i;
-	char *dummy, *home, *termpath;
+	char *dummy = NULL, *home, *termpath;
 	char **fname, **pvec;
 	char pathbuf[PBUFSIZ], *pathvec[PVECSIZ];
 
