@@ -1,118 +1,138 @@
-#	$NetBSD: TODO,v 1.2 1994/06/29 06:46:45 cgd Exp $
+#   $NetBSD: TODO,v 1.3 1999/03/15 00:46:47 perseant Exp $
 
-#	@(#)TODO	8.1 (Berkeley) 6/11/93
+- If we put an LFS onto a striped disk, we want to be able to specify
+  the segment size to be equal to the stripe size, regardless of whether
+  this is a power of two; also, the first segment should just eat the
+  label pad, like the segments eat the superblocks.  Then, we could
+  neatly lay out the segments along stripe boundaries.
 
-NOTE: Changed the lookup on a page of inodes to search from the back
-in case the same inode gets written twice on the same page.
+- Working fsck_lfs.  (Have something that will verify, need something
+  that will fix too.  Really, need a general-purpose external
+  partial-segment writer.)
 
-Make sure that if you are writing a file, but not all the blocks
-make it into a single segment, that you do not write the inode in
-that segment.
+- Roll-forward agent, *at least* to verify the newer superblock's
+  checkpoint (easy) but also to create a valid checkpoint for
+  post-checkpoint writes (requires an external partial-segment writer).
 
-Keith:
-	Why not delete the lfs_bmapv call, just mark everything dirty
-		that isn't deleted/truncated?  Get some numbers about
-		what percentage of the stuff that the cleaner thinks
-		might be live is live.  If it's high, get rid of lfs_bmapv.
+- Blocks created in the cache are currently not marked in any way,
+  except that b_blkno == b_lblkno, which can happen naturally too.  LFS
+  needs to know for accounting.
 
-	There is a nasty problem in that it may take *more* room to write
-	the data to clean a segment than is returned by the new segment
-	because of indirect blocks in segment 2 being dirtied by the data
-	being copied into the log from segment 1.  The suggested solution
-	at this point is to detect it when we have no space left on the
-	filesystem, write the extra data into the last segment (leaving
-	no clean ones), make it a checkpoint and shut down the file system
-	for fixing by a utility reading the raw partition.  Argument is
-	that this should never happen and is practically impossible to fix
-	since the cleaner would have to theoretically build a model of the
-	entire filesystem in memory to detect the condition occurring.
-	A file coalescing cleaner will help avoid the problem, and one
-	that reads/writes from the raw disk could fix it.
+- Inode blocks are currently the same size as the fs block size; but all
+  the ones I've seen are mostly empty, and this will be especially true
+  if atime information is kept in the ifile instead of the inode.  Could
+  we shrink the inode block size to 512?  Or parametrize it at fs
+  creation time?
 
-DONE	Currently, inodes are being flushed to disk synchronously upon
-		creation -- see ufs_makeinode.  However, only the inode
-		is flushed, the directory "name" is written using VOP_BWRITE,
-		so it's not synchronous.  Possible solutions: 1: get some
-		ordering in the writes so that inode/directory entries get
-		stuffed into the same segment.  2: do both synchronously
-		3: add Mendel's information into the stream so we log
-		creation/deletion of inodes.  4: do some form of partial
-		segment when changing the inode (creation/deletion/rename).
-DONE	Fix i_block increment for indirect blocks.
-	If the file system is tar'd, extracted on top of another LFS, the
-		IFILE ain't worth diddly.  Is the cleaner writing the IFILE?
-		If not, let's make it read-only.
-DONE	Delete unnecessary source from utils in main-line source tree.
-DONE	Make sure that we're counting meta blocks in the inode i_block count.
-	Overlap the version and nextfree fields in the IFILE
-DONE	Vinvalbuf (Kirk):
-		Why writing blocks that are no longer useful?
-		Are the semantics of close such that blocks have to be flushed?
-		How specify in the buf chain the blocks that don't need
-		to be written?  (Different numbering of indirect blocks.)
+- Get rid of DEV_BSIZE, pay attention to the media block size at mount time.
 
-Margo:
-	Change so that only search one sector of inode block file for the
-		inode by using sector addresses in the ifile instead of
-		logical disk addresses.
-	Fix the use of the ifile version field to use the generation
-		number instead.
-DONE	Unmount; not doing a bgetvp (VHOLD) in lfs_newbuf call.
-DONE	Document in the README file where the checkpoint information is
-		on disk.
-	Variable block sizes (Margo/Keith).
-	Switch the byte accounting to sector accounting.
-DONE	Check lfs.h and make sure that the #defines/structures are all
-		actually needed.
-DONE	Add a check in lfs_segment.c so that if the segment is empty,
-		we don't write it.
-	Need to keep vnode v_numoutput up to date for pending writes?
-DONE	USENIX paper (Carl/Margo).
+- More fs ops need to call lfs_imtime.  Which ones?  (Blackwell et al., 1995)
 
+- lfs_vunref_head exists so that vnodes loaded solely for cleaning can
+  be put back on the *head* of the vnode free list.  Make sure we
+  actually do this, since we now take IN_CLEANING off during segment write.
 
-Evelyn:
-	lfsck:	If delete a file that's being executed, the version number
-		isn't updated, and lfsck has to figure this out; case is			the same as if have an inode that no directory references,
-		so the file should be reattached into lost+found.
-	Recovery/fsck.
+- Investigate the "unlocked access" in lfs_bmapv, see if we could wait
+  there most of the time?  Are we getting inconsistent data?
 
-Carl:
-	Investigate: clustering of reads (if blocks in the segment are ordered,
-		should read them all) and writes (McVoy paper).
-	Investigate: should the access time be part of the IFILE:
-		pro: theoretically, saves disk writes
-		con: cacheing inodes should obviate this advantage
-		     the IFILE is already humongous
-	Cleaner.
-	Port to OSF/1 (Carl/Keith).
-	Currently there's no notion of write error checking.
-		+ Failed data/inode writes should be rescheduled (kernel level
-		  bad blocking).
-		+ Failed superblock writes should cause selection of new
-		  superblock for checkpointing.
+- Change the free_lock to be fs-specific, and change the dirvcount to be
+  subsystem-wide.
 
-FUTURE FANTASIES: ============
+- The cleaner could be enhanced to be controlled from other processes,
+  and possibly perform additional tasks:
 
-+ unrm, versioning
-+ transactions
-+ extended cleaner policies (hot/cold data, data placement)
+  - Backups.  At a minimum, turn the cleaner off and on to allow
+	effective live backups.  More aggressively, the cleaner itself could
+	be the backup agent, and dump_lfs would merely be a controller.
 
-==============================
-Problem with the concept of multiple buffer headers referencing the segment:
-Positives:
-	Don't lock down 1 segment per file system of physical memory.
-	Don't copy from buffers to segment memory.
-	Don't tie down the bus to transfer 1M.
-	Works on controllers supporting less than large transfers.
-	Disk can start writing immediately instead of waiting 1/2 rotation
-	    and the full transfer.
-Negatives:
-	Have to do segment write then segment summary write, since the latter
-	is what verifies that the segment is okay.  (Is there another way
-	to do this?)
-==============================
+  - Cleaning time policies.  Be able to tweak the cleaner's thresholds
+	to allow more thorough cleaning during policy-determined idle
+	periods (regardless of actual idleness) or put off until later
+	during short, intensive write periods.
 
-The algorithm for selecting the disk addresses of the super-blocks
-has to be available to the user program which checks the file system.
+  - File coalescing and placement.  During periods we expect to be idle,
+    coalesce fragmented files into one place on disk for better read
+    performance.  Ideally, move files that have not been accessed in a
+    while to the extremes of the disk, thereby shortening seek times for
+    files that are accessed more frequently (though how the cleaner
+    should communicate "please put this near the beginning or end of the
+    disk" to the kernel is a very good question; flags to lfs_markv?).
 
-(Currently in newfs, becomes a common subroutine.)
+  - Versioning.  When it cleans a segment it could write data for files
+    that were less than n versions old to tape or elsewhere.  Perhaps it
+    could even write them back onto the disk, although that requires
+    more thought (and kernel mods).
+
+- Move lfs_countlocked() into vfs_bio.c, to replace count_locked_queue;
+  perhaps keep the name, replace the function.  Could it count referenced
+  vnodes as well, if it was in vfs_subr.c instead?
+
+- If we clean a DIROP vnode, and we toss a fake buffer in favor of a
+  pending held real buffer, we risk writing part of the dirop during a
+  synchronous checkpoint.  This is bad.  Now that we're doing `stingy'
+  cleaning, is there a good reason to favor real blocks over fake ones?
+
+- Why not delete the lfs_bmapv call, just mark everything dirty that
+  isn't deleted/truncated?  Get some numbers about what percentage of
+  the stuff that the cleaner thinks might be live is live.  If it's
+  high, get rid of lfs_bmapv.
+
+- There is a nasty problem in that it may take *more* room to write the
+  data to clean a segment than is returned by the new segment because of
+  indirect blocks in segment 2 being dirtied by the data being copied
+  into the log from segment 1.  The suggested solution at this point is
+  to detect it when we have no space left on the filesystem, write the
+  extra data into the last segment (leaving no clean ones), make it a
+  checkpoint and shut down the file system for fixing by a utility
+  reading the raw partition.  Argument is that this should never happen
+  and is practically impossible to fix since the cleaner would have to
+  theoretically build a model of the entire filesystem in memory to
+  detect the condition occurring.  A file coalescing cleaner will help
+  avoid the problem, and one that reads/writes from the raw disk could
+  fix it.
+
+- Overlap the version and nextfree fields in the IFILE
+
+- Change so that only search one sector of inode block file for the
+  inode by using sector addresses in the ifile instead of
+  logical disk addresses.
+
+- Fix the use of the ifile version field to use the generation number instead.
+
+- Need to keep vnode v_numoutput up to date for pending writes?
+
+- If delete a file that's being executed, the version number isn't
+  updated, and fsck_lfs has to figure this out; case is the same as if
+  have an inode that no directory references, so the file should be
+  reattached into lost+found.
+
+- Investigate: should the access time be part of the IFILE:
+        pro: theoretically, saves disk writes
+        con: cacheing inodes should obviate this advantage
+             the IFILE is already humongous
+
+- Currently there's no notion of write error checking.
+  + Failed data/inode writes should be rescheduled (kernel level bad blocking).
+  + Failed superblock writes should cause selection of new superblock
+  for checkpointing.
+
+- Future fantasies:
+  - unrm, versioning
+  - transactions
+  - extended cleaner policies (hot/cold data, data placement)
+
+- Problem with the concept of multiple buffer headers referencing the segment:
+  Positives:
+    Don't lock down 1 segment per file system of physical memory.
+    Don't copy from buffers to segment memory.
+    Don't tie down the bus to transfer 1M.
+    Works on controllers supporting less than large transfers.
+    Disk can start writing immediately instead of waiting 1/2 rotation
+        and the full transfer.
+  Negatives:
+    Have to do segment write then segment summary write, since the latter
+    is what verifies that the segment is okay.  (Is there another way
+    to do this?)
+
+- The algorithm for selecting the disk addresses of the super-blocks
+  has to be available to the user program which checks the file system.
