@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.33 1999/12/30 15:48:19 eeh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.34 2000/01/22 23:07:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -324,13 +324,13 @@ typedef struct {
 #define	STT_LOPROC		13	/* Processor-specific range */
 #define	STT_HIPROC		15
 
-#define	ELF32_ST_BIND(info)		((info) >> 4)
-#define	ELF32_ST_TYPE(info)		((info) & 0xf)
-#define	ELF32_ST_INFO(bind,type)	(((bind) << 4) + ((type) & 0xf))
+#define	ELF32_ST_BIND(info)		((Elf32_Word)(info) >> 4)
+#define	ELF32_ST_TYPE(info)		((Elf32_Word)(info) & 0xf)
+#define	ELF32_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
 
-#define	ELF64_ST_BIND(info)		((info) >> 4)
-#define	ELF64_ST_TYPE(info)		((info) & 0xf)
-#define	ELF64_ST_INFO(bind,type)	(((bind) << 4) + ((type) & 0xf))
+#define	ELF64_ST_BIND(info)		((Elf64_Word)(info) >> 4)
+#define	ELF64_ST_TYPE(info)		((Elf64_Word)(info) & 0xf)
+#define	ELF64_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
 
 /*
  * Special section indexes

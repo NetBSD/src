@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.28 2000/01/22 22:19:16 mycroft Exp $	*/
+/*	$NetBSD: res_init.c,v 1.29 2000/01/22 23:32:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.28 2000/01/22 22:19:16 mycroft Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.29 2000/01/22 23:32:13 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -316,7 +316,8 @@ res_init()
 			memcpy(&sin->sin_addr, &a, sizeof(sin->sin_addr));
 			sin->sin_port = htons(NAMESERVER_PORT);
 			/* backward compat */
-			memcpy(&_res.nsaddr_list[nserv], sin, sin->sin_len);
+			memcpy(&_res.nsaddr_list[nserv], sin,
+			    (size_t)sin->sin_len);
 			nserv++;
 		    }
 #else /* INET6 */
