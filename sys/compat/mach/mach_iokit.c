@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.6 2003/02/16 15:02:05 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.7 2003/02/16 18:33:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.6 2003/02/16 15:02:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.7 2003/02/16 18:33:35 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -285,9 +285,20 @@ mach_io_connect_get_service(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	mach_port_t mn;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
+#ifdef COMPAT_DARWIN
+	if (mr->mr_port->mp_datatype == MACH_MP_DARWIN_FAKEDEV) {
+		mp->mp_datatype = MACH_MP_DARWIN_FAKEDEV;
+		mp->mp_data = mr->mr_port->mp_data;
+	}
+#endif
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
@@ -315,6 +326,25 @@ mach_io_registry_entry_get_property(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	mach_port_t mn;
+#ifdef COMPAT_DARWIN
+	struct darwin_iokit_class *dic;
+#endif
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	
+#ifdef COMPAT_DARWIN
+	if (mr->mr_port->mp_datatype == MACH_MP_DARWIN_FAKEDEV) {
+		dic = mr->mr_port->mp_data;
+		if (dic->dic_handler == NULL)
+			printf("no handler for darwin_iokit_class %s\n",
+			    dic->dic_name);
+		else
+			return (*dic->dic_handler)(args);
+	}
+#endif
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
