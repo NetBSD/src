@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.91 1996/12/05 01:25:40 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.92 1996/12/05 22:16:04 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -182,12 +182,14 @@ isasearch(parent, cf, aux)
 	ia.ia_drq = cf->cf_loc[5];
 	ia.ia_delaybah = sc->sc_delaybah;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
-		config_attach(parent, cf, &ia, isaprint);
 #ifdef __BROKEN_INDIRECT_CONFIG
+	if ((*cf->cf_attach->ca_match)(parent, match, &ia) > 0)
+		config_attach(parent, match, &ia, isaprint);
 	else
 		free(dev, M_DEVBUF);
 #else
+	if (((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
+		config_attach(parent, cf, &ia, isaprint);
 	return (0);
 #endif
 }
