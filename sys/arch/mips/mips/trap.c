@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.133 2000/05/30 01:23:53 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2000/05/30 01:23:53 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -668,16 +668,19 @@ trap(status, cause, vaddr, opc, frame)
 			break; /* SIGNAL */
 		}
 #ifndef SOFTFLOAT
-		switchfpregs(fpcurproc, p);
+		{
+		struct frame *f;
+
+		f = (struct frame *)p->p_md.md_regs;
+		savefpregs(fpcurproc);  		/* yield FPA */
+		loadfpregs(p);          		/* load FPA */
+		p->p_md.md_flags |= MDP_FPUSED;
+		f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
+		}
+#else
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
 #endif
 		fpcurproc = p;
-#ifdef SOFTFLOAT
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
-#else
-		((struct frame *)p->p_md.md_regs)->f_regs[SR]
-			|= MIPS_SR_COP_1_BIT;
-#endif
-		p->p_md.md_flags |= MDP_FPUSED;
 		userret(p, opc, sticks);
 		return; /* GEN */
 	case T_FPE+T_USER:

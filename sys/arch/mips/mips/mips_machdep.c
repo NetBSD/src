@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.82 2000/05/29 09:47:19 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.83 2000/05/30 01:23:55 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.82 2000/05/29 09:47:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.83 2000/05/30 01:23:55 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1167,4 +1167,162 @@ mips_init_msgbuf()
 	if (sz != reqsz)
 		printf("WARNING: %ld bytes not available for msgbuf "
 		    "in last cluster (%ld used)\n", reqsz, sz);
+}
+
+void
+savefpregs(p)
+	struct proc *p;
+{
+#ifndef NOFPU
+	u_int32_t status, fpcsr, *fp;
+	struct frame *f;
+
+	if (p == NULL)
+		return;
+	/*
+	 * turnoff interrupts enabling CP1 to read FPCSR register.
+	 */
+	__asm __volatile (
+		".set noreorder		;"
+		".set noat		;"
+		"mfc0	%0, $12		;"
+		"li	$1, %2		;"
+		"mtc0	$1, $12		;"
+		"nop; nop; nop; nop	;"
+		"cfc1	%1, $31		;"
+		"cfc1	%1, $31		;"
+		".set reorder		;"
+		".set at" 
+		: "=r" (status), "=r"(fpcsr) : "i"(MIPS_SR_COP_1_BIT));
+	/*
+	 * this process yielded FPA.
+	 */
+	f = (struct frame *)p->p_md.md_regs;
+	f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+
+	/*
+	 * save FPCSR and 32bit FP register values.
+	 */
+	fp = (int *)p->p_addr->u_pcb.pcb_fpregs.r_regs;
+	fp[32] = fpcsr;
+	__asm __volatile (
+		".set noreorder		;"
+		"swc1	$f0, 0(%0)	;"
+		"swc1	$f1, 4(%0)	;"
+		"swc1	$f2, 8(%0)	;"
+		"swc1	$f3, 12(%0)	;"
+		"swc1	$f4, 16(%0)	;"
+		"swc1	$f5, 20(%0)	;"
+		"swc1	$f6, 24(%0)	;"
+		"swc1	$f7, 28(%0)	;"
+		"swc1	$f8, 32(%0)	;"
+		"swc1	$f9, 36(%0)	;"
+		"swc1	$f10, 40(%0)	;"
+		"swc1	$f11, 44(%0)	;"
+		"swc1	$f12, 48(%0)	;"
+		"swc1	$f13, 52(%0)	;"
+		"swc1	$f14, 56(%0)	;"
+		"swc1	$f15, 60(%0)	;"
+		"swc1	$f16, 64(%0)	;"
+		"swc1	$f17, 68(%0)	;"
+		"swc1	$f18, 72(%0)	;"
+		"swc1	$f19, 76(%0)	;"
+		"swc1	$f20, 80(%0)	;"
+		"swc1	$f21, 84(%0)	;"
+		"swc1	$f22, 88(%0)	;"
+		"swc1	$f23, 92(%0)	;"
+		"swc1	$f24, 96(%0)	;"
+		"swc1	$f25, 100(%0)	;"
+		"swc1	$f26, 104(%0)	;"
+		"swc1	$f27, 108(%0)	;"
+		"swc1	$f28, 112(%0)	;"
+		"swc1	$f29, 116(%0)	;"
+		"swc1	$f30, 120(%0)	;"
+		"swc1	$f31, 124(%0)	;"
+		".set reorder" :: "r"(fp));
+	/*
+	 * stop CP1, enable interrupts.
+	 */
+	__asm __volatile ("mtc0 %0, $12" :: "r"(status));
+	return;
+#endif
+}
+
+void
+loadfpregs(p)
+	struct proc *p;
+{
+#ifndef NOFPU
+	u_int32_t status, *fp;
+	struct frame *f;
+
+	if (p == NULL)
+		panic("loading fpregs for NULL proc");
+
+	/*
+	 * turnoff interrupts enabling CP1 to load FP registers.
+	 */
+	__asm __volatile(
+		".set noreorder		;"
+		".set noat		;"
+		"mfc0	%0, $12		;"
+		"li	$1, %1		;"
+		"mtc0	$1, $12		;"
+		"nop; nop; nop; nop	;"
+		".set reorder		;"
+		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
+
+	f = (struct frame *)p->p_md.md_regs;
+	fp = (int *)p->p_addr->u_pcb.pcb_fpregs.r_regs;
+	/*
+	 * load 32bit FP registers and establish processes' FP context.
+	 */
+	__asm __volatile(
+		".set noreorder		;"
+		"lwc1	$f0, 0(%0)	;"
+		"lwc1	$f1, 4(%0)	;"
+		"lwc1	$f2, 8(%0)	;"
+		"lwc1	$f3, 12(%0)	;"
+		"lwc1	$f4, 16(%0)	;"
+		"lwc1	$f5, 20(%0)	;"
+		"lwc1	$f6, 24(%0)	;"
+		"lwc1	$f7, 28(%0)	;"
+		"lwc1	$f8, 32(%0)	;"
+		"lwc1	$f9, 36(%0)	;"
+		"lwc1	$f10, 40(%0)	;"
+		"lwc1	$f11, 44(%0)	;"
+		"lwc1	$f12, 48(%0)	;"
+		"lwc1	$f13, 52(%0)	;"
+		"lwc1	$f14, 56(%0)	;"
+		"lwc1	$f15, 60(%0)	;"
+		"lwc1	$f16, 64(%0)	;"
+		"lwc1	$f17, 68(%0)	;"
+		"lwc1	$f18, 72(%0)	;"
+		"lwc1	$f19, 76(%0)	;"
+		"lwc1	$f20, 80(%0)	;"
+		"lwc1	$f21, 84(%0)	;"
+		"lwc1	$f22, 88(%0)	;"
+		"lwc1	$f23, 92(%0)	;"
+		"lwc1	$f24, 96(%0)	;"
+		"lwc1	$f25, 100(%0)	;"
+		"lwc1	$f26, 104(%0)	;"
+		"lwc1	$f27, 108(%0)	;"
+		"lwc1	$f28, 112(%0)	;"
+		"lwc1	$f29, 116(%0)	;"
+		"lwc1	$f30, 120(%0)	;"
+		"lwc1	$f31, 124(%0)	;"
+		".set reorder" : "=r"(fp));
+	/*
+	 * load FPCSR and stop CP1 again while enabling interrupts.
+	 */
+	__asm __volatile(
+		".set noreorder		;"
+		".set noat		;"
+		"ctc1	%0, $31		;"
+		"mtc0	%1, $12		;"
+		".set reorder		;"
+		".set at"
+		:: "r"(fp[32] &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
+	return;
+#endif
 }
