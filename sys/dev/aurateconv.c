@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.10 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.11 2005/03/12 03:42:03 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.10 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.11 2005/03/12 03:42:03 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -348,8 +348,8 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 	src = this->base.src; \
 	w = dst->inp; \
 	r = src->outp; \
-	DPRINTF(("%s: ENTER w=%p r=%p used_dst=%d used_src=%d\n", \
-		__func__, w, r, used_dst, used_src)); \
+	DPRINTF(("%s: ENTER w=%p r=%p dst->used=%d src->used=%d\n", \
+		__func__, w, r, dst->used, src->used)); \
 	from = &this->from; \
 	to = &this->to; \
 	if (this->from.sample_rate == this->to.sample_rate) { \
@@ -386,8 +386,8 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 			this->count += from->sample_rate; \
 		} \
 	} \
-	DPRINTF(("%s: LEAVE w=%p r=%p used_dst=%d used_src=%d\n", \
-		__func__, w, r, used_dst, used_src)); \
+	DPRINTF(("%s: LEAVE w=%p r=%p dst->used=%d src->used=%d\n", \
+		__func__, w, r, dst->used, src->used)); \
 	dst->inp = w; \
 	src->outp = r; \
 	return 0; \
