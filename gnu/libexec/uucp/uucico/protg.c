@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char protg_rcsid[] = "$Id: protg.c,v 1.3 1995/08/24 05:22:53 jtc Exp $";
+const char protg_rcsid[] = "$Id: protg.c,v 1.4 1998/04/17 23:39:29 ross Exp $";
 #endif
 
 #include <ctype.h>
@@ -1009,7 +1009,7 @@ fgsenddata (qdaemon, zdata, cdata, ilocal, iremote, ipos)
 
   DEBUG_MESSAGE2 (DEBUG_PROTO,
 		  "fgsenddata: Sending packet %d (%d bytes)",
-		  CONTROL_XXX (z[IFRAME_CONTROL]), cdata);
+		  CONTROL_XXX (z[IFRAME_CONTROL]), (int)cdata);
 
   return fsend_data (qdaemon->qconn, z, CFRAMELEN + csize, TRUE);
 }
