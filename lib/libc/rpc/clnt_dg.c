@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.12 2003/09/09 03:56:39 itojun Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.13 2003/10/22 15:38:31 drochner Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.12 2003/09/09 03:56:39 itojun Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.13 2003/10/22 15:38:31 drochner Exp $");
 #endif
 #endif
 
@@ -325,7 +325,6 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	sigset_t mask;
 #endif
 	sigset_t newmask;
-	socklen_t fromlen, inlen;
 	ssize_t recvlen = 0;
 
 	_DIAGASSERT(cl != NULL);
@@ -495,10 +494,8 @@ send_again:
 				 */
 				errno = 0;
 			}
-			fromlen = sizeof (struct sockaddr_storage);
 			recvlen = recvfrom(cu->cu_fd, cu->cu_inbuf,
-			    cu->cu_recvsz, 0, (struct sockaddr *)(void *)&cu->cu_raddr,
-			    &fromlen);
+			    cu->cu_recvsz, 0, NULL, NULL);
 		} while (recvlen < 0 && errno == EINTR);
 		if (recvlen < 0) {
 			if (errno == EWOULDBLOCK)
@@ -516,13 +513,12 @@ send_again:
 		/* we now assume we have the proper reply */
 		break;
 	}
-	inlen = (socklen_t)recvlen;
 
 	/*
 	 * now decode and validate the response
 	 */
 
-	xdrmem_create(&reply_xdrs, cu->cu_inbuf, (u_int)inlen, XDR_DECODE);
+	xdrmem_create(&reply_xdrs, cu->cu_inbuf, (u_int)recvlen, XDR_DECODE);
 	ok = xdr_replymsg(&reply_xdrs, &reply_msg);
 	/* XDR_DESTROY(&reply_xdrs);	save a few cycles on noop destroy */
 	if (ok) {
