@@ -1,7 +1,7 @@
-/* $NetBSD: ibm561reg.h,v 1.1 2001/12/12 07:46:48 elric Exp $ */
+/* $NetBSD: ibm561reg.h,v 1.2 2001/12/22 01:38:20 elric Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
