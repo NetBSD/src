@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.3 2003/05/15 08:50:53 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.4 2003/08/05 13:41:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  * The job of this code is to read in the phase 1 bootstrap.
  *
  * Makefile supplies:
- * PRIMARY_LOAD_ADDRESS:	Address we load code toi (0x600).
+ * PRIMARY_LOAD_ADDRESS:	Address we load code to (0x600).
  * BOOTXX_SECTORS:		Number of sectors we load (15).
  * X86_BOOT_MAGIC_1:		A random magic number.
  *
@@ -107,7 +107,7 @@ ENTRY(start)
 	 * The PC BIOS architecture defines a 'Boot Parameter Block' here.
 	 * The actual format varies between different dos versions, but
 	 * apparantly some system BIOS insist on patching this area
-	 * (especially on LS120 drives).
+	 * (especially on LS120 drives - which I thought had an mbr...).
 	 * The initial jmp and nop are part of the standard and may be
 	 * tested for by the system BIOS.
 	 */
@@ -117,15 +117,14 @@ ENTRY(start)
 
 	. = start + 0x25		/* rest all zeros for now */
 start0:
-	mov	%cs, %ax		/* don't trust values of ds, es or ss */
+	xor	%ax, %ax		/* don't trust values of ds, es or ss */
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %ss
 	mov	$0xfffc, %sp
 
 	/* A 'reset disk system' request is traditional here... */
-	xor	%ax, %ax		/* in particular ah = 0 */
-	int	$0x13
+	int	$0x13			/* ah == 0 from code above */
 
 	/* Read from start of disk */
 	movw	$0x0001, %cx		/* track zero sector 1 */
@@ -225,9 +224,6 @@ no_netbsd_ptn:
  * Actually we check that the CHS values reference the LBA sector,
  * if not we assume that the LBA sector is above the limit, or that
  * the geometry used (by fdisk) isn't correct.
- *
- * There isn't much point checking if LBA support is present!  We
- * only try to use it if it is necessary.
  */
 boot:
 	movl	%ebp, lba_sector	/* to control block */
@@ -291,9 +287,15 @@ chs_read:
 
 check_lba:
 #ifndef NO_LBA_CHECK
-/* Determine whether we have int13-extensions, by calling
+/*
+ * Determine whether we have int13-extensions, by calling
  * int 13, function 41. Check for the magic number returned,
  * and the disk packet capability.
+ *
+ * This is actually relatively pointless:
+ * 1) we only us LBA reads if CHS ones would fail
+ * 2) the mbr code managed to read the same sectors
+ * 3) the bios will (ok should) reject the LBA read as a bad bios call
  */
 	movw	$0x55aa, %bx
 	movb	$0x41, %ah
@@ -320,7 +322,7 @@ pbr_read_ok:
 	jnz	error
 
 	movl	%ebp, %esi			/* %esi ptn base, %dl disk id */
-	jmp	bootxx + BOOTADDR - OURADDR
+	jmpl	$0, $bootxx			/* our %cs may not be zero */
 
 /* Read disk using int13-extension parameter block */
 read_lba:
@@ -332,16 +334,6 @@ read_lba:
 
 	jc	read_err
 	ret
-
-/* Control block for int-13 LBA read. */
-_lba_info:
-	.word	0x10				/* control block length */
-	.word	BOOTXX_SECTORS			/* sector count */
-	.word	BOOTADDR			/* offset in segment */
-	.word	0				/* segment */
-_lba_sector:
-	.long	0x0000				/* sector # goes here... */
-	.long	0x0000
 
 _errtxt: .ascii	"Error "			/* runs into newline... */
 _errcod: .byte	0				/* ... if errcod set */
@@ -358,7 +350,7 @@ ERR_NO_LBA:	.asciz	"Invalid CHS read"
 #endif
 
 /*
- * I hate #including source files, but the stuff below has to be at
+ * I hate #including source files, but pbr_magic below has to be at
  * the correct absolute address.
  * Clearly this could be done with a linker script.
  */
@@ -368,5 +360,23 @@ ERR_NO_LBA:	.asciz	"Invalid CHS read"
 #include <dump_eax.S>
 #endif
 
+/* Control block for int-13 LBA read. */
+_lba_info:
+	.word	0x10				/* control block length */
+	.word	BOOTXX_SECTORS			/* sector count */
+	.word	BOOTADDR			/* offset in segment */
+	.word	0				/* segment */
+_lba_sector:
+	.long	0x0000				/* sector # goes here... */
+	.long	0x0000
+
+/*
+ * Some people like to put this code into the mbr of a disk (this is not
+ * a valid PC disk layout but...).  To do this there must be space here
+ * for a 64byte partition table.  There isn't (quite) that much space
+ * here, but provided the partition 0 entry is left blank it should be ok.
+ */
+
 	. = _C_LABEL(start) + MBR_MAGICOFF
+pbr_magic:
 	.word	MBR_MAGIC
