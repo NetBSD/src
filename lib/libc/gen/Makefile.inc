@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.33 1994/01/27 23:51:33 cgd Exp $
+#	$Id: Makefile.inc,v 1.34 1994/01/27 23:58:34 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -49,13 +49,12 @@ SRCS+=	_setjmp.S fabs.S frexp.c infinity.c isnan.c ldexp.c modf.S
 SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
 .endif
 
-# missing: daemon.0 getbsize.0
-
-MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 directory.0 err.0 \
-	exec.0 fnmatch.0 frexp.0 fts.0 getcap.0 getcwd.0 getdiskbyname.0 \
-	getfsent.0 getgrent.0 getloadavg.0 getmntinfo.0 getpass.0 \
-	getpwent.0 getsubopt.0 \
-	getttyent.0 getusershell.0 glob.0 initgroups.0 isalnum.0 \
+MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 \
+	daemon.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 fts.0 \
+	getbsize.0 getcap.0 getcwd.0 getdiskbyname.0 getfsent.0 \
+	getgrent.0 getloadavg.0 getmntinfo.0 getpass.0 getpwent.0 \
+	getsubopt.0 getttyent.0 getusershell.0 glob.0 \
+	initgroups.0 isalnum.0 \
 	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
 	ldexp.0 lsearch.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
