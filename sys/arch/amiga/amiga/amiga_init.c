@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.10 1994/03/08 10:48:47 chopps Exp $
+ *	$Id: amiga_init.c,v 1.11 1994/03/20 10:02:28 chopps Exp $
  */
 
 
@@ -141,13 +141,15 @@ u_long orig_fastram_start, orig_fastram_size, orig_chipram_size;
 u_int cache_copyback = PG_CC;		/* patchable to disable copyback cache */
 
 void
-start_c(id, fastram_start, fastram_size, chipram_size)
+start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
 	int id;
 	u_int fastram_start, fastram_size, chipram_size;
+	char *esym_addr;
 {
   extern char end[];
   extern void etext();
   extern u_int protorp[2];
+  extern char *esym;
   u_int pstart, pend, vstart, vend, avail;
   u_int Sysseg_pa, Sysptmap_pa, umap_pa;
   u_int Sysseg1_pa, Sysptmap1_pa, umap1_pa;
@@ -173,11 +175,19 @@ start_c(id, fastram_start, fastram_size, chipram_size)
 
   chipmem_end = (void *)chipram_size;
 
+  esym = esym_addr;
+
   /* the kernel ends at end(), plus the ConfigDev structures we placed 
      there in the loader. Correct for this now. */
-  num_ConfigDev = *(int *)end;
-  ConfigDev = (struct ConfigDev *) ((int)end + 4);
-  end_loaded = (u_int)end + 4 + num_ConfigDev * sizeof(struct ConfigDev);
+  if (esym == NULL) {
+    num_ConfigDev = *(int *)end;
+    ConfigDev = (struct ConfigDev *) ((int)end + 4);
+    end_loaded = (u_int)end + 4 + num_ConfigDev * sizeof(struct ConfigDev);
+  } else {
+    num_ConfigDev = *(int *)esym;
+    ConfigDev = (struct ConfigDev *) ((int)esym + 4);
+    end_loaded = (u_int)esym + 4 + num_ConfigDev * sizeof(struct ConfigDev);
+  }
 
   mem_list = (struct Mem_List *) end_loaded;
   end_loaded = (u_int)&mem_list->mem_seg[mem_list->num_mem];
@@ -759,7 +769,7 @@ kernel_reload_write(uio)
 			     + kernel_exec.a_bss + kernel_image_magic_size()),
 			    kernel_exec.a_entry,
 			    orig_fastram_start, orig_fastram_size,
-			    orig_chipram_size);
+			    orig_chipram_size, NULL);
 	    }
 	}
     }
