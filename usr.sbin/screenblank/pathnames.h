@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 1999/06/06 03:35:36 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 2002/01/23 16:57:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@
 #define _PATH_FB		"/dev/fb"
 #endif
 
-#define	_PATH_WSKBD		"/dev/wskbd0"
-#define	_PATH_WSMOUSE		"/dev/wsmouse0"
+#define	_PATH_WSKBD		"/dev/wskbd"
+#define	_PATH_WSMOUSE		"/dev/wsmouse"
 #define	_PATH_WSDISPLAY		"/dev/ttyE0"
