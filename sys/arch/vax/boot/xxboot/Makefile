@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/11/05 14:35:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 2003/02/04 13:21:49 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -18,6 +18,8 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 	-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_CLOSE \
 	-DLIBSA_NO_FS_WRITE -DLIBSA_NO_FS_SEEK \
 	-DNEED_UFS -DNEED_CD9660
+# Use small daddr_t to avoid code bloat
+CPPFLAGS+=-D__daddr_t=int32_t
 BINDIR=	/usr/mdec
 NOMAN=	# defined
 
