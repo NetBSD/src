@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.17 2000/06/05 12:01:47 kleink Exp $
+.\"	$NetBSD: ctime.3,v 1.17.2.1 2000/07/06 16:33:33 kleink Exp $
 .TH CTIME 3
 .SH NAME
 asctime, asctime_r, ctime, ctime_r, difftime, gmtime, gmtime_r, localtime, localtime_r, mktime \- convert date and time to ASCII
@@ -83,7 +83,11 @@ and
 .I localtime\^
 differing in that the caller must supply a buffer area
 .IR result
-in which the result is stored.
+in which the result is stored; also,
+.I localtime_r\^
+does not imply initialization of the local time conversion information;
+the application may need to do so by calling
+.IR tzset .
 .PP
 .I Asctime\^
 converts a time value contained in a
