@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.2 1998/07/13 10:49:41 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.3 1998/07/25 15:22:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -350,11 +350,16 @@ struct usb_ctl_report {
 	u_char	data[1024];	/* filled data size will vary */
 };
 
+struct usb_device_stats {
+	u_long	requests[4];	/* indexed by transfer type UE_* */
+};
+
 /* USB controller */
 #define USB_REQUEST		_IOWR('U', 1, struct usb_ctl_request)
 #define USB_SETDEBUG		_IOW ('U', 2, int)
 #define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
+#define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
 
 /* Generic HID device */
 #define USB_GET_REPORT_DESC	_IOR ('U', 21, struct usb_ctl_report_desc)

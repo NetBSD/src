@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.4 1998/07/24 21:02:51 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.5 1998/07/25 15:22:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -839,6 +839,10 @@ usbd_transfer_cb(reqh)
 	usbd_pipe_handle pipe = reqh->pipe;
 	usbd_request_handle nreqh;
 	usbd_status r;
+
+	/* Count completed transfers. */
+	++pipe->device->bus->stats.requests
+		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
 	/* XXX check retry count */
 	reqh->done = 1;
