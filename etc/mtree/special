@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.30.4.2 2000/08/23 11:36:38 lukem Exp $
+#	$NetBSD: special,v 1.30.4.3 2001/04/27 11:13:38 he Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -27,7 +27,6 @@ csh.login	type=file mode=0644 uname=root gname=wheel
 csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.conf	type=file mode=0644 uname=root gname=wheel
-dhclient-script	type=file mode=0555 uname=root gname=wheel
 disklabels	type=dir mode=0755 uname=root gname=wheel ignore
 ..	#etc/disklabels
 dm.conf		type=file mode=0644 uname=root gname=wheel
