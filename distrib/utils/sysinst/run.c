@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.25 2000/01/07 02:02:05 jeremy Exp $	*/
+/*	$NetBSD: run.c,v 1.26 2000/01/13 18:52:21 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -456,20 +456,19 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 	if (display) {
 		wclear(stdscr); /* XXX shouldn't be needed */
 		wrefresh(stdscr);
-		statuswin = subwin(stdscr, win.ws_row, win.ws_col, 0, 0);
+		statuswin = subwin(stdscr, 3, win.ws_col, 0, 0);
 		if (statuswin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
 			    " status window.\n");
 			exit(1);
 		}
-		boxwin = subwin(statuswin, win.ws_row - 3, win.ws_col, 3, 0);
+		boxwin = subwin(stdscr, win.ws_row - 3, win.ws_col, 3, 0);
 		if (boxwin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
 			    " status box.\n");
 			exit(1);
 		}
-		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 2,
-		   4, 1);
+		actionwin = subwin(stdscr, win.ws_row - 4, win.ws_col, 4, 0);
 		if (actionwin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
 			    " output window.\n");
@@ -477,14 +476,19 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 		}
 		scrollok(actionwin, TRUE);
 
-		win.ws_col -= 2;
-		win.ws_row -= 5;
+		win.ws_row -= 4;
 
 		wclear(statuswin);
 		wrefresh(statuswin);
 
 		wclear(boxwin);
-		box(boxwin, 124, 45);
+		wmove(boxwin, 0, 0);
+		{
+			int n, m;
+			for (n = win.ws_col; (m = min(n, 30)) > 0; n -= m)
+				waddstr(boxwin,
+				    "------------------------------" + 30 - m);
+		}
 		wrefresh(boxwin);
 
 		wclear(actionwin);
