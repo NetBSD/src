@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/09 04:18:24 lukem Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -16,12 +16,17 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c xf86fbBus.c \
 	xf86xv.c xf86xvmc.c xf86cmap.c xf86PM.c xf86Debug.c xf86KbdBSD.c \
 	xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
 
+# Rebuild xf86Build.h on every make
+#
 CLEANFILES+=	xf86Build.h
 xf86Build.h: .PHONY
 	${_MKTARGET_CREATE}
 	echo "#define BUILD_DATE `date +%Y%m%d`" > ${.TARGET}
 
-xf86Init.o: xf86Build.h
+# We don't use  DPSRCS+=xf86Build.h  because we don't want the entire
+# library to be rebuilt each time
+#
+xf86Init.c xf86Init.o: xf86Build.h
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
