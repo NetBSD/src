@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 1999/06/19 00:53:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1999/07/14 21:10:13 thorpej Exp $
 
 PROG=	mmap
 MKMAN=	no
+
+CLEANFILES+= mapped_file
 
 # This is hopefully just some file not mmap'd very often.
 SOME_FILE=/usr/share/misc/zipcodes

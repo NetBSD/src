@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.2 1999/07/07 22:00:31 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.3 1999/07/14 21:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,9 @@ int	check_residency __P((void *, int));
 int	pgsize;
 int	verbose;
 
+#define	MAPPED_FILE	"mapped_file"
+#define	TEST_PATTERN	0xa5
+
 int
 main(argc, argv)
 	int argc;
@@ -67,8 +70,9 @@ main(argc, argv)
 {
 	struct stat st;
 	void *addr, *addr2;
-	int ch, ecode, fd, npgs;
+	int i, ch, ecode, fd, npgs;
 	const char *filename;
+	u_int8_t *cp;
 
 	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
@@ -221,6 +225,69 @@ main(argc, argv)
 	if (check_residency(addr2, npgs) != 0) {
 		printf("    RESIDENCY CHECK FAILED!\n");
 		ecode = 1;
+	}
+
+	printf(">>> UNMAPPING ANONYMOUS REGIONS <<<\n");
+
+	(void) munmap(addr, npgs * pgsize);
+	(void) munmap(addr2, npgs * pgsize);
+
+	printf(">>> CREATING MAPPED FILE <<<\n");
+
+	(void) unlink(MAPPED_FILE);
+
+	if ((fd = open(MAPPED_FILE, O_RDWR|O_CREAT|O_TRUNC, 0666)) == -1)
+		err(1, "open %s", MAPPED_FILE);
+
+	if ((cp = malloc(npgs * pgsize)) == NULL)
+		err(1, "malloc %d bytes", npgs * pgsize);
+
+	memset(cp, 0x01, npgs * pgsize);
+
+	if (write(fd, cp, npgs * pgsize) != npgs * pgsize)
+		err(1, "write %s", MAPPED_FILE);
+
+	addr = mmap(NULL, npgs * pgsize, PROT_READ|PROT_WRITE,
+	    MAP_FILE|MAP_SHARED, fd, (off_t) 0);
+	if (addr == MAP_FAILED)
+		err(1, "mmap %s", MAPPED_FILE);
+
+	(void) close(fd);
+
+	printf("    WRITING TEST PATTERN\n");
+
+	for (i = 0; i < npgs * pgsize; i++)
+		((u_int8_t *)addr)[i] = TEST_PATTERN;
+
+	printf("    SYNCING FILE\n");
+
+	if (msync(addr, npgs * pgsize, MS_SYNC|MS_INVALIDATE) == -1)
+		err(1, "msync %s", MAPPED_FILE);
+
+	printf("    UNMAPPING FILE\n");
+
+	(void) munmap(addr, npgs * pgsize);
+
+	printf("    READING FILE\n");
+
+	if ((fd = open(MAPPED_FILE, O_RDONLY, 0666)) == -1)
+		err(1, "open %s", MAPPED_FILE);
+
+	if (read(fd, cp, npgs * pgsize) != npgs * pgsize)
+		err(1, "read %s", MAPPED_FILE);
+
+	(void) close(fd);
+
+	printf("    CHECKING TEST PATTERN\n");
+
+	for (i = 0; i < npgs * pgsize; i++) {
+		if (cp[i] != TEST_PATTERN) {
+			printf("    INCORRECT BYTE AT OFFSET %d: "
+			    "0x%02x should be 0x%02x\n", i, cp[i],
+			    TEST_PATTERN);
+			ecode = 1;
+			break;
+		}
 	}
 
 	exit(ecode);
