@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.107 2000/07/19 18:38:41 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.108 2000/07/19 18:56:36 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -473,7 +473,7 @@ LEAF(savectx)
 	move	v0, zero
 END(savectx)
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 /*
  * setjmp(label_t *)
  * longjmp(label_t *)
@@ -1222,7 +1222,7 @@ END(MachFPInterrupt)
 
 #ifndef DDB_TRACE
 
-#if defined(DEBUG) || defined(DDB)
+#if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
 /*
  * Stacktrace support hooks which use type punnign to access
  * the caller's registers.
@@ -1233,12 +1233,12 @@ END(MachFPInterrupt)
  * stacktrace() -- print a stack backtrace to the console.
  *	implicitly accesses caller's a0-a3.
  */
-NESTED(stacktrace, CALLFRAME_SIZ+20, ra)
-
-	subu	sp, sp, CALLFRAME_SIZ+20	# four arg-passing slots
+NESTED(stacktrace, CALLFRAME_SIZ+24, ra)
+XNESTED(logstacktrace)
+	subu	sp, sp, CALLFRAME_SIZ+24	# four arg-passing slots
 
 	move	t0, ra				# save caller's PC
-	addu	t1, sp, CALLFRAME_SIZ+20	# compute caller's SP
+	addu	t1, sp, CALLFRAME_SIZ+24	# compute caller's SP
 	move	t2, s8				# non-virtual frame pointer
 
 	la	v0, _C_LABEL(printf)
@@ -1254,42 +1254,10 @@ NESTED(stacktrace, CALLFRAME_SIZ+20, ra)
 	sw	v0, 32(sp)			# push printf
 
 	lw	ra, 36(sp)
-	addu	sp, sp, CALLFRAME_SIZ+20
+	addu	sp, sp, CALLFRAME_SIZ+24
 	j	ra
 	nop
 END(stacktrace)
-
-
-/*
- * logstacktrace() -- log a stack traceback to msgbuf.
- *	implicitly accesses caller's a0-a3.
- */
-NESTED(logstacktrace, CALLFRAME_SIZ+20, ra)
-
-	subu	sp, sp, CALLFRAME_SIZ+20	# four arg-passing slots
-
-	move	t0, ra				# save caller's PC
-	addu	t1, sp, CALLFRAME_SIZ+20	# compute caller's SP
-	move	t2, s8				# non-virtual frame pointer
-
-	la	v0, _C_LABEL(printf)
-
-	sw	ra, 36(sp)			# save return address
-
-	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
-	sw	t0, 16(sp)			# push caller's PC
-	sw	t1, 20(sp)			# push caller's SP
-	sw	t2, 24(sp)			# push caller's FP, in case
-	sw	zero, 28(sp)			# RA on stack
-	jal	_C_LABEL(stacktrace_subr)
-	sw	v0, 32(sp)			# push printf
-
-	lw	ra, 36(sp)
-	addu	sp, sp, CALLFRAME_SIZ+20
-	j	ra
-	nop
-END(logstacktrace)
-
 #endif	/* DEBUG || DDB */
 #endif	/* DDB_TRACE */
 
