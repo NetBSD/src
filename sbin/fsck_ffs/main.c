@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2005/01/13 19:56:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.53 2005/01/13 15:22:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2005/01/13 19:56:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,12 +183,12 @@ main(argc, argv)
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
-#ifndef SMALL
+#ifdef PROGRESS
 	if (progress) {
 		progress_ttywidth(0);
 		(void)signal(SIGWINCH, progress_ttywidth);
 	}
-#endif /* ! SMALL */
+#endif /* ! PROGRESS */
 	signal(SIGINFO, infohandler);
 
 	while (argc-- > 0) {
@@ -240,9 +240,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 #ifdef LITE2BORKEN
 	int flags;
 #endif
-#ifndef SMALL
+#ifdef PROGRESS
 	off_t progress_total = 0;
-#endif
+#endif /* PROGRESS */
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
@@ -263,7 +263,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 */
 	resolved = 1;
 
-#ifndef SMALL
+#ifdef PROGRESS
 	/*
 	 * Pass 1, Pass 4, and Pass 5 all iterate over cylinder
 	 * groups.  Account for those now.  We'll never need to
@@ -276,7 +276,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 */
 	if (preen)
 		progress_total += sblock->fs_ncg * 3;
-#endif /* ! SMALL */
+#endif /* PROGRESS */
 
 	/*
 	 * 1: scan inodes tallying blocks used
@@ -289,13 +289,13 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	}
 	pass1();
 
-#ifndef SMALL
+#ifdef PROGRESS
 	/* Account for number of directory inodes (used twice). */
 	if (preen)
 		progress_total += inplast * 2;
 	progress_switch(progress);
 	progress_init(progress_total);
-#endif /* ! SMALL */
+#endif /* PROGRESS */
 
 
 	/*
