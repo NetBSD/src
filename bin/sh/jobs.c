@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.55 2002/11/24 22:35:40 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.56 2002/11/25 12:13:03 agc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.55 2002/11/24 22:35:40 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.56 2002/11/25 12:13:03 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,7 @@ bgcmd(int argc, char **argv)
 		if (jp->jobctl == 0)
 			error("job not created under job control");
 		set_curjob(jp, 1);
-		out1fmt("[%d] %s", jp - jobtab + 1, jp->ps[0].cmd);
+		out1fmt("[%ld] %s", (long)(jp - jobtab + 1), jp->ps[0].cmd);
 		for (i = 1; i < jp->nprocs; i++)
 			out1fmt(" | %s", jp->ps[i].cmd );
 		out1c('\n');
@@ -417,8 +417,8 @@ showjob(struct output *out, struct job *jp, int mode)
 
 	for (ps = jp->ps; --procno >= 0; ps++) {	/* for each process */
 		if (ps == jp->ps)
-			fmtstr(s, 16, "[%d] %c ",
-				jp - jobtab + 1,
+			fmtstr(s, 16, "[%ld] %c ",
+				(long)(jp - jobtab + 1),
 #if JOBS
 				jp == jobtab + curjob ? '+' :
 				curjob != -1 && jp == jobtab +
