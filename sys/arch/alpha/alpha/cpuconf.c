@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.11 1998/04/15 00:45:43 mjacob Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.12 1998/04/16 04:04:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -103,7 +103,7 @@ extern void avalon_a12_init __P((void));
 #ifdef	DEC_KN300
 extern void dec_kn300_init __P((void));
 #else
-#define	kn300_init		platform_not_configured
+#define	dec_kn300_init		platform_not_configured
 #endif
 
 struct cpuinit cpuinit[] = {
