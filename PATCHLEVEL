@@ -287,3 +287,6 @@ panic the client.  Fix this.
 [ kernel/i386 ] Fix the 3COM `sniper bug', which could cause packets to
 be accepted that were not sent to the local host, in turn causing bogus
 redirects and/or ICMP unreachables.
+
+[ kernel/i386 ] Fix trap handling problem that allowed a user to panic
+the system.
