@@ -1,4 +1,4 @@
-/*	$NetBSD: except.c,v 1.7 2004/03/25 14:51:28 drochner Exp $	*/
+/*	$NetBSD: except.c,v 1.8 2004/03/25 15:01:22 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -129,14 +129,18 @@ main()
 		assert(ex1 == ex2);
 	}
 
+/* force delayed exceptions to be delivered */
+#define BARRIER() fpsetmask(0); x = one * one
 	/*
 	 * exception unmasked, check SIGFPE delivery and correct siginfo
 	 */
 	for (i = 0; i < sizeof(ops)/sizeof(ops[0]); i++) {
 		fpsetmask(ops[i].mask);
 		r = sigsetjmp(b, 1);
-		if (!r)
+		if (!r) {
 			(*ops[i].op)();
+			BARRIER();
+		}
 		assert(signal_caught == 1);
 		assert(sicode == ops[i].sicode);
 		signal_caught = 0;
