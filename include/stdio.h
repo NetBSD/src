@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.9 1993/12/02 04:45:32 mycroft Exp $
+ *	$Id: stdio.h,v 1.10 1994/01/04 05:14:14 cgd Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -117,8 +117,8 @@ typedef	struct __sFILE {
 	unsigned char _ubuf[3];	/* guarantee an ungetc() buffer */
 	unsigned char _nbuf[1];	/* guarantee a getc() buffer */
 
-	/* separate buffer for fgetline() when line crosses buffer boundary */
-	struct	__sbuf _lb;	/* buffer for fgetline() */
+	/* separate buffer for fgetln() when line crosses buffer boundary */
+	struct	__sbuf _lb;	/* buffer for fgetln() */
 
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */
@@ -143,7 +143,7 @@ __END_DECLS
 #define	__SOPT	0x0400		/* do fseek() optimisation */
 #define	__SNPT	0x0800		/* do not do fseek() optimisation */
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
-#define	__SMOD	0x2000		/* true => fgetline modified _p text */
+#define	__SMOD	0x2000		/* true => fgetln modified _p text */
 
 /*
  * The following three definitions are for ANSI C, which took them
@@ -261,7 +261,7 @@ __END_DECLS
  */
 #if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 __BEGIN_DECLS
-char	*fgetline __P((FILE *, size_t *));
+char	*fgetln __P((FILE *, size_t *));
 int	 fpurge __P((FILE *));
 int	 getw __P((FILE *));
 int	 pclose __P((FILE *));
