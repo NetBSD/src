@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.4 1999/11/01 08:58:45 haya Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.5 2000/01/26 09:02:41 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -63,6 +63,7 @@ static char *cb_chipset_name[CB_CHIPS_LAST] = {
 #endif
 
 struct pccbb_softc;
+struct pccbb_intrhand_list;
 
 #if pccard
 struct cbb_pcmcia_softc {
@@ -170,6 +171,21 @@ struct pccbb_softc {
 
   struct proc *sc_event_thread;
   SIMPLEQ_HEAD(, pcic_event) sc_events;
+
+  /* interrupt handler list on the bridge */
+  struct pccbb_intrhand_list *sc_pil;
+};
+
+
+/*
+ * struct pccbb_intrhand_list holds interrupt handler and argument for
+ * child devices.
+ */
+
+struct pccbb_intrhand_list {
+    int (*pil_func) __P((void *));
+    void *pil_arg;
+    struct pccbb_intrhand_list *pil_next;
 };
 
 #endif /* _DEV_PCI_PCCBBREG_H_ */
