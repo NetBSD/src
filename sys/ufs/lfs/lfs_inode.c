@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.30 2000/01/19 00:03:04 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.31 2000/03/12 01:45:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -243,7 +243,10 @@ lfs_truncate(v)
 	
 	ip = VTOI(vp);
 
-	if (vp->v_type == VLNK && vp->v_mount->mnt_maxsymlinklen > 0) {
+	if (vp->v_type == VLNK &&
+	   (ip->i_ffs_size < vp->v_mount->mnt_maxsymlinklen ||
+	     (vp->v_mount->mnt_maxsymlinklen == 0 &&
+	      ip->i_din.ffs_din.di_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
 			panic("lfs_truncate: partial truncate of symlink");
