@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.4 1997/10/19 12:36:29 lukem Exp $	*/
+/*	$NetBSD: paste.c,v 1.5 1998/02/03 03:56:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.4 1997/10/19 12:36:29 lukem Exp $");
+__RCSID("$NetBSD: paste.c,v 1.5 1998/02/03 03:56:44 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: paste.c,v 1.4 1997/10/19 12:36:29 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int	main __P((int, char **));
 void	parallel __P((char **));
