@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.23 2000/06/29 08:34:11 mrg Exp $	*/
+/*	$NetBSD: asc.c,v 1.1 2000/12/24 09:25:27 ur Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -140,12 +140,13 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <arc/jazz/jazziovar.h>
 #include <arc/jazz/jazzdmatlbreg.h>
-#include <arc/dev/dma.h>
-#include <arc/dev/scsi.h>
-#include <arc/dev/ascreg.h>
+#include <arc/jazz/dma.h>
+#include <arc/jazz/scsi.h>
+#include <arc/jazz/ascreg.h>
 
-#include <arc/pica/pica.h>
+#include <arc/jazz/pica.h>
 #include <arc/arc/arctype.h>
 
 
@@ -497,11 +498,11 @@ ascmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 
-	if(!BUS_MATCHNAME(ca, "asc"))
-		return(0);
-	return(1);
+	if(strcmp(ja->ja_name, "asc") != 0)
+		return (0);
+	return (1);
 }
 
 void
@@ -510,16 +511,16 @@ ascattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register asc_softc_t asc = (void *)self;
-	register asc_regmap_t *regs;
+	struct jazzio_attach_args *ja = aux;
+	asc_softc_t asc = (void *)self;
+	asc_regmap_t *regs;
 	int id, s, i;
 	int bufsiz;
 
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
-	asc->regs = (asc_regmap_t *)BUS_CVTADDR(ca);
+	asc->regs = (asc_regmap_t *)ja->ja_addr;	/* XXX */
 
 	/*
 	 * Set up machine dependencies.
@@ -617,7 +618,7 @@ ascattach(parent, self, aux)
 	/*
 	 * Set up interrupt handler.
          */
-	BUS_INTR_ESTABLISH(ca, asc_intr, (void *)asc);
+	jazzio_intr_establish(ja->ja_intr, asc_intr, (void *)asc);
 
 	printf(": %s, target %d\n", asc->is24bit ? "NCR53CF9X-2" : "NCR53C94",
 	    id);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.4 2000/01/23 21:01:54 soda Exp $	*/
+/*	$NetBSD: scsi.h,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: scsi.h,v 1.2 1997/04/19 17:19:54 pefo Exp $	*/
 
 /*
