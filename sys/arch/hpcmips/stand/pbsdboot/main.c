@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1999/09/26 02:42:50 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1999/09/26 07:35:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -148,6 +148,18 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("INTERTOP CX300"), BIFB_D8_FF,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300 },
+	{ TEXT("Philips Nino 312"), BIFB_D2_M2L_0,
+		240, 320, 0, 0,
+		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_PHILIPS_NINO_312 },
+	{ TEXT("Compaq C-series 810"), BIFB_D2_M2L_0,
+		640, 240, 0, 0,
+		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_810 },
+	{ TEXT("Compaq C-series 2010c"), BIFB_D8_FF,
+		640, 240, 0, 0,
+		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_2010 },
+	{ TEXT("Compaq C-series 2015c"), BIFB_D8_FF,
+		640, 240, 0, 0,
+		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_2015 },
 };
 
 #define ARRAYSIZEOF(a)	(sizeof(a)/sizeof(*(a)))
@@ -383,7 +395,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.6.0 1999.09.26\r\n")
+			       TEXT("Version 1.6.1 1999.09.26\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
