@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.74 92/12/20$
  *
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
- *	$Id: machdep.c,v 1.38 1994/07/05 17:08:16 mycroft Exp $
+ *	$Id: machdep.c,v 1.39 1994/07/16 06:43:00 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -1687,7 +1687,7 @@ cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-#ifdef COMPAT_NOMID
+#if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;
 	u_short mid;
 	int error;
@@ -1700,20 +1700,27 @@ cpu_exec_aout_makecmds(p, epp)
 	midmag = mid << 16 | magic;
 
 	switch (midmag) {
+#ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = cpu_exec_aout_prep_oldzmagic(p, epp);
 		break;
+#endif
+#ifdef COMPAT_44
+	case (MID_HP300 << 16) | ZMAGIC:
+		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		break;
+#endif
 	default:
 		error = ENOEXEC;
 	}
 
 	return error;
-#else /* ! COMPAT_NOMID */
+#else /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 	return ENOEXEC;
 #endif
 }
 
-#ifdef COMPAT_NOMID
+#if defined(COMPAT_NOMID) || defined(COMPAT_44)
 /*
  * cpu_exec_aout_prep_oldzmagic():
  *	Prepare the vmcmds to build a vmspace for an old
