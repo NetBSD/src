@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.77 1997/10/19 07:41:56 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.78 1997/10/29 02:00:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -208,9 +208,7 @@ audioprobe(parent, match, aux)
 
 	DPRINTF(("audioprobe: done=%d sa=%p hw=%p\n", 
 		 sa->audiodone, sa, sa->ahw));
-	if (sa->audiodone)
-		return 0;
-	return sa->ahw != 0;
+	return (sa->type == AUDIODEV_TYPE_AUDIO) ? 1 : 0;
 }
 
 void
@@ -220,15 +218,13 @@ audioattach(parent, self, aux)
 {
 	struct audio_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
-	struct audio_hw_if *hwp = sa->ahw;
+	struct audio_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
 	int iclass, oclass;
 
 	printf("\n");
-
-	sa->audiodone++;
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -396,12 +392,42 @@ audio_attach_mi(ahwp, mhwp, hdlp, dev)
 {
 	struct audio_attach_args arg;
 
-	arg.ahw = ahwp;
-	arg.mhw = mhwp;
-	arg.hdl = hdlp;
-	arg.audiodone = arg.mididone = 0;
-	while(config_found(dev, &arg, 0))
-		;
+	if (ahwp != NULL) {
+		arg.type = AUDIODEV_TYPE_AUDIO;
+		arg.hwif = ahwp;
+		arg.hdl = hdlp;
+		(void)config_found(dev, &arg, audioprint);
+	}
+	if (mhwp != NULL) {
+		arg.type = AUDIODEV_TYPE_MIDI;
+		arg.hwif = mhwp;
+		arg.hdl = hdlp;
+		(void)config_found(dev, &arg, audioprint);
+	}
+}
+
+int
+audioprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct audio_attach_args *arg = aux;
+	const char *type;
+
+	if (pnp != NULL) {
+		switch (arg->type) {
+		case AUDIODEV_TYPE_AUDIO:
+			type = "audio";
+			break;
+		case AUDIODEV_TYPE_MIDI:
+			type = "midi";
+			break;
+		default:
+			panic("audioprint: unknown type %d", arg->type);
+		}
+		printf("%s at %s", type, pnp);
+	}
+	return (UNCONF);
 }
 
 #ifdef AUDIO_DEBUG
