@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 1994/10/20 04:23:12 cgd Exp $
+	$NetBSD: syscalls.master,v 1.24 1994/10/21 00:14:36 mycroft Exp $
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
 ; NetBSD system call name/number "master" file.
@@ -7,12 +7,12 @@
 ; Fields: number type [type-dependent ...]
 ;	number	system call number, must be in order
 ;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
-;		the copatibility options defined in syscalls.conf.
+;		the compatibility options defined in syscalls.conf.
 ;
 ; types:
 ;	STD	always included
 ;	OBSOL	obsolete, not included in system
-;	UNIMP	unimplemented, not included in system
+;	UNIMPL	unimplemented, not included in system
 ;	NODEF	included, but don't define the syscall number
 ;	NOARGS	included, but don't define the syscall args structure
 ;
