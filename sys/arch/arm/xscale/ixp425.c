@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $ */
+/*	$NetBSD: ixp425.c,v 1.2 2003/05/23 09:41:02 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.2 2003/05/23 09:41:02 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,10 @@ ixp425_pmap_chunk_table(vaddr_t l1pt, struct pmap_ent* m)
 
 	loop = 0;
 	while (m[loop].msg) {
+#ifdef DEBUG
 		printf("mapping 0x%lx(0x%05lx) -> 0x%lx %s...\n",
 			m[loop].pa, m[loop].sz, m[loop].va, m[loop].msg);
+#endif
 		pmap_map_chunk(l1pt, m[loop].va, m[loop].pa,
 			       m[loop].sz, m[loop].prot, m[loop].cache);
 		++loop;
