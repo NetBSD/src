@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.5 2000/01/03 18:29:03 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.6 2000/01/06 18:14:25 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -39,6 +39,8 @@
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/txcsbusvar.h>
+#include <hpcmips/tx/tx39biureg.h> /* legacy mode requires BIU access */
+#include <hpcmips/dev/it8368var.h>
 #include <hpcmips/dev/it8368reg.h>
 
 #ifdef IT8368DEBUG
@@ -66,7 +68,6 @@ struct it8368e_softc {
 	bus_space_handle_t	sc_csregh;
 	/* I/O, attribute space */
 	bus_space_tag_t		sc_csiot;
-	bus_space_handle_t	sc_csioh;
 	bus_addr_t		sc_csiobase;
 	bus_size_t		sc_csiosize;
 	/*
@@ -74,7 +75,6 @@ struct it8368e_softc {
 	 *	memory space is 0x64000000. 
 	 */
 	bus_space_tag_t		sc_csmemt;
-	bus_space_handle_t	sc_csmemh;
 	bus_addr_t		sc_csmembase;
 	bus_size_t		sc_csmemsize;
 
@@ -95,7 +95,6 @@ struct it8368e_softc {
 
 void	it8368_init_socket __P((struct it8368e_softc*));
 void	it8368_attach_socket __P((struct it8368e_softc*));
-void	it8368_access __P((struct it8368e_softc*, int, int));
 int	it8368_intr __P((void*));
 
 void	it8368_dump __P((struct it8368e_softc*));
@@ -231,22 +230,19 @@ it8368e_attach(parent, self, aux)
 	reg |= IT8368_CTRL_FIXATTRIO;
 	it8368_reg_write(csregt, csregh, IT8368_CTRL_REG, reg);
 	
-	if (IT8368_CTRL_FIXATTRIO & it8368_reg_read(csregt, csregh, 
-						    IT8368_CTRL_REG)) {
+	if (IT8368_CTRL_FIXATTRIO & 
+	    it8368_reg_read(csregt, csregh, IT8368_CTRL_REG)) {
 		sc->sc_fixattr = 1;
 		printf("%s: fix attr mode\n", sc->sc_dev.dv_xname);
-		sc->sc_csmemt = sc->sc_csiot;
-		sc->sc_csiosize /= 2;
-		sc->sc_csmemsize = sc->sc_csiosize;
-		sc->sc_csmembase = sc->sc_csiosize;
 	} else {
-		printf("%s: legacy attr mode", sc->sc_dev.dv_xname);
 		sc->sc_fixattr = 0;
-		sc->sc_csmemt = sc->sc_csiot;
-		sc->sc_csmemh = sc->sc_csmemh;
-		sc->sc_csmembase = sc->sc_csiobase;
-		sc->sc_csmemsize = sc->sc_csiosize;
+		printf("%s: legacy attr mode\n", sc->sc_dev.dv_xname);
 	}
+	sc->sc_csmemt = sc->sc_csiot;
+	sc->sc_csiosize /= 2;
+	sc->sc_csmemsize = sc->sc_csiosize;
+	sc->sc_csmembase = sc->sc_csiosize;
+
 	it8368_dump(sc);
 
 	/* Enable card and interrupt driving. */
@@ -258,8 +254,6 @@ it8368e_attach(parent, self, aux)
 
 	sc->sc_irq = ca->ca_irq1;
 	sc->sc_card_irq = ca->ca_irq3;
-
-
 
 	it8368_attach_socket(sc);
 }
@@ -466,20 +460,25 @@ it8368_chip_mem_alloc(pch, size, pcmhp)
 	struct pcmcia_mem_handle *pcmhp;
 {
 	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
-	it8368_access(sc, 0, 0);
-	
-	pcmhp->memt = sc->sc_csmemt;
 
-	if (bus_space_map(sc->sc_csmemt, sc->sc_csmembase, size, 0, 
-			  &pcmhp->memh)) {
+
+
+	if (bus_space_alloc(sc->sc_csmemt, sc->sc_csmembase, 
+			    sc->sc_csmembase + sc->sc_csmemsize, size, 
+			    size, 0, 0, 0, &pcmhp->memh)) {
+		DPRINTF(("it8368_chip_mem_alloc: failed\n"));
 		return 1;
 	}
 
+	if (!sc->sc_fixattr) /* XXX IT8368 brain damaged spec */
+		pcmhp->memh -= sc->sc_csmembase;
+
+	pcmhp->memt = sc->sc_csmemt;
 	pcmhp->addr = pcmhp->memh;
 	pcmhp->size = size;
 	pcmhp->realsize = size;
 
-	DPRINTF(("it8368_chip_mem_alloc %#x+%#x\n", pcmhp->memh, size));
+	DPRINTF(("it8368_chip_mem_alloc: %#x+%#x\n", pcmhp->memh, size));
 
 	return 0;
 }
@@ -489,7 +488,15 @@ it8368_chip_mem_free(pch, pcmhp)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_mem_handle *pcmhp;
 {
+	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
+
+	if (!sc->sc_fixattr) /* XXX IT8368 brain damaged spec */
+		pcmhp->memh += sc->sc_csmembase;
+
 	bus_space_unmap(pcmhp->memt, pcmhp->memh, pcmhp->size);
+
+	DPRINTF(("it8368_chip_mem_free: %#x+%#x\n", 
+		 pcmhp->memh, pcmhp->size));
 }
 
 int 
@@ -502,9 +509,8 @@ it8368_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t *offsetp;
 	int *windowp;
 {
-	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
-
-	it8368_access(sc, 0, 0);
+	/* attribute mode */
+	it8368_mode(pch, IT8368_ATTR_MODE, IT8368_WIDTH_16);
 
 	*offsetp = card_addr;
 	DPRINTF(("it8368_chip_mem_map %#x+%#x\n", pcmhp->memh, size));
@@ -517,40 +523,46 @@ it8368_chip_mem_unmap(pch, window)
 	pcmcia_chipset_handle_t pch;
 	int window;
 {
+	/* return to I/O mode */
+	it8368_mode(pch, IT8368_IO_MODE, IT8368_WIDTH_16);
 }
 
 void
-it8368_access(sc, io, width)
-	struct it8368e_softc *sc;
+it8368_mode(pch, io, width)
+	pcmcia_chipset_handle_t pch;
 	int io;
 	int width;
 {
-#if not_required_yet
+	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
 	txreg_t reg32;	
 
+	DPRINTF(("it8368_mode: change access space to "));
+	DPRINTF((io ? "I/O(%d)\n" : "attribute(%d)\n", width));
+
 	reg32 = tx_conf_read(sc->sc_tc, TX39_MEMCONFIG3_REG);
-	if (io && width == 1) {
-		reg32 |= TX39_MEMCONFIG3_PORT8SEL;
-	} else {
-		reg32 &= ~TX39_MEMCONFIG3_PORT8SEL;
+
+	if (io) {
+		if (width == 1)
+			reg32 |= TX39_MEMCONFIG3_PORT8SEL;
+		else
+			reg32 &= ~TX39_MEMCONFIG3_PORT8SEL;
 	}
+
 	if (!sc->sc_fixattr) {
-		if (io) {
+		if (io)
 			reg32 |= TX39_MEMCONFIG3_CARD1IOEN;
-		} else {
+		else
 			reg32 &= ~TX39_MEMCONFIG3_CARD1IOEN;
-		}
 	}
 	tx_conf_write(sc->sc_tc, TX39_MEMCONFIG3_REG, reg32);
 
 	reg32 = tx_conf_read(sc->sc_tc, TX39_MEMCONFIG3_REG);
-	if (!(reg32 & TX39_MEMCONFIG3_CARD1IOEN))
-		printf("CARDIOEN failed\n");
-	if (!(reg32 & TX39_MEMCONFIG3_PORT8SEL))
-		printf("PORT8SEL failed\n");
 	
-	delay(20);
-#endif
+	if (reg32 & TX39_MEMCONFIG3_CARD1IOEN)
+		DPRINTF(("it8368_mode: I/O space(%d) enabled\n",
+			 reg32 & TX39_MEMCONFIG3_PORT8SEL ? 8 : 16));
+	else
+		DPRINTF(("it8368_mode: atttribute space enabled\n"));
 }
 
 int 
@@ -562,8 +574,6 @@ it8368_chip_io_alloc(pch, start, size, align, pcihp)
 	struct pcmcia_io_handle *pcihp;
 {
 	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
-
-	it8368_access(sc, 1, 0);
 
 	if (start) {
 		if (bus_space_map(sc->sc_csiot, start, size, 0, 
@@ -600,9 +610,8 @@ it8368_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	struct pcmcia_io_handle *pcihp;
 	int *windowp;
 {
-	struct it8368e_softc *sc = (struct it8368e_softc*) pch;
-
-	it8368_access(sc, 1, 0);
+	/* I/O mode */
+	it8368_mode(pch, IT8368_IO_MODE, IT8368_WIDTH_16);
 
 	DPRINTF(("it8368_chip_io_map %#x:%#x+%#x\n", pcihp->ioh, offset, 
 		 size));
@@ -615,11 +624,11 @@ it8368_chip_io_free(pch, pcihp)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_io_handle *pcihp;
 {
-	if (pcihp->flags & PCMCIA_IO_ALLOCATED) {
+	if (pcihp->flags & PCMCIA_IO_ALLOCATED)
 		bus_space_free(pcihp->iot, pcihp->ioh, pcihp->size);
-	} else {
+	else
 		bus_space_unmap(pcihp->iot, pcihp->ioh, pcihp->size);
-	}
+
 	DPRINTF(("it8368_chip_io_free %#x+%#x\n", pcihp->ioh, pcihp->size));
 }
 
@@ -683,7 +692,7 @@ it8368_chip_socket_enable(pch)
 	it8368_reg_write(csregt, csregh, IT8368_GPIODATAOUT_REG, reg);
 	delay(20000);
 
-	DPRINTF(("socket enabled\n"));
+	DPRINTF(("it8368_chip_socket_enable: socket enabled\n"));
 }
 
 void
@@ -707,7 +716,7 @@ it8368_chip_socket_disable(pch)
 	 */
 	delay(300 * 1000);
 
-	DPRINTF(("socket disabled\n"));
+	DPRINTF(("it8368_chip_socket_disable: socket disabled\n"));
 }
 
 void
