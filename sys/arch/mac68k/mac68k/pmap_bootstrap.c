@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.32 1997/06/10 19:11:26 veego Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.33 1997/06/19 17:00:02 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -392,7 +392,7 @@ pmap_bootstrap(nextpa, firstpa)
 	if (vidlen) {
 		pte = PA2VA(vidpa, u_int *);
 		epte = pte + VIDMAPSIZE;
-		protopte = mac68k_vidphys | PG_RW | PG_V | PG_CI;
+		protopte = (mac68k_vidphys & ~PGOFSET) | PG_RW | PG_V | PG_CI;
 		while (pte < epte) {
 			*pte++ = protopte;
 			protopte += NBPG;
