@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.19 2003/05/01 15:30:35 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.20 2003/05/01 15:42:51 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1206,13 +1206,13 @@ is the
 operation to perform.
 Valid values are:
 .Pp
-.Bl -tag -offset indent -width F_RDLCK -compact
-.It F_RDLCK
-shared or read lock
+.Bl -tag -offset indent -width F_SETLK -compact
+.It F_SETLK
+set lock
+.It F_GETLK
+get the first conflicted lock
 .It F_UNLCK
-unlock
-.It F_WRLCK
-exclusive or write lock
+clear lock
 .El
 .Pp
 The argument
@@ -1223,7 +1223,7 @@ The argument
 is the set of flags.
 Valid values are:
 .Pp
-.Bl -tag -offset indent -width F_RDLCK -compact
+.Bl -tag -offset indent -width F_WAIT -compact
 .It F_WAIT
 wait until lock is granted
 .It F_FLOCK
