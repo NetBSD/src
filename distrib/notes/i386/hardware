@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.54 1999/08/30 13:12:50 bouyer Exp $	
+.\"	$NetBSD: hardware,v 1.55 1999/09/29 17:26:53 ad Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -54,6 +54,11 @@ Supported devices include:
 		BusLogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
+		DPT SCSI RAID boards (PCI and EISA):
+			SmartCache III
+			SmartCache IV
+			SmartRAID III
+			SmartRAID IV
 		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
 		Seagate/Future Domain ISA SCSI adapter cards, including
 			ST01/02
