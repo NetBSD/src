@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.355 2004/07/24 11:59:42 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.356 2004/07/24 22:18:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6132,4 +6132,13 @@ xfree/xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h	1.2
 
 	Stop XFree86 from losing mouse events on LP64 platforms.
 	[heas, ticket #709]
+
+xfree/xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c 1.3
+
+	Get rid of the "disable emulate3Buttons on first middle button press"
+	wholesale. It does not make sense at all since we multiplex multiple
+	mice into one wsmouse device and this logic would need to distinguish
+	the pre-multiplexed devices.
+	Fixes PR xsrc/26188.
+	[martin, ticket #710]
 
