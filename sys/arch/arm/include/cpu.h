@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2001/02/23 21:23:47 reinoud Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2001/02/25 17:04:54 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -74,8 +74,6 @@
 #endif
 #endif /* CPU_ARM7500 */
 
-#define COPY_SIGCODE    /* copy sigcode above user stack in exec */
- 
 /*
  * ARM Process Status Register
  *
