@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.19 2002/11/11 12:51:07 onoe Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.20 2002/11/11 14:20:01 kanaoka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.22 2002/11/11 12:50:33 onoe Exp 
+ *	NetBSD: cardbusdevs,v 1.23 2002/11/11 14:15:48 kanaoka Exp 
  */
 
 /*
@@ -60,6 +60,7 @@
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
 #define	CARDBUS_VENDOR_ALLIEDTELESYN	0x1259		/* Allied Telesyn International */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* AboCom Systems */
+#define	CARDBUS_VENDOR_PLANEX	0x14ea		/* Planex Communications Inc */
 #define	CARDBUS_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
@@ -119,6 +120,9 @@
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* FE2500 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500MX	0xab08		/* FE2500MX 10/100 Ethernet */
+
+/* Planex products */
+#define	CARDBUS_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 Ethernet */
 
 /* Hawking Technology products */
 #define	CARDBUS_PRODUCT_HAWKING_PN672TX	0xab08		/* PN672TX 10/100 Ethernet */
