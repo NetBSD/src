@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.132 2000/07/04 15:33:32 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.133 2000/07/16 21:07:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2372,7 +2372,7 @@ vfs_shutdown()
 	for (iter = 0; iter < 20; iter++) {
 		nbusy = 0;
 		for (bp = &buf[nbuf]; --bp >= buf; ) {
-			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
 				nbusy++;
 			/*
 			 * With soft updates, some buffers that are
@@ -2404,7 +2404,7 @@ fail:
 #if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
 		printf("giving up\nPrinting vnodes for busy buffers\n");
 		for (bp = &buf[nbuf]; --bp >= buf; )
-			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
 				vprint(NULL, bp->b_vp);
 
 #if defined(DDB) && defined(DEBUG_HALT_BUSY)
