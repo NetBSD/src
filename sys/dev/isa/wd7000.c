@@ -1,4 +1,4 @@
-/*	$NetBSD: wd7000.c,v 1.20 1995/04/17 12:09:35 cgd Exp $	*/
+/*	$NetBSD: wd7000.c,v 1.21 1995/07/24 07:17:52 cgd Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -166,7 +166,7 @@ int wds_debug = 0;
 void p2x(u_char *, u_long);
 u_char *x2p(u_char *);
 int wdsprobe(struct isa_device *);
-void wds_minphys(struct buf *);
+u_int wds_minphys(struct buf *);
 struct wds_req *wdsr_alloc(int);
 int wds_scsi_cmd(struct scsi_xfer *);
 long wds_adapter_info(int);
@@ -236,13 +236,14 @@ wdsprobe(struct isa_device *dev)
 	return 8;
 }
 
-void
+u_int
 wds_minphys(struct buf *bp)
 {
 	int base = (int)bp->b_data & (PAGESIZ-1);
 
-	if(base + bp->b_bcount > PAGESIZ)
+	if (base + bp->b_bcount > PAGESIZ)
 		bp->b_bcount = PAGESIZ - base;
+	return (minphys(bp));
 }
 
 struct wds_req *

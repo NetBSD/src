@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.46 1995/04/17 12:08:19 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.47 1995/07/24 07:16:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -287,7 +287,7 @@ struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
 struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
 int ahb_find __P((struct ahb_softc *));
 void ahb_init __P((struct ahb_softc *));
-void ahbminphys __P((struct buf *));
+u_int ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
 void ahb_timeout __P((void *));
 void ahb_print_ecb __P((struct ahb_ecb *));
@@ -895,13 +895,14 @@ ahb_init(ahb)
 
 }
 
-void
+u_int
 ahbminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((AHB_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((AHB_NSEG - 1) << PGSHIFT);
+	return (minphys(bp));
 }
 
 /*
