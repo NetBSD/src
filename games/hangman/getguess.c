@@ -1,4 +1,4 @@
-/*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
+/*	$NetBSD: getguess.c,v 1.6 1997/05/23 23:27:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $";
+static char rcsid[] = "$NetBSD: getguess.c,v 1.6 1997/05/23 23:27:40 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,6 @@ readch()
 		}
 		else if (ch == CTRL('L')) {
 			wrefresh(curscr);
-			mvcur(0, 0, curscr->cury, curscr->curx);
 		}
 		else
 			return ch;
