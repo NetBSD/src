@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61 2002/04/25 15:06:31 atatat Exp $
+#	$NetBSD: INSTALL,v 1.61.4.1 2002/09/30 23:28:50 lukem Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -60,9 +60,11 @@ mainbus* at root
 cpu*	at mainbus?
 bandit*	at mainbus?
 grackle* at mainbus?
+uninorth* at mainbus?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
+pci*	at uninorth? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
