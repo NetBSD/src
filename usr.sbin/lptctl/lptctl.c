@@ -1,4 +1,4 @@
-/* $NetBSD: lptctl.c,v 1.7 2004/02/03 20:04:10 jdolecek Exp $ */
+/* $NetBSD: lptctl.c,v 1.8 2004/02/03 20:04:56 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: lptctl.c,v 1.8 2004/02/03 20:04:56 jdolecek Exp $");
 
 #include <stdio.h>
 #include <fcntl.h>
