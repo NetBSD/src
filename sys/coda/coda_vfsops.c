@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.32 2004/03/09 03:14:09 atatat Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.33 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.32 2004/03/09 03:14:09 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.33 2004/03/24 15:34:52 atatat Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -553,11 +553,13 @@ coda_done(void)
 
 SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
 {
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "coda", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 18, CTL_EOL);
@@ -568,7 +570,8 @@ SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
 	 */
 
 /*
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "clusterread", NULL,
 		       NULL, 0, &doclusterread, 0,
 		       CTL_VFS, 18, FFS_CLUSTERREAD, CTL_EOL);

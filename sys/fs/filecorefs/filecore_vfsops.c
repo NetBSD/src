@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.8 2003/12/05 00:51:08 bjh21 Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.9 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.8 2003/12/05 00:51:08 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.9 2004/03/24 15:34:52 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -736,11 +736,13 @@ filecore_vptofh(vp, fhp)
 SYSCTL_SETUP(sysctl_vfs_filecore_setup, "sysctl vfs.filecore subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "filecore", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 19, CTL_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2004/03/23 19:35:16 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2004/03/24 15:34:47 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2004/03/23 19:35:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2004/03/24 15:34:47 atatat Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -379,20 +379,24 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_kernel", NULL,
 		       sysctl_machdep_booted_kernel, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);

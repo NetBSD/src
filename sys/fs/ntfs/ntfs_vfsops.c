@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.16 2004/02/22 08:18:11 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.17 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.16 2004/02/22 08:18:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.17 2004/03/24 15:34:52 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,11 +145,13 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 SYSCTL_SETUP(sysctl_vfs_ntfs_setup, "sysctl vfs.ntfs subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ntfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 20, CTL_EOL);

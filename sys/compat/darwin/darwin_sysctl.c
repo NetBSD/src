@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.22 2004/01/17 03:30:14 atatat Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.23 2004/03/24 15:34:52 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.22 2004/01/17 03:30:14 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.23 2004/03/24 15:34:52 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,7 @@ static void native_to_darwin_pflag(int *, int);
 static int darwin_sysctl_procargs(SYSCTLFN_PROTO);
 
 static struct sysctlnode darwin_sysctl_root = {
-	.sysctl_flags = SYSCTL_ROOT|CTLTYPE_NODE,
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_num = 0,
 	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(darwin_root)",
@@ -105,160 +105,160 @@ darwin_sysctl_redispatch(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 {
-	struct sysctlnode *r;
+	struct sysctlnode *_root = &darwin_sysctl_root;
 
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "kern", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       DARWIN_CTL_KERN, CTL_EOL);
 
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRING, "ostype", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "ostype", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_OSTYPE, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease", &r,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_OSRELEASE, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "osrevision", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "osrevision", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_OSREV, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRING, "version", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "version", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_VERSION, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "maxvnodes", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "maxvnodes", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_MAXVNODES, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "maxproc", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "maxproc", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_MAXPROC, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "maxfiles", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "maxfiles", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_MAXFILES, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "argmax", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "argmax", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_ARGMAX, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "securelevel", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "securelevel", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_SECURELVL, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRING, "hostname", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "hostname", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_HOSTNAME, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "hostid", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "hostid", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_HOSTID, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRUCT, "clockrate", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "clockrate", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_CLOCKRATE, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRUCT, "vnode", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "vnode", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_VNODE, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRUCT, "file", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "file", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_FILE, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "profiling", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "profiling", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_PROF, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "posix1version", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "posix1version", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_POSIX1, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "ngroups", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ngroups", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_NGROUPS, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "job_control", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "job_control", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_JOB_CONTROL, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "saved_ids", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "saved_ids", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_SAVED_IDS, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRUCT, "boottime", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "boottime", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_BOOTTIME, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRING, "nisdomainname", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "nisdomainname", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_NISDOMAINNAME, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "maxpartitions", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "maxpartitions", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_MAXPARTITIONS, CTL_EOL);
 
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "procargs", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "procargs", NULL,
 		       darwin_sysctl_procargs, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_PROCARGS, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "proc", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "proc", NULL,
 		       darwin_sysctl_dokproc, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_PROC, CTL_EOL);
 
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "hw", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       DARWIN_CTL_HW, CTL_EOL);
 
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRING, "machine", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine", NULL,
 		       NULL, 0, darwin_sysctl_hw_machine, 0,
 		       DARWIN_CTL_HW, DARWIN_HW_MACHINE, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "ncpu", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ncpu", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_HW, DARWIN_HW_NCPU, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
-		       CTLTYPE_INT, "vectorunit", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "vectorunit", NULL,
 		       NULL, 0, NULL, 0,
 		       DARWIN_CTL_HW, DARWIN_HW_VECTORUNIT, CTL_EOL);
-	r = &darwin_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "pagesize", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "pagesize", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_HW, DARWIN_HW_PAGESIZE, CTL_EOL);
 }
@@ -334,25 +334,30 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "emul", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "darwin", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "init", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, 
 		       EMUL_DARWIN_INIT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ioframebuffer", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, 
 		       EMUL_DARWIN_IOFRAMEBUFFER, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "iohidsystem", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, 
@@ -360,22 +365,26 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 	/*
 	 * XXX - darwin_init_pid is a pid_t, not an int
 	 */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "pid", NULL,
 		       NULL, 0, &darwin_init_pid, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_INIT,
 		       EMUL_DARWIN_INIT_PID, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "unit", NULL,
 		       NULL, 0, &darwin_ioframebuffer_unit, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOFRAMEBUFFER,
 		       EMUL_DARWIN_IOFRAMEBUFFER_UNIT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "screen", NULL,
 		       NULL, 0, &darwin_ioframebuffer_screen, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOFRAMEBUFFER,
 		       EMUL_DARWIN_IOFRAMEBUFFER_SCREEN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mux", NULL,
 		       NULL, 0, &darwin_iohidsystem_mux, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOHIDSYSTEM,

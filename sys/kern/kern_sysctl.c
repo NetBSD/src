@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.160 2004/03/24 15:25:43 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.161 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.160 2004/03/24 15:25:43 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.161 2004/03/24 15:34:53 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -103,8 +103,8 @@ static int sysctl_realloc(struct sysctlnode *);
  * the "root" of the new sysctl tree
  */
 static struct sysctlnode sysctl_root = {
-	.sysctl_flags = SYSCTL_ROOT|
-	    SYSCTL_READWRITE|
+	.sysctl_flags = SYSCTL_VERSION|
+	    CTLFLAG_ROOT|CTLFLAG_READWRITE|
 	    CTLTYPE_NODE,
 	.sysctl_num = 0,
 	.sysctl_size = sizeof(struct sysctlnode),
@@ -214,7 +214,7 @@ sysctl_init(void)
 		 * XXX - why do i have to coerce the pointers like this?
 		 */
 		f = (void*)*sysctl_setup;
-		(*f)();
+		(*f)(NULL);
 	}
 
 	/*
@@ -222,7 +222,7 @@ sysctl_init(void)
 	 * trees that claim to be readonly at the root now are, and if
 	 * the main tree is readonly, *everything* is.
 	 */
-	sysctl_root.sysctl_flags |= SYSCTL_PERMANENT;
+	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
 
 }
 
@@ -353,6 +353,11 @@ sysctl_dispatch(SYSCTLFN_RWARGS)
 	sysctlfn fn;
 	int ni;
 
+	if (rnode && SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_dispatch: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
 	fn = NULL;
 	error = sysctl_locate(l, name, namelen, &rnode, &ni);
 
@@ -471,6 +476,10 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 	 * search starts from "root"
 	 */
 	pnode = *rnode;
+	if (SYSCTL_VERS(pnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_locate: pnode %p wrong version\n", pnode);
+		return (EINVAL);
+	}
 	node = pnode->sysctl_child;
 	error = 0;
 
@@ -491,7 +500,7 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		/*
 		 * can anyone traverse this node or only root?
 		 */
-		if (l != NULL && (pnode->sysctl_flags & SYSCTL_PRIVATE) &&
+		if (l != NULL && (pnode->sysctl_flags & CTLFLAG_PRIVATE) &&
 		    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
 		    != 0)
 			return (error);
@@ -508,11 +517,11 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		 * sub-trees (eg proc), check before the loop and skip
 		 * it if we can.
 		 */
-		if ((node[si].sysctl_flags & SYSCTL_ANYNUMBER) && (tn >= 0))
+		if ((node[si].sysctl_flags & CTLFLAG_ANYNUMBER) && (tn >= 0))
 			goto foundit;
 		for (; si < pnode->sysctl_clen; si++) {
 			if (node[si].sysctl_num == tn) {
-				if (node[si].sysctl_flags & SYSCTL_ALIAS) {
+				if (node[si].sysctl_flags & CTLFLAG_ALIAS) {
 					if (alias++ == 4)
 						break;
 					else {
@@ -560,6 +569,11 @@ sysctl_query(SYSCTLFN_ARGS)
 	size_t out, left, t;
 	struct sysctlnode *enode, *onode;
 
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_query: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
 	if (newp != NULL)
 		return (EPERM);
 	if (SYSCTL_TYPE(rnode->sysctl_flags) != CTLTYPE_NODE)
@@ -577,7 +591,7 @@ sysctl_query(SYSCTLFN_ARGS)
 	 * process has overlay tree
 	 */
 	if (l && l->l_proc->p_emul->e_sysctlovly) {
-		enode = (void*)l->l_proc->p_emul->e_sysctlovly;
+		enode = l->l_proc->p_emul->e_sysctlovly;
 		elim = (name - oname);
 		error = sysctl_locate(l, oname, elim, &enode, NULL);
 		if (error == 0) {
@@ -596,8 +610,7 @@ sysctl_query(SYSCTLFN_ARGS)
 		t = MIN(left, sizeof(struct sysctlnode));
 		onode = &rnode->sysctl_child[ni];
 		if (enode && enode->sysctl_num == onode->sysctl_num) {
-			if (SYSCTL_TYPE(enode->sysctl_flags) !=
-			    CTLTYPE_NODE)
+			if (SYSCTL_TYPE(enode->sysctl_flags) != CTLTYPE_NODE)
 				onode = enode;
 			if (--elim > 0)
 				enode++;
@@ -645,6 +658,11 @@ sysctl_create(SYSCTLFN_RWARGS)
 	own = NULL;
 	anum = -1;
 
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_create: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
 	if (namelen != 1 || (name[namelen - 1] != CTL_CREATE
 #if NKSYMS > 0
 			     && name[namelen - 1] != CTL_CREATESYM
@@ -663,7 +681,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
-		if (!(rnode->sysctl_flags & SYSCTL_READWRITE))
+		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
 #endif /* SYSCTL_DISALLOW_CREATE */
 			return (EPERM);
 	}
@@ -674,9 +692,9 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 * the tree itself is not writeable or
 	 * the entire sysctl system is not writeable
 	 */
-	if ((sysctl_root.sysctl_flags & SYSCTL_PERMANENT) &&
-	    (!(sysctl_rootof(rnode)->sysctl_flags & SYSCTL_READWRITE) ||
-	     !(sysctl_root.sysctl_flags & SYSCTL_READWRITE)))
+	if ((sysctl_root.sysctl_flags & CTLFLAG_PERMANENT) &&
+	    (!(sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_READWRITE) ||
+	     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE)))
 		return (EPERM);
 
 	/*
@@ -688,7 +706,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 
 	if (newp == NULL || newlen != sizeof(struct sysctlnode))
 		return (EINVAL);
-	error = sysctl_copyin(l, newp, &nnode, sizeof(struct sysctlnode));
+	error = sysctl_copyin(l, newp, &nnode, MIN(sizeof(nnode), newlen));
 	if (error)
 		return (error);
 
@@ -743,7 +761,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 */
 	type = SYSCTL_TYPE(nnode.sysctl_flags);
 	flags = SYSCTL_FLAGS(nnode.sysctl_flags);
-	rw = (flags & SYSCTL_READWRITE) ? B_WRITE : B_READ;
+	rw = (flags & CTLFLAG_READWRITE) ? B_WRITE : B_READ;
 	sz = nnode.sysctl_size;
 
 	/*
@@ -751,8 +769,8 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 * know what they collided with
 	 */
 	node = pnode->sysctl_child;
-	if (((flags & SYSCTL_ANYNUMBER) && node) ||
-	    (node && node->sysctl_flags & SYSCTL_ANYNUMBER))
+	if (((flags & CTLFLAG_ANYNUMBER) && node) ||
+	    (node && node->sysctl_flags & CTLFLAG_ANYNUMBER))
 		return (EINVAL);
 	for (ni = at = 0; ni < pnode->sysctl_clen; ni++) {
 		if (nm == node[ni].sysctl_num ||
@@ -798,13 +816,13 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 */
 	if (l != NULL && (flags & ~SYSCTL_USERFLAGS))
 		return (EPERM);
-	if ((flags & SYSCTL_PERMANENT) &
-	    (sysctl_root.sysctl_flags & SYSCTL_PERMANENT))
+	if ((flags & CTLFLAG_PERMANENT) &
+	    (sysctl_root.sysctl_flags & CTLFLAG_PERMANENT))
 		return (EPERM);
-	if ((flags & (SYSCTL_OWNDATA | SYSCTL_IMMEDIATE)) == 
-	    (SYSCTL_OWNDATA | SYSCTL_IMMEDIATE))
+	if ((flags & (CTLFLAG_OWNDATA | CTLFLAG_IMMEDIATE)) == 
+	    (CTLFLAG_OWNDATA | CTLFLAG_IMMEDIATE))
 		return (EINVAL);
-	if ((flags & SYSCTL_IMMEDIATE) &&
+	if ((flags & CTLFLAG_IMMEDIATE) &&
 	    type != CTLTYPE_INT && type != CTLTYPE_QUAD)
 		return (EINVAL);
 
@@ -818,7 +836,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 		/*
 		 * only *i* can assert the size of a node
 		 */
-		if (flags & SYSCTL_ALIAS) {
+		if (flags & CTLFLAG_ALIAS) {
 			anum = nnode.sysctl_alias;
 			if (anum < 0)
 				return (EINVAL);
@@ -830,7 +848,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 		    nnode.sysctl_clen != 0 ||
 		    nnode.sysctl_child != 0)
 			return (EINVAL);
-		if (flags & SYSCTL_OWNDATA)
+		if (flags & CTLFLAG_OWNDATA)
 			return (EINVAL);
 		sz = sizeof(struct sysctlnode);
 		break;
@@ -858,7 +876,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 				}
 			}
 			else if (nnode.sysctl_data == NULL &&
-				 flags & SYSCTL_OWNDATA) {
+				 flags & CTLFLAG_OWNDATA) {
 				return (EINVAL);
 			}
 			else {
@@ -895,7 +913,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 		if (sz == 0) {
 			if (l != NULL || nnode.sysctl_func == NULL)
 				return (EINVAL);
-			if (flags & SYSCTL_OWNDATA)
+			if (flags & CTLFLAG_OWNDATA)
 				return (EINVAL);
 		}
 		break;
@@ -921,7 +939,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 */
 	if (type != CTLTYPE_NODE) {
 		if (sz != 0) {
-			if (flags & SYSCTL_OWNDATA) {
+			if (flags & CTLFLAG_OWNDATA) {
 				own = malloc(sz, M_SYSCTLDATA,
 					     M_WAITOK|M_CANFAIL);
 				if (nnode.sysctl_data == NULL)
@@ -936,7 +954,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 				}
 			}
 			else if ((nnode.sysctl_data != NULL) &&
-				 !(flags & SYSCTL_IMMEDIATE)) {
+				 !(flags & CTLFLAG_IMMEDIATE)) {
 #if NKSYMS > 0
 				if (name[namelen - 1] == CTL_CREATESYM) {
 					char symname[128]; /* XXX enough? */
@@ -987,7 +1005,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	if (l != NULL || nnode.sysctl_func == NULL) {
 		if (type != CTLTYPE_NODE &&
 		    nnode.sysctl_data == NULL &&
-		    !(flags & SYSCTL_IMMEDIATE) &&
+		    !(flags & CTLFLAG_IMMEDIATE) &&
 		    own == NULL)
 			return (EINVAL);
 	}
@@ -998,8 +1016,8 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 * new data.
 	 */
 	if (l != NULL && own == NULL && type != CTLTYPE_NODE &&
-	    (flags & SYSCTL_READWRITE) != SYSCTL_READONLY &&
-	    !(flags & SYSCTL_IMMEDIATE))
+	    (flags & CTLFLAG_READWRITE) != CTLFLAG_READONLY &&
+	    !(flags & CTLFLAG_IMMEDIATE))
 		return (EPERM);
 #endif /* SYSCTL_DISALLOW_KWRITE */
 
@@ -1007,7 +1025,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 * make sure there's somewhere to put the new stuff.
 	 */
 	if (pnode->sysctl_child == NULL) {
-		if (flags & SYSCTL_ANYNUMBER)
+		if (flags & CTLFLAG_ANYNUMBER)
 			error = sysctl_alloc(pnode, 1);
 		else
 			error = sysctl_alloc(pnode, 0);
@@ -1070,17 +1088,17 @@ sysctl_create(SYSCTLFN_RWARGS)
 		sizeof(node->sysctl_name));
 	node->sysctl_num = nm;
 	node->sysctl_size = sz;
-	node->sysctl_flags = type|flags;
+	node->sysctl_flags = SYSCTL_VERSION|type|flags; /* XXX other trees */
 	node->sysctl_csize = 0;
 	node->sysctl_clen = 0;
 	if (own) {
 		node->sysctl_data = own;
-		node->sysctl_flags |= SYSCTL_OWNDATA;
+		node->sysctl_flags |= CTLFLAG_OWNDATA;
 	}
-	else if (flags & SYSCTL_ALIAS) {
+	else if (flags & CTLFLAG_ALIAS) {
 		node->sysctl_alias = anum;
 	}
-	else if (flags & SYSCTL_IMMEDIATE) {
+	else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_INT:
 			node->sysctl_idata = nnode.sysctl_idata;
@@ -1092,7 +1110,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	}
 	else {
 		node->sysctl_data = nnode.sysctl_data;
-		node->sysctl_flags &= ~SYSCTL_OWNDATA;
+		node->sysctl_flags &= ~CTLFLAG_OWNDATA;
 	}
         node->sysctl_func = nnode.sysctl_func;
         node->sysctl_child = NULL;
@@ -1167,6 +1185,11 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	struct sysctlnode *node, *pnode, onode, nnode;
 	int ni, error;
 
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_destroy: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
 	error = 0;
 
 	if (namelen != 1 || name[namelen - 1] != CTL_DESTROY)
@@ -1184,7 +1207,7 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
-		if (!(rnode->sysctl_flags & SYSCTL_READWRITE))
+		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
 #endif /* SYSCTL_DISALLOW_CREATE */
 			return (EPERM);
 	}
@@ -1195,13 +1218,13 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	 * the tree itself is not writeable or
 	 * the entire sysctl system is not writeable
 	 */
-	if (!(sysctl_rootof(rnode)->sysctl_flags & SYSCTL_READWRITE) ||
-	    !(sysctl_root.sysctl_flags & SYSCTL_READWRITE))
+	if (!(sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_READWRITE) ||
+	    !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE))
 		return (EPERM);
 
-	if (newp == NULL || newlen != sizeof(struct sysctlnode))
+	if (newp == NULL)
 		return (EINVAL);
-	error = sysctl_copyin(l, newp, &nnode, sizeof(struct sysctlnode));
+	error = sysctl_copyin(l, newp, &nnode, MIN(sizeof(nnode), newlen));
 	if (error)
 		return (error);
 	memset(&onode, 0, sizeof(struct sysctlnode));
@@ -1235,7 +1258,7 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	/*
 	 * if the kernel says permanent, it is, so there.  nyah.
 	 */
-	if (SYSCTL_FLAGS(node->sysctl_flags) & SYSCTL_PERMANENT)
+	if (SYSCTL_FLAGS(node->sysctl_flags) & CTLFLAG_PERMANENT)
 		return (EPERM);
 
 	/*
@@ -1248,7 +1271,7 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	/*
 	 * if the node "owns" data, release it now
 	 */
-	if (node->sysctl_flags & SYSCTL_OWNDATA) {
+	if (node->sysctl_flags & CTLFLAG_OWNDATA) {
 		if (node->sysctl_data != NULL)
 			FREE(node->sysctl_data, M_SYSCTLDATA);
 		node->sysctl_data = NULL;
@@ -1268,7 +1291,8 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 		for (; ni < pnode->sysctl_clen - 1; ni++)
 			if (SYSCTL_TYPE(pnode->sysctl_child[ni].sysctl_flags) ==
 			    CTLTYPE_NODE)
-				for (t = 0; t < pnode->sysctl_child[ni].sysctl_clen;
+				for (t = 0;
+				     t < pnode->sysctl_child[ni].sysctl_clen;
 				     t++)
 					pnode->sysctl_child[ni].sysctl_child[t].
 						sysctl_parent =
@@ -1322,6 +1346,11 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	size_t sz, len;
 	void *d;
 
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_lookup: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
 	error = 0;
 
 	/*
@@ -1334,7 +1363,7 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	/*
 	 * some nodes are private, so only root can look into them.
 	 */
-	if (l != NULL && (rnode->sysctl_flags & SYSCTL_PRIVATE) &&
+	if (l != NULL && (rnode->sysctl_flags & CTLFLAG_PRIVATE) &&
 	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
@@ -1345,7 +1374,7 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	 * called and not us.
 	 */
 	if (l != NULL && newp != NULL &&
-	    !(rnode->sysctl_flags & SYSCTL_ANYWRITE) &&
+	    !(rnode->sysctl_flags & CTLFLAG_ANYWRITE) &&
 	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
@@ -1353,14 +1382,14 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	 * is this node supposedly writable?
 	 */
 	rw = 0;
-	switch (rnode->sysctl_flags & SYSCTL_READWRITE) {
-	    case SYSCTL_READONLY1:
+	switch (rnode->sysctl_flags & CTLFLAG_READWRITE) {
+	    case CTLFLAG_READONLY1:
 		rw = (securelevel < 1) ? 1 : 0;
 		break;
-	    case SYSCTL_READONLY2:
+	    case CTLFLAG_READONLY2:
 		rw = (securelevel < 2) ? 1 : 0;
 		break;
-	    case SYSCTL_READWRITE:
+	    case CTLFLAG_READWRITE:
 		rw = 1;
 		break;
 	}
@@ -1375,7 +1404,7 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	/*
 	 * step one, copy out the stuff we have presently
 	 */
-	if (rnode->sysctl_flags & SYSCTL_IMMEDIATE) {
+	if (rnode->sysctl_flags & CTLFLAG_IMMEDIATE) {
 		switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
 		case CTLTYPE_INT:
 			d = &rnode->sysctl_idata;
@@ -1485,6 +1514,11 @@ sysctl_mmap(SYSCTLFN_RWARGS)
 	struct sysctlnode nnode, *node;
 	int error;
 
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_mmap: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
 	/*
 	 * let's just pretend that didn't happen, m'kay?
 	 */
@@ -1496,7 +1530,7 @@ sysctl_mmap(SYSCTLFN_RWARGS)
 	 */
 	if (newp == NULL || newlen != sizeof(struct sysctlnode))
 		return (EINVAL);
-	error = sysctl_copyin(l, newp, &nnode, sizeof(struct sysctlnode));
+	error = sysctl_copyin(l, newp, &nnode, sizeof(nnode));
 	if (error)
 		return (error);
 
@@ -1514,7 +1548,7 @@ sysctl_mmap(SYSCTLFN_RWARGS)
 	 * does this node that we have found purport to handle mmap?
 	 */
 	if (node->sysctl_func == NULL ||
-	    !(node->sysctl_flags & SYSCTL_MMAP))
+	    !(node->sysctl_flags & CTLFLAG_MMAP))
 		return (EOPNOTSUPP);
 
 	/*
@@ -1544,8 +1578,9 @@ sysctl_mmap(SYSCTLFN_RWARGS)
  * ********************************************************************
  */
 int
-sysctl_createv(int flags, int type,
-	       const char *namep, struct sysctlnode **rnode,
+sysctl_createv(struct sysctllog **log, int cflags,
+	       struct sysctlnode **rnode, struct sysctlnode **cnode,
+	       int flags, int type, const char *namep, const char *descr,
 	       sysctlfn func, u_quad_t qv, void *newp, size_t newlen,
 	       ...)
 {
@@ -1554,10 +1589,23 @@ sysctl_createv(int flags, int type,
 	struct sysctlnode *pnode, nnode, onode;
 	size_t sz;
 
+	if (cnode != NULL)
+		*cnode = NULL;
+	if (cflags != 0)
+		return (EINVAL);
+
+	/*
+	 * where are we putting this?
+	 */
+	if (rnode != NULL && *rnode == NULL) {
+		printf("sysctl_createv: rnode NULL\n");
+		return (EINVAL);
+	}
+
 	/*
 	 * what is it?
 	 */
-	flags = SYSCTL_TYPE(type)|SYSCTL_FLAGS(flags);
+	flags = SYSCTL_VERSION|SYSCTL_TYPE(type)|SYSCTL_FLAGS(flags);
 
 	/*
 	 * where do we put it?
@@ -1596,10 +1644,10 @@ sysctl_createv(int flags, int type,
 		nnode.sysctl_csize = 0;
 		nnode.sysctl_clen = 0;
 		nnode.sysctl_child = NULL;
-		if (flags & SYSCTL_ALIAS)
+		if (flags & CTLFLAG_ALIAS)
 			nnode.sysctl_alias = qv;
 	}
-	else if (flags & SYSCTL_IMMEDIATE) {
+	else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_INT:
 			nnode.sysctl_idata = qv;
@@ -1636,10 +1684,13 @@ sysctl_createv(int flags, int type,
 	sz = sizeof(onode);
 	pnode = rnode ? *rnode : NULL;
 	error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
-	if (error == 0)
-		error = sysctl_create(&name[ni], namelen - ni, &onode, &sz,
-				      &nnode, sizeof(nnode), &name[0], NULL,
-				      pnode);
+	if (error) {
+		sysctl_unlock(NULL);
+		return (error);
+	}
+	error = sysctl_create(&name[ni], namelen - ni, &onode, &sz,
+			      &nnode, sizeof(nnode), &name[0], NULL,
+			      pnode);
 
 	/*
 	 * unfortunately the node we wanted to create is already
@@ -1670,17 +1721,12 @@ sysctl_createv(int flags, int type,
 		}
 	}
 
-	/*
-	 * if they want to know where the new node is, go find the
-	 * address of the actual node, not the copy that
-	 * sysctl_create() gave us.
-	 */
-	if (rnode != NULL && error == 0) {
+	if (error == 0 && cnode != NULL) {
 		/*
 		 * sysctl_create() gave us back a copy of the node,
 		 * but we need to know where it actually is...
 		 */
-		pnode = *rnode;
+		pnode = rnode ? *rnode : NULL;
 		error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 
 		/*
@@ -1701,12 +1747,24 @@ sysctl_createv(int flags, int type,
 		/*
 		 * not expecting an error here, but...
 		 */
-		if (error == 0)
-			*rnode = pnode;
+		if (error == 0) {
+			if (cnode != NULL)
+				*cnode = pnode;
+		}
+		else {
+			printf("sysctl_create succeeded but node not found?!\n");
+			/*
+			 *  confusing, but the create said it
+			 * succeeded, so...
+			 */
+			error = 0;
+		}
 	}
 
 	/*
-	 * now it should be safe to release the lock state.
+	 * now it should be safe to release the lock state.  note that
+	 * the pointer to the newly created node being passed back may
+	 * not be "good" for very long.
 	 */
 	sysctl_unlock(NULL);
 
@@ -1772,7 +1830,6 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	 * we found it, now let's nuke it
 	 */
 	name[namelen - 1] = CTL_DESTROY;
-	pnode = node->sysctl_parent;
 	sz = 0;
 	error = sysctl_destroy(&name[namelen - 1], 1, NULL, &sz,
 			       node, sizeof(*node), &name[0], NULL,
@@ -1807,27 +1864,27 @@ sf(int f)
 	c = "";
 
 #define print_flag(_f, _s, _c, _q, _x) \
-	if (((_x) && (((_f) & (_x)) == (__CONCAT(SYSCTL_,_q)))) || \
-	    (!(_x) && ((_f) & (__CONCAT(SYSCTL_,_q))))) { \
+	if (((_f) & (__CONCAT(CTLFLAG_,_x))) == (__CONCAT(CTLFLAG_,_q))) { \
 		strlcat((_s), (_c), sizeof(_s)); \
 		strlcat((_s), __STRING(_q), sizeof(_s)); \
 		(_c) = ","; \
-		(_f) &= ~(__CONCAT(SYSCTL_,_q)|(_x)); \
+		(_f) &= ~__CONCAT(CTLFLAG_,_x); \
 	}
-	print_flag(f, s, c, READONLY, SYSCTL_READWRITE);
-	print_flag(f, s, c, READONLY1, SYSCTL_READWRITE);
-	print_flag(f, s, c, READONLY2, SYSCTL_READWRITE);
-	print_flag(f, s, c, READWRITE, SYSCTL_READWRITE);
-	print_flag(f, s, c, ANYWRITE, 0);
-	print_flag(f, s, c, PRIVATE, 0);
-	print_flag(f, s, c, PERMANENT, 0);
-	print_flag(f, s, c, OWNDATA, 0);
-	print_flag(f, s, c, IMMEDIATE, 0);
-	print_flag(f, s, c, HEX, 0);
-	print_flag(f, s, c, ROOT, 0);
-	print_flag(f, s, c, ANYNUMBER, 0);
-	print_flag(f, s, c, HIDDEN, 0);
-	print_flag(f, s, c, ALIAS, 0);
+
+	print_flag(f, s, c, READONLY,  READWRITE);
+	print_flag(f, s, c, READONLY1, READWRITE);
+	print_flag(f, s, c, READONLY2, READWRITE);
+	print_flag(f, s, c, READWRITE, READWRITE);
+	print_flag(f, s, c, ANYWRITE,  ANYWRITE);
+	print_flag(f, s, c, PRIVATE,   PRIVATE);
+	print_flag(f, s, c, PERMANENT, PERMANENT);
+	print_flag(f, s, c, OWNDATA,   OWNDATA);
+	print_flag(f, s, c, IMMEDIATE, IMMEDIATE);
+	print_flag(f, s, c, HEX,       HEX);
+	print_flag(f, s, c, ROOT,      ROOT);
+	print_flag(f, s, c, ANYNUMBER, ANYNUMBER);
+	print_flag(f, s, c, HIDDEN,    HIDDEN);
+	print_flag(f, s, c, ALIAS,     ALIAS);
 #undef print_flag
 
 	if (f) {
@@ -1875,7 +1932,7 @@ sysctl_dump(const struct sysctlnode *d)
 	np = &nmib[strlen(nmib)];
 	sp = &smib[strlen(smib)];
 
-	if (!(d->sysctl_flags & SYSCTL_ROOT)) {
+	if (!(d->sysctl_flags & CTLFLAG_ROOT)) {
 		snprintf(tmp, sizeof(tmp), "%d", d->sysctl_num);
 		strcat(nmib, ".");
 		strcat(smib, ".");
@@ -1943,6 +2000,11 @@ sysctl_free(struct sysctlnode *rnode)
 {
 	struct sysctlnode *node, *pnode;
 
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_free: rnode %p wrong version\n", rnode);
+		return;
+	}
+
 	if (rnode == NULL)
 		rnode = &sysctl_root;
 	pnode = rnode;
@@ -1956,7 +2018,7 @@ sysctl_free(struct sysctlnode *rnode)
 				CTLTYPE_NODE ||
 				node->sysctl_csize == 0)) {
 				if (SYSCTL_FLAGS(node->sysctl_flags) &
-				    SYSCTL_OWNDATA) {
+				    CTLFLAG_OWNDATA) {
 					if (node->sysctl_data != NULL) {
 						FREE(node->sysctl_data,
 						     M_SYSCTLDATA);

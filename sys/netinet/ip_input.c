@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.196 2004/01/15 05:13:17 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.197 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.196 2004/01/15 05:13:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.197 2004/03/24 15:34:54 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2170,130 +2170,154 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 {
 	extern int subnetsarelocal, hostzeroisbroadcast;
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ip", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
 	
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "forwarding", NULL,
 		       NULL, 0, &ipforwarding, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_FORWARDING, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "redirect", NULL,
 		       NULL, 0, &ipsendredirects, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_SENDREDIRECTS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ttl", NULL,
 		       NULL, 0, &ip_defttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DEFTTL, CTL_EOL);
 #ifdef IPCTL_DEFMTU
-	sysctl_createv(SYSCTL_PERMANENT /* |SYSCTL_READWRITE? */,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT /* |CTLFLAG_READWRITE? */,
 		       CTLTYPE_INT, "mtu", NULL,
 		       NULL, 0, &ip_mtu, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DEFMTU, CTL_EOL);
 #endif /* IPCTL_DEFMTU */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY1,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY1,
 		       CTLTYPE_INT, "forwsrcrt", NULL,
 		       NULL, 0, &ip_forwsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_FORWSRCRT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "directed-broadcast", NULL,
 		       NULL, 0, &ip_directedbcast, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DIRECTEDBCAST, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "allowsrcrt", NULL,
 		       NULL, 0, &ip_allowsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ALLOWSRCRT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "subnetsarelocal", NULL,
 		       NULL, 0, &subnetsarelocal, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_SUBNETSARELOCAL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mtudisc", NULL,
 		       NULL, 0, &ip_mtudisc, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonportmin", NULL,
 		       sysctl_net_inet_ip_ports, 0, &anonportmin, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ANONPORTMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonportmax", NULL,
 		       sysctl_net_inet_ip_ports, 0, &anonportmax, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ANONPORTMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mtudisctimeout", NULL,
 		       sysctl_net_inet_ip_pmtudto, 0, &ip_mtudisc_timeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISCTIMEOUT, CTL_EOL);
 #ifdef GATEWAY
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxflows", NULL,
 		       sysctl_net_inet_ip_maxflows, 0, &ip_maxflows, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MAXFLOWS, CTL_EOL);
 #endif /* GATEWAY */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "hostzerobroadcast", NULL,
 		       NULL, 0, &hostzeroisbroadcast, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_HOSTZEROBROADCAST, CTL_EOL);
 #if NGIF > 0
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifttl", NULL,
 		       NULL, 0, &ip_gif_ttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_GIF_TTL, CTL_EOL);
 #endif /* NGIF */
 #ifndef IPNOPRIVPORTS
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "lowportmin", NULL,
 		       sysctl_net_inet_ip_ports, 0, &lowportmin, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_LOWPORTMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "lowportmax", NULL,
 		       sysctl_net_inet_ip_ports, 0, &lowportmax, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_LOWPORTMAX, CTL_EOL);
 #endif /* IPNOPRIVPORTS */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxfragpackets", NULL,
 		       NULL, 0, &ip_maxfragpackets, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MAXFRAGPACKETS, CTL_EOL);
 #if NGRE > 0
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "grettl", NULL,
 		       NULL, 0, &ip_gre_ttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_GRE_TTL, CTL_EOL);
 #endif /* NGRE */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "checkinterface", NULL,
 		       NULL, 0, &ip_checkinterface, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_CHECKINTERFACE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "random_id", NULL,
 		       NULL, 0, &ip_do_randomid, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
