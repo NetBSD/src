@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.67 2002/09/21 18:24:40 mycroft Exp $	*/
+/*	$NetBSD: ping.c,v 1.68 2002/09/21 18:33:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.67 2002/09/21 18:24:40 mycroft Exp $");
+__RCSID("$NetBSD: ping.c,v 1.68 2002/09/21 18:33:51 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -716,7 +716,7 @@ doit(void)
 				if (errno == EINTR)
 					continue;
 				jiggle_flush(1);
-				err(1, "select");
+				err(1, "poll");
 			}
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.48 2002/09/21 18:30:05 mycroft Exp $	*/
+/*	$NetBSD: ping6.c,v 1.49 2002/09/21 18:33:51 mycroft Exp $	*/
 /*	$KAME: ping6.c,v 1.160 2002/09/08 14:28:18 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.48 2002/09/21 18:30:05 mycroft Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.49 2002/09/21 18:33:51 mycroft Exp $");
 #endif
 #endif
 
@@ -1083,7 +1083,7 @@ main(argc, argv)
 		cc = poll(fdmaskp, 1, timeout);
 		if (cc < 0) {
 			if (errno != EINTR) {
-				warn("select");
+				warn("poll");
 				sleep(1);
 			}
 			continue;
