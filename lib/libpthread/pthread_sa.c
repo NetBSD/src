@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.13 2001/11/17 01:59:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.14 2001/12/30 02:20:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,15 +58,15 @@
 #define SDPRINTF(x)
 #endif
 
-extern struct pt_queue_t allqueue;
+extern struct pthread_queue_t allqueue;
 
 stack_t recyclable[2][(PT_UPCALLSTACKS/2)+1];
 int	recycle_count;
 int	recycle_threshold;
 int	recycle_side;
-pt_spin_t recycle_lock;
+pthread_spin_t recycle_lock;
 
-extern struct pt_queue_t runqueue;
+extern struct pthread_queue_t runqueue;
 
 #define pthread__sa_id(sap) (pthread__id((sap)->sa_context))
 
@@ -257,7 +257,7 @@ void
 pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 {
 	pthread_t victim, prev, next, switchto, runq, recycleq, intqueue;
-	pt_spin_t *lock;
+	pthread_spin_t *lock;
 
 	PTHREADD_ADD(PTHREADD_RESOLVELOCKS);
 
