@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.9 1994/10/09 09:13:18 mycroft Exp $
+ *	$Id: db_interface.c,v 1.10 1994/10/09 12:57:11 mycroft Exp $
  */
 
 /*
@@ -110,29 +110,23 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
-	regs->tf_eip = ddb_regs.tf_eip;
+	regs->tf_es     = ddb_regs.tf_es;
+	regs->tf_ds     = ddb_regs.tf_ds;
+	regs->tf_edi    = ddb_regs.tf_edi;
+	regs->tf_esi    = ddb_regs.tf_esi;
+	regs->tf_ebp    = ddb_regs.tf_ebp;
+	regs->tf_ebx    = ddb_regs.tf_ebx;
+	regs->tf_edx    = ddb_regs.tf_edx;
+	regs->tf_ecx    = ddb_regs.tf_ecx;
+	regs->tf_eax    = ddb_regs.tf_eax;
+	regs->tf_eip    = ddb_regs.tf_eip;
+	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	regs->tf_eax = ddb_regs.tf_eax;
-	regs->tf_ecx = ddb_regs.tf_ecx;
-	regs->tf_edx = ddb_regs.tf_edx;
-	regs->tf_ebx = ddb_regs.tf_ebx;
 	if (regs->tf_cs & 0x3) {
-		/*
-		 * user mode - saved esp and ss valid
-		 */
-		regs->tf_esp = ddb_regs.tf_esp;		/* user stack pointer */
-		regs->tf_ss  = ddb_regs.tf_ss & 0xffff;	/* user stack segment */
+		/* ring transit - saved esp and ss valid */
+		regs->tf_esp    = ddb_regs.tf_esp;
+		regs->tf_ss     = ddb_regs.tf_ss;
 	}
-	regs->tf_ebp = ddb_regs.tf_ebp;
-	regs->tf_esi = ddb_regs.tf_esi;
-	regs->tf_edi = ddb_regs.tf_edi;
-	regs->tf_es = ddb_regs.tf_es & 0xffff;
-	regs->tf_cs = ddb_regs.tf_cs & 0xffff;
-	regs->tf_ds = ddb_regs.tf_ds & 0xffff;
-#if 0
-	regs->tf_fs = ddb_regs.tf_fs & 0xffff;
-	regs->tf_gs = ddb_regs.tf_gs & 0xffff;
-#endif
 
 	return (1);
 }
