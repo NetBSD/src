@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.43 2000/01/22 21:43:15 mycroft Exp $	*/
+/*	$NetBSD: namespace.h,v 1.44 2000/01/23 01:35:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -265,7 +265,9 @@
 #define mpool_sync		_mpool_sync
 #define mrand48			_mrand48
 #define nice			_nice
+#if 0
 #define nlist			_nlist
+#endif
 #define nrand48			_nrand48
 #define nsdispatch		_nsdispatch
 #define offtime			_offtime
