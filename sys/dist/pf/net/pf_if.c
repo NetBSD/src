@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.7 2004/12/04 10:35:54 yamt Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.8 2004/12/04 14:26:01 peter Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.20 2004/08/15 15:31:46 henning Exp $ */
 
 /*
@@ -133,15 +133,9 @@ pfi_initialize(void)
 void
 pfi_destroy(void)
 {
-	struct pfi_kif *p;
-
-	while ((p = TAILQ_FIRST(&pfi_statehead)) != NULL) {
-		TAILQ_REMOVE(&pfi_statehead, p, pfik_w_states);
-		free(p, PFI_MTYPE);
-	}
 	pool_destroy(&pfi_addr_pl);
 
-	pfi_self = NULL;
+	free(pfi_buffer, PFI_MTYPE);
 }
 #endif
 

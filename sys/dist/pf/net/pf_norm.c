@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.6 2004/11/14 11:12:16 yamt Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.7 2004/12/04 14:26:01 peter Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.96 2004/07/17 00:17:27 frantzen Exp $ */
 
 /*
@@ -162,20 +162,9 @@ pf_normalize_init(void)
 }
 
 #ifdef _LKM
-#define TAILQ_DRAIN(list, element)				\
-	do {							\
-		while ((element = TAILQ_FIRST(list)) != NULL)	\
-			TAILQ_REMOVE(list, element, frag_next);	\
-	} while (0)
-
 void
 pf_normalize_destroy(void)
 {
-	struct pf_fragment *fragment_e;
-
-	TAILQ_DRAIN(&pf_fragqueue, fragment_e);
-	TAILQ_DRAIN(&pf_cachequeue, fragment_e);
-
 	pool_destroy(&pf_state_scrub_pl);
 	pool_destroy(&pf_cent_pl);
 	pool_destroy(&pf_cache_pl);
