@@ -16,6 +16,7 @@
 ./bin/expr
 ./bin/hostname
 ./bin/kill
+./bin/ksh
 ./bin/ln
 ./bin/ls
 ./bin/mkdir
@@ -64,6 +65,7 @@
 ./sbin/halt
 ./sbin/ifconfig
 ./sbin/init
+./sbin/ipf
 ./sbin/ldconfig
 ./sbin/mknod
 ./sbin/modload
@@ -465,6 +467,9 @@
 ./usr/sbin/htable
 ./usr/sbin/inetd
 ./usr/sbin/iostat
+./usr/sbin/ipfstat
+./usr/sbin/ipmon
+./usr/sbin/ipnat
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/lpc
 ./usr/sbin/lpd
@@ -515,6 +520,8 @@
 ./usr/sbin/stdhosts
 ./usr/sbin/sysctl
 ./usr/sbin/syslogd
+./usr/sbin/tcpdchk
+./usr/sbin/tcpdmatch
 ./usr/sbin/tcpdump
 ./usr/sbin/timed
 ./usr/sbin/timedc
