@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.2 1998/10/22 15:15:16 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.3 1998/11/10 14:16:09 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -50,8 +50,8 @@ functions for the
 and
 .Nm atapi
 drivers. This driver include specific, enhanced support for the CMD Tech
-PCI0640 controller, and IDE DMA/Ultra-DMA support for the Intel PIIX and
-VIA Apollo controllers series.
+PCI0640 controller, and IDE DMA/Ultra-DMA support for the Intel PIIX,
+VIA Apollo and CMD Tech PCI0643 and PCI0646 controllers series.
 .Pp
 The 0x0001 flag force the
 .Nm 
@@ -60,16 +60,16 @@ the controller but DMA is present. If the BIOS didn't set up the controller
 properly, this can cause a machine hang.
 
 .Sh BUGS
-There's no way to reliably know if a PCI0640 controller is enabled or not.
-If the driver finds a PCI0640, it will assume it is enabled unless the
+There's no way to reliably know if a PCI064x controller is enabled or not.
+If the driver finds a PCI064x, it will assume it is enabled unless the
 PCIIDE_CMD064x_DISABLE is specified in the kernel config file.
 This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed and uses the ISA legaty I/O ports
 and interrupts.
 .Pp
-The timings used for the PIO and DMA modes for the PIIX and Apollo controllers
-are for a PCI bus running at 60 or 66 Mhz. This driver may not work properly
-on overclocked systems.
+The timings used for the PIO and DMA modes for the PCI064x, PIIX and Apollo
+controllers are for a PCI bus running at 60 or 66 Mhz. This driver may not
+work properly on overclocked systems.
 
 .Sh SEE ALSO
 .Xr intro 4
