@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.40 1995/04/21 21:55:11 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.41 1995/04/21 22:03:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1426,6 +1426,7 @@ vfs_export_lookup(mp, nep, nam)
  * file_mode, uid and gid are from the vnode in question,
  * while acc_mode and cred are from the VOP_ACCESS parameter list
  */
+int
 vaccess(file_mode, uid, gid, acc_mode, cred)
 	mode_t file_mode;
 	uid_t uid;
