@@ -1,3 +1,5 @@
+/*	$NetBSD: wav.c,v 1.3 2002/01/25 15:33:51 mrg Exp $	*/
+
 /*
  * Copyright (c) 2002 Matthew R. Green
  * All rights reserved.
