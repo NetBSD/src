@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 2002/02/02 07:04:53 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2002/02/02 20:58:51 tls Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -77,7 +77,7 @@ case $i in
 
 all)
 	sh $0 std wscons fd wd0 wd1
-	sh $0 pty0 pty1
+	sh $0 pty0
 	sh $0 bpf0 bpf1 bpf2 bpf3
 	sh $0 vnd0 vnd1 vnd2 vnd3
 	sh $0 random
