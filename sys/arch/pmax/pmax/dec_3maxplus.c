@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.7 1998/03/30 06:45:38 jonathan Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.8 1998/06/22 09:37:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.7 1998/03/30 06:45:38 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.8 1998/06/22 09:37:42 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -92,16 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.7 1998/03/30 06:45:38 jonathan Ex
 /* all these to get ioasic_base */
 #include <sys/device.h>			/* struct cfdata for.. */
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
+#include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h> 
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn03.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/dec_3max_subr.h>
 
 
@@ -267,8 +266,8 @@ dec_3maxplus_enable_intr(slotno, handler, sc, on)
 		mask = KN03_INTR_TC_2;
 		break;
 	case KN03_SCSI_SLOT:
-		mask = (KN03_INTR_SCSI | KN03_INTR_SCSI_PTR_LOAD |
-			KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E);
+		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
+			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
 	case KN03_LANCE_SLOT:
 		mask = KN03_INTR_LANCE;
@@ -374,8 +373,8 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 		/* masked interrupts are still observable */
 		intr &= old_mask;
 
-		if (intr & KN03_INTR_SCSI_PTR_LOAD) {
-			*intrp &= ~KN03_INTR_SCSI_PTR_LOAD;
+		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
+			*intrp &= ~IOASIC_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
 			asc_dma_intr();
 #endif
@@ -393,11 +392,11 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 	 * non-DMA interrupts from ioctl devices or TC options.
 	 */
 
-		if (intr & (KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E))
-			*intrp &= ~(KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E);
+		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
+			*intrp &= ~(IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 
-		if (intr & KN03_INTR_LANCE_READ_E)
-			*intrp &= ~KN03_INTR_LANCE_READ_E;
+		if (intr & IOASIC_INTR_LANCE_READ_E)
+			*intrp &= ~IOASIC_INTR_LANCE_READ_E;
 
 		if ((intr & KN03_INTR_SCC_0) &&
 			tc_slot_info[KN03_SCC0_SLOT].intr) {
@@ -446,7 +445,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 			printf ("can't handle tc2 interrupt\n");
 #endif /*DIAGNOSTIC*/
 	
-		if ((intr & KN03_INTR_SCSI) &&
+		if ((intr & IOASIC_INTR_SCSI) &&
 			tc_slot_info[KN03_SCSI_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
 			(tc_slot_info[KN03_SCSI_SLOT].sc);

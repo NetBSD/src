@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 1998/06/19 22:44:48 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 1998/06/22 09:37:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 1998/06/19 22:44:48 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 1998/06/22 09:37:43 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 1998/06/19 22:44:48 jonathan Exp $
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
 #include <dev/tc/ioasicvar.h>
 
 
@@ -116,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 1998/06/19 22:44:48 jonathan Exp $
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/dev/promiovar.h>		/* prom console I/O vector */

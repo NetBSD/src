@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.5 1998/03/30 06:45:37 jonathan Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.6 1998/06/22 09:37:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.5 1998/03/30 06:45:37 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6 1998/06/22 09:37:42 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -92,15 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.5 1998/03/30 06:45:37 jonathan Exp 
 /* all these to get ioasic_base */
 #include <sys/device.h>			/* struct cfdata for.. */
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
+#include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h> 
 #include <pmax/pmax/pmaxtype.h> 
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
-#include <pmax/pmax/maxine.h>		/* 3min baseboard addresses */
+#include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
 
 /*
@@ -204,7 +204,6 @@ dec_maxine_bus_reset()
 
 	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 	wbflush();
-
 }
 
 
@@ -252,11 +251,11 @@ dec_maxine_enable_intr(slotno, handler, sc, on)
 		mask = XINE_INTR_FLOPPY;
 		break;
 	case XINE_SCSI_SLOT:
-		mask = (XINE_INTR_SCSI | XINE_INTR_SCSI_PTR_LOAD |
-			XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E);
+		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
+			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
 	case XINE_LANCE_SLOT:
-		mask = XINE_INTR_LANCE;
+		mask = IOASIC_INTR_LANCE;
 		break;
 	case XINE_SCC0_SLOT:
 		mask = XINE_INTR_SCC_0;
@@ -265,7 +264,8 @@ dec_maxine_enable_intr(slotno, handler, sc, on)
 		mask = XINE_INTR_DTOP_RX;
 		break;
 	case XINE_ISDN_SLOT:
-		mask = XINE_INTR_ISDN;
+		mask = (XINE_INTR_ISDN | IOASIC_INTR_ISDN_OVRUN |
+			IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
 		break;
 	case XINE_ASIC_SLOT:
 		mask = XINE_INTR_ASIC;
@@ -345,18 +345,18 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 			intrcnt[SERIAL0_INTR]++;
 		}
 	
-		if (intr & XINE_INTR_SCSI_PTR_LOAD) {
-			*intrp &= ~XINE_INTR_SCSI_PTR_LOAD;
+		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
+			*intrp &= ~IOASIC_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
 			asc_dma_intr();
 #endif
 		}
 	
-		if (intr & (XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E))
-			*intrp &= ~(XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E);
+		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
+			*intrp &= ~(IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 
-		if (intr & XINE_INTR_LANCE_READ_E)
-			*intrp &= ~XINE_INTR_LANCE_READ_E;
+		if (intr & IOASIC_INTR_LANCE_READ_E)
+			*intrp &= ~IOASIC_INTR_LANCE_READ_E;
 
 		if (intr & XINE_INTR_DTOP_RX) {
 			if (tc_slot_info[XINE_DTOP_SLOT].intr)
@@ -403,7 +403,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				intrcnt[ISDN_INTR]++;
 		}
 	
-		if (intr & XINE_INTR_SCSI) {
+		if (intr & IOASIC_INTR_SCSI) {
 			if (tc_slot_info[XINE_SCSI_SLOT].intr)
 				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
 				(tc_slot_info[XINE_SCSI_SLOT].sc);
@@ -412,7 +412,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 			intrcnt[SCSI_INTR]++;
 		}
 	
-		if (intr & XINE_INTR_LANCE) {
+		if (intr & IOASIC_INTR_LANCE) {
 			if (tc_slot_info[XINE_LANCE_SLOT].intr)
 				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
 				(tc_slot_info[XINE_LANCE_SLOT].sc);
