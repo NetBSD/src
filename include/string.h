@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.14 1998/04/27 17:02:04 tv Exp $	*/
+/*	$NetBSD: string.h,v 1.15 1998/05/06 20:17:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -73,13 +73,15 @@ char	*strrchr __P((const char *, int));
 size_t	 strspn __P((const char *, const char *));
 char	*strstr __P((const char *, const char *));
 char	*strtok __P((char *, const char *));
-#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE)) || \
-    defined(_REENTRANT) || (_POSIX_C_SOURCE - 0 >= 199506L)
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+     !defined(_XOPEN_SOURCE)) || defined(_REENTRANT) || \
+    (_POSIX_C_SOURCE - 0 >= 199506L) || (_XOPEN_SOURCE - 0 >= 500)
 char	*strtok_r __P((char *, const char *, char **));
 #endif /* !defined(_ANSI_SOURCE) || defined(_REENTRANT) || ... */
 size_t	 strxfrm __P((char *, const char *, size_t));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 void	*memccpy __P((void *, const void *, int, size_t));
 char	*strdup __P((const char *));
 #endif /* !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) */
