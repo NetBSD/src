@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.40 2004/05/11 17:12:26 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.41 2004/06/20 22:20:14 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.40 2004/05/11 17:12:26 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.41 2004/06/20 22:20:14 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -855,8 +855,12 @@ ar_write(char *buf, int bsz)
 		/*
 		 * if file is out of space, handle it like a return of 0
 		 */
-		if ((errno == ENOSPC) || (errno == EFBIG) || (errno == EDQUOT))
+		if ((errno == ENOSPC) || (errno == EFBIG))
 			res = lstrval = 0;
+#ifdef EDQUOT
+		if (errno == EDQUOT)
+			res = lstrval = 0;
+#endif
 		break;
 	case ISTAPE:
 	case ISCHR:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sum2.c,v 1.10 2003/12/20 23:41:38 kleink Exp $	*/
+/*	$NetBSD: sum2.c,v 1.11 2004/06/20 22:20:15 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sum2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sum2.c,v 1.10 2003/12/20 23:41:38 kleink Exp $");
+__RCSID("$NetBSD: sum2.c,v 1.11 2004/06/20 22:20:15 jmc Exp $");
 #endif
 #endif /* not lint */
 

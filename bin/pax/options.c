@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.75 2004/06/19 02:27:00 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.76 2004/06/20 22:20:14 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.75 2004/06/19 02:27:00 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.76 2004/06/20 22:20:14 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,11 @@ __RCSID("$NetBSD: options.c,v 1.75 2004/06/19 02:27:00 christos Exp $");
 #include <sys/param.h>
 #include <ctype.h>
 #include <errno.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include "compat_getopt.h"
+#else
 #include <getopt.h>
+#endif
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>

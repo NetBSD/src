@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.18 2003/09/07 14:24:09 fvdl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.19 2004/06/20 22:20:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -38,13 +38,17 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.18 2003/09/07 14:24:09 fvdl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.19 2004/06/20 22:20:18 jmc Exp $");
 #endif
 #endif
 #endif /* not lint */

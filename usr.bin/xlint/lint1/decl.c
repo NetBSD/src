@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.32 2002/11/02 20:10:16 perry Exp $ */
+/* $NetBSD: decl.c,v 1.33 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.32 2002/11/02 20:10:16 perry Exp $");
+__RCSID("$NetBSD: decl.c,v 1.33 2004/06/20 22:20:16 jmc Exp $");
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.28 2004/04/26 21:06:55 dsl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.29 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,13 +65,20 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.28 2004/04/26 21:06:55 dsl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.29 2004/06/20 22:20:17 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
+
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/mount.h>
+#endif
 
 #include <assert.h>
 #include <errno.h>

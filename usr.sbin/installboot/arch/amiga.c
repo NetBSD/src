@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga.c,v 1.2 2003/04/15 14:22:14 dsl Exp $	*/
+/*	$NetBSD: amiga.c,v 1.3 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,9 +39,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: amiga.c,v 1.2 2003/04/15 14:22:14 dsl Exp $");
+__RCSID("$NetBSD: amiga.c,v 1.3 2004/06/20 22:20:17 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

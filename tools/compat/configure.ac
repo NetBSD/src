@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.43 2004/06/18 20:07:31 thorpej Exp $
+#	$NetBSD: configure.ac,v 1.44 2004/06/20 22:20:15 jmc Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -7,6 +7,21 @@ AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
 AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
+AC_DEFUN([AC_NETBSD],
+[AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
+      AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
+      AC_MSG_CHECKING([for NetBSD])
+      AC_EGREP_CPP(yes,
+      [#ifdef __NetBSD__
+	yes
+	#endif
+	],
+	[AC_MSG_RESULT([yes])
+	AC_DEFINE(_POSIX_SOURCE, 1) AC_DEFINE(_POSIX_C_SOURCE, 200112L) AC_DEFINE(_XOPEN_SOURCE, 600)],
+	[AC_MSG_RESULT([no])])
+])# AC_NETBSD
+
+AC_NETBSD
 AC_PATH_PROG(BSHELL, sh, )
 if test x"$BSHELL" = x; then
 	AC_MSG_ERROR([sh must be somewhere on \$PATH])
@@ -37,11 +52,11 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h \
-	features.h malloc.h sys/poll.h stddef.h)
+	getopt.h features.h malloc.h sys/poll.h stddef.h)
 AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h stdint.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
-AC_CHECK_HEADERS(rpc/types.h getopt.h netconfig.h,,
+AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
@@ -52,7 +67,7 @@ AC_CHECK_HEADERS(rpc/types.h getopt.h netconfig.h,,
 
 # Typedefs.
 AC_TYPE_SIZE_T
-AC_CHECK_TYPES([id_t, long long, u_long, u_quad_t])
+AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE(HAVE_SOCKLEN_T)],,
 [#include <sys/types.h>
 #include <sys/socket.h>])
@@ -104,6 +119,14 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	setgroupent setprogname setpassent snprintf strlcat strlcpy strsep \
 	strsuftoll strtoll \
 	user_from_uid vasprintf vasnprintf vsnprintf)
+
+AC_CHECK_FUNCS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [
+#include <sys/types.h>
+])
+
+AC_CHECK_FUNCS([bswap16, bswap32, bswap64],,, [
+#include <machine/bswap.h>
+])
 
 AC_CHECK_DECLS([setgroupent, setpassent],,, [
 #include <sys/types.h>

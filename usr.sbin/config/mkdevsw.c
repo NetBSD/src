@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.4 2003/05/17 18:53:01 itojun Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.5 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>

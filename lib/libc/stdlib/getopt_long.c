@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.16 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.17 2004/06/20 22:20:15 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.16 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.17 2004/06/20 22:20:15 jmc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,7 +50,11 @@ __RCSID("$NetBSD: getopt_long.c,v 1.16 2003/10/27 00:12:42 lukem Exp $");
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include "compat_getopt.h"
+#else
 #include <getopt.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_log2.c,v 1.8 2003/08/07 16:42:42 agc Exp $	*/
+/*	$NetBSD: hash_log2.c,v 1.9 2004/06/20 22:20:14 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -32,12 +32,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash_log2.c	8.2 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_log2.c,v 1.8 2003/08/07 16:42:42 agc Exp $");
+__RCSID("$NetBSD: hash_log2.c,v 1.9 2004/06/20 22:20:14 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

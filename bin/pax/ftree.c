@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.30 2004/06/19 02:27:00 christos Exp $	*/
+/*	$NetBSD: ftree.c,v 1.31 2004/06/20 22:20:14 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.30 2004/06/19 02:27:00 christos Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.31 2004/06/20 22:20:14 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -522,7 +522,7 @@ next_file(ARCHD *arcn)
 			statbuf.st_flags = ftnode->st_flags;
 #endif
 		if (ftnode->flags & F_TIME)
-#ifdef BSD4_4
+#if BSD4_4 && !HAVE_NBTOOL_CONFIG_H
 			statbuf.st_mtimespec = ftnode->st_mtimespec;
 #else
 			statbuf.st_mtime = ftnode->st_mtimespec.tv_sec;
@@ -726,6 +726,7 @@ next_file(ARCHD *arcn)
 			arcn->ln_name[cnt] = '\0';
 			arcn->ln_nlen = cnt;
 			break;
+#ifdef S_IFSOCK
 		case S_IFSOCK:
 			/*
 			 * under BSD storing a socket is senseless but we will
@@ -734,6 +735,7 @@ next_file(ARCHD *arcn)
 			 */
 			arcn->type = PAX_SCK;
 			break;
+#endif
 		case S_IFIFO:
 			arcn->type = PAX_FIF;
 			break;

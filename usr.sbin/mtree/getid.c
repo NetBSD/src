@@ -1,4 +1,4 @@
-/*	$NetBSD: getid.c,v 1.4 2003/08/07 11:25:35 agc Exp $	*/
+/*	$NetBSD: getid.c,v 1.5 2004/06/20 22:20:18 jmc Exp $	*/
 /*	from: NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp */
 /*	from: NetBSD: getgrent.c,v 1.41 2002/01/12 23:51:30 lukem Exp */
 
@@ -66,6 +66,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 
