@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.3 1993/06/18 06:51:05 cgd Exp $
+ *	$Id: vmparam.h,v 1.4 1993/07/13 10:16:40 cgd Exp $
  */
 
 
@@ -64,7 +64,7 @@
  */
 #define	MAXTSIZ		(6*1024*1024)		/* max text size */
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(6*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(32*1024*1024)		/* max data size */
