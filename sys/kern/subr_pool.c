@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.5 1998/07/31 21:55:09 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.6 1998/08/01 23:44:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -232,6 +232,14 @@ pr_rmpage(pp, ph)
 	(*pp->pr_free)(ph->ph_page, pp->pr_pagesz, pp->pr_mtype);
 	pp->pr_npages--;
 	pp->pr_npagefree++;
+
+	if (ph->ph_nmissing == 0) {
+#ifdef DIAGNOSTIC
+		if (pp->pr_nidle == 0)
+			panic("pr_rmpage: nidle inconsistent");
+#endif
+		pp->pr_nidle--;
+	}
 
 	if ((pp->pr_flags & PR_PHINPAGE) == 0) {
 		LIST_REMOVE(ph, ph_hashlist);
@@ -541,6 +549,13 @@ again:
 	 * Remove from item list.
 	 */
 	TAILQ_REMOVE(&ph->ph_itemlist, pi, pi_list);
+	if (ph->ph_nmissing == 0) {
+#ifdef DIAGNOSTIC
+		if (pp->pr_nidle == 0)
+			panic("pool_get: nidle inconsistent");
+#endif
+		pp->pr_nidle--;
+	}
 	ph->ph_nmissing++;
 	if (TAILQ_FIRST(&ph->ph_itemlist) == NULL) {
 		/*
@@ -623,6 +638,7 @@ pool_put(pp, v)
 	 * If this page has just become un-empty, move it the head.
 	 */
 	if (ph->ph_nmissing == 0) {
+		pp->pr_nidle++;
 		if (pp->pr_npages > pp->pr_maxpages) {
 #if 0
 			timeout(pool_drain, 0, pool_inactive_time*hz);
@@ -729,6 +745,8 @@ pool_prime_page(pp, storage)
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
 	ph->ph_time.tv_sec = ph->ph_time.tv_usec = 0;
+
+	pp->pr_nidle++;
 
 	/*
 	 * Color this page.
@@ -905,7 +923,8 @@ pool_print(pp, label)
 		printf("%s: ", label);
 
 	printf("pool %s: nalloc %lu nfree %lu npagealloc %lu npagefree %lu\n"
-	       "         npages %u minitems %u itemsperpage %u itemoffset %u\n",
+	       "         npages %u minitems %u itemsperpage %u itemoffset %u\n"
+	       "         nidle %lu\n",
 		pp->pr_wchan,
 		pp->pr_nget,
 		pp->pr_nput,
@@ -914,7 +933,8 @@ pool_print(pp, label)
 		pp->pr_npages,
 		pp->pr_minitems,
 		pp->pr_itemsperpage,
-		pp->pr_itemoffset);
+		pp->pr_itemoffset,
+		pp->pr_nidle);
 }
 
 int

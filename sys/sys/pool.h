@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.5 1998/07/31 02:53:34 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.6 1998/08/01 23:44:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ typedef struct pool {
 	unsigned long	pr_npagealloc;	/* # of pages allocated */
 	unsigned long	pr_npagefree;	/* # of pages released */
 	unsigned int	pr_hiwat;	/* max # of pages in pool */
+	unsigned long	pr_nidle;	/* # of idle pages */
 
 #ifdef POOL_DIAGNOSTIC
 	struct pool_log	*pr_log;
