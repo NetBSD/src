@@ -10,14 +10,14 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.4 1995/06/05 19:48:40 pk Exp $
+ * $Id: skeysubr.c,v 1.5 1995/06/19 22:47:37 jtc Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/termios.h>
+#include <termios.h>
 
 #include "md4.h"
 #include "skey.h"

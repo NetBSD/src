@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.10 1994/05/14 21:43:45 cgd Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.11 1995/06/19 22:52:25 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -79,7 +79,7 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.10 1994/05/14 21:43:45 cgd Exp $";
 #define POSIX
 #endif
 #ifdef POSIX
-#include <sys/termios.h>
+#include <termios.h>
 #include <sys/ioctl.h>
 #include <ttyent.h>
 #else
