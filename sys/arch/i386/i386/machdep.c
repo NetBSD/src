@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.32 2002/01/28 04:21:38 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.33 2002/02/24 00:17:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.32 2002/01/28 04:21:38 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.33 2002/02/24 00:17:44 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1174,7 +1174,7 @@ amd_family5_setup(struct cpu_info *ci)
 #define	MSR_TMx86_LONGRUN		0x80868010
 #define	MSR_TMx86_LONGRUN_FLAGS		0x80868011
 
-#define	LONGRUN_MODE_MASK(x)		((x) & 0x000000007f)
+#define	LONGRUN_MODE_MASK(x)		((x) & 0x0000007f)
 #define	LONGRUN_MODE_RESERVED(x)	((x) & 0xffffff80)
 #define	LONGRUN_MODE_WRITE(x, y)	(LONGRUN_MODE_RESERVED(x) | \
 					    LONGRUN_MODE_MASK(y))
@@ -1549,6 +1549,11 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 }
 
+static const char n_support[] =
+    "NOTICE: this kernel does not support %s CPU class\n";
+static const char n_lower[] = "NOTICE: lowering CPU class to %s\n";
+
+
 /*
  * Print identification for the given CPU.
  */
@@ -1733,34 +1738,34 @@ identifycpu(struct cpu_info *ci)
 #endif
 #ifndef I686_CPU
 	case CPUCLASS_686:
-		printf("NOTICE: this kernel does not support Pentium Pro CPU class\n");
+		printf(n_support, "Pentium Pro");
 #ifdef I586_CPU
-		printf("NOTICE: lowering CPU class to i586\n");
+		printf(n_lower, "i586");
 		cpu_class = CPUCLASS_586;
 		break;
 #endif
 #endif
 #ifndef I586_CPU
 	case CPUCLASS_586:
-		printf("NOTICE: this kernel does not support Pentium CPU class\n");
+		printf(n_support, "Pentium");
 #ifdef I486_CPU
-		printf("NOTICE: lowering CPU class to i486\n");
+		printf(n_lower, "i486");
 		cpu_class = CPUCLASS_486;
 		break;
 #endif
 #endif
 #ifndef I486_CPU
 	case CPUCLASS_486:
-		printf("NOTICE: this kernel does not support i486 CPU class\n");
+		printf(n_support, "i486");
 #ifdef I386_CPU
-		printf("NOTICE: lowering CPU class to i386\n");
+		printf(n_lower, "i386");
 		cpu_class = CPUCLASS_386;
 		break;
 #endif
 #endif
 #ifndef I386_CPU
 	case CPUCLASS_386:
-		printf("NOTICE: this kernel does not support i386 CPU class\n");
+		printf(n_support, "i386");
 		panic("no appropriate CPU class available");
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.19 2001/12/29 23:31:04 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.20 2002/02/24 00:17:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.19 2001/12/29 23:31:04 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.20 2002/02/24 00:17:45 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -169,7 +169,7 @@ trap(frame)
 {
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
-	struct pcb *pcb = NULL;
+	struct pcb *pcb;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
 		    resume_pop_fs[], resume_pop_gs[],
@@ -181,6 +181,7 @@ trap(frame)
 
 	uvmexp.traps++;
 
+	pcb = (p != NULL) ? &p->p_addr->u_pcb : NULL;
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
@@ -193,6 +194,7 @@ trap(frame)
 	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
 		p->p_md.md_regs = &frame;
+		pcb->pcb_cr2 = 0;
 	}
 
 	switch (type) {
@@ -236,7 +238,6 @@ trap(frame)
 		if (p == NULL)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
 copyefault:
 			error = EFAULT;
@@ -389,7 +390,6 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (p == 0)
 			goto we_re_toast;
-
 #ifdef LOCKDEBUG
 		/* If we page-fault while in scheduler, we're doomed. */
 		if (simple_lock_held(&sched_lock))
@@ -404,7 +404,6 @@ copyfault:
 			goto we_re_toast;
 #endif
 
-		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
@@ -432,7 +431,8 @@ copyfault:
 		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
-		va = trunc_page((vaddr_t)rcr2());
+		pcb->pcb_cr2 = rcr2();
+		va = trunc_page((vaddr_t)pcb->pcb_cr2);
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -446,7 +446,7 @@ copyfault:
 		else
 			map = &vm->vm_map;
 		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -477,10 +477,10 @@ copyfault:
 		}
 
 		/* Fault the original page in. */
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = NULL;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		error = uvm_fault(map, va, 0, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -609,7 +609,7 @@ trapwrite(addr)
 			nss = 0;
 	}
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE) != 0)
+	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE) != 0)
 		return 1;
 
 	if (nss > vm->vm_ssize)
