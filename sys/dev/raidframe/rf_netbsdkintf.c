@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.29.8.1 1999/12/21 23:19:54 wrstuden Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.29.8.2 1999/12/22 00:13:24 wrstuden Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -400,7 +400,7 @@ raidsize(dev)
 		size = -1;
 	else
 		size = lp->d_partitions[part].p_size *
-		    (lp->d_secsize / DEV_BSIZE);
+		    (lp->d_secsize / DEF_BSIZE);
 
 	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
@@ -2014,12 +2014,11 @@ raidmarkdirty(dev_t dev, struct vnode *b_vp, int mod_counter)
 
 /* ARGSUSED */
 int
-raidread_component_label(dev, b_vp, component_label, bshift, bsize)
+raidread_component_label(dev, b_vp, component_label, bshift)
 	dev_t dev;
 	struct vnode *b_vp;
 	RF_ComponentLabel_t *component_label;
 	int bshift;
-	int bsize;
 {
 	struct buf *bp;
 	int error;
