@@ -1,4 +1,4 @@
-.\"	$NetBSD: strip.1,v 1.5 1997/10/18 15:05:01 mrg Exp $
+.\"	$NetBSD: strip.1,v 1.6 1997/10/19 23:30:38 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm strip
 .Nd remove unnecessary information from executable files
 .Sh SYNOPSIS
-.Nm strip
+.Nm
 .Op Fl d
 .Op Fl x
 .Op Fl X
 .Ar file ...
 .Sh DESCRIPTION
 The
-.Nm strip
+.Nm
 utility
 deletes the relocation information and symbol table used by
 assemblers, loaders and debuggers.
@@ -64,7 +64,7 @@ Delete only debugging, empty, and compiler identification symbols.
 Delete only debugging, empty, compiler identification, and local symbols.
 .El
 .Pp
-.Nm Strip
+.Nm
 exits 0 on success and 1 if an error occurred.
 .Sh SEE ALSO
 .Xr cc 1 ,
