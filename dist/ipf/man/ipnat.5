@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.10 2002/09/19 08:11:15 martti Exp $
+.\"	$NetBSD: ipnat.5,v 1.11 2002/12/21 13:28:25 wiz Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -112,9 +112,9 @@ Only IP address and port numbers can be compared against.  This is available
 with all NAT rules.
 .SH TRANSLATION
 .PP
-To the right of the "->" is the address and port specificaton which will be
+To the right of the "->" is the address and port specification which will be
 written into the packet providing it has already successful matched the
-prior constraints.  The case of redirections (\fBrdr\fP) is the simpliest:
+prior constraints.  The case of redirections (\fBrdr\fP) is the simplest:
 the new destination address is that specified in the rule.  For \fBmap\fP
 rules, the destination address will be one for which the tuple combining
 the new source and destination is known to be unique.  If the packet is
@@ -192,7 +192,7 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .fi
 .PP
 so that all TCP/UDP packets were port mapped and only other protocols, such as
-ICMP, only have their IP# changed.  In some instaces, it is more appropriate
+ICMP, only have their IP# changed.  In some instances, it is more appropriate
 to use the keyword \fBauto\fP in place of an actual range of port numbers if
 you want to guarantee simultaneous access to all within the given range.
 However, in the above case, it would default to 1 port per IP address, since
