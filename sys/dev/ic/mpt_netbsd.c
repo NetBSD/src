@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.5 2003/04/23 00:55:19 tls Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.6 2003/05/01 20:18:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -380,12 +380,12 @@ mpt_timeout(void *arg)
 	if (mpt->verbose > 1)
 		mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
 
-	xs->error = XS_TIMEOUT;
-	scsipi_done(xs);
-
 	/* XXX WHAT IF THE IOC IS STILL USING IT?? */
 	req->xfer = NULL;
 	mpt_free_request(mpt, req);
+
+	xs->error = XS_TIMEOUT;
+	scsipi_done(xs);
 
 	splx(s);
 }
@@ -393,7 +393,7 @@ mpt_timeout(void *arg)
 static void
 mpt_done(mpt_softc_t *mpt, uint32_t reply)
 {
-	struct scsipi_xfer *xs;
+	struct scsipi_xfer *xs = NULL;
 	struct scsipi_periph *periph;
 	int index;
 	request_t *req;
@@ -528,8 +528,9 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		xs->error = XS_NOERROR;
 		xs->status = SCSI_OK;
 		xs->resid = 0;
+		mpt_free_request(mpt, req);
 		scsipi_done(xs);
-		goto done;
+		return;
 	}
 
 	xs->status = mpt_reply->SCSIStatus;
@@ -633,7 +634,6 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 			xs->error = XS_BUSY;
 	}
 
-	scsipi_done(xs);
  done:
 	/* If IOC done with this requeset, free it up. */
 	if (mpt_reply == NULL || (mpt_reply->MsgFlags & 0x80) == 0)
@@ -642,6 +642,9 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	/* If address reply, give the buffer back to the IOC. */
 	if (mpt_reply != NULL)
 		mpt_free_reply(mpt, (reply << 1));
+
+	if (xs != NULL)
+		scsipi_done(xs);
 }
 
 static void
