@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.32 1996/02/05 01:54:02 christos Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.33 1996/02/10 00:08:11 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1460,8 +1460,6 @@ vm_object_print(object, full)
 	vm_object_t	object;
 	boolean_t	full;
 {
-        extern void _vm_object_print();
-        
         _vm_object_print(object, full, printf);
 }
 
