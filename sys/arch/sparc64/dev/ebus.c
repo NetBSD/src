@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.23 2001/07/20 00:07:12 eeh Exp $	*/
+/*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -125,6 +125,7 @@ ebus_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+	char name[10];
 	int node;
 
 	/* Only attach if there's a PROM node. */
@@ -132,9 +133,11 @@ ebus_match(parent, match, aux)
 	if (node == -1) return (0);
 
 	/* Match a real ebus */
+	OF_getprop(node, "name", &name, sizeof(name));
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
+		strcmp(name, "ebus") == 0)
 		return (1);
 
 	/* Or a PCI-ISA bridge XXX I hope this is on-board. */
