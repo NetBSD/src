@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.22.2.9 2002/04/27 20:24:44 sommerfeld Exp $
+#	$NetBSD: GENERIC_TINY,v 1.22.2.10 2002/05/03 13:40:17 sommerfeld Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -172,6 +172,8 @@ options 	PCDISPLAY_SOFTCURSOR
 #
 
 mainbus0 at root
+
+cpu0 at mainbus? apid ?
 
 #apm0	at mainbus0			# Advanced power management
 
