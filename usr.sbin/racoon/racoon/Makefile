@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/08/02 15:27:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2001/08/31 10:36:08 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ SRCS=	main.c session.c isakmp.c handler.c random.c \
 	vmbuf.c plog.c logger.c schedule.c str2val.c misc.c sockmisc.c \
 	proposal.c sainfo.c vendorid.c safefile.c backupsa.c \
 	dnssec.c getcertsbyname.c
+SRCS+=	rijndael-alg-fst.c rijndael-api-fst.c sha2.c
 
 MAN=	racoon.8 racoon.conf.5
 
@@ -40,6 +41,7 @@ CPPFLAGS+=-DINET6 -DHAVE_FUNCTION_MACRO=1 -DHAVE_LIBCRYPTO=1 -DHAVE_LIBL=1 -DHAV
 CPPFLAGS+=-DHAVE_OPENSSL_OPENSSLV_H=1
 CPPFLAGS+=-DYY_NO_UNPUT
 CPPFLAGS+=-I${LIBPFKEYSRCDIR}
+CPPFLAGS+=-I${RACOONSRCDIR}/missing
 .if (${MKKERBEROS} != "no")
 CPPFLAGS+=-DHAVE_GSSAPI 
 .endif
@@ -60,5 +62,5 @@ CPPFLAGS+=-DHAVE_SIGNING_C=1 -DHAVE_OPENSSL_PEM_H=1 -DHAVE_OPENSSL_X509_H=1
 
 .include <bsd.prog.mk>
 
-.PATH:	${RACOONSRCDIR} ${TCPDUMPSRCDIR}
+.PATH:	${RACOONSRCDIR} ${TCPDUMPSRCDIR} ${RACOONSRCDIR}/missing/crypto/rijndael ${RACOONSRCDIR}/missing/crypto/sha2
 CLEANFILES+=	y.tab.h cfparse.c cftoken.c

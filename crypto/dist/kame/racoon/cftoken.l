@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.59 2001/05/24 06:43:24 sakane Exp $	*/
+/*	$KAME: cftoken.l,v 1.64 2001/08/13 17:47:59 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -47,11 +47,8 @@ int yyerrorcount = 0;
 #  define YYDB plog(LLV_DEBUG2, LOCATION, NULL,                                \
 		"begin <%d>%s\n", yy_start, yytext);
 #  define YYD {                                                                \
-	plog(LLV_DEBUG2, LOCATION, NULL, "<%d>", yy_start);                    \
-	if (loglevel >= LLV_DEBUG2) {                                          \
-		ECHO ;                                                         \
-		printf("\n");                                                  \
-	}                                                                      \
+	plog(LLV_DEBUG2, LOCATION, NULL, "<%d>%s",                             \
+	    yy_start, loglevel >= LLV_DEBUG2 ? "\n" : "");                     \
 }
 #else
 #  define YYDB
@@ -205,10 +202,6 @@ hexstring	0x{hexdigit}+
 <S_PLCYT>mode		{ YYD; return(SECMODE); }
 <S_PLCYT>tunnel		{ YYD; yylval.num = IPSECDOI_ATTR_ENC_MODE_TUNNEL; return(SECMODETYPE); }
 <S_PLCYT>transport	{ YYD; yylval.num = IPSECDOI_ATTR_ENC_MODE_TRNS; return(SECMODETYPE); }
-<S_PLCYT>strength	{ YYD; return(STRENGTH); }
-<S_PLCYT>extra_high	{ YYD; yylval.num = algstrength_ehigh; return(STRENGTHTYPE); }
-<S_PLCYT>high		{ YYD; yylval.num = algstrength_high; return(STRENGTHTYPE); }
-<S_PLCYT>normal		{ YYD; yylval.num = algstrength_normal; return(STRENGTHTYPE); }
 <S_PLCYT>encryption_algorithm { YYD; yylval.num = algclass_ipsec_enc; return(ALGORITHM_CLASS); }
 <S_PLCYT>authentication_algorithm { YYD; yylval.num = algclass_ipsec_auth; return(ALGORITHM_CLASS); }
 <S_PLCYT>compression_algorithm	{ YYD; yylval.num = algclass_ipsec_comp; return(ALGORITHM_CLASS); }
@@ -282,10 +275,6 @@ hexstring	0x{hexdigit}+
 <S_RMTP>lifetime	{ YYD; return(LIFETIME); }
 <S_RMTP>time		{ YYD; return(LIFETYPE_TIME); }
 <S_RMTP>byte		{ YYD; return(LIFETYPE_BYTE); }
-<S_RMTP>strength	{ YYD; return(STRENGTH); }
-<S_RMTP>extra_high	{ YYD; yylval.num = algstrength_ehigh; return(STRENGTHTYPE); }
-<S_RMTP>high		{ YYD; yylval.num = algstrength_high; return(STRENGTHTYPE); }
-<S_RMTP>normal		{ YYD; yylval.num = algstrength_normal; return(STRENGTHTYPE); }
 <S_RMTP>encryption_algorithm { YYD; yylval.num = algclass_isakmp_enc; return(ALGORITHM_CLASS); }
 <S_RMTP>authentication_method { YYD; yylval.num = algclass_isakmp_ameth; return(ALGORITHM_CLASS); }
 <S_RMTP>hash_algorithm	{ YYD; yylval.num = algclass_isakmp_hash; return(ALGORITHM_CLASS); }
@@ -337,15 +326,22 @@ des_iv32	{ YYD; yylval.num = algtype_des_iv32;	return(ALGORITHMTYPE); }
 rc4 		{ YYD; yylval.num = algtype_rc4;	return(ALGORITHMTYPE); }
 null_enc	{ YYD; yylval.num = algtype_null_enc;	return(ALGORITHMTYPE); }
 rijndael	{ YYD; yylval.num = algtype_rijndael;	return(ALGORITHMTYPE); }
+aes		{ YYD; yylval.num = algtype_rijndael;	return(ALGORITHMTYPE); }
 twofish		{ YYD; yylval.num = algtype_twofish;	return(ALGORITHMTYPE); }
 non_auth	{ YYD; yylval.num = algtype_non_auth;	return(ALGORITHMTYPE); }
 hmac_md5	{ YYD; yylval.num = algtype_hmac_md5;	return(ALGORITHMTYPE); }
 hmac_sha1	{ YYD; yylval.num = algtype_hmac_sha1;	return(ALGORITHMTYPE); }
+hmac_sha2_256	{ YYD; yylval.num = algtype_hmac_sha2_256;	return(ALGORITHMTYPE); }
+hmac_sha2_384	{ YYD; yylval.num = algtype_hmac_sha2_384;	return(ALGORITHMTYPE); }
+hmac_sha2_512	{ YYD; yylval.num = algtype_hmac_sha2_512;	return(ALGORITHMTYPE); }
 des_mac		{ YYD; yylval.num = algtype_des_mac;	return(ALGORITHMTYPE); }
 kpdk		{ YYD; yylval.num = algtype_kpdk;	return(ALGORITHMTYPE); }
 md5		{ YYD; yylval.num = algtype_md5;	return(ALGORITHMTYPE); }
 sha1		{ YYD; yylval.num = algtype_sha1;	return(ALGORITHMTYPE); }
 tiger		{ YYD; yylval.num = algtype_tiger;	return(ALGORITHMTYPE); }
+sha2_256	{ YYD; yylval.num = algtype_sha2_256;	return(ALGORITHMTYPE); }
+sha2_384	{ YYD; yylval.num = algtype_sha2_384;	return(ALGORITHMTYPE); }
+sha2_512	{ YYD; yylval.num = algtype_sha2_512;	return(ALGORITHMTYPE); }
 oui		{ YYD; yylval.num = algtype_oui;	return(ALGORITHMTYPE); }
 deflate		{ YYD; yylval.num = algtype_deflate;	return(ALGORITHMTYPE); }
 lzs		{ YYD; yylval.num = algtype_lzs;	return(ALGORITHMTYPE); }
@@ -354,6 +350,10 @@ modp1024	{ YYD; yylval.num = algtype_modp1024;	return(ALGORITHMTYPE); }
 modp1536	{ YYD; yylval.num = algtype_modp1536;	return(ALGORITHMTYPE); }
 ec2n155		{ YYD; yylval.num = algtype_ec2n155;	return(ALGORITHMTYPE); }
 ec2n185		{ YYD; yylval.num = algtype_ec2n185;	return(ALGORITHMTYPE); }
+modp2048	{ YYD; yylval.num = algtype_modp2048;	return(ALGORITHMTYPE); }
+modp3072	{ YYD; yylval.num = algtype_modp3072;	return(ALGORITHMTYPE); }
+modp4096	{ YYD; yylval.num = algtype_modp4096;	return(ALGORITHMTYPE); }
+modp8192	{ YYD; yylval.num = algtype_modp8192;	return(ALGORITHMTYPE); }
 pre_shared_key	{ YYD; yylval.num = algtype_psk;	return(ALGORITHMTYPE); }
 rsasig		{ YYD; yylval.num = algtype_rsasig;	return(ALGORITHMTYPE); }
 dsssig		{ YYD; yylval.num = algtype_dsssig;	return(ALGORITHMTYPE); }
