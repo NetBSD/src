@@ -1,3 +1,5 @@
+.\" 	$NetBSD: ftp.1,v 1.11 1995/09/08 01:06:24 tls Exp $
+.\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)ftp.1	8.2 (Berkeley) 12/30/93
-.\"	$Id: ftp.1,v 1.10 1995/01/13 00:09:41 jtc Exp $
+.\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd December 30, 1993
+.Dd October 9, 1994
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -42,7 +43,12 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl dgintv
+.Op Fl t
+.Op Fl v
+.Op Fl d
+.Op Fl i
+.Op Fl n
+.Op Fl g
 .Op Ar host
 .Sh DESCRIPTION
 .Nm Ftp
@@ -55,15 +61,16 @@ remote network site.
 Options may be specified at the command line, or to the
 command interpreter.
 .Bl -tag -width flag
-.It Fl d
-Enables debugging.
-.It Fl g
-Disables file name globbing.
-.It Fl i
-Turns off interactive prompting during
-multiple file transfers.
+.It Fl t
+Enables packet tracing.
+.It Fl v
+Verbose option forces
+.Nm ftp
+to show all responses from the remote server, as well
+as report on data transfer statistics.
 .It Fl n
 Restrains
+.Nm ftp
 from attempting \*(Lqauto-login\*(Rq upon initial connection.
 If auto-login is enabled,
 .Nm ftp
@@ -76,13 +83,13 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
-.It Fl t
-Enables packet tracing.
-.It Fl v
-Verbose option forces
-.Nm ftp
-to show all responses from the remote server, as well
-as report on data transfer statistics.
+.It Fl i
+Turns off interactive prompting during
+multiple file transfers.
+.It Fl d
+Enables debugging.
+.It Fl g
+Disables file name globbing.
 .El
 .Pp
 The client host with which
