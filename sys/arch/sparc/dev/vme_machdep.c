@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.29 2000/06/29 07:40:08 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.30 2000/07/04 22:22:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -666,21 +666,28 @@ vmeintr4(arg)
 {
 	struct sparc_vme_intr_handle *ihp = (vme_intr_handle_t)arg;
 	int level, vec;
-	int i = 0;
+	int rv = 0;
 
 	level = (ihp->pri << 1) | 1;
 
 	vec = ldcontrolb((caddr_t)(AC_VMEINTVEC | level));
 
 	if (vec == -1) {
-		printf("vme: spurious interrupt\n");
-		return 1; /* XXX - pretend we handled it, for now */
+#ifdef DEBUG
+		/*
+		 * This seems to happen only with the i82586 based
+		 * `ie1' boards.
+		 */
+		printf("vme: spurious interrupt at VME level %d\n", ihp->pri);
+#endif
+		return (1); /* XXX - pretend we handled it, for now */
 	}
 
 	for (; ihp; ihp = ihp->next)
 		if (ihp->vec == vec && ihp->ih.ih_fun)
-			i += (ihp->ih.ih_fun)(ihp->ih.ih_arg);
-	return (i);
+			rv |= (ihp->ih.ih_fun)(ihp->ih.ih_arg);
+
+	return (rv);
 }
 #endif
 
@@ -691,7 +698,7 @@ vmeintr4m(arg)
 {
 	struct sparc_vme_intr_handle *ihp = (vme_intr_handle_t)arg;
 	int level, vec;
-	int i = 0;
+	int rv = 0;
 
 	level = (ihp->pri << 1) | 1;
 
@@ -736,18 +743,25 @@ vmeintr4m(arg)
 #endif
 
 	if (vec == -1) {
-		printf("vme: spurious interrupt: ");
-		printf("SI: 0x%x, VME AFSR: 0x%x, VME AFAR 0x%x\n",
+#ifdef DEBUG
+		/*
+		 * This seems to happen only with the i82586 based
+		 * `ie1' boards.
+		 */
+		printf("vme: spurious interrupt at VME level %d\n", ihp->pri);
+		printf("    ICR_SI_PEND=0x%x; VME AFSR=0x%x; VME AFAR=0x%x\n",
 			*((int*)ICR_SI_PEND),
 			ihp->sc->sc_reg->vmebus_afsr,
 			ihp->sc->sc_reg->vmebus_afar);
+#endif
 		return (1); /* XXX - pretend we handled it, for now */
 	}
 
 	for (; ihp; ihp = ihp->next)
 		if (ihp->vec == vec && ihp->ih.ih_fun)
-			i += (ihp->ih.ih_fun)(ihp->ih.ih_arg);
-	return (i);
+			rv |= (ihp->ih.ih_fun)(ihp->ih.ih_arg);
+
+	return (rv);
 }
 #endif
 
