@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.37 2002/05/09 15:44:45 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.38 2002/09/21 18:09:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -92,6 +92,9 @@ struct procfs_args {
 #define PROCFS_ARGSVERSION	1
 
 #define PROCFSMNT_LINUXCOMPAT	0x01
+
+#define PROCFSMNT_BITS "\177\20" \
+    "b\00linuxcompat"
 
 /*
  * Kernel stuff follows

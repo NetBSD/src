@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.11 2002/07/30 07:40:10 soren Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.12 2002/09/21 18:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.11 2002/07/30 07:40:10 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.12 2002/09/21 18:09:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,14 @@ ov_mount(mp, path, data, ndp, p)
 	printf("ov_mount(mp = %p)\n", mp);
 #endif
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		lmp = MOUNTTOLAYERMOUNT(mp);
+		if (lmp == NULL)
+			return EIO;
+		args.la.target = NULL;
+		vfs_showexport(mp, &args.la.export, &lmp->layerm_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 * Get argument
 	 */

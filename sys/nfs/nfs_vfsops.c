@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.115 2002/07/30 07:40:13 soren Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.116 2002/09/21 18:08:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.115 2002/07/30 07:40:13 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.116 2002/09/21 18:08:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -563,6 +563,30 @@ nfs_mount(mp, path, data, ndp, p)
 	char *pth, *hst;
 	size_t len;
 	u_char *nfh;
+
+	if (mp->mnt_flag & MNT_GETARGS) {
+		struct nfsmount *nmp = VFSTONFS(mp);
+		if (nmp == NULL)
+			return EIO;
+		args.version = NFS_ARGSVERSION;
+		args.addr = NULL;
+		args.addrlen = 0;
+		args.sotype = nmp->nm_sotype;
+		args.proto = nmp->nm_soproto;
+		args.fh = NULL;
+		args.fhsize = 0;
+		args.flags = nmp->nm_flag;
+		args.wsize = nmp->nm_wsize;
+		args.rsize = nmp->nm_rsize;
+		args.readdirsize = nmp->nm_readdirsize;
+		args.timeo = nmp->nm_timeo;
+		args.retrans = nmp->nm_retry;
+		args.maxgrouplist = nmp->nm_numgrps;
+		args.readahead = nmp->nm_readahead;
+		args.leaseterm = nmp->nm_leaseterm;
+		args.hostname = NULL;
+		return copyout(&args, data, sizeof(args));
+	}
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
 	if (error)
