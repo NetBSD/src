@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.21 1996/05/22 13:55:02 mycroft Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.22 1996/06/14 22:21:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -781,8 +781,6 @@ sys_setsockopt(p, v, retval)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 			       (u_int)SCARG(uap, valsize));
 		if (error) {
@@ -911,8 +909,6 @@ sys_getsockname(p, v, retval)
 		return (error);
 	so = (struct socket *)fp->f_data;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	if (m == NULL)
-		return (ENOBUFS);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, (struct mbuf *)0,
 	    m, (struct mbuf *)0, (struct proc *)0);
 	if (error)
@@ -957,8 +953,6 @@ sys_getpeername(p, v, retval)
 	if (error)
 		return (error);
 	m = m_getclr(M_WAIT, MT_SONAME);
-	if (m == NULL)
-		return (ENOBUFS);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, (struct mbuf *)0,
 	    m, (struct mbuf *)0, (struct proc *)0);
 	if (error)
@@ -993,8 +987,6 @@ sockargs(mp, buf, buflen, type)
 		return (EINVAL);
 	}
 	m = m_get(M_WAIT, type);
-	if (m == NULL)
-		return (ENOBUFS);
 	m->m_len = buflen;
 	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
 	if (error) {
