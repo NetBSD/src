@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.19 2000/03/20 13:20:28 jdolecek Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.20 2001/09/26 07:05:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
