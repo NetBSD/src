@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.66 2001/02/21 21:39:57 jdolecek Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.67 2001/05/09 20:02:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -464,8 +464,15 @@ nfs_send(so, nam, top, rep)
 				else
 					rep->r_flags |= R_MUSTRESEND;
 			}
-		} else
-			log(LOG_INFO, "nfsd send error %d\n", error);
+		} else {
+			/*
+			 * See above. This error can happen under normal
+			 * circumstances and the log is too noisy.
+			 * The error will still show up in nfsstat.
+			 */
+			if (error != ENOBUFS || so->so_type != SOCK_DGRAM)
+				log(LOG_INFO, "nfsd send error %d\n", error);
+		}
 
 		/*
 		 * Handle any recoverable (soft) socket errors here. (? ? ?)
