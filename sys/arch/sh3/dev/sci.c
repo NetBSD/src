@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.3 1999/09/16 21:17:26 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.4 1999/09/17 01:23:00 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -1474,7 +1474,11 @@ scicnprobe(cp)
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);
+#ifdef SCICONSOLE
+	cp->cn_pri = CN_REMOTE;
+#else
 	cp->cn_pri = CN_NORMAL;
+#endif
 }
 
 #define sci_gets GetStrSci
