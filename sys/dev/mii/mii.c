@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.35 2004/08/23 06:18:39 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.36 2004/09/01 20:59:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.35 2004/08/23 06:18:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.36 2004/09/01 20:59:30 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.35 2004/08/23 06:18:39 thorpej Exp $");
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+
+#include "locators.h"
 
 static int	mii_print(void *, const char *);
 static int	mii_submatch(struct device *, struct cfdata *, void *);
