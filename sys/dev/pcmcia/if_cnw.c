@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.2 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.3 1999/11/29 12:53:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,59 @@
  */
 
 /*
+ * Copyright (c) 1996, 1997 Berkeley Software Design, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that this notice is retained,
+ * the conditions in the following notices are met, and terms applying
+ * to contributors in the following notices also apply to Berkeley
+ * Software Design, Inc.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by
+ *	Berkeley Software Design, Inc.
+ * 4. Neither the name of the Berkeley Software Design, Inc. nor the names
+ *    of its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY BERKELEY SOFTWARE DESIGN, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL BERKELEY SOFTWARE DESIGN, INC. BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * Paul Borman, December 1996
+ *
+ * This driver is derived from a generic frame work which is
+ * Copyright(c) 1994,1995,1996
+ * Yoichi Shinoda, Yoshitaka Tokugawa, WIDE Project, Wildboar Project
+ * and Foretune.  All rights reserved.
+ *
+ * A linux driver was used as the "hardware reference manual" (i.e.,
+ * to determine registers and a general outline of how the card works)
+ * That driver is publically available and copyright
+ *
+ * John Markus Bj,Ax(Brndalen
+ * Department of Computer Science
+ * University of Troms,Ax(B
+ * Norway             
+ * johnm@staff.cs.uit.no, http://www.cs.uit.no/~johnm/
+ */
+
+/*
  * This is a driver for the Xircom CreditCard Netwave (also known as
  * the Netwave Airsurfer) wireless LAN PCMCIA adapter.
  *
@@ -68,14 +121,17 @@
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
+#include <sys/proc.h>
+
+#include <net/if.h>
 
 #include <dev/pcmcia/if_cnwreg.h>
+#include <dev/pcmcia/if_cnwioctl.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 
@@ -91,7 +147,6 @@
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
-
 
 /*
  * Let these be patchable variables, initialized from macros that can
@@ -117,6 +172,7 @@ struct cnw_softc {
 	struct ethercom sc_ethercom;	    /* Ethernet common part */
 	int sc_domain;			    /* Netwave domain */
 	int sc_skey;			    /* Netwave scramble key */
+	struct cnwstats sc_stats;
 
 	/* PCMCIA-specific stuff */
 	struct pcmcia_function *sc_pf;	    /* PCMCIA function */
@@ -149,6 +205,8 @@ void cnw_recv __P((struct cnw_softc *));
 int cnw_intr __P((void *arg));
 int cnw_ioctl __P((struct ifnet *, u_long, caddr_t));
 void cnw_watchdog __P((struct ifnet *));
+static int cnw_setdomain __P((struct cnw_softc *, int));
+static int cnw_setkey __P((struct cnw_softc *, int));
 
 /* ---------------------------------------------------------------- */
 
@@ -270,6 +328,10 @@ void
 cnw_init(sc)
 	struct cnw_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	const u_int8_t rxmode =
+	    CNW_RXCONF_RXENA | CNW_RXCONF_BCAST | CNW_RXCONF_AMP;
+
 	/* Reset the card */
 	cnw_reset(sc);
 
@@ -277,7 +339,8 @@ cnw_init(sc)
 	CNW_CMD0(sc, CNW_CMD_NOP);
 
 	/* Set up receive configuration */
-	CNW_CMD1(sc, CNW_CMD_SRC, CNW_RXCONF_RXENA | CNW_RXCONF_BCAST);
+	CNW_CMD1(sc, CNW_CMD_SRC,
+	    rxmode | ((ifp->if_flags & IFF_PROMISC) ? CNW_RXCONF_PRO : 0));
 
 	/* Set up transmit configuration */
 	CNW_CMD1(sc, CNW_CMD_STC, CNW_TXCONF_TXENA);
@@ -355,8 +418,13 @@ cnw_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	return (pa->manufacturer == PCMCIA_VENDOR_TDK &&
-	    pa->product == PCMCIA_PRODUCT_TDK_XIR_CNW);
+	if (pa->manufacturer == PCMCIA_VENDOR_TDK &&
+	    pa->product == PCMCIA_PRODUCT_TDK_XIR_CNW_801)
+		return 1;
+	if (pa->manufacturer == PCMCIA_VENDOR_TDK &&
+	    pa->product == PCMCIA_PRODUCT_TDK_XIR_CNW_802)
+		return 1;
+	return 0;
 }
 
 
@@ -407,7 +475,14 @@ cnw_attach(parent, self, aux)
 	}
 	sc->sc_memt = sc->sc_pcmemh.memt;
 	sc->sc_memh = sc->sc_pcmemh.memh;
-	printf(": %s\n", PCMCIA_STR_TDK_XIR_CNW);
+	switch (pa->product) {
+	case PCMCIA_PRODUCT_TDK_XIR_CNW_801:
+		printf(": %s\n", PCMCIA_STR_TDK_XIR_CNW_801);
+		break;
+	case PCMCIA_PRODUCT_TDK_XIR_CNW_802:
+		printf(": %s\n", PCMCIA_STR_TDK_XIR_CNW_802);
+		break;
+	}
 
 	/* Finish setup of softc */
 	sc->sc_domain = cnw_domain;
@@ -427,7 +502,8 @@ cnw_attach(parent, self, aux)
 	ifp->if_start = cnw_start;
 	ifp->if_ioctl = cnw_ioctl;
 	ifp->if_watchdog = cnw_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX |
+	    IFF_NOTRAILERS;
 
 	/* Attach the interface */
 	if_attach(ifp);
@@ -436,6 +512,8 @@ cnw_attach(parent, self, aux)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+
+	ifp->if_baudrate = 1 * 1024 * 1024;
 
 	/* Disable the card now, and turn it on when the interface goes up */
 	pcmcia_function_disable(sc->sc_pf);
@@ -468,6 +546,8 @@ cnw_start(ifp)
 #endif
 			return;
 		}
+
+		sc->sc_stats.nws_tx++;
 
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
@@ -715,8 +795,10 @@ cnw_intr(arg)
 		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
 
 		/* Anything to receive? */
-		if (status & CNW_ASR_RXRDY)
+		if (status & CNW_ASR_RXRDY) {
+			sc->sc_stats.nws_rx++;
 			cnw_recv(sc);
+		}
 
 		/* Receive error */
 		if (status & CNW_ASR_RXERR) {
@@ -728,6 +810,22 @@ cnw_intr(arg)
 			 */
 			rser = bus_space_read_1(sc->sc_memt, sc->sc_memh,
 			    sc->sc_memoff + CNW_EREG_RSER);
+
+			/* RX statistics */
+			sc->sc_stats.nws_rxerr++;
+			if (rser & CNW_RSER_RXBIG)
+				sc->sc_stats.nws_rxframe++;
+			if (rser & CNW_RSER_RXCRC)
+				sc->sc_stats.nws_rxcrcerror++;
+			if (rser & CNW_RSER_RXOVERRUN)
+				sc->sc_stats.nws_rxoverrun++;
+			if (rser & CNW_RSER_RXOVERFLOW)
+				sc->sc_stats.nws_rxoverflow++;
+			if (rser & CNW_RSER_RXERR)
+				sc->sc_stats.nws_rxerrors++;
+			if (rser & CNW_RSER_RXAVAIL)
+				sc->sc_stats.nws_rxavail++;
+
 			/* Clear error bits in RSER */
 			WAIT_WOC(sc);
 			bus_space_write_1(sc->sc_memt, sc->sc_memh,
@@ -744,12 +842,24 @@ cnw_intr(arg)
 		if (status & CNW_ASR_TXDN) {
 			tser = bus_space_read_1(sc->sc_memt, sc->sc_memh,
 						CNW_EREG_TSER);
+
+			/* TX statistics */
+			if (tser & CNW_TSER_TXERR)
+				sc->sc_stats.nws_txerrors++;
+			if (tser & CNW_TSER_TXNOAP)
+				sc->sc_stats.nws_txlostcd++;
+			if (tser & CNW_TSER_TXGU)
+				sc->sc_stats.nws_txabort++;
+
 			if (tser & CNW_TSER_TXOK) {
+				sc->sc_stats.nws_txokay++;
+				sc->sc_stats.nws_txretries[status & 0xf]++;
 				WAIT_WOC(sc);
 				bus_space_write_1(sc->sc_memt, sc->sc_memh,
 				    sc->sc_memoff + CNW_EREG_TSERW,
 				    CNW_TSER_TXOK | CNW_TSER_RTRY);
 			}
+
 			if (tser & CNW_TSER_ERROR) {
 				++ifp->if_oerrors;
 				WAIT_WOC(sc);
@@ -777,7 +887,9 @@ cnw_ioctl(ifp, cmd, data)
 {
 	struct cnw_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
+	struct proc *p = curproc;	/*XXX*/
 
 	s = splnet();
 
@@ -791,9 +903,13 @@ cnw_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
+			cnw_init(sc);
 			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
 			break;
 #endif
+		default:
+			cnw_init(sc);
+			break;
 		}
 		break;
 
@@ -810,8 +926,59 @@ cnw_ioctl(ifp, cmd, data)
 			 * start it.
 			 */
 			error = cnw_enable(sc);
+		} else {
+			/* IFF_PROMISC may be changed */
+			cnw_init(sc);
 		}
 		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/* Update our multicast list. */
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
+		if (error == ENETRESET || error == 0) {
+			cnw_init(sc);
+			error = 0;
+		}
+		break;
+
+	case SIOCGCNWDOMAIN:
+		((struct ifreq *)data)->ifr_domain = sc->sc_domain;
+		break;
+
+	case SIOCSCNWDOMAIN:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
+		error = cnw_setdomain(sc, ifr->ifr_domain);
+		break;
+
+	case SIOCSCNWKEY:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
+		error = cnw_setkey(sc, ifr->ifr_key);
+		break;
+
+	case SIOCGCNWSTATUS:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			break;
+		bus_space_read_region_1(sc->sc_memt, sc->sc_memh,
+		    sc->sc_memoff + CNW_EREG_CB,
+		    ((struct cnwstatus *)data)->data,
+		    sizeof(((struct cnwstatus *)data)->data));
+		break;
+
+	case SIOCGCNWSTATS:
+		bcopy((void *)&sc->sc_stats,
+		    (void *)&(((struct cnwistats *)data)->stats),
+		    sizeof(struct cnwstats));
+			break;
 
 	default:
 		error = EINVAL;
@@ -836,4 +1003,40 @@ cnw_watchdog(ifp)
 	printf("%s: device timeout; card reset\n", sc->sc_dev.dv_xname);
 	++ifp->if_oerrors;
 	cnw_init(sc);
+}
+
+int
+cnw_setdomain(sc, domain)
+	struct cnw_softc *sc;
+	int domain;
+{
+	int s;
+
+	if (domain & ~0x1ff)
+		return EINVAL;
+
+	s = splnet();
+	CNW_CMD2(sc, CNW_CMD_SMD, domain, domain >> 8);
+	splx(s);
+
+	sc->sc_domain = domain;
+	return 0;
+}
+
+int
+cnw_setkey(sc, key)
+	struct cnw_softc *sc;
+	int key;
+{
+	int s;
+
+	if (key & ~0xffff)
+		return EINVAL;
+
+	s = splnet();
+	CNW_CMD2(sc, CNW_CMD_SSK, key, key >> 8);
+	splx(s);
+
+	sc->sc_skey = key;
+	return 0;
 }
