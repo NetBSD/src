@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.1 1997/05/02 06:15:28 jeremy Exp $	*/
+/*	$NetBSD: intersil7170.h,v 1.2 2000/07/25 22:33:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,6 +65,19 @@ struct intersil7170 {
     u_int8_t clk_cmd_reg;
 };
 
+/* Indices to time-of-day clock registers */
+#define INTERSIL_ICSEC	0
+#define INTERSIL_IHOUR	1
+#define INTERSIL_IMIN	2
+#define INTERSIL_ISEC	3
+#define INTERSIL_IMON	4
+#define INTERSIL_IDAY	5
+#define INTERSIL_IYEAR	6
+#define INTERSIL_IDOW	7
+
+#define INTERSIL_IINTR	16
+#define INTERSIL_ICMD	17
+
 /*  bit assignments for command register, p. 6 of 10, write-only */
 #define INTERSIL_CMD_FREQ_32K    0x0
 #define INTERSIL_CMD_FREQ_1M     0x1
@@ -96,4 +109,5 @@ struct intersil7170 {
 
 #define INTERSIL_INTER_BITS "\20\10PENDING\7DAYS\6HRS\5MIN\4SCDS\3DSEC\2CSEC\1ALARM"
 
+todr_chip_handle_t intersil7170_attach(bus_space_tag_t, bus_space_handle_t, int);
 #endif	/* _INTERSIL7170_H */
