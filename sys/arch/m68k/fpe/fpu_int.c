@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.2 1999/05/30 20:17:48 briggs Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.3 2000/09/22 19:47:59 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -60,7 +60,7 @@ fpu_intrz(fe)
     return x;
   }
 
-  clr = 3 - sh / 32;
+  clr = 2 - sh / 32;
   mask = (0xffffffff << (sh % 32));
 
   for (i = 2; i > clr; i--) {
