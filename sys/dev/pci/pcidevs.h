@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.704 2005/03/19 11:54:53 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.705 2005/03/24 13:17:24 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.703 2005/03/19 11:54:31 tron Exp
+ *	NetBSD: pcidevs,v 1.704 2005/03/24 13:17:08 tron Exp
  */
 
 /*
@@ -1019,10 +1019,13 @@
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500	0x4e44		/* Radeon 9700/9500 Series */
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500_2	0x4e45		/* Radeon 9700/9500 Series */
 #define	PCI_PRODUCT_ATI_RADEON_9600	0x4e46		/* Radeon 9600TX */
+#define	PCI_PRODUCT_ATI_RADEON_9700_PRO	0x4e47		/* Radeon 9700 Pro */
+#define	PCI_PRODUCT_ATI_RADEON_9800_PRO	0x4e48		/* Radeon 9800 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_MOB_T2	0x4e54		/* Radeon Mobility T2 (M10) NT */
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500_S	0x4e64		/* Radeon 9700/9500 Series Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500_S2	0x4e65		/* Radeon 9700/9500 Series Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_9600_2	0x4e66		/* Radeon 9600TX Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_9800_PRO_2	0x4e68		/* Radeon 9800 Pro Secondary */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
