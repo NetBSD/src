@@ -1,4 +1,4 @@
-/*	$NetBSD: arpadate.c,v 1.9 1998/01/09 08:10:59 perry Exp $	*/
+/*	$NetBSD: arpadate.c,v 1.10 1998/07/26 15:54:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
@@ -88,7 +88,7 @@ arpadate(ud)
 	register struct tm *lt;
 	time_t t;
 	struct tm gmt;
-	char *tz;
+	const char *tz;
 	static char b[43 + TZNAME_MAX];
 
 	/*
