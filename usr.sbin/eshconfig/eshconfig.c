@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.1 1998/05/16 18:55:18 kml Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.2 1998/11/20 17:23:27 kml Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.1 1998/05/16 18:55:18 kml Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.2 1998/11/20 17:23:27 kml Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -116,6 +116,7 @@ static void 		esh_tune __P((void));
 static void 		esh_tune_eeprom __P((void));
 static void 		esh_tuning_stats __P((void));
 static void 		esh_stats __P((int));
+static void 		esh_reset __P((void));
 static int 		drvspec_ioctl __P((char *, int, int, int, caddr_t));
 static void		usage __P((void));
 int			main __P((int, char *[]));
@@ -167,6 +168,7 @@ usage()
 	fprintf(stderr, "-u upload filename [not working]\n");
 	fprintf(stderr, "-w bytes before DMA starts for write\n");
 	fprintf(stderr, "-i interrupt delay in usecs\n");
+	fprintf(stderr, "-x reset interface\n");
 	exit(1);
 }
 
@@ -219,6 +221,7 @@ int get_tuning_stats = 0;
 int eeprom_write = 0;
 char *eeprom_download_filename = NULL;
 char *eeprom_upload_filename = NULL;
+int reset = 0;
 
 struct rr_tuning rr_tune;
 struct rr_eeprom rr_eeprom;
@@ -234,7 +237,7 @@ main(argc, argv)
 
 	/* Parse command-line options */
 
-	while ((ch = getopt(argc, argv, "b:c:d:ei:m:r:stu:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:ei:m:r:stu:w:x")) != -1) {
 		switch (ch) {
 		case 'b':
 			dma_max_read = atoi(optarg);
@@ -268,6 +271,9 @@ main(argc, argv)
 			break;
 		case 'w':
 			dma_thresh_write = atoi(optarg);
+			break;
+		case 'x':
+			reset = 1;
 			break;
 		default:
 			usage();
@@ -320,6 +326,10 @@ main(argc, argv)
 
 	if (eeprom_write)
 		esh_tune_eeprom();
+
+	if (reset)
+		esh_reset();
+
 	exit(0);
 }
 
@@ -688,6 +698,13 @@ struct stats_values stats_values[] = {
 	{0xfc, "receiver idles"},
 	{0, 0},
 };
+
+static void
+esh_reset()
+{
+	if (drvspec_ioctl(name, s, EIOCRESET, 0, 0) < 0)
+		err(1, "ioctl(EIOCRESET)");
+}
 
 static void
 esh_stats(int get_stats)
