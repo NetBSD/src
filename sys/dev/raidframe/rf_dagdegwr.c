@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.10 2002/05/22 15:40:48 wiz Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.11 2002/08/02 03:42:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.10 2002/05/22 15:40:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.11 2002/08/02 03:42:33 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.10 2002/05/22 15:40:48 wiz Exp $")
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
 #include "rf_debugMem.h"
-#include "rf_memchunk.h"
 #include "rf_general.h"
 #include "rf_dagdegwr.h"
 

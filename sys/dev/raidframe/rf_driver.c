@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.49 2002/07/24 02:17:14 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.50 2002/08/02 03:42:34 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.49 2002/07/24 02:17:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.50 2002/08/02 03:42:34 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.49 2002/07/24 02:17:14 oster Exp $")
 #include "rf_revent.h"
 #include "rf_callback.h"
 #include "rf_engine.h"
-#include "rf_memchunk.h"
 #include "rf_mcpair.h"
 #include "rf_nwayxor.h"
 #include "rf_debugprint.h"
@@ -371,7 +370,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		DO_INIT_CONFIGURE(rf_ConfigureMapModule);
 		DO_INIT_CONFIGURE(rf_ConfigureReconEvent);
 		DO_INIT_CONFIGURE(rf_ConfigureCallback);
-		DO_INIT_CONFIGURE(rf_ConfigureMemChunk);
 		DO_INIT_CONFIGURE(rf_ConfigureRDFreeList);
 		DO_INIT_CONFIGURE(rf_ConfigureNWayXor);
 		DO_INIT_CONFIGURE(rf_ConfigureStripeLockFreeList);
@@ -492,6 +490,22 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	rf_StartUserStats(raidPtr);
 
 	raidPtr->valid = 1;
+
+	printf("raid%d: %s\n", raidPtr->raidid,
+	       raidPtr->Layout.map->configName);
+	printf("raid%d: Components: ", raidPtr->raidid);
+	for (row = 0; row < raidPtr->numRow; row++) {
+		for (col = 0; col < raidPtr->numCol; col++) {
+			printf("%s ", raidPtr->Disks[row][col].devname);
+		}
+	}
+	printf("\n");
+	printf("raid%d: Total Sectors: %lu (%lu MB)\n",
+	       raidPtr->raidid,
+	       (unsigned long) raidPtr->totalSectors,
+	       (unsigned long) (raidPtr->totalSectors / 1024 * 
+				(1 << raidPtr->logBytesPerSector) / 1024));
+
 	return (0);
 }
 

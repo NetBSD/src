@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.5 2002/08/02 03:32:56 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.6 2002/08/02 03:42:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,7 +43,6 @@
 #include "rf_layout.h"
 #include "rf_dagflags.h"
 #include "rf_acctrace.h"
-#include "rf_memchunk.h"
 
 #define RF_THREAD_CONTEXT   0	/* we were invoked from thread context */
 #define RF_INTR_CONTEXT     1	/* we were invoked from interrupt context */
