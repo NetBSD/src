@@ -1,52 +1,79 @@
-.\"	$NetBSD: ipnat.8,v 1.5 1998/11/22 15:21:55 mrg Exp $
+.\"	$NetBSD: ipnat.8,v 1.6 1999/01/12 18:41:07 garbled Exp $
 .\"
-.TH IPNAT 8
-.SH NAME
+.Dd January 12, 1999
+.Dt IPNAT 8
+.Os
+.Sh NAME
 ipnat \- user interface to the NAT
-.SH SYNOPSIS
-.B ipnat
-[
-.B \-lnrsvCF
-]
-.B \-f <\fIfilename\fP>
-.SH DESCRIPTION
-.PP
-\fBipnat\fP opens the filename given (treating "\-" as stdin) and parses the
+.Sh SYNOPSIS
+.Nm ipnat
+.Op Fl lnrsvCF
+.Fl f Ar filename
+.Sh DESCRIPTION
+.Pp
+.Nm
+opens the filename given (treating
+.Dq -
+as stdin) and parses the
 file for a set of rules which are to be added or removed from the IP NAT.
 .PP
-Each rule processed by \fBipnat\fP
+Each rule processed by
+.Nm
 is added to the kernels internal lists if there are no parsing problems.
 Rules are added to the end of the internal lists, matching the order in
-which they appear when given to \fBipnat\fP.
-.SH OPTIONS
-.TP
-.B \-C
+which they appear when given to
+.Nm Ns .
+.Pp
+.Sy Please Note
+That
+.Nm
+is not functional without
+.Xr ipf 8
+running.  In addition, the following kernel options need to be turned on
+in order to use
+.Nm Ns :
+.Em GATEWAY ,
+.Em IPFORWARDING
+and
+.Em PFIL_HOOKS .
+The
+.Xr sysctl
+.Pp
+.Dl Dq "sysctl net.inet.ip.forwarding
+.Pp
+will inform you if
+.Em IPFORWARDING
+is currently turned on in your kernel.  Please see
+.Xr options 4
+and
+.Xr sysctl 8
+for more information on turning these parameters on.
+.Sh OPTIONS
+.Bl -tag -width four
+.It Fl C
 delete all entries in the current NAT rule listing (NAT rules)
-.TP
-.B \-F
+.It Fl F
 delete all active entries in the current NAT translation table (currently
 active NAT mappings)
-.TP
-.B \-l
+.It Fl l
 Show the list of current NAT table entry mappings.
-.TP
-.B \-n
+.It Fl n
 This flag (no-change) prevents \fBipf\fP from actually making any ioctl
 calls or doing anything which would alter the currently running kernel.
-.TP
-.B \-s
+.It Fl s
 Retrieve and display NAT statistics
-.TP
-.B \-r
+.It Fl r
 Remove matching NAT rules rather than add them to the internal lists
-.TP
-.B \-v
+.It Fl v
 Turn verbose mode on.  Displays information relating to rule processing
 and active rules/table entries.
-.DT
-.SH FILES
-/dev/ipnat
+.El
+.Sh FILES
+.Pa /dev/ipnat
 .br
-/usr/share/examples/ipf  Directory with examples.
-.SH SEE ALSO
-ipnat(5), ipf(8), ipfstat(8)
+.Pa /usr/share/examples/ipf
+Directory with examples.
+.Sh SEE ALSO
+.Xr ipnat 5 ,
+.Xr ipf 8 ,
+.Xr ipfstat 8

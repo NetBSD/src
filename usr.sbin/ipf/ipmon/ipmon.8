@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.6 1998/11/22 15:21:55 mrg Exp $
+.\"	$NetBSD: ipmon.8,v 1.7 1999/01/12 18:41:07 garbled Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -30,6 +30,10 @@ default or a filename, if given on the command line.  Should the \fB\-s\fP
 option be used, output is instead sent to \fBsyslogd(8)\fP.  Messages sent
 via syslog have the day, month and year removed from the message, but the
 time (including microseconds), as recorded in the log, is still included.
+.LP
+In order for \fBipmon\fP to properly work, the kernel option
+\fBIPFILTER_LOG\fP must be turned on in your kernel.  Please see
+\fBoptions(4)\fP for more details.
 .SH OPTIONS
 .TP
 .B \-a
