@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.20 2004/03/01 01:19:45 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.21 2004/03/13 05:43:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.20 2004/03/01 01:19:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.21 2004/03/13 05:43:08 dyoung Exp $");
 #endif
 
 /*
@@ -167,7 +167,8 @@ static void	ath_calibrate(void *);
 static int	ath_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void	ath_newassoc(struct ieee80211com *,
 			struct ieee80211_node *, int);
-static int	ath_getchannels(struct ath_softc *, u_int cc, HAL_BOOL outdoor);
+static int	ath_getchannels(struct ath_softc *, u_int cc, HAL_BOOL outdoor,
+			HAL_BOOL xchanmode);
 
 static int	ath_rate_setup(struct ath_softc *sc, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
@@ -204,6 +205,7 @@ static int ath_dwelltime_nodenum, ath_calibrate_nodenum, ath_outdoor_nodenum,
 static	int ath_dwelltime = 200;		/* 5 channels/second */
 static	int ath_calinterval = 30;		/* calibrate every 30 secs */
 static	int ath_outdoor = AH_TRUE;		/* outdoor operation */
+static	int ath_xchanmode = AH_TRUE;		/* enable extended channels */
 static	int ath_countrycode = CTRY_DEFAULT;	/* country code */
 static	int ath_regdomain = 0;			/* regulatory domain */
 
@@ -441,7 +443,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * is resposible for filtering this list based on settings
 	 * like the phy mode.
 	 */
-	error = ath_getchannels(sc, ath_countrycode, ath_outdoor);
+	error = ath_getchannels(sc, ath_countrycode, ath_outdoor,
+	    ath_xchanmode);
 	if (error != 0)
 		goto bad;
 	/*
@@ -3243,7 +3246,8 @@ ath_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 }
 
 static int
-ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor)
+ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
+    HAL_BOOL xchanmode)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -3258,7 +3262,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor)
 		return ENOMEM;
 	}
 	if (!ath_hal_init_channels(ah, chans, IEEE80211_CHAN_MAX, &nchan,
-	    cc, HAL_MODE_ALL, outdoor, 0 /* no extended channels */)) {
+	    cc, HAL_MODE_ALL, outdoor, xchanmode)) {
 		if_printf(ifp, "unable to collect channel list from hal\n");
 		free(chans, M_TEMP);
 		return EINVAL;
@@ -3276,6 +3280,9 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor)
 				ix, c->channel, c->channelFlags);
 			continue;
 		}
+		DPRINTF(("%s: HAL channel %d/%d freq %d flags %#04x idx %d\n",
+		    sc->sc_dev.dv_xname, i, nchan, c->channel, c->channelFlags,
+		    ix));
 		/* NB: flags are known to be compatible */
 		if (ic->ic_channels[ix].ic_freq == 0) {
 			ic->ic_channels[ix].ic_freq = c->channel;
