@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)resolver.3	6.9 (Berkeley) 7/29/91
-.\"	$Id: resolver.3,v 1.3 1994/01/26 10:59:58 deraadt Exp $
+.\"	$Id: resolver.3,v 1.4 1994/04/07 07:00:22 deraadt Exp $
 .\"
 .Dd July 29, 1991
 .Dt RESOLVER 3
@@ -180,6 +180,25 @@ The current domain name is defined by the hostname
 if not specified in the configuration file;
 it can be overridden by the environment variable
 .Ev LOCALDOMAIN .
+This environment variable may contain several blank-separated
+tokens if you wish to override the
+.Fa search list
+on a per-process basis.
+This is similar to the
+.Fa search
+command in the configuration file.
+Another environment variable
+.Ev RES_OPTIONS
+can be set to override certain internal resolver options which
+are otherwise set by changing fields in the
+.Fa _res
+structure or are inherited from the configuration file's
+.Fa options
+command.
+The syntax of the
+.Ev RES_OPTIONS
+environment variable is explained in
+.Xr resolv.conf 5 .
 Initialization normally occurs on the first call
 to one of the following routines.
 .Pp

@@ -31,11 +31,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resolv.h	5.15 (Berkeley) 4/3/91
- *	$Id: resolv.h,v 1.3 1994/01/28 03:00:25 deraadt Exp $
+ *	$Id: resolv.h,v 1.4 1994/04/07 06:58:30 deraadt Exp $
  */
 
 #ifndef _RESOLV_H_
 #define	_RESOLV_H_
+
+/*
+ * revision information.  this is the release date in YYYYMMDD format.
+ * it can change every day so the right thing to do with it is use it
+ * in preprocessor commands such as "#if (__RES > 19931104)".  do not
+ * compare for equality; rather, use it to determine whether your resolver
+ * is new enough to contain a certain feature.
+ */
+
+#define	__RES		19931104
 
 /*
  * Resolver configuration file.
@@ -57,8 +67,10 @@
 #define	MAXDNSLUS		4	/* max # of host lookup types */
 
 #define	RES_TIMEOUT		5	/* min. seconds between retries */
+#define MAXRESOLVSORT		10	/* number of net to sort on */
+#define RES_MAXNDOTS		15	/* should reflect bit field size */
 
-struct state {
+struct __res_state {
 	int	retrans;	 	/* retransmition time interval */
 	int	retry;			/* number of times to retransmit */
 	long	options;		/* option flags - see below. */
@@ -66,8 +78,16 @@ struct state {
 	struct	sockaddr_in nsaddr_list[MAXNS];	/* address of name server */
 #define	nsaddr	nsaddr_list[0]		/* for backward compatibility */
 	u_short	id;			/* current packet id */
-	char	defdname[MAXDNAME];	/* default domain */
 	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
+	char	defdname[MAXDNAME];	/* default domain */
+	long	pfcode;			/* RES_PRF_ flags - see below. */
+	u_char	ndots:4;		/* threshold for initial abs. query */
+	u_char	nsort:4;		/* number of elements in sort_list[] */
+	char	unused[3];
+	struct {
+		struct in_addr addr;
+		u_long mask;
+	} sort_list[MAXRESOLVSORT];
 	char	lookups[MAXDNSLUS];
 };
 
@@ -87,7 +107,27 @@ struct state {
 
 #define RES_DEFAULT	(RES_RECURSE | RES_DEFNAMES | RES_DNSRCH)
 
-extern struct state _res;
+/*
+ * Resolver "pfcode" values.  Used by dig.
+ */
+#define	RES_PRF_STATS	0x0001
+/*			0x0002  */
+#define	RES_PRF_CLASS	0x0004
+#define	RES_PRF_CMD	0x0008
+#define	RES_PRF_QUES	0x0010
+#define	RES_PRF_ANS	0x0020
+#define	RES_PRF_AUTH	0x0040
+#define	RES_PRF_ADD	0x0080
+#define	RES_PRF_HEAD1	0x0100
+#define	RES_PRF_HEAD2	0x0200
+#define	RES_PRF_TTLID	0x0400
+#define	RES_PRF_HEADX	0x0800
+#define	RES_PRF_QUERY	0x1000
+#define	RES_PRF_REPLY	0x2000
+#define	RES_PRF_INIT	0x4000
+/*			0x8000  */
+
+extern struct __res_state _res;
 
 #include <sys/cdefs.h>
 #include <stdio.h>
@@ -116,7 +156,7 @@ int	 dn_expand __P((const u_char *, const u_char *, const u_char *,
 		u_char *, int));
 int	 res_init __P((void));
 int	 res_mkquery __P((int, const char *, int, int, const char *, int,
-		const struct rrec *, char *, int));
+		const char *, char *, int));
 int	 res_send __P((const char *, int, char *, int));
 __END_DECLS
 

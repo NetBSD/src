@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_comp.c	6.22 (Berkeley) 3/19/91";*/
-static char *rcsid = "$Id: res_comp.c,v 1.3 1993/08/26 00:46:15 jtc Exp $";
+static char *rcsid = "$Id: res_comp.c,v 1.4 1994/04/07 07:00:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -221,16 +221,19 @@ __dn_skipname(comp_dn, eom)
 		 * check for indirection
 		 */
 		switch (n & INDIR_MASK) {
-		case 0:		/* normal case, n == len */
+		case 0:			/* normal case, n == len */
 			cp += n;
 			continue;
-		default:	/* illegal type */
-			return (-1);
 		case INDIR_MASK:	/* indirection */
 			cp++;
+			break;
+		default:		/* illegal type */
+			return (-1);
 		}
 		break;
 	}
+	if (cp > eom)
+		return -1;
 	return (cp - comp_dn);
 }
 
@@ -240,7 +243,7 @@ __dn_skipname(comp_dn, eom)
  * dnptrs is the pointer to the first name on the list,
  * not the pointer to the start of the message.
  */
-static
+static int
 dn_find(exp_dn, msg, dnptrs, lastdnptr)
 	u_char *exp_dn, *msg;
 	u_char **dnptrs, **lastdnptr;
@@ -296,33 +299,22 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 
 u_short
 _getshort(msgp)
-	u_char *msgp;
+	register u_char *msgp;
 {
-	register u_char *p = (u_char *) msgp;
-#ifdef vax
-	/*
-	 * vax compiler doesn't put shorts in registers
-	 */
-	register u_long u;
-#else
 	register u_short u;
-#endif
 
-	u = *p++ << 8;
-	return ((u_short)(u | *p));
+	GETSHORT(u, msgp);
+	return (u);
 }
 
 u_long
 _getlong(msgp)
 	u_char *msgp;
 {
-	register u_char *p = (u_char *) msgp;
 	register u_long u;
 
-	u = *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	return (u | *p);
+	GETLONG(u, msgp);
+	return (u);
 }
 
 void
@@ -334,8 +326,7 @@ __putshort(s, msgp)
 	register u_char *msgp;
 #endif
 {
-	msgp[1] = s;
-	msgp[0] = s >> 8;
+	PUTSHORT(s, msgp);
 }
 
 void
@@ -343,8 +334,5 @@ __putlong(l, msgp)
 	register u_long l;
 	register u_char *msgp;
 {
-	msgp[3] = l;
-	msgp[2] = (l >>= 8);
-	msgp[1] = (l >>= 8);
-	msgp[0] = l >> 8;
+	PUTLONG(l, msgp);
 }

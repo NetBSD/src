@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)netdb.h	5.15 (Berkeley) 4/3/91
- *	$Id: netdb.h,v 1.2 1993/08/01 18:44:45 mycroft Exp $
+ *	$Id: netdb.h,v 1.3 1994/04/07 06:58:29 deraadt Exp $
  */
 
 #ifndef _NETDB_H_
@@ -100,8 +100,8 @@ void		endnetent __P((void));
 void		endprotoent __P((void));
 void		endservent __P((void));
 struct hostent	*gethostbyaddr __P((const char *, int, int));
-struct hostent	*gethostbyname __P((char *));
-struct hostent *gethostent __P((void));
+struct hostent	*gethostbyname __P((const char *));
+struct hostent	*gethostent __P((void));
 struct netent	*getnetbyaddr __P((long, int)); /* u_long? */
 struct netent	*getnetbyname __P((const char *));
 struct netent	*getnetent __P((void));
@@ -112,6 +112,7 @@ struct servent	*getservbyname __P((const char *, const char *));
 struct servent	*getservbyport __P((int, const char *));
 struct servent	*getservent __P((void));
 void		herror __P((const char *));
+char		*hstrerror __P((int));
 void		sethostent __P((int));
 /* void		sethostfile __P((const char *)); */
 void		setnetent __P((int));

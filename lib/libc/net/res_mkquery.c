@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_mkquery.c	6.16 (Berkeley) 3/6/91";*/
-static char *rcsid = "$Id: res_mkquery.c,v 1.3 1993/08/26 00:46:19 jtc Exp $";
+static char *rcsid = "$Id: res_mkquery.c,v 1.4 1994/04/07 07:00:20 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,25 +47,26 @@ static char *rcsid = "$Id: res_mkquery.c,v 1.3 1993/08/26 00:46:19 jtc Exp $";
  * Form all types of queries.
  * Returns the size of the result or -1.
  */
-res_mkquery(op, dname, class, type, data, datalen, newrr, buf, buflen)
+res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	int op;			/* opcode of query */
 	const char *dname;		/* domain name */
 	int class, type;	/* class and type of query */
 	const char *data;		/* resource record data */
 	int datalen;		/* length of data */
-	const struct rrec *newrr;	/* new rr for modify or append */
+	const char *newrr_in;	/* new rr for modify or append */
 	char *buf;		/* buffer to put query */
 	int buflen;		/* size of buffer */
 {
 	register HEADER *hp;
 	register char *cp;
 	register int n;
+	struct rrec *newrr = (struct rrec *) newrr_in;
 	char *dnptrs[10], **dpp, **lastdnptr;
 
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
-		printf("res_mkquery(%d, %s, %d, %d)\n", op, dname, class, type);
-#endif DEBUG
+		printf(";; res_mkquery(%d, %s, %d, %d)\n", op, dname, class, type);
+#endif
 	/*
 	 * Initialize header fields.
 	 */
@@ -202,7 +203,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr, buf, buflen)
 		hp->ancount = htons(0);
 		break;
 
-#endif ALLOW_UPDATES
+#endif /* ALLOW_UPDATES */
 	}
 	return (cp - buf);
 }

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_init.c	6.15 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: res_init.c,v 1.4 1994/01/28 03:10:35 deraadt Exp $";
+static char *rcsid = "$Id: res_init.c,v 1.5 1994/04/07 07:00:19 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,11 +47,14 @@ static char *rcsid = "$Id: res_init.c,v 1.4 1994/01/28 03:10:35 deraadt Exp $";
 #include <stdlib.h>
 #include <string.h>
 
+static void res_setoptions __P((char *, char *));
+static u_long net_mask __P((struct in_addr));
+
 /*
  * Resolver state default settings
  */
 
-struct state _res = {
+struct __res_state _res = {
 	RES_TIMEOUT,               	/* retransmition time interval */
 	4,                         	/* number of times to retransmit */
 	RES_DEFAULT,			/* options flags */
@@ -71,27 +74,65 @@ struct state _res = {
 res_init()
 {
 	register FILE *fp;
-	register char *cp, **pp;
+	register char *cp, **pp, *net;
 	register int n;
-	char buf[BUFSIZ];
+	char buf[BUFSIZ], buf2[BUFSIZ];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
+	int nsort = 0;
+	u_long mask;
 
 	_res.nsaddr.sin_addr.s_addr = INADDR_ANY;
 	_res.nsaddr.sin_family = AF_INET;
 	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
 	_res.nscount = 1;
+	_res.ndots = 1;
+	_res.pfcode = 0;
+	strncpy(_res.lookups, "f", sizeof _res.lookups);
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
-		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname));
+		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
 		haveenv++;
+
+		/*
+		 * Set search list to be blank-separated strings
+		 * from rest of env value.  Permits users of LOCALDOMAIN
+		 * to still have a search list, and anyone to set the
+		 * one that they want to use as an individual (even more
+		 * important now that the rfc1535 stuff restricts searches)
+		 */
+		cp = _res.defdname;
+		pp = _res.dnsrch;
+		*pp++ = cp;
+		for (n = 0; *cp && pp < _res.dnsrch + MAXDNSRCH; cp++) {
+			if (*cp == '\n')        /* silly backwards compat */
+				break;
+			else if (*cp == ' ' || *cp == '\t') {
+				*cp = 0;
+				n = 1;
+			} else if (n) {
+				*pp++ = cp;
+				n = 0;
+				havesearch = 1;
+			}
+		}
+		/* null terminate last domain if there are excess */
+		while (*cp != '\0' && *cp != ' ' && *cp != '\t' && *cp != '\n')
+			cp++;
+		*cp = '\0';
+		*pp++ = 0;
 	}
 
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
+	    strncpy(_res.lookups, "bf", sizeof _res.lookups);
+
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
+		/* skip comments */
+		if ((*buf == ';') || (*buf == '#'))
+			continue;
 		/* read default domain name */
 		if (!strncmp(buf, "domain", sizeof("domain") - 1)) {
 		    if (haveenv)	/* skip if have from environ */
@@ -102,36 +143,35 @@ res_init()
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
 		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    if ((cp = index(_res.defdname, '\n')) != NULL)
+		    if ((cp = strpbrk(_res.defdname, "\t\n")) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
 		    continue;
 		}
 		/* lookup types */
 		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
-		    if (_res.lookups[0])
-			    continue;
+		    char *sp = NULL;
+
+		    bzero(_res.lookups, sizeof _res.lookups);
 		    cp = buf + sizeof("lookup") - 1;
-		    while (*cp == ' ' || *cp == '\t')
-			    cp++;
-		    for (n = 0; *cp && n < MAXDNSLUS; ) {
+		    for (n = 0;; cp++) {
+		    	    if (n == MAXDNSLUS)
+				    break;
 			    if ((*cp == '\0') || (*cp == '\n')) {
-				    n = MAXDNSLUS;
-				    continue;
-			    }
-			    if (!strncmp(cp, "bind", sizeof("bind")-1))
-				    _res.lookups[n++] = 'b';
-#ifdef YP
-			    else if (!strncmp(cp, "yp", sizeof("yp")-1))
-				    _res.lookups[n++] = 'y';
-#endif
-			    else if (!strncmp(cp, "file", sizeof("file")-1))
-				    _res.lookups[n++] = 'f';
-			    while (*cp != ' ' && *cp != '\t' &&
-				   *cp != '\n' && *cp != '\0')
-				    cp++;
-			    while (*cp == ' ' || *cp == '\t')
-				    cp++;
+				    if (sp) {
+					    if (*sp=='y' || *sp=='b' || *sp=='f')
+						    _res.lookups[n++] = *sp;
+					    sp = NULL;
+				    }
+				    break;
+			    } else if ((*cp == ' ') || (*cp == '\t') || (*cp == ',')) {
+				    if (sp) {
+					    if (*sp=='y' || *sp=='b' || *sp=='f')
+						    _res.lookups[n++] = *sp;
+					    sp = NULL;
+				    }
+			    } else if (sp == NULL)
+				    sp = cp;
 		    }
 		    continue;
 		}
@@ -145,7 +185,7 @@ res_init()
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
 		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    if ((cp = index(_res.defdname, '\n')) != NULL)
+		    if ((cp = strchr(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    /*
 		     * Set search list to be blank-separated strings
@@ -174,30 +214,60 @@ res_init()
 		/* read nameservers to query */
 		if (!strncmp(buf, "nameserver", sizeof("nameserver") - 1) &&
 		   nserv < MAXNS) {
+		    struct in_addr a;
+
 		    cp = buf + sizeof("nameserver") - 1;
 		    while (*cp == ' ' || *cp == '\t')
 			    cp++;
-		    if ((*cp == '\0') || (*cp == '\n'))
-			    continue;
-		    if ((_res.nsaddr_list[nserv].sin_addr.s_addr =
-			inet_addr(cp)) == (unsigned)-1) {
-			    _res.nsaddr_list[nserv].sin_addr.s_addr
-				= INADDR_ANY;
-			    continue;
+		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
+			_res.nsaddr_list[nserv].sin_addr = a;
+			_res.nsaddr_list[nserv].sin_family = AF_INET;
+			_res.nsaddr_list[nserv].sin_port =
+			    htons(NAMESERVER_PORT);
+			nserv++;
 		    }
-		    _res.nsaddr_list[nserv].sin_family = AF_INET;
-		    _res.nsaddr_list[nserv].sin_port = htons(NAMESERVER_PORT);
-		    nserv++;
+		    continue;
+		}
+		if (!strncmp(buf, "sortlist", sizeof("sortlist") - 1)) {
+		    struct in_addr a;
+
+		    cp = buf + sizeof("sortlist") - 1;
+		    while (*cp == ' ' || *cp == '\t')
+			cp++;
+		    while (sscanf(cp,"%[0-9./]s", buf2) && nsort < MAXRESOLVSORT) {
+			if (net = strchr(buf2, '/'))
+			    *net = '\0';
+			if (inet_aton(buf2, &a)) {
+			    _res.sort_list[nsort].addr = a;
+			    if (net && inet_aton(net+1, &a)) {
+				_res.sort_list[nsort].mask = a.s_addr;
+			    } else {
+				_res.sort_list[nsort].mask =
+					net_mask(_res.sort_list[nsort].addr);
+			    }
+			    nsort++;
+			}
+			if (net)
+				*net = '/';
+			cp += strlen(buf2);
+			while (*cp == ' ' || *cp == '\t')
+			    cp++;
+		    }
+		    continue;
+		}
+		if (!strncmp(buf, "options", sizeof("options") -1)) {
+		    res_setoptions(buf + sizeof("options") - 1, "conf");
 		    continue;
 		}
 	    }
 	    if (nserv > 1) 
 		_res.nscount = nserv;
+	    _res.nsort = nsort;
 	    (void) fclose(fp);
 	}
 	if (_res.defdname[0] == 0) {
-		if (gethostname(buf, sizeof(_res.defdname)) == 0 &&
-		   (cp = index(buf, '.')))
+		if (gethostname(buf, sizeof(_res.defdname) - 1) == 0 &&
+		   (cp = strchr(buf, '.')))
 			(void)strcpy(_res.defdname, cp + 1);
 	}
 
@@ -205,17 +275,71 @@ res_init()
 	if (havesearch == 0) {
 		pp = _res.dnsrch;
 		*pp++ = _res.defdname;
-		for (cp = _res.defdname, n = 0; *cp; cp++)
-			if (*cp == '.')
-				n++;
-		cp = _res.defdname;
-		for (; n >= LOCALDOMAINPARTS && pp < _res.dnsrch + MAXDFLSRCH;
-		    n--) {
-			cp = index(cp, '.');
-			*pp++ = ++cp;
-		}
-		*pp++ = 0;
+		*pp = NULL;
 	}
+
+	if ((cp = getenv("RES_OPTIONS")) != NULL)
+		res_setoptions(cp, "env");
 	_res.options |= RES_INIT;
 	return (0);
+}
+
+static void
+res_setoptions(options, source)
+	char *options, *source;
+{
+	char *cp = options;
+	int i;
+
+#ifdef DEBUG
+	if (_res.options & RES_DEBUG) {
+		printf(";; res_setoptions(\"%s\", \"%s\")...\n",
+		       options, source);
+	}
+#endif
+	while (*cp) {
+		/* skip leading and inner runs of spaces */
+		while (*cp == ' ' || *cp == '\t')
+			cp++;
+		/* search for and process individual options */
+		if (!strncmp(cp, "ndots:", sizeof("ndots:")-1)) {
+			i = atoi(cp + sizeof("ndots:") - 1);
+			if (i <= RES_MAXNDOTS)
+				_res.ndots = i;
+			else
+				_res.ndots = RES_MAXNDOTS;
+#ifdef DEBUG
+			if (_res.options & RES_DEBUG) {
+				printf(";;\tndots=%d\n", _res.ndots);
+			}
+#endif
+		} else if (!strncmp(cp, "debug", sizeof("debug")-1)) {
+#ifdef DEBUG
+			if (!(_res.options & RES_DEBUG)) {
+				printf(";; res_setoptions(\"%s\", \"%s\")..\n",
+				       options, source);
+				_res.options |= RES_DEBUG;
+			}
+			printf(";;\tdebug\n");
+#endif
+		} else {
+			/* XXX - print a warning here? */
+		}
+		/* skip to next run of spaces */
+		while (*cp && *cp != ' ' && *cp != '\t')
+			cp++;
+	}
+}
+
+static u_long
+net_mask(in)		/* XXX - should really use system's version of this */
+	struct in_addr in;
+{
+	register u_long i = ntohl(in.s_addr);
+
+	if (IN_CLASSA(i))
+		return (htonl(IN_CLASSA_NET));
+	if (IN_CLASSB(i))
+		return (htonl(IN_CLASSB_NET));
+	return (htonl(IN_CLASSC_NET));
 }
