@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.5 2001/12/31 21:30:01 thorpej Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.6 2002/10/08 09:19:45 kent Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -65,6 +65,11 @@ struct ac97_codec_if_vtbl {
 	 * resume from a laptop suspend to disk.
 	 */
 	void (*restore_ports)(struct ac97_codec_if *addr);
+
+	u_int16_t (*get_extcaps)(struct ac97_codec_if *codec_if);
+	int (*set_rate)(struct ac97_codec_if *codec_if,
+			int target, u_long *rate);
+	void (*set_clock)(struct ac97_codec_if *codec_if, unsigned int clock);
 };
 
 struct ac97_codec_if {
