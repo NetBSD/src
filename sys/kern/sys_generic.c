@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.34 1997/10/15 17:04:14 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.34.2.1 1997/11/04 21:27:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -536,7 +536,7 @@ sys_select(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_select_args /* {
-		syscallarg(u_int) nd;
+		syscallarg(int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;
 		syscallarg(fd_set *) ex;
@@ -548,6 +548,8 @@ sys_select(p, v, retval)
 	int s, ncoll, error = 0, timo;
 	size_t ni;
 
+	if (SCARG(uap, nd) < 0)
+		return (EINVAL);
 	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		SCARG(uap, nd) = p->p_fd->fd_nfiles;
