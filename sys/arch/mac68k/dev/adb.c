@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.37 2000/07/03 08:59:26 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.38 2000/09/19 05:17:55 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -286,8 +286,7 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 		 *  - stop bit (with SRQ): 140 usec
 		 * Total: 6900 usec
 		 */
-		tmout = 6900;
-		for (tmout = 6900; !flag && tmout >= 10; tmout -= 10)
+		for (tmout = 8000; !flag && tmout >= 10; tmout -= 10)
 			delay(10);
 		if (!flag && tmout > 0)
 			delay(tmout);
