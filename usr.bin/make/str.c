@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: str.c,v 1.7 1994/06/06 22:45:43 jtc Exp $";
+static char *rcsid = "$Id: str.c,v 1.8 1994/06/16 18:50:18 jtc Exp $";
 #endif				/* not lint */
 
 #include "make.h"
@@ -131,9 +131,10 @@ str_concat(s1, s2, flags)
  *	the first word is always the value of the .MAKE variable.
  */
 char **
-brk_string(str, store_argc)
+brk_string(str, store_argc, expand)
 	register char *str;
 	int *store_argc;
+	Boolean expand;
 {
 	register int argc, ch;
 	register char inquote, *p, *start, *t;
@@ -173,20 +174,28 @@ brk_string(str, store_argc)
 					break;
 				}
 			}
+			if (!expand) {
+				if (!start)
+					start = t;
+				*t++ = ch;
+			}
 			continue;
 		case ' ':
 		case '\t':
+		case '\n':
 			if (inquote)
 				break;
 			if (!start)
 				continue;
 			/* FALLTHROUGH */
-		case '\n':
 		case '\0':
 			/*
 			 * end of a token -- make sure there's enough argv
 			 * space and save off a pointer.
 			 */
+			if (!start)
+			    goto done;
+
 			*t++ = '\0';
 			if (argc == argmax) {
 				argmax *= 2;		/* ramp up fast */
@@ -200,6 +209,14 @@ brk_string(str, store_argc)
 				goto done;
 			continue;
 		case '\\':
+			if (!expand) {
+				if (!start)
+					start = t;
+				*t++ = '\\';
+				ch = *++p;
+				break;
+			}
+				
 			switch (ch = *++p) {
 			case '\0':
 			case '\n':
