@@ -1,4 +1,4 @@
-#	$NetBSD#
+#	$NetBSD: files.i80200,v 1.2 2002/01/24 03:58:09 thorpej Exp $
 #
 # Configuration info for Intel i80200 CPU support
 #
