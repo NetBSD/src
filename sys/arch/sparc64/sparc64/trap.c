@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 2001/07/23 17:19:57 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.72 2001/08/08 18:30:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -365,14 +365,18 @@ const char *trap_type[] = {
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
 static __inline void userret __P((struct proc *, int,  u_quad_t));
-void trap __P((unsigned, long, long, struct trapframe64 *));
 static __inline void share_fpu __P((struct proc *, struct trapframe64 *));
-void mem_access_fault __P((unsigned, int, u_long, int, int, struct trapframe64 *));
-void data_access_fault __P((unsigned type, u_long va, u_long pc, struct trapframe64 *));
-void data_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe64 *));
-void text_access_fault __P((unsigned, u_long, struct trapframe64 *));
-void text_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe64 *));
-void syscall __P((register_t, struct trapframe64 *, register_t));
+
+void trap __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate));
+void data_access_fault __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, 
+	vaddr_t va, vaddr_t sfva, u_long sfsr));
+void data_access_error __P((struct trapframe64 *tf, unsigned type, 
+	vaddr_t afva, u_long afsr, vaddr_t sfva, u_long sfsr));
+void text_access_fault __P((struct trapframe64 *tf, unsigned type, 
+	vaddr_t pc, u_long sfsr));
+void text_access_error __P((struct trapframe64 *tf, unsigned type, 
+	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr));
+void syscall __P((struct trapframe64 *, register_t code, register_t pc));
 
 #ifdef DEBUG
 void print_trapframe __P((struct trapframe64 *));
@@ -475,15 +479,16 @@ static __inline void share_fpu(p, tf)
  * (MMU-related traps go through mem_access_fault, below.)
  */
 void
-trap(type, tstate, pc, tf)
-	register unsigned type;
-	register long tstate, pc;
-	register struct trapframe64 *tf;
+trap(tf, type, pc, tstate)
+	struct trapframe64 *tf;
+	unsigned type;
+	vaddr_t pc;
+	long tstate;
 {
-	register struct proc *p;
-	register struct pcb *pcb;
-	register int pstate = (tstate>>TSTATE_PSTATE_SHIFT);
-	register int64_t n;
+	struct proc *p;
+	struct pcb *pcb;
+	int pstate = (tstate>>TSTATE_PSTATE_SHIFT);
+	int64_t n;
 	u_quad_t sticks;
 
 	/* This steps the PC over the trap. */
@@ -705,7 +710,7 @@ badtrap:
 		break;
 
 	case T_FPDISABLED: {
-		register struct fpstate64 *fs = p->p_md.md_fpstate;
+		struct fpstate64 *fs = p->p_md.md_fpstate;
 
 		if (fs == NULL) {
 			/* NOTE: fpstate must be 64-bit aligned */
@@ -893,12 +898,12 @@ badtrap:
  */
 int
 rwindow_save(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-	register struct rwindow64 *rw = &pcb->pcb_rw[0];
-	register u_int64_t rwdest;
-	register int i, j;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct rwindow64 *rw = &pcb->pcb_rw[0];
+	u_int64_t rwdest;
+	int i, j;
 
 	i = pcb->pcb_nsaved;
 #ifdef DEBUG
@@ -986,18 +991,24 @@ kill_user_windows(p)
 	p->p_addr->u_pcb.pcb_nsaved = 0;
 }
 
+/*
+ * This routine handles MMU generated faults.  About half
+ * of them could be recoverable through uvm_fault.
+ */
 void
-data_access_fault(type, addr, pc, tf)
-	unsigned type;
-	u_long addr;
-	u_long pc;
+data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	struct trapframe64 *tf;
+	unsigned type;
+	vaddr_t pc;
+	vaddr_t addr;
+	vaddr_t sfva;
+	u_long sfsr;
 {
-	register u_int64_t tstate;
-	register struct proc *p;
-	register struct vmspace *vm;
-	register vaddr_t va;
-	register int rv;
+	u_int64_t tstate;
+	struct proc *p;
+	struct vmspace *vm;
+	vaddr_t va;
+	int rv;
 	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
@@ -1016,18 +1027,22 @@ data_access_fault(type, addr, pc, tf)
 	if ((cpcb->pcb_nsaved > 8) ||
 	    (trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) ||
 	    (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))) {
-		printf("%ld: data_access_fault(%lx, %p, %p, %p) nsaved=%d\n",
-		       (long)(curproc?curproc->p_pid:-1), (long)type, (void*)addr, 
-		       (void*)pc, (void*)tf, (int)cpcb->pcb_nsaved);
+		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
+			"nsaved=%d\n",
+			(long)(curproc?curproc->p_pid:-1), tf, type,
+			(void*)addr, (void*)pc,
+			sfva, sfsr, (int)cpcb->pcb_nsaved);
 		if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved)) Debugger();
 	}
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d: tl %d data_access_fault(%x, %p, %p, %p) nsaved=%d\n",
-		       (int)(curproc?curproc->p_pid:-1), (int)tl(), (int)type, 
-		       (void*)addr, (void*)pc, (void*)tf, (int)cpcb->pcb_nsaved);
+		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
+			"nsaved=%d\n",
+			(long)(curproc?curproc->p_pid:-1), tf, type,
+			(void*)addr, (void*)pc,
+			sfva, sfsr, (int)cpcb->pcb_nsaved);
 		Debugger();
 	}
 	if (trapdebug&TDB_STOPCALL) { 
@@ -1041,7 +1056,8 @@ data_access_fault(type, addr, pc, tf)
 	sticks = p->p_sticks;
 
 #if 0
-	/* This can happen when we're in DDB w/curproc == NULL and try
+	/* 
+	 * This can happen when we're in DDB w/curproc == NULL and try
 	 * to access user space.
 	 */
 #ifdef DIAGNOSTIC
@@ -1072,9 +1088,20 @@ data_access_fault(type, addr, pc, tf)
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
-	/* Now munch on protections... */
-
-	access_type = (type == T_FDMMU_PROT) ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+	/* 
+	 * Now munch on protections.
+	 *
+	 * If it was a FAST_DATA_ACCESS_MMU_MISS we have no idea what the
+	 * access was since the SFSR is not set.  But we should never get
+	 * here from there.
+	 */
+	if (type == T_FDMMU_MISS || (sfsr & SFSR_FV) == 0) {
+		/* Punt */
+		access_type = VM_PROT_READ;
+	} else {
+		access_type = (sfsr & SFSR_W) ? VM_PROT_READ|VM_PROT_WRITE
+			: VM_PROT_READ;
+	}
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];
 		/*
@@ -1206,22 +1233,25 @@ kfault:
 #endif
 }
 
+/*
+ * This routine handles deferred errors caused by the memory
+ * or I/O bus subsystems.  Most of these are fatal, and even
+ * if they are not, recovery is painful.  Also, the TPC and
+ * TNPC values are probably not valid if we're not doing a
+ * special PEEK/POKE code sequence.
+ */
 void
-data_access_error(type, sfva, sfsr, afva, afsr, tf)
-	register unsigned type;
-	register u_long sfva;
-	register u_long sfsr;
-	register u_long afva;
-	register u_long afsr;
-	register struct trapframe64 *tf;
+data_access_error(tf, type, afva, afsr, sfva, sfsr)
+	struct trapframe64 *tf;
+	unsigned type;
+	vaddr_t sfva;
+	u_long sfsr;
+	vaddr_t afva;
+	u_long afsr;
 {
-	register u_long pc;
-	register u_int64_t tstate;
-	register struct proc *p;
-	register struct vmspace *vm;
-	register vaddr_t va = 0; /* Stupid GCC warning */
-	register int rv;
-	vm_prot_t access_type;
+	u_long pc;
+	u_int64_t tstate;
+	struct proc *p;
 	vaddr_t onfault;
 	u_quad_t sticks;
 #ifdef DEBUG
@@ -1271,68 +1301,14 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	pc = tf->tf_pc;
 	tstate = tf->tf_tstate;
 
-	/*
-	 * Our first priority is handling serious faults, such as
-	 * parity errors or async faults that might have come through here.
-	 * If we have a data fault, but SFSR_FAV is not set in the sfsr,
-	 * then things are really bizarre, and we treat it as a hard
-	 * error and pass it on to memerr4m. 
-	 */
 	onfault = p->p_addr ? (long)p->p_addr->u_pcb.pcb_onfault : 0;
-	if ((afsr) != 0 ||
-	    (type == T_DATAFAULT && !(sfsr & SFSR_FV))) {
-		printf("data memory error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
-		       type, sfsr, sfva, afsr, afva, tf);
-		if (onfault) goto kfault;
-		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT))
-			panic("trap: memory error");
+	printf("data error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
+		type, sfsr, sfva, afsr, afva, tf);
 
-		/* User fault -- Berr */
-		trapsignal(p, SIGBUS, (u_long)sfva);
-	}
-
-	/*
-	 * Figure out what to pass the VM code. We cannot ignore the sfva
-	 * register on text faults, since this might be a trap on an
-	 * alternate-ASI access to code space. However, we can't help using 
-	 * have a DMMU sfar.
-	 * Kernel faults are somewhat different: text faults are always
-	 * illegal, and data faults are extra complex.  User faults must
-	 * set p->p_md.md_tf, in case we decide to deliver a signal.  Check
-	 * for illegal virtual addresses early since those can induce more
-	 * faults.
-	 * All translation faults are illegal, and result in a SIGSEGV
-	 * being delivered to the running process (or a kernel panic, for
-	 * a kernel fault). We check the translation first to make sure
-	 * it is not spurious.
-	 * Also, note that in the case where we have an overwritten
-	 * text fault (OW==1, AT==2,3), we attempt to service the
-	 * second (overwriting) fault, then restart the instruction
-	 * (which is from the first fault) and allow the first trap
-	 * to reappear. XXX is this right? It will probably change...
-	 */
-	if ((sfsr & SFSR_FV) == 0 || (sfsr & SFSR_FT) == 0) {
+	if (afsr == 0) {
 		printf("data_access_error: no fault\n");
 		goto out;	/* No fault. Why were we called? */
 	}
-
-	/*
-	 * This next section is a mess since some chips use sfva, and others
-	 * don't on text faults. We want to use sfva where possible, since
-	 * we _could_ be dealing with an ASI 0x8,0x9 data access to text space,
-	 * which would trap as a text fault, at least on a HyperSPARC. Ugh.
-	 * XXX: Find out about MicroSPARCs.
-	 */
-
-	if (!(sfsr & SFSR_FV)) {
-#ifdef DEBUG
-		if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-			printf("data_access_error: got fault without valid SFVA\n");
-#endif
-		goto fault;
-	}
-
-	va = trunc_page(sfva);
 
 #ifdef DEBUG
 	if (lastdouble) {
@@ -1348,101 +1324,55 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
-	/* Now munch on protections... */
 
-	access_type = (sfsr & SFSR_W) ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
-		extern char Lfsbail[];
-		/*
-		 * If this was an access that we shouldn't try to page in,
-		 * resume at the fault handler without any action.
-		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsbail)
-			goto kfault;
 
-		/*
-		 * During autoconfiguration, faults are never OK unless
-		 * pcb_onfault is set.  Once running normally we must allow
-		 * exec() to cause copy-on-write faults to kernel addresses.
-		 */
-		if (cold)
-			goto kfault;
-		if (SFSR_CTXT_IS_PRIM(sfsr) || SFSR_CTXT_IS_NUCLEUS(sfsr)) {
-			/* NUCLEUS context */
-			if (uvm_fault(kernel_map, va, 0, access_type) == 0)
-				return;
-			if (SFSR_CTXT_IS_NUCLEUS(sfsr))
-				goto kfault;
-		}
-	} else
-		p->p_md.md_tf = tf;
-
-	vm = p->p_vmspace;
-	/* alas! must call the horrible vm code */
-#ifdef DEBUG
-	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-		printf("data_access_error: calling uvm_fault\n");
-#endif
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
-
-	/*
-	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if uvm_fault gets a protection
-	 * failure it is due to accessing the stack region outside
-	 * the current limit and we need to reflect that as an access
-	 * error.
-	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
-	}
-	if (rv != 0) {
-		/*
-		 * Pagein failed.  If doing copyin/out, return to onfault
-		 * address.  Any other page fault in kernel, die; if user
-		 * fault, deliver SIGSEGV.
-		 */
-fault:
-		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
-kfault:
-			if (!onfault) {
-				extern int trap_trace_dis;
-				char buf[768];
-
-				trap_trace_dis = 1; /* Disable traptrace for printf */
-				bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
-				(void) splhigh();
-				printf("data fault: pc=%lx addr=%lx sfsr=%s\n",
-				    (u_long)pc, (long)sfva, buf);
-				DEBUGGER(type, tf);
-				panic("kernel fault");
-				/* NOTREACHED */
-			}
-#ifdef DEBUG
-			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
-				printf("data_access_error: kern fault -- skipping instr\n");
-				if (trapdebug&TDB_STOPCPIO) DEBUGGER(type, tf);
-			}
-#endif
-			tf->tf_pc = onfault;
-			tf->tf_npc = onfault + 4;
-			return;
-		}
-#ifdef DEBUG
-		if (trapdebug&(TDB_ADDFLT|TDB_STOPSIG)) {
+		if (!onfault) {
 			extern int trap_trace_dis;
-			trap_trace_dis = 1;
-			printf("data_access_error at %p: sending SIGSEGV\n",
-			    (void *)(u_long)va);
-			Debugger();
+			char buf[768];
+
+			trap_trace_dis = 1; /* Disable traptrace for printf */
+			bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+			(void) splhigh();
+			printf("data fault: pc=%lx addr=%lx sfsr=%s\n",
+				(u_long)pc, (long)sfva, buf);
+			DEBUGGER(type, tf);
+			panic("kernel fault");
+			/* NOTREACHED */
+		}
+
+		/*
+		 * If this was a priviliged error but not a probe, we
+		 * cannot recover, so panic.
+		 */
+		if (afsr & ASFR_PRIV) {
+			char buf[128];
+
+			bitmask_snprintf(afsr, AFSR_BITS, buf, sizeof(buf));
+			panic("Privileged Async Fault: AFAR %p AFSR %lx\n%s",
+				(void *)afva, afsr, buf);
+			/* NOTREACHED */
+		}
+#ifdef DEBUG
+		if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
+			printf("data_access_error: kern fault -- skipping instr\n");
+			if (trapdebug&TDB_STOPCPIO) DEBUGGER(type, tf);
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_long)sfva);
+		tf->tf_pc = onfault;
+		tf->tf_npc = onfault + 4;
+		return;
 	}
+#ifdef DEBUG
+	if (trapdebug&(TDB_ADDFLT|TDB_STOPSIG)) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1;
+		printf("data_access_error at %p: sending SIGSEGV\n",
+			(void *)(u_long)va);
+		Debugger();
+	}
+#endif
+	trapsignal(p, SIGSEGV, (u_long)sfva);
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p, pc, sticks);
@@ -1457,17 +1387,22 @@ out:
 #endif
 }
 
+/*
+ * This routine handles MMU generated faults.  About half
+ * of them could be recoverable through uvm_fault.
+ */
 void
-text_access_fault(type, pc, tf)
-	register unsigned type;
-	register vaddr_t pc;
-	register struct trapframe64 *tf;
+text_access_fault(tf, type, pc, sfsr)
+	unsigned type;
+	vaddr_t pc;
+	struct trapframe64 *tf;
+	u_long sfsr;
 {
-	register u_int64_t tstate;
-	register struct proc *p;
-	register struct vmspace *vm;
-	register vaddr_t va;
-	register int rv;
+	u_int64_t tstate;
+	struct proc *p;
+	struct vmspace *vm;
+	vaddr_t va;
+	int rv;
 	vm_prot_t access_type;
 	u_quad_t sticks;
 
@@ -1581,20 +1516,27 @@ text_access_fault(type, pc, tf)
 }
 
 
+/*
+ * This routine handles deferred errors caused by the memory
+ * or I/O bus subsystems.  Most of these are fatal, and even
+ * if they are not, recovery is painful.  Also, the TPC and
+ * TNPC values are probably not valid if we're not doing a
+ * special PEEK/POKE code sequence.
+ */
 void
-text_access_error(type, pc, sfsr, afva, afsr, tf)
-	register unsigned type;
-	register u_long pc;
-	register u_long sfsr;
-	register u_long afva;
-	register u_long afsr;
-	register struct trapframe64 *tf;
+text_access_error(tf, type, pc, sfsr, afva, afsr)
+	struct trapframe64 *tf;
+	unsigned type;
+	vaddr_t pc;
+	u_long sfsr;
+	vaddr_t afva;
+	u_long afsr;
 {
-	register int64_t tstate;
-	register struct proc *p;
-	register struct vmspace *vm;
-	register vaddr_t va;
-	register int rv;
+	int64_t tstate;
+	struct proc *p;
+	struct vmspace *vm;
+	vaddr_t va;
+	int rv;
 	vm_prot_t access_type;
 	u_quad_t sticks;
 #ifdef DEBUG
@@ -1778,9 +1720,9 @@ out:
  *  
  */
 void
-syscall(code, tf, pc)
+syscall(tf, code, pc)
 	register_t code;
-	register struct trapframe64 *tf;
+	struct trapframe64 *tf;
 	register_t pc;
 {
 	int i, nsys, nap;
