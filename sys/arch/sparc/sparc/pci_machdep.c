@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2001/12/20 11:38:52 uwe Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.3 2002/03/28 11:59:56 pk Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -411,7 +411,7 @@ pci_intr_string(pc, ih)
 	static char str[16];
 	int pil;
 
-	pil = msiiep_assigned_intterupt(ih);
+	pil = msiiep_assigned_interrupt(ih);
 	sprintf(str, "line %d (pil %d)", ih, pil);
 	return (str);
 }

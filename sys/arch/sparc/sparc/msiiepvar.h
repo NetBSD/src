@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepvar.h,v 1.1 2001/12/11 00:18:23 uwe Exp $ */
+/*	$NetBSD: msiiepvar.h,v 1.2 2002/03/28 11:59:56 pk Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -54,6 +54,6 @@ struct msiiep_softc {
 };
 
 
-extern int	msiiep_assigned_intterupt(int line);
+extern int	msiiep_assigned_interrupt(int line);
 
 #endif /* _SPARC_MSIIEP_VAR_H_ */
