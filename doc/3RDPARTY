@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.49 2003/02/02 09:57:51 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.50 2003/02/03 05:32:09 enami Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -51,7 +51,7 @@ How to import:
 
 Package:	am-utils [amd]
 Version:	6.1b1
-Current Vers:	6.1b1
+Current Vers:	6.1b2
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/
 Mailing List:	amd-dev
@@ -300,7 +300,7 @@ we use BSD-licensed implementation from Citrus project (see entry for
 
 Package:	grep
 Version:	2.5
-Current Vers:	2.5
+Current Vers:	2.5.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -401,7 +401,7 @@ Notes:
 
 Package:	less
 Version:	less374
-Current Vers:	less378
+Current Vers:	less381
 Maintainer:	Mark Nudleman <marknu@flash.net>
 Archive Site:	ftp://ftp.gnu.org/gnu/less/
 Mailing List:
@@ -458,7 +458,7 @@ Delete the otherOS directory before importing.
 
 Package:	nawk
 Version:	2000-11-15
-Current Vers:	2002-11-29
+Current Vers:	2002-12-13
 Maintainer:	Brian Kernighan <bwk@bell-labs.com> (Lucent Technologies)
 Archive Site:	http://cm.bell-labs.com/who/bwk/
 Mailing List:
@@ -481,7 +481,7 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	nvi
-Version:	1.79nb7
+Version:	1.79nb8
 Current Vers:	1.79
 Maintainer:	Keith Bostic <bostic@bsdi.com>
 Archive Site:	ftp://ftp.bostic.com/pub/
@@ -493,7 +493,7 @@ X11 support and other things we don't want.
 
 Package:	ntp
 Version:	4.0.99i
-Current Vers:	4.1.1b/4.1.72
+Current Vers:	4.1.1c-rc1/4.1.73
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
 Mailing List:	
@@ -687,7 +687,7 @@ Package:	termcap.src
 Version:	9.13.25
 Current Vers:	11.0.1
 Maintainer:	Eric S. Raymond <terminfo@ccil.org>
-Archive Site:	http://www.tuxedo.org/~esr/terminfo/
+Archive Site:	http://www.catb.org/~esr/terminfo/
 Mailing List:
 Responsible:
 Notes:
@@ -703,7 +703,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.3
-Current Vers:	4.3
+Current Vers:	4.4
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Mailing List:	bug-texinfo@gnu.org
