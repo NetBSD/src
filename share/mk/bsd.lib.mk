@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.55 1994/12/13 08:46:22 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.56 1995/04/19 06:26:50 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -143,20 +143,23 @@ beforeinstall:
 
 realinstall:
 #	ranlib lib${LIB}.a
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(NOPROFILE)
 #	ranlib lib${LIB}_p.a
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
 .if !defined(NOPIC)
 #	ranlib lib${LIB}_pic.a
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
