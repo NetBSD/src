@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.78 2003/01/18 09:38:19 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.79 2003/01/24 21:55:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.78 2003/01/18 09:38:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.79 2003/01/24 21:55:28 fvdl Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -251,7 +251,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	int vputc = 0, iwritten = 0;
 #endif
 	ino_t lastino;
-	ufs_daddr_t b_daddr, v_daddr;
+	daddr_t b_daddr, v_daddr;
 	int cnt, error;
 	int do_again = 0;
 	int s;
@@ -311,8 +311,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
 		if (blkp->bi_daddr == LFS_FORCE_WRITE)
-			printf("lfs_markv: warning: force-writing ino %d lbn %d\n",
-			       blkp->bi_inode, blkp->bi_lbn);
+			printf("lfs_markv: warning: force-writing ino %d "
+			       "lbn %lld\n",
+			    blkp->bi_inode, (long long)blkp->bi_lbn);
 		/* Bounds-check incoming data, avoid panic for failed VGET */
 		if (blkp->bi_inode <= 0 || blkp->bi_inode >= maxino) {
 			error = EINVAL;
@@ -440,8 +441,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				if (dtosn(fs,dbtofsb(fs, b_daddr))
 				   == dtosn(fs,blkp->bi_daddr))
 				{
-					printf("lfs_markv: wrong da same seg: %x vs %x\n",
-					       blkp->bi_daddr, dbtofsb(fs, b_daddr));
+					printf("lfs_markv: wrong da same seg: %llx vs %llx\n",
+					       (long long)blkp->bi_daddr, (long long)dbtofsb(fs, b_daddr));
 				}
 				do_again++;
 				continue;
@@ -462,8 +463,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
 		}
 		if (obsize != blkp->bi_size) {
-			printf("lfs_markv: ino %d lbn %d wrong size (%ld != %d), try again\n",
-				blkp->bi_inode, blkp->bi_lbn,
+			printf("lfs_markv: ino %d lbn %lld wrong size (%ld != %d), try again\n",
+				blkp->bi_inode, (long long)blkp->bi_lbn,
 				(long) obsize, blkp->bi_size);
 			do_again++;
 			continue;
@@ -718,7 +719,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct ufsmount *ump;
 	struct vnode *vp;
 	ino_t lastino;
-	ufs_daddr_t v_daddr;
+	daddr_t v_daddr;
 	int cnt, error;
 	int numrefed = 0;
 
@@ -823,14 +824,17 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			blkp->bi_daddr = v_daddr;
 		} else {
+			daddr_t bi_daddr;
+
+			/* XXX ondisk32 */
 			error = VOP_BMAP(vp, blkp->bi_lbn, NULL,
-					 &(blkp->bi_daddr), NULL);
+					 &bi_daddr, NULL);
 			if (error)
 			{
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
 				continue;
 			}
-			blkp->bi_daddr = dbtofsb(fs, blkp->bi_daddr);
+			blkp->bi_daddr = dbtofsb(fs, bi_daddr);
 			/* Fill in the block size, too */
 			if (blkp->bi_lbn >= 0)
 				blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
@@ -1061,7 +1065,7 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 }
 
 int
-lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp, struct dinode *dinp)
+lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, struct dinode *dinp)
 {
 	struct inode *ip;
 	struct dinode *dip;

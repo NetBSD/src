@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.6 2002/05/23 04:05:11 perseant Exp $	 */
+/* $NetBSD: fsck.h,v 1.7 2003/01/24 21:55:09 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -72,7 +72,8 @@ struct bufarea {
 	int             b_flags;
 	union {
 		char           *b_buf;	/* buffer space */
-		daddr_t        *b_indir;	/* indirect block */
+		/* XXX ondisk32 */
+		int32_t        *b_indir;	/* indirect block */
 		struct lfs     *b_fs;	/* super block */
 		struct cg      *b_cg;	/* cylinder group */
 		struct dinode  *b_dinode;	/* inode block */
@@ -172,7 +173,8 @@ struct inoinfo {
 	ino_t           i_dotdot;	/* inode number of `..' */
 	size_t          i_isize;	/* size of inode */
 	u_int           i_numblks;	/* size of block array in bytes */
-	daddr_t         i_blks[1];	/* actually longer */
+	/* XXX ondisk32 */
+	int32_t         i_blks[1];	/* actually longer */
 } **inphead, **inpsort;
 
 #define	clearinode(dp)	(*(dp) = zino)

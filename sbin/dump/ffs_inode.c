@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.10 2001/12/23 12:54:53 lukem Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.11 2003/01/24 21:55:06 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.10 2001/12/23 12:54:53 lukem Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.11 2003/01/24 21:55:06 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -144,7 +144,7 @@ fs_maxino(void)
 struct dinode *
 getino(ino_t inum)
 {
-	static daddr_t minino, maxino;
+	static ino_t minino, maxino;
 	static struct dinode inoblock[MAXINOPB];
 	int i;
 

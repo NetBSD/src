@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.23 2002/12/10 22:42:00 bouyer Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.24 2003/01/24 21:55:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.23 2002/12/10 22:42:00 bouyer Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.24 2003/01/24 21:55:33 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -671,7 +671,7 @@ bread(bno, buf, cnt)
 
 	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||
 	    read(fi, buf, cnt) != cnt)
-		err(1, "block %d", bno);
+		err(1, "block %lld", (long long)bno);
 }
 
 void    

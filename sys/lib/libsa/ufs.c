@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.30 2000/03/30 12:19:49 augustss Exp $	*/
+/*	$NetBSD: ufs.c,v 1.31 2003/01/24 21:55:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -195,7 +195,8 @@ block_map(f, file_block, disk_block_p)
 	int level;
 	int idx;
 	daddr_t ind_block_num;
-	daddr_t *ind_p;
+	/* XXX ondisk32 */
+	int32_t *ind_p;
 	int rc;
 
 	/*
@@ -272,7 +273,8 @@ block_map(f, file_block, disk_block_p)
 			fp->f_blkno[level] = ind_block_num;
 		}
 
-		ind_p = (daddr_t *)fp->f_blk[level];
+		/* XXX ondisk32 */
+		ind_p = (int32_t *)fp->f_blk[level];
 
 		if (level > 0) {
 			idx = file_block / fp->f_nindir[level - 1];

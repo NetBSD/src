@@ -1,4 +1,4 @@
-/*	$NetBSD: getlabelsector.c,v 1.1 2002/12/12 09:45:33 scw Exp $	*/
+/*	$NetBSD: getlabelsector.c,v 1.2 2003/01/24 21:55:03 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,14 +37,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getlabelsector.c,v 1.1 2002/12/12 09:45:33 scw Exp $");
+__RCSID("$NetBSD: getlabelsector.c,v 1.2 2003/01/24 21:55:03 fvdl Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <util.h>
 
-daddr_t
+int
 getlabelsector(void)
 {
 	int sector, mib[2];
@@ -56,7 +56,7 @@ getlabelsector(void)
 	if (sysctl(mib, 2, &sector, &varlen, NULL, 0) < 0)
 		return (-1);
 
-	return ((daddr_t)sector);
+	return sector;
 }
 
 off_t

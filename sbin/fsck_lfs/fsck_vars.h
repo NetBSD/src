@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.4 2000/06/14 18:43:58 perseant Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.5 2003/01/24 21:55:09 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -91,6 +91,6 @@ extern char    *lfname;		/* lost & found directory name */
 extern int      lfmode;		/* lost & found directory creation mode */
 
 extern daddr_t  n_blks;		/* number of blocks in use */
-extern daddr_t  n_files;	/* number of files in use */
+extern ino_t  n_files;	/* number of files in use */
 
 extern struct dinode zino;

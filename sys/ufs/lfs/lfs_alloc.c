@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.58 2003/01/08 15:40:04 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.59 2003/01/24 21:55:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.58 2003/01/08 15:40:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.59 2003/01/24 21:55:25 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -226,7 +226,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	IFILE_V1 *ifp_v1;
 	struct buf *bp, *cbp;
 	int error;
-	ufs_daddr_t i, blkno, max;
+	daddr_t i, blkno, max;
 	ino_t oldlast;
 	CLEANERINFO *cip;
 
@@ -514,7 +514,7 @@ lfs_vfree(void *v)
 	struct inode *ip;
 	struct vnode *vp;
 	struct lfs *fs;
-	ufs_daddr_t old_iaddr;
+	daddr_t old_iaddr;
 	ino_t ino, otail;
 	extern int lfs_dirvcount;
 	int s;

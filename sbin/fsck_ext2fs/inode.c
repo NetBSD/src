@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.9 2003/01/24 21:55:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.9 2003/01/24 21:55:07 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,8 +168,9 @@ iblock(idesc, ilevel, isize)
 	long ilevel;
 	u_int64_t isize;
 {
-	daddr_t *ap;
-	daddr_t *aplim;
+	/* XXX ondisk32 */
+	int32_t *ap;
+	int32_t *aplim;
 	struct bufarea *bp;
 	int i, n, (*func) __P((struct inodesc *)), nif;
 	u_int64_t sizepb;
@@ -266,11 +267,13 @@ chkrange(blk, cnt)
 		if ((blk + cnt) > sblock.e2fs.e2fs_bpg * c + overh +
 		    sblock.e2fs.e2fs_first_dblock) {
 			if (debug) {
-				printf("blk %d < cgdmin %d;",
-				    blk, sblock.e2fs.e2fs_bpg * c + overh +
+				printf("blk %lld < cgdmin %d;",
+				    (long long)blk,
+				    sblock.e2fs.e2fs_bpg * c + overh +
 				    sblock.e2fs.e2fs_first_dblock);
-				printf(" blk + cnt %d > cgsbase %d\n",
-				    blk + cnt, sblock.e2fs.e2fs_bpg * c +
+				printf(" blk + cnt %lld > cgsbase %d\n",
+				    (long long)(blk + cnt),
+				    sblock.e2fs.e2fs_bpg * c +
 				    overh + sblock.e2fs.e2fs_first_dblock);
 			}
 			return (1);
@@ -279,11 +282,13 @@ chkrange(blk, cnt)
 		if ((blk + cnt) > sblock.e2fs.e2fs_bpg * (c + 1) + overh +
 		    sblock.e2fs.e2fs_first_dblock) {
 			if (debug)  {
-				printf("blk %d >= cgdmin %d;",
-				    blk, sblock.e2fs.e2fs_bpg * c + overh +
+				printf("blk %lld >= cgdmin %d;",
+				    (long long)blk,
+				    sblock.e2fs.e2fs_bpg * c + overh +
 				    sblock.e2fs.e2fs_first_dblock);
-				printf(" blk + cnt %d > cgdmax %d\n",
-				    blk+cnt, sblock.e2fs.e2fs_bpg * (c + 1) +
+				printf(" blk + cnt %lld > cgdmax %d\n",
+				    (long long)(blk+cnt),
+				    sblock.e2fs.e2fs_bpg * (c + 1) +
 				    overh + sblock.e2fs.e2fs_first_dblock);
 			}
 			return (1);
@@ -404,8 +409,9 @@ cacheino(dp, inumber)
 	blks = howmany(fs2h32(dp->e2di_size), sblock.e2fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
+	/* XXX ondisk32 */
 	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr_t));
+		malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
@@ -419,7 +425,8 @@ cacheino(dp, inumber)
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
 	inp->i_isize = fs2h32(dp->e2di_size);
-	inp->i_numblks = blks * sizeof(daddr_t);
+	/* XXX ondisk32 */
+	inp->i_numblks = blks * sizeof(int32_t);
 	memcpy(&inp->i_blks[0], &dp->e2di_blocks[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
@@ -566,7 +573,7 @@ blkerror(ino, type, blk)
 	daddr_t blk;
 {
 
-	pfatal("%d %s I=%u", blk, type, ino);
+	pfatal("%lld %s I=%u", (long long)blk, type, ino);
 	printf("\n");
 	switch (statemap[ino]) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.15 2002/05/30 18:16:41 thorpej Exp $	*/
+/*	$NetBSD: ffs.c,v 1.16 2003/01/24 21:55:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.15 2002/05/30 18:16:41 thorpej Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.16 2003/01/24 21:55:32 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -308,8 +308,9 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		    MAX(1, MIN(MAXPHYS, MAXBSIZE) / fsopts->bsize);
 	if (fsopts->rotdelay == -1)
 		fsopts->rotdelay = DFL_ROTDELAY;
+	/* XXX ondisk32 */
 	if (fsopts->maxbpg == -1)
-		fsopts->maxbpg = fsopts->bsize / sizeof(ufs_daddr_t);
+		fsopts->maxbpg = fsopts->bsize / sizeof(int32_t);
 	if (fsopts->nrpos == -1)
 		fsopts->nrpos = DFL_NRPOS;
 	if (fsopts->avgfilesize == -1)

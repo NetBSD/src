@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10 2001/08/18 17:10:06 ad Exp $	 */
+/* $NetBSD: main.c,v 1.11 2003/01/24 21:55:10 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -257,15 +257,16 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		/*
 		 * print out summary statistics
 		 */
-		pwarn("%d files, %d used, %d free ",
-		      n_files, n_blks, n_ffree + sblock.lfs_frag * n_bfree);
+		pwarn("%d files, %lld used, %lld free ",
+		      n_files, (long long)n_blks,
+		      (long long)n_ffree + sblock.lfs_frag * n_bfree);
 		putchar('\n');
 	}
 	if (debug) {
 		if (duplist != NULL) {
 			printf("The following duplicate blocks remain:");
 			for (dp = duplist; dp; dp = dp->next)
-				printf(" %d,", dp->dup);
+				printf(" %lld,", (long long)dp->dup);
 			printf("\n");
 		}
 		if (zlnhead != NULL) {

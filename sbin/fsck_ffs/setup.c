@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.55 2002/11/05 05:18:50 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.56 2003/01/24 21:55:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.55 2002/11/05 05:18:50 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.56 2003/01/24 21:55:09 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,7 +471,7 @@ badsblabel:
 static int
 readappleufs()
 {
-	ufs_daddr_t label = APPLEUFS_LABEL_OFFSET / dev_bsize;
+	daddr_t label = APPLEUFS_LABEL_OFFSET / dev_bsize;
 	struct appleufslabel *appleufs;
 	int i;
 
@@ -577,7 +577,7 @@ static int
 readsb(listerr)
 	int listerr;
 {
-	ufs_daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
+	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
 	struct fs *fs;
 
 	if (bread(fsreadfd, (char *)sblk.b_un.b_fs, super, (long)SBSIZE) != 0)

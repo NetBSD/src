@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.24 2002/12/01 00:12:09 matt Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.25 2003/01/24 21:55:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -79,16 +79,17 @@ extern struct pool ffs_inode_pool;		/* memory pool for inodes */
 __BEGIN_DECLS
 
 /* ffs_alloc.c */
-int ffs_alloc __P((struct inode *, ufs_daddr_t, ufs_daddr_t , int, struct ucred *,
-		   ufs_daddr_t *));
-int ffs_realloccg __P((struct inode *, ufs_daddr_t, ufs_daddr_t, int, int ,
-		       struct ucred *, struct buf **, ufs_daddr_t *));
+int ffs_alloc __P((struct inode *, daddr_t, daddr_t , int, struct ucred *,
+		   daddr_t *));
+int ffs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
+		       struct ucred *, struct buf **, daddr_t *));
 int ffs_reallocblks __P((void *));
 int ffs_valloc __P((void *));
-ufs_daddr_t ffs_blkpref __P((struct inode *, ufs_daddr_t, int, ufs_daddr_t *));
-void ffs_blkfree __P((struct inode *, ufs_daddr_t, long));
+/* XXX ondisk32 */
+daddr_t ffs_blkpref __P((struct inode *, daddr_t, int, int32_t *));
+void ffs_blkfree __P((struct inode *, daddr_t, long));
 int ffs_vfree __P((void *));
-void ffs_clusteracct __P((struct fs *, struct cg *, ufs_daddr_t, int));
+void ffs_clusteracct __P((struct fs *, struct cg *, daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((void *));
@@ -110,10 +111,10 @@ void ffs_fragacct __P((struct fs *, int, int32_t[], int, int));
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap __P((struct buf *, struct inode *));
 #endif
-int ffs_isblock __P((struct fs *, u_char *, ufs_daddr_t));
-int ffs_isfreeblock __P((struct fs *, u_char *, ufs_daddr_t));
-void ffs_clrblock __P((struct fs *, u_char *, ufs_daddr_t));
-void ffs_setblock __P((struct fs *, u_char *, ufs_daddr_t));
+int ffs_isblock __P((struct fs *, u_char *, daddr_t));
+int ffs_isfreeblock __P((struct fs *, u_char *, daddr_t));
+void ffs_clrblock __P((struct fs *, u_char *, daddr_t));
+void ffs_setblock __P((struct fs *, u_char *, daddr_t));
 
 /* ffs_vfsops.c */
 void ffs_init __P((void));
@@ -167,13 +168,13 @@ void	softdep_load_inodeblock __P((struct inode *));
 void	softdep_freefile __P((void *));
 void	softdep_setup_freeblocks __P((struct inode *, off_t));
 void	softdep_setup_inomapdep __P((struct buf *, struct inode *, ino_t));
-void	softdep_setup_blkmapdep __P((struct buf *, struct fs *, ufs_daddr_t));
-void	softdep_setup_allocdirect __P((struct inode *, ufs_lbn_t, ufs_daddr_t,
-	    ufs_daddr_t, long, long, struct buf *));
+void	softdep_setup_blkmapdep __P((struct buf *, struct fs *, daddr_t));
+void	softdep_setup_allocdirect __P((struct inode *, daddr_t, daddr_t,
+	    daddr_t, long, long, struct buf *));
 void	softdep_setup_allocindir_meta __P((struct buf *, struct inode *,
-	    struct buf *, int, ufs_daddr_t));
-void	softdep_setup_allocindir_page __P((struct inode *, ufs_lbn_t,
-	    struct buf *, int, ufs_daddr_t, ufs_daddr_t, struct buf *));
+	    struct buf *, int, daddr_t));
+void	softdep_setup_allocindir_page __P((struct inode *, daddr_t,
+	    struct buf *, int, daddr_t, daddr_t, struct buf *));
 void	softdep_fsync_mountdev __P((struct vnode *));
 int	softdep_sync_metadata __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.34 2002/12/11 13:34:14 yamt Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.35 2003/01/24 21:55:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.34 2002/12/11 13:34:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.35 2003/01/24 21:55:26 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.34 2002/12/11 13:34:14 yamt Exp $")
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-int lfs_fragextend(struct vnode *, int, int, ufs_daddr_t, struct buf **, struct ucred *);
+int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucred *);
 
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
@@ -131,7 +131,7 @@ lfs_balloc(void *v)
 	struct inode *ip;
 	struct lfs *fs;
 	struct indir indirs[NIADDR+2], *idp;
-	ufs_daddr_t	lbn, lastblock;
+	daddr_t	lbn, lastblock;
 	int bb, bcount;
 	int error, frags, i, nsize, osize, num;
 
@@ -265,10 +265,12 @@ lfs_balloc(void *v)
 			 * If that is the case mark it UNWRITTEN to keep
 			 * the accounting straight.
 			 */
-			if (((daddr_t *)ibp->b_data)[indirs[i].in_off] == 0)
-				((daddr_t *)ibp->b_data)[indirs[i].in_off] =
+			/* XXX ondisk32 */
+			if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
+				((int32_t *)ibp->b_data)[indirs[i].in_off] =
 					UNWRITTEN;
-			idaddr = ((daddr_t *)ibp->b_data)[indirs[i].in_off];
+			/* XXX ondisk32 */
+			idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
 			if ((error = VOP_BWRITE(ibp))) {
 				return error;
 			}
@@ -308,8 +310,10 @@ lfs_balloc(void *v)
 			idp = &indirs[num - 1];
 			if (bread(vp, idp->in_lbn, fs->lfs_bsize, NOCRED,
 				  &ibp))
-				panic("lfs_balloc: bread bno %d", idp->in_lbn);
-			((ufs_daddr_t *)ibp->b_data)[idp->in_off] = UNWRITTEN;
+				panic("lfs_balloc: bread bno %lld",
+				    (long long)idp->in_lbn);
+			/* XXX ondisk32 */
+			((int32_t *)ibp->b_data)[idp->in_off] = UNWRITTEN;
 			VOP_BWRITE(ibp);
 		}
 	} else if (!(bp->b_flags & (B_DONE|B_DELWRI))) {
@@ -337,7 +341,7 @@ lfs_balloc(void *v)
 
 /* VOP_BWRITE 1 time */
 int
-lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct buf **bpp, struct ucred *cred)
+lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf **bpp, struct ucred *cred)
 {
 	struct inode *ip;
 	struct lfs *fs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.105 2002/12/01 00:12:09 matt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.106 2003/01/24 21:55:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.105 2002/12/01 00:12:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.106 2003/01/24 21:55:23 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -473,7 +473,7 @@ ffs_reload(mountp, cred, p)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
+	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -522,7 +522,7 @@ ffs_reload(mountp, cred, p)
 		/* Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
-		error = bread(devvp, (ufs_daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
 			APPLEUFS_LABEL_SIZE, cred, &bp);
 		if (error) {
 			brelse(bp);
@@ -699,7 +699,7 @@ ffs_mountfs(devvp, mp, p)
 
 	bp = NULL;
 	ump = NULL;
-	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, cred, &bp);
+	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, cred, &bp);
 	if (error)
 		goto out;
 
@@ -773,7 +773,7 @@ ffs_mountfs(devvp, mp, p)
 		/* Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
-		error = bread(devvp, (ufs_daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
 			APPLEUFS_LABEL_SIZE, cred, &bp);
 		if (error)
 			goto out;

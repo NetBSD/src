@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.8 2001/12/18 10:57:22 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.9 2003/01/24 21:55:23 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.8 2001/12/18 10:57:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.9 2003/01/24 21:55:23 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -93,7 +93,7 @@ void
 softdep_setup_blkmapdep(bp, fs, newblkno)
 	struct buf *bp;
 	struct fs *fs;
-	ufs_daddr_t newblkno;
+	daddr_t newblkno;
 {
 
 	panic("softdep_setup_blkmapdep called");
@@ -102,9 +102,9 @@ softdep_setup_blkmapdep(bp, fs, newblkno)
 void 
 softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	struct inode *ip;
-	ufs_lbn_t lbn;
-	ufs_daddr_t newblkno;
-	ufs_daddr_t oldblkno;
+	daddr_t lbn;
+	daddr_t newblkno;
+	daddr_t oldblkno;
 	long newsize;
 	long oldsize;
 	struct buf *bp;
@@ -116,11 +116,11 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 void
 softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	struct inode *ip;
-	ufs_lbn_t lbn;
+	daddr_t lbn;
 	struct buf *bp;
 	int ptrno;
-	ufs_daddr_t newblkno;
-	ufs_daddr_t oldblkno;
+	daddr_t newblkno;
+	daddr_t oldblkno;
 	struct buf *nbp;
 {
 
@@ -133,7 +133,7 @@ softdep_setup_allocindir_meta(nbp, ip, bp, ptrno, newblkno)
 	struct inode *ip;
 	struct buf *bp;
 	int ptrno;
-	ufs_daddr_t newblkno;
+	daddr_t newblkno;
 {
 
 	panic("softdep_setup_allocindir_meta called");
