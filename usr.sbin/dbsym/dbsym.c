@@ -24,12 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: dbsym.c,v 1.13 1997/10/25 10:49:36 fvdl Exp $
+ *	$NetBSD: dbsym.c,v 1.14 1998/02/20 09:27:21 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dbsym.c,v 1.13 1997/10/25 10:49:36 fvdl Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.14 1998/02/20 09:27:21 mycroft Exp $");
 #endif
 
 /* Copy the symbol table into the space reserved for it. */
@@ -123,7 +123,7 @@ main(argc,argv)
 	dataseg = mmap(NULL,	/* any address is ok */
 				   file_len - data_off, /* length */
 				   PROT_READ | PROT_WRITE,
-				   MAP_SHARED,
+				   MAP_FILE | MAP_SHARED,
 				   fd, data_off);
 	if ((long)dataseg == -1) {
 		printf("%s: can not map data seg\n", file);

@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.12 1997/07/30 23:49:51 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.13 1998/02/20 09:27:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -145,7 +145,8 @@ load_msgcat(path)
 		return (nl_catd)-1;
 	}
 
-	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
+	    0);
 	close (fd);
 
 	if (data == (void *)-1) {

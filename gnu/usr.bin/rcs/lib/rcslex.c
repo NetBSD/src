@@ -1,4 +1,4 @@
-/*	$NetBSD: rcslex.c,v 1.5 1996/10/15 07:00:23 veego Exp $	*/
+/*	$NetBSD: rcslex.c,v 1.6 1998/02/20 09:27:19 mycroft Exp $	*/
 
 /* lexical analysis of RCS files */
 
@@ -42,6 +42,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcslex.c,v $
+ * Revision 1.6  1998/02/20 09:27:19  mycroft
+ * Fill in missing (default) mmap(2) flags.
+ *
  * Revision 1.5  1996/10/15 07:00:23  veego
  * Merge rcs 5.7.
  *
@@ -1002,7 +1005,7 @@ fd2RILE(fd, name, type, status)
 			if (!f->base) {
 			    catchmmapints();
 			    f->base = (unsigned char *) mmap(
-				(char *)0, s, PROT_READ, MAP_SHARED,
+				(char *)0, s, PROT_READ, MAP_FILE|MAP_SHARED,
 				fd, (off_t)0
 			    );
 #			    ifndef MAP_FAILED
