@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.177 2003/09/16 12:08:23 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.178 2003/10/04 07:04:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,8 @@
  *	     NetBSD-1.2.1 = 102000100
  *
  *
- * Don't forget to change conf/osrelease.sh too.
+ * The version name in comment must be kept in sync with the numeric
+ * value, conf/osrelease.sh uses the value as the current kernel version.
  */
 
 #define	__NetBSD_Version__	106290000	/* NetBSD 1.6ZC */
