@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.48 2003/03/19 10:53:40 jdolecek Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.49 2003/03/29 13:57:43 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -41,8 +41,8 @@
 #if defined(_KERNEL_OPT)
 #include "audio.h"
 
-#if NAUDIO == 0
-#error "No 'audio* at audiobus?' configured into kernel"
+#if (NAUDIO == 0) && (NMIDI == 0) && (NMIDIBUS == 0)
+#error "No 'audio* at audiobus?' or 'midi* at midibus?' or similar configured"
 #endif
 
 #endif /* _KERNEL_OPT */
