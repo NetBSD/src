@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.6 1996/12/28 07:10:58 tls Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.7 1997/05/13 06:15:53 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: cmd1.c,v 1.6 1996/12/28 07:10:58 tls Exp $";
+static char rcsid[] = "$NetBSD: cmd1.c,v 1.7 1997/05/13 06:15:53 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ printhead(mesg)
 	if (mp->m_flag & MBOX)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
-	sprintf(wcount, "%3d/%-5ld", mp->m_lines, mp->m_size);
+	snprintf(wcount, LINESIZE, "%3d/%-5ld", mp->m_lines, mp->m_size);
 	subjlen = screenwidth - 50 - strlen(wcount);
 	name = value("show-rcpt") != NOSTR ?
 		skin(hfield("to", mp)) : nameof(mp, 0);
@@ -461,7 +461,7 @@ int
 folders(v)
 	void *v;
 {
-	char dirname[BUFSIZ];
+	char dirname[PATHSIZE];
 	char *cmd;
 
 	if (getfold(dirname) < 0) {

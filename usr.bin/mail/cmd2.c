@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.5 1996/06/08 19:48:13 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.6 1997/05/13 06:15:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd2.c,v 1.5 1996/06/08 19:48:13 christos Exp $";
+static char rcsid[] = "$NetBSD: cmd2.c,v 1.6 1997/05/13 06:15:54 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -487,7 +487,7 @@ ignore1(list, tab, which)
 	struct ignoretab *tab;
 	char *which;
 {
-	char field[BUFSIZ];
+	char field[LINESIZE];
 	register int h;
 	register struct ignore *igp;
 	char **ap;
