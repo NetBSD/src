@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_machdep.h,v 1.1 2002/11/02 20:03:05 chs Exp $	*/
+/*	$NetBSD: cacheops_machdep.h,v 1.2 2002/11/03 01:34:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,8 +44,7 @@
 
 extern vaddr_t MMUbase;
 
-int DCIA_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 DCIA_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUCMD);
@@ -59,8 +58,7 @@ DCIA_md(void)
 	return 1;
 }
 
-int DCIS_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 DCIS_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUSSTP);
@@ -73,8 +71,7 @@ DCIS_md(void)
 	return 1;
 }
 
-int DCIU_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 DCIU_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUUSTP);
@@ -87,8 +84,7 @@ DCIU_md(void)
 	return 1;
 }
 
-int PCIA_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 PCIA_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUCMD);
@@ -108,8 +104,7 @@ PCIA_md(void)
 	return 0;
 }
 
-int TBIA_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 TBIA_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUTBINVAL);
@@ -122,8 +117,7 @@ TBIA_md(void)
 	return 1;
 }
 
-int TBIS_md(vaddr_t);
-extern __inline int
+static __inline int __attribute__((__unused__))
 TBIS_md(vaddr_t va)
 {
 	vaddr_t r_va __asm("%a0") = va;
@@ -143,8 +137,7 @@ TBIS_md(vaddr_t va)
 	return 1;
 }
 
-int TBIAS_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 TBIAS_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUTBINVAL);
@@ -157,8 +150,7 @@ TBIAS_md(void)
 	return 1;
 }
 
-int TBIAU_md(void);
-extern __inline int
+static __inline int __attribute__((__unused__))
 TBIAU_md(void)
 {
 	volatile int *ip = (void *)(MMUbase + MMUTBINVAL);
