@@ -6,7 +6,7 @@ cpu		"i486"
 ident		SUMNER
 timezone	8 dst
 maxusers	4
-options		INET, NFS, MFS, ISOFS
+options		INET, NFSSERVER,NFSCLIENT, MFS, ISOFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options 	DDB
