@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.38 2002/04/08 20:15:59 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.39 2002/06/20 22:02:32 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.38 2002/04/08 20:15:59 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.39 2002/06/20 22:02:32 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: kdump.c,v 1.38 2002/04/08 20:15:59 christos Exp $");
 #include <sys/syscall.h>
 
 int timestamp, decimal, plain, tail, maxdata;
+pid_t do_pid = -1;
 const char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 int emul_changed = 0;
@@ -121,7 +122,7 @@ main(argc, argv)
 	int trpoints = ALL_POINTS;
 	const char *emul_name = "netbsd";
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:nRTt:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:np:RTt:")) != -1)
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -134,6 +135,9 @@ main(argc, argv)
 			break;
 		case 'l':
 			tail = 1;
+			break;
+		case 'p':
+			do_pid = atoi(optarg);
 			break;
 		case 'm':
 			maxdata = atoi(optarg);
@@ -170,7 +174,8 @@ main(argc, argv)
 		err(1, "%s", tracefile);
 	while (fread_tail((char *)&ktr_header, sizeof(struct ktr_header), 1)) {
 		if (trpoints & (1<<ktr_header.ktr_type))
-			dumpheader(&ktr_header);
+			if (do_pid == -1 || ktr_header.ktr_pid == do_pid)
+				dumpheader(&ktr_header);
 		if ((ktrlen = ktr_header.ktr_len) < 0)
 			errx(1, "bogus length 0x%x", ktrlen);
 		if (ktrlen > size) {
@@ -185,6 +190,8 @@ main(argc, argv)
 			continue;
 
 		/* update context to match currently processed record */
+		if (do_pid != -1 && ktr_header.ktr_pid != do_pid)
+			continue;
 		ectx_sanify(ktr_header.ktr_pid);
 
 		switch (ktr_header.ktr_type) {
