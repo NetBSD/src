@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.13 1999/10/28 06:37:32 lukem Exp $	*/
+/*	$NetBSD: db_output.h,v 1.14 2000/08/09 15:13:29 tv Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,7 +36,7 @@ void db_force_whitespace __P((void));
 void db_putchar __P((int));
 int db_print_position __P((void));
 void db_printf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 void db_end_line __P((void));
 
 extern int	db_radix;
