@@ -3,7 +3,7 @@
    Tables of information... */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995-2000 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,15 +34,16 @@
  * SUCH DAMAGE.
  *
  * This software has been written for the Internet Software Consortium
- * by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
- * Enterprises.  To learn more about the Internet Software Consortium,
- * see ``http://www.vix.com/isc''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.
+ * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+ * To learn more about the Internet Software Consortium, see
+ * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+ * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+ * ``http://www.nominum.com''.
  */
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.2 1999/06/04 20:09:12 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.3 2000/04/22 08:18:14 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -62,6 +63,9 @@ static char copyright[] =
    t - ASCII text
    f - flag (true or false)
    A - array of whatever precedes (e.g., IA means array of IP addresses)
+   U - name of an option space (universe)
+   F - implicit flag - the presence of the option indicates that the
+       flag is true.
 */
 
 struct universe dhcp_universe;
@@ -78,7 +82,7 @@ struct option dhcp_options [256] = {
 	{ "lpr-servers", "IA",				&dhcp_universe, 9 },
 	{ "impress-servers", "IA",			&dhcp_universe, 10 },
 	{ "resource-location-servers", "IA",		&dhcp_universe, 11 },
-	{ "host-name", "t",				&dhcp_universe, 12 },
+	{ "host-name", "X",				&dhcp_universe, 12 },
 	{ "boot-size", "S",				&dhcp_universe, 13 },
 	{ "merit-dump", "t",				&dhcp_universe, 14 },
 	{ "domain-name", "t",				&dhcp_universe, 15 },
@@ -126,10 +130,10 @@ struct option dhcp_options [256] = {
 	{ "dhcp-max-message-size", "S",			&dhcp_universe, 57 },
 	{ "dhcp-renewal-time", "L",			&dhcp_universe, 58 },
 	{ "dhcp-rebinding-time", "L",			&dhcp_universe, 59 },
-	{ "dhcp-class-identifier", "t",			&dhcp_universe, 60 },
+	{ "vendor-class-identifier", "X",		&dhcp_universe, 60 },
 	{ "dhcp-client-identifier", "X",		&dhcp_universe, 61 },
-	{ "option-62", "X",				&dhcp_universe, 62 },
-	{ "option-63", "X",				&dhcp_universe, 63 },
+	{ "nwip-domain", "X",				&dhcp_universe, 62 },
+	{ "nwip-suboptions", "X",			&dhcp_universe, 63 },
 	{ "nisplus-domain", "t",			&dhcp_universe, 64 },
 	{ "nisplus-servers", "IA",			&dhcp_universe, 65 },
 	{ "tftp-server-name", "t",			&dhcp_universe, 66 },
@@ -164,7 +168,7 @@ struct option dhcp_options [256] = {
 	{ "option-95", "X",				&dhcp_universe, 95 },
 	{ "option-96", "X",				&dhcp_universe, 96 },
 	{ "option-97", "X",				&dhcp_universe, 97 },
-	{ "option-98", "X",				&dhcp_universe, 98 },
+	{ "uap-servers", "t",				&dhcp_universe, 98 },
 	{ "option-99", "X",				&dhcp_universe, 99 },
 	{ "option-100", "X",				&dhcp_universe, 100 },
 	{ "option-101", "X",				&dhcp_universe, 101 },
@@ -276,8 +280,8 @@ struct option dhcp_options [256] = {
 	{ "option-207", "X",				&dhcp_universe, 207 },
 	{ "option-208", "X",				&dhcp_universe, 208 },
 	{ "option-209", "X",				&dhcp_universe, 209 },
-	{ "option-210", "X",				&dhcp_universe, 210 },
-	{ "option-211", "X",				&dhcp_universe, 211 },
+	{ "authenticate", "X",				&dhcp_universe, 210 },
+	{ "subnet-selection-xx", "X",			&dhcp_universe, 211 },
 	{ "option-212", "X",				&dhcp_universe, 212 },
 	{ "option-213", "X",				&dhcp_universe, 213 },
 	{ "option-214", "X",				&dhcp_universe, 214 },
@@ -324,92 +328,267 @@ struct option dhcp_options [256] = {
 	{ "option-end", "e",				&dhcp_universe, 255 },
 };
 
-/* Default dhcp option priority list (this is ad hoc and should not be
-   mistaken for a carefully crafted and optimized list). */
-unsigned char dhcp_option_default_priority_list [] = {
-	DHO_DHCP_REQUESTED_ADDRESS,
-	DHO_DHCP_OPTION_OVERLOAD,
-	DHO_DHCP_MAX_MESSAGE_SIZE,
-	DHO_DHCP_RENEWAL_TIME,
-	DHO_DHCP_REBINDING_TIME,
-	DHO_DHCP_CLASS_IDENTIFIER,
-	DHO_DHCP_CLIENT_IDENTIFIER,
-	DHO_SUBNET_MASK,
-	DHO_TIME_OFFSET,
-	DHO_ROUTERS,
-	DHO_TIME_SERVERS,
-	DHO_NAME_SERVERS,
-	DHO_DOMAIN_NAME_SERVERS,
-	DHO_HOST_NAME,
-	DHO_LOG_SERVERS,
-	DHO_COOKIE_SERVERS,
-	DHO_LPR_SERVERS,
-	DHO_IMPRESS_SERVERS,
-	DHO_RESOURCE_LOCATION_SERVERS,
-	DHO_HOST_NAME,
-	DHO_BOOT_SIZE,
-	DHO_MERIT_DUMP,
-	DHO_DOMAIN_NAME,
-	DHO_SWAP_SERVER,
-	DHO_ROOT_PATH,
-	DHO_EXTENSIONS_PATH,
-	DHO_IP_FORWARDING,
-	DHO_NON_LOCAL_SOURCE_ROUTING,
-	DHO_POLICY_FILTER,
-	DHO_MAX_DGRAM_REASSEMBLY,
-	DHO_DEFAULT_IP_TTL,
-	DHO_PATH_MTU_AGING_TIMEOUT,
-	DHO_PATH_MTU_PLATEAU_TABLE,
-	DHO_INTERFACE_MTU,
-	DHO_ALL_SUBNETS_LOCAL,
-	DHO_BROADCAST_ADDRESS,
-	DHO_PERFORM_MASK_DISCOVERY,
-	DHO_MASK_SUPPLIER,
-	DHO_ROUTER_DISCOVERY,
-	DHO_ROUTER_SOLICITATION_ADDRESS,
-	DHO_STATIC_ROUTES,
-	DHO_TRAILER_ENCAPSULATION,
-	DHO_ARP_CACHE_TIMEOUT,
-	DHO_IEEE802_3_ENCAPSULATION,
-	DHO_DEFAULT_TCP_TTL,
-	DHO_TCP_KEEPALIVE_INTERVAL,
-	DHO_TCP_KEEPALIVE_GARBAGE,
-	DHO_NIS_DOMAIN,
-	DHO_NIS_SERVERS,
-	DHO_NTP_SERVERS,
-	DHO_VENDOR_ENCAPSULATED_OPTIONS,
-	DHO_NETBIOS_NAME_SERVERS,
-	DHO_NETBIOS_DD_SERVER,
-	DHO_NETBIOS_NODE_TYPE,
-	DHO_NETBIOS_SCOPE,
-	DHO_FONT_SERVERS,
-	DHO_X_DISPLAY_MANAGER,
-	DHO_DHCP_PARAMETER_REQUEST_LIST,
-
-	/* Presently-undefined options... */
-	62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
-	78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92,
-	93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
-	107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
-	119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130,
-	131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
-	143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154,
-	155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166,
-	167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
-	179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190,
-	191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202,
-	203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214,
-	215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
-	227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238,
-	239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250,
-	251, 252, 253, 254,
+struct universe nwip_universe;
+struct option nwip_options [256] = {
+	{ "pad", "",					&nwip_universe, 0 },
+	{ "illegal-1", "",				&nwip_universe, 1 },
+	{ "illegal-2", "",				&nwip_universe, 2 },
+	{ "illegal-3", "",				&nwip_universe, 3 },
+	{ "illegal-4", "",				&nwip_universe, 4 },
+	{ "nsq-broadcast", "f",				&nwip_universe, 5 },
+	{ "preferred-dss", "IA",			&nwip_universe, 6 },
+	{ "nearest-nwip-server", "IA",			&nwip_universe, 7 },
+	{ "autoretries", "B",				&nwip_universe, 8 },
+	{ "autoretry-secs", "B",			&nwip_universe, 9 },
+	{ "nwip-1-1", "f",				&nwip_universe, 10 },
+	{ "primary-dss", "I",				&nwip_universe, 11 },
+	{ "option-12", "X",				&nwip_universe, 12 },
+	{ "option-13", "X",				&nwip_universe, 13 },
+	{ "option-14", "X",				&nwip_universe, 14 },
+	{ "option-15", "X",				&nwip_universe, 15 },
+	{ "option-16", "X",				&nwip_universe, 16 },
+	{ "option-17", "X",				&nwip_universe, 17 },
+	{ "option-18", "X",				&nwip_universe, 18 },
+	{ "option-19", "X",				&nwip_universe, 19 },
+	{ "option-20", "X",				&nwip_universe, 20 },
+	{ "option-21", "X",				&nwip_universe, 21 },
+	{ "option-22", "X",				&nwip_universe, 22 },
+	{ "option-23", "X",				&nwip_universe, 23 },
+	{ "option-24", "X",				&nwip_universe, 24 },
+	{ "option-25", "X",				&nwip_universe, 25 },
+	{ "option-26", "X",				&nwip_universe, 26 },
+	{ "option-27", "X",				&nwip_universe, 27 },
+	{ "option-28", "X",				&nwip_universe, 28 },
+	{ "option-29", "X",				&nwip_universe, 29 },
+	{ "option-30", "X",				&nwip_universe, 30 },
+	{ "option-31", "X",				&nwip_universe, 31 },
+	{ "option-32", "X",				&nwip_universe, 32 },
+	{ "option-33", "X",				&nwip_universe, 33 },
+	{ "option-34", "X",				&nwip_universe, 34 },
+	{ "option-35", "X",				&nwip_universe, 35 },
+	{ "option-36", "X",				&nwip_universe, 36 },
+	{ "option-37", "X",				&nwip_universe, 37 },
+	{ "option-38", "X",				&nwip_universe, 38 },
+	{ "option-39", "X",				&nwip_universe, 39 },
+	{ "option-40", "X",				&nwip_universe, 40 },
+	{ "option-41", "X",				&nwip_universe, 41 },
+	{ "option-42", "X",				&nwip_universe, 42 },
+	{ "option-43", "X",				&nwip_universe, 43 },
+	{ "option-44", "X",				&nwip_universe, 44 },
+	{ "option-45", "X",				&nwip_universe, 45 },
+	{ "option-46", "X",				&nwip_universe, 46 },
+	{ "option-47", "X",				&nwip_universe, 47 },
+	{ "option-48", "X",				&nwip_universe, 48 },
+	{ "option-49", "X",				&nwip_universe, 49 },
+	{ "option-50", "X",				&nwip_universe, 50 },
+	{ "option-51", "X",				&nwip_universe, 51 },
+	{ "option-52", "X",				&nwip_universe, 52 },
+	{ "option-53", "X",				&nwip_universe, 53 },
+	{ "option-54", "X",				&nwip_universe, 54 },
+	{ "option-55", "X",				&nwip_universe, 55 },
+	{ "option-56", "X",				&nwip_universe, 56 },
+	{ "option-57", "X",				&nwip_universe, 57 },
+	{ "option-58", "X",				&nwip_universe, 58 },
+	{ "option-59", "X",				&nwip_universe, 59 },
+	{ "option-60", "X",				&nwip_universe, 60 },
+	{ "option-61", "X",				&nwip_universe, 61 },
+	{ "option-62", "X",				&nwip_universe, 62 },
+	{ "option-63", "X",				&nwip_universe, 63 },
+	{ "option-64", "X",				&nwip_universe, 64 },
+	{ "option-65", "X",				&nwip_universe, 65 },
+	{ "option-66", "X",				&nwip_universe, 66 },
+	{ "option-67", "X",				&nwip_universe, 67 },
+	{ "option-68", "X",				&nwip_universe, 68 },
+	{ "option-69", "X",				&nwip_universe, 69 },
+	{ "option-70", "X",				&nwip_universe, 70 },
+	{ "option-71", "X",				&nwip_universe, 71 },
+	{ "option-72", "X",				&nwip_universe, 72 },
+	{ "option-73", "X",				&nwip_universe, 73 },
+	{ "option-74", "X",				&nwip_universe, 74 },
+	{ "option-75", "X",				&nwip_universe, 75 },
+	{ "option-76", "X",				&nwip_universe, 76 },
+	{ "option-77", "X",				&nwip_universe, 77 },
+	{ "option-78", "X",				&nwip_universe, 78 },
+	{ "option-79", "X",				&nwip_universe, 79 },
+	{ "option-80", "X",				&nwip_universe, 80 },
+	{ "option-81", "X",				&nwip_universe, 81 },
+	{ "option-82", "X",				&nwip_universe, 82 },
+	{ "option-83", "X",				&nwip_universe, 83 },
+	{ "option-84", "X",				&nwip_universe, 84 },
+	{ "option-85", "X",				&nwip_universe, 85 },
+	{ "option-86", "X",				&nwip_universe, 86 },
+	{ "option-87", "X",				&nwip_universe, 87 },
+	{ "option-88", "X",				&nwip_universe, 88 },
+	{ "option-89", "X",				&nwip_universe, 89 },
+	{ "option-90", "X",				&nwip_universe, 90 },
+	{ "option-91", "X",				&nwip_universe, 91 },
+	{ "option-92", "X",				&nwip_universe, 92 },
+	{ "option-93", "X",				&nwip_universe, 93 },
+	{ "option-94", "X",				&nwip_universe, 94 },
+	{ "option-95", "X",				&nwip_universe, 95 },
+	{ "option-96", "X",				&nwip_universe, 96 },
+	{ "option-97", "X",				&nwip_universe, 97 },
+	{ "option-98", "X",				&nwip_universe, 98 },
+	{ "option-99", "X",				&nwip_universe, 99 },
+	{ "option-100", "X",				&nwip_universe, 100 },
+	{ "option-101", "X",				&nwip_universe, 101 },
+	{ "option-102", "X",				&nwip_universe, 102 },
+	{ "option-103", "X",				&nwip_universe, 103 },
+	{ "option-104", "X",				&nwip_universe, 104 },
+	{ "option-105", "X",				&nwip_universe, 105 },
+	{ "option-106", "X",				&nwip_universe, 106 },
+	{ "option-107", "X",				&nwip_universe, 107 },
+	{ "option-108", "X",				&nwip_universe, 108 },
+	{ "option-109", "X",				&nwip_universe, 109 },
+	{ "option-110", "X",				&nwip_universe, 110 },
+	{ "option-111", "X",				&nwip_universe, 111 },
+	{ "option-112", "X",				&nwip_universe, 112 },
+	{ "option-113", "X",				&nwip_universe, 113 },
+	{ "option-114", "X",				&nwip_universe, 114 },
+	{ "option-115", "X",				&nwip_universe, 115 },
+	{ "option-116", "X",				&nwip_universe, 116 },
+	{ "option-117", "X",				&nwip_universe, 117 },
+	{ "option-118", "X",				&nwip_universe, 118 },
+	{ "option-119", "X",				&nwip_universe, 119 },
+	{ "option-120", "X",				&nwip_universe, 120 },
+	{ "option-121", "X",				&nwip_universe, 121 },
+	{ "option-122", "X",				&nwip_universe, 122 },
+	{ "option-123", "X",				&nwip_universe, 123 },
+	{ "option-124", "X",				&nwip_universe, 124 },
+	{ "option-125", "X",				&nwip_universe, 125 },
+	{ "option-126", "X",				&nwip_universe, 126 },
+	{ "option-127", "X",				&nwip_universe, 127 },
+	{ "option-128", "X",				&nwip_universe, 128 },
+	{ "option-129", "X",				&nwip_universe, 129 },
+	{ "option-130", "X",				&nwip_universe, 130 },
+	{ "option-131", "X",				&nwip_universe, 131 },
+	{ "option-132", "X",				&nwip_universe, 132 },
+	{ "option-133", "X",				&nwip_universe, 133 },
+	{ "option-134", "X",				&nwip_universe, 134 },
+	{ "option-135", "X",				&nwip_universe, 135 },
+	{ "option-136", "X",				&nwip_universe, 136 },
+	{ "option-137", "X",				&nwip_universe, 137 },
+	{ "option-138", "X",				&nwip_universe, 138 },
+	{ "option-139", "X",				&nwip_universe, 139 },
+	{ "option-140", "X",				&nwip_universe, 140 },
+	{ "option-141", "X",				&nwip_universe, 141 },
+	{ "option-142", "X",				&nwip_universe, 142 },
+	{ "option-143", "X",				&nwip_universe, 143 },
+	{ "option-144", "X",				&nwip_universe, 144 },
+	{ "option-145", "X",				&nwip_universe, 145 },
+	{ "option-146", "X",				&nwip_universe, 146 },
+	{ "option-147", "X",				&nwip_universe, 147 },
+	{ "option-148", "X",				&nwip_universe, 148 },
+	{ "option-149", "X",				&nwip_universe, 149 },
+	{ "option-150", "X",				&nwip_universe, 150 },
+	{ "option-151", "X",				&nwip_universe, 151 },
+	{ "option-152", "X",				&nwip_universe, 152 },
+	{ "option-153", "X",				&nwip_universe, 153 },
+	{ "option-154", "X",				&nwip_universe, 154 },
+	{ "option-155", "X",				&nwip_universe, 155 },
+	{ "option-156", "X",				&nwip_universe, 156 },
+	{ "option-157", "X",				&nwip_universe, 157 },
+	{ "option-158", "X",				&nwip_universe, 158 },
+	{ "option-159", "X",				&nwip_universe, 159 },
+	{ "option-160", "X",				&nwip_universe, 160 },
+	{ "option-161", "X",				&nwip_universe, 161 },
+	{ "option-162", "X",				&nwip_universe, 162 },
+	{ "option-163", "X",				&nwip_universe, 163 },
+	{ "option-164", "X",				&nwip_universe, 164 },
+	{ "option-165", "X",				&nwip_universe, 165 },
+	{ "option-166", "X",				&nwip_universe, 166 },
+	{ "option-167", "X",				&nwip_universe, 167 },
+	{ "option-168", "X",				&nwip_universe, 168 },
+	{ "option-169", "X",				&nwip_universe, 169 },
+	{ "option-170", "X",				&nwip_universe, 170 },
+	{ "option-171", "X",				&nwip_universe, 171 },
+	{ "option-172", "X",				&nwip_universe, 172 },
+	{ "option-173", "X",				&nwip_universe, 173 },
+	{ "option-174", "X",				&nwip_universe, 174 },
+	{ "option-175", "X",				&nwip_universe, 175 },
+	{ "option-176", "X",				&nwip_universe, 176 },
+	{ "option-177", "X",				&nwip_universe, 177 },
+	{ "option-178", "X",				&nwip_universe, 178 },
+	{ "option-179", "X",				&nwip_universe, 179 },
+	{ "option-180", "X",				&nwip_universe, 180 },
+	{ "option-181", "X",				&nwip_universe, 181 },
+	{ "option-182", "X",				&nwip_universe, 182 },
+	{ "option-183", "X",				&nwip_universe, 183 },
+	{ "option-184", "X",				&nwip_universe, 184 },
+	{ "option-185", "X",				&nwip_universe, 185 },
+	{ "option-186", "X",				&nwip_universe, 186 },
+	{ "option-187", "X",				&nwip_universe, 187 },
+	{ "option-188", "X",				&nwip_universe, 188 },
+	{ "option-189", "X",				&nwip_universe, 189 },
+	{ "option-190", "X",				&nwip_universe, 190 },
+	{ "option-191", "X",				&nwip_universe, 191 },
+	{ "option-192", "X",				&nwip_universe, 192 },
+	{ "option-193", "X",				&nwip_universe, 193 },
+	{ "option-194", "X",				&nwip_universe, 194 },
+	{ "option-195", "X",				&nwip_universe, 195 },
+	{ "option-196", "X",				&nwip_universe, 196 },
+	{ "option-197", "X",				&nwip_universe, 197 },
+	{ "option-198", "X",				&nwip_universe, 198 },
+	{ "option-199", "X",				&nwip_universe, 199 },
+	{ "option-200", "X",				&nwip_universe, 200 },
+	{ "option-201", "X",				&nwip_universe, 201 },
+	{ "option-202", "X",				&nwip_universe, 202 },
+	{ "option-203", "X",				&nwip_universe, 203 },
+	{ "option-204", "X",				&nwip_universe, 204 },
+	{ "option-205", "X",				&nwip_universe, 205 },
+	{ "option-206", "X",				&nwip_universe, 206 },
+	{ "option-207", "X",				&nwip_universe, 207 },
+	{ "option-208", "X",				&nwip_universe, 208 },
+	{ "option-209", "X",				&nwip_universe, 209 },
+	{ "authenticate", "X",				&nwip_universe, 210 },
+	{ "option-211", "X",				&nwip_universe, 211 },
+	{ "option-212", "X",				&nwip_universe, 212 },
+	{ "option-213", "X",				&nwip_universe, 213 },
+	{ "option-214", "X",				&nwip_universe, 214 },
+	{ "option-215", "X",				&nwip_universe, 215 },
+	{ "option-216", "X",				&nwip_universe, 216 },
+	{ "option-217", "X",				&nwip_universe, 217 },
+	{ "option-218", "X",				&nwip_universe, 218 },
+	{ "option-219", "X",				&nwip_universe, 219 },
+	{ "option-220", "X",				&nwip_universe, 220 },
+	{ "option-221", "X",				&nwip_universe, 221 },
+	{ "option-222", "X",				&nwip_universe, 222 },
+	{ "option-223", "X",				&nwip_universe, 223 },
+	{ "option-224", "X",				&nwip_universe, 224 },
+	{ "option-225", "X",				&nwip_universe, 225 },
+	{ "option-226", "X",				&nwip_universe, 226 },
+	{ "option-227", "X",				&nwip_universe, 227 },
+	{ "option-228", "X",				&nwip_universe, 228 },
+	{ "option-229", "X",				&nwip_universe, 229 },
+	{ "option-230", "X",				&nwip_universe, 230 },
+	{ "option-231", "X",				&nwip_universe, 231 },
+	{ "option-232", "X",				&nwip_universe, 232 },
+	{ "option-233", "X",				&nwip_universe, 233 },
+	{ "option-234", "X",				&nwip_universe, 234 },
+	{ "option-235", "X",				&nwip_universe, 235 },
+	{ "option-236", "X",				&nwip_universe, 236 },
+	{ "option-237", "X",				&nwip_universe, 237 },
+	{ "option-238", "X",				&nwip_universe, 238 },
+	{ "option-239", "X",				&nwip_universe, 239 },
+	{ "option-240", "X",				&nwip_universe, 240 },
+	{ "option-241", "X",				&nwip_universe, 241 },
+	{ "option-242", "X",				&nwip_universe, 242 },
+	{ "option-243", "X",				&nwip_universe, 243 },
+	{ "option-244", "X",				&nwip_universe, 244 },
+	{ "option-245", "X",				&nwip_universe, 245 },
+	{ "option-246", "X",				&nwip_universe, 246 },
+	{ "option-247", "X",				&nwip_universe, 247 },
+	{ "option-248", "X",				&nwip_universe, 248 },
+	{ "option-249", "X",				&nwip_universe, 249 },
+	{ "option-250", "X",				&nwip_universe, 250 },
+	{ "option-251", "X",				&nwip_universe, 251 },
+	{ "option-252", "X",				&nwip_universe, 252 },
+	{ "option-253", "X",				&nwip_universe, 253 },
+	{ "option-254", "X",				&nwip_universe, 254 },
+	{ "option-end", "e",				&nwip_universe, 255 },
 };
 
-int sizeof_dhcp_option_default_priority_list =
-	sizeof dhcp_option_default_priority_list;
-
-
-char *hardware_types [] = {
+const char *hardware_types [] = {
 	"unknown-0",
 	"ethernet",
 	"unknown-2",
@@ -667,26 +846,85 @@ char *hardware_types [] = {
 	"unknown-254",
 	"unknown-255" };
 
+struct hash_table *universe_hash;
+struct universe **universes;
+int universe_count, universe_max;
 
+/* Universe containing names of configuration options, which, rather than
+   writing "option universe-name.option-name ...;", can be set by writing
+   "option-name ...;". */
 
-struct hash_table universe_hash;
+struct universe *config_universe;
 
-void initialize_universes()
+void initialize_common_option_spaces()
 {
 	int i;
 
+	universe_max = 10;
+	universes = ((struct universe **)
+		     dmalloc (universe_max * sizeof (struct universe *), MDL));
+	if (!universes)
+		log_fatal ("Can't allocate option space table.");
+	memset (universes, 0, universe_max * sizeof (struct universe *));
+
+	/* Set up the DHCP option universe... */
 	dhcp_universe.name = "dhcp";
-	dhcp_universe.hash = new_hash ();
+	dhcp_universe.lookup_func = lookup_hashed_option;
+	dhcp_universe.option_state_dereference =
+		hashed_option_state_dereference;
+	dhcp_universe.get_func = hashed_option_get;
+	dhcp_universe.set_func = hashed_option_set;
+	dhcp_universe.save_func = save_hashed_option;
+	dhcp_universe.delete_func = delete_hashed_option;
+	dhcp_universe.encapsulate = hashed_option_space_encapsulate;
+	dhcp_universe.length_size = 1;
+	dhcp_universe.tag_size = 1;
+	dhcp_universe.store_tag = putUChar;
+	dhcp_universe.store_length = putUChar;
+	dhcp_universe.index = universe_count++;
+	universes [dhcp_universe.index] = &dhcp_universe;
+	dhcp_universe.hash = new_hash (0, 0, 1);
 	if (!dhcp_universe.hash)
-		error ("Can't allocate dhcp option hash table.");
+		log_fatal ("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		dhcp_universe.options [i] = &dhcp_options [i];
 		add_hash (dhcp_universe.hash,
-			  (unsigned char *)dhcp_options [i].name, 0,
+			  (const unsigned char *)dhcp_options [i].name, 0,
 			  (unsigned char *)&dhcp_options [i]);
 	}
-	universe_hash.hash_count = DEFAULT_HASH_SIZE;
-	add_hash (&universe_hash,
-		  (unsigned char *)dhcp_universe.name, 0,
+
+	/* Set up the Novell option universe (for option 63)... */
+	nwip_universe.name = "nwip";
+	nwip_universe.lookup_func = lookup_hashed_option;
+	nwip_universe.option_state_dereference =
+		hashed_option_state_dereference;
+	nwip_universe.get_func = hashed_option_get;
+	nwip_universe.set_func = hashed_option_set;
+	nwip_universe.save_func = save_hashed_option;
+	nwip_universe.delete_func = delete_hashed_option;
+	nwip_universe.encapsulate = nwip_option_space_encapsulate;
+	nwip_universe.length_size = 1;
+	nwip_universe.tag_size = 1;
+	nwip_universe.store_tag = putUChar;
+	nwip_universe.store_length = putUChar;
+	nwip_universe.index = universe_count++;
+	universes [nwip_universe.index] = &nwip_universe;
+	nwip_universe.hash = new_hash (0, 0, 1);
+	if (!nwip_universe.hash)
+		log_fatal ("Can't allocate dhcp option hash table.");
+	for (i = 0; i < 256; i++) {
+		nwip_universe.options [i] = &dhcp_options [i];
+		add_hash (nwip_universe.hash,
+			  (const unsigned char *)dhcp_options [i].name, 0,
+			  (unsigned char *)&dhcp_options [i]);
+	}
+
+	/* Set up the hash of universes. */
+	universe_hash = new_hash (0, 0, 1);
+	add_hash (universe_hash,
+		  (const unsigned char *)dhcp_universe.name, 0,
 		  (unsigned char *)&dhcp_universe);
+	add_hash (universe_hash,
+		  (const unsigned char *)nwip_universe.name, 0,
+		  (unsigned char *)&nwip_universe);
 }
