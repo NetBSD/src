@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.11 2003/07/15 03:36:13 lukem Exp $	*/
+/*	$NetBSD: obmem.c,v 1.12 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.11 2003/07/15 03:36:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.12 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ struct obmem_softc {
 
 CFATTACH_DECL(obmem, sizeof(struct obmem_softc),
     obmem_match, obmem_attach, NULL, NULL);
+
+static int obmem_attached;
 
 static	paddr_t obmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				off_t, int, int));
@@ -90,6 +92,9 @@ obmem_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
+	if (obmem_attached)
+		return 0;
+
 	return (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
@@ -108,13 +113,8 @@ obmem_attach(parent, self, aux)
 		NULL
 	};
 
-	/*
-	 * There is only one obmem bus
-	 */
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
+	obmem_attached = 1;
+
 	printf("\n");
 
 	sc->sc_bustag = ma->ma_bustag;

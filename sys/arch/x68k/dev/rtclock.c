@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.15 2003/07/15 01:44:52 lukem Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.16 2004/12/13 02:14:14 chs Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.15 2003/07/15 01:44:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.16 2004/12/13 02:14:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,8 @@ int rtclockinit __P((void));
 CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
     rtc_match, rtc_attach, NULL, NULL);
 
+static int rtc_attached;
+
 static int
 rtc_match(parent, cf, aux)
 	struct device *parent;
@@ -76,7 +78,7 @@ rtc_match(parent, cf, aux)
 
 	if (strcmp (ia->ia_name, "rtc") != 0)
 		return (0);
-	if (cf->cf_unit != 0)
+	if (rtc_attached)
 		return (0);
 
 	/* fixed address */
@@ -99,6 +101,8 @@ rtc_attach(parent, self, aux)
 	struct rtc_softc *sc = (struct rtc_softc *)self;
 	struct intio_attach_args *ia = aux;
 	int r;
+
+	rtc_attached = 1;
 
 	ia->ia_size = 0x20;
 	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
