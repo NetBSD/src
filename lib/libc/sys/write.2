@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)write.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: write.2,v 1.3 1993/10/05 16:44:35 jtc Exp $
+.\"	$Id: write.2,v 1.4 1993/11/25 00:40:05 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt WRITE 2
@@ -188,17 +188,17 @@ array overflowed a 32-bit integer.
 .Xr pipe 2 ,
 .Xr select 2
 .Sh STANDARDS
-.Fn Write
-is expected to conform to IEEE Std 1003.1-1988
-.Pq Dq Tn POSIX .
+The
+.Fn write
+function is expected to conform to
+.St -p1003.1-88 .
 .Sh HISTORY
 The
 .Fn writev
 function call
 appeared in
 .Bx 4.2 .
-A
-.Nm write
-function call
-appeared in
-Version 6 AT&T UNIX.
+The
+.Fn write
+function call appeared in
+.At v6 .
