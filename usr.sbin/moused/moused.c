@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.5 2002/01/01 06:31:49 thorpej Exp $ */
+/* $NetBSD: moused.c,v 1.6 2002/04/22 13:08:34 wiz Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.5 2002/01/01 06:31:49 thorpej Exp $");
+__RCSID("$NetBSD: moused.c,v 1.6 2002/04/22 13:08:34 wiz Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -764,21 +764,10 @@ main(int argc, char *argv[])
 
     /* the default port name */
     switch(rodent.rtype) {
-
     case MOUSE_PROTO_INPORT:
         /* INPORT and BUS are the same... */
 	rodent.rtype = MOUSE_PROTO_BUS;
 	/* FALL THROUGH */
-    case MOUSE_PROTO_BUS:
-	if (!rodent.portname)
-	    rodent.portname = "/dev/mse0";
-	break;
-
-    case MOUSE_PROTO_PS2:
-	if (!rodent.portname)
-	    rodent.portname = "/dev/psm0";
-	break;
-
     default:
 	if (rodent.portname)
 	    break;
