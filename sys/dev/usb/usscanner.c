@@ -1,7 +1,7 @@
-/*	$NetBSD: usscanner.c,v 1.2 2001/01/11 06:20:04 augustss Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.3 2001/01/11 06:33:22 augustss Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,18 @@
 /*
  * This driver is partly based on information taken from the Linux driver
  * by John Fremlin, Oliver Neukum, and Jeremy Hall.
+ */
+/*
+ * Protocol:
+ * Send raw SCSI command on the bulk-out pipe.
+ * If output command then
+ *     send further data on the bulk-out pipe
+ * else if input command then
+ *     read data on the bulk-in pipe
+ * else
+ *     don't do anything.
+ * Read status byte on the interrupt pipe (which doesn't seem to be
+ * an interrupt pipe at all).  This operations sometimes times out.
  */
 
 #include <sys/param.h>
@@ -447,7 +459,11 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (sc->sc_state != UAS_STATUS) {
 		printf("%s: !UAS_STATUS\n", USBDEVNAME(sc->sc_dev));
 	}
+	if (sc->sc_status != 0) {
+		printf("%s: status byte=0x%02x\n", USBDEVNAME(sc->sc_dev), sc->sc_status);
+	}
 #endif
+	/* XXX what should we do on non-0 status */
 
 	sc->sc_state = UAS_IDLE;
 		
@@ -556,7 +572,7 @@ usscanner_done(struct usscanner_softc *sc)
 
 Static void
 usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		usbd_status status)
+		      usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -601,7 +617,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 Static void
 usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		usbd_status status)
+		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
