@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.24 2000/02/21 01:44:36 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.25 2000/02/22 02:35:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -167,6 +167,7 @@ STATIC int pccbb_pcmcia_card_detect __P((pcmcia_chipset_handle_t pch));
 static void pccbb_pcmcia_do_io_map __P((struct pcic_handle *, int));
 static void pccbb_pcmcia_wait_ready __P((struct pcic_handle *));
 static void pccbb_pcmcia_do_mem_map __P((struct pcic_handle *, int));
+static void pccbb_powerhook __P((int, void *));
 
 /* bus-space allocation and disallocation functions */
 #if rbus
@@ -587,6 +588,7 @@ pccbb_pci_callback(self)
 	}
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	powerhook_establish(pccbb_powerhook, sc);
 
 	{
 		u_int32_t sockstat =
@@ -3104,3 +3106,35 @@ pccbb_winset(align, sc, bst)
 }
 
 #endif /* rbus */
+
+static void
+pccbb_powerhook(why, arg)
+	int why;
+	void *arg;
+{
+	struct pccbb_softc *sc = arg;
+	u_int32_t reg;
+	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
+	bus_space_handle_t base_memh = sc->sc_base_memh;
+
+	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
+
+	if (why == PWR_RESUME) {
+		/* CSC Interrupt: Card detect interrupt on */
+		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
+		/* Card detect intr is turned on. */
+		reg |= CB_SOCKET_MASK_CD;
+		bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
+		/* reset interrupt */
+		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
+		bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT, reg);
+
+		/*
+		 * check for card insertion or removal during suspend period.
+		 * XXX: the code can't cope with card swap (remove then insert).
+		 * how can we detect such situation?
+		 */
+		if (why == PWR_RESUME)
+			(void)pccbbintr(sc);
+	}
+}
