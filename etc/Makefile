@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.260 2003/10/26 07:25:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.261 2003/10/26 23:34:29 cl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -117,7 +117,7 @@ BIN3+=	hosts.equiv
 ETC_PKG=-T etc_pkg
 BASE_PKG=-T base_pkg
 ETC_INSTALL_FILE=cd ${.CURDIR} && ${INSTALL_FILE} ${ETC_PKG}
-ETC_INSTALL_OBJ_FILE=             ${INSTALL_FILE} ${ETC_PKG}
+ETC_INSTALL_OBJ_FILE=cd ${.OBJDIR} && ${INSTALL_FILE} ${ETC_PKG}
 ETC_INSTALL_LINK=cd ${.CURDIR} && ${INSTALL_LINK} ${ETC_PKG}
 ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
