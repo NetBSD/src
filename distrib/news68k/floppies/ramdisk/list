@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2003/01/19 12:26:49 tsutsui Exp $
+#	$NetBSD: list,v 1.18 2004/03/26 15:23:35 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -60,14 +60,13 @@ ARGVLN	sh	-sh
 
 SPECIAL	dmesg		srcdir	distrib/utils/x_dmesg
 SPECIAL	ed		srcdir	distrib/utils/x_ed
-SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
+LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz -lbz2
 
 COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
 COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
