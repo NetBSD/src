@@ -1,7 +1,7 @@
-/* $NetBSD: cia.c,v 1.52 2000/02/09 01:39:20 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.53 2000/02/26 18:53:12 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.52 2000/02/09 01:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.53 2000/02/26 18:53:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.52 2000/02/09 01:39:20 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
+#include <machine/sysarch.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -118,6 +119,9 @@ struct cfattach cia_ca = {
 extern struct cfdriver cia_cd;
 
 static int	ciaprint __P((void *, const char *pnp));
+
+int	cia_bus_get_window __P((int, int,
+	    struct alpha_bus_space_translation *));
 
 /* There can be only one. */
 int ciafound;
@@ -246,14 +250,30 @@ cia_init(ccp, mallocsafe)
 		if (ccp->cc_flags & CCF_BUS_USE_BWX) {
 			cia_bwx_bus_io_init(&ccp->cc_iot, ccp);
 			cia_bwx_bus_mem_init(&ccp->cc_memt, ccp);
+
+			/*
+			 * We have one window for both PCI I/O and MEM
+			 * in BWX mode.
+			 */
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 1;
 		} else {
 			cia_swiz_bus_io_init(&ccp->cc_iot, ccp);
 			cia_swiz_bus_mem_init(&ccp->cc_memt, ccp);
+
+			/*
+			 * We have two I/O windows and 4 MEM windows in
+			 * SWIZ mode.
+			 */
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 4;
 		}
+		alpha_bus_get_window = cia_bus_get_window;
 	}
 	ccp->cc_mallocsafe = mallocsafe;
 
 	cia_pci_init(&ccp->cc_pc, ccp);
+	alpha_pci_chipset = &ccp->cc_pc;
 
 	ccp->cc_initted = 1;
 }
@@ -417,4 +437,28 @@ ciaprint(aux, pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
+}
+
+int
+cia_bus_get_window(type, window, abst)
+	int type, window;
+	struct alpha_bus_space_translation *abst;
+{
+	struct cia_config *ccp = &cia_configuration;
+	bus_space_tag_t st;
+
+	switch (type) {
+	case ALPHA_BUS_TYPE_PCI_IO:
+		st = &ccp->cc_iot;
+		break;
+
+	case ALPHA_BUS_TYPE_PCI_MEM:
+		st = &ccp->cc_memt;
+		break;
+
+	default:
+		panic("cia_bus_get_window");
+	}
+
+	return (alpha_bus_space_get_window(st, window, abst));
 }

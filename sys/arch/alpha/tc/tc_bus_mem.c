@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.20 2000/02/25 00:45:06 thorpej Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.21 2000/02/26 18:53:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.20 2000/02/25 00:45:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.21 2000/02/26 18:53:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ int		tc_mem_subregion __P((void *, bus_space_handle_t, bus_size_t,
 
 int		tc_mem_translate __P((void *, bus_addr_t, bus_size_t,
 		    int, struct alpha_bus_space_translation *));
+int		tc_mem_get_window __P((void *, int,
+		    struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		tc_mem_alloc __P((void *, bus_addr_t, bus_addr_t, bus_size_t,
@@ -163,6 +165,7 @@ static struct alpha_bus_space tc_mem_space = {
 	tc_mem_subregion,
 
 	tc_mem_translate,
+	tc_mem_get_window,
 
 	/* allocation/deallocation */
 	tc_mem_alloc,
@@ -243,6 +246,17 @@ tc_mem_translate(v, memaddr, memlen, flags, abst)
 	bus_addr_t memaddr;
 	bus_size_t memlen;
 	int flags;
+	struct alpha_bus_space_translation *abst;
+{
+
+	return (EOPNOTSUPP);
+}
+
+/* ARGSUSED */
+int
+tc_mem_get_window(v, window, abst)
+	void *v;
+	int window;
 	struct alpha_bus_space_translation *abst;
 {
 
