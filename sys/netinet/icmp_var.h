@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.9 1997/10/17 22:12:14 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -58,13 +58,16 @@ struct	icmpstat {
  * Names for ICMP sysctl objects
  */
 #define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
-#define ICMPCTL_MAXID		2
+#define ICMPCTL_MTUDISC         2       /* allow path MTU discovery */
+#define ICMPCTL_MAXID           3
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
+	{ "mtudisc", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
 struct	icmpstat icmpstat;
+extern int 	 icmp_do_mtudisc;
 #endif

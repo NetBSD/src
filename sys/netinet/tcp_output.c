@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.18 1997/10/08 16:32:48 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.19 1997/10/17 22:12:31 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -52,6 +52,8 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
 #define	TCPOUTFLAGS
 #include <netinet/tcp_fsm.h>
@@ -69,7 +71,6 @@
 #ifdef notyet
 extern struct mbuf *m_copypack();
 #endif
-
 
 #define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
 
@@ -91,9 +92,10 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 
 	ifp = rt->rt_ifp;
 
-	if (rt->rt_rmx.rmx_mtu)
+	if (rt->rt_rmx.rmx_mtu != 0)
 		size = rt->rt_rmx.rmx_mtu - sizeof(struct tcpiphdr);
-	else if (in_localaddr(inp->inp_faddr) || ifp->if_flags & IFF_LOOPBACK)
+	else if (icmp_do_mtudisc || in_localaddr(inp->inp_faddr) ||
+		 ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - sizeof(struct tcpiphdr);
 	else
 		size = tcp_mssdflt;
@@ -585,9 +587,16 @@ send:
 	else
 #endif
     {
+	struct rtentry *rt;
+
 	((struct ip *)ti)->ip_len = m->m_pkthdr.len;
 	((struct ip *)ti)->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
+
+	if (icmp_do_mtudisc && (rt = in_pcbrtentry(tp->t_inpcb)) != 0 && 
+	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+		((struct ip *)ti)->ip_off |= IP_DF;
+
 #if BSD >= 43
 	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
 	    so->so_options & SO_DONTROUTE, 0);
