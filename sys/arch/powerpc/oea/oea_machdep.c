@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.5 2003/03/05 05:27:25 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.6 2003/03/15 07:21:02 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -102,20 +102,20 @@ void
 oea_init(void (*handler)(void))
 {
 	extern int trapstart[], trapend[];
-	extern int trapcode, trapsize;
-	extern int sctrap, scsize;
-	extern int alitrap, alisize;
-	extern int dsitrap, dsisize;
-	extern int dsi601trap, dsi601size;
-	extern int decrint, decrsize;
-	extern int tlbimiss, tlbimsize;
-	extern int tlbdlmiss, tlbdlmsize;
-	extern int tlbdsmiss, tlbdsmsize;
+	extern int trapcode[], trapsize[];
+	extern int sctrap[], scsize[];
+	extern int alitrap[], alisize[];
+	extern int dsitrap[], dsisize[];
+	extern int dsi601trap[], dsi601size[];
+	extern int decrint[], decrsize[];
+	extern int tlbimiss[], tlbimsize[];
+	extern int tlbdlmiss[], tlbdlmsize[];
+	extern int tlbdsmiss[], tlbdsmsize[];
 #if defined(DDB) || defined(KGDB)
-	extern int ddblow, ddbsize;
+	extern int ddblow[], ddbsize[];
 #endif
 #ifdef IPKDB
-	extern int ipkdblow, ipkdbsize;
+	extern int ipkdblow[], ipkdbsize[];
 #endif
 #ifdef ALTIVEC
 	register_t msr;
@@ -168,8 +168,8 @@ oea_init(void (*handler)(void))
 	for (exc = 0; exc <= EXC_LAST; exc += 0x100) {
 		switch (exc) {
 		default:
-			size = (size_t)&trapsize;
-			memcpy((void *)exc, &trapcode, size);
+			size = (size_t)trapsize;
+			memcpy((void *)exc, trapcode, size);
 			break;
 #if 0
 		case EXC_EXI:
@@ -179,48 +179,48 @@ oea_init(void (*handler)(void))
 			break;
 #endif
 		case EXC_SC:
-			size = (size_t)&scsize;
-			memcpy((void *)EXC_SC, &sctrap, size);
+			size = (size_t)scsize;
+			memcpy((void *)EXC_SC, sctrap, size);
 			break;
 		case EXC_ALI:
-			size = (size_t)&alisize;
-			memcpy((void *)EXC_ALI, &alitrap, size);
+			size = (size_t)alisize;
+			memcpy((void *)EXC_ALI, alitrap, size);
 			break;
 		case EXC_DSI:
 			if (cpuvers == MPC601) {
-				size = (size_t)&dsi601size;
-				memcpy((void *)EXC_DSI, &dsi601trap, size);
+				size = (size_t)dsi601size;
+				memcpy((void *)EXC_DSI, dsi601trap, size);
 			} else {
-				size = (size_t)&dsisize;
-				memcpy((void *)EXC_DSI, &dsitrap, size);
+				size = (size_t)dsisize;
+				memcpy((void *)EXC_DSI, dsitrap, size);
 			}
 			break;
 		case EXC_DECR:
-			size = (size_t)&decrsize;
-			memcpy((void *)EXC_DECR, &decrint, size);
+			size = (size_t)decrsize;
+			memcpy((void *)EXC_DECR, decrint, size);
 			break;
 		case EXC_IMISS:
-			size = (size_t)&tlbimsize;
-			memcpy((void *)EXC_IMISS, &tlbimiss, size);
+			size = (size_t)tlbimsize;
+			memcpy((void *)EXC_IMISS, tlbimiss, size);
 			break;
 		case EXC_DLMISS:
-			size = (size_t)&tlbdlmsize;
-			memcpy((void *)EXC_DLMISS, &tlbdlmiss, size);
+			size = (size_t)tlbdlmsize;
+			memcpy((void *)EXC_DLMISS, tlbdlmiss, size);
 			break;
 		case EXC_DSMISS:
-			size = (size_t)&tlbdsmsize;
-			memcpy((void *)EXC_DSMISS, &tlbdsmiss, size);
+			size = (size_t)tlbdsmsize;
+			memcpy((void *)EXC_DSMISS, tlbdsmiss, size);
 			break;
 		case EXC_PERF:
-			size = (size_t)&trapsize;
-			memcpy((void *)EXC_PERF, &trapcode, size);
-			memcpy((void *)EXC_VEC,  &trapcode, size);
+			size = (size_t)trapsize;
+			memcpy((void *)EXC_PERF, trapcode, size);
+			memcpy((void *)EXC_VEC,  trapcode, size);
 			break;
 #if defined(DDB) || defined(IPKDB) || defined(KGDB)
 		case EXC_RUNMODETRC:
 			if (cpuvers != MPC601) {
-				size = (size_t)&trapsize;
-				memcpy((void *)EXC_RUNMODETRC, &trapcode, size);
+				size = (size_t)trapsize;
+				memcpy((void *)EXC_RUNMODETRC, trapcode, size);
 				break;
 			}
 			/* FALLTHROUGH */
@@ -228,14 +228,14 @@ oea_init(void (*handler)(void))
 		case EXC_TRC:
 		case EXC_BPT:
 #if defined(DDB) || defined(KGDB)
-			size = (size_t)&ddbsize;
-			memcpy((void *)exc, &ddblow, size);
+			size = (size_t)ddbsize;
+			memcpy((void *)exc, ddblow, size);
 #if defined(IPKDB)
 #error "cannot enable IPKDB with DDB or KGDB"
 #endif
 #else
-			size = (size_t)&ipkdbsize;
-			memcpy((void *)exc, &ipkdblow, size);
+			size = (size_t)ipkdbsize;
+			memcpy((void *)exc, ipkdblow, size);
 #endif
 			break;
 #endif /* DDB || IPKDB || KGDB */
@@ -576,9 +576,9 @@ oea_batinit(paddr_t pa, ...)
 void
 oea_install_extint(void (*handler)(void))
 {
-	extern int extint, extsize;
-	extern int extint_call;
-	uintptr_t offset = (uintptr_t)handler - (uintptr_t)&extint_call;
+	extern int extint[], extsize[];
+	extern int extint_call[];
+	uintptr_t offset = (uintptr_t)handler - (uintptr_t)extint_call;
 	int omsr, msr;
 
 #ifdef	DIAGNOSTIC
@@ -589,10 +589,10 @@ oea_install_extint(void (*handler)(void))
 	__asm __volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 	    :	"=r" (omsr), "=r" (msr)
 	    :	"K" ((u_short)~PSL_EE));
-	extint_call = (extint_call & 0xfc000003) | offset;
-	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
-	__syncicache((void *)&extint_call, sizeof extint_call);
-	__syncicache((void *)EXC_EXI, (int)&extsize);
+	extint_call[0] = (extint_call[0] & 0xfc000003) | offset;
+	memcpy((void *)EXC_EXI, extint, (size_t)extsize);
+	__syncicache((void *)extint_call, sizeof extint_call[0]);
+	__syncicache((void *)EXC_EXI, (int)extsize);
 	__asm __volatile ("mtmsr %0" :: "r"(omsr));
 }
 
