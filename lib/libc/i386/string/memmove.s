@@ -33,11 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/asm.h>
-
 #if defined(LIBC_RCS) && !defined(lint)
-	.asciz "$ID$"
+	.asciz "$Id $"
 #endif /* LIBC_RCS and not lint */
+
+#include "DEFS.h"
 
 	/*
 	 * (ov)bcopy (src,dst,cnt)
