@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.21 2001/01/04 15:01:25 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.22 2001/01/15 20:19:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -690,7 +690,7 @@ softagain:
 	}
 	if ((ipending & ~pcpl) & (1 << SIR_CLOCK)) {
 		ipending &= ~(1 << SIR_CLOCK);
-		softclock();
+		softclock(NULL);
 		intrcnt[CNT_SOFTCLOCK]++;
 		goto softagain;
 	}

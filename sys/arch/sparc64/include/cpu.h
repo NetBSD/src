@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2000/09/29 17:02:38 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.27 2001/01/15 20:19:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,11 +170,9 @@ extern struct intrhand soft01intr, soft01net, soft01clock;
 #if 0
 #define setsoftint()	send_softint(-1, IPL_SOFTINT, &soft01intr)
 #define setsoftnet()	send_softint(-1, IPL_SOFTNET, &soft01net)
-#define setsoftclock()	send_softint(-1, IPL_SOFTCLOCK, &soft01clock)
 #else
 void setsoftint __P((void));
 void setsoftnet __P((void));
-void setsoftclock __P((void));
 #endif
 
 int	want_ast;

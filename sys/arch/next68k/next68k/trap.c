@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2000/12/23 09:35:53 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2001/01/15 20:19:56 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -1009,6 +1009,6 @@ init_sir()
 	extern void netintr(void);
 
 	sir_routines[0] = (void (*)(void *))netintr;
-	sir_routines[1] = (void (*)(void *))softclock;
+	sir_routines[1] = softclock;
 	next_sir = 2;
 }

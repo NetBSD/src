@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.3 2000/11/24 14:49:44 scw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.4 2001/01/15 20:19:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 
 
 struct mvme68k_soft_intrhand	*softnet_intrhand;
-struct mvme68k_soft_intrhand	*softclock_intrhand;
 
 static struct mvme68k_soft_intr mvme68k_soft_intrs[IPL_NSOFT];
 
@@ -101,12 +100,9 @@ softintr_init()
 	/* Establish legacy software interrupt handlers */
 	softnet_intrhand = softintr_establish(IPL_SOFTNET,
 	    (void (*)(void *)) netintr, NULL);
-	softclock_intrhand = softintr_establish(IPL_SOFTCLOCK,
-	    (void (*)(void *)) softclock, NULL);
 
 #ifdef DEBUG
 	assert(softnet_intrhand != NULL);
-	assert(softclock_intrhand != NULL);
 #endif
 }
 

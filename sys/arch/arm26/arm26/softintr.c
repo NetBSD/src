@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.7 2000/08/22 21:22:51 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.8 2001/01/15 20:19:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.7 2000/08/22 21:22:51 bjh21 Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.8 2001/01/15 20:19:52 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -66,10 +66,8 @@ LIST_HEAD(sh_head, softintr_handler);
 static struct sh_head sh_head;
 
 static struct softintr_handler *sh_softnet;
-static struct softintr_handler *sh_softclock;
 
 static void dosoftnet(void *);
-static void dosoftclock(void *);
 
 extern int hardsplx(int); /* XXX should be in a header somewhere */
 
@@ -79,14 +77,6 @@ softintr_init()
 
 	LIST_INIT(&sh_head);
 	sh_softnet = softintr_establish(IPL_SOFTNET, dosoftnet, NULL);
-	sh_softclock = softintr_establish(IPL_SOFTCLOCK, dosoftclock, NULL);
-}
-
-void
-setsoftclock()
-{
-
-	softintr_schedule(sh_softclock);
 }
 
 void
@@ -150,13 +140,6 @@ softintr_schedule(void *cookie)
 	struct softintr_handler *sh = cookie;
 
 	sh->sh_pending = 1;
-}
-
-static void
-dosoftclock(void *arg)
-{
-
-	softclock();
 }
 
 static void
