@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.59 2000/07/02 15:07:52 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.60 2000/07/24 06:05:51 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -440,9 +440,7 @@ again:
 	get_ifinterface_info();
 	pass = strlen(net_mask) == 0 ? 0 : 1;
 	needmedia = strlen(net_media) == 0 ? 0 : 1;
-	if(dhcp_config) {
-		/* disable ipv6 */
-		v6config=0;
+	if (dhcp_config) {
 		/* run route show and extract data */
 		get_command_out(net_defroute,"/sbin/route show 2>/dev/null","default");
 		/* pull nameserver info out of /etc/resolv.conf */
@@ -483,9 +481,9 @@ again:
 
 #ifdef INET6
 	/* IPv6 autoconfiguration */
-	if (!is_v6kernel() )
+	if (!is_v6kernel())
 		v6config = 0;
-	else if(v6config) {  /* dhcp config will disable this */
+	else if (v6config) {  /* dhcp config will disable this */
 		process_menu(MENU_ip6autoconf);
 		v6config = yesno ? 1 : 0;
 	}
