@@ -124,6 +124,9 @@
  * templates in AmlOpInfo[]
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
+
 #include "acpi.h"
 #include "acparser.h"
 #include "acdispat.h"
