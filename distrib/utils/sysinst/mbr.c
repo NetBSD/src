@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.7 1998/06/20 13:05:49 mrg Exp $ */
+/*	$NetBSD: mbr.c,v 1.8 1998/07/21 14:53:36 rvb Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,13 +114,17 @@ set_fdisk_geom()
 	msg_display_add(MSG_setbiosgeom);
 	disp_cur_geom();
 	msg_printf_add("\n");
-	msg_prompt_add(MSG_cylinders, NULL, res, 80);
+	snprintf(res, 80, "%d", bcyl);
+	msg_prompt_add(MSG_cylinders, res, res, 80);
 	bcyl = atoi(res);
-	msg_prompt_add(MSG_heads, NULL, res, 80);
+
+	snprintf(res, 80, "%d", bhead);
+	msg_prompt_add(MSG_heads, res, res, 80);
 	bhead = atoi(res);
-	msg_prompt_add(MSG_sectors, NULL, res, 80);
+
+	snprintf(res, 80, "%d", bsec);
+	msg_prompt_add(MSG_sectors, res, res, 80);
 	bsec = atoi(res);
-	bstuffset = 1;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.2 1998/06/20 13:05:49 mrg Exp $	*/
+/*	$NetBSD: mbr.h,v 1.3 1998/07/21 14:53:36 rvb Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -46,7 +46,6 @@
 
 /* incore fdisk (mbr, bios) geometry */
 EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
-EXTERN int bstuffset INIT(0);
 
 /* incore copy of  MBR partitions */
 enum info {ID,SIZE,START,FLAG,SET};
