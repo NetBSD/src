@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.1 2004/10/04 01:16:39 thorpej Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.2 2004/10/23 19:45:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.1 2004/10/04 01:16:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.2 2004/10/23 19:45:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,10 +247,9 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 		if ((caddr_t)lp > lp_lim)
 			return (SCAN_CONTINUE);
 		label_offset = (size_t)((caddr_t)lp - (caddr_t)a->buf);
-		if (lp->d_magic != DISKMAGIC ||
-		    lp->d_magic != DISKMAGIC) {
+		if (lp->d_magic != DISKMAGIC || lp->d_magic2 != DISKMAGIC) {
 			if (lp->d_magic == bswap32(DISKMAGIC) &&
-			    lp->d_magic == bswap32(DISKMAGIC)) {
+			    lp->d_magic2 == bswap32(DISKMAGIC)) {
 				/*
 				 * Label is in the other byte order; validate
 				 * its length, then byte-swap it.
