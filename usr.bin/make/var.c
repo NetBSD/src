@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.83 2003/12/26 08:03:06 jmc Exp $	*/
+/*	$NetBSD: var.c,v 1.84 2003/12/26 23:13:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.83 2003/12/26 08:03:06 jmc Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.84 2003/12/26 23:13:32 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.83 2003/12/26 08:03:06 jmc Exp $");
+__RCSID("$NetBSD: var.c,v 1.84 2003/12/26 23:13:32 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3064,39 +3064,29 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			 * Now we break this sucker into the lhs and
 			 * rhs. We must null terminate them of course.
 			 */
-			for (cp = tstr; *cp != '='; cp++)
-			    continue;
-			pattern.lhs = tstr;
-			pattern.leftLen = cp - tstr;
-			*WR(cp) = '\0';
-			cp++;
-			pattern.rhs = cp;
-			cnt = 1;
-			while (cnt) {
-			    if (*cp == endc)
-				cnt--;
-			    else if (*cp == startc)
-				cnt++;
-			    if (cnt)
-				cp++;
-			}
-			pattern.rightLen = cp - pattern.rhs;
-			*WR(cp) = '\0';
+			delim='=';
+			cp = tstr;
+			if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, 
+				err, &cp, delim, &pattern.flags,
+				&pattern.leftLen, NULL)) == NULL)
+				goto cleanup;
+			delim = endc;
+			if ((pattern.rhs = VarGetPattern(ctxt, &parsestate,
+				err, &cp, delim, NULL, &pattern.rightLen,
+				&pattern)) == NULL)
+				goto cleanup;
 
 			/*
 			 * SYSV modifications happen through the whole
 			 * string. Note the pattern is anchored at the end.
 			 */
+			termc = *--cp;
+			delim = '\0';
 			newStr = VarModify(ctxt, &parsestate, nstr,
 					   VarSYSVMatch,
 					   (ClientData)&pattern);
-
-			/*
-			 * Restore the nulled characters
-			 */
-			*WR(&pattern.lhs[pattern.leftLen]) = '=';
-			*WR(&pattern.rhs[pattern.rightLen]) = endc;
-			termc = endc;
+			free(UNCONST(pattern.lhs));
+			free(UNCONST(pattern.rhs));
 		    } else
 #endif
 		    {
