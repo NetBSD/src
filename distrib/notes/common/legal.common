@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.21 2001/04/07 14:51:52 jhawk Exp $
+.\"	$NetBSD: legal.common,v 1.22 2001/06/15 12:30:17 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,6 +143,7 @@ This product includes software developed by Theo de Raadt.
 This product includes software developed by Tohru Nishimura
 for the NetBSD Project.
 This product includes software developed by TooLs GmbH.
+This product includes software designed by William Allen Simpson.
 This product includes software developed by Winning Strategies, Inc.
 This product includes software developed by Zembu Labs, Inc.
 This product includes software developed by the Center for
