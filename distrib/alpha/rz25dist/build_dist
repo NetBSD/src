@@ -1,4 +1,5 @@
 #!/bin/sh -e
+# $NetBSD: build_dist,v 1.2 1997/04/18 18:05:25 cgd Exp $
 
 SRCBASE=/usr/src
 TOOLSRCBASE=${SRCBASE}/toolchain
