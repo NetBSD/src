@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.2 1996/02/22 22:38:48 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.3 1996/03/06 23:01:49 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -28,8 +28,6 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *
- *	$Id: db_interface.c,v 1.2 1996/02/22 22:38:48 mark Exp $
  */
 
 /*
@@ -126,7 +124,7 @@ kdb_trap(type, tf)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		printf("kernel: trap");
+		db_printf("kernel: trap");
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
@@ -136,6 +134,7 @@ kdb_trap(type, tf)
 	/* Should switch to kdb`s own stack here. */
 
 	ddb_regs.ddb_tf = *tf;
+	ddb_regs.ddb_tf.tf_pc -= 4;
 
 	db_active++;
 	cnpollc(TRUE);
@@ -217,7 +216,6 @@ db_write_bytes(addr, size, data)
 			*dst = *data;
 		dst++, data++;
 	}
-
 }
 
 int
@@ -226,8 +224,15 @@ Debugger()
 	asm(".word	0xe7ffffff");
 }
 
+void db_show_vmstat_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_show_fs_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_show_vnode_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+
 struct db_command arm32_db_command_table[] = {
-	{ (char *)0, }
+	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
+	{ "fs",		db_show_fs_cmd,		0, NULL },
+	{ "vnode",	db_show_vnode_cmd,	0, NULL },
+	{ NULL, 	NULL, 			0, NULL }
 };
 
 int
@@ -236,7 +241,7 @@ db_trapper(addr, inst, frame)
 	u_int		inst;
 	trapframe_t	*frame;
 {
-	printf("db_trapper\n");
+/*	db_printf("db_trapper\n");*/
 	kdb_trap(1, frame);
 	return(0);
 }
@@ -256,7 +261,7 @@ db_machine_init()
  */
 
 	if (kernexec->a_syms == 0) {
-		printf("(no syms) ");
+		printf("[No symbol table]\n");
 	} else {
 		esym = (int)&end + kernexec->a_syms + sizeof(int);
 		len = *((u_int *)esym);
@@ -265,4 +270,20 @@ db_machine_init()
 
 	install_coproc_handler(0, db_trapper);
 	db_machine_commands_install(arm32_db_command_table);
+}
+
+
+u_int
+branch_taken(insn, pc, reg, db_regs)
+	u_int insn;
+	u_int pc;
+	u_int reg;
+	db_regs_t *db_regs;
+{
+	int branch;
+
+	branch = ((insn << 2) & 0x03ffffff);
+	if (branch & 0x02000000)
+		branch |= 0xfc000000;
+	return(pc + 8 + branch);
 }
