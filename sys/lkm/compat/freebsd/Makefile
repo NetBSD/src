@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/22 19:32:51 explorer Exp $
+#	$NetBSD: Makefile,v 1.4 1996/10/22 19:43:13 explorer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/freebsd $S/arch/i386/i386
 
-CFLAGS+=	-DVM86 -I.
+CFLAGS+=	-DVM86
 
 NOMAN=	yep
 
