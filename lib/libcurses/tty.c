@@ -1,3 +1,5 @@
+/*	$NetBSD: tty.c,v 1.7 1997/07/22 07:37:11 mikel Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)tty.c	8.5 (Berkeley) 8/13/94";
+#else
+__RCSID("$NetBSD: tty.c,v 1.7 1997/07/22 07:37:11 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdlib.h>

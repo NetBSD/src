@@ -1,3 +1,5 @@
+/*	$NetBSD: clrtoeol.c,v 1.8 1997/07/22 07:36:29 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: clrtoeol.c,v 1.8 1997/07/22 07:36:29 mikel Exp $");
+#endif
 #endif	/* not lint */
 
 #include "curses.h"

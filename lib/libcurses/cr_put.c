@@ -1,3 +1,5 @@
+/*	$NetBSD: cr_put.c,v 1.9 1997/07/22 07:36:30 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: cr_put.c,v 1.9 1997/07/22 07:36:30 mikel Exp $");
+#endif
 #endif	/* not lint */
 
 #include <string.h>
@@ -297,7 +304,7 @@ plod(cnt, in_refresh)
 	 * If it will be cheaper, or if we can't back up, then send a return
 	 * preliminarily.
 	 */
-	if (j > i + 1 || outcol > destcol && !BS && !BC) {
+	if (j > i + 1 || (outcol > destcol && !BS && !BC)) {
 		/*
 		 * BUG: this doesn't take the (possibly long) length of CR
 		 * into account.

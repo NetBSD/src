@@ -1,3 +1,5 @@
+/*	$NetBSD: addbytes.c,v 1.11 1997/07/22 07:36:20 mikel Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: addbytes.c,v 1.11 1997/07/22 07:36:20 mikel Exp $");
+#endif
 #endif	/* not lint */
 
 #include "curses.h"
@@ -58,11 +65,11 @@ __waddbytes(win, bytes, count, so)
 
 	SYNCH_IN;
 
+	while (count--) {
+		c = *bytes++;
 #ifdef DEBUG
 	__CTRACE("ADDBYTES('%c') at (%d, %d)\n", c, y, x);
 #endif
-	while (count--) {
-		c = *bytes++;
 		switch (c) {
 		case '\t':
 			SYNCH_OUT;

@@ -1,3 +1,5 @@
+/*	$NetBSD: setterm.c,v 1.8 1997/07/22 07:37:03 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)setterm.c	8.7 (Berkeley) 7/27/94";
+#else
+__RCSID("$NetBSD: setterm.c,v 1.8 1997/07/22 07:37:03 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/ioctl.h>		/* TIOCGWINSZ on old systems. */
@@ -157,8 +164,8 @@ setterm(type)
 	/* If no scrolling commands, no quick change. */
 	__noqch =
 	    (CS == NULL || HO == NULL ||
-	    SF == NULL && sf == NULL || SR == NULL && sr == NULL) &&
-	    (AL == NULL && al == NULL || DL == NULL && dl == NULL);
+	    (SF == NULL && sf == NULL) || (SR == NULL && sr == NULL)) &&
+	    ((AL == NULL && al == NULL) || (DL == NULL && dl == NULL));
 
 	return (unknown ? ERR : OK);
 }

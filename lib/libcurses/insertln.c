@@ -1,3 +1,5 @@
+/*	$NetBSD: insertln.c,v 1.8 1997/07/22 07:36:49 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)insertln.c	8.2 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: insertln.c,v 1.8 1997/07/22 07:36:49 mikel Exp $");
+#endif
 #endif	/* not lint */
 
 #include <string.h>
@@ -53,6 +60,9 @@ winsertln(win)
 
 #ifdef DEBUG
 	__CTRACE("insertln: (%0.2o)\n", win);
+#endif
+#ifdef __GNUC__
+	temp = NULL;		/* XXX gcc -Wuninitialized */
 #endif
 	if (win->orig == NULL)
 		temp = win->lines[win->maxy - 1];

@@ -1,3 +1,5 @@
+/*	$NetBSD: fullname.c,v 1.7 1997/07/22 07:36:41 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)fullname.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: fullname.c,v 1.7 1997/07/22 07:36:41 mikel Exp $");
+#endif
 #endif	/* not lint */
+
+#include "curses.h"
 
 /*
  * fullname --

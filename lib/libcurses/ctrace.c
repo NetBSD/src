@@ -1,3 +1,5 @@
+/*	$NetBSD: ctrace.c,v 1.5 1997/07/22 07:36:32 mikel Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
+#else
+__RCSID("$NetBSD: ctrace.c,v 1.5 1997/07/22 07:36:32 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef DEBUG
@@ -43,6 +50,8 @@ static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
 #include <varargs.h>
 #endif
+
+#include "curses.h"
 
 #ifndef TFILE
 #define	TFILE	"__curses.out"

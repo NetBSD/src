@@ -1,3 +1,5 @@
+/*	$NetBSD: clrtobot.c,v 1.8 1997/07/22 07:36:27 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: clrtobot.c,v 1.8 1997/07/22 07:36:27 mikel Exp $");
+#endif
 #endif	/* not lint */
 
 #include "curses.h"
@@ -48,6 +55,9 @@ wclrtobot(win)
 	register int minx, startx, starty, y;
 	register __LDATA *sp, *end, *maxx;
 
+#ifdef __GNUC__
+	maxx = NULL;		/* XXX gcc -Wuninitialized */
+#endif
 	if (win->lines[win->cury]->flags & __ISPASTEOL) {
 		starty = win->cury + 1;
 		startx = 0;
