@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.1.2.2 2002/05/19 14:00:22 gehenna Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.1.2.3 2002/05/31 01:45:04 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -192,9 +192,15 @@ emitconv(FILE *fp)
 		(void)snprintf(mstr, sizeof(mstr), "%d", i);
 		dm = ht_lookup(cdevmtab, intern(mstr));
 		if (dm == NULL) {
+#if 0
 			dm = ht_lookup(alldevmtab, intern(mstr));
 			if (dm == NULL)
 				continue;
+#else
+			if (fputs("\t{ NULL, -1 },\n", fp) < 0)
+				return (-1);
+			continue;
+#endif
 		}
 		if (fprintf(fp, "\t{ \"%s\", %d },\n", dm->dm_name,
 			    dm->dm_bmajor) < 0)
