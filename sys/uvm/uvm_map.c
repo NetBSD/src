@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.125 2002/11/14 17:58:48 atatat Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.126 2002/11/30 18:28:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.125 2002/11/14 17:58:48 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.126 2002/11/30 18:28:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -190,7 +190,7 @@ vaddr_t uvm_maxkaddr;
  * local prototypes
  */
 
-static struct vm_map_entry *uvm_mapent_alloc __P((struct vm_map *));
+static struct vm_map_entry *uvm_mapent_alloc __P((struct vm_map *, int));
 static void uvm_mapent_copy __P((struct vm_map_entry *, struct vm_map_entry *));
 static void uvm_mapent_free __P((struct vm_map_entry *));
 static void uvm_map_entry_unwire __P((struct vm_map *, struct vm_map_entry *));
@@ -206,11 +206,13 @@ static void uvm_map_unreference_amap __P((struct vm_map_entry *, int));
  */
 
 static __inline struct vm_map_entry *
-uvm_mapent_alloc(map)
+uvm_mapent_alloc(map, flags)
 	struct vm_map *map;
+	int flags;
 {
 	struct vm_map_entry *me;
 	int s;
+	int pflags = (flags & UVM_KMF_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
@@ -220,17 +222,21 @@ uvm_mapent_alloc(map)
 		if (me) uvm.kentry_free = me->next;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
-		if (me == NULL) {
+		if (__predict_false(me == NULL)) {
 			panic("uvm_mapent_alloc: out of static map entries, "
 			      "check MAX_KMAPENT (currently %d)",
 			      MAX_KMAPENT);
 		}
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
-		me = pool_get(&uvm_map_entry_kmem_pool, PR_WAITOK);
+		me = pool_get(&uvm_map_entry_kmem_pool, pflags);
+		if (__predict_false(me == NULL))
+			return NULL;
 		me->flags = UVM_MAP_KMEM;
 	} else {
-		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
+		me = pool_get(&uvm_map_entry_pool, pflags);
+		if (__predict_false(me == NULL))
+			return NULL;
 		me->flags = 0;
 	}
 
@@ -421,7 +427,7 @@ uvm_map_clip_start(map, entry, start)
 	 * starting address.
 	 */
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 
 	new_entry->end = start;
@@ -471,7 +477,7 @@ uvm_map_clip_end(map, entry, end)
 	 *	AFTER the specified entry
 	 */
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 
 	new_entry->start = entry->end = end;
@@ -537,6 +543,8 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	uvm_flag_t flags;
 {
 	struct vm_map_entry *prev_entry, *new_entry;
+	const int amapwaitflag = (flags & UVM_KMF_NOWAIT) ?
+	    AMAP_EXTEND_NOWAIT : 0;
 	vm_prot_t prot = UVM_PROTECTION(flags), maxprot =
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
@@ -572,7 +580,9 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 
 	new_entry = NULL;
 	if (map == pager_map) {
-		new_entry = uvm_mapent_alloc(map);
+		new_entry = uvm_mapent_alloc(map, (flags & UVM_KMF_NOWAIT));
+		 if (__predict_false(new_entry == NULL))
+			return ENOMEM;
 	}
 
 	/*
@@ -680,8 +690,8 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		}
 
 		if (prev_entry->aref.ar_amap) {
-			error = amap_extend(prev_entry, size,
-			    AMAP_EXTEND_FORWARDS);
+			error = amap_extend(prev_entry, size, 
+			    amapwaitflag | AMAP_EXTEND_FORWARDS);
 			if (error) {
 				vm_map_unlock(map);
 				if (new_entry) {
@@ -779,7 +789,7 @@ forwardmerge:
 				if (amap_extend(prev_entry,
 				    prev_entry->next->end -
 				    prev_entry->next->start,
-				    AMAP_EXTEND_FORWARDS))
+				    amapwaitflag | AMAP_EXTEND_FORWARDS))
 				goto nomerge;
 			}
 
@@ -797,7 +807,7 @@ forwardmerge:
 				if (amap_extend(prev_entry->next,
 				    prev_entry->end -
 				    prev_entry->start + size,
-				    AMAP_EXTEND_BACKWARDS))
+				    amapwaitflag | AMAP_EXTEND_BACKWARDS))
 				goto nomerge;
 			}
 		} else {
@@ -807,7 +817,7 @@ forwardmerge:
 			 */
 			if (prev_entry->next->aref.ar_amap) {
 				error = amap_extend(prev_entry->next, size,
-				    AMAP_EXTEND_BACKWARDS);
+				    amapwaitflag | AMAP_EXTEND_BACKWARDS);
 				if (error) {
 					vm_map_unlock(map);
 					if (new_entry) {
@@ -879,7 +889,12 @@ nomerge:
 		 */
 
 		if (new_entry == NULL) {
-			new_entry = uvm_mapent_alloc(map);
+			new_entry = uvm_mapent_alloc(map,
+				(flags & UVM_KMF_NOWAIT));
+			if (__predict_false(new_entry == NULL)) {
+				vm_map_unlock(map);
+				return ENOMEM;
+			}
 		}
 		new_entry->start = *startp;
 		new_entry->end = new_entry->start + size;
@@ -911,7 +926,13 @@ nomerge:
 
 			vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ?
 				UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
-			struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
+			struct vm_amap *amap = amap_alloc(size, to_add,
+			    (flags & UVM_KMF_NOWAIT) ? M_NOWAIT : M_WAITOK);
+			if (__predict_false(amap == NULL)) {
+				vm_map_unlock(map);
+				uvm_mapent_free(new_entry);
+				return ENOMEM;
+			}
 			new_entry->aref.ar_pageoff = 0;
 			new_entry->aref.ar_amap = amap;
 		} else {
@@ -1697,7 +1718,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		oldoffset = (entry->start + fudge) - start;
 
 		/* allocate a new map entry */
-		newentry = uvm_mapent_alloc(dstmap);
+		newentry = uvm_mapent_alloc(dstmap, 0);
 		if (newentry == NULL) {
 			error = ENOMEM;
 			goto bad;
@@ -3178,7 +3199,7 @@ uvmspace_fork(vm1)
 				/* XXXCDC: WAITOK??? */
 			}
 
-			new_entry = uvm_mapent_alloc(new_map);
+			new_entry = uvm_mapent_alloc(new_map, 0);
 			/* old_entry -> new_entry */
 			uvm_mapent_copy(old_entry, new_entry);
 
@@ -3215,7 +3236,7 @@ uvmspace_fork(vm1)
 			 * (note that new references are read-only).
 			 */
 
-			new_entry = uvm_mapent_alloc(new_map);
+			new_entry = uvm_mapent_alloc(new_map, 0);
 			/* old_entry -> new_entry */
 			uvm_mapent_copy(old_entry, new_entry);
 
