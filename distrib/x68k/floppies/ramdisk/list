@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2002/10/17 06:38:27 lukem Exp $
+#	$NetBSD: list,v 1.17 2003/09/15 03:14:54 isaki Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
 
@@ -29,7 +29,12 @@ PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
 PROG	sbin/init
 PROG	sbin/mknod
-PROG	sbin/mount	sbin/mount_cd9660 sbin/mount_ffs sbin/mount_kernfs sbin/mount_msdos sbin/mount_nfs
+PROG	sbin/mount
+PROG	sbin/mount_cd9660
+PROG	sbin/mount_ffs
+PROG	sbin/mount_kernfs
+PROG	sbin/mount_msdos
+PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/ping6
