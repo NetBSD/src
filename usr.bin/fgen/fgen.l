@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.16.2.1 2002/05/29 16:25:20 tv Exp $	*/
+/*	$NetBSD: fgen.l,v 1.16.2.2 2002/06/11 02:02:16 lukem Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -103,20 +103,17 @@ int debug = 0;
 
 %%
 
-0			{ token.type = TOK_OTHER; token.text = yytext;
-				return &token; }
+0		{ token.type = TOK_OTHER; token.text = yytext; return &token; }
 
-1			{ token.type = TOK_OTHER; token.text = yytext;
-				return &token; }
+1		{ token.type = TOK_OTHER; token.text = yytext; return &token; }
 
-2			{ token.type = TOK_OTHER; token.text = yytext;
-				return &token; }
+2		{ token.type = TOK_OTHER; token.text = yytext; return &token; }
 
-3			{ token.type = TOK_OTHER; token.text = yytext;
-				return &token; }
+3		{ token.type = TOK_OTHER; token.text = yytext; return &token; }
 
--1		{ token.type = TOK_OTHER; token.text = yytext;
-				return &token; }
+-1		{ token.type = TOK_OTHER; token.text = yytext; return &token; }
+
+\.		{ token.type = TOK_OTHER; token.text = yytext; return &token; }
 
 {white}*		/* whitespace -- keep looping */ ;
 
