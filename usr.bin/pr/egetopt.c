@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.4 1998/12/19 20:16:50 christos Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.5 2002/02/26 02:37:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: egetopt.c,v 1.4 1998/12/19 20:16:50 christos Exp $");
+__RCSID("$NetBSD: egetopt.c,v 1.5 2002/02/26 02:37:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ egetopt(nargc, nargv, ostr)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char *oli;			/* option letter list index */
-	static int delim;		/* which option delimeter */
+	static int delim;		/* which option delimiter */
 	char *p;
 	static char savec = '\0';
 

@@ -36,7 +36,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rex.x 1.3 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rex.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rex.x,v 1.4 1999/07/02 15:44:13 simonb Exp $");
+%__RCSID("$NetBSD: rex.x,v 1.5 2002/02/26 02:37:29 wiz Exp $");
 %#endif /* not lint */
 #endif
 
@@ -154,7 +154,7 @@ struct tchars {
 	/* chars[2] == start output char */
 	/* chars[3] == stop output char */
 	/* chars[4] == end-of-file char */
-	/* chars[5] == input delimeter (like nl) */
+	/* chars[5] == input delimiter (like nl) */
 };
 
 struct ltchars {
