@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2002/06/17 16:33:05 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2002/07/07 22:52:54 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -317,7 +317,10 @@ user_backtrace_raw(u_int pc, u_int fp)
 	int frame_number;
 	int arg_number;
 
-	for(frame_number = 0; pc > HPPA_PC_PRIV_MASK && fp; frame_number++) {
+	for (frame_number = 0; 
+	     frame_number < 100 && pc > HPPA_PC_PRIV_MASK && fp;
+	     frame_number++) {
+
 		printf("%3d: pc=%08x%s fp=0x%08x", frame_number, 
 		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "" : "**", fp);
 		for(arg_number = 0; arg_number < 4; arg_number++)
@@ -338,11 +341,18 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace __P((struct trapframe *, struct proc *));
+static void user_backtrace __P((struct trapframe *, struct proc *, int));
 static void
-user_backtrace(struct trapframe *tf, struct proc *p)
+user_backtrace(struct trapframe *tf, struct proc *p, int type)
 {
 	u_int pc, fp, inst;
+
+	/*
+	 * Display any trap type that we have.
+	 */
+	if (type >= 0)
+		printf("pid %d (%s) trap #%d\n", 
+		    p->p_pid, p->p_comm, type & ~T_USER);
 
 	/*
 	 * Assuming that the frame pointer in r3 is valid,
@@ -616,6 +626,13 @@ trap(type, frame)
 	case T_DATALIGN:
 	case T_DBREAK:
 	dead_end:
+		if (type & T_USER) {
+#ifdef DEBUG
+			user_backtrace(frame, p, type);
+#endif
+			trapsignal(p, SIGILL, frame->tf_iioq_head);
+			break;
+		}
 		if (trap_kdebug(type, va, frame))
 			return;
 		else if (type == T_DATALIGN)
@@ -641,14 +658,23 @@ trap(type, frame)
 		break;
 
 	case T_ILLEGAL | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGILL, va);
 		break;
 
 	case T_PRIV_OP | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGILL, va);
 		break;
 
 	case T_PRIV_REG | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGILL, va);
 		break;
 
@@ -727,7 +753,7 @@ trap(type, frame)
 printf("trapsignal: uvm_fault(%p, %x, %d, %d)=%d\n",
 	map, (u_int)va, 0, vftype, ret);
 #ifdef DEBUG
-				user_backtrace(frame, p);
+				user_backtrace(frame, p, type);
 #endif
 				trapsignal(p, SIGSEGV, frame->tf_ior);
 			} else {
@@ -754,6 +780,9 @@ if (trap_kdebug (type, va, frame))
 		break;
 
 	case T_DATALIGN | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGBUS, va);
 		break;
 
@@ -1022,7 +1051,7 @@ syscall(frame, args)
 
 #ifdef USERTRACE
 	if (0) {
-		user_backtrace(frame, p);
+		user_backtrace(frame, p, -1);
 		frame->tf_ipsw |= PSW_R;
 		frame->tf_rctr = 0;
 		printf("r %08x", frame->tf_iioq_head);
