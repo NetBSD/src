@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.15 2003/12/21 17:37:26 lukem Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.16 2003/12/22 22:26:32 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -274,6 +274,9 @@
 #	wsmux*	wscons event multiplexor
 
 
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
+
+
 usage()
 {
 	cat 1>&2 << _USAGE_
@@ -305,8 +308,6 @@ MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
 if ! $do_force; then
 	MKNOD="${MKNOD} -r"
 fi
-
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
 u_root="%uid_root%"
 u_uucp="%uid_uucp%"
@@ -380,6 +381,11 @@ makedir()
 		mkdir $1 2>/dev/null
 		chmod $2 $1
 	fi
+}
+
+warn()
+{
+	echo 1>&2 "$0: $*"
 }
 
 
@@ -742,13 +748,13 @@ pty*)
 	class=${i#pty}
 	set -- p q r s t u v w x y z P Q R S T
 	if [ "$class" -ge $# ]; then
-		echo "$MAKEDEV: $i: pty unit must be between 0 and 15"
+		warn "$i: pty unit must be between 0 and 15"
 		continue
 	fi
 	shift $class
 	name=$1
 	if [ "$name" = v ]; then
-		echo "$MAKEDEV: $i: pty unit conflicts with console ttyv0 device."
+		warn "$i: pty unit conflicts with console ttyv0 device"
 		continue
 	fi
 	jn=0
@@ -1118,7 +1124,7 @@ par*)
 		mkdev par$unit c %par_chr% $unit
 		;;
 	*)
-		echo bad unit for par in: $i
+		warn "bad unit for par in: $i"
 		;;
 	esac
 	;;
@@ -1187,7 +1193,7 @@ mouse*)
 		fi
 		;;
 	*)
-		echo bad unit for mouse in: $i
+		warn "bad unit for mouse in: $i"
 		;;
 	esac
 	;;
@@ -1321,7 +1327,7 @@ xd*|xy*)
 magma*)
 	unit=${i#magma}
 	if [ 0$unit -gt 3 ]; then
-		echo "bad unit for $i: $unit"
+		warn "bad unit for $i: $unit"
 		break
 	fi
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
@@ -1344,7 +1350,7 @@ magma*)
 clcd*)
 	unit=${i#clcd}
 	if [ 0$unit -gt 7 ]; then
-		echo "bad unit for $i: $unit"
+		warn "bad unit for $i: $unit"
 		break
 	fi
 	for j in 0 1 2 3 4 5 6 7
@@ -1386,7 +1392,7 @@ pow*)
 		fi
 		;;
 	*)
-		echo bad unit for pow in: $i
+		warn "bad unit for pow in: $i"
 		;;
 	esac
 	;;
@@ -1408,7 +1414,7 @@ local)
 	;;
 
 *)
-	echo $i: unknown device
+	warn "$i: unknown device"
 	;;
 
 esac
