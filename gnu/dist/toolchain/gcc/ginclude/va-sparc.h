@@ -5,7 +5,7 @@
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
-#if ! defined (__svr4__) && ! defined (__linux__) && ! defined (__arch64__)
+#if ! defined (__svr4__) && ! defined (__linux__) && (defined(__NetBSD__) || ! defined(__arch64__))
 /* This has to be a char * to be compatible with Sun.
    i.e., we have to pass a `va_list' to vsprintf.  */
 typedef char * __gnuc_va_list;
