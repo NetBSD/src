@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.5 1995/09/03 03:36:35 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.6 1995/09/04 05:07:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -95,8 +95,8 @@ static volatile u_char	*scsi_enable		= NULL;
 #define GET_5380_REG(rnum)	SCSI_5380->scsi_5380[((rnum)<<4)]
 #define SET_5380_REG(rnum,val)	(SCSI_5380->scsi_5380[((rnum)<<4)] = (val))
 
-void	ncr5380_irq_intr(void);
-void	ncr5380_drq_intr(void);
+void	ncr5380_irq_intr(void *);
+void	ncr5380_drq_intr(void *);
 
 static __inline__ void
 scsi_clr_ipend()
@@ -147,8 +147,8 @@ scsi_mach_init(sc)
 	else
 		scsi_enable = Via1Base + VIA2 * 0x2000 + rIER;
 
-	mac68k_register_scsi_irq(ncr5380_irq_intr);
-	mac68k_register_scsi_drq(ncr5380_drq_intr);
+	mac68k_register_scsi_irq(ncr5380_irq_intr, sc);
+	mac68k_register_scsi_drq(ncr5380_drq_intr, sc);
 }
 
 static int
@@ -272,8 +272,11 @@ scsi_main_irq()
 }
 
 void
-ncr5380_irq_intr(void)
+ncr5380_irq_intr(p)
+	void	*p;
 {
+	struct ncr_softc	*sc = p;
+
 	if (scsi_main_irq()) {
 		return;
 	}
@@ -292,8 +295,10 @@ ncr5380_irq_intr(void)
 #endif
 
 void
-ncr5380_drq_intr(void)
+ncr5380_drq_intr(p)
+	void	*p;
 {
+	struct ncr_softc	*sc = p;
 #if USE_PDMA
 
 #if DEBUG
