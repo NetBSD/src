@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent.c,v 1.5 2003/06/03 07:33:57 itojun Exp $	*/
+/*	$NetBSD: gethostent.c,v 1.6 2003/06/09 13:19:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gethostent.c,v 1.32.10.1 2003/06/02 07:53:31 marka Exp";
+static const char rcsid[] = "Id: gethostent.c,v 1.32.10.2 2003/06/04 01:09:43 marka Exp";
 #endif
 
 /* Imports */
@@ -611,6 +611,13 @@ scan_interfaces6(int *have_v4, int *have_v6) {
 #endif
 
 #ifdef __linux
+#ifndef IF_NAMESIZE
+# ifdef IFNAMSIZ
+#  define IF_NAMESIZE  IFNAMSIZ
+# else
+#  define IF_NAMESIZE 16
+# endif
+#endif
 static void
 scan_linux6(int *have_v6) {
 	FILE *proc = NULL;
