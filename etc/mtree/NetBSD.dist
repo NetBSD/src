@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.55 1997/11/13 02:36:18 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.56 1997/11/13 03:15:59 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -767,6 +767,34 @@ usd
 
 # ./usr/share/examples
 examples
+
+# ./usr/share/examples/emul
+emul
+
+# ./usr/share/examples/emul/svr4
+svr4
+
+# ./usr/share/examples/emul/svr4/etc
+etc
+# ./usr/share/examples/emul/svr4/etc
+..
+
+# ./usr/share/examples/emul/svr4
+..
+
+# ./usr/share/examples/emul/ultrix
+ultrix
+
+# ./usr/share/examples/emul/ultrix/etc
+etc
+# ./usr/share/examples/emul/ultrix/etc
+..
+
+# ./usr/share/examples/emul/ultrix
+..
+
+# ./usr/share/examples/emul
+..
 
 # ./usr/share/examples/supfiles
 supfiles
