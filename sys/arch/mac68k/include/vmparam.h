@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2000/11/14 19:07:34 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28 2000/12/01 17:57:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,9 +177,6 @@
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
