@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.87 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.88 2004/03/29 04:59:03 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.87 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.88 2004/03/29 04:59:03 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1070,10 +1070,8 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	struct in6pcb *in6b;
 	struct sockaddr_in6 *si6[2];
 #endif /* INET6 */
-	struct in_addr laddr, raddr;
 	struct sockaddr_storage sa[2];
 	struct socket *sockp;
-	u_int lport, rport;
 	size_t sz;
 	uid_t uid;
 	int error, pf;
@@ -1087,6 +1085,9 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	/* old style lookup, ipv4 only */
 	if (namelen == 4) {
 #ifdef INET
+		struct in_addr laddr, raddr;
+		u_int lport, rport;
+
 		if (pf != PF_INET)
 			return (EPROTONOSUPPORT);
 		raddr.s_addr = (uint32_t)name[0];
