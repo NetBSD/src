@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.20 2000/03/13 03:25:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.21 2000/07/03 02:04:02 sommerfeld Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c vers.c
 NEWVERSWHAT=	"Secondary Boot"
-FILES=		boot.net ${RELOCS:S/^/boot./g}
+FILES=		boot.net boot_big.net ${RELOCS:S/^/boot./g}
 CLEANFILES:=	vers.c ${FILES}
 LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
@@ -36,10 +36,15 @@ boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	rm -f ${.TARGET}.tmp
 .endfor
  
-
 # conjure up a magic header that is accepted by all Sun PROMS;
 # see installboot.c for details.
+
+SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'
+
 boot.net: boot.${RELOC_DEFAULT}
-	(printf '\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'; cat ${.ALLSRC} ) > ${.TARGET}
+	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
+
+boot_big.net: boot.700000
+	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
 
 .include <bsd.prog.mk>
