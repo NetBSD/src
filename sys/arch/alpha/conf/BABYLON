@@ -1,11 +1,11 @@
-# $NetBSD: BABYLON,v 1.2 1998/02/13 04:33:32 enami Exp $
+# $NetBSD: BABYLON,v 1.3 1998/03/12 06:05:08 thorpej Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
 
 include	"arch/alpha/conf/std.alpha"
 
-maxusers 8
+maxusers 64
 
 # set kernel load address a bit higher to allow kernel to be netbooted.
 # if not netbooting, the "makeoptions LOADADDRESS" line can be commented
