@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.4.2.3 2002/12/11 06:00:54 thorpej Exp $ */
+/* $NetBSD: lapic.c,v 1.4.2.4 2003/01/07 21:11:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
-#include <machine/mpbiosreg.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
@@ -137,6 +136,7 @@ lapic_set_lvt()
 	struct cpu_info *ci = curcpu();
 	int i;
 	struct mp_intr_map *mpi;
+	uint32_t lint0;
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
@@ -146,6 +146,17 @@ lapic_set_lvt()
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
+
+	/*
+	 * Disable ExtINT by default when using I/O APICs.
+	 * XXX mp_nintr > 0 isn't quite the right test for this.
+	 */
+	if (mp_nintr > 0) {
+		lint0 = i82489_readreg(LAPIC_LVINT0);
+		lint0 |= LAPIC_LVT_MASKED;
+		i82489_writereg(LAPIC_LVINT0, lint0);
+	}
+
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
 		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS

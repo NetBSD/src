@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.1.4.5 2002/08/01 02:41:59 nathanw Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.1.4.6 2003/01/07 21:11:39 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.5 2002/08/01 02:41:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.6 2003/01/07 21:11:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.5 2002/08/01 02:41:59 nathanw
 #include <dev/acpi/acpivar.h>
 
 #include <machine/acpi_machdep.h>
+#include <machine/mpbiosvar.h>
+#include <machine/mpacpi.h>
 
 #include <dev/pci/pcivar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#include "opt_mpacpi.h"
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -198,3 +202,12 @@ acpi_md_OsDisableInterrupt(void)
 	disable_intr();
 }
 
+void
+acpi_md_callback(struct device *acpi)
+{
+#ifdef MPACPI
+	if (mpbios_scanned)
+		return;
+	mpacpi_find_interrupts();
+#endif
+}

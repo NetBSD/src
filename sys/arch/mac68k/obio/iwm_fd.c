@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11.12.4 2003/01/03 16:48:23 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.12.5 2003/01/07 21:11:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -714,7 +714,7 @@ fdopen(dev, flags, devType, proc)
 			printf(" Drive %d is empty.\n", fd->unit);
 #endif
 		} else {
-			if (!(fd->drvFlags & IWM_WRITEABLE) && (flags & FWRITE)) {
+			if (!(fd->drvFlags & IWM_WRITABLE) && (flags & FWRITE)) {
 
 				err = EPERM;
 #ifdef DIAGNOSTIC
@@ -1869,7 +1869,7 @@ getFDType(unit)
  * Drive flags are: Bit  0 - 1 = Drive is double sided
  *			 1 - 1 = No disk inserted
  *			 2 - 1 = Motor is off
- *			 3 - 1 = Disk is writeable
+ *			 3 - 1 = Disk is writable
  *			 4 - 1 = Disk is DD (800/720K)
  *			31 - 1 = No drive / invalid drive #
  */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/10/05 18:21:10 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2.10.1 2003/01/07 21:12:18 thorpej Exp $
 
 # Makefile for news68k tags file
 
@@ -26,6 +26,6 @@ links:
 	-for i in ${DNEWS68K}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-SUBDIR=	include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

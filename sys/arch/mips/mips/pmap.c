@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138.2.9 2002/12/11 06:11:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138.2.10 2003/01/07 21:12:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.9 2002/12/11 06:11:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.10 2003/01/07 21:12:02 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -895,7 +895,7 @@ pmap_protect(pmap, sva, eva, prot)
 	if (pmap == pmap_kernel()) {
 		/*
 		 * Change entries in kernel pmap.
-		 * This will trap if the page is writeable (in order to set
+		 * This will trap if the page is writable (in order to set
 		 * the dirty bit) even if the dirty bit is already set. The
 		 * optimization isn't worth the effort since this code isn't
 		 * executed much. The common case is to make a user page

@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.2.2.3 2002/12/11 06:01:00 thorpej Exp $ */
+/* $NetBSD: i82093var.h,v 1.2.2.4 2003/01/07 21:11:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct ioapic_softc {
 	struct ioapic_softc	*sc_next;
 	int			sc_apicid;
 	int			sc_apic_vers;
+	int			sc_apic_vecbase; /* global int base if ACPI */
 	int			sc_apic_sz;	/* apic size*/
 	int			sc_flags;
 	paddr_t			sc_pa;		/* PA of ioapic */
@@ -87,12 +88,13 @@ struct ioapic_softc {
 void *apic_intr_establish __P((int, int, int, int (*)(void *), void *)); 
 void apic_intr_disestablish __P((void *));
 
-void ioapic_print_redir (struct ioapic_softc *, char *, int);
-void ioapic_format_redir (char *, char *, int, u_int32_t, u_int32_t);
-struct ioapic_softc *ioapic_find (int);
+void ioapic_print_redir(struct ioapic_softc *, char *, int);
+void ioapic_format_redir(char *, char *, int, u_int32_t, u_int32_t);
+struct ioapic_softc *ioapic_find(int);
+struct ioapic_softc *ioapic_find_bybase(int);
 
-void ioapic_enable __P((void));
-void lapic_vectorset __P((void)); /* XXX */
+void ioapic_enable(void);
+void lapic_vectorset(void); /* XXX */
 
 extern int ioapic_bsp_id;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.2.12 2002/10/18 04:08:34 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.13 2003/01/07 21:11:42 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.12 2002/10/18 04:08:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.13 2003/01/07 21:11:42 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3336,7 +3336,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 	pt_entry_t pte;
 	int32_t *cpumaskp;
 {
-	struct cpu_info *ci, *self = curcpu();
+	struct cpu_info *ci, *self;
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
 	CPU_INFO_ITERATOR cii;
@@ -3347,10 +3347,12 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		va &= PG_LGFRAME;
 #endif
 
-	if (pmap_initialized == FALSE) {
+	if (pmap_initialized == FALSE || cpus_attached == 0) {
 		pmap_update_pg(va);
 		return;
 	}
+
+	self = curcpu();
 
 	s = splipi();
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.7.8.2 2002/02/28 04:10:53 nathanw Exp $	*/
+/*	$NetBSD: isr.h,v 1.7.8.3 2003/01/07 21:12:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #define NISRVECTORED	192
 
 /*
- * Autovectored interupt handler cookie.
+ * Autovectored interrupt handler cookie.
  */
 struct isr_autovec {
 	LIST_ENTRY(isr_autovec) isr_link;

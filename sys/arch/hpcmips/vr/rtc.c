@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.10.4.5 2002/10/18 02:37:16 nathanw Exp $	*/
+/*	$NetBSD: rtc.c,v 1.10.4.6 2003/01/07 21:08:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -173,7 +173,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 	}
 	/* RTC interrupt handler is directly dispatched from CPU intr */
 	vr_intr_establish(VR_INTR1, vrrtc_intr, sc);
-	/* But need to set level 1 interupt mask register, 
+	/* But need to set level 1 interrupt mask register, 
 	 * so regsiter fake interrurpt handler
 	 */
 	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,

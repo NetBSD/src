@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3.4.5 2002/08/02 09:28:29 gmcgarry Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.4.6 2003/01/07 21:12:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct evcnt pmax_memerr_evcnt =
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
 
 /*
- * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
+ * pmax uses standard mips1 convention, wiring FPU to hard interrupt 5.
  */
 void
 cpu_intr(status, cause, pc, ipending)

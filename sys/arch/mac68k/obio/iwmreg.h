@@ -1,4 +1,4 @@
-/*	$NetBSD: iwmreg.h,v 1.3 1999/03/27 05:45:20 scottr Exp $	*/
+/*	$NetBSD: iwmreg.h,v 1.3.26.1 2003/01/07 21:11:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
@@ -43,7 +43,7 @@ enum {
 	IWM_DS_DISK	= 0x01,
 	IWM_NO_DISK 	= 0x02,
 	IWM_MOTOR_OFF 	= 0x04,
-	IWM_WRITEABLE	= 0x08,
+	IWM_WRITABLE	= 0x08,
 	IWM_DD_DISK 	= 0x10,
 	IWM_NO_DRIVE 	= 0x80000000
 };

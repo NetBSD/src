@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/09/13 10:30:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.1.30.1 2003/01/07 21:07:44 thorpej Exp $
 
 # Makefile for evbsh3 tags file and boot blocks
 
@@ -25,6 +25,6 @@ links:
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
-SUBDIR=	include # stand
+SUBDIR=	compile include # stand
 
 .include <bsd.subdir.mk>

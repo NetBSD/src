@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.3.2.4 2002/12/11 06:00:54 thorpej Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.3.2.5 2003/01/07 21:11:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,6 +89,13 @@
 #include <machine/pmap.h>
 
 #include <machine/mpbiosvar.h>
+
+#include "opt_mpbios.h"
+#include "opt_mpacpi.h"
+
+#if !defined(MPBIOS) && !defined(MPACPI)
+#error "ioapic needs at least one of the MPBIOS or MPACPI options"
+#endif
 
 /*
  * XXX locking
@@ -197,6 +204,28 @@ ioapic_find(int apicid)
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next)
 		if (sc->sc_apicid == apicid)
 			return sc;
+
+	return NULL;
+}
+
+/*
+ * For the case the I/O APICs were configured using ACPI, there must
+ * be an option to match global ACPI interrupts with APICs.
+ */
+struct ioapic_softc *
+ioapic_find_bybase(int vec)
+{
+	struct ioapic_softc *sc;
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+#ifdef DIAGNOSTIC
+		if (sc->sc_apic_vecbase == -1)
+			panic("finding ioapic by vector in non-ACPI case");
+#endif
+		if (vec >= sc->sc_apic_vecbase &&
+		    vec < (sc->sc_apic_vecbase + sc->sc_apic_sz))
+			return sc;
+	}
 
 	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.15 2002/11/11 21:59:58 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.16 2003/01/07 21:11:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1787,7 +1787,7 @@ static romvec_t romvecs[] =
 		"LC III ROMs",
 		(caddr_t)0x40814912,	/* ADB interrupt */
 		(caddr_t)0x0,		/* PM ADB interrupt */
-		(caddr_t)0x408b2f94,	/* ADBBase + 130 interupt */
+		(caddr_t)0x408b2f94,	/* ADBBase + 130 interrupt */
 		(caddr_t)0x4080a360,	/* CountADBs */
 		(caddr_t)0x4080a37a,	/* GetIndADB */
 		(caddr_t)0x4080a3a6,	/* GetADBInfo */
@@ -1903,7 +1903,7 @@ static romvec_t romvecs[] =
 		"Mac IIfx ROMs",
 		(caddr_t)0x40809f4a,	/* ADB interrupt */
 		(caddr_t)0x0,		/* PM ADB interrupt */
-		(caddr_t)0x4080a4d8,	/* ADBBase + 130 interupt */
+		(caddr_t)0x4080a4d8,	/* ADBBase + 130 interrupt */
 		(caddr_t)0x4080a360,	/* CountADBs */
 		(caddr_t)0x4080a37a,	/* GetIndADB */
 		(caddr_t)0x4080a3a6,	/* GetADBInfo */
@@ -1932,7 +1932,7 @@ static romvec_t romvecs[] =
 		"Performa 580 ROMs",
 		(caddr_t) 0x4089a8be,	/* ADB interrupt */
 		(caddr_t) 0x0,		/* PM ADB interrupt */
-		(caddr_t) 0x408b2f94,	/* ADBBase + 130 interupt */
+		(caddr_t) 0x408b2f94,	/* ADBBase + 130 interrupt */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
 		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
