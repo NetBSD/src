@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.2 2003/08/04 12:41:44 bsh Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.3 2003/08/29 12:57:50 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.2 2003/08/04 12:41:44 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.3 2003/08/29 12:57:50 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,16 +178,6 @@ cascade_irq_handler(void *cookie)
 }
 
 
-static const u_char s3c24x0_ist[] = {
-	EXTINTR_LOW,		/* NONE */
-	EXTINTR_FALLING,	/* PULSE */
-	EXTINTR_FALLING,	/* EDGE */
-	EXTINTR_LOW,		/* LEVEL */
-	EXTINTR_HIGH,
-	EXTINTR_RISING,
-	EXTINTR_BOTH,
-};
-
 static const uint8_t subirq_to_main[] = {
 	S3C2410_INT_UART0,
 	S3C2410_INT_UART0,
@@ -242,26 +232,12 @@ s3c24x0_intr_establish(int irqno, int level, int type,
 
 	/*
 	 * set trigger type for external interrupts 0..3
-	 * TODO: handle EXTINT[4:23].
 	 */
 	if (irqno <= S3C24X0_INT_EXT(3)) {
 		/*
 		 * Update external interrupt control
 		 */
-		uint32_t reg;
-		u_int 	trig;
-
-		trig = s3c24x0_ist[type];
-
-		reg = bus_space_read_4(s3c2xx0_softc->sc_iot,
-				       s3c2xx0_softc->sc_gpio_ioh,
-				       GPIO_EXTINT(0));
-
-		reg = reg & ~(0x0f << (4*irqno));
-		reg |= trig << (4*irqno);
-
-		bus_space_write_4(s3c2xx0_softc->sc_iot, s3c2xx0_softc->sc_gpio_ioh,
-				  GPIO_EXTINT(0), reg);
+		s3c2410_setup_extint(irqno, type);
 	}
 
 	s3c2xx0_setipl(current_spl_level);
@@ -341,4 +317,43 @@ void
 s3c2410_unmask_subinterrupts(int bits)
 {
 	atomic_clear_bit((uint32_t *)&icreg(INTCTL_INTSUBMSK), bits);
+}
+
+/*
+ * Update external interrupt control
+ */
+static const u_char s3c24x0_ist[] = {
+	EXTINTR_LOW,		/* NONE */
+	EXTINTR_FALLING,	/* PULSE */
+	EXTINTR_FALLING,	/* EDGE */
+	EXTINTR_LOW,		/* LEVEL */
+	EXTINTR_HIGH,
+	EXTINTR_RISING,
+	EXTINTR_BOTH,
+};
+
+void
+s3c2410_setup_extint(int extint, int type)
+{
+        uint32_t reg;
+        u_int   trig;
+        int     i = extint % 8;
+        int     regidx = extint/8;      /* GPIO_EXTINT[0:2] */
+	int	save;
+
+        trig = s3c24x0_ist[type];
+
+	save = disable_interrupts(I32_bit);
+
+        reg = bus_space_read_4(s3c2xx0_softc->sc_iot,
+            s3c2xx0_softc->sc_gpio_ioh,
+            GPIO_EXTINT(regidx));
+
+        reg = reg & ~(0x07 << (4*i));
+        reg |= trig << (4*i);
+
+        bus_space_write_4(s3c2xx0_softc->sc_iot, s3c2xx0_softc->sc_gpio_ioh,
+            GPIO_EXTINT(regidx), reg);
+
+	restore_interrupts(save);
 }
