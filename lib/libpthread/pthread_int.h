@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.22 2003/11/27 16:30:54 cl Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.23 2003/12/31 16:45:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ struct	__pthread_st {
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
 	int	pt_blockedlwp;	/* LWP/SA number when blocked */
+	int	pt_blockgen;	/* SA_UPCALL_BLOCKED counter */
+	int	pt_unblockgen;	/* SA_UPCALL_UNBLOCKED counter */
 
 	int	pt_errno;	/* Thread-specific errno. */
 
@@ -111,6 +113,7 @@ struct	__pthread_st {
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
 	ucontext_t	*pt_trapuc;   	/* Kernel-saved context */
+	ucontext_t	*pt_blockuc;   	/* Kernel-saved context when blocked */
 
 	sigset_t	pt_sigmask;	/* Signals we won't take. */
 	sigset_t	pt_siglist;	/* Signals pending for us. */
@@ -179,7 +182,7 @@ struct pthread_lock_ops {
 /* Thread states */
 #define PT_STATE_RUNNING	1
 #define PT_STATE_RUNNABLE	2
-#define PT_STATE_BLOCKED_SYS	3
+#define _PT_STATE_BLOCKED_SYS	3	/* Only used in libpthread_dbg */
 #define PT_STATE_BLOCKED_QUEUE	4
 #define PT_STATE_ZOMBIE		5
 #define PT_STATE_DEAD		6
