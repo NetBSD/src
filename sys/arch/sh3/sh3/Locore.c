@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.11 2002/04/29 09:32:56 uch Exp $	*/
+/*	$NetBSD: Locore.c,v 1.12 2002/05/09 12:28:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,13 +88,14 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <sh3/cpu.h>
-#include <sh3/psl.h>
-#include <sh3/mmu.h>
 #include <sh3/locore.h>
+#include <sh3/cpu.h>
+#include <sh3/pmap.h>
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
 
 void (*__sh_switch_resume)(struct proc *);
-struct proc *cpu_switch_search(void);
+struct proc *cpu_switch_search(struct proc *);
 void idle(void);
 int want_resched;
 
@@ -107,25 +108,21 @@ int want_resched;
 #endif
 
 /*
- * struct proc *cpu_switch_search(void):
+ * struct proc *cpu_switch_search(struct proc *oldproc):
  *	Find the highest priority process.
  */
 struct proc *
-cpu_switch_search()
+cpu_switch_search(struct proc *oldproc)
 {
 	struct prochd *q;
 	struct proc *p;
-	int s;
 
 	curproc = 0;
 
-	s = _cpu_intr_suspend();
 	SCHED_LOCK_IDLE();
 	while (sched_whichqs == 0) {
 		SCHED_UNLOCK_IDLE();
-		_cpu_intr_resume(s);
 		idle();
-		s = _cpu_intr_suspend();
 		SCHED_LOCK_IDLE();
 	}
 
@@ -133,10 +130,14 @@ cpu_switch_search()
 	p = q->ph_link;
 	remrunqueue(p);
 	want_resched = 0;
-	_cpu_intr_resume(s);
 	SCHED_UNLOCK_IDLE();
 
 	p->p_stat = SONPROC;
+
+	if (p != oldproc) {
+		curpcb = p->p_md.md_pcb;
+		pmap_activate(p);
+	}
 	curproc = p;
 
 	return (p);
@@ -152,8 +153,9 @@ idle()
 {
 
 	spl0();
+	uvm_pageidlezero();
 	__asm__ __volatile__("sleep");
-	splhigh();
+	splsched();
 }
 
 /*
@@ -217,13 +219,14 @@ sh3_switch_setup(struct proc *p)
 	u_int32_t vpn;
 	int i;
 
-	vpn = (u_int32_t)p->p_md.md_p3;
+	vpn = (u_int32_t)p->p_addr;
 	vpn &= ~PGOFSET;
-	for (i = 0; i < UPAGES; i++, pte++, vpn += NBPG, md_upte++) {
-		pte = vtopte(vpn);
+	for (i = 0; i < UPAGES; i++, vpn += NBPG, md_upte++) {
+		pte = __pmap_kpte_lookup(vpn);
+		KDASSERT(pte && *pte != 0);
+
 		md_upte->addr = vpn;
-		md_upte->data = (*pte & PG_HW_BITS) |
-		    SH3_MMUDA_D_D | SH3_MMUDA_D_V;
+		md_upte->data = (*pte & PG_HW_BITS) | PG_D | PG_V;
 	}
 }
 
@@ -239,11 +242,12 @@ sh4_switch_setup(struct proc *p)
 	u_int32_t vpn;
 	int i, e;
 
-	vpn = (u_int32_t)p->p_md.md_p3;
-	pte = vtopte(vpn);
+	vpn = (u_int32_t)p->p_addr;
 	vpn &= ~PGOFSET;
 	e = SH4_UTLB_ENTRY - UPAGES;
-	for (i = 0; i < UPAGES; i++, pte++, e++, vpn += NBPG) {
+	for (i = 0; i < UPAGES; i++, e++, vpn += NBPG) {
+		pte = __pmap_kpte_lookup(vpn);
+		KDASSERT(pte && *pte != 0);
 		/* Address array */
 		md_upte->addr = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
 		md_upte->data = vpn | SH4_UTLB_AA_D | SH4_UTLB_AA_V;
@@ -335,7 +339,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t maxlen, size_t *lencopied)
 	else
 		rc = ENAMETOOLONG;
 
-out:
+ out:
 	if (lencopied)
 		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
@@ -381,7 +385,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t maxlen, size_t *lencopied)
 	else
 		rc = ENAMETOOLONG;
 
-out:
+ out:
 	if (lencopied)
 		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
@@ -417,6 +421,7 @@ copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
 
 	if (lencopied)
 		*lencopied = i;
+
 	return (ENAMETOOLONG);
 }
 
@@ -485,17 +490,17 @@ fuswintr(const void *base)
 		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
-	curpcb->fusubail = 1;
+	curpcb->pcb_faultbail = 1;
 
 	rc = *(unsigned short *)uaddr;
 
 	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
+	curpcb->pcb_faultbail = 0;
 	return (rc);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
+	curpcb->pcb_faultbail = 0;
 	return (-1);
 }
 
@@ -537,10 +542,9 @@ suword(void *base, long x)
 		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
-
 	*(int *)uaddr = x;
-
 	curpcb->pcb_onfault = 0;
+
 	return (0);
 
  Err999:
@@ -586,17 +590,18 @@ suswintr(void *base, short x)
 		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
-	curpcb->fusubail = 1;
+	curpcb->pcb_faultbail = 1;
 
 	*(short *)uaddr = x;
 
 	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
+	curpcb->pcb_faultbail = 0;
 	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
+	curpcb->pcb_faultbail = 0;
+
 	return (-1);
 }
 

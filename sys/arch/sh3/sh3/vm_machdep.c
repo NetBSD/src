@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 2002/04/28 17:10:39 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 2002/05/09 12:28:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -61,18 +61,11 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sh3/locore.h>
 #include <sh3/cpu.h>
 #include <sh3/reg.h>
 #include <sh3/mmu.h>
-#include <sh3/locore.h>
-
-/* XXX XXX XXX */
-#ifdef SH4
-#define	TLBFLUSH()		(cacheflush(), sh_tlb_invalidate_all())
-#else
-#define	TLBFLUSH()		sh_tlb_invalidate_all()
-#endif
-/* XXX XXX XXX */
+#include <sh3/cache.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -100,68 +93,72 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	struct pcb *pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	vaddr_t spbase;
+	vaddr_t spbase, fptop;
+#define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	/* XXX vtophys don't return physical addresss */
-#define	P1ADDR(x)							\
-	((vtophys((vaddr_t)(x)) & SH3_PHYS_MASK) | SH3_P1SEG_BASE)
-#ifdef DIAGNOSTIC
-	if (p1 != curproc && p1 != &proc0)
-		panic("cpu_fork: curproc");
-#endif
-	/*
-	 * wbinv u-area to avoid cache-aliasing, since trapframe
-	 * top is accessed from P1 instead of P3.
-	 */
-	if (CPU_IS_SH4)
-		sh_dcache_wbinv_range((vaddr_t)p2->p_addr, USPACE);
-
-	p2->p_md.md_p3 = p2->p_addr;
+	KDASSERT(!(p1 != curproc && p1 != &proc0));
 
 	/* Copy flags */
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* Sync the switchframe before we copy it. */
-	if (p1 == curproc)
-		savectx(curpcb);
-
-	/* Copy PCB */
-	pcb = &p2->p_addr->u_pcb;
-	*pcb = p1->p_addr->u_pcb;
-	/* Set page directory base to pcb */
-	pmap_activate(p2);
-
-	/* set up the kernel stack pointer */
-	spbase = (vaddr_t)p2->p_md.md_p3 + NBPG;
-#ifdef P1_STACK
-	/* Convert to P1 from P3 */
-	spbase = P1ADDR(spbase);
-#else /* P1_STACK */
-	/* Prepare kernel stack PTEs */
-	if (CPU_IS_SH3)
-		sh3_switch_setup(p2);
-	else
-		sh4_switch_setup(p2);
-#endif /* P1_STACK */
-
-	pcb->pcb_sp = spbase + USPACE - NBPG;
+#ifdef SH3
 	/*
 	 * Convert frame pointer top to P1. because SH3 can't make
 	 * wired TLB entry, context store space accessing must not cause
-	 * exception. SH4 can make wired entry, no need to convert to P1.
+	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
+	 * cause virtual-aliasing.
 	 */
-	pcb->pcb_fp = (vaddr_t)P1ADDR(pcb) + NBPG;		/* P1 */
+	if (CPU_IS_SH3) {
+		pcb = (struct pcb *)P1ADDR((vaddr_t)&p2->p_addr->u_pcb);
+		p2->p_md.md_pcb = pcb;
+		fptop = (vaddr_t)pcb + NBPG;
+	}
+#endif /* SH3 */
+#ifdef SH4
+	/* SH4 can make wired entry, no need to convert to P1. */
+	if (CPU_IS_SH4) {
+		pcb = &p2->p_addr->u_pcb;
+		p2->p_md.md_pcb = pcb;
+		fptop = (vaddr_t)pcb + NBPG;
+	}
+#endif /* SH4 */
+
+	/* set up the kernel stack pointer */
+	spbase = (vaddr_t)p2->p_addr + NBPG;
+#ifdef P1_STACK
+	/* Convert to P1 from P3 */
+	/*
+	 * wbinv u-area to avoid cache-aliasing, since kernel stack
+	 * is accessed from P1 instead of P3.
+	 */
+	if (SH_HAS_VIRTUAL_ALIAS)
+		sh_dcache_wbinv_range((vaddr_t)p2->p_addr, USPACE);
+	spbase = P1ADDR(spbase);
+#else /* P1_STACK */
+	/* Prepare u-area PTEs */
+#ifdef SH3
+	if (CPU_IS_SH3)
+		sh3_switch_setup(p2);
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)
+		sh4_switch_setup(p2);
+#endif
+#endif /* P1_STACK */
 
 #ifdef KSTACK_DEBUG
-	memset((char *)pcb->pcb_fp - NBPG + sizeof(struct user), 0x5a,
+	/* Fill magic number for tracking */
+	memset((char *)fptop - NBPG + sizeof(struct user), 0x5a,
 	    NBPG - sizeof(struct user));
 	memset((char *)spbase, 0xa5, (USPACE - NBPG));
-#endif
+	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
+#endif /* KSTACK_DEBUG */
+
 	/*
-	 * Copy the trapframe.
+	 * Copy the user context.
 	 */
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_fp - 1;
-	*tf = *p1->p_md.md_regs;
+	p2->p_md.md_regs = tf = (struct trapframe *)fptop - 1;
+	memcpy(tf, p1->p_md.md_regs, sizeof(struct trapframe));
 
 	/*
 	 * If specified, give the child a different stack.
@@ -173,11 +170,16 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	sf = &pcb->pcb_sf;
 	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
 	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
-	sf->sf_r6_bank = (int)tf;	/* frame pointer */
-	sf->sf_r15 = pcb->pcb_sp;	/* stack pointer */
+	sf->sf_r15 = spbase + USPACE - NBPG;	/* current stack pointer */
+	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
+	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
 	/* when switch to me, jump to proc_trampoline */
 	sf->sf_pr  = (int)proc_trampoline;
-	sf->sf_sr &= ~0xf0;		/* SR.IMASK = 0 */
+	/*
+	 * Enable interrupt when switch frame is restored, since
+	 * kernel thread begin to run without restoring trapframe.
+	 */
+	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
 }
 
 /*
@@ -189,21 +191,23 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 void
 cpu_exit(struct proc *p)
 {
+	struct switchframe *sf;
 
 	splsched();
 	uvmexp.swtch++;
 
 	/* Switch to proc0 stack */
 	curproc = 0;
-	curpcb = (struct pcb *)proc0.p_addr;
+	curpcb = proc0.p_md.md_pcb;
+	sf = &curpcb->pcb_sf;
 	__asm__ __volatile__(
 		"mov	%0, r15;"	/* current stack */
 		"ldc	%1, r6_bank;"	/* current frame pointer */
 		"ldc	%2, r7_bank;"	/* stack top */
 		::
-		"r"(curpcb->pcb_sf.sf_r15),
-		"r"(curpcb->pcb_sf.sf_r6_bank),
-		"r"(curpcb->pcb_sp));
+		"r"(sf->sf_r15),
+		"r"(sf->sf_r6_bank),
+		"r"(sf->sf_r7_bank));
 
 	/* Schedule freeing process resources */
 	exit2(p);
@@ -260,25 +264,30 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap.
+ * Both addresses are assumed to reside in the pmap_kernel().
  */
 void
 pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	pt_entry_t *fpte, *tpte;
 
-	if (size % NBPG)
+	if ((size & PGOFSET) != 0)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+	fpte = __pmap_kpte_lookup((vaddr_t)from);
+	tpte = __pmap_kpte_lookup((vaddr_t)to);
+
+	if (SH_HAS_VIRTUAL_ALIAS)
+		sh_dcache_wbinv_range((vaddr_t)from, size);
+
 	while (size > 0) {
 		*tpte++ = *fpte;
 		*fpte++ = 0;
+		sh_tlb_invalidate_addr(0, (vaddr_t)from);
+		sh_tlb_invalidate_addr(0, (vaddr_t)to);
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
 	}
-	TLBFLUSH();
 }
 
 /*
