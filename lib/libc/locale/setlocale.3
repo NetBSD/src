@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.20 2003/09/08 17:54:31 wiz Exp $
+.\"	$NetBSD: setlocale.3,v 1.21 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,6 @@ The
 .Fn setlocale
 function recognizes several categories of routines.
 These are the categories and the sets of routines they select:
-.Pp
 .Bl -tag -width LC_MONETARY
 .It Dv LC_ALL
 Set the entire locale generically.
@@ -178,7 +177,6 @@ struct lconv {
 .Ed
 .Pp
 The individual fields have the following meanings:
-.Pp
 .Bl -tag -width int_p_sep_by_space
 .It Fa decimal_point
 The decimal point character, except for monetary values.
