@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.116 2001/01/08 21:16:26 thorpej Exp $
+#	$NetBSD: files.pci,v 1.117 2001/01/22 01:34:43 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -213,6 +213,11 @@ file dev/pci/bktr/bktr_tuner.c		bktr
 device clcs: audio, auconv, mulaw, ac97, midibus
 attach  clcs at pci
 file dev/pci/cs4280.c			clcs
+
+# Cirrus Logic CrystalClear PCI Audio CS4281
+device clct: audio, auconv, mulaw, ac97
+attach  clct at pci
+file dev/pci/cs4281.c			clct
 
 # Forte Media FM801
 device  fms { }: audio, auconv, mulaw, ac97, midibus
