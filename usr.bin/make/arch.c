@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arch.c	5.7 (Berkeley) 12/28/90";*/
-static char rcsid[] = "$Id: arch.c,v 1.7 1994/06/06 22:45:17 jtc Exp $";
+static char rcsid[] = "$Id: arch.c,v 1.8 1995/01/11 17:42:26 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -597,9 +597,6 @@ ArchStatMember (archive, member, hash)
 	 */
 	arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
 	size = (int) strtol(arh.ar_size, NULL, 10);
-#if 0
-	(void) sscanf (arh.ar_size, "%10d", &size);
-#endif
 	fseek (arch, (size + 1) & ~1, 1);
     }
 
@@ -755,9 +752,6 @@ skip:
 	     */
 	    arhPtr->ar_size[sizeof(arhPtr->ar_size)-1] = '\0';
 	    size = (int) strtol(arhPtr->ar_size, NULL, 10);
-#if 0
-	    (void)sscanf (arhPtr->ar_size, "%10d", &size);
-#endif
 	    fseek (arch, (size + 1) & ~1, 1);
 	}
     }
@@ -876,9 +870,6 @@ Arch_MTime (gn)
 
     if (arhPtr != (struct ar_hdr *) NULL) {
 	modTime = (int) strtol(arhPtr->ar_date, NULL, 10);
-#if 0
-	(void)sscanf (arhPtr->ar_date, "%12d", &modTime);
-#endif
     } else {
 	modTime = 0;
     }
@@ -1007,10 +998,14 @@ Arch_FindLib (gn, path)
  *	    Its modification time is greater than the time at which the
  *	    	  make began (i.e. it's been modified in the course
  *	    	  of the make, probably by archiving).
- *	    Its modification time doesn't agree with the modification
- *	    	  time of its RANLIBMAG member (i.e. its table of contents
- *	    	  is out-of-date).
- *
+ *	    The modification time of one of its sources is greater than
+ *		  the one of its RANLIBMAG member (i.e. its table of contents
+ *	    	  is out-of-date). We don't compare of the archive time
+ *		  vs. TOC time because they can be too close. In my
+ *		  opinion we should not bother with the TOC at all since
+ *		  this is used by 'ar' rules that affect the data contents
+ *		  of the archive, not by ranlib rules, which affect the
+ *		  TOC. 
  *
  * Results:
  *	TRUE if the library is out-of-date. FALSE otherwise.
@@ -1038,14 +1033,11 @@ Arch_LibOODate (gn)
 
 	if (arhPtr != (struct ar_hdr *)NULL) {
 	    modTimeTOC = (int) strtol(arhPtr->ar_date, NULL, 10);
-#if 0
-	    (void)sscanf (arhPtr->ar_date, "%12d", &modTimeTOC);
-#endif
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
 	    }
-	    oodate = (gn->mtime > modTimeTOC);
+	    oodate = (gn->cmtime > modTimeTOC);
 	} else {
 	    /*
 	     * A library w/o a table of contents is out-of-date
