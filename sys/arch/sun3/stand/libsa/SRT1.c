@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.4 1996/01/29 23:41:03 gwr Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.5 1997/02/05 17:39:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -64,7 +64,7 @@ _start()
 
 	/* Set the vector for trap 0 used by abort. */
 	p = getvbr();
-	p[32] = (int)romp->abortEntry;
+	p[32] = (int) romVectorPtr->abortEntry;
 
 	main(0);
 	exit();
