@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.31 2000/03/30 12:51:14 augustss Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.32 2000/06/09 00:00:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -123,6 +124,9 @@ int nqnfs_piggy[NFS_NPROCS] = {
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
 extern struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+#ifdef INET6
+extern struct nfssvc_sock *nfs_udp6sock;
+#endif
 extern int nfsd_waiting;
 extern struct nfsstats nfsstats;
 
@@ -331,6 +335,11 @@ nqsrv_addhost(lph, slp, nam)
 		lph->lph_flag |= (LC_VALID | LC_UDP);
 		lph->lph_inetaddr = saddr->sin_addr.s_addr;
 		lph->lph_port = saddr->sin_port;
+#ifdef INET6
+	} else if (slp == nfs_udp6sock) {
+		lph->lph_nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
+		lph->lph_flag |= (LC_VALID | LC_UDP6);
+#endif
 	} else if (slp == nfs_cltpsock) {
 		lph->lph_nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
 		lph->lph_flag |= (LC_VALID | LC_CLTP);
@@ -399,7 +408,11 @@ nqsrv_cmpnam(slp, nam, lph)
 		else
 			return (0);
 	}
-	if (slp == nfs_udpsock || slp == nfs_cltpsock)
+	if (slp == nfs_udpsock || slp == nfs_cltpsock
+#ifdef INET6
+	    || slp == nfs_udp6sock
+#endif
+	)
 		addr = nam;
 	else
 		addr = slp->ns_nam;
@@ -461,6 +474,11 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			} else if (lph->lph_flag & LC_CLTP) {
 				nam2 = lph->lph_nam;
 				so = nfs_cltpsock->ns_so;
+#ifdef INET6
+			} else if (lph->lph_flag & LC_UDP6) {
+				nam2 = lph->lph_nam;
+				so = nfs_udp6sock->ns_so;
+#endif
 			} else if (lph->lph_slp->ns_flag & SLP_VALID) {
 				nam2 = (struct mbuf *)0;
 				so = lph->lph_slp->ns_so;
@@ -503,7 +521,8 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				*mtod(m, u_int32_t *) = htonl(0x80000000 |
 					(m->m_pkthdr.len - NFSX_UNSIGNED));
 			}
-			if (((lph->lph_flag & (LC_UDP | LC_CLTP)) == 0 &&
+			if (((lph->lph_flag & (LC_UDP | LC_CLTP | LC_UDP6))
+			    == 0 &&
 			    (lph->lph_slp->ns_flag & SLP_VALID) == 0) ||
 			    (solockp && (*solockp & NFSMNT_SNDLOCK)))
 				m_freem(m);
@@ -632,7 +651,7 @@ nqnfs_serverd()
 			i = 0;
 			ok = 1;
 			while (ok && (lph->lph_flag & LC_VALID)) {
-				if (lph->lph_flag & LC_CLTP)
+				if (lph->lph_flag & (LC_CLTP | LC_UDP6))
 					MFREE(lph->lph_nam, n);
 				if (lph->lph_flag & LC_SREF)
 					nfsrv_slpderef(lph->lph_slp);
