@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.3 1997/10/01 01:18:40 enami Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.4 1997/10/03 15:13:29 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,6 @@ struct atapi_cap_page {
 	u_int8_t reserved2[2];
 
 	u_int8_t cap1;
-#define AUDIO_PLAY 0x01
 #define AUDIO_PLAY 0x01		/* audio play supported */
 #define AV_COMPOSITE		/* composite audio/video supported */
 #define DA_PORT1		/* digital audio on port 1 */
