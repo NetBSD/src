@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.12 1999/03/25 23:19:59 is Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.12.18.1 2003/05/27 03:57:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -546,7 +546,7 @@ et_boardinit(gp)
 				et_fbsize = 0x100000;		/* 1 MB */
 		}
 		/* ZorroII can map 2 MB max ... */
-		if (!iszthreepa(gp->g_fbkva) && et_fbsize == 0x400000)
+		if (!iszthreepa(kvtop(gp->g_fbkva)) && et_fbsize == 0x400000)
 			et_fbsize = 0x200000;
 		etctype = ETW32;
 		etdtype = MERLINDAC;
