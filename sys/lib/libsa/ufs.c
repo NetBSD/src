@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.21 1999/02/11 09:10:45 pk Exp $	*/
+/*	$NetBSD: ufs.c,v 1.22 1999/02/22 07:59:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,30 +34,30 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *  
+ *
  *
  * Copyright (c) 1990, 1991 Carnegie Mellon University
  * All Rights Reserved.
  *
  * Author: David Golub
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -162,7 +162,7 @@ read_inode(inumber, f)
 	}
 out:
 	free(buf, fs->fs_bsize);
-	return (rc);	 
+	return (rc);
 }
 
 /*
@@ -399,9 +399,11 @@ ufs_open(path, f)
 	struct fs *fs;
 	int rc;
 	size_t buf_size;
+#ifndef UFS_NOSYMLINK
 	int nlinks = 0;
 	char namebuf[MAXPATHLEN+1];
 	char *buf = NULL;
+#endif
 
 	/* allocate file system specific data structure */
 	fp = alloc(sizeof(struct file));
@@ -497,6 +499,7 @@ ufs_open(path, f)
 		if ((rc = read_inode(inumber, f)) != 0)
 			goto out;
 
+#ifndef UFS_NOSYMLINK
 		/*
 		 * Check for symbolic link.
 		 */
@@ -530,7 +533,7 @@ ufs_open(path, f)
 				rc = block_map(f, (daddr_t)0, &disk_block);
 				if (rc)
 					goto out;
-				
+
 				twiddle();
 				rc = (f->f_dev->dv_strategy)(f->f_devdata,
 					F_READ, fsbtodb(fs, disk_block),
@@ -554,6 +557,7 @@ ufs_open(path, f)
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
 		}
+#endif	/* !UFS_NOSYMLINK */
 	}
 
 	/*
@@ -561,8 +565,10 @@ ufs_open(path, f)
 	 */
 	rc = 0;
 out:
+#ifndef UFS_NOSYMLINK
 	if (buf)
 		free(buf, fs->fs_bsize);
+#endif
 	if (rc) {
 		if (fp->f_buf)
 			free(fp->f_buf, fp->f_fs->fs_bsize);
@@ -572,6 +578,7 @@ out:
 	return (rc);
 }
 
+#ifndef UFS_NOCLOSE
 int
 ufs_close(f)
 	struct open_file *f;
@@ -593,6 +600,7 @@ ufs_close(f)
 	free(fp, sizeof(struct file));
 	return (0);
 }
+#endif /* !UFS_NOCLOSE */
 
 /*
  * Copy a portion of a file into kernel memory.
@@ -638,6 +646,7 @@ ufs_read(f, start, size, resid)
 /*
  * Not implemented.
  */
+#ifndef UFS_NOWRITE
 int
 ufs_write(f, start, size, resid)
 	struct open_file *f;
@@ -648,6 +657,7 @@ ufs_write(f, start, size, resid)
 
 	return (EROFS);
 }
+#endif /* !UFS_NOWRITE */
 
 off_t
 ufs_seek(f, offset, where)
