@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2001/04/12 20:15:06 reinoud Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2001/04/12 21:54:06 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -524,8 +524,9 @@ consinit(void)
 
 	if (consinit_called != 0)
 		return;
-
 	consinit_called = 1;
+
+	/* No serial console for now ? hmm... should be in constab */
 	cninit();
 }
 #endif
