@@ -345,9 +345,11 @@
 #include <zconf.h>
 #include <zlib.h>
 
+#ifdef notyet
 /*
  * Add symbols here, that should not be visible in userland,
  * but we make visible. We choose an empty struct to produce a conflict.
  */
 struct {
 } vaddr_t;
+#endif
