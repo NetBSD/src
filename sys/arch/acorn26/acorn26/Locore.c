@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 2002/03/24 15:46:42 bjh21 Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1.4.1 2002/11/18 02:35:16 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.1 2002/03/24 15:46:42 bjh21 Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.1.4.1 2002/11/18 02:35:16 he Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: Locore.c,v 1.1 2002/03/24 15:46:42 bjh21 Exp $");
 #include <machine/machdep.h>
 
 static void idle(void);
+
+struct pcb *curpcb;
 
 /*
  * Put process p on the run queue indicated by its priority.
@@ -139,6 +141,7 @@ cpu_switch(struct proc *p1)
 	printf("cpu_switch: %p ->", p1);
 #endif
 	curproc = NULL;
+	curpcb = NULL;
 	while (sched_whichqs == 0)
 		idle();
 	which = ffs(sched_whichqs) - 1;
@@ -152,6 +155,7 @@ cpu_switch(struct proc *p1)
 	/* p->p_cpu initialized in fork1() for single-processor */
 	p2->p_stat = SONPROC;
 	curproc = p2;
+	curpcb = &curproc->p_addr->u_pcb;
 #if 0
 	printf(" %p\n", p2);
 #endif
