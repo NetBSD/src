@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.2 1998/03/04 22:22:37 thorpej Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.3 1998/03/26 13:15:01 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -167,13 +167,6 @@ news3400_intr(mask, pc, statusReg, causeReg)
 		causeReg &= ~MIPS_INT_MASK_4;
 		printf("level 4 interrupt: PC %x CR %x SR %x\n",
 			pc, causeReg, statusReg);
-	}
-	if (mask & MIPS_INT_MASK_3) {
-		if (! USERMODE(statusReg)) {
-			printf("FPU interrupt: PC %x CR %x SR %x\n",
-				pc, causeReg, statusReg);
-			panic("news3400_intr");
-		}
 	}
 	if (mask & MIPS_INT_MASK_1) {		/* level 1 interrupt */
 		level1_intr();
