@@ -1,8 +1,8 @@
-/*	$NetBSD: strxfrm.c,v 1.5 1997/07/13 20:24:37 christos Exp $	*/
+/*	$NetBSD: strxfrm.c,v 1.6 1998/01/30 23:38:45 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)strxfrm.c	5.2 (Berkeley) 1/26/91";
+static char sccsid[] = "@(#)strxfrm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strxfrm.c,v 1.5 1997/07/13 20:24:37 christos Exp $");
+__RCSID("$NetBSD: strxfrm.c,v 1.6 1998/01/30 23:38:45 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,26 +55,19 @@ __RCSID("$NetBSD: strxfrm.c,v 1.5 1997/07/13 20:24:37 christos Exp $");
 size_t
 strxfrm(dst, src, n)
 	register char *dst;
-	register const char *src;
-	register size_t n;
+	const char *src;
+	size_t n;
 {
-	register size_t r = 0;
-	register int c;
+	register size_t srclen, copysize;
 
 	/*
 	 * Since locales are unimplemented, this is just a copy.
 	 */
+	srclen = strlen(src);
 	if (n != 0) {
-		while ((c = *src++) != 0) {
-			r++;
-			if (--n == 0) {
-				while (*src++ != 0)
-					r++;
-				break;
-			}
-			*dst++ = c;
-		}
-		*dst = 0;
+		copysize = srclen < n ? srclen : n - 1;
+		(void)memcpy(dst, src, copysize);
+		dst[copysize] = 0;
 	}
-	return (r);
+	return (srclen);
 }

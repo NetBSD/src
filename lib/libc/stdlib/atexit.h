@@ -1,8 +1,8 @@
-/*	$NetBSD: atexit.h,v 1.5 1997/07/13 20:16:36 christos Exp $	*/
+/*	$NetBSD: atexit.h,v 1.6 1998/01/30 23:37:45 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)atexit.h	5.1 (Berkeley) 5/15/90
+ *	from: @(#)atexit.h	8.2 (Berkeley) 7/3/94
  */
 
 /* must be at least 32 to guarantee ANSI conformance */

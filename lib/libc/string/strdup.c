@@ -1,8 +1,8 @@
-/*	$NetBSD: strdup.c,v 1.7 1997/07/13 20:24:25 christos Exp $	*/
+/*	$NetBSD: strdup.c,v 1.8 1998/01/30 23:38:33 perry Exp $	*/
 
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)strdup.c	5.4 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strdup.c,v 1.7 1997/07/13 20:24:25 christos Exp $");
+__RCSID("$NetBSD: strdup.c,v 1.8 1998/01/30 23:38:33 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ strdup(str)
 
 	len = strlen(str) + 1;
 	if (!(copy = malloc(len)))
-		return((char *)NULL);
+		return (NULL);
 	memcpy(copy, str, len);
-	return(copy);
+	return (copy);
 }

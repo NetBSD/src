@@ -1,8 +1,8 @@
-/*	$NetBSD: putenv.c,v 1.7 1997/07/21 14:08:58 jtc Exp $	*/
+/*	$NetBSD: putenv.c,v 1.8 1998/01/30 23:38:01 perry Exp $	*/
 
 /*-
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)putenv.c	5.4 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.7 1997/07/21 14:08:58 jtc Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.8 1998/01/30 23:38:01 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,17 +54,17 @@ int
 putenv(str)
 	const char *str;
 {
-	register char *p, *equal;
+	char *p, *equal;
 	int rval;
 
-	if (!(p = strdup(str)))
-		return(1);
-	if (!(equal = strchr(p, '='))) {
+	if ((p = strdup(str)) == NULL)
+		return (-1);
+	if ((equal = strchr(p, '=')) == NULL) {
 		(void)free(p);
-		return(1);
+		return (-1);
 	}
 	*equal = '\0';
 	rval = setenv(p, equal + 1, 1);
 	(void)free(p);
-	return(rval);
+	return (rval);
 }

@@ -1,8 +1,8 @@
-/*	$NetBSD: memchr.c,v 1.6 1998/01/21 21:13:09 cgd Exp $	*/
+/*	$NetBSD: memchr.c,v 1.7 1998/01/30 23:38:20 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)memchr.c	5.6 (Berkeley) 1/26/91";
+static char sccsid[] = "@(#)memchr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memchr.c,v 1.6 1998/01/21 21:13:09 cgd Exp $");
+__RCSID("$NetBSD: memchr.c,v 1.7 1998/01/30 23:38:20 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: strspn.c,v 1.5 1997/07/13 20:24:33 christos Exp $	*/
+/*	$NetBSD: strspn.c,v 1.6 1998/01/30 23:38:42 perry Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)strspn.c	5.8 (Berkeley) 1/26/91";
+static char sccsid[] = "@(#)strspn.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strspn.c,v 1.5 1997/07/13 20:24:33 christos Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.6 1998/01/30 23:38:42 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

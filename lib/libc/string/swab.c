@@ -1,8 +1,8 @@
-/*	$NetBSD: swab.c,v 1.5 1998/01/12 16:05:42 kleink Exp $	*/
+/*	$NetBSD: swab.c,v 1.6 1998/01/30 23:38:46 perry Exp $	*/
 
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jeffrey Mogul.
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)swab.c	5.10 (Berkeley) 3/6/91";
+static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: swab.c,v 1.5 1998/01/12 16:05:42 kleink Exp $");
+__RCSID("$NetBSD: swab.c,v 1.6 1998/01/30 23:38:46 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
