@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.6 1996/01/17 02:45:25 jtc Exp $	*/
+/*	$NetBSD: malloc.c,v 1.7 1996/12/20 20:32:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: malloc.c,v 1.6 1996/01/17 02:45:25 jtc Exp $";
+static char *rcsid = "$NetBSD: malloc.c,v 1.7 1996/12/20 20:32:02 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,7 +138,8 @@ malloc(nbytes)
 	size_t nbytes;
 {
   	register union overhead *op;
-  	register long bucket, n;
+	register int bucket;
+  	register long n;
 	register unsigned amt;
 
 	/*
