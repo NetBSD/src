@@ -1,0 +1,25 @@
+# $NetBSD: md.x86_64,v 1.1 2003/03/08 20:49:15 fvdl Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xnest
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/lib/X11/XF86Config.eg
+./usr/X11R6/lib/X11/doc/BUILD
+./usr/X11R6/lib/X11/doc/README
+./usr/X11R6/lib/X11/doc/README.DECtga
+./usr/X11R6/lib/X11/doc/README.DGA
+./usr/X11R6/lib/X11/doc/README.I128
+./usr/X11R6/lib/X11/doc/README.SiS
+./usr/X11R6/lib/X11/doc/README.apm
+./usr/X11R6/lib/X11/doc/README.ati
+./usr/X11R6/lib/X11/doc/README.chips
+./usr/X11R6/lib/X11/doc/README.cyrix
+./usr/X11R6/lib/X11/doc/README.i740
+./usr/X11R6/lib/X11/doc/README.mouse
+./usr/X11R6/lib/X11/doc/README.r128
+./usr/X11R6/lib/X11/doc/README.rendition
+./usr/X11R6/lib/X11/doc/RELNOTES
+./usr/X11R6/lib/X11/doc/ServersOnly
+./usr/X11R6/lib/modules
+./usr/X11R6/man/cat1/Xnest.0
+./usr/X11R6/man/cat1/Xvfb.0
+./usr/X11R6/man/cat5/XF86Config.0
