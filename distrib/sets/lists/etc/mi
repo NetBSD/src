@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2000/07/26 05:24:59 lukem Exp $
+# $NetBSD: mi,v 1.63 2000/08/06 21:37:02 thorpej Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -86,7 +86,7 @@
 ./etc/rc.d/ipmon
 ./etc/rc.d/ipnat
 ./etc/rc.d/ipsec
-./etc/rc.d/kerberos
+./etc/rc.d/kdc
 ./etc/rc.d/ldconfig
 ./etc/rc.d/lkm1
 ./etc/rc.d/lkm2
