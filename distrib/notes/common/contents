@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.8.2.8 2000/02/12 21:31:56 he Exp $
+.\"	$NetBSD: contents,v 1.8.2.9 2000/02/24 23:02:49 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -657,7 +657,9 @@ distribution set can be found only on those sites which carry the complete
 .Nx
 distribution and which can legally obtain it. Because
 of United States law, it may not be legal to distribute this set
-to locations outside of the United States and Canada.
+to locations outside of the United States and Canada.  See
+.Lk http://www.NetBSD.ORG/Misc/crypto-export.html
+for updated information on this issue.
 .br
 .if r_alpha .Em 1M gzipped, 3M uncompressed
 .if r_i386 . Em 798K gzipped, 2.4M uncompressed

@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.22 2000/02/24 22:37:01 he Exp $
+.\" $NetBSD: main,v 1.6.2.23 2000/02/24 23:02:48 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -522,7 +522,11 @@ distribution tree, which point out that there are some portions of the
 distribution (i.e. the `domestic' portion) that may be subject to
 export regulations of the United States.  It is your responsibility
 to determine whether or not it is legal for you to export these portions
-and to act accordingly.
+and to act accordingly.  The NetBSD project maintains a web page at
+.Pp
+.Lk http://www.NetBSD.ORG/Misc/crypto-export.html
+.Pp
+which should contain up-to-date information on this issue.
 .Pp
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree. They contain the 
@@ -569,14 +573,16 @@ Most of the above source sets are located in the
 subdirectory of the distribution tree. The secrsrc.tgz set is
 contained in the
 .Pa source/security
-subdirectory. This set, which is
-available only to users in the United States and Canada, contains the
+subdirectory. This set, which may only be
+available to users in the United States and Canada, contains the
 sources normally found in
 .Pa /usr/src/domestic
-\- primarily kerberos and
+\- primarily Kerberos and
 other cryptographic security related software. (Remember, because of
 United States law, it may not be legal to distribute this set to
-locations outside of the United States and Canada.)
+locations outside of the United States and Canada.  Again, see
+.Lk http://www.NetBSD.ORG/Misc/crypto-export.html
+for updated information on this issue.)
 .Pp
 The source sets are distributed as compressed tar files. They may be
 unpacked into
