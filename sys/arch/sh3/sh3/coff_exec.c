@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.7 2000/04/11 04:37:48 chs Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.8 2000/04/13 15:45:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -377,7 +377,7 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	}
 
 #ifdef	sh3
-	if (ap->a_bsize > 0){
+	if (ap->a_bsize > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_ROUND(ap->a_dstart + ap->a_dsize, COFF_LDPGSZ),
 			  NULLVP, 0,
