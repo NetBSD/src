@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.14 1995/05/16 22:24:43 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.15 1995/05/25 01:09:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -115,7 +115,8 @@ main()
 	off("P_STAT", struct proc, p_stat);
 	off("P_WCHAN", struct proc, p_wchan);
 	off("P_FLAG", struct proc, p_flag);
-	off("P_MDFLAG", struct proc, p_md.md_flags);
+	off("P_MD_FLAGS", struct proc, p_md.md_flags);
+	off("P_MD_REGS", struct proc, p_md.md_regs);
 	def("SSLEEP", SSLEEP);
 	def("SRUN", SRUN);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1995/05/12 18:24:46 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1995/05/25 01:09:10 mycroft Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -1117,6 +1117,19 @@ Lnocache0:
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
 
+/*
+ * Create a fake exception frame so that cpu_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
+ */
+	clrw	sp@-			| vector offset/frame type
+	clrl	sp@-			| PC - filled in by "execve"
+	movw	#PSL_USER,sp@-		| in user mode
+	clrl	sp@-			| stack adjust count and padding
+	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
+	lea	_proc0,a0		| save pointer to frame
+	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
+
 	jra	_main			| main()
 
 	.globl	_proc_trampoline
@@ -1481,7 +1494,7 @@ Lswnofpsave:
 	jne	Lbadsw
 #endif
 	clrl	a0@(P_BACK)		| clear back link
-	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
+	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
 
