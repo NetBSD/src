@@ -10,7 +10,7 @@ G_LIB1ASMFUNCS=_divI _divU _remI _remU _div_const _mulI _dyncall
 G_LIB1ASMSRC=pa/milli64.S
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 G_LIB2FUNCS_ST=_eprintf _bb __gcc_bcmp
-G_LIBGCC2_CFLAGS=-O2  -DIN_GCC   -W -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -isystem ./include  -fPIC -DELF=1 -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED
+G_LIBGCC2_CFLAGS=-O2  -DIN_GCC   -W -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -isystem ./include  -fPIC -DELF=1 -DNETBSD=1 -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED
 G_USE_COLLECT2=collect2
 G_EXTRA_HEADERS=
 G_tm_defines=NETBSD_ENABLE_PTHREADS
