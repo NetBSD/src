@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.4 1995/06/18 07:13:48 phil Exp $	*/
+/*	$NetBSD: icu.h,v 1.5 1995/08/25 07:52:18 phil Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -79,7 +79,7 @@
 #ifndef LOCORE
 /* Interrupt trigger modes
  */
-enum {HIGH_LEVEL, LOW_LEVEL, RAISING_EDGE, FALLING_EDGE} int_modes;
+enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 #endif /* !LOCORE */
 
 /* Hardware interrupt request lines.
