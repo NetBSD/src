@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.1 2002/02/25 19:09:44 kleink Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.2 2002/03/04 01:38:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.1 2002/02/25 19:09:44 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.2 2002/03/04 01:38:31 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,7 +211,7 @@ mkclock_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr = mk48txx_attach(sc->sc_iot, sc->sc_ioh, "mk48t18", 1900,
 	    mkclock_isa_nvrd, mkclock_isa_nvwr);
 	if (sc->sc_todr == NULL)
-		panic("\nmkclock_isa_attach: mk48txx attach failded");
+		panic("\nmkclock_isa_attach: mk48txx attach failed");
 
 	clockattach(self, &mkclock_isa_clockfns);
 }
