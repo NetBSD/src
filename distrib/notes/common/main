@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.7 1999/04/29 14:35:58 perry Exp $
+.\" $NetBSD: main,v 1.6.2.8 1999/04/29 15:52:25 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -789,11 +789,10 @@ has been maintaining the
 386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
 recognized for it.
 .It
-The following people (in alphabetical order) have made donations or
-loans of hardware and/or money, to support
+The following individuals and organiztions (each in alphabetical order)
+have made donations or loans of hardware and/or money, to support
 .Nx
-development, and
-deserve credit for it:
+development, and deserve credit for it:
 .so ../common/donations -----------------------------------------------
 (If you're not on that list and should be, tell us! We probably were
 not able to get in touch with you, to verify that you wanted to be
