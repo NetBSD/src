@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.34 2005/01/05 09:18:53 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.35 2005/01/09 14:58:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -94,29 +94,6 @@ static const int reloc_target_flags[] = {
 				_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
 	_RF_S|_RF_A|	_RF_U|	_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
-
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* PLT32 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* HIPLT22 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* LOPLT10 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* LOPLT10 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* PCPLT22 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* PCPLT32 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* 10 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* 11 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* 64 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* OLO10 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* HH22 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* HM10 */
-	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* LM22 */
-	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* PC_HH22 */
-	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* PC_HM10 */
-	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* PC_LM22 */
-	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* WDISP16 */
-	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* WDISP19 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* GLOB_JMP */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* 7 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* 5 */
-	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* 6 */
 };
 
 #ifdef RTLD_DEBUG_RELOC
@@ -125,11 +102,7 @@ static const char *reloc_names[] = {
 	"DISP_16", "DISP_32", "WDISP_30", "WDISP_22", "HI22",
 	"22", "13", "LO10", "GOT10", "GOT13",
 	"GOT22", "PC10", "PC22", "WPLT30", "COPY",
-	"GLOB_DAT", "JMP_SLOT", "RELATIVE", "UA_32", "PLT32",
-	"HIPLT22", "LOPLT10", "LOPLT10", "PCPLT22", "PCPLT32",
-	"10", "11", "64", "OLO10", "HH22",
-	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22", 
-	"WDISP16", "WDISP19", "GLOB_JMP", "7", "5", "6"
+	"GLOB_DAT", "JMP_SLOT", "RELATIVE", "UA_32"
 };
 #endif
 
@@ -153,16 +126,7 @@ static const int reloc_target_bitmask[] = {
 	_BM(10), _BM(22),		/* _PC10, _PC22 */  
 	_BM(30), 0,			/* _WPLT30, _COPY */
 	-1, -1, -1,			/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
-	_BM(32), _BM(32),		/* _UA32, PLT32 */
-	_BM(22), _BM(10),		/* _HIPLT22, LOPLT10 */
-	_BM(32), _BM(22), _BM(10),	/* _PCPLT32, _PCPLT22, _PCPLT10 */
-	_BM(10), _BM(11), -1,		/* _10, _11, _64 */
-	_BM(10), _BM(22),		/* _OLO10, _HH22 */
-	_BM(10), _BM(22),		/* _HM10, _LM22 */
-	_BM(22), _BM(10), _BM(22),	/* _PC_HH22, _PC_HM10, _PC_LM22 */
-	_BM(16), _BM(19),		/* _WDISP16, _WDISP19 */
-	-1,				/* GLOB_JMP */
-	_BM(7), _BM(5), _BM(6)		/* _7, _5, _6 */
+	_BM(32)				/* _UA32 */
 #undef _BM
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
@@ -170,6 +134,8 @@ static const int reloc_target_bitmask[] = {
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+static inline int _rtld_relocate_plt_object(const Obj_Entry *obj,
+    const Elf_Rela *rela, Elf_Addr *tp);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -357,6 +323,31 @@ caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	Elf_Addr value;
+	int err;
+
+	err = _rtld_relocate_plt_object(obj, rela, &value);
+	if (err)
+		_rtld_die();
+
+	return (caddr_t)value;
+}
+
+int
+_rtld_relocate_plt_objects(const Obj_Entry *obj)
+{
+	const Elf_Rela *rela = obj->pltrela;
+
+	for (; rela < obj->pltrelalim; rela++)
+		if (_rtld_relocate_plt_object(obj, rela, NULL) < 0)
+			return -1;
+
+	return 0;
+}
+
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
+{
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	Elf_Word *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
@@ -368,7 +359,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
-		_rtld_die();
+		return -1;
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> new=%p", 
@@ -396,5 +387,8 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	__asm __volatile("iflush %0+8" : : "r" (where));
 	__asm __volatile("iflush %0+4" : : "r" (where));
 
-	return (caddr_t)value;
+	if (tp)
+		*tp = value;
+
+	return 0;
 }
