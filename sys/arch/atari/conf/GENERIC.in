@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.26 2002/10/06 02:58:21 provos Exp $
+#	$NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
 #
 # Generic atari
 #
@@ -234,6 +234,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #endif
 pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	cgd		4	# cryptographic disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
