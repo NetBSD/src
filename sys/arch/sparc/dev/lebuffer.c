@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.6 1998/04/07 20:11:54 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7 1998/07/24 21:08:16 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -91,7 +91,6 @@ lebufattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if defined(SUN4C) || defined(SUN4M)
 	struct sbus_attach_args *sa = aux;
 	struct lebuf_softc *sc = (void *)self;
 	int node;
@@ -107,7 +106,7 @@ lebufattach(parent, self, aux)
 			 sa->sa_offset,
 			 sa->sa_size,
 			 0, 0, &bh) != 0) {
-		printf("lebufattach: cannot map registers\n");
+		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
 
@@ -136,8 +135,6 @@ lebufattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
 
-	printf("\n");
-
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Propagate bootpath */
@@ -150,9 +147,11 @@ lebufattach(parent, self, aux)
 	sbt = (bus_space_tag_t)
 		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
 	if (sbt == NULL) {
-		printf("lebufattach: out of memory\n");
+		printf("%s: attach: out of memory\n", self->dv_xname);
 		return;
 	}
+
+	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
@@ -165,5 +164,4 @@ lebufattach(parent, self, aux)
 				       sbt, sc->sc_dmatag, node, bp, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
 	}
-#endif /* SUN4C || SUN4M */
 }
