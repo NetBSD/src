@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.15 2000/03/27 06:48:05 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.16 2000/03/27 07:04:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.15 2000/03/27 06:48:05 enami Exp $
+ *	$Id: if_wi.c,v 1.16 2000/03/27 07:04:21 enami Exp $
  */
 
 /*
@@ -117,7 +117,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.15 2000/03/27 06:48:05 enami Exp $";
+	"$Id: if_wi.c,v 1.16 2000/03/27 07:04:21 enami Exp $";
 #endif
 
 #ifdef foo
@@ -911,12 +911,12 @@ static void wi_setmulti(sc)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-	bzero((char *)&mcast, sizeof(mcast));
-
-	mcast.wi_type = WI_RID_MCAST;
-	mcast.wi_len = (3 * 16) + 1;
-
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		bzero((char *)&mcast, sizeof(mcast));
+		mcast.wi_type = WI_RID_MCAST;
+		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
+
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
 		return;
 	}
@@ -925,13 +925,9 @@ static void wi_setmulti(sc)
 	ETHER_FIRST_MULTI(estep, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0 ||
+		    i >= 16)
 			goto allmulti;
-		if (i>= 16) {
-		allmulti:
-			bzero((char *)&mcast, sizeof(mcast));
-			break;
-		}
 #if 0
 		/* Punt on ranges. */
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -944,10 +940,9 @@ static void wi_setmulti(sc)
 		ETHER_NEXT_MULTI(estep, enm);
 	}
 
-	mcast.wi_len = (i * 3) + 1;
+	mcast.wi_type = WI_RID_MCAST;
+	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * i) + 1;
 	wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
-
-	return;
 }
 
 static int
