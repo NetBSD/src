@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2003/08/07 16:26:57 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 2003/09/17 23:17:41 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2003/08/07 16:26:57 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2003/09/17 23:17:41 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -643,8 +643,15 @@ trap(type, code, v, frame)
 		if (type == T_MMUFLT &&
 		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
-		else
+		else {
 			map = vm ? &vm->vm_map : kernel_map;
+			if (l->l_flag & L_SA) {
+				KDASSERT(p != NULL && p->p_sa != NULL);
+				p->p_sa->sa_vp_faultaddr = (vaddr_t)v;
+				l->l_flag |= L_SA_PAGEFAULT;
+			}
+		}
+
 		if (WRFAULT(code))
 			ftype = VM_PROT_WRITE;
 		else
@@ -688,6 +695,7 @@ trap(type, code, v, frame)
 #endif
 				return;
 			}
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			goto out;
 		}
 		if (type == T_MMUFLT) {
@@ -701,6 +709,7 @@ trap(type, code, v, frame)
 			       type, code);
 			panictrap(type, code, v, &frame);
 		}
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		ucode = v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
