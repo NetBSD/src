@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.61 2001/11/26 21:43:01 manu Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.62 2001/11/28 11:45:36 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.61 2001/11/26 21:43:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.62 2001/11/28 11:45:36 manu Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -254,7 +254,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(irix,probe) },
 	  &emul_irix, EXECSW_PRIO_ANY,
 	  IRIX_AUX_ARGSIZ,
-	  irix_elf32_copyargs, NULL }, /* IRIX 6.5 ELF n32 bins */
+	  irix_elf32_copyargs, NULL }, /* IRIX o32 ELF bins */
 #endif
 #ifdef COMPAT_SVR4_32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
