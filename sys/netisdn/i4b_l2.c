@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.5 2001/11/13 01:06:21 lukem Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.5 2001/11/13 01:06:21 lukem Exp $ 
+ *	$Id: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.5 2001/11/13 01:06:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -295,8 +295,7 @@ int i4b_mdl_command_req(int bri, int command, void * parm)
 			break;
 	}		
 
-	/* XXX - check if we still need this (and the whole function
-	   pointer, when enable/disable is done properly) */
+	/* pass down to layer 1 driver */
 	sc->driver->mph_command_req(sc->l1_token, command, parm);
 	
 	return(0);
