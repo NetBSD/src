@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.16 1999/11/12 00:34:58 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.17 1999/11/16 10:21:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,13 @@ int	umodemdebug = 0;
 #define	UMODEMDIALOUT(x)	(minor(x) & UMODEMDIALOUT_MASK)
 #define	UMODEMCALLUNIT(x)	(minor(x) & UMODEMCALLUNIT_MASK)
 
+/* 
+ * These are the maximum number of bytes transferred per frame.
+ * If some really high speed devices should use this driver they
+ * may need to be increased, but this is good enough for modems.
+ */
 #define UMODEMIBUFSIZE 64
+#define UMODEMOBUFSIZE 256
 
 struct umodem_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -113,7 +119,8 @@ struct umodem_softc {
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
 	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
-	usbd_xfer_handle	sc_oxfer;	/* read request */
+	usbd_xfer_handle	sc_oxfer;	/* write request */
+	u_char			*sc_obuf;	/* write buffer */
 
 	int			sc_cm_cap;	/* CM capabilities */
 	int			sc_acm_cap;	/* ACM capabilities */
@@ -356,11 +363,19 @@ umodemstart(tp)
 
 	SET(tp->t_state, TS_BUSY);
 
+	/* XXX Is it really correct not to transfer all of the buffer? */
+	if (cnt > UMODEMOBUFSIZE) {
+		DPRINTF(("umodemstart: big buffer %d chars\n", cnt));
+		cnt = UMODEMOBUFSIZE;
+	}
+
+	memcpy(sc->sc_obuf, data, cnt);
+
 	DPRINTFN(4,("umodemstart: %d chars\n", cnt));
 	/* XXX what can we do on error? */
 	usbd_setup_request(sc->sc_oxfer, sc->sc_bulkout_pipe, 
-			   (usbd_private_handle)sc, data, cnt,
-			   0, USBD_NO_TIMEOUT, umodemwritecb);
+			   (usbd_private_handle)sc, sc->sc_obuf, cnt,
+			   USBD_NO_COPY, USBD_NO_TIMEOUT, umodemwritecb);
 	(void)usbd_transfer(sc->sc_oxfer);
 
 out:
@@ -566,19 +581,35 @@ umodemopen(dev, flag, mode, p)
 		
 		/* Allocate a request and an input buffer and start reading. */
 		sc->sc_ixfer = usbd_alloc_request(sc->sc_udev);
-		if (sc->sc_ixfer == 0) {
+		if (sc->sc_ixfer == NULL) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_oxfer = usbd_alloc_request(sc->sc_udev);
-		if (sc->sc_oxfer == 0) {
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-			usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer, UMODEMIBUFSIZE);
+		if (sc->sc_ibuf == NULL) {
 			usbd_free_request(sc->sc_ixfer);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_ibuf = malloc(UMODEMIBUFSIZE, M_USBDEV, M_WAITOK);
+
+		sc->sc_oxfer = usbd_alloc_request(sc->sc_udev);
+		if (sc->sc_oxfer == NULL) {
+			usbd_free_request(sc->sc_ixfer);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+			return (ENOMEM);
+		}
+		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer, UMODEMOBUFSIZE);
+		if (sc->sc_obuf == NULL) {
+			usbd_free_request(sc->sc_oxfer);
+			usbd_free_request(sc->sc_ixfer);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+			return (ENOMEM);
+		}
+
 		umodemstartread(sc);
 	}
 	sc->sc_opening = 0;
@@ -616,7 +647,8 @@ umodemstartread(sc)
 	DPRINTFN(5,("umodemstartread: start\n"));
 	usbd_setup_request(sc->sc_ixfer, sc->sc_bulkin_pipe, 
 			   (usbd_private_handle)sc, 
-			   sc->sc_ibuf,  UMODEMIBUFSIZE, USBD_SHORT_XFER_OK, 
+			   sc->sc_ibuf, UMODEMIBUFSIZE, 
+			   USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			   USBD_NO_TIMEOUT, umodemreadcb);
 	r = usbd_transfer(sc->sc_ixfer);
 	if (r != USBD_IN_PROGRESS)
@@ -711,7 +743,6 @@ umodem_cleanup(sc)
 	usbd_close_pipe(sc->sc_bulkout_pipe);
 	usbd_free_request(sc->sc_ixfer);
 	usbd_free_request(sc->sc_oxfer);
-	free(sc->sc_ibuf, M_USBDEV);
 }
 
 int
