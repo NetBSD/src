@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.41 2003/09/18 01:33:58 mycroft Exp $	 */
+/* $NetBSD: adw.c,v 1.42 2003/10/21 00:25:59 fvdl Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.41 2003/09/18 01:33:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.42 2003/10/21 00:25:59 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,7 +773,7 @@ adw_build_sglist(ADW_CCB *ccb, ADW_SCSI_REQ_Q *scsiqp, ADW_SG_BLOCK *sg_block)
 			if (--sg_elem_cnt == 0) {
 				/* last entry, get out */
 				sg_block->sg_cnt = i + 1;
-				sg_block->sg_ptr = NULL; /* next link = NULL */
+				sg_block->sg_ptr = 0; /* next link = NULL */
 				return;
 			}
 			sg_list++;
