@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.139 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.140 2004/05/04 21:23:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.139 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.140 2004/05/04 21:23:39 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -128,37 +128,34 @@ int debug_exit = 0;
 #endif
 
 static void lwp_exit_hook(struct lwp *, void *);
-static void exit_psignal(struct proc *, struct proc *);
 
 /*
  * Fill in the appropriate signal information, and signal the parent.
  */
 static void
-exit_psignal(struct proc *p, struct proc *pp)
+exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 {
-	ksiginfo_t ksi;
 
-	(void)memset(&ksi, 0, sizeof(ksi));
-	if ((ksi.ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
+	(void)memset(ksi, 0, sizeof(ksiginfo_t));
+	if ((ksi->ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
 		if (WIFSIGNALED(p->p_xstat)) {
 			if (WCOREDUMP(p->p_xstat))
-				ksi.ksi_code = CLD_DUMPED;
+				ksi->ksi_code = CLD_DUMPED;
 			else
-				ksi.ksi_code = CLD_KILLED;
+				ksi->ksi_code = CLD_KILLED;
 		} else {
-			ksi.ksi_code = CLD_EXITED;
+			ksi->ksi_code = CLD_EXITED;
 		}
 	}
 	/*
 	 * we fill those in, even for non-SIGCHLD.
 	 */
-	ksi.ksi_pid = p->p_pid;
-	ksi.ksi_uid = p->p_ucred->cr_uid;
-	ksi.ksi_status = p->p_xstat;
+	ksi->ksi_pid = p->p_pid;
+	ksi->ksi_uid = p->p_ucred->cr_uid;
+	ksi->ksi_status = p->p_xstat;
 	/* XXX: is this still valid? */
-	ksi.ksi_utime = p->p_ru->ru_utime.tv_sec;
-	ksi.ksi_stime = p->p_ru->ru_stime.tv_sec;
-	kpsignal(pp, &ksi, NULL);
+	ksi->ksi_utime = p->p_ru->ru_utime.tv_sec;
+	ksi->ksi_stime = p->p_ru->ru_stime.tv_sec;
 }
 
 /*
@@ -191,6 +188,11 @@ exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
 	int		s, sa;
+	struct plimit	*plim;
+	struct pstats	*pstats;
+	struct sigacts	*ps;
+	ksiginfo_t	ksi;
+	int		do_psignal = 0;
 
 	p = l->l_proc;
 
@@ -331,53 +333,6 @@ exit1(struct lwp *l, int rv)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
-	 * Reset p_opptr pointer of all former children which got
-	 * traced by another process and were reparented. We reset
-	 * it to NULL here; the trace detach code then reparents
-	 * the child to initproc. We only check allproc list, since
-	 * eventual former children on zombproc list won't reference
-	 * p_opptr anymore.
-	 */
-	s = proclist_lock_write();
-	if (p->p_flag & P_CHTRACED) {
-		LIST_FOREACH(q, &allproc, p_list) {
-			if (q->p_opptr == p)
-				q->p_opptr = NULL;
-		}
-	}
-
-	/*
-	 * Give orphaned children to init(8).
-	 */
-	q = LIST_FIRST(&p->p_children);
-	if (q)		/* only need this if any child is SZOMB */
-		wakeup(initproc);
-	for (; q != NULL; q = nq) {
-		nq = LIST_NEXT(q, p_sibling);
-
-		/*
-		 * Traced processes are killed since their existence
-		 * means someone is screwing up. Since we reset the
-		 * trace flags, the logic in sys_wait4() would not be
-		 * triggered to reparent the process to its
-		 * original parent, so we must do this here.
-		 */
-		if (q->p_flag & P_TRACED) {
-			if (q->p_opptr != q->p_pptr) {
-				struct proc *t = q->p_opptr;
-				proc_reparent(q, t ? t : initproc);
-				q->p_opptr = NULL;
-			} else
-				proc_reparent(q, initproc);
-			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-			psignal(q, SIGKILL);
-		} else {
-			proc_reparent(q, initproc);
-		}
-	}
-	proclist_unlock_write(s);
-
-	/*
 	 * Free the VM resources we're still holding on to.
 	 * We must do this from a valid thread because doing
 	 * so may block. This frees vmspace, which we don't
@@ -416,13 +371,74 @@ exit1(struct lwp *l, int rv)
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
 	/*
+	 * Notify interested parties of our demise.
+	 */
+	KNOTE(&p->p_klist, NOTE_EXIT);
+
+#if PERFCTRS
+	/*
+	 * Save final PMC information in parent process & clean up.
+	 */
+	if (PMC_ENABLED(p)) {
+		pmc_save_context(p);
+		pmc_accumulate(p->p_pptr, p);
+		pmc_process_exit(p);
+	}
+#endif
+
+	s = proclist_lock_write();
+	/*
+	 * Reset p_opptr pointer of all former children which got
+	 * traced by another process and were reparented. We reset
+	 * it to NULL here; the trace detach code then reparents
+	 * the child to initproc. We only check allproc list, since
+	 * eventual former children on zombproc list won't reference
+	 * p_opptr anymore.
+	 */
+	if (p->p_flag & P_CHTRACED) {
+		LIST_FOREACH(q, &allproc, p_list) {
+			if (q->p_opptr == p)
+				q->p_opptr = NULL;
+		}
+	}
+
+	/*
+	 * Give orphaned children to init(8).
+	 */
+	q = LIST_FIRST(&p->p_children);
+	if (q)		/* only need this if any child is SZOMB */
+		wakeup(initproc);
+	for (; q != NULL; q = nq) {
+		nq = LIST_NEXT(q, p_sibling);
+
+		/*
+		 * Traced processes are killed since their existence
+		 * means someone is screwing up. Since we reset the
+		 * trace flags, the logic in sys_wait4() would not be
+		 * triggered to reparent the process to its
+		 * original parent, so we must do this here.
+		 */
+		if (q->p_flag & P_TRACED) {
+			if (q->p_opptr != q->p_pptr) {
+				struct proc *t = q->p_opptr;
+				proc_reparent(q, t ? t : initproc);
+				q->p_opptr = NULL;
+			} else
+				proc_reparent(q, initproc);
+			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+			psignal(q, SIGKILL);
+		} else {
+			proc_reparent(q, initproc);
+		}
+	}
+
+	/*
 	 * Move proc from allproc to zombproc, it's now ready
 	 * to be collected by parent. Remaining lwp resources
-	 * will be freed in lwp_exit2() once we'd switch to idle
+	 * will be freed in lwp_exit2() once we've switch to idle
 	 * context.
 	 * Changing the state to SZOMB stops it being found by pfind().
 	 */
-	s = proclist_lock_write();
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
 	p->p_stat = SZOMB;
@@ -444,31 +460,12 @@ exit1(struct lwp *l, int rv)
 		LIST_INSERT_HEAD(&q->p_children, p, p_sibling);
 	}
 
-	proclist_unlock_write(s);
-
-	/*
-	 * Notify interested parties of our demise.
-	 */
-	KNOTE(&p->p_klist, NOTE_EXIT);
-
-#if PERFCTRS
-	/*
-	 * Save final PMC information in parent process & clean up.
-	 */
-	if (PMC_ENABLED(p)) {
-		pmc_save_context(p);
-		pmc_accumulate(p->p_pptr, p);
-		pmc_process_exit(p);
-	}
-#endif
-
 	/*
 	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
 	 * flag set, notify init instead (and hope it will handle
 	 * this situation).
 	 */
-	if (p->p_pptr->p_flag & P_NOCLDWAIT) {
-		struct proc *pp = p->p_pptr;
+	if (q->p_flag & P_NOCLDWAIT) {
 		proc_reparent(p, initproc);
 
 		/*
@@ -476,19 +473,9 @@ exit1(struct lwp *l, int rv)
 		 * parent, so in case he was wait(2)ing, he will
 		 * continue.
 		 */
-		if (LIST_FIRST(&pp->p_children) == NULL)
-			wakeup(pp);
+		if (LIST_FIRST(&q->p_children) == NULL)
+			wakeup(q);
 	}
-
-	/* Wake up the parent so it can get exit status. */
-	if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
-		exit_psignal(p, p->p_pptr);
-	wakeup(p->p_pptr);
-
-	/*
-	 * Release the process's signal state.
-	 */
-	sigactsfree(p);
 
 	/*
 	 * Clear curlwp after we've done all operations
@@ -501,17 +488,49 @@ exit1(struct lwp *l, int rv)
 	 * Other substructures are freed from wait().
 	 */
 	curlwp = NULL;
-	limfree(p->p_limit);
-	pstatsfree(p->p_stats);
-	p->p_limit = NULL;
 
-	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_PROC_UNLOCK(l);
+	/* Delay release until after dropping the proclist lock */
+	plim = p->p_limit;
+	pstats = p->p_stats;
+	ps = p->p_sigacts;
+
+	p->p_limit = NULL;
+	p->p_stats = NULL;
+	p->p_sigacts = NULL;
+
+	/* Reload parent pointer, since p may have been reparented above */
+	q = p->p_pptr;
+
+	if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0) {
+		exit_psignal(p, q, &ksi);
+		do_psignal = 1;
+	}
+
+	/*
+	 * Once we release the proclist lock, we shouldn't touch the
+	 * process structure anymore, since it's now on the zombie
+	 * list and available for collection by the parent.
+	 */
+	proclist_unlock_write(s);
+
+	if (do_psignal)
+		kpsignal(q, &ksi, NULL);
+
+	/* Wake up the parent so it can get exit status. */
+	wakeup(q);
+
+	/* Release substructures */
+	sigactsfree(ps);
+	limfree(plim);
+	pstatsfree(pstats);
 
 #ifdef DEBUG
 	/* Nothing should use the process link anymore */
 	l->l_proc = NULL;
 #endif
+
+	/* This process no longer needs to hold the kernel lock. */
+	KERNEL_PROC_UNLOCK(l);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
@@ -753,6 +772,7 @@ void
 proc_free(struct proc *p)
 {
 	struct proc *parent = p->p_pptr;
+	ksiginfo_t ksi;
 	int s;
 
 	KASSERT(p->p_nlwps == 0);
@@ -775,8 +795,10 @@ proc_free(struct proc *p)
 		proc_reparent(p, parent);
 		p->p_opptr = NULL;
 		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-		if (p->p_exitsig != 0)
-			exit_psignal(p, parent);
+		if (p->p_exitsig != 0) {
+			exit_psignal(p, parent, &ksi);
+			kpsignal(parent, &ksi, NULL);
+		}
 		wakeup(parent);
 		return;
 	}
