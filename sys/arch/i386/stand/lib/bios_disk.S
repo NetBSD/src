@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.6 1999/03/30 17:55:48 drochner Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.7 1999/03/30 22:35:21 fvdl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -153,14 +153,13 @@ ENTRY(get_diskinfo)
 	# carry = 0
 
 ok:
+	data32
+	call	_C_LABEL(real_to_prot)	# back to protected mode
+
 	/* form a longword representing all this gunk */
 	shll	$8, %ecx
 	movb	%dh, %cl
 
-	data32
-	call	_C_LABEL(real_to_prot)	# back to protected mode
-
-	data32
 	movl	%ecx, %eax
 
 	pop	%edi
