@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.67 2004/01/04 15:09:16 sekiya Exp $
+.\"	$NetBSD: sysinst,v 1.68 2004/01/09 05:26:47 sekiya Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1287,17 +1287,7 @@ from the main menu.
 .\} \" \n[macppc]
 .if \n[sgimips] \{\
 .(bullet
-It is imprtant to note the disk on which 
-.Nx 
-is being installed on must already have an SGI volume header.  Disks not
-already formatted for
-.Tn IRIX 
-can be prepared with the
-.Tn IRIX
-.Xr fx 1 
-disk formatting tool.  
-.It
-Please also note that shared installs of 
+Please note that shared installs of 
 .Tn IRIX
 and 
 .Nx
