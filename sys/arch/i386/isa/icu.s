@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.49 1997/03/19 20:32:11 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.50 1997/04/02 21:59:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -169,6 +169,9 @@ IDTVEC(softnet)
 #endif
 #ifdef NATM
 	DONET(NETISR_NATM, _natmintr)
+#endif
+#ifdef NETATALK
+	DONET(NETISR_ATALK, _atintr)
 #endif
 #include "ppp.h"
 #if NPPP > 0
