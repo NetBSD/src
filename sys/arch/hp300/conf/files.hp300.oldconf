@@ -1,4 +1,4 @@
-# $Id: files.hp300.oldconf,v 1.4 1993/05/29 19:21:06 cgd Exp $
+# $Id: files.hp300.oldconf,v 1.5 1993/07/07 06:36:30 cgd Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard clock needs-count # XXX? split?
@@ -43,8 +43,8 @@ arch/hp300/dev/ppi.c			optional ppi device-driver
 arch/hp300/dev/dca.c			optional dca device-driver
 arch/hp300/dev/dcm.c			optional dcm device-driver
 arch/hp300/dev/scsi.c			optional scsi device-driver
-arch/hp300/dev/sd.c			optional sd
-arch/hp300/dev/st.c			optional st
+arch/hp300/dev/sd.c			optional sd device-driver # XXX add dd
+arch/hp300/dev/st.c			optional st device-driver # XXX add dd
 arch/hp300/hpux/hpux_compat.c		optional hpuxcompat
 arch/hp300/hpux/hpux_net.c		optional hpuxcompat
 arch/hp300/hpux/hpux_sig.c		optional hpuxcompat
