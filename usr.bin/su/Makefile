@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/01/10 21:33:13 sjg Exp $
+#	$NetBSD: Makefile,v 1.26 2001/01/11 00:54:57 sjg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -14,10 +14,10 @@ CPPFLAGS+=-DLOGIN_CAP
 #
 #CPPFLAGS+=-DSUGROUP=\"sugroup\"
 
-# Comment out the following line to prevent su
-# from assuming that group wheel (or SUGROUP) can be an indirect
+# Uncomment the following line to make su
+# treat group wheel (SUGROUP) and/or ROOTAUTH as an indirect
 # list of groups.
-CPPFLAGS+=-DSU_INDIRECT_GROUP
+#CPPFLAGS+=-DSU_INDIRECT_GROUP
 
 .if (${MKKERBEROS} != "no")
 .ifdef AFS
