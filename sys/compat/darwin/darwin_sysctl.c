@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.27 2004/07/04 20:30:14 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.28 2004/07/21 01:37:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.27 2004/07/04 20:30:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.28 2004/07/21 01:37:57 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.27 2004/07/04 20:30:14 manu Exp 
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_proc.h>
+#include <compat/darwin/darwin_route.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 pid_t darwin_init_pid = 0;
@@ -76,6 +77,7 @@ static int darwin_sysctl_dokproc(SYSCTLFN_PROTO);
 static void darwin_fill_kproc(struct proc *, struct darwin_kinfo_proc *);
 static void native_to_darwin_pflag(int *, int);
 static int darwin_sysctl_procargs(SYSCTLFN_PROTO);
+static int darwin_sysctl_net(SYSCTLFN_PROTO);
 
 static struct sysctlnode darwin_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
@@ -261,7 +263,14 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 		       CTLTYPE_INT, "pagesize", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_HW, DARWIN_HW_PAGESIZE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       darwin_sysctl_net, 0, NULL, 0,
+		       DARWIN_CTL_NET, CTL_EOL);
 }
+
 
 int
 darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
@@ -445,6 +454,57 @@ darwin_sys_getpid(l, v, retval)
 
 	return 0;
 }
+
+static int
+darwin_sysctl_net(SYSCTLFN_ARGS) 
+{
+	int af;
+
+	/* 
+	 * A strange thing: thrid level is zero, but I don't understand 
+	 * what it stands for.
+	 * All nodes here are of form [net.]<address family>.<zero>.* 
+	 */
+	if (namelen < 3)
+		return EINVAL;
+
+	if ((af = name[0]) != AF_ROUTE) {
+		printf("unimplemented sysctl net.%d\n", af);
+		return EINVAL;
+	}
+
+#ifdef DEBUG_DARWIN
+	if (name[1] != 0)
+		printf("sysctl net.af.%d\n", name[1]);
+#endif
+
+	if (namelen < 4)
+		return EINVAL;
+
+	switch (name[3]) {
+	case DARWIN_NET_RT_DUMP:
+		printf("unimplemented sysctl DARWIN_NET_RT_DUMP\n");
+		return EINVAL;
+		break;
+
+	case DARWIN_NET_RT_FLAGS:
+		printf("unimplemented sysctl DARWIN_NET_RT_FLAGS\n");
+		return EINVAL;
+		break;
+
+	case DARWIN_NET_RT_IFLIST:
+		return darwin_ifaddrs(name[2], oldp, oldlenp);
+		break;
+
+	default:
+		return EINVAL;
+		break;
+	}
+
+	/* NOTREACHED */
+	return 0;
+}
+
 
 /*
  * This is stolen from sys/kern/kern_sysctl.c:sysctl_doeproc() 
