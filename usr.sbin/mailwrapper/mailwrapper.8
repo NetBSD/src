@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailwrapper.8,v 1.3 1999/02/05 03:28:17 hubertf Exp $
+.\"	$NetBSD: mailwrapper.8,v 1.4 1999/02/05 18:15:59 perry Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -127,10 +127,11 @@ The following is an example of how to set up an
 .Pa /etc/mailer.conf
 for traditional sendmail invocation behavior.
 .Bd -literal
-# Execute the "real" sendmail program, named /usr/sbin/sendmail.sendmail
-sendmail	/usr/sbin/sendmail.sendmail
-mailq		/usr/sbin/sendmail.sendmail
-newaliases	/usr/sbin/sendmail.sendmail
+# Execute the "real" sendmail program, named /usr/libexec/sendmail/sendmail
+sendmail	/usr/libexec/sendmail/sendmail
+send-mail	/usr/libexec/sendmail/sendmail
+mailq		/usr/libexec/sendmail/sendmail
+newaliases	/usr/libexec/sendmail/sendmail
 .Ed
 .Pp
 This example shows how to invoke the fictitious "newmail" program in
