@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.84 2002/09/19 21:59:03 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.85 2003/02/12 08:52:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.84 2002/09/19 21:59:03 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.85 2003/02/12 08:52:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,7 @@ __RCSID("$NetBSD: inetd.c,v 1.84 2002/09/19 21:59:03 mycroft Exp $");
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/event.h>
 
 #ifndef RLIMIT_NOFILE
 #define RLIMIT_NOFILE	RLIMIT_OFILE
@@ -275,7 +276,7 @@ int	debug;
 int	lflag;
 #endif
 int	nsock, maxsock;
-fd_set	allsock;
+int	kq;
 int	options;
 int	timingout;
 struct	servent *sp;
@@ -348,50 +349,52 @@ struct	servtab {
 #define ISMUXPLUS(sep)	((sep)->se_type == MUXPLUS_TYPE)
 
 
-void		chargen_dg __P((int, struct servtab *));
-void		chargen_stream __P((int, struct servtab *));
-void		close_sep __P((struct servtab *));
-void		config __P((int));
-void		daytime_dg __P((int, struct servtab *));
-void		daytime_stream __P((int, struct servtab *));
-void		discard_dg __P((int, struct servtab *));
-void		discard_stream __P((int, struct servtab *));
-void		echo_dg __P((int, struct servtab *));
-void		echo_stream __P((int, struct servtab *));
-void		endconfig __P((void));
-struct servtab *enter __P((struct servtab *));
-void		freeconfig __P((struct servtab *));
-struct servtab *getconfigent __P((void));
-void		goaway __P((int));
-void		machtime_dg __P((int, struct servtab *));
-void		machtime_stream __P((int, struct servtab *));
-char	       *newstr __P((char *));
-char	       *nextline __P((FILE *));
-void		print_service __P((char *, struct servtab *));
-void		reapchild __P((int));
-void		retry __P((int));
-void		run_service __P((int, struct servtab *));
-int		setconfig __P((void));
-void		setup __P((struct servtab *));
-char	       *sskip __P((char **));
-char	       *skip __P((char **));
-void		tcpmux __P((int, struct servtab *));
-void		usage __P((void));
-void		register_rpc __P((struct servtab *));
-void		unregister_rpc __P((struct servtab *));
-void		bump_nofile __P((void));
-void		inetd_setproctitle __P((char *, int));
-void		initring __P((void));
-uint32_t	machtime __P((void));
-int 		port_good_dg __P((struct sockaddr *));
-int 		dg_broadcast __P((struct in_addr *));
-static int	getline __P((int, char *, int));
-int		main __P((int, char *[]));
-void		spawn __P((struct servtab *, int));
+void		chargen_dg (int, struct servtab *);
+void		chargen_stream (int, struct servtab *);
+void		close_sep (struct servtab *);
+void		config (int);
+void		daytime_dg (int, struct servtab *);
+void		daytime_stream (int, struct servtab *);
+void		discard_dg (int, struct servtab *);
+void		discard_stream (int, struct servtab *);
+void		echo_dg (int, struct servtab *);
+void		echo_stream (int, struct servtab *);
+void		endconfig (void);
+struct servtab *enter (struct servtab *);
+void		freeconfig (struct servtab *);
+struct servtab *getconfigent (void);
+void		goaway (int);
+void		machtime_dg (int, struct servtab *);
+void		machtime_stream (int, struct servtab *);
+char	       *newstr (char *);
+char	       *nextline (FILE *);
+void		print_service (char *, struct servtab *);
+void		reapchild (int);
+void		retry (int);
+void		run_service (int, struct servtab *);
+int		setconfig (void);
+void		setup (struct servtab *);
+char	       *sskip (char **);
+char	       *skip (char **);
+void		tcpmux (int, struct servtab *);
+void		usage (void);
+void		register_rpc (struct servtab *);
+void		unregister_rpc (struct servtab *);
+void		bump_nofile (void);
+void		inetd_setproctitle (char *, int);
+void		initring (void);
+uint32_t	machtime (void);
+int 		port_good_dg (struct sockaddr *);
+int 		dg_broadcast (struct in_addr *);
+static int	my_kevent(const struct kevent *, size_t, struct kevent *,
+		size_t);
+static int	getline (int, char *, int);
+int		main (int, char *[]);
+void		spawn (struct servtab *, int);
 #ifdef MULOG
-void		dolog __P((struct servtab *, int));
-static void	timeout __P((int));
-char		*rfc931_name __P((struct sockaddr *, int));
+void		dolog (struct servtab *, int);
+static void	timeout (int);
+char		*rfc931_name (struct sockaddr *, int);
 #endif
 
 struct biltin {
@@ -399,7 +402,7 @@ struct biltin {
 	int	bi_socktype;		/* type of socket supported */
 	short	bi_fork;		/* 1 if should fork before call */
 	short	bi_wait;		/* 1 if should wait for child */
-	void	(*bi_fn) __P((int, struct servtab *));
+	void	(*bi_fn) (int, struct servtab *);
 					/* function which performs it */
 } biltins[] = {
 	/* Echo received data */
@@ -443,7 +446,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct servtab *sep, *nsep;
+	struct servtab *sep;
 	struct sigvec sv;
 	int ch;
 
@@ -479,6 +482,12 @@ main(argc, argv)
 	openlog("inetd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	pidfile(NULL);
 
+	kq = kqueue();
+	if (kq < 0) {
+		syslog(LOG_ERR, "kqueue: %m");
+		return (EXIT_FAILURE);
+	}
+
 #ifdef RLIMIT_NOFILE
 	if (getrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
@@ -492,23 +501,23 @@ main(argc, argv)
 	memset(&sv, 0, sizeof(sv));
 	sv.sv_mask = SIGBLOCK;
 	sv.sv_handler = retry;
-	sigvec(SIGALRM, &sv, (struct sigvec *)0);
+	sigvec(SIGALRM, &sv, NULL);
 	config(SIGHUP);
 	sv.sv_handler = config;
-	sigvec(SIGHUP, &sv, (struct sigvec *)0);
+	sigvec(SIGHUP, &sv, NULL);
 	sv.sv_handler = reapchild;
-	sigvec(SIGCHLD, &sv, (struct sigvec *)0);
+	sigvec(SIGCHLD, &sv, NULL);
 	sv.sv_handler = goaway;
-	sigvec(SIGTERM, &sv, (struct sigvec *)0);
+	sigvec(SIGTERM, &sv, NULL);
 	sv.sv_handler = goaway;
-	sigvec(SIGINT, &sv, (struct sigvec *)0);
+	sigvec(SIGINT, &sv, NULL);
 	sv.sv_mask = 0L;
 	sv.sv_handler = SIG_IGN;
-	sigvec(SIGPIPE, &sv, (struct sigvec *)0);
+	sigvec(SIGPIPE, &sv, NULL);
 
 	for (;;) {
-		int n, ctrl;
-		fd_set readable;
+		int		n, ctrl;
+		struct kevent	ev[256], *evp;
 
 		if (nsock == 0) {
 			(void) sigblock(SIGBLOCK);
@@ -516,28 +525,19 @@ main(argc, argv)
 				sigpause(0L);
 			(void) sigsetmask(0L);
 		}
-		readable = allsock;
-		if ((n = select(maxsock + 1, &readable, (fd_set *)0,
-		    (fd_set *)0, (struct timeval *)0)) <= 0) {
-			if (n == -1 && errno != EINTR) {
-				syslog(LOG_WARNING, "select: %m");
-				sleep(1);
-			}
-			continue;
-		}
-		for (sep = servtab; n && sep; sep = nsep) {
-			nsep = sep->se_next;
-			if (sep->se_fd == -1 ||
-			    !FD_ISSET(sep->se_fd, &readable))
+		n = my_kevent(NULL, 0, ev, sizeof(ev) / sizeof(ev[0]));
+		for (evp = ev; n > 0; evp++, n--) {
+			if (evp->filter != EVFILT_READ)
 				continue;
-
-			n--;
+			sep = (struct servtab *)evp->udata;
+			/* Paranoia */
+			if (sep->se_fd != evp->ident)
+				continue;
 			if (debug)
 				fprintf(stderr, "someone wants %s\n", sep->se_service);
 			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
 				/* XXX here do the libwrap check-before-accept */
-				ctrl = accept(sep->se_fd, (struct sockaddr *)0,
-				    (int *)0);
+				ctrl = accept(sep->se_fd, NULL, NULL);
 				if (debug)
 					fprintf(stderr, "accept, ctrl %d\n",
 					    ctrl);
@@ -573,11 +573,11 @@ spawn(sep, ctrl)
 #endif
 	if (dofork) {
 		if (sep->se_count++ == 0)
-			(void)gettimeofday(&sep->se_time, (struct timezone *)0);
+			(void)gettimeofday(&sep->se_time, NULL);
 		else if (sep->se_count >= sep->se_max) {
 			struct timeval now;
 
-			(void)gettimeofday(&now, (struct timezone *)0);
+			(void)gettimeofday(&now, NULL);
 			if (now.tv_sec - sep->se_time.tv_sec > CNT_INTVL) {
 				sep->se_time = now;
 				sep->se_count = 1;
@@ -607,15 +607,19 @@ spawn(sep, ctrl)
 			return;
 		}
 		if (pid != 0 && sep->se_wait) {
+			struct kevent	ev;
+
 			sep->se_wait = pid;
-			FD_CLR(sep->se_fd, &allsock);
+			EV_SET(&ev, sep->se_fd, EVFILT_READ,
+			    EV_DELETE, 0, 0, 0);
+			(void) my_kevent(&ev, 1, NULL, 0);
 			nsock--;
 		}
 		if (pid == 0) {
 			memset(&sv, 0, sizeof(sv));
 			sv.sv_mask = 0L;
 			sv.sv_handler = SIG_DFL;
-			sigvec(SIGPIPE, &sv, (struct sigvec *)0);
+			sigvec(SIGPIPE, &sv, NULL);
 			if (debug)
 				setsid();
 		}
@@ -752,14 +756,16 @@ reapchild(signo)
 	struct servtab *sep;
 
 	for (;;) {
-		pid = wait3(&status, WNOHANG, (struct rusage *)0);
+		pid = wait3(&status, WNOHANG, NULL);
 		if (pid <= 0)
 			break;
 		if (debug)
 			fprintf(stderr, "%d reaped, status %#x\n", 
 			    pid, status);
-		for (sep = servtab; sep; sep = sep->se_next)
+		for (sep = servtab; sep != NULL; sep = sep->se_next)
 			if (sep->se_wait == pid) {
+				struct kevent	ev;
+
 				if (WIFEXITED(status) && WEXITSTATUS(status))
 					syslog(LOG_WARNING,
 					    "%s: exit status 0x%x",
@@ -769,7 +775,9 @@ reapchild(signo)
 					    "%s: exit signal 0x%x",
 					    sep->se_server, WTERMSIG(status));
 				sep->se_wait = 1;
-				FD_SET(sep->se_fd, &allsock);
+				EV_SET(&ev, sep->se_fd, EVFILT_READ,
+				    EV_ADD | EV_ENABLE, 0, 0, (intptr_t)sep);
+				(void) my_kevent(&ev, 1, NULL, 0);
 				nsock++;
 				if (debug)
 					fprintf(stderr, "restored %s, fd %d\n",
@@ -790,10 +798,10 @@ config(signo)
 		syslog(LOG_ERR, "%s: %m", CONFIG);
 		return;
 	}
-	for (sep = servtab; sep; sep = sep->se_next)
+	for (sep = servtab; sep != NULL; sep = sep->se_next)
 		sep->se_checked = 0;
 	while ((cp = getconfigent())) {
-		for (sep = servtab; sep; sep = sep->se_next)
+		for (sep = servtab; sep != NULL; sep = sep->se_next)
 			if (strcmp(sep->se_service, cp->se_service) == 0 &&
 			    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
 			    strcmp(sep->se_proto, cp->se_proto) == 0 &&
@@ -994,7 +1002,7 @@ retry(signo)
 	struct servtab *sep;
 
 	timingout = 0;
-	for (sep = servtab; sep; sep = sep->se_next) {
+	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1 && !ISMUX(sep)) {
 			switch (sep->se_family) {
 			case AF_LOCAL:
@@ -1017,7 +1025,7 @@ goaway(signo)
 {
 	struct servtab *sep;
 
-	for (sep = servtab; sep; sep = sep->se_next) {
+	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1)
 			continue;
 
@@ -1042,7 +1050,8 @@ void
 setup(sep)
 	struct servtab *sep;
 {
-	int on = 1;
+	int		on = 1;
+	struct kevent	ev;
 
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
 		if (debug)
@@ -1109,7 +1118,9 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (sep->se_socktype == SOCK_STREAM)
 		listen(sep->se_fd, 10);
 
-	FD_SET(sep->se_fd, &allsock);
+	EV_SET(&ev, sep->se_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t)sep);
+	(void) my_kevent(&ev, 1, NULL, 0);
 	nsock++;
 	if (sep->se_fd > maxsock) {
 		maxsock = sep->se_fd;
@@ -1130,7 +1141,6 @@ close_sep(sep)
 {
 	if (sep->se_fd >= 0) {
 		nsock--;
-		FD_CLR(sep->se_fd, &allsock);
 		(void) close(sep->se_fd);
 		sep->se_fd = -1;
 	}
@@ -1216,7 +1226,7 @@ enter(cp)
 	long omask;
 
 	sep = (struct servtab *)malloc(sizeof (*sep));
-	if (sep == (struct servtab *)0) {
+	if (sep == NULL) {
 		syslog(LOG_ERR, "Out of memory.");
 		exit(1);
 	}
@@ -1338,7 +1348,7 @@ more:
 		break;
 	}
 	if (cp == NULL)
-		return ((struct servtab *)0);
+		return (NULL);
 	/*
 	 * clear the static buffer, since some fields (se_ctrladdr,
 	 * for example) don't get initialized here.
@@ -1707,7 +1717,7 @@ skip(cpp)
 	char *start;
 
 	if (*cpp == NULL)
-		return ((char *)0);
+		return (NULL);
 
 again:
 	while (*cp == ' ' || *cp == '\t')
@@ -1720,8 +1730,8 @@ again:
 		if (c == ' ' || c == '\t')
 			if ((cp = nextline(fconfig)))
 				goto again;
-		*cpp = (char *)0;
-		return ((char *)0);
+		*cpp = NULL;
+		return (NULL);
 	}
 	start = cp;
 	while (*cp && *cp != ' ' && *cp != '\t')
@@ -1739,7 +1749,7 @@ nextline(fd)
 	char *cp;
 
 	if (fgets(line, sizeof (line), fd) == NULL)
-		return ((char *)0);
+		return (NULL);
 	cp = strchr(line, '\n');
 	if (cp)
 		*cp = '\0';
@@ -1977,7 +1987,7 @@ machtime()
 {
 	struct timeval tv;
 
-	if (gettimeofday(&tv, (struct timezone *)0) < 0) {
+	if (gettimeofday(&tv, NULL) < 0) {
 		if (debug)
 			fprintf(stderr, "Unable to get time of day\n");
 		return (0);
@@ -2175,7 +2185,7 @@ tcpmux(ctrl, sep)
 	if (!strcasecmp(service, "help")) {
 		strwrite(ctrl, "+Available services:\r\n");
 		strwrite(ctrl, "help\r\n");
-		for (sep = servtab; sep; sep = sep->se_next) {
+		for (sep = servtab; sep != NULL; sep = sep->se_next) {
 			if (!ISMUX(sep))
 				continue;
 			(void)write(ctrl, sep->se_service,
@@ -2186,7 +2196,7 @@ tcpmux(ctrl, sep)
 	}
 
 	/* Try matching a service in inetd.conf with the request */
-	for (sep = servtab; sep; sep = sep->se_next) {
+	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (!ISMUX(sep))
 			continue;
 		if (!strcasecmp(service, sep->se_service)) {
@@ -2533,4 +2543,21 @@ dg_broadcast(in)
 	}
 	freeifaddrs(ifap);
 	return (0);
+}
+
+static int
+my_kevent(const struct kevent *changelist, size_t nchanges,
+    struct kevent *eventlist, size_t nevents)
+
+{
+	int	result;
+
+	while ((result = kevent(kq, changelist, nchanges, eventlist, nevents,
+	    NULL)) < 0)
+		if (errno != EINTR) {
+			syslog(LOG_ERR, "kevent: %m");
+			exit(EXIT_FAILURE);
+		}
+
+	return (result);
 }
