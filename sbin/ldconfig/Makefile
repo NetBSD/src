@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 1997/06/23 13:25:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 1998/03/02 19:46:44 cgd Exp $
+
+.include <bsd.own.mk>
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -8,7 +10,7 @@
 	(${MACHINE_ARCH} == "arm32")
 PROG=	ldconfig
 SRCS=	ldconfig.c shlib.c etc.c
-LDSTATIC=-static
+LDSTATIC?=-static
 BINDIR=	/sbin
 .endif
 
