@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.22 1998/07/26 20:05:26 mycroft Exp $	*/
+/*	$NetBSD: reboot.c,v 1.23 1998/08/29 11:17:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.22 1998/07/26 20:05:26 mycroft Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.23 1998/08/29 11:17:20 augustss Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,8 +165,14 @@ main(argc, argv)
 	if (kill(1, SIGTSTP) == -1)
 		err(1, "SIGTSTP init");
 
-	/* Ignore the SIGHUP we get when our parent shell dies. */
-	(void)signal(SIGHUP, SIG_IGN);
+	/* 
+	 * Ignore signals that we can get as a result of killing
+	 * parents, group leaders, etc.
+	 */
+	(void)signal(SIGHUP,  SIG_IGN);
+	(void)signal(SIGINT,  SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
+	(void)signal(SIGTERM, SIG_IGN);
 
 	/* Send a SIGTERM first, a chance to save the buffers. */
 	if (kill(-1, SIGTERM) == -1) {
