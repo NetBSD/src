@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.4 1997/10/07 14:56:10 lukem Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.5 1997/10/13 04:00:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: stdethers.c,v 1.5 1997/10/13 04:00:27 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
