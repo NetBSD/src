@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.16 2000/01/15 18:13:22 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.17 2000/01/16 14:08:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.16 2000/01/15 18:13:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.17 2000/01/16 14:08:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ dpt_readcfg(sc)
 	}
 	
 	if (i == 0) {
-		printf("%s: HBA not ready after reset: %02x\n", 
+		printf("%s: HBA not ready after reset (hba status:%02x)\n",
 		    sc->sc_dv.dv_xname, dpt_inb(sc, HA_STATUS));
 		return (-1);
 	}
@@ -526,7 +526,7 @@ dpt_readcfg(sc)
 	p = (u_int16_t *)ec;
 	
 	if (dpt_wait(sc, 0xFF, HA_ST_DATA_RDY, 2000)) {
-		printf("%s: cfg data didn't appear (status:%02x)\n", 
+		printf("%s: cfg data didn't appear (hba status:%02x)\n", 
 		    sc->sc_dv.dv_xname, dpt_inb(sc, HA_STATUS));
   		return (-1);
   	}
