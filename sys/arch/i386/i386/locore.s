@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.46 1994/03/08 11:59:41 mycroft Exp $
+ *	$Id: locore.s,v 1.47 1994/03/25 00:46:51 mycroft Exp $
  */
 
 
@@ -1828,13 +1828,16 @@ alltraps:
 calltrap:
 	call	_trap
 	/*
-	 * Return through doreti to handle ASTs.  Have to change trap frame
-	 * to interrupt frame.
+	 * Check for ASTs.
 	 */
-	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	/* new trap type (err code not used) */
-	pushl	_cpl
-	pushl	$0			/* dummy unit */
-	INTREXIT
+	testb	$SEL_RPL_MASK,TF_CS(%esp)
+	jz	1f
+	btrl	$SIR_AST,_sir
+	jnc	1f
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	call	_trap
+1:
+	INTRFASTEXIT
 
 #ifdef KGDB
 /*
@@ -1844,9 +1847,8 @@ calltrap:
 	ALIGN_TEXT
 bpttraps:
 	INTRENTRY
-	testb	$(SEL_RPL_MASK),TF_CS(%esp)
-					# non-kernel mode?
-	jne	calltrap		# yes
+	testb	$SEL_RPL_MASK,TF_CS(%esp)
+	jne	calltrap
 	call	_kgdb_trap_glue		
 	jmp	calltrap
 #endif
@@ -1867,12 +1869,15 @@ IDTVEC(syscall)
 	movl	%eax,TF_EFLAGS(%esp)
 	call	_syscall
 	/*
-	 * Return through doreti to handle ASTs.
+	 * Check for ASTs.
 	 */
-	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	# new trap type (err code not used)
-	pushl	_cpl
-  	pushl	$0
-	INTREXIT
+	/* Always returning to user mode here. */
+	btrl	$SIR_AST,_sir
+	jnc	1f
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	call	_trap
+1:
+	INTRFASTEXIT
 
-#include "i386/isa/vector.s"
-#include "i386/isa/icu.s"
+#include <i386/isa/vector.s>
+#include <i386/isa/icu.s>
