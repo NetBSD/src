@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.463 2002/08/02 12:45:23 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.464 2002/08/02 19:36:26 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.459 2002/08/02 12:44:42 ad Exp 
+ *	NetBSD: pcidevs,v 1.460 2002/08/02 19:35:43 soren Exp 
  */
 
 /*
@@ -1220,6 +1220,7 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832/OZ6833 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6860	0x6836		/* OZ6860 PCI-Cardbus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6872	0x6872		/* OZ6812/OZ6872 PCI-Cardbus Bridge */
+#define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ6912/OZ6972 PCI-Cardbus Bridge */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus Interface */
