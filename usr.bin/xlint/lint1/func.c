@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.5 1995/10/02 17:21:35 jpo Exp $	*/
+/*	$NetBSD: func.c,v 1.6 1995/10/02 17:29:53 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.5 1995/10/02 17:21:35 jpo Exp $";
+static char rcsid[] = "$NetBSD: func.c,v 1.6 1995/10/02 17:29:53 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -111,11 +111,10 @@ pos_t	scflpos;
 int	plibflg;
 
 /*
- * Absolute line number of last CONSTCOND comment. A warning is suppressed
- * at this and the following line.
- * (An absolute line number is the number of the line in the .i file)
+ * Nonzero means that no warnings about constands in conditional
+ * context are printed.
  */
-int	ccline = -1;
+int	ccflg;
 
 /*
  * llibflg is set if a lint library shall be created. The effect of
@@ -125,10 +124,15 @@ int	ccline = -1;
 int	llibflg;
 
 /*
- * Contains the absolute line number (lint in .i file) of last LINTED
- * comment. All warnings at this and the following line are suppressed.
+ * Nonzero if warnings are suppressed by a LINTED directive
  */
-int	lline = -1;
+int	nowarn;
+
+/*
+ * Nonzero if complaints about use of "long long" are suppressed in
+ * the next statement or declaration.
+ */
+int	quadflg;
 
 /*
  * Puts a new element at the top of the stack used for control statements.
@@ -1016,15 +1020,15 @@ doreturn(tn)
  * definitions/declarations.
  */
 void
-glclrlc(nowarn)
-	int	nowarn;
+glclrlc(silent)
+	int	silent;
 {
 	pos_t	cpos;
 
 	STRUCT_ASSIGN(cpos, curr_pos);
 
 	if (nargusg != -1) {
-		if (!nowarn) {
+		if (!silent) {
 			STRUCT_ASSIGN(curr_pos, aupos);
 			/* must precede function definition: %s */
 			warning(282, "ARGSUSED");
@@ -1032,7 +1036,7 @@ glclrlc(nowarn)
 		nargusg = -1;
 	}
 	if (nvararg != -1) {
-		if (!nowarn) {
+		if (!silent) {
 			STRUCT_ASSIGN(curr_pos, vapos);
 			/* must precede function definition: %s */
 			warning(282, "VARARGS");
@@ -1040,7 +1044,7 @@ glclrlc(nowarn)
 		nvararg = -1;
 	}
 	if (prflstrg != -1) {
-		if (!nowarn) {
+		if (!silent) {
 			STRUCT_ASSIGN(curr_pos, prflpos);
 			/* must precede function definition: %s */
 			warning(282, "PRINTFLIKE");
@@ -1048,7 +1052,7 @@ glclrlc(nowarn)
 		prflstrg = -1;
 	}
 	if (scflstrg != -1) {
-		if (!nowarn) {
+		if (!silent) {
 			STRUCT_ASSIGN(curr_pos, scflpos);
 			/* must precede function definition: %s */
 			warning(282, "SCANFLIKE");
@@ -1172,7 +1176,7 @@ void
 constcond(n)
 	int	n;
 {
-	ccline = isrcline;
+	ccflg = 1;
 }
 
 /*
@@ -1222,7 +1226,7 @@ void
 linted(n)
 	int	n;
 {
-	lline = isrcline;
+	nowarn = 1;
 }
 
 /*
@@ -1240,4 +1244,16 @@ protolib(n)
 		return;
 	}
 	plibflg = n == 0 ? 0 : 1;
+}
+
+/*
+ * Set quadflg to nonzero which means that the next statement/declaration
+ * may use "long long" without an error or warning.
+ */
+/* ARGSUSED */
+void
+longlong(n)
+	int	n;
+{
+	quadflg = 1;
 }

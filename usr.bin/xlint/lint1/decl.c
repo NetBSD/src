@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.8 1995/10/02 17:26:54 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.9 1995/10/02 17:29:48 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.8 1995/10/02 17:26:54 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.9 1995/10/02 17:29:48 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -380,8 +380,9 @@ addtype(tp)
 		/* "long long" or "long ... long" */
 		t = QUAD;
 		dcs->d_lmod = NOTSPEC;
-		/* %s C does not support 'long long' */
-		(void)gnuism(265, tflag ? "traditional" : "ANSI");
+		if (!quadflg)
+			/* %s C does not support 'long long' */
+			(void)gnuism(265, tflag ? "traditional" : "ANSI");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
@@ -2797,16 +2798,16 @@ chkusage(syms)
 	sym_t	*syms;
 {
 	sym_t	*sym;
-	int	tmpll;
+	int	mknowarn;
 
 	/* for this warnings LINTED has no effect */
-	tmpll = lline;
-	lline = -1;
+	mknowarn = nowarn;
+	nowarn = 0;
 
 	for (sym = syms; sym != NULL; sym = sym->s_dlnxt)
 		chkusg1(sym);
 
-	lline = tmpll;
+	nowarn = mknowarn;
 }
 
 /*

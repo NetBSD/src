@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.6 1995/10/02 17:22:48 jpo Exp $	*/
+/*	$NetBSD: err.c,v 1.7 1995/10/02 17:29:49 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.6 1995/10/02 17:22:48 jpo Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.7 1995/10/02 17:29:49 jpo Exp $";
 #endif
 
 /* number of errors found */
@@ -412,7 +412,7 @@ vwarning(n, ap)
 {
 	const	char *fn;
 
-	if (lline == isrcline || lline + 1 == isrcline)
+	if (nowarn)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 

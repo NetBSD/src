@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.5 1995/10/02 17:26:55 jpo Exp $	*/
+/*	$NetBSD: externs1.h,v 1.6 1995/10/02 17:29:52 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -68,7 +68,6 @@ extern	int	yyparse __P((void));
  */
 extern	pos_t	curr_pos;
 extern	pos_t	csrc_pos;
-extern	int	isrcline;
 extern	symt_t	symtyp;
 extern	FILE	*yyin;
 extern	u_quad_t qbmasks[], qlmasks[], qumasks[];
@@ -77,6 +76,7 @@ extern	void	initscan __P((void));
 extern	int	sign __P((quad_t, tspec_t, int));
 extern	int	msb __P((quad_t, tspec_t, int));
 extern	quad_t	xsign __P((quad_t, tspec_t, int));
+extern	void	clrwflgs __P((void));
 extern	sym_t	*getsym __P((sbuf_t *));
 extern	void	cleanup __P((void));
 extern	sym_t	*pushdown __P((sym_t *));
@@ -217,10 +217,11 @@ extern	int	prflstrg;
 extern	pos_t	prflpos;
 extern	int	scflstrg;
 extern	pos_t	scflpos;
-extern	int	ccline;
+extern	int	ccflg;
 extern	int	llibflg;
-extern	int	lline;
+extern	int	nowarn;
 extern	int	plibflg;
+extern	int	quadflg;
 
 extern	void	pushctrl __P((int));
 extern	void	popctrl __P((int));
@@ -254,6 +255,7 @@ extern	void	varargs __P((int));
 extern	void	printflike __P((int));
 extern	void	scanflike __P((int));
 extern	void	protolib __P((int));
+extern	void	longlong __P((int));
 
 /*
  * init.c
