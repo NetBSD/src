@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.18 2003/01/18 17:10:16 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.19 2003/01/18 17:12:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -88,7 +88,7 @@
 #define NL_TEXTMAX		2048
 
 /* Always ensure that this is consistent with <stdio.h> */
-#ifndef
+#ifndef TMP_MAX
 #define TMP_MAX			308915776	/* Legacy */
 #endif
 #endif /* !_POSIX_C_SOURCE || >= 200112L || _XOPEN_SOURCE */
