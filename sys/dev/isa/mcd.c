@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.89 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.89 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ mcdstrategy(bp)
 	    bp->b_blkno, bp->b_bcount, 0);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = %d bcount = %ld\n",
+		printf("%s: strategy: blkno = " PRId64 " bcount = %ld\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -954,7 +954,7 @@ mcdprobe(parent, match, aux)
 
 	if (rv)	{
 		ia->ia_nio = 1;
-		ia->ia_io[0].ir_addr = MCD_NPORT;
+		ia->ia_io[0].ir_size = MCD_NPORT;
 
 		ia->ia_nirq = 1;
 
