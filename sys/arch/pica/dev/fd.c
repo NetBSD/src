@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 1996/11/15 03:01:01 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 1997/07/17 01:23:25 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -61,6 +61,8 @@
 #include <mips/locore.h>
 #include <pica/dev/fdreg.h>
 #include <pica/dev/dma.h>
+
+#include "locators.h"
 
 
 #define FDUNIT(dev)	(minor(dev) / 8)
@@ -309,7 +311,8 @@ fdprobe(parent, match, aux)
 	int iobase = fdc->sc_iobase;
 	int n;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[FDCCF_DRIVE] != drive)
 		return 0;
 
 	/* select drive and turn on motor */

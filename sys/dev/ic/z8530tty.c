@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.16 1997/05/19 04:01:16 mrg Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.17 1997/07/17 01:19:19 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -80,6 +80,8 @@
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
+
+#include "locators.h"
 
 /*
  * How many input characters we can buffer.
@@ -185,11 +187,11 @@ zstty_match(parent, vcf, aux)
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match is better than wildcard. */
-	if (cf->cf_loc[0] == args->channel)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
 
 	/* This driver accepts wildcard. */
-	if (cf->cf_loc[0] == -1)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT)
 		return 1;
 
 	return 0;
@@ -204,11 +206,11 @@ zstty_match(parent, cf, aux)
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match is better than wildcard. */
-	if (cf->cf_loc[0] == args->channel)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
 
 	/* This driver accepts wildcard. */
-	if (cf->cf_loc[0] == -1)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT)
 		return 1;
 
 	return 0;
