@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.88 1998/09/09 00:07:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.89 1998/09/12 19:44:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3781,6 +3781,52 @@ Lgandul:	nop
 	 */
 	call	_main
 	 clr	%o0			! our frame arg is ignored
+	/*NOTREACHED*/
+
+	/*
+	 * Entry point for non-boot CPUs in MP systems.
+	 */
+	.globl	_cpu_hatch
+_cpu_hatch:
+	rd	%psr, %g3		! paranoia: make sure ...
+	andn	%g3, PSR_ET, %g3	! we have traps off
+	wr	%g3, 0, %psr		! so that we can fiddle safely
+	nop; nop; nop
+
+	wr	%g0, 0, %wim		! make sure we can set psr
+	nop; nop; nop
+	wr	%g0, PSR_S|PSR_PS|PSR_PIL, %psr	! set initial psr
+	nop; nop; nop
+
+	wr	%g0, 2, %wim		! set initial %wim (w1 invalid)
+
+	/* Initialize Trap Base register */
+	sethi	%hi(_trapbase), %o0
+	ld	[%o0+%lo(_trapbase)], %g6
+	wr	%g6, 0, %tbr
+	nop; nop; nop			! paranoia
+
+	/* Set up a stack */
+	set	USRSTACK - CCFSZ, %fp	! as if called from user code
+	sethi	%hi(_cpu_hatchstack), %o0
+	ld	[%o0+%lo(_cpu_hatchstack)], %o0
+
+	set	USPACE - CCFSZ - 80, %sp	! XXX - stack length
+	add	%o0, %sp, %sp
+
+	/* Enable traps */
+	rd	%psr, %l0
+	wr	%l0, PSR_ET, %psr
+	nop; nop; nop
+
+	/* Call C code */
+	sethi	%hi(_cpu_hatch_sc), %o0
+	call	_cpu_setup
+	 ld	[%o0+%lo(_cpu_hatch_sc)], %o0
+
+	/* Idle here .. */
+9:	ba 9b
+	 nop
 	/*NOTREACHED*/
 
 
