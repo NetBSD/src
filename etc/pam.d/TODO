@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.5 2005/02/22 01:09:29 christos Exp $
+# $NetBSD: TODO,v 1.6 2005/02/23 01:28:40 christos Exp $
 
 Status:
 
@@ -14,7 +14,7 @@ passwd		- Done, needs testing and review, XXX docs? XXX: ??
 pop3		- Pkgsrc, nothing to do
 rsh		- Done, needs testing and review, XXX: ???
 racoon		- XXX: Switch to ipsec-tools will bring some PAM support.
-rexecd		- XXX: No code yet
+rexecd		- Done, needs testing and review, working
 rsh		- Done, needs testing and review, working
 sshd		- Done, needs testing and review, working
 su		- Done, needs testing and review, working
@@ -34,7 +34,7 @@ passwd		- passwd -p usage.
 pop3		- Pkgsrc, nothing to do
 pppd		- XXX: No /etc/pam.d/ppp
 racoon		- XXX: Not done
-rexecd		- XXX: Not done
+rexecd		- Nothing
 rsh		- Nothing
 sshd		- add "UsePam yes" in /etc/ssh/sshd_config
 su		- Nothing
