@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.6 2002/11/07 23:03:21 cgd Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.7 2003/02/17 12:32:13 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -153,14 +153,14 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
 		    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va += (16 * 32);
+		va   += (16 * 32);
 		w2va += (16 * 32);
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		cache_op_r4k_line(  va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
 		cache_op_r4k_line(w2va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va += 32;
+		va   += 32;
 		w2va += 32;
 	}
 }
@@ -345,14 +345,14 @@ r5k_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
 	while ((eva - va) >= (16 * 16)) {
 		cache_r4k_op_16lines_16_2way(va, w2va,
 		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += (16 * 16);
+		va   += (16 * 16);
 		w2va += (16 * 16);
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(  va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += 16;
+		va   += 16;
 		w2va += 16;
 	}
 }
@@ -377,14 +377,14 @@ r5k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
 		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += (16 * 32);
+		va   += (16 * 32);
 		w2va += (16 * 32);
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(  va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += 32;
+		va   += 32;
 		w2va += 32;
 	}
 }
