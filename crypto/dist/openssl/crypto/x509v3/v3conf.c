@@ -60,7 +60,6 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
-#include <openssl/asn1_mac.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -119,7 +118,7 @@ int main(int argc, char **argv)
 		printf("%s", OBJ_nid2ln(OBJ_obj2nid(ext->object)));
 		if(ext->critical) printf(",critical:\n");
 		else printf(":\n");
-		X509V3_EXT_print_fp(stdout, ext, 0);
+		X509V3_EXT_print_fp(stdout, ext, 0, 0);
 		printf("\n");
 		
 	}

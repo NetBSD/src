@@ -12,7 +12,8 @@ INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	$(TOP)/util/domd $(TOP)
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -47,19 +48,12 @@ all:	lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	@echo You may get an error following this line.  Please ignore.
-	- $(RANLIB) $(LIB)
+	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 # elf
-asm/rx86-elf.o: asm/rx86unix.cpp
-	$(CPP) -DELF -x c asm/rx86unix.cpp | as -o asm/rx86-elf.o
-
-# solaris
-asm/rx86-sol.o: asm/rx86unix.cpp
-	$(CC) -E -DSOL asm/rx86unix.cpp | sed 's/^#.*//' > asm/rx86-sol.s
-	as -o asm/rx86-sol.o asm/rx86-sol.s
-	rm -f asm/rx86-sol.s
+asm/rx86-elf.s: asm/rc4-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rc4-586.pl elf $(CFLAGS) > rx86-elf.s)
 
 # a.out
 asm/rx86-out.o: asm/rx86unix.cpp
@@ -97,19 +91,19 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(INCLUDES) $(DEPFLAG) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/rx86unix.cpp *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
+	rm -f asm/rx86unix.cpp asm/*-elf.* *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rc4_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc4.h
-rc4_enc.o: rc4_locl.h
+rc4_enc.o: rc4_enc.c rc4_locl.h
 rc4_skey.o: ../../include/openssl/opensslconf.h
 rc4_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/rc4.h
-rc4_skey.o: rc4_locl.h
+rc4_skey.o: rc4_locl.h rc4_skey.c
