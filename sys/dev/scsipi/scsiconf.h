@@ -1,5 +1,6 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
+ * Hacked by Theo de Raadt <deraadt@fsa.ca>
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
@@ -11,33 +12,22 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- *
  */
 
 /*
- * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
+ * these calls are called by the high-end
+ * drivers to get services from whatever low-end
+ * drivers they are attached to
  */
-
-/***********************************************\
-* these calls are called by the high-end	*
-* drivers to get services from whatever low-end	*
-* drivers they are attached to			*
-\***********************************************/
-struct scsi_switch
-{
-	int		(*scsi_cmd)();
-	void		(*scsi_minphys)();
-	int		(*open_target_lu)();
-	int		(*close_target_lu)();
-	long	int	(*adapter_info)(); /* see definitions below */
+struct scsi_switch {
+	char *name;
+	int (*scsi_cmd)();
+	void (*scsi_minphys)();
+	int (*open_target_lu)();
+	int (*close_target_lu)();
+	long int (*adapter_info)(); /* see definitions below */
 	u_long	spare[3];
+	u_char	empty[8], used[8], printed[8];
 };
 #define	AD_INF_MAX_CMDS		0x000000FF /* maximum number of entries
 						queuable to a device by 
@@ -110,4 +100,31 @@ struct scsi_xfer
 #define XS_TIMEOUT	0x03	/* The device timed out.. turned off?	  */
 #define XS_SWTIMEOUT	0x04	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		0x08	/* The device busy, try again later?	  */
+
+/*
+ * The structure of known drivers for autoconfiguration
+ */
+#define SC_TSD	0
+#define SC_TST	1
+#define SC_TCD	2
+
+#define SC_SHOWME	0x01
+#define	SC_ONE_LU	0x00
+#define	SC_MORE_LUS	0x02
+struct scsidevs {
+	int type, dtype, removable;
+	char *manufacturer, *model, *version;
+	int (*attach_rtn)();
+	char *devname, flags;
+};
+
+int scsi_inquire(int, int, int,	struct scsi_switch *, u_char *, int);
+int scsi_ready(int, int, int, struct scsi_switch *, int);
+int scsi_attach(int, int, struct scsi_switch *, int *, int *, int);
+void scsi_warn(int, int, struct scsi_switch *);
+struct scsidevs *scsi_probe(int, struct scsi_switch *, int, int, int);
+struct scsidevs *selectdev(int, int, int, struct scsi_switch *,
+	int, int, int, char *, char *, char *, int);
+u_long _3btol(u_char *);
+void lto3b(u_long, u_char *);
 
