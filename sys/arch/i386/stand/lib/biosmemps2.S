@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemps2.S,v 1.1 2003/01/23 21:22:25 jdolecek Exp $	*/
+/*	$NetBSD: biosmemps2.S,v 1.2 2003/02/05 21:50:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,9 +38,6 @@
 
 #include <machine/asm.h>
 
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
-
 	.text
 
 /* int getextmemp2(void buffer)
@@ -49,6 +46,7 @@
    buffer: filled with memory-map table structure
 */
 ENTRY(getextmemps2)
+	.code32
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ebx
@@ -60,6 +58,7 @@ ENTRY(getextmemps2)
 	movl	8(%ebp), %edx	# parameter
 
 	call	_C_LABEL(prot_to_real)
+	.code16
 
 	# do int15, function 0xc0 call to discover if C7h is supported
 	movb	$0xc0, %ah
@@ -68,8 +67,7 @@ ENTRY(getextmemps2)
 	jc	out		# 0xc0 not supported if carry set
 
 	# check feature byte 2, bit 4 to see if return memory map is supported
-	addr32
-	movb	%es:6(%ebx), %al
+	movb	%es:6(%bx), %al
 	andb	$0x10, %al
 	jnz	getmem		# 0xc7 supported
 	
@@ -79,8 +77,12 @@ ENTRY(getextmemps2)
 
 getmem:
 	# move the parameter to right register
-	data32
 	movl	%edx, %esi
+	andl	$0xf, %esi
+	shrl	$4, %edx
+	mov	%ds, %ax
+	add	%dx, %ax
+	mov	%ax, %ds
 
 	# actually call int15, function 0xc7 now
 	movb	$0xc7, %ah
@@ -88,8 +90,8 @@ getmem:
 	setc	%bl		# save carry
 
 out:
-	data32
-	call	_C_LABEL(real_to_prot)
+	calll	_C_LABEL(real_to_prot)
+	.code32
 
 	xorl	%eax, %eax
 	movb	%bl, %al	# return value in %ax
