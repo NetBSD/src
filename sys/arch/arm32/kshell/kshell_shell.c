@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_shell.c,v 1.11 1996/10/17 02:43:38 mark Exp $ */
+/*	$NetBSD: kshell_shell.c,v 1.12 1997/10/14 09:01:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -517,7 +517,7 @@ shell_wakeup(argc, argv)
 /* shell - a crude shell */
 
 int
-shell()
+kshell()
 {
 	int quit = 0;
 	char buffer[200];
@@ -691,4 +691,4 @@ shell()
 	return(0);
 }
 
-/* End of shell_shell.c */
+/* End of kshell_shell.c */
