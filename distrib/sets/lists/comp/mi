@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.395 2001/11/08 09:15:08 jmc Exp $
+#	$NetBSD: mi,v 1.396 2001/11/08 19:51:33 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1977,6 +1977,7 @@
 ./usr/share/man/cat3/kafs.0	comp-c-catman
 ./usr/share/man/cat3/kerberos.0	comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
+./usr/share/man/cat3/krb5.0	comp-c-catman
 ./usr/share/man/cat3/krb5_425_conv_principal.0	comp-c-catman
 ./usr/share/man/cat3/krb5_appdefault.0	comp-c-catman
 ./usr/share/man/cat3/krb5_auth_context.0	comp-c-catman
@@ -4314,6 +4315,7 @@
 ./usr/share/man/man3/kafs.3		comp-c-man
 ./usr/share/man/man3/kerberos.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
+./usr/share/man/man3/krb5.3		comp-c-man
 ./usr/share/man/man3/krb5_425_conv_principal.3	comp-c-man
 ./usr/share/man/man3/krb5_appdefault.3	comp-c-man
 ./usr/share/man/man3/krb5_auth_context.3	comp-c-man
