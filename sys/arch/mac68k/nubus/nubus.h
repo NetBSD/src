@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.15 1996/12/17 03:56:11 scottr Exp $	*/
+/*	$NetBSD: nubus.h,v 1.16 1997/02/19 06:21:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -227,6 +227,7 @@ typedef struct _NUBUS_EXEC_BLOCK {
 				 ((((x)-NUBUS_MIN_SLOT) & 0xF) << 24))
 
 struct nubus_attach_args {
+	bus_space_tag_t	na_tag;
 	int		slot;
 	int		rsrcid;
 	u_int16_t	category;
