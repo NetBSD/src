@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.38 2000/11/27 06:38:54 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.39 2001/04/24 08:03:44 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -628,12 +628,13 @@
 #define MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
 #define MIPS_R3SONY	0x21	/* Sony R3000 based 		ISA I	*/
 #define MIPS_R4650	0x22	/* QED R4650 			ISA III */
-#define MIPS_TX3900	0x22	/* Toshiba R3000		ISA I	*/
+#define MIPS_TX3900	0x22	/* Toshiba TX39 family		ISA I	*/
 #define MIPS_R5000	0x23	/* MIPS R5000 			ISA IV	*/
 #define MIPS_R3NKK	0x23	/* NKK R3000 based 		ISA I	*/
 #define MIPS_RC32364	0x26	/* IDT RC32364 			ISA II	*/
 #define MIPS_RM7000	0x27	/* QED RM7000			ISA IV  */
 #define MIPS_RM5200	0x28	/* QED RM5200s 			ISA IV	*/
+#define MIPS_TX4900	0x2d	/* Toshiba TX49 family		ISA III */
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
 
