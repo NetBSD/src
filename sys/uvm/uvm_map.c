@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.49 1999/05/28 22:54:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.50 1999/05/31 23:36:23 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1975,6 +1975,7 @@ uvm_map_advice(map, start, end, new_advice)
 #endif
 
 		default:
+			vm_map_unlock(map);
 			UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
 			return (KERN_INVALID_ARGUMENT);
 		}
