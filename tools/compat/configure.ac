@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.7 2002/01/31 22:43:48 tv Exp $
+#	$NetBSD: configure.ac,v 1.8 2002/02/26 22:29:39 tv Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -30,10 +30,10 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 
 # Find headers that may not be available.
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(sys/sysmacros.h features.h inttypes.h malloc.h stddef.h stdint.h)
+AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h features.h inttypes.h malloc.h stddef.h stdint.h)
 AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/featuretest.h \
 	err.h libgen.h paths.h util.h,, [touch include/$ac_header])
-AC_CHECK_HEADERS(fts.h getopt.h vis.h,,
+AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h netconfig.h vis.h,,
 	[echo '#include "'$srcdir/../../include/$ac_header'"' >include/$ac_header])
 
 # Typedefs.
@@ -54,7 +54,8 @@ NB_CHECK_INTTYPE(32)
 NB_CHECK_INTTYPE(64)
 
 # Struct members.
-AC_CHECK_MEMBERS(DIR.dd_fd,,, [#include <dirent.h>])
+AC_CHECK_MEMBERS([DIR.dd_fd, struct dirent.d_namlen],,,
+	[#include <dirent.h>])
 AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
 	struct stat.st_mtimensec],,, [#include <sys/stat.h>])
 AC_CHECK_MEMBERS(struct statfs.f_iosize,,, [#include <sys/mount.h>])
@@ -72,8 +73,13 @@ AC_SEARCH_LIBS(fparseln, util)
 AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
 	isblank lchmod lchown lutimes pread pwcache_userdb \
-	pwrite setenv setgroupent setpassent setprogname \
+	pwrite setenv setgroupent setprogname setpassent \
 	snprintf strlcat strlcpy strsep vasprintf vasnprintf vsnprintf)
+
+AC_CHECK_DECLS([setgroupent, setpassent],,, [
+#include <grp.h>
+#include <pwd.h>
+])
 
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().

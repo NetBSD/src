@@ -1,8 +1,8 @@
-/*	$NetBSD: setgroupent.c,v 1.2 2002/01/31 19:23:14 tv Exp $	*/
+/*	$NetBSD: setgroupent.c,v 1.3 2002/02/26 22:29:39 tv Exp $	*/
 
 #include "config.h"
 
-#if !HAVE_SETGROUPENT
+#if !HAVE_SETGROUPENT || !HAVE_DECL_SETGROUPENT
 #include <grp.h>
 
 int setgroupent(int stayopen) {
