@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.24.2.2 2000/02/29 23:45:27 he Exp $
+# $NetBSD: GENERIC3X,v 1.24.2.3 2000/06/03 15:21:53 he Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -57,7 +57,7 @@ file-system	FDESC		# /dev/fd/*
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
-file-system	UNION		# union file system
+#file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 
 options 	NFSSERVER	# nfs server support
