@@ -1,8 +1,8 @@
-/*	$NetBSD: com_vrip.c,v 1.11 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.12 2002/02/02 10:50:09 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
- * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999, 2002 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,7 +61,6 @@
 #include <dev/ic/comreg.h>
 
 #include "opt_vr41xx.h"
-#include <hpcmips/vr/vrgiuvar.h>
 #include <hpcmips/vr/com_vripvar.h>
 
 #include "locators.h"
@@ -84,7 +83,6 @@ struct com_vrip_softc {
 static int com_vrip_probe(struct device *, struct cfdata *, void *);
 static void com_vrip_attach(struct device *, struct device *, void *);
 static int com_vrip_common_probe(bus_space_tag_t, int);
-int find_comenableport_from_cfdata(int *);
 
 void vrcmu_init(void);
 void vrcmu_supply(int);
@@ -94,44 +92,10 @@ struct cfattach com_vrip_ca = {
 	sizeof(struct com_vrip_softc), com_vrip_probe, com_vrip_attach
 };
 
-/* For serial console */
-extern struct cfdata cfdata[];
-int
-find_comenableport_from_cfdata(int *port)
-{
-	platid_mask_t mask;
-	struct cfdata *cf;
-	int id;
-
-	printf ("COM enable port: ");
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (strcmp(cf->cf_driver->cd_name, "pwctl"))
-			continue;
-		mask = PLATID_DEREF(cf->cf_loc[HPCIOIFCF_PLATFORM]);
-		id = cf->cf_loc[HPCIOIFCF_ID];
-		if (platid_match(&platid, &mask) &&
-		    id == CONFIG_HOOK_POWERCONTROL_COM0)
-			goto found;
-	}
-	*port = -1;
-	printf ("not found\n");
-	return (0);
- found:
-	*port = cf->cf_loc[HPCIOIFCF_PORT];
-	printf ("#%d\n", *port);
-
-	return (1);
-}
-
 int
 com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate, int frequency,
     tcflag_t cflag, int kgdb)
 {
-	int port;
-	/* Platform dependent setting */
-	__vrcmu_supply(CMUMASK_SIU, 1);
-	if (find_comenableport_from_cfdata(&port))
-		__vrgiu_out(port, 1);	
 
 	if (!com_vrip_common_probe(iot, iobase))
 		return (EIO);	/* I can't find appropriate error number. */
