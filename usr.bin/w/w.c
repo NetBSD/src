@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.37 2000/06/25 13:41:12 simonb Exp $	*/
+/*	$NetBSD: w.c,v 1.38 2000/07/13 14:28:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.37 2000/06/25 13:41:12 simonb Exp $");
+__RCSID("$NetBSD: w.c,v 1.38 2000/07/13 14:28:07 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,6 @@ main(argc, argv)
 		if (!(stp = ttystat(ep->utmp.ut_line)))
 			continue;
 		ep->tdev = stp->st_rdev;
-#ifdef CPU_CONSDEV
 		/*
 		 * If this is the console device, attempt to ascertain
 		 * the true console device dev_t.
@@ -210,12 +209,11 @@ main(argc, argv)
 			int mib[2];
 			size_t size;
 
-			mib[0] = CTL_MACHDEP;
-			mib[1] = CPU_CONSDEV;
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_CONSDEV;
 			size = sizeof(dev_t);
 			(void) sysctl(mib, 2, &ep->tdev, &size, NULL, 0);
 		}
-#endif
 		if ((ep->idle = now - stp->st_atime) < 0)
 			ep->idle = 0;
 	}
