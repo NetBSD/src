@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.24 2004/01/02 19:14:00 cl Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.25 2004/02/02 20:36:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -219,13 +219,13 @@ struct pthread_lock_ops {
 
 #else  /* PT_FIXEDSTACKSIZE_LG */
 
-extern	int		pt_stacksize_lg;
-extern	size_t		pt_stacksize;
-extern	vaddr_t		pt_stackmask;
+extern	int		pthread_stacksize_lg;
+extern	size_t		pthread_stacksize;
+extern	vaddr_t		pthread_stackmask;
 
-#define	PT_STACKSIZE_LG	pt_stacksize_lg
-#define	PT_STACKSIZE	pt_stacksize
-#define	PT_STACKMASK	pt_stackmask
+#define	PT_STACKSIZE_LG	pthread_stacksize_lg
+#define	PT_STACKSIZE	pthread_stacksize
+#define	PT_STACKMASK	pthread_stackmask
 
 #endif /* PT_FIXEDSTACKSIZE_LG */
 

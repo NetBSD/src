@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.12 2004/02/02 20:08:27 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.13 2004/02/02 20:36:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.12 2004/02/02 20:08:27 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.13 2004/02/02 20:36:19 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -126,7 +126,7 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 		goto error;
 	}
 
-	val = LOOKUP(proc, "pt_stacksize_lg", &addr);
+	val = LOOKUP(proc, "pthread_stacksize_lg", &addr);
 	if (val == 0)
 		proc->stacksizeaddr = addr;
 	else
