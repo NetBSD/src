@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2001/09/29 03:50:12 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2001/10/01 16:59:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -219,6 +219,7 @@ bootmenu(void)
 	char input[80];
 	int n = 5, c;
 
+	printf("Press return to boot now, any other key for boot menu\n");
 	printf("booting %s - starting in %d seconds. ",
 		default_kernel, n);
 	while (n-- > 0 && (c = awaitkey_1sec()) == 0) {
