@@ -1,5 +1,5 @@
-#	$NetBSD: des.inc,v 1.1 2001/09/10 02:56:59 thorpej Exp $
+#	$NetBSD: des.inc,v 1.2 2001/09/11 04:10:41 simonb Exp $
 
-CPPFLAGS+=	-DDES_UNROLL -DDES_RISC2 -DDES_PTR
+CPPFLAGS+=	-DDES_UNROLL
 
 .include "${.CURDIR}/des.inc"
