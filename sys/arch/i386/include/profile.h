@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.6 1995/03/28 18:17:08 jtc Exp $	*/
+/*	$NetBSD: profile.h,v 1.7 1996/12/04 00:03:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #define	_MCOUNT_DECL static inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount");					\
+extern void mcount __P((void)) asm("mcount");				\
 void									\
 mcount()								\
 {									\
