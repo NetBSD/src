@@ -1,4 +1,4 @@
-.\" $NetBSD: sunlabel.8,v 1.3 2002/02/08 01:38:56 ross Exp $
+.\" $NetBSD: sunlabel.8,v 1.3.2.1 2002/12/26 07:45:14 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 12, 2002
+.Dd December 21, 2002
 .Dt SUNLABEL 8
 .Os
 .Sh NAME
@@ -42,32 +42,25 @@
 .Nd read or modify a SunOS disk label
 .Sh SYNOPSIS
 .Nm
-.Op Fl d Ar device
 .Op Fl mnqs
-.Op Ar device
+.Ar device
 .Sh DESCRIPTION
 .Nm
 reads or modifies a
-.Tn Sun disk label on
-.Ar device .
-Either
-.Ar device
-or
-.Fl d Ar device
-must be specified on the command line.
+.Tn SunOS
+disk label on
+.Ar device ,
+which is used by the
+.Tn PROM
+on
+.Nx Ns /sparc
+hardware to find partitions to boot from.
 .Nm
 only reads/writes the first 512 bytes of
 .Ar device .
 .Pp
 The supported options are:
-.Bl -tag -width "-disk device" -offset indent
-.It Fl d Ar device
-Use
-.Ar device
-as target for the operations (in case
-.Ar device
-would start with a dash
-.Pq Sq \&- ) .
+.Bl -tag -width 4n -offset indent
 .It Fl m
 Ignore an incorrect magic number in the disk label.
 .It Fl n
@@ -97,7 +90,7 @@ prints a prompt
 .Dq sunlabel\*[Gt]
 and expects commands.
 The following commands are understood:
-.Bl -tag -width 35n -offset indent -compact
+.Bl -tag -width 16n -offset indent
 .It \&?
 Show a short help message.
 .It Ic [abcdefghijklmnop] Ar \*[Lt]cylno\*[Gt] Ar \*[Lt]size\*[Gt]
