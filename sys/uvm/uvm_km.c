@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.23 1999/04/11 04:04:11 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.24 1999/05/25 20:30:08 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -164,7 +164,8 @@ vm_map_t kernel_map = NULL;
  */
 
 static int uvm_km_get __P((struct uvm_object *, vaddr_t, 
-													 vm_page_t *, int *, int, vm_prot_t, int, int));
+	vm_page_t *, int *, int, vm_prot_t, int, int));
+
 /*
  * local data structues
  */
@@ -424,22 +425,30 @@ uvm_km_init(start, end)
 	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
-	/* kmem_object: for malloc'd memory (wired, protected by splimp) */
+	/*
+	 * kmem_object: for use by the kernel malloc().  Memory is always
+	 * wired, and this object (and the kmem_map) can be accessed at
+	 * interrupt time.
+	 */
 	simple_lock_init(&kmem_object_store.vmobjlock);
 	kmem_object_store.pgops = &km_pager;
 	TAILQ_INIT(&kmem_object_store.memq);
 	kmem_object_store.uo_npages = 0;
 	/* we are special.  we never die */
-	kmem_object_store.uo_refs = UVM_OBJ_KERN; 
+	kmem_object_store.uo_refs = UVM_OBJ_KERN_INTRSAFE; 
 	uvmexp.kmem_object = &kmem_object_store;
 
-	/* mb_object: for mbuf memory (always wired, protected by splimp) */
+	/*
+	 * mb_object: for mbuf cluster pages on platforms which use the
+	 * mb_map.  Memory is always wired, and this object (and the mb_map)
+	 * can be accessed at interrupt time.
+	 */
 	simple_lock_init(&mb_object_store.vmobjlock);
 	mb_object_store.pgops = &km_pager;
 	TAILQ_INIT(&mb_object_store.memq);
 	mb_object_store.uo_npages = 0;
 	/* we are special.  we never die */
-	mb_object_store.uo_refs = UVM_OBJ_KERN; 
+	mb_object_store.uo_refs = UVM_OBJ_KERN_INTRSAFE; 
 	uvmexp.mb_object = &mb_object_store;
 
 	/*
@@ -538,15 +547,17 @@ uvm_km_pgremove(uobj, start, end)
 	struct uvm_object *uobj;
 	vaddr_t start, end;
 {
-	boolean_t by_list, is_aobj;
+	boolean_t by_list;
 	struct vm_page *pp, *ppnext;
 	vaddr_t curoff;
 	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
 	simple_lock(&uobj->vmobjlock);		/* lock object */
 
-	/* is uobj an aobj? */
-	is_aobj = uobj->pgops == &aobj_pager;
+#ifdef DIAGNOSTIC
+	if (uobj->pgops != &aobj_pager)
+		panic("uvm_km_pgremove: object %p not an aobj", uobj);
+#endif
 
 	/* choose cheapest traversal */
 	by_list = (uobj->uo_npages <=
@@ -564,26 +575,24 @@ uvm_km_pgremove(uobj, start, end)
 
 		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
+
 		/* now do the actual work */
-		if (pp->flags & PG_BUSY)
+		if (pp->flags & PG_BUSY) {
 			/* owner must check for this when done */
 			pp->flags |= PG_RELEASED;
-		else {
-			pmap_page_protect(PMAP_PGARG(pp), VM_PROT_NONE);
+		} else {
+			/* free the swap slot... */
+			uao_dropswap(uobj, curoff >> PAGE_SHIFT);
 
 			/*
-			 * if this kernel object is an aobj, free the swap slot.
+			 * ...and free the page; note it may be on the
+			 * active or inactive queues.
 			 */
-			if (is_aobj) {
-				uao_dropswap(uobj, curoff >> PAGE_SHIFT);
-			}
-
 			uvm_lock_pageq();
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();
 		}
 		/* done */
-
 	}
 	simple_unlock(&uobj->vmobjlock);
 	return;
@@ -591,7 +600,6 @@ uvm_km_pgremove(uobj, start, end)
 loop_by_list:
 
 	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = ppnext) {
-
 		ppnext = pp->listq.tqe_next;
 		if (pp->offset < start || pp->offset >= end) {
 			continue;
@@ -599,26 +607,111 @@ loop_by_list:
 
 		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
+
 		/* now do the actual work */
-		if (pp->flags & PG_BUSY)
+		if (pp->flags & PG_BUSY) {
 			/* owner must check for this when done */
 			pp->flags |= PG_RELEASED;
-		else {
-			pmap_page_protect(PMAP_PGARG(pp), VM_PROT_NONE);
+		} else {
+			/* free the swap slot... */
+			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
 
 			/*
-			 * if this kernel object is an aobj, free the swap slot.
+			 * ...and free the page; note it may be on the
+			 * active or inactive queues.
 			 */
-			if (is_aobj) {
-				uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
-			}
-
 			uvm_lock_pageq();
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();
 		}
 		/* done */
+	}
+	simple_unlock(&uobj->vmobjlock);
+	return;
+}
 
+
+/*
+ * uvm_km_pgremove_intrsafe: like uvm_km_pgremove(), but for "intrsafe"
+ *    objects
+ *
+ * => when you unmap a part of anonymous kernel memory you want to toss
+ *    the pages right away.    (this gets called from uvm_unmap_...).
+ * => none of the pages will ever be busy, and none of them will ever
+ *    be on the active or inactive queues (because these objects are
+ *    never allowed to "page").
+ */
+
+void
+uvm_km_pgremove_intrsafe(uobj, start, end)
+	struct uvm_object *uobj;
+	vaddr_t start, end;
+{
+	boolean_t by_list;
+	struct vm_page *pp, *ppnext;
+	vaddr_t curoff;
+	UVMHIST_FUNC("uvm_km_pgremove_intrsafe"); UVMHIST_CALLED(maphist);
+
+	simple_lock(&uobj->vmobjlock);		/* lock object */
+
+#ifdef DIAGNOSTIC
+	if (UVM_OBJ_IS_INTRSAFE_OBJECT(uobj) == 0)
+		panic("uvm_km_pgremove_intrsafe: object %p not intrsafe", uobj);
+#endif
+
+	/* choose cheapest traversal */
+	by_list = (uobj->uo_npages <=
+	     ((end - start) >> PAGE_SHIFT) * UKM_HASH_PENALTY);
+ 
+	if (by_list)
+		goto loop_by_list;
+
+	/* by hash */
+
+	for (curoff = start ; curoff < end ; curoff += PAGE_SIZE) {
+		pp = uvm_pagelookup(uobj, curoff);
+		if (pp == NULL)
+			continue;
+
+		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
+		    pp->flags & PG_BUSY, 0, 0);
+#ifdef DIAGNOSTIC
+		if (pp->flags & PG_BUSY)
+			panic("uvm_km_pgremove_intrsafe: busy page");
+		if (pp->pqflags & PQ_ACTIVE)
+			panic("uvm_km_pgremove_intrsafe: active page");
+		if (pp->pqflags & PQ_INACTIVE)
+			panic("uvm_km_pgremove_intrsafe: inactive page");
+#endif
+
+		/* free the page */
+		uvm_pagefree(pp);
+	}
+	simple_unlock(&uobj->vmobjlock);
+	return;
+
+loop_by_list:
+
+	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = ppnext) {
+		ppnext = pp->listq.tqe_next;
+		if (pp->offset < start || pp->offset >= end) {
+			continue;
+		}
+
+		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
+		    pp->flags & PG_BUSY, 0, 0);
+
+#ifdef DIAGNOSTIC
+		if (pp->flags & PG_BUSY)
+			panic("uvm_km_pgremove_intrsafe: busy page");
+		if (pp->pqflags & PQ_ACTIVE)
+			panic("uvm_km_pgremove_intrsafe: active page");
+		if (pp->pqflags & PQ_INACTIVE)
+			panic("uvm_km_pgremove_intrsafe: inactive page");
+#endif
+
+		/* free the page */
+		uvm_pagefree(pp);
 	}
 	simple_unlock(&uobj->vmobjlock);
 	return;
@@ -728,12 +821,18 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		 * (because if pmap_enter wants to allocate out of kmem_object
 		 * it will need to lock it itself!)
 		 */
+		if (UVM_OBJ_IS_INTRSAFE_OBJECT(obj)) {
 #if defined(PMAP_NEW)
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+			pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_ALL);
 #else
-		pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-		    UVM_PROT_ALL, TRUE, 0);
+			pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
+			    UVM_PROT_ALL, TRUE, 0);
 #endif
+		} else {
+			pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
+			    UVM_PROT_ALL, TRUE, 0);
+		}
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -860,13 +959,13 @@ uvm_km_alloc1(map, size, zeroit)
 			continue;
 		}
 		
-		/* map it in */
-#if defined(PMAP_NEW)
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), UVM_PROT_ALL);
-#else
+		/*
+		 * map it in; note we're never called with an intrsafe
+		 * object, so we always use regular old pmap_enter().
+		 */
 		pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
 		    UVM_PROT_ALL, TRUE, 0);
-#endif
+
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
 		size -= PAGE_SIZE;
