@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 1997/10/31 23:00:32 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.11 1997/11/02 03:45:32 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -222,6 +222,8 @@ void	mnt_net_config __P((void));
 /* From run.c */
 int	collect __P((int kind, char **buffer, char *name, ...));
 int	run_prog __P((char *, ...));
+void	run_prog_or_die __P((char *, ...));
+int	run_prog_or_continue __P((char *, ...));
 
 /* from upgrade.c */
 void	do_upgrade __P((void));
@@ -238,3 +240,8 @@ int	get_via_cdrom __P((void));
 void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
+void	make_ramdisk_dir __P((const char *path));
+void	make_target_dir __P((const char *path));
+void	append_to_target_file __P((const char *string, const char *path));
+void	echo_to_target_file __P((const char *string, const char *path));
+void	trunc_target_file __P((const char *path));
