@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.13 1997/10/19 19:11:56 mycroft Exp $	*/
+/*	$NetBSD: klogin.c,v 1.14 1999/07/30 01:56:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.13 1997/10/19 19:11:56 mycroft Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.14 1999/07/30 01:56:49 mycroft Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: klogin.c,v 1.13 1997/10/19 19:11:56 mycroft Exp $");
 #define	INITIAL_TICKET	"krbtgt"
 #define	VERIFY_SERVICE	"rcmd"
 
-extern int notickets;
-extern char *krbtkfile_env;
-extern char *tty;
+int notickets;
+char *krbtkfile_env;
+char *tty;
 
 static char tkt_location[MAXPATHLEN];  /* a pointer to this is returned... */
 
