@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1997/07/23 06:24:33 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 1997/08/03 07:20:40 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -100,8 +100,8 @@
 #define	splimp()	spl2()
 #define	splclock()	spl2()
 #define	splstatclock()	spl2()
+#define	splsched()	spl3()
 #define	splserial()	spl4()
-#define	splsched()	spl7()
 #define	splhigh()	spl7()
 
 /* watch out for side effects */
