@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.32 2000/05/08 21:57:59 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.33 2000/06/11 23:34:31 matt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -162,6 +162,9 @@ file arch/hpcmips/dev/mra.c			tpcalib
 device vrpiu: wsmousedev
 attach vrpiu at vrip: tpcalib
 file arch/hpcmips/vr/vrpiu.c			vrpiu
+
+attach ohci at vrip with ohci_vrip
+file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
 
 #
 #	TOSHIBA TX3912/3922
