@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.28 2003/08/07 11:15:58 agc Exp $	*/
+/*	$NetBSD: iostat.c,v 1.29 2003/08/12 17:16:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.28 2003/08/07 11:15:58 agc Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.29 2003/08/12 17:16:53 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ numlabels(int row)
 	int i, col, regions, ndrives;
 
 #define COLWIDTH	(read_write ? 24 : 14)
-#define DRIVESPERLINE	((getmaxx(wnd) - 1) / COLWIDTH)
+#define DRIVESPERLINE	((getmaxx(wnd) + 1) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
 			ndrives++;
@@ -134,7 +134,7 @@ numlabels(int row)
 	/*
 	 * Deduct -regions for blank line after each scrolling region.
 	 */
-	linesperregion = (getmaxy(wnd) - row - regions) / regions;
+	linesperregion = (getmaxy(wnd) - row - regions + 1) / regions;
 	/*
 	 * Minimum region contains space for two
 	 * label lines and one line of statistics.
@@ -144,9 +144,9 @@ numlabels(int row)
 	col = 0;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i]) {
-			if (col + COLWIDTH > getmaxx(wnd)) {
+			if (col + COLWIDTH - 1 > getmaxx(wnd)) {
 				col = 0, row += linesperregion + 1;
-				if (row > getmaxy(wnd) - (linesperregion + 1))
+				if (row > getmaxy(wnd) - (linesperregion))
 					break;
 			}
 			mvwprintw(wnd, row, col + 4, "%s%s",
@@ -222,7 +222,7 @@ showiostat(void)
 	winsertln(wnd);
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i]) {
-			if (col + COLWIDTH > getmaxx(wnd)) {
+			if (col + COLWIDTH - 1 > getmaxx(wnd)) {
 				col = 0, row += linesperregion + 1;
 				if (row > getmaxy(wnd) - (linesperregion + 1))
 					break;
