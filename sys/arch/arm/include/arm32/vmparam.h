@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/11/11 16:40:36 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/11/23 17:39:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,9 +38,14 @@
 #ifndef _ARM_ARM32_VMPARAM_H_
 #define	_ARM_ARM32_VMPARAM_H_
 
+#ifdef _KERNEL
+
 /*
  * Virtual Memory parameters common to all arm32 platforms.
  */
+
+/* for pt_entry_t definition */
+#include <arm/arm32/pte.h>
 
 /*
  * While the ARM architecture defines Section mappings, large pages,
@@ -49,5 +54,19 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * define structure pmap_physseg: there is one of these structures
+ * for each chunk of noncontig RAM you have.
+ */
+
+#define	__HAVE_PMAP_PHYSSEG
+
+struct pmap_physseg {
+	struct pv_head *pvhead;		/* pv_entry array */
+	char *attrs;			/* attrs array */
+};
+
+#endif /* _KERNEL */
 
 #endif /* _ARM_ARM32_VMPARAM_H_ */
