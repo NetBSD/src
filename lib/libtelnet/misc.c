@@ -33,9 +33,12 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: misc.c,v 1.3 1994/02/25 02:53:03 cgd Exp $";
+static char *rcsid = "$Id: misc.c,v 1.4 1995/06/05 19:47:04 pk Exp $";
 #endif /* not lint */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "misc.h"
 
 char *RemoteHostName;
