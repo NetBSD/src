@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.33 1998/03/22 07:04:14 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.34 1998/03/22 07:15:20 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,11 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.33 1998/03/22 07:04:14 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.34 1998/03/22 07:15:20 jonathan Exp $");
+
+#ifdef alpha
+#include "opt_dec_3000_300.h"
+#endif
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -140,7 +144,7 @@ extern void ttrstrt	__P((void *));
  * support from the tty drivers. This is ugly and broken and won't
  * compile on Alphas. 
  */
-#if defined (pmax)
+#ifdef pmax
 #if NRASTERCONSOLE > 0
 #define HAVE_RCONS
 #endif
@@ -197,6 +201,7 @@ struct scc_softc {
 	} scc_wreg[2];
 	struct tty *scc_tty[2];
 	int	scc_softCAR;
+
 	int scc_flags[2];
 #define  SCC_CHAN_NEEDSDELAY	0x01	/* sw must delay 1.6us between output*/
 #define  SCC_CHAN_NOMODEM	0x02	/* don't touch modem ctl lines (may
@@ -236,34 +241,12 @@ struct speedtab sccspeedtab[] = {
 	{ 28800,	6,	},	/* non-POSIX */
 	{ 38400,	4,	},	/* non-POSIX */
 	{ 57600,	2,	},	/* non-POSIX */
+#ifdef SCC_HIGHSPEED
 	{ 76800,	1,	},	/* non-POSIX, doesn't work reliably */
 	{ 115200, 	0	},	/* non-POSIX doesn't work reliably */
+#endif
 	{ -1,		-1,	},
 };
-
-#if 0
-/* speed selections with clock x1 */
-{
-	{ 0,		0 },
-	{ 300,		24574 },
-	{ 300,		12286 },
-	{ 600,		6142 },
-	{ 1200,		3070 },
-	{ 2400,		1534 },
-	{ 4800,		766 },
-	{ 7200,		510 },
-	{ 9600,		382 },
-	{ 14400,	254 },
-	{ 19200,	190 },
-	{ 28800,	126 },
-	{ 38400,	94 },
-	{ 57600,	62, },
-	{ 76800,	46, },
-	{ 115200,	30 },
-	{ 204800,	16 },
-	{ 230400,	14 },
-}
-#endif
 
 #ifndef	PORTSELECTOR
 #define	ISPEED	TTYDEF_SPEED
@@ -487,10 +470,9 @@ sccattach(parent, self, aux)
 	struct tty ctty;
 	int s;
 	extern int cputype;
-	int unit, flags;
+	int unit;
 
 	unit = sc->sc_dv.dv_unit;
-	flags = sc->sc_dv.dv_cfdata->cf_flags;
 
 	/* serial console debugging */
 #if defined(DEBUG) && defined(HAVE_RCONS) && 0
@@ -544,7 +526,7 @@ sccattach(parent, self, aux)
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
-	sc->scc_softCAR = flags | 0x2;		/* XXX */
+	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags | 0x2;	/* XXX */
 
 	/* reset chip, initialize  register-copies in softc */
 	sccreset(sc);
@@ -663,8 +645,9 @@ sccattach(parent, self, aux)
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
 		printf("\n");
-#endif /* !alpha */
+#else	/* !alpha */
 	printf("\n");
+#endif	/* !alpha */
 }
 
 
@@ -793,7 +776,6 @@ sccopen(dev, flag, mode, p)
 #endif
 		(void) sccparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	(void) sccmctl(dev, DML_DTR, DMSET);
@@ -953,6 +935,7 @@ sccioctl(dev, cmd, data, flag, p)
 	}
 	return (0);
 }
+
 
 /*
  * Set line parameters --  tty t_param entry point.
@@ -1251,8 +1234,8 @@ sccintr(xxxsc)
 #ifdef HAVE_RCONS
 			/*XXX*/
 			mouseInput(cc);
-			continue;
 #endif
+			continue;
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
@@ -1470,8 +1453,7 @@ scc_modem_intr(dev)
 		car = value & ZSRR0_DCD;
 	}
 
-
-	/* Break on serial console drops into the dbeugger */
+	/* Break on serial console drops into the debugger */
 	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
 #ifdef DDB
 		splx(s);		/* spl0()? */
@@ -1484,11 +1466,8 @@ scc_modem_intr(dev)
 
 	/*
 	 * The pmax driver follows carrier-detect. The Alpha does not.
-	 * XXX Why doesn't the Alpha driver follow carrier-detect?
-	 * (in the Alpha driver, this is an "#ifdef notdef").
-	 * Is it related to  console handling?
-	 *
-	 * Ignore hups on a console tty.
+	 * On pmax, ignore hups on a console tty.
+	 * On alpha, a no-op, for historical reasons. XXXXXX
 	 */
 #ifndef alpha
 	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
@@ -1499,7 +1478,7 @@ scc_modem_intr(dev)
 		} else if (tp->t_state & TS_CARR_ON)
 			(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	}
-#endif
+#endif	/* !alpha */
 	splx(s);
 }
 
