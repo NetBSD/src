@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.57 2002/10/14 18:39:25 elric Exp $
+# $NetBSD: AMIGA,v 1.58 2002/11/22 12:23:26 wiz Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.7 2002/10/14 18:23:30 elric Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.9 2002/11/22 12:20:59 wiz Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.57 $"
+#ident 		"GENERIC-$Revision: 1.58 $"
 
 
 maxusers	8
@@ -158,6 +158,10 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support
 options 	NTP		# NTP phase/frequency locked loop
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiveness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #
 # Misc. debugging options
