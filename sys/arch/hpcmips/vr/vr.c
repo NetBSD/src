@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.24 2001/05/30 15:24:30 lukem Exp $	*/
+/*	$NetBSD: vr.c,v 1.25 2001/06/11 05:52:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -93,7 +93,7 @@
 
 #include "hpcfb.h"
 #include "vrkiu.h"
-#if NVRKIU > 0
+#if (NVRKIU > 0) || (NHPCFB > 0)
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #endif
@@ -171,9 +171,11 @@ void
 vr_mem_init(kernend)
 	paddr_t kernend;
 {
+
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = kernend;
 	mem_cluster_cnt = 1;
+
 	vr_find_dram(kernend, 0x02000000);
 	vr_find_dram(0x02000000, 0x04000000);
 	vr_find_dram(0x04000000, 0x06000000);
@@ -193,6 +195,10 @@ vr_find_dram(addr, end)
 	int x, i;
 #endif
 
+#ifdef VR_FIND_DRAMLIM
+	if (VR_FIND_DRAMLIM < end)
+		end = VR_FIND_DRAMLIM;
+#endif
 	n = mem_cluster_cnt;
 	for (; addr < end; addr += NBPG) {
 
@@ -341,9 +347,9 @@ vr_cons_init()
 	} else {
 		goto find_keyboard;
 	}
+ find_keyboard:
 #endif
 
- find_keyboard:
 #if NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR
 	if (vrkiu_cnattach(system_bus_iot, VRIP_KIU_ADDR)) {
 		printf("%s(%d): can't init vrkiu as console",
