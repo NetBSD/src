@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/07 09:33:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2001/08/23 15:56:55 mrg Exp $
 
-SUBDIR=	xminiroot
+SUBDIR=	xminiroot instfs
 
 .include <bsd.subdir.mk>
