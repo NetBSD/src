@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.132 2003/09/05 13:53:00 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.133 2003/09/05 18:16:16 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1451,4 +1451,10 @@ crypto/dist/kame/racoon/missing/crypto/sha2/sha2.c 1.5
 
 	bzero() 2nd arg mistake.  found by openbsd guys.  from kame
 	[itojun, ticket #1446]
+
+usr.sbin/ypbind/ypbind.c			1.48
+
+width needs to be updated before each loop, because svc_maxfd may have
+changed.
+[bouyer, ticket #1449]
 
