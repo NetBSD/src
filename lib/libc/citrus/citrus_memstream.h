@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_memstream.h,v 1.1 2003/06/25 09:51:37 tshiozak Exp $	*/
+/*	$NetBSD: citrus_memstream.h,v 1.2 2004/12/30 05:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -79,9 +79,7 @@ _citrus_memory_stream_remainder(struct _citrus_memory_stream *ms)
 static __inline int
 _citrus_memory_stream_seek(struct _citrus_memory_stream *ms, size_t pos, int w)
 {
-	int sz;
-
-	sz = _citrus_region_size(&ms->ms_region);
+	size_t sz = _citrus_region_size(&ms->ms_region);
 	switch (w) {
 	case SEEK_SET:
 		if (pos>=sz)
