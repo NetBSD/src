@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.39 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.40 2000/12/17 22:09:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.39 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.40 2000/12/17 22:09:12 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -405,7 +405,7 @@ _nis_grscan(rv, cb_data, ap)
 			if (yp_first(__ypdomain, "group.byname",
 					&__ypcurrent, &__ypcurrentlen,
 					&data, &datalen)) {
-				if (data);
+				if (data)
 					free(data);
 				return NS_UNAVAIL;
 			}
