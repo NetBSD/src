@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2000/07/07 11:10:55 itojun Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2000/08/28 04:13:09 hubertf Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -12,7 +12,7 @@ FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
 .if (${.CURDIR} == ${FILESDIR})
 CFDIR=		${.CURDIR}/..
 .else
-CFDIR=		${DIST}/sendmail/cf
+CFDIR?=		${DIST}/sendmail/cf
 .endif
 CHMOD=		chmod
 M4=		m4
@@ -32,6 +32,16 @@ OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 	${CHMOD} ${ROMODE} $@
 
 realall: ${ALL}
+
+# netbsd-proto.mc pulls in netbsd-proto-IPv4only.mc
+netbsd-proto.cf: netbsd-proto-IPv4only.mc
+
+afterinstall:
+	sed 's,../../../../usr.sbin/sendmail/cf/cf/,,g' \
+		<${DESTDIR}${FILESDIR}/netbsd-proto.mc \
+		>${DESTDIR}${FILESDIR}/netbsd-proto.mc.new
+	mv ${DESTDIR}${FILESDIR}/netbsd-proto.mc.new ${DESTDIR}${FILESDIR}/netbsd-proto.mc
+	${CHMOD} ${ROMODE} ${DESTDIR}${FILESDIR}/netbsd-proto.mc
 
 # XXX not friendly with "make obj"
 others: ${OTHERS}
