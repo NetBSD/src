@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2000/03/10 01:30:06 sato Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2000/04/03 03:40:00 sato Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -37,6 +37,7 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
@@ -52,9 +53,11 @@
 int vrisa_debug = VRISADEBUG_CONF;
 #define DPRINTF(arg) if (vrisa_debug) printf arg;
 #define DBITDISP32(mask) if (vrisa_debug) bitdisp32(mask);
+#define VPRINTF(arg) if (hpcmips_verbose || vrisa_debug) printf arg;
 #else /* VRISADEBUG */
 #define DPRINTF(arg)
 #define DBITDISP32(mask)
+#define VPRINTF(arg) if (hpcmips_verbose) printf arg;
 #endif /* VRISADEBUG */
 
 int	vrisabprint __P((void*, const char*));
@@ -228,7 +231,7 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	mode = INTR_MODE(intr);
 	port = INTR_PORT(intr);
 
-	DPRINTF(("ISA IRQ %d -> GPIO port %d, %s\n",
+	VPRINTF(("ISA IRQ %d -> GPIO port %d, %s\n",
 	       irq, port, intr_mode_names[mode]));
 
 	/* Call Vr routine */

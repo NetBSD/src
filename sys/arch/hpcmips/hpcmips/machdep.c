@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2000/03/25 10:14:14 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2000/04/03 03:39:58 sato Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2000/03/25 10:14:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2000/04/03 03:39:58 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -124,6 +124,10 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];	
 
 char	cpu_name[40];			/* set cpu depend xx_init() */
+
+/* verbose boot message */
+int	hpcmips_verbose = 0;
+#define VPRINTF(arg)	if (hpcmips_verbose) printf arg;
 
 /* maps for VM objects */
 vm_map_t exec_map = NULL;
@@ -341,6 +345,9 @@ mach_init(argc, argv, bi)
 #endif
 				cp += strlen(cp);
 				break;
+			case 'v': /* verbose for hpcmips */
+				hpcmips_verbose = 1;
+				break;
 			}
 		}
 	}
@@ -466,6 +473,16 @@ cpu_startup()
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
+	if (hpcmips_verbose) {
+		/* show again when verbose mode */
+		printf("total memory banks = %d\n", mem_cluster_cnt);
+		for (i = 0; i < mem_cluster_cnt; i++) {
+			printf("memory bank %d = 0x%08lx %ldKB(0x%08lx)\n", i,
+			    (paddr_t)mem_clusters[i].start,
+			    (paddr_t)mem_clusters[i].size/1024,
+			    (paddr_t)mem_clusters[i].size);
+		}
+	}
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.

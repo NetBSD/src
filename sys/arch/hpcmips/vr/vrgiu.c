@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.9 2000/03/14 08:26:42 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.10 2000/04/03 03:40:00 sato Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -45,6 +45,7 @@
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
 
+#include <hpcmips/hpcmips/machdep.h>	/* hpcmips_verbose */
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
@@ -56,18 +57,27 @@
 #define DEBUG_IO	1
 #define DEBUG_INTR	2
 #ifndef VRGIUDEBUG_CONF
-#define VRGIUDEBUG_CONF DEBUG_IO
-/* #define VRGIUDEBUG_CONF 0 */
+#define VRGIUDEBUG_CONF 0
 #endif /* VRGIUDEBUG_CONF */
 int	vrgiu_debug = VRGIUDEBUG_CONF;
 #define	DPRINTF(flag, arg) if (vrgiu_debug & flag) printf arg;
 #define DDUMP_IO(flag, sc) if (vrgiu_debug & flag) vrgiu_dump_io(sc);
 #define DDUMP_IOSETTING(flag, sc) \
-			if (vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
+		if (vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
+#define	VPRINTF(flag, arg) \
+		if (hpcmips_verbose || vrgiu_debug & flag) printf arg;
+#define VDUMP_IO(flag, sc) \
+		if (hpcmips_verbose || vrgiu_debug & flag) vrgiu_dump_io(sc);
+#define VDUMP_IOSETTING(flag, sc) \
+		if (hpcmips_verbose || vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
 #else
 #define	DPRINTF(flag, arg)
 #define DDUMP_IO(flag, sc)
 #define DDUMP_IOSETTING(flag, sc)
+#define	VPRINTF(flag, arg) if (hpcmips_verbose) printf arg;
+#define VDUMP_IO(flag, sc) if (hpcmips_verbose) vrgiu_dump_io(sc);
+#define VDUMP_IOSETTING(flag, sc) \
+			if (hpcmips_verbose) vrgiu_dump_iosetting(sc);
 #endif
 
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
@@ -138,9 +148,9 @@ vrgiu_attach(parent, self, aux)
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
-	DPRINTF(DEBUG_IO, ("WIN setting:                                "));
-	DDUMP_IOSETTING(DEBUG_IO, sc);
-	DPRINTF(DEBUG_IO, ("\n"));
+	VPRINTF(DEBUG_IO, ("WIN setting:                                "));
+	VDUMP_IOSETTING(DEBUG_IO, sc);
+	VPRINTF(DEBUG_IO, ("\n"));
 	vrgiu_regwrite_4(sc, GIUINTEN_REG, sc->sc_intr_mask);
 #endif
     
@@ -159,11 +169,11 @@ vrgiu_attach(parent, self, aux)
 	vrip_giu_function_register(va->va_vc, &vrgiu_functions, self);
 
 	/* Display port status (Input/Output) for debugging */
-	DPRINTF(DEBUG_IO, ("I/O setting:                                "));
+	VPRINTF(DEBUG_IO, ("I/O setting:                                "));
 	DDUMP_IOSETTING(DEBUG_IO, sc);
-	DPRINTF(DEBUG_IO, ("\n"));
-	DPRINTF(DEBUG_IO, ("       data:"));
-	DDUMP_IO(DEBUG_IO, sc);
+	VPRINTF(DEBUG_IO, ("\n"));
+	VPRINTF(DEBUG_IO, ("       data:"));
+	VDUMP_IO(DEBUG_IO, sc);
 
 	/* 
 	 *  General purpose bus 

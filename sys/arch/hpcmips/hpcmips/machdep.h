@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.3 2000/03/28 23:57:27 simonb Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4 2000/04/03 03:39:59 sato Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,3 +32,4 @@
 
 /* others.. */
 extern char cpu_name[];
+extern int hpcmips_verbose;
