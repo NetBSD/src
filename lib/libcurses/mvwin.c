@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.11 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.12 2001/10/08 10:45:13 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,13 +38,37 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.11 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.12 2001/10/08 10:45:13 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+/*
+ * mvderwin --
+ *      Move a derived window.
+ *
+ */
+int
+mvderwin(WINDOW *win, int dy, int dx)
+{
+	WINDOW *parent;
+	int x, y;
+	
+	if (win == NULL)
+		return ERR;
+
+	parent = win->orig;
+
+	if (parent == NULL)
+		return ERR;
+
+	x = parent->begx + dx;
+	y = parent->begy + dy;
+	return mvwin(win, y, x);
+}
+	
 /*
  * mvwin --
  *	Relocate the starting position of a window.

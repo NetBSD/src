@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.32 2001/09/20 11:11:54 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.33 2001/10/08 10:45:13 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,6 +207,7 @@ is always ignored.
 .It move(y,x)	move to (y,x) on
 .Em stdscr
 .It mvcur(lasty,lastx,newy,newx)	actually move cursor
+.It mvderwin(win, y, x)		move window to (y,x) within parent window.
 .It mvgetnstr(str, len)	move to
 .Em y ,
 .Em x 

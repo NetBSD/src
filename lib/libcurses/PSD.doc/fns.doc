@@ -786,6 +786,18 @@ and
 should be used to move the cursor position,
 so that the routines know what's going on.
 .Ds
+.Fn mvderwin "WINDOW *win" "int y" "int x"
+.De
+Moves the subwindow
+.Vn win
+to the location
+.Vn y\*,x ) (
+where the location is relative to the top left hand corner of the
+parent window.  This call will return ERR if 
+.Vn win
+is not a subwindow or if the relocated window would lie outside the
+parent window.
+.Ds
 .Fn mvhline "int y" "int x" "chtype ch" "int count"
 .De
 Moves the cursor to the position

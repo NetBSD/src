@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.59 2001/09/20 11:11:54 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.60 2001/10/08 10:45:13 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -661,6 +661,7 @@ int	 leaveok(WINDOW *, bool);
 char	*longname(void);
 int	 meta(WINDOW *, bool);
 int	 mvcur(int, int, int, int);
+int      mvderwin(WINDOW *, int, int);
 int	 mvhline(int, int, chtype, int);
 int	 mvprintw(int, int, const char *, ...)
 		__attribute__((__format__(__printf__, 3, 4)));
