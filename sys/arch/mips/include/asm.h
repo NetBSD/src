@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 1998/12/02 00:58:43 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.15 1999/01/14 18:45:46 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,13 +64,12 @@
  * Define -pg profile entry code.
  * XXX assume .set noreorder for kernel, .set reorder for user code.
  */
-#define _KERN_MCOUNT \
-	.set noat; \
-	move $1,$31; \
-	jal _mcount; \
-	subu sp,sp,8; \
-	.set at;
-
+#define _KERN_MCOUNT		\
+	.set	noat;		\
+	move	$1,$31;		\
+	jal	_mcount;	\
+	subu	sp,sp,8;	\
+	.set at
 
 #ifdef GPROF
 # if defined(_KERNEL) || defined(_LOCORE)
@@ -92,6 +91,13 @@
 # endif
 #endif
 
+#ifdef USE_AENT
+#define AENT(x)				\
+	.aent	x, 0
+#else
+#define AENT(x)
+#endif
+
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced
  * (ELF only, and thus, no leading underscores).
@@ -107,97 +113,174 @@
 #endif /* __ELF__ */
 
 /*
- * LEAF(x)
- *
- *	Declare a leaf routine.
+ * LEAF
+ *	A leaf routine does
+ *	- call no other function,
+ *	- never use any register that callee-saved (S0-S8), and
+ *	- not use any local stack storage.
  */
-#define LEAF(x) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, 0, ra; \
+#define LEAF(x)				\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, 0, ra;		\
 	MCOUNT
 
 /*
- * NLEAF(x)
- *
- *	Declare a non-profiled leaf routine.
+ * LEAF_NOPROFILE
+ *	No profilable leaf routine.
  */
-#define NLEAF(x) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, 0, ra
+#define LEAF_NOPROFILE(x)		\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame	sp, 0, ra
 
 /*
- * ALEAF -- declare alternate entry to a leaf routine.
+ * XLEAF
+ *	declare alternate entry to leaf routine
  */
-#ifdef USE_AENT
-#define AENT(x) \
-	.aent	x, 0
-#else
-#define AENT(x)
-#endif
-#define	ALEAF(x)					\
-	.globl	_C_LABEL(x);				\
-	AENT (_C_LABEL(x))				\
+#define XLEAF(x)			\
+	.globl	_C_LABEL(x);		\
+	.aent	_C_LABEL(x),0;		\
 _C_LABEL(x):
 
 /*
- * NON_LEAF(x)
- *
- *	Declare a non-leaf routine (a routine that makes other C calls).
+ * NESTED
+ *	A function calls other functions and needs
+ *	therefore stack space to save/restore registers.
  */
-#define NON_LEAF(x, fsize, retpc) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, fsize, retpc; \
+#define NESTED(x, fsize, retpc)		\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0; 	\
+_C_LABEL(x): ;				\
+	.frame	sp, fsize, retpc;	\
 	MCOUNT
 
 /*
- * NNON_LEAF(x)
- *
- *	Declare a non-profiled non-leaf routine
- *	(a routine that makes other C calls).
+ * NESTED_NOPROFILE(x)
+ *	No profilable nested routine.
  */
-#define NNON_LEAF(x, fsize, retpc) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, fsize, retpc
+#define NESTED_NOPROFILE(x, fsize, retpc)	\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame	sp, fsize, retpc
 
 /*
- * END(x)
- *
+ * XNESTED
+ *	declare alternate entry point to nested routine.
+ */
+#define XNESTED(x)			\
+	.globl	_C_LABEL(x);		\
+	.aent	_C_LABEL(x),0;		\
+_C_LABEL(x):
+
+/*
+ * END
  *	Mark end of a procedure.
  */
 #define END(x) \
 	.end _C_LABEL(x)
 
-#define STAND_FRAME_SIZE	24
-#define STAND_RA_OFFSET		20
+/*
+ * IMPORT -- import external symbol
+ */
+#define IMPORT(sym, size)		\
+	.extern sym,size
+
+/*
+ * EXPORT -- export definition of symbol
+ */
+#define EXPORT(x)			\
+	.globl	_C_LABEL(x);		\
+_C_LABEL(x):
+
+/*
+ * ALIAS
+ *	Global alias for a function, or alternate entry point
+ */
+#define	ALIAS(x)			\
+	.globl	_C_LABEL(x);		\
+_C_LABEL(x):
 
 /*
  * Macros to panic and printf from assembly language.
  */
-#define PANIC(msg) \
-	la	a0, 9f; \
-	jal	_C_LABEL(panic); \
+#define PANIC(msg)			\
+	la	a0, 9f;			\
+	jal	_C_LABEL(panic);	\
 	MSG(msg)
 
-#define	PRINTF(msg) \
-	la	a0, 9f; \
-	jal	_C_LABEL(printf); \
+#define	PRINTF(msg)			\
+	la	a0, 9f;			\
+	jal	_C_LABEL(printf);	\
 	MSG(msg)
 
-#define	MSG(msg) \
-	.rdata; \
-9:	.asciiz	msg; \
+#define	MSG(msg)			\
+	.rdata;				\
+9:	.asciiz	msg;			\
 	.text
 
-#define ASMSTR(str) \
-	.asciiz str; \
+#define ASMSTR(str)			\
+	.asciiz str;			\
 	.align	3
+
+/*
+ * XXX retain dialects XXX
+ */
+#define ALEAF(x)			\
+	.globl _C_LABEL(x);		\
+	AENT (_C_LABEL(x))		\
+_C_LABEL(x):
+
+#define NLEAF(x)			\
+	.globl _C_LABEL(x); 		\
+	.ent _C_LABEL(x), 0;		\
+_C_LABEL(x): ; \
+	.frame sp, 0, ra
+
+#define NON_LEAF(x, fsize, retpc)	\
+	.globl _C_LABEL(x);		\
+	.ent _C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, fsize, retpc;	\
+	MCOUNT
+
+#define NNON_LEAF(x, fsize, retpc)	\
+	.globl _C_LABEL(x);		\
+	.ent _C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, fsize, retpc
+
+/*
+ * While it would be nice to be compatible with the SGI 
+ * REG_L and REG_S macros, because they do not take parameters, it
+ * is impossible to use them with the _MIPS_SIM_ABIX32 model.
+ *
+ * These macros hide the use of mips3 instructions from the 
+ * assembler to prevent the assembler from generating 64-bit style
+ * ABI calls.
+ */
+
+#if	defined(_MIPS_BSD_SIM) && _MIPS_BSD_SIM_ != _MIPS_SIM_ABI32
+#define	REG_L	ld
+#define REG_S	sd
+#define	REG_LI	dli
+#define	REG_PROLOGUE	.set push ; .set mips3
+#define	REG_EPILOGUE	.set pop
+#define SZREG	8
+#else
+#define	REG_L	lw
+#define REG_S	sw
+#define	REG_LI	li
+#define	REG_PROLOGUE	.set push 
+#define	REG_EPILOGUE	.set pop
+#define SZREG	4
+#endif	/* _MIPS_BSD_SIM */
+
+#ifndef _KERNEL
+#include <machine/pubassym.h>
+#endif
 
 #endif /* _MIPS_ASM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.7 1997/11/04 23:09:58 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.8 1999/01/14 18:45:46 castor Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,8 +27,14 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _MACHINE_CDEFS_H_
-#define	_MACHINE_CDEFS_H_
+#ifndef _MIPS_CDEFS_H_
+#define	_MIPS_CDEFS_H_
+
+/*      MIPS Subprogram Interface Model */
+#define _MIPS_SIM_ABIX32	4	/* 64 bit safe, ILP32 o32 model */
+#define _MIPS_SIM_ABI64		3
+#define _MIPS_SIM_NABI32	2	/* 64bit safe, ILP32 n32 model */
+#define _MIPS_SIM_ABI32		1
 
 #define	_C_LABEL(x)	x
 
@@ -67,4 +73,4 @@
 
 #endif /* _KERNEL */
 
-#endif /* !_MACHINE_CDEFS_H_ */
+#endif /* !_MIPS_CDEFS_H_ */
