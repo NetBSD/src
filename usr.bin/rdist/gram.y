@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.5 1996/07/12 00:46:24 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.6 1996/09/10 18:48:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: gram.y,v 1.5 1996/07/12 00:46:24 thorpej Exp $";
+static char *rcsid = "$NetBSD: gram.y,v 1.6 1996/09/10 18:48:57 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -373,11 +373,11 @@ insert(label, files, hosts, subcmds)
 	struct subcmd *subcmds;
 {
 	register struct cmd *c, *prev, *nc;
-	register struct namelist *h;
+	register struct namelist *h, *nexth;
 
 	files = expand(files, E_VARS|E_SHELL);
 	hosts = expand(hosts, E_ALL);
-	for (h = hosts; h != NULL; free(h), h = h->n_next) {
+	for (h = hosts; h != NULL; nexth = h->n_next, free(h), h = nexth) {
 		/*
 		 * Search command list for an update to the same host.
 		 */
