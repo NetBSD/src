@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.2 1998/06/09 07:28:30 thorpej Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.3 1998/06/23 04:19:23 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -156,7 +156,7 @@ pcic_isapnp_attach(parent, self, aux)
 		printf(": can't alloc mem space\n");
 		return;
 	}
-	printf(": using iobase 0x%lx iosize 0x%x", maddr, msize);
+	printf(": using iomem 0x%lx iosiz 0x%x", maddr, msize);
 	sc->membase = maddr;
 	sc->subregionmask = (1 << (msize / PCIC_MEM_PAGESIZE)) - 1;
 
