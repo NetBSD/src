@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.20 1996/02/19 02:51:06 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.21 1996/03/07 02:26:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,10 +47,17 @@ u_char	ncr5380_no_parchk = 0xff;
 
 /*
  * Bit masks of targets that accept linked commands, and those
- * that we've already checked out
+ * that we've already checked out.  Some devices will report
+ * that they support linked commands when they have problems with
+ * them.  By default, don't try them on any devices.  Allow an
+ * option to override.
  */
 u_char	ncr_will_link = 0x00;
-u_char	ncr_test_link = 0x00;
+#ifdef	TRY_SCSI_LINKED_COMMANDS
+u_char	ncr_test_link = ((~TRY_SCSI_LINKED_COMMANDS) & 0x7f);
+#else
+u_char	ncr_test_link = 0x7f;
+#endif
 
 #endif	/* AUTO_SENSE */
 
@@ -1212,10 +1219,19 @@ u_int	msg;
 			PID("hmessage9");
 			return (-1);
 		default: 
-			ncr_tprint(reqp, "Unknown message %x\n", msg);
+			if ((msg & 0x80) & !(msg & 0x18)) {	/* IDENTIFY */
+				PID("hmessage10");
+				ack_message();
+				return (0);
+			} else {
+				ncr_tprint(reqp,
+					   "Unknown message %x.  Rejecting.\n",
+					   msg);
+				nack_message(reqp, MSG_MESSAGE_REJECT);
+			}
 			return (-1);
 	}
-	PID("hmessage10");
+	PID("hmessage11");
 	return (-1);
 }
 
