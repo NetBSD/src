@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.7 1993/09/03 04:37:58 cgd Exp $
+ *	$Id: isofs_vnops.c,v 1.8 1993/09/07 15:41:01 ws Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -22,11 +22,60 @@
 #include "isofs_node.h"
 #include "iso_rrip.h"
 
-#ifdef ISOFS_DEBUG
-#define DPRINTF(a) printf a
+/*
+ * Mknod vnode call
+ *  Actually remap the device number
+ */
+/* ARGSUSED */
+isofs_mknod(ndp, vap, cred, p)
+	struct nameidata *ndp;
+	struct ucred *cred;
+	struct vattr *vap;
+	struct proc *p;
+{
+#ifndef	ISODEVMAP
+	free(ndp->ni_pnbuf, M_NAMEI);
+	vput(ndp->ni_dvp);
+	vput(ndp->ni_vp);
+	return EINVAL;
 #else
-#define DPRINTF(a)
+	register struct vnode *vp;
+	struct iso_node *ip;
+	struct iso_dnode *dp;
+	int error;
+	
+	vp = ndp->ni_vp;
+	ip = VTOI(vp);
+	
+	if (ip->i_mnt->iso_ftype != ISO_FTYPE_RRIP
+	    || vap->va_type != vp->v_type
+	    || (vap->va_type != VCHR && vap->va_type != VBLK)) {
+		free(ndp->ni_pnbuf, M_NAMEI);
+		vput(ndp->ni_dvp);
+		vput(ndp->ni_vp);
+		return EINVAL;
+	}
+	
+	dp = iso_dmap(ip->i_dev,ip->i_number,1);
+	if (ip->inode.iso_rdev == vap->va_rdev || vap->va_rdev == VNOVAL) {
+		/* same as the unmapped one, delete the mapping */
+		remque(dp);
+		FREE(dp,M_CACHE);
+	} else
+		/* enter new mapping */
+		dp->d_dev = vap->va_rdev;
+	
+	/*
+	 * Remove inode so that it will be reloaded by iget and
+	 * checked to see if it is an alias of an existing entry
+	 * in the inode cache.
+	 */
+	vput(vp);
+	vp->v_type = VNON;
+	vgone(vp);
+	return (0);
 #endif
+}
 
 /*
  * Open called.
@@ -82,29 +131,26 @@ isofs_getattr(vp, vap, cred, p)
 	register struct iso_node *ip = VTOI(vp);
 	int i;
 
-	vap->va_fsid = ip->i_dev;
-	vap->va_fileid = ip->i_number;
-	if (vp->v_type == VDIR)
-		vap->va_nlink = 2;
-	else
-		vap->va_nlink = 1;
+	vap->va_fsid	= ip->i_dev;
+	vap->va_fileid	= ip->i_number;
 
-	vap->va_mode = ip->inode.iso_mode;
-	vap->va_uid  = ip->inode.iso_uid;
-	vap->va_gid  = ip->inode.iso_gid;
-	vap->va_atime= ip->inode.iso_atime;
-	vap->va_mtime= ip->inode.iso_mtime;
-	vap->va_ctime= ip->inode.iso_ctime;
+	vap->va_mode	= ip->inode.iso_mode;
+	vap->va_nlink	= ip->inode.iso_links;
+	vap->va_uid	= ip->inode.iso_uid;
+	vap->va_gid	= ip->inode.iso_gid;
+	vap->va_atime	= ip->inode.iso_atime;
+	vap->va_mtime	= ip->inode.iso_mtime;
+	vap->va_ctime	= ip->inode.iso_ctime;
+	vap->va_rdev	= ip->inode.iso_rdev;
 
-	vap->va_rdev = 0;
-	vap->va_size = ip->i_size;
+	vap->va_size	= ip->i_size;
 	vap->va_size_rsv = 0;
-	vap->va_flags = 0;
+	vap->va_flags	= 0;
 	vap->va_gen = 1;
 	vap->va_blocksize = ip->i_mnt->logical_block_size;
-	vap->va_bytes = ip->i_size;
+	vap->va_bytes	= ip->i_size;
 	vap->va_bytes_rsv = 0;
-	vap->va_type = vp->v_type;
+	vap->va_type	= vp->v_type;
 	return (0);
 }
 
@@ -124,14 +170,7 @@ isofs_read(vp, uio, ioflag, cred)
 	daddr_t lbn, bn, rablock;
 	int size, diff, error = 0;
 	long n, on, type;
-
-#ifdef DIAGNOSTICx
-	if (uio->uio_rw != UIO_READ)
-		panic("isofs_read mode");
-	type = ip->i_mode & IFMT;
-	if (type != IFDIR && type != IFREG && type != IFLNK)
-		panic("isofs_read type");
-#endif
+	
 	if (uio->uio_resid == 0)
 		return (0);
 	if (uio->uio_offset < 0)
@@ -179,6 +218,7 @@ isofs_ioctl(vp, com, data, fflag, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
+	printf("You did ioctl for isofs !!\n");
 	return (ENOTTY);
 }
 
@@ -228,16 +268,110 @@ isofs_seek(vp, oldoff, newoff, cred)
 }
 
 /*
+ * Structure for reading directories
+ */
+struct isoreaddir {
+	struct dirent saveent;
+	struct dirent assocent;
+	struct dirent current;
+	off_t saveoff;
+	off_t assocoff;
+	off_t curroff;
+	struct uio *uio;
+	off_t uio_off;
+	u_int *cookiep;
+	int ncookies;
+	int eof;
+};
+
+static int
+iso_uiodir(idp,dp)
+	struct isoreaddir *idp;
+	struct dirent *dp;
+{
+	int error;
+	
+	dp->d_name[dp->d_namlen] = 0;
+	dp->d_reclen = DIRSIZ(dp);
+	
+	if (idp->uio->uio_resid < dp->d_reclen) {
+		idp->eof = 0;
+		return -1;
+	}
+	
+	if (idp->cookiep) {
+		if (idp->ncookies <= 0) {
+			idp->eof = 0;
+			return -1;
+		}
+		
+		*idp->cookiep++ = idp->curroff;
+		--idp->ncookies;
+	}
+	
+	if (error = uiomove(dp,dp->d_reclen,idp->uio))
+		return error;
+	idp->uio_off = idp->curroff;
+	return 0;
+}
+
+static int
+iso_shipdir(idp)
+	struct isoreaddir *idp;
+{
+	struct dirent *dp;
+	int cl, sl, assoc;
+	int error;
+	
+	cl = idp->current.d_namlen;
+	if (assoc = cl > 1 && idp->current.d_name[cl - 1] == ASSOCCHAR)
+		cl--;
+	
+	dp = &idp->saveent;
+	if (!(sl = dp->d_namlen)) {
+		dp = &idp->assocent;
+		sl = dp->d_namlen - 1;
+	}
+	if (dp->d_namlen) {
+		if (sl != cl
+		    || bcmp(dp->d_name,idp->current.d_name,sl)) {
+			if (idp->assocent.d_namlen) {
+				if (error = iso_uiodir(idp,&idp->assocent,idp->assocoff))
+					return error;
+				idp->uio_off = idp->assocoff;
+				idp->assocent.d_namlen = 0;
+			}
+			if (idp->saveent.d_namlen) {
+				if (error = iso_uiodir(idp,&idp->saveent,idp->saveoff))
+					return error;
+				idp->uio_off = idp->saveoff;
+				idp->saveent.d_namlen = 0;
+			}
+		}
+	}
+	idp->current.d_reclen = DIRSIZ(&idp->current);
+	if (assoc) {
+		idp->assocoff = idp->curroff;
+		bcopy(&idp->current,&idp->assocent,idp->current.d_reclen);
+	} else {
+		idp->saveoff = idp->curroff;
+		bcopy(&idp->current,&idp->saveent,idp->current.d_reclen);
+	}		
+	return 0;
+}
+
+/*
  * Vnode op for readdir
  */
-isofs_readdir(vp, uio, cred, eofflagp)
+isofs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	struct vnode *vp;
 	register struct uio *uio;
 	struct ucred *cred;
 	int *eofflagp;
+	u_int *cookies;
+	int ncookies;
 {
-	struct dirent dirent;
-	int iso_offset;
+	struct isoreaddir *idp;
 	int entryoffsetinblock;
 	int error = 0;
 	int endsearch;
@@ -246,150 +380,143 @@ isofs_readdir(vp, uio, cred, eofflagp)
 	struct iso_mnt *imp;
 	struct iso_node *ip;
 	struct buf *bp = NULL;
-	int i;
-	int end_flag = 0;
-	ISO_RRIP_ANALYZE ana;
-
+	
 	ip = VTOI (vp);
 	imp = ip->i_mnt;
-
-	iso_offset = uio->uio_offset;
-
-	entryoffsetinblock = iso_blkoff(imp, iso_offset);
-	DPRINTF(("isofs_readdir: iso_offset = %d, entryoff..=%d\n", 
-		 iso_offset, entryoffsetinblock));
+	
+	MALLOC(idp,struct isoreaddir *,sizeof(*idp),M_TEMP,M_WAITOK);
+	idp->saveent.d_namlen = 0;
+	idp->assocent.d_namlen = 0;
+	idp->uio = uio;
+	idp->cookiep = cookies;
+	idp->ncookies = ncookies;
+	idp->curroff = uio->uio_offset;
+	idp->eof = 1;
+	
+	entryoffsetinblock = iso_blkoff(imp, idp->curroff);
 	if (entryoffsetinblock != 0) {
-		if (error = iso_blkatoff(ip, iso_offset, (char **)0, &bp))
+		if (error = iso_blkatoff(ip, idp->curroff, &bp)) {
+			FREE(idp,M_TEMP);
 			return (error);
+		}
 	}
-
+	
 	endsearch = ip->i_size;
-	DPRINTF(("isofs_readdir: endsearch = %d\n", endsearch));
-
-	while (iso_offset < endsearch && uio->uio_resid > 0) {
-	        DPRINTF(("isooff=%d, entryoff=%d\n", iso_offset, entryoffsetinblock));
+	
+	while (idp->curroff < endsearch) {
 		/*
 		 * If offset is on a block boundary,
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-
-		if (iso_blkoff(imp, iso_offset) == 0) {
+		
+		if (iso_blkoff(imp, idp->curroff) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (error = iso_blkatoff(ip, iso_offset,
-						 (char **)0, &bp))
-				return (error);
+			if (error = iso_blkatoff(ip, idp->curroff, &bp))
+				break;
 			entryoffsetinblock = 0;
-			DPRINTF(("new block at iso_offset = %d\n", iso_offset));
 		}
 		/*
 		 * Get pointer to next entry.
 		 */
-
+		
 		ep = (struct iso_directory_record *)
 			(bp->b_un.b_addr + entryoffsetinblock);
-
+		
 		reclen = isonum_711 (ep->length);
-		DPRINTF(("isofs_readdir: reclen = %d\n", reclen));
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			iso_offset = roundup (iso_offset,
-					      imp->logical_block_size);
-			DPRINTF(("isofs: skip to next block, if any\n"));
+			idp->curroff = roundup (idp->curroff,
+						imp->logical_block_size);
 			continue;
 		}
-
+		
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE) {
-		        DPRINTF(("isofs_readdir: reclen too small!\n"));
 			error = EINVAL;
 			/* illegal entry, stop */
 			break;
 		}
-
+		
 		if (entryoffsetinblock + reclen -1 >= imp->logical_block_size) {
-                        DPRINTF(("isofs_readdir: entryoffsetinblock + reclen - 1 > lbs\n"));
 			error = EINVAL;
 			/* illegal directory, so stop looking */
 			break;
 		}
+		
+		idp->current.d_namlen = isonum_711 (ep->name_len);
 
-		dirent.d_fileno = isonum_733 (ep->extent);
-		dirent.d_namlen = isonum_711 (ep->name_len);
-		if (reclen < ISO_DIRECTORY_RECORD_SIZE + dirent.d_namlen) {
-		        error = EINVAL;
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE + idp->current.d_namlen) {
+			error = EINVAL;
 			/* illegal entry, stop */
 			break;
-	        }
-
+		}
+		
+		idp->curroff += reclen;
 		/*
 		 *
 		 */
-		switch (ep->name[0]) {
+		switch (imp->iso_ftype) {
+		case ISO_FTYPE_RRIP:
+			isofs_rrip_getname(ep,idp->current.d_name,
+					   &idp->current.d_namlen,
+					   &idp->current.d_fileno,imp);
+			if (idp->current.d_namlen)
+				error = iso_uiodir(idp,&idp->current);
+			break;
+		default:	/* ISO_FTYPE_DEFAULT || ISO_FTYPE_9660 */
+			idp->current.d_fileno = isonum_733(ep->extent);
+			strcpy(idp->current.d_name,"..");
+			switch (ep->name[0]) {
 			case 0:
-				dirent.d_name[0] = '.';
-				dirent.d_namlen = 1;
+				idp->current.d_namlen = 1;
+				error = iso_uiodir(idp,&idp->current);
 				break;
 			case 1:
-				dirent.d_name[0] = '.';
-				dirent.d_name[1] = '.';
-				dirent.d_namlen = 2;
+				idp->current.d_namlen = 2;
+				error = iso_uiodir(idp,&idp->current);
 				break;
 			default:
-				switch ( imp->iso_ftype ) {
-					default:
-						DPRINTF(("isofs_readdir: unknown ftype %x\n",
-							 imp->iso_ftype));
-						/* default to iso */
-						/* FALLTHRU */
-
-					case ISO_FTYPE_9660:
-						DPRINTF(("isofs_readdir: 9660\n"));
-						isofntrans(ep->name, dirent.d_namlen, dirent.d_name, &dirent.d_namlen);
-					break;
-
-					case ISO_FTYPE_RRIP:
-				                DPRINTF(("isofs_readdir: RRIP\n"));
-						isofs_rrip_getname( ep, dirent.d_name, &dirent.d_namlen );
-					break;
-				}
+				isofntrans(ep->name,idp->current.d_namlen,
+					   idp->current.d_name,&idp->current.d_namlen,
+					   imp->iso_ftype == ISO_FTYPE_DEFAULT,
+					   isonum_711(ep->flags)&4);
+				if (imp->iso_ftype == ISO_FTYPE_DEFAULT)
+					error = iso_shipdir(idp);
+				else
+					error = iso_uiodir(idp,&idp->current);
 				break;
+			}
 		}
-
-		dirent.d_name[dirent.d_namlen] = 0;
-		dirent.d_reclen = DIRSIZ (&dirent);
-
-		DPRINTF(("d_fileno = %d, d_namlen = %d, name = %s (0x%08x%08x)\n",
-			 dirent.d_fileno, dirent.d_namlen, dirent.d_name,
-			 *(unsigned long*)dirent.d_name, 
-			 *(unsigned long*)(dirent.d_name+4)));
-
-		if (uio->uio_resid < dirent.d_reclen)
+		if (error)
 			break;
-
-		if (error = uiomove (&dirent, dirent.d_reclen, uio))
-			break;
-
-		iso_offset += reclen;
+		
 		entryoffsetinblock += reclen;
 	}
-			
-	DPRINTF(("isofs_readdir: out of directory scan loop\n"));
+	
+	if (!error && imp->iso_ftype == ISO_FTYPE_DEFAULT) {
+		idp->current.d_namlen = 0;
+		error = iso_shipdir(idp);
+	}
+	if (error < 0)
+		error = 0;
+	
 	if (bp)
 		brelse (bp);
 
-	if (end_flag || (VTOI(vp)->i_size - iso_offset) <= 0)
-		*eofflagp = 1;
-	else
-		*eofflagp = 0;
-
-	uio->uio_offset = iso_offset;
-
+	uio->uio_offset = idp->uio_off;
+	*eofflagp = idp->eof;
+	
+	FREE(idp,M_TEMP);
+	
 	return (error);
 }
 
 /*
  * Return target name of a symbolic link
+ * Shouldn't we get the parent vnode and read the data from there?
+ * This could eventually result in deadlocks in isofs_lookup.
+ * But otherwise the block read here is in the block buffer two times.
  */
 typedef struct iso_directory_record ISODIR;
 typedef struct iso_node             ISONODE;
@@ -399,78 +526,96 @@ struct vnode *vp;
 struct uio   *uio;
 struct ucred *cred;
 {
-        ISONODE *ip;
-        ISODIR  *dirp;                   
-        ISOMNT  *imp;
-        struct  buf *bp;
-        int     symlen;
-        int     error;
-        char    symname[NAME_MAX];
+	ISONODE	*ip;
+	ISODIR	*dirp;                   
+	ISOMNT	*imp;
+	struct	buf *bp;
+	u_short	symlen;
+	int	error;
+	char	*symname;
+	ino_t	ino;
+	
+	ip  = VTOI( vp );
+	imp = ip->i_mnt;
+	
+	if (imp->iso_ftype != ISO_FTYPE_RRIP)
+		return EINVAL;
+	
+	/*
+	 * Get parents directory record block that this inode included.
+	 */
+	error = bread(  imp->im_devvp,
+			(daddr_t)(( ip->iso_parent_ino + (ip->iso_parent / imp->im_bsize ) )
+			* imp->im_bsize / DEV_BSIZE ),
+			imp->im_bsize,
+			NOCRED,
+			&bp );
+	if ( error ) {
+		brelse(bp);
+		return( EINVAL );
+	}
 
-        ip  = VTOI( vp );
-        imp = ip->i_mnt;
-        /*
-         * Get parents directory record block that this inode included.
-         */
-        error = bread(  imp->im_devvp,
-                        (daddr_t)(( ip->iso_parent_ext + (ip->iso_parent >> 11 ) )
-                        * imp->im_bsize / DEV_BSIZE ),
-                        imp->im_bsize,
-                        NOCRED,
-                        &bp );
-        if ( error ) {
-                return( EINVAL );
-        }
+	/*
+	 * Setup the directory pointer for this inode
+	 */
 
-        /*
-         * Setup the directory pointer for this inode
-         */
-
-        dirp = (ISODIR *)(bp->b_un.b_addr + ( ip->iso_parent & 0x7ff ) );
+	dirp = (ISODIR *)(bp->b_un.b_addr + ( ip->iso_parent & (imp->im_bsize - 1) ) );
 #ifdef DEBUG
-        printf("lbn=%d[base=%d,off=%d,bsize=%d,DEV_BSIZE=%d], dirp= %08x, b_addr=%08x, offset=%08x(%08x)\n",
-                                (daddr_t)(( ip->iso_parent_ext + (ip->iso_parent >> 12 ) ) * imp->im_bsize / DEV_BSIZE ),
-                                ip->iso_parent_ext,
-                                (ip->iso_parent >> 11 ),
-                                imp->im_bsize,
-                                DEV_BSIZE,
-                                dirp,
-                                bp->b_un.b_addr,
-                                ip->iso_parent,
-                                ip->iso_parent & 0x7ff );
+	printf("lbn=%d[base=%d,off=%d,bsize=%d,DEV_BSIZE=%d], dirp= %08x, b_addr=%08x, offset=%08x(%08x)\n",
+				(daddr_t)(( ip->iso_parent_ino + (ip->iso_parent / imp->im_bsize) ) * imp->im_bsize / DEV_BSIZE ),
+				ip->iso_parent_ino,
+				(ip->iso_parent / imp->im_bsize ),
+				imp->im_bsize,
+				DEV_BSIZE,
+				dirp,
+				bp->b_un.b_addr,
+				ip->iso_parent,
+				ip->iso_parent & (imp->im_bsize - 1) );
 #endif
-
-        /*
-         * Just make sure, we have a right one....
-         *   1: Check not cross boundary on block
-         *   2: Check number of inode
-         */
-        if ( (ip->iso_parent & 0x7ff) + isonum_711( dirp->length ) >=
-                                                imp->im_bsize )         {
-                brelse ( bp );
-                return( EINVAL );
-        }
-        if ( isonum_733(dirp->extent) != ip->i_number ) {
-                brelse ( bp );
-                return( EINVAL );
-        }
-
-        /*
-         * Ok, we just gathering a Symbolick name in SL record.
-         */
-        if ( isofs_rrip_getsymname( vp, dirp, symname, &symlen ) == 0 ) {
-                brelse ( bp );
-                return( EINVAL );
-        }
-        /*
-         * Don't forget before you leave from home ;-)
-         */
-        brelse( bp );
-
-        /*
-         * return with the Symbolick name to caller's.
-         */
-        return ( uiomove( symname, symlen, uio ) );
+	
+	/*
+	 * Just make sure, we have a right one....
+	 *   1: Check not cross boundary on block
+	 *   2: Check number of inode
+	 */
+	if ( (ip->iso_parent & (imp->im_bsize - 1) ) + isonum_711( dirp->length ) >=
+						imp->im_bsize )         {
+		brelse ( bp );
+		return( EINVAL );
+	}
+	isofs_defino(dirp,&ino);
+	if ( ino != ip->i_number ) {
+		brelse ( bp );
+		return( EINVAL );
+	}
+	
+	/*
+	 * Now get a buffer
+	 * Abuse a namei buffer for now.
+	 */
+	MALLOC(symname,char *,MAXPATHLEN,M_NAMEI,M_WAITOK);
+	
+	/*
+	 * Ok, we just gathering a symbolic name in SL record.
+	 */
+	if ( isofs_rrip_getsymname( dirp, symname, &symlen,imp ) == 0 ) {
+		FREE(symname,M_NAMEI);
+		brelse ( bp );
+		return( EINVAL );
+	}
+	/*
+	 * Don't forget before you leave from home ;-)
+	 */
+	brelse( bp );
+	
+	/*
+	 * return with the symbolic name to caller's.
+	 */
+	error = uiomove( symname, symlen, uio );
+	
+	FREE(symname,M_NAMEI);
+	
+	return error;
 }
 
 /*
@@ -605,3 +750,77 @@ struct vnodeops isofs_vnodeops = {
 	isofs_islocked,		/* islocked */
 	(void *)enodev,		/* advlock */
 };
+
+struct vnodeops isofs_spec_inodeops = {
+	spec_lookup,		/* lookup */
+	(void *)enodev,		/* create */
+	(void *)enodev,		/* mknod */
+	spec_open,		/* open */
+	spec_close,		/* close */
+	isofs_access,		/* access */
+	isofs_getattr,		/* getattr */
+	(void *)enodev,		/* setattr */
+	spec_read,		/* read */
+	spec_write,		/* write */
+	spec_ioctl,		/* ioctl */
+	spec_select,		/* select */
+	spec_mmap,		/* mmap */
+	spec_fsync,		/* fsync */
+	spec_seek,		/* seek */
+	(void *)enodev,		/* remove */
+	(void *)enodev,		/* link */
+	(void *)enodev,		/* rename */
+	(void *)enodev,		/* mkdir */
+	(void *)enodev,		/* rmdir */
+	(void *)enodev,		/* symlink */
+	spec_readdir,		/* readdir */
+	spec_readlink,		/* readlink */
+	spec_abortop,		/* abortop */
+	isofs_inactive,		/* inactive */
+	isofs_reclaim,		/* reclaim */
+	isofs_lock,		/* lock */
+	isofs_unlock,		/* unlock */
+	(void *)enodev,		/* bmap */
+	spec_strategy,		/* strategy */
+	isofs_print,		/* print */
+	isofs_islocked,		/* islocked */
+	spec_advlock,		/* advlock */
+};
+
+#ifdef	FIFO
+struct vnodeops isofs_fifo_inodeops = {
+	fifo_lookup,		/* lookup */
+	(void *)enodev,		/* create */
+	(void *)enodev,		/* mknod */
+	fifo_open,		/* open */
+	fifo_close,		/* close */
+	isofs_access,		/* access */
+	isofs_getattr,		/* getattr */
+	(void *)enodev,		/* setattr */
+	fifo_read,		/* read */
+	fifo_write,		/* write */
+	fifo_ioctl,		/* ioctl */
+	fifo_select,		/* select */
+	fifo_mmap,		/* mmap */
+	fifo_fsync,		/* fsync */
+	fifo_seek,		/* seek */
+	(void *)enodev,		/* remove */
+	(void *)enodev,		/* link */
+	(void *)enodev,		/* rename */
+	(void *)enodev,		/* mkdir */
+	(void *)enodev,		/* rmdir */
+	(void *)enodev,		/* symlink */
+	fifo_readdir,		/* readdir */
+	fifo_readlink,		/* readlink */
+	fifo_abortop,		/* abortop */
+	isofs_inactive,		/* inactive */
+	isofs_reclaim,		/* reclaim */
+	isofs_lock,		/* lock */
+	isofs_unlock,		/* unlock */
+	(void *)enodev,		/* bmap */
+	fifo_strategy,		/* strategy */
+	isofs_print,		/* print */
+	isofs_islocked,		/* islocked */
+	fifo_advlock,		/* advlock */
+};
+#endif	/* FIFO */

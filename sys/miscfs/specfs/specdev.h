@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)specdev.h	7.4 (Berkeley) 4/19/91
- *	$Id: specdev.h,v 1.4 1993/06/27 05:59:07 andrew Exp $
+ *	$Id: specdev.h,v 1.5 1993/09/07 15:41:56 ws Exp $
  */
 
 #ifndef _SYS_SPECDEV_H_
@@ -189,7 +189,9 @@ int	spec_select __P((
 		struct vnode *vp, \
 		struct uio *uio, \
 		struct ucred *cred, \
-		int *eofflagp))) spec_badop)
+		int *eofflagp, \
+		u_int *cookies, \
+		int ncookies))) spec_badop)
 #define spec_readlink ((int (*) __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \

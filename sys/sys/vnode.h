@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.10 1993/08/24 12:53:51 pk Exp $
+ *	$Id: vnode.h,v 1.11 1993/09/07 15:41:57 ws Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -200,7 +200,8 @@ struct vnodeops {
 	int	(*vop_symlink)	__P((struct nameidata *ndp, struct vattr *vap,
 				    char *target, struct proc *p));
 	int	(*vop_readdir)	__P((struct vnode *vp, struct uio *uio,
-				    struct ucred *cred, int *eofflagp));
+				    struct ucred *cred, int *eofflagp,
+				    u_int *cookies, int ncookies));
 	int	(*vop_readlink)	__P((struct vnode *vp, struct uio *uio,
 				    struct ucred *cred));
 	int	(*vop_abortop)	__P((struct nameidata *ndp));
@@ -239,7 +240,7 @@ struct vnodeops {
 #define	VOP_MKDIR(n,a,p)	(*((n)->ni_dvp->v_op->vop_mkdir))(n,a,p)
 #define	VOP_RMDIR(n,p)		(*((n)->ni_dvp->v_op->vop_rmdir))(n,p)
 #define	VOP_SYMLINK(n,a,m,p)	(*((n)->ni_dvp->v_op->vop_symlink))(n,a,m,p)
-#define	VOP_READDIR(v,u,c,e)	(*((v)->v_op->vop_readdir))(v,u,c,e)
+#define	VOP_READDIR(v,u,c,e,k,n)	(*((v)->v_op->vop_readdir))(v,u,c,e,k,n)
 #define	VOP_READLINK(v,u,c)	(*((v)->v_op->vop_readlink))(v,u,c)
 #define	VOP_ABORTOP(n)		(*((n)->ni_dvp->v_op->vop_abortop))(n)
 #define	VOP_INACTIVE(v,p)	(*((v)->v_op->vop_inactive))(v,p)

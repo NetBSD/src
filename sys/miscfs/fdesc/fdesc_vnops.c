@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vnops.c,v 1.5 1993/08/02 23:01:49 mycroft Exp $
+ *	$Id: fdesc_vnops.c,v 1.6 1993/09/07 15:41:18 ws Exp $
  */
 
 /*
@@ -302,11 +302,13 @@ fdesc_setattr(vp, vap, cred, p)
 	return (error);
 }
 
-fdesc_readdir(vp, uio, cred, eofflagp)
+fdesc_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	struct vnode *vp;
 	struct uio *uio;
 	struct ucred *cred;
 	int *eofflagp;
+	u_int *cookies;
+	int ncookies;
 {
 	struct filedesc *fdp;
 	int ind, i;
@@ -317,7 +319,7 @@ fdesc_readdir(vp, uio, cred, eofflagp)
 	fdp = uio->uio_procp->p_fd;
 	ind = uio->uio_offset / UIO_MX;
 	error = 0;
-	while (uio->uio_resid > 0) {
+	while (uio->uio_resid > 0 && (!cookies || ncookies > 0)) {
 		struct direct d;
 		struct direct *dp = &d;
 
@@ -343,6 +345,10 @@ fdesc_readdir(vp, uio, cred, eofflagp)
 		    break;
 
 		  ind++;
+		  if (cookies) {
+			  *cookies++ = ind * UIO_MX;
+			  ncookies--;
+		  }
 		  continue;
 		}
 	        i = ind - 2;
@@ -400,6 +406,10 @@ fdesc_readdir(vp, uio, cred, eofflagp)
 			error = uiomove((caddr_t) dp, UIO_MX, uio);
 			if (error)
 				break;
+			if (cookies) {
+				*cookies++ = (ind + 1) * UIO_MX;
+				ncookies--;
+			}
 		}
 		ind++;
 	}

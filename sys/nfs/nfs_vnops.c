@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.10 1993/08/02 23:12:31 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.11 1993/09/07 15:41:46 ws Exp $
  */
 
 /*
@@ -1192,16 +1192,25 @@ nfs_rmdir(ndp, p)
  * order so that it looks more sensible. This appears consistent with the
  * Ultrix implementation of NFS.
  */
-nfs_readdir(vp, uiop, cred, eofflagp)
+nfs_readdir(vp, uiop, cred, eofflagp, cookies, ncookies)
 	register struct vnode *vp;
 	struct uio *uiop;
 	struct ucred *cred;
 	int *eofflagp;
+	u_int *cookies;
+	int ncookies;
 {
 	register struct nfsnode *np = VTONFS(vp);
 	int tresid, error;
 	struct vattr vattr;
-
+	
+	/*
+	 * Since NFS mounting isn't propagated,
+	 * we don't need to handle cookies here!
+	 */
+	if (cookies)
+		panic("nfs_readdir");
+	
 	if (vp->v_type != VDIR)
 		return (EPERM);
 	/*

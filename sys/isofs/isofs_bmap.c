@@ -1,5 +1,5 @@
 /*
- * 	$Id: isofs_bmap.c,v 1.3 1993/09/03 04:37:53 cgd Exp $
+ * 	$Id: isofs_bmap.c,v 1.4 1993/09/07 15:40:53 ws Exp $
  */
 
 #include "param.h"
@@ -17,7 +17,7 @@ struct iso_node *ip;
 int lblkno;
 daddr_t *result;
 {
-	*result = (ip->iso_extent + lblkno)
-		* (ip->i_mnt->im_bsize / DEV_BSIZE);
+	*result = (ip->i_number + lblkno)
+		  * (ip->i_mnt->im_bsize / DEV_BSIZE);
 	return (0);
 }

@@ -29,13 +29,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_rrip.h
- *	$Id: iso_rrip.h,v 1.2 1993/08/07 09:32:14 mycroft Exp $
+ *	$Id: iso_rrip.h,v 1.3 1993/09/07 15:40:53 ws Exp $
  */
 
-#define NOTYET	1
-
 /*
- *	Analyze function flag
+ *	Analyze function flag (similar to RR field bits)
  */
 #define	ISO_SUSP_ATTR		0x0001
 #define	ISO_SUSP_DEVICE		0x0002
@@ -46,13 +44,33 @@
 #define	ISO_SUSP_RELDIR		0x0040
 #define	ISO_SUSP_TSTAMP		0x0080
 #define	ISO_SUSP_IDFLAG		0x0100
-#define	ISO_SUSP_EXFLAG		0x0200
-#define	ISO_SUSP_UNKNOWN	0x0400
+#define	ISO_SUSP_EXTREF		0x0200
+#define	ISO_SUSP_CONT		0x0400
+#define	ISO_SUSP_OFFSET		0x0800
+#define	ISO_SUSP_STOP		0x1000
+#define	ISO_SUSP_UNKNOWN	0x8000
 
 typedef struct {
-	ISO_RRIP_INODE	inode;
-	u_short		iso_altlen;	/* Alt Name length */
-	u_short		iso_symlen;	/* Symbol Name length */
-	char		*iso_altname;	/* Alt Name (no Null terminated ) */
-	char		*iso_symname;	/* Symbol Name (no NULL termninated )*/
+	struct iso_node	*inop;
+	int		fields;		/* interesting fields in this analysis */
+	daddr_t		iso_ce_blk;	/* block of continuation area */
+	off_t		iso_ce_off;	/* offset of continuation area */
+	int		iso_ce_len;	/* length of continuation area */
+	struct iso_mnt	*imp;		/* mount structure */
+	ino_t		*inump;		/* inode number pointer */
+	char		*outbuf;	/* name/symbolic link output area */
+	u_short		*outlen;	/* length of above */
+	u_short		maxlen;		/* maximum length of above */
+	int		cont;		/* continuation of above */
 } ISO_RRIP_ANALYZE;
+
+int isofs_rrip_analyze __P((struct iso_directory_record *isodir,
+			    struct iso_node *inop, struct iso_mnt *imp));
+int isofs_rrip_getname __P((struct iso_directory_record *isodir,
+			    char *outbuf, u_short *outlen,
+			    ino_t *inump, struct iso_mnt *imp));
+int isofs_rrip_getsymname __P((struct iso_directory_record *isodir,
+			       char *outbuf, u_short *outlen,
+			       struct iso_mnt *imp));
+int isofs_rrip_offset __P((struct iso_directory_record *isodir,
+			   struct iso_mnt *imp));

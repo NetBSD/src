@@ -1,7 +1,6 @@
 /*
- *	$Id: isofs_util.c,v 1.4 1993/09/03 04:37:56 cgd Exp $
+ *	$Id: isofs_util.c,v 1.5 1993/09/07 15:40:59 ws Exp $
  */
-
 #include "param.h"
 #include "systm.h"
 #include "namei.h"
@@ -23,6 +22,7 @@
 #include "dirent.h"
 #include "machine/endian.h"
 
+#ifdef	__notanymore__
 int
 isonum_711 (p)
 unsigned char *p;
@@ -112,52 +112,86 @@ unsigned char *p;
 	return 0;
 #endif
 }
+#endif	/* __notanymore__ */
 
 /*
  * translate and compare a filename
+ * Note: Version number plus ';' may be omitted.
  */
-isofncmp(char *fn, int fnlen, char *isofn, int isolen) {
-	int fnidx;
-
-	fnidx = 0;
-	for (fnidx = 0; fnidx < isolen; fnidx++, fn++) {
-		char c = *isofn++;
-
-		if (fnidx > fnlen)
-			return (0);
-
-		if (c >= 'A' && c <= 'Z') {
-			if (c + ('a' - 'A') !=  *fn)
-				return(0);
-			else
-				continue;
+int
+isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
+{
+	int i, j;
+	char c;
+	
+	while (--fnlen >= 0) {
+		if (--isolen < 0)
+			return *fn;
+		if ((c = *isofn++) == ';') {
+			switch (*fn++) {
+			default:
+				return *--fn;
+			case 0:
+				return 0;
+			case ';':
+				break;
+			}
+			for (i = 0; --fnlen >= 0; i = i * 10 + *fn++ - '0') {
+				if (*fn < '0' || *fn > '9') {
+					return -1;
+				}
+			}
+			for (j = 0; --isolen >= 0; j = j * 10 + *isofn++ - '0');
+			return i - j;
 		}
-		if (c == ';')
-			return ((fnidx == fnlen));
-		if (c != *fn)
-			return (0);
+		if (c != *fn) {
+			if (c >= 'A' && c <= 'Z') {
+				if ((c += ('a' - 'A')) != *fn)
+					return *fn - c;
+			} else
+				return *fn - c;
+		}
+		fn++;
 	}
-	return (1);
+	if (isolen > 0) {
+		switch (*isofn) {
+		default:
+			return -1;
+		case '.':
+			if (isofn[1] != ';')
+				return -1;
+		case ';':
+			return 0;
+		}
+	}
+	return 0;
 }
 
 /*
  * translate a filename
  */
 void
-isofntrans(char *infn, int infnlen, char *outfn, short *outfnlen) {
+isofntrans(unsigned char *infn,int infnlen,
+	   unsigned char *outfn,unsigned short *outfnlen,
+	   int stripgen,int assoc)
+{
 	int fnidx;
-
-	fnidx = 0;
+	
 	for (fnidx = 0; fnidx < infnlen; fnidx++) {
 		char c = *infn++;
-
+		
 		if (c >= 'A' && c <= 'Z')
 			*outfn++ = c + ('a' - 'A');
-		else if (c == ';') {
-			*outfnlen = fnidx;
-			return;
-		} else
+		else if (c == '.' && stripgen && *infn == ';')
+			break;
+		else if (c == ';' && stripgen)
+			break;
+		else
 			*outfn++ = c;
 	}
-	*outfnlen = infnlen;
+	if (assoc) {
+		*outfn = ASSOCCHAR;
+		fnidx++;
+	}
+	*outfnlen = fnidx;
 }

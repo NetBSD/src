@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfsnode.h	7.3 (Berkeley) 4/16/91
- *	$Id: mfsnode.h,v 1.4 1993/08/24 14:54:16 mycroft Exp $
+ *	$Id: mfsnode.h,v 1.5 1993/09/07 15:42:03 ws Exp $
  */
 
 #ifndef _UFS_MFSNODE_H_
@@ -165,7 +165,9 @@ int	mfs_ioctl __P((
 		struct vnode *vp, \
 		struct uio *uio, \
 		struct ucred *cred, \
-		int *eofflagp))) mfs_badop)
+		int *eofflagp,
+		u_int *cookies,
+		int ncookies))) mfs_badop)
 #define mfs_readlink ((int (*) __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \

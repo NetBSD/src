@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fifo.h	7.1 (Berkeley) 4/15/91
- *	$Id: fifo.h,v 1.4 1993/06/27 05:59:02 andrew Exp $
+ *	$Id: fifo.h,v 1.5 1993/09/07 15:41:53 ws Exp $
  */
 
 #ifndef _SYS_FIFO_H_
@@ -148,7 +148,9 @@ int	fifo_select __P((
 		struct vnode *vp, \
 		struct uio *uio, \
 		struct ucred *cred, \
-		int *eofflagp))) fifo_badop)
+		int *eofflagp, \
+		u_int *cookies, \
+		int ncookies))) fifo_badop)
 #define fifo_readlink ((int (*) __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \

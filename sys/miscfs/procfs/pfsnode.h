@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pfsnode.h,v 1.5 1993/08/26 19:01:00 pk Exp $
+ *	$Id: pfsnode.h,v 1.6 1993/09/07 15:41:24 ws Exp $
  */
 
 /*
@@ -181,7 +181,9 @@ int	pfs_readdir __P((
 		struct vnode *vp,
 		struct uio *uio,
 		struct ucred *cred,
-		int *eofflagp));
+		int *eofflagp,
+		u_int *cookies,
+		int ncookies));
 #define pfs_readlink ((int (*) __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \

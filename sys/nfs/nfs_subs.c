@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.7 1993/08/02 23:11:14 mycroft Exp $
+ *	$Id: nfs_subs.c,v 1.8 1993/09/07 15:41:45 ws Exp $
  */
 
 /*
@@ -621,7 +621,6 @@ nfs_namei(ndp, fhp, len, mdp, dposp, p)
 	tocp = ndp->ni_pnbuf;
 	md = *mdp;
 	rem = mtod(md, caddr_t) + md->m_len - fromcp;
-	ndp->ni_hash = 0;
 	for (i = 0; i < len; i++) {
 		while (rem == 0) {
 			md = md->m_next;
@@ -641,7 +640,6 @@ nfs_namei(ndp, fhp, len, mdp, dposp, p)
 				error = EINVAL;
 				goto out;
 			}
-		ndp->ni_hash += (unsigned char)*fromcp;
 		*tocp++ = *fromcp++;
 		rem--;
 	}

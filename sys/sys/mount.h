@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.16 1993/08/24 12:53:50 pk Exp $
+ *	$Id: mount.h,v 1.17 1993/09/07 15:41:55 ws Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -77,6 +77,7 @@ struct statfs {
  * File system types.
  */
 #define	MOUNT_NONE	0
+#define	MOUNT_EXPORT	MOUNT_NONE	/* use this for export mounting (mountd) */
 #define	MOUNT_UFS	1		/* UNIX "Fast" Filesystem */
 #define	MOUNT_NFS	2		/* Network Filesystem */
 #define	MOUNT_MFS	3		/* Memory Filesystem */
@@ -116,8 +117,6 @@ struct mount {
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesysem */
-
-#define ISOFSMNT_NORRIP	0x00000040	/* disable Rock Ridge Ext.*/
 
 /*
  * exported mount flags.
@@ -211,12 +210,17 @@ struct fhandle {
 typedef struct fhandle	fhandle_t;
 
 /*
+ * Arguments to export mount
+ */
+struct export_args {
+	uid_t exroot;		/* mapping for root uid */
+};
+
+/*
  * Arguments to mount UFS
  */
 struct ufs_args {
 	char	*fspec;		/* block special device to mount */
-	int	exflags;	/* export related flags */
-	uid_t	exroot;		/* mapping for root uid */
 };
 
 /*
@@ -270,12 +274,21 @@ struct nfs_args {
 #define	NFSMNT_LOCKBITS	(NFSMNT_SCKLOCK | NFSMNT_WANTSCK)
 
 /*
+ * Arguments to mount ISO 9660 filesystems.
+ */
+struct iso_args {
+	char *fspec;		/* block special holding the fs to mount */
+	int flags;		/* mounting flags, see below */
+};
+#define ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
+#define	ISOFSMNT_GENS	0x00000002	/* enable usage of generation numbers */
+#define	ISOFSMNT_EXTATT	0x00000004	/* enable usage of extended attributes */
+
+/*
  *  Arguments to mount MSDOS filesystems.
  */
 struct msdosfs_args {
 	char *fspec;		/* blocks special holding the fs to mount */
-	int exflags;		/* mount flags				*/
-	uid_t exroot;		/* mapping for root uid			*/
 };
 
 #ifdef KERNEL

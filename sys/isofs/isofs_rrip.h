@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isofs_rrip.h
- *	$Id: isofs_rrip.h,v 1.2 1993/08/01 19:25:53 mycroft Exp $
+ *	$Id: isofs_rrip.h,v 1.3 1993/09/07 15:40:58 ws Exp $
  */
 
 typedef struct {
@@ -68,8 +68,9 @@ typedef struct {
 typedef struct {
 	u_char cflag			[ISODCL (  1,    1)];
 	u_char clen			[ISODCL (  2,    2)];
-	u_char name			[ISODCL (  3,    3)];
+	u_char name			[0];
 } ISO_RRIP_SLINK_COMPONENT;
+#define	ISO_RRIP_SLSIZ	2
 
 typedef struct {
 	ISO_SUSP_HEADER			h;
@@ -119,6 +120,21 @@ typedef struct {
 
 typedef struct {
 	ISO_SUSP_HEADER			h;
-	unsigned char flags		[ISODCL (  4,    4)];
-} ISO_RRIP_EXFLAG;
+	char len_id			[ISODCL (  4,    4)];
+	char len_des			[ISODCL (  5,	 5)];
+	char len_src			[ISODCL (  6,	 6)];
+	char version			[ISODCL (  7,	 7)];
+} ISO_RRIP_EXTREF;
 
+typedef struct {
+	ISO_SUSP_HEADER			h;
+	char check			[ISODCL (  4,	 5)];
+	char skip			[ISODCL (  6,	 6)];
+} ISO_RRIP_OFFSET;
+
+typedef struct {
+	ISO_SUSP_HEADER			h;
+	char location			[ISODCL (  4,	11)];
+	char offset			[ISODCL ( 12,	19)];
+	char length			[ISODCL ( 20,	27)];
+} ISO_RRIP_CONT;

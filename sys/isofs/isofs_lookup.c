@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.6 1993/09/03 04:37:54 cgd Exp $
+ *	$Id: isofs_lookup.c,v 1.7 1993/09/07 15:40:54 ws Exp $
  */
 
 #include "param.h"
@@ -49,13 +49,7 @@
 #include "iso_rrip.h"
 #include "isofs_rrip.h"
 
-#ifdef ISOFS_DEBUG
-#define DPRINTF(a) printf a
-#else
-#define DPRINTF(a)
-#endif
-
-struct	nchstats nchstats;
+struct	nchstats iso_nchstats;
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -100,14 +94,9 @@ isofs_lookup(vdp, ndp, p)
 	register struct iso_node *dp;	/* the directory we are searching */
 	register struct iso_mnt *imp;	/* file system that directory is in */
 	struct buf *bp = 0;		/* a buffer of directory entries */
-	register struct iso_directory_record *ep;
-					/* the current directory entry */
+	struct iso_directory_record *ep;/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
-	enum {NONE, COMPACT, FOUND} slotstatus;
-	int slotoffset = -1;		/* offset of area with free space */
-	int slotsize;			/* size of area at slotoffset */
-	int slotfreespace;		/* amount of space free in slot */
-	int slotneeded;			/* size of the entry we're seeking */
+	int saveoffset;			/* offset of last directory entry in dir */
 	int numdirpasses;		/* strategy for directory search */
 	int endsearch;			/* offset to end directory search */
 	struct iso_node *pdp;		/* saved dp during symlink work */
@@ -116,12 +105,13 @@ isofs_lookup(vdp, ndp, p)
 	int lockparent;			/* 1 => lockparent flag is set */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int error;
-
+	ino_t ino = 0;
 	int reclen;
-	short namelen;
-	char altname[251];
-	int i;
-
+	u_short namelen;
+	char altname[NAME_MAX];
+	int res;
+	int assoc, len;
+	
 	ndp->ni_dvp = vdp;
 	ndp->ni_vp = NULL;
 	dp = VTOI(vdp);
@@ -133,11 +123,9 @@ isofs_lookup(vdp, ndp, p)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((dp->iso_flags & 2) == 0) {
-	        DPRINTF(("isofs_lookup: iso_flags = %x, ENOTDIR\n", dp->iso_flags));
-		return (ENOTDIR);
-	}
-
+	if (vdp->v_type != VDIR)
+	    return ENOTDIR;
+	
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 *
@@ -192,7 +180,13 @@ isofs_lookup(vdp, ndp, p)
 		vdp = ITOV(dp);
 		ndp->ni_vp = NULL;
 	}
-
+	
+	/*
+	 * A traling `@' means, we are looking for an associated file
+	 */
+	len = ndp->ni_namelen;
+	if (assoc = ndp->ni_ptr[len - 1] == ASSOCCHAR)
+		len--;
 	/*
 	 * If there is cached information on a previous search of
 	 * this directory, pick up where we last left off.
@@ -211,12 +205,11 @@ isofs_lookup(vdp, ndp, p)
 		ndp->ni_ufs.ufs_offset = dp->i_diroff;
 		entryoffsetinblock = iso_blkoff(imp, ndp->ni_ufs.ufs_offset);
 		if (entryoffsetinblock != 0) {
-			if (error = iso_blkatoff(dp, ndp->ni_ufs.ufs_offset,
-			    (char **)0, &bp))
-				return (error);
+			if (error = iso_blkatoff(dp,ndp->ni_ufs.ufs_offset,&bp))
+				return error;
 		}
 		numdirpasses = 2;
-		nchstats.ncs_2passes++;
+		iso_nchstats.ncs_2passes++;
 	}
 	endsearch = roundup(dp->i_size, imp->logical_block_size);
 
@@ -230,9 +223,8 @@ searchloop:
 		if (iso_blkoff(imp, ndp->ni_ufs.ufs_offset) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (error = iso_blkatoff(dp, ndp->ni_ufs.ufs_offset,
-						 (char **)0, &bp))
-				return (error);
+			if (error = iso_blkatoff(dp,ndp->ni_ufs.ufs_offset,&bp))
+				return error;
 			entryoffsetinblock = 0;
 		}
 		/*
@@ -243,7 +235,6 @@ searchloop:
 			(bp->b_un.b_addr + entryoffsetinblock);
 
 		reclen = isonum_711 (ep->length);
-		DPRINTF(("isofs_lookup: reclen = %d\n", reclen));
 		if (reclen == 0) {
 			/* skip to next block, if any */
 			ndp->ni_ufs.ufs_offset =
@@ -252,79 +243,82 @@ searchloop:
 			continue;
 		}
 
-		if (reclen < ISO_DIRECTORY_RECORD_SIZE) {
-		        DPRINTF(("isofs_lookup: reclen too small (<%d)\n",
-				 ISO_DIRECTORY_RECORD_SIZE));
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE)
 			/* illegal entry, stop */
 			break;
-		}
 
-		if (entryoffsetinblock + reclen -1 >= imp->logical_block_size) {
-                        DPRINTF(("isofs_lookup: cross-block entry\n"));
+		if (entryoffsetinblock + reclen -1 >= imp->logical_block_size)
 			/* entries are not allowed to cross boundaries */
 			break;
-	        }
 
 		/*
 		 * Check for a name match.
 		 */
 		namelen = isonum_711 (ep->name_len);
-		DPRINTF(("isofs_lookup: namelen = %d\n", namelen));
 
-		if (reclen < ISO_DIRECTORY_RECORD_SIZE + namelen) {
-		        DPRINTF(("isofs_lookup: reclen < %d + %d\n",
-				 ISO_DIRECTORY_RECORD_SIZE, namelen));
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE + namelen)
 			/* illegal entry, stop */
 			break;
-	        }
 
-		if (namelen == 1
-		     && ((ndp->ni_namelen == 1
-			  && ndp->ni_ptr[0] == '.'
-			  && ep->name[0] == 0)
-			 || (ndp->ni_isdotdot && ep->name[0] == 1))) {
-			/*
-			 * Save directory entry's inode number and
-			 * reclen in ndp->ni_ufs area, and release
-			 * directory buffer.
-			 */
-			ndp->ni_ufs.ufs_ino = isonum_733 (ep->extent);
-			brelse(bp);
-			goto found;
-		} else {
-			switch ( imp->iso_ftype ) {
-				default:
-				DPRINTF(("isofs_lookup: unsupported ftype = %x\n",
-					 imp->iso_ftype));
-				/* default to iso-mode, any extension should support
-				   iso, not ? */
-				/* FALLTHRU */
-
-				case ISO_FTYPE_9660:
-				DPRINTF(("isofs_lookup: ftype == ISO\n"));
-				if( ( namelen  >= ndp->ni_namelen ) &&
-					    ( isofncmp( ndp->ni_ptr, ndp->ni_namelen, ep->name, namelen ) ) ) {
-						ndp->ni_ufs.ufs_ino = isonum_733 (ep->extent);
-						brelse(bp);
+		switch (imp->iso_ftype) {
+		default:
+			if ((!(isonum_711(ep->flags)&4)) == !assoc) {
+				if ((len == 1
+				     && ndp->ni_ptr[0] == '.')
+				    || ndp->ni_isdotdot) {
+					if (namelen == 1
+					    && ep->name[0] == (ndp->ni_isdotdot ? 1 : 0)) {
+						/*
+						 * Save directory entry's inode number and
+						 * reclen in ndp->ni_ufs area, and release
+						 * directory buffer.
+						 */
+						isofs_defino(ep,&ndp->ni_ufs.ufs_ino);
 						goto found;
 					}
-					break;
-				case ISO_FTYPE_RRIP:
-				DPRINTF(("isofs_lookup: ftype == RRIP\n"));
-					isofs_rrip_getname( ep, altname, &namelen );
-					if ( ( namelen == ndp->ni_namelen ) &&
-					     ( !bcmp( ndp->ni_ptr, altname, ndp->ni_namelen ) ) ) {
-						ndp->ni_ufs.ufs_ino = isonum_733 (ep->extent);
-						brelse(bp);
-						goto found;
-					}
-					break;
+					if (namelen != 1
+					    || ep->name[0] != 0)
+						goto notfound;
+				} else if (!(res = isofncmp(ndp->ni_ptr,len,
+							    ep->name,namelen))) {
+					isofs_defino(ep,&ino);
+					saveoffset = ndp->ni_ufs.ufs_offset;
+				} else if (ino)
+					goto foundino;
+				else if (res < 0)
+					goto notfound;
+				else if (res > 0 && numdirpasses == 2)
+					numdirpasses++;
 			}
+			break;
+		case ISO_FTYPE_RRIP:
+			isofs_rrip_getname(ep,altname,&namelen,&ndp->ni_ufs.ufs_ino,imp);
+			if (namelen == ndp->ni_namelen
+			    && !bcmp(ndp->ni_ptr,altname,namelen))
+				goto found;
+			break;
 		}
 		ndp->ni_ufs.ufs_offset += reclen;
 		entryoffsetinblock += reclen;
 	}
-/* notfound: */
+	if (ino) {
+foundino:
+		ndp->ni_ufs.ufs_ino = ino;
+		if (saveoffset != ndp->ni_ufs.ufs_offset) {
+			if (iso_lblkno(imp,ndp->ni_ufs.ufs_offset)
+			    != iso_lblkno(imp,saveoffset)) {
+				if (bp != NULL)
+					brelse(bp);
+				if (error = iso_blkatoff(dp,saveoffset,&bp))
+					return error;
+			}
+			ep = (struct iso_directory_record *)(bp->b_un.b_addr
+							     + iso_blkoff(imp,saveoffset));
+			ndp->ni_ufs.ufs_offset = saveoffset;
+		}
+		goto found;
+	}
+notfound:
 	/*
 	 * If we started in the middle of the directory and failed
 	 * to find our target, we must check the beginning as well.
@@ -345,8 +339,8 @@ searchloop:
 	return (ENOENT);
 
 found:
-	if (numdirpasses == 2)
-		nchstats.ncs_pass2++;
+	if (numdirpasses > 1)
+		iso_nchstats.ncs_pass2++;
 
 	/*
 	 * Found component in pathname.
@@ -355,7 +349,6 @@ found:
 	 */
 	if (*ndp->ni_next == '\0' && flag == LOOKUP)
 		dp->i_diroff = ndp->ni_ufs.ufs_offset;
-			/* &~ (imp->logical_block_size - 1); */
 
 	/*
 	 * Step through the translation in the name.  We do not `iput' the
@@ -380,6 +373,7 @@ found:
 	if (ndp->ni_isdotdot) {
 		ISO_IUNLOCK(pdp);	/* race to get the inode */
 		if (error = iso_iget(dp, ndp->ni_ufs.ufs_ino, &tdp, ep)) {
+			brelse(bp);
 			ISO_ILOCK(pdp);
 			return (error);
 		}
@@ -390,13 +384,17 @@ found:
 		VREF(vdp);	/* we want ourself, ie "." */
 		ndp->ni_vp = vdp;
 	} else {
-		if (error = iso_iget(dp, ndp->ni_ufs.ufs_ino, &tdp, ep))
+		if (error = iso_iget(dp, ndp->ni_ufs.ufs_ino, &tdp, ep)) {
+			brelse(bp);
 			return (error);
+		}
 		if (!lockparent || *ndp->ni_next != '\0')
 			ISO_IUNLOCK(pdp);
 		ndp->ni_vp = ITOV(tdp);
 	}
-
+	
+	brelse(bp);
+	
 	/*
 	 * Insert name into cache if appropriate.
 	 */
@@ -412,10 +410,9 @@ found:
  * is non-zero, fill it in with a pointer to the
  * remaining space in the directory.
  */
-iso_blkatoff(ip, offset, res, bpp)
+iso_blkatoff(ip, offset, bpp)
 	struct iso_node *ip;
 	off_t offset;
-	char **res;
 	struct buf **bpp;
 {
 	register struct iso_mnt *imp = ip->i_mnt;
@@ -424,14 +421,12 @@ iso_blkatoff(ip, offset, res, bpp)
 	struct buf *bp;
 	int error;
 
-	*bpp = 0;
 	if (error = bread(ITOV(ip), lbn, bsize, NOCRED, &bp)) {
 		brelse(bp);
-		return (error);
+		*bpp = 0;
+		return error;
 	}
-	if (res)
-		*res = bp->b_un.b_addr + iso_blkoff(imp, offset);
 	*bpp = bp;
 
-	return (0);
+	return 0;
 }

@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vnops.c,v 1.1 1993/08/13 11:35:40 cgd Exp $
+ *	msdosfs_vnops.c,v 1.1 1993/08/13 11:35:40 cgd Exp
  */
 
 #include "param.h"
@@ -1264,19 +1264,13 @@ struct dos_dirent {
 };
 
 int
-#ifdef __bsdi__
 msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
-#else
-msdosfs_readdir(vp, uio, cred, eofflagp)
-#endif
 	struct vnode *vp;
 	struct uio *uio;
 	struct ucred *cred;
 	int *eofflagp;
-#ifdef __bsdi__
 	u_int *cookies;
 	int ncookies;
-#endif
 {
 	int error = 0;
 	int diff;
@@ -1298,19 +1292,15 @@ msdosfs_readdir(vp, uio, cred, eofflagp)
 	struct dirent *crnt;
 	u_char dirbuf[512];	/* holds converted dos directories */
 	int i = 0;
-#ifdef __bsdi__
 	u_int *end_cookies;
-#endif
 
 #if defined(MSDOSFSDEBUG)
 	printf("msdosfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
 	    vp, uio, cred, eofflagp);
 #endif				/* defined(MSDOSFSDEBUG) */
 
-#ifdef	__bsdi__
 	if (cookies)
 		end_cookies = cookies + ncookies;
-#endif
 
 	/*
 	 * msdosfs_readdir() won't operate properly on regular files since
@@ -1348,13 +1338,25 @@ msdosfs_readdir(vp, uio, cred, eofflagp)
 		 */
 		bias = 2 * sizeof(struct direntry);
 		if (uio->uio_offset < 2 * sizeof(struct direntry)) {
-			error = uiomove((char *) rootdots + uio->uio_offset,
-			    sizeof rootdots - uio->uio_offset, uio);
-			if (error)
+			if (uio->uio_offset
+			    && uio->uio_offset != sizeof(struct direntry)) {
+				error = EINVAL;
 				goto out;
+			}
+			n = 1;
+			if (!uio->uio_offset) {
+				n = 2;
+				*cookies++ = sizeof(struct direntry);
+			}
+			if (cookies >= end_cookies)
+				n--;
+			else
+				*cookies++ = 2 * sizeof(struct direntry);
+			error = uiomove((char *) rootdots + uio->uio_offset,
+					n * sizeof(struct direntry), uio);
 		}
 	}
-	do {
+	while (!error && uio->uio_offset > 0 && cookies < end_cookies) {
 		lbn = (uio->uio_offset - bias) >> pmp->pm_cnshift;
 		on = (uio->uio_offset - bias) & pmp->pm_crbomask;
 		n = MIN((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
@@ -1399,6 +1401,7 @@ msdosfs_readdir(vp, uio, cred, eofflagp)
 			    (dentp->deAttributes & ATTR_VOLUME)) {
 				if (prev) {
 					prev->d_reclen += sizeof(struct direntry);
+					cookies--;
 				}
 				else {
 					prev = crnt;
@@ -1442,10 +1445,9 @@ msdosfs_readdir(vp, uio, cred, eofflagp)
 				prev = crnt;
 			}
 			dentp++;
-#ifdef __bsdi__
 			if (cookies)
-				*cookies++ = (u_int) ((char *) dentp - bp->b_un.b_addr - on) + uio->uio_offset;
-#endif
+				*cookies++ = (u_int)((char *)dentp - bp->b_un.b_addr - on)
+					     + uio->uio_offset;
 			crnt = (struct dirent *) ((char *) crnt + sizeof(struct direntry));
 			pushout = 1;
 
@@ -1466,10 +1468,8 @@ msdosfs_readdir(vp, uio, cred, eofflagp)
 				prev = 0;
 				crnt = (struct dirent *) dirbuf;
 			}
-#ifdef __bsdi__
-			if (cookies == end_cookies)
+			if (cookies >= end_cookies)
 				break;
-#endif
 		}
 		if (pushout) {
 			pushout = 0;
@@ -1488,11 +1488,9 @@ msdosfs_readdir(vp, uio, cred, eofflagp)
 			bp->b_flags |= B_AGE;
 #endif /* if 0 */
 		brelse(bp);
-#ifdef __bsdi__
-		if (cookies && cookies == end_cookies)
+		if (n == 0)
 			break;
-#endif
-	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+	}
 out:	;
 	uio->uio_resid += lost;
 
