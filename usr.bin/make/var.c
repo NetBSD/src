@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.61 2001/06/05 06:00:39 explorer Exp $	*/
+/*	$NetBSD: var.c,v 1.62 2001/06/09 05:22:47 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.61 2001/06/05 06:00:39 explorer Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.62 2001/06/09 05:22:47 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.61 2001/06/05 06:00:39 explorer Exp $");
+__RCSID("$NetBSD: var.c,v 1.62 2001/06/09 05:22:47 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -468,7 +468,26 @@ Var_Set (name, val, ctxt)
      * to the environment (as per POSIX standard)
      */
     if (ctxt == VAR_CMD) {
+	char tmp[256];
+	char *exp;
+	int nbytes;
+	
 	setenv(name, val, 1);
+
+	exp = 0;
+	if ((nbytes = snprintf(tmp, sizeof(tmp), "%s='%s'", name, val))
+	    < sizeof(tmp)) {
+	    exp = tmp;
+	} else {
+	    /* alloca is handy, but not everyone has it. */
+	    if ((exp = malloc(nbytes + 1)))
+		snprintf(exp, nbytes + 1, "%s='%s'", name, val);
+	}
+	if (exp) {
+	    Var_Append(MAKEOVERRIDES, exp, VAR_GLOBAL);
+	    if (exp != tmp)
+		free(exp);
+	}
     }
     if (name != cp)
 	free(name);
