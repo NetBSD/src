@@ -1,4 +1,4 @@
-/* $NetBSD: majors+minors,v 1.7 1997/01/05 19:01:18 mark Exp $ */
+/* $NetBSD: majors+minors,v 1.8 1997/01/12 20:39:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1996 Mark Brinicombe.
@@ -249,3 +249,5 @@ same device driver even if the driver does not require both.
 45 C	- reserved (virtual console)
 		   (/dev/ttyg{unit})
 		   (unit = minor)
+46 B	- reserved
+46 C	- ip-filter
