@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.3 1999/04/09 14:24:21 kleink Exp $	*/
+/*	$NetBSD: ldd.c,v 1.4 1999/05/31 14:56:00 kleink Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -60,23 +60,6 @@ Search_Path *_rtld_paths;
 
 static void print_needed(Obj_Entry *);
 
-
-/*
- * Main entry point for dynamic linking.  The argument is the stack
- * pointer.  The stack is expected to be laid out as described in the
- * SVR4 ABI specification, Intel 386 Processor Supplement.  Specifically,
- * the stack pointer points to a word containing ARGC.  Following that
- * in the stack is a null-terminated sequence of pointers to argument
- * strings.  Then comes a null-terminated sequence of pointers to
- * environment strings.  Finally, there is a sequence of "auxiliary
- * vector" entries.
- *
- * This function returns the entry point for the main program in %eax,
- * and the dynamic linker's exit procedure in %edx.  We accomplish this
- * by declaring the return value to have the 64-bit type "long long".
- * Such values are returned with their most-significant 32 bits in %edx,
- * and their least-significant 32 bits in %eax.
- */
 int
 main(
     int argc,
