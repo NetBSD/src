@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.29 1997/07/21 05:39:17 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.30 1997/11/17 11:44:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,6 +80,9 @@
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.30 1997/11/17 11:44:50 jonathan Exp $");
+
 #include "fb.h"
 #include "mfb.h"
 #if NMFB > 0
@@ -159,6 +162,8 @@ static void  bt431_write_reg __P((bt431_regmap_t *regs, int regno, int val));
 static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
 #endif
 
+static __inline void  bt431_cursor_off __P((struct fbinfo *fi));
+static __inline void  bt431_cursor_on __P((struct fbinfo *fi));
 
 
 /*
@@ -371,6 +376,38 @@ mfbinit(fi, mfbaddr, unit, silent)
 
 static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
 
+static __inline void
+bt431_cursor_on(fi)
+	register struct fbinfo *fi;
+{
+	mfbRestoreCursorColor(fi);
+}
+
+
+static __inline void
+bt431_cursor_off(fi)
+	register struct fbinfo *fi;
+{
+	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
+	u_char cursor_save [6];
+	register int i;
+
+	bcopy (cursor_RGB, cursor_save, 6);
+
+	/* Zap the cursor */
+	BT455_SELECT_ENTRY(regs, 8);
+	for (i = 0; i < 6; i++) {
+		cursor_RGB[i] = 0;
+		regs->addr_cmap_data = 0;
+		wbflush();
+	}
+	mfbRestoreCursorColor (fi);
+
+	bcopy (cursor_save, cursor_RGB, 6);
+}
+
+
+
 /*
  * There are actually 2 Bt431 cursor sprite chips that each generate 1 bit
  * of each cursor pixel for a 2bit 64x64 cursor sprite. The corresponding
@@ -423,6 +460,9 @@ mfbLoadCursor(fi, cursor)
 		BT431_WRITE_CMAP_AUTOI(regs, 0);
 		pos++;
 	}
+
+	/* Turn on the cmap entries used for the cursor. */
+	bt431_cursor_on(fi);
 }
 
 /* Restore the color of the cursor. */
@@ -520,8 +560,11 @@ mfbPosCursor(fi, x, y)
 	BT431_WRITE_REG_AUTOI(regs, hi(y + 36));
 }
 
-/* Initialize the color map. */
-
+/*
+ * Initialize the colormap to the default state, which is that entry
+ * zero is black and all other entries are full white. 
+ * The hardware cursor is turned off.  
+ */
 static void
 mfbInitColorMapBlack(fi, blackpix)
 	struct fbinfo *fi;
@@ -548,11 +591,12 @@ mfbInitColorMapBlack(fi, blackpix)
 		mfbLoadColorMap(fi, (caddr_t)rgb, i, 1);
 	}
 
+	/* initialize cmap entries for cursor sprite value and mask */
 	for (i = 0; i < 3; i++) {
 		cursor_RGB[i] = 0;
 		cursor_RGB[i + 3] = 0xff;
 	}
-	mfbRestoreCursorColor (fi);
+	bt431_cursor_off(fi);
 }
 
 /* set colormap for open/close */
@@ -677,7 +721,6 @@ bt455_video_off(fi)
 	struct fbinfo *fi;
 {
 	register int i;
-	u_char cursor_save [6];
 	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
 	u_char *cmap;
 
@@ -686,19 +729,16 @@ bt455_video_off(fi)
 
 	cmap = (u_char *)(fi -> fi_cmap_bits);
 
-	bcopy (cursor_RGB, cursor_save, 6);
-
-	/* Zap the cursor and the colormap... */
+	/* Zap the colormap... */
 	BT455_SELECT_ENTRY(regs, 0);
 	for (i = 0; i < 6; i++) {
-		cursor_RGB[i] = 0;
 		regs->addr_cmap_data = 0;
 		wbflush();
 	}
-		
-	mfbRestoreCursorColor (fi);
 
-	bcopy (cursor_save, cursor_RGB, 6);
+	/* and the cursor.. */
+	bt431_cursor_off(fi);
+
 	fi -> fi_blanked = 1;
 
 	return 0;
