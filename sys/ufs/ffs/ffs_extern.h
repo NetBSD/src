@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.10 1998/06/24 20:58:47 sommerfe Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.11 1998/09/01 03:11:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -68,6 +68,8 @@ struct uio;
 struct vnode;
 struct mbuf;
 struct cg;
+
+extern struct pool ffs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.15 1998/06/24 20:58:48 sommerfe Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.16 1998/09/01 03:11:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,6 +51,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
@@ -248,8 +249,11 @@ ffs_reclaim(v)
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
-	FREE(vp->v_data, VFSTOUFS(vp->v_mount)->um_devvp->v_tag == VT_MFS ?
-	    M_MFSNODE : M_FFSNODE);
+	/*
+	 * XXX MFS ends up here, too, to free an inode.  Should we create
+	 * XXX a separate pool for MFS inodes?
+	 */
+	pool_put(&ffs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }
