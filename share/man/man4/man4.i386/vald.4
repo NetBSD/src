@@ -1,4 +1,4 @@
-.\" $NetBSD: vald.4,v 1.3 2004/05/03 14:21:02 wiz Exp $
+.\" $NetBSD: vald.4,v 1.4 2004/05/07 22:17:17 snj Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,8 +40,11 @@
 .Sh SYNOPSIS
 .Cd "vald* at acpi?"
 .Sh DESCRIPTION
-Some Toshiba computers have a special I/O controller that handles various interface devices.
-This special I/O controller is accessed by the "GHCI" ACPI method.
+Some Toshiba computers have a special I/O controller that handles various
+interface devices.
+This special I/O controller is accessed by the
+.Dq GHCI
+ACPI method.
 The
 .Nm
 driver provides some support for it.
@@ -74,5 +77,5 @@ appeared in
 .Nx 1.6 .
 .Sh BUGS
 .Nm
-has some problem with X11 when switching between LCD
+has a problem with X11 when switching between LCD
 and External Video output.
