@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2002/11/23 12:53:52 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2002/11/29 22:17:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1599,16 +1599,15 @@ init_x86_64(first_avail)
 		extern int end;
 		extern int *esym;
 		struct btinfo_symtab *symtab;
+		vaddr_t tssym, tesym;
 
 		symtab = lookup_bootinfo(BTINFO_SYMTAB);
 		if (symtab) {
-			symtab->ssym += KERNBASE;
-			symtab->esym += KERNBASE;
-			ddb_init(symtab->nsym, (int *)symtab->ssym,
-			    (int *)symtab->esym);
-		}
-		else
-			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+			tssym = (vaddr_t)symtab->ssym + KERNBASE;
+			tesym = (vaddr_t)symtab->esym + KERNBASE;
+			ddb_init(symtab->nsym, (void *)tssym, (void *)tesym);
+		} else
+			ddb_init(*(long *)&end, ((long *)&end) + 1, esym);
 	}
 	if (boothowto & RB_KDB)
 		Debugger();

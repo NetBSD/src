@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.12 2002/10/26 13:50:50 jdolecek Exp $
+#	$NetBSD: files.x86_64,v 1.13 2002/11/29 22:17:13 fvdl Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -25,7 +25,6 @@ defflag			VM86
 file	arch/x86_64/x86_64/autoconf.c
 file	arch/x86_64/x86_64/bus_machdep.c
 file	arch/x86_64/x86_64/consinit.c
-file	arch/x86_64/x86_64/db_dbgreg.s		ddb
 file	arch/x86_64/x86_64/db_disasm.c		ddb
 file	arch/x86_64/x86_64/db_interface.c	ddb
 file	arch/x86_64/x86_64/db_memrw.c		ddb | kgdb

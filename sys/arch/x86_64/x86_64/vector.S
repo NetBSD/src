@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.14 2002/11/24 13:19:27 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.15 2002/11/29 22:17:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -572,7 +572,7 @@ XHOLD_VEC(irq_num)							;\
 
 #ifdef DDB
 #define	MAKE_FRAME \
-	leaq	-8(%rsp),%rbp
+	leaq	-16(%rsp),%rbp
 #else /* !DDB */
 #define	MAKE_FRAME
 #endif /* DDB */

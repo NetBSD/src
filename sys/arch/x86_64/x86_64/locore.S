@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2002/11/04 06:24:40 itohy Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2002/11/29 22:17:18 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -408,6 +408,14 @@ start:	movw	$0x1234,0x472			# warm boot
   ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * NBPG)
 
+#define fillkpt	\
+1:	movl	%eax,(%ebx)	; 	/* store phys addr */ \
+	movl	$0,4(%ebx)	; 	/* upper 32 bits 0 */ \
+	addl	$8,%ebx		; 	/* next pte/pde */ \
+	addl	$NBPG,%eax	; 	/* next phys page */ \
+	loop	1b		;  \
+
+
 	/* Find end of kernel image. */
 	GET_RELOC_ADDR(end)
 	movl	%ebp,%edi
@@ -421,17 +429,8 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	%eax,%edi
 1:
 #endif
-
-#define fillkpt	\
-1:	movl	%eax,(%ebx)	; 	/* store phys addr */ \
-	movl	$0,4(%ebx)	; 	/* upper 32 bits 0 */ \
-	addl	$8,%ebx		; 	/* next pte/pde */ \
-	addl	$NBPG,%eax	; 	/* next phys page */ \
-	loop	1b		;  \
-
 	/* Clear tables */
-	GET_RELOC_ADDR(end)
-	movl	%ebp,%esi
+	movl	%edi,%esi
 	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
 
