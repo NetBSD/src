@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.8 1997/03/23 09:37:31 veego Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.9 1997/03/26 01:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_devar.h,v 1.17 1997/03/21 22:42:03 thomas Exp
+ * Id: if_devar.h,v 1.20 1997/03/25 21:12:17 thomas Exp
  */
 
 #if !defined(_DEVAR_H)
@@ -494,7 +494,7 @@ struct _tulip_softc_t {
 #define	TULIP_DEVICEPROBE	0x00000008
 #define	TULIP_PRINTMEDIA	0x00000010
 #define	TULIP_TXPROBE_ACTIVE	0x00000020
-#define	TULIP_xxx1		0x00000040
+#define	TULIP_ALLMULTI		0x00000040
 #define	TULIP_WANTRXACT		0x00000080
 #define	TULIP_RXACT		0x00000100
 #define	TULIP_INRESET		0x00000200
@@ -525,6 +525,8 @@ struct _tulip_softc_t {
 #define	TULIP_HAVE_SIANWAY	0x00000010	/* SIA does NWAY */
 #define	TULIP_HAVE_DUALSENSE	0x00000020	/* SIA senses both AUI & TP */
 #define	TULIP_HAVE_SIAGP	0x00000040	/* SIA has a GP port */
+#define	TULIP_HAVE_BROKEN_HASH	0x00000080	/* Broken Multicast Hash */
+#define	TULIP_HAVE_ISVSROM	0x00000100	/* uses ISV SROM Format */
     u_int32_t tulip_intrmask;	/* our copy of csr_intr */
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is TULIP_SYSTEMERROR is also set) */
@@ -650,7 +652,7 @@ static const int tulip_media_to_ifmedia[] = {
     IFM_ETHER | IFM_10_T | IFM_FDX,	/* TULIP_MEDIA_10BASET_FD */
     IFM_ETHER | IFM_10_2,		/* TULIP_MEDIA_BNC */
     IFM_ETHER | IFM_10_5,		/* TULIP_MEDIA_AUI */
-    IFM_ETHER | IFM_10_2,		/* TULIP_MEDIA_EXTSIA */
+    IFM_ETHER | IFM_MANUAL,		/* TULIP_MEDIA_EXTSIA */
     IFM_ETHER | IFM_10_5,		/* TULIP_MEDIA_AUIBNC */
     IFM_ETHER | IFM_100_TX,		/* TULIP_MEDIA_100BASET */
     IFM_ETHER | IFM_100_TX | IFM_FDX,	/* TULIP_MEDIA_100BASET_FD */
