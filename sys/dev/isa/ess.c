@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.21 1998/08/12 03:18:34 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.22 1998/08/12 19:13:14 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1577,7 +1577,7 @@ ess_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = AUDIO_MIXER_LAST;
+		dip->next = ESS_MIC_PREAMP;
 		strcpy(dip->label.name, AudioNmicrophone);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
@@ -1672,7 +1672,7 @@ ess_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ESS_RECORD_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = ESS_MIC_PREAMP;
+		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmicrophone);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
@@ -1720,8 +1720,8 @@ ess_query_devinfo(addr, dip)
 
 	case ESS_MIC_PREAMP:
 		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = ESS_RECORD_CLASS;
-		dip->prev = ESS_MIC_REC_VOL;
+		dip->mixer_class = ESS_INPUT_CLASS;
+		dip->prev = ESS_MIC_PLAY_VOL;
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNpreamp);
 		dip->un.e.num_mem = 2;
