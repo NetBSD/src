@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.5 2001/03/25 20:44:03 jsm Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.6 2002/05/26 00:12:12 wiz Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.5 2001/03/25 20:44:03 jsm Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.6 2002/05/26 00:12:12 wiz Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -143,21 +143,11 @@ clrlin()
 }
 
 void
-#ifdef __STDC__
 pline(const char *fmt, ...)
-#else
-pline(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char *fmt;
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#else
+
 	va_start(ap, fmt);
-#endif
 	vpline(fmt, ap);
 	va_end(ap);
 }
