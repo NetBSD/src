@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.110.4.7 2002/01/14 10:49:30 he Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.110.4.8 2002/04/26 17:51:39 he Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -515,6 +515,10 @@ sys_execve(p, v, retval)
 		 * anything that might block.
 		 */
 		p_sugid(p);
+
+		/* Make sure file descriptors 0..2 are in use. */
+		if ((error = fdcheckstd(p)) != 0)
+			goto exec_abort;
 
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
