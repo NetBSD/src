@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.10 2002/10/02 04:55:48 thorpej Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.11 2003/02/10 20:09:43 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.10 2002/10/02 04:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11 2003/02/10 20:09:43 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -514,14 +514,17 @@ amidisplaycc_cursor(void *screen, int on, int row, int col)
 	if (row < 0 || col < 0 || row >= scr->nrows || col >= scr->ncols)
 		return;
 
-	if (!on && scr->cursorrow==-1 && scr->cursorcol==-1)
+	/* was off, turning off again? */
+	if (!on && scr->cursorrow == -1 && scr->cursorcol == -1)
 		return;
 
-	if (!on) {
-		row = scr->cursorrow;
-		col = scr->cursorcol;
+	/* was on, and turning on again? */
+	if (on && scr->cursorrow >= 0 && scr->cursorcol >= 0)
+	{
+		/* clear from old location first */
+		amidisplaycc_cursor (screen, 0, scr->cursorrow, scr->cursorcol);
 	}
-
+	
 	dst = scr->planes[0];
 	dst += row * scr->rowbytes;
 	dst += col;
@@ -1357,6 +1360,9 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 
 	*cookiep = scr;
 
+	/* cursor initially at top left */
+	scr->cursorrow = -1;
+	scr->cursorcol = -1;
 	*curxp = 0;
 	*curyp = 0;
 	amidisplaycc_cursor(scr, 1, *curxp, *curyp);
