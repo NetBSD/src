@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec_mace.c,v 1.4 2004/07/14 09:45:47 tsutsui Exp $ */
+/* $NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.4 2004/07/14 09:45:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -248,7 +248,7 @@ struct mec_control_data {
 /*
  * It _seems_ there are some restrictions on descriptor address:
  *
- * - Base address of txdescs should be 64kbyte aligned
+ * - Base address of txdescs should be 8kbyte aligned
  * - Each txdesc should be 128byte aligned
  * - Each rxdesc should be 4kbyte aligned
  *
@@ -256,7 +256,7 @@ struct mec_control_data {
  * In this case, sizeof(struct mec_txdesc) * MEC_NTXDESC is 8192
  * so rxdescs are also allocated at 4kbyte aligned.
  */
-#define MEC_CONTROL_DATA_ALIGN	(64 * 1024)
+#define MEC_CONTROL_DATA_ALIGN	(8 * 1024)
 
 #define MEC_CDOFF(x)	offsetof(struct mec_control_data, x)
 #define MEC_CDTXOFF(x)	MEC_CDOFF(mcd_txdesc[(x)])
@@ -1058,9 +1058,8 @@ mec_start(struct ifnet *ifp)
 		 */
 		if (opending == 0) {
 			sc->sc_txdirty = firsttx;
-			bus_space_write_8(st, sh, MEC_DMA_CONTROL,
-			    bus_space_read_8(st, sh, MEC_DMA_CONTROL) |
-			    MEC_DMA_TX_INT_ENABLE);
+			bus_space_write_8(st, sh, MEC_TX_ALIAS,
+			    MEC_TX_ALIAS_INT_ENABLE);
 		}
 
 		/* Set a watchdog timer in case the chip flakes out. */
@@ -1254,8 +1253,7 @@ mec_intr(void *arg)
 				 * disable TX interrupt to stop
 				 * TX empty interrupt
 				 */
-				bus_space_write_8(st, sh, MEC_DMA_CONTROL,
-				    dmac & ~MEC_DMA_TX_INT_ENABLE);
+				bus_space_write_8(st, sh, MEC_TX_ALIAS, 0);
 				DPRINTF(MEC_DEBUG_INTR,
 				    ("mec_intr: disable TX_INT\n"));
 			}
