@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
+/*	$NetBSD: elf.c,v 1.3 2001/10/13 19:50:36 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,17 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef TOSTOOLS
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
-#ifdef TOSTOOLS
 #include "exec_elf.h"
+
+#define	MALLOC(x)	malloc(x)
+
 #else
+
+#include <stand.h>
+#include <atari_stand.h>
+#include <string.h>
+#include <libkern.h>
 #include <sys/exec_elf.h>
+
+#define	MALLOC(x)	alloc(x)
 #endif
+
 #include "tosdefs.h"
 #include "kparamb.h"
 #include "libtos.h"
@@ -89,7 +98,7 @@ int	loadsyms;
 	 */
 	i = ehdr.e_phnum * sizeof(Elf32_Phdr);
 	err = 1;
-	if ((phdrs = (Elf32_Phdr *)malloc(i)) == NULL)
+	if ((phdrs = (Elf32_Phdr *)MALLOC(i)) == NULL)
 		goto error;
 	err = 2;
 	if (read(fd, phdrs, i) != i)
@@ -140,7 +149,7 @@ int	loadsyms;
 	od->kentry = ehdr.e_entry;
 
 	err = 5;
-	if ((od->kstart = (u_char *)malloc(od->ksize)) == NULL)
+	if ((od->kstart = (u_char *)MALLOC(od->ksize)) == NULL)
 		goto error;
 
 	/*
@@ -159,7 +168,7 @@ int	loadsyms;
 		if (read(fd, p, php->p_filesz) != php->p_filesz)
 		    goto error;
 		if (php->p_memsz > php->p_filesz)
-		    memset(p + php->p_filesz, 0, php->p_memsz - php->p_filesz);
+		    bzero(p + php->p_filesz, php->p_memsz - php->p_filesz);
 	    }
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.1 2001/10/10 14:19:53 leo Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.2 2001/10/13 19:50:36 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef TOSTOOLS
 #include <stdio.h>
 #include <sys/types.h>
+#else
+
+#include <stand.h>
+#include <atari_stand.h>
+#include <string.h>
+#include <libkern.h>
+#include <machine/cpu.h>
+#endif /* TOSTOOLS */
+
 #include "tosdefs.h"
 #include "kparamb.h"
 #include "libtos.h"
