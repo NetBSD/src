@@ -1,70 +1,53 @@
-#	$NetBSD: Makefile,v 1.14 2002/03/05 21:23:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/23 16:38:50 shiba Exp $
 
+.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-
 .ifndef NOTESOBJDIR
-NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k && ${PRINTOBJDIR}
+NOTESOBJDIR!=cd ${DISTRIBDIR}/notes/mac68k && ${PRINTOBJDIR}
 .endif
 
 IMAGE=		ramdisk.fs
+IMAGESIZE=	2048k
 
-CBIN=		ramdiskbin
+WARNS=		1
 
-MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
-IMAGE?=		xxx.fs
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	raminst
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		dot.profile dot.hdprofile \
+		${.CURDIR}/../../miniroot/termcap \
+		${NOTESOBJDIR}/INSTALL.more \
+		${_SRC_TOP_}/etc/group \
+		${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/netconfig \
+		${_SRC_TOP_}/etc/services
 
-LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	mtree.conf
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
-
-all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} count=5120
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}
-	-disklabel ${VND} >tmplabel
-	disklabel -r -R ${VND} tmplabel
-	newfs -m 0 -o space -i 5120 ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} NOTESOBJDIR=${NOTESOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
-
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+realall: ${IMAGE}
 
 release:
 
-clean cleandir distclean:
-	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi;
-	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
-	rm -f *.core *.o *.cro *.c tmplabel
 
-.INTERRUPT: unconfig
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=${DISTRIBDIR}/utils/libhack
+.include "${HACKSRC}/Makefile.inc"
 
-.include <bsd.subdir.mk>
+# Turn off libhack's gethostby*() as it only supports /etc/hosts
+HACKOBJS:=	${HACKOBJS:Ngethost.o}
+
+# This is listed in ramdiskbin.conf but is built here.
+${CRUNCHBIN}: libhack.o
+
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+PARSELISTENV+=	NOTESOBJDIR=${NOTESOBJDIR}
+
+.include <bsd.prog.mk>
