@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.2 2000/05/28 07:18:58 gmcgarry Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.3 2000/06/06 20:09:20 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ tr_mca_attach(parent, self, aux)
 	bus_space_handle_t pioh, mmioh, sramh;
 	int iobase, irq, sram_size, sram_addr, rom_addr;
 	int pos2, pos3, pos4, pos5;
+
+	printf("\n");
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
