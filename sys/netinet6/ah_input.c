@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.17 2000/08/15 21:43:57 thorpej Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.18 2000/08/16 09:54:39 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.30 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
@@ -458,6 +458,7 @@ ah4_input(m, va_alist)
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
 			ipsecstat.in_inval++;
+			splx(s);
 			goto fail;
 		}
 		IF_ENQUEUE(&ipintrq, m);
@@ -862,6 +863,7 @@ ah6_input(mp, offp, proto)
 		s = splimp();
 		if (IF_QFULL(&ip6intrq)) {
 			ipsec6stat.in_inval++;
+			splx(s);
 			goto fail;
 		}
 		IF_ENQUEUE(&ip6intrq, m);
