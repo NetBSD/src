@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.14 1994/10/20 04:27:33 cgd Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.15 1994/10/29 07:35:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,7 +111,7 @@ grow(p, sp)
 	/*
 	 * For user defined stacks (from sendsig).
 	 */
-	if (sp < (unsigned)vm->vm_maxsaddr)
+	if (sp < (unsigned long)vm->vm_maxsaddr)
 		return (0);
 	/*
 	 * For common case of already allocated (from trap).
@@ -159,9 +159,9 @@ vm_coredump(p, vp, cred, chdr)
 	if (!map->is_main_map) {
 #ifdef DEBUG
 		uprintf(
-	"vm_coredump: %s map 0x%x: pmap=0x%x,ref=%d,nentries=%d,version=%d\n",
+	"vm_coredump: %s map 0x%lx: pmap=0x%lx,ref=%d,nentries=%d,version=%d\n",
 			(map->is_main_map ? "Task" : "Share"),
-			(int)map, (int)(map->pmap),
+			(long)map, (long)(map->pmap),
 			map->ref_count, map->nentries,
 			map->timestamp);
 #endif
@@ -175,9 +175,10 @@ vm_coredump(p, vp, cred, chdr)
 
 		if (entry->is_a_map || entry->is_sub_map) {
 #ifdef DEBUG
-		 	uprintf("vm_coredump: entry: share=0x%x, offset=0x%x\n",
-                                  (int) entry->object.share_map,
-                                  (int) entry->offset);
+		 	uprintf(
+			    "vm_coredump: entry: share=0x%lx, offset=0x%lx\n",
+                            (long) entry->object.share_map,
+                            (long) entry->offset);
 #endif
 			continue;
 		}

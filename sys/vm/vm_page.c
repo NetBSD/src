@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.18 1994/09/07 20:25:12 mycroft Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.19 1994/10/29 07:35:18 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -538,7 +538,7 @@ pmap_startup(startp, endp)
  *	NOTE:  This macro depends on vm_page_bucket_count being a power of 2.
  */
 #define vm_page_hash(object, offset) \
-	(((unsigned)object+(unsigned)atop(offset))&vm_page_hash_mask)
+	(((unsigned long)object+(unsigned long)atop(offset))&vm_page_hash_mask)
 
 /*
  *	vm_page_insert:		[ internal use only ]

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.14 1994/06/29 06:48:30 cgd Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.15 1994/10/29 07:35:20 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -232,14 +232,14 @@ simple_lock_data_t	vm_page_queue_free_lock;
 
 #define PAGE_ASSERT_WAIT(m, interruptible)	{ \
 				(m)->flags |= PG_WANTED; \
-				assert_wait((int) (m), (interruptible)); \
+				assert_wait((long) (m), (interruptible)); \
 			}
 
 #define PAGE_WAKEUP(m)	{ \
 				(m)->flags &= ~PG_BUSY; \
 				if ((m)->flags & PG_WANTED) { \
 					(m)->flags &= ~PG_WANTED; \
-					thread_wakeup((int) (m)); \
+					thread_wakeup((long) (m)); \
 				} \
 			}
 

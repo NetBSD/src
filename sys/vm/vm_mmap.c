@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.33 1994/10/20 04:27:31 cgd Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.34 1994/10/29 07:35:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -319,7 +319,7 @@ msync(p, uap, retval)
 		printf("msync(%d): addr %x len %x\n",
 		       p->p_pid, SCARG(uap, addr), SCARG(uap, len));
 #endif
-	if (((int)SCARG(uap, addr) & PAGE_MASK) ||
+	if (((long)SCARG(uap, addr) & PAGE_MASK) ||
 	    SCARG(uap, addr) + SCARG(uap, len) < SCARG(uap, addr))
 		return (EINVAL);
 	map = &p->p_vmspace->vm_map;
@@ -623,7 +623,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		vp = (struct vnode *)handle;
 		if (vp->v_type == VCHR) {
 			type = PG_DEVICE;
-			handle = (caddr_t)vp->v_rdev;
+			handle = (caddr_t)(long)vp->v_rdev;
 		} else
 			type = PG_VNODE;
 	}

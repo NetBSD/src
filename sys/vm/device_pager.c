@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.17 1994/06/29 06:47:39 cgd Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.18 1994/10/29 07:35:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -129,7 +129,7 @@ dev_pager_alloc(handle, size, prot, foff)
 	/*
 	 * Make sure this device can be mapped.
 	 */
-	dev = (dev_t)handle;
+	dev = (dev_t)(long)handle;
 	mapfunc = cdevsw[major(dev)].d_mmap;
 	if (mapfunc == NULL || mapfunc == enodev || mapfunc == nullop)
 		return(NULL);
@@ -274,7 +274,7 @@ dev_pager_getpage(pager, mlist, npages, sync)
 	m = *mlist;
 
 	object = m->object;
-	dev = (dev_t)pager->pg_handle;
+	dev = (dev_t)(long)pager->pg_handle;
 	offset = m->offset + object->paging_offset;
 	prot = PROT_READ;	/* XXX should pass in? */
 	mapfunc = cdevsw[major(dev)].d_mmap;
