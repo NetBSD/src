@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.79 2005/01/18 03:29:51 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.80 2005/01/22 02:22:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.79 2005/01/18 03:29:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.80 2005/01/22 02:22:44 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -143,7 +143,6 @@ struct RF_ReconDoneProc_s {
 static void 
 rf_ShutdownReconstruction(void *ignored)
 {
-	pool_destroy(&rf_pools.recond);
 	pool_destroy(&rf_pools.reconbuffer);
 }
 
@@ -151,8 +150,6 @@ int
 rf_ConfigureReconstruction(RF_ShutdownList_t **listp)
 {
 
-	rf_pool_init(&rf_pools.recond, sizeof(RF_RaidReconDesc_t),
-		     "rf_recond_pl", RF_MIN_FREE_RECOND, RF_MAX_FREE_RECOND);
 	rf_pool_init(&rf_pools.reconbuffer, sizeof(RF_ReconBuffer_t),
 		     "rf_reconbuffer_pl", RF_MIN_FREE_RECONBUFFER, RF_MAX_FREE_RECONBUFFER);
 	rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
@@ -168,7 +165,8 @@ AllocRaidReconDesc(RF_Raid_t *raidPtr, RF_RowCol_t col,
 
 	RF_RaidReconDesc_t *reconDesc;
 
-	reconDesc = pool_get(&rf_pools.recond, PR_WAITOK);
+	RF_Malloc(reconDesc, sizeof(RF_RaidReconDesc_t),
+		  (RF_RaidReconDesc_t *));
 	reconDesc->raidPtr = raidPtr;
 	reconDesc->col = col;
 	reconDesc->spareDiskPtr = spareDiskPtr;
@@ -194,7 +192,7 @@ FreeReconDesc(RF_RaidReconDesc_t *reconDesc)
 #if (RF_RECON_STATS > 0) || defined(KERNEL)
 	printf("\n");
 #endif				/* (RF_RECON_STATS > 0) || KERNEL */
-	pool_put(&rf_pools.recond, reconDesc);
+	RF_Free(reconDesc, sizeof(RF_RaidReconDesc_t));
 }
 
 
