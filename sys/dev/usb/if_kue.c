@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.15 2000/03/12 21:59:38 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.16 2000/03/15 22:40:30 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -606,7 +606,6 @@ USB_ATTACH(kue)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->kue_dev), i);
-			splx(s);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
