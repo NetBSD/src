@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.9 2001/06/20 19:56:35 christos Exp $	*/
+/*	$NetBSD: top.c,v 1.10 2001/06/21 21:27:51 wiz Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -189,7 +189,7 @@ char *argv[];
 
     /* initialize some selection options */
     ps.idle    = Yes;
-    ps.system  = No;
+    ps.system  = Yes;
     ps.uid     = -1;
     ps.command = NULL;
 
