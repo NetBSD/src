@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k-nat.c,v 1.6 1995/01/26 18:28:18 mycroft Exp $
+	$Id: m68k-nat.c,v 1.7 1995/04/16 03:07:49 gwr Exp $
 */
 
 #include <sys/types.h>
@@ -68,33 +68,75 @@ store_inferior_registers (regno)
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
 }
 
+/* XXX - Add this to machine/regs.h instead? */
+struct md_core {
+	struct reg intreg;
+	struct fpreg freg;
+};
+/* Get registers from a core file. */
+void
+fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
+  char *core_reg_sect;
+  unsigned core_reg_size;
+  int which;
+  unsigned int ignore;	/* reg addr, unused in this version */
+{
+  struct md_core *core_reg;
+
+  core_reg = (struct md_core *)core_reg_sect;
+
+  if (which == 0) {
+    /* Integer registers */
+    memcpy(&registers[REGISTER_BYTE (0)],
+	   &core_reg->intreg, sizeof(struct reg));
+  } else if (which == 2) {
+    /* Floating point registers */
+    memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)],
+	   &core_reg->freg, sizeof(struct fpreg));
+  }
+}
+
+/* Get registers from a kernel crash dump. */
 void
 fetch_kcore_registers(pcb)
 struct pcb *pcb;
 {
-	int i;
+	int i, *ip, tmp=0;
 
-	for (i = 2; i < 8; ++i)
-		supply_register(i, &pcb->pcb_regs[i-2]);
-	for (i = 10; i < 16; ++i)
-		supply_register(i, &pcb->pcb_regs[i-4]);
+	/* D0,D1 */
+	ip = &tmp;
+	supply_register(0, ip);
+	supply_register(1, ip);
+	/* D2-D7 */
+	ip = &pcb->pcb_regs[0];
+	for (i = 2; i < 8; i++, ip++)
+		supply_register(i, ip);
 
-	/* fake 'scratch' regs d0, d1, a0, a1 */
-	i = 0;
-	supply_register(0, &i); supply_register(1, &i);
-	supply_register(8, &i); supply_register(9, &i);
+	/* A0,A1 */
+	ip = &tmp;
+	supply_register(8, ip);
+	supply_register(9, ip);
+	/* A2-A7 */
+	ip = &pcb->pcb_regs[6];
+	for (i = 10; i < 16; i++, ip++)
+		supply_register(i, ip);
 
-	if (target_read_memory(pcb->pcb_regs[10] + 4, &i, sizeof i, 0))
-		supply_register(PC_REGNUM, &i);
+	/* PC (use return address) */
+	tmp = pcb->pcb_regs[10] + 4;
+	if (target_read_memory(tmp, &tmp, sizeof(tmp), 0))
+		supply_register(PC_REGNUM, &tmp);
 
 	supply_register(PS_REGNUM, &pcb->pcb_ps);
 
-	for (i = FP0_REGNUM; i < NUM_REGS; ++i) {
-		int fpreg;
+	/* FP0-FP7 */
+	ip = &pcb->pcb_fpregs.fpf_regs[0];
+	for (i = 0; i < 8; ++i, ip+=3)
+		supply_register(FP0_REGNUM+i, ip);
 
-		REGISTER_U_ADDR(fpreg, 0, i);
-		supply_register(i, ((char *)pcb) + fpreg);
-	}
+	/* FPCR, FPSR, FPIAR */
+	supply_register(FPC_REGNUM, ip++);
+	supply_register(FPS_REGNUM, ip++);
+	supply_register(FPI_REGNUM, ip++);
 
 	return;
 }
