@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.76 2001/04/26 17:09:39 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.77 2001/04/28 15:09:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -788,17 +788,15 @@ ncr53c9x_get_ecb(sc, flags)
 	int flags;
 {
 	struct ncr53c9x_ecb *ecb;
-	int s, wait = 0;
-
-	if ((curproc != NULL) && ((flags & XS_CTL_NOSLEEP) == 0))
-		wait = PR_WAITOK;
+	int s;
 
 	s = splbio();
-	ecb = (struct ncr53c9x_ecb *)pool_get(&ecb_pool, wait);
+	ecb = (struct ncr53c9x_ecb *)pool_get(&ecb_pool, PR_NOWAIT);
 	splx(s);
-	bzero(ecb, sizeof(*ecb));
-	if (ecb)
+	if (ecb) {
+		bzero(ecb, sizeof(*ecb));
 		ecb->flags |= ECB_ALLOC;
+	}
 	return (ecb);
 }
 
@@ -837,7 +835,6 @@ ncr53c9x_scsipi_request(chan, req, arg)
 
 		/* Get an ECB to use. */
 		ecb = ncr53c9x_get_ecb(sc, xs->xs_control);
-#ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track resources
 		 * in the mid-layer.
@@ -845,9 +842,10 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		if (ecb == NULL) {
 			scsipi_printaddr(periph);
 			printf("unable to allocate ecb\n");
-			panic("ncr53c9x_scsipi_request");
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			return;
 		}
-#endif
 
 		/* Initialize ecb */
 		ecb->xs = xs;
@@ -1068,13 +1066,7 @@ ncr53c9x_sched(sc)
 		s = splbio();
 		li = TINFO_LUN(ti, lun);
 		if (li == NULL) {
-			int wait = M_NOWAIT;
-			int flags = ecb->xs->xs_control;
-
 			/* Initialize LUN info and add to list. */
-			if ((curproc != NULL) &&
-			    ((flags & XS_CTL_NOSLEEP) == 0))
-				wait = M_WAITOK;
 			if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT))
 			    == NULL) {
 				splx(s);
@@ -1212,7 +1204,7 @@ ncr53c9x_done(sc, ecb)
 		} else {
 			xs->resid = ecb->dleft;
 		}
-		if (xs->status == SCSI_QUEUE_FULL)
+		if (xs->status == SCSI_QUEUE_FULL || xs->status == XS_BUSY)
 			xs->error = XS_BUSY;
 	}
 
