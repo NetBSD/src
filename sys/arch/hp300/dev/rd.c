@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.32 1997/06/24 00:44:03 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -63,11 +63,6 @@
 
 #include <hp300/dev/rdreg.h>
 #include <hp300/dev/rdvar.h>
-
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
 
 #include "opt_useleds.h"
 
