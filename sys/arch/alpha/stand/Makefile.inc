@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/02/16 21:27:06 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/02/23 20:42:28 cgd Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=
 
-.include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
+.include <bsd.own.mk>			# for ECOFF_TOOLCHAIN definition
 
 BINDIR=			/usr/mdec
 
@@ -20,7 +20,7 @@ CPPFLAGS+=		-DSECONDARY_LOAD_ADDRESS="0x${SECONDARY_LOAD_ADDRESS}"
 
 SAMISCCPPFLAGS+=	-DHEAP_LIMIT="0x${HEAP_LIMIT}"
 
-.if !defined(ELF_TOOLCHAIN)
+.if defined(ECOFF_TOOLCHAIN)
 CPPFLAGS+=	-DECOFF_COMPAT
 .endif
 
