@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.60 2000/11/08 19:50:08 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.61 2000/11/08 21:47:25 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -303,8 +303,8 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
-#scsibus* at isp?
 #scsibus* at iopsp?
+#scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
 scsibus* at sea?
