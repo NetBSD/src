@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.39 2002/01/07 21:47:10 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.39.6.1 2002/04/06 16:12:08 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ struct isa_attach_args {
  */
 struct isa_softc {
 	struct	device sc_dev;		/* base device */
+	struct device *sc_devp;
 
 	bus_space_tag_t sc_iot;		/* isa io space tag */
 	bus_space_tag_t sc_memt;	/* isa mem space tag */
