@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2001/01/10 03:47:41 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2001/01/15 13:19:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.26 2001/01/10 03:47:41 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2001/01/15 13:19:12 itojun Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -721,9 +721,13 @@ rip_mcast_on(struct interface *ifp)
 #endif
 	    && !(ifp->int_state & IS_ALIAS)) {
 		m.imr_multiaddr.s_addr = htonl(INADDR_RIP_GROUP);
+#ifdef MCAST_IFINDEX
+		m.imr_interface.s_addr = htonl(ifp->int_index);
+#else
 		m.imr_interface.s_addr = ((ifp->int_if_flags & IFF_POINTOPOINT)
 					  ? ifp->int_dstaddr
 					  : ifp->int_addr);
+#endif
 		if (setsockopt(rip_sock,IPPROTO_IP, IP_ADD_MEMBERSHIP,
 			       &m, sizeof(m)) < 0)
 			LOGERR("setsockopt(IP_ADD_MEMBERSHIP RIP)");
