@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.1 1998/09/24 23:28:17 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.2 1998/09/28 21:48:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.1 1998/09/24 23:28:17 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.2 1998/09/28 21:48:50 thorpej Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -61,8 +61,13 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	br	pv, Lcst1		/* compute new GP */
 Lcst1:	LDGP(pv)
 
+	/* Invalidate TLB and I-stream. */
+	ldiq	a0, -2			/* TBIA */
+	call_pal PAL_OSF1_tbi
+	call_pal PAL_imb
+
 	/* Load KGP with current GP. */
-	mov	s0, a0
+	mov	gp, a0
 	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
 
 	/* Restore argument and call cpu_hatch() */
