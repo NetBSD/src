@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.1.8.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.1.8.2 2004/12/17 12:15:49 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.2 2004/12/17 12:15:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.1 2004/12/13 17:52:21 bouyer Exp $
 #include <ddb/db_output.h>	/* XXX for db_max_line */
 
 static int xencons_isconsole = 0;
+static struct xencons_softc *xencons_console_device;
 
 #define	XENCONS_UNIT(x)	(minor(x))
 #define XENCONS_BURST 128
@@ -66,6 +67,11 @@ void xencons_init (void);
 struct xencons_softc {
 	struct	device sc_dev;
 	struct	tty *sc_tty;
+	int polling;
+	/* circular buffer when polling */
+	char buf[XENCONS_BURST];
+	volatile int buf_write;
+	volatile int buf_read;
 };
 
 CFATTACH_DECL(xencons, sizeof(struct xencons_softc),
@@ -100,6 +106,8 @@ static struct consdev xencons = {
 	NULL, NULL, NULL, NODEV, CN_NORMAL
 };
 
+static struct cnm_state xencons_cnm_state;
+
 void	xencons_start (struct tty *);
 int	xencons_param (struct tty *, struct termios *);
 
@@ -120,6 +128,11 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": Xen Virtual Console Driver\n");
 
+	sc->sc_tty = ttymalloc();
+	tty_attach(sc->sc_tty);
+	sc->sc_tty->t_oproc = xencons_start;
+	sc->sc_tty->t_param = xencons_param;
+
 	if (xencons_isconsole) {
 		int maj;
 
@@ -132,11 +145,17 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		aprint_verbose("%s: console major %d, unit %d\n",
 		    sc->sc_dev.dv_xname, maj, sc->sc_dev.dv_unit);
 
+		sc->sc_tty->t_dev = cn_tab->cn_dev;
+	
 		/* Set db_max_line to avoid paging. */
 		db_max_line = 0x7fffffff;
 
 		(void)ctrl_if_register_receiver(CMSG_CONSOLE, xencons_rx, 0);
+		xencons_console_device = sc;
+		cn_init_magic(&xencons_cnm_state);
+		cn_set_magic("+++++");
 	}
+	sc->polling = 0;
 }
 
 int
@@ -150,16 +169,10 @@ xencons_open(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
-		tty_attach(tp);
-	} else
-		tp = sc->sc_tty;
+	tp = sc->sc_tty;
 
-	tp->t_oproc = xencons_start;
-	tp->t_param = xencons_param;
-	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+		tp->t_dev = dev;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -328,22 +341,47 @@ xencons_rx(ctrl_msg_t *msg, unsigned long id)
 
 	sc = device_lookup(&xencons_cd, XENCONS_UNIT(cn_tab->cn_dev));
 	if (sc == NULL)
-		goto out;
+		goto out2;
 
+	s = spltty();
+	if (sc->polling) {
+		for (i = 0; i < msg->length; i++) {
+			cn_check_magic(sc->sc_tty->t_dev, msg->msg[i],
+			    xencons_cnm_state);
+			sc->buf[sc->buf_write] = msg->msg[i];
+			sc->buf_write++;
+			if (sc->buf_write == XENCONS_BURST)
+				sc->buf_write = 0;
+			if (sc->buf_write == sc->buf_read) {
+				/*
+				 * we overflowed the circular buffer
+				 * advance the read pointer, meaning
+				 * we loose one char at the beggining
+				 * of the buf
+				 */
+				sc->buf_read++;
+				if (sc->buf_read == XENCONS_BURST)
+					sc->buf_read = 0;
+			}
+		}
+		goto out;
+	}
+	// save_and_cli(flags);
+	// simple_lock(&xencons_lock);
 	tp = sc->sc_tty;
 	if (tp == NULL)
 		goto out;
 
-	s = spltty();
-	// save_and_cli(flags);
-	// simple_lock(&xencons_lock);
-	for (i = 0; i < msg->length; i++)
+	for (i = 0; i < msg->length; i++) {
+		cn_check_magic(sc->sc_tty->t_dev, msg->msg[i],
+		    xencons_cnm_state);
 		(*tp->t_linesw->l_rint)(msg->msg[i], tp);
+	}
+ out:
 	// simple_unlock(&xencons_lock);
 	// restore_flags(flags);
 	splx(s);
-
- out:
+ out2:
 	msg->length = 0;
 	ctrl_if_send_response(msg);
 }
@@ -362,9 +400,28 @@ xenconscn_attach()
 int
 xenconscn_getc(dev_t dev)
 {
+	int ret;
 
-	printf("\n");
-	for (;;);
+	if (xencons_console_device == NULL) {
+		printf("xenconscn_getc(): not console\n");
+		return 0;
+	}
+
+	if (xencons_console_device->polling == 0) {
+		printf("xenconscn_getc() but not polling\n");
+		return 0;
+	}
+
+	while (xencons_console_device->buf_write ==
+	    xencons_console_device->buf_read) {
+		HYPERVISOR_yield();
+	}
+
+	ret = xencons_console_device->buf[xencons_console_device->buf_read];
+	xencons_console_device->buf_read++;
+	if (xencons_console_device->buf_read == XENCONS_BURST)
+		xencons_console_device->buf_read = 0;
+	return ret;
 }
 
 void
@@ -396,7 +453,12 @@ xenconscn_putc(dev_t dev, int c)
 void
 xenconscn_pollc(dev_t dev, int on)
 {
-	
+	if (xencons_console_device)
+		xencons_console_device->polling = on;
+	if (on) {
+		xencons_console_device->buf_write = 0;
+		xencons_console_device->buf_read = 0;
+	}
 }
 
 /*
