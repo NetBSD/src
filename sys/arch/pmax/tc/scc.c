@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.47.2.2 1999/04/12 21:27:06 pk Exp $	*/
+/*	$NetBSD: scc.c,v 1.47.2.3 2000/09/26 11:22:29 he Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.47.2.2 1999/04/12 21:27:06 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.47.2.3 2000/09/26 11:22:29 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -1139,7 +1139,9 @@ scc_rxintr(sc, chan, regs, unit)
 {
 	register struct tty *tp = sc->scc_tty[chan];
 	int cc, rr1 = 0, rr2 = 0;	/* XXX */
+#ifdef HAVE_RCONS
 	char *cp;
+#endif
 
 	SCC_READ_DATA(regs, chan, cc);
 	if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
