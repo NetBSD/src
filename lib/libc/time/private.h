@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.14 1999/11/10 20:32:31 kleink Exp $	*/
+/*	$NetBSD: private.h,v 1.15 2000/10/10 18:09:25 is Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -210,7 +210,8 @@ char *	imalloc P((int n));
 void *	irealloc P((void * pointer, int size));
 void	icfree P((char * pointer));
 void	ifree P((char * pointer));
-char *	scheck P((const char *string, const char *format));
+char *	scheck P((const char *string, const char *format))
+	__attribute__((__format_arg__(2)));
 
 
 /*
