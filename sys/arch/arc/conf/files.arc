@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.25 2000/12/24 09:25:25 ur Exp $
+#	$NetBSD: files.arc,v 1.26 2000/12/24 09:35:28 ur Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -214,7 +214,7 @@ file	arch/arc/pci/pci_vga.c		pcivga
 # Specials.
 #
 # memory disk for installation
-file arch/arc/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c			memory_disk_hooks
 major {md = 8}
 
 # RAIDframe
