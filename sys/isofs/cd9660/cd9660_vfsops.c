@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.38 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.39 1999/07/17 01:08:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -127,14 +127,18 @@ cd9660_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("cd9660_mountroot: can't setup rootvp");
 
-	if ((error = vfs_rootmountalloc(MOUNT_CD9660, "root_device", &mp)) != 0)
+	if ((error = vfs_rootmountalloc(MOUNT_CD9660, "root_device", &mp))
+			!= 0) {
+		vrele(rootvp);
 		return (error);
+	}
 
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
