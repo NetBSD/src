@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k-nat.c,v 1.2 1994/05/30 20:03:39 hpeyerl Exp $
+	$Id: m68k-nat.c,v 1.3 1995/01/26 15:56:29 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -28,6 +28,45 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <sys/ptrace.h>
 
 #include "defs.h"
+#include "inferior.h"
+
+void
+fetch_inferior_registers (regno)
+     int regno;
+{
+  struct reg inferior_registers;
+  struct fpreg inferior_fp_registers;
+
+  ptrace (PT_GETREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+
+  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, 4*18);
+
+  ptrace (PT_GETFPREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+
+  memcpy (&registers[REGISTER_BYTE (18)], &inferior_fp_registers, 8*12+4*3);
+
+  registers_fetched ();
+}
+
+void
+store_inferior_registers (regno)
+     int regno;
+{
+  struct reg inferior_registers;
+  struct fpreg inferior_fp_registers;
+
+  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], 4*18);
+
+  ptrace (PT_SETREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+
+  memcpy (&inferior_fp_registers, &registers[REGISTER_BYTE (18)], 8*12+4*3);
+
+  ptrace (PT_SETFPREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+}
 
 void
 fetch_kcore_registers(pcb)
@@ -65,11 +104,12 @@ clear_regs()
 {
 	u_long reg = 0;
 	float freg = 0.0;
-	int i;
+	int i = 0;
 
-	for (i = 0; i < FP0_REGNUM; ++i)
+	for (; i < FP0_REGNUM; i++)
 		supply_register(i, (char *)&reg);
-	for (; i < NUM_REGS; ++i)
+	for (; i < FPC_REGNUM; i++)
 		supply_register(i, (char *)&freg);
-	return;
+	for (; i < NUM_REGS; i++)
+		supply_register(i, (char *)&reg);
 }
