@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.110 2001/07/25 17:29:14 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.111 2001/07/31 23:27:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.110 2001/07/25 17:29:14 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.111 2001/07/31 23:27:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -920,6 +920,35 @@ settunnel(src, dst)
 	strncpy(req.iflr_name, name, sizeof(req.iflr_name));
 	memcpy(&req.addr, srcres->ai_addr, srcres->ai_addrlen);
 	memcpy(&req.dstaddr, dstres->ai_addr, dstres->ai_addrlen);
+
+#ifdef INET6
+	if (req.addr.ss_family == AF_INET6) {
+		struct sockaddr_in6 *s, *d;
+
+		s = (struct sockaddr_in6 *)&req.addr;
+		d = (struct sockaddr_in6 *)&req.dstaddr;
+		if (s->sin6_scope_id != d->sin6_scope_id) {
+			errx(1, "scope mismatch");
+			/* NOTREACHED */
+		}
+#ifdef __KAME__
+		/* embed scopeid */
+		if (s->sin6_scope_id && 
+		    (IN6_IS_ADDR_LINKLOCAL(&s->sin6_addr) ||
+		     IN6_IS_ADDR_MC_LINKLOCAL(&s->sin6_addr))) {
+			*(u_int16_t *)&s->sin6_addr.s6_addr[2] =
+			    htons(s->sin6_scope_id);
+		}
+		if (d->sin6_scope_id && 
+		    (IN6_IS_ADDR_LINKLOCAL(&d->sin6_addr) ||
+		     IN6_IS_ADDR_MC_LINKLOCAL(&d->sin6_addr))) {
+			*(u_int16_t *)&d->sin6_addr.s6_addr[2] =
+			    htons(d->sin6_scope_id);
+		}
+#endif
+	}
+#endif
+
 	if (ioctl(s, SIOCSLIFPHYADDR, &req) < 0)
 		warn("SIOCSLIFPHYADDR");
 
