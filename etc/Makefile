@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.189 2001/10/29 22:18:28 perry Exp $
+#	$NetBSD: Makefile,v 1.190 2001/10/31 02:58:58 jmc Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -141,7 +141,7 @@ TARGET_ENDIANNESS=
 obj:
 	mkdir -p ${KERNOBJDIR}
 
-.ifndef DESTDIR
+.if !defined(DESTDIR) || ${DESTDIR} == ""
 __warndestdir: .USE
 	@echo setenv DESTDIR before doing that!
 	@false
