@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.19 2001/06/10 17:05:11 tsubai Exp $
+#	$NetBSD: Makefile.macppc,v 1.20 2001/06/19 13:00:42 simonb Exp $
 #
 # Makefile for NetBSD
 #
@@ -42,7 +42,8 @@ TEXTADDR?=	100000
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dmacppc
-CWARNFLAGS?=	-Werror -Wall -Wpointer-arith -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wpointer-arith -Wstrict-prototypes \
+		-Wmissing-prototypes
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 
 CWARNFLAGS+=	-Wno-uninitialized
