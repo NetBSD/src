@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.11 1993/07/18 10:07:39 mycroft Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.12 1993/07/23 03:01:49 brezak Exp $";
 #endif /* not lint */
 
 /*
@@ -230,14 +230,8 @@ makefile()
  */
 read_files()
 {
-	FILE *fp;
-	register struct file_list *tp, *pf;
-	register struct device *dp;
-	struct device *save_dp;
-	register struct opt *op;
-	char *wd, *this, *needs, *special;
+	register struct file_list *fl;
 	char fname[32];
-	int nreqs, first = 1, configdep, isdup, std, filetype, driver;
 
 	ftab = 0;
 	(void) strcpy(fname, "../../../conf/files");
@@ -245,6 +239,12 @@ read_files()
 	(void) sprintf(fname, "files.%s", machinename);
 	read_file(fname,1,0);
 	(void) sprintf(fname, "files.%s", raise(ident));
+	read_file(fname,0,1);
+	(void) strcpy(fname, "../../../conf/options");
+	read_file(fname,0,0);
+	(void) sprintf(fname, "options.%s", machinename);
+	read_file(fname,0,0);
+	(void) sprintf(fname, "options.%s", raise(ident));
 	read_file(fname,0,1);
 }
 
