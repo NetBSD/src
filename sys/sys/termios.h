@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.19 1998/02/14 01:25:21 thorpej Exp $	*/
+/*	$NetBSD: termios.h,v 1.20 1998/02/16 08:13:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -269,14 +269,15 @@ int	tcdrain __P((int));
 int	tcflow __P((int, int));
 int	tcflush __P((int, int));
 int	tcsendbreak __P((int, int));
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+pid_t	tcgetsid __P((int));
+#endif /* !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
 
-#if !defined(_POSIX_C_SOURCE)
-#if !defined(_XOPEN_SOURCE)
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 void	cfmakeraw __P((struct termios *));
 int	cfsetspeed __P((struct termios *, speed_t));
-#endif /* ! _XOPEN_SOURCE */
-pid_t	tcgetsid __P((int));
-#endif /* ! _POSIX_C_SOURCE */
+#endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
 __END_DECLS
 
 #endif /* !_KERNEL */
