@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.104 2000/09/05 16:20:27 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.105 2000/09/05 16:27:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -388,6 +388,7 @@ void	remrunqueue __P((struct proc *));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
+void	suspendsched __P((void));
 int	ltsleep __P((void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *));
 void	unsleep __P((struct proc *));
