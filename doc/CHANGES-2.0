@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.59 2004/04/08 21:07:56 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.60 2004/04/08 22:02:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -653,3 +653,9 @@ sys/arch/sparc/sparc/cache.c			1.83
 	For now, disable Hypersparc instruction cache on MP machines.
 	[pk, ticket #97]
 
+
+games/mille/move.c				1.14
+
+	If the current player has no cards, skip to the other player.    
+	Make this compile with -DDEBUG. PR#12530
+	[jdc, ticket #101]
