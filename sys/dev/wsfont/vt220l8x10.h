@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220l8x10.h,v 1.1 1999/11/02 10:25:22 takemura Exp $ */
+/* 	$NetBSD: vt220l8x10.h,v 1.2 1999/12/04 13:40:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -35,6 +35,19 @@
 /*
  * Translated into a wsfont form by Shin Takemura in Nov 2, 1999.
  */
+
+extern u_char vt220l8x10_data[];
+
+struct wsdisplay_font vt220l8x10 = {
+    "vt220l",			/* typeface name */
+    '\0',			/* firstchar */
+    256,			/* numchars */
+    WSDISPLAY_FONTENC_ISO,	/* encoding */
+    8,				/* width */
+    10,				/* height */
+    1,				/* stride */
+    vt220l8x10_data		/* data */
+};
 
 static u_char vt220l8x10_data[] = {
     /* code 0 */
@@ -3108,15 +3121,4 @@ static u_char vt220l8x10_data[] = {
     0x00, /* ................ */
     0x00, /* ................ */
     0x00, /* ................ */
-
-};
-struct wsdisplay_font vt220l8x10 = {
-    "vt220l",			/* typeface name */
-    0x00,			/* firstchar */
-    256,			/* numchars */
-    WSDISPLAY_FONTENC_ISO,	/* encoding */
-    8,				/* width */
-    10,				/* height */
-    1,				/* stride */
-    vt220l8x10_data			/* data */
 };
