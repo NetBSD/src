@@ -1,6 +1,8 @@
+#	$NetBSD: majors.sbmips,v 1.1.2.2 2002/05/30 07:14:51 gehenna Exp $
 #
 # Device majors for sbmips
 #
+
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
