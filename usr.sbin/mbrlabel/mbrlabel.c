@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.3 1999/01/27 20:44:04 thorpej Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.4 1999/08/19 05:44:48 cgd Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.3 1999/01/27 20:44:04 thorpej Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.4 1999/08/19 05:44:48 cgd Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -210,7 +210,7 @@ getparts(sd, np, off)
 void
 usage()
 {
-	fprintf(stderr, "Usage: mbrlabel { rawdisk }\n");
+	fprintf(stderr, "usage: mbrlabel rawdisk\n");
 	exit(1);
 }
 
