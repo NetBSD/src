@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.4 2002/03/14 17:26:27 eeh Exp $
+#	$NetBSD: files.walnut,v 1.5 2002/04/16 20:50:23 thorpej Exp $
 #
 # walnut-specific configuration info
 
@@ -25,9 +25,6 @@ major	{md = 9}
 
 # Machine-independent I2O drivers.
 include	"dev/i2o/files.i2o"
-
-# Machine-independent MII/PHY drivers.
-include	"dev/mii/files.mii"
 
 # Machine-independent SCSI drivers
 include	"dev/scsipi/files.scsipi"

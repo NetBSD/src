@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.26 2002/03/28 15:26:58 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.27 2002/04/16 20:50:20 thorpej Exp $
 #
 maxpartitions 8
 
@@ -117,7 +117,6 @@ file	arch/hpcsh/dev/hd64465/hd64465pcmcia.c	hd64465pcmcia
 file	arch/hpcsh/dev/hd6446x/hd6446x_subr.S	hd64461if | hd64465if
 file	arch/hpcsh/dev/hd6446x/hd6446xintc.c	hd64461if | hd64465if
 
-include	"dev/mii/files.mii"
 #include "dev/usb/files.usb"
 include	"dev/wscons/files.wscons"
 
