@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.9 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.10 2002/11/10 18:10:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,14 +40,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigprocmask.S,v 1.9 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: sigprocmask.S,v 1.10 2002/11/10 18:10:26 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder

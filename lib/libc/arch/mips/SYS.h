@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.15 2002/05/26 12:24:57 wiz Exp $ */
+/*	$NetBSD: SYS.h,v 1.16 2002/11/10 18:10:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -80,7 +80,7 @@
  * ii) Do interprocedure jumps indirectly via t9, with the side-effect of
  *     preserving the callee's entry address in t9.
  */
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 # define PIC_PROLOGUE(x,sr)	.set noreorder; .cpload sr; .set reorder
 # define PIC_CALL(l,sr)		la sr, _C_LABEL(l); jr sr
