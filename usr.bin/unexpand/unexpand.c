@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.7 1999/02/10 16:16:43 kleink Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.8 1999/02/11 15:29:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.7 1999/02/10 16:16:43 kleink Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.8 1999/02/11 15:29:14 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: unexpand [ -a ] file ...\n");
+			fprintf(stderr, "usage: unexpand [-a] [file ...]\n");
 			exit(EXIT_FAILURE);
 			/* NOTREACHED */
 		}
