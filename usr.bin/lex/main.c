@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/main.c,v 1.10 1996/12/10 07:18:48 mikel Exp $ */
+/* $NetBSD: main.c,v 1.11 1998/01/05 05:15:55 perry Exp $ */
 
 
 #include "flexdef.h"

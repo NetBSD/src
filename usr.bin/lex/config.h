@@ -1,5 +1,5 @@
 /* config.h.  Generated automatically by configure.  */
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/config.h,v 1.2 1996/12/10 07:18:40 mikel Exp $ */
+/* $NetBSD: config.h,v 1.3 1998/01/05 05:15:45 perry Exp $ */
 
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
