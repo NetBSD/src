@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.7 1997/10/13 21:04:40 christos Exp $	*/
+/*	$NetBSD: sync.c,v 1.8 1998/03/29 04:56:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.7 1997/10/13 21:04:40 christos Exp $");
+__RCSID("$NetBSD: sync.c,v 1.8 1998/03/29 04:56:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,6 @@ Sync()
 	long a, b, c, d;
 	char buf[80];
 	char erred = 0;
-	extern errno;
 
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
