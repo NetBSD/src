@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.9 1994/06/30 12:54:44 gwr Exp $
+ *	$Id: db_disasm.c,v 1.10 1994/10/06 20:32:04 chopps Exp $
  */
 /*
  * Notes:
@@ -885,7 +885,7 @@ opcode_branch(dbuf, opc)
 		sz = SIZE_LONG;
 		addchar('l');
 	} else {
-		disp = *(char *)(dbuf->val + 1);
+		disp = *((char *)dbuf->val + 1);
 		/*
 		 * XXX gas chokes on this, I am not sure if
 		 * XXX it can even be made to emit it (short of .word)
