@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.1 1996/10/29 06:08:58 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.2 1996/10/30 05:39:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -309,19 +309,27 @@ espattach(parent, self, aux)
 #else
 #ifdef MAC68K_DRIVER
 	if (sc->sc_dev.dv_unit == 0) {
+		unsigned long	reg_offset;
+
 		sc->sc_reg = (volatile u_char *) SCSIBase;
 		mac68k_register_scsi_irq((void (*)(void *)) espintr, sc);
 		sc->irq_mask = V2IF_SCSIIRQ;
+		reg_offset = SCSIBase - IOBase;
+		if (reg_offset == 0x10000) {
+			sc->sc_freq = 16500000;
+		} else {
+			sc->sc_freq = 25000000;
+		}
 	} else {
 		sc->sc_reg = (volatile u_char *) SCSIBase + 0x400;
 		mac68k_register_scsi_b_irq((void (*)(void *)) espintr, sc);
 		sc->irq_mask = V2IF_SCSIDRQ; /* V2IF_T1?  If so, fix ^^, too */
+		sc->sc_freq = 25000000;
 	}
 	sc->sc_dma = &sc->_sc_dma;
 	printf(": address %p", sc->sc_reg);
 
 	sc->sc_id = 7;
-	sc->sc_freq = 25000000;
 #else
 	sc->sc_reg = (volatile u_int32_t *)tcdsdev->tcdsda_addr;
 	sc->sc_cookie = tcdsdev->tcdsda_cookie;
