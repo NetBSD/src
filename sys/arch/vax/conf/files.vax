@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.56 1999/08/04 19:15:11 ragge Exp $
+#       $NetBSD: files.vax,v 1.57 1999/08/07 10:36:44 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -11,26 +11,44 @@ maxusers 8 32 64
 device	mainbus { }
 attach	mainbus at root
 
-device	sbi { tr=-1 }
-attach	sbi at mainbus
-file	arch/vax/vax/sbi.c		sbi needs-flag
+# Define a bunch of devices, needed in more than one place.
+device	cpu
+device	mem
+device	mba { drive = -1 }
 
+# SBI and related devices
+device	sbi { tr=-1 }
+attach	sbi at mainbus with sbi_mainbus
+file	arch/vax/vax/sbi.c		sbi
+
+attach	mem at sbi with mem_sbi
+file	arch/vax/vax/ka780.c		vax780 | mem_sbi
+file	arch/vax/vax/cfl.c		vax780 | mem_sbi
+
+# Abus and related devices
+device	abus { }
+attach	abus at mainbus
+attach	sbi at abus with sbi_abus
+file	arch/vax/vax/ka860.c		abus
+file	arch/vax/vax/crl.c		abus
+
+# CMI and related devices
 device	cmi { tr=-1 }
 attach	cmi at mainbus
+file	arch/vax/vax/cmi.c		cmi
+
+attach	mem at cmi with mem_cmi
+file	arch/vax/vax/ka750.c		vax750 | mem_cmi
+file	arch/vax/vax/ctu.c		vax750 | mem_cmi
 
 device	vsbus { csr }
 attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
 
-device	cpu
-attach	cpu at mainbus with cpu_mainbus
+device	ibus { }
+attach	ibus at mainbus
+file	arch/vax/vax/ibus.c		ibus
 
-device	mem
-attach	mem at mainbus with mem_mainbus
-attach	mem at sbi with mem_sbi
-attach	mem at cmi with mem_cmi
-
-device	mba { drive = -1 }
 attach	mba at sbi with mba_sbi
 attach	mba at cmi with mba_cmi
 file	arch/vax/mba/mba.c		mba needs-flag
@@ -58,8 +76,8 @@ major	{ra = 9}
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
-attach	uba at mainbus with uba_mainbus
-file	arch/vax/uba/uba_mainbus.c	uba_mainbus
+attach	uba at ibus with uba_ibus
+file	arch/vax/uba/uba_ibus.c		uba_ibus
 attach	uba at sbi with uba_sbi
 file	arch/vax/uba/uba_sbi.c		uba_sbi
 attach	uba at cmi with uba_cmi
@@ -81,7 +99,7 @@ attach	ts at uba
 file	arch/vax/uba/ts.c		ts needs-flag
 
 attach	dz at vsbus with dz_vsbus
-file	arch/vax/vsa/dz_vsbus.c		dz_vsbus
+file	arch/vax/vsa/dz_ibus.c		dz_vsbus
 
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
@@ -267,14 +285,8 @@ file	arch/vax/vax/clock.c
 file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650|vax670
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
-file	arch/vax/vax/ka750.c		vax750
-file	arch/vax/vax/ctu.c		vax750
-file	arch/vax/vax/ka780.c		vax780
-file	arch/vax/vax/cfl.c		vax780
 file	arch/vax/vax/ka820.c		vax8200
 file	arch/vax/vax/crx.c		vax8200
-file	arch/vax/vax/ka860.c		vax8600
-file	arch/vax/vax/crl.c		vax8600
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43

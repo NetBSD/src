@@ -1,6 +1,6 @@
-/*	$NetBSD: sbi.c,v 1.20 1999/08/07 10:36:50 ragge Exp $ */
+/*	$NetBSD: ibus.c,v 1.1 1999/08/07 10:36:48 ragge Exp $ */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,7 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,91 +30,80 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Still to do: Write all SBI error handling.
- */
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/nexus.h>
+#include <machine/cpu.h>
+#include <machine/sid.h>
 
-static	int sbi_print __P((void *, const char *));
-static	int sbi_match __P((struct device *, struct cfdata *, void *));
-static	void sbi_attach __P((struct device *, struct device *, void*));
+static	int ibus_print __P((void *, const char *));
+static	int ibus_match __P((struct device *, struct cfdata *, void *));
+static	void ibus_attach __P((struct device *, struct device *, void*));
+
+struct	cfattach ibus_ca = {
+	sizeof(struct device), ibus_match, ibus_attach
+};
 
 int
-sbi_print(aux, name)
+ibus_print(aux, name)
 	void *aux;
 	const char *name;
 {
-	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	int unsupp = 0;
+	struct bp_conf *bp = aux;
 
-	if (name) {
-		switch (sa->type) {
-		case NEX_MBA:
-			printf("mba at %s", name);
-			break;
-		default:
-			printf("unknown device 0x%x at %s", sa->type, name);
-			unsupp++;
-		}		
-	}
-	printf(" tr%d", sa->nexnum);
-	return (unsupp ? UNSUPP : UNCONF);
+	if (name)
+		printf("device %s at %s", bp->type, name);
+
+	return (UNCONF);
 }
 
+
 int
-sbi_match(parent, cf, aux)
-	struct device	*parent;
+ibus_match(parent, cf, aux)
+	struct	device	*parent;
 	struct cfdata *cf;
-	void *aux;
+	void	*aux;
 {
-	if (vax_bustype == VAX_SBIBUS)
+	if (vax_bustype == VAX_IBUS)
 		return 1;
 	return 0;
 }
 
+#define	SGECADDR 0x20008000
+#define SHACADDR 0x20004200
+
 void
-sbi_attach(parent, self, aux)
+ibus_attach(parent, self, aux)
 	struct	device	*parent, *self;
 	void	*aux;
 {
-	u_int	nexnum, minnex;
-	struct	sbi_attach_args sa;
+	struct bp_conf bp;
+	vaddr_t va;
 
 	printf("\n");
+	/*
+	 * All MV's have a Qbus.
+	 */
+	bp.type = "uba";
+	config_found(self, &bp, ibus_print);
 
-#define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
-	minnex = self->dv_unit * NNEXSBI;
-	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
-		struct	nexus *nexusP = 0;
-		volatile int tmp;
+	/*
+	 * There may be a SGEC. Is badaddr() enough here?
+	 */
+	bp.type = "sgec";
+	va = vax_map_physmem(SGECADDR, 1);
+	if (badaddr((caddr_t)va, 4) == 0)
+		config_found(self, &bp, ibus_print);
+	vax_unmap_physmem(va, 1);
 
-		nexusP = (struct nexus *)vax_map_physmem((paddr_t)NEXA8600 +
-		    sizeof(struct nexus) * nexnum, NEXPAGES);
-		if (badaddr((caddr_t)nexusP, 4)) {
-			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
-		} else {
-			tmp = nexusP->nexcsr.nex_csr; /* no byte reads */
-			sa.type = tmp & 255;
-
-			sa.nexnum = nexnum;
-			sa.nexaddr = nexusP;
-			config_found(self, (void*)&sa, sbi_print);
-		}
-	}
+	/*
+	 * The same procedure for SHAC.
+	 */
+	bp.type = "shac";
+	va = vax_map_physmem(SHACADDR, 1);
+	if (badaddr((caddr_t)va + 0x48, 4) == 0)
+		config_found(self, &bp, ibus_print);
+	vax_unmap_physmem(va, 1);
 }
-
-struct	cfattach sbi_mainbus_ca = {
-	sizeof(struct device), sbi_match, sbi_attach
-};
-
-struct	cfattach sbi_abus_ca = {
-	sizeof(struct device), sbi_match, sbi_attach
-};
