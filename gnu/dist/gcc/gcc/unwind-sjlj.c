@@ -180,7 +180,7 @@ _Unwind_Word
 _Unwind_GetCFA (struct _Unwind_Context *context)
 {
   /* ??? Ideally __builtin_setjmp places the CFA in the jmpbuf.  */
-  return NULL;
+  return 0;
 }
 
 void
