@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/05/08 21:11:50 gwr Exp $
+#	$NetBSD: Makefile,v 1.18 1997/05/09 07:50:32 mycroft Exp $
 
 .include "../../Makefile.inc"
 
@@ -6,19 +6,16 @@ CFLAGS += -I${.CURDIR} -I.
 
 MAN = mset.1 map3270.5
 
-SRCS += astosc.c map3270.c mset.c
+SRCS += astosc.OUT astosc.c map3270.c mset.c
 
 # this and the dependency hacks below to make 'depend' target
 # work right...
-
-DEPSRCS += astosc.OUT map3270.c mset.c
 
 PROG = mset
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -s -f-
 
-astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
 astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
@@ -28,15 +25,8 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	/bin/rm -f astosc.out
 	ln -s astosc.OUT astosc.out
 
-# astosc.out
-
 ${MKASTOSC}:
 	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
-
-
-depend: .depend
-.depend: ${DEPSRCS}
-	${MKDEP} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1997/05/08 21:11:53 gwr Exp $
+#	$NetBSD: Makefile,v 1.23 1997/05/09 07:50:33 mycroft Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -7,27 +7,11 @@ CFLAGS += -I${.CURDIR} -I.
 LDADD += -lcurses -ltermcap -lcrypt
 DPADD += ${LIBCURSES} ${LIBTERMCAP} ${LIBCRYPT}
 
-SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
-SRCS += disp_asc.c ebc_disp.c
-SRCS += map3270.c termin.c
-SRCS += api.c function.c inbound.c oia.c options.c outbound.c
-SRCS += genbsubs.c globals.c system.c termout.c
-SRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
-SRCS += tn3270.c utilities.c
-SRCS += genget.c
-
-# this and the dependency hacks below to make 'depend' target
-# work right...
-
-DEPSRCS += astosc.OUT asc_disp.OUT disp_asc.OUT kbd.OUT
-DEPSRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c dctype.c
-DEPSRCS += ebc_disp.c
-DEPSRCS += map3270.c termin.c
-DEPSRCS += api.c function.c inbound.c oia.c options.c outbound.c
-DEPSRCS += genbsubs.c globals.c system.c termout.c
-DEPSRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
-DEPSRCS += tn3270.c utilities.c
-DEPSRCS += genget.c
+SRCS += api.c api_bsd.c api_exch.c apilib.c asc_disp.OUT asc_ebc.c astosc.OUT \
+	astosc.c commands.c dctype.c disp_asc.OUT disp_asc.c ebc_disp.c \
+	function.c genbsubs.c genget.c globals.c inbound.c kbd.OUT main.c \
+	map3270.c network.c oia.c options.c outbound.c ring.c sys_bsd.c \
+	system.c telnet.c termin.c terminal.c termout.c tn3270.c utilities.c
 
 PROG = tn3270
 
@@ -43,7 +27,6 @@ MKDSTOAS!=cd $(.CURDIR)/../tools/mkdstoas; \
 MKHITS!=cd $(.CURDIR)/../tools/mkhits; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkhits\n" | ${MAKE} -s -f-
 
-astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
 astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
@@ -53,7 +36,6 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	/bin/rm -f astosc.out
 	ln -s astosc.OUT astosc.out
 
-disp_asc.o: asc_disp.OUT disp_asc.OUT
 CLEANFILES += asc_disp.OUT asc_disp.out disp_asc.OUT disp_asc.out
 asc_disp.OUT: ${MKASTODS}
 	${MKASTODS} > ${.TARGET}
@@ -64,7 +46,6 @@ disp_asc.OUT: ${MKDSTOAS}
 	/bin/rm -f disp_asc.out
 	ln -s disp_asc.OUT disp_asc.out
 
-inbound.o: kbd.OUT
 CLEANFILES += TMPfunc.out kbd.OUT kbd.out
 kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
 	 ${MKHITS}
@@ -74,11 +55,6 @@ kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
 	/bin/rm -f kbd.out
 	ln -s kbd.OUT kbd.out
 
-# astosc.out
-# asc_disp.out disp_asc.out
-# default.map
-# kbd.out
-
 ${MKASTOSC}:
 	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
 ${MKASTODS}:
@@ -87,11 +63,6 @@ ${MKDSTOAS}:
 	cd ${.CURDIR}/../tools/mkdstoas; ${MAKE}
 ${MKHITS}:
 	cd ${.CURDIR}/../tools/mkhits; ${MAKE}
-
-
-depend: .depend
-.depend: ${DEPSRCS}
-	${MKDEP} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>
 
