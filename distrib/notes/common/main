@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.41 2000/01/02 18:39:03 itojun Exp $
+.\" $NetBSD: main,v 1.42 2000/01/12 04:49:56 soren Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -856,6 +856,7 @@ them, and would like to mentioned, tell us!)
 .It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG
 .It Ta Antti Kantee Ta Mt pooka@NetBSD.ORG
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
+.It Ta Thomas Klausner Ta Mt wiz@NetBSD.ORG
 .It Ta Klaus Klein Ta Mt kleink@NetBSD.ORG
 .It Ta John Kohl Ta Mt jtk@NetBSD.ORG
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.ORG
