@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.34 2003/02/17 23:48:23 perseant Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.35 2003/03/01 05:07:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.34 2003/02/17 23:48:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.35 2003/03/01 05:07:53 perseant Exp $");
 
 #include "opt_quota.h"
 
@@ -179,7 +179,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	struct ucred *cred;
 	int flags;
 {
-	off_t oldeof, neweof, oldeob, neweob, pagestart;
+	off_t oldeof, neweof, oldeob, oldeop, neweob, pagestart;
 	struct uvm_object *uobj;
 	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
@@ -192,7 +192,16 @@ ufs_balloc_range(vp, off, len, cred, flags)
 		    vp, off, len, vp->v_size);
 
 	oldeof = vp->v_size;
-	GOP_SIZE(vp, oldeof, &oldeob, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, oldeof, &oldeop, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, oldeof, &oldeob, GOP_SIZE_READ);
+
+	/*
+	 * If we need to map pages in the former last block,
+	 * do so now.
+	 */
+	if (oldeob != oldeop) {
+		uvm_vnp_zerorange(vp, oldeop, oldeob - oldeop);
+	}
 
 	neweof = MAX(vp->v_size, off + len);
 	GOP_SIZE(vp, neweof, &neweob, GOP_SIZE_WRITE);
