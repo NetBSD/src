@@ -1,7 +1,7 @@
-	$NetBSD: prep.RISCOS,v 1.1 2001/10/14 14:08:03 bjh21 Exp $
+	$NetBSD: prep.RISCOS,v 1.2 2002/02/15 23:22:45 reinoud Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
-(RiscPC/A7000/A7000+).
+(RiscPC/A7000/A7000+/NC's).
 
 0 Before you start
 
@@ -20,21 +20,23 @@ You will need the following RiscOS software:
 
 	A program that will unpack sparchives. We recommend that you
 	get David Pilling's !SparkPlug. A selfextracting version of this
-	can be found on the Acorn ftp site (ftp://ftp.acorn.co.uk), and
-	also at David Pilling's W3 site
-	(http://www.pilling.demon.co.uk/soft.html).
+	can be found at David Pilling's W3 site
+	(http://www.pilling.demon.co.uk/free.html).
 
-	A program that can uncompress gzip files:
+	A program that can uncompress gzip files for the current bootloader
+	can't read gzip'ed kernels (yet!).
+
+		The included command line gzip program gzip_ff8 (!)
+		wich is a mirror a version that Laurent Domisse has
+		patched to work on SA. This is also available from:
+        	http://www.users.dircon.co.uk/~arcangel/files/index.html
+		Just set the type of the file to `ff8'.
 
 		SparkFS from David Pilling (commercial) (v1.28 for
 		SA-110).
 
-		!Gzip from HENSA (micros.hensa.ac.uk).
-
-		There is also a command line version of gzip available
-		that Laurent Domisse has patched to work on SA. This is
-		available from:
-        	http://www.users.dircon.co.uk/~arcangel/files/index.html
+		!Gzip from HENSA (micros.hensa.ac.uk); is it still alive
+		though?
 
 	A program to report your disk's geometry:
 
@@ -61,17 +63,17 @@ You will need the following RiscOS software:
 		MCS Connect32 SCSI: UNKNOWN
 		Morley SCSI: UNKNOWN
 
-Additionally you will require the following:
+Additionally you will require the following :
 
 	An installation kernel for your platform:
 
-		RiscPC:	UNKNOWN
-		A7000(+): UNKNOWN
+		RiscPC/A7000(+)/NC's  : INSTALL kernel
 
-	The Bootloader and RiscOS tools: bootloader.arc (This should
-	be pre-extracted if you're installing from CD-ROM).
+	The Bootloader and RiscOS tools: BtNetBSD.tar.gz or BtNetBSD.zip
+	as found in the installation/misc directory. (This should be
+	pre-extracted if you're installing from CD-ROM).
 
-	The NetBSD/arm32 distribution sets (Will be on the CD-ROM, or
+	The NetBSD/acorn32 distribution sets (Will be on the CD-ROM, or
 	available from your nearest NetBSD ftp site).
 
 	A hardcopy of this document, along with a hardcopy of the
@@ -271,9 +273,9 @@ you are using a different interface you have 2 options:
 
 2.2 Using a whole device for NetBSD
 
-As a safety precaution NetBSD/arm32 looks for a filecore bootblock
+As a safety precaution NetBSD/acorn32 looks for a filecore bootblock
 at the beginning of any device it labels. If it finds one and it
-looks as though it is in use then NetBSD/arm32 will not touch it.
+looks as though it is in use then NetBSD/acorn32 will not touch it.
 
 Because of this, if you've ever used your device for RiscOS, you will
 need to invalidate this bootblock.
