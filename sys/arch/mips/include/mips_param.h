@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.19 2000/03/27 02:55:14 nisimura Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.20 2000/06/09 04:37:51 soda Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -75,5 +75,5 @@
  */
 #define mips_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define mips_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define mips_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
+#define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2000/06/06 18:52:40 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.139 2000/06/09 04:37:52 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2000/06/06 18:52:40 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2000/06/09 04:37:52 soda Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -430,7 +430,7 @@ trap(status, cause, vaddr, opc, frame)
 		if (KERNLAND(vaddr)) {
 			pt_entry_t *pte;
 			unsigned entry;
-			vaddr_t pa;
+			paddr_t pa;
 
 			pte = kvtopte(vaddr);
 			entry = pte->pt_entry;
@@ -448,7 +448,8 @@ trap(status, cause, vaddr, opc, frame)
 			MachTLBUpdate(vaddr, entry);
 			pa = pfn_to_vad(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
-				printf("ktlbmod: va %x pa %lx\n", vaddr, pa);
+				printf("ktlbmod: va %x pa %llx\n",
+				    vaddr, (long long)pa);
 				panic("ktlbmod: unmanaged page");
 			}
 			pmap_set_modified(pa);
@@ -459,7 +460,7 @@ trap(status, cause, vaddr, opc, frame)
 	    {
 		pt_entry_t *pte;
 		unsigned entry;
-		vaddr_t pa;
+		paddr_t pa;
 		pmap_t pmap;
 
 		pmap  = p->p_vmspace->vm_map.pmap;
@@ -482,7 +483,8 @@ trap(status, cause, vaddr, opc, frame)
 		MachTLBUpdate(vaddr, entry);
 		pa = pfn_to_vad(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
-			printf("utlbmod: va %x pa %lx\n", vaddr, pa);
+			printf("utlbmod: va %x pa %llx\n",
+			    vaddr, (long long)pa);
 			panic("utlbmod: unmanaged page");
 		}
 		pmap_set_modified(pa);
