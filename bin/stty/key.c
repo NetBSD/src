@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.14 1998/07/28 11:40:58 mycroft Exp $	*/
+/*	$NetBSD: key.c,v 1.15 1999/01/13 23:55:26 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-__RCSID("$NetBSD: key.c,v 1.14 1998/07/28 11:40:58 mycroft Exp $");
+__RCSID("$NetBSD: key.c,v 1.15 1999/01/13 23:55:26 sommerfe Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,8 @@ void	f_rows __P((struct info *));
 void	f_sane __P((struct info *));
 void	f_size __P((struct info *));
 void	f_speed __P((struct info *));
+void	f_ostart __P((struct info *));
+void	f_ostop __P((struct info *));
 void	f_tty __P((struct info *));
 __END_DECLS
 
@@ -91,6 +93,8 @@ static const struct key {
 	{ "nl",		f_nl,		F_OFFOK },
 	{ "old",	f_tty,		0 },
 	{ "ospeed",	f_ospeed,	F_NEEDARG },
+	{ "ostart",	f_ostart,	0 },
+	{ "ostop",	f_ostop,	0 },
 	{ "raw",	f_raw,		F_OFFOK },
 	{ "rows",	f_rows,		F_NEEDARG },
 	{ "sane",	f_sane,		0 },
@@ -308,4 +312,20 @@ f_tty(ip)
 	tmp = TTYDISC;
 	if (ioctl(0, TIOCSETD, &tmp) < 0)
 		err(1, "TIOCSETD");
+}
+
+void
+f_ostart(ip)
+	struct info *ip;
+{
+	if (ioctl (0, TIOCSTART) < 0)
+		err(1, "TIOCSTART");
+}
+
+void
+f_ostop(ip)
+	struct info *ip;
+{
+	if (ioctl (0, TIOCSTOP) < 0)
+		err(1, "TIOCSTOP");
 }
