@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldd.c,v 1.7 1994/04/10 08:54:30 pk Exp $
+ *	$Id: ldd.c,v 1.8 1994/06/10 15:17:02 pk Exp $
  */
 
 #include <sys/types.h>
@@ -37,11 +37,12 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <a.out.h>
-#include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void
 usage()
@@ -124,7 +125,7 @@ char	*argv[];
 			}
 			break;
 		case 0:
-			rval != execl(*argv, *argv, NULL) != 0;
+			rval |= execl(*argv, *argv, NULL) != 0;
 			perror(*argv);
 			_exit(1);
 		}

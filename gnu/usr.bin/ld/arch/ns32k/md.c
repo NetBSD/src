@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.1 1994/04/07 19:44:48 pk Exp $
+ *	$Id: md.c,v 1.2 1994/06/10 15:17:13 pk Exp $
  */
 
 #include <sys/param.h>
@@ -206,7 +206,7 @@ int		n;
 		Ivalue = (Ivalue << 8) | *addr;
 		break;
 	default:
-		fatal("get_disp: invalid argument %d\n", n);
+		errx(1, "get_disp: invalid argument %d\n", n);
 	}
 	return Ivalue;
 }
