@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202 2002/01/24 16:50:34 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.203 2002/01/25 17:50:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -231,8 +231,8 @@ static struct pvlist *pvhead(paddr_t pfn)
  * it is in the MMU, however; that is true iff pm_segmap[VA_VSEG(va)]
  * does not point to the invalid PMEG.
  *
- * In the older SPARC architectures (pre-4m), page tables are cached in the
- * MMU. The following discussion applies to these architectures:
+ * In the older SPARC architectures (sun4/sun4c), page tables are cached in
+ * the MMU. The following discussion applies to these architectures:
  *
  * If a virtual segment is valid and loaded, the correct PTEs appear
  * in the MMU only.  If it is valid and unloaded, the correct PTEs appear
@@ -264,6 +264,7 @@ static struct pvlist *pvhead(paddr_t pfn)
  * or locked.  The LRU list is for user processes; the locked list is
  * for kernel entries; both are doubly linked queues headed by `mmuhd's.
  * The free list is a simple list, headed by a free list pointer.
+ *
  *
  * In the sun4m architecture using the SPARC Reference MMU (SRMMU), three
  * levels of page tables are maintained in physical memory. We use the same
@@ -303,8 +304,8 @@ int	reginval;		/* [4/3mmu] the invalid region number */
 /*
  * (sun4/4c)
  * A context is simply a small number that dictates which set of 4096
- * segment map entries the MMU uses.  The Sun 4c has eight such sets.
- * These are alloted in an `almost MRU' fashion.
+ * segment map entries the MMU uses.  The Sun 4c has eight (SS1,IPC) or
+ * sixteen (SS2,IPX) such sets. These are alloted in an `almost MRU' fashion.
  * (sun4m)
  * A context is simply a small number that indexes the context table, the
  * root-level page table mapping 4G areas. Each entry in this table points
@@ -521,7 +522,7 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
 /* --------------------------------------------------------------*/
 
 /*
- * Next we have some Sun4m-specific routines which have no 4/4c
+ * Next we have some sun4m-specific routines which have no 4/4c
  * counterparts, or which are 4/4c macros.
  */
 
@@ -1141,7 +1142,7 @@ mmu_reservemon4_4c(nrp, nsp)
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
-		panic("mmu_reservemon4_4c called on Sun4M machine");
+		panic("mmu_reservemon4_4c called on sun4m machine");
 		return;
 	}
 #endif
@@ -1209,7 +1210,7 @@ mmu_reservemon4_4c(nrp, nsp)
 }
 #endif
 
-#if defined(SUN4M) /* Sun4M versions of above */
+#if defined(SUN4M) /* sun4m versions of above */
 
 u_long
 srmmu_bypass_read(paddr)
@@ -1265,7 +1266,7 @@ mmu_reservemon4m(kpmap)
 	prom_vend = OPENPROM_ENDVADDR;
 
 	/*
-	 * XXX: although the Sun4M can handle 36 bits of physical
+	 * XXX: although the sun4m can handle 36 bits of physical
 	 * address space, we assume that all these page tables, etc
 	 * are in the lower 4G (32-bits) of address space, i.e. out of I/O
 	 * space. Eventually this should be changed to support the 36 bit
@@ -2050,7 +2051,7 @@ ctx_alloc(pm)
 		 * Reload page and context tables to activate the page tables
 		 * for this context.
 		 *
-		 * The gap stuff isn't really needed in the Sun4m architecture,
+		 * The gap stuff isn't really needed in the sun4m architecture,
 		 * since we don't have to worry about excessive mappings (all
 		 * mappings exist since the page tables must be complete for
 		 * the mmu to be happy).
@@ -2173,10 +2174,6 @@ ctx_free(pm)
 /*
  * Walk the given pv list, and for each PTE, set or clear some bits
  * (e.g., PG_W or PG_NC).
- *
- * As a special case, this never clears PG_W on `pager' pages.
- * These, being kernel addresses, are always in hardware and have
- * a context.
  *
  * This routine flushes the cache for any page whose PTE changes,
  * as long as the process has a context; this is overly conservative.
@@ -2462,7 +2459,7 @@ pv_link4_4c(pv, pm, va, nc)
 
 #endif /* sun4, sun4c code */
 
-#if defined(SUN4M)		/* Sun4M versions of above */
+#if defined(SUN4M)		/* sun4m versions of above */
 /*
  * Walk the given pv list, and for each PTE, set or clear some bits
  * (e.g., PG_W or PG_NC).
@@ -3273,9 +3270,9 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 }
 #endif
 
-#if defined(SUN4M)		/* Sun4M version of pmap_bootstrap */
+#if defined(SUN4M)		/* sun4m version of pmap_bootstrap */
 /*
- * Bootstrap the system enough to run with VM enabled on a Sun4M machine.
+ * Bootstrap the system enough to run with VM enabled on a sun4m machine.
  *
  * Switches from ROM to kernel page tables, and sets up initial mappings.
  */
@@ -3312,7 +3309,7 @@ pmap_bootstrap4m(void)
 	pmap_changeprot_p	=	pmap_changeprot4m;
 	pmap_rmk_p		=	pmap_rmk4m;
 	pmap_rmu_p		=	pmap_rmu4m;
-#endif /* defined Sun4/Sun4c */
+#endif /* defined SUN4/SUN4C */
 
 	/*
 	 * p points to top of kernel mem
@@ -5855,7 +5852,7 @@ pmap_kremove4_4c(va, len)
 
 #endif /*sun4,4c*/
 
-#if defined(SUN4M)		/* Sun4M versions of enter routines */
+#if defined(SUN4M)		/* sun4m versions of enter routines */
 /*
  * Insert (MI) physical page pa at virtual address va in the given pmap.
  * NB: the pa parameter includes type bits PMAP_OBIO, PMAP_NC as necessary.
@@ -6781,7 +6778,7 @@ pmap_copy_page4_4c(src, dst)
 }
 #endif /* 4, 4c */
 
-#if defined(SUN4M)		/* Sun4M version of copy/zero routines */
+#if defined(SUN4M)		/* sun4m version of copy/zero routines */
 /*
  * Fill the given MI physical page with zero bytes.
  *
