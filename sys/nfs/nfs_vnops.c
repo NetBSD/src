@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.168 2003/05/21 13:50:55 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.169 2003/05/26 13:34:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.168 2003/05/21 13:50:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.169 2003/05/26 13:34:38 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1109,7 +1109,8 @@ nfs_readlinkrpc(vp, uiop, cred)
 	caddr_t cp;
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
-	int error = 0, len, attrflag;
+	int error = 0, attrflag;
+	uint32_t len;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
@@ -1121,7 +1122,21 @@ nfs_readlinkrpc(vp, uiop, cred)
 	if (v3)
 		nfsm_postop_attr(vp, attrflag, 0);
 	if (!error) {
-		nfsm_strsiz(len, NFS_MAXPATHLEN);
+		if (v3) {
+			nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
+			len = fxdr_unsigned(uint32_t, *tl);
+			if (len > MAXPATHLEN) {
+				/*
+				 * this pathname is too long for us.
+				 */
+				m_freem(mrep);
+				/* Solaris returns EINVAL. should we follow? */
+				error = ENAMETOOLONG;
+				goto nfsmout;
+			}
+		} else {
+			nfsm_strsiz(len, NFS_MAXPATHLEN);
+		}
 		nfsm_mtouio(uiop, len);
 	}
 	nfsm_reqdone;
