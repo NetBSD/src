@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.7 1993/10/27 08:00:40 mycroft Exp $
+ *	$Id: intr.c,v 1.8 1993/10/27 17:45:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -244,33 +244,20 @@ u_short
 isa_discoverintr(force, aux)
 	void (*force)();
 {
-	int time = TIMER_FREQ * 1;	/* wait up to 1 second */
-	u_int last, now;
-	u_short iobase = IO_TIMER1;
+	register int time = 1000000;	/* wait up to 1 second */
+	extern unsigned ipending;
 
 	isa_flushintrs();
 	/* attempt to force interrupt */
 	force(aux);
-	/* set timer 2 to a known state */
-	outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT);
-	outb(iobase + TIMER_CNTR2, 0xff);
-	outb(iobase + TIMER_CNTR2, 0xff);
-	last = 0xffff;
 	while (time > 0) {
 		register unsigned irr;
-		register u_char lo, hi;
-		irr = (inb(IO_ICU1) | (inb(IO_ICU2) << 8)) & ~(IRQ_SLAVE | IRQ0);
+		irr = inb(IO_ICU1) | (inb(IO_ICU2) << 8) | ipending;
+		irr &= ~(IRQ_SLAVE | IRQ0);
 		if (irr)
 			return 1 << (ffs(irr) - 1);
-		outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_LATCH);
-		lo = inb(iobase + TIMER_CNTR2);
-		hi = inb(iobase + TIMER_CNTR2);
-		now = (hi << 8) | lo;
-		if (now <= last)
-			time -= (last - now);
-		else
-			time -= 0x10000 - (now - last);
-		last = now;
+		delay(10000);
+		time -= 10000;
 	}
 	return IRQNONE;
 }
