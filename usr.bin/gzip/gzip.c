@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.1.1.1 2003/12/23 05:16:33 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.2 2003/12/23 06:23:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -436,8 +436,6 @@ file_compress(char *file)
 	 * output, just in case.
 	 */
 	if (cflag == 0) {
-		struct timeval times[2];
-
 		if (stat(outfile, &osb) < 0) {
 			maybe_warn("couldn't stat: %s", outfile);
 			maybe_warnx("leaving original %s", file);
@@ -555,8 +553,6 @@ file_uncompress(char *file)
 	 * if we create a file...
 	 */
 	if (cflag == 0) {
-		struct timeval times[2];
-
 		/* close the file */
 		if (fclose(out))
 			maybe_err(1, "failed fclose");
