@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.31 1999/12/06 04:35:30 jonb Exp $
+.\" $NetBSD: main,v 1.32 1999/12/06 21:53:06 jwise Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -839,6 +839,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.ORG
 .It Ta Ken Hornstein Ta Mt kenh@NetBSD.ORG
 .It Ta Marc Horowitz Ta Mt marc@NetBSD.ORG
+.It Ta Dean Huxley Ta Mt dean@netbsd.org
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.ORG
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.ORG
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.ORG
