@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2000/06/27 17:58:21 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.25 2001/02/08 13:11:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -152,7 +152,7 @@ md_attach(parent, self, aux)
 	/*
 	 * This external function might setup a pre-loaded disk.
 	 * All it would need to do is setup the md_conf struct.
-	 * See sys/arch/sun3/dev/md_root.c for an example.
+	 * See sys/dev/md_root.c for an example.
 	 */
 	md_attach_hook(sc->sc_dev.dv_unit, &sc->sc_md);
 #endif
