@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.33 2001/04/25 17:53:04 bouyer Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.33.16.1 2002/05/16 16:06:35 gehenna Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.33 2001/04/25 17:53:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.33.16.1 2002/05/16 16:06:35 gehenna Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -40,11 +40,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.33 2001/04/25 17:53:04 bouyer Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdsvar.h>

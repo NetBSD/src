@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.13 2001/12/02 22:54:26 bouyer Exp $ */
+/* $NetBSD: dec_6600.c,v 1.13.8.1 2002/05/16 16:06:35 gehenna Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,17 +31,18 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.13 2001/12/02 22:54:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.13.8.1 2002/05/16 16:06:35 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>

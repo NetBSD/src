@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $ */
+/* $NetBSD: mainbus.c,v 1.27.40.1 2002/05/16 16:06:36 gehenna Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,16 +29,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.40.1 2002/05/16 16:06:36 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 
 /* Definition of the mainbus driver. */
 static int	mbmatch __P((struct device *, struct cfdata *, void *));

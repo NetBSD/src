@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.4 2001/05/30 15:24:26 lukem Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.4.16.1 2002/05/16 16:06:34 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,16 +67,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.4 2001/05/30 15:24:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.4.16.1 2002/05/16 16:06:34 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/eisa/eisavar.h>
 #include <dev/isa/isareg.h>
