@@ -1,9 +1,46 @@
-/*	$NetBSD: sem.h,v 1.9 1998/05/07 16:50:21 kleink Exp $	*/
+/*	$NetBSD: sem.h,v 1.10 1999/08/25 05:05:49 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * SVID compatible sem.h file
  *
- * Author:  Daniel Boulet
+ * Author: Daniel Boulet
  */
 
 #ifndef _SYS_SEM_H_
@@ -13,16 +50,32 @@
 
 #include <sys/ipc.h>
 
-struct sem {
+#ifdef _KERNEL
+struct __sem {
 	unsigned short	semval;		/* semaphore value */
 	pid_t		sempid;		/* pid of last operation */
 	unsigned short	semncnt;	/* # awaiting semval > cval */
 	unsigned short	semzcnt;	/* # awaiting semval = 0 */
 };
+#endif /* _KERNEL */
 
 struct semid_ds {
-	struct ipc_perm	sem_perm;	/* operation permission struct */
-	struct sem	*sem_base;	/* pointer to first semaphore in set */
+	struct ipc_perm	sem_perm;	/* operation permission structure */
+	unsigned short	sem_nsems;	/* number of semaphores in set */
+	time_t		sem_otime;	/* last semop() time */
+	time_t		sem_ctime;	/* last time changed by semctl() */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	struct __sem	*_sem_base;	/* pointer to first semaphore in set */
+};
+
+#ifdef _KERNEL
+struct semid_ds14 {
+	struct ipc_perm14 sem_perm;	/* operation permission struct */
+	struct __sem	*sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
 	time_t		sem_otime;	/* last operation time */
 	long		sem_pad1;	/* SVABI/386 says I need this here */
@@ -32,6 +85,7 @@ struct semid_ds {
 	long		sem_pad2;	/* SVABI/386 says I need this here */
 	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
+#endif /* _KERNEL */
 
 /*
  * semop's sops parameter structure
@@ -42,15 +96,6 @@ struct sembuf {
 	short		sem_flg;	/* operation flags */
 };
 #define SEM_UNDO	010000		/* undo changes on process exit */
-
-/*
- * semctl's arg parameter structure
- */
-union semun {
-	int	val;		/* value for SETVAL */
-	struct	semid_ds *buf;	/* buffer for IPC_STAT & IPC_SET */
-	u_short	*array;		/* array for GETALL & SETALL */
-};
 
 /*
  * commands for semctl
@@ -147,7 +192,7 @@ struct seminfo	seminfo;
  * Structures allocated in machdep.c
  */
 struct	semid_ds *sema;		/* semaphore id pool */
-struct	sem *sem;		/* semaphore pool */
+struct	__sem *sem;		/* semaphore pool */
 struct	map *semmap;		/* semaphore allocation map */
 struct	sem_undo *semu_list;	/* list of active undo structures */
 int	*semu;			/* undo structure pool */
@@ -168,17 +213,27 @@ int	*semu;			/* undo structure pool */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int semctl __P((int, int, int, union semun));
-int __semctl __P((int, int, int, union semun *));
-int semget __P((key_t, int, int));
-int semop __P((int, struct sembuf *, size_t));
+#if defined(__LIBC12_SOURCE__)
+int	semctl __P((int, int, int, union __semun));
+int	__semctl __P((int, int, int, union __semun *));
+int	__semctl13 __P((int, int, int, ...));
+#else
+int	semctl __P((int, int, int, ...)) __RENAME(__semctl13);
+#endif
+int	semget __P((key_t, int, int));
+int	semop __P((int, struct sembuf *, size_t));
 #if !defined(_XOPEN_SOURCE)
-int semconfig __P((int));
+int	semconfig __P((int));
 #endif
 __END_DECLS
 #else
-void seminit __P((void));
-void semexit __P((struct proc *));
+void	seminit __P((void));
+void	semexit __P((struct proc *));
+
+int	semctl1 __P((struct proc *, int, int, int, void *, register_t *));
+
+void	semid_ds14_to_native __P((struct semid_ds14 *, struct semid_ds *));
+void	native_to_semid_ds14 __P((struct semid_ds *, struct semid_ds14 *));
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */
