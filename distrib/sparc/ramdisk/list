@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2000/10/30 23:16:13 pk Exp $
+#	$NetBSD: list,v 1.15 2000/11/05 18:35:56 pk Exp $
 
 LIBS	libhack.o -lz
 
@@ -22,9 +22,9 @@ LINK	ramdiskbin			sbin/mount_ffs
 LINK	ramdiskbin			sbin/mount_cd9660
 LINK	ramdiskbin			sbin/umount
 LINK	ramdiskbin			sbin/reboot sbin/halt
-
-LINK	ramdiskbin			usr/bin/gzip usr/bin/gunzip usr/bin/zcat
 LINK	ramdiskbin			usr/sbin/chroot
+LINK	ramdiskbin			usr/bin/eject
+LINK	ramdiskbin			usr/bin/gzip usr/bin/gunzip usr/bin/zcat
 
 # `internal' crunchgen links
 ARGVLINK sh             -sh
