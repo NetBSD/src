@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.79.2.9 2002/10/10 18:43:04 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.79.2.10 2002/10/12 10:30:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.79.2.9 2002/10/10 18:43:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.79.2.10 2002/10/12 10:30:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,8 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 
 	if (delfp != NULL) {
 		FILE_USE(delfp);
-		/* XXXLUKEM jdolecek: knote_fdclose() call needed */
+		if (new < fdp->fd_knlistsize)
+			knote_fdclose(p, new);
 		(void) closef(delfp, p);
 	}
 	return (0);
@@ -600,6 +601,7 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 	case DTYPE_KQUEUE:
 		error = EINVAL;
 		break;
+
 	default:
 		error = EOPNOTSUPP;
 		break;
