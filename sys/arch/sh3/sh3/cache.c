@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.5 2002/04/28 17:10:37 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.6 2002/05/09 12:32:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ sh_cache_information()
 void
 __cache_flush()
 {
-	__volatile__ int *p = (int *)IOM_RAM_BEGIN;
+	__volatile__ int *p = (int *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 	int i;
 	int d;
 

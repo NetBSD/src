@@ -1,4 +1,4 @@
-# $NetBSD: std.dreamcast,v 1.4 2002/05/03 01:36:02 thorpej Exp $
+# $NetBSD: std.dreamcast,v 1.5 2002/05/09 12:32:32 uch Exp $
 #
 # standard, required NetBSD/dreamcast 'options'
 
@@ -13,7 +13,7 @@ options 	PCLOCK=49900000			# 50MHz
 #options 	PCLOCK=50000000			# 50MHz 
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00100000         # 1MB
-options 	IOM_RAM_BEGIN=0x8c000000
+options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_RAM_SIZE=0x01000000         # 16MB
 
 makeoptions	ENDIAN="-EL"
