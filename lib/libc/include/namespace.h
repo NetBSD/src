@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.76 2003/02/13 02:50:51 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.77 2003/05/17 20:43:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -319,7 +319,9 @@
 #define innetgr			_innetgr
 #define isatty			_isatty
 #define isinf			_isinf
+#define isinfl			_isinfl
 #define isnan			_isnan
+#define isnanl			_isnanl
 #define jrand48			_jrand48
 #define kill			_kill
 #define l64a			_l64a
