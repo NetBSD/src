@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.134 2001/06/07 01:04:40 lukem Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.135 2001/07/24 15:39:33 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1407,8 +1407,6 @@ nfs_mknod(v)
 	int error;
 
 	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
-	if (!error)
-		vput(newvp);
 	return (error);
 }
 
@@ -1869,6 +1867,7 @@ nfs_symlink(v)
 	struct vnode *newvp = (struct vnode *)0;
 	const int v3 = NFS_ISV3(dvp);
 
+	*ap->a_vpp = NULL;
 	nfsstats.rpccnt[NFSPROC_SYMLINK]++;
 	slen = strlen(ap->a_target);
 	nfsm_reqhead(dvp, NFSPROC_SYMLINK, NFSX_FH(v3) + 2*NFSX_UNSIGNED +
@@ -1894,18 +1893,30 @@ nfs_symlink(v)
 		nfsm_wcc_data(dvp, wccflag);
 	}
 	nfsm_reqdone;
-	if (newvp)
-		vput(newvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
-	VTONFS(dvp)->n_flag |= NMODIFIED;
-	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
-	vput(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
 	if (error == EEXIST)
 		error = 0;
+	if (error == 0 && newvp == NULL) {
+		struct nfsnode *np = NULL;
+
+		error = nfs_lookitup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_cred, cnp->cn_proc, &np);
+		if (error == 0)
+			newvp = NFSTOV(np);
+	}
+	if (error) {
+		if (newvp != NULL)
+			vput(newvp);
+	} else {
+		*ap->a_vpp = newvp;
+	}
+	PNBUF_PUT(cnp->cn_pnbuf);
+	VTONFS(dvp)->n_flag |= NMODIFIED;
+	if (!wccflag)
+		VTONFS(dvp)->n_attrstamp = 0;
+	vput(dvp);
 	return (error);
 }
 
