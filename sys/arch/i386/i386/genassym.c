@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.52 1996/09/08 15:43:37 jtk Exp $	*/
+/*	$NetBSD: genassym.c,v 1.53 1996/11/18 01:06:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -90,7 +90,9 @@ main()
 
 	def("PTDPTDI", PTDPTDI);
 	def("KPTDI", KPTDI);
-	def("NKPDE", NKPDE);
+	def("NKPDE_BASE", NKPDE_BASE);
+	def("NKPDE_MAX", NKPDE_MAX);
+	def("NKPDE_SCALE", NKPDE_SCALE);
 	def("APTDPTDI", APTDPTDI);
 
 	def("VM_MAXUSER_ADDRESS", (int)VM_MAXUSER_ADDRESS);
