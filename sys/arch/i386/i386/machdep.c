@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.13 1998/10/17 22:15:32 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.14 1998/10/25 07:20:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2415,7 +2415,7 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	int flags;
 {
 
-	panic("_bus_dmamap_load: not implemented");
+	panic("_bus_dmamap_load_mbuf: not implemented");
 }
 
 /*
