@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.35 2003/11/15 17:44:39 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.36 2003/11/16 01:14:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.35 2003/11/15 17:44:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.36 2003/11/16 01:14:07 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,18 +483,18 @@ mach_vm_inherit(args)
 }
 
 int
-mach_vm_make_memory_entry_64(args)
+mach_make_memory_entry_64(args)
 	struct mach_trap_args *args;
 {
-	mach_vm_make_memory_entry_64_request_t *req = args->smsg;
-	mach_vm_make_memory_entry_64_reply_t *rep = args->rmsg;
+	mach_make_memory_entry_64_request_t *req = args->smsg;
+	mach_make_memory_entry_64_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
 	struct mach_memory_entry *mme;
 	
-	printf("mach_vm_make_memory_entry_64, offset 0x%lx, size 0x%lx\n",
+	printf("mach_make_memory_entry_64, offset 0x%lx, size 0x%lx\n",
 	    (u_long)req->req_offset, (u_long)req->req_size);
 
 	mp = mach_port_get();

@@ -1,14 +1,14 @@
-/* $NetBSD: mach_services_names.c,v 1.1 2003/11/15 22:55:35 manu Exp $ */
+/* $NetBSD: mach_services_names.c,v 1.2 2003/11/16 01:14:07 manu Exp $ */
 
 /*
  * Mach services names. This file is not built
  * by the kernel, it is included by kdump sources.
  *
- * created from  $NetBSD: mach_services_names.c,v 1.1 2003/11/15 22:55:35 manu Exp $
+ * created from  $NetBSD: mach_services_names.c,v 1.2 2003/11/16 01:14:07 manu Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.1 2003/11/15 22:55:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.2 2003/11/16 01:14:07 manu Exp $");
 
 struct mach_service_name {
 	int srv_id;
