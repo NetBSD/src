@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.115 2001/09/17 17:36:06 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.116 2001/09/26 07:20:16 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.115 2001/09/17 17:36:06 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.116 2001/09/26 07:20:16 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,6 @@ const struct cmd {
 	{ "vlan",	NEXTARG,	0,		setvlan } ,
 	{ "vlanif",	NEXTARG,	0,		setvlanif } ,
 	{ "-vlanif",	0,		0,		unsetvlanif } ,
-	{ "deletetunnel", 0,		0,		deletetunnel },
 #if 0
 	/* XXX `create' special-cased below */
 	{ "create",	0,		0,		clone_create } ,
