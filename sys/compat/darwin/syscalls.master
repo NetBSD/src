@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2002/11/12 22:04:09 manu Exp $
+	$NetBSD: syscalls.master,v 1.2 2002/11/14 21:47:15 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -33,6 +33,9 @@
 ;
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
+;
+; NB: A lot of system calls are used from FreeBSD emulation, because theses 
+; system calls are just native NetBSD plus a check in /emul/<e_name>. 
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -50,6 +53,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <compat/freebsd/freebsd_syscallargs.h>
 %%
 
 0	INDIR		{ int sys_syscall(int number, ...); }
@@ -58,26 +62,28 @@
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
-5	NOARGS		{ int sys_open(const char *path, \
+5	NOARGS		{ int freebsd_sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
-9	NOARGS		{ int sys_link(const char *path, const char *link); }
-10	NOARGS		{ int sys_unlink(const char *path); }
+8	NOARGS		{ int compat_43_freebsd_sys_creat(const char *path, \
+			    mode_t mode); } ocreat
+9	NOARGS		{ int freebsd_sys_link(const char *path, \
+			    const char *link); }
+10	NOARGS		{ int freebsd_sys_unlink(const char *path); }
 11	UNIMPL		execv
-12	NOARGS		{ int sys_chdir(const char *path); }
+12	NOARGS		{ int freebsd_sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
-14	NOARGS		{ int sys_mknod(const char *path, mode_t mode, \
-			    dev_t dev); }
-15	NOARGS		{ int sys_chmod(const char *path, mode_t mode); }
-16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
+14	NOARGS		{ int freebsd_sys_mknod(const char *path, \
+			    mode_t mode, dev_t dev); }
+15	NOARGS		{ int freebsd_sys_chmod(const char *path, mode_t mode); }
+16	NOARGS		{ int freebsd_sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
-19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
+19	NOARGS		{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
 #ifdef COMPAT_43
 20	NOARGS 		{ pid_t sys_getpid_with_ppid(void); } getpid
@@ -109,15 +115,17 @@
 			    unsigned int *alen); }
 32	NOARGS		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
-33	NOARGS		{ int sys_access(const char *path, int flags); }
-34	NOARGS		{ int sys_chflags(const char *path, u_long flags); }
+33	NOARGS		{ int freebsd_sys_access(const char *path, \
+			    int flags); }
+34	NOARGS		{ int freebsd_sys_chflags(const char *path, \
+			    u_long flags); }
 35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	COMPAT_43	{ int sys_stat(const char *path, struct stat43 *ub); } \
-			    stat43
+38	NOARGS		{ int compat_43_freebsd_sys_stat(const char *path, \
+			    struct stat43 *ub); } stat43
 39	NOARGS		{ pid_t sys_getppid(void); }
-40	COMPAT_43	{ int sys_lstat(const char *path, \
+40	NOARGS		{ int compat_43_freebsd_sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -130,7 +138,7 @@
 #else
 45	EXCL		ktrace
 #endif
-46	COMPAT_13	{ int sys_sigaction(int signum, \
+46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
 #ifdef COMPAT_43
@@ -138,37 +146,38 @@
 #else
 47	NOARGS		{ gid_t sys_getgid(void); }
 #endif
-48	COMPAT_13	{ int sys_sigprocmask(int how, \
+48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
 50	NOARGS		{ int sys_setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
-52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
-53	COMPAT_13	{ int sys_sigaltstack( \
+52	NOARGS    	{ int compat_13_sys_sigpending(void); } sigpending13
+53	NOARGS    	{ int compat_13_sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); } sigaltstack13
 54	NOARGS		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
-55	COMPAT_12	{ int sys_reboot(int opt); } oreboot
-56	NOARGS		{ int sys_revoke(const char *path); }
-57	NOARGS		{ int sys_symlink(const char *path, \
+55	NOARGS		{ int sys_reboot(int opt); } oreboot
+56	NOARGS		{ int freebsd_sys_revoke(const char *path); }
+57	NOARGS		{ int freebsd_sys_symlink(const char *path, \
 			    const char *link); }
-58	NOARGS		{ int sys_readlink(const char *path, char *buf, \
-			    size_t count); }
-59	NOARGS		{ int sys_execve(const char *path, \
+58	NOARGS		{ int freebsd_sys_readlink(const char *path, \
+			    char *buf, size_t count); }
+59	NOARGS		{ int freebsd_sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
 60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
-61	NOARGS		{ int sys_chroot(const char *path); }
-62	COMPAT_43	{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
+61	NOARGS		{ int freebsd_sys_chroot(const char *path); }
+62	NOARGS		{ int compat_43_sys_fstat(int fd, \
+			    struct stat43 *sb); } fstat43
 63	UNIMPL
-64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
-65	COMPAT_12	{ int sys_msync(caddr_t addr, size_t len); }
+64	NOARGS    	{ int compat_43_sys_getpagesize(void); } ogetpagesize
+65	NOARGS    	{ int compat_12_sys_msync(caddr_t addr, size_t len); }
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-71	COMPAT_43	{ int sys_mmap(caddr_t addr, size_t len, int prot, \
+71	NOARGS    	{ int sys_mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
 72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
@@ -189,15 +198,16 @@
 83	NOARGS		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
-84	COMPAT_43	{ int sys_wait(void); } owait
-85	COMPAT_12	{ int sys_swapon(const char *name); } oswapon
+84	NOARGS    	{ int compat_43_sys_wait(void); } owait
+85	NOARGS    	{ int compat_12_sys_swapon(const char *name); } oswapon
 86	NOARGS		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
-87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); } \
-			    ogethostname
-88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); } \
-			    osethostname
-89	COMPAT_43	{ int sys_getdtablesize(void); } ogetdtablesize
+87	NOARGS    	{ int compat_43_sys_gethostname(char *hostname, \
+			    u_int len); } ogethostname
+88	NOARGS    	{ int compat_43_sys_sethostname(char *hostname, \
+			    u_int len); } osethostname
+89	NOARGS    	{ int compat_43_sys_getdtablesize(void); } \
+			    ogetdtablesize
 90	NOARGS		{ int sys_dup2(int from, int to); }
 91	UNIMPL
 92	NOARGS		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
@@ -209,32 +219,33 @@
 97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
-99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
+99	NOARGS    	{ int compat_43_sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	COMPAT_43	{ int sys_send(int s, caddr_t buf, int len, \
+101	NOARGS    	{ int compat_43_sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
-102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \
+102	NOARGS    	{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
 			    int flags); } orecv
-103	COMPAT_13	{ int sys_sigreturn(struct sigcontext13 *sigcntxp); } \
-			    sigreturn13
+103	NOARGS    	{ int compat_13_sys_sigreturn(struct \
+			    sigcontext13 *sigcntxp); } sigreturn13
 104	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, unsigned int valsize); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	UNIMPL
-108	COMPAT_43	{ int sys_sigvec(int signum, struct sigvec *nsv, \
-			    struct sigvec *osv); } osigvec
-109	COMPAT_43	{ int sys_sigblock(int mask); } osigblock
-110	COMPAT_43	{ int sys_sigsetmask(int mask); } osigsetmask
-111	COMPAT_13	{ int sys_sigsuspend(int mask); } sigsuspend13
-112	COMPAT_43	{ int sys_sigstack(struct sigstack *nss, \
+108	NOARGS    	{ int compat_43_sys_sigvec(int signum, \
+			    struct sigvec *nsv, struct sigvec *osv); } osigvec
+109	NOARGS    	{ int compat_43_sys_sigblock(int mask); } osigblock
+110	NOARGS    	{ int compat_43_sys_sigsetmask(int mask); } osigsetmask
+111	NOARGS    	{ int compat_13_sys_sigsuspend(int mask); } \
+			    sigsuspend13
+112	NOARGS    	{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
-113	COMPAT_43	{ int sys_recvmsg(int s, struct omsghdr *msg, \
-			    int flags); } orecvmsg
-114	COMPAT_43	{ int sys_sendmsg(int s, caddr_t msg, int flags); } \
-			    osendmsg
+113	NOARGS    	{ int compat_43_sys_recvmsg(int s, \
+			    struct omsghdr *msg, int flags); } orecvmsg
+114	NOARGS    	{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+			    int flags); } osendmsg
 115	UNIMPL
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
@@ -250,44 +261,49 @@
 			    const struct timezone *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
-125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t from, int *fromlenaddr); } \
-			    orecvfrom
+125	NOARGS    	{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
+			    size_t len, int flags, caddr_t from, \
+			    int *fromlenaddr); } orecvfrom
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
-128	NOARGS		{ int sys_rename(const char *from, const char *to); }
-129	COMPAT_43	{ int sys_truncate(const char *path, long length); } \
+128	NOARGS		{ int freebsd_sys_rename(const char *from, \
+			    const char *to); }
+129	NOARGS		{ int compat_43_freebsd_sys_truncate(const \
+			    char *path, long length); } \
 			    otruncate
-130	COMPAT_43	{ int sys_ftruncate(int fd, long length); } oftruncate
+130	NOARGS    	{ int compat_43_sys_ftruncate(int fd, \
+			    long length); } oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
-132	NOARGS		{ int sys_mkfifo(const char *path, mode_t mode); }
+132	NOARGS		{ int freebsd_sys_mkfifo(const char *path, \
+			    mode_t mode); }
 133	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    unsigned int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	NOARGS		{ int sys_mkdir(const char *path, mode_t mode); }
-137	NOARGS		{ int sys_rmdir(const char *path); }
+136	NOARGS		{ int freebsd_sys_mkdir(const char *path, mode_t mode); }
+137	NOARGS		{ int freebsd_sys_rmdir(const char *path); }
 138	NOARGS		{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
 139	UNIMPL		futimes
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
-141	COMPAT_43	{ int sys_getpeername(int fdes, caddr_t asa, \
-			    int *alen); } ogetpeername
-142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
+141	NOARGS    	{ int compat_43_sys_getpeername(int fdes, \
+			    caddr_t asa, int *alen); } ogetpeername
+142	NOARGS    	{ int32_t compat_43_sys_gethostid(void); } ogethostid
 143	UNIMPL
-144	COMPAT_43	{ int sys_getrlimit(int which, \
+144	NOARGS    	{ int compat_43_sys_getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
-145	COMPAT_43	{ int sys_setrlimit(int which, \
+145	NOARGS    	{ int compat_43_sys_setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
-146	COMPAT_43	{ int sys_killpg(int pgid, int signum); } okillpg
+146	NOARGS    	{ int compat_43_sys_killpg(int pgid, int signum); } \
+			    okillpg
 147	NOARGS		{ int sys_setsid(void); }
 148	UNIMPL
 149	UNIMPL
-150	COMPAT_43	{ int sys_getsockname(int fdec, caddr_t asa, \
-			    int *alen); } ogetsockname
+150	NOARGS    	{ int compat_43_sys_getsockname(int fdec, \
+			    caddr_t asa, int *alen); } ogetsockname
 151	UNIMPL		getpgid
 152	UNIMPL		setprivexec
 153	UNIMPL		pread
@@ -297,18 +313,23 @@
 #else
 155	EXCL		nfssvc
 #endif
-156	COMPAT_43	{ int sys_getdirentries(int fd, char *buf, \
+156	NOARGS    	{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	NOARGS		{ int sys_statfs(const char *path, \
+157	NOARGS		{ int freebsd_sys_statfs(const char *path, \
 			    struct statfs *buf); }
 158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL		unmount
 160	UNIMPL
-161	NOARGS		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
-162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
-			    ogetdomainname
-163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
-			    osetdomainname
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+161	NOARGS		{ int freebsd_sys_getfh(const char *fname, \
+			    fhandle_t *fhp); }
+#else
+161	EXCL		getfh
+#endif
+162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+			    int len); } ogetdomainname
+163	NOARGS    	{ int compat_09_sys_setdomainname(char *domainname, \
+			    int len); } osetdomainname
 164	UNIMPL
 165	UNIMPL		quotactl
 166	UNIMPL
@@ -333,27 +354,29 @@
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-188	COMPAT_12	{ int sys_stat(const char *path, struct stat12 *ub); } \
-			    stat12
-189	COMPAT_12	{ int sys_fstat(int fd, struct stat12 *sb); } fstat12
-190	COMPAT_12	{ int sys_lstat(const char *path, \
+188	NOARGS		{ int freebsd_sys_stat(const char *path, \
+			    struct stat12 *ub); } stat12
+189	NOARGS		{ int compat_12_sys_fstat(int fd, \
+			    struct stat12 *sb); } fstat12
+190	NOARGS		{ int freebsd_sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	NOARGS		{ long sys_pathconf(const char *path, int name); }
+191	NOARGS		{ long freebsd_sys_pathconf(const char *path, \
+			    int name); }
 192	NOARGS		{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL		getfsstat
 194	NOARGS		{ int sys_getrlimit(int which, \
 			    struct rlimit *rlp); }
 195	NOARGS		{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
-196	COMPAT_12	{ int sys_getdirentries(int fd, char *buf, \
+196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 197	NOARGS		{ void *sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
 198	UNIMPL
-199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
-			    int whence); }
-200	NOARGS		{ int sys_truncate(const char *path, int pad, \
-			    off_t length); }
+199	NOARGS    	{ off_t compat_43_sys_lseek(int fd, int pad, \
+			    off_t offset, int whence); }
+200	NOARGS		{ int freebsd_sys_truncate(const char *path, \
+			    int pad, off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	NOARGS		{ int sys___sysctl(int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, void *new, \
