@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.467 2002/08/08 09:57:21 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.468 2002/08/10 16:30:45 toshii Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.463 2002/08/08 09:56:38 drochner Exp 
+ *	NetBSD: pcidevs,v 1.464 2002/08/10 16:26:14 toshii Exp 
  */
 
 /*
@@ -1932,6 +1932,7 @@
 #define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
+#define	PCI_PRODUCT_SIS_745	0x0745		/* SiS 745 Host Bridge */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* SiS 900 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
