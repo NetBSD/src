@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.7 (Berkeley) 6/27/90
-#	$Id: Makefile,v 1.8 1994/12/25 12:38:41 pk Exp $
+#	$NetBSD: Makefile,v 1.9 1995/03/21 15:03:38 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
 CFLAGS+=-DBSD -I${.CURDIR} -I.

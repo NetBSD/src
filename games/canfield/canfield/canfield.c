@@ -1,6 +1,8 @@
+/*	$NetBSD: canfield.c,v 1.5 1995/03/21 15:08:32 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)canfield.c	5.11 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: canfield.c,v 1.4 1995/02/28 18:31:17 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: canfield.c,v 1.5 1995/03/21 15:08:32 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -54,10 +59,13 @@ static char rcsid[] = "$Id: canfield.c,v 1.4 1995/02/28 18:31:17 jtc Exp $";
  */
 
 #include <sys/types.h>
-#include <signal.h>
+
 #include <curses.h>
 #include <termios.h>
 #include <ctype.h>
+#include <signal.h>
+#include <termios.h>
+
 #include "pathnames.h"
 
 #define	decksize	52

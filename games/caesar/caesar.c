@@ -1,6 +1,8 @@
+/*	$NetBSD: caesar.c,v 1.3 1995/03/21 15:08:21 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Rick Adams.
@@ -40,14 +42,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)caesar.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: caesar.c,v 1.2 1993/08/01 18:55:37 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: caesar.c,v 1.3 1995/03/21 15:08:21 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <math.h>

@@ -1,6 +1,8 @@
+/*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)battlestar.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: battlestar.c,v 1.2 1993/08/01 18:56:14 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)battlestar.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
