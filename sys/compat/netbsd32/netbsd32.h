@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.25 2003/10/13 18:55:30 fvdl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.26 2004/01/15 14:34:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -550,6 +550,10 @@ void netbsd32_si32_to_si(siginfo_t *, siginfo32_t *);
 #define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
 
 int	coredump_netbsd32(struct lwp *, struct vnode *, struct ucred *);
+
+/* ktrace helper - only ktrsyscall() needs a different version */
+void ktrsyscall32(struct proc *, register_t, register_t, 
+    const struct sysent *, register64_t []);
 
 /*
  * random other stuff
