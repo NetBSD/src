@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.15 1996/09/23 16:18:36 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1.c,v 1.15 1996/09/23 16:18:36 christos Exp $";
+static char rcsid[] = "$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$NetBSD: pass1.c,v 1.15 1996/09/23 16:18:36 christos Exp 
 
 #include "fsck.h"
 #include "extern.h"
-#include "util.h"
+#include "fsutil.h"
 
 static daddr_t badblk;
 static daddr_t dupblk;

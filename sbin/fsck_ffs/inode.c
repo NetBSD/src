@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.21 1996/09/23 16:18:34 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.22 1996/09/27 22:45:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.21 1996/09/23 16:18:34 christos Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.22 1996/09/27 22:45:13 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$NetBSD: inode.c,v 1.21 1996/09/23 16:18:34 christos Exp 
 #include <string.h>
 
 #include "fsck.h"
-#include "util.h"
+#include "fsutil.h"
 #include "extern.h"
 
 static ino_t startinum;

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.17 1996/09/23 16:18:41 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.17 1996/09/23 16:18:41 christos Exp $";
+static char rcsid[] = "$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: utilities.c,v 1.17 1996/09/23 16:18:41 christos 
 #include <ctype.h>
 #include <unistd.h>
 
-#include "util.h"
+#include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
 
