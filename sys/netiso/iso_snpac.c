@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.7 1994/10/30 21:49:06 cgd Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.8 1995/03/06 19:06:05 glass Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -124,7 +124,7 @@ struct rtentry	*known_is;
  *	These addresses assume on-the-wire transmission of least significant
  *	bit first. This is the method used by 802.3. When these
  *	addresses are passed to the token ring driver, (802.5), they
- *	must be bit-swaped because 802.5 transmission order is MSb first.
+ *	must be bit-swapped because 802.5 transmission order is MSb first.
  *
  *	Furthermore, according to IBM Austin, these addresses are not
  *	true token ring multicast addresses. More work is necessary

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.18 1994/07/27 12:36:09 mycroft Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.19 1995/03/06 19:06:09 glass Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -572,7 +572,7 @@ arplookup(addr, create, proxy)
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		if (create)
-			log(LOG_DEBUG, "arptnew failed on %x\n", ntohl(addr));
+			log(LOG_DEBUG, "arplookup: unable to enter address for %x\n", ntohl(addr));
 		return (0);
 	}
 	return ((struct llinfo_arp *)rt->rt_llinfo);

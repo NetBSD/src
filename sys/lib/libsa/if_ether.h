@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.11 1995/02/27 09:10:35 glass Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.12 1995/03/06 19:06:11 glass Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -152,7 +152,6 @@ u_char	ether_ipmulticast_min[6];
 u_char	ether_ipmulticast_max[6];
 struct	ifqueue arpintrq;
 
-struct	llinfo_arp *arptnew __P((struct in_addr *));
 struct	llinfo_arp llinfo_arp;		/* head of the llinfo queue */
 
 void	arpwhohas __P((struct arpcom *, struct in_addr *));
