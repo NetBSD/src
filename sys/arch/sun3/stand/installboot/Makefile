@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 1997/06/22 06:25:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1998/03/02 19:57:01 cgd Exp $
+
+.include <bsd.own.mk>
 
 PROG=	installboot
 NOMAN=	yes
 BINDIR=/usr/mdec
 
 # Need this to work in the miniroot
-LDSTATIC=	-static
+LDSTATIC?=	-static
 
 .include <bsd.prog.mk>
