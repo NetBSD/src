@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2003/01/31 05:24:31 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.121 2003/02/01 21:05:08 erh Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -179,11 +179,11 @@ calc_kvmsize(vsize_t usrptsize)
 	kvmsize += (physmem * sizeof(struct vm_anon));
 
 	/* allocated buffer space etc... This is a hack */
-	n = nbuf; s = nswbuf; bp = bufpages; bc = bufcache;
+	n = nbuf; bp = bufpages; bc = bufcache;
 	kvmsize += (u_int)allocsys(NULL, NULL);
 	/* Buffer space */
 	kvmsize += (MAXBSIZE * nbuf);
-	nbuf = n; nswbuf = s; bufpages = bp; bufcache = bc;
+	nbuf = n; bufpages = bp; bufcache = bc;
 
 	/* UBC submap space */
 	kvmsize += (UBC_NWINS << UBC_WINSHIFT);
