@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.c,v 1.2 2003/05/08 20:42:39 petrov Exp $ */
+/* $NetBSD: citrus_gbk2k.c,v 1.3 2003/06/25 09:51:42 tshiozak Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_gbk2k.c,v 1.2 2003/05/08 20:42:39 petrov Exp $");
+__RCSID("$NetBSD: citrus_gbk2k.c,v 1.3 2003/06/25 09:51:42 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -41,8 +41,13 @@ __RCSID("$NetBSD: citrus_gbk2k.c,v 1.2 2003/05/08 20:42:39 petrov Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#include "citrus_namespace.h"
+#include "citrus_types.h"
+#include "citrus_bcs.h"
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_stdenc.h"
 #include "citrus_gbk2k.h"
 
 
@@ -56,8 +61,9 @@ typedef struct _GBK2KState {
 } _GBK2KState;
 
 typedef struct {
-	int dummy;
+	int ei_mode;
 } _GBK2KEncodingInfo;
+#define _MODE_2BYTE	0x0001
 
 typedef struct {
 	_GBK2KEncodingInfo	ei;
@@ -217,7 +223,8 @@ _citrus_GBK2K_mbrtowc_priv(_GBK2KEncodingInfo * __restrict ei,
 		case 2:
 			if (_mb_trailbyte (_PSENC))
 				goto convert;
-			if (_mb_surrogate (_PSENC))
+			if ((ei->ei_mode & _MODE_2BYTE) == 0 &&
+			    _mb_surrogate (_PSENC))
 				continue;
 			goto ilseq;
 		case 3:
@@ -267,35 +274,52 @@ _citrus_GBK2K_wcrtomb_priv(_GBK2KEncodingInfo * __restrict ei,
 			   _GBK2KState * __restrict psenc,
 			   size_t * __restrict nresult)
 {
-	int len;
+	int len, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 
-	if (psenc->chlen != 0)
-		goto invalid;
+	if (psenc->chlen != 0) {
+		ret = EINVAL;
+		goto err;
+	}
+
+	/* reset state */
+	if (wc == 0) {
+		*nresult = 0; /* stateless */
+		return 0;
+	}
 
 	len = _mb_count(wc);
-	if (n < len)
-		goto ilseq;
+	if (n < len) {
+		ret = E2BIG;
+		goto err;
+	}
 
 	switch (len) {
 	case 1:
-		if (!_mb_singlebyte(_PUSH_PSENC(wc     )))
-			goto ilseq;
+		if (!_mb_singlebyte(_PUSH_PSENC(wc     ))) {
+			ret = EILSEQ;
+			goto err;
+		}
 		break;
 	case 2:
 		if (!_mb_leadbyte  (_PUSH_PSENC(wc >> 8)) ||
-		    !_mb_trailbyte (_PUSH_PSENC(wc     )))
-			goto ilseq;
+		    !_mb_trailbyte (_PUSH_PSENC(wc     ))) {
+			ret = EILSEQ;
+			goto err;
+		}
 		break;
 	case 4:
-		if (!_mb_leadbyte  (_PUSH_PSENC(wc >> 24)) ||
+		if ((ei->ei_mode & _MODE_2BYTE) != 0 ||
+		    !_mb_leadbyte  (_PUSH_PSENC(wc >> 24)) ||
 		    !_mb_surrogate (_PUSH_PSENC(wc >> 16)) ||
 		    !_mb_leadbyte  (_PUSH_PSENC(wc >>  8)) ||
-		    !_mb_surrogate (_PUSH_PSENC(wc      )))
-			goto ilseq;
+		    !_mb_surrogate (_PUSH_PSENC(wc      ))) {
+			ret = EILSEQ;
+			goto err;
+		}
 		break;
 	}
 
@@ -308,20 +332,109 @@ _citrus_GBK2K_wcrtomb_priv(_GBK2KEncodingInfo * __restrict ei,
 
 	return (0);
 
-invalid:
-	return (EINVAL);
-
-ilseq:
+err:
 	*nresult = (size_t)-1;
-	return (EILSEQ);
+	return ret;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_GBK2K_stdenc_wctocs(_GBK2KEncodingInfo * __restrict ei,
+			    _csid_t * __restrict csid,
+			    _index_t * __restrict idx, wchar_t wc)
+{
+	u_int8_t ch, cl;
+
+	_DIAGASSERT(csid != NULL && idx != NULL);
+
+	if ((u_int32_t)wc<0x80) {
+		/* ISO646 */
+		*csid = 0;
+		*idx = (_index_t)wc;
+	} else if ((u_int32_t)wc>=0x10000) {
+		/* GBKUCS : XXX */
+		*csid = 3;
+		*idx = (_index_t)wc;
+	} else {
+		ch = (u_int8_t)(wc >> 8);
+		cl = (u_int8_t)wc;
+		if (ch>=0xA1 && cl>=0xA1) {
+			/* EUC G1 */
+			*csid = 1;
+			*idx = (_index_t)wc & 0x7F7FU;
+		} else {
+			/* extended area (0x8140-) */
+			*csid = 2;
+			*idx = (_index_t)wc;
+		}
+	}
+		
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_GBK2K_stdenc_cstowc(_GBK2KEncodingInfo * __restrict ei,
+			    wchar_t * __restrict wc,
+			    _csid_t csid, _index_t idx)
+{
+
+	_DIAGASSERT(wc != NULL);
+
+	switch (csid) {
+	case 0:
+		/* ISO646 */
+		*wc = (wchar_t)idx;
+		break;
+	case 1:
+		/* EUC G1 */
+		*wc = (wchar_t)idx | 0x8080U;
+		break;
+	case 2:
+		/* extended area */
+		*wc = (wchar_t)idx;
+		break;
+	case 3:
+		/* GBKUCS : XXX */
+		if ((ei->ei_mode & _MODE_2BYTE) != 0)
+			return EINVAL;
+		*wc = (wchar_t)idx;
+		break;
+	default:
+		return EILSEQ;
+	}
+
+	return 0;
 }
 
 static int
 /*ARGSUSED*/
-_citrus_GBK2K_stdencoding_init(_GBK2KEncodingInfo * __restrict ei,
-			       const void * __restrict var, size_t lenvar)
+_citrus_GBK2K_encoding_module_init(_GBK2KEncodingInfo * __restrict ei,
+				   const void * __restrict var, size_t lenvar)
 {
+	const char *p;
+
 	_DIAGASSERT(ei != NULL);
+
+	p = var;
+#define MATCH(x, act)                                           \
+do {                                                            \
+        if (lenvar >= (sizeof(#x)-1) &&                         \
+            _bcs_strncasecmp(p, #x, sizeof(#x)-1) == 0) {       \
+                act;                                            \
+                lenvar -= sizeof(#x)-1;                         \
+                p += sizeof(#x)-1;                              \
+        }                                                       \
+} while (/*CONSTCOND*/0)
+	while (lenvar>0) {
+		switch (_bcs_tolower(*p)) {
+		case '2':
+			MATCH("2byte", ei->ei_mode |= _MODE_2BYTE);
+			break;
+		}
+		p++;
+		lenvar--;
+	}
 
 	memset((void *)ei, 0, sizeof(*ei));
 	return (0);
@@ -329,7 +442,7 @@ _citrus_GBK2K_stdencoding_init(_GBK2KEncodingInfo * __restrict ei,
 
 static void
 /*ARGSUSED*/
-_citrus_GBK2K_stdencoding_uninit(_GBK2KEncodingInfo *ei)
+_citrus_GBK2K_encoding_module_uninit(_GBK2KEncodingInfo *ei)
 {
 }
 
@@ -342,3 +455,12 @@ _CITRUS_CTYPE_DECLS(GBK2K);
 _CITRUS_CTYPE_DEF_OPS(GBK2K);
 
 #include "citrus_ctype_template.h"
+
+/* ----------------------------------------------------------------------
+ * public interface for stdenc
+ */
+
+_CITRUS_STDENC_DECLS(GBK2K);
+_CITRUS_STDENC_DEF_OPS(GBK2K);
+
+#include "citrus_stdenc_template.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.6 2002/03/28 10:53:49 yamt Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.7 2003/06/25 09:51:44 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.6 2002/03/28 10:53:49 yamt Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.7 2003/06/25 09:51:44 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -43,8 +43,12 @@ __RCSID("$NetBSD: citrus_iso2022.c,v 1.6 2002/03/28 10:53:49 yamt Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#include "citrus_namespace.h"
+#include "citrus_types.h"
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_stdenc.h"
 #include "citrus_iso2022.h"
 
 
@@ -364,13 +368,13 @@ _citrus_ISO2022_parse_variable(_ISO2022EncodingInfo * __restrict ei,
 		e = v;
 		while (*e && *e != ' ' && *e != '\t')
 			++e;
-		if (*e) {
-			len = e-v;
-			if (len>=sizeof(buf))
-				goto parsefail;
-			sprintf(buf, "%.*s", len, v);
-			++e;
-		}
+
+		len = e-v;
+		if (len == 0)
+			break;
+		if (len>=sizeof(buf))
+			goto parsefail;
+		sprintf(buf, "%.*s", len, v);
 
 		if ((ret = get_recommend(ei, buf)) != _NOTMATCH)
 			;
@@ -441,8 +445,9 @@ _citrus_ISO2022_unpack_state(_ISO2022EncodingInfo * __restrict ei,
 
 static int
 /*ARGSUSED*/
-_citrus_ISO2022_stdencoding_init(_ISO2022EncodingInfo * __restrict ei,
-				 const void * __restrict var, size_t lenvar)
+_citrus_ISO2022_encoding_module_init(_ISO2022EncodingInfo * __restrict ei,
+				     const void * __restrict var,
+				     size_t lenvar)
 {
 
 	_DIAGASSERT(ei != NULL);
@@ -452,7 +457,7 @@ _citrus_ISO2022_stdencoding_init(_ISO2022EncodingInfo * __restrict ei,
 
 static void
 /*ARGSUSED*/
-_citrus_ISO2022_stdencoding_uninit(_ISO2022EncodingInfo *ei)
+_citrus_ISO2022_encoding_module_uninit(_ISO2022EncodingInfo *ei)
 {
 }
 
@@ -996,7 +1001,7 @@ recommendation(_ISO2022EncodingInfo * __restrict ei,
 }
 
 static int
-_ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t c,
+_ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t wc,
 		   char * __restrict string, size_t n,
 		   char ** __restrict result,
 		   _ISO2022State * __restrict psenc)
@@ -1014,13 +1019,13 @@ _ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t c,
 	/* result may be NULL */
 	/* state appears to be unused */
 
-	if (iscntl(c & 0xff)) {
+	if (iscntl(wc & 0xff)) {
 		/* go back to ASCII on control chars */
 		cs.type = CS94;
 		cs.final = 'B';
 		cs.interm = '\0';
-	} else if (!(c & ~0xff)) {
-		if (c & 0x80) {
+	} else if (!(wc & ~0xff)) {
+		if (wc & 0x80) {
 			/* special treatment for ISO-8859-1 */
 			cs.type = CS96;
 			cs.final = 'A';
@@ -1032,15 +1037,15 @@ _ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t c,
 			cs.interm = '\0';
 		}
 	} else {
-		cs.final = (c >> 24) & 0x7f;
-		if ((c >> 16) & 0x80)
-			cs.interm = (c >> 16) & 0x7f;
+		cs.final = (wc >> 24) & 0x7f;
+		if ((wc >> 16) & 0x80)
+			cs.interm = (wc >> 16) & 0x7f;
 		else
 			cs.interm = '\0';
-		if (c & 0x80)
-			cs.type = (c & 0x00007f00) ? CS96MULTI : CS96;
+		if (wc & 0x80)
+			cs.type = (wc & 0x00007f00) ? CS96MULTI : CS96;
 		else
-			cs.type = (c & 0x00007f00) ? CS94MULTI : CS94;
+			cs.type = (wc & 0x00007f00) ? CS94MULTI : CS94;
 	}
 	target = recommendation(ei, &cs);
 	p = tmp;
@@ -1071,7 +1076,6 @@ _ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t c,
 	psenc->g[target].interm = cs.interm;
 
 planeok:
-	 
 	/* invoke the plane onto GL or GR. */
 	if (psenc->gl == target)
 		goto sideok;
@@ -1146,8 +1150,9 @@ sideok:
 		i = isthree(cs.final) ? 3 : 2;
 		break;
 	}
-	while (i-- > 0)
-		*p++ = ((c >> (i << 3)) & 0x7f) | mask;
+	if (wc != 0)
+		while (i-- > 0)
+			*p++ = ((wc >> (i << 3)) & 0x7f) | mask;
 
 	/* reset single shift state */
 	psenc->singlegl = psenc->singlegr = -1;
@@ -1172,7 +1177,7 @@ _citrus_ISO2022_wcrtomb_priv(_ISO2022EncodingInfo * __restrict ei,
 {
 	char buf[MB_LEN_MAX];
 	char *result;
-	int len;
+	int len, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
@@ -1182,17 +1187,62 @@ _citrus_ISO2022_wcrtomb_priv(_ISO2022EncodingInfo * __restrict ei,
 	len = _ISO2022_sputwchar(ei, wc, buf, sizeof(buf), &result, psenc);
 	if (sizeof(buf) < len || n < len) {
 		/* XXX should recover state? */
-		goto ilseq;
+		ret = E2BIG;
+		goto err;
 	}
 
 	memcpy(s, buf, len);
 	*nresult = (size_t)len;
 	return (0);
 
-ilseq:
+err:
 	/* bound check failure */
 	*nresult = (size_t)-1;
-	return (EILSEQ);
+	return ret;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_ISO2022_stdenc_wctocs(_ISO2022EncodingInfo * __restrict ei,
+			      _csid_t * __restrict csid,
+			      _index_t * __restrict idx, wchar_t wc)
+{
+	wchar_t m, nm;
+
+	_DIAGASSERT(csid != NULL && idx != NULL);
+
+	m = wc & 0x7FFF8080;
+	nm = wc & 0x007F7F7F;
+	if (m & 0x00800000) {
+		nm &= 0x00007F7F;
+	} else {
+		m &= 0x7F008080;
+	}
+	if (nm & 0x007F0000) {
+		/* ^3 mark */
+		m |= 0x007F0000;
+	} else if (nm & 0x00007F00) {
+		/* ^2 mark */
+		m |= 0x00007F00;
+	}
+	*csid = (_csid_t)m;
+	*idx  = (_index_t)nm;
+
+	return (0);
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_ISO2022_stdenc_cstowc(_ISO2022EncodingInfo * __restrict ei,
+			      wchar_t * __restrict wc,
+			      _csid_t csid, _index_t idx)
+{
+
+	_DIAGASSERT(ei != NULL && wc != NULL);
+
+	*wc = (wchar_t)(csid & 0x7F808080) | (wchar_t)idx;
+
+	return (0);
 }
 
 /* ----------------------------------------------------------------------
@@ -1203,3 +1253,12 @@ _CITRUS_CTYPE_DECLS(ISO2022);
 _CITRUS_CTYPE_DEF_OPS(ISO2022);
 
 #include "citrus_ctype_template.h"
+
+/* ----------------------------------------------------------------------
+ * public interface for stdenc
+ */
+
+_CITRUS_STDENC_DECLS(ISO2022);
+_CITRUS_STDENC_DEF_OPS(ISO2022);
+
+#include "citrus_stdenc_template.h"
