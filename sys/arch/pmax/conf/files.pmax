@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.45 1997/07/20 22:42:37 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.46 1997/07/22 04:32:17 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -27,23 +27,28 @@ file arch/pmax/pmax/cpu.c		cpu
 #file	arch/pmax/pmax/kn210.c				# DS5400, mipsfair
 #file	arch/pmax/pmax/kn220.c				# DS5500, mipsfair2
 file	arch/pmax/pmax/kn230.c			kn230	# DS5100, mipsmate
-#
-# Auto-configuration driver for the turbochannel bus itself.
-#
-#define	tcbus { }
 
-device tc {[slot = -1], [offset = -1]} ##{ } 
+#
+# Bus-independent support for DEC devices
+#
+include "dev/dec/files.dec"
+
+#
+# TurboChannel Devices
+#
+include	"dev/tc/files.tc"
+
 attach tc at mainbus
 file	arch/pmax/tc/tc_subr.c		tc		needs-flag
-file	dev/tc/tc.c			tc		needs-flag
 
 
 #
 # The TurboChannel IOCTL ASIC. Present on IOASIC machines,
 # which is all turbochannel machines ever built except the 3MAX (5000/200).
 #
-device ioasic { offset = -1 }		# not really optional
-attach ioasic at tc
+# device defined in files.tc:
+# device ioasic { offset = -1 }
+# attach ioasic at tc
 file	arch/pmax/tc/asic.c		ioasic
 
 
@@ -118,18 +123,12 @@ attach dtop at ioasic
 file	arch/pmax/dev/dtop.c		dtop needs-flag
 
 # LANCE ethernet driver.
-#  XXX Should use new machine-independent one instead.
-# device defined in sys/conf/files
-attach le at ioasic with le_ioasic
-attach le at tc with le_tc
-attach le at mainbus with le_pmax
-#file	arch/pmax/tc/if_le.c		(le_pmax|le_tc|le_ioasic) needs-flag
+#   device defined in sys/conf/files.
+#   TC and ioasic attachment and files in sys/dev/tc/files.tc
 
-
-file	dev/tc/if_le_dec.c		(le_ioasic | le_tc | le_pmax)
-file	dev/tc/if_le_ioasic.c		le_ioasic	needs-flag #for le_iomem
-file	dev/tc/if_le_tc.c		le_tc
+attach le at mainbus with le_pmax:	le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
+
 
 # 3100 (pmax) onboard framebuffer
 device pm
