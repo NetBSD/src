@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.97 2005/03/15 13:59:35 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.98 2005/03/18 04:52:24 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.97 2005/03/15 13:59:35 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.98 2005/03/18 04:52:24 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.97 2005/03/15 13:59:35 atatat Exp $");
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,8 +125,8 @@ __RCSID("$NetBSD: sysctl.c,v 1.97 2005/03/15 13:59:35 atatat Exp $");
 /*
  * generic routines
  */
-static const struct handlespec *findprinter(const int *, u_int);
-static const struct handlespec *findwriter(const int *, u_int);
+static const struct handlespec *findhandler(const char *, int);
+static void canonicalize(const char *, char *);
 static void print_tree(int *, u_int, struct sysctlnode *, u_int, int);
 static void write_number(int *, u_int, struct sysctlnode *, char *);
 static void write_string(int *, u_int, struct sysctlnode *, char *);
@@ -170,63 +171,57 @@ static void machdep_diskinfo(HANDLER_PROTO);
 #endif /* CPU_DISKINFO */
 
 static const struct handlespec {
-	int ps_name[CTL_MAXNAME];
+	const char *ps_re;
 	void (*ps_p)(HANDLER_PROTO);
 	void (*ps_w)(HANDLER_PROTO);
 	void *ps_d;
 } handlers[] = {
-	{ { CTL_KERN, KERN_CLOCKRATE },	kern_clockrate },
-	{ { CTL_KERN, KERN_VNODE },	printother,	NULL,	"pstat" },
-	{ { CTL_KERN, KERN_PROC },	printother,	NULL,	"ps" },
-	{ { CTL_KERN, KERN_PROC2 },	printother,	NULL,	"ps" },
-	{ { CTL_KERN, KERN_PROC_ARGS },	printother,	NULL,	"ps" },
-	{ { CTL_KERN, KERN_FILE },	printother,	NULL,	"pstat" },
-	{ { CTL_KERN, KERN_FILE2 },	printother,	NULL,	"pstat" },
-	{ { CTL_KERN, KERN_NTPTIME },	printother,	NULL,
-	  "ntpdc -c kerninfo" },
-	{ { CTL_KERN, KERN_MSGBUF },	printother,	NULL,	"dmesg" },
-	{ { CTL_KERN, KERN_BOOTTIME },	kern_boottime },
-	{ { CTL_KERN, KERN_CONSDEV },	kern_consdev },
-	{ { CTL_KERN, KERN_CP_TIME, -1 }, kern_cp_time },
-	{ { CTL_KERN, KERN_CP_TIME },	kern_cp_time },
-	{ { CTL_KERN, KERN_SYSVIPC_INFO }, printother,	NULL,	"ipcs" },
-	{ { CTL_VM,   VM_METER },	printother,	NULL,
-	  "vmstat' or 'systat" },
-	{ { CTL_VM,   VM_LOADAVG },	vm_loadavg },
-	{ { CTL_VM,   VM_UVMEXP },	printother,	NULL,
-	  "vmstat' or 'systat" },
-	{ { CTL_VM,   VM_UVMEXP2 },	printother,	NULL,
-	  "vmstat' or 'systat" },
-	{ { CTL_VFS,  2 /* NFS */, NFS_NFSSTATS },
-					printother,	NULL,	"nfsstat" },
-	{ { CTL_NET },			printother,	NULL,	NULL },
-	{ { CTL_NET, PF_LOCAL },	printother,	NULL,	NULL },
-	{ { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT },
-					printother,	NULL,	"identd" },
-	{ { CTL_NET, PF_INET6, IPPROTO_TCP, TCPCTL_IDENT },
-					printother,	NULL,	"identd" },
+	{ "/kern/clockrate",			kern_clockrate },
+	{ "/kern/vnode",			printother, NULL, "pstat" },
+	{ "/kern/proc(2|_args)?",		printother, NULL, "ps" },
+	{ "/kern/file2?",			printother, NULL, "pstat" },
+	{ "/kern/ntptime",			printother, NULL,
+						"ntpdc -c kerninfo" },
+	{ "/kern/msgbuf",			printother, NULL, "dmesg" },
+	{ "/kern/boottime",			kern_boottime },
+	{ "/kern/consdev",			kern_consdev },
+	{ "/kern/cp_time(/[0-9]+)?",		kern_cp_time },
+	{ "/kern/sysvipc_info",			printother, NULL, "ipcs" },
 
-	{ { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_DRLIST },
-					printother,	NULL,	"ndp" },
-	{ { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST },
-					printother,	NULL,	"ndp" },
+	{ "/vm/vmmeter",			printother, NULL,
+						"vmstat' or 'systat" },
+	{ "/vm/loadavg",			vm_loadavg },
+	{ "/vm/uvmexp2?",			printother, NULL,
+						"vmstat' or 'systat" },
 
+	{ "/vfs/nfs/nfsstats",			printother, NULL, "nfsstat" },
 
-	{ { CTL_NET, PF_KEY, KEYCTL_DUMPSA },
-					printother,	NULL,	"setkey" },
-	{ { CTL_NET, PF_KEY, KEYCTL_DUMPSP },
-					printother,	NULL,	"setkey" },
-	/* { { CTL_DEBUG },		printother,	NULL,	NULL }, */
-	{ { CTL_HW,   HW_DISKSTATS },	printother,	NULL,	"iostat" },
+	{ "/net/inet6?/tcp6?/ident",		printother, NULL, "identd" },
+	{ "/net/inet6/icmp6/nd6_[dp]rlist",	printother, NULL, "ndp" },
+	{ "/net/key/dumps[ap]",			printother, NULL, "setkey" },
+	{ "/net/[^/]+/[^/]+/pcblist",		printother, NULL,
+						"netstat' or 'sockstat" },
+
+	{ "/hw/diskstats",			printother, NULL, "iostat" },
+
 #ifdef CPU_CONSDEV
-	{ { CTL_MACHDEP, CPU_CONSDEV },	kern_consdev },
+	{ "/machdep/consdev",			kern_consdev },
 #endif /* CPU_CONSDEV */
 #ifdef CPU_DISKINFO
-	{ { CTL_MACHDEP, CPU_DISKINFO },machdep_diskinfo },
+	{ "/machdep/diskinfo",			machdep_diskinfo },
 #endif /* CPU_CONSDEV */
-	{ { CTL_DDB },			printother,	NULL,	NULL },
-	{ { CTL_PROC, -1, PROC_PID_LIMIT, -1, -1 }, proc_limit, proc_limit },
-	{ { CTL_UNSPEC }, },
+
+	{ "/proc/[^/]+/rlimit/[^/]+/[^/]+",	proc_limit, proc_limit },
+
+	/*
+	 * these will only be called when the given node has no children
+	 */
+	{ "/net/[^/]+",				printother, NULL, NULL },
+	{ "/debug",				printother, NULL, NULL },
+	{ "/ddb",				printother, NULL, NULL },
+	{ "/vendor",				printother, NULL, NULL },
+
+	{ NULL },
 };
 
 struct sysctlnode my_root = {
@@ -250,6 +245,7 @@ FILE	*warnfp = stderr;
  * vah-riables n stuff
  */
 char gsname[SYSCTL_NAMELEN * CTL_MAXNAME + CTL_MAXNAME],
+	canonname[SYSCTL_NAMELEN * CTL_MAXNAME + CTL_MAXNAME],
 	gdname[10 * CTL_MAXNAME + CTL_MAXNAME];
 char sep[2] = ".", *eq = " = ";
 const char *lname[] = {
@@ -369,47 +365,70 @@ main(int argc, char *argv[])
  * ********************************************************************
  */
 static const struct handlespec *
-findprinter(const int *name, u_int namelen)
+findhandler(const char *s, int w)
 {
 	const struct handlespec *p;
-	int i, j;
-
-	if (namelen < 1)
-		return (NULL);
+	regex_t re;
+	int i, j, l;
+	char eb[64];
+	regmatch_t match[1];
 
 	p = &handlers[0];
-	for (i = 0; p[i].ps_name[0] != CTL_UNSPEC; i++) {
-		for (j = 0; j < namelen; j++)
-			if (p[i].ps_name[j] != name[j] &&
-			    p[i].ps_name[j] != -1)
-				break;
-		if (j == namelen && p[i].ps_p != NULL)
-			return (&p[i]);
+	l = strlen(s);
+	for (i = 0; p[i].ps_re != NULL; i++) {
+		j = regcomp(&re, p[i].ps_re, REG_EXTENDED);
+		if (j != 0) {
+			regerror(j, &re, eb, sizeof(eb));
+			errx(1, "regcomp: %s: %s", p[i].ps_re, eb);
+		}
+		j = regexec(&re, s, 1, match, 0);
+		if (j == 0) {
+			if (match[0].rm_so == 0 && match[0].rm_eo == l &&
+			    (w ? p[i].ps_w : p[i].ps_p) != NULL)
+				return (&p[i]);
+		}
+		else if (j != REG_NOMATCH) {
+			regerror(j, &re, eb, sizeof(eb));
+			errx(1, "regexec: %s: %s", p[i].ps_re, eb);
+		}
 	}
 
 	return (NULL);
 }
 
-static const struct handlespec *
-findwriter(const int *name, u_int namelen)
+/*
+ * after sysctlgetmibinfo is done with the name, we convert all
+ * separators to / and stuff one at the front if it was missing
+ */
+static void
+canonicalize(const char *i, char *o)
 {
-	const struct handlespec *p;
-	int i, j;
+	const char *t;
+	char p[SYSCTL_NAMELEN + 1];
+	int l;
 
-        if (namelen < 1)
-                return (NULL);
-
-	p = &handlers[0];
-	for (i = 0; p[i].ps_name[0] != CTL_UNSPEC; i++) {
-		for (j = 0; j < namelen; j++)
-			if (p[i].ps_name[j] != name[j] &&
-			    p[i].ps_name[j] != -1)
-				break;
-		if (j == namelen && p[i].ps_w != NULL)
-			return (&p[i]);
+	if (i[0] != *sep) {
+		o[0] = '/';
+		o[1] = '\0';
 	}
+	else
+		o[0] = '\0';
 
-	return (NULL);
+	t = i;
+	do {
+		i = t;
+		t = strchr(i, sep[0]);
+		if (t == NULL)
+			strcat(o, i);
+		else {
+			l = t - i;
+			t++;
+			memcpy(p, i, l);
+			p[l] = '\0';
+			strcat(o, p);
+			strcat(o, "/");
+		}
+	} while (t != NULL);
 }
 
 /*
@@ -585,7 +604,8 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		return;
 	}
 
-	p = findprinter(name, namelen);
+	canonicalize(gsname, canonname);
+	p = findhandler(canonname, 0);
 	if (type != CTLTYPE_NODE && p != NULL) {
 		(*p->ps_p)(gsname, gdname, NULL, name, namelen, pnode, type,
 			   p->ps_d);
@@ -797,7 +817,8 @@ parse(char *l)
 		exit(1);
 	}
 
-	if (type != CTLTYPE_NODE && (w = findwriter(name, namelen)) != NULL) {
+	canonicalize(gsname, canonname);
+	if (type != CTLTYPE_NODE && (w = findhandler(canonname, 1)) != NULL) {
 		(*w->ps_w)(gsname, gdname, value, name, namelen, node, type,
 			   w->ps_d);
 		gsname[0] = '\0';
@@ -1923,6 +1944,10 @@ printother(HANDLER_ARGS)
 		break;
 	case CTL_DDB:
 		sysctlperror("%s: missing 'options DDB' from kernel?\n",
+			     sname);
+		break;
+	case CTL_VENDOR:
+		sysctlperror("%s: no vendor extensions installed\n",
 			     sname);
 		break;
 	}
