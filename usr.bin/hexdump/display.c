@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.7 1997/10/19 02:34:03 lukem Exp $	*/
+/*	$NetBSD: display.c,v 1.8 1999/11/09 15:06:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.7 1997/10/19 02:34:03 lukem Exp $");
+__RCSID("$NetBSD: display.c,v 1.8 1999/11/09 15:06:36 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,5 +377,5 @@ emalloc(size)
 void
 nomem()
 {
-	err(1, "%s", "");
+	err(1, NULL);
 }

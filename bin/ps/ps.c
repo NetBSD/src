@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.31 1999/10/15 20:39:52 jdolecek Exp $	*/
+/*	$NetBSD: ps.c,v 1.32 1999/11/09 15:06:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.31 1999/10/15 20:39:52 jdolecek Exp $");
+__RCSID("$NetBSD: ps.c,v 1.32 1999/11/09 15:06:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -411,7 +411,7 @@ getkinfo_kvm(kd, what, flag, nentriesp, needuser)
 	if ((kp = kvm_getprocs(kd, what, flag, nentriesp)) != 0)
 	{
 		if ((kinfo = malloc((*nentriesp) * sizeof(*kinfo))) == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 		for (i = (*nentriesp); i-- > 0; kp++) {
 			kinfo[i].ki_p = kp;
 			if (needuser)
@@ -509,7 +509,7 @@ kludge_oldps_options(s)
 
 	len = strlen(s);
 	if ((newopts = ns = malloc(len + 3)) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	/*
 	 * options begin with '-'
 	 */
