@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.1 2002/02/03 22:21:55 skrll Exp $
+/*	$NetBSD: aout2elf.c,v 1.2 2002/02/03 22:44:21 skrll Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -40,15 +40,12 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
-#include <sys/utsname.h>
-#include <sys/types.h>
-#include <machine/cpu.h>
-#include <util.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "defs.h"
 #include "md.h"
@@ -59,7 +56,6 @@
 static int is_aout_shared_lib(const char *name);
 static void handle_aout_x_libs(const char *srcdir, const char *tgtdir);
 static int handle_aout_libs(const char *dir, int op, const void *arg);
-
 
 /* XXX NAH. This probably needs moving to arch/<foo>/md.h
  *
