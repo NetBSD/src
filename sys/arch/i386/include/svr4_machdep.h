@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.3 1995/01/25 04:18:52 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.4 1995/02/01 01:40:25 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -72,5 +72,20 @@ void svr4_getcontext __P((struct proc *, struct svr4_ucontext *,
 			  int, int));
 int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
 void svr4_sendsig __P((sig_t, int, int, u_long));
+
+/*
+ * SYSARCH numbers
+ */
+#define SVR4_SYSARCH_FPHW	40
+#define SVR4_SYSARCH_DSCR	75
+
+struct svr4_ssd {
+	unsigned int selector;
+	unsigned int base;
+	unsigned int limit;
+	unsigned int access1;
+	unsigned int access2;
+};
+
 
 #endif /* !_I386_SVR4_MACHDEP_H_ */
