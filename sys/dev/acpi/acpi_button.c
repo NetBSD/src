@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.8 2003/04/17 01:26:41 thorpej Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.9 2003/04/18 01:31:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.8 2003/04/17 01:26:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.9 2003/04/18 01:31:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,10 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
 
 	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0C") == 0) {
-		sc->sc_smpsw.smpsw_type = SMPSW_TYPE_POWER;
+		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
 		desc = "Power";
 	} else if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0E") == 0) {
-		sc->sc_smpsw.smpsw_type = SMPSW_TYPE_SLEEP;
+		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
 		desc = "Sleep";
 	} else {
 		printf("\n");
@@ -153,7 +153,7 @@ acpibut_pressed_event(void *arg)
 	if (sc->sc_flags & ACPIBUT_F_VERBOSE)
 		printf("%s: button pressed\n", sc->sc_dev.dv_xname);
 
-	sysmon_pswitch_event(&sc->sc_smpsw, SMPSW_EVENT_PRESSED);
+	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
 
 /*
