@@ -1092,7 +1092,7 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
     ptrend = rcsbuf->ptrend;
 
     /* Sanity check.  */
-    assert (ptr >= rcsbuf_buffer && ptr < rcsbuf_buffer + rcsbuf_buffer_size);
+    assert (ptr >= rcsbuf_buffer && ptr <= rcsbuf_buffer + rcsbuf_buffer_size);
 
 #ifndef HAVE_MMAP
     /* If the pointer is more than RCSBUF_BUFSIZE bytes into the
