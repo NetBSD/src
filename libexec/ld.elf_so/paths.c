@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.11.4.1 2000/11/13 19:10:30 tv Exp $	 */
+/*	$NetBSD: paths.c,v 1.11.4.2 2001/12/09 17:20:54 he Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -42,12 +42,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/gmon.h>
-#include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/resource.h>
-#include <vm/vm_param.h>
 #include <machine/cpu.h>
 
 #include "debug.h"
