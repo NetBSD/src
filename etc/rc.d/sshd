@@ -25,7 +25,7 @@ sshd_keygen() {
 	if [ -f /etc/ssh_host_dsa_key ]
 	then
 		echo "You already have a DSA host key in /etc/ssh_host_dsa_key"
-		echo "Skipping RSA Key Generation"
+		echo "Skipping DSA Key Generation"
 	else
 		umask 022
 		/usr/bin/ssh-keygen -d -f /etc/ssh_host_dsa_key -N ''
