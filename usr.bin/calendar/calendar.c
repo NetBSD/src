@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.12 1998/02/04 15:19:50 christos Exp $	*/
+/*	$NetBSD: calendar.c,v 1.13 1998/04/01 20:50:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.12 1998/02/04 15:19:50 christos Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.13 1998/04/01 20:50:17 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: calendar.c,v 1.12 1998/02/04 15:19:50 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 
