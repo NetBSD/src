@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.11 1998/07/07 02:45:00 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.12 1998/07/08 05:00:40 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -51,6 +51,7 @@
 
 #include <dev/cons.h>
 
+#include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
@@ -72,6 +73,7 @@
 #endif
 
 #include "pc.h"
+#include "isadma.h"
 
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
 #define IO_VIRT_SIZE 0x01000000
@@ -576,77 +578,6 @@ ofw_getcleaninfo(void)
 	return pclean;
 }
 
-#ifdef DMA_BOUNCE /* XXX */
-/* hack, hack, hack, your DMA,
-   gently into the kernel.
-   merrily, merrily, merrily, merrily,
-   life is just a gerbil.
-
-   Notes: 
-   - Assumes that align is a power of 2.
-   - OFW integer properties stored in network order (thanks, Mitch).
-*/
-vm_offset_t
-ofw_getisadmamemory(size, align)
-	vm_size_t   size;
-	vm_offset_t align;
-{
-	int               nphysavail;
-	struct mem_region *physavail;
-	int               phandle;
-	int               avail_len;
-	int               region;
-	vm_offset_t       physstart, physstartal;
-	vm_size_t         physsize,  physsizeal;
-
-#ifdef DEBUG
-	printf("getisadmamemory: %08lx, %08lx\n", size, align);
-#endif
-
-	/* the memory allocated by this ofw_malloc will be lost.  sue me. */
-
-	if (((phandle = OF_finddevice("/memory")) == -1) ||
-	    (avail_len = OF_getproplen(phandle, "available")) <= 0 ||
-	    (physavail = ofw_malloc(avail_len)) == 0 ||
-	    OF_getprop(phandle, "available", physavail, avail_len) != avail_len) {
-		panic("ofw_getisadmamemory: get available memory failed");
-	}
-
-	nphysavail = avail_len / sizeof(struct mem_region);
-
-	for (region = 0; region < nphysavail; ++region) {
-		physsize = of_decode_int((unsigned char *)&physavail[region].size);
-		physstart = of_decode_int((unsigned char *)&physavail[region].start);
-#ifdef DEBUG
-		printf("avail:   %08lx %08lx\n", physstart, physsize);
-#endif
-		/* do alignment now */
-		physstartal = ((physstart + (align - 1)) & ~(align - 1));
-		if ((physstartal - physstart) > physsize) 
-			physsizeal = 0;
-		else
-			physsizeal = physsize - (physstartal - physstart);
-#ifdef DEBUG
-		printf("aligned: %08lx %08lx\n", physstartal, physsizeal);
-#endif
-		if ((size <= physsizeal) && 
-		    /* same function that's called by isadma.c: */
-		    !isa_machdep_dmarangecheck(physstartal, size)) {
-			/* we have a winner */
-#ifdef DEBUG
-			printf("we have a winner: %08lx %08lx\n", physstartal, size);
-#endif
-			if (ofw_claimphys(physstartal, size, 0) == -1)
-				panic("ofw_getisadmamemory: get claim memory failed");
-
-			return physstartal;
-		}
-	}
-
-	return -1; /* uh, oh. */
-}
-#endif /* DMA_BOUNCE XXX */
-
 void
 ofw_configisa(pio, pmem)
 	vm_offset_t *pio;
@@ -761,7 +692,11 @@ ofw_configisadma(pdma)
 	int rangeidx;
 	int size;
 	struct dma_range *dr;
-  
+#if NISADMA > 0
+	extern bus_dma_segment_t *pmap_isa_dma_ranges;
+	extern int pmap_isa_dma_nranges;
+#endif
+
 	if ((root = OF_finddevice("/")) == -1 ||
 	    (size = OF_getproplen(root, "dma-ranges")) <= 0 ||
 	    (OFdmaranges = (struct dma_range *)ofw_malloc(size)) == 0 ||
@@ -770,10 +705,23 @@ ofw_configisadma(pdma)
 
 	nOFdmaranges = size / sizeof(struct dma_range);
 
+#if NISADMA > 0
+	/* Allocate storage for non-OFW representation of the range. */
+	pmap_isa_dma_ranges = ofw_malloc(nOFdmaranges *
+	    sizeof(bus_dma_segment_t));
+	if (pmap_isa_dma_ranges == NULL)
+		panic("unable to allocate pmap_isa_dma_ranges");
+	pmap_isa_dma_nranges = nOFdmaranges;
+#endif
+
 	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges; 
 	    ++rangeidx, ++dr) {
 		dr->start = of_decode_int((unsigned char *)&dr->start);
 		dr->size = of_decode_int((unsigned char *)&dr->size);
+#if NISADMA > 0
+		pmap_isa_dma_ranges[rangeidx].ds_addr = dr->start;
+		pmap_isa_dma_ranges[rangeidx].ds_len  = dr->size;
+#endif
 	}
 
 #ifdef DEBUG
@@ -785,40 +733,6 @@ ofw_configisadma(pdma)
 		(u_long)OFdmaranges[rangeidx].size);
 	}
 #endif
-
-#ifdef DMA_BOUNCE /* XXX */
-	/* XXX - Snarf physical memory for DMA bounce buffers.  */
-
-	if ((*pdma =
-	    ofw_getisadmamemory(DMA_BOUNCE * NBPG, DMA_BOUNCE * NBPG)) == -1)
-		panic("no ISA DMA memory: is memory populated in the correct slot?");
-#endif /* DMA_BOUNCE XXX */
-}
-
-int
-ofw_isadmarangeintersect(pa, size, ppa, psize)
-	vm_offset_t pa;
-	vm_offset_t size;
-	vm_offset_t *ppa;
-	vm_offset_t *psize;
-{
-	int rangeidx;
-	struct dma_range *dr;
-
-	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges; 
-	    ++rangeidx, ++dr) {
-		if ((dr->start <= pa) && (pa < (dr->start + dr->size))) {
-			*ppa   = pa;
-			*psize = min(pa + size, dr->start + dr->size) - pa;
-			return 1; /* intersection is not NULL */
-		} else if ((pa < dr->start) && (dr->start < (pa + size))) {
-			*ppa   = dr->start;
-			*psize = min((pa + size) - dr->start, dr->size);
-			return 1; /* intersection is not NULL */
-		}
-	}
-
-	return 0; /* intersection is NULL */
 }
 
 /* 
