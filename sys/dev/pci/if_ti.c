@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.25 2001/06/12 15:17:25 wiz Exp $ */
+/* $NetBSD: if_ti.c,v 1.26 2001/06/27 16:47:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2599,14 +2599,17 @@ ti_ether_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ti_softc *sc = ifp->if_softc;
 
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		ifp->if_flags |= IFF_UP;
+		ti_init(sc);
+	}
+		
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ti_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
@@ -2621,13 +2624,10 @@ ti_ether_ioctl(ifp, cmd, data)
 			 else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ifp->if_addrlen);
-			 /* Set new address. */
-			 ti_init(sc);
 			 break;
 		    }
 #endif
 		default:
-			ti_init(sc);
 			break;
 		}
 		break;
