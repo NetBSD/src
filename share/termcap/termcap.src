@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.83 2003/04/09 19:21:46 jdolecek Exp $
+#	$NetBSD: termcap.src,v 1.84 2003/10/24 23:37:18 jklos Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1900,6 +1900,20 @@ color_xterm|cx|cx100|color_xterm color terminal emulator for X:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[27m:\
 	:sf=^J:so=\E[7m:sr=\EM:ta=^I:te=\E>\E[?41;1r:\
 	:ti=\E[?1;41s\E[?1;41h\E=:ue=\E[24m:up=\E[A:us=\E[4m:
+
+# The 'nxterm' distributed with Redhat Linux 5.2 is a slight rehack of
+# xterm-sb_right-ansi-3d, which implements ANSI colors, but does not support
+# SGR 39 or 49.  SGR 0 does reset colors (along with everything else).  This
+# description is "compatible" with color_xterm, rxvt and XFree86 xterm, except
+# that each of those implements the home, end, delete keys differently.
+#
+# Redhat Linux 6.x distributes XFree86 xterm as "nxterm", which uses bce
+# colors; note that this is not compatible with the 5.2 version.
+# csw (2002-05-15): make xterm-color primary instead of nxterm, to
+#   match XFree86's xterm.terminfo usage and prevent circular links
+xterm-color|nxterm|generic color xterm:\
+        :NC@:\
+        :op=\E[m:tc=xterm-r6:tc=klone+color:
 
 # From: Mark Olesen & Thomas Dickey <dickey@clark.net> 13 Jul 1996
 # (untranslatable capabilities removed to fit entry within 1023 bytes)
