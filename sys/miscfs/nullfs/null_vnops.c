@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.9 1996/10/13 02:21:35 christos Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.10 1997/05/17 20:32:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -362,7 +362,7 @@ null_getattr(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	int error;
-	if ((error = null_bypass(ap)) != NULL)
+	if ((error = null_bypass(ap)) != 0)
 		return (error);
 	/* Requires that arguments be restored. */
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];

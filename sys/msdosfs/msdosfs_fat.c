@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.24 1996/10/13 04:16:32 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.25 1997/05/17 20:33:57 pk Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -628,7 +628,7 @@ chainlength(pmp, start, count)
 	while (++idx <= max_idx) {
 		if (len >= count)
 			break;
-		if ((map = pmp->pm_inusemap[idx]) != NULL) {
+		if ((map = pmp->pm_inusemap[idx]) != 0) {
 			len +=  ffs(map) - 1;
 			break;
 		}
