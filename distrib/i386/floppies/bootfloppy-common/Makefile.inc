@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2000/01/19 16:40:11 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2000/01/24 17:52:24 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -35,7 +35,7 @@ INO_BYTES?=	204800
 
 CLEANFILES+=	netbsd.ram.gz
 
-all:	netbsd.ram.gz
+realall:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}

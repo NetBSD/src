@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/01/02 13:59:34 itojun Exp $
+#	$NetBSD: Makefile,v 1.21 2000/01/24 17:52:26 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -38,7 +38,7 @@ upgrade.sh: upgrade.tmpl
 start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
-all: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
+realall: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=2880
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
