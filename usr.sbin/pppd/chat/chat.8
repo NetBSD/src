@@ -1,4 +1,4 @@
-.\"	$NetBSD: chat.8,v 1.17 2002/10/29 16:13:50 wiz Exp $
+.\"	$NetBSD: chat.8,v 1.18 2003/03/31 01:09:08 perry Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
 .\" Id: chat.8,v 1.9 1999/09/06 05:10:23 paulus Exp
@@ -216,7 +216,7 @@ ABORT BUSY
 .br
 ECHO OFF
 .br
-SAY "Dialling your ISP...\\n"
+SAY "Dialing your ISP...\\n"
 .br
 \'' ATDT5551212
 .br
@@ -240,7 +240,7 @@ This sequence will only present the SAY strings to the user and all
 the details of the script will remain hidden. For example, if the
 above script works, the user will see:
 .IP
-Dialling your ISP...
+Dialing your ISP...
 .br
 Waiting up to 2 minutes for connection ... Connected, now logging in ...
 .br
@@ -307,7 +307,7 @@ but starting with the \fICONNECT\fR (or \fIBUSY\fR) message, everything
 will be echoed.
 .SH HANGUP
 The HANGUP options control whether a modem hangup should be considered
-as an error or not.  This option is useful in scripts for dialling
+as an error or not.  This option is useful in scripts for dialing
 systems which will hang up and call your system back.  The HANGUP
 options can be \fBON\fR or \fBOFF\fR.
 .br
@@ -459,7 +459,7 @@ For example, the character DC1 (17) is shown as \^^Q.
 Environment variables are available within chat scripts, if  the \fI-E\fR
 option was specified in the command line. The metacharacter \fI$\fR is used
 to introduce the name of the environment variable to substitute. If the
-substition fails, because the requested environment variable is not set,
+substitution fails, because the requested environment variable is not set,
 \fInothing\fR is replaced for the variable.
 .SH TERMINATION CODES
 The \fIchat\fR program will terminate with the following completion
