@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.48 2002/11/05 13:22:32 mrg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.49 2002/11/06 02:31:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.48 2002/11/05 13:22:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.49 2002/11/06 02:31:34 enami Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -406,28 +406,19 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	 * that do not pass in the size are given an error only, unless
 	 * we care about 1.6 compatibility.
 	 */
-#define SIZE_NETBSD16	offsetof(struct disk_sysctl, dk_rxfer)
-
-	if (where == NULL) {
-		if (namelen == 0)
-#ifdef COMPAT_16
-			*sizep = disk_count * SIZE_NETBSD16;
-#else
-			return (EINVAL);
-#endif
-		else
-			*sizep = disk_count * name[0];
-		return (0);
-	}
-
 	if (namelen == 0)
 #ifdef COMPAT_16
-		tocopy = SIZE_NETBSD16;
+		tocopy = offsetof(struct disk_sysctl, dk_rxfer);
 #else
 		return (EINVAL);
 #endif
 	else
 		tocopy = name[0];
+
+	if (where == NULL) {
+		*sizep = disk_count * tocopy;
+		return (0);
+	}
 
 	error = 0;
 	left = *sizep;
