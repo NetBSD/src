@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.5 1998/02/03 19:12:39 perry Exp $	*/
+/*	$NetBSD: emacs.c,v 1.6 1998/05/20 01:01:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.5 1998/02/03 19:12:39 perry Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.6 1998/05/20 01:01:28 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -305,7 +305,7 @@ em_upper_case(el, c)
 		      el->el_state.argument, ce__isword);
 
     for (cp = el->el_line.cursor; cp < ep; cp++)
-	if (islower(*cp))
+	if (islower((unsigned char) *cp))
 	    *cp = toupper(*cp);
 
     el->el_line.cursor = ep;
@@ -331,15 +331,15 @@ em_capitol_case(el, c)
 		      el->el_state.argument, ce__isword);
 
     for (cp = el->el_line.cursor; cp < ep; cp++) {
-	if (isalpha(*cp)) {
-	    if (islower(*cp))
+	if (isalpha((unsigned char) *cp)) {
+	    if (islower((unsigned char) *cp))
 		*cp = toupper(*cp);
 	    cp++;
 	    break;
 	}
     }
     for (; cp < ep; cp++)
-	if (isupper(*cp))
+	if (isupper((unsigned char) *cp))
 	    *cp = tolower(*cp);
 
     el->el_line.cursor = ep;
@@ -364,7 +364,7 @@ em_lower_case(el, c)
 		      el->el_state.argument, ce__isword);
 
     for (cp = el->el_line.cursor; cp < ep; cp++)
-	if (isupper(*cp))
+	if (isupper((unsigned char) *cp))
 	    *cp = tolower(*cp);
 
     el->el_line.cursor = ep;
