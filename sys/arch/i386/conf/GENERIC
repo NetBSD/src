@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.184 1998/09/18 12:22:54 drochner Exp $
+#	$NetBSD: GENERIC,v 1.185 1998/09/22 01:16:48 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -36,8 +36,8 @@ options 	XSERVER		# X server support in console drivers
 # values.  Note that the BIOS may *correctly* report less than 640k of base
 # memory if the extended BIOS data area is located at the top of base memory
 # (as is the case on most recent systems).
-#options 	REALBASEMEM=639	# size of base memory (kB)
-#options 	REALEXTMEM=15360	# size of extended memory (kB)
+#options 	REALBASEMEM=639		# size of base memory (in KB)
+#options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
 # Standard system options
 
