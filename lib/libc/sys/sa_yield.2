@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_yield.2,v 1.3 2004/03/14 20:57:49 wiz Exp $
+.\"     $NetBSD: sa_yield.2,v 1.4 2004/05/09 11:28:58 yamt Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd March 14, 2004
+.Dd May 9, 2004
 .Dt SA_YIELD 2
 .Os
 .Sh NAME
@@ -42,7 +42,9 @@
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn sa_yield
-is used to idle a virtual processor.
+is used to idle a virtual processor on which the calling thread is running.
+It's typically used when the process's userland scheduler has no userland
+thread to run.
 .Pp
 Scheduler activation should be enabled by
 .Fn sa_enable
