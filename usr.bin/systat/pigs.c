@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.10 1998/07/12 05:59:01 mrg Exp $	*/
+/*	$NetBSD: pigs.c,v 1.11 1998/07/28 21:25:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.10 1998/07/12 05:59:01 mrg Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.11 1998/07/28 21:25:35 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -101,7 +101,8 @@ showpigs()
 	struct	eproc *ep;
 	float total;
 	int factor;
-	char *uname, *pname, pidname[30];
+	const char *uname, *pname;
+	char pidname[30];
 
 	if (pt == NULL)
 		return;
