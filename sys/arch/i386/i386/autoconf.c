@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1997/09/20 14:15:54 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1997/09/23 22:34:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -142,11 +142,11 @@ findroot(devpp, partp)
 	*devpp = NULL;
 	*partp = 0;
 
-	if(booted_device) {
+	if (booted_device) {
 		*devpp = booted_device;
 		return;
 	}
-	if(lookup_bootinfo(BTINFO_NETIF)) {
+	if (lookup_bootinfo(BTINFO_NETIF)) {
 		/*
 		 * We got netboot interface information, but
 		 * "device_register()" couldn't match it to a configured
@@ -159,7 +159,7 @@ findroot(devpp, partp)
 
 #ifdef notyet
 	bid = lookup_bootinfo(BTINFO_BOOTDISK);
-	if(bid) {
+	if (bid) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
 		 * Don't break if one is found, to get possible multiple
@@ -172,13 +172,15 @@ findroot(devpp, partp)
 			if(dv->dv_class != DV_DISK)
 				continue;
 
-			if(!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
-				/* Assume the configured unit number matches the
-				 BIOS device number. (This is the old behaviour.)
-				 Needs some ideas how to handle BIOS's "swap floppy
-				 drive" options. */
-				if((bid->biosdev & 0x80) ||
-				   dv->dv_unit != bid->biosdev)
+			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
+				/*
+				 * Assume the configured unit number matches
+				 * the BIOS device number.  (This is the old
+				 * behaviour.)  Needs some ideas how to handle
+				 * BIOS's "swap floppy drive" options.
+				 */
+				if ((bid->biosdev & 0x80) ||
+				    dv->dv_unit != bid->biosdev)
 					continue;
 
 				goto found;
@@ -192,51 +194,60 @@ findroot(devpp, partp)
 				struct disklabel label;
 				int found = 0;
 
-				if(!(bid->biosdev & 0x80) || bid->labelsector == -1)
+				if ((bid->biosdev & 0x80) == 0 ||
+				    bid->labelsector == -1)
 					continue;
-				/* A disklabel is required here. The bootblocks don't
-				 refuse to boot from a disk without label, but this is
-				 normally not wanted. */
-
+				/*
+				 * A disklabel is required here.  The
+				 * bootblocks don't refuse to boot from
+				 * a disk without a label, but this is
+				 * normally not wanted.
+				 */
 				i = i386_nam2blk;
-				while(i->d_name &&
-				      strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
+				while (i->d_name &&
+				    strcmp(i->d_name,
+				    dv->dv_cfdata->cf_driver->cd_name))
 					i++;
-				if(!i->d_name)
+				if (i->d_name == NULL)
 					continue; /* XXX panic() ??? */
 
-				/* Fake a temporary vnode for the disk, open it and read
-				 the disklabel for comparision. */
-				if(bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition),
-					  &tmpvn))
+				/*
+				 * Fake a temporary vnode for the disk, open
+				 * it, and read the disklabel for comparison.
+				 */
+				if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit,
+				    bid->partition), &tmpvn))
 					panic("findroot can't alloc vnode");
 				error = VOP_OPEN(tmpvn, FREAD, FSCRED, 0);
-				if(error) {
-					printf("findroot: can't open dev %s (%d)\n",
-					       dv->dv_xname, error);
+				if (error) {
+					printf("findroot: can't open dev "
+					    "%s (%d)\n", dv->dv_xname, error);
 					continue;
 				}
-				error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label,
-						  FREAD, NOCRED, 0);
-				if(error) {
-					/* XXX can't happen - open() would have errored
-					 out (or faked up one) */
-					printf("can't get label for dev %s (%d)\n",
-					       dv->dv_xname, error);
+				error = VOP_IOCTL(tmpvn, DIOCGDINFO,
+				    (caddr_t)&label, FREAD, NOCRED, 0);
+				if (error) {
+					/*
+					 * XXX can't happen - open() would
+					 * have errored our (or faked up one)
+					 */
+					printf("can't get label for dev "
+					    "%s (%d)\n", dv->dv_xname, error);
 					goto closeout;
 				}
 
 				/* compare with our data */
-				if(label.d_type == bid->label.type &&
-				   label.d_checksum == bid->label.checksum &&
-				   !strncmp(label.d_packname, bid->label.packname, 16))
+				if (label.d_type == bid->label.type &&
+				    label.d_checksum == bid->label.checksum &&
+				    !strncmp(label.d_packname,
+				             bid->label.packname, 16))
 					found = 1;
 
 closeout:
 				VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
 				vrele(tmpvn);
 
-				if(found)
+				if (found)
 					goto found;
 				continue;
 			}
@@ -245,16 +256,17 @@ closeout:
 			continue;
 
 found:
-			if(*devpp) {
-				printf("warning: double match for boot device (%s, %s)\n",
-				       (*devpp)->dv_xname, dv->dv_xname);
+			if (*devpp) {
+				printf("warning: double match for boot "
+				    "device (%s, %s)\n", (*devpp)->dv_xname,
+				    dv->dv_xname);
 				continue;
 			}
 			*devpp = dv;
 			*partp = bid->partition;
 		}
 
-		if(*devpp)
+		if (*devpp)
 			return;
 	}
 #endif /* notyet */
@@ -287,8 +299,12 @@ found:
 	}
 }
 
+#include "pci.h"
+
 #include <dev/isa/isavar.h>
+#if NPCI > 0
 #include <dev/pci/pcivar.h>
+#endif
 
 void
 device_register(dev, aux)
@@ -300,42 +316,51 @@ device_register(dev, aux)
 	 * not available driver independantly later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if(dev->dv_class == DV_IFNET) {
+	if (dev->dv_class == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
-		if(!bin)
+		if (bin == NULL)
 			return;
 
 		/* check driver name */
-		if(strcmp(bin->ifname, dev->dv_cfdata->cf_driver->cd_name))
+		if (strcmp(bin->ifname, dev->dv_cfdata->cf_driver->cd_name))
 			return;
 
-		if(bin->bus == BI_BUS_ISA &&
-		   !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name, "isa")) {
+		if (bin->bus == BI_BUS_ISA &&
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
-			if(bin->addr.iobase == iaa->ia_iobase)
+			if (bin->addr.iobase == iaa->ia_iobase)
 				goto found;;
 		}
-		if(bin->bus == BI_BUS_PCI &&
-		   !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name, "pci")) {
+#if NPCI > 0
+		if (bin->bus == BI_BUS_PCI &&
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 
-			/* calculate BIOS representation of (bus,device,function)
-			 and compare */
+			/*
+			 * Calculate BIOS representation of:
+			 *
+			 *	<bus,device,function>
+			 *
+			 * and compare.
+			 */
 			pci_decompose_tag(paa->pa_pc, paa->pa_tag, &b, &d, &f);
-			if(bin->addr.tag == ((b << 8) | (d << 3) | f))
+			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
 				goto found;
 		}
+#endif
 	}
 	return;
 
 found:
-	if(booted_device) {
+	if (booted_device) {
 		/* XXX should be a "panic()" */
 		printf("warning: double match for boot device (%s, %s)\n",
-		       booted_device->dv_xname, dev->dv_xname);
+		    booted_device->dv_xname, dev->dv_xname);
 		return;
 	}
 	booted_device = dev;
