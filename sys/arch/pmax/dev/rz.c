@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.25 1997/06/16 23:52:08 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.26 1997/06/18 22:19:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1112,21 +1112,26 @@ rzsize(dev)
 	register int unit = rzunit(dev);
 	register int part = rzpart(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
+	int omask, size;
 
 	if (unit >= NRZ || !(sc->sc_flags & RZF_ALIVE))
 		return (-1);
 
-	/*
-	 * We get called very early on (via swapconf)
-	 * without the device being open so we need to
-	 * read the disklabel here.
-	 */
-	if (!(sc->sc_flags & RZF_HAVELABEL))
-		rzgetinfo(dev);
+	omask = sc->sc_openpart & (1 << part);
 
-	if (part >= sc->sc_label->d_npartitions)
+	if (omask == 0 && rzopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
-	return (sc->sc_label->d_partitions[part].p_size);
+
+	if (part >= sc->sc_label->d_npartitions ||
+	    sc->sc_label->d_partitions[part].p_fstype != FS_SWAP)
+		size = -1;
+	else
+		size = sc->sc_label->d_partitions[part].p_size;
+
+	if (omask == 0 && rzclose(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
+
+	return (size);
 }
 
 /*
