@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.3 2002/08/26 10:04:05 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.4 2002/08/30 10:45:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -728,6 +728,8 @@ ALTENTRY(suswintr)
 	blink	tr0, r63
 
 
+#include "dtfcons.h"
+#if NDTFCONS > 0
 /******************************************************************************
  *
  * void _dtf_trap(paddr_t fpfreg, paddr_t trapbuff, paddr_t _dtf_trap_frob)
@@ -777,7 +779,11 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 	synci
 	pta/u	2f, tr0
 	pta/u	3f, tr1
+#ifndef SH5_SIM
 	LDC32(0x100000, r0)
+#else
+	LDC32(0x4000, r0)
+#endif
 
 2:	ld.l	r1, 0, r2		/* Fetch "sync" value */
 	synco
@@ -799,6 +805,8 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 
 
 	.comm	_C_LABEL(_dtf_buffer),NBPG,32
+#endif	/* NDTFCONS */
+
 
 /*
  * Reserve space in the BSS for proc0's PCB
