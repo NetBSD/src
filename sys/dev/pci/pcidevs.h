@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.29 1997/06/24 05:04:10 kml Exp 
+ *	NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp 
  */
 
 /*
@@ -725,8 +725,8 @@
 #define	PCI_PRODUCT_INTEL_82437	0x122d		/* 82437FX (Triton) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82471	0x122e		/* 82471FB (Triton) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82438	0x1230		/* 82438 (Triton) IDE controller */
-#define	PCI_PRODUCT_INTEL_82437MX	0x1234		/* 82437 (Triton MX) PCI-ISA Bridge */
-#define	PCI_PRODUCT_INTEL_82471MX	0x1235		/* 82471 (Triton MX) IDE Controller */
+#define	PCI_PRODUCT_INTEL_82371MX	0x1234		/* 82371 (Triton MX) PCI-ISA Bridge and IDE Controller */
+#define	PCI_PRODUCT_INTEL_82437MX	0x1235		/* 82437 (Triton MX) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82440FX	0x1237		/* 82440FX (Natoma) PCI and Memory Controller */
 #define	PCI_PRODUCT_INTEL_82439	0x1250		/* 82439 (Triton II) TXC Host Bridge */
 #define	PCI_PRODUCT_INTEL_82371SB	0x7000		/* 82371SB (Triton II) PCI-ISA Bridge */
