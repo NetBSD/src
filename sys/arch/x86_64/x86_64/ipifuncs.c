@@ -1,11 +1,13 @@
-/*	$NetBSD: cpu_counter.h,v 1.2 2003/03/05 23:56:01 fvdl Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.1 2003/03/05 23:56:09 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Bill Sommerfeld.
+ * by RedBack Networks Inc.
+ *
+ * Author: Bill Sommerfeld
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,39 +38,89 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_64_CPU_COUNTER_H_
-#define _X86_64_CPU_COUNTER_H_
 
-#ifdef _KERNEL
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 /*
- * Machine-specific support for CPU counter.
+ * Interprocessor interrupt handlers.
  */
 
-#include <machine/cpufunc.h>
+#include "opt_ddb.h"
 
-#define cpu_hascounter()	(1)
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
-static __inline uint64_t
-cpu_counter(void)
+#include <uvm/uvm_extern.h>
+
+#include <machine/intr.h>
+#include <machine/atomic.h>
+#include <machine/cpuvar.h>
+#include <machine/i82093var.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
+#include <machine/mtrr.h>
+#include <machine/gdt.h>
+#include <machine/fpu.h>
+
+#include <ddb/db_output.h>
+
+void x86_64_ipi_halt(struct cpu_info *);
+
+void x86_64_ipi_synch_fpu(struct cpu_info *);
+void x86_64_ipi_flush_fpu(struct cpu_info *);
+
+#ifdef MTRR
+void x86_64_reload_mtrr(struct cpu_info *);
+#else
+#define x86_64_reload_mtrr NULL
+#endif
+
+void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
+	x86_64_ipi_halt,
+	cc_microset,
+	x86_64_ipi_flush_fpu,
+	x86_64_ipi_synch_fpu,
+	pmap_do_tlb_shootdown,
+	x86_64_reload_mtrr,
+	gdt_reload_cpu,
+};
 
-	return (rdtsc());
+void
+x86_64_ipi_halt(struct cpu_info *ci)
+{
+	disable_intr();
+
+	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
+	for(;;) {
+		__asm __volatile("hlt");
+	}
 }
 
-static __inline uint32_t
-cpu_counter32(void)
+void
+x86_64_ipi_flush_fpu(struct cpu_info *ci)
 {
-
-	return (rdtsc() & 0xffffffffUL);
+	fpusave_cpu(ci, 0);
 }
 
-static __inline uint64_t
-cpu_frequency(struct cpu_info *ci)
+void
+x86_64_ipi_synch_fpu(struct cpu_info *ci)
 {
-	return (ci->ci_tsc_freq);
+	fpusave_cpu(ci, 1);
 }
 
-#endif /* _KERNEL */
+#ifdef MTRR
 
-#endif /* !_X86_64_CPU_COUNTER_H_ */
+/*
+ * mtrr_reload_cpu() is a macro in mtrr.h which picks the appropriate
+ * function to use..
+ */
+
+void
+x86_64_reload_mtrr(struct cpu_info *ci)
+{
+	if (mtrr_funcs != NULL)
+		mtrr_reload_cpu(ci);
+}
+#endif

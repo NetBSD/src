@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2002/11/29 22:17:16 fvdl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 2003/03/05 23:56:07 fvdl Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 2002/11/29 22:17:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2 2003/03/05 23:56:07 fvdl Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 2002/11/29 22:17:16 fvdl Exp $"
 
 #include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
+#include <machine/cpuvar.h>
+#include <machine/i82093var.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
+#include <machine/atomic.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -73,6 +78,75 @@ const struct db_command db_machine_command_table[] = {
 };
 
 void kdbprinttrap __P((int, int));
+#ifdef MULTIPROCESSOR
+extern void ddb_ipi(struct trapframe);
+static void ddb_suspend(struct trapframe *);
+int ddb_vec;
+#endif
+
+#define NOCPU	-1
+
+int ddb_cpu = NOCPU;
+
+typedef void (vector) __P((void));
+extern vector Xintrddb;
+
+void
+db_machine_init()
+{
+
+#ifdef MULTIPROCESSOR
+	ddb_vec = idt_vec_alloc(0xf0, 0xff);
+	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddb, 1,
+	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+#endif
+}
+
+#ifdef MULTIPROCESSOR
+
+__cpu_simple_lock_t db_lock;
+
+static int
+db_suspend_others(void)
+{
+	int cpu_me = cpu_number();
+	int win;
+
+	if (ddb_vec == 0)
+		return 1;
+
+	__cpu_simple_lock(&db_lock);
+	if (ddb_cpu == NOCPU)
+		ddb_cpu = cpu_me;
+	win = (ddb_cpu == cpu_me);
+	__cpu_simple_unlock(&db_lock);
+	if (win) {
+		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+	}
+	return win;
+}
+
+static void
+db_resume_others(void)
+{
+	int i;
+
+	__cpu_simple_lock(&db_lock);
+	ddb_cpu = NOCPU;
+	__cpu_simple_unlock(&db_lock);
+
+	for (i=0; i < X86_MAXPROCS; i++) {
+		struct cpu_info *ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_flags & CPUF_PAUSE)
+			x86_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+	}
+
+}
+
+#endif
+
 /*
  * Print trap reason.
  */
@@ -116,7 +190,14 @@ kdb_trap(type, code, regs)
 		}
 	}
 
-	/* XXX Should switch to kdb's own stack here. */
+#ifdef MULTIPROCESSOR
+	if (!db_suspend_others()) {
+		ddb_suspend(regs);
+	} else {
+	curcpu()->ci_ddb_regs = &dbreg;
+	ddb_regp = &dbreg;
+#endif
+
 	ddb_regs = *regs;
 
 	ddb_regs.tf_cs &= 0xffff;
@@ -133,6 +214,10 @@ kdb_trap(type, code, regs)
 	cnpollc(FALSE);
 	db_active--;
 	splx(s);
+#ifdef MULTIPROCESSOR  
+	db_resume_others();
+	}
+#endif  
 	ddb_regp = &dbreg;
 
 	*regs = ddb_regs;
@@ -146,3 +231,77 @@ cpu_Debugger()
 	breakpoint();
 }
 
+#ifdef MULTIPROCESSOR
+
+/*
+ * Called when we receive a debugger IPI (inter-processor interrupt).
+ * As with trap() in trap.c, this function is called from an assembly
+ * language IDT gate entry routine which prepares a suitable stack frame,
+ * and restores this frame after the exception has been processed. Note
+ * that the effect is as if the arguments were passed call by reference.
+ */
+
+void
+ddb_ipi(struct trapframe frame)
+{
+
+	ddb_suspend(&frame);
+}
+
+static void
+ddb_suspend(struct trapframe *frame)
+{
+	volatile struct cpu_info *ci = curcpu();
+	db_regs_t regs;
+
+	regs = *frame;
+
+	ci->ci_ddb_regs = &regs;
+
+	x86_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
+
+	while (ci->ci_flags & CPUF_PAUSE)
+		;
+	ci->ci_ddb_regs = 0;
+}
+
+
+extern void cpu_debug_dump(void); /* XXX */
+
+void
+db_mach_cpu(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	struct cpu_info *ci;
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+
+	if ((addr < 0) || (addr >= X86_MAXPROCS)) {
+		db_printf("%ld: cpu out of range\n", addr);
+		return;
+	}
+	ci = cpu_info[addr];
+	if (ci == NULL) {
+		db_printf("cpu %ld not configured\n", addr);
+		return;
+	}
+	if (ci != curcpu()) {
+		if (!(ci->ci_flags & CPUF_PAUSE)) {
+			db_printf("cpu %ld not paused\n", addr);
+			return;
+		}
+	}
+	if (ci->ci_ddb_regs == 0) {
+		db_printf("cpu %ld has no saved regs\n", addr);
+		return;
+	}
+	db_printf("using cpu %ld", addr);
+	ddb_regp = ci->ci_ddb_regs;
+}
+
+#endif

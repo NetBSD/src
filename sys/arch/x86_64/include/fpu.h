@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.6 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.7 2003/03/05 23:56:01 fvdl Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -88,14 +88,15 @@ struct oldfsave {
  * XXX
  */
 struct trapframe;
+struct cpu_info;
 
-extern void fpuinit(void);
-extern void fpudrop(void);
-extern void fpusave(struct lwp *);
-extern void fpudiscard(struct lwp *);
-extern void fputrap(struct trapframe *);
-
-extern struct lwp *fpulwp;
+void fpuinit(struct cpu_info *);
+void fpudrop(void);
+void fpusave(struct lwp *);
+void fpudiscard(struct lwp *);
+void fputrap(struct trapframe *);
+void fpusave_lwp(struct lwp *, int);
+void fpusave_cpu(struct cpu_info *, int);
 
 #endif
 

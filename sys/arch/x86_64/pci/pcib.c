@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2003/01/01 02:32:25 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2003/03/05 23:56:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -199,8 +199,8 @@ pcib_callback(self)
 	 */
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_busname = "isa";
-	iba.iba_iot = X86_64_BUS_SPACE_IO;
-	iba.iba_memt = X86_64_BUS_SPACE_MEM;
+	iba.iba_iot = X86_BUS_SPACE_IO;
+	iba.iba_memt = X86_BUS_SPACE_MEM;
 #if NISA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
