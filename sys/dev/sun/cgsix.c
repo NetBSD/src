@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.20 2005/03/03 12:11:49 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.21 2005/03/03 16:01:37 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.20 2005/03/03 12:11:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.21 2005/03/03 16:01:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ int cgsix_use_rasterconsole = 1;
 		/*EMPTY*/;						\
 } while (0)
 
-#if NWSDISPLAY
+#if NWSDISPLAY || defined(RASTERCONSOLE)
 static void cg6_ras_init(struct cgsix_softc *);
 static void cg6_ras_copyrows(void *, int, int, int);
 static void cg6_ras_copycols(void *, int, int, int, int);
