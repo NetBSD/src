@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.13 1999/12/20 17:26:50 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.14 2000/01/05 11:50:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.13 1999/12/20 17:26:50 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.14 2000/01/05 11:50:21 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -110,9 +110,6 @@ static struct {
 static	int aflag = 0;
 static	int nflag = 0;
 static	int lastrow = 1;
-static	void enter __P((struct inpcb *, struct socket *, int, char *));
-static	void inetprint __P((struct in_addr *, int, char *));
-static	char *inetname __P((struct in_addr));
 
 WINDOW *
 opennetstat()
