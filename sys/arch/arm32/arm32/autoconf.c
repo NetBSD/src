@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1999/02/07 09:34:58 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1999/06/07 20:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -84,17 +84,6 @@ static void get_device __P((char *name, struct device **devpp, int *partp));
 static void set_root_device __P((void));
 #endif
 
-/* Table major numbers for the device names, NULL terminated */
-
-struct devnametobdevmaj arm32_nam2blk[] = {
-	{ "wd",		16 },
-	{ "fd",		17 },
-	{ "md",		18 },
-	{ "sd",		24 },
-	{ "cd",		26 },
-	{ NULL,		0 },
-};
-
 #ifndef MEMORY_DISK_IS_ROOT
 /* Decode a device name to a major and minor number */
 
@@ -114,10 +103,10 @@ get_device(name, devpp, partp)
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
 
-	for (loop = 0; arm32_nam2blk[loop].d_name != NULL; ++loop) {
-		if (strncmp(name, arm32_nam2blk[loop].d_name,
-		    strlen(arm32_nam2blk[loop].d_name)) == 0) {
-			name += strlen(arm32_nam2blk[loop].d_name);
+	for (loop = 0; dev_name2blk[loop].d_name != NULL; ++loop) {
+		if (strncmp(name, dev_name2blk[loop].d_name,
+		    strlen(dev_name2blk[loop].d_name)) == 0) {
+			name += strlen(dev_name2blk[loop].d_name);
 			unit = part = 0;
 
 			cp = name;
@@ -130,7 +119,7 @@ get_device(name, devpp, partp)
 				part = *cp - 'a';
 			else if (*cp != '\0' && *cp != ' ')
 				return;
-			sprintf(buf, "%s%d", arm32_nam2blk[loop].d_name, unit);
+			sprintf(buf, "%s%d", dev_name2blk[loop].d_name, unit);
 			for (dv = alldevs.tqh_first; dv != NULL;
 			    dv = dv->dv_list.tqe_next) {
 				if (strcmp(buf, dv->dv_xname) == 0) {
@@ -175,7 +164,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
 #endif
-	setroot(booted_device, booted_partition, arm32_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 

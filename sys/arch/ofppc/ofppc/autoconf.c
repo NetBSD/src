@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1998/02/24 05:49:28 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 1999/06/07 20:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,14 +47,6 @@ void findroot __P((void));
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
 
-struct devnametobdevmaj powerpc_nam2blk[] = {
-	{ "ofdisk",	0 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
-	{ NULL,		0 },
-};
-
 /*
  * Determine device configuration for a machine.
  */
@@ -81,7 +73,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, powerpc_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*

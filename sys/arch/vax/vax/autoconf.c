@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 1999/02/02 18:37:20 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1999/06/07 20:16:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,17 +64,6 @@ struct device *booted_from;
 
 #define MAINBUS	0
 
-struct devnametobdevmaj vax_nam2blk[] = {
-	{ "hp",		0 },
-	{ "ra",		9 },
-	{ "rx",		12 },
-	{ "rd",		19 },
-	{ "sd",		20 },
-	{ "cd",		22 },
-	{ "md",		23 },
-	{ NULL,		0 },
-};
-
 void
 configure()
 {
@@ -108,7 +97,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, vax_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 int	mainbus_print __P((void *, const char *));

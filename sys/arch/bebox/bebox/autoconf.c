@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1997/10/14 06:47:20 sakamoto Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1999/06/07 20:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,16 +68,6 @@ void findroot __P((struct device **, int *));
  */
 extern int	cold;		/* cold start flag initialized in locore.s */
 
-struct devnametobdevmaj bebox_nam2blk[] = {
-	{ "wd",		0 },
-	{ "sd",		4 },
-	{ "cd",		6 },
-	{ "mcd",	7 },
-	{ "fd",		2 },
-	{ "md",		17 },
-	{ NULL,		0 },
-};
-
 /*
  * Determine i/o configuration for a machine.
  */
@@ -108,7 +98,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, bebox_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
@@ -141,16 +131,16 @@ findroot(devpp, partp)
 		return;
 
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	for (i = 0; bebox_nam2blk[i].d_name != NULL; i++)
-		if (majdev == bebox_nam2blk[i].d_maj)
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (majdev == dev_name2blk[i].d_maj)
 			break;
-	if (bebox_nam2blk[i].d_name == NULL)
+	if (dev_name2blk[i].d_name == NULL)
 		return;
 
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	sprintf(buf, "%s%d", bebox_nam2blk[i].d_name, unit);
+	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {

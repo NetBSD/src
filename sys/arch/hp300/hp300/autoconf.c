@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 1999/06/07 20:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -255,14 +255,6 @@ mainbussearch(parent, cf, aux)
 	return (0);
 }
 
-struct devnametobdevmaj hp300_nam2blk[] = {
-	{ "ct",		 0 },
-	{ "rd",		 2 },
-	{ "sd",		 4 },
-	{ "md",		14 },
-	{ NULL,		 0 },
-};
-
 /*
  * Determine the device configuration for the running system.
  */
@@ -369,7 +361,7 @@ cpu_rootconf()
 	if (booted_device != NULL && booted_device->dv_class == DV_TAPE)
 		boothowto |= RB_ASKNAME;
 
-	setroot(dv, booted_partition, hp300_nam2blk);
+	setroot(dv, booted_partition);
 
 	/*
 	 * Set bootdev based on what we found as the root.

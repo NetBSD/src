@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1999/01/31 06:59:30 dbj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1999/06/07 20:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,14 +147,6 @@ mainbus_print(aux, cp)
 	return (UNCONF);
 }
 
-struct devnametobdevmaj next68k_nam2blk[] = {
-	{ "sd",		4 },
-	{ "st",		5 },
-	{ "cd",		6 },
-	{ "md",		13 },
-	{ NULL,		0 },
-};
-
 /*
  * Determine mass storage and memory configuration for a machine.
  */
@@ -184,7 +176,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, 0, next68k_nam2blk);
+	setroot(booted_device, 0);
 }
 
 #if 0 /* @@@ Does anything use this? Is it a required interface? */
