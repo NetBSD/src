@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
+/*	$NetBSD: chpass.h,v 1.5 1996/08/09 09:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,6 +43,8 @@ typedef struct _entry {
 	char *except, *save;
 } ENTRY;
 
+extern	int use_yp;
+
 /* Field numbers. */
 #define	E_BPHONE	8
 #define	E_HPHONE	9
@@ -70,3 +72,10 @@ int	 p_shell __P((char *, struct passwd *, ENTRY *));
 int	 p_uid __P((char *, struct passwd *, ENTRY *));
 char    *ttoa __P((time_t));
 int	 verify __P((char *, struct passwd *));
+
+#ifdef YP
+void	yppw_error __P((const char *name, int, int));
+void	yppw_prompt __P((void));
+#endif
+
+extern	void (*Pw_error) __P((const char *name, int, int));
