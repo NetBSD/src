@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2003/08/07 16:27:16 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2003/09/12 14:59:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2003/08/07 16:27:16 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.13 2003/09/12 14:59:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2003/08/07 16:27:16 agc Exp $");
 static struct mbr_partition *
 mbr_findslice(struct mbr_partition* dp, struct buf *bp);
 
-/* 
+/*
  * Scan MBR for NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
  * Otherwise, copy valid MBR partition-table into dp, and if a NetBSD
  * partition is found, return a pointer to it; else return  NULL.
@@ -182,7 +182,7 @@ readdisklabel(dev, strat, lp, osdep)
 				/* update disklabel with details */
 				lp->d_partitions[2].p_size =
 				    dp->mbrp_size;
-				lp->d_partitions[2].p_offset = 
+				lp->d_partitions[2].p_offset =
 				    dp->mbrp_start;
 			}
 		}
@@ -314,8 +314,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 			npp->p_cpg = opp->p_cpg;
 		}
 	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }

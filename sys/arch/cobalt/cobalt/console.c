@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 2003/07/15 01:29:22 lukem Exp $	*/
+/*	$NetBSD: console.c,v 1.5 2003/09/12 14:59:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,11 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.4 2003/07/15 01:29:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.5 2003/09/12 14:59:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
-#include <sys/uio.h> 
+#include <sys/uio.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
