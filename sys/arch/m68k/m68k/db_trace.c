@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.25 1999/04/05 17:17:04 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.26 1999/09/25 21:11:55 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -86,9 +86,9 @@ db_var_short(varp, valp, op)
 #define	MAXINT	0x7fffffff
 
 #if 0
-#define	INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS && \
-			 (((vm_offset_t)(va)) < (USRSTACK - MAXSSIZ) || \
-			  ((vm_offset_t)(va)) >= USRSTACK))
+#define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS && \
+			 (((vaddr_t)(va)) < (USRSTACK - MAXSSIZ) || \
+			  ((vaddr_t)(va)) >= USRSTACK))
 #else
 /* XXX - Slight hack... */
 extern int curpcb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.23 1999/06/09 07:53:22 scottr Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24 1999/09/25 21:11:55 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -164,9 +164,9 @@ const char *const fpcregs[3] = { "fpiar", "fpsr", "fpcr" };
 static char asm_buffer[256];
 static char info_buffer[256];
 
-vm_offset_t 
-db_disasm(loc, moto_syntax)
-	vm_offset_t loc;
+db_addr_t 
+db_disasm(db_addr_t, moto_syntax)
+	db_addr_t loc;
 	boolean_t moto_syntax;
 {
 	u_short opc;

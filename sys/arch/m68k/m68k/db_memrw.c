@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1996/02/22 23:23:35 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1999/09/25 21:11:55 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	db_addr_t	addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -78,7 +78,7 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	db_addr_t	addr;
 	register size_t	size;
 	register char	*data;
 {
