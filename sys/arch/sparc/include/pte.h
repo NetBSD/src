@@ -42,7 +42,7 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pte.h,v 1.5 92/11/26 02:04:43 torek Exp 
- * $Id: pte.h,v 1.2 1994/08/20 01:26:43 deraadt Exp $
+ * $Id: pte.h,v 1.3 1994/09/25 20:50:26 deraadt Exp $
  */
 
 /*
@@ -56,10 +56,13 @@
  * A PMEG is simply an index that names a group of 32 (sun4) or
  * 64 (sun4c) PTEs.
  */
+typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
+#if notdef
 #ifdef SUN4
 typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
 #else
 typedef u_char pmeg_t;		/* 7 bits needed per Sun-4c segmap entry */
+#endif
 #endif
 #endif
 
