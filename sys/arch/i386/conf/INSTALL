@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.140 2000/04/03 00:03:30 augustss Exp $
+#	$NetBSD: INSTALL,v 1.141 2000/04/22 06:56:20 groo Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -445,7 +445,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-rl*	at pci? dev ? function ?	# Realtek 8129/8139
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
