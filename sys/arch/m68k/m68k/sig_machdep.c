@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.24 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.25 2003/10/27 02:03:10 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2003/10/27 02:03:10 cl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -355,7 +355,7 @@ cpu_setmcontext(l, mcp, flags)
 	__greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mcp->__mc_pad.__mc_frame.__mcf_format;
-	int sz;
+	int sz = 0;	/* XXX: gcc */
 
 	/* Validate the supplied context */
 	if (((flags & _UC_CPU) != 0 &&
