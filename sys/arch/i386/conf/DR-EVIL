@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.48 2002/06/25 03:12:06 lukem Exp $
+#	$NetBSD: DR-EVIL,v 1.49 2002/07/22 11:06:00 wiz Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -66,7 +66,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
