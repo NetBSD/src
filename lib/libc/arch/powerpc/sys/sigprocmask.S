@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 1998/05/25 15:35:06 ws Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.4 1998/10/03 12:30:38 tsubai Exp $	*/
 
 #include "SYS.h"
 
@@ -13,7 +13,7 @@ ENTRY(sigprocmask)
 	mr	6,3
 1:
 	mr	3,6		# ... using sigprocmask(SIG_BLOCK)
-	li	0,SYS_sigprocmask
+	li	0,SYS_compat_13_sigprocmask13
 	sc
 	bso	3f
 	or.	5,5,5		# check to see of oset requested
