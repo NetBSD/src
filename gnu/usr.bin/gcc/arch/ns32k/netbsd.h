@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.
    Don't assume SB is zero;
    Don't use bitfield instructions; */
 
-#define TARGET_DEFAULT (1 + 24 + 32 + 64)
+#define TARGET_DEFAULT (1 + 24 + 32 + 64 + 256)
 
 /* 32-bit alignment for efficiency */
 
