@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.31 2003/05/13 10:05:05 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.32 2003/05/16 01:26:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -547,15 +547,9 @@ struct ieee80211com {
 };
 #ifdef __NetBSD__
 #define	ic_if		ic_ec.ec_if
-#define	IEEE80211_LOCK_DECL()	int s
-#define	IEEE80211_LOCK(_ic)	do { s = splnet(); } while (0)
-#define	IEEE80211_UNLOCK(_ic)	splx(s)
 #endif
 #ifdef __FreeBSD__
 #define	ic_if		ic_ac.ac_if
-#define	IEEE80211_LOCK_DECL()
-#define	IEEE80211_LOCK(_ic)	mtx_lock(&(_ic)->ic_mtx)
-#define	IEEE80211_UNLOCK(_ic)	mtx_unlock(&(_ic)->ic_mtx)
 #endif
 #define	ic_softc	ic_if.if_softc
 

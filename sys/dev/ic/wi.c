@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.124 2003/05/13 08:58:01 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.125 2003/05/16 01:26:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.124 2003/05/13 08:58:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.125 2003/05/16 01:26:18 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -214,9 +214,9 @@ wi_attach(struct wi_softc *sc)
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
-	WI_LOCK_DECL();
+	int s;
 
-	WI_LOCK(sc);
+	s = splnet();
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -224,7 +224,7 @@ wi_attach(struct wi_softc *sc)
 
 	/* Reset the NIC. */
 	if (wi_reset(sc) != 0) {
-		WI_UNLOCK(s);
+		splx(s);
 		return 1;
 	}
 
@@ -232,7 +232,7 @@ wi_attach(struct wi_softc *sc)
 	if (wi_read_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr, &buflen) != 0 ||
 	    IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
 		printf(" could not get mac address, attach failed\n");
-		WI_UNLOCK(sc);
+		splx(s);
 		return 1;
 	}
 
@@ -399,7 +399,7 @@ wi_attach(struct wi_softc *sc)
 	/* Attach is successful. */
 	sc->sc_attached = 1;
 
-	WI_UNLOCK(sc);
+	splx(s);
 	return 0;
 }
 
@@ -407,12 +407,12 @@ int
 wi_detach(struct wi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	WI_LOCK_DECL();
+	int s;
 
 	if (!sc->sc_attached)
 		return 0;
 
-	WI_LOCK(sc);
+	s = splnet();
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
@@ -424,7 +424,7 @@ wi_detach(struct wi_softc *sc)
 			(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
 	}
-	WI_UNLOCK(sc);
+	splx(s);
 	return 0;
 }
 
@@ -433,10 +433,9 @@ int
 wi_activate(struct device *self, enum devact act)
 {
 	struct wi_softc *sc = (struct wi_softc *)self;
-	int rv = 0;
-	WI_LOCK_DECL();
+	int rv = 0, s;
 
-	WI_LOCK(sc);
+	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
@@ -446,7 +445,7 @@ wi_activate(struct device *self, enum devact act)
 		if_deactivate(&sc->sc_ic.ic_if);
 		break;
 	}
-	WI_UNLOCK(sc);
+	splx(s);
 	return rv;
 }
 
@@ -454,9 +453,9 @@ void
 wi_power(struct wi_softc *sc, int why)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	WI_LOCK_DECL();
+	int s;
 
-	WI_LOCK(sc);
+	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -473,7 +472,7 @@ wi_power(struct wi_softc *sc, int why)
 	case PWR_SOFTRESUME:
 		break;
 	}
-	WI_UNLOCK(sc);
+	splx(s);
 }
 #endif /* __NetBSD__ */
 
@@ -550,9 +549,6 @@ wi_init(struct ifnet *ifp)
 	struct wi_joinreq join;
 	int i;
 	int error = 0, wasenabled;
-	WI_LOCK_DECL();
-
-	WI_LOCK(sc);
 
 	DPRINTF(("wi_init: enabled %d\n", sc->sc_enabled));
 	wasenabled = sc->sc_enabled;
@@ -711,7 +707,6 @@ wi_init(struct ifnet *ifp)
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
 		wi_stop(ifp, 0);
 	}
-	WI_UNLOCK(sc);
 	DPRINTF(("wi_init: return %d\n", error));
 	return error;
 }
@@ -720,9 +715,9 @@ static void
 wi_stop(struct ifnet *ifp, int disable)
 {
 	struct wi_softc	*sc = ifp->if_softc;
-	WI_LOCK_DECL();
+	int s;
 
-	WI_LOCK(sc);
+	s = splnet();
 
 	DPRINTF(("wi_stop: disable %d\n", disable));
 	/* Writing registers of a detached wi provokes an
@@ -751,7 +746,7 @@ wi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
 
-	WI_UNLOCK(sc);
+	splx(s);
 }
 
 static void
@@ -759,27 +754,16 @@ wi_start(struct ifnet *ifp)
 {
 	struct wi_softc	*sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = NULL;
+	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 	struct mbuf *m0;
 	struct wi_frame frmhdr;
 	int cur, fid, off;
-	WI_LOCK_DECL();
 
-	WI_LOCK(sc);
-
-	if (!sc->sc_enabled) {
-		WI_UNLOCK(sc);
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
-	}
-	if (ifp->if_flags & IFF_OACTIVE) {
-		WI_UNLOCK(sc);
+	if (sc->sc_flags & WI_FLAGS_OUTRANGE)
 		return;
-	}
-	if (sc->sc_flags & WI_FLAGS_OUTRANGE) {
-		WI_UNLOCK(sc);
-		return;
-	}
 
 	memset(&frmhdr, 0, sizeof(frmhdr));
 	cur = sc->sc_txnext;
@@ -914,8 +898,6 @@ wi_start(struct ifnet *ifp)
 		}
 		sc->sc_txnext = cur = (cur + 1) % WI_NTXBUF;
 	}
-
-	WI_UNLOCK(sc);
 }
 
 
@@ -997,13 +979,12 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int error = 0;
-	WI_LOCK_DECL();
+	int s, error = 0;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return ENXIO;
 
-	WI_LOCK(sc);
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -1072,7 +1053,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	}
-	WI_UNLOCK(sc);
+	splx(s);
 	return error;
 }
 

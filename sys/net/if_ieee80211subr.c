@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.31 2003/05/13 10:05:05 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.32 2003/05/16 01:26:17 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.31 2003/05/13 10:05:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.32 2003/05/16 01:26:17 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -218,9 +218,9 @@ void
 ieee80211_ifdetach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	IEEE80211_LOCK_DECL();
+	int s;
 
-	IEEE80211_LOCK(ic);
+	s = splnet();
 	IF_PURGE(&ic->ic_mgtq);
 	IF_PURGE(&ic->ic_pwrsaveq);
 	if (ic->ic_wep_ctx != NULL) {
@@ -1322,7 +1322,7 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 {
 	struct ieee80211_node *ni;
 	int hash;
-	IEEE80211_LOCK_DECL();
+	int s;
 
 	ni = malloc(sizeof(struct ieee80211_node) + ic->ic_node_privlen,
 	    M_DEVBUF, M_NOWAIT);
@@ -1340,10 +1340,10 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 		ni->ni_private = NULL;
 
 	hash = IEEE80211_NODE_HASH(macaddr);
-	IEEE80211_LOCK(ic);
+	s = splnet();
 	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
 	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
-	IEEE80211_UNLOCK(ic);
+	splx(s);
 	ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 	return ni;
 }
@@ -1353,23 +1353,24 @@ ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
 	int hash;
-	IEEE80211_LOCK_DECL();
+	int s;
 
 	hash = IEEE80211_NODE_HASH(macaddr);
-	IEEE80211_LOCK(ic);
+	s = splnet();
 	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
 		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr))
 			break;
 	}
-	IEEE80211_UNLOCK(ic);
+	splx(s);
 	return ni;
 }
 
 void
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	IEEE80211_LOCK_DECL();
-	IEEE80211_LOCK(ic);
+	int s;
+
+	s = splnet();
 	if (ic->ic_node_free != NULL)
 		(*ic->ic_node_free)(ic, ni);
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
@@ -1380,7 +1381,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 		if (ic->ic_set_tim)
 			ic->ic_set_tim(ic, ni->ni_associd, 0);
 	}
-	IEEE80211_UNLOCK(ic);
+	splx(s);
 	free(ni, M_DEVBUF);
 	if (TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = 0;
