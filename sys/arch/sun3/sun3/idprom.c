@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.18 1997/01/27 21:57:44 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.19 1997/04/28 21:55:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ idprom_init()
 		char c[4];
 	} hid;
 
+	/* Copy the IDPROM contents and do the checksum. */
 	idp = &identity_prom;
 	dst = (char*)idp;
 	src = (char*)IDPROM_BASE;
@@ -84,14 +85,10 @@ idprom_init()
 		xorsum ^= x;
 	} while (--len > 0);
 
-	if (xorsum != 0) {
-		mon_printf("idprom_fetch: bad checksum=%d\n", xorsum);
-		sunmon_abort();
-	}
-	if (idp->idp_format < 1) {
-		mon_printf("idprom_fetch: bad version=%d\n", idp->idp_format);
-		sunmon_abort();
-	}
+	if (xorsum != 0)
+		mon_printf("idprom: bad checksum=%d\n", xorsum);
+	if (idp->idp_format < 1)
+		mon_printf("idprom: bad version=%d\n", idp->idp_format);
 
 	/*
 	 * Construct the hostid from the idprom contents.
@@ -104,7 +101,8 @@ idprom_init()
 	hostid = hid.l;
 }
 
-void idprom_etheraddr(eaddrp)
+void
+idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
 	u_char *src, *dst;
