@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.57 2000/02/06 07:29:58 fair Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.58 2000/02/27 06:13:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -468,6 +468,8 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    ctob(physmem - uvmexp.wired)));
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
+	case HW_ALIGNBYTES:
+		return (sysctl_rdint(oldp, oldlenp, newp, ALIGNBYTES));
 	default:
 		return (EOPNOTSUPP);
 	}
