@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.5 1998/02/06 00:24:42 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.6 1998/03/21 20:30:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <sparc/sparc/iommuvar.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
@@ -76,14 +77,14 @@ struct vmebus_softc {
 struct  vmebus_softc *vmebus_sc;/*XXX*/
 
 /* autoconfiguration driver */
-static int	vmematch    __P((struct device *, struct cfdata *, void *));
-static void	vmeattach   __P((struct device *, struct device *, void *));
+static int	vmematch_iommu  __P((struct device *, struct cfdata *, void *));
+static void	vmeattach_iommu __P((struct device *, struct device *, void *));
+static int	vmematch_mainbus  __P((struct device *, struct cfdata *, void *));
+static void	vmeattach_mainbus __P((struct device *, struct device *, void *));
 #if defined(SUN4)
-static void	vmeattach4  __P((struct device *, struct device *, void *));
 int 		vmeintr4  __P((void *));
 #endif
 #if defined(SUN4M)
-static void	vmeattach4m __P((struct device *, struct device *, void *));
 int 		vmeintr4m __P((void *));
 #endif
 
@@ -151,8 +152,12 @@ static int	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
 		    bus_dma_segment_t *, int, int, int, int));
 #endif
 
-struct cfattach vme_ca = {
-	sizeof(struct vmebus_softc), vmematch, vmeattach
+struct cfattach vme_mainbus_ca = {
+	sizeof(struct vmebus_softc), vmematch_mainbus, vmeattach_mainbus
+};
+
+struct cfattach vme_iommu_ca = {
+	sizeof(struct vmebus_softc), vmematch_iommu, vmeattach_iommu
 };
 
 struct sparc_bus_space_tag sparc_vme_bus_tag = {
@@ -243,59 +248,48 @@ printf("sparc_vme_bus_establish: on the boot path\n");
 
 
 int
-vmematch(parent, cf, aux)
+vmematch_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
 
-	if (CPU_ISSUN4C)
+	if (!CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (1);
 }
 
+int
+vmematch_iommu(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct mainbus_attach_args *ma = aux;
+
+	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+}
+
+
 void
-vmeattach(parent, self, aux)
+vmeattach_mainbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct vmebus_softc *sc = (struct vmebus_softc *)self;
-	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
-
-	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "vme") == 0) {
-		sc->sc_bp = ra->ra_bp + 1;
-		bootpath_store(1, sc->sc_bp);
-	}
-
 #if defined(SUN4)
-	if (CPU_ISSUN4)
-		vmeattach4(parent, self, aux);
-#endif
-
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		vmeattach4m(parent, self, aux);
-#endif
-
-	bootpath_store(1, NULL);
-}
-
-#if defined(SUN4)
-void
-vmeattach4(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
+	struct mainbus_attach_args *ma = aux;
 	struct vmebus_softc *sc = (struct vmebus_softc *)self;
 	struct vme_busattach_args vba;
 
 	if (self->dv_unit > 0) {
 		printf(" unsupported\n");
 		return;
+	}
+
+	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "vme") == 0) {
+		sc->sc_bp = ma->ma_bp + 1;
+		bootpath_store(1, sc->sc_bp);
 	}
 
 	/* VME interrupt entry point */
@@ -310,22 +304,26 @@ vmeattach4(parent, self, aux)
 
 	printf("\n");
 	(void)config_search(vmesearch, self, &vba);
+
+	bootpath_store(1, NULL);
+#endif
 	return;
 }
-#endif
 
-#if defined(SUN4M)
 /* sun4m vmebus */
 void
-vmeattach4m(parent, self, aux)
+vmeattach_iommu(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+#if defined(SUN4M)
 	struct vmebus_softc *sc = (struct vmebus_softc *)self;
-	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
-	int node, rlen;
+	struct iommu_attach_args *ia = aux;
 	struct vme_busattach_args vba;
+	bus_space_handle_t bh;
+	struct rom_reg *rr;
+	int nreg;
+	int node;
 	int cline;
 
 	if (self->dv_unit > 0) {
@@ -344,31 +342,67 @@ vmeattach4m(parent, self, aux)
 	vba.vba_chipset_tag = &sparc_vme_chipset_tag;
 	vba.vba_dmatag = &sparc_vme4m_dma_tag;
 
-	node = ra->ra_node;
+	node = ia->iom_node;
 
 	/* Map VME control space */
-	sc->sc_reg = (struct vmebusreg *)
-		mapdev(&ra->ra_reg[0], 0, 0, ra->ra_reg[0].rr_len);
-	sc->sc_vec = (struct vmebusvec *)
-		mapdev(&ra->ra_reg[1], 0, 0, ra->ra_reg[1].rr_len);
-	sc->sc_ioctags = (u_int32_t *)
-		mapdev(&ra->ra_reg[1], 0, VME_IOC_TAGOFFSET, VME_IOC_SIZE);
-	sc->sc_iocflush = (u_int32_t *)
-		mapdev(&ra->ra_reg[1], 0, VME_IOC_FLUSHOFFSET, VME_IOC_SIZE);
+	rr = NULL;
+	if (getpropA(node, "reg", sizeof(*rr), &nreg, (void**)&rr) != 0) {
+		printf("%s: can't get register property\n", self->dv_xname);
+		return;
+	}
+	if (nreg < 2) {
+		printf("%s: only %d register sets\n", self->dv_xname, nreg);
+		return;
+	}
+
+	if (sparc_bus_map(ia->iom_bustag,
+			 (bus_type_t)rr[0].rr_iospace,
+			 (bus_addr_t)rr[0].rr_paddr,
+			 (bus_size_t)rr[0].rr_len,
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		panic("%s: can't map vmebusreg", self->dv_xname);
+	}
+	sc->sc_reg = (struct vmebusreg *)bh;
+
+	if (sparc_bus_map(ia->iom_bustag,
+			 (bus_type_t)rr[1].rr_iospace,
+			 (bus_addr_t)rr[1].rr_paddr,
+			 (bus_size_t)rr[1].rr_len,
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		panic("%s: can't map vmebusvec", self->dv_xname);
+	}
+	sc->sc_vec = (struct vmebusvec *)bh;
+
+	if (sparc_bus_map(ia->iom_bustag,
+			 (bus_type_t)rr[1].rr_iospace,
+			 (bus_addr_t)rr[1].rr_paddr + VME_IOC_TAGOFFSET,
+			 VME_IOC_SIZE,
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		panic("%s: can't map IOC tags", self->dv_xname);
+	}
+	sc->sc_ioctags = (u_int32_t *)bh;
+
+	if (sparc_bus_map(ia->iom_bustag,
+			 (bus_type_t)rr[1].rr_iospace,
+			 (bus_addr_t)rr[1].rr_paddr + VME_IOC_FLUSHOFFSET,
+			 VME_IOC_SIZE,
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		panic("%s: can't map IOC flush registers", self->dv_xname);
+	}
+	sc->sc_iocflush = (u_int32_t *)bh;
 
 /*XXX*/	sparc_vme_bus_tag.cookie = sc->sc_reg;
 
 	/*
 	 * Get "range" property.
 	 */
-	rlen = getproplen(node, "ranges");
-	if (rlen > 0) {
-		sc->sc_nrange = rlen / sizeof(struct rom_range);
-		sc->sc_range =
-			(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
-		if (sc->sc_range == 0)  
-			panic("vme: PROM ranges too large: %d", rlen);
-		(void)getprop(node, "ranges", sc->sc_range, rlen);
+	if (getpropA(node, "ranges", sizeof(struct rom_range),
+		     &sc->sc_nrange, (void **)&sc->sc_range) != 0) {
+		panic("%s: can't get ranges property", self->dv_xname);
 	}
 
 	vmebus_sc = sc;
@@ -387,8 +421,8 @@ vmeattach4m(parent, self, aux)
 	       sc->sc_reg->vmebus_cr & VMEBUS_CR_IMPL);
 
 	(void)config_search(vmesearch, self, &vba);
-}
 #endif
+}
 
 void sparc_vme_async_fault __P((void));
 void
@@ -418,7 +452,7 @@ sparc_vme_probe(cookie, tag, addr, offset, size, mod, callback, arg)
 	struct vmebus_softc *sc = (struct vmebus_softc *)cookie;
 
 /* XXX - Use bus_space_[un]map() etc. */
-	reg.rr_paddr = (void *)addr;
+	reg.rr_paddr = (u_int32_t)addr;
 	vmebus_translate(sc, mod, &reg);
 	tmp = (caddr_t)mapdev(&reg, TMPMAP_VA, 0, NBPG);
 	result = probeget(tmp + offset, size) != -1;
@@ -440,7 +474,7 @@ sparc_vme_map(cookie, addr, size, mod, tag, handlep)
 	struct rom_reg reg;
 	struct vmebus_softc *sc = (struct vmebus_softc *)cookie;
 
-	reg.rr_paddr = (void *)addr;
+	reg.rr_paddr = (u_int32_t)addr;
 	vmebus_translate(sc, mod, &reg);
 	*handlep = (bus_space_handle_t)mapdev(&reg, 0, 0, size);
 	return (0);
@@ -457,7 +491,7 @@ sparc_vme_mmap_cookie(cookie, addr, mod, tag, handlep)
 	struct rom_reg reg;
 	struct vmebus_softc *sc = (struct vmebus_softc *)cookie;
   
-	reg.rr_paddr = (void *)addr;
+	reg.rr_paddr = (u_int32_t)addr;
 	vmebus_translate(sc, mod, &reg);
 	*handlep = (int)reg.rr_paddr | PMAP_IOENC(reg.rr_iospace) | PMAP_NC;
 	return (0);
@@ -469,10 +503,9 @@ vmebus_translate(sc, mod, rr)
 	vme_mod_t mod;
 	struct rom_reg *rr;
 {
-	register int j;
 
 	if (CPU_ISSUN4) {
-		(int)rr->rr_iospace = (mod & VMEMOD_D32)
+		rr->rr_iospace = (mod & VMEMOD_D32)
 			? PMAP_VME32
 			: PMAP_VME16;
 
@@ -490,24 +523,26 @@ vmebus_translate(sc, mod, rr)
 				mod);
 		}
 		return;
-	}
+	} else if (CPU_ISSUN4M) {
+		int j;
 
+		/* sun4m VME node: translate through "ranges" property */
+		if (sc->sc_nrange == 0)
+			panic("vmebus: no ranges");
 
-	/* sun4m VME node: translate through "ranges" property */
-	if (sc->sc_nrange == 0)
-		panic("vmebus: no ranges");
+		/* Translate into parent address spaces */
+		for (j = 0; j < sc->sc_nrange; j++) {
+			if (sc->sc_range[j].cspace != mod)
+				continue;
 
-	/* Translate into parent address spaces */
-	for (j = 0; j < sc->sc_nrange; j++) {
-		if (sc->sc_range[j].cspace == mod) {
-			(int)rr->rr_paddr +=
-				sc->sc_range[j].poffset;
-			(int)rr->rr_iospace =
-				sc->sc_range[j].pspace;
+			rr->rr_paddr += sc->sc_range[j].poffset;
+			rr->rr_iospace = sc->sc_range[j].pspace;
 			return;
 		}
+		panic("sparc_vme_translate: modifier %x not supported", mod);
+	} else {
+		panic("sparc_vme_translate: inappropriate cpu arch");
 	}
-	panic("sparc_vme_translate: modifier %x not supported", mod);
 }
 
 #if defined(SUN4M)
