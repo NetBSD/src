@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.201 2004/08/13 02:10:43 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.202 2004/08/13 02:16:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.201 2004/08/13 02:10:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.202 2004/08/13 02:16:40 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -844,65 +844,6 @@ wdcdetach(struct device *self, int flags)
 	return (error);
 }
 
-/*
- * Start I/O on a controller, for the given channel.
- * The first xfer may be not for our channel if the channel queues
- * are shared.
- */
-void
-wdcstart(struct wdc_channel *chp)
-{
-	struct wdc_softc *wdc = chp->ch_wdc;
-	struct ata_xfer *xfer;
-
-#ifdef WDC_DIAGNOSTIC
-	int spl1, spl2;
-
-	spl1 = splbio();
-	spl2 = splbio();
-	if (spl2 != spl1) {
-		printf("wdcstart: not at splbio()\n");
-		panic("wdcstart");
-	}
-	splx(spl2);
-	splx(spl1);
-#endif /* WDC_DIAGNOSTIC */
-
-	/* is there a xfer ? */
-	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
-		return;
-
-	/* adjust chp, in case we have a shared queue */
-	chp = xfer->c_chp;
-
-	if (chp->ch_queue->active_xfer != NULL) {
-		return; /* channel aleady active */
-	}
-	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
-		return; /* queue froozen */
-	}
-#ifdef DIAGNOSTIC
-	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
-		panic("wdcstart: channel waiting for irq");
-#endif
-	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
-		if (!(*wdc->claim_hw)(chp, 0))
-			return;
-
-	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
-	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
-	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_RESET) {
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_RESET;
-		chp->ch_drive[xfer->c_drive].state = 0;
-	}
-	chp->ch_queue->active_xfer = xfer;
-	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-	
-	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
-		KASSERT(xfer->c_flags & C_POLL);
-	xfer->c_start(chp, xfer);
-}
-
 /* restart an interrupted I/O */
 void
 wdcrestart(void *v)
@@ -911,7 +852,7 @@ wdcrestart(void *v)
 	int s;
 
 	s = splbio();
-	wdcstart(chp);
+	atastart(chp);
 	splx(s);
 }
 	
@@ -1092,7 +1033,7 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 	chp->ch_flags &= ~WDCF_TH_RESET;
 	if ((flags & AT_RST_EMERG) == 0)  {
 		chp->ch_queue->queue_freeze--;
-		wdcstart(chp);
+		atastart(chp);
 	} else {
 		/* make sure that we can use polled commands */
 		TAILQ_INIT(&chp->ch_queue->queue_xfer);
@@ -1676,7 +1617,7 @@ __wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wakeup(ata_c);
 	else if (ata_c->callback)
 		ata_c->callback(ata_c->callback_arg);
-	wdcstart(chp);
+	atastart(chp);
 	return;
 }
 
