@@ -32,13 +32,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmdtab.c	2.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmdtab.c,v 1.2 1993/08/01 17:55:11 mycroft Exp $";
+static char sccsid[] = "@(#)cmdtab.c	2.7 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #include "timedc.h"
-
-int	clockdiff(), help(), msite(), quit(), testing(), tracing();
 
 char	clockdiffhelp[] =	"measures clock differences between machines";
 char	helphelp[] =		"gets help on commands";
