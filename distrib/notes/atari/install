@@ -15,11 +15,12 @@ begin again from scratch.
     =======================
 	First you need to get yourself into NetBSD.  This can be
 	done in a couple ways, both of which currently require
-	GEMDOS.
-
-	You can insert the GEMDOS kernel floppy and select
-	the loadbsd program. It will ask for parameters, 
-	supply: '-b netbsd'.  You can, of course, also run it
+	GEMDOS. You need either the bootfloppy provided in the
+	distribution or you can copy the loadbsd.ttp program and
+	kernel to a boot floppy disk (1.4M needed) or put them on a TOS
+	partition.  Select the loadbsd program and it will
+	ask for parameters, supply: '-b netbsd' (or whatever name
+	you copied the kernel to).  You can, of course, also run it
 	from the shell command-line in MiNT:
 
 		loadbsd -b a:/netbsd
@@ -28,13 +29,16 @@ begin again from scratch.
 	your system as the kernel configures the hardware.  Then
 	you will be prompted for a root device.  At this time remove
 	the GEMDOS kernel boot floppy from the drive if present and
-	insert the BSD install floppy 1.  Now type `rd0' to tell the
+	insert the BSD install floppy 1.  Now type `md0a' to tell the
 	kernel to load the install filesystem into RAMdisk. While
 	While the kernel is loading, it will show a '.' for each
 	track loaded. After loading 80 tracks, it will ask you
 	to insert the next floppy. At this time, inser the BSD
 	install floppy 2 and hit any key. The kernel continous
 	loading another 40 tracks before it continues to boot.
+
+	Note: If you are using 1.44Mb floppies, you should select 'md1a'
+	      instead of 'md0a'.
 
 	The system should continue to boot.  For now ignore WARNING:
 	messages about bad dates in clocks. Eventually you will be
@@ -49,12 +53,10 @@ begin again from scratch.
     =========================
 	The installer starts with a nice welcome messages. Read this
 	message carefully, it also informs you of the risks involved
-	in continueiNg! If you still want to go on, type 'y'. The
+	in continuing! If you still want to go on, type 'y'. The
 	installer now continues by trying to figure out your disk
-	configuration. Ignore the error:
-		kern_fs_get_rrootdev: no raw root device
-	When it is done, you will be prompted to select a root device
-	from the list of disks it has found.
+	configuration.  When it is done, you will be prompted to select
+	a root device from the list of disks it has found.
 
     3. Select your root device
     ==========================
@@ -145,6 +147,8 @@ begin again from scratch.
 	Some notes:
 	    - If you want to install from tape, please read the section
 	      about how to create such a tape.
+	      The tape device name will be "nrst0" for the first tape
+	      drive, "nrst1" for the second, etc.
 	    - If you want to install from a gemdos filesystem, you should
 	      rename the distribution sets because of the nameing limitations
 	      on gemdos. Move all 'xxx.tar.gz' sets to 'xxx.tgz'. The
@@ -164,10 +168,9 @@ begin again from scratch.
     11. Installing the kernel
     =========================
 	Because the kernel didn't fit on the install-disks, the installer
-	asks you about the disk you're kernel is on. You can specify the
-	same disks as with the installation of the sets with the addition of
-	'fd0'. The latter can be used when you decide to install the kernel
-	from the kernel-floppy.
+	asks you about the disk your kernel is on. You can specify the
+	floppy with disk 'fd0' and partition 'b' for  720K disks and
+	partition 'c' for 1.4M disks, or one of the hard disk partitions.
 
     12. Installing the bootstrap
     ============================
@@ -181,7 +184,7 @@ begin again from scratch.
 	Congratulations, you just installed NetBSD successfully! If you
 	also installed a bootblock, you only have to reboot your atari to
 	enter your freshly build system. If you didn't, get back to section
-	1 (How to boot the miniroot). Just substitute 'rd0' by your NetBSD
+	1 (How to boot the miniroot). Just substitute 'md0a' by your NetBSD
 	root disk.
 
 

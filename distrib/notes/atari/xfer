@@ -10,7 +10,8 @@ under the root of the NetBSD tree at your favorite archive site.
 
 If you are using NetBSD/atari to make the floppies, you should use
 the command dd(1) to write the raw floppy images (.fs files) to
-the disk. To write onto fd0 use:
+the disk. As an example, to write the first part of the miniroot filesystem
+onto a 720Kb floppy in fd0 use:
 
 	dd if=miniroot-_SVER_S.fs.1 of=/dev/rfd0b bs=9b
 
@@ -19,9 +20,13 @@ from the "atari/utils" directory and issue the command:
 	rawwrite miniroot-_SVER_S.fs
 
 This will create the boot-floppy on the floppy in drive a. The floppies
-should be pre-formatted on 720Kb for both the 'dd' and 'rawwrite' commands
-to work. Pre-formatting can be best done using the desktop format command.
-Some other utilities seem to be giving problems.
+should be pre-formatted on 720Kb/1.44Mb for both the 'dd' and 'rawwrite'
+commands to work. Pre-formatting can be best done using the desktop format
+command.  Some other utilities seem to be giving problems.
+
+Since the 1.3 release, it is also possible to use HD-floppies. You should
+than use the floppy device '/dev/rfd0c' or add the '-H' flag to 'rawwrite'.
+
 
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
