@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.218 2004/05/23 11:02:57 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.219 2004/05/23 12:00:25 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3027,3 +3027,10 @@ sbin/raidctl/raidctl.8				1.43
 	section of RAID config files.
 	[oster, ticket #378]
 
+sys/ufs/ext2fs/ext2fs_vnops.c			1.53
+sys/ufs/ufs/ufs_vnops.c				1.114
+
+	POSIX: Permit a process without the appropriate privilege to change a
+	file's group ID to its effective gid, in addition to the presently
+	permitted set of supplementary gids.
+	[kleink, ticket #379]
