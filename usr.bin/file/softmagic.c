@@ -26,6 +26,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
@@ -34,7 +35,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: softmagic.c,v 1.10 1996/10/05 20:20:31 christos Exp $";
+	"@(#)$Id: softmagic.c,v 1.11 1996/10/06 18:27:25 cgd Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
