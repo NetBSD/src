@@ -1,7 +1,8 @@
 /*
  * machine-dependent clock routines; intersil7170
+ *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.2 1993/06/25 23:07:14 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.3 1993/06/26 01:17:52 glass Exp $
  */
 
 #include "param.h"
@@ -23,7 +24,12 @@
 #define SECS_PER_LEAP           (SECS_DAY*366)
 #define SECS_PER_MONTH(month, year) \
     ((month == 2) && INTERSIL_LEAP_YEAR(year) \
-    ? 29*SECS_DAY : month_days[month-1]*SECS_DAY)
+     ? 29*SECS_DAY : month_days[month-1]*SECS_DAY)
+
+#define SECS_YEAR(year) \
+       (INTERSIL_LEAP_YEAR(year) ? SECS_PER_LEAP : SECS_PER_YEAR)
+
+
     
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -49,14 +55,14 @@ static int month_days[12] = {
 /*
  * Start the real-time clock.
  */
-startrtclock()
+void startrtclock()
 {
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_IDISABLE);
     intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
 }
 
-enablertclock()
+void enablertclock()
 {
 	/* make sure irq5/7 stuff is resolved :) */
 
@@ -124,7 +130,7 @@ struct timeval intersil_to_timeval()
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
-inittodr(base)
+void inittodr(base)
 	time_t base;
 {
     int s;
@@ -133,7 +139,7 @@ inittodr(base)
 
     clock_time = intersil_to_timeval();
 
-    if (!clock_time.tv_sec && (base <= 0) goto set_time;
+    if (!clock_time.tv_sec && (base <= 0)) goto set_time;
 	
     if (clock_time.tv_sec < base) {
 	printf("WARNING: real-time clock reports a time earlier than last\n");
@@ -153,9 +159,55 @@ set_time:
     time = clock_time;
 }
 
-resettodr()
+void timeval_to_intersil(now, map)
+    timeval now;
+    struct intersil_map *map;
 {
+
+    for (map->year = INTERSIL_UNIX_BASE-INTERSIL_BASE_YEAR;
+	 now > SECS_YEAR(map->year);
+	 map->year++)
+	now -= SECS_YEAR(map->year);
+
+    for (map->month = 1; now >=0; map->month++)
+	now -= SECS_PER_MONTH(map->monthINTERSIL_BASE_YEAR+map->year);
+
+    map->month--;
+    now -= SECS_PER_MONTH(map->monthINTERSIL_BASE_YEAR+map->year);
+
+    map->date = now % SECS_DAY ;
+    map /= SECS_DAY;
+    map->minutes = now %60;
+    now /= 60;
+    map->seconds = now %60;
+    now /= 60;
+    map->day = map->date %7;
+    map->csec = now / 10000;
+}
+
+
+/*   
+ * Resettodr restores the time of day hardware after a time change.
+ */
+void resettodr()
+{
+    struct intersil_map hdw_format;
+
+    timeval_to_intersil(time, &hdw_format);
+    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_STOP,
+						   INTERSIL_IDISABLE);
+
+    intersil_clock->counters.csecs    =    hdw_format->csecs   ;
+    intersil_clock->counters.hours    =    hdw_format->hours   ;
+    intersil_clock->counters.minutes  =    hdw_format->minutes ;
+    intersil_clock->counters.seconds  =    hdw_format->seconds ;
+    intersil_clock->counters.month    =    hdw_format->month   ;
+    intersil_clock->counters.date     =    hdw_format->date    ;
+    intersil_clock->counters.year     =    hdw_format->year    ;
+    intersil_clock->counters.day      =    hdw_format->day     ;
     
+    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
+						   INTERSIL_IENABLE);
 }
 
 
