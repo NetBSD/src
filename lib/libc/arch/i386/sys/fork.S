@@ -34,19 +34,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fork.s	5.1 (Berkeley) 4/23/90
- *	$Id: fork.S,v 1.3 1994/01/24 19:24:40 jtc Exp $
+ *	$Id: fork.S,v 1.4 1994/01/27 04:10:21 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: fork.S,v 1.3 1994/01/24 19:24:40 jtc Exp $"
+	.asciz "$Id: fork.S,v 1.4 1994/01/27 04:10:21 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 SYSCALL(fork)
 	testl	%edx,%edx	/* parent, since %edx == 0 in parent, 1 in child */
-	je	1f
+	jz	1f
 	xorl	%eax,%eax
 1:
 	ret		/* pid = fork(); */
