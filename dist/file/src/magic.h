@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.1.1.1 2003/03/25 22:30:19 pooka Exp $	*/
+/*	$NetBSD: magic.h,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -44,7 +44,7 @@
 
 typedef struct magic_set *magic_t;
 
-magic_t magic_open(int flags);
+magic_t magic_open(int);
 void magic_close(magic_t);
 
 const char *magic_file(magic_t, const char *);

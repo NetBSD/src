@@ -1,0 +1,51 @@
+2003-05-23 17:03  Christos Zoulas  <christos@zoulas.com>
+
+	* documentation fixes from Michael Piefel <piefel@debian.org>
+	* magic fixes (various)
+	* revert basename magic in .mgc name determination
+	* buffer protection in uncompress,
+	  signness issues,
+	  close files
+	  Maciej W. Rozycki <macro@ds2.pg.gda.pl
+
+2003-04-21 20:12  Christos Zoulas  <christos@zoulas.com>
+
+	* fix zsh magic
+
+2003-04-04 16:59  Christos Zoulas  <christos@zoulas.com>
+
+	* fix operand sort order in string.
+
+2003-04-02 17:30  Christos Zoulas  <christos@zoulas.com>
+
+	* cleanup namespace in magic.h
+
+2003-04-02 13:50  Christos Zoulas  <christos@zoulas.com>
+
+	* Magic additions (Alex Ott)
+	* Fix bug that broke VPATH compilation (Peter Breitenlohner)
+
+2003-03-28 16:03  Christos Zoulas  <christos@zoulas.com>
+
+	* remove packed attribute from magic struct.
+	* make the magic struct properly aligned.
+	* bump version number of compiled files to 2.
+
+2003-03-27 13:10  Christos Zoulas  <christos@zoulas.com>
+
+	* separate tar detection and run it before softmagic.
+	* fix reversed symlink test.
+	* fix version printing.
+	* make separator a string instead of a char.
+	* update manual page and sort options.
+
+2003-03-26 11:00  Christos Zoulas  <christos@zoulas.com>
+
+	* Pass lint
+	* make NULL in magic_file mean stdin
+	* Fix "-" argument to file to pass NULL to magic_file
+	* avoid pointer casts by using memcpy
+	* rename magic_buf -> magic_buffer
+	* keep only the first error
+	* manual page: new sentence, new line
+	* fix typo in api function (magic_buf -> magic_buffer)
