@@ -1,7 +1,7 @@
-/* $NetBSD: iomd_irq.S,v 1.2 1996/02/02 02:35:41 mycroft Exp $ */
+/* $NetBSD: iomd_irq.S,v 1.3 1996/03/08 20:44:13 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * Low level irq and fiq handlers
  *
  * Created      : 27/09/94
- * Last updated : 01/07/95
- *
- *    $Id: iomd_irq.S,v 1.2 1996/02/02 02:35:41 mycroft Exp $
  */
 
 #include "assym.h"
@@ -281,7 +278,7 @@ Lis:
 	mov	r12, sp
 
 /* r0  points to the trap frame on the IRQ stack (SP corrected) */
-/* r12 points to the trap frame on the IRQ stack (SP corrected) */
+/* r12 points to the trap frame on the SVC stack */
 
 	ldmia	r0!, {r1-r9} 	/* Pull 9 regs off the IRQ stack */
 	stmia	r12!, {r1-r9}	/* Store on the SVC stack */
@@ -395,7 +392,7 @@ _intrnames:
 	.asciz	"pwr on reset"
 	.asciz	"timer 0"
 	.asciz	"timer 1"
-	.asciz	"reserved 1"
+	.asciz	"softclock"	/* reserved1 */
 	.asciz	"reserved 2"
 	.asciz	"wdc"
 	.asciz	"serial"
