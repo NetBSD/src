@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.74 2000/12/29 19:42:08 mellon Exp $
+$NetBSD: acronyms,v 1.75 2000/12/31 13:39:02 ad Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -67,6 +67,7 @@ KITA	kick in the ass
 KNF	kernel normal form
 L8R	later
 LART	luser attitude readjustment tool (ie, hammer)
+LJBF	let's just be friends
 LMSO	laughing my socks off
 LOL	laughing out loud
 LTNS	long time no see
