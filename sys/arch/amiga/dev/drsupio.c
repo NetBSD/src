@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.1.2.3 1997/09/22 06:30:33 thorpej Exp $ */
+/*	$NetBSD: drsupio.c,v 1.1.2.4 1997/10/14 08:26:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -52,7 +52,6 @@
 
 #include <amiga/dev/supio.h>
 
-
 struct drsupio_softc {
 	struct device sc_dev;
 	struct bus_space_tag sc_bst;
@@ -61,6 +60,7 @@ struct drsupio_softc {
 int drsupiomatch __P((struct device *, struct cfdata *, void *));
 void drsupioattach __P((struct device *, struct device *, void *));
 int drsupprint __P((void *auxp, const char *));
+void drlptintack __P((void *));
 
 struct cfattach drsupio_ca = {
 	sizeof(struct drsupio_softc), drsupiomatch, drsupioattach
@@ -92,7 +92,7 @@ struct drsupio_devs {
 } drsupiodevs[] = {
 	{ "com", 0x3f8, 115200 * 16 },
 	{ "com", 0x2f8, 115200 * 16 },
-	{ "lpt", 0x378, 0 },
+	{ "lpt", 0x278, (int)drlptintack },
 	{ "fdc", 0x3f0, 0 },
 	/* WD port? */
 	{ 0 }
@@ -105,6 +105,7 @@ drsupioattach(parent, self, auxp)
 {
 	struct drsupio_softc *drsc;
 	struct drsupio_devs  *drsd;
+	struct drioct *ioct;
 	struct supio_attach_args supa;
 
 	drsc = (struct drsupio_softc *)self;
@@ -126,6 +127,22 @@ drsupioattach(parent, self, auxp)
 		config_found(self, &supa, drsupprint); /* XXX */
 		++drsd;
 	}
+
+	drlptintack(0);
+	ioct = (struct drioct *)(DRCCADDR + NBPG * DRIOCTLPG);
+	ioct->io_status2 |= DRSTAT2_PARIRQENA;
+}
+
+void
+drlptintack(p)
+	void *p;
+{
+	struct drioct *ioct;
+
+	(void)p;
+	ioct = (struct drioct *)(DRCCADDR + NBPG * DRIOCTLPG);
+
+	ioct->io_parrst = 0;	/* any value works */
 }
 
 int

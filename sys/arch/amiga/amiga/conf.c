@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43.4.1 1997/09/01 20:06:29 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.43.4.2 1997/10/14 08:25:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -91,13 +91,14 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "view.h"
 #include "mfcs.h"
 #include "com.h"
-cdev_decl(com);
+#include "lpt.h"
 #include "audio.h"
 cdev_decl(audio);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
 #include "ipfilter.h"
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -134,7 +135,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 30 */
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
 	cdev_tty_init(NCOM,com),	/* 32: com ports */
-	cdev_lkm_dummy(),		/* 33 */
+	cdev_lpt_init(NLPT,lpt),	/* 33: lpt-style parallel ports */
 	cdev_lkm_dummy(),		/* 34 */
 	cdev_lkm_dummy(),		/* 35 */
 	cdev_lkm_dummy(),		/* 36 */
@@ -143,6 +144,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 39: SCSI unknown */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 40: ip-filter device */
 	cdev_audio_init(NAUDIO,audio),	/* 41: cc audio interface */
+	cdev_rnd_init(NRND,rnd),	/* 42: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -247,6 +249,7 @@ static int chrtoblktab[] = {
  	/* 39 */	NODEV,
  	/* 40 */	NODEV,
  	/* 41 */	NODEV,
+ 	/* 42 */	NODEV,
 };
 
 /*

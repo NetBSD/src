@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzscvar.h,v 1.1.10.1 1997/10/14 08:26:20 thorpej Exp $	*/
+/*	$NetBSD: cbiiscvar.h,v 1.1.2.2 1997/10/14 08:26:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch.
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct bztzsc_softc {
+struct cbiisc_softc {
 	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
 
 	struct	isr		 sc_isr;	/* Interrupt chain struct */
@@ -57,4 +57,4 @@ struct bztzsc_softc {
 
 };
 
-#define BZTZSC_PB_LED		0x02		/* clear to turn LED on */
+#define CBIISC_PB_LED		0x02
