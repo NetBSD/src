@@ -103,12 +103,12 @@ bwtwo*)
 
 cgthree*)
 	unit=`expr $i : '.......\(.*\)'`
-	mknod cgthree$unit	c 27 $unit; chmod 666 cgthree$unit
+	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
 
 cgsix*)
 	unit=`expr $i : '.....\(.*\)'`
-	mknod cgsix$unit	c 27 $unit; chmod 666 cgsix$unit
+	mknod cgsix$unit	c 67 $unit; chmod 666 cgsix$unit
 	;;
 
 audio)
