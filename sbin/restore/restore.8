@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.20 1998/01/10 08:21:58 enami Exp $
+.\"	$NetBSD: restore.8,v 1.21 1998/01/10 08:27:56 enami Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,32 +43,32 @@
 .Sh SYNOPSIS
 .Nm
 .Fl i
-.Op Fl chmvy
+.Op Fl cdhmvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm ""
 .Fl R
-.Op Fl cvy
+.Op Fl cdvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm ""
 .Fl r
-.Op Fl cvy
+.Op Fl cdvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm ""
 .Fl t
-.Op Fl chvy
+.Op Fl cdhvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op file ...
 .Nm ""
 .Fl x
-.Op Fl chmvy
+.Op Fl cdhmvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
@@ -145,7 +145,7 @@ from the dump.
 will ask which volume the user wishes to mount.
 The fastest way to extract a few files is to
 start with the last volume, and work towards the first volume.
-.It Ic help
+.It Ic help , ?
 List a summary of the available commands.
 .It Ic \&ls Op Ar arg
 List the current or specified directory.
@@ -155,7 +155,7 @@ If the verbose
 flag is set the inode number of each entry is also listed.
 .It Ic pwd
 Print the full pathname of the current working directory.
-.It Ic quit
+.It Ic quit , Ic xit
 Restore immediately exits,
 even if the extraction list is not empty.
 .It Ic setmodes
@@ -173,6 +173,10 @@ command to list the inode numbers of all entries.
 It also causes
 .Nm
 to print out information about each file as it is extracted.
+.It Ic what
+List dump header information.
+.It Ic Debug
+Enable debugging.
 .El
 .It Fl R
 .Nm
@@ -275,6 +279,8 @@ old (pre-4.4) or new format file sytem.  The
 .Fl c
 flag disables this check, and only allows reading a dump in the old
 format.
+.It Fl d
+Enable debugging.
 .It Fl f Ar file
 Read the backup from
 .Ar file ;
@@ -337,6 +343,8 @@ preceded by its file type.
 .It Fl y
 Do not ask the user whether to abort the restore in the event of an error.
 Always try to skip over the bad block(s) and continue.
+.It Fl N
+Do not perform actual writing to disk.
 .El
 .Sh DIAGNOSTICS
 Complains if it gets a read error.

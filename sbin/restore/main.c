@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1997/09/16 13:44:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1998/01/10 08:27:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 1997/09/16 13:44:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 1998/01/10 08:27:55 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,19 +290,19 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s -i [-chmvy] [-b blocksize] [-f file] [-s fileno]\n",
+	    "usage: %s -i [-cdhmvyN] [-b blocksize] [-f file] [-s fileno]\n",
 	    __progname);
 	(void)fprintf(stderr,
-	    "\t%s -R [-cvy] [-b blocksize] [-f file] [-s fileno]\n",
+	    "\t%s -R [-cdvyN] [-b blocksize] [-f file] [-s fileno]\n",
 	    __progname);
 	(void)fprintf(stderr,
-	    "\t%s -r [-cvy] [-b blocksize] [-f file] [-s fileno]\n",
+	    "\t%s -r [-cdvyN] [-b blocksize] [-f file] [-s fileno]\n",
 	    __progname);
 	(void)fprintf(stderr,
-	    "\t%s -t [-chvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
+	    "\t%s -t [-cdhvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
 	    __progname);
 	(void)fprintf(stderr,
-	    "\t%s -x [-chmvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
+	    "\t%s -x [-cdhmvyN] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
 	    __progname);
 	exit(1);
 }
