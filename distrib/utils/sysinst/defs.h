@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.29 1998/05/15 15:12:29 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.30 1998/06/22 12:18:52 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,7 +167,7 @@ EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
-EXTERN char cdrom_dir[STRSIZE] INIT("/NetBSD-");
+EXTERN char cdrom_dir[STRSIZE] INIT("/");
 
 EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
