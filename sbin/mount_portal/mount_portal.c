@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.13 1998/07/18 05:04:36 lukem Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.14 1999/03/04 03:02:43 bgrayson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.13 1998/07/18 05:04:36 lukem Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.14 1999/03/04 03:02:43 bgrayson Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ main(argc, argv)
 		err(1, "socket");
 	(void) unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
-		err(1, "%s", "");
+		err(1, "bind() call");
 	(void) unlink(un.sun_path);
 
 	(void) listen(so, 5);
@@ -185,7 +185,7 @@ main(argc, argv)
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
 	if (rc < 0)
-		err(1, "%s", "");
+		err(1, "mount attempt on %s", mountpt);
 
 	/*
 	 * Everything is ready to go - now is a good time to fork
