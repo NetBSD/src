@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.c,v 1.1.1.2 1997/03/29 02:49:51 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -30,19 +32,17 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: misc.c,v 1.1.1.1 1997/01/05 13:09:05 mrg Exp $";
+static	char	rcsid[] = "$Id: misc.c,v 1.1.1.2 1997/03/29 02:49:51 darrenr Exp $";
 #endif
-
-void	debug(), verbose();
 
 extern	int	opts;
 
@@ -69,17 +69,35 @@ struct	ip	*ip;
 }
 
 
-void	verbose(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9)
-char	*fmt, *p1, *p2, *p3, *p4, *p5, *p6, *p7,*p8,*p9;
+#ifdef __STDC__
+void	verbose(char *fmt, ...)
+#else
+void	verbose(fmt, va_alist)
+char	*fmt;
+va_dcl
+#endif
 {
+	va_list pvar;
+
+	va_start(pvar, fmt);
 	if (opts & OPT_VERBOSE)
-		printf(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+		vprintf(fmt, pvar);
+	va_end(pvar);
 }
 
 
-void	debug(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9)
-char	*fmt, *p1, *p2, *p3, *p4, *p5, *p6, *p7,*p8,*p9;
+#ifdef	__STDC__
+void	debug(char *fmt, ...)
+#else
+void	debug(fmt, va_alist)
+char *fmt;
+va_dcl
+#endif
 {
+	va_list pvar;
+
+	va_start(pvar, fmt);
 	if (opts & OPT_DEBUG)
-		printf(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+		vprintf(fmt, pvar);
+	va_end(pvar);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: ipft_sn.c,v 1.1.1.2 1997/03/29 02:49:47 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -33,7 +35,7 @@
 #include "snoop.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipft_sn.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipft_sn.c,v 1.1.1.2 1997/03/29 02:49:47 darrenr Exp $";
 #endif
 
 struct	llc	{
@@ -59,9 +61,12 @@ static	struct	llc	llcs[SDL_MAX+1] = {
 	{ 0, 0, 0 },	/* SDL_OTHER */
 };
 
-static	int	snoop_open(), snoop_close(), snoop_readip();
+static	int	snoop_open __P((char *));
+static	int	snoop_close __P((void));
+static	int	snoop_readip __P((char *, int, char **, int *));
 
 static	int	sfd = -1, s_type = -1;
+static	int	snoop_read_rec __P((struct snooppkt *));
 
 struct	ipread	snoop = { snoop_open, snoop_close, snoop_readip };
 
