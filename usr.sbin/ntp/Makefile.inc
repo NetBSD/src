@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/09/18 03:54:34 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/10/19 06:11:38 lukem Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -19,7 +19,9 @@ DPADD+=		${LIBNTP}/libntp.a
 SRCS+=	version.c
 CLEANFILES+=version.c version.o .version
 .version:
-	sh ${.CURDIR}/../scripts/mkver ${PROG} > /dev/null
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	${HOST_SH} ${.CURDIR}/../scripts/mkver ${PROG} > /dev/null
 version.c: .version ${LIBNTP}/libntp.a
 .endif
 
