@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.14 1993/11/01 08:36:50 mycroft Exp $
+ *	$Id: intr.c,v 1.15 1993/12/05 11:20:09 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -235,7 +235,7 @@ isa_flushintrs()
 	register int i;
 
 	/* clear any pending interrupts */
-#if 0
+#ifndef SPECIAL_MASK_MODE
 	disable_intr();
 	intr_enable(ipending);
 #endif
@@ -244,7 +244,7 @@ isa_flushintrs()
 		outb(IO_ICU2, ICU_EOI);
 	}
 	ipending = 0;
-#if 0
+#ifndef SPECIAL_MASK_MODE
 	enable_intr();
 #endif
 }
@@ -252,20 +252,23 @@ isa_flushintrs()
 void
 isa_intrstate()
 {
-	register u_char a, b, c, d;
+	register u_char a, b, c, d, e, f;
 
 	disable_intr();
 	outb(IO_ICU1, 0x0a);
 	a = inb(IO_ICU1);
 	outb(IO_ICU1, 0x0b);
 	b = inb(IO_ICU1);
+	c = inb(IO_ICU1 + 1);
 	outb(IO_ICU2, 0x0a);
-	c = inb(IO_ICU2);
-	outb(IO_ICU2, 0x0b);
 	d = inb(IO_ICU2);
+	outb(IO_ICU2, 0x0b);
+	e = inb(IO_ICU2);
+	f = inb(IO_ICU2 + 1);
 	enable_intr();
-	printf("irr1=%02x isr1=%02x irr2=%02x isr2=%02x ipending=%08x\n",
-	       a, b, c, d, ipending);
+	printf("irr1=%02x isr1=%02x imr1=%02x "
+	       "irr2=%02x isr2=%02x imr2=%02x ipending=%08x\n",
+	       a, b, c, d, e, f, ipending);
 }
 
 /*
