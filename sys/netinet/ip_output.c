@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.45 1998/02/15 18:24:28 tls Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.46 1998/03/19 15:46:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ ip_output(m0, va_alist)
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.le_next)
+	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
 			if (rv) {
