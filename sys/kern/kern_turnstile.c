@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.1 2002/03/10 19:08:24 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.2 2002/03/10 20:05:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.1 2002/03/10 19:08:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.2 2002/03/10 20:05:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -125,8 +125,9 @@ do {									\
 
 #define	TURNSTILE_CHAIN_UNLOCK(tc)					\
 do {									\
+	int _s_ = (tc)->tc_oldspl;					\
 	__cpu_simple_unlock(&(tc)->tc_lock);				\
-	splx((tc)->tc_oldspl);						\
+	splx(_s_);							\
 } while (/*CONSTCOND*/0)
 
 static const char turnstile_wmesg[] = "tstile";
