@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2000/07/06 12:40:19 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2000/08/15 20:24:58 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2000/07/06 12:40:19 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2000/08/15 20:24:58 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,8 @@ struct nlist nl[] = {
 	{ "_mif6table" },
 #define N_PFKEYSTAT	53
 	{ "_pfkeystat" },
+#define N_ARPSTAT	54
+	{ "_arpstat" },
 	{ "" },
 };
 
@@ -238,6 +240,11 @@ struct protox ip6protox[] = {
 };
 #endif
 
+struct protox arpprotox[] = {
+	{ -1,		N_ARPSTAT,	1,	0,
+	  arp_stats,	NULL,		0,	"arp" },
+};
+
 #ifdef IPSEC
 struct protox pfkeyprotox[] = {
 	{ -1,		N_PFKEYSTAT,	1,	0,
@@ -284,6 +291,7 @@ struct protox *protoprotox[] = { protox,
 #ifdef INET6
 				 ip6protox,
 #endif
+				 arpprotox,
 #ifdef IPSEC
 				 pfkeyprotox,
 #endif
@@ -339,6 +347,8 @@ main(argc, argv)
 				af = AF_INET;
 			else if (strcmp(optarg, "inet6") == 0)
 				af = AF_INET6;
+			else if (strcmp(optarg, "arp") == 0)
+				af = AF_ARP;
 			else if (strcmp(optarg, "pfkey") == 0)
 				af = PF_KEY;
 			else if (strcmp(optarg, "unix") == 0
@@ -563,6 +573,9 @@ main(argc, argv)
 		for (tp = ip6protox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
 #endif
+	if (af == AF_ARP || af == AF_UNSPEC)
+		for (tp = arpprotox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
 #ifdef IPSEC
 	if (af == PF_KEY || af == AF_UNSPEC)
 		for (tp = pfkeyprotox; tp->pr_name; tp++)

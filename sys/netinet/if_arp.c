@@ -1,7 +1,7 @@
-/*	$NetBSD: if_arp.c,v 1.69 2000/05/20 03:08:42 jhawk Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.70 2000/08/15 20:24:57 jhawk Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -157,7 +157,9 @@ int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
 
+struct	arpstat arpstat;
 struct	callout arptimer_ch;
+
 
 /* revarp state */
 static struct	in_addr myip, srv_ip;
@@ -317,6 +319,7 @@ arp_drain()
 		}
 	}
 	ARP_UNLOCK();
+	arpstat.as_dfrdropped += count;
 }
 
 
@@ -559,6 +562,8 @@ arprequest(ifp, sip, tip, enaddr)
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
+	arpstat.as_sndtotal++;
+	arpstat.as_sndrequest++;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
 
@@ -592,6 +597,7 @@ arpresolve(ifp, rt, m, dst, desten)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
+		arpstat.as_allocfail++;
 		log(LOG_DEBUG, "arpresolve: can't allocate llinfo\n");
 		m_freem(m);
 		return (0);
@@ -613,14 +619,16 @@ arpresolve(ifp, rt, m, dst, desten)
 	 * latest one.
 	 */
 
+	arpstat.as_dfrtotal++;
 	s = splimp();
 	mold = la->la_hold;
 	la->la_hold = m;
 	splx(s);
 
-	if (mold)
+	if (mold) {
+		arpstat.as_dfrdropped++;
 		m_freem(mold);
-
+	}
 	
 	/*
 	 * Re-send the ARP request when appropriate.
@@ -670,6 +678,8 @@ arpintr()
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
 
+		arpstat.as_rcvtotal++;
+
 		if (m->m_len >= sizeof(struct arphdr) &&
 		    (ar = mtod(m, struct arphdr *)) &&
 		    /* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
@@ -681,7 +691,11 @@ arpintr()
 			case ETHERTYPE_IPTRAILERS:
 				in_arpinput(m);
 				continue;
+			default:
+				arpstat.as_rcvbadproto++;
 			}
+		else
+			arpstat.as_rcvbadlen++;
 		m_freem(m);
 	}
 }
@@ -716,27 +730,33 @@ in_arpinput(m)
 	struct mbuf *mold;
 	int s;
 	
-
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
+
+	if (m->m_flags & (M_BCAST|M_MCAST))
+		arpstat.as_rcvmcast++;
 
 	/*
 	 * If the target IP address is zero, ignore the packet.
 	 * This prevents the code below from tring to answer
 	 * when we are using IP address zero (booting).
 	 */
-	if (in_nullhost(itaddr))
+	if (in_nullhost(itaddr)) {
+		arpstat.as_rcvzerotpa++;
 		goto out;
+	}
 
 	/*
 	 * If the source IP address is zero, this is most likely a
 	 * confused host trying to use IP address zero. (Windoze?)
 	 * XXX: Should we bother trying to reply to these?
 	 */
-	if (in_nullhost(isaddr))
+	if (in_nullhost(isaddr)) {
+		arpstat.as_rcvzerospa++;
 		goto out;
+	}
 
 	/*
 	 * Search for a matching interface address
@@ -754,19 +774,24 @@ in_arpinput(m)
 
 		if (ia == NULL) {
 			IFP_TO_IA(ifp, ia);
-			if (ia == NULL)
+			if (ia == NULL) {
+				arpstat.as_rcvnoint++;
 				goto out;
+			}
 		}
 	}
 
 	myaddr = ia->ia_addr.sin_addr;
 
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
-	    ifp->if_data.ifi_addrlen))
+	    ifp->if_data.ifi_addrlen)) {
+		arpstat.as_rcvlocalsha++;
 		goto out;	/* it's from me, ignore it. */
+	}
 
 	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
 	    ifp->if_data.ifi_addrlen)) {
+		arpstat.as_rcvbcastsha++;
 		log(LOG_ERR,
 		    "%s: arp: link address is broadcast for IP address %s!\n",
 		    ifp->if_xname, in_fmtaddr(isaddr));
@@ -774,6 +799,7 @@ in_arpinput(m)
 	}
 
 	if (in_hosteq(isaddr, myaddr)) {
+		arpstat.as_rcvlocalspa++;
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from link address %s\n",
 		   in_fmtaddr(isaddr), lla_snprintf(ar_sha(ah), ah->ar_hln));
@@ -785,6 +811,7 @@ in_arpinput(m)
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen)) {
 			if (rt->rt_flags & RTF_STATIC) {
+				arpstat.as_rcvoverperm++;
 				log(LOG_INFO,
 				    "%s tried to overwrite permanent arp info"
 				    " for %s\n",
@@ -792,6 +819,7 @@ in_arpinput(m)
 				    in_fmtaddr(isaddr));
 				goto out;
 			} else if (rt->rt_ifp != ifp) {
+				arpstat.as_rcvoverint++;
 				log(LOG_INFO,
 				    "%s on %s tried to overwrite "
 				    "arp info for %s on %s\n",
@@ -800,6 +828,7 @@ in_arpinput(m)
 				    rt->rt_ifp->if_xname);
 				    goto out;
 			} else {
+				arpstat.as_rcvover++;
 				log(LOG_INFO,
 				    "arp info overwritten for %s by %s\n",
 				    in_fmtaddr(isaddr),
@@ -813,11 +842,13 @@ in_arpinput(m)
 		 */
 		if (sdl->sdl_alen &&
 		    sdl->sdl_alen != ah->ar_hln) {
+			arpstat.as_rcvlenchg++;
 			log(LOG_WARNING, 
 			    "arp from %s: new addr len %d, was %d",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_data.ifi_addrlen != ah->ar_hln) {
+			arpstat.as_rcvbadlen++;
 			log(LOG_WARNING, 
 			    "arp from %s: addr len: new %d, i/f %d (ignored)",
 			    in_fmtaddr(isaddr), ah->ar_hln,
@@ -863,15 +894,20 @@ in_arpinput(m)
 		la->la_hold = 0;
 		splx(s);
 
-		if (mold)
+		if (mold) {
+			arpstat.as_dfrsent++;
 			(*ifp->if_output)(ifp, mold, rt_key(rt), rt);
+		}
 	}
 reply:
 	if (op != ARPOP_REQUEST) {
+		if (op == ARPOP_REPLY)
+			arpstat.as_rcvreply++;
 	out:
 		m_freem(m);
 		return;
 	}
+	arpstat.as_rcvrequest++;
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
 		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
@@ -895,6 +931,8 @@ reply:
 	m->m_pkthdr.len = m->m_len;
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
+	arpstat.as_sndtotal++;
+	arpstat.as_sndreply++;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 	return;
 }
@@ -947,9 +985,10 @@ arplookup(addr, create, proxy)
 
 	if (rt->rt_flags & RTF_GATEWAY)
 		why = "host is not on local network";
-	else if ((rt->rt_flags & RTF_LLINFO) == 0)
+	else if ((rt->rt_flags & RTF_LLINFO) == 0) {
+		arpstat.as_allocfail++;
 		why = "could not allocate llinfo";
-	else if (rt->rt_gateway->sa_family != AF_LINK)
+	} else if (rt->rt_gateway->sa_family != AF_LINK)
 		why = "gateway route is not ours";
 	else
 		return ((struct llinfo_arp *)rt->rt_llinfo);
