@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.2 2000/06/09 08:22:13 gmcgarry Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.2.2.1 2000/08/09 23:14:52 gmcgarry Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -185,6 +185,7 @@ static int xi_mediachange __P((struct ifnet *));
 static void xi_mediastatus __P((struct ifnet *, struct ifmediareq *));
 static int xi_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
 static int xi_pcmcia_lan_nid_ciscallback __P((struct pcmcia_tuple *, void *));
+static int xi_pcmcia_manfid_ciscallback __P((struct pcmcia_tuple *, void *));
 static u_int16_t xi_get __P((struct xi_softc *));
 static void xi_reset __P((struct xi_softc *));
 static void xi_set_address __P((struct xi_softc *));
@@ -192,11 +193,13 @@ static void xi_start __P((struct ifnet *));
 static void xi_statchg __P((struct device *));
 static void xi_stop __P((struct xi_softc *));
 static void xi_watchdog __P((struct ifnet *));
+struct xi_pcmcia_product *xi_pcmcia_identify __P((struct device *,
+						struct pcmcia_attach_args *));
 
 /* flags */
-#define XI_FLAGS_MOHAWK	0x001		/* 100Mb capabilities (has phy) */
-#define XI_FLAGS_DINGO	0x002		/* realport cards ??? */
-#define XI_FLAGS_MODEM	0x004		/* modem also present */
+#define XIFLAGS_MOHAWK	0x001		/* 100Mb capabilities (has phy) */
+#define XIFLAGS_DINGO	0x002		/* realport cards ??? */
+#define XIFLAGS_MODEM	0x004		/* modem also present */
 
 struct xi_pcmcia_product {
 	u_int32_t	xpp_vendor;	/* vendor ID */
@@ -206,44 +209,78 @@ struct xi_pcmcia_product {
 	const char	*xpp_name;	/* device name */
 } xi_pcmcia_products[] = {
 #ifdef NOT_SUPPORTED
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_CE,
+	{ PCMCIA_VENDOR_XIRCOM,		0x0141,
 	  0,				0,
 	  PCMCIA_STR_XIRCOM_CE },
 #endif
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_CE2,
+	{ PCMCIA_VENDOR_XIRCOM,		0x0141,
 	  0,				0,
 	  PCMCIA_STR_XIRCOM_CE2 },
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_CE3,
-	  0,				XI_FLAGS_MOHAWK,
+	{ PCMCIA_VENDOR_XIRCOM,		0x0142,
+	  0,				0,
+	  PCMCIA_STR_XIRCOM_CE2 },
+	{ PCMCIA_VENDOR_XIRCOM,		0x0143,
+	  0,				XIFLAGS_MOHAWK,
 	  PCMCIA_STR_XIRCOM_CE3 },
-	{ PCMCIA_VENDOR_COMPAQ2,	PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100,
-	  0,				XI_FLAGS_MOHAWK,
+	{ PCMCIA_VENDOR_COMPAQ2,	0x0143,
+	  0,				XIFLAGS_MOHAWK,
 	  PCMCIA_STR_COMPAQ2_CPQ_10_100 },
-	{ PCMCIA_VENDOR_INTEL,		PCMCIA_PRODUCT_INTEL_EEPRO100,
-	  0,				XI_FLAGS_MOHAWK | XI_FLAGS_MODEM,
+	{ PCMCIA_VENDOR_INTEL,		0x0143,
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM,
 	  PCMCIA_STR_INTEL_EEPRO100 },
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_CEM,
-	  0,				XI_FLAGS_MODEM,
+#ifdef NOT_SUPPORTED
+	{ PCMCIA_VENDOR_XIRCOM,		0x1141,
+	  0,				XIFLAGS_MODEM,
 	  PCMCIA_STR_XIRCOM_CEM },
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_CEM28,
-	  0,				XI_FLAGS_MODEM,
-	  PCMCIA_STR_XIRCOM_CEM28 },
+#endif
+	{ PCMCIA_VENDOR_XIRCOM,		0x1142,
+	  0,				XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_CEM },
+	{ PCMCIA_VENDOR_XIRCOM,		0x1143,
+	  0,				XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_CEM },
+	{ PCMCIA_VENDOR_XIRCOM,		0x1144,
+	  0,				XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_CEM33 },
+	{ PCMCIA_VENDOR_XIRCOM,		0x1145,
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_CEM56 },
+	{ PCMCIA_VENDOR_XIRCOM,		0x1146,
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_REM56 },
+	{ PCMCIA_VENDOR_XIRCOM,		0x1147,
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_REM56 },
 	{ 0,				0,
 	  0,				0,
 	  NULL },
 };
 
-struct xi_pcmcia_product *xi_pcmcia_lookup __P((struct pcmcia_attach_args *));
 
 struct xi_pcmcia_product *
-xi_pcmcia_lookup(pa)
+xi_pcmcia_identify(dev, pa)
+	struct device *dev;
         struct pcmcia_attach_args *pa;
 {
 	struct xi_pcmcia_product *xpp;
+        u_int8_t id;
+	u_int32_t prod;
+
+	/*
+	 * The Xircom ethernet cards swap the revision and product fields
+	 * inside the CIS, which makes identification just a little
+	 * bit different.
+	 */
+
+        pcmcia_scan_cis(dev, xi_pcmcia_manfid_ciscallback, &id);
+
+	prod = (pa->product & ~0xff) | id;
+
+	DPRINTF(XID_CONFIG, ("product=0x%x\n", prod));
 
 	for (xpp = xi_pcmcia_products; xpp->xpp_name != NULL; xpp++)
 		if (pa->manufacturer == xpp->xpp_vendor &&
-			pa->product == xpp->xpp_product &&
+			prod == xpp->xpp_product &&
 			pa->pf->number == xpp->xpp_expfunc)
 			return (xpp);
 	return (NULL);
@@ -298,8 +335,19 @@ xi_pcmcia_match(parent, match, aux)
 	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
 		return (0);
 
-	if (xi_pcmcia_lookup(pa) != NULL)
+	if (pa->manufacturer == PCMCIA_VENDOR_COMPAQ2 &&
+	    pa->product == PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100)
 		return (1);
+
+	if (pa->manufacturer == PCMCIA_VENDOR_INTEL &&
+	   pa->product == PCMCIA_PRODUCT_INTEL_EEPRO100)
+		return (1);
+
+	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
+	    ((pa->product >> 8) == XIMEDIA_ETHER ||
+	    (pa->product >> 8) == (XIMEDIA_ETHER | XIMEDIA_MODEM)))
+		return (1);
+
 	return (0);
 }
 
@@ -344,9 +392,11 @@ xi_pcmcia_attach(parent, self, aux)
 	sc->sc_offset = 0;
 	psc->sc_resource |= XI_RES_IO;
 
-	xpp = xi_pcmcia_lookup(pa);
-	if (xpp == NULL)
-		panic("xi_pcmcia_attach: impossible");
+	xpp = xi_pcmcia_identify(parent,pa);
+	if (xpp == NULL) {
+		printf(": unrecognised model\n");
+		return;
+	}
 	sc->sc_flags = xpp->xpp_flags;
 
 	printf(": %s\n", xpp->xpp_name);
@@ -355,7 +405,7 @@ xi_pcmcia_attach(parent, self, aux)
 	 * Configuration as adviced by DINGO documentation.
 	 * Dingo has some extra configuration registers in the CCR space.
 	 */
-	if (sc->sc_flags & XI_FLAGS_DINGO) {
+	if (sc->sc_flags & XIFLAGS_DINGO) {
 		struct pcmcia_mem_handle pcmh;
 		int ccr_window;
 		bus_addr_t ccr_offset;
@@ -452,7 +502,7 @@ xi_pcmcia_attach(parent, self, aux)
 	 * time.  The ugly media tickling seems to be necessary for getting
 	 * autonegotiation to work too.
 	 */
-	if (sc->sc_flags & XI_FLAGS_DINGO) {
+	if (sc->sc_flags & XIFLAGS_DINGO) {
 		xi_full_reset(sc);
 		xi_init(sc);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
@@ -615,6 +665,27 @@ xi_pcmcia_lan_nid_ciscallback(tuple, arg)
 	return (0);
 }
 
+int
+xi_pcmcia_manfid_ciscallback(tuple, arg)
+	struct pcmcia_tuple *tuple;
+	void *arg;
+{
+	u_int8_t *id = arg;
+
+	DPRINTF(XID_CONFIG, ("xi_pcmcia_manfid_callback()\n"));
+
+	if (tuple->code != PCMCIA_CISTPL_MANFID)
+		return (0);
+
+	if (tuple->length < 2)
+		return (0);
+
+	*id = pcmcia_tuple_read_1(tuple, 4);
+	return (1);
+}
+
+
+
 static int
 xi_intr(arg)
 	void *arg;
@@ -633,7 +704,7 @@ xi_intr(arg)
 
 	ifp->if_timer = 0;	/* turn watchdog timer off */
 
-	if (sc->sc_flags & XI_FLAGS_MOHAWK) {
+	if (sc->sc_flags & XIFLAGS_MOHAWK) {
 		/* Disable interrupt (Linux does it). */
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 		    0);
@@ -1160,7 +1231,7 @@ xi_start(ifp)
 		MFREE(m, m0);
 		m = m0;
 	}
-	if (sc->sc_flags & XI_FLAGS_MOHAWK)
+	if (sc->sc_flags & XIFLAGS_MOHAWK)
 		bus_space_write_1(bst, bsh, offset + CR, TX_PKT | ENABLE_INT);
 	else {
 		for (; pad > 1; pad -= 2)
@@ -1335,7 +1406,7 @@ xi_set_address(sc)
 	PAGE(sc, 0x50);
 	for (i = 0; i < 6; i++) {
 		bus_space_write_1(bst, bsh, offset + IA + i,
-		    sc->sc_enaddr[(sc->sc_flags & XI_FLAGS_MOHAWK) ?  5-i : i]);
+		    sc->sc_enaddr[(sc->sc_flags & XIFLAGS_MOHAWK) ?  5-i : i]);
 	}
 		
 	if (ether->ec_multicnt > 0) {
@@ -1367,7 +1438,7 @@ xi_set_address(sc)
 			for (i = 0; i < 6; i++) {
 				bus_space_write_1(bst, bsh, offset + pos,
 				    enm->enm_addrlo[
-				    (sc->sc_flags & XI_FLAGS_MOHAWK) ? 5-i : i]);
+				    (sc->sc_flags & XIFLAGS_MOHAWK) ? 5-i : i]);
 
 				if (++pos > 15) {
 					pos = IA;
@@ -1393,7 +1464,7 @@ xi_cycle_power(sc)
 	DELAY(1);
 	bus_space_write_1(bst, bsh, offset + GP1, 0);
 	DELAY(40000);
-	if (sc->sc_flags & XI_FLAGS_MOHAWK)
+	if (sc->sc_flags & XIFLAGS_MOHAWK)
 		bus_space_write_1(bst, bsh, offset + GP1, POWER_UP);
 	else
 		/* XXX What is bit 2 (aka AIC)? */
@@ -1417,7 +1488,7 @@ xi_full_reset(sc)
 	DELAY(20000);
 	bus_space_write_1(bst, bsh, offset + CR, 0);
 	DELAY(20000);
-	if (sc->sc_flags & XI_FLAGS_MOHAWK) {
+	if (sc->sc_flags & XIFLAGS_MOHAWK) {
 		PAGE(sc, 4);
 		/*
 		 * Drive GP1 low to power up ML6692 and GP2 high to power up
@@ -1430,10 +1501,10 @@ xi_full_reset(sc)
 
 	/* Get revision information.  XXX Symbolic constants. */
 	sc->sc_rev = bus_space_read_1(bst, bsh, offset + BV) &
-	    ((sc->sc_flags & XI_FLAGS_MOHAWK) ? 0x70 : 0x30) >> 4;
+	    ((sc->sc_flags & XIFLAGS_MOHAWK) ? 0x70 : 0x30) >> 4;
 
 	/* Media selection.  XXX Maybe manual overriding too? */
-	if (!(sc->sc_flags & XI_FLAGS_MOHAWK)) {
+	if (!(sc->sc_flags & XIFLAGS_MOHAWK)) {
 		PAGE(sc, 4);
 		/*
 		 * XXX I have no idea what this really does, it is from the
@@ -1451,7 +1522,7 @@ xi_full_reset(sc)
 #if 0
 	bus_space_write_1(bst, bsh, offset + IMR0, 0xff);
 #endif
-	if (!(sc->sc_flags & XI_FLAGS_DINGO)) {
+	if (!(sc->sc_flags & XIFLAGS_DINGO)) {
 		/* XXX What is this?  Not for Dingo at least. */
 		bus_space_write_1(bst, bsh, offset + IMR1, 1);
 	}
@@ -1460,7 +1531,7 @@ xi_full_reset(sc)
 	 * Disable source insertion.
 	 * XXX Dingo does not have this bit, but Linux does it unconditionally.
 	 */
-	if (!(sc->sc_flags & XI_FLAGS_DINGO)) {
+	if (!(sc->sc_flags & XIFLAGS_DINGO)) {
 		PAGE(sc, 0x42);
 		bus_space_write_1(bst, bsh, offset + SWC0, 0x20);
 	}
@@ -1488,7 +1559,7 @@ xi_full_reset(sc)
 	bus_space_write_1(bst, bsh, offset + TX0MSK,
 	    CARRIER_LOST | EXCESSIVE_COLL | TX_UNDERRUN | LATE_COLLISION |
 	    SQE | TX_ABORT | TX_OK);
-	if (!(sc->sc_flags & XI_FLAGS_DINGO))
+	if (!(sc->sc_flags & XIFLAGS_DINGO))
 		/* XXX From Linux, dunno what 0xb0 means. */
 		bus_space_write_1(bst, bsh, offset + TX1MSK, 0xb0);
 	bus_space_write_1(bst, bsh, offset + RXST0, 0);
@@ -1518,7 +1589,7 @@ xi_full_reset(sc)
 	/* XXX This is not good for 10base2. */
 	bus_space_write_1(bst, bsh, offset + LED,
 	    LED_TX_ACT << LED1_SHIFT | LED_10MB_LINK << LED0_SHIFT);
-	if (sc->sc_flags & XI_FLAGS_DINGO)
+	if (sc->sc_flags & XIFLAGS_DINGO)
 		bus_space_write_1(bst, bsh, offset + LED3,
 		    LED_100MB_LINK << LED3_SHIFT);
 
@@ -1530,7 +1601,7 @@ xi_full_reset(sc)
 	/* XXX Linux does this here - is it necessary? */
 	PAGE(sc, 1);
 	bus_space_write_1(bst, bsh, offset + IMR0, 0xff);
-	if (!(sc->sc_flags & XI_FLAGS_DINGO)) {
+	if (!(sc->sc_flags & XIFLAGS_DINGO)) {
 		/* XXX What is this?  Not for Dingo at least. */
 		bus_space_write_1(bst, bsh, offset + IMR1, 1);
 	}
@@ -1541,7 +1612,7 @@ xi_full_reset(sc)
 	bus_space_write_1(bst, bsh, offset + CR, ENABLE_INT);
 
 	/* XXX This is pure magic for me, found in the Linux driver. */
-	if ((sc->sc_flags & (XI_FLAGS_DINGO | XI_FLAGS_MODEM)) == XI_FLAGS_MODEM) {
+	if ((sc->sc_flags & (XIFLAGS_DINGO | XIFLAGS_MODEM)) == XIFLAGS_MODEM) {
 		if ((bus_space_read_1(bst, bsh, offset + 0x10) & 0x01) == 0)
 			/* Unmask the master interrupt bit. */
 			bus_space_write_1(bst, bsh, offset + 0x10, 0x11);
