@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 2003/01/17 21:55:24 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.10 2003/05/28 21:35:13 kristerw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2003/01/17 21:55:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2003/05/28 21:35:13 kristerw Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -157,10 +157,10 @@ cpu_identify()
 		cp15 = install_coproc_handler(15, cpu_undef_handler);
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
-		asm volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
+		__asm __volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
 		id = CPU_ID_ARM250;
 		/* ARM3 has an internal coprocessor 15 with an ID register. */
-		asm volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
+		__asm __volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
 	}
 	remove_coproc_handler(cp0);
 	remove_coproc_handler(cp15);
@@ -242,9 +242,9 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 #ifdef CPU_ARM3
 
 #define ARM3_READ(reg, var) \
-	asm ("mrc 15, 0, %0, cr" __STRING(reg) ", cr0" : "=r" (var))
+	__asm ("mrc 15, 0, %0, cr" __STRING(reg) ", cr0" : "=r" (var))
 #define ARM3_WRITE(reg, val) \
-	asm ("mcr 15, 0, %0, cr" __STRING(reg) ", cr0" : : "r" (val))
+	__asm ("mcr 15, 0, %0, cr" __STRING(reg) ", cr0" : : "r" (val))
 
 static void
 cpu_arm3_setup(struct device *self, int flags)
