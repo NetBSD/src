@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.49 1998/12/10 17:48:40 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.50 1999/01/09 21:47:09 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -155,12 +155,12 @@ static void	pppdumpm __P((struct mbuf *m0));
 	    (m)->m_flags & M_PKTHDR ? MHLEN: MLEN)
 
 /*
- * We steal two bits in the mbuf m_flags, to mark high-priority packets
- * for output, and received packets following lost/corrupted packets.
+ * We define two link layer specific mbuf flags, to mark high-priority
+ * packets for output, and received packets following lost/corrupted
+ * packets.
  */
-#define M_HIGHPRI	0x2000	/* output packet for sc_fastq */
-#define M_ERRMARK	0x4000	/* steal a bit in mbuf m_flags */
-
+#define	M_HIGHPRI	M_LINK0	/* output packet for sc_fastq */
+#define	M_ERRMARK	M_LINK1	/* rx packet following lost/corrupted pkt */
 
 #ifdef PPP_COMPRESS
 /*
