@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.26 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.27 2003/07/12 14:29:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -240,7 +240,7 @@ extern int (*decrypt_input)(int);
 
 extern FILE
     *NetTrace;		/* Where debugging output goes */
-extern unsigned char
+extern char
     NetTraceFile[];	/* Name of file where debugging output goes */
 
 extern jmp_buf

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.15 2003/06/18 20:51:01 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.16 2003/07/12 14:29:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.15 2003/06/18 20:51:01 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.16 2003/07/12 14:29:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ SetSockOpt(int fd, int level, int option, int yesno)
  * The following are routines used to print out debugging information.
  */
 
-unsigned char NetTraceFile[256] = "(standard output)";
+char NetTraceFile[256] = "(standard output)";
 
 void
 SetNetTrace(char *file)
@@ -135,13 +135,13 @@ SetNetTrace(char *file)
     if (file  && (strcmp(file, "-") != 0)) {
 	NetTrace = fopen(file, "w");
 	if (NetTrace) {
-	    strcpy((char *)NetTraceFile, file);
+	    strlcpy(NetTraceFile, file, sizeof(NetTraceFile));
 	    return;
 	}
 	fprintf(stderr, "Cannot open %s.\n", file);
     }
     NetTrace = stdout;
-    strcpy((char *)NetTraceFile, "(standard output)");
+    strlcpy(NetTraceFile, "(standard output)", sizeof(NetTraceFile));
 }
 
 void
