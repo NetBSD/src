@@ -1078,7 +1078,7 @@ getauthinfo(fd)
 
 	/* get result */
 	p = &ibuf[0];
-	nleft = sizeof(ibuf - 1);
+	nleft = sizeof(ibuf) - 1;
 	while ((i = read(s, p, nleft)) > 0)
 	{
 		p += i;
