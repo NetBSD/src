@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.22 1996/10/12 05:28:14 mhitch Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.23 1996/10/13 02:52:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -452,7 +452,7 @@ adosfs_vget(mp, an, vpp)
 	namlen = *(u_char *)nam++;
 	if (namlen > 30) {
 #ifdef DIAGNOSTIC
-		kprintf("adosfs: aget: name length too long blk %d\n", an);
+		printf("adosfs: aget: name length too long blk %d\n", an);
 #endif
 		brelse(bp);
 		vput(vp);
@@ -580,7 +580,7 @@ adosfs_loadbitmap(amp)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-			kprintf("adosfs: loadbitmap - cksum of blk %d failed\n",
+			printf("adosfs: loadbitmap - cksum of blk %d failed\n",
 			    adoswordn(bp, blkix));
 #endif
 			/* XXX Force read-only?  Set free space 0? */
@@ -656,7 +656,7 @@ adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	int error;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	kprintf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
+	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
 	
 	/*
@@ -699,7 +699,7 @@ adosfs_vptofh(vp, fhp)
 	ifhp->ifid_start = ap->block;
 	
 #ifdef ADOSFS_DIAGNOSTIC
-	kprintf("advptofh(%x, %x)\n", vp, fhp);
+	printf("advptofh(%x, %x)\n", vp, fhp);
 #endif
 	return(0);
 }
@@ -723,7 +723,7 @@ adosfs_sync(mp, waitfor, uc, p)
 	struct proc *p;
 {
 #ifdef ADOSFS_DIAGNOSTIC
-	kprintf("ad_sync(%x, %x)\n", mp, waitfor);
+	printf("ad_sync(%x, %x)\n", mp, waitfor);
 #endif
 	return(0);
 }
