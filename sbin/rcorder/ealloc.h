@@ -1,6 +1,6 @@
-/*	$NetBSD: ealloc.h,v 1.1 1999/11/23 05:28:20 mrg Exp $	*/
+/*	$NetBSD: ealloc.h,v 1.2 2002/06/30 14:17:44 lukem Exp $	*/
 
-void	*emalloc __P((size_t len));
-char	*estrdup __P((const char *str));
-void	*erealloc __P((void *ptr, size_t size));
-void	*ecalloc __P((size_t nmemb, size_t size));
+void	*emalloc(size_t);
+char	*estrdup(const char *);
+void	*erealloc(void *, size_t);
+void	*ecalloc(size_t, size_t);
