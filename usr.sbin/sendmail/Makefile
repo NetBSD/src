@@ -1,6 +1,6 @@
 #       @(#)Makefile	8.2 (Berkeley) 9/25/93
 
-SUBDIR= src mailstats makemap praliases
+SUBDIR= src mailstats makemap praliases cf/cf
 VER=	XX
 
 tar: Files.base Files.cf Files.misc Files.xdoc
