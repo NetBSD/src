@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2000/06/19 23:30:34 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.8 2000/06/24 20:48:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,7 +61,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/ctlreg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
 
@@ -141,7 +140,6 @@ cpu_init(pa, cpu_num)
 	u_int64_t pagesize;
 	u_int64_t pte;
 	vm_page_t m;
-	paddr_t pa;
 	psize_t size;
 	vaddr_t va;
 	struct pglist mlist;
