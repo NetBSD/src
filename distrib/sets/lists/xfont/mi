@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 2004/03/11 06:28:59 rtr Exp $
+# $NetBSD: mi,v 1.19.2.1 2004/04/29 05:45:49 jmc Exp $
 ./etc/mtree/set.xfont						xfont-sys-root
 ./usr/X11R6/lib/X11/fonts                                       xfont   share
 ./usr/X11R6/lib/X11/fonts/100dpi                                xfont   share
@@ -3836,6 +3836,15 @@
 ./usr/X11R6/lib/X11/fonts/TTF/luxisbi.ttf			xfont	share
 ./usr/X11R6/lib/X11/fonts/TTF/luxisr.ttf			xfont	share
 ./usr/X11R6/lib/X11/fonts/TTF/luxisri.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/Vera.ttf				xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraBI.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraBd.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraMoBI.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraMoBd.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraMoIt.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraMono.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraSe.ttf			xfont	share
+./usr/X11R6/lib/X11/fonts/TTF/VeraSeBd.ttf			xfont	share
 ./usr/X11R6/lib/X11/fonts/Type1                                 xfont   share   
 ./usr/X11R6/lib/X11/fonts/Type1/UTBI____.afm			xfont	share
 ./usr/X11R6/lib/X11/fonts/Type1/UTBI____.pfa			xfont	share
@@ -3990,6 +3999,7 @@
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-dingbats.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-standard.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-symbol.enc.gz		xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/ansi-1251.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/armscii-8.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/dec-special.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/encodings.dir		xfont	share
@@ -3998,6 +4008,8 @@
 ./usr/X11R6/lib/X11/fonts/encodings/ibm-cp850.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/ibm-cp852.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/ibm-cp866.enc		xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/iso8859-6.16.enc		xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/iso8859-6.8x.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-11.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-13.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-16.enc		xfont	share
