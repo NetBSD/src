@@ -54,22 +54,20 @@
 /* When referenced during a trap/exception and a syscall,
    registers are at these offsets from p-p_regs*/
 
-#define	R0	(7)
-#define	R1	(6)
-#define	R2	(5)
-#define	R3	(4)
-#define	R4	(3)
-#define	R5	(2)
-#define	R6	(1)
-#define	R7	(0)
+#define	REG_R0	(7)
+#define	REG_R1	(6)
+#define	REG_R2	(5)
+#define	REG_R3	(4)
+#define	REG_R4	(3)
+#define	REG_R5	(2)
+#define	REG_R6	(1)
+#define	REG_R7	(0)
 
-#define	SP	(8)
-#define SB	(9)
-#define	FP	(10)
-#define	PC	(11)
-#define	PSR	(12)
-
-#define	PS	PSR
+#define	REG_SP	(8)
+#define REG_SB	(9)
+#define	REG_FP	(10)
+#define	REG_PC	(11)
+#define	REG_PSR	(12)
 
 /* The reg struct .. in the order of above. */
 
@@ -97,7 +95,8 @@ struct reg {
 #define	NIPCREG 13
 #ifdef IPCREG
 int ipcreg[NIPCREG] =
-  { R0,R1,R2,R3,R4,R5,R6,R7,SP,SB,FP,PC,PSR };
+  { REG_R0, REG_R1, REG_R2, REG_R3, REG_R4, REG_R5, REG_R6, REG_R7,
+      REG_SP, REG_SB, REG_FP, REG_PC, REG_PSR };
 #endif
 
 #endif
