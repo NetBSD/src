@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.73 1994/11/04 01:02:40 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.74 1994/11/04 07:30:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -114,7 +114,7 @@ static struct video_state {
 
 int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
-int pcintr __P((void *));
+int pcintr __P((void));
 
 struct cfdriver pccd = {
 	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct device)
@@ -353,9 +353,9 @@ async_update()
  * these are both bad jokes
  */
 int
-pcprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
 	u_int i;
