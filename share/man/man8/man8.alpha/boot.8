@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.8 2003/05/06 07:56:54 wiz Exp $
+.\" $NetBSD: boot.8,v 1.9 2003/05/20 07:47:40 fair Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .\"
 .\"     @(#)boot_hp300.8        8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 28, 2003
+.Dd May 20, 2003
 .Dt BOOT 8 alpha
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ requires
 .Tn SRM .
 .Pp
 .Tn SRM
-can boot from supported local storage devices, e.g.,
+can boot from supported local storage devices, e.g.
 .Tn IDE
 disks or
 .Tn CD-ROM
@@ -165,7 +165,7 @@ various non-volatile environment variables.
 .Tn SRM
 device names are not the same as in
 .Nx ,
-e.g.,
+e.g.
 .Sy ewa0
 is a
 .Tn DEC
@@ -236,7 +236,7 @@ help system.
 .Pp
 Set an
 .Tn SRM
-variable, e.g.,
+variable, e.g.
 .Bd -literal -offset indent
 set auto_action boot
 set bootdef_dev dka0
@@ -251,7 +251,7 @@ Show
 variables and values, or show system state or configuration.
 If a wildcard is used, then all matching
 .Tn SRM
-variables are shown, e.g.,
+variables are shown, e.g.
 .Pp
 .Bl -tag -width "show device" -compact -offset indent
 .It Ic show b*
@@ -281,7 +281,7 @@ prompt the user on the console for commands to execute.
 Some
 .Tn Alpha
 systems
-.Pq e.g., Tn AlphaServer 800
+.Pq e.g. Tn AlphaServer 800
 have a
 .Qq halt
 switch, which if set, will override the action of this variable, and cause
@@ -290,9 +290,10 @@ to stop after
 .Tn POST
 and prompt the user for commands to execute.
 .It Ev bootdef_dev
-The default boot device, e.g.,
+The default boot device, e.g.
 .Sy dka0 ,
-.Sy dqa0 .
+.Sy dqa0 ,
+.Sy ewa0 .
 The
 .Ic show device
 command will list the available and recognized bootable devices.
@@ -342,16 +343,50 @@ the media and speed for
 .Qq tulip
 Ethernet interfaces
 .Po
-e.g.,
+e.g.
 .Tn DECchip
 21040, 21140, 21143
 .Pc ;
-values are: auto, BNC, AUI, Twisted-Pair, FastFD
+possible values are:
+.Ic auto
+.Po
+.Tn IEEE
+802.3u
+.Qq Nway
+negotiation
+.Pc ,
+.Ic BNC ,
+.Ic AUI ,
+.Ic Twisted-Pair ,
+.Ic FastFD
 .Pq Fast Full Duplex .
 .It Ev ew*0_protocols
-the protocol to use when netbooting, i.e. MOP
+the protocol to use when netbooting, i.e.
+.Tn MOP
 .Pq Maintenance Operations Protocol ,
-or BOOTP.
+or
+.Tn BOOTP
+.Pq Bootstrap Protocol .
+.Pp
+The
+.Tn Alpha
+.Tn SRM
+firmware is picky about
+.Tn BOOTP
+responses; the
+.Xr dhcpd.conf 5
+on the server needs the
+.Pp
+.Bd -literal -offset indent
+always-reply-rfc1048 on;
+.Ed
+.Pp
+directive in the section for netbooting
+.Tn Alpha
+systems.
+.It Ev os_type
+This should be set to
+.Qq Ux .
 .El
 .Ss After bootstrap
 Once the
