@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.30 1999/04/14 19:37:28 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.31 1999/06/09 04:52:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 #define LFS_VREF_THRESHOLD 128
 
 /*
- * lfs_markv:
+ * sys_lfs_markv:
  *
  * This will mark inodes and blocks dirty, so they are written into the log.
  * It will block until all the blocks have been written.  The segment create
@@ -134,7 +134,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
  * -1/errno is return on error.
  */
 int
-lfs_markv(p, v, retval)
+sys_lfs_markv(p, v, retval)
     struct proc *p;
     void *v;
     register_t *retval;
@@ -502,7 +502,7 @@ lfs_markv(p, v, retval)
 }
 
 /*
- * lfs_bmapv:
+ * sys_lfs_bmapv:
  *
  * This will fill in the current disk address for arrays of blocks.
  *
@@ -511,7 +511,7 @@ lfs_markv(p, v, retval)
  */
 
 int
-lfs_bmapv(p, v, retval)
+sys_lfs_bmapv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -720,7 +720,7 @@ lfs_bmapv(p, v, retval)
 }
 
 /*
- * lfs_segclean:
+ * sys_lfs_segclean:
  *
  * Mark the segment clean.
  *
@@ -728,7 +728,7 @@ lfs_bmapv(p, v, retval)
  * -1/errno is return on error.
  */
 int
-lfs_segclean(p, v, retval)
+sys_lfs_segclean(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -808,7 +808,7 @@ lfs_segclean(p, v, retval)
 }
 
 /*
- * lfs_segwait:
+ * sys_lfs_segwait:
  *
  * This will block until a segment in file system fsid is written.  A timeout
  * in milliseconds may be specified which will awake the cleaner automatically.
@@ -819,7 +819,7 @@ lfs_segclean(p, v, retval)
  * -1/errno is return on error.
  */
 int
-lfs_segwait(p, v, retval)
+sys_lfs_segwait(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
