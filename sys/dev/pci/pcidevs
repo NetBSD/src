@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.616 2004/04/01 08:00:01 tron Exp $
+$NetBSD: pcidevs,v 1.617 2004/04/03 00:41:10 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2201,6 +2201,7 @@ product REALTEK	RT8129		0x8129	8129 10/100 Ethernet
 product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
 product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 product REALTEK RT8169		0x8169	8169 10/100/1000 Ethernet
+product REALTEK RT8180		0x8180	8180 802.11b
 
 /* RICOH products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus bridge
