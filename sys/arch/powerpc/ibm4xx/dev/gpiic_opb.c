@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.1 2003/10/06 16:15:46 scw Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.2 2003/10/06 18:19:24 scw Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.
@@ -45,8 +45,8 @@
 
 #include <machine/cpu.h>
 
-#include <dev/wasabi_i2c/i2cvar.h>
-#include <dev/wasabi_i2c/i2c_bitbang.h>
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
 
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/gpiicreg.h>
