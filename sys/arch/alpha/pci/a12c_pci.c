@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.1 1998/01/29 21:42:52 ross Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.2 1998/03/02 07:07:41 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.1 1998/01/29 21:42:52 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.2 1998/03/02 07:07:41 ross Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -54,6 +54,8 @@ __KERNEL_COPYRIGHT(0,
 #include <alpha/pci/a12cvar.h>
 
 #include <machine/rpb.h>	/* XXX for eb164 CIA firmware workarounds. */
+
+#define	A12C_PCI()	/* Generate ctags(1) key */
 
 void		a12c_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -141,8 +143,8 @@ a12_set_pci_config_cycle(int offset)
 	alpha_pal_draina();
 	alpha_mb();
 	REGVAL(A12_OMR) = REGVAL(A12_OMR)
-			| A12_PCIConfigCycle
-			| (offset & 4 ? A12_PCIAddr2 : 0);
+			| A12_OMR_PCIConfigCycle
+			| (offset & 4 ? A12_OMR_PCIAddr2 : 0);
 	alpha_mb();
 	return offset & ~4;
 }
@@ -152,7 +154,8 @@ a12_reset_pci_config_cycle(void)
 {
 	alpha_pal_draina();
 	alpha_mb();
-	REGVAL(A12_OMR) = REGVAL(A12_OMR) & ~(A12_PCIConfigCycle|A12_PCIAddr2);
+	REGVAL(A12_OMR) = REGVAL(A12_OMR)
+			& ~(A12_OMR_PCIConfigCycle | A12_OMR_PCIAddr2);
 	alpha_mb();
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_bus_mem.c,v 1.1 1998/01/29 21:42:51 ross Exp $ */
+/* $NetBSD: a12c_bus_mem.c,v 1.2 1998/03/02 07:07:41 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -44,7 +44,9 @@
 #include <alpha/pci/a12creg.h>
 #include <alpha/pci/a12cvar.h>
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.1 1998/01/29 21:42:51 ross Exp $");
+#define	A12C_BUS_MEM()	/* Generate ctags(1) key */
+
+__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.2 1998/03/02 07:07:41 ross Exp $");
 
 /* Memory barrier */
 void		pci_a12c_mem_barrier __P((void *, bus_space_handle_t,
@@ -319,9 +321,9 @@ setup_target_transfer(bus_space_handle_t memh, bus_size_t off)
 
 	alpha_mb();
 	addr = memh + off;
-	t = REGVAL(A12_OMR) & ~A12_PCIAddr2;
+	t = REGVAL(A12_OMR) & ~A12_OMR_PCIAddr2;
 	if (addr & 4)
-		t |= A12_PCIAddr2;
+		t |= A12_OMR_PCIAddr2;
 	REGVAL(A12_OMR) = t;
 	alpha_mb();
 	return (void *)ALPHA_PHYS_TO_K0SEG(A12_PCITarget | (addr & ~4L));
