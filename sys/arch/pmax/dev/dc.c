@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.76 2003/09/28 17:25:07 chs Exp $	*/
+/*	$NetBSD: dc.c,v 1.77 2003/10/31 03:32:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.76 2003/09/28 17:25:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.77 2003/10/31 03:32:19 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -707,7 +707,6 @@ dcparam(tp, t)
 	struct termios *t;
 {
 	struct dc_softc *sc;
-	dcregs *dcaddr;
 
 
 	/*
@@ -715,7 +714,6 @@ dcparam(tp, t)
 	 * cold_dcparam() for argument checking and execution.
 	 */
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	return (cold_dcparam(tp, t, sc));
 
 }
@@ -1022,12 +1020,11 @@ dcmctl(dev, bits, how)
 	struct dc_softc *sc;
 	dcregs *dcaddr;
 	int line, mbits;
-	int b, s;
+	int s;
 	int tcr, msr;
 
 	line = DCLINE(dev);
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	b = 1 << line;
 	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	s = spltty();
 	/* only channel 2 has modem control on a DECstation 2100/3100 */
