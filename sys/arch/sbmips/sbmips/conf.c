@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.5 2002/07/11 00:17:39 simonb Exp $ */
+/* $NetBSD: conf.c,v 1.6 2002/07/19 16:38:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.5 2002/07/11 00:17:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.6 2002/07/19 16:38:24 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -356,7 +356,7 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 68 */
 	cdev_clockctl_init(NCLOCKCTL,clockctl),	/* 69: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 70: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 70: system call tracing */
 #else
 	cdev_notdef(),			/* 70: system call tracing */
 #endif

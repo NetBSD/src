@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2002/06/17 16:33:09 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2002/07/19 16:38:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -206,7 +206,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 74: RAIDframe disk driver */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 75: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 76: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 76: system call tracing */
 #else
 	cdev_notdef(),			/* 76: system call tracing */
 #endif

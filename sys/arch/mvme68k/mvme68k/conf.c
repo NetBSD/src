@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 2002/06/17 16:33:10 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 2002/07/19 16:38:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -187,7 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 38: svr4 net pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 39: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 40: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 40: system call tracing */
 #else
 	cdev_notdef(),			/* 40: system call tracing */
 #endif

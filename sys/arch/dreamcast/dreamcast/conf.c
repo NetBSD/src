@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2002/06/17 16:33:01 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2002/07/19 16:38:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -222,7 +222,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NMAPLE, maple),	/* 58: Maple bus */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 59: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 60: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 60: system call tracing */
 #else
 	cdev_notdef(),			/* 60: system call tracing */
 #endif
