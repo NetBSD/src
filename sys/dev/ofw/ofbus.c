@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.12 2001/11/13 07:26:28 lukem Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.13 2002/09/18 01:44:13 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.12 2001/11/13 07:26:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.13 2002/09/18 01:44:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +54,11 @@ ofbus_print(aux, pnp)
 	const char *pnp;
 {
 	struct ofbus_attach_args *oba = aux;
-	char name[64];
 
-	(void)of_packagename(oba->oba_phandle, name, sizeof name);
 	if (pnp)
-		printf("%s at %s", name, pnp);
+		printf("%s at %s", oba->oba_ofname, pnp);
 	else
-		printf(" (%s)", name);
+		printf(" (%s)", oba->oba_ofname);
 	return UNCONF;
 }
 
@@ -84,11 +82,10 @@ ofbus_attach(parent, dev, aux)
 	struct device *parent, *dev;
 	void *aux;
 {
-	int child;
-	char name[5];
 	struct ofbus_attach_args *oba = aux;
 	struct ofbus_attach_args oba2;
-	int units;
+	char name[64];
+	int child, units;
 
 	printf("\n");
 
@@ -98,6 +95,7 @@ ofbus_attach(parent, dev, aux)
 	 * DEVICES ON THESE BUSSES.
 	 */
 	units = 1;
+	name[0] = 0;
 	if (OF_getprop(oba->oba_phandle, "name", name, sizeof name) > 0) {
 		if (!strcmp(name, "scsi"))
 			units = 7; /* What about wide or hostid != 7?	XXX */
@@ -108,8 +106,17 @@ ofbus_attach(parent, dev, aux)
 	for (child = OF_child(oba->oba_phandle); child != 0;
 	     child = OF_peer(child)) {
 		oba2.oba_busname = "ofw";
+		of_packagename(child, name, sizeof name);
 		oba2.oba_phandle = child;
-		for (oba2.oba_unit = 0; oba2.oba_unit < units; oba2.oba_unit++)
+		for (oba2.oba_unit = 0; oba2.oba_unit < units;
+		     oba2.oba_unit++) {
+			if (units > 1) {
+				sprintf(oba2.oba_ofname, "%s@%d", name,
+					oba2.oba_unit);
+			} else {
+				strcpy(oba2.oba_ofname, name);
+			}
 			config_found(dev, &oba2, ofbus_print);
+		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2001/10/23 22:52:14 thorpej Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.8 2002/09/18 01:44:13 chs Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -108,40 +108,35 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * see CPUs after other devices in the boot messages.
 	 */
 	node = OF_finddevice("/cpus");
-	if (node != -1) {
-		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
-			oba.oba_busname = "cpu";
-			oba.oba_phandle = node;
-			(void) config_found(self, &oba, mainbus_print);
-		}
-	} else {
+	if (node == -1) {
+
 		/*
 		 * No /cpus node; assume they're all children of the
 		 * root OFW node.
 		 */
-		for (node = OF_child(OF_peer(0)); node != 0;
-		     node = OF_peer(node)) {
-			if (OF_getprop(node, "device_type",
-			    buf, sizeof(buf)) <= 0)
-				continue;
-			if (strcmp(buf, "cpu") != 0)
-				continue;
-			oba.oba_busname = "cpu";
-			oba.oba_phandle = node;
-			(void) config_found(self, &oba, mainbus_print);
-		}
+		node = OF_peer(0);
+	}
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cpu") != 0)
+			continue;
+
+		oba.oba_busname = "cpu";
+		of_packagename(node, oba.oba_ofname, sizeof oba.oba_ofname);
+		oba.oba_phandle = node;
+		(void) config_found(self, &oba, mainbus_print);
 	}
 
 	/*
 	 * Now attach the rest of the devices on the system.
 	 */
 	for (node = OF_child(OF_peer(0)); node != 0; node = OF_peer(node)) {
+
 		/*
-		 * Make sure it's not a CPU (we've already attached
-		 * those).
+		 * Make sure it's not a CPU (we've already attached those).
 		 */
-		if (OF_getprop(node, "device_type",
-			       buf, sizeof(buf)) > 0 &&
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
 		    strcmp(buf, "cpu") == 0)
 			continue;
 
@@ -157,6 +152,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		oba.oba_busname = "ofw";
+		of_packagename(node, oba.oba_ofname, sizeof oba.oba_ofname);
 		oba.oba_phandle = node;
 		(void) config_found(self, &oba, mainbus_print);
 	}
@@ -166,12 +162,10 @@ int
 mainbus_print(void *aux, const char *pnp)
 {
 	struct ofbus_attach_args *oba = aux;
-	char name[64];
 
-	if (pnp) {
-		OF_getprop(oba->oba_phandle, "name", name, sizeof(name));
-		printf("%s at %s", name, pnp);
-	}
-
+	if (pnp)
+		printf("%s at %s", oba->oba_ofname, pnp);
+	else
+		printf(" (%s)", oba->oba_ofname);
 	return (UNCONF);
 }
