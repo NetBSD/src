@@ -38,7 +38,7 @@ static const char rcsid[] =
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-/*#include <util.h>*/
+#include <util.h>
 
 #include "extern.h"
 
