@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_connect.c,v 1.5 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	inet_connect 3

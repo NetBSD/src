@@ -1,3 +1,5 @@
+/*	$NetBSD: smtp_unalias.c,v 1.4 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtp_unalias 3

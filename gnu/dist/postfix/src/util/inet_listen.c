@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_listen.c,v 1.5 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	inet_listen 3

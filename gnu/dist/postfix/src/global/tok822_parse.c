@@ -1,3 +1,5 @@
+/*	$NetBSD: tok822_parse.c,v 1.9 2004/05/31 00:46:47 heas Exp $	*/
+
 /*++
 /* NAME
 /*	tok822_parse 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: match_list.c,v 1.6 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	match_list 3
