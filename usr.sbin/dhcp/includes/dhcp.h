@@ -3,7 +3,7 @@
    Protocol structures... */
 
 /*
- * Copyright (c) 1995, 1996, 1999 The Internet Software Consortium.
+ * Copyright (c) 1995-2001 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -167,15 +167,14 @@ struct dhcp_packet {
 #define	DHO_PXE_CLIENT_NETIF_ID		94
 #define	DHO_PXE_UUID			97
 
+#define DHO_SUBNET_SELECTION		118 /* RFC3011! */
+
 /* The DHO_AUTHENTICATE option is not a standard yet, so I've
    allocated an option out of the "local" option space for it on a
    temporary basis.  Once an option code number is assigned, I will
    immediately and shamelessly break this, so don't count on it
    continuing to work. */
 #define DHO_AUTHENTICATE		210
-/* The DHO_SUBNET_SELECTION option is also not standard - same deal
-   as above. */
-#define DHO_SUBNET_SELECTION		211
 
 #define DHO_END				255
 
@@ -200,5 +199,7 @@ struct dhcp_packet {
 #define FQDN_ENCODED			3
 #define FQDN_RCODE1			4
 #define FQDN_RCODE2			5
-#define FQDN_NAME			6
-#define FQDN_SUBOPTION_COUNT		6
+#define FQDN_HOSTNAME			6
+#define FQDN_DOMAINNAME			7
+#define FQDN_FQDN			8
+#define FQDN_SUBOPTION_COUNT		8
