@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	siliconmotion_drv
 MAN=	siliconmotion.4
@@ -12,8 +10,6 @@ MAN=	siliconmotion.4
 
 SRCS=	smi_driver.c smi_accel.c smi_dac.c smi_hwcurs.c smi_dga.c \
 	smi_i2c.c smi_shadow.c smi_video.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/siliconmotion \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

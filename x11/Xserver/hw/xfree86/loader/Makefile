@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 15:45:57 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:07 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	loader
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
@@ -10,8 +8,6 @@ LIB=	loader
 SRCS=	aoutloader.c coffloader.c dlloader.c elfloader.c hash.c loader.c \
 	loadmod.c loadfont.c loadext.c os.c dixsym.c misym.c xf86sym.c \
 	fontsym.c extsym.c
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

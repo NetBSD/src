@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/27 03:14:56 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/input
 
 .include "../../../../Makefile.serverlib"
 
-.include <bsd.own.mk>
-
 MODULE=	hyperpen_drv
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/hyperpen
 
 SRCS=	xf86HyperPen.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/hyperpen \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

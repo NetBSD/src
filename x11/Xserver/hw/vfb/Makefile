@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/11 08:30:42 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		vfb
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/vfb
@@ -11,8 +9,6 @@ LIB=		vfb
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
 
 SRCS=		InitInput.c InitOutput.c dpmsstubs.c miinitext.c stubs.c
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts \

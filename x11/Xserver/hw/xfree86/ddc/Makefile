@@ -1,18 +1,14 @@
-# $NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		ddc
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 
 SRCS=		ddcProperty.c edid.c interpret_edid.c interpret_vdif.c \
 		print_edid.c print_vdif.c xf86DDC.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
