@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.14 1999/09/06 06:45:20 jwise Exp $	*/
+/*	$NetBSD: xlint.c,v 1.15 1999/09/07 02:36:57 jwise Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.14 1999/09/06 06:45:20 jwise Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.15 1999/09/07 02:36:57 jwise Exp $");
 #endif
 
 #include <sys/param.h>
@@ -541,15 +541,6 @@ fname(name, last)
 	int is_stdin;
 	int	fd;
 
-	if (lseek(cppoutfd, SEEK_SET, (off_t)0) != 0) {
-		warn("lseek");
-		terminate(-1);
-	}
-	if (ftruncate(cppoutfd, (off_t)0) != 0) {
-		warn("ftruncate");
-		terminate(-1);
-	}
-	
 	is_stdin = (strcmp(name, "-") == 0);
 	bn = basename(name, '/');
 	suff = basename(bn, '.');
@@ -610,6 +601,16 @@ fname(name, last)
 	applst(&args, lcflags);
 	appcstrg(&args, name);
 
+	/* we reuse the same tmp file for cpp output, so rewind and truncate */
+	if (lseek(cppoutfd, SEEK_SET, (off_t)0) != 0) {
+		warn("lseek");
+		terminate(-1);
+	}
+	if (ftruncate(cppoutfd, (off_t)0) != 0) {
+		warn("ftruncate");
+		terminate(-1);
+	}
+	 
 	runchild(path, args, cppout, cppoutfd);
 	free(path);
 	freelst(&args);
@@ -652,7 +653,7 @@ runchild(path, args, crfn, fdout)
 
 	(void)fflush(stdout);
 
-	switch (fork()) {
+	switch (vfork()) {
 	case -1:
 		warn("cannot fork");
 		terminate(-1);
@@ -670,7 +671,7 @@ runchild(path, args, crfn, fdout)
 		}
 		(void)execv(path, args);
 		warn("cannot exec %s", path);
-		exit(1);
+		_exit(1);
 		/* NOTREACHED */
 	}
 
