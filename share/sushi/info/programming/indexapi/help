@@ -1,0 +1,23 @@
+The index programing interface to Sushi consists of a flat ascii file, with
+three fields.  The fields are whitespace separated.
+
+The first field, is the name of a subdirectory, which must exist.  No spaces
+can exist in this name.
+
+The second field, is the quickpath.  This is a unique keyword that can be used
+to automatically access this point within Sushi, when called on the command
+line as an argument to sushi.
+
+The final field is the description.  The description must be contained on one
+line, and can have embedded whitespace.  The description is limited to about
+70 characters, due to screen width.
+
+The special keywork "BLANK" can be used to insert a blank line in the menu.
+
+A simple index file is shown below:
+
+test	test	This is a test menu
+BLANK	BLANK	BLANK
+more	more	Another test menu item
+
+$NetBSD: help,v 1.1 2001/01/05 02:06:56 garbled Exp $

@@ -1,0 +1,5 @@
+# $NetBSD: index,v 1.1 2001/01/05 02:06:57 garbled Exp $
+installb	install-binary	Install New Binary Packages
+install		install-source	Install New Packages from source
+remove		remove-pkg	Remove Installed Packages
+list		list-pkg	List Installed packages

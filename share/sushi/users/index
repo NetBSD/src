@@ -1,0 +1,5 @@
+# $NetBSD: index,v 1.1 2001/01/05 02:06:59 garbled Exp $
+listuser	listuser	List users on this system
+adduser		adduser		Add a new user to the system
+deluser		deluser		Delete a user on the system
+disuser		disableuser	Disable a user on the system

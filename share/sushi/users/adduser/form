@@ -1,0 +1,9 @@
+# $NetBSD: form,v 1.1 2001/01/05 02:07:00 garbled Exp $
+req-entry:8,	Username
+script:script1	Primary group
+script:script3	Secondary group
+entry:30,	User's real name
+entry:50,	User's home directory
+integer:4,0,2000	Days before password expires
+script:script2	User's login shell
+integer:6,0,32767	User's UID.

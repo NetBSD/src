@@ -1,0 +1,8 @@
+# $NetBSD: index,v 1.1 2001/01/05 02:06:53 garbled Exp $
+install		install	Software Installation and Maintenance
+system		system	System Maintenance
+users		users	Security & Users
+BLANK		BLANK	BLANK
+info		info	Using SMIT (information only)
+scripton	info	Turn scripting on
+scriptoff	info	Turn scripting off

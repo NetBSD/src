@@ -1,0 +1,7 @@
+This is where you can find help on various parts of making your own menus
+and forms within Sushi.  The application has been designed to make it very
+simple to make extensible and complex menus and functions.  It is advised
+that if you wish to program your own menus, you read the documentation in
+the submenus, and look at some of the pre-existing menus.
+
+$NetBSD: help,v 1.1 2001/01/05 02:06:54 garbled Exp $

@@ -1,0 +1,35 @@
+Welcome to NetBSD sushi.  This tool is designed to assist you in the
+everyday tasks of maintaining and administering your machine.
+
+To use this tool, simply select the menu item that you wish to enter, with
+the arrow keys, and hit enter to select it.
+
+You may use any of the function keys listed at the bottom of your screen
+to call certain functions within sushi:
+
+F1:   Call up help, if it exists, for the current menu or form.
+F2:   Refresh the screen.
+F3:   Cancel the current menu, and return to the previous one, or exit sushi.
+F8:   Take a screen capture of the current screen and save it to "sushi.image".
+F9:   Launch a shell to perform manual tasks.
+F10:  Exit sushi immediately.
+ESC:  Same as F3, Cancel.
+ENTER: Do.
+
+Once you have selected a function to perform, sushi will do one of two
+things, it will either run the selected task immediately, or, in the case
+of a task which requires user input, present a form to the user.  The user
+is expected to fill in the form, and hit enter.  Required fields are
+marked with a "*" at the beginning of the line.  Any other fields can be
+left unfilled, but should be examined to see if the defaults supplied are
+satisfactory. Once this is done, the user-supplied values will be passed
+to the controlling scripts, and the task will be attempted.
+
+The output of the task will be displayed to the user in a scrolling
+window. Once complete, success or failure will be noted in the status bar
+at the top of the screen, and the user can scroll through the output, or
+simply hit ESC/ENTER to continue.  If the task was unsuccessful, the user
+will be returned to the form, to attempt again if he/she should wish,
+otherwise the user is returned to the previous menu.
+
+$NetBSD: help,v 1.1 2001/01/05 02:06:53 garbled Exp $

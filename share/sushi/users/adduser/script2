@@ -1,0 +1,3 @@
+#!/bin/sh
+# $NetBSD: script2,v 1.1 2001/01/05 02:07:00 garbled Exp $
+egrep -v '(^#|^$)' /etc/shells

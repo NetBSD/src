@@ -1,0 +1,3 @@
+#!/bin/sh
+# $NetBSD: script1,v 1.1 2001/01/05 02:07:00 garbled Exp $
+cut -f 1 -d ':' /etc/group
