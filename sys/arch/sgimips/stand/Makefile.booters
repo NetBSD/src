@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.10 2003/10/26 07:25:37 lukem Exp $
+# $NetBSD: Makefile.booters,v 1.11 2003/11/11 06:47:00 sekiya Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -27,11 +27,9 @@ realall: machine-links ${PROG}
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
-# -I${.CURDIR}/../.. done by Makefile.inc
-#CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -DHEAP_VARIABLE -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
-CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -msoft-float -G 128
+CFLAGS=		-ffreestanding -Os -Wall -Werror -mno-abicalls -msoft-float -G 1024
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
