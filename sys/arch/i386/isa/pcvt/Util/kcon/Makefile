@@ -2,6 +2,8 @@ PROG=		kcon
 DEVICE=		/dev/ttyv0
 CFLAGS+= 	-I${.CURDIR}/../keycap -DKEYB_DEVICE=\"${DEVICE}\"
 
+NOMAN=	yes
+
 # the -Lfoo could be omitted if libkeycap.a were installed before
 # making those programs here
 
