@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1997/02/26 18:38:21 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.34 1997/03/15 16:36:17 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -150,6 +150,10 @@ pmap_bootstrap()
 #endif
 		avail_end += NBPG * 128;/* Memory is checked in 64K hunks */
 	}
+#if VAX410
+	if (vax_boardtype == VAX_BTYP_410)
+		avail_end -= NBPG * 24; /* ??? */
+#endif
 	/*
 	 * Calculation of the System Page Table is somewhat a pain,
 	 * because it must be in contiguous physical memory and all
