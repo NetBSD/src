@@ -1,8 +1,8 @@
-/*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.7 2003/04/06 10:02:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
- * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
+ * Copyright (c) 2001,2002 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,12 +103,11 @@ osiop_gsc_match(parent, match, aux)
 	int rv = 1;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
-	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI &&
-	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI))
+	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI))
 		return 0;
 
 	if (bus_space_map(ga->ga_iot, ga->ga_hpa, 
-			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
+	    OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
 		return 0;
 
 
@@ -128,27 +127,18 @@ osiop_gsc_attach(parent, self, aux)
 	sc->sc_bst = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
 	if (bus_space_map(sc->sc_bst, ga->ga_hpa,
-			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
+	    OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
 		panic("osiop_gsc_attach: couldn't map I/O ports");
 	if (bus_space_subregion(sc->sc_bst, ioh, 
-				OSIOP_GSC_OFFSET, OSIOP_NREGS, &sc->sc_reg))
+	    OSIOP_GSC_OFFSET, OSIOP_NREGS, &sc->sc_reg))
 		panic("osiop_gsc_attach: couldn't get chip ports");
 
 	sc->sc_clock_freq = ga->ga_ca.ca_pdc_iodc_read->filler2[14] / 1000000;
 	if (!sc->sc_clock_freq)
 		sc->sc_clock_freq = 50;
 
-	if (ga->ga_ca.ca_type.iodc_sv_model == HPPA_FIO_GSCSI) {
-		sc->sc_rev = OSIOP_VARIANT_NCR53C710;
-		sc->sc_byteorder = OSIOP_BYTEORDER_NATIVE;
-		sc->sc_ctest7 = 0; /* | OSIOP_CTEST7_TT1 */
-		sc->sc_dcntl = OSIOP_DCNTL_EA;
-	} else {
-		sc->sc_rev = OSIOP_VARIANT_NCR53C700;
-		sc->sc_byteorder = OSIOP_BYTEORDER_NONNATIVE;
-		sc->sc_ctest7 = 0;
-		sc->sc_dcntl = 0;
-	}
+	sc->sc_ctest7 = 0; /* | OSIOP_CTEST7_TT1 */
+	sc->sc_dcntl = OSIOP_DCNTL_EA;
 
 	sc->sc_flags = 0;
 	sc->sc_id = ga->ga_scsi_target;
@@ -170,9 +160,8 @@ osiop_gsc_attach(parent, self, aux)
 #endif /* OSIOP_DEBUG */
 	osiop_attach(sc);
 
-	(void) hp700_intr_establish(&sc->sc_dev, IPL_BIO,
-				    osiop_gsc_intr, sc,
-				    ga->ga_int_reg, ga->ga_irq);
+	(void)hp700_intr_establish(&sc->sc_dev, IPL_BIO,
+	    osiop_gsc_intr, sc, ga->ga_int_reg, ga->ga_irq);
 }
 
 /*
