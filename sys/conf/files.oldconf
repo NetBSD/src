@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.46 1994/05/07 01:30:45 cgd Exp $
+#	$Id: files.oldconf,v 1.47 1994/05/12 03:33:41 chopps Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -112,6 +112,10 @@ msdosfs/msdosfs_fat.c		optional msdosfs
 msdosfs/msdosfs_lookup.c	optional msdosfs
 msdosfs/msdosfs_vfsops.c	optional msdosfs
 msdosfs/msdosfs_vnops.c	optional msdosfs
+adosfs/adlookup.c	optional adosfs
+adosfs/adutil.c		optional adosfs
+adosfs/advfsops.c	optional adosfs
+adosfs/advnops.c	optional adosfs
 net/bpf.c		optional bpfilter
 net/bpf_filter.c	optional bpfilter device-driver
 net/if.c		standard
