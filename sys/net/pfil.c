@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.12 2000/02/22 10:18:49 darrenr Exp $	*/
+/*	$NetBSD: pfil.c,v 1.13 2000/02/22 10:45:47 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -41,9 +41,9 @@
 #include <net/pfil.h>
 
 static void pfil_init __P((struct pfil_head *));
-static void pfil_list_add(pfil_list_t *,
+static int pfil_list_add(pfil_list_t *,
     int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)), int);
-static void pfil_list_remove(pfil_list_t *,
+static int pfil_list_remove(pfil_list_t *,
     int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)));
 
 static void
@@ -64,24 +64,26 @@ pfil_init(ph)
  *	PFIL_ALL	call me on all of the above
  *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
  */
-void
+int
 pfil_add_hook(func, flags, ph)
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 	int	flags;
 	struct	pfil_head	*ph;
 {
+	int err = 0;
 
 	if (ph->ph_init == 0)
 		pfil_init(ph);
 
 	if (flags & PFIL_IN)
-		pfil_list_add(&ph->ph_in, func, flags);
-	if (flags & PFIL_OUT)
-		pfil_list_add(&ph->ph_out, func, flags);
+		err = pfil_list_add(&ph->ph_in, func, flags);
+	if ((err == 0) && (flags & PFIL_OUT))
+		err = pfil_list_add(&ph->ph_out, func, flags);
+	return err;
 }
 
-static void
+static int
 pfil_list_add(list, func, flags)
 	pfil_list_t *list;
 	int	(*func) __P((void *, int, struct ifnet *, int,
@@ -93,7 +95,7 @@ pfil_list_add(list, func, flags)
 	pfh = (struct packet_filter_hook *)malloc(sizeof(*pfh), M_IFADDR,
 	    flags & PFIL_WAITOK ? M_WAITOK : M_NOWAIT);
 	if (pfh == NULL)
-		panic("no memory for packet filter hook");
+		return ENOMEM;
 	pfh->pfil_func = func;
 	/*
 	 * insert the input list in reverse order of the output list
@@ -104,34 +106,37 @@ pfil_list_add(list, func, flags)
 		TAILQ_INSERT_HEAD(list, pfh, pfil_link);
 	else
 		TAILQ_INSERT_TAIL(list, pfh, pfil_link);
+	return 0;
 }
 
 /*
  * pfil_remove_hook removes a specific function from the packet filter
  * hook list.
  */
-void
+int
 pfil_remove_hook(func, flags, ph)
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 	int	flags;
 	struct	pfil_head	*ph;
 {
+	int err = 0;
 
 	if (ph->ph_init == 0)
 		pfil_init(ph);
 
 	if (flags & PFIL_IN)
-		pfil_list_remove(&ph->ph_in, func);
-	if (flags & PFIL_OUT)
-		pfil_list_remove(&ph->ph_out, func);
+		err = pfil_list_remove(&ph->ph_in, func);
+	if ((err == 0) && (flags & PFIL_OUT))
+		err = pfil_list_remove(&ph->ph_out, func);
+	return err;
 }
 
 /*
  * pfil_list_remove is an internal function that takes a function off the
  * specified list.
  */
-static void
+static int
 pfil_list_remove(list, func)
 	pfil_list_t *list;
 	int	(*func) __P((void *, int, struct ifnet *, int,
@@ -143,12 +148,9 @@ pfil_list_remove(list, func)
 		if (pfh->pfil_func == func) {
 			TAILQ_REMOVE(list, pfh, pfil_link);
 			free(pfh, M_IFADDR);
-			return;
+			return 0;
 		}
-	printf("pfil_list_remove:  no function on list\n");
-#ifdef DIAGNOSTIC
-	panic("pfil_list_remove");
-#endif
+	return ENOENT;
 }
 
 struct packet_filter_hook *
