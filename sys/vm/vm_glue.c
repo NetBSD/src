@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.55 1996/05/19 10:00:38 ragge Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.56 1996/05/29 21:20:11 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -352,6 +352,7 @@ swapin(p)
 	p->p_flag |= P_INMEM;
 	splx(s);
 	p->p_swtime = 0;
+	++cnt.v_swpin;
 }
 
 /*
@@ -536,6 +537,7 @@ swapout(p)
 		remrq(p);
 	splx(s);
 	p->p_swtime = 0;
+	++cnt.v_swpout;
 }
 
 /*
