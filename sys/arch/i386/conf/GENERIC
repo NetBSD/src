@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.240 1999/07/05 22:40:34 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.241 1999/07/12 15:16:23 kleink Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -530,6 +530,7 @@ ugen*	at uhub? port ? configuration ? interface ?
 
 # PCI audio devices
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -552,6 +553,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at eso?
 opl*	at ess?
 opl*	at sb?
 opl*	at sv?
@@ -559,6 +561,7 @@ opl*	at sv?
 # Audio support
 #audio*	at aria?
 audio*	at eap?
+audio*	at eso?
 audio*	at ess?
 audio*	at gus?
 audio*	at guspnp?
