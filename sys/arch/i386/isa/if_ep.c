@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.66 1995/01/06 21:41:26 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.67 1995/01/07 21:37:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -199,14 +199,8 @@ epprobe(parent, match, aux)
 			epaddcard(iobase, k2, 1);
 		}
 
-		/* find all isa cards */
-		delay(1000);
-		elink_reset();	/* global reset to ELINK_ID_PORT */
-		delay(1000);
-
 		for (slot = 0; slot < 10; slot++) {
-			outb(ELINK_ID_PORT, 0x00);
-			outb(ELINK_ID_PORT, 0x00);
+			elink_reset();
 			elink_idseq(ELINK_509_POLY);
 			delay(1000);
 
