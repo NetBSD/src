@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.50 2001/12/11 03:28:38 uwe Exp $ */
+/*	$NetBSD: param.h,v 1.51 2002/02/26 15:13:26 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,15 +114,19 @@ extern int nbpg, pgofset, pgshift;
  * of the hardware page size.
  */
 #define	MSIZE		256		/* size of an mbuf */
-#define	MCLBYTES	2048		/* enough for whole Ethernet packet */
-#define	MCLSHIFT	11		/* log2(MCLBYTES) */
-#define	MCLOFSET	(MCLBYTES - 1)
 
+#ifndef MCLSHIFT
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#ifndef NMBCLUSTERS
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif
 
-#ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
