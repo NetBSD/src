@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.5 1994/10/26 07:23:10 cgd Exp $
+#	$NetBSD: LAGER,v 1.6 1995/01/23 15:14:33 hpeyerl Exp $
 #
 # LAGER (hpeyerl's hp345)
 #
@@ -25,6 +25,7 @@ options		LOFS,PORTAL,PROCFS
 options		"COMPAT_NOMID"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		GATEWAY
 
 # Options for all HP machines
 options		SYSVSHM
