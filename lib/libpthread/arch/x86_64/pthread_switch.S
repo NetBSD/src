@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/09/07 14:47:57 cl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.7 2003/10/19 21:45:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,13 +126,9 @@ ENTRY(pthread__switch)
 	movq	%rsi,%r13
 	/* r12 (eax) holds the current thread	     */
 	/* r13 (ecx) holds the thread to switch to */
-	subq	$CONTEXTSIZE+12, %rsp	/* Allocate space for the ucontext_t */
-	leaq	12(%rsp), %r14
+	subq	$CONTEXTSIZE+8, %rsp	/* Allocate space for the ucontext_t */
+	leaq	8(%rsp), %r14
 	andq	$~(0xf), %r14		/* 16-byte-align the ucontext_t area */
-	/*
-	 * Note: Alignment space below the ucontext_t can consume up to
-	 * 12 bytes of STACKSPACE.
-	 */
 	movq	%r14,%rdi
 	call	PIC_PLT(_C_LABEL(_getcontext_u))
 	/*
@@ -153,7 +149,7 @@ ENTRY(pthread__switch)
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 NENTRY(pthread__switch_return_point)
 	/* We're back on the original stack. */
-	addq	$CONTEXTSIZE+12, %rsp
+	addq	$CONTEXTSIZE+8, %rsp
 	popq	%r14
 	popq	%r13
 	popq	%r12
@@ -200,13 +196,9 @@ ENTRY(pthread__locked_switch)
 	movq	%rsi, %r13
 	movq	%rdx, %r14
 	incl	PT_SPINLOCKS(%r13)	/* Make sure we get continued	     */
-	subq	$CONTEXTSIZE+12, %rsp	/* Allocate space for the ucontext_t */
-	leaq	12(%rsp), %r15
+	subq	$CONTEXTSIZE+8, %rsp	/* Allocate space for the ucontext_t */
+	leaq	8(%rsp), %r15
 	andq	$~(0xf), %r15		/* 16-byte-align the ucontext_t area */
-	/*
-	 * Note: Alignment space below the ucontext_t can consume up to
-	 * 12 bytes of STACKSPACE.
-	 */
 	movq	%r15, %rdi
 	call	PIC_PLT(_C_LABEL(_getcontext_u))
 	/*
@@ -279,7 +271,7 @@ locked_no_new_preempt:
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
-	addq	$CONTEXTSIZE+12, %rsp
+	addq	$CONTEXTSIZE+8, %rsp
 	popq	%r15
 	popq	%r14
 	popq	%r13
