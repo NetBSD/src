@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.17 2000/03/18 21:49:33 mycroft Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.18 2000/03/18 21:50:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <dev/isa/espvar.h>
+#include <dev/isa/esp_isavar.h>
 
 int	esp_isa_match __P((struct device *, struct cfdata *, void *)); 
 void	esp_isa_attach __P((struct device *, struct device *, void *));  
