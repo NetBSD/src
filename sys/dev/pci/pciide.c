@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.22 1998/12/03 13:25:44 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.23 1998/12/03 13:30:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -992,8 +992,6 @@ pciiide_chan_candisable(sc, pa, cp, cmdsize, ctlsize)
 		printf("%s: disabling %s channel (no drives)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		cp->hw_ok = 0;
-		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, cmdsize);
-		bus_space_unmap(wdc_cp->ctl_iot, wdc_cp->ctl_ioh, ctlsize);
 		return 1;
 	}
 	return 0;
