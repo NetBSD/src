@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/05/22 02:23:42 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/07/25 18:58:42 tv Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -15,12 +15,7 @@ VERSION=2.8.1
 DIST_NAME=binutils-${VERSION}
 
 # Override this to make cross tools. (Not yet guaranteed.)
-.if (${MACHINE_ARCH} == "arm32")
-# XXX. We need a better system for mapping NetBSD arch -> GNU arch.
-TARGET_ARCH?=arm
-.else
-TARGET_ARCH?=${MACHINE_ARCH}
-.endif
+TARGET_ARCH?=${MACHINE_GNU_ARCH}
 
 # XXX. Need to pull proper target definition from <bsd.own.mk>.
 .include <bsd.own.mk>
