@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.15 2002/04/16 07:42:20 kleink Exp $
+#	$NetBSD: NATSUMI,v 1.16 2002/04/17 02:22:54 mycroft Exp $
 #
 #	for development
 #
@@ -114,7 +114,7 @@ options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
-#config	netbsd	root on de0 type nfs
+#config	netbsd	root on tlp0 type nfs
 #config	netbsd	root on le0 type nfs
 
 #
@@ -248,17 +248,12 @@ fd*	at fdc? drive ?
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 #fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA Plug-and-Play network intefaces
@@ -269,6 +264,7 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
 

@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.14 2002/04/16 11:49:55 wiz Exp $
+#	$NetBSD: DELPHI,v 1.15 2002/04/17 02:22:48 mycroft Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.14 $"
+ident 		"DELPHI-$Revision: 1.15 $"
 
 maxusers	64		# estimated number of users
 
@@ -477,7 +477,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 #ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -490,11 +489,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 #sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #rl*	at pci? dev ? function ?	# Realtek 8129/8139
