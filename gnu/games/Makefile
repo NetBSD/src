@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1993/08/02 17:21:27 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1995/04/23 07:52:53 cgd Exp $
 
 SUBDIR=	chess
 
