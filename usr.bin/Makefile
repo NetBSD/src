@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.67 1997/01/08 21:41:22 leo Exp $
-#	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
+#	$NetBSD: Makefile,v 1.68 1997/03/07 06:14:02 mikel Exp $
+#	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
-SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
-	checknr chflags chpass cksum cmp col colcrt colrm column comm \
-	compress crontab ctags cut dirname du \
+SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar \
+	cap_mkdb checknr chflags chpass cksum cmp col colcrt colrm column \
+	comm compress crontab ctags cut dirname du \
 	eject env error expand false file find finger fmt fold fpr from \
 	fsplit fstat ftp gencat getconf getopt head hexdump id indent \
 	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave less lex \
