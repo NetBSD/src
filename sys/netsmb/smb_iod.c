@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.9 2003/03/03 21:16:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.10 2003/03/15 02:11:43 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.9 2003/03/03 21:16:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.10 2003/03/15 02:11:43 kristerw Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,6 +564,7 @@ smb_iod_sendall(struct smbiod *iod)
 			}
 			break;
 		    default:
+			break;
 		}
 		if (herror)
 			break;
