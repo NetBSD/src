@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.3 2000/06/14 03:24:16 itojun Exp $
+# $NetBSD: ipsec,v 1.3.2.1 2000/08/09 18:47:13 lukem Exp $
 #
 
 # PROVIDE: ipsec
@@ -11,6 +11,7 @@
 . /etc/rc.subr
 
 name="ipsec"
+start_precmd="ipsec_prestart"
 start_cmd="ipsec_start"
 stop_precmd="checkyesno ipsec && [ -f /etc/ipsec.conf ]"
 stop_cmd="ipsec_stop"
@@ -18,20 +19,29 @@ reload_precmd="$stop_precmd"
 reload_cmd="ipsec_reload"
 extra_commands="reload"
 
-ipsec_start()
+ipsec_prestart()
 {
 	if ! checkyesno ipsec; then
-		return 0
+		return 1
 	fi
-
-	# if /etc/ipsec.conf isn't readable, abort the boot rather
-	# than risk a security problem
-	#
 	if [ ! -f /etc/ipsec.conf ]; then
-		err 1 "/etc/ipsec.conf not readable; ipsec start aborted."
+		warn "/etc/ipsec.conf not readable; ipsec start aborted."
+			#
+			# If booting directly to multiuser, send SIGTERM to
+			# the parent (/etc/rc) to abort the boot
+			#
+		if [ "$autoboot" = yes ]; then
+			echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
+			kill -TERM $$
+			exit 1
+		fi
+		return 1
 	fi
-	# XXX should check if ipsec.conf is secure enough
-	#
+	return 0
+}
+
+ipsec_start()
+{
 	echo "Installing ipsec manual keys/policies."
 	/sbin/setkey -f /etc/ipsec.conf
 }
