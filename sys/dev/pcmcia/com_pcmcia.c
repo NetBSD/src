@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.7 1997/08/10 22:47:49 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.8 1997/08/23 01:57:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -81,6 +81,7 @@ struct com_pcmcia_softc {
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
+	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
 struct cfattach com_pcmcia_ca = {
@@ -135,6 +136,8 @@ com_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	char *model;
 
+	psc->sc_pf = pa->pf;
+
 	/* find a cfe we can use */
 
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
@@ -169,7 +172,8 @@ com_pcmcia_attach(parent, self, aux)
 	sc->sc_ioh = psc->sc_pcioh.ioh;
 
 	/* Enable the card. */
-	if (pcmcia_enable_function(pa->pf, parent, cfe))
+	pcmcia_function_init(pa->pf, cfe);
+	if (pcmcia_function_enable(pa->pf))
 		printf(": function enable failed\n");
 
 	/* turn off the bit which disables the ethernet */

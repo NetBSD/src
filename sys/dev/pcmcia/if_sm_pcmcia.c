@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.1 1997/08/11 20:07:55 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.2 1997/08/23 01:57:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ struct sm_pcmcia_softc {
 	struct	pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int	sc_io_window;			/* our i/o window */
 	void	*sc_ih;				/* interrupt cookie */
+	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
 struct cfattach sm_pcmcia_ca = {
@@ -139,10 +140,12 @@ sm_pcmcia_attach(parent, self, aux)
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
 	const char *model;
 
+	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
 
 	/* Enable the card. */
-	if (pcmcia_enable_function(pa->pf, parent, cfe)) {
+	pcmcia_function_init(pa->pf, cfe);
+	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
 		return;
 	}
