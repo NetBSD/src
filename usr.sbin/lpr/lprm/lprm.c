@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.10 1999/12/07 14:54:48 mrg Exp $	*/
+/*	$NetBSD: lprm.c,v 1.11 2002/07/03 22:10:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.10 1999/12/07 14:54:48 mrg Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.11 2002/07/03 22:10:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,8 +127,8 @@ main(argc, argv)
 					wait_time = atoi(*++argv);
 				}
 				if (wait_time < 0)
-					errx(1, "wait time must be postive: %s",
-					    optarg);
+					errx(1, "wait time must be postive: %d",
+					    wait_time);
 				if (wait_time < 30)
 				    warnx("warning: wait time less than 30 seconds");
 				break;
@@ -164,6 +164,7 @@ main(argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "usage: lprm [-] [-Pprinter] [[job #] [user] ...]\n");
+	fprintf(stderr,
+		"usage: lprm [-] [-Pprinter] [-w maxwait] [[job #] [user] ...]\n");
 	exit(2);
 }
