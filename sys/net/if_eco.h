@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eco.h,v 1.3 2001/09/16 15:08:39 bjh21 Exp $	*/
+/*	$NetBSD: if_eco.h,v 1.4 2001/09/17 22:42:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -30,7 +30,9 @@
 #ifndef _NET_IF_ECO_H_
 #define _NET_IF_ECO_H_
 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 
@@ -108,15 +110,29 @@ struct eco_arp {
 	u_int8_t ecar_tpa[4];
 };
 
-/*
- * Common structure used to store state about an Econet interface.
- */
 enum eco_state {
 	ECO_UNKNOWN, ECO_IDLE, ECO_SCOUT_RCVD,
 	ECO_SCOUT_SENT, ECO_DATA_SENT, ECO_IMMED_SENT,
 	ECO_DONE
 };
 
+
+/*
+ * This structure contains a packet that might need retransmitting,
+ * together with a callout to trigger retransmission.  They're kept on
+ * a per-interface list so they can be freed when an interface is
+ * downed.
+ */
+struct eco_retry {
+	LIST_ENTRY(eco_retry)	er_link;
+	struct	callout er_callout;
+	struct	mbuf *er_packet;
+	struct	ifnet *er_ifp;
+};
+
+/*
+ * Common structure used to store state about an Econet interface.
+ */
 struct ecocom {
 	struct ifnet	ec_if;
 	int	(*ec_claimwire)(struct ifnet *);
@@ -124,12 +140,14 @@ struct ecocom {
 	enum eco_state	ec_state;
 	struct mbuf	*ec_scout;
 	struct mbuf	*ec_packet;
+	LIST_HEAD(, eco_retry)	ec_retries;
 };
 
 #ifdef _KERNEL
 void	eco_ifattach(struct ifnet *, const u_int8_t *);
 void	eco_ifdetach(struct ifnet *);
 int	eco_init(struct ifnet *);
+void	eco_stop(struct ifnet *, int);
 
 char	*eco_sprintf(const u_int8_t *);
 
