@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.105 2003/01/18 10:06:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.105 2003/01/18 10:06:26 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp
 #include <sys/signalvar.h>
 #include <sys/systrace.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -118,10 +119,10 @@ int	forkfsleep = 0;
 
 /*ARGSUSED*/
 int
-sys_fork(struct proc *p, void *v, register_t *retval)
+sys_fork(struct lwp *l, void *v, register_t *retval)
 {
 
-	return (fork1(p, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
+	return (fork1(l, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
 }
 
 /*
@@ -130,10 +131,10 @@ sys_fork(struct proc *p, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys_vfork(struct proc *p, void *v, register_t *retval)
+sys_vfork(struct lwp *l, void *v, register_t *retval)
 {
 
-	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
+	return (fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
 	    retval, NULL));
 }
 
@@ -143,10 +144,10 @@ sys_vfork(struct proc *p, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys___vfork14(struct proc *p, void *v, register_t *retval)
+sys___vfork14(struct lwp *l, void *v, register_t *retval)
 {
 
-	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
+	return (fork1(l, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
 	    NULL, NULL, retval, NULL));
 }
 
@@ -154,7 +155,7 @@ sys___vfork14(struct proc *p, void *v, register_t *retval)
  * Linux-compatible __clone(2) system call.
  */
 int
-sys___clone(struct proc *p, void *v, register_t *retval)
+sys___clone(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___clone_args /* {
 		syscallarg(int) flags;
@@ -191,7 +192,7 @@ sys___clone(struct proc *p, void *v, register_t *retval)
 	 * grows up or down.  So, we pass a stack size of 0, so that the
 	 * code that makes this adjustment is a noop.
 	 */
-	return (fork1(p, flags, sig, SCARG(uap, stack), 0,
+	return (fork1(l, flags, sig, SCARG(uap, stack), 0,
 	    NULL, NULL, retval, NULL));
 }
 
@@ -199,12 +200,13 @@ sys___clone(struct proc *p, void *v, register_t *retval)
 struct timeval fork_tfmrate = { 10, 0 };
 
 int
-fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
+fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc	*p2, *tp;
+	struct proc	*p1, *p2, *tp;
 	uid_t		uid;
+	struct lwp	*l2;
 	int		count, s;
 	vaddr_t		uaddr;
 	boolean_t	inmem;
@@ -217,6 +219,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * exceed the limit. The variable nprocs is the current number of
 	 * processes, maxproc is the limit.
 	 */
+	p1 = l1->l_proc;
 	uid = p1->p_cred->p_ruid;
 	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
@@ -276,28 +279,15 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
-#if !defined(MULTIPROCESSOR)
-	/*
-	 * In the single-processor case, all processes will always run
-	 * on the same CPU.  So, initialize the child's CPU to the parent's
-	 * now.  In the multiprocessor case, the child's CPU will be
-	 * initialized in the low-level context switch code when the
-	 * process runs.
-	 */
-	p2->p_cpu = p1->p_cpu;
-#else
-	/*
-	 * zero child's cpu pointer so we don't get trash.
-	 */
-	p2->p_cpu = NULL;
-#endif /* ! MULTIPROCESSOR */
+	simple_lock_init(&p2->p_lwplock);
+	LIST_INIT(&p2->p_lwps);
 
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in uvm_fork().
 	 */
-	p2->p_flag = (inmem ? P_INMEM : 0) | (p1->p_flag & P_SUGID);
+	p2->p_flag = (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
@@ -354,9 +344,6 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
-	callout_init(&p2->p_realit_ch);
-	callout_init(&p2->p_tsleep_ch);
-
 #ifdef KTRACE
 	/*
 	 * Copy traceflag and tracefile if enabled.
@@ -377,6 +364,12 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	sigactsinit(p2, p1, flags & FORK_SHARESIGS);
 
 	/*
+	 * p_stats. 
+	 * Copy parts of p_stats, and zero out the rest.
+	 */
+	p2->p_stats = pstatscopy(p1->p_stats);
+
+	/*
 	 * If emulation has process fork hook, call it now.
 	 */
 	if (p2->p_emul->e_proc_fork)
@@ -386,17 +379,17 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	PHOLD(p1);
+	PHOLD(l1);
+
+	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
 
 	/*
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
-	p2->p_addr = (struct user *)uaddr;
-	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE,
-	    stack, stacksize,
-	    (func != NULL) ? func : child_return,
-	    (arg != NULL) ? arg : p2);
+	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize, 
+	    (func != NULL) ? func : child_return, 
+	    arg, &l2);
 
 	/*
 	 * BEGIN PID ALLOCATION.
@@ -466,7 +459,6 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_pid = nextpid;
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
-	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
 
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
@@ -494,11 +486,14 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
+	p2->p_nrlwps = 1;
 	if (p1->p_flag & P_STOPFORK) {
 		p2->p_stat = SSTOP;
+		l2->l_stat = LSSTOP;
 	} else {
-		p2->p_stat = SRUN;
-		setrunqueue(p2);
+		p2->p_stat = SACTIVE;
+		l2->l_stat = LSRUN;
+		setrunqueue(l2);
 	}
 	SCHED_UNLOCK(s);
 
@@ -513,7 +508,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Now can be swapped.
 	 */
-	PRELE(p1);
+	PRELE(l1);
 
 	/*
 	 * Notify any interested parties about the new process.
@@ -569,11 +564,11 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 void
 proc_trampoline_mp(void)
 {
-	struct proc *p;
+	struct lwp *l;
 
-	p = curproc;
+	l = curlwp;
 
 	SCHED_ASSERT_UNLOCKED();
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 }
 #endif

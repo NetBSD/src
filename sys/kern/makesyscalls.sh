@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.52 2001/11/12 14:57:02 lukem Exp $
+#	$NetBSD: makesyscalls.sh,v 1.53 2003/01/18 10:06:32 thorpej Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -379,7 +379,7 @@ function putent(nodefs, compatwrap) {
 	# get none, since they always have sys_nosys() for their table
 	# entries.
 	if (nodefs != "INDIR") {
-		prototype = "(struct proc *, void *, register_t *)"
+		prototype = "(struct lwp *, void *, register_t *)"
 		if (compatwrap == "")
 			printf("int\t%s%s;\n", funcname,
 			    prototype) > sysprotos

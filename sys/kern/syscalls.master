@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.117 2002/12/19 23:51:00 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.118 2003/01/18 10:06:35 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 %%
@@ -150,7 +151,7 @@
 48	COMPAT_13	{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD		{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	STD		{ int sys_setlogin(const char *namebuf); }
+50	STD		{ int sys___setlogin(const char *namebuf); }
 51	STD		{ int sys_acct(const char *path); }
 52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
 53	COMPAT_13	{ int sys_sigaltstack( \
@@ -494,11 +495,15 @@
 			    const struct timespec *tp); }
 234	STD		{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
-235	UNIMPL		timer_create
-236	UNIMPL		timer_delete
-237	UNIMPL		timer_settime
-238	UNIMPL		timer_gettime
-239	UNIMPL		timer_getoverrun
+235	STD		{ int sys_timer_create(clockid_t clock_id, \
+			    struct sigevent *evp, timer_t *timerid); }
+236	STD		{ int sys_timer_delete(timer_t timerid); }
+237	STD		{ int sys_timer_settime(timer_t timerid, int flags, \
+			    const struct itimerspec *value, \
+			    struct itimerspec *ovalue); }
+238	STD		{ int sys_timer_gettime(timer_t timerid, struct \
+			    itimerspec *value); }
+239	STD		{ int sys_timer_getoverrun(timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
@@ -609,24 +614,21 @@
 304	STD		{ int sys_lchflags(const char *path, u_long flags); }
 305	STD		{ int sys_issetugid(void); }
 306	STD		{ int sys_utrace(const char *label, void *addr, \
-			    size_t len); }
-;
-; Syscalls 307 and 308 are reserved for getcontext and setcontext
-;
-307	UNIMPL
-308	UNIMPL
-;
-; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
-;
-309	UNIMPL
-310	UNIMPL
-311	UNIMPL
-312	UNIMPL
-313	UNIMPL
-314	UNIMPL
-315	UNIMPL
-316	UNIMPL
-317	UNIMPL
+				size_t len); }
+307	STD		{ int sys_getcontext(struct __ucontext *ucp); }
+308	STD		{ int sys_setcontext(const struct __ucontext *ucp); }
+309	STD		{ int sys__lwp_create(const struct __ucontext *ucp, \
+				u_long flags, lwpid_t *new_lwp); }
+310	STD		{ int sys__lwp_exit(void); }
+311	STD		{ lwpid_t sys__lwp_self(void); }
+312	STD		{ int sys__lwp_wait(lwpid_t wait_for, \
+				lwpid_t *departed); }
+313	STD		{ int sys__lwp_suspend(lwpid_t target); }
+314	STD		{ int sys__lwp_continue(lwpid_t target); }
+315	STD		{ int sys__lwp_wakeup(lwpid_t target); }
+316	STD		{ void *sys__lwp_getprivate(void); }
+317	STD		{ int sys__lwp_setprivate(void *ptr); }
+; Syscalls 318-329 reserved for remaining Solaris-compatible LWP calls.
 318	UNIMPL
 319	UNIMPL
 320	UNIMPL
@@ -639,12 +641,17 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	UNIMPL
-331	UNIMPL
-332	UNIMPL
-333	UNIMPL
-334	UNIMPL
-335	UNIMPL
+; Scheduler activation syscalls
+330	STD		{ int sys_sa_register(sa_upcall_t new, \
+				sa_upcall_t *old, int flags); }
+331	STD		{ int sys_sa_stacks(int num, stack_t *stacks); }
+332	STD		{ int sys_sa_enable(void); }
+333	STD		{ int sys_sa_setconcurrency(int concurrency); }
+334	STD		{ int sys_sa_yield(void); }
+335	STD		{ int sys_sa_preempt(int sa_id); }
+;
+; Syscalls 336-339 are reserved for other scheduler activation syscalls.
+;
 336	UNIMPL
 337	UNIMPL
 338	UNIMPL

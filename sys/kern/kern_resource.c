@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.67 2002/10/03 05:18:59 itojun Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.68 2003/01/18 10:06:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.67 2002/10/03 05:18:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.68 2003/01/18 10:06:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.67 2002/10/03 05:18:59 itojun Ex
 #include <sys/proc.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -71,8 +72,8 @@ rlim_t maxsmap = MAXSSIZ;
  */
 
 int
-sys_getpriority(curp, v, retval)
-	struct proc *curp;
+sys_getpriority(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -80,7 +81,7 @@ sys_getpriority(curp, v, retval)
 		syscallarg(int) which;
 		syscallarg(int) who;
 	} */ *uap = v;
-	struct proc *p;
+	struct proc *curp = l->l_proc, *p;
 	int low = NZERO + PRIO_MAX + 1;
 
 	switch (SCARG(uap, which)) {
@@ -132,8 +133,8 @@ sys_getpriority(curp, v, retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(curp, v, retval)
-	struct proc *curp;
+sys_setpriority(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -142,7 +143,7 @@ sys_setpriority(curp, v, retval)
 		syscallarg(int) who;
 		syscallarg(int) prio;
 	} */ *uap = v;
-	struct proc *p;
+	struct proc *curp = l->l_proc, *p;
 	int found = 0, error = 0;
 
 	switch (SCARG(uap, which)) {
@@ -214,15 +215,15 @@ donice(curp, chgp, n)
 		return (EACCES);
 	chgp->p_nice = n;
 	SCHED_LOCK(s);
-	(void)resetpriority(chgp);
+	(void)resetprocpriority(chgp);
 	SCHED_UNLOCK(s);
 	return (0);
 }
 
 /* ARGSUSED */
 int
-sys_setrlimit(p, v, retval)
-	struct proc *p;
+sys_setrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -230,6 +231,7 @@ sys_setrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
@@ -358,8 +360,8 @@ dosetrlimit(p, cred, which, limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(p, v, retval)
-	struct proc *p;
+sys_getrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -367,6 +369,7 @@ sys_getrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 
 	if ((u_int)which >= RLIM_NLIMITS)
@@ -390,6 +393,7 @@ calcru(p, up, sp, ip)
 	long sec, usec;
 	int s;
 	struct timeval tv;
+	struct lwp *l;
 
 	s = splstatclock();
 	st = p->p_sticks;
@@ -408,20 +412,27 @@ calcru(p, up, sp, ip)
 
 	sec = p->p_rtime.tv_sec;
 	usec = p->p_rtime.tv_usec;
-	if (p->p_stat == SONPROC) {
-		struct schedstate_percpu *spc;
-
-		KDASSERT(p->p_cpu != NULL);
-		spc = &p->p_cpu->ci_schedstate;
-
-		/*
-		 * Adjust for the current time slice.  This is actually fairly
-		 * important since the error here is on the order of a time
-		 * quantum, which is much greater than the sampling error.
-		 */
-		microtime(&tv);
-		sec += tv.tv_sec - spc->spc_runtime.tv_sec;
-		usec += tv.tv_usec - spc->spc_runtime.tv_usec;
+	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
+	     l = LIST_NEXT(l, l_sibling)) {
+		if (l->l_stat == LSONPROC) {
+			struct schedstate_percpu *spc;
+			
+			KDASSERT(l->l_cpu != NULL);
+			spc = &l->l_cpu->ci_schedstate;
+			
+			/*
+			 * Adjust for the current time slice.  This is
+			 * actually fairly important since the error
+			 * here is on the order of a time quantum,
+			 * which is much greater than the sampling
+			 * error.  
+			 */
+			microtime(&tv);
+			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
+			usec += tv.tv_usec - spc->spc_runtime.tv_usec;
+			
+			break;
+		}
 	}
 	u = (u_quad_t) sec * 1000000 + usec;
 	st = (u * st) / tot;
@@ -439,8 +450,8 @@ calcru(p, up, sp, ip)
 
 /* ARGSUSED */
 int
-sys_getrusage(p, v, retval)
-	struct proc *p;
+sys_getrusage(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -449,6 +460,7 @@ sys_getrusage(p, v, retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	struct rusage *rup;
+	struct proc *p = l->l_proc;
 
 	switch (SCARG(uap, who)) {
 
@@ -523,4 +535,32 @@ limfree(lim)
 	if (lim->pl_corename != defcorename)
 		free(lim->pl_corename, M_TEMP);
 	pool_put(&plimit_pool, lim);
+}
+
+struct pstats *
+pstatscopy(ps)
+	struct pstats *ps;
+{
+	
+	struct pstats *newps;
+
+	newps = pool_get(&pstats_pool, PR_WAITOK);
+
+	memset(&newps->pstat_startzero, 0,
+	(unsigned) ((caddr_t)&newps->pstat_endzero -
+		    (caddr_t)&newps->pstat_startzero));
+	memcpy(&newps->pstat_startcopy, &ps->pstat_startcopy,
+	((caddr_t)&newps->pstat_endcopy -
+	 (caddr_t)&newps->pstat_startcopy));
+
+	return (newps);
+
+}
+
+void
+pstatsfree(ps)
+	struct pstats *ps;
+{
+
+	pool_put(&pstats_pool, ps);
 }
