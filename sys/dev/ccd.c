@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.25 1996/02/06 18:15:19 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.26 1996/02/10 22:27:22 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -1182,7 +1182,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
 
 		/* Detatch the disk. */
-		disk_detatch(&cs->sc_dkdev);
+		disk_detach(&cs->sc_dkdev);
 
 		/* This must be atomic. */
 		s = splhigh();
