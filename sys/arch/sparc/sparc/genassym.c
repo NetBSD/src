@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13 1995/05/01 14:13:45 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.14 1995/05/04 19:42:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,6 +185,7 @@ main()
 	off("AU_REND", struct auio, au_rend);
 	off("AU_PDATA", struct auio, au_pdata);
 	off("AU_PEND", struct auio, au_pend);
+	off("AU_EVCNT", struct auio, au_intrcnt.ev_count);
 
 	off("AMD_IR", struct amd7930, ir);
 	off("AMD_BBRB", struct amd7930, bbrb);
