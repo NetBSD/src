@@ -66,7 +66,8 @@ long (*via2itab[7])()={
 	via2_noint, /* snd_intr */
 	via2_noint, /* via2t2_intr */
 #if defined(GPROF) && defined(PROFTIMER)
-	profclock,
+	via2_noint,
+/*	profclock,  parameters are wrong... */
 #else
 	via2_noint,
 #endif

@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.8 1994/02/03 21:25:57 briggs Exp $
+ *	$Id: locore.s,v 1.9 1994/02/06 22:06:27 briggs Exp $
  */
 
 #include "assym.s"
@@ -607,8 +607,9 @@ _rtclock_intr:
 	movl	d0,sp@-			| save status so jsr will not clobber
 	movl	a1@,sp@-		| push padded PS
 	movl	a1@(4),sp@-		| push PC
+	movl	sp, sp@-		| push pointer to pc, ps
 	jbsr	_profclock		| profclock(pc, ps)
-	addql	#8,sp			| pop params
+	lea	sp@(12),sp		| pop params
 #else /* notdef GPROF */
 	btst	#5,a1@(2)		| saved PS in user mode?
 	jne	Lttimer1		| no, go check timer1
