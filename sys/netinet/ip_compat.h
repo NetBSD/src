@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.2 1997/01/05 21:32:17 veego Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.3 1997/03/29 00:54:57 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
@@ -8,17 +8,47 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 1.1.1.1.4.4 1996/11/13 10:18:11 darrenr Exp
+ * $Id: ip_compat.h,v 1.3 1997/03/29 00:54:57 thorpej Exp $
  */
 
-#ifndef	__IP_COMPAT_H__
+#ifndef	__IP_COMPAT_H_
 #define	__IP_COMPAT_H__
+
+#ifndef	__P
+# ifdef	__STDC__
+#  define	__P(x)  x
+# else
+#  define	__P(x)  ()
+# endif
+#endif
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 #if	SOLARIS
-#define	MTYPE(m)	((m)->b_datap->db_type)
+# define	MTYPE(m)	((m)->b_datap->db_type)
+# include	<sys/ioccom.h>
+# include	<sys/sysmacros.h>
+/*
+ * because Solaris 2 defines these in two places :-/
+ */
+# undef	IPOPT_EOL
+# undef	IPOPT_NOP
+# undef	IPOPT_LSRR
+# undef	IPOPT_RR
+# undef	IPOPT_SSRR
+# ifndef	_KERNEL
+#  define	_KERNEL
+#  undef	RES_INIT
+#  include <inet/common.h>
+#  include <inet/ip.h>
+#  include <inet/ip_ire.h>
+#  undef	_KERNEL
+# else
+#  include <inet/common.h>
+#  include <inet/ip.h>
+#  include <inet/ip_ire.h>
+# endif
 #endif
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
@@ -87,6 +117,10 @@
 #define	IPOPT_FINN	205	/* FINN */
 
 
+#ifdef	__FreeBSD__
+#include <machine/spl.h>
+#endif
+
 /*
  * Build some macros and #defines to enable the same code to compile anywhere
  * Well, that's the idea, anyway :-)
@@ -110,6 +144,7 @@
 
 # ifdef sun
 #  if defined(__svr4__) || defined(__SVR4)
+extern	ill_t	*get_unit __P((char *));
 #   define	GETUNIT(n)	get_unit((n))
 #  else
 #   include	<sys/kmem_alloc.h>
@@ -134,9 +169,10 @@ typedef	struct	qif	{
 	queue_t	*qf_out;
 	void	*qf_wqinfo;
 	void	*qf_rqinfo;
-	int	(*qf_inp)();
-	int	(*qf_outp)();
+	int	(*qf_inp) __P((queue_t *, mblk_t *));
+	int	(*qf_outp) __P((queue_t *, mblk_t *));
 	mblk_t	*qf_m;
+	int	qf_len;
 	char	qf_name[8];
 	/*
 	 * in case the ILL has disappeared...
@@ -152,10 +188,10 @@ typedef	struct	qif	{
 #    define	htons(x)	(x)
 #    define	htonl(x)	(x)
 #   endif
-#   define	KMALLOC(x)	kmem_alloc((x), KM_SLEEP)
+#   define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
 #   define	GET_MINOR(x)	getminor(x)
 #  else
-#   define	KMALLOC(x)	new_kmem_alloc((x), KMEM_SLEEP)
+#   define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
 #  endif /* __svr4__ */
 # endif /* sun && !linux */
 # ifndef	GET_MINOR
@@ -170,14 +206,18 @@ extern	vm_map_t	kmem_map;
 #  else
 #   include <vm/vm_kern.h>
 #  endif /* __FreeBSD__ */
-#ifdef __NetBSD__
-#  define KMALLOC(x)		malloc((x), M_DEVBUF, M_NOWAIT)
-#  define KFREE(x)		free((x), M_DEVBUF)
-#else
-#  define	KMALLOC(x)	kmem_alloc(kmem_map, (x))
+/*
+#  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc(kmem_map, (c))
 #  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
 					  sizeof(*(x)))
-#endif /* __NetBSD__ */
+*/
+#  ifdef	M_PFIL
+#   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
+#   define	KFREE(x)	FREE((x), M_PFIL)
+#  else
+#   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_TEMP, M_NOWAIT)
+#   define	KFREE(x)	FREE((x), M_TEMP)
+#  endif
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 # endif /* BSD */
@@ -190,17 +230,16 @@ extern	vm_map_t	kmem_map;
 #  endif
 # endif
 #else
-# ifndef	linux
-#  define	MUTEX_ENTER(x)	;
-#  define	MUTEX_EXIT(x)	;
-#  define	SPLNET(x)	;
-#  define	SPLX(x)		;
-#  define	KMALLOC(x)	malloc(x)
-#  define	KFREE(x)	free(x)
-#  define	GETUNIT(x)	(x)
-#  define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-#  define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
-# endif
+# define	MUTEX_ENTER(x)	;
+# define	MUTEX_EXIT(x)	;
+# define	SPLNET(x)	;
+# undef		SPLX
+# define	SPLX(x)		;
+# define	KMALLOC(a,b,c)	(a) = (b)malloc(c)
+# define	KFREE(x)	free(x)
+# define	GETUNIT(x)	get_unit(x)
+# define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
+# define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
 #endif /* KERNEL */
 
 #ifdef linux
@@ -315,7 +354,7 @@ struct ipovly {
 # define	UNITNAME(n)	dev_get((n))
 # define	ifnet	device
 
-# define	KMALLOC(x)	kmalloc((x), GFP_ATOMIC)
+# define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
 # define	KFREE(x)	kfree_s((x), sizeof(*(x)))
 # define	IRCOPY(a,b,c)	{ \
 				 error = verify_area(VERIFY_READ, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.4 1997/02/19 23:07:57 scottr Exp $	*/
+/*	$NetBSD: fil.c,v 1.5 1997/03/29 00:54:55 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fil.c,v 1.3.4.12 1996/12/02 11:51:24 darrenr Exp";
+static	char	rcsid[] = "$Id: fil.c,v 1.5 1997/03/29 00:54:55 thorpej Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -33,16 +33,10 @@ static	char	rcsid[] = "Id: fil.c,v 1.3.4.12 1996/12/02 11:51:24 darrenr Exp";
 #endif
 #include <sys/protosw.h>
 #include <sys/socket.h>
-
-#ifndef _LKM
-#include "ipfilter.h"
-#endif
-
 #include <net/if.h>
 #ifdef sun
 # include <net/af.h>
 #endif
-
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -52,8 +46,8 @@ static	char	rcsid[] = "Id: fil.c,v 1.3.4.12 1996/12/02 11:51:24 darrenr Exp";
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/ip_fil.h>
 #include <netinet/ip_compat.h>
+#include <netinet/ip_fil.h>
 #include <netinet/ip_nat.h>
 #include <netinet/ip_frag.h>
 #include <netinet/ip_state.h>
@@ -61,61 +55,69 @@ static	char	rcsid[] = "Id: fil.c,v 1.3.4.12 1996/12/02 11:51:24 darrenr Exp";
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
-/* XXX NetBSD will default to passing if IPFILTER is enabled */
-#ifdef IPFILTER_POLICY
-# define NOMATCH IPFILTER_POLICY
-#else
-# define NOMATCH FR_PASS
-#endif
-
 #ifndef	_KERNEL
-#include "ipf.h"
+# include "ipf.h"
+# include "ipt.h"
 extern	int	opts;
-extern	void	debug(), verbose();
 
-#define	FR_IFVERBOSE(ex,second,verb_pr)	if (ex) { verbose verb_pr; second; }
-#define	FR_IFDEBUG(ex,second,verb_pr)	if (ex) { debug verb_pr; second; }
-#define	FR_VERBOSE(verb_pr)	verbose verb_pr
-#define	FR_DEBUG(verb_pr)	debug verb_pr
-#define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, 0)
+# define	FR_IFVERBOSE(ex,second,verb_pr)	if (ex) { verbose verb_pr; \
+							  second; }
+# define	FR_IFDEBUG(ex,second,verb_pr)	if (ex) { debug verb_pr; \
+							  second; }
+# define	FR_VERBOSE(verb_pr)			verbose verb_pr
+# define	FR_DEBUG(verb_pr)			debug verb_pr
+# define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+# define	SEND_RESET(ip, qif, q, if)		send_reset(ip, if)
 # if SOLARIS
+#  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(ip)
 #  define	bcmp	memcmp
-# endif
-#else
-#define	FR_IFVERBOSE(ex,second,verb_pr)	;
-#define	FR_IFDEBUG(ex,second,verb_pr)	;
-#define	FR_VERBOSE(verb_pr)
-#define	FR_DEBUG(verb_pr)
-#define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
-# if SOLARIS
-extern	int	icmp_error(), ipfr_fastroute();
-extern	kmutex_t	ipf_mutex, ipl_mutex;
 # else
+#  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(b, ip, if)
 # endif
-extern	int	ipl_unreach;
+
+#else /* #ifndef _KERNEL */
+# define	FR_IFVERBOSE(ex,second,verb_pr)	;
+# define	FR_IFDEBUG(ex,second,verb_pr)	;
+# define	FR_VERBOSE(verb_pr)
+# define	FR_DEBUG(verb_pr)
+# define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+# if SOLARIS
+extern	kmutex_t	ipf_mutex;
+#  define	SEND_RESET(ip, qif, q, if)	send_reset(ip, qif, q)
+#  define	ICMP_ERROR(b, ip, t, c, if, src) \
+			icmp_error(b, ip, t, c, if, src)
+# else
+#  define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+#  define	SEND_RESET(ip, qif, q, if)	send_reset((struct tcpiphdr *)ip)
+#  if BSD < 199103
+#   define	ICMP_ERROR(b, ip, t, c, if, src) \
+			icmp_error(mtod(b, ip_t *), t, c, if, src)
+#  else
+#   define	ICMP_ERROR(b, ip, t, c, if, src) \
+			icmp_error(b, t, c, (src).s_addr, if)
+#  endif
+# endif
 #endif
 
-#if SOLARIS
-# define	SEND_RESET(ip, if, q)		send_reset(ip, qif, q)
-# define	ICMP_ERROR(b, ip, t, c, if, src) \
-			icmp_error(b, ip, t, c, if, src)
+#ifndef	IPF_LOGGING
+#define	IPF_LOGGING	0
+#endif
+#ifdef	IPF_DEFAULT_PASS
+#define	IPF_NOMATCH	(IPF_DEFAULT_PASS|FR_NOMATCH)
 #else
-# define	SEND_RESET(ip, if, q)		send_reset((struct tcpiphdr *)ip)
-# if BSD < 199103
-#  define	ICMP_ERROR(b, ip, t, c, if, src) \
-			icmp_error(mtod(b, ip_t *), t, c, if, src)
-# else
-#  define	ICMP_ERROR(b, ip, t, c, if, src) \
-			icmp_error(b, t, c, (src).s_addr, if)
-# endif
+#define	IPF_NOMATCH	(FR_PASS|FR_NOMATCH)
 #endif
 
 struct	filterstats frstats[2] = {{0,0,0,0,0},{0,0,0,0,0}};
 struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct[2][2] = { { NULL, NULL }, { NULL, NULL } };
-int	fr_flags = 0, fr_active = 0;
+int	fr_flags = IPF_LOGGING, fr_active = 0;
 
 fr_info_t	frcache[2];
+
+static	void	fr_makefrip __P((int, ip_t *, fr_info_t *));
+static	int	fr_tcpudpchk __P((frentry_t *, fr_info_t *));
+static	int	fr_scanlist __P((int, ip_t *, fr_info_t *, void *));
 
 
 /*
@@ -163,9 +165,7 @@ struct	optlist	secopt[8] = {
  * compact the IP header into a structure which contains just the info.
  * which is useful for comparing IP headers with.
  */
-void	fr_makefrip __P((int hlen, ip_t *ip, fr_info_t *fin));
-
-void	fr_makefrip(hlen, ip, fin)
+static	void	fr_makefrip(hlen, ip, fin)
 int hlen;
 ip_t *ip;
 fr_info_t *fin;
@@ -284,9 +284,7 @@ getports:
 /*
  * check an IP packet for TCP/UDP characteristics such as ports and flags.
  */
-int	fr_tcpudpchk __P((frentry_t *fr, fr_info_t *fin));
-
-int fr_tcpudpchk(fr, fin)
+static int fr_tcpudpchk(fr, fin)
 frentry_t *fr;
 fr_info_t *fin;
 {
@@ -379,9 +377,7 @@ fr_info_t *fin;
  * Could be per interface, but this gets real nasty when you don't have
  * kernel sauce.
  */
-int	fr_scanlist __P((int pass, ip_t *ip, register fr_info_t *fin, void *m));
-
-int fr_scanlist(pass, ip, fin, m)
+static int fr_scanlist(pass, ip, fin, m)
 int pass;
 ip_t *ip;
 register fr_info_t *fin;
@@ -414,8 +410,7 @@ void *m;
 		if (opts & (OPT_VERBOSE|OPT_DEBUG))
 			printf("\n");
 		FR_VERBOSE(("%c", (pass & FR_PASS) ? 'p' : 'b'));
-		if (fin->fin_ifp && *fr->fr_ifname &&
-		    strcasecmp((char *)fin->fin_ifp, fr->fr_ifname))
+		if (fr->fr_ifa && fr->fr_ifa != fin->fin_ifp)
 			continue;
 		FR_VERBOSE((":i"));
 #endif
@@ -453,7 +448,8 @@ void *m;
 			if (portcmp) {
 				if (!fr_tcpudpchk(fr, fin))
 					continue;
-			} else if (fr->fr_dcmp || fr->fr_scmp)
+			} else if (fr->fr_dcmp || fr->fr_scmp || fr->fr_tcpf ||
+				   fr->fr_tcpfm)
 				continue;
 		} else if (fi->fi_p == IPPROTO_ICMP) {
 			if (!off && (fin->fin_dlen > 1)) {
@@ -464,7 +460,7 @@ void *m;
 						 fr->fr_icmpm, fr->fr_icmp));
 					continue;
 				}
-			} else if (fr->fr_icmpm || fr->fr_tcpfm)
+			} else if (fr->fr_icmpm || fr->fr_icmp)
 				continue;
 		}
 		FR_VERBOSE(("*"));
@@ -476,7 +472,7 @@ void *m;
 			pass = (*fr->fr_func)(pass, ip, fin);
 #ifdef  IPFILTER_LOG
 		if ((pass & FR_LOGMASK) == FR_LOG) {
-			if (!ipllog(fr->fr_flags, ip, fin, m))
+			if (!ipllog(fr->fr_flags, 0, ip, fin, m))
 				frstats[fin->fin_out].fr_skip++;
 			frstats[fin->fin_out].fr_pkl++;
 		}
@@ -513,7 +509,8 @@ mblk_t **mp;
 struct mbuf **mp;
 # endif
 #else
-)
+, mp)
+char *mp;
 #endif
 ip_t *ip;
 int hlen;
@@ -525,10 +522,14 @@ int out;
 	 */
 	fr_info_t frinfo, *fc;
 	register fr_info_t *fin = &frinfo;
-	frentry_t *fr;
+	frentry_t *fr = NULL;
 	int pass, changed;
+#ifndef	_KERNEL
+	char	*mc = mp, *m = mp;
+#endif
 
-#if !defined(__SVR4) && !defined(__svr4__) && defined(_KERNEL)
+#ifdef	_KERNEL
+# if !defined(__SVR4) && !defined(__svr4__)
 	register struct mbuf *m = *mp;
 	struct mbuf *mc = NULL;
 
@@ -547,9 +548,10 @@ int out;
 			}
 		}
 	}
-#endif
-#if SOLARIS && defined(_KERNEL)
+# endif
+# if SOLARIS
 	mblk_t *mc = NULL, *m = qif->qf_m;
+# endif
 #endif
 	fr_makefrip(hlen, ip, fin);
 	fin->fin_ifp = ifp;
@@ -591,17 +593,14 @@ int out;
 			frstats[out].fr_chit++;
 			pass = fin->fin_fr->fr_flags;
 		} else {
-			pass = FR_NOMATCH;
+			pass = IPF_NOMATCH;
 			if ((fin->fin_fr = ipfilter[out][fr_active]))
-				pass = FR_SCANLIST(FR_NOMATCH, ip, fin, m);
+				pass = FR_SCANLIST(IPF_NOMATCH, ip, fin, m);
 			bcopy((char *)fin, (char *)fc, FI_CSIZE);
-			if (pass & FR_NOMATCH) {
+			if (pass & FR_NOMATCH)
 				frstats[out].fr_nom++;
-#ifdef	NOMATCH
-				pass |= NOMATCH;
-#endif
-			}
 		}
+		fr = fin->fin_fr;
 
 		if ((pass & FR_KEEPFRAG)) {
 			if (fin->fin_fi.fi_fl & FI_FRAG) {
@@ -620,17 +619,17 @@ int out;
 		}
 	}
 
-	fr = fin->fin_fr;
-
-	if (fr && fr->fr_func)
+	if (fr && fr->fr_func && !(pass & FR_CALLNOW))
 		pass = (*fr->fr_func)(pass, ip, fin);
 
 	if (out) {
 		if ((fin->fin_fr = ipacct[1][fr_active]) &&
 		    (FR_SCANLIST(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT))
 			frstats[1].fr_acct++;
+		fin->fin_fr = NULL;
 		changed = ip_natout(ip, hlen, fin);
 	}
+	fin->fin_fr = fr;
 	MUTEX_EXIT(&ipf_mutex);
 
 #ifdef	IPFILTER_LOG
@@ -651,7 +650,7 @@ int out;
 				pass |= FF_LOGBLOCK;
 			frstats[out].fr_bpkl++;
 logit:
-			if (!ipllog(pass, ip, fin, m)) {
+			if (!ipllog(pass, 0, ip, fin, m)) {
 				frstats[out].fr_skip++;
 				if ((pass & (FR_PASS|FR_LOGORBLOCK)) ==
 				    (FR_PASS|FR_LOGORBLOCK))
@@ -668,34 +667,40 @@ logit:
 		/*
 		 * Should we return an ICMP packet to indicate error
 		 * status passing through the packet filter ?
+		 * WARNING: ICMP error packets AND TCP RST packets should
+		 * ONLY be sent in repsonse to incoming packets.  Sending them
+		 * in response to outbound packets can result in a panic on
+		 * some operating systems.
 		 */
+		if (!out) {
 #ifdef	_KERNEL
-		if (pass & FR_RETICMP) {
+			if (pass & FR_RETICMP) {
 # if SOLARIS
-			ICMP_ERROR(q, ip, ICMP_UNREACH, fin->fin_icode,
-				   qif, ip->ip_src);
+				ICMP_ERROR(q, ip, ICMP_UNREACH, fin->fin_icode,
+					   qif, ip->ip_src);
 # else
-			ICMP_ERROR(m, ip, ICMP_UNREACH, fin->fin_icode,
-				   ifp, ip->ip_src);
-			m = NULL;	/* freed by icmp_error() */
+				ICMP_ERROR(m, ip, ICMP_UNREACH, fin->fin_icode,
+					   ifp, ip->ip_src);
+				m = *mp = NULL;	/* freed by icmp_error() */
 # endif
 
-			frstats[0].fr_ret++;
-		} else if ((pass & FR_RETRST) &&
-			   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-			if (SEND_RESET(ip, qif, q) == 0)
-				frstats[1].fr_ret++;
-		}
+				frstats[0].fr_ret++;
+			} else if ((pass & FR_RETRST) &&
+				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
+				if (SEND_RESET(ip, qif, q, ifp) == 0)
+					frstats[1].fr_ret++;
+			}
 #else
-		if (pass & FR_RETICMP) {
-			verbose("- ICMP unreachable sent\n");
-			frstats[0].fr_ret++;
-		} else if ((pass & FR_RETRST) &&
-			   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-			verbose("- TCP RST sent\n");
-			frstats[1].fr_ret++;
-		}
+			if (pass & FR_RETICMP) {
+				verbose("- ICMP unreachable sent\n");
+				frstats[0].fr_ret++;
+			} else if ((pass & FR_RETRST) &&
+				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
+				verbose("- TCP RST sent\n");
+				frstats[1].fr_ret++;
+			}
 #endif
+		}
 	}
 #ifdef	_KERNEL
 # if	!SOLARIS
@@ -708,7 +713,6 @@ logit:
 		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
 			ipfr_fastroute(m, fin, fdp);
 			m = *mp = NULL;
-			pass = 0;
 		}
 		if (mc)
 			ipfr_fastroute(mc, fin, &fr->fr_dif);
@@ -724,11 +728,11 @@ logit:
 
 		if ((pass & FR_FASTROUTE) ||
 		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
-			ipfr_fastroute(m, mp, fin, fdp);
+			ipfr_fastroute(qif, ip, m, mp, fin, fdp);
 			m = *mp = NULL;
 		}
 		if (mc)
-			ipfr_fastroute(mc, mp, fin, &fr->fr_dif);
+			ipfr_fastroute(qif, ip, mc, mp, fin, &fr->fr_dif);
 	}
 	return (pass & FR_PASS) ? changed : -1;
 # endif
@@ -743,36 +747,29 @@ logit:
 
 
 #ifdef	IPFILTER_LOG
-# if !(defined(_KERNEL))
-static void ipllog()
-{
-	verbose("l");
-}
-# endif
-
-
-int fr_copytolog(buf, len)
+int fr_copytolog(dev, buf, len)
+int dev;
 char *buf;
 int len;
 {
 	int	clen, tail;
 
-	tail = (iplh >= iplt) ? (iplbuf + IPLLOGSIZE - iplh) : (iplt - iplh);
+	tail = (iplh[dev] >= iplt[dev]) ? (iplbuf[dev] + IPLLOGSIZE - iplh[dev]) : (iplt[dev] - iplh[dev]);
 	clen = MIN(tail, len);
-	bcopy(buf, iplh, clen);
+	bcopy(buf, iplh[dev], clen);
 	len -= clen;
 	tail -= clen;
-	iplh += clen;
+	iplh[dev] += clen;
 	buf += clen;
-	if (iplh == iplbuf + IPLLOGSIZE) {
-		iplh = iplbuf;
-		tail = iplt - iplh;
+	if (iplh[dev] == iplbuf[dev] + IPLLOGSIZE) {
+		iplh[dev] = iplbuf[dev];
+		tail = iplt[dev] - iplh[dev];
 	}
 	if (len && tail) {
 		clen = MIN(tail, len);
-		bcopy(buf, iplh, clen);
+		bcopy(buf, iplh[dev], clen);
 		len -= clen;
-		iplh += clen;
+		iplh[dev] += clen;
 	}
 	return len;
 }

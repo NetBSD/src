@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.2 1997/01/05 21:32:25 veego Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.3 1997/03/29 00:55:05 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 1.2.4.4 1996/12/02 11:52:01 darrenr Exp
+ * $Id: ip_state.h,v 1.3 1997/03/29 00:55:05 thorpej Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -39,8 +39,10 @@ typedef	struct tcpstate {
 
 typedef struct ipstate {
 	struct	ipstate	*is_next;
-	int	is_age;
+	u_long	is_age;
 	u_int	is_pass;
+	u_int	is_pkts;
+	u_int	is_bytes;
 	struct	in_addr	is_src;
 	struct	in_addr	is_dst;
 	u_char	is_p;
@@ -79,13 +81,12 @@ typedef	struct	ips_stat {
 	ipstate_t **iss_table;
 } ips_stat_t;
 
-extern	ips_stat_t *fr_statetstats __P((void));
-extern	int	fr_addstate __P((ip_t *ip, fr_info_t *fin, u_int pass));
-extern	int	fr_checkstate __P((ip_t *ip, fr_info_t *fin));
-extern	void	fr_timeoutstate __P((void));
-extern	void	set_tcp_age __P((int *age, u_char *state, ip_t *ip,
-		    fr_info_t *fin, int dir));
-# ifdef	_KERNEL
-extern	void	fr_stateunload __P((void));
-# endif
+extern int fr_tcpstate __P((ipstate_t *, fr_info_t *, ip_t *,
+			    tcphdr_t *, u_short));
+extern ips_stat_t *fr_statetstats __P((void));
+extern int fr_addstate __P((ip_t *, fr_info_t *, u_int));
+extern int fr_checkstate __P((ip_t *, fr_info_t *));
+extern void fr_timeoutstate __P((void));
+extern void fr_tcp_age __P((u_long *, u_char *, ip_t *, fr_info_t *, int));
+extern void fr_stateunload __P((void));
 #endif /* __IP_STATE_H__ */
