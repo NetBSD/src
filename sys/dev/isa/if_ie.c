@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.34 1995/04/03 21:22:37 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.35 1995/04/04 01:44:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -155,7 +155,9 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #define	IED_RNR		0x04
 #define	IED_CNA		0x08
 #define	IED_READFRAME	0x10
-#define	IED_ALL		0x1f
+#define	IED_ENQ		0x20
+#defien	IED_XMIT	0x40
+#define	IED_ALL		0x7f
 
 #define	ETHER_MIN_LEN	64
 #define	ETHER_MAX_LEN	1518
@@ -923,6 +925,12 @@ iexmit(sc)
 	struct ie_softc *sc;
 {
 
+#ifdef IEDEBUG
+	if (sc->sc_debug & IED_XMIT)
+		printf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname,
+		    sc->xctail);
+#endif
+
 #if NBPFILTER > 0
 	/*
 	 * If BPF is listening on this interface, let it see the packet before
@@ -1223,6 +1231,12 @@ iestart(ifp)
 
 		len = 0;
 		buffer = sc->xmit_cbuffs[sc->xchead];
+
+#ifdef IEDEBUG
+		if (sc->sc_debug & IED_ENQ)
+			printf("%s: fill buffer %d\n", sc->sc_dev.dv_xname,
+			    sc->xchead);
+#endif
 
 		for (m0 = m; m && (len + m->m_len) < IE_TBUF_SIZE;
 		     m = m->m_next) {
