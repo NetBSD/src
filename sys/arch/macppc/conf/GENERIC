@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 2002/05/11 18:05:12 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.129.4.1 2002/06/10 16:09:06 tv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.129.4.1 $"
 
 maxusers	32
 
@@ -215,7 +215,11 @@ zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
-awacs*	at obio?			# Apple audio device
+# awacs is disabled because on some systems--e.g., a 350MHz G4 GigE--
+# it may generate interrupt storms, rendering the machine unusable.
+# If you uncomment this, you'll also want to uncomment "audio* at awacs?"
+# below.
+#awacs*	at obio?			# Apple audio device
 wi*	at obio?			# AirMac
 
 cardslot* at cbb?
@@ -329,7 +333,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #opl*	at fms?
 
 # Audio support
-audio* at awacs?
+#audio* at awacs?
 #audio*	at clcs?
 #audio*	at cmpci?
 audio*	at eap?
