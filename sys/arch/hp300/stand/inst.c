@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.5 1996/10/14 07:33:43 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.6 1996/12/21 21:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -108,7 +108,7 @@ main()
 
 	printf("\n>> NetBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: inst.c,v 1.5 1996/10/14 07:33:43 thorpej Exp $\n");
+	printf(">> $NetBSD: inst.c,v 1.6 1996/12/21 21:23:43 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
@@ -494,7 +494,7 @@ miniroot()
 			goto done;
 		}
 		if (st.st_size % DEV_BSIZE) {
-			printf("Miniroot size must be an even numple of %d\n",
+			printf("Miniroot size must be an even multiple of %d\n",
 			    DEV_BSIZE);
 			return;
 		}
