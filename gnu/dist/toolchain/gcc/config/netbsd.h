@@ -49,12 +49,19 @@
 
 /* Provide a LIB_SPEC appropriate for NetBSD.  Just select the appropriate
    libc, depending on whether we're doing profiling; if `-posix' is specified,
-   link against the appropriate libposix first.  */
+   link against the appropriate libposix first.  Don't include libc when
+   linking a shared library.  */
 
 #undef LIB_SPEC
 #define LIB_SPEC							\
   "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
-   %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+   %{!shared:%{!symbolic:%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}}}"
+
+/* Provide a LIBGCC_SPEC appropriate for NetBSD.  We also want to exclude
+   libgcc when -symbolic.  */
+
+#undef  LIBGCC_SPEC
+#define LIBGCC_SPEC "%{!shared:%{!symbolic:-lgcc}}"
 
 /* #ifdef NETBSD_AOUT */
 
