@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1998/06/25 23:58:07 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11 1998/08/16 15:33:48 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -53,6 +53,9 @@
 #include <vm/vm.h>
 
 #include <sys/syscallargs.h>
+
+#include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #ifdef TRACE
 int	nvualarm;
@@ -111,8 +114,6 @@ vdoualarm(arg)
 	nvualarm--;
 }
 #endif
-
-#include <machine/cpu.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1
