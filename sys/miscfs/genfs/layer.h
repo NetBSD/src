@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.2 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: layer.h,v 1.3 2000/03/30 02:19:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -151,7 +151,6 @@ struct layer_node {
 #define	LAYERFS_DO_BYPASS(vp, ap)	\
 	(*MOUNTTOLAYERMOUNT((vp)->v_mount)->layerm_bypass)((ap))
 
-extern int layer_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
 extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
 
 #define	MOUNTTOLAYERMOUNT(mp) ((struct layer_mount *)((mp)->mnt_data))
