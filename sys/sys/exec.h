@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.51 1995/02/28 23:05:18 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.52 1995/03/08 00:51:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -68,7 +68,7 @@ struct ps_strings {
  * (used to copyin/copyout various emulation data structures).
  */
 #if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
-    defined(COMPAT_IBCS2) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_IBCS2) || defined(COMPAT_SVR4) || defined(COMPAT_OSF1) || \
     defined(COMPAT_LINUX)
 #define	STACKGAPLEN	400	/* plenty enough for now */
 #else
