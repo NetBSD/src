@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.17 1998/02/27 03:44:53 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.18 1998/03/22 07:26:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -299,6 +299,12 @@ void		alpha_stb __P((volatile u_int8_t *, u_int8_t));
 void		alpha_stw __P((volatile u_int16_t *, u_int16_t));
 u_int8_t	alpha_sextb __P((u_int8_t));
 u_int16_t	alpha_sextw __P((u_int16_t));
+
+/*
+ * Stubs for atomic operations that must be implemented in assembly.
+ */
+void		alpha_atomic_setbits_q __P((unsigned long *, unsigned long));
+void		alpha_atomic_clearbits_q __P((unsigned long *, unsigned long));
 
 /*
  * Stubs for OSF/1 PALcode operations.
