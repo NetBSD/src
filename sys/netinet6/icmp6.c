@@ -1,3 +1,4 @@
+/*	$NetBSD: icmp6.c,v 1.57 2001/02/11 04:53:49 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.194 2001/02/08 15:19:12 itojun Exp $	*/
 
 /*
