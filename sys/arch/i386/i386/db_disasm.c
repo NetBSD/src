@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.23 2000/12/02 19:34:54 jdolecek Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24 2000/12/05 10:26:12 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1101,7 +1101,16 @@ db_disasm(loc, altfmt)
 		pte = kvtopte((vaddr_t)loc);
 	else
 		pte = vtopte((vaddr_t)loc);
-	pde = kvtopte((vaddr_t)pte);
+
+	/*
+	 * pte is normally in user address space, but may also be in kernel
+	 * address space for LARGEPAGES kernel.
+	 */
+	if ((vaddr_t)pte >= VM_MIN_KERNEL_ADDRESS)
+		pde = kvtopte((vaddr_t)pte);
+	else
+		pde = vtopte((vaddr_t)pte);
+
 	if ((*pde & PG_V) == 0 || (*pte & PG_V) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
