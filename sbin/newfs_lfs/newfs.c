@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.9 2002/08/29 19:51:58 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.10 2002/12/12 11:45:17 scw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.9 2002/08/29 19:51:58 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.10 2002/12/12 11:45:17 scw Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,6 +400,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		int i;
 		int cfd;
 		daddr_t alt;
+		off_t loff;
 		char specname[64];
 		char blk[1024];
 		char *cp;
@@ -414,8 +415,10 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		cfd = open(specname, O_WRONLY);
 		if (cfd < 0)
 			fatal("%s: %s", specname, strerror(errno));
+		if ((loff = getlabeloffset()) < 0)
+			fatal("getlabeloffset: %s", strerror(errno));
 		memset(blk, 0, sizeof(blk));
-		*(struct disklabel *)(blk + LABELOFFSET) = *lp;
+		*(struct disklabel *)(blk + loff) = *lp;
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
 			if (lseek(cfd, (off_t)((alt + i) * lp->d_secsize),
