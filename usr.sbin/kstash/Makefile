@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/08/03 22:47:38 assar Exp $
+# $NetBSD: Makefile,v 1.5 2000/09/10 19:38:03 joda Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
@@ -30,6 +30,6 @@ LDADD=	-lhdb \
 	-lroken \
 	-lcrypt
 
-NOMAN=
+MAN=	kstash.8
 
 .include <bsd.prog.mk>
