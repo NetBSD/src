@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.118 2000/06/25 05:07:22 erh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.119 2000/10/07 20:26:36 deberg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -43,13 +43,13 @@ LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
 LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
-LIBHDB?=	${DESTIDR}/usr/lib/libhdb.a
+LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
 LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
 LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
 LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
 LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
 LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
-LIBKRB?=	${DESTDIR}/usr/lib/libkdb.a
+LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
 LIBKSTREAM?=	${DESTDIR}/usr/lib/libkstream.a
