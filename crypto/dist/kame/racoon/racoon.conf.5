@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.68 2000/12/17 21:17:53 sakane Exp $
+.\"	$KAME: racoon.conf.5,v 1.69 2001/01/24 05:46:25 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -393,6 +393,7 @@ This directive must be defined.
 .Ar group
 is one of following:
 .Ic modp768 , modp1024 , modp1536 .
+Or you can define 1, 2, or 5 as the DH group number.
 When you want to use aggressive mode,
 you must define same DH group in each proposals.
 .It Ic lifetime time Ar number Ar timeunit ;
@@ -459,6 +460,7 @@ Any proposal will be accepted if you don't specify it.
 .Ar group
 is one of following:
 .Ic modp768 , modp1024 , modp1536 .
+Or you can define 1, 2, or 5 as the DH group number.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
 .It Ic lifetime byte Ar number Ar byteunit ;
