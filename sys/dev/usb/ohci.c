@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.70 2000/01/31 22:35:13 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.71 2000/02/01 05:42:52 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -359,8 +359,10 @@ ohci_detach(sc, flags)
 	if (rv != 0)
 		return (rv);
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	powerhook_disestablish(sc->sc_powerhook);
 	shutdownhook_disestablish(sc->sc_shutdownhook);
+#endif
 
 	/* free data structures XXX */
 
@@ -802,8 +804,10 @@ ohci_init(sc)
 	sc->sc_bus.methods = &ohci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
+#endif
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -1114,6 +1118,13 @@ ohci_process_done(sc, done)
 		stdnext = std->dnext;
 		DPRINTFN(10, ("ohci_process_done: std=%p xfer=%p hcpriv=%p\n",
 				std, xfer, xfer ? xfer->hcpriv : 0));
+		if (xfer == NULL) {
+			/* xfer == NULL: There seems to be no xfer associated
+			 * with this TD. It is tailp that happened to end up on
+			 * the done queue.
+			 */
+			continue;
+		}
 		cc = OHCI_TD_GET_CC(LE(std->td.td_flags));
 		usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
 		if (xfer->status == USBD_CANCELLED ||
@@ -1143,7 +1154,7 @@ ohci_process_done(sc, done)
 			struct ohci_pipe *opipe = 
 				(struct ohci_pipe *)xfer->pipe;
 
-			DPRINTF(("ohci_process_done: error cc=%d (%s)\n",
+			DPRINTFN(15,("ohci_process_done: error cc=%d (%s)\n",
 			  OHCI_TD_GET_CC(LE(std->td.td_flags)),
 			  ohci_cc_strs[OHCI_TD_GET_CC(LE(std->td.td_flags))]));
 
