@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" 
-.\"	$NetBSD: ddb.4,v 1.11 1997/09/11 07:10:21 scottr Exp $
+.\"	$NetBSD: ddb.4,v 1.12 1997/10/09 07:51:46 mycroft Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -45,8 +45,6 @@ ddb \- kernel debugger
 .SH SYNOPSIS
 .B "options DDB"
 .SH DESCRIPTION
-.br
-.sp
 The kernel debugger has most of the features of the old kdb,
 but with a more rational (gdb-like) syntax.
 .sp
@@ -80,14 +78,9 @@ one more page
 one more line
 .IP \fB\q\fR 10n
 abort the current command, and return to the command input mode.
-.LP
-.sp
 .XE 4n
-.LP
-.B COMMANDS
-.sp
+.SH COMMANDS
 .XS 4n
-.LP
 .XX "\fBexamine(x) \fI[/<modifier>] <addr>[,<count>]\fR"
 Display the addressed locations according to the formats in the modifier.
 Multiple modifier formats display multiple locations.
@@ -311,13 +304,8 @@ with an error message.
 Warning: Attempts to watch wired kernel memory
 may cause unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work best.
-.br
-.LP
 .XE 4n
-.LP
-.sp
-.B VARIABLES
-.sp
+.SH VARIABLES
 The debugger accesses registers and variables as
 .I $<name>.
 Register names are as in the "\fBshow registers\fR"
@@ -350,10 +338,7 @@ Work variable.
 can be 0 to 31.
 .LP
 All built-in variables are accessible via sysctl(3).
-.LP
-.sp
-.B EXPRESSIONS
-.sp
+.SH EXPRESSIONS
 Almost all expression operators in C are supported except '~', '^',
 and unary '&'.
 Special rules in "\fBddb\fR"
