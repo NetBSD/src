@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.5 2002/09/10 01:47:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.95 2001/12/10 08:21:24 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.5 2002/09/10 01:47:31 itojun Exp $");
 #endif
 #endif
 
@@ -613,7 +613,8 @@ tcp_print(register const u_char *bp, register u_int length,
 		else if (sport == BEEP_PORT || dport == BEEP_PORT)
 			beep_print(bp, length);
 		else if (length > 2 &&
-		    (sport == NAMESERVER_PORT || dport == NAMESERVER_PORT)) {
+		    (sport == NAMESERVER_PORT || dport == NAMESERVER_PORT ||
+		     sport == MULTICASTDNS_PORT || dport == MULTICASTDNS_PORT)) {
 			/*
 			 * TCP DNS query has 2byte length at the head.
 			 * XXX packet could be unaligned, it can go strange
