@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.9 2000/09/24 12:37:03 jdolecek Exp $ */
+/* $NetBSD: if_ti.c,v 1.10 2000/09/24 14:19:52 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2567,6 +2567,10 @@ static int ti_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (command == SIOCADDMULTI)
+			ether_addmulti(ifr, &sc->ethercom);
+		else
+			ether_delmulti(ifr, &sc->ethercom);
 		if (ifp->if_flags & IFF_RUNNING) {
 			ti_setmulti(sc);
 			error = 0;
