@@ -1,4 +1,4 @@
-.\"     $NetBSD: mcclock.4,v 1.4 2002/03/15 05:20:55 gmcgarry Exp $
+.\"     $NetBSD: mcclock.4,v 1.5 2002/04/15 07:33:27 simonb Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,8 @@
 .Nm mcclock
 .Nd DS1287 real-time clock
 .Sh SYNOPSIS
+.Ss algor
+.Cd "mcclock* at isa? port 0x70"
 .Ss alpha
 .Cd "mcclock* at gbus? offset ?"
 .Cd "mcclock* at ioasic? offset ?"
@@ -48,6 +50,8 @@
 .Cd "mcclock* at jensenio? port ?"
 .Ss arc
 .Cd "mcclock* at jazzio?"
+.Ss evbmips
+.Cd "mcclock* at isa? port 0x70"
 .Ss pmax
 .Cd "mcclock* at ibus0 addr ?"
 .Cd "mcclock* at ioasic? offset ?"
