@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.127 2000/11/02 00:56:59 pk Exp $ */
+/*	$NetBSD: st.c,v 1.128 2000/11/02 13:12:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2452,12 +2452,18 @@ st_interpret_sense(xs)
 			retval = SCSIRET_NOERROR;
 		}
 	}
+
+	/*
+	 * If generic sense processing will continue, we should not
+	 * print sense info here.
+	 */
+	if (retval == SCSIRET_CONTINUE)
+		doprint = 0;
+
+	if (doprint) {
 #ifdef	SCSIVERBOSE
-	if (doprint) {
 		scsipi_print_sense(xs, 0);
-	}
 #else
-	if (doprint) {
 		xs->sc_link->sc_print_addr(xs->sc_link);
 		printf("Sense Key 0x%02x", key);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
@@ -2487,8 +2493,8 @@ st_interpret_sense(xs)
 				printf(" %02x", sense->cmd_spec_info[n]);
 		} 
 		printf("\n");
-	}
 #endif
+	}
 	return (retval);
 }
 
