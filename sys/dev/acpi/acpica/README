@@ -1,3 +1,5 @@
+#	$NetBSD: README,v 1.2 2001/09/28 01:24:44 thorpej Exp $
+
 This is the Intel ACPI Component Architecture, Intel's reference
 implementation of the core operating system ACPI support.  The
 portion in the Osd/ subdirectory is provided by the oprerating
