@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.5 1995/08/25 07:52:18 phil Exp $	*/
+/*	$NetBSD: icu.h,v 1.6 1996/02/01 00:03:29 phil Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -35,8 +35,8 @@
 
 /* icu.h: defines for use with the ns32532 icu. */
 
-#ifndef _MACHINE_ICU_H_
-#define _MACHINE_ICU_H_
+#ifndef _NS532_ICU_H_
+#define _NS532_ICU_H_
 
 /* We don't use vector interrupts, but make it right anyway */
 #define VEC_ICU		0x10
@@ -106,8 +106,8 @@ enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 #define IEDGE		0
 #define IPOLARITY	0
 
-#define ints_off	bicpsrw	PSR_I
-#define ints_on		bispsrw	PSR_I
+#define ints_off	bicpsrw	PSL_I ; nop
+#define ints_on		bispsrw	PSL_I
 
 /* SCSI controllers */
 #define AIC6250		0
@@ -131,4 +131,4 @@ scsi_select_ctlr(int ctlr)
 	return(old);
 }
 #endif /* !LOCORE */
-#endif /* _MACHINE_ICU_H_ */
+#endif /* _NS532_ICU_H_ */
