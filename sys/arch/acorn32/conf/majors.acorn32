@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.11 2003/10/10 22:42:39 jdolecek Exp $
+#	$NetBSD: majors.acorn32,v 1.12 2003/10/11 07:54:26 jdolecek Exp $
 #
 # Device majors for acorn32
 #
@@ -65,8 +65,7 @@ device-major	isdntel		char 83			isdntel
 device-major	clockctl	char 84			clockctl
 device-major	systrace	char 85			systrace
 device-major	ksyms		char 86			ksyms
-
-device-major	netsmb		char 87			netsmb
+# major 87 free
 device-major	nsmb		char 88			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
