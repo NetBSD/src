@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.29 1994/04/08 20:46:18 mycroft Exp $
+ *	$Id: icu.s,v 1.30 1994/04/18 23:26:55 mycroft Exp $
  */
 
 /*
@@ -139,6 +139,7 @@ IDTVEC(softnet)
 	xchgl	_netisr,%edi
 	DONET(NETISR_RAW, _rawintr)
 #ifdef INET
+	DONET(NETISR_ARP, _arpintr)
 	DONET(NETISR_IP, _ipintr)
 #endif
 #ifdef IMP
