@@ -1,6 +1,6 @@
-.\"	$NetBSD: main,v 1.111 2001/03/29 01:09:02 fredette Exp $
+.\"	$NetBSD: main,v 1.112 2001/04/07 15:23:15 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd October 29, 2000
+.Dd April 7, 2001
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -117,11 +117,12 @@ and are thus not part of the binary distribution. For information on
 them, please see the
 .Nx
 web site at
-.Lk http://www.netbsd.org/ )
+.Lk http://www.netbsd.org/ . )
 .Pp
 .Nx
 is a completely integrated system.
 In addition to its highly portable, high performance kernel,
+.nh
 .Nx
 features a complete set of user utilities, compilers for several
 languages, the X Window System, firewall software
@@ -136,7 +137,7 @@ possible, it's likely that
 .Nx
 wouldn't exist.
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Since The Last Release
+.Ss Changes Since The NetBSD 1.4 Release
 .Pp
 The
 .Nx \*V
@@ -183,7 +184,7 @@ Deletion of swap devices using
 .Xr swapctl 8 .
 .It
 Easier hot-pluggability of keyboards and mice using a new wscons
-device - wsmux.
+device\(emwsmux.
 .It
 Improved PCMCIA and Cardbus support, including support for detaching
 of devices and cards, resulting in better support for notebooks and
@@ -241,7 +242,7 @@ thus resolving a source of several panics in the past.
 .It
 Support for NFS and RPC over IPv6.
 .It
-Server part of NFS locking (implemented by
+The server part of NFS locking (implemented by
 .Xr rpc.lockd 8 )
 now works.
 .bullet)
@@ -266,13 +267,12 @@ security).
 Disable various services by default, and set the default options for
 disabled daemons to a higher level of logging.
 .It 
-Several code audits were performed. One audit replaced 
-string routines that were used without bound checking, and another 
-one to identify and disable
-places where format strings were used in an
-unsafe way, allowing arbitrary data entered by (possibly) malicious
-users to overwrite application code, and leading from Denial of
-Service attacks to compromised system.
+Several code audits were performed. One audit replaced string routines
+that were used without bounds checking, and another one identified and
+disabled places where format strings were used in unsafe ways,
+allowing arbitrary data to be entered by (possibly) malicious users to
+overwrite application code, and leading from Denial of Service attacks
+to compromised systems.
 .It
 .Xr sshd 8
 and
@@ -453,7 +453,7 @@ release is organized as follows:
 .ie \n[FOR_RELEASE] \{\
 .Pp
 .Pa .../NetBSD-\*V/
-.(tag LAST_MINUTE
+.(tag README.files
 .It Li CHANGES
 Changes since earlier
 .Nx
@@ -516,8 +516,8 @@ sources, which contain the infrastructure to build third-party packages.
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
-with any particular program, the sources for the typesettable document
-set, the dictionaries, and more.
+with any particular program; the sources for the typesettable document
+set; the dictionaries; and more.
 .br
 .Em 3.3 MB gzipped, 13.2 MB uncompressed
 .It Sy src
@@ -533,8 +533,8 @@ or
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
-kernel for all architectures,
-.Xr config 8 ,
+kernel for all architectures;
+.Xr config 8 ;
 and
 .Xr dbsym 8 .
 .br
@@ -591,7 +591,7 @@ Historic
 .Bx
 checksums for the various files
 in that directory, in the format produced by the command:
-.Ic cksum -o 1 Ar file
+.Ic cksum -o 1 Ar file .
 .It Li CKSUM
 .Tn POSIX
 checksums for the various files in that
@@ -687,15 +687,12 @@ following problems and compatibility issues in mind when upgrading to
 modified to use
 .Pa /etc/rc.d/*
 .Pp
-In previous releases of
-.Nx ,
+Prior to 
+.Nx 1.5 ,
 .Pa /etc/rc
 was a traditional
 .Bx
-style monolithic file.
-As of
-.Nx 1.5 ,
-each discrete program or substem from
+style monolithic file; each discrete program or substem from
 .Pa /etc/rc
 and
 .Pa /etc/netstart
@@ -746,7 +743,7 @@ for more information on implementing
 .Pa rc.d
 scripts.
 .bullet)
-.Ss2 Issues affecting an upgrading from NetBSD 1.4 or later
+.Ss2 Issues affecting an upgrading from NetBSD 1.4 or prior
 .(bullet
 .Xr named 8
 leaks version information
@@ -1031,6 +1028,7 @@ them, and would like to mentioned, tell us!)
 .It-span Em "The portmasters (and their ports):"
 .It Ta Ta
 .It Ta Mark Brinicombe Ta Mt mark@netbsd.org Ta Sy arm32
+.It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
 .It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
 .It Ta Matt Fredette Ta Mt fredette@netbsd.org Ta Sy sun2
 .It Ta Ross Harvey Ta Mt ross@netbsd.org Ta Sy alpha
@@ -1068,7 +1066,7 @@ them, and would like to mentioned, tell us!)
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
-.It Ta Havard Eidnes Ta Mt he@netbsd.org
+.It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Ted Lemon Ta Mt mellon@netbsd.org
 .It Ta John Hawkinson Ta Mt jhawk@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
@@ -1096,7 +1094,6 @@ them, and would like to mentioned, tell us!)
 .It Ta David Brownlee Ta Mt abs@netbsd.org
 .It Ta Frederick Bruckman Ta Mt fredb@netbsd.org
 .It Ta Jon Buller Ta Mt jonb@netbsd.org
-.It Ta Simon Burge Ta Mt simonb@netbsd.org
 .It Ta Dave Burgess Ta Mt burgess@cynjut.infonet.net
 .It Ta Robert Byrnes Ta Mt byrnes@netbsd.org
 .It Ta D'Arcy J.M. Cain Ta Mt darcy@netbsd.org
@@ -1110,12 +1107,12 @@ them, and would like to mentioned, tell us!)
 .It Ta Matt DeBergalis Ta Mt deberg@netbsd.org
 .It Ta Rob Deker Ta Mt deker@netbsd.org
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
-.It Ta Jaromir Dolecek Ta Mt jdolecek@netbsd.org
+.It Ta Jarom\('ir Dolecek Ta Mt jdolecek@netbsd.org
 .It Ta Andy Doran Ta Mt ad@netbsd.org
 .It Ta Roland Dowdeswell Ta Mt elric@netbsd.org
 .It Ta Matthias Drochner Ta Mt drochner@netbsd.org
 .It Ta Jun Ebihara Ta Mt jun@netbsd.org
-.It Ta Havard Eidnes Ta Mt he@netbsd.org
+.It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Enami Tsugutomo Ta Mt enami@netbsd.org
 .It Ta Bernd Ernesti Ta Mt veego@netbsd.org
 .It Ta Erik Fair Ta Mt fair@netbsd.org
@@ -1257,3 +1254,4 @@ the software that we have mentioned in this document:
 .Ht </font>
 .ps
 .vs
+.Ss "The End"
