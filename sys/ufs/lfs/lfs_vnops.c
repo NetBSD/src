@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.123 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.124 2003/11/25 15:14:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.123 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.124 2003/11/25 15:14:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1773,8 +1773,7 @@ lfs_putpages(void *v)
 			sp->fip->fi_ino = ip->i_number;
 			/* Add us to the new segment summary. */
 			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -=
-				sizeof(struct finfo) - sizeof(int32_t);
+			sp->sum_bytes_left -= FINFOSIZE;
 
 			/* Give the write a chance to complete */
 			preempt(1);
@@ -1812,7 +1811,7 @@ lfs_putpages(void *v)
 	    sp->sum_bytes_left < sizeof(struct finfo))
 		(void) lfs_writeseg(fs, fs->lfs_sp); 
  
-	sp->sum_bytes_left -= sizeof(struct finfo) - sizeof(int32_t);
+	sp->sum_bytes_left -= FINFOSIZE;
 	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
@@ -1859,8 +1858,7 @@ lfs_putpages(void *v)
 		sp->fip->fi_ino = ip->i_number;
 		/* Add us to the new segment summary. */
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -=
-			sizeof(struct finfo) - sizeof(int32_t);
+		sp->sum_bytes_left -= FINFOSIZE;
 
 		/* Give the write a chance to complete */
 		preempt(1);
@@ -1892,11 +1890,11 @@ lfs_putpages(void *v)
 	 * This should duplicate cleanup at the end of lfs_writefile().
 	 */
 	if (sp->fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)sp->fip + sizeof(struct finfo) +
-			sizeof(int32_t) * (sp->fip->fi_nblocks - 1));
+		sp->fip = (FINFO*)((caddr_t)sp->fip + FINFOSIZE +
+			sizeof(int32_t) * sp->fip->fi_nblocks);
 		sp->start_lbp = &sp->fip->fi_blocks[0];
 	} else {
-		sp->sum_bytes_left += sizeof(FINFO) - sizeof(int32_t);
+		sp->sum_bytes_left += FINFOSIZE;
 		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	}
 	lfs_writeseg(fs, fs->lfs_sp);
