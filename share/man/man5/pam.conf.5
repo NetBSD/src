@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam.conf.5,v 1.4 2005/03/07 03:17:21 thorpej Exp $
+.\"	$NetBSD: pam.conf.5,v 1.5 2005/03/09 00:11:31 christos Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 6, 2005
+.Dd March 8, 2005
 .Dt PAM.CONF 5
 .Os
 .Sh NAME
@@ -105,6 +105,12 @@ of the PAM module's authentication task.
 The following are valid values for
 .Ar control-flag :
 .Bl -tag -width sufficient
+.It binding 
+If the module succeeds and no earlier module in the chain
+has failed, the chain is immediately terminated and the
+request is granted.
+If the module fails, the rest of the chain is executed,
+but the request is ultimately denied.
 .It requisite
 If the module returns success, continue to execute the processing chain.
 If the module fails, immediately return the error code from the first
