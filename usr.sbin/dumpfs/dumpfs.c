@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.16 1998/03/18 17:19:59 bouyer Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.17 1998/07/27 00:52:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.16 1998/03/18 17:19:59 bouyer Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.17 1998/07/27 00:52:01 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ union {
 long	dev_bsize = 1;
 int needswap = 0;
 
-int	dumpfs __P((char *));
-int	dumpcg __P((char *, int, int));
+int	dumpfs __P((const char *));
+int	dumpcg __P((const char *, int, int));
 int	main __P((int, char **));
 void	pbits __P((void *, int));
 void	usage __P((void));
@@ -116,7 +116,7 @@ main(argc, argv)
 
 int
 dumpfs(name)
-	char *name;
+	const char *name;
 {
 	int fd, c, i, j, k, size;
 
@@ -262,7 +262,7 @@ err:	if (fd != -1)
 
 int
 dumpcg(name, fd, c)
-	char *name;
+	const char *name;
 	int fd, c;
 {
 	off_t cur;

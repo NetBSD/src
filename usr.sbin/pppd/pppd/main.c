@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 1998/07/26 15:48:44 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.32 1998/07/27 00:52:02 mycroft Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.47 1998/03/30 06:25:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 1998/07/26 15:48:44 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 1998/07/27 00:52:02 mycroft Exp $");
 #endif
 #endif
 
@@ -173,7 +173,7 @@ main(argc, argv)
 {
     int i, fdflags;
     struct sigaction sa;
-    char *p;
+    const char *p;
     struct passwd *pw;
     struct timeval timo;
     sigset_t mask;
@@ -1130,8 +1130,8 @@ device_script(program, in, out)
  */
 int
 run_program(prog, args, must_exist)
-    char *prog;
-    char **args;
+    const char *prog;
+    const char **args;
     int must_exist;
 {
     int pid;
@@ -1179,7 +1179,7 @@ run_program(prog, args, must_exist)
 	/* SysV recommends a second fork at this point. */
 
 	/* run the program; give it a null environment */
-	execve(prog, args, script_env);
+	execve(prog, (char **)args, script_env);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(-1);
