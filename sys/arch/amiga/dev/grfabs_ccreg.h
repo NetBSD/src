@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccreg.h,v 1.6 1995/10/05 12:41:19 chopps Exp $	*/
+/*	$NetBSD: grfabs_ccreg.h,v 1.7 1997/09/19 03:27:13 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -308,6 +308,11 @@ void cc_init_view(view_t * v, bmap_t * bm, dmode_t * mode, box_t * dbox);
 void cc_free_view(view_t * v);
 void cc_remove_view(view_t * v);
 dmode_t * cc_get_display_mode(view_t * v);
+
+#if defined (GRF_SUPER72)
+dmode_t *cc_init_super72(void);
+void display_super72_view(view_t * v);
+#endif /* SUPER72 */
 
 #  if defined (GRF_NTSC)
 dmode_t *cc_init_ntsc_hires(void);
