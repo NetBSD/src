@@ -19,7 +19,6 @@
 %token	DISK
 %token	DRIVE
 %token	DRQ
-%token	DST
 %token	DUMPS
 %token	EQUALS
 %token	FLAGS
@@ -52,7 +51,6 @@
 %token	SIZE
 %token	SLAVE
 %token	SWAP
-%token	TIMEZONE
 %token	TTY
 %token	TRACE
 %token	VECTOR
@@ -75,7 +73,7 @@
 %type	<file>	swap_device_spec
 
 %{
-/*	$NetBSD: config.y,v 1.19 1996/06/10 02:32:21 thorpej Exp $	*/
+/*	$NetBSD: config.y,v 1.20 1997/01/17 23:48:55 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -176,30 +174,6 @@ Config_spec:
 		|
 	HZ NUMBER
 	      = { yyerror("HZ specification obsolete; delete"); } |
-	TIMEZONE NUMBER
-	      = { zone = 60 * $2; check_tz(); } |
-	TIMEZONE NUMBER DST NUMBER
-	      = { zone = 60 * $2; dst = $4; check_tz(); } |
-	TIMEZONE NUMBER DST
-	      = { zone = 60 * $2; dst = 1; check_tz(); } |
-	TIMEZONE FPNUMBER
-	      = { zone = $2; check_tz(); } |
-	TIMEZONE FPNUMBER DST NUMBER
-	      = { zone = $2; dst = $4; check_tz(); } |
-	TIMEZONE FPNUMBER DST
-	      = { zone = $2; dst = 1; check_tz(); } |
-	TIMEZONE MINUS NUMBER
-	      = { zone = -60 * $3; check_tz(); } |
-	TIMEZONE MINUS NUMBER DST NUMBER
-	      = { zone = -60 * $3; dst = $5; check_tz(); } |
-	TIMEZONE MINUS NUMBER DST
-	      = { zone = -60 * $3; dst = 1; check_tz(); } |
-	TIMEZONE MINUS FPNUMBER
-	      = { zone = -$3; check_tz(); } |
-	TIMEZONE MINUS FPNUMBER DST NUMBER
-	      = { zone = -$3; dst = $5; check_tz(); } |
-	TIMEZONE MINUS FPNUMBER DST
-	      = { zone = -$3; dst = 1; check_tz(); } |
 	MAXUSERS NUMBER
 	      = { maxusers = $2; };
 
@@ -862,17 +836,6 @@ check_manuf_prod (dev, manuf, prod)
 		dev->d_addr = ((manuf & 0xffff) << 16) | (prod & 0xffff);
 }
 
-/*
- * Check the timezone to make certain it is sensible
- */
-
-check_tz()
-{
-	if (abs(zone) > 12 * 60)
-		yyerror("timezone is unreasonable");
-	else
-		hadtz = 1;
-}
 
 /*
  * Check system specification and apply defaulting
