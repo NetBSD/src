@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.22 1999/05/24 20:12:58 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.23 1999/05/26 01:26:18 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -99,7 +99,7 @@ struct	uba_softc {
 	short	uh_nr;			/* Unibus sequential number */
 	short	uh_nbdp;		/* # of BDP's */
 	int	uh_ibase;		/* Base address for vectors */
-	bus_space_tag_t	uh_tag;		/* Tag for this Unibus */
+	bus_space_tag_t	uh_iot;		/* Tag for this Unibus */
 	bus_space_handle_t uh_ioh;	/* Handle for I/O space */
 };
 
@@ -126,14 +126,15 @@ struct	uba_unit {
  * from ubascan() to each (possible) device.
  */
 struct uba_attach_args {
-	bus_addr_t	ua_addr; /* I/O regs addr */
+	bus_space_tag_t	ua_iot;		/* Tag for this bus I/O-space */
+	bus_addr_t	ua_ioh;		/* I/O regs addr */
 		    /* Pointer to int routine, filled in by probe*/
 	void		(*ua_ivec) __P((int));
 		    /* UBA reset routine, filled in by probe */
 	void		(*ua_reset) __P((int));
-	int		ua_iaddr;
-	int		ua_br;
-	int		ua_cvec;
+	int		ua_iaddr;	/* Full CSR address of device */
+	int		ua_br;		/* IPL this dev interrupted on */
+	int		ua_cvec;	/* Vector for this device */
 };
 
 /*

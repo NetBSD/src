@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.3 1999/03/13 20:26:50 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.4 1999/05/26 01:26:17 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -44,15 +44,16 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/trap.h>
 #include <machine/scb.h>
 
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/dec/uba/ubareg.h>
+#include <dev/dec/uba/ubavar.h>
 
-#include <vax/uba/dzreg.h>
-#include <vax/uba/dzvar.h>
+#include <dev/dec/uba/dzreg.h>
+#include <dev/dec/uba/dzvar.h>
 
 #include "ioconf.h"
 
@@ -73,26 +74,26 @@ dz_uba_match(parent, cf, aux)
         void *aux;
 {
 	struct uba_attach_args *ua = aux;
-	register dzregs *dzaddr;
+	bus_space_tag_t	iot = ua->ua_iot;
+	bus_space_handle_t ioh = ua->ua_ioh;
 	register int n;
 
-	dzaddr = (dzregs *) ua->ua_addr;
-
+	iot = iot; /* Silly GCC */
 	/* Reset controller to initialize, enable TX interrupts */
 	/* to catch floating vector info elsewhere when completed */
 
-	dzaddr->dz_csr = (DZ_CSR_MSE | DZ_CSR_TXIE);
-	dzaddr->dz_tcr = 1;	/* Force a TX interrupt */
+	bus_space_write_2(iot, ioh, DZ_UBA_CSR, DZ_CSR_MSE | DZ_CSR_TXIE);
+	bus_space_write_1(iot, ioh, DZ_UBA_TCR, 1);
 
 	DELAY(100000);	/* delay 1/10 second */
 
-	dzaddr->dz_csr = DZ_CSR_RESET;
+	bus_space_write_2(iot, ioh, DZ_UBA_CSR, DZ_CSR_RESET);
 
 	/* Now wait up to 3 seconds for reset/clear to complete. */
 
 	for (n = 0; n < 300; n++) {
 		DELAY(10000);
-		if ((dzaddr->dz_csr & DZ_CSR_RESET) == 0)
+		if ((bus_space_read_2(iot, ioh, DZ_UBA_CSR)&DZ_CSR_RESET) == 0)
 			break;
 	}
 
@@ -116,24 +117,20 @@ dz_uba_attach(parent, self, aux)
 {
 	struct	dz_softc *sc = (void *)self;
 	register struct uba_attach_args *ua = aux;
-	register dzregs *da;
 
-	da = (dzregs *) ua->ua_addr;
-	sc->sc_dr.dr_csr = &da->dz_csr;
-	sc->sc_dr.dr_rbuf = &da->dz_rbuf;
-	sc->sc_dr.dr_dtr = &da->dz_dtr;
-	sc->sc_dr.dr_break = &da->dz_break;
-	sc->sc_dr.dr_tbuf = &da->dz_tbuf;
-	sc->sc_dr.dr_tcr = &da->dz_tcr;
-	sc->sc_dr.dr_dcd = &da->dz_dcd;
-	sc->sc_dr.dr_ring = &da->dz_ring;
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
 
-#ifdef QBA
-	if (((struct uba_softc *)parent)->uh_type == QBA)
-		sc->sc_type = DZ_DZV;
-	else
-#endif
-		sc->sc_type = DZ_DZ;
+	sc->sc_dr.dr_csr = DZ_UBA_CSR;
+	sc->sc_dr.dr_rbuf = DZ_UBA_RBUF;
+	sc->sc_dr.dr_dtr = DZ_UBA_DTR;
+	sc->sc_dr.dr_break = DZ_UBA_BREAK;
+	sc->sc_dr.dr_tbuf = DZ_UBA_TBUF;
+	sc->sc_dr.dr_tcr = DZ_UBA_TCR;
+	sc->sc_dr.dr_dcd = DZ_UBA_DCD;
+	sc->sc_dr.dr_ring = DZ_UBA_RING;
+
+	sc->sc_type = DZ_DZ;
 
 	/* Now register the RX interrupt handler */
 	scb_vecalloc(ua->ua_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
