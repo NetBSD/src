@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.15 1995/09/13 19:35:53 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.16 1996/01/04 17:43:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -909,19 +909,28 @@ asc_intr(sc)
 	register State *state;
 	register script_t *scpt;
 	register int ss, ir, status;
+	register unsigned char cmd_was;
 
 	/* collect ephemeral information */
 	status = regs->asc_status;
 again:
 	ss = regs->asc_ss;
-	ir = regs->asc_intr;	/* this resets the previous two */
+	cmd_was = regs->asc_cmd;
+
+	/* drop spurious interrupts */
+	if ((status & ASC_CSR_INT) == 0)
+		return;
+
+	ir = regs->asc_intr;	/* this resets the previous two: i.e.,*/
+				/* this re-latches CSR (and SSTEP) */
 	scpt = asc->script;
+
 
 #ifdef DEBUG
 	asc_logp->status = PACK(asc->sc_dev.dv_unit, status, ss, ir);
 	asc_logp->target = (asc->state == ASC_STATE_BUSY) ? asc->target : -1;
 	asc_logp->state = scpt - asc_scripts;
-	asc_logp->msg = -1;
+	asc_logp->msg = cmd_was;
 	asc_logp->resid = 0;
 	if (++asc_logp >= &asc_log[NLOG])
 		asc_logp = asc_log;
@@ -1035,6 +1044,7 @@ again:
 				printf("asc_intr: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
 			regs->asc_cmd = ASC_CMD_FLUSH;
+			MachEmptyWriteBuffer();
 			readback(regs->asc_cmd);
 			DELAY(2);
 		}
