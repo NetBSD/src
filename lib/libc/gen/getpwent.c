@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.46.4.3 2002/04/17 11:45:21 he Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.46.4.4 2002/04/17 11:46:02 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.46.4.3 2002/04/17 11:45:21 he Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.46.4.4 2002/04/17 11:46:02 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -376,9 +376,8 @@ __pwparse(pw, s)
 
 		if (yp_match(__ypdomain, "passwd.adjunct.byname", pw->pw_name,
 		    (int)strlen(pw->pw_name), &data, &datalen) == 0) {
-			if (datalen > sizeof(adjunctpw) - 1)
-				datalen = sizeof(adjunctpw) - 1;
-			strncpy(adjunctpw, data, (size_t)datalen);
+			strlcpy(adjunctpw, data, MIN((size_t)datalen,
+			    sizeof(adjunctpw)));
 
 				/* skip name to get password */
 			if ((bp = strsep(&data, ":")) != NULL &&
