@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.15 1998/04/02 10:59:14 kleink Exp $	*/
+/*	$NetBSD: rusers.c,v 1.16 1998/07/03 18:35:35 hubertf Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.15 1998/04/02 10:59:14 kleink Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.16 1998/07/03 18:35:35 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -160,8 +160,8 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 
 			days = minutes / (24 * 60);
 			minutes %= (24 * 60);
-			hours = minutes / 24;
-			minutes %= 24;
+			hours = minutes / 60;
+			minutes %= 60;
 
 			if (days > 0)
 				snprintf(idle, sizeof(idle), "%d d ", days);
