@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.2 1994/06/29 06:46:53 cgd Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.3 1994/09/20 06:45:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -54,7 +54,7 @@ cksum(str, len)
 	len &= ~(sizeof(u_short) - 1);
 	for (sum = 0; len; len -= sizeof(u_short)) {
 		sum ^= *(u_short *)str;
-		++(u_short *)str;
+		str = (void *)((u_short *)str + 1);
 	}
 	return (sum);
 }
