@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.18 2000/02/26 09:55:24 itojun Exp $	*/
+/*	$NetBSD: netstat.h,v 1.19 2000/07/06 12:40:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,6 +82,7 @@ void	ipsec_stats __P((u_long, char *));
 
 #ifdef INET6
 struct sockaddr_in6;
+struct in6_addr;
 void	ip6protopr __P((u_long, char *));
 void	tcp6_stats __P((u_long, char *));
 void	tcp6_dump __P((u_long));
@@ -113,6 +114,9 @@ void	upHex __P((char *));
 
 char	*routename __P((u_int32_t));
 char	*netname __P((u_int32_t, u_int32_t));
+#ifdef INET6
+char	*netname6 __P((struct sockaddr_in6 *, struct in6_addr *));
+#endif 
 char	*atalk_print __P((const struct sockaddr *, int));
 char	*atalk_print2 __P((const struct sockaddr *, const struct sockaddr *,
     int));
