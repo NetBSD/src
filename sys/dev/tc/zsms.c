@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.2 2000/10/14 08:51:51 nisimura Exp $	*/
+/*	$NetBSD: zsms.c,v 1.3 2000/10/19 10:27:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,8 +104,7 @@ struct zsms_softc {		/* driver status information */
 
 	int inputstate;
 	u_int buttons;
-	signed char dx;
-	signed char dy;
+	int dx, dy;
 
 	struct device *sc_wsmousedev;
 };
@@ -256,24 +255,18 @@ zsms_input(vsc, data)
 		return;
 	}
 
-#define WSMS_BUTTON1    0x01
-#define WSMS_BUTTON2    0x02
-#define WSMS_BUTTON3    0x04
-
 	if ((data & MOUSE_START_FRAME) != 0)
 		sc->inputstate = 1;
 	else
 		sc->inputstate++;
 
 	if (sc->inputstate == 1) {
-		sc->buttons = 0;
-		if ((data & LEFT_BUTTON) != 0)
-			sc->buttons |= WSMS_BUTTON1;
-		if ((data & MIDDLE_BUTTON) != 0)
-			sc->buttons |= WSMS_BUTTON2;
-		if ((data & RIGHT_BUTTON) != 0)
-			sc->buttons |= WSMS_BUTTON3;
-	    
+		/* LMR -> RML: wsevents counts 0 for the left-most */
+		sc->buttons = data & 02;
+		if (data & 01)
+			sc->buttons |= 04;
+		if (data & 04)
+			sc->buttons |= 01;
 		sc->dx = data & MOUSE_X_SIGN;
 		sc->dy = data & MOUSE_Y_SIGN;
 	} else if (sc->inputstate == 2) {
