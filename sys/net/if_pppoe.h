@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.3 2002/04/14 12:24:28 martin Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.4 2003/06/18 08:12:52 oki Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@ struct pppoediscparms {
 #define	PPPOE_STATE_PADR_SENT	2
 #define	PPPOE_STATE_SESSION	3
 #define	PPPOE_STATE_CLOSING	4
+/* passive */
+#define	PPPOE_STATE_PADO_SENT	1
 
 struct pppoeconnectionstate {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
