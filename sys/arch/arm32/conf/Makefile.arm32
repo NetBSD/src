@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.40 1998/10/15 18:37:13 drochner Exp $
+#	$NetBSD: Makefile.arm32,v 1.41 1999/01/01 10:28:16 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -185,7 +185,6 @@ depend: .depend
 	@rm -f assym.dep
 .ifdef MONITOR
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM32}/vidc/makemodes.c
 .endif
 
 # depend on root or device configuration
@@ -207,16 +206,10 @@ cpuswitch.o fault.o machdep.o: Makefile
 locore.o: ${ARM32}/arm32/locore.S assym.h
 	${NORMAL_S}
 
-modedefs.c: makemodes ${ARM32}/conf/monitors/${MONITOR} Makefile
-	./makemodes ${ARM32}/conf/monitors/${MONITOR} modedefs.c ${MODES}
+modedefs.c: ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} Makefile
+	awk -f ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} ${MODES} >modedefs.c
 
 modedefs.o: modedefs.c
 	${NORMAL_C}
-
-makemodes: makemodes.o
-	${CC} -o $@ makemodes.o
-
-makemodes.o: ${ARM32}/vidc/makemodes.c
-	${HOSTED_C}
 
 %RULES
