@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.3 2004/03/09 14:05:09 sekiya Exp $	*/
+/*	$NetBSD: int.c,v 1.4 2004/03/25 15:06:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.3 2004/03/09 14:05:09 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.4 2004/03/25 15:06:37 pooka Exp $");
 
 #include "opt_cputype.h"
 
@@ -87,9 +87,6 @@ int_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 int_attach(struct device *parent, struct device *self, void *aux)
 {
-	int i;
-	unsigned long cps;
-	unsigned long ctrdiff[3];
 	u_int32_t address;
 
 	if (mach_type == MACH_SGI_IP12)
@@ -125,8 +122,14 @@ int_attach(struct device *parent, struct device *self, void *aux)
 			platform.intr2 = int_local1_intr;
 			int_8254_cal();
 			break;
+#ifdef MIPS3
 		case MACH_SGI_IP20:
 		case MACH_SGI_IP22:
+		{
+			int i;
+			unsigned long cps;
+			unsigned long ctrdiff[3];
+
 			platform.intr0 = int_local0_intr;
 			platform.intr1 = int_local1_intr;
 
@@ -148,6 +151,8 @@ int_attach(struct device *parent, struct device *self, void *aux)
 
 			/* R4k/R4400/R4600/R5k count at half CPU frequency */
 			curcpu()->ci_cpu_freq = 2 * cps * hz;
+		}
+#endif /* MIPS3 */
 
 			break;
 		default:
@@ -302,6 +307,7 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	return (void *)NULL;
 }
 
+#ifdef MIPS3
 unsigned long
 int_cal_timer(void)
 {
@@ -346,6 +352,7 @@ int_cal_timer(void)
 
 	return (endctr - startctr) / roundtime * roundtime;
 }
+#endif /* MIPS3 */
 
 void
 int_8254_cal(void)
