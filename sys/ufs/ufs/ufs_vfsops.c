@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.21 2004/12/20 03:12:20 dbj Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.21 2004/12/20 03:12:20 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22 2005/01/23 19:37:05 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -57,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.21 2004/12/20 03:12:20 dbj Exp $");
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#ifdef UFS_DIRHASH
+#include <ufs/ufs/dirhash.h>
+#endif
 
 /* how many times ufs_init() was called */
 int ufs_initcount = 0;
@@ -241,6 +244,9 @@ ufs_init()
 #ifdef QUOTA
 	dqinit();
 #endif
+#ifdef UFS_DIRHASH
+	ufsdirhash_init();
+#endif
 }
 
 void
@@ -267,5 +273,8 @@ ufs_done()
 #endif
 #ifdef _LKM
 	pool_destroy(&ufs_direct_pool);
+#endif
+#ifdef UFS_DIRHASH
+	ufsdirhash_done();
 #endif
 }
