@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.71 1998/09/01 20:30:20 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.72 1998/09/22 03:58:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,15 +125,6 @@
  *
  *	Does not currently support multiple processors.  Problems:
  *
- *		- ASN logic needs minor adjustments for multiple processors:
- *
- *			- pmap_next_asn and pmap_asn_generation need
- *			  to be changed to arrays indexed by processor
- *			  number.
- *
- *			- A similar change needs to happen for the pmap
- *			  structure's pm_asn and pm_asngen members.
- *
  *		- TLB shootdown code needs to be written.
  */
 
@@ -163,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 1998/09/01 20:30:20 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 1998/09/22 03:58:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +239,8 @@ pt_entry_t	*kernel_lev1map;
 pt_entry_t	*VPT;
 
 struct pmap	kernel_pmap_store;
+u_int		kernel_pmap_asn_store[ALPHA_MAXPROCS];
+u_long		kernel_pmap_asngen_store[ALPHA_MAXPROCS];
 
 paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
@@ -257,6 +250,13 @@ vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 boolean_t	pmap_initialized;	/* Has pmap_init completed? */
 
 u_long		pmap_pages_stolen;	/* instrumentation */
+
+/*
+ * This variable contains the number of CPU IDs we need to allocate
+ * space for when allocating the pmap structure.  It is used to
+ * size a per-CPU array of ASN and ASN Generation number.
+ */
+u_long		pmap_ncpuids;
 
 /*
  * Storage for physical->virtual entries and page attributes.
@@ -279,9 +279,11 @@ int		pv_nfree;
 LIST_HEAD(, pmap) pmap_all_pmaps;
 
 /*
- * The pool from which pmap structures are allocated.
+ * The pools from which pmap structures and sub-structures are allocated.
  */
 struct pool pmap_pmap_pool;
+struct pool pmap_asn_pool;
+struct pool pmap_asngen_pool;
 
 /*
  * Address Space Numbers.
@@ -340,9 +342,9 @@ struct pool pmap_pmap_pool;
  * the ASN generation in this particular case) to keep the logic sane
  * in other parts of the code.
  */
-u_int	pmap_max_asn;		/* max ASN supported by the system */
-u_int	pmap_next_asn;		/* next free ASN to use */
-u_long	pmap_asn_generation;	/* current ASN generation */
+u_int	pmap_max_asn;			/* max ASN supported by the system */
+u_int	pmap_next_asn[ALPHA_MAXPROCS];	/* next free ASN to use */
+u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
 
 /*
  * Locking:
@@ -428,10 +430,8 @@ pa_to_pvh(pa)
  */
 void	alpha_protection_init __P((void));
 boolean_t pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *,
-	    boolean_t));
-void	pmap_changebit __P((paddr_t, pt_entry_t, pt_entry_t));
-void	pmap_pinit __P((pmap_t));
-void	pmap_release __P((pmap_t));
+	    boolean_t, long));
+void	pmap_changebit __P((paddr_t, pt_entry_t, pt_entry_t, long));
 #ifndef PMAP_NEW
 /* It's an interface function if PMAP_NEW. */
 void	pmap_kremove __P((vaddr_t, vsize_t));
@@ -440,14 +440,14 @@ void	pmap_kremove __P((vaddr_t, vsize_t));
 /*
  * PT page management functions.
  */
-void	pmap_lev1map_create __P((pmap_t));
-void	pmap_lev1map_destroy __P((pmap_t));
+void	pmap_lev1map_create __P((pmap_t, long));
+void	pmap_lev1map_destroy __P((pmap_t, long));
 void	pmap_ptpage_alloc __P((pmap_t, pt_entry_t *, int));
 void	pmap_ptpage_free __P((pmap_t, pt_entry_t *));
 void	pmap_l3pt_delref __P((pmap_t, vaddr_t, pt_entry_t *, pt_entry_t *,
-	    pt_entry_t *));
-void	pmap_l2pt_delref __P((pmap_t, pt_entry_t *, pt_entry_t *));
-void	pmap_l1pt_delref __P((pmap_t, pt_entry_t *));
+	    pt_entry_t *, long));
+void	pmap_l2pt_delref __P((pmap_t, pt_entry_t *, pt_entry_t *, long));
+void	pmap_l1pt_delref __P((pmap_t, pt_entry_t *, long));
 
 /*
  * PV table management functions.
@@ -464,7 +464,7 @@ void	pmap_pv_dump __P((paddr_t));
 /*
  * ASN management functions.
  */
-void	pmap_asn_alloc __P((pmap_t));
+void	pmap_asn_alloc __P((pmap_t, long));
 
 /*
  * Misc. functions.
@@ -502,7 +502,7 @@ int	pmap_physpage_delref __P((void *));
  *	DEBUG sanity checks for ASNs within PMAP_ACTIVATE.
  */
 #ifdef DEBUG
-#define	PMAP_ACTIVATE_ASN_SANITY(pmap)					\
+#define	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id)				\
 do {									\
 	if ((pmap)->pm_lev1map == kernel_lev1map) {			\
 		/*							\
@@ -511,23 +511,25 @@ do {									\
 		 * ASN to prevent the PALcode from servicing a TLB	\
 		 * miss	with the wrong PTE.				\
 		 */							\
-		if ((pmap)->pm_asn != PMAP_ASN_RESERVED) {		\
+		if ((pmap)->pm_asn[(cpu_id)] != PMAP_ASN_RESERVED) {	\
 			printf("kernel_lev1map with non-reserved ASN "	\
 			    "(line %ld)\n", __LINE__);			\
 			panic("PMAP_ACTIVATE_ASN_SANITY");		\
 		}							\
 	} else {							\
-		if ((pmap)->pm_asngen != pmap_asn_generation) {		\
+		if ((pmap)->pm_asngen[(cpu_id)] != 			\
+		    pmap_asn_generation[(cpu_id)]) {			\
 			/*						\
 			 * ASN generation number isn't valid!		\
 			 */						\
 			printf("pmap asngen %lu, current %lu "		\
 			    "(line %ld)\n",				\
-			    (pmap)->pm_asngen, pmap_asn_generation,	\
+			    (pmap)->pm_asngen[(cpu_id)], 		\
+			    pmap_asn_generation[(cpu_id)],		\
 			    __LINE__);					\
 			panic("PMAP_ACTIVATE_ASN_SANITY");		\
 		}							\
-		if ((pmap)->pm_asn == PMAP_ASN_RESERVED) {		\
+		if ((pmap)->pm_asn[(cpu_id)] == PMAP_ASN_RESERVED) {	\
 			/*						\
 			 * DANGER WILL ROBINSON!  We're going to	\
 			 * pollute the VPT TLB entries!			\
@@ -552,13 +554,13 @@ do {									\
  *	This is called only when it is known that a pmap is "active"
  *	on the current processor; the ASN must already be valid.
  */
-#define	PMAP_ACTIVATE(pmap, p)						\
+#define	PMAP_ACTIVATE(pmap, p, cpu_id)					\
 do {									\
 	PMAP_ACTIVATE_ASN_SANITY(pmap);					\
 									\
 	(p)->p_addr->u_pcb.pcb_hw.apcb_ptbr =				\
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
-	(p)->p_addr->u_pcb.pcb_hw.apcb_asn = (pmap)->pm_asn;		\
+	(p)->p_addr->u_pcb.pcb_hw.apcb_asn = (pmap)->pm_asn[(cpu_id)];	\
 									\
 	if ((p) == curproc) {						\
 		/*							\
@@ -582,9 +584,9 @@ do {									\
  *
  *		(2) The pmap is not active on the current processor.
  */
-#define	PMAP_INVALIDATE_ASN(pmap)					\
+#define	PMAP_INVALIDATE_ASN(pmap, cpu_id)				\
 do {									\
-	(pmap)->pm_asn = PMAP_ASN_RESERVED;				\
+	(pmap)->pm_asn[(cpu_id)] = PMAP_ASN_RESERVED;			\
 } while (0)
 
 /*
@@ -592,7 +594,7 @@ do {									\
  *
  *	Invalidate the TLB entry for the pmap/va pair.
  */
-#define	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive)			\
+#define	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id)		\
 do {									\
 	if ((hadasm) || (isactive)) {					\
 		/*							\
@@ -600,14 +602,15 @@ do {									\
 		 * works in this case.					\
 		 */							\
 		ALPHA_TBIS((va));					\
-	} else if ((pmap)->pm_asngen == pmap_asn_generation) {		\
+	} else if ((pmap)->pm_asngen[(cpu_id)] == 			\
+	    pmap_asn_generation[(cpu_id)]) {				\
 		/*							\
 		 * We can't directly invalidate the TLB entry		\
 		 * in this case, so we have to force allocation		\
 		 * of a new ASN the next time this pmap becomes		\
 		 * active.						\
 		 */							\
-		PMAP_INVALIDATE_ASN((pmap));				\
+		PMAP_INVALIDATE_ASN((pmap), (cpu_id));			\
 	}								\
 		/*							\
 		 * Nothing to do in this case; the next time the	\
@@ -656,9 +659,10 @@ do {									\
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_bootstrap(ptaddr, maxasn)
+pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	paddr_t ptaddr;
 	u_int maxasn;
+	u_long ncpuids;
 {
 	vsize_t lev2mapsize, lev3mapsize;
 	pt_entry_t *lev2map, *lev3map;
@@ -807,9 +811,16 @@ pmap_bootstrap(ptaddr, maxasn)
 #endif
 
 	/*
-	 * Intialize the pmap pool and list.
+	 * Intialize the pmap pools and list.
 	 */
+	pmap_ncpuids = ncpuids;
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_init(&pmap_asn_pool, pmap_ncpuids * sizeof(u_int), 0, 0, 0,
+	    "pmasnpl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_init(&pmap_asngen_pool, pmap_ncpuids * sizeof(u_long), 0, 0, 0,
+	    "pmasngenpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 	LIST_INIT(&pmap_all_pmaps);
 
@@ -817,8 +828,10 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * Initialize the ASN logic.
 	 */
 	pmap_max_asn = maxasn;
-	pmap_next_asn = 1;
-	pmap_asn_generation = 0;
+	for (i = 0; i < ALPHA_MAXPROCS; i++) {
+		pmap_next_asn[i] = 1;
+		pmap_asn_generation[i] = 0;
+	}
 
 	/*
 	 * Initialize the locks.
@@ -836,8 +849,12 @@ pmap_bootstrap(ptaddr, maxasn)
 	 */
 	pmap_kernel()->pm_lev1map = kernel_lev1map;
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_asn = PMAP_ASN_RESERVED;
-	pmap_kernel()->pm_asngen = pmap_asn_generation;
+	pmap_kernel()->pm_asn = kernel_pmap_asn_store;
+	pmap_kernel()->pm_asngen = kernel_pmap_asngen_store;
+	for (i = 0; i < ALPHA_MAXPROCS; i++) {
+		pmap_kernel()->pm_asn[i] = PMAP_ASN_RESERVED;
+		pmap_kernel()->pm_asngen[i] = pmap_asn_generation[i];
+	}
 	simple_lock_init(&pmap_kernel()->pm_slock);
 	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap_kernel(), pm_list);
 
@@ -847,7 +864,8 @@ pmap_bootstrap(ptaddr, maxasn)
 	 */
 	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
-	proc0.p_addr->u_pcb.pcb_hw.apcb_asn = pmap_kernel()->pm_asn;
+	proc0.p_addr->u_pcb.pcb_hw.apcb_asn =
+	    pmap_kernel()->pm_asn[alpha_pal_whami()];
 
 	/*
 	 * Mark the kernel pmap `active' on this processor.
@@ -1041,6 +1059,7 @@ pmap_create(size)
 #endif /* PMAP_NEW */
 {
 	pmap_t pmap;
+	int i;
 
 #if defined(PMAP_NEW)
 #ifdef DEBUG
@@ -1060,29 +1079,10 @@ pmap_create(size)
 #endif /* PMAP_NEW */
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
 	bzero(pmap, sizeof(*pmap));
-	pmap_pinit(pmap);
-	return (pmap);
-}
 
-/*
- * pmap_pinit:
- *
- *	Initialize a preallocated and zeroed pmap structure.
- */
-void
-pmap_pinit(pmap)
-	struct pmap *pmap;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_pinit(%p)\n", pmap);
-#endif
+	pmap->pm_asn = pool_get(&pmap_asn_pool, PR_WAITOK);
+	pmap->pm_asngen = pool_get(&pmap_asngen_pool, PR_WAITOK);
 
 	/*
 	 * Defer allocation of a new level 1 page table until
@@ -1092,13 +1092,18 @@ pmap_pinit(pmap)
 	pmap->pm_lev1map = kernel_lev1map;
 
 	pmap->pm_count = 1;
-	pmap->pm_asn = PMAP_ASN_RESERVED;
-	pmap->pm_asngen = pmap_asn_generation;
+	for (i = 0; i < pmap_ncpuids; i++) {
+		pmap->pm_asn[i] = PMAP_ASN_RESERVED;
+		/* XXX Locking? */
+		pmap->pm_asngen[i] = pmap_asn_generation[i];
+	}
 	simple_lock_init(&pmap->pm_slock);
 
 	simple_lock(&pmap_all_pmaps_slock);
 	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
+
+	return (pmap);
 }
 
 /*
@@ -1126,32 +1131,6 @@ pmap_destroy(pmap)
 	}
 
 	/*
-	 * Reference count is zero: free all resources held by this pmap.
-	 */
-	pmap_release(pmap);
-	pool_put(&pmap_pmap_pool, pmap);
-}
-
-/*
- * pmap_release:
- *
- *	Release any resources held by the given physical map.
- *	Called when a pmap initialized by pmap_pinit is being released.
- *	Should only be called if the map contains no valid mappings.
- *
- *	Note: pmap should be locked.
- */
-void
-pmap_release(pmap)
-	pmap_t pmap;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_release(%p)\n", pmap);
-#endif
-
-	/*
 	 * Remove it from the global list of all pmaps.
 	 */
 	simple_lock(&pmap_all_pmaps_slock);
@@ -1176,6 +1155,10 @@ pmap_release(pmap)
 			panic("pmap_release: pmap_remove() didn't");
 	}
 #endif
+
+	pool_put(&pmap_asn_pool, pmap->pm_asn);
+	pool_put(&pmap_asngen_pool, pmap->pm_asngen);
+	pool_put(&pmap_pmap_pool, pmap);
 }
 
 /*
@@ -1216,6 +1199,7 @@ pmap_remove(pmap, sva, eva)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	boolean_t needisync = FALSE;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -1268,7 +1252,7 @@ pmap_remove(pmap, sva, eva)
 		l3pte = pmap_l3pte(pmap, sva, l2pte);
 		if (pmap_pte_v(l3pte))
 			needisync |= pmap_remove_mapping(pmap, sva, l3pte,
-			    TRUE);
+			    TRUE, cpu_id);
 		sva += PAGE_SIZE;
 	}
 
@@ -1301,6 +1285,7 @@ pmap_page_protect(pa, prot)
 	pv_entry_t pv, nextpv;
 	int s;
 	boolean_t needisync = FALSE;
+	long cpu_id = alpha_pal_whami();
 #if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
@@ -1340,7 +1325,7 @@ pmap_page_protect(pa, prot)
 		pvh = pa_to_pvh(pa);
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pvh->pvh_slock);
-/* XXX */	pmap_changebit(pa, 0, ~(PG_KWE | PG_UWE));
+/* XXX */	pmap_changebit(pa, 0, ~(PG_KWE | PG_UWE), cpu_id);
 		simple_unlock(&pvh->pvh_slock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
 		return;
@@ -1367,7 +1352,7 @@ pmap_page_protect(pa, prot)
 #endif
 		if (!pmap_pte_w(pte))
 			needisync |= pmap_remove_mapping(pv->pv_pmap,
-			    pv->pv_va, pte, FALSE);
+			    pv->pv_va, pte, FALSE, cpu_id);
 #ifdef DEBUG
 		else {
 			if (pmapdebug & PDB_PARANOIA) {
@@ -1405,6 +1390,7 @@ pmap_protect(pmap, sva, eva, prot)
 	boolean_t isactive;
 	boolean_t hadasm;
 	vaddr_t l1eva, l2eva;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1453,7 +1439,7 @@ pmap_protect(pmap, sva, eva, prot)
 							   bits);
 							PMAP_INVALIDATE_TLB(
 							   pmap, sva, hadasm,
-							   isactive);
+							   isactive, cpu_id);
 						}
 					}
 				}
@@ -1496,6 +1482,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
 	boolean_t needisync;
 	boolean_t isactive;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1539,7 +1526,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * created.
 		 */
 		if (pmap->pm_lev1map == kernel_lev1map)
-			pmap_lev1map_create(pmap);
+			pmap_lev1map_create(pmap, cpu_id);
 
 		/*
 		 * Check to see if the level 1 PTE is valid, and
@@ -1666,7 +1653,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		pmap_physpage_addref(pte);
 	}
-	needisync |= pmap_remove_mapping(pmap, va, pte, TRUE);
+	needisync |= pmap_remove_mapping(pmap, va, pte, TRUE, cpu_id);
 
  validate_enterpv:
 	/*
@@ -1723,7 +1710,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * caches.
 	 */
 	if (tflush)
-		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive);
+		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
 	if (needisync)
 		alpha_pal_imb();
 
@@ -1747,6 +1734,7 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *pte, npte;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1779,7 +1767,7 @@ pmap_kenter_pa(va, pa, prot)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE);
+	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE, cpu_id);
 	if (prot & VM_PROT_EXECUTE)
 		alpha_pal_imb();
 }
@@ -1829,6 +1817,7 @@ pmap_kremove(va, size)
 {
 	pt_entry_t *pte;
 	boolean_t needisync = FALSE;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1848,7 +1837,7 @@ pmap_kremove(va, size)
 		pte = PMAP_KERNEL_PTE(va);
 		if (pmap_pte_v(pte))
 			needisync |= pmap_remove_mapping(pmap_kernel(), va,
-			    pte, TRUE);
+			    pte, TRUE, cpu_id);
 	}
 
 	if (needisync)
@@ -2058,6 +2047,7 @@ pmap_activate(p)
 	struct proc *p;
 {
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2069,14 +2059,14 @@ pmap_activate(p)
 	/*
 	 * Allocate an ASN.
 	 */
-	pmap_asn_alloc(pmap);
+	pmap_asn_alloc(pmap, cpu_id);
 
 	/*
 	 * Mark the pmap in use by this processor.
 	 */
-	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << alpha_pal_whami()));
+	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << cpu_id));
 
-	PMAP_ACTIVATE(pmap, p);
+	PMAP_ACTIVATE(pmap, p, cpu_id);
 
 	simple_unlock(&pmap->pm_slock);
 }
@@ -2194,6 +2184,7 @@ pmap_clear_modify(pg)
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv = FALSE;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2207,7 +2198,7 @@ pmap_clear_modify(pg)
 
 	if (pvh->pvh_attrs & PGA_MODIFIED) {
 		rv = TRUE;
-		pmap_changebit(pa, PG_FOW, ~0);
+		pmap_changebit(pa, PG_FOW, ~0, cpu_id);
 		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 
@@ -2222,6 +2213,7 @@ pmap_clear_modify(pa)
 	paddr_t	pa;
 {
 	struct pv_head *pvh;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2258,6 +2250,7 @@ pmap_clear_reference(pg)
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv = FALSE;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2271,7 +2264,7 @@ pmap_clear_reference(pg)
 
 	if (pvh->pvh_attrs & PGA_REFERENCED) {
 		rv = TRUE;
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0);
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0, cpu_id);
 		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
@@ -2286,6 +2279,7 @@ pmap_clear_reference(pa)
 	paddr_t	pa;
 {
 	struct pv_head *pvh;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2300,7 +2294,7 @@ pmap_clear_reference(pa)
 	simple_lock(&pvh->pvh_slock);
 
 	if (pvh->pvh_attrs & PGA_REFERENCED) {
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0);
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0, cpu_id);
 		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
@@ -2501,11 +2495,12 @@ alpha_protection_init()
  *	be synchronized.
  */
 boolean_t
-pmap_remove_mapping(pmap, va, pte, dolock)
+pmap_remove_mapping(pmap, va, pte, dolock, cpu_id)
 	pmap_t pmap;
 	vaddr_t va;
 	pt_entry_t *pte;
 	boolean_t dolock;
+	long cpu_id;
 {
 	paddr_t pa;
 	int s;
@@ -2516,8 +2511,8 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %d)\n",
-		       pmap, va, pte, dolock);
+		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld)\n",
+		       pmap, va, pte, dolock, cpu_id);
 #endif
 
 	/*
@@ -2551,7 +2546,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 #endif
 	*pte = PG_NV;
 
-	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive);
+	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2568,7 +2563,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 		 * delete references on the level 2 and 1 tables as
 		 * appropriate.
 		 */
-		pmap_l3pt_delref(pmap, va, l1pte, l2pte, pte);
+		pmap_l3pt_delref(pmap, va, l1pte, l2pte, pte, cpu_id);
 	}
 
 	/*
@@ -2599,9 +2594,10 @@ pmap_remove_mapping(pmap, va, pte, dolock)
  *	the pmaps as we encounter them.
  */
 void
-pmap_changebit(pa, set, mask)
+pmap_changebit(pa, set, mask, cpu_id)
 	paddr_t pa;
 	u_long set, mask;
+	long cpu_id;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
@@ -2652,7 +2648,8 @@ pmap_changebit(pa, set, mask)
 			isactive = PMAP_ISACTIVE(pv->pv_pmap);
 			needisync |= (isactive && (pmap_pte_exec(pte) != 0));
 			*pte = npte;
-			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive);
+			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
+			    cpu_id);
 		}
 		simple_unlock(&pv->pv_pmap->pm_slock);
 	}
@@ -2678,6 +2675,7 @@ pmap_emulate_reference(p, v, user, write)
 	paddr_t pa;
 	struct pv_head *pvh;
 	boolean_t didlock = FALSE;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2775,7 +2773,7 @@ pmap_emulate_reference(p, v, user, write)
 		pvh->pvh_attrs |= PGA_MODIFIED;
 		faultoff |= PG_FOW;
 	}
-	pmap_changebit(pa, 0, ~faultoff);
+	pmap_changebit(pa, 0, ~faultoff, cpu_id);
 
 	simple_unlock(&pvh->pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
@@ -3343,8 +3341,9 @@ pmap_physpage_delref(kva)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_lev1map_create(pmap)
+pmap_lev1map_create(pmap, cpu_id)
 	pmap_t pmap;
+	long cpu_id;
 {
 	paddr_t ptpa;
 	pt_entry_t pte;
@@ -3354,7 +3353,7 @@ pmap_lev1map_create(pmap)
 	if (pmap == pmap_kernel())
 		panic("pmap_lev1map_create: got kernel pmap");
 
-	if (pmap->pm_asn != PMAP_ASN_RESERVED)
+	if (pmap->pm_asn[cpu_id] != PMAP_ASN_RESERVED)
 		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
 #endif
 
@@ -3383,8 +3382,8 @@ pmap_lev1map_create(pmap)
 	 * reactivate it.
 	 */
 	if (PMAP_ISACTIVE(pmap)) {
-		pmap_asn_alloc(pmap);
-		PMAP_ACTIVATE(pmap, curproc);
+		pmap_asn_alloc(pmap, cpu_id);
+		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 	}
 }
 
@@ -3396,8 +3395,9 @@ pmap_lev1map_create(pmap)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_lev1map_destroy(pmap)
+pmap_lev1map_destroy(pmap, cpu_id)
 	pmap_t pmap;
+	long cpu_id;
 {
 	paddr_t ptpa;
 
@@ -3431,9 +3431,9 @@ pmap_lev1map_destroy(pmap)
 	 * reserved ASN, to ensure that no two pmaps never have
 	 * clashing TLB entries.
 	 */
-	PMAP_INVALIDATE_ASN(pmap);
+	PMAP_INVALIDATE_ASN(pmap, cpu_id);
 	if (PMAP_ISACTIVE(pmap))
-		PMAP_ACTIVATE(pmap, curproc);
+		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 
 	/*
 	 * Free the old level 1 page table page.
@@ -3511,10 +3511,11 @@ pmap_ptpage_free(pmap, pte)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_l3pt_delref(pmap, va, l1pte, l2pte, l3pte)
+pmap_l3pt_delref(pmap, va, l1pte, l2pte, l3pte, cpu_id)
 	pmap_t pmap;
 	vaddr_t va;
 	pt_entry_t *l1pte, *l2pte, *l3pte;
+	long cpu_id;
 {
 
 #ifdef DIAGNOSTIC
@@ -3544,13 +3545,13 @@ pmap_l3pt_delref(pmap, va, l1pte, l2pte, l3pte)
 		 */
 		PMAP_INVALIDATE_TLB(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
-		    PMAP_ISACTIVE(pmap));
+		    PMAP_ISACTIVE(pmap), cpu_id);
 
 		/*
 		 * We've freed a level 3 table, so delete the reference
 		 * on the level 2 table.
 		 */
-		pmap_l2pt_delref(pmap, l1pte, l2pte);
+		pmap_l2pt_delref(pmap, l1pte, l2pte, cpu_id);
 	}
 }
 
@@ -3563,9 +3564,10 @@ pmap_l3pt_delref(pmap, va, l1pte, l2pte, l3pte)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_l2pt_delref(pmap, l1pte, l2pte)
+pmap_l2pt_delref(pmap, l1pte, l2pte, cpu_id)
 	pmap_t pmap;
 	pt_entry_t *l1pte, *l2pte;
+	long cpu_id;
 {
 
 #ifdef DIAGNOSTIC
@@ -3590,7 +3592,7 @@ pmap_l2pt_delref(pmap, l1pte, l2pte)
 		 * We've freed a level 2 table, so delete the reference
 		 * on the level 1 table.
 		 */
-		pmap_l1pt_delref(pmap, l1pte);
+		pmap_l1pt_delref(pmap, l1pte, cpu_id);
 	}
 }
 
@@ -3603,9 +3605,10 @@ pmap_l2pt_delref(pmap, l1pte, l2pte)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_l1pt_delref(pmap, l1pte)
+pmap_l1pt_delref(pmap, l1pte, cpu_id)
 	pmap_t pmap;
 	pt_entry_t *l1pte;
+	long cpu_id;
 {
 
 #ifdef DIAGNOSTIC
@@ -3618,7 +3621,7 @@ pmap_l1pt_delref(pmap, l1pte)
 		 * No more level 2 tables left, go back to the global
 		 * kernel_lev1map.
 		 */
-		pmap_lev1map_destroy(pmap);
+		pmap_lev1map_destroy(pmap, cpu_id);
 	}
 }
 
@@ -3632,8 +3635,9 @@ pmap_l1pt_delref(pmap, l1pte)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_asn_alloc(pmap)
+pmap_asn_alloc(pmap, cpu_id)
 	pmap_t pmap;
+	long cpu_id;
 {
 
 #ifdef DEBUG
@@ -3655,7 +3659,7 @@ pmap_asn_alloc(pmap)
 			    "kernel_lev1map\n");
 #endif
 #ifdef DIAGNOSTIC
-		if (pmap->pm_asn != PMAP_ASN_RESERVED)
+		if (pmap->pm_asn[cpu_id] != PMAP_ASN_RESERVED)
 			panic("pmap_asn_alloc: kernel_lev1map without "
 			    "PMAP_ASN_RESERVED");
 #endif
@@ -3672,7 +3676,7 @@ pmap_asn_alloc(pmap)
 		 * Refresh the pmap's generation number, to
 		 * simplify logic elsewhere.
 		 */
-		pmap->pm_asngen = pmap_asn_generation;
+		pmap->pm_asngen[cpu_id] = pmap_asn_generation[cpu_id];
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: no ASNs, using asngen %lu\n",
@@ -3684,15 +3688,15 @@ pmap_asn_alloc(pmap)
 	/*
 	 * Hopefully, we can continue using the one we have...
 	 */
-	if (pmap->pm_asn != PMAP_ASN_RESERVED &&
-	    pmap->pm_asngen == pmap_asn_generation) {
+	if (pmap->pm_asn[cpu_id] != PMAP_ASN_RESERVED &&
+	    pmap->pm_asngen[cpu_id] == pmap_asn_generation[cpu_id]) {
 		/*
 		 * ASN is still in the current generation; keep on using it.
 		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN) 
 			printf("pmap_asn_alloc: same generation, keeping %u\n",
-			    pmap->pm_asn);
+			    pmap->pm_asn[cpu_id]);
 #endif
 		return;
 	}
@@ -3701,7 +3705,7 @@ pmap_asn_alloc(pmap)
 	 * Need to assign a new ASN.  Grab the next one, incrementing
 	 * the generation number if we have to.
 	 */
-	if (pmap_next_asn > pmap_max_asn) {
+	if (pmap_next_asn[cpu_id] > pmap_max_asn) {
 		/*
 		 * Invalidate all non-PG_ASM TLB entries and the
 		 * I-cache, and bump the generation number.
@@ -3709,11 +3713,11 @@ pmap_asn_alloc(pmap)
 		ALPHA_TBIAP();
 		alpha_pal_imb();
 
-		pmap_next_asn = 1;
+		pmap_next_asn[cpu_id] = 1;
 
-		pmap_asn_generation++;
+		pmap_asn_generation[cpu_id]++;
 #ifdef DIAGNOSTIC
-		if (pmap_asn_generation == 0) {
+		if (pmap_asn_generation[cpu_id] == 0) {
 			/*
 			 * The generation number has wrapped.  We could
 			 * handle this scenario by traversing all of
@@ -3743,12 +3747,12 @@ pmap_asn_alloc(pmap)
 	/*
 	 * Assign the new ASN and validate the generation number.
 	 */
-	pmap->pm_asn = pmap_next_asn++;
-	pmap->pm_asngen = pmap_asn_generation;
+	pmap->pm_asn[cpu_id] = pmap_next_asn[cpu_id]++;
+	pmap->pm_asngen[cpu_id] = pmap_asn_generation[cpu_id];
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ASN)
 		printf("pmap_asn_alloc: assigning %u to pmap %p\n",
-		    pmap->pm_asn, pmap);
+		    pmap->pm_asn[cpu_id], pmap);
 #endif
 }
