@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.54 1998/03/28 02:09:29 cgd Exp $
+$NetBSD: pcidevs,v 1.55 1998/03/28 06:38:46 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -659,6 +659,7 @@ product COMPAQ NF3P			0xf130	NetFlex 3/P
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
+product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
