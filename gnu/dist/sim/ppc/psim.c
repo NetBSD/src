@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,11 @@
 #ifndef _PSIM_C_
 #define _PSIM_C_
 
-#include "inline.c"
+#include "cpu.h" /* includes psim.h */
+#include "idecode.h"
+#include "options.h"
+
+#include "tree.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -33,10 +37,6 @@
 
 #include <setjmp.h>
 
-#include "cpu.h" /* includes psim.h */
-#include "idecode.h"
-#include "options.h"
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -44,6 +44,7 @@
 #include <strings.h>
 #endif
 #endif
+
 
 #include "bfd.h"
 
@@ -78,6 +79,7 @@ int current_environment;
 int current_alignment;
 int current_floating_point;
 int current_model_issue = MODEL_ISSUE_IGNORE;
+int current_stdio = DO_USE_STDIO;
 model_enum current_model = WITH_DEFAULT_MODEL;
 
 
@@ -87,16 +89,16 @@ INLINE_PSIM\
 (device *)
 psim_tree(void)
 {
-  device *root = core_device_create();
-  device_tree_add_parsed(root, "/aliases");
-  device_tree_add_parsed(root, "/options");
-  device_tree_add_parsed(root, "/chosen");
-  device_tree_add_parsed(root, "/packages");
-  device_tree_add_parsed(root, "/cpus");
-  device_tree_add_parsed(root, "/openprom");
-  device_tree_add_parsed(root, "/openprom/init");
-  device_tree_add_parsed(root, "/openprom/trace");
-  device_tree_add_parsed(root, "/openprom/options");
+  device *root = tree_parse(NULL, "core");
+  tree_parse(root, "/aliases");
+  tree_parse(root, "/options");
+  tree_parse(root, "/chosen");
+  tree_parse(root, "/packages");
+  tree_parse(root, "/cpus");
+  tree_parse(root, "/openprom");
+  tree_parse(root, "/openprom/init");
+  tree_parse(root, "/openprom/trace");
+  tree_parse(root, "/openprom/options");
   return root;
 }
 
@@ -122,53 +124,82 @@ psim_usage(int verbose)
   printf_filtered("\n");
   printf_filtered("Where\n");
   printf_filtered("\n");
-  printf_filtered("\t<image>       Name of the PowerPC program to run.\n");
+  printf_filtered("\t<image>         Name of the PowerPC program to run.\n");
   if (verbose) {
-  printf_filtered("\t              This can either be a PowerPC binary or\n");
-  printf_filtered("\t              a text file containing a device tree\n");
-  printf_filtered("\t              specification.\n");
-  printf_filtered("\t              PSIM will attempt to determine from the\n");
-  printf_filtered("\t              specified <image> the intended emulation\n");
-  printf_filtered("\t              environment.\n");
-  printf_filtered("\t              If PSIM gets it wrong, the emulation\n");
-  printf_filtered("\t              environment can be specified using the\n");
-  printf_filtered("\t              `-e' option (described below).\n");
+  printf_filtered("\t                This can either be a PowerPC binary or\n");
+  printf_filtered("\t                a text file containing a device tree\n");
+  printf_filtered("\t                specification.\n");
+  printf_filtered("\t                PSIM will attempt to determine from the\n");
+  printf_filtered("\t                specified <image> the intended emulation\n");
+  printf_filtered("\t                environment.\n");
+  printf_filtered("\t                If PSIM gets it wrong, the emulation\n");
+  printf_filtered("\t                environment can be specified using the\n");
+  printf_filtered("\t                `-e' option (described below).\n");
   printf_filtered("\n"); }
-  printf_filtered("\t<image-arg>   Argument to be passed to <image>\n");
+  printf_filtered("\t<image-arg>     Argument to be passed to <image>\n");
   if (verbose) {
-  printf_filtered("\t              These arguments will be passed to\n");
-  printf_filtered("\t              <image> (as standard C argv, argc)\n");
-  printf_filtered("\t              when <image> is started.\n");
+  printf_filtered("\t                These arguments will be passed to\n");
+  printf_filtered("\t                <image> (as standard C argv, argc)\n");
+  printf_filtered("\t                when <image> is started.\n");
   printf_filtered("\n"); }
-  printf_filtered("\t<psim-option> See below\n");
+  printf_filtered("\t<psim-option>   See below\n");
   printf_filtered("\n");
   printf_filtered("The following are valid <psim-option>s:\n");
   printf_filtered("\n");
-  printf_filtered("\t-m <model>    Specify the processor to model (604)\n");
+
+  printf_filtered("\t-c <count>      Limit the simulation to <count> iterations\n");
+  if (verbose) { 
+  printf_filtered("\n");
+  }
+
+  printf_filtered("\t-i or -i2       Print instruction counting statistics\n");
+  if (verbose) { 
+  printf_filtered("\t                Specify -i2 for a more detailed display\n");
+  printf_filtered("\n");
+  }
+
+  printf_filtered("\t-I              Print execution unit statistics\n");
+  if (verbose) { printf_filtered("\n"); }
+
+  printf_filtered("\t-e <os-emul>    specify an OS or platform to model\n");
   if (verbose) {
-  printf_filtered("\t              Selects the processor to use when\n");
-  printf_filtered("\t              modeling execution units.  Includes:\n");
-  printf_filtered("\t              604, 603 and 603e\n");
+  printf_filtered("\t                Can be any of the following:\n");
+  printf_filtered("\t                bug - OEA + MOTO BUG ROM calls\n");
+  printf_filtered("\t                netbsd - UEA + NetBSD system calls\n");
+  printf_filtered("\t                solaris - UEA + Solaris system calls\n");
+  printf_filtered("\t                linux - UEA + Linux system calls\n");
+  printf_filtered("\t                chirp - OEA + a few OpenBoot calls\n");
   printf_filtered("\n"); }
-  printf_filtered("\t-e <os-emul>  specify an OS or platform to model\n");
+
+  printf_filtered("\t-f <file>       Merge <file> into the device tree\n");
+  if (verbose) { printf_filtered("\n"); }
+
+  printf_filtered("\t-h -? -H        give more detailed usage\n");
+  if (verbose) { printf_filtered("\n"); }
+
+  printf_filtered("\t-m <model>      Specify the processor to model (604)\n");
   if (verbose) {
-  printf_filtered("\t              Can be any of the following:\n");
-  printf_filtered("\t              bug - OEA + MOTO BUG ROM calls\n");
-  printf_filtered("\t              netbsd - UEA + NetBSD system calls\n");
-  printf_filtered("\t              chirp - OEA + a few OpenBoot calls\n");
+  printf_filtered("\t                Selects the processor to use when\n");
+  printf_filtered("\t                modeling execution units.  Includes:\n");
+  printf_filtered("\t                604, 603 and 603e\n");
   printf_filtered("\n"); }
-  printf_filtered("\t-i            Print instruction counting statistics\n");
+
+  printf_filtered("\t-n <nr-smp>     Specify the number of processors in SMP simulations\n");
+  if (verbose) {
+  printf_filtered("\t                Specifies the number of processors that are\n");
+  printf_filtered("\t                to be modeled in a symetric multi-processor (SMP)\n");
+  printf_filtered("\t                simulation\n");
+  printf_filtered("\n"); }
+
+  printf_filtered("\t-o <dev-spec>   Add device <dev-spec> to the device tree\n");
   if (verbose) { printf_filtered("\n"); }
-  printf_filtered("\t-I            Print execution unit statistics\n");
+
+  printf_filtered("\t-r <ram-size>   Set RAM size in bytes (OEA environments)\n");
   if (verbose) { printf_filtered("\n"); }
-  printf_filtered("\t-r <size>     Set RAM size in bytes (OEA environments)\n");
+
+  printf_filtered("\t-t [!]<trace>   Enable (disable) <trace> option\n");
   if (verbose) { printf_filtered("\n"); }
-  printf_filtered("\t-t [!]<trace> Enable (disable) <trace> option\n");
-  if (verbose) { printf_filtered("\n"); }
-  printf_filtered("\t-o <spec>     add device <spec> to the device tree\n");
-  if (verbose) { printf_filtered("\n"); }
-  printf_filtered("\t-h -? -H      give more detailed usage\n");
-  if (verbose) { printf_filtered("\n"); }
+
   printf_filtered("\n");
   trace_usage(verbose);
   device_usage(verbose);
@@ -198,9 +229,17 @@ psim_options(device *root,
 	psim_usage(0);
 	error ("");
 	break;
+      case 'c':
+	param = find_arg("Missing <count> option for -c (max-iterations)\n", &argp, argv);
+	tree_parse(root, "/openprom/options/max-iterations %s", param);
+	break;
       case 'e':
-	param = find_arg("Missing <emul> option for -e\n", &argp, argv);
-	device_tree_add_parsed(root, "/openprom/options/os-emul %s", param);
+	param = find_arg("Missing <emul> option for -e (os-emul)\n", &argp, argv);
+	tree_parse(root, "/openprom/options/os-emul %s", param);
+	break;
+      case 'f':
+	param = find_arg("Missing <file> option for -f\n", &argp, argv);
+	psim_merge_device_file(root, param);
 	break;
       case 'h':
       case '?':
@@ -210,42 +249,85 @@ psim_options(device *root,
 	psim_usage(2);
 	break;
       case 'i':
-	device_tree_add_parsed(root, "/openprom/trace/print-info 1");
+	if (isdigit(p[1])) {
+	  tree_parse(root, "/openprom/trace/print-info %c", p[1]);
+	  p++;
+	}
+	else {
+	  tree_parse(root, "/openprom/trace/print-info 1");
+	}
 	break;
       case 'I':
-	device_tree_add_parsed(root, "/openprom/trace/print-info 2");
-	device_tree_add_parsed(root, "/openprom/options/model-issue %d",
-			       MODEL_ISSUE_PROCESS);
+	tree_parse(root, "/openprom/trace/print-info 2");
+	tree_parse(root, "/openprom/options/model-issue %d",
+		   MODEL_ISSUE_PROCESS);
 	break;
       case 'm':
-	param = find_arg("Missing <model> option for -m\n", &argp, argv);
-	device_tree_add_parsed(root, "/openprom/options/model \"%s", param);
+	param = find_arg("Missing <model> option for -m (model)\n", &argp, argv);
+	tree_parse(root, "/openprom/options/model \"%s", param);
+	break;
+      case 'n':
+	param = find_arg("Missing <nr-smp> option for -n (smp)\n", &argp, argv);
+	tree_parse(root, "/openprom/options/smp %s", param);
 	break;
       case 'o':
-	param = find_arg("Missing <device> option for -o\n", &argp, argv);
-	current = device_tree_add_parsed(current, "%s", param);
+	param = find_arg("Missing <dev-spec> option for -o\n", &argp, argv);
+	current = tree_parse(current, "%s", param);
 	break;
       case 'r':
-	param = find_arg("Missing <ram-size> option for -r\n", &argp, argv);
-	device_tree_add_parsed(root, "/openprom/options/oea-memory-size 0x%lx",
-			       atol(param));
+	param = find_arg("Missing <ram-size> option for -r (oea-memory-size)\n", &argp, argv);
+	tree_parse(root, "/openprom/options/oea-memory-size %s",
+			       param);
 	break;
       case 't':
-	param = find_arg("Missing <trace> option for -t\n", &argp, argv);
+	param = find_arg("Missing <trace> option for -t (trace/*)\n", &argp, argv);
 	if (param[0] == '!')
-	  device_tree_add_parsed(root, "/openprom/trace/%s 0", param+1);
+	  tree_parse(root, "/openprom/trace/%s 0", param+1);
 	else
-	  device_tree_add_parsed(root, "/openprom/trace/%s 1", param);
+	  tree_parse(root, "/openprom/trace/%s 1", param);
 	break;
       }
       p += 1;
     }
     argp += 1;
   }
-  /* force the trace node to (re)process its options */
-  device_init_data(device_tree_find_device(root, "/openprom/trace"), NULL);
+  /* force the trace node to process its options now *before* the tree
+     initialization occures */
+  device_ioctl(tree_find_device(root, "/openprom/trace"),
+	       NULL, 0,
+	       device_ioctl_set_trace);
+
   /* return where the options end */
   return argv + argp;
+}
+
+INLINE_PSIM\
+(void)
+psim_command(device *root,
+	     char **argv)
+{
+  int argp = 0;
+  if (argv[argp] == NULL) {
+    return;
+  }
+  else if (strcmp(argv[argp], "trace") == 0) {
+    const char *opt = find_arg("Missing <trace> option", &argp, argv);
+    if (opt[0] == '!')
+      trace_option(opt + 1, 0);
+    else
+      trace_option(opt, 1);
+  }
+  else if (strcmp(*argv, "change-media") == 0) {
+    char *device = find_arg("Missing device name", &argp, argv);
+    char *media = argv[++argp];
+    device_ioctl(tree_find_device(root, device), NULL, 0,
+		 device_ioctl_change_media, media);
+  }
+  else {
+    printf_filtered("Unknown PSIM command %s, try\n", argv[argp]);
+    printf_filtered("    trace <trace-option>\n");
+    printf_filtered("    change-media <device> [ <new-image> ]\n");
+  }
 }
 
 
@@ -271,13 +353,13 @@ psim_create(const char *file_name,
     error("psim: either file %s was not reconized or unreconized or unknown os-emulation type\n", file_name);
 
   /* fill in the missing real number of CPU's */
-  nr_cpus = device_find_integer_property(root, "/openprom/options/smp");
+  nr_cpus = tree_find_integer_property(root, "/openprom/options/smp");
   if (MAX_NR_PROCESSORS < nr_cpus)
     error("target and configured number of cpus conflict\n");
 
   /* fill in the missing TARGET BYTE ORDER information */
   current_target_byte_order
-    = (device_find_boolean_property(root, "/options/little-endian?")
+    = (tree_find_boolean_property(root, "/options/little-endian?")
        ? LITTLE_ENDIAN
        : BIG_ENDIAN);
   if (CURRENT_TARGET_BYTE_ORDER != current_target_byte_order)
@@ -292,7 +374,7 @@ psim_create(const char *file_name,
     error("host and configured byte order conflict\n");
 
   /* fill in the missing OEA/VEA information */
-  env = device_find_string_property(root, "/openprom/options/env");
+  env = tree_find_string_property(root, "/openprom/options/env");
   current_environment = ((strcmp(env, "user") == 0
 			  || strcmp(env, "uea") == 0)
 			 ? USER_ENVIRONMENT
@@ -310,7 +392,7 @@ psim_create(const char *file_name,
 
   /* fill in the missing ALLIGNMENT information */
   current_alignment
-    = (device_find_boolean_property(root, "/openprom/options/strict-alignment?")
+    = (tree_find_boolean_property(root, "/openprom/options/strict-alignment?")
        ? STRICT_ALIGNMENT
        : NONSTRICT_ALIGNMENT);
   if (CURRENT_ALIGNMENT != current_alignment)
@@ -318,15 +400,23 @@ psim_create(const char *file_name,
 
   /* fill in the missing FLOATING POINT information */
   current_floating_point
-    = (device_find_boolean_property(root, "/openprom/options/floating-point?")
+    = (tree_find_boolean_property(root, "/openprom/options/floating-point?")
        ? HARD_FLOATING_POINT
        : SOFT_FLOATING_POINT);
   if (CURRENT_FLOATING_POINT != current_floating_point)
     error("target and configured floating-point conflict\n");
 
+  /* fill in the missing STDIO information */
+  current_stdio
+    = (tree_find_boolean_property(root, "/openprom/options/use-stdio?")
+       ? DO_USE_STDIO
+       : DONT_USE_STDIO);
+  if (CURRENT_STDIO != current_stdio)
+    error("target and configured stdio interface conflict\n");
+
   /* sort out the level of detail for issue modeling */
   current_model_issue
-    = device_find_integer_property(root, "/openprom/options/model-issue");
+    = tree_find_integer_property(root, "/openprom/options/model-issue");
   if (CURRENT_MODEL_ISSUE != current_model_issue)
     error("target and configured model-issue conflict\n");
 
@@ -338,12 +428,12 @@ psim_create(const char *file_name,
      ihandle into the corresponding cpu's phandle and then querying
      the "name" property, the cpu type can be determined. Ok? */
 
-  model_set(device_find_string_property(root, "/openprom/options/model"));
+  model_set(tree_find_string_property(root, "/openprom/options/model"));
 
   /* create things */
   system = ZALLOC(psim);
   system->events = event_queue_create();
-  system->memory = core_create(root);
+  system->memory = core_from_device(root);
   system->monitor = mon_create();
   system->nr_cpus = nr_cpus;
   system->os_emulation = os_emulation;
@@ -353,7 +443,6 @@ psim_create(const char *file_name,
   for (cpu_nr = 0; cpu_nr < MAX_NR_PROCESSORS; cpu_nr++) {
     system->processors[cpu_nr] = cpu_create(system,
 					    system->memory,
-					    system->events,
 					    mon_cpu(system->monitor,
 						    cpu_nr),
 					    system->os_emulation,
@@ -362,7 +451,7 @@ psim_create(const char *file_name,
 
   /* dump out the contents of the device tree */
   if (ppc_trace[trace_print_device_tree] || ppc_trace[trace_dump_device_tree])
-    device_tree_traverse(root, device_tree_print_device, NULL, NULL);
+    tree_print(root);
   if (ppc_trace[trace_dump_device_tree])
     error("");
 
@@ -372,7 +461,7 @@ psim_create(const char *file_name,
 
 /* allow the simulation to stop/restart abnormaly */
 
-STATIC_INLINE_PSIM\
+INLINE_PSIM\
 (void)
 psim_set_halt_and_restart(psim *system,
 			  void *halt_jmp_buf,
@@ -382,7 +471,7 @@ psim_set_halt_and_restart(psim *system,
   system->path_to_restart = restart_jmp_buf;
 }
 
-STATIC_INLINE_PSIM\
+INLINE_PSIM\
 (void)
 psim_clear_halt_and_restart(psim *system)
 {
@@ -395,6 +484,8 @@ INLINE_PSIM\
 psim_restart(psim *system,
 	     int current_cpu)
 {
+  ASSERT(current_cpu >= 0 && current_cpu < system->nr_cpus);
+  ASSERT(system->path_to_restart != NULL);
   system->last_cpu = current_cpu;
   longjmp(*(jmp_buf*)(system->path_to_restart), current_cpu + 1);
 }
@@ -404,16 +495,40 @@ INLINE_PSIM\
 (void)
 psim_halt(psim *system,
 	  int current_cpu,
-	  unsigned_word cia,
 	  stop_reason reason,
 	  int signal)
 {
+  ASSERT(current_cpu >= 0 && current_cpu <= system->nr_cpus);
+  ASSERT(system->path_to_halt != NULL);
   system->last_cpu = current_cpu;
-  system->halt_status.cpu_nr = current_cpu;
   system->halt_status.reason = reason;
   system->halt_status.signal = signal;
-  system->halt_status.program_counter = cia;
+  if (current_cpu == system->nr_cpus) {
+    system->halt_status.cpu_nr = 0;
+    system->halt_status.program_counter =
+      cpu_get_program_counter(system->processors[0]);
+  }
+  else {
+    system->halt_status.cpu_nr = current_cpu;
+    system->halt_status.program_counter =
+      cpu_get_program_counter(system->processors[current_cpu]);
+  }
   longjmp(*(jmp_buf*)(system->path_to_halt), current_cpu + 1);
+}
+
+
+INLINE_PSIM\
+(int)
+psim_last_cpu(psim *system)
+{
+  return system->last_cpu;
+}
+
+INLINE_PSIM\
+(int)
+psim_nr_cpus(psim *system)
+{
+  return system->nr_cpus;
 }
 
 INLINE_PSIM\
@@ -441,9 +556,28 @@ INLINE_PSIM\
 psim_device(psim *system,
 	    const char *path)
 {
-  return device_tree_find_device(system->devices, path);
+  return tree_find_device(system->devices, path);
 }
 
+INLINE_PSIM\
+(event_queue *)
+psim_event_queue(psim *system)
+{
+  return system->events;
+}
+
+
+
+STATIC_INLINE_PSIM\
+(void)
+psim_max_iterations_exceeded(void *data)
+{
+  psim *system = data;
+  psim_halt(system,
+	    system->nr_cpus, /* halted during an event */
+	    was_signalled,
+	    -1);
+}
 
 
 INLINE_PSIM\
@@ -454,24 +588,40 @@ psim_init(psim *system)
 
   /* scrub the monitor */
   mon_init(system->monitor, system->nr_cpus);
-  os_emul_init(system->os_emulation, system->nr_cpus);
+
+  /* trash any pending events */
   event_queue_init(system->events);
+
+  /* if needed, schedule a halt event.  FIXME - In the future this
+     will be replaced by a more generic change to psim_command().  A
+     new command `schedule NNN halt' being added. */
+  if (tree_find_property(system->devices, "/openprom/options/max-iterations")) {
+    event_queue_schedule(system->events,
+			 tree_find_integer_property(system->devices,
+						    "/openprom/options/max-iterations") - 2,
+			 psim_max_iterations_exceeded,
+			 system);
+  }
 
   /* scrub all the cpus */
   for (cpu_nr = 0; cpu_nr < system->nr_cpus; cpu_nr++)
     cpu_init(system->processors[cpu_nr]);
 
   /* init all the devices (which updates the cpus) */
-  device_tree_init(system->devices, system);
+  tree_init(system->devices, system);
+
+  /* and the emulation (which needs an initialized device tree) */
+  os_emul_init(system->os_emulation, system->nr_cpus);
 
   /* now sync each cpu against the initialized state of its registers */
   for (cpu_nr = 0; cpu_nr < system->nr_cpus; cpu_nr++) {
-    cpu_synchronize_context(system->processors[cpu_nr]);
-    cpu_page_tlb_invalidate_all(system->processors[cpu_nr]);
+    cpu *processor = system->processors[cpu_nr];
+    cpu_synchronize_context(processor, cpu_get_program_counter(processor));
+    cpu_page_tlb_invalidate_all(processor);
   }
 
-  /* force loop to restart */
-  system->last_cpu = system->nr_cpus - 1;
+  /* force loop to start with first cpu */
+  system->last_cpu = -1;
 }
 
 INLINE_PSIM\
@@ -482,234 +632,21 @@ psim_stack(psim *system,
 {
   /* pass the stack device the argv/envp and let it work out what to
      do with it */
-  device *stack_device = device_tree_find_device(system->devices,
-						 "/openprom/init/stack");
+  device *stack_device = tree_find_device(system->devices,
+					  "/openprom/init/stack");
   if (stack_device != (device*)0) {
     unsigned_word stack_pointer;
     psim_read_register(system, 0, &stack_pointer, "sp", cooked_transfer);
     device_ioctl(stack_device,
-		 system,
 		 NULL, /*cpu*/
 		 0, /*cia*/
+		 device_ioctl_create_stack,
 		 stack_pointer,
 		 argv,
 		 envp);
   }
 }
 
-
-
-/* EXECUTE REAL CODE: 
-
-   Unfortunatly, there are multiple cases to consider vis:
-
-   	<icache> X <smp> X <events> X <keep-running-flag> X ...
-
-   Consequently this function is written in multiple different ways */
-
-STATIC_INLINE_PSIM\
-(void)
-run_until_stop(psim *system,
-	       volatile int *keep_running)
-{
-  jmp_buf halt;
-  jmp_buf restart;
-#if WITH_IDECODE_CACHE_SIZE
-  int cpu_nr;
-  for (cpu_nr = 0; cpu_nr < system->nr_cpus; cpu_nr++)
-    cpu_flush_icache(system->processors[cpu_nr]);
-#endif
-  psim_set_halt_and_restart(system, &halt, &restart);
-
-#if (!WITH_IDECODE_CACHE_SIZE && WITH_SMP == 0)
-
-  /* CASE 1: No instruction cache and no SMP.
-
-     In this case, we can take advantage of the fact that the current
-     instruction address does not need to be returned to the cpu
-     object after every execution of an instruction.  Instead it only
-     needs to be saved when either A. the main loop exits or B. a
-     cpu-{halt,restart} call forces the loop to be re-entered.  The
-     later functions always save the current cpu instruction
-     address. */
-
-  if (!setjmp(halt)) {
-    do {
-      if (!setjmp(restart)) {
-	cpu *const processor = system->processors[0];
-	unsigned_word cia = cpu_get_program_counter(processor);
-	do {
-	  if (WITH_EVENTS) {
-	    if (event_queue_tick(system->events)) {
-	      cpu_set_program_counter(processor, cia);
-	      event_queue_process(system->events);
-	      cia = cpu_get_program_counter(processor);
-	    }
-	  }
-	  {
-	    instruction_word const instruction
-	      = vm_instruction_map_read(cpu_instruction_map(processor),
-					processor, cia);
-	    cia = idecode_issue(processor, instruction, cia);
-	  }
-	} while (keep_running == NULL || *keep_running);
-	cpu_set_program_counter(processor, cia);
-      }
-    } while(keep_running == NULL || *keep_running);
-  }
-#endif
-
-
-#if (WITH_IDECODE_CACHE_SIZE && WITH_SMP == 0)
-
-  /* CASE 2: Instruction case but no SMP
-
-     Here, the additional complexity comes from there being two
-     different cache implementations.  A simple function address cache
-     or a full cracked instruction cache */
-
-  if (!setjmp(halt)) {
-    do {
-      if (!setjmp(restart)) {
-	cpu *const processor = system->processors[0];
-	unsigned_word cia = cpu_get_program_counter(processor);
-	do {
-	  if (WITH_EVENTS)
-	    if (event_queue_tick(system->events)) {
-	      cpu_set_program_counter(processor, cia);
-	      event_queue_process(system->events);
-	      cia = cpu_get_program_counter(processor);
-	    }
-	  { 
-	    idecode_cache *const cache_entry = cpu_icache_entry(processor,
-								cia);
-	    if (cache_entry->address == cia) {
-	      idecode_semantic *const semantic = cache_entry->semantic;
-	      cia = semantic(processor, cache_entry, cia);
-	    }
-	    else {
-	      instruction_word const instruction
-		= vm_instruction_map_read(cpu_instruction_map(processor),
-					  processor,
-					  cia);
-	      idecode_semantic *const semantic = idecode(processor,
-							 instruction,
-							 cia,
-							 cache_entry);
-
-	      if (WITH_MON != 0)
-		mon_event(mon_event_icache_miss, processor, cia);
-	      cache_entry->address = cia;
-	      cache_entry->semantic = semantic;
-	      cia = semantic(processor, cache_entry, cia);
-	    }
-	  }
-	} while (keep_running == NULL || *keep_running);
-	cpu_set_program_counter(processor, cia);
-      }
-    } while(keep_running == NULL || *keep_running);
-  }
-#endif
-
-
-#if (!WITH_IDECODE_CACHE_SIZE && WITH_SMP > 0)
-
-  /* CASE 3: No ICACHE but SMP
-
-     The complexity here comes from needing to correctly restart the
-     system when it is aborted.  In particular if cpu0 requests a
-     restart, the next cpu is still cpu1.  Cpu0 being restarted after
-     all the other CPU's and the event queue have been processed */
-
-  if (!setjmp(halt)) {
-    int first_cpu = setjmp(restart);
-    if (first_cpu == 0)
-      first_cpu = system->last_cpu + 1;
-    do {
-      int current_cpu;
-      for (current_cpu = first_cpu, first_cpu = 0;
-	   current_cpu < system->nr_cpus + (WITH_EVENTS ? 1 : 0);
-	   current_cpu++) {
-	if (WITH_EVENTS && current_cpu == system->nr_cpus) {
-	  if (event_queue_tick(system->events))
-	    event_queue_process(system->events);
-	}
-	else {
-	  cpu *const processor = system->processors[current_cpu];
-	  unsigned_word const cia = cpu_get_program_counter(processor);
-	  instruction_word instruction =
-	    vm_instruction_map_read(cpu_instruction_map(processor),
-				    processor,
-				    cia);
-	  cpu_set_program_counter(processor,
-				  idecode_issue(processor, instruction, cia));
-	}
-	if (!(keep_running == NULL || *keep_running)) {
-	  system->last_cpu = current_cpu;
-	  break;
-	}
-      }
-    } while (keep_running == NULL || *keep_running);
-  }
-#endif
-
-#if (WITH_IDECODE_CACHE_SIZE && WITH_SMP > 0)
-
-  /* CASE 4: ICACHE and SMP ...
-
-     This time, everything goes wrong.  Need to restart loops
-     correctly, need to save the program counter and finally need to
-     keep track of each processors current address! */
-
-  if (!setjmp(halt)) {
-    int first_cpu = setjmp(restart);
-    if (!first_cpu)
-      first_cpu = system->last_cpu + 1;
-    do {
-      int current_cpu;
-      for (current_cpu = first_cpu, first_cpu = 0;
-	   current_cpu < system->nr_cpus + (WITH_EVENTS ? 1 : 0);
-	   current_cpu++) {
-	if (WITH_EVENTS && current_cpu == system->nr_cpus) {
-	  if (event_queue_tick(system->events))
-	    event_queue_process(system->events);
-	}
-	else {
-	  cpu *processor = system->processors[current_cpu];
-	  unsigned_word const cia = cpu_get_program_counter(processor);
-	  idecode_cache *cache_entry = cpu_icache_entry(processor, cia);
-	  if (cache_entry->address == cia) {
-	    idecode_semantic *semantic = cache_entry->semantic;
-	    cpu_set_program_counter(processor,
-				    semantic(processor, cache_entry, cia));
-	  }
-	  else {
-	    instruction_word instruction =
-	      vm_instruction_map_read(cpu_instruction_map(processor),
-				      processor,
-				      cia);
-	    idecode_semantic *semantic = idecode(processor,
-						 instruction,
-						 cia,
-						 cache_entry);
-
-	    if (WITH_MON != 0)
-	      mon_event(mon_event_icache_miss, system->processors[current_cpu], cia);
-	    cache_entry->address = cia;
-	    cache_entry->semantic = semantic;
-	    cpu_set_program_counter(processor,
-				    semantic(processor, cache_entry, cia));
-	  }
-	}
-	if (!(keep_running == NULL || *keep_running))
-	  break;
-      }
-    } while (keep_running == NULL || *keep_running);
-  }
-#endif
-
-  psim_clear_halt_and_restart(system);
-}
 
 
 /* SIMULATE INSTRUCTIONS, various different ways of achieving the same
@@ -720,14 +657,16 @@ INLINE_PSIM\
 psim_step(psim *system)
 {
   volatile int keep_running = 0;
-  run_until_stop(system, &keep_running);
+  idecode_run_until_stop(system, &keep_running,
+			 system->events, system->processors, system->nr_cpus);
 }
 
 INLINE_PSIM\
 (void)
 psim_run(psim *system)
 {
-  run_until_stop(system, NULL);
+  idecode_run(system,
+	      system->events, system->processors, system->nr_cpus);
 }
 
 INLINE_PSIM\
@@ -735,7 +674,8 @@ INLINE_PSIM\
 psim_run_until_stop(psim *system,
 		    volatile int *keep_running)
 {
-  run_until_stop(system, keep_running);
+  idecode_run_until_stop(system, keep_running,
+			 system->events, system->processors, system->nr_cpus);
 }
 
 
@@ -751,14 +691,19 @@ psim_read_register(psim *system,
 		   transfer_mode mode)
 {
   register_descriptions description;
-  char cooked_buf[sizeof(natural_word)];
+  char cooked_buf[sizeof(unsigned_8)];
   cpu *processor;
 
   /* find our processor */
-  if (which_cpu == MAX_NR_PROCESSORS)
-    which_cpu = system->last_cpu;
-  if (which_cpu < 0 || which_cpu >= system->nr_cpus)
-    error("psim_read_register() - invalid processor %d\n", which_cpu);
+  if (which_cpu == MAX_NR_PROCESSORS) {
+    if (system->last_cpu == system->nr_cpus
+	|| system->last_cpu == -1)
+      which_cpu = 0;
+    else
+      which_cpu = system->last_cpu;
+  }
+  ASSERT(which_cpu >= 0 && which_cpu < system->nr_cpus);
+
   processor = system->processors[which_cpu];
 
   /* find the register description */
@@ -795,6 +740,23 @@ psim_read_register(psim *system,
 
   case reg_msr:
     *(msreg*)cooked_buf = cpu_registers(processor)->msr;
+    break;
+
+  case reg_insns:
+    *(unsigned_word*)cooked_buf = mon_get_number_of_insns(system->monitor,
+							  which_cpu);
+    break;
+
+  case reg_stalls:
+    if (cpu_model(processor) == NULL)
+      error("$stalls only valid if processor unit model enabled (-I)\n");
+    *(unsigned_word*)cooked_buf = model_get_number_of_stalls(cpu_model(processor));
+    break;
+
+  case reg_cycles:
+    if (cpu_model(processor) == NULL)
+      error("$cycles only valid if processor unit model enabled (-I)\n");
+    *(unsigned_word*)cooked_buf = model_get_number_of_cycles(cpu_model(processor));
     break;
 
   default:
@@ -842,20 +804,23 @@ psim_write_register(psim *system,
 {
   cpu *processor;
   register_descriptions description;
-  char cooked_buf[sizeof(natural_word)];
+  char cooked_buf[sizeof(unsigned_8)];
 
   /* find our processor */
-  if (which_cpu == MAX_NR_PROCESSORS)
-    which_cpu = system->last_cpu;
+  if (which_cpu == MAX_NR_PROCESSORS) {
+    if (system->last_cpu == system->nr_cpus
+	|| system->last_cpu == -1)
+      which_cpu = 0;
+    else
+      which_cpu = system->last_cpu;
+  }
   if (which_cpu == -1) {
     int i;
     for (i = 0; i < system->nr_cpus; i++)
       psim_write_register(system, i, buf, reg, mode);
     return;
   }
-  else if (which_cpu < 0 || which_cpu >= system->nr_cpus) {
-    error("psim_read_register() - invalid processor %d\n", which_cpu);
-  }
+  ASSERT(which_cpu >= 0 && which_cpu < system->nr_cpus);
 
   processor = system->processors[which_cpu];
 
@@ -938,13 +903,17 @@ psim_read_memory(psim *system,
 		 unsigned nr_bytes)
 {
   cpu *processor;
-  if (which_cpu == MAX_NR_PROCESSORS)
-    which_cpu = system->last_cpu;
-  if (which_cpu < 0 || which_cpu >= system->nr_cpus)
-    error("psim_read_memory() invalid cpu\n");
+  if (which_cpu == MAX_NR_PROCESSORS) {
+    if (system->last_cpu == system->nr_cpus
+	|| system->last_cpu == -1)
+      which_cpu = 0;
+    else
+      which_cpu = system->last_cpu;
+  }
   processor = system->processors[which_cpu];
   return vm_data_map_read_buffer(cpu_data_map(processor),
-				 buffer, vaddr, nr_bytes);
+				 buffer, vaddr, nr_bytes,
+				 NULL, -1);
 }
 
 
@@ -958,13 +927,18 @@ psim_write_memory(psim *system,
 		  int violate_read_only_section)
 {
   cpu *processor;
-  if (which_cpu == MAX_NR_PROCESSORS)
-    which_cpu = system->last_cpu;
-  if (which_cpu < 0 || which_cpu >= system->nr_cpus)
-    error("psim_read_memory() invalid cpu\n");
+  if (which_cpu == MAX_NR_PROCESSORS) {
+    if (system->last_cpu == system->nr_cpus
+	|| system->last_cpu == -1)
+      which_cpu = 0;
+    else
+      which_cpu = system->last_cpu;
+  }
+  ASSERT(which_cpu >= 0 && which_cpu < system->nr_cpus);
   processor = system->processors[which_cpu];
   return vm_data_map_write_buffer(cpu_data_map(processor),
-				  buffer, vaddr, nr_bytes, 1);
+				  buffer, vaddr, nr_bytes, 1/*violate-read-only*/,
+				  NULL, -1);
 }
 
 
@@ -984,20 +958,61 @@ INLINE_PSIM\
 psim_merge_device_file(device *root,
 		       const char *file_name)
 {
-  FILE *description = fopen(file_name, "r");
-  int line_nr = 0;
+  FILE *description;
+  int line_nr;
   char device_path[1000];
-  device *current = root;
+  device *current;
+
+  /* try opening the file */
+  description = fopen(file_name, "r");
+  if (description == NULL) {
+    perror(file_name);
+    error("Invalid file %s specified", file_name);
+  }
+
+  line_nr = 0;
+  current = root;
   while (fgets(device_path, sizeof(device_path), description)) {
-    /* check all of line was read */
+    char *device;
+    /* check that the full line was read */
     if (strchr(device_path, '\n') == NULL) {
       fclose(description);
-      error("create_filed_device_tree() line %d to long: %s\n",
-	    line_nr, device_path);
+      error("%s:%d: line to long - %s",
+	    file_name, line_nr, device_path);
     }
+    else
+      *strchr(device_path, '\n') = '\0';
     line_nr++;
+    /* skip comments ("#" or ";") and blank lines lines */
+    for (device = device_path;
+	 *device != '\0' && isspace(*device);
+	 device++);
+    if (device[0] == '#'
+	|| device[0] == ';'
+	|| device[0] == '\0')
+      continue;
+    /* merge any appended lines */
+    while (device_path[strlen(device_path) - 1] == '\\') {
+      int curlen = strlen(device_path) - 1;
+      /* zap \ */
+      device_path[curlen] = '\0';
+      /* append the next line */
+      if (!fgets(device_path + curlen, sizeof(device_path) - curlen, description)) {
+	fclose(description);
+	error("%s:%s: unexpected eof in line continuation - %s",
+	      file_name, line_nr, device_path);
+      }
+      if (strchr(device_path, '\n') == NULL) {
+	fclose(description);
+	error("%s:%d: line to long - %s",
+	    file_name, line_nr, device_path);
+      }
+      else
+	*strchr(device_path, '\n') = '\0';
+      line_nr++;
+    }
     /* parse this line */
-    current = device_tree_add_parsed(current, "%s", device_path);
+    current = tree_parse(current, "%s", device);
   }
   fclose(description);
 }

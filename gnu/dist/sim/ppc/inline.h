@@ -70,28 +70,6 @@
 #endif
 
 
-/* icache is inlined with inline.c */
-
-#if defined(_INLINE_C_) && !defined(_ICACHE_C_) && (ICACHE_INLINE & INCLUDE_MODULE)
-# if (ICACHE_INLINE & INLINE_MODULE)
-#  define INLINE_ICACHE(TYPE) static INLINE TYPE UNUSED
-#  define EXTERN_ICACHE(TYPE) static TYPE UNUSED
-#else
-#  define INLINE_ICACHE(TYPE) static TYPE UNUSED
-#  define EXTERN_ICACHE(TYPE) static TYPE UNUSED
-#endif
-#else
-# define INLINE_ICACHE(TYPE) TYPE
-# define EXTERN_ICACHE(TYPE) TYPE
-#endif
-
-#if (ICACHE_INLINE & INLINE_LOCALS)
-# define STATIC_INLINE_ICACHE(TYPE) static INLINE TYPE
-#else
-# define STATIC_INLINE_ICACHE(TYPE) static TYPE
-#endif
-
-
 /* core is inlined with inline.c */
 
 #if defined(_INLINE_C_) && !defined(_CORE_C_) && (CORE_INLINE & INCLUDE_MODULE)
@@ -290,6 +268,28 @@
 #endif
 
 
+/* tree is inlined with inline.c */
+
+#if defined(_INLINE_C_) && !defined(_TREE_C_) && (TREE_INLINE & INCLUDE_MODULE)
+# if (TREE_INLINE & INLINE_MODULE)
+#  define INLINE_TREE(TYPE) static INLINE TYPE UNUSED
+#  define EXTERN_TREE(TYPE) static TYPE UNUSED
+#else
+#  define INLINE_TREE(TYPE) static TYPE UNUSED
+#  define EXTERN_TREE(TYPE) static TYPE UNUSED
+#endif
+#else
+# define INLINE_TREE(TYPE) TYPE
+# define EXTERN_TREE(TYPE) TYPE
+#endif
+
+#if (TREE_INLINE & INLINE_LOCALS)
+# define STATIC_INLINE_TREE(TYPE) static INLINE TYPE
+#else
+# define STATIC_INLINE_TREE(TYPE) static TYPE
+#endif
+
+
 /* spreg is inlined with inline.c */
 
 #if defined(_INLINE_C_) && !defined(_SPREG_C_) && (SPREG_INLINE & INCLUDE_MODULE)
@@ -334,7 +334,7 @@
 #endif
 
 
-/* idecode is inlined with inline.c */
+/* idecode is actually not inlined */
 
 #if defined(_INLINE_C_) && !defined(_IDECODE_C_) && (IDECODE_INLINE & INCLUDE_MODULE)
 # if (IDECODE_INLINE & INLINE_MODULE)
@@ -353,6 +353,50 @@
 # define STATIC_INLINE_IDECODE(TYPE) static INLINE TYPE
 #else
 # define STATIC_INLINE_IDECODE(TYPE) static TYPE REGPARM
+#endif
+
+
+/* icache is inlined with inline.c */
+
+#if defined(_INLINE_C_) && !defined(_ICACHE_C_) && (ICACHE_INLINE & INCLUDE_MODULE)
+# if (ICACHE_INLINE & INLINE_MODULE)
+#  define INLINE_ICACHE(TYPE) static INLINE TYPE UNUSED
+#  define EXTERN_ICACHE(TYPE) static TYPE UNUSED REGPARM
+#else
+#  define INLINE_ICACHE(TYPE) static TYPE UNUSED REGPARM
+#  define EXTERN_ICACHE(TYPE) static TYPE UNUSED REGPARM
+#endif
+#else
+# define INLINE_ICACHE(TYPE) TYPE REGPARM
+# define EXTERN_ICACHE(TYPE) TYPE REGPARM
+#endif
+
+#if (ICACHE_INLINE & INLINE_LOCALS)
+# define STATIC_INLINE_ICACHE(TYPE) static INLINE TYPE
+#else
+# define STATIC_INLINE_ICACHE(TYPE) static TYPE REGPARM
+#endif
+
+
+/* support is always inlined */
+
+#if !defined(_SUPPORT_C_) && (SUPPORT_INLINE & INCLUDE_MODULE)
+# if (SUPPORT_INLINE & INLINE_MODULE)
+#  define INLINE_SUPPORT(TYPE) static INLINE TYPE UNUSED
+#  define EXTERN_SUPPORT(TYPE) static TYPE UNUSED
+#else
+#  define INLINE_SUPPORT(TYPE) static TYPE UNUSED
+#  define EXTERN_SUPPORT(TYPE) static TYPE UNUSED
+#endif
+#else
+# define INLINE_SUPPORT(TYPE) TYPE
+# define EXTERN_SUPPORT(TYPE) TYPE
+#endif
+
+#if (SUPPORT_INLINE & INLINE_LOCALS)
+# define STATIC_INLINE_SUPPORT(TYPE) static INLINE TYPE
+#else
+# define STATIC_INLINE_SUPPORT(TYPE) static TYPE
 #endif
 
 
@@ -400,7 +444,7 @@
 #endif
 
 
-/* psim is inlined with inline.c */
+/* psim is actually not inlined */
 
 #if defined(_INLINE_C_) && !defined(_PSIM_C_) && (PSIM_INLINE & INCLUDE_MODULE)
 # if (PSIM_INLINE & INLINE_MODULE)

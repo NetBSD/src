@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #ifndef _VM_C_
 #define _VM_C_
 
+#if 0
 #include "basics.h"
 #include "registers.h"
 #include "device.h"
@@ -29,6 +30,9 @@
 #include "vm.h"
 #include "interrupts.h"
 #include "mon.h"
+#endif
+
+#include "cpu.h"
 
 /* OEA vs VEA
 
@@ -138,7 +142,7 @@ enum _om_segment_tlb_constants {
 typedef struct _om_segment_tlb_entry {
   int key[nr_om_modes];
   om_access_types invalid_access; /* set to instruction if no_execute bit */
-  unsigned_word masked_virtual_segment_id; /* aligned ready for pte addr */
+  unsigned_word masked_virtual_segment_id; /* aligned ready for pte group addr */
 #if (WITH_TARGET_WORD_BITSIZE == 64)
   int is_valid;
   unsigned_word masked_effective_segment_id;
@@ -298,11 +302,19 @@ om_hash_page(unsigned_word masked_vsid,
 {
   unsigned_word extracted_ea = EXTRACTED(ea, 36, 51);
 #if (WITH_TARGET_WORD_BITSIZE == 32)
-  return masked_vsid ^ INSERTED32(extracted_ea, 7, 31-6);
+  unsigned_word masked_ea = INSERTED32(extracted_ea, 7, 31-6);
+  unsigned_word hash = masked_vsid ^ masked_ea;
 #endif
 #if (WITH_TARGET_WORD_BITSIZE == 64)
-  return masked_vsid ^ INSERTED64(extracted_ea, 18, 63-7);
+  unsigned_word masked_ea = INSERTED64(extracted_ea, 18, 63-7);
+  unsigned_word hash = masked_vsid ^ masked_ea;
 #endif
+  TRACE(trace_vm, ("ea=0x%lx - masked-vsid=0x%lx masked-ea=0x%lx hash=0x%lx\n",
+		   (unsigned long)ea,
+		   (unsigned long)masked_vsid,
+		   (unsigned long)masked_ea,
+		   (unsigned long)hash));
+  return hash;
 }
 
 STATIC_INLINE_VM\
@@ -355,11 +367,17 @@ om_ea_masked_byte(unsigned_word ea)
   return MASKED(ea, 52, 63);
 }
 
+/* return the VSID aligned for pte group addr */
 STATIC_INLINE_VM\
 (unsigned_word)
 om_pte_0_masked_vsid(unsigned_word pte_0)
 {
-  return INSERTED32(EXTRACTED32(pte_0, 1, 24), 7-5, 31-6);
+#if (WITH_TARGET_WORD_BITSIZE == 32)
+  return INSERTED32(EXTRACTED32(pte_0, 1, 24), 31-6-24+1, 31-6);
+#endif
+#if (WITH_TARGET_WORD_BITSIZE == 64)
+  return INSERTED64(EXTRACTED64(pte_0, 0, 51), 63-7-52+1, 63-7);
+#endif
 }
 
 STATIC_INLINE_VM\
@@ -439,11 +457,11 @@ vm_create(core *physical)
   if (nr_om_segment_tlb_entries
       != (1 << (om_segment_tlb_index_stop_bit
 		- om_segment_tlb_index_start_bit + 1)))
-    error("new_vm() - internal error with om_segment constants\n");
+    error("internal error - vm_create - problem with om_segment constants\n");
   if (nr_om_page_tlb_entries
       != (1 << (om_page_tlb_index_stop_bit
 		- om_page_tlb_index_start_bit + 1)))
-    error("new_vm() - internal error with om_page constants\n");
+    error("internal error - vm_create - problem with om_page constants\n");
 
   /* create the new vm register file */
   virtual = ZALLOC(vm);
@@ -506,6 +524,12 @@ om_effective_to_virtual(om_map *map,
 					     + om_segment_tlb_index(ea));
 
 #if (WITH_TARGET_WORD_BITSIZE == 32)
+  TRACE(trace_vm, ("ea=0x%lx - sr[%ld] - masked-vsid=0x%lx va=0x%lx%07lx\n",
+		   (unsigned long)ea,
+		   (long)om_segment_tlb_index(ea),
+		   (unsigned long)segment_tlb_entry->masked_virtual_segment_id, 
+		   (unsigned long)EXTRACTED32(segment_tlb_entry->masked_virtual_segment_id, 31-6-24+1, 31-6),
+		   (unsigned long)EXTRACTED32(ea, 4, 31)));
   return segment_tlb_entry;
 #endif
 
@@ -556,7 +580,7 @@ om_effective_to_virtual(om_map *map,
 	     : om_access_any);
 	  segment_tlb_entry->masked_virtual_segment_id =
 	    INSERTED64(EXTRACTED64(segment_table_entry_dword_1, 0, 51),
-		       18-13, 63-7); /* align ready for pte addr */
+		       18-13, 63-7); /* aligned ready for pte group addr */
 	  return segment_tlb_entry;
 	}
       }
@@ -602,11 +626,12 @@ om_virtual_to_real(om_map *map,
 	 | (page_hash & map->page_table_hash_mask));
       unsigned_word real_address_of_pte_0;
       TRACE(trace_vm,
-	    ("ea=0x%lx - htab search - pteg=0x%lx htab=0x%lx mask=0x%lx hash=0x%lx\n",
-	     (long)ea, (long)real_address_of_pte_group,
+	    ("ea=0x%lx - htab search %d - htab=0x%lx hash=0x%lx mask=0x%lx pteg=0x%lx\n",
+	     (long)ea, current_hash,
 	     map->real_address_of_page_table,
+	     page_hash,
 	     map->page_table_hash_mask,
-	     page_hash));
+	     (long)real_address_of_pte_group));
       for (real_address_of_pte_0 = real_address_of_pte_group;
 	   real_address_of_pte_0 < (real_address_of_pte_group
 				    + sizeof_pte_group);
@@ -674,8 +699,7 @@ om_interrupt(cpu *processor,
     instruction_storage_interrupt(processor, cia, reason);
     break;
   default:
-    error("om_interrupt - unexpected access type %d, cia=0x%x, ea=0x%x\n",
-	  access, cia, ea);
+    error("internal error - om_interrupt - unexpected access type %d", access);
   }
 }
 
@@ -840,14 +864,15 @@ STATIC_INLINE_VM\
 (void)
 om_unpack_sr(vm *virtual,
 	     sreg *srs,
-	     int which_sr)
+	     int which_sr,
+	     cpu *processor,
+	     unsigned_word cia)
 {
   om_segment_tlb_entry *segment_tlb_entry = 0;
   sreg new_sr_value = 0;
 
   /* check register in range */
-  if (which_sr < 0 || which_sr > nr_om_segment_tlb_entries)
-    error("om_set_sr: segment register out of bounds\n");
+  ASSERT(which_sr >= 0 && which_sr < nr_om_segment_tlb_entries);
 
   /* get the working values */
   segment_tlb_entry = &virtual->segment_tlb.entry[which_sr];  
@@ -855,8 +880,8 @@ om_unpack_sr(vm *virtual,
   
   /* do we support this */
   if (MASKED32(new_sr_value, 0, 0))
-    error("om_ser_sr(): unsupported value of T in segment register %d\n",
-	  which_sr);
+    cpu_error(processor, cia, "unsupported value of T in segment register %d",
+	      which_sr);
 
   /* update info */
   segment_tlb_entry->key[om_supervisor_state] = EXTRACTED32(new_sr_value, 1, 1);
@@ -866,7 +891,7 @@ om_unpack_sr(vm *virtual,
 				       : om_access_any);
   segment_tlb_entry->masked_virtual_segment_id =
     INSERTED32(EXTRACTED32(new_sr_value, 8, 31),
-	       7-5, 31-6); /* align ready for pte address */
+	       31-6-24+1, 31-6); /* aligned ready for pte group addr */
 }
 #endif
 
@@ -875,11 +900,14 @@ om_unpack_sr(vm *virtual,
 STATIC_INLINE_VM\
 (void)
 om_unpack_srs(vm *virtual,
-	      sreg *srs)
+	      sreg *srs,
+	      cpu *processor,
+	      unsigned_word cia)
 {
   int which_sr;
   for (which_sr = 0; which_sr < nr_om_segment_tlb_entries; which_sr++) {
-    om_unpack_sr(virtual, srs, which_sr);
+    om_unpack_sr(virtual, srs, which_sr,
+		 processor, cia);
   }
 }
 #endif
@@ -892,7 +920,10 @@ INLINE_VM\
 vm_synchronize_context(vm *virtual,
 		       spreg *sprs,
 		       sreg *srs,
-		       msreg msr)
+		       msreg msr,
+		       /**/
+		       cpu *processor,
+		       unsigned_word cia)
 {
 
   /* enable/disable translation */
@@ -934,7 +965,8 @@ vm_synchronize_context(vm *virtual,
 
   /* unpack the segment tlb registers */
 #if (WITH_TARGET_WORD_BITSIZE == 32)
-  om_unpack_srs(virtual, srs);
+  om_unpack_srs(virtual, srs,
+		processor, cia);
 #endif
  
   /* set up the XOR registers if the current endian mode conflicts
@@ -958,7 +990,7 @@ vm_synchronize_context(vm *virtual,
     /* don't allow the processor to change endian modes */
     if ((little_endian && CURRENT_TARGET_BYTE_ORDER != LITTLE_ENDIAN)
 	|| (!little_endian && CURRENT_TARGET_BYTE_ORDER != BIG_ENDIAN))
-      error("vm_synchronize_context() - unsuported change of byte order\n");
+      cpu_error(processor, cia, "attempt to change hardwired byte order");
   }
 }
 
@@ -1023,7 +1055,7 @@ vm_translate(om_map *map,
 					  processor, cia,
 					  abort);
   default:
-    error("vm_translate() - unknown environment\n");
+    error("internal error - vm_translate - bad switch");
     return 0;
   }
 }
@@ -1079,7 +1111,9 @@ INLINE_VM\
 vm_data_map_read_buffer(vm_data_map *map,
 			void *target,
 			unsigned_word addr,
-			unsigned nr_bytes)
+			unsigned nr_bytes,
+			cpu *processor,
+			unsigned_word cia)
 {
   unsigned count;
   for (count = 0; count < nr_bytes; count++) {
@@ -1087,9 +1121,9 @@ vm_data_map_read_buffer(vm_data_map *map,
     unsigned_word ea = addr + count;
     unsigned_word ra = vm_translate(&map->translation,
 				    ea, om_data_read,
-				    NULL, /*processor*/
-				    0, /*cia*/
-				    0); /*dont-abort*/
+				    processor, /*processor*/
+				    cia, /*cia*/
+				    processor != NULL); /*abort?*/
     if (ra == MASK(0, 63))
       break;
     if (WITH_XOR_ENDIAN)
@@ -1109,7 +1143,9 @@ vm_data_map_write_buffer(vm_data_map *map,
 			 const void *source,
 			 unsigned_word addr,
 			 unsigned nr_bytes,
-			 int violate_read_only_section)
+			 int violate_read_only_section,
+			 cpu *processor,
+			 unsigned_word cia)
 {
   unsigned count;
   unsigned_1 byte;
@@ -1117,9 +1153,9 @@ vm_data_map_write_buffer(vm_data_map *map,
     unsigned_word ea = addr + count;
     unsigned_word ra = vm_translate(&map->translation,
 				    ea, om_data_write,
-				    NULL/*processor*/,
-				    0, /*cia*/
-				    0); /*dont-abort*/
+				    processor,
+				    cia,
+				    processor != NULL); /*abort?*/
     if (ra == MASK(0, 63))
       break;
     if (WITH_XOR_ENDIAN)

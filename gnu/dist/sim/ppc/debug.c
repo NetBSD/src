@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ typedef struct _trace_option_descriptor {
 static trace_option_descriptor trace_description[] = {
   { trace_gdb, "gdb", "calls made by gdb to the sim_calls.c file" },
   { trace_os_emul, "os-emul", "VEA mode sytem calls - like strace" },
+  { trace_events, "events", "event queue handling" },
   /* decode/issue */
   { trace_semantics, "semantics", "Instruction execution (issue)" },
   { trace_idecode, "idecode", "instruction decode (when miss in icache)" },
@@ -47,21 +48,32 @@ static trace_option_descriptor trace_description[] = {
   { trace_vm, "vm", "OEA address translation" },
   { trace_load_store, "load-store", "transfers between registers and memory" },
   { trace_model, "model", "model specific information" },
+  { trace_interrupts, "interrupts", "interrupt handling" },
   /* devices */
   { trace_device_tree, "device-tree",  },
   { trace_devices, "devices" },
-  { trace_pass_device, "pass-device" },
-  { trace_console_device, "console-device" },
-  { trace_icu_device, "icu-device" },
-  { trace_halt_device, "halt-device" },
-  { trace_register_device, "register-device", "Device initializing registers" },
-  { trace_vm_device, "vm-device" },
-  { trace_memory_device, "memory-device" },
-  { trace_htab_device, "htab-device" },
   { trace_binary_device, "binary-device" },
-  { trace_file_device, "file-device" },
+  { trace_com_device, "com-device" },
+  { trace_console_device, "console-device" },
   { trace_core_device, "core-device" },
+  { trace_disk_device, "disk-device" },
+  { trace_eeprom_device, "eeprom-device" },
+  { trace_file_device, "file-device" },
+  { trace_glue_device, "glue-device" },
+  { trace_halt_device, "halt-device" },
+  { trace_htab_device, "htab-device" },
+  { trace_icu_device, "icu-device" },
+  { trace_ide_device, "ide-device" },
+  { trace_memory_device, "memory-device" },
+  { trace_opic_device, "opic-device" },
+  { trace_pal_device, "pal-device" },
+  { trace_pass_device, "pass-device" },
+  { trace_phb_device, "phb-device" },
+  { trace_register_device, "register-device", "Device initializing registers" },
   { trace_stack_device, "stack-device" },
+  { trace_vm_device, "vm-device" },
+  /* packages */
+  { trace_disklabel_package, "disklabel-package" },
   /* misc */
   { trace_print_info, "print-info", "Print performance analysis information" },
   { trace_opts, "options", "Print options simulator was compiled with" },
@@ -79,7 +91,9 @@ trace_option(const char *option,
   if (strcmp(option, "all") == 0) {
     trace_options i;
     for (i = 0; i < nr_trace_options; i++)
-      ppc_trace[i] = setting;
+      if (i != trace_dump_device_tree) {
+	ppc_trace[i] = setting;
+      }
   }
   else {
     int i = 0;

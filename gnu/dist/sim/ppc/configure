@@ -1,8 +1,8 @@
 #! /bin/sh
 
 # Guess values for system-dependent variables and create Makefiles.
-# Generated automatically using autoconf version 2.7 
-# Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+# Generated automatically using autoconf version 2.12 
+# Copyright (C) 1992, 93, 94, 95, 96 Free Software Foundation, Inc.
 #
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
@@ -12,59 +12,75 @@ ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
-  --enable-sim-cflags=opts		Extra CFLAGS for use in building simulator"
-ac_help="$ac_help
-  --enable-sim-warnings=opts		Extra CFLAGS for turning on compiler warnings except for idecode.o, semantics.o and psim.o"
-ac_help="$ac_help
-  --enable-sim-config=file		Override default config file"
-ac_help="$ac_help
-  --enable-sim-opcode=which		Override default opcode lookup."
-ac_help="$ac_help
-  --enable-sim-switch			Use a switch instead of a table for instruction call."
-ac_help="$ac_help
-  --enable-sim-duplicate		Expand (duplicate) semantic functions."
-ac_help="$ac_help
-  --enable-sim-filter=rule		Specify filter rules."
-ac_help="$ac_help
-  --enable-sim-icache=size		Specify instruction cache size."
-ac_help="$ac_help
-  --enable-sim-inline=inlines		Specify which functions should be inlined."
-ac_help="$ac_help
-  --enable-sim-bswap			Use the BSWAP instruction on Intel 486s and Pentiums."
-ac_help="$ac_help
-  --enable-sim-endian=endian		Specify target byte endian orientation."
-ac_help="$ac_help
-  --enable-sim-hostendain=end		Specify host byte endian orientation."
-ac_help="$ac_help
-  --enable-sim-smp=n			Specify number of processors to configure for."
-ac_help="$ac_help
-  --enable-sim-xor-endian=n		Specify number bytes involved in PowerPC XOR bi-endian mode (default 8)."
-ac_help="$ac_help
-  --enable-sim-bitsize=n		Specify target bitsize (32 or 64)."
-ac_help="$ac_help
-  --enable-sim-hostbitsize=32|64	Specify host bitsize (32 or 64)."
-ac_help="$ac_help
-  --enable-sim-env=env			Specify target environment (operating, virtual, user)."
-ac_help="$ac_help
-  --enable-sim-timebase			Specify whether the PPC timebase is supported."
-ac_help="$ac_help
   --enable-sim-alignment=align		Specify strict or nonstrict alignment."
-ac_help="$ac_help
-  --enable-sim-trace			Specify whether tracing is supported."
 ac_help="$ac_help
   --enable-sim-assert			Specify whether to perform random assertions."
 ac_help="$ac_help
-  --enable-sim-reserved-bits		Specify whether to check reserved bits in instruction."
+  --enable-sim-bitsize=n		Specify target bitsize (32 or 64)."
 ac_help="$ac_help
-  --enable-sim-float			Specify whether to use host floating point or simulate."
+  --enable-sim-bswap			Use the BSWAP instruction on Intel 486s and Pentiums."
 ac_help="$ac_help
-  --enable-sim-monitor=mon		Specify whether to enable monitoring events."
+  --enable-sim-cflags=opts		Extra CFLAGS for use in building simulator"
 ac_help="$ac_help
-  --enable-sim-model=which		Specify PowerPC to model."
+  --enable-sim-config=file		Override default config file"
+ac_help="$ac_help
+  --enable-sim-decode-mechanism=which		Specify the instruction decode mechanism."
 ac_help="$ac_help
   --enable-sim-default-model=which	Specify default PowerPC to model."
 ac_help="$ac_help
+  --enable-sim-duplicate		Expand (duplicate) semantic functions."
+ac_help="$ac_help
+  --enable-sim-endian=endian		Specify target byte endian orientation."
+ac_help="$ac_help
+  --enable-sim-env=env			Specify target environment (operating, virtual, user)."
+ac_help="$ac_help
+  --enable-sim-filter=rule		Specify filter rules."
+ac_help="$ac_help
+  --enable-sim-float			Specify whether to use host floating point or simulate."
+ac_help="$ac_help
+  --enable-sim-hardware=list		Specify the hardware to be included in the build."
+ac_help="$ac_help
+  --enable-sim-hostbitsize=32|64	Specify host bitsize (32 or 64)."
+ac_help="$ac_help
+  --enable-sim-hostendian=end		Specify host byte endian orientation."
+ac_help="$ac_help
+  --enable-sim-icache=size		Specify instruction-decode cache size and type."
+ac_help="$ac_help
+  --enable-sim-inline=inlines		Specify which functions should be inlined."
+ac_help="$ac_help
+  --enable-sim-jump		Jump between semantic code (instead of call/return)."
+ac_help="$ac_help
+  --enable-sim-line-nr=opts		Generate extra CPP code that references source rather than generated code"
+ac_help="$ac_help
+  --enable-sim-model=which		Specify PowerPC to model."
+ac_help="$ac_help
   --enable-sim-model-issue		Specify whether to simulate model specific actions"
+ac_help="$ac_help
+  --enable-sim-monitor=mon		Specify whether to enable monitoring events."
+ac_help="$ac_help
+  --enable-sim-opcode=which		Override default opcode lookup."
+ac_help="$ac_help
+  --enable-sim-packages=list		Specify the packages to be included in the build."
+ac_help="$ac_help
+  --enable-sim-regparm=nr-parm		Pass parameters in registers instead of on the stack - x86/GCC specific."
+ac_help="$ac_help
+  --enable-sim-reserved-bits		Specify whether to check reserved bits in instruction."
+ac_help="$ac_help
+  --enable-sim-smp=n			Specify number of processors to configure for."
+ac_help="$ac_help
+  --enable-sim-stdcall=type		Use an alternative function call/return mechanism - x86/GCC specific."
+ac_help="$ac_help
+  --enable-sim-stdio			Specify whether to use stdio for console input/output."
+ac_help="$ac_help
+  --enable-sim-switch			Use a switch instead of a table for instruction call."
+ac_help="$ac_help
+  --enable-sim-timebase			Specify whether the PPC timebase is supported."
+ac_help="$ac_help
+  --enable-sim-trace			Specify whether tracing is supported."
+ac_help="$ac_help
+  --enable-sim-warnings=opts		Extra CFLAGS for turning on compiler warnings except for idecode.o, semantics.o and psim.o"
+ac_help="$ac_help
+  --enable-sim-xor-endian=n		Specify number bytes involved in PowerPC XOR bi-endian mode (default 8)."
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -103,6 +119,8 @@ mandir='${prefix}/man'
 # Initialize some other variables.
 subdirs=
 MFLAGS= MAKEFLAGS=
+# Maximum number of lines to put in a shell here document.
+ac_max_here_lines=12
 
 ac_prev=
 for ac_option
@@ -384,7 +402,7 @@ EOF
     verbose=yes ;;
 
   -version | --version | --versio | --versi | --vers)
-    echo "configure generated by autoconf version 2.7"
+    echo "configure generated by autoconf version 2.12"
     exit 0 ;;
 
   -with-* | --with-*)
@@ -486,11 +504,14 @@ do
 done
 
 # NLS nuisances.
-# Only set LANG and LC_ALL to C if already set.
-# These must not be set unconditionally because not all systems understand
-# e.g. LANG=C (notably SCO).
-if test "${LC_ALL+set}" = set; then LC_ALL=C; export LC_ALL; fi
+# Only set these to C if already set.  These must not be set unconditionally
+# because not all systems understand e.g. LANG=C (notably SCO).
+# Fixing LC_MESSAGES prevents Solaris sh from translating var values in `set'!
+# Non-C LC_CTYPE values break the ctype check.
 if test "${LANG+set}"   = set; then LANG=C;   export LANG;   fi
+if test "${LC_ALL+set}" = set; then LC_ALL=C; export LC_ALL; fi
+if test "${LC_MESSAGES+set}" = set; then LC_MESSAGES=C; export LC_MESSAGES; fi
+if test "${LC_CTYPE+set}"    = set; then LC_CTYPE=C;    export LC_CTYPE;    fi
 
 # confdefs.h avoids OS command line length limits that DEFS can exceed.
 rm -rf conftest* confdefs.h
@@ -549,12 +570,10 @@ fi
 
 ac_ext=c
 # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
-ac_cpp='echo $CPP $CPPFLAGS 1>&5;
-$CPP $CPPFLAGS'
-ac_compile='echo ${CC-cc} -c $CFLAGS $CPPFLAGS conftest.$ac_ext 1>&5;
-${CC-cc} -c $CFLAGS $CPPFLAGS conftest.$ac_ext 1>&5 2>&5'
-ac_link='echo ${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5;
-${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5 2>&5'
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='${CC-cc} -c $CFLAGS $CPPFLAGS conftest.$ac_ext 1>&5'
+ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+cross_compiling=$ac_cv_prog_cc_cross
 
 if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
   # Stardent Vistra SVR4 grep lacks -e, says ghazi@caip.rutgers.edu.
@@ -568,6 +587,329 @@ else
   ac_n= ac_c='\c' ac_t=
 fi
 
+
+
+ac_aux_dir=
+for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
+  if test -f $ac_dir/install-sh; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install-sh -c"
+    break
+  elif test -f $ac_dir/install.sh; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install.sh -c"
+    break
+  fi
+done
+if test -z "$ac_aux_dir"; then
+  { echo "configure: error: can not find install-sh or install.sh in $srcdir $srcdir/.. $srcdir/../.." 1>&2; exit 1; }
+fi
+ac_config_guess=$ac_aux_dir/config.guess
+ac_config_sub=$ac_aux_dir/config.sub
+ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
+
+# Find a good install program.  We prefer a C program (faster),
+# so one script is as good as another.  But avoid the broken or
+# incompatible versions:
+# SysV /etc/install, /usr/sbin/install
+# SunOS /usr/etc/install
+# IRIX /sbin/install
+# AIX /bin/install
+# AFS /usr/afsws/bin/install, which mishandles nonexistent args
+# SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
+# ./install, which can be erroneously created by make from ./install.sh.
+echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
+echo "configure:623: checking for a BSD compatible install" >&5
+if test -z "$INSTALL"; then
+if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+    IFS="${IFS= 	}"; ac_save_IFS="$IFS"; IFS="${IFS}:"
+  for ac_dir in $PATH; do
+    # Account for people who put trailing slashes in PATH elements.
+    case "$ac_dir/" in
+    /|./|.//|/etc/*|/usr/sbin/*|/usr/etc/*|/sbin/*|/usr/afsws/bin/*|/usr/ucb/*) ;;
+    *)
+      # OSF1 and SCO ODT 3.0 have their own names for install.
+      for ac_prog in ginstall installbsd scoinst install; do
+        if test -f $ac_dir/$ac_prog; then
+	  if test $ac_prog = install &&
+            grep dspmsg $ac_dir/$ac_prog >/dev/null 2>&1; then
+	    # AIX install.  It has an incompatible calling convention.
+	    # OSF/1 installbsd also uses dspmsg, but is usable.
+	    :
+	  else
+	    ac_cv_path_install="$ac_dir/$ac_prog -c"
+	    break 2
+	  fi
+	fi
+      done
+      ;;
+    esac
+  done
+  IFS="$ac_save_IFS"
+
+fi
+  if test "${ac_cv_path_install+set}" = set; then
+    INSTALL="$ac_cv_path_install"
+  else
+    # As a last resort, use the slow shell script.  We don't cache a
+    # path for INSTALL within a source directory, because that will
+    # break other packages using the cache if that directory is
+    # removed, or if the path is relative.
+    INSTALL="$ac_install_sh"
+  fi
+fi
+echo "$ac_t""$INSTALL" 1>&6
+
+# Use test -z because SunOS4 sh mishandles braces in ${var-val}.
+# It thinks the first close brace ends the variable substitution.
+test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM='${INSTALL}'
+
+test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
+
+# Extract the first word of "gcc", so it can be a program name with args.
+set dummy gcc; ac_word=$2
+echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+echo "configure:675: checking for $ac_word" >&5
+if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
+  for ac_dir in $PATH; do
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      ac_cv_prog_CC="gcc"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+fi
+fi
+CC="$ac_cv_prog_CC"
+if test -n "$CC"; then
+  echo "$ac_t""$CC" 1>&6
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+if test -z "$CC"; then
+  # Extract the first word of "cc", so it can be a program name with args.
+set dummy cc; ac_word=$2
+echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+echo "configure:704: checking for $ac_word" >&5
+if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
+  ac_prog_rejected=no
+  for ac_dir in $PATH; do
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      if test "$ac_dir/$ac_word" = "/usr/ucb/cc"; then
+        ac_prog_rejected=yes
+	continue
+      fi
+      ac_cv_prog_CC="cc"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_CC
+  shift
+  if test $# -gt 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set CC to just the basename; use the full file name.
+    shift
+    set dummy "$ac_dir/$ac_word" "$@"
+    shift
+    ac_cv_prog_CC="$@"
+  fi
+fi
+fi
+fi
+CC="$ac_cv_prog_CC"
+if test -n "$CC"; then
+  echo "$ac_t""$CC" 1>&6
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+  test -z "$CC" && { echo "configure: error: no acceptable cc found in \$PATH" 1>&2; exit 1; }
+fi
+
+echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
+echo "configure:752: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+
+ac_ext=c
+# CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='${CC-cc} -c $CFLAGS $CPPFLAGS conftest.$ac_ext 1>&5'
+ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+cross_compiling=$ac_cv_prog_cc_cross
+
+cat > conftest.$ac_ext <<EOF
+#line 762 "configure"
+#include "confdefs.h"
+main(){return(0);}
+EOF
+if { (eval echo configure:766: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+  ac_cv_prog_cc_works=yes
+  # If we can't run a trivial program, we are probably using a cross compiler.
+  if (./conftest; exit) 2>/dev/null; then
+    ac_cv_prog_cc_cross=no
+  else
+    ac_cv_prog_cc_cross=yes
+  fi
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_cv_prog_cc_works=no
+fi
+rm -fr conftest*
+
+echo "$ac_t""$ac_cv_prog_cc_works" 1>&6
+if test $ac_cv_prog_cc_works = no; then
+  { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
+fi
+echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
+echo "configure:786: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
+cross_compiling=$ac_cv_prog_cc_cross
+
+echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
+echo "configure:791: checking whether we are using GNU C" >&5
+if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.c <<EOF
+#ifdef __GNUC__
+  yes;
+#endif
+EOF
+if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:800: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+  ac_cv_prog_gcc=yes
+else
+  ac_cv_prog_gcc=no
+fi
+fi
+
+echo "$ac_t""$ac_cv_prog_gcc" 1>&6
+
+if test $ac_cv_prog_gcc = yes; then
+  GCC=yes
+  ac_test_CFLAGS="${CFLAGS+set}"
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS=
+  echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
+echo "configure:815: checking whether ${CC-cc} accepts -g" >&5
+if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  echo 'void f(){}' > conftest.c
+if test -z "`${CC-cc} -g -c conftest.c 2>&1`"; then
+  ac_cv_prog_cc_g=yes
+else
+  ac_cv_prog_cc_g=no
+fi
+rm -f conftest*
+
+fi
+
+echo "$ac_t""$ac_cv_prog_cc_g" 1>&6
+  if test "$ac_test_CFLAGS" = set; then
+    CFLAGS="$ac_save_CFLAGS"
+  elif test $ac_cv_prog_cc_g = yes; then
+    CFLAGS="-g -O2"
+  else
+    CFLAGS="-O2"
+  fi
+else
+  GCC=
+  test "${CFLAGS+set}" = set || CFLAGS="-g"
+fi
+
+
+# Put a plausible default for CC_FOR_BUILD in Makefile.
+
+if test "x$cross_compiling" = "xno"; then
+  CC_FOR_BUILD='$(CC)'
+else
+  CC_FOR_BUILD=gcc
+fi
+
+
+# Check whether --enable-sim-alignment or --disable-sim-alignment was given.
+if test "${enable_sim_alignment+set}" = set; then
+  enableval="$enable_sim_alignment"
+  case "${enableval}" in
+  yes | strict | STRICT)	sim_alignment="-DWITH_ALIGNMENT=STRICT_ALIGNMENT";;
+  no | nonstrict | NONSTRICT)	sim_alignment="-DWITH_ALIGNMENT=NONSTRICT_ALIGNMENT";;
+  0 | default | DEFAULT)	sim_alignment="-DWITH_ALIGNMENT=0";;
+  *)				{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-alignment"" 1>&2; exit 1; }; sim_alignment="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_alignment" != x""; then
+  echo "Setting alignment flags = $sim_alignment" 6>&1
+fi
+else
+  sim_alignment=""
+fi
+
+
+# Check whether --enable-sim-assert or --disable-sim-assert was given.
+if test "${enable_sim_assert+set}" = set; then
+  enableval="$enable_sim_assert"
+  case "${enableval}" in
+  yes)	sim_assert="-DWITH_ASSERT=1";;
+  no)	sim_assert="-DWITH_ASSERT=0";;
+  *)	{ echo "configure: error: "--enable-sim-assert does not take a value"" 1>&2; exit 1; }; sim_assert="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_assert" != x""; then
+  echo "Setting assert flags = $sim_assert" 6>&1
+fi
+else
+  sim_assert=""
+fi
+
+
+# Check whether --enable-sim-bitsize or --disable-sim-bitsize was given.
+if test "${enable_sim_bitsize+set}" = set; then
+  enableval="$enable_sim_bitsize"
+  case "${enableval}" in
+  32|64) sim_bitsize="-DWITH_TARGET_WORD_BITSIZE=$enableval";;
+  *)	 { echo "configure: error: "--enable-sim-bitsize was given $enableval.  Expected 32 or 64"" 1>&2; exit 1; }; sim_bitsize="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_bitsize" != x""; then
+  echo "Setting bitsize flags = $sim_bitsize" 6>&1
+fi
+else
+  sim_bitsize=""
+fi
+
+
+# Check whether --enable-sim-bswap or --disable-sim-bswap was given.
+if test "${enable_sim_bswap+set}" = set; then
+  enableval="$enable_sim_bswap"
+  case "${enableval}" in
+  yes)	sim_bswap="-DWITH_BSWAP=1";;
+  no)	sim_bswap="-DWITH_BSWAP=0";;
+  *)	{ echo "configure: error: "--enable-sim-bswap does not take a value"" 1>&2; exit 1; }; sim_bswap="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_bswap" != x""; then
+  echo "Setting bswap flags = $sim_bswap" 6>&1
+fi
+else
+  sim_bswap=""
+fi
 
 
 # Check whether --enable-sim-cflags or --disable-sim-cflags was given.
@@ -585,20 +927,6 @@ else
   sim_cflags=""
 fi
 
-# Check whether --enable-sim-warnings or --disable-sim-warnings was given.
-if test "${enable_sim_warnings+set}" = set; then
-  enableval="$enable_sim_warnings"
-  case "${enableval}" in
-  yes)	sim_warnings="-Werror -Wall -Wpointer-arith -Wmissing-prototypes";;
-  no)	sim_warnings="-w";;
-  *)	sim_warnings=`echo "${enableval}" | sed -e "s/,/ /g"`;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_warnings" != x""; then
-  echo "Setting warning flags = $sim_warnings" 6>&1
-fi
-else
-  sim_warnings=""
-fi
 
 # Check whether --enable-sim-config or --disable-sim-config was given.
 if test "${enable_sim_config+set}" = set; then
@@ -624,53 +952,47 @@ if test x"$silent" != x"yes"; then
 fi
 fi
 
-# Check whether --enable-sim-opcode or --disable-sim-opcode was given.
-if test "${enable_sim_opcode+set}" = set; then
-  enableval="$enable_sim_opcode"
+
+# Check whether --enable-sim-decode-mechanism or --disable-sim-decode-mechanism was given.
+if test "${enable_sim_decode_mechanism+set}" = set; then
+  enableval="$enable_sim_decode_mechanism"
   case "${enableval}" in
-  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-opcode=file"" 1>&2; exit 1; };;
-  *)		if test -f "${srcdir}/${enableval}"; then
-		  sim_opcode="${enableval}"
-		elif test -f "${srcdir}/ppc-opcode-${enableval}"; then
-		  sim_opcode="ppc-opcode-${enableval}"
-		else
-		  { echo "configure: error: "File $enableval is not an opcode rules file"" 1>&2; exit 1; };
-		  sim_opcode="ppc-opcode-complex"
-		fi;;
+  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-decode-mechanism=file"" 1>&2; exit 1; };;
+  array|switch|padded-switch|goto-switch)	sim_decode_mechanism="-T ${enableval}";;
+  *)		{ echo "configure: error: "File $enableval is not an opcode rules file"" 1>&2; exit 1; };
+		sim_decode_mechanism="switch";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_opcode" != x""; then
-  echo "Setting opcode flags = $sim_opcode" 6>&1
+if test x"$silent" != x"yes" && test x"$sim_decode_mechanism" != x""; then
+  echo "Setting decode mechanism flags = $sim_decode_mechanism" 6>&1
 fi
 else
-  sim_opcode="ppc-opcode-complex"
+  sim_decode_mechanism=""
 if test x"$silent" != x"yes"; then
-  echo "Setting opcode flags = $sim_opcode"
+  echo "Setting decode mechanism flags = $sim_decode_mechanism"
 fi
 fi
 
-# Check whether --enable-sim-switch or --disable-sim-switch was given.
-if test "${enable_sim_switch+set}" = set; then
-  enableval="$enable_sim_switch"
+
+# Check whether --enable-sim-default-model or --disable-sim-default-model was given.
+if test "${enable_sim_default_model+set}" = set; then
+  enableval="$enable_sim_default_model"
   case "${enableval}" in
-  yes)	sim_switch="-s";;
-  no)	sim_switch="";;
-  *)	{ echo "configure: error: "--enable-sim-switch does not take a value"" 1>&2; exit 1; }; sim_switch="";;
+  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-default-model=model"" 1>&2; exit 1; };;
+  *)		sim_default_model="-DWITH_DEFAULT_MODEL=${enableval}";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_switch" != x""; then
-  echo "Setting switch flags = $sim_switch" 6>&1
+if test x"$silent" != x"yes" && test x"$sim_default_model" != x""; then
+  echo "Setting default-model flags = $sim_default_model" 6>&1
 fi
 else
-  sim_switch="";
-if test x"$silent" != x"yes"; then
-  echo "Setting switch flags = $sim_switch" 6>&1
+  sim_default_model=""
 fi
-fi
+
 
 # Check whether --enable-sim-duplicate or --disable-sim-duplicate was given.
 if test "${enable_sim_duplicate+set}" = set; then
   enableval="$enable_sim_duplicate"
   case "${enableval}" in
-  yes)	sim_dup="-e";;
+  yes)	sim_dup="-E";;
   no)	sim_dup="";;
   *)	{ echo "configure: error: "--enable-sim-duplicate does not take a value"" 1>&2; exit 1; }; sim_dup="";;
 esac
@@ -678,11 +1000,52 @@ if test x"$silent" != x"yes" && test x"$sim_dup" != x""; then
   echo "Setting duplicate flags = $sim_dup" 6>&1
 fi
 else
-  sim_dup="-e"
+  sim_dup="-E"
 if test x"$silent" != x"yes"; then
   echo "Setting duplicate flags = $sim_dup" 6>&1
 fi
 fi
+
+
+# Check whether --enable-sim-endian or --disable-sim-endian was given.
+if test "${enable_sim_endian+set}" = set; then
+  enableval="$enable_sim_endian"
+  case "${enableval}" in
+  yes)	case "$target" in
+	  *powerpc-*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
+	  *powerpcle-*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
+	  *) echo "Unknown target $target" 1>&6; sim_endian="-DWITH_TARGET_BYTE_ORDER=0";;
+	esac;;
+  no)	 sim_endian="-DWITH_TARGET_BYTE_ORDER=0";;
+  b*|B*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
+  l*|L*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
+  *)	 { echo "configure: error: "Unknown value $enableval for --enable-sim-endian"" 1>&2; exit 1; }; sim_endian="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_endian" != x""; then
+  echo "Setting endian flags = $sim_endian" 6>&1
+fi
+else
+  sim_endian=""
+fi
+
+
+# Check whether --enable-sim-env or --disable-sim-env was given.
+if test "${enable_sim_env+set}" = set; then
+  enableval="$enable_sim_env"
+  case "${enableval}" in
+  operating | os | oea)	sim_env="-DWITH_ENVIRONMENT=OPERATING_ENVIRONMENT";;
+  virtual | vea)	sim_env="-DWITH_ENVIRONMENT=VIRTUAL_ENVIRONMENT";;
+  user | uea)		sim_env="-DWITH_ENVIRONMENT=USER_ENVIRONMENT";;
+  no)			sim_env="-DWITH_ENVIRONMENT=0";;
+  *)			{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-env"" 1>&2; exit 1; }; sim_env="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_env" != x""; then
+  echo "Setting env flags = $sim_env" 6>&1
+fi
+else
+  sim_env=""
+fi
+
 
 # Check whether --enable-sim-filter or --disable-sim-filter was given.
 if test "${enable_sim_filter+set}" = set; then
@@ -690,37 +1053,222 @@ if test "${enable_sim_filter+set}" = set; then
   case "${enableval}" in
   yes)	{ echo "configure: error: "--enable-sim-filter must be specified with a rule to filter or no"" 1>&2; exit 1; }; sim_filter="";;
   no)	sim_filter="";;
-  *)	sim_filter="-f $enableval";;
+  *)	sim_filter="-F $enableval";;
 esac
 if test x"$silent" != x"yes" && test x"$sim_filter" != x""; then
   echo "Setting filter flags = $sim_filter" 6>&1
 fi
 else
-  sim_filter="-f 64"
+  sim_filter="-F 32,f,o"
 if test x"$silent" != x"yes"; then
   echo "Setting filter flags = $sim_filter" 6>&1
 fi
 fi
 
+
+# Check whether --enable-sim-float or --disable-sim-float was given.
+if test "${enable_sim_float+set}" = set; then
+  enableval="$enable_sim_float"
+  case "${enableval}" in
+  yes | hard)	sim_float="-DWITH_FLOATING_POINT=HARD_FLOATING_POINT";;
+  no | soft)	sim_float="-DWITH_FLOATING_POINT=SOFT_FLOATING_POINT";;
+  *)		{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-float"" 1>&2; exit 1; }; sim_float="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_float" != x""; then
+  echo "Setting float flags = $sim_float" 6>&1
+fi
+else
+  sim_float=""
+fi
+
+
+# Check whether --enable-sim-hardware or --disable-sim-hardware was given.
+if test "${enable_sim_hardware+set}" = set; then
+  enableval="$enable_sim_hardware"
+  hardware="cpu,memory,nvram,iobus,htab,disk,trace,register,vm,init,core,pal,com,eeprom,opic,glue,phb,ide"
+case "${enableval}" in
+  yes)	;;
+  no)	{ echo "configure: error: "List of hardware must be specified for --enable-sim-hardware"" 1>&2; exit 1; }; hardware="";;
+  ,*)   hardware="${hardware}${enableval}";;
+  *,)   hardware="${enableval}${hardware}";;
+  *)	hardware="${enableval}"'';;
+esac
+sim_hw_src=`echo $hardware | sed -e 's/,/.c hw_/g' -e 's/^/hw_/' -e s'/$/.c/'`
+sim_hw_obj=`echo $sim_hw_src | sed -e 's/\.c/.o/g'`
+if test x"$silent" != x"yes" && test x"$hardware" != x""; then
+  echo "Setting hardware to $sim_hw_src, $sim_hw_obj"
+fi
+else
+  hardware="cpu,memory,nvram,iobus,htab,disk,trace,register,vm,init,core,pal,com,eeprom,opic,glue,phb,ide"
+sim_hw_src=`echo $hardware | sed -e 's/,/.c hw_/g' -e 's/^/hw_/' -e s'/$/.c/'`
+sim_hw_obj=`echo $sim_hw_src | sed -e 's/\.c/.o/g'`
+if test x"$silent" != x"yes"; then
+  echo "Setting hardware to $sim_hw_src, $sim_hw_obj"
+fi
+fi
+
+
+# Check whether --enable-sim-hostbitsize or --disable-sim-hostbitsize was given.
+if test "${enable_sim_hostbitsize+set}" = set; then
+  enableval="$enable_sim_hostbitsize"
+  case "${enableval}" in
+  32|64) sim_hostbitsize="-DWITH_HOST_WORD_BITSIZE=$enableval";;
+  *)	 { echo "configure: error: "--enable-sim-hostbitsize was given $enableval.  Expected 32 or 64"" 1>&2; exit 1; }; sim_hostbitsize="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_hostbitsize" != x""; then
+  echo "Setting hostbitsize flags = $sim_hostbitsize" 6>&1
+fi
+else
+  sim_hostbitsize=""
+fi
+
+
+# Check whether --enable-sim-hostendian or --disable-sim-hostendian was given.
+if test "${enable_sim_hostendian+set}" = set; then
+  enableval="$enable_sim_hostendian"
+  case "${enableval}" in
+  no)	 sim_hostendian="-DWITH_HOST_BYTE_ORDER=0";;
+  b*|B*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN";;
+  l*|L*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN";;
+  *)	 { echo "configure: error: "Unknown value $enableval for --enable-sim-hostendian"" 1>&2; exit 1; }; sim_hostendian="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_hostendian" != x""; then
+  echo "Setting hostendian flags = $sim_hostendian" 6>&1
+fi
+else
+  
+if test "x$cross_compiling" = "xno"; then
+  echo $ac_n "checking whether byte ordering is bigendian""... $ac_c" 1>&6
+echo "configure:1143: checking whether byte ordering is bigendian" >&5
+if eval "test \"`echo '$''{'ac_cv_c_bigendian'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_cv_c_bigendian=unknown
+# See if sys/param.h defines the BYTE_ORDER macro.
+cat > conftest.$ac_ext <<EOF
+#line 1150 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+int main() {
+
+#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
+ bogus endian macros
+#endif
+; return 0; }
+EOF
+if { (eval echo configure:1161: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  # It does; now see whether it defined to BIG_ENDIAN or not.
+cat > conftest.$ac_ext <<EOF
+#line 1165 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+int main() {
+
+#if BYTE_ORDER != BIG_ENDIAN
+ not big endian
+#endif
+; return 0; }
+EOF
+if { (eval echo configure:1176: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_c_bigendian=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_c_bigendian=no
+fi
+rm -f conftest*
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+fi
+rm -f conftest*
+if test $ac_cv_c_bigendian = unknown; then
+if test "$cross_compiling" = yes; then
+    { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1196 "configure"
+#include "confdefs.h"
+main () {
+  /* Are we little or big endian?  From Harbison&Steele.  */
+  union
+  {
+    long l;
+    char c[sizeof (long)];
+  } u;
+  u.l = 1;
+  exit (u.c[sizeof (long) - 1] == 1);
+}
+EOF
+if { (eval echo configure:1209: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+then
+  ac_cv_c_bigendian=no
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -fr conftest*
+  ac_cv_c_bigendian=yes
+fi
+rm -fr conftest*
+fi
+
+fi
+fi
+
+echo "$ac_t""$ac_cv_c_bigendian" 1>&6
+if test $ac_cv_c_bigendian = yes; then
+  cat >> confdefs.h <<\EOF
+#define WORDS_BIGENDIAN 1
+EOF
+
+fi
+
+  if test $ac_cv_c_bigendian = yes; then
+    sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN"
+  else
+    sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN"
+  fi
+else
+  sim_hostendian="-DWITH_HOST_BYTE_ORDER=0"
+fi
+fi
+
+
 # Check whether --enable-sim-icache or --disable-sim-icache was given.
 if test "${enable_sim_icache+set}" = set; then
   enableval="$enable_sim_icache"
-  icache=""
-case "${enableval}" in
-  yes)		sim_icache="-r 1024"; icache="1024";;
-  define)	sim_icache="-r 1024 -R"; icache="1024";;
-  no)		sim_icache="";;
-  *)		sim_icache="-r ${enableval}"; icache="${enableval}";;
+  icache="-R"
+ case "${enableval}" in
+  yes)		icache="1024"; sim_icache="-I $icache";;
+  no)		sim_icache="-R";;
+  *) icache=1024
+     sim_icache="-"
+     for x in `echo "${enableval}" | sed -e "s/,/ /g"`; do
+       case "$x" in
+         define)	sim_icache="${sim_icache}R";;
+         semantic)	sim_icache="${sim_icache}C";;
+	 insn)		sim_icache="${sim_icache}S";;
+	 0*|1*|2*|3*|4*|5*|6*|7*|8*|9*)	icache=$x;;
+         *)		{ echo "configure: error: "Unknown value $x for --enable-sim-icache"" 1>&2; exit 1; }; sim_icache="";;
+       esac
+     done
+     sim_icache="${sim_icache}I $icache";;
 esac
 if test x"$silent" != x"yes" && test x"$icache" != x""; then
-  echo "Setting instruction cache size to $icache"
+  echo "Setting instruction cache size to $icache ($sim_icache)"
 fi
 else
-  sim_icache="-r 1024"
+  sim_icache="-CSRI 1024"
 if test x"$silent" != x"yes"; then
-  echo "Setting instruction cache size to 1024"
+  echo "Setting instruction cache size to 1024 ($sim_icache)"
 fi
 fi
+
 
 # Check whether --enable-sim-inline or --disable-sim-inline was given.
 if test "${enable_sim_inline+set}" = set; then
@@ -735,8 +1283,8 @@ case "$enableval" in
        new_flag=""
        case "$x" in
 	 *_INLINE=*)	new_flag="-D$x";;
-	 *_INLINE)	new_flag="-D$x=ALL_INLINE";;
 	 *=*)		new_flag=`echo "$x" | sed -e "s/=/_INLINE=/" -e "s/^/-D/"`;;
+	 *_INLINE)	new_flag="-D$x=ALL_INLINE";;
 	 *)		new_flag="-D$x""_INLINE=ALL_INLINE";;
        esac
        if test x"$sim_inline" = x""; then
@@ -760,225 +1308,72 @@ else
 fi
 fi
 
-# Check whether --enable-sim-bswap or --disable-sim-bswap was given.
-if test "${enable_sim_bswap+set}" = set; then
-  enableval="$enable_sim_bswap"
-  case "${enableval}" in
-  yes)	sim_bswap="-DWITH_BSWAP=1";;
-  no)	sim_bswap="-DWITH_BSWAP=0";;
-  *)	{ echo "configure: error: "--enable-sim-bswap does not take a value"" 1>&2; exit 1; }; sim_bswap="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_bswap" != x""; then
-  echo "Setting bswap flags = $sim_bswap" 6>&1
-fi
-else
-  sim_bswap=""
-fi
 
-# Check whether --enable-sim-endian or --disable-sim-endian was given.
-if test "${enable_sim_endian+set}" = set; then
-  enableval="$enable_sim_endian"
+# Check whether --enable-sim-jump or --disable-sim-jump was given.
+if test "${enable_sim_jump+set}" = set; then
+  enableval="$enable_sim_jump"
   case "${enableval}" in
-  yes)	case "$target" in
-	  *powerpc-*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
-	  *powerpcle-*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
-	  *) echo "Unknown target $target" 1>&6; sim_endian="-DWITH_TARGET_BYTE_ORDER=0";;
-	esac;;
-  no)	 sim_endian="-DWITH_TARGET_BYTE_ORDER=0";;
-  b*|B*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
-  l*|L*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
-  *)	 { echo "configure: error: "Unknown value $enableval for --enable-sim-endian"" 1>&2; exit 1; }; sim_endian="";;
+  yes)	sim_jump="-J";;
+  no)	sim_jump="";;
+  *)	{ echo "configure: error: "--enable-sim-jump does not take a value"" 1>&2; exit 1; }; sim_jump="";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_endian" != x""; then
-  echo "Setting endian flags = $sim_endian" 6>&1
+if test x"$silent" != x"yes" && test x"$sim_jump" != x""; then
+  echo "Setting jump flag = $sim_jump" 6>&1
 fi
 else
-  sim_endian=""
-fi
-
-# Check whether --enable-sim-hostendian or --disable-sim-hostendian was given.
-if test "${enable_sim_hostendian+set}" = set; then
-  enableval="$enable_sim_hostendian"
-  case "${enableval}" in
-  no)	 sim_hostendian="-DWITH_HOST_BYTE_ORDER=0";;
-  b*|B*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN";;
-  l*|L*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN";;
-  *)	 { echo "configure: error: "Unknown value $enableval for --enable-sim-hostendian"" 1>&2; exit 1; }; sim_hostendian="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_hostendian" != x""; then
-  echo "Setting hostendian flags = $sim_hostendian" 6>&1
-fi
-else
-  sim_hostendian=""
-fi
-
-# Check whether --enable-sim-smp or --disable-sim-smp was given.
-if test "${enable_sim_smp+set}" = set; then
-  enableval="$enable_sim_smp"
-  case "${enableval}" in
-  yes)	sim_smp="-DWITH_SMP=5";;
-  no)	sim_smp="-DWITH_SMP=0";;
-  *)	sim_smp="-DWITH_SMP=$enableval";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_smp" != x""; then
-  echo "Setting smp flags = $sim_smp" 6>&1
-fi
-else
-  sim_smp="-DWITH_SMP=5"
+  sim_jump=""
 if test x"$silent" != x"yes"; then
-  echo "Setting smp flags = $sim_smp" 6>&1
+  echo "Setting jump flag = $sim_jump" 6>&1
 fi
 fi
 
-# Check whether --enable-sim-xor-endian or --disable-sim-xor-endian was given.
-if test "${enable_sim_xor_endian+set}" = set; then
-  enableval="$enable_sim_xor_endian"
+
+# Check whether --enable-sim-line-nr or --disable-sim-line-nr was given.
+if test "${enable_sim_line_nr+set}" = set; then
+  enableval="$enable_sim_line_nr"
   case "${enableval}" in
-  yes)	sim_xor_endian="-DWITH_XOR_ENDIAN=8";;
-  no)	sim_xor_endian="-DWITH_XOR_ENDIAN=0";;
-  *)	sim_xor_endian="-DWITH_XOR_ENDIAN=$enableval";;
+  yes)	sim_line_nr="";;
+  no)	sim_line_nr="-L";;
+  *)	{ echo "configure: error: "--enable-sim-line-nr does not take a value"" 1>&2; exit 1; }; sim_line_nr="";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_xor_endian" != x""; then
-  echo "Setting xor-endian flag = $sim_xor_endian" 6>&1
+if test x"$silent" != x"yes" && test x"$sim_line_nr" != x""; then
+  echo "Setting warning flags = $sim_line_nr" 6>&1
 fi
 else
-  sim_xor_endian=""
+  sim_line_nr=""
 fi
 
-# Check whether --enable-sim-bitsize or --disable-sim-bitsize was given.
-if test "${enable_sim_bitsize+set}" = set; then
-  enableval="$enable_sim_bitsize"
+
+# Check whether --enable-sim-model or --disable-sim-model was given.
+if test "${enable_sim_model+set}" = set; then
+  enableval="$enable_sim_model"
   case "${enableval}" in
-  32|64) sim_bitsize="-DWITH_TARGET_WORD_BITSIZE=$enableval";;
-  *)	 { echo "configure: error: "--enable-sim-bitsize was given $enableval" 1>&2; exit 1; }; sim_bitsize="";;
+  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-model=model"" 1>&2; exit 1; };;
+  *)		sim_model="-DWITH_MODEL=${enableval}";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_bitsize" != x""; then
-  echo "Setting bitsize flags = $sim_bitsize" 6>&1
+if test x"$silent" != x"yes" && test x"$sim_model" != x""; then
+  echo "Setting model flags = $sim_model" 6>&1
 fi
 else
-  sim_bitsize=""
+  sim_model=""
 fi
 
-# Check whether --enable-sim-hostbitsize or --disable-sim-hostbitsize was given.
-if test "${enable_sim_hostbitsize+set}" = set; then
-  enableval="$enable_sim_hostbitsize"
+
+# Check whether --enable-sim-model-issue or --disable-sim-model-issue was given.
+if test "${enable_sim_model_issue+set}" = set; then
+  enableval="$enable_sim_model_issue"
   case "${enableval}" in
-  32|64) sim_hostbitsize="-DWITH_HOST_WORD_BITSIZE=$enableval";;
-  *)	 { echo "configure: error: "--enable-sim-hostbitsize was given $enableval" 1>&2; exit 1; }; sim_hostbitsize="";;
+  yes)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_PROCESS";;
+  no)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_IGNORE";;
+  *)	{ echo "configure: error: "--enable-sim-model-issue does not take a value"" 1>&2; exit 1; }; sim_model_issue="";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_hostbitsize" != x""; then
-  echo "Setting hostbitsize flags = $sim_hostbitsize" 6>&1
+if test x"$silent" != x"yes"; then
+  echo "Setting model-issue flags = $sim_model_issue" 6>&1
 fi
 else
-  sim_hostbitsize=""
+  sim_model_issue=""
 fi
 
-# Check whether --enable-sim-env or --disable-sim-env was given.
-if test "${enable_sim_env+set}" = set; then
-  enableval="$enable_sim_env"
-  case "${enableval}" in
-  operating | os | oea)	sim_env="-DWITH_ENVIRONMENT=OPERATING_ENVIRONMENT";;
-  virtual | vea)	sim_env="-DWITH_ENVIRONMENT=VIRTUAL_ENVIRONMENT";;
-  user | uea)		sim_env="-DWITH_ENVIRONMENT=USER_ENVIRONMENT";;
-  no)			sim_env="-DWITH_ENVIRONMENT=0";;
-  *)			{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-env"" 1>&2; exit 1; }; sim_env="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_env" != x""; then
-  echo "Setting env flags = $sim_env" 6>&1
-fi
-else
-  sim_env=""
-fi
-
-# Check whether --enable-sim-timebase or --disable-sim-timebase was given.
-if test "${enable_sim_timebase+set}" = set; then
-  enableval="$enable_sim_timebase"
-  case "${enableval}" in
-  yes)	sim_timebase="-DWITH_TIME_BASE=1";;
-  no)	sim_timebase="-DWITH_TIME_BASE=0";;
-  *)	{ echo "configure: error: "--enable-sim-timebase does not take a value"" 1>&2; exit 1; }; sim_timebase="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_timebase" != x""; then
-  echo "Setting timebase flags = $sim_timebase" 6>&1
-fi
-else
-  sim_timebase=""
-fi
-
-# Check whether --enable-sim-alignment or --disable-sim-alignment was given.
-if test "${enable_sim_alignment+set}" = set; then
-  enableval="$enable_sim_alignment"
-  case "${enableval}" in
-  yes | strict | STRICT)	sim_alignment="-DWITH_ALIGNMENT=STRICT_ALIGNMENT";;
-  no | nonstrict | NONSTRICT)	sim_alignment="-DWITH_ALIGNMENT=NONSTRICT_ALIGNMENT";;
-  *)				{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-alignment"" 1>&2; exit 1; }; sim_alignment="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_alignment" != x""; then
-  echo "Setting alignment flags = $sim_alignment" 6>&1
-fi
-else
-  sim_alignment=""
-fi
-
-# Check whether --enable-sim-trace or --disable-sim-trace was given.
-if test "${enable_sim_trace+set}" = set; then
-  enableval="$enable_sim_trace"
-  case "${enableval}" in
-  yes)	sim_trace="-DWITH_TRACE=1";;
-  no)	sim_trace="-DWITH_TRACE=0";;
-  *)	{ echo "configure: error: "--enable-sim-trace does not take a value"" 1>&2; exit 1; }; sim_trace="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_trace" != x""; then
-  echo "Setting trace flags = $sim_trace" 6>&1
-fi
-else
-  sim_trace=""
-fi
-
-# Check whether --enable-sim-assert or --disable-sim-assert was given.
-if test "${enable_sim_assert+set}" = set; then
-  enableval="$enable_sim_assert"
-  case "${enableval}" in
-  yes)	sim_assert="-DWITH_ASSERT=1";;
-  no)	sim_assert="-DWITH_ASSERT=0";;
-  *)	{ echo "configure: error: "--enable-sim-assert does not take a value"" 1>&2; exit 1; }; sim_assert="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_assert" != x""; then
-  echo "Setting assert flags = $sim_assert" 6>&1
-fi
-else
-  sim_assert=""
-fi
-
-# Check whether --enable-sim-reserved-bits or --disable-sim-reserved-bits was given.
-if test "${enable_sim_reserved_bits+set}" = set; then
-  enableval="$enable_sim_reserved_bits"
-  case "${enableval}" in
-  yes)	sim_reserved="-DWITH_RESERVED_BITS=1";;
-  no)	sim_reserved="-DWITH_RESERVED_BITS=0";;
-  *)	{ echo "configure: error: "--enable-sim-reserved-bits does not take a value"" 1>&2; exit 1; }; sim_reserved="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_reserved" != x""; then
-  echo "Setting reserved flags = $sim_reserved" 6>&1
-fi
-else
-  sim_reserved=""
-fi
-
-# Check whether --enable-sim-float or --disable-sim-float was given.
-if test "${enable_sim_float+set}" = set; then
-  enableval="$enable_sim_float"
-  case "${enableval}" in
-  yes | hard)	sim_float="-DWITH_FLOATING_POINT=HARD_FLOATING_POINT";;
-  no | soft)	sim_float="-DWITH_FLOATING_POINT=SOFT_FLOATING_POINT";;
-  *)		{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-float"" 1>&2; exit 1; }; sim_float="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_float" != x""; then
-  echo "Setting float flags = $sim_float" 6>&1
-fi
-else
-  sim_float=""
-fi
 
 # Check whether --enable-sim-monitor or --disable-sim-monitor was given.
 if test "${enable_sim_monitor+set}" = set; then
@@ -997,48 +1392,225 @@ else
   sim_monitor=""
 fi
 
-# Check whether --enable-sim-model or --disable-sim-model was given.
-if test "${enable_sim_model+set}" = set; then
-  enableval="$enable_sim_model"
+
+# Check whether --enable-sim-opcode or --disable-sim-opcode was given.
+if test "${enable_sim_opcode+set}" = set; then
+  enableval="$enable_sim_opcode"
   case "${enableval}" in
-  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-model=model"" 1>&2; exit 1; };;
-  *)		sim_model="-DWITH_MODEL=${enableval}";;
+  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-opcode=file"" 1>&2; exit 1; };;
+  *)		if test -f "${srcdir}/${enableval}"; then
+		  sim_opcode="${enableval}"
+		elif test -f "${srcdir}/dc-${enableval}"; then
+		  sim_opcode="dc-${enableval}"
+		else
+		  { echo "configure: error: "File $enableval is not an opcode rules file"" 1>&2; exit 1; };
+		  sim_opcode="dc-complex"
+		fi;;
 esac
-if test x"$silent" != x"yes" && test x"$sim_model" != x""; then
-  echo "Setting model flags = $sim_model" 6>&1
+if test x"$silent" != x"yes" && test x"$sim_opcode" != x""; then
+  echo "Setting opcode flags = $sim_opcode" 6>&1
 fi
 else
-  sim_model=""
-fi
-
-# Check whether --enable-sim-default-model or --disable-sim-default-model was given.
-if test "${enable_sim_default_model+set}" = set; then
-  enableval="$enable_sim_default_model"
-  case "${enableval}" in
-  yes|no)	{ echo "configure: error: "No value supplied for --enable-sim-default-model=model"" 1>&2; exit 1; };;
-  *)		sim_default_model="-DWITH_DEFAULT_MODEL=${enableval}";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_default_model" != x""; then
-  echo "Setting default-model flags = $sim_default_model" 6>&1
-fi
-else
-  sim_model=""
-fi
-
-# Check whether --enable-sim-model-issue or --disable-sim-model-issue was given.
-if test "${enable_sim_model_issue+set}" = set; then
-  enableval="$enable_sim_model_issue"
-  case "${enableval}" in
-  yes)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_PROCESS";;
-  no)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_IGNORE";;
-  *)	{ echo "configure: error: "--enable-sim-model-issue does not take a value"" 1>&2; exit 1; }; sim_model_issue="";;
-esac
+  sim_opcode="dc-complex"
 if test x"$silent" != x"yes"; then
-  echo "Setting model-issue flags = $sim_model_issue" 6>&1
+  echo "Setting opcode flags = $sim_opcode"
+fi
+fi
+
+
+# Check whether --enable-sim-packages or --disable-sim-packages was given.
+if test "${enable_sim_packages+set}" = set; then
+  enableval="$enable_sim_packages"
+  packages=disklabel
+case "${enableval}" in
+  yes)	;;
+  no)	{ echo "configure: error: "List of packages must be specified for --enable-sim-packages"" 1>&2; exit 1; }; packages="";;
+  ,*)   packages="${packages}${enableval}";;
+  *,)   packages="${enableval}${packages}";;
+  *)	packages="${enableval}"'';;
+esac
+sim_pk_src=`echo $packages | sed -e 's/,/.c pk_/g' -e 's/^/pk_/' -e 's/$/.c/'`
+sim_pk_obj=`echo $sim_pk_src | sed -e 's/\.c/.o/g'`
+if test x"$silent" != x"yes" && test x"$packages" != x""; then
+  echo "Setting packages to $sim_pk_src, $sim_pk_obj"
 fi
 else
-  sim_model_issue=""
+  packages=disklabel
+sim_pk_src=`echo $packages | sed -e 's/,/.c pk_/g' -e 's/^/pk_/' -e 's/$/.c/'`
+sim_pk_obj=`echo $sim_pk_src | sed -e 's/\.c/.o/g'`
+if test x"$silent" != x"yes"; then
+  echo "Setting packages to $sim_pk_src, $sim_pk_obj"
 fi
+fi
+
+
+# Check whether --enable-sim-regparm or --disable-sim-regparm was given.
+if test "${enable_sim_regparm+set}" = set; then
+  enableval="$enable_sim_regparm"
+  case "${enableval}" in
+  0*|1*|2*|3*|4*|5*|6*|7*|8*|9*) sim_regparm="-DWITH_REGPARM=${enableval}";;
+  no)                            sim_regparm="" ;;
+  yes)                           sim_regparm="-DWITH_REGPARM=3";;
+  *)   { echo "configure: error: "Unknown value $enableval for --enable-sim-regparm"" 1>&2; exit 1; }; sim_regparm="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_regparm" != x""; then
+  echo "Setting regparm flags = $sim_regparm" 6>&1
+fi
+else
+  sim_regparm=""
+fi
+
+
+# Check whether --enable-sim-reserved-bits or --disable-sim-reserved-bits was given.
+if test "${enable_sim_reserved_bits+set}" = set; then
+  enableval="$enable_sim_reserved_bits"
+  case "${enableval}" in
+  yes)	sim_reserved="-DWITH_RESERVED_BITS=1";;
+  no)	sim_reserved="-DWITH_RESERVED_BITS=0";;
+  *)	{ echo "configure: error: "--enable-sim-reserved-bits does not take a value"" 1>&2; exit 1; }; sim_reserved="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_reserved" != x""; then
+  echo "Setting reserved flags = $sim_reserved" 6>&1
+fi
+else
+  sim_reserved=""
+fi
+
+
+# Check whether --enable-sim-smp or --disable-sim-smp was given.
+if test "${enable_sim_smp+set}" = set; then
+  enableval="$enable_sim_smp"
+  case "${enableval}" in
+  yes)	sim_smp="-DWITH_SMP=5" ; sim_igen_smp="-N 5";;
+  no)	sim_smp="-DWITH_SMP=0" ; sim_igen_smp="-N 0";;
+  *)	sim_smp="-DWITH_SMP=$enableval" ; sim_igen_smp="-N $enableval";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_smp" != x""; then
+  echo "Setting smp flags = $sim_smp" 6>&1
+fi
+else
+  sim_smp="-DWITH_SMP=5" ; sim_igen_smp="-N 5"
+if test x"$silent" != x"yes"; then
+  echo "Setting smp flags = $sim_smp" 6>&1
+fi
+fi
+
+
+# Check whether --enable-sim-stdcall or --disable-sim-stdcall was given.
+if test "${enable_sim_stdcall+set}" = set; then
+  enableval="$enable_sim_stdcall"
+  case "${enableval}" in
+  no)		sim_stdcall="" ;;
+  std*)		sim_stdcall="-DWITH_STDCALL=1";;
+  yes)		sim_stdcall="-DWITH_STDCALL=1";;
+  *)   { echo "configure: error: "Unknown value $enableval for --enable-sim-stdcall"" 1>&2; exit 1; }; sim_stdcall="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_stdcall" != x""; then
+  echo "Setting function call flags = $sim_stdcall" 6>&1
+fi
+else
+  sim_stdcall=""
+fi
+
+
+# Check whether --enable-sim-stdio or --disable-sim-stdio was given.
+if test "${enable_sim_stdio+set}" = set; then
+  enableval="$enable_sim_stdio"
+  case "${enableval}" in
+  yes)	sim_stdio="-DWITH_STDIO=DO_USE_STDIO";;
+  no)	sim_stdio="-DWITH_STDIO=DONT_USE_STDIO";;
+  *)	{ echo "configure: error: "Unknown value $enableval passed to --enable-sim-stdio"" 1>&2; exit 1; }; sim_stdio="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_stdio" != x""; then
+  echo "Setting stdio flags = $sim_stdio" 6>&1
+fi
+else
+  sim_stdio=""
+fi
+
+
+# Check whether --enable-sim-switch or --disable-sim-switch was given.
+if test "${enable_sim_switch+set}" = set; then
+  enableval="$enable_sim_switch"
+  case "${enableval}" in
+  yes)	sim_switch="-s";;
+  no)	sim_switch="";;
+  *)	{ echo "configure: error: "--enable-sim-switch does not take a value"" 1>&2; exit 1; }; sim_switch="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_switch" != x""; then
+  echo "Setting switch flags = $sim_switch" 6>&1
+fi
+else
+  sim_switch="";
+if test x"$silent" != x"yes"; then
+  echo "Setting switch flags = $sim_switch" 6>&1
+fi
+fi
+
+
+# Check whether --enable-sim-timebase or --disable-sim-timebase was given.
+if test "${enable_sim_timebase+set}" = set; then
+  enableval="$enable_sim_timebase"
+  case "${enableval}" in
+  yes)	sim_timebase="-DWITH_TIME_BASE=1";;
+  no)	sim_timebase="-DWITH_TIME_BASE=0";;
+  *)	{ echo "configure: error: "--enable-sim-timebase does not take a value"" 1>&2; exit 1; }; sim_timebase="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_timebase" != x""; then
+  echo "Setting timebase flags = $sim_timebase" 6>&1
+fi
+else
+  sim_timebase=""
+fi
+
+
+# Check whether --enable-sim-trace or --disable-sim-trace was given.
+if test "${enable_sim_trace+set}" = set; then
+  enableval="$enable_sim_trace"
+  case "${enableval}" in
+  yes)	sim_trace="-DWITH_TRACE=1";;
+  no)	sim_trace="-DWITH_TRACE=0";;
+  *)	{ echo "configure: error: "--enable-sim-trace does not take a value"" 1>&2; exit 1; }; sim_trace="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_trace" != x""; then
+  echo "Setting trace flags = $sim_trace" 6>&1
+fi
+else
+  sim_trace=""
+fi
+
+
+# Check whether --enable-sim-warnings or --disable-sim-warnings was given.
+if test "${enable_sim_warnings+set}" = set; then
+  enableval="$enable_sim_warnings"
+  case "${enableval}" in
+  yes)	sim_warnings="-Werror -Wall -Wpointer-arith -Wmissing-prototypes -Wmissing-declarations ";;
+  no)	sim_warnings="-w";;
+  *)	sim_warnings=`echo "${enableval}" | sed -e "s/,/ /g"`;;
+esac
+if test x"$silent" != x"yes" && test x"$sim_warnings" != x""; then
+  echo "Setting warning flags = $sim_warnings" 6>&1
+fi
+else
+  sim_warnings=""
+fi
+
+
+# Check whether --enable-sim-xor-endian or --disable-sim-xor-endian was given.
+if test "${enable_sim_xor_endian+set}" = set; then
+  enableval="$enable_sim_xor_endian"
+  case "${enableval}" in
+  yes)	sim_xor_endian="-DWITH_XOR_ENDIAN=8";;
+  no)	sim_xor_endian="-DWITH_XOR_ENDIAN=0";;
+  *)	sim_xor_endian="-DWITH_XOR_ENDIAN=$enableval";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_xor_endian" != x""; then
+  echo "Setting xor-endian flag = $sim_xor_endian" 6>&1
+fi
+else
+  sim_xor_endian=""
+fi
+
 
 ac_aux_dir=
 for ac_dir in `cd $srcdir;pwd`/../.. $srcdir/`cd $srcdir;pwd`/../..; do
@@ -1087,6 +1659,7 @@ else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
 echo $ac_n "checking host system type""... $ac_c" 1>&6
+echo "configure:1663: checking host system type" >&5
 
 host_alias=$host
 case "$host_alias" in
@@ -1101,12 +1674,13 @@ NONE)
 esac
 
 host=`$ac_config_sub $host_alias`
-host_cpu=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-host_vendor=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-host_os=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+host_cpu=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+host_vendor=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+host_os=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 echo "$ac_t""$host" 1>&6
 
 echo $ac_n "checking target system type""... $ac_c" 1>&6
+echo "configure:1684: checking target system type" >&5
 
 target_alias=$target
 case "$target_alias" in
@@ -1118,12 +1692,13 @@ NONE)
 esac
 
 target=`$ac_config_sub $target_alias`
-target_cpu=`echo $target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-target_vendor=`echo $target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-target_os=`echo $target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+target_cpu=`echo $target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+target_vendor=`echo $target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+target_os=`echo $target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 echo "$ac_t""$target" 1>&6
 
 echo $ac_n "checking build system type""... $ac_c" 1>&6
+echo "configure:1702: checking build system type" >&5
 
 build_alias=$build
 case "$build_alias" in
@@ -1135,9 +1710,9 @@ NONE)
 esac
 
 build=`$ac_config_sub $build_alias`
-build_cpu=`echo $build | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-build_vendor=`echo $build | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-build_os=`echo $build | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+build_cpu=`echo $build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+build_vendor=`echo $build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+build_os=`echo $build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 echo "$ac_t""$build" 1>&6
 
 test "$host_alias" != "$target_alias" &&
@@ -1169,80 +1744,1126 @@ test "$program_transform_name" = "" && program_transform_name="s,x,x,"
 
 
 
-# Extract the first word of "gcc", so it can be a program name with args.
-set dummy gcc; ac_word=$2
-echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+echo $ac_n "checking for st_blksize in struct stat""... $ac_c" 1>&6
+echo "configure:1749: checking for st_blksize in struct stat" >&5
+if eval "test \"`echo '$''{'ac_cv_struct_st_blksize'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
-  if test -n "$CC"; then
-  ac_cv_prog_CC="$CC" # Let the user override the test.
-else
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      ac_cv_prog_CC="gcc"
-      break
-    fi
-  done
-  IFS="$ac_save_ifs"
-  test -z "$ac_cv_prog_CC" && ac_cv_prog_CC="cc"
-fi
-fi
-CC="$ac_cv_prog_CC"
-if test -n "$CC"; then
-  echo "$ac_t""$CC" 1>&6
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-
-echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.c <<EOF
-#ifdef __GNUC__
-  yes;
-#endif
+  cat > conftest.$ac_ext <<EOF
+#line 1754 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+int main() {
+struct stat s; s.st_blksize;
+; return 0; }
 EOF
-if ${CC-cc} -E conftest.c 2>&5 | egrep yes >/dev/null 2>&1; then
-  ac_cv_prog_gcc=yes
+if { (eval echo configure:1762: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_struct_st_blksize=yes
 else
-  ac_cv_prog_gcc=no
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_struct_st_blksize=no
 fi
+rm -f conftest*
 fi
 
-echo "$ac_t""$ac_cv_prog_gcc" 1>&6
-if test $ac_cv_prog_gcc = yes; then
-  GCC=yes
-  if test "${CFLAGS+set}" != set; then
-    echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_prog_gcc_g'+set}'`\" = set"; then
+echo "$ac_t""$ac_cv_struct_st_blksize" 1>&6
+if test $ac_cv_struct_st_blksize = yes; then
+  cat >> confdefs.h <<\EOF
+#define HAVE_ST_BLKSIZE 1
+EOF
+
+fi
+
+echo $ac_n "checking for st_blocks in struct stat""... $ac_c" 1>&6
+echo "configure:1783: checking for st_blocks in struct stat" >&5
+if eval "test \"`echo '$''{'ac_cv_struct_st_blocks'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
-  echo 'void f(){}' > conftest.c
-if test -z "`${CC-cc} -g -c conftest.c 2>&1`"; then
-  ac_cv_prog_gcc_g=yes
+  cat > conftest.$ac_ext <<EOF
+#line 1788 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+int main() {
+struct stat s; s.st_blocks;
+; return 0; }
+EOF
+if { (eval echo configure:1796: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_struct_st_blocks=yes
 else
-  ac_cv_prog_gcc_g=no
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_struct_st_blocks=no
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_struct_st_blocks" 1>&6
+if test $ac_cv_struct_st_blocks = yes; then
+  cat >> confdefs.h <<\EOF
+#define HAVE_ST_BLOCKS 1
+EOF
+
+else
+  LIBOBJS="$LIBOBJS fileblocks.o"
+fi
+
+echo $ac_n "checking for st_rdev in struct stat""... $ac_c" 1>&6
+echo "configure:1819: checking for st_rdev in struct stat" >&5
+if eval "test \"`echo '$''{'ac_cv_struct_st_rdev'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1824 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+int main() {
+struct stat s; s.st_rdev;
+; return 0; }
+EOF
+if { (eval echo configure:1832: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_struct_st_rdev=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_struct_st_rdev=no
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_struct_st_rdev" 1>&6
+if test $ac_cv_struct_st_rdev = yes; then
+  cat >> confdefs.h <<\EOF
+#define HAVE_ST_RDEV 1
+EOF
+
+fi
+
+echo $ac_n "checking whether struct tm is in sys/time.h or time.h""... $ac_c" 1>&6
+echo "configure:1853: checking whether struct tm is in sys/time.h or time.h" >&5
+if eval "test \"`echo '$''{'ac_cv_struct_tm'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1858 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <time.h>
+int main() {
+struct tm *tp; tp->tm_sec;
+; return 0; }
+EOF
+if { (eval echo configure:1866: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_struct_tm=time.h
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_struct_tm=sys/time.h
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_struct_tm" 1>&6
+if test $ac_cv_struct_tm = sys/time.h; then
+  cat >> confdefs.h <<\EOF
+#define TM_IN_SYS_TIME 1
+EOF
+
+fi
+
+echo $ac_n "checking for tm_zone in struct tm""... $ac_c" 1>&6
+echo "configure:1887: checking for tm_zone in struct tm" >&5
+if eval "test \"`echo '$''{'ac_cv_struct_tm_zone'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1892 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <$ac_cv_struct_tm>
+int main() {
+struct tm tm; tm.tm_zone;
+; return 0; }
+EOF
+if { (eval echo configure:1900: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_struct_tm_zone=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_struct_tm_zone=no
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_struct_tm_zone" 1>&6
+if test "$ac_cv_struct_tm_zone" = yes; then
+  cat >> confdefs.h <<\EOF
+#define HAVE_TM_ZONE 1
+EOF
+
+else
+  echo $ac_n "checking for tzname""... $ac_c" 1>&6
+echo "configure:1920: checking for tzname" >&5
+if eval "test \"`echo '$''{'ac_cv_var_tzname'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1925 "configure"
+#include "confdefs.h"
+#include <time.h>
+#ifndef tzname /* For SGI.  */
+extern char *tzname[]; /* RS6000 and others reject char **tzname.  */
+#endif
+int main() {
+atoi(*tzname);
+; return 0; }
+EOF
+if { (eval echo configure:1935: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+  rm -rf conftest*
+  ac_cv_var_tzname=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_var_tzname=no
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_var_tzname" 1>&6
+  if test $ac_cv_var_tzname = yes; then
+    cat >> confdefs.h <<\EOF
+#define HAVE_TZNAME 1
+EOF
+
+  fi
+fi
+
+
+echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
+echo "configure:1958: checking how to run the C preprocessor" >&5
+# On Suns, sometimes $CPP names a directory.
+if test -n "$CPP" && test -d "$CPP"; then
+  CPP=
+fi
+if test -z "$CPP"; then
+if eval "test \"`echo '$''{'ac_cv_prog_CPP'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+    # This must be in double quotes, not single quotes, because CPP may get
+  # substituted into the Makefile and "${CC-cc}" will confuse make.
+  CPP="${CC-cc} -E"
+  # On the NeXT, cc -E runs the code through the compiler's parser,
+  # not just through cpp.
+  cat > conftest.$ac_ext <<EOF
+#line 1973 "configure"
+#include "confdefs.h"
+#include <assert.h>
+Syntax Error
+EOF
+ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+{ (eval echo configure:1979: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+ac_err=`grep -v '^ *+' conftest.out`
+if test -z "$ac_err"; then
+  :
+else
+  echo "$ac_err" >&5
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  CPP="${CC-cc} -E -traditional-cpp"
+  cat > conftest.$ac_ext <<EOF
+#line 1990 "configure"
+#include "confdefs.h"
+#include <assert.h>
+Syntax Error
+EOF
+ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+{ (eval echo configure:1996: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+ac_err=`grep -v '^ *+' conftest.out`
+if test -z "$ac_err"; then
+  :
+else
+  echo "$ac_err" >&5
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  CPP=/lib/cpp
+fi
+rm -f conftest*
+fi
+rm -f conftest*
+  ac_cv_prog_CPP="$CPP"
+fi
+  CPP="$ac_cv_prog_CPP"
+else
+  ac_cv_prog_CPP="$CPP"
+fi
+echo "$ac_t""$CPP" 1>&6
+
+echo $ac_n "checking for uid_t in sys/types.h""... $ac_c" 1>&6
+echo "configure:2019: checking for uid_t in sys/types.h" >&5
+if eval "test \"`echo '$''{'ac_cv_type_uid_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2024 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "uid_t" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_uid_t=yes
+else
+  rm -rf conftest*
+  ac_cv_type_uid_t=no
 fi
 rm -f conftest*
 
 fi
 
-echo "$ac_t""$ac_cv_prog_gcc_g" 1>&6
-    if test $ac_cv_prog_gcc_g = yes; then
-      CFLAGS="-g -O"
-    else
-      CFLAGS="-O"
-    fi
+echo "$ac_t""$ac_cv_type_uid_t" 1>&6
+if test $ac_cv_type_uid_t = no; then
+  cat >> confdefs.h <<\EOF
+#define uid_t int
+EOF
+
+  cat >> confdefs.h <<\EOF
+#define gid_t int
+EOF
+
+fi
+
+echo $ac_n "checking type of array argument to getgroups""... $ac_c" 1>&6
+echo "configure:2053: checking type of array argument to getgroups" >&5
+if eval "test \"`echo '$''{'ac_cv_type_getgroups'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test "$cross_compiling" = yes; then
+  ac_cv_type_getgroups=cross
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2061 "configure"
+#include "confdefs.h"
+
+/* Thanks to Mike Rendell for this test.  */
+#include <sys/types.h>
+#define NGID 256
+#undef MAX
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+main()
+{
+  gid_t gidset[NGID];
+  int i, n;
+  union { gid_t gval; long lval; }  val;
+
+  val.lval = -1;
+  for (i = 0; i < NGID; i++)
+    gidset[i] = val.gval;
+  n = getgroups (sizeof (gidset) / MAX (sizeof (int), sizeof (gid_t)) - 1,
+                 gidset);
+  /* Exit non-zero if getgroups seems to require an array of ints.  This
+     happens when gid_t is short but getgroups modifies an array of ints.  */
+  exit ((n > 0 && gidset[n] != val.gval) ? 1 : 0);
+}
+
+EOF
+if { (eval echo configure:2086: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+then
+    ac_cv_type_getgroups=gid_t
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -fr conftest*
+  ac_cv_type_getgroups=int
+fi
+rm -fr conftest*
+fi
+
+if test $ac_cv_type_getgroups = cross; then
+        cat > conftest.$ac_ext <<EOF
+#line 2100 "configure"
+#include "confdefs.h"
+#include <unistd.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "getgroups.*int.*gid_t" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_getgroups=gid_t
+else
+  rm -rf conftest*
+  ac_cv_type_getgroups=int
+fi
+rm -f conftest*
+
+fi
+fi
+
+echo "$ac_t""$ac_cv_type_getgroups" 1>&6
+cat >> confdefs.h <<EOF
+#define GETGROUPS_T $ac_cv_type_getgroups
+EOF
+
+
+echo $ac_n "checking for ANSI C header files""... $ac_c" 1>&6
+echo "configure:2124: checking for ANSI C header files" >&5
+if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2129 "configure"
+#include "confdefs.h"
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <float.h>
+EOF
+ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+{ (eval echo configure:2137: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+ac_err=`grep -v '^ *+' conftest.out`
+if test -z "$ac_err"; then
+  rm -rf conftest*
+  ac_cv_header_stdc=yes
+else
+  echo "$ac_err" >&5
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_header_stdc=no
+fi
+rm -f conftest*
+
+if test $ac_cv_header_stdc = yes; then
+  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
+cat > conftest.$ac_ext <<EOF
+#line 2154 "configure"
+#include "confdefs.h"
+#include <string.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "memchr" >/dev/null 2>&1; then
+  :
+else
+  rm -rf conftest*
+  ac_cv_header_stdc=no
+fi
+rm -f conftest*
+
+fi
+
+if test $ac_cv_header_stdc = yes; then
+  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
+cat > conftest.$ac_ext <<EOF
+#line 2172 "configure"
+#include "confdefs.h"
+#include <stdlib.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "free" >/dev/null 2>&1; then
+  :
+else
+  rm -rf conftest*
+  ac_cv_header_stdc=no
+fi
+rm -f conftest*
+
+fi
+
+if test $ac_cv_header_stdc = yes; then
+  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
+if test "$cross_compiling" = yes; then
+  :
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2193 "configure"
+#include "confdefs.h"
+#include <ctype.h>
+#define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
+#define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
+#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
+int main () { int i; for (i = 0; i < 256; i++)
+if (XOR (islower (i), ISLOWER (i)) || toupper (i) != TOUPPER (i)) exit(2);
+exit (0); }
+
+EOF
+if { (eval echo configure:2204: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+then
+  :
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -fr conftest*
+  ac_cv_header_stdc=no
+fi
+rm -fr conftest*
+fi
+
+fi
+fi
+
+echo "$ac_t""$ac_cv_header_stdc" 1>&6
+if test $ac_cv_header_stdc = yes; then
+  cat >> confdefs.h <<\EOF
+#define STDC_HEADERS 1
+EOF
+
+fi
+
+echo $ac_n "checking for mode_t""... $ac_c" 1>&6
+echo "configure:2228: checking for mode_t" >&5
+if eval "test \"`echo '$''{'ac_cv_type_mode_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2233 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "mode_t[^a-zA-Z_0-9]" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_mode_t=yes
+else
+  rm -rf conftest*
+  ac_cv_type_mode_t=no
+fi
+rm -f conftest*
+
+fi
+echo "$ac_t""$ac_cv_type_mode_t" 1>&6
+if test $ac_cv_type_mode_t = no; then
+  cat >> confdefs.h <<\EOF
+#define mode_t int
+EOF
+
+fi
+
+echo $ac_n "checking for off_t""... $ac_c" 1>&6
+echo "configure:2261: checking for off_t" >&5
+if eval "test \"`echo '$''{'ac_cv_type_off_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2266 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "off_t[^a-zA-Z_0-9]" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_off_t=yes
+else
+  rm -rf conftest*
+  ac_cv_type_off_t=no
+fi
+rm -f conftest*
+
+fi
+echo "$ac_t""$ac_cv_type_off_t" 1>&6
+if test $ac_cv_type_off_t = no; then
+  cat >> confdefs.h <<\EOF
+#define off_t long
+EOF
+
+fi
+
+echo $ac_n "checking for pid_t""... $ac_c" 1>&6
+echo "configure:2294: checking for pid_t" >&5
+if eval "test \"`echo '$''{'ac_cv_type_pid_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2299 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "pid_t[^a-zA-Z_0-9]" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_pid_t=yes
+else
+  rm -rf conftest*
+  ac_cv_type_pid_t=no
+fi
+rm -f conftest*
+
+fi
+echo "$ac_t""$ac_cv_type_pid_t" 1>&6
+if test $ac_cv_type_pid_t = no; then
+  cat >> confdefs.h <<\EOF
+#define pid_t int
+EOF
+
+fi
+
+echo $ac_n "checking return type of signal handlers""... $ac_c" 1>&6
+echo "configure:2327: checking return type of signal handlers" >&5
+if eval "test \"`echo '$''{'ac_cv_type_signal'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2332 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <signal.h>
+#ifdef signal
+#undef signal
+#endif
+#ifdef __cplusplus
+extern "C" void (*signal (int, void (*)(int)))(int);
+#else
+void (*signal ()) ();
+#endif
+
+int main() {
+int i;
+; return 0; }
+EOF
+if { (eval echo configure:2349: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_type_signal=void
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_type_signal=int
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_type_signal" 1>&6
+cat >> confdefs.h <<EOF
+#define RETSIGTYPE $ac_cv_type_signal
+EOF
+
+
+echo $ac_n "checking for size_t""... $ac_c" 1>&6
+echo "configure:2368: checking for size_t" >&5
+if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2373 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "size_t[^a-zA-Z_0-9]" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_size_t=yes
+else
+  rm -rf conftest*
+  ac_cv_type_size_t=no
+fi
+rm -f conftest*
+
+fi
+echo "$ac_t""$ac_cv_type_size_t" 1>&6
+if test $ac_cv_type_size_t = no; then
+  cat >> confdefs.h <<\EOF
+#define size_t unsigned
+EOF
+
+fi
+
+echo $ac_n "checking for uid_t in sys/types.h""... $ac_c" 1>&6
+echo "configure:2401: checking for uid_t in sys/types.h" >&5
+if eval "test \"`echo '$''{'ac_cv_type_uid_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2406 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "uid_t" >/dev/null 2>&1; then
+  rm -rf conftest*
+  ac_cv_type_uid_t=yes
+else
+  rm -rf conftest*
+  ac_cv_type_uid_t=no
+fi
+rm -f conftest*
+
+fi
+
+echo "$ac_t""$ac_cv_type_uid_t" 1>&6
+if test $ac_cv_type_uid_t = no; then
+  cat >> confdefs.h <<\EOF
+#define uid_t int
+EOF
+
+  cat >> confdefs.h <<\EOF
+#define gid_t int
+EOF
+
+fi
+
+
+for ac_func in access cfgetispeed cfgetospeed cfsetispeed cfsetospeed chdir chmod chown dup dup2 fchmod fchown fcntl fstat fstatfs getdirentries getegid geteuid getgid getpid getppid getrusage gettimeofday getuid ioctl kill link lseek lstat mkdir pipe readlink rmdir setreuid setregid stat sigprocmask stat symlink tcgetattr tcsetattr tcsendbreak tcdrain tcflush tcflow tcgetpgrp tcsetpgrp time umask unlink
+do
+echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+echo "configure:2438: checking for $ac_func" >&5
+if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2443 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char $ac_func();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+choke me
+#else
+$ac_func();
+#endif
+
+; return 0; }
+EOF
+if { (eval echo configure:2466: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+  rm -rf conftest*
+  eval "ac_cv_func_$ac_func=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_func_$ac_func=no"
+fi
+rm -f conftest*
+fi
+
+if eval "test \"`echo '$ac_cv_func_'$ac_func`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_func=HAVE_`echo $ac_func | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+  cat >> confdefs.h <<EOF
+#define $ac_tr_func 1
+EOF
+ 
+else
+  echo "$ac_t""no" 1>&6
+fi
+done
+
+
+for ac_hdr in fcntl.h stdlib.h string.h strings.h sys/ioctl.h sys/mount.h sys/param.h sys/resource.h sys/stat.h sys/termio.h sys/termios.h sys/time.h sys/times.h sys/types.h time.h unistd.h
+do
+ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
+echo "configure:2495: checking for $ac_hdr" >&5
+if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2500 "configure"
+#include "confdefs.h"
+#include <$ac_hdr>
+EOF
+ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+{ (eval echo configure:2505: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+ac_err=`grep -v '^ *+' conftest.out`
+if test -z "$ac_err"; then
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=yes"
+else
+  echo "$ac_err" >&5
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=no"
+fi
+rm -f conftest*
+fi
+if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_hdr=HAVE_`echo $ac_hdr | sed 'y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%'`
+  cat >> confdefs.h <<EOF
+#define $ac_tr_hdr 1
+EOF
+ 
+else
+  echo "$ac_t""no" 1>&6
+fi
+done
+
+ac_header_dirent=no
+for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h
+do
+ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+echo $ac_n "checking for $ac_hdr that defines DIR""... $ac_c" 1>&6
+echo "configure:2536: checking for $ac_hdr that defines DIR" >&5
+if eval "test \"`echo '$''{'ac_cv_header_dirent_$ac_safe'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2541 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <$ac_hdr>
+int main() {
+DIR *dirp = 0;
+; return 0; }
+EOF
+if { (eval echo configure:2549: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  eval "ac_cv_header_dirent_$ac_safe=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_header_dirent_$ac_safe=no"
+fi
+rm -f conftest*
+fi
+if eval "test \"`echo '$ac_cv_header_dirent_'$ac_safe`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_hdr=HAVE_`echo $ac_hdr | sed 'y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%'`
+  cat >> confdefs.h <<EOF
+#define $ac_tr_hdr 1
+EOF
+ ac_header_dirent=$ac_hdr; break
+else
+  echo "$ac_t""no" 1>&6
+fi
+done
+# Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
+if test $ac_header_dirent = dirent.h; then
+echo $ac_n "checking for opendir in -ldir""... $ac_c" 1>&6
+echo "configure:2574: checking for opendir in -ldir" >&5
+ac_lib_var=`echo dir'_'opendir | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-ldir  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 2582 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char opendir();
+
+int main() {
+opendir()
+; return 0; }
+EOF
+if { (eval echo configure:2593: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  LIBS="$LIBS -ldir"
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+else
+echo $ac_n "checking for opendir in -lx""... $ac_c" 1>&6
+echo "configure:2615: checking for opendir in -lx" >&5
+ac_lib_var=`echo x'_'opendir | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lx  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 2623 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char opendir();
+
+int main() {
+opendir()
+; return 0; }
+EOF
+if { (eval echo configure:2634: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  LIBS="$LIBS -lx"
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+fi
+
+
+sim_termio=""
+echo $ac_n "checking for struct termios""... $ac_c" 1>&6
+echo "configure:2659: checking for struct termios" >&5
+if eval "test \"`echo '$''{'ac_cv_termios_struct'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2664 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/termios.h>
+int main() {
+static struct termios x;
+ x.c_iflag = 0;
+ x.c_oflag = 0;
+ x.c_cflag = 0;
+ x.c_lflag = 0;
+ x.c_cc[NCCS] = 0;
+; return 0; }
+EOF
+if { (eval echo configure:2677: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_termios_struct=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_termios_struct=no
+fi
+rm -f conftest*
+fi
+
+echo "$ac_t""$ac_cv_termios_struct" 1>&6
+if test $ac_cv_termios_struct = yes; then
+  sim_termio="$sim_termio -DHAVE_TERMIOS_STRUCTURE"
+fi
+
+if test "$ac_cv_termios_struct" = "yes"; then
+  echo $ac_n "checking for c_line field in struct termios""... $ac_c" 1>&6
+echo "configure:2696: checking for c_line field in struct termios" >&5
+  if eval "test \"`echo '$''{'ac_cv_termios_cline'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2701 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/termios.h>
+int main() {
+static struct termios x; x.c_line = 0;
+; return 0; }
+EOF
+if { (eval echo configure:2709: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_termios_cline=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_termios_cline=no
+fi
+rm -f conftest*
+fi
+
+
+  echo "$ac_t""$ac_cv_termios_cline" 1>&6
+  if test $ac_cv_termios_cline = yes; then
+    sim_termio="$sim_termio -DHAVE_TERMIOS_CLINE"
   fi
 else
-  GCC=
-  test "${CFLAGS+set}" = set || CFLAGS="-g"
+  ac_cv_termios_cline=no
 fi
+
+if test "$ac_cv_termios_struct" != "yes"; then
+  echo $ac_n "checking for struct termio""... $ac_c" 1>&6
+echo "configure:2732: checking for struct termio" >&5
+  if eval "test \"`echo '$''{'ac_cv_termio_struct'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2737 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/termio.h>
+int main() {
+static struct termio x;
+ x.c_iflag = 0;
+ x.c_oflag = 0;
+ x.c_cflag = 0;
+ x.c_lflag = 0;
+ x.c_cc[NCC] = 0;
+; return 0; }
+EOF
+if { (eval echo configure:2750: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_termio_struct=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_termio_struct=no
+fi
+rm -f conftest*
+fi
+
+  echo "$ac_t""$ac_cv_termio_struct" 1>&6
+  if test $ac_cv_termio_struct = yes; then
+    sim_termio="$sim_termio -DHAVE_TERMIO_STRUCTURE"
+  fi
+else
+  ac_cv_termio_struct=no
+fi
+
+if test "$ac_cv_termio_struct" = "yes"; then
+  echo $ac_n "checking for c_line field in struct termio""... $ac_c" 1>&6
+echo "configure:2772: checking for c_line field in struct termio" >&5
+  if eval "test \"`echo '$''{'ac_cv_termio_cline'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2777 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/termio.h>
+int main() {
+static struct termio x; x.c_line = 0;
+; return 0; }
+EOF
+if { (eval echo configure:2785: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  ac_cv_termio_cline=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_termio_cline=no
+fi
+rm -f conftest*
+fi
+
+
+  echo "$ac_t""$ac_cv_termio_cline" 1>&6
+  if test $ac_cv_termio_cline = yes; then
+    sim_termio="$sim_termio -DHAVE_TERMIO_CLINE"
+  fi
+else
+  ac_cv_termio_cline=no
+fi
+
+sim_devzero=""
+echo $ac_n "checking for /dev/zero""... $ac_c" 1>&6
+echo "configure:2808: checking for /dev/zero" >&5
+if eval "test \"`echo '$''{'ac_cv_devzero'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test "$cross_compiling" = yes; then
+  ac_cv_devzero=no
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2816 "configure"
+#include "confdefs.h"
+#include <fcntl.h>
+main () {
+  char buf[2048];
+  int i;
+  int fd = open ("/dev/zero", O_RDONLY);
+  if (fd < 0)
+    return 1;
+  for (i = 0; i < sizeof (buf); i++)
+    buf[i] = 1;
+  if (read (fd, buf, sizeof (buf)) != sizeof (buf))
+    return 1;
+  for (i = 0; i < sizeof (buf); i++)
+    if (buf[i])
+      return 1;
+  return 0;
+}
+EOF
+if { (eval echo configure:2835: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+then
+  ac_cv_devzero=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -fr conftest*
+  ac_cv_devzero=no
+fi
+rm -fr conftest*
+fi
+
+fi
+
+echo "$ac_t""$ac_cv_devzero" 1>&6
+if test $ac_cv_devzero = yes; then
+  sim_devzero="-DHAVE_DEVZERO"
+else
+  sim_devzero=""
+fi
+
+echo $ac_n "checking for common simulator directory""... $ac_c" 1>&6
+echo "configure:2857: checking for common simulator directory" >&5
+if test -f "${srcdir}/../common/callback.c"; then
+  echo "$ac_t""yes" 1>&6
+  sim_callback="callback.o targ-map.o"
+  sim_targ_vals="targ-vals.h targ-map.c targ-vals.def"
+else
+  echo "$ac_t""no" 1>&6
+  sim_callback=""
+  sim_targ_vals=""
+fi
+
 
 
 
@@ -1251,6 +2872,7 @@ AR=${AR-ar}
 # Extract the first word of "ranlib", so it can be a program name with args.
 set dummy ranlib; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+echo "configure:2876: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_RANLIB'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1304,379 +2926,19 @@ fi
 
 
 
-for ac_func in getrusage
-do
-echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1315 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-char $ac_func();
-
-int main() { return 0; }
-int t() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-$ac_func();
-#endif
-
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_func_$ac_func=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_func_$ac_func=no"
-fi
-rm -f conftest*
-
-fi
-if eval "test \"`echo '$ac_cv_func_'$ac_func`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_func=HAVE_`echo $ac_func | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_func 1
-EOF
- 
-else
-  echo "$ac_t""no" 1>&6
-fi
-done
-
-
-# Put a plausible default for CC_FOR_BUILD in Makefile.
-# If we cannot run a trivial program, we must be cross compiling.
-echo $ac_n "checking whether cross-compiling""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_c_cross'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  if test "$cross_compiling" = yes; then
-  ac_cv_c_cross=yes
-else
-cat > conftest.$ac_ext <<EOF
-#line 1370 "configure"
-#include "confdefs.h"
-main(){return(0);}
-EOF
-eval $ac_link
-if test -s conftest && (./conftest; exit) 2>/dev/null; then
-  ac_cv_c_cross=no
-else
-  ac_cv_c_cross=yes
-fi
-fi
-rm -fr conftest*
-fi
-
-echo "$ac_t""$ac_cv_c_cross" 1>&6
-cross_compiling=$ac_cv_c_cross
-
-if test "x$cross_compiling" = "xno"; then
-  CC_FOR_BUILD='$(CC)'
-else
-  CC_FOR_BUILD=gcc
-fi
-
-
-echo $ac_n "checking whether byte ordering is bigendian""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_c_bigendian'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_cv_c_bigendian=unknown
-# See if sys/param.h defines the BYTE_ORDER macro.
-cat > conftest.$ac_ext <<EOF
-#line 1401 "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <sys/param.h>
-int main() { return 0; }
-int t() {
-
-#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
- bogus endian macros
-#endif
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  # It does; now see whether it defined to BIG_ENDIAN or not.
-cat > conftest.$ac_ext <<EOF
-#line 1417 "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <sys/param.h>
-int main() { return 0; }
-int t() {
-
-#if BYTE_ORDER != BIG_ENDIAN
- not big endian
-#endif
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  ac_cv_c_bigendian=yes
-else
-  rm -rf conftest*
-  ac_cv_c_bigendian=no
-fi
-rm -f conftest*
-
-fi
-rm -f conftest*
-
-if test $ac_cv_c_bigendian = unknown; then
-if test "$cross_compiling" = yes; then
-    { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-else
-cat > conftest.$ac_ext <<EOF
-#line 1446 "configure"
-#include "confdefs.h"
-main () {
-  /* Are we little or big endian?  From Harbison&Steele.  */
-  union
-  {
-    long l;
-    char c[sizeof (long)];
-  } u;
-  u.l = 1;
-  exit (u.c[sizeof (long) - 1] == 1);
-}
-EOF
-eval $ac_link
-if test -s conftest && (./conftest; exit) 2>/dev/null; then
-  ac_cv_c_bigendian=no
-else
-  ac_cv_c_bigendian=yes
-fi
-fi
-rm -fr conftest*
-fi
-fi
-
-echo "$ac_t""$ac_cv_c_bigendian" 1>&6
-if test $ac_cv_c_bigendian = yes; then
-  cat >> confdefs.h <<\EOF
-#define WORDS_BIGENDIAN 1
-EOF
-
-fi
 
 
 
-echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
-# On Suns, sometimes $CPP names a directory.
-if test -n "$CPP" && test -d "$CPP"; then
-  CPP=
-fi
-if test -z "$CPP"; then
-if eval "test \"`echo '$''{'ac_cv_prog_CPP'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-    # This must be in double quotes, not single quotes, because CPP may get
-  # substituted into the Makefile and "${CC-cc}" will confuse make.
-  CPP="${CC-cc} -E"
-  # On the NeXT, cc -E runs the code through the compiler's parser,
-  # not just through cpp.
-  cat > conftest.$ac_ext <<EOF
-#line 1495 "configure"
-#include "confdefs.h"
-#include <assert.h>
-Syntax Error
-EOF
-eval "$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-ac_err=`grep -v '^ *+' conftest.out`
-if test -z "$ac_err"; then
-  :
-else
-  echo "$ac_err" >&5
-  rm -rf conftest*
-  CPP="${CC-cc} -E -traditional-cpp"
-  cat > conftest.$ac_ext <<EOF
-#line 1509 "configure"
-#include "confdefs.h"
-#include <assert.h>
-Syntax Error
-EOF
-eval "$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-ac_err=`grep -v '^ *+' conftest.out`
-if test -z "$ac_err"; then
-  :
-else
-  echo "$ac_err" >&5
-  rm -rf conftest*
-  CPP=/lib/cpp
-fi
-rm -f conftest*
-fi
-rm -f conftest*
-  ac_cv_prog_CPP="$CPP"
-fi
-  CPP="$ac_cv_prog_CPP"
-else
-  ac_cv_prog_CPP="$CPP"
-fi
-echo "$ac_t""$CPP" 1>&6
 
-for ac_hdr in string.h strings.h stdlib.h time.h sys/mount.h sys/types.h sys/time.h sys/times.h unistd.h sys/resource.h
-do
-ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
-echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1542 "configure"
-#include "confdefs.h"
-#include <$ac_hdr>
-EOF
-eval "$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-ac_err=`grep -v '^ *+' conftest.out`
-if test -z "$ac_err"; then
-  rm -rf conftest*
-  eval "ac_cv_header_$ac_safe=yes"
-else
-  echo "$ac_err" >&5
-  rm -rf conftest*
-  eval "ac_cv_header_$ac_safe=no"
-fi
-rm -f conftest*
-fi
-if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_hdr=HAVE_`echo $ac_hdr | tr 'abcdefghijklmnopqrstuvwxyz./\055' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ___'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_hdr 1
-EOF
- 
-else
-  echo "$ac_t""no" 1>&6
-fi
-done
 
-ac_header_dirent=no
-for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h
-do
-ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
-echo $ac_n "checking for $ac_hdr that defines DIR""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_header_dirent_$ac_safe'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1579 "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <$ac_hdr>
-int main() { return 0; }
-int t() {
-DIR *dirp = 0;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  eval "ac_cv_header_dirent_$ac_safe=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_header_dirent_$ac_safe=no"
-fi
-rm -f conftest*
 
-fi
-if eval "test \"`echo '$ac_cv_header_dirent_'$ac_safe`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_hdr=HAVE_`echo $ac_hdr | tr 'abcdedfghijklmnopqrstuvwxyz./\055' 'ABCDEDFGHIJKLMNOPQRSTUVWXYZ___'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_hdr 1
-EOF
- ac_header_dirent=$ac_hdr; break
-else
-  echo "$ac_t""no" 1>&6
-fi
-done
-# Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
-if test $ac_header_dirent = dirent.h; then
-echo $ac_n "checking for -ldir""... $ac_c" 1>&6
-ac_lib_var=`echo dir | tr '.-/+' '___p'`
-if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_save_LIBS="$LIBS"
-LIBS="-ldir  $LIBS"
-cat > conftest.$ac_ext <<EOF
-#line 1619 "configure"
-#include "confdefs.h"
 
-int main() { return 0; }
-int t() {
-opendir()
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_lib_$ac_lib_var=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_lib_$ac_lib_var=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
 
-fi
-if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  LIBS="$LIBS -ldir"
-else
-  echo "$ac_t""no" 1>&6
-fi
 
-else
-echo $ac_n "checking for -lx""... $ac_c" 1>&6
-ac_lib_var=`echo x | tr '.-/+' '___p'`
-if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_save_LIBS="$LIBS"
-LIBS="-lx  $LIBS"
-cat > conftest.$ac_ext <<EOF
-#line 1654 "configure"
-#include "confdefs.h"
 
-int main() { return 0; }
-int t() {
-opendir()
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_lib_$ac_lib_var=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_lib_$ac_lib_var=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
 
-fi
-if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  LIBS="$LIBS -lx"
-else
-  echo "$ac_t""no" 1>&6
-fi
 
-fi
+
 
 
 trap '' 1 2 15
@@ -1696,11 +2958,25 @@ cat > confcache <<\EOF
 # --recheck option to rerun configure.
 #
 EOF
+# The following way of writing the cache mishandles newlines in values,
+# but we know of no workaround that is simple, portable, and efficient.
+# So, don't put newlines in cache variables' values.
 # Ultrix sh set writes to stderr and can't be redirected directly,
 # and sets the high bit in the cache file unless we assign to the vars.
 (set) 2>&1 |
-  sed -n "s/^\([a-zA-Z0-9_]*_cv_[a-zA-Z0-9_]*\)=\(.*\)/\1=\${\1='\2'}/p" \
-  >> confcache
+  case `(ac_space=' '; set) 2>&1` in
+  *ac_space=\ *)
+    # `set' does not quote correctly, so add quotes (double-quote substitution
+    # turns \\\\ into \\, and sed turns \\ into \).
+    sed -n \
+      -e "s/'/'\\\\''/g" \
+      -e "s/^\\([a-zA-Z0-9_]*_cv_[a-zA-Z0-9_]*\\)=\\(.*\\)/\\1=\${\\1='\\2'}/p"
+    ;;
+  *)
+    # `set' quotes correctly as required by POSIX, so do not add quotes.
+    sed -n -e 's/^\([a-zA-Z0-9_]*_cv_[a-zA-Z0-9_]*\)=\(.*\)/\1=${\1=\2}/p'
+    ;;
+  esac >> confcache
 if cmp -s $cache_file confcache; then
   :
 else
@@ -1755,7 +3031,7 @@ do
     echo "running \${CONFIG_SHELL-/bin/sh} $0 $ac_configure_args --no-create --no-recursion"
     exec \${CONFIG_SHELL-/bin/sh} $0 $ac_configure_args --no-create --no-recursion ;;
   -version | --version | --versio | --versi | --vers | --ver | --ve | --v)
-    echo "$CONFIG_STATUS generated by autoconf version 2.7"
+    echo "$CONFIG_STATUS generated by autoconf version 2.12"
     exit 0 ;;
   -help | --help | --hel | --he | --h)
     echo "\$ac_cs_usage"; exit 0 ;;
@@ -1764,6 +3040,7 @@ do
 done
 
 ac_given_srcdir=$srcdir
+ac_given_INSTALL="$INSTALL"
 
 trap 'rm -fr `echo "Makefile config.h:config.in" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
@@ -1795,6 +3072,9 @@ s%@includedir@%$includedir%g
 s%@oldincludedir@%$oldincludedir%g
 s%@infodir@%$infodir%g
 s%@mandir@%$mandir%g
+s%@INSTALL_PROGRAM@%$INSTALL_PROGRAM%g
+s%@INSTALL_DATA@%$INSTALL_DATA%g
+s%@CC@%$CC%g
 s%@host@%$host%g
 s%@host_alias@%$host_alias%g
 s%@host_cpu@%$host_cpu%g
@@ -1810,24 +3090,36 @@ s%@build_alias@%$build_alias%g
 s%@build_cpu@%$build_cpu%g
 s%@build_vendor@%$build_vendor%g
 s%@build_os@%$build_os%g
-s%@CC@%$CC%g
+s%@LIBOBJS@%$LIBOBJS%g
+s%@CPP@%$CPP%g
+s%@CC_FOR_BUILD@%$CC_FOR_BUILD%g
 s%@HDEFINES@%$HDEFINES%g
 s%@AR@%$AR%g
 s%@RANLIB@%$RANLIB%g
 s%@sim_cflags@%$sim_cflags%g
 s%@sim_warnings@%$sim_warnings%g
+s%@sim_line_nr@%$sim_line_nr%g
 s%@sim_config@%$sim_config%g
 s%@sim_opcode@%$sim_opcode%g
 s%@sim_switch@%$sim_switch%g
 s%@sim_dup@%$sim_dup%g
+s%@sim_decode_mechanism@%$sim_decode_mechanism%g
+s%@sim_jump@%$sim_jump%g
 s%@sim_filter@%$sim_filter%g
 s%@sim_icache@%$sim_icache%g
+s%@sim_hw_src@%$sim_hw_src%g
+s%@sim_hw_obj@%$sim_hw_obj%g
+s%@sim_pk_src@%$sim_pk_src%g
+s%@sim_pk_obj@%$sim_pk_obj%g
 s%@sim_inline@%$sim_inline%g
 s%@sim_bswap@%$sim_bswap%g
 s%@sim_endian@%$sim_endian%g
+s%@sim_regparm@%$sim_regparm%g
+s%@sim_stdcall@%$sim_stdcall%g
 s%@sim_xor_endian@%$sim_xor_endian%g
 s%@sim_hostendian@%$sim_hostendian%g
 s%@sim_smp@%$sim_smp%g
+s%@sim_igen_smp@%$sim_igen_smp%g
 s%@sim_bitsize@%$sim_bitsize%g
 s%@sim_hostbitsize@%$sim_hostbitsize%g
 s%@sim_env@%$sim_env%g
@@ -1841,26 +3133,64 @@ s%@sim_monitor@%$sim_monitor%g
 s%@sim_model@%$sim_model%g
 s%@sim_default_model@%$sim_default_model%g
 s%@sim_model_issue@%$sim_model_issue%g
-s%@CC_FOR_BUILD@%$CC_FOR_BUILD%g
-s%@WORDS_BIGENDIAN@%$WORDS_BIGENDIAN%g
-s%@CPP@%$CPP%g
+s%@sim_stdio@%$sim_stdio%g
+s%@sim_termio@%$sim_termio%g
+s%@sim_devzero@%$sim_devzero%g
+s%@sim_callback@%$sim_callback%g
+s%@sim_targ_vals@%$sim_targ_vals%g
 
 CEOF
 EOF
+
+cat >> $CONFIG_STATUS <<\EOF
+
+# Split the substitutions into bite-sized pieces for seds with
+# small command number limits, like on Digital OSF/1 and HP-UX.
+ac_max_sed_cmds=90 # Maximum number of lines to put in a sed script.
+ac_file=1 # Number of current file.
+ac_beg=1 # First line for current file.
+ac_end=$ac_max_sed_cmds # Line after last line for current file.
+ac_more_lines=:
+ac_sed_cmds=""
+while $ac_more_lines; do
+  if test $ac_beg -gt 1; then
+    sed "1,${ac_beg}d; ${ac_end}q" conftest.subs > conftest.s$ac_file
+  else
+    sed "${ac_end}q" conftest.subs > conftest.s$ac_file
+  fi
+  if test ! -s conftest.s$ac_file; then
+    ac_more_lines=false
+    rm -f conftest.s$ac_file
+  else
+    if test -z "$ac_sed_cmds"; then
+      ac_sed_cmds="sed -f conftest.s$ac_file"
+    else
+      ac_sed_cmds="$ac_sed_cmds | sed -f conftest.s$ac_file"
+    fi
+    ac_file=`expr $ac_file + 1`
+    ac_beg=$ac_end
+    ac_end=`expr $ac_end + $ac_max_sed_cmds`
+  fi
+done
+if test -z "$ac_sed_cmds"; then
+  ac_sed_cmds=cat
+fi
+EOF
+
 cat >> $CONFIG_STATUS <<EOF
 
 CONFIG_FILES=\${CONFIG_FILES-"Makefile"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
-  # Support "outfile[:infile]", defaulting infile="outfile.in".
+  # Support "outfile[:infile[:infile...]]", defaulting infile="outfile.in".
   case "$ac_file" in
-  *:*) ac_file_in=`echo "$ac_file"|sed 's%.*:%%'`
+  *:*) ac_file_in=`echo "$ac_file"|sed 's%[^:]*:%%'`
        ac_file=`echo "$ac_file"|sed 's%:.*%%'` ;;
   *) ac_file_in="${ac_file}.in" ;;
   esac
 
-  # Adjust relative srcdir, etc. for subdirectories.
+  # Adjust a relative srcdir, top_srcdir, and INSTALL for subdirectories.
 
   # Remove last slash and all that follows it.  Not all systems have dirname.
   ac_dir=`echo $ac_file|sed 's%/[^/][^/]*$%%'`
@@ -1884,6 +3214,11 @@ for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
     top_srcdir="$ac_dots$ac_given_srcdir" ;;
   esac
 
+  case "$ac_given_INSTALL" in
+  [/$]*) INSTALL="$ac_given_INSTALL" ;;
+  *) INSTALL="$ac_dots$ac_given_INSTALL" ;;
+  esac
+
   echo creating "$ac_file"
   rm -f "$ac_file"
   configure_input="Generated automatically from `echo $ac_file_in|sed 's%.*/%%'` by configure."
@@ -1892,13 +3227,16 @@ for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
 # $configure_input" ;;
   *) ac_comsub= ;;
   esac
+
+  ac_file_inputs=`echo $ac_file_in|sed -e "s%^%$ac_given_srcdir/%" -e "s%:% $ac_given_srcdir/%g"`
   sed -e "$ac_comsub
 s%@configure_input@%$configure_input%g
 s%@srcdir@%$srcdir%g
 s%@top_srcdir@%$top_srcdir%g
-" -f conftest.subs $ac_given_srcdir/$ac_file_in > $ac_file
+s%@INSTALL@%$INSTALL%g
+" $ac_file_inputs | (eval "$ac_sed_cmds") > $ac_file
 fi; done
-rm -f conftest.subs
+rm -f conftest.s*
 
 # These sed commands are passed to sed as "A NAME B NAME C VALUE D", where
 # NAME is the cpp macro being defined and VALUE is the value it is being given.
@@ -1919,11 +3257,17 @@ ac_eB='$%\1#\2define\3'
 ac_eC=' '
 ac_eD='%g'
 
-CONFIG_HEADERS=${CONFIG_HEADERS-"config.h:config.in"}
+if test "${CONFIG_HEADERS+set}" != set; then
+EOF
+cat >> $CONFIG_STATUS <<EOF
+  CONFIG_HEADERS="config.h:config.in"
+EOF
+cat >> $CONFIG_STATUS <<\EOF
+fi
 for ac_file in .. $CONFIG_HEADERS; do if test "x$ac_file" != x..; then
-  # Support "outfile[:infile]", defaulting infile="outfile.in".
+  # Support "outfile[:infile[:infile...]]", defaulting infile="outfile.in".
   case "$ac_file" in
-  *:*) ac_file_in=`echo "$ac_file"|sed 's%.*:%%'`
+  *:*) ac_file_in=`echo "$ac_file"|sed 's%[^:]*:%%'`
        ac_file=`echo "$ac_file"|sed 's%:.*%%'` ;;
   *) ac_file_in="${ac_file}.in" ;;
   esac
@@ -1931,7 +3275,8 @@ for ac_file in .. $CONFIG_HEADERS; do if test "x$ac_file" != x..; then
   echo creating $ac_file
 
   rm -f conftest.frag conftest.in conftest.out
-  cp $ac_given_srcdir/$ac_file_in conftest.in
+  ac_file_inputs=`echo $ac_file_in|sed -e "s%^%$ac_given_srcdir/%" -e "s%:% $ac_given_srcdir/%g"`
+  cat $ac_file_inputs > conftest.in
 
 EOF
 
@@ -1943,7 +3288,7 @@ rm -f conftest.vals
 cat > conftest.hdr <<\EOF
 s/[\\&%]/\\&/g
 s%[\\$`]%\\&%g
-s%#define \([A-Za-z_][A-Za-z0-9_]*\) \(.*\)%${ac_dA}\1${ac_dB}\1${ac_dC}\2${ac_dD}%gp
+s%#define \([A-Za-z_][A-Za-z0-9_]*\) *\(.*\)%${ac_dA}\1${ac_dB}\1${ac_dC}\2${ac_dD}%gp
 s%ac_d%ac_u%gp
 s%ac_u%ac_e%gp
 EOF
@@ -1959,8 +3304,6 @@ EOF
 
 # Break up conftest.vals because some shells have a limit on
 # the size of here documents, and old seds have small limits too.
-# Maximum number of lines to put in a single here document.
-ac_max_here_lines=12
 
 rm -f conftest.tail
 while :
@@ -1991,12 +3334,22 @@ cat >> $CONFIG_STATUS <<\EOF
     echo "$ac_file is unchanged"
     rm -f conftest.h
   else
+    # Remove last slash and all that follows it.  Not all systems have dirname.
+      ac_dir=`echo $ac_file|sed 's%/[^/][^/]*$%%'`
+      if test "$ac_dir" != "$ac_file" && test "$ac_dir" != .; then
+      # The file is in a subdirectory.
+      test ! -d "$ac_dir" && mkdir "$ac_dir"
+    fi
     rm -f $ac_file
     mv conftest.h $ac_file
   fi
 fi; done
 
+EOF
+cat >> $CONFIG_STATUS <<EOF
 
+EOF
+cat >> $CONFIG_STATUS <<\EOF
 case x$CONFIG_HEADERS in xconfig.h:config.in) echo > stamp-h ;; esac
 exit 0
 EOF

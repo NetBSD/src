@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,9 +49,6 @@ struct _cpu {
   vm_instruction_map *instruction_map; /* instructions */
   vm_data_map *data_map; /* data */
 
-  /* current state of interrupt inputs */
-  int external_exception_pending;
-
   /* the system this processor is contained within */
   cpu_mon *monitor;
   os_emul *os_emulation;
@@ -66,6 +63,9 @@ struct _cpu {
   /* a cache to store cracked instructions */
   idecode_cache icache[WITH_IDECODE_CACHE_SIZE];
 #endif
+
+  /* any interrupt state */
+  interrupts ints;
 
   /* address reservation: keep the physical address and the contents
      of memory at that address */
@@ -82,7 +82,6 @@ INLINE_CPU\
 (cpu *)
 cpu_create(psim *system,
 	   core *memory,
-	   event_queue *events,
 	   cpu_mon *monitor,
 	   os_emul *os_emulation,
 	   int cpu_nr)
@@ -100,7 +99,7 @@ cpu_create(psim *system,
 
   /* link back to core system */
   processor->system = system;
-  processor->events = events;
+  processor->events = psim_event_queue(system);
   processor->cpu_nr = cpu_nr;
   processor->monitor = monitor;
   processor->os_emulation = os_emulation;
@@ -138,13 +137,6 @@ cpu_nr(cpu *processor)
 }
 
 INLINE_CPU\
-(event_queue *)
-cpu_event_queue(cpu *processor)
-{
-  return processor->events;
-}
-
-INLINE_CPU\
 (cpu_mon *)
 cpu_monitor(cpu *processor)
 {
@@ -164,6 +156,79 @@ cpu_model(cpu *processor)
 {
   return processor->model_ptr;
 }
+
+
+/* program counter manipulation */
+
+INLINE_CPU\
+(void)
+cpu_set_program_counter(cpu *processor,
+			unsigned_word new_program_counter)
+{
+  processor->program_counter = new_program_counter;
+}
+
+INLINE_CPU\
+(unsigned_word)
+cpu_get_program_counter(cpu *processor)
+{
+  return processor->program_counter;
+}
+
+
+INLINE_CPU\
+(void)
+cpu_restart(cpu *processor,
+	    unsigned_word nia)
+{
+  ASSERT(processor != NULL);
+  cpu_set_program_counter(processor, nia);
+  psim_restart(processor->system, processor->cpu_nr);
+}
+
+INLINE_CPU\
+(void)
+cpu_halt(cpu *processor,
+	 unsigned_word nia,
+	 stop_reason reason,
+	 int signal)
+{
+  ASSERT(processor != NULL);
+  if (CURRENT_MODEL_ISSUE > 0)
+    model_halt(processor->model_ptr);
+  cpu_set_program_counter(processor, nia);
+  psim_halt(processor->system, processor->cpu_nr, reason, signal);
+}
+
+EXTERN_CPU\
+(void)
+cpu_error(cpu *processor,
+	  unsigned_word cia,
+	  const char *fmt,
+	  ...)
+{
+  char message[1024];
+  va_list ap;
+
+  /* format the message */
+  va_start(ap, fmt);
+  vsprintf(message, fmt, ap);
+  va_end(ap);
+
+  /* sanity check */
+  if (strlen(message) >= sizeof(message))
+    error("cpu_error: buffer overflow");
+
+  if (processor != NULL) {
+    printf_filtered("cpu %d, cia 0x%lx: %s\n",
+		    processor->cpu_nr + 1, (unsigned long)cia, message);
+    cpu_halt(processor, cia, was_signalled, -1);
+  }
+  else {
+    error("cpu: %s", message);
+  }
+}
+
 
 /* The processors local concept of time */
 
@@ -194,16 +259,11 @@ cpu_get_decrementer(cpu *processor)
 
 STATIC_INLINE_CPU\
 (void)
-cpu_decrement_event(event_queue *queue,
-		    void *data)
+cpu_decrement_event(void *data)
 {
   cpu *processor = (cpu*)data;
-  if (!decrementer_interrupt(processor)) {
-    processor->decrementer_event = event_queue_schedule(processor->events,
-							1, /* NOW! */
-							cpu_decrement_event,
-							processor);
-  }
+  processor->decrementer_event = NULL;
+  decrementer_interrupt(processor);
 }
 
 INLINE_CPU\
@@ -211,72 +271,21 @@ INLINE_CPU\
 cpu_set_decrementer(cpu *processor,
 		    signed32 decrementer)
 {
-  signed64 old_decrementer = (processor->decrementer_local_time
-			      - event_queue_time(processor->events));
+  signed64 old_decrementer = cpu_get_decrementer(processor);
   event_queue_deschedule(processor->events, processor->decrementer_event);
+  processor->decrementer_event = NULL;
   processor->decrementer_local_time = (event_queue_time(processor->events)
 				       + decrementer);
   if (decrementer < 0 && old_decrementer >= 0)
-    /* dec interrupt occures if the sign of the decrement reg is
-       changed by the load operation */
-    processor->decrementer_event = event_queue_schedule(processor->events,
-							1, /* NOW! */
-							cpu_decrement_event,
-							processor);
+    /* A decrementer interrupt occures if the sign of the decrement
+       register is changed from positive to negative by the load
+       instruction */
+    decrementer_interrupt(processor);
   else if (decrementer >= 0)
     processor->decrementer_event = event_queue_schedule(processor->events,
 							decrementer,
 							cpu_decrement_event,
 							processor);
-}
-
-
-/* program counter manipulation */
-
-INLINE_CPU\
-(void)
-cpu_set_program_counter(cpu *processor,
-			unsigned_word new_program_counter)
-{
-  processor->program_counter = new_program_counter;
-}
-
-INLINE_CPU\
-(unsigned_word)
-cpu_get_program_counter(cpu *processor)
-{
-  return processor->program_counter;
-}
-
-INLINE_CPU\
-(void)
-cpu_restart(cpu *processor,
-	    unsigned_word nia)
-{
-  processor->program_counter = nia;
-  psim_restart(processor->system, processor->cpu_nr);
-}
-
-INLINE_CPU\
-(void)
-cpu_halt(cpu *processor,
-	 unsigned_word cia,
-	 stop_reason reason,
-	 int signal)
-{
-  if (processor == NULL) {
-    error("cpu_halt() processor=NULL, cia=0x%x, reason=%d, signal=%d\n",
-	  cia,
-	  reason,
-	  signal);
-  }
-  else {
-    if (CURRENT_MODEL_ISSUE > 0)
-      model_halt(processor->model_ptr);
-
-    processor->program_counter = cia;
-    psim_halt(processor->system, processor->cpu_nr, cia, reason, signal);
-  }
 }
 
 
@@ -335,6 +344,17 @@ cpu_page_tlb_invalidate_all(cpu *processor)
 }
 
 
+/* interrupt access */
+
+INLINE_CPU\
+(interrupts *)
+cpu_interrupts(cpu *processor)
+{
+  return &processor->ints;
+}
+
+
+
 /* reservation access */
 
 INLINE_CPU\
@@ -356,7 +376,8 @@ cpu_registers(cpu *processor)
 
 INLINE_CPU\
 (void)
-cpu_synchronize_context(cpu *processor)
+cpu_synchronize_context(cpu *processor,
+			unsigned_word cia)
 {
 #if (WITH_IDECODE_CACHE_SIZE)
   /* kill of the cache */
@@ -367,7 +388,8 @@ cpu_synchronize_context(cpu *processor)
   vm_synchronize_context(processor->virtual,
 			 processor->regs.spr,
 			 processor->regs.sr,
-			 processor->regs.msr);
+			 processor->regs.msr,
+			 processor, cia);
 }
 
 

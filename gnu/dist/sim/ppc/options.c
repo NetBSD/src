@@ -138,6 +138,9 @@ print_options (void)
   printf_filtered ("WITH_MODEL               = %s\n", model_name[WITH_MODEL]);
   printf_filtered ("WITH_MODEL_ISSUE         = %d\n", WITH_MODEL_ISSUE);
   printf_filtered ("WITH_RESERVED_BITS       = %d\n", WITH_RESERVED_BITS);
+  printf_filtered ("WITH_STDIO               = %d\n", WITH_STDIO);
+  printf_filtered ("WITH_REGPARM             = %d\n", WITH_REGPARM);
+  printf_filtered ("WITH_STDCALL             = %d\n", WITH_STDCALL);
   printf_filtered ("DEFAULT_INLINE           = %s\n", options_inline (DEFAULT_INLINE));
   printf_filtered ("SIM_ENDIAN_INLINE        = %s\n", options_inline (SIM_ENDIAN_INLINE));
   printf_filtered ("BITS_INLINE              = %s\n", options_inline (BITS_INLINE));
@@ -154,6 +157,7 @@ print_options (void)
   printf_filtered ("IDECODE_INLINE           = %s\n", options_inline (IDECODE_INLINE));
   printf_filtered ("OPTIONS_INLINE           = %s\n", options_inline (OPTIONS_INLINE));
   printf_filtered ("OS_EMUL_INLINE           = %s\n", options_inline (OS_EMUL_INLINE));
+  printf_filtered ("SUPPORT_INLINE           = %s\n", options_inline (SUPPORT_INLINE));
 
 #ifdef OPCODE_RULES
   printf_filtered ("OPCODE rules             = %s\n", OPCODE_RULES);
@@ -166,6 +170,78 @@ print_options (void)
 #ifdef DGEN_FLAGS
   printf_filtered ("DGEN_FLAGS               = %s\n", DGEN_FLAGS);
 #endif
+
+  {
+    static const char *const defines[] = {
+#ifdef __GNUC__
+      "__GNUC__",
+#endif
+
+#ifdef __STRICT_ANSI__
+      "__STRICT_ANSI__",
+#endif
+
+#ifdef __CHAR_UNSIGNED__
+      "__CHAR_UNSIGNED__",
+#endif
+
+#ifdef __OPTIMIZE__
+      "__OPTIMIZE__",
+#endif
+
+#ifdef STDC_HEADERS
+      "STDC_HEADERS",
+#endif
+
+#include "defines.h"
+
+#ifdef HAVE_TERMIOS_CLINE
+      "HAVE_TERMIOS_CLINE",
+#endif
+
+#ifdef HAVE_TERMIOS_STRUCTURE
+      "HAVE_TERMIOS_STRUCTURE",
+#endif
+
+#ifdef HAVE_TERMIO_CLINE
+      "HAVE_TERMIO_CLINE",
+#endif
+
+#ifdef HAVE_TERMIO_STRUCTURE
+      "HAVE_TERMIO_STRUCTURE",
+#endif
+
+#ifdef HAVE_DEVZERO
+      "HAVE_DEVZERO",
+#endif
+    };
+
+    int i;
+    int max_len = 0;
+    int cols;
+
+    for (i = 0; i < sizeof (defines) / sizeof (defines[0]); i++) {
+      int len = strlen (defines[i]);
+      if (len > max_len)
+	max_len = len;
+    }
+
+    cols = 78 / (max_len + 2);
+    if (cols < 0)
+      cols = 1;
+
+    printf_filtered ("\n#defines:");
+    for (i = 0; i < sizeof (defines) / sizeof (defines[0]); i++) {
+      const char *const prefix = ((i % cols) == 0) ? "\n" : "";
+      printf_filtered ("%s  %s%*s", prefix, defines[i],
+		       (((i == (sizeof (defines) / sizeof (defines[0])) - 1)
+			 || (((i + 1) % cols) == 0))
+			? 0
+			: max_len + 4 - strlen (defines[i])),
+		       "");
+    }
+    printf_filtered ("\n");
+  }
 }
 
 #endif /* _OPTIONS_C_ */
