@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.34 1998/10/03 20:17:37 christos Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.35 1998/12/15 19:31:30 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #if defined(i386)
 #include <compat/linux/arch/i386/linux_syscallargs.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_syscallargs.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_syscallargs.h>
 #else

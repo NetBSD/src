@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.34 1998/10/03 20:17:37 christos Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.35 1998/12/15 19:31:30 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #if defined(__i386__)
 #include "../../sys/compat/linux/arch/i386/linux_syscalls.c"
+#elif defined(__m68k__)
+#include "../../sys/compat/linux/arch/m68k/linux_syscalls.c"
 #elif defined(__alpha__)
 #include "../../sys/compat/linux/arch/alpha/linux_syscalls.c"
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.4 1998/10/03 20:17:44 christos Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.5 1998/12/15 19:31:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@ struct linux_termios {
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_termios.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_termios.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_termios.h>
 #else

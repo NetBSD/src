@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.10 1998/10/07 22:45:51 erh Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.11 1998/12/15 19:31:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_signal.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_signal.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_signal.h>
 #else
@@ -53,19 +55,27 @@ extern int linux_to_native_sig[];
 __BEGIN_DECLS
 int linux_sigprocmask1 __P((struct proc *, int, const linux_old_sigset_t *,
 						linux_old_sigset_t *));
-void linux_old_to_native_sigset __P((const linux_old_sigset_t *, sigset_t *));
-void native_to_linux_old_sigset __P((const sigset_t *, linux_old_sigset_t *));
 
-#if 0
-/* XXX Need these if sizeof(linux_old_sigset_t) != sizeof(linux_sigset_t) */
-void linux_to_native_sigset __P((const linux_sigset_t *, sigset_t *));
-void native_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
+#if LINUX__NSIG_WORDS > 1
+void linux_old_extra_to_native_sigset __P((const linux_old_sigset_t *,
+    const unsigned long *, sigset_t *));
+void native_to_linux_old_extra_sigset __P((const sigset_t *,
+    linux_old_sigset_t *, unsigned long *));
+#define linux_old_to_native_sigset(x,y) \
+    linux_old_extra_to_native_sigset(x, (const unsigned long *) 0, y)
+#define native_to_linux_old_sigset(x,y) \
+    native_to_linux_old_extra_sigset(x, y, (unsigned long *) 0)
+
+#else	/* LINUX__NSIG_WORDS == 1 */
+
+#define linux_old_to_native_sigset(x,y) \
+    linux_to_native_sigset((const linux_sigset_t *) x, y)
+#define native_to_linux_old_sigset(x,y) \
+    native_to_linux_sigset(x, (linux_sigset_t *) y)
 #endif
 
-#define linux_to_native_sigset(x,y) \
-    linux_old_to_native_sigset((linux_old_sigset_t *)x, y)
-#define native_to_linux_sigset(x,y) \
-    native_to_linux_old_sigset(x, (linux_old_sigset_t *)y)
+void linux_to_native_sigset __P((const linux_sigset_t *, sigset_t *));
+void native_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
 
 void linux_old_to_native_sigaction __P((struct linux_old_sigaction *,
     struct sigaction *));
@@ -74,7 +84,7 @@ void native_to_linux_old_sigaction __P((struct sigaction *,
 
 void linux_to_native_sigaction __P((struct linux_sigaction *,
     struct sigaction *));
-void native_to_linux_sigaction __P((struct sigaction *, \
+void native_to_linux_sigaction __P((struct sigaction *,
     struct linux_sigaction *));
 
 __END_DECLS

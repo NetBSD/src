@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.19 1998/10/07 22:50:42 erh Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.20 1998/12/15 19:31:39 itohy Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,12 +75,11 @@
 #include <compat/linux/linux_syscallargs.h>
 
 /* Locally used defines (in bsd<->linux conversion functions): */
-/* XXX XAX rename to linux_old.  Add stuff for new type linux_sigset_t
-	handle _NSIG_WORDS > 1 */
-#define	linux_sigmask(n)	(1 << ((n) - 1))
 #define	linux_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
-#define	linux_sigismember(s, n)	(*(s) & linux_sigmask(n))
-#define	linux_sigaddset(s, n)	(*(s) |= linux_sigmask(n))
+#define	linux_sigismember(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
+					& (1 << ((n) - 1) % LINUX__NSIG_BPW))
+#define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
+					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
 
 /* Note: linux_to_native_sig[] is in <arch>/linux_sigarray.c */
 int native_to_linux_sig[NSIG] = {
@@ -120,18 +119,54 @@ int native_to_linux_sig[NSIG] = {
 };
 
 /*
- * Ok, we know that Linux and BSD signals both are just an unsigned int.
- * Don't bother to use the sigismember() stuff for now.
+ * Convert between Linux and BSD signal sets.
  */
+#if LINUX__NSIG_WORDS > 1
 void
-linux_old_to_native_sigset(lss, bss)
+linux_old_extra_to_native_sigset(lss, extra, bss)
 	const linux_old_sigset_t *lss;
+	const unsigned long *extra;
+	sigset_t *bss;
+{
+	linux_sigset_t lsnew;
+
+	/* convert old sigset to new sigset */
+	linux_sigemptyset(&lsnew);
+	lsnew.sig[0] = *lss;
+	if (extra)
+		bcopy(extra, &lsnew.sig[1],
+			sizeof(linux_sigset_t) - sizeof(linux_old_sigset_t));
+
+	linux_to_native_sigset(&lsnew, bss);
+}
+
+void
+native_to_linux_old_extra_sigset(bss, lss, extra)
+	const sigset_t *bss;
+	linux_old_sigset_t *lss;
+	unsigned long *extra;
+{
+	linux_sigset_t lsnew;
+
+	native_to_linux_sigset(bss, &lsnew);
+
+	/* convert new sigset to old sigset */
+	*lss = lsnew.sig[0];
+	if (extra)
+		bcopy(&lsnew.sig[1], extra,
+			sizeof(linux_sigset_t) - sizeof(linux_old_sigset_t));
+}
+#endif
+
+void
+linux_to_native_sigset(lss, bss)
+	const linux_sigset_t *lss;
 	sigset_t *bss;
 {
 	int i, newsig;
 
 	sigemptyset(bss);
-	for (i = 1; i < LINUX_NSIG; i++) {
+	for (i = 1; i < LINUX__NSIG; i++) {
 		if (linux_sigismember(lss, i)) {
 			newsig = linux_to_native_sig[i];
 			if (newsig)
@@ -141,12 +176,12 @@ linux_old_to_native_sigset(lss, bss)
 }
 
 void
-native_to_linux_old_sigset(bss, lss)
+native_to_linux_sigset(bss, lss)
 	const sigset_t *bss;
-	linux_old_sigset_t *lss;
+	linux_sigset_t *lss;
 {
 	int i, newsig;
-	
+
 	linux_sigemptyset(lss);
 	for (i = 1; i < NSIG; i++) {
 		if (sigismember(bss, i)) {
