@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.99 1994/04/15 07:15:27 mycroft Exp $
+ *	$Id: machdep.c,v 1.100 1994/04/18 23:52:06 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -346,6 +346,9 @@ identifycpu()
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
+#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
+#error No CPU classes configured.
+#endif
 #if !defined(I386_CPU)
 	case CPUCLASS_386:
 #endif
@@ -355,10 +358,9 @@ identifycpu()
 #if !defined(I586_CPU)
 	case CPUCLASS_586:
 #endif
-#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
-#error No CPU classes configured.
-#endif
+#if !defined(I386_CPU) || !defined(I486_CPU) || !defined(I586_CPU)
 		panic("CPU class not configured");
+#endif
 	default:
 		break;
 	}
