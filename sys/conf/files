@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.251 1998/10/29 21:22:33 jonathan Exp $
+#	$NetBSD: files,v 1.252 1998/10/31 00:43:19 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -87,6 +87,7 @@ deffs	fs_coda.h CODA
 
 # file system options
 defopt	QUOTA
+defopt	opt_ffs.h	LIFFS
 
 # Not entirely MI, but present on multiple arch's
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
@@ -302,6 +303,9 @@ file	dev/ic/ad1848.c			ad1848
 define	lsi64854
 file	dev/ic/lsi64854.c		lsi64854
 
+# RealTek 8019/8029 NE2000-compatible network interface subroutines
+define	rtl80x9
+file	dev/ic/rtl80x9.c		rtl80x9
 
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
