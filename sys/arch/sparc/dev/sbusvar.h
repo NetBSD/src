@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.6 1998/03/21 22:03:33 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.7 1998/04/07 20:43:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,13 +130,6 @@ int	sbus_print __P((void *, const char *));
 
 int	sbusdev_match __P((struct cfdata *, void *));
 void	sbus_establish __P((struct sbusdev *, struct device *));
-
-void	*sbus_intr_establish __P((
-		void *,			/*cookie*/
-		int,			/*level*/
-		int,			/*flags*/
-		int (*) __P((void *)),	/*handler*/
-		void *));		/*handler arg*/
 
 int	sbus_setup_attach_args __P((
 		struct sbus_softc *,
