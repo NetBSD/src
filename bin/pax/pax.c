@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.6 1997/07/20 20:32:40 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.7 1998/07/27 16:43:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.6 1997/07/20 20:32:40 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.7 1998/07/27 16:43:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ int	pids;			/* preserve file uid/gid */
 int	exit_val;		/* exit value */
 int	docrc;			/* check/create file crc */
 char	*dirptr;		/* destination dir in a copy */
-char	*ltmfrmt;		/* -v locale time format (if any) */
+const	char *ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 
