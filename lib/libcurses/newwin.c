@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.34 2003/02/17 11:07:20 dsl Exp $	*/
+/*	$NetBSD: newwin.c,v 1.35 2003/04/08 05:56:01 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.34 2003/02/17 11:07:20 dsl Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.35 2003/04/08 05:56:01 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -131,6 +131,9 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 	int     i, j;
 	int	maxy, maxx;
 	__LDATA *sp;
+
+	if (by < 0 || bx < 0)
+		return (NULL);
 
 	maxy = nlines > 0 ? nlines : LINES - by + nlines;
 	maxx = ncols > 0 ? ncols : COLS - bx + ncols;
