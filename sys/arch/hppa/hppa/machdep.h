@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.3 2002/08/19 18:58:26 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4 2002/08/25 20:19:59 fredette Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -105,6 +105,6 @@ void hppa_machine_check __P((int));
 int hppa_btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
 		     vsize_t *lenp, u_int prot)); 
 int hppa_btlb_reload __P((void)); 
-int hppa_btlb_purge __P((pa_space_t, vaddr_t, vsize_t));
+int hppa_btlb_purge __P((pa_space_t, vaddr_t, vsize_t *));
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.4 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.5 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -85,6 +85,7 @@ struct ie_gsc_regs {
 };
 #endif
 
+#define	IE_GSC_BANK_SZ		(12)
 #define	IE_GSC_REG_RESET	(0)
 #define	IE_GSC_REG_PORT		(4)
 #define	IE_GSC_REG_ATTN		(8)
@@ -400,7 +401,6 @@ ie_gsc_attach(parent, self, aux)
 	void *aux;
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 	register struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)self;
 	register struct ie_softc *sc = &gsc->ie;
 	register struct gsc_attach_args *ga = aux;
@@ -416,9 +416,17 @@ ie_gsc_attach(parent, self, aux)
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		gsc->flags |= IEGSC_GECKO;
 
+	/*
+	 * Map the GSC registers.
+	 */
+	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
+			  IE_GSC_BANK_SZ, 0, &gsc->ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+
 	/* Set up some initial glue. */
 	gsc->iot = ga->ga_iot;
-	gsc->ioh = ga->ga_hpa;
 	gsc->iemt = ga->ga_dmatag;
 	sc->bt = ga->ga_iot;
 	sc->sc_msize = IE_SIZE;
@@ -542,12 +550,7 @@ ie_gsc_attach(parent, self, aux)
 		return;
 
 	/* Get our Ethernet address. */
-	if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
-		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) < 0)
-		bcopy((void *)ASP_PROM, myaddr,
-		      ETHER_ADDR_LEN);
-	else
-		bcopy(pdc_mac.addr, myaddr, ETHER_ADDR_LEN);
+	memcpy(myaddr, ga->ga_ether_address, ETHER_ADDR_LEN);
 
 	/* Set up the SCP. */
 	sc->ie_bus_write16(sc, IE_SCP_BUS_USE(sc->scp), IE_GSC_SYSBUS);

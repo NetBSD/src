@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.2 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.3 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -64,7 +64,7 @@ struct com_gsc_regs {
 struct com_gsc_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
  
-	/* ISA-specific goo. */
+	/* GSC-specific goo. */
 	void	*sc_ih;			/* interrupt handler */
 }; 
 
@@ -75,9 +75,6 @@ struct cfattach com_gsc_ca = {
 	sizeof(struct com_gsc_softc), com_gsc_probe, com_gsc_attach
 };
 
-/* XXX fredette - this is gross */
-extern const struct hppa_bus_space_tag hppa_hpa_bustag;
-
 int
 com_gsc_probe(parent, match, aux)
 	struct device *parent;
@@ -85,13 +82,48 @@ com_gsc_probe(parent, match, aux)
 	void *aux;
 {
 	register struct gsc_attach_args *ga = aux;
+	bus_space_handle_t ioh;
+	int rv;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GRS232 &&
 	     (ga->ga_type.iodc_sv_model != HPPA_FIO_RS232)))
 		return 0;
 
-	return comprobe1(&hppa_hpa_bustag, ga->ga_hpa + COMGSC_OFFSET);
+#if 1
+	/*
+	 * XXX fredette - don't match anything unless it
+	 * happens to be the KGDB port, since any other
+	 * port might be a serial console, and I haven't
+	 * done any console work yet.
+	 */
+	if (
+#ifdef KGDB
+	    ga->ga_hpa != KGDBADDR
+#else
+	    /* CONSTCOND */ 1
+#endif
+	    )
+		return 0;
+#endif
+
+	/*
+	 * If this port is the console or a KGDB port,
+	 * we definitely match, otherwise map and probe
+	 * the port.
+	 */
+	if (!com_is_console(ga->ga_iot, ga->ga_hpa + COMGSC_OFFSET, 0)) {
+		if (bus_space_map(ga->ga_iot, ga->ga_hpa + COMGSC_OFFSET, 
+				  COM_NPORTS, 0, &ioh))
+			return 0;
+		rv = comprobe1(ga->ga_iot, ioh);
+		bus_space_unmap(ga->ga_iot, ioh, COM_NPORTS);
+		if (!rv)
+			return 0;
+	}
+
+	/* Success. */
+	return 1;
 }
 
 void
@@ -105,25 +137,14 @@ com_gsc_attach(parent, self, aux)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_iot = &hppa_hpa_bustag;
-	sc->sc_ioh = ga->ga_hpa + COMGSC_OFFSET;
+	sc->sc_iot = ga->ga_iot;
 	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
 	sc->sc_frequency = COMGSC_FREQUENCY;
 
-	/*
-	 * XXX fredette - don't really attach anything
-	 * unless it happens to be the KGDB port, since
-	 * any other port might be a serial console, and
-	 * I haven't really done any console work yet.
-	 */
-	if (
-#ifdef KGDB
-	    ga->ga_hpa != KGDBADDR
-#else
-	    /* CONSTCOND */ 1
-#endif
-	    ) {
-		printf(": untouched, assumed serial console\n");
+	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
+	    bus_space_map(sc->sc_iot, sc->sc_iobase,
+			  COM_NPORTS, 0, &sc->sc_ioh)) {
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -145,14 +166,9 @@ com_gsc_kgdb_attach(void)
 {
 	int error;
 
-	/*
-	 * We need to conjure up a bus_space_tag that doesn't
-	 * do any mapping, because com_kdgb_attach wants to
-	 * call bus_space_map.
-	 */
 	printf("kgdb: attaching com at 0x%x at %d baud...",
 		KGDBADDR, KGDBRATE);
-	error = com_kgdb_attach(&hppa_hpa_bustag, 
+	error = com_kgdb_attach(&hppa_bustag, 
 				KGDBADDR + COMGSC_OFFSET, 
 				KGDBRATE, COMGSC_FREQUENCY,
 	   /* 8N1 */

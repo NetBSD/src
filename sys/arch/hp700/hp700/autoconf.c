@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2002/08/25 20:20:01 fredette Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -59,6 +59,10 @@
 #include <sys/device.h>
 #include <sys/callout.h>
 
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 
@@ -97,14 +101,18 @@ cpu_configure()
 {
 
 	/*
- 	* Consider stopping for a debugger before
- 	* autoconfiguration.
- 	*/
-#ifdef	DDB
+	 * Consider stopping for a debugger before
+	 * autoconfiguration.
+	 */
 	if (boothowto & RB_KDB) {
+#ifdef KGDB
+		extern int hp700_kgdb_attached;
+		if (hp700_kgdb_attached)
+			kgdb_connect(1);
+#elif defined(DDB)
 		Debugger();
-	}
 #endif	/* DDB */
+	}
 
 	splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
