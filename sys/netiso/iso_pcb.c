@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.17 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.18 1999/03/12 22:42:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -311,7 +311,7 @@ iso_pcbconnect(v, nam)
 	if (siso->siso_nlen == 0) {
 		if ((ia = iso_ifaddr.tqh_first) != NULL) {
 			int             nlen = ia->ia_addr.siso_nlen;
-			ovbcopy(TSEL(siso), nlen + TSEL(siso),
+			memmove(nlen + TSEL(siso), TSEL(siso),
 			siso->siso_plen + siso->siso_tlen + siso->siso_slen);
 			bcopy((caddr_t) & ia->ia_addr.siso_addr,
 			      (caddr_t) & siso->siso_addr, nlen + 1);
@@ -385,7 +385,7 @@ iso_pcbconnect(v, nam)
 		}
 		siso->siso_nlen = ia->ia_addr.siso_nlen;
 		newtsel = TSEL(siso);
-		ovbcopy(oldtsel, newtsel, tlen);
+		memmove(newtsel, oldtsel, tlen);
 		bcopy(ia->ia_addr.siso_data, siso->siso_data, nlen);
 		siso->siso_tlen = tlen;
 		siso->siso_family = AF_ISO;
@@ -463,7 +463,7 @@ iso_pcbdisconnect(v)
 	if ((siso = isop->isop_laddr) && siso->siso_nlen && siso->siso_tlen) {
 		caddr_t         otsel = TSEL(siso);
 		siso->siso_nlen = 0;
-		ovbcopy(otsel, TSEL(siso), siso->siso_tlen);
+		memmove(TSEL(siso), otsel, siso->siso_tlen);
 	}
 	if (isop->isop_faddr && isop->isop_faddr != &isop->isop_sfaddr)
 		m_freem(isop->isop_mfaddr);
