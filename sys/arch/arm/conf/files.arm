@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.70 2003/05/03 00:47:42 thorpej Exp $
+#	$NetBSD: files.arm,v 1.71 2003/05/21 18:07:10 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -29,7 +29,6 @@ file	arch/arm/fpe-arm/armfpe.S		armfpe
 defflag				PMAP_DEBUG
 
 # New PMAP options
-defflag	opt_arm32_pmap.h	ARM32_PMAP_NEW
 defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT
 
 # MI console support
@@ -117,8 +116,7 @@ file	arch/arm/arm32/exception.S		arm32
 file	arch/arm/arm32/fault.c			arm32
 file	arch/arm/arm32/fusu.S			arm32
 file	arch/arm/arm32/mem.c			arm32
-file	arch/arm/arm32/pmap.c			arm32 & !arm32_pmap_new
-file	arch/arm/arm32/pmap_new.c		arm32 & arm32_pmap_new
+file	arch/arm/arm32/pmap.c			arm32
 file	arch/arm/arm32/setcpsr.S		arm32
 file	arch/arm/arm32/setstack.S		arm32
 file	arch/arm/arm32/stubs.c			arm32
