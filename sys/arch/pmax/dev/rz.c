@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: rz.c,v 1.3 1994/05/27 08:59:13 glass Exp $
+ *      $Id: rz.c,v 1.4 1994/06/14 02:47:36 glass Exp $
  */
 
 /*
@@ -58,6 +58,8 @@
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
+
+#include <ufs/ffs/fs.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>

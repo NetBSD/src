@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.8 1994/06/02 06:15:06 glass Exp $
+ *      $Id: machdep.c,v 1.9 1994/06/14 02:47:40 glass Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -277,12 +277,10 @@ mach_init(argc, argv, code, cv)
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
-#if defined(XXXXX)
 	if (boothowto & RB_MINIROOT) {
 		boothowto |= RB_DFLTROOT;
 		v += mfs_initminiroot(v);
 	}
-#endif
 #endif
 
 	/*
