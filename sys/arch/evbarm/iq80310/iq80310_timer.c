@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.9 2002/04/13 22:41:46 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.10 2002/04/13 22:42:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@ timer_read(void)
 	rv  =  ((la[0] & 0x40) >> 1) | (la[0] & 0x1f);
 	rv |= (((la[1] & 0x40) >> 1) | (la[1] & 0x1f)) << 6;
 	rv |= (((la[2] & 0x40) >> 1) | (la[2] & 0x1f)) << 12;
-	rv |= (la[3] 0x0f) << 18;
+	rv |= (la[3] & 0x0f) << 18;
 
 	return (rv);
 }
