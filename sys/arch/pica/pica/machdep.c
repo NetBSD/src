@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1997/06/23 02:56:47 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 1997/07/01 09:32:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,7 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
@@ -83,9 +84,12 @@
 #include <machine/pio.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
-#include <mips/locore.h>		/* wbflush() callback */
+#include <mips/locore.h>		/* wbflush() */
 #include <mips/cpuregs.h>
 #include <mips/psl.h>
+#ifdef DDB
+#include <mips/db_machdep.h>
+#endif
 
 #include <sys/exec_ecoff.h>
 
@@ -162,8 +166,18 @@ int	(*Mach_splstatclock)__P((void)) = splhigh;
 void	dumpsys __P((void));			/* do a dump */
 int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
 
-void vid_print_string(const char *str);
-void vid_putchar(dev_t dev, char c);
+/* initialize bss, etc. from kernel start, before main() is called. */
+extern	void
+mach_init __P((int argc, char *argv[], u_int code));
+
+
+/*
+ * Pica video-console output (for output before console is autoconfigured)
+ */
+static void  vid_scroll __P((void));
+void vid_print_string __P((const char *str));
+void vid_putchar __P((dev_t dev, char c));
+extern	int atoi __P((const char *cp));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -183,7 +197,6 @@ struct	proc nullproc;		/* for use by swtch_exit() */
 
 extern void mips_vector_init  __P((void));
 
-extern void savefpregs __P((struct proc *));
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -218,6 +231,13 @@ mach_init(argc, argv, code)
 	 * XXX this may clobber PTEs needed by the BIOS.
 	 */
 	mips_vector_init();
+
+#ifdef DDB
+	/*
+	 * Initialize machine-dependent DDB commands, in case of early panic.
+	 */
+	db_machine_init();
+#endif
 
 	/* check what model platform we are running on */
 	cputype = ACER_PICA_61; /* FIXME find systemtype */
@@ -679,217 +699,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-/*
- * Set registers on exec.
- * Clear all registers except sp, pc.
- */
-void
-setregs(p, pack, stack, retval)
-	register struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
-{
-	extern struct proc *fpcurproc;
-
-	bzero((caddr_t)p->p_md.md_regs, sizeof(struct frame));
-	bzero((caddr_t)&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
-	p->p_md.md_regs[SP] = stack;
-	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
-        p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
-	p->p_md.md_regs[PS] = PSL_USERSET;
-	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (fpcurproc == p)
-		fpcurproc = (struct proc *)0;
-	p->p_md.md_ss_addr = 0;
-}
-
-/*
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
- */
-struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
-	struct	sigcontext sf_sc;	/* actual context */
-};
-
-#ifdef DEBUG
-int sigdebug = 0;
-int sigpid = 0;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#endif
-
-/*
- * Send an interrupt to process.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-{
-	register struct proc *p = curproc;
-	register struct sigframe *fp;
-	register int *regs;
-	register struct sigacts *psp = p->p_sigacts;
-	int oonstack, fsize;
-	struct sigcontext ksc;
-	extern char sigcode[], esigcode[];
-
-	regs = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in data space, the
-	 * call to grow() is a nop, and the copyout()
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
-	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		fp = (struct sigframe *)(regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-		(void)grow(p, (unsigned)fp);
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
-#endif
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	ksc.sc_onstack = oonstack;
-	ksc.sc_mask = mask;
-	ksc.sc_pc = regs[PC];
-	ksc.mullo = regs[MULLO];
-	ksc.mulhi = regs[MULHI];
-	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
-	bcopy((caddr_t)&regs[1], (caddr_t)&ksc.sc_regs[1],
-		sizeof(ksc.sc_regs) - sizeof(int));
-	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
-	if (ksc.sc_fpused) {
-		extern struct proc *fpcurproc;
-
-		/* if FPU has current state, save it first */
-		if (p == fpcurproc)
-			savefpregs(p);
-		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
-	}
-	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	regs[A0] = sig;
-	regs[A1] = code;
-	regs[A2] = (int)&fp->sf_sc;
-	regs[A3] = (int)catcher;
-
-	regs[PC] = (int)catcher;
-	regs[T9] = (int)catcher;
-	regs[SP] = (int)fp;
-	/*
-	 * Signal trampoline code is at base of user stack.
-	 */
-	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
-#endif
-}
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
- * a machine fault.
- */
-/* ARGSUSED */
-int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	register struct sigcontext *scp;
-	register int *regs;
-	struct sigcontext ksc;
-	int error;
-
-	scp = SCARG(uap, sigcntxp);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-	regs = p->p_md.md_regs;
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-	error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(ksc));
-	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
-#ifdef DEBUG
-		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-		printf("  old sp %x ra %x pc %x\n",
-			regs[SP], regs[RA], regs[PC]);
-		printf("  new sp %x ra %x pc %x err %d z %x\n",
-			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
-			error, ksc.sc_regs[ZERO]);
-#endif
-		return (EINVAL);
-	}
-	scp = &ksc;
-	/*
-	 * Restore the user supplied information
-	 */
-	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	regs[PC] = scp->sc_pc;
-	regs[MULLO] = scp->mullo;
-	regs[MULHI] = scp->mulhi;
-	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
-		sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
-	if (scp->sc_fpused)
-		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
-	return (EJUSTRETURN);
-}
-
 int	waittime = -1;
 struct user dumppcb;	/* Actually, struct pcb would do. */
 
@@ -1163,6 +972,7 @@ vid_scroll()
 		video++;
 	}
 }
+
 void
 vid_print_string(const char *str)
 {
