@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.43 2001/05/18 16:25:07 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.44 2001/05/23 15:50:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -566,12 +566,20 @@ scsipi_channel_thaw(chan, count)
 		chan->chan_qfreeze = 0;
 	}
 	splx(s);
+	/*
+	 * Kick the channel's queue here.  Note, we may be running in
+	 * interrupt context (softclock or HBA's interrupt), so the adapter
+	 * driver had better not sleep.
+	 */
+	if (chan->chan_qfreeze == 0)
+		scsipi_run_queue(chan);
 }
 
 /*
  * scsipi_channel_timed_thaw:
  *
- *	Thaw a channel after some time has expired.
+ *	Thaw a channel after some time has expired. This will also
+ * 	run the channel's queue if the freeze count has reached 0.
  */
 void
 scsipi_channel_timed_thaw(arg)
@@ -580,13 +588,6 @@ scsipi_channel_timed_thaw(arg)
 	struct scsipi_channel *chan = arg;
 
 	scsipi_channel_thaw(chan, 1);
-
-	/*
-	 * Kick the channel's queue here.  Note, we're running in
-	 * interrupt context (softclock), so the adapter driver
-	 * had better not sleep.
-	 */
-	scsipi_run_queue(chan);
 }
 
 /*
