@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.13 1996/10/11 00:44:49 christos Exp $	*/
+/*	$NetBSD: fb.c,v 1.14 1996/10/12 16:00:21 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

@@ -203,23 +203,21 @@ fbioctl(dev, cmd, data, flag, p)
  * Select on Digital-OS-compatible in-kernel input-event ringbuffer.
  */
 int
-fbselect(dev, flag, p)
+fbpoll(dev, events, p)
 	dev_t dev;
-	int flag;
+	int events;
 	struct proc *p;
 {
 	struct fbinfo *fi = fbcd.cd_devs[minor(dev)];
+	int revents = 0;
 
-	switch (flag) {
-	case FREAD:
+	if (events & (POLLIN | POLLRDNORM))
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
 		    fi->fi_fbu->scrInfo.qe.eTail)
-			return (1);
-		selrecord(p, &fi->fi_selp);
-		break;
-	}
-
-	return (0);
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &fi->fi_selp);
+	return (revents);
 }
 
 /*
