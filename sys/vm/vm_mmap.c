@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.62 1998/10/02 08:00:57 mrg Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.63 1999/03/09 12:18:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,7 +87,7 @@ sys_sbrk(p, v, retval)
 #endif
 
 	/* Not yet implemented */
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /* ARGSUSED */
@@ -104,7 +104,7 @@ sys_sstk(p, v, retval)
 #endif
 
 	/* Not yet implemented */
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 
@@ -591,7 +591,7 @@ sys_madvise(p, v, retval)
 #endif
 
 	/* Not yet implemented */
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /* ARGSUSED */
@@ -610,7 +610,7 @@ sys_mincore(p, v, retval)
 #endif
 
 	/* Not yet implemented */
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 int
