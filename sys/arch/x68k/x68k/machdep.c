@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1997/10/10 17:43:25 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1997/10/12 18:12:51 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,12 +90,15 @@
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 
+#include <sys/device.h>
 #include <x68k/x68k/iodevice.h>
 
 void initcpu __P((void));
 void identifycpu __P((void));
 void doboot __P((void))
     __attribute__((__noreturn__));
+int badaddr __P((caddr_t));
+int badbaddr __P((caddr_t));
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -138,6 +141,16 @@ extern	short exframesize[];
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
 #endif
+
+/* prototypes for local functions */
+void    identifycpu __P((void));
+void    initcpu __P((void));
+
+/* functions called from locore.s */
+void    dumpsys __P((void));
+void    straytrap __P((int, u_short));
+void	nmihand __P((struct frame));
+void	intrhand __P((int));
 
 /*
  * Console initialization: called early on from main,
@@ -1059,6 +1072,8 @@ cpu_dumpconf()
 #define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
+vm_offset_t	reserve_dumppages __P((vm_offset_t));
+
 vm_offset_t
 reserve_dumppages(p)
 	vm_offset_t p;
@@ -1068,6 +1083,9 @@ reserve_dumppages(p)
 }
 
 #ifdef MACHINE_NONCONTIG
+static int find_range __P((vm_offset_t));
+static int find_next_range __P((vm_offset_t));
+
 static int
 find_range(pa)
 	vm_offset_t pa;
@@ -1312,17 +1330,23 @@ badbaddr(addr)
 /*
  * XXX Why on earth isn't this in a common file?!
  */
+void	netintr __P((void));
+void	arpintr __P((void));
+void	atintr __P((void));
+void	ipintr __P((void));
+void	nsintr __P((void));
+void	clnintr __P((void));
+void	ccittintr __P((void));
+void	pppintr __P((void));
+
 void
 netintr()
 {
 #ifdef INET
-#include "ether.h"
-#if NETHER > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
 	}
-#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
@@ -1378,6 +1402,9 @@ struct si_callback {
 };
 
 static struct si_callback *si_callbacks = 0;
+
+void add_sicallback __P((void (*)(void *, void *), void *, void *));
+void rem_sicallback __P((void (*)(void *, void *)));
 
 void
 add_sicallback (function, rock1, rock2)
@@ -1445,6 +1472,7 @@ intrhand(sr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
+void candbtimer __P((void *));
 
 void
 candbtimer(arg)

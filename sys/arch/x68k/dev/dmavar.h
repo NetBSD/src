@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.2 1997/10/12 18:06:23 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh.  All rights reserved.
@@ -39,6 +39,7 @@
 #define	DMA_BWR	0x02
 
 int dmarangecheck	__P((vm_offset_t, u_long));
+void x68k_dmastart	__P((int, caddr_t, int, int));
 
 extern caddr_t dma_dataaddr[4];		/* XXX */
 extern caddr_t dma_bouncebuf[4];	/* XXX */
