@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.19 2001/01/05 03:27:28 lukem Exp $	*/
+/*	$NetBSD: pen.c,v 1.19.2.1 2002/07/21 04:43:03 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.19 2001/01/05 03:27:28 lukem Exp $");
+__RCSID("$NetBSD: pen.c,v 1.19.2.1 2002/07/21 04:43:03 lukem Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ static int CurrentSet;		/* rm -rf Current only if it's really set! */
 /*
  * Backup Current and Previous into temp. strings that are later
  * restored & freed by restore_dirs
- * This is to make nested calls to makeplaypen/leave_playpen work
+ * This is to make nested calls to make_playpen/leave_playpen work
  */
 void
 save_dirs(char **c, char **p)
@@ -58,7 +58,7 @@ save_dirs(char **c, char **p)
 /*
  * Restore Current and Previous from temp strings that were created
  * by safe_dirs.
- * This is to make nested calls to makeplaypen/leave_playpen work
+ * This is to make nested calls to make_playpen/leave_playpen work
  */
 void
 restore_dirs(char *c, char *p)
