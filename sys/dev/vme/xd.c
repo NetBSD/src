@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.1 1997/11/01 22:56:25 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.2 1997/11/02 23:12:53 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.1 1997/11/01 22:56:25 pk Exp $
+ * id: $NetBSD: xd.c,v 1.2 1997/11/02 23:12:53 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -424,7 +424,7 @@ xdcattach(parent, self, aux)
 
 	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct xdc),
 			mod, bt, &bh) != 0)
-		panic("if_ie: vme_map");
+		panic("xdc: vme_map");
 
 	xdc->xdc = (struct xdc *) bh;
 	xdc->ipl = va->vma_pri;
@@ -532,7 +532,9 @@ xdcattach(parent, self, aux)
 		(void) config_found(self, (void *) &xa, NULL);
 
 	dvma_free(xa.dvmabuf, XDFM_BPS, &xa.buf);
+#if 0
 	bootpath_store(1, NULL);
+#endif
 
 	/* start the watchdog clock */
 	timeout(xdc_tick, xdc, XDC_TICKCNT);
