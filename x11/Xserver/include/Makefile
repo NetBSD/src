@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/19 18:36:46 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,5 @@ LNFILES=${XF86SRC}/common/xf86Module.h		xf86Module.h \
 	${XF86SRC}/xf86Version.h		xf86Version.h \
 	${XF86SRC}/common/compiler.h		compiler.h
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>
