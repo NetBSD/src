@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.3 2001/02/24 20:17:45 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.4 2001/03/15 17:30:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -97,8 +97,8 @@ shbattach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_iot = BUS_SPACE_TAG_ANONYMOUS;
-	sc->sc_memt = BUS_SPACE_TAG_ANONYMOUS;
+	sc->sc_iot = 0;
+	sc->sc_memt = 0;
 
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_search(shbsearch, self, NULL);

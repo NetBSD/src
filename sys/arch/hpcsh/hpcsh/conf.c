@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2001/02/09 19:54:11 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2001/03/15 17:30:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ cons_decl(com);
 cdev_decl(sci);
 #include "scif.h"
 cdev_decl(scif);
+#include "com.h"
+cdev_decl(com);
 
 #include "biconsdev.h"
 cdev_decl(biconsdev);
@@ -166,7 +168,7 @@ struct cdevsw cdevsw[] =
 	cdev_log_init(1,log),           /*  5: /dev/klog */
 	cdev_ptc_init(NPTY,ptc),        /*  6: pseudo-tty master */
 	cdev_tty_init(NPTY,pts),        /*  7: pseudo-tty slave */
-	cdev_notdef(),			/*  8: (reserved) NS16550 compatible */
+	cdev_tty_init(NCOM,com),	/*  8: NS16550 compatible */
 	cdev_notdef(),		        /*  9: (reserved) parallel printer*/
 	cdev_disk_init(NWD, wd),        /* 10: ST506/ESDI/IDE disk */
 	cdev_notdef(),			/* 11: (reserved) floppy diskette */
@@ -242,22 +244,6 @@ static int chrtoblktbl[] =  {
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
-};
-
-struct consdev constab[] = {
-#if NBICONSDEV > 0
-	cons_init(bicons),
-#endif
-#if NSCI > 0
-	cons_init(sci),
-#endif
-#if NSCIF > 0
-	cons_init(scif),
-#endif
-#if NCOM > 0
-	cons_init(com),
-#endif
-	{ 0 },
 };
 
 /*
