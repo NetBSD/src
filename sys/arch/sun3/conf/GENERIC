@@ -17,6 +17,7 @@ maxusers	16
 # Standard options
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options FOO=3
 
 # Options for all SUN3 machines
 options		KTRACE
