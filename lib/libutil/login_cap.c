@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.14 2003/10/21 00:55:05 fvdl Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.15 2003/10/25 07:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.14 2003/10/21 00:55:05 fvdl Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.15 2003/10/25 07:31:27 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -508,7 +508,7 @@ setuserenv(login_cap_t *lc)
 	if (!res)
 		return -1;
 	
-	ptr = (char *)res + count * sizeof(char *);
+	ptr = (char *)(void *)res + count * sizeof(char *);
 	strcpy(ptr, str);
 
 	/* split string */
