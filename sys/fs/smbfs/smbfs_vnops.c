@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.20 2003/04/07 12:21:40 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.21 2003/04/07 19:31:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.20 2003/04/07 12:21:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.21 2003/04/07 19:31:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ smbfs_closel(struct vop_close_args *ap)
 			smbfs_findclose(np->n_dirseq, &scred);
 			np->n_dirseq = NULL;
 		}
-		if ((SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS) == 0) {
+		if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS) {
 			error = smbfs_smb_close(ssp, np->n_fid,
 				&np->n_mtime, &scred);
 		} else
