@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.18 1999/05/30 16:08:23 tron Exp $	*/
+/*	$NetBSD: extract.c,v 1.19 1999/08/19 13:29:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.18 1999/05/30 16:08:23 tron Exp $");
+__RCSID("$NetBSD: extract.c,v 1.19 1999/08/19 13:29:59 agc Exp $");
 #endif
 #endif
 
@@ -69,8 +69,8 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
     dir = home;
     for (q = start; q != stop; q = q->next) {
 	if (q->type == PLIST_FILE) {
-	    snprintf(try, FILENAME_MAX, "%s/%s", dir, q->name);
-	    if (make_preserve_name(bup, FILENAME_MAX, name, try) && fexists(bup)) {
+	    (void) snprintf(try, sizeof(try), "%s/%s", dir, q->name);
+	    if (make_preserve_name(bup, sizeof(bup), name, try) && fexists(bup)) {
 		(void)chflags(try, 0);
 		(void)unlink(try);
 		if (rename(bup, try))
@@ -151,13 +151,13 @@ extract_plist(char *home, package_t *pkg)
 		}
 		
 		/* first try to rename it into place */
-		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
+		(void) snprintf(try, sizeof(try), "%s/%s", Directory, p->name);
 		if (fexists(try)) {
 		    (void)chflags(try, 0);	/* XXX hack - if truly immutable, rename fails */
 		    if (preserve && PkgName) {
 			char pf[FILENAME_MAX];
 
-			if (make_preserve_name(pf, FILENAME_MAX, PkgName, try)) {
+			if (make_preserve_name(pf, sizeof(pf), PkgName, try)) {
 			    if (rename(try, pf)) {
 				warnx(
 				"unable to back up %s to %s, aborting pkg_add",
@@ -174,7 +174,7 @@ extract_plist(char *home, package_t *pkg)
 			char *s, t[FILENAME_MAX];
 			int rc;
 			
-			snprintf(t, FILENAME_MAX, "%s/%s", Directory, p->name);
+			(void) snprintf(t, sizeof(t), "%s/%s", Directory, p->name);
 			
 			s=pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
@@ -236,7 +236,7 @@ extract_plist(char *home, package_t *pkg)
 			if (p->name[0] == '/')
 			    u=p->name;
 			else {
-			    snprintf(t, FILENAME_MAX, "%s/%s", Directory, p->name);
+			    (void) snprintf(t, sizeof(t), "%s/%s", Directory, p->name);
 			    u=t;
 			}
 			
