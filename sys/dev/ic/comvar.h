@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.32 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.33 2000/09/21 23:27:32 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,13 +38,13 @@
 #include <sys/callout.h>
 #include <sys/timepps.h>
 
-int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
+int comcnattach __P((bus_space_tag_t, paddr_t, int, int, tcflag_t));
 
 #ifdef KGDB
 int com_kgdb_attach __P((bus_space_tag_t, int, int, int, tcflag_t));
 #endif
 
-int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
+int com_is_console __P((bus_space_tag_t, paddr_t, bus_space_handle_t *));
 
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
@@ -66,7 +66,7 @@ struct com_softc {
 
 	struct callout sc_diag_callout;
 
-	int sc_iobase;			/* XXX ISA-centric name */
+	paddr_t sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;
 
 	bus_space_tag_t sc_iot;
@@ -135,7 +135,7 @@ struct com_softc {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
-int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
+int cominit __P((bus_space_tag_t, paddr_t, int, int, tcflag_t,
 	bus_space_handle_t *));
 int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.176 2000/09/17 22:07:39 toshii Exp $	*/
+/*	$NetBSD: com.c,v 1.177 2000/09/21 23:27:32 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,6 +70,10 @@
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#if defined(__sparc__) || defined(__sparc_v9__)
+#define	DDB_BREAK_CHAR	1	/* L1 or Stop key */
+#endif
 
 /*
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
@@ -182,7 +186,7 @@ u_int com_rbuf_size = COM_RING_SIZE;
 u_int com_rbuf_hiwat = (COM_RING_SIZE * 1) / 4;
 u_int com_rbuf_lowat = (COM_RING_SIZE * 3) / 4;
 
-static int	comconsaddr;
+static paddr_t	comconsaddr;
 static bus_space_tag_t comconstag;
 static bus_space_handle_t comconsioh;
 static int	comconsattached;
@@ -207,7 +211,7 @@ volatile int	com_softintr_scheduled;
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-static int com_kgdb_addr;
+static paddr_t com_kgdb_addr;
 static bus_space_tag_t com_kgdb_iot;
 static bus_space_handle_t com_kgdb_ioh;
 static int com_kgdb_attached;
@@ -387,7 +391,7 @@ void
 com_attach_subr(sc)
 	struct com_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	paddr_t iobase = sc->sc_iobase;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
@@ -756,7 +760,7 @@ comopen(dev, flag, mode, p)
 
 	sc = device_lookup(&com_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
-	    sc->sc_rbuf == NULL)
+		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
@@ -774,7 +778,7 @@ comopen(dev, flag, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+		p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1604,19 +1608,21 @@ comstart(tp)
 		return;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
+	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP)) {
 		goto out;
-	if (sc->sc_tx_stopped)
+	}
+	if (sc->sc_tx_stopped) {
 		goto out;
-
+	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
+		if (tp->t_outq.c_cc == 0) {
 			goto out;
+		}
 	}
 
 	/* Grab the first contiguous region of buffer space. */
@@ -1970,7 +1976,7 @@ comintr(arg)
 			while (cc > 0) {
 				put[0] = bus_space_read_1(iot, ioh, com_data);
 				put[1] = lsr;
-#if defined(DDB) && defined(DDB_BREAKCHAR)
+#if defined(DDB) && defined(DDB_BREAK_CHAR)
 				if (put[0] == DDB_BREAK_CHAR &&
 				    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 					console_debugger();
@@ -2260,7 +2266,7 @@ com_common_putc(iot, ioh, c)
 int
 cominit(iot, iobase, rate, frequency, cflag, iohp)
 	bus_space_tag_t iot;
-	int iobase;
+	paddr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 	bus_space_handle_t *iohp;
@@ -2289,19 +2295,20 @@ cominit(iot, iobase, rate, frequency, cflag, iohp)
 /*
  * Following are all routines needed for COM to act as console
  */
+struct consdev comcons = {
+	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
+	NODEV, CN_NORMAL
+};
+
 
 int
 comcnattach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	int iobase;
+	paddr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {
 	int res;
-	static struct consdev comcons = {
-		NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
-		    NODEV, CN_NORMAL
-	};
 
 	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
 	if (res)
@@ -2349,7 +2356,7 @@ comcnpollc(dev, on)
 int
 com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	int iobase;
+	paddr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {
@@ -2396,7 +2403,7 @@ com_kgdb_putc(arg, c)
 int
 com_is_console(iot, iobase, ioh)
 	bus_space_tag_t iot;
-	int iobase;
+	paddr_t iobase;
 	bus_space_handle_t *ioh;
 {
 	bus_space_handle_t help;
