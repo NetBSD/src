@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.77 2003/03/01 05:41:56 atatat Exp $	*/
+/*	$NetBSD: print.c,v 1.78 2003/03/06 09:04:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.77 2003/03/01 05:41:56 atatat Exp $");
+__RCSID("$NetBSD: print.c,v 1.78 2003/03/06 09:04:21 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,21 @@ static void  intprintorsetwidth __P((VAR *, int, int));
 static void  strprintorsetwidth __P((VAR *, const char *, int));
 
 #define	min(a,b)	((a) <= (b) ? (a) : (b))
-#define	max(a,b)	((a) >= (b) ? (a) : (b))
+
+static int
+iwidth(u_int64_t v)
+{
+	u_int64_t nlim, lim;
+	int w = 1;
+
+	for (lim = 10; v >= lim; lim = nlim) {
+		nlim = lim * 10;
+		w++;
+		if (nlim < lim)
+			break;
+	}
+	return w;
+}
 
 static char *
 cmdpart(arg0)
@@ -232,13 +246,13 @@ intprintorsetwidth(v, val, mode)
 
 	if (mode == WIDTHMODE) {
 		if (val < 0 && val < v->longestn) {
-			fmtlen = (int)log10((double)-val) + 2;
 			v->longestn = val;
+			fmtlen = iwidth(-val) + 1;
 			if (fmtlen > v->width)
 				v->width = fmtlen;
 		} else if (val > 0 && val > v->longestp) {
-			fmtlen = (int)log10((double)val) + 1;
 			v->longestp = val;
+			fmtlen = iwidth(val);
 			if (fmtlen > v->width)
 				v->width = fmtlen;
 		}
@@ -731,12 +745,11 @@ tdev(arg, ve, mode)
 	v = ve->var;
 	dev = k->p_tdev;
 	if (dev == NODEV) {
-		/*
-		 * Minimum width is width of header - we don't
-		 * need to check it every time.
-		 */
 		if (mode == PRINTMODE)
 			(void)printf("%*s", v->width, "??");
+		else
+			if (v->width < 2)
+				v->width = 2;
 	} else {
 		(void)snprintf(buff, sizeof(buff),
 		    "%d/%d", major(dev), minor(dev));
@@ -760,12 +773,11 @@ tname(arg, ve, mode)
 	v = ve->var;
 	dev = k->p_tdev;
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL) {
-		/*
-		 * Minimum width is width of header - we don't
-		 * need to check it every time.
-		 */
 		if (mode == PRINTMODE)
 			(void)printf("%-*s", v->width, "??");
+		else
+			if (v->width < 2)
+				v->width = 2;
 	} else {
 		if (strncmp(ttname, "tty", 3) == 0 ||
 		    strncmp(ttname, "dty", 3) == 0)
@@ -801,14 +813,12 @@ longtname(arg, ve, mode)
 	v = ve->var;
 	dev = k->p_tdev;
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL) {
-		/*
-		 * Minimum width is width of header - we don't
-		 * need to check it every time.
-		 */
 		if (mode == PRINTMODE)
 			(void)printf("%-*s", v->width, "??");
-	}
-	else {
+		else
+			if (v->width < 2)
+				v->width = 2;
+	} else {
 		strprintorsetwidth(v, ttname, mode);
 	}
 }
@@ -900,14 +910,14 @@ wchan(arg, ve, mode)
 	if (l->l_wchan) {
 		if (l->l_wmesg) {
 			strprintorsetwidth(v, l->l_wmesg, mode);
-			v->width = min(v->width, WMESGLEN);
+			v->width = min(v->width, KI_WMESGLEN);
 		} else {
-			(void)asprintf(&buf, "%-*llx", v->width,
-			    (long long)l->l_wchan);
+			(void)asprintf(&buf, "%-*" PRIx64, v->width,
+			    l->l_wchan);
 			if (buf == NULL)
 				err(1, "%s", "");
 			strprintorsetwidth(v, buf, mode);
-			v->width = min(v->width, WMESGLEN);
+			v->width = min(v->width, KI_WMESGLEN);
 			free(buf);
 		}
 	} else {
@@ -1001,16 +1011,17 @@ cputime(arg, ve, mode)
 	if (mode == WIDTHMODE) {
 		/*
 		 * Ugg, this is the only field where a value of 0 longer
-		 * than the column title, and log10(0) isn't good enough.
+		 * than the column title.
 		 * Use SECSPERMIN, because secs is divided by that when
-		 * passed to log10().
+		 * passed to iwidth().
 		 */
-		if (secs == 0 && v->longestp == 0)
+		if (secs == 0)
 			secs = SECSPERMIN;
+
 		if (secs > v->longestp) {
-			/* "+6" for the "%02ld.%02ld" in the printf() below */
-			fmtlen = (int)log10((double)secs / SECSPERMIN) + 1 + 6;
 			v->longestp = secs;
+			/* "+6" for the ":%02ld.%02ld" in the printf() below */
+			fmtlen = iwidth(secs / SECSPERMIN) + 6;
 			if (fmtlen > v->width)
 				v->width = fmtlen;
 		}
@@ -1147,10 +1158,9 @@ printval(bp, v, mode)
 {
 	static char ofmt[32] = "%";
 	int width, vok, fmtlen;
-	char *fcp, *cp, *obuf;
-	enum type type;
-	long long val;
-	unsigned long long uval;
+	char *fcp, *cp;
+	int64_t val;
+	u_int64_t uval;
 
 	/*
 	 * Note that the "INF127" check is nonsensical for types
@@ -1204,45 +1214,45 @@ printval(bp, v, mode)
 			vok = VUNSIGN;
 			break;
 		case KPTR:
-			uval = (unsigned long long)GET(u_int64_t);
+			uval = GET(u_int64_t);
 			vok = VPTR;
 			break;
 		case KPTR24:
-			uval = (unsigned long long)GET(u_int64_t);
+			uval = GET(u_int64_t);
 			uval &= 0xffffff;
 			vok = VPTR;
 			break;
 		case INT64:
-			val = (long long)GET(int64_t);
+			val = GET(int64_t);
 			vok = VSIGN;
 			break;
 		case UINT64:
-			uval = (unsigned long long)CHK_INF127(GET(u_int64_t));
+			uval = CHK_INF127(GET(u_int64_t));
 			vok = VUNSIGN;
 			break;
 
+		case SIGLIST:
 		default:
 			/* nothing... */;
 		}
 		switch (vok) {
 		case VSIGN:
-			if (val < 0  && val < v->longestn) {
-				fmtlen = (int)log10((double)-val) + 2;
+			if (val < 0 && val < v->longestn) {
 				v->longestn = val;
+				fmtlen = iwidth(-val) + 1;
 				if (fmtlen > v->width)
 					v->width = fmtlen;
 			} else if (val > 0 && val > v->longestp) {
-				fmtlen = (int)log10((double)val) + 1;
 				v->longestp = val;
+				fmtlen = iwidth(val);
 				if (fmtlen > v->width)
 					v->width = fmtlen;
 			}
 			return;
 		case VUNSIGN:
 			if (uval > v->longestu) {
-				fmtlen = (int)log10((double)uval) + 1;
 				v->longestu = uval;
-				v->width = fmtlen;
+				v->width = iwidth(uval);
 			}
 			return;
 		case VPTR:
@@ -1267,28 +1277,6 @@ printval(bp, v, mode)
 		continue;
 
 	switch (v->type) {
-	case INT32:
-		if (sizeof(int32_t) == sizeof(int))
-			type = INT;
-		else if (sizeof(int32_t) == sizeof(long))
-			type = LONG;
-		else
-			errx(1, "unknown conversion for type %d", v->type);
-		break;
-	case UINT32:
-		if (sizeof(u_int32_t) == sizeof(u_int))
-			type = UINT;
-		else if (sizeof(u_int32_t) == sizeof(u_long))
-			type = ULONG;
-		else
-			errx(1, "unknown conversion for type %d", v->type);
-		break;
-	default:
-		type = v->type;
-		break;
-	}
-
-	switch (type) {
 	case CHAR:
 		(void)printf(ofmt, width, GET(char));
 		return;
@@ -1314,11 +1302,16 @@ printval(bp, v, mode)
 		(void)printf(ofmt, width, CHK_INF127(GET(u_long)));
 		return;
 	case KPTR:
-		(void)printf(ofmt, width, (unsigned long long)GET(u_int64_t));
+		(void)printf(ofmt, width, GET(u_int64_t));
 		return;
 	case KPTR24:
-		(void)printf(ofmt, width,
-		    (unsigned long long)GET(u_int64_t) & 0xffffff);
+		(void)printf(ofmt, width, GET(u_int64_t) & 0xffffff);
+		return;
+	case INT32:
+		(void)printf(ofmt, width, GET(int32_t));
+		return;
+	case UINT32:
+		(void)printf(ofmt, width, CHK_INF127(GET(u_int32_t)));
 		return;
 	case SIGLIST:
 		{
@@ -1332,38 +1325,24 @@ printval(bp, v, mode)
 				    s->__bits[(SIGSETSIZE - 1) - i]);
 
 			/* Skip leading zeroes */
-			for (i = 0; buf[i]; i++)
-				if (buf[i] != '0')
-					break;
+			for (i = 0; buf[i] == '0'; i++)
+				continue;
 
 			if (buf[i] == '\0')
 				i--;
-			(void)asprintf(&obuf, ofmt, width, &buf[i]);
+			strprintorsetwidth(v, buf + i, mode);
+#undef SIGSETSIZE
 		}
-		break;
+		return;
 	case INT64:
-		(void)printf(ofmt, width, (long long)GET(int64_t));
+		(void)printf(ofmt, width, GET(int64_t));
 		return;
 	case UINT64:
-		(void)printf(ofmt, width, (unsigned long long)CHK_INF127(GET(u_int64_t)));
+		(void)printf(ofmt, width, CHK_INF127(GET(u_int64_t)));
 		return;
 	default:
 		errx(1, "unknown type %d", v->type);
 	}
-	if (obuf == NULL)
-		err(1, "%s", "");
-	if (mode == WIDTHMODE) {
-		/* Skip leading spaces. */
-		cp = strrchr(obuf, ' ');
-		if (cp == NULL)
-			cp = obuf;
-		else
-			cp++;	/* skip last space */
-	}
-	else
-		cp = obuf;
-	strprintorsetwidth(v, cp, mode);
-	free(obuf);
 #undef GET
 #undef CHK_INF127
 }
@@ -1377,5 +1356,65 @@ pvar(arg, ve, mode)
 	VAR *v;
 
 	v = ve->var;
+	if (v->flag & UAREA && !((struct kinfo_proc2 *)arg)->p_uvalid) {
+		if (mode == PRINTMODE)
+			(void)printf("%*s", v->width, "-");
+		return;
+	}
+
 	printval((char *)arg + v->off, v, mode);
+}
+
+void
+putimeval(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	VAR *v = ve->var;
+	struct kinfo_proc2 *k = arg;
+	ulong secs = *(uint32_t *)((char *)arg + v->off);
+	ulong usec = *(uint32_t *)((char *)arg + v->off + sizeof (uint32_t));
+	int fmtlen;
+
+	if (!k->p_uvalid) {
+		if (mode == PRINTMODE)
+			(void)printf("%*s", v->width, "-");
+		return;
+	}
+
+	if (mode == WIDTHMODE) {
+		if (!secs)
+			/* zero doesn't give correct width... */
+			secs = 1;
+		if (secs > v->longestu) {
+			v->longestu = secs;
+			if (secs <= 999)
+				/* sss.ssssss */
+				fmtlen = iwidth(secs) + 6 + 1;
+			else
+				/* hh:mm:ss.ss */
+				fmtlen = iwidth((secs+1)/3600)
+					+ 2 + 1 + 2 + 1 + 2 + 1;
+			if (fmtlen > v->width)
+				v->width = fmtlen;
+		}
+		return;
+	}
+
+	if (secs < 999)
+		(void)printf( "%*lu.%.6lu", v->width - 6 - 1, secs, usec);
+	else {
+		uint h, m;
+		usec += 5000;
+		if (usec >= 1000000) {
+			usec -= 1000000;
+			secs++;
+		}
+		m = secs / 60u;
+		secs -= m * 60u;
+		h = m / 60u;
+		m -= h * 60u;
+		(void)printf( "%*u:%.2u:%.2lu.%.2lu", v->width - 9, h, m, secs, usec / 10000u );
+	}
 }

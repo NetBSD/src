@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2003/03/01 05:41:56 atatat Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 2003/03/06 09:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -48,6 +48,7 @@ extern uid_t myuid;
 extern kvm_t *kd;
 extern VAR var[];
 extern VARENT *vhead;
+extern VARENT *sorthead;
 
 __BEGIN_DECLS
 void	 command __P((void *, VARENT *, int));
@@ -69,12 +70,14 @@ void	 maxrss __P((void *, VARENT *, int));
 void	 nlisterr __P((struct nlist *));
 void	 p_rssize __P((void *, VARENT *, int));
 void	 pagein __P((void *, VARENT *, int));
-void	 parsefmt __P((char *));
+void	 parsefmt __P((const char *));
+void	 parsesort __P((const char *));
 void	 pcpu __P((void *, VARENT *, int));
 void	 pmem __P((void *, VARENT *, int));
 void	 pnice __P((void *, VARENT *, int));
 void	 pri __P((void *, VARENT *, int));
 void	 printheader __P((void));
+void	 putimeval __P((void *, VARENT *, int));
 void	 pvar __P((void *, VARENT *, int));
 void	 rgname __P((void *, VARENT *, int));
 void	 rssize __P((void *, VARENT *, int));
