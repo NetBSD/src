@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.126 2002/12/01 09:03:03 isaki Exp $
+#	$NetBSD: DEVNAMES,v 1.127 2002/12/09 12:56:15 scw Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -211,6 +211,7 @@ cpu			arm32
 cpu			atari
 cpu			cobalt
 cpu			evbmips
+cpu			evbppc
 cpu			hpcmips
 cpu			macppc
 cpu			mipsco
@@ -222,7 +223,6 @@ cpu			sgimips
 cpu			sparc
 cpu			sparc64
 cpu			vax
-cpu			walnut
 cpu			x68k
 crime			sgimips
 crypto			MI		Attribute
@@ -264,7 +264,7 @@ drsc			amigappc
 drsupio			amiga
 drsupio			amigappc
 dsrtc			arm32
-dsrtc			walnut
+dsrtc			evbppc
 dtide			MI
 dtop			pmax
 dvbox			hp300
@@ -298,7 +298,7 @@ eisabus			MI		Attribute
 el			MI		
 elink			MI		Attribute
 elmc			MI (MCA)
-emac			walnut
+emac			evbppc
 empsc			amiga
 empsc			amigappc
 emuxki			MI
@@ -403,7 +403,7 @@ giobus			sgimips		Attribute
 gm			macppc
 gpbus			hpcmips
 gpbusif			hpcmips
-gpio			walnut
+gpio			evbppc
 grackle			macppc
 grf			amiga
 grf			amigappc
@@ -626,6 +626,7 @@ mainbus			bebox
 mainbus			bebox		Attribute
 mainbus			cobalt
 mainbus			evbmips
+mainbus			evbppc
 mainbus			hp300
 mainbus			hpcmips
 mainbus			i386
@@ -653,7 +654,6 @@ mainbus			sparc64		Attribute
 mainbus			sun2
 mainbus			sun3
 mainbus			vax
-mainbus			walnut
 mainbus			x68k
 maple			dreamcast
 mb86960			MI		Attribute
@@ -1216,7 +1216,7 @@ wdc			MI
 wdc_base		MI		Attribute
 wdog			evbsh3
 wdog			mmeye
-wdog			walnut
+wdog			evbppc
 wds			MI		
 wdsc			mvme68k
 we			MI		
