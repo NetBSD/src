@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_mmap.c 1.3 90/01/21$
  *
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.8 1993/07/07 11:25:32 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.9 1993/07/15 14:48:37 cgd Exp $
  */
 
 /*
@@ -131,7 +131,7 @@ smmap(p, uap, retval)
 	if (mmapdebug & MDB_FOLLOW)
 		printf("mmap(%d): addr %x len %x pro %x flg %x fd %d pos %x\n",
 		       p->p_pid, uap->addr, uap->len, uap->prot,
-		       uap->flags, uap->fd, uap->pos);
+		       flags, uap->fd, uap->pos);
 #endif
 	/*
 	 * Make sure one of the sharing types is specified
@@ -187,7 +187,8 @@ smmap(p, uap, retval)
 		/*
 		 * Ensure that file protection and desired protection
 		 * are compatible.  Note that we only worry about writability
-		 * if mapping is shared.
+		 * if mapping is shared.  XXX (cgd) -- coalese access checks
+		 * and permissions setting.
 		 */
 		if ((uap->prot & PROT_READ) && (fp->f_flag & FREAD) == 0 ||
 		    ((flags & MAP_SHARED) &&
@@ -195,17 +196,16 @@ smmap(p, uap, retval)
 			return(EACCES);
 		handle = (caddr_t)vp;
 		/*
-		 * Map protections to MACH style
+		 * Map maximum protections to MACH style
 		 */
-		if(flags & MAP_SHARED) {
-        	        maxprot = VM_PROT_EXECUTE;
-			if (fp->f_flag & FREAD)
-				maxprot |= VM_PROT_READ;
+		maxprot = VM_PROT_EXECUTE;	/* ??? */
+		if (fp->f_flag & FREAD)
+			maxprot |= VM_PROT_READ;
+		if(uap->flags & MAP_SHARED) {
 			if (fp->f_flag & FWRITE)
 				maxprot |= VM_PROT_WRITE;
-		} else {
-			maxprot = VM_PROT_ALL;
-		}
+		} else
+			maxprot |= VM_PROT_WRITE;
 	} else if (uap->fd != -1) {
                 maxprot = VM_PROT_ALL;
 		handle = (caddr_t)fp;
@@ -214,7 +214,7 @@ smmap(p, uap, retval)
 		handle = NULL;
 	}
 	/*
-	 * Map protections to MACH style
+	 * Map current protections to MACH style
 	 */
 	prot = VM_PROT_NONE;
 	if (uap->prot & PROT_READ)
@@ -652,12 +652,8 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	/*
 	 * Correct protection (default is VM_PROT_ALL).
 	 * Note that we set the maximum protection.  This may not be
-	 * entirely correct.  Maybe the maximum protection should be based
-	 * on the object permissions where it makes sense (e.g. a vnode).
-	 *
-	 * XXX Changed my mind: leave max prot at VM_PROT_ALL.
-	 * Changed again: indeed set maximum protection based on
-	 * object permissions.
+	 * entirely correct.  The maximum protection is be based on
+	 * the object permissions where it makes sense (e.g. a vnode).
 	 */
 		rv = vm_map_protect(map, *addr, *addr+size, prot, FALSE);
 		if (rv != KERN_SUCCESS) {
