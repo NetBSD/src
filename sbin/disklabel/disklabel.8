@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.11 1996/06/29 15:50:18 pk Exp $
+.\"	$NetBSD: disklabel.8,v 1.12 1996/10/02 13:49:44 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nd read and write disk pack label
 .Sh SYNOPSIS
 .Nm disklabel
-.Op Fl r
+.Op Fl rt
 .Ar disk
 .Nm disklabel
 .Fl w
@@ -130,6 +130,11 @@ If the
 .Fl r
 flag is given, the label from the raw disk will be displayed rather
 than the in-core label.
+If the
+.Fl t
+flag is given, then the label will be formatted as a
+.Xr disktab 5
+entry.
 .Pp
 The second form of the command, with the
 .Fl w
@@ -372,7 +377,10 @@ Conversely, if a partition has a type other than FS_UNUSED or FS_BOOT,
 .Nm disklabel
 will not install bootstrap code that overlaps it.
 .Sh BUGS
-When a disk name is given without a full pathname,
-the constructed device name uses the ``a'' partition on the tahoe,
+If the disk partition is not specified in the disk name
+(i.e. ``xy0'' instead of ``/dev/rxy0c''),
+.Nm disklabel
+will construct the full pathname of the disk and use
+the ``a'' partition on the tahoe,
 the ``d'' partition on the i386 or its successors, and the ``c''
 partition on all others.
