@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.155 2002/01/08 02:46:14 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.156 2002/01/13 14:18:35 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -102,6 +102,7 @@
 #	i4btrc*	trace device
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
 #	cir*	Consumer IR
@@ -186,6 +187,7 @@ all)
 	sh $0 altq
 	sh $0 ed0 ed1
 	sh $0 cir0 cir1 irframe0 irframe1
+	sh $0 clockctl
 	;;
 
 audio)
@@ -955,6 +957,13 @@ irframe*)
 	mknod $irframe c $major $unit
 	chown root.wheel $irframe
 	chmod 600 $irframe
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 89 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
