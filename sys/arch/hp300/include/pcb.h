@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.7 1994/10/26 07:26:32 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8 1995/05/12 12:55:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,8 +47,7 @@
 /*
  * HP300 process control block
  */
-struct pcb
-{
+struct pcb {
 	short	pcb_flags;	/* misc. process flags */
 	short	pcb_ps; 	/* processor status word */
 	int	pcb_ustp;	/* user segment table pointer */

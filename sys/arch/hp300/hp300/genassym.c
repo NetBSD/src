@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.12 1995/04/12 15:27:48 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.13 1995/05/12 12:54:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -125,7 +125,6 @@ main()
 	off("PM_STCHG", struct pmap, pm_stchanged);
 
 	/* interrupt/fault metering */
-	off("V_SWTCH", struct vmmeter, v_swtch);
 	off("V_INTR", struct vmmeter, v_intr);
 
 	/* trap types (should just include trap.h?) */

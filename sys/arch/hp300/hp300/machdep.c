@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1995/04/22 20:25:51 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1995/05/12 12:54:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1103,7 +1103,7 @@ boot(howto)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
-		savectx(curproc->p_addr, 0);
+		savectx(curproc->p_addr);
 
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
@@ -1597,8 +1597,7 @@ regdump(fp, sbytes)
 	splx(s);
 }
 
-extern char kstack[];
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
+#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
@@ -1648,7 +1647,7 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-#ifdef DEBUG
+#ifdef STACKCHECK
 char oflowmsg[] = "k-stack overflow";
 char uflowmsg[] = "k-stack underflow";
 

@@ -1,4 +1,6 @@
-/*	$NetBSD: locore.s,v 1.37 1995/04/12 08:30:45 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1995/05/12 12:54:48 mycroft Exp $	*/
+
+#undef STACKCHECK	/* doesn't work any more */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -841,17 +843,17 @@ Ldorte1:
 #endif
 	rte				| real return
 
+#ifdef STACKCHECK
 /*
  * Kernel access to the current processes kernel stack is via a fixed
  * virtual address.  It is at the same address as in the users VA space.
- * Umap contains the KVA of the first of UPAGES PTEs mapping VA _kstack.
  */
 	.data
 	.set	_kstack,USRSTACK
 	.set	_kstackatbase,USRSTACK+USPACE-4
 	.globl	_kstackatbase
-_Umap:	.long	0
-	.globl	_kstack, _Umap
+	.globl	_kstack
+#endif
 
 #define	RELOC(var, ar)	\
 	lea	var,ar;	\
@@ -1087,11 +1089,10 @@ Lfinish:
 	lea	tmpstk,sp		| temporary stack
 	jbsr	_vm_set_page_size	| select software page size
 /* set kernel stack, user SP, and initial pcb */
-	lea	_kstack,a1		| proc0 kernel stack
+	movl	_proc0paddr,a1		| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
-	movl	_proc0paddr,a1		| get proc0 pcb addr
 	movl	a1,_curpcb		| proc0 is running
 #ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
@@ -1115,35 +1116,23 @@ Lnocache0:
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
-/*
- * Create a fake exception frame that returns to user mode,
- * make space for the rest of a fake saved register set, and
- * pass the first available RAM and a pointer to the register
- * set to "main()".  "main()" will call "icode()", which fakes
- * an "execve()" system call, which is why we need to do that
- * ("main()" sets "u.u_ar0" to point to the register set).
- * When "main()" returns, we're running in process 1 and have
- * successfully faked the "execve()".  We load up the registers from
- * that set; the "rte" loads the PC and PSR, which jumps to "init".
- */
-  	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| PC - filled in by "execve"
-  	movw	#PSL_USER,sp@-		| in user mode
-	clrl	sp@-			| stack adjust count and padding
-	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
-	pea	sp@			| addr of space for D0
+
 	jbsr	_main			| main(firstaddr, r0)
-	addql	#4,sp			| pop args
-	cmpl	#-2,_mmutype		| 68040?
-	jne	Lnoflush		| no, skip
-	.word	0xf478			| cpusha dc
-	.word	0xf498			| cinva ic
-Lnoflush:
+
+	.globl	_return_to_user
+_return_to_user:
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
-	addql	#8,sp			| pop SSP and align word
-  	rte
+	moveml	sp@+,#0x7FFF		| restore most user regs
+	addql	#8,sp			| toss SP and stack adjust
+	jra	rei			| and return
+
+	.globl	_proc_trampoline
+_proc_trampoline:
+	movl	_curproc,sp@-
+	jbsr	a2@
+	addql	#4,sp
+	jra	a3@
 
 /*
  * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
@@ -1383,13 +1372,20 @@ mdpflag:
 
 /*
  * At exit of a process, do a switch for the last time.
- * The mapping of the pcb at p->p_addr has already been deleted,
- * and the memory for the pcb+stack has been freed.
- * The ipl is high enough to prevent the memory from being reallocated.
+ * Switch to a safe stack and PCB, and deallocate the process's resources.
  */
 ENTRY(switch_exit)
+	movl	sp@(4),a0
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
+
+	/* Free old process's resources. */
+	movl	#USPACE,sp@-		| size of u-area
+	movl	a0@(P_ADDR),sp@-	| address of process's u-area
+	movl	_kernel_map,sp@-	| map it was allocated in
+	jbsr	_kmem_free		| deallocate it
+	lea	sp@(12),sp		| pop args
+
 	jra	_cpu_switch
 
 /*
@@ -1427,7 +1423,6 @@ ENTRY(cpu_switch)
 	movl	_curproc,sp@-		| remember last proc running
 #endif
 	clrl	_curproc
-	addql	#1,_cnt+V_SWTCH
 
 	/*
 	 * Find the highest-priority queue that isn't empty,
@@ -1510,24 +1505,7 @@ Lswnofpsave:
 	movl	_curpcb,a1		| restore p_addr
 Lswnochg:
 
-	movl	#PGSHIFT,d1
-	movl	a1,d0
-	lsrl	d1,d0			| convert p_addr to page number
-	lsll	#2,d0			| and now to Sysmap offset
-	addl	_Sysmap,d0		| add Sysmap base to get PTE addr
-#ifdef notdef
-	movw	#PSL_HIGHIPL,sr		| go crit while changing PTEs
-#endif
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
-	movl	d0,a0			| address of new context
-	movl	_Umap,a2		| address of PTEs for kstack
-	moveq	#UPAGES-1,d0		| sizeof kstack
-Lres1:
-	movl	a0@+,d1			| get PTE
-	andl	#~PG_PROT,d1		| mask out old protection
-	orl	#PG_RW+PG_V,d1		| ensure valid and writable
-	movl	d1,a2@+			| load it up
-	dbf	d0,Lres1		| til done
 #if defined(HP380)
 	cmpl	#-2,_mmutype		| 68040?
 	jne	Lres1a			| no, skip
@@ -1589,9 +1567,8 @@ Lresfprest:
 	rts
 
 /*
- * savectx(pcb, altreturn)
- * Update pcb, saving current processor state and arranging
- * for alternate return ala longjmp in switch if altreturn is true.
+ * savectx(pcb)
+ * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
 	movl	sp@(4),a1
@@ -1608,13 +1585,6 @@ ENTRY(savectx)
 	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lsvnofpsave:
 #endif
-	tstl	sp@(8)			| altreturn?
-	jeq	Lsavedone
-	movl	sp,d0			| relocate current sp relative to a1
-	subl	#_kstack,d0		|   (sp is relative to kstack):
-	addl	d0,a1			|   a1 += sp - kstack;
-	movl	sp@,a1@			| write return pc at (relocated) sp@
-Lsavedone:
 	moveq	#0,d0			| return 0
 	rts
 
@@ -1965,18 +1935,6 @@ ENTRY(ecacheoff)
 	MMUADDR(a0)
 	andl	#~MMU_CEN,a0@(MMUCMD)
 Lnocache8:
-	rts
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by A6 (e.g. GCC generated code).
- */
-	.globl	_getsp
-_getsp:
-	movl	sp,d0			| get current SP
-	addql	#4,d0			| compensate for return address
 	rts
 
 	.globl	_getsfc, _getdfc

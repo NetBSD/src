@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1995/04/22 20:26:00 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1995/05/12 12:54:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,43 +69,47 @@ int
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	register struct user *up = p2->p_addr;
-	int offset;
-	extern caddr_t getsp();
-	extern char kstack[];
+	register struct pcb *pcb = &p2->p_addr->u_pcb;
+	register struct trapframe *tf;
+	register struct switchframe *sf;
+	extern void return_to_user();
 
-	p2->p_md.md_regs = p1->p_md.md_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
-	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 * this is tricky, as the final pcb is constructed by savectx,
-	 * but its frame isn't yet on the stack when the stack is copied.
-	 * switch compensates for this when the child eventually runs.
-	 * This should be done differently, with a single call
-	 * that copies and updates the pcb+stack,
-	 * replacing the bcopy and savectx.
-	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = getsp() - kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) USPACE - offset);
+	/* Copy pcb from proc p1 to p2. */
+	*pcb = p1->p_addr->u_pcb;
 
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
 
 	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
+	 * Copy the trap frame, and arrange for the child to return directly
+	 * through return_to_user().
 	 */
-	if (savectx(up, 1)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
+	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
+	p2->p_md.md_regs = (int *)tf;
+	*tf = *(struct trapframe *)p1->p_md.md_regs;
+	tf->tf_regs[0] = 0;		/* D0 */
+	tf->tf_sr &= ~PSL_C;
+	tf->tf_format = FMT0;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_pc = (u_int)return_to_user;
+	pcb->pcb_regs[11] = (int)sf;	/* saved KSP */
+
 	return (0);
+}
+
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	u_long pc;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct switchframe *sf = (struct switchframe *)pcb->pcb_regs[11];
+	extern void proc_trampoline(), return_to_user();
+
+	pcb->pcb_regs[6] = pc;				/* A2 */
+	pcb->pcb_regs[7] = (u_int)return_to_user;	/* A3 */
+	sf->sf_pc = (u_int)proc_trampoline;
 }
 
 /*
@@ -124,8 +128,8 @@ cpu_exit(p)
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, USPACE);
-	switch_exit();
+	cnt.v_swtch++;
+	switch_exit(p);
 	/* NOTREACHED */
 }
 
