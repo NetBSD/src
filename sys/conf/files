@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.537 2002/06/27 06:26:51 junyoung Exp $
+#	$NetBSD: files,v 1.538 2002/06/28 22:32:58 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -764,7 +764,7 @@ file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
 # VGA graphics
 #
-defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL	
+defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
 file	dev/ic/vga_subr.c		vga
