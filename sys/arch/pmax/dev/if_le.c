@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	8.2 (Berkeley) 11/16/93
- *      $Id: if_le.c,v 1.6 1994/07/24 23:46:40 glass Exp $
+ *      $Id: if_le.c,v 1.7 1994/08/17 01:33:15 deraadt Exp $
  */
 
 #include <le.h>
@@ -784,7 +784,6 @@ leread(unit, buf, len)
 	}
 #endif
 	m->m_flags |= flags;
-	et.ether_type = eth_type;
 	ether_input(&le->sc_if, &et, m);
 }
 
