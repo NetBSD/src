@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2001/03/06 12:13:55 tron Exp $
+# $NetBSD: mi,v 1.19 2001/03/19 11:18:42 tsutsui Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -498,8 +498,6 @@
 ./usr/X11R6/lib/X11/xkb/types/nocancel
 ./usr/X11R6/lib/X11/xkb/types/pc
 ./usr/X11R6/lib/X11/xkb/xkbcomp
-./usr/X11R6/lib/X11/xserver
-./usr/X11R6/lib/X11/xserver/SecurityPolicy
 ./usr/X11R6/lib/X11/xsm
 ./usr/X11R6/lib/X11/xsm/system.xsm
 ./usr/X11R6/man
