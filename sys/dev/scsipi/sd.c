@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.211 2003/10/27 23:03:05 fredb Exp $	*/
+/*	$NetBSD: sd.c,v 1.212 2003/10/28 02:01:46 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.211 2003/10/27 23:03:05 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.212 2003/10/28 02:01:46 cl Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -683,7 +683,7 @@ sdstrategy(bp)
 	int s;
 	boolean_t sector_aligned;
 
-	blkno = 0;		/* XXX to appease gcc3 */	
+	blkno = 0;		/* XXX to appease gcc3 m68k */
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB1,

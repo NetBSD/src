@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.264 2003/10/27 23:06:15 fredb Exp $ */
+/*	$NetBSD: wd.c,v 1.265 2003/10/28 02:01:46 cl Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.264 2003/10/27 23:06:15 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.265 2003/10/28 02:01:46 cl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -480,7 +480,7 @@ wdstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s;
 
-	blkno = 0;		/* XXX to appease gcc3 */
+	blkno = 0;		/* XXX to appease gcc3 m68k */
 
 	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
