@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.55 2002/05/02 17:13:27 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.56 2002/06/09 16:33:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,7 +100,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.55 2002/05/02 17:13:27 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.56 2002/06/09 16:33:36 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp";
@@ -616,7 +616,7 @@ void *m;
 #endif
 
 		FR_VERBOSE(("%c", fr->fr_skip ? 's' :
-				  (pass & FR_PASS) ? 'p' : 
+				  (pass & FR_PASS) ? 'p' :
 				  (pass & FR_AUTH) ? 'a' :
 				  (pass & FR_ACCOUNT) ? 'A' :
 				  (pass & FR_NOMATCH) ? 'n' : 'b'));
@@ -928,7 +928,7 @@ int out;
 	fin->fin_qif = qif;
 # endif
 #endif /* _KERNEL */
-	
+
 	changed = 0;
 	fin->fin_ifp = ifp;
 	fin->fin_v = v;
@@ -1668,10 +1668,10 @@ minor_t which;
 int set;
 {
 	frgroup_t *fg, **fgp;
- 
+
 	if (!(fg = fr_findgroup(num, flags, which, set, &fgp)))
 		return;
- 
+
 	*fgp = fg->fg_next;
 	KFREE(fg);
 }
@@ -1703,7 +1703,7 @@ frentry_t **listp;
 
 		ATOMIC_DEC32(fp->fr_ref);
 		if (fp->fr_grhead) {
-			fr_delgroup(fp->fr_grhead, fp->fr_flags, 
+			fr_delgroup(fp->fr_grhead, fp->fr_flags,
 				    unit, set);
 			fp->fr_grhead = 0;
 		}
