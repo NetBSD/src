@@ -1,4 +1,4 @@
-.\"     $NetBSD: dio.4,v 1.2 2002/01/15 01:31:30 wiz Exp $
+.\"     $NetBSD: dio.4,v 1.3 2003/08/01 02:42:08 tsutsui Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 10, 2001
+.Dd August 1, 2003
 .Dt DIO 4 hp300
 .Os
 .Sh NAME
@@ -93,8 +93,9 @@ built-in and add-on Ethernet boards
 .El
 .Ss SCSI interfaces
 .Bl -tag -width XXXXXX -offset indent
-.It oscsi
-Old HP300 SCSI driver
+.It spc
+.Tn HP98265A
+SCSI interface
 .El
 .Sh SEE ALSO
 .Xr dca 4 ,
@@ -104,6 +105,6 @@ Old HP300 SCSI driver
 .Xr hpib 4 ,
 .Xr hyper 4 ,
 .Xr le 4 ,
-.Xr oscsi 4 ,
 .Xr rbox 4 ,
+.Xr spc 4 ,
 .Xr topcat 4
