@@ -34,32 +34,32 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
- *	$Id: nfs_syscalls.c,v 1.6 1993/07/17 15:56:59 mycroft Exp $
+ *	$Id: nfs_syscalls.c,v 1.6.4.1 1993/11/14 22:22:29 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "file.h"
-#include "stat.h"
-#include "namei.h"
-#include "vnode.h"
-#include "mount.h"
-#include "proc.h"
-#include "malloc.h"
-#include "buf.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "domain.h"
-#include "protosw.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
 
-#include "../netinet/in.h"
-#include "../netinet/tcp.h"
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
-#include "nfsv2.h"
-#include "nfs.h"
-#include "nfsrvcache.h"
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsrvcache.h>
 
 /* Global defs. */
 extern u_long nfs_prog, nfs_vers;

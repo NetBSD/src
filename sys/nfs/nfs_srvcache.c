@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_srvcache.c	7.11 (Berkeley) 4/16/91
- *	$Id: nfs_srvcache.c,v 1.5 1993/09/07 15:41:44 ws Exp $
+ *	$Id: nfs_srvcache.c,v 1.5.2.1 1993/11/14 22:22:26 mycroft Exp $
  */
 
 /*
@@ -43,22 +43,22 @@
  *            pages 53-63. San Diego, February 1989.
  */
 
-#include "param.h"
-#include "namei.h"
-#include "vnode.h"
-#include "mount.h"
-#include "kernel.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
-#include "../netinet/in.h"
+#include <netinet/in.h>
 
-#include "nfsm_subs.h"
-#include "nfsv2.h"
-#include "nfsrvcache.h"
-#include "nfs.h"
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfsrvcache.h>
+#include <nfs/nfs.h>
 
 #if	((NFSRCHSZ&(NFSRCHSZ-1)) == 0)
 #define	NFSRCHASH(xid)		(((xid)+((xid)>>16))&(NFSRCHSZ-1))

@@ -13,29 +13,29 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_fat.c,v 1.1 1993/08/13 11:35:36 cgd Exp $
+ *	$Id: msdosfs_fat.c,v 1.1.2.1 1993/11/14 22:27:16 mycroft Exp $
  */
 
 /*
  * kernel include files.
  */
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "file.h"
-#include "namei.h"
-#include "mount.h"		/* to define statfs structure */
-#include "vnode.h"		/* to define vattr structure */
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/namei.h>
+#include <sys/mount.h>		/* to define statfs structure */
+#include <sys/vnode.h>		/* to define vattr structure */
+#include <sys/errno.h>
 
 /*
  * msdosfs include files.
  */
-#include "bpb.h"
-#include "msdosfsmount.h"
-#include "direntry.h"
-#include "denode.h"
-#include "fat.h"
+#include <msdosfs/bpb.h>
+#include <msdosfs/msdosfsmount.h>
+#include <msdosfs/direntry.h>
+#include <msdosfs/denode.h>
+#include <msdosfs/fat.h>
 
 /*
  * Fat cache stats.

@@ -16,27 +16,27 @@
  *	msdosfs_vnops.c,v 1.1 1993/08/13 11:35:40 cgd Exp
  */
 
-#include "param.h"
-#include "systm.h"
-#include "namei.h"
-#include "resourcevar.h"	/* defines plimit structure in proc struct */
-#include "kernel.h"
-#include "file.h"		/* define FWRITE ... */
-#include "stat.h"
-#include "buf.h"
-#include "proc.h"
-#include "mount.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/resourcevar.h>	/* defines plimit structure in proc struct */
+#include <sys/kernel.h>
+#include <sys/file.h>		/* define FWRITE ... */
+#include <sys/stat.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>	/* defines v_rdev */
-#include "malloc.h"
+#include <sys/malloc.h>
+#include <sys/dir.h>		/* defines dirent structure */
 
-#include "dir.h"		/* defines dirent structure */
+#include <msdosfs/bpb.h>
+#include <msdosfs/direntry.h>
+#include <msdosfs/denode.h>
+#include <msdosfs/msdosfsmount.h>
+#include <msdosfs/fat.h>
 
-#include "bpb.h"
-#include "direntry.h"
-#include "denode.h"
-#include "msdosfsmount.h"
-#include "fat.h"
 /*
  * Some general notes:
  * 
