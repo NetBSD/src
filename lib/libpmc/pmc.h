@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.1 2002/08/09 00:03:15 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.2 2005/02/04 15:27:44 perry Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -47,19 +47,19 @@ struct pmc_event {
 };
 
 __BEGIN_DECLS
-int	pmc_configure_counter __P((int, const char *, pmc_ctr_t, uint32_t));
-int	pmc_start_counter __P((int));
-int	pmc_stop_counter __P((int));
-int	pmc_get_num_counters __P((void));
-int	pmc_get_counter_class __P((void));
-int	pmc_get_counter_type __P((int, int *));
-int	pmc_get_counter_value __P((int, uint64_t *));
-int	pmc_get_accumulated_counter_value __P((int, uint64_t *));
+int	pmc_configure_counter(int, const char *, pmc_ctr_t, uint32_t);
+int	pmc_start_counter(int);
+int	pmc_stop_counter(int);
+int	pmc_get_num_counters(void);
+int	pmc_get_counter_class(void);
+int	pmc_get_counter_type(int, int *);
+int	pmc_get_counter_value(int, uint64_t *);
+int	pmc_get_accumulated_counter_value(int, uint64_t *);
 
-const char *pmc_get_counter_class_name __P((int));
-const char *pmc_get_counter_type_name __P((int));
-const char *pmc_get_counter_event_name __P((pmc_evid_t));
-const struct pmc_event *pmc_get_counter_event_list __P((void));
+const char *pmc_get_counter_class_name(int);
+const char *pmc_get_counter_type_name(int);
+const char *pmc_get_counter_event_name(pmc_evid_t);
+const struct pmc_event *pmc_get_counter_event_list(void);
 __END_DECLS
 
 #endif /* _PMC_H_ */
