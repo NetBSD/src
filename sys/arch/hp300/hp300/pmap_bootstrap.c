@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 1997/09/19 13:54:03 leo Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 1998/08/20 08:33:45 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -60,18 +60,19 @@ extern int Sysptsize;
 extern char *extiobase, *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
-extern vm_offset_t CLKbase, MMUbase;
-extern vm_offset_t pagezero;
+extern vaddr_t CLKbase, MMUbase;
+extern paddr_t pagezero;
 
 extern int maxmem, physmem;
-extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
-extern vm_size_t mem_size;
+extern paddr_t avail_start, avail_end;
+extern vaddr_t virtual_avail, virtual_end;
+extern vsize_t mem_size;
 extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
 
-void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+void	pmap_bootstrap __P((paddr_t, paddr_t));
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -98,10 +99,10 @@ extern caddr_t	msgbufaddr;
  */
 void
 pmap_bootstrap(nextpa, firstpa)
-	vm_offset_t nextpa;
-	vm_offset_t firstpa;
+	paddr_t nextpa;
+	paddr_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -317,7 +318,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * not mapped at VA 0.  But, we might want to use it
 	 * for something later.
 	 */
-	RELOC(pagezero, vm_offset_t) = firstpa;
+	RELOC(pagezero, paddr_t) = firstpa;
 
 	/*
 	 * Validate PTEs for kernel text (RO).  The first page
@@ -399,10 +400,10 @@ pmap_bootstrap(nextpa, firstpa)
 	 * CLKbase, MMUbase: important registers in internal IO space
 	 * accessed from assembly language.
 	 */
-	RELOC(CLKbase, vm_offset_t) =
-		(vm_offset_t)RELOC(intiobase, char *) + CLKBASE;
-	RELOC(MMUbase, vm_offset_t) =
-		(vm_offset_t)RELOC(intiobase, char *) + MMUBASE;
+	RELOC(CLKbase, vaddr_t) =
+		(vaddr_t)RELOC(intiobase, char *) + CLKBASE;
+	RELOC(MMUbase, vaddr_t) =
+		(vaddr_t)RELOC(intiobase, char *) + MMUBASE;
 
 	/*
 	 * Setup u-area for process 0.
@@ -434,13 +435,13 @@ pmap_bootstrap(nextpa, firstpa)
 	 * To work around this, we move avail_end back one more
 	 * page so the msgbuf can be preserved.
 	 */
-	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int)) -
+	RELOC(avail_start, paddr_t) = nextpa;
+	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
 	    (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
-	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
-	RELOC(virtual_avail, vm_offset_t) =
+	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
+	RELOC(virtual_avail, vaddr_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
-	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
+	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
 #ifdef M68K_MMU_HP
 	/*
@@ -511,7 +512,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
+		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
 		va += NBPG;
@@ -523,6 +524,6 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
-		RELOC(virtual_avail, vm_offset_t) = va;
+		RELOC(virtual_avail, vaddr_t) = va;
 	}
 }
