@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.228 2000/06/07 01:57:30 soren Exp $
+$NetBSD: pcidevs,v 1.229 2000/06/07 09:52:16 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1342,8 +1342,8 @@ product SONY	CXD32222	0x8039  CXD3222 OHCI IEEE 1394 Host Controller
 product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
 /* Sun Microsystems products */
-product SUN EBUS	0x1000	SPARC Ebus
-product SUN HMENETWORK	0x1001	SUNW,hme compatible Ethernet
+product SUN EBUS	0x1000	PCIO Ebus2
+product SUN HMENETWORK	0x1001	PCIO Happy Meal Ethernet
 product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 
