@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.51 2002/03/11 16:27:02 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.52 2002/04/11 11:11:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ obioprint(args, busname)
 	union obio_attach_args *uoba = args;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 
-	printf(" addr 0x%lx", (long)oba->oba_paddr);
+	printf(" addr 0x%lx", (u_long)BUS_ADDR_PADDR(oba->oba_paddr));
 	if (oba->oba_pri != -1)
 		printf(" level %d", oba->oba_pri);
 
@@ -239,8 +239,7 @@ _obio_bus_map(t, ba, size, flags, va, hp)
 	     obio_find_rom_map(ba, size, hp) == 0)
 		return (0);
 
-	return (bus_space_map2(sc->sc_bustag,
-			BUS_ADDR(PMAP_OBIO, ba), size, flags, va, hp));
+	return (bus_space_map2(sc->sc_bustag, ba, size, flags, va, hp));
 }
 
 paddr_t
@@ -253,8 +252,7 @@ obio_bus_mmap(t, ba, off, prot, flags)
 {
 	struct obio4_softc *sc = t->cookie;
 
-	return (bus_space_mmap(sc->sc_bustag,
-			BUS_ADDR(PMAP_OBIO, ba), off, prot, flags));
+	return (bus_space_mmap(sc->sc_bustag, ba, off, prot, flags));
 }
 
 int
@@ -293,7 +291,7 @@ obiosearch(parent, cf, aux)
 	uoba.uoba_isobio4 = 1;
 	oba->oba_bustag = &obio_space_tag;
 	oba->oba_dmatag = oap->ma->ma_dmatag;
-	oba->oba_paddr = cf->cf_loc[0];
+	oba->oba_paddr = BUS_ADDR(PMAP_OBIO, cf->cf_loc[0]);
 	oba->oba_pri = cf->cf_loc[1];
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &uoba) == 0)
@@ -309,20 +307,21 @@ obiosearch(parent, cf, aux)
  * Else, create a new mapping.
  */
 int
-obio_find_rom_map(pa, len, hp)
-	bus_addr_t	pa;
+obio_find_rom_map(ba, len, hp)
+	bus_addr_t	ba;
 	int		len;
 	bus_space_handle_t *hp;
 {
 #define	getpte(va)		lda(va, ASI_PTE)
 
-	u_long	pf;
+	u_long	pa, pf;
 	int	pgtype;
 	u_long	va, pte;
 
 	if (len > NBPG)
 		return (EINVAL);
 
+	pa = BUS_ADDR_PADDR(ba);
 	pf = pa >> PGSHIFT;
 	pgtype = PMAP_T2PTE_4(PMAP_OBIO);
 
@@ -336,7 +335,7 @@ obio_find_rom_map(pa, len, hp)
 		 * Found entry in PROM's pagetable
 		 * note: preserve page offset
 		 */
-		*hp = (bus_space_handle_t)(va | ((u_long)pa & PGOFSET));
+		*hp = (bus_space_handle_t)(va | (pa & PGOFSET));
 		return (0);
 	}
 
