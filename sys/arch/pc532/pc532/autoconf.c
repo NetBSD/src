@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1995/06/09 05:59:56 phil Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1995/08/25 07:49:04 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,13 +48,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-/* #include <sys/sl.h> */
-
 #include <sys/device.h>
 
 /*
@@ -63,8 +62,8 @@
  * the machine.
  */
 
-int	dkn;		/* number of iostat dk numbers assigned so far */
-extern int	cold;		/* cold start flag initialized in locore.s */
+int dkn;		/* number of iostat dk numbers assigned so far */
+extern int cold;	/* cold start flag initialized in locore.s */
 
 /*
  * Determine i/o configuration for a machine.
@@ -87,21 +86,26 @@ configure()
 	safepri = imask[IPL_ZERO];
 	spl0();
 
-	/* select the root device */
+#if GENERIC
+	if ((boothowto & RB_ASKNAME) == 0)
+		setroot();
+	setconf();
+#else
 	setroot();
+#endif
 
 	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
 
 /*
  * Configure swap space and related parameters.
  */
-
 swapconf()
 {
 	register struct swdevt *swp;
@@ -125,14 +129,6 @@ swapconf()
 		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 
 	}
-#if 0
-	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
-	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
-		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			Maxmem*NBPG/512;
-	if (dumplo < 0)
-#endif
-		dumplo = 0;
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */
@@ -143,52 +139,20 @@ static	char devname[][2] = {
 	's','w',	/* 1 = sw */
 	's','t',	/* 2 = st */
 	'r','d',	/* 3 = rd */
+	'c','d',	/* 4 = cd */
 };
-
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
 
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
-
-extern int _boot_flags;
-	/* 0 => no flags */
-
 setroot()
 {
-#if 1
-	int  majdev, mindev;
-	char ans;
-	dev_t temp;
-
-	if (_boot_flags & 0x2) {
-	    boothowto |= RB_SINGLE;
-	}
-	if (_boot_flags & 0x1) {
-	    printf ("root dev (0=>/dev/rd, 1=>/dev/sd0a, 2=>/dev/sd1a) ?");
-	    ans = cngetc();
-	    printf ("%c\n", ans);
-	    if (ans < '0' || ans > '2') {
-		printf ("bad root dev, using config root dev \n");
-		return;
-	    }
-	    if (ans == '0') {
-		rootdev = makedev(2,0);
-	    } else if (ans == '1') {
-		rootdev = makedev(0,0);
-	    } else {
-		rootdev = makedev(0,8);
-	    }
-	}
-#else
 	int  majdev, mindev, unit, part, adaptor;
 	dev_t temp, orootdev;
 	struct swdevt *swp;
 
-	printf("howto %x bootdev %x ", boothowto, bootdev);
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
@@ -198,7 +162,7 @@ setroot()
 	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	mindev = (unit << PARTITIONSHIFT) + part;
+	mindev = (unit * MAXPARTITIONS) + part;
 	orootdev = rootdev;
 	rootdev = makedev(majdev, mindev);
 	/*
@@ -209,32 +173,32 @@ setroot()
 		return;
 	printf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
-		mindev >> PARTITIONSHIFT, part + 'a');
-#ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
-	for (swp = swdevt; swp->sw_dev; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		unit, part + 'a');
 
+#ifdef DOSWAP
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		if (majdev == major(swp->sw_dev) &&
+		    (mindev / MAXPARTITIONS)
+		    == (minor(swp->sw_dev) / MAXPARTITIONS)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
 			break;
 		}
 	}
-	if (swp->sw_dev == 0)
+	if (swp->sw_dev == NODEV)
 		return;
+
 	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
+	 * If dumpdev was the same as the old primary swap device, move
+	 * it to the new primary swap device.
 	 */
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 #endif
-#endif
 }
 
-/* mem bus stuff? */
+/* mem bus stuff */
 
 static int membusprobe();
 static void membusattach();

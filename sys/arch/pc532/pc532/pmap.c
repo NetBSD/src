@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 1995/04/27 07:16:41 phil Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 1995/08/25 07:49:13 phil Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -97,6 +97,7 @@
 
 vm_offset_t pmap_extract(pmap_t, vm_offset_t);
 void pmap_activate(register pmap_t, struct pcb *);
+extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
@@ -438,6 +439,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
 	virtual_avail = va;
 #endif
+	virtual_avail = reserve_dumppages(va);
 #ifdef DEBUG
 	printf("virtual_avail = 0x%x\n", virtual_avail);
 #endif

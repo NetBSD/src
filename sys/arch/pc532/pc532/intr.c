@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 1995/07/04 12:19:07 paulus Exp $  */
+/*	$NetBSD: intr.c,v 1.4 1995/08/25 07:49:06 phil Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.3 1995/07/04 12:19:07 paulus Exp $
+ *	$Id: intr.c,v 1.4 1995/08/25 07:49:06 phil Exp $
  */
 
 #define DEFINE_SPLX
@@ -124,7 +124,7 @@ intr_establish(int intr, void (*vector)(), void *arg, char *use,
 		}
 		di();
 		switch (mode) {
-		case RAISING_EDGE:
+		case RISING_EDGE:
 			ICUW(TPL)  |=  (1 << intr);
 			ICUW(ELTG) &= ~(1 << intr);
 			break;
@@ -157,6 +157,7 @@ intr_establish(int intr, void (*vector)(), void *arg, char *use,
 	/* In the presence of SLIP or PPP, splimp > spltty. */
 	imask[IPL_NET] |= imask[IPL_TTY];
 #endif
+	imask[IPL_NET] |= imask[IPL_BIO];
 	imask[IPL_ZERO] &= ~(1 << intr);
 	return(intr);
 }

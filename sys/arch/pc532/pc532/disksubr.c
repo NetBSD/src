@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1994/10/26 08:25:00 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 1995/08/25 07:49:05 phil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -234,3 +234,8 @@ bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
 }
+
+/* XXX unknown */
+int
+dk_establish()
+{}
