@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.57 2002/09/27 15:37:21 provos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.58 2002/11/22 16:20:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.57 2002/09/27 15:37:21 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.58 2002/11/22 16:20:18 jmc Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -278,6 +278,11 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	sc->sc_dying = 0;
 	sc->sc_nodeid = 0xffff;		/* invalid */
 
+	sc->sc_sc1394.sc1394_callback.sc1394_read = fwohci_read;
+	sc->sc_sc1394.sc1394_callback.sc1394_write = fwohci_write;
+	sc->sc_sc1394.sc1394_callback.sc1394_inreg = fwohci_inreg;
+	sc->sc_sc1394.sc1394_callback.sc1394_unreg = fwohci_unreg;
+	
 	kthread_create(fwohci_create_event_thread, sc);
 	return 0;
 }
@@ -2669,16 +2674,15 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 				DPRINTF(("%s: Updating nodeid to %d\n", 
 				    iea->sc1394_dev.dv_xname,
 				    iea->sc1394_node_id));
+				if (iea->sc1394_callback.sc1394_reset)
+					iea->sc1394_callback.sc1394_reset(iea,
+					    iea->sc1394_callback.sc1394_resetarg);
 				break;
 			}
 		if (!found) {
 			strcpy(fwa.name, "fwnode");
 			memcpy(fwa.uid, fu->fu_uid, 8);
 			fwa.nodeid = n;
-			fwa.read = fwohci_read;
-			fwa.write = fwohci_write;
-			fwa.inreg = fwohci_inreg;
-			fwa.unreg = fwohci_unreg;
 			iea = (struct ieee1394_softc *)
 			    config_found_sm(&sc->sc_sc1394.sc1394_dev, &fwa, 
 			    fwohci_print, fwohci_submatch);
@@ -3245,6 +3249,7 @@ fwohci_write(struct ieee1394_abuf *ab)
 		lo = (ab->ab_addr & 0x00000000ffffffff);
 		pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
 		    (psc->sc_tlabel << 10) | (pkt.fp_tcode << 4);
+		psc->sc_tlabel = (psc->sc_tlabel + 1) & 0x3f;
 		break;
 	}
 
@@ -3590,7 +3595,7 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 			 * amount is ok.
 			 */ 
 			if (ab->ab_cb)
-                                ab->ab_data = (void *)1;
+                                ab->ab_subok = 1;
 		} else {
 			if (ab->ab_cb) 
 				rv = fwohci_handler_set(psc, ab->ab_tcode, high,
@@ -3633,31 +3638,34 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	ab->ab_tlabel = (pkt->fp_hdr[0] >> 10) & 0x3f;
 	addr = (((u_int64_t)(pkt->fp_hdr[1] & 0xffff) << 32) | pkt->fp_hdr[2]);
 
+	/* Make sure it's always 0 in case this gets reused multiple times. */
+	ab->ab_retlen = 0;
+
 	switch (ab->ab_tcode) {
 	case IEEE1394_TCODE_READ_REQ_QUAD:
 		ab->ab_retlen = 4;
 		break;
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
 		ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
-		if (ab->ab_data) {
+		if (ab->ab_subok) {
 			if ((addr + ab->ab_retlen) >
 			    (ab->ab_addr + ab->ab_length))
 				return IEEE1394_RCODE_ADDRESS_ERROR;
-			ab->ab_data = NULL;
 		} else
 			if (ab->ab_retlen != ab->ab_length)
 				return IEEE1394_RCODE_ADDRESS_ERROR;
 		break;
 	case IEEE1394_TCODE_WRITE_REQ_QUAD:
 		ab->ab_retlen = 4;
+		/* Fall through. */
+		
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
 		if (!ab->ab_retlen) 
 			ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
-		if (ab->ab_data) {
+		if (ab->ab_subok) {
 			if ((addr + ab->ab_retlen) >
 			    (ab->ab_addr + ab->ab_length))
 				return IEEE1394_RCODE_ADDRESS_ERROR;
-			ab->ab_data = NULL;
 		} else
 			if (ab->ab_retlen != ab->ab_length)
 				return IEEE1394_RCODE_ADDRESS_ERROR;
