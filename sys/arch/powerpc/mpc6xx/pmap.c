@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2001/06/30 01:21:24 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2001/06/30 02:03:16 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2183,7 +2183,7 @@ pmap_print_mmuregs(void)
 	printf("\ndBAT[]:\t");
 	for (i=0; i<4; i++) {
 		printf("0x%08x 0x%08x, ",
-			soft_ibat[i].batu, soft_dbat[i].batl);
+			soft_dbat[i].batu, soft_dbat[i].batl);
 		if (i == 1)
 			printf("\n\t");
 	}
