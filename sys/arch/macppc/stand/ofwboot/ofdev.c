@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.9 2002/03/30 07:14:49 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.10 2002/06/17 23:59:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -230,7 +230,7 @@ search_label(devp, off, buf, lp, off0)
 #endif
 		    ) {
 			poff = get_long(&p->mbrp_start) + off0;
-			if (strategy(devp, F_READ, poff + LABELSECTOR,
+			if (strategy(devp, F_READ, poff + 1,
 				     DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
 				if (!getdisklabel(buf, lp)) {
