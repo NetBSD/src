@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.13 2004/12/23 05:50:24 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.14 2004/12/23 05:52:27 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.13 2004/12/23 05:50:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.14 2004/12/23 05:52:27 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2421,7 +2421,7 @@ rtw_start(struct ifnet *ifp)
 {
 	uint8_t tppoll;
 	int desc, i, lastdesc, npkt, rate;
-	uint32_t proto_txctl0, txctl0, txctl1;
+	uint32_t proto_ctl0, ctl0, ctl1;
 	bus_dmamap_t		dmamap;
 	struct ieee80211com	*ic;
 	struct ieee80211_duration *d0;
@@ -2440,25 +2440,25 @@ rtw_start(struct ifnet *ifp)
 	DPRINTF2(sc, ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 
 	/* XXX do real rate control */
-	proto_txctl0 = RTW_TXCTL0_RTSRATE_1MBPS;
+	proto_ctl0 = RTW_TXCTL0_RTSRATE_1MBPS;
 
 	switch (rate = MAX(2, ieee80211_get_rate(ic))) {
 	case 2:
-		proto_txctl0 |= RTW_TXCTL0_RATE_1MBPS;
+		proto_ctl0 |= RTW_TXCTL0_RATE_1MBPS;
 		break;
 	case 4:
-		proto_txctl0 |= RTW_TXCTL0_RATE_2MBPS;
+		proto_ctl0 |= RTW_TXCTL0_RATE_2MBPS;
 		break;
 	case 11:
-		proto_txctl0 |= RTW_TXCTL0_RATE_5MBPS;
+		proto_ctl0 |= RTW_TXCTL0_RATE_5MBPS;
 		break;
 	case 22:
-		proto_txctl0 |= RTW_TXCTL0_RATE_11MBPS;
+		proto_ctl0 |= RTW_TXCTL0_RATE_11MBPS;
 		break;
 	}
 
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) != 0)
-		proto_txctl0 |= RTW_TXCTL0_SPLCP;
+		proto_ctl0 |= RTW_TXCTL0_SPLCP;
 
 	for (;;) {
 		if (rtw_dequeue(ifp, &stc, &htc, &m0, &ni) == -1)
@@ -2477,7 +2477,7 @@ rtw_start(struct ifnet *ifp)
 			goto post_dequeue_err;
 		}
 
-		txctl0 = proto_txctl0 |
+		ctl0 = proto_ctl0 |
 		    LSHIFT(m0->m_pkthdr.len, RTW_TXCTL0_TPKTSIZE_MASK);
 
 		wh = mtod(m0, struct ieee80211_frame *);
@@ -2492,15 +2492,15 @@ rtw_start(struct ifnet *ifp)
 
 		/* XXX >= ? */
 		if (m0->m_pkthdr.len > ic->ic_rtsthreshold)
-			txctl0 |= RTW_TXCTL0_RTSEN;
+			ctl0 |= RTW_TXCTL0_RTSEN;
 
 		d0 = &stx->stx_d0;
 
-		txctl1 = LSHIFT(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
+		ctl1 = LSHIFT(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
 		    LSHIFT(d0->d_rts_dur, RTW_TXCTL1_RTSDUR_MASK);
 
 		if ((d0->d_plcp_svc & IEEE80211_PLCP_SERVICE_LENEXT) != 0)
-			txctl1 |= RTW_TXCTL1_LENGEXT;
+			ctl1 |= RTW_TXCTL1_LENGEXT;
 
 		/* TBD fragmentation */
 
@@ -2518,10 +2518,10 @@ rtw_start(struct ifnet *ifp)
 				goto post_load_err;
 			}
 			htx = &htc->htc_desc[desc];
-			htx->htx_ctl0 = htole32(txctl0);
+			htx->htx_ctl0 = htole32(ctl0);
 			if (i != 0)
 				htx->htx_ctl0 |= htole32(RTW_TXCTL0_OWN);
-			htx->htx_ctl1 = htole32(txctl1);
+			htx->htx_ctl1 = htole32(ctl1);
 			htx->htx_buf = htole32(dmamap->dm_segs[i].ds_addr);
 			htx->htx_len = htole32(dmamap->dm_segs[i].ds_len);
 			lastdesc = desc;
