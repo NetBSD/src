@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.42 2003/11/05 10:18:38 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.43 2004/08/14 01:08:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.42 2003/11/05 10:18:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.43 2004/08/14 01:08:07 mycroft Exp $");
 
 #include "opt_quota.h"
 
@@ -114,9 +114,9 @@ ufs_inactive(v)
 	}
 
 	if (ip->i_flag &
-	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) {
+	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		VOP_UPDATE(vp, NULL, NULL, 0);
+		VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 		vn_finished_write(mp, V_LOWER);
 	}
 out:
