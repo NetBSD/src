@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.22 1999/01/11 22:45:41 tron Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.23 1999/03/25 16:15:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -296,6 +296,8 @@ tl_pci_attach(parent, self, aux)
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int i, tmp, ioh_valid, memh_valid;
+	int reg_io, reg_mem;
+	pcireg_t reg10, reg14;
 	pcireg_t csr;
 
 	printf("\n");
@@ -305,12 +307,39 @@ tl_pci_attach(parent, self, aux)
 		panic("tl_pci_attach: impossible");
 	sc->tl_product = tp;
 
-	/* Map the card space. */
-	ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL) == 0);
-	memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-	    0, &memt, &memh, NULL, NULL) == 0);
+	/*
+	 * Map the card space. Fisrt we have to find the I/O and MEM
+	 * registers. I/O is supposed to be at 0x10, MEM at 0x14, 
+	 * but some boards (Compaq Netflex 3/P PCI) seem to have it reversed.
+	 * The ThunderLAN manual is not consistent about this either (there
+	 * are both cases in code examples).
+	 */
+	reg10 = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x10);
+	reg14 = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x14);
+	if (PCI_MAPREG_TYPE(reg10) == PCI_MAPREG_TYPE_IO)
+		reg_io = 0x10;
+	else if (PCI_MAPREG_TYPE(reg14) == PCI_MAPREG_TYPE_IO)
+		reg_io = 0x14;
+	else
+		reg_io = 0;
+	if (PCI_MAPREG_TYPE(reg10) == PCI_MAPREG_TYPE_MEM)
+		reg_mem = 0x10;
+	else if (PCI_MAPREG_TYPE(reg14) == PCI_MAPREG_TYPE_MEM)
+		reg_mem = 0x14;
+	else
+		reg_mem = 0;
+
+	if (reg_io != 0)
+		ioh_valid = (pci_mapreg_map(pa, reg_io, PCI_MAPREG_TYPE_IO,
+		    0, &iot, &ioh, NULL, NULL) == 0);
+	else
+		ioh_valid = 0;
+	if (reg_mem != 0)
+		memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+		    0, &memt, &memh, NULL, NULL) == 0);
+	else
+		memh_valid = 0;
 
 	if (ioh_valid) {
 		sc->tl_bustag = iot;
