@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.17 1994/07/04 22:41:47 briggs Exp $
+ *	$Id: locore.s,v 1.18 1994/07/07 00:27:14 briggs Exp $
  */
 
 #include "assym.s"
@@ -279,69 +279,13 @@ _fpfline:
 	jra	rei		| all done
 
 _fpunsupp:
-	jra	_illinst
-
+	tstl	_cpu040
+	jne	_illinst
 #ifdef FPSP
-| FPSP entry points and support routines
-	.globl	real_fline,real_bsun,real_unfl,real_operr,real_ovfl,real_snan
-	.globl	real_unsupp,real_inex
-	.globl	fpsp_done,fpsp_fmt_error,mem_read,mem_write,real_trace
-real_fline:
+	.globl	fpsp_unsupp
+	jmp	fpsp_unsupp
+#endif
 	jra	_illinst
-real_trace:
-fpsp_done:
-	rte
-fpsp_fmt_error:
-	pea	LFP1
-	jbsr	_panic
-mem_read:
-	btst	#5,a6@(4)
-	jeq	user_read
-super_read:
-	movb	a0@+,a1@+
-	subl	#1,d0
-	jne	super_read
-	rts
-user_read:
-	movl	d1,sp@-
-	movl	d0,sp@-		| len
-	movl	a1,sp@-		| to
-	movl	a0,sp@-		| from
-	jsr	_copyin
-	addl	#12,sp
-	movl	sp@+,d1
-	rts
-mem_write:
-	btst	#5,a6@(4)
-	jeq	user_write
-super_write:
-	movb	a0@+,a1@+
-	subl	#1,d0
-	jne	super_write
-	rts
-user_write:
-	movl	d1,sp@-
-	movl	d0,sp@-		| len
-	movl	a1,sp@-		| to
-	movl	a0,sp@-		| from
-	jsr	_copyout
-	addl	#12,sp
-	movl	sp@+,d1
-	rts
-LFP1:	.asciz	"FPSP format error"
-	.even
-real_unsupp:
-	jra	_illinst
-
-real_bsun:
-real_inex:
-real_dz:
-real_unfl:
-real_operr:
-real_ovfl:
-real_snan:
-| Fall through into FP coprocessor exceptions
-#endif	/* if FPSP */
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -968,21 +912,10 @@ start:
 	tstl	_cpu040
 	beq	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
-#ifdef FPSP
-	lea	Lvectab+0xc0,a0		| Set up 68040 floating point
-	movl	#fpsp_bsun,a0@+		|  exception vectors
-	movl	#real_inex,a0@+
-	movl	#real_dz,a0@+
-	movl	#fpsp_unfl,a0@+
-	movl	#fpsp_operr,a0@+
-	movl	#fpsp_ovfl,a0@+
-	movl	#fpsp_snan,a0@+
-	movl	#fpsp_unsupp,a0@+
-#endif	/* if FPSP */
 
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
-	movl	#1, _mmutype		| 68040 MMU
+	movl	#MMU_68040, _mmutype	| 68040 MMU
 
 	jbsr	_gray_bar
 	movel	#0x0, d0
@@ -1012,10 +945,10 @@ Lstartnot040:
 	movc	cacr, d0		| on an '851, it'll go away.
 	tstl	d0
 	jeq	Lisa68020
-	movl	#0, _mmutype		| 68030 MMU
+	movl	#MMU_68030, _mmutype	| 68030 MMU
 	jra	Lmmufigured
 Lisa68020:
-	movl	#-1, _mmutype		| 68020, implies 68851, or crash.
+	movl	#MMU_68851, _mmutype	| 68020, implies 68851, or crash.
 Lmmufigured:
 
 | LAK: (1/2/94) We need to find out if the MMU is already on.  If it is
@@ -1034,7 +967,7 @@ Lmmufigured:
 | LAK: MMU is on; find out how it is mapped.  MacOS uses the CRP.
 
 	tstl	_mmutype		| ttx instructions will break 68851
-	jmi	LnocheckTT
+	jgt	LnocheckTT
 	lea	macos_tt0,a0		| save it for later inspection
 	.long	0xF0100A00		| pmove tt0,a0@
 	lea	macos_tt1,a0		| save it for later inspection
@@ -1046,7 +979,7 @@ LnocheckTT:
 	pmove	crp,a0@			| Save MacOS 
 	tstl	_mmutype		| ttx instructions will break 68851
 	| Assume that 68851 maps are in ROMs, which we can already read.
-	jmi	LnosetTT
+	jgt	LnosetTT
 					| This next line gets the second
 					| long word of the RP, the address...
 	movl	macos_crp2,d0		| address of root table
@@ -1576,7 +1509,7 @@ foobar3:
 
 | LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
 	tstl	_mmutype		| ttx instructions will break 68851
-	jmi	LnokillTT
+	jgt	LnokillTT
 	lea	longscratch,a0
 	movl	#0, a0@
 	.long	0xF0100800		| movl a0@,tt0
@@ -2239,7 +2172,7 @@ __TBIA:
 	jne	Ltbia040
 	pflusha				| flush entire TLB
 	tstl	_mmutype
-	jmi	Ltbia851
+	jgt	Ltbia851
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 Ltbia851:
@@ -2261,7 +2194,7 @@ ENTRY(TBIS)
 	tstl	_cpu040
 	jne	Ltbis040
 	tstl	_mmutype
-	jmi	Ltbis851
+	jgt	Ltbis851
 	pflush	#0,#0,a0@		| flush address from both sides
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip data cache
@@ -2290,7 +2223,7 @@ ENTRY(TBIAS)
 	tstl	_cpu040
 	jne	Ltbias040
 	tstl	_mmutype
-	jmi	Ltbias851
+	jgt	Ltbias851
 	pflush	#4,#4			| flush supervisor TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
@@ -2315,7 +2248,7 @@ ENTRY(TBIAU)
 	tstl	_cpu040
 	jne	Ltbiau040
 	tstl	_mmutype
-	jmi	Ltbiau851
+	jgt	Ltbiau851
 	pflush	#0,#4			| flush user TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
@@ -2496,7 +2429,7 @@ Lldustp040:
  */
 ENTRY(flushustp)
 	tstl	_mmutype
-	jge	Lnot68851		| Should get '030 and '040
+	jlt	Lnot68851		| Should get '030 and '040
 	movl	sp@(4),d0		| get USTP to flush
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to address
