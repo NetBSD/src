@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1999/04/14 15:22:46 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.14 2000/03/13 10:51:22 martin Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -255,7 +255,11 @@ main(argc, argv)
 	extern char    *optarg;
 	extern int      optind;
 
+#ifdef	SUPPORT_SERIAL
+	initio(SUPPORT_SERIAL);
+#else
 	initio(CONSDEV_PC);
+#endif
 	gateA20();
 
 	print_banner();
