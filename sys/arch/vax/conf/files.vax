@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.75 2000/08/08 16:48:13 ragge Exp $
+#       $NetBSD: files.vax,v 1.76 2000/08/26 02:31:00 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -22,7 +22,7 @@ defopt	opt_cputype.h	VAX780 VAX750 VAX730
 	VAX410 VAX43 VAX46 VAX48 VAX49 VAX53
 	VAX630 VAX640 VAX650 VAX660 VAX670 VAX680
 
-defopt	opt_emulate.h	INSN_EMULATE
+defopt	opt_emulate.h	NO_INSN_EMULATE
 
 # NBI on KA88
 device	nmi { slot=-1 }
@@ -344,8 +344,8 @@ file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/ka660.c		vax660
 file	arch/vax/vax/ka670.c		vax670
 file	arch/vax/vax/ka680.c		vax680
-file	arch/vax/vax/emulate.s		insn_emulate
-file	arch/vax/vax/unimpl_emul.s	insn_emulate
+file	arch/vax/vax/emulate.s		!no_insn_emulate
+file	arch/vax/vax/unimpl_emul.s	!no_insn_emulate
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s

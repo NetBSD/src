@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.55 2000/08/08 16:48:12 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.56 2000/08/26 02:31:01 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -208,8 +208,8 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	TRAPCALL(invkstk, T_KSPNOTVAL)
 
 SCBENTRY(privinflt)	# Privileged/unimplemented instruction
-#ifdef INSN_EMULATE
-	jsb	unimemu	# do not return if insn emulated
+#ifndef NO_INSN_EMULATE
+	jsb	_C_LABEL(unimemu)	# do not return if insn emulated
 #endif
 	pushl $0
 	pushl $T_PRIVINFLT
@@ -387,7 +387,7 @@ _C_LABEL(sret):
 sbifltmsg:
 	.asciz	"SBI fault"
 
-#if INSN_EMULATE
+#ifndef NO_INSN_EMULATE
 /*
  * Table of emulated Microvax instructions supported by emulate.s.
  * Use noemulate to convert unimplemented ones to reserved instruction faults.
@@ -467,7 +467,7 @@ _C_LABEL(emtable):
  */
 
 SCBENTRY(emulate)
-#if INSN_EMULATE
+#ifndef NO_INSN_EMULATE
 	movl	r11,32(sp)		# save register r11 in unused operand
 	movl	r10,36(sp)		# save register r10 in unused operand
 	cvtbl	(sp),r10		# get opcode
