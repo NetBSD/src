@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.7 1994/06/29 06:44:58 cgd Exp $	*/
+/*	$NetBSD: queue.h,v 1.8 1994/08/30 03:01:30 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -96,6 +96,13 @@ struct {								\
 	(elm)->field.le_prev = &(listelm)->field.le_next;		\
 }
 
+#define	LIST_INSERT_BEFORE(listelm, elm, field) {			\
+	(elm)->field.le_prev = (listelm)->field.le_prev;		\
+	(elm)->field.le_next = (listelm);				\
+	*(listelm)->field.le_prev = (elm);				\
+	(listelm)->field.le_prev = &(elm)->field.le_next;		\
+}
+
 #define LIST_INSERT_HEAD(head, elm, field) {				\
 	if (((elm)->field.le_next = (head)->lh_first) != NULL)		\
 		(head)->lh_first->field.le_prev = &(elm)->field.le_next;\
@@ -135,7 +142,7 @@ struct {								\
 
 #define TAILQ_INSERT_HEAD(head, elm, field) {				\
 	if (((elm)->field.tqe_next = (head)->tqh_first) != NULL)	\
-		(elm)->field.tqe_next->field.tqe_prev =			\
+		(head)->tqh_first->field.tqe_prev =			\
 		    &(elm)->field.tqe_next;				\
 	else								\
 		(head)->tqh_last = &(elm)->field.tqe_next;		\
@@ -158,6 +165,13 @@ struct {								\
 		(head)->tqh_last = &(elm)->field.tqe_next;		\
 	(listelm)->field.tqe_next = (elm);				\
 	(elm)->field.tqe_prev = &(listelm)->field.tqe_next;		\
+}
+
+#define	TAILQ_INSERT_BEFORE(listelm, elm, field) {			\
+	(elm)->field.tqe_prev = (listelm)->field.tqe_prev;		\
+	(elm)->field.tqe_next = (listelm);				\
+	*(listelm)->field.tqe_prev = (elm);				\
+	(listelm)->field.tqe_prev = &(elm)->field.tqe_next;		\
 }
 
 #define TAILQ_REMOVE(head, elm, field) {				\
