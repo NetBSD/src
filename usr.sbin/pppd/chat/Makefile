@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.1.1.1 1997/03/12 19:38:37 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1997/05/17 21:18:08 christos Exp $
 
 PROG=	chat
 SRCS=	chat.c
-MAN8=	chat.8
-MAN=	chat.cat8
+MAN=	chat.8
 BINDIR=	/usr/sbin
+#CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Dlint
 
 .include <bsd.prog.mk>

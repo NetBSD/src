@@ -1,3 +1,5 @@
+/*	$NetBSD: chat.c,v 1.1.1.2 1997/05/17 21:18:11 christos Exp $	*/
+
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
  *		the phone and log in).
@@ -34,15 +36,23 @@
  *
  */
 
-static char rcsid[] = "$Id: chat.c,v 1.1.1.1 1997/03/12 19:38:40 christos Exp $";
+#ifndef lint
+#if 0
+static char rcsid[] = "Id: chat.c,v 1.14 1997/04/30 05:40:50 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: chat.c,v 1.1.1.2 1997/05/17 21:18:11 christos Exp $";
+#endif
+#endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <time.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <syslog.h>
@@ -160,6 +170,9 @@ char *clean __P((register char *s, int sending));
 void break_sequence __P((void));
 void terminate __P((int status));
 void die __P((void));
+char *expect_strtok __P((char *, char *));
+
+int main __P((int, char *[]));
 
 void *dup_mem(b, c)
 void *b;
@@ -197,7 +210,7 @@ char **argv;
     program_name = *argv;
     tzset();
 
-    while (option = OPTION(argc, argv))
+    while ((option = OPTION(argc, argv)) != 0)
         {
 	switch (option)
 	    {
@@ -214,7 +227,7 @@ char **argv;
 		break;
 
 	    case 'f':
-		if (arg = OPTARG(argc, argv))
+		if ((arg = OPTARG(argc, argv)) != NULL)
 		    {
 		    chat_file = copy_of(arg);
 		    }
@@ -225,7 +238,7 @@ char **argv;
 		break;
 
 	    case 't':
-		if (arg = OPTARG(argc, argv))
+		if ((arg = OPTARG(argc, argv)) != NULL)
 		    {
 		    timeout = atoi(arg);
 		    }
@@ -301,11 +314,11 @@ char **argv;
 	}
     else
 	{
-	while (arg = ARG(argc, argv))
+	while ((arg = ARG(argc, argv)) != NULL)
 	    {
 	    chat_expect(arg);
 
-	    if (arg = ARG(argc, argv))
+	    if ((arg = ARG(argc, argv)) != NULL)
 	        {
 		chat_send(arg);
 	        }
@@ -313,6 +326,7 @@ char **argv;
 	}
 
     terminate(0);
+    return 0;
     }
 
 /*
@@ -322,7 +336,7 @@ char **argv;
 void do_file (chat_file)
 char *chat_file;
     {
-    int linect, len, sendflg;
+    int linect, sendflg;
     char *sp, *arg, quote;
     char buf [STR_LEN];
     FILE *cfp;
@@ -714,7 +728,7 @@ int sending;
 	    break;
 
 	case 'q':
-	    quiet = ! quiet;
+	    quiet = 1;
 	    break;
 
 	case 'r':
@@ -1179,6 +1193,7 @@ int c;
 int put_string (s)
 register char *s;
     {
+    quiet = 0;
     s = clean(s, 1);
 
     if (verbose)

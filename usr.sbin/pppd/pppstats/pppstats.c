@@ -1,3 +1,5 @@
+/*	$NetBSD: pppstats.c,v 1.1.1.2 1997/05/17 21:27:51 christos Exp $	*/
+
 /*
  * print PPP statistics:
  * 	pppstats [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pppstats.c,v 1.1.1.1 1997/03/12 19:38:44 christos Exp $";
+#if 0
+static char rcsid[] = "Id: pppstats.c,v 1.19 1997/04/30 06:00:27 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: pppstats.c,v 1.1.1.2 1997/05/17 21:27:51 christos Exp $";
+#endif
 #endif
 
 #include <stdio.h>
@@ -76,7 +82,15 @@ extern int optind;
 extern char *optarg;
 #endif
 
-void
+static void usage __P((void));
+static void catchalarm __P((int));
+static void get_ppp_stats __P((struct ppp_stats *));
+static void get_ppp_cstats __P((struct ppp_comp_stats *));
+static void intpr __P((void));
+
+int main __P((int, char *argv[]));
+
+static void
 usage()
 {
     fprintf(stderr, "Usage: %s [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]\n",
@@ -88,7 +102,7 @@ usage()
  * Called if an interval expires before intpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
-void
+static void
 catchalarm(arg)
     int arg;
 {
@@ -97,7 +111,7 @@ catchalarm(arg)
 
 
 #ifndef STREAMS
-void
+static void
 get_ppp_stats(curp)
     struct ppp_stats *curp;
 {
@@ -123,7 +137,7 @@ get_ppp_stats(curp)
     *curp = req.stats;
 }
 
-void
+static void
 get_ppp_cstats(csp)
     struct ppp_comp_stats *csp;
 {
@@ -189,7 +203,7 @@ strioctl(fd, cmd, ptr, ilen, olen)
     return 0;
 }
 
-void
+static void
 get_ppp_stats(curp)
     struct ppp_stats *curp;
 {
@@ -203,7 +217,7 @@ get_ppp_stats(curp)
     }
 }
 
-void
+static void
 get_ppp_cstats(csp)
     struct ppp_comp_stats *csp;
 {
@@ -238,7 +252,7 @@ get_ppp_cstats(csp)
  * collected over that interval.  Assumes that interval is non-zero.
  * First line printed is cumulative.
  */
-void
+static void
 intpr()
 {
     register int line = 0;
@@ -348,7 +362,6 @@ intpr()
 	    else
 		printf("  | %8u", V(p.ppp_obytes));
 	    printf(" %6u %6u",
-		   V(p.ppp_obytes),
 		   V(p.ppp_opackets),
 		   V(vj.vjs_compressed));
 	    if (!rflag)

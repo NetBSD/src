@@ -1,10 +1,9 @@
-#	$Id: Makefile,v 1.1.1.1 1997/03/12 19:38:42 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1997/05/17 21:27:53 christos Exp $
 
 PROG=	pppstats
 SRCS=	pppstats.c
-CFLAGS+=-I.. -D_BITYPES
-MAN8=	pppstats.8
-MAN=	pppstats.cat8
+MAN=	pppstats.8
 BINDIR=	/usr/sbin
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Dlint
 
 .include <bsd.prog.mk>
