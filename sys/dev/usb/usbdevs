@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.370 2004/03/15 11:08:34 augustss Exp $
+$NetBSD: usbdevs,v 1.371 2004/03/15 11:16:23 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -907,6 +907,7 @@ product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* I-O DATA products */
 product IODATA IU_CD2		0x0204	DVD Multi-plus unit iU-CD2
+product IODATA DVR_UEH8		0x0206	DVD Multi-plus unit DVR-UEH8
 product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card adapter
 product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
 product IODATA USBETT		0x0901	USB ETT
@@ -1027,6 +1028,10 @@ product	LINKSYS	WUSB11_25	0x2212	WUSB11 Wireless USB Network Adapter (version 2.
 product LINKSYS WUSB12_11	0x2213	WUSB12 802.11b v1.1
 product LINKSYS2 USB200M	0x2226	USB 2.0 10/100 ethernet controller
 product LINKSYS USB10TX2	0x400b	USB10TX
+
+/* Logitec products */
+product LOGITEC LDR_H443SU2	0x0033	DVD Multi-plus unit LDR-H443SU2
+product LOGITEC LDR_H443U2	0x00b3	DVD Multi-plus unit LDR-H443U2
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
@@ -1230,6 +1235,7 @@ product ONSPEC DATAFAB4		0xa004	Datafab-based Reader
 product ONSPEC PNYCFSM		0xa005	PNY/Datafab CF+SM Reader
 product ONSPEC STECHCFSM	0xa006	Simple Tech/Datafab CF+SM Reader
 product ONSPEC LC1		0xa109	CF + SM Combo (LC1)
+product ONSPEC UCF100		0xa400	FlashLink UCF-100 CompactFlash Reader
 product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 
 /* Ours Technology Inc. */
