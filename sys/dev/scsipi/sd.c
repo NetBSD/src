@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.146 1999/08/26 09:28:17 hannken Exp $	*/
+/*	$NetBSD: sd.c,v 1.147 1999/09/11 21:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -221,6 +222,79 @@ sdattach(parent, sd, sc_link, ops)
 #endif
 }
 
+int
+sdactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
+int
+sddetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct sd_softc *sd = (struct sd_softc *) self;
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* locate the major number */
+	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == sdopen)
+			break;
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == sdopen)
+			break;
+
+	s = splbio();
+
+	/* Kill off any queued buffers. */
+	while ((bp = sd->buf_queue.b_actf) != NULL) {
+		sd->buf_queue.b_actf = bp->b_actf;
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+
+	/* Kill off any pending commands. */
+	scsipi_kill_pending(sd->sc_link);
+
+	splx(s);
+
+	/* Nuke the the vnodes for any open instances */
+	mn = self->dv_unit;
+	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
+	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
+
+	/* Detach from the disk list. */
+	disk_detach(&sd->sc_dk);
+
+	/* Get rid of the shutdown hook. */
+	shutdownhook_disestablish(sd->sc_sdhook);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sd->rnd_source);
+#endif
+
+	return (0);
+}
+
 /*
  * Wait interruptibly for an exclusive lock.
  *
@@ -277,6 +351,9 @@ sdopen(dev, flag, fmt, p)
 	sd = sd_cd.cd_devs[unit];
 	if (sd == NULL)
 		return (ENXIO);
+
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	sc_link = sd->sc_link;
 	part = SDPART(dev);
@@ -479,7 +556,8 @@ sdstrategy(bp)
 	/*
 	 * If the device has been made invalid, error out
 	 */
-	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0 ||
+	    (sd->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
 		if (sd->sc_link->flags & SDEV_OPEN)
 			bp->b_error = EIO;
 		else
@@ -761,6 +839,9 @@ sdioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
+
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/*
 	 * If the device is not valid, some IOCTLs can still be
@@ -1073,6 +1154,9 @@ sdsize(dev)
 	if (sd == NULL)
 		return (-1);
 
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (-1);
+
 	part = SDPART(dev);
 	omask = sd->sc_dk.dk_openmask & (1 << part);
 
@@ -1117,6 +1201,9 @@ sddump(dev, blkno, va, size)
 	struct scsipi_rw_big cmd;	/* write command */
 	struct scsipi_xfer *xs;	/* ... convenience */
 	int	retval;
+
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
