@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
+/*	$NetBSD: cp.c,v 1.15 1997/04/09 12:06:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $";
+static char rcsid[] = "$NetBSD: cp.c,v 1.15 1997/04/09 12:06:13 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static char rcsid[] = "$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $";
 #include "extern.h"
 
 #define	STRIP_TRAILING_SLASH(p) {					\
-        while ((p).p_end > (p).p_path && (p).p_end[-1] == '/')		\
+        while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
                 *--(p).p_end = 0;					\
 }
 
@@ -328,7 +328,7 @@ copy(argv, type, fts_options)
 			p = &curr->fts_path[base];
 			nlen = curr->fts_pathlen - base;
 
-			(void)strncat(to.target_end + 1, p, nlen);
+			(void)strncat(to.target_end, p, nlen);
 			to.p_end = to.target_end + nlen + 1;
 			*to.p_end = 0;
 			STRIP_TRAILING_SLASH(to);
