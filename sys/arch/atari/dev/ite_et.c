@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.9 2000/02/11 21:42:52 leo Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.10 2000/03/29 14:19:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -110,7 +110,8 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	static int	card_probed = -1;
+	static int	card_probed  = -1;
+	static int	did_consinit = 0;
 	grf_auxp_t	*grf_auxp = auxp;
 
 	if (card_probed <= 0) {
@@ -133,23 +134,24 @@ void		*auxp;
 
 	if (atari_realconfig == 0) {
 		/*
-		 * Early console init. Only match unit 0.
+		 * Early console init. Only match first unit.
 		 */
-		if (cfp->cf_unit != 0)
+		if (did_consinit)
 			return 0;
-		if (viewopen(0, 0, 0, NULL))
+		if (viewopen(cfp->cf_unit, 0, 0, NULL))
 			return 0;
 		cfdata_grf = cfp;
+		did_consinit = 1;
 		return 1;
 	}
 
 	/*
 	 * Normal config. When we are called directly from the grfbus,
-	 * we only match unit 0. The attach function will call us for
+	 * we only match the first unit. The attach function will call us for
 	 * the other configured units.
 	 */
 	if (grf_auxp->from_bus_match
-	    && ((cfp->cf_unit != 0) || !et_probe_card()))
+	    && ((did_consinit > 1) || !et_probe_card()))
 		return 0;
 
 	if (!grf_auxp->from_bus_match && (grf_auxp->unit != cfp->cf_unit))
@@ -158,10 +160,11 @@ void		*auxp;
 	/*
 	 * Final constraint: each grf needs a view....
 	 */
-	if((cfdata_grf == NULL) || (cfp->cf_unit != 0)) {
+	if((cfdata_grf == NULL) || (did_consinit > 1)) {
 	    if(viewopen(cfp->cf_unit, 0, 0, NULL))
 		return 0;
 	}
+	did_consinit = 2;
 	return 1;
 }
 
