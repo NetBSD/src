@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.11 1999/04/16 01:09:25 explorer Exp $
+#	$NetBSD: NBFTP,v 1.12 1999/04/16 01:11:22 explorer Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -132,7 +132,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_COMPAT_42
 
 options 	NMBCLUSTERS=2048
-options 	BUFPAGES=2048
+#options 	BUFPAGES=2048	# used to be set, let system guess now (MLG)
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
