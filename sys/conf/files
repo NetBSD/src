@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.235 1998/08/22 22:53:06 augustss Exp $
+#	$NetBSD: files,v 1.236 1998/08/25 22:38:29 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -275,6 +275,10 @@ file    dev/ic/rrunner.c        esh
 device	opl: midibus, midisyn
 file	dev/ic/opl.c			opl
 file	dev/ic/oplinstrs.c		opl
+
+# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
+define	ad1848
+file	dev/ic/ad1848.c			ad1848
 
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
