@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145 2000/08/14 04:36:34 wdk Exp $	*/
+/*	$NetBSD: trap.c,v 1.146 2000/09/15 06:50:46 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2000/08/14 04:36:34 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2000/09/15 06:50:46 jeffs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -684,6 +684,7 @@ trap(status, cause, vaddr, opc, frame)
 		userret(p, opc, sticks);
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
+	case T_TRAP+T_USER:
 		sig = SIGFPE;
 		break; /* SIGNAL */
 	}

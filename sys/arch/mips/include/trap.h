@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.12 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: trap.h,v 1.13 2000/09/15 06:50:46 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,7 @@
  * Trap definitions added for r4000 port.
  */
 #define	T_TRAP			13	/* Trap instruction */
-#define	T_VCEI			14	/* Virtual coherency instruction */
+#define	T_VCEI			14	/* Virtual coherency exception */
 #define	T_FPE			15	/* Floating point exception */
 #define	T_WATCH			23	/* Watch address reference */
 #define T_VCED			31	/* Virtual coherency data */
