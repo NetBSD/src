@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmel.h,v 1.2 2001/08/02 18:51:01 ichiro Exp $	*/
+/*	$NetBSD: ipaq_atmelvar.h,v 1.1 2001/08/02 18:51:00 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -35,57 +35,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Atmel microcontroller (Proxy Controller for StrongARM)
- */
+struct atmelgpio_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	struct ipaq_softc	*sc_parent;
+};
 
-/* Frame character */
-#define FRAME_SOF		0x02	/* Start of Frame character */
-#define FRAME_EOF		0x04	/* End of Frame character */
-#define FRAME_OVERHEAD_SIZE	3	/* FRAME_SOF + (ID+len) + checksum */
-
-/* ID */
-#define ID_VERSION		0x00	/* Get version ID */
-#define EVENT_BUTTON		0x02	/* Get event of BUTTON */
-#define EVENT_TS		0x03	/* Get event of Touch Screen */
-#define READ_EEPROM		0x04	/* Read EEPROM */
-#define WRITE_EEPROM		0x05	/* Write EEPROM */
-#define SW_LED			0x08	/* Switch of LED */
-#define STATUS_BATTERY		0x09	/* Get status of battery */
-#define READ_IIC		0x0b	/* Read data via IIC protocol */
-#define WRITE_IIC		0x0c	/* Write data via IIC protocol */
-#define SET_BACKLIGHT		0x0d	/* Backlight Control command */
-#define STATUS_EXTP		0xa1	/* Get status of Extension Pack */
-
-#define MAX_SENDSIZE		32	/* maximum data size of sendData() */
-#define MAX_RECVSIZE		16	/* maximum data size of recv data */
-
-
-/*
- * Battery status
- */
-#define BATT_STATUS_HIGH		0x00
-#define BATT_STATUS_LOW			0x01
-#define BATT_STATUS_CRITICAL 		0x02
-#define BATT_STATUS_CHARGING		0x04
-#define BATT_STATUS_CHARGING_MAIN	0x10
-#define BATT_STATUS_NOBATT		0x80
-#define BATT_STATUS_UNKNOWN		0xff
-
-/*
- * AC status   
- */
-#define AC_STATUS_OFFLINE		0x00
-#define AC_STATUS_ONLINE		0x01
-#define AC_STATUS_BACKUP		0x02
-#define AC_STATUS_UNKNOWN		0xff
-
-/*
- * kind of battery
- */
-#define BATT_ALKALINE			0x01
-#define BATT_NICD			0x02
-#define BATT_NIMH			0x03
-#define BATT_LION			0x04
-#define BATT_LIPOLY			0x05
-#define BATT_UNKNOWN			0xff
+struct atmel_rx {
+	u_int8_t		id;
+	u_int8_t		len;
+	u_int8_t		idx;
+	u_int8_t		data[MAX_RECVSIZE];
+	u_int8_t		checksum;
+	u_int8_t		state;
+#define	STATE_SOF		0
+#define STATE_ID		1
+#define STATE_DATA		2
+#define STATE_EOF		3
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.1 2001/08/01 07:59:43 ichiro Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.2 2001/08/02 18:51:01 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -54,21 +54,25 @@
 #include <hpcarm/dev/ipaq_saipvar.h>
 #include <hpcarm/dev/ipaq_gpioreg.h>
 #include <hpcarm/dev/ipaq_atmel.h>
+#include <hpcarm/dev/ipaq_atmelvar.h>
+#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
 #include <hpcarm/sa11x0/sa11x0_comreg.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 
-struct atmelgpio_softc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	struct ipaq_softc	*sc_parent;
-};
+#ifdef ATMEL_DEBUG
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 static	int	atmelgpio_match(struct device *, struct cfdata *, void *);
 static	void	atmelgpio_attach(struct device *, struct device *, void *);
 static	int	atmelgpio_print(void *, const char *);
 static	int	atmelgpio_search(struct device *, struct cfdata *, void *);
 static	void	atmelgpio_init(struct atmelgpio_softc *);
+
+static	void	rxtx_data(struct atmelgpio_softc *, int, int,
+			 u_int8_t *, struct atmel_rx *);
 
 struct cfattach atmelgpio_ca = {
 	sizeof(struct atmelgpio_softc), atmelgpio_match, atmelgpio_attach
@@ -92,6 +96,8 @@ atmelgpio_attach(parent, self, aux)
 	struct atmelgpio_softc *sc = (struct atmelgpio_softc *)self;
 	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
 
+	struct atmel_rx *rxbuf;
+
 	printf("\n");
 	printf("%s: Atmel microcontroller GPIO\n",  sc->sc_dev.dv_xname);
 
@@ -106,6 +112,18 @@ atmelgpio_attach(parent, self, aux)
         }
 
 	atmelgpio_init(sc);
+
+#if 1  /* this is sample */
+	rxtx_data(sc, STATUS_BATTERY, 0, NULL, rxbuf); 
+
+	printf("ac_status          = %x\n", rxbuf->data[0]);
+	printf("Battery kind       = %x\n", rxbuf->data[1]);
+	printf("Voltage            = %d mV\n",
+		1000 * (rxbuf->data[3] << 8 | rxbuf->data[2]) /228);
+	printf("Battery Status     = %x\n", rxbuf->data[4]);
+	printf("Battery percentage = %d\n",
+		425 * (rxbuf->data[3] << 8 | rxbuf->data[2]) /1000 - 298);
+#endif
 
 	/*
 	 *  Attach each devices
@@ -144,4 +162,81 @@ atmelgpio_init(sc)
 	/* Set baud rate 115k */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACOM_CR1, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACOM_CR2, SACOMSPEED(115200));
+
+	/* RX/TX enable, RX/TX FIFO interrupt enable */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACOM_CR3,
+			 (CR3_RXE | CR3_TXE | CR3_RIE | CR3_TIE));
+}
+
+static void
+rxtx_data(sc, id, size, buf, rxbuf)
+	struct atmelgpio_softc  *sc; 
+	int			id, size;
+	u_int8_t		*buf;
+	struct atmel_rx		*rxbuf;
+{
+	int 		i, checksum, length, rx_data;
+	u_int8_t	data[MAX_SENDSIZE];
+
+	length = size + FRAME_OVERHEAD_SIZE;
+
+	while (! (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_SR0) & SR0_TFS))
+		;
+
+		data[0] = (u_int8_t)FRAME_SOF; 
+		data[1] = (u_int8_t)((id << 4) | size);
+		checksum = data[1];
+		i = 2;
+		while (size--)	{
+			data[i++] = *buf;
+			checksum += (u_int8_t)(*buf++);
+		}
+		data[length-1] = checksum;
+
+	while (! (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_SR1) & SR1_TNF))
+		;
+		i = 0;
+		while (i < length)
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACOM_DR, data[i++]);
+
+	delay(10000);
+#if 0
+	while (! (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_SR0) &
+		 (SR0_RID | SR0_RFS)))
+#endif
+	rxbuf->state = STATE_SOF;
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_SR1) & SR1_RNE) {
+
+		rx_data = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACOM_DR);
+			DPRINTF(("DATA = %x\n", rx_data));
+
+		switch (rxbuf->state) {
+		case STATE_SOF:
+			if (rx_data == FRAME_SOF)
+				rxbuf->state = STATE_ID;
+			break;
+		case STATE_ID:
+			rxbuf->id = (rx_data & 0xf0) >> 4;
+			rxbuf->len = rx_data & 0x0f;
+			rxbuf->idx = 0;
+			rxbuf->checksum = rx_data;
+			rxbuf->state = (rxbuf->len > 0 ) ? STATE_DATA : STATE_EOF;
+			break;
+		case STATE_DATA:
+			rxbuf->checksum += rx_data;
+			rxbuf->data[rxbuf->idx] = rx_data;
+			if (++rxbuf->idx == rxbuf->len)
+				rxbuf->state = STATE_EOF;
+			break;
+		case STATE_EOF:
+			rxbuf->state = STATE_SOF;
+			if (rx_data == FRAME_EOF || rx_data == rxbuf->checksum)
+				DPRINTF(("frame EOF\n"));
+			else
+				DPRINTF(("BadFrame\n"));
+			break;
+		default:
+			break;
+		}
+	}
 }
