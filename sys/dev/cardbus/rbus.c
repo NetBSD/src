@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.5 2000/05/08 19:25:46 augustss Exp $	*/
+/*	$NetBSD: rbus.c,v 1.6 2000/05/08 19:27:00 augustss Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -92,7 +92,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 {
   bus_addr_t decodesize = mask + 1;
   bus_addr_t boundary, search_addr;
-  int val = 0;
+  int val;
   bus_addr_t result;
   int exflags = EX_FAST | EX_NOWAIT;
 
@@ -141,6 +141,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 	search_addr += boundary;
       }
 
+      val = 1;
       for (; search_addr + size <= subend; search_addr += boundary) {
 	val = extent_alloc_subregion(rbt->rb_ext,search_addr, search_addr+size,
 				size, align, 0, exflags, (u_long *)&result);
