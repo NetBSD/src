@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 1997/12/22 05:58:58 mikel Exp $
+#	$NetBSD: Makefile,v 1.87 1998/07/22 16:37:54 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -47,8 +47,10 @@ distribution distrib-dirs snapshot:
 	@false
 .else
 distribution: distrib-dirs
+.if !defined(INSTALL_DONE)
 	(cd ..; ${MAKE} includes)
 	(cd ..; ${MAKE} install)
+.endif
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
