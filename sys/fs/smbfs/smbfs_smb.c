@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.13 2003/03/15 02:22:13 kristerw Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.14 2003/03/23 16:55:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.13 2003/03/15 02:22:13 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.14 2003/03/23 16:55:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -781,7 +781,7 @@ smbfs_smb_search(struct smbfs_fctx *ctx)
 	struct mdchain *mdp;
 	u_int8_t wc, bt;
 	u_int16_t ec, dlen, bc;
-	int maxent, error, iseof = 0;
+	int maxent, error;
 
 	maxent = min(ctx->f_left, (vcp->vc_txmax - SMB_HDRLEN - 3) / SMB_DENTRYLEN);
 	if (ctx->f_rq) {
@@ -815,17 +815,15 @@ smbfs_smb_search(struct smbfs_fctx *ctx)
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
 	if (error) {
-		if (rqp->sr_errclass == ERRDOS && rqp->sr_serror == ERRnofiles) {
-			error = 0;
-			iseof = 1;
+		if (error == ENOENT)
 			ctx->f_flags |= SMBFS_RDD_EOF;
-		} else
-			return error;
+
+		return error;
 	}
 	smb_rq_getreply(rqp, &mdp);
 	md_get_uint8(mdp, &wc);
 	if (wc != 1) 
-		return iseof ? ENOENT : EBADRPC;
+		return EBADRPC;
 	md_get_uint16le(mdp, &ec);
 	if (ec == 0)
 		return ENOENT;
