@@ -1,7 +1,7 @@
-/*	$NetBSD: res_update.c,v 1.1.1.1.8.2 2000/11/13 22:00:12 tv Exp $	*/
+/*	$NetBSD: res_update.c,v 1.1.1.1.8.3 2001/01/28 15:52:42 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_update.c,v 1.24 1999/10/15 19:49:12 vixie Exp";
+static const char rcsid[] = "Id: res_update.c,v 1.25 2000/11/22 01:20:47 marka Exp";
 #endif /* not lint */
 
 /*
@@ -132,6 +132,7 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in, ns_tsig_key *key) {
 			}
 			*zptr = tgrp;
 			zptr->z_flags = 0;
+			INIT_LINK(zptr, z_link);
 			INIT_LIST(zptr->z_rrlist);
 			APPEND(zgrps, zptr, z_link);
 		}
