@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.284 2004/03/08 05:46:44 cgd Exp $
+#	$NetBSD: Makefile,v 1.285 2004/04/13 12:43:12 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -142,11 +142,11 @@ PWD_MKDB_ENDIAN=
 distribution: .PHONY check_DESTDIR .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
-	(cd ${NETBSDSRCDIR}; ${MAKE} _DISTRIB= includes)
-	(cd ${NETBSDSRCDIR}; ${MAKE} _DISTRIB= install)
+	${MAKEDIRTARGET} ${NETBSDSRCDIR} include _DISTRIB=
+	${MAKEDIRTARGET} ${NETBSDSRCDIR} install _DISTRIB=
 .endif	# !INSTALL_DONE
-	(cd ${.CURDIR}; ${MAKE} install-etc-files)
-	(cd ${NETBSDSRCDIR}/distrib/sets && ${MAKE} makesetfiles)
+	${MAKEDIRTARGET} . install-etc-files
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
 .endif	# !DISTRIBUTION_DONE
 
 
@@ -250,8 +250,8 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile
 	${ETC_INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc
 	${ETC_INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile
-	(cd ${.CURDIR}/defaults; ${MAKE} install)
-	(cd ${.CURDIR}/mtree; ${MAKE} install)
+	${MAKEDIRTARGET} defaults install
+	${MAKEDIRTARGET} mtree install
 .for file in ${NAMEDB}
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    namedb/${file} ${DESTDIR}/etc/namedb
@@ -260,8 +260,8 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ssh/${file} ${DESTDIR}/etc/ssh
 .endfor
-	(cd ${.CURDIR}/powerd; ${MAKE} install)
-	(cd ${.CURDIR}/rc.d; ${MAKE} install)
+	${MAKEDIRTARGET} powerd install
+	${MAKEDIRTARGET} rc.d install
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    postinstall ${DESTDIR}/etc
 	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
@@ -336,14 +336,14 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	    /dev/null ${DESTDIR}/var/games/snake.log
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/tetris.scores
-	(cd ${.CURDIR}/skel; ${MAKE} distribution)
-	(cd ${NETBSDSRCDIR}/usr.bin/mail; ${MAKE} distribution)
-	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/postfix/; ${MAKE} distribution)
+	${MAKEDIRTARGET} skel distribution
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail distribution
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix distribution
 .if (${MKCRYPTO} != "no")
-	(cd ${NETBSDSRCDIR}/usr.bin/ssh; ${MAKE} distribution)
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh distribution
 .endif
 .if (${MKSENDMAIL} != "no")
-	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf distribution
 .endif
 
 
@@ -387,7 +387,7 @@ release snapshot: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 		    distribution .WAIT \
 		    snap_pre .WAIT snap_kern .WAIT \
 		    snap_post .WAIT snap_md_post
-	(cd ${NETBSDSRCDIR}/distrib/sets; ${MAKE} sets)
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets sets
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/kernel '*.gz'
 
 
