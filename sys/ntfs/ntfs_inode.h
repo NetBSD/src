@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.4 1999/09/10 16:14:03 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.5 1999/09/24 15:22:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -66,11 +66,6 @@ struct ntnode {
 	u_int32_t       i_flag;
 	int		i_lock;
 	int		i_usecount;
-#if defined(__NetBSD__)
-	pid_t		i_lockholder;
-	pid_t		i_lockwaiter;
-	int		i_lockcount;
-#endif
 	LIST_HEAD(,fnode)	i_fnlist;
 	LIST_HEAD(,ntvattr)	i_valist;
 
