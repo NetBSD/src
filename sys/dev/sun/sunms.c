@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.13 2003/01/19 16:53:53 thorpej Exp $	*/
+/*	$NetBSD: sunms.c,v 1.14 2003/05/30 23:34:06 petrov Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.13 2003/01/19 16:53:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.14 2003/05/30 23:34:06 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.13 2003/01/19 16:53:53 thorpej Exp $");
 #include <dev/sun/msvar.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
+
 #include "ms.h"
+#include "wsmouse.h"
 #if NMS > 0
 
 #ifdef SUN_MS_BPS
@@ -100,6 +104,16 @@ CFATTACH_DECL(ms_tty, sizeof(struct ms_softc),
 struct  linesw sunms_disc =
 	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
 	  sunmsinput, ttstart, nullmodem, ttpoll };	/* 8- SUNMOUSEDISC */
+
+int	sunms_enable(void *);
+int	sunms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	sunms_disable(void *);
+
+const struct wsmouse_accessops	sunms_accessops = {
+	sunms_enable,
+	sunms_ioctl,
+	sunms_disable,
+};
 
 /*
  * ms_match: how is this zs channel configured?
@@ -132,6 +146,9 @@ sunms_attach(parent, self, aux)
 	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
 	int ms_unit;
+#if NWSMOUSE > 0
+	struct wsmousedev_attach_args a;
+#endif
 
 	cf = ms->ms_dev.dv_cfdata;
 	ms_unit = ms->ms_dev.dv_unit;
@@ -151,6 +168,16 @@ sunms_attach(parent, self, aux)
 
 	/* Initialize translator. */
 	ms->ms_byteno = -1;
+
+#if NWSMOUSE > 0
+	/*
+	 * attach wsmouse
+	 */
+	a.accessops = &sunms_accessops;
+	a.accesscookie = ms;
+
+	ms->ms_wsmousedev = config_found(self, &a, wsmousedevprint);
+#endif
 }
 
 /*
@@ -202,5 +229,60 @@ sunmsinput(c, tp)
 	/* Pass this up to the "middle" layer. */
 	ms_input(ms, c);
 	return (0);
+}
+
+int
+sunms_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+/*	struct ms_softc *sc = v; */
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_PS2; /* XXX  */
+		break;
+		
+	default:
+		return (EPASSTHROUGH);
+	}
+	return (0);
+}
+
+int
+sunms_enable(v)
+	void *v;
+{
+	struct ms_softc *ms = v;
+	int err;
+	int s;
+
+	if (ms->ms_ready)
+		return EBUSY;
+
+	err = sunmsiopen(v, 0);
+	if (err)
+		return err;
+
+	s = spltty();
+	ms->ms_ready = 2;
+	splx(s);
+
+	return 0;
+}
+
+void
+sunms_disable(v)
+	void *v;
+{
+	struct ms_softc *ms = v;
+	int s;
+
+	s = spltty();
+	ms->ms_ready = 0;
+	splx(s);
 }
 #endif
