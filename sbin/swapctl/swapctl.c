@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.2 1997/06/15 03:47:53 thorpej Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.3 1997/06/24 05:22:38 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -54,6 +54,7 @@
 #include <vm/vm_swap.h>
 
 #include <unistd.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -318,7 +319,7 @@ do_fstab()
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
 #define PATH_MOUNT	"/sbin/mount_nfs"
-	while (fp = getfsent()) {
+	while ((fp = getfsent())) {
 		char *spec;
 
 		if (strcmp(fp->fs_type, "sw") != 0)
@@ -326,13 +327,13 @@ do_fstab()
 
 		spec = fp->fs_spec;
 
-		if (s = strstr(fp->fs_mntops, PRIORITYEQ)) {
+		if ((s = strstr(fp->fs_mntops, PRIORITYEQ))) {
 			s += sizeof(PRIORITYEQ) - 1;
 			priority = atol(s);
 		} else
 			priority = pri;
 
-		if (s = strstr(fp->fs_mntops, NFSMNTPT)) {
+		if ((s = strstr(fp->fs_mntops, NFSMNTPT))) {
 			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
 
 			t = strpbrk(s, ",");
@@ -362,7 +363,7 @@ do_fstab()
 			warn("%s", spec);
 		else
 			printf("%s: adding %s as swap device at priority %d\n",
-			    __progname, fp->fs_spec, priority);
+			    __progname, fp->fs_spec, (int)priority);
 
 		if (spec != fp->fs_spec)
 			free(spec);
