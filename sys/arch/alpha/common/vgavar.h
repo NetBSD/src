@@ -1,4 +1,4 @@
-/*	$NetBSD: vgavar.h,v 1.1 1996/11/19 04:38:33 cgd Exp $	*/
+/*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@ struct vga_config {
 	 * Filled in by front-ends.
 	 */
 	bus_space_tag_t	vc_iot, vc_memt;
-	bus_space_handle_t vc_ioh, vc_memh;
+	bus_space_handle_t vc_ioh_b, vc_ioh_c, vc_ioh_d, vc_memh;
 
 	/*
 	 * Private to back-end.
@@ -45,6 +45,8 @@ struct vga_config {
 	char		vc_so_at;	/* standout attributes */
 };
 
-void	vga_getconfig __P((struct vga_config *));
+int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
+void	vga_common_setup __P((bus_space_tag_t, bus_space_tag_t,
+	    struct vga_config *));
 void	vga_wscons_attach __P((struct device *, struct vga_config *, int));
 void	vga_wscons_console __P((struct vga_config *));

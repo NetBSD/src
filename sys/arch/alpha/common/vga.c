@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.1 1996/11/19 04:38:32 cgd Exp $	*/
+/*	$NetBSD: vga.c,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,8 +36,8 @@
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/common/vgavar.h>
 
-#define	VGA_6845_ADDR	0x24
-#define	VGA_6845_DATA	0x25
+#define	VGA_IO_D_6845_ADDR	0x4
+#define	VGA_IO_D_6845_DATA	0x5
 
 struct cfdriver vga_cd = {
 	NULL, "vga", DV_DULL,
@@ -67,24 +67,73 @@ static int	vgammap __P((void *, off_t, int));
  * The following functions implement back-end configuration grabbing
  * and attachment.
  */
+int
+vga_common_probe(iot, memt)
+	bus_space_tag_t iot, memt;
+{
+	bus_space_handle_t ioh_b, ioh_c, ioh_d, memh;
+	u_int16_t vgadata;
+	int gotio_b, gotio_c, gotio_d, gotmem, rv;
+
+	gotio_b = gotio_c = gotio_d = gotmem = rv = 0;
+
+	if (bus_space_map(iot, 0x3b0, 0xc, 0, &ioh_b))
+		goto bad;
+	gotio_b = 1;
+	if (bus_space_map(iot, 0x3c0, 0x10, 0, &ioh_c))
+		goto bad;
+	gotio_c = 1;
+	if (bus_space_map(iot, 0x3d0, 0x10, 0, &ioh_d))
+		goto bad;
+	gotio_d = 1;
+	if (bus_space_map(memt, 0xb8000, 0x8000, 0, &memh))
+		goto bad;
+	gotmem = 1;
+
+	vgadata = bus_space_read_2(memt, memh, 0);
+	bus_space_write_2(memt, memh, 0, 0xa55a);
+	rv = (bus_space_read_2(memt, memh, 0) == 0xa55a);
+	bus_space_write_2(memt, memh, 0, vgadata);
+
+bad:
+	if (gotio_b)
+		bus_space_unmap(iot, ioh_b, 0xc);
+	if (gotio_c)
+		bus_space_unmap(iot, ioh_c, 0x10);
+	if (gotio_d)
+		bus_space_unmap(iot, ioh_d, 0x10);
+	if (gotmem)
+		bus_space_unmap(memt, memh, 0x8000);
+
+	return (rv);
+}
+
 void
-vga_getconfig(vc)
+vga_common_setup(iot, memt, vc)
+	bus_space_tag_t iot, memt;
 	struct vga_config *vc;
 {
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	int cpos;
 
-	iot = vc->vc_iot;
-	ioh = vc->vc_ioh;
+        vc->vc_iot = iot;
+        vc->vc_memt = memt;
+
+        if (bus_space_map(vc->vc_iot, 0x3b0, 0xc, 0, &vc->vc_ioh_b))
+                panic("vga_common_setup: couldn't map io b");
+        if (bus_space_map(vc->vc_iot, 0x3c0, 0x10, 0, &vc->vc_ioh_c))
+                panic("vga_common_setup: couldn't map io c");
+        if (bus_space_map(vc->vc_iot, 0x3d0, 0x10, 0, &vc->vc_ioh_d))
+                panic("vga_common_setup: couldn't map io d");
+        if (bus_space_map(vc->vc_memt, 0xb8000, 0x8000, 0, &vc->vc_memh))
+                panic("vga_common_setup: couldn't map memory"); 
 
 	vc->vc_nrow = 25;
 	vc->vc_ncol = 80;
 
-	bus_space_write_1(iot, ioh, VGA_6845_ADDR, 14); 
-	cpos = bus_space_read_1(iot, ioh, VGA_6845_DATA) << 8;
-	bus_space_write_1(iot, ioh, VGA_6845_ADDR, 15);
-	cpos |= bus_space_read_1(iot, ioh, VGA_6845_DATA);
+	bus_space_write_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_ADDR, 14); 
+	cpos = bus_space_read_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_DATA) << 8;
+	bus_space_write_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_ADDR, 15);
+	cpos |= bus_space_read_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_DATA);
 	vc->vc_crow = cpos / vc->vc_ncol;
 	vc->vc_ccol = cpos % vc->vc_ncol;
 
@@ -197,7 +246,7 @@ vga_cursor(id, on, row, col)
 {
 	struct vga_config *vc = id;
 	bus_space_tag_t iot = vc->vc_iot;
-	bus_space_handle_t ioh = vc->vc_ioh;
+	bus_space_handle_t ioh_d = vc->vc_ioh_d;
 	int pos;
 
 #if 0
@@ -214,10 +263,10 @@ vga_cursor(id, on, row, col)
 
 	pos = row * vc->vc_ncol + col;
 
-	bus_space_write_1(iot, ioh, VGA_6845_ADDR, 14);
-	bus_space_write_1(iot, ioh, VGA_6845_DATA, pos >> 8);
-	bus_space_write_1(iot, ioh, VGA_6845_ADDR, 15);
-	bus_space_write_1(iot, ioh, VGA_6845_DATA, pos);
+	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_ADDR, 14);
+	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_DATA, pos >> 8);
+	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_ADDR, 15);
+	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_DATA, pos);
 }
 
 static void

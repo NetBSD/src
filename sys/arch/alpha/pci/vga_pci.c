@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.1 1996/11/19 04:38:35 cgd Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.2 1996/11/23 06:06:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -66,18 +66,27 @@ vga_pci_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct pci_attach_args *pa = aux;
+	int potential;
+
+	potential = 0;
 
 	/*
-	 * If it's prehistoric/vga or display/vga, we match.
+	 * If it's prehistoric/vga or display/vga, we might match.
 	 */
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
-		return (1);
+		potential = 1;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
-		return (1);
+		potential = 1;
 
-	return (0);
+	/*
+	 * If we might match, make sure that the card actually looks OK.
+	 */
+	if (potential && vga_common_probe(pa->pa_iot, pa->pa_memt) == 0)
+		potential = 0;
+
+	return (potential);
 }
 
 void
@@ -98,15 +107,8 @@ vga_pci_attach(parent, self, aux)
 		vc = sc->sc_vc = (struct vga_config *)
 		    malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
 
-		/* for bus-independent VGA code */
-		vc->vc_iot = pa->pa_iot;
-		vc->vc_memt = pa->pa_memt;
-		if (bus_space_map(vc->vc_iot, 0x3b0, 0x30, 0, &vc->vc_ioh))
-			panic("vga_pci_attach: couldn't map io");
-		if (bus_space_map(vc->vc_memt, 0xb8000, 0x8000, 0,
-		    &vc->vc_memh))
-			panic("vga_pci_attach: couldn't map memory");
-		vga_getconfig(vc);
+		/* set up bus-independent VGA configuration */
+		vga_common_setup(pa->pa_iot, pa->pa_memt, vc);
 	}
 
 	sc->sc_pcitag = pa->pa_tag;
@@ -129,14 +131,8 @@ vga_pci_console(iot, memt, pc, bus, device, function)
 	/* for later recognition */
 	vga_pci_console_tag = pci_make_tag(pc, bus, device, function);
 
-	/* for bus-independent VGA code */
-	vc->vc_iot = iot;
-	vc->vc_memt = memt;
-	if (bus_space_map(vc->vc_iot, 0x3b0, 0x30, 0, &vc->vc_ioh))
-		panic("vga_pci_console: couldn't map io");
-	if (bus_space_map(vc->vc_memt, 0xb8000, 0x8000, 0, &vc->vc_memh))
-		panic("vga_pci_console: couldn't map memory");
-	vga_getconfig(vc);
+	/* set up bus-independent VGA configuration */
+	vga_common_setup(iot, memt, vc);
 
 	vga_wscons_console(vc);
 }
