@@ -1,4 +1,4 @@
-/*	$NetBSD: nm.c,v 1.9 1997/04/23 11:17:38 kleink Exp $	*/
+/*	$NetBSD: nm.c,v 1.10 1997/10/19 07:18:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: nm.c,v 1.9 1997/04/23 11:17:38 kleink Exp $";
+__RCSID("$NetBSD: nm.c,v 1.10 1997/10/19 07:18:53 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,6 +62,20 @@ static char rcsid[] = "$NetBSD: nm.c,v 1.9 1997/04/23 11:17:38 kleink Exp $";
 #include <stdlib.h>
 #include <string.h>
 
+void   *emalloc __P((size_t));
+void   *erealloc __P((void *, size_t));
+int	fname __P((const void *, const void *));
+int	main __P((int, char **));
+void	print_symbol __P((char *, struct nlist *));
+int	process_file __P((char *));
+int	rname __P((const void *, const void *));
+int	show_archive __P((char *, FILE *));
+int	show_objfile __P((char *, FILE *));
+char	typeletter __P((u_char));
+char   *typestring __P((u_char));
+void	usage __P((void));
+int	value __P((const void *, const void *));
+
 int ignore_bad_archive_entries = 1;
 int print_only_external_symbols;
 int print_only_undefined_symbols;
@@ -71,21 +85,19 @@ int print_weak_symbols;
 int fcount;
 
 int rev;
-int fname(), rname(), value();
-int (*sfunc)() = fname;
+int (*sfunc) __P((const void *, const void *)) = fname;
 
 /* some macros for symbol type (nlist.n_type) handling */
 #define	IS_DEBUGGER_SYMBOL(x)	((x) & N_STAB)
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
 #define	SYMBOL_TYPE(x)		((x) & (N_TYPE | N_STAB))
 
-void *emalloc(), *erealloc();
-
 /*
  * main()
  *	parse command line, execute process_file() for each file
  *	specified on the command line.
  */
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -93,7 +105,7 @@ main(argc, argv)
 	extern int optind;
 	int ch, errors;
 
-	while ((ch = getopt(argc, argv, "aglnopruw")) != EOF) {
+	while ((ch = getopt(argc, argv, "aglnopruw")) != -1) {
 		switch (ch) {
 		case 'a':
 			print_all_symbols = 1;
@@ -149,6 +161,7 @@ main(argc, argv)
  *	show symbols in the file given as an argument.  Accepts archive and
  *	object files as input.
  */
+int
 process_file(fname)
 	char *fname;
 {
@@ -195,6 +208,7 @@ process_file(fname)
  * show_archive()
  *	show symbols in the given archive file
  */
+int
 show_archive(fname, fp)
 	char *fname;
 	FILE *fp;
@@ -308,12 +322,13 @@ skip:		if (fseek(fp, last_ar_off + even(atol(ar_head.ar_size)),
  *	file pointer for fp is expected to be at the beginning of an a.out
  *	header.
  */
+int
 show_objfile(objname, fp)
 	char *objname;
 	FILE *fp;
 {
-	register struct nlist *names, *np;
-	register int i, nnames, nrawnames;
+	struct nlist *names, *np;
+	int i, nnames, nrawnames;
 	struct exec head;
 	long stabsize;
 	char *stab;
@@ -433,12 +448,11 @@ show_objfile(objname, fp)
  * print_symbol()
  *	show one symbol
  */
+void
 print_symbol(objname, sym)
 	char *objname;
-	register struct nlist *sym;
+	struct nlist *sym;
 {
-	char *typestring(), typeletter();
-
 	if (print_file_each_line)
 		(void)printf("%s:", objname);
 
@@ -480,7 +494,7 @@ print_symbol(objname, sym)
  */
 char *
 typestring(type)
-	register u_char type;
+	u_char type;
 {
 	switch(type) {
 	case N_BCOMM:
@@ -564,26 +578,29 @@ typeletter(type)
 	return('?');
 }
 
+int
 fname(a0, b0)
-	void *a0, *b0;
+	const void *a0, *b0;
 {
-	struct nlist *a = a0, *b = b0;
+	const struct nlist *a = a0, *b = b0;
 
 	return(strcmp(a->n_un.n_name, b->n_un.n_name));
 }
 
+int
 rname(a0, b0)
-	void *a0, *b0;
+	const void *a0, *b0;
 {
-	struct nlist *a = a0, *b = b0;
+	const struct nlist *a = a0, *b = b0;
 
 	return(strcmp(b->n_un.n_name, a->n_un.n_name));
 }
 
+int
 value(a0, b0)
-	void *a0, *b0;
+	const void *a0, *b0;
 {
-	register struct nlist *a = a0, *b = b0;
+	const struct nlist *a = a0, *b = b0;
 
 	if (SYMBOL_TYPE(a->n_type) == N_UNDF)
 		if (SYMBOL_TYPE(b->n_type) == N_UNDF)
@@ -610,9 +627,9 @@ emalloc(size)
 	char *p;
 
 	/* NOSTRICT */
-	if (p = malloc(size))
+	if ((p = malloc(size)) != NULL)
 		return(p);
-	err(1, NULL);
+	err(1, "malloc");
 	exit(1);
 }
 
@@ -622,12 +639,13 @@ erealloc(p, size)
 	size_t size;
 {
 	/* NOSTRICT */
-	if (p = realloc(p, size))
+	if ((p = realloc(p, size)) != NULL)
 		return(p);
-	err(1, NULL);
+	err(1, "realloc");
 	exit(1);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: nm [-agnopruw] [file ...]\n");
