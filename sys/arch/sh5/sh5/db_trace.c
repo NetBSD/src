@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2003/11/09 12:22:15 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 2003/11/09 21:39:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2003/11/09 12:22:15 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2003/11/09 21:39:48 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -230,8 +230,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 */
 		symp = NULL;
 		sym = db_search_symbol(pc - pc_adj, DB_STGY_PROC, &diff);
-		if (sym == NULL) {
-			(*pr)("0x%lx: Symbol not found\n");
+		if (sym == 0) {
+			(*pr)("0x%lx: Symbol not found\n", (long)(pc - pc_adj));
 			break;
 		}
 		symp = NULL;
@@ -379,7 +379,7 @@ again:
 #endif
 	symp = NULL;
 	sym = db_search_symbol(addr, DB_STGY_PROC, &diff);
-	if (sym == NULL)
+	if (sym == 0)
 		return (0);
 
 	symp = NULL;
