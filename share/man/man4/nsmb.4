@@ -1,4 +1,4 @@
-.\" $NetBSD: nsmb.4,v 1.4 2004/01/18 15:23:15 jdolecek Exp $
+.\" $NetBSD: nsmb.4,v 1.5 2004/01/18 15:48:01 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,10 +41,11 @@
 .Cd "pseudo-device nsmb"
 .Sh DESCRIPTION
 This virtual device is used by SMBFS filesystem
-for actual communication with SMB servers. It provides
-the physical transportation, encapsulating the networking
-part of SMBFS. Only SMB over TCP/IP is supported at
-this moment, SMB over NetBIOS is not supported.
+for actual communication with SMB servers.
+It provides the physical transportation, encapsulating the networking
+part of SMBFS.
+Only SMB over TCP/IP is supported at this moment, SMB over NetBIOS
+is not supported.
 .Pp
 For the SMBFS kernel support to work, it's necessary
 to have both this pseudo-device and file-system
@@ -65,7 +66,7 @@ together with rest of SMBFS support.
 .Nx
 port done by
 .An Matt Debergalis
-.Aq deberg@NetBSD.org ,
+.Aq deberg@NetBSD.org
 and
 .An Jaromir Dolecek
 .Aq jdolecek@NetBSD.org .
