@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.6 1995/08/04 07:55:40 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.7 1995/08/05 16:47:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,11 +42,11 @@
 
 #ifdef DCACONSOLE
 #include <sys/param.h>
-#include <machine/cpu.h>
 #include <dev/cons.h>
 
 #include <hp300/dev/dcareg.h>
 #include <hp300/stand/consdefs.h>
+#include <hp300/stand/samachdep.h>
 
 /* If not using 4.4 devs */
 #ifndef dca_reset
