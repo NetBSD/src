@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 1999/03/04 20:32:19 wrstuden Exp $
+# $NetBSD: Makefile,v 1.23 1999/04/07 06:47:50 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -56,8 +56,8 @@ build-fs:
 	ln -s ../local/bin/strip ${DESTDIR}/usr/bin
 	cp -p ${DESTDIR}/usr/mdec/boot ${DESTDIR}/
 	sync; sleep 1; sync; sleep 1
-	${DESTDIR}/usr/mdec/installboot -v ${DESTDIR}/boot \
-	    ${DESTDIR}/usr/mdec/bootxx /dev/r${DESTDISK}c
+	${DESTDIR}/usr/mdec/installboot -v /dev/r${DESTDISK}c \
+	    ${DESTDIR}/usr/mdec/bootxx_ffs
 
 unmount-fs:
 	umount ${DESTDIR}/usr ${DESTDIR}

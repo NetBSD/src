@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/25 12:31:30 ross Exp $
+#	$NetBSD: Makefile,v 1.5 1999/04/07 06:47:49 cgd Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -25,7 +25,7 @@ CLEANFILES+=	${IMAGE} ${GZKERNEL}
 
 all: GENERIC.fs
 
-GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx
+GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx.old
 	@echo Creating tar image
 	tar cvf ustar.tmp ${MDEC}/boot ${GZKERNEL}
 	@echo Creating vn image
@@ -33,8 +33,8 @@ GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${.TARGET}.tmp
 	dd bs=8k seek=1 if=ustar.tmp of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	${MDEC}/installboot -b 17 -v	\
-		${MDEC}/boot ${MDEC}/bootxx ${VND_CRDEV}
+	${MDEC}/installboot.old -b 17 -v	\
+		${MDEC}/boot ${MDEC}/bootxx.old ${VND_CRDEV}
 	vnconfig -u ${VND_CDEV}
 	mv ${.TARGET}.tmp ${.TARGET}
 
