@@ -15,10 +15,12 @@
  */
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
-#include "ppp_defs.h"
-#include "ppp-comp.h"
+#include "pppdump.h"
+#include <net/ppp_defs.h>
+#include <net/ppp-comp.h>
 
 int hexmode;
 int pppmode;
@@ -33,6 +35,34 @@ int tot_sent, tot_rcvd;
 extern int optind;
 extern char *optarg;
 
+extern struct compressor ppp_bsd_compress, ppp_deflate;
+
+struct compressor *compressors[] = {
+#if DO_BSD_COMPRESS
+    &ppp_bsd_compress,
+#endif
+#if DO_DEFLATE
+    &ppp_deflate,
+#endif
+    NULL
+};
+
+static struct pkt {
+    int	cnt;
+    int	esc;
+    int	flags;
+    struct compressor *comp;
+    void *state;
+    unsigned char buf[8192];
+} spkt, rpkt;
+
+static void dumplog __P((FILE *));
+static void dumpppp __P((FILE *));
+static void show_time __P((FILE *, int));
+static void handle_ccp __P((struct pkt *, u_char *, int));
+int main __P((int, char *[]));
+
+int
 main(ac, av)
     int ac;
     char **av;
@@ -85,6 +115,7 @@ main(ac, av)
     exit(0);
 }
 
+static void
 dumplog(f)
     FILE *f;
 {
@@ -163,7 +194,7 @@ dumplog(f)
 	    show_time(f, c);
 	    break;
 	default:
-	    printf("?%.2x\n");
+	    printf("?%.2x\n", c);
 	}
     }
 }
@@ -206,15 +237,6 @@ static u_short fcstab[256] = {
 	0x7bc7,	0x6a4e,	0x58d5,	0x495c,	0x3de3,	0x2c6a,	0x1ef1,	0x0f78
 };
 
-struct pkt {
-    int	cnt;
-    int	esc;
-    int	flags;
-    struct compressor *comp;
-    void *state;
-    unsigned char buf[8192];
-} spkt, rpkt;
-
 /* Values for flags */
 #define CCP_ISUP	1
 #define CCP_ERROR	2
@@ -224,6 +246,7 @@ struct pkt {
 
 unsigned char dbuf[8192];
 
+static void
 dumpppp(f)
     FILE *f;
 {
@@ -311,8 +334,15 @@ dumpppp(f)
 				    && (pkt->flags & CCP_DECOMP_RUN)
 				    && pkt->state
 				    && (pkt->flags & CCP_ERR) == 0) {
-				    rv = pkt->comp->decompress(pkt->state, r,
-							endp - r, d, &dn);
+				    struct packet in, out, *outp;
+				    in.buf = r;
+				    in.len = endp - r;
+				    out.buf = d;
+				    outp = &out;
+				    rv = pkt->comp->decompress(pkt->state, &in,
+					&outp);
+				    dn = outp->len;
+				    d = outp->buf;
 				    switch (rv) {
 				    case DECOMP_OK:
 					p = dbuf;
@@ -335,7 +365,10 @@ dumpppp(f)
 				}
 			    } else if (pkt->state
 				       && (pkt->flags & CCP_DECOMP_RUN)) {
-				pkt->comp->incomp(pkt->state, r, endp - r);
+				struct packet in;
+				in.buf = r;
+				in.len = endp - r;
+				pkt->comp->incomp(pkt->state, &in);
 			    }
 			}
 			do {
@@ -392,23 +425,12 @@ dumpppp(f)
 	    show_time(f, c);
 	    break;
 	default:
-	    printf("?%.2x\n");
+	    printf("?%.2x\n", c);
 	}
     }
 }
 
-extern struct compressor ppp_bsd_compress, ppp_deflate;
-
-struct compressor *compressors[] = {
-#if DO_BSD_COMPRESS
-    &ppp_bsd_compress,
-#endif
-#if DO_DEFLATE
-    &ppp_deflate,
-#endif
-    NULL
-};
-
+static void
 handle_ccp(cp, dp, len)
     struct pkt *cp;
     u_char *dp;
@@ -465,6 +487,7 @@ handle_ccp(cp, dp, len)
     }
 }
 
+static void
 show_time(f, c)
     FILE *f;
     int c;

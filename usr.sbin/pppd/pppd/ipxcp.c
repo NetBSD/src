@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.c,v 1.8 2000/09/23 22:39:36 christos Exp $	*/
+/*	$NetBSD: ipxcp.c,v 1.9 2002/05/29 19:06:32 christos Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -24,9 +24,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ipxcp.c,v 1.18 1999/08/24 05:31:09 paulus Exp "
+#define RCSID	"Id: ipxcp.c,v 1.20 2001/03/08 05:11:13 paulus Exp "
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.8 2000/09/23 22:39:36 christos Exp $");
+__RCSID("$NetBSD: ipxcp.c,v 1.9 2002/05/29 19:06:32 christos Exp $");
 #endif
 #endif
 
@@ -102,43 +102,55 @@ static fsm_callbacks ipxcp_callbacks = { /* IPXCP callback routines */
  * Command-line options.
  */
 static int setipxnode __P((char **));
+static void printipxnode __P((option_t *,
+			      void (*)(void *, char *, ...), void *));
 static int setipxname __P((char **));
 
 static option_t ipxcp_option_list[] = {
     { "ipx", o_bool, &ipxcp_protent.enabled_flag,
-      "Enable IPXCP (and IPX)", 1 },
+      "Enable IPXCP (and IPX)", OPT_PRIO | 1 },
     { "+ipx", o_bool, &ipxcp_protent.enabled_flag,
-      "Enable IPXCP (and IPX)", 1 },
+      "Enable IPXCP (and IPX)", OPT_PRIOSUB | OPT_ALIAS | 1 },
     { "noipx", o_bool, &ipxcp_protent.enabled_flag,
-      "Disable IPXCP (and IPX)" },
+      "Disable IPXCP (and IPX)", OPT_PRIOSUB },
     { "-ipx", o_bool, &ipxcp_protent.enabled_flag,
-      "Disable IPXCP (and IPX)" } ,
+      "Disable IPXCP (and IPX)", OPT_PRIOSUB | OPT_ALIAS },
+
     { "ipx-network", o_uint32, &ipxcp_wantoptions[0].our_network,
-      "Set our IPX network number", 0, &ipxcp_wantoptions[0].neg_nn },
+      "Set our IPX network number", OPT_PRIO, &ipxcp_wantoptions[0].neg_nn },
+
     { "ipxcp-accept-network", o_bool, &ipxcp_wantoptions[0].accept_network,
       "Accept peer IPX network number", 1,
       &ipxcp_allowoptions[0].accept_network },
-    { "ipx-node", o_special, setipxnode,
-      "Set IPX node number" },
+
+    { "ipx-node", o_special, (void *)setipxnode,
+      "Set IPX node number", OPT_A2PRINTER, (void *)printipxnode },
+
     { "ipxcp-accept-local", o_bool, &ipxcp_wantoptions[0].accept_local,
       "Accept our IPX address", 1,
       &ipxcp_allowoptions[0].accept_local },
+
     { "ipxcp-accept-remote", o_bool, &ipxcp_wantoptions[0].accept_remote,
       "Accept peer's IPX address", 1,
       &ipxcp_allowoptions[0].accept_remote },
+
     { "ipx-routing", o_int, &ipxcp_wantoptions[0].router,
-      "Set IPX routing proto number", 0,
+      "Set IPX routing proto number", OPT_PRIO,
       &ipxcp_wantoptions[0].neg_router },
+
     { "ipx-router-name", o_special, setipxname,
-      "Set IPX router name" },
+      "Set IPX router name", OPT_PRIO | OPT_A2STRVAL | OPT_STATIC,
+       &ipxcp_wantoptions[0].name },
+
     { "ipxcp-restart", o_int, &ipxcp_fsm[0].timeouttime,
-      "Set timeout for IPXCP" },
+      "Set timeout for IPXCP", OPT_PRIO },
     { "ipxcp-max-terminate", o_int, &ipxcp_fsm[0].maxtermtransmits,
-      "Set max #xmits for IPXCP term-reqs" },
+      "Set max #xmits for IPXCP term-reqs", OPT_PRIO },
     { "ipxcp-max-configure", o_int, &ipxcp_fsm[0].maxconfreqtransmits,
-      "Set max #xmits for IPXCP conf-reqs" },
+      "Set max #xmits for IPXCP conf-reqs", OPT_PRIO },
     { "ipxcp-max-failure", o_int, &ipxcp_fsm[0].maxnakloops,
-      "Set max #conf-naks for IPXCP" },
+      "Set max #conf-naks for IPXCP", OPT_PRIO },
+
     { NULL }
 };
 
@@ -259,26 +271,60 @@ u_char *src, *dst;
     return src;
 }
 
+static int ipx_prio_our, ipx_prio_his;
+
 static int
 setipxnode(argv)
     char **argv;
 {
     char *end;
+    int have_his = 0;
+    u_char our_node[6];
+    u_char his_node[6];
 
-    memset (&ipxcp_wantoptions[0].our_node[0], 0, 6);
-    memset (&ipxcp_wantoptions[0].his_node[0], 0, 6);
+    memset (our_node, 0, 6);
+    memset (his_node, 0, 6);
 
-    end = setipxnodevalue (*argv, &ipxcp_wantoptions[0].our_node[0]);
-    if (*end == ':')
-	end = setipxnodevalue (++end, &ipxcp_wantoptions[0].his_node[0]);
+    end = setipxnodevalue (*argv, our_node);
+    if (*end == ':') {
+	have_his = 1;
+	end = setipxnodevalue (++end, his_node);
+    }
 
     if (*end == '\0') {
         ipxcp_wantoptions[0].neg_node = 1;
+	if (option_priority >= ipx_prio_our) {
+	    memcpy(&ipxcp_wantoptions[0].our_node[0], our_node, 6);
+	    ipx_prio_our = option_priority;
+	}
+	if (have_his && option_priority >= ipx_prio_his) {
+	    memcpy(&ipxcp_wantoptions[0].his_node[0], his_node, 6);
+	    ipx_prio_his = option_priority;
+	}
         return 1;
     }
 
     option_error("invalid parameter '%s' for ipx-node option", *argv);
     return 0;
+}
+
+static void
+printipxnode(opt, printer, arg)
+    option_t *opt;
+    void (*printer) __P((void *, char *, ...));
+    void *arg;
+{
+	unsigned char *p;
+
+	p = ipxcp_wantoptions[0].our_node;
+	if (ipx_prio_our)
+		printer(arg, "%.2x%.2x%.2x%.2x%.2x%.2x",
+			p[0], p[1], p[2], p[3], p[4], p[5]);
+	printer(arg, ":");
+	p = ipxcp_wantoptions[0].his_node;
+	if (ipx_prio_his)
+		printer(arg, "%.2x%.2x%.2x%.2x%.2x%.2x",
+			p[0], p[1], p[2], p[3], p[4], p[5]);
 }
 
 static int
@@ -302,7 +348,7 @@ setipxname (argv)
 	    return 0;
 	}
 
-	if (count >= sizeof (ipxcp_wantoptions[0].name)) {
+	if (count >= sizeof (ipxcp_wantoptions[0].name) - 1) {
 	    option_error("IPX router name is limited to %d characters",
 			 sizeof (ipxcp_wantoptions[0].name) - 1);
 	    return 0;
@@ -310,6 +356,7 @@ setipxname (argv)
 
 	dest[count++] = toupper (ch);
     }
+    dest[count] = 0;
 
     return 1;
 }

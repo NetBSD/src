@@ -1,3 +1,5 @@
+/*	$NetBSD: multilink.c,v 1.2 2002/05/29 19:06:32 christos Exp $	*/
+
 /*
  * multilink.c - support routines for multilink.
  *

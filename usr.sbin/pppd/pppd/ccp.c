@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.c,v 1.11 2000/09/23 22:39:34 christos Exp $	*/
+/*	$NetBSD: ccp.c,v 1.12 2002/05/29 19:06:31 christos Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -30,9 +30,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ccp.c,v 1.30 2000/04/15 01:27:11 masputra Exp "
+#define RCSID	"Id: ccp.c,v 1.32 2001/03/08 05:11:11 paulus Exp "
 #else
-__RCSID("$NetBSD: ccp.c,v 1.11 2000/09/23 22:39:34 christos Exp $");
+__RCSID("$NetBSD: ccp.c,v 1.12 2002/05/29 19:06:31 christos Exp $");
 #endif
 #endif
 
@@ -49,42 +49,59 @@ static const char rcsid[] = RCSID;
 #endif
 
 /*
+ * Unfortunately there is a bug in zlib which means that using a
+ * size of 8 (window size = 256) for Deflate compression will cause
+ * buffer overruns and kernel crashes in the deflate module.
+ * Until this is fixed we only accept sizes in the range 9 .. 15.
+ * Thanks to James Carlson for pointing this out.
+ */
+#define DEFLATE_MIN_WORKS	9
+
+/*
  * Command-line options.
  */
 static int setbsdcomp __P((char **));
 static int setdeflate __P((char **));
+static char bsd_value[8];
+static char deflate_value[8];
 
 static option_t ccp_option_list[] = {
     { "noccp", o_bool, &ccp_protent.enabled_flag,
       "Disable CCP negotiation" },
     { "-ccp", o_bool, &ccp_protent.enabled_flag,
-      "Disable CCP negotiation" },
+      "Disable CCP negotiation", OPT_ALIAS },
+
     { "bsdcomp", o_special, (void *)setbsdcomp,
-      "Request BSD-Compress packet compression" },
+      "Request BSD-Compress packet compression",
+      OPT_PRIO | OPT_A2STRVAL | OPT_STATIC, bsd_value },
     { "nobsdcomp", o_bool, &ccp_wantoptions[0].bsd_compress,
-      "don't allow BSD-Compress", OPT_A2COPY,
+      "don't allow BSD-Compress", OPT_PRIOSUB | OPT_A2CLR,
       &ccp_allowoptions[0].bsd_compress },
     { "-bsdcomp", o_bool, &ccp_wantoptions[0].bsd_compress,
-      "don't allow BSD-Compress", OPT_A2COPY,
+      "don't allow BSD-Compress", OPT_ALIAS | OPT_PRIOSUB | OPT_A2CLR,
       &ccp_allowoptions[0].bsd_compress },
-    { "deflate", 1, (void *)setdeflate,
-      "request Deflate compression" },
+
+    { "deflate", o_special, (void *)setdeflate,
+      "request Deflate compression",
+      OPT_PRIO | OPT_A2STRVAL | OPT_STATIC, deflate_value },
     { "nodeflate", o_bool, &ccp_wantoptions[0].deflate,
-      "don't allow Deflate compression", OPT_A2COPY,
+      "don't allow Deflate compression", OPT_PRIOSUB | OPT_A2CLR,
       &ccp_allowoptions[0].deflate },
     { "-deflate", o_bool, &ccp_wantoptions[0].deflate,
-      "don't allow Deflate compression", OPT_A2COPY,
+      "don't allow Deflate compression", OPT_ALIAS | OPT_PRIOSUB | OPT_A2CLR,
       &ccp_allowoptions[0].deflate },
+
     { "nodeflatedraft", o_bool, &ccp_wantoptions[0].deflate_draft,
       "don't use draft deflate #", OPT_A2COPY,
       &ccp_allowoptions[0].deflate_draft },
+
     { "predictor1", o_bool, &ccp_wantoptions[0].predictor_1,
-      "request Predictor-1", 1, &ccp_allowoptions[0].predictor_1 },
+      "request Predictor-1", 1, &ccp_allowoptions[0].predictor_1, OPT_PRIO },
     { "nopredictor1", o_bool, &ccp_wantoptions[0].predictor_1,
-      "don't allow Predictor-1", OPT_A2COPY,
+      "don't allow Predictor-1", OPT_PRIOSUB | OPT_A2CLR,
       &ccp_allowoptions[0].predictor_1 },
     { "-predictor1", o_bool, &ccp_wantoptions[0].predictor_1,
-      "don't allow Predictor-1", OPT_A2COPY,
+      "don't allow Predictor-1", OPT_ALIAS | OPT_PRIOSUB | OPT_A2CLR,
       &ccp_allowoptions[0].predictor_1 },
 
     { NULL }
@@ -218,6 +235,9 @@ setbsdcomp(argv)
 	ccp_allowoptions[0].bsd_bits = abits;
     } else
 	ccp_allowoptions[0].bsd_compress = 0;
+    slprintf(bsd_value, sizeof(bsd_value),
+	     rbits == abits? "%d": "%d,%d", rbits, abits);
+
     return 1;
 }
 
@@ -245,6 +265,14 @@ setdeflate(argv)
 		     DEFLATE_MIN_SIZE, DEFLATE_MAX_SIZE);
 	return 0;
     }
+    if (rbits == DEFLATE_MIN_SIZE || abits == DEFLATE_MIN_SIZE) {
+	if (rbits == DEFLATE_MIN_SIZE)
+	    rbits = DEFLATE_MIN_WORKS;
+	if (abits == DEFLATE_MIN_SIZE)
+	    abits = DEFLATE_MIN_WORKS;
+	warn("deflate option value of %d changed to %d to avoid zlib bug",
+	     DEFLATE_MIN_SIZE, DEFLATE_MIN_WORKS);
+    }
     if (rbits > 0) {
 	ccp_wantoptions[0].deflate = 1;
 	ccp_wantoptions[0].deflate_size = rbits;
@@ -255,9 +283,11 @@ setdeflate(argv)
 	ccp_allowoptions[0].deflate_size = abits;
     } else
 	ccp_allowoptions[0].deflate = 0;
+    slprintf(deflate_value, sizeof(deflate_value),
+	     rbits == abits? "%d": "%d,%d", rbits, abits);
+
     return 1;
 }
-
 
 /*
  * ccp_init - initialize CCP.
@@ -451,7 +481,7 @@ ccp_resetci(f)
 	if (go->deflate_correct) {
 	    opt_buf[0] = CI_DEFLATE;
 	    opt_buf[1] = CILEN_DEFLATE;
-	    opt_buf[2] = DEFLATE_MAKE_OPT(DEFLATE_MIN_SIZE);
+	    opt_buf[2] = DEFLATE_MAKE_OPT(DEFLATE_MIN_WORKS);
 	    opt_buf[3] = DEFLATE_CHK_SEQUENCE;
 	    if (ccp_test(f->unit, opt_buf, CILEN_DEFLATE, 0) <= 0)
 		go->deflate_correct = 0;
@@ -459,7 +489,7 @@ ccp_resetci(f)
 	if (go->deflate_draft) {
 	    opt_buf[0] = CI_DEFLATE_DRAFT;
 	    opt_buf[1] = CILEN_DEFLATE;
-	    opt_buf[2] = DEFLATE_MAKE_OPT(DEFLATE_MIN_SIZE);
+	    opt_buf[2] = DEFLATE_MAKE_OPT(DEFLATE_MIN_WORKS);
 	    opt_buf[3] = DEFLATE_CHK_SEQUENCE;
 	    if (ccp_test(f->unit, opt_buf, CILEN_DEFLATE, 0) <= 0)
 		go->deflate_draft = 0;
@@ -525,7 +555,7 @@ ccp_addci(f, p, lenp)
 		p += CILEN_DEFLATE;
 		break;
 	    }
-	    if (res < 0 || go->deflate_size <= DEFLATE_MIN_SIZE) {
+	    if (res < 0 || go->deflate_size <= DEFLATE_MIN_WORKS) {
 		go->deflate = 0;
 		break;
 	    }
@@ -686,7 +716,7 @@ ccp_nakci(f, p, len)
 	 * Stop asking for Deflate if we don't understand his suggestion.
 	 */
 	if (DEFLATE_METHOD(p[2]) != DEFLATE_METHOD_VAL
-	    || DEFLATE_SIZE(p[2]) < DEFLATE_MIN_SIZE
+	    || DEFLATE_SIZE(p[2]) < DEFLATE_MIN_WORKS
 	    || p[3] != DEFLATE_CHK_SEQUENCE)
 	    try.deflate = 0;
 	else if (DEFLATE_SIZE(p[2]) < go->deflate_size)
@@ -853,7 +883,7 @@ ccp_reqci(f, p, lenp, dont_nak)
 		ho->deflate_size = nb = DEFLATE_SIZE(p[2]);
 		if (DEFLATE_METHOD(p[2]) != DEFLATE_METHOD_VAL
 		    || p[3] != DEFLATE_CHK_SEQUENCE
-		    || nb > ao->deflate_size || nb < DEFLATE_MIN_SIZE) {
+		    || nb > ao->deflate_size || nb < DEFLATE_MIN_WORKS) {
 		    newret = CONFNAK;
 		    if (!dont_nak) {
 			p[2] = DEFLATE_MAKE_OPT(ao->deflate_size);
@@ -874,7 +904,7 @@ ccp_reqci(f, p, lenp, dont_nak)
 			res = ccp_test(f->unit, p, CILEN_DEFLATE, 1);
 			if (res > 0)
 			    break;		/* it's OK now */
-			if (res < 0 || nb == DEFLATE_MIN_SIZE || dont_nak) {
+			if (res < 0 || nb == DEFLATE_MIN_WORKS || dont_nak) {
 			    newret = CONFREJ;
 			    p[2] = DEFLATE_MAKE_OPT(ho->deflate_size);
 			    break;

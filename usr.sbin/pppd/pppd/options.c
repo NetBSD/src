@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.34 2000/10/11 20:23:55 is Exp $	*/
+/*	$NetBSD: options.c,v 1.35 2002/05/29 19:06:32 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: options.c,v 1.76 2000/08/01 01:38:30 paulus Exp "
+#define RCSID	"Id: options.c,v 1.80 2001/03/12 22:56:12 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.34 2000/10/11 20:23:55 is Exp $");
+__RCSID("$NetBSD: options.c,v 1.35 2002/05/29 19:06:32 christos Exp $");
 #endif
 #endif
 
@@ -34,15 +34,9 @@ __RCSID("$NetBSD: options.c,v 1.34 2000/10/11 20:23:55 is Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <syslog.h>
 #include <string.h>
-#include <netdb.h>
 #include <pwd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #ifdef PLUGIN
 #include <dlfcn.h>
 #endif
@@ -53,15 +47,6 @@ __RCSID("$NetBSD: options.c,v 1.34 2000/10/11 20:23:55 is Exp $");
 
 #include "pppd.h"
 #include "pathnames.h"
-#include "patchlevel.h"
-#include "fsm.h"
-#include "lcp.h"
-#include "ipcp.h"
-#include "upap.h"
-#include "chap.h"
-#include "ccp.h"
-
-#include <net/ppp-comp.h>
 
 #if defined(ultrix) || defined(NeXT)
 char *strdup __P((char *));
@@ -70,6 +55,12 @@ char *strdup __P((char *));
 #ifdef RCSID
 static const char rcsid[] = RCSID;
 #endif
+
+struct option_value {
+    struct option_value *next;
+    const char *source;
+    char value[1];
+};
 
 /*
  * Option variables and default values.
@@ -81,7 +72,6 @@ int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
 char	devnam[MAXPATHLEN];	/* Device name */
-u_int32_t netmask = 0;		/* IP netmask to set on interface */
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
 int	maxconnect = 0;		/* Maximum connect time */
@@ -95,6 +85,7 @@ int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
 bool	holdoff_specified;	/* true if a holdoff value has been given */
 int	log_to_fd = 1;		/* send log messages to this fd too */
+bool	log_default = 1;	/* log_to_fd is default (stdout) */
 int	maxfail = 10;		/* max # of unsuccessful connection attempts */
 char	linkname[MAXPATHLEN];	/* logical name for link */
 bool	tune_kernel;		/* may alter kernel settings */
@@ -102,16 +93,12 @@ int	connect_delay = 1000;	/* wait this many ms after connect script */
 int	req_unit = -1;		/* requested interface unit */
 bool	multilink = 0;		/* Enable multilink operation */
 char	*bundle_name = NULL;	/* bundle name for multilink */
+bool	dump_options;		/* print out option values */
+bool	dryrun;			/* print out option values and exit */
+char	*domain;		/* domain name set by domain option */
 
 extern option_t auth_options[];
 extern struct stat devstat;
-
-struct option_info initializer_info;
-struct option_info connect_script_info;
-struct option_info disconnect_script_info;
-struct option_info welcomer_info;
-struct option_info devnam_info;
-struct option_info ptycommand_info;
 
 #ifdef PPP_FILTER
 /* Filter program for packets to pass */
@@ -128,19 +115,16 @@ pcap_t  pc;			/* Fake struct pcap so we can compile expr */
 char *current_option;		/* the name of the option being parsed */
 int  privileged_option;		/* set iff the current option came from root */
 char *option_source;		/* string saying where the option came from */
-bool log_to_file;		/* log_to_fd is a file opened by us */
-bool log_to_specific_fd;	/* log_to_fd was specified by user option */
-bool no_override;		/* don't override previously-set options */
+int  option_priority = OPRIO_CFGFILE; /* priority of the current options */
+bool devnam_fixed;		/* can no longer change device name */
+
+static int logfile_fd = -1;	/* fd opened for log file */
+static char logfile_name[MAXPATHLEN];	/* name of log file */
 
 /*
  * Prototypes
  */
-static int setdevname __P((char *));
-static int setipaddr __P((char *));
-static int setspeed __P((char *));
-static int noopt __P((char **));
 static int setdomain __P((char **));
-static int setnetmask __P((char **));
 static int readfile __P((char **));
 static int callfile __P((char **));
 static int showversion __P((char **));
@@ -158,10 +142,15 @@ static int setactivefilter_in __P((char **));
 static int setactivefilter_out __P((char **));
 #endif
 
-static option_t *find_option __P((char *name));
-static int process_option __P((option_t *, char **));
+static int match_option __P((const char *, option_t *, int));
+static option_t *find_option __P((const char *name));
+static int process_option __P((option_t *, char *, char **));
 static int n_arguments __P((option_t *));
 static int number_option __P((char *, u_int32_t *, int));
+static void print_option __P((option_t *, option_t *, void (*)(void *, char *,
+    ...), void *));
+static void print_option_list __P((option_t *, void (*)(void *, char *, ...),
+    void *));
 
 /*
  * Structure to store extra lists of options.
@@ -178,99 +167,127 @@ static struct option_list *extra_options = NULL;
  */
 option_t general_options[] = {
     { "debug", o_int, &debug,
-      "Increase debugging level", OPT_INC|OPT_NOARG|1 },
+      "Increase debugging level", OPT_INC | OPT_NOARG | 1 },
     { "-d", o_int, &debug,
-      "Increase debugging level", OPT_INC|OPT_NOARG|1 },
+      "Increase debugging level",
+      OPT_ALIAS | OPT_INC | OPT_NOARG | 1 },
+
     { "kdebug", o_int, &kdebugflag,
-      "Set kernel driver debug level" },
+      "Set kernel driver debug level", OPT_PRIO },
+
     { "nodetach", o_bool, &nodetach,
-      "Don't detach from controlling tty", 1 },
+      "Don't detach from controlling tty", OPT_PRIO | 1 },
     { "-detach", o_bool, &nodetach,
-      "Don't detach from controlling tty", 1 },
+      "Don't detach from controlling tty", OPT_ALIAS | OPT_PRIOSUB | 1 },
     { "updetach", o_bool, &updetach,
-      "Detach from controlling tty once link is up", 1 },
+      "Detach from controlling tty once link is up",
+      OPT_PRIOSUB | OPT_A2CLR | 1, &nodetach },
+
     { "holdoff", o_int, &holdoff,
-      "Set time in seconds before retrying connection" },
+      "Set time in seconds before retrying connection", OPT_PRIO },
+
     { "idle", o_int, &idle_time_limit,
-      "Set time in seconds before disconnecting idle link" },
-    { "-all", o_special_noarg, (void *)noopt,
-      "Don't request/allow any LCP or IPCP options (useless)" },
+      "Set time in seconds before disconnecting idle link", OPT_PRIO },
+
     { "maxconnect", o_int, &maxconnect,
-      "Set connection time limit", OPT_LLIMIT|OPT_NOINCR|OPT_ZEROINF },
+      "Set connection time limit",
+      OPT_PRIO | OPT_LLIMIT | OPT_NOINCR | OPT_ZEROINF },
+
     { "domain", o_special, (void *)setdomain,
-      "Add given domain name to hostname" },
-    { "mtu", o_int, &lcp_allowoptions[0].mru,
-      "Set our MTU", OPT_LIMITS, NULL, MAXMRU, MINMRU },
-    { "netmask", o_special, (void *)setnetmask,
-      "set netmask" },
+      "Add given domain name to hostname",
+      OPT_PRIO | OPT_PRIV | OPT_A2STRVAL, &domain },
+
     { "file", o_special, (void *)readfile,
-      "Take options from a file", OPT_PREPASS },
+      "Take options from a file", OPT_NOPRINT },
     { "call", o_special, (void *)callfile,
-      "Take options from a privileged file", OPT_PREPASS },
+      "Take options from a privileged file", OPT_NOPRINT },
+
     { "persist", o_bool, &persist,
-      "Keep on reopening connection after close", 1 },
+      "Keep on reopening connection after close", OPT_PRIO | 1 },
     { "nopersist", o_bool, &persist,
-      "Turn off persist option" },
+      "Turn off persist option", OPT_PRIOSUB },
+
     { "demand", o_bool, &demand,
       "Dial on demand", OPT_INITONLY | 1, &persist },
+
     { "--version", o_special_noarg, (void *)showversion,
       "Show version number" },
     { "--help", o_special_noarg, (void *)showhelp,
       "Show brief listing of options" },
     { "-h", o_special_noarg, (void *)showhelp,
-      "Show brief listing of options" },
+      "Show brief listing of options", OPT_ALIAS },
+
+    { "logfile", o_special, (void *)setlogfile,
+      "Append log messages to this file",
+      OPT_PRIO | OPT_A2STRVAL | OPT_STATIC, &logfile_name },
     { "logfd", o_int, &log_to_fd,
       "Send log messages to this file descriptor",
-      0, &log_to_specific_fd },
-    { "logfile", o_special, (void *)setlogfile,
-      "Append log messages to this file" },
+      OPT_PRIOSUB | OPT_A2CLR, &log_default },
     { "nolog", o_int, &log_to_fd,
       "Don't send log messages to any file",
-      OPT_NOARG | OPT_VAL(-1) },
+      OPT_PRIOSUB | OPT_NOARG | OPT_VAL(-1) },
     { "nologfd", o_int, &log_to_fd,
       "Don't send log messages to any file descriptor",
-      OPT_NOARG | OPT_VAL(-1) },
+      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
+
     { "linkname", o_string, linkname,
       "Set logical name for link",
-      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+      OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, MAXPATHLEN },
+
     { "maxfail", o_int, &maxfail,
-      "Maximum number of unsuccessful connection attempts to allow" },
+      "Maximum number of unsuccessful connection attempts to allow",
+      OPT_PRIO },
+
     { "ktune", o_bool, &tune_kernel,
-      "Alter kernel settings as necessary", 1 },
+      "Alter kernel settings as necessary", OPT_PRIO | 1 },
     { "noktune", o_bool, &tune_kernel,
-      "Don't alter kernel settings", 0 },
+      "Don't alter kernel settings", OPT_PRIOSUB },
+
     { "connect-delay", o_int, &connect_delay,
-      "Maximum time (in ms) to wait after connect script finishes" },
+      "Maximum time (in ms) to wait after connect script finishes",
+      OPT_PRIO },
+
     { "unit", o_int, &req_unit,
-      "PPP interface unit number to use if possible", OPT_LLIMIT, 0, 0 },
+      "PPP interface unit number to use if possible",
+      OPT_PRIO | OPT_LLIMIT, 0, 0 },
+
+    { "dump", o_bool, &dump_options,
+      "Print out option values after parsing all options", 1 },
+    { "dryrun", o_bool, &dryrun,
+      "Stop after parsing, printing, and checking options", 1 },
+
 #ifdef HAVE_MULTILINK
     { "multilink", o_bool, &multilink,
-      "Enable multilink operation", 1 },
-    { "nomultilink", o_bool, &multilink,
-      "Disable multilink operation", 0 },
+      "Enable multilink operation", OPT_PRIO | 1 },
     { "mp", o_bool, &multilink,
-      "Enable multilink operation", 1 },
+      "Enable multilink operation", OPT_PRIOSUB | OPT_ALIAS | 1 },
+    { "nomultilink", o_bool, &multilink,
+      "Disable multilink operation", OPT_PRIOSUB | 0 },
     { "nomp", o_bool, &multilink,
-      "Disable multilink operation", 0 },
+      "Disable multilink operation", OPT_PRIOSUB | OPT_ALIAS | 0 },
+
     { "bundle", o_string, &bundle_name,
-      "Bundle name for multilink" },
+      "Bundle name for multilink", OPT_PRIO },
 #endif /* HAVE_MULTILINK */
+
 #ifdef PLUGIN
     { "plugin", o_special, (void *)loadplugin,
-      "Load a plug-in module into pppd", OPT_PRIV },
+      "Load a plug-in module into pppd", OPT_PRIV | OPT_A2LIST },
 #endif
 
 #ifdef PPP_FILTER
     { "pdebug", o_int, &dflag,
-      "libpcap debugging" },
+      "libpcap debugging", OPT_PRIO },
+
     { "pass-filter-in", 1, setpassfilter_in,
-      "set filter for packets to pass inwards" },
+      "set filter for packets to pass inwards", OPT_PRIO },
     { "pass-filter-out", 1, setpassfilter_out,
-      "set filter for packets to pass outwards" },
+      "set filter for packets to pass outwards", OPT_PRIO },
+
     { "active-filter-in", 1, setactivefilter_in,
-      "set filter for active pkts inwards" },
+      "set filter for active pkts inwards", OPT_PRIO },
     { "active-filter-out", 1, setactivefilter_out,
-      "set filter for active pkts outwards" },
+      "set filter for active pkts outwards", OPT_PRIO },
 #endif
 
     { NULL }
@@ -281,7 +298,7 @@ option_t general_options[] = {
 #endif
 
 static const char usage_string[] = "\
-pppd version %s.%d%s\n\
+pppd version %s\n\
 Usage: %s [ options ], where options are:\n\
 	<device>	Communicate over the named device\n\
 	<speed>		Set the baud rate to <speed>\n\
@@ -309,83 +326,32 @@ parse_args(argc, argv)
 {
     char *arg;
     option_t *opt;
-    int ret;
+    int n;
 
     privileged_option = privileged;
     option_source = "command line";
+    option_priority = OPRIO_CMDLINE;
     while (argc > 0) {
 	arg = *argv++;
 	--argc;
-
-	/*
-	 * First see if it's an option in the new option list.
-	 */
 	opt = find_option(arg);
-	if (opt != NULL) {
-	    int n = n_arguments(opt);
-	    if (argc < n) {
-		option_error("too few parameters for option %s", arg);
-		return 0;
-	    }
-	    current_option = arg;
-	    if (!process_option(opt, argv))
-		return 0;
-	    argc -= n;
-	    argv += n;
-	    continue;
-	}
-
-	/*
-	 * Maybe a tty name, speed or IP address?
-	 */
-	if ((ret = setdevname(arg)) == 0
-	    && (ret = setspeed(arg)) == 0
-	    && (ret = setipaddr(arg)) == 0) {
+	if (opt == NULL) {
 	    option_error("unrecognized option '%s'", arg);
 	    usage();
 	    return 0;
 	}
-	if (ret < 0)	/* error */
+	n = n_arguments(opt);
+	if (argc < n) {
+	    option_error("too few parameters for option %s", arg);
 	    return 0;
+	}
+	if (!process_option(opt, arg, argv))
+	    return 0;
+	argc -= n;
+	argv += n;
     }
     return 1;
 }
-
-#if 0
-/*
- * scan_args - scan the command line arguments to get the tty name,
- * if specified.  Also checks whether the notty or pty option was given.
- */
-void
-scan_args(argc, argv)
-    int argc;
-    char **argv;
-{
-    char *arg;
-    option_t *opt;
-
-    privileged_option = privileged;
-    while (argc > 0) {
-	arg = *argv++;
-	--argc;
-
-	if (strcmp(arg, "notty") == 0 || strcmp(arg, "pty") == 0)
-	    using_pty = 1;
-
-	/* Skip options and their arguments */
-	opt = find_option(arg);
-	if (opt != NULL) {
-	    int n = n_arguments(opt);
-	    argc -= n;
-	    argv += n;
-	    continue;
-	}
-
-	/* Check if it's a tty name and copy it if so */
-	(void) setdevname(arg, 1);
-    }
-}
-#endif
 
 /*
  * options_from_file - Read a string of options from a file,
@@ -401,7 +367,7 @@ options_from_file(filename, must_exist, check_prot, priv)
     FILE *f;
     int i, newline, ret, err;
     option_t *opt;
-    int oldpriv;
+    int oldpriv, n;
     char *oldsource;
     char *argv[MAXARGS];
     char args[MAXARGS][MAXWORDLEN];
@@ -432,43 +398,23 @@ options_from_file(filename, must_exist, check_prot, priv)
 	option_source = "file";
     ret = 0;
     while (getword(f, cmd, &newline, filename)) {
-	/*
-	 * First see if it's a command.
-	 */
 	opt = find_option(cmd);
-	if (opt != NULL) {
-	    int n = n_arguments(opt);
-	    for (i = 0; i < n; ++i) {
-		if (!getword(f, args[i], &newline, filename)) {
-		    option_error(
-			"In file %s: too few parameters for option '%s'",
-			filename, cmd);
-		    goto err;
-		}
-		argv[i] = args[i];
-	    }
-	    current_option = cmd;
-	    if ((opt->flags & OPT_DEVEQUIV) && no_override) {
-		option_error("the %s option may not be used in the %s file",
-			     cmd, filename);
-		goto err;
-	    }
-	    if (!process_option(opt, argv))
-		goto err;
-	    continue;
-	}
-
-	/*
-	 * Maybe a tty name, speed or IP address?
-	 */
-	if ((i = setdevname(cmd)) == 0
-	    && (i = setspeed(cmd)) == 0
-	    && (i = setipaddr(cmd)) == 0) {
+	if (opt == NULL) {
 	    option_error("In file %s: unrecognized option '%s'",
 			 filename, cmd);
 	    goto err;
 	}
-	if (i < 0)		/* error */
+	n = n_arguments(opt);
+	for (i = 0; i < n; ++i) {
+	    if (!getword(f, args[i], &newline, filename)) {
+		option_error(
+			"In file %s: too few parameters for option '%s'",
+			filename, cmd);
+		goto err;
+	    }
+	    argv[i] = args[i];
+	}
+	if (!process_option(opt, cmd, argv))
 	    goto err;
     }
     ret = 1;
@@ -501,6 +447,7 @@ options_from_user()
     if (path == NULL)
 	novm("init file name");
     slprintf(path, pl, "%s/%s", user, file);
+    option_priority = OPRIO_CFGFILE;
     ret = options_from_file(path, 0, 1, privileged);
     free(path);
     return ret;
@@ -511,7 +458,8 @@ options_from_user()
  * device, and if so, interpret options from it.
  * We only allow the per-tty options file to override anything from
  * the command line if it is something that the user can't override
- * once it has been set by root.
+ * once it has been set by root; this is done by giving configuration
+ * files a lower priority than the command line.
  */
 int
 options_for_tty()
@@ -534,9 +482,8 @@ options_for_tty()
     for (p = path + strlen(_PATH_TTYOPT); *p != 0; ++p)
 	if (*p == '/')
 	    *p = '.';
-    no_override = 1;
+    option_priority = OPRIO_CFGFILE;
     ret = options_from_file(path, 0, 0, 1);
-    no_override = 0;
     free(path);
     return ret;
 }
@@ -551,52 +498,59 @@ options_from_list(w, priv)
 {
     char *argv[MAXARGS];
     option_t *opt;
-    int i, ret = 0;
+    int i, n, ret = 0;
+    struct wordlist *w0;
 
     privileged_option = priv;
     option_source = "secrets file";
+    option_priority = OPRIO_SECFILE;
 
     while (w != NULL) {
-	/*
-	 * First see if it's a command.
-	 */
 	opt = find_option(w->word);
-	if (opt != NULL) {
-	    int n = n_arguments(opt);
-	    struct wordlist *w0 = w;
-	    for (i = 0; i < n; ++i) {
-		w = w->next;
-		if (w == NULL) {
-		    option_error(
-			"In secrets file: too few parameters for option '%s'",
-			w0->word);
-		    goto err;
-		}
-		argv[i] = w->word;
-	    }
-	    current_option = w0->word;
-	    if (!process_option(opt, argv))
-		goto err;
-	    continue;
-	}
-
-	/*
-	 * Maybe a tty name, speed or IP address?
-	 */
-	if ((i = setdevname(w->word)) == 0
-	    && (i = setspeed(w->word)) == 0
-	    && (i = setipaddr(w->word)) == 0) {
+	if (opt == NULL) {
 	    option_error("In secrets file: unrecognized option '%s'",
 			 w->word);
 	    goto err;
 	}
-	if (i < 0)		/* error */
+	n = n_arguments(opt);
+	w0 = w;
+	for (i = 0; i < n; ++i) {
+	    w = w->next;
+	    if (w == NULL) {
+		option_error(
+			"In secrets file: too few parameters for option '%s'",
+			w0->word);
+		goto err;
+	    }
+	    argv[i] = w->word;
+	}
+	if (!process_option(opt, w0->word, argv))
 	    goto err;
+	w = w->next;
     }
     ret = 1;
 
 err:
     return ret;
+}
+
+/*
+ * match_option - see if this option matches an option_t structure.
+ */
+static int
+match_option(name, opt, dowild)
+    const char *name;
+    option_t *opt;
+    int dowild;
+{
+	int (*match) __P((const char *, char **, int));
+
+	if (dowild != (opt->type == o_wild))
+		return 0;
+	if (!dowild)
+		return strcmp(name, opt->name) == 0;
+	match = (int (*) __P((const char *, char **, int))) opt->addr;
+	return (*match)(name, NULL, 0);
 }
 
 /*
@@ -606,71 +560,91 @@ err:
  */
 static option_t *
 find_option(name)
-    char *name;
+    const char *name;
 {
-    option_t *opt;
-    struct option_list *list;
-    int i;
+	option_t *opt;
+	struct option_list *list;
+	int i, dowild;
 
-    for (list = extra_options; list != NULL; list = list->next)
-	for (opt = list->options; opt->name != NULL; ++opt)
-	    if (strcmp(name, opt->name) == 0)
-		return opt;
-    for (opt = general_options; opt->name != NULL; ++opt)
-	if (strcmp(name, opt->name) == 0)
-	    return opt;
-    for (opt = auth_options; opt->name != NULL; ++opt)
-	if (strcmp(name, opt->name) == 0)
-	    return opt;
-    for (i = 0; protocols[i] != NULL; ++i)
-	if ((opt = protocols[i]->options) != NULL)
-	    for (; opt->name != NULL; ++opt)
-		if (strcmp(name, opt->name) == 0)
-		    return opt;
-    return NULL;
+	for (dowild = 0; dowild <= 1; ++dowild) {
+		for (opt = general_options; opt->name != NULL; ++opt)
+			if (match_option(name, opt, dowild))
+				return opt;
+		for (opt = auth_options; opt->name != NULL; ++opt)
+			if (match_option(name, opt, dowild))
+				return opt;
+		for (list = extra_options; list != NULL; list = list->next)
+			for (opt = list->options; opt->name != NULL; ++opt)
+				if (match_option(name, opt, dowild))
+					return opt;
+		for (opt = the_channel->options; opt->name != NULL; ++opt)
+			if (match_option(name, opt, dowild))
+				return opt;
+		for (i = 0; protocols[i] != NULL; ++i)
+			if ((opt = protocols[i]->options) != NULL)
+				for (; opt->name != NULL; ++opt)
+					if (match_option(name, opt, dowild))
+						return opt;
+	}
+	return NULL;
 }
 
 /*
  * process_option - process one new-style option.
  */
 static int
-process_option(opt, argv)
+process_option(opt, cmd, argv)
     option_t *opt;
+    char *cmd;
     char **argv;
 {
     u_int32_t v;
     int iv, a;
     char *sv;
     int (*parser) __P((char **));
+    int (*wildp) __P((char *, char **, int));
+    char *optopt = (opt->type == o_wild)? "": " option";
+    int prio = option_priority;
+    option_t *mainopt = opt;
 
-    if (no_override && (opt->flags & OPT_SEENIT)) {
-	struct option_info *ip = (struct option_info *) opt->addr2;
-	if (!(privileged && (opt->flags & OPT_PRIVFIX)))
+    if ((opt->flags & OPT_PRIVFIX) && privileged_option)
+	prio += OPRIO_ROOT;
+    while (mainopt->flags & OPT_PRIOSUB)
+	--mainopt;
+    if (mainopt->flags & OPT_PRIO) {
+	if (prio < mainopt->priority) {
+	    /* new value doesn't override old */
+	    if (prio == OPRIO_CMDLINE && mainopt->priority > OPRIO_ROOT) {
+		option_error("%s%s set in %s cannot be overridden\n",
+			     opt->name, optopt, mainopt->source);
+		return 0;
+	    }
 	    return 1;
-	if (!ip || ip->priv)
-	    return 1;
-	warn("%s option from per-tty file overrides command line", opt->name);
+	}
+	if (prio > OPRIO_ROOT && mainopt->priority == OPRIO_CMDLINE)
+	    warn("%s%s from %s overrides command line",
+		 opt->name, optopt, option_source);
     }
+
     if ((opt->flags & OPT_INITONLY) && phase != PHASE_INITIALIZE) {
-	option_error("it's too late to use the %s option", opt->name);
+	option_error("%s%s cannot be changed after initialization",
+		     opt->name, optopt);
 	return 0;
     }
     if ((opt->flags & OPT_PRIV) && !privileged_option) {
-	option_error("using the %s option requires root privilege", opt->name);
+	option_error("using the %s%s requires root privilege",
+		     opt->name, optopt);
 	return 0;
     }
     if ((opt->flags & OPT_ENABLE) && *(bool *)(opt->addr2) == 0) {
-	option_error("%s option is disabled", opt->name);
+	option_error("%s%s is disabled", opt->name, optopt);
 	return 0;
     }
-    if ((opt->flags & OPT_PRIVFIX) && !privileged_option) {
-	struct option_info *ip = (struct option_info *) opt->addr2;
-	if (ip && ip->priv) {
-	    option_error("%s option cannot be overridden", opt->name);
-	    return 0;
-	}
+    if ((opt->flags & OPT_DEVEQUIV) && devnam_fixed) {
+	option_error("the %s%s may not be changed in %s",
+		     opt->name, optopt, option_source);
+	return 0;
     }
-    opt->flags |= OPT_SEENIT;
 
     switch (opt->type) {
     case o_bool:
@@ -729,6 +703,8 @@ process_option(opt, argv)
     case o_uint32:
 	if (opt->flags & OPT_NOARG) {
 	    v = opt->flags & OPT_VALUE;
+	    if (v & 0x80)
+		    v |= 0xffffff00U;
 	} else if (!number_option(*argv, &v, 16))
 	    return 0;
 	if (opt->flags & OPT_OR)
@@ -754,19 +730,64 @@ process_option(opt, argv)
 	parser = (int (*) __P((char **))) opt->addr;
 	if (!(*parser)(argv))
 	    return 0;
+	if (opt->flags & OPT_A2LIST) {
+	    struct option_value *ovp, **pp;
+
+	    ovp = malloc(sizeof(*ovp) + strlen(*argv));
+	    if (ovp != 0) {
+		strcpy(ovp->value, *argv);
+		ovp->source = option_source;
+		ovp->next = NULL;
+		pp = (struct option_value **) &opt->addr2;
+		while (*pp != 0)
+		    pp = &(*pp)->next;
+		*pp = ovp;
+	    }
+	}
+	break;
+
+    case o_wild:
+	wildp = (int (*) __P((char *, char **, int))) opt->addr;
+	if (!(*wildp)(cmd, argv, 1))
+	    return 0;
 	break;
     }
 
-    if (opt->addr2) {
-	if (opt->flags & OPT_A2INFO) {
-	    struct option_info *ip = (struct option_info *) opt->addr2;
-	    ip->priv = privileged_option;
-	    ip->source = option_source;
-	} else if ((opt->flags & (OPT_A2COPY|OPT_ENABLE)) == 0)
-	    *(bool *)(opt->addr2) = 1;
-    }
+    if (opt->addr2 && (opt->flags & (OPT_A2COPY|OPT_ENABLE
+		|OPT_A2PRINTER|OPT_A2STRVAL|OPT_A2LIST)) == 0)
+	*(bool *)(opt->addr2) = !(opt->flags & OPT_A2CLR);
+
+    mainopt->source = option_source;
+    mainopt->priority = prio;
+    mainopt->winner = opt - mainopt;
 
     return 1;
+}
+
+/*
+ * override_value - if the option priorities would permit us to
+ * override the value of option, return 1 and update the priority
+ * and source of the option value.  Otherwise returns 0.
+ */
+int
+override_value(option, priority, source)
+    const char *option;
+    int priority;
+    const char *source;
+{
+	option_t *opt;
+
+	opt = find_option(option);
+	if (opt == NULL)
+		return 0;
+	while (opt->flags & OPT_PRIOSUB)
+		--opt;
+	if ((opt->flags & OPT_PRIO) && priority < opt->priority)
+		return 0;
+	opt->priority = priority;
+	opt->source = source;
+	opt->winner = -1;
+	return 1;
 }
 
 /*
@@ -776,8 +797,8 @@ static int
 n_arguments(opt)
     option_t *opt;
 {
-    return (opt->type == o_bool || opt->type == o_special_noarg
-	    || (opt->flags & OPT_NOARG))? 0: 1;
+	return (opt->type == o_bool || opt->type == o_special_noarg
+		|| (opt->flags & OPT_NOARG))? 0: 1;
 }
 
 /*
@@ -798,14 +819,166 @@ add_options(opt)
 }
 
 /*
+ * check_options - check that options are valid and consistent.
+ */
+void
+check_options()
+{
+	if (logfile_fd >= 0 && logfile_fd != log_to_fd)
+		close(logfile_fd);
+}
+
+/*
+ * print_option - print out an option and its value
+ */
+static void
+print_option(opt, mainopt, printer, arg)
+    option_t *opt, *mainopt;
+    void (*printer) __P((void *, char *, ...));
+    void *arg;
+{
+	int i, v;
+	char *p;
+
+	if (opt->flags & OPT_NOPRINT)
+		return;
+	switch (opt->type) {
+	case o_bool:
+		v = opt->flags & OPT_VALUE;
+		if (*(bool *)opt->addr != v)
+			/* this can happen legitimately, e.g. lock
+			   option turned off for default device */
+			break;
+		printer(arg, "%s", opt->name);
+		break;
+	case o_int:
+		v = opt->flags & OPT_VALUE;
+		if (v >= 128)
+			v -= 256;
+		i = *(int *)opt->addr;
+		if (opt->flags & OPT_NOARG) {
+			printer(arg, "%s", opt->name);
+			if (i != v) {
+				if (opt->flags & OPT_INC) {
+					for (; i > v; i -= v)
+						printer(arg, " %s", opt->name);
+				} else
+					printer(arg, " # oops: %d not %d\n",
+						i, v);
+			}
+		} else {
+			printer(arg, "%s %d", opt->name, i);
+		}
+		break;
+	case o_uint32:
+		printer(arg, "%s", opt->name);
+		if ((opt->flags & OPT_NOARG) == 0)
+			printer(arg, " %x", *(u_int32_t *)opt->addr);
+		break;
+
+	case o_string:
+		if (opt->flags & OPT_HIDE) {
+			p = "??????";
+		} else {
+			p = (char *) opt->addr;
+			if ((opt->flags & OPT_STATIC) == 0)
+				p = *(char **)p;
+		}
+		printer(arg, "%s %q", opt->name, p);
+		break;
+
+	case o_special:
+	case o_special_noarg:
+	case o_wild:
+		if (opt->type != o_wild) {
+			printer(arg, "%s", opt->name);
+			if (n_arguments(opt) == 0)
+				break;
+			printer(arg, " ");
+		}
+		if (opt->flags & OPT_A2PRINTER) {
+			void (*oprt) __P((option_t *,
+					  void ((*)__P((void *, char *, ...))),
+					  void *));
+			oprt = opt->addr2;
+			(*oprt)(opt, printer, arg);
+		} else if (opt->flags & OPT_A2STRVAL) {
+			p = (char *) opt->addr2;
+			if ((opt->flags & OPT_STATIC) == 0)
+				p = *(char **)p;
+			printer("%q", p);
+		} else if (opt->flags & OPT_A2LIST) {
+			struct option_value *ovp;
+
+			ovp = (struct option_value *) opt->addr2;
+			for (;;) {
+				printer(arg, "%q", ovp->value);
+				if ((ovp = ovp->next) == NULL)
+					break;
+				printer(arg, "\t\t# (from %s)\n%s ",
+					ovp->source, opt->name);
+			}
+		} else {
+			printer(arg, "xxx # [don't know how to print value]");
+		}
+		break;
+
+	default:
+		printer(arg, "# %s value (type %d??)", opt->name, opt->type);
+		break;
+	}
+	printer(arg, "\t\t# (from %s)\n", mainopt->source);
+}
+
+/*
+ * print_option_list - print out options in effect from an
+ * array of options.
+ */
+static void
+print_option_list(opt, printer, arg)
+    option_t *opt;
+    void (*printer) __P((void *, char *, ...));
+    void *arg;
+{
+	while (opt->name != NULL) {
+		if (opt->priority != OPRIO_DEFAULT
+		    && opt->winner != (short int) -1)
+			print_option(opt + opt->winner, opt, printer, arg);
+		do {
+			++opt;
+		} while (opt->flags & OPT_PRIOSUB);
+	}
+}
+
+/*
+ * print_options - print out what options are in effect.
+ */
+void
+print_options(printer, arg)
+    void (*printer) __P((void *, char *, ...));
+    void *arg;
+{
+	struct option_list *list;
+	int i;
+
+	printer(arg, "pppd options in effect:\n");
+	print_option_list(general_options, printer, arg);
+	print_option_list(auth_options, printer, arg);
+	for (list = extra_options; list != NULL; list = list->next)
+		print_option_list(list->options, printer, arg);
+	print_option_list(the_channel->options, printer, arg);
+	for (i = 0; protocols[i] != NULL; ++i)
+		print_option_list(protocols[i]->options, printer, arg);
+}
+
+/*
  * usage - print out a message telling how to use the program.
  */
 static void
 usage()
 {
     if (phase == PHASE_INITIALIZE)
-	fprintf(stderr, usage_string, VERSION, PATCHLEVEL, IMPLEMENTATION,
-		progname);
+	fprintf(stderr, usage_string, VERSION, progname);
 }
 
 /*
@@ -830,8 +1003,7 @@ showversion(argv)
     char **argv;
 {
     if (phase == PHASE_INITIALIZE) {
-	fprintf(stderr, "pppd version %s.%d%s\n",
-		VERSION, PATCHLEVEL, IMPLEMENTATION);
+	fprintf(stderr, "pppd version %s\n", VERSION);
 	exit(0);
     }
     return 0;
@@ -846,7 +1018,7 @@ void
 option_error __V((char *fmt, ...))
 {
     va_list args;
-    char buf[256];
+    char buf[1024];
 
 #if defined(__STDC__)
     va_start(args, fmt);
@@ -1302,250 +1474,23 @@ setactivefilter_out(argv)
 #endif
 
 /*
- * noopt - Disable all options.
- */
-static int
-noopt(argv)
-    char **argv;
-{
-    BZERO((char *) &lcp_wantoptions[0], sizeof (struct lcp_options));
-    BZERO((char *) &lcp_allowoptions[0], sizeof (struct lcp_options));
-    BZERO((char *) &ipcp_wantoptions[0], sizeof (struct ipcp_options));
-    BZERO((char *) &ipcp_allowoptions[0], sizeof (struct ipcp_options));
-
-    return (1);
-}
-
-/*
  * setdomain - Set domain name to append to hostname 
  */
 static int
 setdomain(argv)
     char **argv;
 {
-    if (!privileged_option) {
-	option_error("using the domain option requires root privilege");
-	return 0;
-    }
     gethostname(hostname, MAXNAMELEN);
     if (**argv != 0) {
 	if (**argv != '.')
 	    strncat(hostname, ".", MAXNAMELEN - strlen(hostname));
+	domain = hostname + strlen(hostname);
 	strncat(hostname, *argv, MAXNAMELEN - strlen(hostname));
     }
     hostname[MAXNAMELEN-1] = 0;
     return (1);
 }
 
-
-/*
- * setspeed - Set the speed.
- */
-static int
-setspeed(arg)
-    char *arg;
-{
-    char *ptr;
-    int spd;
-
-    if (no_override && inspeed != 0)
-	return 1;
-    spd = strtol(arg, &ptr, 0);
-    if (ptr == arg || *ptr != 0 || spd == 0)
-	return 0;
-    if (!no_override || inspeed == 0)
-	inspeed = spd;
-    return 1;
-}
-
-
-/*
- * setdevname - Set the device name.
- */
-static int
-setdevname(cp)
-    char *cp;
-{
-    struct stat statbuf;
-    char dev[MAXPATHLEN];
-
-    if (*cp == 0)
-	return 0;
-
-    if (strncmp("/dev/", cp, 5) != 0) {
-	strlcpy(dev, "/dev/", sizeof(dev));
-	strlcat(dev, cp, sizeof(dev));
-	cp = dev;
-    }
-
-    /*
-     * Check if there is a character device by this name.
-     */
-    if (stat(cp, &statbuf) < 0) {
-	if (errno == ENOENT)
-	    return 0;
-	option_error("Couldn't stat %s: %m", cp);
-	return -1;
-    }
-    if (!S_ISCHR(statbuf.st_mode)) {
-	option_error("%s is not a character device", cp);
-	return -1;
-    }
-
-    if (phase != PHASE_INITIALIZE) {
-	option_error("device name cannot be changed after initialization");
-	return -1;
-    }
-    if (no_override) {
-	option_error("per-tty options file may not specify device name");
-	return -1;
-    }
-
-    if (devnam_info.priv && !privileged_option) {
-	option_error("device name cannot be overridden");
-	return -1;
-    }
-
-    strlcpy(devnam, cp, sizeof(devnam));
-    devstat = statbuf;
-    default_device = 0;
-    devnam_info.priv = privileged_option;
-    devnam_info.source = option_source;
-  
-    return 1;
-}
-
-
-/*
- * setipaddr - Set the IP address
- */
-static int
-setipaddr(arg)
-    char *arg;
-{
-    struct hostent *hp;
-    char *colon;
-    u_int32_t local, remote;
-    ipcp_options *wo = &ipcp_wantoptions[0];
-    static int seen_local = 0, seen_remote = 0;
-
-    /*
-     * IP address pair separated by ":".
-     */
-    if ((colon = strchr(arg, ':')) == NULL)
-	return 0;
-  
-    /*
-     * If colon first character, then no local addr.
-     */
-    if (colon != arg && !(no_override && seen_local)) {
-	*colon = '\0';
-	if ((local = inet_addr(arg)) == (u_int32_t) -1) {
-	    if ((hp = gethostbyname(arg)) == NULL) {
-		option_error("unknown host: %s", arg);
-		return -1;
-	    } else {
-		local = *(u_int32_t *)hp->h_addr;
-	    }
-	}
-	if (bad_ip_adrs(local)) {
-	    option_error("bad local IP address %s", ip_ntoa(local));
-	    return -1;
-	}
-	if (local != 0)
-	    wo->ouraddr = local;
-	*colon = ':';
-	seen_local = 1;
-    }
-  
-    /*
-     * If colon last character, then no remote addr.
-     */
-    if (*++colon != '\0' && !(no_override && seen_remote)) {
-	if ((remote = inet_addr(colon)) == (u_int32_t) -1) {
-	    if ((hp = gethostbyname(colon)) == NULL) {
-		option_error("unknown host: %s", colon);
-		return -1;
-	    } else {
-		remote = *(u_int32_t *)hp->h_addr;
-		if (remote_name[0] == 0)
-		    strlcpy(remote_name, colon, sizeof(remote_name));
-	    }
-	}
-	if (bad_ip_adrs(remote)) {
-	    option_error("bad remote IP address %s", ip_ntoa(remote));
-	    return -1;
-	}
-	if (remote != 0)
-	    wo->hisaddr = remote;
-	seen_remote = 1;
-    }
-
-    return 1;
-}
-
-
-/*
- * setnetmask - set the netmask to be used on the interface.
- */
-static int
-setnetmask(argv)
-    char **argv;
-{
-    u_int32_t mask;
-    int n;
-    char *p;
-
-    /*
-     * Unfortunately, if we use inet_addr, we can't tell whether
-     * a result of all 1s is an error or a valid 255.255.255.255.
-     */
-    p = *argv;
-    n = parse_dotted_ip(p, &mask);
-
-    mask = htonl(mask);
-
-    if (n == 0 || p[n] != 0 || (netmask & ~mask) != 0) {
-	option_error("invalid netmask value '%s'", *argv);
-	return 0;
-    }
-
-    netmask = mask;
-    return (1);
-}
-
-int
-parse_dotted_ip(p, vp)
-    char *p;
-    u_int32_t *vp;
-{
-    int n;
-    u_int32_t v, b;
-    char *endp, *p0 = p;
-
-    v = 0;
-    for (n = 3;; --n) {
-	b = strtoul(p, &endp, 0);
-	if (endp == p)
-	    return 0;
-	if (b > 255) {
-	    if (n < 3)
-		return 0;
-	    /* accept e.g. 0xffffff00 */
-	    *vp = b;
-	    return endp - p0;
-	}
-	v |= b << (n * 8);
-	p = endp;
-	if (n == 0)
-	    break;
-	if (*p != '.')
-	    return 0;
-	++p;
-    }
-    *vp = v;
-    return p - p0;
-}
 
 static int
 setlogfile(argv)
@@ -1566,10 +1511,12 @@ setlogfile(argv)
 	option_error("Can't open log file %s: %m", *argv);
 	return 0;
     }
-    if (log_to_file && log_to_fd >= 0)
-	close(log_to_fd);
+    strlcpy(logfile_name, *argv, sizeof(logfile_name));
+    if (logfile_fd >= 0)
+	close(logfile_fd);
+    logfile_fd = fd;
     log_to_fd = fd;
-    log_to_file = 1;
+    log_default = 0;
     return 1;
 }
 
@@ -1582,23 +1529,49 @@ loadplugin(argv)
     void *handle;
     const char *err;
     void (*init) __P((void));
+    char *path = arg;
+    const char *vers;
 
-    handle = dlopen(arg, RTLD_GLOBAL | RTLD_NOW);
+    if (strchr(arg, '/') == 0) {
+	const char *base = _PATH_PLUGIN;
+	int l = strlen(base) + strlen(arg) + 2;
+	path = malloc(l);
+	if (path == 0)
+	    novm("plugin file path");
+	strlcpy(path, base, l);
+	strlcat(path, "/", l);
+	strlcat(path, arg, l);
+    }
+    handle = dlopen(path, RTLD_GLOBAL | RTLD_NOW);
     if (handle == 0) {
 	err = dlerror();
 	if (err != 0)
 	    option_error("%s", err);
 	option_error("Couldn't load plugin %s", arg);
-	return 0;
+	goto err;
     }
     init = (void (*)(void))dlsym(handle, "plugin_init");
     if (init == 0) {
 	option_error("%s has no initialization entry point", arg);
-	dlclose(handle);
-	return 0;
+	goto errclose;
+    }
+    vers = (const char *) dlsym(handle, "pppd_version");
+    if (vers == 0) {
+	warn("Warning: plugin %s has no version information", arg);
+    } else if (strcmp(vers, VERSION) != 0) {
+	option_error("Plugin %s is for pppd version %s, this is %s",
+		     vers, VERSION);
+	goto errclose;
     }
     info("Plugin %s loaded.", arg);
     (*init)();
     return 1;
+
+ errclose:
+    dlclose(handle);
+ err:
+    if (path != arg)
+	free(path);
+    return 0;
 }
 #endif /* PLUGIN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.6 2000/09/23 22:39:33 christos Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.7 2002/05/29 19:06:31 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -23,9 +23,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: cbcp.c,v 1.10 1999/08/13 06:46:10 paulus Exp "
+#define RCSID	"Id: cbcp.c,v 1.11 2001/03/08 05:11:10 paulus Exp "
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.6 2000/09/23 22:39:33 christos Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.7 2002/05/29 19:06:31 christos Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ static int setcbcp __P((char **));
 
 static option_t cbcp_option_list[] = {
     { "callback", o_special, setcbcp,
-      "Ask for callback" },
+      "Ask for callback", OPT_PRIO | OPT_A2STRVAL, &cbcp[0].us_number },
     { NULL }
 };
 

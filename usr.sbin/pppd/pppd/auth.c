@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.27 2000/09/23 22:39:33 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.28 2002/05/29 19:06:31 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -37,9 +37,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: auth.c,v 1.67 2000/08/01 01:38:29 paulus Exp "
+#define RCSID	"Id: auth.c,v 1.69 2001/03/12 22:50:01 paulus Exp "
 #else
-__RCSID("$NetBSD: auth.c,v 1.27 2000/09/23 22:39:33 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.28 2002/05/29 19:06:31 christos Exp $");
 #endif
 #endif
 
@@ -171,6 +171,8 @@ bool allow_any_ip = 0;		/* Allow peer to use any IP address */
 bool explicit_remote = 0;	/* User specified explicit remote name */
 char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
 
+static char *uafname;		/* name of most recent +ua file */
+
 /* Bits in auth_pending[] */
 #define PAP_WITHPEER	1
 #define PAP_PEER	2
@@ -209,50 +211,69 @@ static int  wordlist_count __P((struct wordlist *));
  * Authentication-related options.
  */
 option_t auth_options[] = {
+    { "auth", o_bool, &auth_required,
+      "Require authentication from peer", OPT_PRIO | 1 },
+    { "noauth", o_bool, &auth_required,
+      "Don't require peer to authenticate", OPT_PRIOSUB | OPT_PRIV,
+      &allow_any_ip },
     { "require-pap", o_bool, &lcp_wantoptions[0].neg_upap,
-      "Require PAP authentication from peer", 1, &auth_required },
+      "Require PAP authentication from peer",
+      OPT_PRIOSUB | 1, &auth_required },
     { "+pap", o_bool, &lcp_wantoptions[0].neg_upap,
-      "Require PAP authentication from peer", 1, &auth_required },
+      "Require PAP authentication from peer",
+      OPT_ALIAS | OPT_PRIOSUB | 1, &auth_required },
+    { "require-chap", o_bool, &lcp_wantoptions[0].neg_chap,
+      "Require CHAP authentication from peer",
+      OPT_PRIOSUB | 1, &auth_required },
+    { "+chap", o_bool, &lcp_wantoptions[0].neg_chap,
+      "Require CHAP authentication from peer",
+      OPT_ALIAS | OPT_PRIOSUB | 1, &auth_required },
+
     { "refuse-pap", o_bool, &refuse_pap,
       "Don't agree to auth to peer with PAP", 1 },
     { "-pap", o_bool, &refuse_pap,
-      "Don't allow PAP authentication with peer", 1 },
-    { "require-chap", o_bool, &lcp_wantoptions[0].neg_chap,
-      "Require CHAP authentication from peer", 1, &auth_required },
-    { "+chap", o_bool, &lcp_wantoptions[0].neg_chap,
-      "Require CHAP authentication from peer", 1, &auth_required },
+      "Don't allow PAP authentication with peer", OPT_ALIAS | 1 },
+
     { "refuse-chap", o_bool, &refuse_chap,
       "Don't agree to auth to peer with CHAP", 1 },
     { "-chap", o_bool, &refuse_chap,
-      "Don't allow CHAP authentication with peer", 1 },
+      "Don't allow CHAP authentication with peer", OPT_ALIAS | 1 },
+
     { "name", o_string, our_name,
       "Set local name for authentication",
-      OPT_PRIV|OPT_STATIC, NULL, MAXNAMELEN },
+      OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, MAXNAMELEN },
+
+    { "+ua", o_special, (void *)setupapfile,
+      "Get PAP user and password from file",
+      OPT_PRIO | OPT_A2STRVAL, &uafname },
+
     { "user", o_string, user,
-      "Set name for auth with peer", OPT_STATIC, NULL, MAXNAMELEN },
+      "Set name for auth with peer", OPT_PRIO | OPT_STATIC, NULL, MAXNAMELEN },
+
+    { "password", o_string, passwd,
+      "Password for authenticating us to the peer",
+      OPT_PRIO | OPT_STATIC | OPT_HIDE, NULL, MAXSECRETLEN },
+
     { "usehostname", o_bool, &usehostname,
       "Must use hostname for authentication", 1 },
+
     { "remotename", o_string, remote_name,
-      "Set remote name for authentication", OPT_STATIC,
+      "Set remote name for authentication", OPT_PRIO | OPT_STATIC,
       &explicit_remote, MAXNAMELEN },
-    { "auth", o_bool, &auth_required,
-      "Require authentication from peer", 1 },
-    { "noauth", o_bool, &auth_required,
-      "Don't require peer to authenticate", OPT_PRIV, &allow_any_ip },
-    {  "login", o_bool, &uselogin,
+
+    { "login", o_bool, &uselogin,
       "Use system password database for PAP", 1 },
+
     { "papcrypt", o_bool, &cryptpap,
       "PAP passwords are encrypted", 1 },
-    { "+ua", o_special, (void *)setupapfile,
-      "Get PAP user and password from file" },
-    { "password", o_string, passwd,
-      "Password for authenticating us to the peer", OPT_STATIC,
-      NULL, MAXSECRETLEN },
+
     { "privgroup", o_special, (void *)privgroup,
-      "Allow group members to use privileged options", OPT_PRIV },
+      "Allow group members to use privileged options", OPT_PRIV | OPT_A2LIST },
+
     { "allow-ip", o_special, (void *)set_noauth_addr,
       "Set IP address(es) which can be used without authentication",
-      OPT_PRIV },
+      OPT_PRIV | OPT_A2LIST },
+
     { NULL }
 };
 
@@ -263,36 +284,47 @@ static int
 setupapfile(argv)
     char **argv;
 {
-    FILE * ufile;
+    FILE *ufile;
     int l;
+    char u[MAXNAMELEN], p[MAXSECRETLEN];
+    char *fname;
 
     lcp_allowoptions[0].neg_upap = 1;
 
     /* open user info file */
+    fname = strdup(*argv);
+    if (fname == NULL)
+	novm("+ua file name");
     seteuid(getuid());
-    ufile = fopen(*argv, "r");
+    ufile = fopen(fname, "r");
     seteuid(0);
     if (ufile == NULL) {
-	option_error("unable to open user login data file %s", *argv);
+	option_error("unable to open user login data file %s", fname);
 	return 0;
     }
-    check_access(ufile, *argv);
+    check_access(ufile, fname);
+    uafname = fname;
 
     /* get username */
-    if (fgets(user, MAXNAMELEN - 1, ufile) == NULL
-	|| fgets(passwd, MAXSECRETLEN - 1, ufile) == NULL){
-	option_error("unable to read user login data file %s", *argv);
+    if (fgets(u, MAXNAMELEN - 1, ufile) == NULL
+	|| fgets(p, MAXSECRETLEN - 1, ufile) == NULL){
+	option_error("unable to read user login data file %s", fname);
 	return 0;
     }
     fclose(ufile);
 
     /* get rid of newlines */
-    l = strlen(user);
-    if (l > 0 && user[l-1] == '\n')
-	user[l-1] = 0;
-    l = strlen(passwd);
-    if (l > 0 && passwd[l-1] == '\n')
-	passwd[l-1] = 0;
+    l = strlen(u);
+    if (l > 0 && u[l-1] == '\n')
+	u[l-1] = 0;
+    l = strlen(p);
+    if (l > 0 && p[l-1] == '\n')
+	p[l-1] = 0;
+
+    if (override_value("user", option_priority, fname))
+	strlcpy(user, u, sizeof(user));
+    if (override_value("passwd", option_priority, fname))
+	strlcpy(passwd, p, sizeof(passwd));
 
     return (1);
 }
@@ -794,6 +826,7 @@ auth_check_options()
 
     /* If authentication is required, ask peer for CHAP or PAP. */
     if (auth_required) {
+	allow_any_ip = 0;
 	if (!wo->neg_chap && !wo->neg_upap) {
 	    wo->neg_chap = 1;
 	    wo->neg_upap = 1;
@@ -1584,8 +1617,15 @@ set_allowed_addrs(unit, addrs, opts)
      * which is a single host, then use that if we find one.
      */
     if (suggested_ip != 0
-	&& (wo->hisaddr == 0 || !auth_ip_addr(unit, wo->hisaddr)))
+	&& (wo->hisaddr == 0 || !auth_ip_addr(unit, wo->hisaddr))) {
 	wo->hisaddr = suggested_ip;
+	/*
+	 * Do we insist on this address?  No, if there are other
+	 * addresses authorized than the suggested one.
+	 */
+	if (n > 1)
+	    wo->accept_remote = 1;
+    }
 }
 
 /*
@@ -1788,12 +1828,12 @@ scan_authfile(f, client, server, secret, addrs, opts, filename)
 	for (;;) {
 	    if (!getword(f, word, &newline, filename) || newline)
 		break;
-	    ap = (struct wordlist *) malloc(sizeof(struct wordlist));
+	    ap = (struct wordlist *)
+		    malloc(sizeof(struct wordlist) + strlen(word) + 1);
 	    if (ap == NULL)
 		novm("authorized addresses");
-	    ap->word = strdup(word);
-	    if (ap->word == NULL)
-		novm("authorized addresses");
+	    ap->word = (char *) (ap + 1);
+	    strcpy(ap->word, word);
 	    *app = ap;
 	    app = &ap->next;
 	}

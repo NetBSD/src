@@ -1,3 +1,5 @@
+/*	$NetBSD: tty.c,v 1.2 2002/05/29 19:06:33 christos Exp $	*/
+
 /*
  * tty.c - code for handling serial ports in pppd.
  *
@@ -20,7 +22,14 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
 #define RCSID	"Id: tty.c,v 1.6 2001/03/12 22:59:01 paulus Exp "
+#else
+__RCSID("$NetBSD: tty.c,v 1.2 2002/05/29 19:06:33 christos Exp $");
+#endif
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -166,8 +175,11 @@ option_t tty_options[] = {
       "Disable hardware flow control",
       OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
     { "nocdtrcts", o_int, &crtscts,
-      "Disable hardware flow control",
-      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
+      "Disable alternate hardware (DTR/CTS) flow control",
+      OPT_PRIOSUB | OPT_NOARG | OPT_VAL(2) },
+    { "-cdtrcts", o_int, &crtscts,
+      "Disable alternate hardware (DTR/CTS) flow control",
+      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(2) },
     { "xonxoff", o_special_noarg, (void *)setxonxoff,
       "Set software (XON/XOFF) flow control", OPT_PRIOSUB },
 
