@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/07/29 19:18:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 1998/08/27 20:32:08 tv Exp $
 
 # XXX until our binutils is upgraded 
 .if (${MACHINE_ARCH} != "powerpc")
@@ -10,13 +10,9 @@ MAN=	c++filt.1
 
 CPPFLAGS+=-DMAIN -DVERSION='"${VERSION}"'
 
-CLEANFILES+=underscore.c ${PROG}.1
+CLEANFILES+=${PROG}.1
 
 .include <bsd.prog.mk>
-
-underscore.c: mkunderscore.sh ${dist}/bfd/config.bfd
-	sh ${.CURDIR}/mkunderscore.sh ${MACHINE_GNU_ARCH}-unknown-netbsd \
-		${dist}/bfd/config.bfd > ${.TARGET}
 
 .PATH:	${dist}/libiberty
 
