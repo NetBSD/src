@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1996/02/27 13:17:01 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.21 1996/03/14 00:54:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/trap.h>
 
 #include <sparc/sparc/cache.h>
 
@@ -315,39 +316,36 @@ vunmapbuf(bp, sz)
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
+ * Copy and update the pcb, making the child ready to run, and marking
+ * it so that it can return differently than the parent.
  *
  * This function relies on the fact that the pcb is
  * the first element in struct user.
  */
+void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
 	register struct pcb *opcb = &p1->p_addr->u_pcb;
 	register struct pcb *npcb = &p2->p_addr->u_pcb;
 	register u_int sp, topframe, off, ssize;
+	register struct trapframe *tf2;
+	register struct rwindow *rp;
+	extern void child_return __P((struct proc *));
+	extern void proc_trampoline __P((void));
 
 	/*
-	 * Save all the registers to p1's stack or, in the case of
+	 * Save all user registers to p1's stack or, in the case of
 	 * user registers and invalid stack pointers, to opcb.
-	 * snapshot() also sets the given pcb's pcb_sp and pcb_psr
-	 * to the current %sp and %psr, and sets pcb_pc to a stub
-	 * which returns 1.  We then copy the whole pcb to p2;
-	 * when switch() selects p2 to run, it will run at the stub,
-	 * rather than at the copying code below, and cpu_fork
-	 * will return 1.
-	 *
-	 * Note that the order `*npcb = *opcb, snapshot(npcb)' is wrong,
-	 * as user registers might then wind up only in opcb.
-	 * We could call save_user_windows first,
-	 * but that would only save 3 stores anyway.
+	 * We then copy the whole pcb to p2; when switch() selects p2
+	 * to run, it will run at the `proc_trampoline' stub, rather
+	 * than returning at the copying code below.
 	 *
 	 * If process p1 has an FPU state, we must copy it.  If it is
 	 * the FPU user, we must save the FPU state first.
 	 */
-	snapshot(opcb);
+
+	write_user_windows();
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
 		if (p1 == fpproc)
@@ -360,30 +358,81 @@ cpu_fork(p1, p2)
 		p2->p_md.md_fpstate = NULL;
 
 	/*
-	 * Copy the active part of the kernel stack,
-	 * then adjust each kernel sp -- the frame pointer
-	 * in the top frame is a user sp -- in the child's copy,
-	 * including the initial one in the child's pcb.
+	 * Setup (kernel) stack frame that will by-pass the child
+	 * out of the kernel.
 	 */
-	sp = npcb->pcb_sp;		/* points to old kernel stack */
-	ssize = (u_int)opcb + USPACE - sp;
-	if (ssize >= USPACE - sizeof(struct pcb))
-		panic("cpu_fork 1");
-	off = (u_int)npcb - (u_int)opcb;
-	qcopy((caddr_t)sp, (caddr_t)sp + off, ssize);
-	sp += off;
-	npcb->pcb_sp = sp;
-	topframe = (u_int)npcb + TOPFRAMEOFF;
-	while (sp < topframe)
-		sp = ((struct rwindow *)sp)->rw_in[6] += off;
-	if (sp != topframe)
-		panic("cpu_fork 2");
+	tf2 = p2->p_md.md_tf = (struct trapframe *)
+			((int)npcb + USPACE - sizeof(*tf2));
+
+	/* Copy parent's trapframe */
+	*tf2 = *(struct trapframe *)((int)opcb + USPACE - sizeof(*tf2));
+
+	/* Duplicate efforts of syscall(), but slightly differently */
+	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
+		/* jmp %g2 (or %g7, deprecated) on success */
+		tf2->tf_npc = tf2->tf_global[2];
+	} else {
+		/*
+		 * old system call convention: clear C on success
+		 * note: proc_trampoline() sets a fresh psr when
+		 * returning to user mode.
+		 */
+		/*tf2->tf_psr &= ~PSR_C;   -* success */
+	}
+
+	/* Set return values in child mode */
+	tf2->tf_out[0] = 0;
+	tf2->tf_out[1] = 1;
+
+	/* Construct kernel frame to return to in cpu_switch() */
+	rp = (struct rwindow *)((u_int)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (int)child_return;	/* Function to call */
+	rp->rw_local[1] = (int)p2;		/* and its argument */
+
+	npcb->pcb_pc = (int)proc_trampoline - 8;
+	npcb->pcb_sp = (int)rp;
+	npcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
+	npcb->pcb_wim = 1;		/* Fence at window #1 */
+
+}
+
+/*
+ * cpu_set_kpc:
+ *
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with the current process's process pointer as an argument.
+ *
+ * Note that it's assumed that when the named process returns,
+ * we immediately return to user mode.
+ *
+ * (Note that cpu_fork(), above, uses an open-coded version of this.)
+ */
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	long pc;
+{
+	struct pcb *pcb;
+	struct rwindow *rp;
+	extern void proc_trampoline __P((void));
+
+	pcb = &p->p_addr->u_pcb;
+
+	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (int)pc;		/* Function to call */
+	rp->rw_local[1] = (int)p;		/* and its argument */
+
 	/*
-	 * This might be unnecessary, but it may be possible for the child
-	 * to run in ptrace or sendsig before it returns from fork.
+	 * Frob PCB:
+	 *	- arrange to return to proc_trampoline() from cpu_switch()
+	 *	- point it at the stack frame constructed above
+	 *	- make it run in a clear set of register windows
 	 */
-	p2->p_md.md_tf = (struct trapframe *)((int)p1->p_md.md_tf + off);
-	return (0);
+	pcb->pcb_pc = (int)proc_trampoline - 8;
+	pcb->pcb_sp = (int)rp;
+	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
+	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
 
 /*
