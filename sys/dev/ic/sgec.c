@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.12 2001/04/12 03:16:56 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.13 2001/04/15 15:01:35 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -314,7 +314,7 @@ zestart(ifp)
 	struct ze_cdata *zc = sc->sc_zedata;
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
-	int idx, len, s, i, totlen, error;
+	int idx, len, i, totlen, error;
 	int old_inq = sc->sc_inq;
 	short orword;
 
@@ -606,7 +606,7 @@ ze_setup(sc)
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
-	int j, idx, s, reg;
+	int j, idx, reg;
 
 	if (sc->sc_inq == (TXDESCS - 1)) {
 		sc->sc_setup = 1;
@@ -711,7 +711,7 @@ int
 zereset(sc)
 	struct ze_softc *sc;
 {
-	int reg, i, s;
+	int reg, i;
 
 	ZE_WCSR(ZE_CSR6, ZE_NICSR6_RE);
 	DELAY(50000);
