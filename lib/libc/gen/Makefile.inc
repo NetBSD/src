@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.99 1999/05/01 22:45:57 ross Exp $
+#	$NetBSD: Makefile.inc,v 1.100 1999/09/12 18:54:34 kleink Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -12,7 +12,7 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	getdomainname.c getgrent.c getgrouplist.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
 	getpagesize.c getpass.c getpwent.c getsubopt.c getttyent.c \
-	getusershell.c __glob13.c glob.c initgroups.c isatty.c \
+	getusershell.c __glob13.c glob.c initgroups.c isascii.c isatty.c \
 	isctype.c lockf.c nice.c nlist.c nlist_aout.c \
 	nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
 	pause.c popen.c psignal.c pwcache.c pw_scan.c raise.c readdir.c \
@@ -21,9 +21,9 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	siginterrupt.c __siglist14.c siglist.c signal.c \
 	__signame14.c signame.c __sigsetops14.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c times.c \
-	timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c uname.c \
-	unvis.c usleep.c utime.c valloc.c vis.c wait.c wait3.c waitpid.c \
-	warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
+	timezone.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c \
+	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
+	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
