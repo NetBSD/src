@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.47 2005/02/01 13:38:53 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.48 2005/02/28 20:37:14 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -804,7 +804,14 @@ Of importance here are the component lines which read
 .Sq optimal ,
 and the
 .Sq Parity status
-line which indicates that the parity is up-to-date.
+line.
+.Sq Parity status: clean
+indicates that the parity is up-to-date for this RAID set,
+whether or not the RAID set is in redundant or degraded mode.
+.Sq Parity status: DIRTY
+indicates that it is not known if the parity information is
+consistent with the data, and that the parity information needs
+to be checked.
 Note that if there are file systems open on the RAID set,
 the individual components will not be
 .Sq clean
