@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.2.8.1 1997/08/23 07:08:13 thorpej Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.2.8.2 1997/10/15 05:45:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,12 +43,13 @@
 /* Proto types for all the bus_space structure functions */
 
 bs_protos(podulebus);
+bs_protos(bs_notimpl);
 
 /* Declare the podulebus bus space tag */
 
 struct bus_space podulebus_bs_tag = {
 	/* cookie */
-	(void *) 2,			/* shift to apply to registers */
+	(void *) 2,			/* Shift to apply to registers */
 
 	/* mapping/unmapping */
 	podulebus_map,
@@ -66,55 +67,55 @@ struct bus_space podulebus_bs_tag = {
 	podulebus_r_1,
 	podulebus_r_2,
 	podulebus_r_4,
-	podulebus_r_8,
+	bs_notimpl_r_8,
 
 	/* read multiple */
-	podulebus_rm_1,
+	bs_notimpl_rm_1,
    	podulebus_rm_2,
-	podulebus_rm_4,
-	podulebus_rm_8,
+	bs_notimpl_rm_4,
+	bs_notimpl_rm_8,
 
 	/* read region */
-	podulebus_rr_1,
-	podulebus_rr_2,
-	podulebus_rr_4,
-	podulebus_rr_8,
+	bs_notimpl_rr_1,
+	bs_notimpl_rr_2,
+	bs_notimpl_rr_4,
+	bs_notimpl_rr_8,
 
 	/* write (single) */
 	podulebus_w_1,
 	podulebus_w_2,
 	podulebus_w_4,
-	podulebus_w_8,
+	bs_notimpl_w_8,
 
 	/* write multiple */
-	podulebus_wm_1,
+	bs_notimpl_wm_1,
 	podulebus_wm_2,
-	podulebus_wm_4,
-	podulebus_wm_8,
+	bs_notimpl_wm_4,
+	bs_notimpl_wm_8,
 
 	/* write region */
-	podulebus_wr_1,
-	podulebus_wr_2,
-	podulebus_wr_4,
-	podulebus_wr_8,
+	bs_notimpl_wr_1,
+	bs_notimpl_wr_2,
+	bs_notimpl_wr_4,
+	bs_notimpl_wr_8,
 
 	/* set multiple */
-	podulebus_sm_1,
-	podulebus_sm_2,
-	podulebus_sm_4,
-	podulebus_sm_8,
+	bs_notimpl_sm_1,
+	bs_notimpl_sm_2,
+	bs_notimpl_sm_4,
+	bs_notimpl_sm_8,
 
 	/* set region */
-	podulebus_sr_1,
-	podulebus_sr_2,
-	podulebus_sr_4,
-	podulebus_sr_8,
+	bs_notimpl_sr_1,
+	bs_notimpl_sr_2,
+	bs_notimpl_sr_4,
+	bs_notimpl_sr_8,
 
 	/* copy */
-	podulebus_c_1,
-	podulebus_c_2,
-	podulebus_c_4,
-	podulebus_c_8,
+	bs_notimpl_c_1,
+	bs_notimpl_c_2,
+	bs_notimpl_c_4,
+	bs_notimpl_c_8,
 };
 
 /* bus space functions */

@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.3 1996/10/17 02:37:48 mark Exp $ */
+/*	$NetBSD: pcb.h,v 1.3.10.1 1997/10/15 05:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.2.6.1 1997/10/14 08:42:39 thorpej Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.2.6.2 1997/10/15 05:38:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 struct arm32_sync_icache_args {
 	u_int	addr;		/* Virtual start address */
-	int	len;		/* region size */
+	int	len;		/* Region size */
 };
 
 #ifndef _KERNEL

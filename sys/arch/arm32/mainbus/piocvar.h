@@ -1,7 +1,8 @@
-/*	$NetBSD: mainbus_io_asm.S,v 1.2.8.1 1997/10/15 05:42:21 thorpej Exp $	*/
+/*	$NetBSD: piocvar.h,v 1.1.2.2 1997/10/15 05:42:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
+ * Copyright (c) 1997 Causality Limited
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,95 +31,30 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * RiscBSD kernel project
+ *
+ * piocvar.h
+ *
+ * pioc attach args
+ *
+ * Created      : 18/02/97
  */
+
+#include <machine/bus.h>
 
 /*
- * bus_space I/O functions for mainbus
+ * pioc driver attach arguments
  */
 
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
+struct pioc_attach_args {
+	const char 	*pa_name;	/* Device name */
+	u_int		pa_iobase;	/* base i/o address */
+	u_int		pa_offset;	/* device i/o offset */
+	int		pa_iosize;	/* span of ports used */
+	int		pa_irq;		/* interrupt request */
+	int		pa_drq;		/* DMA request */
+	bus_space_tag_t	pa_iot;		/* bus space tag */
+};
 
-	.text
-
-/*
- * read single
- */
-
-	.global	_mainbus_r_1
-_mainbus_r_1:
-	ldrb	r0, [r1, r2, lsl #2]
-	mov	pc, lr
-
-	.global	_mainbus_r_2
-_mainbus_r_2:
-	ldr	r0, [r1, r2, lsl #2]
-	bic	r0, r0, #0xff000000
-	bic	r0, r0, #0x00ff0000
-	mov	pc, lr
-
-	.global	_mainbus_r_4
-_mainbus_r_4:
-	ldr	r0, [r1, r2, lsl #2]
-	mov	pc, lr
-
-/*
- * write single
- */
-
-	.global	_mainbus_w_1
-_mainbus_w_1:
-	strb	r3, [r1, r2, lsl #2]
-	mov	pc, lr
-
-	.global	_mainbus_w_2
-_mainbus_w_2:
-	mov	r3, r3, lsl #16
-	orr	r3, r3, r3, lsr #16
-	str	r3, [r1, r2, lsl #2]
-	mov	pc, lr
-
-	.global	_mainbus_w_4
-_mainbus_w_4:
-	str	r3, [r1, r2, lsl #2]
-	mov	pc, lr
-
-/*
- * read multiple
- */
-
-	.global	_mainbus_rm_2
-_mainbus_rm_2:
-	add	r0, r1, r2, lsl #2
-	mov	r1, r3
-	ldr	r2, [sp, #0]
-	b	_insw16
-
-/*
- * write multiple
- */
-
-	.global	_mainbus_wm_1
-_mainbus_wm_1:
-	add	r0, r1, r2, lsl #2
-	ldr	r2, [sp, #0]
-
-	/* Make sure that we have a positive length */
-	cmp	r2, #0x00000000
-	movle	pc, lr
-
-mainbus_wm_1_loop:
-	ldrb	r1, [r3], #0x0001
-	str	r1, [r0]
-	subs	r2, r2, #0x00000001
-	bgt	mainbus_wm_1_loop
-
-	mov	pc, lr
-
-	.global	_mainbus_wm_2
-_mainbus_wm_2:
-	add	r0, r1, r2, lsl #2
-	mov	r1, r3
-	ldr	r2, [sp, #0]
-	b	_outsw16
+/* End of piocvar.h */
