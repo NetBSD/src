@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.3 1998/05/14 20:49:57 drochner Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.4 1998/06/15 17:48:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,7 @@ struct wsemul_ops {
 				int, int, void *, long));
 	void	(*output) __P((void *cookie, const u_char *data, u_int count,
 			       int));
+	int	(*translate) __P((void *, keysym_t, char **));
 	void	(*detach) __P((void *cookie, u_int *crow, u_int *ccol));
 };
 
@@ -54,6 +55,9 @@ extern const struct wsemul_ops wsemul_dumb_ops;
 #endif
 #ifdef WSEMUL_SUN
 extern const struct wsemul_ops wsemul_sun_ops;
+#endif
+#ifdef WSEMUL_VT100
+extern const struct wsemul_ops wsemul_vt100_ops;
 #endif
 
 const struct wsemul_ops *wsemul_pick __P((const char *));

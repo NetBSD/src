@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.3 1998/06/11 22:15:14 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.4 1998/06/15 17:48:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -134,14 +134,6 @@ struct wskbd_map_data {
 #define WSKBDIO_SETMAP		_IOW('W', 14, struct wskbd_map_data)
 #define WSKBDIO_GETENCODING	_IOR('W', 15, int)
 #define WSKBDIO_SETENCODING	_IOW('W', 16, int)
-
-/* Manipulate strings of function keys */
-struct wskbd_string_data {
-	u_int	keycode;			/* keycode to change */
-	char	value[WSKBD_STRING_LEN];	/* string data */
-};
-#define WSKBDIO_GETSTRING	_IOR('W', 17, struct wskbd_string_data)
-#define WSKBDIO_SETSTRING	_IOW('W', 18, struct wskbd_string_data)
 
 /* internal use only */
 #define WSKBDIO_SETMODE		_IOW('W', 19, int)

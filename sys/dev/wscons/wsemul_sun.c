@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.5 1998/05/24 10:56:16 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.6 1998/06/15 17:48:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.5 1998/05/24 10:56:16 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.6 1998/06/15 17:48:33 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -46,6 +46,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsemulvar.h>
+#include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/ascii.h>
 
 #include "opt_wskernattr.h"
@@ -56,6 +57,7 @@ void	*wsemul_sun_attach __P((int console, const struct wsscreen_descr *,
 				void *, int, int, void *, long));
 void	wsemul_sun_output __P((void *cookie, const u_char *data, u_int count,
 			       int));
+int	wsemul_sun_translate __P((void *cookie, keysym_t, char **));
 void	wsemul_sun_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
 
 const struct wsemul_ops wsemul_sun_ops = {
@@ -63,6 +65,7 @@ const struct wsemul_ops wsemul_sun_ops = {
 	wsemul_sun_cnattach,
 	wsemul_sun_attach,
 	wsemul_sun_output,
+	wsemul_sun_translate,
 	wsemul_sun_detach,
 };
 
@@ -545,6 +548,83 @@ wsemul_sun_output(cookie, data, count, kernel)
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
+}
+
+static char *sun_fkeys[] = {
+	"\033[224z",	/* F1 */
+	"\033[225z",
+	"\033[226z",
+	"\033[227z",
+	"\033[228z",
+	"\033[229z",
+	"\033[230z",
+	"\033[231z",
+	"\033[232z",
+	"\033[233z",	/* F10 */
+};
+
+int
+wsemul_sun_translate(cookie, in, out)
+	void *cookie;
+	keysym_t in;
+	char **out;
+{
+	static char c;
+
+	if (KS_GROUP(in) == KS_GROUP_Keypad && (in & 0x80) == 0) {
+		c = in & 0xff; /* turn into ASCII */
+		*out = &c;
+		return (1);
+	}
+
+	if (in >= KS_f1 && in <= KS_f10) {
+		*out = sun_fkeys[in - KS_f1];
+		return (6);
+	}
+	if (in >= KS_F1 && in <= KS_F10) {
+		*out = sun_fkeys[in - KS_F1];
+		return (6);
+	}
+	if (in >= KS_KP_F1 && in <= KS_KP_F4) {
+		*out = sun_fkeys[in - KS_KP_F1];
+		return (6);
+	}
+
+	switch (in) {
+	    case KS_Home:
+	    case KS_KP_Home:
+	    case KS_KP_Begin:
+		*out = "\033[214z";
+		return (6);
+	    case KS_Prior:
+	    case KS_KP_Prior:
+		*out = "\033[216z";
+		return (6);
+	    case KS_Next:
+	    case KS_KP_Next:
+		*out = "\033[222z";
+		return (6);
+	    case KS_Up:
+	    case KS_KP_Up:
+		*out = "\033[A";
+		return (3);
+	    case KS_Down:
+	    case KS_KP_Down:
+		*out = "\033[B";
+		return (3);
+	    case KS_Left:
+	    case KS_KP_Left:
+		*out = "\033[D";
+		return (3);
+	    case KS_Right:
+	    case KS_KP_Right:
+		*out = "\033[C";
+		return (3);
+	    case KS_KP_Delete:
+		*out = "\177";
+		return (1);
+	}
+	return (0);
 }
 
 void
