@@ -9,14 +9,14 @@
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
 
-#undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
+#undef STANDARD_INCLUDE_DIR
+#define STANDARD_INCLUDE_DIR "/usr/include"
 
 #undef INCLUDE_DEFAULTS
 #define INCLUDE_DEFAULTS			\
   {						\
     { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
-    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
+    { STANDARD_INCLUDE_DIR, 0, 0, 0 },		\
     { 0, 0, 0, 0 }				\
   }
 
@@ -24,11 +24,7 @@
    /usr/libexec directory.  */
 
 #undef MD_EXEC_PREFIX
-#ifdef NBSD_EXEC_PREFIX
-#define	MD_EXEC_PREFIX			NBSD_EXEC_PREFIX
-#else
 #define MD_EXEC_PREFIX			"/usr/libexec/"
-#endif
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
