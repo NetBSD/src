@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.2 1998/07/21 22:58:31 thorpej Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.3 1998/07/23 19:03:11 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -145,7 +145,6 @@ do {									\
 #define CFGFLG_USE_SA       0x0002
 #define CFGFLG_IOCHRDY      0x0004
 #define CFGFLG_DCDC_POL     0x0008
-#define CFGFLG_FDX          0x0010
 #define CFGFLG_DMA_MODE	    0x0020
 #define CFGFLG_NOT_EEPROM   0x8000
 
