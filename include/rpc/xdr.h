@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.13 1998/07/26 12:39:40 mycroft Exp $	*/
+/*	$NetBSD: xdr.h,v 1.14 1998/07/26 12:43:24 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -104,9 +104,9 @@ typedef struct __rpc_xdr {
 		/* put a long to " */
 		bool_t	(*x_putlong) __P((struct __rpc_xdr *, const long *));
 		/* get some bytes from " */
-		bool_t	(*x_getbytes) __P((struct __rpc_xdr *, caddr_t, u_int));
+		bool_t	(*x_getbytes) __P((struct __rpc_xdr *, char *, u_int));
 		/* put some bytes to " */
-		bool_t	(*x_putbytes) __P((struct __rpc_xdr *, const caddr_t, u_int));
+		bool_t	(*x_putbytes) __P((struct __rpc_xdr *, const char *, u_int));
 		/* returns bytes off from beginning */
 		u_int	(*x_getpostn) __P((struct __rpc_xdr *));
 		/* lets you reposition the stream */
@@ -116,9 +116,9 @@ typedef struct __rpc_xdr {
 		/* free privates of this xdr_stream */
 		void	(*x_destroy) __P((struct __rpc_xdr *));
 	} *x_ops;
-	caddr_t 	x_public;	/* users' data */
-	caddr_t		x_private;	/* pointer to private data */
-	caddr_t 	x_base;		/* private used for position info */
+	char *	 	x_public;	/* users' data */
+	char *		x_private;	/* pointer to private data */
+	char * 		x_base;		/* private used for position info */
 	int		x_handy;	/* extra private word */
 } XDR;
 
@@ -139,7 +139,7 @@ typedef	bool_t (*xdrproc_t) __P((/* XDR *, void *, u_int */));
  *
  * XDR		*xdrs;
  * long		*longp;
- * caddr_t	 addr;
+ * char *	 addr;
  * u_int	 len;
  * u_int	 pos;
  */
@@ -250,7 +250,7 @@ extern bool_t	xdr_bool	__P((XDR *, bool_t *));
 extern bool_t	xdr_enum	__P((XDR *, enum_t *));
 extern bool_t	xdr_array	__P((XDR *, char **, u_int *, u_int, u_int, xdrproc_t));
 extern bool_t	xdr_bytes	__P((XDR *, char **, u_int *, u_int));
-extern bool_t	xdr_opaque	__P((XDR *, caddr_t, u_int));
+extern bool_t	xdr_opaque	__P((XDR *, char *, u_int));
 extern bool_t	xdr_string	__P((XDR *, char **, u_int));
 extern bool_t	xdr_union	__P((XDR *, enum_t *, char *, const struct xdr_discrim *, xdrproc_t));
 extern bool_t	xdr_char	__P((XDR *, char *));
@@ -258,8 +258,8 @@ extern bool_t	xdr_u_char	__P((XDR *, u_char *));
 extern bool_t	xdr_vector	__P((XDR *, char *, u_int, u_int, xdrproc_t));
 extern bool_t	xdr_float	__P((XDR *, float *));
 extern bool_t	xdr_double	__P((XDR *, double *));
-extern bool_t	xdr_reference	__P((XDR *, caddr_t *, u_int, xdrproc_t));
-extern bool_t	xdr_pointer	__P((XDR *, caddr_t *, u_int, xdrproc_t));
+extern bool_t	xdr_reference	__P((XDR *, char **, u_int, xdrproc_t));
+extern bool_t	xdr_pointer	__P((XDR *, char **, u_int, xdrproc_t));
 extern bool_t	xdr_wrapstring	__P((XDR *, char **));
 extern void	xdr_free 	__P((xdrproc_t, char *));
 __END_DECLS
@@ -291,8 +291,8 @@ extern void   xdrstdio_create	__P((XDR *, FILE *, enum xdr_op));
 
 /* XDR pseudo records for tcp */
 extern void   xdrrec_create	__P((XDR *, u_int, u_int, char *,
-				    int (*) __P((caddr_t, caddr_t, int)),
-				    int (*) __P((caddr_t, caddr_t, int))));
+				    int (*) __P((char *, char *, int)),
+				    int (*) __P((char *, char *, int))));
 
 /* make end of xdr record */
 extern bool_t xdrrec_endofrecord __P((XDR *, int));
