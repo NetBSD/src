@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.4 1998/10/19 22:27:38 tron Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.5 1999/08/25 04:48:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -63,11 +63,11 @@ freebsd_sys_semsys(p, v, retval)
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 	} */ *uap = v;
-	struct sys___semctl_args /* {
+	struct compat_14_sys___semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
-		syscallarg(union semun *) arg;
+		syscallarg(union __semun *) arg;
 	} */ __semctl_args;
 	struct sys_semget_args /* {
 		syscallarg(key_t) key;
@@ -88,8 +88,8 @@ freebsd_sys_semsys(p, v, retval)
 		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
 		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
 		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
-		SCARG(&__semctl_args, arg) = (union semun *)SCARG(uap, a5);
-		return (sys___semctl(p, &__semctl_args, retval));
+		SCARG(&__semctl_args, arg) = (union __semun *)SCARG(uap, a5);
+		return (compat_14_sys___semctl(p, &__semctl_args, retval));
 
 	case 1:						/* semget() */
 		SCARG(&semget_args, key) = SCARG(uap, a2);
@@ -131,10 +131,10 @@ freebsd_sys_shmsys(p, v, retval)
 		syscallarg(void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ shmat_args;
-	struct sys_shmctl_args /* {
+	struct compat_14_sys_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds *) buf;
+		syscallarg(struct shmid_ds14 *) buf;
 	} */ shmctl_args;
 	struct sys_shmdt_args /* {
 		syscallarg(void *) shmaddr;
@@ -169,8 +169,8 @@ freebsd_sys_shmsys(p, v, retval)
 	case 4:						/* shmctl() */
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
-		SCARG(&shmctl_args, buf) = (struct shmid_ds *)SCARG(uap, a4);
-		return (sys_shmctl(p, &shmctl_args, retval));
+		SCARG(&shmctl_args, buf) = (struct shmid_ds14 *)SCARG(uap, a4);
+		return (compat_14_sys_shmctl(p, &shmctl_args, retval));
 
 	default:
 		return (EINVAL);
@@ -193,10 +193,10 @@ freebsd_sys_msgsys(p, v, retval)
 		syscallarg(int) a5;
 		syscallarg(int) a6;
 	} */ *uap = v;
-	struct sys_msgctl_args /* {
+	struct compat_14_sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
-		syscallarg(struct msqid_ds *) buf;
+		syscallarg(struct msqid_ds14 *) buf;
 	} */ msgctl_args;
 	struct sys_msgget_args /* {
 		syscallarg(key_t) key;
@@ -221,8 +221,8 @@ freebsd_sys_msgsys(p, v, retval)
 		SCARG(&msgctl_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&msgctl_args, buf) =
-		    (struct msqid_ds *)SCARG(uap, a4);
-		return (sys_msgctl(p, &msgctl_args, retval));
+		    (struct msqid_ds14 *)SCARG(uap, a4);
+		return (compat_14_sys_msgctl(p, &msgctl_args, retval));
 
 	case 1:					/* msgget() */
 		SCARG(&msgget_args, key) = SCARG(uap, a2);
