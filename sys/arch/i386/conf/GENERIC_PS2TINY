@@ -1,15 +1,13 @@
-#	$NetBSD: GENERIC_PS2,v 1.1 2001/07/21 16:26:46 jdolecek Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.1 2001/07/30 18:24:07 jdolecek Exp $
 #
-#	GENERIC-style kernel config for IBM PS/2 with MCA bus. Note some stuff
-#	is disabled here compared to other GENERIC configs, mostly due to
-#	being not appropriate for IBM PS/2.
+#	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
+#	IBM PS/2 related stuff and has been generally trimmed down somewhat,
+#	so that the kernel is small enough to be usable for 4MB machines. This
+#	configuration is also used for INSTALL_PS2 kernels.
 #
 #	BEWARE:
 #	 MCA support in NetBSD is still experimental at this
 #	 stage and should be used with caution.
-#
-#	 See also sys/dev/mca/TODO for list of problems and current list of
-#	 projects.
 
 include "arch/i386/conf/std.i386"
 
