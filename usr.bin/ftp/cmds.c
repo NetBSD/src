@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.19 1997/03/13 06:23:11 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.20 1997/03/14 01:39:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.19 1997/03/13 06:23:11 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.20 1997/03/14 01:39:32 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -668,9 +668,9 @@ status(argc, argv)
 	printf("Hash mark printing: %s; Mark count: %d; Progress bar: %s.\n",
 	    onoff(hash), mark, onoff(progress));
 	printf("Use of PORT cmds: %s.\n", onoff(sendport));
-#ifndef SMALLFTP
+#ifndef SMALL
 	printf("Command line editing: %s.\n", onoff(editing));
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 	if (macnum > 0) {
 		puts("Macros:");
 		for (i=0; i<macnum; i++) {
@@ -718,7 +718,7 @@ setbell(argc, argv)
 	code = togglevar(argc, argv, &bell, "Bell mode");
 }
 
-#ifndef SMALLFTP
+#ifndef SMALL
 /*
  * Set command line editing
  */
@@ -731,7 +731,7 @@ setedit(argc, argv)
 
 	code = togglevar(argc, argv, &editing, "Editing mode");
 }
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 /*
  * Turn on packet tracing.
