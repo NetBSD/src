@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.74 1996/11/05 05:40:28 mikel Exp $
+#	$NetBSD: bsd.lib.mk,v 1.75 1996/11/30 02:18:54 jtc Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -65,8 +65,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@rm -f ${.TARGET}.o
 
 .S.po .s.po:
-	@echo "${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
