@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.16 2004/03/22 08:36:28 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.17 2004/03/22 10:06:31 pk Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.16 2004/03/22 08:36:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.17 2004/03/22 10:06:31 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1159,7 +1159,7 @@ mach64_is_console(struct pci_attach_args *pa)
 	if (node == -1)
 		return 0;
 
-	return (node == OF_instance_to_package(prom_stdout()));
+	return (node == prom_instance_to_package(prom_stdout()));
 #else
 	return 1;
 #endif
