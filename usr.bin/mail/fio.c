@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.10 1997/10/19 05:03:22 lukem Exp $	*/
+/*	$NetBSD: fio.c,v 1.11 1998/06/10 05:28:16 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.10 1997/10/19 05:03:22 lukem Exp $");
+__RCSID("$NetBSD: fio.c,v 1.11 1998/06/10 05:28:16 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,8 @@ setptr(ibuf, offset)
 			perror("/tmp");
 			exit(1);
 		}
-		linebuf[count - 1] = 0;
+		if(count)
+			linebuf[count - 1] = 0;
 		if (maybe && linebuf[0] == 'F' && ishead(linebuf)) {
 			msgCount++;
 			if (append(&this, mestmp)) {
