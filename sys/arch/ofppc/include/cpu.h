@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2001/01/14 02:00:41 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2001/04/12 19:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -60,7 +60,7 @@ struct machvec {
 	int (*splbio) __P((void));
 	int (*splnet) __P((void));
 	int (*spltty) __P((void));
-	int (*splimp) __P((void));
+	int (*splvm) __P((void));
 	int (*splclock) __P((void));
 	int (*spllowersoftclock) __P((void));
 	int (*splsoftclock) __P((void));
@@ -80,8 +80,8 @@ extern struct machvec machine_interface;
 #define	splbio()	((*machine_interface.splbio)())
 #define	splnet()	((*machine_interface.splnet)())
 #define	spltty()	((*machine_interface.spltty)())
-#define	splimp()	((*machine_interface.splimp)())
-#define	splvm()		((*machine_interface.splimp)())
+#define	splimp()	((*machine_interface.splvm)())
+#define	splvm()		((*machine_interface.splvm)())
 #define	splclock()	((*machine_interface.splclock)())
 #define	spllowersoftclock() ((*machine_interface.spllowersoftclock)())
 #define	splsoftclock()	((*machine_interface.splsoftclock)())
