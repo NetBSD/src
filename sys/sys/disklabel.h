@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.83 2003/08/07 16:34:02 agc Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.84 2003/10/10 02:02:52 grog Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -280,6 +280,7 @@ struct olddisklabel {
 #define	DTYPE_LD		15		/* logical disk */
 #define	DTYPE_JFS2		16		/* IBM JFS2 */
 #define DTYPE_CGD		17		/* cryptographic pseudo-disk */
+#define	DTYPE_VINUM		18		/* vinum volume */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -301,6 +302,7 @@ static const char *const dktypenames[] = {
 	"ld",
 	"jfs",
 	"cgd",
+	"vinum",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
@@ -336,6 +338,8 @@ static const char *const dktypenames[] = {
 #define	FS_CCD		20		/* concatenated disk component */
 #define	FS_JFS2		21		/* IBM JFS2 */
 #define	FS_APPLEUFS	22		/* Apple UFS */
+/* XXX this is not the same as FreeBSD.  How to solve? */
+#define	FS_VINUM	23		/* Vinum */
 
 /* Adjust the FSMAXTYPES def below if you add something after APPLEUFS */
 
@@ -364,6 +368,7 @@ static const char *const fstypenames[] = {
 	"ccd",
 	"jfs",
 	"Apple UFS",
+	"vinum",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
