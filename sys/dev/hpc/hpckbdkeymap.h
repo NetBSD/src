@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.21 2003/08/23 02:48:47 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.22 2004/03/15 22:49:07 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -551,7 +551,7 @@ static const keysym_t jornada6x0_us_keydesc[] = {
     KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
     KC(3),   KS_2,           KS_at,         KS_grave,
     KC(4),   KS_3,           KS_numbersign, KS_sterling,
-#if 0 /* XXX: no keysym for Euro yet */
+#ifdef KS_euro
     KC(5),   KS_4,           KS_dollar,     KS_euro,
 #endif
     KC(25),  KS_p,           KS_P,          KS_braceleft,
@@ -604,7 +604,7 @@ static const keysym_t jornada6x0_de_keydesc[] = {
     KC(5),   KS_4,           KS_dollar,     KS_ccedilla,
     KC(6),   KS_5,           KS_percent,    KS_sterling,
     KC(7),   KS_6,           KS_ampersand,  KS_notsign,
-#if 0 /* XXX: no keysym for Euro yet */
+#ifdef KS_euro
     KC(18),  KS_e,           KS_E,          KS_euro,
 #endif
     KC(27),  KS_plus,        KS_asterisk,   KS_asciitilde, /* NB: not dead */
@@ -621,7 +621,7 @@ static const keysym_t jornada6x0_de_keydesc[] = {
 static const keysym_t jornada6x0_fr_keydesc[] = {
 /*  pos      normal          shifted        altgr	*/
     KC(2),   KS_ampersand,   KS_1,          KS_plusminus,
-#if 0 /* XXX: no keysym for Euro yet */
+#ifdef KS_euro
     KC(18),  KS_e,           KS_E,          KS_euro,
 #endif
     KC(19),  KS_r,           KS_R,          KS_onequarter,
