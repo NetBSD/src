@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 1996/02/06 22:59:03 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.28 1996/02/13 22:38:25 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -318,20 +318,22 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T08 is 8K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 2 * NBPG,
-		    ca->ca_bustype);
+		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 8192,
+						 ca->ca_bustype);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + 4096,
+				VM_PROT_READ, 1);
 		cl = (struct clockreg *)((int)cl + CLK_MK48T08_OFF);
 	} else {
 		/*
 		 * the MK48T02 is 2K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, sizeof *clockreg,
-		    ca->ca_bustype);
+		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0,
+						 sizeof *clockreg,
+						 ca->ca_bustype);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
-		idp = &cl->cl_idprom;
 	}
+	idp = &cl->cl_idprom;
 
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
