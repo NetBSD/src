@@ -1,6 +1,9 @@
-#	$Id: Makefile,v 1.3 1994/12/29 00:32:20 cgd Exp $
+#	$Id: Makefile,v 1.4 1995/04/18 19:24:21 jtc Exp $
 
 SUBDIR+= _setjmp db regex setjmp sigsetjmp
+.if (${MACHINE_ARCH} != "vax")
+SUBDIR+= ieeefp
+.endif
 
 regress: _SUBDIRUSE
 
