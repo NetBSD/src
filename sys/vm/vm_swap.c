@@ -32,7 +32,7 @@
  *
  *	@(#)vm_swap.c	7.18 (Berkeley) 5/6/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.3 1993/04/28 04:00:49 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.4 1993/04/29 00:46:21 mycroft Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -243,10 +243,8 @@ swfree(p, index)
 	register int nblks;
 	int error;
 
-	--nblks;
-
 	sp = &swdevt[index];
-	nblks = sp->sw_nblks;
+	nblks = sp->sw_nblks - 1;
 	if (nblks <= 0)
 		return(ENXIO);
 	vp = sp->sw_vp;
