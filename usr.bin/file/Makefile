@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2001/10/10 16:56:27 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2002/03/05 22:07:13 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -34,16 +34,11 @@ magic:		${MAGFILES}
 	cat ${MAGFILES} > ${.TARGET}
 
 magic.mgc:	mkmagic magic
-	${.OBJDIR}/mkmagic magic
+	./mkmagic magic
 
 magic.mime.mgc:	mkmagic magic.mime
-.if ${.CURDIR} != ${.OBJDIR}
-	@cp -p ${.CURDIR}/magic.mime ${.OBJDIR}
-.endif
-	${.OBJDIR}/mkmagic magic.mime
-.if ${.CURDIR} != ${.OBJDIR}
-	@rm -f ${.OBJDIR}/magic.mime
-.endif
+	[ -f magic.mime ] || cp ${.CURDIR}/magic.mime ./magic.mime
+	./mkmagic ./magic.mime
 .else
 magic:
 .endif
