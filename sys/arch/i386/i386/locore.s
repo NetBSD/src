@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.19 1993/06/27 04:27:58 andrew Exp $
+ *	$Id: locore.s,v 1.20 1993/06/27 05:24:24 andrew Exp $
  */
 
 
@@ -996,7 +996,7 @@ ENTRY(lgdt)
 	lgdt	(%eax)
 	/* flush the prefetch q */
 	jmp	1f
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop
 #endif
 1:
@@ -1710,7 +1710,7 @@ IDTVEC(fpu)
 	pushl	$0		/* dummy error code */
 	pushl	$T_ASTFLT
 	pushal
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop			/* silly, the bug is for popal and it only
 				 * bites when the next instruction has a
 				 * complicated address mode */
@@ -1763,7 +1763,7 @@ IDTVEC(rsvd14)
 	SUPERALIGN_TEXT
 alltraps:
 	pushal
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop
 #endif
 	pushl	%ds
@@ -1791,7 +1791,7 @@ calltrap:
 	ALIGN_TEXT
 bpttraps:
 	pushal
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop
 #endif
 	pushl	%es
@@ -1815,7 +1815,7 @@ IDTVEC(syscall)
 	pushfl	# only for stupid carry bit and more stupid wait3 cc kludge
 		# XXX - also for direction flag (bzero, etc. clear it)
 	pushal	# only need eax,ecx,edx - trap resaves others
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop
 #endif
 	movl	$KDSEL,%eax		# switch to kernel segments
@@ -1838,13 +1838,13 @@ IDTVEC(syscall)
 	movl	%ecx,32+4(%esp)
 	movl	%eax,32+8(%esp)
 	popal
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop
 #endif
 	pushl	$0		/* dummy error code */
 	pushl	$T_ASTFLT
 	pushal
-#ifndef I486_CPU
+#ifdef I386_CPU
 	nop
 #endif
 	movl	__udatasel,%eax	/* switch back to user segments */
@@ -1857,7 +1857,7 @@ IDTVEC(syscall)
 ENTRY(htonl)
 ENTRY(ntohl)
 	movl	4(%esp),%eax
-#ifdef I486_CPU
+#ifndef I386_CPU
 	/* XXX */
 	/* Since Gas 1.38 does not grok bswap this has been coded as the
 	 * equivalent bytes.  This can be changed back to bswap when we
