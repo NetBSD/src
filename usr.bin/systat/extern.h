@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2003/08/07 11:15:58 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.32 2003/09/12 17:32:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -84,7 +84,7 @@ void	 closetcp(WINDOW *);
 void	 command(char *);
 void	 die(int);
 void	 disks_add(char *);
-void	 disks_delete(char *);
+void	 disks_remove(char *);
 void	 disks_drives(char *);
 void	 display(int);
 void	 error(const char *, ...)

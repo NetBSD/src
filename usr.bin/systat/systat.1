@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.31 2003/08/30 12:27:26 dsl Exp $
+.\"	$NetBSD: systat.1,v 1.32 2003/09/12 17:32:32 mycroft Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -464,12 +464,15 @@ should your system have more drives configured than can normally
 be displayed on the screen.
 .Pp
 .Bl -tag -width Ar -compact
-.It Cm ignore Op Ar drives
-Do not display information about the drives indicated.s
-Multiple drives may be specified, separated by spaces.
 .It Cm display Op Ar drives
 Display information about the drives indicated.
 Multiple drives may be specified, separated by spaces.
+.It Cm ignore Op Ar drives
+Do not display information about the drives indicated.
+Multiple drives may be specified, separated by spaces.
+.It Cm drives Op Ar drives
+With no arguments, displays a list of available drives.  With arguments,
+replaced the list of currently displayed with the ones indicated.
 .El
 .Pp
 The following commands are specific to the
