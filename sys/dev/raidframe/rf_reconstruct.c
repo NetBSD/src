@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.44 2002/09/21 01:25:10 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.45 2002/09/23 03:40:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.44 2002/09/21 01:25:10 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.45 2002/09/23 03:40:28 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -395,7 +395,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
 	RF_LayoutSW_t *lp;
-	RF_RaidDisk_t *badDisk;
 	RF_ComponentLabel_t c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
@@ -470,8 +469,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}			
-
-		badDisk = &raidPtr->Disks[row][col];
 
 		proc = raidPtr->engine_thread;
 
