@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.376 2001/09/18 19:53:15 ad Exp $
+#	$NetBSD: mi,v 1.377 2001/09/20 21:52:58 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -398,6 +398,7 @@
 ./usr/include/krb5/hdb_asn1.h		comp-c-include
 ./usr/include/krb5/hdb_err.h		comp-c-include
 ./usr/include/krb5/heim_err.h		comp-c-include
+./usr/include/krb5/k524_err.h		comp-c-include
 ./usr/include/krb5/krb5-private.h	comp-c-include
 ./usr/include/krb5/krb5-protos.h	comp-c-include
 ./usr/include/krb5/krb5-types.h		comp-c-include
