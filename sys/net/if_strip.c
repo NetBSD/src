@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.19 2000/03/30 09:45:37 augustss Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.20 2000/10/02 03:51:18 itojun Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -747,7 +747,7 @@ stripoutput(ifp, m, dst, rt)
 #define SDL(a)          ((struct sockaddr_dl *) (a))
 
 #ifdef DEBUG
-	   if (rt) {
+	if (rt) {
 	   	printf("stripout, rt: dst af%d gw af%d",
 		    rt_key(rt)->sa_family, rt->rt_gateway->sa_family);
 		if (rt_key(rt)->sa_family == AF_INET)
@@ -757,9 +757,7 @@ stripoutput(ifp, m, dst, rt)
 	}
 #endif
 	switch (dst->sa_family) {
-
-            case AF_INET:
-
+	case AF_INET:
                 if (rt != NULL && rt->rt_gwroute != NULL)
                         rt = rt->rt_gwroute;
 
@@ -775,7 +773,7 @@ stripoutput(ifp, m, dst, rt)
                 dldst = LLADDR(SDL(rt->rt_gateway));
                 break;
 
-            case AF_LINK:
+	case AF_LINK:
 		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
 		dldst = LLADDR(SDL(dst));
 		break;
