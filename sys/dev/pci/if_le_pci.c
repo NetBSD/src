@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.22 1998/07/05 00:51:24 jonathan Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.23 1998/07/21 17:30:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,8 +109,10 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ic/am7990reg.h>
-#include <dev/ic/am7990var.h>
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
+#include <dev/ic/am79900reg.h>
+#include <dev/ic/am79900var.h>
 
 #include <dev/pci/if_levar.h>
 
@@ -121,8 +123,20 @@ struct cfattach le_pci_ca = {
 	sizeof(struct le_softc), le_pci_match, le_pci_attach
 };
 
-hide void le_pci_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_pci_rdcsr __P((struct am7990_softc *, u_int16_t));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_pci_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_pci_rdcsr __P((struct lance_softc *, u_int16_t));
 
 /*
  * PCI constants.
@@ -134,7 +148,7 @@ hide u_int16_t le_pci_rdcsr __P((struct am7990_softc *, u_int16_t));
 
 hide void
 le_pci_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -147,7 +161,7 @@ le_pci_wrcsr(sc, port, val)
 
 hide u_int16_t
 le_pci_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -185,7 +199,7 @@ le_pci_attach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *lesc = (void *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am79900.lsc;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	bus_space_tag_t iot;
@@ -265,18 +279,22 @@ le_pci_attach(parent, self, aux)
 	sc->sc_addr = lesc->sc_dmam->dm_segs[0].ds_addr;
 	sc->sc_memsize = LE_PCI_MEMSIZE;
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_pci_rdcsr;
 	sc->sc_wrcsr = le_pci_wrcsr;
 	sc->sc_hwinit = NULL;
 
 	printf("%s", sc->sc_dev.dv_xname);
-	am7990_config(sc);
+	am79900_config(&lesc->sc_am79900);
+
+	/* Chip is stopped. Set "software style" to 32-bit. */
+	bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 20);
+	bus_space_write_2(iot, ioh, PCNET_PCI_BDP, 2);
 
 	/* Enable the card. */
 	csr = pci_conf_read(pc, pa->pa_tag,
@@ -291,7 +309,7 @@ le_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am7990_intr, sc);
+	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am79900_intr, sc);
 	if (lesc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
