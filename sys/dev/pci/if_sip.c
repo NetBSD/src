@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.59 2002/06/30 20:04:43 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.60 2002/06/30 20:36:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.59 2002/06/30 20:04:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.60 2002/06/30 20:36:06 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -551,6 +551,49 @@ SIP_DECL(lookup)(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
+#ifdef DP83820
+/*
+ * I really hate stupid hardware vendors.  There's a bit in the EEPROM
+ * which indicates if the card can do 64-bit data transfers.  Unfortunately,
+ * several vendors of 32-bit cards fail to clear this bit in the EEPROM,
+ * which means we try to use 64-bit data transfers on those cards if we
+ * happen to be plugged into a 32-bit slot.
+ *
+ * What we do is use this table of cards known to be 64-bit cards.  If
+ * you have a 64-bit card who's subsystem ID is not listed in this table,
+ * send the output of "pcictl dump ..." of the device to me so that your
+ * card will use the 64-bit data path when plugged into a 64-bit slot.
+ *
+ *	-- Jason R. Thorpe <thorpej@netbsd.org>
+ *	   June 30, 2002
+ */
+static int
+SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
+{
+	static const struct {
+		pci_vendor_id_t c64_vendor;
+		pci_product_id_t c64_product;
+	} card64[] = {
+		/* Asante GigaNIX */
+		{ 0x128a,	0x0002 },
+
+		{ 0, 0}
+	};
+	pcireg_t subsys;
+	int i;
+
+	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	for (i = 0; card64[i].c64_vendor != 0; i++) {
+		if (PCI_VENDOR(subsys) == card64[i].c64_vendor &&
+		    PCI_PRODUCT(subsys) == card64[i].c64_product)
+			return (1);
+	}
+
+	return (0);
+}
+#endif /* DP83820 */
+
 int
 SIP_DECL(match)(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -809,12 +852,21 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
-		printf("%s: 64-bit PCI slot detected\n", sc->sc_dev.dv_xname);
-		if (reg & CFG_DATA64_EN)
+		printf("%s: 64-bit PCI slot detected", sc->sc_dev.dv_xname);
+		/*
+		 * Check to see if this card is 64-bit.  If so, enable 64-bit
+		 * data transfers.
+		 *
+		 * We can't use the DATA64_EN bit in the EEPROM, because
+		 * vendors of 32-bit cards fail to clear that bit in many
+		 * cases (yet the card still detects that it's in a 64-bit
+		 * slot; go figure).
+		 */
+		if (SIP_DECL(check_64bit)(pa)) {
 			sc->sc_cfg |= CFG_DATA64_EN;
-		else
-			printf("%s: 64-bit data transfers disabled in EEPROM\n",
-			    sc->sc_dev.dv_xname);
+			printf(", using 64-bit data transfers");
+		}
+		printf("\n");
 	}
 
 	/*
