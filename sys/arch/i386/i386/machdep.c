@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.147 1995/04/21 06:43:24 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.148 1995/04/21 07:53:52 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -352,6 +352,7 @@ identifycpu()
 		break;
 	default:
 		strcat(cpu_model, "unknown");	/* will panic below... */
+		break;
 	}
 	strcat(cpu_model, "-class CPU)");
 	printf("%s\n", cpu_model);	/* cpu speed would be nice, but how? */
@@ -1020,6 +1021,7 @@ sdtossd(sd, ssd)
 	struct segment_descriptor *sd;
 	struct soft_segment_descriptor *ssd;
 {
+
 	ssd->ssd_base = (sd->sd_hibase << 24) | sd->sd_lobase;
 	ssd->ssd_limit = (sd->sd_hilimit << 16) | sd->sd_lolimit;
 	ssd->ssd_type = sd->sd_type;
@@ -1034,6 +1036,7 @@ ssdtosd(ssd, sd)
 	struct soft_segment_descriptor *ssd;
 	struct segment_descriptor *sd;
 {
+
 	sd->sd_lobase = ssd->ssd_base;
 	sd->sd_hibase = ssd->ssd_base >> 24;
 	sd->sd_lolimit = ssd->ssd_limit;
@@ -1049,20 +1052,27 @@ void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern lgdt();
-	void consinit __P((void));
+	struct pcb *pcb;
 	int x;
 	unsigned biosbasemem, biosextmem;
-	struct gate_descriptor *gdp;
+	struct region_descriptor region;
 	extern char etext[], sigcode[], esigcode[];
-	/* table descriptors - used to load tables by microp */
-	struct region_descriptor r_gdt, r_idt;
+	extern void consinit __P((void));
+	extern lgdt();
 
 	proc0.p_addr = proc0paddr;
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
-#ifndef LKM		/* don't do this if we're using LKM's */
+	/* Set up proc 0's PCB and TSS. */
+	curpcb = pcb = &proc0.p_addr->u_pcb;
+	pcb->pcb_flags = 0;
+	pcb->pcb_ptd = IdlePTD;
+	pcb->pcb_tss.tss_esp0 = (int)USRSTACK + USPACE;
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_ioopt = sizeof(struct i386tss) << 16;
+
+#ifndef LKM
 	/* set code segment limit to end of kernel text */
 	gdt_segs[GCODE_SEL].ssd_limit = i386_btop(i386_round_page(&etext)) - 1;
 #endif
@@ -1074,6 +1084,10 @@ init386(first_avail)
 	ldt_segs[LUDATA_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
 	for (x = 0; x < NLDT; x++)
 		ssdtosd(&ldt_segs[x], &ldt[x].sd);
+
+	/* Set up the old-style call gate descriptor for system calls. */
+	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
+	    SEL_UPL);
 
 	/* exceptions */
 	for (x = 0; x < NIDT; x++)
@@ -1101,15 +1115,12 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
-	r_gdt.rd_limit = sizeof(gdt)-1;
-	r_gdt.rd_base = (int) gdt;
-	lgdt(&r_gdt);
-	r_idt.rd_limit = sizeof(idt)-1;
-	r_idt.rd_base = (int) idt;
-	lidt(&r_idt);
-	_default_ldt = GSEL(GLDT_SEL, SEL_KPL);
-	lldt(_default_ldt);
-	currentldt = _default_ldt;
+	region.rd_limit = sizeof(gdt)-1;
+	region.rd_base = (int) gdt;
+	lgdt(&region);
+	region.rd_limit = sizeof(idt)-1;
+	region.rd_base = (int) idt;
+	lidt(&region);
 
 	splhigh();
 	enable_intr();
@@ -1131,21 +1142,9 @@ init386(first_avail)
 	biosbasemem = (rtcin(RTC_BASEHI)<<8) | (rtcin(RTC_BASELO));
 	biosextmem = (rtcin(RTC_EXTHI)<<8) | (rtcin(RTC_EXTLO));
 
-	/*
-	 * Round down to whole pages.
-	 */
+	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
 	biosextmem &= -(NBPG / 1024);
-
-#ifndef BIOS_BASEMEM
-#define	BIOS_BASEMEM 640
-#endif
-
-	if (biosbasemem == 0 || biosbasemem > 640) {
-		printf("warning: nvram reports %dk base memory; assuming %dk\n",
-		    biosbasemem, BIOS_BASEMEM);
-		biosbasemem = BIOS_BASEMEM;
-	}
 
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
@@ -1161,7 +1160,7 @@ init386(first_avail)
 	 */
 	hole_start = biosbasemem * 1024;
 	/* we load right after the I/O hole; adjust hole_end to compensate */
-	hole_end = round_page((vm_offset_t)first_avail);
+	hole_end = round_page(first_avail);
 	avail_next = avail_start;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
@@ -1173,29 +1172,14 @@ init386(first_avail)
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
 
-	/* now running on new page tables, configured,and u/iom is accessible */
-
-	/* make a initial tss so microp can get interrupt stack on syscall! */
-	proc0.p_addr->u_pcb.pcb_tss.tss_esp0 = (int) USRSTACK + UPAGES*NBPG;
-	proc0.p_addr->u_pcb.pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	_gsel_tss = GSEL(GPROC0_SEL, SEL_KPL);
-
-	((struct i386tss *)gdt_segs[GPROC0_SEL].ssd_base)->tss_ioopt =
-		(sizeof(tss))<<16;
-
 	ltr(_gsel_tss);
-
-	/* Set up the old-style call gate descriptor for system calls. */
-	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
-	    SEL_UPL);
+	_default_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	lldt(currentldt = _default_ldt);
 
 	/* transfer to user mode */
 	_ucodesel = LSEL(LUCODE_SEL, SEL_UPL);
 	_udatasel = LSEL(LUDATA_SEL, SEL_UPL);
-
-	/* setup proc 0's pcb */
-	proc0.p_addr->u_pcb.pcb_flags = 0;
-	proc0.p_addr->u_pcb.pcb_ptd = IdlePTD;
 }
 
 struct queue {
