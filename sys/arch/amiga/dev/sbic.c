@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.16 1995/09/04 13:04:45 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.17 1995/09/16 16:11:26 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -148,7 +148,7 @@ int	data_pointer_debug = 0;
 u_char	debug_asr, debug_csr, routine;
 void sbictimeout __P((struct sbic_softc *dev));
 
-#define CSR_TRACE_SIZE 0
+#define CSR_TRACE_SIZE 32
 #if CSR_TRACE_SIZE
 #define CSR_TRACE(w,c,a,x) do { \
 	int s = splbio(); \
@@ -156,7 +156,7 @@ void sbictimeout __P((struct sbic_softc *dev));
 	csr_trace[csr_traceptr].asr = (a); csr_trace[csr_traceptr].xtn = (x); \
 	dma_cachectl(&csr_trace[csr_traceptr], sizeof(csr_trace[0])); \
 	csr_traceptr = (csr_traceptr + 1) & (CSR_TRACE_SIZE - 1); \
-	dma_cachectl(&csr_traceptr, sizeof(csr_traceptr)); \
+/*	dma_cachectl(&csr_traceptr, sizeof(csr_traceptr));*/ \
 	splx(s); \
 } while (0)
 int csr_traceptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.11 1995/08/18 15:28:14 chopps Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.12 1995/09/16 16:11:31 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,24 +52,24 @@
  * Data Structure for SCRIPTS program
  */
 struct siop_ds {
-/*00*/	long	scsi_addr;		/* SCSI ID & sync */
-/*04*/	long	idlen;			/* Identify message */
-/*08*/	char	*idbuf;
-/*0c*/	long	cmdlen;			/* SCSI command */
-/*10*/	char	*cmdbuf;
-/*14*/	long	stslen;			/* Status */
-/*18*/	char	*stsbuf;
-/*1c*/	long	msglen;			/* Message */
-/*20*/	char	*msgbuf;
-/*24*/	long	msginlen;		/* Message in */
-/*28*/	char	*msginbuf;
-/*2c*/	long	extmsglen;		/* Extended message in */
-/*30*/	char	*extmsgbuf;
-/*34*/	long	synmsglen;		/* Sync transfer request */
-/*38*/	char	*synmsgbuf;
+	long	scsi_addr;		/* SCSI ID & sync */
+	long	idlen;			/* Identify message */
+	char	*idbuf;
+	long	cmdlen;			/* SCSI command */
+	char	*cmdbuf;
+	long	stslen;			/* Status */
+	char	*stsbuf;
+	long	msglen;			/* Message */
+	char	*msgbuf;
+	long	msginlen;		/* Message in */
+	char	*msginbuf;
+	long	extmsglen;		/* Extended message in */
+	char	*extmsgbuf;
+	long	synmsglen;		/* Sync transfer request */
+	char	*synmsgbuf;
 	struct {
-/*3c*/		long datalen;
-/*40*/		char *databuf;
+		long datalen;
+		char *databuf;
 	} chain[DMAMAXIO];
 };
 
@@ -82,26 +82,26 @@ struct siop_ds {
  * occasionally xs->retries.
  */
 struct siop_acb {
-/*00*/	TAILQ_ENTRY(siop_acb) chain;
-/*08*/	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
-/*0c*/	int		flags;	/* Status */
+	TAILQ_ENTRY(siop_acb) chain;
+	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
+	int		flags;	/* Status */
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
 #define ACB_DONE	0x04
 #define ACB_CHKSENSE	0x08
-/*10*/	struct scsi_generic cmd;  /* SCSI command block */
-/*1c*/	struct siop_ds ds;
-/*a0*/	void	*iob_buf;
-/*a4*/	u_long	iob_curbuf;
-/*a8*/	u_long	iob_len, iob_curlen;
-/*b0*/	u_char	msgout[6];
-/*b6*/	u_char	msg[6];
-/*bc*/	u_char	stat[1];
-/*bd*/	u_char	status;
-/*be*/	u_char	dummy[2];
-/*c0*/	int	 clen;
-/*c4*/	char	*daddr;		/* Saved data pointer */
-/*c8*/	int	 dleft;		/* Residue */
+	struct scsi_generic cmd;  /* SCSI command block */
+	struct siop_ds ds;
+	void	*iob_buf;
+	u_long	iob_curbuf;
+	u_long	iob_len, iob_curlen;
+	u_char	msgout[6];
+	u_char	msg[6];
+	u_char	stat[1];
+	u_char	status;
+	u_char	dummy[2];
+	int	 clen;
+	char	*daddr;		/* Saved data pointer */
+	int	 dleft;		/* Residue */
 };
 
 /*
@@ -122,36 +122,41 @@ struct siop_tinfo {
 } tinfo_t;
 
 struct	siop_softc {
-/*00*/	struct	device sc_dev;
-/*??*/	struct	isr sc_isr;
+	struct	device sc_dev;
+	struct	isr sc_isr;
 
-/*38*/	u_char	sc_istat;
-/*39*/	u_char	sc_dstat;
-/*3a*/	u_char	sc_sstat0;
-/*3b*/	u_char	sc_sstat1;
-/*3c*/	u_long	sc_intcode;
-/*40*/	struct	scsi_link sc_link;	/* proto for sub devices */
-/*58*/	u_long	sc_scriptspa;		/* physical address of scripts */
-/*5c*/	siop_regmap_p	sc_siopp;	/* the SIOP */
-/*60*/	u_long	sc_active;		/* number of active I/O's */
+	u_char	sc_istat;
+	u_char	sc_dstat;
+	u_char	sc_sstat0;
+	u_char	sc_sstat1;
+	u_long	sc_intcode;
+	struct	scsi_link sc_link;	/* proto for sub devices */
+	u_long	sc_scriptspa;		/* physical address of scripts */
+	siop_regmap_p	sc_siopp;	/* the SIOP */
+	u_long	sc_active;		/* number of active I/O's */
 
 	/* Lists of command blocks */
-/*64*/	TAILQ_HEAD(acb_list, siop_acb) free_list,
-/*6c*/				       ready_list,
-/*74*/				       nexus_list;
+	TAILQ_HEAD(acb_list, siop_acb) free_list,
+				       ready_list,
+				       nexus_list;
 
-/*7c*/	struct siop_acb *sc_nexus;	/* current command */
-/*80*/	struct siop_acb sc_acb[8];	/* the real command blocks */
-/*6e0*/	struct siop_tinfo sc_tinfo[8];
+	struct siop_acb *sc_nexus;	/* current command */
+	struct siop_acb sc_acb[8];	/* the real command blocks */
+	struct siop_tinfo sc_tinfo[8];
 
-/*7b0*/	u_long	sc_clock_freq;
-/*7b4*/	u_char	sc_flags;
-/*7b5*/	u_char	sc_sien;
-/*7b6*/	u_char	sc_dien;
+	u_short	sc_clock_freq;
+	u_char	sc_dcntl;
+	u_char	sc_ctest7;
+	u_short	sc_tcp[4];
+	u_char	sc_flags;
+	u_char	sc_sien;
+	u_char	sc_dien;
+	u_char	sc_minsync;
 	/* one for each target */
-/*7b7*/	struct syncpar {
-	  u_char state;
-	  u_char period, offset;
+	struct syncpar {
+		u_char state;
+		u_char sxfer;
+		u_char sbcl;
 	} sc_sync[8];
 };
 

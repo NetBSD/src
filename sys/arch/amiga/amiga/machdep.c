@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1995/09/01 20:05:59 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1995/09/16 16:11:06 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -912,8 +912,26 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+#define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
+static vm_offset_t dumpspace;
+
+vm_offset_t
+reserve_dumppages(p)
+	vm_offset_t p;
+{
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
 dumpsys()
 {
+	unsigned bytes, i, n;
+	int     range;
+	int     maddr, psize;
+	daddr_t blkno;
+	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int     error = 0;
+	int     c;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -927,8 +945,36 @@ dumpsys()
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
+	psize = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	if (psize == -1) {
+		printf("area unavailable.\n");
+		return;
+	}
+	bytes = ctob(dumpsize);
+	maddr = lowram;
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	for (i = 0; i < bytes; i += n) {
+		/* Print out how many MBs we have to go. */
+		n = bytes - i;
+		if (n && (n % (1024 * 1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/* Limit size for next transfer. */
+		if (n > BYTES_PER_DUMP)
+			n = BYTES_PER_DUMP;
+
+		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		error = (*dump) (dumpdev, blkno, (caddr_t) dumpspace, n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);	/* XXX? */
+	}
+
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -950,6 +996,8 @@ dumpsys()
 		printf("succeeded\n");
 		break;
 	}
+	printf("\n\n");
+	delay(5000000);		/* 5 seconds */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.23 1995/08/18 15:28:08 chopps Exp $	*/
+/*	$NetBSD: siop.c,v 1.24 1995/09/16 16:11:29 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -93,13 +93,14 @@ int siop_cmd_wait = SCSI_CMD_WAIT;
 int siop_data_wait = SCSI_DATA_WAIT;
 int siop_init_wait = SCSI_INIT_WAIT;
 
+#ifdef DEBUG
 /*
  * sync period transfer lookup - only valid for 66Mhz clock
  */
 static struct {
-	unsigned char x;	/* period from sync request message */
-	unsigned char y;	/* siop_period << 4 | sbcl */
-} xxx[] = {
+	unsigned char p;	/* period from sync request message */
+	unsigned char r;	/* siop_period << 4 | sbcl */
+} sync_tab[] = {
 	{ 60/4, 0<<4 | 1},
 	{ 76/4, 1<<4 | 1},
 	{ 92/4, 2<<4 | 1},
@@ -125,6 +126,7 @@ static struct {
 	{300/4, 6<<4 | 3},
 	{332/4, 7<<4 | 3}
 };
+#endif
 
 #ifdef DEBUG
 /*
@@ -153,6 +155,8 @@ int	siopphmm = 0;
 	siop_trix = (siop_trix + 4) & (SIOP_TRACE_SIZE - 1);
 u_char	siop_trbuf[SIOP_TRACE_SIZE];
 int	siop_trix;
+void siop_dump __P((struct siop_softc *));
+void siop_dump_trace __P((void));
 #else
 #define SIOP_TRACE(a,b,c,d)
 #endif
@@ -195,7 +199,8 @@ siop_scsicmd(xs)
 
 	/* XXXX ?? */
 	if (sc->sc_nexus && flags & SCSI_POLL)
-		panic("siop_scsicmd: busy");
+/*		panic("siop_scsicmd: busy");*/
+		printf("siop_scsicmd: busy\n");
 
 	s = splbio();
 	acb = sc->free_list.tqh_first;
@@ -521,6 +526,25 @@ siopinitialize(sc)
 	 * physical pages.
 	 */
 	sc->sc_scriptspa = kvtop(scripts);
+	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
+	sc->sc_tcp[2] = 1500 / sc->sc_clock_freq;
+	sc->sc_tcp[3] = 2000 / sc->sc_clock_freq;
+	sc->sc_minsync = sc->sc_tcp[1];		/* in 4ns units */
+	if (sc->sc_minsync < 25)
+		sc->sc_minsync = 25;
+	if (sc->sc_clock_freq <= 25) {
+		sc->sc_dcntl = 0x80;		/* SCLK/1 */
+		sc->sc_tcp[0] = sc->sc_tcp[1];
+	} else if (sc->sc_clock_freq <= 37) {
+		sc->sc_dcntl = 0x40;		/* SCLK/1.5 */
+		sc->sc_tcp[0] = sc->sc_tcp[2];
+	} else if (sc->sc_clock_freq <= 50) {
+		sc->sc_dcntl = 0x00;		/* SCLK/2 */
+		sc->sc_tcp[0] = sc->sc_tcp[3];
+	} else {
+		sc->sc_dcntl = 0xc0;		/* SCLK/3 */
+		sc->sc_tcp[0] = 3000 / sc->sc_clock_freq;
+	}
 
 	siopreset (sc);
 }
@@ -563,14 +587,14 @@ siopreset(sc)
 	 */
 	rp->siop_scntl0 = SIOP_ARB_FULL | SIOP_SCNTL0_EPC | SIOP_SCNTL0_EPG;
 	rp->siop_scntl1 = SIOP_SCNTL1_ESR;
-	rp->siop_dcntl = sc->sc_clock_freq & 0xff;
+	rp->siop_dcntl = sc->sc_dcntl;
 	rp->siop_dmode = 0x80;	/* burst length = 4 */
 	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_scid = 1 << sc->sc_link.adapter_target;
 	rp->siop_dwt = 0x00;
 	rp->siop_ctest0 |= SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
-	rp->siop_ctest7 |= (sc->sc_clock_freq >> 8) & 0xff;
+	rp->siop_ctest7 |= sc->sc_ctest7;
 
 	/* will need to re-negotiate sync xfers */
 	bzero(&sc->sc_sync, sizeof (sc->sc_sync));
@@ -661,7 +685,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 	acb->status = 0;
 	acb->stat[0] = -1;
 	acb->msg[0] = -1;
-	acb->ds.scsi_addr = (0x10000 << target) | (sc->sc_sync[target].period << 8);
+	acb->ds.scsi_addr = (0x10000 << target) | (sc->sc_sync[target].sxfer << 8);
 	acb->ds.idlen = 1;
 	acb->ds.idbuf = (char *) kvtop(&acb->msgout[0]);
 	acb->ds.cmdlen = clen;
@@ -682,8 +706,8 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 	if (sc->sc_sync[target].state == SYNC_START) {
 		if (siop_inhibit_sync[target]) {
 			sc->sc_sync[target].state = SYNC_DONE;
-			sc->sc_sync[target].offset = 0;
-			sc->sc_sync[target].period = 0;
+			sc->sc_sync[target].sbcl = 0;
+			sc->sc_sync[target].sxfer = 0;
 #ifdef DEBUG
 			if (siopsync_debug)
 				printf ("Forcing target %d asynchronous\n", target);
@@ -697,7 +721,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 #ifdef MAXTOR_SYNC_KLUDGE
 			acb->msgout[4] = 50 / 4;	/* ask for ridiculous period */
 #else
-			acb->msgout[4] = 100 / 4;
+			acb->msgout[4] = sc->sc_minsync;
 #endif
 			acb->msgout[5] = SIOP_MAX_OFFSET;
 			acb->ds.idlen = 6;
@@ -774,7 +798,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 			printf("%s: siop_select while connected?\n",
 			    sc->sc_dev.dv_xname);
 		rp->siop_temp = 0;
-		rp->siop_sbcl = sc->sc_sync[target].offset;
+		rp->siop_sbcl = sc->sc_sync[target].sbcl;
 		rp->siop_dsa = kvtop(&acb->ds);
 		rp->siop_dsp = sc->sc_scriptspa;
 		SIOP_TRACE('s',1,0,0)
@@ -863,8 +887,8 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 				printf ("%s: target %d rejected sync request\n",
 				    sc->sc_dev.dv_xname, target);
 			sc->sc_sync[target].state = SYNC_DONE;
-			sc->sc_sync[target].period = 0;
-			sc->sc_sync[target].offset = 0;
+			sc->sc_sync[target].sxfer = 0;
+			sc->sc_sync[target].sbcl = 0;
 			if (acb->msg[2] == 3 &&
 			    acb->msg[3] == MSG_SYNC_REQ &&
 			    acb->msg[5] != 0) {
@@ -1187,8 +1211,8 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			acb->status = 0;
 			DCIAS(kvtop(&acb->stat[0]));
 			rp->siop_dsa = kvtop(&acb->ds);
-			rp->siop_sxfer = sc->sc_sync[acb->xs->sc_link->target].period;
-			rp->siop_sbcl = sc->sc_sync[acb->xs->sc_link->target].offset;
+			rp->siop_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
+			rp->siop_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
 			break;
 		}
 		if (acb == NULL) {
@@ -1203,19 +1227,34 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		return (0);
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff04) {
+		u_short ctest2 = rp->siop_ctest2;
+
 		/* reselect was interrupted (by Sig_P or select) */
 #ifdef DEBUG
 		if (siop_debug & 0x100 ||
-		    (rp->siop_ctest2 & SIOP_CTEST2_SIGP) == 0)
-			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x\n",
-			    sc->sc_dev.dv_xname, rp->siop_scntl1, rp->siop_ctest2, rp->siop_sfbr);
+		    (ctest2 & SIOP_CTEST2_SIGP) == 0)
+			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x istat %x/%x\n",
+			    sc->sc_dev.dv_xname, rp->siop_scntl1,
+			    ctest2, rp->siop_sfbr, istat, rp->siop_istat);
 #endif
-		/* XXX assume it was not select */
+		/* XXX assumes it was not select */
+		if (sc->sc_nexus == NULL) {
+			printf("%s: reselect interrupted, sc_nexus == NULL\n",
+			    sc->sc_dev.dv_xname);
+#if 0
+			siop_dump(sc);
+#ifdef DDB
+			Debugger();
+#endif
+#endif
+			rp->siop_dcntl |= SIOP_DCNTL_STD;
+			return(0);
+		}
 		target = sc->sc_nexus->xs->sc_link->target;
 		rp->siop_temp = 0;
 		rp->siop_dsa = kvtop(&sc->sc_nexus->ds);
-		rp->siop_sxfer = sc->sc_sync[target].period;
-		rp->siop_sbcl = sc->sc_sync[target].offset;
+		rp->siop_sxfer = sc->sc_sync[target].sxfer;
+		rp->siop_sbcl = sc->sc_sync[target].sbcl;
 		rp->siop_dsp = sc->sc_scriptspa;
 		return (0);
 	}
@@ -1406,23 +1445,140 @@ siopintr (sc)
 scsi_period_to_siop (sc, target)
 	struct siop_softc *sc;
 {
-	int period, offset, i, sxfer;
+	int period, offset, i, sxfer, sbcl;
 
 	period = sc->sc_nexus->msg[4];
 	offset = sc->sc_nexus->msg[5];
+#ifdef DEBUG
 	sxfer = 0;
 	if (offset <= SIOP_MAX_OFFSET)
 		sxfer = offset;
-	for (i = 0; i < sizeof (xxx) / 2; ++i) {
-		if (period <= xxx[i].x) {
-			sxfer |= xxx[i].y & 0x70;
-			offset = xxx[i].y & 0x03;
+	for (i = 0; i < sizeof (sync_tab) / 2; ++i) {
+		if (period <= sync_tab[i].p) {
+			sxfer |= sync_tab[i].r & 0x70;
+			sbcl = sync_tab[i].r & 0x03;
 			break;
 		}
 	}
-	sc->sc_sync[target].period = sxfer;
-	sc->sc_sync[target].offset = offset;
+	printf ("siop sync old: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
+#endif
+	for (sbcl = 1; sbcl < 4; ++sbcl) {
+		sxfer = (period * 4 - 1) / sc->sc_tcp[sbcl] - 3;
+		if (sxfer >= 0 && sxfer <= 7)
+			break;
+	}
+	if (sbcl > 3) {
+		printf("siop sync: unable to compute sync params for period %dns\n",
+		    period * 4);
+		/*
+		 * XXX need to pick a value we can do and renegotiate
+		 */
+		sxfer = sbcl = 0;
+	} else {
+		sxfer = (sxfer << 4) | ((offset <= SIOP_MAX_OFFSET) ?
+		    offset : SIOP_MAX_OFFSET);
+		printf("siop sync: params for period %dns: sxfer %x sbcl %x",
+		    period * 4, sxfer, sbcl);
+		printf(" actual period %dns\n",
+		    sc->sc_tcp[sbcl] * ((sxfer >> 4) + 4));
+	}
+	sc->sc_sync[target].sxfer = sxfer;
+	sc->sc_sync[target].sbcl = sbcl;
 #ifdef DEBUG
-	printf ("sync: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, offset);
+	printf ("siop sync: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
 #endif
 }
+
+#ifdef DEBUG
+
+#if SIOP_TRACE_SIZE
+void
+siop_dump_trace()
+{
+	int i;
+
+	printf("siop trace: next index %d\n", siop_trix);
+	i = siop_trix;
+	do {
+		printf("%3d: '%c' %02x %02x %02x\n", i, siop_trbuf[i],
+		    siop_trbuf[i + 1], siop_trbuf[i + 2], siop_trbuf[i + 3]);
+		i = (i + 4) & (SIOP_TRACE_SIZE - 1);
+	} while (i != siop_trix);
+}
+#endif
+
+void
+siop_dump_acb(acb)
+	struct siop_acb *acb;
+{
+	u_char *b = (u_char *) &acb->cmd;
+	int i;
+
+	printf("acb@%x ", acb);
+	if (acb->xs == NULL) {
+		printf("<unused>\n");
+		return;
+	}
+	printf("(%d:%d) flags %2x clen %2d cmd ", acb->xs->sc_link->target,
+	    acb->xs->sc_link->lun, acb->flags, acb->clen);
+	for (i = acb->clen; i; --i)
+		printf(" %02x", *b++);
+	printf("\n");
+	printf("  xs: %08x data %8x:%04x ", acb->xs, acb->xs->data,
+	    acb->xs->datalen);
+	printf("va %8x:%04x ", acb->iob_buf, acb->iob_len);
+	printf("cur %8x:%04x\n", acb->iob_curbuf, acb->iob_curlen);
+}
+
+void
+siop_dump(sc)
+	struct siop_softc *sc;
+{
+	struct siop_acb *acb;
+	siop_regmap_p rp = sc->sc_siopp;
+	int s;
+	int i;
+
+	s = splbio();
+#if SIOP_TRACE_SIZE
+	siop_dump_trace();
+#endif
+	printf("%s@%x regs %x istat %x\n",
+	    sc->sc_dev.dv_xname, sc, rp, rp->siop_istat);
+	if (acb = sc->free_list.tqh_first) {
+		printf("Free list:\n");
+		while (acb) {
+			siop_dump_acb(acb);
+			acb = acb->chain.tqe_next;
+		}
+	}
+	if (acb = sc->ready_list.tqh_first) {
+		printf("Ready list:\n");
+		while (acb) {
+			siop_dump_acb(acb);
+			acb = acb->chain.tqe_next;
+		}
+	}
+	if (acb = sc->nexus_list.tqh_first) {
+		printf("Nexus list:\n");
+		while (acb) {
+			siop_dump_acb(acb);
+			acb = acb->chain.tqe_next;
+		}
+	}
+	if (sc->sc_nexus) {
+		printf("Nexus:\n");
+		siop_dump_acb(sc->sc_nexus);
+	}
+	for (i = 0; i < 8; ++i) {
+		if (sc->sc_tinfo[i].cmds > 2) {
+			printf("tgt %d: cmds %d disc %d senses %d lubusy %x\n",
+			    i, sc->sc_tinfo[i].cmds,
+			    sc->sc_tinfo[i].dconns,
+			    sc->sc_tinfo[i].senses,
+			    sc->sc_tinfo[i].lubusy);
+		}
+	}
+	splx(s);
+}
+#endif

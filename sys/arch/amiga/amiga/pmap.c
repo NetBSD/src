@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1995/08/18 15:27:36 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 1995/09/16 16:11:09 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -201,7 +201,7 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
-u_int	*Sysseg1;		/* root segment for 68040 */
+u_int	*Sysseg2;		/* 68040 2nd level descriptor table */
 u_int	*Sysseg;
 u_int	*Sysmap, *Sysptmap;
 u_int	*Segtabzero;
@@ -242,6 +242,8 @@ void		pmap_enter_ptpage();
 #define pmap_valid_page(pa)	(pmap_initialized && pa >= vm_first_phys && \
 				pa < vm_last_phys)
 #endif
+
+extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 
 /*
  * All those kernel PT submaps that BSD is so fond of
@@ -342,7 +344,8 @@ pmap_bootstrap(firstaddr, loadaddr)
 	pmap_kernel()->pm_ptab = Sysmap;
 #ifdef M68040
 	if (mmutype == MMU_68040) {
-		pmap_kernel()->pm_rtab = Sysseg1;
+		pmap_kernel()->pm_stpa = Sysseg;
+		pmap_kernel()->pm_stab = Sysseg2;
 		pmap_ishift = SG4_SHIFT2;
 	} else
 #endif
@@ -365,7 +368,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t		,vmpte		,vmmap	   ,1		)
 	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
 
-	virtual_avail = va;
+	virtual_avail = reserve_dumppages(va);
 }
 
 /*
@@ -722,7 +725,7 @@ pmap_pinit(pmap)
 	 */
 #ifdef M68040
 	if (mmutype == MMU_68040)
-		pmap->pm_rtab = Segtabzero;
+		pmap->pm_stpa = Segtabzero;
 #endif
 	pmap->pm_stab = Segtabzero;
 	pmap->pm_stchanged = TRUE;
@@ -783,7 +786,7 @@ pmap_release(pmap)
 	if (pmap->pm_stab != Segtabzero)
 #ifdef M68040
 		if (mmutype == MMU_68040) {
-			kmem_free(kernel_map, (vm_offset_t)pmap->pm_rtab,
+			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stpa,
 			    AMIGA_040RTSIZE);
 			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab,
 			    AMIGA_040STSIZE*128);
@@ -1005,12 +1008,12 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 #ifdef M68040
 					if (mmutype == MMU_68040) {
 						kmem_free(kernel_map,
-							(vm_offset_t)ptpmap->pm_rtab,
+							(vm_offset_t)ptpmap->pm_stpa,
 							AMIGA_040RTSIZE);
 						kmem_free(kernel_map,
 							(vm_offset_t)ptpmap->pm_stab,
 							AMIGA_040STSIZE*128);
-						ptpmap->pm_rtab = Segtabzero;
+						ptpmap->pm_stpa = Segtabzero;
 					}
 					else
 #endif
@@ -1347,6 +1350,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 			npv = (pv_entry_t)
 				malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+			if (npv == NULL)
+				panic("pmap_enter: PV allocation failure");
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
 			npv->pv_next = pv->pv_next;
@@ -2044,20 +2049,20 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap->pm_stab == Segtabzero) {
 #ifdef M68040
 		if (mmutype == MMU_68040) {
-			pmap->pm_rtab = (u_int *)
+			pmap->pm_stpa = (u_int *)
 				kmem_alloc(kernel_map, AMIGA_040RTSIZE);
 			pmap->pm_stab = (u_int *)
 				kmem_alloc(kernel_map, AMIGA_040STSIZE*128);
 			/* intialize root table entries */
-			sg = (u_int *) pmap->pm_rtab;
+			sg = (u_int *) pmap->pm_stpa;
 			sg_proto = pmap_extract(pmap_kernel(), 
 			    (vm_offset_t) pmap->pm_stab) | SG_RW | SG_V;
 #ifdef DEBUG
 			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 				printf ("pmap_enter_ptpage: ROOT TABLE SETUP %x %x\n",
-				    pmap->pm_rtab, sg_proto);
+				    pmap->pm_stpa, sg_proto);
 #endif
-			while (sg < (u_int *) ((u_int) pmap->pm_rtab + AMIGA_040RTSIZE)) {
+			while (sg < (u_int *) ((u_int) pmap->pm_stpa + AMIGA_040RTSIZE)) {
 				*sg++ = sg_proto;
 				sg_proto += AMIGA_040STSIZE;
 			}
@@ -2143,6 +2148,11 @@ pmap_enter_ptpage(pmap, va)
 	 * letting the VM system allocate a zero-filled page.
 	 */
 	else {
+		/*
+		 * Count the segment table reference now so that we won't
+		 * lose the segment table when low on memory.
+		 */
+		pmap->pm_sref++;
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter: about to fault UPT pg at %x\n", va);
@@ -2203,7 +2213,6 @@ pmap_enter_ptpage(pmap, va)
 #endif
 		*(int *)ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
 	if (pmap != pmap_kernel()) {
-		pmap->pm_sref++;
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: stab %x refcnt %d\n",

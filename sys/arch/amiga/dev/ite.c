@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.30 1995/05/14 14:26:00 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.31 1995/09/16 16:11:20 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -844,7 +844,7 @@ ite_filter(c, caller)
 	struct key key;
 	int s, i;
 
-	if (kbd_ite == NULL)
+	if (kbd_ite == NULL || kbd_ite->tp == NULL)
 		return;
 
 	kbd_tty = kbd_ite->tp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.7 1995/08/18 15:27:46 chopps Exp $	*/
+/*	$NetBSD: afsc.c,v 1.8 1995/09/16 16:11:15 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -112,10 +112,10 @@ afscattach(pdp, dp, auxp)
 	sc->sc_siopp = rp = zap->va + 0x00800000;
 
 	/*
-	 * DCNTL = 37.51->50MHZ / SCLK/2
 	 * CTEST7 = 80 [disable burst]
 	 */
-	sc->sc_clock_freq = 0x8000;
+	sc->sc_clock_freq = 50;		/* Clock = 50Mhz */
+	sc->sc_ctest7 = 0x80;		/* CDIS */
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
@@ -172,3 +172,15 @@ afsc_dmaintr(sc)
 	siopintr(sc);
 	return(1);
 }
+
+#ifdef DEBUG
+void
+afsc_dump()
+{
+	int i;
+
+	for (i = 0; i < afsccd.cd_ndevs; ++i)
+		if (afsccd.cd_devs[i])
+			siop_dump(afsccd.cd_devs[i]);
+}
+#endif

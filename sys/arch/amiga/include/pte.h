@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 1995/04/02 20:39:02 chopps Exp $	*/
+/*	$NetBSD: pte.h,v 1.13 1995/09/16 16:11:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,7 @@ typedef u_int st_entry_t;
 #define SG4_MASK3	0x0003e000	/* page table index mask */
 #define	SG4_SHIFT3	13
 #define	SG4_ADDR1	0xfffffe00	/* pointer table address mask */
-#define	SG4_ADDR2	0xffffff00	/* page table address mask */
+#define	SG4_ADDR2	0xffffff80	/* page table address mask */
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000

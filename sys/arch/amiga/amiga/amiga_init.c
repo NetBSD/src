@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.30 1995/08/18 15:27:29 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.31 1995/09/16 16:11:03 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -61,7 +61,7 @@
 extern int	machineid, mmutype;
 extern u_int 	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
-extern u_int	Sysseg1;
+extern u_int	Sysseg2;	/* 68040 2nd level descriptor table */
 extern u_int	virtual_avail;
 
 extern char *esym;
@@ -167,7 +167,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	struct cfdev *cd;
 	u_int pstart, pend, vstart, vend, avail;
 	u_int pt, ptpa, ptsize, ptextra;
-	u_int Sysseg_pa, Sysptmap_pa, umap_pa, Sysseg1_pa;
+	u_int Sysseg_pa, Sysptmap_pa, umap_pa, Sysseg2_pa;
 	u_int sg_proto, pg_proto;
 	u_int tc, end_loaded, ncd, i;
 	u_int *sg, *pg, *pg2;
@@ -281,8 +281,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		/*
 		 * allocate the kernel 1st level segment table
 		 */
-		Sysseg1_pa = pstart;
-		Sysseg1 = vstart;
+		Sysseg_pa = pstart;
+		Sysseg = vstart;
 		vstart += NBPG;
 		pstart += NBPG;
 		avail -= NBPG;
@@ -290,8 +290,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		/*
 		 * allocate the kernel segment table
 		 */
-		Sysseg_pa = pstart;
-		Sysseg = vstart;
+		Sysseg2_pa = pstart;
+		Sysseg2 = vstart;
 		vstart += AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
 		pstart += AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
 		avail -= AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
@@ -350,11 +350,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 */
 #ifdef M68040
 	if (mmutype == MMU_68040) {
-		sg_proto = Sysseg_pa | SG_RW | SG_V;
+		sg_proto = Sysseg2_pa | SG_RW | SG_V;
 		/*
 		 * map all level 1 entries to the segment table
 		 */
-		sg = (u_int *)Sysseg1_pa;
+		sg = (u_int *)Sysseg_pa;
 		while (sg_proto < ptpa) {
 			*sg++ = sg_proto;
 			sg_proto += AMIGA_040RTSIZE;
@@ -364,7 +364,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		/*
 		 * map so many segs
 		 */
-		sg = (u_int *)Sysseg_pa;
+		sg = (u_int *)Sysseg2_pa;
 		pg = (u_int *)Sysptmap_pa;
 		while (sg_proto < pstart) {
 			*sg++ = sg_proto;
@@ -382,7 +382,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 			*sg++ = SG_NV;
 			if (pg < (u_int *)pstart)
 				*pg++ = PG_NV;
-		} while (sg < (u_int *)(Sysseg_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE));
+		} while (sg < (u_int *)(Sysseg2_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE));
 	} else
 #endif /* M68040 */
 	{
@@ -489,7 +489,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * init mem sizes
 	 */
 	maxmem  = pend >> PGSHIFT;
-	lowram  = fphystart >> PGSHIFT;
+	lowram  = fphystart;
 	physmem = fphysize >> PGSHIFT;
 
 	/*
@@ -545,14 +545,14 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 #ifdef M68040
 	if (mmutype == MMU_68040) {
 		/*
-		 * movel Sysseg1_pa,a0;
+		 * movel Sysseg_pa,a0;
 		 * movec a0,SRP;
 		 * pflusha;
 		 * movel #$0xc000,d0;
 		 * movec d0,TC
 		 */
 		asm volatile ("movel %0,a0; .word 0x4e7b,0x8807"
-		    : : "a" (Sysseg1_pa));
+		    : : "a" (Sysseg_pa));
 		asm volatile (".word 0xf518" : : );
 		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : );
 	} else
