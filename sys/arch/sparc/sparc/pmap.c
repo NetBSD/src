@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 1998/09/07 23:04:28 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.128 1998/09/12 14:11:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,6 +78,10 @@
 
 #if defined(UVM)
 #include <uvm/uvm.h>
+#else
+#define uvm_pglistalloc(s,l,h,a,b,m,n,f) \
+				vm_page_alloc_memory(s,l,h,a,b,m,n,f)
+#define uvm_km_alloc(m,s)	kmem_alloc_pageable(m,s)
 #endif
 
 #include <machine/autoconf.h>
@@ -3318,6 +3322,7 @@ pmap_bootstrap4m(void)
 	 */
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
+	cpuinfo.ctx_tbl_pa = (paddr_t)cpuinfo.ctx_tbl - KERNBASE;
 	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
 
 	/*
@@ -3554,7 +3559,7 @@ mmu_install_tables(sc)
 	prom_ctxreg = lda(SRMMU_CXTPTR, ASI_SRMMU);
 
 	sta(SRMMU_CXTPTR, ASI_SRMMU,
-	    (VA2PA((caddr_t)sc->ctx_tbl) >> SRMMU_PPNPASHIFT) & ~0x3);
+		(sc->ctx_tbl_pa >> SRMMU_PPNPASHIFT) & ~0x3);
 
 	tlb_flush_all();
 
@@ -3574,7 +3579,14 @@ srmmu_restore_prom_ctx()
 }
 
 /*
- * Allocate per-CPU page tables.
+ * Allocate per-CPU page tables. One region, segment and page table
+ * is needed to map CPUINFO_VA to different physical addresses on
+ * each CPU. Since the kernel region and segment tables are all
+ * pre-wired (in bootstrap() above) and we also assume that the
+ * first segment (256K) of kernel space is fully populated with
+ * pages from the start, these per-CPU tables will never need
+ * to be updated when mapping kernel virtual memory.
+ *
  * Note: this routine is called in the context of the boot CPU
  * during autoconfig.
  */
@@ -3582,21 +3594,57 @@ void
 pmap_alloc_cpu(sc)
 	struct cpu_info *sc;
 {
-	caddr_t cpustore;
-	int *ctxtable;
-	int *regtable;
-	int *segtable;
-	int *pagtable;
+	vaddr_t va;
+	u_int *ctxtable, *regtable, *segtable, *pagtable;
 	int vr, vs, vpg;
 	struct regmap *rp;
 	struct segmap *sp;
+	int ctxsize;
+	struct pglist mlist;
+	vm_page_t m;
+	int cachebit;
 
-	/* Allocate properly aligned and physically contiguous memory here */
-	cpustore = 0;
-	ctxtable = 0;
-	regtable = 0;
-	segtable = 0;
-	pagtable = 0;
+	cachebit = ((sc->flags & CPUFLG_CACHEPAGETABLES) != 0) ? SRMMU_PG_C : 0;
+
+	/*
+	 * Allocate properly aligned and contiguous physically memory
+	 * for the context table.
+	 */
+	TAILQ_INIT(&mlist);
+	ctxsize = sc->mmu_ncontext * sizeof(int);
+	if (uvm_pglistalloc(ctxsize, vm_first_phys, vm_first_phys+vm_num_phys,
+			    ctxsize, 0, &mlist, 1, 0) != 0)
+		panic("pmap_alloc_cpu: no memory");
+
+	va = uvm_km_valloc(kernel_map, ctxsize);
+	if (va == 0)
+		panic("pmap_alloc_cpu: no memory");
+
+	ctxtable = (int *)va;
+
+	m = TAILQ_FIRST(&mlist);
+	sc->ctx_tbl_pa = VM_PAGE_TO_PHYS(m);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa | cachebit,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		va += NBPG;
+	}
+
+	/*
+	 * Get memory for a region, segment and page table.
+	 */
+	va = uvm_km_alloc(kernel_map, NBPG);
+	if (va == 0)
+		panic("pmap_alloc_cpu: no memory");
+	if (cachebit == 0)
+		kvm_uncache((caddr_t)va, 1);
+
+	regtable = (u_int *)va;
+	segtable = regtable + SRMMU_L1SIZE;
+	pagtable = segtable + SRMMU_L2SIZE;
 
 	vr = VA_VREG(CPUINFO_VA);
 	vs = VA_VSEG(CPUINFO_VA);
@@ -3608,29 +3656,31 @@ pmap_alloc_cpu(sc)
 	 * Copy page tables, then modify entry for CPUINFO_VA so that
 	 * it points at the per-CPU pages.
 	 */
-	bcopy(cpuinfo.L1_ptps, regtable, SRMMU_L1SIZE * sizeof(int));
-	regtable[vr] =
-		(VA2PA((caddr_t)segtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
 
-	bcopy(rp->rg_seg_ptps, segtable, SRMMU_L2SIZE * sizeof(int));
-	segtable[vs] =
-		(VA2PA((caddr_t)pagtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+	setpgt4m(&ctxtable[0],
+	    (VA2PA((caddr_t)regtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
-	bcopy(sp->sg_pte, pagtable, SRMMU_L3SIZE * sizeof(int));
-	pagtable[vpg] =
-		(VA2PA((caddr_t)cpustore) >> SRMMU_PPNPASHIFT) |
-		(SRMMU_TEPTE | PPROT_RWX_RWX | SRMMU_PG_C);
+	qcopy(pmap_kernel()->pm_reg_ptps, regtable, SRMMU_L1SIZE * sizeof(int));
+	setpgt4m(&regtable[vr],
+		(VA2PA((caddr_t)segtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
-	/* Install L1 table in context 0 */
-	ctxtable[0] = ((u_int)regtable >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+	qcopy(rp->rg_seg_ptps, segtable, SRMMU_L2SIZE * sizeof(int));
+	setpgt4m(&segtable[vs],
+		(VA2PA((caddr_t)pagtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+
+	qcopy(sp->sg_pte, pagtable, SRMMU_L3SIZE * sizeof(int));
+	setpgt4m(&pagtable[vpg],
+		(VA2PA((caddr_t)sc) >> SRMMU_PPNPASHIFT) |
+		(SRMMU_TEPTE | PPROT_RWX_RWX | cachebit));
 
 	sc->ctx_tbl = ctxtable;
 	sc->L1_ptps = regtable;
-
-#if 0
-	if ((sc->flags & CPUFLG_CACHEPAGETABLES) == 0) {
-		kvm_uncache((caddr_t)0, 1);
-	}
+#ifdef DEBUG
+{char bits[64];
+ int pte = lda(((u_int)regtable & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP);
+ printf("regtab PTE at %p = %s\n", regtable,
+		bitmask_snprintf(pte, SRMMU_PTE_BITS, bits, sizeof(bits)));
+}
 #endif
 }
 #endif /* SUN4M */
@@ -6453,6 +6503,8 @@ kvm_uncache(va, npages)
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				panic("kvm_uncache: table entry not pte");
 
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
+				cache_flush_page((int)va);
 			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
 			    managed(pa)) {
@@ -6460,8 +6512,6 @@ kvm_uncache(va, npages)
 			}
 			pte &= ~SRMMU_PG_C;
 			setpte4m((vaddr_t) va, pte);
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
-				cache_flush_page((int)va);
 		
 		}
 		setcontext4m(ctx);
