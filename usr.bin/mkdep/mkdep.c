@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdep.c,v 1.5 2001/02/21 00:08:37 cgd Exp $	*/
+/* $NetBSD: mkdep.c,v 1.6 2001/03/22 00:16:50 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.5 2001/02/21 00:08:37 cgd Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.6 2001/03/22 00:16:50 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,8 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: mkdep [-a] [-p] [-f file] flags file ...\n");
+	    "usage: %s [-a] [-p] [-f file] flags file ...\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -156,12 +157,12 @@ main(argc, argv)
 		if (!setenv("PATH", DEFAULT_PATH, 1))
 			pathname = findcc(CC);
 	if (pathname == NULL) {
-		(void)fprintf(stderr, "mkdep: %s: not found\n", CC);
+		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), CC);
 		return EXIT_FAILURE;
 	}
 
 	if ((args = malloc((argc + 3) * sizeof(char *))) == NULL) {
-		perror("mkdep");
+		perror(getprogname());
 		exit(EXIT_FAILURE);
 	}
 	args[0] = CC;
@@ -187,7 +188,7 @@ main(argc, argv)
 	    /* NOTREACHED */
 
 	case -1:
-	    (void)fputs("mkdep: unable to fork.\n", stderr);
+	    (void)fprintf(stderr, "%s: unable to fork.\n", getprogname());
 	    (void)close(tmpfd);
 	    (void)unlink(tmpfilename);
 	    return EXIT_FAILURE;
@@ -196,7 +197,7 @@ main(argc, argv)
 	while (((pid = wait(&status)) != cpid) && (pid >= 0));
 
 	if (status) {
-	    (void)fputs("mkdep: compile failed.\n", stderr);
+	    (void)fprintf(stderr, "%s: compile failed.\n", getprogname());
 	    (void)close(tmpfd);
 	    (void)unlink(tmpfilename);
 	    return EXIT_FAILURE;
@@ -205,17 +206,17 @@ main(argc, argv)
 	(void)lseek(tmpfd, (off_t)0, SEEK_SET);
 	if ((tmpfile = fdopen(tmpfd, "r")) == NULL) {
 	    (void)fprintf(stderr,
-			  "mkdep: unable to read temporary file %s\n",
-			  tmpfilename);
+			  "%s: unable to read temporary file %s\n",
+			  getprogname(), tmpfilename);
 	    (void)close(tmpfd);
 	    (void)unlink(tmpfilename);
 	    return EXIT_FAILURE;
 	}
 
 	if ((dependfile = fopen(filename, aflag ? "a" : "w")) == NULL) {
-		(void)fprintf(stderr,
-			      "mkdep: unable to %s to file %s\n",
-			      aflag ? "append" : "write", filename);
+		(void)fprintf(stderr, "%s: unable to %s to file %s\n",
+			      getprogname(), aflag ? "append" : "write",
+			      filename);
 		(void)fclose(tmpfile);
 		(void)unlink(tmpfilename);
 		return EXIT_FAILURE;
