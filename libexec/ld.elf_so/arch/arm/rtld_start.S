@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 2001/07/15 17:31:03 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 2001/07/15 23:19:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,19 +65,20 @@ _rtld_start:
  *	lr = &GOT[2]
  */
 _rtld_bind_start:
-	stmdb	sp!,{r0-r3,sl,fp}
+	stmdb	sp!,{r0-r4,sl,fp}
 
 	sub	r1, ip, lr		/* r1 = 4 * (n + 1) */
 	sub	r1, r1, #4		/* r1 = 4 * n */
 	add	r1, r1, r1		/* r1 = 8 * n */
 
 	ldr	r0, [lr, #-4]		/* get obj ptr from GOT[1] */
+	mov	r4, ip			/* save GOT location */
 
 	bl	_rtld_bind		/* Call the binder */
 
-	str	r0, [ip]		/* save address in GOT */
+	str	r0, [r4]		/* save address in GOT */
 	mov	ip, r0			/* save new address */
 
-	ldmia	sp!,{r0-r3,sl,fp,lr}	/* restore the stack */
+	ldmia	sp!,{r0-r4,sl,fp,lr}	/* restore the stack */
 	mov	pc, ip			/* jump to the new address */
 
