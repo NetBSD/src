@@ -1,8 +1,7 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.20 1997/02/15 10:02:11 mikel Exp $
-#
-# from: @(#)daily	8.2 (Berkeley) 1/25/94
+#	$NetBSD: daily,v 1.21 1997/05/30 05:18:59 mikel Exp $
+#	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
@@ -59,7 +58,7 @@ fi
 TMP=daily.$$
 TMP2=daily2.$$
 
-if [ x"$find_core" != xNO ] ; then
+if [ "$find_core" != NO ] ; then
 	find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
 		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
 		-name 'lost+found' -a -prune -o \
@@ -85,25 +84,25 @@ if [ x"$find_core" != xNO ] ; then
 	rm -f $TMP $TMP2
 fi
 
-if [ x"$run_msgs" != xNO ]; then
+if [ "$run_msgs" != NO ]; then
 	msgs -c
 fi
 
-if [ x"$expire_news" != xNO -a -f /etc/news.expire ]; then
+if [ "$expire_news" != NO -a -f /etc/news.expire ]; then
 	/etc/news.expire
 fi
 
-if [ x"$purge_accounting" != xNO -a -f /var/account/acct ]; then
-	echo "" ;
-	echo "Purging accounting records:" ;
-	mv /var/account/acct.2 /var/account/acct.3 ;
-	mv /var/account/acct.1 /var/account/acct.2 ;
-	mv /var/account/acct.0 /var/account/acct.1 ;
-	cp /var/account/acct /var/account/acct.0 ;
-	sa -sq ;
+if [ "$purge_accounting" != NO -a -f /var/account/acct ]; then
+	echo ""
+	echo "Purging accounting records:"
+	mv /var/account/acct.2 /var/account/acct.3
+	mv /var/account/acct.1 /var/account/acct.2
+	mv /var/account/acct.0 /var/account/acct.1
+	cp /var/account/acct /var/account/acct.0
+	sa -sq
 fi
 
-if [ x"$run_calendar" != xNO ]; then
+if [ "$run_calendar" != NO ]; then
 	calendar -a > $TMP
 	if [ -s $TMP ]; then
 		echo ""
@@ -113,13 +112,13 @@ if [ x"$run_calendar" != xNO ]; then
 	rm -f $TMP
 fi
 
-if [ x"$check_uucp" != xNO -a -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
+if [ "$check_uucp" != NO -a -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
 	echo /etc/uuclean.daily | su daemon
 fi
 
-if [ x"$check_disks" != xNO ]; then
+if [ "$check_disks" != NO ]; then
 	df -k > $TMP 
 	dump W > $TMP2
 	if [ -s $TMP -o -s $TMP2 ]; then
@@ -141,7 +140,7 @@ fi
 
 rm -f $TMP $TMP2
 
-if [ x"$check_mailq" != xNO ]; then
+if [ "$check_mailq" != NO ]; then
 	mailq > $TMP
 	if ! grep -q "^Mail queue is empty$" $TMP; then
 		echo ""
@@ -152,17 +151,18 @@ fi
 
 rm -f $TMP
 
-if [ x"$check_uucp" != xNO -a -d /var/spool/uucp ]; then
+if [ "$check_uucp" != NO -a -d /var/spool/uucp ]; then
 	uustat -a > $TMP
 	if [ -s $TMP ]; then
 		echo ""
 		echo "uucp:"
+		cat $TMP
 	fi
 fi
 
 rm -f $TMP
 
-if [ x"$check_network" != xNO ]; then
+if [ "$check_network" != NO ]; then
 	echo ""
 	echo "network:"
 	netstat -i
@@ -173,27 +173,25 @@ if [ x"$check_network" != xNO ]; then
 	fi
 fi
 
-if [ x"$run_fsck" != xNO ]; then
+if [ "$run_fsck" != NO ]; then
 	echo ""
 	echo "Checking filesystems:"
 	fsck -n | grep -v '^\*\* Phase'
 fi
 
 echo ""
-if [ x"$run_rdist" != xNO -a -f /etc/Distfile ]; then
+if [ "$run_rdist" != NO -a -f /etc/Distfile ]; then
 	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
-		logf=`date | awk '{printf "%s.%s.%s", $6, $2, $3}'`
+		logf=`date +%Y.%b.%e`
 		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
 	else
 		rdist -f /etc/Distfile 
 	fi
 fi
 
-if [ x"$run_security" != xNO ]; then
+if [ "$run_security" != NO ]; then
 	sh /etc/security 2>&1 | mail -s "$host daily insecurity output" root
 fi
 
 rm -rf $TMPDIR
-
-exit
