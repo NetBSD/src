@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 2000/07/25 06:22:05 tsubai Exp $
+#	$NetBSD: Makefile,v 1.16 2000/07/25 06:26:18 tsubai Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c vers.c
+SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float
