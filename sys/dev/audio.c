@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.172 2003/01/01 00:10:15 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.173 2003/01/31 02:15:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.172 2003/01/01 00:10:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.173 2003/01/31 02:15:57 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -466,7 +466,7 @@ audio_attach_mi(struct audio_hw_if *ahwp, void *hdlp, struct device *dev)
 
 #ifdef DIAGNOSTIC
 	if (ahwp == NULL) {
-		printf("audio_attach_mi: NULL\n");
+		aprint_error("audio_attach_mi: NULL\n");
 		return (0);
 	}
 #endif
