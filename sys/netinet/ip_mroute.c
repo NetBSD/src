@@ -903,6 +903,8 @@ srcrt_send(ip, vifp, m)
 	 */
 	mb_opts->m_next = mb_copy;
 	mb_opts->m_len = IP_HDR_LEN + TUNNEL_LEN;
+	mb_opts->m_pkthdr.len = mb_copy->m_pkthdr.len + TUNNEL_LEN;
+	mb_opts->m_pkthdr.rcvif = mb_copy->m_pkthdr.rcvif;
 	mb_opts->m_data += MSIZE - mb_opts->m_len;
 	/*
 	 * Copy the base ip header from the mb_copy chain to the new head mbuf
@@ -978,6 +980,8 @@ encap_send(ip, vifp, m)
 	mb_copy->m_data += sizeof(multicast_encap_iphdr);
 	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
 	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
+	mb_copy->m_pkthdr.len = m->m_pkthdr.len + sizeof(multicast_encap_iphdr);
+	mb_copy->m_pkthdr.rcvif = m->m_pkthdr.rcvif;
 #endif
 	ip_output(mb_copy, (struct mbuf *)0, (struct route *)0,
 		  IP_FORWARDING, (struct ip_moptions *)0);
