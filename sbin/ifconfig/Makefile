@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:37:44 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
+#	$Id: Makefile,v 1.5 1994/09/23 01:38:50 mycroft Exp $
 
 PROG=	ifconfig
 MAN8=	ifconfig.0
