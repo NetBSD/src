@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.274 2000/11/14 06:53:26 matt Exp $
+#	$NetBSD: mi,v 1.275 2000/11/18 06:11:03 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2003,6 +2003,7 @@
 ./usr/share/man/cat3/floorf.0	comp-c-catman
 ./usr/share/man/cat3/fmod.0	comp-c-catman
 ./usr/share/man/cat3/fmodf.0	comp-c-catman
+./usr/share/man/cat3/fmtcheck.0	comp-c-catman
 ./usr/share/man/cat3/fmtmsg.0	comp-c-catman
 ./usr/share/man/cat3/fnmatch.0	comp-c-catman
 ./usr/share/man/cat3/fopen.0	comp-c-catman
@@ -2992,6 +2993,7 @@
 ./usr/share/man/cat9/ioctl.0		comp-kern-catman
 ./usr/share/man/cat9/kernacc.0		comp-kern-catman
 ./usr/share/man/cat9/kprintf.0		comp-kern-catman
+./usr/share/man/cat9/linedisc.0		comp-kern-catman
 ./usr/share/man/cat9/lock.0		comp-kern-catman
 ./usr/share/man/cat9/lockinit.0		comp-kern-catman
 ./usr/share/man/cat9/lockmgr.0		comp-kern-catman
@@ -3768,6 +3770,7 @@
 ./usr/share/man/man3/floorf.3		comp-c-man
 ./usr/share/man/man3/fmod.3		comp-c-man
 ./usr/share/man/man3/fmodf.3		comp-c-man
+./usr/share/man/man3/fmtcheck.3		comp-c-man
 ./usr/share/man/man3/fmtmsg.3		comp-c-man
 ./usr/share/man/man3/fnmatch.3		comp-c-man
 ./usr/share/man/man3/fopen.3		comp-c-man
@@ -4757,6 +4760,7 @@
 ./usr/share/man/man9/ioctl.9		comp-kern-man
 ./usr/share/man/man9/kernacc.9		comp-kern-man
 ./usr/share/man/man9/kprintf.9		comp-kern-man
+./usr/share/man/man9/linedisc.9		comp-kern-man
 ./usr/share/man/man9/lock.9		comp-kern-man
 ./usr/share/man/man9/lockinit.9		comp-kern-man
 ./usr/share/man/man9/lockmgr.9		comp-kern-man
