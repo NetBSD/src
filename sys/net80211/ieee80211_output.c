@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.20 2004/12/27 01:51:49 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.21 2004/12/27 01:57:58 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.20 2004/12/27 01:51:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.21 2004/12/27 01:57:58 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -287,10 +287,10 @@ bad:
  *
  * Arguments out:
  *
- * d:       802.11 Duration field for data frame,
+ * d:       802.11 Duration field for RTS,
+ *          802.11 Duration field for data frame,
  *          PLCP Length for data frame,
- *          PLCP Service field for data frame,
- *          802.11 Duration field for RTS
+ *          residual octets at end of data slot
  */
 static int
 ieee80211_compute_duration1(int len, uint32_t flags, int rate,
