@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.15 2004/01/08 05:12:32 rtr Exp $
+# $NetBSD: mi,v 1.16 2004/01/09 16:30:21 rtr Exp $
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
@@ -263,6 +263,8 @@
 ./usr/X11R6/include/X11/extensions/Xvlib.h
 ./usr/X11R6/include/X11/extensions/Xvproto.h
 ./usr/X11R6/include/X11/extensions/bigreqstr.h
+./usr/X11R6/include/X11/extensions/dpms.h
+./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/extutil.h
 ./usr/X11R6/include/X11/extensions/fontcache.h
 ./usr/X11R6/include/X11/extensions/fontcacheP.h
@@ -302,8 +304,12 @@
 ./usr/X11R6/include/X11/extensions/xf86dga1.h
 ./usr/X11R6/include/X11/extensions/xf86dga1str.h
 ./usr/X11R6/include/X11/extensions/xf86dgastr.h
+./usr/X11R6/include/X11/extensions/xf86misc.h
+./usr/X11R6/include/X11/extensions/xf86mscstr.h
 ./usr/X11R6/include/X11/extensions/xf86rush.h
 ./usr/X11R6/include/X11/extensions/xf86rushstr.h
+./usr/X11R6/include/X11/extensions/xf86vmode.h
+./usr/X11R6/include/X11/extensions/xf86vmstr.h
 ./usr/X11R6/include/X11/extensions/xtestext1.h
 ./usr/X11R6/include/X11/extensions/xteststr.h
 ./usr/X11R6/include/X11/extensions/xtrapbits.h
@@ -606,8 +612,10 @@
 ./usr/X11R6/lib/libXxf86dga.a
 ./usr/X11R6/lib/libXxf86dga_p.a
 ./usr/X11R6/lib/libXxf86dga_pic.a
+./usr/X11R6/lib/libXxf86misc.a
 ./usr/X11R6/lib/libXxf86misc_p.a
 ./usr/X11R6/lib/libXxf86misc_pic.a
+./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/lib/libXxf86vm_p.a
 ./usr/X11R6/lib/libXxf86vm_pic.a
 ./usr/X11R6/lib/libdps.a
