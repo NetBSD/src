@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.2 1995/04/02 20:38:45 chopps Exp $	*/
+/*	$NetBSD: if_es.c,v 1.3 1995/04/11 05:58:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -74,10 +74,6 @@
 #define ESDEBUG
 #define	USEPKTBUF
 
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
-
 /*
  * Ethernet software status per interface.
  *
@@ -88,14 +84,9 @@
 struct	es_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
-	struct	arpcom sc_ac;	/* common Ethernet structures */
-#define	sc_if	sc_ac.ac_if	/* network-visible interface */
-#define	sc_addr	sc_ac.ac_enaddr	/* hardware Ethernet address */
+	struct	arpcom sc_arpcom;	/* common Ethernet structures */
 	void	*sc_base;	/* base address of board */
 	short	sc_iflags;
-#if NBPFILTER > 0
-	caddr_t sc_bpf;
-#endif
 	unsigned short sc_intctl;
 #ifdef ESDEBUG
 	int	sc_debug;
@@ -113,36 +104,30 @@ int	esdebug = 0;
 #endif
 
 int esintr __P((struct es_softc *));
-int esstart __P((struct ifnet *));
-int eswatchdog __P((int));
+void esstart __P((struct ifnet *));
+void eswatchdog __P((int));
 int esioctl __P((struct ifnet *, u_long, caddr_t));
 void esrint __P((struct es_softc *));
 void estint __P((struct es_softc *));
 void esinit __P((struct es_softc *));
 void esreset __P((struct es_softc *));
 
-extern	struct ifnet loif;
-
+int esmatch __P((struct device *, void *, void *));
 void esattach __P((struct device *, struct device *, void *));
-int esmatch __P((struct device *, struct cfdata *, void *args));
 
 struct cfdriver escd = {
-	NULL, "es", (cfmatch_t)esmatch, esattach, DV_IFNET,
-	sizeof(struct es_softc), NULL, 0};
+	NULL, "es", esmatch, esattach, DV_IFNET, sizeof(struct es_softc)
+};
 
 int
-esmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+esmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-
-	struct zbus_args *zap;
-
-	zap = (struct zbus_args *)auxp;
+	struct zbus_args *zap = aux;
 
 	/* Ameristar A4066 ethernet card */
-	if ( zap->manid == 1053 && zap->prodid == 10)
+	if (zap->manid == 1053 && zap->prodid == 10)
 		return(1);
 
 	return (0);
@@ -154,23 +139,14 @@ esmatch(pdp, cfp, auxp)
  * to accept packets.
  */
 void
-esattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+esattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct zbus_args *zap;
-	struct es_softc *sc = (struct es_softc *) dp;
-	struct ifnet *ifp = &sc->sc_if;
-	char *cp;
-	int i;
+	struct es_softc *sc = (void *)self;
+	struct zbus_args *zap = aux;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	unsigned long ser;
-
-	zap =(struct zbus_args *)auxp;
-
-	/*
-	 * Make config msgs look nicer.
-	 */
-/*	printf("\n");*/
 
 	sc->sc_base = zap->va;
 
@@ -178,85 +154,81 @@ esattach(pdp, dp, auxp)
 	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
 	 * (Currently only Ameristar.)
 	 */
-	sc->sc_addr[0] = 0x00;
-	sc->sc_addr[1] = 0x00;
-	sc->sc_addr[2] = 0x9f;
+	sc->sc_arpcom.ac_enaddr[0] = 0x00;
+	sc->sc_arpcom.ac_enaddr[1] = 0x00;
+	sc->sc_arpcom.ac_enaddr[2] = 0x9f;
 
 	/*
 	 * Serial number for board contains last 3 bytes.
 	 */
 	ser = (unsigned long) zap->serno;
 
-	sc->sc_addr[3] = (ser >> 16) & 0xff;
-	sc->sc_addr[4] = (ser >>  8) & 0xff;
-	sc->sc_addr[5] = (ser      ) & 0xff;
+	sc->sc_arpcom.ac_enaddr[3] = (ser >> 16) & 0xff;
+	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8) & 0xff;
+	sc->sc_arpcom.ac_enaddr[5] = (ser      ) & 0xff;
 
-#if 0
-	printf("es%d: hardware address %s\n",
-	    dp->dv_unit, ether_sprintf(sc->sc_addr));
-#else
-	printf(": address %s\n", ether_sprintf(sc->sc_addr));
-#endif
-
-	ifp->if_unit = dp->dv_unit;
+	/* Initialize ifnet structure. */
+	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = escd.cd_name;
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_output = ether_output;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
 	/* XXX IFF_MULTICAST */
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
+	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	/* Print additional info when attached. */
+	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_isr.isr_intr = esintr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
-	add_isr (&sc->sc_isr);
-	return;
+	add_isr(&sc->sc_isr);
 }
 
 void
 esinit(sc)
 	struct es_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	union smcregs *smc = sc->sc_base;
 	int s;
 
-	if (!ifp->if_addrlist)
+	if (ifp->if_addrlist == 0)
 		return;
 
 	s = splimp();
 
-	smc->b0.bsr = 0x0000;		/* Select bank 0 */
+	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
 	smc->b0.rcr = RCR_EPH_RST;
 	smc->b0.rcr = 0;
-	smc->b3.bsr = 0x0300;		/* Select bank 3 */
+	smc->b3.bsr = BSR_BANK3;	/* Select bank 3 */
 	smc->b3.mt[0] = 0;		/* clear Multicast table */
 	smc->b3.mt[1] = 0;
 	smc->b3.mt[2] = 0;
 	smc->b3.mt[3] = 0;
 	/* XXX set Multicast table from Multicast list */
-	smc->b1.bsr = 0x0100;		/* Select bank 1 */
+	smc->b1.bsr = BSR_BANK1;	/* Select bank 1 */
 	smc->b1.cr = CR_RAM32K | CR_NO_WAIT_ST | CR_SET_SQLCH;
 	smc->b1.ctr = CTR_AUTO_RLSE;
-	smc->b1.iar[0] = *((unsigned short *) &sc->sc_addr[0]);
-	smc->b1.iar[1] = *((unsigned short *) &sc->sc_addr[2]);
-	smc->b1.iar[2] = *((unsigned short *) &sc->sc_addr[4]);
-	smc->b2.bsr = 0x0200;		/* Select bank 2 */
+	smc->b1.iar[0] = *((unsigned short *) &sc->sc_arpcom.ac_enaddr[0]);
+	smc->b1.iar[1] = *((unsigned short *) &sc->sc_arpcom.ac_enaddr[2]);
+	smc->b1.iar[2] = *((unsigned short *) &sc->sc_arpcom.ac_enaddr[4]);
+	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
 	smc->b2.mmucr = MMUCR_RESET;
-	smc->b0.bsr = 0x0000;		/* Select bank 0 */
-	smc->b0.mcr = SWAP (0x0020);	/* reserve 8K for transmit buffers */
+	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
+	smc->b0.mcr = SWAP(0x0020);	/* reserve 8K for transmit buffers */
 	smc->b0.tcr = TCR_PAD_EN | TCR_TXENA + TCR_MON_CSN;
 	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN;
 	/* XXX add multicast/promiscuous flags */
-	smc->b2.bsr = 0x0200;		/* Select bank 2 */
+	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
 	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX;
 
 	/* Interface is now 'running', with no output active. */
@@ -312,7 +284,7 @@ esintr(sc)
 			smc->b2.mmucr = MMUCR_RLSPKT;
 			while (smc->b2.mmucr & MMUCR_BUSY)
 				;
-			sc->sc_ac.ac_if.if_flags &= ~IFF_OACTIVE;
+			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 		}
 	}
 	while ((smc->b2.fifo & FIFO_REMPTY) == 0) {
@@ -323,7 +295,7 @@ esintr(sc)
 		    intsts);
 		smc->b2.ist = ACK_RX_OVRN;
 		printf ("->%02x\n", smc->b2.ist);
-		sc->sc_if.if_ierrors++;
+		sc->sc_arpcom.ac_if.if_ierrors++;
 	}
 	if (intact & IST_TX) {
 #ifdef ESDEBUG
@@ -336,14 +308,14 @@ esintr(sc)
 		if (esdebug)
 			printf ("->%02x\n", smc->b2.ist);
 #endif
-		smc->b0.bsr = 0x0000;
+		smc->b0.bsr = BSR_BANK0;
 		if ((smc->b0.tcr & TCR_TXENA) == 0) {
-			printf ("%s: IST %02x masked %02x EPH status %04x tcr %04x\n",
+			printf("%s: IST %02x masked %02x EPH status %04x tcr %04x\n",
 			    sc->sc_dev.dv_xname, intsts, intact, smc->b0.ephsr,
 			    smc->b0.tcr);
 			if ((smc->b0.ephsr & EPHSR_TX_SUC) == 0) {
 				smc->b0.tcr |= TCR_TXENA;
-				sc->sc_if.if_oerrors++;
+				sc->sc_arpcom.ac_if.if_oerrors++;
 			}
 		}
 		/*
@@ -351,13 +323,13 @@ esintr(sc)
 		 */
 #if 0
 		else if ((intact & IST_TX_EMPTY) == 0) {
-			printf("%s: unexpected TX interrupt %02x %02x",
+			printf("%s: unexpected TX interrupt %02x %02x\n",
 			    sc->sc_dev.dv_xname, intsts, intact);
 			smc->b2.bsr = 0x0200;
 			printf (" %02x\n", smc->b2.ist);
 		}
 #endif
-		smc->b2.bsr = 0x0200;
+		smc->b2.bsr = BSR_BANK2;
 	}
 	if (intact & IST_TX_EMPTY) {
 		u_short ecr;
@@ -374,12 +346,12 @@ esintr(sc)
 			    smc->b2.arr);
 #endif
 		sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
-		smc->b0.bsr = 0x0000;
+		smc->b0.bsr = BSR_BANK0;
 		ecr = smc->b0.ecr;	/* Get error counters */
 		if (ecr & 0xff00)
-			sc->sc_if.if_collisions += ((ecr >> 8) & 15) +
+			sc->sc_arpcom.ac_if.if_collisions += ((ecr >> 8) & 15) +
 			    ((ecr >> 11) & 0x1e);
-		smc->b2.bsr = 0x0200;
+		smc->b2.bsr = BSR_BANK2;
 	}
 	/* output packets */
 	estint(sc);
@@ -388,7 +360,7 @@ esintr(sc)
 }
 
 void
-esrint (sc)
+esrint(sc)
 	struct es_softc *sc;
 {
 	union smcregs *smc = sc->sc_base;
@@ -412,24 +384,24 @@ esrint (sc)
 		    smc->b2.fifo);
 #endif
 	data = (u_short *)&smc->b2.data;
-	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR | PTR_READ | SWAP (0x0002);
+	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR | PTR_READ | SWAP(0x0002);
 	(void) smc->b2.mmucr;
 #ifdef ESDEBUG
 	if (esdebug)
 		printf ("->%04x", smc->b2.fifo);
 #endif
 	len = *data;
-	len = SWAP (len);	/* Careful of macro side-effects */
+	len = SWAP(len);	/* Careful of macro side-effects */
 #ifdef ESDEBUG
 	if (esdebug)
 		printf (" length %d", len);
 #endif
-	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR + PTR_READ | SWAP (0x0000);
+	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR + PTR_READ | SWAP(0x0000);
 	(void) smc->b2.mmucr;
 	pktctlw = *data;
 	pktlen = *data;
-	pktctlw = SWAP (pktctlw);
-	pktlen = SWAP (pktlen) - 6;
+	pktctlw = SWAP(pktctlw);
+	pktlen = SWAP(pktlen) - 6;
 	if (pktctlw & RFSW_ODDFRM)
 		pktlen++;
 	/* XXX copy directly from controller to mbuf */
@@ -480,7 +452,7 @@ esrint (sc)
 	}
 #endif
 #endif /* USEPKTBUF */
-	ifp = &sc->sc_ac.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_ipackets++;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -547,13 +519,14 @@ esrint (sc)
 }
 
 void
-estint (sc)
+estint(sc)
 	struct es_softc *sc;
 {
-	esstart (&sc->sc_ac.ac_if);
+
+	esstart(&sc->sc_arpcom.ac_if);
 }
 
-int
+void
 esstart(ifp)
 	struct ifnet *ifp;
 {
@@ -561,7 +534,7 @@ esstart(ifp)
 	union smcregs *smc = sc->sc_base;
 	struct mbuf *m0, *m;
 #ifdef USEPKTBUF
-	u_short pktbuf[ETHER_MAX_LEN + 2];
+	u_short pktbuf[ETHERMTU + 2];
 #endif
 	u_short pktctlw, pktlen;
 	u_short *buf;
@@ -571,7 +544,7 @@ esstart(ifp)
 	short cnt;
 	int i;
 
-	if ((sc->sc_ac.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
+	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING)
 		return;
 
@@ -580,7 +553,7 @@ esstart(ifp)
 		 * Sneak a peek at the next packet to get the length
 		 * and see if the SMC 91C90 can accept it.
 		 */
-		m = sc->sc_ac.ac_if.if_snd.ifq_head;
+		m = sc->sc_arpcom.ac_if.if_snd.ifq_head;
 		if (!m)
 			break;
 #ifdef ESDEBUG
@@ -605,7 +578,7 @@ if (esdebug)
 			if ((smc->b2.arr & ARR_FAILED) == 0)
 				break;
 		if (smc->b2.arr & ARR_FAILED) {
-			sc->sc_ac.ac_if.if_flags |= IFF_OACTIVE;
+			sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
 #ifdef ESDEBUG
 if (esdebug)
   printf("-no xmit bufs r1 %x\n", smc->b2.pnr);
@@ -615,12 +588,12 @@ if (esdebug)
 		}
 		smc->b2.pnr = smc->b2.arr;
 
-		IF_DEQUEUE(&sc->sc_ac.ac_if.if_snd, m);
+		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 		smc->b2.ptr = PTR_AUTOINCR;
 		(void) smc->b2.mmucr;
 		data = (u_short *)&smc->b2.data;
-		*data = SWAP (pktctlw);
-		*data = SWAP (pktlen);
+		*data = SWAP(pktctlw);
+		*data = SWAP(pktlen);
 #ifdef USEPKTBUF
 		i = 0;
 		for (m0 = m; m; m = m->m_next) {
@@ -689,11 +662,11 @@ if (esdebug)
   printf("%s: esstart packet sent r1 %x\n", sc->sc_dev.dv_xname, smc->b2.pnr);
 #endif
 #if NBPFILTER > 0
-		if (sc->sc_ac.ac_if.if_bpf)
-			bpf_mtap(sc->sc_ac.ac_if.if_bpf, m0);
+		if (sc->sc_arpcom.ac_if.if_bpf)
+			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
 #endif
 		m_freem(m0);
-		sc->sc_ac.ac_if.if_opackets++;	/* move to interrupt? */
+		sc->sc_arpcom.ac_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 	}
 	smc->b2.msk = sc->sc_intctl;
@@ -701,24 +674,20 @@ if (esdebug)
 }
 
 int
-esioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
+esioctl(ifp, command, data)
+	register struct ifnet *ifp;
+	u_long command;
 	caddr_t data;
 {
 	struct es_softc *sc = escd.cd_devs[ifp->if_unit];
-	struct ifaddr *ifa = (struct ifaddr *)data;
+	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-#ifdef ESDEBUG
-	if (esdebug)
-		printf ("esioctl called: cmd %x\n", cmd);
-#endif
-
 	s = splimp();
 
-	switch (cmd) {
+	switch (command) {
+
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
@@ -726,8 +695,7 @@ esioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			esinit(sc);
-			sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
@@ -737,11 +705,12 @@ esioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(uniion ns_host *)(sc->sc_addr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_addr, sizeof(sc->sc_addr));
-			/* Set new address */
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
+			/* Set new address. */
 			esinit(sc);
 			break;
 #endif
@@ -750,6 +719,7 @@ esioctl(ifp, cmd, data)
 			break;
 		}
 		break;
+
 	case SIOCSIFFLAGS:
 		/*
 		 * If interface is marked down and it is running, then stop it
@@ -760,7 +730,7 @@ esioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			/* esstop(sc); */
+			esstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -774,7 +744,7 @@ esioctl(ifp, cmd, data)
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			/* esstop(sc); */
+			esstop(sc);
 			esinit(sc);
 		}
 #ifdef ESDEBUG
@@ -784,8 +754,6 @@ esioctl(ifp, cmd, data)
 			esdebug = sc->sc_debug = 0;
 #endif
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
 
 	default:
 		error = EINVAL;
@@ -802,18 +770,19 @@ esreset(sc)
 	int s;
 
 	s = splimp();
-	/* esstop(sc); */
+	esstop(sc);
 	esinit(sc);
 	splx(s);
 }
 
-int
+void
 eswatchdog(unit)
 	int unit;
 {
-	register struct es_softc *sc = escd.cd_devs[unit];
+	struct es_softc *sc = escd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	++sc->sc_arpcom.ac_if.if_oerrors;
+
 	esreset(sc);
-	return (0);
 }
