@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.6 2003/09/08 08:58:00 wiz Exp $
+.\"	$NetBSD: pkg_view.1,v 1.7 2003/09/08 09:12:35 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,10 +36,15 @@
 .Os
 .Sh NAME
 .Nm pkg_view
-.Nd a utility for managing package views
+.Nd manage package views
 .Sh SYNOPSIS
 .Nm
-.Op Ar options
+.Op Ar nVv
+.Op Fl d Ar stowdir
+.Op Fl i Ar ignore
+.Op Fl k Ar pkg_dbdir
+.Op Fl W Ar viewbase
+.Op Fl w Ar view
 .Ar command
 .Ar package ...
 .Sh DESCRIPTION
