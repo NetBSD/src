@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.4 2001/03/31 11:50:12 ragge Exp $	*/
+/*	$NetBSD: ka680.c,v 1.5 2001/04/24 20:16:37 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,12 +114,15 @@ ka680_conf()
 	*hej = *hej;
 	hej[-1] = hej[-1];
 
-	switch((vax_siedata & 0xff00) >> 8) {
+	if((vax_boardtype & 0xff) == 1) switch((vax_siedata & 0xff00) >> 8) {
 		case VAX_STYP_675: cpuname = "KA675"; break;
 		case VAX_STYP_680: cpuname = "KA680"; break;
 		case VAX_STYP_690: cpuname = "KA690"; break;
-		default: cpuname = "unknown NVAX";
-	}
+		default: cpuname = "unknown KA680-class";
+	} else if((vax_boardtype & 0xff) == 5) {
+		cpuname = "KA681";
+	} else cpuname = "unknown NVAX class";
+
 	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
 }
 
@@ -145,7 +148,7 @@ ka680_cache_enable()
 
 
 	start = 0x01400000;
-	switch ((vax_siedata & 0xff00) >> 8) {
+	if((vax_boardtype & 0xff) == 1) switch ((vax_siedata & 0xff00) >> 8) {
 	case VAX_STYP_675:
 		fslut = 0x01420000;
 		cslut = 0x01020000;
@@ -161,6 +164,14 @@ ka680_cache_enable()
 		cslut = 0x01040000;
 		havevic = 1;
 		break;
+	} else if((vax_boardtype & 0xff) == 5) {
+		fslut = 0x01420000;
+		cslut = 0x01020000;
+		havevic = 1;
+	} else {
+		fslut = 0x01420000;
+		cslut = 0x01020000;
+		havevic = 0;
 	}
 
 	/* Flush cache lines */
