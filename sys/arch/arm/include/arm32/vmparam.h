@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2003/05/02 23:26:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2003/05/03 18:25:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 #else /* ! ARM32_PMAP_NEW */
 /*
@@ -110,7 +110,7 @@
 #define	VM_MAX_ADDRESS		((vaddr_t) (PTE_BASE + \
 					    (KERNEL_BASE >> PGSHIFT) * \
 					    sizeof(pt_entry_t)))
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 #endif /* ARM32_PMAP_NEW */
 

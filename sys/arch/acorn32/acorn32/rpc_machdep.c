@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.52 2003/05/03 03:49:03 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.53 2003/05/03 18:25:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.52 2003/05/03 03:49:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.53 2003/05/03 18:25:28 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -100,6 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.52 2003/05/03 03:49:03 thorpej Exp
 
 #include "opt_ipkdb.h"
 #include "ksyms.h"
+
+/* Kernel text starts at the base of the kernel address space. */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.
