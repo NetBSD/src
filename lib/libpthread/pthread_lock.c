@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.13 2005/01/06 17:38:29 mycroft Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.14 2005/03/17 17:23:21 jwise Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.13 2005/01/06 17:38:29 mycroft Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.14 2005/03/17 17:23:21 jwise Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -257,7 +257,7 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 	
 	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL)) {
 		PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-//		pthread__assert(thread->pt_blockgen == thread->pt_unblockgen);
+		/* pthread__assert(thread->pt_blockgen == thread->pt_unblockgen); */
 		pthread__switch(thread, thread->pt_next);
 	}
 }
