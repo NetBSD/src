@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.19 2003/07/30 08:51:04 itojun Exp $	*/
+/*	$NetBSD: patch.c,v 1.20 2004/08/06 14:54:26 mycroft Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.19 2003/07/30 08:51:04 itojun Exp $");
+__RCSID("$NetBSD: patch.c,v 1.20 2004/08/06 14:54:26 mycroft Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -461,116 +461,126 @@ exclusive\n");
 
 	    if (*(s + 1) == '-') {
 		opt = decode_long_option(s + 2);
-		s += strlen(s) - 1;
+		s = "";
 	    }
 	    else
 		opt = *++s;
 
-	    switch (opt) {
-	    case 'b':
-		simple_backup_suffix = xstrdup(nextarg());
-		break;
-	    case 'B':
-		origprae = xstrdup(nextarg());
-		break;
-	    case 'c':
-		diff_type = CONTEXT_DIFF;
-		break;
-	    case 'd':
-		if (!*++s)
-		    s = nextarg();
-		if (chdir(s) < 0)
-		    pfatal("can't cd to %s", s);
-		break;
-	    case 'D':
-	    	do_defines = TRUE;
-		if (!*++s)
-		    s = nextarg();
-		if (!isalpha((unsigned char)*s) && '_' != *s)
-		    fatal("argument to -D is not an identifier\n");
-		snprintf(if_defined, sizeof(if_defined), "#ifdef %s\n", s);
-		snprintf(not_defined, sizeof(not_defined), "#ifndef %s\n", s);
-		snprintf(end_defined, sizeof(end_defined),
-		    "#endif /* %s */\n", s);
-		break;
-	    case 'e':
-		diff_type = ED_DIFF;
-		break;
-	    case 'E':
-		remove_empty_files = TRUE;
-		break;
-	    case 'f':
-		force = TRUE;
-		break;
-	    case 'F':
-		if (*++s == '=')
-		    s++;
-		maxfuzz = atoi(s);
-		break;
-	    case 'i':
-		if (filearg[1] != NULL)
-		    free(filearg[1]);
-		filearg[1] = xstrdup(nextarg());
-		break;
-	    case 'l':
-		canonicalize = TRUE;
-		break;
-	    case 'n':
-		diff_type = NORMAL_DIFF;
-		break;
-	    case 'N':
-		noreverse = TRUE;
-		break;
-	    case 'o':
-		outname = xstrdup(nextarg());
-		break;
-	    case 'p':
-		if (*++s == '=')
-		    s++;
-		strippath = atoi(s);
-		break;
-	    case 'r':
-		strlcpy(rejname, nextarg(), sizeof(rejname));
-		break;
-	    case 'R':
-		reverse = TRUE;
-		reverse_flag_specified = TRUE;
-		break;
-	    case 's':
-		verbose = FALSE;
-		break;
-	    case 'S':
-		skip_rest_of_patch = TRUE;
-		break;
-	    case 't':
-		batch = TRUE;
-		break;
-	    case 'u':
-		diff_type = UNI_DIFF;
-		break;
-	    case 'v':
-		version();
-		break;
-	    case 'V':
+	    do {
+		printf("PARSING OPTION %c\n", opt);
+		switch (opt) {
+		case 'b':
+		    simple_backup_suffix = xstrdup(nextarg());
+		    break;
+		case 'B':
+		    origprae = xstrdup(nextarg());
+		    break;
+		case 'c':
+		    diff_type = CONTEXT_DIFF;
+		    break;
+		case 'd':
+		    if (!*++s)
+			s = nextarg();
+		    if (chdir(s) < 0)
+			pfatal("can't cd to %s", s);
+		    s = "";
+		    break;
+		case 'D':
+	    	    do_defines = TRUE;
+		    if (!*++s)
+			s = nextarg();
+		    if (!isalpha((unsigned char)*s) && '_' != *s)
+			fatal("argument to -D is not an identifier\n");
+		    snprintf(if_defined, sizeof(if_defined), "#ifdef %s\n", s);
+		    snprintf(not_defined, sizeof(not_defined), "#ifndef %s\n", s);
+		    snprintf(end_defined, sizeof(end_defined),
+			"#endif /* %s */\n", s);
+		    s = "";
+		    break;
+		case 'e':
+		    diff_type = ED_DIFF;
+		    break;
+		case 'E':
+		    remove_empty_files = TRUE;
+		    break;
+		case 'f':
+		    force = TRUE;
+		    break;
+		case 'F':
+		    if (*++s == '=')
+			s++;
+		    maxfuzz = atoi(s);
+		    s = "";
+		    break;
+		case 'i':
+		    if (filearg[1] != NULL)
+			free(filearg[1]);
+		    filearg[1] = xstrdup(nextarg());
+		    break;
+		case 'l':
+		    canonicalize = TRUE;
+		    break;
+		case 'n':
+		    diff_type = NORMAL_DIFF;
+		    break;
+		case 'N':
+		    noreverse = TRUE;
+		    break;
+		case 'o':
+		    outname = xstrdup(nextarg());
+		    break;
+		case 'p':
+		    if (*++s == '=')
+			s++;
+		    strippath = atoi(s);
+		    s = "";
+		    break;
+		case 'r':
+		    strlcpy(rejname, nextarg(), sizeof(rejname));
+		    break;
+		case 'R':
+		    reverse = TRUE;
+		    reverse_flag_specified = TRUE;
+		    break;
+		case 's':
+		    verbose = FALSE;
+		    break;
+		case 'S':
+		    skip_rest_of_patch = TRUE;
+		    break;
+		case 't':
+		    batch = TRUE;
+		    break;
+		case 'u':
+		    diff_type = UNI_DIFF;
+		    break;
+		case 'v':
+		    version();
+		    break;
+		case 'V':
 #ifndef NODIR
-		backup_type = get_version (nextarg ());
+		    backup_type = get_version (nextarg ());
 #endif
-		break;
+		    break;
 #ifdef DEBUGGING
-	    case 'x':
-		debug = atoi(s+1);
-		break;
+		case 'x':
+		    debug = atoi(s+1);
+		    s = "";
+		    break;
 #endif
-	    default:
-		fprintf(stderr, "patch: unrecognized option `%s'\n", Argv[0]);
-		fprintf(stderr, "\
+		default:
+		    fprintf(stderr, "patch: unrecognized option `%s'\n",
+			Argv[0]);
+		    fprintf(stderr, "\
 Usage: patch [options] [origfile [patchfile]] [+ [options] [origfile]]...\n\
 Options:\n\
        [-ceEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
        [-D symbol] [-Fmax-fuzz] [-o out-file] [-p[strip-count]]\n\
        [-r rej-name] [-V {numbered,existing,simple}]\n");
-		my_exit(1);
-	    }
+		    my_exit(1);
+		}
+		opt = *++s;
+	    } while (opt != '\0');
 	}
     }
 }
