@@ -1,1 +1,0 @@
-#define NSER 1
