@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.50 2002/01/21 15:40:55 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.51 2002/01/21 15:55:36 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -100,7 +100,7 @@ This may be faster on slow machines that have an expensive
 .Xr fork 2
 operation.
 .Bl -hang
-.It Em Note:
+.It Em Note :
 Use this at your own risk!
 A rogue command or script may inadvertently prevent boot to multiuser.
 .El
@@ -373,7 +373,7 @@ in
 as part of
 .Pa / ,
 or direct the DHCP client to store the leases file on the root
-filesystem by modifying the
+file system by modifying the
 .Sy dhclient_flags
 variable.
 You must not provide ifconfig information or ifaliases
@@ -607,7 +607,7 @@ as the unprivileged user and group
 .Xr chroot 2 Ns ed
 to
 .Sy ntpd_chrootdir .
-.Pa Sy ntpd_chrootdir Ns /var/run/log
+.Pa Sy ntpd_chrootdir Ns Pa /var/run/log
 will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
@@ -924,7 +924,7 @@ or
 Runs
 .Xr amd 8 ,
 the automounter daemon, which automatically mounts NFS file systems
-whenever a file or directory within that filesystem is accessed.
+whenever a file or directory within that file system is accessed.
 Passes
 .Sy amd_flags .
 .It Sy amd_dir
@@ -999,7 +999,7 @@ Runs
 .Xr poffd 8
 x68k shutdown daemon
 (only for
-.Nx x86k ) .
+.Nx Ns /x86k ) .
 Passes
 .Sy poffd_flags .
 .It Sy screenblank
