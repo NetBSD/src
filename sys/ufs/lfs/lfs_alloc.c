@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.36 2000/06/22 18:31:49 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.37 2000/06/22 18:46:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ lfs_valloc(v)
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_ialloc: inuse inode %d on the free list", new_ino);
 	fs->lfs_free = ifp->if_nextfree;
-	new_gen = ifp->fi_version; /* version was updated by vfree */
+	new_gen = ifp->if_version; /* version was updated by vfree */
 #ifdef LFS_DEBUG_NEXTFREE
 	ifp->if_nextfree = 0;
 	VOP_BWRITE(bp);
