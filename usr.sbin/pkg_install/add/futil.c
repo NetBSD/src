@@ -1,11 +1,11 @@
-/*	$NetBSD: futil.c,v 1.9 2002/10/17 03:31:33 christos Exp $	*/
+/*	$NetBSD: futil.c,v 1.10 2003/08/24 21:11:37 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.9 2002/10/17 03:31:33 christos Exp $");
+__RCSID("$NetBSD: futil.c,v 1.10 2003/08/24 21:11:37 tron Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ make_hierarchy(char *dir)
 			if (!(isdir(dir) || islinktodir(dir)))
 				return FAIL;
 		} else {
-			if (vsystem("mkdir %s", dir))
+			if (fexec("mkdir", dir, NULL))
 				return FAIL;
 			apply_perms(NULL, dir);
 		}

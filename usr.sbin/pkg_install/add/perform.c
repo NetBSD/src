@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.83 2003/07/14 06:00:44 itojun Exp $	*/
+/*	$NetBSD: perform.c,v 1.84 2003/08/24 21:11:37 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.83 2003/07/14 06:00:44 itojun Exp $");
+__RCSID("$NetBSD: perform.c,v 1.84 2003/08/24 21:11:37 tron Exp $");
 #endif
 #endif
 
@@ -572,7 +572,7 @@ ignore_replace_depends_check:
 
 	/* Look for the requirements file */
 	if (fexists(REQUIRE_FNAME)) {
-		vsystem("%s +x %s", CHMOD_CMD, REQUIRE_FNAME);	/* be sure */
+		(void) fexec(CHMOD_CMD, "+x", REQUIRE_FNAME, NULL);	/* be sure */
 		if (Verbose)
 			printf("Running requirements file first for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
