@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2000/06/16 16:29:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2002/01/22 19:32:48 he Exp $
 
 LIB=	crypt
 
-SRCS=	crypt.c
+SRCS=	crypt.c md5crypt.c
 
 MAN=	crypt.3
 MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3
