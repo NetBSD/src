@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.103 1998/02/12 02:54:02 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.104 1998/02/13 00:12:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 1998/02/12 02:54:02 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 1998/02/13 00:12:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,6 +816,58 @@ cpu_startup()
 	 * to do restarts.
 	 */
 	hwrpb_restart_setup();
+}
+
+/*
+ * Retrieve the platform name from the DSR.
+ */
+const char *
+alpha_dsr_sysname()
+{
+	struct dsrdb *dsr;
+	const char *sysname;
+
+	/*
+	 * DSR does not exist on early HWRPB versions.
+	 */
+	if (hwrpb->rpb_version < HWRPB_DSRDB_MINVERS)
+		return (NULL);
+
+	dsr = (struct dsrdb *)(((caddr_t)hwrpb) + hwrpb->rpb_dsrdb_off);
+	sysname = (const char *)((caddr_t)dsr + (dsr->dsr_sysname_off +
+	    sizeof(u_int64_t)));
+	return (sysname);
+}
+
+/*
+ * Lookup the system specified system variation in the provided table,
+ * returning the model string on match.
+ */
+const char *
+alpha_variation_name(variation, avtp)
+	u_int64_t variation;
+	const struct alpha_variation_table *avtp;
+{
+	int i;
+
+	for (i = 0; avtp[i].avt_model != NULL; i++)
+		if (avtp[i].avt_variation == variation)
+			return (avtp[i].avt_model);
+	return (NULL);
+}
+
+/*
+ * Generate a default platform name based for unknown system variations.
+ */
+const char *
+alpha_unknown_sysname()
+{
+	/* string is 24 bytes + 64 bit hex number (16 bytes) */
+	static char s[42];
+
+	sprintf(s, "unknown model variation %lx",
+	    hwrpb->rpb_variation & SV_ST_MASK);
+	return ((const char *)s);
 }
 
 void

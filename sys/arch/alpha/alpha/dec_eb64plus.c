@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.11 1997/10/17 18:59:58 mjacob Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.12 1998/02/13 00:12:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.11 1997/10/17 18:59:58 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.12 1998/02/13 00:12:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,24 +68,25 @@ void dec_eb64plus_init __P((void));
 static void dec_eb64plus_cons_init __P((void));
 static void dec_eb64plus_device_register __P((struct device *, void *));
 
+const struct alpha_variation_table dec_eb64plus_variations[] = {
+	{ 0, "DEC EB64+" },
+	{ 0, NULL },
+};
+
 void
 dec_eb64plus_init()
 {
+	u_int64_t variation;
+
 	platform.family = "EB64+";
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case 0:
-		platform.model = platform.family;
-		break;
-	default:
-	{
-		/* string is 24 bytes plus 64 bit hex number (16 byte) */
-		static char s[42];
-		sprintf(s, "unknown model variation %lx",
-			hwrpb->rpb_variation & SV_ST_MASK);
-		platform.model = (const char *) s;
-		break;
+
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if ((platform.model = alpha_variation_name(variation,
+		    dec_eb64plus_variations)) == NULL)
+			platform.model = alpha_unknown_sysname();
 	}
-	}
+
 	platform.iobus = "apecs";
 	platform.cons_init = dec_eb64plus_cons_init;
 	platform.device_register = dec_eb64plus_device_register;

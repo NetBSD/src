@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.18 1997/09/23 23:15:46 mjacob Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.19 1998/02/13 00:12:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.18 1997/09/23 23:15:46 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.19 1998/02/13 00:12:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,59 +53,48 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.18 1997/09/23 23:15:46 mjacob Exp
 void dec_3000_500_init __P((void));
 static void dec_3000_500_device_register __P((struct device *, void *));
 
+static const char dec_3000_500_sp[] = "DEC 3000/400 (\"Sandpiper\")";
+static const char dec_3000_500_sf[] = "DEC 3000/500 (\"Flamingo\")";
+
+const struct alpha_variation_table dec_3000_500_variations[] = {
+	{ SV_ST_SANDPIPER, dec_3000_500_sp },
+	{ SV_ST_FLAMINGO, dec_3000_500_sf },
+	{ SV_ST_HOTPINK, "DEC 3000/500X (\"Hot Pink\")" },
+	{ SV_ST_FLAMINGOPLUS, "DEC 3000/800 (\"Flamingo+\")" },
+	{ SV_ST_SANDPLUS, "DEC 3000/600 (\"Sandpiper+\")" },
+	{ SV_ST_SANDPIPER45, "DEC 3000/700 (\"Sandpiper45\")" },
+	{ SV_ST_FLAMINGO45, "DEC 3000/900 (\"Flamingo45\")" },
+	{ 0, NULL },
+};
+
 void
 dec_3000_500_init()
 {
-	const char *sp = "DEC 3000/400 (\"Sandpiper\")";
-	const char *sf = "DEC 3000/500 (\"Flamingo\")";
+	u_int64_t variation;
 
 	platform.family = "DEC 3000/500 (\"Flamingo\")";
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case SV_ST_SANDPIPER:
-		platform.model = sp;
-		break;
 
-	case SV_ST_FLAMINGO:
-		platform.model = sf;
-		break;
-
-	case SV_ST_HOTPINK:
-		platform.model = "DEC 3000/500X (\"Hot Pink\")";
-		break;
-
-	case SV_ST_FLAMINGOPLUS:
-	case SV_ST_ULTRA:
-		platform.model = "DEC 3000/800 (\"Flamingo+\")";
-		break;
-
-	case SV_ST_SANDPLUS:
-		platform.model = "DEC 3000/600 (\"Sandpiper+\")";
-		break;
-
-	case SV_ST_SANDPIPER45:
-		platform.model = "DEC 3000/700 (\"Sandpiper45\")";
-		break;
-
-	case SV_ST_FLAMINGO45:
-		platform.model = "DEC 3000/900 (\"Flamingo45\")";
-		break;
-
-	case SV_ST_RESERVED: /* this is how things used to be done */
-		if (hwrpb->rpb_variation & SV_GRAPHICS)
-			platform.model = sf;
-		else
-			platform.model = sp;
-		break;
-	default:
-	{
-		/* string is 24 bytes plus 64 bit hex number (16 byte) */
-		static char s[42];
-		sprintf(s, "unknown model variation %lx",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		platform.model = (const char *) s;
-		break;
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if (variation == SV_ST_ULTRA) {
+			/* These are really the same. */
+			variation = SV_ST_FLAMINGOPLUS;
+		}
+		if ((platform.model = alpha_variation_name(variation,
+		    dec_3000_500_variations)) == NULL) {
+			/*
+			 * This is how things used to be done.
+			 */
+			if (variation == SV_ST_RESERVED) {
+				if (hwrpb->rpb_variation & SV_GRAPHICS)
+					platform.model = dec_3000_500_sf;
+				else
+					platform.model = dec_3000_500_sp;
+			} else
+				platform.model = alpha_unknown_sysname();
+		}
 	}
-	}
+
 	platform.iobus = "tcasic";
 	platform.device_register = dec_3000_500_device_register;
 }

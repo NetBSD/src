@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.35 1997/10/17 18:59:54 mjacob Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.36 1998/02/13 00:12:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.35 1997/10/17 18:59:54 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.36 1998/02/13 00:12:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,24 +68,25 @@ void dec_kn20aa_init __P((void));
 static void dec_kn20aa_cons_init __P((void));
 static void dec_kn20aa_device_register __P((struct device *, void *));
 
+const struct alpha_variation_table dec_kn20aa_variations[] = {
+	{ 0, "AlphaStation 500 or 600 (KN20AA)" },
+	{ 0, NULL },
+};
+
 void
 dec_kn20aa_init()
 {
-	platform.family = "AlphaStation 600 (KN20AA)";
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case 0:
-		platform.model = "AlphaStation 500 or 600 (KN20AA)";
-		break;
-	default:
-	{
-		/* string is 24 bytes plus 64 bit hex number (16 byte) */
-		static char s[42];
-		sprintf(s, "unknown model variation %lx",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		platform.model = (const char *) s;
-		break;
+	u_int64_t variation;
+
+	platform.family = "AlphaStation 500 or 600 (KN20AA)";
+
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if ((platform.model = alpha_variation_name(variation,
+		    dec_kn20aa_variations)) == NULL)
+			platform.model = alpha_unknown_sysname();
 	}
-	}
+
 	platform.iobus = "cia";
 	platform.cons_init = dec_kn20aa_cons_init;
 	platform.device_register = dec_kn20aa_device_register;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.36 1997/10/17 19:00:12 mjacob Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.37 1998/02/13 00:12:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.36 1997/10/17 19:00:12 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.37 1998/02/13 00:12:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,46 +67,34 @@ void dec_2100_a50_init __P((void));
 static void dec_2100_a50_cons_init __P((void));
 static void dec_2100_a50_device_register __P((struct device *, void *));
 
+const struct alpha_variation_table dec_2100_a50_variations[] = {
+	{ SV_ST_AVANTI,	"AlphaStation 400 4/233 (\"Avanti\")" },
+	{ SV_ST_MUSTANG2_4_166, "AlphaStation 200 4/166 (\"Mustang II\")" },
+	{ SV_ST_MUSTANG2_4_233, "AlphaStation 200 4/233 (\"Mustang II\")" },
+	{ SV_ST_AVANTI_4_266, "AlphaStation 250 4/266" },
+	{ SV_ST_MUSTANG2_4_100, "AlphaStation 200 4/100 (\"Mustang II\")" },
+	{ SV_ST_AVANTI_4_233, "AlphaStation 255/233" },
+	{ 0, NULL },
+};
+
 void
 dec_2100_a50_init()
 {
+	u_int64_t variation;
+
 	platform.family = "AlphaStation 200/400 (\"Avanti\")";
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case SV_ST_AVANTI:
-	case SV_ST_AVANTI_XXX:		/* XXX apparently the same? */
-		platform.model = "AlphaStation 400 4/233 (\"Avanti\")";
-		break;
 
-	case SV_ST_MUSTANG2_4_166:
-		platform.model = "AlphaStation 200 4/166 (\"Mustang II\")";
-		break;
-
-	case SV_ST_MUSTANG2_4_233:
-		platform.model = "AlphaStation 200 4/233 (\"Mustang II\")";
-		break;
-
-	case SV_ST_AVANTI_4_266:
-		platform.model = "AlphaStation 250 4/266";
-		break;
-
-	case SV_ST_MUSTANG2_4_100:
-		platform.model = "AlphaStation 200 4/100 (\"Mustang II\")";
-		break;
-
-	case SV_ST_AVANTI_4_233:
-		platform.model = "AlphaStation 255/233";
-		break;
-
-	default:
-	{
-		/* string is 24 bytes plus 64 bit hex number (16 byte) */
-		static char s[42];
-		sprintf(s, "unknown model variation %lx",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		platform.model = (const char *) s;
-		break;
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if (variation == SV_ST_AVANTI_XXX) {
+			/* XXX apparently the same? */
+			variation = SV_ST_AVANTI;
+		}
+		if ((platform.model = alpha_variation_name(variation,
+		    dec_2100_a50_variations)) == NULL)
+			platform.model = alpha_unknown_sysname();
 	}
-	}
+
 	platform.iobus = "apecs";
 	platform.cons_init = dec_2100_a50_cons_init;
 	platform.device_register = dec_2100_a50_device_register;
