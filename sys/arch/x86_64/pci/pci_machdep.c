@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2002/09/27 15:37:02 provos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2002/11/23 12:53:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/icu.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -501,7 +500,7 @@ pci_intr_map(pa, ihp)
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	} else {
-		if (line >= ICU_LEN) {
+		if (line >= NUM_LEGACY_IRQS) {
 			printf("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
@@ -526,7 +525,7 @@ pci_intr_string(pc, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || ih >= NUM_LEGACY_IRQS || ih == 2)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
@@ -552,7 +551,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	void *arg;
 {
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || ih >= NUM_LEGACY_IRQS || ih == 2)
 		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
