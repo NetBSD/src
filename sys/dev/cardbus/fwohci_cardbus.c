@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.3 2001/11/15 09:48:02 lukem Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.4 2001/12/29 12:26:32 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.3 2001/11/15 09:48:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.4 2001/12/29 12:26:32 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,11 @@ struct fwohci_cardbus_softc {
 
 static int fwohci_cardbus_match(struct device *, struct cfdata *, void *);
 static void fwohci_cardbus_attach(struct device *, struct device *, void *);
+static int fwohci_cardbus_detach(struct device *, int);
 
 struct cfattach fwohci_cardbus_ca = {
 	sizeof(struct fwohci_cardbus_softc), fwohci_cardbus_match, fwohci_cardbus_attach,
-#if 0
 	fwohci_cardbus_detach, fwohci_activate
-#endif
 };
 
 #define CARDBUS_OHCI_MAP_REGISTER PCI_OHCI_MAP_REGISTER
@@ -162,4 +161,28 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		bus_space_unmap(sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
 		    sc->sc_sc.sc_memsize);
 	}
+}
+
+int
+fwohci_cardbus_detach(struct device *self, int flags)
+{
+	struct fwohci_cardbus_softc *sc = (struct fwohci_cardbus_softc *)self;
+	cardbus_devfunc_t ct = sc->sc_ct;
+	int rv;
+
+	rv = fwohci_detach(&sc->sc_sc, flags);
+
+	if (rv)
+		return (rv);
+	if (sc->sc_ih != NULL) {
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+		sc->sc_ih = NULL;
+	} 
+	if (sc->sc_sc.sc_memsize) {
+		Cardbus_mapreg_unmap(ct, CARDBUS_OHCI_MAP_REGISTER,
+			sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
+			sc->sc_sc.sc_memsize);
+		sc->sc_sc.sc_memsize = 0;
+	}
+	return (0);
 }
