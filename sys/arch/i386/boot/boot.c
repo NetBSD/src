@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.11 1993/09/06 22:09:45 mycroft Exp $
+ *	$Id: boot.c,v 1.12 1993/09/07 07:35:41 mycroft Exp $
  */
 
 /*
@@ -82,14 +82,15 @@ int drive;
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.11 $");
+		"$Revision: 1.12 $");
 	gateA20();
 loadstart:
 	/***************************************************************\
 	* As a default set it to the first partition of the first	*
 	* floppy or hard drive						*
 	\***************************************************************/
-	part = unit = 0;
+	part = 0;
+	unit = drive&0x7f;
 	maj = (drive&0x80 ? 0 : 2);		/* a good first bet */
 
 	name = names[currname++];
@@ -211,7 +212,7 @@ loadprog(howto)
 		/********************************************************/
 		/* READ in the symbol table				*/
 		/********************************************************/
-		printf("symbols=[0x%x", head.a_syms);
+		printf("symbols=[0x%x+", head.a_syms);
 		xread(addr, head.a_syms);
 		addr += head.a_syms;
 	
@@ -231,7 +232,7 @@ loadprog(howto)
 		/********************************************************/
 		/* and that many bytes of (debug symbols?)		*/
 		/********************************************************/
-		printf("+0x%x] ", i);
+		printf("0x%x] ", i);
                 argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
 	}
 
