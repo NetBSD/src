@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.29 2001/01/28 10:41:44 itojun Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.30 2001/01/29 01:51:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -194,6 +194,23 @@ vlanattach(int n)
 	if_clone_attach(&vlan_cloner);
 }
 
+static void
+vlan_reset_linkname(struct ifnet *ifp)
+{
+
+	/*
+	 * We start out with a "802.1Q VLAN" type and zero-length
+	 * addresses.  When we attach to a parent interface, we
+	 * inherit its type, address length, address, and data link
+	 * type.
+	 */
+
+	ifp->if_type = IFT_L2VLAN;
+	ifp->if_addrlen = 0;
+	ifp->if_dlt = DLT_NULL;
+	if_alloc_sadl(ifp);
+}
+
 static int
 vlan_clone_create(struct if_clone *ifc, int unit)
 {
@@ -217,7 +234,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = vlan_ioctl;
 
 	if_attach(ifp);
-	if_alloc_sadl(ifp);
+	vlan_reset_linkname(ifp);
 
 	return (0);
 }
@@ -359,6 +376,7 @@ vlan_unconfig(struct ifnet *ifp)
 		}
 
 		ether_ifdetach(ifp);
+		vlan_reset_linkname(ifp);
 		break;
 	    }
 
@@ -454,8 +472,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGIFADDR:
-		if (ifp->if_sadl == NULL)
-			return (EADDRNOTAVAIL);
 		sa = (struct sockaddr *)&ifr->ifr_data;
 		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
