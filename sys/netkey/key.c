@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.17 2000/05/08 18:31:37 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.18 2000/05/19 04:34:43 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.67 2000/03/05 02:38:25 itojun Exp $	*/
 
 /*
@@ -4104,7 +4104,7 @@ key_add(mhp)
 		return NULL;
 
 	/* check SA values to be mature. */
-	if ((msg0->sadb_msg_errno = key_mature(newsav)) != NULL) {
+	if ((msg0->sadb_msg_errno = key_mature(newsav)) != 0) {
 		key_freesav(newsav);
 		return NULL;
 	}
@@ -5367,7 +5367,7 @@ key_dump(mhp, so, target)
 		printf("key_dump: invalid satype is passed.\n");
 #endif
 		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
+		return 0;
 	}
 
 	/* count sav entries to be sent to the userland. */
@@ -5406,7 +5406,7 @@ key_dump(mhp, so, target)
 			printf("key_dump: there was invalid proto in SAD.\n");
 #endif
 			msg0->sadb_msg_errno = EINVAL;
-			return NULL;
+			return 0;
 		}
 
 		for (stateidx = 0;

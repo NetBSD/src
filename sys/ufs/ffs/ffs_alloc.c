@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.34 2000/04/04 09:23:20 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.35 2000/05/19 04:34:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -721,7 +721,7 @@ ffs_blkpref(ip, lbn, indx, bap)
 				fs->fs_cgrotor = cg;
 				return (fs->fs_fpg * cg + fs->fs_frag);
 			}
-		return (NULL);
+		return (0);
 	}
 	/*
 	 * One or more previous blocks have been laid out. If less
@@ -799,7 +799,7 @@ ffs_hashalloc(ip, cg, pref, size, allocator)
 		if (cg == fs->fs_ncg)
 			cg = 0;
 	}
-	return (NULL);
+	return (0);
 }
 
 /*
@@ -824,30 +824,30 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nffree < numfrags(fs, nsize - osize))
-		return (NULL);
+		return (0);
 	frags = numfrags(fs, nsize);
 	bbase = fragnum(fs, bprev);
 	if (bbase > fragnum(fs, (bprev + frags - 1))) {
 		/* cannot extend across a block boundary */
-		return (NULL);
+		return (0);
 	}
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp->cg_time = ufs_rw32(time.tv_sec, UFS_FSNEEDSWAP(fs));
 	bno = dtogd(fs, bprev);
 	for (i = numfrags(fs, osize); i < frags; i++)
 		if (isclr(cg_blksfree(cgp, UFS_FSNEEDSWAP(fs)), bno + i)) {
 			brelse(bp);
-			return (NULL);
+			return (0);
 		}
 	/*
 	 * the current fragment can be extended
@@ -897,18 +897,18 @@ ffs_alloccg(ip, cg, bpref, size)
 #endif
 
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap) ||
 	    (cgp->cg_cs.cs_nbfree == 0 && size == fs->fs_bsize)) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp->cg_time = ufs_rw32(time.tv_sec, needswap);
 	if (size == fs->fs_bsize) {
@@ -932,7 +932,7 @@ ffs_alloccg(ip, cg, bpref, size)
 		 */
 		if (cgp->cg_cs.cs_nbfree == 0) {
 			brelse(bp);
-			return (NULL);
+			return (0);
 		}
 		bno = ffs_alloccgblk(ip, bp, bpref);
 		bpref = dtogd(fs, bno);
@@ -955,7 +955,7 @@ ffs_alloccg(ip, cg, bpref, size)
 	 */
 	if (bno < 0) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 #endif
 	for (i = 0; i < frags; i++)
@@ -1080,7 +1080,7 @@ norot:
 	 */
 	bno = ffs_mapsearch(fs, cgp, bpref, (int)fs->fs_frag);
 	if (bno < 0)
-		return (NULL);
+		return (0);
 	cgp->cg_rotor = ufs_rw32(bno, needswap);
 gotit:
 	blkno = fragstoblks(fs, bno);
@@ -1123,7 +1123,7 @@ ffs_clusteralloc(ip, cg, bpref, len)
 
 	fs = ip->i_fs;
 	if (fs->fs_maxcluster[cg] < len)
-		return (NULL);
+		return (0);
 	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize,
 	    NOCRED, &bp))
 		goto fail;
@@ -1238,17 +1238,17 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 #endif
 
 	if (fs->fs_cs(fs, cg).cs_nifree == 0)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap) || cgp->cg_cs.cs_nifree == 0) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp->cg_time = ufs_rw32(time.tv_sec, needswap);
 	if (ipref) {

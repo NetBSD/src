@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.19 2000/05/19 01:40:18 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.20 2000/05/19 04:34:43 thorpej Exp $	*/
 /*	$KAME: ip6_output.c,v 1.102 2000/05/17 15:31:56 itojun Exp $	*/
 
 /*
@@ -683,7 +683,7 @@ skip_ipsec2:;
 			 * if necessary.
 			 */
 			if (ip6_mrouter && (flags & IPV6_FORWARDING) == 0) {
-				if (ip6_mforward(ip6, ifp, m) != NULL) {
+				if (ip6_mforward(ip6, ifp, m) != 0) {
 					m_freem(m);
 					goto done;
 				}
