@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.46 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.46.2.1 2004/05/29 09:05:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.46 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.46.2.1 2004/05/29 09:05:21 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -312,7 +312,8 @@ SYSCTL_SETUP(sysctl_vfs_fdesc_setup, "sysctl vfs.fdesc subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-                       CTLTYPE_NODE, "fdesc", NULL,
+		       CTLTYPE_NODE, "fdesc",
+		       SYSCTL_DESCR("File-descriptor file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 7, CTL_EOL);
 	/*
