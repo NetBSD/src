@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.9 2000/06/04 04:30:49 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.10 2000/08/29 15:10:18 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -76,6 +76,7 @@ struct preference_s {
 	int setting_idx;
 	int fb_type;
 	int fb_width, fb_height, fb_linebytes;
+	int boot_time;
 	long fb_addr;
 	unsigned long platid_cpu, platid_machine;
 	TCHAR setting_name[PATHBUFLEN];
@@ -85,6 +86,7 @@ struct preference_s {
 	BOOL load_debug_info;
 	BOOL serial_port;
 	BOOL reverse_video;
+	BOOL autoboot;	
 };
 
 struct path_s {
@@ -115,7 +117,7 @@ extern TCHAR* where_pref_load_from;
  *  main.c
  */
 BOOL CheckCancel(int progress);
-extern HWND hWndMain;
+extern HWND hDlgMain;
 
 /*
  *  layout.c

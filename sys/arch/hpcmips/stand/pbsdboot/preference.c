@@ -1,4 +1,4 @@
-/*	$NetBSD: preference.c,v 1.3 2000/03/19 11:10:59 takemura Exp $	*/
+/*	$NetBSD: preference.c,v 1.4 2000/08/29 15:10:20 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -39,9 +39,55 @@
 #include <commctrl.h>
 #include <res/resource.h>
 
+
 struct preference_s pref;
 TCHAR* where_pref_load_from = NULL;
 static TCHAR filenamebuf[1024];
+
+
+#define SETTING_IDX 1
+#define FB_TYPE 2
+#define FB_WIDTH 3
+#define FB_HEIGHT 4
+#define FB_LINEBYTES 5
+#define BOOT_TIME 6
+#define FB_ADDR 7
+#define PLATID_CPU 8
+#define PLATID_MACHINE 9
+#define SETTING_NAME 10
+#define KERNEL_NAME 11
+#define OPTIONS 12
+#define CHECK_LAST_CHANCE 13
+#define LOAD_DEBUG_INFO 14
+#define SERIAL_PORT 15
+#define REVERSE_VIDEO 16
+#define AUTOBOOT 17
+
+#define NOFID 18
+
+
+TCHAR *id_table[] = {
+0,
+TEXT("setting_idx"),
+TEXT("fb_type"),
+TEXT("fb_width"),
+TEXT("fb_height"),
+TEXT("fb_linebytes"),
+TEXT("boot_time"),
+TEXT("fb_addr"),
+TEXT("platid_cpu"),
+TEXT("platid_machine"),
+TEXT("setting_name"),
+TEXT("kernel_name"),
+TEXT("options"),
+TEXT("check_last_chance"),
+TEXT("load_debug_info"),
+TEXT("serial_port"),
+TEXT("reverse_video"),
+TEXT("autoboot"),
+};
+
+
 
 void
 pref_init(struct preference_s* pref)
@@ -49,6 +95,58 @@ pref_init(struct preference_s* pref)
 	memset(pref, 0, sizeof(*pref));
 }
 
+
+/*
+ argument file is handle that was already opened .
+ if read is faile , this function will "not" close this handle .
+ return 0 if error . if end of file , return -1
+*/
+int read1byte(HANDLE file,char *c){
+	DWORD n;
+	if(!ReadFile(file,c,sizeof(char),&n,NULL)){
+		msg_printf(MSG_ERROR, TEXT("pref_load()"),
+			   TEXT("ReadFile(): error=%d"), GetLastError());
+		debug_printf(TEXT("ReadFile(): error=%d\r"), GetLastError());
+		
+		return 0;
+	}
+	if (n != sizeof(char)) {
+		if( n == 0){
+			return (-1);
+		}
+		msg_printf(MSG_ERROR, TEXT("pref_load()"),
+			   TEXT("ReadFile(): read %d bytes"), n);
+		debug_printf(TEXT("ReadFile(): read %d bytes\r"), n);
+		
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ argument file is handle that was already opened .
+ if write is faile, this function will "not" close this handle .
+ return 0 if error . write one line of string .
+*/
+int write1string(HANDLE file,char *string){
+	DWORD n;
+	if(!WriteFile(file,string,sizeof(char)*strlen(string),&n,NULL)){
+	    msg_printf(MSG_ERROR, TEXT("pref_write()"),
+			   TEXT("WriteFile(): error=%d"), GetLastError());
+		debug_printf(TEXT("WriteFile(): error=%d\n"), GetLastError());
+
+		return 0;
+	}
+	if (n != sizeof(char)*strlen(string)) {
+		msg_printf(MSG_ERROR, TEXT("pref_write()"),
+			   TEXT("WriteFile(): write %d bytes"), n);
+		debug_printf(TEXT("WriteFile(): write %d bytes\n"), n);
+
+		return (0);
+	}
+
+	return 1;
+}
 
 void
 pref_dump(struct preference_s* pref)
@@ -73,49 +171,237 @@ pref_dump(struct preference_s* pref)
 }
 
 
+
+/* To Do . modify this function*/
 int
 pref_read(TCHAR* filename, struct preference_s* pref)
 {
 	HANDLE file;
-	DWORD n;
-	struct preference_s buf;
-
-       	file = CreateFile(
-	       	filename,      	/* file name */
-	       	GENERIC_READ,	/* access (read-write) mode */
-	       	FILE_SHARE_READ,/* share mode */
-	       	NULL,		/* pointer to security attributes */
-	       	OPEN_EXISTING,	/* how to create */
-	       	FILE_ATTRIBUTE_NORMAL,	/* file attributes*/
-	       	NULL		/* handle to file with attributes to */
-	       	);
-
+	DWORD length;
+	static struct preference_s buf;
+	char tempbuf[1024];
+	TCHAR unidata[1024];
+	TCHAR identif[1024];
+	char c;
+	int i,flag,d;
+	int result;/* count of loading pref item */
+	
+	
+	file = CreateFile(
+		filename,      	/* file name */
+		GENERIC_READ,	/* access (read-write) mode */
+		FILE_SHARE_READ,/* share mode */
+		NULL,		/* pointer to security attributes */
+		OPEN_EXISTING,	/* how to create */
+		FILE_ATTRIBUTE_NORMAL,	/* file attributes*/
+		NULL		/* handle to file with attributes to */
+		);
+	
 	if (file == INVALID_HANDLE_VALUE) {
 		return (-1);
 	}
+	
+	
+	
+	
+	flag = 1;
+	result = 0;
+	while(flag){
+		i = 0;
+		d = read1byte(file,&c);
+		if( d <=0){
+			if(d == -1){
+				flag = 0;
+				break;
+			}
+			else
+			{
+				CloseHandle(file);
+				return (-1);
+			}	
+		}
+	
 
-	if (!ReadFile(file, &buf, sizeof(buf), &n, NULL)) {
-		msg_printf(MSG_ERROR, TEXT("pref_load()"),
-			   TEXT("ReadFile(): error=%d"), GetLastError());
-		debug_printf(TEXT("ReadFile(): error=%d\n"), GetLastError());
-		CloseHandle(file);
-		return (-1);
+		while(c != ':' && c != '\r' && c!= '\n'){
+			tempbuf[i] = c;
+			d = read1byte(file,&c);
+			if( d <=0){
+				if(d == -1){
+					flag = 0;
+					break;
+				}
+				else
+				{
+					CloseHandle(file);
+					return (-1);
+				}
+			}
+			i++;
+		}
+		if(c == ':'){
+			
+
+			tempbuf[i] = '\0';
+			length = MultiByteToWideChar(CP_ACP,0,tempbuf,-1,identif,0);
+			MultiByteToWideChar(CP_ACP,0,tempbuf,-1,identif,length);
+			
+			i = 0;
+			d = read1byte(file,&c);
+			flag = 1;
+			while(c != '\r' && c != '\n' && flag){/* get unidata */
+				if(d <= 0){
+					if(d == -1){
+						flag = 0;/* though needless ... */
+						break;
+					}
+					else{
+						CloseHandle(file);
+						return -1;
+					}
+				}
+				tempbuf[i] = c;
+				d = read1byte(file,&c);
+				i++;
+				
+			}
+			if(c == '\r'){/* skip \n */
+				read1byte(file,&c);
+			}
+			tempbuf[i] = '\0';
+			length = MultiByteToWideChar(CP_ACP,0,tempbuf,-1,unidata,0);
+			MultiByteToWideChar(CP_ACP,0,tempbuf,-1,unidata,length);
+			
+			for(i = 1; i < NOFID;i++){
+				if(wcscmp(identif,id_table[i])==0){
+					break;
+				}
+			}
+			switch(i){
+			case SETTING_IDX:
+				d = _wtoi(unidata);
+				buf.setting_idx = d;
+				result++;
+				break;
+			case FB_TYPE:
+				d = _wtoi(unidata);
+				buf.fb_type = d;
+				result++;
+				break;
+			case FB_WIDTH:
+				d = _wtoi(unidata);
+				buf.fb_width = d;
+				result++;
+				break;
+			case FB_HEIGHT:
+				d = _wtoi(unidata);
+				buf.fb_height = d;
+				result++;
+				break;
+			case FB_LINEBYTES:
+				d = _wtoi(unidata);
+				buf.fb_linebytes = d;
+				result++;
+				break;
+			case BOOT_TIME:
+				d = _wtoi(unidata);
+				buf.boot_time = d;
+				result++;
+				break;
+			case FB_ADDR:
+				d = _wtoi(unidata);
+				buf.fb_addr = d;
+				result++;
+				break;
+			case PLATID_CPU:
+				d = _wtoi(unidata);
+				buf.platid_cpu = d;
+				result++;
+				break;
+			case PLATID_MACHINE:
+				d = _wtoi(unidata);
+				buf.platid_machine = d;
+				result++;
+				break;
+			case SETTING_NAME:
+				wcscpy(buf.setting_name,unidata);
+				result++;
+				break;
+			case KERNEL_NAME:
+				wcscpy(buf.kernel_name,unidata);
+				result++;
+				break;
+			case OPTIONS:
+				wcscpy(buf.options,unidata);
+				result++;
+				break;
+			case CHECK_LAST_CHANCE:
+				if(wcscmp(unidata,TEXT("t")) == 0){
+					buf.check_last_chance = TRUE;
+				}
+				else{
+					buf.check_last_chance = FALSE;
+				}
+				result++;
+				break;
+			case LOAD_DEBUG_INFO:
+				if(wcscmp(unidata,TEXT("t")) == 0){
+					buf.load_debug_info = TRUE;
+				}
+				else{
+					buf.load_debug_info = FALSE;
+				}
+				result++;
+				break;
+			case SERIAL_PORT:
+				if(wcscmp(unidata,TEXT("t")) == 0){
+					buf.serial_port = TRUE;
+				}
+				else{
+					buf.serial_port = FALSE;
+				}
+				result++;
+				break;
+			case REVERSE_VIDEO:
+				if(wcscmp(unidata,TEXT("t")) == 0){
+					buf.reverse_video = TRUE;
+				}
+				else{
+					buf.reverse_video = FALSE;
+				}
+				result++;
+				break;
+			case AUTOBOOT:
+				if(wcscmp(unidata,TEXT("t")) == 0){
+					buf.autoboot = TRUE;
+				}
+				else{
+					buf.autoboot = FALSE;
+				}
+				result++;
+				break;
+			default:
+				break;
+			}
+		}
 	}
+	
+	
 
-	if (n != sizeof(buf)) {
-		msg_printf(MSG_ERROR, TEXT("pref_load()"),
-			   TEXT("ReadFile(): read %d bytes"), n);
-		debug_printf(TEXT("ReadFile(): read %d bytes\n"), n);
-		CloseHandle(file);
-		return (-1);
-	}
-
+	
 	CloseHandle(file);
 
+#if 0
+	/* shortage of item is not error */
+	if(result != NOFID -1){
+		return -1;/* data is shortage */
+	}
+#endif
+	
 	*pref = buf;
 
 	return (0);
 }
+
 
 
 int
@@ -128,6 +414,7 @@ pref_load(struct path_s load_path[], int pathlen)
 		wsprintf(filenamebuf, TEXT("%s%s"),
 			 load_path[i].name, PREFNAME);
 		debug_printf(TEXT("pref_load: try to '%s'\n"), filenamebuf);
+
 		if (pref_read(filenamebuf, &pref) == 0) {
 			debug_printf(TEXT("pref_load: succeded, '%s'.\n"),
 				     filenamebuf);
@@ -179,7 +466,10 @@ int
 pref_write(TCHAR* filename, struct preference_s* buf)
 {
 	HANDLE file;
-	DWORD n;
+	char tempbuf[1024];
+	TCHAR unibuf[1024];
+	DWORD length;
+
 
 	debug_printf(TEXT("pref_write('%s').\n"), filename);
 	pref_dump(&pref);
@@ -199,18 +489,214 @@ pref_write(TCHAR* filename, struct preference_s* buf)
 		return (-1);
 	}
 
-	if (!WriteFile(file, buf, sizeof(*buf), &n, NULL)) {
-		msg_printf(MSG_ERROR, TEXT("pref_write()"),
-			   TEXT("WriteFile(): error=%d"), GetLastError());
-		debug_printf(TEXT("WriteFile(): error=%d\n"), GetLastError());
+
+	wsprintf(unibuf,TEXT("setting_idx:%d\r\n"),buf->setting_idx);
+	debug_printf(TEXT("setting_idx,tempbuf=%s"),unibuf);
+		length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
 		CloseHandle(file);
 		return (-1);
 	}
 
-	if (n != sizeof(*buf)) {
-		msg_printf(MSG_ERROR, TEXT("pref_write()"),
-			   TEXT("WriteFile(): write %d bytes"), n);
-		debug_printf(TEXT("WriteFile(): write %d bytes\n"), n);
+
+	wsprintf(unibuf,TEXT("fb_type:%d\r\n"),buf->fb_type);
+	debug_printf(TEXT("fb_type,tempbuf=%s,"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+	wsprintf(unibuf,TEXT("fb_width:%d\r\n"),buf->fb_width);
+	debug_printf(TEXT("fb_width,tempbuf=%s"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+
+	wsprintf(unibuf,TEXT("fb_height:%d\r\n"),buf->fb_height);
+	debug_printf(TEXT("fb_height,tempbuf=%s"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+
+
+	wsprintf(unibuf,TEXT("fb_linebytes:%d\r\n"),buf->fb_linebytes);
+	debug_printf(TEXT("fb_linebytes,tempbuf=%s"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+
+	wsprintf(unibuf,TEXT("boot_time:%d\r\n"),buf->boot_time);
+	debug_printf(TEXT("boot_time,tempbuf=%s\n"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+	wsprintf(unibuf,TEXT("fb_addr:%d\r\n"),buf->fb_addr);
+	debug_printf(TEXT("fb_addr,tempbuf=%s"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+
+
+    wsprintf(unibuf,TEXT("platid_cpu:%d\r\n"),buf->platid_cpu);
+	debug_printf(TEXT("platid_cpu,tempbuf=%s"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+
+	wsprintf(unibuf,TEXT("platid_machine:%d\r\n"),buf->platid_machine);
+	debug_printf(TEXT("platid_machine,tempbuf=%s"),unibuf);
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+
+
+	wsprintf(unibuf,TEXT("setting_name:%s\r\n"),buf->setting_name);
+	debug_printf(TEXT("setting_name,unibuf=%s,wcslen=%d"),unibuf,
+		wcslen(unibuf));
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+
+	wsprintf(unibuf,TEXT("kernel_name:%s\r\n"),buf->kernel_name);
+	debug_printf(TEXT("kernel_name,unibuf=%s,wcslen=%d"),unibuf,
+		wcslen(unibuf));
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+
+	wsprintf(unibuf,TEXT("options:%s\r\n"),buf->options);
+	debug_printf(TEXT("options,unibuf=%s,wcslen=%d"),unibuf,
+		wcslen(unibuf));
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+	if(buf->check_last_chance){
+		wsprintf(unibuf,TEXT("check_last_chance:t\r\n"));
+	}
+	else{
+	wsprintf(unibuf,TEXT("check_last_chance:n\r\n"));
+	}
+
+
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+
+
+	if(buf->load_debug_info){
+		wsprintf(unibuf,TEXT("load_debug_info:t\r\n"));
+	}
+	else{
+	wsprintf(unibuf,TEXT("load_debug_info:n\r\n"));
+	}
+
+
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+
+
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+
+
+	if(buf->serial_port){
+		wsprintf(unibuf,TEXT("serial_port:t\r\n"));
+	}
+	else{
+	wsprintf(unibuf,TEXT("serial_port:n\r\n"));
+	}
+
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}	
+
+
+
+	if(buf->reverse_video){
+		wsprintf(unibuf,TEXT("reverse_video:t\r\n"));
+	}
+	else{
+	wsprintf(unibuf,TEXT("reverse_video:n\r\n"));
+	}
+
+length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
+		CloseHandle(file);
+		return (-1);
+	}
+
+	if(buf->autoboot){
+		wsprintf(unibuf,TEXT("autoboot:t\r\n"));
+	}
+	else{
+		wsprintf(unibuf,TEXT("autoboot:n\r\n"));
+	}
+
+	length = WideCharToMultiByte(CP_ACP,0,unibuf,-1,NULL,0,NULL,NULL);
+	WideCharToMultiByte(CP_ACP,0,unibuf,-1,tempbuf,length,NULL,NULL);
+	if(!write1string(file,tempbuf)){
 		CloseHandle(file);
 		return (-1);
 	}

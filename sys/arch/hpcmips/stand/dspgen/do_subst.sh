@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.2 2000/02/03 19:16:47 cgd Exp $
+# $NetBSD: do_subst.sh,v 1.3 2000/08/29 15:10:15 takemura Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -29,9 +29,10 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 if [ "X$1" = "X--show-libdeps" ]; then
-	if ! expr "X$TYPE" : 'Xconsole_program.*' > /dev/null 2>&1 &&
-	   ! expr "X$TYPE" : 'Xapplication.*' > /dev/null 2>&1; then
-		exit
+	if ! expr "X$TYPE" : 'Xconsole_program.*' > /dev/null 2>&1; then
+		if ! expr "X$TYPE" : 'Xapplication.*' > /dev/null 2>&1; then
+			exit
+		fi
 	fi
 	( for lib in $LIBDEP_LIST; do
 		echo $lib
