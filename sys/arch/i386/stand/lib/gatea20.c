@@ -1,4 +1,4 @@
-/*	$NetBSD: gatea20.c,v 1.4 2001/05/19 18:15:14 jdolecek Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.4.18.1 2002/11/18 00:52:29 he Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
@@ -32,27 +32,29 @@ static unsigned char	x_20 = KB_A20;
 void gateA20()
 {
 	__asm("pushfl ; cli");
-#ifdef	SUPPORT_PS2
 	/*
-	 * Check if the machine is PS/2 L40 via biosmca_model, which is
-	 * initialized before gateA20() is called.
+	 * Not all systems enable A20 via the keyboard controller.
+	 *	* IBM PS/2 L40
+	 *	* AMD Elan SC520-based systems
 	 */
-	if (biosmca_ps2model == 0xf82)
-		outb(0x92, 0x2);
-	else {
-#endif
-	while (inb(K_STATUS) & K_IBUF_FUL);
-	while (inb(K_STATUS) & K_OBUF_FUL)
-		(void)inb(K_RDWR);
-
-	outb(K_CMD, KC_CMD_WOUT);
-	delay(100);
-	while (inb(K_STATUS) & K_IBUF_FUL);
-	outb(K_RDWR, x_20);
-	delay(100);
-	while (inb(K_STATUS) & K_IBUF_FUL);
+	if (
 #ifdef SUPPORT_PS2
-	}
+	    biosmca_ps2model == 0xf82 ||
 #endif
+	    /* XXX How to check for AMD Elan SC520? */
+	    0) {
+		outb(0x92, 0x2);
+	} else {
+		while (inb(K_STATUS) & K_IBUF_FUL);
+		while (inb(K_STATUS) & K_OBUF_FUL)
+			(void)inb(K_RDWR);
+
+		outb(K_CMD, KC_CMD_WOUT);
+		delay(100);
+		while (inb(K_STATUS) & K_IBUF_FUL);
+		outb(K_RDWR, x_20);
+		delay(100);
+		while (inb(K_STATUS) & K_IBUF_FUL);
+	}
 	__asm("popfl");
 }
