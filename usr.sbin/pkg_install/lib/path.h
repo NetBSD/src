@@ -1,4 +1,4 @@
-/*	$NetBSD: path.h,v 1.2 2002/08/27 17:27:31 abs Exp $	*/
+/*	$NetBSD: path.h,v 1.3 2002/08/29 21:46:34 abs Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -36,5 +36,5 @@ extern struct pathhead PkgPath;
 void path_create(const char *);
 void path_free(void);
 void path_prepend_from_pkgname(const char *);
-void path_remove_first(void);
+void path_prepend_clear(void);
 void path_setenv(const char *);
