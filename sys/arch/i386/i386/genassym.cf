@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 1999/03/24 11:21:47 tron Exp $
+#	$NetBSD: genassym.cf,v 1.16 1999/03/24 11:23:45 tron Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,9 +88,7 @@ include <sys/mbuf.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/trap.h>
 include <machine/pmap.h>
@@ -154,13 +152,8 @@ define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
 define	M_NEXT			offsetof(struct mbuf, m_next)
 
-ifdef UVM
 define	V_TRAP			offsetof(struct uvmexp, traps)
 define	V_INTR			offsetof(struct uvmexp, intrs)
-else
-define	V_TRAP			offsetof(struct vmmeter, v_trap)
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
