@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.47 2004/05/27 12:55:07 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.48 2004/08/24 20:09:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -203,6 +203,7 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define	NCHG		0x0400	/* Special file times changed */
 #define	NTRUNCDELAYED	0x1000	/* Should be truncated later */
 #define	NREMOVED	0x2000	/* Has been removed */
+#define	NUSEOPENCRED	0x4000	/* Try open cred first rather than owner's */
 
 /*
  * Convert between nfsnode pointers and vnode pointers
