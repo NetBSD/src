@@ -72,6 +72,10 @@
 #include <unistd.h>
 #endif	/* GNU C library.  */
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #ifdef VMS
 #include <unixlib.h>
 #if HAVE_STRING_H - 0
