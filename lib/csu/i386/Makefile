@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1996/10/18 05:36:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 1997/03/24 22:11:50 christos Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
@@ -25,10 +25,6 @@ scrt0.o: ${SRCS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-install:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
-	    ${DESTDIR}/usr/lib
-
 .if make(depend)
 CPPFLAGS+= -DDYNAMIC
 .endif
@@ -38,5 +34,8 @@ afterdepend: .depend
 		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
 		< .depend > $$TMP; \
 	mv $$TMP .depend)
+
+FILES=${OBJS}
+FILESDIR=/usr/lib
 
 .include <bsd.prog.mk>
