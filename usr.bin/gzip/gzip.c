@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.14 2004/01/02 01:40:59 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.15 2004/01/02 02:55:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.14 2004/01/02 01:40:59 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.15 2004/01/02 02:55:26 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: gzip.c,v 1.14 2004/01/02 01:40:59 mrg Exp $");
  * TODO:
  *	- handle .taz/.tgz files?
  *	- use mmap where possible
- *	- $GZIP
+ *	- handle some signals getter (remove outfile?)
  */
 
 #include <sys/param.h>
@@ -117,6 +117,7 @@ static	void	maybe_err(int rv, const char *fmt, ...);
 static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
+static	void	prepend_gzip(char *, int *, char ***);
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
 static	void	copymodes(const char *, struct stat *);
@@ -174,12 +175,18 @@ int
 main(int argc, char **argv)
 {
 	const char *progname = getprogname();
+	char *gzip;
 	int ch;
+
+	/* XXX set up signals */
 
 	gzipflags[0] = 'w';
 	gzipflags[1] = '\0';
 
 	suffix = GZ_SUFFIX;;
+
+	if ((gzip = getenv("GZIP")) != NULL)
+		prepend_gzip(gzip, &argc, &argv);
 
 	/*
 	 * XXX
@@ -317,6 +324,61 @@ maybe_errx(int rv, const char *fmt, ...)
 		va_end(ap);
 	}
 	exit(rv);
+}
+
+/* split up $GZIP and prepend it to the argument list */
+static void
+prepend_gzip(char *gzip, int *argc, char ***argv)
+{
+	char *s, **nargv, **ac;
+	int nenvarg = 0, i;
+
+	/* scan how many arguments there are */
+	for (s = gzip; *s; s++) {
+		if (*s == ' ' || *s == '\t')
+			continue;
+		nenvarg++;
+		for (; *s; s++)
+			if (*s == ' ' || *s == '\t')
+				break;
+	}
+	/* punt early */
+	if (nenvarg == 0)
+		return;
+
+	*argc += nenvarg;
+	ac = *argv;
+
+	nargv = (char **)malloc(*argc * sizeof(char *));
+	if (nargv == NULL)
+		maybe_err(1, "malloc");
+
+	/* stash this away */
+	*argv = nargv;
+
+	/* copy the program name first */
+	i = 0;
+	nargv[i++] = *(ac++);
+
+	/* take a copy of $GZIP and add it to the array */
+	s = strdup(gzip);
+	if (s == NULL)
+		maybe_err(1, "strdup");
+	for (; *s; s++) {
+		if (*s == ' ' || *s == '\t')
+			continue;
+		nargv[i++] = s;
+		for (; *s; s++)
+			if (*s == ' ' || *s == '\t') {
+				*s = 0;
+				break;
+			}
+	}
+
+	/* copy the original arguments and a NULL */
+	while (*ac)
+		nargv[i++] = *(ac++);
+	nargv[i] = NULL;
 }
 
 /* compress input to output then close both files */
