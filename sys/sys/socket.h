@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.28 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: socket.h,v 1.29 1998/04/25 10:41:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -327,6 +327,13 @@ struct cmsghdr {
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #define	SCM_TIMESTAMP	0x02		/* timestamp (struct timeval) */
 #define	SCM_CREDS	0x04		/* credientials (struct sockcred) */
+
+/*
+ * Types of socket shutdown(2).
+ */
+#define	SHUT_RD		0		/* Disallow further receives. */
+#define	SHUT_WR		1		/* Disallow further sends. */
+#define	SHUT_RDWR	2		/* Disallow further sends/receives. */
 
 /*
  * 4.3 compat sockaddr, move to compat file later
