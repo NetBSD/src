@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.19 1994/08/21 18:44:10 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.20 1994/09/19 19:17:54 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -65,8 +65,6 @@
 #include <msdosfs/denode.h>
 #include <msdosfs/msdosfsmount.h>
 #include <msdosfs/fat.h>
-
-int msdosfsdoforce = 0;		/* 1 = force unmount */
 
 /*
  * mp - path - addr in user space of mount point (ie /usr or whatever) 
@@ -499,7 +497,9 @@ msdosfs_unmount(mp, mntflags, p)
 		return error;
 
 	if (mntflags & MNT_FORCE) {
-		if (!msdosfsdoforce)
+		extern int doforce;
+
+		if (!doforce || (mp->mnt_flag & MNT_ROOTFS))
 			return EINVAL;
 		flags |= FORCECLOSE;
 	}
