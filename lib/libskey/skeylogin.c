@@ -1,3 +1,5 @@
+/*	$NetBSD: skeylogin.c,v 1.6 1996/09/19 19:39:48 thorpej Exp $	*/
+
 /* S/KEY v1.1b (skeylogin.c)
  *
  * Authors:
@@ -7,8 +9,6 @@
  *          Scott Chasin <chasin@crimelab.com>
  *
  * S/KEY verification check, lookups, and authentication.
- * 
- * $Id: skeylogin.c,v 1.5 1995/06/05 19:48:38 pk Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: md4.c,v 1.5 1996/09/19 19:39:39 thorpej Exp $	*/
+
 /* 
  * md4.c -- Implementation of MD4 Message Digest Algorithm
  * Updated: 2/16/90 by Ronald L. Rivest
@@ -22,8 +24,6 @@
  *
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
- *
- * $Id: md4.c,v 1.4 1996/09/19 19:36:51 thorpej Exp $
  */
 
 /* 

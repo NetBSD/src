@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1994/05/21 05:45:58 deraadt Exp $
+#	$NetBSD: Makefile,v 1.2 1996/09/19 19:39:36 thorpej Exp $
 
 LIB=	skey
 SRCS=	skeylogin.c skeysubr.c md4.c put.c
