@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
+/*	$NetBSD: config.c,v 1.8 1997/10/17 06:42:09 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $";
+__RCSID("$NetBSD: config.c,v 1.8 1997/10/17 06:42:09 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,12 +120,12 @@ config(fname)
 			while (*++t && isspace(*t));
 			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 			    (ep->s = strdup(t)) == NULL)
-				err(1, NULL);
+				err(1, "malloc");
 			TAILQ_INSERT_TAIL(&tp->list, ep, q);
 		} else for (++t; (p = strtok(t, " \t\n")) != NULL; t = NULL) {
 			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 			    (ep->s = strdup(p)) == NULL)
-				err(1, NULL);
+				err(1, "malloc");
 			TAILQ_INSERT_TAIL(&tp->list, ep, q);
 		}
 	}
@@ -144,7 +145,7 @@ addlist(name)
 
 	if ((tp = calloc(1, sizeof(TAG))) == NULL ||
 	    (tp->s = strdup(name)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	TAILQ_INIT(&tp->list);
 	TAILQ_INSERT_TAIL(&head, tp, q);
 	return (tp);
