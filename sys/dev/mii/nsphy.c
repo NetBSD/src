@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.2 1997/11/17 09:02:27 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.3 1998/01/12 09:28:53 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -62,10 +62,6 @@ void	nsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach nsphy_ca = {
 	sizeof(struct phy_softc), nsphymatch, nsphyattach
-};
-
-struct cfdriver nsphy_cd = {
-	NULL, "nsphy", DV_IFNET
 };
 
 int

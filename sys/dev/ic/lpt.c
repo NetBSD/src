@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.47 1997/12/07 16:09:36 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.48 1998/01/12 09:23:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -89,9 +89,7 @@ int lptdebug = 0;
 /* XXX does not belong here */
 cdev_decl(lpt);
 
-struct cfdriver lpt_cd = {
-	NULL, "lpt", DV_TTY
-};
+extern struct cfdriver lpt_cd;
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)

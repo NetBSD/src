@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.5 1997/10/15 05:56:03 explorer Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.6 1998/01/12 09:23:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,10 +132,6 @@
 
 /* XXX Hardware padding doesn't work yet(?) */
 #define	SMC91CXX_SW_PAD
-
-struct cfdriver sm_cd = {
-	NULL, "sm", DV_IFNET
-};
 
 const char *smc91cxx_idstrs[] = {
 	NULL,				/* 0 */

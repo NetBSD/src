@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.14 1997/12/01 18:47:01 mjacob Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.15 1998/01/12 09:27:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -81,11 +81,6 @@ static void isapnp_attach __P((struct device *, struct device *, void *));
 struct cfattach isapnp_ca = {
 	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
 };
-
-struct cfdriver isapnp_cd = {
-	NULL, "isapnp", DV_DULL
-};
-
 
 /* isapnp_init():
  *	Write the PNP initiation key to wake up the cards...

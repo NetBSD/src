@@ -1,11 +1,11 @@
-#	$NetBSD: files.isapnp,v 1.7 1997/10/16 17:16:36 matt Exp $
+#	$NetBSD: files.isapnp,v 1.8 1998/01/12 09:27:12 thorpej Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
 
 # XXX: We don't use locators currenly...
 
-device	isapnp {[port = -1], [size = 0],
+device	isapnp class dull {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	isapnp at isa
@@ -38,6 +38,6 @@ attach	sb at isapnp with sb_isapnp
 file	dev/isapnp/sb_isapnp.c			sb_isapnp
 
 # GUS Pnp (Interwave)
-device	guspnp: audio, isadma, interwave, mulaw
+device	guspnp class dull: audio, isadma, interwave, mulaw
 attach	guspnp at isapnp
 file	dev/isapnp/gus_isapnp.c			guspnp needs-flag
