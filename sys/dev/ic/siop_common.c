@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.35 2004/05/17 18:37:02 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.36 2004/05/17 20:12:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.35 2004/05/17 18:37:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.36 2004/05/17 20:12:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,6 +886,59 @@ siop_update_resid(siop_cmd, offset)
 	if (siop_cmd->flags & CMDFL_RESID) {
 		table = &siop_cmd->siop_tables->data[offset];
 		siop_cmd->xs->resid -= le32toh(table->count) - siop_cmd->resid;
+	}
+}
+
+int
+siop_iwr(siop_cmd)
+	struct siop_common_cmd *siop_cmd;
+{
+	int offset;
+	scr_table_t *table; /* table with IWR */
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
+	/* handle ignore wide residue messages */
+
+	/* if target isn't wide, reject */
+	if ((siop_cmd->siop_target->flags & TARF_ISWIDE) == 0) {
+		siop_cmd->siop_tables->t_msgout.count= htole32(1);
+		siop_cmd->siop_tables->msg_out[0] = MSG_MESSAGE_REJECT;
+		return SIOP_NEG_MSGOUT;
+	}
+	/* get index of current command in table */
+	offset = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCRATCHA + 1);
+	/*
+	 * if the current table did complete, we're now pointing at the
+	 * next one. Go back one if we didn't see a phase mismatch.
+	 */
+	if ((siop_cmd->flags & CMDFL_RESID) == 0)
+		offset--;
+	table = &siop_cmd->siop_tables->data[offset];
+
+	if ((siop_cmd->flags & CMDFL_RESID) == 0) {
+		if (le32toh(table->count) & 1) {
+			/* we really got the number of bytes we expected */
+			return SIOP_NEG_ACK;
+		} else {
+			/*
+			 * now we really had a short xfer, by one byte.
+			 * handle it just as if we had a phase mistmatch
+			 * (there is a resid of one for this table).
+			 * Update scratcha1 to reflect the fact that
+			 * this xfer isn't complete.
+			 */
+			 siop_cmd->flags |= CMDFL_RESID;
+			 siop_cmd->resid = 1;
+			 bus_space_write_1(sc->sc_rt, sc->sc_rh,
+			     SIOP_SCRATCHA + 1, offset);
+			 return SIOP_NEG_ACK;
+		}
+	} else {
+		/*
+		 * we already have a short xfer for this table; it's
+		 * just one byte less than we though it was
+		 */
+		siop_cmd->resid--;
+		return SIOP_NEG_ACK;
 	}
 }
 
