@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.49 2004/01/29 08:48:24 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.49.2.1 2004/04/30 03:48:26 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,9 +80,9 @@
  * Disk names accepted as valid targets for a from-scratch installation.
  *
  * On i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
- * disks, "ed" IBM ESDI disks
+ * disks, "ed" IBM ESDI disks, "raid" raidframe disks
  */
-#define DISK_NAMES "wd", "sd", "ld", "ed"
+#define DISK_NAMES "wd", "sd", "ld", "ed", "raid"
 
 /*
  * Machine-specific command to write a new label to a disk.
