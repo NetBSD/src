@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.22 1999/04/01 23:28:09 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.22.2.1 1999/04/13 21:33:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ lfs_update(v)
 	 * for our inode completes, if we are called with LFS_SYNC set.
 	 */
 	while((ap->a_waitfor & LFS_SYNC) && WRITEINPROG(vp)) {
+#ifdef DEBUG_LFS
+		printf("lfs_update: sleeping on inode %d\n",ip->i_number);
+#endif
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
 	mod = ip->i_flag & IN_MODIFIED;
@@ -405,6 +408,12 @@ lfs_truncate(v)
 	a_released = 0;
 	i_released = 0;
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
+
+		/* XXX KS - Don't miscount if we're not truncating to zero. */
+		if(length>0 && !(bp->b_lblkno >= 0 && bp->b_lblkno > lastblock)
+		   && !(bp->b_lblkno < 0 && bp->b_lblkno < -lastblock-NIADDR))
+			continue;
+
 		if (bp->b_flags & B_LOCKED) {
 			a_released += numfrags(fs, bp->b_bcount);
 			/*
