@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.120 1998/03/27 01:52:01 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.121 1998/03/30 06:15:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -165,8 +165,7 @@ struct emul emul_netbsd = {
  * startup(), which does memory initialization and autoconfiguration.
  */
 void
-main(framep)
-	void *framep;				/* XXX should go away */
+main()
 {
 	struct proc *p, *p2;
 	struct pdevinit *pdev;
