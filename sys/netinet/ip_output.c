@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.75 2000/06/28 02:59:32 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.76 2000/10/17 02:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -415,6 +415,14 @@ ip_output(m0, va_alist)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
+	/*
+	 * If we're doing Path MTU Discovery, we need to set DF unless
+	 * the route's MTU is locked.
+	 */
+	if ((flags & IP_MTUDISC) != 0 && ro->ro_rt != NULL &&
+	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+		ip->ip_off |= IP_DF;
+
 #ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
