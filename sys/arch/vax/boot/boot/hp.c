@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -129,12 +129,12 @@ hpstrategy(hs, func, dblk, size, buf, rsize)
 	hd = (void *)&mr->mba_md[hs->unit];
 	lp = &hplabel;
 
-	pfnum = (u_int)buf >> PGSHIFT;
+	pfnum = (u_int)buf >> VAX_PGSHIFT;
 
-	for(mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
+	for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0; nsize -= VAX_NBPG)
 		*(int *)&mr->mba_map[mapnr++] = PG_V | pfnum++;
 
-	mr->mba_var = ((u_int)buf & PGOFSET);
+	mr->mba_var = ((u_int)buf & VAX_PGOFSET);
 	mr->mba_bc = (~size) + 1;
 	bn = dblk + lp->d_partitions[hs->part].p_offset;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 char line[100];
-int	devtype, bootdev, howto;
+int	devtype, bootdev, howto, debug;
 extern	unsigned opendev;
 extern  unsigned *bootregs;
 
@@ -104,6 +104,7 @@ Xmain()
 	}
 	printf("\n");
 
+	/* First try to autoboot */
 	if (askname == 0) {
 		type = (devtype >> B_TYPESHIFT) & B_TYPEMASK;
 		if ((unsigned)type < ndevs && devsw[type].dv_name)
@@ -117,6 +118,7 @@ Xmain()
 			}
 	}
 
+	/* If any key pressed, go to conversational boot */
 	for (;;) {
 		struct vals *v = &val[0];
 		char *c, *d;

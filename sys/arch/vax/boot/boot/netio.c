@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.1 1999/03/06 16:36:05 ragge Exp $	*/
+/*	$NetBSD: netio.c,v 1.2 1999/04/01 20:40:07 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -226,7 +226,6 @@ netmountroot(f, devname)
 	 * and the more modern, BOOTP way. (RFC951, RFC1048)
 	 */
 
-#if 0
 #ifdef SUPPORT_BOOTP
 
 	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
@@ -244,7 +243,6 @@ netmountroot(f, devname)
 		printf("\n");
 	} else
 
-#endif /* SUPPORT_BOOTP */
 #endif /* SUPPORT_BOOTP */
 	{
 #ifdef	SUPPORT_BOOTPARAMS

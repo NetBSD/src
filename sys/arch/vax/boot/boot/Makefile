@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/27 09:33:30 ragge Exp $
+#	$NetBSD: Makefile,v 1.3 1999/04/01 20:40:07 ragge Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -10,6 +10,8 @@ SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
 
 CLEANFILES+=${PROG} ${PROG}.mop
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE
+#CPPFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DDEV_DEBUG \
+#	-DRPC_DEBUG -DRARP_DEBUG -DPARANOID
 BINDIR=	/
 
 SA_AS=	library

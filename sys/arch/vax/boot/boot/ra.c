@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -98,6 +98,10 @@ raopen(f, adapt, ctlr, unit, part)
 	unsigned short johan, johan2;
 	int i,err;
 
+#ifdef DEV_DEBUG
+	printf("raopen: adapter %d ctlr %d unit %d part %d\n", 
+	    adapt, ctlr, unit, part);
+#endif
 	bzero(lp, sizeof(struct disklabel));
 	ra->unit = unit;
 	ra->part = part;
@@ -138,18 +142,29 @@ raopen(f, adapt, ctlr, unit, part)
 	/* Init of this uda */
 	while ((*ra->ra_sa & MP_STEP1) == 0)
 		;
-
+#ifdef DEV_DEBUG
+	printf("MP_STEP1...");
+#endif
 	*ra->ra_sw = 0x8000;
 	while ((*ra->ra_sa & MP_STEP2) == 0)
 		;
+#ifdef DEV_DEBUG
+	printf("MP_STEP2...");
+#endif
 
 	*ra->ra_sw = johan;
 	while ((*ra->ra_sa & MP_STEP3) == 0)
 		;
+#ifdef DEV_DEBUG
+	printf("MP_STEP3...");
+#endif
 
 	*ra->ra_sw = johan2;
 	while ((*ra->ra_sa & MP_STEP4) == 0)
 		;
+#ifdef DEV_DEBUG
+	printf("MP_STEP4\n");
+#endif
 
 	*ra->ra_sw = 0x0001;
 	uda.uda_ca.ca_rspdsc = (int)&ubauda->uda_rsp.mscp_cmdref;
@@ -159,12 +174,18 @@ raopen(f, adapt, ctlr, unit, part)
 	uda.uda_cmd.mscp_unit = ra->unit;
 	command(M_OP_ONLINE);
 
+#ifdef DEV_DEBUG
+	printf("reading disklabel\n");
+#endif
 	err = rastrategy(ra,F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
 	if(err){
 		printf("reading disklabel: %s\n",strerror(err));
 		return 0;
 	}
 
+#ifdef DEV_DEBUG
+	printf("getting disklabel\n");
+#endif
 	msg = getdisklabel(io_buf+LABELOFFSET, lp);
 	if (msg)
 		printf("getdisklabel: %s\n", msg);
@@ -182,10 +203,15 @@ command(cmd)
 	uda.uda_rsp.mscp_msglen = MSCP_MSGLEN;
 	uda.uda_ca.ca_rspdsc |= MSCP_OWN|MSCP_INT;
 	uda.uda_ca.ca_cmddsc |= MSCP_OWN|MSCP_INT;
+#ifdef DEV_DEBUG
+	printf("sending cmd %x...", cmd);
+#endif
 	hej = *ra_softc.ra_ip;
 	while(uda.uda_ca.ca_rspdsc<0)
 		;
-
+#ifdef DEV_DEBUG
+	printf("sent.\n");
+#endif
 }
 
 rastrategy(ra, func, dblk, size, buf, rsize)
@@ -202,15 +228,15 @@ rastrategy(ra, func, dblk, size, buf, rsize)
 	u_int	i, j, pfnum, mapnr, nsize;
 	volatile int hej;
 
-
 	if (vax_cputype != VAX_8200) {
 		ur = (void *)ra->ubaddr;
 		udadev = (void*)ra->udaddr;
 		ptmapp = (u_int *)&ur->uba_map[0];
 
-		pfnum = (u_int)buf >> PGSHIFT;
+		pfnum = (u_int)buf >> VAX_PGSHIFT;
 
-		for(mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
+		for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0;
+		    nsize -= VAX_NBPG)
 			ptmapp[mapnr++] = PG_V | pfnum++;
 		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
 	} else
@@ -221,6 +247,10 @@ rastrategy(ra, func, dblk, size, buf, rsize)
 	    dblk + lp->d_partitions[ra->part].p_offset;
 	uda.uda_cmd.mscp_seq.seq_bytecount = size;
 	uda.uda_cmd.mscp_unit = ra->unit;
+#ifdef DEV_DEBUG
+	printf("rastrategy: blk 0x%lx count %lx unit %lx\n", 
+	    uda.uda_cmd.mscp_seq.seq_lbn, size, ra->unit);
+#endif
 	if (func == F_WRITE)
 		command(M_OP_WRITE);
 	else
