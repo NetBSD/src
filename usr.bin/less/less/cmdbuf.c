@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdbuf.c,v 1.1.1.3 1997/09/21 12:22:46 mrg Exp $	*/
+/*	$NetBSD: cmdbuf.c,v 1.2 1998/02/22 14:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -45,7 +45,7 @@ static int cmd_offset;		/* Index into cmdbuf of first displayed char */
 static int literal;		/* Next input char should not be interpreted */
 
 #if TAB_COMPLETE_FILENAME
-static int cmd_complete();
+static int cmd_complete __P((int));
 /*
  * These variables are statics used by cmd_complete.
  */
@@ -57,8 +57,24 @@ static char *tk_trial;
 static struct textlist tk_tlist;
 #endif
 
-static int cmd_left();
-static int cmd_right();
+static void cmd_repaint __P((char *));
+static void cmd_home __P((void));
+static void cmd_lshift __P((void));
+static void cmd_rshift __P((void));
+static int cmd_right __P((void));
+static int cmd_left __P((void));
+static int cmd_ichar __P((int));
+static int cmd_erase __P((void));
+static int cmd_delete __P((void));
+static int cmd_werase __P((void));
+static int cmd_wdelete __P((void));
+static int cmd_kill __P((void));
+static int cmd_updown __P((int));
+static int cmd_edit __P((int));
+static int cmd_istr __P((char *));
+static char *delimit_word __P((void));
+static void init_compl __P((void));
+static char *next_compl __P((int, char *));
 
 #if SPACES_IN_FILENAMES
 public char openquote = '"';
@@ -82,11 +98,11 @@ struct mlist
  */
 struct mlist mlist_search =  
 	{ &mlist_search,  &mlist_search,  &mlist_search,  NULL };
-public void constant *ml_search = (void *) &mlist_search;
+public void *ml_search = (void *) &mlist_search;
 
 struct mlist mlist_examine = 
 	{ &mlist_examine, &mlist_examine, &mlist_examine, NULL };
-public void constant *ml_examine = (void *) &mlist_examine;
+public void *ml_examine = (void *) &mlist_examine;
 
 #if SHELL_ESCAPE || PIPEC
 struct mlist mlist_shell =   
@@ -97,10 +113,10 @@ public void constant *ml_shell = (void *) &mlist_shell;
 #else /* CMD_HISTORY */
 
 /* If CMD_HISTORY is off, these are just flags. */
-public void constant *ml_search = (void *)1;
-public void constant *ml_examine = (void *)2;
+public void *ml_search = (void *)1;
+public void *ml_examine = (void *)2;
 #if SHELL_ESCAPE || PIPEC
-public void constant *ml_shell = (void *)3;
+public void *ml_shell = (void *)3;
 #endif
 
 #endif /* CMD_HISTORY */
@@ -486,7 +502,7 @@ cmd_kill()
  */
 	public void
 set_mlist(mlist)
-	void *mlist;
+	constant void *mlist;
 {
 	curr_mlist = (struct mlist *) mlist;
 }
@@ -746,7 +762,7 @@ cmd_istr(str)
 	static char *
 delimit_word()
 {
-	char *word;
+	char *word = NULL;
 #if SPACES_IN_FILENAMES
 	char *p;
 	int quoted;

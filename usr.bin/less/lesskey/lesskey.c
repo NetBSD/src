@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.c,v 1.1.1.3 1997/09/21 12:23:24 mrg Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.2 1998/02/22 14:57:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -111,83 +111,83 @@ struct cmdname
 
 struct cmdname cmdnames[] = 
 {
-	"back-bracket",		A_B_BRACKET,
-	"back-line",		A_B_LINE,
-	"back-line-force",	A_BF_LINE,
-	"back-screen",		A_B_SCREEN,
-	"back-scroll",		A_B_SCROLL,
-	"back-search",		A_B_SEARCH,
-	"back-window",		A_B_WINDOW,
-	"debug",		A_DEBUG,
-	"display-flag",		A_DISP_OPTION,
-	"display-option",	A_DISP_OPTION,
-	"end",			A_GOEND,
-	"examine",		A_EXAMINE,
-	"first-cmd",		A_FIRSTCMD,
-	"firstcmd",		A_FIRSTCMD,
-	"flush-repaint",	A_FREPAINT,
-	"forw-bracket",		A_F_BRACKET,
-	"forw-forever",		A_F_FOREVER,
-	"forw-line",		A_F_LINE,
-	"forw-line-force",	A_FF_LINE,
-	"forw-screen",		A_F_SCREEN,
-	"forw-screen-force",	A_FF_SCREEN,
-	"forw-scroll",		A_F_SCROLL,
-	"forw-search",		A_F_SEARCH,
-	"forw-window",		A_F_WINDOW,
-	"goto-end",		A_GOEND,
-	"goto-line",		A_GOLINE,
-	"goto-mark",		A_GOMARK,
-	"help",			A_HELP,
-	"index-file",		A_INDEX_FILE,
-	"invalid",		A_UINVALID,
-	"left-scroll",		A_LSHIFT,
-	"next-file",		A_NEXT_FILE,
-	"noaction",		A_NOACTION,
-	"percent",		A_PERCENT,
-	"pipe",			A_PIPE,
-	"prev-file",		A_PREV_FILE,
-	"quit",			A_QUIT,
-	"repaint",		A_REPAINT,
-	"repaint-flush",	A_FREPAINT,
-	"repeat-search",	A_AGAIN_SEARCH,
-	"repeat-search-all",	A_T_AGAIN_SEARCH,
-	"reverse-search",	A_REVERSE_SEARCH,
-	"reverse-search-all",	A_T_REVERSE_SEARCH,
-	"right-scroll",		A_RSHIFT,
-	"set-mark",		A_SETMARK,
-	"shell",		A_SHELL,
-	"status",		A_STAT,
-	"toggle-flag",		A_OPT_TOGGLE,
-	"toggle-option",	A_OPT_TOGGLE,
-	"undo-hilite",		A_UNDO_SEARCH,
-	"version",		A_VERSION,
-	"visual",		A_VISUAL,
-	NULL,			0
+	{ "back-bracket",	A_B_BRACKET },
+	{ "back-line",		A_B_LINE },
+	{ "back-line-force",	A_BF_LINE },
+	{ "back-screen",	A_B_SCREEN },
+	{ "back-scroll",	A_B_SCROLL },
+	{ "back-search",	A_B_SEARCH },
+	{ "back-window",	A_B_WINDOW },
+	{ "debug",		A_DEBUG },
+	{ "display-flag",	A_DISP_OPTION },
+	{ "display-option",	A_DISP_OPTION },
+	{ "end",		A_GOEND },
+	{ "examine",		A_EXAMINE },
+	{ "first-cmd",		A_FIRSTCMD },
+	{ "firstcmd",		A_FIRSTCMD },
+	{ "flush-repaint",	A_FREPAINT },
+	{ "forw-bracket",	A_F_BRACKET },
+	{ "forw-forever",	A_F_FOREVER },
+	{ "forw-line",		A_F_LINE },
+	{ "forw-line-force",	A_FF_LINE },
+	{ "forw-screen",	A_F_SCREEN },
+	{ "forw-screen-force",	A_FF_SCREEN },
+	{ "forw-scroll",	A_F_SCROLL },
+	{ "forw-search",	A_F_SEARCH },
+	{ "forw-window",	A_F_WINDOW },
+	{ "goto-end",		A_GOEND },
+	{ "goto-line",		A_GOLINE },
+	{ "goto-mark",		A_GOMARK },
+	{ "help",		A_HELP },
+	{ "index-file",		A_INDEX_FILE },
+	{ "invalid",		A_UINVALID },
+	{ "left-scroll",	A_LSHIFT },
+	{ "next-file",		A_NEXT_FILE },
+	{ "noaction",		A_NOACTION },
+	{ "percent",		A_PERCENT },
+	{ "pipe",		A_PIPE },
+	{ "prev-file",		A_PREV_FILE },
+	{ "quit",		A_QUIT },
+	{ "repaint",		A_REPAINT },
+	{ "repaint-flush",	A_FREPAINT },
+	{ "repeat-search",	A_AGAIN_SEARCH },
+	{ "repeat-search-all",	A_T_AGAIN_SEARCH },
+	{ "reverse-search",	A_REVERSE_SEARCH },
+	{ "reverse-search-all",	A_T_REVERSE_SEARCH },
+	{ "right-scroll",	A_RSHIFT },
+	{ "set-mark",		A_SETMARK },
+	{ "shell",		A_SHELL },
+	{ "status",		A_STAT },
+	{ "toggle-flag",	A_OPT_TOGGLE },
+	{ "toggle-option",	A_OPT_TOGGLE },
+	{ "undo-hilite",	A_UNDO_SEARCH },
+	{ "version",		A_VERSION },
+	{ "visual",		A_VISUAL },
+	{ NULL,			0 }
 };
 
 struct cmdname editnames[] = 
 {
-	"back-complete",	EC_B_COMPLETE,
-	"backspace",		EC_BACKSPACE,
-	"delete",		EC_DELETE,
-	"down",			EC_DOWN,
-	"end",			EC_END,
-	"expand",		EC_EXPAND,
-	"forw-complete",	EC_F_COMPLETE,
-	"home",			EC_HOME,
-	"insert",		EC_INSERT,
-	"invalid",		EC_UINVALID,
-	"kill-line",		EC_LINEKILL,
-	"left",			EC_LEFT,
-	"literal",		EC_LITERAL,
-	"right",		EC_RIGHT,
-	"up",			EC_UP,
-	"word-backspace",	EC_W_BACKSPACE,
-	"word-delete",		EC_W_DELETE,
-	"word-left",		EC_W_LEFT,
-	"word-right",		EC_W_RIGHT,
-	NULL,			0
+	{ "back-complete",	EC_B_COMPLETE },
+	{ "backspace",		EC_BACKSPACE },
+	{ "delete",		EC_DELETE },
+	{ "down",		EC_DOWN },
+	{ "end",		EC_END },
+	{ "expand",		EC_EXPAND },
+	{ "forw-complete",	EC_F_COMPLETE },
+	{ "home",		EC_HOME },
+	{ "insert",		EC_INSERT },
+	{ "invalid",		EC_UINVALID },
+	{ "kill-line",		EC_LINEKILL },
+	{ "left",		EC_LEFT },
+	{ "literal",		EC_LITERAL },
+	{ "right",		EC_RIGHT },
+	{ "up",			EC_UP },
+	{ "word-backspace",	EC_W_BACKSPACE },
+	{ "word-delete",	EC_W_DELETE },
+	{ "word-left",		EC_W_LEFT },
+	{ "word-right",		EC_W_RIGHT },
+	{ NULL,			0 }
 };
 
 struct table
@@ -225,6 +225,26 @@ int linenum;
 int errors;
 
 extern char version[];
+
+char *mkpathname __P((char *, char *));
+char *homefile __P((char *));
+void parse_args __P((int, char **));
+void init_tables __P((void));
+int tchar __P((char **));
+public char *skipsp __P((char *));
+public char *skipnsp __P((char *));
+char *clean_line __P((char *));
+void add_cmd_char __P((int));
+int control_line __P((char *));
+void fputbytes __P((FILE *, char *, int));
+void fputint __P((FILE *, unsigned int));
+int findaction __P((char *));
+void usage __P((void));
+void terror __P((char *));
+void parse_cmdline __P((char *));
+void parse_varline __P((char *));
+void parse_line __P((char *));
+int main __P((int, char *[]));
 
 	char *
 mkpathname(dirname, filename)
@@ -435,7 +455,7 @@ add_cmd_char(c)
 {
 	if (currtable->pbuffer >= currtable->buffer + MAX_USERCMD)
 	{
-		error("too many commands");
+		terror("too many commands");
 		exit(1);
 	}
 	*(currtable->pbuffer)++ = c;
@@ -524,10 +544,11 @@ findaction(actname)
 	for (i = 0;  currtable->names[i].cn_name != NULL;  i++)
 		if (strcmp(currtable->names[i].cn_name, actname) == 0)
 			return (currtable->names[i].cn_action);
-	error("unknown action");
+	terror("unknown action");
 	return (A_INVALID);
 }
 
+	void
 usage()
 {
 	fprintf(stderr, "usage: lesskey [-o output] [input]\n");
@@ -535,7 +556,7 @@ usage()
 }
 
 	void
-error(s)
+terror(s)
 	char *s;
 {
 	fprintf(stderr, "line %d: %s\n", linenum, s);
@@ -560,7 +581,7 @@ parse_cmdline(p)
 	{
 		c = tchar(&p);
 		if (++cmdlen > MAX_CMDLEN)
-			error("command too long");
+			terror("command too long");
 		else
 			add_cmd_char(c);
 	} while (*p != ' ' && *p != '\t' && *p != '\0');
@@ -577,7 +598,7 @@ parse_cmdline(p)
 	p = skipsp(p);
 	if (*p == '\0')
 	{
-		error("missing action");
+		terror("missing action");
 		return;
 	}
 	actname = p;
@@ -630,7 +651,7 @@ parse_varline(p)
 	p = skipsp(p);
 	if (*p++ != '=')
 	{
-		error("missing =");
+		terror("missing =");
 		return;
 	}
 
@@ -674,6 +695,7 @@ parse_line(line)
 		parse_cmdline(p);
 }
 
+	int
 main(argc, argv)
 	int argc;
 	char *argv[];

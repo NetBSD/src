@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.1.1.3 1997/09/21 12:23:18 mrg Exp $	*/
+/*	$NetBSD: output.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -45,6 +45,9 @@ extern int so_s_width, so_e_width;
 extern int screen_trashed;
 extern int any_display;
 extern int is_tty;
+
+static int iprintnum __P((int, int));
+static int iprintf __P((char *, PARG *));
 
 /*
  * Display the line which is in the line buffer.
@@ -209,7 +212,7 @@ flush()
 /*
  * Output a character.
  */
-	public int
+	public void
 putchr(c)
 	int c;
 {
@@ -234,7 +237,6 @@ putchr(c)
 	if (ob >= &obuf[sizeof(obuf)-1])
 		flush();
 	*ob++ = c;
-	return (c);
 }
 
 /*

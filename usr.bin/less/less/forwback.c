@@ -1,4 +1,4 @@
-/*	$NetBSD: forwback.c,v 1.3 1997/09/21 12:40:59 mrg Exp $	*/
+/*	$NetBSD: forwback.c,v 1.4 1998/02/22 14:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -52,6 +52,10 @@ extern int ignore_eoi;
 #if TAGS
 extern char *tagoption;
 #endif
+
+static void eof_bell __P((void));
+static void eof_check __P((void));
+static void squish_check __P((void));
 
 /*
  * Sound the bell to indicate user is trying to move past end of file.

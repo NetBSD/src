@@ -1,4 +1,4 @@
-/*	$NetBSD: filename.c,v 1.1.1.3 1997/09/21 12:22:47 mrg Exp $	*/
+/*	$NetBSD: filename.c,v 1.2 1998/02/22 14:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -72,6 +72,17 @@ extern IFILE old_ifile;
 extern char openquote;
 extern char closequote;
 #endif
+
+static char *dirfile __P((char *, char *));
+#ifdef _OSK
+static POSITION seek_filesize __P((int));
+#endif
+static char *readfd __P((FILE *));
+static char *get_meta_escape __P((void));
+static int metachar __P((int));
+static char *esc_metachars __P((char *));
+static char *esc_metachars __P((char *));
+static FILE *shellcmd __P((char *));
 
 /*
  * Remove quotes around a filename.
@@ -356,6 +367,7 @@ bin_file(f)
 	return (0);
 }
 
+#ifdef _OSK
 /*
  * Try to determine the size of a file by seeking to the end.
  */
@@ -370,10 +382,13 @@ seek_filesize(f)
 		return (NULL_POSITION);
 	return ((POSITION) spos);
 }
+#endif
 
 #if HAVE_POPEN
 
+#ifndef __STDC__
 FILE *popen();
+#endif
 
 
 /*
@@ -1026,5 +1041,6 @@ filesize(f)
 	return (seek_filesize(f));
 #endif
 #endif
+	return (POSITION) 0;
 }
 

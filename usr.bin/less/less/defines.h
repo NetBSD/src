@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.1.1.3 1997/09/21 12:22:47 mrg Exp $	*/
+/*	$NetBSD: defines.h,v 1.2 1998/02/22 14:57:29 christos Exp $	*/
 
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -305,6 +305,9 @@
 
 /* Define if you have the <values.h> header file.  */
 /* #undef HAVE_VALUES_H */
+
+/* Define if you have the <termcap.h> header file.  */
+#define HAVE_TERMCAP_H 1
 
 /* Define if you have the PW library (-lPW).  */
 /* #undef HAVE_LIBPW */

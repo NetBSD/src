@@ -1,4 +1,4 @@
-/*	$NetBSD: linenum.c,v 1.1.1.3 1997/09/21 12:23:02 mrg Exp $	*/
+/*	$NetBSD: linenum.c,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -89,6 +89,10 @@ static struct linenum *spare;		/* We always keep one spare entry */
 extern int linenums;
 extern int sigs;
 extern int sc_height;
+
+static void calcgap __P((struct linenum *));
+static void longloopmessage __P((void));
+static void longish __P((void));
 
 /*
  * Initialize the line number structures.

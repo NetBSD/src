@@ -1,4 +1,4 @@
-/*	$NetBSD: mark.c,v 1.1.1.3 1997/09/21 12:23:03 mrg Exp $	*/
+/*	$NetBSD: mark.c,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -53,6 +53,9 @@ static struct mark marks[NMARKS];
  * Special mark for the "last mark"; addressed by the apostrophe.
  */
 static struct mark lmark;
+
+static struct mark *getumark __P((int));
+static struct mark *getmark __P((int));
 
 /*
  * Initialize the mark table to show no marks are set.

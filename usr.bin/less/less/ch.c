@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.1.1.3 1997/09/21 12:22:45 mrg Exp $	*/
+/*	$NetBSD: ch.c,v 1.2 1998/02/22 14:57:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -100,8 +100,9 @@ extern int logfile;
 extern char *namelogfile;
 #endif
 
-static int ch_addbuf();
-
+static int buffered __P((long));
+static int ch_addbuf __P((void));
+static void ch_delbufs __P((void));
 
 /*
  * Get the character pointed to by the read pointer.

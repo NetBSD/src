@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.4 1997/09/21 12:40:58 mrg Exp $	*/
+/*	$NetBSD: command.c,v 1.5 1998/02/22 14:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -84,7 +84,15 @@ static int optflag;
 static char pipec;
 #endif
 
-static void multi_search();
+
+static void cmd_exec __P((void));
+static void start_mca __P((int, char *, constant void *));
+static void mca_search __P((void));
+static void exec_mca __P((void));
+static int mca_char __P((int));
+static void make_display __P((void));
+static void prompt __P((void));
+static void multi_search __P((char *, int));
 
 /*
  * Move the cursor to lower left before executing a command.
@@ -105,7 +113,7 @@ cmd_exec()
 start_mca(action, prompt, mlist)
 	int action;
 	char *prompt;
-	void *mlist;
+	constant void *mlist;
 {
 	mca = action;
 	clear_cmd();
@@ -703,7 +711,7 @@ multi_search(pattern, n)
 	public void
 commands()
 {
-	register int c;
+	register int c = 0;
 	register int action;
 	register char *cbuf;
 	int newaction;

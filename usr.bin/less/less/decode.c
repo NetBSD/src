@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.1.1.3 1997/09/21 12:23:12 mrg Exp $	*/
+/*	$NetBSD: decode.c,v 1.2 1998/02/22 14:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -206,6 +206,11 @@ static struct tablelist *list_fcmd_tables = NULL;
 static struct tablelist *list_ecmd_tables = NULL;
 static struct tablelist *list_var_tables = NULL;
 
+static int add_cmd_table __P((struct tablelist **, char *, int));
+static int cmd_decode __P((struct tablelist *, char *, char **));
+static int gint __P((char **));
+static int old_lesskey __P((char *, int));
+static int new_lesskey __P((char *, int));
 
 /*
  * Initialize the command lists.

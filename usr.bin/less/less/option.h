@@ -1,4 +1,4 @@
-/*	$NetBSD: option.h,v 1.1.1.3 1997/09/21 12:23:17 mrg Exp $	*/
+/*	$NetBSD: option.h,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -63,7 +63,8 @@ struct option
 	int otype;		/* Type of the option */
 	int odefault;		/* Default value */
 	int *ovar;		/* Pointer to the associated variable */
-	void (*ofunc)();	/* Pointer to special handling function */
+	void (*ofunc)		/* Pointer to special handling function */
+	    __P((int, char *));
 	char *odesc[3];		/* Description of each value */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.3 1997/09/21 12:23:05 mrg Exp $	*/
+/*	$NetBSD: os.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -81,6 +81,11 @@ public int reading;
 static jmp_buf read_label;
 
 extern int sigs;
+
+#if !HAVE_STRERROR
+static char *strerror __P((int));
+#endif
+static long get_maxlong __P((void));
 
 /*
  * Like read() system call, but is deliberately interruptible.
