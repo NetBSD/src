@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: s_frexp.c,v 1.7 1994/09/22 16:44:41 jtc Exp $";
+static char rcsid[] = "$Id: s_frexp.c,v 1.8 1995/01/25 01:07:25 jtc Exp $";
 #endif
 
 /*
@@ -32,7 +32,6 @@ static const double
 #else
 static double
 #endif
-one   =  1.00000000000000000000e+00, /* 0x3FF00000, 0x00000000 */
 two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 
 #ifdef __STDC__
