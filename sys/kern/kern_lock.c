@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.23 1999/07/28 19:29:39 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.24 1999/08/10 21:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ lockmgr(lkp, flags, interlkp)
 	int error;
 	pid_t pid;
 	int extflags;
-	u_long cpu_id;
+	cpuid_t cpu_id;
 	struct proc *p = curproc;
 
 	error = 0;
@@ -317,7 +317,7 @@ lockmgr(lkp, flags, interlkp)
 #endif /* } */
 		pid = p->p_pid;
 	}
-	cpu_id = 0;			/* XXX cpu_number() XXX */
+	cpu_id = cpu_number();
 
 #ifdef DIAGNOSTIC /* { */
 	/*
@@ -690,7 +690,7 @@ _simple_lock(alp, id, l)
 	const char *id;
 	int l;
 {
-	u_long cpu_id = 0 /* XXX cpu_number() XXX */;
+	cpuid_t cpu_id = cpu_number();
 	int s;
 
 	s = splhigh();
@@ -740,7 +740,7 @@ _simple_lock_try(alp, id, l)
 	const char *id;
 	int l;
 {
-	u_long cpu_id = 0 /* XXX cpu_number() XXX */;
+	cpuid_t cpu_id = cpu_number();
 	int s, rv = 0;
 
 	s = splhigh();
