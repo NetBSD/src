@@ -27,11 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_script.h,v 1.2 1994/01/28 23:48:36 jtc Exp $
+ *	$Id: exec_script.h,v 1.3 1994/05/21 08:20:57 cgd Exp $
  */
-
-#ifndef	_SYS_EXEC_SCRIPT_H_
-#define	_SYS_EXEC_SCRIPT_H_
 
 #define	EXEC_SCRIPT_MAGIC	"#!"
 #define	EXEC_SCRIPT_MAGICLEN	2
@@ -42,4 +39,3 @@
 int	exec_script_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* KERNEL */
-#endif /* !_SYS_EXEC_AOUT_H_ */
