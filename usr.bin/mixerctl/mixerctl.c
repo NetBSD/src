@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.7 1997/10/08 22:20:40 jtc Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.8 1997/10/16 23:28:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -303,8 +303,9 @@ main(argc, argv)
 	}
 
 	for(i = 0; i < j; i++) {
-		if (infos[i].mixer_class >= 0 && infos[i].mixer_class < ndev)
-			fields[i].name = catstr(infos[fields[i].infp->mixer_class].label.name, 
+		int cls = fields[i].infp->mixer_class;
+		if (cls >= 0 && cls < ndev)
+			fields[i].name = catstr(infos[cls].label.name, 
 						fields[i].name);
 	}
 
