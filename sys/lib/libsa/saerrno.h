@@ -1,4 +1,4 @@
-/*	$NetBSD: saerrno.h,v 1.3 1994/08/04 19:39:38 brezak Exp $	*/
+/*	$NetBSD: saerrno.h,v 1.4 1995/02/21 07:52:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -44,7 +44,7 @@ extern	int errno;	/* just like unix */
 #define	EPART	4	/* bad partition */
 #define	ERDLAB	5	/* can't read disk label */
 #define	EUNLAB	6	/* unlabeled disk */
-#define	ENXIO	7	/* bad device specification */
+#define	ENXIO	7	/* Device not configured */
 #define	EBADF	8	/* bad file descriptor */
 #define	EOFFSET	9	/* relative seek not supported */
 #define	ESRCH	10	/* directory search for file failed */
@@ -65,3 +65,4 @@ extern	int errno;	/* just like unix */
 #define	ENOTDIR	25	/* Not a directory */
 #define	EROFS	26	/* Read-only file system */
 #define	ENODEV	27	/* Operation not supported by device */
+#define	EFTYPE	28	/* Inappropriate file type or format */
