@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.1.4.2 2002/07/14 17:46:17 gehenna Exp $
+#	$NetBSD: files.hp700,v 1.1.4.3 2002/07/16 08:04:05 gehenna Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -19,9 +19,6 @@ include "dev/wsfont/files.wsfont"
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{ sd = 4 }
-major	{ st = 5 }
-major	{ cd = 6 }
 
 # I2O
 include "dev/i2o/files.i2o"
@@ -109,10 +106,6 @@ file	arch/hp700/dev/sti_sgc.c		sti_sgc
 
 ###
 
-major	{ccd = 1}
-major	{vnd = 2}
-#major	{rd = 3}
-
 #
 # GSC bus devices
 #
@@ -140,7 +133,6 @@ file	arch/hp700/gsc/lpt_gsc.c		lpt
 
 #device  fd: disk
 #attach  fd at fdc
-#major   {fd = 7}        
 
 device	ie: ifnet, ether, arp, i82586
 attach	ie at gsc with ie_gsc
