@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.13 2001/07/07 16:50:41 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.14 2001/07/07 16:51:47 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -324,7 +324,7 @@ xi_pcmcia_cis_quirks(pf)
 
 	if (cfe == NULL)
 		return -1;
-	bzero(cfe, sizeof(*cfe));
+	memset(cfe, 0, sizeof(*cfe));
 
 	/*
 	 * XXX Use preprocessor symbols instead.
