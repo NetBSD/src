@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.3 2004/07/18 20:51:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #undef _LOCORE
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: _setjmp.S,v 1.2 2003/10/06 05:30:21 matt Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.3 2004/07/18 20:51:24 chs Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -127,6 +127,8 @@ ENTRY(_longjmp,0)
 	nop
 botch:
 	bl	longjmperror, %rp
+	nop
+	bl	abort, %rp
 	nop
 EXIT(_longjmp)
 
