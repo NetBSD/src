@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 1994/11/23 17:49:07 dean Exp $
+	$NetBSD: syscalls.master,v 1.7 1994/12/01 16:41:43 dean Exp $
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -149,7 +149,7 @@
 100	NOARGS		{ int getpriority(int which, int who); }
 101	NOARGS		{ int compat_43_send(int s, caddr_t buf, int len, int flags); }
 102	NOARGS		{ int compat_43_recv(int s, caddr_t buf, int len, int flags); }
-103	UNIMPL		/*XXX*/	 sigreturn
+103	NOARGS		{ int sigreturn(struct sigcontext *sigcntxp); }
 104	NOARGS		{ int bind(int s, caddr_t name, int namelen); }
 105	STD		{ int sun_setsockopt(int s, int level, int name, \
 			    caddr_t val, int valsize); }
