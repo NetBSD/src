@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.6 1998/03/01 02:22:29 fvdl Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.7 1998/05/20 01:32:29 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -38,6 +38,8 @@
  *
  *	@(#)kern_lock.c	8.18 (Berkeley) 5/21/95
  */
+
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

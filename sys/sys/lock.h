@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 1998/03/01 02:24:13 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.10 1998/05/20 01:32:29 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -43,6 +43,7 @@
 #define	_SYS_LOCK_H_
 
 #if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
 #include "opt_uvm.h"
 #endif
 

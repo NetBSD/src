@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.7 1998/05/18 15:00:50 pk Exp $	*/
+/*	$NetBSD: uvm.h,v 1.8 1998/05/20 01:32:29 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -42,6 +42,7 @@
 #ifndef _UVM_UVM_H_
 #define _UVM_UVM_H_
 
+#include "opt_lockdebug.h"
 #include "opt_uvmhist.h"
 
 #include <uvm/uvm_extern.h>
