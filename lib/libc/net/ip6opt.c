@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.4 1999/09/20 04:39:15 lukem Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.5 2000/01/23 00:09:19 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,7 +41,7 @@
 #include <stdio.h>
 
 static int ip6optlen(u_int8_t *opt, u_int8_t *lim);
-static void inet6_insert_padopt(u_char *p, int len);
+static void inet6_insert_padopt(u_char *p, size_t len);
 
 /*
  * This function returns the number of bytes required to hold an option
@@ -107,7 +107,7 @@ inet6_option_append(cmsg, typep, multx, plusy)
 	int multx;
 	int plusy;
 {
-	int padlen, optlen, off;
+	size_t padlen, optlen, off;
 	register u_char *bp;
 	struct ip6_ext *eh;
 
@@ -150,7 +150,7 @@ inet6_option_append(cmsg, typep, multx, plusy)
 		optlen = 1;
 	else
 		optlen = typep[1] + 2;
-	memcpy(bp, typep, optlen);
+	memcpy(bp, typep, (size_t)optlen);
 	bp += optlen;
 	cmsg->cmsg_len += optlen;
 
@@ -162,7 +162,8 @@ inet6_option_append(cmsg, typep, multx, plusy)
 	cmsg->cmsg_len += padlen;
 
 	/* update the length field of the ip6 option header */
-	eh->ip6e_len = ((bp - (u_char *)eh) >> 3) - 1;
+	off = bp - (u_char *)eh;
+	eh->ip6e_len = (off >> 3) - 1;
 
 	return(0);
 }
@@ -187,7 +188,7 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	int multx;
 	int plusy;
 {
-	int padlen, off;
+	size_t padlen, off;
 	register u_int8_t *bp;
 	u_int8_t *retval;
 	struct ip6_ext *eh;
@@ -236,7 +237,8 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	cmsg->cmsg_len += padlen;
 
 	/* update the length field of the ip6 option header */
-	eh->ip6e_len = ((bp - (u_char *)eh) >> 3) - 1;
+	off = bp - (u_char *)eh;
+	eh->ip6e_len = (off >> 3) - 1;
 
 	return(retval);
 }
@@ -395,7 +397,7 @@ ip6optlen(opt, lim)
 }
 
 static void
-inet6_insert_padopt(u_char *p, int len)
+inet6_insert_padopt(u_char *p, size_t len)
 {
 
 	_DIAGASSERT(p != NULL);
