@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2002/08/19 09:41:35 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2005/01/10 03:11:17 lukem Exp $
 
 NOLINKLIB=	# defined
 NOPIC=		# defined
@@ -24,6 +24,11 @@ CPPFLAGS+= -I. \
 	-DHAVE_CONFIG_H
  
 HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/include/heimdal -DHAVE_CONFIG_H
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DHAVE_IPV6
+HOST_CPPFLAGS+=-DHAVE_IPV6
+.endif
 
 make-print-version.lo: ${NETBSDSRCDIR}/include/heimdal/version.h
 
