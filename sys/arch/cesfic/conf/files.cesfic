@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.5 2002/10/20 02:37:24 chs Exp $
+#	$NetBSD: files.cesfic,v 1.6 2002/10/26 13:50:25 jdolecek Exp $
 #
 # cesfic-specific configuration info
 
@@ -49,7 +49,6 @@ file	arch/cesfic/dev/if_le.c		le
 
 file	arch/cesfic/cesfic/autoconf.c
 file	arch/cesfic/cesfic/clock.c
-file	arch/cesfic/cesfic/conf.c
 file	arch/cesfic/cesfic/db_memrw.c		ddb | kgdb
 file	arch/cesfic/cesfic/kgdb_machdep.c	kgdb
 file	arch/cesfic/cesfic/machdep.c

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: conf.c,v 1.6 2002/10/26 13:50:18 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,22 +31,12 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6 2002/10/26 13:50:18 jdolecek Exp $");
 
 #include <sys/conf.h>
 #include <dev/cons.h>
 
 #include "rs.h"
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-	return (major(dev) == mem_no && minor(dev) < 2);
-}
 
 struct consdev constab[] = {
 #if NRS > 0

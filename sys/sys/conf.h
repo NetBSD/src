@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.106 2002/10/23 09:14:54 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.107 2002/10/26 13:50:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -202,9 +202,6 @@ struct swdevt {
 
 #ifdef _KERNEL
 extern struct swdevt swdevt[];
-
-extern const int mem_no;
-int	iskmemdev __P((dev_t));
 
 #define	DEV_MEM		0	/* minor device 0 is physical memory */
 #define	DEV_KMEM	1	/* minor device 1 is kernel memory */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.9 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.playstation2,v 1.10 2002/10/26 13:50:39 jdolecek Exp $
 
 maxpartitions 8
 
@@ -20,7 +20,6 @@ file arch/playstation2/playstation2/interrupt.c
 file arch/playstation2/playstation2/bus_space.c
 file arch/playstation2/playstation2/bus_dma.c
 file arch/playstation2/playstation2/clock.c
-file arch/playstation2/playstation2/conf.c
 file arch/playstation2/playstation2/disksubr.c		disk
 file arch/playstation2/playstation2/machdep.c
 file arch/playstation2/playstation2/sifbios.c
