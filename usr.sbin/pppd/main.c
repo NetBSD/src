@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1997/03/12 20:18:02 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1997/03/13 19:05:51 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.40 1997/03/04 03:41:17 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/03/12 20:18:02 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.22 1997/03/13 19:05:51 christos Exp $";
 #endif
 #endif
 
@@ -1444,12 +1444,7 @@ vfmtmsg(buf, buflen, fmt, args)
 	    break;
 	case 'r':
 	    f = va_arg(args, char *);
-	    /*
-	     * XXX We assume a va_list is either a pointer or an array, so
-	     * what gets passed for a va_list is like a void * in some sense.
-	     */
-	    a = va_arg(args, void *);
-	    n = vfmtmsg(buf, buflen + 1, f, a);
+	    n = vfmtmsg(buf, buflen + 1, f, args);
 	    buf += n;
 	    buflen -= n;
 	    continue;
