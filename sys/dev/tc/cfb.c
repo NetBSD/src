@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.41 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: cfb.c,v 1.42 2003/11/13 03:09:29 chs Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.41 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.42 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,8 @@ struct hwcursor64 {
 	struct wsdisplay_curpos cc_magic;
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t cc_color[6];
-	u_int64_t cc_image[64 + 64];
+	u_int64_t cc_image[CURSOR_MAX_SIZE];
+	u_int64_t cc_mask[CURSOR_MAX_SIZE];
 };
 
 struct cfb_softc {
@@ -551,7 +552,7 @@ cfbintr(arg)
 		int bcnt;
 
 		ip = (u_int8_t *)sc->sc_cursor.cc_image;
-		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
+		mp = (u_int8_t *)sc->sc_cursor.cc_mask;
 
 		bcnt = 0;
 		SELECT(vdac, BT459_IREG_CRAM_BASE+0);
@@ -670,20 +671,19 @@ get_cmap(sc, p)
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
+	int error;
 
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-
-	copyout(&sc->sc_cmap.r[index], p->red, count);
-	copyout(&sc->sc_cmap.g[index], p->green, count);
-	copyout(&sc->sc_cmap.b[index], p->blue, count);
-
-	return (0);
+	error = copyout(&sc->sc_cmap.r[index], p->red, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap.g[index], p->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap.b[index], p->blue, count);
+	return error;
 }
 
 static int
@@ -691,19 +691,25 @@ set_cmap(sc, p)
 	struct cfb_softc *sc;
 	struct wsdisplay_cmap *p;
 {
+	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
+	int error;
 
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
-
-	copyin(p->red, &sc->sc_cmap.r[index], count);
-	copyin(p->green, &sc->sc_cmap.g[index], count);
-	copyin(p->blue, &sc->sc_cmap.b[index], count);
+	error = copyin(p->red, &cmap.r[index], count);
+	if (error)
+		return error;
+	error = copyin(p->green, &cmap.g[index], count);
+	if (error)
+		return error;
+	error = copyin(p->blue, &cmap.b[index], count);
+	if (error)
+		return error;
+	memcpy(&sc->sc_cmap.r[index], &cmap.r[index], count);
+	memcpy(&sc->sc_cmap.g[index], &cmap.g[index], count);
+	memcpy(&sc->sc_cmap.b[index], &cmap.b[index], count);
 	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
 	return (0);
 }
@@ -715,6 +721,8 @@ set_cursor(sc, p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
+	uint8_t r[2], g[2], b[2], image[512], mask[512];
+	int error;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -722,18 +730,26 @@ set_cursor(sc, p)
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
-		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
-		    !uvm_useracc(p->cmap.green, count, B_READ) ||
-		    !uvm_useracc(p->cmap.blue, count, B_READ))
-			return (EFAULT);
+		error = copyin(p->cmap.red, &r[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.green, &g[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.blue, &b[index], count);
+		if (error)
+			return error;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
-		if (!uvm_useracc(p->image, icount, B_READ) ||
-		    !uvm_useracc(p->mask, icount, B_READ))
-			return (EFAULT);
+		error = copyin(p->image, image, icount);
+		if (error)
+			return error;
+		error = copyin(p->mask, mask, icount);
+		if (error)
+			return error;
 	}
 
 	if (v & WSDISPLAY_CURSOR_DOCUR)
@@ -743,15 +759,16 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOHOT)
 		cc->cc_hot = p->hot;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		copyin(p->cmap.red, &cc->cc_color[index], count);
-		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
-		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
+		memcpy(&cc->cc_color[index], &r[index], count);
+		memcpy(&cc->cc_color[index + 2], &g[index], count);
+		memcpy(&cc->cc_color[index + 4], &b[index], count);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
-		copyin(p->image, cc->cc_image, icount);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
+		memcpy(cc->cc_image, image, icount);
+		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
+		memcpy(cc->cc_mask, mask, icount);
 	}
 	sc->sc_changed |= v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2003/11/09 16:41:52 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.157 2003/11/13 03:09:29 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2003/11/09 16:41:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2003/11/13 03:09:29 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1242,25 +1242,14 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
 
-	/*
-	 * Check user read/write access to the data buffer.
-	 */
 	if (uio->uio_segflg == UIO_USERSPACE) {
 		pm = p->p_vmspace->vm_map.pmap;
-		for (i = 0; i < uio->uio_iovcnt; i++) {
-			/* XXXCDC: map not locked, rethink */
-			if (__predict_false(!uvm_useracc(uio->uio_iov[i].iov_base,
-				     uio->uio_iov[i].iov_len,
-/* XXX is UIO_WRITE correct? */
-				     (uio->uio_rw == UIO_WRITE) ? B_WRITE : B_READ)))
-				return (EFAULT);
-		}
 	} else
 		pm = pmap_kernel();
 
 	i = 0;
 	len = 0;
-	for (j=0; j<uio->uio_iovcnt; j++) {
+	for (j = 0; j < uio->uio_iovcnt; j++) {
 		struct iovec *iov = &uio->uio_iov[j];
 		vaddr_t vaddr = (vaddr_t)iov->iov_base;
 		bus_size_t buflen = iov->iov_len;
@@ -1272,8 +1261,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		PHOLD(p);
 		if (__predict_false(uvm_vslock(p, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
-			    VM_PROT_WRITE : VM_PROT_READ)
-			    != 0)) {
+			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
 				goto after_vsunlock;
 			}
 		
