@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.516 2003/03/20 05:50:13 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.517 2003/03/25 18:30:16 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.515 2003/03/20 05:49:21 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.516 2003/03/25 18:28:15 tsubai Exp 
  */
 
 /*
@@ -1262,6 +1262,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KAUAI,
+	    0,
+	    "Apple Computer",
+	    "Kauai ATA Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (Intrepid)",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
