@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.19 1998/11/15 17:32:46 christos Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.20 1999/01/20 08:40:13 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.19 1998/11/15 17:32:46 christos Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.20 1999/01/20 08:40:13 lukem Exp $");
 #endif
 #endif
 
@@ -152,8 +152,8 @@ svctcp_create(sock, sendsize, recvsize)
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-			warnx("svctcp_create - udp socket creation problem");
-			return ((SVCXPRT *)NULL);
+			warn("svctcp_create - udp socket creation problem");
+			goto cleanup_svctcp_create;
 		}
 		madesock = TRUE;
 	}
@@ -164,24 +164,25 @@ svctcp_create(sock, sendsize, recvsize)
 		addr.sin_port = 0;
 		(void)bind(sock, (struct sockaddr *)(void *)&addr, len);
 	}
-	if ((getsockname(sock, (struct sockaddr *)(void *)&addr, &len) != 0)  ||
-	    (listen(sock, 2) != 0)) {
-		warnx("svctcp_create - cannot getsockname or listen");
-		if (madesock)
-		       (void)close(sock);
-		return ((SVCXPRT *)NULL);
+	if (getsockname(sock, (struct sockaddr *)(void *)&addr, &len) != 0) {
+		warn("svctcp_create - cannot getsockname");
+		goto cleanup_svctcp_create;
+	}
+	if (listen(sock, SOMAXCONN) != 0) {
+		warn("svctcp_create - cannot listen");
+		goto cleanup_svctcp_create;
 	}
 	r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
 	if (r == NULL) {
 		warnx("svctcp_create: out of memory");
-		return (NULL);
+		goto cleanup_svctcp_create;
 	}
 	r->sendsize = sendsize;
 	r->recvsize = recvsize;
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
 		warnx("svctcp_create: out of memory");
-		return (NULL);
+		goto cleanup_svctcp_create;
 	}
 	xprt->xp_p2 = NULL;
 	xprt->xp_p1 = (caddr_t)(void *)r;
@@ -191,6 +192,10 @@ svctcp_create(sock, sendsize, recvsize)
 	xprt->xp_sock = sock;
 	xprt_register(xprt);
 	return (xprt);
+ cleanup_svctcp_create:
+	if (madesock)
+	       (void)close(sock);
+	return ((SVCXPRT *)NULL);
 }
 
 /*
@@ -394,6 +399,7 @@ svctcp_recv(xprt, msg)
 		cd->x_id = msg->rm_xid;
 		return (TRUE);
 	}
+	cd->strm_stat = XPRT_DIED;
 	return (FALSE);
 }
 
