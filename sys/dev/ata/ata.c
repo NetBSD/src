@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.56 2004/08/20 23:36:52 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.57 2004/08/20 23:50:13 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.56 2004/08/20 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.57 2004/08/20 23:50:13 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -488,11 +488,12 @@ atabus_detach(struct device *self, int flags)
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = sc->sc_chan;
 	struct device *dev = NULL;
-	int i, error = 0;
+	int s, i, error = 0;
 
 	/* Shutdown the channel. */
-	/* XXX NEED AN INTERLOCK HERE. */
+	s = splbio();		/* XXX ALSO NEED AN INTERLOCK HERE. */
 	chp->ch_flags |= ATACH_SHUTDOWN;
+	splx(s);
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
@@ -676,7 +677,9 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 }
 
 /*
- * Add a command to the queue and start controller. Must be called at splbio
+ * Add a command to the queue and start controller.
+ *
+ * MUST BE CALLED AT splbio()!
  */
 void
 ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
@@ -699,6 +702,8 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
  * Start I/O on a controller, for the given channel.
  * The first xfer may be not for our channel if the channel queues
  * are shared.
+ *
+ * MUST BE CALLED AT splbio()!
  */
 void
 atastart(struct ata_channel *chp)
@@ -821,12 +826,27 @@ ata_kill_pending(struct ata_drive_datas *drvp)
  * ata_reset_channel:
  *
  *	Reset and ATA channel.
+ *
+ *	MUST BE CALLED AT splbio()!
  */
 void
 ata_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	int drive;
+
+#ifdef ATA_DEBUG
+	int spl1, spl2;
+
+	spl1 = splbio();
+	spl2 = splbio();
+	if (spl2 != spl1) {
+		printf("ata_reset_channel: not at splbio()\n");
+		panic("ata_reset_channel");
+	}
+	splx(spl2);
+	splx(spl1);
+#endif /* ATA_DEBUG */
 
 	chp->ch_queue->queue_freeze++;
 
@@ -931,6 +951,8 @@ ata_print_modes(struct ata_channel *chp)
 /*
  * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
+ *
+ * MUST BE CALLED AT splbio()!
  */
 int
 ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
