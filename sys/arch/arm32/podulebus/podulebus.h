@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.3 1996/04/26 22:34:02 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.4 1996/08/21 19:44:53 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -100,6 +100,15 @@ struct podule_attach_args {
 	int pa_podule_number;
 	int pa_slottype;
 };
+
+/* Useful macros */
+
+/* EASI space cycle control */
+
+#define EASI_CYCLE_TYPE_A	0x00
+#define EASI_CYCLE_TYPE_C	0x01
+#define set_easi_cycle_type(podule, type) \
+	WriteByte(IOMD_ECTCR, (ReadByte(IOMD_ECTCR) & ~(1 << podule)) | (1 << type))
   
 #ifdef _KERNEL
 
