@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1999/08/03 09:02:10 dbj Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 2000/03/06 04:14:15 deberg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -589,8 +589,8 @@ zs_abort(cs)
 #elif defined(DDB)
 	Debugger();
 #else
-	printf("stopping on keyboard abort\n");
-	callrom();
+	/* XXX eventually, drop into next rom monitor here */
+	printf("stopping on keyboard abort not supported without DDB or KGDB\n");
 #endif
 #else /* !ZS_CONSOLE_ABORT */
 	return;
