@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.3 1999/12/08 16:52:51 joda Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.4 2000/02/03 06:47:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,10 +102,12 @@ cardbus_read_exrom(romt, romh, head)
     do {
 	size_t image_size;
 	struct cardbus_rom_image *image;
+	u_int16_t val;
 
-	if(READ_INT16(romt, romh, addr + CARDBUS_EXROM_SIGNATURE) != 0xaa55) {
-	    printf("%s: bad header signature in ROM image %u\n", 
-		   __func__, rom_image);
+	val = READ_INT16(romt, romh, addr + CARDBUS_EXROM_SIGNATURE);
+	if(val != 0xaa55) {
+	    printf("%s: bad header signature in ROM image %u: 0x%04x\n", 
+		   __func__, rom_image, val);
 	    return 1;
 	}
 	dataptr = addr + READ_INT16(romt, romh, addr + CARDBUS_EXROM_DATA_PTR);
