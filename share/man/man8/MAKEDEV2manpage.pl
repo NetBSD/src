@@ -1,9 +1,9 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.2 1999/10/11 01:41:10 hubertf Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.3 2000/05/02 00:15:41 hubertf Exp $
 #
 # Copyright (c) 1999
-#	Hubert Feyrer <hubert@feyrer.de>.  All rights reserved.
+#	Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,7 +13,11 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of the University nor the names of its contributors
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#      This product includes software developed by Hubert Feyrer for
+#      the NetBSD Project.
+# 4. Neither the name of the University nor the names of its contributors
 #    may be used to endorse or promote products derived from this software
 #    without specific prior written permission.
 #
