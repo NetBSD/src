@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.13 1997/07/24 08:53:48 phil Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.14 1997/10/19 12:29:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,25 +33,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: local_passwd.c,v 1.13 1997/07/24 08:53:48 phil Exp $";
+__RCSID("$NetBSD: local_passwd.c,v 1.14 1997/10/19 12:29:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pwd.h>
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <util.h>
 
 #include "extern.h"
+
+static	char   *getnewpasswd __P((struct passwd *));
 
 static uid_t uid;
 
@@ -72,13 +78,13 @@ to64(s, v, n)
 	}
 }
 
-char *
+static char *
 getnewpasswd(pw)
 	struct passwd *pw;
 {
 	int tries;
 	char *p, *t;
-	char buf[_PASSWORD_LEN+1], salt[9], *crypt(), *getpass();
+	char buf[_PASSWORD_LEN+1], salt[9];
 
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
@@ -131,7 +137,6 @@ local_passwd(uname)
 	struct passwd *pw;
 	struct passwd old_pw;
 	int pfd, tfd;
-	char *getnewpasswd();
 
 	if (!(pw = getpwnam(uname))) {
 		warnx("unknown user %s", uname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.14 1997/05/21 02:09:51 lukem Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.15 1997/10/19 12:30:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -33,26 +33,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.14 1997/05/21 02:09:51 lukem Exp $";
+__RCSID("$NetBSD: yp_passwd.c,v 1.15 1997/10/19 12:30:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef	YP
 
+#include <ctype.h>
 #include <err.h>
-#include <stdio.h>
-#include <string.h>
-#include <netdb.h>
-#include <time.h>
-#include <pwd.h>
 #include <errno.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#include "extern.h"
+
 #define passwd yp_passwd_rec
 #include <rpcsvc/yppasswd.h>
 #undef passwd
@@ -65,26 +73,21 @@ extern	char *__progname;		/* from crt0.o */
 
 extern	int yflag, yppwd;
 
-static char *getnewpasswd();
-static struct passwd *ypgetpwnam();
+static	char		*getnewpasswd __P((struct passwd *, char **));
+static	struct passwd	*interpret __P((struct passwd *, char *));
+static	struct passwd	*ypgetpwnam __P((char *));
+static	void		 pw_error __P((char *, int, int));
 
 static uid_t uid;
 char *domain;
 
-static
+static void
 pw_error(name, err, eval)
 	char *name;
 	int err, eval;
 {
-	int sverrno;
-
-	if (err) {
-		sverrno = errno;
-		(void)fprintf(stderr, "%s: ", __progname);
-		if (name)
-			(void)fprintf(stderr, "%s: ", name);
-		(void)fprintf(stderr, "%s\n", strerror(sverrno));
-	}
+	if (err)
+		warn("%s", name ? name : "");
 	errx(eval, "YP passwd database unchanged");
 }
 
@@ -93,7 +96,6 @@ yp_passwd(username)
 	char *username;
 {
 	char *master;
-	char *pp;
 	int r, rpcport, status;
 	struct yppasswd yppasswd;
 	struct passwd *pw;
@@ -105,7 +107,7 @@ yp_passwd(username)
 	/*
 	 * Get local domain
 	 */
-	if (r = yp_get_default_domain(&domain))
+	if ((r = yp_get_default_domain(&domain)) != NULL)
 		errx(1, "can't get local YP domain.  Reason: %s",
 		    yperr_string(r));
 
@@ -191,7 +193,7 @@ getnewpasswd(pw, old_pass)
 	int tries;
 	char *p, *t;
 	static char buf[_PASSWORD_LEN+1];
-	char salt[9], *crypt(), *getpass();
+	char salt[9];
 	
 	(void)printf("Changing YP password for %s.\n", pw->pw_name);
 
@@ -255,11 +257,12 @@ pwskip(char *p)
 	return (p);
 }
 
-struct passwd *
-interpret(struct passwd *pwent, char *line)
+static struct passwd *
+interpret(pwent, line)
+	struct passwd *pwent;
+	char *line;
 {
 	char	*p = line;
-	int	c;
 
 	pwent->pw_passwd = "*";
 	pwent->pw_uid = 0;
