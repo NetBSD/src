@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.12 1995/11/03 16:34:12 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.13 1995/11/28 20:26:59 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -245,9 +245,11 @@ dma_start(sc, addr, len, datain)
 	int datain;
 {
 	/* we do the loading of the transfer counter */
-	volatile caddr_t esp = sc->sc_esp->sc_reg;
+	volatile unsigned char *esp = sc->sc_esp->sc_reg;
 	size_t size;
+	u_long csr;
 
+	sc->sc_regs->csr &= ~D_INT_EN;
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
@@ -264,6 +266,17 @@ dma_start(sc, addr, len, datain)
 
 	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
 
+	/* Program the DMA address */
+#if 1
+	/* clear errors and D_TC flag */
+	DMAWAIT(sc);
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
+#endif
+
+	DMADDR(sc) = *sc->sc_dmaaddr;
+
+	/* Program the SCSI counter */
 	esp[ESP_TCL] = size;
 	esp[ESP_TCM] = size >> 8;
 	if (sc->sc_esp->sc_rev > ESP100A) {
@@ -272,15 +285,7 @@ dma_start(sc, addr, len, datain)
 	/* load the count in */
 	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
 
-	DMADDR(sc) = *sc->sc_dmaaddr;
-	DMACSR(sc) |= datain|D_EN_DMA|D_INT_EN;
-
-	/* and clear from last read if this is a write */
-	if (!datain)
-		DMACSR(sc) &= ~D_WRITE;
-
 	/*
-	 * and kick the SCSI
 	 * Note that if `size' is 0, we've already transceived all
 	 * the bytes we want but we're still in the DATA PHASE.
 	 * Apparently, the device needs padding. Also, a transfer
@@ -288,7 +293,14 @@ dma_start(sc, addr, len, datain)
 	 */
 	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
 
+
+	/* Start DMA */
+	csr = DMACSR(sc);
+	/* clear from last read if this is a write */
+	csr &= ~D_WRITE;
+	csr |= datain|D_EN_DMA|D_INT_EN;
 	sc->sc_active = 1;
+	DMACSR(sc) = csr;
 }
 
 /*
@@ -302,7 +314,7 @@ int
 dmaintr(sc)
 	struct dma_softc *sc;
 {
-	volatile caddr_t esp = sc->sc_esp->sc_reg;
+	volatile unsigned char *esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
 
 	ESP_DMA(("%s: intr: <csr %x>", sc->sc_dev.dv_xname, DMACSR(sc)));
@@ -322,10 +334,12 @@ dmaintr(sc)
 	DMACSR(sc) &= ~D_EN_DMA;
 	sc->sc_active = 0;
 
-	DMAWAIT(sc);
-	/* clear errors and D_TC flag */
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+	if ((DMACSR(sc) & D_WRITE)) {
+		DMAWAIT(sc);
+		/* clear errors and D_TC flag */
+		DMACSR(sc) |= D_INVALIDATE;
+		DMAWAIT1(sc);
+	}
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
@@ -342,6 +356,11 @@ dmaintr(sc)
 
 	resid += esp[ESP_TCL] | (esp[ESP_TCM] << 8) |
 	    (sc->sc_esp->sc_rev > ESP100A ? (esp[ESP_TCH] << 16) : 0);
+
+	if (resid == 0 && (sc->sc_esp->sc_rev <= ESP100A) &&
+	    (sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0)
+		resid = 65536;
+
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
 		printf("%s: xfer (%d) > req (%d)\n",
@@ -349,7 +368,7 @@ dmaintr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n", esp[ESP_TCL],esp[ESP_TCM], esp[ESP_TCH], trans, resid));
+	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n", esp[ESP_TCL],esp[ESP_TCM], sc->sc_esp->sc_rev > ESP100A ? esp[ESP_TCH] : 0, trans, resid));
 
 	if (DMACSR(sc) & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
@@ -357,6 +376,7 @@ dmaintr(sc)
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
 
+#if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
 	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
 		return 0;
@@ -364,4 +384,6 @@ dmaintr(sc)
 	/* and again */
 	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, DMACSR(sc) & D_WRITE);
 	return 1;
+#endif
+	return 0;
 }
