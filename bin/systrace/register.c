@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.6 2002/11/02 19:49:21 provos Exp $	*/
+/*	$NetBSD: register.c,v 1.7 2003/03/25 22:54:59 provos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -135,10 +135,12 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("netbsd", "rename", trans_cb, NULL));
-	intercept_register_transfn("netbsd", "rename", 0);
+	intercept_register_translation("netbsd", "rename", 0,
+	    &ic_translate_unlinkname);
 	intercept_register_transfn("netbsd", "rename", 1);
 	X(intercept_register_sccb("netbsd", "__posix_rename", trans_cb, NULL));
-	intercept_register_transfn("netbsd", "__posix_rename", 0);
+	intercept_register_translation("netbsd", "__posix_rename", 0,
+	    &ic_translate_unlinkname);
 	intercept_register_transfn("netbsd", "__posix_rename", 1);
 	X(intercept_register_sccb("netbsd", "symlink", trans_cb, NULL));
 	intercept_register_transstring("netbsd", "symlink", 0);
@@ -240,7 +242,8 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "rename", trans_cb, NULL));
-	intercept_register_transfn("native", "rename", 0);
+	intercept_register_translation("native", "rename", 0,
+	    &ic_translate_unlinkname);
 	intercept_register_transfn("native", "rename", 1);
 	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
 	intercept_register_transstring("native", "symlink", 0);
