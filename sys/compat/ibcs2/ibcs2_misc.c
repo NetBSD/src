@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.43 2000/01/13 06:33:29 matt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.44 2000/02/27 17:30:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -89,7 +89,9 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>		/* must be included after vm.h */
 
+#if defined(__i386__)
 #include <i386/include/reg.h>
+#endif
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_dirent.h>
