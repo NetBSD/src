@@ -2188,12 +2188,32 @@ main ()
 #define PC (15)
 
 int				/* return -1 or 0:15 */
-vax_reg_parse (c1, c2, c3)	/* 3 chars of register name */
-     char c1, c2, c3;		/* c3 == 0 if 2-character reg name */
+vax_reg_parse (c1, c2, c3, c4)	/* 3 chars of register name */
+     char c1, c2, c3, c4;	/* c3 == 0 if 2-character reg name */
 {
   int retval;		/* return -1:15 */
 
   retval = -1;
+
+#ifdef OBJ_ELF
+  if (c1 != '%')	/* register prefixes are mandatory for ELF */
+    return retval;
+  c1 = c2;
+  c2 = c3;
+  c3 = c4;
+#endif
+#ifdef OBJ_VMS
+  if (c4 != 0)		/* register prefixes are not allowed under VMS */
+    return retval;
+#endif
+#ifdef OBJ_AOUT
+  if (c1 == '%')	/* register prefixes are optional under a.out */
+    {
+      c1 = c2;
+      c2 = c3;
+      c3 = c4;
+    }
+#endif
 
   if (isupper (c1))
     c1 = tolower (c1);
@@ -2601,9 +2621,11 @@ vip_op (optext, vopP)
 	   * name error. So again we don't need to check for early '\0'.
 	   */
 	  if (q[3] == ']')
-	    ndx = vax_reg_parse (q[1], q[2], 0);
+	    ndx = vax_reg_parse (q[1], q[2], 0, 0);
 	  else if (q[4] == ']')
-	    ndx = vax_reg_parse (q[1], q[2], q[3]);
+	    ndx = vax_reg_parse (q[1], q[2], q[3], 0);
+	  else if (q[5] == ']')
+	    ndx = vax_reg_parse (q[1], q[2], q[3], q[4]);
 	  else
 	    ndx = -1;
 	  /*
@@ -2656,9 +2678,11 @@ vip_op (optext, vopP)
 	       * name error. So again we don't need to check for early '\0'.
 	       */
 	      if (q[3] == ')')
-		reg = vax_reg_parse (q[1], q[2], 0);
+		reg = vax_reg_parse (q[1], q[2], 0, 0);
 	      else if (q[4] == ')')
-		reg = vax_reg_parse (q[1], q[2], q[3]);
+		reg = vax_reg_parse (q[1], q[2], q[3], 0);
+	      else if (q[5] == ')')
+		reg = vax_reg_parse (q[1], q[2], q[3], q[4]);
 	      else
 		reg = -1;
 	      /*
@@ -2728,8 +2752,11 @@ vip_op (optext, vopP)
 		q--;
 	      /* reverse over whitespace, but don't */
 	      /* run back over *p */
-	      if (q > p && q < p + 3)	/* room for Rn or Rnn exactly? */
-		reg = vax_reg_parse (p[0], p[1], q < p + 2 ? 0 : p[2]);
+	      /* room for Rn or Rnn (include prefix) exactly? */
+	      if (q > p && q < p + 4)
+		reg = vax_reg_parse (p[0], p[1],
+		  q < p + 2 ? 0 : p[2],
+		  q < p + 3 ? 0 : p[3]);
 	      else
 		reg = -1;	/* always comes here if no register at all */
 	      /*
@@ -3473,27 +3500,10 @@ tc_gen_reloc (section, fixp)
     {
       code = fixp->fx_r_type;
 
-#if 0
-      /* Since DIFF_EXPR_OK is defined in tc-m68k.h, it is possible
-         that fixup_segment converted a non-PC relative reloc into a
-         PC relative reloc.  In such a case, we need to convert the
-         reloc code.  */
-#endif
       if (fixp->fx_pcrel)
 	{
 	  switch (code)
 	    {
-#if 0
-	    case BFD_RELOC_8:
-	      code = BFD_RELOC_8_PCREL;
-	      break;
-	    case BFD_RELOC_16:
-	      code = BFD_RELOC_16_PCREL;
-	      break;
-	    case BFD_RELOC_32:
-	      code = BFD_RELOC_32_PCREL;
-	      break;
-#endif
 	    case BFD_RELOC_8_PCREL:
 	    case BFD_RELOC_16_PCREL:
 	    case BFD_RELOC_32_PCREL:
@@ -3538,49 +3548,15 @@ tc_gen_reloc (section, fixp)
 
   reloc = (arelent *) xmalloc (sizeof (arelent));
   reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
-#ifdef OBJ_ELF
-#if 0
-  if (code == BFD_RELOC_32_GOT_PCREL || code == BFD_RELOC_32_PLT_PCREL)
-    *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_frag->fr_symbol);
-  else
-#endif
-#endif
-    *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 #ifndef OBJ_ELF
   if (fixp->fx_pcrel)
     reloc->addend = fixp->fx_addnumber;
   else
     reloc->addend = 0;
-#elif defined(OBJ_ELF)
-  reloc->addend = fixp->fx_offset;
-#if 0
-  if (code == BFD_RELOC_32_GOT_PCREL || code == BFD_RELOC_32_PLT_PCREL)
-    {
-      if (S_IS_DEFINED(fixp->fx_frag->fr_symbol))
-	reloc->addend -= S_GET_VALUE(fixp->fx_frag->fr_symbol);
-    }
-#endif
 #else
-  if (!fixp->fx_pcrel)
-    {
-      reloc->addend = fixp->fx_addnumber;
-    }
-#ifdef OBJ_ELF
-  else if (code == BFD_RELOC_32_GOT_PCREL && fixp->fx_offset != 0)
-    {
-      code = BFD_RELOC_32_PCREL;
-      reloc->addend = 0;
-    }
-  else if (code == BFD_RELOC_32_GOT_PCREL || code == BFD_RELOC_32_PCREL || code == BFD_RELOC_32_PLT_PCREL)
-    {
-      reloc->addend = fixp->fx_offset;
-    }
-#endif
-  else
-    {
-      reloc->addend = 0;
-    }
+  reloc->addend = fixp->fx_offset;
 #endif
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
@@ -3589,6 +3565,6 @@ tc_gen_reloc (section, fixp)
   return reloc;
 }
 
-#endif
+#endif	/* BFD_ASSEMBLER */
 
 /* end of tc-vax.c */
