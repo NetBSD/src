@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7.6.3 2002/03/08 21:34:50 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.7.6.4 2002/03/22 20:41:53 nathanw Exp $
 
 SRCS+=	_setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
 SRCS+=	bswap16.c bswap32.c bswap64.c

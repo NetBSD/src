@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.34.2.3 2002/03/08 21:35:23 nathanw Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.34.2.4 2002/03/22 20:42:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.34.2.3 2002/03/08 21:35:23 nathanw Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.34.2.4 2002/03/22 20:42:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

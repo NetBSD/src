@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.19.6.1 2002/03/08 21:35:20 nathanw Exp $	*/
+/*	$NetBSD: unvis.c,v 1.19.6.2 2002/03/22 20:42:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.19.6.1 2002/03/08 21:35:20 nathanw Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.19.6.2 2002/03/22 20:42:14 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

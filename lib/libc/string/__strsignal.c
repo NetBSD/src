@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.19.10.1 2002/03/08 21:35:58 nathanw Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.19.10.2 2002/03/22 20:42:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.19.10.1 2002/03/08 21:35:58 nathanw Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.19.10.2 2002/03/22 20:42:32 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,9 +50,13 @@ __RCSID("$NetBSD: __strsignal.c,v 1.19.10.1 2002/03/08 21:35:58 nathanw Exp $");
 
 #include <assert.h>
 #include <stdio.h>
-#include <signal.h>
 #include <string.h>
 #include "extern.h"
+#include <signal.h>
+#ifndef SIGRTMIN	/* XXX: Until we remove the #ifdef _KERNEL */
+#define SIGRTMIN	33
+#define SIGRTMAX	63
+#endif
 
 /* ARGSUSED */
 const char *
@@ -62,6 +66,7 @@ __strsignal(num, buf, buflen)
 	size_t buflen;
 {
 #define	UPREFIX	"Unknown signal: %u"
+#define RPREFIX "Real time signal %u"
 	unsigned int signum;
 
 #ifdef NLS
@@ -79,6 +84,13 @@ __strsignal(num, buf, buflen)
 		buf[NL_TEXTMAX - 1] = '\0';
 #else
 		return((char *)sys_siglist[signum]);
+#endif
+	} else if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
+#ifdef NLS
+		(void)snprintf(buf, NL_TEXTMAX, 
+	            catgets(catd, 2, SIGRTMIN, RPREFIX), signum);
+#else
+		(void)snprintf(buf, buflen, RPREFIX, signum);
 #endif
 	} else {
 #ifdef NLS

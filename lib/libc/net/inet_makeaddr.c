@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.8.6.1 2002/03/08 21:35:27 nathanw Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.8.6.2 2002/03/22 20:42:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.8.6.1 2002/03/08 21:35:27 nathanw Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.8.6.2 2002/03/22 20:42:21 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

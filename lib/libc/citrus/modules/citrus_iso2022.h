@@ -1,7 +1,7 @@
-/*	$NetBSD: iso2022.h,v 1.4.2.1 2001/10/08 20:19:50 nathanw Exp $	*/
+/*	$NetBSD: citrus_iso2022.h,v 1.1.2.2 2002/03/22 20:42:03 nathanw Exp $	*/
 
 /*-
- * Copyright (c)1999 Citrus Project,
+ * Copyright (c)2002 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,17 +24,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Citrus: xpg4dl/FreeBSD/lib/libc/locale/iso2022.h,v 1.4 2001/06/21 01:51:44 yamt Exp $
  */
 
-typedef struct {
-#define	CS94		(0U)
-#define	CS96		(1U)
-#define	CS94MULTI	(2U)
-#define	CS96MULTI	(3U)
-	u_char	type;
-	u_char	final;
-	u_char	interm;
-	u_char	vers;
-} _Iso2022Charset;
+#ifndef _CITRUS_ISO2022_H_
+#define _CITRUS_ISO2022_H_
+
+__BEGIN_DECLS
+_CITRUS_CTYPE_GETOPS_FUNC(ISO2022);
+__END_DECLS
+
+#endif

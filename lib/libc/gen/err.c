@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.16.10.1 2002/03/08 21:35:04 nathanw Exp $	*/
+/*	$NetBSD: err.c,v 1.16.10.2 2002/03/22 20:42:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.16.10.1 2002/03/08 21:35:04 nathanw Exp $");
+__RCSID("$NetBSD: err.c,v 1.16.10.2 2002/03/22 20:42:06 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

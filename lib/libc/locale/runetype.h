@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.4.2.2 2001/11/14 19:31:58 nathanw Exp $	*/
+/*	$NetBSD: runetype.h,v 1.4.2.3 2002/03/22 20:42:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,14 +41,11 @@
 #ifndef	_RUNETYPE_H_
 #define	_RUNETYPE_H_
 
-#include <inttypes.h>
-#include <wchar.h>
-
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
 #ifdef _BSD_RUNE_T_
-typedef        _BSD_RUNE_T_    rune_t;
+typedef	_BSD_RUNE_T_	rune_t;
 #undef _BSD_RUNE_T_
 #endif
 
@@ -91,119 +88,96 @@ typedef uint32_t _RuneType;
  * rune file format.  network endian.
  */
 typedef struct {
-	int32_t		__min;		/* First rune of the range */
-	int32_t		__max;		/* Last rune (inclusive) of the range */
-	int32_t		__map;		/* What first maps to in maps */
-	uint32_t	__pad1;		/* backward compatibility */
-	__runepad_t	__pad2;		/* backward compatibility */
-} _FileRuneEntry __attribute__((__packed__));
+	int32_t		fre_min;	/* First rune of the range */
+	int32_t		fre_max;	/* Last rune (inclusive) of the range */
+	int32_t		fre_map;	/* What first maps to in maps */
+	uint32_t	fre_pad1;	/* backward compatibility */
+	__runepad_t	fre_pad2;	/* backward compatibility */
+} __attribute__((__packed__)) _FileRuneEntry;
 
 
 typedef struct {
-	uint32_t	__nranges;	/* Number of ranges stored */
-	uint32_t	__pad1;		/* backward compatibility */
-	__runepad_t	__pad2;		/* backward compatibility */
-} _FileRuneRange __attribute__((__packed__));
+	uint32_t	frr_nranges;	/* Number of ranges stored */
+	uint32_t	frr_pad1;	/* backward compatibility */
+	__runepad_t	frr_pad2;	/* backward compatibility */
+} __attribute__((__packed__)) _FileRuneRange;
 
 
 typedef struct {
-	char		__magic[8];	/* Magic saying what version we are */
-	char		__encoding[32];	/* ASCII name of this encoding */
+	char		frl_magic[8];	/* Magic saying what version we are */
+	char		frl_encoding[32];/* ASCII name of this encoding */
 
-	__runepad_t	__pad1;		/* backward compatibility */
-	__runepad_t	__pad2;		/* backward compatibility */
-	int32_t		__invalid_rune;
-	uint32_t	__pad3;		/* backward compatibility */
+	__runepad_t	frl_pad1;	/* backward compatibility */
+	__runepad_t	frl_pad2;	/* backward compatibility */
+	int32_t		frl_invalid_rune;
+	uint32_t	frl_pad3;	/* backward compatibility */
 
-	_RuneType	__runetype[_CACHED_RUNES];
-	int32_t		__maplower[_CACHED_RUNES];
-	int32_t		__mapupper[_CACHED_RUNES];
+	_RuneType	frl_runetype[_CACHED_RUNES];
+	int32_t		frl_maplower[_CACHED_RUNES];
+	int32_t		frl_mapupper[_CACHED_RUNES];
 
 	/*
 	 * The following are to deal with Runes larger than _CACHED_RUNES - 1.
 	 * Their data is actually contiguous with this structure so as to make
 	 * it easier to read/write from/to disk.
 	 */
-	_FileRuneRange	__runetype_ext;
-	_FileRuneRange	__maplower_ext;
-	_FileRuneRange	__mapupper_ext;
+	_FileRuneRange	frl_runetype_ext;
+	_FileRuneRange	frl_maplower_ext;
+	_FileRuneRange	frl_mapupper_ext;
 
-	__runepad_t	__pad4;		/* backward compatibility */
-	int32_t		__variable_len;	/* how long that data is */
-	uint32_t	__pad5;		/* backward compatibility */
+	__runepad_t	frl_pad4;	/* backward compatibility */
+	int32_t		frl_variable_len;/* how long that data is */
+	uint32_t	frl_pad5;	/* backward compatibility */
 
 	/* variable size data follows */
-} _FileRuneLocale __attribute__((__packed__));
+} __attribute__((__packed__)) _FileRuneLocale;
 
 
 /*
  * expanded rune locale declaration.  local to the host.  host endian.
  */
 typedef struct {
-	rune_t		__min;		/* First rune of the range */
-	rune_t		__max;		/* Last rune (inclusive) of the range */
-	rune_t		__map;		/* What first maps to in maps */
-	_RuneType	*__rune_types;	/* Array of types in range */
+	rune_t		re_min;		/* First rune of the range */
+	rune_t		re_max;		/* Last rune (inclusive) of the range */
+	rune_t		re_map;		/* What first maps to in maps */
+	_RuneType	*re_rune_types;	/* Array of types in range */
 } _RuneEntry;
 
 
 typedef struct {
-	uint32_t	__nranges;	/* Number of ranges stored */
-	_RuneEntry	*__rune_ranges;
+	uint32_t	rr_nranges;	/* Number of ranges stored */
+	_RuneEntry	*rr_rune_ranges;
 } _RuneRange;
 
 
-struct _RuneLocale;
-struct _RuneState;
-#if defined(_LIBC) || defined(RUNEMOD_MAJOR)
-typedef struct _RuneState {
-	size_t		__sizestate;
-	void		(*__initstate) __P((struct _RuneLocale *, void *));
-	void		(*__packstate)
-		__P((struct _RuneLocale *, mbstate_t *, void *));
-	void		(*__unpackstate)
-		__P((struct _RuneLocale *, void *, const mbstate_t *));
-} _RuneState;
-#endif
-
-typedef size_t (*__rune_mbrtowc_t) __P((struct _RuneLocale *, rune_t *,
-	const char *, size_t, void *));
-typedef size_t (*__rune_wcrtomb_t) __P((struct _RuneLocale *, char *, size_t,
-	const rune_t, void *));
+/*
+ * ctype stuffs
+ */
 
 typedef struct _RuneLocale {
 	/*
 	 * copied from _FileRuneLocale
 	 */
-	char		__magic[8];	/* Magic saying what version we are */
-	char		__encoding[32];	/* ASCII name of this encoding */
-	rune_t		__invalid_rune;
-	_RuneType	__runetype[_CACHED_RUNES];
-	rune_t		__maplower[_CACHED_RUNES];
-	rune_t		__mapupper[_CACHED_RUNES];
-	_RuneRange	__runetype_ext;
-	_RuneRange	__maplower_ext;
-	_RuneRange	__mapupper_ext;
+	char		rl_magic[8];	/* Magic saying what version we are */
+	char		rl_encoding[32];/* ASCII name of this encoding */
+	rune_t		rl_invalid_rune;
+	_RuneType	rl_runetype[_CACHED_RUNES];
+	rune_t		rl_maplower[_CACHED_RUNES];
+	rune_t		rl_mapupper[_CACHED_RUNES];
+	_RuneRange	rl_runetype_ext;
+	_RuneRange	rl_maplower_ext;
+	_RuneRange	rl_mapupper_ext;
 
-	/*
-	 * __variable_len is copied from _FileRuneLocale
-	 */
-	/* Data which depends on the encoding */
-	size_t		__variable_len;	/* how long that data is */
-	void *		__rune_variable;
+	void		*rl_variable;
+	size_t		rl_variable_len;
 
 	/*
 	 * the following portion is generated on the fly
 	 */
-	__rune_mbrtowc_t __rune_mbrtowc;
-	__rune_wcrtomb_t __rune_wcrtomb;
-
-	struct _RuneState  *__rune_RuneState;
-	size_t		__rune_mb_cur_max;
-
-	void		*__rune_RuneModule;
-	char		*__rune_codeset;
+	char				*rl_codeset;
+	struct _citrus_ctype_rec	*rl_citrus_ctype;
 } _RuneLocale;
+
 
 /* magic number for LC_CTYPE (rune)locale declaration */
 #define	_RUNE_MAGIC_1	"RuneCT10"	/* Indicates version 0 of RuneLocale */

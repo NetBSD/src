@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.7.2.2 2002/03/08 21:36:05 nathanw Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.7.2.3 2002/03/22 20:42:33 nathanw Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $ 	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.7.2.2 2002/03/08 21:36:05 nathanw Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.7.2.3 2002/03/22 20:42:33 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

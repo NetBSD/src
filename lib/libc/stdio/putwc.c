@@ -1,4 +1,4 @@
-/* $NetBSD: putwc.c,v 1.1.2.2 2002/01/28 20:51:04 nathanw Exp $ */
+/* $NetBSD: putwc.c,v 1.1.2.3 2002/03/22 20:42:27 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -37,7 +37,7 @@
 #undef putwc
 
 wint_t
-putwc(wint_t wc, FILE *fp)
+putwc(wchar_t wc, FILE *fp)
 {
 
 	return fputwc(wc, fp);

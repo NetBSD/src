@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.16.10.2 2002/03/08 21:35:58 nathanw Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.16.10.3 2002/03/22 20:42:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.16.10.2 2002/03/08 21:35:58 nathanw Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.16.10.3 2002/03/22 20:42:32 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: execlp.S,v 1.1.2.3 2002/03/08 21:35:00 nathanw Exp $	*/
+/*	$NetBSD: execlp.S,v 1.1.2.4 2002/03/22 20:41:59 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden. All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.2.6.2 2002/03/08 21:35:03 nathanw Exp $	*/
+/*	$NetBSD: basename.c,v 1.2.6.3 2002/03/22 20:42:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.2.6.2 2002/03/08 21:35:03 nathanw Exp $");
+__RCSID("$NetBSD: basename.c,v 1.2.6.3 2002/03/22 20:42:05 nathanw Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.19.2.1 2002/03/08 21:36:52 nathanw Exp $	*/
+/*	$NetBSD: private.h,v 1.19.2.2 2002/03/22 20:42:46 nathanw Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.2.6.3 2002/03/08 21:35:04 nathanw Exp $	*/
+/*	$NetBSD: dirname.c,v 1.2.6.4 2002/03/22 20:42:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.2.6.3 2002/03/08 21:35:04 nathanw Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.2.6.4 2002/03/22 20:42:06 nathanw Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"

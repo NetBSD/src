@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.1.20.1 2002/03/08 21:34:57 nathanw Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.1.20.2 2002/03/22 20:41:58 nathanw Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.6.2.2 2002/03/22 20:42:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $
+ *	Id: runeglue.c,v 1.7 2000/12/22 22:52:29 itojun Exp
  */
 
 /*
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.6.2.2 2002/03/22 20:42:18 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _CTYPE_PRIVATE
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: runeglue.c,v 1.6.2.1 2001/10/08 20:19:53 nathanw Exp $");
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include "runetype.h"
 #include "rune_local.h"
 
@@ -110,19 +111,19 @@ __runetable_to_netbsd_ctype(locale)
 	new_tolower[0] = EOF;
 	for (i = 0; i < _CTYPE_NUM_CHARS; i++) {
 		new_ctype[i + 1]=0;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_U)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_U)
 			new_ctype[i + 1] |= _U;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_L)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_L)
 			new_ctype[i + 1] |= _L;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_D)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_D)
 			new_ctype[i + 1] |= _N;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_S)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_S)
 			new_ctype[i + 1] |= _S;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_P)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_P)
 			new_ctype[i + 1] |= _P;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_C)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_C)
 			new_ctype[i + 1] |= _C;
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_X)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_X)
 			new_ctype[i + 1] |= _X;
 		/*
 		 * TWEAK!  _B has been used incorrectly (or with older
@@ -132,15 +133,15 @@ __runetable_to_netbsd_ctype(locale)
 		 * function (i.e. isblank() is inherently locale unfriendly).
 		 */
 #if 1
-		if ((_CurrentRuneLocale->__runetype[i] & (_CTYPE_R | _CTYPE_G))
+		if ((_CurrentRuneLocale->rl_runetype[i] & (_CTYPE_R | _CTYPE_G))
 		    == _CTYPE_R)
 			new_ctype[i + 1] |= _B;
 #else
-		if (_CurrentRuneLocale->__runetype[i] & _CTYPE_B)
+		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_B)
 			new_ctype[i + 1] |= _B;
 #endif
-		new_toupper[i + 1] = (short)_CurrentRuneLocale->__mapupper[i];
-		new_tolower[i + 1] = (short)_CurrentRuneLocale->__maplower[i];
+		new_toupper[i + 1] = (short)_CurrentRuneLocale->rl_mapupper[i];
+		new_tolower[i + 1] = (short)_CurrentRuneLocale->rl_maplower[i];
 	}
 
 	/* LINTED const cast */

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: fabs.S,v 1.1.22.1 2002/03/08 21:34:55 nathanw Exp $"
+	.asciz "$NetBSD: fabs.S,v 1.1.22.2 2002/03/22 20:41:57 nathanw Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* fabs - floating absolute value */

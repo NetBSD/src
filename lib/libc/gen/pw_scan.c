@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.10.10.1 2002/03/08 21:35:14 nathanw Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.10.10.2 2002/03/22 20:42:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -39,7 +39,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.10.10.1 2002/03/08 21:35:14 nathanw Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.10.10.2 2002/03/22 20:42:11 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)

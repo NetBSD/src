@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.14.2 2002/03/08 21:34:51 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.1.14.3 2002/03/22 20:41:54 nathanw Exp $
 
 SRCS+=	bzero.S ffs.S strlen.S
 KMSRCS+=bzero.S ffs.S strlen.S

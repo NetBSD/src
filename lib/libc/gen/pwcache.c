@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.15.2.2 2002/03/08 21:35:14 nathanw Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.15.2.3 2002/03/22 20:42:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.15.2.2 2002/03/08 21:35:14 nathanw Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.15.2.3 2002/03/22 20:42:12 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

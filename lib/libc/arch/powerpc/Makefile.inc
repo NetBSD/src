@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2.10.3 2002/03/08 21:34:49 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.2.10.4 2002/03/22 20:41:53 nathanw Exp $
 
 KMINCLUDES=
 KMSRCS=	

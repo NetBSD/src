@@ -41,6 +41,8 @@ the `FLOAT128' macro and the quadruple-precision format `float128'.
 /* #define FLOATX80 */
 /* #define FLOAT128 */
 
+#include <machine/ieeefp.h>
+
 /*
 -------------------------------------------------------------------------------
 Software IEC/IEEE floating-point types.
@@ -78,10 +80,10 @@ Software IEC/IEEE floating-point rounding mode.
 */
 extern int float_rounding_mode;
 enum {
-    float_round_nearest_even = 0,
-    float_round_to_zero      = 1,
-    float_round_down         = 2,
-    float_round_up           = 3
+    float_round_nearest_even = FP_RN,
+    float_round_to_zero      = FP_RZ,
+    float_round_down         = FP_RM,
+    float_round_up           = FP_RP
 };
 
 /*
@@ -91,11 +93,11 @@ Software IEC/IEEE floating-point exception flags.
 */
 extern int float_exception_flags;
 enum {
-    float_flag_inexact   =  1,
-    float_flag_underflow =  2,
-    float_flag_overflow  =  4,
-    float_flag_divbyzero =  8,
-    float_flag_invalid   = 16
+    float_flag_inexact   = FP_X_IMP,
+    float_flag_underflow = FP_X_UFL,
+    float_flag_overflow  = FP_X_OFL,
+    float_flag_divbyzero = FP_X_DZ,
+    float_flag_invalid   = FP_X_INV
 };
 
 /*

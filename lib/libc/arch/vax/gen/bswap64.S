@@ -1,7 +1,7 @@
 /* Written by Anders Magnusson. Public Domain */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "$NetBSD: bswap64.S,v 1.1.12.1 2002/03/08 21:34:55 nathanw Exp $"
+	.asciz "$NetBSD: bswap64.S,v 1.1.12.2 2002/03/22 20:41:56 nathanw Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"

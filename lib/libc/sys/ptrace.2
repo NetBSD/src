@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.13.2.3 2002/03/08 21:36:34 nathanw Exp $
+.\"	$NetBSD: ptrace.2,v 1.13.2.4 2002/03/22 20:42:42 nathanw Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -171,6 +171,60 @@ is at or below the tracing process's root.
 This request is like PT_CONTINUE, except that after it
 succeeds, the traced process is no longer traced and continues
 execution normally.
+.It Dv PT_IO
+This request is a more general interface that can be used instead of
+.Dv PT_READ_D ,
+.Dv PT_WRITE_D ,
+.Dv PT_READ_I ,
+and
+.Dv PT_WRITE_I .
+The I/O request is encoded in a
+.Dq Li "struct ptrace_io_desc"
+defined as:
+.Bd -literal -ffset indent
+struct ptrace_io_desc {
+	int	piod_op;
+	void	*piod_offs;
+	void	*piod_addr;
+	size_t	piod_len;
+};
+.Ed
+.Pp
+where
+.Fa piod_offs
+is the offset within the traced process where the I/O operation should
+take place,
+.Fa piod_addr
+is the buffer in the tracing process, and
+.Fa piod_len
+is the length of the I/O request.  The
+.Fa piod_op
+field specifies which type of I/O operation to perform.  Possible
+values are:
+.Bl -tag -width 18n
+.It PIOD_OP_READ_D
+.It PIOD_OP_WRITE_D
+.It PIOD_OP_READ_I
+.It PIOD_OP_WRITE_I
+.El
+.Pp
+See the description of
+.Dv PT_READ_I
+for the difference between I and D spaces.
+A pointer to the I/O descriptor is passed in the
+.Fa addr
+argument to
+.Fn ptrace .
+On return, the
+.Fa piod_len
+field in the I/O descriptor will be updated with the actual number of
+bytes transferred.  If the requested I/O could not be successfully
+performed,
+.Fn ptrace
+will return
+.Li -1
+and set
+.Va errno .
 .El
 .Pp
 Additionally, the following requests exist but are
