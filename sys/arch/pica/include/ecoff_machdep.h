@@ -1,3 +1,3 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.2 1996/03/23 03:42:34 jonathan Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.3 1996/09/26 22:40:53 cgd Exp $	*/
 
-#include <mips/ecoff.h>
+#include <mips/ecoff_machdep.h>
