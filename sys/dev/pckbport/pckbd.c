@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.4 2005/04/01 01:49:52 gavan Exp $ */
+/* $NetBSD: pckbd.c,v 1.5 2005/04/01 05:49:26 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.4 2005/04/01 01:49:52 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.5 2005/04/01 05:49:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ const struct wskbd_mapdata pckbd_keymapdata = {
 #ifdef PCKBD_LAYOUT
 	PCKBD_LAYOUT,
 #else
-	KB_US | KB_DVORAK,
+	KB_US,
 #endif
 };
 
