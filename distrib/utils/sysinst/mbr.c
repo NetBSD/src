@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.57 2004/01/18 12:23:36 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.58 2004/01/18 16:27:25 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1506,16 +1506,16 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 #endif
 
 	for (ext = mbri; ext != NULL; ext = ext->extended) {
+		sector = ext->sector;
 		mbrsec = ext->mbr;	/* copy sector */
 		mbrp = &mbrsec.mbr_parts[0];
-		sector = ext->sector;
 
 		if (sector != 0 && ext->extended != NULL
 		    && ext->extended->mbr.mbr_parts[0].mbrp_type == 0) {
 			/* We are followed by an empty slot, collapse out */
 			ext = ext->extended;
 			/* Make us describe the next non-empty partition */
-			mbrp[1] = ext->extended->mbr.mbr_parts[1];
+			mbrp[1] = ext->mbr.mbr_parts[1];
 		}
 
 		for (i = 0; i < MBR_PART_COUNT; i++) {
