@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.5 1998/09/08 23:50:13 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.6 1999/07/22 21:11:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -141,6 +141,7 @@ db_show_all_procs(addr, haddr, count, modif)
 		break;
 	}
 
+	/* XXX LOCKING XXX */
 	pd = proclists;
  loop:
 	for (p = LIST_FIRST(pd->pd_list); p != NULL;
