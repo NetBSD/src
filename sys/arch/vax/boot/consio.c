@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.1 1995/02/13 00:41:09 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.2 1995/04/25 14:14:24 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,8 +34,11 @@
 
 
 #include "sys/param.h"
+
 #include "../vax/gencons.h"
+
 #include "../include/mtpr.h"
+
 putchar(ch)
         int     ch;
 {
