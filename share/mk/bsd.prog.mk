@@ -1,5 +1,5 @@
-#	$NetBSD: bsd.prog.mk,v 1.66 1997/03/27 17:33:37 christos Exp $
-#	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
+#	$NetBSD: bsd.prog.mk,v 1.67 1997/03/29 08:02:53 mikel Exp $
+#	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -88,8 +88,10 @@ MAN=	${PROG}.1
 .endif	# !defined(MAN)
 .endif	# defined(PROG)
 
+.if !target(all)
 .MAIN: all
 all: ${PROG} _SUBDIRUSE
+.endif
 
 .if !target(clean)
 cleanprog:

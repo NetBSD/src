@@ -1,5 +1,5 @@
-#	$NetBSD: bsd.man.mk,v 1.25 1997/03/24 21:54:19 christos Exp $
-#	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
+#	$NetBSD: bsd.man.mk,v 1.26 1997/03/29 08:02:51 mikel Exp $
+#	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 MANTARGET?=	cat
 NROFF?=		nroff

@@ -1,5 +1,5 @@
-#	$NetBSD: bsd.README,v 1.23 1997/03/27 17:33:35 christos Exp $
-#	@(#)bsd.README	5.1 (Berkeley) 5/11/90
+#	$NetBSD: bsd.README,v 1.24 1997/03/29 08:02:47 mikel Exp $
+#	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
 source tree.  The files are installed in /usr/share/mk, and are, by
@@ -234,7 +234,7 @@ It has eight targets:
 		build the program and its manual page
 	clean:
 		remove the program, any object files and the files a.out,
-		Errs, errs, mklog, and core.
+		Errs, errs, mklog, and ${PROG}.core.
 	cleandir:
 		remove all of the files removed by the target clean, as
 		well as .depend, tags, and any manual pages.
