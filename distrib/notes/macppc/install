@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.5 2000/11/01 07:00:49 mbw Exp $
+.\"	$NetBSD: install,v 1.6 2000/11/01 23:57:32 lukem Exp $
 .
 .Ss2 Booting the installer
 .
@@ -6,7 +6,7 @@ The syntax of the Open Firmware
 .Ic boot
 command is:
 .Pp
-.Dl boot device[:partition][,filename] [-as | kernel_location [-as]]
+.Dl boot device[:partition][,filename] [kernel_location] [-as]
 .Pp
 where the
 .Fl a
@@ -190,7 +190,7 @@ drives have several system-level
 .Sq partitions reserved for
 .Tn MacOS
 drivers.
-You may find that your first HF Sor HFS+ partition might be as high as
+You may find that your first HFS or HFS+ partition might be as high as
 partition 9.
 You may need to keep trying higher partition numbers until you find the one
 that has your bootloader.
@@ -302,7 +302,7 @@ in Open Firmware or it got erased by your booting into
 After the kernel loads, the first key you press repeats forever
 .Pp
 Press the
-.Dq SHIFT
+.Key SHIFT
 key first.
 .It
 Hang after configuring devices, but before doing anything else
