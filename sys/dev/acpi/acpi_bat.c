@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.37 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.38 2004/04/12 15:09:46 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.37 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.38 2004/04/12 15:09:46 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,7 +554,7 @@ acpibat_print_info(struct acpibat_softc *sc)
 	else
 		tech = "primary";
 
-	printf("%s: %s battery, Design %d.%03d%s, Last full %d.%03d%s"
+	printf("%s: %s battery, Design %d.%03d%s, Last full %d.%03d%s "
 	       "Warn %d.%03d%s Low %d.%03d%s\n",
 	       sc->sc_dev.dv_xname, tech,
 	       SCALE(sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s), CAPUNITS(sc),
