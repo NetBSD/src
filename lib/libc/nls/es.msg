@@ -50,15 +50,15 @@ $ EMFILE
 $ ENOTTY
 25 IOCTL inapropiado para el dispositivo
 $ ETXTBSY
-26 Fichero de texto ocupado
+26 Archivo de texto ocupado
 $ EFBIG
-27 Fichero demasiado grande
+27 Archivo demasiado grande
 $ ENOSPC
 28 No queda espacio libre en el dispositivo
 $ ESPIPE
 29 Búsqueda ilegal
 $ EROFS
-30 Fichero del sistema de sólo lectura
+30 Archivo del sistema de sólo lectura
 $ EMLINK
 31 Demasiados enlaces
 $ EPIPE
