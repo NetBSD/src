@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: 524.c,v 1.6 2001/09/17 12:32:35 assar Exp $");
+__RCSID("$Heimdal: 524.c,v 1.25 2002/07/31 09:43:20 joda Exp $"
+        "$NetBSD: 524.c,v 1.7 2002/09/12 13:19:00 joda Exp $");
 
 #ifdef KRB4
 
@@ -69,7 +70,7 @@ fetch_server (const Ticket *t,
 	kdc_log(0,
 	"Request to convert ticket from %s for unknown principal %s: %s",
 		from, *spn, krb5_get_err_text(context, ret));
-	if (ret == ENOENT)
+	if (ret == HDB_ERR_NOENTRY)
 	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	return ret;
     }
@@ -278,12 +279,12 @@ out:
 	krb5_store_int32(sp, server->kvno); /* is this right? */
 	krb5_store_data(sp, ticket.cipher);
 	/* Aargh! This is coded as a KTEXT_ST. */
-	sp->seek(sp, MAX_KTXT_LEN - ticket.cipher.length, SEEK_CUR);
+	krb5_storage_seek(sp, MAX_KTXT_LEN - ticket.cipher.length, SEEK_CUR);
 	krb5_store_int32(sp, 0); /* mbz */
 	free_EncryptedData(&ticket);
     }
     ret = krb5_storage_to_data(sp, reply);
-    reply->length = (*sp->seek)(sp, 0, SEEK_CUR);
+    reply->length = krb5_storage_seek(sp, 0, SEEK_CUR);
     krb5_storage_free(sp);
     
     if(spn)
