@@ -38,14 +38,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$Id: cerror.S,v 1.2 1994/11/14 23:49:36 dean Exp $")
+	ASMSTR("$Id: cerror.S,v 1.3 1994/12/15 17:25:09 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-	.globl	_errno
-LEAF(_cerror)
+	.globl	_C_LABEL(errno)
+LEAF(cerror)
 	.set	noreorder
-	sw	v0, _errno
+	sw	v0, _C_LABEL(errno)
 	li	v0, -1
 	j	ra
 	li	v1, -1
-END(_cerror)
+END(cerror)
