@@ -1,4 +1,2 @@
-# $NetBSD: Makefile.inc,v 1.4 2002/01/19 11:16:20 reinoud Exp $
+# $NetBSD: Makefile.inc,v 1.5 2002/03/06 23:50:55 lukem Exp $
 .include <bsd.own.mk>
-
-REV!=sh ${.CURDIR}/../../sys/conf/osrelease.sh -s

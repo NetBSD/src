@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.20 2001/11/09 01:42:14 reinoud Exp $
+#	$NetBSD: Makefile,v 1.21 2002/03/06 23:50:57 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk-${REV}.fs
+IMAGE=		ramdisk-${DISTRIBREV}.fs
 
 AUXTARGETS=	install.sh upgrade.sh start.sh
 AUXCLEAN=	${AUXTARGETS}
@@ -30,13 +30,13 @@ DISKTYPE=	install-ramdisk
 RDSIZE=		3800
 
 install.sh: install.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+	sed "s/@@VERSION@@/${DISTRIBVER}/" < ${.ALLSRC} > ${.TARGET}
 
 upgrade.sh: upgrade.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+	sed "s/@@VERSION@@/${DISTRIBVER}/" < ${.ALLSRC} > ${.TARGET}
 
 start.sh: start.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+	sed "s/@@VERSION@@/${DISTRIBVER}/" < ${.ALLSRC} > ${.TARGET}
 
 all: ${AUXTARGETS} ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=${RDSIZE}
