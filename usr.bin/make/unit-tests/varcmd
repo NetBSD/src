@@ -1,0 +1,33 @@
+# $Id: varcmd,v 1.1 2003/07/31 00:46:15 sjg Exp $
+#
+# Test behaviour of recursive make and vars set on command line.
+
+FU=fu
+FOO?=foo
+.if !empty(.TARGETS)
+TAG=${.TARGETS}
+.endif
+TAG?=default
+
+all:	one
+
+show:
+	@echo "${TAG} FU=<v>${FU}</v> FOO=<v>${FOO}</v> VAR=<v>${VAR}</v>"
+
+one:	show
+	@${MAKE} -f ${MAKEFILE} FU=bar FOO=goo two
+
+two:	show
+	@${MAKE} -f ${MAKEFILE} three
+
+three:	show
+	@${MAKE} -f ${MAKEFILE} four
+
+
+.ifmake four
+VAR=Internal
+.MAKEOVERRIDES+= VAR
+.endif
+
+four:	show
+	@${MAKE} -f ${MAKEFILE} show
