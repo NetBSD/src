@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.37 2004/04/21 04:17:28 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.38 2004/04/21 21:03:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -248,11 +248,10 @@ struct route_cb {
 struct rttimer {
 	TAILQ_ENTRY(rttimer)	rtt_next;  /* entry on timer queue */
 	LIST_ENTRY(rttimer) 	rtt_link;  /* multiple timers per rtentry */
-	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
-	struct rtentry  	*rtt_rt;   /* Back pointer to the route */
-	void            	(*rtt_func) __P((struct rtentry *, 
-						 struct rttimer *));
-	time_t          	rtt_time; /* When this timer was registered */
+	struct rttimer_queue   *rtt_queue; /* back pointer to queue */
+	struct rtentry         *rtt_rt;    /* Back pointer to the route */
+	void		      (*rtt_func)(struct rtentry *, struct rttimer *);
+	time_t          	rtt_time;  /* When this timer was registered */
 };
 
 struct rttimer_queue {
@@ -278,45 +277,45 @@ extern	struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct socket;
 
-void	 route_init __P((void));
-int	 route_output __P((struct mbuf *, ...));
-int	 route_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
-void	 rt_ifannouncemsg __P((struct ifnet *, int));
-void	 rt_ifmsg __P((struct ifnet *));
-void	 rt_maskedcopy __P((const struct sockaddr *,
-	    struct sockaddr *, const struct sockaddr *));
-void	 rt_missmsg __P((int, struct rt_addrinfo *, int, int));
-void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
-int	 rt_setgate __P((struct rtentry *,
-	    const struct sockaddr *, const struct sockaddr *));
-void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
-int      rt_timer_add __P((struct rtentry *,
+void	 route_init(void);
+int	 route_output(struct mbuf *, ...);
+int	 route_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+void	 rt_ifannouncemsg(struct ifnet *, int);
+void	 rt_ifmsg(struct ifnet *);
+void	 rt_maskedcopy(const struct sockaddr *,
+	    struct sockaddr *, const struct sockaddr *);
+void	 rt_missmsg(int, struct rt_addrinfo *, int, int);
+void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+int	 rt_setgate(struct rtentry *,
+	    const struct sockaddr *, const struct sockaddr *);
+void	 rt_setmetrics(u_long, const struct rt_metrics *, struct rt_metrics *);
+int      rt_timer_add(struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
-	     struct rttimer_queue *));
-void	 rt_timer_init __P((void));
+	     struct rttimer_queue *);
+void	 rt_timer_init(void);
 struct rttimer_queue *
-	 rt_timer_queue_create __P((u_int));
-void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
-void	 rt_timer_queue_remove_all __P((struct rttimer_queue *, int));
-void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
-void	 rt_timer_remove_all __P((struct rtentry *, int));
-unsigned long	rt_timer_count __P((struct rttimer_queue *));
-void	 rt_timer_timer __P((void *));
-void	 rtable_init __P((void **));
-void	 rtalloc __P((struct route *));
+	 rt_timer_queue_create(u_int);
+void	 rt_timer_queue_change(struct rttimer_queue *, long);
+void	 rt_timer_queue_remove_all(struct rttimer_queue *, int);
+void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
+void	 rt_timer_remove_all(struct rtentry *, int);
+unsigned long	rt_timer_count(struct rttimer_queue *);
+void	 rt_timer_timer(void *);
+void	 rtable_init(void **);
+void	 rtalloc(struct route *);
 struct rtentry *
-	 rtalloc1 __P((const struct sockaddr *, int));
-void	 rtfree __P((struct rtentry *));
-int	 rt_getifa __P((struct rt_addrinfo *));
-int	 rtinit __P((struct ifaddr *, int, int));
-int	 rtioctl __P((u_long, caddr_t, struct proc *));
-void	 rtredirect __P((const struct sockaddr *, const struct sockaddr *,
+	 rtalloc1(const struct sockaddr *, int);
+void	 rtfree(struct rtentry *);
+int	 rt_getifa(struct rt_addrinfo *);
+int	 rtinit(struct ifaddr *, int, int);
+int	 rtioctl(u_long, caddr_t, struct proc *);
+void	 rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
-	    struct rtentry **));
-int	 rtrequest __P((int, const struct sockaddr *,
+	    struct rtentry **);
+int	 rtrequest(int, const struct sockaddr *,
 	    const struct sockaddr *, const struct sockaddr *, int,
-	    struct rtentry **));
-int	 rtrequest1 __P((int, struct rt_addrinfo *, struct rtentry **));
+	    struct rtentry **);
+int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

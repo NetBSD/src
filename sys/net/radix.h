@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.13 2004/04/21 04:17:28 matt Exp $	*/
+/*	$NetBSD: radix.h,v 1.14 2004/04/21 21:03:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -106,24 +106,24 @@ struct radix_node_head {
 	int	rnh_addrsize;		/* permit, but not require fixed keys */
 	int	rnh_pktsize;		/* permit, but not require fixed keys */
 	struct	radix_node *(*rnh_addaddr)	/* add based on sockaddr */
-		__P((const void *v, const void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[]));
+		(const void *v, const void *mask,
+		     struct radix_node_head *head, struct radix_node nodes[]);
 	struct	radix_node *(*rnh_addpkt)	/* add based on packet hdr */
-		__P((const void *v, const void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[]));
+		(const void *v, const void *mask,
+		     struct radix_node_head *head, struct radix_node nodes[]);
 	struct	radix_node *(*rnh_deladdr)	/* remove based on sockaddr */
-		__P((const void *v, const void *mask, struct radix_node_head *head));
+		(const void *v, const void *mask, struct radix_node_head *head);
 	struct	radix_node *(*rnh_delpkt)	/* remove based on packet hdr */
-		__P((const void *v, const void *mask, struct radix_node_head *head));
+		(const void *v, const void *mask, struct radix_node_head *head);
 	struct	radix_node *(*rnh_matchaddr)	/* locate based on sockaddr */
-		__P((const void *v, struct radix_node_head *head));
+		(const void *v, struct radix_node_head *head);
 	struct	radix_node *(*rnh_lookup)	/* locate based on sockaddr */
-		__P((const void *v, const void *mask, struct radix_node_head *head));
+		(const void *v, const void *mask, struct radix_node_head *head);
 	struct	radix_node *(*rnh_matchpkt)	/* locate based on packet hdr */
-		__P((const void *v, struct radix_node_head *head));
+		(const void *v, struct radix_node_head *head);
 	int	(*rnh_walktree)			/* traverse tree */
-		__P((struct radix_node_head *,
-		     int (*)(struct radix_node *, void *), void *));
+		(struct radix_node_head *,
+		     int (*)(struct radix_node *, void *), void *);
 	struct	radix_node rnh_nodes[3];	/* empty tree for common case */
 };
 
@@ -136,23 +136,23 @@ struct radix_node_head {
 #define Free(p) free((caddr_t)p, M_RTABLE);
 #endif /*_KERNEL*/
 
-void	 rn_init __P((void));
-int	 rn_inithead __P((void **, int));
-int	 rn_inithead0 __P((struct radix_node_head *, int));
-int	 rn_refines __P((const void *, const void *));
-int	 rn_walktree __P((struct radix_node_head *,
-			  int (*)(struct radix_node *, void *), void *));
+void	 rn_init(void);
+int	 rn_inithead(void **, int);
+int	 rn_inithead0(struct radix_node_head *, int);
+int	 rn_refines(const void *, const void *);
+int	 rn_walktree(struct radix_node_head *,
+			  int (*)(struct radix_node *, void *), void *);
 struct radix_node
-	 *rn_addmask __P((const void *, int, int)),
-	 *rn_addroute __P((const void *, const void *, struct radix_node_head *,
-			struct radix_node [2])),
-	 *rn_delete __P((const void *, const void *, struct radix_node_head *)),
-	 *rn_insert __P((const void *, struct radix_node_head *, int *,
-			struct radix_node [2])),
-	 *rn_lookup __P((const void *, const void *, struct radix_node_head *)),
-	 *rn_match __P((const void *, struct radix_node_head *)),
-	 *rn_newpair __P((const void *, int, struct radix_node[2])),
-	 *rn_search __P((const void *, struct radix_node *)),
-	 *rn_search_m __P((const void *, struct radix_node *, const void *));
+	 *rn_addmask(const void *, int, int),
+	 *rn_addroute(const void *, const void *, struct radix_node_head *,
+			struct radix_node [2]),
+	 *rn_delete(const void *, const void *, struct radix_node_head *),
+	 *rn_insert(const void *, struct radix_node_head *, int *,
+			struct radix_node [2]),
+	 *rn_lookup(const void *, const void *, struct radix_node_head *),
+	 *rn_match(const void *, struct radix_node_head *),
+	 *rn_newpair(const void *, int, struct radix_node[2]),
+	 *rn_search(const void *, struct radix_node *),
+	 *rn_search_m(const void *, struct radix_node *, const void *);
 
 #endif /* _NET_RADIX_H_ */
