@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1995/08/18 08:14:28 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.32 1995/08/27 18:58:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,7 +184,7 @@ bootstrap()
 		/*
 		 * XXX:
 		 * The promvec is bogus. We need to build a
-		 * fake one from scrath as soon as possible.
+		 * fake one from scratch as soon as possible.
 		 */
 		bzero(&promvecdat, sizeof promvecdat);
 		promvec = &promvecdat;
@@ -913,6 +913,7 @@ mainbus_attach(parent, dev, aux)
 	 * EEPROM contains the Ethernet address for the LANCE chip.
 	 * If the device cannot be located or configured, panic.
 	 */
+#if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 
 		/* Start at the beginning of the bootpath */
@@ -928,7 +929,9 @@ mainbus_attach(parent, dev, aux)
 			oca.ca_ra.ra_name = sp;
 			(void)config_found(dev, (void *)&oca, mbprint);
 		}
-	} else {
+	} else
+#endif
+	{
 
 		/* remember which frame buffer, if any, is to be /dev/fb */
 		fbnode = getpropint(node, "fb", 0);
@@ -1345,7 +1348,9 @@ swapconf()
 	dumpconf();
 }
 
-u_long	bootdev;		/* should be dev_t, but not until 32 bits */
+#if 0 /* Unused */
+dev_t	bootdev;
+#endif
 
 #define	PARTITIONMASK	0x7
 #define	PARTITIONSHIFT	3
