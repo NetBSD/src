@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2004/01/08 05:12:33 rtr Exp $
+# $NetBSD: mi,v 1.10 2004/01/11 23:33:35 lukem Exp $
 ./usr/X11R6/lib/X11/XftConfig-OBSOLETE
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-10.pcf.gz
@@ -4023,7 +4023,6 @@
 ./usr/X11R6/lib/X11/fonts/encodings/tis620-2.enc
 ./usr/X11R6/lib/X11/fonts/encodings/viscii1.1-1.enc.gz
 ./usr/X11R6/lib/X11/fonts/fonts.cache-1
-./usr/X11R6/lib/X11/fonts/local
 ./usr/X11R6/lib/X11/fonts/local/encodings.dir
 ./usr/X11R6/lib/X11/fonts/local/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/local/fonts.dir
@@ -4440,7 +4439,6 @@
 ./usr/X11R6/lib/X11/fonts/misc/olgl12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/olgl14.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/olgl19.pcf.gz
-./usr/X11R6/lib/X11/fonts/util
 ./usr/X11R6/lib/X11/fonts/util/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-1
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-10
