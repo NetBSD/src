@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.16 1999/02/04 07:32:46 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.17 1999/02/05 07:04:02 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -341,3 +341,26 @@ gnu/usr.bin/gcc/arch/ns32k/ns32k.h		patch
 distrib/notes/pc532/install			patch
 
   Correct tape installation instructions' floppy load address.  (matthias)
+
+distrib/notes/x68k/contents			1.9
+
+  Mention X sets.  Note that security distribution is actually available
+  because it is common to all m68k ports.  (minoura)
+
+distrib/x68k/floppies/ramdisk/install.tmpl	1.5
+
+  Set up the 'driveunits' variable correctly.  Previously it didn't
+  allow users to choose the target disk drive correctly.  (minoura)
+
+sys/dev/scsipi/atapiconf.c			1.7
+
+  Add a few entries for ATAPI CD-ROMs.  (bouyer)
+
+sys/arch/x68k/conf/files.x68k			patch
+sys/arch/x68k/dev/ms.c				patch
+sys/arch/x68k/dev/zs.c				patch
+sys/arch/x68k/x68k/conf.c			patch
+sys/arch/x68k/x68k/locore.s			patch
+
+  Make mouse optional.  Previously it was required because some
+  mouse-related functions were referenced from other files.  (minoura)
