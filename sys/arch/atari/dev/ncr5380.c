@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.43 2002/10/02 05:51:28 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.44 2003/04/01 23:47:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1864,7 +1864,8 @@ SC_REQ	*reqp;
 	 */
 	dm->dm_addr = phy_buf = kvtop(req_addr);
 	while (req_len) {
-		if (req_len < (phy_len = NBPG - ((u_long)req_addr & PGOFSET)))
+		if (req_len <
+		    (phy_len = PAGE_SIZE - ((u_long)req_addr & PGOFSET)))
 			phy_len = req_len;
 
 		req_addr     += phy_len;

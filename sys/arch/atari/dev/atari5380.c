@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.33 2001/09/16 16:34:28 wiz Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.34 2003/04/01 23:47:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -41,6 +41,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsiconf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/asm_single.h>
 #include <m68k/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2003/01/28 22:35:05 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 2003/04/01 23:47:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -763,7 +763,7 @@ writeback(fp, docachepush)
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-				    (vaddr_t)&vmmap[NBPG]);
+				    (vaddr_t)&vmmap[PAGE_SIZE]);
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
