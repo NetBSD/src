@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.25 2002/11/16 04:41:50 itojun Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.26 2002/11/16 15:59:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.25 2002/11/16 04:41:50 itojun Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.26 2002/11/16 15:59:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,11 +204,27 @@ yp_chpw(username)
 
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	= strdup(pw->pw_name);
+	if (!yppasswd.newpw.pw_name) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_uid 	= pw->pw_uid;
 	yppasswd.newpw.pw_gid	= pw->pw_gid;
 	yppasswd.newpw.pw_gecos = strdup(pw->pw_gecos);
+	if (!yppasswd.newpw.pw_gecos) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_dir	= strdup(pw->pw_dir);
+	if (!yppasswd.newpw.pw_dir) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_shell	= strdup(pw->pw_shell);
+	if (!yppasswd.newpw.pw_shell) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL) {
@@ -250,14 +266,18 @@ getnewpasswd(pw, old_pass)
 		if (pw->pw_passwd[0]) {
 			if (strcmp(crypt(p = getpass("Old password:"),
 					 pw->pw_passwd),  pw->pw_passwd)) {
-				   (void)printf("Sorry.\n");
-				   pw_error(NULL, 0, 1);
+				(void)printf("Sorry.\n");
+				pw_error(NULL, 0, 1);
 			}
 		} else {
 			p = "";
 		}
 
 		*old_pass = strdup(p);
+		if (!*old_pass) {
+			(void)printf("not enough core.\n");
+			pw_error(NULL, 0, 1);
+		}
 	}
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
@@ -283,11 +303,16 @@ getnewpasswd(pw, old_pass)
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
 
-        if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'y' )) {
-                (void)printf("Couldn't generate salt.\n");
-                pw_error(NULL, 0, 0);
-        }
-	return(strdup(crypt(buf, salt)));
+	if (!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'y' )) {
+		(void)printf("Couldn't generate salt.\n");
+		pw_error(NULL, 0, 0);
+	}
+	p = strdup(crypt(buf, salt));
+	if (!p) {
+		(void)printf("not enough core.\n");
+		pw_error(NULL, 0, 0);
+	}
+	return (p);
 }
 
 static int
