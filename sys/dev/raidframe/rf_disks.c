@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.10 1999/06/04 02:02:39 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.11 1999/08/10 22:56:20 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -445,8 +445,8 @@ rf_print_label_status( raidPtr, row, column, dev_name, ci_label )
 	printf("         Version: %d Serial Number: %d Mod Counter: %d\n",
 	       ci_label->version, ci_label->serial_number,
 	       ci_label->mod_counter);
-	printf("         Clean: %d Status: %d\n",
-	       ci_label->clean, ci_label->status );
+	printf("         Clean: %s Status: %d\n",
+	       ci_label->clean ? "Yes" : "No", ci_label->status );
 }
 
 static int rf_check_label_vitals( RF_Raid_t *, int, int, char *, 
