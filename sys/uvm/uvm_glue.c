@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.51 2001/09/10 21:19:42 chris Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.52 2001/09/15 20:36:45 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -204,7 +204,7 @@ uvm_chgkprot(addr, len, rw)
 #endif
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vslock: wire user memory for I/O
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -229,7 +229,7 @@ uvm_vslock(p, addr, len, access_type)
 }
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -274,9 +274,9 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
-		uvmspace_share(p1, p2);			/* share vmspace */
+		uvmspace_share(p1, p2);
 	} else
-		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
+		p2->p_vmspace = uvmspace_fork(p1->p_vmspace);
 
 	/*
 	 * Wire down the U-area for the process, which contains the PCB
@@ -376,12 +376,15 @@ uvm_swapin(p)
 	struct proc *p;
 {
 	vaddr_t addr;
-	int s;
+	int s, error;
 
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
-	uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE,
 	    VM_PROT_READ | VM_PROT_WRITE);
+	if (error) {
+		panic("uvm_swapin: rewiring stack failed: %d", error);
+	}
 
 	/*
 	 * Some architectures need to be notified when the user area has

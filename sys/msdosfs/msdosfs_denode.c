@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.51 2001/09/15 16:13:00 chs Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.52 2001/09/15 20:36:39 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -77,6 +77,12 @@ struct simplelock msdosfs_ihash_slock;
 struct pool msdosfs_denode_pool;
 
 extern int prtactive;
+
+struct genfs_ops msdosfs_genfsops = {
+	genfs_size,
+	msdosfs_gop_alloc,
+	genfs_gop_write,
+};
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
@@ -251,7 +257,7 @@ deget(pmp, dirclust, diroffset, depp)
 		return (error);
 	}
 	ldep = pool_get(&msdosfs_denode_pool, PR_WAITOK);
-	memset((caddr_t)ldep, 0, sizeof *ldep);
+	memset(ldep, 0, sizeof *ldep);
 	nvp->v_data = ldep;
 	ldep->de_vnode = nvp;
 	ldep->de_flag = 0;
@@ -342,9 +348,10 @@ deget(pmp, dirclust, diroffset, depp)
 		}
 	} else
 		nvp->v_type = VREG;
+	genfs_node_init(nvp, &msdosfs_genfsops);
 	VREF(ldep->de_devvp);
 	*depp = ldep;
-	nvp->v_uvm.u_size = ldep->de_FileSize;
+	nvp->v_size = ldep->de_FileSize;
 	return (0);
 }
 
@@ -638,10 +645,6 @@ msdosfs_inactive(v)
 	if (dep->de_Name[0] == SLOT_DELETED)
 		goto out;
 
-#ifdef DIAGNOSTIC
-	if (!VOP_ISLOCKED(vp))
-		panic("msdosfs_inactive: unlocked denode");
-#endif
 	/*
 	 * If the file has been deleted and it is on a read/write
 	 * filesystem, then truncate the file, and mark the directory slot
@@ -672,4 +675,11 @@ out:
 	if (dep->de_Name[0] == SLOT_DELETED)
 		vrecycle(vp, (struct simplelock *)0, p);
 	return (error);
+}
+
+int
+msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
+{
+	return 0;
 }

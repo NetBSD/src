@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.96 2001/09/15 16:13:01 chs Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.97 2001/09/15 20:36:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2403,11 +2403,11 @@ nfs_clearcommit(mp)
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-		TAILQ_FOREACH(pg, &vp->v_uvm.u_obj.memq, listq) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.13 2001/05/28 02:50:51 chs Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.14 2001/09/15 20:36:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -153,7 +153,7 @@ filecore_read(v)
 	struct buf *bp;
 	daddr_t lbn, rablock;
 	off_t diff;
-	int rasize, error = 0;
+	int error = 0;
 	long size, n, on;
 
 	if (uio->uio_resid == 0)
@@ -173,7 +173,7 @@ filecore_read(v)
 			if (bytelen == 0) {
 				break;
 			}
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -201,24 +201,12 @@ filecore_read(v)
 			n = MIN(FILECORE_DIR_SIZE - on, uio->uio_resid);
 			size = FILECORE_DIR_SIZE;
 		} else {
-			if (vp->v_lastr + 1 == lbn &&
-			    lblktosize(fcmp, rablock) < ip->i_size) {
-				rasize = blksize(fcmp, ip, rablock);
-				error = breadn(vp, lbn, size, &rablock,
-					       &rasize, 1, NOCRED, &bp);
+			error = bread(vp, lbn, size, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-				printf("breadn(%p, %x, %ld, CRED, %p)=%d\n",
-				    vp, lbn, size, bp, error);
+			printf("bread(%p, %x, %ld, CRED, %p)=%d\n",
+			    vp, lbn, size, bp, error);
 #endif
-			} else {
-				error = bread(vp, lbn, size, NOCRED, &bp);
-#ifdef FILECORE_DEBUG_BR
-				printf("bread(%p, %x, %ld, CRED, %p)=%d\n",
-				    vp, lbn, size, bp, error);
-#endif
-			}
 		}
-		vp->v_lastr = lbn;
 		n = MIN(n, size - bp->b_resid);
 		if (error) {
 #ifdef FILECORE_DEBUG_BR
@@ -581,7 +569,7 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_update_desc, filecore_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
-	{ &vop_size_desc, genfs_size },			/* size */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc filecore_vnodeop_opv_desc =
