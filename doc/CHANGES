@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.84 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.85 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -256,4 +256,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sysinst: Leverage progress(1) for reasonable-looking file extraction
 		displays.  [jhawk 20030122]
 	build.sh: Rework command line into command line options followed
-		by a list of operations to perform.  [lukem 20020123]
+		by a list of operations to perform.  [lukem 20030123]
+	gcore(1): Add it back [christos 20030123]
