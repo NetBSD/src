@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.6 2000/04/18 22:47:40 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.7 2000/04/21 15:54:42 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,16 +130,36 @@ start_color(void)
 	if (!COLORS)
 		return (ERR);
 
-	/* Initialise colours and pairs */
-	for (i = 0; i < COLORS; i++) {
+	/* Set up initial 8 colours */
+	if (COLORS >= COLOR_BLACK)
+		(void) init_color(COLOR_BLACK, 0, 0, 0);
+	if (COLORS >= COLOR_RED)
+		(void) init_color(COLOR_RED, 1000, 0, 0);
+	if (COLORS >= COLOR_GREEN)
+		(void) init_color(COLOR_GREEN, 0, 1000, 0);
+	if (COLORS >= COLOR_YELLOW)
+		(void) init_color(COLOR_YELLOW, 1000, 1000, 0);
+	if (COLORS >= COLOR_BLUE)
+		(void) init_color(COLOR_BLUE, 0, 0, 1000);
+	if (COLORS >= COLOR_MAGENTA)
+		(void) init_color(COLOR_MAGENTA, 1000, 0, 1000);
+	if (COLORS >= COLOR_CYAN)
+		(void) init_color(COLOR_CYAN, 0, 1000, 1000);
+	if (COLORS >= COLOR_WHITE)
+		(void) init_color(COLOR_WHITE, 1000, 1000, 1000);
+
+	/* Initialise other colours */
+	for (i = 8; i < COLORS; i++) {
 		colors[i].red = 0;
 		colors[i].green = 0;
 		colors[i].blue = 0;
 		colors[i].flags = 0;
 	}
+
+	/* Initialise colour pairs to default (white on black) */
 	for (i = 0; i < COLOR_PAIRS; i++) {
-		pairs[i].fore = 0;
-		pairs[i].back = 0;
+		pairs[i].fore = COLOR_WHITE;
+		pairs[i].back = COLOR_BLACK;
 		pairs[i].flags = 0;
 	}
 
@@ -153,7 +173,7 @@ start_color(void)
 			curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET;
 	}
 
-	/* Type of colour manipulation - ANSI/TEK/HP */
+	/* Type of colour manipulation - ANSI/TEK/HP/other */
 	if (af != NULL && ab != NULL)
 		__color_type = COLOR_ANSI;
 	else if (iP != NULL)
@@ -184,24 +204,6 @@ start_color(void)
 	}
 #endif
 	
-	/* Set up initial 8 colours */
-	if (COLORS >= COLOR_BLACK)
-		(void) init_color(COLOR_BLACK, 0, 0, 0);
-	if (COLORS >= COLOR_RED)
-		(void) init_color(COLOR_RED, 1000, 0, 0);
-	if (COLORS >= COLOR_GREEN)
-		(void) init_color(COLOR_GREEN, 0, 1000, 0);
-	if (COLORS >= COLOR_YELLOW)
-		(void) init_color(COLOR_YELLOW, 1000, 1000, 0);
-	if (COLORS >= COLOR_BLUE)
-		(void) init_color(COLOR_BLUE, 0, 0, 1000);
-	if (COLORS >= COLOR_MAGENTA)
-		(void) init_color(COLOR_MAGENTA, 1000, 0, 1000);
-	if (COLORS >= COLOR_CYAN)
-		(void) init_color(COLOR_CYAN, 0, 1000, 1000);
-	if (COLORS >= COLOR_WHITE)
-		(void) init_color(COLOR_WHITE, 1000, 1000, 1000);
-
 	/*
 	 * Attributes that cannot be used with color.
 	 * Store these in an attr_t for wattrset()/wattron().
