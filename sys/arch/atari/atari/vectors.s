@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.16 2001/04/12 09:09:56 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.17 2001/05/15 13:46:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -74,11 +74,7 @@ GLOBAL(autovects)
 	VECTOR(lev4intr)	| 28: level 4 interrupt autovector
 	VECTOR(lev5intr)	| 29: level 5 interrupt autovector
 	VECTOR(lev6intr)	| 30: level 6 interrupt autovector
-#ifdef _ATARIHW_
 	VECTOR(lev7intr)	| 31: level 7 interrupt autovector
-#else
-	VECTOR(badtrap)		| 31: Not supported by hardware
-#endif
 	VECTOR(trap0)		| 32: syscalls
 #ifdef COMPAT_13
 	VECTOR(trap1)		| 33: compat_13_sigreturn
