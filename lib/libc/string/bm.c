@@ -36,7 +36,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94"; */
-static char *rcsid = "$Id: bm.c,v 1.2 1994/06/22 00:17:06 cgd Exp $";
+static char *rcsid = "$Id: bm.c,v 1.3 1994/12/14 07:24:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -208,7 +208,7 @@ mismatch1:	s += md2;		/* md2 shift */
 		if (s[ro] != rc)	/* guard test */
 			goto mismatch2;
 					/* fwd match */
-		for (p = pat->pat, q = s - n1; p < ep;)
+		for (p = pat->pat, q = s - n1; p <= ep;)
 			if (*q++ != *p++)
 				goto mismatch2;
 		return (s - n1);
