@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.1 1999/05/19 03:54:40 gwr Exp $	*/
+/*	$NetBSD: utmp.c,v 1.2 1999/05/27 05:41:15 gwr Exp $	*/
 
 /*
  * Written by Gordon W. Ross <gwr@netbsd.org>
@@ -8,6 +8,7 @@
 /* Simplified (do nothing:) */
 #include <sys/types.h>
 #include <utmp.h>
+#include <util.h>
 
 void
 login(ut)
@@ -19,6 +20,7 @@ int
 logout(line)
 	const char *line;
 {
+	return(0);
 }
 
 
