@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigreturn.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: sigreturn.2,v 1.3 1993/11/25 00:39:43 jtc Exp $
+.\"	$Id: sigreturn.2,v 1.4 1993/11/29 21:25:40 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGRETURN 2
@@ -79,7 +79,7 @@ is set to indicate the error.
 .Fn Sigreturn
 will fail and the process context will remain unchanged
 if one of the following occurs.
-.Bl -tag -width [EINVAL]
+.Bl -tag -width Er
 .It Bq Er EFAULT
 .Fa Scp
 points to memory that is not a valid part of the process

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)connect.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: connect.2,v 1.3 1993/11/25 00:38:35 jtc Exp $
+.\"	$Id: connect.2,v 1.4 1993/11/29 21:25:03 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt CONNECT 2
@@ -78,7 +78,7 @@ code is stored in
 The
 .Fn connect
 call fails if:
-.Bl -tag -width EADDRNOTAVAILABB
+.Bl -tag -width Er
 .It Bq Er EBADF
 .Fa S
 is not a valid descriptor.
@@ -119,7 +119,7 @@ has not yet been completed.
 .Pp
 The following errors are specific to connecting names in the UNIX domain.
 These errors may not apply in future versions of the UNIX IPC domain.
-.Bl -tag -width EADDRNOTAVAILABB
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er EINVAL

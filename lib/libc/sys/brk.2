@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)brk.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: brk.2,v 1.4 1993/11/25 02:49:19 jtc Exp $
+.\"	$Id: brk.2,v 1.5 1993/11/29 21:25:01 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt BRK 2
@@ -116,7 +116,7 @@ is returned.
 .\" returns -1 if the break could not be set.
 .\" will fail and no additional memory will be allocated if
 .\" one of the following are true:
-.\" .Bl -tag -width [ENOMEM]
+.\" .Bl -tag -width Er
 .\" .It Bq Er ENOMEM
 .\" The limit, as set by
 .\" .Xr setrlimit 2 ,

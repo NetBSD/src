@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)socket.2	6.8 (Berkeley) 3/10/91
-.\"	$Id: socket.2,v 1.3 1993/11/25 00:39:46 jtc Exp $
+.\"	$Id: socket.2,v 1.4 1993/11/29 21:25:43 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SOCKET 2
@@ -212,7 +212,7 @@ value is a descriptor referencing the socket.
 The
 .Fn socket
 call fails if:
-.Bl -tag -width EPROTONOPSUPPORTA
+.Bl -tag -width Er
 .It Bq Er EPROTONOSUPPORT
 The protocol type or the specified protocol is not supported
 within this domain.

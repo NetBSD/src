@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)socketpair.2	6.4 (Berkeley) 3/10/91
-.\"	$Id: socketpair.2,v 1.3 1993/11/25 00:39:47 jtc Exp $
+.\"	$Id: socketpair.2,v 1.4 1993/11/29 21:25:44 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SOCKETPAIR 2
@@ -63,7 +63,7 @@ The two sockets are indistinguishable.
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
-.Bl -tag -width EPROTONOSUPPORTA
+.Bl -tag -width Er
 .It Bq Er EMFILE
 Too many descriptors are in use by this process.
 .It Bq Er EAFNOSUPPORT

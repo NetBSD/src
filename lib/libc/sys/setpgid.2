@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)setpgid.2	6.3 (Berkeley) 3/10/91
-.\"	$Id: setpgid.2,v 1.3 1993/11/25 00:39:37 jtc Exp $
+.\"	$Id: setpgid.2,v 1.4 1993/11/29 21:25:34 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETPGRP 2
@@ -67,7 +67,7 @@ indicates the reason.
 .Sh ERRORS
 .Fn Setpgid
 will fail and the process group will not be altered if:
-.Bl -tag -width indent
+.Bl -tag -width Er
 .It Bq Er ESRCH
 The requested process does not exist.
 .It Bq Er EPERM

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bind.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: bind.2,v 1.3 1993/11/25 00:38:25 jtc Exp $
+.\"	$Id: bind.2,v 1.4 1993/11/29 21:25:00 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt BIND 2
@@ -72,7 +72,7 @@ further specified in the global
 The
 .Fn bind
 call will fail if:
-.Bl -tag -width EADDRNOTAVA
+.Bl -tag -width Er
 .It Bq Er EBADF
 .Fa S
 is not a valid descriptor.
@@ -96,7 +96,7 @@ address space.
 .El
 .Pp
 The following errors are specific to binding names in the UNIX domain.
-.Bl -tag -width EADDRNOTAVA
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er EINVAL

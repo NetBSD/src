@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)readlink.2	6.8 (Berkeley) 3/10/91
-.\"	$Id: readlink.2,v 1.3 1993/11/25 00:39:27 jtc Exp $
+.\"	$Id: readlink.2,v 1.4 1993/11/29 21:25:28 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt READLINK 2
@@ -63,7 +63,7 @@ code in the global variable
 .Sh ERRORS
 .Fn Readlink
 will fail if:
-.Bl -tag -width ENAMETOOLONG
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er EINVAL
