@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/01/22 13:52:48 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/03/26 22:33:57 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,8 @@
  * already dealing with spin-preemption or other gunk.  
  */
 ENTRY(pthread__switch)
-	pta/l	_C_LABEL(_swapcontext_u), tr0
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(_swapcontext_u), r0, tr0)
 	movi	RND_CTXSIZE+8, r0
 	sub	r15, r0, r15
 	st.q	r15, RND_CTXSIZE, r18
@@ -79,6 +80,7 @@ ENTRY(pthread__switch)
 	ptabs/l	r18, tr0
 	movi	RND_CTXSIZE+8, r0
 	add	r15, r0, r15
+	PIC_EPILOGUE
 	blink	tr0, r63
 
 
@@ -91,6 +93,7 @@ ENTRY(pthread__switch)
  * r2 = self, r3 = next, r4 = lock
  */
 ENTRY(pthread__locked_switch)
+	PIC_PROLOGUE
 	movi	RND_CTXSIZE+32, r0
 	sub	r15, r0, r15
 	st.q	r15, RND_CTXSIZE, r28
@@ -106,7 +109,7 @@ ENTRY(pthread__locked_switch)
 	/*
 	 * Keep r2-r4, and r15 safe for later.
 	 */
-	pta/l	_C_LABEL(_getcontext_u), tr0
+	PIC_PTAL(_C_LABEL(_getcontext_u), r0, tr0)
 	or	r2, r63, r28		/* self */
 	or	r3, r63, r29		/* next */
 	or	r4, r63, r30		/* lock */
@@ -158,7 +161,7 @@ ENTRY(pthread__locked_switch)
 	 */
 	STPTR	r28, PT_SLEEPUC, r3
 
-	pta/l	_C_LABEL(_setcontext_u), tr0
+	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
 	STACK_SWITCH(r1, r2)
 
 	/* If we're invoked from the switch-to-next provisions of
@@ -184,7 +187,7 @@ Llocked_no_old_preempt:
 
 	/* We happen to know that this is the right way to release a lock. */
 	st.q	r30, 0, r63		/* *lock = 0 */
-	pta/l	_C_LABEL(_setcontext_u), tr0
+	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
 
 	/* Remove the fake lock */
 	ld.l	r29, PT_SPINLOCKS, r0	/* next->pt_spinlocks-- */
@@ -211,6 +214,7 @@ Llocked_return_point:
 	ld.q	r15, RND_CTXSIZE+8, r29
 	ld.q	r15, RND_CTXSIZE, r28
 	add	r15, r0, r15
+	PIC_PROLOGUE
 	blink	tr0, r18
 
 
@@ -222,6 +226,7 @@ Llocked_return_point:
  * registers.
  */
 ENTRY(pthread__upcall_switch)
+	PIC_GET_GOT(tr0)
 	/* Create a `fake' lock count so we are `continued' */
 	ld.l	r3, PT_SPINLOCKS, r0
 	pta/l	Lupcall_no_old_preempt, tr0
@@ -231,7 +236,7 @@ ENTRY(pthread__upcall_switch)
 	STACK_SWITCH(r3, r28)		/* r28 = next->pt_uc */
 
 	/* Check if the upcall was preempted and continued. */
-	pta/l	_C_LABEL(pthread__sa_recycle), tr1
+	PIC_PTAL(_C_LABEL(pthread__sa_recycle), r0, tr1)
 	LDPTR	r2, PT_NEXT, r1
 	beq/l	r1, r63, tr0
 
@@ -242,7 +247,7 @@ ENTRY(pthread__upcall_switch)
 	STPTR	r2, PT_SWITCHTO, r3
 	STPTR	r2, PT_SWITCHTOUC, r28
 	st.l	r2, PT_STATE, r0
-	pta/l	_C_LABEL(_setcontext_u), tr0
+	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
 	STACK_SWITCH(r1, r2)
 	ld.l	r3, PT_SPINLOCKS, r0
 	addi	r0, -1, r0
@@ -256,7 +261,7 @@ Lupcall_no_old_preempt:
 
 	/* Release the fake lock */
 	ld.l	r29, PT_SPINLOCKS, r0
-	pta/l	_C_LABEL(_setcontext_u), tr0
+	PIC_PTAL(_C_LABEL(_setcontext_u), r1, tr0)
 	addi	r0, -1, r0
 	st.l	r29, PT_SPINLOCKS, r0
 
