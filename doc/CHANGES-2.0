@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.492 2004/10/08 03:10:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.493 2004/10/08 03:11:30 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7771,3 +7771,11 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for Adaptec AAR 2810SA raid controller.
 	[he, ticket #896]
+
+sys/net/if_bridge.c				1.26
+
+	Interfaces that do checksum offloading indicate the checksum status of
+	received packets in csum_flags in the packet header.  Packets that are
+	forwarded over the bridge need to have csum_flags cleared before being
+	put on the output queue.  Do so in bridge_enqueue(). PR#27007 PR#21831
+	[bad, ticket #900]
