@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.3 2000/12/12 01:32:34 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.4 2000/12/12 05:11:15 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -132,8 +132,8 @@
 #include <net/bpf.h>
 #endif
 
-#include <dev/ic/anvar.h>
 #include <dev/ic/anreg.h>
+#include <dev/ic/anvar.h>
 
 #if !defined(lint)
 static const char rcsid[] =
@@ -886,7 +886,7 @@ static void an_setdef(sc, areq)
 		sp = (struct an_ltv_gen *)areq;
 		sc->an_tx_rate = sp->an_val;
 		break;
-	case AN_RID_WEP_TEMP:
+	case AN_RID_WEP_VOLATILE:
 		/* Disable the MAC. */
 		an_cmd(sc, AN_CMD_DISABLE, 0);
 		
@@ -897,7 +897,7 @@ static void an_setdef(sc, areq)
 		an_cmd(sc, AN_CMD_ENABLE, 0);
 	
 		break;
-	case AN_RID_WEP_PERM:
+	case AN_RID_WEP_PERSISTENT:
 
 		/* Disable the MAC. */
 		an_cmd(sc, AN_CMD_DISABLE, 0);

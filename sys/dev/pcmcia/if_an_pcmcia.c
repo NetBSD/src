@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.2 2000/12/11 23:58:56 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.3 2000/12/12 05:11:16 onoe Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/ic/anvar.h>
 #include <dev/ic/anreg.h>
+#include <dev/ic/anvar.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

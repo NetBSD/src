@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.2 2000/12/11 23:58:55 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.3 2000/12/12 05:11:15 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -33,30 +33,8 @@
  * $FreeBSD: src/sys/dev/an/if_anreg.h,v 1.3 2000/11/13 23:04:12 wpaul Exp $
  */
 
-#define AN_TIMEOUT	65536
-
-/* Default network name: ANY */
-#define AN_DEFAULT_NETNAME	""
-
-/* The nodename must be less than 16 bytes */
-#define AN_DEFAULT_NODENAME	"NetBSD"
-
-#define AN_DEFAULT_IBSS		"NetBSD IBSS"
-
-/*
- * register space access macros
- */
-#define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->an_btag, sc->an_bhandle, reg, val)
-
-#define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->an_btag, sc->an_bhandle, reg)
-
-#define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->an_btag, sc->an_bhandle, reg, val)
-
-#define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->an_btag, sc->an_bhandle, reg)
+#ifndef _DEV_IC_ANREG_H
+#define	_DEV_IC_ANREG_H
 
 /*
  * Size of Aironet I/O space.
@@ -322,6 +300,7 @@ struct an_ltv_genconfig {
 #define AN_AUTHTYPE_OPEN			0x0001
 #define AN_AUTHTYPE_SHAREDKEY			0x0002
 #define AN_AUTHTYPE_EXCLUDE_UNENCRYPTED		0x0004
+#define	AN_AUTHTYPE_MASK			0x00ff
 
 #define AN_PSAVE_NONE				0x0000
 #define AN_PSAVE_CAM				0x0001
@@ -419,9 +398,6 @@ struct an_rid_encap {
 
 #define AN_TXENCAP_RFC1024	0x0000
 #define AN_TXENCAP_80211	0x0002
-
-#define AN_RID_WEP_TEMP	        0xFF15
-#define AN_RID_WEP_PERM	        0xFF16
 
 /*
  * Actual config, same structure as general config (read only).
@@ -735,7 +711,6 @@ struct an_rxframe_802_3 {
 };
 #define AN_RXGAP_MAX	8
 
-
 struct an_txframe_802_3 {
 /*
  * Transmit 802.3 header structure.
@@ -777,79 +752,6 @@ struct an_txframe_802_3 {
 	(AN_TXCTL_TXOK_INTR|AN_TXCTL_TXERR_INTR|AN_HEADERTYPE_8023|	\
 	AN_PAYLOADTYPE_ETHER|AN_TXCTL_NORELEASE)
 
-#define AN_TXGAP_80211		0
-#define AN_TXGAP_8023		0
-
-struct an_802_3_hdr {
-	u_int16_t		an_8023_status;
-	u_int16_t		an_8023_payload_len;
-	u_int8_t		an_8023_dst_addr[6];
-	u_int8_t		an_8023_src_addr[6];
-	u_int16_t		an_8023_dat[3];	/* SNAP header */
-	u_int16_t		an_8023_type;
-};
-
-struct an_snap_hdr {
-	u_int16_t		an_snap_dat[3];	/* SNAP header */
-	u_int16_t		an_snap_type;
-};
-
-#define AN_TX_RING_CNT		4
-#define AN_INC(x, y)		(x) = (x + 1) % y
- 
-struct an_tx_ring_data {        
-	u_int16_t		an_tx_fids[AN_TX_RING_CNT];
-	u_int16_t		an_tx_ring[AN_TX_RING_CNT];
-	int			an_tx_prod;
-	int			an_tx_cons;
-};
-
-struct an_softc	{
-	struct device		an_dev;
-	struct ethercom		arpcom;
-	int			(*sc_enable) __P((struct an_softc *));
-	void			(*sc_disable) __P((struct an_softc *));
-	int			sc_enabled;
-	struct ifmedia		sc_media;
-
-	void*	irq_handle;	/* handle for irq handler */
-
-	bus_space_handle_t	an_bhandle;
-	bus_space_tag_t		an_btag;
-	struct an_ltv_genconfig	an_config;
-	struct an_ltv_caps	an_caps;
-	struct an_ltv_ssidlist	an_ssidlist;
-	struct an_ltv_aplist	an_aplist;
-        struct an_ltv_key	an_temp_keys;
-        struct an_ltv_key	an_perm_keys;
-	int			an_tx_rate;
-	int			an_rxmode;
-	int			an_if_flags;
-	u_int8_t		an_txbuf[1536];
-	struct an_tx_ring_data	an_rdata;
-	struct an_ltv_stats	an_stats;
-	struct an_ltv_status	an_status;
-	u_int8_t		an_associated;
-#ifdef ANCACHE
-	int			an_sigitems;
-	struct an_sigcache	an_sigcache[MAXANCACHE];
-	int			an_nextitem;
-#endif
-	struct callout		an_stat_ch;
-};
-
-void	an_release_resources	__P((struct device *));
-int	an_alloc_port		__P((struct device *, int, int));
-int	an_alloc_memory		__P((struct device *, int, int));
-int	an_alloc_irq		__P((struct device *, int, int));
-int	an_probe	        __P((struct an_softc *));
-void	an_shutdown	        __P((struct device *));
-int	an_attach		__P((struct an_softc *));
-int	an_detach		__P((struct an_softc *));
-int	an_intr			__P((void *));
-int	an_activate		__P((struct device *, enum devact));
-
-
 #define AN_802_3_OFFSET		0x2E
 #define AN_802_11_OFFSET	0x44
 #define AN_802_11_OFFSET_RAW	0x3C
@@ -873,17 +775,4 @@ int	an_activate		__P((struct device *, enum devact));
 #define AN_TXCNTL_MACPORT	0x00FF
 #define AN_TXCNTL_STRUCTTYPE	0xFF00
 
-/*
- * SNAP (sub-network access protocol) constants for transmission
- * of IP datagrams over IEEE 802 networks, taken from RFC1042.
- * We need these for the LLC/SNAP header fields in the TX/RX frame
- * structure.
- */
-#define AN_SNAP_K1		0xaa	/* assigned global SAP for SNAP */
-#define AN_SNAP_K2		0x00
-#define AN_SNAP_CONTROL		0x03	/* unnumbered information format */
-#define AN_SNAP_WORD0		(AN_SNAP_K1 | (AN_SNAP_K1 << 8))
-#define AN_SNAP_WORD1		(AN_SNAP_K2 | (AN_SNAP_CONTROL << 8))
-#define AN_SNAPHDR_LEN		0x6
-
-
+#endif	/* _DEV_IC_ANREG_H */
