@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.42 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.43 2003/11/02 10:31:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.42 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.43 2003/11/02 10:31:06 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -222,7 +222,7 @@ eshconfig(sc)
 		sizeof(struct rr_event) * RR_EVENT_RING_SIZE;
 	
 	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma_size, 
-				 0, RR_DMA_BOUNDRY, &sc->sc_dmaseg, 1, 
+				 0, RR_DMA_BOUNDARY, &sc->sc_dmaseg, 1, 
 				 &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error("%s: couldn't allocate space for host-side"
@@ -247,7 +247,7 @@ eshconfig(sc)
 	}
     
 	if (bus_dmamap_create(sc->sc_dmat, sc->sc_dma_size, 
-			      1, sc->sc_dma_size, RR_DMA_BOUNDRY, 
+			      1, sc->sc_dma_size, RR_DMA_BOUNDARY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 			      &sc->sc_dma)) {
 		aprint_error("%s: couldn't create DMA map\n",
@@ -302,7 +302,7 @@ eshconfig(sc)
 	 */
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
-			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 
+			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY,
 			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 			      &sc->sc_send.ec_dma)) {
 		aprint_error("%s: failed bus_dmamap_create\n", 
@@ -316,7 +316,7 @@ eshconfig(sc)
 
 	for (i = 0; i < RR_MAX_SNAP_RECV_RING_SIZE; i++)
 		if (bus_dmamap_create(sc->sc_dmat, RR_DMA_MAX, 1, RR_DMA_MAX, 
-				      RR_DMA_BOUNDRY, 
+				      RR_DMA_BOUNDARY, 
 				      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 				      &sc->sc_snap_recv.ec_dma[i])) {
 			aprint_error("%s: failed bus_dmamap_create\n", 
@@ -811,7 +811,7 @@ esh_fpopen(dev, oflags, devtype, p)
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);
-	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, RR_DMA_BOUNDRY, 
+	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, RR_DMA_BOUNDARY, 
 				 &recv->ec_dmaseg, 1, 
 				 &rseg, BUS_DMA_WAITOK);
 
@@ -836,7 +836,7 @@ esh_fpopen(dev, oflags, devtype, p)
 		goto bad_fp_dmamem_map;
 	}
     
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, RR_DMA_BOUNDRY, 
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, RR_DMA_BOUNDARY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK, 
 			      &recv->ec_dma)) {
 		printf("%s: couldn't create DMA map for FP receive ring\n", 
@@ -3691,7 +3691,7 @@ esh_new_dmainfo(sc)
 	assert(di != NULL);
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
-			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 
+			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK, 
 			      &di->ed_dma)) {
 		printf("%s:  failed dmainfo bus_dmamap_create\n", 
