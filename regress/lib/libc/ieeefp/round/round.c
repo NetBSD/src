@@ -1,4 +1,4 @@
-/*	$NetBSD: round.c,v 1.2 1995/04/20 22:39:37 cgd Exp $	*/
+/*	$NetBSD: round.c,v 1.1 1995/04/26 00:27:28 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 18, 1995
