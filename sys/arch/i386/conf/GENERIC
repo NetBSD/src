@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.199 1998/11/03 23:52:50 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.200 1998/11/04 00:31:59 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -369,7 +369,8 @@ fd*	at fdc? drive ?			# the drives themselves
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
-ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
