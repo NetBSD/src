@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	5.2 (Berkeley) 12/24/91";*/
-static char rcsid[] = "$Id: map.c,v 1.2 1993/08/01 18:04:26 mycroft Exp $";
+static char rcsid[] = "$Id: map.c,v 1.3 1993/12/02 22:42:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -218,47 +218,14 @@ mapped(type)
 	return (type);
 }
 
-typedef struct speeds {
-	char	*string;
-	int	speed;
-} SPEEDS;
-
-SPEEDS speeds[] = {
-	"0",		B0,
-	"50",		B50,
-	"75",		B75,
-	"110",		B110,
-	"134",		B134,
-	"134.5",	B134,
-	"150",		B150,
-	"200",		B200,
-	"300",		B300,
-	"600",		B600,
-	"1200",		B1200,
-	"1800",		B1800,
-	"2400",		B2400,
-	"4800",		B4800,
-	"9600",		B9600,
-	"19200",	B19200,
-	"38400",	B38400,
-	"exta",		B19200,
-	"extb",		B38400,
-	NULL
-};
-
 int
 baudrate(rate)
 	char *rate;
 {
-	SPEEDS *sp;
 
 	/* The baudrate number can be preceded by a 'B', which is ignored. */
 	if (*rate == 'B')
 		++rate;
 
-	for (sp = speeds; sp->string; ++sp)
-		if (!strcasecmp(rate, sp->string))
-			return (sp->speed);
-	err("unknown baud rate %s", rate);
-	/* NOTREACHED */
+	return (atoi(rate));
 }
