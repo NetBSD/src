@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2000/03/20 00:50:14 erh Exp $
+	$NetBSD: syscalls.master,v 1.19.4.1 2001/03/30 21:33:21 he Exp $
 ;
 ; XXX XAX lib/libc/sys/reboot.2 needs updating
 ;
@@ -92,7 +92,7 @@
 7	UNIMPL		osf_wait4
 ;8	OBSOL		osf_old_creat, NOT USED
 8	STD		{ int linux_sys_creat(const char *path, mode_t mode); }
-9	NOARGS		{ int sys_link(const char *path, const char *link); }
+9	STD		{ int linux_sys_link(const char *path, const char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
 11	UNIMPL
 12	STD		{ int linux_sys_chdir(const char *path); }
