@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.19 2004/04/30 02:05:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2004/04/30 02:05:43 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -580,6 +580,7 @@ cpu_hatch(void *v)
 
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
+	cpu_feature2 &= ci->ci_feature2_flags;
 
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_PRESENT)
