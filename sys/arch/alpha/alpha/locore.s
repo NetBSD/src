@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.71 1999/12/16 20:17:22 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.72 1999/12/16 20:20:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.71 1999/12/16 20:17:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.72 1999/12/16 20:20:11 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.71 1999/12/16 20:17:22 thorpej Exp $");
 #define	SPLX	 _splx
 #define	SPLRAISE _splraise
 #endif
-
-IMPORT(cpu_info, SIZEOF_CPU_INFO * ALPHA_MAXPROCS)
 
 /*
  * Get various per-cpu values.  A pointer to our cpu_info structure
