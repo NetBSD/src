@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.3 1998/10/13 05:39:01 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.4 1998/10/13 09:33:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -167,7 +167,7 @@ wdc_ata_bio_start(chp, xfer)
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
-	    DEBUG_FUNCS | DEBUG_XFERS);
+	    DEBUG_XFERS);
 
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
@@ -534,7 +534,7 @@ wdc_ata_bio_done(chp, xfer)
 	int drive = xfer->drive;
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_done: flags 0x%x\n", (u_int)xfer->c_flags),
-	    DEBUG_FUNCS);
+	    DEBUG_XFERS);
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;
@@ -544,11 +544,11 @@ wdc_ata_bio_done(chp, xfer)
 
 	ata_bio->flags |= ATA_ITSDONE;
 	if (need_done) {
-		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_FUNCS);
+		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
 		wddone(chp->ch_drive[drive].drv_softc);
 	}
 	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
-	    chp->ch_flags), DEBUG_FUNCS);
+	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp->wdc, chp->channel);
 }
 
