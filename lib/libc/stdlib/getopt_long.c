@@ -1,6 +1,11 @@
-/*
- * Copyright (c) 1987, 1993, 1994, 1996
- *	The Regents of the University of California.  All rights reserved.
+/*	$NetBSD: getopt_long.c,v 1.4 2000/04/02 20:27:58 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Dieter Baron and Thomas Klausner.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,146 +17,313 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: getopt_long.c,v 1.4 2000/04/02 20:27:58 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
-#include <stdio.h>
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
-#include "getopt.h"
+#include <unistd.h>
 
-extern int	  opterr;	/* if error message should be printed */
-extern int	  optind;	/* index into parent argv vector */
-extern int	  optopt;	/* character checked for validity */
-extern int	  optreset;	/* reset getopt */
-extern char *optarg;	/* argument associated with option */
+#ifdef REPLACE_GETOPT
+#ifdef __weak_alias
+__weak_alias(getopt,_getopt)
+#endif
+int	opterr = 1;		/* if error message should be printed */
+int	optind = 1;		/* index into parent argv vector */
+int	optopt = '?';		/* character checked for validity */
+int	optreset;		/* reset getopt */
+char    *optarg;		/* argument associated with option */
+#endif
 
-static char * __progname __P((char *));
-int getopt_internal __P((int, char * const *, const char *));
+#ifdef __weak_alias
+__weak_alias(getopt_long,_getopt_long)
+#endif
 
-static char *
-__progname(nargv0)
-	char * nargv0;
-{
-	char * tmp;
 
-	_DIAGASSERT(nargv0 != NULL);
+#define IGNORE_FIRST	(*options == '-' || *options == '+')
+#define PRINT_ERROR	((opterr) && ((*options != ':') \
+				      || (IGNORE_FIRST && options[1] != ':')))
+#define IS_POSIXLY_CORRECT (getenv("POSIXLY_CORRECT") != NULL)
+#define PERMUTE         (!IS_POSIXLY_CORRECT && !IGNORE_FIRST)
+/* XXX: GNU ignores PC if *options == '-' */
+#define IN_ORDER        (!IS_POSIXLY_CORRECT && *options == '-')
 
-	tmp = strrchr(nargv0, '/');
-	if (tmp)
-		tmp++;
-	else
-		tmp = nargv0;
-	return(tmp);
-}
-
+/* return values */
 #define	BADCH	(int)'?'
 #define	BADARG	(int)':'
+#define INORDER (int)1
+
 #define	EMSG	""
 
+static int getopt_internal __P((int, char * const *, const char *));
+static int gcd __P((int, int));
+static void permute_args __P((int, int, int, char * const *));
+
+static char *place = EMSG; /* option letter processing */
+
+/* XXX: set optreset to 1 rather than these two */
+static int nonopt_start = -1; /* first non option argument (for permute) */
+static int nonopt_end = -1;   /* first option after non options (for permute) */
+
+/* Error messages */
+static const char recarg[] = "option requires an argument -- %c";
+static const char ambig[] = "ambiguous option -- %.*s";
+static const char noarg[] = "option doesn't take an argument -- %.*s";
+static const char illopt[] = "illegal option -- %s";
+
+
+extern char *__progname;
+
 /*
- * getopt --
- *	Parse argc/argv argument vector.
+ * Compute the greatest common divisor of a and b.
  */
-int
-getopt_internal(nargc, nargv, ostr)
+static int
+gcd(a, b)
+	int a;
+	int b;
+{
+	int c;
+
+	c = a % b;
+	while (c != 0) {
+		a = b;
+		b = c;
+		c = a % b;
+	}
+	   
+	return b;
+}
+
+/*
+ * Exchange the block from nonopt_start to nonopt_end with the block
+ * from nonopt_end to opt_end (keeping the same order of arguments
+ * in each block).
+ */
+static void
+permute_args(nonopt_start, nonopt_end, opt_end, nargv)
+	int nonopt_start;
+	int nonopt_end;
+	int opt_end;
+	char * const *nargv;
+{
+	int cstart, cyclelen, i, j, ncycle, nnonopts, nopts, pos;
+	char *swap;
+
+	/*
+	 * compute lengths of blocks and number and size of cycles
+	 */
+	nnonopts = nonopt_end - nonopt_start;
+	nopts = opt_end - nonopt_end;
+	ncycle = gcd(nnonopts, nopts);
+	cyclelen = (opt_end - nonopt_start) / ncycle;
+
+	for (i = 0; i < ncycle; i++) {
+		cstart = nonopt_end+i;
+		pos = cstart;
+		for (j = 0; j < cyclelen; j++) {
+			if (pos >= nonopt_end)
+				pos -= nnonopts;
+			else
+				pos += nopts;
+			swap = nargv[pos];
+			/* LINTED const cast */
+			((char **) nargv)[pos] = nargv[cstart];
+			/* LINTED const cast */
+			((char **)nargv)[cstart] = swap;
+		}
+	}
+}
+
+/*
+ * getopt_internal --
+ *	Parse argc/argv argument vector.  Called by user level routines.
+ *  Returns -2 if -- is found (can be long option or end of options marker).
+ */
+static int
+getopt_internal(nargc, nargv, options)
 	int nargc;
 	char * const *nargv;
-	const char *ostr;
+	const char *options;
 {
-	static char *place = EMSG;		/* option letter processing */
 	char *oli;				/* option letter list index */
+	int optchar;
 
 	_DIAGASSERT(nargv != NULL);
-	_DIAGASSERT(ostr != NULL);
+	_DIAGASSERT(options != NULL);
 
+	optarg = NULL;
+
+	if (optreset)
+		nonopt_start = nonopt_end = -1;
+start:
 	if (optreset || !*place) {		/* update scanning pointer */
 		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-') {
+		if (optind >= nargc) {          /* end of argument vector */
 			place = EMSG;
-			return (-1);
+			if (nonopt_end != -1) {
+				/* do permutation, if we have to */
+				permute_args(nonopt_start, nonopt_end,
+				    optind, nargv);
+				optind -= nonopt_end - nonopt_start;
+			}
+			else if (nonopt_start != -1) {
+				/*
+				 * If we skipped non-options, set optind
+				 * to the first of them.
+				 */
+				optind = nonopt_start;
+			}
+			nonopt_start = nonopt_end = -1;
+			return -1;
 		}
+		if (*(place = nargv[optind]) != '-') {  /* found non-option */
+			place = EMSG;
+			if (IN_ORDER) {
+				/*
+				 * GNU extension: 
+				 * return non-option as argument to option 1
+				 */
+				optarg = nargv[optind++];
+				return INORDER;
+			}
+			if (!PERMUTE) {
+				/*
+				 * if no permutation wanted, stop parsing
+				 * at first non-option
+				 */
+				return -1;
+			}
+			/* do permutation */
+			if (nonopt_start == -1)
+				nonopt_start = optind;
+			else if (nonopt_end != -1) {
+				permute_args(nonopt_start, nonopt_end,
+				    optind, nargv);
+				nonopt_start = optind -
+				    (nonopt_end - nonopt_start);
+				nonopt_end = -1;
+			}
+			optind++;
+			/* process next argument */
+			goto start;
+		}
+		if (nonopt_start != -1 && nonopt_end == -1)
+			nonopt_end = optind;
 		if (place[1] && *++place == '-') {	/* found "--" */
-			/* ++optind; */
-			place = EMSG;
-			return (-2);
+			place++;
+			return -2;
 		}
-	}					/* option letter okay? */
-	if ((optopt = (int)*place++) == (int)':' ||
-	    !(oli = strchr(ostr, optopt))) {
-		/*
-		 * if the user didn't specify '-' as an option,
-		 * assume it means -1.
-		 */
-		if (optopt == (int)'-')
-			return (-1);
-		if (!*place)
-			++optind;
-		if (opterr && *ostr != ':')
-			(void)fprintf(stderr,
-			    "%s: illegal option -- %c\n", __progname(nargv[0]), optopt);
-		return (BADCH);
 	}
-	if (*++oli != ':') {			/* don't need argument */
-		optarg = NULL;
+	if ((optchar = (int)*place++) == (int)':' ||
+	    (oli = strchr(options + (IGNORE_FIRST ? 1 : 0), optchar)) == NULL) {
+		/* option letter unknown or ':' */
 		if (!*place)
 			++optind;
-	} else {				/* need an argument */
+		if (PRINT_ERROR)
+			warnx(illopt, optchar);
+		optopt = optchar;
+		return BADCH;
+	}
+	if (optchar == 'W' && oli[1] == ';') {		/* -W long-option */
+		/* XXX: what if no long options provided (called by getopt)? */
+		if (*place) 
+			return -2;
+
+		if (++optind >= nargc) {	/* no arg */
+			place = EMSG;
+			if (PRINT_ERROR)
+				warnx(recarg, optchar);
+			optopt = optchar;
+			/* XXX: GNU returns '?' if options[0] != ':' */
+			return BADARG;
+		} else				/* white space */
+			place = nargv[optind];
+		/*
+		 * Handle -W arg the same as --arg (which causes getopt to
+		 * stop parsing).
+		 */
+		return -2;
+	}
+	if (*++oli != ':') {			/* doesn't take argument */
+		if (!*place)
+			++optind;
+	} else {				/* takes (optional) argument */
+		optarg = NULL;
 		if (*place)			/* no white space */
 			optarg = place;
-		else if (nargc <= ++optind) {	/* no arg */
-			place = EMSG;
-			if ((opterr) && (*ostr != ':'))
-				(void)fprintf(stderr,
-				    "%s: option requires an argument -- %c\n",
-				    __progname(nargv[0]), optopt);
-			return (BADARG);
-		} else				/* white space */
-			optarg = nargv[optind];
+		/* XXX: disable test for :: if PC? (GNU doesn't) */
+		else if (oli[1] != ':') {	/* arg not optional */
+			if (++optind >= nargc) {	/* no arg */
+				place = EMSG;
+				if (PRINT_ERROR)
+					warnx(recarg, optchar);
+				optopt = optchar;
+				/* XXX: GNU returns '?' if options[0] != ':' */
+				return BADARG;
+			} else
+				optarg = nargv[optind];
+		}
 		place = EMSG;
 		++optind;
 	}
-	return (optopt);			/* dump back option letter */
+	/* dump back option letter */
+	return optchar;
 }
 
-#if 0
+#ifdef REPLACE_GETOPT
 /*
  * getopt --
  *	Parse argc/argv argument vector.
+ *
+ * [eventually this will replace the real getopt]
  */
 int
-getopt2(nargc, nargv, ostr)
+getopt(nargc, nargv, options)
 	int nargc;
 	char * const *nargv;
-	const char *ostr;
+	const char *options;
 {
 	int retval;
 
-	if ((retval = getopt_internal(nargc, nargv, ostr)) == -2) {
+	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
+		++optind;
+		/*
+		 * We found an option (--), so if we skipped non-options,
+		 * we have to permute.
+		 */
+		if (nonopt_end != -1) {
+			permute_args(nonopt_start, nonopt_end, optind,
+				       nargv);
+			optind -= nonopt_end - nonopt_start;
+		}
+		nonopt_start = nonopt_end = -1;
 		retval = -1;
-		++optind; 
 	}
-	return(retval);
+	return retval;
 }
 #endif
 
@@ -160,77 +332,137 @@ getopt2(nargc, nargv, ostr)
  *	Parse argc/argv argument vector.
  */
 int
-getopt_long(nargc, nargv, options, long_options, index)
+getopt_long(nargc, nargv, options, long_options, idx)
 	int nargc;
-	char ** nargv;
-	char * options;
-	struct option * long_options;
-	int * index;
+	char * const *nargv;
+	const char *options;
+	const struct option *long_options;
+	int *idx;
 {
 	int retval;
 
 	_DIAGASSERT(nargv != NULL);
-	_DIAGASSERT(ostr != NULL);
+	_DIAGASSERT(options != NULL);
 	_DIAGASSERT(long_options != NULL);
-	/* index may be NULL */
+	/* idx may be NULL */
 
 	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
-		char *current_argv = nargv[optind++] + 2, *has_equal;
-		int i, current_argv_len, match = -1;
+		char *current_argv, *has_equal;
+		size_t current_argv_len;
+		int i, match;
 
-		if (*current_argv == '\0') {
-			return(-1);
+		current_argv = place;
+		match = -1;
+
+		optind++;
+		place = EMSG;
+
+		if (*current_argv == '\0') {		/* found "--" */
+			/*
+			 * We found an option (--), so if we skipped
+			 * non-options, we have to permute.
+			 */
+			if (nonopt_end != -1) {
+				permute_args(nonopt_start, nonopt_end,
+				    optind, nargv);
+				optind -= nonopt_end - nonopt_start;
+			}
+			nonopt_start = nonopt_end = -1;
+			return -1;
 		}
 		if ((has_equal = strchr(current_argv, '=')) != NULL) {
+			/* argument found (--option=arg) */
 			current_argv_len = has_equal - current_argv;
 			has_equal++;
 		} else
 			current_argv_len = strlen(current_argv);
-
-		for (i = 0; long_options[i].name; i++) { 
-			if (strncmp(current_argv, long_options[i].name, current_argv_len))
+	    
+		for (i = 0; long_options[i].name; i++) {
+			/* find matching long option */
+			if (strncmp(current_argv, long_options[i].name,
+			    current_argv_len))
 				continue;
 
-			if (strlen(long_options[i].name) == (unsigned)current_argv_len) { 
+			if (strlen(long_options[i].name) ==
+			    (unsigned)current_argv_len) {
+				/* exact match */
 				match = i;
 				break;
 			}
-			if (match == -1)
+			if (match == -1)		/* partial match */
 				match = i;
+			else {
+				/* ambiguous abbreviation */
+				if (PRINT_ERROR)
+					warnx(ambig, current_argv_len,
+					     current_argv);
+				optopt = 0;
+				return BADCH;
+			}
 		}
-		if (match != -1) {
+		if (match != -1) {			/* option found */
+		        if (long_options[match].has_arg == no_argument
+			    && has_equal) {
+				if (PRINT_ERROR)
+					warnx(noarg, current_argv_len,
+					     current_argv);
+				/*
+				 * XXX: GNU sets optopt to val regardless of
+				 * flag
+				 */
+				if (long_options[match].flag == NULL)
+					optopt = long_options[match].val;
+				else
+					optopt = 0;
+				/* XXX: GNU returns '?' if options[0] != ':' */
+				return BADARG;
+			}
 			if (long_options[match].has_arg == required_argument ||
 			    long_options[match].has_arg == optional_argument) {
 				if (has_equal)
 					optarg = has_equal;
-				else
+				else if (long_options[match].has_arg ==
+				    required_argument) {
+					/*
+					 * optional argument doesn't use
+					 * next nargv
+					 */
 					optarg = nargv[optind++];
+				}
 			}
 			if ((long_options[match].has_arg == required_argument)
 			    && (optarg == NULL)) {
 				/*
-				 * Missing argument, leading :
+				 * Missing argument; leading ':'
 				 * indicates no error should be generated
 				 */
-				if ((opterr) && (*options != ':'))
-					(void)fprintf(stderr,
-				      "%s: option requires an argument -- %s\n",
-				      __progname(nargv[0]), current_argv);
-				return (BADARG);
+				if (PRINT_ERROR)
+					warnx(recarg, current_argv);
+				/*
+				 * XXX: GNU sets optopt to val regardless
+				 * of flag
+				 */
+				if (long_options[match].flag == NULL)
+					optopt = long_options[match].val;
+				else
+					optopt = 0;
+				/* XXX: GNU returns '?' if options[0] != ':' */
+				--optind;
+				return BADARG;
 			}
-		} else { /* No matching argument */
-			if ((opterr) && (*options != ':'))
-				(void)fprintf(stderr,
-				    "%s: illegal option -- %s\n", __progname(nargv[0]), current_argv);
-			return (BADCH);
+		} else {			/* unknown option */
+			if (PRINT_ERROR)
+				warnx(illopt, current_argv);
+			optopt = 0;
+			return BADCH;
 		}
 		if (long_options[match].flag) {
 			*long_options[match].flag = long_options[match].val;
 			retval = 0;
 		} else 
 			retval = long_options[match].val;
-		if (index)
-			*index = match;
+		if (idx)
+			*idx = match;
 	}
-	return(retval);
+	return retval;
 }
