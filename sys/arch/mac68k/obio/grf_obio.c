@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.2 1995/06/21 02:48:00 briggs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.3 1995/07/02 00:30:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -93,6 +93,7 @@ grfiv_init(sc)
 	gm->vres = 80;		/* XXX Hack */
 	gm->fbsize = gm->width * gm->height;
 	gm->fbbase = (caddr_t) 0;
+	gm->fboff = 0;
 
 	return 1;
 }
