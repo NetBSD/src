@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.3 1994/08/17 11:41:39 mycroft Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.4 1994/08/17 14:43:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,7 +129,6 @@ int nnnnnn = sizeof (struct nqlease);
 int oooooo = sizeof (struct nfsnode);
 extern nfstype nfs_type[9];
 extern struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
-extern struct nfsd nfsd_head;
 extern int nfsd_waiting;
 
 #define TRUE	1
