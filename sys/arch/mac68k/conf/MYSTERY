@@ -1,6 +1,6 @@
-#	$NetBSD: MYSTERY,v 1.13 1997/05/07 00:32:45 lukem Exp $
+#	$NetBSD: MYSTERY,v 1.14 1997/05/08 04:09:27 scottr Exp $
 #
-# SPOT
+# MYSTERY
 
 include "arch/mac68k/conf/std.mac68k"
 
@@ -36,8 +36,7 @@ options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	QUOTA		# fast filesystem with user and group quotas
 options 	NFSSERVER	# Sun NFS-compatible filesystem
 
-options 	SCSI
-options 	SCSIDEBUG
+#options 	SCSIDEBUG
 options 	NCR5380_DEBUG
 options 	SBC_DEBUG
 
@@ -51,6 +50,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	EON
 #options 	PPP_BSDCOMP
 #options 	PPP_DEFLATE
+options 	NETATALK
 options 	COMPAT_42
 options 	COMPAT_43
 options 	MAPMEM
