@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 2002/10/31 14:52:30 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11 2002/12/06 10:12:13 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -308,11 +308,11 @@ static const struct format_mnd0 format_mnd0[][16] = {
 	{NULL,		0},
 	{NULL,		0},
 	{NULL,		0},
-	{"fsina.s",	FMT_MND0_OP_D, FMT_MND0_OP_AS1, FMT_MND0_OP_D},
+	{"fsina.s",	FMT_MND0_OP_F, FMT_MND0_OP_AS1, FMT_MND0_OP_F},
 	{NULL,		0},
-	{"fsrra.s",	FMT_MND0_OP_D, FMT_MND0_OP_AS1, FMT_MND0_OP_D},
+	{"fsrra.s",	FMT_MND0_OP_F, FMT_MND0_OP_AS1, FMT_MND0_OP_F},
 	{NULL,		0},
-	{"fcosa.s",	FMT_MND0_OP_D, FMT_MND0_OP_AS1, FMT_MND0_OP_D},
+	{"fcosa.s",	FMT_MND0_OP_F, FMT_MND0_OP_AS1, FMT_MND0_OP_F},
 	{NULL,		0},
 	{NULL,		0},
 	{NULL,		0}
