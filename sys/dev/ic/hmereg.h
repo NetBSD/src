@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.11 2001/11/26 10:39:29 tron Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.12 2002/05/07 05:56:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -283,11 +283,11 @@ struct hme_xd {
 	(p) ? le32toh(*((u_int32_t *)HME_XD_FLAGS(b,i))) :		\
 		(*((u_int32_t *)HME_XD_FLAGS(b,i)))
 #define HME_XD_SETFLAGS(p, b, i, f)	do {				\
-	*((u_int32_t *)HME_XD_FLAGS(b,i)) = ((p) ? htole32(f) : (f));	\
-} while(0)
+	*((u_int32_t *)HME_XD_FLAGS(b,i)) = ((p) ? htole32((f)) : (f));	\
+} while(/* CONSTCOND */ 0)
 #define HME_XD_SETADDR(p, b, i, a)	do {				\
-	*((u_int32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32(a) : (a));	\
-} while(0)
+	*((u_int32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32((a)) : (a));	\
+} while(/* CONSTCOND */ 0)
 
 /* Descriptor flag values */
 #define HME_XD_OWN	0x80000000	/* ownership: 1=hw, 0=sw */
