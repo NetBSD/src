@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.73 1998/09/22 13:39:20 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.74 1998/09/26 19:09:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -346,9 +346,6 @@ cpu_setup(sc)
 #endif
 }
 
-#include <machine/bsd_openprom.h> /*XXX*/
-extern struct promvec *promvec;   /*XXX-make library functions */
-
 /*
  * Allocate per-CPU data, then start up this CPU using PROM.
  */
@@ -361,7 +358,7 @@ cpu_spinup(sc)
 	int n;
 extern void cpu_hatch __P((void));
 	caddr_t pc = (caddr_t)cpu_hatch;
-	struct rom_reg rr;
+	struct openprom_addr oa;
 
 	/* Setup CPU-specific MMU tables */
 	pmap_alloc_cpu(cip);
@@ -374,16 +371,16 @@ extern void cpu_hatch __P((void));
 	 * The physical address of the context table is passed to
 	 * the PROM in a "physical address descriptor".
 	 */
-	rr.rr_iospace = 0;
-	rr.rr_paddr = (u_int32_t)cip->ctx_tbl_pa;
-	rr.rr_len = cip->mmu_ncontext * sizeof(cip->ctx_tbl[0]); /*???*/
+	oa.oa_space = 0;
+	oa.oa_base = (u_int32_t)cip->ctx_tbl_pa;
+	oa.oa_size = cip->mmu_ncontext * sizeof(cip->ctx_tbl[0]); /*???*/
 
 	/*
 	 * Flush entire cache here, since the CPU may start with
 	 * caches off, hence no cache-coherency may be assumed.
 	 */
 	cpuinfo.cache_flush_all();
-	(*promvec->pv_v3cpustart)(cip->node, (u_int)&rr, 0, pc);
+	rom_cpustart(cip->node, &oa, 0, pc);
 
 	/*
 	 * Wait for this CPU to spin up.
