@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.7.30.1 2003/01/16 03:14:58 thorpej Exp $   */
+/*	$NetBSD: signal.h,v 1.4.6.2 2003/01/16 03:14:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -35,15 +35,14 @@
  *	@(#)signal.h	7.16 (Berkeley) 3/17/91
  */
 
- /* All bugs are subject to removal without further notice */
-
-#ifndef _VAX_SIGNAL_H_
-#define _VAX_SIGNAL_H_
+#ifndef _SH3_SIGNAL_H_
+#define	_SH3_SIGNAL_H_
 
 typedef int sig_atomic_t;
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
+
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -53,25 +52,61 @@ typedef int sig_atomic_t;
  */
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct sigcontext13 {
+	int	sc_spc;
+	int	sc_ssr;
+	int	sc_pr;
+	int	sc_r14;
+	int	sc_r13;
+	int	sc_r12;
+	int	sc_r11;
+	int	sc_r10;
+	int	sc_r9;
+	int	sc_r8;
+	int	sc_r7;
+	int	sc_r6;
+	int	sc_r5;
+	int	sc_r4;
+	int	sc_r3;
+	int	sc_r2;
+	int	sc_r1;
+	int	sc_r0;
+	int	sc_r15;
+
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
-	int	sc_sp;			/* sp to restore */
-	int	sc_fp;			/* fp to restore */
-	int	sc_ap;			/* ap to restore */
-	int	sc_pc;			/* pc to restore */
-	int	sc_ps;			/* psl to restore */
+
+	int	sc_expevt;		/* XXX should be above */
+	int	sc_err;
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif
 
 struct sigcontext {
-	int	sc_onstack;		/* sigstack state to restore */
-	int	__sc_mask13;		/* signal mask to restore (old style) */
-	int	sc_sp;			/* sp to restore */
-	int	sc_fp;			/* fp to restore */
-	int	sc_ap;			/* ap to restore */
-	int	sc_pc;			/* pc to restore */
-	int	sc_ps;			/* psl to restore */
-	sigset_t sc_mask;		/* signal mask to restore (new style) */
+	int	sc_spc;
+	int	sc_ssr;
+	int	sc_pr;
+	int	sc_r14;
+	int	sc_r13;
+	int	sc_r12;
+	int	sc_r11;
+	int	sc_r10;
+	int	sc_r9;
+	int	sc_r8;
+	int	sc_r7;
+	int	sc_r6;
+	int	sc_r5;
+	int	sc_r4;
+	int	sc_r3;
+	int	sc_r2;
+	int	sc_r1;
+	int	sc_r0;
+	int	sc_r15;
+
+	int	sc_onstack;	/* sigstack state to restore */
+
+	int	sc_expevt;	/* XXX should be above */
+	int	sc_err;
+
+	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
 
 /*
@@ -82,21 +117,22 @@ struct sigcontext {
  */
 #define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
 do {									\
-	(sc)->sc_sp = (uc)->uc_mcontext.__gregs[_REG_SP];		\
-	(sc)->sc_fp = (uc)->uc_mcontext.__gregs[_REG_FP];		\
-	(sc)->sc_ap = (uc)->uc_mcontext.__gregs[_REG_AP];		\
-	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-	(sc)->sc_ps = (uc)->uc_mcontext.__gregs[_REG_PSL];		\
+	memcpy(&(sc)->sc_pr, &(uc)->uc_mcontext.__gregs[_REG_PR],	\
+	    17 * sizeof(unsigned int));					\
+	(sc)->sc_spc    = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	(sc)->sc_ssr    = (uc)->uc_mcontext.__gregs[_REG_SR];		\
+	(sc)->sc_expevt = (uc)->uc_mcontext.__gregs[_REG_EXPEVT];	\
+	(sc)->sc_err    = 0;	/* XXX */				\
 } while (/*CONSTCOND*/0)
 
 #define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
 do {									\
-	(uc)->uc_mcontext.__gregs[_REG_SP]  = (sc)->sc_sp;		\
-	(uc)->uc_mcontext.__gregs[_REG_FP]  = (sc)->sc_fp;		\
-	(uc)->uc_mcontext.__gregs[_REG_AP]  = (sc)->sc_ap;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC]  = (sc)->sc_pc;		\
-	(uc)->uc_mcontext.__gregs[_REG_PSL] = (sc)->sc_ps;		\
+	memcpy(&(uc)->uc_mcontext.__gregs[_REG_PR], &(sc)->sc_pr,	\
+	    17 * sizeof(unsigned int));					\
+	(uc)->uc_mcontext.__gregs[_REG_PC]     = (sc)->sc_spc;		\
+	(uc)->uc_mcontext.__gregs[_REG_SR]     = (sc)->sc_ssr;		\
+	(uc)->uc_mcontext.__gregs[_REG_EXPEVT] = (sc)->sc_expevt;	\
 } while (/*CONSTCOND*/0)
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
-#endif	/* !_VAX_SIGNAL_H_ */
+#endif	/* !_SH3_SIGNAL_H_ */
