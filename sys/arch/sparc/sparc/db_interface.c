@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.54 2003/01/18 06:45:03 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.55 2003/05/18 16:45:21 martin Exp $ */
 
 /*
  * Mach Operating System
@@ -31,7 +31,8 @@
 /*
  * Interface to new debugger.
  */
-#include "opt_ddb.h"			/* XXX ddb vs kgdb */
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -105,6 +106,7 @@ db_write_bytes(addr, size, data)
 
 }
 
+db_regs_t *ddb_regp;
 
 #if defined(DDB)
 
@@ -221,7 +223,6 @@ kdb_kbd_trap(tf)
 
 /* struct cpu_info of CPU being investigated */
 struct cpu_info *ddb_cpuinfo;
-db_regs_t *ddb_regp;
 
 #ifdef MULTIPROCESSOR
 
