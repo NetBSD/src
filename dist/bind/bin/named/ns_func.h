@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.2 1999/11/21 10:40:10 veego Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990
@@ -368,6 +368,7 @@ extern struct nameser	*nameserFind(struct in_addr addr, int flags);
 /* ++from ns_update.c++ */
 void			free_rrecp(ns_updque *, int rcode, struct sockaddr_in);
 int			findzone(const char *, int, int, int *, int);
+struct databuf *	findzonesoa(struct zoneinfo *);
 u_char *		findsoaserial(u_char *data);
 u_int32_t		get_serial_unchecked(struct zoneinfo *zp);
 u_int32_t		get_serial(struct zoneinfo *zp);
