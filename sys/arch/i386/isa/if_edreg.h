@@ -7,7 +7,7 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  *
- *	$Id: if_edreg.h,v 1.10 1994/10/01 07:13:35 mycroft Exp $
+ *	$Id: if_edreg.h,v 1.11 1994/10/23 21:22:18 mycroft Exp $
  */
 
 /*
@@ -539,6 +539,9 @@ struct ed_ring	{
  * Common constants
  */
 #define ED_PAGE_SIZE		256	/* Size of RAM pages in bytes */
+#define	ED_PAGE_MASK		255
+#define	ED_PAGE_SHIFT		8
+
 #define ED_TXBUF_SIZE		6	/* Size of TX buffer in pages */
 
 /*
