@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.25 1995/04/17 12:09:06 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26 1995/04/19 22:42:51 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -96,7 +96,7 @@ struct le_softc {
 int leintr __P((void *));
 int leioctl __P((struct ifnet *, u_long, caddr_t));
 void lestart __P((struct ifnet *));
-void lewatchdog __P((short));
+void lewatchdog __P((int));
 static inline void lewrcsr __P((struct le_softc *, u_short, u_short));
 static inline u_short lerdcsr __P((struct le_softc *, u_short));
 void leinit __P((struct le_softc *));
@@ -431,7 +431,7 @@ lereset(sc)
 
 void
 lewatchdog(unit)
-	short unit;
+	int unit;
 {
 	struct le_softc *sc = lecd.cd_devs[unit];
 
