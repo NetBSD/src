@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	$Id: vm_glue.c,v 1.6 1993/06/29 07:16:31 andrew Exp $
+ *	$Id: vm_glue.c,v 1.7 1993/06/29 13:47:05 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -120,8 +120,8 @@ useracc(addr, len, rw)
 	 * only used (as an end address) in trap.c.  Use it as an end
 	 * address here too.
 	 */
-	if ((vm_offset_t) addr > VM_MAXUSER_ADDRESS
-	    || (vm_offset_t) addr + (len-1) > VM_MAXUSER_ADDRESS
+	if ((vm_offset_t) addr >= VM_MAXUSER_ADDRESS
+	    || (vm_offset_t) addr + (len-1) >= VM_MAXUSER_ADDRESS
 	    || (vm_offset_t) addr + (len-1) < (vm_offset_t) addr)
 		return (FALSE);
 
