@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.90 1999/08/11 03:02:18 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.91 1999/08/11 17:37:59 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1110,7 +1110,12 @@ after_listen:
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
 				sbdrop(&so->so_snd, acked);
-				tp->snd_una = th->th_ack;
+				/*
+				 * We want snd_recover to track snd_una to
+				 * avoid sequence wraparound problems for
+				 * very large transfers.
+				 */
+				tp->snd_una = tp->snd_recover = th->th_ack;
 				m_freem(m);
 
 				/*
@@ -1213,7 +1218,7 @@ after_listen:
 		if ((tiflags & TH_SYN) == 0)
 			goto drop;
 		if (tiflags & TH_ACK) {
-			tp->snd_una = th->th_ack;
+			tp->snd_una = tp->snd_recover = th->th_ack;
 			if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 				tp->snd_nxt = tp->snd_una;
 		}
@@ -1574,7 +1579,8 @@ after_listen:
 					u_int win =
 					    min(tp->snd_wnd, tp->snd_cwnd) / 
 					    2 /	tp->t_segsz;
-					if (SEQ_LT(th->th_ack, tp->snd_recover)) {
+					if (SEQ_LT(th->th_ack,
+					    tp->snd_recover)) {
 						/*
 						 * False fast retransmit after
 						 * timeout.  Do not cut window.
@@ -1692,7 +1698,12 @@ after_listen:
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
-		tp->snd_una = th->th_ack;
+		/*
+		 * We want snd_recover to track snd_una to
+		 * avoid sequence wraparound problems for
+		 * very large transfers.
+		 */
+		tp->snd_una = tp->snd_recover = th->th_ack;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
 
@@ -2279,7 +2290,7 @@ tcp_xmit_timer(tp, rtt)
 /*
  * Checks for partial ack.  If partial ack arrives, force the retransmission
  * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
- * 1.  By setting snd_nxt to ti_ack, this forces retransmission timer to
+ * 1.  By setting snd_nxt to th_ack, this forces retransmission timer to
  * be started again.  If the ack advances at least to tp->snd_recover, return 0.
  */
 int
@@ -2287,18 +2298,26 @@ tcp_newreno(tp, th)
 	struct tcpcb *tp;
 	struct tcphdr *th;
 {
+	tcp_seq onxt = tp->snd_nxt;
+	u_long ocwnd = tp->snd_cwnd;
+
 	if (SEQ_LT(th->th_ack, tp->snd_recover)) {
-	        tcp_seq onxt = tp->snd_nxt;
-	        tcp_seq ouna = tp->snd_una;  /* Haven't updated snd_una yet*/
-	        u_long  ocwnd = tp->snd_cwnd;
+		/*
+		 * snd_una has not yet been updated and the socket's send
+		 * buffer has not yet drained off the ACK'd data, so we
+		 * have to leave snd_una as it was to get the correct data
+		 * offset in tcp_output().
+		 */
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 	        tp->t_rtt = 0;
 	        tp->snd_nxt = th->th_ack;
-	        tp->snd_cwnd = tp->t_segsz;
-	        tp->snd_una = th->th_ack;
+		/*
+		 * Set snd_cwnd to one segment beyond ACK'd offset.  snd_una
+		 * is not yet updated when we're called.
+		 */
+		tp->snd_cwnd = tp->t_segsz + (th->th_ack - tp->snd_una);
 	        (void) tcp_output(tp);
 	        tp->snd_cwnd = ocwnd;
-	        tp->snd_una = ouna;
 	        if (SEQ_GT(onxt, tp->snd_nxt))
 	                tp->snd_nxt = onxt;
 	        /*
