@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getgroups.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: getgroups.2,v 1.4 1993/11/25 00:38:51 jtc Exp $
+.\"	$Id: getgroups.2,v 1.5 1994/03/29 02:46:29 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt GETGROUPS 2
@@ -43,7 +43,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <unistd.h>
 .Ft int
-.Fn getgroups "int gidsetlen" "int *gidset"
+.Fn getgroups "int gidsetlen" "gid_t *gidset"
 .Sh DESCRIPTION
 .Fn Getgroups
 gets the current group access list of the user process
@@ -85,12 +85,6 @@ an invalid address.
 .Sh SEE ALSO
 .Xr setgroups 2 ,
 .Xr initgroups 3
-.Sh BUGS
-The
-.Fa gidset
-array should be of type
-.Vt gid_t ,
-but remains integer for compatibility with earlier systems.
 .Sh HISTORY
 The
 .Fn getgroups
