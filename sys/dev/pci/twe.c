@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.6 2001/11/14 19:15:31 nathanw Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.7 2002/01/09 02:51:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.6 2001/11/14 19:15:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.7 2002/01/09 02:51:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -921,9 +921,6 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer, 0,
 	    ccb->ccb_datasize, flags);
 	bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
-
-	if (ccb->ccb_buf != NULL) {
-		tb = ccb->ccb_buf;
 
 	if (ccb->ccb_abuf != (vaddr_t)0) {
 		if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
