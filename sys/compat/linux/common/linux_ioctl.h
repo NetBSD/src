@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.12 2000/12/10 14:08:48 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.13 2001/01/10 02:28:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@ int linux_ioctl_socket __P((struct proc *, struct linux_sys_ioctl_args *,
 int linux_ioctl_hdio __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
 int linux_ioctl_fdio __P((struct proc *p, struct linux_sys_ioctl_args *uap, 
+                 register_t *retval));
+int linux_ioctl_blkio __P((struct proc *p, struct linux_sys_ioctl_args *uap, 
                  register_t *retval));
 __END_DECLS
 #endif	/* !_KERNEL */
