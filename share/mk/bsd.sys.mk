@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.112 2004/04/18 03:19:02 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.113 2004/06/08 21:46:52 abs Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -132,6 +132,7 @@ TOOL_ROFF_RAW?=		${TOOL_GROFF} -Z
 TOOL_RPCGEN?=		rpcgen
 TOOL_SOELIM?=		soelim
 TOOL_STAT?=		stat
+TOOL_SPARKCRC?=		sparkcrc
 TOOL_SUNLABEL?=		sunlabel
 TOOL_TBL?=		tbl
 TOOL_UUDECODE?=		uudecode
