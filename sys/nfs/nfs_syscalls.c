@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.59 2003/05/07 16:18:17 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.60 2003/05/07 16:18:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.59 2003/05/07 16:18:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.60 2003/05/07 16:18:54 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -972,17 +972,28 @@ nfssvc_iod(l)
 	 * Just loop around doing our stuff until SIGKILL
 	 */
 	for (;;) {
-		while (((nmp = myiod->nid_mount) == NULL
-		    || TAILQ_EMPTY(&nmp->nm_bufq)) && error == 0) {
-			if (nmp)
+		while (/*CONSTCOND*/ TRUE) {
+			simple_lock(&myiod->nid_slock);
+			nmp = myiod->nid_mount;
+			if (nmp) {
+				simple_lock(&nmp->nm_slock);
+				if (!TAILQ_EMPTY(&nmp->nm_bufq)) {
+					simple_unlock(&myiod->nid_slock);
+					break;
+				}
 				nmp->nm_bufqiods--;
+				simple_unlock(&nmp->nm_slock);
+			}
 			myiod->nid_want = p;
 			myiod->nid_mount = NULL;
-			error = tsleep((caddr_t)&myiod->nid_want,
-			    PWAIT | PCATCH, "nfsidl", 0);
+			error = ltsleep(&myiod->nid_want,
+			    PWAIT | PCATCH | PNORELOCK, "nfsidl", 0,
+			    &myiod->nid_slock);
+			if (error)
+				goto quit;
 		}
-		while (nmp != NULL &&
-		    (bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
+
+		while ((bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
 			/* Take one off the front of the list */
 			TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
 			nmp->nm_bufqlen--;
@@ -991,7 +1002,9 @@ nfssvc_iod(l)
 				nmp->nm_bufqwant = FALSE;
 				wakeup(&nmp->nm_bufq);
 			}
+			simple_unlock(&nmp->nm_slock);
 			(void) nfs_doio(bp, NULL);
+			simple_lock(&nmp->nm_slock);
 			/*
 			 * If there are more than one iod on this mount, then defect
 			 * so that the iods can be shared out fairly between the mounts
@@ -1002,10 +1015,9 @@ nfssvc_iod(l)
 				break;
 			}
 		}
-		if (error) {
-			break;
-		}
+		simple_unlock(&nmp->nm_slock);
 	}
+quit:
 	PRELE(l);
 	if (nmp)
 		nmp->nm_bufqiods--;
@@ -1014,7 +1026,16 @@ nfssvc_iod(l)
 	myiod->nid_proc = NULL;
 	nfs_numasync--;
 
-	return (error);
+	return error;
+}
+
+void
+nfs_iodinit()
+{
+	int i;
+
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
+		simple_lock_init(&nfs_asyncdaemon[i].nid_slock);
 }
 
 void
