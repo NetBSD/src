@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.65 2000/01/09 16:00:29 joda Exp $
+$NetBSD: pcmciadevs,v 1.66 2000/01/18 17:19:33 jlam Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor LUCENT			0x0156	Lucent Technologies
+vendor AIRONET			0x015f	Aironet Wireless Communications
 vendor COMPAQ2			0x0183	Compaq
 vendor DAYNA			0x0194	Dayna Corporation
 vendor WEBGEAR			0x01a6	WebGear
@@ -183,7 +184,11 @@ product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 /* Lucent WaveLAN/IEEE */
 product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
 
-/* Bey Networks */
+/* Aironet */
+product AIRONET PC4500		0x0005 Aironet PC4500 Wireless LAN Adapter
+product AIRONET PC4800		0x0005 Aironet PC4800 Wireless LAN Adapter
+
+/* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
 
 /* WebGear */
