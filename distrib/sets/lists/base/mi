@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.479 2004/05/18 05:38:18 christos Exp $
+# $NetBSD: mi,v 1.480 2004/05/18 12:24:11 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -409,7 +409,7 @@
 ./usr/bin/diff3					base-util-bin
 ./usr/bin/dig					base-netutil-bin
 ./usr/bin/dirname				base-util-bin
-./usr/bin/dnsquery				base-netutil-bin
+./usr/bin/dnsquery				base-netutil-bin	obsolete
 ./usr/bin/du					base-util-bin
 ./usr/bin/egrep					base-util-bin
 ./usr/bin/eject					base-util-bin
@@ -823,7 +823,7 @@
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/comsat				base-mail-bin
 ./usr/libexec/cpp				base-obsolete		obsolete
-./usr/libexec/dnskeygen				base-bind-bin
+./usr/libexec/dnskeygen				base-bind-bin		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin
@@ -1217,7 +1217,7 @@
 ./usr/share/doc/smm/07.lpd			base-smm-share
 ./usr/share/doc/smm/08.sendmailop		base-smm-share
 ./usr/share/doc/smm/09.sendmail			base-smm-share
-./usr/share/doc/smm/10.named			base-smm-share
+./usr/share/doc/smm/10.named			base-smm-share		obsolete
 ./usr/share/doc/smm/11.timedop			base-smm-share
 ./usr/share/doc/smm/12.timed			base-smm-share
 ./usr/share/doc/smm/13.amd			base-smm-share
@@ -1279,7 +1279,7 @@
 ./usr/share/examples/isdn			base-isdn-examples
 ./usr/share/examples/kerberos			base-krb5-examples
 ./usr/share/examples/mount_portal		base-miscfs-examples
-./usr/share/examples/named			base-bind-examples
+./usr/share/examples/named			base-bind-examples	obsolete
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/postfix			base-postfix-examples
 ./usr/share/examples/racoon			base-netutil-examples
