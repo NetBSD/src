@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.19 2002/05/02 15:17:57 nonaka Exp $
+#	$NetBSD: INSTALL,v 1.20 2002/05/30 16:10:04 nonaka Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -19,11 +19,15 @@ maxusers	8
 # Platform support
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
+options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
 options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 
+options 	OPENPIC				# OpenPIC support (7043-140)
+
 # Compatibility options
-#options 	COMPAT_13	# NetBSD 1.3,
+options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 
 # File systems
@@ -80,12 +84,14 @@ cpu0	at mainbus0
 # PCI bus support
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
+pci*	at ppb? bus ?
 
 options 	PCI_NETBSD_CONFIGURE
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # ISA bus support
 isa*	at pcib?			# ISA on PCI-ISA bridge
@@ -122,6 +128,7 @@ pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 
 mcclock0 at isa? port 0x70		# mc146818 and compatible
+mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
 
 # Serial Devices
@@ -141,6 +148,7 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 # PCI SCSI controllers
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+esiop*	at pci? dev ? function ?	# Symbios 53c825/875 and newer chips
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -152,6 +160,7 @@ aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 scsibus* at adw?
 scsibus* at ahc?
 scsibus* at aic?
+scsibus* at esiop?
 scsibus* at iha?
 scsibus* at pcscp?
 scsibus* at siop?

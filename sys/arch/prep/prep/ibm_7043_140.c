@@ -1,7 +1,7 @@
-/*	$NetBSD: platform.h,v 1.6 2002/05/30 16:10:05 nonaka Exp $	*/
+/*	$NetBSD: ibm_7043_140.c,v 1.1 2002/05/30 16:10:07 nonaka Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,51 +36,70 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_PREP_PLATFORM_H_
-#define	_PREP_PLATFORM_H_
+#include "opt_openpic.h"
+#if !defined(OPENPIC)
+#error RS/6000 43P 7043-140 require "options OPENPIC" in kernel config file!
+#endif
+
+#include "pci.h"
 
 #include <sys/param.h>
-#include <sys/device.h>
+#include <sys/systm.h>
+
+#include <machine/intr.h>
+#include <machine/platform.h>
+
+#include <powerpc/openpic.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
-struct platform {
-	const char	*model;
-	int		(*match)(struct platform *);
-	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
-	void		(*pci_intr_fixup)(int, int, int *);
-	void		(*init_intr)(void);
-	void		(*cpu_setup)(struct device *);
-	void		(*reset)(void);
-	const char	**obiodevs;
+void pci_intr_fixup_ibm_7043_140(int, int, int *);
+void init_intr_mpic(void);
+
+struct platform platform_ibm_7043_140 = {
+	"IBM Model 7042/7043 (ED)",		/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_fixup_ibm_7043_140,		/* pci_intr_fixup */
+	init_intr_mpic,				/* init_intr */
+	cpu_setup_unknown,			/* cpu_setup */
+	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
-struct plattab {
-	struct platform **platform;
-	int num;
-};
+void
+pci_intr_fixup_ibm_7043_140(int bus, int dev, int *line)
+{
 
-extern struct platform *platform;
-extern const char *obiodevs_nodev[];
+	if (*line >= 1 && *line < OPENPIC_INTR_NUM - 3)
+		*line += I8259_INTR_NUM;
+}
 
-int ident_platform(void);
-int platform_generic_match(struct platform *);
-void pci_intr_nofixup(int, int, int *);
-void cpu_setup_unknown(struct device *);
-void reset_unknown(void);
-void reset_prep_generic(void);
+void
+init_intr_mpic(void)
+{
+	unsigned char *baseaddr = (unsigned char *)0xC0006800;	/* XXX */
+#if NPCI > 0
+	struct prep_pci_chipset pc;
+	pcitag_t tag;
+	pcireg_t id, address;
 
-/* IBM */
-extern struct plattab plattab_ibm;
-extern struct platform platform_ibm_6050;
-extern struct platform platform_ibm_7248;
-extern struct platform platform_ibm_7043_140;
+	(*platform->pci_get_chipset_tag)(&pc);
 
-void cpu_setup_ibm_generic(struct device *);
+	tag = pci_make_tag(&pc, 0, 13, 0);
+	id = pci_conf_read(&pc, tag, PCI_ID_REG);
 
-/* Motorola */
-extern struct plattab plattab_mot;
+	if (PCI_VENDOR(id) == PCI_VENDOR_IBM
+	    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC) {
+		address = pci_conf_read(&pc, tag, 0x10);
+		if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
+			address &= PCI_MAPREG_MEM_ADDR_MASK;
+			baseaddr = (unsigned char *)(PREP_BUS_SPACE_MEM | address);
+		}
+	}
+#endif
 
-extern struct platform platform_mot_ulmb60xa;
-
-#endif /* !_PREP_PLATFORM_H_ */
+	openpic_init(baseaddr);
+}

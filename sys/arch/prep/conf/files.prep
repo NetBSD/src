@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.35 2002/05/16 12:12:30 kleink Exp $
+#	$NetBSD: files.prep,v 1.36 2002/05/30 16:10:04 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -10,12 +10,14 @@ defflag	opt_residual.h	RESIDUAL_DATA_DUMP
 
 defflag	opt_platform.h	PLATFORM_IBM_6050
 			PLATFORM_IBM_7248
+			PLATFORM_IBM_7043_140
 			PLATFORM_MOTOROLA_ULMB60XA
 
 # IBM
 file	arch/prep/prep/ibm_machdep.c
 file	arch/prep/prep/ibm_6050.c	platform_ibm_6050
 file	arch/prep/prep/ibm_7248.c	platform_ibm_7248
+file	arch/prep/prep/ibm_7043_140.c	platform_ibm_7043_140
 
 # Motorola
 file	arch/prep/prep/mot_machdep.c

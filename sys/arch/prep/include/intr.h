@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2002/02/26 00:30:10 kleink Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2002/05/30 16:10:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,9 @@ int  splsoftnet(void);
 
 void do_pending_int(void);
 
-void ext_intr(void);
-void ext_intr_ivr(void);
+void init_intr(void);
+void init_intr_ivr(void);
+void init_intr_openpic(void);
 
 void enable_intr(void);
 void disable_intr(void);
@@ -154,9 +155,11 @@ set_sint(int pending)
 	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
 }
 
-#define	ICU_LEN		32
-#define	IRQ_SLAVE	2
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
+#define	ICU_LEN			32
+#define	IRQ_SLAVE		2
+#define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
+#define	I8259_INTR_NUM		16
+#define	OPENPIC_INTR_NUM	((ICU_LEN)-(I8259_INTR_NUM))
 
 #define	PREP_INTR_REG	0xbffff000
 #define	INTR_VECTOR_REG	0xff0

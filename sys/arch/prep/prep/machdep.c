@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2002/05/13 06:17:36 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2002/05/30 16:10:08 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,8 +118,6 @@ paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 
 paddr_t avail_end;			/* XXX temporary */
-
-void install_extint __P((void (*)(void)));
 
 RESIDUAL *res;
 RESIDUAL resdata;
@@ -327,7 +325,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * external interrupt handler install
 	 */
-	install_extint(*platform->ext_intr);
+	(*platform->init_intr)();
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
@@ -360,29 +358,6 @@ mem_regions(mem, avail)
 
 	*mem = physmemr;
 	*avail = availmemr;
-}
-
-void
-install_extint(handler)
-	void (*handler) __P((void));
-{
-	extern u_char extint[];
-	extern u_long extsize;
-	extern u_long extint_call;
-	u_long offset = (u_long)handler - (u_long)&extint_call;
-	int omsr, msr;
-
-#ifdef DIAGNOSTIC
-	if (offset > 0x1ffffff)
-		panic("install_extint: too far away");
-#endif
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
-	extint_call = (extint_call & 0xfc000003) | offset;
-	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
-	__syncicache((void *)&extint_call, sizeof extint_call);
-	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
 /*

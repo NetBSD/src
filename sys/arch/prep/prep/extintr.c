@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.12 2002/05/13 06:17:36 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.13 2002/05/30 16:10:06 nonaka Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -87,6 +87,8 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "opt_openpic.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -97,12 +99,22 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <machine/intr.h>
 #include <machine/psl.h>
+#include <machine/trap.h>
+
+#if defined(OPENPIC)
+#include <powerpc/openpic.h>
+#endif /* OPENPIC */
 
 #include <dev/isa/isavar.h>
 
-void intr_calculatemasks(void);
-int fakeintr(void *);
-void ext_intr(void);
+static void intr_calculatemasks(void);
+static int fakeintr(void *);
+static void ext_intr(void);
+static void ext_intr_ivr(void);
+#if defined(OPENPIC)
+static void ext_intr_openpic(void);
+#endif /* OPENPIC */
+static void install_extint(void (*)(void));
 
 int imen = 0xffffffff;
 volatile int cpl, ipending, tickspending;
@@ -111,7 +123,7 @@ int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 unsigned intrcnt2[ICU_LEN];
 
-int
+static int
 fakeintr(void *arg)
 {
 
@@ -126,7 +138,7 @@ fakeintr(void *arg)
  *  and interrupts are likely to *NOT* happen most of the
  *  times the spl level is changed.
  */
-void
+static void
 ext_intr(void)
 {
 	u_int8_t irq;
@@ -167,7 +179,7 @@ ext_intr(void)
 /*
  * Same as the above, but using the board's interrupt vector register.
  */
-void
+static void
 ext_intr_ivr(void)
 {
 	u_int8_t irq;
@@ -204,6 +216,62 @@ ext_intr_ivr(void)
 
 	splx(pcpl);	/* Process pendings. */
 }
+
+#if defined(OPENPIC)
+static void
+ext_intr_openpic(void)
+{
+	struct intrhand *ih;
+	int r_imen;
+	int pcpl;
+	u_int realirq;
+	u_int8_t irq;
+
+	/* what about enabling external interrupt in here? */
+	pcpl = splhigh();	/* Turn off all */
+
+	realirq = openpic_read_irq(0);
+	while (realirq < OPENPIC_INTR_NUM) {
+		if (realirq == 0)
+			irq = *((u_char *)prep_intr_reg + INTR_VECTOR_REG);
+		else
+			irq = realirq + I8259_INTR_NUM;
+
+		intrcnt2[irq]++;
+
+		r_imen = 1 << irq;
+
+		if ((pcpl & r_imen) != 0) {
+			ipending |= r_imen;
+			imen |= r_imen;
+			if (realirq == 0)
+				isa_intr_mask(imen);
+			else
+				openpic_disable_irq(realirq);
+		} else {
+			ih = intrhand[irq];
+			if (ih == NULL)
+				printf("spurious interrupt %d\n", irq);
+			while (ih) {
+				(*ih->ih_fun)(ih->ih_arg);
+				ih = ih->ih_next;
+			}
+
+			if (realirq == 0)
+				isa_intr_clr(irq);
+
+			uvmexp.intrs++;
+			intrcnt[irq]++;
+		}
+
+		openpic_eoi(0);
+
+		realirq = openpic_read_irq(0);
+	}
+
+	splx(pcpl);	/* Process pendings. */
+}
+#endif /* OPENPIC */
 
 void *
 intr_establish(int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg)
@@ -264,7 +332,8 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg
 	ih->ih_irq = irq;
 	*p = ih;
 
-	isa_setirqstat(irq, 1, type);
+	if (irq < I8259_INTR_NUM)
+		isa_setirqstat(irq, 1, type);
 
 	return (ih);
 }
@@ -284,12 +353,11 @@ intr_disestablish(void *arg)
 	 * This is O(n^2), too.
 	 */
 	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
-
-	if (q)
-		*p = q->ih_next;
-	else
+		continue;
+	if (q == NULL)
 		panic("intr_disestablish: handler not registered");
+
+	*p = q->ih_next;
 
 	free((void *)ih, M_DEVBUF);
 
@@ -305,7 +373,7 @@ intr_disestablish(void *arg)
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-void
+static void
 intr_calculatemasks(void)
 {
 	int irq, level;
@@ -388,13 +456,27 @@ intr_calculatemasks(void)
 
 	{
 		register int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
+		for (irq = 0; irq < I8259_INTR_NUM; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
 		if (irqs >= 0x100)	/* any IRQs >= 8 in use */
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
 		isa_intr_mask(imen);
+
+#if defined(OPENPIC)
+		if (openpic_base) {
+			openpic_enable_irq(0, IST_LEVEL);
+			for (irq = I8259_INTR_NUM + 1; irq < ICU_LEN; irq++) {
+				if (intrhand[irq]) {
+					openpic_enable_irq(irq - I8259_INTR_NUM,
+					    intrtype[irq]);
+				} else {
+					openpic_disable_irq(irq);
+				}
+			}
+		}
+#endif /* OPENPIC */
 	}
 }
 
@@ -429,7 +511,12 @@ do_pending_int(void)
 			ih = ih->ih_next;
 		}
 
-		isa_intr_clr(irq);
+#if defined(OPENPIC)
+		if (irq >= I8259_INTR_NUM)
+			openpic_enable_irq(irq - I8259_INTR_NUM, intrtype[irq]);
+		else
+#endif /* OPENPIC */
+			isa_intr_clr(irq);
 
 		uvmexp.intrs++;
 		intrcnt[irq]++;
@@ -454,4 +541,86 @@ do_pending_int(void)
 
 	asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
+}
+
+static void
+install_extint(void (*handler)(void))
+{
+	extern u_char extint[];
+	extern u_long extsize;
+	extern u_long extint_call;
+	u_long offset = (u_long)handler - (u_long)&extint_call;
+	int omsr, msr;
+
+#ifdef DIAGNOSTIC
+	if (offset > 0x1ffffff)
+		panic("install_extint: too far away");
+#endif
+	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
+	extint_call = (extint_call & 0xfc000003) | offset;
+	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
+	__syncicache((void *)&extint_call, sizeof extint_call);
+	__syncicache((void *)EXC_EXI, (int)&extsize);
+	asm volatile ("mtmsr %0" :: "r"(omsr));
+}
+
+#if defined(OPENPIC)
+void
+openpic_init(unsigned char *baseaddr)
+{
+	int irq;
+	u_int x;
+
+	openpic_base = baseaddr;
+
+	openpic_set_priority(0, 0x0f);
+
+	/* disable all interrupts */
+	for (irq = 0; irq < 256; irq++)
+		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
+
+	/* we don't need 8259 pass through mode */
+	x = openpic_read(OPENPIC_CONFIG);
+	x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	openpic_write(OPENPIC_CONFIG, x);
+
+	for (irq = 0; irq < OPENPIC_INTR_NUM; irq++) {
+		x = irq;
+		x |= OPENPIC_IMASK;
+		x |= (irq == 0) ?
+		    OPENPIC_POLARITY_POSITIVE : OPENPIC_POLARITY_NEGATIVE;
+		x |= OPENPIC_SENSE_LEVEL;
+		x |= 8 << OPENPIC_PRIORITY_SHIFT;
+		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
+	}
+
+	openpic_set_priority(0, 0);
+
+	for (irq = 0; irq < OPENPIC_INTR_NUM; irq++)
+		openpic_disable_irq(irq);
+
+	install_extint(ext_intr_openpic);
+}
+#endif /* OPENPIC */
+
+void
+init_intr(void)
+{
+
+#if defined(OPENPIC)
+	openpic_base = 0;
+#endif /* OPENPIC */
+	install_extint(ext_intr);
+}
+
+void
+init_intr_ivr(void)
+{
+
+#if defined(OPENPIC)
+	openpic_base = 0;
+#endif /* OPENPIC */
+	install_extint(ext_intr_ivr);
 }

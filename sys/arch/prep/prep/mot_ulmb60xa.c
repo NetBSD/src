@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.5 2002/05/15 21:06:11 kleink Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.6 2002/05/30 16:10:08 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,13 +72,14 @@
 
 
 static int mot_ulmb60xa_match(struct platform *);
+static void pci_intr_fixup_mot_ulmb60xa(int, int, int *);
 
 struct platform platform_mot_ulmb60xa = {
 	"BULL ESTRELLA (e0)         (e0)",	/* model */ /* XXX */
 	mot_ulmb60xa_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
 	pci_intr_fixup_mot_ulmb60xa,		/* pci_intr_fixup */
-	ext_intr_ivr,				/* ext_intr */
+	init_intr_ivr,				/* init_intr */
 	cpu_setup_unknown,			/* cpu_setup */
 	reset_prep_generic,			/* reset */
 	obiodevs_nodev,				/* obiodevs */
@@ -102,7 +103,7 @@ mot_ulmb60xa_match(struct platform *p)
 	return 1;
 }
 
-void
+static void
 pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int *line)
 {
 
