@@ -1,4 +1,40 @@
-/*	$NetBSD: bcopy.S,v 1.10 1997/01/04 03:26:19 jtc Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.11 1997/05/13 19:20:59 jtc Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by J.T. Conklin.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,19 +79,11 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.10 1997/01/04 03:26:19 jtc Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.11 1997/05/13 19:20:59 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-/*
- * This is probably not the best we can do, but it is still 2-10 times
- * faster than the C version in the portable gen directory.
- *
- * Things that might help:
- *	- unroll the longword copy loop (might not be good for a 68020)
- *	- longword align when possible (only on the 68020)
- *	- use nested DBcc instructions or use one and limit size to 64K
- */
+
 #ifdef MEMCOPY
 ENTRY(memcpy)
 #else
@@ -65,8 +93,6 @@ ENTRY(memmove)
 ENTRY(bcopy)
 #endif
 #endif
-	movl	sp@(12),d1		| check count
-	jeq	bcdone			| == 0, do not do anything
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	sp@(4),a1		| dest address
 	movl	sp@(8),a0		| src address
@@ -74,63 +100,137 @@ ENTRY(bcopy)
 	movl	sp@(4),a0		| src address
 	movl	sp@(8),a1		| dest address
 #endif
+	movl	sp@(12),d1		| count
+
 	cmpl	a1,a0			| src after dest?
-	jlt	bcback			| yes, must copy backwards
-	movl	a0,d0
-	btst	#0,d0			| src address odd?
-	jeq	bcfeven			| no, skip alignment
-	movb	a0@+,a1@+		| yes, copy a byte
-	subql	#1,d1			| adjust count
-	jeq	bcdone			| count 0, all done 
-bcfeven:
+	blt	Lbcback			| yes, must copy backwards
+
+	/* 
+	 * It isn't worth the overhead of aligning to {long}word boundries
+	 * if the string is too short.
+	 */
+	cmpl	#8,d1
+	blt	Lbcfbyte
+
+	/* word align */
 	movl	a1,d0
-	btst	#0,d0			| dest address odd?
-	jne	bcfbloop		| yes, no hope for alignment, copy bytes
-	movl	d1,d0			| no, both even
-	lsrl	#2,d0			| convert count to longword count
-	jeq	bcfbloop		| count 0, skip longword loop
-bcflloop:
-	movl	a0@+,a1@+		| copy a longword
-	subql	#1,d0			| adjust count
-	jne	bcflloop		| still more, keep copying
-	andl	#3,d1			| what remains
-	jeq	bcdone			| nothing, all done
-bcfbloop:
-	movb	a0@+,a1@+		| copy a byte
-	subql	#1,d1			| adjust count
-	jne	bcfbloop		| still more, keep going
-bcdone:
+	btst	#0,d0		| if (dst & 1)
+	beq	Lbcfalgndw	| 
+	movb	a0@+,a1@+	|	*(char *)dst++ = *(char *) src++
+	subql	#1,d1		|	len--
+Lbcfalgndw:
+	/* long word align */
+	btst	#1,d0		| if (dst & 2)
+	beq	Lbcfalgndl
+	movw	a0@+,a1@+	|	*(short *)dst++ = *(short *) dst++
+	subql	#2,d1		|	len -= 2
+Lbcfalgndl:
+	/* copy by 8 longwords */
+	movel	d1,d0
+	lsrl	#5,d0		| cnt = len / 32
+	jeq	Lbcflong		| if (cnt)
+	andl	#31,d1		|	len %= 32
+	subql	#1,d0		|	set up for dbf
+Lbcf32loop:
+	movl	a0@+,a1@+	|	copy 8 long words
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	dbf	d0,Lbcf32loop	|	till done
+	clrw	d0
+	subql	#1,d0
+	jcc	Lbcf32loop
+
+Lbcflong:
+	/* copy by longwords */
+	movel	d1,d0
+	lsrl	#2,d0		| cnt = len / 4
+	jeq	Lbcfbyte		| if (cnt)
+	subql	#1,d0		|	set up for dbf
+Lbcflloop:
+	movl	a0@+,a1@+	|	copy longwords
+	dbf	d0,Lbcflloop	|	til done
+	andl	#3,d1		|	len %= 4
+	jeq	Lbcdone
+
+	subql	#1,d1		| set up for dbf
+Lbcfbloop:
+	movb	a0@+,a1@+	| copy bytes
+Lbcfbyte:
+	dbf	d1,Lbcfbloop	| till done
+Lbcdone:
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	sp@(4),d0		| dest address
+	movl	sp@(4),d0	| dest address
 #endif
 	rts
-bcback:
-	addl	d1,a0			| src pointer to end
-	addl	d1,a1			| dest pointer to end
-	movl	a0,d0
-	btst	#0,d0			| src address odd?
-	jeq	bcbeven			| no, skip alignment
-	movb	a0@-,a1@-		| yes, copy a byte
-	subql	#1,d1			| adjust count
-	jeq	bcdone			| count 0, all done 
-bcbeven:
+
+
+Lbcback:
+	addl	d1,a0		| src pointer to end
+	addl	d1,a1		| dest pointer to end
+
+	/* 
+	 * It isn't worth the overhead of aligning to {long}word boundries
+	 * if the string is too short.
+	 */
+	cmpl	#8,d1
+	blt	Lbcbbyte
+
+	/* word align */
 	movl	a1,d0
-	btst	#0,d0			| dest address odd?
-	jne	bcbbloop		| yes, no hope for alignment, copy bytes
-	movl	d1,d0			| no, both even
-	lsrl	#2,d0			| convert count to longword count
-	jeq	bcbbloop		| count 0, skip longword loop
-bcblloop:
-	movl	a0@-,a1@-		| copy a longword
-	subql	#1,d0			| adjust count
-	jne	bcblloop		| still more, keep copying
-	andl	#3,d1			| what remains
-	jeq	bcdone			| nothing, all done
-bcbbloop:
-	movb	a0@-,a1@-		| copy a byte
-	subql	#1,d1			| adjust count
-	jne	bcbbloop		| still more, keep going
+	btst	#0,d0		| if (dst & 1)
+	beq	Lbcbalgndw	| 
+	movb	a0@-,a1@-	|	*(char *)dst-- = *(char *) src--
+	subql	#1,d1		|	len--
+Lbcbalgndw:
+	/* long word align */
+	btst	#1,d0		| if (dst & 2)
+	beq	Lbcbalgndl
+	movw	a0@-,a1@-	|	*(short *)dst-- = *(short *) dst--
+	subql	#2,d1		|	len -= 2
+Lbcbalgndl:
+	/* copy by 8 longwords */
+	movel	d1,d0
+	lsrl	#5,d0		| cnt = len / 32
+	jeq	Lbcblong		| if (cnt)
+	andl	#31,d1		|	len %= 32
+	subql	#1,d0		|	set up for dbf
+Lbcb32loop:
+	movl	a0@-,a1@-	|	copy 8 long words
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	dbf	d0,Lbcb32loop	|	till done
+	clrw	d0
+	subql	#1,d0
+	jcc	Lbcb32loop
+	
+Lbcblong:
+	/* copy by longwords */
+	movel	d1,d0
+	lsrl	#2,d0		| cnt = len / 4
+	jeq	Lbcbbyte		| if (cnt)
+Lbcblloop:
+	movl	a0@-,a1@-	|	copy longwords
+	dbf	d0,Lbcblloop	|	til done
+	andl	#3,d1		|	len %= 4
+	jeq	Lbcdone
+
+	subql	#1,d1		| set up for dbf
+Lbcbbloop:
+	movb	a0@-,a1@-	| copy bytes
+Lbcbbyte:
+	dbf	d1,Lbcbbloop	| till done
+
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	sp@(4),d0		| dest address
+	movl	sp@(4),d0	| dest address
 #endif
 	rts
