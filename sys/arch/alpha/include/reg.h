@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.3 1997/04/06 08:47:40 cgd Exp $ */
+/* $NetBSD: reg.h,v 1.4 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -91,8 +91,8 @@ struct fpreg {
 };
 
 #ifdef _KERNEL
-void	restorefpstate __P((struct fpreg *));
-void	savefpstate __P((struct fpreg *));
+void	restorefpstate(struct fpreg *);
+void	savefpstate(struct fpreg *);
 #endif
 
 #endif /* _ALPHA_REG_H_ */

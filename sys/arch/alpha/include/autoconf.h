@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.18 2000/06/05 21:47:18 thorpej Exp $ */
+/* $NetBSD: autoconf.h,v 1.19 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -72,9 +72,9 @@ struct bootinfo_v1 {
 	char	booted_kernel[64];	/* 80: name of booted kernel	*/
 	void	*hwrpb;			/* 144: hwrpb pointer (BEVA)	*/
 	u_long	hwrpbsize;		/* 152: size of hwrpb data	*/
-	int	(*cngetc) __P((void));	/* 160: console getc pointer	*/
-	void	(*cnputc) __P((int));	/* 168: console putc pointer	*/
-	void	(*cnpollc) __P((int));	/* 176: console pollc pointer	*/
+	int	(*cngetc)(void);	/* 160: console getc pointer	*/
+	void	(*cnputc)(int);		/* 168: console putc pointer	*/
+	void	(*cnpollc)(int);	/* 176: console pollc pointer	*/
 	u_long	pad[9];			/* 184: rsvd for future use	*/
 					/* 256: total size		*/
 };
@@ -112,7 +112,7 @@ extern int booted_partition;
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;
 
-const char *alpha_variation_name __P((u_int64_t,
-    const struct alpha_variation_table *));
-const char *alpha_unknown_sysname __P((void));
+const char *alpha_variation_name(u_int64_t,
+    const struct alpha_variation_table *);
+const char *alpha_unknown_sysname(void);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.43 2000/06/05 21:47:18 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.44 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ extern	struct cpu_info cpu_info[];
 #define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-void	cpu_boot_secondary_processors __P((void));
+void	cpu_boot_secondary_processors(void);
 #else /* ! MULTIPROCESSOR */
 extern	struct cpu_info cpu_info_store;
 
@@ -256,7 +256,7 @@ struct reg;
 struct rpb;
 struct trapframe;
 
-int	badaddr	__P((void *, size_t));
+int	badaddr(void *, size_t);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */
