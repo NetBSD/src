@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.335 2001/06/28 04:45:09 thorpej Exp $
+$NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1036,8 +1036,9 @@ product DELTA 8139	0x1360	8139 Ethernet
 product DIAMOND VIPER	0x9001	Viper/PCI
 
 /* D-Link Systems products */
-product DLINK DFE550TX		0x1002	DFE-550TX 10/100 Ethernet
+product DLINK DL1002		0x1002	DL-1002 10/100 Ethernet
 product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
+product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID
@@ -1671,6 +1672,7 @@ product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
+product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet
 
 /* Surecom Technology products */
 product SURECOM NE34	0x0e34	NE-34 Ethernet
@@ -1687,7 +1689,8 @@ product	SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product	SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
 
 /* Tamarack Microelectronics, Inc. */
-product TAMARACK	TC9021	0x9021	Tamarack TC9021 Gigabit Ethernet
+product TAMARACK	TC9021		0x1021	Tamarack TC9021 Gigabit Ethernet
+product TAMARACK	TC9021_ALT	0x9021	Tamarack TC9021 Gigabit Ethernet (alt ID)
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 product TEKRAM DC290		0xdc29	DC-290(M)
