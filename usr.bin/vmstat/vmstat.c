@@ -1,3 +1,5 @@
+/*	$NetBSD: vmstat.c,v 1.21 1995/05/07 22:16:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)vmstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: vmstat.c,v 1.20 1995/04/29 05:59:11 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.21 1995/05/07 22:16:26 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
