@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tree.c	5.5 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tree.c,v 1.2 1993/08/01 18:17:03 mycroft Exp $";
+static char rcsid[] = "$Id: tree.c,v 1.3 1994/05/23 06:12:16 cgd Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -131,7 +131,7 @@ free_tree(node)
 	while (node) {
 		if (node->right)
 			free_tree(node->right);
-		cfree(node);
+		free(node);
 		node = node->left;
 	}
 }
