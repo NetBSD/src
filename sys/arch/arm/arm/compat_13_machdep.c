@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5 2002/09/25 22:21:04 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.6 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 2002/09/25 22:21:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 2003/01/17 22:28:48 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -46,14 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 2002/09/25 22:21:04 thorpe
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>  
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int
-compat_13_sys_sigreturn(struct proc *p, void *v, register_t *retval)
+compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp, context;
 	struct trapframe *tf;
 	sigset_t mask;
@@ -82,7 +84,7 @@ compat_13_sys_sigreturn(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* Restore register context. */
-	tf = p->p_addr->u_pcb.pcb_tf;
+	tf = l->l_addr->u_pcb.pcb_tf;
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;

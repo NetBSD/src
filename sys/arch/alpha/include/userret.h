@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.1 2001/01/03 22:15:39 thorpej Exp $ */
+/* $NetBSD: userret.h,v 1.2 2003/01/17 22:11:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,18 +102,27 @@
  * trap and syscall.
  */
 static __inline void
-userret(struct proc *p)
+userret(struct lwp *l)
 {
 	int sig;
+	struct proc *p = l->l_proc;
 
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 #endif /* _ALPHA_USERRET_H_ */

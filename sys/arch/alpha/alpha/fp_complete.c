@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $ */
+/* $NetBSD: fp_complete.c,v 1.6 2003/01/17 22:11:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.6 2003/01/17 22:11:17 thorpej Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -83,11 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $")
 
 #define IS_SUBNORMAL(v)	((v)->exp == 0 && (v)->frac != 0)
 
-#define	PREFILTER_SUBNORMAL(p,v) if ((p)->p_md.md_flags & IEEE_MAP_DMZ	\
+#define	PREFILTER_SUBNORMAL(l,v) if ((l)->l_md.md_flags & IEEE_MAP_DMZ	\
 				     && IS_SUBNORMAL(v))		\
 					 (v)->frac = 0; else
 
-#define	POSTFILTER_SUBNORMAL(p,v) if ((p)->p_md.md_flags & IEEE_MAP_UMZ	\
+#define	POSTFILTER_SUBNORMAL(l,v) if ((l)->l_md.md_flags & IEEE_MAP_UMZ	\
 				      && IS_SUBNORMAL(v))		\
 					  (v)->frac = 0; else
 
@@ -126,10 +126,10 @@ static float64 compare_un(float64, float64);
 static float64 compare_eq(float64, float64);
 static float64 compare_lt(float64, float64);
 static float64 compare_le(float64, float64);
-static void cvt_qs_ts_st_gf_qf(u_int32_t, struct proc *);
-static void cvt_gd(u_int32_t, struct proc *);
-static void cvt_qt_dg_qg(u_int32_t, struct proc *);
-static void cvt_tq_gq(u_int32_t, struct proc *);
+static void cvt_qs_ts_st_gf_qf(u_int32_t, struct lwp *);
+static void cvt_gd(u_int32_t, struct lwp *);
+static void cvt_qt_dg_qg(u_int32_t, struct lwp *);
+static void cvt_tq_gq(u_int32_t, struct lwp *);
 
 static float32 (*swfp_s[])(float32, float32) = {
 	float32_add, float32_sub, float32_mul, float32_div,
@@ -141,7 +141,7 @@ static float64 (*swfp_t[])(float64, float64) = {
 	float64_unk, float64_unk, float64_unk, float64_unk
 };
 
-static void (*swfp_cvt[])(u_int32_t, struct proc *) = {
+static void (*swfp_cvt[])(u_int32_t, struct lwp *) = {
 	cvt_qs_ts_st_gf_qf, cvt_gd, cvt_qt_dg_qg, cvt_tq_gq
 };
 
@@ -170,30 +170,30 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 }
 
 static __inline void
-sts(unsigned int rn, s_float *v, struct proc *p)
+sts(unsigned int rn, s_float *v, struct lwp *l)
 {
 	alpha_sts(rn, v);
-	PREFILTER_SUBNORMAL(p, v);
+	PREFILTER_SUBNORMAL(l, v);
 }
 
 static __inline void
-stt(unsigned int rn, t_float *v, struct proc *p)
+stt(unsigned int rn, t_float *v, struct lwp *l)
 {
 	alpha_stt(rn, v);
-	PREFILTER_SUBNORMAL(p, v);
+	PREFILTER_SUBNORMAL(l, v);
 }
 
 static __inline void
-lds(unsigned int rn, s_float *v, struct proc *p)
+lds(unsigned int rn, s_float *v, struct lwp *l)
 {
-	POSTFILTER_SUBNORMAL(p, v);
+	POSTFILTER_SUBNORMAL(l, v);
 	alpha_lds(rn, v);
 }
 
 static __inline void
-ldt(unsigned int rn, t_float *v, struct proc *p)
+ldt(unsigned int rn, t_float *v, struct lwp *l)
 {
-	POSTFILTER_SUBNORMAL(p, v);
+	POSTFILTER_SUBNORMAL(l, v);
 	alpha_ldt(rn, v);
 }
 
@@ -237,7 +237,7 @@ compare_eq(float64 a, float64 b)
  * decoder, so weird cases don't become security issues.
  */
 static void
-cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct proc *p)
+cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	s_float sfb, sfc;
@@ -254,15 +254,15 @@ cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct proc *p)
 	switch(inst.float_format.function) {
 	case op_cvtst:
 	case op_cvtst_u:
-		sts(inst.float_detail.fb, &sfb, p);
+		sts(inst.float_detail.fb, &sfb, l);
 		tfc.i = float32_to_float64(sfb.i);
-		ldt(inst.float_detail.fc, &tfc, p);
+		ldt(inst.float_detail.fc, &tfc, l);
 		return;
 	}
 	if(inst.float_detail.src == 2) {
-		stt(inst.float_detail.fb, &tfb, p);
+		stt(inst.float_detail.fb, &tfb, l);
 		sfc.i = float64_to_float32(tfb.i);
-		lds(inst.float_detail.fc, &sfc, p);
+		lds(inst.float_detail.fc, &sfc, l);
 		return;
 	}
 	/* 0: S/F */
@@ -270,26 +270,26 @@ cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct proc *p)
 	/* 3: Q/Q */
 	this_cannot_happen(5, inst.generic_format.opcode);
 	tfc.i = FLOAT64QNAN;
-	ldt(inst.float_detail.fc, &tfc, p);
+	ldt(inst.float_detail.fc, &tfc, l);
 	return;
 }
 
 static void
-cvt_gd(u_int32_t inst_bits, struct proc *p)
+cvt_gd(u_int32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	alpha_instruction inst;
 
 	inst.bits = inst_bits;
-	stt(inst.float_detail.fb, &tfb, p);
+	stt(inst.float_detail.fb, &tfb, l);
 	(void) float64_to_float32(tfb.i); 
-	p->p_md.md_flags &= ~NETBSD_FLAG_TO_FP_C(FP_X_IMP);
+	l->l_md.md_flags &= ~NETBSD_FLAG_TO_FP_C(FP_X_IMP);
 	tfc.i = float64_add(tfb.i, (float64)0);
-	ldt(inst.float_detail.fc, &tfc, p);
+	ldt(inst.float_detail.fc, &tfc, l);
 }
 
 static void
-cvt_qt_dg_qg(u_int32_t inst_bits, struct proc *p)
+cvt_qt_dg_qg(u_int32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	alpha_instruction inst;
@@ -309,7 +309,7 @@ cvt_qt_dg_qg(u_int32_t inst_bits, struct proc *p)
 		tfc.i = 0;
 		break;
 	case 3:	/* Q/Q */
-		stt(inst.float_detail.fb, &tfb, p);
+		stt(inst.float_detail.fb, &tfb, l);
 		tfc.i = int64_to_float64(tfb.i);
 		break;
 	}
@@ -322,13 +322,13 @@ cvt_qt_dg_qg(u_int32_t inst_bits, struct proc *p)
  *      the issue of trap handler pc and trapping results.
  */
 static void
-cvt_tq_gq(u_int32_t inst_bits, struct proc *p)
+cvt_tq_gq(u_int32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	alpha_instruction inst;
 
 	inst.bits = inst_bits;
-	stt(inst.float_detail.fb, &tfb, p);
+	stt(inst.float_detail.fb, &tfb, l);
 	tfc.i = float64_to_int64(tfb.i);
 	alpha_ldt(inst.float_detail.fc, &tfc);	/* yes, ldt */
 }
@@ -388,28 +388,28 @@ fp_c_to_fpcr_1(u_int64_t fpcr, u_int64_t fp_c)
 }
 
 static void
-fp_c_to_fpcr(struct proc *p)
+fp_c_to_fpcr(struct lwp *l)
 {
-	alpha_write_fpcr(fp_c_to_fpcr_1(alpha_read_fpcr(), p->p_md.md_flags));
+	alpha_write_fpcr(fp_c_to_fpcr_1(alpha_read_fpcr(), l->l_md.md_flags));
 }
 
 void
-alpha_write_fp_c(struct proc *p, u_int64_t fp_c)
+alpha_write_fp_c(struct lwp *l, u_int64_t fp_c)
 {
 	u_int64_t md_flags;
 
 	fp_c &= MDP_FP_C;
-	md_flags = p->p_md.md_flags;
+	md_flags = l->l_md.md_flags;
 	if ((md_flags & MDP_FP_C) == fp_c)
 		return;
-	p->p_md.md_flags = (md_flags & ~MDP_FP_C) | fp_c;
-	alpha_enable_fp(p, 1);
-	fp_c_to_fpcr(p);
+	l->l_md.md_flags = (md_flags & ~MDP_FP_C) | fp_c;
+	alpha_enable_fp(l, 1);
+	fp_c_to_fpcr(l);
 	alpha_pal_wrfen(0);
 }
 
 u_int64_t
-alpha_read_fp_c(struct proc *p)
+alpha_read_fp_c(struct lwp *l)
 {
 	/*
 	 * A possibly-desireable EV6-specific optimization would deviate from
@@ -417,7 +417,7 @@ alpha_read_fp_c(struct proc *p)
 	 * but in a transparent way. Some of the code for that would need to
 	 * go right here.
 	 */
-	return p->p_md.md_flags & MDP_FP_C;
+	return l->l_md.md_flags & MDP_FP_C;
 }
 
 static float64
@@ -499,7 +499,7 @@ float64_unk(float64 a, float64 b)
  */
 
 static void
-alpha_fp_interpret(alpha_instruction *pc, struct proc *p, u_int64_t bits)
+alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, u_int64_t bits)
 {
 	s_float sfa, sfb, sfc;
 	t_float tfa, tfb, tfc;
@@ -529,34 +529,34 @@ alpha_fp_interpret(alpha_instruction *pc, struct proc *p, u_int64_t bits)
 	case op_fix_float:
 		switch(inst.float_detail.src) {
 		case op_src_sf:
-			sts(inst.float_detail.fb, &sfb, p);
+			sts(inst.float_detail.fb, &sfb, l);
 			if (inst.float_detail.opclass == 10)
 				sfc.i = float32_sqrt(sfb.i);
 			else if (inst.float_detail.opclass & ~3) {
 				this_cannot_happen(1, inst.bits);
 				sfc.i = FLOAT32QNAN;
 			} else {
-				sts(inst.float_detail.fa, &sfa, p);
+				sts(inst.float_detail.fa, &sfa, l);
 				sfc.i = (*swfp_s[inst.float_detail.opclass])(
 				    sfa.i, sfb.i);
 			}
-			lds(inst.float_detail.fc, &sfc, p);
+			lds(inst.float_detail.fc, &sfc, l);
 			break;
 		case op_src_xd:
 		case op_src_tg:
 			if (inst.float_detail.opclass >= 12)
 				(*swfp_cvt[inst.float_detail.opclass - 12])(
-				    inst.bits, p);
+				    inst.bits, l);
 			else {
-				stt(inst.float_detail.fb, &tfb, p);
+				stt(inst.float_detail.fb, &tfb, l);
 				if (inst.float_detail.opclass == 10)
 					tfc.i = float64_sqrt(tfb.i);
 				else {
-					stt(inst.float_detail.fa, &tfa, p);
+					stt(inst.float_detail.fa, &tfa, l);
 					tfc.i = (*swfp_t[inst.float_detail
 					    .opclass])(tfa.i, tfb.i);
 				}
-				ldt(inst.float_detail.fc, &tfc, p);
+				ldt(inst.float_detail.fc, &tfc, l);
 			}
 			break;
 		case op_src_qq:
@@ -567,7 +567,7 @@ alpha_fp_interpret(alpha_instruction *pc, struct proc *p, u_int64_t bits)
 }
 
 static int
-alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
+alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
     u_int64_t *ucode)
 {
 	int needsig;
@@ -579,7 +579,7 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
-	alpha_enable_fp(p, 1);
+	alpha_enable_fp(l, 1);
 	/*
 	 * If necessary, lie about the dynamic rounding mode so emulation
 	 * software need go to only one place for it, and so we don't have to
@@ -592,11 +592,11 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
 		fpcr = (fpcr & ~FPCR_DYN(3)) | FPCR_DYN(rm);
 		alpha_write_fpcr(fpcr);
 	}
-	orig_flags = FP_C_TO_NETBSD_FLAG(p->p_md.md_flags);
+	orig_flags = FP_C_TO_NETBSD_FLAG(l->l_md.md_flags);
 
-	alpha_fp_interpret(trigger_pc, p, inst.bits);
+	alpha_fp_interpret(trigger_pc, l, inst.bits);
 
-	md_flags = p->p_md.md_flags;
+	md_flags = l->l_md.md_flags;
 
 	new_flags = FP_C_TO_NETBSD_FLAG(md_flags);
 	changed_flags = orig_flags ^ new_flags;
@@ -612,7 +612,7 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
 }
 
 int
-alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
+alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, u_int64_t *ucode)
 {
 	int t;
 	int sig;
@@ -623,11 +623,11 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 	alpha_instruction *pc, *win_begin, tsw[TSWINSIZE];
 
 	sig = SIGFPE;
-	pc = (alpha_instruction *)p->p_md.md_tf->tf_regs[FRAME_PC];
+	pc = (alpha_instruction *)l->l_md.md_tf->tf_regs[FRAME_PC];
 	trigger_pc = pc - 1;	/* for ALPHA_AMASK_PAT case */
 	if (cpu_amask & ALPHA_AMASK_PAT) {
 		if (a0 & 1 || alpha_fp_sync_complete) {
-			sig = alpha_fp_complete_at(trigger_pc, p, ucode);
+			sig = alpha_fp_complete_at(trigger_pc, l, ucode);
 			goto done;
 		}
 	} 
@@ -690,7 +690,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 		alpha_shadow.max = t;
 	if (__predict_true(trigger_pc != 0 && a1 == 0)) {
 		++alpha_shadow.resolved;
-		sig = alpha_fp_complete_at(trigger_pc, p, ucode);
+		sig = alpha_fp_complete_at(trigger_pc, l, ucode);
 	} else {
 		++alpha_shadow.unresolved;
 		return sig;
@@ -699,10 +699,10 @@ done:
 	if (sig) {
 		usertrap_pc = trigger_pc + 1;
 #ifdef COMPAT_OSF1
-		if (p->p_emul == &emul_osf1)
+		if (l->l_proc->p_emul == &emul_osf1)
 			usertrap_pc = trigger_pc;
 #endif
-		p->p_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
+		l->l_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
 		return sig;
 	}
 	return 0;

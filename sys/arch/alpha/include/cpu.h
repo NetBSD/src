@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.58 2001/05/30 12:28:38 mrg Exp $ */
+/* $NetBSD: cpu.h,v 1.59 2003/01/17 22:11:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
-	struct proc *ci_curproc;	/* current owner of the processor */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
 	/*
@@ -122,7 +122,7 @@ struct cpu_info {
 	 */
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	struct proc *ci_fpcurproc;	/* current owner of the FPU */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
@@ -174,8 +174,8 @@ void	cpu_pause_resume_all(int);
 #define	curcpu()	(&cpu_info_primary)
 #endif /* MULTIPROCESSOR */
 
-#define	curproc		curcpu()->ci_curproc
-#define	fpcurproc	curcpu()->ci_fpcurproc
+#define	curlwp		curcpu()->ci_curlwp
+#define	fpcurlwp	curcpu()->ci_fpcurlwp
 #define	curpcb		curcpu()->ci_curpcb
 
 /*
@@ -184,6 +184,7 @@ void	cpu_pause_resume_all(int);
  */
 #define	cpu_wait(p)		/* nothing */
 #define	cpu_number()		alpha_pal_whami()
+#define	cpu_proc_fork(p1, p2)	/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -210,7 +211,7 @@ struct clockframe {
  * This is used during profiling to integrate system time.  It can safely
  * assume that the process is resident.
  */
-#define	PROC_PC(p)		((p)->p_md.md_tf->tf_regs[FRAME_PC])
+#define	LWP_PC(p)		((l)->l_md.md_tf->tf_regs[FRAME_PC])
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -219,8 +220,8 @@ struct clockframe {
 #define	need_resched(ci)						\
 do {									\
 	(ci)->ci_want_resched = 1;					\
-	if ((ci)->ci_curproc != NULL)					\
-		aston((ci)->ci_curproc);				\
+	if ((ci)->ci_curlwp != NULL)					\
+		aston((ci)->ci_curlwp->l_proc);       			\
 } while (/*CONSTCOND*/0)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.28 2002/09/27 15:35:59 provos Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.29 2003/01/17 22:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -256,7 +256,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
+	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2002/11/25 11:26:22 scw Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2003/01/17 22:47:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2002/11/25 11:26:22 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2003/01/17 22:47:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -270,9 +270,9 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Init mapping for u page(s) for proc0.
 	 */
 	v = (caddr_t) uvm_pageboot_alloc(USPACE);
-	proc0.p_addr = proc0paddr = (struct user *) v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*

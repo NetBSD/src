@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.14 2002/01/14 00:53:16 thorpej Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.15 2003/01/17 22:11:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2002/01/14 00:53:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2003/01/17 22:11:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2002/01/14 00:53:16 thorpej Exp
 #include <sys/proc.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/fpu.h>
@@ -88,7 +89,7 @@ int	(*alpha_bus_get_window)(int, int,
 struct alpha_pci_chipset *alpha_pci_chipset;
 
 int
-sys_sysarch(struct proc *p, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
@@ -98,10 +99,10 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 
 	switch(SCARG(uap, op)) {
 	case ALPHA_FPGETMASK:
-		*retval = FP_C_TO_NETBSD_MASK(p->p_md.md_flags);
+		*retval = FP_C_TO_NETBSD_MASK(l->l_md.md_flags);
 		break;
 	case ALPHA_FPGETSTICKY:
-		*retval = FP_C_TO_NETBSD_FLAG(p->p_md.md_flags);
+		*retval = FP_C_TO_NETBSD_FLAG(l->l_md.md_flags);
 		break;
 	case ALPHA_FPSETMASK:
 	case ALPHA_FPSETSTICKY:
@@ -114,7 +115,7 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		if (error)
 			return error;
 		m = args.mask;
-		md_flags = p->p_md.md_flags;
+		md_flags = l->l_md.md_flags;
 		switch (SCARG(uap, op)) {
 		case ALPHA_FPSETMASK:
 			*retval = FP_C_TO_NETBSD_MASK(md_flags);
@@ -125,14 +126,14 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 			md_flags = SET_FP_C_FLAG(md_flags, m);
 			break;
 		}
-		alpha_write_fp_c(p, md_flags);
+		alpha_write_fp_c(l, md_flags);
 		break;
 	    }
 	case ALPHA_GET_FP_C:
 	    {
 		struct alpha_fp_c_args args;
 
-		args.fp_c = alpha_read_fp_c(p);
+		args.fp_c = alpha_read_fp_c(l);
 		error = copyout(&args, SCARG(uap, parms), sizeof args);
 		break;
 	    }
@@ -145,7 +146,7 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if ((args.fp_c >> 63) != 0)
 			args.fp_c |= IEEE_INHERIT;
-		alpha_write_fp_c(p, args.fp_c);
+		alpha_write_fp_c(l, args.fp_c);
 		break;
 	    }
 	case ALPHA_BUS_GET_WINDOW_COUNT:

@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.2 2002/03/24 23:37:43 bjh21 Exp $ */
+/* $NetBSD: proc.h,v 1.3 2003/01/17 21:55:26 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,6 +30,10 @@
 #define _ARM26_PROC_H
 
 /* arm26-specific part of struct proc */
+
+struct mdlwp {
+	int	mdl_dummy; /* Zero-sized structs are bad, apparently. */
+};
 
 struct mdproc {
 	int	mdp_dummy; /* Zero-sized structs are bad, apparently. */

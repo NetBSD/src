@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2002/08/25 20:21:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2003/01/17 22:47:10 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -282,16 +282,16 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Allocate space for system data structures.  These data structures
 	 * are allocated here instead of cpu_startup() because physical
 	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
+	 * the virtual address space.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)

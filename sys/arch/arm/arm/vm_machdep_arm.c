@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.4 2001/02/27 15:39:57 reinoud Exp $	*/
+/*	$NetBSD: vm_machdep_arm.c,v 1.5 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.4 2001/02/27 15:39:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.5 2003/01/17 22:28:49 thorpej Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -55,9 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.4 2001/02/27 15:39:57 reinoud E
  */
 
 int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
     struct core *chdr)
 {
+	struct proc *p = l->l_proc;
 	int error;
 	struct {
 		struct reg regs;
@@ -71,11 +72,11 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 	chdr->c_cpusize = sizeof(cpustate);
 
 	/* Save integer registers. */
-	error = process_read_regs(p, &cpustate.regs);
+	error = process_read_regs(l, &cpustate.regs);
 	if (error)
 		return error;
 	/* Save floating point registers. */
-	error = process_read_fpregs(p, &cpustate.fpregs);
+	error = process_read_fpregs(l, &cpustate.fpregs);
 	if (error)
 		return error;
 
