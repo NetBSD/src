@@ -31,6 +31,10 @@
  *
  * from: Id: rq.c,v 1.7 2001/04/16 04:33:01 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rq.c,v 1.3 2003/04/04 08:05:36 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>

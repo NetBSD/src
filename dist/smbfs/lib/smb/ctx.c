@@ -31,6 +31,10 @@
  *
  * from: Id: ctx.c,v 1.24 2002/04/13 14:35:28 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ctx.c,v 1.3 2003/04/04 08:05:32 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
