@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.49 1998/07/17 00:28:01 sommerfe Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.50 1998/08/09 08:58:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
 
+#include "opt_pfil_hooks.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
