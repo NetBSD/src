@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.1.2.1 1999/01/30 15:07:40 minoura Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.1.2.2 1999/02/02 23:44:43 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@ struct dmac_channel_stat {
 	int			ch_errorv; /* error interrupt vector */
 	dmac_intr_handler_t	ch_normal; /* normal interrupt handler */
 	dmac_intr_handler_t	ch_error; /* error interrupt handler */
+	void			*ch_normalarg;
+	void			*ch_errorarg;
 	struct dmac_dma_xfer	*ch_xfer_in_progress;
 	void			*ch_map; /* transfer map for arraychain mode */
 	struct device		*ch_softc; /* device softc link */
@@ -96,8 +98,10 @@ struct dmac_dma_xfer {
 #define DMAC_BOUNDARY	0
 
 struct dmac_channel_stat *dmac_alloc_channel __P((struct device*, int, char*,
-						  int, dmac_intr_handler_t,
-						  int, dmac_intr_handler_t));
+						  int,
+						  dmac_intr_handler_t, void*,
+						  int,
+						  dmac_intr_handler_t, void*));
 		/* ch, name, normalv, normal, errorv, error */
 int dmac_free_channel __P((struct device*, int, void*));
 		/* ch, channel */
