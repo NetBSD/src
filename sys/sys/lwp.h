@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.14 2003/11/17 22:52:09 cl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.15 2003/12/20 18:22:16 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,9 +86,7 @@ struct	lwp {
 #define l_endcopy l_private
 
 	void	*l_private;	/* svr4-style lwp-private data */
-#ifdef notyet
 	void	*l_emuldata;	/* kernel lwp-private data */
-#endif
 
 	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
 
