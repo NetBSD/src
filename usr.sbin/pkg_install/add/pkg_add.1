@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.19.4.2 2001/03/30 22:09:08 he Exp $
+.\" $NetBSD: pkg_add.1,v 1.19.4.3 2001/05/01 10:54:09 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -61,7 +61,7 @@ to ensure it poses no danger to your system's integrity.  Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
 .Cm @cwd ,
-.Cm @mode 
+.Cm @mode
 (check for setuid),
 .Cm @dirrm ,
 .Cm @exec ,
@@ -76,17 +76,17 @@ command to examine the package file.
 The following command line arguments are supported:
 .Bl -tag -width indent
 .It Ar pkg-name [ ... ]
-The named packages are installed. 
+The named packages are installed.
 .Ar pkg-name
 may be either a URL or a local pathname,
 a package name of "-" will cause
 .Nm
 to read from stdin.
 If the packages are not found in the current
-working directory, 
+working directory,
 .Nm
 will search them in each directory named by the
-.Ev PKG_PATH 
+.Ev PKG_PATH
 environment variable.
 Any dependencies required by the installed package will be searched
 in the same location that the original package was installed from.
@@ -163,8 +163,8 @@ and the contents then acted on as normal.
 .It Fl t Ar template
 Use
 .Ar template
-as the input to 
-.Xr mktemp 3 
+as the input to
+.Xr mktemp 3
 when creating a ``staging area.''
 By default, this is the string
 .Pa /var/tmp/instmp.XXXXXX ,
@@ -214,7 +214,7 @@ passive mode
 .Ef
 ftp.
 .Sh TECHNICAL DETAILS
-.Nm 
+.Nm
 extracts each package's "packing list"
 into a special staging directory in /tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
@@ -271,8 +271,8 @@ final location, otherwise it is extracted into the staging area.
 .It
 If the package contains a
 .Ar require
-script (see 
-.Xr pkg_create 1 ),
+script (see
+.Xr pkg_create 1 ) ,
 it is executed with the following arguments:
 .Bl -tag -width indentindent
 .It Ar pkg-name
@@ -311,23 +311,23 @@ the staging area into their final locations.
 If the package contains an
 .Ar mtreefile
 file (see
-.Xr pkg_create 1 ),
+.Xr pkg_create 1 ) ,
 then mtree is invoked as:
 .Bd -filled -offset indent -compact
 .Cm mtree
-.Fl u 
-.Fl f 
+.Fl u
+.Fl f
 .Ar mtreefile
 .Fl d
-.Fl e 
-.Fl p 
-.Pa prefix 
+.Fl e
+.Fl p
+.Pa prefix
 .Ed
 where
 .Pa prefix
 is either the prefix specified with the
 .Fl p
-flag or, if no 
+flag or, if no
 .Fl p
 flag was specified, the name of the first directory named by a
 .Cm @cwd
@@ -350,7 +350,7 @@ script, description, and display files are copied into
 .Pa /var/db/pkg/<pkg-name>
 for subsequent possible use by
 .Xr pkg_delete 1 .
-Any package dependencies are recorded in the other packages' 
+Any package dependencies are recorded in the other packages'
 .Pa /var/db/pkg/<other-pkg>/+REQUIRED_BY
 file
 (if the environment variable PKG_DBDIR is set, this overrides the
@@ -397,6 +397,37 @@ Where to register packages instead of
 Staging directory for installing packages, defaults to /tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
+.Sh EXAMPLES
+In all cases,
+.Nm
+will try to install binary packages listed in dependencies list.
+.Pp
+You can specify a compiled binary package explicitly on the command line.
+.Bd -literal
+# pkg_add /usr/pkgsrc/packages/All/tcsh-6.10.00.tgz
+.Ed
+.Pp
+If you omit the version number,
+.Nm
+will install the latest version available.
+With
+.Fl v ,
+.Nm
+emits more messages to terminal.
+.Bd -literal
+# pkg_add -v /usr/pkgsrc/packages/All/unzip
+.Ed
+.Pp
+You can grab a compiled binary package from remote location, by specifying
+an URL.
+The URL can be put into an environment variable,
+.Ev PKG_PATH .
+.Bd -literal
+# pkg_add -v ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/All/mozilla-0.8.1.tgz
+
+# export PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/All
+# pkg_add -v mozilla
+.Ed
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
@@ -421,7 +452,7 @@ Hard links between files in a distribution are only preserved if either
 (1) the staging area is on the same file system as the target directory of
 all the links to the file, or (2) all the links to the file are bracketed by
 .Cm @cwd
-directives in the contents file, 
+directives in the contents file,
 .Em and
 and the link names are extracted with a single
 .Cm tar
@@ -430,6 +461,6 @@ invocations due to exec argument-space limitations--this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
 .Pp
-Pkg upgrading needs a lot more work to be really universal. 
+Pkg upgrading needs a lot more work to be really universal.
 .Pp
 Sure to be others.
