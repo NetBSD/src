@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
+/*	$NetBSD: check.c,v 1.9 1998/08/25 19:18:15 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $");
+__RCSID("$NetBSD: check.c,v 1.9 1998/08/25 19:18:15 ross Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -83,11 +83,12 @@ checkfilesys(fname)
 		return 8;
 	}
 
-	if (!preen)
+	if (!preen)  {
 		if (boot.ValidFat < 0)
 			printf("** Phase 1 - Read and Compare FATs\n");
 		else
 			printf("** Phase 1 - Read FAT\n");
+	}
 
 	mod |= readfat(dosfs, &boot, boot.ValidFat >= 0 ? boot.ValidFat : 0, &fat);
 	if (mod & FSFATAL) {

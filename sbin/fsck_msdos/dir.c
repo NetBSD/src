@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.13 1998/07/28 19:22:55 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.14 1998/08/25 19:18:15 ross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.13 1998/07/28 19:22:55 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.14 1998/08/25 19:18:15 ross Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -803,7 +803,7 @@ readDosDirSection(f, boot, fat, dir)
 					continue;
 				}
 				if (strcmp(dirent.name, "..") == 0) {
-					if (dir->parent)		/* XXX */
+					if (dir->parent) {		/* XXX */
 						if (!dir->parent->parent) {
 							if (dirent.head) {
 								pwarn("`..' entry in %s has non-zero start cluster\n",
@@ -832,6 +832,7 @@ readDosDirSection(f, boot, fat, dir)
 							} else
 								mod |= FSERROR;
 						}
+					}
 					continue;
 				}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.15 1998/03/18 16:50:12 bouyer Exp $	*/
+/*	$NetBSD: badsect.c,v 1.16 1998/08/25 19:18:12 ross Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.15 1998/03/18 16:50:12 bouyer Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.16 1998/08/25 19:18:12 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,11 +148,12 @@ main(argc, argv)
 
 	fs = &sblock;
 	rdfs(SBOFF, SBSIZE, (char *)fs);
-	if (fs->fs_magic != FS_MAGIC)
+	if (fs->fs_magic != FS_MAGIC) {
 		if(fs->fs_magic == bswap32(FS_MAGIC))
 			needswap = 1;
 		else
 			errx(1, "%s: bad superblock", name);
+	}
 	if (needswap)
 		ffs_sb_swap(fs, fs, 0);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);

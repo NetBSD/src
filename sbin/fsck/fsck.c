@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.18 1998/07/26 20:02:36 mycroft Exp $	*/
+/*	$NetBSD: fsck.c,v 1.19 1998/08/25 19:18:14 ross Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.18 1998/07/26 20:02:36 mycroft Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.19 1998/08/25 19:18:14 ross Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -274,18 +274,20 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/%s", *edir, execbase);
 			execv(execname, (char * const *)argv);
-			if (errno != ENOENT)
+			if (errno != ENOENT) {
 				if (spec)
 					warn("exec %s for %s", execname, spec);
 				else
 					warn("exec %s", execname);
+			}
 		} while (*++edir != NULL);
 
-		if (errno == ENOENT)
+		if (errno == ENOENT) {
 			if (spec)
 				warn("exec %s for %s", execname, spec);
 			else
 				warn("exec %s", execname);
+		}
 		_exit(1);
 		/* NOTREACHED */
 
@@ -444,7 +446,7 @@ mangle(options, argcp, argvp, maxargcp)
 			maxargc <<= 1;
 			argv = erealloc(argv, maxargc * sizeof(char *));
 		}
-		if (*p != '\0')
+		if (*p != '\0')  {
 			if (*p == '-') {
 				argv[argc++] = p;
 				p = strchr(p, '=');
@@ -456,6 +458,7 @@ mangle(options, argcp, argvp, maxargcp)
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
+		}
 	}
 
 	*argcp = argc;

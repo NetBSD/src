@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.16 1998/07/28 19:22:56 mycroft Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.17 1998/08/25 19:18:17 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.16 1998/07/28 19:22:56 mycroft Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.17 1998/08/25 19:18:17 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,12 +304,13 @@ getsb(fs, file)
 		err(3, "cannot open %s for reading", file);
 	if (bread((daddr_t)SBOFF, (char *)fs, SBSIZE))
 		err(4, "%s: bad super block", file);
-	if (fs->fs_magic != FS_MAGIC)
+	if (fs->fs_magic != FS_MAGIC) {
 		if (fs->fs_magic == bswap32(FS_MAGIC)) {
 			needswap = 1;
 			ffs_sb_swap(fs, fs, 0);
 		} else
 			err(5, "%s: bad magic number", file);
+	}
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	close(fi);
 }

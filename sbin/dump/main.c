@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1998/07/06 06:50:02 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1998/08/25 19:18:14 ross Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 1998/07/06 06:50:02 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 1998/08/25 19:18:14 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,12 +362,13 @@ main(argc, argv)
 	sync();
 	sblock = (struct fs *)sblock_buf;
 	bread(SBOFF, (char *) sblock, SBSIZE);
-	if (sblock->fs_magic != FS_MAGIC)
+	if (sblock->fs_magic != FS_MAGIC) {
 		if (sblock->fs_magic == bswap32(FS_MAGIC)) {
 			ffs_sb_swap(sblock, sblock, 0);
 			needswap = 1;
 		} else
 			quit("bad sblock magic number\n");
+	}
 
 	spcl.c_level = iswap32(level - '0');
 	spcl.c_type = iswap32(TS_TAPE);

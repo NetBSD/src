@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.19 1998/03/18 17:01:24 bouyer Exp $	*/
+/*	$NetBSD: pass5.c,v 1.20 1998/08/25 19:18:15 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.19 1998/03/18 17:01:24 bouyer Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.20 1998/08/25 19:18:15 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,12 +312,13 @@ pass5()
 		cstotal.cs_nifree += newcg->cg_cs.cs_nifree;
 		cstotal.cs_ndir += newcg->cg_cs.cs_ndir;
 		cs = &fs->fs_cs(fs, c);
-		if (memcmp(&newcg->cg_cs, cs, sizeof *cs) != 0)
+		if (memcmp(&newcg->cg_cs, cs, sizeof *cs) != 0) {
 			if (dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 			memmove(cs, &newcg->cg_cs, sizeof *cs);
 			sbdirty();
 			} else
 				markclean = 0;
+		}
 		if (doinglevel1) {
 			memmove(cg, newcg, (size_t)fs->fs_cgsize);
 			cgdirty();
@@ -339,18 +340,19 @@ pass5()
 		}
 		if (memcmp(newcg, cg, basesize) != 0 ||
 		     memcmp(&cg_blktot(newcg, 0)[0],
-				&cg_blktot(cg, 0)[0], sumsize) != 0) 
+				&cg_blktot(cg, 0)[0], sumsize) != 0) {
 		    if (dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
 			memmove(cg, newcg, (size_t)basesize);
 			memmove(&cg_blktot(cg, 0)[0],
 			       &cg_blktot(newcg, 0)[0], (size_t)sumsize);
 			cgdirty();
 			} else markclean = 0;
+		}
 
 	}
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
-	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0)
+	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0) {
 	    if(dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 		memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);
 		fs->fs_ronly = 0;
@@ -358,6 +360,7 @@ pass5()
 		sbdirty();
 		} else
 			markclean = 0;
+	}
 }
 
 void 
