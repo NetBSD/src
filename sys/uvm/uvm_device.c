@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.20 2000/03/26 20:54:46 kleink Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.21 2000/04/03 07:35:24 chs Exp $	*/
 
 /*
  *
@@ -96,7 +96,6 @@ struct uvm_pagerops uvm_deviceops = {
 	udv_put,
 	NULL,		/* no cluster function */
 	NULL,		/* no put cluster function */
-	NULL,		/* no share protect.   no share maps for us */
 	NULL,		/* no AIO-DONE function since no async i/o */
 	NULL,		/* no releasepg function since no normal pages */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.12 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.13 2000/04/03 07:35:24 chs Exp $	*/
 
 /*
  *
@@ -87,8 +87,6 @@ struct uvm_pagerops {
 			 __P((struct uvm_object *, struct vm_page **,
 				 int *, struct vm_page *, int, voff_t,
 				 voff_t));
-	void			(*pgo_shareprot)	/* share protect */
-			 __P((vm_map_entry_t, vm_prot_t));
 	void			(*pgo_aiodone)		/* async iodone */
 			 __P((struct uvm_aiodesc *));
 	boolean_t		(*pgo_releasepg)	/* release page */
