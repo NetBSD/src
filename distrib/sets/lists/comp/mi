@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.12 2001/02/27 16:16:27 he Exp $
+#	$NetBSD: mi,v 1.231.2.13 2001/04/06 01:54:03 he Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -521,8 +521,10 @@
 ./usr/include/isofs/cd9660/iso.h		comp-c-include
 ./usr/include/isofs/cd9660/iso_rrip.h		comp-c-include
 ./usr/include/kadm5/admin.h	comp-c-include
-./usr/include/kadm5/kadm5_err.h	comp-c-include
+./usr/include/kadm5/kadm5-private.h	comp-c-include
+./usr/include/kadm5/kadm5-protos.h	comp-c-include
 ./usr/include/kadm5/private.h	comp-c-include
+./usr/include/kadm5/rtbl.h	comp-c-include
 ./usr/include/kerberosIV/des.h	comp-c-include
 ./usr/include/kerberosIV/kadm.h	comp-c-include
 ./usr/include/kerberosIV/kadm_err.h	comp-c-include
@@ -2176,8 +2178,13 @@
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
 ./usr/share/man/cat3/krb5_425_conv_principal.0	comp-c-catman
+./usr/share/man/cat3/krb5_appdefault.0	comp-c-catman
+./usr/share/man/cat3/krb5_auth_context.0	comp-c-catman
 ./usr/share/man/cat3/krb5_build_principal.0	comp-c-catman
+./usr/share/man/cat3/krb5_config.0	comp-c-catman
+./usr/share/man/cat3/krb5_context.0	comp-c-catman
 ./usr/share/man/cat3/krb5_free_principal.0	comp-c-catman
+./usr/share/man/cat3/krb5_init_context.0	comp-c-catman
 ./usr/share/man/cat3/krb5_openlog.0	comp-c-catman
 ./usr/share/man/cat3/krb5_parse_name.0	comp-c-catman
 ./usr/share/man/cat3/krb5_sname_to_principal.0	comp-c-catman
@@ -3888,8 +3895,13 @@
 ./usr/share/man/man3/jrand48.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
 ./usr/share/man/man3/krb5_425_conv_principal.3	comp-c-man
+/usr/share/man/man3/krb5_appdefault.3	comp-c-man
+./usr/share/man/man3/krb5_auth_context.3	comp-c-man
 ./usr/share/man/man3/krb5_build_principal.3	comp-c-man
+./usr/share/man/man3/krb5_config.3	comp-c-man
+./usr/share/man/man3/krb5_context.3	comp-c-man
 ./usr/share/man/man3/krb5_free_principal.3	comp-c-man
+./usr/share/man/man3/krb5_init_context.3	comp-c-man
 ./usr/share/man/man3/krb5_openlog.3	comp-c-man
 ./usr/share/man/man3/krb5_parse_name.3	comp-c-man
 ./usr/share/man/man3/krb5_sname_to_principal.3	comp-c-man

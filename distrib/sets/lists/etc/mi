@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.10 2000/10/20 17:03:04 tv Exp $
+# $NetBSD: mi,v 1.60.2.11 2001/04/06 01:54:04 he Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -34,7 +34,6 @@
 ./etc/mail/aliases
 ./etc/mail/aliases.db
 ./etc/mail/helpfile
-./etc/mail/sendmail-IPv4only.cf
 ./etc/mail/sendmail.cf
 ./etc/mailer.conf
 ./etc/man.conf
