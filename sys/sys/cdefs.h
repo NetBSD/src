@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.18.8.1 1997/10/22 06:16:12 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.18.8.2 1997/10/24 21:03:23 mellon Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -142,7 +142,11 @@
 
 /* This is defined in <machine/cdefs.h> */
 #ifndef __RENAME
+#ifdef __lint
+#define __RENAME(a)
+#else
 #error "No function renaming possible"
+#endif
 #endif
 
 #endif /* !_SYS_CDEFS_H_ */
