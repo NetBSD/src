@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 1998/02/14 09:28:52 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.114 1998/03/21 11:32:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4428,8 +4428,6 @@ pmap_page_protect4_4c(pa, prot)
 	struct segmap *sp;
 
 #ifdef DEBUG
-	if (!pmap_pa_exists(pa))
-		panic("pmap_page_protect: no such address: 0x%lx", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
 		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
@@ -4826,8 +4824,6 @@ pmap_page_protect4m(pa, prot)
 	struct segmap *sp;
 
 #ifdef DEBUG
-	if (!pmap_pa_exists(pa))
-		panic("pmap_page_protect: no such address: 0x%lx", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
 		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
