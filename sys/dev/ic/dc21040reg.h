@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.2 1995/06/05 00:46:30 cgd Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.3 1995/06/05 00:49:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -27,8 +27,8 @@
 #if !defined(_DC21040_H)
 #define _DC21040_H
 
-typedef	  signed int tulip_sint32_t;
-typedef	unsigned int tulip_uint32_t;
+typedef	int32_t		tulip_sint32_t;
+typedef	u_int32_t	tulip_uint32_t;
 
 #if defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
 #define	TULIP_BITFIELD2(a, b)		      b, a
