@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2.4.2 2000/01/08 20:18:26 he Exp $
+#	$NetBSD: Makefile.inc,v 1.2.4.3 2000/06/27 15:12:52 he Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -50,6 +50,7 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
 		${MAKE} INSTALL_KERNEL=${k} && ${MAKE} release INSTALL_KERNEL=${k}
 .endfor
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} && ${MAKE} release
 	cd ${RELEASEDIR}/installation/instkernel && \
 		cksum -o 1 *.gz >BSDSUM && \
 		cksum *.gz >CKSUM && \
