@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.23 2003/10/30 22:12:02 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.24 2003/10/31 20:54:18 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.23 2003/10/30 22:12:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.24 2003/10/31 20:54:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ acpibat_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0A") == 0)
+	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "PNP0C0A") == 0)
 		return (1);
 
 	return (0);
@@ -282,13 +282,20 @@ acpibat_clear_info(struct acpibat_softc *sc)
 	if (sc->sc_available>ABAT_ALV_PRESENCE)
 		sc->sc_available = ABAT_ALV_PRESENCE;
 	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_DCAPACITY].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].max.data_s = 0;
+	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID);
 	sc->sc_data[ACPIBAT_CAPACITY].max.data_s = 0;
+	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~ENVSYS_FMAXVALID;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_TECHNOLOGY].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_DVOLTAGE].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_DVOLTAGE].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_WCAPACITY].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_WCAPACITY].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_LCAPACITY].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_LCAPACITY].validflags &= ~ENVSYS_FCURVALID;
 }
 
 void
@@ -300,11 +307,16 @@ acpibat_clear_stat(struct acpibat_softc *sc)
 	if (sc->sc_available>ABAT_ALV_INFO)
 		sc->sc_available = ABAT_ALV_INFO;
 	sc->sc_data[ACPIBAT_LOAD].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_LOAD].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].cur.data_s = 0;
-	sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FFRACVALID);
 	sc->sc_data[ACPIBAT_CAPACITY].warnflags = 0;
+	sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_VOLTAGE].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_DISCHARGING].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_DISCHARGING].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CHARGING].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_CHARGING].validflags &= ~ENVSYS_FCURVALID;
 }
 
 
@@ -334,6 +346,7 @@ acpibat_battery_present(struct acpibat_softc *sc)
 		sc->sc_data[ACPIBAT_PRESENT].cur.data_s = 1;
 	} else
 		sc->sc_data[ACPIBAT_PRESENT].cur.data_s = 0;
+	sc->sc_data[ACPIBAT_PRESENT].validflags |= ENVSYS_FCURVALID;
 	ABAT_UNLOCK(sc, s);
 
 	return ((sta & ACPIBAT_STA_PRESENT)?1:0);
@@ -407,13 +420,20 @@ acpibat_get_info(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_CAPACITY, capunit, capstring);
 
 	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = p2[1].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_DCAPACITY].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].cur.data_s = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].max.data_s = p2[1].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags |= ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].max.data_s = p2[1].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_CAPACITY].validflags |= ENVSYS_FMAXVALID;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].cur.data_s = p2[3].Integer.Value;
+	sc->sc_data[ACPIBAT_TECHNOLOGY].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_DVOLTAGE].cur.data_s = p2[4].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_DVOLTAGE].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_WCAPACITY].cur.data_s = p2[5].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_WCAPACITY].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_LCAPACITY].cur.data_s = p2[6].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_LCAPACITY].validflags |= ENVSYS_FCURVALID;
 	sc->sc_available = ABAT_ALV_INFO;
 	ABAT_UNLOCK(sc, s);
 
@@ -465,8 +485,11 @@ acpibat_get_status(struct acpibat_softc *sc)
 	ABAT_LOCK(sc, s);
 	status = p2[0].Integer.Value;
 	sc->sc_data[ACPIBAT_LOAD].cur.data_s = p2[1].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_LOAD].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].cur.data_s = p2[2].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_CAPACITY].validflags |= ENVSYS_FCURVALID | ENVSYS_FFRACVALID;
 	sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s = p2[3].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_VOLTAGE].validflags |= ENVSYS_FCURVALID;
 
 	flags = 0;
 	if (sc->sc_data[ACPIBAT_CAPACITY].cur.data_s <
@@ -477,8 +500,10 @@ acpibat_get_status(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].warnflags = flags;
 	sc->sc_data[ACPIBAT_DISCHARGING].cur.data_s =
 	    ((status & ACPIBAT_ST_DISCHARGING) != 0);
+	sc->sc_data[ACPIBAT_DISCHARGING].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CHARGING].cur.data_s =
 	    ((status & ACPIBAT_ST_CHARGING) != 0);
+	sc->sc_data[ACPIBAT_CHARGING].validflags |= ENVSYS_FCURVALID;
 	sc->sc_available = ABAT_ALV_STAT;
 	ABAT_UNLOCK(sc, s);
 
@@ -670,7 +695,7 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 
 	for (i = 0 ; i < ACPIBAT_NSENSORS; i++) {
 		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
-		sc->sc_data[i].validflags |= (ENVSYS_FVALID | ENVSYS_FCURVALID);
+		sc->sc_data[i].validflags = ENVSYS_FVALID;
 		sc->sc_info[i].validflags = ENVSYS_FVALID;
 		sc->sc_data[i].warnflags = 0;
 	}
@@ -686,15 +711,6 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_CAPACITY, capunit, capstring);
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
 	INITDATA(ACPIBAT_DISCHARGING, ENVSYS_INDICATOR, "discharging");
-
-	/*
-	 * ACPIBAT_CAPACITY is the "gas gauge".
-	 * ACPIBAT_LFCCAPACITY is the "wear gauge".
-	 */
-	sc->sc_data[ACPIBAT_CAPACITY].validflags |=
-		ENVSYS_FMAXVALID | ENVSYS_FFRACVALID;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags |=
-		ENVSYS_FMAXVALID | ENVSYS_FFRACVALID;
 
 	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.2 2003/01/09 12:23:28 jdolecek Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.3 2003/10/31 20:54:18 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.2 2003/01/09 12:23:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.3 2003/10/31 20:54:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ lpt_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 		return 0;
 
 	for (i = 0; (id = lpt_acpi_ids[i]) != NULL; ++i) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId, id) == 0)
+		if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, id) == 0)
 			return 1;
 	}
 
