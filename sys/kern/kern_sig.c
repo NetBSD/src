@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.64 1997/04/28 02:36:05 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.65 1997/04/28 02:51:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -786,24 +786,11 @@ issignal(p)
 			 * stopped until released by the debugger.
 			 */
 			p->p_xstat = signum;
-
-			if (p->p_flag & P_FSTRACE) {
-#ifdef	PROCFS
-				/* procfs debugging */
-				p->p_stat = SSTOP;
-				wakeup(p->p_pptr);
+			psignal(p->p_pptr, SIGCHLD);
+			do {
+				stop(p);
 				mi_switch();
-#else
-				panic("procfs debugging");
-#endif
-			} else {
-				/* ptrace debugging */
-				psignal(p->p_pptr, SIGCHLD);
-				do {
-					stop(p);
-					mi_switch();
-				} while (!trace_req(p) && p->p_flag & P_TRACED);
-			}
+			} while (!trace_req(p) && p->p_flag & P_TRACED);
 
 			/*
 			 * If we are no longer being traced, or the parent
