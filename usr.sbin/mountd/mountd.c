@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.56 1999/08/25 17:26:20 mjl Exp $	 */
+/* $NetBSD: mountd.c,v 1.57 1999/09/10 16:20:22 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.56 1999/08/25 17:26:20 mjl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.57 1999/09/10 16:20:22 jdolecek Exp $");
 #endif
 #endif				/* not lint */
 
@@ -846,7 +846,8 @@ get_exportlist(n)
 		    !strncmp(fsp->f_fstypename, MOUNT_NULL, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_UMAP, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_UNION, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
+		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_NTFS, MFSNAMELEN)) {
 			bzero((char *) &targs, sizeof(targs));
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
