@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tsort.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tsort.c,v 1.4 1993/11/17 12:05:46 cgd Exp $";
+static char rcsid[] = "$Id: tsort.c,v 1.5 1993/12/01 05:34:16 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ add_node(name)
 void
 tsort()
 {
-	register NODE *n, *next;
+	register NODE *n, *m, *next;
 	register int cnt;
 
 	while (graph) {
@@ -316,6 +316,8 @@ tsort()
 		}
 		for (n = graph; n; n = n->n_next)
 			if (!(n->n_flags & NF_ACYCLIC)) {
+				for (m=graph; m; m=m->n_next)
+					m->n_flags &= ~NF_MARK;
 				if (cnt = find_cycle(n, n, 0, 0)) {
 					register int i;
 
@@ -356,7 +358,7 @@ remove_node(n)
 		n->n_next->n_prevp = n->n_prevp;
 }
 
-/* look for the longest cycle from node from to node to. */
+/* look for a path from node from to node to. */
 find_cycle(from, to, longest_len, depth)
 	NODE *from, *to;
 	int depth, longest_len;
@@ -383,11 +385,12 @@ find_cycle(from, to, longest_len, depth)
 			}
 		} else {
 			len = find_cycle(*np, to, longest_len, depth + 1);
-			if (len > longest_len)
+			if (len > longest_len) {
 				longest_len = len;
+				break;
+			}
 		}
 	}
-	from->n_flags &= ~NF_MARK;
 	return(longest_len);
 }
 
