@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.8 1997/06/17 18:56:46 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.9 1997/11/13 01:05:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -574,7 +574,7 @@ char **argv;
 {
 	char buf[STRINGLENGTH],*p;
 	char username[STRINGLENGTH];
-	register char *supfname,*q,*arg;
+	register char *supfname,*arg;
 	register COLLECTION *c,*lastC;
 	register FILE *f;
 	register int bogus;
@@ -649,9 +649,7 @@ char **argv;
 	firstC = NULL;
 	lastC = NULL;
 	bogus = FALSE;
-	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-		q = index (p,'\n');
-		if (q)  *q = '\0';
+	while ((p = read_line(f, NULL, NULL)) != NULL) {
 		if (index ("#;:",*p))  continue;
 		arg = nxtarg (&p," \t");
 		if (*arg == '\0') {
