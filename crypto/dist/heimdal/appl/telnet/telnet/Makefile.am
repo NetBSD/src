@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:14 assar Exp $
+# $Id: Makefile.am,v 1.1.1.4 2001/06/19 22:07:41 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -19,4 +19,5 @@ LDADD = ../libtelnet/libtelnet.a \
 	$(LIB_krb4) \
 	$(LIB_des) \
 	$(LIB_tgetent) \
+	$(LIB_kdfs) \
 	$(LIB_roken)

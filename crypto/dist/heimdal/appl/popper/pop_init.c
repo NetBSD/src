@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_init.c,v 1.1.1.3 2001/02/11 13:51:15 assar Exp $");
+RCSID("$Id: pop_init.c,v 1.1.1.4 2001/06/19 22:07:43 assar Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)
@@ -254,10 +254,10 @@ pop_init(POP *p,int argcount,char **argmessage)
     /*  Initialize the POP parameter block */
     memset (p, 0, sizeof(POP));
 
-    set_progname(argmessage[0]);
+    setprogname(argmessage[0]);
 
     /*  Save my name in a global variable */
-    p->myname = (char*)__progname;
+    p->myname = (char*)getprogname();
 
     /*  Get the name of our host */
     gethostname(p->myhost,MaxHostNameLen);
