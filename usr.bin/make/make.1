@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.10 1995/11/02 23:54:57 christos Exp $
+.\"	$NetBSD: make.1,v 1.11 1995/11/08 02:31:00 christos Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -140,7 +140,9 @@ before each command line in the makefile.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
 .Nm make
-may have running at any one time.
+may have running at any one time. Turns compatibility mode off, unless the 
+.Ar B
+flag is also specified.
 .It Fl k
 Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
