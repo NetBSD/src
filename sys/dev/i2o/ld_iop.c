@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.8 2001/08/04 16:54:18 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.9 2001/08/22 09:42:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -136,13 +136,13 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	int rv, evreg, enable;
 	char *typestr, *fixedstr;
 	u_int cachesz;
+	u_int32_t timeoutbase, rwvtimeoutbase, rwvtimeout;
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		union {
 			struct	i2o_param_rbs_cache_control cc;
 			struct	i2o_param_rbs_device_info bdi;
-			struct	i2o_param_rbs_operation op;
 		} p;
 	} __attribute__ ((__packed__)) param;
 
@@ -204,13 +204,10 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	    I2O_UTIL_CLAIM_PRIMARY_USER);
 	sc->sc_flags = rv ? 0 : LD_IOP_CLAIMED;
 
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_RBS_DEVICE_INFO,
-	    &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_DEVICE_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_RBS_DEVICE_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		goto bad;
-	}
 
 	ld->sc_secsize = le32toh(param.p.bdi.blocksize);
 	ld->sc_secperunit = (int)
@@ -254,13 +251,10 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	 * cache size.  Even if the device doesn't appear to have a cache,
 	 * we perform a flush at shutdown.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_RBS_CACHE_CONTROL, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_CACHE_CONTROL, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_RBS_CACHE_CONTROL,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		goto bad;
-	}
 
 	if ((cachesz = le32toh(param.p.cc.totalcachesize)) != 0)
 		printf(", %dkB cache", cachesz >> 10);
@@ -271,32 +265,19 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	 * Configure the DDM's timeout functions to time out all commands
 	 * after 30 seconds.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_RBS_OPERATION,
-	    &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_OPERATION, rv);
-		goto bad;
-	}
+	timeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
+	rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
+	rwvtimeout = 0;
 
-	param.p.op.timeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
-	param.p.op.rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
-	param.p.op.rwvtimeout = 0; 
-
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 1, I2O_PARAM_RBS_OPERATION,
-	    &param, sizeof(param));
-#ifdef notdef
-	/*
-	 * Intel RAID adapters don't like the above, but do post a
-	 * `parameter changed' event.  Perhaps we're doing something
-	 * wrong...
-	 */
-	if (rv != 0) {
-		printf("%s: unable to set parameters (0x%04x; %d)\n",
-		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_OPERATION, rv);
-		goto bad;
-	}
-#endif
+	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
+	    &timeoutbase, sizeof(timeoutbase),
+	    I2O_PARAM_RBS_OPERATION_timeoutbase);
+	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
+	    &rwvtimeoutbase, sizeof(rwvtimeoutbase),
+	    I2O_PARAM_RBS_OPERATION_rwvtimeoutbase);
+	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
+	    &rwvtimeout, sizeof(rwvtimeout),
+	    I2O_PARAM_RBS_OPERATION_rwvtimeoutbase);
 
 	if (enable)
 		ld->sc_flags |= LDF_ENABLED;
