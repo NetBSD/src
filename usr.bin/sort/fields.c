@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.17 2004/02/15 12:41:25 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.18 2004/03/14 21:12:14 heas Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.17 2004/02/15 12:41:25 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.18 2004/03/14 21:12:14 heas Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #define NEXTCOL(pos) {						\
 	if (!SEP_FLAG)						\
 		while (BLANK & l_d_mask[*(++pos)]);		\
-	while (!((FLD_D | REC_D_F) & l_d_mask[*++pos]));	\
+	while ((*(pos+1) != '\0') && !((FLD_D | REC_D_F) & l_d_mask[*++pos]));\
 }
 		
 static u_char *enterfield __P((u_char *, u_char *, struct field *, int));
