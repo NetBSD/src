@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13 1998/09/29 07:29:15 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.14 1998/11/04 06:19:56 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -48,6 +48,8 @@
 #include "opt_uvm.h"
 #endif
 
+#include <sys/queue.h>
+
 /*
  * Placeholder for simple lock structure until spinlocks are
  * really used an machine-dependently defined.
@@ -59,6 +61,7 @@ struct simplelock {
 	int lock_line;
 	const char *unlock_file;
 	int unlock_line;
+	LIST_ENTRY(simplelock) list;
 	unsigned long lock_holder;		/* CPU ID */
 #endif
 };
@@ -198,6 +201,8 @@ int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int))
 void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
+void simple_lock_dump __P((void));
+void simple_lock_freecheck __P((void *, void *));
 #else /* !(LOCKDEBUG && !MULTIPROCESSOR) */
 #if defined(MULTIPROCESSOR)
 /*
