@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.11 2003/01/18 07:44:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.11 2003/01/18 07:44:50 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.10 2002/09/06 13:18:43 gehenna Exp 
 #include <sys/filedesc.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
