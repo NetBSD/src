@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586reg.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: via82c586reg.h,v 1.2 2000/04/22 15:00:41 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -48,7 +48,7 @@
 #define	VP3_CFG_TRIGGER_SHIFT_PIRQC	1
 #define	VP3_CFG_TRIGGER_SHIFT_PIRQD	0
 
-#define	VP3_CFG_INTR_MASK		0x04
+#define	VP3_CFG_INTR_MASK		0x0f
 #define	VP3_PIRQ_MASK			0xdefa
 
 #define	VP3_CFG_INTR_SHIFT_PIRQA	0x14
