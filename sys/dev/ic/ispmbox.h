@@ -1,4 +1,4 @@
-/*	$NetBSD: ispmbox.h,v 1.4 1997/09/10 02:17:22 mjacob Exp $	*/
+/*	$NetBSD: ispmbox.h,v 1.5 1997/09/29 01:41:30 mjacob Exp $	*/
 
 /*
  * Mailbox and Command Definitions for for Qlogic ISP SCSI adapters.
@@ -331,9 +331,10 @@ typedef struct {
 #define RQSF_GOT_BUS			0x0100
 #define RQSF_GOT_TARGET			0x0200
 #define RQSF_SENT_CDB			0x0400
-#define RQSF_TRANFERRED_DATA		0x0800
+#define RQSF_XFRD_DATA			0x0800
 #define RQSF_GOT_STATUS			0x1000
 #define RQSF_GOT_SENSE			0x2000
+#define	RQSF_XFER_COMPLETE		0x4000
 
 /*
  * Status Flags (not applicable to 2100)
