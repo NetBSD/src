@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.95 2000/03/30 12:23:20 augustss Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.96 2000/04/22 22:45:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -466,7 +466,7 @@ msdosfs_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	int error = 0;
-	int diff;
+	int64_t diff;
 	int blsize;
 	int isadir;
 	long n;
@@ -492,11 +492,12 @@ msdosfs_read(v)
 		lbn = de_cluster(pmp, uio->uio_offset);
 		on = uio->uio_offset & pmp->pm_crbomask;
 		n = min((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
-		diff = dep->de_FileSize - uio->uio_offset;
-		if (diff <= 0)
+		if (uio->uio_offset >= dep->de_FileSize)
 			return (0);
+		/* file size (and hence diff) may be up to 4GB */
+		diff = dep->de_FileSize - uio->uio_offset;
 		if (diff < n)
-			n = diff;
+			n = (long) diff;
 		/* convert cluster # to block # if a directory */
 		if (isadir) {
 			error = pcbmap(dep, lbn, &lbn, 0, &blsize);
