@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.24 2000/03/23 07:01:31 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.25 2000/05/13 16:53:03 he Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -101,8 +101,7 @@ isp_attach(isp)
 	isp->isp_osinfo._link.type = BUS_SCSI;
 
 	/*
-	 * Send a SCSI Bus Reset (used to be done as part of attach,
-	 * but now left to the OS outer layers).
+	 * Send a SCSI Bus Reset.
 	 */
 	if (IS_SCSI(isp)) {
 		int bus = 0;
