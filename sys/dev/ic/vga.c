@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.14 1999/02/20 18:27:53 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.15 1999/03/22 18:24:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -296,7 +296,8 @@ bad:
 }
 
 /*
- * We want at least ASCII 32..255 be present.
+ * We want at least ASCII 32..127 be present in the
+ * first font slot.
  */
 #define vga_valid_primary_font(f) \
 	(f->encoding == WSDISPLAY_FONTENC_IBM || \
@@ -306,7 +307,7 @@ int
 vga_selectfont(vc, scr, name1, name2)
 	struct vga_config *vc;
 	struct vgascreen *scr;
-	char *name1, *name2;
+	char *name1, *name2; /* NULL: take first found */
 {
 	const struct wsscreen_descr *type = scr->pcs.type;
 	struct vgafont *f1, *f2;
@@ -332,6 +333,10 @@ vga_selectfont(vc, scr, name1, name2)
 		}
 	}
 
+	/*
+	 * The request fails if no primary font was found,
+	 * or if a second font was requested but not found.
+	 */
 	if (f1 && (!name2 || f2)) {
 #ifdef VGAFONTDEBUG
 		if (scr != &vga_console_screen || vga_console_attached) {
@@ -408,12 +413,15 @@ vga_init_screen(vc, scr, type, existing, attrp)
 #endif
 
 	scr->pcs.mem = NULL;
+
+	scr->fontset1 = scr->fontset2 = 0;
 	if (vga_selectfont(vc, scr, 0, 0)) {
 		if (scr == &vga_console_screen)
 			panic("vga_init_screen: no font");
 		else
 			printf("vga_init_screen: no font\n");
 	}
+
 	vc->nscreens++;
 	LIST_INSERT_HEAD(&vc->screens, scr, next);
 }
