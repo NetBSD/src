@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.99 2004/02/04 00:37:45 wiz Exp $
+.\"	$NetBSD: make.1,v 1.100 2004/02/05 23:40:52 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -289,6 +289,8 @@ sub-makes in the environment.
 The
 .Fl X
 flag disables this behavior.
+Variable assignments should follow options for posix compatibility
+but no ordering is enforced.
 .El
 .Pp
 There are seven different types of lines in a makefile: file dependency
