@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.12 1994/05/05 20:35:11 mycroft Exp $
+ *	$Id: vm_pageout.c,v 1.13 1994/05/21 04:00:13 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,7 +68,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/vmmeter.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
