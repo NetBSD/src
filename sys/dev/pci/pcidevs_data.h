@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.79 1998/07/27 21:37:17 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.80 1998/07/27 22:58:43 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.73 1998/07/27 21:34:11 tron Exp 
+ *	NetBSD: pcidevs,v 1.74 1998/07/27 22:58:07 tron Exp 
  */
 
 /*
@@ -433,13 +433,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
 	    0,
 	    "Brooktree",
-	    "Brooktree Bt848 Video Capture",
+	    "Bt848 Video Capture",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT849,
 	    0,
 	    "Brooktree",
-	    "Brooktree Bt848 Video Capture",
+	    "Bt848 Video Capture",
 	},
 	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
