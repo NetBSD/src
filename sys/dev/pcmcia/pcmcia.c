@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.10 1998/11/14 01:54:25 thorpej Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -206,8 +206,20 @@ void
 pcmcia_card_detach(dev)
 	struct device *dev;
 {
-	/* struct pcmcia_softc *sc = (struct pcmcia_softc *) dev; */
-	/* don't do anything yet */
+	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+
+	/* XXX Implement me!
+	 *
+	 * Should:
+	 *
+	 *	- ensure child is deactivated
+	 *
+	 *	- config_detach child
+	 *
+	 * We assume we have context (and can block).
+	 */
+
+	printf("%s: pcmcia_card_detach called!\n", sc->dev.dv_xname);
 }
 
 int
