@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.11 1994/03/20 00:26:21 briggs Exp $
+ *	$Id: locore.s,v 1.12 1994/04/21 23:34:17 briggs Exp $
  */
 
 #include "assym.s"
@@ -156,7 +156,7 @@ _stacknquit:
  * Trap/interrupt vector routines
  */ 
 
-	.globl	_trap, _nofault, _longjmp, _print_bus
+	.globl	_cpu040, _trap, _nofault, _longjmp, _print_bus
 _buserr:
 	tstl	_nofault		| device probe?
 	jeq	_addrerr		| no, handle as usual
@@ -165,10 +165,26 @@ _buserr:
 _addrerr:
 	clrw	sp@-			| pad SR to longword
 	moveml	#0xFFFF,sp@-		| save user registers
-
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(60)		|   in the savearea
 	lea	sp@(64),a1		| grab base of HW berr frame
+	tstl	_cpu040
+	jeq	Lbe030			| If we're not an '040
+	movl	a1@(10),sp@-		| V = exception address
+	clrl	sp@-			| dummy code
+	moveq	#0,d0
+	movw	a1@(8),d0		| get vector offset
+	andw	#0x0fff,d0
+	cmpw	#12,d0			| is it address error
+	jeq	Lisaerr
+	movl	a1@(22),sp@(4)		| get fault address
+	moveq	#0,d0
+	movw	a1@(14),d0		| get SSW
+	movl	d0,sp@			| pass as code
+	btst	#10,d0			| test ATC
+	jeq	Lisberr			| it's a bus error
+	jra	Lismerr
+Lbe030:
 	moveq	#0,d0
 	movw	a1@(12),d0		| grab SSW for fault processing
 	btst	#12,d0			| RB set?
@@ -264,6 +280,66 @@ _fpfline:
 
 _fpunsupp:
 	jra	_illinst
+
+| FPSP entry points and support routines
+	.globl	real_fline,real_bsun,real_unfl,real_operr,real_ovfl,real_snan
+	.globl	real_unsupp,real_inex
+	.globl	fpsp_done,fpsp_fmt_error,mem_read,mem_write,real_trace
+real_fline:
+	jra	_illinst
+real_trace:
+fpsp_done:
+	rte
+fpsp_fmt_error:
+	pea	LFP1
+	jbsr	_panic
+mem_read:
+	btst	#5,a6@(4)
+	jeq	user_read
+super_read:
+	movb	a0@+,a1@+
+	subl	#1,d0
+	jne	super_read
+	rts
+user_read:
+	movl	d1,sp@-
+	movl	d0,sp@-		| len
+	movl	a1,sp@-		| to
+	movl	a0,sp@-		| from
+	jsr	_copyin
+	addw	#12,sp
+	movl	sp@+,d1
+	rts
+mem_write:
+	btst	#5,a6@(4)
+	jeq	user_write
+super_write:
+	movb	a0@+,a1@+
+	subl	#1,d0
+	jne	super_write
+	rts
+user_write:
+	movl	d1,sp@-
+	movl	d0,sp@-		| len
+	movl	a1,sp@-		| to
+	movl	a0,sp@-		| from
+	jsr	_copyout
+	addw	#12,sp
+	movl	sp@+,d1
+	rts
+LFP1:	.asciz	"FPSP format error"
+	.even
+real_unsupp:
+	jra	_illinst
+
+real_bsun:
+real_inex:
+real_dz:
+real_unfl:
+real_operr:
+real_ovfl:
+real_snan:
+| Fall through into FP coprocessor exceptions
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -616,9 +692,8 @@ _rtclock_intr:
 	movl	d0,sp@-			| save status so jsr will not clobber
 	movl	a1@,sp@-		| push padded PS
 	movl	a1@(4),sp@-		| push PC
-	movl	sp, sp@-		| push pointer to pc, ps
 	jbsr	_profclock		| profclock(pc, ps)
-	lea	sp@(12),sp		| pop params
+	addql	#8,sp			| pop params
 #else /* notdef GPROF */
 	btst	#5,a1@(2)		| saved PS in user mode?
 	jne	Lttimer1		| no, go check timer1
@@ -851,7 +926,7 @@ start:
 | Give ourself a stack
 	movl	#tmpstk,sp		| give ourselves a temporary stack
 	movl	#CACHE_OFF,d0
-	movc	d0,cacr			| clear and disable on-chip cache(s)
+	movc	d0, cacr
 
 | Some parameters provided by MacOS
 |
@@ -868,10 +943,31 @@ start:
 	movl	d4, sp@-		| Some flags... (probably not used)
 	jbsr	_initenv
 	addql	#8, sp
+
 	jbsr	_getenvvars		| Parse the environment buffer
 	jbsr	_setmachdep		| Set some machine-dep stuff
 	jbsr	_gray_bar		| first graybar call (we need stack).
 
+	tstl	_cpu040
+	beq	Lstartnot040		| It's not an '040
+	.word	0xf4f8			| cpusha bc - push and invalidate caches
+	lea	Lvectab+0xc0,a0		| Set up 68040 floating point
+	movl	#fpsp_bsun,a0@+		|  exception vectors
+	movl	#real_inex,a0@+
+	movl	#real_dz,a0@+
+	movl	#fpsp_unfl,a0@+
+	movl	#fpsp_operr,a0@+
+	movl	#fpsp_ovfl,a0@+
+	movl	#fpsp_snan,a0@+
+	movl	#fpsp_unsupp,a0@+
+
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
+	movc	d0, cacr
+	movl	#1, _mmutype		| 68040 MMU
+	jra	Lmap040
+
+Lmap040: | not!
+Lstartnot040:
 
 | BG - Figure out our MMU
 	movl	#0x200, d0		| data freeze bit (??)
@@ -879,10 +975,10 @@ start:
 	movc	cacr, d0		| on an '851, it'll go away.
 	tstl	d0
 	jeq	Lisa68020
-	movl	#1, _mmutype		| 68030 MMU (What about 68040?)
-	bra	Lmmufigured
+	movl	#0, _mmutype		| 68030 MMU
+	jra	Lmmufigured
 Lisa68020:
-	movl	#0, _mmutype		| 68020, implies 68851, or crash.
+	movl	#-1, _mmutype		| 68020, implies 68851, or crash.
 Lmmufigured:
 
 | LAK: (1/2/94) We need to find out if the MMU is already on.  If it is
@@ -900,8 +996,8 @@ Lmmufigured:
 
 | LAK: MMU is on; find out how it is mapped.  MacOS uses the CRP.
 
-	cmpl	#0, _mmutype		| ttx instructions will break 68851
-	jeq		LnocheckTT
+	tstl	_mmutype		| ttx instructions will break 68851
+	jmi	LnocheckTT
 	lea	macos_tt0,a0		| save it for later inspection
 	.long	0xF0100A00		| pmove tt0,a0@
 	lea	macos_tt1,a0		| save it for later inspection
@@ -911,9 +1007,9 @@ LnocheckTT:
 
 	lea		macos_crp1,a0
 	pmove	crp,a0@			| Save MacOS 
-	cmpl	#0, _mmutype		| ttx instructions will break 68851
+	tstl	_mmutype		| ttx instructions will break 68851
 	| Assume that 68851 maps are in ROMs, which we can already read.
-	jeq		LnosetTT
+	jmi	LnosetTT
 					| This next line gets the second
 					| long word of the RP, the address...
 	movl	macos_crp2,d0		| address of root table
@@ -1452,8 +1548,8 @@ foobar3:
 	pmove	a2@,tc			| load it
 
 | LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
-	cmpl	#0, _mmutype		| ttx instructions will break 68851
-	jeq	LnokillTT
+	tstl	_mmutype		| ttx instructions will break 68851
+	jmi	LnokillTT
 	lea	longscratch,a0
 	movl	#0, a0@
 	.long	0xF0100800		| movl a0@,tt0
@@ -1501,10 +1597,11 @@ foobar2:
 	movl	_load_addr,sp@-		| phys load address
 	addl	_load_addr,a4		| need physical address
 	movl	a4,sp@-			| first available PA
+	jbsr	_gray_bar		| #19
 	jbsr	_pmap_bootstrap		| sync up pmap module
 	addql	#8,sp
-	/* ALICE: Next line was already commented */
-|	movl	_avail_start,a4		| pmap_bootstrap may need RAM
+	jbsr	_gray_bar		| #20
+
 /* set kernel stack, user SP, and initial pcb */
 	lea	_kstack,a1		| proc0 kernel stack
 	lea	a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
@@ -1519,22 +1616,22 @@ foobar2:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
-	jbsr	_gray_bar		| #19
+	jbsr	_gray_bar		| #21
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
-	jbsr	_gray_bar		| #20
+	jbsr	_gray_bar		| #22
 /* BARF: Enable external cache here */
 /* final setup for C code */
-	jbsr	_gray_bar		| #21
-	jbsr	_gray_bar		| #22
+	jbsr	_gray_bar		| #23
+	jbsr	_gray_bar		| #24
 |	movl	#0x7f, 0x50001C00
 |	movl	#0x7f, 0x50003C00
 	jbsr	_setmachdep		| Set some machine-dep stuff
-	jbsr	_gray_bar		| #23
+	jbsr	_gray_bar		| #25
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
-	jbsr	_gray_bar		| #24
+	jbsr	_gray_bar		| #26
 	movl	#0,a6			| LAK: so that stack_trace() works
 	jbsr	_main			| call main() ; tag Minit_main()
 
@@ -2196,16 +2293,30 @@ Lres1:
 	orl	#PG_RW+PG_V,d1		| ensure valid and writable
 	movl	d1,a2@+			| load it up
 	dbf	d0,Lres1		| til done
+	tstl	_cpu040
+	jne	Lres2
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
+	jra	Lres3
+Lres2:
+	.word	0xf4f8			| cpusha bc
+	.word	0xf518			| pflusha (68040)
+	movl	#CACHE40_ON,d0
+	movc	d0, cacr		| invalidate caches
+Lres3:
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
+	tstl	_cpu040
+	jne	Lres4
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load new user root pointer
-	pflusha				| BARF -- BG paranoid about root pointer
+	jra	Lres5
+Lres4:
+	.word	0x4e7b, 0x0806		| movc d0, URP
+Lres5:
 	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
@@ -2423,69 +2534,115 @@ Lclrloop:
  */
 ENTRY(TBIA)
 __TBIA:
+	tstl	_cpu040
+	jne	Ltbia040
 	pflusha				| flush entire TLB
-	/* BARF LAK: hp300 didn't clear cacr if there was an 68851 */
-|	movl	#DC_CLEAR,d0
-|	movc	d0,cacr			| invalidate on-chip d-cache
+	tstl	_mmutype
+	jmi	Ltbia851
+	movl	#DC_CLEAR,d0
+	movc	d0,cacr			| invalidate on-chip d-cache
+Ltbia851:
+	rts
+Ltbia040:
+	.word	0xf518		| pflusha
+	.word	0xf478		| cpush dc [ cinv or cpush ??]
 	rts
 
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
 ENTRY(TBIS)
-	jmp	__TBIA			| BARF: TBIS doesnt seem to work
 #ifdef DEBUG
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush entire TLB
 #endif
 	movl	sp@(4),a0		| get addr to flush
+	tstl	_cpu040
+	jne	Ltbis040
+	tstl	_mmutype
+	jmi	Ltbis851
 	pflush	#0,#0,a0@		| flush address from both sides
-	/* BARF LAK: Next two lines didn't happen if there was 68851 */
-|	movl	#DC_CLEAR,d0
-|	movc	d0,cacr			| invalidate on-chip data cache
+	movl	#DC_CLEAR,d0
+	movc	d0,cacr			| invalidate on-chip data cache
+	rts
+Ltbis851:
+	pflushs	#0,#0,a0@		| flush address from both sides
+	rts
+Ltbis040:
+	moveq	#FC_SUPERD,d0		| select supervisor
+	movc	d0, dfc
+	.word	0xf508			| pflush a0@
+	moveq	#FC_USERD,d0		| select user
+	movc	d0, dfc
+	.word	0xf508			| pflush a0@
+	.word	0xf478			| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
  * Invalidate supervisor side of TLB
  */
 ENTRY(TBIAS)
-	jmp	__TBIA			| BARF: TBIAS doesnt seem to work
 #ifdef DEBUG
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
-	pflush #4,#4			| flush supervisor TLB entries
-	/* BARF LAK: Next two lines didn't happen if there was 68851 */
-|	movl	#DC_CLEAR,d0
-|	movc	d0,cacr			| invalidate on-chip d-cache
+	tstl	_cpu040
+	jne	Ltbias040
+	tstl	_mmutype
+	jmi	Ltbias851
+	pflush	#4,#4			| flush supervisor TLB entries
+	movl	#DC_CLEAR,d0
+	movc	d0,cacr			| invalidate on-chip d-cache
+	rts
+Ltbias851:
+	pflushs	#4,#4			| flush supervisor TLB entries
+	rts
+Ltbias040:
+| 68040 can't specify supervisor/user on pflusha, so we flush all
+	.word	0xf518			| pflusha
+	.word	0xf478			| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
  * Invalidate user side of TLB
  */
 ENTRY(TBIAU)
-	jmp	__TBIA			| BARF: TBIAU doesnt seem to work
 #ifdef DEBUG
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
+	tstl	_cpu040
+	jne	Ltbiau040
+	tstl	_mmutype
+	jmi	Ltbiau851
 	pflush	#0,#4			| flush user TLB entries
-	/* BARF LAK: Next two lines didn't happen if there was 68851 */
-|	movl	#DC_CLEAR,d0
-|	movc	d0,cacr			| invalidate on-chip d-cache
+	movl	#DC_CLEAR,d0
+	movc	d0,cacr			| invalidate on-chip d-cache
+	rts
+Ltbiau851:
+	pflush	#0,#4			| flush user TLB entries
+	rts
+Ltbiau040:
+| 68040 can't specify supervisor/user on pflusha, so we flush all
+	.word	0xf518			| pflusha
+	.word	0xf478			| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
+	tstl	_cpu040
+	jne	Licia040
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			| invalidate i-cache
+	rts
+Licia040:
+	.word	0xf498			| cinva ic
 	rts
 
 /*
  * Invalidate data cache.
- * HP external cache allows for invalidation of user/supervisor portions.
  * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
  * problems with DC_WA.  The only cases we have to worry about are context
  * switch and TLB changes, both of which are handled "in-line" in resume
@@ -2493,17 +2650,46 @@ ENTRY(ICIA)
  */
 ENTRY(DCIA)
 __DCIA:
+	tstl	_cpu040
+	jeq	Ldciax
+	.word	0xf478		| cpusha dc
+Ldciax:
 	rts
 
 ENTRY(DCIS)
 __DCIS:
+	tstl	_cpu040
+	jeq	Ldcisx
+	.word	0xf478		| cpusha dc
+Ldcisx:
 	rts
 
 ENTRY(DCIU)
 __DCIU:
+	tstl	_cpu040
+	jeq	Ldciux
+	.word	0xf478		| cpusha dc
+Ldciux:
+	rts
+
+| Invalid single cache line
+ENTRY(DCIAS)
+__DCIAS:
+	tstl	_cpu040
+	jeq	Ldciasx
+	movl	sp@(4),a0
+	.word	0xf468		| cpushl dc,a0@
+Ldciasx:
 	rts
 
 ENTRY(PCIA)
+	tstl	_cpu040
+	jne	Lpcia040
+	movl	#DC_CLEAR,d0
+	movc	d0,cacr			| invalidate on-chip d-cache
+	rts
+Lpcia040:
+	.word	0xf478			| cpusha dc
 	rts
 
 ENTRY(ecacheon)
@@ -2533,6 +2719,22 @@ _getdfc:
 	rts
 
 /*
+ * Check out a virtual address to see if it's okay to write to.
+ *
+ * probeva(va, fc)
+ *
+ */
+ENTRY(probeva)
+	movl	sp@(8),d0
+	movec	d0,dfc
+	movl	sp@(4),a0
+	.word	0xf548		| ptestw (a0)
+	moveq	#FC_USERD,d0		| restore DFC to user space
+	movc	d0,dfc
+	.word	0x4e7a,0x0805	| movec  MMUSR,d0
+	rts
+
+/*
  * Load a new user segment table pointer.
  */
 ENTRY(loadustp)
@@ -2542,13 +2744,18 @@ ENTRY(loadustp)
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
+	tstl	_cpu040
+	jne	Lldustp040
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	pflusha				| BARF -- BG paranoid about root pointer
 	rts				|   since pmove flushes TLB
+Lldustp040:
+	.word	0xf478			| cpush dc
+	.word	0x4e7b,0x0806		| movec d0, URP
+	rts
 
 /*
  * Flush any hardware context associated with given USTP.
@@ -2556,18 +2763,22 @@ ENTRY(loadustp)
  * and ATC entries in PMMU.
  */
 ENTRY(flushustp)
-	/* BARF LAK: Only did this for 68851.  What do we have? */
+	tstl	_mmutype
+	jge	Lnot68851		| Should get '030 and '040
 	movl	sp@(4),d0		| get USTP to flush
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to address
 	movl	d0,_protorp+4		| stash USTP
 	pflushr	_protorp		| flush RPT/TLB entries
-	pflusha				| BARF -- BG paranoid about root pointer
+Lnot68851:
 	rts
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		| address to load
+	tstl	_cpu040
+	jne	Lploadw040
 	ploadw	#1,a0@			| pre-load translation
+Lploadw040:				| should '040 do a ptest?
 	rts
 
 /*
@@ -2889,6 +3100,7 @@ iottdata:
 	.long	0x50018600	| maps IO space in TT1 register
 _mmutype:
 	.long	0		| Are we running 68851, 68030, or 68040?
+				| (-1, 0, 1, respectively)
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_ectype
@@ -2913,6 +3125,8 @@ _extiobase:
 	.globl	_load_addr
 _load_addr:
 	.long	0		| Physical address of kernel
+_cpu040:
+	.long	0		| Flag: Are we currently running on a 68040
 lastpage:
 	.long	0		| LAK: to store the addr of last page in mem
 #ifdef DEBUG
