@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 1994/10/26 08:24:28 cgd Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 1996/02/01 00:03:27 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,6 +97,16 @@ struct syscframe {
 };
 
 /*
+ * Stack frame inside cpu_switch()
+ */
+struct switchframe {
+	long	sf_pl;
+	long	sf_reg[5];
+	long	sf_fp;
+	int	sf_pc;
+};
+
+/*
  * Signal frame
  */
 struct sigframe {
@@ -105,6 +115,6 @@ struct sigframe {
 	struct	sigcontext *sf_scp;
 	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
-} ;
+};
 
 #endif
