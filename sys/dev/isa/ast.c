@@ -5,7 +5,7 @@
  *
  * Modified by: Charles Hannum, 3/22/94
  *
- *	$Id: ast.c,v 1.5 1994/03/29 04:35:37 mycroft Exp $
+ *	$Id: ast.c,v 1.6 1994/03/29 06:58:29 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ astprobe(parent, self, aux)
 	 * its presence means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
+	ia->ia_iosize = 4 * 8;
 	return comprobe1(ia->ia_iobase);
 }
 
