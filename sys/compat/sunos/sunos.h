@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.3 1994/11/20 21:31:10 deraadt Exp $	*/
+/*	$NetBSD: sunos.h,v 1.4 1995/03/04 09:50:00 pk Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
@@ -121,3 +121,37 @@ struct sunos_pollfd {
 #define SUNOS_POLLRDNORM 0x0040
 #define SUNOS_POLLRDBAND 0x0080
 #define SUNOS_POLLWRBAND 0x0100
+
+/* Sun audio compatibility */
+struct sunos_audio_prinfo {
+	u_int	sample_rate;
+	u_int	channels;
+	u_int	precision;
+	u_int	encoding;
+	u_int	gain;
+	u_int	port;
+	u_int	avail_ports;
+	u_int	reserved0[3];
+	u_int	samples;
+	u_int	eof;
+	u_char	pause;
+	u_char	error;
+	u_char	waiting;
+	u_char	balance;
+	u_short	minordev;
+	u_char	open;
+	u_char	active;
+};
+struct sunos_audio_info {
+	struct sunos_audio_prinfo play;
+	struct sunos_audio_prinfo record;
+	u_int monitor_gain;
+	u_int reserved[4];
+};
+
+/* Values for AUDIO_GETDEV ioctl: */
+#define SUNOS_AUDIO_DEV_UNKNOWN			0
+#define SUNOS_AUDIO_DEV_AMD			1
+#define SUNOS_AUDIO_DEV_SPEAKERBOX		2
+#define SUNOS_AUDIO_DEV_CODEC			3
+
