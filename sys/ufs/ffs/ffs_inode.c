@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.69 2004/08/15 16:17:37 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.70 2004/08/15 17:36:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.69 2004/08/15 16:17:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.70 2004/08/15 17:36:00 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -282,22 +282,26 @@ ffs_truncate(v)
 	 */
 
 	offset = blkoff(fs, length);
-	if (ovp->v_type == VREG && offset != 0 && osize > length &&
-	    round_page(osize) > round_page(length)) {
+	if (ovp->v_type == VREG && offset != 0 && osize > length) {
+		daddr_t lbn;
 		voff_t eoz;
 
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 		    aflag);
 		if (error)
 			return error;
-		size = blksize(fs, oip, lblkno(fs, length));
-		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
+		lbn = lblkno(fs, length);
+		size = blksize(fs, oip, lbn);
+		eoz = MIN(lblktosize(fs, lbn) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
-		simple_lock(&ovp->v_interlock);
-		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
-		    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
-		if (error)
-			return error;
+		if (round_page(eoz) > round_page(length)) {
+			simple_lock(&ovp->v_interlock);
+			error = VOP_PUTPAGES(ovp, round_page(length),
+			    round_page(eoz),
+			    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
+			if (error)
+				return error;
+		}
 	}
 
 	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
