@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2002/10/12 12:20:08 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2002/10/12 21:06:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -36,7 +36,8 @@ void	cpu_boot_secondary_processors(void);
 #define MP_CPU_INFO_MEMBERS						\
 	int ci_cpunum;							\
 	struct proc *ci_curproc;					\
-	struct pcb *ci_curpcb;
+	struct pcb *ci_curpcb;						\
+	struct pcb *ci_idlepcb;
 
 #define CPU_MAXNUM 8
 
