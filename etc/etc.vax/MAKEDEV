@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.53 2002/10/21 04:15:03 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.54 2003/03/30 21:13:22 wiz Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -61,7 +61,7 @@
 #	ps*	unibus interface to picture system 2
 #	ad*	unibus interface to data translation a/d converter
 #	np*	unibus ethernet co-processor interface, for downloading.
-#	qv*	qvss (microvax) display
+#	qv*	qvss (MicroVAX) display
 #	lkm	loadable kernel modules
 #	bpf*	berkeley packet filter
 #	tun*	network tunnel device
