@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/02 14:16:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/13 07:41:48 lukem Exp $
 
 PROG=	stdethers
 MAN=	stdethers.8
-CFLAGS+= -DNTOA_FIX
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.5 1997/10/13 04:00:27 lukem Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.6 1997/10/13 07:41:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.5 1997/10/13 04:00:27 lukem Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.6 1997/10/13 07:41:49 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,9 +42,6 @@ __RCSID("$NetBSD: stdethers.c,v 1.5 1997/10/13 04:00:27 lukem Exp $");
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <netinet/in.h>
-#ifndef NTOA_FIX	/* XXX the below is wrong with old ARP code */
-#include <net/if_ether.h> 
-#endif
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
@@ -58,32 +55,6 @@ void	usage __P((void));
 
 extern	char *__progname;		/* from crt0.o */
 
-#ifndef NTOA_FIX
-#define	NTOA(x) ether_ntoa(x)
-#else
-char	*working_ntoa __P((struct ether_addr *));
-
-#define NTOA(x) working_ntoa(x)
-
-/*
- * As of 1995-12-02 NetBSD has an SunOS 4 incompatible ether_ntoa.
- * The code in usr/lib/libc/net/ethers seems to do the correct thing
- * when asking YP but not when returning string from ether_ntoa.
- */
-
-char *
-working_ntoa(e)
-	struct ether_addr *e;
-{
-	static char a[] = "xx:xx:xx:xx:xx:xx";
-
-	sprintf(a, "%x:%x:%x:%x:%x:%x",
-	    e->ether_addr_octet[0], e->ether_addr_octet[1],
-	    e->ether_addr_octet[2], e->ether_addr_octet[3],
-	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
-	return a;
-}
-#endif
 
 int
 main(argc, argv)
@@ -128,7 +99,7 @@ main(argc, argv)
 			data_line[len - 1] = '\0';
 
 		if (ether_line(data_line, &eth_addr, hostname) == 0)
-			printf("%s\t%s\n", NTOA(&eth_addr), hostname);
+			printf("%s\t%s\n", ether_ntoa(&eth_addr), hostname);
 		else
 			warnx("ignoring line %d: `%s'", line_no, data_line);
 	}
