@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8 1996/10/15 21:26:25 mark Exp $ */
+/* $NetBSD: cpu.c,v 1.9 1996/11/23 03:53:48 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -54,7 +54,6 @@
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <machine/cpu.h>
-#include <machine/pte.h>
 #include <machine/undefined.h>
 #include <machine/cpus.h>
 
@@ -75,9 +74,9 @@ volatile int undefined_test;	/* Used for FPA test */
 
 /* Prototypes */
 
-void identify_master_cpu __P((int /*cpu_number*/));
-void identify_arm_cpu	__P((int /*cpu_number*/));
-void identify_arm_fpu	__P((int /*cpu_number*/));
+void identify_master_cpu __P((int cpu_number, char *dev_name));
+void identify_arm_cpu	__P((int cpu_number));
+void identify_arm_fpu	__P((int cpu_number));
 
 extern int initialise_arm_fpe	__P((cpu_t *cpu));
 extern int initialise_fpe	__P((cpu_t *cpu));
@@ -121,7 +120,7 @@ cpuattach(parent, self, aux)
 	for (loop = 0; loop < MAX_CPUS; ++loop)
 		bzero(&cpus[loop], sizeof(cpu_t));
 
-	identify_master_cpu(CPU_MASTER);
+	identify_master_cpu(CPU_MASTER, self->dv_xname);
 }
 
 struct cfattach cpu_ca = {
@@ -179,8 +178,9 @@ fpa_handler(address, instruction, frame, fault_code)
  */
  
 void
-identify_master_cpu(cpu_number)
+identify_master_cpu(cpu_number, dev_name)
 	int cpu_number;
+	char *dev_name;
 {
 	u_int fpsr;
 
@@ -196,8 +196,10 @@ identify_master_cpu(cpu_number)
 	identify_arm_cpu(cpu_number);
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
-	if (cpus[cpu_number].cpu_class == CPU_CLASS_SARM)
-		printf("cpu0: StrongARM support is highly experimental\n");
+	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SARM
+	  && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
+		printf("%s: SA-110 with bugged STM^ instruction\n", dev_name);
+	}
 
 /*
  * Ok now we test for an FPA
@@ -326,6 +328,10 @@ identify_arm_cpu(cpu_number)
           
 	case ID_ARM710 :
 	case ID_ARM700 :
+		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		break;
+
+	case ID_ARM810 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
 
