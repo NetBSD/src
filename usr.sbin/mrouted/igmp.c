@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.11 2003/05/16 18:10:38 itojun Exp $	*/
+/*	$NetBSD: igmp.c,v 1.12 2003/05/16 22:59:50 dsl Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -156,7 +156,7 @@ accept_igmp(int recvlen)
     if (iphdrlen + ipdatalen != recvlen) {
 	logit(LOG_WARNING, 0,
 	    "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
-	    inet_fmt(src, s1, sizeof(s1)), recvlen, iphdrlen, ipdatalen);
+	    inet_fmt(src), recvlen, iphdrlen, ipdatalen);
 	return;
     }
 
@@ -166,13 +166,13 @@ accept_igmp(int recvlen)
     if (igmpdatalen < 0) {
 	logit(LOG_WARNING, 0,
 	    "received IP data field too short (%u bytes) for IGMP, from %s",
-	    ipdatalen, inet_fmt(src, s1, sizeof(s1)));
+	    ipdatalen, inet_fmt(src));
 	return;
     }
 
     logit(LOG_DEBUG, 0, "RECV %s from %-15s to %s",
 	packet_kind(igmp->igmp_type, igmp->igmp_code),
-	inet_fmt(src, s1, sizeof(s1)), inet_fmt(dst, s2, sizeof(s2)));
+	inet_fmt(src), inet_fmt(dst));
 
     switch (igmp->igmp_type) {
 
@@ -245,8 +245,8 @@ accept_igmp(int recvlen)
 		default:
 		    logit(LOG_INFO, 0,
 		     "ignoring unknown DVMRP message code %u from %s to %s",
-		     igmp->igmp_code, inet_fmt(src, s1, sizeof(s1)),
-		     inet_fmt(dst, s2, sizeof(s2)));
+		     igmp->igmp_code, inet_fmt(src),
+		     inet_fmt(dst));
 		    return;
 	    }
 
@@ -264,8 +264,8 @@ accept_igmp(int recvlen)
 	default:
 	    logit(LOG_INFO, 0,
 		"ignoring unknown IGMP message type %x from %s to %s",
-		igmp->igmp_type, inet_fmt(src, s1, sizeof(s1)),
-		inet_fmt(dst, s2, sizeof(s2)));
+		igmp->igmp_type, inet_fmt(src),
+		inet_fmt(dst));
 	    return;
     }
 }
@@ -342,13 +342,13 @@ send_igmp(u_int32_t src, u_int32_t dst, int type, int code, u_int32_t group,
 	else
 	    logit(igmp_log_level(type, code), errno,
 		"sendto to %s on %s",
-		inet_fmt(dst, s1, sizeof(s1)), inet_fmt(src, s2, sizeof(s2)));
+		inet_fmt(dst), inet_fmt(src));
     }
 
     if (setloop)
 	    k_set_loop(FALSE);
 
     logit(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-	packet_kind(type, code), inet_fmt(src, s1, sizeof(s1)),
-	inet_fmt(dst, s2, sizeof(s2)));
+	packet_kind(type, code), inet_fmt(src),
+	inet_fmt(dst));
 }

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.12 2003/05/16 18:10:38 itojun Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.13 2003/05/16 22:59:50 dsl Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -123,7 +123,7 @@ stmt	: error
 			
 			if (vifi == numvifs)
 			    fatal("%s is not a configured interface",
-				inet_fmt($2,s1, sizeof(s1)));
+				inet_fmt($2));
 
 					}
 		ifmods
@@ -138,18 +138,18 @@ stmt	: error
 			ifr = ifconfaddr(&ifc, $2);
 			if (ifr == 0)
 			    fatal("Tunnel local address %s is not mine",
-				inet_fmt($2, s1, sizeof(s1)));
+				inet_fmt($2));
 
 			strncpy(ffr.ifr_name, ifr->ifr_name, IFNAMSIZ);
 			if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ffr)<0)
 			    fatal("ioctl SIOCGIFFLAGS on %s",ffr.ifr_name);
 			if (ffr.ifr_flags & IFF_LOOPBACK)
 			    fatal("Tunnel local address %s is a loopback interface",
-				inet_fmt($2, s1, sizeof(s1)));
+				inet_fmt($2));
 
 			if (ifconfaddr(&ifc, $3) != 0)
 			    fatal("Tunnel remote address %s is one of mine",
-				inet_fmt($3, s1, sizeof(s1)));
+				inet_fmt($3));
 
 			for (vifi = 0, v = uvifs;
 			     vifi < numvifs;
@@ -157,11 +157,11 @@ stmt	: error
 			    if (v->uv_flags & VIFF_TUNNEL) {
 				if ($3 == v->uv_rmt_addr)
 				    fatal("Duplicate tunnel to %s",
-					inet_fmt($3, s1, sizeof(s1)));
+					inet_fmt($3));
 			    } else if (!(v->uv_flags & VIFF_DISABLED)) {
 				if (($3 & v->uv_subnetmask) == v->uv_subnet)
 				    fatal("Unnecessary tunnel to %s",
-					inet_fmt($3,s1, sizeof(s1)));
+					inet_fmt($3));
 			    }
 
 			if (numvifs == MAXVIFS)
@@ -192,8 +192,8 @@ stmt	: error
 					{
 			logit(LOG_INFO, 0,
 			    "installing tunnel from %s to %s as vif #%u - rate=%d",
-			    inet_fmt($2, s1, sizeof(s1)),
-			    inet_fmt($3, s2, sizeof(s2)),
+			    inet_fmt($2),
+			    inet_fmt($3),
 			    numvifs, v->uv_rate_limit);
 
 			++numvifs;
@@ -278,7 +278,7 @@ ifmod	: mod
 		    ph->pa_subnetbcast = ph->pa_subnet | ~ph->pa_subnetmask;
 		    if ($2.addr & ~ph->pa_subnetmask)
 			warn("Extra subnet %s/%d has host bits set",
-				inet_fmt($2.addr,s1, sizeof(s1)), $2.mask);
+				inet_fmt($2.addr), $2.mask);
 		    ph->pa_next = v->uv_addrs;
 		    v->uv_addrs = ph;
 
@@ -328,7 +328,7 @@ mod	: THRESHOLD NUMBER	{ if ($2 < 1 || $2 > 255)
 		    v_acl->acl_addr = $2.addr & v_acl->acl_mask;
 		    if ($2.addr & ~v_acl->acl_mask)
 			warn("Boundary spec %s/%d has host bits set",
-				inet_fmt($2.addr,s1, sizeof(s1)),$2.mask);
+				inet_fmt($2.addr),$2.mask);
 		    v_acl->acl_next = v->uv_acl;
 		    v->uv_acl = v_acl;
 
@@ -381,7 +381,7 @@ boundary	: ADDRMASK	{
 
 			if ((ntohl($1.addr) & 0xff000000) != 0xef000000) {
 			    fatal("Boundaries must be 239.x.x.x, not %s/%d",
-				inet_fmt($1.addr, s1, sizeof(s1)), $1.mask);
+				inet_fmt($1.addr), $1.mask);
 			}
 			$$ = $1;
 
@@ -475,6 +475,7 @@ yylex()
 	int n;
 	u_int32_t addr;
 	char *q;
+	char c;
 
 	if ((q = next_word()) == NULL) {
 		return 0;
@@ -516,26 +517,21 @@ yylex()
 		yylval.num = 0;
 		return BOOLEAN;
 	}
-	if (sscanf(q,"%[.0-9]/%d%c",s1,&n,s2) == 2) {
-		if ((addr = inet_parse(s1)) != 0xffffffff) {
-			yylval.addrmask.mask = n;
-			yylval.addrmask.addr = addr;
-			return ADDRMASK;
-		}
-		/* fall through to returning STRING */
+	if ((addr = inet_parse(q, &n)) != 0xffffffff) {
+		yylval.addrmask.mask = n;
+		yylval.addrmask.addr = addr;
+		return ADDRMASK;
 	}
-	if (sscanf(q,"%[.0-9]%c",s1,s2) == 1) {
-		if ((addr = inet_parse(s1)) != 0xffffffff &&
-		    inet_valid_host(addr)) { 
-			yylval.addr = addr;
-			return ADDR;
-		}
+	if ((addr = inet_parse(q,0)) != 0xffffffff &&
+	    inet_valid_host(addr)) { 
+		yylval.addr = addr;
+		return ADDR;
 	}
-	if (sscanf(q,"0x%8x%c",&n,s1) == 1) {
+	if (sscanf(q,"0x%8x%c",&n,&c) == 1) {
 		yylval.addr = n;
 		return ADDR;
 	}
-	if (sscanf(q,"%d%c",&n,s1) == 1) {
+	if (sscanf(q,"%d%c",&n,&c) == 1) {
 		yylval.num = n;
 		return NUMBER;
 	}

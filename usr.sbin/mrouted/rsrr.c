@@ -1,4 +1,4 @@
-/*	$NetBSD: rsrr.c,v 1.8 2003/05/16 18:10:38 itojun Exp $	*/
+/*	$NetBSD: rsrr.c,v 1.9 2003/05/16 22:59:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1998-2001.
@@ -179,8 +179,8 @@ rsrr_accept(recvlen)
 	    route_query = (struct rsrr_rq *) (rsrr_recv_buf + RSRR_HEADER_LEN);
 	    logit(LOG_INFO, 0,
 		"Received Route Query for src %s grp %s notification %d",
-		inet_fmt(route_query->source_addr.s_addr, s1, sizeof(s1)),
-		inet_fmt(route_query->dest_addr.s_addr,s2, sizeof(s2)),
+		inet_fmt(route_query->source_addr.s_addr),
+		inet_fmt(route_query->dest_addr.s_addr,s2),
 		BIT_TST(rsrr->flags,RSRR_NOTIFICATION_BIT));
 	    /* Send Route Reply to client */
 	    rsrr_accept_rq(route_query,rsrr->flags,NULL);
@@ -365,8 +365,8 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 	logit(LOG_INFO, 0, "Send RSRR Route Reply");
 
     logit(LOG_INFO, 0, "for src %s dst %s in vif %d out vif %d\n",
-	inet_fmt(route_reply->source_addr.s_addr,s1, sizeof(s1)),
-	inet_fmt(route_reply->dest_addr.s_addr,s2, sizeof(s2)),
+	inet_fmt(route_reply->source_addr.s_addr,s1),
+	inet_fmt(route_reply->dest_addr.s_addr,s2),
 	route_reply->in_vif,route_reply->out_vif_bm);
     
     /* Send it. */
@@ -487,7 +487,7 @@ rsrr_cache_clean(gt)
     struct rsrr_cache *rc,*rc_next;
 
     printf("cleaning cache for group %s\n",
-	    inet_fmt(gt->gt_mcastgrp, s1, sizeof(s1)));
+	    inet_fmt(gt->gt_mcastgrp));
     rc = gt->gt_rsrr_cache;
     while (rc) {
 	rc_next = rc->next;
