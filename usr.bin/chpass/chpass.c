@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.14 1997/10/18 12:48:47 lukem Exp $	*/
+/*	$NetBSD: chpass.c,v 1.15 1998/07/05 14:26:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.14 1997/10/18 12:48:47 lukem Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.15 1998/07/05 14:26:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,9 +232,8 @@ main(argc, argv)
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		dfd = mkstemp(tempname);
-		if (dfd < 0) {
-				(*Pw_error)(tempname, 1, 1);
-		}
+		if (dfd < 0)
+			(*Pw_error)(tempname, 1, 1);
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
 		(void)unlink(tempname);
