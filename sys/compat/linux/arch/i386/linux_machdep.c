@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.58 2000/12/29 22:06:58 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.59 2001/01/09 13:01:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -638,6 +638,10 @@ linux_machdepioctl(p, v, retval)
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
 			SCARG(&bia, data) = (caddr_t)K_RAW;
 		break;
+	case LINUX_KIOCSOUND:
+		SCARG(&bia, data) =
+		    (caddr_t)(((unsigned long)SCARG(&bia, data)) & 0xffff);
+		/* fall through */
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
 		break;
