@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2002/10/01 12:57:04 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.83 2002/10/05 21:22:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,7 @@
  */
 #include <machine/frame.h>
 #include <machine/segments.h>
+#include <machine/tss.h>
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
@@ -142,6 +143,14 @@ struct cpu_info {
 	int64_t ci_tsc_denom;
 
 	union descriptor *ci_gdt;
+
+	volatile u_int32_t	ci_tlb_ipi_mask;
+
+	struct i386tss	ci_doubleflt_tss;
+	struct i386tss	ci_ddbipi_tss;
+
+	char *ci_doubleflt_stack;
+	char *ci_ddbipi_stack;
 };
 
 /*
