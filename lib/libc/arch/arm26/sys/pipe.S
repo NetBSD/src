@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.1 2000/05/09 21:55:51 bjh21 Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2 2000/09/28 08:38:54 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,11 @@
 
 #include "SYS.h"
 
-ENTRY(pipe)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
+#endif
+
+ENTRY(_pipe)
 	mov	r2, r0
 	swi	SYS_pipe
 	bcs	cerror

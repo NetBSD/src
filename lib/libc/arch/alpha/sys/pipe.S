@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.S,v 1.2 2000/06/14 06:49:03 cgd Exp $ */
+/* $NetBSD: pipe.S,v 1.3 2000/09/28 08:38:53 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,12 @@
 
 #include "SYS.h"
 
-SYSCALL(pipe)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
+#endif
+
+LEAF(_pipe, 0)
+	CALLSYS_ERROR(pipe)
 	stl	v0, 0(a0)
 	stl	a4, 4(a0)
 	mov	zero, v0

@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.2 2000/03/27 16:27:16 msaitoh Exp $	*/
+/*	$NetBSD: pipe.S,v 1.3 2000/09/28 08:38:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,12 +40,16 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: pipe.S,v 1.2 2000/03/27 16:27:16 msaitoh Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.3 2000/09/28 08:38:55 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-SYSCALL(pipe)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
+#endif
+
+_SYSCALL(_pipe,pipe)
 	mov	r4, r2
 	mov.l	r0, @r2	
 	mov.l	r1, @(4,r2) 

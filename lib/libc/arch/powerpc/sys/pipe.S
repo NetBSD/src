@@ -1,8 +1,12 @@
-/*	$NetBSD: pipe.S,v 1.5 1999/01/14 22:48:21 kleink Exp $	*/
+/*	$NetBSD: pipe.S,v 1.6 2000/09/28 08:38:54 kleink Exp $	*/
 
 #include "SYS.h"
 
-ENTRY(pipe)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
+#endif
+
+ENTRY(_pipe)
 	mr	5,3		# save pointer
 	li	0,SYS_pipe
 	sc			# assume, that r5 is kept
