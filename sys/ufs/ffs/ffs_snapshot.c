@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.4 2004/06/20 18:55:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5 2004/06/30 18:42:17 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -389,7 +389,7 @@ loop:
 		loc = howmany(xp->i_size, fs->fs_bsize) - 1;
 		if (loc < NDADDR) {
 			len = fragroundup(fs, blkoff(fs, xp->i_size));
-			if (len < fs->fs_bsize) {
+			if (len > 0 && len < fs->fs_bsize) {
 				ffs_blkfree(copy_fs, vp, db_get(xp, loc),
 				    len, xp->i_number);
 				blkno = db_get(xp, loc);
