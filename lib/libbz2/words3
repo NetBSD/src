@@ -1,0 +1,20 @@
+
+If you got this far and the "cmp"s didn't find anything amiss, looks
+like you're in business.  You should install bzip2, bunzip2 and bzcat:
+
+   Copy bzip2 and bzip2recover to a public place, maybe /usr/bin.
+   In that public place, make bunzip2 and bzcat be
+      symbolic links to the bzip2 you just copied there.
+   Put the manual page, bzip2.1, somewhere appropriate;
+      perhaps in /usr/man/man1.
+
+Instructions for use are in the preformatted manual page, in the file
+bzip2.txt.  For more detailed documentation, read the full manual.  
+It is available in Postscript form (manual.ps) and HTML form
+(manual_toc.html).
+
+You can also do "bzip2 --help" to see some helpful information. 
+"bzip2 -L" displays the software license.
+
+Happy compressing.  -- JRS, 30 August 1998.
+
