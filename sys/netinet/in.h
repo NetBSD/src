@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.h	7.11 (Berkeley) 4/20/91
- *	$Id: in.h,v 1.6 1994/01/09 01:06:08 mycroft Exp $
+ *	$Id: in.h,v 1.7 1994/01/26 01:26:37 cgd Exp $
  */
 
 #ifndef _NETINET_IN_H_
@@ -156,18 +156,18 @@ struct ip_opts {
  * First word of comment is data type; bool is stored in int.
  */
 #define	IP_OPTIONS		1	/* buf/ip_opts; set/get IP options */
-#define	IP_MULTICAST_IF		2	/* u_char; set/get IP mcast i/f */
-#define	IP_MULTICAST_TTL	3	/* u_char; set/get IP mcast ttl */
-#define	IP_MULTICAST_LOOP	4	/* u_char; set/get IP mcast loopback */
-#define	IP_ADD_MEMBERSHIP	5	/* ip_mreq; add IP group membership */
-#define	IP_DROP_MEMBERSHIP	6	/* ip_mreq; drop IP group membership */
-#define	IP_HDRINCL		7	/* int; header is included with data */
-#define	IP_TOS			8	/* int; IP type of service and preced */
-#define	IP_TTL			9	/* int; IP time to live */
-#define	IP_RECVOPTS		10	/* bool; receive all IP opts w/dgram */
-#define	IP_RECVRETOPTS		11	/* bool; receive IP opts for response */
-#define	IP_RECVDSTADDR		12	/* bool; receive IP dst addr w/dgram */
-#define	IP_RETOPTS		13	/* ip_opts; set/get IP options */
+#define	IP_HDRINCL		2	/* int; header is included with data */
+#define	IP_TOS			3	/* int; IP type of service and preced */
+#define	IP_TTL			4	/* int; IP time to live */
+#define	IP_RECVOPTS		5	/* bool; receive all IP opts w/dgram */
+#define	IP_RECVRETOPTS		6	/* bool; receive IP opts for response */
+#define	IP_RECVDSTADDR		7	/* bool; receive IP dst addr w/dgram */
+#define	IP_RETOPTS		8	/* ip_opts; set/get IP options */
+#define	IP_MULTICAST_IF		9	/* u_char; set/get IP mcast i/f */
+#define	IP_MULTICAST_TTL	10	/* u_char; set/get IP mcast ttl */
+#define	IP_MULTICAST_LOOP	11	/* u_char; set/get IP mcast loopback */
+#define	IP_ADD_MEMBERSHIP	12	/* ip_mreq; add IP group membership */
+#define	IP_DROP_MEMBERSHIP	13	/* ip_mreq; drop IP group membership */
 
 #define	IP_DEFAULT_MULTICAST_TTL   1    /* normally limit m'casts to 1 hop  */
 #define	IP_DEFAULT_MULTICAST_LOOP  1    /* normally hear sends if a member  */
