@@ -1,4 +1,4 @@
-/*	$NetBSD: obp.c,v 1.1 1998/09/26 18:15:34 pk Exp $ */
+/*	$NetBSD: obp.c,v 1.2 1998/09/26 19:08:09 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -286,4 +286,41 @@ callrom()
 {
 
 	promvec->pv_abort();
+}
+
+/*
+ * Start a cpu.
+ */
+void
+rom_cpustart(node, ctxtab, ctx, pc)
+	int node, ctx;
+	struct openprom_addr *ctxtab;
+	caddr_t pc;
+{
+
+	(*promvec->pv_v3cpustart)(node, ctxtab, ctx, pc);
+}
+
+void
+rom_cpustop(node)
+	int node;
+{
+
+	(*promvec->pv_v3cpustop)(node);
+}
+
+void
+rom_cpuidle(node)
+	int node;
+{
+
+	(*promvec->pv_v3cpuidle)(node);
+}
+
+void
+rom_cpuresume(node)
+	int node;
+{
+
+	(*promvec->pv_v3cpuresume)(node);
 }
