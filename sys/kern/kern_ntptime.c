@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.26 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.27 2004/04/08 06:20:29 atatat Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.26 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.27 2004/04/08 06:20:29 atatat Exp $");
 
 #include "opt_ntp.h"
 
@@ -400,7 +400,8 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "ntptime", NULL,
+		       CTLTYPE_STRUCT, "ntptime",
+		       SYSCTL_DESCR("Kernel clock values for NTP"),
 		       sysctl_kern_ntptime, 0, NULL,
 		       sizeof(struct ntptimeval),
 		       CTL_KERN, KERN_NTPTIME, CTL_EOL);
