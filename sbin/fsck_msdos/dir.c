@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.4 1996/09/11 20:31:24 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.5 1996/09/17 15:34:05 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.4 1996/09/11 20:31:24 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.5 1996/09/17 15:34:05 ws Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -167,7 +167,7 @@ fullpath(dir)
 		memcpy(cp, np, nl);
 		*--cp = '/';
 	} while ((dir = dir->parent) != NULL);
-	if (dir->parent)
+	if (dir)
 		*--cp = '?';
 	return cp;
 }
