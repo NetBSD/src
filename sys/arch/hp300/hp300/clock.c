@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.20.4.1 1997/10/14 08:55:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,6 @@ struct hil_dev *bbcaddr = NULL;
 
 void	statintr __P((struct clockframe *));
 
-void	hp300_calibrate_delay __P((void));
 struct bbc_tm *gmt_to_bbc __P((long));
 int	bbc_to_gmt __P((u_long *));
 void	read_bbc __P((void));
