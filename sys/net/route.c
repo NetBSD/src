@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.63 2004/09/30 00:14:05 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.64 2005/01/23 18:41:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.63 2004/09/30 00:14:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.64 2005/01/23 18:41:56 matt Exp $");
 
 #include "opt_ns.h"
 
@@ -148,7 +148,7 @@ void
 rtable_init(void **table)
 {
 	struct domain *dom;
-	for (dom = domains; dom; dom = dom->dom_next)
+	DOMAIN_FOREACH(dom)
 		if (dom->dom_rtattach)
 			dom->dom_rtattach(&table[dom->dom_family],
 			    dom->dom_rtoffset);

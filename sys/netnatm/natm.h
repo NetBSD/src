@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.5 2003/06/29 22:32:08 fvdl Exp $	*/
+/*	$NetBSD: natm.h,v 1.6 2005/01/23 18:41:57 matt Exp $	*/
 
 /*
  *
@@ -116,7 +116,7 @@ LIST_HEAD(npcblist, natmpcb);
 
 /* global data structures */
 
-struct npcblist natm_pcbs;		/* global list of pcbs */
+extern	struct npcblist natm_pcbs;	/* global list of pcbs */
 extern	struct ifqueue natmintrq;	/* natm packet input queue */
 #define	NATM_STAT
 #ifdef NATM_STAT
