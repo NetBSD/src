@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.6 1997/03/16 00:37:00 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.7 1997/03/28 21:51:51 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -91,7 +91,7 @@ static struct ispmdvec mdvec = {
 #define IO_MAP_REG	0x10
 #define MEM_MAP_REG	0x14
 
-int isp_pci_prefer_io = 0;	/* prefer to map via I/O (patchable data) */
+int isp_pci_prefer_io = 0;	/* 1 -> map via I/O (patchable data) */
 
 
 #ifdef	__BROKEN_INDIRECT_CONFIG
