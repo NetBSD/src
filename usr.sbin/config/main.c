@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2000/12/12 08:46:02 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2000/12/12 17:49:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -905,7 +905,7 @@ badstar(void)
 void
 setupdirs(void)
 {
-#define KERNNAMEOPTPREFIX	"KERNEL_"
+#define KERNNAMEOPTPREFIX	"_KERNEL_"
 	char		*p, buf[sizeof(KERNNAMEOPTPREFIX) + PATH_MAX + 1];
 	const char	*name;
 	struct stat	 st;
