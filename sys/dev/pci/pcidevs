@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.308 2001/03/13 17:21:16 bouyer Exp $
+$NetBSD: pcidevs,v 1.309 2001/03/17 02:26:26 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1126,8 +1126,8 @@ product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
-product INTEL LIVENGOOD		0x1001	PRO/1000 Gigabit Ethernet (LIVENGOOD)
-product INTEL 82452_SC		0x1003	PRO/1000 Gigabit Ethernet (i82452-SC)
+product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
+product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
