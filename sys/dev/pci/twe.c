@@ -1,11 +1,11 @@
-/*	$NetBSD: twe.c,v 1.41 2003/09/21 19:01:05 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.42 2003/09/21 19:20:18 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran; and by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.41 2003/09/21 19:01:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.42 2003/09/21 19:20:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,11 +309,14 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int size, i, rv, rseg;
 	size_t max_segs, max_xfer;
-	struct twe_param *dtp;
+	struct twe_param *dtp, *atp;
+	struct twe_array_descriptor *ad;
+	struct twe_drive *td;
 	bus_dma_segment_t seg;
 	struct twe_cmd *tc;
 	struct twe_attach_args twea;
 	struct twe_ccb *ccb;
+	uint16_t dsize;
 
 	sc = (struct twe_softc *)self;
 	pa = aux;
@@ -450,17 +453,51 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* For each detected unit, collect size and store in an array. */
 	for (i = 0, sc->sc_nunits = 0; i < TWE_MAX_UNITS; i++) {
+		td = &sc->sc_units[i];
+
 		/* Unit present? */
 		if ((dtp->tp_data[i] & TWE_PARAM_UNITSTATUS_Online) == 0) {
-			sc->sc_dsize[i] = 0;
+			td->td_size = 0;
+			td->td_type = 0;
+			td->td_stripe = 0;
 	   		continue;
 	   	}
 
-		rv = twe_param_get_4(sc, TWE_PARAM_UNITINFO + i,
-		    TWE_PARAM_UNITINFO_Capacity, &sc->sc_dsize[i]);
+		rv = twe_param_get_2(sc, TWE_PARAM_UNITINFO + i,
+		    TWE_PARAM_UNITINFO_DescriptorSize, &dsize);
 		if (rv != 0) {
-			aprint_error("%s: error %d fetching capacity for unit %d\n",
+			aprint_error("%s: error %d fetching descriptor size "
+			    "for unit %d\n", sc->sc_dv.dv_xname, rv, i);
+			td->td_size = 0;
+			td->td_type = 0;
+			td->td_stripe = 0;
+			continue;
+		}
+
+		rv = twe_param_get(sc, TWE_PARAM_UNITINFO + i,
+		    TWE_PARAM_UNITINFO_Descriptor, dsize - 3, NULL, &atp);
+		if (rv != 0) {
+			aprint_error("%s: error %d fetching array descriptor "
+			    "for unit %d\n", sc->sc_dv.dv_xname, rv, i);
+			td->td_size = 0;
+			td->td_type = 0;
+			td->td_stripe = 0;
+			continue;
+		}
+		ad = (struct twe_array_descriptor *)atp->tp_data;
+		td->td_type = ad->configuration;
+		td->td_stripe = ad->stripe_size;
+		free(atp, M_DEVBUF);
+
+		rv = twe_param_get_4(sc, TWE_PARAM_UNITINFO + i,
+		    TWE_PARAM_UNITINFO_Capacity, &td->td_size);
+		if (rv != 0) {
+			aprint_error(
+			    "%s: error %d fetching capacity for unit %d\n",
 			    sc->sc_dv.dv_xname, rv, i);
+			td->td_size = 0;
+			td->td_type = 0;
+			td->td_stripe = 0;
 			continue;
 		}
 
@@ -478,10 +515,12 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach sub-devices. */
 	for (i = 0; i < TWE_MAX_UNITS; i++) {
-		if (sc->sc_dsize[i] == 0)
+		td = &sc->sc_units[i];
+		if (td->td_size == 0)
 			continue;
 		twea.twea_unit = i;
-		config_found_sm(&sc->sc_dv, &twea, twe_print, twe_submatch);
+		td->td_dev = config_found_sm(&sc->sc_dv, &twea, twe_print,
+		    twe_submatch);
 	}
 }
 
