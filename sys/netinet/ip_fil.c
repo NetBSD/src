@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.51 2000/05/21 18:45:54 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.52 2000/05/21 18:47:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.51 2000/05/21 18:45:54 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.52 2000/05/21 18:47:00 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.4 2000/05/09 22:43:31 darrenr Exp";
@@ -1016,7 +1016,7 @@ struct ip *oip;
 # ifdef	USE_INET6
 	ip6 = (ip6_t *)ip;
 # endif
-	bzero((char *)ip, sizeof(*tcp2) + hlen)
+	bzero((char *)ip, sizeof(*tcp2) + hlen);
 	tcp2 = (struct tcphdr *)((char *)ip + hlen);
 
 	tcp2->th_sport = tcp->th_dport;
