@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.11 1998/12/19 21:52:00 christos Exp $	*/
+/*	$NetBSD: rwho.c,v 1.11.2.1 1999/10/09 19:12:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.11 1998/12/19 21:52:00 christos Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.11.2.1 1999/10/09 19:12:14 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -196,8 +196,9 @@ utmpcmp(v1, v2)
 	rc = strncmp(u1->myutmp.out_name, u2->myutmp.out_name, 8);
 	if (rc)
 		return (rc);
-	rc = strncmp(u1->myhost, u2->myhost, 8);
+	rc = strcmp(u1->myhost, u2->myhost);
 	if (rc)
 		return (rc);
 	return (strncmp(u1->myutmp.out_line, u2->myutmp.out_line, 8));
 }
+
