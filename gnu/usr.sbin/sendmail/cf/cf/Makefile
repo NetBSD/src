@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/09/23 13:53:43 simonb Exp $
+#	$NetBSD: Makefile,v 1.14 2001/01/15 17:57:44 itojun Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -6,8 +6,7 @@ DIST=		${.CURDIR}/../../../../dist
 
 FILESDIR=	/usr/share/sendmail/cf
 FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
-		netbsd-proto.mc netbsd-proto-IPv4only.mc sun-lamp.mc zhadum.mc \
-		Makefile
+		netbsd-proto.mc sun-lamp.mc zhadum.mc Makefile
 
 .if (${.CURDIR} == ${FILESDIR})
 CFDIR=		${.CURDIR}/..
@@ -19,7 +18,7 @@ M4=		m4
 ROMODE=		444
 RM=		rm -f
 
-ALL=		netbsd-proto.cf netbsd-proto-IPv4only.cf
+ALL=		netbsd-proto.cf
 
 OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 
@@ -32,9 +31,6 @@ OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 	${CHMOD} ${ROMODE} $@
 
 realall: ${ALL}
-
-# netbsd-proto.mc pulls in netbsd-proto-IPv4only.mc
-netbsd-proto.cf: netbsd-proto-IPv4only.mc
 
 afterinstall:
 	sed 's,../../../../usr.sbin/sendmail/cf/cf/,,g' \
@@ -54,8 +50,6 @@ realdepend:
 distribution: netbsd-proto.cf
 	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 444 \
 	    netbsd-proto.cf ${DESTDIR}/etc/mail/sendmail.cf
-	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 444 \
-	    netbsd-proto-IPv4only.cf ${DESTDIR}/etc/mail/sendmail-IPv4only.cf
 
 # this is overkill, but....
 M4FILES=	${CFDIR}/domain/Berkeley.EDU.m4 \
