@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.12 2003/08/29 01:37:11 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.13 2003/08/29 01:58:32 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.12 2003/08/29 01:37:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.13 2003/08/29 01:58:32 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5989,7 +5989,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 		ahd_outb(ahd, LUNLEN,
 			 sizeof(ahd->next_queued_hscb->pkt_long_lun) - 1);
 	} else {
-		ahd_outb(ahd, LUNLEN, sizeof(ahd->next_queued_hscb->lun) - 1);
+		ahd_outb(ahd, LUNLEN, LUNLEN_SINGLE_LEVEL_LUN);
 	}
 	ahd_outb(ahd, CDBLIMIT, SCB_CDB_LEN_PTR - 1);
 	ahd_outb(ahd, MAXCMD, 0xFF);
