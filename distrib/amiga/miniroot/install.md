@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.21 2003/01/13 20:34:05 is Exp $
+#	$NetBSD: install.md,v 1.22 2003/01/15 07:20:52 mhitch Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,13 +92,13 @@ md_get_partition_range() {
 }
 
 md_installboot() {
-	if [ -x /mnt/usr/mdec/installboot ]; then
+	if [ -x /mnt/usr/sbin/installboot ]; then
 		echo -n "Should a boot block be installed? [y] "
 		getresp "y"
 		case "$resp" in
 			y*|Y*)
 				echo "Installing boot block..."
-				chroot /mnt /usr/mdec/installboot /usr/mdec/bootxx_ffs /dev/r${1}a
+				chroot /mnt /usr/sbin/installboot /dev/r${1}a /usr/mdec/bootxx_ffs
 				cp -p /mnt/usr/mdec/boot.amiga /mnt/
 				;;
 			*)
@@ -435,7 +435,7 @@ in the filesystem hierarchy rooted at /emul/aout.
 This upgrade procedure will now establish this hierarchy by moving all
 shared libraries in a.out format found in /usr/lib to /emul/aout/usr/lib.
 It will also move the X11 shared libraries in a.out format from previous
-NetBSD/sparc X11 installation sets, if they are installed.
+NetBSD/amiga X11 installation sets, if they are installed.
 
 EOF
 	md_mv_aout_libs || {
