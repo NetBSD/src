@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.36 1996/03/31 22:39:06 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.37 1996/04/01 17:29:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,8 +63,10 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <sparc/sparc/vaddrs.h>
@@ -75,7 +77,6 @@
 #include <dev/ic/z8530reg.h>
 
 #include <sparc/dev/zsvar.h>
-#include <sparc/dev/dev_conf.h>
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -170,6 +171,7 @@ static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
 void zsabort __P((void));
 static void zsoverrun __P((int, long *, char *));
 
+#include "zs.h"	/* XXX: */
 static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.24 1996/03/31 22:30:53 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.25 1996/04/01 17:30:00 christos Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -61,6 +61,7 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #ifdef DEBUG
 #include <sys/proc.h>
@@ -76,6 +77,7 @@
 #if defined(SUN4)
 #include <machine/eeprom.h>
 #endif
+#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
@@ -84,7 +86,6 @@
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif
-#include <sparc/dev/dev_conf.h>
 
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char	cm_map[2][3];	/* 2 R/G/B entries */

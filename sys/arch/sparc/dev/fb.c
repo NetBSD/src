@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.17 1996/03/31 22:30:57 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.18 1996/04/01 17:29:54 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,16 +53,17 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
 #include <machine/kbd.h>
 #include <machine/fbvar.h>
+#include <machine/conf.h>
 #if defined(SUN4)
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
 #endif
-#include <sparc/dev/dev_conf.h>
 
 static struct fbdevice *devfb;
 

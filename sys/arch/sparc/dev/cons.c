@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.19 1996/03/31 22:38:33 pk Exp $ */
+/*	$NetBSD: cons.c,v 1.20 1996/04/01 17:29:55 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,10 +55,9 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
-
-#include <sparc/dev/dev_conf.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/psl.h>
@@ -68,6 +67,7 @@
 #include <machine/oldmon.h>
 #endif
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 
 #include "zs.h"
 

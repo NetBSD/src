@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.26 1996/03/31 22:30:56 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.27 1996/04/01 17:30:03 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
@@ -68,12 +69,12 @@
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/cpu.h>
+#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgthreereg.h>
 #include <sparc/dev/sbusvar.h>
-#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct cgthree_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.13 1996/03/17 03:19:34 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.14 1996/04/01 17:30:06 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
@@ -70,10 +71,9 @@
 #if defined(SUN4)
 #include <machine/eeprom.h>
 #endif
-
+#include <machine/conf.h>
 #include <machine/cgtworeg.h>
 
-#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct cgtwo_softc {
