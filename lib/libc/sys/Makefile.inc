@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.107 2000/09/28 08:38:55 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.108 2000/12/10 21:27:38 mycroft Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -8,15 +8,15 @@
 SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
 	sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
-	syscall.S
+	syscall.S __syscall.S
 SRCS+=	cerror.S
 
 LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint___sigreturn14.c Lint_syscall.c
+	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
 DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint___sigreturn14.c Lint_syscall.c
+	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -67,7 +67,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	socket.o socketpair.o __stat13.o statfs.o \
 	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o \
-	__syscall.o __sysctl.o \
+	__sysctl.o \
 	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o
 
 PASM=	${ASM:.o=.po}
