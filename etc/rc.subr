@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.13 2000/04/22 03:01:22 lukem Exp $
+# $NetBSD: rc.subr,v 1.14 2000/04/26 15:06:46 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -222,10 +222,6 @@ check_process()
 #
 run_rc_command()
 {
-	if ! checkyesno rc_configured; then
-		err 1 '/etc/rc.conf is not configured'
-	fi
-
 	_arg=$1
 	shift
 	_ckvar=${rcvar:-$name}
