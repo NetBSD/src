@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/29 11:40:36 kleink Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/31 10:47:51 kleink Exp $
 
-TEXINFO=        uucp.texi
+TEXINFO=	uucp.texi
 
 .include <bsd.info.mk>
