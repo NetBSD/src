@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.1 1999/01/13 08:18:45 ross Exp $	
+.\"	$NetBSD: legal.common,v 1.2 1999/03/25 03:49:51 explorer Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -217,3 +217,9 @@ by Piermont Information Systems Inc.
 
 This product includes software developed for the NetBSD Project
 by Ted Lemon.
+
+This product includes software developed by LAN Media Corporation
+and its contributors.
+
+This product includes software developed by Michael Graff for
+the NetBSD Project.
