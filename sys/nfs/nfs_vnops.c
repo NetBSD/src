@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.34 1994/06/29 06:42:29 cgd Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.35 1994/07/03 09:22:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -485,25 +485,39 @@ nfs_setattr(ap)
 	register struct vattr *vap = ap->a_vap;
 	u_quad_t frev, tsize;
 
-	if (vap->va_size != VNOVAL || vap->va_mtime.ts_sec != VNOVAL ||
-		vap->va_atime.ts_sec != VNOVAL) {
-		if (vap->va_size != VNOVAL) {
+	if (vap->va_size != VNOVAL) {
+		switch (vp->v_type) {
+		case VDIR:
+			return (EISDIR);
+		case VCHR:
+		case VBLK:
+			if (vap->va_mtime.ts_sec == VNOVAL &&
+			    vap->va_atime.ts_sec == VNOVAL &&
+			    vap->va_mode == (u_short)VNOVAL &&
+			    vap->va_uid == VNOVAL &&
+			    vap->va_gid == VNOVAL)
+				return (0);
+			vap->va_size = VNOVAL;
+			break;
+		default:
 			if (np->n_flag & NMODIFIED) {
-			    if (vap->va_size == 0)
-				error = nfs_vinvalbuf(vp, 0, ap->a_cred,
-					ap->a_p, 1);
-			    else
-				error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-					ap->a_p, 1);
-			    if (error)
-				return (error);
+				if (vap->va_size == 0)
+					error = nfs_vinvalbuf(vp, 0,
+						ap->a_cred, ap->a_p, 1);
+				else
+					error = nfs_vinvalbuf(vp, V_SAVE,
+						ap->a_cred, ap->a_p, 1);
+				if (error)
+					return (error);
 			}
 			tsize = np->n_size;
 			np->n_size = np->n_vattr.va_size = vap->va_size;
 			vnode_pager_setsize(vp, (u_long)np->n_size);
-		} else if ((np->n_flag & NMODIFIED) &&
-			(error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-			 ap->a_p, 1)) == EINTR)
+		}
+	} else if ((vap->va_mtime.ts_sec != VNOVAL ||
+	    vap->va_atime.ts_sec != VNOVAL) && (np->n_flag & NMODIFIED)) {
+		error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
+		if (error == EINTR)
 			return (error);
 	}
 	nfsstats.rpccnt[NFSPROC_SETATTR]++;
