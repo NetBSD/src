@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_proc.c,v 1.3 1997/10/13 07:38:11 lukem Exp $	*/
+/*	$NetBSD: yppush_proc.c,v 1.3.2.1 1997/11/28 09:44:59 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_proc.c,v 1.3 1997/10/13 07:38:11 lukem Exp $");
+__RCSID("$NetBSD: yppush_proc.c,v 1.3.2.1 1997/11/28 09:44:59 mellon Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ yppushproc_xfrresp_1_svc(argp, rqstp)
 	static char result;
 
 	if (resp->status != YPPUSH_SUCC)
-		warnx(yppush_err_string(resp->status));
+		warnx("%s", yppush_err_string(resp->status));
 
 	(void) memset(&result, 0, sizeof(result));
 	return ((void *)&result);
