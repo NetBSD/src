@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.31 1994/02/17 07:20:06 mycroft Exp $
+ *	$Id: if_ed.c,v 1.32 1994/02/20 04:05:26 mycroft Exp $
  */
 
 #include "ed.h"
@@ -421,6 +421,9 @@ ed_probe_WD80x3(isa_dev)
 			    ffs(ed_790_intr_mask[iptr]) - 1);
 			return 0;
 		}
+		/* Enable the interrupt. */
+		outb(isa_dev->id_iobase + 0x06, inb(isa_dev->id_iobase + 0x06)
+		    | 0x01);
 	} else if (sc->type & ED_WD_SOFTCONFIG) {
 		sc->ed_cr_rd2 = ED_CR_RD2;
 		/* Assemble together the encoded interrupt number. */
