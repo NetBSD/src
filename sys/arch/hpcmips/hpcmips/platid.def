@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.8 1999/12/09 02:47:24 jun Exp $	*/
+/*	$NetBSD: platid.def,v 1.9 1999/12/10 09:13:06 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -71,12 +71,14 @@ NEC {
   MCR {
     CPU=MIPS_VR_41XX
     3XX {
-      CPU=MIPS_VR_4111 300 forDoCoMo
+      CPU=MIPS_VR_4111 300
       CPU=MIPS_VR_4121 320
+      CPU=MIPS_VR_4111 forDoCoMo
     }
     5XX {
-      CPU=MIPS_VR_4111 500 500A
+      CPU=MIPS_VR_4111 500
       CPU=MIPS_VR_4121 510 520 520A
+      CPU=MIPS_VR_4111 500A
     }
     7XX {
       CPU=MIPS_VR_4121 700 700A
