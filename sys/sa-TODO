@@ -1,4 +1,4 @@
-#	$NetBSD: sa-TODO,v 1.1.2.32 2003/01/04 00:10:54 thorpej Exp $
+#	$NetBSD: sa-TODO,v 1.1.2.33 2003/01/04 23:56:42 thorpej Exp $
 
 Things to do for scheduler activations/LWP code.
 
@@ -59,7 +59,7 @@ Platform status:
 
 - evbmips: Works
 
-- evbppc: WALNUT compiles.  System crashes going multi-user.
+- evbppc: Works.
 
 - evbsh3: COMPUTEXEVB compiles.  See sh3.
 
